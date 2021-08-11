@@ -1,11 +1,11 @@
 {
   "name": "@sanity/block-tools",
-  "version": "2.14.0",
+  "version": "2.17.2",
   "description": "Can format HTML, Slate JSON or Sanity block array into any other format.",
   "main": "./lib/index.js",
   "types": "./dist/dts",
   "scripts": {
-    "clean": "rimraf lib",
+    "clean": "rimraf lib dest",
     "compile": "babel src --copy-files --out-dir lib",
     "compile:watch": "npm run compile -- --watch",
     "test": "NODE_ENV=test jest",
@@ -29,7 +29,7 @@
     "lodash": "^4.17.15"
   },
   "devDependencies": {
-    "@sanity/schema": "2.14.0",
+    "@sanity/schema": "2.17.2",
     "jest": "^26.6.3",
     "jsdom": "^12.0.0",
     "ts-jest": "^26.5.4"
