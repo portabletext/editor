@@ -7,6 +7,7 @@
     "check:types": "turbo check:types",
     "chore:format:fix": "prettier --cache --write .",
     "clean": "turbo clean",
+    "dev": "turbo dev",
     "postinstall": "husky",
     "lint": "turbo lint",
     "test": "turbo test",
