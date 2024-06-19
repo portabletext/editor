@@ -51,7 +51,6 @@
     "dev": "cd ./e2e-tests/ && tsx serve",
     "lint": "eslint .",
     "prepublishOnly": "turbo run build",
-    "prettier": "prettier --write './**/*.{ts,tsx,js,css,html}'",
     "test": "jest",
     "test:e2e": "jest --config=e2e-tests/e2e.config.cjs",
     "test:watch": "jest --watch",
