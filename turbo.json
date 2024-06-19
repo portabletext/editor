@@ -1,0 +1,35 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "build": {
+      "outputs": ["lib/**"],
+      "dependsOn": ["^build"],
+      "outputLogs": "new-only"
+    },
+    "check:types": {
+      "outputs": [""],
+      "dependsOn": ["^build"],
+      "outputLogs": "errors-only"
+    },
+    "clean": {
+      "cache": false
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "outputLogs": "errors-only"
+    },
+    "test": {
+      "outputs": [""]
+    },
+    "test:e2e": {
+      "outputs": [""]
+    },
+    "test:watch": {
+      "persistent": true,
+      "cache": false
+    }
+  }
+}

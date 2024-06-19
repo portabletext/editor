@@ -1,6 +1,6 @@
 'use strict'
 
-const {createJestConfig} = require('../../../../test/config.cjs')
+const {createJestConfig} = require('../test-config/config.cjs')
 
 // eslint-disable-next-line no-console
 console.info('Running collaborate editing tests for the Portable Text Editor')
