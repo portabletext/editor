@@ -1,0 +1,18 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "build": {
+      "outputs": ["lib/**"],
+      "dependsOn": ["^build"],
+      "outputLogs": "new-only"
+    },
+    "check:types": {
+      "outputs": [""],
+      "dependsOn": ["^build"],
+      "outputLogs": "errors-only"
+    },
+    "lint": {
+      "outputLogs": "errors-only"
+    }
+  }
+}

@@ -1,6 +1,6 @@
 {
-  "name": "@sanity/portable-text-editor",
-  "version": "3.47.0",
+  "name": "@portabletext/editor",
+  "version": "1.0.0",
   "description": "Portable Text Editor made in React",
   "keywords": [
     "sanity",
@@ -18,12 +18,12 @@
   ],
   "homepage": "https://www.sanity.io/",
   "bugs": {
-    "url": "https://github.com/sanity-io/sanity/issues"
+    "url": "https://github.com/portabletext/editor/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sanity-io/sanity.git",
-    "directory": "packages/@sanity/portable-text-editor"
+    "url": "git+https://github.com/portabletext/editor.git",
+    "directory": "packages/editor"
   },
   "license": "MIT",
   "author": "Sanity.io <hello@sanity.io>",
@@ -72,8 +72,10 @@
     "@jest/globals": "^29.7.0",
     "@playwright/test": "1.41.2",
     "@portabletext/toolkit": "^2.0.15",
-    "@repo/package.config": "workspace:*",
+    "@repo/package.config": "workspace:^",
+    "@repo/tsconfig": "workspace:^",
     "@sanity/diff-match-patch": "^3.1.1",
+    "@sanity/pkg-utils": "^6.10.0",
     "@sanity/ui": "^2.4.0",
     "@testing-library/react": "^13.4.0",
     "@types/debug": "^4.1.5",
@@ -98,6 +100,7 @@
     "rxjs": "^7.8.1",
     "styled-components": "^6.1.11",
     "tsx": "^4.10.3",
+    "typescript": "^5.4.5",
     "vite": "^4.5.3"
   },
   "peerDependencies": {
