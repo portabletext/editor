@@ -1,6 +1,6 @@
 'use strict'
 
-const {createJestConfig} = require('../../../test/config.cjs')
+const {createJestConfig} = require('./test-config/config.cjs')
 
 module.exports = createJestConfig({
   displayName: require('./package.json').name,

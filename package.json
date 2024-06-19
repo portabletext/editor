@@ -7,7 +7,10 @@
     "check:types": "turbo check:types",
     "chore:format:fix": "prettier --cache --write .",
     "postinstall": "husky",
-    "lint": "turbo lint"
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "test:e2e": "turbo test:e2e",
+    "test:watch": "turbo test:watch"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

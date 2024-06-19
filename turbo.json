@@ -13,6 +13,16 @@
     },
     "lint": {
       "outputLogs": "errors-only"
+    },
+    "test": {
+      "outputs": [""]
+    },
+    "test:e2e": {
+      "outputs": [""]
+    },
+    "test:watch": {
+      "persistent": true,
+      "cache": false
     }
   }
 }
