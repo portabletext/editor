@@ -6,6 +6,7 @@
     "check:format": "prettier . --check",
     "check:types": "turbo check:types",
     "chore:format:fix": "prettier --cache --write .",
+    "clean": "turbo clean",
     "postinstall": "husky",
     "lint": "turbo lint",
     "test": "turbo test",

@@ -11,6 +11,9 @@
       "dependsOn": ["^build"],
       "outputLogs": "errors-only"
     },
+    "clean": {
+      "cache": false
+    },
     "lint": {
       "outputLogs": "errors-only"
     },
