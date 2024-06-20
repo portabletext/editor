@@ -80,16 +80,16 @@ importers:
   packages/editor:
     dependencies:
       '@sanity/block-tools':
-        specifier: 3.47.0
+        specifier: ^3.47.0
         version: 3.47.0
       '@sanity/schema':
-        specifier: 3.47.0
+        specifier: ^3.47.0
         version: 3.47.0(debug@3.2.7)
       '@sanity/types':
-        specifier: 3.47.0
+        specifier: ^3.47.0
         version: 3.47.0(debug@3.2.7)
       '@sanity/util':
-        specifier: 3.47.0
+        specifier: ^3.47.0
         version: 3.47.0(debug@3.2.7)
       debug:
         specifier: ^3.2.7
