@@ -1,6 +1,11 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "github>sanity-io/renovate-config"
+  "extends": ["github>sanity-io/renovate-config"],
+  "packageRules": [
+    {
+      "description": "Slate upgrades are handled manually as they require extensive manual testing to verify it's safe to upgrade",
+      "matchPackageNames": ["slate", "slate-react"],
+      "enabled": false
+    }
   ]
 }
