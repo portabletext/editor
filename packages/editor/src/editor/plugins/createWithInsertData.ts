@@ -382,3 +382,11 @@ function _insertFragment(
 
   editor.onChange()
 }
+
+/**
+ * functions we don't want to export but want to test
+ * @internal
+ */
+export const exportedForTesting = {
+  _regenerateKeys,
+}
