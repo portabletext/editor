@@ -21,8 +21,6 @@ jobs:
         os: [ubuntu-latest]
         node: [18, 20]
         experimental: [false]
-        shardIndex: [1, 2, 3, 4]
-        shardTotal: [4]
 
     steps:
       - name: Checkout
@@ -65,7 +63,5 @@ jobs:
         id: test
         run: |
           node -v
-          npm -v
+          pnpm -v
           pnpm test
-        env:
-          GITHUB_SHARD_IDENTIFIER: ${{ matrix.shardIndex }}-${{ matrix.shardTotal }}
