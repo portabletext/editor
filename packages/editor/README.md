@@ -1,3 +1,3 @@
-# @sanity/portable-text-editor
+# @portabletext/editor
 
-More info to come!
+This is the successor to `@sanity/portable-text-editor` 🎉
