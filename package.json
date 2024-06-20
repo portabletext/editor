@@ -21,6 +21,7 @@
   },
   "prettier": "@sanity/prettier-config",
   "devDependencies": {
+    "@playwright/test": "1.41.2",
     "@sanity/eslint-config-i18n": "^1.1.0",
     "@sanity/eslint-config-studio": "^4.0.0",
     "@sanity/prettier-config": "^1.0.2",
