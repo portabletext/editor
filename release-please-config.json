@@ -3,5 +3,6 @@
   "release-type": "node",
   "packages": {
     "packages/editor": {}
-  }
+  },
+  "last-release-sha": "4d86d5e341f30f63538c62dad602c8a04d482f29"
 }
