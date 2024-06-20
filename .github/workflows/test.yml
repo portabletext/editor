@@ -66,6 +66,6 @@ jobs:
         run: |
           node -v
           npm -v
-          pnpm test -- --shard=${{ matrix.shardIndex}}/${{ matrix.shardTotal }}
+          pnpm test
         env:
           GITHUB_SHARD_IDENTIFIER: ${{ matrix.shardIndex }}-${{ matrix.shardTotal }}
