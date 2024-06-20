@@ -4,6 +4,5 @@
   "plugins": ["node-workspace"],
   "packages": {
     "packages/editor": {}
-  },
-  "last-release-sha": "167597e8a466a302dc9be502ea63f44f0c3705ad"
+  }
 }
