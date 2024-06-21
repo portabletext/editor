@@ -269,7 +269,7 @@ function escapeHtml(str: string) {
  * @internal
  */
 function _regenerateKeys(
-  editor: PortableTextSlateEditor,
+  editor: Pick<PortableTextSlateEditor, 'isTextBlock' | 'isTextSpan'>,
   fragment: Descendant[],
   keyGenerator: () => string,
   spanTypeName: string,
