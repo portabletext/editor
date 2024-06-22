@@ -1,10 +1,7 @@
-import {describe, expect, it, jest} from '@jest/globals'
+import {describe, expect, it} from '@jest/globals'
+import {isPortableTextSpan, isPortableTextTextBlock} from '@sanity/types'
 import {type Descendant} from 'slate'
 
-import {
-  type PortableTextMemberSchemaTypes,
-  type PortableTextSlateEditor,
-} from '../../../types/editor'
 import {exportedForTesting} from '../createWithInsertData'
 
 const initialValue = [
@@ -40,42 +37,51 @@ const initialValue = [
     ],
     style: 'normal',
   },
-]
+] satisfies Array<Descendant>
 
 describe('plugin: createWithInsertData _regenerateKeys', () => {
   it('has MarkDefs that are allowed annotations', async () => {
     const {_regenerateKeys} = exportedForTesting
-    const editorTypes = {annotations: [{name: 'color'}, {name: 'link'}]}
-    const editor = {
-      isTextBlock: jest.fn().mockReturnValue(true),
-      isTextSpan: jest.fn().mockReturnValue(true),
-    } as unknown as PortableTextSlateEditor
+    let keyCursor = 0
 
     const generatedValue = _regenerateKeys(
-      editor,
-      initialValue as Descendant[],
-      jest.fn().mockReturnValue('') as () => string,
+      {
+        isTextBlock: isPortableTextTextBlock,
+        isTextSpan: isPortableTextSpan,
+      },
+      initialValue,
+      () => {
+        keyCursor++
+        return `k${keyCursor}`
+      },
       'span',
-      editorTypes as unknown as PortableTextMemberSchemaTypes,
+      {
+        annotations: [
+          // eslint-disable-next-line camelcase
+          {name: 'color', jsonType: 'object', fields: [], __experimental_search: []},
+          // eslint-disable-next-line camelcase
+          {name: 'link', jsonType: 'object', fields: [], __experimental_search: []},
+        ],
+      },
     )
 
     // the keys are not important here as it's not what we are testing here
     expect(generatedValue).toStrictEqual([
       {
-        _key: '',
+        _key: 'k3',
         _type: 'myTestBlockType',
         children: [
-          {_key: '', _type: 'span', marks: [''], text: 'Block A'},
+          {_key: 'k4', _type: 'span', marks: ['k1'], text: 'Block A'},
           {
-            _key: '',
+            _key: 'k5',
             _type: 'span',
-            marks: [''],
+            marks: ['k2'],
             text: 'Block B',
           },
         ],
         markDefs: [
-          {_key: '', _type: 'link', href: 'google.com', newTab: false},
-          {_key: '', _type: 'color', color: 'red'},
+          {_key: 'k1', _type: 'link', href: 'google.com', newTab: false},
+          {_key: 'k2', _type: 'color', color: 'red'},
         ],
         style: 'normal',
       },
@@ -84,23 +90,26 @@ describe('plugin: createWithInsertData _regenerateKeys', () => {
 
   it('removes MarkDefs when no annotations are allowed', async () => {
     const {_regenerateKeys} = exportedForTesting
-    const editorTypes = {annotations: []}
-    const editor = {
-      isTextBlock: jest.fn().mockReturnValue(true),
-    } as unknown as PortableTextSlateEditor
+    let keyCursor = 0
 
     const generatedValue = _regenerateKeys(
-      editor,
-      initialValue as Descendant[],
-      jest.fn().mockReturnValue('a1') as () => string,
+      {
+        isTextBlock: isPortableTextTextBlock,
+        isTextSpan: isPortableTextSpan,
+      },
+      initialValue,
+      () => {
+        keyCursor++
+        return `k${keyCursor}`
+      },
       'span',
-      editorTypes as unknown as PortableTextMemberSchemaTypes,
+      {annotations: []},
     )
 
     // orphaned children marks are removed later in the normalize function
     expect(generatedValue).toStrictEqual([
       {
-        _key: 'a1',
+        _key: 'k1',
         _type: 'myTestBlockType',
         children: [
           {_key: 'a1', _type: 'span', marks: ['link1'], text: 'Block A'},
@@ -118,23 +127,27 @@ describe('plugin: createWithInsertData _regenerateKeys', () => {
 
   it('updates MarkDefs when one annotations is allowed but one is not allowed', async () => {
     const {_regenerateKeys} = exportedForTesting
-    const editorTypes = {annotations: [{name: 'color'}]}
-    const editor = {
-      isTextBlock: jest.fn().mockReturnValue(true),
-    } as unknown as PortableTextSlateEditor
+    let keyCursor = 0
 
     const generatedValue = _regenerateKeys(
-      editor,
-      initialValue as Descendant[],
-      jest.fn().mockReturnValue('a1') as () => string,
+      {
+        isTextBlock: isPortableTextTextBlock,
+        isTextSpan: isPortableTextSpan,
+      },
+      initialValue,
+      () => {
+        keyCursor++
+        return `k${keyCursor}`
+      },
       'span',
-      editorTypes as unknown as PortableTextMemberSchemaTypes,
+      // eslint-disable-next-line camelcase
+      {annotations: [{name: 'color', jsonType: 'object', fields: [], __experimental_search: []}]},
     )
 
     // orphaned children marks are removed later in the normalize function
     expect(generatedValue).toStrictEqual([
       {
-        _key: 'a1',
+        _key: 'k1',
         _type: 'myTestBlockType',
         children: [
           {_key: 'a1', _type: 'span', marks: ['link1'], text: 'Block A'},
