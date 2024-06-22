@@ -274,7 +274,7 @@ function _regenerateKeys(
   fragment: Descendant[],
   keyGenerator: () => string,
   spanTypeName: string,
-  editorTypes: PortableTextMemberSchemaTypes,
+  editorTypes: Pick<PortableTextMemberSchemaTypes, 'annotations'>,
 ): Descendant[] {
   return fragment.map((node) => {
     const newNode: Descendant = {...node}
