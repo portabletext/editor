@@ -138,6 +138,7 @@ export function createWithInsertData(
             toSlateValue(parsed, {schemaTypes}),
             keyGenerator,
             spanTypeName,
+            schemaTypes,
           )
           // Validate the result
           const validation = validateValue(parsed, schemaTypes, keyGenerator)
@@ -273,11 +274,35 @@ function _regenerateKeys(
   fragment: Descendant[],
   keyGenerator: () => string,
   spanTypeName: string,
+  editorTypes: PortableTextMemberSchemaTypes,
 ): Descendant[] {
   return fragment.map((node) => {
     const newNode: Descendant = {...node}
     // Ensure the copy has new keys
     if (editor.isTextBlock(newNode)) {
+      const annotations = editorTypes.annotations.map((t) => t.name)
+
+      // Ensure that if there are no annotations, we remove the markDefs
+      if (annotations.length === 0) {
+        const {markDefs, ...NewNodeNoDefs} = newNode
+
+        return {...NewNodeNoDefs, _key: keyGenerator()}
+      }
+
+      // Ensure that all annotations are allowed
+      const hasForbiddenAnnotations = (newNode.markDefs || []).some((def) => {
+        return !annotations.includes(def._type)
+      })
+
+      // if they have forbidden annotations, we remove them and keep the rest
+      if (hasForbiddenAnnotations) {
+        const allowedAnnotations = (newNode.markDefs || []).filter((def) => {
+          return annotations.includes(def._type)
+        })
+
+        return {...newNode, markDefs: allowedAnnotations, _key: keyGenerator()}
+      }
+
       newNode.markDefs = (newNode.markDefs || []).map((def) => {
         const oldKey = def._key
         const newKey = keyGenerator()
@@ -356,4 +381,12 @@ function _insertFragment(
   })
 
   editor.onChange()
+}
+
+/**
+ * functions we don't want to export but want to test
+ * @internal
+ */
+export const exportedForTesting = {
+  _regenerateKeys,
 }
