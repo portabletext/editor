@@ -492,6 +492,9 @@ export type RenderEditableFunction = (props: PortableTextEditableProps) => JSX.E
 export type RenderAnnotationFunction = (props: BlockAnnotationRenderProps) => JSX.Element
 
 /** @beta */
+export type RenderPlaceholderFunction = () => React.ReactNode
+
+/** @beta */
 export type RenderStyleFunction = (props: BlockStyleRenderProps) => JSX.Element
 
 /** @beta */
