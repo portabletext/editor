@@ -73,17 +73,6 @@ importers:
         specifier: ^5.3.1
         version: 5.3.1
 
-  packages/@repo/package.config:
-    devDependencies:
-      '@sanity/pkg-utils':
-        specifier: ^6.10.0
-        version: 6.10.0(@types/node@18.19.36)(debug@3.2.7)(typescript@5.4.5)
-      typescript:
-        specifier: ^5.4.5
-        version: 5.4.5
-
-  packages/@repo/tsconfig: {}
-
   packages/editor:
     dependencies:
       '@sanity/block-tools':
@@ -126,12 +115,6 @@ importers:
       '@portabletext/toolkit':
         specifier: ^2.0.15
         version: 2.0.15
-      '@repo/package.config':
-        specifier: workspace:^
-        version: link:../@repo/package.config
-      '@repo/tsconfig':
-        specifier: workspace:^
-        version: link:../@repo/tsconfig
       '@sanity/diff-match-patch':
         specifier: ^3.1.1
         version: 3.1.1
