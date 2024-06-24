@@ -48,13 +48,13 @@
     "build": "pkg-utils build --strict --check --clean",
     "check:types": "tsc --project tsconfig.lib.json",
     "clean": "rimraf lib",
-    "dev": "cd ./e2e-tests/ && tsx serve",
+    "dev": "pkg-utils watch",
+    "dev:e2e-server": "cd ./e2e-tests/ && tsx serve",
     "lint": "eslint .",
     "prepublishOnly": "turbo run build",
     "test": "jest",
     "test:e2e": "jest --config=e2e-tests/e2e.config.cjs",
-    "test:watch": "jest --watch",
-    "watch": "pkg-utils watch"
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "@sanity/block-tools": "^3.47.0",

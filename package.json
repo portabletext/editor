@@ -9,6 +9,7 @@
     "chore:format:fix": "prettier --cache --write .",
     "clean": "turbo clean",
     "dev": "turbo dev",
+    "dev:playground": "turbo dev --filter=playground...",
     "postinstall": "husky",
     "lint": "turbo lint",
     "test": "turbo test",
