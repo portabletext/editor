@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "build": "turbo build",
+    "build:editor": "turbo build --filter=@portabletext/editor...",
     "check:format": "prettier . --check",
     "check:types": "turbo check:types",
     "chore:format:fix": "prettier --cache --write .",
