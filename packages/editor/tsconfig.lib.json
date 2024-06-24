@@ -1,7 +1,9 @@
 {
-  "extends": "@repo/tsconfig/build.json",
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./tsconfig.base.json",
   "include": ["./src"],
   "compilerOptions": {
+    "noEmitOnError": true,
     "rootDir": ".",
     "outDir": "./lib",
 
