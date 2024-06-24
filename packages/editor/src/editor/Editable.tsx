@@ -9,7 +9,6 @@ import {
   type HTMLProps,
   type KeyboardEvent,
   type MutableRefObject,
-  type ReactNode,
   type TextareaHTMLAttributes,
   useCallback,
   useEffect,
@@ -49,6 +48,7 @@ import {
   type RenderChildFunction,
   type RenderDecoratorFunction,
   type RenderListItemFunction,
+  type RenderPlaceholderFunction,
   type RenderStyleFunction,
   type ScrollSelectionIntoViewFunction,
 } from '../types/editor'
@@ -100,7 +100,7 @@ export type PortableTextEditableProps = Omit<
   renderChild?: RenderChildFunction
   renderDecorator?: RenderDecoratorFunction
   renderListItem?: RenderListItemFunction
-  renderPlaceholder?: () => ReactNode
+  renderPlaceholder?: RenderPlaceholderFunction
   renderStyle?: RenderStyleFunction
   scrollSelectionIntoView?: ScrollSelectionIntoViewFunction
   selection?: EditorSelection
