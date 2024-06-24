@@ -467,7 +467,6 @@ export interface BlockDecoratorRenderProps {
   value: string
 }
 /** @beta */
-
 export interface BlockListItemRenderProps {
   block: PortableTextTextBlock
   children: ReactElement
@@ -496,7 +495,6 @@ export type RenderAnnotationFunction = (props: BlockAnnotationRenderProps) => JS
 export type RenderStyleFunction = (props: BlockStyleRenderProps) => JSX.Element
 
 /** @beta */
-
 export interface BlockStyleRenderProps {
   block: PortableTextTextBlock
   children: ReactElement
