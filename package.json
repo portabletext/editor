@@ -10,6 +10,7 @@
     "clean": "turbo clean",
     "dev": "turbo dev",
     "dev:playground": "turbo dev --filter=playground...",
+    "format:staged": "pretty-quick --staged",
     "postinstall": "husky",
     "lint": "turbo lint",
     "lint:fix": "turbo lint:fix",
@@ -18,8 +19,8 @@
     "test:watch": "turbo test:watch"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "pnpm lint -- --quiet --fix"
+    "*": [
+      "pnpm format:staged"
     ]
   },
   "prettier": "@sanity/prettier-config",
@@ -29,6 +30,7 @@
     "husky": "^9.0.11",
     "lint-staged": "^15.2.7",
     "prettier": "^3.3.2",
+    "pretty-quick": "^4.0.0",
     "turbo": "^2.0.4"
   },
   "packageManager": "pnpm@8.15.8"
