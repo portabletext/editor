@@ -14,6 +14,7 @@ import {schema} from './schema'
 import {useState} from 'react'
 import {applyAll} from '@portabletext/patches/apply'
 import {Code, Stack} from '@sanity/ui'
+import {wait} from './wait'
 
 export function Editor() {
   const [value, setValue] = useState<Array<PortableTextBlock>>([])
@@ -29,6 +30,20 @@ export function Editor() {
         schemaType={schema}
       >
         <PortableTextEditable
+          onPaste={(data) => {
+            const text = data.event.clipboardData.getData('text')
+            if (text === 'heading') {
+              return wait(2000).then(() => ({
+                insert: [
+                  {
+                    _type: 'block',
+                    children: [{_type: 'span', text: 'heading'}],
+                    style: 'h1',
+                  },
+                ],
+              }))
+            }
+          }}
           renderAnnotation={renderAnnotation}
           renderBlock={renderBlock}
           renderChild={renderChild}
