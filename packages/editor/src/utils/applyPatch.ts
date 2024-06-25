@@ -1,4 +1,12 @@
 /* eslint-disable max-statements */
+import {applyAll} from '@portabletext/patches/apply'
+import {
+  type DiffMatchPatch,
+  type InsertPatch,
+  type Patch,
+  type SetPatch,
+  type UnsetPatch,
+} from '@portabletext/patches/types'
 import {
   applyPatches as diffMatchPatchApplyPatches,
   cleanupEfficiency,
@@ -17,15 +25,7 @@ import {
 } from '@sanity/types'
 import {type Descendant, Element, type Node, type Path as SlatePath, Text, Transforms} from 'slate'
 
-import {applyAll} from '../patch/applyPatch'
 import {type PortableTextMemberSchemaTypes, type PortableTextSlateEditor} from '../types/editor'
-import {
-  type DiffMatchPatch,
-  type InsertPatch,
-  type Patch,
-  type SetPatch,
-  type UnsetPatch,
-} from '../types/patch'
 import {debugWithName} from './debug'
 import {toSlateValue} from './values'
 import {KEY_TO_SLATE_ELEMENT} from './weakMaps'

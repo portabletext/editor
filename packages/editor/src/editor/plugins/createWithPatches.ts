@@ -1,4 +1,6 @@
 /* eslint-disable max-nested-callbacks */
+import {insert, setIfMissing, unset} from '@portabletext/patches/patch-event'
+import {type Patch} from '@portabletext/patches/types'
 import {type Subject} from 'rxjs'
 import {
   type Descendant,
@@ -14,14 +16,12 @@ import {
   type SplitNodeOperation,
 } from 'slate'
 
-import {insert, setIfMissing, unset} from '../../patch/PatchEvent'
 import {
   type EditorChange,
   type PatchObservable,
   type PortableTextMemberSchemaTypes,
   type PortableTextSlateEditor,
 } from '../../types/editor'
-import {type Patch} from '../../types/patch'
 import {createApplyPatch} from '../../utils/applyPatch'
 import {debugWithName} from '../../utils/debug'
 import {fromSlateValue, isEqualToEmptyEditor} from '../../utils/values'

@@ -1,3 +1,4 @@
+import {type Patch} from '@portabletext/patches/types'
 import {
   type ArraySchemaType,
   type BlockDecoratorDefinition,
@@ -30,7 +31,6 @@ import {type DOMNode} from 'slate-react/dist/utils/dom'
 
 import {type PortableTextEditableProps} from '../editor/Editable'
 import {type PortableTextEditor} from '../editor/PortableTextEditor'
-import {type Patch} from '../types/patch'
 
 /** @beta */
 export interface EditableAPIDeleteOptions {

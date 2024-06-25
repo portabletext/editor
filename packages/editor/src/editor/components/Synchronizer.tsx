@@ -1,3 +1,4 @@
+import {type Patch} from '@portabletext/patches/types'
 import {type PortableTextBlock} from '@sanity/types'
 import {throttle} from 'lodash'
 import {
@@ -13,7 +14,6 @@ import {Editor} from 'slate'
 import {useSlate} from 'slate-react'
 
 import {type EditorChange, type EditorChanges, type EditorSelection} from '../../types/editor'
-import {type Patch} from '../../types/patch'
 import {debugWithName} from '../../utils/debug'
 import {IS_PROCESSING_LOCAL_CHANGES} from '../../utils/weakMaps'
 import {PortableTextEditorContext} from '../hooks/usePortableTextEditor'

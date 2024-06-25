@@ -1,3 +1,5 @@
+import {diffMatchPatch, insert, set, setIfMissing, unset} from '@portabletext/patches/patch-event'
+import {type InsertPosition, type Patch} from '@portabletext/patches/types'
 import {type Path, type PortableTextSpan, type PortableTextTextBlock} from '@sanity/types'
 import {get, isUndefined, omitBy} from 'lodash'
 import {
@@ -14,9 +16,7 @@ import {
 } from 'slate'
 
 import {type PatchFunctions} from '../editor/plugins/createWithPatches'
-import {diffMatchPatch, insert, set, setIfMissing, unset} from '../patch/PatchEvent'
 import {type PortableTextMemberSchemaTypes, type PortableTextSlateEditor} from '../types/editor'
-import {type InsertPosition, type Patch} from '../types/patch'
 import {debugWithName} from './debug'
 import {fromSlateValue} from './values'
 
