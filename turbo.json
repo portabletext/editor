@@ -18,7 +18,7 @@
       "cache": false,
       "persistent": true
     },
-    "lint": {
+    "check:lint": {
       "outputLogs": "errors-only"
     },
     "lint:fix": {

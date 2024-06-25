@@ -8,8 +8,8 @@
     "./types": "./src/types.ts"
   },
   "scripts": {
+    "check:lint": "eslint .",
     "check:types": "tsc --noEmit --pretty",
-    "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
