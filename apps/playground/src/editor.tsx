@@ -9,21 +9,39 @@ import {
   RenderPlaceholderFunction,
   RenderStyleFunction,
 } from '@portabletext/editor'
+import {PortableTextBlock} from '@sanity/types'
 import {schema} from './schema'
+import {useState} from 'react'
+import {applyAll} from '@portabletext/patches/apply'
+import {Code, Stack} from '@sanity/ui'
 
 export function Editor() {
+  const [value, setValue] = useState<Array<PortableTextBlock>>([])
+
   return (
-    <PortableTextEditor onChange={() => {}} schemaType={schema}>
-      <PortableTextEditable
-        renderAnnotation={renderAnnotation}
-        renderBlock={renderBlock}
-        renderChild={renderChild}
-        renderDecorator={renderDecorator}
-        renderListItem={renderListItem}
-        renderPlaceholder={renderPlaceholder}
-        renderStyle={renderStyle}
-      />
-    </PortableTextEditor>
+    <Stack space={2}>
+      <PortableTextEditor
+        onChange={(change) => {
+          if (change.type === 'mutation') {
+            setValue(applyAll(value, change.patches))
+          }
+        }}
+        schemaType={schema}
+      >
+        <PortableTextEditable
+          renderAnnotation={renderAnnotation}
+          renderBlock={renderBlock}
+          renderChild={renderChild}
+          renderDecorator={renderDecorator}
+          renderListItem={renderListItem}
+          renderPlaceholder={renderPlaceholder}
+          renderStyle={renderStyle}
+        />
+      </PortableTextEditor>
+      <Code as="code" size={0} language="json">
+        {JSON.stringify(value, null, 2)}
+      </Code>
+    </Stack>
   )
 }
 
