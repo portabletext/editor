@@ -1,3 +1,4 @@
+import {applyAll} from '@portabletext/patches/apply'
 import {type PortableTextBlock} from '@sanity/types'
 import express from 'express'
 import expressWS from 'express-ws'
@@ -6,7 +7,6 @@ import {Subject} from 'rxjs'
 import {type WebSocket} from 'ws'
 
 import {type Patch} from '../../src'
-import {applyAll} from '../../src/patch/applyPatch'
 
 const WEBSOCKET_PORT = 3001
 

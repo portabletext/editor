@@ -1,4 +1,5 @@
 import {describe, expect, test} from '@jest/globals'
+import {type DiffMatchPatch} from '@portabletext/patches/types'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {
   isPortableTextSpan,
@@ -11,7 +12,6 @@ import {
 import {type Descendant, type Operation} from 'slate'
 
 import {type PortableTextSlateEditor} from '../../types/editor'
-import {type DiffMatchPatch} from '../../types/patch'
 import {diffMatchPatch} from '../applyPatch'
 
 describe('operationToPatches: diffMatchPatch', () => {

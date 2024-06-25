@@ -1,3 +1,4 @@
+import {insert, set, setIfMissing, unset} from '@portabletext/patches/patch-event'
 import {
   isPortableTextTextBlock,
   type PortableTextBlock,
@@ -6,7 +7,6 @@ import {
 } from '@sanity/types'
 import {flatten, isPlainObject, uniq} from 'lodash'
 
-import {insert, set, setIfMissing, unset} from '../patch/PatchEvent'
 import {type InvalidValueResolution, type PortableTextMemberSchemaTypes} from '../types/editor'
 import {EMPTY_MARKDEFS} from './values'
 

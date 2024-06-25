@@ -58,6 +58,7 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@portabletext/patches": "workspace:^",
     "@sanity/block-tools": "^3.47.0",
     "@sanity/schema": "^3.47.0",
     "@sanity/types": "^3.47.0",

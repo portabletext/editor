@@ -8,7 +8,7 @@ import {
   type SetIfMissingPatch,
   type SetPatch,
   type UnsetPatch,
-} from '../types/patch'
+} from './types'
 
 export function setIfMissing(value: any, path: Path = []): SetIfMissingPatch {
   return {
