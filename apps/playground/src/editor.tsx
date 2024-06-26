@@ -69,7 +69,7 @@ export function Editor() {
           </Flex>
         </PortableTextEditor>
       </Flex>
-      <PortableTextPreview value={value} />
+      <PortableTextPreview />
     </Grid>
   )
 }

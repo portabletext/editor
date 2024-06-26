@@ -1,24 +1,19 @@
-import {PortableTextBlock} from '@sanity/types'
-import {useMachine} from '@xstate/react'
-import {useEffect} from 'react'
-import {codeToHtml} from 'shiki/bundle/web'
-import {assign, fromPromise, setup} from 'xstate'
-import * as prettier from 'prettier/standalone'
+import {Card} from '@sanity/ui'
+import {useSelector} from '@xstate/react'
 import prettierPluginBabel from 'prettier/plugins/babel'
 import prettierPluginEstree from 'prettier/plugins/estree'
 import prettierPluginHtml from 'prettier/plugins/html'
-import {Card} from '@sanity/ui'
+import * as prettier from 'prettier/standalone'
+import {codeToHtml} from 'shiki/bundle/web'
+import {assign, createActor, fromPromise, setup} from 'xstate'
+import {editorActor} from './editor-actor'
 
-export function PortableTextPreview(props: {value: Array<PortableTextBlock>}) {
-  const [state, send] = useMachine(higlightMachine)
-
-  useEffect(() => {
-    send({type: 'update code', code: JSON.stringify(props.value)})
-  }, [props.value, send])
+export function PortableTextPreview() {
+  const highlightedCode = useSelector(highlightActor, (s) => s.context.highlightedCode)
 
   return (
     <Card border padding={2}>
-      <div dangerouslySetInnerHTML={{__html: state.context.highlightedCode}} />
+      <div dangerouslySetInnerHTML={{__html: highlightedCode}} />
     </Card>
   )
 }
@@ -57,10 +52,10 @@ const higlightMachine = setup({
 }).createMachine({
   id: 'highlight',
   context: {
-    code: '',
+    code: '[]',
     highlightedCode: '',
   },
-  initial: 'idle',
+  initial: 'highlighting code',
   on: {
     'update code': {
       actions: 'assign code to context',
@@ -84,4 +79,11 @@ const higlightMachine = setup({
       },
     },
   },
+})
+
+const highlightActor = createActor(higlightMachine)
+highlightActor.start()
+
+editorActor.subscribe((s) => {
+  highlightActor.send({type: 'update code', code: JSON.stringify(s.context.value)})
 })
