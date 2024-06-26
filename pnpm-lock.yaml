@@ -68,7 +68,7 @@ importers:
     devDependencies:
       '@sanity/types':
         specifier: ^3.48.1
-        version: 3.48.1(debug@3.2.7)
+        version: 3.48.1(debug@4.3.5)
       '@types/react':
         specifier: ^18.3.3
         version: 18.3.3
@@ -106,8 +106,8 @@ importers:
         specifier: 1.0.2
         version: link:../patches
       debug:
-        specifier: ^3.2.7
-        version: 3.2.7
+        specifier: ^4.3.4
+        version: 4.3.5
       is-hotkey-esm:
         specifier: ^1.0.0
         version: 1.0.0
@@ -147,22 +147,22 @@ importers:
         version: 4.0.0(eslint@8.57.0)(typescript@5.5.2)
       '@sanity/pkg-utils':
         specifier: ^6.10.0
-        version: 6.10.0(@types/node@18.19.36)(debug@3.2.7)(typescript@5.5.2)
+        version: 6.10.0(@types/node@18.19.36)(debug@4.3.5)(typescript@5.5.2)
       '@sanity/schema':
         specifier: ^3.48.1
-        version: 3.48.1(debug@3.2.7)
+        version: 3.48.1(debug@4.3.5)
       '@sanity/test':
         specifier: 0.0.1-alpha.1
-        version: 0.0.1-alpha.1(debug@3.2.7)
+        version: 0.0.1-alpha.1(debug@4.3.5)
       '@sanity/types':
         specifier: ^3.48.1
-        version: 3.48.1(debug@3.2.7)
+        version: 3.48.1(debug@4.3.5)
       '@sanity/ui':
         specifier: ^2.5.0
         version: 2.5.0(react-dom@18.3.1)(react-is@18.3.1)(react@18.3.1)(styled-components@6.1.11)
       '@sanity/util':
         specifier: ^3.48.1
-        version: 3.48.1(debug@3.2.7)
+        version: 3.48.1(debug@4.3.5)
       '@testing-library/react':
         specifier: ^13.4.0
         version: 13.4.0(react-dom@18.3.1)(react@18.3.1)
@@ -246,7 +246,7 @@ importers:
         version: 29.7.0(@types/node@18.19.36)
       jest-dev-server:
         specifier: ^9.0.2
-        version: 9.0.2(debug@3.2.7)
+        version: 9.0.2(debug@4.3.5)
       jest-environment-jsdom:
         specifier: ^29.7.0
         version: 29.7.0
@@ -292,10 +292,10 @@ importers:
     devDependencies:
       '@sanity/pkg-utils':
         specifier: ^6.10.0
-        version: 6.10.0(@types/node@18.19.36)(debug@3.2.7)(typescript@5.5.2)
+        version: 6.10.0(@types/node@18.19.36)(debug@4.3.5)(typescript@5.5.2)
       '@sanity/types':
         specifier: ^3.48.1
-        version: 3.48.1(debug@3.2.7)
+        version: 3.48.1(debug@4.3.5)
       '@types/lodash':
         specifier: ^4.17.5
         version: 4.17.5
@@ -3090,12 +3090,12 @@ packages:
     resolution: {integrity: sha512-UkJuiTyROgPcxbvpHYyXwr+T88Np4eLzu3h05gMgeZ2hv3EM7g/4VMyng5HuA1JdPQPEdq8bmmfQDR+u4KC+TA==}
     dev: true
 
-  /@sanity/client@6.20.1(debug@3.2.7):
+  /@sanity/client@6.20.1(debug@4.3.5):
     resolution: {integrity: sha512-iyqooCYAMWxHwlGYuePlZlaL2VsgX57cV610czxPLh2ooUnW4U/7zE3oIlSY1VFQ4WDfg4w5//xp6+5WdyEs9A==}
     engines: {node: '>=14.18'}
     dependencies:
       '@sanity/eventsource': 5.0.2
-      get-it: 8.6.2(debug@3.2.7)
+      get-it: 8.6.2(debug@4.3.5)
       rxjs: 7.8.1
     transitivePeerDependencies:
       - debug
@@ -3167,7 +3167,7 @@ packages:
     dependencies:
       react: 18.3.1
 
-  /@sanity/pkg-utils@6.10.0(@types/node@18.19.36)(debug@3.2.7)(typescript@5.5.2):
+  /@sanity/pkg-utils@6.10.0(@types/node@18.19.36)(debug@4.3.5)(typescript@5.5.2):
     resolution: {integrity: sha512-mALy0u8qifr130StGMhYg47fJl+lviKmcMYyb15wGzMFiIODlGne7IiziXdkeYnneeK1nqOVvWPPQMbsdaTr4A==}
     engines: {node: '>=18.17.0'}
     hasBin: true
@@ -3196,7 +3196,7 @@ packages:
       esbuild: 0.21.5
       esbuild-register: 3.5.0(esbuild@0.21.5)
       find-config: 1.0.0
-      get-latest-version: 5.1.0(debug@3.2.7)
+      get-latest-version: 5.1.0(debug@4.3.5)
       git-url-parse: 14.0.0
       globby: 11.1.0
       jsonc-parser: 3.2.1
@@ -3233,11 +3233,11 @@ packages:
       prettier-plugin-packagejson: 2.5.0(prettier@3.3.2)
     dev: true
 
-  /@sanity/schema@3.48.1(debug@3.2.7):
+  /@sanity/schema@3.48.1(debug@4.3.5):
     resolution: {integrity: sha512-d5psPHa0PD36jLiU7gjftYNRxqyyNQE3aj55u3yu8a6Bdp9uw2XVQjz2r0dnmOEIGOYIcUK7CSnpbEsuv+mhQA==}
     dependencies:
       '@sanity/generate-help-url': 3.0.0
-      '@sanity/types': 3.48.1(debug@3.2.7)
+      '@sanity/types': 3.48.1(debug@4.3.5)
       arrify: 1.0.1
       groq-js: 1.9.0
       humanize-list: 1.0.1
@@ -3249,22 +3249,22 @@ packages:
       - supports-color
     dev: true
 
-  /@sanity/test@0.0.1-alpha.1(debug@3.2.7):
+  /@sanity/test@0.0.1-alpha.1(debug@4.3.5):
     resolution: {integrity: sha512-o2X2Veh9YWyVK/Iou/cToSS6ufcTLREoCVMcvBQbSqCFUIGaN1Ko3zxChJMWdf39dyaJ/ixMKtc8pciF/tL6Sw==}
     hasBin: true
     dependencies:
       '@playwright/test': 1.45.0
-      '@sanity/client': 6.20.1(debug@3.2.7)
+      '@sanity/client': 6.20.1(debug@4.3.5)
       '@sanity/uuid': 3.0.2
       cac: 6.7.14
     transitivePeerDependencies:
       - debug
     dev: true
 
-  /@sanity/types@3.48.1(debug@3.2.7):
+  /@sanity/types@3.48.1(debug@4.3.5):
     resolution: {integrity: sha512-UG+AjRPYhh+URH5pBrIQ4h81rRbVZ+J/WLL+vP9uL/bseq61etWIYz8iljXWuReVHbqBPLGHQF1EpcMX1EZ5MQ==}
     dependencies:
-      '@sanity/client': 6.20.1(debug@3.2.7)
+      '@sanity/client': 6.20.1(debug@4.3.5)
       '@types/react': 18.3.3
     transitivePeerDependencies:
       - debug
@@ -3290,12 +3290,12 @@ packages:
       react-refractor: 2.2.0(react@18.3.1)
       styled-components: 6.1.11(react-dom@18.3.1)(react@18.3.1)
 
-  /@sanity/util@3.48.1(debug@3.2.7):
+  /@sanity/util@3.48.1(debug@4.3.5):
     resolution: {integrity: sha512-MTWKGuE88ASGnx9nngqAd0ZphVXppCIIgh5KB/xvMDigaWcrP5tWW34XR6yN52/6kRHGxU2ehyC7RRZDMTj9pQ==}
     engines: {node: '>=18'}
     dependencies:
-      '@sanity/client': 6.20.1(debug@3.2.7)
-      '@sanity/types': 3.48.1(debug@3.2.7)
+      '@sanity/client': 6.20.1(debug@4.3.5)
+      '@sanity/types': 3.48.1(debug@4.3.5)
       get-random-values-esm: 1.0.2
       moment: 2.30.1
       rxjs: 7.8.1
@@ -4197,10 +4197,10 @@ packages:
     engines: {node: '>=4'}
     dev: true
 
-  /axios@1.7.2(debug@3.2.7):
+  /axios@1.7.2(debug@4.3.5):
     resolution: {integrity: sha512-2A8QhOMrbomlDuiLeK9XibIBzuHeRcqqNOHp0Cyp5EoJ1IFDh+XZH3A6BkXtv0K4gFGCI0Y4BM7B1wOEi0Rmgw==}
     dependencies:
-      follow-redirects: 1.15.6(debug@3.2.7)
+      follow-redirects: 1.15.6(debug@4.3.5)
       form-data: 4.0.0
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -4788,6 +4788,7 @@ packages:
         optional: true
     dependencies:
       ms: 2.1.3
+    dev: true
 
   /debug@4.3.5:
     resolution: {integrity: sha512-pt0bNEmneDIvdL1Xsd9oDQ/wrQRkXDT4AUWlNZNPKvW5x/jyO9VFXkJUP07vQ2upmw5PlaITaPKc31jK13V+jg==}
@@ -4799,7 +4800,6 @@ packages:
         optional: true
     dependencies:
       ms: 2.1.2
-    dev: true
 
   /decimal.js@10.4.3:
     resolution: {integrity: sha512-VBBaLc1MgL5XpzgIP7ny5Z6Nx3UrRkIViUkPUdtl9aya5amy3De1gsUUSB1g3+3sExYNjCAsAznmukyxCb1GRA==}
@@ -5976,7 +5976,7 @@ packages:
     resolution: {integrity: sha512-X8cqMLLie7KsNUDSdzeN8FYK9rEt4Dt67OsG/DNGnYTSDBG4uFAJFBnUeiV+zCVAvwFy56IjM9sH51jVaEhNxw==}
     dev: true
 
-  /follow-redirects@1.15.6(debug@3.2.7):
+  /follow-redirects@1.15.6(debug@4.3.5):
     resolution: {integrity: sha512-wWN62YITEaOpSK584EZXJafH1AGpO8RVgElfkuXbTOrPX4fIfOyEpW/CsiNd8JdYrAoOvafRTOEnvsO++qCqFA==}
     engines: {node: '>=4.0'}
     peerDependencies:
@@ -5985,7 +5985,7 @@ packages:
       debug:
         optional: true
     dependencies:
-      debug: 3.2.7
+      debug: 4.3.5
     dev: true
 
   /for-each@0.3.3:
@@ -6116,12 +6116,12 @@ packages:
       hasown: 2.0.2
     dev: true
 
-  /get-it@8.6.2(debug@3.2.7):
+  /get-it@8.6.2(debug@4.3.5):
     resolution: {integrity: sha512-yZNwjgWGc1bmu+NGlb834A5SpfJAlVubOmyMjnwMnGdO4dpCshAFahFTC9Ct123FSf9cY1aSVPLJS2/BKaQ+GA==}
     engines: {node: '>=14.0.0'}
     dependencies:
       decompress-response: 7.0.0
-      follow-redirects: 1.15.6(debug@3.2.7)
+      follow-redirects: 1.15.6(debug@4.3.5)
       is-retry-allowed: 2.2.0
       progress-stream: 2.0.0
       tunnel-agent: 0.6.0
@@ -6129,11 +6129,11 @@ packages:
       - debug
     dev: true
 
-  /get-latest-version@5.1.0(debug@3.2.7):
+  /get-latest-version@5.1.0(debug@4.3.5):
     resolution: {integrity: sha512-Q6IBWr/zzw57zIkJmNhI23eRTw3nZ4BWWK034meLwOYU9L3J3IpXiyM73u2pYUwN6U7ahkerCwg2T0jlxiLwsw==}
     engines: {node: '>=14.18'}
     dependencies:
-      get-it: 8.6.2(debug@3.2.7)
+      get-it: 8.6.2(debug@4.3.5)
       registry-auth-token: 5.0.2
       registry-url: 5.1.0
       semver: 7.6.2
@@ -7074,7 +7074,7 @@ packages:
       - supports-color
     dev: true
 
-  /jest-dev-server@9.0.2(debug@3.2.7):
+  /jest-dev-server@9.0.2(debug@4.3.5):
     resolution: {integrity: sha512-Zc/JB0IlNNrpXkhBw+h86cGrde/Mey52KvF+FER2eyrtYJTHObOwW7Iarxm3rPyTKby5+3Y2QZtl8pRz/5GCxg==}
     engines: {node: '>=16'}
     dependencies:
@@ -7084,7 +7084,7 @@ packages:
       prompts: 2.4.2
       spawnd: 9.0.2
       tree-kill: 1.2.2
-      wait-on: 7.2.0(debug@3.2.7)
+      wait-on: 7.2.0(debug@4.3.5)
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -7875,10 +7875,10 @@ packages:
 
   /ms@2.1.2:
     resolution: {integrity: sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==}
-    dev: true
 
   /ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
+    dev: true
 
   /nanoid@3.3.7:
     resolution: {integrity: sha512-eSRppjcPIatRIMC1U6UngP8XFcz8MQWGQdt1MTBQ7NaAmvXDfvNxbvWV3x2y6CdEUciCSsDHDQZbhYaB8QEo2g==}
@@ -9933,12 +9933,12 @@ packages:
       xml-name-validator: 4.0.0
     dev: true
 
-  /wait-on@7.2.0(debug@3.2.7):
+  /wait-on@7.2.0(debug@4.3.5):
     resolution: {integrity: sha512-wCQcHkRazgjG5XoAq9jbTMLpNIjoSlZslrJ2+N9MxDsGEv1HnFoVjOCexL0ESva7Y9cu350j+DWADdk54s4AFQ==}
     engines: {node: '>=12.0.0'}
     hasBin: true
     dependencies:
-      axios: 1.7.2(debug@3.2.7)
+      axios: 1.7.2(debug@4.3.5)
       joi: 17.13.2
       lodash: 4.17.21
       minimist: 1.2.8
