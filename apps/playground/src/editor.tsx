@@ -18,26 +18,27 @@ import {PortableTextPreview} from './portable-text-preview'
 import {schema} from './schema'
 import {Toolbar} from './toolbar'
 import {wait} from './wait'
+import {SelectionPreview} from './selection-preview'
 
 export function Editor() {
   const [loading, setLoading] = useState(false)
   const value = useSelector(editorActor, (s) => s.context.value)
 
   return (
-    <Grid columns={[1, 2]} gap={2} padding={2} style={{alignItems: 'start'}}>
-      <Flex direction="column" gap={2}>
-        <PortableTextEditor
-          value={value}
-          onChange={(change) => {
-            if (change.type === 'mutation') {
-              editorActor.send(change)
-            }
-            if (change.type === 'loading') {
-              setLoading(change.isLoading)
-            }
-          }}
-          schemaType={schema}
-        >
+    <PortableTextEditor
+      value={value}
+      onChange={(change) => {
+        if (change.type === 'mutation') {
+          editorActor.send(change)
+        }
+        if (change.type === 'loading') {
+          setLoading(change.isLoading)
+        }
+      }}
+      schemaType={schema}
+    >
+      <Grid columns={[1, 2]} gap={2} padding={2} style={{alignItems: 'start'}}>
+        <Flex direction="column" gap={2}>
           <Toolbar />
           <Flex gap={2} align="center">
             <Card flex={1} border padding={2}>
@@ -67,10 +68,11 @@ export function Editor() {
             </Card>
             {loading ? <Spinner /> : null}
           </Flex>
-        </PortableTextEditor>
-      </Flex>
-      <PortableTextPreview />
-    </Grid>
+          <SelectionPreview />
+        </Flex>
+        <PortableTextPreview />
+      </Grid>
+    </PortableTextEditor>
   )
 }
 
