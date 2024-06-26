@@ -1,6 +1,7 @@
 // This utils are inspired from https://github.dev/mwood23/slate-test-utils/blob/master/src/buildTestHarness.tsx
-import {act, fireEvent, type render} from '@testing-library/react'
+import {fireEvent, type render} from '@testing-library/react'
 import {parseHotkey} from 'is-hotkey-esm'
+import {act} from 'react'
 
 export async function triggerKeyboardEvent(hotkey: string, element: Element): Promise<void> {
   return act(async () => {
