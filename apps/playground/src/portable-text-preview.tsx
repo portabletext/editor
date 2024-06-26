@@ -9,11 +9,11 @@ import prettierPluginEstree from 'prettier/plugins/estree'
 import prettierPluginHtml from 'prettier/plugins/html'
 import {Card} from '@sanity/ui'
 
-export function PortableTextPreview(props: {value?: Array<PortableTextBlock>}) {
+export function PortableTextPreview(props: {value: Array<PortableTextBlock>}) {
   const [state, send] = useMachine(higlightMachine)
 
   useEffect(() => {
-    send({type: 'update code', code: JSON.stringify(props.value ?? [])})
+    send({type: 'update code', code: JSON.stringify(props.value)})
   }, [props.value, send])
 
   return (
