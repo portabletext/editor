@@ -10,10 +10,10 @@ import {
   RenderPlaceholderFunction,
   RenderStyleFunction,
 } from '@portabletext/editor'
-import {applyAll} from '@portabletext/patches/apply'
-import {PortableTextBlock} from '@sanity/types'
 import {Card, Flex, Grid, Spinner} from '@sanity/ui'
+import {useSelector} from '@xstate/react'
 import {useState} from 'react'
+import {editorActor} from './editor-actor'
 import {PortableTextPreview} from './portable-text-preview'
 import {schema} from './schema'
 import {Toolbar} from './toolbar'
@@ -21,15 +21,16 @@ import {wait} from './wait'
 
 export function Editor() {
   const [loading, setLoading] = useState(false)
-  const [value, setValue] = useState<Array<PortableTextBlock>>([])
+  const value = useSelector(editorActor, (s) => s.context.value)
 
   return (
     <Grid columns={[1, 2]} gap={2} padding={2} style={{alignItems: 'start'}}>
       <Flex direction="column" gap={2}>
         <PortableTextEditor
+          value={value}
           onChange={(change) => {
             if (change.type === 'mutation') {
-              setValue(applyAll(value, change.patches))
+              editorActor.send(change)
             }
             if (change.type === 'loading') {
               setLoading(change.isLoading)
