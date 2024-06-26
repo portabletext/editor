@@ -19,6 +19,7 @@ export function SelectionPreview() {
 
   return (
     <Card border padding={2}>
+      <code>// Editor selection</code>
       {highlightedSelection ? (
         <div dangerouslySetInnerHTML={{__html: highlightedSelection}} />
       ) : (
