@@ -1,3 +1,12 @@
 # @portabletext/editor
 
-This is the successor to `@sanity/portable-text-editor` 🥳
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/portabletext/portabletext/master/logo-white.svg?sanitize=true">
+  <img alt="Portable Text Logo" src="https://raw.githubusercontent.com/portabletext/portabletext/master/logo.svg?sanitize=true">
+</picture>
+
+<div align="center">
+<h1>Portable Text Editor</h1>
+</div>
+
+> The official editor for editing [Portable Text](https://github.com/portabletext/portabletext) – the JSON based rich text specification for modern content editing platforms.
