@@ -12,6 +12,7 @@ export function PortableTextPreview() {
 
   return (
     <Card border padding={2}>
+      <code>// Portable Text</code>
       {highlightedPortableText ? (
         <div dangerouslySetInnerHTML={{__html: highlightedPortableText}} />
       ) : (
