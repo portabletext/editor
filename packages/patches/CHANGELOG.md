@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/portabletext/editor/compare/patches-v1.0.1...patches-v1.0.2) (2024-06-27)
+
+
+### Bug Fixes
+
+* upgrade `[@sanity](https://github.com/sanity)` dependencies ([b167312](https://github.com/portabletext/editor/commit/b1673125c3539f0e93ff40bc8c8ac5e4908ef1f1))
+
 ## [1.0.1](https://github.com/portabletext/editor/compare/patches-v1.0.0...patches-v1.0.1) (2024-06-27)
 
 
