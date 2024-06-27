@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/editor",
-  "version": "1.0.5",
+  "version": "1.0.1",
   "description": "Portable Text Editor made in React",
   "keywords": [
     "sanity",
@@ -58,7 +58,7 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@portabletext/patches": "1.0.0",
+    "@portabletext/patches": "1.0.1",
     "debug": "^3.2.7",
     "is-hotkey-esm": "^1.0.0",
     "lodash": "^4.17.21",
