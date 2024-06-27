@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.4](https://github.com/portabletext/editor/compare/v1.0.3...v1.0.4) (2024-06-27)
+
+
+### Bug Fixes
+
+* move @portabletext/patches to dev dependencies ([15cc131](https://github.com/portabletext/editor/commit/15cc1318c58c12162b801b2af5537e50e34e3057))
+
 ## [1.0.3](https://github.com/portabletext/editor/compare/v1.0.2...v1.0.3) (2024-06-27)
 
 
