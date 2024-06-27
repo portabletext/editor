@@ -5,6 +5,7 @@ import applyObjectPatch from './object'
 import applyPrimitivePatch from './primitive'
 import applyStringPatch from './string'
 
+/** @beta */
 export function applyAll(value: any, patches: any[]) {
   return patches.reduce(_apply, value)
 }

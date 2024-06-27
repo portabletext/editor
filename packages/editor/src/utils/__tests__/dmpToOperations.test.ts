@@ -1,5 +1,5 @@
 import {describe, expect, test} from '@jest/globals'
-import {type DiffMatchPatch} from '@portabletext/patches/types'
+import {type DiffMatchPatch} from '@portabletext/patches'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {
   isPortableTextSpan,

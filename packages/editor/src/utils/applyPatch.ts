@@ -1,12 +1,12 @@
 /* eslint-disable max-statements */
-import {applyAll} from '@portabletext/patches/apply'
 import {
+  applyAll,
   type DiffMatchPatch,
   type InsertPatch,
   type Patch,
   type SetPatch,
   type UnsetPatch,
-} from '@portabletext/patches/types'
+} from '@portabletext/patches'
 import {
   applyPatches as diffMatchPatchApplyPatches,
   cleanupEfficiency,

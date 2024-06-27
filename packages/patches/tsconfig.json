@@ -1,5 +1,5 @@
 {
-  "extends": "@sanity/pkg-utils/tsconfig/strictest.json",
-  "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"]
+  "extends": "./tsconfig.settings",
+  "include": ["**/*.ts"],
+  "exclude": ["dist", "./node_modules"]
 }

@@ -1,9 +1,12 @@
 import {type Path} from '@sanity/types'
 
+/** @public */
 export type JSONValue = number | string | boolean | {[key: string]: JSONValue} | JSONValue[]
 
+/** @public */
 export type Origin = 'remote' | 'local' | 'internal'
 
+/** @public */
 export type IncPatch = {
   path: Path
   origin?: Origin
@@ -11,6 +14,7 @@ export type IncPatch = {
   value: JSONValue
 }
 
+/** @public */
 export type DecPatch = {
   path: Path
   origin?: Origin
@@ -18,6 +22,7 @@ export type DecPatch = {
   value: JSONValue
 }
 
+/** @public */
 export type SetPatch = {
   path: Path
   type: 'set'
@@ -25,6 +30,7 @@ export type SetPatch = {
   value: JSONValue
 }
 
+/** @public */
 export type SetIfMissingPatch = {
   path: Path
   origin?: Origin
@@ -32,14 +38,17 @@ export type SetIfMissingPatch = {
   value: JSONValue
 }
 
+/** @public */
 export type UnsetPatch = {
   path: Path
   origin?: Origin
   type: 'unset'
 }
 
+/** @public */
 export type InsertPosition = 'before' | 'after' | 'replace'
 
+/** @public */
 export type InsertPatch = {
   path: Path
   origin?: Origin
@@ -48,6 +57,7 @@ export type InsertPatch = {
   items: JSONValue[]
 }
 
+/** @public */
 export type DiffMatchPatch = {
   path: Path
   type: 'diffMatchPatch'
@@ -55,6 +65,7 @@ export type DiffMatchPatch = {
   value: string
 }
 
+/** @public */
 export type Patch =
   | SetPatch
   | SetIfMissingPatch

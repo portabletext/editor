@@ -25,12 +25,15 @@
       "outputs": [""]
     },
     "test": {
+      "dependsOn": ["^build"],
       "outputs": [""]
     },
     "test:e2e": {
+      "dependsOn": ["^build"],
       "outputs": [""]
     },
     "test:watch": {
+      "dependsOn": ["^build"],
       "persistent": true,
       "cache": false
     }

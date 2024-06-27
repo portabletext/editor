@@ -10,6 +10,7 @@ import {
   type UnsetPatch,
 } from './types'
 
+/** @public */
 export function setIfMissing(value: any, path: Path = []): SetIfMissingPatch {
   return {
     type: 'setIfMissing',
@@ -18,6 +19,7 @@ export function setIfMissing(value: any, path: Path = []): SetIfMissingPatch {
   }
 }
 
+/** @public */
 export function diffMatchPatch(
   currentValue: string,
   nextValue: string,
@@ -28,6 +30,7 @@ export function diffMatchPatch(
   return {type: 'diffMatchPatch', path, value: patch}
 }
 
+/** @public */
 export function insert(items: any[], position: InsertPosition, path: Path = []): InsertPatch {
   return {
     type: 'insert',
@@ -37,14 +40,17 @@ export function insert(items: any[], position: InsertPosition, path: Path = []):
   }
 }
 
+/** @public */
 export function set(value: any, path: Path = []): SetPatch {
   return {type: 'set', path, value}
 }
 
+/** @public */
 export function unset(path: Path = []): UnsetPatch {
   return {type: 'unset', path}
 }
 
+/** @internal */
 export function prefixPath<T extends {path: Path}>(patch: T, segment: PathSegment): T {
   return {
     ...patch,

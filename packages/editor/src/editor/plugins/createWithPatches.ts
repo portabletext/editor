@@ -1,6 +1,5 @@
 /* eslint-disable max-nested-callbacks */
-import {insert, setIfMissing, unset} from '@portabletext/patches/patch-event'
-import {type Patch} from '@portabletext/patches/types'
+import {insert, type Patch, setIfMissing, unset} from '@portabletext/patches'
 import {type Subject} from 'rxjs'
 import {
   type Descendant,

@@ -1,4 +1,4 @@
-import {insert, set, setIfMissing, unset} from '@portabletext/patches/patch-event'
+import {insert, set, setIfMissing, unset} from '@portabletext/patches'
 import {
   isPortableTextTextBlock,
   type PortableTextBlock,
