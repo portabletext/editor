@@ -22,7 +22,7 @@ import {PortableTextEditorSelectionContext} from '../hooks/usePortableTextEditor
 import {PortableTextEditorValueContext} from '../hooks/usePortableTextEditorValue'
 import {PortableTextEditorReadOnlyContext} from '../hooks/usePortableTextReadOnly'
 import {useSyncValue} from '../hooks/useSyncValue'
-import {PortableTextEditor} from '../PortableTextEditor'
+import {type PortableTextEditor} from '../PortableTextEditor'
 
 const debug = debugWithName('component:PortableTextEditor:Synchronizer')
 const debugVerbose = debug.enabled && false
