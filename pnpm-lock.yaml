@@ -61,8 +61,8 @@ importers:
         version: 5.14.0
     devDependencies:
       '@sanity/types':
-        specifier: ^3.47.1
-        version: 3.47.1(debug@3.2.7)
+        specifier: ^3.48.1
+        version: 3.48.1(debug@3.2.7)
       '@types/react':
         specifier: ^18.3.3
         version: 18.3.3
@@ -128,8 +128,8 @@ importers:
         specifier: ^2.0.15
         version: 2.0.15
       '@sanity/block-tools':
-        specifier: ^3.47.1
-        version: 3.47.1
+        specifier: ^3.48.1
+        version: 3.48.1
       '@sanity/diff-match-patch':
         specifier: ^3.1.1
         version: 3.1.1
@@ -143,20 +143,20 @@ importers:
         specifier: ^6.10.0
         version: 6.10.0(@types/node@18.19.36)(debug@3.2.7)(typescript@5.5.2)
       '@sanity/schema':
-        specifier: ^3.47.1
-        version: 3.47.1(debug@3.2.7)
+        specifier: ^3.48.1
+        version: 3.48.1(debug@3.2.7)
       '@sanity/test':
         specifier: 0.0.1-alpha.1
         version: 0.0.1-alpha.1(debug@3.2.7)
       '@sanity/types':
-        specifier: ^3.47.1
-        version: 3.47.1(debug@3.2.7)
+        specifier: ^3.48.1
+        version: 3.48.1(debug@3.2.7)
       '@sanity/ui':
         specifier: ^2.5.0
         version: 2.5.0(react-dom@18.3.1)(react-is@18.3.1)(react@18.3.1)(styled-components@6.1.11)
       '@sanity/util':
-        specifier: ^3.47.1
-        version: 3.47.1(debug@3.2.7)
+        specifier: ^3.48.1
+        version: 3.48.1(debug@3.2.7)
       '@testing-library/react':
         specifier: ^13.4.0
         version: 13.4.0(react-dom@18.3.1)(react@18.3.1)
@@ -288,8 +288,8 @@ importers:
         specifier: ^6.10.0
         version: 6.10.0(@types/node@18.19.36)(debug@3.2.7)(typescript@5.5.2)
       '@sanity/types':
-        specifier: ^3.47.1
-        version: 3.47.1(debug@3.2.7)
+        specifier: ^3.48.1
+        version: 3.48.1(debug@3.2.7)
       '@types/lodash':
         specifier: ^4.17.5
         version: 4.17.5
@@ -3073,8 +3073,8 @@ packages:
       - '@types/node'
     dev: true
 
-  /@sanity/block-tools@3.47.1:
-    resolution: {integrity: sha512-R95TWfdxggaXmSs42MjuHkbJOzme/HHr1vU3bGd/aPe7WmernevAzfaHToYMB4eyJEzy0s0WKlD0/evGIb9WKw==}
+  /@sanity/block-tools@3.48.1:
+    resolution: {integrity: sha512-I43M1zdUFAK32+Pd6uQptcx0Myv+dwDAqVvWWgQMqeXrBxm9u9SmA2k/0+EE25XW9wJ/pk60qKcDNhBl+biX+g==}
     dependencies:
       get-random-values-esm: 1.0.2
       lodash: 4.17.21
@@ -3227,11 +3227,11 @@ packages:
       prettier-plugin-packagejson: 2.5.0(prettier@3.3.2)
     dev: true
 
-  /@sanity/schema@3.47.1(debug@3.2.7):
-    resolution: {integrity: sha512-eLmivLYJb33bPLv7+AEEPtPLbke8H+lyhszFJ8mnKUcwmiyYTEumwxEYtnSTV02YX0hLimiPCmIeeEwqboixgg==}
+  /@sanity/schema@3.48.1(debug@3.2.7):
+    resolution: {integrity: sha512-d5psPHa0PD36jLiU7gjftYNRxqyyNQE3aj55u3yu8a6Bdp9uw2XVQjz2r0dnmOEIGOYIcUK7CSnpbEsuv+mhQA==}
     dependencies:
       '@sanity/generate-help-url': 3.0.0
-      '@sanity/types': 3.47.1(debug@3.2.7)
+      '@sanity/types': 3.48.1(debug@3.2.7)
       arrify: 1.0.1
       groq-js: 1.9.0
       humanize-list: 1.0.1
@@ -3255,8 +3255,8 @@ packages:
       - debug
     dev: true
 
-  /@sanity/types@3.47.1(debug@3.2.7):
-    resolution: {integrity: sha512-R2uODu5cgoNq5K5gG4s617GBLZzXb2kcLTJbUrm8Njd9iyP9N7J80J7Qy7dNF7J5ooS635YSQjPSQHTVzEtoTQ==}
+  /@sanity/types@3.48.1(debug@3.2.7):
+    resolution: {integrity: sha512-UG+AjRPYhh+URH5pBrIQ4h81rRbVZ+J/WLL+vP9uL/bseq61etWIYz8iljXWuReVHbqBPLGHQF1EpcMX1EZ5MQ==}
     dependencies:
       '@sanity/client': 6.20.1(debug@3.2.7)
       '@types/react': 18.3.3
@@ -3284,12 +3284,12 @@ packages:
       react-refractor: 2.2.0(react@18.3.1)
       styled-components: 6.1.11(react-dom@18.3.1)(react@18.3.1)
 
-  /@sanity/util@3.47.1(debug@3.2.7):
-    resolution: {integrity: sha512-AoTkQXIjBCZrbH+VirY4gZyFAt3CRFvwVSg1IbzGOvQYE8Q8M1pezCoUTovl/hAvejzmc238Kh/SzK8r8Q7voQ==}
+  /@sanity/util@3.48.1(debug@3.2.7):
+    resolution: {integrity: sha512-MTWKGuE88ASGnx9nngqAd0ZphVXppCIIgh5KB/xvMDigaWcrP5tWW34XR6yN52/6kRHGxU2ehyC7RRZDMTj9pQ==}
     engines: {node: '>=18'}
     dependencies:
       '@sanity/client': 6.20.1(debug@3.2.7)
-      '@sanity/types': 3.47.1(debug@3.2.7)
+      '@sanity/types': 3.48.1(debug@3.2.7)
       get-random-values-esm: 1.0.2
       moment: 2.30.1
       rxjs: 7.8.1
