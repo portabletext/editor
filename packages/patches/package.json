@@ -2,14 +2,45 @@
   "name": "@portabletext/patches",
   "version": "0.0.0",
   "private": true,
-  "exports": {
-    "./apply": "./src/applyPatch.ts",
-    "./patch-event": "./src/PatchEvent.ts",
-    "./types": "./src/types.ts"
+  "description": "Portable Text Patches",
+  "keywords": [
+    "portable-text",
+    "portable-text-editor",
+    "patches"
+  ],
+  "homepage": "https://www.sanity.io/",
+  "bugs": {
+    "url": "https://github.com/portabletext/editor/issues"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/portabletext/editor.git",
+    "directory": "packages/patches"
+  },
+  "license": "MIT",
+  "author": "Sanity.io <hello@sanity.io>",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
+    "build": "pkg-utils build --strict --check --clean",
     "check:lint": "eslint .",
     "check:types": "tsc --noEmit --pretty",
+    "dev": "pkg-utils watch",
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {

@@ -1,5 +1,12 @@
-import {diffMatchPatch, insert, set, setIfMissing, unset} from '@portabletext/patches/patch-event'
-import {type InsertPosition, type Patch} from '@portabletext/patches/types'
+import {
+  diffMatchPatch,
+  insert,
+  type InsertPosition,
+  type Patch,
+  set,
+  setIfMissing,
+  unset,
+} from '@portabletext/patches'
 import {type Path, type PortableTextSpan, type PortableTextTextBlock} from '@sanity/types'
 import {get, isUndefined, omitBy} from 'lodash'
 import {

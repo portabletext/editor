@@ -1,4 +1,4 @@
-import {type Patch} from '@portabletext/patches/types'
+import {type Patch} from '@portabletext/patches'
 import {type PortableTextBlock} from '@sanity/types'
 import {throttle} from 'lodash'
 import {

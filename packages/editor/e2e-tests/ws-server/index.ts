@@ -1,4 +1,4 @@
-import {applyAll} from '@portabletext/patches/apply'
+import {applyAll} from '@portabletext/patches'
 import {type PortableTextBlock} from '@sanity/types'
 import express from 'express'
 import expressWS from 'express-ws'

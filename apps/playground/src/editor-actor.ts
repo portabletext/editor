@@ -1,5 +1,5 @@
 import {Patch} from '@portabletext/editor'
-import {applyAll} from '@portabletext/patches/apply'
+import {applyAll} from '@portabletext/patches'
 import {PortableTextBlock} from '@sanity/types'
 import {assign, createActor, setup} from 'xstate'
 
