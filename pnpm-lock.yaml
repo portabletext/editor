@@ -97,7 +97,7 @@ importers:
   packages/editor:
     dependencies:
       '@portabletext/patches':
-        specifier: workspace:^
+        specifier: 1.0.0
         version: link:../patches
       debug:
         specifier: ^3.2.7
