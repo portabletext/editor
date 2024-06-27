@@ -29,17 +29,15 @@ jobs:
           app-id: ${{ secrets.ECOSCRIPT_APP_ID }}
           private-key: ${{ secrets.ECOSCRIPT_APP_PRIVATE_KEY }}
       # This action will create a release PR when regular conventional commits are pushed to main, it'll also detect if a release PR is merged and npm publish should happen
-      - uses: google-github-actions/release-please-action@v3
+      - uses: google-github-actions/release-please-action@v4
         id: release
         with:
-          path: packages/editor
-          release-type: node
           token: ${{ steps.generate-token.outputs.token }}
 
       # Publish to NPM on new releases
       - uses: actions/checkout@v4
         if: ${{ steps.release.outputs.releases_created || github.event.inputs.publish == 'true' }}
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v2
         if: ${{ steps.release.outputs.releases_created || github.event.inputs.publish == 'true' }}
       - uses: actions/setup-node@v4
         if: ${{ steps.release.outputs.releases_created || github.event.inputs.publish == 'true' }}
@@ -47,7 +45,7 @@ jobs:
           cache: pnpm
           node-version: lts/*
       - name: install deps & build
-        run: pnpm --version && pnpm install --ignore-scripts && pnpm build --filter=./packages/*
+        run: corepack enable && pnpm --version && pnpm install --ignore-scripts && pnpm build --filter=./packages/*
         if: ${{ steps.release.outputs.releases_created || github.event.inputs.publish == 'true' }}
       - name: Set publishing config
         run: pnpm config set '//registry.npmjs.org/:_authToken' "${NODE_AUTH_TOKEN}"
