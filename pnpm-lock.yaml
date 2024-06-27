@@ -96,9 +96,6 @@ importers:
 
   packages/editor:
     dependencies:
-      '@portabletext/patches':
-        specifier: workspace:^
-        version: link:../patches
       debug:
         specifier: ^3.2.7
         version: 3.2.7
@@ -124,6 +121,9 @@ importers:
       '@playwright/test':
         specifier: 1.45.0
         version: 1.45.0
+      '@portabletext/patches':
+        specifier: workspace:^
+        version: link:../patches
       '@portabletext/toolkit':
         specifier: ^2.0.15
         version: 2.0.15
