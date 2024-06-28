@@ -14,6 +14,7 @@ module.exports = {
     sourceType: 'module',
   },
   plugins: ['import', 'simple-import-sort'],
+  ignorePatterns: ['dist/**'],
   rules: {
     'no-console': 'error',
     'no-shadow': 'error',
