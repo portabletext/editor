@@ -1,16 +1,16 @@
 import {usePortableTextEditorSelection} from '@portabletext/editor'
 import {Card, Spinner} from '@sanity/ui'
-import {useSelector} from '@xstate/react'
+import {useActorRef, useSelector} from '@xstate/react'
 import {useEffect} from 'react'
-import {createActor} from 'xstate'
 import {higlightMachine} from './highlight-json-machine'
 
 export function SelectionPreview() {
+  const highlightSelectionActor = useActorRef(higlightMachine, {input: {code: ''}})
   const selection = usePortableTextEditorSelection()
 
   useEffect(() => {
     highlightSelectionActor.send({type: 'update code', code: JSON.stringify(selection)})
-  }, [selection])
+  }, [highlightSelectionActor, selection])
 
   const highlightedSelection = useSelector(
     highlightSelectionActor,
@@ -28,8 +28,3 @@ export function SelectionPreview() {
     </Card>
   )
 }
-
-const highlightSelectionActor = createActor(higlightMachine, {
-  input: {code: ''},
-})
-highlightSelectionActor.start()

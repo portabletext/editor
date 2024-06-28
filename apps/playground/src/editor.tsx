@@ -10,7 +10,7 @@ import {
   RenderPlaceholderFunction,
   RenderStyleFunction,
 } from '@portabletext/editor'
-import {Card, Flex, Spinner} from '@sanity/ui'
+import {Card, CardTone, Flex, Spinner} from '@sanity/ui'
 import {useSelector} from '@xstate/react'
 import {useState} from 'react'
 import {editorActor} from './editor-actor'
@@ -19,56 +19,58 @@ import {SelectionPreview} from './selection-preview'
 import {Toolbar} from './toolbar'
 import {wait} from './wait'
 
-export function Editor() {
+export function Editor(props: {tone: CardTone}) {
   const [loading, setLoading] = useState(false)
   const value = useSelector(editorActor, (s) => s.context.value)
 
   return (
-    <PortableTextEditor
-      value={value}
-      onChange={(change) => {
-        if (change.type === 'mutation') {
-          editorActor.send(change)
-        }
-        if (change.type === 'loading') {
-          setLoading(change.isLoading)
-        }
-      }}
-      schemaType={schema}
-    >
-      <Flex direction="column" gap={2}>
-        <Toolbar />
-        <Flex gap={2} align="center">
-          <Card flex={1} border padding={2}>
-            <PortableTextEditable
-              onPaste={(data) => {
-                const text = data.event.clipboardData.getData('text')
-                if (text === 'heading') {
-                  return wait(2000).then(() => ({
-                    insert: [
-                      {
-                        _type: 'block',
-                        children: [{_type: 'span', text: 'heading'}],
-                        style: 'h1',
-                      },
-                    ],
-                  }))
-                }
-              }}
-              renderAnnotation={renderAnnotation}
-              renderBlock={renderBlock}
-              renderChild={renderChild}
-              renderDecorator={renderDecorator}
-              renderListItem={renderListItem}
-              renderPlaceholder={renderPlaceholder}
-              renderStyle={renderStyle}
-            />
-          </Card>
-          {loading ? <Spinner /> : null}
+    <Card border padding={2} tone={props.tone}>
+      <PortableTextEditor
+        value={value}
+        onChange={(change) => {
+          if (change.type === 'mutation') {
+            editorActor.send(change)
+          }
+          if (change.type === 'loading') {
+            setLoading(change.isLoading)
+          }
+        }}
+        schemaType={schema}
+      >
+        <Flex direction="column" gap={2}>
+          <Toolbar />
+          <Flex gap={2} align="center">
+            <Card flex={1} border padding={2}>
+              <PortableTextEditable
+                onPaste={(data) => {
+                  const text = data.event.clipboardData.getData('text')
+                  if (text === 'heading') {
+                    return wait(2000).then(() => ({
+                      insert: [
+                        {
+                          _type: 'block',
+                          children: [{_type: 'span', text: 'heading'}],
+                          style: 'h1',
+                        },
+                      ],
+                    }))
+                  }
+                }}
+                renderAnnotation={renderAnnotation}
+                renderBlock={renderBlock}
+                renderChild={renderChild}
+                renderDecorator={renderDecorator}
+                renderListItem={renderListItem}
+                renderPlaceholder={renderPlaceholder}
+                renderStyle={renderStyle}
+              />
+            </Card>
+            {loading ? <Spinner /> : null}
+          </Flex>
+          <SelectionPreview />
         </Flex>
-        <SelectionPreview />
-      </Flex>
-    </PortableTextEditor>
+      </PortableTextEditor>
+    </Card>
   )
 }
 
