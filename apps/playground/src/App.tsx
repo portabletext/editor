@@ -1,7 +1,8 @@
-import {Card, ThemeProvider, usePrefersDark} from '@sanity/ui'
+import {Card, Grid, ThemeProvider, usePrefersDark} from '@sanity/ui'
 import {buildTheme} from '@sanity/ui/theme'
 import {Editor} from './editor'
 import {GlobalStyle} from './global-style'
+import {PortableTextPreview} from './portable-text-preview'
 
 const theme = buildTheme()
 
@@ -12,7 +13,10 @@ export function App() {
     <ThemeProvider theme={theme} scheme={prefersDark ? 'dark' : 'light'}>
       <GlobalStyle />
       <Card height="fill">
-        <Editor />
+        <Grid columns={[1, 2]} gap={2} padding={2} style={{alignItems: 'start'}}>
+          <Editor />
+          <PortableTextPreview />
+        </Grid>
       </Card>
     </ThemeProvider>
   )

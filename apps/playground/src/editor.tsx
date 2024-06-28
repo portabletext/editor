@@ -10,15 +10,14 @@ import {
   RenderPlaceholderFunction,
   RenderStyleFunction,
 } from '@portabletext/editor'
-import {Card, Flex, Grid, Spinner} from '@sanity/ui'
+import {Card, Flex, Spinner} from '@sanity/ui'
 import {useSelector} from '@xstate/react'
 import {useState} from 'react'
 import {editorActor} from './editor-actor'
-import {PortableTextPreview} from './portable-text-preview'
 import {schema} from './schema'
+import {SelectionPreview} from './selection-preview'
 import {Toolbar} from './toolbar'
 import {wait} from './wait'
-import {SelectionPreview} from './selection-preview'
 
 export function Editor() {
   const [loading, setLoading] = useState(false)
@@ -37,41 +36,38 @@ export function Editor() {
       }}
       schemaType={schema}
     >
-      <Grid columns={[1, 2]} gap={2} padding={2} style={{alignItems: 'start'}}>
-        <Flex direction="column" gap={2}>
-          <Toolbar />
-          <Flex gap={2} align="center">
-            <Card flex={1} border padding={2}>
-              <PortableTextEditable
-                onPaste={(data) => {
-                  const text = data.event.clipboardData.getData('text')
-                  if (text === 'heading') {
-                    return wait(2000).then(() => ({
-                      insert: [
-                        {
-                          _type: 'block',
-                          children: [{_type: 'span', text: 'heading'}],
-                          style: 'h1',
-                        },
-                      ],
-                    }))
-                  }
-                }}
-                renderAnnotation={renderAnnotation}
-                renderBlock={renderBlock}
-                renderChild={renderChild}
-                renderDecorator={renderDecorator}
-                renderListItem={renderListItem}
-                renderPlaceholder={renderPlaceholder}
-                renderStyle={renderStyle}
-              />
-            </Card>
-            {loading ? <Spinner /> : null}
-          </Flex>
-          <SelectionPreview />
+      <Flex direction="column" gap={2}>
+        <Toolbar />
+        <Flex gap={2} align="center">
+          <Card flex={1} border padding={2}>
+            <PortableTextEditable
+              onPaste={(data) => {
+                const text = data.event.clipboardData.getData('text')
+                if (text === 'heading') {
+                  return wait(2000).then(() => ({
+                    insert: [
+                      {
+                        _type: 'block',
+                        children: [{_type: 'span', text: 'heading'}],
+                        style: 'h1',
+                      },
+                    ],
+                  }))
+                }
+              }}
+              renderAnnotation={renderAnnotation}
+              renderBlock={renderBlock}
+              renderChild={renderChild}
+              renderDecorator={renderDecorator}
+              renderListItem={renderListItem}
+              renderPlaceholder={renderPlaceholder}
+              renderStyle={renderStyle}
+            />
+          </Card>
+          {loading ? <Spinner /> : null}
         </Flex>
-        <PortableTextPreview />
-      </Grid>
+        <SelectionPreview />
+      </Flex>
     </PortableTextEditor>
   )
 }
