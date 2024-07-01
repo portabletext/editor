@@ -1,16 +1,7 @@
 import {type MutationChange} from '@portabletext/editor'
 import {applyAll} from '@portabletext/patches'
 import {PortableTextBlock} from '@sanity/types'
-import {
-  ActorRefFrom,
-  assertEvent,
-  assign,
-  createActor,
-  raise,
-  sendParent,
-  setup,
-  stopChild,
-} from 'xstate'
+import {ActorRefFrom, assertEvent, assign, raise, sendParent, setup, stopChild} from 'xstate'
 import {generateColor} from './generate-color'
 
 export type EditorActorRef = ActorRefFrom<typeof editorMachine>
@@ -57,11 +48,12 @@ const editorMachine = setup({
   },
 })
 
-const generateEditorColor = generateColor('100')
+export type PlaygroundActorRef = ActorRefFrom<typeof playgroundMachine>
 
 export const playgroundMachine = setup({
   types: {
     context: {} as {
+      colorGenerator: ReturnType<typeof generateColor>
       editors: Array<EditorActorRef>
       value: Array<PortableTextBlock> | undefined
     },
@@ -69,6 +61,7 @@ export const playgroundMachine = setup({
       | {type: 'add editor'}
       | ({type: 'editor.mutation'; editorId: EditorActorRef['id']} & Omit<MutationChange, 'type'>)
       | {type: 'editor.remove'; editorId: EditorActorRef['id']},
+    input: {} as {colorGenerator: ReturnType<typeof generateColor>},
   },
   actions: {
     'broadcast patches': ({context, event}) => {
@@ -108,7 +101,7 @@ export const playgroundMachine = setup({
         return [
           ...context.editors,
           spawn('editor machine', {
-            input: {color: generateEditorColor.next().value, value: context.value},
+            input: {color: context.colorGenerator.next().value, value: context.value},
           }),
         ]
       },
@@ -129,10 +122,11 @@ export const playgroundMachine = setup({
   },
 }).createMachine({
   id: 'playground',
-  context: {
+  context: ({input}) => ({
+    colorGenerator: input.colorGenerator,
     value: undefined,
     editors: [],
-  },
+  }),
   on: {
     'add editor': {
       actions: ['add editor to context'],
@@ -146,7 +140,3 @@ export const playgroundMachine = setup({
   },
   entry: [raise({type: 'add editor'}), raise({type: 'add editor'})],
 })
-
-export const playgroundActor = createActor(playgroundMachine)
-
-playgroundActor.start()
