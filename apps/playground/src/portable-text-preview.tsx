@@ -1,8 +1,8 @@
 import {Card, Spinner} from '@sanity/ui'
 import {useSelector} from '@xstate/react'
 import {createActor} from 'xstate'
-import {editorActor} from './editor-actor'
 import {higlightMachine} from './highlight-json-machine'
+import {playgroundActor} from './playground-machine'
 
 export function PortableTextPreview() {
   const highlightedPortableText = useSelector(
@@ -23,10 +23,13 @@ export function PortableTextPreview() {
 }
 
 const highlightPortableTextActor = createActor(higlightMachine, {
-  input: {code: JSON.stringify(editorActor.getSnapshot().context.value)},
+  input: {code: JSON.stringify(playgroundActor.getSnapshot().context.value ?? null)},
 })
 highlightPortableTextActor.start()
 
-editorActor.subscribe((s) => {
-  highlightPortableTextActor.send({type: 'update code', code: JSON.stringify(s.context.value)})
+playgroundActor.subscribe((s) => {
+  highlightPortableTextActor.send({
+    type: 'update code',
+    code: JSON.stringify(s.context.value ?? null),
+  })
 })
