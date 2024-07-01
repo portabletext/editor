@@ -124,6 +124,16 @@ export function Synchronizer(props: SynchronizerProps) {
           })
           onChange(next) // Keep this out of the startTransition!
           break
+        case 'blur':
+          // Set the selection state in a transition, we don't need the state immediately.
+          startTransition(() => {
+            if (debugVerbose) {
+              debug('Resetting selection')
+            }
+            setSelection(null)
+          })
+          onChange(next)
+          break
         default:
           onChange(next)
       }
