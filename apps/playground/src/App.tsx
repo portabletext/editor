@@ -1,17 +1,21 @@
 import {Button, Card, Flex, Grid, ThemeProvider, usePrefersDark} from '@sanity/ui'
 import {buildTheme} from '@sanity/ui/theme'
-import {useSelector} from '@xstate/react'
+import {useActorRef, useSelector} from '@xstate/react'
 import {Editor} from './editor'
 import {GlobalStyle} from './global-style'
-import {playgroundActor} from './playground-machine'
 import {PortableTextPreview} from './portable-text-preview'
 import {AddIcon} from '@sanity/icons'
+import {playgroundMachine} from './playground-machine'
+import {generateColor} from './generate-color'
 
 const theme = buildTheme()
 
 export function App() {
   const prefersDark = usePrefersDark()
-  const editors = useSelector(playgroundActor, (s) => s.context.editors)
+  const playgroundRef = useActorRef(playgroundMachine, {
+    input: {colorGenerator: generateColor('100')},
+  })
+  const editors = useSelector(playgroundRef, (s) => s.context.editors)
 
   return (
     <ThemeProvider theme={theme} scheme={prefersDark ? 'dark' : 'light'}>
@@ -24,7 +28,7 @@ export function App() {
             icon={AddIcon}
             text="Add editor"
             onClick={() => {
-              playgroundActor.send({type: 'add editor'})
+              playgroundRef.send({type: 'add editor'})
             }}
           />
           <Grid columns={[1, 2]} gap={2} style={{alignItems: 'start'}}>
@@ -33,7 +37,7 @@ export function App() {
                 <Editor key={editor.id} editorRef={editor} />
               ))}
             </Flex>
-            <PortableTextPreview />
+            <PortableTextPreview playgroundRef={playgroundRef} />
           </Grid>
         </Flex>
       </Card>
