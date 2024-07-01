@@ -21,7 +21,6 @@ export const GlobalStyle = createGlobalStyle((props) => {
     'body': {
       margin: 0,
       WebkitFontSmoothing: 'antialiased',
-      overflow: 'hidden',
     },
 
     '::-webkit-scrollbar': {
