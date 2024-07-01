@@ -1,5 +1,6 @@
 import {
   BlockDecoratorRenderProps,
+  Patch,
   PortableTextEditable,
   PortableTextEditor,
   RenderAnnotationFunction,
@@ -10,26 +11,39 @@ import {
   RenderPlaceholderFunction,
   RenderStyleFunction,
 } from '@portabletext/editor'
-import {Card, CardTone, Flex, Spinner} from '@sanity/ui'
+import {RemoveIcon} from '@sanity/icons'
+import {PortableTextBlock} from '@sanity/types'
+import {Badge, Button, Card, Flex, Inline, Spinner} from '@sanity/ui'
 import {useSelector} from '@xstate/react'
-import {useState} from 'react'
-import {editorActor} from './editor-actor'
+import {useMemo, useState} from 'react'
+import {Subject} from 'rxjs'
+import {EditorActorRef} from './playground-machine'
 import {schema} from './schema'
 import {SelectionPreview} from './selection-preview'
 import {Toolbar} from './toolbar'
 import {wait} from './wait'
 
-export function Editor(props: {tone: CardTone}) {
+export function Editor(props: {editorRef: EditorActorRef}) {
+  const color = useSelector(props.editorRef, (s) => s.context.color)
+  const value = useSelector(props.editorRef, (s) => s.context.value)
+  const patches$ = useMemo(
+    () =>
+      new Subject<{
+        patches: Array<Patch>
+        snapshot: Array<PortableTextBlock> | undefined
+      }>(),
+    [],
+  )
   const [loading, setLoading] = useState(false)
-  const value = useSelector(editorActor, (s) => s.context.value)
 
   return (
-    <Card border padding={2} tone={props.tone}>
+    <Card border padding={2} style={{backgroundColor: color}}>
       <PortableTextEditor
         value={value}
+        patches$={patches$}
         onChange={(change) => {
           if (change.type === 'mutation') {
-            editorActor.send(change)
+            props.editorRef.send(change)
           }
           if (change.type === 'loading') {
             setLoading(change.isLoading)
@@ -38,6 +52,19 @@ export function Editor(props: {tone: CardTone}) {
         schemaType={schema}
       >
         <Flex direction="column" gap={2}>
+          <Card border padding={1}>
+            <Inline space={[2]}>
+              <Badge tone="primary">ID: {props.editorRef.id}</Badge>
+              <Button
+                mode="ghost"
+                icon={RemoveIcon}
+                text="Remove"
+                onClick={() => {
+                  props.editorRef.send({type: 'remove'})
+                }}
+              />
+            </Inline>
+          </Card>
           <Toolbar />
           <Flex gap={2} align="center">
             <Card flex={1} border padding={2}>
