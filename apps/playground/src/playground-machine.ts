@@ -1,7 +1,7 @@
 import {type MutationChange} from '@portabletext/editor'
 import {applyAll} from '@portabletext/patches'
 import {PortableTextBlock} from '@sanity/types'
-import {ActorRefFrom, assertEvent, assign, raise, sendParent, setup, stopChild} from 'xstate'
+import {ActorRefFrom, assertEvent, assign, emit, raise, sendParent, setup, stopChild} from 'xstate'
 import {generateColor} from './generate-color'
 
 export type EditorActorRef = ActorRefFrom<typeof editorMachine>
@@ -17,7 +17,18 @@ const editorMachine = setup({
       | {type: 'patches'; patches: MutationChange['patches']; snapshot: MutationChange['snapshot']}
       | {type: 'value'; value?: Array<PortableTextBlock>}
       | {type: 'remove'},
+    emitted: {} as {
+      type: 'patches'
+      patches: MutationChange['patches']
+      snapshot: MutationChange['snapshot']
+    },
     input: {} as {color: string; value: Array<PortableTextBlock> | undefined},
+  },
+  actions: {
+    emitPatches: emit(({event}) => {
+      assertEvent(event, 'patches')
+      return event
+    }),
   },
 }).createMachine({
   id: 'editor',
@@ -34,6 +45,9 @@ const editorMachine = setup({
           editorId: self.id,
         })),
       ],
+    },
+    patches: {
+      actions: ['emitPatches'],
     },
     value: {
       actions: [
@@ -74,8 +88,8 @@ export const playgroundMachine = setup({
         editor.send({
           type: 'patches',
           patches: event.patches.map((patch) => ({
-            origin: event.editorId === editor.id ? 'local' : 'remote',
             ...patch,
+            origin: event.editorId === editor.id ? 'local' : 'remote',
           })),
           snapshot: event.snapshot,
         })
