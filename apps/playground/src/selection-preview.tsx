@@ -3,8 +3,9 @@ import {Card, Spinner} from '@sanity/ui'
 import {useActorRef, useSelector} from '@xstate/react'
 import {useEffect} from 'react'
 import {higlightMachine} from './highlight-json-machine'
+import {EditorActorRef} from './playground-machine'
 
-export function SelectionPreview() {
+export function SelectionPreview(props: {editorId: EditorActorRef['id']}) {
   const highlightSelectionActor = useActorRef(higlightMachine, {input: {code: ''}})
   const selection = usePortableTextEditorSelection()
 
@@ -18,7 +19,7 @@ export function SelectionPreview() {
   )
 
   return (
-    <Card border padding={2}>
+    <Card border padding={2} data-testid={`${props.editorId}-selection`}>
       <code>// Editor selection</code>
       {highlightedSelection ? (
         <div dangerouslySetInnerHTML={{__html: highlightedSelection}} />

@@ -22,6 +22,7 @@ import {schema} from './schema'
 import {SelectionPreview} from './selection-preview'
 import {Toolbar} from './toolbar'
 import {wait} from './wait'
+import {EditorPortableTextPreview} from './editor-portable-text-preview'
 
 export function Editor(props: {editorRef: EditorActorRef}) {
   const color = useSelector(props.editorRef, (s) => s.context.color)
@@ -37,7 +38,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
   const [loading, setLoading] = useState(false)
 
   return (
-    <Card border padding={2} style={{backgroundColor: color}}>
+    <Card data-testid={props.editorRef.id} border padding={2} style={{backgroundColor: color}}>
       <PortableTextEditor
         value={value}
         patches$={patches$}
@@ -94,7 +95,8 @@ export function Editor(props: {editorRef: EditorActorRef}) {
             </Card>
             {loading ? <Spinner /> : null}
           </Flex>
-          <SelectionPreview />
+          <EditorPortableTextPreview editorId={props.editorRef.id} value={value} />
+          <SelectionPreview editorId={props.editorRef.id} />
         </Flex>
       </PortableTextEditor>
     </Card>

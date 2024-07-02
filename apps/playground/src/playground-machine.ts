@@ -53,6 +53,7 @@ export type PlaygroundActorRef = ActorRefFrom<typeof playgroundMachine>
 export const playgroundMachine = setup({
   types: {
     context: {} as {
+      editorIdGenerator: Generator<string, string>
       colorGenerator: ReturnType<typeof generateColor>
       editors: Array<EditorActorRef>
       value: Array<PortableTextBlock> | undefined
@@ -61,7 +62,10 @@ export const playgroundMachine = setup({
       | {type: 'add editor'}
       | ({type: 'editor.mutation'; editorId: EditorActorRef['id']} & Omit<MutationChange, 'type'>)
       | {type: 'editor.remove'; editorId: EditorActorRef['id']},
-    input: {} as {colorGenerator: ReturnType<typeof generateColor>},
+    input: {} as {
+      editorIdGenerator: Generator<string, string>
+      colorGenerator: ReturnType<typeof generateColor>
+    },
   },
   actions: {
     'broadcast patches': ({context, event}) => {
@@ -102,6 +106,7 @@ export const playgroundMachine = setup({
           ...context.editors,
           spawn('editor machine', {
             input: {color: context.colorGenerator.next().value, value: context.value},
+            id: context.editorIdGenerator.next().value,
           }),
         ]
       },
@@ -123,6 +128,7 @@ export const playgroundMachine = setup({
 }).createMachine({
   id: 'playground',
   context: ({input}) => ({
+    editorIdGenerator: input.editorIdGenerator,
     colorGenerator: input.colorGenerator,
     value: undefined,
     editors: [],
