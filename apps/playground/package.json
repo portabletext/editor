@@ -8,7 +8,8 @@
     "check:lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "check:types": "tsc --noEmit --pretty",
     "dev": "vite",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "playwright test -c playwright-ct.config.ts"
   },
   "dependencies": {
     "@portabletext/editor": "workspace:^",
@@ -26,7 +27,9 @@
     "xstate": "^5.14.0"
   },
   "devDependencies": {
+    "@playwright/experimental-ct-react": "^1.45.0",
     "@sanity/types": "^3.48.1",
+    "@types/node": "^18.19.8",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^7.14.1",
