@@ -35,6 +35,12 @@ export function Editor(props: {editorRef: EditorActorRef}) {
       }>(),
     [],
   )
+  props.editorRef.on('patches', (event) => {
+    patches$.next({
+      patches: event.patches,
+      snapshot: event.snapshot,
+    })
+  })
   const [loading, setLoading] = useState(false)
 
   return (
