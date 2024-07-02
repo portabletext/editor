@@ -17,14 +17,20 @@ import {Badge, Button, Card, Flex, Inline, Spinner} from '@sanity/ui'
 import {useSelector} from '@xstate/react'
 import {useMemo, useState} from 'react'
 import {Subject} from 'rxjs'
+import {EditorPortableTextPreview} from './editor-portable-text-preview'
 import {EditorActorRef} from './playground-machine'
 import {schema} from './schema'
 import {SelectionPreview} from './selection-preview'
 import {Toolbar} from './toolbar'
 import {wait} from './wait'
-import {EditorPortableTextPreview} from './editor-portable-text-preview'
 
 export function Editor(props: {editorRef: EditorActorRef}) {
+  const showingValuePreview = useSelector(props.editorRef, (s) =>
+    s.matches({'value preview': 'shown'}),
+  )
+  const showingSelectionPreivew = useSelector(props.editorRef, (s) =>
+    s.matches({'selection preview': 'shown'}),
+  )
   const color = useSelector(props.editorRef, (s) => s.context.color)
   const value = useSelector(props.editorRef, (s) => s.context.value)
   const patches$ = useMemo(
@@ -70,6 +76,20 @@ export function Editor(props: {editorRef: EditorActorRef}) {
                   props.editorRef.send({type: 'remove'})
                 }}
               />
+              <Button
+                mode="ghost"
+                text={`${showingValuePreview ? 'Hide' : 'Show'} value`}
+                onClick={() => {
+                  props.editorRef.send({type: 'toggle value preview'})
+                }}
+              />
+              <Button
+                mode="ghost"
+                text={`${showingSelectionPreivew ? 'Hide' : 'Show'} selection`}
+                onClick={() => {
+                  props.editorRef.send({type: 'toggle selection preview'})
+                }}
+              />
             </Inline>
           </Card>
           <Toolbar />
@@ -101,8 +121,10 @@ export function Editor(props: {editorRef: EditorActorRef}) {
             </Card>
             {loading ? <Spinner /> : null}
           </Flex>
-          <EditorPortableTextPreview editorId={props.editorRef.id} value={value} />
-          <SelectionPreview editorId={props.editorRef.id} />
+          {showingValuePreview ? (
+            <EditorPortableTextPreview editorId={props.editorRef.id} value={value} />
+          ) : null}
+          {showingSelectionPreivew ? <SelectionPreview editorId={props.editorRef.id} /> : null}
         </Flex>
       </PortableTextEditor>
     </Card>
