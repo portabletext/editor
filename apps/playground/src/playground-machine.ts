@@ -16,7 +16,9 @@ const editorMachine = setup({
       | MutationChange
       | {type: 'patches'; patches: MutationChange['patches']; snapshot: MutationChange['snapshot']}
       | {type: 'value'; value?: Array<PortableTextBlock>}
-      | {type: 'remove'},
+      | {type: 'remove'}
+      | {type: 'toggle value preview'}
+      | {type: 'toggle selection preview'},
     emitted: {} as {
       type: 'patches'
       patches: MutationChange['patches']
@@ -58,6 +60,23 @@ const editorMachine = setup({
     },
     remove: {
       actions: [sendParent(({self}) => ({type: 'editor.remove', editorId: self.id}))],
+    },
+  },
+  type: 'parallel',
+  states: {
+    'value preview': {
+      initial: 'hidden',
+      states: {
+        hidden: {on: {'toggle value preview': {target: 'shown'}}},
+        shown: {on: {'toggle value preview': {target: 'hidden'}}},
+      },
+    },
+    'selection preview': {
+      initial: 'hidden',
+      states: {
+        hidden: {on: {'toggle selection preview': {target: 'shown'}}},
+        shown: {on: {'toggle selection preview': {target: 'hidden'}}},
+      },
     },
   },
 })
