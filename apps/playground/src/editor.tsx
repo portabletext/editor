@@ -16,15 +16,15 @@ import {PortableTextBlock} from '@sanity/types'
 import {Badge, Button, Card, Flex, Inline, Spinner} from '@sanity/ui'
 import {useSelector} from '@xstate/react'
 import {useEffect, useMemo, useState} from 'react'
+import {reverse} from 'remeda'
 import {Subject} from 'rxjs'
+import {EditorPatchesPreview} from './editor-patches-preview'
 import {EditorPortableTextPreview} from './editor-portable-text-preview'
 import {EditorActorRef} from './playground-machine'
-import {schema} from './schema'
+import {LinkAnnotationSchema, schema} from './schema'
 import {SelectionPreview} from './selection-preview'
 import {Toolbar} from './toolbar'
 import {wait} from './wait'
-import {reverse} from 'remeda'
-import {EditorPatchesPreview} from './editor-patches-preview'
 
 export function Editor(props: {editorRef: EditorActorRef}) {
   const showingPatchesPreview = useSelector(props.editorRef, (s) =>
@@ -155,7 +155,13 @@ export function Editor(props: {editorRef: EditorActorRef}) {
 }
 
 const renderAnnotation: RenderAnnotationFunction = (props) => {
-  return props.children
+  const linkAnnotation = LinkAnnotationSchema.safeParse(props).data
+
+  if (linkAnnotation) {
+    return <a href={linkAnnotation.value.href}>{props.children}</a>
+  } else {
+    return props.children
+  }
 }
 
 const renderBlock: RenderBlockFunction = (props) => {
