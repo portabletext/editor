@@ -140,8 +140,7 @@ export const playgroundMachine = setup({
         return applyAll(context.value, event.patches)
       },
     }),
-    'broadcast value': ({context, event}) => {
-      assertEvent(event, 'editor.mutation')
+    'broadcast value': ({context}) => {
       const value = context.value
       if (value !== null) {
         context.editors.forEach((editor) => {
@@ -194,8 +193,22 @@ export const playgroundMachine = setup({
       actions: ['stop editor', 'remove editor from context'],
     },
     'editor.mutation': {
-      actions: ['broadcast patches', 'update value', 'broadcast value'],
+      target: '.apply patches',
     },
   },
   entry: [raise({type: 'add editor'}), raise({type: 'add editor'})],
+  initial: 'idle',
+  states: {
+    'idle': {},
+    'apply patches': {
+      entry: ['broadcast patches', 'update value'],
+      after: {
+        1500: {target: 'broadcasting value'},
+      },
+    },
+    'broadcasting value': {
+      entry: ['broadcast value'],
+      always: {target: 'idle'},
+    },
+  },
 })
