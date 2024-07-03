@@ -1,8 +1,9 @@
 import {type MutationChange} from '@portabletext/editor'
-import {applyAll} from '@portabletext/patches'
+import {Patch, applyAll} from '@portabletext/patches'
 import {PortableTextBlock} from '@sanity/types'
 import {ActorRefFrom, assertEvent, assign, emit, raise, sendParent, setup, stopChild} from 'xstate'
 import {generateColor} from './generate-color'
+import {v4 as uuid} from 'uuid'
 
 export type EditorActorRef = ActorRefFrom<typeof editorMachine>
 
@@ -11,12 +12,14 @@ const editorMachine = setup({
     context: {} as {
       color: string
       value: Array<PortableTextBlock> | undefined
+      patchesReceived: Array<Patch & {new: boolean; id: string}>
     },
     events: {} as
       | MutationChange
       | {type: 'patches'; patches: MutationChange['patches']; snapshot: MutationChange['snapshot']}
       | {type: 'value'; value?: Array<PortableTextBlock>}
       | {type: 'remove'}
+      | {type: 'toggle patches preview'}
       | {type: 'toggle value preview'}
       | {type: 'toggle selection preview'},
     emitted: {} as {
@@ -27,7 +30,16 @@ const editorMachine = setup({
     input: {} as {color: string; value: Array<PortableTextBlock> | undefined},
   },
   actions: {
-    emitPatches: emit(({event}) => {
+    'store patches received': assign({
+      patchesReceived: ({context, event}) => {
+        assertEvent(event, 'patches')
+        return [
+          ...context.patchesReceived.map((patch) => ({...patch, new: false})),
+          ...event.patches.map((patch) => ({...patch, new: true, id: uuid()})),
+        ]
+      },
+    }),
+    'emitPatches': emit(({event}) => {
       assertEvent(event, 'patches')
       return event
     }),
@@ -37,6 +49,7 @@ const editorMachine = setup({
   context: ({input}) => ({
     color: input.color,
     value: input.value,
+    patchesReceived: [],
   }),
   on: {
     mutation: {
@@ -49,7 +62,7 @@ const editorMachine = setup({
       ],
     },
     patches: {
-      actions: ['emitPatches'],
+      actions: ['store patches received', 'emitPatches'],
     },
     value: {
       actions: [
@@ -64,6 +77,13 @@ const editorMachine = setup({
   },
   type: 'parallel',
   states: {
+    'patches preview': {
+      initial: 'shown',
+      states: {
+        hidden: {on: {'toggle patches preview': {target: 'shown'}}},
+        shown: {on: {'toggle patches preview': {target: 'hidden'}}},
+      },
+    },
     'value preview': {
       initial: 'hidden',
       states: {

@@ -11,7 +11,7 @@ import {
   RenderPlaceholderFunction,
   RenderStyleFunction,
 } from '@portabletext/editor'
-import {RemoveIcon} from '@sanity/icons'
+import {EyeClosedIcon, EyeOpenIcon, RemoveIcon} from '@sanity/icons'
 import {PortableTextBlock} from '@sanity/types'
 import {Badge, Button, Card, Flex, Inline, Spinner} from '@sanity/ui'
 import {useSelector} from '@xstate/react'
@@ -23,8 +23,13 @@ import {schema} from './schema'
 import {SelectionPreview} from './selection-preview'
 import {Toolbar} from './toolbar'
 import {wait} from './wait'
+import {reverse} from 'remeda'
+import {EditorPatchesPreview} from './editor-patches-preview'
 
 export function Editor(props: {editorRef: EditorActorRef}) {
+  const showingPatchesPreview = useSelector(props.editorRef, (s) =>
+    s.matches({'patches preview': 'shown'}),
+  )
   const showingValuePreview = useSelector(props.editorRef, (s) =>
     s.matches({'value preview': 'shown'}),
   )
@@ -33,6 +38,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
   )
   const color = useSelector(props.editorRef, (s) => s.context.color)
   const value = useSelector(props.editorRef, (s) => s.context.value)
+  const patchesReceived = useSelector(props.editorRef, (s) => reverse(s.context.patchesReceived))
   const patches$ = useMemo(
     () =>
       new Subject<{
@@ -78,14 +84,24 @@ export function Editor(props: {editorRef: EditorActorRef}) {
               />
               <Button
                 mode="ghost"
-                text={`${showingValuePreview ? 'Hide' : 'Show'} value`}
+                icon={showingPatchesPreview ? EyeClosedIcon : EyeOpenIcon}
+                text="Patches"
+                onClick={() => {
+                  props.editorRef.send({type: 'toggle patches preview'})
+                }}
+              />
+              <Button
+                mode="ghost"
+                icon={showingValuePreview ? EyeClosedIcon : EyeOpenIcon}
+                text="Value"
                 onClick={() => {
                   props.editorRef.send({type: 'toggle value preview'})
                 }}
               />
               <Button
                 mode="ghost"
-                text={`${showingSelectionPreivew ? 'Hide' : 'Show'} selection`}
+                icon={showingSelectionPreivew ? EyeClosedIcon : EyeOpenIcon}
+                text="Selection"
                 onClick={() => {
                   props.editorRef.send({type: 'toggle selection preview'})
                 }}
@@ -121,6 +137,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
             </Card>
             {loading ? <Spinner /> : null}
           </Flex>
+          {showingPatchesPreview ? <EditorPatchesPreview patches={patchesReceived} /> : null}
           {showingValuePreview ? (
             <EditorPortableTextPreview editorId={props.editorRef.id} value={value} />
           ) : null}
