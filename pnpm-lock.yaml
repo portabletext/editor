@@ -77,6 +77,9 @@ importers:
       xstate:
         specifier: ^5.14.0
         version: 5.14.0
+      zod:
+        specifier: ^3.23.8
+        version: 3.23.8
     devDependencies:
       '@sanity/types':
         specifier: ^3.48.1
@@ -10225,4 +10228,3 @@ packages:
 
   /zod@3.23.8:
     resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
-    dev: true
