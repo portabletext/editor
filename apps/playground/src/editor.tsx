@@ -15,7 +15,7 @@ import {EyeClosedIcon, EyeOpenIcon, RemoveIcon} from '@sanity/icons'
 import {PortableTextBlock} from '@sanity/types'
 import {Badge, Button, Card, Flex, Inline, Spinner} from '@sanity/ui'
 import {useSelector} from '@xstate/react'
-import {useMemo, useState} from 'react'
+import {useEffect, useMemo, useState} from 'react'
 import {Subject} from 'rxjs'
 import {EditorPortableTextPreview} from './editor-portable-text-preview'
 import {EditorActorRef} from './playground-machine'
@@ -47,12 +47,18 @@ export function Editor(props: {editorRef: EditorActorRef}) {
       }>(),
     [],
   )
-  props.editorRef.on('patches', (event) => {
-    patches$.next({
-      patches: event.patches,
-      snapshot: event.snapshot,
+  useEffect(() => {
+    const subscription = props.editorRef.on('patches', (event) => {
+      patches$.next({
+        patches: event.patches,
+        snapshot: event.snapshot,
+      })
     })
-  })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [patches$, props.editorRef])
   const [loading, setLoading] = useState(false)
 
   return (
