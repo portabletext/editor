@@ -1,7 +1,7 @@
 import {usePortableTextEditorSelection} from '@portabletext/editor'
-import {Card, Spinner} from '@sanity/ui'
 import {useActorRef, useSelector} from '@xstate/react'
 import {useEffect} from 'react'
+import {Spinner} from './components/spinner'
 import {higlightMachine} from './highlight-json-machine'
 import {EditorActorRef} from './playground-machine'
 
@@ -19,13 +19,13 @@ export function SelectionPreview(props: {editorId: EditorActorRef['id']}) {
   )
 
   return (
-    <Card border padding={2} data-testid={`${props.editorId}-selection`}>
+    <div className="border p-2 text-sm" data-testid={`${props.editorId}-selection`}>
       <code>// Editor selection</code>
       {highlightedSelection ? (
         <div dangerouslySetInnerHTML={{__html: highlightedSelection}} />
       ) : (
         <Spinner />
       )}
-    </Card>
+    </div>
   )
 }

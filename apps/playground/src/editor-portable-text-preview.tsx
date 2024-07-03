@@ -1,9 +1,9 @@
 import {PortableTextBlock} from '@sanity/types'
-import {Card, Spinner} from '@sanity/ui'
 import {useActorRef, useSelector} from '@xstate/react'
 import {useEffect} from 'react'
 import {higlightMachine} from './highlight-json-machine'
 import {EditorActorRef} from './playground-machine'
+import {Spinner} from './components/spinner'
 
 export function EditorPortableTextPreview(props: {
   editorId: EditorActorRef['id']
@@ -25,13 +25,13 @@ export function EditorPortableTextPreview(props: {
   }, [props.value, highlightedPortableTextRef])
 
   return (
-    <Card border padding={2} data-testid={`${props.editorId}-value`}>
+    <div className="border p-2 text-sm" data-testid={`${props.editorId}-value`}>
       <code>// Editor Portable Text</code>
       {highlightedPortableText ? (
         <div dangerouslySetInnerHTML={{__html: highlightedPortableText}} />
       ) : (
         <Spinner />
       )}
-    </Card>
+    </div>
   )
 }
