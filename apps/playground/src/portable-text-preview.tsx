@@ -5,6 +5,7 @@ import {higlightMachine} from './highlight-json-machine'
 import {PlaygroundActorRef} from './playground-machine'
 
 export function PortableTextPreview(props: {playgroundRef: PlaygroundActorRef}) {
+  const valuePending = useSelector(props.playgroundRef, (s) => s.matches('apply patches'))
   const highlightRef = useActorRef(higlightMachine, {
     input: {code: JSON.stringify(props.playgroundRef.getSnapshot().context.value ?? null)},
   })
@@ -18,9 +19,12 @@ export function PortableTextPreview(props: {playgroundRef: PlaygroundActorRef}) 
 
   return (
     <Card border padding={2}>
-      <code>// Portable Text</code>
+      <code>// Portable Text (server)</code>
       {highlightedPortableText ? (
-        <div dangerouslySetInnerHTML={{__html: highlightedPortableText}} />
+        <div
+          style={{opacity: valuePending ? 0.5 : 1}}
+          dangerouslySetInnerHTML={{__html: highlightedPortableText}}
+        />
       ) : (
         <Spinner />
       )}
