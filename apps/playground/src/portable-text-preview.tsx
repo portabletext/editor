@@ -1,8 +1,8 @@
-import {Card, Spinner} from '@sanity/ui'
 import {useActorRef, useSelector} from '@xstate/react'
 import {useEffect} from 'react'
 import {higlightMachine} from './highlight-json-machine'
 import {PlaygroundActorRef} from './playground-machine'
+import {Spinner} from './components/spinner'
 
 export function PortableTextPreview(props: {playgroundRef: PlaygroundActorRef}) {
   const valuePending = useSelector(props.playgroundRef, (s) => s.matches('apply patches'))
@@ -18,7 +18,7 @@ export function PortableTextPreview(props: {playgroundRef: PlaygroundActorRef}) 
   }, [props.playgroundRef, highlightRef])
 
   return (
-    <Card border padding={2}>
+    <div className="border-2 p-2 shadow-sm text-sm">
       <code>// Portable Text (server)</code>
       {highlightedPortableText ? (
         <div
@@ -28,6 +28,6 @@ export function PortableTextPreview(props: {playgroundRef: PlaygroundActorRef}) 
       ) : (
         <Spinner />
       )}
-    </Card>
+    </div>
   )
 }

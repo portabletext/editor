@@ -5,17 +5,20 @@ import {
   usePortableTextEditorSelection,
 } from '@portabletext/editor'
 import {BlockDecoratorDefinition, ObjectSchemaType} from '@sanity/types'
-import {Button, Card, Flex} from '@sanity/ui'
+import {Group} from 'react-aria-components'
+import {Toolbar} from './components/toolbar'
+import {Separator} from './components/separator'
+import {ToggleButton} from './components/toggle-button'
 
-export function Toolbar() {
+export function PortableTextToolbar() {
   const editor = usePortableTextEditor()
   const selection = usePortableTextEditorSelection()
   const decorators = editor.schemaTypes.decorators
   const annotations = editor.schemaTypes.annotations
 
   return (
-    <Card border>
-      <Flex gap={1} wrap="wrap">
+    <Toolbar aria-label="Text formatting">
+      <Group aria-label="Decorators" className="contents">
         {decorators.map((decorator) => (
           <DecoratorToolbarButton
             key={decorator.value}
@@ -24,6 +27,9 @@ export function Toolbar() {
             selection={selection}
           />
         ))}
+      </Group>
+      <Separator orientation="vertical" />
+      <Group aria-label="Annotations" className="contents">
         {annotations.map((annotation) => (
           <AnnotationToolbarButton
             key={annotation.name}
@@ -32,8 +38,8 @@ export function Toolbar() {
             selection={selection}
           />
         ))}
-      </Flex>
-    </Card>
+      </Group>
+    </Toolbar>
   )
 }
 
@@ -47,10 +53,9 @@ function AnnotationToolbarButton(props: {
     PortableTextEditor.isAnnotationActive(props.editor, props.annotation.name)
 
   return (
-    <Button
-      mode="bleed"
-      selected={active}
-      onClick={() => {
+    <ToggleButton
+      isSelected={active}
+      onPress={() => {
         if (active) {
           PortableTextEditor.removeAnnotation(props.editor, props.annotation)
         } else {
@@ -62,7 +67,7 @@ function AnnotationToolbarButton(props: {
       }}
     >
       {props.annotation.title}
-    </Button>
+    </ToggleButton>
   )
 }
 
@@ -75,15 +80,14 @@ function DecoratorToolbarButton(props: {
     props.selection !== null && PortableTextEditor.isMarkActive(props.editor, props.decorator.value)
 
   return (
-    <Button
-      mode="bleed"
-      selected={active}
-      onClick={() => {
+    <ToggleButton
+      isSelected={active}
+      onPress={() => {
         PortableTextEditor.toggleMark(props.editor, props.decorator.value)
         PortableTextEditor.focus(props.editor)
       }}
     >
       {props.decorator.title}
-    </Button>
+    </ToggleButton>
   )
 }

@@ -1,34 +1,34 @@
-import {AddIcon} from '@sanity/icons'
-import {Button, Card, Flex, Grid} from '@sanity/ui'
+import {PlusIcon} from 'lucide-react'
 import {PlaygroundActorRef} from './playground-machine'
 import {useSelector} from '@xstate/react'
 import {PortableTextPreview} from './portable-text-preview'
 import {Editor} from './editor'
+import {Button} from './components/button'
 
 export function Editors(props: {playgroundRef: PlaygroundActorRef}) {
   const editors = useSelector(props.playgroundRef, (s) => s.context.editors)
 
   return (
-    <Card height="fill" padding={2}>
-      <Flex direction="column" gap={2}>
+    <div className="p-4">
+      <div className="flex flex-col gap-4">
         <Button
-          mode="ghost"
-          style={{alignSelf: 'flex-start'}}
-          icon={AddIcon}
-          text="Add editor"
-          onClick={() => {
+          variant="primary"
+          className="self-start"
+          onPress={() => {
             props.playgroundRef.send({type: 'add editor'})
           }}
-        />
-        <Grid columns={[1, 2]} gap={2} style={{alignItems: 'start'}}>
-          <Flex direction="column" gap={2}>
+        >
+          <PlusIcon className="w-4 h-4" /> Add editor
+        </Button>
+        <div className="grid gap-4 items-start md:grid-cols-2">
+          <div className="flex flex-col gap-4">
             {editors.map((editor) => (
               <Editor key={editor.id} editorRef={editor} />
             ))}
-          </Flex>
+          </div>
           <PortableTextPreview playgroundRef={props.playgroundRef} />
-        </Grid>
-      </Flex>
-    </Card>
+        </div>
+      </div>
+    </div>
   )
 }

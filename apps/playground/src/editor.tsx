@@ -11,20 +11,24 @@ import {
   RenderPlaceholderFunction,
   RenderStyleFunction,
 } from '@portabletext/editor'
-import {EyeClosedIcon, EyeOpenIcon, RemoveIcon} from '@sanity/icons'
 import {PortableTextBlock} from '@sanity/types'
-import {Badge, Button, Card, Flex, Inline, Spinner} from '@sanity/ui'
 import {useSelector} from '@xstate/react'
 import {useEffect, useMemo, useState} from 'react'
+import {Group} from 'react-aria-components'
 import {reverse} from 'remeda'
 import {Subject} from 'rxjs'
+import {Button} from './components/button'
+import {Toolbar} from './components/toolbar'
+import {Separator} from './components/separator'
+import {ToggleButton} from './components/toggle-button'
 import {EditorPatchesPreview} from './editor-patches-preview'
 import {EditorPortableTextPreview} from './editor-portable-text-preview'
 import {EditorActorRef} from './playground-machine'
 import {LinkAnnotationSchema, schema} from './schema'
 import {SelectionPreview} from './selection-preview'
-import {Toolbar} from './toolbar'
+import {PortableTextToolbar} from './portable-text-toolbar'
 import {wait} from './wait'
+import {Spinner} from './components/spinner'
 
 export function Editor(props: {editorRef: EditorActorRef}) {
   const showingPatchesPreview = useSelector(props.editorRef, (s) =>
@@ -62,7 +66,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
   const [loading, setLoading] = useState(false)
 
   return (
-    <Card data-testid={props.editorRef.id} border padding={2} style={{backgroundColor: color}}>
+    <div data-testid={props.editorRef.id} className="p-2 border-2 shadow-sm">
       <PortableTextEditor
         value={value}
         patches$={patches$}
@@ -76,47 +80,58 @@ export function Editor(props: {editorRef: EditorActorRef}) {
         }}
         schemaType={schema}
       >
-        <Flex direction="column" gap={2}>
-          <Card border padding={1}>
-            <Inline space={[2]}>
-              <Badge tone="primary">ID: {props.editorRef.id}</Badge>
-              <Button
-                mode="ghost"
-                icon={RemoveIcon}
-                text="Remove"
-                onClick={() => {
-                  props.editorRef.send({type: 'remove'})
-                }}
-              />
-              <Button
-                mode="ghost"
-                icon={showingPatchesPreview ? EyeClosedIcon : EyeOpenIcon}
-                text="Patches"
-                onClick={() => {
-                  props.editorRef.send({type: 'toggle patches preview'})
-                }}
-              />
-              <Button
-                mode="ghost"
-                icon={showingValuePreview ? EyeClosedIcon : EyeOpenIcon}
-                text="Value"
-                onClick={() => {
-                  props.editorRef.send({type: 'toggle value preview'})
-                }}
-              />
-              <Button
-                mode="ghost"
-                icon={showingSelectionPreivew ? EyeClosedIcon : EyeOpenIcon}
-                text="Selection"
-                onClick={() => {
-                  props.editorRef.send({type: 'toggle selection preview'})
-                }}
-              />
-            </Inline>
-          </Card>
-          <Toolbar />
-          <Flex gap={2} align="center">
-            <Card flex={1} border padding={2}>
+        <div className="flex flex-col gap-2">
+          <div className="flex justify-between gap-2 items-center flex-wrap">
+            <span
+              style={{backgroundColor: color}}
+              className="py-1 px-2 rounded-lg text-sm shrink-0"
+            >
+              ID: {props.editorRef.id}
+            </span>
+            <Toolbar>
+              <Group className="contents">
+                <Button
+                  variant="destructive"
+                  onPress={() => {
+                    props.editorRef.send({type: 'remove'})
+                  }}
+                >
+                  Remove
+                </Button>
+              </Group>
+              <Separator orientation="vertical" />
+              <Group className="contents">
+                <ToggleButton
+                  isSelected={showingPatchesPreview}
+                  onPress={() => {
+                    props.editorRef.send({type: 'toggle patches preview'})
+                  }}
+                >
+                  Patches
+                </ToggleButton>
+                <ToggleButton
+                  isSelected={showingValuePreview}
+                  onPress={() => {
+                    props.editorRef.send({type: 'toggle value preview'})
+                  }}
+                >
+                  Value
+                </ToggleButton>
+                <ToggleButton
+                  isSelected={showingSelectionPreivew}
+                  onPress={() => {
+                    props.editorRef.send({type: 'toggle selection preview'})
+                  }}
+                >
+                  Selection
+                </ToggleButton>
+              </Group>
+            </Toolbar>
+          </div>
+          <Separator />
+          <PortableTextToolbar />
+          <div className="flex gap-2 items-center">
+            <div className="flex-1 p-2 border">
               <PortableTextEditable
                 onPaste={(data) => {
                   const text = data.event.clipboardData.getData('text')
@@ -140,17 +155,17 @@ export function Editor(props: {editorRef: EditorActorRef}) {
                 renderPlaceholder={renderPlaceholder}
                 renderStyle={renderStyle}
               />
-            </Card>
+            </div>
             {loading ? <Spinner /> : null}
-          </Flex>
+          </div>
           {showingPatchesPreview ? <EditorPatchesPreview patches={patchesReceived} /> : null}
           {showingValuePreview ? (
             <EditorPortableTextPreview editorId={props.editorRef.id} value={value} />
           ) : null}
           {showingSelectionPreivew ? <SelectionPreview editorId={props.editorRef.id} /> : null}
-        </Flex>
+        </div>
       </PortableTextEditor>
-    </Card>
+    </div>
   )
 }
 
@@ -158,7 +173,11 @@ const renderAnnotation: RenderAnnotationFunction = (props) => {
   const linkAnnotation = LinkAnnotationSchema.safeParse(props).data
 
   if (linkAnnotation) {
-    return <a href={linkAnnotation.value.href}>{props.children}</a>
+    return (
+      <a className="text-blue-800 underline" href={linkAnnotation.value.href}>
+        {props.children}
+      </a>
+    )
   } else {
     return props.children
   }
@@ -181,7 +200,7 @@ const renderListItem: RenderListItemFunction = (props) => {
 }
 
 const renderPlaceholder: RenderPlaceholderFunction = () => (
-  <span style={{color: 'var(--card-muted-fg-color)'}}>Type something</span>
+  <span className="text-slate-400">Type something</span>
 )
 
 const renderStyle: RenderStyleFunction = (props) => {
