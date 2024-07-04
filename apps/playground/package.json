@@ -13,9 +13,11 @@
   "dependencies": {
     "@portabletext/editor": "workspace:^",
     "@portabletext/patches": "workspace:^",
+    "@sanity/block-tools": "^3.48.1",
     "@sanity/color": "^3.0.6",
     "@xstate/react": "^4.1.1",
     "lucide-react": "^0.400.0",
+    "micromark": "^4.0.0",
     "prettier": "^3.3.2",
     "react": "^18.3.1",
     "react-aria-components": "^1.2.1",

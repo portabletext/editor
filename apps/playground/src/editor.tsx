@@ -18,17 +18,17 @@ import {Group} from 'react-aria-components'
 import {reverse} from 'remeda'
 import {Subject} from 'rxjs'
 import {Button} from './components/button'
-import {Toolbar} from './components/toolbar'
 import {Separator} from './components/separator'
+import {Spinner} from './components/spinner'
 import {ToggleButton} from './components/toggle-button'
+import {Toolbar} from './components/toolbar'
+import {handlePaste} from './custom-paste-handler'
 import {EditorPatchesPreview} from './editor-patches-preview'
 import {EditorPortableTextPreview} from './editor-portable-text-preview'
 import {EditorActorRef} from './playground-machine'
+import {PortableTextToolbar} from './portable-text-toolbar'
 import {LinkAnnotationSchema, schema} from './schema'
 import {SelectionPreview} from './selection-preview'
-import {PortableTextToolbar} from './portable-text-toolbar'
-import {wait} from './wait'
-import {Spinner} from './components/spinner'
 
 export function Editor(props: {editorRef: EditorActorRef}) {
   const showingPatchesPreview = useSelector(props.editorRef, (s) =>
@@ -133,20 +133,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
           <div className="flex gap-2 items-center">
             <div className="flex-1 p-2 border">
               <PortableTextEditable
-                onPaste={(data) => {
-                  const text = data.event.clipboardData.getData('text')
-                  if (text === 'heading') {
-                    return wait(2000).then(() => ({
-                      insert: [
-                        {
-                          _type: 'block',
-                          children: [{_type: 'span', text: 'heading'}],
-                          style: 'h1',
-                        },
-                      ],
-                    }))
-                  }
-                }}
+                onPaste={handlePaste}
                 renderAnnotation={renderAnnotation}
                 renderBlock={renderBlock}
                 renderChild={renderChild}
