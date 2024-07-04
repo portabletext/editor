@@ -404,7 +404,10 @@ export const PortableTextEditable = forwardRef(function PortableTextEditable(
         Promise.resolve(onPasteResult)
           .then((result) => {
             debug('Custom paste function from client resolved', result)
-            if (result && result.insert) {
+            if (!result || !result.insert) {
+              debug('No result from custom paste handler, pasting normally')
+              slateEditor.insertData(event.clipboardData)
+            } else if (result.insert) {
               slateEditor.insertFragment(
                 toSlateValue(result.insert as PortableTextBlock[], {schemaTypes}),
               )
