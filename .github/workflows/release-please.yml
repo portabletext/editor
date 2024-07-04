@@ -37,7 +37,7 @@ jobs:
       # Publish to NPM on new releases
       - uses: actions/checkout@v4
         if: ${{ steps.release.outputs.releases_created || github.event.inputs.publish == 'true' }}
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v4
         if: ${{ steps.release.outputs.releases_created || github.event.inputs.publish == 'true' }}
       - uses: actions/setup-node@v4
         if: ${{ steps.release.outputs.releases_created || github.event.inputs.publish == 'true' }}
