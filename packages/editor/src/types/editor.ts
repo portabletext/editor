@@ -394,7 +394,12 @@ export interface PasteData {
   value: PortableTextBlock[] | undefined
 }
 
-/** @beta */
+/**
+ * @beta
+ * It is encouraged not to return `Promise<undefined>` from the `OnPasteFn` as
+ * a mechanism to fall back to the native paste behaviour. This doesn't work in
+ * all cases. Always return plain `undefined` if possible.
+ **/
 export type OnPasteFn = (data: PasteData) => OnPasteResultOrPromise
 
 /** @beta */
