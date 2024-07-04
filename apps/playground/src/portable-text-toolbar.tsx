@@ -5,10 +5,14 @@ import {
   usePortableTextEditorSelection,
 } from '@portabletext/editor'
 import {BlockDecoratorDefinition, ObjectSchemaType} from '@sanity/types'
-import {Group} from 'react-aria-components'
+import {Group, TooltipTrigger} from 'react-aria-components'
 import {Toolbar} from './components/toolbar'
 import {Separator} from './components/separator'
 import {ToggleButton} from './components/toggle-button'
+import {isValidElement} from 'react'
+import {isValidElementType} from 'react-is'
+import startCase from 'lodash.startcase'
+import {Tooltip} from './components/tooltip'
 
 export function PortableTextToolbar() {
   const editor = usePortableTextEditor()
@@ -51,23 +55,35 @@ function AnnotationToolbarButton(props: {
   const active =
     props.selection !== null &&
     PortableTextEditor.isAnnotationActive(props.editor, props.annotation.name)
+  const IconComponent = props.annotation.icon
+  const title = props.annotation.title ?? startCase(props.annotation.name)
 
   return (
-    <ToggleButton
-      isSelected={active}
-      onPress={() => {
-        if (active) {
-          PortableTextEditor.removeAnnotation(props.editor, props.annotation)
-        } else {
-          PortableTextEditor.addAnnotation(props.editor, props.annotation, {
-            href: 'https://example.com',
-          })
-        }
-        PortableTextEditor.focus(props.editor)
-      }}
-    >
-      {props.annotation.title}
-    </ToggleButton>
+    <TooltipTrigger>
+      <ToggleButton
+        aria-label={title}
+        isSelected={active}
+        onPress={() => {
+          if (active) {
+            PortableTextEditor.removeAnnotation(props.editor, props.annotation)
+          } else {
+            PortableTextEditor.addAnnotation(props.editor, props.annotation, {
+              href: 'https://example.com',
+            })
+          }
+          PortableTextEditor.focus(props.editor)
+        }}
+      >
+        {isValidElement(IconComponent) ? (
+          IconComponent
+        ) : isValidElementType(IconComponent) ? (
+          <IconComponent className="w-4 h-4" />
+        ) : (
+          title
+        )}
+      </ToggleButton>
+      <Tooltip>{title}</Tooltip>
+    </TooltipTrigger>
   )
 }
 
@@ -78,16 +94,27 @@ function DecoratorToolbarButton(props: {
 }) {
   const active =
     props.selection !== null && PortableTextEditor.isMarkActive(props.editor, props.decorator.value)
+  const IconComponent = props.decorator.icon
 
   return (
-    <ToggleButton
-      isSelected={active}
-      onPress={() => {
-        PortableTextEditor.toggleMark(props.editor, props.decorator.value)
-        PortableTextEditor.focus(props.editor)
-      }}
-    >
-      {props.decorator.title}
-    </ToggleButton>
+    <TooltipTrigger>
+      <ToggleButton
+        aria-label={props.decorator.title}
+        isSelected={active}
+        onPress={() => {
+          PortableTextEditor.toggleMark(props.editor, props.decorator.value)
+          PortableTextEditor.focus(props.editor)
+        }}
+      >
+        {isValidElement(IconComponent) ? (
+          IconComponent
+        ) : isValidElementType(IconComponent) ? (
+          <IconComponent className="w-4 h-4" />
+        ) : (
+          props.decorator.title
+        )}
+      </ToggleButton>
+      <Tooltip>{props.decorator.title}</Tooltip>
+    </TooltipTrigger>
   )
 }
