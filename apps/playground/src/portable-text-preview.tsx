@@ -1,8 +1,8 @@
 import {useActorRef, useSelector} from '@xstate/react'
 import {useEffect} from 'react'
+import {Spinner} from './components/spinner'
 import {higlightMachine} from './highlight-json-machine'
 import {PlaygroundActorRef} from './playground-machine'
-import {Spinner} from './components/spinner'
 
 export function PortableTextPreview(props: {playgroundRef: PlaygroundActorRef}) {
   const valuePending = useSelector(props.playgroundRef, (s) => s.matches('apply patches'))
@@ -18,10 +18,11 @@ export function PortableTextPreview(props: {playgroundRef: PlaygroundActorRef}) 
   }, [props.playgroundRef, highlightRef])
 
   return (
-    <div className="border-2 p-2 shadow-sm text-sm">
-      <code>// Portable Text (server)</code>
+    <div className="flex flex-col gap-2">
+      <span className="text-sm">Portable Text (server)</span>
       {highlightedPortableText ? (
         <div
+          className="[&>pre]:max-h-none"
           style={{opacity: valuePending ? 0.5 : 1}}
           dangerouslySetInnerHTML={{__html: highlightedPortableText}}
         />

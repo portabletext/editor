@@ -18,24 +18,25 @@ const patchVariants = tv({
 })
 
 export function EditorPatchesPreview(props: {patches: Array<EditorPatch>}) {
+  if (props.patches.length === 0) {
+    return <pre>null</pre>
+  }
+
   return (
-    <div className="border p-2 text-sm">
-      <code>// Editor patches</code>
-      <pre>
-        {props.patches.map((patch) => (
-          <code
-            key={patch.id}
-            className={patchVariants({
-              age: patch.new ? 'new' : 'old',
-              origin: patch.origin === 'remote' ? 'remote' : 'local',
-            })}
-          >
-            {patch.origin === 'remote' ? '↓' : '↑'}{' '}
-            {JSON.stringify(omit(patch, ['id', 'origin', 'new']))}
-            {'\n'}
-          </code>
-        ))}
-      </pre>
-    </div>
+    <pre>
+      {props.patches.map((patch) => (
+        <code
+          key={patch.id}
+          className={patchVariants({
+            age: patch.new ? 'new' : 'old',
+            origin: patch.origin === 'remote' ? 'remote' : 'local',
+          })}
+        >
+          {patch.origin === 'remote' ? '↓' : '↑'}{' '}
+          {JSON.stringify(omit(patch, ['id', 'origin', 'new']))}
+          {'\n'}
+        </code>
+      ))}
+    </pre>
   )
 }

@@ -62,6 +62,7 @@ function AnnotationToolbarButton(props: {
     <TooltipTrigger>
       <ToggleButton
         aria-label={title}
+        size="sm"
         isSelected={active}
         onPress={() => {
           if (active) {
@@ -100,6 +101,7 @@ function DecoratorToolbarButton(props: {
     <TooltipTrigger>
       <ToggleButton
         aria-label={props.decorator.title}
+        size="sm"
         isSelected={active}
         onPress={() => {
           PortableTextEditor.toggleMark(props.editor, props.decorator.value)

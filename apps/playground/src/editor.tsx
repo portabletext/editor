@@ -13,22 +13,23 @@ import {
 } from '@portabletext/editor'
 import {PortableTextBlock} from '@sanity/types'
 import {useSelector} from '@xstate/react'
+import {TrashIcon} from 'lucide-react'
 import {useEffect, useMemo, useState} from 'react'
-import {Group} from 'react-aria-components'
+import {TooltipTrigger} from 'react-aria-components'
 import {reverse} from 'remeda'
 import {Subject} from 'rxjs'
 import {Button} from './components/button'
+import {Spinner} from './components/spinner'
+import {Switch} from './components/switch'
 import {Toolbar} from './components/toolbar'
-import {Separator} from './components/separator'
-import {ToggleButton} from './components/toggle-button'
+import {Tooltip} from './components/tooltip'
 import {EditorPatchesPreview} from './editor-patches-preview'
 import {EditorPortableTextPreview} from './editor-portable-text-preview'
 import {EditorActorRef} from './playground-machine'
+import {PortableTextToolbar} from './portable-text-toolbar'
 import {LinkAnnotationSchema, schema} from './schema'
 import {SelectionPreview} from './selection-preview'
-import {PortableTextToolbar} from './portable-text-toolbar'
 import {wait} from './wait'
-import {Spinner} from './components/spinner'
 
 export function Editor(props: {editorRef: EditorActorRef}) {
   const showingPatchesPreview = useSelector(props.editorRef, (s) =>
@@ -66,7 +67,10 @@ export function Editor(props: {editorRef: EditorActorRef}) {
   const [loading, setLoading] = useState(false)
 
   return (
-    <div data-testid={props.editorRef.id} className="p-2 border-2 shadow-sm">
+    <div
+      data-testid={props.editorRef.id}
+      className="grid gap-2 items-start grid-cols-1 md:grid-cols-2 border p-2 shadow-sm"
+    >
       <PortableTextEditor
         value={value}
         patches$={patches$}
@@ -81,54 +85,6 @@ export function Editor(props: {editorRef: EditorActorRef}) {
         schemaType={schema}
       >
         <div className="flex flex-col gap-2">
-          <div className="flex justify-between gap-2 items-center flex-wrap">
-            <span
-              style={{backgroundColor: color}}
-              className="py-1 px-2 rounded-lg text-sm shrink-0"
-            >
-              ID: {props.editorRef.id}
-            </span>
-            <Toolbar>
-              <Group className="contents">
-                <Button
-                  variant="destructive"
-                  onPress={() => {
-                    props.editorRef.send({type: 'remove'})
-                  }}
-                >
-                  Remove
-                </Button>
-              </Group>
-              <Separator orientation="vertical" />
-              <Group className="contents">
-                <ToggleButton
-                  isSelected={showingPatchesPreview}
-                  onPress={() => {
-                    props.editorRef.send({type: 'toggle patches preview'})
-                  }}
-                >
-                  Patches
-                </ToggleButton>
-                <ToggleButton
-                  isSelected={showingValuePreview}
-                  onPress={() => {
-                    props.editorRef.send({type: 'toggle value preview'})
-                  }}
-                >
-                  Value
-                </ToggleButton>
-                <ToggleButton
-                  isSelected={showingSelectionPreivew}
-                  onPress={() => {
-                    props.editorRef.send({type: 'toggle selection preview'})
-                  }}
-                >
-                  Selection
-                </ToggleButton>
-              </Group>
-            </Toolbar>
-          </div>
-          <Separator />
           <PortableTextToolbar />
           <div className="flex gap-2 items-center">
             <div className="flex-1 p-2 border">
@@ -158,6 +114,54 @@ export function Editor(props: {editorRef: EditorActorRef}) {
             </div>
             {loading ? <Spinner /> : null}
           </div>
+          <div className="flex gap-2 items-center">
+            <span
+              style={{backgroundColor: color}}
+              className="py-0.5 border px-2 rounded-full text-xs shrink-0 self-start font-mono"
+            >
+              ID: <strong>{props.editorRef.id}</strong>
+            </span>
+            <TooltipTrigger>
+              <Button
+                size="sm"
+                variant="destructive"
+                onPress={() => {
+                  props.editorRef.send({type: 'remove'})
+                }}
+              >
+                <TrashIcon className="w-3 h-3" />
+              </Button>
+              <Tooltip>Remove editor</Tooltip>
+            </TooltipTrigger>
+          </div>
+        </div>
+        <div className="flex flex-col gap-2">
+          <Toolbar className="justify-end">
+            <Switch
+              isSelected={showingPatchesPreview}
+              onChange={() => {
+                props.editorRef.send({type: 'toggle patches preview'})
+              }}
+            >
+              Patches
+            </Switch>
+            <Switch
+              isSelected={showingValuePreview}
+              onChange={() => {
+                props.editorRef.send({type: 'toggle value preview'})
+              }}
+            >
+              Value
+            </Switch>
+            <Switch
+              isSelected={showingSelectionPreivew}
+              onChange={() => {
+                props.editorRef.send({type: 'toggle selection preview'})
+              }}
+            >
+              Selection
+            </Switch>
+          </Toolbar>
           {showingPatchesPreview ? <EditorPatchesPreview patches={patchesReceived} /> : null}
           {showingValuePreview ? (
             <EditorPortableTextPreview editorId={props.editorRef.id} value={value} />
