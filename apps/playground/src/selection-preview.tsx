@@ -19,8 +19,7 @@ export function SelectionPreview(props: {editorId: EditorActorRef['id']}) {
   )
 
   return (
-    <div className="border p-2 text-sm" data-testid={`${props.editorId}-selection`}>
-      <code>// Editor selection</code>
+    <div data-testid={`${props.editorId}-selection`}>
       {highlightedSelection ? (
         <div dangerouslySetInnerHTML={{__html: highlightedSelection}} />
       ) : (

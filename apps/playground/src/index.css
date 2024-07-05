@@ -3,5 +3,9 @@
 @tailwind utilities;
 
 pre {
-  overflow: auto;
+  @apply max-h-56;
+  @apply border-2;
+  @apply border-dashed;
+  @apply text-sm;
+  @apply overflow-auto;
 }

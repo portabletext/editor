@@ -25,8 +25,7 @@ export function EditorPortableTextPreview(props: {
   }, [props.value, highlightedPortableTextRef])
 
   return (
-    <div className="border p-2 text-sm" data-testid={`${props.editorId}-value`}>
-      <code>// Editor Portable Text</code>
+    <div data-testid={`${props.editorId}-value`}>
       {highlightedPortableText ? (
         <div dangerouslySetInnerHTML={{__html: highlightedPortableText}} />
       ) : (
