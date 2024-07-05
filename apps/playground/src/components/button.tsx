@@ -7,6 +7,7 @@ import {tv} from 'tailwind-variants'
 import {focusRing} from './utils'
 
 export interface ButtonProps extends RACButtonProps {
+  size?: 'sm'
   variant?: 'primary' | 'secondary' | 'destructive' | 'icon'
 }
 
@@ -24,6 +25,9 @@ const button = tv({
     isDisabled: {
       true: 'bg-gray-100 dark:bg-zinc-800 text-gray-300 dark:text-zinc-600 forced-colors:text-[GrayText] border-black/5 dark:border-white/5',
     },
+    size: {
+      sm: 'text-xs px-2 py-1',
+    },
   },
   defaultVariants: {
     variant: 'primary',
@@ -35,7 +39,7 @@ export function Button(props: ButtonProps) {
     <RACButton
       {...props}
       className={composeRenderProps(props.className, (className, renderProps) =>
-        button({...renderProps, variant: props.variant, className}),
+        button({...renderProps, variant: props.variant, size: props.size, className}),
       )}
     />
   )
