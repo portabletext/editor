@@ -18,15 +18,18 @@ const styles = tv({
     isDisabled: {
       true: 'bg-gray-100 dark:bg-zinc-800 forced-colors:!bg-[ButtonFace] text-gray-300 dark:text-zinc-600 forced-colors:!text-[GrayText] border-black/5 dark:border-white/5 forced-colors:border-[GrayText]',
     },
+    size: {
+      sm: 'text-xs px-2 py-1',
+    },
   },
 })
 
-export function ToggleButton(props: ToggleButtonProps) {
+export function ToggleButton(props: ToggleButtonProps & {size?: 'sm'}) {
   return (
     <RACToggleButton
       {...props}
       className={composeRenderProps(props.className, (className, renderProps) =>
-        styles({...renderProps, className}),
+        styles({...renderProps, size: props.size, className}),
       )}
     />
   )
