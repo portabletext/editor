@@ -1,24 +1,15 @@
 import {type Patch} from '@portabletext/patches'
 import {type PortableTextBlock} from '@sanity/types'
 import {throttle} from 'lodash'
-import {
-  type PropsWithChildren,
-  startTransition,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import {type PropsWithChildren, useCallback, useEffect, useMemo, useRef} from 'react'
 import {Editor} from 'slate'
 import {useSlate} from 'slate-react'
 
-import {type EditorChange, type EditorChanges, type EditorSelection} from '../../types/editor'
+import {type EditorChange, type EditorChanges} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {IS_PROCESSING_LOCAL_CHANGES} from '../../utils/weakMaps'
 import {PortableTextEditorContext} from '../hooks/usePortableTextEditor'
 import {PortableTextEditorKeyGeneratorContext} from '../hooks/usePortableTextEditorKeyGenerator'
-import {PortableTextEditorSelectionContext} from '../hooks/usePortableTextEditorSelection'
 import {PortableTextEditorValueContext} from '../hooks/usePortableTextEditorValue'
 import {PortableTextEditorReadOnlyContext} from '../hooks/usePortableTextReadOnly'
 import {useSyncValue} from '../hooks/useSyncValue'
@@ -49,7 +40,6 @@ export interface SynchronizerProps extends PropsWithChildren {
  */
 export function Synchronizer(props: SynchronizerProps) {
   const {change$, portableTextEditor, onChange, keyGenerator, readOnly, value} = props
-  const [selection, setSelection] = useState<EditorSelection>(null)
   const pendingPatches = useRef<Patch[]>([])
 
   const syncValue = useSyncValue({
@@ -116,14 +106,6 @@ export function Synchronizer(props: SynchronizerProps) {
           onFlushPendingPatchesThrottled()
           onChange(next)
           break
-        case 'selection':
-          // Set the selection state in a transition, we don't need the state immediately.
-          startTransition(() => {
-            if (debugVerbose) debug('Setting selection')
-            setSelection(next.selection)
-          })
-          onChange(next) // Keep this out of the startTransition!
-          break
         default:
           onChange(next)
       }
@@ -179,9 +161,7 @@ export function Synchronizer(props: SynchronizerProps) {
       <PortableTextEditorContext.Provider value={portableTextEditor}>
         <PortableTextEditorValueContext.Provider value={value}>
           <PortableTextEditorReadOnlyContext.Provider value={readOnly}>
-            <PortableTextEditorSelectionContext.Provider value={selection}>
-              {props.children}
-            </PortableTextEditorSelectionContext.Provider>
+            {props.children}
           </PortableTextEditorReadOnlyContext.Provider>
         </PortableTextEditorValueContext.Provider>
       </PortableTextEditorContext.Provider>

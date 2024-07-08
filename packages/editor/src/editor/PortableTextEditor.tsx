@@ -27,6 +27,7 @@ import {compileType} from '../utils/schema'
 import {SlateContainer} from './components/SlateContainer'
 import {Synchronizer} from './components/Synchronizer'
 import {defaultKeyGenerator} from './hooks/usePortableTextEditorKeyGenerator'
+import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
 
 const debug = debugWithName('component:PortableTextEditor')
 
@@ -171,7 +172,9 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
           readOnly={readOnly}
           value={value}
         >
-          {children}
+          <PortableTextEditorSelectionProvider change$={change$}>
+            {children}
+          </PortableTextEditorSelectionProvider>
         </Synchronizer>
       </SlateContainer>
     )
