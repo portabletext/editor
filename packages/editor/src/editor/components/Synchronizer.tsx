@@ -10,7 +10,6 @@ import {debugWithName} from '../../utils/debug'
 import {IS_PROCESSING_LOCAL_CHANGES} from '../../utils/weakMaps'
 import {usePortableTextEditor} from '../hooks/usePortableTextEditor'
 import {usePortableTextEditorKeyGenerator} from '../hooks/usePortableTextEditorKeyGenerator'
-import {usePortableTextEditorValue} from '../hooks/usePortableTextEditorValue'
 import {usePortableTextEditorReadOnlyStatus} from '../hooks/usePortableTextReadOnly'
 import {useSyncValue} from '../hooks/useSyncValue'
 
@@ -28,6 +27,7 @@ export interface SynchronizerProps extends PropsWithChildren {
   change$: EditorChanges
   getValue: () => Array<PortableTextBlock> | undefined
   onChange: (change: EditorChange) => void
+  value: Array<PortableTextBlock> | undefined
 }
 
 /**
@@ -38,8 +38,7 @@ export function Synchronizer(props: SynchronizerProps) {
   const portableTextEditor = usePortableTextEditor()
   const keyGenerator = usePortableTextEditorKeyGenerator()
   const readOnly = usePortableTextEditorReadOnlyStatus()
-  const value = usePortableTextEditorValue()
-  const {change$, getValue, onChange} = props
+  const {change$, getValue, onChange, value} = props
   const pendingPatches = useRef<Patch[]>([])
 
   const syncValue = useSyncValue({
