@@ -9,7 +9,6 @@ import {type EditorChange, type EditorChanges} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {IS_PROCESSING_LOCAL_CHANGES} from '../../utils/weakMaps'
 import {PortableTextEditorContext} from '../hooks/usePortableTextEditor'
-import {PortableTextEditorKeyGeneratorContext} from '../hooks/usePortableTextEditorKeyGenerator'
 import {PortableTextEditorValueContext} from '../hooks/usePortableTextEditorValue'
 import {useSyncValue} from '../hooks/useSyncValue'
 import {PortableTextEditor} from '../PortableTextEditor'
@@ -156,12 +155,10 @@ export function Synchronizer(props: SynchronizerProps) {
   }, [change$, syncValue, value])
 
   return (
-    <PortableTextEditorKeyGeneratorContext.Provider value={keyGenerator}>
-      <PortableTextEditorContext.Provider value={portableTextEditor}>
-        <PortableTextEditorValueContext.Provider value={value}>
-          {props.children}
-        </PortableTextEditorValueContext.Provider>
-      </PortableTextEditorContext.Provider>
-    </PortableTextEditorKeyGeneratorContext.Provider>
+    <PortableTextEditorContext.Provider value={portableTextEditor}>
+      <PortableTextEditorValueContext.Provider value={value}>
+        {props.children}
+      </PortableTextEditorValueContext.Provider>
+    </PortableTextEditorContext.Provider>
   )
 }

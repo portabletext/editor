@@ -26,7 +26,10 @@ import {getPortableTextMemberSchemaTypes} from '../utils/getPortableTextMemberSc
 import {compileType} from '../utils/schema'
 import {SlateContainer} from './components/SlateContainer'
 import {Synchronizer} from './components/Synchronizer'
-import {defaultKeyGenerator} from './hooks/usePortableTextEditorKeyGenerator'
+import {
+  defaultKeyGenerator,
+  PortableTextEditorKeyGeneratorContext,
+} from './hooks/usePortableTextEditorKeyGenerator'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
 import {PortableTextEditorReadOnlyContext} from './hooks/usePortableTextReadOnly'
 
@@ -173,11 +176,13 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
           readOnly={readOnly}
           value={value}
         >
-          <PortableTextEditorReadOnlyContext.Provider value={readOnly}>
-            <PortableTextEditorSelectionProvider change$={change$}>
-              {children}
-            </PortableTextEditorSelectionProvider>
-          </PortableTextEditorReadOnlyContext.Provider>
+          <PortableTextEditorKeyGeneratorContext.Provider value={keyGenerator}>
+            <PortableTextEditorReadOnlyContext.Provider value={readOnly}>
+              <PortableTextEditorSelectionProvider change$={change$}>
+                {children}
+              </PortableTextEditorSelectionProvider>
+            </PortableTextEditorReadOnlyContext.Provider>
+          </PortableTextEditorKeyGeneratorContext.Provider>
         </Synchronizer>
       </SlateContainer>
     )
