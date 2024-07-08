@@ -186,9 +186,8 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
                   getValue={this.getValue}
                   onChange={onChange}
                   value={value}
-                >
-                  {children}
-                </Synchronizer>
+                />
+                {children}
               </PortableTextEditorSelectionProvider>
             </PortableTextEditorReadOnlyContext.Provider>
           </PortableTextEditorContext.Provider>

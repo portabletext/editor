@@ -1,7 +1,7 @@
 import {type Patch} from '@portabletext/patches'
 import {type PortableTextBlock} from '@sanity/types'
 import {throttle} from 'lodash'
-import {type PropsWithChildren, useCallback, useEffect, useMemo, useRef} from 'react'
+import {useCallback, useEffect, useMemo, useRef} from 'react'
 import {Editor} from 'slate'
 import {useSlate} from 'slate-react'
 
@@ -23,7 +23,7 @@ const FLUSH_PATCHES_THROTTLED_MS = process.env.NODE_ENV === 'test' ? 500 : 1000
 /**
  * @internal
  */
-export interface SynchronizerProps extends PropsWithChildren {
+export interface SynchronizerProps {
   change$: EditorChanges
   getValue: () => Array<PortableTextBlock> | undefined
   onChange: (change: EditorChange) => void
@@ -155,5 +155,5 @@ export function Synchronizer(props: SynchronizerProps) {
     }
   }, [change$, syncValue, value])
 
-  return props.children
+  return null
 }
