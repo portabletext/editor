@@ -46,7 +46,7 @@ describe('RangeDecorations', () => {
       />,
     )
     await waitFor(() => {
-      expect([rangeDecorationIteration, 'initial']).toEqual([0, 'initial'])
+      expect([rangeDecorationIteration, 'initial']).toEqual([1, 'initial'])
     })
     // Re-render with the same range decorations
     rerender(
@@ -59,7 +59,7 @@ describe('RangeDecorations', () => {
       />,
     )
     await waitFor(() => {
-      expect([rangeDecorationIteration, 'initial']).toEqual([0, 'initial'])
+      expect([rangeDecorationIteration, 'initial']).toEqual([1, 'initial'])
     })
     // Update the range decorations, a new object with identical values
     rangeDecorations = [
@@ -82,7 +82,7 @@ describe('RangeDecorations', () => {
     )
     await waitFor(() => {
       expect([rangeDecorationIteration, 'updated-with-equal-values']).toEqual([
-        0,
+        1,
         'updated-with-equal-values',
       ])
     })
@@ -107,7 +107,7 @@ describe('RangeDecorations', () => {
     )
     await waitFor(() => {
       expect([rangeDecorationIteration, 'updated-with-different']).toEqual([
-        1,
+        2,
         'updated-with-different',
       ])
     })
