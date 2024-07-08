@@ -32,6 +32,7 @@ import {
 } from './hooks/usePortableTextEditorKeyGenerator'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
 import {PortableTextEditorReadOnlyContext} from './hooks/usePortableTextReadOnly'
+import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 
 const debug = debugWithName('component:PortableTextEditor')
 
@@ -177,11 +178,13 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
           value={value}
         >
           <PortableTextEditorKeyGeneratorContext.Provider value={keyGenerator}>
-            <PortableTextEditorReadOnlyContext.Provider value={readOnly}>
-              <PortableTextEditorSelectionProvider change$={change$}>
-                {children}
-              </PortableTextEditorSelectionProvider>
-            </PortableTextEditorReadOnlyContext.Provider>
+            <PortableTextEditorContext.Provider value={this}>
+              <PortableTextEditorReadOnlyContext.Provider value={readOnly}>
+                <PortableTextEditorSelectionProvider change$={change$}>
+                  {children}
+                </PortableTextEditorSelectionProvider>
+              </PortableTextEditorReadOnlyContext.Provider>
+            </PortableTextEditorContext.Provider>
           </PortableTextEditorKeyGeneratorContext.Provider>
         </Synchronizer>
       </SlateContainer>
