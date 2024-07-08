@@ -11,7 +11,6 @@ import {IS_PROCESSING_LOCAL_CHANGES} from '../../utils/weakMaps'
 import {PortableTextEditorContext} from '../hooks/usePortableTextEditor'
 import {PortableTextEditorKeyGeneratorContext} from '../hooks/usePortableTextEditorKeyGenerator'
 import {PortableTextEditorValueContext} from '../hooks/usePortableTextEditorValue'
-import {PortableTextEditorReadOnlyContext} from '../hooks/usePortableTextReadOnly'
 import {useSyncValue} from '../hooks/useSyncValue'
 import {PortableTextEditor} from '../PortableTextEditor'
 
@@ -160,9 +159,7 @@ export function Synchronizer(props: SynchronizerProps) {
     <PortableTextEditorKeyGeneratorContext.Provider value={keyGenerator}>
       <PortableTextEditorContext.Provider value={portableTextEditor}>
         <PortableTextEditorValueContext.Provider value={value}>
-          <PortableTextEditorReadOnlyContext.Provider value={readOnly}>
-            {props.children}
-          </PortableTextEditorReadOnlyContext.Provider>
+          {props.children}
         </PortableTextEditorValueContext.Provider>
       </PortableTextEditorContext.Provider>
     </PortableTextEditorKeyGeneratorContext.Provider>
