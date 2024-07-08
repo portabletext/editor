@@ -26,13 +26,14 @@ import {getPortableTextMemberSchemaTypes} from '../utils/getPortableTextMemberSc
 import {compileType} from '../utils/schema'
 import {SlateContainer} from './components/SlateContainer'
 import {Synchronizer} from './components/Synchronizer'
+import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {
   defaultKeyGenerator,
   PortableTextEditorKeyGeneratorContext,
 } from './hooks/usePortableTextEditorKeyGenerator'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
 import {PortableTextEditorReadOnlyContext} from './hooks/usePortableTextReadOnly'
-import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
+import {PortableTextEditorValueContext} from './hooks/usePortableTextEditorValue'
 
 const debug = debugWithName('component:PortableTextEditor')
 
@@ -149,6 +150,14 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
     this.editable = {...this.editable, ...editable}
   }
 
+  private getValue = () => {
+    if (this.editable) {
+      return this.editable.getValue()
+    }
+
+    return undefined
+  }
+
   render() {
     const {onChange, value, children, patches$, incomingPatches$} = this.props
     const {change$} = this
@@ -169,24 +178,23 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
         portableTextEditor={this}
         readOnly={readOnly}
       >
-        <Synchronizer
-          change$={change$}
-          keyGenerator={keyGenerator}
-          onChange={onChange}
-          portableTextEditor={this}
-          readOnly={readOnly}
-          value={value}
-        >
-          <PortableTextEditorKeyGeneratorContext.Provider value={keyGenerator}>
-            <PortableTextEditorContext.Provider value={this}>
+        <PortableTextEditorKeyGeneratorContext.Provider value={keyGenerator}>
+          <PortableTextEditorContext.Provider value={this}>
+            <PortableTextEditorValueContext.Provider value={value}>
               <PortableTextEditorReadOnlyContext.Provider value={readOnly}>
                 <PortableTextEditorSelectionProvider change$={change$}>
-                  {children}
+                  <Synchronizer
+                    change$={change$}
+                    getValue={this.getValue}
+                    onChange={onChange}
+                  >
+                    {children}
+                  </Synchronizer>
                 </PortableTextEditorSelectionProvider>
               </PortableTextEditorReadOnlyContext.Provider>
-            </PortableTextEditorContext.Provider>
-          </PortableTextEditorKeyGeneratorContext.Provider>
-        </Synchronizer>
+            </PortableTextEditorValueContext.Provider>
+          </PortableTextEditorContext.Provider>
+        </PortableTextEditorKeyGeneratorContext.Provider>
       </SlateContainer>
     )
   }

@@ -8,10 +8,11 @@ import {useSlate} from 'slate-react'
 import {type EditorChange, type EditorChanges} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {IS_PROCESSING_LOCAL_CHANGES} from '../../utils/weakMaps'
-import {PortableTextEditorContext} from '../hooks/usePortableTextEditor'
-import {PortableTextEditorValueContext} from '../hooks/usePortableTextEditorValue'
+import {usePortableTextEditor} from '../hooks/usePortableTextEditor'
+import {usePortableTextEditorKeyGenerator} from '../hooks/usePortableTextEditorKeyGenerator'
+import {usePortableTextEditorValue} from '../hooks/usePortableTextEditorValue'
+import {usePortableTextEditorReadOnlyStatus} from '../hooks/usePortableTextReadOnly'
 import {useSyncValue} from '../hooks/useSyncValue'
-import {PortableTextEditor} from '../PortableTextEditor'
 
 const debug = debugWithName('component:PortableTextEditor:Synchronizer')
 const debugVerbose = debug.enabled && false
@@ -25,11 +26,8 @@ const FLUSH_PATCHES_THROTTLED_MS = process.env.NODE_ENV === 'test' ? 500 : 1000
  */
 export interface SynchronizerProps extends PropsWithChildren {
   change$: EditorChanges
-  portableTextEditor: PortableTextEditor
-  keyGenerator: () => string
+  getValue: () => Array<PortableTextBlock> | undefined
   onChange: (change: EditorChange) => void
-  readOnly: boolean
-  value: PortableTextBlock[] | undefined
 }
 
 /**
@@ -37,7 +35,11 @@ export interface SynchronizerProps extends PropsWithChildren {
  * @internal
  */
 export function Synchronizer(props: SynchronizerProps) {
-  const {change$, portableTextEditor, onChange, keyGenerator, readOnly, value} = props
+  const portableTextEditor = usePortableTextEditor()
+  const keyGenerator = usePortableTextEditorKeyGenerator()
+  const readOnly = usePortableTextEditorReadOnlyStatus()
+  const value = usePortableTextEditorValue()
+  const {change$, getValue, onChange} = props
   const pendingPatches = useRef<Patch[]>([])
 
   const syncValue = useSyncValue({
@@ -59,12 +61,12 @@ export function Synchronizer(props: SynchronizerProps) {
       if (debugVerbose) {
         debug(`Patches:\n${JSON.stringify(pendingPatches.current, null, 2)}`)
       }
-      const snapshot = PortableTextEditor.getValue(portableTextEditor)
+      const snapshot = getValue()
       change$.next({type: 'mutation', patches: pendingPatches.current, snapshot})
       pendingPatches.current = []
     }
     IS_PROCESSING_LOCAL_CHANGES.set(slateEditor, false)
-  }, [slateEditor, portableTextEditor, change$])
+  }, [slateEditor, getValue, change$])
 
   const onFlushPendingPatchesThrottled = useMemo(() => {
     return throttle(
@@ -154,9 +156,5 @@ export function Synchronizer(props: SynchronizerProps) {
     }
   }, [change$, syncValue, value])
 
-  return (
-    <PortableTextEditorValueContext.Provider value={value}>
-      {props.children}
-    </PortableTextEditorValueContext.Provider>
-  )
+  return props.children
 }
