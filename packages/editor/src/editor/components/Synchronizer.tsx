@@ -155,10 +155,8 @@ export function Synchronizer(props: SynchronizerProps) {
   }, [change$, syncValue, value])
 
   return (
-    <PortableTextEditorContext.Provider value={portableTextEditor}>
-      <PortableTextEditorValueContext.Provider value={value}>
-        {props.children}
-      </PortableTextEditorValueContext.Provider>
-    </PortableTextEditorContext.Provider>
+    <PortableTextEditorValueContext.Provider value={value}>
+      {props.children}
+    </PortableTextEditorValueContext.Provider>
   )
 }
