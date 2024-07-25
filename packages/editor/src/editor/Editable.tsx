@@ -79,8 +79,6 @@ interface BaseRangeWithDecoration extends BaseRange {
   rangeDecoration: RangeDecoration
 }
 
-const EMPTY_DECORATIONS_STATE: BaseRangeWithDecoration[] = []
-
 /**
  * @public
  */
@@ -142,8 +140,7 @@ export const PortableTextEditable = forwardRef(function PortableTextEditable(
   const ref = useRef<HTMLDivElement | null>(null)
   const [editableElement, setEditableElement] = useState<HTMLDivElement | null>(null)
   const [hasInvalidValue, setHasInvalidValue] = useState(false)
-  const [rangeDecorationState, setRangeDecorationsState] =
-    useState<BaseRangeWithDecoration[]>(EMPTY_DECORATIONS_STATE)
+  const [rangeDecorationState, setRangeDecorationsState] = useState<BaseRangeWithDecoration[]>([])
 
   // Forward ref to parent component
   useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(forwardedRef, () => ref.current)
@@ -296,7 +293,7 @@ export const PortableTextEditable = forwardRef(function PortableTextEditable(
           return
         }
       }
-      setRangeDecorationsState(EMPTY_DECORATIONS_STATE)
+      setRangeDecorationsState([])
     },
     [portableTextEditor, rangeDecorations, schemaTypes, slateEditor],
   )
@@ -619,7 +616,7 @@ export const PortableTextEditable = forwardRef(function PortableTextEditable(
       }
       // Editor node has a path length of 0 (should never be decorated)
       if (path.length === 0) {
-        return EMPTY_DECORATIONS_STATE
+        return []
       }
       const result = rangeDecorationState.filter((item) => {
         // Special case in order to only return one decoration for collapsed ranges
@@ -639,7 +636,7 @@ export const PortableTextEditable = forwardRef(function PortableTextEditable(
       if (result.length > 0) {
         return result
       }
-      return EMPTY_DECORATIONS_STATE
+      return []
     },
     [slateEditor, schemaTypes, rangeDecorationState],
   )
