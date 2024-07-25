@@ -7,6 +7,7 @@
     "build": "tsc -b && vite build",
     "check:lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "check:types": "tsc --noEmit --pretty",
+    "clean": "del .turbo && del dist && del node_modules",
     "dev": "vite",
     "preview": "vite preview"
   },

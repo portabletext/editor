@@ -39,6 +39,7 @@
     "build": "pkg-utils build --strict --check --clean",
     "check:lint": "eslint .",
     "check:types": "tsc --noEmit --pretty",
+    "clean": "del .turbo && del dist && del node_modules",
     "dev": "pkg-utils watch",
     "lint:fix": "eslint . --fix"
   },
