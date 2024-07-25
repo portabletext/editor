@@ -9,7 +9,7 @@
     "check:format": "prettier . --check",
     "check:lint": "turbo check:lint",
     "check:types": "turbo check:types",
-    "clean": "turbo clean",
+    "clean": "turbo clean && del .turbo && del node_modules",
     "dev": "turbo dev",
     "dev:playground": "turbo dev --filter=playground...",
     "format": "prettier --cache --write .",
@@ -29,6 +29,7 @@
   "devDependencies": {
     "@playwright/test": "1.45.0",
     "@sanity/prettier-config": "^1.0.2",
+    "del-cli": "^5.1.0",
     "husky": "^9.0.11",
     "lint-staged": "^15.2.7",
     "prettier": "^3.3.2",
