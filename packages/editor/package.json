@@ -63,7 +63,6 @@
     "slate-react": "0.101.0"
   },
   "devDependencies": {
-    "@babel/plugin-proposal-class-properties": "^7.18.6",
     "@jest/globals": "^29.7.0",
     "@playwright/test": "1.45.0",
     "@portabletext/toolkit": "^2.0.15",

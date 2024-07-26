@@ -92,7 +92,6 @@ exports.createJestConfig = function createJestConfig(
             '@babel/preset-typescript',
             ['@babel/preset-react', {runtime: 'automatic'}],
           ],
-          plugins: ['@babel/plugin-proposal-class-properties'],
         },
       ],
     },
