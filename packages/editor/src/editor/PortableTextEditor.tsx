@@ -41,11 +41,6 @@ const debug = debugWithName('component:PortableTextEditor')
  *
  * @public
  */
-/**
- * Props for the PortableTextEditor component
- *
- * @public
- */
 export type PortableTextEditorProps = PropsWithChildren<{
   /**
    * Function that gets called when the editor changes the value
