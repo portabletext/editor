@@ -110,7 +110,7 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
     super(props)
 
     if (!props.schemaType) {
-      throw new Error('PortableTextEditor: missing "type" property')
+      throw new Error('PortableTextEditor: missing "schemaType" property')
     }
 
     if (props.incomingPatches$) {
