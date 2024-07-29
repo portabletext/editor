@@ -6,6 +6,9 @@ import {
   LinkIcon,
   StrikethroughIcon,
   UnderlineIcon,
+  ListOrderedIcon,
+  ListIcon,
+  ListChecksIcon,
 } from 'lucide-react'
 import {z} from 'zod'
 
@@ -43,6 +46,28 @@ export const schema: PortableTextEditorProps['schemaType'] = {
           },
         ],
       },
+      /**
+       * Default lists:
+       * { "title": "Bulleted list", "value": "bullet" },
+       * { "title": "Numbered list", "value": "number" }
+       */
+      lists: [
+        {
+          title: 'Bulleted list',
+          value: 'bullet',
+          icon: ListIcon,
+        },
+        {
+          title: 'Numbered list',
+          value: 'number',
+          icon: ListOrderedIcon,
+        },
+        {
+          title: 'To-do list',
+          value: 'to-do',
+          icon: ListChecksIcon,
+        },
+      ],
     },
   ],
 }
