@@ -4,7 +4,7 @@ import {
   usePortableTextEditor,
   usePortableTextEditorSelection,
 } from '@portabletext/editor'
-import {BlockDecoratorDefinition, ObjectSchemaType} from '@sanity/types'
+import {BlockDecoratorDefinition, BlockListDefinition, ObjectSchemaType} from '@sanity/types'
 import {Group, TooltipTrigger} from 'react-aria-components'
 import {Toolbar} from './components/toolbar'
 import {Separator} from './components/separator'
@@ -19,6 +19,7 @@ export function PortableTextToolbar() {
   const selection = usePortableTextEditorSelection()
   const decorators = editor.schemaTypes.decorators
   const annotations = editor.schemaTypes.annotations
+  const lists = editor.schemaTypes.lists
 
   return (
     <Toolbar aria-label="Text formatting">
@@ -41,6 +42,12 @@ export function PortableTextToolbar() {
             editor={editor}
             selection={selection}
           />
+        ))}
+      </Group>
+      <Separator orientation="vertical" />
+      <Group aria-label="Lists" className="contents">
+        {lists.map((list) => (
+          <ListToolbarButton key={list.value} list={list} editor={editor} selection={selection} />
         ))}
       </Group>
     </Toolbar>
@@ -117,6 +124,39 @@ function DecoratorToolbarButton(props: {
         )}
       </ToggleButton>
       <Tooltip>{props.decorator.title}</Tooltip>
+    </TooltipTrigger>
+  )
+}
+
+function ListToolbarButton(props: {
+  list: BlockListDefinition
+  editor: PortableTextEditor
+  selection: EditorSelection
+}) {
+  const active =
+    props.selection !== null && PortableTextEditor.hasListStyle(props.editor, props.list.value)
+  const IconComponent = props.list.icon
+
+  return (
+    <TooltipTrigger>
+      <ToggleButton
+        aria-label={props.list.title}
+        size="sm"
+        isSelected={active}
+        onPress={() => {
+          PortableTextEditor.toggleList(props.editor, props.list.value)
+          PortableTextEditor.focus(props.editor)
+        }}
+      >
+        {isValidElement(IconComponent) ? (
+          IconComponent
+        ) : isValidElementType(IconComponent) ? (
+          <IconComponent className="w-4 h-4" />
+        ) : (
+          props.list.title
+        )}
+      </ToggleButton>
+      <Tooltip>{props.list.title}</Tooltip>
     </TooltipTrigger>
   )
 }
