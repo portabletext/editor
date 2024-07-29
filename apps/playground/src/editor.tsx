@@ -31,6 +31,8 @@ import {PortableTextToolbar} from './portable-text-toolbar'
 import {LinkAnnotationSchema, schema} from './schema'
 import {SelectionPreview} from './selection-preview'
 import {wait} from './wait'
+import {ErrorBoundary} from './components/error-boundary'
+import {ErrorScreen} from './components/error-screen'
 
 export function Editor(props: {editorRef: EditorActorRef}) {
   const showingPatchesPreview = useSelector(props.editorRef, (s) =>
@@ -89,29 +91,35 @@ export function Editor(props: {editorRef: EditorActorRef}) {
           <PortableTextToolbar />
           <div className="flex gap-2 items-center">
             <div className="flex-1 p-2 border">
-              <PortableTextEditable
-                onPaste={(data) => {
-                  const text = data.event.clipboardData.getData('text')
-                  if (text === 'heading') {
-                    return wait(2000).then(() => ({
-                      insert: [
-                        {
-                          _type: 'block',
-                          children: [{_type: 'span', text: 'heading'}],
-                          style: 'h1',
-                        },
-                      ],
-                    }))
-                  }
-                }}
-                renderAnnotation={renderAnnotation}
-                renderBlock={renderBlock}
-                renderChild={renderChild}
-                renderDecorator={renderDecorator}
-                renderListItem={renderListItem}
-                renderPlaceholder={renderPlaceholder}
-                renderStyle={renderStyle}
-              />
+              <ErrorBoundary
+                fallbackProps={{area: 'PortableTextEditable'}}
+                fallback={ErrorScreen}
+                onError={console.error}
+              >
+                <PortableTextEditable
+                  onPaste={(data) => {
+                    const text = data.event.clipboardData.getData('text')
+                    if (text === 'heading') {
+                      return wait(2000).then(() => ({
+                        insert: [
+                          {
+                            _type: 'block',
+                            children: [{_type: 'span', text: 'heading'}],
+                            style: 'h1',
+                          },
+                        ],
+                      }))
+                    }
+                  }}
+                  renderAnnotation={renderAnnotation}
+                  renderBlock={renderBlock}
+                  renderChild={renderChild}
+                  renderDecorator={renderDecorator}
+                  renderListItem={renderListItem}
+                  renderPlaceholder={renderPlaceholder}
+                  renderStyle={renderStyle}
+                />
+              </ErrorBoundary>
             </div>
             {loading ? <Spinner /> : null}
           </div>
