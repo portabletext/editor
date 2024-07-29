@@ -1,4 +1,16 @@
-import {type Path} from '@sanity/types'
+/** @public */
+export declare type IndexTuple = [number | '', number | '']
+
+/** @public */
+export declare type KeyedSegment = {
+  _key: string
+}
+
+/** @public */
+export type PathSegment = string | number | KeyedSegment | IndexTuple
+
+/** @public */
+export type Path = PathSegment[]
 
 /** @public */
 export type JSONValue = number | string | boolean | {[key: string]: JSONValue} | JSONValue[]

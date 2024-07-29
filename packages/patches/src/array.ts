@@ -1,8 +1,8 @@
-import {type PathSegment} from '@sanity/types'
 import {findIndex} from 'lodash'
 
 import applyPatch from './applyPatch'
 import insert from './arrayInsert'
+import type {PathSegment} from './types'
 
 const hasOwn = Object.prototype.hasOwnProperty.call.bind(Object.prototype.hasOwnProperty)
 
