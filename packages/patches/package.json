@@ -48,13 +48,13 @@
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@sanity/pkg-utils": "^6.10.0",
-    "@types/lodash": "^4.17.5",
-    "@typescript-eslint/eslint-plugin": "^7.14.1",
-    "@typescript-eslint/parser": "^7.14.1",
+    "@sanity/pkg-utils": "^6.10.6",
+    "@types/lodash": "^4.17.7",
+    "@typescript-eslint/eslint-plugin": "^7.17.0",
+    "@typescript-eslint/parser": "^7.17.0",
     "eslint": "^8.57.0",
     "eslint-plugin-import": "^2.29.1",
-    "eslint-plugin-simple-import-sort": "^12.1.0",
-    "typescript": "^5.5.2"
+    "eslint-plugin-simple-import-sort": "^12.1.1",
+    "typescript": "^5.5.3"
   }
 }
