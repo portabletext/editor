@@ -5,13 +5,14 @@ import {
   usePortableTextEditorSelection,
 } from '@portabletext/editor'
 import {BlockDecoratorDefinition, BlockListDefinition, ObjectSchemaType} from '@sanity/types'
+import startCase from 'lodash.startcase'
+import {isValidElement, useMemo} from 'react'
 import {Group, TooltipTrigger} from 'react-aria-components'
-import {Toolbar} from './components/toolbar'
+import {isValidElementType} from 'react-is'
+import {Select, SelectItem} from './components/select'
 import {Separator} from './components/separator'
 import {ToggleButton} from './components/toggle-button'
-import {isValidElement} from 'react'
-import {isValidElementType} from 'react-is'
-import startCase from 'lodash.startcase'
+import {Toolbar} from './components/toolbar'
 import {Tooltip} from './components/tooltip'
 
 export function PortableTextToolbar() {
@@ -23,6 +24,8 @@ export function PortableTextToolbar() {
 
   return (
     <Toolbar aria-label="Text formatting">
+      <StyleSelector editor={editor} selection={selection} />
+      <Separator orientation="vertical" />
       <Group aria-label="Decorators" className="contents">
         {decorators.map((decorator) => (
           <DecoratorToolbarButton
@@ -51,6 +54,47 @@ export function PortableTextToolbar() {
         ))}
       </Group>
     </Toolbar>
+  )
+}
+
+function StyleSelector(props: {editor: PortableTextEditor; selection: EditorSelection}) {
+  const styles = props.editor.schemaTypes.styles
+  const focusBlock = PortableTextEditor.focusBlock(props.editor)
+  const activeStyle = useMemo(
+    () =>
+      focusBlock
+        ? (styles.find((style) => PortableTextEditor.hasBlockStyle(props.editor, style.value))
+            ?.value ?? null)
+        : null,
+    [props.editor, focusBlock, styles],
+  )
+
+  return (
+    <Select
+      placeholder="Select style"
+      aria-label="Style"
+      selectedKey={activeStyle}
+      onSelectionChange={(style) => {
+        if (typeof style === 'string') {
+          PortableTextEditor.toggleBlockStyle(props.editor, style)
+          PortableTextEditor.focus(props.editor)
+        }
+      }}
+    >
+      {styles.map((style) => {
+        const IconComponent = style.icon
+        return (
+          <SelectItem key={style.value} id={style.value} textValue={style.title}>
+            {isValidElement(IconComponent) ? (
+              IconComponent
+            ) : isValidElementType(IconComponent) ? (
+              <IconComponent className="w-4 h-4" />
+            ) : null}
+            {style.title}
+          </SelectItem>
+        )
+      })}
+    </Select>
   )
 }
 
