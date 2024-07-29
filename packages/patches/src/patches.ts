@@ -1,10 +1,11 @@
 import {makePatches, stringifyPatches} from '@sanity/diff-match-patch'
-import {type Path, type PathSegment} from '@sanity/types'
 
 import {
   type DiffMatchPatch,
   type InsertPatch,
   type InsertPosition,
+  type Path,
+  type PathSegment,
   type SetIfMissingPatch,
   type SetPatch,
   type UnsetPatch,
