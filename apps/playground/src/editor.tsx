@@ -1,5 +1,6 @@
 import {
   BlockDecoratorRenderProps,
+  BlockStyleRenderProps,
   Patch,
   PortableTextEditable,
   PortableTextEditor,
@@ -208,7 +209,7 @@ const renderPlaceholder: RenderPlaceholderFunction = () => (
 )
 
 const renderStyle: RenderStyleFunction = (props) => {
-  return props.children
+  return (styleMap.get(props.value) ?? ((props) => props.children))(props)
 }
 
 const decoratorMap: Map<string, (props: BlockDecoratorRenderProps) => JSX.Element> = new Map([
@@ -219,5 +220,23 @@ const decoratorMap: Map<string, (props: BlockDecoratorRenderProps) => JSX.Elemen
   [
     'strike-through',
     (props) => <span style={{textDecorationLine: 'line-through'}}>{props.children}</span>,
+  ],
+])
+
+const styleMap: Map<string, (props: BlockStyleRenderProps) => JSX.Element> = new Map([
+  ['normal', (props) => <p className="mb-1">{props.children}</p>],
+  ['h1', (props) => <h1 className="mb-1 font-bold text-5xl">{props.children}</h1>],
+  ['h2', (props) => <h2 className="mb-1 font-bold text-4xl">{props.children}</h2>],
+  ['h3', (props) => <h3 className="mb-1 font-bold text-3xl">{props.children}</h3>],
+  ['h4', (props) => <h4 className="mb-1 font-bold text-2xl">{props.children}</h4>],
+  ['h5', (props) => <h5 className="mb-1 font-bold text-xl">{props.children}</h5>],
+  ['h6', (props) => <h6 className="mb-1 font-bold text-lg">{props.children}</h6>],
+  [
+    'blockquote',
+    (props) => (
+      <blockquote className="mb-1 pl-2 py-1 border-slate-300 border-l-4">
+        {props.children}
+      </blockquote>
+    ),
   ],
 ])
