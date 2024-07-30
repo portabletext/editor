@@ -375,6 +375,9 @@ export type EditorChange =
   | UnsetChange
   | ValueChange
 
+/**
+ * @beta
+ */
 export type EditorChanges = Subject<EditorChange>
 
 /** @beta */
@@ -384,6 +387,10 @@ export type OnPasteResult =
       path?: Path
     }
   | undefined
+
+/**
+ * @beta
+ */
 export type OnPasteResultOrPromise = OnPasteResult | Promise<OnPasteResult>
 
 /** @beta */

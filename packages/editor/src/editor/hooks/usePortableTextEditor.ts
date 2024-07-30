@@ -8,6 +8,7 @@ import {type PortableTextEditor} from '../PortableTextEditor'
 export const PortableTextEditorContext = createContext<PortableTextEditor | null>(null)
 
 /**
+ * @public
  * Get the current editor object from the React context.
  */
 export const usePortableTextEditor = (): PortableTextEditor => {
