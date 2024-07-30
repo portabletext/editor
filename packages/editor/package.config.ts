@@ -21,7 +21,6 @@ export default defineConfig({
     rules: {
       // Disable rules for now
       'ae-incompatible-release-tags': 'off',
-      'ae-missing-release-tag': 'off',
     },
   },
   legacyExports: true,

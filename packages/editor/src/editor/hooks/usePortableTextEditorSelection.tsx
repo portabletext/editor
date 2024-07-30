@@ -9,6 +9,7 @@ import {debugWithName} from '../../utils/debug'
 const PortableTextEditorSelectionContext = createContext<EditorSelection | null>(null)
 
 /**
+ * @public
  * Get the current editor selection from the React context.
  */
 export const usePortableTextEditorSelection = (): EditorSelection => {

@@ -1,6 +1,9 @@
 import {randomKey} from '@sanity/util/content'
 import {createContext, useContext} from 'react'
 
+/**
+ * @public
+ */
 export const defaultKeyGenerator = (): string => randomKey(12)
 
 /**
