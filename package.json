@@ -12,6 +12,7 @@
     "clean": "turbo clean && del .turbo && del node_modules",
     "dev": "turbo dev",
     "dev:playground": "turbo dev --filter=playground...",
+    "dev:sanity-studio": "turbo dev --filter=sanity-studio...",
     "format": "prettier --cache --write .",
     "format:staged": "pretty-quick --staged",
     "postinstall": "husky",
@@ -36,5 +37,11 @@
     "pretty-quick": "^4.0.0",
     "turbo": "^2.0.9"
   },
-  "packageManager": "pnpm@8.15.8"
+  "packageManager": "pnpm@8.15.8",
+  "overrides": {
+    "pnpm": {
+      "@portabletext/editor": "workspace:*",
+      "@portabletext/patches": "workspace:*"
+    }
+  }
 }
