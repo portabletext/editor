@@ -11,6 +11,7 @@
     "check:types": "turbo check:types",
     "clean": "turbo clean && del .turbo && del node_modules",
     "dev": "turbo dev",
+    "dev:editor": "turbo dev --filter=@portabletext/editor",
     "dev:playground": "turbo dev --filter=playground...",
     "dev:sanity-studio": "turbo dev --filter=sanity-studio...",
     "format": "prettier --cache --write .",
