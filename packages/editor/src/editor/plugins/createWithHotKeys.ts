@@ -195,12 +195,16 @@ export function createWithHotkeys(
         ) as SlateTextBlock | VoidElement
         const focusBlockPath = editor.selection.focus.path.slice(0, 1)
         const focusBlock = Node.descendant(editor, focusBlockPath) as SlateTextBlock | VoidElement
+        const isTextBlock = isPortableTextTextBlock(focusBlock)
+        const isEmptyFocusBlock =
+          isTextBlock && focusBlock.children.length === 1 && focusBlock.children?.[0]?.text === ''
 
         if (
           nextBlock &&
           focusBlock &&
           !Editor.isVoid(editor, focusBlock) &&
-          Editor.isVoid(editor, nextBlock)
+          Editor.isVoid(editor, nextBlock) &&
+          isEmptyFocusBlock
         ) {
           debug('Preventing deleting void block below')
           event.preventDefault()
