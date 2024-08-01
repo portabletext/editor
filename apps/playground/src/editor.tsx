@@ -28,11 +28,12 @@ import {EditorPatchesPreview} from './editor-patches-preview'
 import {EditorPortableTextPreview} from './editor-portable-text-preview'
 import {EditorActorRef} from './playground-machine'
 import {PortableTextToolbar} from './portable-text-toolbar'
-import {LinkAnnotationSchema, schema} from './schema'
+import {LinkAnnotationSchema, schema, StockTickerSchema} from './schema'
 import {SelectionPreview} from './selection-preview'
 import {wait} from './wait'
 import {ErrorBoundary} from './components/error-boundary'
 import {ErrorScreen} from './components/error-screen'
+import {Separator} from './components/separator'
 
 export function Editor(props: {editorRef: EditorActorRef}) {
   const showingPatchesPreview = useSelector(props.editorRef, (s) =>
@@ -197,6 +198,10 @@ const renderAnnotation: RenderAnnotationFunction = (props) => {
 }
 
 const renderBlock: RenderBlockFunction = (props) => {
+  if (props.schemaType.name === 'break') {
+    return <Separator orientation="horizontal" className="my-2" />
+  }
+
   return props.children
 }
 
@@ -205,6 +210,14 @@ const renderDecorator: RenderDecoratorFunction = (props) => {
 }
 
 const renderChild: RenderChildFunction = (props) => {
+  const stockTicker = StockTickerSchema.safeParse(props).data
+
+  if (stockTicker) {
+    return (
+      <span className="border-2 rounded px-1 font-mono text-sm">{stockTicker.value.symbol}</span>
+    )
+  }
+
   return props.children
 }
 
