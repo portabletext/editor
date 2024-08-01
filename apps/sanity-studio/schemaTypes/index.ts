@@ -1,3 +1,3 @@
-import {blogPostType} from './blog-post'
+import {blogPostType, breakType, stockTickerType} from './blog-post'
 
-export const schemaTypes = [blogPostType]
+export const schemaTypes = [blogPostType, breakType, stockTickerType]
