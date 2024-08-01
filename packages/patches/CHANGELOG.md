@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/portabletext/editor/compare/patches-v1.0.2...patches-v1.1.0) (2024-08-01)
+
+
+### Features
+
+* **patches:** remove @sanity/types dependency ([068d796](https://github.com/portabletext/editor/commit/068d79658150def5aa3d76335a967d3a0ac301ec))
+
 ## [1.0.2](https://github.com/portabletext/editor/compare/patches-v1.0.1...patches-v1.0.2) (2024-06-27)
 
 
