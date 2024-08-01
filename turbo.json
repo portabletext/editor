@@ -1,5 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": [".npmrc"],
   "tasks": {
     "build": {
       "outputs": ["dist/**", "lib/**"],
