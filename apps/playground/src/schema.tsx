@@ -1,4 +1,5 @@
-import {PortableTextEditorProps} from '@portabletext/editor'
+import {Schema} from '@sanity/schema'
+import {defineField, defineType} from '@sanity/types'
 import {
   BoldIcon,
   CodeIcon,
@@ -15,18 +16,22 @@ import {
   ListOrderedIcon,
   PilcrowIcon,
   StrikethroughIcon,
+  SeparatorHorizontalIcon,
   TextQuoteIcon,
+  ActivityIcon,
   UnderlineIcon,
 } from 'lucide-react'
 import {z} from 'zod'
 
-export const schema: PortableTextEditorProps['schemaType'] = {
+const portableTextSchema = defineField({
   type: 'array',
-  name: 'body',
+  name: 'portable-text',
   of: [
+    {type: 'break'},
     {
       type: 'block',
       name: 'block',
+      of: [{type: 'stock-ticker'}],
       marks: {
         /**
          * Default decorators:
@@ -99,7 +104,40 @@ export const schema: PortableTextEditorProps['schemaType'] = {
       ],
     },
   ],
-}
+})
+
+const breakType = defineType({
+  name: 'break',
+  type: 'object',
+  icon: SeparatorHorizontalIcon,
+  fields: [
+    defineField({
+      name: 'style',
+      type: 'string',
+      options: {
+        list: ['break'],
+      },
+      validation: (Rule) => Rule.required(),
+    }),
+  ],
+})
+
+const stockTickerType = defineType({
+  name: 'stock-ticker',
+  icon: ActivityIcon,
+  type: 'object',
+  fields: [
+    defineField({
+      name: 'symbol',
+      type: 'string',
+      validation: (Rule) => Rule.required(),
+    }),
+  ],
+})
+
+export const schema = Schema.compile({
+  types: [portableTextSchema, breakType, stockTickerType],
+}).get('portable-text')
 
 export const LinkAnnotationSchema = z.object({
   schemaType: z.object({
@@ -107,5 +145,14 @@ export const LinkAnnotationSchema = z.object({
   }),
   value: z.object({
     href: z.string(),
+  }),
+})
+
+export const StockTickerSchema = z.object({
+  schemaType: z.object({
+    name: z.literal('stock-ticker'),
+  }),
+  value: z.object({
+    symbol: z.string(),
   }),
 })

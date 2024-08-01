@@ -14,6 +14,7 @@ import {Separator} from './components/separator'
 import {ToggleButton} from './components/toggle-button'
 import {Toolbar} from './components/toolbar'
 import {Tooltip} from './components/tooltip'
+import {Button} from './components/button'
 
 export function PortableTextToolbar() {
   const editor = usePortableTextEditor()
@@ -21,6 +22,8 @@ export function PortableTextToolbar() {
   const decorators = editor.schemaTypes.decorators
   const annotations = editor.schemaTypes.annotations
   const lists = editor.schemaTypes.lists
+  const inlineObjects = editor.schemaTypes.inlineObjects
+  const blockObjects = editor.schemaTypes.blockObjects
 
   return (
     <Toolbar aria-label="Text formatting">
@@ -53,6 +56,18 @@ export function PortableTextToolbar() {
           <ListToolbarButton key={list.value} list={list} editor={editor} selection={selection} />
         ))}
       </Group>
+      <Separator orientation="vertical" />
+      <Group aria-label="Block objects" className="contents">
+        {blockObjects.map((blockObject) => (
+          <BlockObjectButton key={blockObject.name} blockObject={blockObject} editor={editor} />
+        ))}
+      </Group>
+      <Separator orientation="vertical" />
+      <Group aria-label="Inline objects" className="contents">
+        {inlineObjects.map((inlineObject) => (
+          <InlineObjectButton key={inlineObject.name} inlineObject={inlineObject} editor={editor} />
+        ))}
+      </Group>
     </Toolbar>
   )
 }
@@ -81,19 +96,12 @@ function StyleSelector(props: {editor: PortableTextEditor; selection: EditorSele
         }
       }}
     >
-      {styles.map((style) => {
-        const IconComponent = style.icon
-        return (
-          <SelectItem key={style.value} id={style.value} textValue={style.title}>
-            {isValidElement(IconComponent) ? (
-              IconComponent
-            ) : isValidElementType(IconComponent) ? (
-              <IconComponent className="w-4 h-4" />
-            ) : null}
-            {style.title}
-          </SelectItem>
-        )
-      })}
+      {styles.map((style) => (
+        <SelectItem key={style.value} id={style.value} textValue={style.title}>
+          <Icon icon={style.icon} fallback={null} />
+          {style.title}
+        </SelectItem>
+      ))}
     </Select>
   )
 }
@@ -106,7 +114,6 @@ function AnnotationToolbarButton(props: {
   const active =
     props.selection !== null &&
     PortableTextEditor.isAnnotationActive(props.editor, props.annotation.name)
-  const IconComponent = props.annotation.icon
   const title = props.annotation.title ?? startCase(props.annotation.name)
 
   return (
@@ -126,13 +133,7 @@ function AnnotationToolbarButton(props: {
           PortableTextEditor.focus(props.editor)
         }}
       >
-        {isValidElement(IconComponent) ? (
-          IconComponent
-        ) : isValidElementType(IconComponent) ? (
-          <IconComponent className="w-4 h-4" />
-        ) : (
-          title
-        )}
+        <Icon icon={props.annotation.icon} fallback={title} />
       </ToggleButton>
       <Tooltip>{title}</Tooltip>
     </TooltipTrigger>
@@ -146,7 +147,6 @@ function DecoratorToolbarButton(props: {
 }) {
   const active =
     props.selection !== null && PortableTextEditor.isMarkActive(props.editor, props.decorator.value)
-  const IconComponent = props.decorator.icon
 
   return (
     <TooltipTrigger>
@@ -159,13 +159,7 @@ function DecoratorToolbarButton(props: {
           PortableTextEditor.focus(props.editor)
         }}
       >
-        {isValidElement(IconComponent) ? (
-          IconComponent
-        ) : isValidElementType(IconComponent) ? (
-          <IconComponent className="w-4 h-4" />
-        ) : (
-          props.decorator.title
-        )}
+        <Icon icon={props.decorator.icon} fallback={props.decorator.title} />
       </ToggleButton>
       <Tooltip>{props.decorator.title}</Tooltip>
     </TooltipTrigger>
@@ -179,7 +173,6 @@ function ListToolbarButton(props: {
 }) {
   const active =
     props.selection !== null && PortableTextEditor.hasListStyle(props.editor, props.list.value)
-  const IconComponent = props.list.icon
 
   return (
     <TooltipTrigger>
@@ -192,15 +185,53 @@ function ListToolbarButton(props: {
           PortableTextEditor.focus(props.editor)
         }}
       >
-        {isValidElement(IconComponent) ? (
-          IconComponent
-        ) : isValidElementType(IconComponent) ? (
-          <IconComponent className="w-4 h-4" />
-        ) : (
-          props.list.title
-        )}
+        <Icon icon={props.list.icon} fallback={props.list.title} />
       </ToggleButton>
       <Tooltip>{props.list.title}</Tooltip>
     </TooltipTrigger>
+  )
+}
+
+function InlineObjectButton(props: {inlineObject: ObjectSchemaType; editor: PortableTextEditor}) {
+  return (
+    <Button
+      variant="secondary"
+      size="sm"
+      onPress={() => {
+        PortableTextEditor.insertChild(props.editor, props.inlineObject, {symbol: 'NVDA'})
+        PortableTextEditor.focus(props.editor)
+      }}
+    >
+      <Icon icon={props.inlineObject.icon} fallback={null} />
+      {props.inlineObject.title}
+    </Button>
+  )
+}
+
+function BlockObjectButton(props: {blockObject: ObjectSchemaType; editor: PortableTextEditor}) {
+  return (
+    <Button
+      variant="secondary"
+      size="sm"
+      onPress={() => {
+        PortableTextEditor.insertBlock(props.editor, props.blockObject)
+        PortableTextEditor.focus(props.editor)
+      }}
+    >
+      <Icon icon={props.blockObject.icon} fallback={null} />
+      {props.blockObject.title}
+    </Button>
+  )
+}
+
+function Icon(props: {icon?: React.ReactNode | React.ComponentType; fallback: string | null}) {
+  const IconComponent = props.icon
+
+  return isValidElement(IconComponent) ? (
+    IconComponent
+  ) : isValidElementType(IconComponent) ? (
+    <IconComponent className="w-4 h-4" />
+  ) : (
+    props.fallback
   )
 }
