@@ -308,6 +308,10 @@ export function createWithEditableAPI(
             }),
           ]
 
+          if (spans.length === 0) {
+            return false
+          }
+
           if (
             spans.some(
               ([span]) => !isPortableTextSpan(span) || !span.marks || span.marks?.length === 0,
