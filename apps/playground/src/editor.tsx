@@ -28,7 +28,13 @@ import {EditorPatchesPreview} from './editor-patches-preview'
 import {EditorPortableTextPreview} from './editor-portable-text-preview'
 import {EditorActorRef} from './playground-machine'
 import {PortableTextToolbar} from './portable-text-toolbar'
-import {ImageSchema, LinkAnnotationSchema, schema, StockTickerSchema} from './schema'
+import {
+  CommentAnnotationSchema,
+  ImageSchema,
+  LinkAnnotationSchema,
+  schema,
+  StockTickerSchema,
+} from './schema'
 import {SelectionPreview} from './selection-preview'
 import {wait} from './wait'
 import {ErrorBoundary} from './components/error-boundary'
@@ -183,17 +189,15 @@ export function Editor(props: {editorRef: EditorActorRef}) {
 }
 
 const renderAnnotation: RenderAnnotationFunction = (props) => {
-  const linkAnnotation = LinkAnnotationSchema.safeParse(props).data
-
-  if (linkAnnotation) {
-    return (
-      <a className="text-blue-800 underline" href={linkAnnotation.value.href}>
-        {props.children}
-      </a>
-    )
-  } else {
-    return props.children
+  if (CommentAnnotationSchema.safeParse(props).success) {
+    return <span className="bg-yellow-300">{props.children}</span>
   }
+
+  if (LinkAnnotationSchema.safeParse(props).success) {
+    return <span className="text-blue-800 underline">{props.children}</span>
+  }
+
+  return props.children
 }
 
 const renderBlock: RenderBlockFunction = (props) => {

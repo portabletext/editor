@@ -126,9 +126,19 @@ function AnnotationToolbarButton(props: {
           if (active) {
             PortableTextEditor.removeAnnotation(props.editor, props.annotation)
           } else {
-            PortableTextEditor.addAnnotation(props.editor, props.annotation, {
-              href: 'https://example.com',
-            })
+            PortableTextEditor.addAnnotation(
+              props.editor,
+              props.annotation,
+              props.annotation.name === 'comment'
+                ? {
+                    text: 'Consider rewriting this',
+                  }
+                : props.annotation.name === 'link'
+                  ? {
+                      href: 'https://example.com',
+                    }
+                  : {},
+            )
           }
           PortableTextEditor.focus(props.editor)
         }}
