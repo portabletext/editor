@@ -91,37 +91,36 @@ export function Editor(props: {editorRef: EditorActorRef}) {
         <div className="flex flex-col gap-2">
           <PortableTextToolbar />
           <div className="flex gap-2 items-center">
-            <div className="flex-1 p-2 border">
-              <ErrorBoundary
-                fallbackProps={{area: 'PortableTextEditable'}}
-                fallback={ErrorScreen}
-                onError={console.error}
-              >
-                <PortableTextEditable
-                  onPaste={(data) => {
-                    const text = data.event.clipboardData.getData('text')
-                    if (text === 'heading') {
-                      return wait(2000).then(() => ({
-                        insert: [
-                          {
-                            _type: 'block',
-                            children: [{_type: 'span', text: 'heading'}],
-                            style: 'h1',
-                          },
-                        ],
-                      }))
-                    }
-                  }}
-                  renderAnnotation={renderAnnotation}
-                  renderBlock={renderBlock}
-                  renderChild={renderChild}
-                  renderDecorator={renderDecorator}
-                  renderListItem={renderListItem}
-                  renderPlaceholder={renderPlaceholder}
-                  renderStyle={renderStyle}
-                />
-              </ErrorBoundary>
-            </div>
+            <ErrorBoundary
+              fallbackProps={{area: 'PortableTextEditable'}}
+              fallback={ErrorScreen}
+              onError={console.error}
+            >
+              <PortableTextEditable
+                className="flex-1 p-2 border"
+                onPaste={(data) => {
+                  const text = data.event.clipboardData.getData('text')
+                  if (text === 'heading') {
+                    return wait(2000).then(() => ({
+                      insert: [
+                        {
+                          _type: 'block',
+                          children: [{_type: 'span', text: 'heading'}],
+                          style: 'h1',
+                        },
+                      ],
+                    }))
+                  }
+                }}
+                renderAnnotation={renderAnnotation}
+                renderBlock={renderBlock}
+                renderChild={renderChild}
+                renderDecorator={renderDecorator}
+                renderListItem={renderListItem}
+                renderPlaceholder={renderPlaceholder}
+                renderStyle={renderStyle}
+              />
+            </ErrorBoundary>
             {loading ? <Spinner /> : null}
           </div>
           <div className="flex gap-2 items-center">
@@ -226,7 +225,7 @@ const renderListItem: RenderListItemFunction = (props) => {
 }
 
 const renderPlaceholder: RenderPlaceholderFunction = () => (
-  <span className="text-slate-400">Type something</span>
+  <span className="text-slate-400 px-2">Type something</span>
 )
 
 const renderStyle: RenderStyleFunction = (props) => {
