@@ -173,22 +173,22 @@ export function createWithEditableAPI(
           ],
           portableTextEditor,
         )[0] as unknown as Node
-        const [focusBlock] = Array.from(
+
+        const focusBlock = Array.from(
           Editor.nodes(editor, {
             at: editor.selection.focus.path.slice(0, 1),
             match: (n) => n._type === types.block.name,
           }),
-        )[0] || [undefined]
-
-        const isEmptyTextBlock = focusBlock && isEqualToEmptyEditor([focusBlock], types)
-
-        if (isEmptyTextBlock) {
-          // If the text block is empty, remove it before inserting the new block.
-          Transforms.removeNodes(editor, {at: editor.selection})
-        }
+        )[0]
 
         Editor.insertNode(editor, block)
+
+        if (focusBlock && isEqualToEmptyEditor([focusBlock[0]], types)) {
+          Transforms.removeNodes(editor, {at: focusBlock[1]})
+        }
+
         editor.onChange()
+
         return (
           toPortableTextRange(
             fromSlateValue(editor.children, types.block.name, KEY_TO_VALUE_ELEMENT.get(editor)),
