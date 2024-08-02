@@ -14,6 +14,7 @@ import {
   ImageIcon,
   ListChecksIcon,
   ListIcon,
+  MessageSquareTextIcon,
   ListOrderedIcon,
   PilcrowIcon,
   StrikethroughIcon,
@@ -58,6 +59,17 @@ const portableTextSchema = defineField({
             name: 'link',
             type: 'object',
             icon: LinkIcon,
+          },
+          {
+            name: 'comment',
+            type: 'object',
+            icon: MessageSquareTextIcon,
+            fields: [
+              {
+                type: 'string',
+                name: 'text',
+              },
+            ],
           },
         ],
       },
@@ -163,6 +175,15 @@ const stockTickerType = defineType({
 export const schema = Schema.compile({
   types: [portableTextSchema, breakType, imageType, stockTickerType],
 }).get('portable-text')
+
+export const CommentAnnotationSchema = z.object({
+  schemaType: z.object({
+    name: z.literal('comment'),
+  }),
+  value: z.object({
+    text: z.string(),
+  }),
+})
 
 export const LinkAnnotationSchema = z.object({
   schemaType: z.object({
