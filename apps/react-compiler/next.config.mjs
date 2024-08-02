@@ -22,12 +22,7 @@ const config = {
     // Support the ability to debug log the studio, for example `DEBUG="sanity:pte:* pnpm dev:react-compiler"`
     DEBUG: process.env.DEBUG,
   },
-  transpilePackages: [
-    '@portabletext/editor',
-    '@portabletext/patches',
-    'playground',
-    'sanity-studio',
-  ],
+  transpilePackages: ['@portabletext/editor', '@portabletext/patches', 'sanity-studio'],
   // eslint-disable-next-line @typescript-eslint/no-shadow
   webpack(config) {
     config.resolve.alias = {
