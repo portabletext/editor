@@ -28,8 +28,8 @@
   },
   "devDependencies": {
     "@sanity/eslint-config-studio": "^4.0.0",
-    "@types/react": "^18.0.25",
+    "@types/react": "^18.3.3",
     "eslint": "^8.6.0",
-    "typescript": "^5.1.6"
+    "typescript": "5.5.4"
   }
 }
