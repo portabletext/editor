@@ -11,6 +11,7 @@ import {
   Heading6Icon,
   ItalicIcon,
   LinkIcon,
+  ImageIcon,
   ListChecksIcon,
   ListIcon,
   ListOrderedIcon,
@@ -28,6 +29,7 @@ const portableTextSchema = defineField({
   name: 'portable-text',
   of: [
     {type: 'break'},
+    {type: 'img'},
     {
       type: 'block',
       name: 'block',
@@ -122,6 +124,29 @@ const breakType = defineType({
   ],
 })
 
+const imageType = defineType({
+  name: 'img',
+  title: 'Image',
+  type: 'object',
+  icon: ImageIcon,
+  fields: [
+    defineField({
+      name: 'url',
+      type: 'string',
+      validation: (Rule) => Rule.required(),
+    }),
+  ],
+})
+
+export const ImageSchema = z.object({
+  schemaType: z.object({
+    name: z.literal('img'),
+  }),
+  value: z.object({
+    url: z.string(),
+  }),
+})
+
 const stockTickerType = defineType({
   name: 'stock-ticker',
   icon: ActivityIcon,
@@ -136,7 +161,7 @@ const stockTickerType = defineType({
 })
 
 export const schema = Schema.compile({
-  types: [portableTextSchema, breakType, stockTickerType],
+  types: [portableTextSchema, breakType, imageType, stockTickerType],
 }).get('portable-text')
 
 export const LinkAnnotationSchema = z.object({
