@@ -160,9 +160,6 @@ export function createWithEditableAPI(
         )
       },
       insertBlock: (type: SchemaType, value?: {[prop: string]: any}): Path => {
-        if (!editor.selection) {
-          throw new Error('The editor has no selection')
-        }
         const block = toSlateValue(
           [
             {
@@ -173,6 +170,36 @@ export function createWithEditableAPI(
           ],
           portableTextEditor,
         )[0] as unknown as Node
+
+        if (!editor.selection) {
+          const lastBlock = Array.from(
+            Editor.nodes(editor, {
+              match: (n) => !Editor.isEditor(n),
+              at: [],
+              reverse: true,
+            }),
+          )[0]
+
+          // If there is no selection, let's just insert the new block at the
+          // end of the document
+          Editor.insertNode(editor, block)
+
+          if (lastBlock && isEqualToEmptyEditor([lastBlock[0]], types)) {
+            // And if the last block was an empty text block, let's remove
+            // that too
+            Transforms.removeNodes(editor, {at: lastBlock[1]})
+          }
+
+          editor.onChange()
+
+          return (
+            toPortableTextRange(
+              fromSlateValue(editor.children, types.block.name, KEY_TO_VALUE_ELEMENT.get(editor)),
+              editor.selection,
+              types,
+            )?.focus.path ?? []
+          )
+        }
 
         const focusBlock = Array.from(
           Editor.nodes(editor, {
