@@ -14,7 +14,7 @@ import {
 } from '@portabletext/editor'
 import {PortableTextBlock} from '@sanity/types'
 import {useSelector} from '@xstate/react'
-import {TrashIcon} from 'lucide-react'
+import {ImageIcon, TrashIcon} from 'lucide-react'
 import {useEffect, useMemo, useState} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
 import {reverse} from 'remeda'
@@ -28,7 +28,7 @@ import {EditorPatchesPreview} from './editor-patches-preview'
 import {EditorPortableTextPreview} from './editor-portable-text-preview'
 import {EditorActorRef} from './playground-machine'
 import {PortableTextToolbar} from './portable-text-toolbar'
-import {LinkAnnotationSchema, schema, StockTickerSchema} from './schema'
+import {ImageSchema, LinkAnnotationSchema, schema, StockTickerSchema} from './schema'
 import {SelectionPreview} from './selection-preview'
 import {wait} from './wait'
 import {ErrorBoundary} from './components/error-boundary'
@@ -198,7 +198,25 @@ const renderAnnotation: RenderAnnotationFunction = (props) => {
 
 const renderBlock: RenderBlockFunction = (props) => {
   if (props.schemaType.name === 'break') {
-    return <Separator orientation="horizontal" className="my-2" />
+    return (
+      <Separator
+        orientation="horizontal"
+        className={`h-1 my-2${props.selected ? ' bg-blue-300 ' : ''}`}
+      />
+    )
+  }
+
+  const image = ImageSchema.safeParse(props).data
+
+  if (image) {
+    return (
+      <div
+        className={`flex items-center gap-1 border-2 rounded px-1 text-sm my-2${props.selected ? ' border-blue-300' : ''}`}
+      >
+        <ImageIcon className="size-4" />
+        {image.value.url}
+      </div>
+    )
   }
 
   return props.children
@@ -213,7 +231,11 @@ const renderChild: RenderChildFunction = (props) => {
 
   if (stockTicker) {
     return (
-      <span className="border-2 rounded px-1 font-mono text-sm">{stockTicker.value.symbol}</span>
+      <span
+        className={`border-2 rounded px-1 font-mono text-sm${props.selected ? ' border-blue-300' : ''}`}
+      >
+        {stockTicker.value.symbol}
+      </span>
     )
   }
 

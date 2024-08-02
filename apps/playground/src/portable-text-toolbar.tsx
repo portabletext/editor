@@ -214,7 +214,11 @@ function BlockObjectButton(props: {blockObject: ObjectSchemaType; editor: Portab
       variant="secondary"
       size="sm"
       onPress={() => {
-        PortableTextEditor.insertBlock(props.editor, props.blockObject)
+        PortableTextEditor.insertBlock(
+          props.editor,
+          props.blockObject,
+          props.blockObject.name === 'img' ? {url: 'http://example.com/image.png'} : {},
+        )
         PortableTextEditor.focus(props.editor)
       }}
     >
