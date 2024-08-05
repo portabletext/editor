@@ -16,6 +16,137 @@ const schema = Schema.compile({
 }).get('portable-text')
 
 describe(PortableTextEditor.insertBlock.name, () => {
+  test('Scenario: Inserting a custom block without a selection #1', async () => {
+    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const emptyTextBlock: PortableTextBlock = {
+      _key: 'ba',
+      _type: 'block',
+      children: [
+        {
+          _type: 'span',
+          _key: 'sa',
+          text: '',
+          marks: [],
+        },
+      ],
+      style: 'normal',
+    }
+    const initialValue: Array<PortableTextBlock> = [emptyTextBlock]
+    const onChange: (change: EditorChange) => void = jest.fn()
+
+    render(
+      <PortableTextEditor
+        ref={editorRef}
+        schemaType={schema}
+        value={initialValue}
+        keyGenerator={() => 'bb'}
+        onChange={onChange}
+      >
+        <PortableTextEditable />
+      </PortableTextEditor>,
+    )
+
+    // Given an empty text block
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
+    // And no selection
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(PortableTextEditor.getSelection(editorRef.current)).toBeNull()
+      }
+    })
+
+    // When a new image is inserted
+    await waitFor(() => {
+      if (editorRef.current) {
+        const imageBlockType = editorRef.current.schemaTypes.blockObjects.find(
+          (object) => object.name === 'image',
+        )!
+        PortableTextEditor.insertBlock(editorRef.current, imageBlockType)
+      }
+    })
+
+    // Then the empty text block is replaced with the new image
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
+          {_key: 'bb', _type: 'image'},
+        ])
+      }
+    })
+  })
+
+  test('Scenario: Inserting a custom block without a selection #2', async () => {
+    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const nonEmptyTextBlock: PortableTextBlock = {
+      _key: 'ba',
+      _type: 'block',
+      children: [
+        {
+          _type: 'span',
+          _key: 'xs',
+          text: 'foo',
+          marks: [],
+        },
+      ],
+      style: 'normal',
+    }
+    const initialValue: Array<PortableTextBlock> = [nonEmptyTextBlock]
+    const onChange: (change: EditorChange) => void = jest.fn()
+
+    render(
+      <PortableTextEditor
+        ref={editorRef}
+        schemaType={schema}
+        value={initialValue}
+        keyGenerator={() => 'bb'}
+        onChange={onChange}
+      >
+        <PortableTextEditable />
+      </PortableTextEditor>,
+    )
+
+    // Given an non-empty text block
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
+    // And no selection
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(PortableTextEditor.getSelection(editorRef.current)).toBeNull()
+      }
+    })
+
+    // When a new image is inserted
+    await waitFor(() => {
+      if (editorRef.current) {
+        const imageBlockType = editorRef.current.schemaTypes.blockObjects.find(
+          (object) => object.name === 'image',
+        )!
+        PortableTextEditor.insertBlock(editorRef.current, imageBlockType)
+      }
+    })
+
+    // Then the empty text block is replaced with the new image
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
+          nonEmptyTextBlock,
+          {_key: 'bb', _type: 'image'},
+        ])
+      }
+    })
+  })
+
   test('Scenario: Replacing an empty text block with a custom block', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
     const emptyTextBlock: PortableTextBlock = {
