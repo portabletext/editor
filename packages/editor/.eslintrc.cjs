@@ -110,6 +110,7 @@ const config = {
     'sort-imports': 'off', // handled by simple-import-sort
     'simple-import-sort/imports': 'error',
     'simple-import-sort/exports': 'error',
+    'max-nested-callbacks': 'off',
     'no-undef': 'off',
     'no-dupe-class-members': 'off', // doesn't work with TS overrides
     'no-shadow': 'off',
