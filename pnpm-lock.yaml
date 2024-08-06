@@ -347,7 +347,7 @@ importers:
         version: 7.18.0(eslint@8.57.0)(typescript@5.5.4)
       '@vitejs/plugin-react':
         specifier: ^4.3.1
-        version: 4.3.1(vite@4.5.3(@types/node@18.19.42)(terser@5.31.3))
+        version: 4.3.1(vite@5.3.5(@types/node@18.19.42)(terser@5.31.3))
       dotenv:
         specifier: ^16.4.5
         version: 16.4.5
@@ -421,8 +421,8 @@ importers:
         specifier: 5.5.4
         version: 5.5.4
       vite:
-        specifier: ^4.5.3
-        version: 4.5.3(@types/node@18.19.42)(terser@5.31.3)
+        specifier: ^5.3.5
+        version: 5.3.5(@types/node@18.19.42)(terser@5.31.3)
 
   packages/patches:
     dependencies:
