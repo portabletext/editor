@@ -79,15 +79,21 @@ describe('plugin:withPortableTextMarksModel', () => {
       ]
 
       const onChange = jest.fn()
+
+      render(
+        <PortableTextEditorTester
+          onChange={onChange}
+          ref={editorRef}
+          schemaType={schemaType}
+          value={initialValue}
+        />,
+      )
+
       await waitFor(() => {
-        render(
-          <PortableTextEditorTester
-            onChange={onChange}
-            ref={editorRef}
-            schemaType={schemaType}
-            value={initialValue}
-          />,
-        )
+        if (editorRef.current) {
+          expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+          expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+        }
       })
 
       await waitFor(() => {
@@ -382,6 +388,7 @@ Array [
         }
       })
     })
+
     it('toggles marks on children with annotation marks correctly', async () => {
       const editorRef: RefObject<PortableTextEditor> = createRef()
       const initialValue = [
@@ -413,61 +420,65 @@ Array [
         },
       ]
       const onChange = jest.fn()
-      await waitFor(() => {
-        render(
-          <PortableTextEditorTester
-            onChange={onChange}
-            ref={editorRef}
-            schemaType={schemaType}
-            value={initialValue}
-          />,
-        )
-      })
-      const editor = editorRef.current!
-      expect(editor).toBeDefined()
+
+      render(
+        <PortableTextEditorTester
+          onChange={onChange}
+          ref={editorRef}
+          schemaType={schemaType}
+          value={initialValue}
+        />,
+      )
 
       await waitFor(() => {
-        PortableTextEditor.focus(editor)
-        PortableTextEditor.select(editor, {
-          focus: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 0},
-          anchor: {path: [{_key: 'a'}, 'children', {_key: 'b1'}], offset: 12},
-        })
-        PortableTextEditor.toggleMark(editor, 'strong')
-        expect(PortableTextEditor.getValue(editor)).toMatchInlineSnapshot(`
-        Array [
-          Object {
-            "_key": "a",
-            "_type": "myTestBlockType",
-            "children": Array [
-              Object {
-                "_key": "a1",
-                "_type": "span",
-                "marks": Array [
-                  "abc",
-                  "strong",
-                ],
-                "text": "A link",
-              },
-              Object {
-                "_key": "a2",
-                "_type": "span",
-                "marks": Array [
-                  "strong",
-                ],
-                "text": ", not a link",
-              },
-            ],
-            "markDefs": Array [
-              Object {
-                "_key": "abc",
-                "_type": "link",
-                "href": "http://www.link.com",
-              },
-            ],
-            "style": "normal",
-          },
-        ]
-      `)
+        if (editorRef.current) {
+          expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+          expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+        }
+      })
+
+      await waitFor(() => {
+        if (editorRef.current) {
+          PortableTextEditor.focus(editorRef.current)
+          PortableTextEditor.select(editorRef.current, {
+            focus: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 0},
+            anchor: {path: [{_key: 'a'}, 'children', {_key: 'a2'}], offset: 12},
+          })
+          PortableTextEditor.toggleMark(editorRef.current, 'strong')
+        }
+      })
+
+      await waitFor(() => {
+        if (editorRef.current) {
+          expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
+            {
+              _key: 'a',
+              _type: 'myTestBlockType',
+              children: [
+                {
+                  _key: 'a1',
+                  _type: 'span',
+                  marks: ['abc', 'strong'],
+                  text: 'A link',
+                },
+                {
+                  _key: 'a2',
+                  _type: 'span',
+                  marks: ['strong'],
+                  text: ', not a link',
+                },
+              ],
+              markDefs: [
+                {
+                  _type: 'link',
+                  _key: 'abc',
+                  href: 'http://www.link.com',
+                },
+              ],
+              style: 'normal',
+            },
+          ])
+        }
       })
     })
 
@@ -605,11 +616,11 @@ Array [
       const editorRef: RefObject<PortableTextEditor> = createRef()
       const initialValue = [
         {
-          _key: '1987f99da4a2',
+          _key: 'ba',
           _type: 'myTestBlockType',
           children: [
             {
-              _key: '3693e789451c',
+              _key: 'sa',
               _type: 'span',
               marks: [],
               text: '1',
@@ -619,19 +630,19 @@ Array [
           style: 'normal',
         },
         {
-          _key: '2f55670a03bb',
+          _key: 'bb',
           _type: 'myTestBlockType',
           children: [
             {
-              _key: '9f5ed7dee7ab',
+              _key: 'sb',
               _type: 'span',
-              marks: ['bab319ad3a9d'],
+              marks: ['aa'],
               text: '2',
             },
           ],
           markDefs: [
             {
-              _key: 'bab319ad3a9d',
+              _key: 'aa',
               _type: 'link',
               href: 'http://www.123.com',
             },
@@ -640,82 +651,87 @@ Array [
         },
       ]
       const sel: EditorSelection = {
-        focus: {path: [{_key: '2f55670a03bb'}, 'children', {_key: '9f5ed7dee7ab'}], offset: 0},
-        anchor: {path: [{_key: '2f55670a03bb'}, 'children', {_key: '9f5ed7dee7ab'}], offset: 0},
+        focus: {path: [{_key: 'bb'}, 'children', {_key: 'sb'}], offset: 0},
+        anchor: {path: [{_key: 'bb'}, 'children', {_key: 'sb'}], offset: 0},
       }
       const onChange = jest.fn()
+
+      render(
+        <PortableTextEditorTester
+          onChange={onChange}
+          ref={editorRef}
+          schemaType={schemaType}
+          value={initialValue}
+        />,
+      )
+
       await waitFor(() => {
-        render(
-          <PortableTextEditorTester
-            onChange={onChange}
-            ref={editorRef}
-            schemaType={schemaType}
-            value={initialValue}
-          />,
-        )
+        if (editorRef.current) {
+          expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+          expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+        }
       })
 
-      const editor = editorRef.current!
-      expect(editor).toBeDefined()
+      await waitFor(() => {
+        if (editorRef.current) {
+          PortableTextEditor.select(editorRef.current, sel)
+          PortableTextEditor.insertBreak(editorRef.current)
+        }
+      })
 
       await waitFor(() => {
-        PortableTextEditor.select(editor, sel)
-        PortableTextEditor.focus(editor)
-        PortableTextEditor.insertBreak(editor)
-        expect(PortableTextEditor.getValue(editor)).toMatchInlineSnapshot(`
-        Array [
-          Object {
-            "_key": "1987f99da4a2",
-            "_type": "myTestBlockType",
-            "children": Array [
-              Object {
-                "_key": "3693e789451c",
-                "_type": "span",
-                "marks": Array [],
-                "text": "1",
-              },
-            ],
-            "markDefs": Array [],
-            "style": "normal",
-          },
-          Object {
-            "_key": "3",
-            "_type": "myTestBlockType",
-            "children": Array [
-              Object {
-                "_key": "2",
-                "_type": "span",
-                "marks": Array [],
-                "text": "",
-              },
-            ],
-            "markDefs": Array [],
-            "style": "normal",
-          },
-          Object {
-            "_key": "2f55670a03bb",
-            "_type": "myTestBlockType",
-            "children": Array [
-              Object {
-                "_key": "9f5ed7dee7ab",
-                "_type": "span",
-                "marks": Array [
-                  "bab319ad3a9d",
-                ],
-                "text": "2",
-              },
-            ],
-            "markDefs": Array [
-              Object {
-                "_key": "bab319ad3a9d",
-                "_type": "link",
-                "href": "http://www.123.com",
-              },
-            ],
-            "style": "normal",
-          },
-        ]
-      `)
+        if (editorRef.current) {
+          expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
+            {
+              _key: 'ba',
+              _type: 'myTestBlockType',
+              children: [
+                {
+                  _key: 'sa',
+                  _type: 'span',
+                  marks: [],
+                  text: '1',
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _key: '3',
+              _type: 'myTestBlockType',
+              children: [
+                {
+                  _key: '2',
+                  _type: 'span',
+                  marks: [],
+                  text: '',
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _key: 'bb',
+              _type: 'myTestBlockType',
+              children: [
+                {
+                  _key: 'sb',
+                  _type: 'span',
+                  marks: ['aa'],
+                  text: '2',
+                },
+              ],
+              markDefs: [
+                {
+                  _key: 'aa',
+                  _type: 'link',
+                  href: 'http://www.123.com',
+                },
+              ],
+              style: 'normal',
+            },
+          ])
+        }
       })
     })
   })
@@ -724,11 +740,11 @@ Array [
       const editorRef: RefObject<PortableTextEditor> = createRef()
       const initialValue = [
         {
-          _key: '1987f99da4a2',
+          _key: 'ba',
           _type: 'myTestBlockType',
           children: [
             {
-              _key: '3693e789451c',
+              _key: 'sa',
               _type: 'span',
               marks: [],
               text: '',
@@ -740,32 +756,38 @@ Array [
       ]
       const onChange = jest.fn()
 
-      await waitFor(() => {
-        render(
-          <PortableTextEditorTester
-            onChange={onChange}
-            ref={editorRef}
-            schemaType={schemaType}
-            value={initialValue}
-          />,
-        )
-      })
-
-      const editor = editorRef.current!
-      expect(editor).toBeDefined()
+      render(
+        <PortableTextEditorTester
+          onChange={onChange}
+          ref={editorRef}
+          schemaType={schemaType}
+          value={initialValue}
+        />,
+      )
 
       await waitFor(() => {
-        PortableTextEditor.focus(editor)
+        if (editorRef.current) {
+          expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+          expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+        }
       })
-      const currentSelectionObject = PortableTextEditor.getSelection(editor)
 
       await waitFor(() => {
-        PortableTextEditor.toggleMark(editor, 'strong')
+        if (editorRef.current) {
+          PortableTextEditor.focus(editorRef.current)
+        }
       })
-      const nextSelectionObject = PortableTextEditor.getSelection(editor)
-      expect(currentSelectionObject).toEqual(nextSelectionObject)
-      expect(currentSelectionObject === nextSelectionObject).toBe(false)
-      expect(onChange).toHaveBeenCalledWith({type: 'selection', selection: nextSelectionObject})
+
+      await waitFor(() => {
+        if (editorRef.current) {
+          const currentSelectionObject = PortableTextEditor.getSelection(editorRef.current)
+          PortableTextEditor.toggleMark(editorRef.current, 'strong')
+          const nextSelectionObject = PortableTextEditor.getSelection(editorRef.current)
+          expect(currentSelectionObject).toEqual(nextSelectionObject)
+          expect(currentSelectionObject === nextSelectionObject).toBe(false)
+          expect(onChange).toHaveBeenCalledWith({type: 'selection', selection: nextSelectionObject})
+        }
+      })
     })
 
     it('should return active marks that cover the whole selection', async () => {

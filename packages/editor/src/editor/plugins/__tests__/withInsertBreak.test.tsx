@@ -42,9 +42,9 @@ describe('plugin:withInsertBreak: "enter"', () => {
       focus: {path: [{_key: 'b'}, 'children', {_key: 'b1'}], offset: 0},
       anchor: {path: [{_key: 'b'}, 'children', {_key: 'b1'}], offset: 0},
     }
-
     const editorRef: RefObject<PortableTextEditor> = createRef()
     const onChange = jest.fn()
+
     render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -53,6 +53,14 @@ describe('plugin:withInsertBreak: "enter"', () => {
         value={initialValue}
       />,
     )
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
     const editor = editorRef.current
     const inlineType = editor?.schemaTypes.inlineObjects.find((t) => t.name === 'someObject')
     await waitFor(async () => {
@@ -102,9 +110,9 @@ describe('plugin:withInsertBreak: "enter"', () => {
       markDefs: [],
       style: 'normal',
     }
-
     const editorRef: RefObject<PortableTextEditor> = createRef()
     const onChange = jest.fn()
+
     render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -113,6 +121,14 @@ describe('plugin:withInsertBreak: "enter"', () => {
         value={[emptyBlock]}
       />,
     )
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({type: 'value', value: [emptyBlock]})
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
     const editor = editorRef.current
     const inlineType = editor?.schemaTypes.inlineObjects.find((t) => t.name === 'someObject')
     await waitFor(async () => {

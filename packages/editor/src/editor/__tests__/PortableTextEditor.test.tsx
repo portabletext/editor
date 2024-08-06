@@ -127,6 +127,14 @@ describe('initialization', () => {
         value={initialValue}
       />,
     )
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
     await waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
@@ -158,10 +166,16 @@ describe('initialization', () => {
         value={initialValue}
       />,
     )
+
     await waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
         expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
         const sel = PortableTextEditor.getSelection(editorRef.current)
         PortableTextEditor.focus(editorRef.current)
 

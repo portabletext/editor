@@ -4,21 +4,19 @@ import {parseHotkey} from 'is-hotkey-esm'
 import {act} from 'react'
 
 export async function triggerKeyboardEvent(hotkey: string, element: Element): Promise<void> {
-  return act(async () => {
-    const eventProps = parseHotkey(hotkey)
-    const values = hotkey.split('+')
+  const eventProps = parseHotkey(hotkey)
+  const values = hotkey.split('+')
 
-    fireEvent(
-      element,
-      new window.KeyboardEvent('keydown', {
-        key: values[values.length - 1],
-        code: `${eventProps.which}`,
-        keyCode: eventProps.which,
-        bubbles: true,
-        ...eventProps,
-      }),
-    )
-  })
+  fireEvent(
+    element,
+    new window.KeyboardEvent('keydown', {
+      key: values[values.length - 1],
+      code: `${eventProps.which}`,
+      keyCode: eventProps.which,
+      bubbles: true,
+      ...eventProps,
+    }),
+  )
 }
 
 export async function getEditableElement(component: ReturnType<typeof render>): Promise<Element> {

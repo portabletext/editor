@@ -53,6 +53,14 @@ describe('plugin:withUndoRedo', () => {
         value={initialValue}
       />,
     )
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
     await waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
@@ -88,6 +96,7 @@ describe('plugin:withUndoRedo', () => {
   it('preserves the keys when redoing ', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
     const onChange = jest.fn()
+
     render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -96,6 +105,14 @@ describe('plugin:withUndoRedo', () => {
         value={initialValue}
       />,
     )
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
     await waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
