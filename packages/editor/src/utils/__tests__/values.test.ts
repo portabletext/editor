@@ -101,6 +101,7 @@ Array [
       ],
       {schemaTypes},
     )
+
     expect(result).toMatchInlineSnapshot(`
 Array [
   Object {

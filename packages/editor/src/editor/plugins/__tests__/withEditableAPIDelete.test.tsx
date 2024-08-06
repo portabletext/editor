@@ -53,6 +53,14 @@ describe('plugin:withEditableAPI: .delete()', () => {
         value={initialValue}
       />,
     )
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
     await waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
@@ -95,6 +103,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
         value={initialValue}
       />,
     )
+
     await waitFor(() => {
       expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
       expect(onChange).toHaveBeenCalledWith({type: 'ready'})
@@ -140,6 +149,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
   it('deletes children', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
     const onChange = jest.fn()
+
     render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -151,16 +161,32 @@ describe('plugin:withEditableAPI: .delete()', () => {
 
     await waitFor(() => {
       if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
         PortableTextEditor.select(editorRef.current, {
           focus: {path: [{_key: 'b'}, 'children', {_key: 'b1'}], offset: 5},
           anchor: {path: [{_key: 'b'}, 'children', {_key: 'b1'}], offset: 7},
         })
-        PortableTextEditor.focus(editorRef.current)
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
         PortableTextEditor.delete(
           editorRef.current,
           PortableTextEditor.getSelection(editorRef.current),
           {mode: 'children'},
         )
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toMatchInlineSnapshot(`
                   Array [
                     Object {
@@ -196,9 +222,11 @@ describe('plugin:withEditableAPI: .delete()', () => {
       }
     })
   })
+
   it('deletes selected', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
     const onChange = jest.fn()
+
     render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -210,34 +238,48 @@ describe('plugin:withEditableAPI: .delete()', () => {
 
     await waitFor(() => {
       if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
         PortableTextEditor.select(editorRef.current, {
           focus: {path: [{_key: 'b'}, 'children', {_key: 'b1'}], offset: 5},
           anchor: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 0},
         })
-        PortableTextEditor.focus(editorRef.current)
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
         PortableTextEditor.delete(
           editorRef.current,
           PortableTextEditor.getSelection(editorRef.current),
           {mode: 'selected'},
         )
-        expect(PortableTextEditor.getValue(editorRef.current)).toMatchInlineSnapshot(`
-                  Array [
-                    Object {
-                      "_key": "b",
-                      "_type": "myTestBlockType",
-                      "children": Array [
-                        Object {
-                          "_key": "b1",
-                          "_type": "span",
-                          "marks": Array [],
-                          "text": " B",
-                        },
-                      ],
-                      "markDefs": Array [],
-                      "style": "normal",
-                    },
-                  ]
-              `)
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
+          {
+            _key: 'b',
+            _type: 'myTestBlockType',
+            children: [
+              {
+                _key: 'b1',
+                _type: 'span',
+                marks: [],
+                text: ' B',
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
       }
     })
   })
