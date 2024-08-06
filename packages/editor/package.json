@@ -52,6 +52,7 @@
     "prepublishOnly": "turbo run build",
     "test": "jest",
     "test:e2e": "jest --config=e2e-tests/e2e.config.cjs",
+    "test:e2e:watch": "jest --config=e2e-tests/e2e.config.cjs --watch",
     "test:watch": "jest --watch"
   },
   "dependencies": {

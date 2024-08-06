@@ -30,11 +30,16 @@
       "dependsOn": ["^build"],
       "outputs": [""]
     },
+    "test:watch": {
+      "dependsOn": ["^build"],
+      "persistent": true,
+      "cache": false
+    },
     "test:e2e": {
       "dependsOn": ["^build"],
       "outputs": [""]
     },
-    "test:watch": {
+    "test:e2e:watch": {
       "dependsOn": ["^build"],
       "persistent": true,
       "cache": false

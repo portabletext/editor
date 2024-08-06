@@ -21,6 +21,7 @@
     "lint:fix": "turbo lint:fix",
     "test": "turbo test",
     "test:e2e": "turbo test:e2e",
+    "test:e2e:watch": "turbo test:e2e:watch",
     "test:watch": "turbo test:watch"
   },
   "lint-staged": {
