@@ -391,8 +391,8 @@ importers:
         specifier: ^29.7.0
         version: 29.7.0(@types/node@18.19.42)
       jest-dev-server:
-        specifier: ^9.0.2
-        version: 9.0.2(debug@4.3.6)
+        specifier: ^10.0.0
+        version: 10.0.0(debug@4.3.6)
       jest-environment-jsdom:
         specifier: ^29.7.0
         version: 29.7.0
@@ -5601,8 +5601,8 @@ packages:
       ts-node:
         optional: true
 
-  jest-dev-server@9.0.2:
-    resolution: {integrity: sha512-Zc/JB0IlNNrpXkhBw+h86cGrde/Mey52KvF+FER2eyrtYJTHObOwW7Iarxm3rPyTKby5+3Y2QZtl8pRz/5GCxg==}
+  jest-dev-server@10.0.0:
+    resolution: {integrity: sha512-FtyBBDxrAIfTX3hyKSOwj5KU6Z7fFLew5pQYOFpwyf+qpPpULL8aYxtsFkbkAwcs+Mb7qhcNbVLeiWsLOd7CKw==}
     engines: {node: '>=16'}
 
   jest-diff@29.7.0:
@@ -7209,8 +7209,8 @@ packages:
   space-separated-tokens@1.1.5:
     resolution: {integrity: sha512-q/JSVd1Lptzhf5bkYm4ob4iWPjx0KiRe3sRFBNrVqbJkFaBm5vbbowy1mymoPNLRa52+oadOhJ+K49wsSeSjTA==}
 
-  spawnd@9.0.2:
-    resolution: {integrity: sha512-nl8DVHEDQ57IcKakzpjanspVChkMpGLuVwMR/eOn9cXE55Qr6luD2Kn06sA0ootRMdgrU4tInN6lA6ohTNvysw==}
+  spawnd@10.0.0:
+    resolution: {integrity: sha512-6GKcakMTryb5b1SWCvdubCDHEsR2k+5VZUD5G19umZRarkvj1RyCGyizcqhjewI7cqZo8fTVD8HpnDZbVOLMtg==}
     engines: {node: '>=16'}
 
   spdx-correct@3.2.0:
@@ -14730,13 +14730,13 @@ snapshots:
       - babel-plugin-macros
       - supports-color
 
-  jest-dev-server@9.0.2(debug@4.3.6):
+  jest-dev-server@10.0.0(debug@4.3.6):
     dependencies:
       chalk: 4.1.2
       cwd: 0.10.0
       find-process: 1.4.7
       prompts: 2.4.2
-      spawnd: 9.0.2
+      spawnd: 10.0.0
       tree-kill: 1.2.2
       wait-on: 7.2.0(debug@4.3.6)
     transitivePeerDependencies:
@@ -16982,7 +16982,7 @@ snapshots:
 
   space-separated-tokens@1.1.5: {}
 
-  spawnd@9.0.2:
+  spawnd@10.0.0:
     dependencies:
       signal-exit: 4.1.0
       tree-kill: 1.2.2
