@@ -8,13 +8,6 @@ import {type EditorSelection} from '../..'
 import {PortableTextEditor} from '../PortableTextEditor'
 import {PortableTextEditorTester, schemaType} from './PortableTextEditorTester'
 
-const helloBlock: PortableTextBlock = {
-  _key: '123',
-  _type: 'myTestBlockType',
-  markDefs: [],
-  children: [{_key: '567', _type: 'span', text: 'Hello', marks: []}],
-}
-
 const renderPlaceholder = () => 'Jot something down here'
 
 describe('initialization', () => {
@@ -89,6 +82,12 @@ describe('initialization', () => {
     })
   })
   it('takes value from props and confirms it by emitting value change event', async () => {
+    const helloBlock: PortableTextBlock = {
+      _key: '123',
+      _type: 'myTestBlockType',
+      markDefs: [],
+      children: [{_key: '567', _type: 'span', text: 'Hello', marks: []}],
+    }
     const initialValue = [helloBlock]
     const onChange = jest.fn()
     const editorRef = createRef<PortableTextEditor>()
@@ -110,6 +109,12 @@ describe('initialization', () => {
   })
 
   it('takes initial selection from props', async () => {
+    const helloBlock: PortableTextBlock = {
+      _key: '123',
+      _type: 'myTestBlockType',
+      markDefs: [],
+      children: [{_key: '567', _type: 'span', text: 'Hello', marks: []}],
+    }
     const editorRef: RefObject<PortableTextEditor> = createRef()
     const initialValue = [helloBlock]
     const initialSelection: EditorSelection = {
@@ -127,6 +132,14 @@ describe('initialization', () => {
         value={initialValue}
       />,
     )
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
     await waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
@@ -136,6 +149,12 @@ describe('initialization', () => {
   })
 
   it('updates editor selection from new prop and keeps object equality in editor.getSelection()', async () => {
+    const helloBlock: PortableTextBlock = {
+      _key: '123',
+      _type: 'myTestBlockType',
+      markDefs: [],
+      children: [{_key: '567', _type: 'span', text: 'Hello', marks: []}],
+    }
     const editorRef: RefObject<PortableTextEditor> = createRef()
     const initialValue = [helloBlock]
     const initialSelection: EditorSelection = {
@@ -158,10 +177,16 @@ describe('initialization', () => {
         value={initialValue}
       />,
     )
+
     await waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
         expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
         const sel = PortableTextEditor.getSelection(editorRef.current)
         PortableTextEditor.focus(editorRef.current)
 
@@ -227,6 +252,12 @@ describe('initialization', () => {
     })
   })
   it('validates a non-initial value', async () => {
+    const helloBlock: PortableTextBlock = {
+      _key: '123',
+      _type: 'myTestBlockType',
+      markDefs: [],
+      children: [{_key: '567', _type: 'span', text: 'Hello', marks: []}],
+    }
     const editorRef: RefObject<PortableTextEditor> = createRef()
     let value: PortableTextBlock[] = [helloBlock]
     const initialSelection: EditorSelection = {
@@ -303,6 +334,12 @@ describe('initialization', () => {
     })
   })
   it("doesn't crash when containing a invalid block somewhere inside the content", async () => {
+    const helloBlock: PortableTextBlock = {
+      _key: '123',
+      _type: 'myTestBlockType',
+      markDefs: [],
+      children: [{_key: '567', _type: 'span', text: 'Hello', marks: []}],
+    }
     const editorRef: RefObject<PortableTextEditor> = createRef()
     const initialValue: PortableTextBlock[] = [
       helloBlock,

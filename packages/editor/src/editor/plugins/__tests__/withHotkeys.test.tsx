@@ -49,7 +49,7 @@ describe('plugin:withHotkeys: .ArrowDown', () => {
     const editor = editorRef.current
     const inlineType = editor?.schemaTypes.inlineObjects.find((t) => t.name === 'someObject')
     await waitFor(async () => {
-      if (editor && inlineType && element) {
+      if (editor && inlineType && editor) {
         PortableTextEditor.focus(editor)
         PortableTextEditor.select(editor, initialSelection)
         PortableTextEditor.insertBreak(editor)

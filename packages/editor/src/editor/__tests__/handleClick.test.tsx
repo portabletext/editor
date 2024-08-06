@@ -44,16 +44,22 @@ describe('adds empty text block if its needed', () => {
         value={initialValue}
       />,
     )
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
     const element = await getEditableElement(component)
 
-    const editor = editorRef.current
-    const inlineType = editor?.schemaTypes.inlineObjects.find((t) => t.name === 'someObject')
     await waitFor(async () => {
-      if (editor && inlineType && element) {
-        PortableTextEditor.focus(editor)
-        PortableTextEditor.select(editor, initialSelection)
+      if (editorRef.current && element) {
+        PortableTextEditor.focus(editorRef.current)
+        PortableTextEditor.select(editorRef.current, initialSelection)
         fireEvent.click(element)
-        expect(PortableTextEditor.getValue(editor)).toEqual([initialValue[0], newBlock])
+        expect(PortableTextEditor.getValue(editorRef.current)).toEqual([initialValue[0], newBlock])
       }
     })
   })
@@ -96,17 +102,16 @@ describe('adds empty text block if its needed', () => {
     )
     const element = await getEditableElement(component)
 
-    const editor = editorRef.current
-    const inlineType = editor?.schemaTypes.inlineObjects.find((t) => t.name === 'someObject')
     await waitFor(async () => {
-      if (editor && inlineType && element) {
-        PortableTextEditor.focus(editor)
-        PortableTextEditor.select(editor, initialSelection)
+      if (editorRef.current && element) {
+        PortableTextEditor.focus(editorRef.current)
+        PortableTextEditor.select(editorRef.current, initialSelection)
         fireEvent.click(element)
-        expect(PortableTextEditor.getValue(editor)).toEqual(initialValue)
+        expect(PortableTextEditor.getValue(editorRef.current)).toEqual(initialValue)
       }
     })
   })
+
   it('should not add blocks if the last element is void, but its not focused on that one', async () => {
     const initialValue = [
       {
@@ -134,8 +139,8 @@ describe('adds empty text block if its needed', () => {
     ]
 
     const initialSelection = {
-      focus: {path: [{_key: 'b'}, 'children', {_key: 'b1'}], offset: 2},
-      anchor: {path: [{_key: 'b'}, 'children', {_key: 'b1'}], offset: 2},
+      focus: {path: [{_key: 'b'}, 'children', {_key: 'b1'}], offset: 0},
+      anchor: {path: [{_key: 'b'}, 'children', {_key: 'b1'}], offset: 0},
     }
 
     const editorRef: RefObject<PortableTextEditor> = createRef()
@@ -148,19 +153,26 @@ describe('adds empty text block if its needed', () => {
         value={initialValue}
       />,
     )
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
     const element = await getEditableElement(component)
 
-    const editor = editorRef.current
-    const inlineType = editor?.schemaTypes.inlineObjects.find((t) => t.name === 'someObject')
     await waitFor(async () => {
-      if (editor && inlineType && element) {
-        PortableTextEditor.focus(editor)
-        PortableTextEditor.select(editor, initialSelection)
+      if (editorRef.current && element) {
+        PortableTextEditor.focus(editorRef.current)
+        PortableTextEditor.select(editorRef.current, initialSelection)
         fireEvent.click(element)
-        expect(PortableTextEditor.getValue(editor)).toEqual(initialValue)
+        expect(PortableTextEditor.getValue(editorRef.current)).toEqual(initialValue)
       }
     })
   })
+
   it('should not add blocks if the last element is void, and its focused on that one when clicking', async () => {
     const initialValue = [
       {
@@ -202,6 +214,14 @@ describe('adds empty text block if its needed', () => {
         value={initialValue}
       />,
     )
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
     const element = await getEditableElement(component)
 
     const editor = editorRef.current

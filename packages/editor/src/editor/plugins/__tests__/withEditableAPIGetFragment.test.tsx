@@ -51,6 +51,7 @@ describe('plugin:withEditableAPI: .getFragment()', () => {
   it('can get a Portable Text fragment of the current selection in a single block', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
     const onChange = jest.fn()
+
     render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -63,6 +64,14 @@ describe('plugin:withEditableAPI: .getFragment()', () => {
       focus: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 6},
       anchor: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 7},
     }
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
     await waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
@@ -74,9 +83,11 @@ describe('plugin:withEditableAPI: .getFragment()', () => {
       }
     })
   })
+
   it('can get a Portable Text fragment of the current selection in multiple blocks', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
     const onChange = jest.fn()
+
     render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -89,6 +100,14 @@ describe('plugin:withEditableAPI: .getFragment()', () => {
       anchor: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 6},
       focus: {path: [{_key: 'b'}, 'children', {_key: 'b3'}], offset: 9},
     }
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
     await waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)

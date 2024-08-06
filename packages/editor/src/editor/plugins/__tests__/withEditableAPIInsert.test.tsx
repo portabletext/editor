@@ -51,6 +51,7 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
   it('inserts child nodes correctly', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
     const onChange = jest.fn()
+
     render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -59,102 +60,105 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
         value={initialValue}
       />,
     )
-    const editor = editorRef.current
-    const inlineType = editor?.schemaTypes.inlineObjects.find((t) => t.name === 'someObject')
+
     await waitFor(() => {
-      if (editor && inlineType) {
-        PortableTextEditor.focus(editor)
-        PortableTextEditor.select(editor, initialSelection)
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        PortableTextEditor.focus(editorRef.current)
+        PortableTextEditor.select(editorRef.current, initialSelection)
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        const inlineType = editorRef.current.schemaTypes.inlineObjects.find(
+          (t) => t.name === 'someObject',
+        )!
         PortableTextEditor.insertChild(editorRef.current, inlineType, {color: 'red'})
-        expect(PortableTextEditor.getValue(editorRef.current)).toMatchInlineSnapshot(`
-          Array [
-            Object {
-              "_key": "a",
-              "_type": "myTestBlockType",
-              "children": Array [
-                Object {
-                  "_key": "a1",
-                  "_type": "span",
-                  "marks": Array [],
-                  "text": "Block A",
-                },
-                Object {
-                  "_key": "3",
-                  "_type": "someObject",
-                  "color": "red",
-                },
-                Object {
-                  "_key": "4",
-                  "_type": "span",
-                  "marks": Array [],
-                  "text": "",
-                },
-              ],
-              "markDefs": Array [],
-              "style": "normal",
-            },
-          ]
-        `)
-        PortableTextEditor.insertChild(editor, editor.schemaTypes.span, {text: ' '})
-        expect(PortableTextEditor.getValue(editor)).toMatchInlineSnapshot(`
-          Array [
-            Object {
-              "_key": "a",
-              "_type": "myTestBlockType",
-              "children": Array [
-                Object {
-                  "_key": "a1",
-                  "_type": "span",
-                  "marks": Array [],
-                  "text": "Block A",
-                },
-                Object {
-                  "_key": "3",
-                  "_type": "someObject",
-                  "color": "red",
-                },
-                Object {
-                  "_key": "7",
-                  "_type": "span",
-                  "marks": Array [],
-                  "text": " ",
-                },
-              ],
-              "markDefs": Array [],
-              "style": "normal",
-            },
-          ]
-        `)
-        const sel = PortableTextEditor.getSelection(editor)
-        expect(sel).toMatchInlineSnapshot(`
-          Object {
-            "anchor": Object {
-              "offset": 1,
-              "path": Array [
-                Object {
-                  "_key": "a",
-                },
-                "children",
-                Object {
-                  "_key": "7",
-                },
-              ],
-            },
-            "backward": false,
-            "focus": Object {
-              "offset": 1,
-              "path": Array [
-                Object {
-                  "_key": "a",
-                },
-                "children",
-                Object {
-                  "_key": "7",
-                },
-              ],
-            },
-          }
-        `)
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
+          {
+            _key: 'a',
+            _type: 'myTestBlockType',
+            children: [
+              {
+                _key: 'a1',
+                _type: 'span',
+                marks: [],
+                text: 'Block A',
+              },
+              {
+                _key: '3',
+                _type: 'someObject',
+                color: 'red',
+              },
+              {
+                _key: '4',
+                _type: 'span',
+                marks: [],
+                text: '',
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        PortableTextEditor.insertChild(editorRef.current, editorRef.current.schemaTypes.span, {
+          text: ' ',
+        })
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
+          {
+            _key: 'a',
+            _type: 'myTestBlockType',
+            children: [
+              {
+                _key: 'a1',
+                _type: 'span',
+                marks: [],
+                text: 'Block A',
+              },
+              {
+                _key: '3',
+                _type: 'someObject',
+                color: 'red',
+              },
+              {
+                _key: '7',
+                _type: 'span',
+                marks: [],
+                text: ' ',
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+
+        expect(PortableTextEditor.getSelection(editorRef.current)).toEqual({
+          anchor: {path: [{_key: 'a'}, 'children', {_key: '7'}], offset: 1},
+          focus: {path: [{_key: 'a'}, 'children', {_key: '7'}], offset: 1},
+          backward: false,
+        })
       }
     })
   })
@@ -163,29 +167,62 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
 describe('plugin:withEditableAPI: .insertBlock()', () => {
   it('should not add empty blank blocks: empty block', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
+    const value = [
+      {
+        _key: 'emptyBlock',
+        _type: 'myTestBlockType',
+        children: [
+          {
+            _key: 'emptySpan',
+            _type: 'span',
+            marks: [],
+            text: '',
+          },
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
     const onChange = jest.fn()
+
     render(
       <PortableTextEditorTester
-        onChange={onChange}
         ref={editorRef}
         schemaType={schemaType}
         value={emptyTextBlock}
+        onChange={onChange}
       />,
     )
-    const editor = editorRef.current
-    const someObject = editor?.schemaTypes.inlineObjects.find((t) => t.name === 'someObject')
 
     await waitFor(() => {
-      if (editorRef.current && someObject) {
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({type: 'value', value})
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
         PortableTextEditor.select(editorRef.current, emptyBlockSelection)
-        PortableTextEditor.insertBlock(editorRef.current, someObject, {color: 'red'})
+      }
+    })
 
+    await waitFor(() => {
+      if (editorRef.current) {
+        const someObject = editorRef.current.schemaTypes.inlineObjects.find(
+          (t) => t.name === 'someObject',
+        )!
+
+        PortableTextEditor.insertBlock(editorRef.current, someObject, {color: 'red'})
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           {_key: '2', _type: 'someObject', color: 'red'},
         ])
-      } else {
-        throw new Error('No editor or someObject')
       }
     })
   })
@@ -193,34 +230,54 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
   it('should not add empty blank blocks: non-empty block', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
     const onChange = jest.fn()
+
     render(
       <PortableTextEditorTester
-        onChange={onChange}
         ref={editorRef}
         schemaType={schemaType}
         value={initialValue}
+        onChange={onChange}
       />,
     )
-    const editor = editorRef.current
-    const someObject = editor?.schemaTypes.inlineObjects.find((t) => t.name === 'someObject')
 
     await waitFor(() => {
-      if (editorRef.current && someObject) {
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
         PortableTextEditor.select(editorRef.current, initialSelection)
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        const someObject = editorRef.current.schemaTypes.inlineObjects.find(
+          (t) => t.name === 'someObject',
+        )!
+
         PortableTextEditor.insertBlock(editorRef.current, someObject, {color: 'red'})
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           ...initialValue,
           {_key: '2', _type: 'someObject', color: 'red'},
         ])
-      } else {
-        throw new Error('No editor or someObject')
       }
     })
   })
+
   it('should be inserted before if focus is on start of block', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
     const onChange = jest.fn()
+
     render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -229,117 +286,185 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
         value={initialValue}
       />,
     )
-    const editor = editorRef.current
-    const someObject = editor?.schemaTypes.inlineObjects.find((t) => t.name === 'someObject')
 
     await waitFor(() => {
-      if (editorRef.current && someObject) {
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
         PortableTextEditor.select(editorRef.current, {
           focus: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 0},
           anchor: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 0},
         })
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        const someObject = editorRef.current.schemaTypes.inlineObjects.find(
+          (t) => t.name === 'someObject',
+        )!
         PortableTextEditor.insertBlock(editorRef.current, someObject, {color: 'red'})
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           {_key: '2', _type: 'someObject', color: 'red'},
           ...initialValue,
         ])
-      } else {
-        throw new Error('No editor or someObject')
       }
     })
   })
+
   it('should not add empty blank blocks: non text block', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
     const value = [...initialValue, {_key: 'b', _type: 'someObject', color: 'red'}]
+    const onChange = jest.fn()
+
     render(
       <PortableTextEditorTester
-        onChange={onChange}
         ref={editorRef}
         schemaType={schemaType}
         value={value}
+        onChange={onChange}
       />,
     )
-    const editor = editorRef.current
-    const someObject = editor?.schemaTypes.inlineObjects.find((t) => t.name === 'someObject')
 
     await waitFor(() => {
-      if (editorRef.current && someObject) {
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({type: 'value', value})
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
         // Focus the `someObject` block
         PortableTextEditor.select(editorRef.current, {
           focus: {path: [{_key: 'b'}], offset: 0},
           anchor: {path: [{_key: 'b'}], offset: 0},
         })
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        const someObject = editorRef.current.schemaTypes.inlineObjects.find(
+          (t) => t.name === 'someObject',
+        )!
         PortableTextEditor.insertBlock(editorRef.current, someObject, {color: 'yellow'})
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           ...value,
           {_key: '2', _type: 'someObject', color: 'yellow'},
         ])
-      } else {
-        throw new Error('No editor or someObject')
       }
     })
   })
+
   it('should not add empty blank blocks: in between blocks', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
     const value = [...initialValue, {_key: 'b', _type: 'someObject', color: 'red'}]
+    const onChange = jest.fn()
+
     render(
       <PortableTextEditorTester
-        onChange={onChange}
         ref={editorRef}
         schemaType={schemaType}
         value={value}
+        onChange={onChange}
       />,
     )
-    const editor = editorRef.current
-    const someObject = editor?.schemaTypes.inlineObjects.find((t) => t.name === 'someObject')
 
     await waitFor(() => {
-      if (editorRef.current && someObject) {
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({type: 'value', value})
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
         // Focus the `text` block
         PortableTextEditor.select(editorRef.current, initialSelection)
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        const someObject = editorRef.current.schemaTypes.inlineObjects.find(
+          (t) => t.name === 'someObject',
+        )!
         PortableTextEditor.insertBlock(editorRef.current, someObject, {color: 'yellow'})
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           value[0],
           {_key: '2', _type: 'someObject', color: 'yellow'},
           value[1],
         ])
-      } else {
-        throw new Error('No editor or someObject')
       }
     })
   })
+
   it('should not add empty blank blocks: in new empty text block', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
     const value = [...initialValue, ...emptyTextBlock]
+    const onChange = jest.fn()
+
     render(
       <PortableTextEditorTester
-        onChange={onChange}
         ref={editorRef}
         schemaType={schemaType}
         value={value}
+        onChange={onChange}
       />,
     )
-    const editor = editorRef.current
-    const someObject = editor?.schemaTypes.inlineObjects.find((t) => t.name === 'someObject')
 
     await waitFor(() => {
-      if (editorRef.current && someObject) {
-        PortableTextEditor.focus(editorRef.current)
-        // Focus the empty `text` block
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({type: 'value', value})
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
         PortableTextEditor.select(editorRef.current, emptyBlockSelection)
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        const someObject = editorRef.current.schemaTypes.inlineObjects.find(
+          (t) => t.name === 'someObject',
+        )!
         PortableTextEditor.insertBlock(editorRef.current, someObject, {color: 'yellow'})
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           value[0],
           {_key: '2', _type: 'someObject', color: 'yellow'},
         ])
-      } else {
-        throw new Error('No editor or someObject')
       }
     })
   })
