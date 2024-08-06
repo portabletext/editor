@@ -100,7 +100,7 @@
     "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-react-compiler": "0.0.0-experimental-9ed098e-20240725",
     "eslint-plugin-tsdoc": "^0.3.0",
-    "eslint-plugin-unicorn": "^54.0.0",
+    "eslint-plugin-unicorn": "^55.0.0",
     "eslint-plugin-unused-imports": "^4.0.1",
     "express": "^4.19.2",
     "express-ws": "^5.0.2",
