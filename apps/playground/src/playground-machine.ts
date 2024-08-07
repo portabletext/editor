@@ -193,22 +193,8 @@ export const playgroundMachine = setup({
       actions: ['stop editor', 'remove editor from context'],
     },
     'editor.mutation': {
-      target: '.apply patches',
+      actions: ['broadcast patches', 'update value', 'broadcast value'],
     },
   },
   entry: [raise({type: 'add editor'}), raise({type: 'add editor'})],
-  initial: 'idle',
-  states: {
-    'idle': {},
-    'apply patches': {
-      entry: ['broadcast patches', 'update value'],
-      after: {
-        1500: {target: 'broadcasting value'},
-      },
-    },
-    'broadcasting value': {
-      entry: ['broadcast value'],
-      always: {target: 'idle'},
-    },
-  },
 })
