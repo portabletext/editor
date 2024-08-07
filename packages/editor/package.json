@@ -60,8 +60,8 @@
     "debug": "^4.3.4",
     "is-hotkey-esm": "^1.0.0",
     "lodash": "^4.17.21",
-    "slate": "0.100.0",
-    "slate-react": "0.101.0"
+    "slate": "0.103.0",
+    "slate-react": "0.107.1"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
