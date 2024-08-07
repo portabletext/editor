@@ -17,8 +17,7 @@ export function PortableTextPreview(props: {playgroundRef: PlaygroundActorRef}) 
   }, [props.playgroundRef, highlightRef])
 
   return (
-    <div className="flex flex-col gap-2">
-      <span className="text-sm">Portable Text (server)</span>
+    <>
       {highlightedPortableText ? (
         <div
           className="[&>pre]:max-h-none"
@@ -27,6 +26,6 @@ export function PortableTextPreview(props: {playgroundRef: PlaygroundActorRef}) 
       ) : (
         <Spinner />
       )}
-    </div>
+    </>
   )
 }

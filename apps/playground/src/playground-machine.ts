@@ -114,7 +114,8 @@ export const playgroundMachine = setup({
     events: {} as
       | {type: 'add editor'}
       | ({type: 'editor.mutation'; editorId: EditorActorRef['id']} & Omit<MutationChange, 'type'>)
-      | {type: 'editor.remove'; editorId: EditorActorRef['id']},
+      | {type: 'editor.remove'; editorId: EditorActorRef['id']}
+      | {type: 'toggle value'},
     input: {} as {
       editorIdGenerator: Generator<string, string>
       colorGenerator: ReturnType<typeof generateColor>
@@ -197,4 +198,9 @@ export const playgroundMachine = setup({
     },
   },
   entry: [raise({type: 'add editor'}), raise({type: 'add editor'})],
+  initial: 'value shown',
+  states: {
+    'value shown': {on: {'toggle value': {target: 'value hidden'}}},
+    'value hidden': {on: {'toggle value': {target: 'value shown'}}},
+  },
 })
