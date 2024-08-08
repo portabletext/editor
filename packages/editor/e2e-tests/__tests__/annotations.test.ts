@@ -2,9 +2,52 @@
 import '../setup/globals.jest'
 
 import {describe, expect, it} from '@jest/globals'
-import {isPortableTextBlock} from '@portabletext/toolkit'
+import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 
 describe('Feature: Annotations', () => {
+  it('Scenario: Undoing the deletion of the last char of annotated text', async () => {
+    const [editorA] = await getEditors()
+
+    // Given the text "foo"
+    await editorA.insertText('foo')
+
+    // And a "comment" around the text
+    await editorA.setSelection({
+      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 0},
+      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 3},
+    })
+    await editorA.toggleMark('m')
+    const valueBeforeUndo = await editorA.getValue()
+    const commentKey =
+      valueBeforeUndo && isPortableTextBlock(valueBeforeUndo[0])
+        ? valueBeforeUndo[0].markDefs?.[0]?._key
+        : undefined
+
+    // When "Backspace" is pressed once
+    await editorA.setSelection({
+      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 3},
+      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 3},
+    })
+    await editorA.pressKey('Backspace')
+
+    // And an "undo" is performed
+    await editorA.undo()
+
+    const valueAfterUndo = await editorA.getValue()
+    const span =
+      valueAfterUndo &&
+      isPortableTextBlock(valueAfterUndo[0]) &&
+      isPortableTextSpan(valueAfterUndo[0].children[0])
+        ? valueAfterUndo[0].children[0]
+        : undefined
+
+    // Then the text is "foo"
+    expect(span?.text).toBe('foo')
+
+    // And the text is marked with a "comment"
+    expect(span?.marks).toEqual([commentKey])
+  })
+
   it('Scenario: Undoing inserting text after annotated text', async () => {
     const [editorA] = await getEditors()
 
