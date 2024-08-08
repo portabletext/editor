@@ -32,6 +32,20 @@ export const HOTKEYS: HotkeyOptions = {
       e.preventDefault()
       PortableTextEditor.toggleList(editor, 'number')
     },
+    'mod+m': (e, editor) => {
+      e.preventDefault()
+      PortableTextEditor.addAnnotation(
+        editor,
+        {
+          jsonType: 'object',
+          name: 'comment',
+          fields: [],
+          // eslint-disable-next-line camelcase
+          __experimental_search: [],
+        },
+        {text: 'Consider rewriting this'},
+      )
+    },
   },
 }
 
