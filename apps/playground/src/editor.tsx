@@ -81,109 +81,115 @@ export function Editor(props: {editorRef: EditorActorRef}) {
       data-testid={props.editorRef.id}
       className="grid gap-2 items-start grid-cols-1 md:grid-cols-2 border p-2 shadow-sm"
     >
-      <PortableTextEditor
-        value={value}
-        patches$={patches$}
-        onChange={(change) => {
-          if (change.type === 'mutation') {
-            props.editorRef.send(change)
-          }
-          if (change.type === 'loading') {
-            setLoading(change.isLoading)
-          }
-        }}
-        schemaType={schema}
+      <ErrorBoundary
+        fallbackProps={{area: 'PortableTextEditor'}}
+        fallback={ErrorScreen}
+        onError={console.error}
       >
-        <div className="flex flex-col gap-2">
-          <PortableTextToolbar />
-          <div className="flex gap-2 items-center">
-            <ErrorBoundary
-              fallbackProps={{area: 'PortableTextEditable'}}
-              fallback={ErrorScreen}
-              onError={console.error}
-            >
-              <PortableTextEditable
-                className="flex-1 p-2 border"
-                onPaste={(data) => {
-                  const text = data.event.clipboardData.getData('text')
-                  if (text === 'heading') {
-                    return wait(2000).then(() => ({
-                      insert: [
-                        {
-                          _type: 'block',
-                          children: [{_type: 'span', text: 'heading'}],
-                          style: 'h1',
-                        },
-                      ],
-                    }))
-                  }
-                }}
-                renderAnnotation={renderAnnotation}
-                renderBlock={renderBlock}
-                renderChild={renderChild}
-                renderDecorator={renderDecorator}
-                renderListItem={renderListItem}
-                renderPlaceholder={renderPlaceholder}
-                renderStyle={renderStyle}
-              />
-            </ErrorBoundary>
-            {loading ? <Spinner /> : null}
+        <PortableTextEditor
+          value={value}
+          patches$={patches$}
+          onChange={(change) => {
+            if (change.type === 'mutation') {
+              props.editorRef.send(change)
+            }
+            if (change.type === 'loading') {
+              setLoading(change.isLoading)
+            }
+          }}
+          schemaType={schema}
+        >
+          <div className="flex flex-col gap-2">
+            <PortableTextToolbar />
+            <div className="flex gap-2 items-center">
+              <ErrorBoundary
+                fallbackProps={{area: 'PortableTextEditable'}}
+                fallback={ErrorScreen}
+                onError={console.error}
+              >
+                <PortableTextEditable
+                  className="flex-1 p-2 border"
+                  onPaste={(data) => {
+                    const text = data.event.clipboardData.getData('text')
+                    if (text === 'heading') {
+                      return wait(2000).then(() => ({
+                        insert: [
+                          {
+                            _type: 'block',
+                            children: [{_type: 'span', text: 'heading'}],
+                            style: 'h1',
+                          },
+                        ],
+                      }))
+                    }
+                  }}
+                  renderAnnotation={renderAnnotation}
+                  renderBlock={renderBlock}
+                  renderChild={renderChild}
+                  renderDecorator={renderDecorator}
+                  renderListItem={renderListItem}
+                  renderPlaceholder={renderPlaceholder}
+                  renderStyle={renderStyle}
+                />
+              </ErrorBoundary>
+              {loading ? <Spinner /> : null}
+            </div>
+            <div className="flex gap-2 items-center">
+              <span
+                style={{backgroundColor: color}}
+                className="py-0.5 border px-2 rounded-full text-xs shrink-0 self-start font-mono"
+              >
+                ID: <strong>{props.editorRef.id}</strong>
+              </span>
+              <TooltipTrigger>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onPress={() => {
+                    props.editorRef.send({type: 'remove'})
+                  }}
+                >
+                  <TrashIcon className="w-3 h-3" />
+                </Button>
+                <Tooltip>Remove editor</Tooltip>
+              </TooltipTrigger>
+            </div>
           </div>
-          <div className="flex gap-2 items-center">
-            <span
-              style={{backgroundColor: color}}
-              className="py-0.5 border px-2 rounded-full text-xs shrink-0 self-start font-mono"
-            >
-              ID: <strong>{props.editorRef.id}</strong>
-            </span>
-            <TooltipTrigger>
-              <Button
-                size="sm"
-                variant="destructive"
-                onPress={() => {
-                  props.editorRef.send({type: 'remove'})
+          <div className="flex flex-col gap-2">
+            <Toolbar className="justify-end">
+              <Switch
+                isSelected={showingPatchesPreview}
+                onChange={() => {
+                  props.editorRef.send({type: 'toggle patches preview'})
                 }}
               >
-                <TrashIcon className="w-3 h-3" />
-              </Button>
-              <Tooltip>Remove editor</Tooltip>
-            </TooltipTrigger>
+                Patches
+              </Switch>
+              <Switch
+                isSelected={showingValuePreview}
+                onChange={() => {
+                  props.editorRef.send({type: 'toggle value preview'})
+                }}
+              >
+                Value
+              </Switch>
+              <Switch
+                isSelected={showingSelectionPreivew}
+                onChange={() => {
+                  props.editorRef.send({type: 'toggle selection preview'})
+                }}
+              >
+                Selection
+              </Switch>
+            </Toolbar>
+            {showingPatchesPreview ? <EditorPatchesPreview patches={patchesReceived} /> : null}
+            {showingValuePreview ? (
+              <EditorPortableTextPreview editorId={props.editorRef.id} value={value} />
+            ) : null}
+            {showingSelectionPreivew ? <SelectionPreview editorId={props.editorRef.id} /> : null}
           </div>
-        </div>
-        <div className="flex flex-col gap-2">
-          <Toolbar className="justify-end">
-            <Switch
-              isSelected={showingPatchesPreview}
-              onChange={() => {
-                props.editorRef.send({type: 'toggle patches preview'})
-              }}
-            >
-              Patches
-            </Switch>
-            <Switch
-              isSelected={showingValuePreview}
-              onChange={() => {
-                props.editorRef.send({type: 'toggle value preview'})
-              }}
-            >
-              Value
-            </Switch>
-            <Switch
-              isSelected={showingSelectionPreivew}
-              onChange={() => {
-                props.editorRef.send({type: 'toggle selection preview'})
-              }}
-            >
-              Selection
-            </Switch>
-          </Toolbar>
-          {showingPatchesPreview ? <EditorPatchesPreview patches={patchesReceived} /> : null}
-          {showingValuePreview ? (
-            <EditorPortableTextPreview editorId={props.editorRef.id} value={value} />
-          ) : null}
-          {showingSelectionPreivew ? <SelectionPreview editorId={props.editorRef.id} /> : null}
-        </div>
-      </PortableTextEditor>
+        </PortableTextEditor>
+      </ErrorBoundary>
     </div>
   )
 }
