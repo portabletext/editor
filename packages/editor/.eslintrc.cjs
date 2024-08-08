@@ -97,7 +97,6 @@ const config = {
     ],
     '@typescript-eslint/no-explicit-any': ['warn'],
     '@typescript-eslint/no-dupe-class-members': ['error'],
-    '@typescript-eslint/no-shadow': ['error'],
     '@typescript-eslint/no-unused-vars': ['warn'],
     '@typescript-eslint/consistent-type-imports': ['error', {prefer: 'type-imports'}],
     'unused-imports/no-unused-imports': 'error',
