@@ -6,6 +6,7 @@
  *
  */
 
+import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import {isEqual, uniq} from 'lodash'
 import {type Subject} from 'rxjs'
 import {type Descendant, Editor, Element, Path, Range, Text, Transforms} from 'slate'
@@ -18,6 +19,7 @@ import {
 import {debugWithName} from '../../utils/debug'
 import {toPortableTextRange} from '../../utils/ranges'
 import {EMPTY_MARKS} from '../../utils/values'
+import {withoutPreserveKeys} from '../../utils/withPreserveKeys'
 
 const debug = debugWithName('plugin:withPortableTextMarkModel')
 
@@ -230,8 +232,8 @@ export function createWithPortableTextMarkModel(
       }
     }
 
-    // Special hook before inserting text at the end of an annotation.
     editor.apply = (op) => {
+      // Special hook before inserting text at the end of an annotation.
       if (op.type === 'insert_text') {
         const {selection} = editor
         if (
@@ -273,6 +275,54 @@ export function createWithPortableTextMarkModel(
           }
         }
       }
+
+      if (op.type === 'remove_text') {
+        const nodeEntry = Array.from(
+          Editor.nodes(editor, {
+            mode: 'lowest',
+            at: {path: op.path, offset: op.offset},
+            match: (n) => n._type === types.span.name,
+            voids: false,
+          }),
+        )[0]
+        const node = nodeEntry[0]
+        const blockEntry = Editor.node(editor, Path.parent(op.path))
+        const block = blockEntry[0]
+
+        if (node && isPortableTextSpan(node) && block && isPortableTextBlock(block)) {
+          const markDefs = block.markDefs ?? []
+          const nodeHasAnnotations = (node.marks ?? []).some((mark) =>
+            markDefs.find((markDef) => markDef._key === mark),
+          )
+          const deletingPartOfTheNode = op.offset !== 0
+          const deletingFromTheEnd = op.offset + op.text.length === node.text.length
+
+          if (nodeHasAnnotations && deletingPartOfTheNode && deletingFromTheEnd) {
+            /**
+             * If all of these conditions match then override the ordinary
+             * `remove_text` operation and turn it into `split_nodes` followed
+             * by `remove_nodes`. This is so if the operation can be properly
+             * undone. Undoing a `remove_text` results in an `insert_text` and
+             * we want to bail out of that in this exact scenario to make sure
+             * the inserted text is annotated. (See custom logic regarding
+             * `insert_text`)
+             */
+            Editor.withoutNormalizing(editor, () => {
+              withoutPreserveKeys(editor, () => {
+                Transforms.splitNodes(editor, {
+                  match: Text.isText,
+                  at: {path: op.path, offset: op.offset},
+                })
+              })
+              Transforms.removeNodes(editor, {at: Path.next(op.path)})
+            })
+
+            editor.onChange()
+            return
+          }
+        }
+      }
+
       apply(op)
     }
 
