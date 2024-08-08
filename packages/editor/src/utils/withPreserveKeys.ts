@@ -9,6 +9,13 @@ export function withPreserveKeys(editor: Editor, fn: () => void): void {
   PRESERVE_KEYS.set(editor, prev)
 }
 
+export function withoutPreserveKeys(editor: Editor, fn: () => void): void {
+  const prev = isPreservingKeys(editor)
+  PRESERVE_KEYS.set(editor, false)
+  fn()
+  PRESERVE_KEYS.set(editor, prev)
+}
+
 export function isPreservingKeys(editor: Editor): boolean | undefined {
   return PRESERVE_KEYS.get(editor)
 }
