@@ -23,23 +23,38 @@ export function createWithObjectKeys(
     editor.apply = (operation) => {
       if (operation.type === 'split_node') {
         const withNewKey = !isPreservingKeys(editor) || !('_key' in operation.properties)
-        operation.properties = {
-          ...operation.properties,
-          ...(withNewKey ? {_key: keyGenerator()} : {}),
-        }
+
+        apply({
+          ...operation,
+          properties: {
+            ...operation.properties,
+            ...(withNewKey ? {_key: keyGenerator()} : {}),
+          },
+        })
+
+        return
       }
+
       if (operation.type === 'insert_node') {
         // Must be given a new key or adding/removing marks while typing gets in trouble (duped keys)!
         const withNewKey = !isPreservingKeys(editor) || !('_key' in operation.node)
+
         if (!Editor.isEditor(operation.node)) {
-          operation.node = {
-            ...operation.node,
-            ...(withNewKey ? {_key: keyGenerator()} : {}),
-          }
+          apply({
+            ...operation,
+            node: {
+              ...operation.node,
+              ...(withNewKey ? {_key: keyGenerator()} : {}),
+            },
+          })
+
+          return
         }
       }
+
       apply(operation)
     }
+
     editor.normalizeNode = (entry) => {
       const [node, path] = entry
       if (Element.isElement(node) && node._type === schemaTypes.block.name) {
