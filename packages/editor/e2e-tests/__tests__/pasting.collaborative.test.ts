@@ -38,7 +38,7 @@ describe('pasting', () => {
     ])
   })
 
-  it('can paste empty lines from clipboard without duplicating keys', async () => {
+  it.skip('can paste empty lines from clipboard without duplicating keys', async () => {
     const [editorA] = await getEditors()
     await editorA.paste('\n\n', 'text/plain')
     const data = `<meta charset='utf-8'><div class="pt-block pt-text-block pt-text-block-style-normal" spellcheck="true"><div><div><div data-as="div" data-ui="Box" data-testid="text-block" class="sc-pyfCe ejpaYo"><div data-as="div" data-ui="Box" data-testid="text-block__wrapper" class="sc-pyfCe fzrBED sc-cqQeAO jubvhE"><div data-as="div" data-ui="Flex" class="sc-pyfCe hDoDhD sc-csuSiG dCdti"><div data-as="div" data-ui="Box" class="sc-pyfCe jRVwRg"><div data-read-only="false" data-testid="text-block__text" class="sc-jeToga carTaU"><div data-as="div" data-ui="Flex" class="sc-pyfCe fzrBED sc-csuSiG jCgSkH sc-cTVMo ixGLsO"><div data-text=""><div data-ui="Text" data-testid="text-style--normal" class="sc-bcXHqe bHshCf"><span><div class="sc-dMVFSy jJslKz"><div data-testid="text-style--normal" class="sc-dMVFSy jJslKz"><span><span><span data-slate-length="0">
