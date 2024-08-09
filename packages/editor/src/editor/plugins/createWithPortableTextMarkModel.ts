@@ -256,9 +256,11 @@ export function createWithPortableTextMarkModel(
             node.marks.length > 0
           ) {
             apply(op)
-            Transforms.splitNodes(editor, {
-              match: Text.isText,
-              at: {...selection.focus, offset: selection.focus.offset},
+            withoutPreserveKeys(editor, () => {
+              Transforms.splitNodes(editor, {
+                match: Text.isText,
+                at: {...selection.focus, offset: selection.focus.offset},
+              })
             })
             const marksWithoutAnnotationMarks: string[] = (
               {
@@ -481,6 +483,7 @@ export function createWithPortableTextMarkModel(
           const nextNode = parent.children[nextPath[1]]
           if (Text.isText(node) && Text.isText(nextNode) && isEqual(nextNode.marks, node.marks)) {
             debug('Merging spans')
+            debugger
             Transforms.mergeNodes(editor, {at: nextPath, voids: true})
             editor.onChange()
           }
