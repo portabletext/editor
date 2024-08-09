@@ -28,7 +28,6 @@ import {debugWithName} from './debug'
 import {fromSlateValue} from './values'
 
 const debug = debugWithName('operationToPatches')
-debug.enabled = false
 
 export function createOperationToPatches(types: PortableTextMemberSchemaTypes): PatchFunctions {
   const textBlockName = types.block.name
