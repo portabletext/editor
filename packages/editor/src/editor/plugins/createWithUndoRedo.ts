@@ -146,17 +146,15 @@ export function createWithUndoRedo(
               ),
             )
           })
+          const reversedOperations = transformedOperations.map(Operation.inverse).reverse()
+
           try {
             Editor.withoutNormalizing(editor, () => {
               withPreserveKeys(editor, () => {
                 withoutSaving(editor, () => {
-                  transformedOperations
-                    .map(Operation.inverse)
-                    .reverse()
-                    // eslint-disable-next-line max-nested-callbacks
-                    .forEach((op) => {
-                      editor.apply(op)
-                    })
+                  reversedOperations.forEach((op) => {
+                    editor.apply(op)
+                  })
                 })
               })
             })
