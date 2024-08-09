@@ -28,7 +28,6 @@ import {debugWithName} from './debug'
 import {fromSlateValue} from './values'
 
 const debug = debugWithName('operationToPatches')
-debug.enabled = false
 
 export function createOperationToPatches(types: PortableTextMemberSchemaTypes): PatchFunctions {
   const textBlockName = types.block.name
@@ -265,9 +264,19 @@ export function createOperationToPatches(types: PortableTextMemberSchemaTypes): 
       }
       throw new Error('Block not found')
     } else if (editor.isTextBlock(block) && operation.path.length === 2) {
-      const spanToRemove =
-        editor.isTextBlock(block) && block.children && block.children[operation.path[1]]
+      const spanToRemove = block.children[operation.path[1]]
+
       if (spanToRemove) {
+        const spansMatchingKey = block.children.filter((span) => span._key === operation.node._key)
+
+        if (spansMatchingKey.length > 1) {
+          debug(
+            `Multiple spans have \`_key\` ${operation.node._key}. It's ambiguous which one to remove.`,
+            JSON.stringify(block.children, null, 2),
+          )
+          return []
+        }
+
         return [unset([{_key: block._key}, 'children', {_key: spanToRemove._key}])]
       }
       debug('Span not found in editor trying to remove node')
