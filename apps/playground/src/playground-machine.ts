@@ -19,6 +19,7 @@ const editorMachine = setup({
       | {type: 'patches'; patches: MutationChange['patches']; snapshot: MutationChange['snapshot']}
       | {type: 'value'; value?: Array<PortableTextBlock>}
       | {type: 'remove'}
+      | {type: 'clear stored patches'}
       | {type: 'toggle patches preview'}
       | {type: 'toggle value preview'}
       | {type: 'toggle selection preview'},
@@ -43,6 +44,9 @@ const editorMachine = setup({
       assertEvent(event, 'patches')
       return event
     }),
+    'remove patches from context': assign({
+      patchesReceived: [],
+    }),
   },
 }).createMachine({
   id: 'editor',
@@ -52,7 +56,7 @@ const editorMachine = setup({
     patchesReceived: [],
   }),
   on: {
-    mutation: {
+    'mutation': {
       actions: [
         sendParent(({event, self}) => ({
           ...event,
@@ -61,18 +65,21 @@ const editorMachine = setup({
         })),
       ],
     },
-    patches: {
+    'patches': {
       actions: ['store patches received', 'emitPatches'],
     },
-    value: {
+    'value': {
       actions: [
         assign({
           value: ({event}) => event.value,
         }),
       ],
     },
-    remove: {
+    'remove': {
       actions: [sendParent(({self}) => ({type: 'editor.remove', editorId: self.id}))],
+    },
+    'clear stored patches': {
+      actions: ['remove patches from context'],
     },
   },
   type: 'parallel',

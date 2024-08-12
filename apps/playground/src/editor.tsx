@@ -156,7 +156,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <Toolbar className="justify-end">
+            <Toolbar>
               <Switch
                 isSelected={showingPatchesPreview}
                 onChange={() => {
@@ -165,6 +165,21 @@ export function Editor(props: {editorRef: EditorActorRef}) {
               >
                 Patches
               </Switch>
+              <TooltipTrigger>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onPress={() => {
+                    props.editorRef.send({type: 'clear stored patches'})
+                  }}
+                >
+                  <TrashIcon className="size-3" />
+                </Button>
+                <Tooltip>Clear patches</Tooltip>
+              </TooltipTrigger>
+            </Toolbar>
+            {showingPatchesPreview ? <EditorPatchesPreview patches={patchesReceived} /> : null}
+            <Toolbar>
               <Switch
                 isSelected={showingValuePreview}
                 onChange={() => {
@@ -173,6 +188,11 @@ export function Editor(props: {editorRef: EditorActorRef}) {
               >
                 Value
               </Switch>
+            </Toolbar>
+            {showingValuePreview ? (
+              <EditorPortableTextPreview editorId={props.editorRef.id} value={value} />
+            ) : null}
+            <Toolbar>
               <Switch
                 isSelected={showingSelectionPreivew}
                 onChange={() => {
@@ -182,10 +202,6 @@ export function Editor(props: {editorRef: EditorActorRef}) {
                 Selection
               </Switch>
             </Toolbar>
-            {showingPatchesPreview ? <EditorPatchesPreview patches={patchesReceived} /> : null}
-            {showingValuePreview ? (
-              <EditorPortableTextPreview editorId={props.editorRef.id} value={value} />
-            ) : null}
             {showingSelectionPreivew ? <SelectionPreview editorId={props.editorRef.id} /> : null}
           </div>
         </PortableTextEditor>
