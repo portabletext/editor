@@ -149,4 +149,56 @@ describe('Feature: Annotations', () => {
     // And the subsequent text is deleted
     expect(blockAfterUndo?.children[1]).toBeUndefined()
   })
+
+  it('Scenario: Undoing local annotation before remote annotation', async () => {
+    const [editorA, editorB] = await getEditors()
+
+    // Given the text "foobar"
+    await editorA.insertText('foobar')
+
+    const value = await editorA.getValue()
+    const block = value && isPortableTextBlock(value[0]) ? value[0] : undefined
+
+    // And a "comment" around "foo"
+    await editorA.setSelection({
+      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 0},
+      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 3},
+    })
+    await editorA.toggleMark('m')
+
+    const valueAfterEditorAMark = await editorA.getValue()
+    const blockAfterEditorAMark =
+      valueAfterEditorAMark && isPortableTextBlock(valueAfterEditorAMark[0])
+        ? valueAfterEditorAMark[0]
+        : undefined
+    const secondSpanKey = blockAfterEditorAMark?.children[1]._key
+
+    // When editor "B" adds a "comment" around "bar"
+    await editorB.setSelection({
+      anchor: {path: [{_key: 'A-4'}, 'children', {_key: secondSpanKey!}], offset: 0},
+      focus: {path: [{_key: 'A-4'}, 'children', {_key: secondSpanKey!}], offset: 3},
+    })
+    await editorB.toggleMark('m')
+
+    const valueAfterEditorBMark = await editorA.getValue()
+    const blockAfterEditorBMark =
+      valueAfterEditorBMark && isPortableTextBlock(valueAfterEditorBMark[0])
+        ? valueAfterEditorBMark[0]
+        : undefined
+
+    // And editor "A" performs "undo"
+    await editorA.undo()
+
+    const valueAfterUndo = await editorA.getValue()
+    const blockAfterUndo =
+      valueAfterUndo && isPortableTextBlock(valueAfterUndo[0]) ? valueAfterUndo[0] : undefined
+
+    // Then the "comment" is removed from "foo"
+    expect(blockAfterUndo?.children[0]._key).toBe(block?.children[0]._key)
+    expect(blockAfterUndo?.children[0].marks).toEqual(block?.children[0].marks)
+    expect(blockAfterUndo?.children[0].text).toBe('foo')
+
+    // And "bar" is unchanged
+    expect(blockAfterUndo?.children[1]).toEqual(blockAfterEditorBMark?.children[1])
+  })
 })
