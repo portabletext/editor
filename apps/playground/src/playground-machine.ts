@@ -1,9 +1,26 @@
 import {type MutationChange} from '@portabletext/editor'
 import {Patch, applyAll} from '@portabletext/patches'
 import {PortableTextBlock} from '@sanity/types'
-import {ActorRefFrom, assertEvent, assign, emit, raise, sendParent, setup, stopChild} from 'xstate'
+import {
+  ActorRefFrom,
+  assertEvent,
+  assign,
+  emit,
+  fromPromise,
+  raise,
+  sendParent,
+  setup,
+  stopChild,
+} from 'xstate'
 import {generateColor} from './generate-color'
 import {v4 as uuid} from 'uuid'
+
+const copyToTextClipboardActor = fromPromise(({input}: {input: {text: string}}) => {
+  const blob = new Blob([input.text], {type: 'text/plain'})
+  const data = [new ClipboardItem({'text/plain': blob})]
+
+  return navigator.clipboard.write(data)
+})
 
 export type EditorActorRef = ActorRefFrom<typeof editorMachine>
 
@@ -20,6 +37,7 @@ const editorMachine = setup({
       | {type: 'value'; value?: Array<PortableTextBlock>}
       | {type: 'remove'}
       | {type: 'clear stored patches'}
+      | {type: 'copy patches'}
       | {type: 'toggle patches preview'}
       | {type: 'toggle value preview'}
       | {type: 'toggle selection preview'},
@@ -47,6 +65,9 @@ const editorMachine = setup({
     'remove patches from context': assign({
       patchesReceived: [],
     }),
+  },
+  actors: {
+    'copy text to clipboard': copyToTextClipboardActor,
   },
 }).createMachine({
   id: 'editor',
@@ -103,6 +124,36 @@ const editorMachine = setup({
       states: {
         hidden: {on: {'toggle selection preview': {target: 'shown'}}},
         shown: {on: {'toggle selection preview': {target: 'hidden'}}},
+      },
+    },
+    'copying patches': {
+      initial: 'idle',
+      states: {
+        idle: {
+          on: {
+            'copy patches': {target: 'copying'},
+          },
+        },
+        copying: {
+          invoke: {
+            src: 'copy text to clipboard',
+            input: ({context}) => ({
+              type: 'text/plain',
+              text: JSON.stringify(context.patchesReceived),
+            }),
+            onDone: {
+              target: 'idle',
+            },
+            onError: {
+              target: 'idle',
+              actions: [
+                ({event}) => {
+                  console.error(event)
+                },
+              ],
+            },
+          },
+        },
       },
     },
   },
