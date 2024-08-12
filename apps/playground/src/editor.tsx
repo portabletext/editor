@@ -14,7 +14,7 @@ import {
 } from '@portabletext/editor'
 import {PortableTextBlock} from '@sanity/types'
 import {useSelector} from '@xstate/react'
-import {ImageIcon, TrashIcon} from 'lucide-react'
+import {CopyIcon, ImageIcon, TrashIcon} from 'lucide-react'
 import {useEffect, useMemo, useState} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
 import {reverse} from 'remeda'
@@ -176,6 +176,18 @@ export function Editor(props: {editorRef: EditorActorRef}) {
                   <TrashIcon className="size-3" />
                 </Button>
                 <Tooltip>Clear patches</Tooltip>
+              </TooltipTrigger>
+              <TooltipTrigger>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onPress={() => {
+                    props.editorRef.send({type: 'copy patches'})
+                  }}
+                >
+                  <CopyIcon className="size-3" />
+                </Button>
+                <Tooltip>Copy</Tooltip>
               </TooltipTrigger>
             </Toolbar>
             {showingPatchesPreview ? <EditorPatchesPreview patches={patchesReceived} /> : null}
