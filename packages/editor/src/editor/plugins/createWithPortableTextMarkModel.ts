@@ -469,17 +469,24 @@ export function createWithPortableTextMarkModel(
    */
   function mergeSpans(editor: PortableTextSlateEditor) {
     const {selection} = editor
+
     if (selection) {
-      for (const [node, path] of Array.from(
+      const textNodesInSelection = Array.from(
         Editor.nodes(editor, {
           at: Editor.range(editor, [selection.anchor.path[0]], [selection.focus.path[0]]),
+          match: Text.isText,
+          reverse: true,
         }),
-      ).reverse()) {
+      )
+
+      for (const [node, path] of textNodesInSelection) {
         const [parent] = path.length > 1 ? Editor.node(editor, Path.parent(path)) : [undefined]
         const nextPath = [path[0], path[1] + 1]
+
         if (editor.isTextBlock(parent)) {
           const nextNode = parent.children[nextPath[1]]
-          if (Text.isText(node) && Text.isText(nextNode) && isEqual(nextNode.marks, node.marks)) {
+
+          if (Text.isText(nextNode) && isEqual(nextNode.marks, node.marks)) {
             debug('Merging spans')
             Transforms.mergeNodes(editor, {at: nextPath, voids: true})
             editor.onChange()
