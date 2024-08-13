@@ -78,7 +78,11 @@ export const withPlugins = <T extends Editor>(
     patches$,
     blockSchemaType: schemaTypes.block,
   })
-  const withPortableTextMarkModel = createWithPortableTextMarkModel(schemaTypes, change$)
+  const withPortableTextMarkModel = createWithPortableTextMarkModel(
+    schemaTypes,
+    change$,
+    keyGenerator,
+  )
   const withPortableTextBlockStyle = createWithPortableTextBlockStyle(schemaTypes)
 
   const withPlaceholderBlock = createWithPlaceholderBlock()
