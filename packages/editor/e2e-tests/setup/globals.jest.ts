@@ -24,4 +24,6 @@ type Editor = {
 declare global {
   function getEditors(): Promise<Editor[]>
   function setDocumentValue(value: Value): Promise<void>
+  /** Wait for editors to have settled with a new revision */
+  function waitForRevision(): Promise<void>
 }
