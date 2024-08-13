@@ -26,6 +26,7 @@ const debug = debugWithName('plugin:withPortableTextMarkModel')
 export function createWithPortableTextMarkModel(
   types: PortableTextMemberSchemaTypes,
   change$: Subject<EditorChange>,
+  keyGenerator: () => string,
 ): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
   return function withPortableTextMarkModel(editor: PortableTextSlateEditor) {
     const {apply, normalizeNode} = editor
@@ -255,21 +256,17 @@ export function createWithPortableTextMarkModel(
             Array.isArray(node.marks) &&
             node.marks.length > 0
           ) {
-            apply(op)
-            Transforms.splitNodes(editor, {
-              match: Text.isText,
-              at: {...selection.focus, offset: selection.focus.offset},
-            })
             const marksWithoutAnnotationMarks: string[] = (
               {
                 ...(Editor.marks(editor) || {}),
               }.marks || []
             ).filter((mark) => decorators.includes(mark))
-            Transforms.setNodes(
-              editor,
-              {marks: marksWithoutAnnotationMarks},
-              {at: Path.next(selection.focus.path)},
-            )
+            Transforms.insertNodes(editor, {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: op.text,
+              marks: marksWithoutAnnotationMarks,
+            })
             debug('Inserting text at end of annotation')
             return
           }
