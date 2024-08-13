@@ -262,4 +262,66 @@ describe('Feature: Annotations', () => {
     // And the subsequent text has no marks
     expect(blockAfterRedo?.children[1]?.marks).toEqual([])
   })
+
+  it("Scenario: Editor B inserting text after Editor A's half-deleted annotation", async () => {
+    const [editorA, editorB] = await getEditors()
+
+    // Given the text "foo"
+    await editorA.insertText('foo')
+
+    const valueBeforeMark = await editorA.getValue()
+    const blockBeforeMark =
+      valueBeforeMark && isPortableTextBlock(valueBeforeMark[0]) ? valueBeforeMark[0] : undefined
+
+    // And a "comment" around the text
+    await editorA.setSelection({
+      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 0},
+      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 3},
+    })
+    await editorA.toggleMark('m')
+
+    const valueAfterMark = await editorA.getValue()
+    const blockAfterMark =
+      valueAfterMark && isPortableTextBlock(valueAfterMark[0]) ? valueAfterMark[0] : undefined
+
+    // When editor "A" pressed "Backspace"
+    await editorA.setSelection({
+      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 3},
+      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 3},
+    })
+    await editorA.pressKey('Backspace')
+
+    const valueAfterBackspace = await editorA.getValue()
+    const blockAfterBackspace =
+      valueAfterBackspace && isPortableTextBlock(valueAfterBackspace[0])
+        ? valueAfterBackspace[0]
+        : undefined
+
+    expect(blockAfterBackspace?.children[0]._key).toBe(blockBeforeMark?.children[0]._key)
+    expect(blockAfterBackspace?.children[0].text).toBe('fo')
+    expect(blockAfterBackspace?.children[0].marks).toEqual(blockAfterMark?.children[0].marks)
+
+    // And editor "B" inserts "1"
+    await editorB.setSelection({
+      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 2},
+      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 2},
+    })
+
+    await editorB.pressKey('1')
+
+    await waitForRevision()
+
+    const valueAfterEditorBChange = await editorA.getValue()
+    const blockAfterEditorBChange =
+      valueAfterEditorBChange && isPortableTextBlock(valueAfterEditorBChange[0])
+        ? valueAfterEditorBChange[0]
+        : undefined
+
+    // Then "fo" is unchanged
+    expect(blockAfterEditorBChange?.children[0]).toEqual(blockAfterBackspace?.children[0])
+
+    // And "1" is inserted
+    expect(blockAfterEditorBChange?.children[1].text).toBe('1')
+    expect(blockAfterEditorBChange?.children[1].marks).toEqual([])
+  })
 })
