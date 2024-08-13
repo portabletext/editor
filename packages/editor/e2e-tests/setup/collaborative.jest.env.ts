@@ -130,6 +130,35 @@ export default class CollaborationEnvironment extends NodeEnvironment {
       })
     }
 
+    this.global.waitForRevision = async () => {
+      const pageARevIdHandle = await this._pageA?.waitForSelector('#pte-revId')
+      const pageBRevIdHandle = await this._pageB?.waitForSelector('#pte-revId')
+      const pageACurrentRevId = await pageARevIdHandle!.evaluate((node) =>
+        node instanceof HTMLElement && node.innerText ? JSON.parse(node.innerText)?.revId : null,
+      )
+      const pageBCurrentRevId = await pageBRevIdHandle!.evaluate((node) =>
+        node instanceof HTMLElement && node.innerText ? JSON.parse(node.innerText)?.revId : null,
+      )
+      const pageARevIdChanged = () =>
+        this._pageA?.waitForSelector(
+          `code[data-rev-id]:not([data-rev-id='${pageACurrentRevId}'])`,
+          {
+            timeout: REVISION_TIMEOUT_MS,
+          },
+        )
+      const pageBRevIdChanged = () =>
+        this._pageA?.waitForSelector(
+          `code[data-rev-id]:not([data-rev-id='${pageBCurrentRevId}'])`,
+          {
+            timeout: REVISION_TIMEOUT_MS,
+          },
+        )
+
+      return Promise.all([pageARevIdChanged(), pageBRevIdChanged()])
+        .then(() => Promise.resolve())
+        .catch(() => Promise.resolve())
+    }
+
     this.global.getEditors = () =>
       Promise.all(
         [this._pageA!, this._pageB!].map(async (page, index) => {
@@ -332,6 +361,7 @@ export default class CollaborationEnvironment extends NodeEnvironment {
               return value
             },
             getSelection,
+            waitForRevision,
           }
         }),
       )
