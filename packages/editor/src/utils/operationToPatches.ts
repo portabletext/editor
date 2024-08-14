@@ -295,7 +295,7 @@ export function createOperationToPatches(types: PortableTextMemberSchemaTypes): 
     const patches: Patch[] = []
 
     const block = beforeValue[operation.path[0]]
-    const targetBlock = editor.children[operation.path[0]]
+    const updatedBlock = editor.children[operation.path[0]]
 
     if (operation.path.length === 1) {
       if (block?._key) {
@@ -305,17 +305,51 @@ export function createOperationToPatches(types: PortableTextMemberSchemaTypes): 
       } else {
         throw new Error('Target key not found!')
       }
-    } else if (operation.path.length === 2 && editor.isTextBlock(targetBlock)) {
-      const mergedSpan =
-        (editor.isTextBlock(block) && block.children[operation.path[1]]) || undefined
-      const targetSpan = targetBlock.children[operation.path[1] - 1]
-      if (editor.isTextSpan(targetSpan)) {
-        // Set the merged span with it's new value
-        patches.push(
-          set(targetSpan.text, [{_key: block._key}, 'children', {_key: targetSpan._key}, 'text']),
-        )
-        if (mergedSpan) {
-          patches.push(unset([{_key: block._key}, 'children', {_key: mergedSpan._key}]))
+    } else if (
+      editor.isTextBlock(block) &&
+      editor.isTextBlock(updatedBlock) &&
+      operation.path.length === 2
+    ) {
+      const updatedSpan =
+        updatedBlock.children[operation.path[1] - 1] &&
+        editor.isTextSpan(updatedBlock.children[operation.path[1] - 1])
+          ? updatedBlock.children[operation.path[1] - 1]
+          : undefined
+      const removedSpan =
+        block.children[operation.path[1]] && editor.isTextSpan(block.children[operation.path[1]])
+          ? block.children[operation.path[1]]
+          : undefined
+
+      if (updatedSpan) {
+        const spansMatchingKey = block.children.filter((span) => span._key === updatedSpan._key)
+
+        if (spansMatchingKey.length === 1) {
+          patches.push(
+            set(updatedSpan.text, [
+              {_key: block._key},
+              'children',
+              {_key: updatedSpan._key},
+              'text',
+            ]),
+          )
+        } else {
+          console.warn(
+            `Multiple spans have \`_key\` ${updatedSpan._key}. It's ambiguous which one to update.`,
+            JSON.stringify(block, null, 2),
+          )
+        }
+      }
+
+      if (removedSpan) {
+        const spansMatchingKey = block.children.filter((span) => span._key === removedSpan._key)
+
+        if (spansMatchingKey.length === 1) {
+          patches.push(unset([{_key: block._key}, 'children', {_key: removedSpan._key}]))
+        } else {
+          console.warn(
+            `Multiple spans have \`_key\` ${removedSpan._key}. It's ambiguous which one to remove.`,
+            JSON.stringify(block, null, 2),
+          )
         }
       }
     } else {
