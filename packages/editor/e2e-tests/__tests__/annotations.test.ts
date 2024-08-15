@@ -324,4 +324,43 @@ describe('Feature: Annotations', () => {
     expect(blockAfterEditorBChange?.children[1].text).toBe('1')
     expect(blockAfterEditorBChange?.children[1].marks).toEqual([])
   })
+
+  it('Scenario: Writing on top of annotation', async () => {
+    const [editorA] = await getEditors()
+
+    // Given the text "foo bar baz"
+    await editorA.insertText('foo bar baz')
+
+    // And a "comment" around "bar"
+    await editorA.setSelection({
+      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 4},
+      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 7},
+    })
+    await editorA.toggleMark('m')
+
+    const valueAfterMark = await editorA.getValue()
+    const blockAfterMark =
+      valueAfterMark && isPortableTextBlock(valueAfterMark[0]) ? valueAfterMark[0] : undefined
+
+    // When "removed" is typed
+    await editorA.type('removed')
+
+    const valueAfterNewText = await editorA.getValue()
+    const blockAfterNewText =
+      valueAfterNewText && isPortableTextBlock(valueAfterNewText[0])
+        ? valueAfterNewText[0]
+        : undefined
+
+    // Then the comment is removed
+    expect(blockAfterNewText).toEqual({
+      ...blockAfterMark,
+      children: [
+        {
+          ...blockAfterMark?.children[0],
+          text: 'foo removed baz',
+        },
+      ],
+      markDefs: [],
+    })
+  })
 })
