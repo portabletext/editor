@@ -295,15 +295,6 @@ export function createWithPortableTextMarkModel(
           const deletingFromTheEnd = op.offset + op.text.length === node.text.length
 
           if (nodeHasAnnotations && deletingPartOfTheNode && deletingFromTheEnd) {
-            /**
-             * If all of these conditions match then override the ordinary
-             * `remove_text` operation and turn it into `split_nodes` followed
-             * by `remove_nodes`. This is so if the operation can be properly
-             * undone. Undoing a `remove_text` results in an `insert_text` and
-             * we want to bail out of that in this exact scenario to make sure
-             * the inserted text is annotated. (See custom logic regarding
-             * `insert_text`)
-             */
             Editor.withoutNormalizing(editor, () => {
               withoutPreserveKeys(editor, () => {
                 Transforms.splitNodes(editor, {
