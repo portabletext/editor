@@ -247,6 +247,11 @@ export default class CollaborationEnvironment extends NodeEnvironment {
                 )
               })
             },
+            type: async (text) => {
+              await waitForRevision(async () => {
+                await page.keyboard.type(text)
+              })
+            },
             undo: async () => {
               await waitForRevision(async () => {
                 await editableHandle.focus()
