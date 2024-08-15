@@ -19,7 +19,6 @@ import {
 import {debugWithName} from '../../utils/debug'
 import {toPortableTextRange} from '../../utils/ranges'
 import {EMPTY_MARKS} from '../../utils/values'
-import {withoutPreserveKeys} from '../../utils/withPreserveKeys'
 
 const debug = debugWithName('plugin:withPortableTextMarkModel')
 
@@ -296,11 +295,9 @@ export function createWithPortableTextMarkModel(
 
           if (nodeHasAnnotations && deletingPartOfTheNode && deletingFromTheEnd) {
             Editor.withoutNormalizing(editor, () => {
-              withoutPreserveKeys(editor, () => {
-                Transforms.splitNodes(editor, {
-                  match: Text.isText,
-                  at: {path: op.path, offset: op.offset},
-                })
+              Transforms.splitNodes(editor, {
+                match: Text.isText,
+                at: {path: op.path, offset: op.offset},
               })
               Transforms.removeNodes(editor, {at: Path.next(op.path)})
             })
