@@ -11,7 +11,6 @@ import {validateValue} from '../../utils/validateValue'
 import {toSlateValue, VOID_CHILD_KEY} from '../../utils/values'
 import {isChangingLocally, isChangingRemotely, withRemoteChanges} from '../../utils/withChanges'
 import {withoutPatching} from '../../utils/withoutPatching'
-import {withPreserveKeys} from '../../utils/withPreserveKeys'
 import {withoutSaving} from '../plugins/createWithUndoRedo'
 import {type PortableTextEditor} from '../PortableTextEditor'
 
@@ -184,10 +183,8 @@ export function useSyncValue(
                         currentBlock,
                       )
                     if (validation.valid || validation.resolution?.autoResolve) {
-                      withPreserveKeys(slateEditor, () => {
-                        Transforms.insertNodes(slateEditor, currentBlock, {
-                          at: [currentBlockIndex],
-                        })
+                      Transforms.insertNodes(slateEditor, currentBlock, {
+                        at: [currentBlockIndex],
                       })
                     } else {
                       debug('Invalid', validation)
@@ -267,9 +264,7 @@ function _replaceBlock(
     Transforms.deselect(slateEditor)
   }
   Transforms.removeNodes(slateEditor, {at: [currentBlockIndex]})
-  withPreserveKeys(slateEditor, () => {
-    Transforms.insertNodes(slateEditor, currentBlock, {at: [currentBlockIndex]})
-  })
+  Transforms.insertNodes(slateEditor, currentBlock, {at: [currentBlockIndex]})
   slateEditor.onChange()
   if (selectionFocusOnBlock) {
     Transforms.select(slateEditor, currentSelection)
@@ -350,21 +345,17 @@ function _updateBlock(
           Transforms.removeNodes(slateEditor, {
             at: [currentBlockIndex, currentBlockChildIndex],
           })
-          withPreserveKeys(slateEditor, () => {
-            Transforms.insertNodes(slateEditor, currentBlockChild as Node, {
-              at: [currentBlockIndex, currentBlockChildIndex],
-            })
+          Transforms.insertNodes(slateEditor, currentBlockChild as Node, {
+            at: [currentBlockIndex, currentBlockChildIndex],
           })
           slateEditor.onChange()
           // Insert it if it didn't exist before
         } else if (!oldBlockChild) {
           debug('Inserting new child', currentBlockChild)
-          withPreserveKeys(slateEditor, () => {
-            Transforms.insertNodes(slateEditor, currentBlockChild as Node, {
-              at: [currentBlockIndex, currentBlockChildIndex],
-            })
-            slateEditor.onChange()
+          Transforms.insertNodes(slateEditor, currentBlockChild as Node, {
+            at: [currentBlockIndex, currentBlockChildIndex],
           })
+          slateEditor.onChange()
         }
       }
     })

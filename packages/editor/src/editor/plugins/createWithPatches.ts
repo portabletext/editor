@@ -27,7 +27,6 @@ import {fromSlateValue, isEqualToEmptyEditor} from '../../utils/values'
 import {IS_PROCESSING_REMOTE_CHANGES, KEY_TO_VALUE_ELEMENT} from '../../utils/weakMaps'
 import {withRemoteChanges} from '../../utils/withChanges'
 import {isPatching, PATCHING, withoutPatching} from '../../utils/withoutPatching'
-import {withPreserveKeys} from '../../utils/withPreserveKeys'
 import {withoutSaving} from './createWithUndoRedo'
 
 const debug = debugWithName('plugin:withPatches')
@@ -117,11 +116,9 @@ export function createWithPatches({
         Editor.withoutNormalizing(editor, () => {
           withoutPatching(editor, () => {
             withoutSaving(editor, () => {
-              withPreserveKeys(editor, () => {
-                patches.forEach((patch) => {
-                  if (debug.enabled) debug(`Handling remote patch ${JSON.stringify(patch)}`)
-                  changed = applyPatch(editor, patch)
-                })
+              patches.forEach((patch) => {
+                if (debug.enabled) debug(`Handling remote patch ${JSON.stringify(patch)}`)
+                changed = applyPatch(editor, patch)
               })
             })
           })

@@ -20,6 +20,7 @@ import {debugWithName} from '../../utils/debug'
 import {toPortableTextRange} from '../../utils/ranges'
 import {EMPTY_MARKS} from '../../utils/values'
 import {isChangingRemotely} from '../../utils/withChanges'
+import {isRedoing, isUndoing} from '../../utils/withUndoRedo'
 
 const debug = debugWithName('plugin:withPortableTextMarkModel')
 
@@ -239,6 +240,15 @@ export function createWithPortableTextMarkModel(
        * remote changes.
        */
       if (isChangingRemotely(editor)) {
+        apply(op)
+        return
+      }
+
+      /**
+       * We don't want to run any side effects when the editor is undoing or
+       * redoing operations.
+       */
+      if (isUndoing(editor) || isRedoing(editor)) {
         apply(op)
         return
       }

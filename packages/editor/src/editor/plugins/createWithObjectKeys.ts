@@ -2,7 +2,7 @@ import {Editor, Element, Node, Transforms} from 'slate'
 
 import {type PortableTextMemberSchemaTypes, type PortableTextSlateEditor} from '../../types/editor'
 import {isChangingRemotely} from '../../utils/withChanges'
-import {isPreservingKeys, PRESERVE_KEYS} from '../../utils/withPreserveKeys'
+import {isRedoing, isUndoing} from '../../utils/withUndoRedo'
 
 /**
  * This plugin makes sure that every new node in the editor get a new _key prop when created
@@ -13,11 +13,8 @@ export function createWithObjectKeys(
   keyGenerator: () => string,
 ) {
   return function withKeys(editor: PortableTextSlateEditor): PortableTextSlateEditor {
-    PRESERVE_KEYS.set(editor, false)
     const {apply, normalizeNode} = editor
 
-    // The apply function can be called with a scope (withPreserveKeys) that will
-    // preserve keys for the produced nodes if they have a _key property set already.
     // The default behavior is to always generate a new key here.
     // For example, when undoing and redoing we want to retain the keys, but
     // when we create a new bold span by splitting a non-bold-span we want the produced node to get a new key.
@@ -31,14 +28,21 @@ export function createWithObjectKeys(
         return
       }
 
-      if (operation.type === 'split_node') {
-        const withNewKey = !isPreservingKeys(editor) || !('_key' in operation.properties)
+      /**
+       * We don't want to run any side effects when the editor is undoing or
+       * redoing operations.
+       */
+      if (isUndoing(editor) || isRedoing(editor)) {
+        apply(operation)
+        return
+      }
 
+      if (operation.type === 'split_node') {
         apply({
           ...operation,
           properties: {
             ...operation.properties,
-            ...(withNewKey ? {_key: keyGenerator()} : {}),
+            _key: keyGenerator(),
           },
         })
 
@@ -46,15 +50,12 @@ export function createWithObjectKeys(
       }
 
       if (operation.type === 'insert_node') {
-        // Must be given a new key or adding/removing marks while typing gets in trouble (duped keys)!
-        const withNewKey = !isPreservingKeys(editor) || !('_key' in operation.node)
-
         if (!Editor.isEditor(operation.node)) {
           apply({
             ...operation,
             node: {
               ...operation.node,
-              ...(withNewKey ? {_key: keyGenerator()} : {}),
+              _key: keyGenerator(),
             },
           })
 

@@ -1,5 +1,6 @@
 import {type PortableTextSlateEditor} from '../../types/editor'
 import {isChangingRemotely} from '../../utils/withChanges'
+import {isRedoing, isUndoing} from '../../utils/withUndoRedo'
 
 /**
  * This plugin makes sure that the PTE maxBlocks prop is respected
@@ -14,6 +15,15 @@ export function createWithMaxBlocks(maxBlocks: number) {
        * remote changes.
        */
       if (isChangingRemotely(editor)) {
+        apply(operation)
+        return
+      }
+
+      /**
+       * We don't want to run any side effects when the editor is undoing or
+       * redoing operations.
+       */
+      if (isUndoing(editor) || isRedoing(editor)) {
         apply(operation)
         return
       }
