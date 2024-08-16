@@ -414,4 +414,44 @@ describe('Feature: Annotations', () => {
       ],
     })
   })
+
+  it('Scenario: Undoing deletion of annotated block', async () => {
+    const [editorA] = await getEditors()
+
+    // Given the text "foo"
+    await editorA.insertText('foo')
+
+    // And a "comment" around "foo"
+    await editorA.setSelection({
+      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 0},
+      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 3},
+    })
+    await editorA.toggleMark('m')
+
+    const valueAfterMark = await editorA.getValue()
+    const blockAfterMark =
+      valueAfterMark && isPortableTextBlock(valueAfterMark[0]) ? valueAfterMark[0] : undefined
+
+    // When "foo" is deleted
+    await editorA.pressKey('Backspace')
+
+    // And "undo" is performed
+    await editorA.undo()
+
+    const valueAfterUndo = await editorA.getValue()
+    const blockAfterUndo =
+      valueAfterUndo && isPortableTextBlock(valueAfterUndo[0]) ? valueAfterUndo[0] : undefined
+
+    // Then the text is unchanged
+    expect(blockAfterUndo).toEqual({
+      ...blockAfterMark,
+      _key: blockAfterUndo?._key,
+      children: [
+        {
+          ...blockAfterMark?.children[0],
+          _key: blockAfterUndo?.children[0]._key,
+        },
+      ],
+    })
+  })
 })
