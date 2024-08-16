@@ -315,6 +315,24 @@ export function createWithPortableTextMarkModel(
             editor.onChange()
             return
           }
+
+          const deletingAllText = op.offset === 0 && deletingFromTheEnd
+
+          if (nodeHasAnnotations && deletingAllText) {
+            const marksWithoutAnnotationMarks: string[] = (
+              {
+                ...(Editor.marks(editor) || {}),
+              }.marks || []
+            ).filter((mark) => decorators.includes(mark))
+
+            Editor.withoutNormalizing(editor, () => {
+              apply(op)
+              Transforms.setNodes(editor, {marks: marksWithoutAnnotationMarks}, {at: op.path})
+            })
+
+            editor.onChange()
+            return
+          }
         }
       }
 
