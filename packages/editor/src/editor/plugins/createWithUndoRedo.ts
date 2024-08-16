@@ -12,7 +12,7 @@ import {type Descendant, Editor, Operation, Path, type SelectionOperation, Trans
 import {type PatchObservable, type PortableTextSlateEditor} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {fromSlateValue} from '../../utils/values'
-import {withPreserveKeys} from '../../utils/withPreserveKeys'
+import {PRESERVE_KEYS, withPreserveKeys} from '../../utils/withPreserveKeys'
 
 const debug = debugWithName('plugin:withUndoRedo')
 const debugVerbose = debug.enabled && false
@@ -166,6 +166,7 @@ export function createWithUndoRedo(
             Transforms.deselect(editor)
             editor.history = {undos: [], redos: []}
             SAVING.set(editor, true)
+            PRESERVE_KEYS.set(editor, false)
             editor.onChange()
             return
           }
@@ -212,6 +213,7 @@ export function createWithUndoRedo(
             Transforms.deselect(editor)
             editor.history = {undos: [], redos: []}
             SAVING.set(editor, true)
+            PRESERVE_KEYS.set(editor, false)
             editor.onChange()
             return
           }
