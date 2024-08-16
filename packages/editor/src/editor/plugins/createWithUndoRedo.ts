@@ -12,7 +12,7 @@ import {type Descendant, Editor, Operation, Path, type SelectionOperation, Trans
 import {type PatchObservable, type PortableTextSlateEditor} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {fromSlateValue} from '../../utils/values'
-import {PRESERVE_KEYS, withPreserveKeys} from '../../utils/withPreserveKeys'
+import {setIsRedoing, setIsUndoing, withRedoing, withUndoing} from '../../utils/withUndoRedo'
 
 const debug = debugWithName('plugin:withUndoRedo')
 const debugVerbose = debug.enabled && false
@@ -150,7 +150,7 @@ export function createWithUndoRedo(
 
           try {
             Editor.withoutNormalizing(editor, () => {
-              withPreserveKeys(editor, () => {
+              withUndoing(editor, () => {
                 withoutSaving(editor, () => {
                   reversedOperations.forEach((op) => {
                     editor.apply(op)
@@ -166,7 +166,7 @@ export function createWithUndoRedo(
             Transforms.deselect(editor)
             editor.history = {undos: [], redos: []}
             SAVING.set(editor, true)
-            PRESERVE_KEYS.set(editor, false)
+            setIsUndoing(editor, false)
             editor.onChange()
             return
           }
@@ -196,7 +196,7 @@ export function createWithUndoRedo(
           })
           try {
             Editor.withoutNormalizing(editor, () => {
-              withPreserveKeys(editor, () => {
+              withRedoing(editor, () => {
                 withoutSaving(editor, () => {
                   // eslint-disable-next-line max-nested-callbacks
                   transformedOperations.forEach((op) => {
@@ -213,7 +213,7 @@ export function createWithUndoRedo(
             Transforms.deselect(editor)
             editor.history = {undos: [], redos: []}
             SAVING.set(editor, true)
-            PRESERVE_KEYS.set(editor, false)
+            setIsRedoing(editor, false)
             editor.onChange()
             return
           }

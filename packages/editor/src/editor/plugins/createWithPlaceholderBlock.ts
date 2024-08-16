@@ -4,6 +4,7 @@ import {type PortableTextSlateEditor} from '../../types/editor'
 import {type SlateTextBlock, type VoidElement} from '../../types/slate'
 import {debugWithName} from '../../utils/debug'
 import {isChangingRemotely} from '../../utils/withChanges'
+import {isRedoing, isUndoing} from '../../utils/withUndoRedo'
 
 const debug = debugWithName('plugin:withPlaceholderBlock')
 
@@ -23,6 +24,15 @@ export function createWithPlaceholderBlock(): (
        * remote changes.
        */
       if (isChangingRemotely(editor)) {
+        apply(op)
+        return
+      }
+
+      /**
+       * We don't want to run any side effects when the editor is undoing or
+       * redoing operations.
+       */
+      if (isUndoing(editor) || isRedoing(editor)) {
         apply(op)
         return
       }
