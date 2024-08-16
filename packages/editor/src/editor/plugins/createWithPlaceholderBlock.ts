@@ -3,6 +3,7 @@ import {Editor, Path} from 'slate'
 import {type PortableTextSlateEditor} from '../../types/editor'
 import {type SlateTextBlock, type VoidElement} from '../../types/slate'
 import {debugWithName} from '../../utils/debug'
+import {isChangingRemotely} from '../../utils/withChanges'
 
 const debug = debugWithName('plugin:withPlaceholderBlock')
 
@@ -17,6 +18,15 @@ export function createWithPlaceholderBlock(): (
     const {apply} = editor
 
     editor.apply = (op) => {
+      /**
+       * We don't want to run any side effects when the editor is processing
+       * remote changes.
+       */
+      if (isChangingRemotely(editor)) {
+        apply(op)
+        return
+      }
+
       if (op.type === 'remove_node') {
         const node = op.node as SlateTextBlock | VoidElement
         if (op.path[0] === 0 && Editor.isVoid(editor, node)) {

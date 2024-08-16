@@ -19,6 +19,7 @@ import {
 import {debugWithName} from '../../utils/debug'
 import {toPortableTextRange} from '../../utils/ranges'
 import {EMPTY_MARKS} from '../../utils/values'
+import {isChangingRemotely} from '../../utils/withChanges'
 
 const debug = debugWithName('plugin:withPortableTextMarkModel')
 
@@ -233,6 +234,15 @@ export function createWithPortableTextMarkModel(
     }
 
     editor.apply = (op) => {
+      /**
+       * We don't want to run any side effects when the editor is processing
+       * remote changes.
+       */
+      if (isChangingRemotely(editor)) {
+        apply(op)
+        return
+      }
+
       // Special hook before inserting text at the end of an annotation.
       if (op.type === 'insert_text') {
         const {selection} = editor
