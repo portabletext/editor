@@ -1,4 +1,5 @@
 import {type PortableTextSlateEditor} from '../../types/editor'
+import {isChangingRemotely} from '../../utils/withChanges'
 
 /**
  * This plugin makes sure that the PTE maxBlocks prop is respected
@@ -8,6 +9,15 @@ export function createWithMaxBlocks(maxBlocks: number) {
   return function withMaxBlocks(editor: PortableTextSlateEditor): PortableTextSlateEditor {
     const {apply} = editor
     editor.apply = (operation) => {
+      /**
+       * We don't want to run any side effects when the editor is processing
+       * remote changes.
+       */
+      if (isChangingRemotely(editor)) {
+        apply(operation)
+        return
+      }
+
       const rows = maxBlocks
       if (rows > 0 && editor.children.length >= rows) {
         if (

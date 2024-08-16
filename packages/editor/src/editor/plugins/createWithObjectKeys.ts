@@ -1,6 +1,7 @@
 import {Editor, Element, Node, Transforms} from 'slate'
 
 import {type PortableTextMemberSchemaTypes, type PortableTextSlateEditor} from '../../types/editor'
+import {isChangingRemotely} from '../../utils/withChanges'
 import {isPreservingKeys, PRESERVE_KEYS} from '../../utils/withPreserveKeys'
 
 /**
@@ -21,6 +22,15 @@ export function createWithObjectKeys(
     // For example, when undoing and redoing we want to retain the keys, but
     // when we create a new bold span by splitting a non-bold-span we want the produced node to get a new key.
     editor.apply = (operation) => {
+      /**
+       * We don't want to run any side effects when the editor is processing
+       * remote changes.
+       */
+      if (isChangingRemotely(editor)) {
+        apply(operation)
+        return
+      }
+
       if (operation.type === 'split_node') {
         const withNewKey = !isPreservingKeys(editor) || !('_key' in operation.properties)
 
