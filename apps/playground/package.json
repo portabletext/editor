@@ -18,7 +18,7 @@
     "@sanity/schema": "^3.52.4",
     "@xstate/react": "^4.1.1",
     "lodash.startcase": "^4.4.0",
-    "lucide-react": "^0.427.0",
+    "lucide-react": "^0.428.0",
     "prettier": "^3.3.2",
     "react": "^18.3.1",
     "react-aria-components": "^1.2.1",
@@ -33,7 +33,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@sanity/types": "^3.53.0",
+    "@sanity/types": "^3.54.0",
     "@types/lodash.startcase": "^4.4.9",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
@@ -52,6 +52,6 @@
     "tailwindcss": "^3.4.10",
     "tailwindcss-react-aria-components": "^1.1.4",
     "typescript": "5.5.4",
-    "vite": "^5.4.0"
+    "vite": "^5.4.1"
   }
 }
