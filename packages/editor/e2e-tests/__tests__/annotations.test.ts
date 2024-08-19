@@ -454,4 +454,39 @@ describe('Feature: Annotations', () => {
       ],
     })
   })
+
+  it('Scenario: Deleting emphasised paragraph with comment in the middle', async () => {
+    const [editorA] = await getEditors()
+
+    // Given the text "foo bar baz"
+    await editorA.insertText('foo bar baz')
+
+    // And "em" around "foo bar baz"
+    await editorA.setSelection({
+      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 0},
+      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 11},
+    })
+    await editorA.toggleMark('i')
+
+    // And a "comment" around "bar"
+    await editorA.setSelection({
+      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 4},
+      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 7},
+    })
+    await editorA.toggleMark('m')
+
+    const valueAfterMark = await editorA.getValue()
+    const blockAfterMark =
+      valueAfterMark && isPortableTextBlock(valueAfterMark[0]) ? valueAfterMark[0] : undefined
+
+    await editorA.setSelection({
+      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 0},
+      focus: {
+        path: [{_key: 'A-4'}, 'children', {_key: blockAfterMark!.children[2]._key}],
+        offset: 4,
+      },
+    })
+
+    await editorA.pressKey('Backspace')
+  })
 })
