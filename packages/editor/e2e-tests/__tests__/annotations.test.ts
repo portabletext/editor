@@ -489,4 +489,90 @@ describe('Feature: Annotations', () => {
 
     await editorA.pressKey('Backspace')
   })
+
+  it('Scenario: Toggling bold inside italic', async () => {
+    const [editorA] = await getEditors()
+
+    // Given the text "foo bar baz"
+    await editorA.insertText('foo bar baz')
+
+    // And "em" around "foo bar baz"
+    await editorA.setSelection({
+      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 0},
+      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 11},
+    })
+    await editorA.toggleMark('i')
+
+    // When "bar" is marked with "strong"
+    await editorA.setSelection({
+      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 4},
+      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 7},
+    })
+    await editorA.toggleMark('b')
+
+    const valueWithBold = await editorA.getValue()
+    const blockWithBold =
+      valueWithBold && isPortableTextBlock(valueWithBold[0]) ? valueWithBold[0] : undefined
+
+    // Then the block is split
+    expect(blockWithBold).toEqual({
+      _type: 'block',
+      _key: blockWithBold?._key,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {
+          _type: 'span',
+          _key: blockWithBold?.children[0]._key,
+          text: 'foo ',
+          marks: ['em'],
+        },
+        {
+          _type: 'span',
+          _key: blockWithBold?.children[1]._key,
+          text: 'bar',
+          marks: ['em', 'strong'],
+        },
+        {
+          _type: 'span',
+          _key: blockWithBold?.children[2]._key,
+          text: ' baz',
+          marks: ['em'],
+        },
+      ],
+    })
+
+    // And when "strong" is remove from bar "bar"
+    await editorA.setSelection({
+      anchor: {
+        path: [{_key: 'A-4'}, 'children', {_key: blockWithBold!.children[1]._key}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: 'A-4'}, 'children', {_key: blockWithBold!.children[1]._key}],
+        offset: 3,
+      },
+    })
+    await editorA.toggleMark('b')
+
+    const valueWithoutBold = await editorA.getValue()
+    const blockWithoutBold =
+      valueWithoutBold && isPortableTextBlock(valueWithoutBold[0]) ? valueWithoutBold[0] : undefined
+
+    // Then the block is merged again
+    expect(blockWithoutBold).toEqual({
+      _type: 'block',
+      _key: blockWithBold?._key,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {
+          _type: 'span',
+          _key: blockWithBold?.children[0]._key,
+          text: 'foo bar baz',
+          marks: ['em'],
+        },
+      ],
+    })
+  })
 })
