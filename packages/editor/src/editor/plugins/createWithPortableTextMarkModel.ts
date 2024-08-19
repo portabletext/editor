@@ -9,7 +9,7 @@
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import {isEqual, uniq} from 'lodash'
 import {type Subject} from 'rxjs'
-import {type Descendant, Editor, Element, Path, Range, Text, Transforms} from 'slate'
+import {type Descendant, Editor, Element, Node, Path, Range, Text, Transforms} from 'slate'
 
 import {
   type EditorChange,
@@ -54,29 +54,38 @@ export function createWithPortableTextMarkModel(
 
     // Extend Slate's default normalization. Merge spans with same set of .marks when doing merge_node operations, and clean up markDefs / marks
     editor.normalizeNode = (nodeEntry) => {
-      normalizeNode(nodeEntry)
-      if (
-        editor.operations.some((op) =>
-          [
-            'insert_node',
-            'insert_text',
-            'merge_node',
-            'remove_node',
-            'remove_text',
-            'set_node',
-          ].includes(op.type),
-        )
-      ) {
-        mergeSpans(editor)
-      }
       const [node, path] = nodeEntry
+
       const isSpan = Text.isText(node) && node._type === types.span.name
       const isTextBlock = editor.isTextBlock(node)
+
+      if (editor.isTextBlock(node)) {
+        const children = Node.children(editor, path)
+
+        for (const [child, childPath] of children) {
+          const nextNode = node.children[childPath[1] + 1]
+
+          if (
+            editor.isTextSpan(child) &&
+            editor.isTextSpan(nextNode) &&
+            isEqual(child.marks, nextNode.marks)
+          ) {
+            debug(
+              'Merging spans',
+              JSON.stringify(child, null, 2),
+              JSON.stringify(nextNode, null, 2),
+            )
+            Transforms.mergeNodes(editor, {at: [childPath[0], childPath[1] + 1], voids: true})
+            return
+          }
+        }
+      }
+
       if (isSpan || isTextBlock) {
         if (isSpan && !Array.isArray(node.marks)) {
           debug('Adding .marks to span node')
           Transforms.setNodes(editor, {marks: []}, {at: path})
-          editor.onChange()
+          return
         }
         const hasSpanMarks = isSpan && (node.marks || []).length > 0
         if (hasSpanMarks) {
@@ -100,7 +109,7 @@ export function createWithPortableTextMarkModel(
                 {marks: spanMarks.filter((mark) => !orphanedMarks.includes(mark))},
                 {at: path},
               )
-              editor.onChange()
+              return
             }
           }
         }
@@ -124,7 +133,7 @@ export function createWithPortableTextMarkModel(
               // eslint-disable-next-line max-depth
               if (!isNormalized) {
                 Transforms.setNodes(editor, {markDefs: newMarkDefs}, {at: targetPath, voids: false})
-                editor.onChange()
+                return
               }
             }
           }
@@ -148,7 +157,7 @@ export function createWithPortableTextMarkModel(
                 {markDefs: uniq([...oldDefs, ...op.properties.markDefs])},
                 {at: targetPath, voids: false},
               )
-              editor.onChange()
+              return
             }
           }
           // Make sure marks are reset, if a block is split at the end.
@@ -169,7 +178,7 @@ export function createWithPortableTextMarkModel(
               child.marks.length > 0
             ) {
               Transforms.setNodes(editor, {marks: []}, {at: childPath, voids: false})
-              editor.onChange()
+              return
             }
           }
           // Make sure markDefs are reset, if a block is split at start.
@@ -192,7 +201,7 @@ export function createWithPortableTextMarkModel(
               (!block.children[0].marks || block.children[0].marks.length === 0)
             ) {
               Transforms.setNodes(editor, {markDefs: []}, {at: blockPath})
-              editor.onChange()
+              return
             }
           }
         }
@@ -203,7 +212,7 @@ export function createWithPortableTextMarkModel(
           (!node.marks || (node.marks.length > 0 && node.text === ''))
         ) {
           Transforms.setNodes(editor, {marks: []}, {at: path, voids: false})
-          editor.onChange()
+          return
         }
       }
       // Check consistency of markDefs (unless we are merging two nodes)
@@ -229,9 +238,11 @@ export function createWithPortableTextMarkModel(
             },
             {at: path},
           )
-          editor.onChange()
+          return
         }
       }
+
+      normalizeNode(nodeEntry)
     }
 
     editor.apply = (op) => {
@@ -353,34 +364,35 @@ export function createWithPortableTextMarkModel(
     editor.addMark = (mark: string) => {
       if (editor.selection) {
         if (Range.isExpanded(editor.selection)) {
-          // Split if needed
-          Transforms.setNodes(editor, {}, {match: Text.isText, split: true})
-          // Use new selection
-          const splitTextNodes = [
-            ...Editor.nodes(editor, {at: editor.selection, match: Text.isText}),
-          ]
-          const shouldRemoveMark = splitTextNodes.every((node) => node[0].marks?.includes(mark))
-
-          if (shouldRemoveMark) {
-            editor.removeMark(mark)
-            return editor
-          }
           Editor.withoutNormalizing(editor, () => {
-            splitTextNodes.forEach(([node, path]) => {
-              const marks = [
-                ...(Array.isArray(node.marks) ? node.marks : []).filter(
-                  (eMark: string) => eMark !== mark,
-                ),
-                mark,
-              ]
-              Transforms.setNodes(
-                editor,
-                {marks},
-                {at: path, match: Text.isText, split: true, hanging: true},
-              )
-            })
+            // Split if needed
+            Transforms.setNodes(editor, {}, {match: Text.isText, split: true})
+            // Use new selection
+            const splitTextNodes = Range.isRange(editor.selection)
+              ? [...Editor.nodes(editor, {at: editor.selection, match: Text.isText})]
+              : []
+            const shouldRemoveMark =
+              splitTextNodes.length > 1 &&
+              splitTextNodes.every((node) => node[0].marks?.includes(mark))
+
+            if (shouldRemoveMark) {
+              editor.removeMark(mark)
+            } else {
+              splitTextNodes.forEach(([node, path]) => {
+                const marks = [
+                  ...(Array.isArray(node.marks) ? node.marks : []).filter(
+                    (eMark: string) => eMark !== mark,
+                  ),
+                  mark,
+                ]
+                Transforms.setNodes(
+                  editor,
+                  {marks},
+                  {at: path, match: Text.isText, split: true, hanging: true},
+                )
+              })
+            }
           })
-          Editor.normalize(editor)
         } else {
           const existingMarks: string[] =
             {
@@ -485,37 +497,5 @@ export function createWithPortableTextMarkModel(
       }
     }
     return editor
-  }
-
-  /**
-   * Normalize re-marked spans in selection
-   */
-  function mergeSpans(editor: PortableTextSlateEditor) {
-    const {selection} = editor
-
-    if (selection) {
-      const textNodesInSelection = Array.from(
-        Editor.nodes(editor, {
-          at: Editor.range(editor, [selection.anchor.path[0]], [selection.focus.path[0]]),
-          match: Text.isText,
-          reverse: true,
-        }),
-      )
-
-      for (const [node, path] of textNodesInSelection) {
-        const [parent] = path.length > 1 ? Editor.node(editor, Path.parent(path)) : [undefined]
-        const nextPath = [path[0], path[1] + 1]
-
-        if (editor.isTextBlock(parent)) {
-          const nextNode = parent.children[nextPath[1]]
-
-          if (Text.isText(nextNode) && isEqual(nextNode.marks, node.marks)) {
-            debug('Merging spans')
-            Transforms.mergeNodes(editor, {at: nextPath, voids: true})
-            editor.onChange()
-          }
-        }
-      }
-    }
   }
 }
