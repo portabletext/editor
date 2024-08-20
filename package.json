@@ -40,7 +40,7 @@
     "pretty-quick": "^4.0.0",
     "turbo": "^2.0.14"
   },
-  "packageManager": "pnpm@9.6.0",
+  "packageManager": "pnpm@9.7.1",
   "pnpm": {
     "peerDependencyRules": {
       "allowAny": [
