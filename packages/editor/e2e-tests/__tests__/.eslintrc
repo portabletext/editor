@@ -5,6 +5,7 @@
   },
   "rules": {
     "import/no-unassigned-import": "off",
-    "tsdoc/syntax": "off"
+    "tsdoc/syntax": "off",
+    "max-depth": "off"
   }
 }

@@ -4,13 +4,11 @@ import {type EditorSelection} from '../../src'
 
 export {}
 
-type Value = PortableTextBlock[] | undefined
-
-type Editor = {
+export type Editor = {
   editorId: string
   focus: () => Promise<void>
   getSelection: () => Promise<EditorSelection | null>
-  getValue: () => Promise<Value>
+  getValue: () => Promise<PortableTextBlock[] | undefined>
   insertText: (text: string) => Promise<void>
   type: (text: string) => Promise<void>
   paste: (text: string, type?: string) => Promise<void>
@@ -24,7 +22,7 @@ type Editor = {
 
 declare global {
   function getEditors(): Promise<Editor[]>
-  function setDocumentValue(value: Value): Promise<void>
+  function setDocumentValue(value: PortableTextBlock[] | undefined): Promise<void>
   /** Wait for editors to have settled with a new revision */
   function waitForRevision(): Promise<void>
 }
