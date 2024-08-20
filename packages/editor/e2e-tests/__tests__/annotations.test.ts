@@ -1,75 +1,58 @@
 /** @jest-environment ./setup/collaborative.jest.env.ts */
-import '../setup/globals.jest'
-
-import {describe, expect, it} from '@jest/globals'
+import {describe, expect, it, test} from '@jest/globals'
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
+import {type PortableTextBlock} from '@sanity/types'
+
+import {type EditorSelection, type EditorSelectionPoint} from '../../src'
+import {type Editor} from '../setup/globals.jest'
 
 describe('Feature: Annotations', () => {
   it('Scenario: Undoing the deletion of the last char of annotated text', async () => {
+    const marksMap = new Map<string, Array<string>>()
+
     const [editorA] = await getEditors()
 
     // Given the text "foo"
     await editorA.insertText('foo')
 
-    // And a "comment" around the text
-    await editorA.setSelection({
-      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 0},
-      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 3},
-    })
-    await editorA.toggleMark('m')
-    const valueBeforeUndo = await editorA.getValue()
-    const commentKey =
-      valueBeforeUndo && isPortableTextBlock(valueBeforeUndo[0])
-        ? valueBeforeUndo[0].markDefs?.[0]?._key
-        : undefined
+    // And a "comment" (m1) around "foo"
+    const marks = await markEditorText(editorA, 'foo', 'm')
+    marksMap.set('m1', marks ?? [])
 
-    // When "Backspace" is pressed once
-    await editorA.setSelection({
-      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 3},
-      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 3},
-    })
+    // When "ArrowRight" is pressed
+    await editorA.pressKey('ArrowRight')
+
+    // And "Backspace" is pressed
     await editorA.pressKey('Backspace')
 
-    // And an "undo" is performed
+    // And "undo" is performed
     await editorA.undo()
 
-    const valueAfterUndo = await editorA.getValue()
-    const span =
-      valueAfterUndo &&
-      isPortableTextBlock(valueAfterUndo[0]) &&
-      isPortableTextSpan(valueAfterUndo[0].children[0])
-        ? valueAfterUndo[0].children[0]
-        : undefined
-
     // Then the text is "foo"
-    expect(span?.text).toBe('foo')
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['foo']))
 
-    // And the text is marked with a "comment"
-    expect(span?.marks).toEqual([commentKey])
+    // And "foo" is marked with (m1)
+    await getEditorTextMarks(editorA, 'foo').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m1')),
+    )
   })
 
   it('Scenario: Redoing the deletion of the last char of annotated text', async () => {
+    const marksMap = new Map<string, Array<string>>()
+
     const [editorA] = await getEditors()
 
     // Given the text "foo"
     await editorA.insertText('foo')
 
-    // And a "comment" around the text
-    await editorA.setSelection({
-      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 0},
-      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 3},
-    })
-    await editorA.toggleMark('m')
-    const value = await editorA.getValue()
-    const block = value && isPortableTextBlock(value[0]) ? value[0] : undefined
-    const commentKey = block?.markDefs?.[0]?._key
-    const spanKey = block?.children[0]?._key
+    // And a "comment" (m1) around "foo"
+    const marks = await markEditorText(editorA, 'foo', 'm')
+    marksMap.set('m1', marks ?? [])
 
-    // When "Backspace" is pressed once
-    await editorA.setSelection({
-      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 3},
-      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 3},
-    })
+    // When "ArrowRight" is pressed
+    await editorA.pressKey('ArrowRight')
+
+    // And "Backspace" is pressed
     await editorA.pressKey('Backspace')
 
     // And "undo" is performed
@@ -78,251 +61,168 @@ describe('Feature: Annotations', () => {
     // When "redo" is performed
     await editorA.redo()
 
-    const valueAfterRedo = await editorA.getValue()
-    const blockAfterRedo =
-      valueAfterRedo && isPortableTextBlock(valueAfterRedo[0]) ? valueAfterRedo[0] : undefined
+    // Then the text is "fo"
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['fo']))
 
-    // Then the text is "foo"
-    expect(blockAfterRedo?.children[0]?.text).toBe('fo')
-
-    // And the text is marked with a "comment"
-    expect(blockAfterRedo?.children[0]?.marks).toEqual([commentKey])
-
-    // And the key is unchanged
-    expect(blockAfterRedo?.children[0]?._key).toBe(spanKey)
+    // And "fo" is marked with (m1)
+    await getEditorTextMarks(editorA, 'fo').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m1')),
+    )
   })
 
   it('Scenario: Undoing inserting text after annotated text', async () => {
+    const marksMap = new Map<string, Array<string>>()
+
     const [editorA] = await getEditors()
 
     // Given the text "foo"
     await editorA.insertText('foo')
 
-    // And a "comment" around the text
-    await editorA.setSelection({
-      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 0},
-      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 3},
-    })
-    await editorA.toggleMark('m')
-    const valueBeforeSpace = await editorA.getValue()
-    const commentKey =
-      valueBeforeSpace && isPortableTextBlock(valueBeforeSpace[0])
-        ? valueBeforeSpace[0].markDefs?.[0]?._key
-        : undefined
+    // And a "comment" (m1) around "foo"
+    const marks = await markEditorText(editorA, 'foo', 'm')
+    marksMap.set('m1', marks ?? [])
 
-    // When "Space" is pressed once
-    await editorA.setSelection({
-      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 3},
-      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 3},
-    })
+    // When "ArrowRight" is pressed
+    await editorA.pressKey('ArrowRight')
+
+    // And "Space" is pressed
     await editorA.pressKey(' ')
 
-    const valueAfterSpace = await editorA.getValue()
-    const blockAfterSpace =
-      valueAfterSpace && isPortableTextBlock(valueAfterSpace[0]) ? valueAfterSpace[0] : undefined
+    // Then the text is "foo, "
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['foo', ' ']))
 
-    // Then the text is "foo"
-    expect(blockAfterSpace?.children[0]?.text).toBe('foo')
+    // And "foo" is marked with (m1)
+    await getEditorTextMarks(editorA, 'foo').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m1')),
+    )
 
-    // And the text is marked with a "comment"
-    expect(blockAfterSpace?.children[0]?.marks).toEqual([commentKey])
-
-    // And the subsequent text is " "
-    expect(blockAfterSpace?.children[1]?.text).toBe(' ')
-
-    // And the subsequent text has no marks
-    expect(blockAfterSpace?.children[1]?.marks).toEqual([])
+    // And " " has no marks
+    await getEditorTextMarks(editorA, ' ').then((marks) => expect(marks).toEqual([]))
 
     // And when an "undo" is performed
     await editorA.undo()
 
-    const valueAfterUndo = await editorA.getValue()
-    const blockAfterUndo =
-      valueAfterUndo && isPortableTextBlock(valueAfterUndo[0]) ? valueAfterUndo[0] : undefined
-
     // Then the text is "foo"
-    expect(blockAfterUndo?.children[0]?.text).toBe('foo')
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['foo']))
 
-    // And the text is marked with a "comment"
-    expect(blockAfterUndo?.children[0]?.marks).toEqual([commentKey])
-
-    // And the subsequent text is deleted
-    expect(blockAfterUndo?.children[1]).toBeUndefined()
+    // And "foo" is marked with (m1)
+    await getEditorTextMarks(editorA, 'foo').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m1')),
+    )
   })
 
   it('Scenario: Undoing local annotation before remote annotation', async () => {
+    const marksMap = new Map<string, Array<string>>()
+
     const [editorA, editorB] = await getEditors()
 
     // Given the text "foobar"
     await editorA.insertText('foobar')
 
-    const value = await editorA.getValue()
-    const block = value && isPortableTextBlock(value[0]) ? value[0] : undefined
-
-    // And a "comment" around "foo"
-    await editorA.setSelection({
-      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 0},
-      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 3},
-    })
-    await editorA.toggleMark('m')
-
-    const valueAfterEditorAMark = await editorA.getValue()
-    const blockAfterEditorAMark =
-      valueAfterEditorAMark && isPortableTextBlock(valueAfterEditorAMark[0])
-        ? valueAfterEditorAMark[0]
-        : undefined
-    const secondSpanKey = blockAfterEditorAMark?.children[1]._key
+    // And a "comment" (m1) around "foo"
+    const m1 = await markEditorText(editorA, 'foo', 'm')
+    marksMap.set('m1', m1 ?? [])
 
     // When editor "B" adds a "comment" around "bar"
-    await editorB.setSelection({
-      anchor: {path: [{_key: 'A-4'}, 'children', {_key: secondSpanKey!}], offset: 0},
-      focus: {path: [{_key: 'A-4'}, 'children', {_key: secondSpanKey!}], offset: 3},
-    })
-    await editorB.toggleMark('m')
-
-    const valueAfterEditorBMark = await editorA.getValue()
-    const blockAfterEditorBMark =
-      valueAfterEditorBMark && isPortableTextBlock(valueAfterEditorBMark[0])
-        ? valueAfterEditorBMark[0]
-        : undefined
+    const m2 = await markEditorText(editorB, 'bar', 'm')
+    marksMap.set('m2', m2 ?? [])
 
     // And editor "A" performs "undo"
     await editorA.undo()
 
-    const valueAfterUndo = await editorA.getValue()
-    const blockAfterUndo =
-      valueAfterUndo && isPortableTextBlock(valueAfterUndo[0]) ? valueAfterUndo[0] : undefined
+    // Then the text is "foo,bar"
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['foo', 'bar']))
 
-    // Then the "comment" is removed from "foo"
-    expect(blockAfterUndo?.children[0]._key).toBe(block?.children[0]._key)
-    expect(blockAfterUndo?.children[0].marks).toEqual(block?.children[0].marks)
-    expect(blockAfterUndo?.children[0].text).toBe('foo')
+    // And "foo" has no marks
+    await getEditorTextMarks(editorA, 'foo').then((marks) => expect(marks).toEqual([]))
 
-    // And "bar" is unchanged
-    expect(blockAfterUndo?.children[1]).toEqual(blockAfterEditorBMark?.children[1])
+    // And "bar" is marked with (m2)
+    await getEditorTextMarks(editorA, 'bar').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m2')),
+    )
   })
 
   it('Scenario: Undoing and redoing inserting text after annotated text', async () => {
+    const marksMap = new Map<string, Array<string>>()
+
     const [editorA] = await getEditors()
 
     // Given the text "foo"
     await editorA.insertText('foo')
 
-    // And a "comment" around the text
-    await editorA.setSelection({
-      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 0},
-      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 3},
-    })
-    await editorA.toggleMark('m')
-    const valueBeforeSpace = await editorA.getValue()
-    const commentKey =
-      valueBeforeSpace && isPortableTextBlock(valueBeforeSpace[0])
-        ? valueBeforeSpace[0].markDefs?.[0]?._key
-        : undefined
+    // And a "comment" (m1) around "foo"
+    const marks = await markEditorText(editorA, 'foo', 'm')
+    marksMap.set('m1', marks ?? [])
 
-    // When "Space" is pressed once
-    await editorA.setSelection({
-      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 3},
-      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 3},
-    })
+    // When "ArrowRight" is pressed
+    await editorA.pressKey('ArrowRight')
+
+    // And "Space" is pressed
     await editorA.pressKey(' ')
 
     // And an "undo" is performed
     await editorA.undo()
 
-    const valueAfterUndo = await editorA.getValue()
-    const blockAfterUndo =
-      valueAfterUndo && isPortableTextBlock(valueAfterUndo[0]) ? valueAfterUndo[0] : undefined
-
     // Then the text is "foo"
-    expect(blockAfterUndo?.children[0]?.text).toBe('foo')
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['foo']))
 
-    // And the text is marked with a "comment"
-    expect(blockAfterUndo?.children[0]?.marks).toEqual([commentKey])
-
-    // And the subsequent text is deleted
-    expect(blockAfterUndo?.children[1]).toBeUndefined()
+    // And "foo" is marked with (m1)
+    await getEditorTextMarks(editorA, 'foo').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m1')),
+    )
 
     // And when "redo" is performed
     await editorA.redo()
 
-    const valueAfterRedo = await editorA.getValue()
-    const blockAfterRedo =
-      valueAfterRedo && isPortableTextBlock(valueAfterRedo[0]) ? valueAfterRedo[0] : undefined
+    // Then the text is "foo, "
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['foo', ' ']))
 
-    // Then the text is "foo"
-    expect(blockAfterRedo?.children[0]?.text).toBe('foo')
+    // And "foo" is marked with (m1)
+    await getEditorTextMarks(editorA, 'foo').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m1')),
+    )
 
-    // And the text is marked with a "comment"
-    expect(blockAfterRedo?.children[0]?.marks).toEqual([commentKey])
-
-    // And the subsequent text is " "
-    expect(blockAfterRedo?.children[1]?.text).toBe(' ')
-
-    // And the subsequent text has no marks
-    expect(blockAfterRedo?.children[1]?.marks).toEqual([])
+    // And " " has no marks
+    await getEditorTextMarks(editorA, ' ').then((marks) => expect(marks).toEqual([]))
   })
 
   it("Scenario: Editor B inserting text after Editor A's half-deleted annotation", async () => {
+    const marksMap = new Map<string, Array<string>>()
+
     const [editorA, editorB] = await getEditors()
 
     // Given the text "foo"
     await editorA.insertText('foo')
 
-    const valueBeforeMark = await editorA.getValue()
-    const blockBeforeMark =
-      valueBeforeMark && isPortableTextBlock(valueBeforeMark[0]) ? valueBeforeMark[0] : undefined
+    // And a "comment" (m1) around "foo"
+    const marks = await markEditorText(editorA, 'foo', 'm')
+    marksMap.set('m1', marks ?? [])
 
-    // And a "comment" around the text
-    await editorA.setSelection({
-      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 0},
-      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 3},
-    })
-    await editorA.toggleMark('m')
+    // When "ArrowRight" is pressed
+    await editorA.pressKey('ArrowRight')
 
-    const valueAfterMark = await editorA.getValue()
-    const blockAfterMark =
-      valueAfterMark && isPortableTextBlock(valueAfterMark[0]) ? valueAfterMark[0] : undefined
-
-    // When editor "A" pressed "Backspace"
-    await editorA.setSelection({
-      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 3},
-      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 3},
-    })
+    // And "Backspace" is pressed
     await editorA.pressKey('Backspace')
 
-    const valueAfterBackspace = await editorA.getValue()
-    const blockAfterBackspace =
-      valueAfterBackspace && isPortableTextBlock(valueAfterBackspace[0])
-        ? valueAfterBackspace[0]
-        : undefined
+    // And editor B select "fo"
+    await selectEditorText(editorB, 'fo')
 
-    expect(blockAfterBackspace?.children[0]._key).toBe(blockBeforeMark?.children[0]._key)
-    expect(blockAfterBackspace?.children[0].text).toBe('fo')
-    expect(blockAfterBackspace?.children[0].marks).toEqual(blockAfterMark?.children[0].marks)
+    // And editor B presses "ArrowRight"
+    await editorB.pressKey('ArrowRight')
 
-    // And editor "B" inserts "1"
-    await editorB.setSelection({
-      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 2},
-      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 2},
-    })
+    // And editor B types "1"
+    await editorB.type('1')
 
-    await editorB.pressKey('1')
+    // Then the text is "fo,1"
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['fo', '1']))
 
-    await waitForRevision()
+    // And "fo" is marked with (m1)
+    await getEditorTextMarks(editorA, 'fo').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m1')),
+    )
 
-    const valueAfterEditorBChange = await editorA.getValue()
-    const blockAfterEditorBChange =
-      valueAfterEditorBChange && isPortableTextBlock(valueAfterEditorBChange[0])
-        ? valueAfterEditorBChange[0]
-        : undefined
-
-    // Then "fo" is unchanged
-    expect(blockAfterEditorBChange?.children[0]).toEqual(blockAfterBackspace?.children[0])
-
-    // And "1" is inserted
-    expect(blockAfterEditorBChange?.children[1].text).toBe('1')
-    expect(blockAfterEditorBChange?.children[1].marks).toEqual([])
+    // And "1" has no marks
+    await getEditorTextMarks(editorA, '1').then((marks) => expect(marks).toEqual([]))
   })
 
   it('Scenario: Writing on top of annotation', async () => {
@@ -332,127 +232,73 @@ describe('Feature: Annotations', () => {
     await editorA.insertText('foo bar baz')
 
     // And a "comment" around "bar"
-    await editorA.setSelection({
-      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 4},
-      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 7},
-    })
-    await editorA.toggleMark('m')
-
-    const valueAfterMark = await editorA.getValue()
-    const blockAfterMark =
-      valueAfterMark && isPortableTextBlock(valueAfterMark[0]) ? valueAfterMark[0] : undefined
+    await markEditorText(editorA, 'bar', 'm')
 
     // When "removed" is typed
     await editorA.type('removed')
 
-    const valueAfterNewText = await editorA.getValue()
-    const blockAfterNewText =
-      valueAfterNewText && isPortableTextBlock(valueAfterNewText[0])
-        ? valueAfterNewText[0]
-        : undefined
+    // Then the text is "foo removed baz"
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['foo removed baz']))
 
-    // Then the comment is removed
-    expect(blockAfterNewText).toEqual({
-      ...blockAfterMark,
-      children: [
-        {
-          ...blockAfterMark?.children[0],
-          text: 'foo removed baz',
-        },
-      ],
-      markDefs: [],
-    })
+    // And "foo removed baz" has no marks
+    await getEditorTextMarks(editorA, 'foo removed baz').then((marks) => expect(marks).toEqual([]))
   })
 
   it('Scenario: Undoing the deletion of block with annotation at the end', async () => {
+    const marksMap = new Map<string, Array<string>>()
+
     const [editorA] = await getEditors()
 
     // Given the text "foo bar"
     await editorA.insertText('foo bar')
 
-    // And a "comment" around "bar"
-    await editorA.setSelection({
-      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 4},
-      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 7},
-    })
-    await editorA.toggleMark('m')
+    // And a "comment" (m1) around "bar"
+    const marks = await markEditorText(editorA, 'bar', 'm')
+    marksMap.set('m1', marks ?? [])
 
-    const valueAfterMark = await editorA.getValue()
-    const blockAfterMark =
-      valueAfterMark && isPortableTextBlock(valueAfterMark[0]) ? valueAfterMark[0] : undefined
+    // When "foo bar" is selected
+    await selectEditorText(editorA, 'foo bar')
 
-    // When "foo bar" is deleted
-    await editorA.setSelection({
-      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 0},
-      focus: {
-        path: [{_key: 'A-4'}, 'children', {_key: blockAfterMark!.children[1]._key}],
-        offset: 3,
-      },
-    })
+    // And "Backspace" is pressed
     await editorA.pressKey('Backspace')
 
     // And "undo" is performed
     await editorA.undo()
 
-    const valueAfterUndo = await editorA.getValue()
-    const blockAfterUndo =
-      valueAfterUndo && isPortableTextBlock(valueAfterUndo[0]) ? valueAfterUndo[0] : undefined
+    // Then the text is "foo ,bar"
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['foo ', 'bar']))
 
-    // Then the text is unchanged
-    expect(blockAfterUndo).toEqual({
-      ...blockAfterMark,
-      _key: blockAfterUndo?._key,
-      children: [
-        {
-          ...blockAfterMark?.children[0],
-          _key: blockAfterUndo?.children[0]?._key,
-        },
-        {
-          ...blockAfterMark?.children[1],
-          _key: blockAfterUndo?.children[1]?._key,
-        },
-      ],
-    })
+    // And "bar" is marked with (m1)
+    await getEditorTextMarks(editorA, 'bar').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m1')),
+    )
   })
 
   it('Scenario: Undoing deletion of annotated block', async () => {
+    const marksMap = new Map<string, Array<string>>()
+
     const [editorA] = await getEditors()
 
     // Given the text "foo"
     await editorA.insertText('foo')
 
-    // And a "comment" around "foo"
-    await editorA.setSelection({
-      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 0},
-      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 3},
-    })
-    await editorA.toggleMark('m')
+    // And a "comment" (m1) around "foo"
+    const marks = await markEditorText(editorA, 'foo', 'm')
+    marksMap.set('m1', marks ?? [])
 
-    const valueAfterMark = await editorA.getValue()
-    const blockAfterMark =
-      valueAfterMark && isPortableTextBlock(valueAfterMark[0]) ? valueAfterMark[0] : undefined
-
-    // When "foo" is deleted
+    // When "Backspace" is pressed
     await editorA.pressKey('Backspace')
 
     // And "undo" is performed
     await editorA.undo()
 
-    const valueAfterUndo = await editorA.getValue()
-    const blockAfterUndo =
-      valueAfterUndo && isPortableTextBlock(valueAfterUndo[0]) ? valueAfterUndo[0] : undefined
+    // Then the text is "foo"
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['foo']))
 
-    // Then the text is unchanged
-    expect(blockAfterUndo).toEqual({
-      ...blockAfterMark,
-      _key: blockAfterUndo?._key,
-      children: [
-        {
-          ...blockAfterMark?.children[0],
-          _key: blockAfterUndo?.children[0]._key,
-        },
-      ],
-    })
+    // And "foo" is marked with (m1)
+    await getEditorTextMarks(editorA, 'foo').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m1')),
+    )
   })
 
   it('Scenario: Deleting emphasised paragraph with comment in the middle', async () => {
@@ -462,32 +308,19 @@ describe('Feature: Annotations', () => {
     await editorA.insertText('foo bar baz')
 
     // And "em" around "foo bar baz"
-    await editorA.setSelection({
-      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 0},
-      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 11},
-    })
-    await editorA.toggleMark('i')
+    await markEditorText(editorA, 'foo bar baz', 'i')
 
-    // And a "comment" around "bar"
-    await editorA.setSelection({
-      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 4},
-      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 7},
-    })
-    await editorA.toggleMark('m')
+    // And "comment" around "bar"
+    await markEditorText(editorA, 'bar', 'm')
 
-    const valueAfterMark = await editorA.getValue()
-    const blockAfterMark =
-      valueAfterMark && isPortableTextBlock(valueAfterMark[0]) ? valueAfterMark[0] : undefined
+    // When "foo bar baz" is selected
+    await selectEditorText(editorA, 'foo bar baz')
 
-    await editorA.setSelection({
-      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 0},
-      focus: {
-        path: [{_key: 'A-4'}, 'children', {_key: blockAfterMark!.children[2]._key}],
-        offset: 4,
-      },
-    })
-
+    // And "Backspace" is pressed
     await editorA.pressKey('Backspace')
+
+    // Then the editor is empty
+    await editorA.getValue().then((value) => expect(value).toEqual([]))
   })
 
   it('Scenario: Toggling bold inside italic', async () => {
@@ -497,82 +330,329 @@ describe('Feature: Annotations', () => {
     await editorA.insertText('foo bar baz')
 
     // And "em" around "foo bar baz"
-    await editorA.setSelection({
-      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 0},
-      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 11},
-    })
-    await editorA.toggleMark('i')
+    await markEditorText(editorA, 'foo bar baz', 'i')
 
     // When "bar" is marked with "strong"
-    await editorA.setSelection({
-      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 4},
-      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-3'}], offset: 7},
-    })
-    await editorA.toggleMark('b')
+    await markEditorText(editorA, 'bar', 'b')
 
-    const valueWithBold = await editorA.getValue()
-    const blockWithBold =
-      valueWithBold && isPortableTextBlock(valueWithBold[0]) ? valueWithBold[0] : undefined
+    // Then the text is "foo ,bar, baz"
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['foo ', 'bar', ' baz']))
 
-    // Then the block is split
-    expect(blockWithBold).toEqual({
-      _type: 'block',
-      _key: blockWithBold?._key,
-      style: 'normal',
-      markDefs: [],
-      children: [
-        {
-          _type: 'span',
-          _key: blockWithBold?.children[0]._key,
-          text: 'foo ',
-          marks: ['em'],
-        },
-        {
-          _type: 'span',
-          _key: blockWithBold?.children[1]._key,
-          text: 'bar',
-          marks: ['em', 'strong'],
-        },
-        {
-          _type: 'span',
-          _key: blockWithBold?.children[2]._key,
-          text: ' baz',
-          marks: ['em'],
-        },
-      ],
-    })
+    // And "foo " is marked with "em"
+    await getEditorTextMarks(editorA, 'foo ').then((marks) => expect(marks).toEqual(['em']))
 
-    // And when "strong" is remove from bar "bar"
-    await editorA.setSelection({
-      anchor: {
-        path: [{_key: 'A-4'}, 'children', {_key: blockWithBold!.children[1]._key}],
-        offset: 0,
-      },
-      focus: {
-        path: [{_key: 'A-4'}, 'children', {_key: blockWithBold!.children[1]._key}],
-        offset: 3,
-      },
-    })
-    await editorA.toggleMark('b')
+    // And "bar" is marked with "em,strong"
+    await getEditorTextMarks(editorA, 'bar').then((marks) =>
+      expect(marks).toEqual(['em', 'strong']),
+    )
 
-    const valueWithoutBold = await editorA.getValue()
-    const blockWithoutBold =
-      valueWithoutBold && isPortableTextBlock(valueWithoutBold[0]) ? valueWithoutBold[0] : undefined
+    // And " baz" is marked with "em"
+    await getEditorTextMarks(editorA, ' baz').then((marks) => expect(marks).toEqual(['em']))
 
-    // Then the block is merged again
-    expect(blockWithoutBold).toEqual({
-      _type: 'block',
-      _key: blockWithBold?._key,
-      style: 'normal',
-      markDefs: [],
-      children: [
-        {
-          _type: 'span',
-          _key: blockWithBold?.children[0]._key,
-          text: 'foo bar baz',
-          marks: ['em'],
-        },
-      ],
-    })
+    // And when "strong" is remove from "bar"
+    await markEditorText(editorA, 'bar', 'b')
+
+    // Then the text is "foo bar baz"
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['foo bar baz']))
+
+    // And "foo bar baz" is marked with "em"
+    await getEditorTextMarks(editorA, 'foo bar baz').then((marks) => expect(marks).toEqual(['em']))
   })
+
+  it('Scenario: Toggling bold inside italic as you write', async () => {
+    const [editorA] = await getEditors()
+
+    // Given an empty editor
+    setDocumentValue([])
+
+    // When "italic" is toggled
+    await editorA.toggleMark('i')
+
+    // And "foo " is typed
+    await editorA.type('foo ')
+
+    // And "bold" is toggled
+    await editorA.toggleMark('b')
+
+    // And "bar" is typed
+    await editorA.type('bar')
+
+    // And "bold" is toggled
+    await editorA.toggleMark('b')
+
+    // And " baz" is typed
+    await editorA.type(' baz')
+
+    // Then the text is "foo ,bar, baz"
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['foo ', 'bar', ' baz']))
+
+    // And "foo " is marked with "em"
+    await getEditorTextMarks(editorA, 'foo ').then((marks) => expect(marks).toEqual(['em']))
+
+    // And "bar" is marked with "em,strong"
+    await getEditorTextMarks(editorA, 'bar').then((marks) =>
+      expect(marks).toEqual(['em', 'strong']),
+    )
+
+    // And " baz" is marked with "em"
+    await getEditorTextMarks(editorA, ' baz').then((marks) => expect(marks).toEqual(['em']))
+  })
+})
+
+/********************
+ * Step helpers
+ ********************/
+
+function getEditorText(editor: Editor) {
+  return editor.getValue().then(getText)
+}
+
+function getText(value: Array<PortableTextBlock> | undefined) {
+  if (!value) {
+    return undefined
+  }
+
+  const text: Array<string> = []
+
+  for (const block of value) {
+    if (isPortableTextBlock(block)) {
+      if (text.length > 0) {
+        text.push('\n')
+      }
+      for (const child of block.children) {
+        if (isPortableTextSpan(child)) {
+          text.push(child.text)
+        }
+      }
+    }
+  }
+
+  return text
+}
+
+function getEditorTextMarks(editor: Editor, text: string) {
+  return editor.getValue().then((value) => getTextMarks(value, text))
+}
+
+function getTextMarks(value: Array<PortableTextBlock> | undefined, text: string) {
+  if (!value) {
+    return undefined
+  }
+
+  let marks: Array<string> | undefined = undefined
+
+  for (const block of value) {
+    if (isPortableTextBlock(block)) {
+      for (const child of block.children) {
+        if (isPortableTextSpan(child) && child.text === text) {
+          marks = child.marks
+          break
+        }
+      }
+    }
+  }
+
+  return marks
+}
+
+async function markEditorText(editor: Editor, text: string, mark: string) {
+  await selectEditorText(editor, text)
+  await editor.toggleMark(mark)
+  return editor.getValue().then((value) => getTextMarks(value, text))
+}
+
+function selectEditorText(editor: Editor, text: string) {
+  return editor
+    .getValue()
+    .then((value) => getTextSelection(value, text))
+    .then(editor.setSelection)
+}
+
+/********************
+ * Utility functions
+ ********************/
+
+function getTextSelection(
+  value: Array<PortableTextBlock> | undefined,
+  text: string,
+): EditorSelection {
+  if (!value) {
+    throw new Error(`Unable to find selection for value ${value}`)
+  }
+
+  let anchor: EditorSelectionPoint | undefined
+  let focus: EditorSelectionPoint | undefined
+
+  for (const block of value) {
+    if (isPortableTextBlock(block)) {
+      for (const child of block.children) {
+        if (isPortableTextSpan(child)) {
+          if (child.text === text) {
+            anchor = {
+              path: [{_key: block._key}, 'children', {_key: child._key}],
+              offset: 0,
+            }
+            focus = {
+              path: [{_key: block._key}, 'children', {_key: child._key}],
+              offset: text.length,
+            }
+            break
+          }
+
+          const splitChildText = child.text.split(text)
+
+          if (splitChildText.length === 2) {
+            anchor = {
+              path: [{_key: block._key}, 'children', {_key: child._key}],
+              offset: splitChildText[0].length,
+            }
+            focus = {
+              path: [{_key: block._key}, 'children', {_key: child._key}],
+              offset: splitChildText[0].length + text.length,
+            }
+            break
+          }
+
+          const splitText = text.split(child.text)
+          const textIndex = text.indexOf(child.text)
+
+          if (splitText.length === 2 && textIndex !== -1) {
+            if (splitText[0] === '') {
+              anchor = {
+                path: [{_key: block._key}, 'children', {_key: child._key}],
+                offset: 0,
+              }
+              continue
+            }
+            if (splitText[splitText.length - 1] === '') {
+              focus = {
+                path: [{_key: block._key}, 'children', {_key: child._key}],
+                offset: child.text.length,
+              }
+              continue
+            }
+            if (splitText.join('') !== text) {
+              continue
+            }
+            break
+          }
+
+          const overlap = stringOverlap(child.text, text)
+
+          if (overlap !== '') {
+            if (child.text.indexOf(overlap) > 0) {
+              anchor = {
+                path: [{_key: block._key}, 'children', {_key: child._key}],
+                offset: child.text.indexOf(overlap),
+              }
+              continue
+            }
+            if (child.text.indexOf(overlap) === 0) {
+              focus = {
+                path: [{_key: block._key}, 'children', {_key: child._key}],
+                offset: overlap.length,
+              }
+              continue
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (!anchor || !focus) {
+    throw new Error(`Unable to find selection for text "${text}"`)
+  }
+
+  return {
+    anchor,
+    focus,
+  }
+}
+
+test(getTextSelection.name, () => {
+  const joinedBlock = {
+    _key: 'b1',
+    _type: 'block',
+    children: [{_key: 's1', _type: 'span', text: 'foo bar baz'}],
+  }
+
+  expect(getTextSelection([joinedBlock], 'foo ')).toEqual({
+    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
+    focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 4},
+  })
+  expect(getTextSelection([joinedBlock], 'bar')).toEqual({
+    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 4},
+    focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 7},
+  })
+  expect(getTextSelection([joinedBlock], ' baz')).toEqual({
+    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 7},
+    focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 11},
+  })
+
+  const splitBlock = {
+    _key: 'b1',
+    _type: 'block',
+    children: [
+      {_key: 's1', _type: 'span', text: 'foo '},
+      {_key: 's2', _type: 'span', text: 'bar'},
+      {_key: 's3', _type: 'span', text: ' baz'},
+    ],
+  }
+
+  expect(getTextSelection([splitBlock], 'foo')).toEqual({
+    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
+    focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+  })
+  expect(getTextSelection([splitBlock], 'bar')).toEqual({
+    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 0},
+    focus: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 3},
+  })
+  expect(getTextSelection([splitBlock], 'baz')).toEqual({
+    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 1},
+    focus: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 4},
+  })
+  expect(getTextSelection([splitBlock], 'foo bar baz')).toEqual({
+    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
+    focus: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 4},
+  })
+  expect(getTextSelection([splitBlock], 'o bar b')).toEqual({
+    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
+    focus: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 2},
+  })
+})
+
+function stringOverlap(string: string, searchString: string) {
+  let overlap = ''
+
+  for (let i = 0; i < string.length; i++) {
+    const slice = string.slice(i)
+    const split = searchString.split(slice)
+
+    if (split.length > 1 && split[0] === '') {
+      overlap = slice
+      break
+    }
+
+    if (split.length === 2 && split.join('') !== searchString) {
+      overlap = slice
+      break
+    }
+
+    const reverseSlice = string.slice(0, i)
+    const reverseSliceSplit = searchString.split(reverseSlice)
+
+    if (reverseSlice !== '' && reverseSliceSplit[reverseSliceSplit.length - 1] === '') {
+      overlap = reverseSlice
+      break
+    }
+  }
+
+  return overlap
+}
+
+test(stringOverlap.name, () => {
+  expect(stringOverlap('foo ', 'o bar b')).toBe('o ')
+  expect(stringOverlap('bar', 'o bar b')).toBe('bar')
+  expect(stringOverlap(' baz', 'o bar b')).toBe(' b')
 })
