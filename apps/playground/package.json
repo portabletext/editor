@@ -33,7 +33,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@sanity/types": "^3.54.0",
+    "@sanity/types": "^3.55.0",
     "@types/lodash.startcase": "^4.4.9",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
@@ -52,6 +52,6 @@
     "tailwindcss": "^3.4.10",
     "tailwindcss-react-aria-components": "^1.1.5",
     "typescript": "5.5.4",
-    "vite": "^5.4.1"
+    "vite": "^5.4.2"
   }
 }
