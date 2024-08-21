@@ -490,6 +490,10 @@ function selectEditorText(editor: Editor, text: string) {
     .then(editor.setSelection)
 }
 
+function selectAfterEditorText(editor: Editor, text: string) {
+  return selectEditorText(editor, text).then(() => editor.pressKey('ArrowRight'))
+}
+
 /********************
  * Utility functions
  ********************/
