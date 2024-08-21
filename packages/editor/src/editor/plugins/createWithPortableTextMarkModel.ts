@@ -205,15 +205,6 @@ export function createWithPortableTextMarkModel(
             }
           }
         }
-        // Empty marks if text is empty
-        if (
-          isSpan &&
-          Array.isArray(node.marks) &&
-          (!node.marks || (node.marks.length > 0 && node.text === ''))
-        ) {
-          Transforms.setNodes(editor, {marks: []}, {at: path, voids: false})
-          return
-        }
       }
       // Check consistency of markDefs (unless we are merging two nodes)
       if (
@@ -349,6 +340,18 @@ export function createWithPortableTextMarkModel(
             Editor.withoutNormalizing(editor, () => {
               apply(op)
               Transforms.setNodes(editor, {marks: marksWithoutAnnotationMarks}, {at: op.path})
+            })
+
+            editor.onChange()
+            return
+          }
+
+          const nodeHasMarks = node.marks !== undefined && node.marks.length > 0
+
+          if (nodeHasMarks && deletingAllText) {
+            Editor.withoutNormalizing(editor, () => {
+              apply(op)
+              Transforms.setNodes(editor, {marks: []}, {at: op.path})
             })
 
             editor.onChange()
