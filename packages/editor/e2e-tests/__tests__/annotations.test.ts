@@ -398,6 +398,31 @@ describe('Feature: Annotations', () => {
     await getEditorTextMarks(editorA, ' baz').then((marks) => expect(marks).toEqual(['em']))
   })
 
+  it('Scenario: Deleting marked text and writing again, unmarked', async () => {
+    const [editorA] = await getEditors()
+
+    // Given the text "foo"
+    await editorA.insertText('foo')
+
+    // When "foo" is marked with "strong"
+    await markEditorText(editorA, 'foo', 'b')
+
+    // Then "foo" is marked with "strong"
+    await getEditorTextMarks(editorA, 'foo').then((marks) => expect(marks).toEqual(['strong']))
+
+    // And when "ArrowRight" is pressed
+    await editorA.pressKey('ArrowRight')
+
+    // And "Backspace" is pressed "3" times
+    await editorA.pressKey('Backspace', 3)
+
+    // And "bar" is typed
+    await editorA.type('bar')
+
+    // Then "bar" has no marks
+    await getEditorTextMarks(editorA, 'bar').then((marks) => expect(marks).toEqual([]))
+  })
+
   it('Scenario: Adding bold across an empty block and typing in the same', async () => {
     const [editorA] = await getEditors()
 
