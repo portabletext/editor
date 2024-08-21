@@ -397,6 +397,52 @@ describe('Feature: Annotations', () => {
     // And " baz" is marked with "em"
     await getEditorTextMarks(editorA, ' baz').then((marks) => expect(marks).toEqual(['em']))
   })
+
+  it('Scenario: Toggling bold across an empty block', async () => {
+    const [editorA] = await getEditors()
+
+    // Given an empty editor
+    setDocumentValue([])
+
+    // When "foo" is typed
+    await editorA.type('foo')
+
+    // And "Enter" is pressed "2" times
+    await editorA.pressKey('Enter', 2)
+
+    // And "bar" is typed
+    await editorA.type('bar')
+
+    // Then the text is "foo,\n,,\n,bar"
+    await getEditorText(editorA).then((text) =>
+      expect(text).toEqual(['foo', '\n', '', '\n', 'bar']),
+    )
+
+    // And when "ooba" is selected
+    await selectEditorText(editorA, 'ooba')
+
+    // And "bold" is toggled
+    await editorA.toggleMark('b')
+
+    // Then the text is "f,oo,\n,,\n,ba,r"
+    await getEditorText(editorA).then((text) =>
+      expect(text).toEqual(['f', 'oo', '\n', '', '\n', 'ba', 'r']),
+    )
+
+    // And "oo" is marked with "strong"
+    await getEditorTextMarks(editorA, 'oo').then((marks) => expect(marks).toEqual(['strong']))
+
+    // And "ba" is marked with "strong"
+    await getEditorTextMarks(editorA, 'ba').then((marks) => expect(marks).toEqual(['strong']))
+
+    // And when "bold" is toggled
+    await editorA.toggleMark('b')
+
+    // Then the text is "foo,\n,,\n,bar"
+    await getEditorText(editorA).then((text) =>
+      expect(text).toEqual(['foo', '\n', '', '\n', 'bar']),
+    )
+  })
 })
 
 /********************
