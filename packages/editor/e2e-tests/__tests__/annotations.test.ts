@@ -398,6 +398,37 @@ describe('Feature: Annotations', () => {
     await getEditorTextMarks(editorA, ' baz').then((marks) => expect(marks).toEqual(['em']))
   })
 
+  it('Scenario: Adding bold across an empty block and typing in the same', async () => {
+    const [editorA] = await getEditors()
+
+    // Given an empty editor
+    setDocumentValue([])
+
+    // When "foo" is typed
+    await editorA.type('foo')
+
+    // And "Enter" is pressed "2" times
+    await editorA.pressKey('Enter', 2)
+
+    // And "bar" is typed
+    await editorA.type('baz')
+
+    // And "foobar" is marked with "strong"
+    await markEditorText(editorA, 'foobaz', 'b')
+
+    // And the caret is put after "foo"
+    await selectAfterEditorText(editorA, 'foo')
+
+    // And the caret is moved down
+    await editorA.pressKey('ArrowDown')
+
+    // And "bar" is typed
+    await editorA.type('bar')
+
+    // Then "bar" is marked with "strong"
+    await getEditorTextMarks(editorA, 'bar').then((marks) => expect(marks).toEqual(['strong']))
+  })
+
   it('Scenario: Toggling bold across an empty block', async () => {
     const [editorA] = await getEditors()
 
