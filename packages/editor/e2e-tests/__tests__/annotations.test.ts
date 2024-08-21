@@ -523,6 +523,24 @@ function getTextMarks(value: Array<PortableTextBlock> | undefined, text: string)
   return marks
 }
 
+test(getTextMarks.name, () => {
+  const fooBlock = {
+    _key: 'b1',
+    _type: 'block',
+    children: [{_key: 's1', _type: 'span', text: 'foo'}],
+  }
+  const splitBarBlock = {
+    _key: 'b1',
+    _type: 'block',
+    children: [
+      {_key: 's1', _type: 'span', text: 'ba', marks: ['strong']},
+      {_key: 's2', _type: 'span', text: 'r'},
+    ],
+  }
+
+  expect(getTextMarks([fooBlock, splitBarBlock], 'ba')).toEqual(['strong'])
+})
+
 async function markEditorText(editor: Editor, text: string, mark: string) {
   await selectEditorText(editor, text)
   await editor.toggleMark(mark)
