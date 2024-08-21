@@ -430,6 +430,28 @@ function getText(value: Array<PortableTextBlock> | undefined) {
   return text
 }
 
+test(getText.name, () => {
+  const fooBlock = {
+    _key: 'b1',
+    _type: 'block',
+    children: [{_key: 's1', _type: 'span', text: 'foo'}],
+  }
+  const emptyBlock = {
+    _key: 'b2',
+    _type: 'block',
+    children: [{_key: 's2', _type: 'span', text: ''}],
+  }
+  const barBlock = {
+    _key: 'b3',
+    _type: 'block',
+    children: [{_key: 's3', _type: 'span', text: 'bar'}],
+  }
+
+  expect(getText([fooBlock, barBlock])).toEqual(['foo', '\n', 'bar'])
+  expect(getText([emptyBlock, barBlock])).toEqual(['', '\n', 'bar'])
+  expect(getText([fooBlock, emptyBlock, barBlock])).toEqual(['foo', '\n', '', '\n', 'bar'])
+})
+
 function getEditorTextMarks(editor: Editor, text: string) {
   return editor.getValue().then((value) => getTextMarks(value, text))
 }
@@ -619,6 +641,24 @@ test(getTextSelection.name, () => {
   expect(getTextSelection([splitBlock], 'o bar b')).toEqual({
     anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
     focus: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 2},
+  })
+
+  const twoBlocks = [
+    {
+      _key: 'b1',
+      _type: 'block',
+      children: [{_key: 's1', _type: 'span', text: 'foo'}],
+    },
+    {
+      _key: 'b2',
+      _type: 'block',
+      children: [{_key: 's2', _type: 'span', text: 'bar'}],
+    },
+  ]
+
+  expect(getTextSelection(twoBlocks, 'ooba')).toEqual({
+    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
+    focus: {path: [{_key: 'b2'}, 'children', {_key: 's2'}], offset: 2},
   })
 })
 
