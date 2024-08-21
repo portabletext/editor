@@ -499,6 +499,47 @@ describe('Feature: Annotations', () => {
       expect(text).toEqual(['foo', '\n', '', '\n', 'bar']),
     )
   })
+
+  it('Scenario: Accidentally adding same-type annotation to same span', async () => {
+    const marksMap = new Map<string, Array<string>>()
+
+    const [editorA] = await getEditors()
+
+    // Given an empty editor
+    setDocumentValue([])
+
+    // When "foo" is typed
+    await editorA.type('foo')
+
+    // And "Enter" is pressed
+    await editorA.pressKey('Enter')
+
+    // And "bar" is typed
+    await editorA.type('bar')
+
+    // And "ooba" is marked with a "comment" (m1)
+    await markEditorText(editorA, 'ooba', 'm')
+    const marks1 = await getEditorTextMarks(editorA, 'ba')
+    marksMap.set('m1', marks1 ?? [])
+
+    // Then the text is "foo,\n,ba,r"
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['foo', '\n', 'ba', 'r']))
+
+    // And "ba" is marked with "comment" (m1)
+    await getEditorTextMarks(editorA, 'ba').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m1')),
+    )
+
+    // And when "ooba" is marked with a "comment" (m2)
+    await editorA.toggleMark('m')
+    const marks2 = await getEditorTextMarks(editorA, 'ba')
+    marksMap.set('m2', marks2 ?? [])
+
+    // Then "ba" is marked with "comment" (m2)
+    await getEditorTextMarks(editorA, 'ba').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m2')),
+    )
+  })
 })
 
 /********************
