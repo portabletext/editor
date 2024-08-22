@@ -34,17 +34,29 @@ export const HOTKEYS: HotkeyOptions = {
     },
     'mod+m': (e, editor) => {
       e.preventDefault()
-      PortableTextEditor.addAnnotation(
-        editor,
-        {
+      const active = PortableTextEditor.isAnnotationActive(editor, 'comment')
+
+      if (active) {
+        PortableTextEditor.removeAnnotation(editor, {
           jsonType: 'object',
           name: 'comment',
           fields: [],
           // eslint-disable-next-line camelcase
           __experimental_search: [],
-        },
-        {text: 'Consider rewriting this'},
-      )
+        })
+      } else {
+        PortableTextEditor.addAnnotation(
+          editor,
+          {
+            jsonType: 'object',
+            name: 'comment',
+            fields: [],
+            // eslint-disable-next-line camelcase
+            __experimental_search: [],
+          },
+          {text: 'Consider rewriting this'},
+        )
+      }
     },
   },
 }
