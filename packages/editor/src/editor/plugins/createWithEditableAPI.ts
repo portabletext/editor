@@ -384,6 +384,13 @@ export function createWithEditableAPI(
           }
           const [textNode] = Editor.node(editor, originalSelection.focus, {depth: 2})
 
+          const existingAnnotation = editor.isTextSpan(textNode)
+            ? textNode.marks?.find((mark) => {
+                const markDef = block.markDefs?.find((markDef) => markDef._key === mark)
+                return markDef?._type === type.name
+              })
+            : undefined
+
           // If we still have a selection, add the annotation to the selected text
           if (editor.selection) {
             Editor.withoutNormalizing(editor, () => {
@@ -393,7 +400,9 @@ export function createWithEditableAPI(
                 editor,
                 {
                   markDefs: [
-                    ...(block.markDefs || []),
+                    ...(block.markDefs || []).filter(
+                      (markDef) => markDef._key !== existingAnnotation,
+                    ),
                     {_type: type.name, _key: annotationKey, ...value} as PortableTextObject,
                   ],
                 },
@@ -410,7 +419,10 @@ export function createWithEditableAPI(
                 Transforms.setNodes(
                   editor,
                   {
-                    marks: [...((textNode.marks || []) as string[]), annotationKey],
+                    marks: [
+                      ...(textNode.marks || []).filter((key) => key !== existingAnnotation),
+                      annotationKey,
+                    ],
                   },
                   {
                     at: editor.selection,
