@@ -419,16 +419,7 @@ export function createWithEditableAPI(
                 )
               }
               editor.onChange()
-              if (editor.selection) {
-                // Insert an empty string to continue writing non-annotated text
-                Transforms.insertNodes(
-                  editor,
-                  [{_type: 'span', text: '', marks: [], _key: keyGenerator()}],
-                  {
-                    at: Range.end(editor.selection),
-                  },
-                )
-              }
+
               const newPortableTextEditorSelection = toPortableTextRange(
                 fromSlateValue(editor.children, types.block.name, KEY_TO_VALUE_ELEMENT.get(editor)),
                 editor.selection,
