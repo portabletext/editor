@@ -12,6 +12,10 @@ export type Editor = {
   insertText: (text: string) => Promise<void>
   type: (text: string) => Promise<void>
   paste: (text: string, type?: string) => Promise<void>
+  pressButton: (
+    buttonName: 'add-comment' | 'remove-comment' | 'toggle-comment',
+    times?: number,
+  ) => Promise<void>
   pressKey: (keyName: string, times?: number) => Promise<void>
   redo: () => Promise<void>
   setSelection: (selection: EditorSelection | null) => Promise<void>

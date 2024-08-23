@@ -18,6 +18,8 @@ import {
   PortableTextEditor,
   type RenderBlockFunction,
   type RenderChildFunction,
+  usePortableTextEditor,
+  usePortableTextEditorSelection,
 } from '../../../src'
 import {portableTextType} from '../../schema'
 import {createKeyGenerator} from '../keyGenerator'
@@ -37,25 +39,9 @@ export const HOTKEYS: HotkeyOptions = {
       const active = PortableTextEditor.isAnnotationActive(editor, 'comment')
 
       if (active) {
-        PortableTextEditor.removeAnnotation(editor, {
-          jsonType: 'object',
-          name: 'comment',
-          fields: [],
-          // eslint-disable-next-line camelcase
-          __experimental_search: [],
-        })
+        removeComment(editor)
       } else {
-        PortableTextEditor.addAnnotation(
-          editor,
-          {
-            jsonType: 'object',
-            name: 'comment',
-            fields: [],
-            // eslint-disable-next-line camelcase
-            __experimental_search: [],
-          },
-          {text: 'Consider rewriting this'},
-        )
+        addComment(editor)
       }
     },
   },
@@ -241,6 +227,7 @@ export const Editor = ({
       keyGenerator={keyGenFn}
       readOnly={isOffline || readOnly}
     >
+      <CommentButtons />
       <Box padding={4} style={{outline: '1px solid #999'}}>
         {editable}
       </Box>
@@ -262,4 +249,70 @@ export const Editor = ({
       </Box>
     </PortableTextEditor>
   )
+}
+
+function CommentButtons() {
+  const selection = usePortableTextEditorSelection()
+  const editor = usePortableTextEditor()
+  const active = selection !== null && PortableTextEditor.isAnnotationActive(editor, 'comment')
+
+  return (
+    <>
+      <button
+        type="button"
+        data-testid="button-add-comment"
+        onClick={() => {
+          addComment(editor)
+        }}
+      >
+        Add comment
+      </button>
+      <button
+        type="button"
+        data-testid="button-remove-comment"
+        onClick={() => {
+          removeComment(editor)
+        }}
+      >
+        Remove comment
+      </button>
+      <button
+        type="button"
+        data-testid="button-toggle-comment"
+        onClick={() => {
+          if (active) {
+            removeComment(editor)
+          } else {
+            addComment(editor)
+          }
+        }}
+      >
+        Toggle comment
+      </button>
+    </>
+  )
+}
+
+function addComment(editor: PortableTextEditor) {
+  PortableTextEditor.addAnnotation(
+    editor,
+    {
+      jsonType: 'object',
+      name: 'comment',
+      fields: [],
+      // eslint-disable-next-line camelcase
+      __experimental_search: [],
+    },
+    {text: 'Consider rewriting this'},
+  )
+}
+
+function removeComment(editor: PortableTextEditor) {
+  PortableTextEditor.removeAnnotation(editor, {
+    jsonType: 'object',
+    name: 'comment',
+    fields: [],
+    // eslint-disable-next-line camelcase
+    __experimental_search: [],
+  })
 }
