@@ -41,6 +41,7 @@ export default class CollaborationEnvironment extends NodeEnvironment {
   private _pageB?: Page
   private _contextA?: BrowserContext
   private _contextB?: BrowserContext
+  private _scenario?: string
 
   // Saving these setup/teardown functions here for future reference.
   // public async setup(): Promise<void> {
@@ -50,12 +51,15 @@ export default class CollaborationEnvironment extends NodeEnvironment {
   //   await super.teardown()
   // }
 
-  public async handleTestEvent(event: {name: string}): Promise<void> {
+  public async handleTestEvent(event: {name: string; test?: Circus.TestEntry}): Promise<void> {
     if (event.name === 'run_start') {
       await this._setupInstance()
     }
     if (event.name == 'test_start') {
       await this._createNewTestPage()
+      if (event.test?.name) {
+        this._scenario = event.test.name
+      }
     }
     if (event.name === 'run_finish') {
       await this._destroyInstance()
@@ -109,13 +113,13 @@ export default class CollaborationEnvironment extends NodeEnvironment {
         console.log(`B:${message.type().slice(0, 3).toUpperCase()} ${message.text()}`),
       )
     }
-    this._pageA.on('pageerror', (err) => {
-      console.error('Editor A crashed', err)
-      throw err
+    this._pageA.on('pageerror', (error) => {
+      console.error(`Editor A crashed${this._scenario ? ` (${this._scenario})` : ''}`, error)
+      throw error
     })
-    this._pageB.on('pageerror', (err) => {
-      console.error('Editor B crashed', err)
-      throw err
+    this._pageB.on('pageerror', (error) => {
+      console.error(`Editor B crashed${this._scenario ? ` (${this._scenario})` : ''}`, error)
+      throw error
     })
 
     this.global.setDocumentValue = async (
