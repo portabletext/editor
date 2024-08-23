@@ -1,3 +1,4 @@
+import {type Circus} from '@jest/types'
 import {
   type Browser,
   type BrowserContext,
@@ -171,11 +172,17 @@ export default class CollaborationEnvironment extends NodeEnvironment {
             selectionHandle,
             valueHandle,
             revIdHandle,
+            addCommentButtonHandle,
+            removeCommentButtonHandle,
+            toggleCommentButtonHandle,
           ]: (ElementHandle<Element> | null)[] = await Promise.all([
             page.waitForSelector('div[contentEditable="true"]'),
             page.waitForSelector('#pte-selection'),
             page.waitForSelector('#pte-value'),
             page.waitForSelector('#pte-revId'),
+            page.waitForSelector('[data-testid="button-add-comment"]'),
+            page.waitForSelector('[data-testid="button-remove-comment"]'),
+            page.waitForSelector('[data-testid="button-toggle-comment"]'),
           ])
 
           if (!editableHandle || !selectionHandle || !valueHandle || !revIdHandle) {
@@ -284,6 +291,23 @@ export default class CollaborationEnvironment extends NodeEnvironment {
                 await page.keyboard.down(metaKey)
                 await page.keyboard.press('v')
                 await page.keyboard.up(metaKey)
+              })
+            },
+            pressButton: async (buttonName, times) => {
+              await waitForRevision(() => {
+                if (buttonName === 'add-comment') {
+                  return addCommentButtonHandle.click({clickCount: times})
+                }
+
+                if (buttonName === 'remove-comment') {
+                  return removeCommentButtonHandle.click({clickCount: times})
+                }
+
+                if (buttonName === 'toggle-comment') {
+                  return toggleCommentButtonHandle.click({clickCount: times})
+                }
+
+                return Promise.reject(new Error(`Button ${buttonName} not accounted for`))
               })
             },
             pressKey: async (keyName: string, times?: number) => {
