@@ -686,10 +686,10 @@ function getTextSelection(
           const overlap = stringOverlap(child.text, text)
 
           if (overlap !== '') {
-            if (child.text.indexOf(overlap) > 0) {
+            if (child.text.lastIndexOf(overlap) > 0) {
               anchor = {
                 path: [{_key: block._key}, 'children', {_key: child._key}],
-                offset: child.text.indexOf(overlap),
+                offset: child.text.lastIndexOf(overlap),
               }
               continue
             }
@@ -734,6 +734,20 @@ test(getTextSelection.name, () => {
   expect(getTextSelection([joinedBlock], ' baz')).toEqual({
     anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 7},
     focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 11},
+  })
+
+  const noSpaceBlock = {
+    _key: 'b1',
+    _type: 'block',
+    children: [
+      {_key: 's1', _type: 'span', text: 'foo'},
+      {_key: 's2', _type: 'span', text: 'bar'},
+    ],
+  }
+
+  expect(getTextSelection([noSpaceBlock], 'obar')).toEqual({
+    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
+    focus: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 3},
   })
 
   const splitBlock = {
