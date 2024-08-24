@@ -800,6 +800,83 @@ test(getTextSelection.name, () => {
   })
 })
 
+function getSelectionText(
+  value: Array<PortableTextBlock> | undefined,
+  selection: EditorSelection,
+): string {
+  if (!value) {
+    throw new Error(`Unable to find text for value ${value}`)
+  }
+  const forwardSelection = selection?.backward ? reverseTextSelection(selection) : selection
+
+  if (!selection || !forwardSelection) {
+    throw new Error(`Unable to find text for selection ${selection}`)
+  }
+
+  if (selection.anchor.path.length < 3 || selection.focus.path.length < 3) {
+    throw new Error(`Unable to find text for selection ${selection}`)
+  }
+
+  let text = ''
+
+  for (const block of value) {
+    if (block._key !== forwardSelection.anchor.path[0]['_key']) {
+      continue
+    }
+
+    if (block._key !== forwardSelection.focus.path[0]['_key']) {
+      continue
+    }
+
+    if (!isPortableTextBlock(block)) {
+      continue
+    }
+
+    for (const child of block.children) {
+      if (!isPortableTextSpan(child)) {
+        continue
+      }
+
+      if (child._key === forwardSelection.anchor.path[2]['_key']) {
+        text += child.text.slice(forwardSelection.anchor.offset)
+        continue
+      }
+
+      if (child._key === forwardSelection.focus.path[2]['_key']) {
+        text += child.text.slice(0, forwardSelection.focus.offset)
+        break
+      }
+    }
+  }
+
+  return text
+}
+
+test(getSelectionText.name, () => {
+  const noSpaceBlock = {
+    _key: 'b1',
+    _type: 'block',
+    children: [
+      {_key: 's1', _type: 'span', text: 'foo'},
+      {_key: 's2', _type: 'span', text: 'bar'},
+    ],
+  }
+
+  expect(
+    getSelectionText([noSpaceBlock], {
+      anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
+      focus: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 3},
+    }),
+  ).toEqual('obar')
+  expect(
+    getSelectionText([noSpaceBlock], {
+      anchor: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 3},
+      focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
+      backward: true,
+    }),
+  ).toEqual('obar')
+})
+
 function stringOverlap(string: string, searchString: string) {
   let overlap = ''
 
@@ -834,3 +911,23 @@ test(stringOverlap.name, () => {
   expect(stringOverlap('bar', 'o bar b')).toBe('bar')
   expect(stringOverlap(' baz', 'o bar b')).toBe(' b')
 })
+
+function reverseTextSelection(selection: EditorSelection): EditorSelection {
+  if (!selection) {
+    return selection
+  }
+
+  if (selection.backward) {
+    return {
+      anchor: selection.focus,
+      focus: selection.anchor,
+      backward: false,
+    }
+  }
+
+  return {
+    anchor: selection.focus,
+    focus: selection.anchor,
+    backward: true,
+  }
+}
