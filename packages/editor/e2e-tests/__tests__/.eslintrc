@@ -6,6 +6,7 @@
   "rules": {
     "import/no-unassigned-import": "off",
     "tsdoc/syntax": "off",
-    "max-depth": "off"
+    "max-depth": "off",
+    "dot-notation": "off"
   }
 }
