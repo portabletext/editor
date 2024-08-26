@@ -32,15 +32,17 @@ function getText(value: Array<PortableTextBlock> | undefined) {
   const text: Array<string> = []
 
   for (const block of value) {
+    if (text.length > 0) {
+      text.push('\n')
+    }
     if (isPortableTextBlock(block)) {
-      if (text.length > 0) {
-        text.push('\n')
-      }
       for (const child of block.children) {
         if (isPortableTextSpan(child)) {
           text.push(child.text)
         }
       }
+    } else {
+      text.push(block._type)
     }
   }
 
