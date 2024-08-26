@@ -499,6 +499,454 @@ describe('Feature: Annotations', () => {
       expect(text).toEqual(['foo', '\n', '', '\n', 'bar']),
     )
   })
+
+  /**
+   * Warning: Possible wrong behaviour
+   * "bar" should be marked with "strong"
+   */
+  it('Scenario: Splitting block before decorator', async () => {
+    const [editorA] = await getEditors()
+
+    // Given the text "foo"
+    await editorA.insertText('foo')
+
+    // And "foo" is marked with "strong"
+    await markEditorText(editorA, 'foo', 'b')
+
+    // When the caret is put before "foo"
+    await selectBeforeEditorText(editorA, 'foo')
+
+    // And "Enter" is pressed
+    await editorA.pressKey('Enter')
+
+    // And "ArrowUp" is pressed
+    await editorA.pressKey('ArrowUp')
+
+    // And "bar" is typed
+    await editorA.type('bar')
+
+    // Then the text is "bar,\n,foo"
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['bar', '\n', 'foo']))
+
+    // And "bar" has no marks
+    await getEditorTextMarks(editorA, 'bar').then((marks) => expect(marks).toEqual([]))
+
+    // And "foo" is marked with "strong"
+    await getEditorTextMarks(editorA, 'foo').then((marks) => expect(marks).toEqual(['strong']))
+  })
+
+  it('Scenario: Splitting block before annotation', async () => {
+    const marksMap = new Map<string, Array<string>>()
+
+    const [editorA] = await getEditors()
+
+    // Given the text "foo"
+    await editorA.insertText('foo')
+
+    // And a "comment" (m1) around "foo"
+    const m1 = await markEditorText(editorA, 'foo', 'm')
+    marksMap.set('m1', m1 ?? [])
+
+    // When the caret is put before "foo"
+    await selectBeforeEditorText(editorA, 'foo')
+
+    // And "Enter" is pressed
+    await editorA.pressKey('Enter')
+
+    // Then the text is ",\n,foo"
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['', '\n', 'foo']))
+
+    // And "" has no marks
+    await getEditorTextMarks(editorA, '').then((marks) => expect(marks).toEqual([]))
+
+    // And "foo" is marked with "comment" (m1)
+    await getEditorTextMarks(editorA, 'foo').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m1')),
+    )
+  })
+
+  it('Scenario: Splitting block after annotation', async () => {
+    const marksMap = new Map<string, Array<string>>()
+
+    const [editorA] = await getEditors()
+
+    // Given the text "foo"
+    await editorA.insertText('foo')
+
+    // And a "comment" (m1) around "foo"
+    const m1 = await markEditorText(editorA, 'foo', 'm')
+    marksMap.set('m1', m1 ?? [])
+
+    // When the caret is put after "foo"
+    await selectAfterEditorText(editorA, 'foo')
+
+    // And "Enter" is pressed
+    await editorA.pressKey('Enter')
+
+    // Then the text is "foo,\n,"
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['foo', '\n', '']))
+
+    // And "foo" is marked with "comment" (m1)
+    await getEditorTextMarks(editorA, 'foo').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m1')),
+    )
+
+    // And "" has no marks
+    await getEditorTextMarks(editorA, '').then((marks) => expect(marks).toEqual([]))
+  })
+
+  it('Scenario: Splitting an annotation', async () => {
+    const marksMap = new Map<string, Array<string>>()
+
+    const [editorA] = await getEditors()
+
+    // Given the text "foobar"
+    await editorA.insertText('foobar')
+
+    // And "foobar" is marked with "comment" (m1)
+    const m1 = await markEditorText(editorA, 'foobar', 'm')
+    marksMap.set('m1', m1 ?? [])
+
+    // When the caret is put after "foo"
+    await selectAfterEditorText(editorA, 'foo')
+
+    // And "Enter" is pressed
+    await editorA.pressKey('Enter')
+
+    // Then "foo" is marked with "comment" (m1)
+    await getEditorTextMarks(editorA, 'foo').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m1')),
+    )
+
+    // And "bar" is marked with "comment" (m1)
+    await getEditorTextMarks(editorA, 'bar').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m1')),
+    )
+  })
+
+  it('Scenario: Merging blocks with annotations', async () => {
+    const marksMap = new Map<string, Array<string>>()
+
+    const [editorA] = await getEditors()
+
+    // Given an empty editor
+    setDocumentValue([])
+
+    // When "foo" is typed
+    await editorA.insertText('foo')
+
+    // And "Enter" is pressed
+    await editorA.pressKey('Enter')
+
+    // And "bar" is typed
+    await editorA.insertText('bar')
+
+    // And "foo" is marked with "comment" (m1)
+    const m1 = await markEditorText(editorA, 'foo', 'm')
+    marksMap.set('m1', m1 ?? [])
+
+    // And "bar" is marked with "comment" (m2)
+    const m2 = await markEditorText(editorA, 'bar', 'm')
+    marksMap.set('m2', m2 ?? [])
+
+    // And the caret is put before "bar"
+    await selectBeforeEditorText(editorA, 'bar')
+
+    // And "Backspace" is pressed
+    await editorA.pressKey('Backspace')
+
+    // Then the text is "foo,bar"
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['foo', 'bar']))
+
+    // And "foo" is marked with "comment" (m1)
+    await getEditorTextMarks(editorA, 'foo').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m1')),
+    )
+
+    // And "bar" is marked with "comment" (m2)
+    await getEditorTextMarks(editorA, 'bar').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m2')),
+    )
+  })
+
+  /**
+   * Warning: Possible wrong behaviour
+   * "f" and "r" should end up on the same line
+   */
+  it('Scenario: Deleting across annotated blocks', async () => {
+    const marksMap = new Map<string, Array<string>>()
+
+    const [editorA] = await getEditors()
+
+    // Given an empty editor
+    setDocumentValue([])
+
+    // When "foo" is typed
+    await editorA.insertText('foo')
+
+    // And "Enter" is pressed
+    await editorA.pressKey('Enter')
+
+    // And "bar" is typed
+    await editorA.insertText('bar')
+
+    // And "foo" is marked with "comment" (m1)
+    const m1 = await markEditorText(editorA, 'foo', 'm')
+    marksMap.set('m1', m1 ?? [])
+
+    // And "bar" is marked with "comment" (m2)
+    const m2 = await markEditorText(editorA, 'bar', 'm')
+    marksMap.set('m2', m2 ?? [])
+
+    // When "ooba" is selected
+    await selectEditorText(editorA, 'ooba')
+
+    // And "Backspace" is pressed
+    await editorA.pressKey('Backspace')
+
+    // Then the text is "f,r"
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['f', '\n', 'r']))
+
+    // And "f" is marked with "comment" (m1)
+    await getEditorTextMarks(editorA, 'f').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m1')),
+    )
+
+    // And "r" is marked with "comment" (m2)
+    await getEditorTextMarks(editorA, 'r').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m2')),
+    )
+  })
+
+  /**
+   * Warning: Possible wrong behaviour
+   * "foo" should also be marked with a comment
+   */
+  it('Scenario: Adding annotation across blocks', async () => {
+    const marksMap = new Map<string, Array<string>>()
+
+    const [editorA] = await getEditors()
+
+    // Given an empty editor
+    setDocumentValue([])
+
+    // When "foo" is typed
+    await editorA.insertText('foo')
+
+    // And "Enter" is pressed
+    await editorA.pressKey('Enter')
+
+    // And "bar" is typed
+    await editorA.insertText('bar')
+
+    // And "foobar" is selected
+    await selectEditorText(editorA, 'foobar')
+
+    // And "comment" (m1) is added
+    const m1 = await markEditorSelection(editorA, 'm')
+    marksMap.set('m1', m1 ?? [])
+
+    // Then "foo" has no marks
+    await getEditorTextMarks(editorA, 'foo').then((marks) => expect(marks).toEqual([]))
+
+    // And "bar" is marked with "comment" (m1)
+    await getEditorTextMarks(editorA, 'bar').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m1')),
+    )
+  })
+
+  /**
+   * Warning: Possible wrong behaviour
+   * "bar" should also be marked with a comment
+   */
+  it('Scenario: Adding annotation across blocks (backward selection)', async () => {
+    const marksMap = new Map<string, Array<string>>()
+
+    const [editorA] = await getEditors()
+
+    // Given an empty editor
+    setDocumentValue([])
+
+    // When "foo" is typed
+    await editorA.insertText('foo')
+
+    // And "Enter" is pressed
+    await editorA.pressKey('Enter')
+
+    // And "bar" is typed
+    await editorA.insertText('bar')
+
+    // And "foobar" is selected backwards
+    await selectEditorTextBackwards(editorA, 'foobar')
+
+    // And "comment" (m1) is added
+    const m1 = await markEditorSelection(editorA, 'm')
+    marksMap.set('m1', m1 ?? [])
+
+    // Then "foo" is marked with "comment" (m1)
+    await getEditorTextMarks(editorA, 'foo').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m1')),
+    )
+
+    // And "bar" has no marks
+    await getEditorTextMarks(editorA, 'bar').then((marks) => expect(marks).toEqual([]))
+  })
+
+  /**
+   * Warning: Possible wrong behaviour
+   * "foo" should be marked with l1
+   * "b" should be marked with m1,l1
+   * "ar" should be marked with l1
+   */
+  it('Scenario: Overlapping annotation', async () => {
+    const marksMap = new Map<string, Array<string>>()
+
+    const [editorA] = await getEditors()
+
+    // Given the text "foobar"
+    await editorA.insertText('foobar')
+
+    // And a "link" (l1) around "bar"
+    const l1 = await markEditorText(editorA, 'bar', 'l')
+    marksMap.set('l1', l1 ?? [])
+
+    // When "foob" is selected
+    await selectEditorText(editorA, 'foob')
+
+    // And "comment" (m1) is added
+    const m1 = await markEditorSelection(editorA, 'm')
+    marksMap.set('m1', m1 ?? [])
+
+    // Then the text is "foob,ar"
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['foob', 'ar']))
+
+    // And "foob" is marked with l1,m1
+    await getEditorTextMarks(editorA, 'foob').then((marks) =>
+      expect(marks).toEqual((marksMap.get('l1') ?? []).concat(marksMap.get('m1') ?? [])),
+    )
+
+    // And "ar" is marked with l1
+    await getEditorTextMarks(editorA, 'ar').then((marks) =>
+      expect(marks).toEqual(marksMap.get('l1')),
+    )
+  })
+
+  /**
+   * Warning: Possible wrong behaviour
+   * "foo" should be marked with l1
+   * "b" should be marked with m1,l1
+   * "ar" should be marked with l1
+   */
+  it('Scenario: Overlapping annotation (backwards selection)', async () => {
+    const marksMap = new Map<string, Array<string>>()
+
+    const [editorA] = await getEditors()
+
+    // Given the text "foobar"
+    await editorA.insertText('foobar')
+
+    // And a "lini" (l1) around "bar"
+    const l1 = await markEditorText(editorA, 'bar', 'l')
+    marksMap.set('l1', l1 ?? [])
+
+    // When "foob" is selected backwards
+    await selectEditorTextBackwards(editorA, 'foob')
+
+    // And "comment" (m1) is added
+    const m1 = await markEditorSelection(editorA, 'l')
+    marksMap.set('m1', m1 ?? [])
+
+    // Then the text is "foob,bar"
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['foob', 'ar']))
+
+    // And "foob" is marked with m1
+    await getEditorTextMarks(editorA, 'foob').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m1')),
+    )
+
+    // And "ar" is marked with l1
+    await getEditorTextMarks(editorA, 'ar').then((marks) =>
+      expect(marks).toEqual(marksMap.get('l1')),
+    )
+  })
+
+  /**
+   * Warning: Possible wrong behaviour
+   * "fo" should be marked with m1
+   * "o" should be marked with m1,l1
+   * "bar" should be marked with l1
+   */
+  it('Scenario: Overlapping annotation from behind', async () => {
+    const marksMap = new Map<string, Array<string>>()
+
+    const [editorA] = await getEditors()
+
+    // Given the text "foobar"
+    await editorA.insertText('foobar')
+
+    // And a "comment" (m1) around "foo"
+    const m1 = await markEditorText(editorA, 'foo', 'm')
+    marksMap.set('m1', m1 ?? [])
+
+    // When "obar" is selected
+    await selectEditorText(editorA, 'obar')
+
+    // And "link" (l1) is added
+    const l1 = await markEditorSelection(editorA, 'l')
+    marksMap.set('l1', l1 ?? [])
+
+    // Then the text is "fo,obar"
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['fo', 'obar']))
+
+    // And "fo" is marked with m1
+    await getEditorTextMarks(editorA, 'fo').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m1')),
+    )
+
+    // And "obar" is marked with l1
+    await getEditorTextMarks(editorA, 'obar').then((marks) =>
+      expect(marks).toEqual(marksMap.get('l1')),
+    )
+  })
+
+  /**
+   * Warning: Possible wrong behaviour
+   * "fo" should be marked with m1
+   * "o" should be marked with m1,l1
+   * "bar" should be marked with l1
+   */
+  it('Scenario: Overlapping annotation from behind (backward selection)', async () => {
+    const marksMap = new Map<string, Array<string>>()
+
+    const [editorA] = await getEditors()
+
+    // Given the text "foobar"
+    await editorA.insertText('foobar')
+
+    // And a "comment" (m1) around "foo"
+    const m1 = await markEditorText(editorA, 'foo', 'm')
+    marksMap.set('m1', m1 ?? [])
+
+    // When "obar" is selected backwards
+    await selectEditorTextBackwards(editorA, 'obar')
+
+    // And "link" (l1) is added
+    const l1 = await markEditorSelection(editorA, 'l')
+    marksMap.set('l1', l1 ?? [])
+
+    // Then the text is "fo,obar"
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['fo', 'obar']))
+
+    // And "fo" is marked with m1
+    await getEditorTextMarks(editorA, 'fo').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m1')),
+    )
+
+    // And "obar" is marked with m1,l1
+    await getEditorTextMarks(editorA, 'obar').then((marks) =>
+      expect(marks).toEqual((marksMap.get('m1') ?? []).concat(marksMap.get('l1') ?? [])),
+    )
+  })
 })
 
 /********************
@@ -596,6 +1044,12 @@ test(getTextMarks.name, () => {
 
   expect(getTextMarks([fooBlock, splitBarBlock], 'ba')).toEqual(['strong'])
 })
+
+async function markEditorSelection(editor: Editor, mark: string) {
+  return getNewAnnotations(editor, async () => {
+    await editor.toggleMark(mark)
+  })
+}
 
 async function markEditorText(editor: Editor, text: string, mark: string) {
   return getNewAnnotations(editor, async () => {
