@@ -500,6 +500,72 @@ describe('Feature: Annotations', () => {
     )
   })
 
+  it('Scenario: Splitting a block at the beginning', async () => {
+    const keysMap = new Map<string, string>()
+
+    const [editorA] = await getEditors()
+
+    // Given the text "foo"
+    const b1 = await insertEditorText(editorA, 'foo')
+    keysMap.set('b1', b1)
+
+    // When the caret is put before "foo"
+    await selectBeforeEditorText(editorA, 'foo')
+
+    // And "Enter" is pressed
+    await editorA.pressKey('Enter')
+
+    // Then the text is ",\n,foo"
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['', '\n', 'foo']))
+
+    // And "foo" is in block "b1"
+    await getEditorBlockKey(editorA, 'foo').then((key) => expect(key).toEqual(keysMap.get('b1')))
+  })
+
+  it('Scenario: Splitting a block at the middle', async () => {
+    const keysMap = new Map<string, string>()
+
+    const [editorA] = await getEditors()
+
+    // Given the text "foo"
+    const b1 = await insertEditorText(editorA, 'foo')
+    keysMap.set('b1', b1)
+
+    // When the caret is put after "fo"
+    await selectAfterEditorText(editorA, 'fo')
+
+    // And "Enter" is pressed
+    await editorA.pressKey('Enter')
+
+    // Then the text is "fo,\n,o"
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['fo', '\n', 'o']))
+
+    // And "fo" is in block "b1"
+    await getEditorBlockKey(editorA, 'fo').then((key) => expect(key).toEqual(keysMap.get('b1')))
+  })
+
+  it('Scenario: Splitting a block at the end', async () => {
+    const keysMap = new Map<string, string>()
+
+    const [editorA] = await getEditors()
+
+    // Given the text "foo"
+    const b1 = await insertEditorText(editorA, 'foo')
+    keysMap.set('b1', b1)
+
+    // When the caret is put after "foo"
+    await selectAfterEditorText(editorA, 'foo')
+
+    // And "Enter" is pressed
+    await editorA.pressKey('Enter')
+
+    // Then the text is "foo,\n,"
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['foo', '\n', '']))
+
+    // And "foo" is in block "b1"
+    await getEditorBlockKey(editorA, 'foo').then((key) => expect(key).toEqual(keysMap.get('b1')))
+  })
+
   /**
    * Warning: Possible wrong behaviour
    * "bar" should be marked with "strong"
@@ -953,8 +1019,19 @@ describe('Feature: Annotations', () => {
  * Step helpers
  ********************/
 
+async function getEditorBlockKey(editor: Editor, text: string) {
+  return editor.getValue().then((value) => getBlockKey(value, text))
+}
+
 function getEditorText(editor: Editor) {
   return editor.getValue().then(getText)
+}
+
+async function insertEditorText(editor: Editor, text: string) {
+  await editor.insertText(text)
+  const value = await editor.getValue()
+
+  return getBlockKey(value, text)
 }
 
 function getText(value: Array<PortableTextBlock> | undefined) {
@@ -1402,6 +1479,47 @@ function reverseTextSelection(selection: EditorSelection): EditorSelection {
 /********************
  * Value utility functions
  ********************/
+
+function getBlockKey(value: Array<PortableTextBlock> | undefined, text: string) {
+  if (!value) {
+    throw new Error(`Unable to find block key for text "${text}"`)
+  }
+
+  let blockKey: string | undefined
+
+  for (const block of value) {
+    if (isPortableTextBlock(block)) {
+      for (const child of block.children) {
+        if (isPortableTextSpan(child) && child.text === text) {
+          blockKey = block._key
+          break
+        }
+      }
+    }
+  }
+
+  if (!blockKey) {
+    throw new Error(`Unable to find block key for text "${text}"`)
+  }
+
+  return blockKey
+}
+
+test(getBlockKey.name, () => {
+  const emptyBlock = {
+    _key: 'b1',
+    _type: 'block',
+    children: [{_key: 's1', _type: 'span', text: ''}],
+  }
+  const fooBlock = {
+    _key: 'b2',
+    _type: 'block',
+    children: [{_key: 's2', _type: 'span', text: 'foo'}],
+  }
+
+  expect(getBlockKey([emptyBlock, fooBlock], '')).toBe('b1')
+  expect(getBlockKey([emptyBlock, fooBlock], 'foo')).toBe('b2')
+})
 
 async function getNewAnnotations(editor: Editor, step: () => Promise<void>) {
   const value = await editor.getValue()
