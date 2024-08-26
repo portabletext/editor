@@ -7,6 +7,58 @@ import {type EditorSelection, type EditorSelectionPoint} from '../../src'
 import {type Editor} from '../setup/globals.jest'
 
 describe('Feature: Annotations', () => {
+  it('Scenario: Deleting half of annotated text', async () => {
+    const marksMap = new Map<string, Array<string>>()
+
+    const [editorA] = await getEditors()
+
+    // Given the text "foo bar baz"
+    await editorA.insertText('foo bar baz')
+
+    // And a "comment" (m1) around "foo bar baz"
+    const m1 = await markEditorText(editorA, 'foo bar baz', 'm')
+    marksMap.set('m1', m1 ?? [])
+
+    // When "a baz" is selected
+    await selectEditorText(editorA, ' baz')
+
+    // And "Backspace" is pressed
+    await editorA.pressKey('Backspace')
+
+    // Then the text is "foo bar"
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['foo bar']))
+
+    // And "foo bar" is marked with "comment" (m1)
+    await getEditorTextMarks(editorA, 'foo bar').then((marks) =>
+      expect(marks).toEqual(marksMap.get('m1')),
+    )
+  })
+
+  it('Scenario: Deleting annotation in the middle of text', async () => {
+    const marksMap = new Map<string, Array<string>>()
+
+    const [editorA] = await getEditors()
+
+    // Given the text "foo bar baz"
+    await editorA.insertText('foo bar baz')
+
+    // And a "comment" (m1) around "bar"
+    const m1 = await markEditorText(editorA, 'bar', 'm')
+    marksMap.set('m1', m1 ?? [])
+
+    // When "bar " is selected
+    await selectEditorText(editorA, 'bar ')
+
+    // And "Backspace" is pressed
+    await editorA.pressKey('Backspace')
+
+    // Then the text is "foo baz"
+    await getEditorText(editorA).then((text) => expect(text).toEqual(['foo baz']))
+
+    // And "foo baz" has no marks
+    await getEditorTextMarks(editorA, 'foo baz').then((marks) => expect(marks).toEqual([]))
+  })
+
   it('Scenario: Undoing the deletion of the last char of annotated text', async () => {
     const marksMap = new Map<string, Array<string>>()
 
