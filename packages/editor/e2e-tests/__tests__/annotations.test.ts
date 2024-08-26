@@ -16,8 +16,8 @@ describe('Feature: Annotations', () => {
     await editorA.insertText('foo')
 
     // And a "comment" (m1) around "foo"
-    const marks = await markEditorText(editorA, 'foo', 'm')
-    marksMap.set('m1', marks ?? [])
+    const m1 = await markEditorText(editorA, 'foo', 'm')
+    marksMap.set('m1', m1 ?? [])
 
     // When "ArrowRight" is pressed
     await editorA.pressKey('ArrowRight')
@@ -46,8 +46,8 @@ describe('Feature: Annotations', () => {
     await editorA.insertText('foo')
 
     // And a "comment" (m1) around "foo"
-    const marks = await markEditorText(editorA, 'foo', 'm')
-    marksMap.set('m1', marks ?? [])
+    const m1 = await markEditorText(editorA, 'foo', 'm')
+    marksMap.set('m1', m1 ?? [])
 
     // When "ArrowRight" is pressed
     await editorA.pressKey('ArrowRight')
@@ -79,8 +79,8 @@ describe('Feature: Annotations', () => {
     await editorA.insertText('foo')
 
     // And a "comment" (m1) around "foo"
-    const marks = await markEditorText(editorA, 'foo', 'm')
-    marksMap.set('m1', marks ?? [])
+    const m1 = await markEditorText(editorA, 'foo', 'm')
+    marksMap.set('m1', m1 ?? [])
 
     // When "ArrowRight" is pressed
     await editorA.pressKey('ArrowRight')
@@ -123,7 +123,7 @@ describe('Feature: Annotations', () => {
     const m1 = await markEditorText(editorA, 'foo', 'm')
     marksMap.set('m1', m1 ?? [])
 
-    // When editor "B" adds a "comment" around "bar"
+    // When editor "B" adds a "comment" (m2) around "bar"
     const m2 = await markEditorText(editorB, 'bar', 'm')
     marksMap.set('m2', m2 ?? [])
 
@@ -195,8 +195,8 @@ describe('Feature: Annotations', () => {
     await editorA.insertText('foo')
 
     // And a "comment" (m1) around "foo"
-    const marks = await markEditorText(editorA, 'foo', 'm')
-    marksMap.set('m1', marks ?? [])
+    const m1 = await markEditorText(editorA, 'foo', 'm')
+    marksMap.set('m1', m1 ?? [])
 
     // When "ArrowRight" is pressed
     await editorA.pressKey('ArrowRight')
@@ -253,8 +253,8 @@ describe('Feature: Annotations', () => {
     await editorA.insertText('foo bar')
 
     // And a "comment" (m1) around "bar"
-    const marks = await markEditorText(editorA, 'bar', 'm')
-    marksMap.set('m1', marks ?? [])
+    const m1 = await markEditorText(editorA, 'bar', 'm')
+    marksMap.set('m1', m1 ?? [])
 
     // When "foo bar" is selected
     await selectEditorText(editorA, 'foo bar')
@@ -283,8 +283,8 @@ describe('Feature: Annotations', () => {
     await editorA.insertText('foo')
 
     // And a "comment" (m1) around "foo"
-    const marks = await markEditorText(editorA, 'foo', 'm')
-    marksMap.set('m1', marks ?? [])
+    const m1 = await markEditorText(editorA, 'foo', 'm')
+    marksMap.set('m1', m1 ?? [])
 
     // When "Backspace" is pressed
     await editorA.pressKey('Backspace')
@@ -598,9 +598,10 @@ test(getTextMarks.name, () => {
 })
 
 async function markEditorText(editor: Editor, text: string, mark: string) {
-  await selectEditorText(editor, text)
-  await editor.toggleMark(mark)
-  return editor.getValue().then((value) => getTextMarks(value, text))
+  return getNewAnnotations(editor, async () => {
+    await selectEditorText(editor, text)
+    await editor.toggleMark(mark)
+  })
 }
 
 function selectEditorText(editor: Editor, text: string) {
