@@ -18,7 +18,6 @@ import {
 } from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {toPortableTextRange} from '../../utils/ranges'
-import {EMPTY_MARKS} from '../../utils/values'
 import {isChangingRemotely} from '../../utils/withChanges'
 import {isRedoing, isUndoing} from '../../utils/withUndoRedo'
 
@@ -56,9 +55,6 @@ export function createWithPortableTextMarkModel(
     editor.normalizeNode = (nodeEntry) => {
       const [node, path] = nodeEntry
 
-      const isSpan = Text.isText(node) && node._type === types.span.name
-      const isTextBlock = editor.isTextBlock(node)
-
       if (editor.isTextBlock(node)) {
         const children = Node.children(editor, path)
 
@@ -81,131 +77,89 @@ export function createWithPortableTextMarkModel(
         }
       }
 
-      if (isSpan || isTextBlock) {
-        if (isSpan && !Array.isArray(node.marks)) {
-          debug('Adding .marks to span node')
-          Transforms.setNodes(editor, {marks: []}, {at: path})
-          return
-        }
-        const hasSpanMarks = isSpan && (node.marks || []).length > 0
-        if (hasSpanMarks) {
-          const spanMarks = node.marks || EMPTY_MARKS
-          // Test that every annotation mark used has a definition in markDefs
-          const annotationMarks = spanMarks.filter(
-            (mark) => !types.decorators.map((dec) => dec.value).includes(mark),
-          )
-          if (annotationMarks.length > 0) {
-            const [block] = Editor.node(editor, Path.parent(path))
-            const orphanedMarks =
-              (editor.isTextBlock(block) &&
-                annotationMarks.filter(
-                  (mark) => !block.markDefs?.find((def) => def._key === mark),
-                )) ||
-              []
-            if (orphanedMarks.length > 0) {
-              debug('Removing orphaned .marks from span node')
-              Transforms.setNodes(
-                editor,
-                {marks: spanMarks.filter((mark) => !orphanedMarks.includes(mark))},
-                {at: path},
-              )
-              return
-            }
+      /**
+       * Add missing .marks to span nodes
+       */
+      if (editor.isTextSpan(node) && !Array.isArray(node.marks)) {
+        debug('Adding .marks to span node')
+        Transforms.setNodes(editor, {marks: []}, {at: path})
+        return
+      }
+
+      /**
+       * Remove annotations from empty spans
+       */
+      if (editor.isTextSpan(node)) {
+        const blockPath = Path.parent(path)
+        const [block] = Editor.node(editor, blockPath)
+        const decorators = types.decorators.map((decorator) => decorator.value)
+        const annotations = node.marks?.filter((mark) => !decorators.includes(mark))
+
+        if (editor.isTextBlock(block)) {
+          if (node.text === '' && annotations && annotations.length > 0) {
+            debug('Removing annotations from empty span node')
+            Transforms.setNodes(
+              editor,
+              {marks: node.marks?.filter((mark) => decorators.includes(mark))},
+              {at: path},
+            )
+            return
           }
         }
-        for (const op of editor.operations) {
-          // Make sure markDefs are copied over when merging two blocks.
-          if (
-            op.type === 'merge_node' &&
-            op.path.length === 1 &&
-            'markDefs' in op.properties &&
-            op.properties._type === types.block.name &&
-            Array.isArray(op.properties.markDefs) &&
-            op.properties.markDefs.length > 0 &&
-            op.path[0] - 1 >= 0
-          ) {
-            const [targetBlock, targetPath] = Editor.node(editor, [op.path[0] - 1])
-            debug(`Copying markDefs over to merged block`, op)
-            if (editor.isTextBlock(targetBlock)) {
-              const oldDefs = (Array.isArray(targetBlock.markDefs) && targetBlock.markDefs) || []
-              const newMarkDefs = uniq([...oldDefs, ...op.properties.markDefs])
-              const isNormalized = isEqual(newMarkDefs, targetBlock.markDefs)
-              // eslint-disable-next-line max-depth
-              if (!isNormalized) {
-                Transforms.setNodes(editor, {markDefs: newMarkDefs}, {at: targetPath, voids: false})
-                return
-              }
-            }
-          }
-          // Make sure markDefs are copied over to new block when splitting a block.
-          if (
-            op.type === 'split_node' &&
-            op.path.length === 1 &&
-            Element.isElementProps(op.properties) &&
-            op.properties._type === types.block.name &&
-            'markDefs' in op.properties &&
-            Array.isArray(op.properties.markDefs) &&
-            op.properties.markDefs.length > 0 &&
-            op.path[0] + 1 < editor.children.length
-          ) {
-            const [targetBlock, targetPath] = Editor.node(editor, [op.path[0] + 1])
-            debug(`Copying markDefs over to split block`, op)
-            if (editor.isTextBlock(targetBlock)) {
-              const oldDefs = (Array.isArray(targetBlock.markDefs) && targetBlock.markDefs) || []
+      }
+
+      /**
+       * Remove orphaned annotations from child spans of block nodes
+       */
+      if (editor.isTextBlock(node)) {
+        const decorators = types.decorators.map((decorator) => decorator.value)
+
+        for (const [child, childPath] of Node.children(editor, path)) {
+          if (editor.isTextSpan(child)) {
+            const marks = child.marks ?? []
+            const orphanedAnnotations = marks.filter((mark) => {
+              return !decorators.includes(mark) && !node.markDefs?.find((def) => def._key === mark)
+            })
+
+            if (orphanedAnnotations.length > 0) {
+              debug('Removing orphaned annotations from span node')
               Transforms.setNodes(
                 editor,
-                {markDefs: uniq([...oldDefs, ...op.properties.markDefs])},
-                {at: targetPath, voids: false},
+                {marks: marks.filter((mark) => !orphanedAnnotations.includes(mark))},
+                {at: childPath},
               )
-              return
-            }
-          }
-          // Make sure marks are reset, if a block is split at the end.
-          if (
-            op.type === 'split_node' &&
-            op.path.length === 2 &&
-            (op.properties as unknown as Descendant)._type === types.span.name &&
-            'marks' in op.properties &&
-            Array.isArray(op.properties.marks) &&
-            op.properties.marks.length > 0 &&
-            op.path[0] + 1 < editor.children.length
-          ) {
-            const [child, childPath] = Editor.node(editor, [op.path[0] + 1, 0])
-            if (
-              Text.isText(child) &&
-              child.text === '' &&
-              Array.isArray(child.marks) &&
-              child.marks.length > 0
-            ) {
-              Transforms.setNodes(editor, {marks: []}, {at: childPath, voids: false})
-              return
-            }
-          }
-          // Make sure markDefs are reset, if a block is split at start.
-          if (
-            op.type === 'split_node' &&
-            op.path.length === 1 &&
-            (op.properties as unknown as Descendant)._type === types.block.name &&
-            'markDefs' in op.properties &&
-            Array.isArray(op.properties.markDefs) &&
-            op.properties.markDefs.length > 0
-          ) {
-            const [block, blockPath] = Editor.node(editor, [op.path[0]])
-            if (
-              editor.isTextBlock(block) &&
-              block.children.length === 1 &&
-              block.markDefs &&
-              block.markDefs.length > 0 &&
-              Text.isText(block.children[0]) &&
-              block.children[0].text === '' &&
-              (!block.children[0].marks || block.children[0].marks.length === 0)
-            ) {
-              Transforms.setNodes(editor, {markDefs: []}, {at: blockPath})
               return
             }
           }
         }
       }
+
+      /**
+       * Remove orphaned annotations from span nodes
+       */
+      if (editor.isTextSpan(node)) {
+        const blockPath = Path.parent(path)
+        const [block] = Editor.node(editor, blockPath)
+
+        if (editor.isTextBlock(block)) {
+          const decorators = types.decorators.map((decorator) => decorator.value)
+          const marks = node.marks ?? []
+          const orphanedAnnotations = marks.filter((mark) => {
+            return !decorators.includes(mark) && !block.markDefs?.find((def) => def._key === mark)
+          })
+
+          if (orphanedAnnotations.length > 0) {
+            debug('Removing orphaned annotations from span node')
+            Transforms.setNodes(
+              editor,
+              {marks: marks.filter((mark) => !orphanedAnnotations.includes(mark))},
+              {at: path},
+            )
+            return
+          }
+        }
+      }
+
       // Check consistency of markDefs (unless we are merging two nodes)
       if (
         editor.isTextBlock(node) &&
@@ -357,6 +311,31 @@ export function createWithPortableTextMarkModel(
             editor.onChange()
             return
           }
+        }
+      }
+
+      /**
+       * Copy over markDefs when merging blocks
+       */
+      if (
+        op.type === 'merge_node' &&
+        op.path.length === 1 &&
+        'markDefs' in op.properties &&
+        op.properties._type === types.block.name &&
+        Array.isArray(op.properties.markDefs) &&
+        op.properties.markDefs.length > 0 &&
+        op.path[0] - 1 >= 0
+      ) {
+        const [targetBlock, targetPath] = Editor.node(editor, [op.path[0] - 1])
+
+        if (editor.isTextBlock(targetBlock)) {
+          const oldDefs = (Array.isArray(targetBlock.markDefs) && targetBlock.markDefs) || []
+          const newMarkDefs = uniq([...oldDefs, ...op.properties.markDefs])
+
+          debug(`Copying markDefs over to merged block`, op)
+          Transforms.setNodes(editor, {markDefs: newMarkDefs}, {at: targetPath, voids: false})
+          apply(op)
+          return
         }
       }
 

@@ -11,7 +11,6 @@ import {type Descendant, Element, type Node, Text} from 'slate'
 import {type PortableTextMemberSchemaTypes} from '../types/editor'
 
 export const EMPTY_MARKDEFS: PortableTextObject[] = []
-export const EMPTY_MARKS: string[] = []
 
 export const VOID_CHILD_KEY = 'void-child'
 
