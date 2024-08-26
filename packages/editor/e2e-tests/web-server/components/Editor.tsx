@@ -34,6 +34,16 @@ export const HOTKEYS: HotkeyOptions = {
       e.preventDefault()
       PortableTextEditor.toggleList(editor, 'number')
     },
+    'mod+l': (e, editor) => {
+      e.preventDefault()
+      const active = PortableTextEditor.isAnnotationActive(editor, 'link')
+
+      if (active) {
+        removeLink(editor)
+      } else {
+        addLink(editor)
+      }
+    },
     'mod+m': (e, editor) => {
       e.preventDefault()
       const active = PortableTextEditor.isAnnotationActive(editor, 'comment')
@@ -311,6 +321,30 @@ function removeComment(editor: PortableTextEditor) {
   PortableTextEditor.removeAnnotation(editor, {
     jsonType: 'object',
     name: 'comment',
+    fields: [],
+    // eslint-disable-next-line camelcase
+    __experimental_search: [],
+  })
+}
+
+function addLink(editor: PortableTextEditor) {
+  PortableTextEditor.addAnnotation(
+    editor,
+    {
+      jsonType: 'object',
+      name: 'link',
+      fields: [],
+      // eslint-disable-next-line camelcase
+      __experimental_search: [],
+    },
+    {href: 'https://example.com'},
+  )
+}
+
+function removeLink(editor: PortableTextEditor) {
+  PortableTextEditor.removeAnnotation(editor, {
+    jsonType: 'object',
+    name: 'link',
     fields: [],
     // eslint-disable-next-line camelcase
     __experimental_search: [],
