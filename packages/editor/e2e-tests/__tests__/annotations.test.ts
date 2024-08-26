@@ -610,12 +610,24 @@ function selectEditorText(editor: Editor, text: string) {
     .then(editor.setSelection)
 }
 
+function selectEditorTextBackwards(editor: Editor, text: string) {
+  return editor
+    .getValue()
+    .then((value) => getTextSelection(value, text))
+    .then(reverseTextSelection)
+    .then(editor.setSelection)
+}
+
+function selectBeforeEditorText(editor: Editor, text: string) {
+  return selectEditorText(editor, text).then(() => editor.pressKey('ArrowLeft'))
+}
+
 function selectAfterEditorText(editor: Editor, text: string) {
   return selectEditorText(editor, text).then(() => editor.pressKey('ArrowRight'))
 }
 
 /********************
- * Utility functions
+ * Selection utility functions
  ********************/
 
 function getTextSelection(
@@ -930,4 +942,46 @@ function reverseTextSelection(selection: EditorSelection): EditorSelection {
     focus: selection.anchor,
     backward: true,
   }
+}
+
+/********************
+ * Value utility functions
+ ********************/
+
+async function getNewAnnotations(editor: Editor, step: () => Promise<void>) {
+  const value = await editor.getValue()
+  const annotationsBefore = getAnnotations(value)
+
+  await step()
+
+  const newValue = await editor.getValue()
+
+  return getAnnotations(newValue).filter((annotation) => !annotationsBefore.includes(annotation))
+}
+
+function getAnnotations(value: Array<PortableTextBlock> | undefined): Array<string> {
+  if (!value) {
+    return []
+  }
+
+  const annotations: Array<string> = []
+
+  for (const block of value) {
+    if (isPortableTextBlock(block)) {
+      for (const child of block.children) {
+        if (isPortableTextSpan(child) && child.marks) {
+          for (const mark of child.marks) {
+            if (
+              block.markDefs?.some((markDef) => markDef._key === mark) &&
+              !annotations.includes(mark)
+            ) {
+              annotations.push(mark)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return annotations
 }
