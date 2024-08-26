@@ -1,9 +1,18 @@
-import {defineType} from '@sanity/types'
+import {Schema} from '@sanity/schema'
+import {defineField, defineType} from '@sanity/types'
 
-export const imageType = {
-  type: 'image',
-  name: 'blockImage',
-}
+export const imageType = defineType({
+  name: 'image',
+  title: 'Image',
+  type: 'object',
+  fields: [
+    defineField({
+      name: 'url',
+      type: 'string',
+      validation: (Rule) => Rule.required(),
+    }),
+  ],
+})
 
 export const someObject = {
   type: 'object',
@@ -40,5 +49,10 @@ export const portableTextType = defineType({
       of: [someObject],
     },
     someObject,
+    {type: 'image'},
   ],
 })
+
+export const schema = Schema.compile({
+  types: [portableTextType, imageType, someObject],
+}).get('body')

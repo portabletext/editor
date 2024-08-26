@@ -21,7 +21,7 @@ import {
   usePortableTextEditor,
   usePortableTextEditorSelection,
 } from '../../../src'
-import {portableTextType} from '../../schema'
+import {schema} from '../../schema'
 import {createKeyGenerator} from '../keyGenerator'
 
 export const HOTKEYS: HotkeyOptions = {
@@ -230,13 +230,14 @@ export const Editor = ({
   return (
     <PortableTextEditor
       ref={editor}
-      schemaType={portableTextType}
+      schemaType={schema}
       onChange={handleChange}
       patches$={patches$}
       value={value}
       keyGenerator={keyGenFn}
       readOnly={isOffline || readOnly}
     >
+      <BlockButtons />
       <CommentButtons />
       <Box padding={4} style={{outline: '1px solid #999'}}>
         {editable}
@@ -258,6 +259,34 @@ export const Editor = ({
         </button>
       </Box>
     </PortableTextEditor>
+  )
+}
+
+function BlockButtons() {
+  const editor = usePortableTextEditor()
+
+  return (
+    <>
+      <button
+        type="button"
+        data-testid="button-insert-image"
+        onClick={() => {
+          PortableTextEditor.insertBlock(
+            editor,
+            {
+              jsonType: 'object',
+              name: 'image',
+              fields: [],
+              // eslint-disable-next-line camelcase
+              __experimental_search: [],
+            },
+            {url: 'http://example.com/image.png'},
+          )
+        }}
+      >
+        Insert image
+      </button>
+    </>
   )
 }
 
