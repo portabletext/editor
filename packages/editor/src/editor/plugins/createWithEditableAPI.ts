@@ -378,11 +378,20 @@ export function createWithEditableAPI(
           if (!editor.isTextBlock(block)) {
             return undefined
           }
+          const [textNode] = Editor.node(editor, originalSelection.focus, {depth: 2})
+
+          if (!isPortableTextSpan(textNode)) {
+            return undefined
+          }
+
+          if (textNode.text === '') {
+            return undefined
+          }
+
           if (Range.isCollapsed(originalSelection)) {
             editor.pteExpandToWord()
             editor.onChange()
           }
-          const [textNode] = Editor.node(editor, originalSelection.focus, {depth: 2})
 
           // If we still have a selection, add the annotation to the selected text
           if (editor.selection) {
