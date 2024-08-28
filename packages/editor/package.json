@@ -51,8 +51,8 @@
     "lint:fix": "eslint . --fix",
     "prepublishOnly": "turbo run build",
     "test": "jest",
-    "test:e2e": "jest --config=e2e-tests/e2e.config.cjs",
-    "test:e2e:watch": "jest --config=e2e-tests/e2e.config.cjs --watch",
+    "test:e2e": "jest --config=e2e-tests/e2e.config.ts",
+    "test:e2e:watch": "jest --config=e2e-tests/e2e.config.ts --watch",
     "test:watch": "jest --watch"
   },
   "dependencies": {
@@ -114,6 +114,7 @@
     "react-dom": "^18.3.1",
     "rxjs": "^7.8.1",
     "styled-components": "^6.1.12",
+    "ts-node": "^10.9.2",
     "tsx": "^4.17.0",
     "typescript": "5.5.4",
     "vite": "^5.4.2"
