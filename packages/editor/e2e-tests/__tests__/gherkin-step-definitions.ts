@@ -84,6 +84,13 @@ export const stepDefinitions = [
     },
   ),
   defineStep(
+    'a(n) {annotation} {key} around {string} by editor B',
+    async ({editorB, keyMap}, annotation: string, keyKey: string, text: string) => {
+      const key = await markEditorText(editorB, text, annotation)
+      keyMap.set(keyKey, key)
+    },
+  ),
+  defineStep(
     '{annotation} {key} is added',
     async ({editorA, keyMap}, annotation: string, keyKey: string) => {
       const key = await markEditorSelection(editorA, annotation)
@@ -150,6 +157,16 @@ export const stepDefinitions = [
       await editorA.pressKey(button, times)
     },
   ),
+
+  /**
+   * Undo/redo steps
+   */
+  defineStep('undo is performed', async ({editorA}) => {
+    await editorA.undo()
+  }),
+  defineStep('redo is performed', async ({editorA}) => {
+    await editorA.redo()
+  }),
 ]
 
 export const parameterTypes = [
@@ -163,9 +180,9 @@ export const parameterTypes = [
   ),
   new ParameterType(
     'button',
-    /"(ArrowUp|ArrowDown|Backspace|Delete|Enter)"/,
+    /"(ArrowUp|ArrowDown|ArrowRight|Backspace|Delete|Enter|Space)"/,
     String,
-    (input) => input,
+    (input) => (input === 'Space' ? ' ' : input),
     false,
     true,
   ),
