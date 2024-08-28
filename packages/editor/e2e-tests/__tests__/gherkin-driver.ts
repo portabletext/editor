@@ -1,7 +1,6 @@
-/** @jest-environment ./setup/collaborative.jest.env.ts */
 import {
   CucumberExpression,
-  ParameterType,
+  type ParameterType,
   ParameterTypeRegistry,
 } from '@cucumber/cucumber-expressions'
 import * as Gherkin from '@cucumber/gherkin'
@@ -11,7 +10,7 @@ import {describe, test} from '@jest/globals'
 import {type Editor} from '../setup/globals.jest'
 
 export type StepDefinitionCallback<TParamA, TParamB, TParamC> = (
-  context: {editorA: Editor},
+  context: {editorA: Editor; editorB: Editor; keyMap: Map<string, Array<string> | string>},
   ...args: Array<any>
 ) => Promise<void>
 
@@ -33,37 +32,21 @@ const matcher = new Gherkin.GherkinClassicTokenMatcher()
 const parser = new Gherkin.Parser(builder, matcher)
 
 const parameterTypeRegistry = new ParameterTypeRegistry()
-const buttonParameterType = new ParameterType(
-  'button',
-  /"(ArrowUp|ArrowDown|Backspace|Delete|Enter)"/,
-  String,
-  (input) => input,
-  false,
-  true,
-)
-const textParameterType = new ParameterType(
-  'text',
-  /"([a-z,\\n]*)"/,
-  Array,
-  (input) =>
-    input.split(',').map((item) => {
-      if (item === '\\n') {
-        return '\n'
-      }
-      return item
-    }),
-  false,
-  true,
-)
-parameterTypeRegistry.defineParameterType(textParameterType)
-parameterTypeRegistry.defineParameterType(buttonParameterType)
 
-export function Feature<TParamA, TParamB, TParamC>(
-  featureText: string,
-  stepDefinitions: Array<StepDefinition<TParamA, TParamB, TParamC>>,
-) {
+export function Feature<TParamA, TParamB, TParamC>({
+  featureText,
+  stepDefinitions,
+  parameterTypes,
+}: {
+  featureText: string
+  stepDefinitions: Array<StepDefinition<TParamA, TParamB, TParamC>>
+  parameterTypes: Array<ParameterType<unknown>>
+}) {
   const gherkinDocument = parser.parse(featureText)
   const pickles = Gherkin.compile(gherkinDocument, 'block-objects.feature', uuidFn)
+  parameterTypes.forEach((parameterType) =>
+    parameterTypeRegistry.defineParameterType(parameterType),
+  )
 
   if (!gherkinDocument.feature) {
     throw new Error('No feature found')
@@ -90,7 +73,8 @@ export function Feature<TParamA, TParamB, TParamC>(
       const testFn = onlyPickle ? test.only : skippedPickle ? test.skip : test
 
       testFn(`Scenario: ${pickle.name}`, async () => {
-        const [editorA] = await getEditors()
+        const keyMap = new Map<string, Array<string>>()
+        const [editorA, editorB] = await getEditors()
 
         for await (const step of pickle.steps) {
           const matchingSteps = stepImplementations.flatMap((stepImplementation) => {
@@ -120,7 +104,7 @@ export function Feature<TParamA, TParamB, TParamC>(
 
           const args = matchingStep.args.map((arg) => arg.getValue(matchingStep))
 
-          await matchingStep.callback({editorA}, ...args)
+          await matchingStep.callback({editorA, editorB, keyMap}, ...args)
         }
       })
     }
