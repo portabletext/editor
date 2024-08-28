@@ -6,6 +6,10 @@ const config = createJestConfig({
   globalSetup: './setup/globalSetup.ts',
   globalTeardown: './setup/globalTeardown.ts',
   setupFilesAfterEnv: ['./setup/afterEnv.ts'],
+  transform: {
+    '\\.feature$': '<rootDir>/feature-file-transformer.js',
+  },
+  moduleFileExtensions: ['feature', 'js', 'ts'],
 })
 
 export default config

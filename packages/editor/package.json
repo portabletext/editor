@@ -64,6 +64,9 @@
     "slate-react": "0.108.0"
   },
   "devDependencies": {
+    "@cucumber/cucumber-expressions": "^17.1.0",
+    "@cucumber/gherkin": "^29.0.0",
+    "@cucumber/messages": "^26.0.0",
     "@jest/globals": "^29.7.0",
     "@jest/types": "^29.6.3",
     "@playwright/test": "1.46.1",
