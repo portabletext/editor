@@ -13,7 +13,7 @@ import {
   selectEditorText,
   selectEditorTextBackwards,
   toggleAnnotation,
-} from './step-helpers.test'
+} from './gherkin-step-helpers'
 
 export const stepDefinitions = [
   /**
