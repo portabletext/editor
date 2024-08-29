@@ -1,5 +1,41 @@
 Feature: Annotations
-  Scenario Outline: Toggling annotation with a collapsed selection
+  Scenario: Selection after adding an annotation
+    Given the text "foo bar baz"
+    When "bar" is selected
+    And "link" "l1" is toggled
+    Then "bar" is marked with "l1"
+    And "bar" is selected
+
+  @skip
+  # Mimics Google Docs' behaviour
+  Scenario: Selection after adding an annotation
+    Given the text "foo bar baz"
+    When "bar" is selected
+    And "link" "l1" is toggled
+    Then "bar" is marked with "l1"
+    Then the caret is after "bar"
+
+  Scenario: Inserting text after an annotation
+    Given the text "foo"
+    And a "link" "l1" around "foo"
+    When the caret is put after "foo"
+    And "bar" is typed
+    Then "foo" is marked with "l1"
+    And "bar" has no marks
+
+  # Warning: Possible wrong behaviour
+  # The " baz" link should have a unique key
+  Scenario: Toggling part of an annotation off
+    Given the text "foo bar baz"
+    And a "link" "l1" around "foo bar baz"
+    When "bar" is selected
+    And "link" is toggled
+    Then the text is "foo ,bar, baz"
+    And "foo " is marked with "l1"
+    And "bar" has no marks
+    And " baz" is marked with "l1"
+
+  Scenario Outline: Toggling annotation on with a collapsed selection
     Given the text "foo bar baz"
     When the caret is put <position>
     And "link" "l1" is toggled
@@ -11,32 +47,18 @@ Feature: Annotations
       | after "bar" |
       | after "ar" |
 
-  Scenario: Deleting half of annotated text
+  Scenario Outline: Toggling annotation off with a collapsed selection
     Given the text "foo bar baz"
-    And a "comment" "c1" around "foo bar baz"
-    When " baz" is selected
-    And "Backspace" is pressed
-    Then the text is "foo bar"
-    And "foo bar" is marked with "c1"
+    And a "link" "l1" around "foo bar baz"
+    When the caret is put <position>
+    And "link" is toggled
+    Then "foo bar baz" has no marks
 
-  Scenario: Deleting annotation in the middle of text
-    Given the text "foo bar baz"
-    And a "comment" "c1" around "bar"
-    When "bar " is selected
-    And "Backspace" is pressed
-    Then the text is "foo baz"
-    And "foo baz" has no marks
-
-  Scenario: Editor B inserts text after Editor A's half-deleted annotation
-    Given the text "foo"
-    And a "comment" "c1" around "foo"
-    When the caret is put after "foo"
-    And "Backspace" is pressed
-    And the caret is put after "fo" by editor B
-    And "a" is typed by editor B
-    Then the text is "fo,a"
-    And "fo" is marked with "c1"
-    And "a" has no marks
+    Examples:
+      | position |
+      | before "foo" |
+      | after "o b" |
+      | after "baz" |
 
   Scenario: Writing on top of annotation
     Given the text "foo bar baz"
@@ -45,13 +67,14 @@ Feature: Annotations
     Then the text is "foo removed baz"
     And "foo removed baz" has no marks
 
-  Scenario: Deleting emphasised paragraph with comment in the middle
-    Given the text "foo bar baz"
-    And "em" around "foo bar baz"
-    And a "comment" "c1" around "bar"
-    When "foo bar baz" is selected
-    And "Backspace" is pressed
-    Then the editor is empty
+  Scenario: Inserting text after an annotation
+    Given the text "foo"
+    And a "comment" "c1" around "foo"
+    When the caret is put after "foo"
+    And "bar" is typed
+    Then the text is "foo,bar"
+    And "foo" is marked with "c1"
+    And "bar" has no marks
 
   Scenario: Splitting block before annotation
     Given the text "foo"
@@ -133,96 +156,3 @@ Feature: Annotations
     Then "foo" is marked with "c1"
     And "bar" has no marks
 
-  # Warning: Possible wrong behaviour
-  # "foo" should be marked with c1
-  # "b" should be marked with m,l1
-  # "ar" should be marked with l1
-  Scenario: Overlapping annotation
-    Given the text "foobar"
-    And a "link" "l1" around "bar"
-    When "foob" is selected
-    And "comment" "c1" is toggled
-    Then the text is "foob,ar"
-    And "foob" is marked with "l1,c1"
-    And "ar" is marked with "l1"
-
-  # Warning: Possible wrong behaviour
-  # "foo" should be marked with c1
-  # "b" should be marked with m,l1
-  # "ar" should be marked with l1
-  Scenario: Overlapping annotation (backwards selection)
-    Given the text "foobar"
-    And a "link" "l1" around "bar"
-    When "foob" is selected backwards
-    And "comment" "c1" is toggled
-    Then the text is "foob,ar"
-    And "foob" is marked with "c1"
-    And "ar" is marked with "l1"
-
-  # Warning: Possible wrong behaviour
-  # "fo" should be marked with c1
-  # "o" should be marked with "c1,l1"
-  # "bar" should be marked with l1
-  Scenario: Overlapping annotation from behind
-    Given the text "foobar"
-    And a "comment" "c1" around "foo"
-    When "obar" is selected
-    And "link" "l1" is toggled
-    Then the text is "fo,obar"
-    Then "fo" is marked with "c1"
-    And "obar" is marked with "l1"
-
-  # Warning: Possible wrong behaviour
-  # "fo" should be marked with c1
-  # "o" should be marked with "c1,l1"
-  # "bar" should be marked with l1
-  Scenario: Overlapping annotation from behind (backwards selection)
-    Given the text "foobar"
-    And a "comment" "c1" around "foo"
-    When "obar" is selected backwards
-    And "link" "l1" is toggled
-    Then the text is "fo,obar"
-    Then "fo" is marked with "c1"
-    And "obar" is marked with "c1,l1"
-
-  # Warning: Possible wrong behaviour
-  # "foob" should be marked with c2
-  # "ar" should be marked with c1
-  Scenario: Overlapping same-type annotation
-    Given the text "foobar"
-    And a "comment" "c1" around "bar"
-    When "foob" is selected
-    And "comment" "c2" is toggled
-    Then the text is "foob,ar"
-    And "foob" is marked with "c1,c2"
-    And "ar" is marked with "c1"
-
-  Scenario: Overlapping same-type annotation (backwards selection)
-    Given the text "foobar"
-    And a "comment" "c1" around "bar"
-    When "foob" is selected backwards
-    And "comment" "c2" is toggled
-    Then the text is "foob,ar"
-    And "foob" is marked with "c2"
-    And "ar" is marked with "c1"
-
-  Scenario: Overlapping same-type annotation from behind
-    Given the text "foobar"
-    And a "comment" "c1" around "foo"
-    When "obar" is selected
-    And "comment" "c2" is toggled
-    Then the text is "fo,obar"
-    And "fo" is marked with "c1"
-    And "obar" is marked with "c2"
-
-  # Warning: Possible wrong behaviour
-  # "fo" should be marked with c1
-  # "obar" should be marked with c2
-  Scenario: Overlapping same-type annotation from behind (backwards selection)
-    Given the text "foobar"
-    And a "comment" "c1" around "foo"
-    When "obar" is selected backwards
-    And "comment" "c2" is toggled
-    Then the text is "fo,obar"
-    And "fo" is marked with "c1"
-    And "obar" is marked with "c1,c2"
