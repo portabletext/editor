@@ -19,7 +19,6 @@ import {
   type RenderBlockFunction,
   type RenderChildFunction,
   usePortableTextEditor,
-  usePortableTextEditorSelection,
 } from '../../../src'
 import {schema} from '../../schema'
 import {createKeyGenerator} from '../keyGenerator'
@@ -36,23 +35,11 @@ export const HOTKEYS: HotkeyOptions = {
     },
     'mod+l': (e, editor) => {
       e.preventDefault()
-      const active = PortableTextEditor.isAnnotationActive(editor, 'link')
-
-      if (active) {
-        removeLink(editor)
-      } else {
-        addLink(editor)
-      }
+      toggleLink(editor)
     },
     'mod+m': (e, editor) => {
       e.preventDefault()
-      const active = PortableTextEditor.isAnnotationActive(editor, 'comment')
-
-      if (active) {
-        removeComment(editor)
-      } else {
-        addComment(editor)
-      }
+      toggleComment(editor)
     },
   },
 }
@@ -239,6 +226,7 @@ export const Editor = ({
     >
       <BlockButtons />
       <CommentButtons />
+      <LinkButtons />
       <Box padding={4} style={{outline: '1px solid #999'}}>
         {editable}
       </Box>
@@ -291,9 +279,7 @@ function BlockButtons() {
 }
 
 function CommentButtons() {
-  const selection = usePortableTextEditorSelection()
   const editor = usePortableTextEditor()
-  const active = selection !== null && PortableTextEditor.isAnnotationActive(editor, 'comment')
 
   return (
     <>
@@ -302,6 +288,7 @@ function CommentButtons() {
         data-testid="button-add-comment"
         onClick={() => {
           addComment(editor)
+          PortableTextEditor.focus(editor)
         }}
       >
         Add comment
@@ -311,6 +298,7 @@ function CommentButtons() {
         data-testid="button-remove-comment"
         onClick={() => {
           removeComment(editor)
+          PortableTextEditor.focus(editor)
         }}
       >
         Remove comment
@@ -319,17 +307,63 @@ function CommentButtons() {
         type="button"
         data-testid="button-toggle-comment"
         onClick={() => {
-          if (active) {
-            removeComment(editor)
-          } else {
-            addComment(editor)
-          }
+          toggleComment(editor)
+          PortableTextEditor.focus(editor)
         }}
       >
         Toggle comment
       </button>
     </>
   )
+}
+
+function LinkButtons() {
+  const editor = usePortableTextEditor()
+
+  return (
+    <>
+      <button
+        type="button"
+        data-testid="button-add-link"
+        onClick={() => {
+          addLink(editor)
+          PortableTextEditor.focus(editor)
+        }}
+      >
+        Add link
+      </button>
+      <button
+        type="button"
+        data-testid="button-remove-link"
+        onClick={() => {
+          removeLink(editor)
+          PortableTextEditor.focus(editor)
+        }}
+      >
+        Remove link
+      </button>
+      <button
+        type="button"
+        data-testid="button-toggle-link"
+        onClick={() => {
+          toggleLink(editor)
+          PortableTextEditor.focus(editor)
+        }}
+      >
+        Toggle comment
+      </button>
+    </>
+  )
+}
+
+function toggleComment(editor: PortableTextEditor) {
+  const active = PortableTextEditor.isAnnotationActive(editor, 'comment')
+
+  if (active) {
+    removeComment(editor)
+  } else {
+    addComment(editor)
+  }
 }
 
 function addComment(editor: PortableTextEditor) {
@@ -354,6 +388,16 @@ function removeComment(editor: PortableTextEditor) {
     // eslint-disable-next-line camelcase
     __experimental_search: [],
   })
+}
+
+function toggleLink(editor: PortableTextEditor) {
+  const active = PortableTextEditor.isAnnotationActive(editor, 'link')
+
+  if (active) {
+    removeLink(editor)
+  } else {
+    addLink(editor)
+  }
 }
 
 function addLink(editor: PortableTextEditor) {

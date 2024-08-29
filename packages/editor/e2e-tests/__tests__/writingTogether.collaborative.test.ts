@@ -777,7 +777,7 @@ describe('collaborate editing', () => {
   it('will not result in duplicate keys when overwriting some partial bold text line, as the only content in the editor', async () => {
     const [editorA, editorB] = await getEditors()
     await editorA.insertText('Hey')
-    await editorA.toggleMark('b')
+    await editorA.toggleDecoratorUsingKeyboard('strong')
     await editorA.insertText('there')
     const valA = await editorA.getValue()
     if (!valA || !Array.isArray(valA[0].children)) {
@@ -818,12 +818,12 @@ describe('collaborate editing', () => {
   })
   it('sends the correct patches when toggling marks in a sequence', async () => {
     const [editorA, editorB] = await getEditors()
-    await editorA.toggleMark('b')
+    await editorA.toggleDecoratorUsingKeyboard('strong')
     await editorA.insertText('Bold')
-    await editorA.toggleMark('b')
-    await editorA.toggleMark('i')
+    await editorA.toggleDecoratorUsingKeyboard('strong')
+    await editorA.toggleDecoratorUsingKeyboard('em')
     await editorA.insertText('Italic')
-    await editorA.toggleMark('i')
+    await editorA.toggleDecoratorUsingKeyboard('em')
     const valueA = await editorA.getValue()
     const valueB = await editorB.getValue()
     expect(valueB).toMatchInlineSnapshot(`
