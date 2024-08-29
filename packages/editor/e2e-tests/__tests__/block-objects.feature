@@ -39,19 +39,65 @@ Feature: Block Objects
   Scenario: Pressing Delete before an image
     Given the text "foo"
     And an "image"
-    When the caret is put after "foo"
+    When "Enter" is pressed
+    And "bar" is typed
+    And the caret is put after "foo"
     And "Delete" is pressed
-    Then the text is "foo"
+    Then the text is "foo,\n,bar"
 
-  # Warning: Somewhat inconsistent behaviour
+  @skip
+  # Mimics Google Docs' behaviour
+  Scenario: Pressing Delete before an image
+    Given the text "foo"
+    And an "image"
+    When "Enter" is pressed
+    And "bar" is typed
+    And the caret is put after "foo"
+    And "Delete" is pressed
+    Then the text is "foobar"
+
+  @skip
+  # Mimics Notion's behaviour
+  Scenario: Pressing Delete before an image
+    Given the text "foo"
+    And an "image"
+    When "Enter" is pressed
+    And "bar" is typed
+    And the caret is put after "foo"
+    And "Delete" is pressed
+    Then the text is "foobar,\n,image"
+
+  # Warning: Not consistent with Delete before an image
   # Perhaps the image should be deleted instead
   Scenario: Pressing Backspace after an image
-    Given an "image" "m1"
+    Given the text "foo"
+    And an "image" "m1"
     When "Enter" is pressed
-    And "foo" is typed
-    And the caret is put before "foo"
+    And "bar" is typed
+    And the caret is put before "bar"
     And "Backspace" is pressed with navigation intent
     Then block "m1" is selected
+
+  @skip
+  # Mimics Google Docs' behaviour
+  Scenario: Pressing Backspace after an image
+    Given the text "foo"
+    And an "image"
+    When "Enter" is pressed
+    And "bar" is typed
+    And the caret is put before "bar"
+    Then the text is "foobar"
+
+  @skip
+  # Mimics Notion's behaviour
+  Scenario: Pressing Backspace after an image
+    Given the text "foo"
+    And an "image"
+    When "Enter" is pressed
+    And "bar" is typed
+    And the caret is put before "bar"
+    And "Backspace" is pressed
+    Then the text is "foobar,\n,image"
 
   Scenario Outline: Deleting a lonely image
     Given an "image"
