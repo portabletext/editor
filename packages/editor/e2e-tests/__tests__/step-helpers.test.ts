@@ -24,6 +24,13 @@ export async function insertEditorText(editor: Editor, text: string) {
   return getBlockKey(value, text)
 }
 
+export async function insertBlockObject(editor: Editor, name: 'image') {
+  return getNewBlockKeys(editor, async () => {
+    await editor.pressButton(`insert-${name}`)
+    await editor.focus()
+  })
+}
+
 function getText(value: Array<PortableTextBlock> | undefined) {
   if (!value) {
     return undefined
@@ -505,6 +512,25 @@ test(getBlockKey.name, () => {
   expect(getBlockKey([emptyBlock, fooBlock], '')).toBe('b1')
   expect(getBlockKey([emptyBlock, fooBlock], 'foo')).toBe('b2')
 })
+
+async function getNewBlockKeys(editor: Editor, step: () => Promise<void>) {
+  const value = await editor.getValue()
+  const blockKeysBefore = getBlockKeys(value)
+
+  await step()
+
+  const newValue = await editor.getValue()
+
+  return getBlockKeys(newValue).filter((blockKey) => !blockKeysBefore.includes(blockKey))
+}
+
+function getBlockKeys(value: Array<PortableTextBlock> | undefined) {
+  if (!value) {
+    return []
+  }
+
+  return value.map((block) => block._key)
+}
 
 async function getNewAnnotations(editor: Editor, step: () => Promise<void>) {
   const value = await editor.getValue()

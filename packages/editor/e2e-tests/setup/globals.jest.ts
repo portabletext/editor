@@ -16,7 +16,7 @@ export type Editor = {
     buttonName: 'add-comment' | 'remove-comment' | 'toggle-comment' | 'insert-image',
     times?: number,
   ) => Promise<void>
-  pressKey: (keyName: string, times?: number) => Promise<void>
+  pressKey: (keyName: string, times?: number, intent?: 'navigation') => Promise<void>
   redo: () => Promise<void>
   setSelection: (selection: EditorSelection | null) => Promise<void>
   testId: string

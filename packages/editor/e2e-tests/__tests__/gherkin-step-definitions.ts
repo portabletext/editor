@@ -6,6 +6,7 @@ import {
   getEditorBlockKey,
   getEditorText,
   getEditorTextMarks,
+  insertBlockObject,
   insertEditorText,
   selectAfterEditorText,
   selectBeforeEditorText,
@@ -68,9 +69,17 @@ export const stepDefinitions = [
   /**
    * Block object steps
    */
-  defineStep('an image', async ({editorA}) => {
+  defineStep('a(n) {block-object}', async ({editorA}) => {
     await editorA.pressButton('insert-image')
+    await editorA.focus()
   }),
+  defineStep(
+    'a(n) {block-object} {key}',
+    async ({editorA, keyMap}, blockObject: 'image', keyKey: string) => {
+      const newBlockKeys = await insertBlockObject(editorA, blockObject)
+      keyMap.set(keyKey, newBlockKeys[0])
+    },
+  ),
 
   /**
    * Annotation and decorator steps
@@ -156,12 +165,21 @@ export const stepDefinitions = [
   defineStep('the caret is put after {string} by editor B', async ({editorB}, text: string) => {
     await selectAfterEditorText(editorB, text)
   }),
+  defineStep('block {key} is selected', async ({editorA, keyMap}, keyKey: string) => {
+    await editorA.getSelection().then((selection) => {
+      expect(selection?.anchor.path[0]['_key']).toEqual(keyMap.get(keyKey))
+      expect(selection?.focus.path[0]['_key']).toEqual(keyMap.get(keyKey))
+    })
+  }),
 
   /**
    * Button steps
    */
   defineStep('{button} is pressed', async ({editorA}, button: string) => {
     await editorA.pressKey(button)
+  }),
+  defineStep('{button} is pressed with navigation intent', async ({editorA}, button: string) => {
+    await editorA.pressKey(button, 1, 'navigation')
   }),
   defineStep(
     '{button} is pressed {int} times',
@@ -183,9 +201,10 @@ export const stepDefinitions = [
 
 export const parameterTypes = [
   new ParameterType('annotation', /"(comment|link)"/, String, (input) => input, false, true),
+  new ParameterType('block-object', /"(image)"/, String, (input) => input, false, true),
   new ParameterType(
     'button',
-    /"(ArrowUp|ArrowDown|ArrowRight|Backspace|Delete|Enter|Space)"/,
+    /"(ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Backspace|Delete|Enter|Space)"/,
     String,
     (input) => (input === 'Space' ? ' ' : input),
     false,

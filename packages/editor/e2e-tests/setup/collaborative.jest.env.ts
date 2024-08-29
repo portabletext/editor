@@ -322,7 +322,7 @@ export default class CollaborationEnvironment extends NodeEnvironment {
                 return Promise.reject(new Error(`Button ${buttonName} not accounted for`))
               })
             },
-            pressKey: async (keyName: string, times?: number) => {
+            pressKey: async (keyName: string, times?: number, intent?: 'navigation') => {
               const pressKey = async () => {
                 await editableHandle.press(keyName)
               }
@@ -334,9 +334,13 @@ export default class CollaborationEnvironment extends NodeEnvironment {
                   keyName === 'Delete' ||
                   keyName === 'Enter'
                 ) {
-                  await waitForRevision(async () => {
-                    await pressKey()
-                  })
+                  if (intent === 'navigation') {
+                    await waitForNewSelection(pressKey)
+                  } else {
+                    await waitForRevision(async () => {
+                      await pressKey()
+                    })
+                  }
                 } else if (
                   // Selection manipulation keys
                   [
