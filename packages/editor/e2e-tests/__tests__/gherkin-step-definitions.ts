@@ -6,12 +6,14 @@ import {
   getEditorBlockKey,
   getEditorText,
   getEditorTextMarks,
+  getSelectionFocusText,
   insertBlockObject,
   insertEditorText,
   selectAfterEditorText,
   selectBeforeEditorText,
   selectEditorText,
   selectEditorTextBackwards,
+  selectionIsCollapsed,
   toggleAnnotation,
 } from './gherkin-step-helpers'
 
@@ -100,6 +102,9 @@ export const stepDefinitions = [
       keyMap.set(keyKey, key)
     },
   ),
+  defineStep('{annotation} is toggled', async ({editorA}, annotation: 'comment' | 'link') => {
+    await toggleAnnotation(editorA, annotation)
+  }),
   defineStep(
     '{annotation} {key} is toggled',
     async ({editorA, keyMap}, annotation: 'comment' | 'link', keyKey: string) => {
@@ -159,8 +164,28 @@ export const stepDefinitions = [
   defineStep('the caret is put after {string}', async ({editorA}, text: string) => {
     await selectAfterEditorText(editorA, text)
   }),
+  defineStep('the caret is after {string}', async ({editorA}, text: string) => {
+    const value = await editorA.getValue()
+    const selection = await editorA.getSelection()
+
+    const collapsed = selectionIsCollapsed(selection)
+    const focusText = getSelectionFocusText(value, selection)
+
+    expect(collapsed).toBe(true)
+    expect(focusText?.slice(0, selection?.focus.offset)).toBe(text)
+  }),
   defineStep('the caret is put before {string}', async ({editorA}, text: string) => {
     await selectBeforeEditorText(editorA, text)
+  }),
+  defineStep('the caret is before {string}', async ({editorA}, text: string) => {
+    const value = await editorA.getValue()
+    const selection = await editorA.getSelection()
+
+    const collapsed = selectionIsCollapsed(selection)
+    const focusText = getSelectionFocusText(value, selection)
+
+    expect(collapsed).toBe(true)
+    expect(focusText?.slice(selection?.focus.offset)).toBe(text)
   }),
   defineStep('the caret is put after {string} by editor B', async ({editorB}, text: string) => {
     await selectAfterEditorText(editorB, text)

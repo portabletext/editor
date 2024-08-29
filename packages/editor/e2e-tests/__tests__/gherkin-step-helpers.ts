@@ -113,6 +113,45 @@ export function selectAfterEditorText(editor: Editor, text: string) {
  * Selection utility functions
  ********************/
 
+export function selectionIsCollapsed(selection: EditorSelection) {
+  if (!selection) {
+    return false
+  }
+
+  return (
+    selection.anchor.path.join() === selection.focus.path.join() &&
+    selection.anchor.offset === selection.focus.offset
+  )
+}
+
+export function getSelectionFocusText(
+  value: Array<PortableTextBlock> | undefined,
+  selection: EditorSelection,
+) {
+  if (!value || !selection) {
+    return undefined
+  }
+
+  let text: string | undefined
+
+  for (const block of value) {
+    if (isPortableTextBlock(block)) {
+      if (block._key === selection.focus.path[0]['_key']) {
+        for (const child of block.children) {
+          if (isPortableTextSpan(child)) {
+            if (child._key === selection.focus.path[2]['_key']) {
+              text = child.text
+              break
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return text
+}
+
 export function getTextSelection(
   value: Array<PortableTextBlock> | undefined,
   text: string,
