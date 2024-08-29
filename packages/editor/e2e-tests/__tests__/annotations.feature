@@ -1,4 +1,16 @@
 Feature: Annotations
+  Scenario Outline: Toggling annotation with a collapsed selection
+    Given the text "foo bar baz"
+    When the caret is put <position>
+    And "link" "l1" is toggled
+    Then "bar" is marked with "l1"
+
+    Examples:
+      | position |
+      | before "bar" |
+      | after "bar" |
+      | after "ar" |
+
   Scenario: Deleting half of annotated text
     Given the text "foo bar baz"
     And a "comment" "c1" around "foo bar baz"
