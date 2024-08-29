@@ -1,4 +1,3 @@
-import {expect, test} from '@jest/globals'
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import {type PortableTextBlock} from '@sanity/types'
 
@@ -31,7 +30,7 @@ export async function insertBlockObject(editor: Editor, name: 'image') {
   })
 }
 
-function getText(value: Array<PortableTextBlock> | undefined) {
+export function getText(value: Array<PortableTextBlock> | undefined) {
   if (!value) {
     return undefined
   }
@@ -56,33 +55,11 @@ function getText(value: Array<PortableTextBlock> | undefined) {
   return text
 }
 
-test(getText.name, () => {
-  const fooBlock = {
-    _key: 'b1',
-    _type: 'block',
-    children: [{_key: 's1', _type: 'span', text: 'foo'}],
-  }
-  const emptyBlock = {
-    _key: 'b2',
-    _type: 'block',
-    children: [{_key: 's2', _type: 'span', text: ''}],
-  }
-  const barBlock = {
-    _key: 'b3',
-    _type: 'block',
-    children: [{_key: 's3', _type: 'span', text: 'bar'}],
-  }
-
-  expect(getText([fooBlock, barBlock])).toEqual(['foo', '\n', 'bar'])
-  expect(getText([emptyBlock, barBlock])).toEqual(['', '\n', 'bar'])
-  expect(getText([fooBlock, emptyBlock, barBlock])).toEqual(['foo', '\n', '', '\n', 'bar'])
-})
-
 export function getEditorTextMarks(editor: Editor, text: string) {
   return editor.getValue().then((value) => getTextMarks(value, text))
 }
 
-function getTextMarks(value: Array<PortableTextBlock> | undefined, text: string) {
+export function getTextMarks(value: Array<PortableTextBlock> | undefined, text: string) {
   if (!value) {
     return undefined
   }
@@ -102,24 +79,6 @@ function getTextMarks(value: Array<PortableTextBlock> | undefined, text: string)
 
   return marks
 }
-
-test(getTextMarks.name, () => {
-  const fooBlock = {
-    _key: 'b1',
-    _type: 'block',
-    children: [{_key: 's1', _type: 'span', text: 'foo'}],
-  }
-  const splitBarBlock = {
-    _key: 'b1',
-    _type: 'block',
-    children: [
-      {_key: 's1', _type: 'span', text: 'ba', marks: ['strong']},
-      {_key: 's2', _type: 'span', text: 'r'},
-    ],
-  }
-
-  expect(getTextMarks([fooBlock, splitBarBlock], 'ba')).toEqual(['strong'])
-})
 
 export function toggleAnnotation(editor: Editor, annotation: 'comment' | 'link') {
   return getNewAnnotations(editor, async () => {
@@ -154,7 +113,7 @@ export function selectAfterEditorText(editor: Editor, text: string) {
  * Selection utility functions
  ********************/
 
-function getTextSelection(
+export function getTextSelection(
   value: Array<PortableTextBlock> | undefined,
   text: string,
 ): EditorSelection {
@@ -252,168 +211,7 @@ function getTextSelection(
   }
 }
 
-test(getTextSelection.name, () => {
-  const joinedBlock = {
-    _key: 'b1',
-    _type: 'block',
-    children: [{_key: 's1', _type: 'span', text: 'foo bar baz'}],
-  }
-
-  expect(getTextSelection([joinedBlock], 'foo ')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 4},
-  })
-  expect(getTextSelection([joinedBlock], 'bar')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 4},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 7},
-  })
-  expect(getTextSelection([joinedBlock], ' baz')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 7},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 11},
-  })
-
-  const noSpaceBlock = {
-    _key: 'b1',
-    _type: 'block',
-    children: [
-      {_key: 's1', _type: 'span', text: 'foo'},
-      {_key: 's2', _type: 'span', text: 'bar'},
-    ],
-  }
-
-  expect(getTextSelection([noSpaceBlock], 'obar')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 3},
-  })
-
-  const splitBlock = {
-    _key: 'b1',
-    _type: 'block',
-    children: [
-      {_key: 's1', _type: 'span', text: 'foo '},
-      {_key: 's2', _type: 'span', text: 'bar'},
-      {_key: 's3', _type: 'span', text: ' baz'},
-    ],
-  }
-
-  expect(getTextSelection([splitBlock], 'foo')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
-  })
-  expect(getTextSelection([splitBlock], 'bar')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 0},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 3},
-  })
-  expect(getTextSelection([splitBlock], 'baz')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 1},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 4},
-  })
-  expect(getTextSelection([splitBlock], 'foo bar baz')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 4},
-  })
-  expect(getTextSelection([splitBlock], 'o bar b')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 2},
-  })
-
-  const twoBlocks = [
-    {
-      _key: 'b1',
-      _type: 'block',
-      children: [{_key: 's1', _type: 'span', text: 'foo'}],
-    },
-    {
-      _key: 'b2',
-      _type: 'block',
-      children: [{_key: 's2', _type: 'span', text: 'bar'}],
-    },
-  ]
-
-  expect(getTextSelection(twoBlocks, 'ooba')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
-    focus: {path: [{_key: 'b2'}, 'children', {_key: 's2'}], offset: 2},
-  })
-})
-
-function getSelectionText(
-  value: Array<PortableTextBlock> | undefined,
-  selection: EditorSelection,
-): string {
-  if (!value) {
-    throw new Error(`Unable to find text for value ${value}`)
-  }
-  const forwardSelection = selection?.backward ? reverseTextSelection(selection) : selection
-
-  if (!selection || !forwardSelection) {
-    throw new Error(`Unable to find text for selection ${selection}`)
-  }
-
-  if (selection.anchor.path.length < 3 || selection.focus.path.length < 3) {
-    throw new Error(`Unable to find text for selection ${selection}`)
-  }
-
-  let text = ''
-
-  for (const block of value) {
-    if (block._key !== forwardSelection.anchor.path[0]['_key']) {
-      continue
-    }
-
-    if (block._key !== forwardSelection.focus.path[0]['_key']) {
-      continue
-    }
-
-    if (!isPortableTextBlock(block)) {
-      continue
-    }
-
-    for (const child of block.children) {
-      if (!isPortableTextSpan(child)) {
-        continue
-      }
-
-      if (child._key === forwardSelection.anchor.path[2]['_key']) {
-        text += child.text.slice(forwardSelection.anchor.offset)
-        continue
-      }
-
-      if (child._key === forwardSelection.focus.path[2]['_key']) {
-        text += child.text.slice(0, forwardSelection.focus.offset)
-        break
-      }
-    }
-  }
-
-  return text
-}
-
-test(getSelectionText.name, () => {
-  const noSpaceBlock = {
-    _key: 'b1',
-    _type: 'block',
-    children: [
-      {_key: 's1', _type: 'span', text: 'foo'},
-      {_key: 's2', _type: 'span', text: 'bar'},
-    ],
-  }
-
-  expect(
-    getSelectionText([noSpaceBlock], {
-      anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
-      focus: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 3},
-    }),
-  ).toEqual('obar')
-  expect(
-    getSelectionText([noSpaceBlock], {
-      anchor: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 3},
-      focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
-      backward: true,
-    }),
-  ).toEqual('obar')
-})
-
-function stringOverlap(string: string, searchString: string) {
+export function stringOverlap(string: string, searchString: string) {
   let overlap = ''
 
   for (let i = 0; i < string.length; i++) {
@@ -442,12 +240,6 @@ function stringOverlap(string: string, searchString: string) {
   return overlap
 }
 
-test(stringOverlap.name, () => {
-  expect(stringOverlap('foo ', 'o bar b')).toBe('o ')
-  expect(stringOverlap('bar', 'o bar b')).toBe('bar')
-  expect(stringOverlap(' baz', 'o bar b')).toBe(' b')
-})
-
 function reverseTextSelection(selection: EditorSelection): EditorSelection {
   if (!selection) {
     return selection
@@ -472,7 +264,7 @@ function reverseTextSelection(selection: EditorSelection): EditorSelection {
  * Value utility functions
  ********************/
 
-function getBlockKey(value: Array<PortableTextBlock> | undefined, text: string) {
+export function getBlockKey(value: Array<PortableTextBlock> | undefined, text: string) {
   if (!value) {
     throw new Error(`Unable to find block key for text "${text}"`)
   }
@@ -496,22 +288,6 @@ function getBlockKey(value: Array<PortableTextBlock> | undefined, text: string) 
 
   return blockKey
 }
-
-test(getBlockKey.name, () => {
-  const emptyBlock = {
-    _key: 'b1',
-    _type: 'block',
-    children: [{_key: 's1', _type: 'span', text: ''}],
-  }
-  const fooBlock = {
-    _key: 'b2',
-    _type: 'block',
-    children: [{_key: 's2', _type: 'span', text: 'foo'}],
-  }
-
-  expect(getBlockKey([emptyBlock, fooBlock], '')).toBe('b1')
-  expect(getBlockKey([emptyBlock, fooBlock], 'foo')).toBe('b2')
-})
 
 async function getNewBlockKeys(editor: Editor, step: () => Promise<void>) {
   const value = await editor.getValue()
