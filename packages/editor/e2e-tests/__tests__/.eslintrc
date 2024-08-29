@@ -7,7 +7,6 @@
     "import/no-unassigned-import": "off",
     "tsdoc/syntax": "off",
     "max-depth": "off",
-    "no-nested-ternary":  "off",
     "dot-notation": "off"
   }
 }

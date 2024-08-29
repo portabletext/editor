@@ -112,6 +112,7 @@ const config = {
     'max-nested-callbacks': 'off',
     'no-undef': 'off',
     'no-dupe-class-members': 'off', // doesn't work with TS overrides
+    'no-nested-ternary': 'off',
     'no-shadow': 'off',
     'no-unused-vars': 'off',
     'no-useless-catch': 'warn',
