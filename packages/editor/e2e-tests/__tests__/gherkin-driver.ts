@@ -26,13 +26,6 @@ export function defineStep<TParamA, TParamB, TParamC>(
   return {text, callback}
 }
 
-const uuidFn = Messages.IdGenerator.uuid()
-const builder = new Gherkin.AstBuilder(uuidFn)
-const matcher = new Gherkin.GherkinClassicTokenMatcher()
-const parser = new Gherkin.Parser(builder, matcher)
-
-const parameterTypeRegistry = new ParameterTypeRegistry()
-
 export function Feature<TParamA, TParamB, TParamC>({
   featureText,
   stepDefinitions,
@@ -42,8 +35,15 @@ export function Feature<TParamA, TParamB, TParamC>({
   stepDefinitions: Array<StepDefinition<TParamA, TParamB, TParamC>>
   parameterTypes: Array<ParameterType<unknown>>
 }) {
+  const uuidFn = Messages.IdGenerator.uuid()
+  const builder = new Gherkin.AstBuilder(uuidFn)
+  const matcher = new Gherkin.GherkinClassicTokenMatcher()
+  const parser = new Gherkin.Parser(builder, matcher)
+
   const gherkinDocument = parser.parse(featureText)
   const pickles = Gherkin.compile(gherkinDocument, 'block-objects.feature', uuidFn)
+
+  const parameterTypeRegistry = new ParameterTypeRegistry()
   parameterTypes.forEach((parameterType) =>
     parameterTypeRegistry.defineParameterType(parameterType),
   )
