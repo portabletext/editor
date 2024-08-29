@@ -7,12 +7,11 @@ import {
   getEditorText,
   getEditorTextMarks,
   insertEditorText,
-  markEditorSelection,
-  markEditorText,
   selectAfterEditorText,
   selectBeforeEditorText,
   selectEditorText,
   selectEditorTextBackwards,
+  toggleAnnotation,
 } from './step-helpers.test'
 
 export const stepDefinitions = [
@@ -74,38 +73,51 @@ export const stepDefinitions = [
   }),
 
   /**
-   * Annotation and mark steps
+   * Annotation and decorator steps
    */
   defineStep(
     'a(n) {annotation} {key} around {string}',
-    async ({editorA, keyMap}, annotation: string, keyKey: string, text: string) => {
-      const key = await markEditorText(editorA, text, annotation)
+    async ({editorA, keyMap}, annotation: 'comment' | 'link', keyKey: string, text: string) => {
+      await selectEditorText(editorA, text)
+      const key = await toggleAnnotation(editorA, annotation)
       keyMap.set(keyKey, key)
     },
   ),
   defineStep(
     'a(n) {annotation} {key} around {string} by editor B',
-    async ({editorB, keyMap}, annotation: string, keyKey: string, text: string) => {
-      const key = await markEditorText(editorB, text, annotation)
+    async ({editorB, keyMap}, annotation: 'comment' | 'link', keyKey: string, text: string) => {
+      await selectEditorText(editorB, text)
+      const key = await toggleAnnotation(editorB, annotation)
       keyMap.set(keyKey, key)
     },
   ),
   defineStep(
-    '{annotation} {key} is added',
-    async ({editorA, keyMap}, annotation: string, keyKey: string) => {
-      const key = await markEditorSelection(editorA, annotation)
+    '{annotation} {key} is toggled',
+    async ({editorA, keyMap}, annotation: 'comment' | 'link', keyKey: string) => {
+      const key = await toggleAnnotation(editorA, annotation)
       keyMap.set(keyKey, key ?? [])
     },
   ),
-  defineStep('{mark} around {string}', async ({editorA}, mark: string, text: string) => {
-    await markEditorText(editorA, text, mark)
-  }),
-  defineStep('{string} is marked with {mark}', async ({editorA}, text: string, mark: string) => {
-    await markEditorText(editorA, text, mark)
-  }),
-  defineStep('{mark} is toggled', async ({editorA}, mark: string) => {
-    await editorA.toggleMark(mark)
-  }),
+  defineStep(
+    '{decorator} around {string}',
+    async ({editorA}, decorator: 'em' | 'strong', text: string) => {
+      await selectEditorText(editorA, text)
+      await editorA.toggleDecoratorUsingKeyboard(decorator)
+    },
+  ),
+  defineStep(
+    '{string} is marked with {decorator}',
+    async ({editorA}, text: string, decorator: 'em' | 'strong') => {
+      await selectEditorText(editorA, text)
+      await editorA.toggleDecoratorUsingKeyboard(decorator)
+    },
+  ),
+  defineStep(
+    '{decorator} is toggled using the keyboard',
+    async ({editorA}, decorator: 'em' | 'strong') => {
+      await editorA.toggleDecoratorUsingKeyboard(decorator)
+    },
+  ),
   defineStep(
     '{string} is marked with {keys}',
     async ({editorA, keyMap}, text: string, keys: Array<string>) => {
@@ -115,7 +127,7 @@ export const stepDefinitions = [
     },
   ),
   defineStep(
-    '{string} has marks {marks}',
+    '{string} has marks {decorators}',
     async ({editorA}, text: string, marks: Array<string>) => {
       await getEditorTextMarks(editorA, text).then((actualMarks) =>
         expect(actualMarks).toEqual(marks),
@@ -170,14 +182,7 @@ export const stepDefinitions = [
 ]
 
 export const parameterTypes = [
-  new ParameterType(
-    'annotation',
-    /"(comment|link)"/,
-    String,
-    (input) => (input === 'comment' ? 'm' : input === 'link' ? 'l' : input),
-    false,
-    true,
-  ),
+  new ParameterType('annotation', /"(comment|link)"/, String, (input) => input, false, true),
   new ParameterType(
     'button',
     /"(ArrowUp|ArrowDown|ArrowRight|Backspace|Delete|Enter|Space)"/,
@@ -195,16 +200,9 @@ export const parameterTypes = [
     false,
     true,
   ),
+  new ParameterType('decorator', /"(em|strong)"/, String, (input) => input, false, true),
   new ParameterType(
-    'mark',
-    /"(em|strong)"/,
-    String,
-    (input) => (input === 'em' ? 'i' : input === 'strong' ? 'b' : input),
-    false,
-    true,
-  ),
-  new ParameterType(
-    'marks',
+    'decorators',
     /"([(em)(strong),]+)"/,
     Array,
     (input) => input.split(','),

@@ -114,16 +114,9 @@ test(getTextMarks.name, () => {
   expect(getTextMarks([fooBlock, splitBarBlock], 'ba')).toEqual(['strong'])
 })
 
-export async function markEditorSelection(editor: Editor, mark: string) {
+export function toggleAnnotation(editor: Editor, annotation: 'comment' | 'link') {
   return getNewAnnotations(editor, async () => {
-    await editor.toggleMark(mark)
-  })
-}
-
-export async function markEditorText(editor: Editor, text: string, mark: string) {
-  return getNewAnnotations(editor, async () => {
-    await selectEditorText(editor, text)
-    await editor.toggleMark(mark)
+    await editor.toggleAnnotation(annotation)
   })
 }
 

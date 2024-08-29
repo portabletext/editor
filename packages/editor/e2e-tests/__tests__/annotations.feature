@@ -50,23 +50,23 @@ Feature: Annotations
     And "bar" has marks "em,strong"
     And " baz" has marks "em"
     And "bar" is selected
-    And "strong" is toggled
+    And "strong" is toggled using the keyboard
     Then the text is "foo bar baz"
     And "foo bar baz" has marks "em"
 
   Scenario: Toggling bold inside italic as you write
-    Given "em" is toggled
+    Given "em" is toggled using the keyboard
     When "foo " is typed
-    And "strong" is toggled
+    And "strong" is toggled using the keyboard
     And "bar" is typed
-    And "strong" is toggled
+    And "strong" is toggled using the keyboard
     And " baz" is typed
     Then the text is "foo ,bar, baz"
     And "foo " has marks "em"
     And "bar" has marks "em,strong"
     And " baz" has marks "em"
 
-  Scenario: Deleting marked txt and writing again, unmarked
+  Scenario: Deleting marked text and writing again, unmarked
     Given the text "foo"
     And "strong" around "foo"
     When the caret is put after "foo"
@@ -91,11 +91,11 @@ Feature: Annotations
     And "bar" is typed
     Then the text is "foo,\n,,\n,bar"
     When "ooba" is selected
-    And "strong" is toggled
+    And "strong" is toggled using the keyboard
     Then the text is "f,oo,\n,,\n,ba,r"
     And "oo" has marks "strong"
     And "ba" has marks "strong"
-    When "strong" is toggled
+    When "strong" is toggled using the keyboard
     Then the text is "foo,\n,,\n,bar"
 
   Scenario: Splitting block at the beginning
@@ -196,7 +196,7 @@ Feature: Annotations
     And "Enter" is pressed
     And "bar" is typed
     And "foobar" is selected
-    And "comment" "m1" is added
+    And "comment" "m1" is toggled
     Then "foo" has no marks
     And "bar" is marked with "m1"
 
@@ -208,7 +208,7 @@ Feature: Annotations
     And "Enter" is pressed
     And "bar" is typed
     And "foobar" is selected backwards
-    And "comment" "m1" is added
+    And "comment" "m1" is toggled
     Then "foo" is marked with "m1"
     And "bar" has no marks
 
@@ -220,7 +220,7 @@ Feature: Annotations
     Given the text "foobar"
     And a "link" "l1" around "bar"
     When "foob" is selected
-    And "comment" "m1" is added
+    And "comment" "m1" is toggled
     Then the text is "foob,ar"
     And "foob" is marked with "l1,m1"
     And "ar" is marked with "l1"
@@ -233,7 +233,7 @@ Feature: Annotations
     Given the text "foobar"
     And a "link" "l1" around "bar"
     When "foob" is selected backwards
-    And "comment" "m1" is added
+    And "comment" "m1" is toggled
     Then the text is "foob,ar"
     And "foob" is marked with "m1"
     And "ar" is marked with "l1"
@@ -246,7 +246,7 @@ Feature: Annotations
     Given the text "foobar"
     And a "comment" "m1" around "foo"
     When "obar" is selected
-    And "link" "l1" is added
+    And "link" "l1" is toggled
     Then the text is "fo,obar"
     Then "fo" is marked with "m1"
     And "obar" is marked with "l1"
@@ -259,7 +259,7 @@ Feature: Annotations
     Given the text "foobar"
     And a "comment" "m1" around "foo"
     When "obar" is selected backwards
-    And "link" "l1" is added
+    And "link" "l1" is toggled
     Then the text is "fo,obar"
     Then "fo" is marked with "m1"
     And "obar" is marked with "m1,l1"
@@ -271,7 +271,7 @@ Feature: Annotations
     Given the text "foobar"
     And a "comment" "m1" around "bar"
     When "foob" is selected
-    And "comment" "m2" is added
+    And "comment" "m2" is toggled
     Then the text is "foob,ar"
     And "foob" is marked with "m1,m2"
     And "ar" is marked with "m1"
@@ -280,7 +280,7 @@ Feature: Annotations
     Given the text "foobar"
     And a "comment" "m1" around "bar"
     When "foob" is selected backwards
-    And "comment" "m2" is added
+    And "comment" "m2" is toggled
     Then the text is "foob,ar"
     And "foob" is marked with "m2"
     And "ar" is marked with "m1"
@@ -289,7 +289,7 @@ Feature: Annotations
     Given the text "foobar"
     And a "comment" "m1" around "foo"
     When "obar" is selected
-    And "comment" "m2" is added
+    And "comment" "m2" is toggled
     Then the text is "fo,obar"
     And "fo" is marked with "m1"
     And "obar" is marked with "m2"
@@ -301,7 +301,7 @@ Feature: Annotations
     Given the text "foobar"
     And a "comment" "m1" around "foo"
     When "obar" is selected backwards
-    And "comment" "m2" is added
+    And "comment" "m2" is toggled
     Then the text is "fo,obar"
     And "fo" is marked with "m1"
     And "obar" is marked with "m1,m2"

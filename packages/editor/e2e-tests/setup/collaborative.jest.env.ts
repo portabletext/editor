@@ -179,6 +179,7 @@ export default class CollaborationEnvironment extends NodeEnvironment {
             addCommentButtonHandle,
             removeCommentButtonHandle,
             toggleCommentButtonHandle,
+            toggleLinkButtonHandle,
             insertImageButtonHandle,
           ]: (ElementHandle<Element> | null)[] = await Promise.all([
             page.waitForSelector('div[contentEditable="true"]'),
@@ -188,6 +189,7 @@ export default class CollaborationEnvironment extends NodeEnvironment {
             page.waitForSelector('[data-testid="button-add-comment"]'),
             page.waitForSelector('[data-testid="button-remove-comment"]'),
             page.waitForSelector('[data-testid="button-toggle-comment"]'),
+            page.waitForSelector('[data-testid="button-toggle-link"]'),
             page.waitForSelector('[data-testid="button-insert-image"]'),
           ])
 
@@ -356,22 +358,39 @@ export default class CollaborationEnvironment extends NodeEnvironment {
                 }
               }
             },
-            toggleMark: async (hotkey: string) => {
+            toggleAnnotation: async (annotation) => {
+              await waitForRevision(() => {
+                if (annotation === 'comment') {
+                  return toggleCommentButtonHandle.click()
+                }
+
+                if (annotation === 'link') {
+                  return toggleLinkButtonHandle.click()
+                }
+
+                return Promise.reject(new Error(`Annotation ${annotation} not accounted for`))
+              })
+            },
+            toggleDecoratorUsingKeyboard: async (decorator) => {
               const selection = await selectionHandle.evaluate((node) =>
                 node instanceof HTMLElement && node.innerText ? JSON.parse(node.innerText) : null,
               )
-              const performKeyPress = async () => {
-                await page.keyboard.down(metaKey)
-                await page.keyboard.down(hotkey)
+              const hotkey = decorator === 'strong' ? 'b' : decorator === 'em' ? 'i' : undefined
 
-                await page.keyboard.up(hotkey)
-                await page.keyboard.up(metaKey)
-              }
+              const performShortcut = hotkey
+                ? async () => {
+                    await page.keyboard.down(metaKey)
+                    await page.keyboard.down(hotkey)
+                    await page.keyboard.up(hotkey)
+                    await page.keyboard.up(metaKey)
+                  }
+                : () => Promise.reject(new Error(`Decorator ${decorator} not accounted for`))
+
               if (selection && isEqual(selection.focus, selection.anchor)) {
-                await performKeyPress()
-              } else {
-                await waitForRevision(performKeyPress)
+                return performShortcut()
               }
+
+              return waitForRevision(performShortcut)
             },
             focus: async () => {
               await editableHandle.focus()

@@ -462,7 +462,7 @@ describe('selection adjustment', () => {
     }
     await editorB.setSelection(expectedSelectionB)
     expect(await editorB.getSelection()).toEqual(expectedSelectionB)
-    await editorB.toggleMark('b')
+    await editorB.toggleDecoratorUsingKeyboard('strong')
     const valueB = await editorB.getValue()
     expect(valueB).toMatchInlineSnapshot(`
       Array [
@@ -521,7 +521,7 @@ describe('selection adjustment', () => {
     await editorB.setSelection(expectedSelectionB)
     expect(await editorA.getSelection()).toEqual(expectedSelectionA)
     expect(await editorB.getSelection()).toEqual(expectedSelectionB)
-    await editorA.toggleMark('b')
+    await editorA.toggleDecoratorUsingKeyboard('strong')
     const valueB = await editorB.getValue()
     expect(valueB).toMatchInlineSnapshot(`
       Array [

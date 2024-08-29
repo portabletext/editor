@@ -20,7 +20,8 @@ export type Editor = {
   redo: () => Promise<void>
   setSelection: (selection: EditorSelection | null) => Promise<void>
   testId: string
-  toggleMark: (hotkey: string) => Promise<void>
+  toggleAnnotation: (annotation: 'comment' | 'link') => Promise<void>
+  toggleDecoratorUsingKeyboard: (decorator: 'em' | 'strong') => Promise<void>
   undo: () => Promise<void>
 }
 
