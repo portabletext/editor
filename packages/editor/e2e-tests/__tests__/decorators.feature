@@ -1,4 +1,13 @@
 Feature: Decorators
+  Scenario: Inserting text after a decorator
+    Given the text "foo"
+	  And "strong" around "foo"
+    Then "foo" has marks "strong"
+	  When the caret is put after "foo"
+	  And "bar" is typed
+    Then the text is "foobar"
+	  Then "foobar" has marks "strong"
+
   Scenario: Toggling bold inside italic
     Given the text "foo bar baz"
     And "em" around "foo bar baz"
@@ -27,6 +36,7 @@ Feature: Decorators
   Scenario: Deleting marked text and writing again, unmarked
     Given the text "foo"
     And "strong" around "foo"
+    Then "foo" has marks "strong"
     When the caret is put after "foo"
     And "Backspace" is pressed 3 times
     And "bar" is typed
