@@ -7,6 +7,7 @@ import {
   getEditorText,
   getEditorTextMarks,
   getSelectionFocusText,
+  getSelectionText,
   insertBlockObject,
   insertEditorText,
   selectAfterEditorText,
@@ -84,7 +85,7 @@ export const stepDefinitions = [
   ),
 
   /**
-   * Annotation and decorator steps
+   * Mark context/action steps
    */
   defineStep(
     'a(n) {annotation} {key} around {string}',
@@ -113,15 +114,15 @@ export const stepDefinitions = [
     },
   ),
   defineStep(
-    '{decorator} around {string}',
-    async ({editorA}, decorator: 'em' | 'strong', text: string) => {
+    '{string} is marked with {decorator}',
+    async ({editorA}, text: string, decorator: 'em' | 'strong') => {
       await selectEditorText(editorA, text)
       await editorA.toggleDecoratorUsingKeyboard(decorator)
     },
   ),
   defineStep(
-    '{string} is marked with {decorator}',
-    async ({editorA}, text: string, decorator: 'em' | 'strong') => {
+    '{decorator} around {string}',
+    async ({editorA}, decorator: 'em' | 'strong', text: string) => {
       await selectEditorText(editorA, text)
       await editorA.toggleDecoratorUsingKeyboard(decorator)
     },
@@ -132,20 +133,20 @@ export const stepDefinitions = [
       await editorA.toggleDecoratorUsingKeyboard(decorator)
     },
   ),
+
+  /**
+   * Mark outcome steps
+   */
   defineStep(
-    '{string} is marked with {keys}',
-    async ({editorA, keyMap}, text: string, keys: Array<string>) => {
-      await getEditorTextMarks(editorA, text).then((marks) =>
-        expect(marks).toEqual(keys.flatMap((key) => keyMap.get(key))),
-      )
-    },
-  ),
-  defineStep(
-    '{string} has marks {decorators}',
-    async ({editorA}, text: string, marks: Array<string>) => {
-      await getEditorTextMarks(editorA, text).then((actualMarks) =>
-        expect(actualMarks).toEqual(marks),
-      )
+    '{string} has marks {marks}',
+    async ({editorA, keyMap}, text: string, marks: Array<string>) => {
+      await getEditorTextMarks(editorA, text).then((actualMarks) => {
+        expect(actualMarks).toEqual(
+          (marks ?? []).flatMap((mark) =>
+            mark === 'em' || mark === 'strong' ? [mark] : (keyMap.get(mark) ?? []),
+          ),
+        )
+      })
     },
   ),
   defineStep('{string} has no marks', async ({editorA}, text: string) => {
@@ -153,29 +154,38 @@ export const stepDefinitions = [
   }),
 
   /**
-   * Selection steps
+   * Selection context/action steps
    */
-  defineStep('{string} is selected', async ({editorA}, text: string) => {
+  defineStep('{string} is being selected', async ({editorA}, text: string) => {
     await selectEditorText(editorA, text)
   }),
-  defineStep('{string} is selected backwards', async ({editorA}, text: string) => {
+  defineStep('{string} is being selected backwards', async ({editorA}, text: string) => {
     await selectEditorTextBackwards(editorA, text)
+  }),
+  defineStep('the caret is put before {string}', async ({editorA}, text: string) => {
+    await selectBeforeEditorText(editorA, text)
   }),
   defineStep('the caret is put after {string}', async ({editorA}, text: string) => {
     await selectAfterEditorText(editorA, text)
   }),
-  defineStep('the caret is after {string}', async ({editorA}, text: string) => {
+  defineStep('the caret is put after {string} by editor B', async ({editorB}, text: string) => {
+    await selectAfterEditorText(editorB, text)
+  }),
+
+  /**
+   * Selection outcome steps
+   */
+  defineStep('{text} is selected', async ({editorA}, text: Array<string>) => {
     const value = await editorA.getValue()
     const selection = await editorA.getSelection()
 
-    const collapsed = selectionIsCollapsed(selection)
-    const focusText = getSelectionFocusText(value, selection)
-
-    expect(collapsed).toBe(true)
-    expect(focusText?.slice(0, selection?.focus.offset)).toBe(text)
+    expect(getSelectionText(value, selection)).toEqual(text)
   }),
-  defineStep('the caret is put before {string}', async ({editorA}, text: string) => {
-    await selectBeforeEditorText(editorA, text)
+  defineStep('block {key} is selected', async ({editorA, keyMap}, keyKey: string) => {
+    await editorA.getSelection().then((selection) => {
+      expect(selection?.anchor.path[0]['_key']).toEqual(keyMap.get(keyKey))
+      expect(selection?.focus.path[0]['_key']).toEqual(keyMap.get(keyKey))
+    })
   }),
   defineStep('the caret is before {string}', async ({editorA}, text: string) => {
     const value = await editorA.getValue()
@@ -187,14 +197,15 @@ export const stepDefinitions = [
     expect(collapsed).toBe(true)
     expect(focusText?.slice(selection?.focus.offset)).toBe(text)
   }),
-  defineStep('the caret is put after {string} by editor B', async ({editorB}, text: string) => {
-    await selectAfterEditorText(editorB, text)
-  }),
-  defineStep('block {key} is selected', async ({editorA, keyMap}, keyKey: string) => {
-    await editorA.getSelection().then((selection) => {
-      expect(selection?.anchor.path[0]['_key']).toEqual(keyMap.get(keyKey))
-      expect(selection?.focus.path[0]['_key']).toEqual(keyMap.get(keyKey))
-    })
+  defineStep('the caret is after {string}', async ({editorA}, text: string) => {
+    const value = await editorA.getValue()
+    const selection = await editorA.getSelection()
+
+    const collapsed = selectionIsCollapsed(selection)
+    const focusText = getSelectionFocusText(value, selection)
+
+    expect(collapsed).toBe(true)
+    expect(focusText?.slice(0, selection?.focus.offset)).toBe(text)
   }),
 
   /**
@@ -236,18 +247,10 @@ export const parameterTypes = [
     true,
   ),
   new ParameterType('key', /"([a-z]\d)"/, String, (input) => input, false, true),
-  new ParameterType(
-    'keys',
-    /"([a-z]\d(,[a-z]\d)*)"/,
-    Array,
-    (input) => input.split(','),
-    false,
-    true,
-  ),
   new ParameterType('decorator', /"(em|strong)"/, String, (input) => input, false, true),
   new ParameterType(
-    'decorators',
-    /"([(em)(strong),]+)"/,
+    'marks',
+    /"((strong|em|[a-z]\d)(,(strong|em|[a-z]\d))*)"/,
     Array,
     (input) => input.split(','),
     false,
