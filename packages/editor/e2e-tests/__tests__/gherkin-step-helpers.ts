@@ -70,7 +70,7 @@ export function getTextMarks(value: Array<PortableTextBlock> | undefined, text: 
     if (isPortableTextBlock(block)) {
       for (const child of block.children) {
         if (isPortableTextSpan(child) && child.text === text) {
-          marks = child.marks
+          marks = child.marks ?? []
           break
         }
       }
