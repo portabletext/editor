@@ -14,6 +14,18 @@ export const imageType = defineType({
   ],
 })
 
+const stockTickerType = defineType({
+  name: 'stock-ticker',
+  type: 'object',
+  fields: [
+    defineField({
+      name: 'symbol',
+      type: 'string',
+      validation: (Rule) => Rule.required(),
+    }),
+  ],
+})
+
 export const someObject = {
   type: 'object',
   name: 'someObject',
@@ -46,7 +58,7 @@ export const portableTextType = defineType({
           },
         ],
       },
-      of: [someObject],
+      of: [someObject, {type: 'stock-ticker'}],
     },
     someObject,
     {type: 'image'},
@@ -54,5 +66,5 @@ export const portableTextType = defineType({
 })
 
 export const schema = Schema.compile({
-  types: [portableTextType, imageType, someObject],
+  types: [portableTextType, imageType, someObject, stockTickerType],
 }).get('body')

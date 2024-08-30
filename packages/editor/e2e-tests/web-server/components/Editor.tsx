@@ -225,6 +225,7 @@ export const Editor = ({
       readOnly={isOffline || readOnly}
     >
       <BlockButtons />
+      <InlineObjectButtons />
       <CommentButtons />
       <LinkButtons />
       <Box padding={4} style={{outline: '1px solid #999'}}>
@@ -273,6 +274,34 @@ function BlockButtons() {
         }}
       >
         Insert image
+      </button>
+    </>
+  )
+}
+
+function InlineObjectButtons() {
+  const editor = usePortableTextEditor()
+
+  return (
+    <>
+      <button
+        type="button"
+        data-testid="button-insert-stock-ticker"
+        onClick={() => {
+          PortableTextEditor.insertChild(
+            editor,
+            {
+              jsonType: 'object',
+              name: 'stock-ticker',
+              fields: [],
+              // eslint-disable-next-line camelcase
+              __experimental_search: [],
+            },
+            {symbol: 'NVDA'},
+          )
+        }}
+      >
+        Insert stock ticker
       </button>
     </>
   )

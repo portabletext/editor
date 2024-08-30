@@ -13,7 +13,12 @@ export type Editor = {
   type: (text: string) => Promise<void>
   paste: (text: string, type?: string) => Promise<void>
   pressButton: (
-    buttonName: 'add-comment' | 'remove-comment' | 'toggle-comment' | 'insert-image',
+    buttonName:
+      | 'add-comment'
+      | 'remove-comment'
+      | 'toggle-comment'
+      | 'insert-image'
+      | 'insert-stock-ticker',
     times?: number,
   ) => Promise<void>
   pressKey: (keyName: string, times?: number, intent?: 'navigation') => Promise<void>

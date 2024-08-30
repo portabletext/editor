@@ -10,8 +10,11 @@ import {
   getSelectionText,
   insertBlockObject,
   insertEditorText,
+  selectAfterEditorInlineObject,
   selectAfterEditorText,
+  selectBeforeEditorInlineObject,
   selectBeforeEditorText,
+  selectEditorInlineObject,
   selectEditorText,
   selectEditorTextBackwards,
   selectionIsCollapsed,
@@ -70,7 +73,7 @@ export const stepDefinitions = [
   ),
 
   /**
-   * Block object steps
+   * Object steps
    */
   defineStep('a(n) {block-object}', async ({editorA}) => {
     await editorA.pressButton('insert-image')
@@ -83,6 +86,9 @@ export const stepDefinitions = [
       keyMap.set(keyKey, newBlockKeys[0])
     },
   ),
+  defineStep('a(n) {inline-object}', async ({editorA}) => {
+    await editorA.pressButton('insert-stock-ticker')
+  }),
 
   /**
    * Mark context/action steps
@@ -157,16 +163,28 @@ export const stepDefinitions = [
    * Selection context/action steps
    */
   defineStep('{string} is being selected', async ({editorA}, text: string) => {
-    await selectEditorText(editorA, text)
+    if (text === 'stock-ticker') {
+      await selectEditorInlineObject(editorA, text)
+    } else {
+      await selectEditorText(editorA, text)
+    }
   }),
   defineStep('{string} is being selected backwards', async ({editorA}, text: string) => {
     await selectEditorTextBackwards(editorA, text)
   }),
   defineStep('the caret is put before {string}', async ({editorA}, text: string) => {
-    await selectBeforeEditorText(editorA, text)
+    if (text === 'stock-ticker') {
+      await selectBeforeEditorInlineObject(editorA, text)
+    } else {
+      await selectBeforeEditorText(editorA, text)
+    }
   }),
   defineStep('the caret is put after {string}', async ({editorA}, text: string) => {
-    await selectAfterEditorText(editorA, text)
+    if (text === 'stock-ticker') {
+      await selectAfterEditorInlineObject(editorA, text)
+    } else {
+      await selectAfterEditorText(editorA, text)
+    }
   }),
   defineStep('the caret is put after {string} by editor B', async ({editorB}, text: string) => {
     await selectAfterEditorText(editorB, text)
@@ -238,6 +256,7 @@ export const stepDefinitions = [
 export const parameterTypes = [
   new ParameterType('annotation', /"(comment|link)"/, String, (input) => input, false, true),
   new ParameterType('block-object', /"(image)"/, String, (input) => input, false, true),
+  new ParameterType('inline-object', /"(stock-ticker)"/, String, (input) => input, false, true),
   new ParameterType(
     'button',
     /"(ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Backspace|Delete|Enter|Space)"/,
@@ -258,7 +277,7 @@ export const parameterTypes = [
   ),
   new ParameterType(
     'text',
-    /"([a-z,\\n ]*)"/,
+    /"([a-z-,\\n ]*)"/,
     Array,
     (input) =>
       input.split(',').map((item) => {
