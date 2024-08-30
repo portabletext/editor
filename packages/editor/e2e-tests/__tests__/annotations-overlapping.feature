@@ -7,11 +7,11 @@ Feature: Overlapping Annotations
   Scenario: Overlapping annotation
     Given the text "foobar"
     And a "link" "l1" around "bar"
-    When "foob" is selected
+    When "foob" is being selected
     And "comment" "c1" is toggled
     Then the text is "foob,ar"
-    And "foob" is marked with "l1,c1"
-    And "ar" is marked with "l1"
+    And "foob" has marks "l1,c1"
+    And "ar" has marks "l1"
 
   # Warning: Possible wrong behaviour
   # "foo" should be marked with c1
@@ -20,11 +20,11 @@ Feature: Overlapping Annotations
   Scenario: Overlapping annotation (backwards selection)
     Given the text "foobar"
     And a "link" "l1" around "bar"
-    When "foob" is selected backwards
+    When "foob" is being selected backwards
     And "comment" "c1" is toggled
     Then the text is "foob,ar"
-    And "foob" is marked with "c1"
-    And "ar" is marked with "l1"
+    And "foob" has marks "c1"
+    And "ar" has marks "l1"
 
   # Warning: Possible wrong behaviour
   # "fo" should be marked with c1
@@ -33,11 +33,11 @@ Feature: Overlapping Annotations
   Scenario: Overlapping annotation from behind
     Given the text "foobar"
     And a "comment" "c1" around "foo"
-    When "obar" is selected
+    When "obar" is being selected
     And "link" "l1" is toggled
     Then the text is "fo,obar"
-    Then "fo" is marked with "c1"
-    And "obar" is marked with "l1"
+    Then "fo" has marks "c1"
+    And "obar" has marks "l1"
 
   # Warning: Possible wrong behaviour
   # "fo" should be marked with c1
@@ -46,11 +46,11 @@ Feature: Overlapping Annotations
   Scenario: Overlapping annotation from behind (backwards selection)
     Given the text "foobar"
     And a "comment" "c1" around "foo"
-    When "obar" is selected backwards
+    When "obar" is being selected backwards
     And "link" "l1" is toggled
     Then the text is "fo,obar"
-    Then "fo" is marked with "c1"
-    And "obar" is marked with "c1,l1"
+    Then "fo" has marks "c1"
+    And "obar" has marks "c1,l1"
 
   # Warning: Possible wrong behaviour
   # "foob" should be marked with c2
@@ -58,29 +58,29 @@ Feature: Overlapping Annotations
   Scenario: Overlapping same-type annotation
     Given the text "foobar"
     And a "comment" "c1" around "bar"
-    When "foob" is selected
+    When "foob" is being selected
     And "comment" "c2" is toggled
     Then the text is "foob,ar"
-    And "foob" is marked with "c1,c2"
-    And "ar" is marked with "c1"
+    And "foob" has marks "c1,c2"
+    And "ar" has marks "c1"
 
   Scenario: Overlapping same-type annotation (backwards selection)
     Given the text "foobar"
     And a "comment" "c1" around "bar"
-    When "foob" is selected backwards
+    When "foob" is being selected backwards
     And "comment" "c2" is toggled
     Then the text is "foob,ar"
-    And "foob" is marked with "c2"
-    And "ar" is marked with "c1"
+    And "foob" has marks "c2"
+    And "ar" has marks "c1"
 
   Scenario: Overlapping same-type annotation from behind
     Given the text "foobar"
     And a "comment" "c1" around "foo"
-    When "obar" is selected
+    When "obar" is being selected
     And "comment" "c2" is toggled
     Then the text is "fo,obar"
-    And "fo" is marked with "c1"
-    And "obar" is marked with "c2"
+    And "fo" has marks "c1"
+    And "obar" has marks "c2"
 
   # Warning: Possible wrong behaviour
   # "fo" should be marked with c1
@@ -88,8 +88,8 @@ Feature: Overlapping Annotations
   Scenario: Overlapping same-type annotation from behind (backwards selection)
     Given the text "foobar"
     And a "comment" "c1" around "foo"
-    When "obar" is selected backwards
+    When "obar" is being selected backwards
     And "comment" "c2" is toggled
     Then the text is "fo,obar"
-    And "fo" is marked with "c1"
-    And "obar" is marked with "c1,c2"
+    And "fo" has marks "c1"
+    And "obar" has marks "c1,c2"
