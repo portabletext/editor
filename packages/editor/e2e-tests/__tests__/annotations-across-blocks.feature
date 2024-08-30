@@ -24,6 +24,8 @@ Feature: Annotations Across Blocks
     Then "foo" has marks "l1"
     And "bar" has no marks
 
+  # Warning: Possible wrong behaviour
+  # "foo" should also be marked with a link
   Scenario: Adding annotation across an image
     Given the text "foo"
     And an "image"
@@ -36,7 +38,20 @@ Feature: Annotations Across Blocks
     And "foo,\n,image,\n,bar" is selected
 
   # Warning: Possible wrong behaviour
-  # "bar" should be marked with a new link
+  # "bar" should also be marked with a link
+  Scenario: Adding annotation across an image (backwards selection)
+    Given the text "foo"
+    And an "image"
+    When "Enter" is pressed
+    And "bar" is typed
+    And "foobar" is being selected backwards
+    And "link" "l1" is toggled
+    Then "foo" has marks "l1"
+    And "bar" has no marks
+    And "foo,\n,image,\n,bar" is selected
+
+  # Warning: Possible wrong behaviour
+  # The "bar" link should have a unique key
   Scenario: Splitting an annotation across blocks
     Given the text "foobar"
     And a "link" "l1" around "foobar"
@@ -88,17 +103,3 @@ Feature: Annotations Across Blocks
     And "foo" has marks "l1"
     And "bar" has marks "l2"
 
-  # Warning: Possible wrong behaviour
-  # "f" and "r" should end up on the same line
-  Scenario: Deleting across annotated blocks
-    Given an empty editor
-    When "foo" is typed
-    And "Enter" is pressed
-    And "bar" is typed
-    And a "link" "l1" around "foo"
-    And a "link" "l2" around "bar"
-    And "ooba" is being selected
-    And "Backspace" is pressed
-    Then the text is "f,\n,r"
-    And "f" has marks "l1"
-    And "r" has marks "l2"

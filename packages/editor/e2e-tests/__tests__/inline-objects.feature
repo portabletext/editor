@@ -1,3 +1,4 @@
+# In-text objects like stock tickers
 Feature: Inline Objects
 
   Scenario: Navigating around a inline object

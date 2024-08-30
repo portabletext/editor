@@ -1,4 +1,6 @@
+# Complex marks like links
 Feature: Annotations
+
   # Mimics Notion's behaviour
   # Warning: Possible wrong behaviour
   # The caret should be after "bar"

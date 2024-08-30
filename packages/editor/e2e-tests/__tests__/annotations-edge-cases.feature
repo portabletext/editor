@@ -34,3 +34,18 @@ Feature: Annotations Edge Cases
     And "Backspace" is pressed
     Then the text is "foo baz"
     And "foo baz" has no marks
+
+  # Warning: Possible wrong behaviour
+  # "f" and "r" should end up on the same line
+  Scenario: Deleting across annotated blocks
+    Given an empty editor
+    When "foo" is typed
+    And "Enter" is pressed
+    And "bar" is typed
+    And a "link" "l1" around "foo"
+    And a "link" "l2" around "bar"
+    And "ooba" is being selected
+    And "Backspace" is pressed
+    Then the text is "f,\n,r"
+    And "f" has marks "l1"
+    And "r" has marks "l2"
