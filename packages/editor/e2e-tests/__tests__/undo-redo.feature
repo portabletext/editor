@@ -1,4 +1,5 @@
 Feature: Undo/Redo
+
   Scenario: Undoing the deletion of the last char of annotated text
     Given the text "foo"
     And a "comment" "c1" around "foo"

@@ -1,4 +1,6 @@
+# Simple marks like bold and italic
 Feature: Decorators
+
   Scenario: Inserting text after a decorator
     Given the text "foo"
 	  And "strong" around "foo"
