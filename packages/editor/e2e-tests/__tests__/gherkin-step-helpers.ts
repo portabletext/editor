@@ -152,6 +152,55 @@ export function getSelectionFocusText(
   return text
 }
 
+export function getSelectionText(
+  value: Array<PortableTextBlock> | undefined,
+  selection: EditorSelection,
+) {
+  if (!value || !selection) {
+    return undefined
+  }
+
+  const forwardSelection = selection.backward ? reverseTextSelection(selection) : selection
+
+  if (!forwardSelection) {
+    return undefined
+  }
+
+  const text: Array<string> = []
+
+  for (const block of value) {
+    if (text.length === 0 && block._key !== forwardSelection.anchor.path[0]['_key']) {
+      continue
+    }
+
+    if (text.length > 0) {
+      text.push('\n')
+    }
+
+    if (isPortableTextBlock(block)) {
+      for (const child of block.children) {
+        if (isPortableTextSpan(child)) {
+          if (child._key === forwardSelection.anchor.path[2]['_key']) {
+            text.push(child.text.slice(forwardSelection.anchor.offset))
+          } else if (child._key === forwardSelection.focus.path[2]['_key']) {
+            text.push(child.text.slice(0, forwardSelection.focus.offset))
+          } else {
+            text.push(child.text)
+          }
+        }
+      }
+    } else {
+      text.push(block._type)
+    }
+
+    if (block._key === forwardSelection.focus.path[0]['_key']) {
+      break
+    }
+  }
+
+  return text
+}
+
 export function getTextSelection(
   value: Array<PortableTextBlock> | undefined,
   text: string,
