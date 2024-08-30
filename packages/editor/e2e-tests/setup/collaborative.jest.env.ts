@@ -181,6 +181,7 @@ export default class CollaborationEnvironment extends NodeEnvironment {
             toggleCommentButtonHandle,
             toggleLinkButtonHandle,
             insertImageButtonHandle,
+            insertStockTickerButtonHandle,
           ]: (ElementHandle<Element> | null)[] = await Promise.all([
             page.waitForSelector('div[contentEditable="true"]'),
             page.waitForSelector('#pte-selection'),
@@ -191,6 +192,7 @@ export default class CollaborationEnvironment extends NodeEnvironment {
             page.waitForSelector('[data-testid="button-toggle-comment"]'),
             page.waitForSelector('[data-testid="button-toggle-link"]'),
             page.waitForSelector('[data-testid="button-insert-image"]'),
+            page.waitForSelector('[data-testid="button-insert-stock-ticker"]'),
           ])
 
           if (!editableHandle || !selectionHandle || !valueHandle || !revIdHandle) {
@@ -317,6 +319,10 @@ export default class CollaborationEnvironment extends NodeEnvironment {
 
                 if (buttonName === 'insert-image') {
                   return insertImageButtonHandle.click({clickCount: times})
+                }
+
+                if (buttonName === 'insert-stock-ticker') {
+                  return insertStockTickerButtonHandle.click({clickCount: times})
                 }
 
                 return Promise.reject(new Error(`Button ${buttonName} not accounted for`))

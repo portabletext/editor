@@ -45,6 +45,8 @@ export function getText(value: Array<PortableTextBlock> | undefined) {
       for (const child of block.children) {
         if (isPortableTextSpan(child)) {
           text.push(child.text)
+        } else {
+          text.push(child._type)
         }
       }
     } else {
@@ -84,6 +86,23 @@ export function toggleAnnotation(editor: Editor, annotation: 'comment' | 'link')
   return getNewAnnotations(editor, async () => {
     await editor.toggleAnnotation(annotation)
   })
+}
+
+export function selectEditorInlineObject(editor: Editor, inlineObjectName: string) {
+  return editor
+    .getValue()
+    .then((value) => getInlineObjectSelection(value, inlineObjectName))
+    .then(editor.setSelection)
+}
+
+export function selectBeforeEditorInlineObject(editor: Editor, inlineObjectName: string) {
+  return selectEditorInlineObject(editor, inlineObjectName).then(() => editor.pressKey('ArrowLeft'))
+}
+
+export function selectAfterEditorInlineObject(editor: Editor, inlineObjectName: string) {
+  return selectEditorInlineObject(editor, inlineObjectName).then(() =>
+    editor.pressKey('ArrowRight'),
+  )
 }
 
 export function selectEditorText(editor: Editor, text: string) {
@@ -199,6 +218,40 @@ export function getSelectionText(
   }
 
   return text
+}
+
+function getInlineObjectSelection(
+  value: Array<PortableTextBlock> | undefined,
+  inlineObjectName: string,
+) {
+  if (!value) {
+    throw new Error(`Unable to find selection for value ${value}`)
+  }
+
+  let selection: EditorSelection = null
+
+  for (const block of value) {
+    if (isPortableTextBlock(block)) {
+      for (const child of block.children) {
+        if (child._type === inlineObjectName) {
+          selection = {
+            anchor: {
+              path: [{_key: block._key}, 'children', {_key: child._key}],
+              offset: 0,
+            },
+            focus: {
+              path: [{_key: block._key}, 'children', {_key: child._key}],
+              offset: 0,
+            },
+          }
+
+          break
+        }
+      }
+    }
+  }
+
+  return selection
 }
 
 export function getTextSelection(
