@@ -1,6 +1,10 @@
 # Objects like images, charts or page breaks
 Feature: Block Objects
 
+  Background:
+    Given two editors
+    And a global keymap
+
   Scenario: Pressing ArrowUp on a lonely image
     Given an "image"
     When "ArrowUp" is pressed

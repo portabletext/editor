@@ -1,5 +1,9 @@
 Feature: Overlapping Annotations
 
+  Background:
+    Given two editors
+    And a global keymap
+
   # Warning: Possible wrong behaviour
   # "foo" should be marked with c1
   # "b" should be marked with m,l1

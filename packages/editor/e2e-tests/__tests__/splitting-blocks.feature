@@ -1,5 +1,9 @@
 Feature: Splitting Blocks
 
+  Background:
+    Given two editors
+    And a global keymap
+
    Scenario: Splitting block at the beginning
     Given the text "foo" in block "b1"
     When the caret is put before "foo"

@@ -1,5 +1,9 @@
 Feature: Undo/Redo
 
+  Background:
+    Given two editors
+    And a global keymap
+
   Scenario: Undoing the deletion of the last char of annotated text
     Given the text "foo"
     And a "comment" "c1" around "foo"

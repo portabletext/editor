@@ -1,5 +1,9 @@
 Feature: Annotations Edge Cases
 
+  Background:
+    Given two editors
+    And a global keymap
+
   Scenario: Editor B inserts text after Editor A's half-deleted annotation
     Given the text "foo"
     And a "comment" "c1" around "foo"
