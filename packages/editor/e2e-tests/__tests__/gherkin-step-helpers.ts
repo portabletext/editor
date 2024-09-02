@@ -198,11 +198,27 @@ export function getSelectionText(
     if (isPortableTextBlock(block)) {
       for (const child of block.children) {
         if (isPortableTextSpan(child)) {
+          if (
+            child._key === forwardSelection.anchor.path[2]['_key'] &&
+            child._key === forwardSelection.focus.path[2]['_key']
+          ) {
+            text.push(
+              child.text.slice(forwardSelection.anchor.offset, forwardSelection.focus.offset),
+            )
+            break
+          }
+
           if (child._key === forwardSelection.anchor.path[2]['_key']) {
             text.push(child.text.slice(forwardSelection.anchor.offset))
-          } else if (child._key === forwardSelection.focus.path[2]['_key']) {
+            continue
+          }
+
+          if (child._key === forwardSelection.focus.path[2]['_key']) {
             text.push(child.text.slice(0, forwardSelection.focus.offset))
-          } else {
+            break
+          }
+
+          if (text.length > 0) {
             text.push(child.text)
           }
         }
