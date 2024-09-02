@@ -1,6 +1,10 @@
 # In-text objects like stock tickers
 Feature: Inline Objects
 
+  Background:
+    Given two editors
+    And a global keymap
+
   Scenario: Navigating around a inline object
     Given the text "foo"
     And a "stock-ticker"

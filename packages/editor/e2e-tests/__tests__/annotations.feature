@@ -1,6 +1,10 @@
 # Complex marks like links
 Feature: Annotations
 
+  Background:
+    Given two editors
+    And a global keymap
+
   # Mimics Notion's behaviour
   # Warning: Possible wrong behaviour
   # The caret should be after "bar"

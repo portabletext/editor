@@ -7,8 +7,6 @@ import * as Gherkin from '@cucumber/gherkin'
 import * as Messages from '@cucumber/messages'
 import {describe, test} from '@jest/globals'
 
-import {type Editor} from '../setup/globals.jest'
-
 type StepDefinitionCallbackParameters<
   TParamA = undefined,
   TParamB = undefined,
@@ -22,48 +20,69 @@ type StepDefinitionCallbackParameters<
       : [TParamA, TParamB, TParamC]
 
 export type StepDefinitionCallback<
+  TContext extends Record<string, any> = object,
   TParamA = undefined,
   TParamB = undefined,
   TParamC = undefined,
 > = (
-  context: {editorA: Editor; editorB: Editor; keyMap: Map<string, Array<string> | string>},
+  context: TContext,
   ...args: StepDefinitionCallbackParameters<TParamA, TParamB, TParamC>
 ) => Promise<void>
 
-export type StepDefinition<TParamA, TParamB, TParamC> = {
+export type StepDefinition<
+  TContext extends Record<string, any> = object,
+  TParamA = undefined,
+  TParamB = undefined,
+  TParamC = undefined,
+> = {
   type: 'Context' | 'Action' | 'Outcome'
   text: string
-  callback: StepDefinitionCallback<TParamA, TParamB, TParamC>
+  callback: StepDefinitionCallback<TContext, TParamA, TParamB, TParamC>
 }
 
-export function Given<TParamA = undefined, TParamB = undefined, TParamC = undefined>(
+export function Given<
+  TContext extends Record<string, any> = object,
+  TParamA = undefined,
+  TParamB = undefined,
+  TParamC = undefined,
+>(
   text: string,
-  callback: StepDefinitionCallback<TParamA, TParamB, TParamC>,
-): StepDefinition<TParamA, TParamB, TParamC> {
+  callback: StepDefinitionCallback<TContext, TParamA, TParamB, TParamC>,
+): StepDefinition<TContext, TParamA, TParamB, TParamC> {
   return {type: 'Context', text, callback}
 }
 
-export function When<TParamA = undefined, TParamB = undefined, TParamC = undefined>(
+export function When<
+  TContext extends Record<string, any> = object,
+  TParamA = undefined,
+  TParamB = undefined,
+  TParamC = undefined,
+>(
   text: string,
-  callback: StepDefinitionCallback<TParamA, TParamB, TParamC>,
-): StepDefinition<TParamA, TParamB, TParamC> {
+  callback: StepDefinitionCallback<TContext, TParamA, TParamB, TParamC>,
+): StepDefinition<TContext, TParamA, TParamB, TParamC> {
   return {type: 'Action', text, callback}
 }
 
-export function Then<TParamA = undefined, TParamB = undefined, TParamC = undefined>(
+export function Then<
+  TContext extends Record<string, any> = object,
+  TParamA = undefined,
+  TParamB = undefined,
+  TParamC = undefined,
+>(
   text: string,
-  callback: StepDefinitionCallback<TParamA, TParamB, TParamC>,
-): StepDefinition<TParamA, TParamB, TParamC> {
+  callback: StepDefinitionCallback<TContext, TParamA, TParamB, TParamC>,
+): StepDefinition<TContext, TParamA, TParamB, TParamC> {
   return {type: 'Outcome', text, callback}
 }
 
-export function Feature<TParamA, TParamB, TParamC>({
+export function Feature<TContext extends Record<string, any>, TParamA, TParamB, TParamC>({
   featureText,
   stepDefinitions,
   parameterTypes,
 }: {
   featureText: string
-  stepDefinitions: Array<StepDefinition<TParamA, TParamB, TParamC>>
+  stepDefinitions: Array<StepDefinition<TContext, TParamA, TParamB, TParamC>>
   parameterTypes: Array<ParameterType<unknown>>
 }) {
   const uuidFn = Messages.IdGenerator.uuid()
@@ -105,8 +124,7 @@ export function Feature<TParamA, TParamB, TParamC>({
       const testFn = onlyPickle ? test.only : skippedPickle ? test.skip : test
 
       testFn(`Scenario: ${pickle.name}`, async () => {
-        const keyMap = new Map<string, Array<string>>()
-        const [editorA, editorB] = await getEditors()
+        const context = {} as TContext
 
         for await (const step of pickle.steps) {
           const matchingSteps = stepImplementations
@@ -140,7 +158,7 @@ export function Feature<TParamA, TParamB, TParamC>({
             arg.getValue(matchingStep),
           ) as StepDefinitionCallbackParameters<TParamA, TParamB, TParamC>
 
-          await matchingStep.callback({editorA, editorB, keyMap}, ...args)
+          await matchingStep.callback(context, ...args)
         }
       })
     }

@@ -1,5 +1,9 @@
 Feature: Annotations Across Blocks
 
+  Background:
+    Given two editors
+    And a global keymap
+
   # Warning: Possible wrong behaviour
   # "foo" should also be marked with a link
   Scenario: Adding annotation across blocks
