@@ -76,13 +76,13 @@ export function Then<
   return {type: 'Outcome', text, callback}
 }
 
-export function Feature<TContext extends Record<string, any>, TParamA, TParamB, TParamC>({
+export function Feature<TContext extends Record<string, any> = object>({
   featureText,
   stepDefinitions,
   parameterTypes,
 }: {
   featureText: string
-  stepDefinitions: Array<StepDefinition<TContext, TParamA, TParamB, TParamC>>
+  stepDefinitions: Array<StepDefinition<TContext, any, any, any>>
   parameterTypes: Array<ParameterType<unknown>>
 }) {
   const uuidFn = Messages.IdGenerator.uuid()
@@ -156,7 +156,7 @@ export function Feature<TContext extends Record<string, any>, TParamA, TParamB, 
 
           const args = matchingStep.args.map((arg) =>
             arg.getValue(matchingStep),
-          ) as StepDefinitionCallbackParameters<TParamA, TParamB, TParamC>
+          ) as StepDefinitionCallbackParameters<any, any, any>
 
           await matchingStep.callback(context, ...args)
         }

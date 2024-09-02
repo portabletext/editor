@@ -7,6 +7,7 @@ import {
   getEditorBlockKey,
   getEditorText,
   getEditorTextMarks,
+  getSelectionBlockKeys,
   getSelectionFocusText,
   getSelectionText,
   insertBlockObject,
@@ -235,8 +236,10 @@ export const stepDefinitions = [
   }),
   Then('block {key} is selected', async ({editorA, keyMap}: Context, keyKey: string) => {
     await editorA.getSelection().then((selection) => {
-      expect(selection?.anchor.path[0]['_key']).toEqual(keyMap.get(keyKey))
-      expect(selection?.focus.path[0]['_key']).toEqual(keyMap.get(keyKey))
+      const selectionBlockKeys = getSelectionBlockKeys(selection)
+
+      expect(selectionBlockKeys?.anchor).toEqual(keyMap.get(keyKey))
+      expect(selectionBlockKeys?.focus).toEqual(keyMap.get(keyKey))
     })
   }),
   Then('the caret is before {string}', async ({editorA}: Context, text: string) => {

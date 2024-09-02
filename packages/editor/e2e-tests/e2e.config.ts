@@ -1,8 +1,8 @@
-import * as packageJson from '../package.json'
+import {type Config} from '@jest/types'
+
 import {createJestConfig} from '../test-config/create-jest-config'
 
-const config = createJestConfig({
-  displayName: packageJson.name,
+const config: Config.InitialOptions = createJestConfig({
   globalSetup: './setup/globalSetup.ts',
   globalTeardown: './setup/globalTeardown.ts',
   setupFilesAfterEnv: ['./setup/afterEnv.ts'],

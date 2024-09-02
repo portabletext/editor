@@ -1,5 +1,5 @@
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
-import {type PortableTextBlock} from '@sanity/types'
+import {type KeyedSegment, type PathSegment, type PortableTextBlock} from '@sanity/types'
 
 import {type EditorSelection, type EditorSelectionPoint} from '../../src'
 import {type Editor} from '../setup/globals.jest'
@@ -142,6 +142,25 @@ export function selectionIsCollapsed(selection: EditorSelection) {
   )
 }
 
+function isKeyedSegment(segment: PathSegment): segment is KeyedSegment {
+  return typeof segment === 'object' && segment !== null && '_key' in segment
+}
+
+export function getSelectionBlockKeys(selection: EditorSelection) {
+  if (!selection) {
+    return undefined
+  }
+
+  if (!isKeyedSegment(selection.anchor.path[0]) || !isKeyedSegment(selection.focus.path[0])) {
+    return undefined
+  }
+
+  return {
+    anchor: selection.anchor.path[0]['_key'],
+    focus: selection.focus.path[0]['_key'],
+  }
+}
+
 export function getSelectionFocusText(
   value: Array<PortableTextBlock> | undefined,
   selection: EditorSelection,
@@ -154,10 +173,16 @@ export function getSelectionFocusText(
 
   for (const block of value) {
     if (isPortableTextBlock(block)) {
-      if (block._key === selection.focus.path[0]['_key']) {
+      if (
+        isKeyedSegment(selection.focus.path[0]) &&
+        block._key === selection.focus.path[0]['_key']
+      ) {
         for (const child of block.children) {
           if (isPortableTextSpan(child)) {
-            if (child._key === selection.focus.path[2]['_key']) {
+            if (
+              isKeyedSegment(selection.focus.path[2]) &&
+              child._key === selection.focus.path[2]['_key']
+            ) {
               text = child.text
               break
             }
@@ -187,7 +212,11 @@ export function getSelectionText(
   const text: Array<string> = []
 
   for (const block of value) {
-    if (text.length === 0 && block._key !== forwardSelection.anchor.path[0]['_key']) {
+    if (
+      text.length === 0 &&
+      isKeyedSegment(forwardSelection.anchor.path[0]) &&
+      block._key !== forwardSelection.anchor.path[0]['_key']
+    ) {
       continue
     }
 
@@ -199,7 +228,9 @@ export function getSelectionText(
       for (const child of block.children) {
         if (isPortableTextSpan(child)) {
           if (
+            isKeyedSegment(forwardSelection.anchor.path[2]) &&
             child._key === forwardSelection.anchor.path[2]['_key'] &&
+            isKeyedSegment(forwardSelection.focus.path[2]) &&
             child._key === forwardSelection.focus.path[2]['_key']
           ) {
             text.push(
@@ -208,12 +239,18 @@ export function getSelectionText(
             break
           }
 
-          if (child._key === forwardSelection.anchor.path[2]['_key']) {
+          if (
+            isKeyedSegment(forwardSelection.anchor.path[2]) &&
+            child._key === forwardSelection.anchor.path[2]['_key']
+          ) {
             text.push(child.text.slice(forwardSelection.anchor.offset))
             continue
           }
 
-          if (child._key === forwardSelection.focus.path[2]['_key']) {
+          if (
+            isKeyedSegment(forwardSelection.focus.path[2]) &&
+            child._key === forwardSelection.focus.path[2]['_key']
+          ) {
             text.push(child.text.slice(0, forwardSelection.focus.offset))
             break
           }
@@ -227,7 +264,10 @@ export function getSelectionText(
       text.push(block._type)
     }
 
-    if (block._key === forwardSelection.focus.path[0]['_key']) {
+    if (
+      isKeyedSegment(forwardSelection.focus.path[0]) &&
+      block._key === forwardSelection.focus.path[0]['_key']
+    ) {
       break
     }
   }

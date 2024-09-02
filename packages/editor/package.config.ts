@@ -27,7 +27,7 @@ export default defineConfig({
   rollup: {
     optimizeLodash: true,
   },
-  tsconfig: 'tsconfig.lib.json',
+  tsconfig: 'tsconfig.json',
   strictOptions: {
     noImplicitBrowsersList: 'off',
     noImplicitSideEffects: 'error',
