@@ -162,14 +162,14 @@ export const stepDefinitions = [
   /**
    * Selection steps
    */
-  When('{string} is being selected', async ({editorA}, text: string) => {
+  When('{string} is selected', async ({editorA}, text: string) => {
     if (text === 'stock-ticker') {
       await selectEditorInlineObject(editorA, text)
     } else {
       await selectEditorText(editorA, text)
     }
   }),
-  When('{string} is being selected backwards', async ({editorA}, text: string) => {
+  When('{string} is selected backwards', async ({editorA}, text: string) => {
     await selectEditorTextBackwards(editorA, text)
   }),
   When('the caret is put before {string}', async ({editorA}, text: string) => {

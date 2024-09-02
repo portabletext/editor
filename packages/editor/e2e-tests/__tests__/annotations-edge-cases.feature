@@ -15,14 +15,14 @@ Feature: Annotations Edge Cases
     Given the text "foo bar baz"
     And "em" around "foo bar baz"
     And a "comment" "c1" around "bar"
-    When "foo bar baz" is being selected
+    When "foo bar baz" is selected
     And "Backspace" is pressed
     Then the editor is empty
 
   Scenario: Deleting half of annotated text
     Given the text "foo bar baz"
     And a "comment" "c1" around "foo bar baz"
-    When " baz" is being selected
+    When " baz" is selected
     And "Backspace" is pressed
     Then the text is "foo bar"
     And "foo bar" has marks "c1"
@@ -30,7 +30,7 @@ Feature: Annotations Edge Cases
   Scenario: Deleting annotation in the middle of text
     Given the text "foo bar baz"
     And a "comment" "c1" around "bar"
-    When "bar " is being selected
+    When "bar " is selected
     And "Backspace" is pressed
     Then the text is "foo baz"
     And "foo baz" has no marks
@@ -44,7 +44,7 @@ Feature: Annotations Edge Cases
     And "bar" is typed
     When "foo" is marked with a "link" "l1"
     And "bar" is marked with a "link" "l2"
-    And "ooba" is being selected
+    And "ooba" is selected
     And "Backspace" is pressed
     Then the text is "f,\n,r"
     And "f" has marks "l1"

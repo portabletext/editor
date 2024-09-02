@@ -18,7 +18,7 @@ Feature: Decorators
     And "foo " has marks "em"
     And "bar" has marks "em,strong"
     And " baz" has marks "em"
-    When "bar" is being selected
+    When "bar" is selected
     And "strong" is toggled using the keyboard
     Then the text is "foo bar baz"
     And "foo bar baz" has marks "em"
@@ -61,7 +61,7 @@ Feature: Decorators
     When "Enter" is pressed 2 times
     And "bar" is typed
     Then the text is "foo,\n,,\n,bar"
-    When "ooba" is being selected
+    When "ooba" is selected
     And "strong" is toggled using the keyboard
     Then the text is "f,oo,\n,,\n,ba,r"
     And "oo" has marks "strong"

@@ -6,7 +6,7 @@ Feature: Annotations
   # The caret should be after "bar"
   Scenario: Selection after adding an annotation
     Given the text "foo bar baz"
-    When "bar" is being selected
+    When "bar" is selected
     And "link" "l1" is toggled
     Then "bar" has marks "l1"
     And "bar" is selected
@@ -15,7 +15,7 @@ Feature: Annotations
   @skip
   Scenario: Selection after adding an annotation
     Given the text "foo bar baz"
-    When "bar" is being selected
+    When "bar" is selected
     And "link" "l1" is toggled
     Then "bar" has marks "l1"
     Then the caret is after "bar"
@@ -82,7 +82,7 @@ Feature: Annotations
 
   Scenario: Annotation and decorator on the same text
     Given the text "foo bar baz"
-    When "bar" is being selected
+    When "bar" is selected
     And "strong" is toggled using the keyboard
     And "link" "l1" is toggled
     Then the text is "foo ,bar, baz"
@@ -91,7 +91,7 @@ Feature: Annotations
   Scenario: Adding decorator inside annotation
     Given the text "foo bar baz"
     And a "link" "l1" around "foo bar baz"
-    When "bar" is being selected
+    When "bar" is selected
     And "strong" is toggled using the keyboard
     Then the text is "foo ,bar, baz"
     And "foo " has marks "l1"
@@ -103,7 +103,7 @@ Feature: Annotations
   Scenario: Adding an annotation across a decorator
     Given the text "foo bar baz"
     And "strong" around "bar"
-    When "foo bar baz" is being selected
+    When "foo bar baz" is selected
     And "link" "l1" is toggled
     Then the text is "foo bar baz"
     And "foo bar baz" has marks "l1"
@@ -114,7 +114,7 @@ Feature: Annotations
   Scenario: Adding an annotation across a decorator
     Given the text "foo bar baz"
     And "strong" around "bar"
-    When "foo bar baz" is being selected
+    When "foo bar baz" is selected
     And "link" "l1" is toggled
     Then the text is "foo ,bar, baz"
     And "foo " has marks "l1"
