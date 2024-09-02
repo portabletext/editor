@@ -6,7 +6,7 @@ Feature: Overlapping Annotations
 
   # Warning: Possible wrong behaviour
   # "foo" should be marked with c1
-  # "b" should be marked with m,l1
+  # "b" should be marked with c1,l1
   # "ar" should be marked with l1
   Scenario: Overlapping annotation
     Given the text "foobar"
@@ -19,7 +19,7 @@ Feature: Overlapping Annotations
 
   # Warning: Possible wrong behaviour
   # "foo" should be marked with c1
-  # "b" should be marked with m,l1
+  # "b" should be marked with c1,l1
   # "ar" should be marked with l1
   Scenario: Overlapping annotation (backwards selection)
     Given the text "foobar"
