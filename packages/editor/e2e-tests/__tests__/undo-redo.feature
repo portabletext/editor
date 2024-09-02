@@ -35,7 +35,7 @@ Feature: Undo/Redo
     Given the text "foobar"
     And a "comment" "c1" around "foo"
     And a "comment" "c2" around "bar" by editor B
-    And undo is performed
+    When undo is performed
     Then the text is "foo,bar"
     And "foo" has no marks
     And "bar" has marks "c2"
