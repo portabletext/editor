@@ -7,7 +7,7 @@ Feature: Annotations Across Blocks
     When "foo" is typed
     And "Enter" is pressed
     And "bar" is typed
-    And "foobar" is being selected
+    And "foobar" is selected
     And "link" "l1" is toggled
     Then "foo" has no marks
     And "bar" has marks "l1"
@@ -19,7 +19,7 @@ Feature: Annotations Across Blocks
     When "foo" is typed
     And "Enter" is pressed
     And "bar" is typed
-    And "foobar" is being selected backwards
+    And "foobar" is selected backwards
     And "link" "l1" is toggled
     Then "foo" has marks "l1"
     And "bar" has no marks
@@ -31,7 +31,7 @@ Feature: Annotations Across Blocks
     And an "image"
     When "Enter" is pressed
     And "bar" is typed
-    And "foobar" is being selected
+    And "foobar" is selected
     And "link" "l1" is toggled
     Then "foo" has no marks
     And "bar" has marks "l1"
@@ -44,7 +44,7 @@ Feature: Annotations Across Blocks
     And an "image"
     When "Enter" is pressed
     And "bar" is typed
-    And "foobar" is being selected backwards
+    And "foobar" is selected backwards
     And "link" "l1" is toggled
     Then "foo" has marks "l1"
     And "bar" has no marks
@@ -66,7 +66,7 @@ Feature: Annotations Across Blocks
   Scenario: Toggling part of an annotation off
     Given the text "foo bar baz"
     And a "link" "l1" around "foo bar baz"
-    When "bar" is being selected
+    When "bar" is selected
     And "link" is toggled
     Then the text is "foo ,bar, baz"
     And "foo " has marks "l1"

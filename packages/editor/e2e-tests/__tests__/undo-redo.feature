@@ -56,7 +56,7 @@ Feature: Undo/Redo
   Scenario: Undoing the deletion of block with annotation at the end
     Given the text "foo bar"
     And a "comment" "c1" around "bar"
-    When "foo bar" is being selected
+    When "foo bar" is selected
     And "Backspace" is pressed
     And undo is performed
     Then the text is "foo ,bar"
