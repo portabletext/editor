@@ -9,9 +9,25 @@ import {describe, test} from '@jest/globals'
 
 import {type Editor} from '../setup/globals.jest'
 
-export type StepDefinitionCallback<TParamA, TParamB, TParamC> = (
+type StepDefinitionCallbackParameters<
+  TParamA = undefined,
+  TParamB = undefined,
+  TParamC = undefined,
+> = TParamA extends undefined
+  ? []
+  : TParamB extends undefined
+    ? [TParamA]
+    : TParamC extends undefined
+      ? [TParamA, TParamB]
+      : [TParamA, TParamB, TParamC]
+
+export type StepDefinitionCallback<
+  TParamA = undefined,
+  TParamB = undefined,
+  TParamC = undefined,
+> = (
   context: {editorA: Editor; editorB: Editor; keyMap: Map<string, Array<string> | string>},
-  ...args: Array<any>
+  ...args: StepDefinitionCallbackParameters<TParamA, TParamB, TParamC>
 ) => Promise<void>
 
 export type StepDefinition<TParamA, TParamB, TParamC> = {
@@ -20,21 +36,21 @@ export type StepDefinition<TParamA, TParamB, TParamC> = {
   callback: StepDefinitionCallback<TParamA, TParamB, TParamC>
 }
 
-export function Given<TParamA, TParamB, TParamC>(
+export function Given<TParamA = undefined, TParamB = undefined, TParamC = undefined>(
   text: string,
   callback: StepDefinitionCallback<TParamA, TParamB, TParamC>,
 ): StepDefinition<TParamA, TParamB, TParamC> {
   return {type: 'Context', text, callback}
 }
 
-export function When<TParamA, TParamB, TParamC>(
+export function When<TParamA = undefined, TParamB = undefined, TParamC = undefined>(
   text: string,
   callback: StepDefinitionCallback<TParamA, TParamB, TParamC>,
 ): StepDefinition<TParamA, TParamB, TParamC> {
   return {type: 'Action', text, callback}
 }
 
-export function Then<TParamA, TParamB, TParamC>(
+export function Then<TParamA = undefined, TParamB = undefined, TParamC = undefined>(
   text: string,
   callback: StepDefinitionCallback<TParamA, TParamB, TParamC>,
 ): StepDefinition<TParamA, TParamB, TParamC> {
@@ -120,7 +136,9 @@ export function Feature<TParamA, TParamB, TParamC>({
             throw new Error(`Multiple implementations found for step: ${step.text}`)
           }
 
-          const args = matchingStep.args.map((arg) => arg.getValue(matchingStep))
+          const args = matchingStep.args.map((arg) =>
+            arg.getValue(matchingStep),
+          ) as StepDefinitionCallbackParameters<TParamA, TParamB, TParamC>
 
           await matchingStep.callback({editorA, editorB, keyMap}, ...args)
         }
