@@ -68,6 +68,7 @@ Feature: Decorators
     When "strong" is toggled using the keyboard
     Then the text is "foo,\n,,\n,bar"
 
+  # Mimics Notion's behaviour
   # Warning: Possible wrong behaviour
   # "bar" should be marked with "strong"
   Scenario: Splitting block before decorator
@@ -79,4 +80,17 @@ Feature: Decorators
     And "bar" is typed
     Then the text is "bar,\n,foo"
     And "bar" has no marks
+    And "foo" has marks "strong"
+
+  # Mimics Google Docs' behaviour
+  @skip
+  Scenario: Splitting block before decorator
+    Given the text "foo"
+    And "strong" around "foo"
+    When the caret is put before "foo"
+    And "Enter" is pressed
+    And "ArrowUp" is pressed
+    And "bar" is typed
+    Then the text is "bar,\n,foo"
+    And "bar" has marks "strong"
     And "foo" has marks "strong"
