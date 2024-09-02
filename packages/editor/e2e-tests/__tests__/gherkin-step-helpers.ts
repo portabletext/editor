@@ -26,7 +26,6 @@ export async function insertEditorText(editor: Editor, text: string) {
 export async function insertBlockObject(editor: Editor, name: 'image') {
   return getNewBlockKeys(editor, async () => {
     await editor.pressButton(`insert-${name}`)
-    await editor.focus()
   })
 }
 

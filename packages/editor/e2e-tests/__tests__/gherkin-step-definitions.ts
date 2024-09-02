@@ -76,8 +76,7 @@ export const stepDefinitions = [
    * Object steps
    */
   defineStep('a(n) {block-object}', async ({editorA}) => {
-    await editorA.pressButton('insert-image')
-    await editorA.focus()
+    await insertBlockObject(editorA, 'image')
   }),
   defineStep(
     'a(n) {block-object} {key}',
