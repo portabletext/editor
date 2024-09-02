@@ -1,12 +1,12 @@
 {
-  "extends": "../tsconfig.json",
+  "extends": "../tsconfig.base.json",
   "ts-node": {
     // these options are overrides used only by ts-node
     "compilerOptions": {
-      "module": "commonjs"
+      "module": "commonjs",
+      "rootDir": ".",
+
+      "isolatedModules": false
     }
-  },
-  "compilerOptions": {
-    "target": "ESNext"
   }
 }

@@ -44,7 +44,7 @@
   "scripts": {
     "build": "pkg-utils build --strict --check --clean",
     "check:lint": "eslint .",
-    "check:types": "tsc --project tsconfig.lib.json",
+    "check:types": "tsc",
     "clean": "del .turbo && del lib && del node_modules",
     "dev": "pkg-utils watch",
     "dev:e2e-server": "cd ./e2e-tests/ && tsx serve",
