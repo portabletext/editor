@@ -42,8 +42,8 @@ Feature: Annotations Edge Cases
     When "foo" is typed
     And "Enter" is pressed
     And "bar" is typed
-    And a "link" "l1" around "foo"
-    And a "link" "l2" around "bar"
+    When "foo" is marked with a "link" "l1"
+    And "bar" is marked with a "link" "l2"
     And "ooba" is being selected
     And "Backspace" is pressed
     Then the text is "f,\n,r"

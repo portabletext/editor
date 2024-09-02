@@ -9,7 +9,7 @@ Feature: Annotations
     When "bar" is being selected
     And "link" "l1" is toggled
     Then "bar" has marks "l1"
-    And "bar" is being selected
+    And "bar" is selected
 
   # Mimics Google Docs' behaviour
   @skip

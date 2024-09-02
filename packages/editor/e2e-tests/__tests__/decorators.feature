@@ -18,14 +18,15 @@ Feature: Decorators
     And "foo " has marks "em"
     And "bar" has marks "em,strong"
     And " baz" has marks "em"
-    And "bar" is being selected
+    When "bar" is being selected
     And "strong" is toggled using the keyboard
     Then the text is "foo bar baz"
     And "foo bar baz" has marks "em"
 
   Scenario: Toggling bold inside italic as you write
-    Given "em" is toggled using the keyboard
-    When "foo " is typed
+    Given an empty editor
+    When "em" is toggled using the keyboard
+    And "foo " is typed
     And "strong" is toggled using the keyboard
     And "bar" is typed
     And "strong" is toggled using the keyboard

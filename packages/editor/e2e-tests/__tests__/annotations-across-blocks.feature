@@ -95,8 +95,8 @@ Feature: Annotations Across Blocks
     Given the text "foo"
     When "Enter" is pressed
     And "bar" is typed
-    And a "link" "l1" around "foo"
-    And a "link" "l2" around "bar"
+    And "foo" is marked with a "link" "l1"
+    And "bar" is marked with a "link" "l2"
     And the caret is put before "bar"
     And "Backspace" is pressed
     Then the text is "foo,bar"

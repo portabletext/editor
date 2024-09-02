@@ -1,7 +1,7 @@
 import {ParameterType} from '@cucumber/cucumber-expressions'
 import {expect} from '@jest/globals'
 
-import {defineStep} from './gherkin-driver'
+import {Given, Then, When} from './gherkin-driver'
 import {
   getEditorBlockKey,
   getEditorText,
@@ -25,74 +25,71 @@ export const stepDefinitions = [
   /**
    * Editor steps
    */
-  defineStep('an empty editor', async () => {
+  Given('an empty editor', async () => {
     await setDocumentValue([])
   }),
-  defineStep('editors have settled', async () => {
+  When('editors have settled', async () => {
     await waitForRevision()
   }),
-  defineStep('the editor is empty', async ({editorA}) => {
+  Then('the editor is empty', async ({editorA}) => {
     await editorA.getValue().then((value) => expect(value).toEqual([]))
   }),
 
   /**
    * Text steps
    */
-  defineStep('the text {string}', async ({editorA}, text: string) => {
+  Given('the text {string}', async ({editorA}, text: string) => {
     await insertEditorText(editorA, text)
   }),
-  defineStep('the text is {text}', async ({editorA}, text: string) => {
+  Then('the text is {text}', async ({editorA}, text: string) => {
     await getEditorText(editorA).then((actualText) => expect(actualText).toEqual(text))
   }),
 
   /**
    * Typing steps
    */
-  defineStep('{string} is typed', async ({editorA}, text: string) => {
+  When('{string} is typed', async ({editorA}, text: string) => {
     await editorA.type(text)
   }),
-  defineStep('{string} is typed by editor B', async ({editorB}, text: string) => {
+  When('{string} is typed by editor B', async ({editorB}, text: string) => {
     await editorB.type(text)
   }),
 
   /**
    * Text block steps
    */
-  defineStep(
+  Given(
     'the text {string} in block {key}',
     async ({editorA, keyMap}, text: string, keyKey: string) => {
       const key = await insertEditorText(editorA, text)
       keyMap.set(keyKey, key)
     },
   ),
-  defineStep(
-    '{string} is in block {key}',
-    async ({editorA, keyMap}, text: string, keyKey: string) => {
-      await getEditorBlockKey(editorA, text).then((key) => expect(key).toEqual(keyMap.get(keyKey)))
-    },
-  ),
+  Then('{string} is in block {key}', async ({editorA, keyMap}, text: string, keyKey: string) => {
+    await getEditorBlockKey(editorA, text).then((key) => expect(key).toEqual(keyMap.get(keyKey)))
+  }),
 
   /**
    * Object steps
    */
-  defineStep('a(n) {block-object}', async ({editorA}) => {
+  Given('a(n) {block-object}', async ({editorA}) => {
     await insertBlockObject(editorA, 'image')
   }),
-  defineStep(
+  Given(
     'a(n) {block-object} {key}',
     async ({editorA, keyMap}, blockObject: 'image', keyKey: string) => {
       const newBlockKeys = await insertBlockObject(editorA, blockObject)
       keyMap.set(keyKey, newBlockKeys[0])
     },
   ),
-  defineStep('a(n) {inline-object}', async ({editorA}) => {
+  Given('a(n) {inline-object}', async ({editorA}) => {
     await editorA.pressButton('insert-stock-ticker')
   }),
 
   /**
-   * Mark context/action steps
+   * Mark steps
    */
-  defineStep(
+  Given(
     'a(n) {annotation} {key} around {string}',
     async ({editorA, keyMap}, annotation: 'comment' | 'link', keyKey: string, text: string) => {
       await selectEditorText(editorA, text)
@@ -100,7 +97,7 @@ export const stepDefinitions = [
       keyMap.set(keyKey, key)
     },
   ),
-  defineStep(
+  Given(
     'a(n) {annotation} {key} around {string} by editor B',
     async ({editorB, keyMap}, annotation: 'comment' | 'link', keyKey: string, text: string) => {
       await selectEditorText(editorB, text)
@@ -108,41 +105,45 @@ export const stepDefinitions = [
       keyMap.set(keyKey, key)
     },
   ),
-  defineStep('{annotation} is toggled', async ({editorA}, annotation: 'comment' | 'link') => {
+  When('{annotation} is toggled', async ({editorA}, annotation: 'comment' | 'link') => {
     await toggleAnnotation(editorA, annotation)
   }),
-  defineStep(
+  When(
     '{annotation} {key} is toggled',
     async ({editorA, keyMap}, annotation: 'comment' | 'link', keyKey: string) => {
       const key = await toggleAnnotation(editorA, annotation)
       keyMap.set(keyKey, key ?? [])
     },
   ),
-  defineStep(
+  When(
+    '{string} is marked with a(n) {annotation} {key}',
+    async ({editorA, keyMap}, text: string, annotation: 'comment' | 'link', keyKey: string) => {
+      await selectEditorText(editorA, text)
+      const key = await toggleAnnotation(editorA, annotation)
+      keyMap.set(keyKey, key)
+    },
+  ),
+  When(
     '{string} is marked with {decorator}',
     async ({editorA}, text: string, decorator: 'em' | 'strong') => {
       await selectEditorText(editorA, text)
       await editorA.toggleDecoratorUsingKeyboard(decorator)
     },
   ),
-  defineStep(
+  Given(
     '{decorator} around {string}',
     async ({editorA}, decorator: 'em' | 'strong', text: string) => {
       await selectEditorText(editorA, text)
       await editorA.toggleDecoratorUsingKeyboard(decorator)
     },
   ),
-  defineStep(
+  When(
     '{decorator} is toggled using the keyboard',
     async ({editorA}, decorator: 'em' | 'strong') => {
       await editorA.toggleDecoratorUsingKeyboard(decorator)
     },
   ),
-
-  /**
-   * Mark outcome steps
-   */
-  defineStep(
+  Then(
     '{string} has marks {marks}',
     async ({editorA, keyMap}, text: string, marks: Array<string>) => {
       await getEditorTextMarks(editorA, text).then((actualMarks) => {
@@ -154,57 +155,53 @@ export const stepDefinitions = [
       })
     },
   ),
-  defineStep('{string} has no marks', async ({editorA}, text: string) => {
+  Then('{string} has no marks', async ({editorA}, text: string) => {
     await getEditorTextMarks(editorA, text).then((marks) => expect(marks).toEqual([]))
   }),
 
   /**
-   * Selection context/action steps
+   * Selection steps
    */
-  defineStep('{string} is being selected', async ({editorA}, text: string) => {
+  When('{string} is being selected', async ({editorA}, text: string) => {
     if (text === 'stock-ticker') {
       await selectEditorInlineObject(editorA, text)
     } else {
       await selectEditorText(editorA, text)
     }
   }),
-  defineStep('{string} is being selected backwards', async ({editorA}, text: string) => {
+  When('{string} is being selected backwards', async ({editorA}, text: string) => {
     await selectEditorTextBackwards(editorA, text)
   }),
-  defineStep('the caret is put before {string}', async ({editorA}, text: string) => {
+  When('the caret is put before {string}', async ({editorA}, text: string) => {
     if (text === 'stock-ticker') {
       await selectBeforeEditorInlineObject(editorA, text)
     } else {
       await selectBeforeEditorText(editorA, text)
     }
   }),
-  defineStep('the caret is put after {string}', async ({editorA}, text: string) => {
+  When('the caret is put after {string}', async ({editorA}, text: string) => {
     if (text === 'stock-ticker') {
       await selectAfterEditorInlineObject(editorA, text)
     } else {
       await selectAfterEditorText(editorA, text)
     }
   }),
-  defineStep('the caret is put after {string} by editor B', async ({editorB}, text: string) => {
+  When('the caret is put after {string} by editor B', async ({editorB}, text: string) => {
     await selectAfterEditorText(editorB, text)
   }),
-
-  /**
-   * Selection outcome steps
-   */
-  defineStep('{text} is selected', async ({editorA}, text: Array<string>) => {
+  Then('{text} is selected', async ({editorA}, text: Array<string>) => {
     const value = await editorA.getValue()
     const selection = await editorA.getSelection()
 
     expect(getSelectionText(value, selection)).toEqual(text)
   }),
-  defineStep('block {key} is selected', async ({editorA, keyMap}, keyKey: string) => {
+  Then('block {key} is selected', async ({editorA, keyMap}, keyKey: string) => {
     await editorA.getSelection().then((selection) => {
       expect(selection?.anchor.path[0]['_key']).toEqual(keyMap.get(keyKey))
       expect(selection?.focus.path[0]['_key']).toEqual(keyMap.get(keyKey))
     })
   }),
-  defineStep('the caret is before {string}', async ({editorA}, text: string) => {
+  Then('the caret is before {string}', async ({editorA}, text: string) => {
     const value = await editorA.getValue()
     const selection = await editorA.getSelection()
 
@@ -214,7 +211,7 @@ export const stepDefinitions = [
     expect(collapsed).toBe(true)
     expect(focusText?.slice(selection?.focus.offset)).toBe(text)
   }),
-  defineStep('the caret is after {string}', async ({editorA}, text: string) => {
+  Then('the caret is after {string}', async ({editorA}, text: string) => {
     const value = await editorA.getValue()
     const selection = await editorA.getSelection()
 
@@ -228,26 +225,23 @@ export const stepDefinitions = [
   /**
    * Button steps
    */
-  defineStep('{button} is pressed', async ({editorA}, button: string) => {
+  When('{button} is pressed', async ({editorA}, button: string) => {
     await editorA.pressKey(button)
   }),
-  defineStep('{button} is pressed with navigation intent', async ({editorA}, button: string) => {
+  When('{button} is pressed with navigation intent', async ({editorA}, button: string) => {
     await editorA.pressKey(button, 1, 'navigation')
   }),
-  defineStep(
-    '{button} is pressed {int} times',
-    async ({editorA}, button: string, times: number) => {
-      await editorA.pressKey(button, times)
-    },
-  ),
+  When('{button} is pressed {int} times', async ({editorA}, button: string, times: number) => {
+    await editorA.pressKey(button, times)
+  }),
 
   /**
    * Undo/redo steps
    */
-  defineStep('undo is performed', async ({editorA}) => {
+  When('undo is performed', async ({editorA}) => {
     await editorA.undo()
   }),
-  defineStep('redo is performed', async ({editorA}) => {
+  When('redo is performed', async ({editorA}) => {
     await editorA.redo()
   }),
 ]

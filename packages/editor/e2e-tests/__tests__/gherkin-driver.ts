@@ -15,15 +15,30 @@ export type StepDefinitionCallback<TParamA, TParamB, TParamC> = (
 ) => Promise<void>
 
 export type StepDefinition<TParamA, TParamB, TParamC> = {
+  type: 'Context' | 'Action' | 'Outcome'
   text: string
   callback: StepDefinitionCallback<TParamA, TParamB, TParamC>
 }
 
-export function defineStep<TParamA, TParamB, TParamC>(
+export function Given<TParamA, TParamB, TParamC>(
   text: string,
   callback: StepDefinitionCallback<TParamA, TParamB, TParamC>,
 ): StepDefinition<TParamA, TParamB, TParamC> {
-  return {text, callback}
+  return {type: 'Context', text, callback}
+}
+
+export function When<TParamA, TParamB, TParamC>(
+  text: string,
+  callback: StepDefinitionCallback<TParamA, TParamB, TParamC>,
+): StepDefinition<TParamA, TParamB, TParamC> {
+  return {type: 'Action', text, callback}
+}
+
+export function Then<TParamA, TParamB, TParamC>(
+  text: string,
+  callback: StepDefinitionCallback<TParamA, TParamB, TParamC>,
+): StepDefinition<TParamA, TParamB, TParamC> {
+  return {type: 'Outcome', text, callback}
 }
 
 export function Feature<TParamA, TParamB, TParamC>({
@@ -56,6 +71,7 @@ export function Feature<TParamA, TParamB, TParamC>({
     const expression = new CucumberExpression(stepDefinition.text, parameterTypeRegistry)
 
     return {
+      type: stepDefinition.type,
       text: stepDefinition.text,
       expression,
       callback: stepDefinition.callback,
@@ -77,20 +93,22 @@ export function Feature<TParamA, TParamB, TParamC>({
         const [editorA, editorB] = await getEditors()
 
         for await (const step of pickle.steps) {
-          const matchingSteps = stepImplementations.flatMap((stepImplementation) => {
-            const args = stepImplementation.expression.match(step.text)
+          const matchingSteps = stepImplementations
+            .filter((stepImplementation) => stepImplementation.type === step.type)
+            .flatMap((stepImplementation) => {
+              const args = stepImplementation.expression.match(step.text)
 
-            if (args) {
-              return [
-                {
-                  ...stepImplementation,
-                  args,
-                },
-              ]
-            }
+              if (args) {
+                return [
+                  {
+                    ...stepImplementation,
+                    args,
+                  },
+                ]
+              }
 
-            return []
-          })
+              return []
+            })
 
           const matchingStep = matchingSteps[0]
 
