@@ -1,3 +1,4 @@
 {
-  "extends": "@sanity/eslint-config-studio"
+  "ignorePatterns": [".sanity", ".turbo", "dist", "node_modules"],
+  "extends": "@sanity/eslint-config-studio",
 }
