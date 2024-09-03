@@ -126,6 +126,11 @@ export function Feature<TContext extends Record<string, any> = object>({
   const onlyFeature = gherkinDocument.feature.tags.some(
     (tag) => tag.name === '@only',
   )
+
+  if (skippedFeature && onlyFeature) {
+    throw new Error('Feature cannot have both @skip and @only tags')
+  }
+
   const describeFn = onlyFeature
     ? describe.only
     : skippedFeature
@@ -136,7 +141,13 @@ export function Feature<TContext extends Record<string, any> = object>({
     for (const pickle of pickles) {
       const skippedPickle = pickle.tags.some((tag) => tag.name === '@skip')
       const onlyPickle = pickle.tags.some((tag) => tag.name === '@only')
-      const testFn = onlyPickle ? test.only : skippedPickle ? test.skip : test
+      const testFn = skippedFeature
+        ? test.skip
+        : skippedPickle
+          ? test.skip
+          : onlyPickle
+            ? test.only
+            : test
 
       testFn(`Scenario: ${pickle.name}`, async () => {
         const context = {} as TContext
