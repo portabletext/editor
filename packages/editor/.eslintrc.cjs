@@ -1,5 +1,4 @@
 /* eslint-disable */
-// @ts-check
 'use strict'
 
 const extensions = ['.cjs', '.mjs', '.js', '.jsx', '.ts', '.tsx']
@@ -104,6 +103,7 @@ const config = {
     'import/first': 'error',
     'import/newline-after-import': 'error',
     'import/consistent-type-specifier-style': ['error', 'prefer-inline'],
+    'simple-import-sort/imports': 'off', // handled by prettier
     'import/order': 'off', // handled by prettier
     'sort-imports': 'off', // handled by prettier
     'max-nested-callbacks': 'off',
