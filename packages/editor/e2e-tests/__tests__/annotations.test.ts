@@ -2,6 +2,7 @@
 
 import annotationsAcrossBlocks from './annotations-across-blocks.feature'
 import annotationsEdgeCases from './annotations-edge-cases.feature'
+import annotationsOverlappingDecorators from './annotations-overlapping-decorators.feature'
 import annotationsOverlapping from './annotations-overlapping.feature'
 import annotations from './annotations.feature'
 import {Feature} from './gherkin-driver'
@@ -21,6 +22,12 @@ Feature({
 
 Feature({
   featureText: annotationsOverlapping,
+  stepDefinitions,
+  parameterTypes,
+})
+
+Feature({
+  featureText: annotationsOverlappingDecorators,
   stepDefinitions,
   parameterTypes,
 })
