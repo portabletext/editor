@@ -4,8 +4,10 @@ import {Box, Card, Code, Text} from '@sanity/ui'
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {type Subject} from 'rxjs'
 import {styled} from 'styled-components'
-
 import {
+  PortableTextEditable,
+  PortableTextEditor,
+  usePortableTextEditor,
   type BlockDecoratorRenderProps,
   type BlockListItemRenderProps,
   type BlockRenderProps,
@@ -14,11 +16,8 @@ import {
   type EditorSelection,
   type HotkeyOptions,
   type Patch,
-  PortableTextEditable,
-  PortableTextEditor,
   type RenderBlockFunction,
   type RenderChildFunction,
-  usePortableTextEditor,
 } from '../../../src'
 import {schema} from '../../schema'
 import {createKeyGenerator} from '../keyGenerator'

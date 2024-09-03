@@ -6,7 +6,6 @@ import {
   type SchemaType,
   type SpanSchemaType,
 } from '@sanity/types'
-
 import {type PortableTextMemberSchemaTypes} from '../types/editor'
 
 export function getPortableTextMemberSchemaTypes(

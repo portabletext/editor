@@ -8,11 +8,11 @@ import {
   type UnsetPatch,
 } from '@portabletext/patches'
 import {
-  applyPatches as diffMatchPatchApplyPatches,
   cleanupEfficiency,
   DIFF_DELETE,
   DIFF_EQUAL,
   DIFF_INSERT,
+  applyPatches as diffMatchPatchApplyPatches,
   makeDiff,
   parsePatch,
 } from '@sanity/diff-match-patch'
@@ -23,8 +23,7 @@ import {
   type PortableTextBlock,
   type PortableTextChild,
 } from '@sanity/types'
-import {type Descendant, Element, type Node, type Path as SlatePath, Text, Transforms} from 'slate'
-
+import {Element, Text, Transforms, type Descendant, type Node, type Path as SlatePath} from 'slate'
 import {type PortableTextMemberSchemaTypes, type PortableTextSlateEditor} from '../types/editor'
 import {debugWithName} from './debug'
 import {toSlateValue} from './values'

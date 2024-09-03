@@ -1,5 +1,4 @@
 import 'playground/src/index.css'
-
 import {GlobalStyle} from './GlobalStyle'
 import {PreloadResources} from './PreloadResources'
 import {StyledComponentsRegistry} from './registry'

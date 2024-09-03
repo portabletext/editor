@@ -1,11 +1,11 @@
 import {useSelector} from '@xstate/react'
 import {ChevronsLeftIcon, ChevronsRightIcon, PlusIcon} from 'lucide-react'
+import {TooltipTrigger} from 'react-aria-components'
 import {Button} from './components/button'
+import {Tooltip} from './components/tooltip'
 import {Editor} from './editor'
 import {PlaygroundActorRef} from './playground-machine'
 import {PortableTextPreview} from './portable-text-preview'
-import {Tooltip} from './components/tooltip'
-import {TooltipTrigger} from 'react-aria-components'
 
 export function Editors(props: {playgroundRef: PlaygroundActorRef}) {
   const showPortableTextPreview = useSelector(props.playgroundRef, (s) => s.matches('value shown'))

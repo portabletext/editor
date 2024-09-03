@@ -1,7 +1,7 @@
 import {
   CucumberExpression,
-  type ParameterType,
   ParameterTypeRegistry,
+  type ParameterType,
 } from '@cucumber/cucumber-expressions'
 import * as Gherkin from '@cucumber/gherkin'
 import * as Messages from '@cucumber/messages'

@@ -1,6 +1,5 @@
 /** @jest-environment ./setup/collaborative.jest.env.ts */
 import '../setup/globals.jest'
-
 import {describe, expect, it} from '@jest/globals'
 
 // Ideally pasting should be tested in a testing-library test, but I have not found a way to do it natively with testing-lib.

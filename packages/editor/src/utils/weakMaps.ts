@@ -1,5 +1,4 @@
 import {type Editor, type Element, type Range} from 'slate'
-
 import {type EditorSelection} from '..'
 
 // Is the editor currently receiving remote changes that are being applied to the content?

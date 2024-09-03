@@ -1,7 +1,6 @@
 import {describe, expect, it, jest} from '@jest/globals'
 import {fireEvent, render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
-
 import {PortableTextEditor} from '../PortableTextEditor'
 import {PortableTextEditorTester, schemaType} from './PortableTextEditorTester'
 import {getEditableElement} from './utils'

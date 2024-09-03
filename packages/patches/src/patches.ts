@@ -1,5 +1,4 @@
 import {makePatches, stringifyPatches} from '@sanity/diff-match-patch'
-
 import {
   type DiffMatchPatch,
   type InsertPatch,

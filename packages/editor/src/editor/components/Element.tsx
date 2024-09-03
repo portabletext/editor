@@ -6,10 +6,9 @@ import {
   type PortableTextObject,
   type PortableTextTextBlock,
 } from '@sanity/types'
-import {type FunctionComponent, type ReactElement, useMemo, useRef} from 'react'
-import {Editor, Element as SlateElement, Range} from 'slate'
-import {ReactEditor, type RenderElementProps, useSelected, useSlateStatic} from 'slate-react'
-
+import {useMemo, useRef, type FunctionComponent, type ReactElement} from 'react'
+import {Editor, Range, Element as SlateElement} from 'slate'
+import {ReactEditor, useSelected, useSlateStatic, type RenderElementProps} from 'slate-react'
 import {
   type BlockRenderProps,
   type PortableTextMemberSchemaTypes,

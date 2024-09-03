@@ -1,6 +1,7 @@
 import {type MutationChange} from '@portabletext/editor'
-import {Patch, applyAll} from '@portabletext/patches'
+import {applyAll, Patch} from '@portabletext/patches'
 import {PortableTextBlock} from '@sanity/types'
+import {v4 as uuid} from 'uuid'
 import {
   ActorRefFrom,
   assertEvent,
@@ -13,7 +14,6 @@ import {
   stopChild,
 } from 'xstate'
 import {generateColor} from './generate-color'
-import {v4 as uuid} from 'uuid'
 
 const copyToTextClipboardActor = fromPromise(({input}: {input: {text: string}}) => {
   const blob = new Blob([input.text], {type: 'text/plain'})

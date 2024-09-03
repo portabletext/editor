@@ -1,5 +1,4 @@
 import {Editor, Node, Path, Range, Transforms} from 'slate'
-
 import {type PortableTextMemberSchemaTypes, type PortableTextSlateEditor} from '../../types/editor'
 import {type SlateTextBlock, type VoidElement} from '../../types/slate'
 import {isEqualToEmptyEditor} from '../../utils/values'

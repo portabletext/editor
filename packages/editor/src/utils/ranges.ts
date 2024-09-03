@@ -1,6 +1,5 @@
 /* eslint-disable complexity */
-import {type BaseRange, type Editor, type Operation, Point, Range} from 'slate'
-
+import {Point, Range, type BaseRange, type Editor, type Operation} from 'slate'
 import {
   type EditorSelection,
   type EditorSelectionPoint,

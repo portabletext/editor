@@ -1,5 +1,4 @@
 import path from 'node:path'
-
 import {type Config} from '@jest/types'
 
 export function createJestConfig(config: Config.InitialOptions = {}) {

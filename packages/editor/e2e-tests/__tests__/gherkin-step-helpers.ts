@@ -1,6 +1,5 @@
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import {type KeyedSegment, type PathSegment, type PortableTextBlock} from '@sanity/types'
-
 import {type EditorSelection, type EditorSelectionPoint} from '../../src'
 import {type Editor} from '../setup/globals.jest'
 

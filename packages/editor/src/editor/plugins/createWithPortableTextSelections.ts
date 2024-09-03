@@ -1,6 +1,5 @@
 import {type Subject} from 'rxjs'
 import {type BaseRange} from 'slate'
-
 import {
   type EditorChange,
   type EditorSelection,
@@ -8,7 +7,7 @@ import {
   type PortableTextSlateEditor,
 } from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
-import {type ObjectWithKeyAndType, toPortableTextRange} from '../../utils/ranges'
+import {toPortableTextRange, type ObjectWithKeyAndType} from '../../utils/ranges'
 import {SLATE_TO_PORTABLE_TEXT_RANGE} from '../../utils/weakMaps'
 
 const debug = debugWithName('plugin:withPortableTextSelections')

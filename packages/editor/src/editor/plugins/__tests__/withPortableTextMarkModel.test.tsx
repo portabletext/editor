@@ -2,13 +2,12 @@ import {describe, expect, it, jest} from '@jest/globals'
 /* eslint-disable max-nested-callbacks */
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
-
-import {type EditorSelection} from '../../../types/editor'
 import {
   PortableTextEditorTester,
   schemaType,
   schemaTypeWithColorAndLink,
 } from '../../__tests__/PortableTextEditorTester'
+import {type EditorSelection} from '../../../types/editor'
 import {PortableTextEditor} from '../../PortableTextEditor'
 
 describe('plugin:withPortableTextMarksModel', () => {

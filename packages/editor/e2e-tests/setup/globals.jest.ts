@@ -1,5 +1,4 @@
 import {type PortableTextBlock} from '@sanity/types'
-
 import {type EditorSelection} from '../../src'
 
 export {}

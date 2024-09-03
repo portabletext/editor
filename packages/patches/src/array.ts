@@ -1,5 +1,4 @@
 import {findIndex} from 'lodash'
-
 import applyPatch from './applyPatch'
 import insert from './arrayInsert'
 import type {PathSegment} from './types'

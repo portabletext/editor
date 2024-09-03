@@ -1,9 +1,8 @@
 import {htmlToBlocks, normalizeBlock} from '@sanity/block-tools'
 import {type PortableTextBlock, type PortableTextChild} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
-import {type Descendant, Editor, type Node, Range, Transforms} from 'slate'
+import {Editor, Range, Transforms, type Descendant, type Node} from 'slate'
 import {ReactEditor} from 'slate-react'
-
 import {
   type EditorChanges,
   type PortableTextMemberSchemaTypes,

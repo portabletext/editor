@@ -9,12 +9,12 @@ import startCase from 'lodash.startcase'
 import {isValidElement, useMemo} from 'react'
 import {Group, TooltipTrigger} from 'react-aria-components'
 import {isValidElementType} from 'react-is'
+import {Button} from './components/button'
 import {Select, SelectItem} from './components/select'
 import {Separator} from './components/separator'
 import {ToggleButton} from './components/toggle-button'
 import {Toolbar} from './components/toolbar'
 import {Tooltip} from './components/tooltip'
-import {Button} from './components/button'
 
 export function PortableTextToolbar() {
   const editor = usePortableTextEditor()

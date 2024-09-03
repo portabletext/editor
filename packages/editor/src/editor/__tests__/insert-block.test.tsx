@@ -3,7 +3,6 @@ import {Schema} from '@sanity/schema'
 import {type PortableTextBlock} from '@sanity/types'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
-
 import {type EditorChange, type EditorSelection} from '../../types/editor'
 import {PortableTextEditable} from '../Editable'
 import {PortableTextEditor} from '../PortableTextEditor'

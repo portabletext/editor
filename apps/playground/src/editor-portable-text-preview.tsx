@@ -1,9 +1,9 @@
 import {PortableTextBlock} from '@sanity/types'
 import {useActorRef, useSelector} from '@xstate/react'
 import {useEffect} from 'react'
+import {Spinner} from './components/spinner'
 import {higlightMachine} from './highlight-json-machine'
 import {EditorActorRef} from './playground-machine'
-import {Spinner} from './components/spinner'
 
 export function EditorPortableTextPreview(props: {
   editorId: EditorActorRef['id']

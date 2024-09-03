@@ -1,5 +1,4 @@
 import {isObject, isString} from 'lodash'
-
 import applyArrayPatch from './array'
 import applyObjectPatch from './object'
 import applyPrimitivePatch from './primitive'

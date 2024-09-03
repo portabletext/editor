@@ -8,10 +8,9 @@ import {
   type PortableTextTextBlock,
   type SchemaType,
 } from '@sanity/types'
-import {Editor, Element as SlateElement, Node, Range, Text, Transforms} from 'slate'
+import {Editor, Node, Range, Element as SlateElement, Text, Transforms} from 'slate'
 import {ReactEditor} from 'slate-react'
 import {type DOMNode} from 'slate-react/dist/utils/dom'
-
 import {
   type EditableAPIDeleteOptions,
   type EditorSelection,

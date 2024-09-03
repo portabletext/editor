@@ -20,6 +20,9 @@ import {TooltipTrigger} from 'react-aria-components'
 import {reverse} from 'remeda'
 import {Subject} from 'rxjs'
 import {Button} from './components/button'
+import {ErrorBoundary} from './components/error-boundary'
+import {ErrorScreen} from './components/error-screen'
+import {Separator} from './components/separator'
 import {Spinner} from './components/spinner'
 import {Switch} from './components/switch'
 import {Toolbar} from './components/toolbar'
@@ -37,9 +40,6 @@ import {
 } from './schema'
 import {SelectionPreview} from './selection-preview'
 import {wait} from './wait'
-import {ErrorBoundary} from './components/error-boundary'
-import {ErrorScreen} from './components/error-screen'
-import {Separator} from './components/separator'
 
 export function Editor(props: {editorRef: EditorActorRef}) {
   const showingPatchesPreview = useSelector(props.editorRef, (s) =>

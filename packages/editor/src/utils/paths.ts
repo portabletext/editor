@@ -1,7 +1,6 @@
 import {isKeySegment, type Path} from '@sanity/types'
 import {isEqual} from 'lodash'
-import {type Descendant, Editor, Element, type Path as SlatePath, type Point} from 'slate'
-
+import {Editor, Element, type Descendant, type Point, type Path as SlatePath} from 'slate'
 import {type EditorSelectionPoint, type PortableTextMemberSchemaTypes} from '../types/editor'
 import {type ObjectWithKeyAndType} from './ranges'
 

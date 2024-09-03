@@ -1,5 +1,4 @@
 import path from 'node:path'
-
 import {jest} from '@jest/globals'
 import dotenv from 'dotenv'
 

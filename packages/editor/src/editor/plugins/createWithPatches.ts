@@ -1,9 +1,9 @@
 /* eslint-disable max-nested-callbacks */
-import {insert, type Patch, setIfMissing, unset} from '@portabletext/patches'
+import {insert, setIfMissing, unset, type Patch} from '@portabletext/patches'
 import {type Subject} from 'rxjs'
 import {
-  type Descendant,
   Editor,
+  type Descendant,
   type InsertNodeOperation,
   type InsertTextOperation,
   type MergeNodeOperation,
@@ -14,7 +14,6 @@ import {
   type SetNodeOperation,
   type SplitNodeOperation,
 } from 'slate'
-
 import {
   type EditorChange,
   type PatchObservable,

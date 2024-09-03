@@ -1,5 +1,4 @@
 import {createContext, startTransition, useContext, useEffect, useState} from 'react'
-
 import {type EditorChanges, type EditorSelection} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 

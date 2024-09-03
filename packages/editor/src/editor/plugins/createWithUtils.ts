@@ -1,5 +1,4 @@
 import {Editor, Range, Text, Transforms} from 'slate'
-
 import {type PortableTextMemberSchemaTypes, type PortableTextSlateEditor} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {toSlateValue} from '../../utils/values'

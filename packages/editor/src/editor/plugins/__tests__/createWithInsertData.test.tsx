@@ -1,7 +1,6 @@
 import {describe, expect, it} from '@jest/globals'
 import {isPortableTextSpan, isPortableTextTextBlock} from '@sanity/types'
 import {type Descendant} from 'slate'
-
 import {exportedForTesting} from '../createWithInsertData'
 
 const initialValue = [

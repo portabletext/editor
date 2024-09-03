@@ -1,5 +1,4 @@
 import {type BaseSyntheticEvent} from 'react'
-
 import {type PortableTextEditor} from '../editor/PortableTextEditor'
 import {type PatchObservable} from './editor'
 

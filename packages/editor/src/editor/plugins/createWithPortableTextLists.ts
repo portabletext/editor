@@ -1,5 +1,4 @@
-import {Editor, Element, type Node, Text, Transforms} from 'slate'
-
+import {Editor, Element, Text, Transforms, type Node} from 'slate'
 import {type PortableTextMemberSchemaTypes, type PortableTextSlateEditor} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 

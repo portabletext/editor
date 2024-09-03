@@ -2,7 +2,6 @@ import {beforeEach, describe, expect, it} from '@jest/globals'
 import {type Patch} from '@portabletext/patches'
 import {noop} from 'lodash'
 import {createEditor, type Descendant} from 'slate'
-
 import {keyGenerator, PortableTextEditor} from '../..'
 import {schemaType} from '../../editor/__tests__/PortableTextEditorTester'
 import {withPlugins} from '../../editor/plugins'

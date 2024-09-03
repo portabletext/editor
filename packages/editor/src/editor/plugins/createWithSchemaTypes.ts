@@ -6,8 +6,7 @@ import {
   type PortableTextSpan,
   type PortableTextTextBlock,
 } from '@sanity/types'
-import {type Element, Transforms} from 'slate'
-
+import {Transforms, type Element} from 'slate'
 import {type PortableTextMemberSchemaTypes, type PortableTextSlateEditor} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 

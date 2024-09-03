@@ -1,6 +1,5 @@
 import {type Path, type PortableTextBlock} from '@sanity/types'
 import {isEqual} from 'lodash'
-
 import {type EditorSelection, type EditorSelectionPoint} from '../types/editor'
 
 export function normalizePoint(
