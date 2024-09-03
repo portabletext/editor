@@ -18,7 +18,10 @@ export function Separator(props: SeparatorProps) {
   return (
     <RACSeparator
       {...props}
-      className={styles({orientation: props.orientation, className: props.className})}
+      className={styles({
+        orientation: props.orientation,
+        className: props.className,
+      })}
     />
   )
 }

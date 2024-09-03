@@ -78,7 +78,8 @@ describe('plugin:withPortableTextMarksModel', () => {
             anchor: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 3},
           })
           PortableTextEditor.toggleMark(editorRef.current, 'strong')
-          expect(PortableTextEditor.getValue(editorRef.current)).toMatchInlineSnapshot(`
+          expect(PortableTextEditor.getValue(editorRef.current))
+            .toMatchInlineSnapshot(`
         Array [
           Object {
             "_key": "a",
@@ -188,7 +189,10 @@ Array [
 
       await waitFor(() => {
         if (editorRef.current) {
-          expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+          expect(onChange).toHaveBeenCalledWith({
+            type: 'value',
+            value: initialValue,
+          })
           expect(onChange).toHaveBeenCalledWith({type: 'ready'})
         }
       })
@@ -295,8 +299,14 @@ Array [
         },
       ]
       const sel: EditorSelection = {
-        focus: {path: [{_key: '5fc57af23597'}, 'children', {_key: '11c8c9f783a8'}], offset: 4},
-        anchor: {path: [{_key: '7cd53af36712'}, 'children', {_key: '576c748e0cd2'}], offset: 0},
+        focus: {
+          path: [{_key: '5fc57af23597'}, 'children', {_key: '11c8c9f783a8'}],
+          offset: 4,
+        },
+        anchor: {
+          path: [{_key: '7cd53af36712'}, 'children', {_key: '576c748e0cd2'}],
+          offset: 0,
+        },
       }
       const onChange = jest.fn()
       await waitFor(() => {
@@ -423,7 +433,10 @@ Array [
 
       await waitFor(() => {
         if (editorRef.current) {
-          expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+          expect(onChange).toHaveBeenCalledWith({
+            type: 'value',
+            value: initialValue,
+          })
           expect(onChange).toHaveBeenCalledWith({type: 'ready'})
         }
       })
@@ -523,7 +536,10 @@ Array [
 
       await waitFor(() => {
         if (editorRef.current) {
-          expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+          expect(onChange).toHaveBeenCalledWith({
+            type: 'value',
+            value: initialValue,
+          })
           expect(onChange).toHaveBeenCalledWith({type: 'ready'})
         }
       })
@@ -536,12 +552,19 @@ Array [
 
       await waitFor(() => {
         if (editorRef.current) {
-          const currentSelectionObject = PortableTextEditor.getSelection(editorRef.current)
+          const currentSelectionObject = PortableTextEditor.getSelection(
+            editorRef.current,
+          )
           PortableTextEditor.toggleMark(editorRef.current, 'strong')
-          const nextSelectionObject = PortableTextEditor.getSelection(editorRef.current)
+          const nextSelectionObject = PortableTextEditor.getSelection(
+            editorRef.current,
+          )
           expect(currentSelectionObject).toEqual(nextSelectionObject)
           expect(currentSelectionObject === nextSelectionObject).toBe(false)
-          expect(onChange).toHaveBeenCalledWith({type: 'selection', selection: nextSelectionObject})
+          expect(onChange).toHaveBeenCalledWith({
+            type: 'selection',
+            selection: nextSelectionObject,
+          })
         }
       })
     })
@@ -644,7 +667,9 @@ Array [
           focus: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 0},
           anchor: {path: [{_key: 'a'}, 'children', {_key: '2'}], offset: 2},
         })
-        expect(PortableTextEditor.isAnnotationActive(editor, 'link')).toBe(false)
+        expect(PortableTextEditor.isAnnotationActive(editor, 'link')).toBe(
+          false,
+        )
       })
     })
   })
@@ -696,15 +721,28 @@ Array [
           PortableTextEditor.focus(editorRef.current)
           // Selects `a link` from `This is a link`, so the mark should be kept in the first span, color mark in both.
           PortableTextEditor.select(editorRef.current, {
-            focus: {path: [{_key: '5fc57af23597'}, 'children', {_key: 'be1c67c6971a'}], offset: 14},
+            focus: {
+              path: [
+                {_key: '5fc57af23597'},
+                'children',
+                {_key: 'be1c67c6971a'},
+              ],
+              offset: 14,
+            },
             anchor: {
-              path: [{_key: '5fc57af23597'}, 'children', {_key: 'be1c67c6971a'}],
+              path: [
+                {_key: '5fc57af23597'},
+                'children',
+                {_key: 'be1c67c6971a'},
+              ],
               offset: 8,
             },
           })
 
           // // eslint-disable-next-line max-nested-callbacks
-          const linkType = editorRef.current.schemaTypes.annotations.find((a) => a.name === 'link')
+          const linkType = editorRef.current.schemaTypes.annotations.find(
+            (a) => a.name === 'link',
+          )
           if (!linkType) {
             throw new Error('No link type found')
           }
@@ -745,9 +783,16 @@ Array [
 
           // removes the color from both
           PortableTextEditor.select(editorRef.current, {
-            focus: {path: [{_key: '5fc57af23597'}, 'children', {_key: '1'}], offset: 6},
+            focus: {
+              path: [{_key: '5fc57af23597'}, 'children', {_key: '1'}],
+              offset: 6,
+            },
             anchor: {
-              path: [{_key: '5fc57af23597'}, 'children', {_key: 'be1c67c6971a'}],
+              path: [
+                {_key: '5fc57af23597'},
+                'children',
+                {_key: 'be1c67c6971a'},
+              ],
               offset: 0,
             },
           })

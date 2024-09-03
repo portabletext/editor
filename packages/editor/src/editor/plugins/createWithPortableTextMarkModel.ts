@@ -9,7 +9,16 @@
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import {isEqual, uniq} from 'lodash'
 import {type Subject} from 'rxjs'
-import {Editor, Element, Node, Path, Range, Text, Transforms, type Descendant} from 'slate'
+import {
+  Editor,
+  Element,
+  Node,
+  Path,
+  Range,
+  Text,
+  Transforms,
+  type Descendant,
+} from 'slate'
 import {
   type EditorChange,
   type PortableTextMemberSchemaTypes,
@@ -46,7 +55,11 @@ export function createWithPortableTextMarkModel(
         Transforms.select(editor, {...editor.selection})
         editor.selection = {...editor.selection} // Ensure new object
       }
-      const ptRange = toPortableTextRange(editor.children, editor.selection, types)
+      const ptRange = toPortableTextRange(
+        editor.children,
+        editor.selection,
+        types,
+      )
       change$.next({type: 'selection', selection: ptRange})
     }
 
@@ -70,7 +83,10 @@ export function createWithPortableTextMarkModel(
               JSON.stringify(child, null, 2),
               JSON.stringify(nextNode, null, 2),
             )
-            Transforms.mergeNodes(editor, {at: [childPath[0], childPath[1] + 1], voids: true})
+            Transforms.mergeNodes(editor, {
+              at: [childPath[0], childPath[1] + 1],
+              voids: true,
+            })
             return
           }
         }
@@ -92,7 +108,9 @@ export function createWithPortableTextMarkModel(
         const blockPath = Path.parent(path)
         const [block] = Editor.node(editor, blockPath)
         const decorators = types.decorators.map((decorator) => decorator.value)
-        const annotations = node.marks?.filter((mark) => !decorators.includes(mark))
+        const annotations = node.marks?.filter(
+          (mark) => !decorators.includes(mark),
+        )
 
         if (editor.isTextBlock(block)) {
           if (node.text === '' && annotations && annotations.length > 0) {
@@ -117,14 +135,21 @@ export function createWithPortableTextMarkModel(
           if (editor.isTextSpan(child)) {
             const marks = child.marks ?? []
             const orphanedAnnotations = marks.filter((mark) => {
-              return !decorators.includes(mark) && !node.markDefs?.find((def) => def._key === mark)
+              return (
+                !decorators.includes(mark) &&
+                !node.markDefs?.find((def) => def._key === mark)
+              )
             })
 
             if (orphanedAnnotations.length > 0) {
               debug('Removing orphaned annotations from span node')
               Transforms.setNodes(
                 editor,
-                {marks: marks.filter((mark) => !orphanedAnnotations.includes(mark))},
+                {
+                  marks: marks.filter(
+                    (mark) => !orphanedAnnotations.includes(mark),
+                  ),
+                },
                 {at: childPath},
               )
               return
@@ -141,17 +166,26 @@ export function createWithPortableTextMarkModel(
         const [block] = Editor.node(editor, blockPath)
 
         if (editor.isTextBlock(block)) {
-          const decorators = types.decorators.map((decorator) => decorator.value)
+          const decorators = types.decorators.map(
+            (decorator) => decorator.value,
+          )
           const marks = node.marks ?? []
           const orphanedAnnotations = marks.filter((mark) => {
-            return !decorators.includes(mark) && !block.markDefs?.find((def) => def._key === mark)
+            return (
+              !decorators.includes(mark) &&
+              !block.markDefs?.find((def) => def._key === mark)
+            )
           })
 
           if (orphanedAnnotations.length > 0) {
             debug('Removing orphaned annotations from span node')
             Transforms.setNodes(
               editor,
-              {marks: marks.filter((mark) => !orphanedAnnotations.includes(mark))},
+              {
+                marks: marks.filter(
+                  (mark) => !orphanedAnnotations.includes(mark),
+                ),
+              },
               {at: path},
             )
             return
@@ -163,13 +197,18 @@ export function createWithPortableTextMarkModel(
       if (
         editor.isTextBlock(node) &&
         !editor.operations.some(
-          (op) => op.type === 'merge_node' && 'markDefs' in op.properties && op.path.length === 1,
+          (op) =>
+            op.type === 'merge_node' &&
+            'markDefs' in op.properties &&
+            op.path.length === 1,
         )
       ) {
         const newMarkDefs = (node.markDefs || []).filter((def) => {
           return node.children.find((child) => {
             return (
-              Text.isText(child) && Array.isArray(child.marks) && child.marks.includes(def._key)
+              Text.isText(child) &&
+              Array.isArray(child.marks) &&
+              child.marks.includes(def._key)
             )
           })
         })
@@ -214,13 +253,16 @@ export function createWithPortableTextMarkModel(
         if (
           selection &&
           Range.isCollapsed(selection) &&
-          Editor.marks(editor)?.marks?.some((mark) => !decorators.includes(mark))
+          Editor.marks(editor)?.marks?.some(
+            (mark) => !decorators.includes(mark),
+          )
         ) {
           const [node] = Array.from(
             Editor.nodes(editor, {
               mode: 'lowest',
               at: selection.focus,
-              match: (n) => (n as unknown as Descendant)._type === types.span.name,
+              match: (n) =>
+                (n as unknown as Descendant)._type === types.span.name,
               voids: false,
             }),
           )[0] || [undefined]
@@ -260,15 +302,25 @@ export function createWithPortableTextMarkModel(
         const blockEntry = Editor.node(editor, Path.parent(op.path))
         const block = blockEntry[0]
 
-        if (node && isPortableTextSpan(node) && block && isPortableTextBlock(block)) {
+        if (
+          node &&
+          isPortableTextSpan(node) &&
+          block &&
+          isPortableTextBlock(block)
+        ) {
           const markDefs = block.markDefs ?? []
           const nodeHasAnnotations = (node.marks ?? []).some((mark) =>
             markDefs.find((markDef) => markDef._key === mark),
           )
           const deletingPartOfTheNode = op.offset !== 0
-          const deletingFromTheEnd = op.offset + op.text.length === node.text.length
+          const deletingFromTheEnd =
+            op.offset + op.text.length === node.text.length
 
-          if (nodeHasAnnotations && deletingPartOfTheNode && deletingFromTheEnd) {
+          if (
+            nodeHasAnnotations &&
+            deletingPartOfTheNode &&
+            deletingFromTheEnd
+          ) {
             Editor.withoutNormalizing(editor, () => {
               Transforms.splitNodes(editor, {
                 match: Text.isText,
@@ -292,7 +344,11 @@ export function createWithPortableTextMarkModel(
 
             Editor.withoutNormalizing(editor, () => {
               apply(op)
-              Transforms.setNodes(editor, {marks: marksWithoutAnnotationMarks}, {at: op.path})
+              Transforms.setNodes(
+                editor,
+                {marks: marksWithoutAnnotationMarks},
+                {at: op.path},
+              )
             })
 
             editor.onChange()
@@ -328,11 +384,16 @@ export function createWithPortableTextMarkModel(
         const [targetBlock, targetPath] = Editor.node(editor, [op.path[0] - 1])
 
         if (editor.isTextBlock(targetBlock)) {
-          const oldDefs = (Array.isArray(targetBlock.markDefs) && targetBlock.markDefs) || []
+          const oldDefs =
+            (Array.isArray(targetBlock.markDefs) && targetBlock.markDefs) || []
           const newMarkDefs = uniq([...oldDefs, ...op.properties.markDefs])
 
           debug(`Copying markDefs over to merged block`, op)
-          Transforms.setNodes(editor, {markDefs: newMarkDefs}, {at: targetPath, voids: false})
+          Transforms.setNodes(
+            editor,
+            {markDefs: newMarkDefs},
+            {at: targetPath, voids: false},
+          )
           apply(op)
           return
         }
@@ -350,7 +411,12 @@ export function createWithPortableTextMarkModel(
             Transforms.setNodes(editor, {}, {match: Text.isText, split: true})
             // Use new selection
             const splitTextNodes = Range.isRange(editor.selection)
-              ? [...Editor.nodes(editor, {at: editor.selection, match: Text.isText})]
+              ? [
+                  ...Editor.nodes(editor, {
+                    at: editor.selection,
+                    match: Text.isText,
+                  }),
+                ]
               : []
             const shouldRemoveMark =
               splitTextNodes.length > 1 &&
@@ -403,7 +469,10 @@ export function createWithPortableTextMarkModel(
             Transforms.setNodes(editor, {}, {match: Text.isText, split: true})
             if (editor.selection) {
               const splitTextNodes = [
-                ...Editor.nodes(editor, {at: editor.selection, match: Text.isText}),
+                ...Editor.nodes(editor, {
+                  at: editor.selection,
+                  match: Text.isText,
+                }),
               ]
               splitTextNodes.forEach(([node, path]) => {
                 const block = editor.children[path[0]]
@@ -411,9 +480,10 @@ export function createWithPortableTextMarkModel(
                   Transforms.setNodes(
                     editor,
                     {
-                      marks: (Array.isArray(node.marks) ? node.marks : []).filter(
-                        (eMark: string) => eMark !== mark,
-                      ),
+                      marks: (Array.isArray(node.marks)
+                        ? node.marks
+                        : []
+                      ).filter((eMark: string) => eMark !== mark),
                       _type: 'span',
                     },
                     {at: path},

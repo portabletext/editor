@@ -6,7 +6,10 @@ import {playgroundMachine} from './playground-machine'
 
 export function App() {
   const playgroundRef = useActorRef(playgroundMachine, {
-    input: {colorGenerator: generateColor('100'), editorIdGenerator: editorIdGenerator()},
+    input: {
+      colorGenerator: generateColor('100'),
+      editorIdGenerator: editorIdGenerator(),
+    },
   })
 
   return <Editors playgroundRef={playgroundRef} />

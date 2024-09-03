@@ -5,7 +5,10 @@ import {isHotkey} from 'is-hotkey-esm'
 import {type KeyboardEvent} from 'react'
 import {Editor, Node, Path, Range, Transforms} from 'slate'
 import {type ReactEditor} from 'slate-react'
-import {type PortableTextMemberSchemaTypes, type PortableTextSlateEditor} from '../../types/editor'
+import {
+  type PortableTextMemberSchemaTypes,
+  type PortableTextSlateEditor,
+} from '../../types/editor'
 import {type HotkeyOptions} from '../../types/options'
 import {type SlateTextBlock, type VoidElement} from '../../types/slate'
 import {debugWithName} from '../../utils/debug'
@@ -83,15 +86,18 @@ export function createWithHotkeys(
 
       // Check if the user is in a void block, in that case, add an empty text block below if there is no next block
       if (isArrowDown && editor.selection) {
-        const focusBlock = Node.descendant(editor, editor.selection.focus.path.slice(0, 1)) as
-          | SlateTextBlock
-          | VoidElement
+        const focusBlock = Node.descendant(
+          editor,
+          editor.selection.focus.path.slice(0, 1),
+        ) as SlateTextBlock | VoidElement
 
         if (focusBlock && Editor.isVoid(editor, focusBlock)) {
           const nextPath = Path.next(editor.selection.focus.path.slice(0, 1))
           const nextBlock = Node.has(editor, nextPath)
           if (!nextBlock) {
-            Transforms.insertNodes(editor, editor.pteCreateEmptyBlock(), {at: nextPath})
+            Transforms.insertNodes(editor, editor.pteCreateEmptyBlock(), {
+              at: nextPath,
+            })
             editor.onChange()
             return
           }
@@ -99,12 +105,15 @@ export function createWithHotkeys(
       }
       if (isArrowUp && editor.selection) {
         const isFirstBlock = editor.selection.focus.path[0] === 0
-        const focusBlock = Node.descendant(editor, editor.selection.focus.path.slice(0, 1)) as
-          | SlateTextBlock
-          | VoidElement
+        const focusBlock = Node.descendant(
+          editor,
+          editor.selection.focus.path.slice(0, 1),
+        ) as SlateTextBlock | VoidElement
 
         if (isFirstBlock && focusBlock && Editor.isVoid(editor, focusBlock)) {
-          Transforms.insertNodes(editor, editor.pteCreateEmptyBlock(), {at: [0]})
+          Transforms.insertNodes(editor, editor.pteCreateEmptyBlock(), {
+            at: [0],
+          })
           Transforms.select(editor, {path: [0, 0], offset: 0})
           editor.onChange()
           return
@@ -117,14 +126,17 @@ export function createWithHotkeys(
         Range.isCollapsed(editor.selection)
       ) {
         // If the block is text and we have a next block below, remove the current block
-        const focusBlock = Node.descendant(editor, editor.selection.focus.path.slice(0, 1)) as
-          | SlateTextBlock
-          | VoidElement
+        const focusBlock = Node.descendant(
+          editor,
+          editor.selection.focus.path.slice(0, 1),
+        ) as SlateTextBlock | VoidElement
         const nextPath = Path.next(editor.selection.focus.path.slice(0, 1))
         const nextBlock = Node.has(editor, nextPath)
         const isTextBlock = isPortableTextTextBlock(focusBlock)
         const isEmptyFocusBlock =
-          isTextBlock && focusBlock.children.length === 1 && focusBlock.children?.[0]?.text === ''
+          isTextBlock &&
+          focusBlock.children.length === 1 &&
+          focusBlock.children?.[0]?.text === ''
 
         if (nextBlock && isTextBlock && isEmptyFocusBlock) {
           // Remove current block
@@ -145,8 +157,13 @@ export function createWithHotkeys(
         Range.isCollapsed(editor.selection)
       ) {
         const prevPath = Path.previous(editor.selection.focus.path.slice(0, 1))
-        const prevBlock = Node.descendant(editor, prevPath) as SlateTextBlock | VoidElement
-        const focusBlock = Node.descendant(editor, editor.selection.focus.path.slice(0, 1))
+        const prevBlock = Node.descendant(editor, prevPath) as
+          | SlateTextBlock
+          | VoidElement
+        const focusBlock = Node.descendant(
+          editor,
+          editor.selection.focus.path.slice(0, 1),
+        )
         if (
           prevBlock &&
           focusBlock &&
@@ -159,7 +176,9 @@ export function createWithHotkeys(
 
           const isTextBlock = isPortableTextTextBlock(focusBlock)
           const isEmptyFocusBlock =
-            isTextBlock && focusBlock.children.length === 1 && focusBlock.children?.[0]?.text === ''
+            isTextBlock &&
+            focusBlock.children.length === 1 &&
+            focusBlock.children?.[0]?.text === ''
 
           // If this is a not an text block or it is empty, simply remove it
           if (!isTextBlock || isEmptyFocusBlock) {
@@ -193,10 +212,14 @@ export function createWithHotkeys(
           Path.next(editor.selection.focus.path.slice(0, 1)),
         ) as SlateTextBlock | VoidElement
         const focusBlockPath = editor.selection.focus.path.slice(0, 1)
-        const focusBlock = Node.descendant(editor, focusBlockPath) as SlateTextBlock | VoidElement
+        const focusBlock = Node.descendant(editor, focusBlockPath) as
+          | SlateTextBlock
+          | VoidElement
         const isTextBlock = isPortableTextTextBlock(focusBlock)
         const isEmptyFocusBlock =
-          isTextBlock && focusBlock.children.length === 1 && focusBlock.children?.[0]?.text === ''
+          isTextBlock &&
+          focusBlock.children.length === 1 &&
+          focusBlock.children?.[0]?.text === ''
 
         if (
           nextBlock &&
@@ -219,7 +242,9 @@ export function createWithHotkeys(
       // Only steal tab when we are on a plain text span or we are at the start of the line (fallback if the whole block is annotated or contains a single inline object)
       // Otherwise tab is reserved for accessability for buttons etc.
       if ((isTab || isShiftTab) && editor.selection) {
-        const [focusChild] = Editor.node(editor, editor.selection.focus, {depth: 2})
+        const [focusChild] = Editor.node(editor, editor.selection.focus, {
+          depth: 2,
+        })
         const [focusBlock] = isPortableTextSpan(focusChild)
           ? Editor.node(editor, editor.selection.focus, {depth: 1})
           : []
@@ -246,7 +271,9 @@ export function createWithHotkeys(
       // Deal with enter key combos
       if (isEnter && !isShiftEnter && editor.selection) {
         const focusBlockPath = editor.selection.focus.path.slice(0, 1)
-        const focusBlock = Node.descendant(editor, focusBlockPath) as SlateTextBlock | VoidElement
+        const focusBlock = Node.descendant(editor, focusBlockPath) as
+          | SlateTextBlock
+          | VoidElement
 
         // List item enter key
         if (editor.isListBlock(focusBlock)) {
@@ -297,7 +324,10 @@ export function createWithHotkeys(
         editor.undo()
         return
       }
-      if (isHotkey('mod+y', event.nativeEvent) || isHotkey('mod+shift+z', event.nativeEvent)) {
+      if (
+        isHotkey('mod+y', event.nativeEvent) ||
+        isHotkey('mod+shift+z', event.nativeEvent)
+      ) {
         event.preventDefault()
         editor.redo()
       }

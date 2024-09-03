@@ -11,12 +11,20 @@ describe('selection adjustment', () => {
           _type: 'block',
           markDefs: [],
           style: 'normal',
-          children: [{_key: 'anotherKey', _type: 'span', text: 'Hello', marks: []}],
+          children: [
+            {_key: 'anotherKey', _type: 'span', text: 'Hello', marks: []},
+          ],
         },
       ])
       const expectedSelectionA = {
-        anchor: {path: [{_key: 'someKey'}, 'children', {_key: 'anotherKey'}], offset: 2},
-        focus: {path: [{_key: 'someKey'}, 'children', {_key: 'anotherKey'}], offset: 2},
+        anchor: {
+          path: [{_key: 'someKey'}, 'children', {_key: 'anotherKey'}],
+          offset: 2,
+        },
+        focus: {
+          path: [{_key: 'someKey'}, 'children', {_key: 'anotherKey'}],
+          offset: 2,
+        },
         backward: false,
       }
       const [editorA, editorB] = await getEditors()
@@ -95,34 +103,52 @@ describe('selection adjustment', () => {
           _type: 'block',
           markDefs: [],
           style: 'normal',
-          children: [{_key: 'anotherKey1', _type: 'span', text: 'One', marks: []}],
+          children: [
+            {_key: 'anotherKey1', _type: 'span', text: 'One', marks: []},
+          ],
         },
         {
           _key: 'someKey2',
           _type: 'block',
           markDefs: [],
           style: 'normal',
-          children: [{_key: 'anotherKey2', _type: 'span', text: 'Two', marks: []}],
+          children: [
+            {_key: 'anotherKey2', _type: 'span', text: 'Two', marks: []},
+          ],
         },
         {
           _key: 'someKey3',
           _type: 'block',
           markDefs: [],
           style: 'normal',
-          children: [{_key: 'anotherKey3', _type: 'span', text: 'Three', marks: []}],
+          children: [
+            {_key: 'anotherKey3', _type: 'span', text: 'Three', marks: []},
+          ],
         },
       ])
       const expectedSelection = {
-        anchor: {path: [{_key: 'someKey2'}, 'children', {_key: 'anotherKey2'}], offset: 2},
-        focus: {path: [{_key: 'someKey2'}, 'children', {_key: 'anotherKey2'}], offset: 2},
+        anchor: {
+          path: [{_key: 'someKey2'}, 'children', {_key: 'anotherKey2'}],
+          offset: 2,
+        },
+        focus: {
+          path: [{_key: 'someKey2'}, 'children', {_key: 'anotherKey2'}],
+          offset: 2,
+        },
         backward: false,
       }
       const [editorA, editorB] = await getEditors()
       await editorA.setSelection(expectedSelection)
       expect(await editorA.getSelection()).toEqual(expectedSelection)
       await editorB.setSelection({
-        anchor: {path: [{_key: 'someKey1'}, 'children', {_key: 'anotherKey1'}], offset: 3},
-        focus: {path: [{_key: 'someKey1'}, 'children', {_key: 'anotherKey1'}], offset: 3},
+        anchor: {
+          path: [{_key: 'someKey1'}, 'children', {_key: 'anotherKey1'}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: 'someKey1'}, 'children', {_key: 'anotherKey1'}],
+          offset: 3,
+        },
       })
       await editorB.pressKey('Backspace', 3)
       await editorB.pressKey('Delete')
@@ -194,20 +220,34 @@ describe('selection adjustment', () => {
           _type: 'block',
           markDefs: [],
           style: 'normal',
-          children: [{_key: 'anotherKey5', _type: 'span', text: 'Three', marks: []}],
+          children: [
+            {_key: 'anotherKey5', _type: 'span', text: 'Three', marks: []},
+          ],
         },
       ])
       const expectedSelection = {
-        anchor: {path: [{_key: 'someKey5'}, 'children', {_key: 'anotherKey5'}], offset: 5},
-        focus: {path: [{_key: 'someKey5'}, 'children', {_key: 'anotherKey5'}], offset: 5},
+        anchor: {
+          path: [{_key: 'someKey5'}, 'children', {_key: 'anotherKey5'}],
+          offset: 5,
+        },
+        focus: {
+          path: [{_key: 'someKey5'}, 'children', {_key: 'anotherKey5'}],
+          offset: 5,
+        },
         backward: false,
       }
       const [editorA, editorB] = await getEditors()
       await editorA.setSelection(expectedSelection)
       expect(await editorA.getSelection()).toEqual(expectedSelection)
       await editorB.setSelection({
-        anchor: {path: [{_key: 'someKey4'}, 'children', {_key: 'anotherKey4'}], offset: 0},
-        focus: {path: [{_key: 'someKey4'}, 'children', {_key: 'anotherKey4'}], offset: 0},
+        anchor: {
+          path: [{_key: 'someKey4'}, 'children', {_key: 'anotherKey4'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'someKey4'}, 'children', {_key: 'anotherKey4'}],
+          offset: 0,
+        },
       })
       await editorB.pressKey('Backspace')
       await editorB.pressKey('Backspace')
@@ -263,20 +303,34 @@ describe('selection adjustment', () => {
           _type: 'block',
           markDefs: [],
           style: 'normal',
-          children: [{_key: 'anotherKey3', _type: 'span', text: 'Three', marks: []}],
+          children: [
+            {_key: 'anotherKey3', _type: 'span', text: 'Three', marks: []},
+          ],
         },
       ])
       const expectedSelection = {
-        anchor: {path: [{_key: 'someKey3'}, 'children', {_key: 'anotherKey3'}], offset: 0},
-        focus: {path: [{_key: 'someKey3'}, 'children', {_key: 'anotherKey3'}], offset: 0},
+        anchor: {
+          path: [{_key: 'someKey3'}, 'children', {_key: 'anotherKey3'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'someKey3'}, 'children', {_key: 'anotherKey3'}],
+          offset: 0,
+        },
         backward: false,
       }
       const [editorA, editorB] = await getEditors()
       await editorA.setSelection(expectedSelection)
       expect(await editorA.getSelection()).toEqual(expectedSelection)
       await editorB.setSelection({
-        anchor: {path: [{_key: 'someKey2'}, 'children', {_key: 'anotherKey2'}], offset: 0},
-        focus: {path: [{_key: 'someKey2'}, 'children', {_key: 'anotherKey2'}], offset: 0},
+        anchor: {
+          path: [{_key: 'someKey2'}, 'children', {_key: 'anotherKey2'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'someKey2'}, 'children', {_key: 'anotherKey2'}],
+          offset: 0,
+        },
       })
       await editorB.pressKey('Enter')
       const valueA = await editorA.getValue()
@@ -338,34 +392,52 @@ describe('selection adjustment', () => {
           _type: 'block',
           markDefs: [],
           style: 'normal',
-          children: [{_key: 'anotherKey5', _type: 'span', text: '1', marks: []}],
+          children: [
+            {_key: 'anotherKey5', _type: 'span', text: '1', marks: []},
+          ],
         },
         {
           _key: 'someKey6',
           _type: 'block',
           markDefs: [],
           style: 'normal',
-          children: [{_key: 'anotherKey6', _type: 'span', text: '22', marks: []}],
+          children: [
+            {_key: 'anotherKey6', _type: 'span', text: '22', marks: []},
+          ],
         },
         {
           _key: 'someKey7',
           _type: 'block',
           markDefs: [],
           style: 'normal',
-          children: [{_key: 'anotherKey7', _type: 'span', text: '333', marks: []}],
+          children: [
+            {_key: 'anotherKey7', _type: 'span', text: '333', marks: []},
+          ],
         },
       ])
       const expectedSelection = {
-        anchor: {path: [{_key: 'someKey6'}, 'children', {_key: 'anotherKey6'}], offset: 2},
-        focus: {path: [{_key: 'someKey6'}, 'children', {_key: 'anotherKey6'}], offset: 2},
+        anchor: {
+          path: [{_key: 'someKey6'}, 'children', {_key: 'anotherKey6'}],
+          offset: 2,
+        },
+        focus: {
+          path: [{_key: 'someKey6'}, 'children', {_key: 'anotherKey6'}],
+          offset: 2,
+        },
         backward: false,
       }
       const [editorA, editorB] = await getEditors()
       await editorA.setSelection(expectedSelection)
       expect(await editorA.getSelection()).toEqual(expectedSelection)
       await editorB.setSelection({
-        anchor: {path: [{_key: 'someKey6'}, 'children', {_key: 'anotherKey6'}], offset: 0},
-        focus: {path: [{_key: 'someKey6'}, 'children', {_key: 'anotherKey6'}], offset: 0},
+        anchor: {
+          path: [{_key: 'someKey6'}, 'children', {_key: 'anotherKey6'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'someKey6'}, 'children', {_key: 'anotherKey6'}],
+          offset: 0,
+        },
       })
       await editorB.pressKey('Backspace')
       const valueB = await editorB.getValue()
@@ -448,16 +520,28 @@ describe('selection adjustment', () => {
       },
     ])
     const expectedSelectionA = {
-      anchor: {path: [{_key: 'someKey'}, 'children', {_key: 'anotherKey3'}], offset: 1},
-      focus: {path: [{_key: 'someKey'}, 'children', {_key: 'anotherKey3'}], offset: 1},
+      anchor: {
+        path: [{_key: 'someKey'}, 'children', {_key: 'anotherKey3'}],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: 'someKey'}, 'children', {_key: 'anotherKey3'}],
+        offset: 1,
+      },
       backward: false,
     }
     const [editorA, editorB] = await getEditors()
     await editorA.setSelection(expectedSelectionA)
     expect(await editorA.getSelection()).toEqual(expectedSelectionA)
     const expectedSelectionB = {
-      anchor: {path: [{_key: 'someKey'}, 'children', {_key: 'anotherKey2'}], offset: 0},
-      focus: {path: [{_key: 'someKey'}, 'children', {_key: 'anotherKey2'}], offset: 2},
+      anchor: {
+        path: [{_key: 'someKey'}, 'children', {_key: 'anotherKey2'}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: 'someKey'}, 'children', {_key: 'anotherKey2'}],
+        offset: 2,
+      },
     }
     await editorB.setSelection(expectedSelectionB)
     expect(await editorB.getSelection()).toEqual(expectedSelectionB)
@@ -484,8 +568,14 @@ describe('selection adjustment', () => {
     const valueA = await editorA.getValue()
     expect(valueA).toEqual(valueB)
     expect(await editorA.getSelection()).toEqual({
-      anchor: {path: [{_key: 'someKey'}, 'children', {_key: 'anotherKey1'}], offset: 8},
-      focus: {path: [{_key: 'someKey'}, 'children', {_key: 'anotherKey1'}], offset: 8},
+      anchor: {
+        path: [{_key: 'someKey'}, 'children', {_key: 'anotherKey1'}],
+        offset: 8,
+      },
+      focus: {
+        path: [{_key: 'someKey'}, 'children', {_key: 'anotherKey1'}],
+        offset: 8,
+      },
       backward: false,
     })
   })
@@ -497,7 +587,9 @@ describe('selection adjustment', () => {
         _type: 'block',
         markDefs: [],
         style: 'normal',
-        children: [{_key: 'anotherKey1', _type: 'span', text: '1', marks: ['strong']}],
+        children: [
+          {_key: 'anotherKey1', _type: 'span', text: '1', marks: ['strong']},
+        ],
       },
       {
         _key: 'someKey2',
@@ -508,12 +600,24 @@ describe('selection adjustment', () => {
       },
     ])
     const expectedSelectionA = {
-      anchor: {path: [{_key: 'someKey1'}, 'children', {_key: 'anotherKey1'}], offset: 0},
-      focus: {path: [{_key: 'someKey1'}, 'children', {_key: 'anotherKey1'}], offset: 1},
+      anchor: {
+        path: [{_key: 'someKey1'}, 'children', {_key: 'anotherKey1'}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: 'someKey1'}, 'children', {_key: 'anotherKey1'}],
+        offset: 1,
+      },
     }
     const expectedSelectionB = {
-      anchor: {path: [{_key: 'someKey2'}, 'children', {_key: 'anotherKey2'}], offset: 0},
-      focus: {path: [{_key: 'someKey2'}, 'children', {_key: 'anotherKey2'}], offset: 1},
+      anchor: {
+        path: [{_key: 'someKey2'}, 'children', {_key: 'anotherKey2'}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: 'someKey2'}, 'children', {_key: 'anotherKey2'}],
+        offset: 1,
+      },
     }
     const [editorA, editorB] = await getEditors()
     await editorA.setSelection(expectedSelectionA)
@@ -557,13 +661,25 @@ describe('selection adjustment', () => {
     const valueA = await editorA.getValue()
     expect(valueA).toEqual(valueB)
     expect(await editorA.getSelection()).toEqual({
-      anchor: {path: [{_key: 'someKey1'}, 'children', {_key: 'anotherKey1'}], offset: 0},
-      focus: {path: [{_key: 'someKey1'}, 'children', {_key: 'anotherKey1'}], offset: 1},
+      anchor: {
+        path: [{_key: 'someKey1'}, 'children', {_key: 'anotherKey1'}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: 'someKey1'}, 'children', {_key: 'anotherKey1'}],
+        offset: 1,
+      },
       backward: false,
     })
     expect(await editorB.getSelection()).toEqual({
-      anchor: {path: [{_key: 'someKey2'}, 'children', {_key: 'anotherKey2'}], offset: 0},
-      focus: {path: [{_key: 'someKey2'}, 'children', {_key: 'anotherKey2'}], offset: 1},
+      anchor: {
+        path: [{_key: 'someKey2'}, 'children', {_key: 'anotherKey2'}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: 'someKey2'}, 'children', {_key: 'anotherKey2'}],
+        offset: 1,
+      },
       backward: false,
     })
   })

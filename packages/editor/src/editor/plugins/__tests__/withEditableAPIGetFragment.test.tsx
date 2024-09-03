@@ -2,7 +2,10 @@ import {describe, expect, it, jest} from '@jest/globals'
 import {isPortableTextTextBlock} from '@sanity/types'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
-import {PortableTextEditorTester, schemaType} from '../../__tests__/PortableTextEditorTester'
+import {
+  PortableTextEditorTester,
+  schemaType,
+} from '../../__tests__/PortableTextEditorTester'
 import {PortableTextEditor} from '../../PortableTextEditor'
 
 const initialValue = [
@@ -66,7 +69,10 @@ describe('plugin:withEditableAPI: .getFragment()', () => {
 
     await waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({
+          type: 'value',
+          value: initialValue,
+        })
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })
@@ -77,7 +83,9 @@ describe('plugin:withEditableAPI: .getFragment()', () => {
         PortableTextEditor.select(editorRef.current, initialSelection)
         const fragment = PortableTextEditor.getFragment(editorRef.current)
         expect(
-          fragment && isPortableTextTextBlock(fragment[0]) && fragment[0]?.children[0]?.text,
+          fragment &&
+            isPortableTextTextBlock(fragment[0]) &&
+            fragment[0]?.children[0]?.text,
         ).toBe('A')
       }
     })
@@ -102,7 +110,10 @@ describe('plugin:withEditableAPI: .getFragment()', () => {
 
     await waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({
+          type: 'value',
+          value: initialValue,
+        })
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })

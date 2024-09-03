@@ -45,14 +45,26 @@ describe('undo/redo', () => {
     await setDocumentValue(initialValue)
     const [editorA, editorB] = await getEditors()
     const desiredSelectionA = {
-      anchor: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 18},
-      focus: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 18},
+      anchor: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 18,
+      },
+      focus: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 18,
+      },
     }
     await editorA.setSelection(desiredSelectionA)
     await editorA.pressKey('Backspace')
     await editorB.setSelection({
-      anchor: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 11},
-      focus: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 11},
+      anchor: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 11,
+      },
+      focus: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 11,
+      },
     })
     await editorB.insertText(' there!')
     let valA = await editorA.getValue()
@@ -111,20 +123,31 @@ describe('undo/redo', () => {
     // Editor A sets selection at end of the second paragraph (after "!"), and adds a question mark
     const charOffset = initialText.indexOf('!') + 1
     const desiredSelectionA = {
-      anchor: {path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}], offset: charOffset},
-      focus: {path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}], offset: charOffset},
+      anchor: {
+        path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
+        offset: charOffset,
+      },
+      focus: {
+        path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
+        offset: charOffset,
+      },
     }
     await editorA.setSelection(desiredSelectionA)
     await editorA.insertText('?')
 
     // Sanity-test for edit
     const expectedEditedText = initialText.replace(/!/g, '!?')
-    expect(toPlainText((await editorA.getValue()) || [])).toBe(expectedEditedText)
+    expect(toPlainText((await editorA.getValue()) || [])).toBe(
+      expectedEditedText,
+    )
 
     // Editor B adds a new paragraph (_within same block_) to the start of the editor
     const newPrefix = 'Welcome.\n\n'
     await editorB.setSelection({
-      anchor: {path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}], offset: 0},
+      anchor: {
+        path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
+        offset: 0,
+      },
       focus: {path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}], offset: 0},
     })
     await editorB.insertText(newPrefix)
@@ -156,15 +179,27 @@ describe('undo/redo', () => {
     await setDocumentValue(initialValue)
     const [editorA, editorB] = await getEditors()
     const desiredSelectionA = {
-      anchor: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 18},
-      focus: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 18},
+      anchor: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 18,
+      },
+      focus: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 18,
+      },
     }
     await editorA.setSelection(desiredSelectionA)
     await editorA.pressKey('Enter')
     await editorA.insertText('Hey!')
     await editorB.setSelection({
-      anchor: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 11},
-      focus: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 11},
+      anchor: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 11,
+      },
+      focus: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 11,
+      },
     })
     await editorB.insertText(' there!')
     let valA = await editorA.getValue()
@@ -261,14 +296,26 @@ describe('undo/redo', () => {
     await setDocumentValue(val)
     const [editorA, editorB] = await getEditors()
     const startSelectionA = {
-      anchor: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 5},
-      focus: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 5},
+      anchor: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 5,
+      },
+      focus: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 5,
+      },
       backward: false,
     }
     await editorA.setSelection(startSelectionA)
     const startSelectionB = {
-      anchor: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 11},
-      focus: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 11},
+      anchor: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 11,
+      },
+      focus: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 11,
+      },
       backward: false,
     }
     await editorB.setSelection(startSelectionB)
@@ -365,14 +412,26 @@ describe('undo/redo', () => {
     await setDocumentValue(val)
     const [editorA, editorB] = await getEditors()
     const startSelectionA = {
-      anchor: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 5},
-      focus: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 5},
+      anchor: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 5,
+      },
+      focus: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 5,
+      },
       backward: false,
     }
     await editorA.setSelection(startSelectionA)
     const startSelectionB = {
-      anchor: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 18},
-      focus: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 18},
+      anchor: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 18,
+      },
+      focus: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 18,
+      },
       backward: false,
     }
     await editorB.setSelection(startSelectionB)
@@ -449,16 +508,28 @@ describe('undo/redo', () => {
     await setDocumentValue(initialValue)
     const [editorA, editorB] = await getEditors()
     const desiredSelectionA = {
-      anchor: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 18},
-      focus: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 18},
+      anchor: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 18,
+      },
+      focus: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 18,
+      },
       backward: false,
     }
     await editorA.setSelection(desiredSelectionA)
     await editorA.pressKey('Enter')
     await editorA.insertText('Hey!')
     await editorB.setSelection({
-      anchor: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 11},
-      focus: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 11},
+      anchor: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 11,
+      },
+      focus: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 11,
+      },
     })
     await editorB.insertText(' there!')
     let valA = await editorA.getValue()
@@ -541,14 +612,26 @@ describe('undo/redo', () => {
     await setDocumentValue(val)
     const [editorA, editorB] = await getEditors()
     const startSelectionA = {
-      anchor: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 5},
-      focus: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 5},
+      anchor: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 5,
+      },
+      focus: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 5,
+      },
       backward: false,
     }
     await editorA.setSelection(startSelectionA)
     const startSelectionB = {
-      anchor: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 11},
-      focus: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 11},
+      anchor: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 11,
+      },
+      focus: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 11,
+      },
       backward: false,
     }
     await editorB.setSelection(startSelectionB)
@@ -695,14 +778,26 @@ describe('undo/redo', () => {
     await setDocumentValue(val)
     const [editorA, editorB] = await getEditors()
     const startSelectionA = {
-      anchor: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 5},
-      focus: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 5},
+      anchor: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 5,
+      },
+      focus: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 5,
+      },
       backward: false,
     }
     await editorA.setSelection(startSelectionA)
     const startSelectionB = {
-      anchor: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 11},
-      focus: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 11},
+      anchor: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 11,
+      },
+      focus: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 11,
+      },
       backward: false,
     }
     await editorB.setSelection(startSelectionB)
@@ -861,14 +956,26 @@ describe('undo/redo', () => {
     await setDocumentValue(val)
     const [editorA, editorB] = await getEditors()
     const startSelectionA = {
-      anchor: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 1},
-      focus: {path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}], offset: 1},
+      anchor: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: 'randomKey0'}, 'children', {_key: 'randomKey1'}],
+        offset: 1,
+      },
       backward: false,
     }
     await editorA.setSelection(startSelectionA)
     const startSelectionB = {
-      anchor: {path: [{_key: 'randomKey2'}, 'children', {_key: 'randomKey3'}], offset: 1},
-      focus: {path: [{_key: 'randomKey2'}, 'children', {_key: 'randomKey3'}], offset: 1},
+      anchor: {
+        path: [{_key: 'randomKey2'}, 'children', {_key: 'randomKey3'}],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: 'randomKey2'}, 'children', {_key: 'randomKey3'}],
+        offset: 1,
+      },
       backward: false,
     }
     await editorB.setSelection(startSelectionB)
@@ -1070,8 +1177,14 @@ describe('undo/redo', () => {
 
       // Editor A sets selection at start of span, and prepends "Paragraph 1: "
       const desiredSelectionA = {
-        anchor: {path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}], offset: 0},
-        focus: {path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}], offset: 0},
+        anchor: {
+          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
+          offset: 0,
+        },
         backward: false,
       }
       const p1Prefix = 'Paragraph 1: '
@@ -1086,17 +1199,29 @@ describe('undo/redo', () => {
       const p1Suffix = ' (end of paragraph 1)'
       const p1SuffixOffset = prefixedValue.indexOf('\n\n')
       await editorB.setSelection({
-        anchor: {path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}], offset: p1SuffixOffset},
-        focus: {path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}], offset: p1SuffixOffset},
+        anchor: {
+          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
+          offset: p1SuffixOffset,
+        },
+        focus: {
+          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
+          offset: p1SuffixOffset,
+        },
       })
       await editorB.insertText(p1Suffix)
 
       // Editors should be in sync
-      let [valA, valB] = await Promise.all([editorA.getValue(), editorB.getValue()])
+      let [valA, valB] = await Promise.all([
+        editorA.getValue(),
+        editorB.getValue(),
+      ])
       expect(valA).toEqual(valB)
 
       // Should have the prefix from editor A, and the new suffix from editor B
-      const expectedPreAndPostfixedValue = prefixedValue.replace(/\n\n/, `${p1Suffix}\n\n`)
+      const expectedPreAndPostfixedValue = prefixedValue.replace(
+        /\n\n/,
+        `${p1Suffix}\n\n`,
+      )
       expect(toPlainText(valA || [])).toBe(expectedPreAndPostfixedValue)
 
       // Editor A moves to the end of the editor and adds a final `. EOL.` - eg "end of line"
@@ -1119,7 +1244,9 @@ describe('undo/redo', () => {
       expect(valA).toEqual(valB)
 
       // And they should have the full, expected value
-      expect(toPlainText(valB || [])).toBe(`${expectedPreAndPostfixedValue}${p2EOL}`)
+      expect(toPlainText(valB || [])).toBe(
+        `${expectedPreAndPostfixedValue}${p2EOL}`,
+      )
 
       // Editor A undos their last edit (removes `. EOL.` suffix)
       await editorA.undo()
@@ -1157,8 +1284,14 @@ describe('undo/redo', () => {
 
       // Editor A sets selection at start of span, and prepends "Paragraph 1: "
       const desiredSelectionA = {
-        anchor: {path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}], offset: 0},
-        focus: {path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}], offset: 0},
+        anchor: {
+          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
+          offset: 0,
+        },
         backward: false,
       }
       const p1Prefix = 'Paragraph 1: '
@@ -1173,17 +1306,29 @@ describe('undo/redo', () => {
       const p1Suffix = ' (end of paragraph 1)'
       const p1SuffixOffset = prefixedValue.indexOf('\n\n')
       await editorB.setSelection({
-        anchor: {path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}], offset: p1SuffixOffset},
-        focus: {path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}], offset: p1SuffixOffset},
+        anchor: {
+          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
+          offset: p1SuffixOffset,
+        },
+        focus: {
+          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
+          offset: p1SuffixOffset,
+        },
       })
       await editorB.insertText(p1Suffix)
 
       // Editors should be in sync
-      let [valA, valB] = await Promise.all([editorA.getValue(), editorB.getValue()])
+      let [valA, valB] = await Promise.all([
+        editorA.getValue(),
+        editorB.getValue(),
+      ])
       expect(valA).toEqual(valB)
 
       // Should have the prefix from editor A, and the new suffix from editor B
-      const expectedPreAndPostfixedValue = prefixedValue.replace(/\n\n/, `${p1Suffix}\n\n`)
+      const expectedPreAndPostfixedValue = prefixedValue.replace(
+        /\n\n/,
+        `${p1Suffix}\n\n`,
+      )
       expect(toPlainText(valA || [])).toBe(expectedPreAndPostfixedValue)
 
       // Editor A moves to the end of the editor and adds a final `. EOL.` - eg "end of line"
@@ -1206,7 +1351,9 @@ describe('undo/redo', () => {
       expect(valA).toEqual(valB)
 
       // And they should have the full, expected value
-      expect(toPlainText(valB || [])).toBe(`${expectedPreAndPostfixedValue}${p2EOL}`)
+      expect(toPlainText(valB || [])).toBe(
+        `${expectedPreAndPostfixedValue}${p2EOL}`,
+      )
 
       // Editor A undos their last edit (removes `. EOL.` suffix)
       await editorA.undo()
@@ -1223,7 +1370,10 @@ describe('undo/redo', () => {
       // The opposite case is handled in test above ("reverse order")
       await editorA.undo()
 
-      const expectedEditorARollback = initialKanji.replace(/\n\n/, `${p1Suffix}\n\n`)
+      const expectedEditorARollback = initialKanji.replace(
+        /\n\n/,
+        `${p1Suffix}\n\n`,
+      )
       valA = await editorA.getValue()
       valB = await editorB.getValue()
       expect(valA).toEqual(valB)
@@ -1254,8 +1404,14 @@ describe('undo/redo', () => {
       // Editor A sets selection at end of the text (after the character `!`), and removes it
       const charOffset = initialText.indexOf('!') + 1
       const desiredSelectionA = {
-        anchor: {path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}], offset: charOffset},
-        focus: {path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}], offset: charOffset},
+        anchor: {
+          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
+          offset: charOffset,
+        },
+        focus: {
+          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
+          offset: charOffset,
+        },
         backward: false,
       }
       await editorA.setSelection(desiredSelectionA)
@@ -1263,13 +1419,21 @@ describe('undo/redo', () => {
 
       // Sanity-test for edit
       const expectedEditedText = initialText.slice(0, -1)
-      expect(toPlainText((await editorA.getValue()) || [])).toBe(expectedEditedText)
+      expect(toPlainText((await editorA.getValue()) || [])).toBe(
+        expectedEditedText,
+      )
       expect(await editorB.getValue()).toEqual(await editorA.getValue())
 
       // Editor B adds some new text in the middle of the span (after `🌌. `)
       await editorB.setSelection({
-        anchor: {path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}], offset: 127},
-        focus: {path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}], offset: 127},
+        anchor: {
+          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
+          offset: 127,
+        },
+        focus: {
+          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
+          offset: 127,
+        },
       })
 
       await editorB.insertText(middle)
@@ -1281,7 +1445,9 @@ describe('undo/redo', () => {
 
       // Should have the untouched start of the story, the newly inserted middle, and the edit removing the trailing `!`
       const expectedEditedEnd = end.slice(0, -1)
-      expect(toPlainText(valA || [])).toBe(`${beginning}${middle}${expectedEditedEnd}`)
+      expect(toPlainText(valA || [])).toBe(
+        `${beginning}${middle}${expectedEditedEnd}`,
+      )
 
       // Editor A undos their edit (`reading material` => `reading material!`)
       await editorA.undo()
@@ -1309,8 +1475,14 @@ describe('undo/redo', () => {
       // Editor A sets selection at end of the second paragraph (after the character `!`), and removes it
       const charOffset = initialText.indexOf('!') + 1
       const desiredSelectionA = {
-        anchor: {path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}], offset: charOffset},
-        focus: {path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}], offset: charOffset},
+        anchor: {
+          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
+          offset: charOffset,
+        },
+        focus: {
+          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
+          offset: charOffset,
+        },
         backward: false,
       }
       await editorA.setSelection(desiredSelectionA)
@@ -1318,15 +1490,23 @@ describe('undo/redo', () => {
 
       // Sanity-test for edit
       const expectedEditedText = initialText.replace(/!/g, '')
-      expect(toPlainText((await editorA.getValue()) || [])).toBe(expectedEditedText)
+      expect(toPlainText((await editorA.getValue()) || [])).toBe(
+        expectedEditedText,
+      )
       expect(await editorB.getValue()).toEqual(await editorA.getValue())
 
       // Editor B adds a new paragraph (_within same block_) to the start of the editor
       const newPrefix =
         'A curious 🦊 named Felix lived in the 🪄🌲 of Willowwood. One day, he discovered a mysterious 🕳️, which lead to a magical 🌌.\n\n'
       await editorB.setSelection({
-        anchor: {path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}], offset: 0},
-        focus: {path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}], offset: 0},
+        anchor: {
+          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
+          offset: 0,
+        },
       })
       await editorB.insertText(newPrefix)
 
@@ -1364,8 +1544,14 @@ describe('undo/redo', () => {
       // Editor A sets selection at end of the second paragraph (after the number `1`), and removes it
       const charOffset = initialText.indexOf('1') + 1
       const desiredSelectionA = {
-        anchor: {path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}], offset: charOffset},
-        focus: {path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}], offset: charOffset},
+        anchor: {
+          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
+          offset: charOffset,
+        },
+        focus: {
+          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
+          offset: charOffset,
+        },
         backward: false,
       }
       await editorA.setSelection(desiredSelectionA)
@@ -1373,15 +1559,23 @@ describe('undo/redo', () => {
 
       // Sanity-test for edit
       const expectedEditedText = initialText.replace(/数1/g, '数')
-      expect(toPlainText((await editorA.getValue()) || [])).toBe(expectedEditedText)
+      expect(toPlainText((await editorA.getValue()) || [])).toBe(
+        expectedEditedText,
+      )
       expect(await editorB.getValue()).toEqual(await editorA.getValue())
 
       // Editor B adds a new paragraph (_within same block_) to the start of the editor
       const newPrefix =
         '彼の背後で、領主のリングメイルの柔らかい金属の滑り音、葉のカサカサ音、そして伸びた枝が彼の長剣を掴み、華麗なクロテンのマントを引っ張りながら呪いの言葉をつぶやくのが聞こえた。\n\n'
       await editorB.setSelection({
-        anchor: {path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}], offset: 0},
-        focus: {path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}], offset: 0},
+        anchor: {
+          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
+          offset: 0,
+        },
       })
       await editorB.insertText(newPrefix)
 

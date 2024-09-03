@@ -7,7 +7,10 @@ import {
   type PortableTextTextBlock,
 } from '@sanity/types'
 import {Transforms, type Element} from 'slate'
-import {type PortableTextMemberSchemaTypes, type PortableTextSlateEditor} from '../../types/editor'
+import {
+  type PortableTextMemberSchemaTypes,
+  type PortableTextSlateEditor,
+} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 
 const debug = debugWithName('plugin:withSchemaTypes')
@@ -22,21 +25,31 @@ export function createWithSchemaTypes({
   schemaTypes: PortableTextMemberSchemaTypes
   keyGenerator: () => string
 }) {
-  return function withSchemaTypes(editor: PortableTextSlateEditor): PortableTextSlateEditor {
+  return function withSchemaTypes(
+    editor: PortableTextSlateEditor,
+  ): PortableTextSlateEditor {
     editor.isTextBlock = (value: unknown): value is PortableTextTextBlock => {
-      return isPortableTextTextBlock(value) && value._type === schemaTypes.block.name
+      return (
+        isPortableTextTextBlock(value) && value._type === schemaTypes.block.name
+      )
     }
     editor.isTextSpan = (value: unknown): value is PortableTextSpan => {
       return isPortableTextSpan(value) && value._type == schemaTypes.span.name
     }
     editor.isListBlock = (value: unknown): value is PortableTextListBlock => {
-      return isPortableTextListBlock(value) && value._type === schemaTypes.block.name
+      return (
+        isPortableTextListBlock(value) && value._type === schemaTypes.block.name
+      )
     }
     editor.isVoid = (element: Element): boolean => {
       return (
         schemaTypes.block.name !== element._type &&
-        (schemaTypes.blockObjects.map((obj) => obj.name).includes(element._type) ||
-          schemaTypes.inlineObjects.map((obj) => obj.name).includes(element._type))
+        (schemaTypes.blockObjects
+          .map((obj) => obj.name)
+          .includes(element._type) ||
+          schemaTypes.inlineObjects
+            .map((obj) => obj.name)
+            .includes(element._type))
       )
     }
     editor.isInline = (element: Element): boolean => {
@@ -58,7 +71,11 @@ export function createWithSchemaTypes({
         debug('Setting span type on text node without a type')
         const span = node as PortableTextSpan
         const key = span._key || keyGenerator()
-        Transforms.setNodes(editor, {...span, _type: schemaTypes.span.name, _key: key}, {at: path})
+        Transforms.setNodes(
+          editor,
+          {...span, _type: schemaTypes.span.name, _key: key},
+          {at: path},
+        )
       }
 
       // catches cases when the children are missing keys but excludes it when the normalize is running the node as the editor object

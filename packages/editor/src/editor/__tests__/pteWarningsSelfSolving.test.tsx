@@ -34,7 +34,10 @@ describe('when PTE would display warnings, instead it self solves', () => {
       />,
     )
     await waitFor(() => {
-      expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+      expect(onChange).toHaveBeenCalledWith({
+        type: 'value',
+        value: initialValue,
+      })
       expect(onChange).toHaveBeenCalledWith({type: 'ready'})
     })
     await waitFor(() => {
@@ -87,7 +90,10 @@ describe('when PTE would display warnings, instead it self solves', () => {
       />,
     )
     await waitFor(() => {
-      expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+      expect(onChange).toHaveBeenCalledWith({
+        type: 'value',
+        value: initialValue,
+      })
       expect(onChange).toHaveBeenCalledWith({type: 'ready'})
     })
     await waitFor(() => {
@@ -140,7 +146,10 @@ describe('when PTE would display warnings, instead it self solves', () => {
       />,
     )
     await waitFor(() => {
-      expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+      expect(onChange).toHaveBeenCalledWith({
+        type: 'value',
+        value: initialValue,
+      })
       expect(onChange).toHaveBeenCalledWith({type: 'ready'})
     })
     await waitFor(() => {
@@ -209,7 +218,10 @@ describe('when PTE would display warnings, instead it self solves', () => {
       />,
     )
     await waitFor(() => {
-      expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+      expect(onChange).toHaveBeenCalledWith({
+        type: 'value',
+        value: initialValue,
+      })
       expect(onChange).toHaveBeenCalledWith({type: 'ready'})
     })
     await waitFor(() => {
@@ -270,7 +282,10 @@ describe('when PTE would display warnings, instead it self solves', () => {
       />,
     )
     await waitFor(() => {
-      expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+      expect(onChange).toHaveBeenCalledWith({
+        type: 'value',
+        value: initialValue,
+      })
       expect(onChange).toHaveBeenCalledWith({type: 'ready'})
     })
     await waitFor(() => {
@@ -324,7 +339,10 @@ describe('when PTE would display warnings, instead it self solves', () => {
       />,
     )
     await waitFor(() => {
-      expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+      expect(onChange).toHaveBeenCalledWith({
+        type: 'value',
+        value: initialValue,
+      })
       expect(onChange).toHaveBeenCalledWith({type: 'ready'})
     })
     await waitFor(() => {
@@ -363,7 +381,10 @@ describe('when PTE would display warnings, instead it self solves', () => {
       />,
     )
     await waitFor(() => {
-      expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+      expect(onChange).toHaveBeenCalledWith({
+        type: 'value',
+        value: initialValue,
+      })
       expect(onChange).toHaveBeenCalledWith({type: 'ready'})
     })
     await waitFor(() => {
@@ -381,7 +402,10 @@ describe('when PTE would display warnings, instead it self solves', () => {
       }
     })
     await waitFor(() => {
-      expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+      expect(onChange).toHaveBeenCalledWith({
+        type: 'value',
+        value: initialValue,
+      })
       expect(onChange).toHaveBeenCalledWith({type: 'ready'})
     })
   })

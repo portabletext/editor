@@ -1,7 +1,16 @@
 import {isKeySegment, type Path} from '@sanity/types'
 import {isEqual} from 'lodash'
-import {Editor, Element, type Descendant, type Point, type Path as SlatePath} from 'slate'
-import {type EditorSelectionPoint, type PortableTextMemberSchemaTypes} from '../types/editor'
+import {
+  Editor,
+  Element,
+  type Descendant,
+  type Point,
+  type Path as SlatePath,
+} from 'slate'
+import {
+  type EditorSelectionPoint,
+  type PortableTextMemberSchemaTypes,
+} from '../types/editor'
 import {type ObjectWithKeyAndType} from './ranges'
 
 export function createKeyedPath(
@@ -27,17 +36,24 @@ export function createKeyedPath(
   if (child) {
     keyedChildPath = ['children', {_key: child._key}]
   }
-  return (keyedChildPath ? [...keyedBlockPath, ...keyedChildPath] : keyedBlockPath) as Path
+  return (
+    keyedChildPath ? [...keyedBlockPath, ...keyedChildPath] : keyedBlockPath
+  ) as Path
 }
 
-export function createArrayedPath(point: EditorSelectionPoint, editor: Editor): SlatePath {
+export function createArrayedPath(
+  point: EditorSelectionPoint,
+  editor: Editor,
+): SlatePath {
   if (!editor) {
     return []
   }
   const [block, blockPath] = Array.from(
     Editor.nodes(editor, {
       at: [],
-      match: (n) => isKeySegment(point.path[0]) && (n as Descendant)._key === point.path[0]._key,
+      match: (n) =>
+        isKeySegment(point.path[0]) &&
+        (n as Descendant)._key === point.path[0]._key,
     }),
   )[0] || [undefined, undefined]
   if (!block || !Element.isElement(block)) {
@@ -47,7 +63,9 @@ export function createArrayedPath(point: EditorSelectionPoint, editor: Editor): 
     return [blockPath[0], 0]
   }
   const childPath = [point.path[2]]
-  const childIndex = block.children.findIndex((child) => isEqual([{_key: child._key}], childPath))
+  const childIndex = block.children.findIndex((child) =>
+    isEqual([{_key: child._key}], childPath),
+  )
   if (childIndex >= 0 && block.children[childIndex]) {
     const child = block.children[childIndex]
     if (Element.isElement(child) && editor.isVoid(child)) {

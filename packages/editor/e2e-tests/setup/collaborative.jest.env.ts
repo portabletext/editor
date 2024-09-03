@@ -50,7 +50,10 @@ export default class CollaborationEnvironment extends NodeEnvironment {
   //   await super.teardown()
   // }
 
-  public async handleTestEvent(event: {name: string; test?: Circus.TestEntry}): Promise<void> {
+  public async handleTestEvent(event: {
+    name: string
+    test?: Circus.TestEntry
+  }): Promise<void> {
     if (event.name === 'run_start') {
       await this._setupInstance()
     }
@@ -105,19 +108,29 @@ export default class CollaborationEnvironment extends NodeEnvironment {
       }, DEBUG)
       this._pageA.on('console', (message) =>
         // eslint-disable-next-line no-console
-        console.log(`A:${message.type().slice(0, 3).toUpperCase()} ${message.text()}`),
+        console.log(
+          `A:${message.type().slice(0, 3).toUpperCase()} ${message.text()}`,
+        ),
       )
       this._pageB.on('console', (message) =>
         // eslint-disable-next-line no-console
-        console.log(`B:${message.type().slice(0, 3).toUpperCase()} ${message.text()}`),
+        console.log(
+          `B:${message.type().slice(0, 3).toUpperCase()} ${message.text()}`,
+        ),
       )
     }
     this._pageA.on('pageerror', (error) => {
-      console.error(`Editor A crashed${this._scenario ? ` (${this._scenario})` : ''}`, error)
+      console.error(
+        `Editor A crashed${this._scenario ? ` (${this._scenario})` : ''}`,
+        error,
+      )
       throw error
     })
     this._pageB.on('pageerror', (error) => {
-      console.error(`Editor B crashed${this._scenario ? ` (${this._scenario})` : ''}`, error)
+      console.error(
+        `Editor B crashed${this._scenario ? ` (${this._scenario})` : ''}`,
+        error,
+      )
       throw error
     })
 
@@ -125,7 +138,10 @@ export default class CollaborationEnvironment extends NodeEnvironment {
       value: PortableTextBlock[] | undefined,
     ): Promise<void> => {
       const revId = (Math.random() + 1).toString(36).slice(7)
-      ipc.of.socketServer.emit('payload', JSON.stringify({type: 'value', value, testId, revId}))
+      ipc.of.socketServer.emit(
+        'payload',
+        JSON.stringify({type: 'value', value, testId, revId}),
+      )
       await this._pageA?.waitForSelector(`code[data-rev-id="${revId}"]`, {
         timeout: REVISION_TIMEOUT_MS,
       })
@@ -138,10 +154,14 @@ export default class CollaborationEnvironment extends NodeEnvironment {
       const pageARevIdHandle = await this._pageA?.waitForSelector('#pte-revId')
       const pageBRevIdHandle = await this._pageB?.waitForSelector('#pte-revId')
       const pageACurrentRevId = await pageARevIdHandle!.evaluate((node) =>
-        node instanceof HTMLElement && node.innerText ? JSON.parse(node.innerText)?.revId : null,
+        node instanceof HTMLElement && node.innerText
+          ? JSON.parse(node.innerText)?.revId
+          : null,
       )
       const pageBCurrentRevId = await pageBRevIdHandle!.evaluate((node) =>
-        node instanceof HTMLElement && node.innerText ? JSON.parse(node.innerText)?.revId : null,
+        node instanceof HTMLElement && node.innerText
+          ? JSON.parse(node.innerText)?.revId
+          : null,
       )
       const pageARevIdChanged = () =>
         this._pageA?.waitForSelector(
@@ -194,11 +214,18 @@ export default class CollaborationEnvironment extends NodeEnvironment {
             page.waitForSelector('[data-testid="button-insert-stock-ticker"]'),
           ])
 
-          if (!editableHandle || !selectionHandle || !valueHandle || !revIdHandle) {
+          if (
+            !editableHandle ||
+            !selectionHandle ||
+            !valueHandle ||
+            !revIdHandle
+          ) {
             throw new Error('Failed to find required editor elements')
           }
 
-          const waitForRevision = async (mutatingFunction?: () => Promise<void>) => {
+          const waitForRevision = async (
+            mutatingFunction?: () => Promise<void>,
+          ) => {
             if (mutatingFunction) {
               const currentRevId = await revIdHandle.evaluate((node) =>
                 node instanceof HTMLElement && node.innerText
@@ -206,35 +233,46 @@ export default class CollaborationEnvironment extends NodeEnvironment {
                   : null,
               )
               await mutatingFunction()
-              await page.waitForSelector(`code[data-rev-id]:not([data-rev-id='${currentRevId}'])`, {
-                timeout: REVISION_TIMEOUT_MS,
-              })
+              await page.waitForSelector(
+                `code[data-rev-id]:not([data-rev-id='${currentRevId}'])`,
+                {
+                  timeout: REVISION_TIMEOUT_MS,
+                },
+              )
             }
           }
 
           const getSelection = async (): Promise<EditorSelection | null> => {
             const selection = await selectionHandle.evaluate((node) =>
-              node instanceof HTMLElement && node.innerText ? JSON.parse(node.innerText) : null,
+              node instanceof HTMLElement && node.innerText
+                ? JSON.parse(node.innerText)
+                : null,
             )
             return selection
           }
-          const waitForNewSelection = async (selectionChangeFn: () => Promise<void>) => {
+          const waitForNewSelection = async (
+            selectionChangeFn: () => Promise<void>,
+          ) => {
             const oldSelection = await getSelection()
             const dataVal = oldSelection ? JSON.stringify(oldSelection) : 'null'
             await selectionChangeFn()
-            await page.waitForSelector(`code[data-selection]:not([data-selection='${dataVal}'])`, {
-              timeout: SELECTION_TIMEOUT_MS,
-            })
+            await page.waitForSelector(
+              `code[data-selection]:not([data-selection='${dataVal}'])`,
+              {
+                timeout: SELECTION_TIMEOUT_MS,
+              },
+            )
           }
 
           const waitForSelection = async (selection: EditorSelection) => {
             if (selection && typeof selection.backward === 'undefined') {
               selection.backward = false
             }
-            const value = await valueHandle.evaluate((node): PortableTextBlock[] | undefined =>
-              node instanceof HTMLElement && node.innerText
-                ? JSON.parse(node.innerText)
-                : undefined,
+            const value = await valueHandle.evaluate(
+              (node): PortableTextBlock[] | undefined =>
+                node instanceof HTMLElement && node.innerText
+                  ? JSON.parse(node.innerText)
+                  : undefined,
             )
             const normalized = normalizeSelection(selection, value)
             const dataVal = JSON.stringify(normalized)
@@ -321,13 +359,21 @@ export default class CollaborationEnvironment extends NodeEnvironment {
                 }
 
                 if (buttonName === 'insert-stock-ticker') {
-                  return insertStockTickerButtonHandle.click({clickCount: times})
+                  return insertStockTickerButtonHandle.click({
+                    clickCount: times,
+                  })
                 }
 
-                return Promise.reject(new Error(`Button ${buttonName} not accounted for`))
+                return Promise.reject(
+                  new Error(`Button ${buttonName} not accounted for`),
+                )
               })
             },
-            pressKey: async (keyName: string, times?: number, intent?: 'navigation') => {
+            pressKey: async (
+              keyName: string,
+              times?: number,
+              intent?: 'navigation',
+            ) => {
               const pressKey = async () => {
                 await editableHandle.press(keyName)
               }
@@ -377,14 +423,23 @@ export default class CollaborationEnvironment extends NodeEnvironment {
                   return toggleLinkButtonHandle.click()
                 }
 
-                return Promise.reject(new Error(`Annotation ${annotation} not accounted for`))
+                return Promise.reject(
+                  new Error(`Annotation ${annotation} not accounted for`),
+                )
               })
             },
             toggleDecoratorUsingKeyboard: async (decorator) => {
               const selection = await selectionHandle.evaluate((node) =>
-                node instanceof HTMLElement && node.innerText ? JSON.parse(node.innerText) : null,
+                node instanceof HTMLElement && node.innerText
+                  ? JSON.parse(node.innerText)
+                  : null,
               )
-              const hotkey = decorator === 'strong' ? 'b' : decorator === 'em' ? 'i' : undefined
+              const hotkey =
+                decorator === 'strong'
+                  ? 'b'
+                  : decorator === 'em'
+                    ? 'i'
+                    : undefined
 
               const performShortcut = hotkey
                 ? async () => {
@@ -393,7 +448,10 @@ export default class CollaborationEnvironment extends NodeEnvironment {
                     await page.keyboard.up(hotkey)
                     await page.keyboard.up(metaKey)
                   }
-                : () => Promise.reject(new Error(`Decorator ${decorator} not accounted for`))
+                : () =>
+                    Promise.reject(
+                      new Error(`Decorator ${decorator} not accounted for`),
+                    )
 
               if (selection && isEqual(selection.focus, selection.anchor)) {
                 return performShortcut()
@@ -420,10 +478,11 @@ export default class CollaborationEnvironment extends NodeEnvironment {
               await waitForSelection(selection)
             },
             async getValue(): Promise<PortableTextBlock[] | undefined> {
-              const value = await valueHandle.evaluate((node): PortableTextBlock[] | undefined =>
-                node instanceof HTMLElement && node.innerText
-                  ? JSON.parse(node.innerText)
-                  : undefined,
+              const value = await valueHandle.evaluate(
+                (node): PortableTextBlock[] | undefined =>
+                  node instanceof HTMLElement && node.innerText
+                    ? JSON.parse(node.innerText)
+                    : undefined,
               )
               return value
             },
@@ -434,11 +493,17 @@ export default class CollaborationEnvironment extends NodeEnvironment {
       )
 
     // Open up the test documents
-    await this._pageA?.goto(`${WEB_SERVER_ROOT_URL}?editorId=A${testId}&testId=${testId}`, {
-      waitUntil: 'load',
-    })
-    await this._pageB?.goto(`${WEB_SERVER_ROOT_URL}?editorId=B${testId}&testId=${testId}`, {
-      waitUntil: 'load',
-    })
+    await this._pageA?.goto(
+      `${WEB_SERVER_ROOT_URL}?editorId=A${testId}&testId=${testId}`,
+      {
+        waitUntil: 'load',
+      },
+    )
+    await this._pageB?.goto(
+      `${WEB_SERVER_ROOT_URL}?editorId=B${testId}&testId=${testId}`,
+      {
+        waitUntil: 'load',
+      },
+    )
   }
 }

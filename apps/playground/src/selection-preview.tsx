@@ -6,11 +6,16 @@ import {higlightMachine} from './highlight-json-machine'
 import {EditorActorRef} from './playground-machine'
 
 export function SelectionPreview(props: {editorId: EditorActorRef['id']}) {
-  const highlightSelectionActor = useActorRef(higlightMachine, {input: {code: ''}})
+  const highlightSelectionActor = useActorRef(higlightMachine, {
+    input: {code: ''},
+  })
   const selection = usePortableTextEditorSelection()
 
   useEffect(() => {
-    highlightSelectionActor.send({type: 'update code', code: JSON.stringify(selection)})
+    highlightSelectionActor.send({
+      type: 'update code',
+      code: JSON.stringify(selection),
+    })
   }, [highlightSelectionActor, selection])
 
   const highlightedSelection = useSelector(

@@ -13,7 +13,9 @@ const portableTextFeatures = getPortableTextMemberSchemaTypes(schemaType)
 const operationToPatches = createOperationToPatches(portableTextFeatures)
 
 const {editor} = withPlugins(createEditor(), {
-  portableTextEditor: new PortableTextEditor({schemaType} as PortableTextEditorProps),
+  portableTextEditor: new PortableTextEditor({
+    schemaType,
+  } as PortableTextEditorProps),
   keyGenerator: defaultKeyGenerator,
   readOnly: false,
 })

@@ -6,7 +6,11 @@ import {useServerInsertedHTML} from 'next/navigation'
 import {useState, useSyncExternalStore} from 'react'
 import {ServerStyleSheet, StyleSheetManager} from 'styled-components'
 
-export function StyledComponentsRegistry({children}: {children: React.ReactNode}): JSX.Element {
+export function StyledComponentsRegistry({
+  children,
+}: {
+  children: React.ReactNode
+}): JSX.Element {
   const isMounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
@@ -25,7 +29,9 @@ export function StyledComponentsRegistry({children}: {children: React.ReactNode}
   if (isMounted) return <>{children}</>
 
   return (
-    <StyleSheetManager sheet={styledComponentsStyleSheet.instance}>{children}</StyleSheetManager>
+    <StyleSheetManager sheet={styledComponentsStyleSheet.instance}>
+      {children}
+    </StyleSheetManager>
   )
 }
 

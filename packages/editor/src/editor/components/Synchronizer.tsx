@@ -60,7 +60,11 @@ export function Synchronizer(props: SynchronizerProps) {
         debug(`Patches:\n${JSON.stringify(pendingPatches.current, null, 2)}`)
       }
       const snapshot = getValue()
-      change$.next({type: 'mutation', patches: pendingPatches.current, snapshot})
+      change$.next({
+        type: 'mutation',
+        patches: pendingPatches.current,
+        snapshot,
+      })
       pendingPatches.current = []
     }
     IS_PROCESSING_LOCAL_CHANGES.set(slateEditor, false)

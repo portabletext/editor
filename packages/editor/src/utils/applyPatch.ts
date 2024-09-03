@@ -23,8 +23,18 @@ import {
   type PortableTextBlock,
   type PortableTextChild,
 } from '@sanity/types'
-import {Element, Text, Transforms, type Descendant, type Node, type Path as SlatePath} from 'slate'
-import {type PortableTextMemberSchemaTypes, type PortableTextSlateEditor} from '../types/editor'
+import {
+  Element,
+  Text,
+  Transforms,
+  type Descendant,
+  type Node,
+  type Path as SlatePath,
+} from 'slate'
+import {
+  type PortableTextMemberSchemaTypes,
+  type PortableTextSlateEditor,
+} from '../types/editor'
 import {debugWithName} from './debug'
 import {toSlateValue} from './values'
 import {KEY_TO_SLATE_ELEMENT} from './weakMaps'
@@ -45,7 +55,9 @@ export function createApplyPatch(
 
     // Save some CPU cycles by not stringifying unless enabled
     if (debugVerbose) {
-      debug('\n\nNEW PATCH =============================================================')
+      debug(
+        '\n\nNEW PATCH =============================================================',
+      )
       debug(JSON.stringify(patch, null, 2))
     }
 
@@ -90,7 +102,10 @@ export function diffMatchPatch(
   >,
   patch: DiffMatchPatch,
 ): boolean {
-  const {block, child, childPath} = findBlockAndChildFromPath(editor, patch.path)
+  const {block, child, childPath} = findBlockAndChildFromPath(
+    editor,
+    patch.path,
+  )
   if (!block) {
     debug('Block not found')
     return false
@@ -111,7 +126,9 @@ export function diffMatchPatch(
   }
 
   const patches = parsePatch(patch.value)
-  const [newValue] = diffMatchPatchApplyPatches(patches, child.text, {allowExceedingIndices: true})
+  const [newValue] = diffMatchPatchApplyPatches(patches, child.text, {
+    allowExceedingIndices: true,
+  })
   const diff = cleanupEfficiency(makeDiff(child.text, newValue), 5)
 
   debugState(editor, 'before')
@@ -159,7 +176,8 @@ function insertPatch(
       KEY_TO_SLATE_ELEMENT.get(editor),
     ) as Descendant[]
     const targetBlockIndex = targetBlockPath[0]
-    const normalizedIdx = position === 'after' ? targetBlockIndex + 1 : targetBlockIndex
+    const normalizedIdx =
+      position === 'after' ? targetBlockIndex + 1 : targetBlockIndex
     debug(`Inserting blocks at path [${normalizedIdx}]`)
     debugState(editor, 'before')
     Transforms.insertNodes(editor, blocksToInsert, {at: [normalizedIdx]})
@@ -180,12 +198,15 @@ function insertPatch(
       KEY_TO_SLATE_ELEMENT.get(editor),
     )
   const targetChildIndex = targetChildPath[1]
-  const normalizedIdx = position === 'after' ? targetChildIndex + 1 : targetChildIndex
+  const normalizedIdx =
+    position === 'after' ? targetChildIndex + 1 : targetChildIndex
   const childInsertPath = [targetChildPath[0], normalizedIdx]
   debug(`Inserting children at path ${childInsertPath}`)
   debugState(editor, 'before')
   if (childrenToInsert && Element.isElement(childrenToInsert[0])) {
-    Transforms.insertNodes(editor, childrenToInsert[0].children, {at: childInsertPath})
+    Transforms.insertNodes(editor, childrenToInsert[0].children, {
+      at: childInsertPath,
+    })
   }
   debugState(editor, 'after')
   return true
@@ -197,7 +218,10 @@ function setPatch(editor: PortableTextSlateEditor, patch: SetPatch) {
     value = {}
     value[patch.path[3]] = patch.value
   }
-  const {block, blockPath, child, childPath} = findBlockAndChildFromPath(editor, patch.path)
+  const {block, blockPath, child, childPath} = findBlockAndChildFromPath(
+    editor,
+    patch.path,
+  )
 
   if (!block) {
     debug('Block not found')
@@ -286,7 +310,11 @@ function setPatch(editor: PortableTextSlateEditor, patch: SetPatch) {
   return true
 }
 
-function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch, previousPatch?: Patch) {
+function unsetPatch(
+  editor: PortableTextSlateEditor,
+  patch: UnsetPatch,
+  previousPatch?: Patch,
+) {
   // Value
   if (patch.path.length === 0) {
     debug('Removing everything')
@@ -308,7 +336,10 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch, previous
     debugState(editor, 'after')
     return true
   }
-  const {block, blockPath, child, childPath} = findBlockAndChildFromPath(editor, patch.path)
+  const {block, blockPath, child, childPath} = findBlockAndChildFromPath(
+    editor,
+    patch.path,
+  )
 
   // Single blocks
   if (patch.path.length === 1) {
@@ -326,7 +357,11 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch, previous
   }
 
   // Unset on text block children
-  if (editor.isTextBlock(block) && patch.path[1] === 'children' && patch.path.length === 3) {
+  if (
+    editor.isTextBlock(block) &&
+    patch.path[1] === 'children' &&
+    patch.path.length === 3
+  ) {
     if (!child || !childPath) {
       debug('Child not found')
       return false
@@ -348,7 +383,10 @@ function isKeyedSegment(segment: PathSegment): segment is KeyedSegment {
 }
 
 function debugState(
-  editor: Pick<PortableTextSlateEditor, 'children' | 'isTextBlock' | 'apply' | 'selection'>,
+  editor: Pick<
+    PortableTextSlateEditor,
+    'children' | 'isTextBlock' | 'apply' | 'selection'
+  >,
   stateName: string,
 ) {
   if (!debugVerbose) {
@@ -368,7 +406,9 @@ function findBlockFromPath(
 ): {block?: Descendant; path?: SlatePath} {
   let blockIndex = -1
   const block = editor.children.find((node: Descendant, index: number) => {
-    const isMatch = isKeyedSegment(path[0]) ? node._key === path[0]._key : index === path[0]
+    const isMatch = isKeyedSegment(path[0])
+      ? node._key === path[0]._key
+      : index === path[0]
     if (isMatch) {
       blockIndex = index
     }
@@ -386,14 +426,21 @@ function findBlockAndChildFromPath(
     'children' | 'isTextBlock' | 'apply' | 'selection' | 'onChange'
   >,
   path: Path,
-): {child?: Descendant; childPath?: SlatePath; block?: Descendant; blockPath?: SlatePath} {
+): {
+  child?: Descendant
+  childPath?: SlatePath
+  block?: Descendant
+  blockPath?: SlatePath
+} {
   const {block, path: blockPath} = findBlockFromPath(editor, path)
   if (!(Element.isElement(block) && path[1] === 'children')) {
     return {block, blockPath, child: undefined, childPath: undefined}
   }
   let childIndex = -1
   const child = block.children.find((node, index: number) => {
-    const isMatch = isKeyedSegment(path[2]) ? node._key === path[2]._key : index === path[2]
+    const isMatch = isKeyedSegment(path[2])
+      ? node._key === path[2]._key
+      : index === path[2]
     if (isMatch) {
       childIndex = index
     }
@@ -402,5 +449,10 @@ function findBlockAndChildFromPath(
   if (!child) {
     return {block, blockPath, child: undefined, childPath: undefined}
   }
-  return {block, child, blockPath, childPath: blockPath?.concat(childIndex) as SlatePath}
+  return {
+    block,
+    child,
+    blockPath,
+    childPath: blockPath?.concat(childIndex) as SlatePath,
+  }
 }

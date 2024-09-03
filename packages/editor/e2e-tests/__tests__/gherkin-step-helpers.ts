@@ -1,5 +1,9 @@
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
-import {type KeyedSegment, type PathSegment, type PortableTextBlock} from '@sanity/types'
+import {
+  type KeyedSegment,
+  type PathSegment,
+  type PortableTextBlock,
+} from '@sanity/types'
 import {type EditorSelection, type EditorSelectionPoint} from '../../src'
 import {type Editor} from '../setup/globals.jest'
 
@@ -59,7 +63,10 @@ export function getEditorTextMarks(editor: Editor, text: string) {
   return editor.getValue().then((value) => getTextMarks(value, text))
 }
 
-export function getTextMarks(value: Array<PortableTextBlock> | undefined, text: string) {
+export function getTextMarks(
+  value: Array<PortableTextBlock> | undefined,
+  text: string,
+) {
   if (!value) {
     return undefined
   }
@@ -80,24 +87,38 @@ export function getTextMarks(value: Array<PortableTextBlock> | undefined, text: 
   return marks
 }
 
-export function toggleAnnotation(editor: Editor, annotation: 'comment' | 'link') {
+export function toggleAnnotation(
+  editor: Editor,
+  annotation: 'comment' | 'link',
+) {
   return getNewAnnotations(editor, async () => {
     await editor.toggleAnnotation(annotation)
   })
 }
 
-export function selectEditorInlineObject(editor: Editor, inlineObjectName: string) {
+export function selectEditorInlineObject(
+  editor: Editor,
+  inlineObjectName: string,
+) {
   return editor
     .getValue()
     .then((value) => getInlineObjectSelection(value, inlineObjectName))
     .then(editor.setSelection)
 }
 
-export function selectBeforeEditorInlineObject(editor: Editor, inlineObjectName: string) {
-  return selectEditorInlineObject(editor, inlineObjectName).then(() => editor.pressKey('ArrowLeft'))
+export function selectBeforeEditorInlineObject(
+  editor: Editor,
+  inlineObjectName: string,
+) {
+  return selectEditorInlineObject(editor, inlineObjectName).then(() =>
+    editor.pressKey('ArrowLeft'),
+  )
 }
 
-export function selectAfterEditorInlineObject(editor: Editor, inlineObjectName: string) {
+export function selectAfterEditorInlineObject(
+  editor: Editor,
+  inlineObjectName: string,
+) {
   return selectEditorInlineObject(editor, inlineObjectName).then(() =>
     editor.pressKey('ArrowRight'),
   )
@@ -123,7 +144,9 @@ export function selectBeforeEditorText(editor: Editor, text: string) {
 }
 
 export function selectAfterEditorText(editor: Editor, text: string) {
-  return selectEditorText(editor, text).then(() => editor.pressKey('ArrowRight'))
+  return selectEditorText(editor, text).then(() =>
+    editor.pressKey('ArrowRight'),
+  )
 }
 
 /********************
@@ -150,7 +173,10 @@ export function getSelectionBlockKeys(selection: EditorSelection) {
     return undefined
   }
 
-  if (!isKeyedSegment(selection.anchor.path[0]) || !isKeyedSegment(selection.focus.path[0])) {
+  if (
+    !isKeyedSegment(selection.anchor.path[0]) ||
+    !isKeyedSegment(selection.focus.path[0])
+  ) {
     return undefined
   }
 
@@ -202,7 +228,9 @@ export function getSelectionText(
     return undefined
   }
 
-  const forwardSelection = selection.backward ? reverseTextSelection(selection) : selection
+  const forwardSelection = selection.backward
+    ? reverseTextSelection(selection)
+    : selection
 
   if (!forwardSelection) {
     return undefined
@@ -233,7 +261,10 @@ export function getSelectionText(
             child._key === forwardSelection.focus.path[2]['_key']
           ) {
             text.push(
-              child.text.slice(forwardSelection.anchor.offset, forwardSelection.focus.offset),
+              child.text.slice(
+                forwardSelection.anchor.offset,
+                forwardSelection.focus.offset,
+              ),
             )
             break
           }
@@ -426,7 +457,10 @@ export function stringOverlap(string: string, searchString: string) {
     const reverseSlice = string.slice(0, i)
     const reverseSliceSplit = searchString.split(reverseSlice)
 
-    if (reverseSlice !== '' && reverseSliceSplit[reverseSliceSplit.length - 1] === '') {
+    if (
+      reverseSlice !== '' &&
+      reverseSliceSplit[reverseSliceSplit.length - 1] === ''
+    ) {
       overlap = reverseSlice
       break
     }
@@ -459,7 +493,10 @@ function reverseTextSelection(selection: EditorSelection): EditorSelection {
  * Value utility functions
  ********************/
 
-export function getBlockKey(value: Array<PortableTextBlock> | undefined, text: string) {
+export function getBlockKey(
+  value: Array<PortableTextBlock> | undefined,
+  text: string,
+) {
   if (!value) {
     throw new Error(`Unable to find block key for text "${text}"`)
   }
@@ -492,7 +529,9 @@ async function getNewBlockKeys(editor: Editor, step: () => Promise<void>) {
 
   const newValue = await editor.getValue()
 
-  return getBlockKeys(newValue).filter((blockKey) => !blockKeysBefore.includes(blockKey))
+  return getBlockKeys(newValue).filter(
+    (blockKey) => !blockKeysBefore.includes(blockKey),
+  )
 }
 
 function getBlockKeys(value: Array<PortableTextBlock> | undefined) {
@@ -511,10 +550,14 @@ async function getNewAnnotations(editor: Editor, step: () => Promise<void>) {
 
   const newValue = await editor.getValue()
 
-  return getAnnotations(newValue).filter((annotation) => !annotationsBefore.includes(annotation))
+  return getAnnotations(newValue).filter(
+    (annotation) => !annotationsBefore.includes(annotation),
+  )
 }
 
-function getAnnotations(value: Array<PortableTextBlock> | undefined): Array<string> {
+function getAnnotations(
+  value: Array<PortableTextBlock> | undefined,
+): Array<string> {
   if (!value) {
     return []
   }

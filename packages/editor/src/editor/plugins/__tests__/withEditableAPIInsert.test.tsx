@@ -1,7 +1,10 @@
 import {describe, expect, it, jest} from '@jest/globals'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
-import {PortableTextEditorTester, schemaType} from '../../__tests__/PortableTextEditorTester'
+import {
+  PortableTextEditorTester,
+  schemaType,
+} from '../../__tests__/PortableTextEditorTester'
 import {PortableTextEditor} from '../../PortableTextEditor'
 
 const initialValue = [
@@ -42,8 +45,14 @@ const emptyTextBlock = [
   },
 ]
 const emptyBlockSelection = {
-  focus: {path: [{_key: 'emptyBlock'}, 'children', {_key: 'emptySpan'}], offset: 0},
-  anchor: {path: [{_key: 'emptyBlock'}, 'children', {_key: 'emptySpan'}], offset: 0},
+  focus: {
+    path: [{_key: 'emptyBlock'}, 'children', {_key: 'emptySpan'}],
+    offset: 0,
+  },
+  anchor: {
+    path: [{_key: 'emptyBlock'}, 'children', {_key: 'emptySpan'}],
+    offset: 0,
+  },
 }
 
 describe('plugin:withEditableAPI: .insertChild()', () => {
@@ -62,7 +71,10 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
 
     await waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({
+          type: 'value',
+          value: initialValue,
+        })
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })
@@ -79,7 +91,9 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
         const inlineType = editorRef.current.schemaTypes.inlineObjects.find(
           (t) => t.name === 'someObject',
         )!
-        PortableTextEditor.insertChild(editorRef.current, inlineType, {color: 'red'})
+        PortableTextEditor.insertChild(editorRef.current, inlineType, {
+          color: 'red',
+        })
       }
     })
 
@@ -117,9 +131,13 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
 
     await waitFor(() => {
       if (editorRef.current) {
-        PortableTextEditor.insertChild(editorRef.current, editorRef.current.schemaTypes.span, {
-          text: ' ',
-        })
+        PortableTextEditor.insertChild(
+          editorRef.current,
+          editorRef.current.schemaTypes.span,
+          {
+            text: ' ',
+          },
+        )
       }
     })
 
@@ -213,7 +231,9 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
           (t) => t.name === 'someObject',
         )!
 
-        PortableTextEditor.insertBlock(editorRef.current, someObject, {color: 'red'})
+        PortableTextEditor.insertBlock(editorRef.current, someObject, {
+          color: 'red',
+        })
       }
     })
 
@@ -241,7 +261,10 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
 
     await waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({
+          type: 'value',
+          value: initialValue,
+        })
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })
@@ -259,7 +282,9 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
           (t) => t.name === 'someObject',
         )!
 
-        PortableTextEditor.insertBlock(editorRef.current, someObject, {color: 'red'})
+        PortableTextEditor.insertBlock(editorRef.current, someObject, {
+          color: 'red',
+        })
       }
     })
 
@@ -288,7 +313,10 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
 
     await waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({
+          type: 'value',
+          value: initialValue,
+        })
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })
@@ -308,7 +336,9 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
         const someObject = editorRef.current.schemaTypes.inlineObjects.find(
           (t) => t.name === 'someObject',
         )!
-        PortableTextEditor.insertBlock(editorRef.current, someObject, {color: 'red'})
+        PortableTextEditor.insertBlock(editorRef.current, someObject, {
+          color: 'red',
+        })
       }
     })
 
@@ -324,7 +354,10 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
 
   it('should not add empty blank blocks: non text block', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const value = [...initialValue, {_key: 'b', _type: 'someObject', color: 'red'}]
+    const value = [
+      ...initialValue,
+      {_key: 'b', _type: 'someObject', color: 'red'},
+    ]
     const onChange = jest.fn()
 
     render(
@@ -359,7 +392,9 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
         const someObject = editorRef.current.schemaTypes.inlineObjects.find(
           (t) => t.name === 'someObject',
         )!
-        PortableTextEditor.insertBlock(editorRef.current, someObject, {color: 'yellow'})
+        PortableTextEditor.insertBlock(editorRef.current, someObject, {
+          color: 'yellow',
+        })
       }
     })
 
@@ -375,7 +410,10 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
 
   it('should not add empty blank blocks: in between blocks', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const value = [...initialValue, {_key: 'b', _type: 'someObject', color: 'red'}]
+    const value = [
+      ...initialValue,
+      {_key: 'b', _type: 'someObject', color: 'red'},
+    ]
     const onChange = jest.fn()
 
     render(
@@ -407,7 +445,9 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
         const someObject = editorRef.current.schemaTypes.inlineObjects.find(
           (t) => t.name === 'someObject',
         )!
-        PortableTextEditor.insertBlock(editorRef.current, someObject, {color: 'yellow'})
+        PortableTextEditor.insertBlock(editorRef.current, someObject, {
+          color: 'yellow',
+        })
       }
     })
 
@@ -454,7 +494,9 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
         const someObject = editorRef.current.schemaTypes.inlineObjects.find(
           (t) => t.name === 'someObject',
         )!
-        PortableTextEditor.insertBlock(editorRef.current, someObject, {color: 'yellow'})
+        PortableTextEditor.insertBlock(editorRef.current, someObject, {
+          color: 'yellow',
+        })
       }
     })
 

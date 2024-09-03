@@ -23,9 +23,16 @@ import {
 import {createApplyPatch} from '../../utils/applyPatch'
 import {debugWithName} from '../../utils/debug'
 import {fromSlateValue, isEqualToEmptyEditor} from '../../utils/values'
-import {IS_PROCESSING_REMOTE_CHANGES, KEY_TO_VALUE_ELEMENT} from '../../utils/weakMaps'
+import {
+  IS_PROCESSING_REMOTE_CHANGES,
+  KEY_TO_VALUE_ELEMENT,
+} from '../../utils/weakMaps'
 import {withRemoteChanges} from '../../utils/withChanges'
-import {isPatching, PATCHING, withoutPatching} from '../../utils/withoutPatching'
+import {
+  isPatching,
+  PATCHING,
+  withoutPatching,
+} from '../../utils/withoutPatching'
 import {withoutSaving} from './createWithUndoRedo'
 
 const debug = debugWithName('plugin:withPatches')
@@ -116,7 +123,8 @@ export function createWithPatches({
           withoutPatching(editor, () => {
             withoutSaving(editor, () => {
               patches.forEach((patch) => {
-                if (debug.enabled) debug(`Handling remote patch ${JSON.stringify(patch)}`)
+                if (debug.enabled)
+                  debug(`Handling remote patch ${JSON.stringify(patch)}`)
                 changed = applyPatch(editor, patch)
               })
             })
@@ -168,12 +176,19 @@ export function createWithPatches({
 
       if (!isPatching(editor)) {
         if (debugVerbose && debug.enabled)
-          debug(`Editor is not producing patch for operation ${operation.type}`, operation)
+          debug(
+            `Editor is not producing patch for operation ${operation.type}`,
+            operation,
+          )
         return editor
       }
 
       // If the editor was empty and now isn't, insert the placeholder into it.
-      if (editorWasEmpty && !editorIsEmpty && operation.type !== 'set_selection') {
+      if (
+        editorWasEmpty &&
+        !editorIsEmpty &&
+        operation.type !== 'set_selection'
+      ) {
         patches.push(insert(previousChildren, 'before', [0]))
       }
 
@@ -181,31 +196,51 @@ export function createWithPatches({
         case 'insert_text':
           patches = [
             ...patches,
-            ...patchFunctions.insertTextPatch(editor, operation, previousChildren),
+            ...patchFunctions.insertTextPatch(
+              editor,
+              operation,
+              previousChildren,
+            ),
           ]
           break
         case 'remove_text':
           patches = [
             ...patches,
-            ...patchFunctions.removeTextPatch(editor, operation, previousChildren),
+            ...patchFunctions.removeTextPatch(
+              editor,
+              operation,
+              previousChildren,
+            ),
           ]
           break
         case 'remove_node':
           patches = [
             ...patches,
-            ...patchFunctions.removeNodePatch(editor, operation, previousChildren),
+            ...patchFunctions.removeNodePatch(
+              editor,
+              operation,
+              previousChildren,
+            ),
           ]
           break
         case 'split_node':
           patches = [
             ...patches,
-            ...patchFunctions.splitNodePatch(editor, operation, previousChildren),
+            ...patchFunctions.splitNodePatch(
+              editor,
+              operation,
+              previousChildren,
+            ),
           ]
           break
         case 'insert_node':
           patches = [
             ...patches,
-            ...patchFunctions.insertNodePatch(editor, operation, previousChildren),
+            ...patchFunctions.insertNodePatch(
+              editor,
+              operation,
+              previousChildren,
+            ),
           ]
           break
         case 'set_node':
@@ -217,13 +252,21 @@ export function createWithPatches({
         case 'merge_node':
           patches = [
             ...patches,
-            ...patchFunctions.mergeNodePatch(editor, operation, previousChildren),
+            ...patchFunctions.mergeNodePatch(
+              editor,
+              operation,
+              previousChildren,
+            ),
           ]
           break
         case 'move_node':
           patches = [
             ...patches,
-            ...patchFunctions.moveNodePatch(editor, operation, previousChildren),
+            ...patchFunctions.moveNodePatch(
+              editor,
+              operation,
+              previousChildren,
+            ),
           ]
           break
         case 'set_selection':
@@ -235,7 +278,9 @@ export function createWithPatches({
       if (
         !editorWasEmpty &&
         editorIsEmpty &&
-        ['merge_node', 'set_node', 'remove_text', 'remove_node'].includes(operation.type)
+        ['merge_node', 'set_node', 'remove_text', 'remove_node'].includes(
+          operation.type,
+        )
       ) {
         patches = [...patches, unset([])]
         change$.next({

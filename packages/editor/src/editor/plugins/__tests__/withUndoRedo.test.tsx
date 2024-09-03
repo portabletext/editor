@@ -1,7 +1,10 @@
 import {describe, expect, it, jest} from '@jest/globals'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
-import {PortableTextEditorTester, schemaType} from '../../__tests__/PortableTextEditorTester'
+import {
+  PortableTextEditorTester,
+  schemaType,
+} from '../../__tests__/PortableTextEditorTester'
 import {PortableTextEditor} from '../../PortableTextEditor'
 
 const initialValue = [
@@ -55,7 +58,10 @@ describe('plugin:withUndoRedo', () => {
 
     await waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({
+          type: 'value',
+          value: initialValue,
+        })
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })
@@ -69,7 +75,8 @@ describe('plugin:withUndoRedo', () => {
           PortableTextEditor.getSelection(editorRef.current),
           {mode: 'blocks'},
         )
-        expect(PortableTextEditor.getValue(editorRef.current)).toMatchInlineSnapshot(`
+        expect(PortableTextEditor.getValue(editorRef.current))
+          .toMatchInlineSnapshot(`
           Array [
             Object {
               "_key": "a",
@@ -88,7 +95,9 @@ describe('plugin:withUndoRedo', () => {
           ]
         `)
         PortableTextEditor.undo(editorRef.current)
-        expect(PortableTextEditor.getValue(editorRef.current)).toEqual(initialValue)
+        expect(PortableTextEditor.getValue(editorRef.current)).toEqual(
+          initialValue,
+        )
       }
     })
   })
@@ -107,7 +116,10 @@ describe('plugin:withUndoRedo', () => {
 
     await waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({
+          type: 'value',
+          value: initialValue,
+        })
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })
@@ -116,15 +128,21 @@ describe('plugin:withUndoRedo', () => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
         PortableTextEditor.select(editorRef.current, initialSelection)
-        PortableTextEditor.insertBlock(editorRef.current, editorRef.current.schemaTypes.block, {
-          children: [{_key: 'c1', _type: 'span', marks: [], text: 'Block C'}],
-        })
-        const producedKey = PortableTextEditor.getValue(editorRef.current)?.slice(-1)[0]?._key
+        PortableTextEditor.insertBlock(
+          editorRef.current,
+          editorRef.current.schemaTypes.block,
+          {
+            children: [{_key: 'c1', _type: 'span', marks: [], text: 'Block C'}],
+          },
+        )
+        const producedKey = PortableTextEditor.getValue(
+          editorRef.current,
+        )?.slice(-1)[0]?._key
         PortableTextEditor.undo(editorRef.current)
         PortableTextEditor.redo(editorRef.current)
-        expect(PortableTextEditor.getValue(editorRef.current)?.slice(-1)[0]?._key).toEqual(
-          producedKey,
-        )
+        expect(
+          PortableTextEditor.getValue(editorRef.current)?.slice(-1)[0]?._key,
+        ).toEqual(producedKey)
       }
     })
   })

@@ -37,14 +37,18 @@ export interface OriginalEditorFunctions {
   normalizeNode: (entry: NodeEntry<Node>) => void
 }
 
-const originalFnMap = new WeakMap<PortableTextSlateEditor, OriginalEditorFunctions>()
+const originalFnMap = new WeakMap<
+  PortableTextSlateEditor,
+  OriginalEditorFunctions
+>()
 
 export const withPlugins = <T extends Editor>(
   editor: T,
   options: createEditorOptions,
 ): {editor: PortableTextSlateEditor; subscribe: () => () => void} => {
   const e = editor as T & PortableTextSlateEditor
-  const {keyGenerator, portableTextEditor, patches$, readOnly, maxBlocks} = options
+  const {keyGenerator, portableTextEditor, patches$, readOnly, maxBlocks} =
+    options
   const {schemaTypes, change$} = portableTextEditor
   e.subscriptions = []
   if (e.destroy) {
@@ -61,7 +65,11 @@ export const withPlugins = <T extends Editor>(
   const operationToPatches = createOperationToPatches(schemaTypes)
   const withObjectKeys = createWithObjectKeys(schemaTypes, keyGenerator)
   const withSchemaTypes = createWithSchemaTypes({schemaTypes, keyGenerator})
-  const withEditableAPI = createWithEditableAPI(portableTextEditor, schemaTypes, keyGenerator)
+  const withEditableAPI = createWithEditableAPI(
+    portableTextEditor,
+    schemaTypes,
+    keyGenerator,
+  )
   const withPatches = createWithPatches({
     change$,
     keyGenerator,
@@ -82,14 +90,22 @@ export const withPlugins = <T extends Editor>(
     change$,
     keyGenerator,
   )
-  const withPortableTextBlockStyle = createWithPortableTextBlockStyle(schemaTypes)
+  const withPortableTextBlockStyle =
+    createWithPortableTextBlockStyle(schemaTypes)
 
   const withPlaceholderBlock = createWithPlaceholderBlock()
 
   const withInsertBreak = createWithInsertBreak(schemaTypes)
 
-  const withUtils = createWithUtils({keyGenerator, schemaTypes, portableTextEditor})
-  const withPortableTextSelections = createWithPortableTextSelections(change$, schemaTypes)
+  const withUtils = createWithUtils({
+    keyGenerator,
+    schemaTypes,
+    portableTextEditor,
+  })
+  const withPortableTextSelections = createWithPortableTextSelections(
+    change$,
+    schemaTypes,
+  )
 
   e.destroy = () => {
     const originalFunctions = originalFnMap.get(e)
@@ -110,7 +126,9 @@ export const withPlugins = <T extends Editor>(
               withUtils(
                 withPlaceholderBlock(
                   withPortableTextLists(
-                    withPortableTextSelections(withEditableAPI(withInsertBreak(e))),
+                    withPortableTextSelections(
+                      withEditableAPI(withInsertBreak(e)),
+                    ),
                   ),
                 ),
               ),
@@ -133,7 +151,11 @@ export const withPlugins = <T extends Editor>(
                 withUtils(
                   withMaxBlocks(
                     withUndoRedo(
-                      withPatches(withPortableTextSelections(withEditableAPI(withInsertBreak(e)))),
+                      withPatches(
+                        withPortableTextSelections(
+                          withEditableAPI(withInsertBreak(e)),
+                        ),
+                      ),
                     ),
                   ),
                 ),

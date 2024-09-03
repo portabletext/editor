@@ -10,7 +10,11 @@ import {
 } from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {validateValue} from '../../utils/validateValue'
-import {fromSlateValue, isEqualToEmptyEditor, toSlateValue} from '../../utils/values'
+import {
+  fromSlateValue,
+  isEqualToEmptyEditor,
+  toSlateValue,
+} from '../../utils/values'
 
 const debug = debugWithName('plugin:withInsertData')
 
@@ -23,10 +27,13 @@ export function createWithInsertData(
   schemaTypes: PortableTextMemberSchemaTypes,
   keyGenerator: () => string,
 ) {
-  return function withInsertData(editor: PortableTextSlateEditor): PortableTextSlateEditor {
+  return function withInsertData(
+    editor: PortableTextSlateEditor,
+  ): PortableTextSlateEditor {
     const blockTypeName = schemaTypes.block.name
     const spanTypeName = schemaTypes.span.name
-    const whitespaceOnPasteMode = schemaTypes.block.options.unstable_whitespaceOnPasteMode
+    const whitespaceOnPasteMode =
+      schemaTypes.block.options.unstable_whitespaceOnPasteMode
 
     const toPlainText = (blocks: PortableTextBlock[]) => {
       return blocks
@@ -38,13 +45,15 @@ export function createWithInsertData(
                   return child.text
                 }
                 return `[${
-                  schemaTypes.inlineObjects.find((t) => t.name === child._type)?.title || 'Object'
+                  schemaTypes.inlineObjects.find((t) => t.name === child._type)
+                    ?.title || 'Object'
                 }]`
               })
               .join('')
           }
           return `[${
-            schemaTypes.blockObjects.find((t) => t.name === block._type)?.title || 'Object'
+            schemaTypes.blockObjects.find((t) => t.name === block._type)
+              ?.title || 'Object'
           }]`
         })
         .join('\n\n')
@@ -81,10 +90,12 @@ export function createWithInsertData(
       }
       // Remove any zero-width space spans from the cloned DOM so that they don't
       // show up elsewhere when pasted.
-      Array.from(contents.querySelectorAll('[data-slate-zero-width]')).forEach((zw) => {
-        const isNewline = zw.getAttribute('data-slate-zero-width') === 'n'
-        zw.textContent = isNewline ? '\n' : ''
-      })
+      Array.from(contents.querySelectorAll('[data-slate-zero-width]')).forEach(
+        (zw) => {
+          const isNewline = zw.getAttribute('data-slate-zero-width') === 'n'
+          zw.textContent = isNewline ? '\n' : ''
+        },
+      )
       // Clean up the clipboard HTML for editor spesific attributes
       Array.from(contents.querySelectorAll('*')).forEach((elm) => {
         elm.removeAttribute('contentEditable')
@@ -118,7 +129,10 @@ export function createWithInsertData(
       data.setData('application/json', asJSON)
       data.setData('application/x-portable-text', asJSON)
       debug('text', asPlainText)
-      data.setData('application/x-portable-text-event-origin', originEvent || 'external')
+      data.setData(
+        'application/x-portable-text-event-origin',
+        originEvent || 'external',
+      )
       debug('Set fragment data', asJSON, asHTML)
     }
 
@@ -179,7 +193,9 @@ export function createWithInsertData(
         if (html) {
           portableText = htmlToBlocks(html, schemaTypes.portableText, {
             unstable_whitespaceOnPasteMode: whitespaceOnPasteMode,
-          }).map((block) => normalizeBlock(block, {blockTypeName})) as PortableTextBlock[]
+          }).map((block) =>
+            normalizeBlock(block, {blockTypeName}),
+          ) as PortableTextBlock[]
           fragment = toSlateValue(portableText, {schemaTypes})
           insertedType = 'HTML'
 
@@ -191,12 +207,14 @@ export function createWithInsertData(
           const blocks = escapeHtml(text)
             .split(/\n{2,}/)
             .map((line) =>
-              line ? `<p>${line.replace(/(?:\r\n|\r|\n)/g, '<br/>')}</p>` : '<p></p>',
+              line
+                ? `<p>${line.replace(/(?:\r\n|\r|\n)/g, '<br/>')}</p>`
+                : '<p></p>',
             )
             .join('')
           const textToHtml = `<html><body>${blocks}</body></html>`
-          portableText = htmlToBlocks(textToHtml, schemaTypes.portableText).map((block) =>
-            normalizeBlock(block, {blockTypeName}),
+          portableText = htmlToBlocks(textToHtml, schemaTypes.portableText).map(
+            (block) => normalizeBlock(block, {blockTypeName}),
           ) as PortableTextBlock[]
           fragment = toSlateValue(portableText, {
             schemaTypes,
@@ -205,7 +223,11 @@ export function createWithInsertData(
         }
 
         // Validate the result
-        const validation = validateValue(portableText, schemaTypes, keyGenerator)
+        const validation = validateValue(
+          portableText,
+          schemaTypes,
+          keyGenerator,
+        )
 
         // Bail out if it's not valid
         if (!validation.valid) {
@@ -220,7 +242,9 @@ export function createWithInsertData(
           debug('Invalid insert result', validation)
           return false
         }
-        debug(`Inserting ${insertedType} fragment at ${JSON.stringify(editor.selection)}`)
+        debug(
+          `Inserting ${insertedType} fragment at ${JSON.stringify(editor.selection)}`,
+        )
         _insertFragment(editor, fragment, schemaTypes)
         change$.next({type: 'loading', isLoading: false})
         return true
@@ -312,7 +336,9 @@ function _regenerateKeys(
                 marks:
                   child.marks && child.marks.includes(oldKey)
                     ? // eslint-disable-next-line max-nested-callbacks
-                      [...child.marks].filter((mark) => mark !== oldKey).concat(newKey)
+                      [...child.marks]
+                        .filter((mark) => mark !== oldKey)
+                        .concat(newKey)
                     : child.marks,
               }
             : child,
@@ -346,22 +372,34 @@ function _insertFragment(
       return
     }
     // Ensure that markDefs for any annotations inside this fragment are copied over to the focused text block.
-    const [focusBlock, focusPath] = Editor.node(editor, editor.selection, {depth: 1})
+    const [focusBlock, focusPath] = Editor.node(editor, editor.selection, {
+      depth: 1,
+    })
     if (editor.isTextBlock(focusBlock) && editor.isTextBlock(fragment[0])) {
       const {markDefs} = focusBlock
-      debug('Mixing markDefs of focusBlock and fragments[0] block', markDefs, fragment[0].markDefs)
+      debug(
+        'Mixing markDefs of focusBlock and fragments[0] block',
+        markDefs,
+        fragment[0].markDefs,
+      )
       if (!isEqual(markDefs, fragment[0].markDefs)) {
         Transforms.setNodes(
           editor,
           {
-            markDefs: uniq([...(fragment[0].markDefs || []), ...(markDefs || [])]),
+            markDefs: uniq([
+              ...(fragment[0].markDefs || []),
+              ...(markDefs || []),
+            ]),
           },
           {at: focusPath, mode: 'lowest', voids: false},
         )
       }
     }
 
-    const isPasteToEmptyEditor = isEqualToEmptyEditor(editor.children, schemaTypes)
+    const isPasteToEmptyEditor = isEqualToEmptyEditor(
+      editor.children,
+      schemaTypes,
+    )
 
     if (isPasteToEmptyEditor) {
       // Special case for pasting directly into an empty editor (a placeholder block).

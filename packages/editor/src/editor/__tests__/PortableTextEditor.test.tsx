@@ -101,10 +101,15 @@ describe('initialization', () => {
     )
     const normalizedEditorValue = [{...initialValue[0], style: 'normal'}]
     await waitFor(() => {
-      expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+      expect(onChange).toHaveBeenCalledWith({
+        type: 'value',
+        value: initialValue,
+      })
     })
     if (editorRef.current) {
-      expect(PortableTextEditor.getValue(editorRef.current)).toStrictEqual(normalizedEditorValue)
+      expect(PortableTextEditor.getValue(editorRef.current)).toStrictEqual(
+        normalizedEditorValue,
+      )
     }
   })
 
@@ -129,7 +134,10 @@ describe('initialization', () => {
 
     await waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({
+          type: 'value',
+          value: initialValue,
+        })
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })
@@ -137,7 +145,9 @@ describe('initialization', () => {
     await waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
-        expect(PortableTextEditor.getSelection(editorRef.current)).toStrictEqual(initialSelection)
+        expect(
+          PortableTextEditor.getSelection(editorRef.current),
+        ).toStrictEqual(initialSelection)
       }
     })
   })
@@ -168,7 +178,10 @@ describe('initialization', () => {
 
     await waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({
+          type: 'value',
+          value: initialValue,
+        })
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })
@@ -180,7 +193,9 @@ describe('initialization', () => {
 
         // Test for object equality here!
         const anotherSel = PortableTextEditor.getSelection(editorRef.current)
-        expect(PortableTextEditor.getSelection(editorRef.current)).toStrictEqual(initialSelection)
+        expect(
+          PortableTextEditor.getSelection(editorRef.current),
+        ).toStrictEqual(initialSelection)
         expect(sel).toBe(anotherSel)
       }
     })
@@ -195,7 +210,9 @@ describe('initialization', () => {
     )
     waitFor(() => {
       if (editorRef.current) {
-        expect(PortableTextEditor.getSelection(editorRef.current)).toEqual(newSelection)
+        expect(PortableTextEditor.getSelection(editorRef.current)).toEqual(
+          newSelection,
+        )
       }
     })
   })
@@ -224,7 +241,8 @@ describe('initialization', () => {
           value: initialValue,
           resolution: {
             action: 'Unset the value',
-            description: 'Editor value must be an array of Portable Text blocks, or undefined.',
+            description:
+              'Editor value must be an array of Portable Text blocks, or undefined.',
             item: initialValue,
             patches: [
               {
@@ -234,7 +252,10 @@ describe('initialization', () => {
             ],
           },
         })
-        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({
+          type: 'value',
+          value: initialValue,
+        })
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })
@@ -266,7 +287,8 @@ describe('initialization', () => {
         value,
         resolution: {
           action: 'Unset the value',
-          description: 'Editor value must be an array of Portable Text blocks, or undefined.',
+          description:
+            'Editor value must be an array of Portable Text blocks, or undefined.',
           item: value,
           patches: [
             {
@@ -305,7 +327,8 @@ describe('initialization', () => {
           ],
           i18n: {
             action: 'inputs.portable-text.invalid-value.disallowed-type.action',
-            description: 'inputs.portable-text.invalid-value.disallowed-type.description',
+            description:
+              'inputs.portable-text.invalid-value.disallowed-type.description',
             values: {
               key: '123',
               typeName: 'banana',
@@ -350,8 +373,10 @@ describe('initialization', () => {
             description:
               "Child with _key 'def' in block with key 'abc' has missing or invalid text property!",
             i18n: {
-              action: 'inputs.portable-text.invalid-value.invalid-span-text.action',
-              description: 'inputs.portable-text.invalid-value.invalid-span-text.description',
+              action:
+                'inputs.portable-text.invalid-value.invalid-span-text.action',
+              description:
+                'inputs.portable-text.invalid-value.invalid-span-text.description',
               values: {
                 key: 'abc',
                 childKey: 'def',
@@ -393,7 +418,10 @@ describe('initialization', () => {
         })
       }
     })
-    expect(onChange).not.toHaveBeenCalledWith({type: 'value', value: initialValue})
+    expect(onChange).not.toHaveBeenCalledWith({
+      type: 'value',
+      value: initialValue,
+    })
     expect(onChange).toHaveBeenCalledWith({type: 'ready'})
   })
 })

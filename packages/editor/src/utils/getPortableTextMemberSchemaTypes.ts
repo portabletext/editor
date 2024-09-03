@@ -14,19 +14,23 @@ export function getPortableTextMemberSchemaTypes(
   if (!portableTextType) {
     throw new Error("Parameter 'portabletextType' missing (required)")
   }
-  const blockType = portableTextType.of?.find(findBlockType) as BlockSchemaType | undefined
+  const blockType = portableTextType.of?.find(findBlockType) as
+    | BlockSchemaType
+    | undefined
   if (!blockType) {
     throw new Error('Block type is not defined in this schema (required)')
   }
-  const childrenField = blockType.fields?.find((field) => field.name === 'children') as
-    | {type: ArraySchemaType}
-    | undefined
+  const childrenField = blockType.fields?.find(
+    (field) => field.name === 'children',
+  ) as {type: ArraySchemaType} | undefined
   if (!childrenField) {
     throw new Error('Children field for block type found in schema (required)')
   }
   const ofType = childrenField.type.of
   if (!ofType) {
-    throw new Error('Valid types for block children not found in schema (required)')
+    throw new Error(
+      'Valid types for block children not found in schema (required)',
+    )
   }
   const spanType = ofType.find((memberType) => memberType.name === 'span') as
     | ObjectSchemaType
@@ -34,10 +38,12 @@ export function getPortableTextMemberSchemaTypes(
   if (!spanType) {
     throw new Error('Span type not found in schema (required)')
   }
-  const inlineObjectTypes = (ofType.filter((memberType) => memberType.name !== 'span') ||
-    []) as ObjectSchemaType[]
-  const blockObjectTypes = (portableTextType.of?.filter((field) => field.name !== blockType.name) ||
-    []) as ObjectSchemaType[]
+  const inlineObjectTypes = (ofType.filter(
+    (memberType) => memberType.name !== 'span',
+  ) || []) as ObjectSchemaType[]
+  const blockObjectTypes = (portableTextType.of?.filter(
+    (field) => field.name !== blockType.name,
+  ) || []) as ObjectSchemaType[]
   return {
     styles: resolveEnabledStyles(blockType),
     decorators: resolveEnabledDecorators(spanType),
@@ -52,13 +58,19 @@ export function getPortableTextMemberSchemaTypes(
 }
 
 function resolveEnabledStyles(blockType: ObjectSchemaType) {
-  const styleField = blockType.fields?.find((btField) => btField.name === 'style')
+  const styleField = blockType.fields?.find(
+    (btField) => btField.name === 'style',
+  )
   if (!styleField) {
-    throw new Error("A field with name 'style' is not defined in the block type (required).")
+    throw new Error(
+      "A field with name 'style' is not defined in the block type (required).",
+    )
   }
   const textStyles =
     styleField.type.options?.list &&
-    styleField.type.options.list?.filter((style: {value: string}) => style.value)
+    styleField.type.options.list?.filter(
+      (style: {value: string}) => style.value,
+    )
   if (!textStyles || textStyles.length === 0) {
     throw new Error(
       'The style fields need at least one style ' +
@@ -73,9 +85,13 @@ function resolveEnabledDecorators(spanType: ObjectSchemaType) {
 }
 
 function resolveEnabledListItems(blockType: ObjectSchemaType) {
-  const listField = blockType.fields?.find((btField) => btField.name === 'listItem')
+  const listField = blockType.fields?.find(
+    (btField) => btField.name === 'listItem',
+  )
   if (!listField) {
-    throw new Error("A field with name 'listItem' is not defined in the block type (required).")
+    throw new Error(
+      "A field with name 'listItem' is not defined in the block type (required).",
+    )
   }
   const listItems =
     listField.type.options?.list &&

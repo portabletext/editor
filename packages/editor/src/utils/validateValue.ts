@@ -6,7 +6,10 @@ import {
   type PortableTextTextBlock,
 } from '@sanity/types'
 import {flatten, isPlainObject, uniq} from 'lodash'
-import {type InvalidValueResolution, type PortableTextMemberSchemaTypes} from '../types/editor'
+import {
+  type InvalidValueResolution,
+  type PortableTextMemberSchemaTypes,
+} from '../types/editor'
 import {EMPTY_MARKDEFS} from './values'
 
 export interface Validation {
@@ -22,8 +25,14 @@ export function validateValue(
 ): Validation {
   let resolution: InvalidValueResolution | null = null
   let valid = true
-  const validChildTypes = [types.span.name, ...types.inlineObjects.map((t) => t.name)]
-  const validBlockTypes = [types.block.name, ...types.blockObjects.map((t) => t.name)]
+  const validChildTypes = [
+    types.span.name,
+    ...types.inlineObjects.map((t) => t.name),
+  ]
+  const validBlockTypes = [
+    types.block.name,
+    ...types.blockObjects.map((t) => t.name),
+  ]
 
   // Undefined is allowed
   if (value === undefined) {
@@ -35,12 +44,14 @@ export function validateValue(
       valid: false,
       resolution: {
         patches: [unset([])],
-        description: 'Editor value must be an array of Portable Text blocks, or undefined.',
+        description:
+          'Editor value must be an array of Portable Text blocks, or undefined.',
         action: 'Unset the value',
         item: value,
 
         i18n: {
-          description: 'inputs.portable-text.invalid-value.not-an-array.description',
+          description:
+            'inputs.portable-text.invalid-value.not-an-array.description',
           action: 'inputs.portable-text.invalid-value.not-an-array.action',
         },
       },
@@ -58,7 +69,8 @@ export function validateValue(
           item: blk,
 
           i18n: {
-            description: 'inputs.portable-text.invalid-value.not-an-object.description',
+            description:
+              'inputs.portable-text.invalid-value.not-an-object.description',
             action: 'inputs.portable-text.invalid-value.not-an-object.action',
             values: {index},
           },
@@ -74,7 +86,8 @@ export function validateValue(
           item: blk,
 
           i18n: {
-            description: 'inputs.portable-text.invalid-value.missing-key.description',
+            description:
+              'inputs.portable-text.invalid-value.missing-key.description',
             action: 'inputs.portable-text.invalid-value.missing-key.action',
             values: {index},
           },
@@ -87,14 +100,18 @@ export function validateValue(
         if (blk._type === 'block') {
           const currentBlockTypeName = types.block.name
           resolution = {
-            patches: [set({...blk, _type: currentBlockTypeName}, [{_key: blk._key}])],
+            patches: [
+              set({...blk, _type: currentBlockTypeName}, [{_key: blk._key}]),
+            ],
             description: `Block with _key '${blk._key}' has invalid type name '${blk._type}'. According to the schema, the block type name is '${currentBlockTypeName}'`,
             action: `Use type '${currentBlockTypeName}'`,
             item: blk,
 
             i18n: {
-              description: 'inputs.portable-text.invalid-value.incorrect-block-type.description',
-              action: 'inputs.portable-text.invalid-value.incorrect-block-type.action',
+              description:
+                'inputs.portable-text.invalid-value.incorrect-block-type.description',
+              action:
+                'inputs.portable-text.invalid-value.incorrect-block-type.action',
               values: {key: blk._key, expectedTypeName: currentBlockTypeName},
             },
           }
@@ -102,16 +119,23 @@ export function validateValue(
         }
 
         // If the block has no `_type`, but aside from that is a valid Portable Text block
-        if (!blk._type && isPortableTextTextBlock({...blk, _type: types.block.name})) {
+        if (
+          !blk._type &&
+          isPortableTextTextBlock({...blk, _type: types.block.name})
+        ) {
           resolution = {
-            patches: [set({...blk, _type: types.block.name}, [{_key: blk._key}])],
+            patches: [
+              set({...blk, _type: types.block.name}, [{_key: blk._key}]),
+            ],
             description: `Block with _key '${blk._key}' is missing a type name. According to the schema, the block type name is '${types.block.name}'`,
             action: `Use type '${types.block.name}'`,
             item: blk,
 
             i18n: {
-              description: 'inputs.portable-text.invalid-value.missing-block-type.description',
-              action: 'inputs.portable-text.invalid-value.missing-block-type.action',
+              description:
+                'inputs.portable-text.invalid-value.missing-block-type.description',
+              action:
+                'inputs.portable-text.invalid-value.missing-block-type.action',
               values: {key: blk._key, expectedTypeName: types.block.name},
             },
           }
@@ -126,7 +150,8 @@ export function validateValue(
             item: blk,
 
             i18n: {
-              description: 'inputs.portable-text.invalid-value.missing-type.description',
+              description:
+                'inputs.portable-text.invalid-value.missing-type.description',
               action: 'inputs.portable-text.invalid-value.missing-type.action',
               values: {key: blk._key},
             },
@@ -141,7 +166,8 @@ export function validateValue(
           item: blk,
 
           i18n: {
-            description: 'inputs.portable-text.invalid-value.disallowed-type.description',
+            description:
+              'inputs.portable-text.invalid-value.disallowed-type.description',
             action: 'inputs.portable-text.invalid-value.disallowed-type.action',
             values: {key: blk._key, typeName: blk._type},
           },
@@ -163,7 +189,8 @@ export function validateValue(
             i18n: {
               description:
                 'inputs.portable-text.invalid-value.missing-or-invalid-children.description',
-              action: 'inputs.portable-text.invalid-value.missing-or-invalid-children.action',
+              action:
+                'inputs.portable-text.invalid-value.missing-or-invalid-children.action',
               values: {key: textBlock._key},
             },
           }
@@ -191,8 +218,10 @@ export function validateValue(
             item: blk,
 
             i18n: {
-              description: 'inputs.portable-text.invalid-value.empty-children.description',
-              action: 'inputs.portable-text.invalid-value.empty-children.action',
+              description:
+                'inputs.portable-text.invalid-value.empty-children.description',
+              action:
+                'inputs.portable-text.invalid-value.empty-children.action',
               values: {key: blk._key},
             },
           }
@@ -201,7 +230,11 @@ export function validateValue(
         // Test that markDefs are valid if they exists
         if (blk.markDefs && !Array.isArray(blk.markDefs)) {
           resolution = {
-            patches: [set({...textBlock, markDefs: EMPTY_MARKDEFS}, [{_key: textBlock._key}])],
+            patches: [
+              set({...textBlock, markDefs: EMPTY_MARKDEFS}, [
+                {_key: textBlock._key},
+              ]),
+            ],
             description: `Block has invalid required property 'markDefs'.`,
             action: 'Add empty markDefs array',
             item: textBlock,
@@ -209,7 +242,8 @@ export function validateValue(
             i18n: {
               description:
                 'inputs.portable-text.invalid-value.missing-or-invalid-markdefs.description',
-              action: 'inputs.portable-text.invalid-value.missing-or-invalid-markdefs.action',
+              action:
+                'inputs.portable-text.invalid-value.missing-or-invalid-markdefs.action',
               values: {key: textBlock._key},
             },
           }
@@ -226,7 +260,9 @@ export function validateValue(
         // Test that all markDefs are in use (remove orphaned markDefs)
         if (Array.isArray(blk.markDefs) && blk.markDefs.length > 0) {
           const unusedMarkDefs: string[] = uniq(
-            blk.markDefs.map((def) => def._key).filter((key) => !allUsedMarks.includes(key)),
+            blk.markDefs
+              .map((def) => def._key)
+              .filter((key) => !allUsedMarks.includes(key)),
           )
           if (unusedMarkDefs.length > 0) {
             resolution = {
@@ -240,9 +276,14 @@ export function validateValue(
               action: 'Remove unused mark definition item',
               item: blk,
               i18n: {
-                description: 'inputs.portable-text.invalid-value.orphaned-mark-defs.description',
-                action: 'inputs.portable-text.invalid-value.orphaned-mark-defs.action',
-                values: {key: blk._key, unusedMarkDefs: unusedMarkDefs.map((m) => m.toString())},
+                description:
+                  'inputs.portable-text.invalid-value.orphaned-mark-defs.description',
+                action:
+                  'inputs.portable-text.invalid-value.orphaned-mark-defs.action',
+                values: {
+                  key: blk._key,
+                  unusedMarkDefs: unusedMarkDefs.map((m) => m.toString()),
+                },
               },
             }
             return true
@@ -271,7 +312,9 @@ export function validateValue(
               autoResolve: true,
               patches: spanChildren.map((child) => {
                 return set(
-                  (child.marks || []).filter((cMrk) => !orphanedMarks.includes(cMrk)),
+                  (child.marks || []).filter(
+                    (cMrk) => !orphanedMarks.includes(cMrk),
+                  ),
                   [{_key: blk._key}, 'children', {_key: child._key}, 'marks'],
                 )
               }),
@@ -280,9 +323,14 @@ export function validateValue(
               item: blk,
 
               i18n: {
-                description: 'inputs.portable-text.invalid-value.orphaned-marks.description',
-                action: 'inputs.portable-text.invalid-value.orphaned-marks.action',
-                values: {key: blk._key, orphanedMarks: orphanedMarks.map((m) => m.toString())},
+                description:
+                  'inputs.portable-text.invalid-value.orphaned-marks.description',
+                action:
+                  'inputs.portable-text.invalid-value.orphaned-marks.action',
+                values: {
+                  key: blk._key,
+                  orphanedMarks: orphanedMarks.map((m) => m.toString()),
+                },
               },
             }
             return true
@@ -300,8 +348,10 @@ export function validateValue(
                 item: blk,
 
                 i18n: {
-                  description: 'inputs.portable-text.invalid-value.non-object-child.description',
-                  action: 'inputs.portable-text.invalid-value.non-object-child.action',
+                  description:
+                    'inputs.portable-text.invalid-value.non-object-child.description',
+                  action:
+                    'inputs.portable-text.invalid-value.non-object-child.action',
                   values: {key: blk._key, index: cIndex},
                 },
               }
@@ -312,14 +362,18 @@ export function validateValue(
               const newChild = {...child, _key: keyGenerator()}
               resolution = {
                 autoResolve: true,
-                patches: [set(newChild, [{_key: blk._key}, 'children', cIndex])],
+                patches: [
+                  set(newChild, [{_key: blk._key}, 'children', cIndex]),
+                ],
                 description: `Child at index ${cIndex} is missing required _key in block with _key ${blk._key}.`,
                 action: 'Set a new random _key on the object',
                 item: blk,
 
                 i18n: {
-                  description: 'inputs.portable-text.invalid-value.missing-child-key.description',
-                  action: 'inputs.portable-text.invalid-value.missing-child-key.action',
+                  description:
+                    'inputs.portable-text.invalid-value.missing-child-key.description',
+                  action:
+                    'inputs.portable-text.invalid-value.missing-child-key.action',
                   values: {key: blk._key, index: cIndex},
                 },
               }
@@ -329,14 +383,18 @@ export function validateValue(
             // Verify that children have valid types
             if (!child._type) {
               resolution = {
-                patches: [unset([{_key: blk._key}, 'children', {_key: child._key}])],
+                patches: [
+                  unset([{_key: blk._key}, 'children', {_key: child._key}]),
+                ],
                 description: `Child with _key '${child._key}' in block with key '${blk._key}' is missing '_type' property.`,
                 action: 'Remove the object',
                 item: blk,
 
                 i18n: {
-                  description: 'inputs.portable-text.invalid-value.missing-child-type.description',
-                  action: 'inputs.portable-text.invalid-value.missing-child-type.action',
+                  description:
+                    'inputs.portable-text.invalid-value.missing-child-type.description',
+                  action:
+                    'inputs.portable-text.invalid-value.missing-child-type.action',
                   values: {key: blk._key, childKey: child._key},
                 },
               }
@@ -345,7 +403,9 @@ export function validateValue(
 
             if (!validChildTypes.includes(child._type)) {
               resolution = {
-                patches: [unset([{_key: blk._key}, 'children', {_key: child._key}])],
+                patches: [
+                  unset([{_key: blk._key}, 'children', {_key: child._key}]),
+                ],
                 description: `Child with _key '${child._key}' in block with key '${blk._key}' has invalid '_type' property (${child._type}).`,
                 action: 'Remove the object',
                 item: blk,
@@ -353,26 +413,40 @@ export function validateValue(
                 i18n: {
                   description:
                     'inputs.portable-text.invalid-value.disallowed-child-type.description',
-                  action: 'inputs.portable-text.invalid-value.disallowed-child-type.action',
-                  values: {key: blk._key, childKey: child._key, childType: child._type},
+                  action:
+                    'inputs.portable-text.invalid-value.disallowed-child-type.action',
+                  values: {
+                    key: blk._key,
+                    childKey: child._key,
+                    childType: child._type,
+                  },
                 },
               }
               return true
             }
 
             // Verify that spans have .text property that is a string
-            if (child._type === types.span.name && typeof child.text !== 'string') {
+            if (
+              child._type === types.span.name &&
+              typeof child.text !== 'string'
+            ) {
               resolution = {
                 patches: [
-                  set({...child, text: ''}, [{_key: blk._key}, 'children', {_key: child._key}]),
+                  set({...child, text: ''}, [
+                    {_key: blk._key},
+                    'children',
+                    {_key: child._key},
+                  ]),
                 ],
                 description: `Child with _key '${child._key}' in block with key '${blk._key}' has missing or invalid text property!`,
                 action: `Write an empty text property to the object`,
                 item: blk,
 
                 i18n: {
-                  description: 'inputs.portable-text.invalid-value.invalid-span-text.description',
-                  action: 'inputs.portable-text.invalid-value.invalid-span-text.action',
+                  description:
+                    'inputs.portable-text.invalid-value.invalid-span-text.description',
+                  action:
+                    'inputs.portable-text.invalid-value.invalid-span-text.action',
                   values: {key: blk._key, childKey: child._key},
                 },
               }

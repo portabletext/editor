@@ -1,5 +1,8 @@
 import {Editor, Path, Text as SlateText, Transforms, type Node} from 'slate'
-import {type PortableTextMemberSchemaTypes, type PortableTextSlateEditor} from '../../types/editor'
+import {
+  type PortableTextMemberSchemaTypes,
+  type PortableTextSlateEditor,
+} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 
 const debug = debugWithName('plugin:withPortableTextBlockStyle')
@@ -29,7 +32,11 @@ export function createWithPortableTextBlockStyle(
           const [child] = Editor.node(editor, [op.path[0] + 1, 0])
           if (SlateText.isText(child) && child.text === '') {
             debug(`Normalizing split node to ${defaultStyle} style`, op)
-            Transforms.setNodes(editor, {style: defaultStyle}, {at: [op.path[0] + 1], voids: false})
+            Transforms.setNodes(
+              editor,
+              {style: defaultStyle},
+              {at: [op.path[0] + 1], voids: false},
+            )
             break
           }
         }
@@ -64,9 +71,13 @@ export function createWithPortableTextBlockStyle(
       selectedBlocks.forEach(([node, path]) => {
         if (editor.isTextBlock(node) && node.style === blockStyle) {
           debug(`Unsetting block style '${blockStyle}'`)
-          Transforms.setNodes(editor, {...node, style: defaultStyle} as Partial<Node>, {
-            at: path,
-          })
+          Transforms.setNodes(
+            editor,
+            {...node, style: defaultStyle} as Partial<Node>,
+            {
+              at: path,
+            },
+          )
         } else {
           if (blockStyle) {
             debug(`Setting style '${blockStyle}'`)

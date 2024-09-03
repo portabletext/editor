@@ -1,7 +1,10 @@
 import {describe, expect, it, jest} from '@jest/globals'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
-import {PortableTextEditorTester, schemaType} from '../../editor/__tests__/PortableTextEditorTester'
+import {
+  PortableTextEditorTester,
+  schemaType,
+} from '../../editor/__tests__/PortableTextEditorTester'
 import {PortableTextEditor} from '../../editor/PortableTextEditor'
 
 describe('values: normalization', () => {
@@ -35,8 +38,14 @@ describe('values: normalization', () => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
         PortableTextEditor.select(editorRef.current, {
-          focus: {path: [{_key: '5fc57af23597'}, 'children', {_key: 'be1c67c6971a'}], offset: 0},
-          anchor: {path: [{_key: '5fc57af23597'}, 'children', {_key: 'be1c67c6971a'}], offset: 5},
+          focus: {
+            path: [{_key: '5fc57af23597'}, 'children', {_key: 'be1c67c6971a'}],
+            offset: 0,
+          },
+          anchor: {
+            path: [{_key: '5fc57af23597'}, 'children', {_key: 'be1c67c6971a'}],
+            offset: 5,
+          },
         })
         PortableTextEditor.toggleMark(editorRef.current, 'strong')
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([

@@ -46,7 +46,10 @@ describe('adds empty text block if its needed', () => {
 
     await waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({
+          type: 'value',
+          value: initialValue,
+        })
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })
@@ -58,7 +61,10 @@ describe('adds empty text block if its needed', () => {
         PortableTextEditor.focus(editorRef.current)
         PortableTextEditor.select(editorRef.current, initialSelection)
         fireEvent.click(element)
-        expect(PortableTextEditor.getValue(editorRef.current)).toEqual([initialValue[0], newBlock])
+        expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
+          initialValue[0],
+          newBlock,
+        ])
       }
     })
   })
@@ -106,7 +112,9 @@ describe('adds empty text block if its needed', () => {
         PortableTextEditor.focus(editorRef.current)
         PortableTextEditor.select(editorRef.current, initialSelection)
         fireEvent.click(element)
-        expect(PortableTextEditor.getValue(editorRef.current)).toEqual(initialValue)
+        expect(PortableTextEditor.getValue(editorRef.current)).toEqual(
+          initialValue,
+        )
       }
     })
   })
@@ -155,7 +163,10 @@ describe('adds empty text block if its needed', () => {
 
     await waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({
+          type: 'value',
+          value: initialValue,
+        })
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })
@@ -167,7 +178,9 @@ describe('adds empty text block if its needed', () => {
         PortableTextEditor.focus(editorRef.current)
         PortableTextEditor.select(editorRef.current, initialSelection)
         fireEvent.click(element)
-        expect(PortableTextEditor.getValue(editorRef.current)).toEqual(initialValue)
+        expect(PortableTextEditor.getValue(editorRef.current)).toEqual(
+          initialValue,
+        )
       }
     })
   })
@@ -216,7 +229,10 @@ describe('adds empty text block if its needed', () => {
 
     await waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({
+          type: 'value',
+          value: initialValue,
+        })
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })
@@ -224,13 +240,17 @@ describe('adds empty text block if its needed', () => {
     const element = await getEditableElement(component)
 
     const editor = editorRef.current
-    const inlineType = editor?.schemaTypes.inlineObjects.find((t) => t.name === 'someObject')
+    const inlineType = editor?.schemaTypes.inlineObjects.find(
+      (t) => t.name === 'someObject',
+    )
     await waitFor(async () => {
       if (editor && inlineType && element) {
         PortableTextEditor.focus(editor)
         PortableTextEditor.select(editor, initialSelection)
         fireEvent.click(element)
-        expect(PortableTextEditor.getValue(editor)).toEqual(initialValue.concat(newBlock))
+        expect(PortableTextEditor.getValue(editor)).toEqual(
+          initialValue.concat(newBlock),
+        )
       }
     })
   })

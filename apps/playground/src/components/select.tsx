@@ -27,7 +27,8 @@ const styles = tv({
   },
 })
 
-export interface SelectProps<T extends object> extends Omit<AriaSelectProps<T>, 'children'> {
+export interface SelectProps<T extends object>
+  extends Omit<AriaSelectProps<T>, 'children'> {
   label?: string
   description?: string
   errorMessage?: string | ((validation: ValidationResult) => string)
@@ -46,7 +47,10 @@ export function Select<T extends object>({
   return (
     <AriaSelect
       {...props}
-      className={composeTailwindRenderProps(props.className, 'group flex flex-col gap-1')}
+      className={composeTailwindRenderProps(
+        props.className,
+        'group flex flex-col gap-1',
+      )}
     >
       {label && <Label>{label}</Label>}
       <Button className={styles}>
@@ -74,6 +78,8 @@ export function SelectItem(props: ListBoxItemProps) {
   return <DropdownItem {...props} />
 }
 
-export function SelectSection<T extends object>(props: DropdownSectionProps<T>) {
+export function SelectSection<T extends object>(
+  props: DropdownSectionProps<T>,
+) {
   return <DropdownSection {...props} />
 }

@@ -12,21 +12,31 @@ export function normalizePoint(
   const newPath: Path = []
   let newOffset: number = point.offset || 0
   const blockKey =
-    typeof point.path[0] === 'object' && '_key' in point.path[0] && point.path[0]._key
+    typeof point.path[0] === 'object' &&
+    '_key' in point.path[0] &&
+    point.path[0]._key
   const childKey =
-    typeof point.path[2] === 'object' && '_key' in point.path[2] && point.path[2]._key
-  const block: PortableTextBlock | undefined = value.find((blk) => blk._key === blockKey)
+    typeof point.path[2] === 'object' &&
+    '_key' in point.path[2] &&
+    point.path[2]._key
+  const block: PortableTextBlock | undefined = value.find(
+    (blk) => blk._key === blockKey,
+  )
   if (block) {
     newPath.push({_key: block._key})
   } else {
     return null
   }
   if (block && point.path[1] === 'children') {
-    if (!block.children || (Array.isArray(block.children) && block.children.length === 0)) {
+    if (
+      !block.children ||
+      (Array.isArray(block.children) && block.children.length === 0)
+    ) {
       return null
     }
     const child =
-      Array.isArray(block.children) && block.children.find((cld) => cld._key === childKey)
+      Array.isArray(block.children) &&
+      block.children.find((cld) => cld._key === childKey)
     if (child) {
       newPath.push('children')
       newPath.push({_key: child._key})
@@ -51,7 +61,10 @@ export function normalizeSelection(
   let newAnchor: EditorSelectionPoint | null = null
   let newFocus: EditorSelectionPoint | null = null
   const {anchor, focus} = selection
-  if (anchor && value.find((blk) => isEqual({_key: blk._key}, anchor.path[0]))) {
+  if (
+    anchor &&
+    value.find((blk) => isEqual({_key: blk._key}, anchor.path[0]))
+  ) {
     newAnchor = normalizePoint(anchor, value)
   }
   if (focus && value.find((blk) => isEqual({_key: blk._key}, focus.path[0]))) {

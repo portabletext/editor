@@ -91,7 +91,11 @@ export function Feature<TContext extends Record<string, any> = object>({
   const parser = new Gherkin.Parser(builder, matcher)
 
   const gherkinDocument = parser.parse(featureText)
-  const pickles = Gherkin.compile(gherkinDocument, 'block-objects.feature', uuidFn)
+  const pickles = Gherkin.compile(
+    gherkinDocument,
+    'block-objects.feature',
+    uuidFn,
+  )
 
   const parameterTypeRegistry = new ParameterTypeRegistry()
   parameterTypes.forEach((parameterType) =>
@@ -103,7 +107,10 @@ export function Feature<TContext extends Record<string, any> = object>({
   }
 
   const stepImplementations = stepDefinitions.map((stepDefinition) => {
-    const expression = new CucumberExpression(stepDefinition.text, parameterTypeRegistry)
+    const expression = new CucumberExpression(
+      stepDefinition.text,
+      parameterTypeRegistry,
+    )
 
     return {
       type: stepDefinition.type,
@@ -113,9 +120,17 @@ export function Feature<TContext extends Record<string, any> = object>({
     }
   })
 
-  const skippedFeature = gherkinDocument.feature.tags.some((tag) => tag.name === '@skip')
-  const onlyFeature = gherkinDocument.feature.tags.some((tag) => tag.name === '@only')
-  const describeFn = onlyFeature ? describe.only : skippedFeature ? describe.skip : describe
+  const skippedFeature = gherkinDocument.feature.tags.some(
+    (tag) => tag.name === '@skip',
+  )
+  const onlyFeature = gherkinDocument.feature.tags.some(
+    (tag) => tag.name === '@only',
+  )
+  const describeFn = onlyFeature
+    ? describe.only
+    : skippedFeature
+      ? describe.skip
+      : describe
 
   describeFn(`Feature: ${gherkinDocument.feature.name}`, () => {
     for (const pickle of pickles) {
@@ -128,7 +143,9 @@ export function Feature<TContext extends Record<string, any> = object>({
 
         for await (const step of pickle.steps) {
           const matchingSteps = stepImplementations
-            .filter((stepImplementation) => stepImplementation.type === step.type)
+            .filter(
+              (stepImplementation) => stepImplementation.type === step.type,
+            )
             .flatMap((stepImplementation) => {
               const args = stepImplementation.expression.match(step.text)
 
@@ -151,7 +168,9 @@ export function Feature<TContext extends Record<string, any> = object>({
           }
 
           if (matchingSteps.length > 1) {
-            throw new Error(`Multiple implementations found for step: ${step.text}`)
+            throw new Error(
+              `Multiple implementations found for step: ${step.text}`,
+            )
           }
 
           const args = matchingStep.args.map((arg) =>

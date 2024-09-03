@@ -18,5 +18,8 @@ export type createEditorOptions = {
  */
 export type HotkeyOptions = {
   marks?: Record<string, string>
-  custom?: Record<string, (event: BaseSyntheticEvent, editor: PortableTextEditor) => void>
+  custom?: Record<
+    string,
+    (event: BaseSyntheticEvent, editor: PortableTextEditor) => void
+  >
 }

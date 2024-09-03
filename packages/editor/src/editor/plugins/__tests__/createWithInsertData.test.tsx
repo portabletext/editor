@@ -56,10 +56,20 @@ describe('plugin: createWithInsertData _regenerateKeys', () => {
       'span',
       {
         annotations: [
-          // eslint-disable-next-line camelcase
-          {name: 'color', jsonType: 'object', fields: [], __experimental_search: []},
-          // eslint-disable-next-line camelcase
-          {name: 'link', jsonType: 'object', fields: [], __experimental_search: []},
+          {
+            name: 'color',
+            jsonType: 'object',
+            fields: [],
+            // eslint-disable-next-line camelcase
+            __experimental_search: [],
+          },
+          {
+            name: 'link',
+            jsonType: 'object',
+            fields: [],
+            // eslint-disable-next-line camelcase
+            __experimental_search: [],
+          },
         ],
       },
     )
@@ -139,8 +149,17 @@ describe('plugin: createWithInsertData _regenerateKeys', () => {
         return `k${keyCursor}`
       },
       'span',
-      // eslint-disable-next-line camelcase
-      {annotations: [{name: 'color', jsonType: 'object', fields: [], __experimental_search: []}]},
+      {
+        annotations: [
+          {
+            name: 'color',
+            jsonType: 'object',
+            fields: [],
+            // eslint-disable-next-line camelcase
+            __experimental_search: [],
+          },
+        ],
+      },
     )
 
     // orphaned children marks are removed later in the normalize function

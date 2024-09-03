@@ -31,7 +31,11 @@ export function diffMatchPatch(
 }
 
 /** @public */
-export function insert(items: any[], position: InsertPosition, path: Path = []): InsertPatch {
+export function insert(
+  items: any[],
+  position: InsertPosition,
+  path: Path = [],
+): InsertPatch {
   return {
     type: 'insert',
     path,
@@ -51,7 +55,10 @@ export function unset(path: Path = []): UnsetPatch {
 }
 
 /** @internal */
-export function prefixPath<T extends {path: Path}>(patch: T, segment: PathSegment): T {
+export function prefixPath<T extends {path: Path}>(
+  patch: T,
+  segment: PathSegment,
+): T {
   return {
     ...patch,
     path: [segment, ...patch.path],

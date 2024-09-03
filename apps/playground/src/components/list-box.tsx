@@ -32,9 +32,14 @@ export const dropdownItemStyles = tv({
 
 export function DropdownItem(props: ListBoxItemProps) {
   const textValue =
-    props.textValue || (typeof props.children === 'string' ? props.children : undefined)
+    props.textValue ||
+    (typeof props.children === 'string' ? props.children : undefined)
   return (
-    <AriaListBoxItem {...props} textValue={textValue} className={dropdownItemStyles}>
+    <AriaListBoxItem
+      {...props}
+      textValue={textValue}
+      className={dropdownItemStyles}
+    >
       {composeRenderProps(props.children, (children, {isSelected}) => (
         <>
           <span className="flex items-center flex-1 gap-2 font-normal truncate group-selected:font-semibold">
@@ -53,7 +58,9 @@ export interface DropdownSectionProps<T> extends SectionProps<T> {
   title?: string
 }
 
-export function DropdownSection<T extends object>(props: DropdownSectionProps<T>) {
+export function DropdownSection<T extends object>(
+  props: DropdownSectionProps<T>,
+) {
   return (
     <Section className="first:-mt-[5px] after:content-[''] after:block after:h-[5px]">
       <Header className="text-sm font-semibold text-gray-500 dark:text-zinc-300 px-4 py-1 truncate sticky -top-[5px] -mt-px -mx-1 z-10 bg-gray-100/60 dark:bg-zinc-700/60 backdrop-blur-md supports-[-moz-appearance:none]:bg-gray-100 border-y dark:border-y-zinc-700 [&+*]:mt-1">

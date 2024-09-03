@@ -43,7 +43,13 @@ test(getText.name, () => {
 
   expect(getText([fooBlock, barBlock])).toEqual(['foo', '\n', 'bar'])
   expect(getText([emptyBlock, barBlock])).toEqual(['', '\n', 'bar'])
-  expect(getText([fooBlock, emptyBlock, barBlock])).toEqual(['foo', '\n', '', '\n', 'bar'])
+  expect(getText([fooBlock, emptyBlock, barBlock])).toEqual([
+    'foo',
+    '\n',
+    '',
+    '\n',
+    'bar',
+  ])
 })
 
 test(getTextMarks.name, () => {

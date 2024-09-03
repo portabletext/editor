@@ -4,7 +4,8 @@ import {type PortableTextEditor} from '../PortableTextEditor'
 /**
  * A React context for sharing the editor object.
  */
-export const PortableTextEditorContext = createContext<PortableTextEditor | null>(null)
+export const PortableTextEditorContext =
+  createContext<PortableTextEditor | null>(null)
 
 /**
  * @public

@@ -3,7 +3,10 @@ import {fireEvent, type render} from '@testing-library/react'
 import {parseHotkey} from 'is-hotkey-esm'
 import {act} from 'react'
 
-export async function triggerKeyboardEvent(hotkey: string, element: Element): Promise<void> {
+export async function triggerKeyboardEvent(
+  hotkey: string,
+  element: Element,
+): Promise<void> {
   const eventProps = parseHotkey(hotkey)
   const values = hotkey.split('+')
 
@@ -19,9 +22,13 @@ export async function triggerKeyboardEvent(hotkey: string, element: Element): Pr
   )
 }
 
-export async function getEditableElement(component: ReturnType<typeof render>): Promise<Element> {
+export async function getEditableElement(
+  component: ReturnType<typeof render>,
+): Promise<Element> {
   await act(async () => component)
-  const element = component.container.querySelector('[data-slate-editor="true"]')
+  const element = component.container.querySelector(
+    '[data-slate-editor="true"]',
+  )
   if (!element) {
     throw new Error('Could not find element')
   }

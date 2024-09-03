@@ -8,7 +8,14 @@ import {
   type PortableTextTextBlock,
   type SchemaType,
 } from '@sanity/types'
-import {Editor, Node, Range, Element as SlateElement, Text, Transforms} from 'slate'
+import {
+  Editor,
+  Node,
+  Range,
+  Element as SlateElement,
+  Text,
+  Transforms,
+} from 'slate'
 import {ReactEditor} from 'slate-react'
 import {type DOMNode} from 'slate-react/dist/utils/dom'
 import {
@@ -19,8 +26,15 @@ import {
 } from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {toPortableTextRange, toSlateRange} from '../../utils/ranges'
-import {fromSlateValue, isEqualToEmptyEditor, toSlateValue} from '../../utils/values'
-import {KEY_TO_VALUE_ELEMENT, SLATE_TO_PORTABLE_TEXT_RANGE} from '../../utils/weakMaps'
+import {
+  fromSlateValue,
+  isEqualToEmptyEditor,
+  toSlateValue,
+} from '../../utils/values'
+import {
+  KEY_TO_VALUE_ELEMENT,
+  SLATE_TO_PORTABLE_TEXT_RANGE,
+} from '../../utils/weakMaps'
 import {type PortableTextEditor} from '../PortableTextEditor'
 
 const debug = debugWithName('API:editable')
@@ -30,7 +44,9 @@ export function createWithEditableAPI(
   types: PortableTextMemberSchemaTypes,
   keyGenerator: () => string,
 ) {
-  return function withEditableAPI(editor: PortableTextSlateEditor): PortableTextSlateEditor {
+  return function withEditableAPI(
+    editor: PortableTextSlateEditor,
+  ): PortableTextSlateEditor {
     portableTextEditor.setEditable({
       focus: (): void => {
         ReactEditor.focus(editor)
@@ -77,16 +93,26 @@ export function createWithEditableAPI(
       },
       focusBlock: (): PortableTextBlock | undefined => {
         if (editor.selection) {
-          const block = Node.descendant(editor, editor.selection.focus.path.slice(0, 1))
+          const block = Node.descendant(
+            editor,
+            editor.selection.focus.path.slice(0, 1),
+          )
           if (block) {
-            return fromSlateValue([block], types.block.name, KEY_TO_VALUE_ELEMENT.get(editor))[0]
+            return fromSlateValue(
+              [block],
+              types.block.name,
+              KEY_TO_VALUE_ELEMENT.get(editor),
+            )[0]
           }
         }
         return undefined
       },
       focusChild: (): PortableTextChild | undefined => {
         if (editor.selection) {
-          const block = Node.descendant(editor, editor.selection.focus.path.slice(0, 1))
+          const block = Node.descendant(
+            editor,
+            editor.selection.focus.path.slice(0, 1),
+          )
           if (block && editor.isTextBlock(block)) {
             const ptBlock = fromSlateValue(
               [block],
@@ -115,7 +141,9 @@ export function createWithEditableAPI(
           type.name !== types.span.name &&
           !types.inlineObjects.some((t) => t.name === type.name)
         ) {
-          throw new Error('This type cannot be inserted as a child to a text block')
+          throw new Error(
+            'This type cannot be inserted as a child to a text block',
+          )
         }
         const block = toSlateValue(
           [
@@ -141,7 +169,9 @@ export function createWithEditableAPI(
         // If we are inserting a span, and currently have focus on an inline object,
         // move the selection to the next span (guaranteed by normalizing rules) before inserting it.
         if (isSpanNode && focusNode._type !== types.span.name) {
-          debug('Inserting span child next to inline object child, moving selection + 1')
+          debug(
+            'Inserting span child next to inline object child, moving selection + 1',
+          )
           editor.move({distance: 1, unit: 'character'})
         }
 
@@ -152,7 +182,11 @@ export function createWithEditableAPI(
         editor.onChange()
         return (
           toPortableTextRange(
-            fromSlateValue(editor.children, types.block.name, KEY_TO_VALUE_ELEMENT.get(editor)),
+            fromSlateValue(
+              editor.children,
+              types.block.name,
+              KEY_TO_VALUE_ELEMENT.get(editor),
+            ),
             editor.selection,
             types,
           )?.focus.path || []
@@ -193,7 +227,11 @@ export function createWithEditableAPI(
 
           return (
             toPortableTextRange(
-              fromSlateValue(editor.children, types.block.name, KEY_TO_VALUE_ELEMENT.get(editor)),
+              fromSlateValue(
+                editor.children,
+                types.block.name,
+                KEY_TO_VALUE_ELEMENT.get(editor),
+              ),
               editor.selection,
               types,
             )?.focus.path ?? []
@@ -217,7 +255,11 @@ export function createWithEditableAPI(
 
         return (
           toPortableTextRange(
-            fromSlateValue(editor.children, types.block.name, KEY_TO_VALUE_ELEMENT.get(editor)),
+            fromSlateValue(
+              editor.children,
+              types.block.name,
+              KEY_TO_VALUE_ELEMENT.get(editor),
+            ),
             editor.selection,
             types,
           )?.focus.path || []
@@ -246,16 +288,25 @@ export function createWithEditableAPI(
       },
       findByPath: (
         path: Path,
-      ): [PortableTextBlock | PortableTextChild | undefined, Path | undefined] => {
+      ): [
+        PortableTextBlock | PortableTextChild | undefined,
+        Path | undefined,
+      ] => {
         const slatePath = toSlateRange(
           {focus: {path, offset: 0}, anchor: {path, offset: 0}},
           editor,
         )
         if (slatePath) {
-          const [block, blockPath] = Editor.node(editor, slatePath.focus.path.slice(0, 1))
+          const [block, blockPath] = Editor.node(
+            editor,
+            slatePath.focus.path.slice(0, 1),
+          )
           if (block && blockPath && typeof block._key === 'string') {
             if (path.length === 1 && slatePath.focus.path.length === 1) {
-              return [fromSlateValue([block], types.block.name)[0], [{_key: block._key}]]
+              return [
+                fromSlateValue([block], types.block.name)[0],
+                [{_key: block._key}],
+              ]
             }
             const ptBlock = fromSlateValue(
               [block],
@@ -265,14 +316,19 @@ export function createWithEditableAPI(
             if (editor.isTextBlock(ptBlock)) {
               const ptChild = ptBlock.children[slatePath.focus.path[1]]
               if (ptChild) {
-                return [ptChild, [{_key: block._key}, 'children', {_key: ptChild._key}]]
+                return [
+                  ptChild,
+                  [{_key: block._key}, 'children', {_key: ptChild._key}],
+                ]
               }
             }
           }
         }
         return [undefined, undefined]
       },
-      findDOMNode: (element: PortableTextBlock | PortableTextChild): DOMNode | undefined => {
+      findDOMNode: (
+        element: PortableTextBlock | PortableTextChild,
+      ): DOMNode | undefined => {
         let node: DOMNode | undefined
         try {
           const [item] = Array.from(
@@ -321,7 +377,9 @@ export function createWithEditableAPI(
           return []
         }
       },
-      isAnnotationActive: (annotationType: PortableTextObject['_type']): boolean => {
+      isAnnotationActive: (
+        annotationType: PortableTextObject['_type'],
+      ): boolean => {
         if (!editor.selection || editor.selection.focus.path.length < 2) {
           return false
         }
@@ -340,7 +398,10 @@ export function createWithEditableAPI(
 
           if (
             spans.some(
-              ([span]) => !isPortableTextSpan(span) || !span.marks || span.marks?.length === 0,
+              ([span]) =>
+                !isPortableTextSpan(span) ||
+                !span.marks ||
+                span.marks?.length === 0,
             )
           )
             return false
@@ -357,7 +418,8 @@ export function createWithEditableAPI(
             if (!isPortableTextSpan(span)) return false
 
             const spanMarkDefs = span.marks?.map(
-              (markKey) => selectionMarkDefs.find((def) => def?._key === markKey)?._type,
+              (markKey) =>
+                selectionMarkDefs.find((def) => def?._key === markKey)?._type,
             )
 
             return spanMarkDefs?.includes(annotationType)
@@ -371,13 +433,18 @@ export function createWithEditableAPI(
         value?: {[prop: string]: unknown},
       ): {spanPath: Path; markDefPath: Path} | undefined => {
         const {selection: originalSelection} = editor
-        let returnValue: {spanPath: Path; markDefPath: Path} | undefined = undefined
+        let returnValue: {spanPath: Path; markDefPath: Path} | undefined =
+          undefined
         if (originalSelection) {
-          const [block] = Editor.node(editor, originalSelection.focus, {depth: 1})
+          const [block] = Editor.node(editor, originalSelection.focus, {
+            depth: 1,
+          })
           if (!editor.isTextBlock(block)) {
             return undefined
           }
-          const [textNode] = Editor.node(editor, originalSelection.focus, {depth: 2})
+          const [textNode] = Editor.node(editor, originalSelection.focus, {
+            depth: 2,
+          })
 
           if (!isPortableTextSpan(textNode)) {
             return undefined
@@ -402,7 +469,11 @@ export function createWithEditableAPI(
                 {
                   markDefs: [
                     ...(block.markDefs || []),
-                    {_type: type.name, _key: annotationKey, ...value} as PortableTextObject,
+                    {
+                      _type: type.name,
+                      _key: annotationKey,
+                      ...value,
+                    } as PortableTextObject,
                   ],
                 },
                 {at: originalSelection.focus},
@@ -418,7 +489,10 @@ export function createWithEditableAPI(
                 Transforms.setNodes(
                   editor,
                   {
-                    marks: [...((textNode.marks || []) as string[]), annotationKey],
+                    marks: [
+                      ...((textNode.marks || []) as string[]),
+                      annotationKey,
+                    ],
                   },
                   {
                     at: editor.selection,
@@ -429,14 +503,22 @@ export function createWithEditableAPI(
               editor.onChange()
 
               const newPortableTextEditorSelection = toPortableTextRange(
-                fromSlateValue(editor.children, types.block.name, KEY_TO_VALUE_ELEMENT.get(editor)),
+                fromSlateValue(
+                  editor.children,
+                  types.block.name,
+                  KEY_TO_VALUE_ELEMENT.get(editor),
+                ),
                 editor.selection,
                 types,
               )
               if (newPortableTextEditorSelection) {
                 returnValue = {
                   spanPath: newPortableTextEditorSelection.focus.path,
-                  markDefPath: [{_key: block._key}, 'markDefs', {_key: annotationKey}],
+                  markDefPath: [
+                    {_key: block._key},
+                    'markDefs',
+                    {_key: annotationKey},
+                  ],
                 }
               }
             })
@@ -446,10 +528,14 @@ export function createWithEditableAPI(
         }
         return returnValue
       },
-      delete: (selection: EditorSelection, options?: EditableAPIDeleteOptions): void => {
+      delete: (
+        selection: EditorSelection,
+        options?: EditableAPIDeleteOptions,
+      ): void => {
         if (selection) {
           const range = toSlateRange(selection, editor)
-          const hasRange = range && range.anchor.path.length > 0 && range.focus.path.length > 0
+          const hasRange =
+            range && range.anchor.path.length > 0 && range.focus.path.length > 0
           if (!hasRange) {
             throw new Error('Invalid range')
           }
@@ -509,7 +595,11 @@ export function createWithEditableAPI(
           // Select the whole annotation if collapsed
           if (Range.isCollapsed(selection)) {
             const [node, nodePath] = Editor.node(editor, selection, {depth: 2})
-            if (Text.isText(node) && node.marks && typeof node.text === 'string') {
+            if (
+              Text.isText(node) &&
+              node.marks &&
+              typeof node.text === 'string'
+            ) {
               Transforms.select(editor, nodePath)
               selection = editor.selection
             }
@@ -538,10 +628,16 @@ export function createWithEditableAPI(
 
               // Removes the marks from the text nodes
               blocks.forEach(([block]) => {
-                if (editor.isTextBlock(block) && Array.isArray(block.markDefs)) {
-                  const marksToRemove = block.markDefs.filter((def) => def._type === type.name)
+                if (
+                  editor.isTextBlock(block) &&
+                  Array.isArray(block.markDefs)
+                ) {
+                  const marksToRemove = block.markDefs.filter(
+                    (def) => def._type === type.name,
+                  )
                   marksToRemove.forEach((def) => {
-                    if (!removedMarks.includes(def._key)) removedMarks.push(def._key)
+                    if (!removedMarks.includes(def._key))
+                      removedMarks.push(def._key)
                     Editor.removeMark(editor, def._key)
                   })
                 }
@@ -560,7 +656,11 @@ export function createWithEditableAPI(
             return existing
           }
           ptRange = toPortableTextRange(
-            fromSlateValue(editor.children, types.block.name, KEY_TO_VALUE_ELEMENT.get(editor)),
+            fromSlateValue(
+              editor.children,
+              types.block.name,
+              KEY_TO_VALUE_ELEMENT.get(editor),
+            ),
             editor.selection,
             types,
           )
@@ -569,7 +669,11 @@ export function createWithEditableAPI(
         return ptRange
       },
       getValue: () => {
-        return fromSlateValue(editor.children, types.block.name, KEY_TO_VALUE_ELEMENT.get(editor))
+        return fromSlateValue(
+          editor.children,
+          types.block.name,
+          KEY_TO_VALUE_ELEMENT.get(editor),
+        )
       },
       isCollapsedSelection: () => {
         return !!editor.selection && Range.isCollapsed(editor.selection)
@@ -584,7 +688,10 @@ export function createWithEditableAPI(
       getFragment: () => {
         return fromSlateValue(editor.getFragment(), types.block.name)
       },
-      isSelectionsOverlapping: (selectionA: EditorSelection, selectionB: EditorSelection) => {
+      isSelectionsOverlapping: (
+        selectionA: EditorSelection,
+        selectionB: EditorSelection,
+      ) => {
         // Convert the selections to Slate ranges
         const rangeA = toSlateRange(selectionA, editor)
         const rangeB = toSlateRange(selectionB, editor)

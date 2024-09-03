@@ -3,7 +3,9 @@ import applyPatch from './applyPatch'
 import insert from './arrayInsert'
 import type {PathSegment} from './types'
 
-const hasOwn = Object.prototype.hasOwnProperty.call.bind(Object.prototype.hasOwnProperty)
+const hasOwn = Object.prototype.hasOwnProperty.call.bind(
+  Object.prototype.hasOwnProperty,
+)
 
 function move(arr: any[], from: number, to: any) {
   const nextValue = arr.slice()
@@ -44,7 +46,11 @@ export default function apply(
     } else if (patch.type === 'unset') {
       return undefined
     } else if (patch.type === 'move') {
-      if (!patch.value || !hasOwn(patch.value, 'from') || !hasOwn(patch.value, 'to')) {
+      if (
+        !patch.value ||
+        !hasOwn(patch.value, 'from') ||
+        !hasOwn(patch.value, 'to')
+      ) {
         // eslint-disable-line max-depth
         throw new Error(
           `Invalid value of 'move' patch. Expected a value with "from" and "to" indexes, instead got: ${JSON.stringify(
@@ -72,7 +78,9 @@ export default function apply(
       return insert(value, position, index, items)
     } else if (patch.type === 'unset') {
       if (typeof index !== 'number') {
-        throw new Error(`Expected array index to be a number, instead got "${index}"`)
+        throw new Error(
+          `Expected array index to be a number, instead got "${index}"`,
+        )
       }
       nextValue.splice(index, 1)
       return nextValue
