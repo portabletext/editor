@@ -2,9 +2,8 @@
 import {type PortableTextBlock} from '@sanity/types'
 import {debounce, isEqual} from 'lodash'
 import {useCallback, useMemo, useRef} from 'react'
-import {type Descendant, Editor, type Node, Text, Transforms} from 'slate'
+import {Editor, Text, Transforms, type Descendant, type Node} from 'slate'
 import {useSlate} from 'slate-react'
-
 import {type EditorChange, type PortableTextSlateEditor} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {validateValue} from '../../utils/validateValue'

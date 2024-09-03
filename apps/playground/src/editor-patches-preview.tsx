@@ -1,6 +1,6 @@
 import {omit} from 'remeda'
-import {EditorActorRef} from './playground-machine'
 import {tv} from 'tailwind-variants'
+import {EditorActorRef} from './playground-machine'
 
 type EditorPatch = ReturnType<EditorActorRef['getSnapshot']>['context']['patchesReceived'][number]
 

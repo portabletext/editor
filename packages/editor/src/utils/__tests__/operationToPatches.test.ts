@@ -1,7 +1,6 @@
 import {beforeEach, describe, expect, it} from '@jest/globals'
 import {type PortableTextTextBlock} from '@sanity/types'
 import {createEditor, type Descendant} from 'slate'
-
 import {PortableTextEditor, type PortableTextEditorProps} from '../..'
 import {schemaType} from '../../editor/__tests__/PortableTextEditorTester'
 import {defaultKeyGenerator} from '../../editor/hooks/usePortableTextEditorKeyGenerator'

@@ -13,7 +13,7 @@ module.exports = {
     ecmaVersion: 2020,
     sourceType: 'module',
   },
-  plugins: ['import', 'simple-import-sort'],
+  plugins: ['import'],
   ignorePatterns: ['dist/**'],
   rules: {
     'no-console': 'error',
@@ -26,8 +26,6 @@ module.exports = {
       },
     ],
     'quote-props': ['warn', 'consistent-as-needed'],
-    'simple-import-sort/exports': 'warn',
-    'simple-import-sort/imports': 'warn',
     'strict': ['warn', 'global'],
   },
   overrides: [

@@ -1,6 +1,7 @@
 import {Schema} from '@sanity/schema'
 import {defineField, defineType} from '@sanity/types'
 import {
+  ActivityIcon,
   BoldIcon,
   CodeIcon,
   Heading1Icon,
@@ -9,18 +10,17 @@ import {
   Heading4Icon,
   Heading5Icon,
   Heading6Icon,
+  ImageIcon,
   ItalicIcon,
   LinkIcon,
-  ImageIcon,
   ListChecksIcon,
   ListIcon,
-  MessageSquareTextIcon,
   ListOrderedIcon,
+  MessageSquareTextIcon,
   PilcrowIcon,
-  StrikethroughIcon,
   SeparatorHorizontalIcon,
+  StrikethroughIcon,
   TextQuoteIcon,
-  ActivityIcon,
   UnderlineIcon,
 } from 'lucide-react'
 import {z} from 'zod'

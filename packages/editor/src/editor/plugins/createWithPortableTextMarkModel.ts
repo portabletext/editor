@@ -9,8 +9,7 @@
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import {isEqual, uniq} from 'lodash'
 import {type Subject} from 'rxjs'
-import {type Descendant, Editor, Element, Node, Path, Range, Text, Transforms} from 'slate'
-
+import {Editor, Element, Node, Path, Range, Text, Transforms, type Descendant} from 'slate'
 import {
   type EditorChange,
   type PortableTextMemberSchemaTypes,

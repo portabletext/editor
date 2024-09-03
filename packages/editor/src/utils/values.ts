@@ -6,8 +6,7 @@ import {
   type PortableTextTextBlock,
 } from '@sanity/types'
 import {isEqual} from 'lodash'
-import {type Descendant, Element, type Node, Text} from 'slate'
-
+import {Element, Text, type Descendant, type Node} from 'slate'
 import {type PortableTextMemberSchemaTypes} from '../types/editor'
 
 export const EMPTY_MARKDEFS: PortableTextObject[] = []

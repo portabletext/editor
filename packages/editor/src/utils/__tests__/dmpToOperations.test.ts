@@ -10,7 +10,6 @@ import {
   type PortableTextTextBlock,
 } from '@sanity/types'
 import {type Descendant, type Operation} from 'slate'
-
 import {type PortableTextSlateEditor} from '../../types/editor'
 import {diffMatchPatch} from '../applyPatch'
 

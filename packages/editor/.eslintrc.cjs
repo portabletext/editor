@@ -105,10 +105,8 @@ const config = {
     'import/first': 'error',
     'import/newline-after-import': 'error',
     'import/consistent-type-specifier-style': ['error', 'prefer-inline'],
-    'import/order': 'off', // handled by simple-import-sort
-    'sort-imports': 'off', // handled by simple-import-sort
-    'simple-import-sort/imports': 'error',
-    'simple-import-sort/exports': 'error',
+    'import/order': 'off', // handled by prettier
+    'sort-imports': 'off', // handled by prettier
     'max-nested-callbacks': 'off',
     'no-undef': 'off',
     'no-dupe-class-members': 'off', // doesn't work with TS overrides

@@ -1,15 +1,16 @@
 import {
   diffMatchPatch,
   insert,
-  type InsertPosition,
-  type Patch,
   set,
   setIfMissing,
   unset,
+  type InsertPosition,
+  type Patch,
 } from '@portabletext/patches'
 import {type Path, type PortableTextSpan, type PortableTextTextBlock} from '@sanity/types'
 import {get, isUndefined, omitBy} from 'lodash'
 import {
+  Text,
   type Descendant,
   type InsertNodeOperation,
   type InsertTextOperation,
@@ -19,9 +20,7 @@ import {
   type RemoveTextOperation,
   type SetNodeOperation,
   type SplitNodeOperation,
-  Text,
 } from 'slate'
-
 import {type PatchFunctions} from '../editor/plugins/createWithPatches'
 import {type PortableTextMemberSchemaTypes, type PortableTextSlateEditor} from '../types/editor'
 import {debugWithName} from './debug'

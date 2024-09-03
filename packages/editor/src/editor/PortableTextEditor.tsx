@@ -11,7 +11,6 @@ import {
 } from '@sanity/types'
 import {Component, type MutableRefObject, type PropsWithChildren} from 'react'
 import {Subject} from 'rxjs'
-
 import {
   type EditableAPI,
   type EditableAPIDeleteOptions,

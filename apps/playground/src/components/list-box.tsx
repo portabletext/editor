@@ -2,11 +2,11 @@ import {Check} from 'lucide-react'
 import {
   ListBoxItem as AriaListBoxItem,
   Collection,
+  composeRenderProps,
   Header,
   ListBoxItemProps,
   Section,
   SectionProps,
-  composeRenderProps,
 } from 'react-aria-components'
 import {tv} from 'tailwind-variants'
 

@@ -1,6 +1,5 @@
 import {noop} from 'lodash'
 import {type BaseOperation, type Editor, type Node, type NodeEntry} from 'slate'
-
 import {type PortableTextSlateEditor} from '../../types/editor'
 import {type createEditorOptions} from '../../types/options'
 import {createOperationToPatches} from '../../utils/operationToPatches'

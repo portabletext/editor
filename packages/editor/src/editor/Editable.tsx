@@ -1,41 +1,40 @@
 import {type PortableTextBlock} from '@sanity/types'
 import {isEqual, noop} from 'lodash'
 import {
-  type ClipboardEvent,
-  type CSSProperties,
-  type FocusEventHandler,
-  type ForwardedRef,
   forwardRef,
-  type HTMLProps,
-  type KeyboardEvent,
-  type MutableRefObject,
-  type TextareaHTMLAttributes,
   useCallback,
   useEffect,
   useImperativeHandle,
   useMemo,
   useRef,
   useState,
+  type ClipboardEvent,
+  type CSSProperties,
+  type FocusEventHandler,
+  type ForwardedRef,
+  type HTMLProps,
+  type KeyboardEvent,
+  type MutableRefObject,
+  type TextareaHTMLAttributes,
 } from 'react'
 import {
-  type BaseRange,
   Editor,
   Node,
-  type NodeEntry,
-  type Operation,
   Path,
   Range as SlateRange,
-  type Text,
   Transforms,
+  type BaseRange,
+  type NodeEntry,
+  type Operation,
+  type Text,
 } from 'slate'
 import {
-  Editable as SlateEditable,
   ReactEditor,
+  Editable as SlateEditable,
+  useSlate,
   type RenderElementProps,
   type RenderLeafProps,
-  useSlate,
 } from 'slate-react'
-
 import {
   type EditorChange,
   type EditorSelection,

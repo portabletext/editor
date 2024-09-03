@@ -5,7 +5,6 @@ import expressWS from 'express-ws'
 import ipc from 'node-ipc'
 import {Subject} from 'rxjs'
 import {type WebSocket} from 'ws'
-
 import {type Patch} from '../../src'
 
 const WEBSOCKET_PORT = 3001

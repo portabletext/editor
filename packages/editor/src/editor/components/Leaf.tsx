@@ -1,17 +1,16 @@
 import {type Path, type PortableTextObject, type PortableTextTextBlock} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {
-  type ReactElement,
   startTransition,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
+  type ReactElement,
 } from 'react'
 import {Text} from 'slate'
-import {type RenderLeafProps, useSelected} from 'slate-react'
-
+import {useSelected, type RenderLeafProps} from 'slate-react'
 import {
   type BlockAnnotationRenderProps,
   type BlockChildRenderProps,

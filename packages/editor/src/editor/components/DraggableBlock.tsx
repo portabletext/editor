@@ -1,16 +1,15 @@
 import {
-  type DragEvent,
-  type MutableRefObject,
-  type ReactNode,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
+  type DragEvent,
+  type MutableRefObject,
+  type ReactNode,
 } from 'react'
-import {Editor, type Element as SlateElement, Path, Transforms} from 'slate'
+import {Editor, Path, Transforms, type Element as SlateElement} from 'slate'
 import {ReactEditor, useSlateStatic} from 'slate-react'
-
 import {debugWithName} from '../../utils/debug'
 import {
   IS_DRAGGING,

@@ -5,7 +5,6 @@ import {isHotkey} from 'is-hotkey-esm'
 import {type KeyboardEvent} from 'react'
 import {Editor, Node, Path, Range, Transforms} from 'slate'
 import {type ReactEditor} from 'slate-react'
-
 import {type PortableTextMemberSchemaTypes, type PortableTextSlateEditor} from '../../types/editor'
 import {type HotkeyOptions} from '../../types/options'
 import {type SlateTextBlock, type VoidElement} from '../../types/slate'

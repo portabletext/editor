@@ -1,6 +1,5 @@
 import {ParameterType} from '@cucumber/cucumber-expressions'
 import {expect} from '@jest/globals'
-
 import {type Editor} from '../setup/globals.jest'
 import {Given, Then, When} from './gherkin-driver'
 import {

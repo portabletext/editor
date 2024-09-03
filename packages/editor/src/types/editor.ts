@@ -28,7 +28,6 @@ import {type Observable, type Subject} from 'rxjs'
 import {type Descendant, type Node as SlateNode, type Operation as SlateOperation} from 'slate'
 import {type ReactEditor} from 'slate-react'
 import {type DOMNode} from 'slate-react/dist/utils/dom'
-
 import {type PortableTextEditableProps} from '../editor/Editable'
 import {type PortableTextEditor} from '../editor/PortableTextEditor'
 

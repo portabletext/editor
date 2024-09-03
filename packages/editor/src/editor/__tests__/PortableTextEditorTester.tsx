@@ -1,12 +1,11 @@
 import {jest} from '@jest/globals'
 import {Schema} from '@sanity/schema'
 import {defineArrayMember, defineField} from '@sanity/types'
-import {type ForwardedRef, forwardRef, useCallback, useEffect, useMemo} from 'react'
-
+import {forwardRef, useCallback, useEffect, useMemo, type ForwardedRef} from 'react'
 import {
   PortableTextEditable,
-  type PortableTextEditableProps,
   PortableTextEditor,
+  type PortableTextEditableProps,
   type PortableTextEditorProps,
 } from '../../index'
 

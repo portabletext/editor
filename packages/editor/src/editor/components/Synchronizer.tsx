@@ -4,7 +4,6 @@ import {throttle} from 'lodash'
 import {useCallback, useEffect, useMemo, useRef} from 'react'
 import {Editor} from 'slate'
 import {useSlate} from 'slate-react'
-
 import {type EditorChange, type EditorChanges} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {IS_PROCESSING_LOCAL_CHANGES} from '../../utils/weakMaps'

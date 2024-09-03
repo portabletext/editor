@@ -1,8 +1,8 @@
 import {type Circus} from '@jest/types'
 import {
+  chromium,
   type Browser,
   type BrowserContext,
-  chromium,
   type ElementHandle,
   type Page,
 } from '@playwright/test'
@@ -10,7 +10,6 @@ import {type PortableTextBlock} from '@sanity/types'
 import NodeEnvironment from 'jest-environment-node'
 import {isEqual} from 'lodash'
 import ipc from 'node-ipc'
-
 import {type EditorSelection} from '../../src'
 import {normalizeSelection} from '../../src/utils/selection'
 
