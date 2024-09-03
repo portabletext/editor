@@ -1,11 +1,18 @@
-import {createContext, startTransition, useContext, useEffect, useState} from 'react'
+import {
+  createContext,
+  startTransition,
+  useContext,
+  useEffect,
+  useState,
+} from 'react'
 import {type EditorChanges, type EditorSelection} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 
 /**
  * A React context for sharing the editor selection.
  */
-const PortableTextEditorSelectionContext = createContext<EditorSelection | null>(null)
+const PortableTextEditorSelectionContext =
+  createContext<EditorSelection | null>(null)
 
 /**
  * @public

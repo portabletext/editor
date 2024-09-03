@@ -1,7 +1,10 @@
 import {describe, expect, it, jest} from '@jest/globals'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
-import {PortableTextEditorTester, schemaType} from '../../__tests__/PortableTextEditorTester'
+import {
+  PortableTextEditorTester,
+  schemaType,
+} from '../../__tests__/PortableTextEditorTester'
 import {PortableTextEditor} from '../../PortableTextEditor'
 
 const initialValue = [
@@ -55,7 +58,8 @@ describe('plugin:withPortableTextSelections', () => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
         PortableTextEditor.select(editorRef.current, initialSelection)
-        expect(PortableTextEditor.getSelection(editorRef.current)).toMatchInlineSnapshot(`
+        expect(PortableTextEditor.getSelection(editorRef.current))
+          .toMatchInlineSnapshot(`
           Object {
             "anchor": Object {
               "offset": 9,

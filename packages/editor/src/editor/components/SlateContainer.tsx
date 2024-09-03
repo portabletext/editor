@@ -25,7 +25,8 @@ export interface SlateContainerProps extends PropsWithChildren {
  * @internal
  */
 export function SlateContainer(props: SlateContainerProps) {
-  const {patches$, portableTextEditor, readOnly, maxBlocks, keyGenerator} = props
+  const {patches$, portableTextEditor, readOnly, maxBlocks, keyGenerator} =
+    props
 
   // Create the slate instance, using `useState` ensures setup is only run once, initially
   const [[slateEditor, subscribe]] = useState(() => {
@@ -59,7 +60,14 @@ export function SlateContainer(props: SlateContainerProps) {
       portableTextEditor,
       readOnly,
     })
-  }, [keyGenerator, portableTextEditor, maxBlocks, readOnly, patches$, slateEditor])
+  }, [
+    keyGenerator,
+    portableTextEditor,
+    maxBlocks,
+    readOnly,
+    patches$,
+    slateEditor,
+  ])
 
   const initialValue = useMemo(() => {
     return [slateEditor.pteCreateEmptyBlock()]

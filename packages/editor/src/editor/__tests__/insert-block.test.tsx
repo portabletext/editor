@@ -9,7 +9,11 @@ import {PortableTextEditor} from '../PortableTextEditor'
 
 const schema = Schema.compile({
   types: [
-    {name: 'portable-text', type: 'array', of: [{type: 'block'}, {type: 'image'}]},
+    {
+      name: 'portable-text',
+      type: 'array',
+      of: [{type: 'block'}, {type: 'image'}],
+    },
     {name: 'image', type: 'object'},
   ],
 }).get('portable-text')
@@ -48,7 +52,10 @@ describe(PortableTextEditor.insertBlock.name, () => {
     // Given an empty text block
     await waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({
+          type: 'value',
+          value: initialValue,
+        })
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })
@@ -113,7 +120,10 @@ describe(PortableTextEditor.insertBlock.name, () => {
     // Given an non-empty text block
     await waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({
+          type: 'value',
+          value: initialValue,
+        })
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })
@@ -183,7 +193,10 @@ describe(PortableTextEditor.insertBlock.name, () => {
     // Given an empty text block followed by an image
     await waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({
+          type: 'value',
+          value: initialValue,
+        })
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })
@@ -201,7 +214,10 @@ describe(PortableTextEditor.insertBlock.name, () => {
     })
     await waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({type: 'selection', selection: initialSelection})
+        expect(onChange).toHaveBeenCalledWith({
+          type: 'selection',
+          selection: initialSelection,
+        })
       }
     })
 

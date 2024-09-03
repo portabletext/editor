@@ -113,7 +113,9 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
     }
 
     if (props.incomingPatches$) {
-      console.warn(`The prop 'incomingPatches$' is deprecated and renamed to 'patches$'`)
+      console.warn(
+        `The prop 'incomingPatches$' is deprecated and renamed to 'patches$'`,
+      )
     }
 
     this.change$.next({type: 'loading', isLoading: true})
@@ -191,20 +193,25 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
   }
 
   // Static API methods
-  static activeAnnotations = (editor: PortableTextEditor): PortableTextObject[] => {
+  static activeAnnotations = (
+    editor: PortableTextEditor,
+  ): PortableTextObject[] => {
     return editor && editor.editable ? editor.editable.activeAnnotations() : []
   }
   static isAnnotationActive = (
     editor: PortableTextEditor,
     annotationType: PortableTextObject['_type'],
   ): boolean => {
-    return editor && editor.editable ? editor.editable.isAnnotationActive(annotationType) : false
+    return editor && editor.editable
+      ? editor.editable.isAnnotationActive(annotationType)
+      : false
   }
   static addAnnotation = (
     editor: PortableTextEditor,
     type: ObjectSchemaType,
     value?: {[prop: string]: unknown},
-  ): {spanPath: Path; markDefPath: Path} | undefined => editor.editable?.addAnnotation(type, value)
+  ): {spanPath: Path; markDefPath: Path} | undefined =>
+    editor.editable?.addAnnotation(type, value)
   static blur = (editor: PortableTextEditor): void => {
     debug('Host blurred')
     editor.editable?.blur()
@@ -231,7 +238,9 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
   static focusBlock = (editor: PortableTextEditor) => {
     return editor.editable?.focusBlock()
   }
-  static focusChild = (editor: PortableTextEditor): PortableTextChild | undefined => {
+  static focusChild = (
+    editor: PortableTextEditor,
+  ): PortableTextChild | undefined => {
     return editor.editable?.focusChild()
   }
   static getSelection = (editor: PortableTextEditor) => {
@@ -270,7 +279,10 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
   static insertBreak = (editor: PortableTextEditor): void => {
     return editor.editable?.insertBreak()
   }
-  static isVoid = (editor: PortableTextEditor, element: PortableTextBlock | PortableTextChild) => {
+  static isVoid = (
+    editor: PortableTextEditor,
+    element: PortableTextBlock | PortableTextChild,
+  ) => {
     return editor.editable?.isVoid(element)
   }
   static isObjectPath = (editor: PortableTextEditor, path: Path): boolean => {
@@ -282,13 +294,21 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
   static marks = (editor: PortableTextEditor) => {
     return editor.editable?.marks()
   }
-  static select = (editor: PortableTextEditor, selection: EditorSelection | null) => {
+  static select = (
+    editor: PortableTextEditor,
+    selection: EditorSelection | null,
+  ) => {
     debug(`Host setting selection`, selection)
     editor.editable?.select(selection)
   }
-  static removeAnnotation = (editor: PortableTextEditor, type: ObjectSchemaType) =>
-    editor.editable?.removeAnnotation(type)
-  static toggleBlockStyle = (editor: PortableTextEditor, blockStyle: string) => {
+  static removeAnnotation = (
+    editor: PortableTextEditor,
+    type: ObjectSchemaType,
+  ) => editor.editable?.removeAnnotation(type)
+  static toggleBlockStyle = (
+    editor: PortableTextEditor,
+    blockStyle: string,
+  ) => {
     debug(`Host is toggling block style`)
     return editor.editable?.toggleBlockStyle(blockStyle)
   }
@@ -299,7 +319,9 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
     debug(`Host toggling mark`, mark)
     editor.editable?.toggleMark(mark)
   }
-  static getFragment = (editor: PortableTextEditor): PortableTextBlock[] | undefined => {
+  static getFragment = (
+    editor: PortableTextEditor,
+  ): PortableTextBlock[] | undefined => {
     debug(`Host getting fragment`)
     return editor.editable?.getFragment()
   }

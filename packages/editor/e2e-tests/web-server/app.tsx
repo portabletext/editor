@@ -1,6 +1,15 @@
 /* eslint-disable i18next/no-literal-string */
 import {type PortableTextBlock} from '@sanity/types'
-import {Box, Card, Heading, Inline, Stack, studioTheme, Text, ThemeProvider} from '@sanity/ui'
+import {
+  Box,
+  Card,
+  Heading,
+  Inline,
+  Stack,
+  studioTheme,
+  Text,
+  ThemeProvider,
+} from '@sanity/ui'
 import {useCallback, useMemo, useState} from 'react'
 import {Subject} from 'rxjs'
 import {type EditorSelection, type Patch} from '../../src'
@@ -16,13 +25,16 @@ export function App() {
       }>(),
     [],
   )
-  const [value, setValue] = useState<PortableTextBlock[] | undefined | null>(null)
+  const [value, setValue] = useState<PortableTextBlock[] | undefined | null>(
+    null,
+  )
   const [revId, setRevId] = useState<string | undefined>(undefined)
   const [selection, setSelection] = useState<EditorSelection | null>(null)
   const {editorId, testId} = useMemo(() => {
     const params = new URLSearchParams(document.location.search)
     return {
-      editorId: params.get('editorId') || (Math.random() + 1).toString(36).slice(7),
+      editorId:
+        params.get('editorId') || (Math.random() + 1).toString(36).slice(7),
       testId: params.get('testId') || 'noTestIdGiven',
     }
   }, [])
@@ -67,7 +79,9 @@ export function App() {
   const handleMutation = useCallback(
     (patches: Patch[]) => {
       if (webSocket) {
-        webSocket.send(JSON.stringify({type: 'mutation', patches, editorId, testId}))
+        webSocket.send(
+          JSON.stringify({type: 'mutation', patches, editorId, testId}),
+        )
       }
     },
     [editorId, testId, webSocket],

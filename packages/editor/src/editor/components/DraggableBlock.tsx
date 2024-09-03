@@ -35,17 +35,31 @@ export interface DraggableBlockProps {
  * Implements drag and drop functionality on editor block nodes
  * @internal
  */
-export const DraggableBlock = ({children, element, readOnly, blockRef}: DraggableBlockProps) => {
+export const DraggableBlock = ({
+  children,
+  element,
+  readOnly,
+  blockRef,
+}: DraggableBlockProps) => {
   const editor = useSlateStatic()
   const dragGhostRef: MutableRefObject<undefined | HTMLElement> = useRef()
   const [isDragOver, setIsDragOver] = useState(false)
-  const isVoid = useMemo(() => Editor.isVoid(editor, element), [editor, element])
-  const isInline = useMemo(() => Editor.isInline(editor, element), [editor, element])
+  const isVoid = useMemo(
+    () => Editor.isVoid(editor, element),
+    [editor, element],
+  )
+  const isInline = useMemo(
+    () => Editor.isInline(editor, element),
+    [editor, element],
+  )
 
   const [blockElement, setBlockElement] = useState<HTMLElement | null>(null)
 
   useEffect(
-    () => setBlockElement(blockRef ? blockRef.current : ReactEditor.toDOMNode(editor, element)),
+    () =>
+      setBlockElement(
+        blockRef ? blockRef.current : ReactEditor.toDOMNode(editor, element),
+      ),
     [editor, element, blockRef],
   )
 
@@ -121,7 +135,11 @@ export const DraggableBlock = ({children, element, readOnly, blockRef}: Draggabl
             )}`,
           )
         }
-        if (dragPosition === 'top' && isBefore && targetPath[0] !== editor.children.length - 1) {
+        if (
+          dragPosition === 'top' &&
+          isBefore &&
+          targetPath[0] !== editor.children.length - 1
+        ) {
           const originalPath = targetPath
           targetPath = Path.previous(targetPath)
           debug(
@@ -200,7 +218,9 @@ export const DraggableBlock = ({children, element, readOnly, blockRef}: Draggabl
       // drag ghost by adding a truthy data attribute 'data-pt-drag-ghost-element' to a HTML element.
       if (blockElement && blockElement instanceof HTMLElement) {
         let dragGhost = blockElement.cloneNode(true) as HTMLElement
-        const customGhost = dragGhost.querySelector('[data-pt-drag-ghost-element]')
+        const customGhost = dragGhost.querySelector(
+          '[data-pt-drag-ghost-element]',
+        )
         if (customGhost) {
           dragGhost = customGhost as HTMLElement
         }
@@ -231,12 +251,16 @@ export const DraggableBlock = ({children, element, readOnly, blockRef}: Draggabl
     isDragOver && editor.children[0] === IS_DRAGGING_ELEMENT_TARGET.get(editor)
   const isDraggingOverLastBlock =
     isDragOver &&
-    editor.children[editor.children.length - 1] === IS_DRAGGING_ELEMENT_TARGET.get(editor)
+    editor.children[editor.children.length - 1] ===
+      IS_DRAGGING_ELEMENT_TARGET.get(editor)
   const dragPosition = IS_DRAGGING_BLOCK_TARGET_POSITION.get(editor)
 
   const isDraggingOverTop =
     isDraggingOverFirstBlock ||
-    (isDragOver && !isDraggingOverFirstBlock && !isDraggingOverLastBlock && dragPosition === 'top')
+    (isDragOver &&
+      !isDraggingOverFirstBlock &&
+      !isDraggingOverLastBlock &&
+      dragPosition === 'top')
   const isDraggingOverBottom =
     isDraggingOverLastBlock ||
     (isDragOver &&

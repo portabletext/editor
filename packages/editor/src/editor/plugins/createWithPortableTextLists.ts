@@ -1,12 +1,19 @@
 import {Editor, Element, Text, Transforms, type Node} from 'slate'
-import {type PortableTextMemberSchemaTypes, type PortableTextSlateEditor} from '../../types/editor'
+import {
+  type PortableTextMemberSchemaTypes,
+  type PortableTextSlateEditor,
+} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 
 const debug = debugWithName('plugin:withPortableTextLists')
 const MAX_LIST_LEVEL = 10
 
-export function createWithPortableTextLists(types: PortableTextMemberSchemaTypes) {
-  return function withPortableTextLists(editor: PortableTextSlateEditor): PortableTextSlateEditor {
+export function createWithPortableTextLists(
+  types: PortableTextMemberSchemaTypes,
+) {
+  return function withPortableTextLists(
+    editor: PortableTextSlateEditor,
+  ): PortableTextSlateEditor {
     editor.pteToggleListItem = (listItemStyle: string) => {
       const isActive = editor.pteHasListStyle(listItemStyle)
       if (isActive) {
@@ -25,7 +32,8 @@ export function createWithPortableTextLists(types: PortableTextMemberSchemaTypes
       const selectedBlocks = [
         ...Editor.nodes(editor, {
           at: editor.selection,
-          match: (node) => Element.isElement(node) && node._type === types.block.name,
+          match: (node) =>
+            Element.isElement(node) && node._type === types.block.name,
         }),
       ]
       selectedBlocks.forEach(([node, path]) => {
@@ -120,10 +128,16 @@ export function createWithPortableTextLists(types: PortableTextMemberSchemaTypes
           let level = node.level || 1
           if (reverse) {
             level--
-            debug('Decrementing list level', Math.min(MAX_LIST_LEVEL, Math.max(1, level)))
+            debug(
+              'Decrementing list level',
+              Math.min(MAX_LIST_LEVEL, Math.max(1, level)),
+            )
           } else {
             level++
-            debug('Incrementing list level', Math.min(MAX_LIST_LEVEL, Math.max(1, level)))
+            debug(
+              'Incrementing list level',
+              Math.min(MAX_LIST_LEVEL, Math.max(1, level)),
+            )
           }
           Transforms.setNodes(
             editor,

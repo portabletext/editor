@@ -4,14 +4,34 @@
  */
 
 import {type Patch} from '@portabletext/patches'
-import {DIFF_DELETE, DIFF_EQUAL, DIFF_INSERT, parsePatch} from '@sanity/diff-match-patch'
+import {
+  DIFF_DELETE,
+  DIFF_EQUAL,
+  DIFF_INSERT,
+  parsePatch,
+} from '@sanity/diff-match-patch'
 import {type ObjectSchemaType, type PortableTextBlock} from '@sanity/types'
 import {flatten, isEqual} from 'lodash'
-import {Editor, Operation, Path, Transforms, type Descendant, type SelectionOperation} from 'slate'
-import {type PatchObservable, type PortableTextSlateEditor} from '../../types/editor'
+import {
+  Editor,
+  Operation,
+  Path,
+  Transforms,
+  type Descendant,
+  type SelectionOperation,
+} from 'slate'
+import {
+  type PatchObservable,
+  type PortableTextSlateEditor,
+} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {fromSlateValue} from '../../utils/values'
-import {setIsRedoing, setIsUndoing, withRedoing, withUndoing} from '../../utils/withUndoRedo'
+import {
+  setIsRedoing,
+  setIsUndoing,
+  withRedoing,
+  withUndoing,
+} from '../../utils/withUndoRedo'
 
 const debug = debugWithName('plugin:withUndoRedo')
 const debugVerbose = debug.enabled && false
@@ -65,14 +85,21 @@ export function createWithUndoRedo(
           patches.forEach((patch) => {
             if (!reset && patch.origin !== 'local' && remotePatches) {
               if (patch.type === 'unset' && patch.path.length === 0) {
-                debug('Someone else cleared the content, resetting undo/redo history')
+                debug(
+                  'Someone else cleared the content, resetting undo/redo history',
+                )
                 editor.history = {undos: [], redos: []}
                 remotePatches.splice(0, remotePatches.length)
                 SAVING.set(editor, true)
                 reset = true
                 return
               }
-              remotePatches.push({patch, time: new Date(), snapshot, previousSnapshot})
+              remotePatches.push({
+                patch,
+                time: new Date(),
+                snapshot,
+                previousSnapshot,
+              })
             }
           })
           previousSnapshot = snapshot
@@ -93,7 +120,8 @@ export function createWithUndoRedo(
       const {operations, history} = editor
       const {undos} = history
       const step = undos[undos.length - 1]
-      const lastOp = step && step.operations && step.operations[step.operations.length - 1]
+      const lastOp =
+        step && step.operations && step.operations[step.operations.length - 1]
       const overwrite = shouldOverwrite(op, lastOp)
       const save = isSaving(editor)
 
@@ -109,7 +137,12 @@ export function createWithUndoRedo(
           step.operations.push(op)
         } else {
           const newStep = {
-            operations: [...(editor.selection === null ? [] : [createSelectOperation(editor)]), op],
+            operations: [
+              ...(editor.selection === null
+                ? []
+                : [createSelectOperation(editor)]),
+              op,
+            ],
             timestamp: new Date(),
           }
           undos.push(newStep)
@@ -136,16 +169,26 @@ export function createWithUndoRedo(
         const step = undos[undos.length - 1]
         debug('Undoing', step)
         if (step.operations.length > 0) {
-          const otherPatches = remotePatches.filter((item) => item.time >= step.timestamp)
+          const otherPatches = remotePatches.filter(
+            (item) => item.time >= step.timestamp,
+          )
           let transformedOperations = step.operations
           otherPatches.forEach((item) => {
             transformedOperations = flatten(
               transformedOperations.map((op) =>
-                transformOperation(editor, item.patch, op, item.snapshot, item.previousSnapshot),
+                transformOperation(
+                  editor,
+                  item.patch,
+                  op,
+                  item.snapshot,
+                  item.previousSnapshot,
+                ),
               ),
             )
           })
-          const reversedOperations = transformedOperations.map(Operation.inverse).reverse()
+          const reversedOperations = transformedOperations
+            .map(Operation.inverse)
+            .reverse()
 
           try {
             Editor.withoutNormalizing(editor, () => {
@@ -184,12 +227,20 @@ export function createWithUndoRedo(
         const step = redos[redos.length - 1]
         debug('Redoing', step)
         if (step.operations.length > 0) {
-          const otherPatches = remotePatches.filter((item) => item.time >= step.timestamp)
+          const otherPatches = remotePatches.filter(
+            (item) => item.time >= step.timestamp,
+          )
           let transformedOperations = step.operations
           otherPatches.forEach((item) => {
             transformedOperations = flatten(
               transformedOperations.map((op) =>
-                transformOperation(editor, item.patch, op, item.snapshot, item.previousSnapshot),
+                transformOperation(
+                  editor,
+                  item.patch,
+                  op,
+                  item.snapshot,
+                  item.previousSnapshot,
+                ),
               ),
             )
           })
@@ -239,7 +290,9 @@ function transformOperation(
   previousSnapshot: PortableTextBlock[] | undefined,
 ): Operation[] {
   if (debugVerbose) {
-    debug(`Adjusting '${operation.type}' operation paths for '${patch.type}' patch`)
+    debug(
+      `Adjusting '${operation.type}' operation paths for '${patch.type}' patch`,
+    )
     debug(`Operation ${JSON.stringify(operation)}`)
     debug(`Patch ${JSON.stringify(patch)}`)
   }
@@ -253,7 +306,13 @@ function transformOperation(
     debug(
       `Adjusting block path (+${patch.items.length}) for '${transformedOperation.type}' operation and patch '${patch.type}'`,
     )
-    return [adjustBlockPath(transformedOperation, patch.items.length, insertBlockIndex)]
+    return [
+      adjustBlockPath(
+        transformedOperation,
+        patch.items.length,
+        insertBlockIndex,
+      ),
+    ]
   }
 
   if (patch.type === 'unset' && patch.path.length === 1) {
@@ -280,13 +339,21 @@ function transformOperation(
 
   // Someone reset the whole value
   if (patch.type === 'unset' && patch.path.length === 0) {
-    debug(`Adjusting selection for unset everything patch and ${operation.type} operation`)
+    debug(
+      `Adjusting selection for unset everything patch and ${operation.type} operation`,
+    )
     return []
   }
 
   if (patch.type === 'diffMatchPatch') {
-    const operationTargetBlock = findOperationTargetBlock(editor, transformedOperation)
-    if (!operationTargetBlock || !isEqual({_key: operationTargetBlock._key}, patch.path[0])) {
+    const operationTargetBlock = findOperationTargetBlock(
+      editor,
+      transformedOperation,
+    )
+    if (
+      !operationTargetBlock ||
+      !isEqual({_key: operationTargetBlock._key}, patch.path[0])
+    ) {
       return [transformedOperation]
     }
     const diffPatches = parsePatch(patch.value)
@@ -317,7 +384,10 @@ function transformOperation(
       }
       // Adjust accordingly if someone removed text in the same node before us
       if (transformedOperation.type === 'remove_text') {
-        if (changedOffset <= transformedOperation.offset - transformedOperation.text.length) {
+        if (
+          changedOffset <=
+          transformedOperation.offset - transformedOperation.text.length
+        ) {
           transformedOperation.offset += adjustOffsetBy
         }
       }
@@ -364,7 +434,11 @@ function transformOperation(
 /**
  * Adjust the block path for a operation
  */
-function adjustBlockPath(operation: Operation, level: number, blockIndex: number): Operation {
+function adjustBlockPath(
+  operation: Operation,
+  level: number,
+  blockIndex: number,
+): Operation {
   const transformedOperation = {...operation}
   if (
     blockIndex >= 0 &&
@@ -373,7 +447,10 @@ function adjustBlockPath(operation: Operation, level: number, blockIndex: number
     transformedOperation.path[0] >= blockIndex + level &&
     transformedOperation.path[0] + level > -1
   ) {
-    const newPath = [transformedOperation.path[0] + level, ...transformedOperation.path.slice(1)]
+    const newPath = [
+      transformedOperation.path[0] + level,
+      ...transformedOperation.path.slice(1),
+    ]
     transformedOperation.path = newPath
   }
   if (transformedOperation.type === 'set_selection') {
@@ -392,7 +469,11 @@ function adjustBlockPath(operation: Operation, level: number, blockIndex: number
     if ((currentFocus && currentAnchor) || (newFocus && newAnchor)) {
       const points = [currentFocus, currentAnchor, newFocus, newAnchor]
       points.forEach((point) => {
-        if (point && point.path[0] >= blockIndex + level && point.path[0] + level > -1) {
+        if (
+          point &&
+          point.path[0] >= blockIndex + level &&
+          point.path[0] + level > -1
+        ) {
           point.path = [point.path[0] + level, ...point.path.slice(1)]
         }
       })
@@ -448,7 +529,10 @@ const shouldMerge = (op: Operation, prev: Operation | undefined): boolean => {
   return false
 }
 
-const shouldOverwrite = (op: Operation, prev: Operation | undefined): boolean => {
+const shouldOverwrite = (
+  op: Operation,
+  prev: Operation | undefined,
+): boolean => {
   if (prev && op.type === 'set_selection' && prev.type === 'set_selection') {
     return true
   }

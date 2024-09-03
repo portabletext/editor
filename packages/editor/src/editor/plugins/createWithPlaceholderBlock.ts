@@ -14,7 +14,9 @@ const debug = debugWithName('plugin:withPlaceholderBlock')
 export function createWithPlaceholderBlock(): (
   editor: PortableTextSlateEditor,
 ) => PortableTextSlateEditor {
-  return function withPlaceholderBlock(editor: PortableTextSlateEditor): PortableTextSlateEditor {
+  return function withPlaceholderBlock(
+    editor: PortableTextSlateEditor,
+  ): PortableTextSlateEditor {
     const {apply} = editor
 
     editor.apply = (op) => {

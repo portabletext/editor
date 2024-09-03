@@ -44,7 +44,8 @@ export const HOTKEYS: HotkeyOptions = {
 }
 
 export const BlockObject = styled.div<BlockRenderProps>`
-  border: ${(props) => (props.focused ? '1px solid blue' : '1px solid transparent')};
+  border: ${(props) =>
+    props.focused ? '1px solid blue' : '1px solid transparent'};
   background: ${(props) => (props.selected ? '#eeeeff' : 'transparent')};
   padding: 2em;
 `
@@ -76,10 +77,18 @@ export const Editor = ({
   }>
   selection: EditorSelection | null
 }) => {
-  const [selectionValue, setSelectionValue] = useState<EditorSelection | null>(selection)
-  const selectionString = useMemo(() => JSON.stringify(selectionValue), [selectionValue])
+  const [selectionValue, setSelectionValue] = useState<EditorSelection | null>(
+    selection,
+  )
+  const selectionString = useMemo(
+    () => JSON.stringify(selectionValue),
+    [selectionValue],
+  )
   const editor = useRef<PortableTextEditor>(null)
-  const keyGenFn = useMemo(() => createKeyGenerator(editorId.slice(0, 1)), [editorId])
+  const keyGenFn = useMemo(
+    () => createKeyGenerator(editorId.slice(0, 1)),
+    [editorId],
+  )
   const [isOffline, setIsOffline] = useState(!window.navigator.onLine)
   const [readOnly, setReadOnly] = useState(false)
 
@@ -177,7 +186,11 @@ export const Editor = ({
   const renderListItem = useCallback((props: BlockListItemRenderProps) => {
     const {level, schemaType, value: listType, children} = props
     const listStyleType = schemaType.value === 'number' ? 'decimal' : 'inherit'
-    return <li style={{listStyleType, paddingLeft: `${level * 10}pt`}}>{children}</li>
+    return (
+      <li style={{listStyleType, paddingLeft: `${level * 10}pt`}}>
+        {children}
+      </li>
+    )
   }, [])
 
   const editable = useMemo(
@@ -195,7 +208,14 @@ export const Editor = ({
         spellCheck
       />
     ),
-    [renderBlock, renderChild, renderDecorator, renderListItem, renderStyle, selection],
+    [
+      renderBlock,
+      renderChild,
+      renderDecorator,
+      renderListItem,
+      renderStyle,
+      selection,
+    ],
   )
 
   // Make sure that the test editor is focused and out of "readOnly mode".

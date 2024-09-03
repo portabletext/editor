@@ -97,7 +97,10 @@ const config = {
     '@typescript-eslint/no-explicit-any': ['warn'],
     '@typescript-eslint/no-dupe-class-members': ['error'],
     '@typescript-eslint/no-unused-vars': ['warn'],
-    '@typescript-eslint/consistent-type-imports': ['error', {prefer: 'type-imports'}],
+    '@typescript-eslint/consistent-type-imports': [
+      'error',
+      {prefer: 'type-imports'},
+    ],
     'unused-imports/no-unused-imports': 'error',
     'unused-imports/no-unused-vars': ['warn'],
     'import/no-duplicates': ['error', {'prefer-inline': true}],
@@ -161,7 +164,12 @@ const config = {
 
     // Files to disable i18n literals,
     {
-      files: ['./**/*/__workshop__/**/*', './dev/**/*', './examples/**/*', '**/*/debug/**/*'],
+      files: [
+        './**/*/__workshop__/**/*',
+        './dev/**/*',
+        './examples/**/*',
+        '**/*/debug/**/*',
+      ],
       rules: {
         'i18next/no-literal-string': 'off',
         '@sanity/i18n/no-attribute-string-literals': 'off',
@@ -205,7 +213,8 @@ const config = {
               {
                 name: 'styled-components',
                 importNames: ['default'],
-                message: 'Please use `import {styled} from "styled-components"` instead.',
+                message:
+                  'Please use `import {styled} from "styled-components"` instead.',
               },
               {
                 name: 'react',
@@ -222,7 +231,10 @@ const config = {
     // Prefer createContext in _singletons
     {
       files: ['packages/sanity/src/**'],
-      excludedFiles: ['**/__workshop__/**', 'packages/sanity/src/_singletons/**'],
+      excludedFiles: [
+        '**/__workshop__/**',
+        'packages/sanity/src/_singletons/**',
+      ],
       rules: {
         'no-restricted-imports': [
           'error',

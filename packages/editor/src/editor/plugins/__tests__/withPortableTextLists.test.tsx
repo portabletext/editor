@@ -1,7 +1,10 @@
 import {describe, expect, it, jest} from '@jest/globals'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
-import {PortableTextEditorTester, schemaType} from '../../__tests__/PortableTextEditorTester'
+import {
+  PortableTextEditorTester,
+  schemaType,
+} from '../../__tests__/PortableTextEditorTester'
 import {PortableTextEditor} from '../../PortableTextEditor'
 
 describe('plugin:withPortableTextLists', () => {

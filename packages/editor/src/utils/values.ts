@@ -37,7 +37,9 @@ export function toSlateValue(
   if (value && Array.isArray(value)) {
     return value.map((block) => {
       const {_type, _key, ...rest} = block
-      const voidChildren = [{_key: VOID_CHILD_KEY, _type: 'span', text: '', marks: []}]
+      const voidChildren = [
+        {_key: VOID_CHILD_KEY, _type: 'span', text: '', marks: []},
+      ]
       const isPortableText = block && block._type === schemaTypes.block.name
       if (isPortableText) {
         const textBlock = block as PortableTextTextBlock
@@ -110,22 +112,40 @@ export function fromSlateValue(
     if (!_key || !_type) {
       throw new Error('Not a valid block')
     }
-    if (_type === textBlockType && 'children' in block && Array.isArray(block.children) && _key) {
+    if (
+      _type === textBlockType &&
+      'children' in block &&
+      Array.isArray(block.children) &&
+      _key
+    ) {
       let hasInlines = false
       const children = block.children.map((child) => {
         const {_type: _cType} = child
         if ('value' in child && _cType !== 'span') {
           hasInlines = true
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const {value: v, _key: k, _type: t, __inline: _i, children: _c, ...rest} = child
-          return keepObjectEquality({...rest, ...v, _key: k as string, _type: t as string}, keyMap)
+          const {
+            value: v,
+            _key: k,
+            _type: t,
+            __inline: _i,
+            children: _c,
+            ...rest
+          } = child
+          return keepObjectEquality(
+            {...rest, ...v, _key: k as string, _type: t as string},
+            keyMap,
+          )
         }
         return child
       })
       if (!hasInlines) {
         return block as PortableTextBlock // Original object
       }
-      return keepObjectEquality({...block, children, _key, _type}, keyMap) as PortableTextBlock
+      return keepObjectEquality(
+        {...block, children, _key, _type},
+        keyMap,
+      ) as PortableTextBlock
     }
     const blockValue = 'value' in block && block.value
     return keepObjectEquality(
@@ -169,7 +189,8 @@ export function findBlockAndIndexFromPath(
     blockIndex = Number(firstPathSegment)
   } else if (children) {
     blockIndex = children.findIndex(
-      (blk) => Element.isElement(blk) && isEqual({_key: blk._key}, firstPathSegment),
+      (blk) =>
+        Element.isElement(blk) && isEqual({_key: blk._key}, firstPathSegment),
     )
   }
   if (blockIndex > -1) {
@@ -187,7 +208,9 @@ export function findChildAndIndexFromPath(
   if (isNumber) {
     childIndex = Number(secondPathSegment)
   } else {
-    childIndex = block.children.findIndex((child) => isEqual({_key: child._key}, secondPathSegment))
+    childIndex = block.children.findIndex((child) =>
+      isEqual({_key: child._key}, secondPathSegment),
+    )
   }
   if (childIndex > -1) {
     return [block.children[childIndex] as Element | Text, childIndex]

@@ -4,7 +4,11 @@ import {
   usePortableTextEditor,
   usePortableTextEditorSelection,
 } from '@portabletext/editor'
-import {BlockDecoratorDefinition, BlockListDefinition, ObjectSchemaType} from '@sanity/types'
+import {
+  BlockDecoratorDefinition,
+  BlockListDefinition,
+  ObjectSchemaType,
+} from '@sanity/types'
 import startCase from 'lodash.startcase'
 import {isValidElement, useMemo} from 'react'
 import {Group, TooltipTrigger} from 'react-aria-components'
@@ -53,33 +57,50 @@ export function PortableTextToolbar() {
       <Separator orientation="vertical" />
       <Group aria-label="Lists" className="contents">
         {lists.map((list) => (
-          <ListToolbarButton key={list.value} list={list} editor={editor} selection={selection} />
+          <ListToolbarButton
+            key={list.value}
+            list={list}
+            editor={editor}
+            selection={selection}
+          />
         ))}
       </Group>
       <Separator orientation="vertical" />
       <Group aria-label="Block objects" className="contents">
         {blockObjects.map((blockObject) => (
-          <BlockObjectButton key={blockObject.name} blockObject={blockObject} editor={editor} />
+          <BlockObjectButton
+            key={blockObject.name}
+            blockObject={blockObject}
+            editor={editor}
+          />
         ))}
       </Group>
       <Separator orientation="vertical" />
       <Group aria-label="Inline objects" className="contents">
         {inlineObjects.map((inlineObject) => (
-          <InlineObjectButton key={inlineObject.name} inlineObject={inlineObject} editor={editor} />
+          <InlineObjectButton
+            key={inlineObject.name}
+            inlineObject={inlineObject}
+            editor={editor}
+          />
         ))}
       </Group>
     </Toolbar>
   )
 }
 
-function StyleSelector(props: {editor: PortableTextEditor; selection: EditorSelection}) {
+function StyleSelector(props: {
+  editor: PortableTextEditor
+  selection: EditorSelection
+}) {
   const styles = props.editor.schemaTypes.styles
   const focusBlock = PortableTextEditor.focusBlock(props.editor)
   const activeStyle = useMemo(
     () =>
       focusBlock
-        ? (styles.find((style) => PortableTextEditor.hasBlockStyle(props.editor, style.value))
-            ?.value ?? null)
+        ? (styles.find((style) =>
+            PortableTextEditor.hasBlockStyle(props.editor, style.value),
+          )?.value ?? null)
         : null,
     [props.editor, focusBlock, styles],
   )
@@ -156,7 +177,8 @@ function DecoratorToolbarButton(props: {
   selection: EditorSelection
 }) {
   const active =
-    props.selection !== null && PortableTextEditor.isMarkActive(props.editor, props.decorator.value)
+    props.selection !== null &&
+    PortableTextEditor.isMarkActive(props.editor, props.decorator.value)
 
   return (
     <TooltipTrigger>
@@ -182,7 +204,8 @@ function ListToolbarButton(props: {
   selection: EditorSelection
 }) {
   const active =
-    props.selection !== null && PortableTextEditor.hasListStyle(props.editor, props.list.value)
+    props.selection !== null &&
+    PortableTextEditor.hasListStyle(props.editor, props.list.value)
 
   return (
     <TooltipTrigger>
@@ -202,13 +225,18 @@ function ListToolbarButton(props: {
   )
 }
 
-function InlineObjectButton(props: {inlineObject: ObjectSchemaType; editor: PortableTextEditor}) {
+function InlineObjectButton(props: {
+  inlineObject: ObjectSchemaType
+  editor: PortableTextEditor
+}) {
   return (
     <Button
       variant="secondary"
       size="sm"
       onPress={() => {
-        PortableTextEditor.insertChild(props.editor, props.inlineObject, {symbol: 'NVDA'})
+        PortableTextEditor.insertChild(props.editor, props.inlineObject, {
+          symbol: 'NVDA',
+        })
         PortableTextEditor.focus(props.editor)
       }}
     >
@@ -218,7 +246,10 @@ function InlineObjectButton(props: {inlineObject: ObjectSchemaType; editor: Port
   )
 }
 
-function BlockObjectButton(props: {blockObject: ObjectSchemaType; editor: PortableTextEditor}) {
+function BlockObjectButton(props: {
+  blockObject: ObjectSchemaType
+  editor: PortableTextEditor
+}) {
   return (
     <Button
       variant="secondary"
@@ -227,7 +258,9 @@ function BlockObjectButton(props: {blockObject: ObjectSchemaType; editor: Portab
         PortableTextEditor.insertBlock(
           props.editor,
           props.blockObject,
-          props.blockObject.name === 'img' ? {url: 'http://example.com/image.png'} : {},
+          props.blockObject.name === 'img'
+            ? {url: 'http://example.com/image.png'}
+            : {},
         )
         PortableTextEditor.focus(props.editor)
       }}
@@ -238,7 +271,10 @@ function BlockObjectButton(props: {blockObject: ObjectSchemaType; editor: Portab
   )
 }
 
-function Icon(props: {icon?: React.ReactNode | React.ComponentType; fallback: string | null}) {
+function Icon(props: {
+  icon?: React.ReactNode | React.ComponentType
+  fallback: string | null
+}) {
   const IconComponent = props.icon
 
   return isValidElement(IconComponent) ? (

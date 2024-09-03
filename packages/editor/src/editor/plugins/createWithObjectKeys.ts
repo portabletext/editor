@@ -1,5 +1,8 @@
 import {Editor, Element, Node, Transforms} from 'slate'
-import {type PortableTextMemberSchemaTypes, type PortableTextSlateEditor} from '../../types/editor'
+import {
+  type PortableTextMemberSchemaTypes,
+  type PortableTextSlateEditor,
+} from '../../types/editor'
 import {isChangingRemotely} from '../../utils/withChanges'
 import {isRedoing, isUndoing} from '../../utils/withUndoRedo'
 
@@ -11,7 +14,9 @@ export function createWithObjectKeys(
   schemaTypes: PortableTextMemberSchemaTypes,
   keyGenerator: () => string,
 ) {
-  return function withKeys(editor: PortableTextSlateEditor): PortableTextSlateEditor {
+  return function withKeys(
+    editor: PortableTextSlateEditor,
+  ): PortableTextSlateEditor {
     const {apply, normalizeNode} = editor
 
     // The default behavior is to always generate a new key here.

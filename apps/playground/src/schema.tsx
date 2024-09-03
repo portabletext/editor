@@ -46,11 +46,19 @@ const portableTextSchema = defineField({
          */
         decorators: [
           // React.ComponentType
-          {title: 'Strong', value: 'strong', icon: () => <BoldIcon className="w-4 h-4" />},
+          {
+            title: 'Strong',
+            value: 'strong',
+            icon: () => <BoldIcon className="w-4 h-4" />,
+          },
           // React.ComponentType
           {title: 'Emphasis', value: 'em', icon: ItalicIcon},
           // React.ReactNode
-          {title: 'Code', value: 'code', icon: <CodeIcon className="w-4 h-4" />},
+          {
+            title: 'Code',
+            value: 'code',
+            icon: <CodeIcon className="w-4 h-4" />,
+          },
           {title: 'Underline', value: 'underline', icon: UnderlineIcon},
           {title: 'Strike', value: 'strike-through', icon: StrikethroughIcon},
         ],

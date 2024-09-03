@@ -1,7 +1,10 @@
 import {describe, expect, it, jest} from '@jest/globals'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
-import {PortableTextEditorTester, schemaType} from '../__tests__/PortableTextEditorTester'
+import {
+  PortableTextEditorTester,
+  schemaType,
+} from '../__tests__/PortableTextEditorTester'
 import {PortableTextEditor} from '../PortableTextEditor'
 
 const initialValue = [
@@ -59,7 +62,9 @@ describe('useSyncValue', () => {
     )
     await waitFor(() => {
       if (editorRef.current) {
-        expect(PortableTextEditor.getValue(editorRef.current)).toEqual(syncedValue)
+        expect(PortableTextEditor.getValue(editorRef.current)).toEqual(
+          syncedValue,
+        )
       }
     })
   })
@@ -100,7 +105,8 @@ describe('useSyncValue', () => {
     )
     await waitFor(() => {
       if (editorRef.current) {
-        expect(PortableTextEditor.getValue(editorRef.current)).toMatchInlineSnapshot(`
+        expect(PortableTextEditor.getValue(editorRef.current))
+          .toMatchInlineSnapshot(`
           Array [
             Object {
               "_key": "77071c3af231",

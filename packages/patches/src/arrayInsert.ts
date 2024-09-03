@@ -1,9 +1,16 @@
 export const BEFORE = 'before'
 export const AFTER = 'after'
 
-export default function insert(array: any[], position: string, index: number, ...args: any[]) {
+export default function insert(
+  array: any[],
+  position: string,
+  index: number,
+  ...args: any[]
+) {
   if (position !== BEFORE && position !== AFTER) {
-    throw new Error(`Invalid position "${position}", must be either ${BEFORE} or ${AFTER}`)
+    throw new Error(
+      `Invalid position "${position}", must be either ${BEFORE} or ${AFTER}`,
+    )
   }
 
   const items = flatten(...args)

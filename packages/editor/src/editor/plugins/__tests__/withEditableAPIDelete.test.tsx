@@ -1,7 +1,10 @@
 import {describe, expect, it, jest} from '@jest/globals'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
-import {PortableTextEditorTester, schemaType} from '../../__tests__/PortableTextEditorTester'
+import {
+  PortableTextEditorTester,
+  schemaType,
+} from '../../__tests__/PortableTextEditorTester'
 import {PortableTextEditor} from '../../PortableTextEditor'
 
 const initialValue = [
@@ -55,7 +58,10 @@ describe('plugin:withEditableAPI: .delete()', () => {
 
     await waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({
+          type: 'value',
+          value: initialValue,
+        })
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })
@@ -69,7 +75,8 @@ describe('plugin:withEditableAPI: .delete()', () => {
           PortableTextEditor.getSelection(editorRef.current),
           {mode: 'blocks'},
         )
-        expect(PortableTextEditor.getValue(editorRef.current)).toMatchInlineSnapshot(`
+        expect(PortableTextEditor.getValue(editorRef.current))
+          .toMatchInlineSnapshot(`
           Array [
             Object {
               "_key": "a",
@@ -104,7 +111,10 @@ describe('plugin:withEditableAPI: .delete()', () => {
     )
 
     await waitFor(() => {
-      expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+      expect(onChange).toHaveBeenCalledWith({
+        type: 'value',
+        value: initialValue,
+      })
       expect(onChange).toHaveBeenCalledWith({type: 'ready'})
     })
 
@@ -123,7 +133,8 @@ describe('plugin:withEditableAPI: .delete()', () => {
     await waitFor(() => {
       if (editorRef.current) {
         // New keys here confirms that a placeholder block has been created
-        expect(PortableTextEditor.getValue(editorRef.current)).toMatchInlineSnapshot(`
+        expect(PortableTextEditor.getValue(editorRef.current))
+          .toMatchInlineSnapshot(`
           Array [
             Object {
               "_key": "1",
@@ -160,7 +171,10 @@ describe('plugin:withEditableAPI: .delete()', () => {
 
     await waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({
+          type: 'value',
+          value: initialValue,
+        })
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })
@@ -186,7 +200,8 @@ describe('plugin:withEditableAPI: .delete()', () => {
 
     await waitFor(() => {
       if (editorRef.current) {
-        expect(PortableTextEditor.getValue(editorRef.current)).toMatchInlineSnapshot(`
+        expect(PortableTextEditor.getValue(editorRef.current))
+          .toMatchInlineSnapshot(`
                   Array [
                     Object {
                       "_key": "a",
@@ -237,7 +252,10 @@ describe('plugin:withEditableAPI: .delete()', () => {
 
     await waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({type: 'value', value: initialValue})
+        expect(onChange).toHaveBeenCalledWith({
+          type: 'value',
+          value: initialValue,
+        })
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })

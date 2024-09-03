@@ -12,7 +12,13 @@ export class ErrorBoundary<FallbackProps> extends React.Component<
     children: React.ReactNode
     fallbackProps: FallbackProps
     fallback: ErrorBoundaryFallbackUI<FallbackProps>
-    onError: ({error, errorInfo}: {error: Error; errorInfo: React.ErrorInfo}) => void
+    onError: ({
+      error,
+      errorInfo,
+    }: {
+      error: Error
+      errorInfo: React.ErrorInfo
+    }) => void
   },
   {error?: Error}
 > {

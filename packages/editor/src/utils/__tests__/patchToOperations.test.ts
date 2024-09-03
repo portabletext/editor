@@ -50,7 +50,11 @@ describe('operationToPatches', () => {
   it('makes the correct operations for block objects', () => {
     editor.children = createDefaultValue()
     const patches = [
-      {type: 'unset', path: [{_key: 'c01739b0d03b'}, 'hotspot'], origin: 'remote'},
+      {
+        type: 'unset',
+        path: [{_key: 'c01739b0d03b'}, 'hotspot'],
+        origin: 'remote',
+      },
       {type: 'unset', path: [{_key: 'c01739b0d03b'}, 'crop'], origin: 'remote'},
       {
         type: 'set',
@@ -113,7 +117,11 @@ describe('operationToPatches', () => {
       },
     ]
     const patches = [
-      {type: 'insert', path: [{_key: 'c01739b0d03b'}, 'nestedArray'], origin: 'remote'},
+      {
+        type: 'insert',
+        path: [{_key: 'c01739b0d03b'}, 'nestedArray'],
+        origin: 'remote',
+      },
     ] as Patch[]
     patches.forEach((p) => {
       patchToOperations(editor, p)
@@ -172,7 +180,11 @@ describe('operationToPatches', () => {
       },
     ]
     const patches = [
-      {type: 'unset', path: [{_key: 'c01739b0d03b'}, 'nestedArray', 0], origin: 'remote'},
+      {
+        type: 'unset',
+        path: [{_key: 'c01739b0d03b'}, 'nestedArray', 0],
+        origin: 'remote',
+      },
     ] as Patch[]
     patches.forEach((p) => {
       patchToOperations(editor, p)

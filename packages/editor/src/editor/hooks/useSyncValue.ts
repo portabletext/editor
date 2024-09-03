@@ -4,11 +4,18 @@ import {debounce, isEqual} from 'lodash'
 import {useCallback, useMemo, useRef} from 'react'
 import {Editor, Text, Transforms, type Descendant, type Node} from 'slate'
 import {useSlate} from 'slate-react'
-import {type EditorChange, type PortableTextSlateEditor} from '../../types/editor'
+import {
+  type EditorChange,
+  type PortableTextSlateEditor,
+} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {validateValue} from '../../utils/validateValue'
 import {toSlateValue, VOID_CHILD_KEY} from '../../utils/values'
-import {isChangingLocally, isChangingRemotely, withRemoteChanges} from '../../utils/withChanges'
+import {
+  isChangingLocally,
+  isChangingRemotely,
+  withRemoteChanges,
+} from '../../utils/withChanges'
 import {withoutPatching} from '../../utils/withoutPatching'
 import {withoutSaving} from '../plugins/createWithUndoRedo'
 import {type PortableTextEditor} from '../PortableTextEditor'
@@ -25,7 +32,10 @@ export interface UseSyncValueProps {
   readOnly: boolean
 }
 
-const CURRENT_VALUE = new WeakMap<PortableTextEditor, PortableTextBlock[] | undefined>()
+const CURRENT_VALUE = new WeakMap<
+  PortableTextEditor,
+  PortableTextBlock[] | undefined
+>()
 
 /**
  * Sync value with the editor state
@@ -41,12 +51,16 @@ const CURRENT_VALUE = new WeakMap<PortableTextEditor, PortableTextBlock[] | unde
  */
 export function useSyncValue(
   props: UseSyncValueProps,
-): (value: PortableTextBlock[] | undefined, userCallbackFn?: () => void) => void {
+): (
+  value: PortableTextBlock[] | undefined,
+  userCallbackFn?: () => void,
+) => void {
   const {portableTextEditor, readOnly, keyGenerator} = props
   const {change$, schemaTypes} = portableTextEditor
   const previousValue = useRef<PortableTextBlock[] | undefined>()
   const slateEditor = useSlate()
-  const updateValueFunctionRef = useRef<(value: PortableTextBlock[] | undefined) => void>()
+  const updateValueFunctionRef =
+    useRef<(value: PortableTextBlock[] | undefined) => void>()
 
   const updateFromCurrentValue = useCallback(() => {
     const currentValue = CURRENT_VALUE.get(portableTextEditor)
@@ -60,7 +74,8 @@ export function useSyncValue(
     }
   }, [portableTextEditor])
   const updateValueDebounced = useMemo(
-    () => debounce(updateFromCurrentValue, 1000, {trailing: true, leading: false}),
+    () =>
+      debounce(updateFromCurrentValue, 1000, {trailing: true, leading: false}),
     [updateFromCurrentValue],
   )
 
@@ -102,7 +117,11 @@ export function useSyncValue(
                   at: [childrenLength - 1 - index],
                 })
               })
-              Transforms.insertNodes(slateEditor, slateEditor.pteCreateEmptyBlock(), {at: [0]})
+              Transforms.insertNodes(
+                slateEditor,
+                slateEditor.pteCreateEmptyBlock(),
+                {at: [0]},
+              )
               // Add a new selection in the top of the document
               if (hadSelection) {
                 Transforms.select(slateEditor, [0, 0])
@@ -124,7 +143,11 @@ export function useSyncValue(
                 const childrenLength = slateEditor.children.length
                 // Remove blocks that have become superfluous
                 if (slateValueFromProps.length < childrenLength) {
-                  for (let i = childrenLength - 1; i > slateValueFromProps.length - 1; i--) {
+                  for (
+                    let i = childrenLength - 1;
+                    i > slateValueFromProps.length - 1;
+                    i--
+                  ) {
                     Transforms.removeNodes(slateEditor, {
                       at: [i],
                     })
@@ -132,70 +155,102 @@ export function useSyncValue(
                   isChanged = true
                 }
                 // Go through all of the blocks and see if they need to be updated
-                slateValueFromProps.forEach((currentBlock, currentBlockIndex) => {
-                  const oldBlock = slateEditor.children[currentBlockIndex]
-                  const hasChanges = oldBlock && !isEqual(currentBlock, oldBlock)
-                  if (hasChanges && isValid) {
-                    const validationValue = [value[currentBlockIndex]]
-                    const validation = validateValue(validationValue, schemaTypes, keyGenerator)
-                    // Resolve validations that can be resolved automatically, without involving the user (but only if the value was changed)
-                    if (
-                      !validation.valid &&
-                      validation.resolution?.autoResolve &&
-                      validation.resolution?.patches.length > 0
-                    ) {
-                      // Only apply auto resolution if the value has been populated before and is different from the last one.
-                      if (!readOnly && previousValue.current && previousValue.current !== value) {
-                        // Give a console warning about the fact that it did an auto resolution
-                        console.warn(
-                          `${validation.resolution.action} for block with _key '${validationValue[0]._key}'. ${validation.resolution?.description}`,
-                        )
-                        validation.resolution.patches.forEach((patch) => {
-                          change$.next({type: 'patch', patch})
-                        })
-                      }
-                    }
-                    if (validation.valid || validation.resolution?.autoResolve) {
-                      if (oldBlock._key === currentBlock._key) {
-                        if (debug.enabled) debug('Updating block', oldBlock, currentBlock)
-                        _updateBlock(slateEditor, currentBlock, oldBlock, currentBlockIndex)
-                      } else {
-                        if (debug.enabled) debug('Replacing block', oldBlock, currentBlock)
-                        _replaceBlock(slateEditor, currentBlock, currentBlockIndex)
-                      }
-                      isChanged = true
-                    } else {
-                      change$.next({
-                        type: 'invalidValue',
-                        resolution: validation.resolution,
-                        value,
-                      })
-                      isValid = false
-                    }
-                  }
-                  if (!oldBlock && isValid) {
-                    const validationValue = [value[currentBlockIndex]]
-                    const validation = validateValue(validationValue, schemaTypes, keyGenerator)
-                    if (debug.enabled)
-                      debug(
-                        'Validating and inserting new block in the end of the value',
-                        currentBlock,
+                slateValueFromProps.forEach(
+                  (currentBlock, currentBlockIndex) => {
+                    const oldBlock = slateEditor.children[currentBlockIndex]
+                    const hasChanges =
+                      oldBlock && !isEqual(currentBlock, oldBlock)
+                    if (hasChanges && isValid) {
+                      const validationValue = [value[currentBlockIndex]]
+                      const validation = validateValue(
+                        validationValue,
+                        schemaTypes,
+                        keyGenerator,
                       )
-                    if (validation.valid || validation.resolution?.autoResolve) {
-                      Transforms.insertNodes(slateEditor, currentBlock, {
-                        at: [currentBlockIndex],
-                      })
-                    } else {
-                      debug('Invalid', validation)
-                      change$.next({
-                        type: 'invalidValue',
-                        resolution: validation.resolution,
-                        value,
-                      })
-                      isValid = false
+                      // Resolve validations that can be resolved automatically, without involving the user (but only if the value was changed)
+                      if (
+                        !validation.valid &&
+                        validation.resolution?.autoResolve &&
+                        validation.resolution?.patches.length > 0
+                      ) {
+                        // Only apply auto resolution if the value has been populated before and is different from the last one.
+                        if (
+                          !readOnly &&
+                          previousValue.current &&
+                          previousValue.current !== value
+                        ) {
+                          // Give a console warning about the fact that it did an auto resolution
+                          console.warn(
+                            `${validation.resolution.action} for block with _key '${validationValue[0]._key}'. ${validation.resolution?.description}`,
+                          )
+                          validation.resolution.patches.forEach((patch) => {
+                            change$.next({type: 'patch', patch})
+                          })
+                        }
+                      }
+                      if (
+                        validation.valid ||
+                        validation.resolution?.autoResolve
+                      ) {
+                        if (oldBlock._key === currentBlock._key) {
+                          if (debug.enabled)
+                            debug('Updating block', oldBlock, currentBlock)
+                          _updateBlock(
+                            slateEditor,
+                            currentBlock,
+                            oldBlock,
+                            currentBlockIndex,
+                          )
+                        } else {
+                          if (debug.enabled)
+                            debug('Replacing block', oldBlock, currentBlock)
+                          _replaceBlock(
+                            slateEditor,
+                            currentBlock,
+                            currentBlockIndex,
+                          )
+                        }
+                        isChanged = true
+                      } else {
+                        change$.next({
+                          type: 'invalidValue',
+                          resolution: validation.resolution,
+                          value,
+                        })
+                        isValid = false
+                      }
                     }
-                  }
-                })
+                    if (!oldBlock && isValid) {
+                      const validationValue = [value[currentBlockIndex]]
+                      const validation = validateValue(
+                        validationValue,
+                        schemaTypes,
+                        keyGenerator,
+                      )
+                      if (debug.enabled)
+                        debug(
+                          'Validating and inserting new block in the end of the value',
+                          currentBlock,
+                        )
+                      if (
+                        validation.valid ||
+                        validation.resolution?.autoResolve
+                      ) {
+                        Transforms.insertNodes(slateEditor, currentBlock, {
+                          at: [currentBlockIndex],
+                        })
+                      } else {
+                        debug('Invalid', validation)
+                        change$.next({
+                          type: 'invalidValue',
+                          resolution: validation.resolution,
+                          value,
+                        })
+                        isValid = false
+                      }
+                    }
+                  },
+                )
               })
             })
           })
@@ -285,78 +340,93 @@ function _updateBlock(
     at: [currentBlockIndex],
   })
   // Text block's need to have their children updated as well (setNode does not target a node's children)
-  if (slateEditor.isTextBlock(currentBlock) && slateEditor.isTextBlock(oldBlock)) {
+  if (
+    slateEditor.isTextBlock(currentBlock) &&
+    slateEditor.isTextBlock(oldBlock)
+  ) {
     const oldBlockChildrenLength = oldBlock.children.length
     if (currentBlock.children.length < oldBlockChildrenLength) {
       // Remove any children that have become superfluous
-      Array.from(Array(oldBlockChildrenLength - currentBlock.children.length)).forEach(
-        (_, index) => {
-          const childIndex = oldBlockChildrenLength - 1 - index
-          if (childIndex > 0) {
-            debug('Removing child')
-            Transforms.removeNodes(slateEditor, {
-              at: [currentBlockIndex, childIndex],
-            })
-          }
-        },
-      )
-    }
-    currentBlock.children.forEach((currentBlockChild, currentBlockChildIndex) => {
-      const oldBlockChild = oldBlock.children[currentBlockChildIndex]
-      const isChildChanged = !isEqual(currentBlockChild, oldBlockChild)
-      const isTextChanged = !isEqual(currentBlockChild.text, oldBlockChild?.text)
-      const path = [currentBlockIndex, currentBlockChildIndex]
-      if (isChildChanged) {
-        // Update if this is the same child
-        if (currentBlockChild._key === oldBlockChild?._key) {
-          debug('Updating changed child', currentBlockChild, oldBlockChild)
-          Transforms.setNodes(slateEditor, currentBlockChild as Partial<Node>, {
-            at: path,
+      Array.from(
+        Array(oldBlockChildrenLength - currentBlock.children.length),
+      ).forEach((_, index) => {
+        const childIndex = oldBlockChildrenLength - 1 - index
+        if (childIndex > 0) {
+          debug('Removing child')
+          Transforms.removeNodes(slateEditor, {
+            at: [currentBlockIndex, childIndex],
           })
-          const isSpanNode =
-            Text.isText(currentBlockChild) &&
-            currentBlockChild._type === 'span' &&
-            Text.isText(oldBlockChild) &&
-            oldBlockChild._type === 'span'
-          if (isSpanNode && isTextChanged) {
-            Transforms.delete(slateEditor, {
-              at: {focus: {path, offset: 0}, anchor: {path, offset: oldBlockChild.text.length}},
-            })
-            Transforms.insertText(slateEditor, currentBlockChild.text, {
-              at: path,
-            })
-            slateEditor.onChange()
-          } else if (!isSpanNode) {
-            // If it's a inline block, also update the void text node key
-            debug('Updating changed inline object child', currentBlockChild)
+        }
+      })
+    }
+    currentBlock.children.forEach(
+      (currentBlockChild, currentBlockChildIndex) => {
+        const oldBlockChild = oldBlock.children[currentBlockChildIndex]
+        const isChildChanged = !isEqual(currentBlockChild, oldBlockChild)
+        const isTextChanged = !isEqual(
+          currentBlockChild.text,
+          oldBlockChild?.text,
+        )
+        const path = [currentBlockIndex, currentBlockChildIndex]
+        if (isChildChanged) {
+          // Update if this is the same child
+          if (currentBlockChild._key === oldBlockChild?._key) {
+            debug('Updating changed child', currentBlockChild, oldBlockChild)
             Transforms.setNodes(
               slateEditor,
-              {_key: VOID_CHILD_KEY},
+              currentBlockChild as Partial<Node>,
               {
-                at: [...path, 0],
-                voids: true,
+                at: path,
               },
             )
+            const isSpanNode =
+              Text.isText(currentBlockChild) &&
+              currentBlockChild._type === 'span' &&
+              Text.isText(oldBlockChild) &&
+              oldBlockChild._type === 'span'
+            if (isSpanNode && isTextChanged) {
+              Transforms.delete(slateEditor, {
+                at: {
+                  focus: {path, offset: 0},
+                  anchor: {path, offset: oldBlockChild.text.length},
+                },
+              })
+              Transforms.insertText(slateEditor, currentBlockChild.text, {
+                at: path,
+              })
+              slateEditor.onChange()
+            } else if (!isSpanNode) {
+              // If it's a inline block, also update the void text node key
+              debug('Updating changed inline object child', currentBlockChild)
+              Transforms.setNodes(
+                slateEditor,
+                {_key: VOID_CHILD_KEY},
+                {
+                  at: [...path, 0],
+                  voids: true,
+                },
+              )
+            }
+            // Replace the child if _key's are different
+          } else if (oldBlockChild) {
+            debug('Replacing child', currentBlockChild)
+            Transforms.removeNodes(slateEditor, {
+              at: [currentBlockIndex, currentBlockChildIndex],
+            })
+            Transforms.insertNodes(slateEditor, currentBlockChild as Node, {
+              at: [currentBlockIndex, currentBlockChildIndex],
+            })
+            slateEditor.onChange()
+            // Insert it if it didn't exist before
+          } else if (!oldBlockChild) {
+            debug('Inserting new child', currentBlockChild)
+            Transforms.insertNodes(slateEditor, currentBlockChild as Node, {
+              at: [currentBlockIndex, currentBlockChildIndex],
+            })
+            slateEditor.onChange()
           }
-          // Replace the child if _key's are different
-        } else if (oldBlockChild) {
-          debug('Replacing child', currentBlockChild)
-          Transforms.removeNodes(slateEditor, {
-            at: [currentBlockIndex, currentBlockChildIndex],
-          })
-          Transforms.insertNodes(slateEditor, currentBlockChild as Node, {
-            at: [currentBlockIndex, currentBlockChildIndex],
-          })
-          slateEditor.onChange()
-          // Insert it if it didn't exist before
-        } else if (!oldBlockChild) {
-          debug('Inserting new child', currentBlockChild)
-          Transforms.insertNodes(slateEditor, currentBlockChild as Node, {
-            at: [currentBlockIndex, currentBlockChildIndex],
-          })
-          slateEditor.onChange()
         }
-      }
-    })
+      },
+    )
   }
 }

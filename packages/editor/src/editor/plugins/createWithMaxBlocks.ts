@@ -7,7 +7,9 @@ import {isRedoing, isUndoing} from '../../utils/withUndoRedo'
  *
  */
 export function createWithMaxBlocks(maxBlocks: number) {
-  return function withMaxBlocks(editor: PortableTextSlateEditor): PortableTextSlateEditor {
+  return function withMaxBlocks(
+    editor: PortableTextSlateEditor,
+  ): PortableTextSlateEditor {
     const {apply} = editor
     editor.apply = (operation) => {
       /**
@@ -31,7 +33,8 @@ export function createWithMaxBlocks(maxBlocks: number) {
       const rows = maxBlocks
       if (rows > 0 && editor.children.length >= rows) {
         if (
-          (operation.type === 'insert_node' || operation.type === 'split_node') &&
+          (operation.type === 'insert_node' ||
+            operation.type === 'split_node') &&
           operation.path.length === 1
         ) {
           return

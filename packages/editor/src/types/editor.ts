@@ -25,7 +25,11 @@ import {
   type RefObject,
 } from 'react'
 import {type Observable, type Subject} from 'rxjs'
-import {type Descendant, type Node as SlateNode, type Operation as SlateOperation} from 'slate'
+import {
+  type Descendant,
+  type Node as SlateNode,
+  type Operation as SlateOperation,
+} from 'slate'
 import {type ReactEditor} from 'slate-react'
 import {type DOMNode} from 'slate-react/dist/utils/dom'
 import {type PortableTextEditableProps} from '../editor/Editable'
@@ -45,9 +49,16 @@ export interface EditableAPI {
     value?: {[prop: string]: unknown},
   ) => {spanPath: Path; markDefPath: Path} | undefined
   blur: () => void
-  delete: (selection: EditorSelection, options?: EditableAPIDeleteOptions) => void
-  findByPath: (path: Path) => [PortableTextBlock | PortableTextChild | undefined, Path | undefined]
-  findDOMNode: (element: PortableTextBlock | PortableTextChild) => DOMNode | undefined
+  delete: (
+    selection: EditorSelection,
+    options?: EditableAPIDeleteOptions,
+  ) => void
+  findByPath: (
+    path: Path,
+  ) => [PortableTextBlock | PortableTextChild | undefined, Path | undefined]
+  findDOMNode: (
+    element: PortableTextBlock | PortableTextChild,
+  ) => DOMNode | undefined
   focus: () => void
   focusBlock: () => PortableTextBlock | undefined
   focusChild: () => PortableTextChild | undefined
@@ -56,13 +67,22 @@ export interface EditableAPI {
   getValue: () => PortableTextBlock[] | undefined
   hasBlockStyle: (style: string) => boolean
   hasListStyle: (listStyle: string) => boolean
-  insertBlock: (type: BlockSchemaType | ObjectSchemaType, value?: {[prop: string]: unknown}) => Path
-  insertChild: (type: SpanSchemaType | ObjectSchemaType, value?: {[prop: string]: unknown}) => Path
+  insertBlock: (
+    type: BlockSchemaType | ObjectSchemaType,
+    value?: {[prop: string]: unknown},
+  ) => Path
+  insertChild: (
+    type: SpanSchemaType | ObjectSchemaType,
+    value?: {[prop: string]: unknown},
+  ) => Path
   insertBreak: () => void
   isCollapsedSelection: () => boolean
   isExpandedSelection: () => boolean
   isMarkActive: (mark: string) => boolean
-  isSelectionsOverlapping: (selectionA: EditorSelection, selectionB: EditorSelection) => boolean
+  isSelectionsOverlapping: (
+    selectionA: EditorSelection,
+    selectionB: EditorSelection,
+  ) => boolean
   isVoid: (element: PortableTextBlock | PortableTextChild) => boolean
   marks: () => string[]
   redo: () => void
@@ -497,10 +517,14 @@ export type RenderBlockFunction = (props: BlockRenderProps) => JSX.Element
 export type RenderChildFunction = (props: BlockChildRenderProps) => JSX.Element
 
 /** @beta */
-export type RenderEditableFunction = (props: PortableTextEditableProps) => JSX.Element
+export type RenderEditableFunction = (
+  props: PortableTextEditableProps,
+) => JSX.Element
 
 /** @beta */
-export type RenderAnnotationFunction = (props: BlockAnnotationRenderProps) => JSX.Element
+export type RenderAnnotationFunction = (
+  props: BlockAnnotationRenderProps,
+) => JSX.Element
 
 /** @beta */
 export type RenderPlaceholderFunction = () => React.ReactNode
@@ -521,10 +545,14 @@ export interface BlockStyleRenderProps {
 }
 
 /** @beta */
-export type RenderListItemFunction = (props: BlockListItemRenderProps) => JSX.Element
+export type RenderListItemFunction = (
+  props: BlockListItemRenderProps,
+) => JSX.Element
 
 /** @beta */
-export type RenderDecoratorFunction = (props: BlockDecoratorRenderProps) => JSX.Element
+export type RenderDecoratorFunction = (
+  props: BlockDecoratorRenderProps,
+) => JSX.Element
 
 /** @beta */
 export type ScrollSelectionIntoViewFunction = (

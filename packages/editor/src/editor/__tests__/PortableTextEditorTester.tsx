@@ -1,7 +1,13 @@
 import {jest} from '@jest/globals'
 import {Schema} from '@sanity/schema'
 import {defineArrayMember, defineField} from '@sanity/types'
-import {forwardRef, useCallback, useEffect, useMemo, type ForwardedRef} from 'react'
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  type ForwardedRef,
+} from 'react'
 import {
   PortableTextEditable,
   PortableTextEditor,
@@ -73,42 +79,49 @@ const schema = Schema.compile({
 
 let key = 0
 
-export const PortableTextEditorTester = forwardRef(function PortableTextEditorTester(
-  props: Partial<Omit<PortableTextEditorProps, 'type' | 'onChange' | 'value'>> & {
-    onChange?: PortableTextEditorProps['onChange']
-    rangeDecorations?: PortableTextEditableProps['rangeDecorations']
-    renderPlaceholder?: PortableTextEditableProps['renderPlaceholder']
-    schemaType: PortableTextEditorProps['schemaType']
-    selection?: PortableTextEditableProps['selection']
-    value?: PortableTextEditorProps['value']
+export const PortableTextEditorTester = forwardRef(
+  function PortableTextEditorTester(
+    props: Partial<
+      Omit<PortableTextEditorProps, 'type' | 'onChange' | 'value'>
+    > & {
+      onChange?: PortableTextEditorProps['onChange']
+      rangeDecorations?: PortableTextEditableProps['rangeDecorations']
+      renderPlaceholder?: PortableTextEditableProps['renderPlaceholder']
+      schemaType: PortableTextEditorProps['schemaType']
+      selection?: PortableTextEditableProps['selection']
+      value?: PortableTextEditorProps['value']
+    },
+    ref: ForwardedRef<PortableTextEditor>,
+  ) {
+    useEffect(() => {
+      key = 0
+    }, [])
+    const _keyGenerator = useCallback(() => {
+      key++
+      return `${key}`
+    }, [])
+    const onChange = useMemo(
+      () => props.onChange || jest.fn(),
+      [props.onChange],
+    )
+    return (
+      <PortableTextEditor
+        schemaType={props.schemaType}
+        onChange={onChange}
+        value={props.value || undefined}
+        keyGenerator={_keyGenerator}
+        ref={ref}
+      >
+        <PortableTextEditable
+          selection={props.selection || undefined}
+          rangeDecorations={props.rangeDecorations}
+          renderPlaceholder={props.renderPlaceholder}
+          aria-describedby="desc_foo"
+        />
+      </PortableTextEditor>
+    )
   },
-  ref: ForwardedRef<PortableTextEditor>,
-) {
-  useEffect(() => {
-    key = 0
-  }, [])
-  const _keyGenerator = useCallback(() => {
-    key++
-    return `${key}`
-  }, [])
-  const onChange = useMemo(() => props.onChange || jest.fn(), [props.onChange])
-  return (
-    <PortableTextEditor
-      schemaType={props.schemaType}
-      onChange={onChange}
-      value={props.value || undefined}
-      keyGenerator={_keyGenerator}
-      ref={ref}
-    >
-      <PortableTextEditable
-        selection={props.selection || undefined}
-        rangeDecorations={props.rangeDecorations}
-        renderPlaceholder={props.renderPlaceholder}
-        aria-describedby="desc_foo"
-      />
-    </PortableTextEditor>
-  )
-})
+)
 
 export const schemaType = schema.get('body')
 

@@ -62,7 +62,9 @@ export const stepDefinitions = [
     await insertEditorText(editorA, text)
   }),
   Then('the text is {text}', async ({editorA}: Context, text: string) => {
-    await getEditorText(editorA).then((actualText) => expect(actualText).toEqual(text))
+    await getEditorText(editorA).then((actualText) =>
+      expect(actualText).toEqual(text),
+    )
   }),
 
   /**
@@ -71,9 +73,12 @@ export const stepDefinitions = [
   When('{string} is typed', async ({editorA}: Context, text: string) => {
     await editorA.type(text)
   }),
-  When('{string} is typed by editor B', async ({editorB}: Context, text: string) => {
-    await editorB.type(text)
-  }),
+  When(
+    '{string} is typed by editor B',
+    async ({editorB}: Context, text: string) => {
+      await editorB.type(text)
+    },
+  ),
 
   /**
    * Text block steps
@@ -88,7 +93,9 @@ export const stepDefinitions = [
   Then(
     '{string} is in block {key}',
     async ({editorA, keyMap}: Context, text: string, keyKey: string) => {
-      await getEditorBlockKey(editorA, text).then((key) => expect(key).toEqual(keyMap.get(keyKey)))
+      await getEditorBlockKey(editorA, text).then((key) =>
+        expect(key).toEqual(keyMap.get(keyKey)),
+      )
     },
   ),
 
@@ -100,7 +107,11 @@ export const stepDefinitions = [
   }),
   Given(
     'a(n) {block-object} {key}',
-    async ({editorA, keyMap}: Context, blockObject: 'image', keyKey: string) => {
+    async (
+      {editorA, keyMap}: Context,
+      blockObject: 'image',
+      keyKey: string,
+    ) => {
       const newBlockKeys = await insertBlockObject(editorA, blockObject)
       keyMap.set(keyKey, newBlockKeys[0])
     },
@@ -138,12 +149,19 @@ export const stepDefinitions = [
       keyMap.set(keyKey, key)
     },
   ),
-  When('{annotation} is toggled', async ({editorA}: Context, annotation: 'comment' | 'link') => {
-    await toggleAnnotation(editorA, annotation)
-  }),
+  When(
+    '{annotation} is toggled',
+    async ({editorA}: Context, annotation: 'comment' | 'link') => {
+      await toggleAnnotation(editorA, annotation)
+    },
+  ),
   When(
     '{annotation} {key} is toggled',
-    async ({editorA, keyMap}: Context, annotation: 'comment' | 'link', keyKey: string) => {
+    async (
+      {editorA, keyMap}: Context,
+      annotation: 'comment' | 'link',
+      keyKey: string,
+    ) => {
       const key = await toggleAnnotation(editorA, annotation)
       keyMap.set(keyKey, key ?? [])
     },
@@ -187,14 +205,18 @@ export const stepDefinitions = [
       await getEditorTextMarks(editorA, text).then((actualMarks) => {
         expect(actualMarks).toEqual(
           (marks ?? []).flatMap((mark) =>
-            mark === 'em' || mark === 'strong' ? [mark] : (keyMap.get(mark) ?? []),
+            mark === 'em' || mark === 'strong'
+              ? [mark]
+              : (keyMap.get(mark) ?? []),
           ),
         )
       })
     },
   ),
   Then('{string} has no marks', async ({editorA}: Context, text: string) => {
-    await getEditorTextMarks(editorA, text).then((marks) => expect(marks).toEqual([]))
+    await getEditorTextMarks(editorA, text).then((marks) =>
+      expect(marks).toEqual([]),
+    )
   }),
 
   /**
@@ -207,60 +229,84 @@ export const stepDefinitions = [
       await selectEditorText(editorA, text)
     }
   }),
-  When('{string} is selected backwards', async ({editorA}: Context, text: string) => {
-    await selectEditorTextBackwards(editorA, text)
-  }),
-  When('the caret is put before {string}', async ({editorA}: Context, text: string) => {
-    if (text === 'stock-ticker') {
-      await selectBeforeEditorInlineObject(editorA, text)
-    } else {
-      await selectBeforeEditorText(editorA, text)
-    }
-  }),
-  When('the caret is put after {string}', async ({editorA}: Context, text: string) => {
-    if (text === 'stock-ticker') {
-      await selectAfterEditorInlineObject(editorA, text)
-    } else {
-      await selectAfterEditorText(editorA, text)
-    }
-  }),
-  When('the caret is put after {string} by editor B', async ({editorB}: Context, text: string) => {
-    await selectAfterEditorText(editorB, text)
-  }),
-  Then('{text} is selected', async ({editorA}: Context, text: Array<string>) => {
-    const value = await editorA.getValue()
-    const selection = await editorA.getSelection()
+  When(
+    '{string} is selected backwards',
+    async ({editorA}: Context, text: string) => {
+      await selectEditorTextBackwards(editorA, text)
+    },
+  ),
+  When(
+    'the caret is put before {string}',
+    async ({editorA}: Context, text: string) => {
+      if (text === 'stock-ticker') {
+        await selectBeforeEditorInlineObject(editorA, text)
+      } else {
+        await selectBeforeEditorText(editorA, text)
+      }
+    },
+  ),
+  When(
+    'the caret is put after {string}',
+    async ({editorA}: Context, text: string) => {
+      if (text === 'stock-ticker') {
+        await selectAfterEditorInlineObject(editorA, text)
+      } else {
+        await selectAfterEditorText(editorA, text)
+      }
+    },
+  ),
+  When(
+    'the caret is put after {string} by editor B',
+    async ({editorB}: Context, text: string) => {
+      await selectAfterEditorText(editorB, text)
+    },
+  ),
+  Then(
+    '{text} is selected',
+    async ({editorA}: Context, text: Array<string>) => {
+      const value = await editorA.getValue()
+      const selection = await editorA.getSelection()
 
-    expect(getSelectionText(value, selection)).toEqual(text)
-  }),
-  Then('block {key} is selected', async ({editorA, keyMap}: Context, keyKey: string) => {
-    await editorA.getSelection().then((selection) => {
-      const selectionBlockKeys = getSelectionBlockKeys(selection)
+      expect(getSelectionText(value, selection)).toEqual(text)
+    },
+  ),
+  Then(
+    'block {key} is selected',
+    async ({editorA, keyMap}: Context, keyKey: string) => {
+      await editorA.getSelection().then((selection) => {
+        const selectionBlockKeys = getSelectionBlockKeys(selection)
 
-      expect(selectionBlockKeys?.anchor).toEqual(keyMap.get(keyKey))
-      expect(selectionBlockKeys?.focus).toEqual(keyMap.get(keyKey))
-    })
-  }),
-  Then('the caret is before {string}', async ({editorA}: Context, text: string) => {
-    const value = await editorA.getValue()
-    const selection = await editorA.getSelection()
+        expect(selectionBlockKeys?.anchor).toEqual(keyMap.get(keyKey))
+        expect(selectionBlockKeys?.focus).toEqual(keyMap.get(keyKey))
+      })
+    },
+  ),
+  Then(
+    'the caret is before {string}',
+    async ({editorA}: Context, text: string) => {
+      const value = await editorA.getValue()
+      const selection = await editorA.getSelection()
 
-    const collapsed = selectionIsCollapsed(selection)
-    const focusText = getSelectionFocusText(value, selection)
+      const collapsed = selectionIsCollapsed(selection)
+      const focusText = getSelectionFocusText(value, selection)
 
-    expect(collapsed).toBe(true)
-    expect(focusText?.slice(selection?.focus.offset)).toBe(text)
-  }),
-  Then('the caret is after {string}', async ({editorA}: Context, text: string) => {
-    const value = await editorA.getValue()
-    const selection = await editorA.getSelection()
+      expect(collapsed).toBe(true)
+      expect(focusText?.slice(selection?.focus.offset)).toBe(text)
+    },
+  ),
+  Then(
+    'the caret is after {string}',
+    async ({editorA}: Context, text: string) => {
+      const value = await editorA.getValue()
+      const selection = await editorA.getSelection()
 
-    const collapsed = selectionIsCollapsed(selection)
-    const focusText = getSelectionFocusText(value, selection)
+      const collapsed = selectionIsCollapsed(selection)
+      const focusText = getSelectionFocusText(value, selection)
 
-    expect(collapsed).toBe(true)
-    expect(focusText?.slice(0, selection?.focus.offset)).toBe(text)
-  }),
+      expect(collapsed).toBe(true)
+      expect(focusText?.slice(0, selection?.focus.offset)).toBe(text)
+    },
+  ),
 
   /**
    * Button steps
@@ -268,9 +314,12 @@ export const stepDefinitions = [
   When('{button} is pressed', async ({editorA}: Context, button: string) => {
     await editorA.pressKey(button)
   }),
-  When('{button} is pressed with navigation intent', async ({editorA}: Context, button: string) => {
-    await editorA.pressKey(button, 1, 'navigation')
-  }),
+  When(
+    '{button} is pressed with navigation intent',
+    async ({editorA}: Context, button: string) => {
+      await editorA.pressKey(button, 1, 'navigation')
+    },
+  ),
   When(
     '{button} is pressed {int} times',
     async ({editorA}: Context, button: string, times: number) => {
@@ -290,9 +339,30 @@ export const stepDefinitions = [
 ]
 
 export const parameterTypes = [
-  new ParameterType('annotation', /"(comment|link)"/, String, (input) => input, false, true),
-  new ParameterType('block-object', /"(image)"/, String, (input) => input, false, true),
-  new ParameterType('inline-object', /"(stock-ticker)"/, String, (input) => input, false, true),
+  new ParameterType(
+    'annotation',
+    /"(comment|link)"/,
+    String,
+    (input) => input,
+    false,
+    true,
+  ),
+  new ParameterType(
+    'block-object',
+    /"(image)"/,
+    String,
+    (input) => input,
+    false,
+    true,
+  ),
+  new ParameterType(
+    'inline-object',
+    /"(stock-ticker)"/,
+    String,
+    (input) => input,
+    false,
+    true,
+  ),
   new ParameterType(
     'button',
     /"(ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Backspace|Delete|Enter|Space)"/,
@@ -301,8 +371,22 @@ export const parameterTypes = [
     false,
     true,
   ),
-  new ParameterType('key', /"([a-z]\d)"/, String, (input) => input, false, true),
-  new ParameterType('decorator', /"(em|strong)"/, String, (input) => input, false, true),
+  new ParameterType(
+    'key',
+    /"([a-z]\d)"/,
+    String,
+    (input) => input,
+    false,
+    true,
+  ),
+  new ParameterType(
+    'decorator',
+    /"(em|strong)"/,
+    String,
+    (input) => input,
+    false,
+    true,
+  ),
   new ParameterType(
     'marks',
     /"((strong|em|[a-z]\d)(,(strong|em|[a-z]\d))*)"/,

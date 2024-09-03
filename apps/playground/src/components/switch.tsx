@@ -1,5 +1,8 @@
 import React from 'react'
-import {Switch as AriaSwitch, SwitchProps as AriaSwitchProps} from 'react-aria-components'
+import {
+  Switch as AriaSwitch,
+  SwitchProps as AriaSwitchProps,
+} from 'react-aria-components'
 import {tv} from 'tailwind-variants'
 import {composeTailwindRenderProps, focusRing} from './utils'
 

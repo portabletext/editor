@@ -7,7 +7,10 @@ import {
   type PortableTextSlateEditor,
 } from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
-import {toPortableTextRange, type ObjectWithKeyAndType} from '../../utils/ranges'
+import {
+  toPortableTextRange,
+  type ObjectWithKeyAndType,
+} from '../../utils/ranges'
 import {SLATE_TO_PORTABLE_TEXT_RANGE} from '../../utils/weakMaps'
 
 const debug = debugWithName('plugin:withPortableTextSelections')

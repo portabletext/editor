@@ -13,7 +13,12 @@ export type PathSegment = string | number | KeyedSegment | IndexTuple
 export type Path = PathSegment[]
 
 /** @public */
-export type JSONValue = number | string | boolean | {[key: string]: JSONValue} | JSONValue[]
+export type JSONValue =
+  | number
+  | string
+  | boolean
+  | {[key: string]: JSONValue}
+  | JSONValue[]
 
 /** @public */
 export type Origin = 'remote' | 'local' | 'internal'

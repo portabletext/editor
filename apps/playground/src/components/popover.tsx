@@ -26,7 +26,12 @@ const styles = tv({
   },
 })
 
-export function Popover({children, showArrow, className, ...props}: PopoverProps) {
+export function Popover({
+  children,
+  showArrow,
+  className,
+  ...props
+}: PopoverProps) {
   const popoverContext = useSlottedContext(PopoverContext)!
   const isSubmenu = popoverContext?.trigger === 'SubmenuTrigger'
   let offset = showArrow ? 12 : 8

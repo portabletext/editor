@@ -37,11 +37,16 @@ export function toPortableTextRange(
       offset: range.focus.offset,
     }
   }
-  const backward = Boolean(Range.isRange(range) ? Range.isBackward(range) : undefined)
+  const backward = Boolean(
+    Range.isRange(range) ? Range.isBackward(range) : undefined,
+  )
   return anchor && focus ? {anchor, focus, backward} : null
 }
 
-export function toSlateRange(selection: EditorSelection, editor: Editor): Range | null {
+export function toSlateRange(
+  selection: EditorSelection,
+  editor: Editor,
+): Range | null {
   if (!selection || !editor) {
     return null
   }
@@ -60,7 +65,10 @@ export function toSlateRange(selection: EditorSelection, editor: Editor): Range 
   return range
 }
 
-export function moveRangeByOperation(range: Range, operation: Operation): Range | null {
+export function moveRangeByOperation(
+  range: Range,
+  operation: Operation,
+): Range | null {
   const anchor = Point.transform(range.anchor, operation)
   const focus = Point.transform(range.focus, operation)
 

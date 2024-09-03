@@ -8,7 +8,9 @@ import {PlaygroundActorRef} from './playground-machine'
 import {PortableTextPreview} from './portable-text-preview'
 
 export function Editors(props: {playgroundRef: PlaygroundActorRef}) {
-  const showPortableTextPreview = useSelector(props.playgroundRef, (s) => s.matches('value shown'))
+  const showPortableTextPreview = useSelector(props.playgroundRef, (s) =>
+    s.matches('value shown'),
+  )
   const editors = useSelector(props.playgroundRef, (s) => s.context.editors)
 
   return (
@@ -41,7 +43,9 @@ export function Editors(props: {playgroundRef: PlaygroundActorRef}) {
               )}
             </Button>
             <Tooltip>
-              {showPortableTextPreview ? 'Hide Portable Text' : 'Show Portable Text'}
+              {showPortableTextPreview
+                ? 'Hide Portable Text'
+                : 'Show Portable Text'}
             </Tooltip>
           </TooltipTrigger>
         </div>

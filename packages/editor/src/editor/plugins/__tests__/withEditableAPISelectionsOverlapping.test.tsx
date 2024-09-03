@@ -2,7 +2,10 @@ import {describe, expect, it, jest} from '@jest/globals'
 import {type PortableTextBlock} from '@sanity/types'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
-import {PortableTextEditorTester, schemaType} from '../../__tests__/PortableTextEditorTester'
+import {
+  PortableTextEditorTester,
+  schemaType,
+} from '../../__tests__/PortableTextEditorTester'
 import {PortableTextEditor} from '../../PortableTextEditor'
 
 const INITIAL_VALUE: PortableTextBlock[] = [

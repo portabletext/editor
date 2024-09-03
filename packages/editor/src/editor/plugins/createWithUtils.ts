@@ -1,5 +1,8 @@
 import {Editor, Range, Text, Transforms} from 'slate'
-import {type PortableTextMemberSchemaTypes, type PortableTextSlateEditor} from '../../types/editor'
+import {
+  type PortableTextMemberSchemaTypes,
+  type PortableTextSlateEditor,
+} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {toSlateValue} from '../../utils/values'
 import {type PortableTextEditor} from '../PortableTextEditor'
@@ -15,8 +18,14 @@ interface Options {
  * This plugin makes various util commands available in the editor
  *
  */
-export function createWithUtils({schemaTypes, keyGenerator, portableTextEditor}: Options) {
-  return function withUtils(editor: PortableTextSlateEditor): PortableTextSlateEditor {
+export function createWithUtils({
+  schemaTypes,
+  keyGenerator,
+  portableTextEditor,
+}: Options) {
+  return function withUtils(
+    editor: PortableTextSlateEditor,
+  ): PortableTextSlateEditor {
     // Expands the the selection to wrap around the word the focus is at
     editor.pteExpandToWord = () => {
       const {selection} = editor
@@ -36,12 +45,24 @@ export function createWithUtils({schemaTypes, keyGenerator, portableTextEditor}:
           .reverse()
           .findIndex((str) => isEmpty(str))
         const newStartOffset =
-          whiteSpaceBeforeIndex > -1 ? charsBefore.length - whiteSpaceBeforeIndex : 0
-        const whiteSpaceAfterIndex = charsAfter.split('').findIndex((obj) => isEmpty(obj))
+          whiteSpaceBeforeIndex > -1
+            ? charsBefore.length - whiteSpaceBeforeIndex
+            : 0
+        const whiteSpaceAfterIndex = charsAfter
+          .split('')
+          .findIndex((obj) => isEmpty(obj))
         const newEndOffset =
           charsBefore.length +
-          (whiteSpaceAfterIndex > -1 ? whiteSpaceAfterIndex : charsAfter.length + 1)
-        if (!(newStartOffset === newEndOffset || isNaN(newStartOffset) || isNaN(newEndOffset))) {
+          (whiteSpaceAfterIndex > -1
+            ? whiteSpaceAfterIndex
+            : charsAfter.length + 1)
+        if (
+          !(
+            newStartOffset === newEndOffset ||
+            isNaN(newStartOffset) ||
+            isNaN(newEndOffset)
+          )
+        ) {
           debug('pteExpandToWord: Expanding to focused word')
           Transforms.setSelection(editor, {
             anchor: {...selection.anchor, offset: newStartOffset},

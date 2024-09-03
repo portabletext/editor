@@ -20,7 +20,11 @@ export type Editor = {
       | 'insert-stock-ticker',
     times?: number,
   ) => Promise<void>
-  pressKey: (keyName: string, times?: number, intent?: 'navigation') => Promise<void>
+  pressKey: (
+    keyName: string,
+    times?: number,
+    intent?: 'navigation',
+  ) => Promise<void>
   redo: () => Promise<void>
   setSelection: (selection: EditorSelection | null) => Promise<void>
   testId: string
@@ -31,7 +35,9 @@ export type Editor = {
 
 declare global {
   function getEditors(): Promise<Editor[]>
-  function setDocumentValue(value: PortableTextBlock[] | undefined): Promise<void>
+  function setDocumentValue(
+    value: PortableTextBlock[] | undefined,
+  ): Promise<void>
   /** Wait for editors to have settled with a new revision */
   function waitForRevision(): Promise<void>
 }

@@ -15,12 +15,14 @@ import {
 } from 'xstate'
 import {generateColor} from './generate-color'
 
-const copyToTextClipboardActor = fromPromise(({input}: {input: {text: string}}) => {
-  const blob = new Blob([input.text], {type: 'text/plain'})
-  const data = [new ClipboardItem({'text/plain': blob})]
+const copyToTextClipboardActor = fromPromise(
+  ({input}: {input: {text: string}}) => {
+    const blob = new Blob([input.text], {type: 'text/plain'})
+    const data = [new ClipboardItem({'text/plain': blob})]
 
-  return navigator.clipboard.write(data)
-})
+    return navigator.clipboard.write(data)
+  },
+)
 
 export type EditorActorRef = ActorRefFrom<typeof editorMachine>
 
@@ -33,7 +35,11 @@ const editorMachine = setup({
     },
     events: {} as
       | MutationChange
-      | {type: 'patches'; patches: MutationChange['patches']; snapshot: MutationChange['snapshot']}
+      | {
+          type: 'patches'
+          patches: MutationChange['patches']
+          snapshot: MutationChange['snapshot']
+        }
       | {type: 'value'; value?: Array<PortableTextBlock>}
       | {type: 'remove'}
       | {type: 'clear stored patches'}
@@ -97,7 +103,9 @@ const editorMachine = setup({
       ],
     },
     'remove': {
-      actions: [sendParent(({self}) => ({type: 'editor.remove', editorId: self.id}))],
+      actions: [
+        sendParent(({self}) => ({type: 'editor.remove', editorId: self.id})),
+      ],
     },
     'clear stored patches': {
       actions: ['remove patches from context'],
@@ -171,7 +179,10 @@ export const playgroundMachine = setup({
     },
     events: {} as
       | {type: 'add editor'}
-      | ({type: 'editor.mutation'; editorId: EditorActorRef['id']} & Omit<MutationChange, 'type'>)
+      | ({type: 'editor.mutation'; editorId: EditorActorRef['id']} & Omit<
+          MutationChange,
+          'type'
+        >)
       | {type: 'editor.remove'; editorId: EditorActorRef['id']}
       | {type: 'toggle value'},
     input: {} as {
@@ -216,7 +227,10 @@ export const playgroundMachine = setup({
         return [
           ...context.editors,
           spawn('editor machine', {
-            input: {color: context.colorGenerator.next().value, value: context.value},
+            input: {
+              color: context.colorGenerator.next().value,
+              value: context.value,
+            },
             id: context.editorIdGenerator.next().value,
           }),
         ]
