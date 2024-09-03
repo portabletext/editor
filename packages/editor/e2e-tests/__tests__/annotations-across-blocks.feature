@@ -106,4 +106,3 @@ Feature: Annotations Across Blocks
     Then the text is "foo,bar"
     And "foo" has marks "l1"
     And "bar" has marks "l2"
-

@@ -39,10 +39,10 @@ Feature: Annotations
     Then "bar" has marks "l1"
 
     Examples:
-      | position |
+      | position     |
       | before "bar" |
-      | after "bar" |
-      | after "ar" |
+      | after "bar"  |
+      | after "ar"   |
 
   Scenario: Toggling annotation on with a collapsed selection inside split block
     Given the text "foo bar baz"
@@ -63,10 +63,10 @@ Feature: Annotations
     Then "foo bar baz" has no marks
 
     Examples:
-      | position |
+      | position     |
       | before "foo" |
-      | after "o b" |
-      | after "baz" |
+      | after "o b"  |
+      | after "baz"  |
 
   Scenario: Writing on top of annotation
     Given the text "foo bar baz"

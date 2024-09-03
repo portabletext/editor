@@ -2,5 +2,5 @@ import config from '@sanity/prettier-config'
 
 export default {
   ...config,
-  plugins: ['@ianvs/prettier-plugin-sort-imports'],
+  plugins: ['@ianvs/prettier-plugin-sort-imports', 'prettier-plugin-gherkin'],
 }

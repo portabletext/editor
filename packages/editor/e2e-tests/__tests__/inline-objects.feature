@@ -35,9 +35,9 @@ Feature: Inline Objects
     Then the text is "foobar"
 
     Examples:
-      | key |
+      | key         |
       | "Backspace" |
-      | "Delete" |
+      | "Delete"    |
 
   Scenario: Adding a decorator across an inline object
     Given the text "foo"
