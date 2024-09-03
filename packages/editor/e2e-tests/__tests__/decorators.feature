@@ -7,12 +7,12 @@ Feature: Decorators
 
   Scenario: Inserting text after a decorator
     Given the text "foo"
-	  And "strong" around "foo"
+    And "strong" around "foo"
     Then "foo" has marks "strong"
-	  When the caret is put after "foo"
-	  And "bar" is typed
+    When the caret is put after "foo"
+    And "bar" is typed
     Then the text is "foobar"
-	  Then "foobar" has marks "strong"
+    Then "foobar" has marks "strong"
 
   Scenario: Toggling bold inside italic
     Given the text "foo bar baz"

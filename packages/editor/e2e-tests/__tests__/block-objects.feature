@@ -51,8 +51,8 @@ Feature: Block Objects
     And "Delete" is pressed
     Then the text is "foo,\n,bar"
 
-  @skip
   # Mimics Google Docs' behaviour
+  @skip
   Scenario: Pressing Delete before an image
     Given the text "foo"
     And an "image"
@@ -62,8 +62,8 @@ Feature: Block Objects
     And "Delete" is pressed
     Then the text is "foobar"
 
-  @skip
   # Mimics Notion's behaviour
+  @skip
   Scenario: Pressing Delete before an image
     Given the text "foo"
     And an "image"
@@ -84,8 +84,8 @@ Feature: Block Objects
     And "Backspace" is pressed with navigation intent
     Then block "m1" is selected
 
-  @skip
   # Mimics Google Docs' behaviour
+  @skip
   Scenario: Pressing Backspace after an image
     Given the text "foo"
     And an "image"
@@ -94,8 +94,8 @@ Feature: Block Objects
     And the caret is put before "bar"
     Then the text is "foobar"
 
-  @skip
   # Mimics Notion's behaviour
+  @skip
   Scenario: Pressing Backspace after an image
     Given the text "foo"
     And an "image"
@@ -112,9 +112,9 @@ Feature: Block Objects
     Then the text is "foo"
 
     Examples:
-      | button |
+      | button      |
       | "Backspace" |
-      | "Delete" |
+      | "Delete"    |
 
   Scenario Outline: Deleting an image with text above
     Given the text "foo"
@@ -124,9 +124,9 @@ Feature: Block Objects
     Then the text is "foobar"
 
     Examples:
-      | button |
+      | button      |
       | "Backspace" |
-      | "Delete" |
+      | "Delete"    |
 
   Scenario Outline: Deleting an image with text below
     Given an "image"
@@ -138,6 +138,6 @@ Feature: Block Objects
     Then the text is "barfoo"
 
     Examples:
-      | button |
+      | button      |
       | "Backspace" |
-      | "Delete" |
+      | "Delete"    |
