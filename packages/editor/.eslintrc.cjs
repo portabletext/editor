@@ -25,7 +25,6 @@ const config = {
   parser: '@typescript-eslint/parser',
   plugins: [
     'import',
-    'simple-import-sort',
     'unused-imports',
     '@typescript-eslint',
     'prettier',

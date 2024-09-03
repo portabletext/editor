@@ -40,7 +40,7 @@ module.exports = {
         'plugin:@typescript-eslint/eslint-recommended',
         'plugin:@typescript-eslint/recommended',
       ],
-      plugins: ['import', '@typescript-eslint', 'simple-import-sort'],
+      plugins: ['import', '@typescript-eslint'],
       rules: {
         '@typescript-eslint/interface-name-prefix': 'off',
         '@typescript-eslint/member-delimiter-style': 'off',
