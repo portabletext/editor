@@ -4,54 +4,46 @@ Feature: Annotations Across Blocks
     Given two editors
     And a global keymap
 
-  # Warning: Possible wrong behaviour
-  # "foo" should also be marked with a link
   Scenario: Adding annotation across blocks
     Given an empty editor
     When "foo" is typed
     And "Enter" is pressed
     And "bar" is typed
     And "foobar" is selected
-    And "link" "l1" is toggled
-    Then "foo" has no marks
-    And "bar" has marks "l1"
+    And "link" "l1,l2" is toggled
+    Then "foo" has marks "l1"
+    And "bar" has marks "l2"
 
-  # Warning: Possible wrong behaviour
-  # "bar" should also be marked with a link
   Scenario: Adding annotation across blocks (backwards selection)
     Given an empty editor
     When "foo" is typed
     And "Enter" is pressed
     And "bar" is typed
     And "foobar" is selected backwards
-    And "link" "l1" is toggled
+    And "link" "l1,l2" is toggled
     Then "foo" has marks "l1"
-    And "bar" has no marks
+    And "bar" has marks "l2"
 
-  # Warning: Possible wrong behaviour
-  # "foo" should also be marked with a link
   Scenario: Adding annotation across an image
     Given the text "foo"
     And an "image"
     When "Enter" is pressed
     And "bar" is typed
     And "foobar" is selected
-    And "link" "l1" is toggled
-    Then "foo" has no marks
-    And "bar" has marks "l1"
+    And "link" "l1,l2" is toggled
+    Then "foo" has marks "l1"
+    And "bar" has marks "l2"
     And "foo,\n,image,\n,bar" is selected
 
-  # Warning: Possible wrong behaviour
-  # "bar" should also be marked with a link
   Scenario: Adding annotation across an image (backwards selection)
     Given the text "foo"
     And an "image"
     When "Enter" is pressed
     And "bar" is typed
     And "foobar" is selected backwards
-    And "link" "l1" is toggled
+    And "link" "l1,l2" is toggled
     Then "foo" has marks "l1"
-    And "bar" has no marks
+    And "bar" has marks "l2"
     And "foo,\n,image,\n,bar" is selected
 
   # Warning: Possible wrong behaviour
