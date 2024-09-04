@@ -204,10 +204,10 @@ export const stepDefinitions = [
     async ({editorA, keyMap}: Context, text: string, marks: Array<string>) => {
       await getEditorTextMarks(editorA, text).then((actualMarks) => {
         expect(actualMarks).toEqual(
-          (marks ?? []).flatMap((mark) =>
+          marks.flatMap((mark) =>
             mark === 'em' || mark === 'strong'
               ? [mark]
-              : (keyMap.get(mark) ?? []),
+              : (keyMap.get(mark) ?? [mark]),
           ),
         )
       })
