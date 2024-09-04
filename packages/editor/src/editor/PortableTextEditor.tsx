@@ -210,8 +210,22 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
     editor: PortableTextEditor,
     type: ObjectSchemaType,
     value?: {[prop: string]: unknown},
-  ): {spanPath: Path; markDefPath: Path} | undefined =>
-    editor.editable?.addAnnotation(type, value)
+  ):
+    | {
+        /**
+         * @deprecated An annotation may be applied to multiple blocks, resulting
+         * in multiple `markDef`'s being created. Use `markDefPaths` instead.
+         */
+        markDefPath: Path
+        markDefPaths: Array<Path>
+        /**
+         * @deprecated Does not return anything meaningful since an annotation
+         * can span multiple blocks and spans. If references the span closest
+         * to the focus point of the selection.
+         */
+        spanPath: Path
+      }
+    | undefined => editor.editable?.addAnnotation(type, value)
   static blur = (editor: PortableTextEditor): void => {
     debug('Host blurred')
     editor.editable?.blur()

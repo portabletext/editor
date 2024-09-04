@@ -22,19 +22,6 @@ Feature: Annotations Overlapping Decorators
     And "bar" has marks "l1,strong"
     And " baz" has marks "l1"
 
-  # Warning: Inconsistent behaviour
-  # "bar" should be marked with "strong,l1"
-  Scenario: Adding an annotation across a decorator
-    Given the text "foo bar baz"
-    And "strong" around "bar"
-    When "foo bar baz" is selected
-    And "link" "l1" is toggled
-    Then the text is "foo bar baz"
-    And "foo bar baz" has marks "l1"
-
-  # Mimics Google Docs' behaviour
-  # Mimics Notion's behaviour
-  @skip
   Scenario: Adding an annotation across a decorator
     Given the text "foo bar baz"
     And "strong" around "bar"
@@ -45,54 +32,42 @@ Feature: Annotations Overlapping Decorators
     And "bar" has marks "strong,l1"
     And " baz" has marks "l1"
 
-  # Warning: Possible wrong behaviour
-  # "foo" should be marked with l1
-  # "b" should be marked with strong,l1
-  # "ar" should be marked with strong
   Scenario: Annotation overlapping decorator
     Given the text "foobar"
     And "strong" around "bar"
     When "foob" is selected
     And "link" "l1" is toggled
-    Then the text is "foob,ar"
-    And "foob" has marks "strong,l1"
+    Then the text is "foo,b,ar"
+    And "foo" has marks "l1"
+    And "b" has marks "strong,l1"
     And "ar" has marks "strong"
 
-  # Warning: Possible wrong behaviour
-  # "foo" should be marked with l1
-  # "b" should be marked with strong,l1
-  # "ar" should be marked with strong
   Scenario: Annotation overlapping decorator (backwards selection)
     Given the text "foobar"
     And "strong" around "bar"
     When "foob" is selected backwards
     And "link" "l1" is toggled
-    Then the text is "foob,ar"
-    And "foob" has marks "l1"
+    Then the text is "foo,b,ar"
+    And "foo" has marks "l1"
+    And "b" has marks "strong,l1"
     And "ar" has marks "strong"
 
-  # Warning: Possible wrong behaviour
-  # "fo" should be marked with strong
-  # "o" should be marked with "strong,l1"
-  # "bar" should be marked with l1
   Scenario: Annotation overlapping decorator from behind
     Given the text "foobar"
     And "strong" around "foo"
     When "obar" is selected
     And "link" "l1" is toggled
-    Then the text is "fo,obar"
+    Then the text is "fo,o,bar"
     Then "fo" has marks "strong"
-    And "obar" has marks "l1"
+    And "o" has marks "strong,l1"
+    And "bar" has marks "l1"
 
-  # Warning: Possible wrong behaviour
-  # "fo" should be marked with strong
-  # "o" should be marked with "strong,l1"
-  # "bar" should be marked with l1
   Scenario: Annotation overlapping decorator from behind (backwards selection)
     Given the text "foobar"
     And "strong" around "foo"
     When "obar" is selected backwards
     And "link" "l1" is toggled
-    Then the text is "fo,obar"
+    Then the text is "fo,o,bar"
     Then "fo" has marks "strong"
-    And "obar" has marks "strong,l1"
+    And "o" has marks "strong,l1"
+    And "bar" has marks "l1"

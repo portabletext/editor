@@ -19,6 +19,7 @@ import {
 import {ReactEditor} from 'slate-react'
 import {type DOMNode} from 'slate-react/dist/utils/dom'
 import {
+  type EditableAPI,
   type EditableAPIDeleteOptions,
   type EditorSelection,
   type PortableTextMemberSchemaTypes,
@@ -428,32 +429,12 @@ export function createWithEditableAPI(
           return false
         }
       },
-      addAnnotation: (
-        type: ObjectSchemaType,
-        value?: {[prop: string]: unknown},
-      ): {spanPath: Path; markDefPath: Path} | undefined => {
+      addAnnotation: (type, value) => {
         const {selection: originalSelection} = editor
-        let returnValue: {spanPath: Path; markDefPath: Path} | undefined =
+        let returnValue: ReturnType<EditableAPI['addAnnotation']> | undefined =
           undefined
+
         if (originalSelection) {
-          const [block] = Editor.node(editor, originalSelection.focus, {
-            depth: 1,
-          })
-          if (!editor.isTextBlock(block)) {
-            return undefined
-          }
-          const [textNode] = Editor.node(editor, originalSelection.focus, {
-            depth: 2,
-          })
-
-          if (!isPortableTextSpan(textNode)) {
-            return undefined
-          }
-
-          if (textNode.text === '') {
-            return undefined
-          }
-
           if (Range.isCollapsed(originalSelection)) {
             editor.pteExpandToWord()
             editor.onChange()
@@ -461,68 +442,118 @@ export function createWithEditableAPI(
 
           // If we still have a selection, add the annotation to the selected text
           if (editor.selection) {
+            let spanPath: Path | undefined
+            let markDefPath: Path | undefined
+            const markDefPaths: Path[] = []
+
             Editor.withoutNormalizing(editor, () => {
-              // Add markDefs to the block
-              const annotationKey = keyGenerator()
-              Transforms.setNodes(
-                editor,
-                {
-                  markDefs: [
-                    ...(block.markDefs || []),
-                    {
-                      _type: type.name,
-                      _key: annotationKey,
-                      ...value,
-                    } as PortableTextObject,
-                  ],
-                },
-                {at: originalSelection.focus},
-              )
-              editor.onChange()
-
-              // Split if needed
-              Transforms.setNodes(editor, {}, {match: Text.isText, split: true})
-              editor.onChange()
-
-              // Add marks to the span node
-              if (editor.selection && Text.isText(textNode)) {
-                Transforms.setNodes(
-                  editor,
-                  {
-                    marks: [
-                      ...((textNode.marks || []) as string[]),
-                      annotationKey,
-                    ],
-                  },
-                  {
-                    at: editor.selection,
-                    match: (n) => n._type === types.span.name,
-                  },
-                )
+              if (!editor.selection) {
+                return
               }
-              editor.onChange()
 
-              const newPortableTextEditorSelection = toPortableTextRange(
-                fromSlateValue(
-                  editor.children,
-                  types.block.name,
-                  KEY_TO_VALUE_ELEMENT.get(editor),
-                ),
-                editor.selection,
-                types,
-              )
-              if (newPortableTextEditorSelection) {
-                returnValue = {
-                  spanPath: newPortableTextEditorSelection.focus.path,
-                  markDefPath: [
+              const selectedBlocks = Editor.nodes(editor, {
+                at: editor.selection,
+                match: (node) => editor.isTextBlock(node),
+                reverse: Range.isBackward(editor.selection),
+              })
+
+              for (const [block, blockPath] of selectedBlocks) {
+                if (block.children.length === 0) {
+                  continue
+                }
+
+                if (
+                  block.children.length === 1 &&
+                  block.children[0].text === ''
+                ) {
+                  continue
+                }
+
+                const annotationKey = keyGenerator()
+                const markDefs = block.markDefs ?? []
+                const existingMarkDef = markDefs.find(
+                  (markDef) =>
+                    markDef._type === type.name &&
+                    markDef._key === annotationKey,
+                )
+
+                if (existingMarkDef === undefined) {
+                  Transforms.setNodes(
+                    editor,
+                    {
+                      markDefs: [
+                        ...markDefs,
+                        {
+                          _type: type.name,
+                          _key: annotationKey,
+                          ...value,
+                        },
+                      ],
+                    },
+                    {at: blockPath},
+                  )
+
+                  markDefPath = [
                     {_key: block._key},
                     'markDefs',
                     {_key: annotationKey},
-                  ],
+                  ]
+                  if (Range.isBackward(editor.selection)) {
+                    markDefPaths.unshift(markDefPath)
+                  } else {
+                    markDefPaths.push(markDefPath)
+                  }
+                }
+
+                Transforms.setNodes(
+                  editor,
+                  {},
+                  {match: Text.isText, split: true},
+                )
+
+                const children = Node.children(editor, blockPath)
+
+                for (const [span, path] of children) {
+                  if (!editor.isTextSpan(span)) {
+                    continue
+                  }
+
+                  if (!Range.includes(editor.selection, path)) {
+                    continue
+                  }
+
+                  const marks = span.marks ?? []
+                  const existingSameTypeAnnotations = marks.filter((mark) =>
+                    markDefs.some(
+                      (markDef) =>
+                        markDef._key === mark && markDef._type === type.name,
+                    ),
+                  )
+
+                  Transforms.setNodes(
+                    editor,
+                    {
+                      marks: [
+                        ...marks.filter(
+                          (mark) => !existingSameTypeAnnotations.includes(mark),
+                        ),
+                        annotationKey,
+                      ],
+                    },
+                    {at: path},
+                  )
+                  spanPath = [{_key: block._key}, 'children', {_key: span._key}]
+                }
+              }
+
+              if (markDefPath && spanPath) {
+                returnValue = {
+                  markDefPath,
+                  markDefPaths,
+                  spanPath,
                 }
               }
             })
-            Editor.normalize(editor)
             editor.onChange()
           }
         }
