@@ -87,3 +87,14 @@ Feature: Undo/Redo
     And undo is performed
     Then the text is "foo"
     And "foo" has marks "c1"
+
+  Scenario: Undoing annotation across text blocks
+    Given the text "foo"
+    When "Enter" is pressed
+    And "bar" is typed
+    And "foobar" is selected
+    And "link" is toggled
+    And undo is performed
+    Then the text is "foo,\n,bar"
+    And "foo" has no marks
+    And "bar" has no marks
