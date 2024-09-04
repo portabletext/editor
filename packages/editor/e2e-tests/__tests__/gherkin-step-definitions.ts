@@ -156,14 +156,17 @@ export const stepDefinitions = [
     },
   ),
   When(
-    '{annotation} {key} is toggled',
+    '{annotation} {keys} is toggled',
     async (
       {editorA, keyMap}: Context,
       annotation: 'comment' | 'link',
-      keyKey: string,
+      keyKeys: Array<string>,
     ) => {
-      const key = await toggleAnnotation(editorA, annotation)
-      keyMap.set(keyKey, key ?? [])
+      const keys = await toggleAnnotation(editorA, annotation)
+
+      keyKeys.forEach((keyKey, index) => {
+        keyMap.set(keyKey, keys[index])
+      })
     },
   ),
   When(
@@ -376,6 +379,14 @@ export const parameterTypes = [
     /"([a-z]\d)"/,
     String,
     (input) => input,
+    false,
+    true,
+  ),
+  new ParameterType(
+    'keys',
+    /"(([a-z]\d)(,([a-z]\d))*)"/,
+    Array,
+    (input) => input.split(','),
     false,
     true,
   ),
