@@ -152,7 +152,7 @@ export function Feature<TContext extends Record<string, any> = object>({
       testFn(`Scenario: ${pickle.name}`, async () => {
         const context = {} as TContext
 
-        for await (const step of pickle.steps) {
+        for (const step of pickle.steps) {
           const matchingSteps = stepImplementations
             .filter(
               (stepImplementation) => stepImplementation.type === step.type,
