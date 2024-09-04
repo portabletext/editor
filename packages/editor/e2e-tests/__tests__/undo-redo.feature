@@ -4,6 +4,14 @@ Feature: Undo/Redo
     Given two editors
     And a global keymap
 
+  Scenario: Undoing annotation
+    Given the text "foo"
+    When "foo" is selected
+    And "link" is toggled
+    And undo is performed
+    Then the text is "foo"
+    And "foo" has no marks
+
   Scenario: Undoing the deletion of the last char of annotated text
     Given the text "foo"
     And a "comment" "c1" around "foo"
