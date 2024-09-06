@@ -47,7 +47,7 @@ export interface EditableAPI {
   addAnnotation: (
     type: ObjectSchemaType,
     value?: {[prop: string]: unknown},
-  ) => {spanPath: Path; markDefPath: Path} | undefined
+  ) => {markDefPath: Path} | undefined
   blur: () => void
   delete: (
     selection: EditorSelection,

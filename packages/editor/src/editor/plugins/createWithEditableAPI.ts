@@ -431,10 +431,9 @@ export function createWithEditableAPI(
       addAnnotation: (
         type: ObjectSchemaType,
         value?: {[prop: string]: unknown},
-      ): {spanPath: Path; markDefPath: Path} | undefined => {
+      ): {markDefPath: Path} | undefined => {
         const {selection: originalSelection} = editor
-        let returnValue: {spanPath: Path; markDefPath: Path} | undefined =
-          undefined
+        let returnValue: {markDefPath: Path} | undefined = undefined
         if (originalSelection) {
           const [block] = Editor.node(editor, originalSelection.focus, {
             depth: 1,
@@ -502,24 +501,12 @@ export function createWithEditableAPI(
               }
               editor.onChange()
 
-              const newPortableTextEditorSelection = toPortableTextRange(
-                fromSlateValue(
-                  editor.children,
-                  types.block.name,
-                  KEY_TO_VALUE_ELEMENT.get(editor),
-                ),
-                editor.selection,
-                types,
-              )
-              if (newPortableTextEditorSelection) {
-                returnValue = {
-                  spanPath: newPortableTextEditorSelection.focus.path,
-                  markDefPath: [
-                    {_key: block._key},
-                    'markDefs',
-                    {_key: annotationKey},
-                  ],
-                }
+              returnValue = {
+                markDefPath: [
+                  {_key: block._key},
+                  'markDefs',
+                  {_key: annotationKey},
+                ],
               }
             })
             Editor.normalize(editor)

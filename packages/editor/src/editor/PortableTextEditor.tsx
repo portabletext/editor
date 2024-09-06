@@ -210,7 +210,7 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
     editor: PortableTextEditor,
     type: ObjectSchemaType,
     value?: {[prop: string]: unknown},
-  ): {spanPath: Path; markDefPath: Path} | undefined =>
+  ): {markDefPath: Path} | undefined =>
     editor.editable?.addAnnotation(type, value)
   static blur = (editor: PortableTextEditor): void => {
     debug('Host blurred')
