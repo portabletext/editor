@@ -249,6 +249,16 @@ export const stepDefinitions = [
     },
   ),
   When(
+    'the caret is put before {string} by editor B',
+    async ({editorB}: Context, text: string) => {
+      if (text === 'stock-ticker') {
+        await selectBeforeEditorInlineObject(editorB, text)
+      } else {
+        await selectBeforeEditorText(editorB, text)
+      }
+    },
+  ),
+  When(
     'the caret is put after {string}',
     async ({editorA}: Context, text: string) => {
       if (text === 'stock-ticker') {
@@ -261,7 +271,11 @@ export const stepDefinitions = [
   When(
     'the caret is put after {string} by editor B',
     async ({editorB}: Context, text: string) => {
-      await selectAfterEditorText(editorB, text)
+      if (text === 'stock-ticker') {
+        await selectAfterEditorInlineObject(editorB, text)
+      } else {
+        await selectAfterEditorText(editorB, text)
+      }
     },
   ),
   Then(
@@ -317,6 +331,12 @@ export const stepDefinitions = [
   When('{button} is pressed', async ({editorA}: Context, button: string) => {
     await editorA.pressKey(button)
   }),
+  When(
+    '{button} is pressed by editor B',
+    async ({editorB}: Context, button: string) => {
+      await editorB.pressKey(button)
+    },
+  ),
   When(
     '{button} is pressed with navigation intent',
     async ({editorA}: Context, button: string) => {
