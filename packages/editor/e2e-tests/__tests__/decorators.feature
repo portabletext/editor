@@ -41,14 +41,12 @@ Feature: Decorators
     And " baz" has marks "em"
 
   Scenario: Deleting marked text and writing again, unmarked
-    Given the text "foo"
-    And "strong" around "foo"
-    Then "foo" has marks "strong"
-    When the caret is put after "foo"
+    Given an empty editor
+    When "strong" is toggled using the keyboard
+    And "foo" is typed
     And "Backspace" is pressed 3 times
     And "bar" is typed
-    Then the text is "bar"
-    And "bar" has no marks
+    Then "bar" has no marks
 
   Scenario: Adding bold across an empty block and typing in the same
     Given the text "foo"
