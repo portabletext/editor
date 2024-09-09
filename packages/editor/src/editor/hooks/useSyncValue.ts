@@ -119,7 +119,7 @@ export function useSyncValue(
               })
               Transforms.insertNodes(
                 slateEditor,
-                slateEditor.pteCreateEmptyBlock(),
+                slateEditor.pteCreateTextBlock({decorators: []}),
                 {at: [0]},
               )
               // Add a new selection in the top of the document

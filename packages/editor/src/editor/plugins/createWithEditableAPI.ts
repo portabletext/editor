@@ -613,7 +613,7 @@ export function createWithEditableAPI(
             // that would insert the placeholder into the actual value
             // which should remain empty)
             if (editor.children.length === 0) {
-              editor.children = [editor.pteCreateEmptyBlock()]
+              editor.children = [editor.pteCreateTextBlock({decorators: []})]
             }
             editor.onChange()
           }

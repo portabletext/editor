@@ -46,7 +46,10 @@ export function createWithPlaceholderBlock(): (
           // Is removing the first block which is a void (not a text block), add a new empty text block in it, if there is no other element in the next path
           if (!editor.children[nextPath[0]]) {
             debug('Adding placeholder block')
-            Editor.insertNode(editor, editor.pteCreateEmptyBlock())
+            Editor.insertNode(
+              editor,
+              editor.pteCreateTextBlock({decorators: []}),
+            )
           }
         }
       }

@@ -324,7 +324,7 @@ function unsetPatch(
     editor.children.forEach((c, i) => {
       Transforms.removeNodes(editor, {at: [i]})
     })
-    Transforms.insertNodes(editor, editor.pteCreateEmptyBlock())
+    Transforms.insertNodes(editor, editor.pteCreateTextBlock({decorators: []}))
     if (previousSelection) {
       Transforms.select(editor, {
         anchor: {path: [0, 0], offset: 0},

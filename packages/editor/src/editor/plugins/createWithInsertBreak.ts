@@ -33,7 +33,10 @@ export function createWithInsertBreak(
           const isEmptyTextBlock =
             focusBlock && isEqualToEmptyEditor([focusBlock], types)
           if (isEndAtStartOfNode && !isEmptyTextBlock) {
-            Editor.insertNode(editor, editor.pteCreateEmptyBlock())
+            Editor.insertNode(
+              editor,
+              editor.pteCreateTextBlock({decorators: []}),
+            )
             const [nextBlockPath] = Path.next(focusBlockPath)
             Transforms.select(editor, {
               anchor: {path: [nextBlockPath, 0], offset: 0},

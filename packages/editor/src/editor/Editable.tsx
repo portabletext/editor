@@ -524,7 +524,7 @@ export const PortableTextEditable = forwardRef(function PortableTextEditable(
           if (lastBlock && Editor.isVoid(slateEditor, node)) {
             Transforms.insertNodes(
               slateEditor,
-              slateEditor.pteCreateEmptyBlock(),
+              slateEditor.pteCreateTextBlock({decorators: []}),
             )
             slateEditor.onChange()
           }
