@@ -100,6 +100,7 @@ describe(PortableTextEditor.insertBlock.name, () => {
           marks: [],
         },
       ],
+      markDefs: [],
       style: 'normal',
     }
     const initialValue: Array<PortableTextBlock> = [nonEmptyTextBlock]
