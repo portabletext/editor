@@ -40,6 +40,16 @@ Feature: Decorators
     And "bar" has marks "em,strong"
     And " baz" has marks "em"
 
+  Scenario: Toggling decorator mid-text and navigating left to clear it
+    Given an empty editor
+    When "foo" is typed
+    And "strong" is toggled using the keyboard
+    And "ArrowLeft" is pressed
+    And "ArrowRight" is pressed
+    And "bar" is typed
+    Then the text is "foobar"
+    And "foobar" has no marks
+
   Scenario: Deleting marked text and writing again, unmarked
     Given an empty editor
     When "strong" is toggled using the keyboard
