@@ -95,9 +95,13 @@ export function createWithHotkeys(
           const nextPath = Path.next(editor.selection.focus.path.slice(0, 1))
           const nextBlock = Node.has(editor, nextPath)
           if (!nextBlock) {
-            Transforms.insertNodes(editor, editor.pteCreateEmptyBlock(), {
-              at: nextPath,
-            })
+            Transforms.insertNodes(
+              editor,
+              editor.pteCreateTextBlock({decorators: []}),
+              {
+                at: nextPath,
+              },
+            )
             editor.onChange()
             return
           }
@@ -111,9 +115,13 @@ export function createWithHotkeys(
         ) as SlateTextBlock | VoidElement
 
         if (isFirstBlock && focusBlock && Editor.isVoid(editor, focusBlock)) {
-          Transforms.insertNodes(editor, editor.pteCreateEmptyBlock(), {
-            at: [0],
-          })
+          Transforms.insertNodes(
+            editor,
+            editor.pteCreateTextBlock({decorators: []}),
+            {
+              at: [0],
+            },
+          )
           Transforms.select(editor, {path: [0, 0], offset: 0})
           editor.onChange()
           return
@@ -292,7 +300,10 @@ export function createWithHotkeys(
           const [, end] = Range.edges(editor.selection)
           const endAtEndOfNode = Editor.isEnd(editor, end, end.path)
           if (endAtEndOfNode) {
-            Editor.insertNode(editor, editor.pteCreateEmptyBlock())
+            Editor.insertNode(
+              editor,
+              editor.pteCreateTextBlock({decorators: []}),
+            )
             event.preventDefault()
             editor.onChange()
             return
@@ -300,7 +311,7 @@ export function createWithHotkeys(
         }
         // Block object enter key
         if (focusBlock && Editor.isVoid(editor, focusBlock)) {
-          Editor.insertNode(editor, editor.pteCreateEmptyBlock())
+          Editor.insertNode(editor, editor.pteCreateTextBlock({decorators: []}))
           event.preventDefault()
           editor.onChange()
           return

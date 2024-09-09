@@ -74,7 +74,7 @@ export function createWithUtils({
       }
     }
 
-    editor.pteCreateEmptyBlock = () => {
+    editor.pteCreateTextBlock = (options: {decorators: Array<string>}) => {
       const block = toSlateValue(
         [
           {
@@ -87,7 +87,9 @@ export function createWithUtils({
                 _type: 'span',
                 _key: keyGenerator(),
                 text: '',
-                marks: [],
+                marks: options.decorators.filter((decorator) =>
+                  schemaTypes.decorators.find(({value}) => value === decorator),
+                ),
               },
             ],
           },

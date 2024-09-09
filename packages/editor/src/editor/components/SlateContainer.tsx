@@ -70,7 +70,7 @@ export function SlateContainer(props: SlateContainerProps) {
   ])
 
   const initialValue = useMemo(() => {
-    return [slateEditor.pteCreateEmptyBlock()]
+    return [slateEditor.pteCreateTextBlock({decorators: []})]
   }, [slateEditor])
 
   useEffect(() => {
