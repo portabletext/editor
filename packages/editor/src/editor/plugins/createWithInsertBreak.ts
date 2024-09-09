@@ -4,12 +4,7 @@ import {
   type PortableTextSlateEditor,
 } from '../../types/editor'
 import {type SlateTextBlock, type VoidElement} from '../../types/slate'
-import {isEqualToEmptyEditor} from '../../utils/values'
 
-/**
- * Changes default behavior of insertBreak to insert a new block instead of splitting current when the cursor is at the
- * start of the block.
- */
 export function createWithInsertBreak(
   types: PortableTextMemberSchemaTypes,
 ): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
@@ -19,37 +14,47 @@ export function createWithInsertBreak(
     const {insertBreak} = editor
 
     editor.insertBreak = () => {
-      if (editor.selection) {
-        const focusBlockPath = editor.selection.focus.path.slice(0, 1)
-        const focusBlock = Node.descendant(editor, focusBlockPath) as
-          | SlateTextBlock
-          | VoidElement
+      if (!editor.selection || Range.isExpanded(editor.selection)) {
+        insertBreak()
+        return
+      }
 
-        if (editor.isTextBlock(focusBlock)) {
-          // Enter from another style than the first (default one)
-          const [, end] = Range.edges(editor.selection)
-          // If it's at the start of block, we want to preserve the current block key and insert a new one in the current position instead of splitting the node.
-          const isEndAtStartOfNode = Editor.isStart(editor, end, end.path)
-          const isEmptyTextBlock =
-            focusBlock && isEqualToEmptyEditor([focusBlock], types)
-          if (isEndAtStartOfNode && !isEmptyTextBlock) {
-            Editor.insertNode(
-              editor,
-              editor.pteCreateTextBlock({decorators: []}),
-            )
-            const [nextBlockPath] = Path.next(focusBlockPath)
-            Transforms.select(editor, {
-              anchor: {path: [nextBlockPath, 0], offset: 0},
-              focus: {path: [nextBlockPath, 0], offset: 0},
-            })
+      const focusBlockPath = editor.selection.focus.path.slice(0, 1)
+      const focusBlock = Node.descendant(editor, focusBlockPath) as
+        | SlateTextBlock
+        | VoidElement
 
-            editor.onChange()
-            return
-          }
+      if (editor.isTextBlock(focusBlock)) {
+        const [, end] = Range.edges(editor.selection)
+        const isEndAtStartOfNode = Editor.isStart(editor, end, end.path)
+
+        if (isEndAtStartOfNode) {
+          const focusDecorators = editor.isTextSpan(focusBlock.children[0])
+            ? (focusBlock.children[0].marks ?? []).filter((mark) =>
+                types.decorators.some((decorator) => decorator.value === mark),
+              )
+            : []
+
+          Editor.insertNode(
+            editor,
+            editor.pteCreateTextBlock({decorators: focusDecorators}),
+          )
+
+          const [nextBlockPath] = Path.next(focusBlockPath)
+
+          Transforms.select(editor, {
+            anchor: {path: [nextBlockPath, 0], offset: 0},
+            focus: {path: [nextBlockPath, 0], offset: 0},
+          })
+
+          editor.onChange()
+          return
         }
       }
+
       insertBreak()
     }
+
     return editor
   }
 }
