@@ -91,3 +91,26 @@ Feature: Decorators
     Then the text is "bar,\n,foo"
     And "bar" has marks "strong"
     And "foo" has marks "strong"
+
+  Scenario: Toggling decorators in empty block
+    Given an empty editor
+    When "foo" is typed
+    And "Backspace" is pressed 3 times
+    And "strong" is toggled using the keyboard
+    And editors have settled
+    Then the text is ""
+    And "" has marks "strong"
+
+  Scenario: Splitting empty decorated block
+    Given the text "foo"
+    When "Enter" is pressed
+    And "strong" is toggled using the keyboard
+    And "Enter" is pressed
+    And "ArrowUp" is pressed
+    And "bar" is typed
+    And "ArrowDown" is pressed
+    And "baz" is typed
+    Then the text is "foo,\n,bar,\n,baz"
+    And "foo" has no marks
+    And "bar" has marks "strong"
+    And "baz" has marks "strong"

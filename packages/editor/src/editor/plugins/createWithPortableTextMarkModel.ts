@@ -441,17 +441,49 @@ export function createWithPortableTextMarkModel(
             }
           })
         } else {
-          const existingMarks: string[] =
-            {
+          const [block, blockPath] = Editor.node(editor, editor.selection, {
+            depth: 1,
+          })
+          const lonelyEmptySpan =
+            editor.isTextBlock(block) &&
+            block.children.length === 1 &&
+            editor.isTextSpan(block.children[0]) &&
+            block.children[0].text === ''
+              ? block.children[0]
+              : undefined
+
+          if (lonelyEmptySpan) {
+            const existingMarks = lonelyEmptySpan.marks ?? []
+            const existingMarksWithoutDecorator = existingMarks.filter(
+              (existingMark) => existingMark !== mark,
+            )
+
+            Transforms.setNodes(
+              editor,
+              {
+                marks:
+                  existingMarks.length === existingMarksWithoutDecorator.length
+                    ? [...existingMarks, mark]
+                    : existingMarksWithoutDecorator,
+              },
+              {
+                at: blockPath,
+                match: (node) => editor.isTextSpan(node),
+              },
+            )
+          } else {
+            const existingMarks: string[] =
+              {
+                ...(Editor.marks(editor) || {}),
+              }.marks || []
+            const marks = {
               ...(Editor.marks(editor) || {}),
-            }.marks || []
-          const marks = {
-            ...(Editor.marks(editor) || {}),
-            marks: [...existingMarks, mark],
+              marks: [...existingMarks, mark],
+            }
+            editor.marks = marks as Text
+            forceNewSelection()
+            return editor
           }
-          editor.marks = marks as Text
-          forceNewSelection()
-          return editor
         }
         editor.onChange()
         forceNewSelection()
@@ -494,17 +526,46 @@ export function createWithPortableTextMarkModel(
           })
           Editor.normalize(editor)
         } else {
-          const existingMarks: string[] =
-            {
+          const [block, blockPath] = Editor.node(editor, selection, {
+            depth: 1,
+          })
+          const lonelyEmptySpan =
+            editor.isTextBlock(block) &&
+            block.children.length === 1 &&
+            editor.isTextSpan(block.children[0]) &&
+            block.children[0].text === ''
+              ? block.children[0]
+              : undefined
+
+          if (lonelyEmptySpan) {
+            const existingMarks = lonelyEmptySpan.marks ?? []
+            const existingMarksWithoutDecorator = existingMarks.filter(
+              (existingMark) => existingMark !== mark,
+            )
+
+            Transforms.setNodes(
+              editor,
+              {
+                marks: existingMarksWithoutDecorator,
+              },
+              {
+                at: blockPath,
+                match: (node) => editor.isTextSpan(node),
+              },
+            )
+          } else {
+            const existingMarks: string[] =
+              {
+                ...(Editor.marks(editor) || {}),
+              }.marks || []
+            const marks = {
               ...(Editor.marks(editor) || {}),
-            }.marks || []
-          const marks = {
-            ...(Editor.marks(editor) || {}),
-            marks: existingMarks.filter((eMark) => eMark !== mark),
-          } as Text
-          editor.marks = {marks: marks.marks, _type: 'span'} as Text
-          forceNewSelection()
-          return editor
+              marks: existingMarks.filter((eMark) => eMark !== mark),
+            } as Text
+            editor.marks = {marks: marks.marks, _type: 'span'} as Text
+            forceNewSelection()
+            return editor
+          }
         }
         editor.onChange()
         forceNewSelection()

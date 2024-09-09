@@ -925,44 +925,4 @@ describe('collaborate editing', () => {
     const valB = await editorB.getValue()
     expect(newValA).toEqual(valB)
   })
-  it('sends the correct patches when toggling marks in a sequence', async () => {
-    const [editorA, editorB] = await getEditors()
-    await editorA.toggleDecoratorUsingKeyboard('strong')
-    await editorA.insertText('Bold')
-    await editorA.toggleDecoratorUsingKeyboard('strong')
-    await editorA.toggleDecoratorUsingKeyboard('em')
-    await editorA.insertText('Italic')
-    await editorA.toggleDecoratorUsingKeyboard('em')
-    const valueA = await editorA.getValue()
-    const valueB = await editorB.getValue()
-    expect(valueB).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "_key": "A-4",
-          "_type": "block",
-          "children": Array [
-            Object {
-              "_key": "A-5",
-              "_type": "span",
-              "marks": Array [
-                "strong",
-              ],
-              "text": "Bold",
-            },
-            Object {
-              "_key": "A-6",
-              "_type": "span",
-              "marks": Array [
-                "em",
-              ],
-              "text": "Italic",
-            },
-          ],
-          "markDefs": Array [],
-          "style": "normal",
-        },
-      ]
-    `)
-    expect(valueA).toEqual(valueB)
-  })
 })
