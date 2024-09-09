@@ -93,6 +93,15 @@ export function createWithPortableTextMarkModel(
       }
 
       /**
+       * Add missing .markDefs to block nodes
+       */
+      if (editor.isTextBlock(node) && !Array.isArray(node.markDefs)) {
+        debug('Adding .markDefs to block node')
+        Transforms.setNodes(editor, {markDefs: []}, {at: path})
+        return
+      }
+
+      /**
        * Add missing .marks to span nodes
        */
       if (editor.isTextSpan(node) && !Array.isArray(node.marks)) {
