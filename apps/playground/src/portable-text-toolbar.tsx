@@ -10,6 +10,7 @@ import {
   ObjectSchemaType,
 } from '@sanity/types'
 import startCase from 'lodash.startcase'
+import {SquareDashedMousePointerIcon} from 'lucide-react'
 import {isValidElement, useMemo} from 'react'
 import {Group, TooltipTrigger} from 'react-aria-components'
 import {isValidElementType} from 'react-is'
@@ -85,6 +86,20 @@ export function PortableTextToolbar() {
           />
         ))}
       </Group>
+      <Separator orientation="vertical" />
+      <TooltipTrigger>
+        <Button
+          aria-label="Focus"
+          variant="secondary"
+          size="sm"
+          onPress={() => {
+            PortableTextEditor.focus(editor)
+          }}
+        >
+          <SquareDashedMousePointerIcon className="size-4" />
+        </Button>
+        <Tooltip>Focus</Tooltip>
+      </TooltipTrigger>
     </Toolbar>
   )
 }
