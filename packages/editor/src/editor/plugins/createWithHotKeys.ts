@@ -79,8 +79,6 @@ export function createWithHotkeys(
       const isTab = isHotkey('tab', event.nativeEvent)
       const isShiftEnter = isHotkey('shift+enter', event.nativeEvent)
       const isShiftTab = isHotkey('shift+tab', event.nativeEvent)
-      const isBackspace = isHotkey('backspace', event.nativeEvent)
-      const isDelete = isHotkey('delete', event.nativeEvent)
       const isArrowDown = isHotkey('down', event.nativeEvent)
       const isArrowUp = isHotkey('up', event.nativeEvent)
 
@@ -123,72 +121,6 @@ export function createWithHotkeys(
             },
           )
           Transforms.select(editor, {path: [0, 0], offset: 0})
-          editor.onChange()
-          return
-        }
-      }
-      if (
-        isBackspace &&
-        editor.selection &&
-        editor.selection.focus.path[0] === 0 &&
-        Range.isCollapsed(editor.selection)
-      ) {
-        // If the block is text and we have a next block below, remove the current block
-        const focusBlock = Node.descendant(
-          editor,
-          editor.selection.focus.path.slice(0, 1),
-        ) as SlateTextBlock | VoidElement
-        const nextPath = Path.next(editor.selection.focus.path.slice(0, 1))
-        const nextBlock = Node.has(editor, nextPath)
-        const isTextBlock = isPortableTextTextBlock(focusBlock)
-        const isEmptyFocusBlock =
-          isTextBlock &&
-          focusBlock.children.length === 1 &&
-          focusBlock.children?.[0]?.text === ''
-
-        if (nextBlock && isTextBlock && isEmptyFocusBlock) {
-          // Remove current block
-          event.preventDefault()
-          event.stopPropagation()
-          Transforms.removeNodes(editor, {match: (n) => n === focusBlock})
-          editor.onChange()
-          return
-        }
-      }
-
-      if (
-        isDelete &&
-        editor.selection &&
-        editor.selection.focus.offset === 0 &&
-        Range.isCollapsed(editor.selection) &&
-        editor.children[editor.selection.focus.path[0] + 1]
-      ) {
-        const nextBlock = Node.descendant(
-          editor,
-          Path.next(editor.selection.focus.path.slice(0, 1)),
-        ) as SlateTextBlock | VoidElement
-        const focusBlockPath = editor.selection.focus.path.slice(0, 1)
-        const focusBlock = Node.descendant(editor, focusBlockPath) as
-          | SlateTextBlock
-          | VoidElement
-        const isTextBlock = isPortableTextTextBlock(focusBlock)
-        const isEmptyFocusBlock =
-          isTextBlock &&
-          focusBlock.children.length === 1 &&
-          focusBlock.children?.[0]?.text === ''
-
-        if (
-          nextBlock &&
-          focusBlock &&
-          !Editor.isVoid(editor, focusBlock) &&
-          Editor.isVoid(editor, nextBlock) &&
-          isEmptyFocusBlock
-        ) {
-          debug('Preventing deleting void block below')
-          event.preventDefault()
-          event.stopPropagation()
-          Transforms.removeNodes(editor, {match: (n) => n === focusBlock})
-          Transforms.select(editor, focusBlockPath)
           editor.onChange()
           return
         }
