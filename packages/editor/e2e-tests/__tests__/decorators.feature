@@ -81,6 +81,43 @@ Feature: Decorators
     When "strong" is toggled using the keyboard
     Then the text is "foo,\n,,\n,bar"
 
+  Scenario Outline: Toggling bold on a cross-selection with the first line empty
+    Given the text "foo"
+    When "ArrowUp" is pressed
+    And "Enter" is pressed
+    And everything is <selection>
+    And "strong" is toggled using the keyboard
+    Then the text is ",\n,foo"
+    And "" has marks "strong"
+    And "foo" has marks "strong"
+    When "strong" is toggled using the keyboard
+    Then the text is ",\n,foo"
+    And "" has no marks
+    And "foo" has no marks
+
+    Examples:
+      | selection          |
+      | selected           |
+      | selected backwards |
+
+  Scenario Outline: Toggling bold on a cross-selection with the last line empty
+    Given the text "foo"
+    When "Enter" is pressed
+    And everything is <selection>
+    And "strong" is toggled using the keyboard
+    Then the text is "foo,\n,"
+    And "foo" has marks "strong"
+    And "" has marks "strong"
+    When "strong" is toggled using the keyboard
+    Then the text is "foo,\n,"
+    And "foo" has no marks
+    And "" has no marks
+
+    Examples:
+      | selection          |
+      | selected           |
+      | selected backwards |
+
   Scenario: Splitting block before decorator
     Given the text "foo"
     And "strong" around "foo"

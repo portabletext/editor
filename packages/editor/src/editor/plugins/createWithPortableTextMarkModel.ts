@@ -408,7 +408,11 @@ export function createWithPortableTextMarkModel(
         if (Range.isExpanded(editor.selection)) {
           Editor.withoutNormalizing(editor, () => {
             // Split if needed
-            Transforms.setNodes(editor, {}, {match: Text.isText, split: true})
+            Transforms.setNodes(
+              editor,
+              {},
+              {match: Text.isText, split: true, hanging: true},
+            )
             // Use new selection
             const splitTextNodes = Range.isRange(editor.selection)
               ? [
@@ -498,7 +502,11 @@ export function createWithPortableTextMarkModel(
         if (Range.isExpanded(selection)) {
           Editor.withoutNormalizing(editor, () => {
             // Split if needed
-            Transforms.setNodes(editor, {}, {match: Text.isText, split: true})
+            Transforms.setNodes(
+              editor,
+              {},
+              {match: Text.isText, split: true, hanging: true},
+            )
             if (editor.selection) {
               const splitTextNodes = [
                 ...Editor.nodes(editor, {
