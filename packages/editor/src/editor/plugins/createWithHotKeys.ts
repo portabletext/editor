@@ -155,59 +155,7 @@ export function createWithHotkeys(
           return
         }
       }
-      // Disallow deleting void blocks by backspace from another line.
-      // Otherwise it's so easy to delete the void block above when trying to delete text on
-      // the line below or above
-      if (
-        isBackspace &&
-        editor.selection &&
-        editor.selection.focus.path[0] > 0 &&
-        Range.isCollapsed(editor.selection)
-      ) {
-        const prevPath = Path.previous(editor.selection.focus.path.slice(0, 1))
-        const prevBlock = Node.descendant(editor, prevPath) as
-          | SlateTextBlock
-          | VoidElement
-        const focusBlock = Node.descendant(
-          editor,
-          editor.selection.focus.path.slice(0, 1),
-        )
-        if (
-          prevBlock &&
-          focusBlock &&
-          Editor.isVoid(editor, prevBlock) &&
-          editor.selection.focus.offset === 0
-        ) {
-          debug('Preventing deleting void block above')
-          event.preventDefault()
-          event.stopPropagation()
 
-          const isTextBlock = isPortableTextTextBlock(focusBlock)
-          const isEmptyFocusBlock =
-            isTextBlock &&
-            focusBlock.children.length === 1 &&
-            focusBlock.children?.[0]?.text === ''
-
-          // If this is a not an text block or it is empty, simply remove it
-          if (!isTextBlock || isEmptyFocusBlock) {
-            Transforms.removeNodes(editor, {match: (n) => n === focusBlock})
-            Transforms.select(editor, prevPath)
-
-            editor.onChange()
-            return
-          }
-
-          // If the focused block is a text node but it isn't empty, focus on the previous block
-          if (isTextBlock && !isEmptyFocusBlock) {
-            Transforms.select(editor, prevPath)
-
-            editor.onChange()
-            return
-          }
-
-          return
-        }
-      }
       if (
         isDelete &&
         editor.selection &&
