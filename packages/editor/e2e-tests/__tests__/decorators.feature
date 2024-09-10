@@ -129,6 +129,21 @@ Feature: Decorators
     And "bar" has marks "strong"
     And "foo" has marks "strong"
 
+  Scenario Outline: Splitting block at the edge of decorator
+    Given the text "foo bar baz"
+    And "strong" around "bar"
+    When the caret is put <position>
+    And "Enter" is pressed
+    Then the text is <new text>
+    And the caret is <new position>
+
+    Examples:
+      | position      | new text            | new position  |
+      | after "foo "  | "foo ,\\n,bar, baz" | before "bar"  |
+      | before "bar"  | "foo ,\\n,bar, baz" | before "bar"  |
+      | after "bar"   | "foo ,bar,\\n, baz" | before " baz" |
+      | before " baz" | "foo ,bar,\\n, baz" | before " baz" |
+
   Scenario: Toggling decorators in empty block
     Given an empty editor
     When "foo" is typed

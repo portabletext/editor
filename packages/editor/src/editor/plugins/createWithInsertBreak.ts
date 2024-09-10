@@ -28,9 +28,12 @@ export function createWithInsertBreak(
 
       if (editor.isTextBlock(focusBlock)) {
         const [start, end] = Range.edges(editor.selection)
-        const isEndAtStartOfNode = Editor.isStart(editor, end, end.path)
+        const isEndAtStartOfBlock = isEqual(end, {
+          path: [...focusBlockPath, 0],
+          offset: 0,
+        })
 
-        if (isEndAtStartOfNode && Range.isCollapsed(editor.selection)) {
+        if (isEndAtStartOfBlock && Range.isCollapsed(editor.selection)) {
           const focusDecorators = editor.isTextSpan(focusBlock.children[0])
             ? (focusBlock.children[0].marks ?? []).filter((mark) =>
                 types.decorators.some((decorator) => decorator.value === mark),
@@ -53,8 +56,15 @@ export function createWithInsertBreak(
           return
         }
 
-        const isStartAtEndOfNode = Editor.isEnd(editor, start, start.path)
-        const isInTheMiddleOfNode = !isEndAtStartOfNode && !isStartAtEndOfNode
+        const lastFocusBlockChild =
+          focusBlock.children[focusBlock.children.length - 1]
+        const isStartAtEndOfBlock = isEqual(start, {
+          path: [...focusBlockPath, focusBlock.children.length - 1],
+          offset: editor.isTextSpan(lastFocusBlockChild)
+            ? lastFocusBlockChild.text.length
+            : 0,
+        })
+        const isInTheMiddleOfNode = !isEndAtStartOfBlock && !isStartAtEndOfBlock
 
         if (isInTheMiddleOfNode) {
           Editor.withoutNormalizing(editor, () => {
@@ -71,6 +81,11 @@ export function createWithInsertBreak(
               Path.next(focusBlockPath),
               {depth: 1},
             )
+
+            Transforms.setSelection(editor, {
+              anchor: {path: [...nextNodePath, 0], offset: 0},
+              focus: {path: [...nextNodePath, 0], offset: 0},
+            })
 
             /**
              * Assign new keys to markDefs that are now split across two blocks
