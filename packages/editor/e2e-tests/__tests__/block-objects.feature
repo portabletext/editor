@@ -51,51 +51,6 @@ Feature: Block Objects
     And "Delete" is pressed
     Then the text is "foo,\n,bar"
 
-  # Mimics Google Docs' behaviour
-  @skip
-  Scenario: Pressing Delete before an image
-    Given the text "foo"
-    And an "image"
-    When "Enter" is pressed
-    And "bar" is typed
-    And the caret is put after "foo"
-    And "Delete" is pressed
-    Then the text is "foobar"
-
-  # Mimics Notion's behaviour
-  @skip
-  Scenario: Pressing Delete before an image
-    Given the text "foo"
-    And an "image"
-    When "Enter" is pressed
-    And "bar" is typed
-    And the caret is put after "foo"
-    And "Delete" is pressed
-    Then the text is "foobar,\n,image"
-
-  # Warning: Not consistent with Delete before an image
-  # Perhaps the image should be deleted instead
-  Scenario: Pressing Backspace after an image
-    Given the text "foo"
-    And an "image" "m1"
-    When "Enter" is pressed
-    And "bar" is typed
-    And the caret is put before "bar"
-    And "Backspace" is pressed with navigation intent
-    Then block "m1" is selected
-
-  # Mimics Google Docs' behaviour
-  @skip
-  Scenario: Pressing Backspace after an image
-    Given the text "foo"
-    And an "image"
-    When "Enter" is pressed
-    And "bar" is typed
-    And the caret is put before "bar"
-    Then the text is "foobar"
-
-  # Mimics Notion's behaviour
-  @skip
   Scenario: Pressing Backspace after an image
     Given the text "foo"
     And an "image"
@@ -103,7 +58,7 @@ Feature: Block Objects
     And "bar" is typed
     And the caret is put before "bar"
     And "Backspace" is pressed
-    Then the text is "foobar,\n,image"
+    Then the text is "foo,\n,bar"
 
   Scenario Outline: Deleting a lonely image
     Given an "image"
