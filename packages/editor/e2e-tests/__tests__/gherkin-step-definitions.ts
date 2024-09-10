@@ -88,6 +88,15 @@ export const stepDefinitions = [
   Given(
     'the text {string} in block {key}',
     async ({editorA, keyMap}: Context, text: string, keyKey: string) => {
+      const value = await editorA.getValue()
+      const selection = await editorA.getSelection()
+      const selectionFocusText = getSelectionFocusText(value, selection)
+
+      // Slightly naive way to figure out if we need to put the text in a new block
+      if (selectionFocusText !== undefined) {
+        await editorA.pressKey('Enter')
+      }
+
       const key = await insertEditorText(editorA, text)
       keyMap.set(keyKey, key)
     },
