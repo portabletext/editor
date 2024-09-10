@@ -15,6 +15,8 @@ import {
   selectAfterEditorText,
   selectBeforeEditorInlineObject,
   selectBeforeEditorText,
+  selectEditor,
+  selectEditorBackwards,
   selectEditorInlineObject,
   selectEditorText,
   selectEditorTextBackwards,
@@ -225,6 +227,12 @@ export const stepDefinitions = [
   /**
    * Selection steps
    */
+  When('everything is selected', async ({editorA}: Context) => {
+    await selectEditor(editorA)
+  }),
+  When('everything is selected backwards', async ({editorA}: Context) => {
+    await selectEditorBackwards(editorA)
+  }),
   When('{string} is selected', async ({editorA}: Context, text: string) => {
     if (text === 'stock-ticker') {
       await selectEditorInlineObject(editorA, text)
