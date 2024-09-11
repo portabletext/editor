@@ -620,64 +620,109 @@ export function createWithEditableAPI(
         }
       },
       removeAnnotation: (type: ObjectSchemaType): void => {
-        let {selection} = editor
         debug('Removing annotation', type)
-        if (selection) {
-          // Select the whole annotation if collapsed
-          if (Range.isCollapsed(selection)) {
-            const [node, nodePath] = Editor.node(editor, selection, {depth: 2})
-            if (
-              Text.isText(node) &&
-              node.marks &&
-              typeof node.text === 'string'
-            ) {
-              Transforms.select(editor, nodePath)
-              selection = editor.selection
+
+        Editor.withoutNormalizing(editor, () => {
+          if (!editor.selection) {
+            return
+          }
+
+          if (Range.isCollapsed(editor.selection)) {
+            const [block, blockPath] = Editor.node(editor, editor.selection, {
+              depth: 1,
+            })
+
+            if (!editor.isTextBlock(block)) {
+              return
+            }
+
+            const markDefs = block.markDefs ?? []
+            const potentialAnnotations = markDefs.filter(
+              (markDef) => markDef._type === type.name,
+            )
+
+            const [child] = Editor.node(editor, editor.selection, {
+              depth: 2,
+            })
+
+            if (!editor.isTextSpan(child)) {
+              return
+            }
+
+            const annotationToRemove = child.marks?.find((mark) =>
+              potentialAnnotations.some((markDef) => markDef._key === mark),
+            )
+
+            const children = Node.children(editor, blockPath)
+
+            for (const [child, childPath] of children) {
+              if (!editor.isTextSpan(child)) {
+                continue
+              }
+
+              if (annotationToRemove) {
+                Transforms.setNodes(
+                  editor,
+                  {
+                    marks: child.marks?.filter(
+                      (mark) => mark !== annotationToRemove,
+                    ),
+                  },
+                  {at: childPath},
+                )
+              }
+            }
+          } else {
+            Transforms.setNodes(
+              editor,
+              {},
+              {
+                match: (node) => editor.isTextSpan(node),
+                split: true,
+                hanging: true,
+              },
+            )
+
+            const blocks = Editor.nodes(editor, {
+              at: editor.selection,
+              match: (node) => editor.isTextBlock(node),
+            })
+
+            for (const [block, blockPath] of blocks) {
+              const children = Node.children(editor, blockPath)
+
+              for (const [child, childPath] of children) {
+                if (!editor.isTextSpan(child)) {
+                  continue
+                }
+
+                if (!Range.includes(editor.selection, childPath)) {
+                  continue
+                }
+
+                const markDefs = block.markDefs ?? []
+                const marks = child.marks ?? []
+                const marksWithoutAnnotation = marks.filter((mark) => {
+                  const markDef = markDefs.find(
+                    (markDef) => markDef._key === mark,
+                  )
+                  return markDef?._type !== type.name
+                })
+
+                if (marksWithoutAnnotation.length !== marks.length) {
+                  Transforms.setNodes(
+                    editor,
+                    {
+                      marks: marksWithoutAnnotation,
+                    },
+                    {at: childPath},
+                  )
+                }
+              }
             }
           }
-          // Do this without normalization or span references will be unstable!
-          Editor.withoutNormalizing(editor, () => {
-            if (selection && Range.isExpanded(selection)) {
-              selection = editor.selection
-              if (!selection) {
-                return
-              }
-              // Find the selected block, to identify the annotation to remove
-              const blocks = [
-                ...Editor.nodes(editor, {
-                  at: selection,
-                  match: (node) => {
-                    return (
-                      editor.isTextBlock(node) &&
-                      Array.isArray(node.markDefs) &&
-                      node.markDefs.some((def) => def._type === type.name)
-                    )
-                  },
-                }),
-              ]
-              const removedMarks: string[] = []
-
-              // Removes the marks from the text nodes
-              blocks.forEach(([block]) => {
-                if (
-                  editor.isTextBlock(block) &&
-                  Array.isArray(block.markDefs)
-                ) {
-                  const marksToRemove = block.markDefs.filter(
-                    (def) => def._type === type.name,
-                  )
-                  marksToRemove.forEach((def) => {
-                    if (!removedMarks.includes(def._key))
-                      removedMarks.push(def._key)
-                    Editor.removeMark(editor, def._key)
-                  })
-                }
-              })
-            }
-          })
-          Editor.normalize(editor)
-          editor.onChange()
-        }
+        })
+        editor.onChange()
       },
       getSelection: (): EditorSelection | null => {
         let ptRange: EditorSelection = null
