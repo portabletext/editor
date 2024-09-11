@@ -95,7 +95,7 @@ export const withPlugins = <T extends Editor>(
 
   const withPlaceholderBlock = createWithPlaceholderBlock()
 
-  const withInsertBreak = createWithInsertBreak(schemaTypes)
+  const withInsertBreak = createWithInsertBreak(schemaTypes, keyGenerator)
 
   const withUtils = createWithUtils({
     keyGenerator,
