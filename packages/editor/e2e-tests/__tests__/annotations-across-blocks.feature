@@ -105,8 +105,6 @@ Feature: Annotations Across Blocks
     And "foo" has marks "l1"
     And "bar" has an annotation different than "l1"
 
-  # Warning: Possible wrong behaviour
-  # The " baz" link should have a unique key
   Scenario: Toggling part of an annotation off
     Given the text "foo bar baz"
     And a "link" "l1" around "foo bar baz"
@@ -115,7 +113,7 @@ Feature: Annotations Across Blocks
     Then the text is "foo ,bar, baz"
     And "foo " has marks "l1"
     And "bar" has no marks
-    And " baz" has marks "l1"
+    And " baz" has an annotation different than "l1"
 
   Scenario: Splitting block before annotation
     Given the text "foo"

@@ -8,6 +8,7 @@ import {
   type PortableTextTextBlock,
   type SchemaType,
 } from '@sanity/types'
+import {isEqual} from 'lodash'
 import {
   Editor,
   Node,
@@ -691,33 +692,79 @@ export function createWithEditableAPI(
             for (const [block, blockPath] of blocks) {
               const children = Node.children(editor, blockPath)
 
+              const markDefs = block.markDefs ?? []
+              const newMarkKeys = new Map<string, string>()
+
               for (const [child, childPath] of children) {
                 if (!editor.isTextSpan(child)) {
                   continue
                 }
 
-                if (!Range.includes(editor.selection, childPath)) {
-                  continue
-                }
+                if (Range.includes(editor.selection, childPath)) {
+                  const annotationToRemove = child.marks?.find((mark) => {
+                    const markDef = markDefs.find(
+                      (markDef) => markDef._key === mark,
+                    )
+                    return markDef?._type === type.name
+                  })
 
-                const markDefs = block.markDefs ?? []
-                const marks = child.marks ?? []
-                const marksWithoutAnnotation = marks.filter((mark) => {
-                  const markDef = markDefs.find(
-                    (markDef) => markDef._key === mark,
-                  )
-                  return markDef?._type !== type.name
-                })
+                  if (!annotationToRemove) {
+                    continue
+                  }
 
-                if (marksWithoutAnnotation.length !== marks.length) {
+                  if (!newMarkKeys.has(annotationToRemove)) {
+                    newMarkKeys.set(annotationToRemove, keyGenerator())
+                  }
+
+                  const marks = child.marks ?? []
+
                   Transforms.setNodes(
                     editor,
                     {
-                      marks: marksWithoutAnnotation,
+                      marks: marks.filter(
+                        (mark) => mark !== annotationToRemove,
+                      ),
                     },
                     {at: childPath},
                   )
+                } else {
+                  const marks = child.marks ?? []
+                  const newMarks = marks.map(
+                    (mark) => newMarkKeys.get(mark) ?? mark,
+                  )
+
+                  if (!isEqual(marks, newMarks)) {
+                    Transforms.setNodes(
+                      editor,
+                      {
+                        marks: newMarks,
+                      },
+                      {at: childPath},
+                    )
+                  }
                 }
+              }
+
+              const markDefToClone = markDefs.find((markDef) =>
+                newMarkKeys.has(markDef._key),
+              )
+
+              if (markDefToClone) {
+                Transforms.setNodes(
+                  editor,
+                  {
+                    markDefs: [
+                      ...markDefs,
+                      {
+                        ...markDefToClone,
+                        _key:
+                          newMarkKeys.get(markDefToClone._key) ??
+                          markDefToClone._key,
+                      },
+                    ],
+                  },
+                  {at: blockPath},
+                )
               }
             }
           }

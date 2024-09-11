@@ -96,15 +96,14 @@ Feature: Annotations
 
   Scenario: Toggling annotation off with a collapsed selection does not remove sibling annotations
     Given the text "foo bar baz"
-    And a "link" "l1" around "foo"
-    And "strong" around "bar"
-    And a "link" "l2" around "bar baz"
-    When the caret is put before "az"
+    And a "link" "l1" around "foo bar baz"
+    When "bar" is selected
     And "link" is toggled
-    Then the text is "foo, ,bar, baz"
-    And "foo" has marks "l1"
-    And "bar" has marks "strong"
-    And " baz" has no marks
+    And the caret is put before "baz"
+    And "link" is toggled
+    Then the text is "foo ,bar baz"
+    And "foo " has marks "l1"
+    And "bar baz" has no marks
 
   Scenario Outline: Toggling annotation off with a collapsed selection
     Given the text "foo bar baz"
