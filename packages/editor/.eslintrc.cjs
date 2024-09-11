@@ -109,6 +109,7 @@ const config = {
     'simple-import-sort/imports': 'off', // handled by prettier
     'import/order': 'off', // handled by prettier
     'sort-imports': 'off', // handled by prettier
+    'max-depth': 'off',
     'max-nested-callbacks': 'off',
     'no-undef': 'off',
     'no-dupe-class-members': 'off', // doesn't work with TS overrides
