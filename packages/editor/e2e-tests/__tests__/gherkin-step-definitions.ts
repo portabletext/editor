@@ -27,7 +27,7 @@ import {
 type Context = {
   editorA: Editor
   editorB: Editor
-  keyMap: Map<string, Array<string> | string>
+  keyMap: Map<string, string>
 }
 
 export const stepDefinitions = [
@@ -97,8 +97,9 @@ export const stepDefinitions = [
         await editorA.pressKey('Enter')
       }
 
-      const key = await insertEditorText(editorA, text)
-      keyMap.set(keyKey, key)
+      const newBlockKey = await insertEditorText(editorA, text)
+
+      keyMap.set(keyKey, newBlockKey)
     },
   ),
   Then(
@@ -124,6 +125,17 @@ export const stepDefinitions = [
       keyKey: string,
     ) => {
       const newBlockKeys = await insertBlockObject(editorA, blockObject)
+
+      if (newBlockKeys.length === 0) {
+        throw new Error('No new block key was added')
+      }
+
+      if (newBlockKeys.length > 1) {
+        throw new Error(
+          `More than one new block key was added: ${JSON.stringify(newBlockKeys)}`,
+        )
+      }
+
       keyMap.set(keyKey, newBlockKeys[0])
     },
   ),
@@ -143,8 +155,20 @@ export const stepDefinitions = [
       text: string,
     ) => {
       await selectEditorText(editorA, text)
-      const key = await toggleAnnotation(editorA, annotation)
-      keyMap.set(keyKey, key)
+
+      const newAnnotationKeys = await toggleAnnotation(editorA, annotation)
+
+      if (newAnnotationKeys.length === 0) {
+        throw new Error('No new annotation key was added')
+      }
+
+      if (newAnnotationKeys.length > 1) {
+        throw new Error(
+          `More than one new annotation key was added: ${JSON.stringify(newAnnotationKeys)}`,
+        )
+      }
+
+      keyMap.set(keyKey, newAnnotationKeys[0])
     },
   ),
   Given(
@@ -156,8 +180,20 @@ export const stepDefinitions = [
       text: string,
     ) => {
       await selectEditorText(editorB, text)
-      const key = await toggleAnnotation(editorB, annotation)
-      keyMap.set(keyKey, key)
+
+      const newAnnotationKeys = await toggleAnnotation(editorB, annotation)
+
+      if (newAnnotationKeys.length === 0) {
+        throw new Error('No new annotation key was added')
+      }
+
+      if (newAnnotationKeys.length > 1) {
+        throw new Error(
+          `More than one new annotation key was added: ${JSON.stringify(newAnnotationKeys)}`,
+        )
+      }
+
+      keyMap.set(keyKey, newAnnotationKeys[0])
     },
   ),
   When(
@@ -173,10 +209,16 @@ export const stepDefinitions = [
       annotation: 'comment' | 'link',
       keyKeys: Array<string>,
     ) => {
-      const keys = await toggleAnnotation(editorA, annotation)
+      const newAnnotationKeys = await toggleAnnotation(editorA, annotation)
+
+      if (newAnnotationKeys.length !== keyKeys.length) {
+        throw new Error(
+          `Expected ${keyKeys.length} new annotation keys, but got ${newAnnotationKeys.length}`,
+        )
+      }
 
       keyKeys.forEach((keyKey, index) => {
-        keyMap.set(keyKey, keys[index])
+        keyMap.set(keyKey, newAnnotationKeys[index])
       })
     },
   ),
@@ -189,8 +231,20 @@ export const stepDefinitions = [
       keyKey: string,
     ) => {
       await selectEditorText(editorA, text)
-      const key = await toggleAnnotation(editorA, annotation)
-      keyMap.set(keyKey, key)
+
+      const newAnnotationKeys = await toggleAnnotation(editorA, annotation)
+
+      if (newAnnotationKeys.length === 0) {
+        throw new Error('No new annotation key was added')
+      }
+
+      if (newAnnotationKeys.length > 1) {
+        throw new Error(
+          `More than one new annotation key was added: ${JSON.stringify(newAnnotationKeys)}`,
+        )
+      }
+
+      keyMap.set(keyKey, newAnnotationKeys[0])
     },
   ),
   When(
@@ -218,10 +272,10 @@ export const stepDefinitions = [
     async ({editorA, keyMap}: Context, text: string, marks: Array<string>) => {
       await getEditorTextMarks(editorA, text).then((actualMarks) => {
         expect(actualMarks).toEqual(
-          marks.flatMap((mark) =>
+          marks.map((mark) =>
             mark === 'em' || mark === 'strong'
-              ? [mark]
-              : (keyMap.get(mark) ?? [mark]),
+              ? mark
+              : (keyMap.get(mark) ?? mark),
           ),
         )
       })
