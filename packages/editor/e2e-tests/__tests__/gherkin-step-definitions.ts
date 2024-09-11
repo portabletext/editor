@@ -281,6 +281,29 @@ export const stepDefinitions = [
       })
     },
   ),
+  Then(
+    '{string} has an annotation different than {key}',
+    async ({editorA, keyMap}: Context, text: string, key: string) => {
+      await getEditorTextMarks(editorA, text).then((marks) => {
+        const annotations =
+          marks?.filter((mark) => mark !== 'em' && mark !== 'strong') ?? []
+
+        expect(annotations.length).toBeGreaterThan(0)
+        expect(
+          annotations.some((annotation) => annotation === keyMap.get(key)),
+        ).toBeFalsy()
+      })
+    },
+  ),
+  Then(
+    '{string} and {string} have the same marks',
+    async ({editorA}: Context, textA: string, textB: string) => {
+      const marksA = await getEditorTextMarks(editorA, textA)
+      const marksB = await getEditorTextMarks(editorA, textB)
+
+      expect(marksA).toEqual(marksB)
+    },
+  ),
   Then('{string} has no marks', async ({editorA}: Context, text: string) => {
     await getEditorTextMarks(editorA, text).then((marks) =>
       expect(marks).toEqual([]),

@@ -46,8 +46,6 @@ Feature: Annotations Across Blocks
     And "bar" has marks "l2"
     And "foo,\n,image,\n,bar" is selected
 
-  # Warning: Possible wrong behaviour
-  # The "bar" link should have a unique key
   Scenario: Splitting an annotation across blocks
     Given the text "foobar"
     And a "link" "l1" around "foobar"
@@ -55,7 +53,57 @@ Feature: Annotations Across Blocks
     And "Enter" is pressed
     Then the text is "foo,\n,bar"
     And "foo" has marks "l1"
-    And "bar" has marks "l1"
+    And "bar" has an annotation different than "l1"
+
+  Scenario: Splitting an annotation across blocks using a selection
+    Given the text "foo bar baz"
+    And a "link" "l1" around "foo bar baz"
+    When "bar" is selected
+    And "Enter" is pressed
+    Then the text is "foo ,\n, baz"
+    And "foo " has marks "l1"
+    And " baz" has an annotation different than "l1"
+
+  Scenario: Splitting a split annotation across blocks
+    Given the text "foo bar baz"
+    And a "link" "l1" around "foo bar baz"
+    And "strong" around "bar"
+    When the caret is put after "foo"
+    And "Enter" is pressed
+    Then the text is "foo,\n, ,bar, baz"
+    And "foo" has marks "l1"
+    And " " has an annotation different than "l1"
+    And "bar" has an annotation different than "l1"
+    And " baz" has an annotation different than "l1"
+    And " " and " baz" have the same marks
+
+  Scenario: Splitting text before annotation doesn't touch the annotation
+    Given the text "foo bar baz"
+    And a "link" "l1" around "baz"
+    When the caret is put before "bar"
+    And "Enter" is pressed
+    Then the text is "foo ,\n,bar ,baz"
+    And "baz" has marks "l1"
+
+  Scenario: Splitting text after annotation doesn't touch the annotation
+    Given the text "foo bar baz"
+    And a "link" "l1" around "foo"
+    When the caret is put after "bar"
+    And "Enter" is pressed
+    Then the text is "foo, bar,\n, baz"
+    And "foo" has marks "l1"
+
+  # Warning: Possible wrong behaviour
+  # "foo" and "bar" should rejoin as one link
+  Scenario: Splitting and merging an annotation across blocks
+    Given the text "foobar"
+    And a "link" "l1" around "foobar"
+    When the caret is put after "foo"
+    And "Enter" is pressed
+    And "Backspace" is pressed
+    Then the text is "foo,bar"
+    And "foo" has marks "l1"
+    And "bar" has an annotation different than "l1"
 
   # Warning: Possible wrong behaviour
   # The " baz" link should have a unique key
