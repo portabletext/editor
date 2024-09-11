@@ -55,6 +55,73 @@ Feature: Annotations
     And " " has no marks
     And "baz" has marks "l1"
 
+  Scenario: Toggling annotation off with a part-selection inside split block
+    Given the text "foo bar baz"
+    And a "link" "l1" around "foo bar baz"
+    And "strong" around "bar"
+    When "baz" is selected
+    And "link" is toggled
+    Then the text is "foo ,bar, ,baz"
+    And "foo " has marks "l1"
+    And "bar" has marks "l1,strong"
+    And " " has marks "l1"
+    And "baz" has no marks
+    And "baz" is selected
+
+  Scenario: Toggling annotation off with a part-selection does not remove sibling annotations
+    Given the text "foo bar baz"
+    And a "link" "l1" around "foo "
+    And a "link" "l2" around "bar baz"
+    And "strong" around "bar"
+    When "baz" is selected
+    And "link" is toggled
+    Then the text is "foo ,bar, ,baz"
+    And "foo " has marks "l1"
+    And "bar" has marks "l2,strong"
+    And " " has marks "l2"
+    And "baz" has no marks
+    And "baz" is selected
+
+  Scenario: Toggling annotation off with a collapsed selection inside split block
+    Given the text "foo bar baz"
+    And a "link" "l1" around "foo bar baz"
+    And "strong" around "bar"
+    When the caret is put before "baz"
+    And "link" is toggled
+    Then the text is "foo ,bar, baz"
+    And "foo " has no marks
+    And "bar" has marks "strong"
+    And " baz" has no marks
+    And the caret is before "baz"
+
+  Scenario: Toggling annotation off with a collapsed selection does not remove sibling annotations to the left
+    Given the text "foo bar baz boo baa"
+    And a "link" "l1" around "foo bar baz boo baa"
+    And "strong" around "bar"
+    When "boo" is selected
+    And "link" is toggled
+    And the caret is put before "baa"
+    And "link" is toggled
+    Then the text is "foo ,bar, baz ,boo baa"
+    And "foo " has marks "l1"
+    And "bar" has marks "l1,strong"
+    And " baz " has marks "l1"
+    And "boo baa" has no marks
+
+  Scenario: Toggling annotation off with a collapsed selection does not remove sibling annotations to the right
+    Given the text "foo bar baz boo baa"
+    And a "link" "l1" around "foo bar baz boo baa"
+    And "strong" around "boo"
+    When "bar" is selected
+    And "link" is toggled
+    And the caret is put before "foo"
+    And "link" is toggled
+    Then the text is "foo bar, baz ,boo, baa"
+    And "foo bar" has no marks
+    And " baz " has marks "l1"
+    And "boo" has marks "l1,strong"
+    And " baa" has marks "l1"
+
   Scenario Outline: Toggling annotation off with a collapsed selection
     Given the text "foo bar baz"
     And a "link" "l1" around "foo bar baz"
