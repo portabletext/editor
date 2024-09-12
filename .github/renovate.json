@@ -1,6 +1,9 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>sanity-io/renovate-config"],
+  "extends": [
+    "github>sanity-io/renovate-config",
+    ":dependencyDashboardApproval"
+  ],
   "packageRules": [
     {
       "matchDepTypes": ["dependencies", "peerDependencies"],
@@ -12,6 +15,20 @@
       "matchPackageNames": ["@sanity/*", "react", "rxjs", "styled-components"],
       "rangeStrategy": "bump",
       "semanticCommitType": "fix"
+    },
+    {
+      "description": "Ensure internal and important packages open a PRs right away, without waiting for manual approval",
+      "matchPackageNames": [
+        "@sanity/*",
+        "react",
+        "rxjs",
+        "slate",
+        "slate-react",
+        "styled-components",
+        "typescript"
+      ],
+      "dependencyDashboardApproval": false,
+      "schedule": ["every weekday"]
     }
   ]
 }
