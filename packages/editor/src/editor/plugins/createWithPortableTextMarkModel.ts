@@ -7,6 +7,7 @@
  */
 
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
+import {type PortableTextObject} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {type Subject} from 'rxjs'
 import {
@@ -199,6 +200,25 @@ export function createWithPortableTextMarkModel(
             )
             return
           }
+        }
+      }
+
+      // Remove duplicate markDefs
+      if (editor.isTextBlock(node)) {
+        const markDefs = node.markDefs ?? []
+        const markDefKeys = new Set<string>()
+        const newMarkDefs: Array<PortableTextObject> = []
+
+        for (const markDef of markDefs) {
+          if (!markDefKeys.has(markDef._key)) {
+            markDefKeys.add(markDef._key)
+            newMarkDefs.push(markDef)
+          }
+        }
+
+        if (markDefs.length !== newMarkDefs.length) {
+          debug('Removing duplicate markDefs')
+          Transforms.setNodes(editor, {markDefs: newMarkDefs}, {at: path})
         }
       }
 
