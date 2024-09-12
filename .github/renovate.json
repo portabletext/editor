@@ -1,4 +1,17 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>sanity-io/renovate-config"]
+  "extends": ["github>sanity-io/renovate-config"],
+  "packageRules": [
+    {
+      "matchDepTypes": ["dependencies", "peerDependencies"],
+      "rangeStrategy": "bump",
+      "semanticCommitType": "fix"
+    },
+    {
+      "matchDepTypes": ["devDependencies"],
+      "matchPackageNames": ["@sanity/*", "react", "rxjs", "styled-components"],
+      "rangeStrategy": "bump",
+      "semanticCommitType": "fix"
+    }
+  ]
 }
