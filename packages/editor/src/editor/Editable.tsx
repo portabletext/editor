@@ -341,7 +341,9 @@ export const PortableTextEditable = forwardRef(function PortableTextEditable(
           return
         }
       }
-      setRangeDecorationsState([])
+      if (rangeDecorationState.length > 0) {
+        setRangeDecorationsState([])
+      }
     },
     [portableTextEditor, rangeDecorations, schemaTypes, slateEditor],
   )
