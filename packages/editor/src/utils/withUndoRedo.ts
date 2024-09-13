@@ -1,4 +1,4 @@
-import {type Editor} from 'slate'
+import type {Editor} from 'slate'
 
 const IS_UDOING: WeakMap<Editor, boolean | undefined> = new WeakMap()
 const IS_REDOING: WeakMap<Editor, boolean | undefined> = new WeakMap()

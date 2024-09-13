@@ -1,13 +1,13 @@
-import {
-  type PathSegment,
-  type PortableTextBlock,
-  type PortableTextChild,
-  type PortableTextObject,
-  type PortableTextTextBlock,
+import type {
+  PathSegment,
+  PortableTextBlock,
+  PortableTextChild,
+  PortableTextObject,
+  PortableTextTextBlock,
 } from '@sanity/types'
 import {isEqual} from 'lodash'
 import {Element, Text, type Descendant, type Node} from 'slate'
-import {type PortableTextMemberSchemaTypes} from '../types/editor'
+import type {PortableTextMemberSchemaTypes} from '../types/editor'
 
 export const EMPTY_MARKDEFS: PortableTextObject[] = []
 

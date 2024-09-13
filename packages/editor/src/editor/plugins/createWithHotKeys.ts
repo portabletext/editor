@@ -1,16 +1,16 @@
 import {isPortableTextSpan, isPortableTextTextBlock} from '@sanity/types'
 import {isHotkey} from 'is-hotkey-esm'
-import {type KeyboardEvent} from 'react'
+import type {KeyboardEvent} from 'react'
 import {Editor, Node, Path, Range, Transforms} from 'slate'
-import {type ReactEditor} from 'slate-react'
-import {
-  type PortableTextMemberSchemaTypes,
-  type PortableTextSlateEditor,
+import type {ReactEditor} from 'slate-react'
+import type {
+  PortableTextMemberSchemaTypes,
+  PortableTextSlateEditor,
 } from '../../types/editor'
-import {type HotkeyOptions} from '../../types/options'
-import {type SlateTextBlock, type VoidElement} from '../../types/slate'
+import type {HotkeyOptions} from '../../types/options'
+import type {SlateTextBlock, VoidElement} from '../../types/slate'
 import {debugWithName} from '../../utils/debug'
-import {type PortableTextEditor} from '../PortableTextEditor'
+import type {PortableTextEditor} from '../PortableTextEditor'
 
 const debug = debugWithName('plugin:withHotKeys')
 

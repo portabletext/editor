@@ -1,8 +1,8 @@
-import {
-  type Path,
-  type PortableTextChild,
-  type PortableTextObject,
-  type PortableTextTextBlock,
+import type {
+  Path,
+  PortableTextChild,
+  PortableTextObject,
+  PortableTextTextBlock,
 } from '@sanity/types'
 import {useMemo, useRef, type FunctionComponent, type ReactElement} from 'react'
 import {Editor, Range, Element as SlateElement} from 'slate'
@@ -12,13 +12,13 @@ import {
   useSlateStatic,
   type RenderElementProps,
 } from 'slate-react'
-import {
-  type BlockRenderProps,
-  type PortableTextMemberSchemaTypes,
-  type RenderBlockFunction,
-  type RenderChildFunction,
-  type RenderListItemFunction,
-  type RenderStyleFunction,
+import type {
+  BlockRenderProps,
+  PortableTextMemberSchemaTypes,
+  RenderBlockFunction,
+  RenderChildFunction,
+  RenderListItemFunction,
+  RenderStyleFunction,
 } from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {fromSlateValue} from '../../utils/values'
@@ -89,7 +89,7 @@ export const Element: FunctionComponent<ElementProps> = ({
 
   let renderedBlock = children
 
-  let className
+  let className: string | undefined
 
   const blockPath: Path = useMemo(() => [{_key: element._key}], [element])
 
@@ -178,7 +178,7 @@ export const Element: FunctionComponent<ElementProps> = ({
         editorElementRef: blockRef,
       })
     }
-    let level
+    let level: number | undefined
     if (isListItem) {
       if (typeof element.level === 'number') {
         level = element.level
@@ -274,7 +274,7 @@ export const Element: FunctionComponent<ElementProps> = ({
     schemaTypes.block.name,
     KEY_TO_VALUE_ELEMENT.get(editor),
   )[0]
-  let renderedBlockFromProps
+  let renderedBlockFromProps: JSX.Element | undefined
   if (renderBlock) {
     const _props: Omit<BlockRenderProps, 'type'> = Object.defineProperty(
       {

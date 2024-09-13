@@ -1,4 +1,4 @@
-import {type PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock} from '@sanity/types'
 import {
   Box,
   Card,
@@ -11,7 +11,7 @@ import {
 } from '@sanity/ui'
 import {useCallback, useMemo, useState} from 'react'
 import {Subject} from 'rxjs'
-import {type EditorSelection, type Patch} from '../../src'
+import type {EditorSelection, Patch} from '../../src'
 import {Editor} from './components/Editor'
 import {Value} from './components/Value'
 

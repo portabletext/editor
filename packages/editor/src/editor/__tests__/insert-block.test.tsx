@@ -1,9 +1,9 @@
 import {describe, expect, jest, test} from '@jest/globals'
 import {Schema} from '@sanity/schema'
-import {type PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock} from '@sanity/types'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
-import {type EditorChange, type EditorSelection} from '../../types/editor'
+import type {EditorChange, EditorSelection} from '../../types/editor'
 import {PortableTextEditable} from '../Editable'
 import {PortableTextEditor} from '../PortableTextEditor'
 

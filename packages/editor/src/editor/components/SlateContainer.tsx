@@ -1,11 +1,11 @@
 import {useEffect, useMemo, useState, type PropsWithChildren} from 'react'
 import {createEditor} from 'slate'
 import {Slate, withReact} from 'slate-react'
-import {type PatchObservable} from '../../types/editor'
+import type {PatchObservable} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {KEY_TO_SLATE_ELEMENT, KEY_TO_VALUE_ELEMENT} from '../../utils/weakMaps'
 import {withPlugins} from '../plugins'
-import {type PortableTextEditor} from '../PortableTextEditor'
+import type {PortableTextEditor} from '../PortableTextEditor'
 
 const debug = debugWithName('component:PortableTextEditor:SlateContainer')
 

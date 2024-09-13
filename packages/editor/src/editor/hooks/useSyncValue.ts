@@ -1,12 +1,9 @@
-import {type PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock} from '@sanity/types'
 import {debounce, isEqual} from 'lodash'
 import {useCallback, useMemo, useRef} from 'react'
 import {Editor, Text, Transforms, type Descendant, type Node} from 'slate'
 import {useSlate} from 'slate-react'
-import {
-  type EditorChange,
-  type PortableTextSlateEditor,
-} from '../../types/editor'
+import type {EditorChange, PortableTextSlateEditor} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {validateValue} from '../../utils/validateValue'
 import {toSlateValue, VOID_CHILD_KEY} from '../../utils/values'
@@ -17,7 +14,7 @@ import {
 } from '../../utils/withChanges'
 import {withoutPatching} from '../../utils/withoutPatching'
 import {withoutSaving} from '../plugins/createWithUndoRedo'
-import {type PortableTextEditor} from '../PortableTextEditor'
+import type {PortableTextEditor} from '../PortableTextEditor'
 
 const debug = debugWithName('hook:useSyncValue')
 

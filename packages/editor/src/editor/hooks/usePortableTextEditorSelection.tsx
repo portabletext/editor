@@ -5,7 +5,7 @@ import {
   useEffect,
   useState,
 } from 'react'
-import {type EditorChanges, type EditorSelection} from '../../types/editor'
+import type {EditorChanges, EditorSelection} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 
 /**

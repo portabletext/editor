@@ -1,4 +1,4 @@
-import {type PortableTextObject} from '@sanity/types'
+import type {PortableTextObject} from '@sanity/types'
 import {useCallback, type ReactNode} from 'react'
 
 type Props = {

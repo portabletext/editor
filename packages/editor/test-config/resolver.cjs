@@ -20,8 +20,8 @@ module.exports = (path, options) => {
       // implementation is available for the browser+ESM version of uuid to use (eg, via
       // https://github.com/jsdom/jsdom/pull/3352 or a similar polyfill), this can go away.
       if (['nanoid', 'uuid', 'get-random-values-esm'].includes(pkg.name)) {
-        delete pkg.exports
-        delete pkg.module
+        pkg.exports = undefined
+        pkg.module = undefined
       }
       return pkg
     },

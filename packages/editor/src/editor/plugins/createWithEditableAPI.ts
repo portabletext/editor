@@ -19,13 +19,13 @@ import {
   Transforms,
 } from 'slate'
 import {ReactEditor} from 'slate-react'
-import {type DOMNode} from 'slate-react/dist/utils/dom'
-import {
-  type EditableAPI,
-  type EditableAPIDeleteOptions,
-  type EditorSelection,
-  type PortableTextMemberSchemaTypes,
-  type PortableTextSlateEditor,
+import type {DOMNode} from 'slate-react/dist/utils/dom'
+import type {
+  EditableAPI,
+  EditableAPIDeleteOptions,
+  EditorSelection,
+  PortableTextMemberSchemaTypes,
+  PortableTextSlateEditor,
 } from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {toPortableTextRange, toSlateRange} from '../../utils/ranges'
@@ -38,7 +38,7 @@ import {
   KEY_TO_VALUE_ELEMENT,
   SLATE_TO_PORTABLE_TEXT_RANGE,
 } from '../../utils/weakMaps'
-import {type PortableTextEditor} from '../PortableTextEditor'
+import type {PortableTextEditor} from '../PortableTextEditor'
 
 const debug = debugWithName('API:editable')
 

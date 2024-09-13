@@ -1,4 +1,4 @@
-import {type PortableTextSlateEditor} from '../../types/editor'
+import type {PortableTextSlateEditor} from '../../types/editor'
 import {isChangingRemotely} from '../../utils/withChanges'
 import {isRedoing, isUndoing} from '../../utils/withUndoRedo'
 

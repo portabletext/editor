@@ -1,7 +1,7 @@
 import {Editor, Path, Text as SlateText, Transforms, type Node} from 'slate'
-import {
-  type PortableTextMemberSchemaTypes,
-  type PortableTextSlateEditor,
+import type {
+  PortableTextMemberSchemaTypes,
+  PortableTextSlateEditor,
 } from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 

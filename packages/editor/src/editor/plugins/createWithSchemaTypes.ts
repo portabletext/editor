@@ -7,9 +7,9 @@ import {
   type PortableTextTextBlock,
 } from '@sanity/types'
 import {Transforms, type Element} from 'slate'
-import {
-  type PortableTextMemberSchemaTypes,
-  type PortableTextSlateEditor,
+import type {
+  PortableTextMemberSchemaTypes,
+  PortableTextSlateEditor,
 } from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 
@@ -34,7 +34,7 @@ export function createWithSchemaTypes({
       )
     }
     editor.isTextSpan = (value: unknown): value is PortableTextSpan => {
-      return isPortableTextSpan(value) && value._type == schemaTypes.span.name
+      return isPortableTextSpan(value) && value._type === schemaTypes.span.name
     }
     editor.isListBlock = (value: unknown): value is PortableTextListBlock => {
       return (

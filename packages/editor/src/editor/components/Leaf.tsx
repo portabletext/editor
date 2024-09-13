@@ -1,7 +1,7 @@
-import {
-  type Path,
-  type PortableTextObject,
-  type PortableTextTextBlock,
+import type {
+  Path,
+  PortableTextObject,
+  PortableTextTextBlock,
 } from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {
@@ -15,14 +15,14 @@ import {
 } from 'react'
 import {Text} from 'slate'
 import {useSelected, type RenderLeafProps} from 'slate-react'
-import {
-  type BlockAnnotationRenderProps,
-  type BlockChildRenderProps,
-  type BlockDecoratorRenderProps,
-  type PortableTextMemberSchemaTypes,
-  type RenderAnnotationFunction,
-  type RenderChildFunction,
-  type RenderDecoratorFunction,
+import type {
+  BlockAnnotationRenderProps,
+  BlockChildRenderProps,
+  BlockDecoratorRenderProps,
+  PortableTextMemberSchemaTypes,
+  RenderAnnotationFunction,
+  RenderChildFunction,
+  RenderDecoratorFunction,
 } from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {usePortableTextEditor} from '../hooks/usePortableTextEditor'

@@ -1,7 +1,7 @@
 import {Editor, Element, Node, Transforms} from 'slate'
-import {
-  type PortableTextMemberSchemaTypes,
-  type PortableTextSlateEditor,
+import type {
+  PortableTextMemberSchemaTypes,
+  PortableTextSlateEditor,
 } from '../../types/editor'
 import {isChangingRemotely} from '../../utils/withChanges'
 import {isRedoing, isUndoing} from '../../utils/withUndoRedo'

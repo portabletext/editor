@@ -1,5 +1,5 @@
 import {insert, setIfMissing, unset, type Patch} from '@portabletext/patches'
-import {type Subject} from 'rxjs'
+import type {Subject} from 'rxjs'
 import {
   Editor,
   type Descendant,
@@ -13,11 +13,11 @@ import {
   type SetNodeOperation,
   type SplitNodeOperation,
 } from 'slate'
-import {
-  type EditorChange,
-  type PatchObservable,
-  type PortableTextMemberSchemaTypes,
-  type PortableTextSlateEditor,
+import type {
+  EditorChange,
+  PatchObservable,
+  PortableTextMemberSchemaTypes,
+  PortableTextSlateEditor,
 } from '../../types/editor'
 import {createApplyPatch} from '../../utils/applyPatch'
 import {debugWithName} from '../../utils/debug'
@@ -268,7 +268,6 @@ export function createWithPatches({
             ),
           ]
           break
-        case 'set_selection':
         default:
         // Do nothing
       }

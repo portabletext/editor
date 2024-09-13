@@ -1,12 +1,12 @@
 import {htmlToBlocks, normalizeBlock} from '@sanity/block-tools'
-import {type PortableTextBlock, type PortableTextChild} from '@sanity/types'
+import type {PortableTextBlock, PortableTextChild} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {Editor, Range, Transforms, type Descendant, type Node} from 'slate'
 import {ReactEditor} from 'slate-react'
-import {
-  type EditorChanges,
-  type PortableTextMemberSchemaTypes,
-  type PortableTextSlateEditor,
+import type {
+  EditorChanges,
+  PortableTextMemberSchemaTypes,
+  PortableTextSlateEditor,
 } from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {validateValue} from '../../utils/validateValue'
@@ -188,7 +188,7 @@ export function createWithInsertData(
         debug('Inserting data', data)
         let portableText: PortableTextBlock[]
         let fragment: Node[]
-        let insertedType
+        let insertedType: string | undefined
 
         if (html) {
           portableText = htmlToBlocks(html, schemaTypes.portableText, {

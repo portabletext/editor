@@ -7,11 +7,7 @@ import {
   type InsertPosition,
   type Patch,
 } from '@portabletext/patches'
-import {
-  type Path,
-  type PortableTextSpan,
-  type PortableTextTextBlock,
-} from '@sanity/types'
+import type {Path, PortableTextSpan, PortableTextTextBlock} from '@sanity/types'
 import {get, isUndefined, omitBy} from 'lodash'
 import {
   Text,
@@ -25,10 +21,10 @@ import {
   type SetNodeOperation,
   type SplitNodeOperation,
 } from 'slate'
-import {type PatchFunctions} from '../editor/plugins/createWithPatches'
-import {
-  type PortableTextMemberSchemaTypes,
-  type PortableTextSlateEditor,
+import type {PatchFunctions} from '../editor/plugins/createWithPatches'
+import type {
+  PortableTextMemberSchemaTypes,
+  PortableTextSlateEditor,
 } from '../types/editor'
 import {debugWithName} from './debug'
 import {fromSlateValue} from './values'

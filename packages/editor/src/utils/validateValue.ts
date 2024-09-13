@@ -6,9 +6,9 @@ import {
   type PortableTextTextBlock,
 } from '@sanity/types'
 import {flatten, isPlainObject, uniq} from 'lodash'
-import {
-  type InvalidValueResolution,
-  type PortableTextMemberSchemaTypes,
+import type {
+  InvalidValueResolution,
+  PortableTextMemberSchemaTypes,
 } from '../types/editor'
 import {EMPTY_MARKDEFS} from './values'
 

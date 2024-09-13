@@ -1,39 +1,39 @@
-import {type Patch} from '@portabletext/patches'
-import {
-  type ArraySchemaType,
-  type BlockDecoratorDefinition,
-  type BlockListDefinition,
-  type BlockSchemaType,
-  type BlockStyleDefinition,
-  type ObjectSchemaType,
-  type Path,
-  type PortableTextBlock,
-  type PortableTextChild,
-  type PortableTextListBlock,
-  type PortableTextObject,
-  type PortableTextSpan,
-  type PortableTextTextBlock,
-  type SpanSchemaType,
-  type TypedObject,
+import type {Patch} from '@portabletext/patches'
+import type {
+  ArraySchemaType,
+  BlockDecoratorDefinition,
+  BlockListDefinition,
+  BlockSchemaType,
+  BlockStyleDefinition,
+  ObjectSchemaType,
+  Path,
+  PortableTextBlock,
+  PortableTextChild,
+  PortableTextListBlock,
+  PortableTextObject,
+  PortableTextSpan,
+  PortableTextTextBlock,
+  SpanSchemaType,
+  TypedObject,
 } from '@sanity/types'
-import {
-  type ClipboardEvent,
-  type FocusEvent,
-  type KeyboardEvent,
-  type PropsWithChildren,
-  type ReactElement,
-  type RefObject,
+import type {
+  ClipboardEvent,
+  FocusEvent,
+  KeyboardEvent,
+  PropsWithChildren,
+  ReactElement,
+  RefObject,
 } from 'react'
-import {type Observable, type Subject} from 'rxjs'
-import {
-  type Descendant,
-  type Node as SlateNode,
-  type Operation as SlateOperation,
+import type {Observable, Subject} from 'rxjs'
+import type {
+  Descendant,
+  Node as SlateNode,
+  Operation as SlateOperation,
 } from 'slate'
-import {type ReactEditor} from 'slate-react'
-import {type DOMNode} from 'slate-react/dist/utils/dom'
-import {type PortableTextEditableProps} from '../editor/Editable'
-import {type PortableTextEditor} from '../editor/PortableTextEditor'
+import type {ReactEditor} from 'slate-react'
+import type {DOMNode} from 'slate-react/dist/utils/dom'
+import type {PortableTextEditableProps} from '../editor/Editable'
+import type {PortableTextEditor} from '../editor/PortableTextEditor'
 
 /** @beta */
 export interface EditableAPIDeleteOptions {

@@ -1,11 +1,11 @@
 import {Editor, Range, Text, Transforms} from 'slate'
-import {
-  type PortableTextMemberSchemaTypes,
-  type PortableTextSlateEditor,
+import type {
+  PortableTextMemberSchemaTypes,
+  PortableTextSlateEditor,
 } from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {toSlateValue} from '../../utils/values'
-import {type PortableTextEditor} from '../PortableTextEditor'
+import type {PortableTextEditor} from '../PortableTextEditor'
 
 const debug = debugWithName('plugin:withUtils')
 
@@ -59,8 +59,8 @@ export function createWithUtils({
         if (
           !(
             newStartOffset === newEndOffset ||
-            isNaN(newStartOffset) ||
-            isNaN(newEndOffset)
+            Number.isNaN(newStartOffset) ||
+            Number.isNaN(newEndOffset)
           )
         ) {
           debug('pteExpandToWord: Expanding to focused word')

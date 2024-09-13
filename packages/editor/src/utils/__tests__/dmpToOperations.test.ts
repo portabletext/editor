@@ -1,5 +1,5 @@
 import {describe, expect, test} from '@jest/globals'
-import {type DiffMatchPatch} from '@portabletext/patches'
+import type {DiffMatchPatch} from '@portabletext/patches'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {
   isPortableTextSpan,
@@ -9,8 +9,8 @@ import {
   type PortableTextSpan,
   type PortableTextTextBlock,
 } from '@sanity/types'
-import {type Descendant, type Operation} from 'slate'
-import {type PortableTextSlateEditor} from '../../types/editor'
+import type {Descendant, Operation} from 'slate'
+import type {PortableTextSlateEditor} from '../../types/editor'
 import {diffMatchPatch} from '../applyPatch'
 
 describe('operationToPatches: diffMatchPatch', () => {

@@ -1,4 +1,4 @@
-import {type Circus} from '@jest/types'
+import type {Circus} from '@jest/types'
 import {
   chromium,
   type Browser,
@@ -6,11 +6,11 @@ import {
   type ElementHandle,
   type Page,
 } from '@playwright/test'
-import {type PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock} from '@sanity/types'
 import NodeEnvironment from 'jest-environment-node'
 import {isEqual} from 'lodash'
 import ipc from 'node-ipc'
-import {type EditorSelection} from '../../src'
+import type {EditorSelection} from '../../src'
 import {normalizeSelection} from '../../src/utils/selection'
 
 ipc.config.id = 'collaborative-jest-environment-ipc-client'
@@ -56,7 +56,7 @@ export default class CollaborationEnvironment extends NodeEnvironment {
     if (event.name === 'run_start') {
       await this._setupInstance()
     }
-    if (event.name == 'test_start') {
+    if (event.name === 'test_start') {
       await this._createNewTestPage()
       if (event.test?.name) {
         this._scenario = event.test.name

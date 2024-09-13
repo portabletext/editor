@@ -1,10 +1,10 @@
-import {type Subject} from 'rxjs'
-import {type BaseRange} from 'slate'
-import {
-  type EditorChange,
-  type EditorSelection,
-  type PortableTextMemberSchemaTypes,
-  type PortableTextSlateEditor,
+import type {Subject} from 'rxjs'
+import type {BaseRange} from 'slate'
+import type {
+  EditorChange,
+  EditorSelection,
+  PortableTextMemberSchemaTypes,
+  PortableTextSlateEditor,
 } from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {

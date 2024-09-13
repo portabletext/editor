@@ -5,9 +5,9 @@
  */
 
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
-import {type PortableTextObject} from '@sanity/types'
+import type {PortableTextObject} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
-import {type Subject} from 'rxjs'
+import type {Subject} from 'rxjs'
 import {
   Editor,
   Element,
@@ -18,10 +18,10 @@ import {
   Transforms,
   type Descendant,
 } from 'slate'
-import {
-  type EditorChange,
-  type PortableTextMemberSchemaTypes,
-  type PortableTextSlateEditor,
+import type {
+  EditorChange,
+  PortableTextMemberSchemaTypes,
+  PortableTextSlateEditor,
 } from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {toPortableTextRange} from '../../utils/ranges'

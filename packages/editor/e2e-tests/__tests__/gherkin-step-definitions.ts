@@ -1,6 +1,6 @@
 import {ParameterType} from '@cucumber/cucumber-expressions'
 import {expect} from '@jest/globals'
-import {type Editor} from '../setup/globals.jest'
+import type {Editor} from '../setup/globals.jest'
 import {Given, Then, When} from './gherkin-driver'
 import {
   getEditorBlockKey,
@@ -35,13 +35,13 @@ export const stepDefinitions = [
    * Background steps
    */
   Given<Context>('a global keymap', async (context) => {
-    context['keyMap'] = new Map()
+    context.keyMap = new Map()
   }),
 
   Given<Context>('two editors', async (context) => {
     const [editorA, editorB] = await getEditors()
-    context['editorA'] = editorA
-    context['editorB'] = editorB
+    context.editorA = editorA
+    context.editorB = editorB
   }),
 
   /**

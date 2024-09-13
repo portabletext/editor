@@ -1,24 +1,24 @@
-import {
-  type ArrayDefinition,
-  type ArraySchemaType,
-  type BlockSchemaType,
-  type ObjectSchemaType,
-  type Path,
-  type PortableTextBlock,
-  type PortableTextChild,
-  type PortableTextObject,
-  type SpanSchemaType,
+import type {
+  ArrayDefinition,
+  ArraySchemaType,
+  BlockSchemaType,
+  ObjectSchemaType,
+  Path,
+  PortableTextBlock,
+  PortableTextChild,
+  PortableTextObject,
+  SpanSchemaType,
 } from '@sanity/types'
 import {Component, type MutableRefObject, type PropsWithChildren} from 'react'
 import {Subject} from 'rxjs'
-import {
-  type EditableAPI,
-  type EditableAPIDeleteOptions,
-  type EditorChange,
-  type EditorChanges,
-  type EditorSelection,
-  type PatchObservable,
-  type PortableTextMemberSchemaTypes,
+import type {
+  EditableAPI,
+  EditableAPIDeleteOptions,
+  EditorChange,
+  EditorChanges,
+  EditorSelection,
+  PatchObservable,
+  PortableTextMemberSchemaTypes,
 } from '../types/editor'
 import {debugWithName} from '../utils/debug'
 import {getPortableTextMemberSchemaTypes} from '../utils/getPortableTextMemberSchemaTypes'
@@ -161,7 +161,7 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
     const maxBlocks =
       typeof this.props.maxBlocks === 'undefined'
         ? undefined
-        : parseInt(this.props.maxBlocks.toString(), 10) || undefined
+        : Number.parseInt(this.props.maxBlocks.toString(), 10) || undefined
 
     const readOnly = Boolean(this.props.readOnly)
     const keyGenerator = this.props.keyGenerator || defaultKeyGenerator
