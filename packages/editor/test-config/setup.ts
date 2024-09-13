@@ -2,7 +2,6 @@ import path from 'node:path'
 import {jest} from '@jest/globals'
 import dotenv from 'dotenv'
 
-// eslint-disable-next-line no-process-env
 process.env.FORCE_COLOR = '0'
 
 dotenv.config({path: path.resolve(__dirname, '../.env')})

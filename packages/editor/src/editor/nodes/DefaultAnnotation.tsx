@@ -7,7 +7,6 @@ type Props = {
 }
 export function DefaultAnnotation(props: Props) {
   const handleClick = useCallback(
-    // eslint-disable-next-line no-alert
     () => alert(JSON.stringify(props.annotation)),
     [props.annotation],
   )

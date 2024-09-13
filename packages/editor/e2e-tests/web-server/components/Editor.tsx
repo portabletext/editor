@@ -1,4 +1,3 @@
-/* eslint-disable i18next/no-literal-string */
 import {type PortableTextBlock} from '@sanity/types'
 import {Box, Card, Code, Text} from '@sanity/ui'
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
@@ -285,7 +284,6 @@ function BlockButtons() {
               jsonType: 'object',
               name: 'image',
               fields: [],
-              // eslint-disable-next-line camelcase
               __experimental_search: [],
             },
             {url: 'http://example.com/image.png'},
@@ -313,7 +311,6 @@ function InlineObjectButtons() {
               jsonType: 'object',
               name: 'stock-ticker',
               fields: [],
-              // eslint-disable-next-line camelcase
               __experimental_search: [],
             },
             {symbol: 'NVDA'},
@@ -421,7 +418,6 @@ function addComment(editor: PortableTextEditor) {
       jsonType: 'object',
       name: 'comment',
       fields: [],
-      // eslint-disable-next-line camelcase
       __experimental_search: [],
     },
     {text: 'Consider rewriting this'},
@@ -433,7 +429,6 @@ function removeComment(editor: PortableTextEditor) {
     jsonType: 'object',
     name: 'comment',
     fields: [],
-    // eslint-disable-next-line camelcase
     __experimental_search: [],
   })
 }
@@ -455,7 +450,6 @@ function addLink(editor: PortableTextEditor) {
       jsonType: 'object',
       name: 'link',
       fields: [],
-      // eslint-disable-next-line camelcase
       __experimental_search: [],
     },
     {href: 'https://example.com'},
@@ -467,7 +461,6 @@ function removeLink(editor: PortableTextEditor) {
     jsonType: 'object',
     name: 'link',
     fields: [],
-    // eslint-disable-next-line camelcase
     __experimental_search: [],
   })
 }

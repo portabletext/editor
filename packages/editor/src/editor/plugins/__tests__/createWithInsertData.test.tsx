@@ -60,14 +60,12 @@ describe('plugin: createWithInsertData _regenerateKeys', () => {
             name: 'color',
             jsonType: 'object',
             fields: [],
-            // eslint-disable-next-line camelcase
             __experimental_search: [],
           },
           {
             name: 'link',
             jsonType: 'object',
             fields: [],
-            // eslint-disable-next-line camelcase
             __experimental_search: [],
           },
         ],
@@ -155,7 +153,6 @@ describe('plugin: createWithInsertData _regenerateKeys', () => {
             name: 'color',
             jsonType: 'object',
             fields: [],
-            // eslint-disable-next-line camelcase
             __experimental_search: [],
           },
         ],

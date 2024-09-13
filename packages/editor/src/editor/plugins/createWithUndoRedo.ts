@@ -248,7 +248,6 @@ export function createWithUndoRedo(
             Editor.withoutNormalizing(editor, () => {
               withRedoing(editor, () => {
                 withoutSaving(editor, () => {
-                  // eslint-disable-next-line max-nested-callbacks
                   transformedOperations.forEach((op) => {
                     editor.apply(op)
                   })

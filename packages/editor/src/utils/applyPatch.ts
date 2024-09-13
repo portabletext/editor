@@ -1,4 +1,3 @@
-/* eslint-disable max-statements */
 import {
   applyAll,
   type DiffMatchPatch,
@@ -273,7 +272,6 @@ function setPatch(editor: PortableTextSlateEditor, patch: SetPatch) {
   } else if (Element.isElement(block) && patch.path.length === 1 && blockPath) {
     debug('Setting block property')
     const {children, ...nextRest} = value as unknown as PortableTextBlock
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-vars
     const {children: prevChildren, ...prevRest} = block || {children: undefined}
     // Set any block properties
     editor.apply({

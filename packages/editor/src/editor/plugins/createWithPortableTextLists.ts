@@ -38,7 +38,6 @@ export function createWithPortableTextLists(
       ]
       selectedBlocks.forEach(([node, path]) => {
         if (editor.isListBlock(node)) {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const {listItem, level, ...rest} = node
           const newNode = {
             ...rest,

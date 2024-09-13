@@ -38,7 +38,6 @@ export async function getEditableElement(
    *
    * https://github.com/jsdom/jsdom/issues/1670
    */
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   element.isContentEditable = true
   return element

@@ -1,4 +1,3 @@
-/* eslint-disable i18next/no-literal-string */
 import {type PortableTextBlock} from '@sanity/types'
 import {Box, Card, Code, Heading} from '@sanity/ui'
 

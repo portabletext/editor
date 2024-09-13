@@ -1,5 +1,4 @@
 import {describe, expect, it, jest} from '@jest/globals'
-/* eslint-disable no-irregular-whitespace */
 import {type PortableTextBlock} from '@sanity/types'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'

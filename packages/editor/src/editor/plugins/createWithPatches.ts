@@ -1,4 +1,3 @@
-/* eslint-disable max-nested-callbacks */
 import {insert, setIfMissing, unset, type Patch} from '@portabletext/patches'
 import {type Subject} from 'rxjs'
 import {

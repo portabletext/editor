@@ -37,11 +37,9 @@
   ],
   "scripts": {
     "build": "pkg-utils build --strict --check --clean",
-    "check:lint": "eslint .",
     "check:types": "tsc --noEmit --pretty",
     "clean": "del .turbo && del dist && del node_modules",
-    "dev": "pkg-utils watch",
-    "lint:fix": "eslint . --fix"
+    "dev": "pkg-utils watch"
   },
   "dependencies": {
     "@sanity/diff-match-patch": "^3.1.1",
@@ -50,10 +48,6 @@
   "devDependencies": {
     "@sanity/pkg-utils": "^6.10.10",
     "@types/lodash": "^4.17.7",
-    "@typescript-eslint/eslint-plugin": "^8.2.0",
-    "@typescript-eslint/parser": "^8.2.0",
-    "eslint": "^8.57.0",
-    "eslint-plugin-import": "^2.29.1",
     "typescript": "5.5.4"
   }
 }

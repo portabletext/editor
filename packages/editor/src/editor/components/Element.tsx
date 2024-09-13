@@ -1,5 +1,3 @@
-/* eslint-disable complexity */
-/* eslint-disable max-statements */
 import {
   type Path,
   type PortableTextChild,
