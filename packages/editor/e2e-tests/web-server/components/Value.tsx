@@ -1,4 +1,4 @@
-import {type PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock} from '@sanity/types'
 import {Box, Card, Code, Heading} from '@sanity/ui'
 
 type Props = {value: PortableTextBlock[] | undefined; revId: string}

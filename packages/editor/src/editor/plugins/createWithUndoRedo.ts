@@ -3,14 +3,14 @@
  * The undo/redo steps are rebased against incoming patches since the step occurred.
  */
 
-import {type Patch} from '@portabletext/patches'
+import type {Patch} from '@portabletext/patches'
 import {
   DIFF_DELETE,
   DIFF_EQUAL,
   DIFF_INSERT,
   parsePatch,
 } from '@sanity/diff-match-patch'
-import {type ObjectSchemaType, type PortableTextBlock} from '@sanity/types'
+import type {ObjectSchemaType, PortableTextBlock} from '@sanity/types'
 import {flatten, isEqual} from 'lodash'
 import {
   Editor,
@@ -20,10 +20,7 @@ import {
   type Descendant,
   type SelectionOperation,
 } from 'slate'
-import {
-  type PatchObservable,
-  type PortableTextSlateEditor,
-} from '../../types/editor'
+import type {PatchObservable, PortableTextSlateEditor} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {fromSlateValue} from '../../utils/values'
 import {

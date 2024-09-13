@@ -1,4 +1,4 @@
-import {type Patch} from '@sanity/diff-match-patch'
+import type {Patch} from '@sanity/diff-match-patch'
 
 /**
  * Takes a `patches` array as produced by diff-match-patch and adjusts the
@@ -15,7 +15,7 @@ export function adjustIndiciesToUcs2(patches: Patch[], base: string): Patch[] {
   let idx = 0 // index into the input.
 
   function advanceTo(target: number) {
-    for (; byteOffset < target; ) {
+    while (byteOffset < target) {
       const codePoint = base.codePointAt(idx)
       if (typeof codePoint === 'undefined') {
         // Reached the end of the base string - the indicies won't be correct,

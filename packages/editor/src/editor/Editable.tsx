@@ -1,4 +1,4 @@
-import {type PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock} from '@sanity/types'
 import {isEqual, noop} from 'lodash'
 import {
   forwardRef,
@@ -35,23 +35,23 @@ import {
   type RenderElementProps,
   type RenderLeafProps,
 } from 'slate-react'
-import {
-  type EditorChange,
-  type EditorSelection,
-  type OnCopyFn,
-  type OnPasteFn,
-  type RangeDecoration,
-  type RenderAnnotationFunction,
-  type RenderBlockFunction,
-  type RenderChildFunction,
-  type RenderDecoratorFunction,
-  type RenderListItemFunction,
-  type RenderPlaceholderFunction,
-  type RenderStyleFunction,
-  type ScrollSelectionIntoViewFunction,
+import type {
+  EditorChange,
+  EditorSelection,
+  OnCopyFn,
+  OnPasteFn,
+  RangeDecoration,
+  RenderAnnotationFunction,
+  RenderBlockFunction,
+  RenderChildFunction,
+  RenderDecoratorFunction,
+  RenderListItemFunction,
+  RenderPlaceholderFunction,
+  RenderStyleFunction,
+  ScrollSelectionIntoViewFunction,
 } from '../types/editor'
-import {type HotkeyOptions} from '../types/options'
-import {type SlateTextBlock, type VoidElement} from '../types/slate'
+import type {HotkeyOptions} from '../types/options'
+import type {SlateTextBlock, VoidElement} from '../types/slate'
 import {debugWithName} from '../utils/debug'
 import {
   moveRangeByOperation,

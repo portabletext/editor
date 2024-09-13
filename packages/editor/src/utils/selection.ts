@@ -1,6 +1,6 @@
-import {type Path, type PortableTextBlock} from '@sanity/types'
+import type {Path, PortableTextBlock} from '@sanity/types'
 import {isEqual} from 'lodash'
-import {type EditorSelection, type EditorSelectionPoint} from '../types/editor'
+import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 
 export function normalizePoint(
   point: EditorSelectionPoint,

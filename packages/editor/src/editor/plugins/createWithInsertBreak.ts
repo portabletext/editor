@@ -1,10 +1,10 @@
 import {isEqual} from 'lodash'
 import {Editor, Node, Path, Range, Transforms} from 'slate'
-import {
-  type PortableTextMemberSchemaTypes,
-  type PortableTextSlateEditor,
+import type {
+  PortableTextMemberSchemaTypes,
+  PortableTextSlateEditor,
 } from '../../types/editor'
-import {type SlateTextBlock, type VoidElement} from '../../types/slate'
+import type {SlateTextBlock, VoidElement} from '../../types/slate'
 
 export function createWithInsertBreak(
   types: PortableTextMemberSchemaTypes,

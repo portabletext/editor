@@ -1,12 +1,12 @@
-import {
-  type ArraySchemaType,
-  type BlockSchemaType,
-  type ObjectSchemaType,
-  type PortableTextBlock,
-  type SchemaType,
-  type SpanSchemaType,
+import type {
+  ArraySchemaType,
+  BlockSchemaType,
+  ObjectSchemaType,
+  PortableTextBlock,
+  SchemaType,
+  SpanSchemaType,
 } from '@sanity/types'
-import {type PortableTextMemberSchemaTypes} from '../types/editor'
+import type {PortableTextMemberSchemaTypes} from '../types/editor'
 
 export function getPortableTextMemberSchemaTypes(
   portableTextType: ArraySchemaType<PortableTextBlock>,

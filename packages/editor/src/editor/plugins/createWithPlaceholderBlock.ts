@@ -1,6 +1,6 @@
 import {Editor, Path} from 'slate'
-import {type PortableTextSlateEditor} from '../../types/editor'
-import {type SlateTextBlock, type VoidElement} from '../../types/slate'
+import type {PortableTextSlateEditor} from '../../types/editor'
+import type {SlateTextBlock, VoidElement} from '../../types/slate'
 import {debugWithName} from '../../utils/debug'
 import {isChangingRemotely} from '../../utils/withChanges'
 import {isRedoing, isUndoing} from '../../utils/withUndoRedo'

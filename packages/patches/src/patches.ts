@@ -1,13 +1,13 @@
 import {makePatches, stringifyPatches} from '@sanity/diff-match-patch'
-import {
-  type DiffMatchPatch,
-  type InsertPatch,
-  type InsertPosition,
-  type Path,
-  type PathSegment,
-  type SetIfMissingPatch,
-  type SetPatch,
-  type UnsetPatch,
+import type {
+  DiffMatchPatch,
+  InsertPatch,
+  InsertPosition,
+  Path,
+  PathSegment,
+  SetIfMissingPatch,
+  SetPatch,
+  UnsetPatch,
 } from './types'
 
 /** @public */

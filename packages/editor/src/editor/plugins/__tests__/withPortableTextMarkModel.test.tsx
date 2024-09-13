@@ -6,7 +6,7 @@ import {
   schemaType,
   schemaTypeWithColorAndLink,
 } from '../../__tests__/PortableTextEditorTester'
-import {type EditorSelection} from '../../../types/editor'
+import type {EditorSelection} from '../../../types/editor'
 import {PortableTextEditor} from '../../PortableTextEditor'
 
 describe('plugin:withPortableTextMarksModel', () => {

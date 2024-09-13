@@ -7,11 +7,11 @@ import {
   type Point,
   type Path as SlatePath,
 } from 'slate'
-import {
-  type EditorSelectionPoint,
-  type PortableTextMemberSchemaTypes,
+import type {
+  EditorSelectionPoint,
+  PortableTextMemberSchemaTypes,
 } from '../types/editor'
-import {type ObjectWithKeyAndType} from './ranges'
+import type {ObjectWithKeyAndType} from './ranges'
 
 export function createKeyedPath(
   point: Point,
@@ -30,7 +30,7 @@ export function createKeyedPath(
   if (block._type !== types.block.name) {
     return keyedBlockPath as Path
   }
-  let keyedChildPath
+  let keyedChildPath: Path | undefined
   const childPath = point.path.slice(0, 2)
   const child = Array.isArray(block.children) && block.children[childPath[1]]
   if (child) {

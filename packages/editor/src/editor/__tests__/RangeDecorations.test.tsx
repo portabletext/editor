@@ -1,9 +1,9 @@
 import {describe, expect, it, jest} from '@jest/globals'
-import {type PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock} from '@sanity/types'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type ReactNode, type RefObject} from 'react'
-import {type RangeDecoration} from '../..'
-import {type PortableTextEditor} from '../PortableTextEditor'
+import type {RangeDecoration} from '../..'
+import type {PortableTextEditor} from '../PortableTextEditor'
 import {PortableTextEditorTester, schemaType} from './PortableTextEditorTester'
 
 const helloBlock: PortableTextBlock = {
@@ -21,7 +21,7 @@ const RangeDecorationTestComponent = ({children}: {children?: ReactNode}) => {
 }
 
 describe('RangeDecorations', () => {
-  it.only('only render range decorations as necessary', async () => {
+  it('only render range decorations as necessary', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
     const onChange = jest.fn()
     const value = [helloBlock]

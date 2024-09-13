@@ -1,4 +1,4 @@
-import {type Editor} from 'slate'
+import type {Editor} from 'slate'
 import {
   IS_PROCESSING_LOCAL_CHANGES,
   IS_PROCESSING_REMOTE_CHANGES,

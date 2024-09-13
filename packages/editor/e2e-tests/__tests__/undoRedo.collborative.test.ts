@@ -2,7 +2,7 @@
 import '../setup/globals.jest'
 import {describe, expect, it} from '@jest/globals'
 import {toPlainText} from '@portabletext/toolkit'
-import {type PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock} from '@sanity/types'
 
 const initialValue: PortableTextBlock[] = [
   {

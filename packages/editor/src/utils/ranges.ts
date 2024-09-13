@@ -1,8 +1,8 @@
 import {Point, Range, type BaseRange, type Editor, type Operation} from 'slate'
-import {
-  type EditorSelection,
-  type EditorSelectionPoint,
-  type PortableTextMemberSchemaTypes,
+import type {
+  EditorSelection,
+  EditorSelectionPoint,
+  PortableTextMemberSchemaTypes,
 } from '../types/editor'
 import {createArrayedPath, createKeyedPath} from './paths'
 

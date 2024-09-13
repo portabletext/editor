@@ -15,12 +15,12 @@ import {
   makeDiff,
   parsePatch,
 } from '@sanity/diff-match-patch'
-import {
-  type KeyedSegment,
-  type Path,
-  type PathSegment,
-  type PortableTextBlock,
-  type PortableTextChild,
+import type {
+  KeyedSegment,
+  Path,
+  PathSegment,
+  PortableTextBlock,
+  PortableTextChild,
 } from '@sanity/types'
 import {
   Element,
@@ -30,9 +30,9 @@ import {
   type Node,
   type Path as SlatePath,
 } from 'slate'
-import {
-  type PortableTextMemberSchemaTypes,
-  type PortableTextSlateEditor,
+import type {
+  PortableTextMemberSchemaTypes,
+  PortableTextSlateEditor,
 } from '../types/editor'
 import {debugWithName} from './debug'
 import {toSlateValue} from './values'
@@ -49,7 +49,7 @@ export function createApplyPatch(
 ): (editor: PortableTextSlateEditor, patch: Patch) => boolean {
   let previousPatch: Patch | undefined
 
-  return function (editor: PortableTextSlateEditor, patch: Patch): boolean {
+  return (editor: PortableTextSlateEditor, patch: Patch): boolean => {
     let changed = false
 
     // Save some CPU cycles by not stringifying unless enabled
