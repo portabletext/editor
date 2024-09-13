@@ -30,6 +30,7 @@
     ]
   },
   "devDependencies": {
+    "@biomejs/biome": "1.9.0",
     "@ianvs/prettier-plugin-sort-imports": "^4.3.1",
     "@playwright/test": "1.46.1",
     "@sanity/prettier-config": "^1.0.2",

@@ -37,9 +37,11 @@
   ],
   "scripts": {
     "build": "pkg-utils build --strict --check --clean",
+    "check:lint": "biome lint .",
     "check:types": "tsc --noEmit --pretty",
     "clean": "del .turbo && del dist && del node_modules",
-    "dev": "pkg-utils watch"
+    "dev": "pkg-utils watch",
+    "lint:fix": "biome lint --write ."
   },
   "dependencies": {
     "@sanity/diff-match-patch": "^3.1.1",
