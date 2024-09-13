@@ -470,7 +470,7 @@ export const PortableTextEditable = forwardRef(function PortableTextEditable(
             }
           })
           .catch((error) => {
-            console.error(error) // eslint-disable-line no-console
+            console.error(error)
             return error
           })
           .finally(() => {

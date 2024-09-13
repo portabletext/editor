@@ -1,5 +1,3 @@
-/* eslint-disable max-statements */
-/* eslint-disable complexity */
 import {isPortableTextSpan, isPortableTextTextBlock} from '@sanity/types'
 import {isHotkey} from 'is-hotkey-esm'
 import {type KeyboardEvent} from 'react'
@@ -42,7 +40,6 @@ export function createWithHotkeys(
       // Wire up custom marks hotkeys
       Object.keys(activeHotkeys).forEach((cat) => {
         if (cat === 'marks') {
-          // eslint-disable-next-line guard-for-in
           for (const hotkey in activeHotkeys[cat]) {
             if (reservedHotkeys.includes(hotkey)) {
               throw new Error(`The hotkey ${hotkey} is reserved!`)
@@ -59,7 +56,6 @@ export function createWithHotkeys(
           }
         }
         if (cat === 'custom') {
-          // eslint-disable-next-line guard-for-in
           for (const hotkey in activeHotkeys[cat]) {
             if (reservedHotkeys.includes(hotkey)) {
               throw new Error(`The hotkey ${hotkey} is reserved!`)

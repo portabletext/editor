@@ -22,7 +22,6 @@ const WEB_SERVER_ROOT_URL = 'http://localhost:3000'
 
 // Forward debug info from the PTE in the browsers
 // const DEBUG = 'sanity-pte:*'
-// eslint-disable-next-line no-process-env
 const DEBUG = process.env.DEBUG || false
 
 // Wait this long for selections to appear in the browser
@@ -107,13 +106,11 @@ export default class CollaborationEnvironment extends NodeEnvironment {
         window.localStorage.debug = filter
       }, DEBUG)
       this._pageA.on('console', (message) =>
-        // eslint-disable-next-line no-console
         console.log(
           `A:${message.type().slice(0, 3).toUpperCase()} ${message.text()}`,
         ),
       )
       this._pageB.on('console', (message) =>
-        // eslint-disable-next-line no-console
         console.log(
           `B:${message.type().slice(0, 3).toUpperCase()} ${message.text()}`,
         ),

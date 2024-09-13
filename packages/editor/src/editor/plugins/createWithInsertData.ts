@@ -335,8 +335,7 @@ function _regenerateKeys(
                 ...child,
                 marks:
                   child.marks && child.marks.includes(oldKey)
-                    ? // eslint-disable-next-line max-nested-callbacks
-                      [...child.marks]
+                    ? [...child.marks]
                         .filter((mark) => mark !== oldKey)
                         .concat(newKey)
                     : child.marks,

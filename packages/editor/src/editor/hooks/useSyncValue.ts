@@ -1,4 +1,3 @@
-/* eslint-disable max-nested-callbacks */
 import {type PortableTextBlock} from '@sanity/types'
 import {debounce, isEqual} from 'lodash'
 import {useCallback, useMemo, useRef} from 'react'

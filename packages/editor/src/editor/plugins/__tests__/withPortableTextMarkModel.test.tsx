@@ -1,5 +1,4 @@
 import {describe, expect, it, jest} from '@jest/globals'
-/* eslint-disable max-nested-callbacks */
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {
@@ -739,7 +738,6 @@ Array [
             },
           })
 
-          // // eslint-disable-next-line max-nested-callbacks
           const linkType = editorRef.current.schemaTypes.annotations.find(
             (a) => a.name === 'link',
           )

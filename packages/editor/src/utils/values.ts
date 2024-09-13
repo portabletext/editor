@@ -123,7 +123,6 @@ export function fromSlateValue(
         const {_type: _cType} = child
         if ('value' in child && _cType !== 'span') {
           hasInlines = true
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const {
             value: v,
             _key: k,

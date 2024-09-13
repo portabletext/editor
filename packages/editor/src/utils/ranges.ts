@@ -1,4 +1,3 @@
-/* eslint-disable complexity */
 import {Point, Range, type BaseRange, type Editor, type Operation} from 'slate'
 import {
   type EditorSelection,

@@ -4,7 +4,6 @@ import {setup as setupDevServer} from 'jest-dev-server'
 const testFolderPath = path.resolve(__dirname, '..')
 
 declare global {
-  // eslint-disable-next-line no-var
   var servers: any[] // For the globalSetup and globalTeardown script
 }
 

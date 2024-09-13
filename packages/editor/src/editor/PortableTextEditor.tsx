@@ -239,7 +239,6 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
     editor: PortableTextEditor,
     element: PortableTextBlock | PortableTextChild,
   ) => {
-    // eslint-disable-next-line react/no-find-dom-node
     return editor.editable?.findDOMNode(element)
   }
   static findByPath = (editor: PortableTextEditor, path: Path) => {
