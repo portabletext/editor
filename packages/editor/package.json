@@ -43,10 +43,12 @@
   ],
   "scripts": {
     "build": "pkg-utils build --strict --check --clean",
+    "check:lint": "biome lint .",
     "check:types": "tsc",
     "clean": "del .turbo && del lib && del node_modules",
     "dev": "pkg-utils watch",
     "dev:e2e-server": "cd ./e2e-tests/ && tsx serve",
+    "lint:fix": "biome lint --write .",
     "prepublishOnly": "turbo run build",
     "test": "jest",
     "test:e2e": "jest --config=e2e-tests/e2e.config.ts",
