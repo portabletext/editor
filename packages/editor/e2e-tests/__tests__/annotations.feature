@@ -5,24 +5,12 @@ Feature: Annotations
     Given two editors
     And a global keymap
 
-  # Mimics Notion's behaviour
-  # Warning: Possible wrong behaviour
-  # The caret should be after "bar"
   Scenario: Selection after adding an annotation
     Given the text "foo bar baz"
     When "bar" is selected
     And "link" "l1" is toggled
     Then "bar" has marks "l1"
     And "bar" is selected
-
-  # Mimics Google Docs' behaviour
-  @skip
-  Scenario: Selection after adding an annotation
-    Given the text "foo bar baz"
-    When "bar" is selected
-    And "link" "l1" is toggled
-    Then "bar" has marks "l1"
-    Then the caret is after "bar"
 
   Scenario: Inserting text after an annotation
     Given the text "foo"
