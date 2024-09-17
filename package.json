@@ -33,7 +33,7 @@
     "@biomejs/biome": "1.9.0",
     "@ianvs/prettier-plugin-sort-imports": "^4.3.1",
     "@playwright/test": "1.46.1",
-    "@sanity/prettier-config": "^1.0.2",
+    "@sanity/prettier-config": "^1.0.3",
     "del-cli": "^5.1.0",
     "husky": "^9.0.11",
     "lint-staged": "^15.2.7",
