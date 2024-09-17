@@ -102,7 +102,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "rxjs": "^7.8.1",
-    "styled-components": "^6.1.12",
+    "styled-components": "^6.1.13",
     "ts-node": "^10.9.2",
     "tsx": "^4.17.0",
     "typescript": "5.5.4",
@@ -115,7 +115,7 @@
     "@sanity/util": "^3.47.1",
     "react": "^16.9 || ^17 || ^18",
     "rxjs": "^7",
-    "styled-components": "^6.1"
+    "styled-components": "^6.1.13"
   },
   "engines": {
     "node": ">=18"
