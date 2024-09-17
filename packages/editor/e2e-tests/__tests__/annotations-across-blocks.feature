@@ -95,6 +95,7 @@ Feature: Annotations Across Blocks
 
   # Warning: Possible wrong behaviour
   # "foo" and "bar" should rejoin as one link
+  # Fixing this is possibly a breaking change
   Scenario: Splitting and merging an annotation across blocks
     Given the text "foobar"
     And a "link" "l1" around "foobar"
@@ -107,6 +108,7 @@ Feature: Annotations Across Blocks
 
   # Warning: Possible wrong behaviour
   # The " baz" link should have a unique key
+  # Fixing this is possibly a breaking change
   Scenario: Toggling part of an annotation off
     Given the text "foo bar baz"
     And a "link" "l1" around "foo bar baz"
