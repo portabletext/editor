@@ -114,7 +114,7 @@
     "@sanity/types": "^3.47.1",
     "@sanity/util": "^3.47.1",
     "react": "^16.9 || ^17 || ^18",
-    "rxjs": "^7",
+    "rxjs": "^7.8.1",
     "styled-components": "^6.1.13"
   },
   "engines": {
