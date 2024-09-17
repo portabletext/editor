@@ -24,6 +24,6 @@
     "tailwind-variants": "^0.2.1",
     "tailwindcss": "^3.4.7",
     "tailwindcss-react-aria-components": "^1.1.4",
-    "typescript": "5.5.4"
+    "typescript": "5.6.2"
   }
 }
