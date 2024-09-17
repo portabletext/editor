@@ -14,7 +14,15 @@
     {
       "matchFileNames": ["packages/editor/package.json"],
       "matchDepTypes": ["devDependencies"],
-      "matchPackageNames": ["@sanity/*", "react", "rxjs", "styled-components"],
+      "matchPackageNames": [
+        "@sanity/block-tools",
+        "@sanity/schema",
+        "@sanity/types",
+        "@sanity/util",
+        "react",
+        "rxjs",
+        "styled-components"
+      ],
       "rangeStrategy": "bump",
       "semanticCommitType": "fix"
     },
