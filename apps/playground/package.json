@@ -27,7 +27,7 @@
     "remeda": "^2.2.2",
     "rxjs": "^7.8.1",
     "shiki": "^1.9.1",
-    "styled-components": "^6.1.11",
+    "styled-components": "^6.1.13",
     "uuid": "^10.0.0",
     "xstate": "^5.14.0",
     "zod": "^3.23.8"
