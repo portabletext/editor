@@ -12,14 +12,11 @@
       "semanticCommitType": "fix"
     },
     {
+      "matchFileNames": ["packages/editor/package.json"],
       "matchDepTypes": ["devDependencies"],
       "matchPackageNames": ["@sanity/*", "react", "rxjs", "styled-components"],
       "rangeStrategy": "bump",
       "semanticCommitType": "fix"
-    },
-    {
-      "matchPackageNames": ["@sanity/pkg-utils"],
-      "semanticCommitType": "chore"
     },
     {
       "description": "Ensure internal and important packages open a PRs right away, without waiting for manual approval",
