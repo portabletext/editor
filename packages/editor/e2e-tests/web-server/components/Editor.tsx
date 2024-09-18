@@ -395,7 +395,7 @@ function LinkButtons() {
           PortableTextEditor.focus(editor)
         }}
       >
-        Toggle comment
+        Toggle link
       </button>
     </>
   )
