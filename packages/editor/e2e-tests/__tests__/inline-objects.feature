@@ -5,6 +5,15 @@ Feature: Inline Objects
     Given two editors
     And a global keymap
 
+  # Currently fails
+  @skip
+  Scenario: Writing after inserting an inline object
+    Given the text "foo"
+    And a "stock-ticker"
+    When "ArrowRight" is pressed
+    When "bar" is typed
+    Then the text is "foo,stock-ticker,bar"
+
   Scenario: Navigating around a inline object
     Given the text "foo"
     And a "stock-ticker"
