@@ -192,23 +192,11 @@ export default class CollaborationEnvironment extends NodeEnvironment {
             selectionHandle,
             valueHandle,
             revIdHandle,
-            addCommentButtonHandle,
-            removeCommentButtonHandle,
-            toggleCommentButtonHandle,
-            toggleLinkButtonHandle,
-            insertImageButtonHandle,
-            insertStockTickerButtonHandle,
           ]: (ElementHandle<Element> | null)[] = await Promise.all([
             page.waitForSelector('div[contentEditable="true"]'),
             page.waitForSelector('#pte-selection'),
             page.waitForSelector('#pte-value'),
             page.waitForSelector('#pte-revId'),
-            page.waitForSelector('[data-testid="button-add-comment"]'),
-            page.waitForSelector('[data-testid="button-remove-comment"]'),
-            page.waitForSelector('[data-testid="button-toggle-comment"]'),
-            page.waitForSelector('[data-testid="button-toggle-link"]'),
-            page.waitForSelector('[data-testid="button-insert-image"]'),
-            page.waitForSelector('[data-testid="button-insert-stock-ticker"]'),
           ])
 
           if (
@@ -219,6 +207,21 @@ export default class CollaborationEnvironment extends NodeEnvironment {
           ) {
             throw new Error('Failed to find required editor elements')
           }
+
+          const addCommentButtonLocator = page.getByTestId('button-add-comment')
+          const removeCommentButtonLocator = page.getByTestId(
+            'button-remove-comment',
+          )
+          const toggleCommentButtonLocator = page.getByTestId(
+            'button-toggle-comment',
+          )
+          const toggleLinkButtonLocator = page.getByTestId('button-toggle-link')
+          const insertImageButtonLocator = page.getByTestId(
+            'button-insert-image',
+          )
+          const insertStockTickerButtonLocator = page.getByTestId(
+            'button-insert-stock-ticker',
+          )
 
           const waitForRevision = async (
             mutatingFunction?: () => Promise<void>,
@@ -340,23 +343,23 @@ export default class CollaborationEnvironment extends NodeEnvironment {
             pressButton: async (buttonName, times) => {
               await waitForRevision(() => {
                 if (buttonName === 'add-comment') {
-                  return addCommentButtonHandle.click({clickCount: times})
+                  return addCommentButtonLocator.click({clickCount: times})
                 }
 
                 if (buttonName === 'remove-comment') {
-                  return removeCommentButtonHandle.click({clickCount: times})
+                  return removeCommentButtonLocator.click({clickCount: times})
                 }
 
                 if (buttonName === 'toggle-comment') {
-                  return toggleCommentButtonHandle.click({clickCount: times})
+                  return toggleCommentButtonLocator.click({clickCount: times})
                 }
 
                 if (buttonName === 'insert-image') {
-                  return insertImageButtonHandle.click({clickCount: times})
+                  return insertImageButtonLocator.click({clickCount: times})
                 }
 
                 if (buttonName === 'insert-stock-ticker') {
-                  return insertStockTickerButtonHandle.click({
+                  return insertStockTickerButtonLocator.click({
                     clickCount: times,
                   })
                 }
@@ -413,11 +416,11 @@ export default class CollaborationEnvironment extends NodeEnvironment {
             toggleAnnotation: async (annotation) => {
               await waitForRevision(() => {
                 if (annotation === 'comment') {
-                  return toggleCommentButtonHandle.click()
+                  return toggleCommentButtonLocator.click()
                 }
 
                 if (annotation === 'link') {
-                  return toggleLinkButtonHandle.click()
+                  return toggleLinkButtonLocator.click()
                 }
 
                 return Promise.reject(
