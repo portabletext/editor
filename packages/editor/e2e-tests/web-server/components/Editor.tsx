@@ -288,6 +288,7 @@ function BlockButtons() {
             },
             {url: 'http://example.com/image.png'},
           )
+          PortableTextEditor.focus(editor)
         }}
       >
         Insert image
@@ -315,6 +316,7 @@ function InlineObjectButtons() {
             },
             {symbol: 'NVDA'},
           )
+          PortableTextEditor.focus(editor)
         }}
       >
         Insert stock ticker
