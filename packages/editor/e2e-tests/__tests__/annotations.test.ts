@@ -1,11 +1,11 @@
 /** @jest-environment ./setup/collaborative.jest.env.ts */
 
+import {Feature} from '@sanity/gherkin-driver/jest'
 import annotationsAcrossBlocks from './annotations-across-blocks.feature'
 import annotationsEdgeCases from './annotations-edge-cases.feature'
 import annotationsOverlappingDecorators from './annotations-overlapping-decorators.feature'
 import annotationsOverlapping from './annotations-overlapping.feature'
 import annotations from './annotations.feature'
-import {Feature} from './gherkin-driver'
 import {parameterTypes, stepDefinitions} from './gherkin-step-definitions'
 
 Feature({
