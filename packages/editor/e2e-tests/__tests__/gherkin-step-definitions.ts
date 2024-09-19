@@ -1,7 +1,7 @@
-import {ParameterType} from '@cucumber/cucumber-expressions'
 import {expect} from '@jest/globals'
+import {createParameterType} from '@sanity/gherkin-driver'
+import {Given, Then, When} from '@sanity/gherkin-driver/jest'
 import type {Editor} from '../setup/globals.jest'
-import {Given, Then, When} from './gherkin-driver'
 import {
   getEditorBlockKey,
   getEditorText,
@@ -456,7 +456,7 @@ export const stepDefinitions = [
 ]
 
 export const parameterTypes = [
-  new ParameterType(
+  createParameterType(
     'annotation',
     /"(comment|link)"/,
     String,
@@ -464,7 +464,7 @@ export const parameterTypes = [
     false,
     true,
   ),
-  new ParameterType(
+  createParameterType(
     'block-object',
     /"(image)"/,
     String,
@@ -472,7 +472,7 @@ export const parameterTypes = [
     false,
     true,
   ),
-  new ParameterType(
+  createParameterType(
     'inline-object',
     /"(stock-ticker)"/,
     String,
@@ -480,7 +480,7 @@ export const parameterTypes = [
     false,
     true,
   ),
-  new ParameterType(
+  createParameterType(
     'button',
     /"(ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Backspace|Delete|Enter|Space)"/,
     String,
@@ -488,7 +488,7 @@ export const parameterTypes = [
     false,
     true,
   ),
-  new ParameterType(
+  createParameterType(
     'key',
     /"([a-z]\d)"/,
     String,
@@ -496,7 +496,7 @@ export const parameterTypes = [
     false,
     true,
   ),
-  new ParameterType(
+  createParameterType(
     'keys',
     /"(([a-z]\d)(,([a-z]\d))*)"/,
     Array,
@@ -504,7 +504,7 @@ export const parameterTypes = [
     false,
     true,
   ),
-  new ParameterType(
+  createParameterType(
     'decorator',
     /"(em|strong)"/,
     String,
@@ -512,7 +512,7 @@ export const parameterTypes = [
     false,
     true,
   ),
-  new ParameterType(
+  createParameterType(
     'marks',
     /"((strong|em|[a-z]\d)(,(strong|em|[a-z]\d))*)"/,
     Array,
@@ -520,7 +520,7 @@ export const parameterTypes = [
     false,
     true,
   ),
-  new ParameterType(
+  createParameterType(
     'text',
     /"([a-z-,\\n ]*)"/,
     Array,
