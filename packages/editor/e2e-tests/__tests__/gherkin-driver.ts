@@ -93,7 +93,7 @@ export function Feature<TContext extends Record<string, any> = object>({
   const gherkinDocument = parser.parse(featureText)
   const pickles = Gherkin.compile(
     gherkinDocument,
-    'block-objects.feature',
+    (gherkinDocument.feature?.name ?? '').replace(' ', '-'),
     uuidFn,
   )
 
