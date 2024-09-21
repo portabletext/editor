@@ -8,3 +8,6 @@
 </div>
 
 > The official editor for editing [Portable Text](https://github.com/portabletext/portabletext) – the JSON based rich text specification for modern content editing platforms.
+
+> [!NOTE]
+> We are currently working hard on the general release of this component. Docs and refined APIs are coming.
