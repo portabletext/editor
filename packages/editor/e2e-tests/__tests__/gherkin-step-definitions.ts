@@ -38,6 +38,11 @@ export const stepDefinitions = [
     context.keyMap = new Map()
   }),
 
+  Given<Context>('one editor', async (context) => {
+    const editor = await getEditor()
+    context.editorA = editor
+  }),
+
   Given<Context>('two editors', async (context) => {
     const [editorA, editorB] = await getEditors()
     context.editorA = editorA
