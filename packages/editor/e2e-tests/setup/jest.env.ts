@@ -129,7 +129,7 @@ export default class CollaborationEnvironment extends NodeEnvironment {
     }
 
     this.global.getEditor = async () => {
-      const editorId = `editor${testId}`
+      const editorId = `A${testId}`
 
       return getPageEditor({
         page: this._page!,
@@ -161,7 +161,7 @@ export default class CollaborationEnvironment extends NodeEnvironment {
 
     // Open up the test document
     await this._page?.goto(
-      `${WEB_SERVER_ROOT_URL}?editorId=editor${testId}&testId=${testId}`,
+      `${WEB_SERVER_ROOT_URL}?editorId=A${testId}&testId=${testId}`,
       {
         waitUntil: 'load',
       },
