@@ -1,8 +1,8 @@
-import {describe, expect, jest, test} from '@jest/globals'
 import {Schema} from '@sanity/schema'
 import type {PortableTextBlock} from '@sanity/types'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
+import {describe, expect, test, vi} from 'vitest'
 import type {EditorChange, EditorSelection} from '../../types/editor'
 import {PortableTextEditable} from '../Editable'
 import {PortableTextEditor} from '../PortableTextEditor'
@@ -35,7 +35,7 @@ describe(PortableTextEditor.insertBlock.name, () => {
       style: 'normal',
     }
     const initialValue: Array<PortableTextBlock> = [emptyTextBlock]
-    const onChange: (change: EditorChange) => void = jest.fn()
+    const onChange: (change: EditorChange) => void = vi.fn()
 
     render(
       <PortableTextEditor
@@ -104,7 +104,7 @@ describe(PortableTextEditor.insertBlock.name, () => {
       style: 'normal',
     }
     const initialValue: Array<PortableTextBlock> = [nonEmptyTextBlock]
-    const onChange: (change: EditorChange) => void = jest.fn()
+    const onChange: (change: EditorChange) => void = vi.fn()
 
     render(
       <PortableTextEditor
@@ -177,7 +177,7 @@ describe(PortableTextEditor.insertBlock.name, () => {
       _type: 'image',
     }
     const initialValue: Array<PortableTextBlock> = [emptyTextBlock, imageBlock]
-    const onChange: (change: EditorChange) => void = jest.fn()
+    const onChange: (change: EditorChange) => void = vi.fn()
 
     render(
       <PortableTextEditor

@@ -1,6 +1,6 @@
-import {beforeEach, describe, expect, it} from '@jest/globals'
 import type {PortableTextTextBlock} from '@sanity/types'
 import {createEditor, type Descendant} from 'slate'
+import {beforeEach, describe, expect, it} from 'vitest'
 import {PortableTextEditor, type PortableTextEditorProps} from '../..'
 import {schemaType} from '../../editor/__tests__/PortableTextEditorTester'
 import {defaultKeyGenerator} from '../../editor/hooks/usePortableTextEditorKeyGenerator'
@@ -61,34 +61,34 @@ describe('operationToPatches', () => {
         createDefaultValue(),
       ),
     ).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "items": Array [
-            Object {
+      [
+        {
+          "items": [
+            {
               "_key": "773866318fa8",
               "_type": "someObject",
               "title": "The Object",
             },
           ],
-          "path": Array [
-            Object {
+          "path": [
+            {
               "_key": "1f2e64b47787",
             },
             "children",
-            Object {
+            {
               "_key": "c130395c640c",
             },
           ],
           "position": "after",
           "type": "insert",
         },
-        Object {
-          "path": Array [
-            Object {
+        {
+          "path": [
+            {
               "_key": "1f2e64b47787",
             },
             "children",
-            Object {
+            {
               "_key": "c130395c640c",
             },
             "text",
@@ -118,17 +118,17 @@ describe('operationToPatches', () => {
         createDefaultValue(),
       ),
     ).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "items": Array [
-            Object {
+      [
+        {
+          "items": [
+            {
               "_key": "c130395c640c",
               "_type": "someObject",
               "title": "The Object",
             },
           ],
-          "path": Array [
-            Object {
+          "path": [
+            {
               "_key": "1f2e64b47787",
             },
           ],
@@ -160,20 +160,20 @@ describe('operationToPatches', () => {
         [],
       ),
     ).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "path": Array [],
+      [
+        {
+          "path": [],
           "type": "setIfMissing",
-          "value": Array [],
+          "value": [],
         },
-        Object {
-          "items": Array [
-            Object {
+        {
+          "items": [
+            {
               "_key": "c130395c640c",
               "_type": "someObject",
             },
           ],
-          "path": Array [
+          "path": [
             0,
           ],
           "position": "before",
@@ -202,21 +202,21 @@ describe('operationToPatches', () => {
         createDefaultValue(),
       ),
     ).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "items": Array [
-            Object {
+      [
+        {
+          "items": [
+            {
               "_key": "c130395c640c",
               "_type": "someObject",
               "title": "The Object",
             },
           ],
-          "path": Array [
-            Object {
+          "path": [
+            {
               "_key": "1f2e64b47787",
             },
             "children",
-            Object {
+            {
               "_key": "fd9b4a4e6c0b",
             },
           ],
@@ -243,14 +243,14 @@ describe('operationToPatches', () => {
         createDefaultValue(),
       ),
     ).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "path": Array [
-            Object {
+      [
+        {
+          "path": [
+            {
               "_key": "1f2e64b47787",
             },
             "children",
-            Object {
+            {
               "_key": "fd9b4a4e6c0b",
             },
             "text",
@@ -280,14 +280,14 @@ describe('operationToPatches', () => {
         before,
       ),
     ).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "path": Array [
-            Object {
+      [
+        {
+          "path": [
+            {
               "_key": "1f2e64b47787",
             },
             "children",
-            Object {
+            {
               "_key": "fd9b4a4e6c0b",
             },
             "text",
@@ -320,14 +320,14 @@ describe('operationToPatches', () => {
         createDefaultValue(),
       ),
     ).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "path": Array [
-            Object {
+      [
+        {
+          "path": [
+            {
               "_key": "1f2e64b47787",
             },
             "children",
-            Object {
+            {
               "_key": "773866318fa8",
             },
           ],
@@ -351,10 +351,10 @@ describe('operationToPatches', () => {
         val,
       ),
     ).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "path": Array [
-            Object {
+      [
+        {
+          "path": [
+            {
               "_key": "1f2e64b47787",
             },
           ],
@@ -389,14 +389,14 @@ describe('operationToPatches', () => {
         val,
       ),
     ).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "path": Array [
-            Object {
+      [
+        {
+          "path": [
+            {
               "_key": "1f2e64b47787",
             },
             "children",
-            Object {
+            {
               "_key": "fd9b4a4e6c0b",
             },
             "text",
@@ -404,13 +404,13 @@ describe('operationToPatches', () => {
           "type": "set",
           "value": "1234",
         },
-        Object {
-          "path": Array [
-            Object {
+        {
+          "path": [
+            {
               "_key": "1f2e64b47787",
             },
             "children",
-            Object {
+            {
               "_key": "r4wr323432",
             },
           ],

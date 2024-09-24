@@ -1,6 +1,6 @@
-import {describe, expect, it, jest} from '@jest/globals'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
+import {describe, expect, it, vi} from 'vitest'
 import {
   PortableTextEditorTester,
   schemaType,
@@ -29,7 +29,7 @@ describe('plugin:withPortableTextMarksModel', () => {
           style: 'normal',
         },
       ]
-      const onChange = jest.fn()
+      const onChange = vi.fn()
       await waitFor(() => {
         render(
           <PortableTextEditorTester
@@ -50,21 +50,21 @@ describe('plugin:withPortableTextMarksModel', () => {
         })
         PortableTextEditor.toggleMark(editor, 'strong')
         expect(PortableTextEditor.getValue(editor)).toMatchInlineSnapshot(`
-        Array [
-          Object {
+        [
+          {
             "_key": "a",
             "_type": "myTestBlockType",
-            "children": Array [
-              Object {
+            "children": [
+              {
                 "_key": "a1",
                 "_type": "span",
-                "marks": Array [
+                "marks": [
                   "strong",
                 ],
                 "text": "1234",
               },
             ],
-            "markDefs": Array [],
+            "markDefs": [],
             "style": "normal",
           },
         ]
@@ -79,35 +79,35 @@ describe('plugin:withPortableTextMarksModel', () => {
           PortableTextEditor.toggleMark(editorRef.current, 'strong')
           expect(PortableTextEditor.getValue(editorRef.current))
             .toMatchInlineSnapshot(`
-        Array [
-          Object {
+        [
+          {
             "_key": "a",
             "_type": "myTestBlockType",
-            "children": Array [
-              Object {
+            "children": [
+              {
                 "_key": "a1",
                 "_type": "span",
-                "marks": Array [
+                "marks": [
                   "strong",
                 ],
                 "text": "1",
               },
-              Object {
+              {
                 "_key": "2",
                 "_type": "span",
-                "marks": Array [],
+                "marks": [],
                 "text": "23",
               },
-              Object {
+              {
                 "_key": "1",
                 "_type": "span",
-                "marks": Array [
+                "marks": [
                   "strong",
                 ],
                 "text": "4",
               },
             ],
-            "markDefs": Array [],
+            "markDefs": [],
             "style": "normal",
           },
         ]
@@ -122,21 +122,21 @@ describe('plugin:withPortableTextMarksModel', () => {
           })
           PortableTextEditor.toggleMark(editor, 'strong')
           expect(PortableTextEditor.getValue(editor)).toMatchInlineSnapshot(`
-Array [
-  Object {
+[
+  {
     "_key": "a",
     "_type": "myTestBlockType",
-    "children": Array [
-      Object {
+    "children": [
+      {
         "_key": "a1",
         "_type": "span",
-        "marks": Array [
+        "marks": [
           "strong",
         ],
         "text": "1234",
       },
     ],
-    "markDefs": Array [],
+    "markDefs": [],
     "style": "normal",
   },
 ]
@@ -175,7 +175,7 @@ Array [
           style: 'normal',
         },
       ]
-      const onChange = jest.fn()
+      const onChange = vi.fn()
 
       render(
         <PortableTextEditorTester
@@ -307,7 +307,7 @@ Array [
           offset: 0,
         },
       }
-      const onChange = jest.fn()
+      const onChange = vi.fn()
       await waitFor(() => {
         render(
           <PortableTextEditorTester
@@ -324,47 +324,47 @@ Array [
         PortableTextEditor.select(editor, sel)
         PortableTextEditor.delete(editor, sel)
         expect(PortableTextEditor.getValue(editor)).toMatchInlineSnapshot(`
-        Array [
-          Object {
+        [
+          {
             "_key": "5fc57af23597",
             "_type": "myTestBlockType",
-            "children": Array [
-              Object {
+            "children": [
+              {
                 "_key": "be1c67c6971a",
                 "_type": "span",
-                "marks": Array [],
+                "marks": [],
                 "text": "This is a ",
               },
-              Object {
+              {
                 "_key": "11c8c9f783a8",
                 "_type": "span",
-                "marks": Array [
+                "marks": [
                   "fde1fd54b544",
                 ],
                 "text": "link",
               },
-              Object {
+              {
                 "_key": "576c748e0cd2",
                 "_type": "span",
-                "marks": Array [],
+                "marks": [],
                 "text": "This is ",
               },
-              Object {
+              {
                 "_key": "f3d73d3833bf",
                 "_type": "span",
-                "marks": Array [
+                "marks": [
                   "7b6d3d5de30c",
                 ],
                 "text": "another",
               },
             ],
-            "markDefs": Array [
-              Object {
+            "markDefs": [
+              {
                 "_key": "fde1fd54b544",
                 "_type": "link",
                 "url": "1",
               },
-              Object {
+              {
                 "_key": "7b6d3d5de30c",
                 "_type": "link",
                 "url": "2",
@@ -419,7 +419,7 @@ Array [
         focus: {path: [{_key: 'bb'}, 'children', {_key: 'sb'}], offset: 0},
         anchor: {path: [{_key: 'bb'}, 'children', {_key: 'sb'}], offset: 0},
       }
-      const onChange = jest.fn()
+      const onChange = vi.fn()
 
       render(
         <PortableTextEditorTester
@@ -522,7 +522,7 @@ Array [
           style: 'normal',
         },
       ]
-      const onChange = jest.fn()
+      const onChange = vi.fn()
 
       render(
         <PortableTextEditorTester
@@ -592,7 +592,7 @@ Array [
           style: 'normal',
         },
       ]
-      const onChange = jest.fn()
+      const onChange = vi.fn()
       await waitFor(() => {
         render(
           <PortableTextEditorTester
@@ -647,7 +647,7 @@ Array [
           style: 'normal',
         },
       ]
-      const onChange = jest.fn()
+      const onChange = vi.fn()
       await waitFor(() => {
         render(
           <PortableTextEditorTester
@@ -703,7 +703,7 @@ Array [
           style: 'normal',
         },
       ]
-      const onChange = jest.fn()
+      const onChange = vi.fn()
       await waitFor(() => {
         render(
           <PortableTextEditorTester
@@ -859,7 +859,7 @@ Array [
           ],
         },
       ]
-      const onChange = jest.fn()
+      const onChange = vi.fn()
       await waitFor(() => {
         render(
           <PortableTextEditorTester

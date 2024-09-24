@@ -1,6 +1,6 @@
-import {describe, expect, it, jest} from '@jest/globals'
 import {fireEvent, render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
+import {describe, expect, it, vi} from 'vitest'
 import {PortableTextEditor} from '../PortableTextEditor'
 import {PortableTextEditorTester, schemaType} from './PortableTextEditorTester'
 import {getEditableElement} from './utils'
@@ -34,7 +34,7 @@ describe('adds empty text block if its needed', () => {
     }
 
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     const component = render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -96,7 +96,7 @@ describe('adds empty text block if its needed', () => {
     }
 
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     const component = render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -151,7 +151,7 @@ describe('adds empty text block if its needed', () => {
     }
 
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     const component = render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -217,7 +217,7 @@ describe('adds empty text block if its needed', () => {
     }
 
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     const component = render(
       <PortableTextEditorTester
         onChange={onChange}

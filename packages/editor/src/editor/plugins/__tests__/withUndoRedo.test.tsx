@@ -1,6 +1,6 @@
-import {describe, expect, it, jest} from '@jest/globals'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
+import {describe, expect, it, vi} from 'vitest'
 import {
   PortableTextEditorTester,
   schemaType,
@@ -46,7 +46,7 @@ const initialSelection = {
 describe('plugin:withUndoRedo', () => {
   it('preserves the keys when undoing ', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -77,19 +77,19 @@ describe('plugin:withUndoRedo', () => {
         )
         expect(PortableTextEditor.getValue(editorRef.current))
           .toMatchInlineSnapshot(`
-          Array [
-            Object {
+          [
+            {
               "_key": "a",
               "_type": "myTestBlockType",
-              "children": Array [
-                Object {
+              "children": [
+                {
                   "_key": "a1",
                   "_type": "span",
-                  "marks": Array [],
+                  "marks": [],
                   "text": "Block A",
                 },
               ],
-              "markDefs": Array [],
+              "markDefs": [],
               "style": "normal",
             },
           ]
@@ -103,7 +103,7 @@ describe('plugin:withUndoRedo', () => {
   })
   it('preserves the keys when redoing ', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
+    const onChange = vi.fn()
 
     render(
       <PortableTextEditorTester

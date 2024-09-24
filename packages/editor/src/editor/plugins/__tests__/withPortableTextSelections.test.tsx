@@ -1,6 +1,6 @@
-import {describe, expect, it, jest} from '@jest/globals'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
+import {describe, expect, it, vi} from 'vitest'
 import {
   PortableTextEditorTester,
   schemaType,
@@ -41,7 +41,7 @@ const initialValue = [
 describe('plugin:withPortableTextSelections', () => {
   it('will report that a selection is made backward', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -54,34 +54,45 @@ describe('plugin:withPortableTextSelections', () => {
       anchor: {path: [{_key: 'b'}, 'children', {_key: 'b1'}], offset: 9},
       focus: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 7},
     }
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({
+          type: 'value',
+          value: initialValue,
+        })
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
     await waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
         PortableTextEditor.select(editorRef.current, initialSelection)
         expect(PortableTextEditor.getSelection(editorRef.current))
           .toMatchInlineSnapshot(`
-          Object {
-            "anchor": Object {
+          {
+            "anchor": {
               "offset": 9,
-              "path": Array [
-                Object {
+              "path": [
+                {
                   "_key": "b",
                 },
                 "children",
-                Object {
+                {
                   "_key": "b1",
                 },
               ],
             },
             "backward": true,
-            "focus": Object {
+            "focus": {
               "offset": 7,
-              "path": Array [
-                Object {
+              "path": [
+                {
                   "_key": "a",
                 },
                 "children",
-                Object {
+                {
                   "_key": "a1",
                 },
               ],

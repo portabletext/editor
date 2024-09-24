@@ -1,4 +1,3 @@
-import {jest} from '@jest/globals'
 import {Schema} from '@sanity/schema'
 import {defineArrayMember, defineField} from '@sanity/types'
 import {
@@ -8,6 +7,7 @@ import {
   useMemo,
   type ForwardedRef,
 } from 'react'
+import {vi} from 'vitest'
 import {
   PortableTextEditable,
   PortableTextEditor,
@@ -100,10 +100,7 @@ export const PortableTextEditorTester = forwardRef(
       key++
       return `${key}`
     }, [])
-    const onChange = useMemo(
-      () => props.onChange || jest.fn(),
-      [props.onChange],
-    )
+    const onChange = useMemo(() => props.onChange || vi.fn(), [props.onChange])
     return (
       <PortableTextEditor
         schemaType={props.schemaType}

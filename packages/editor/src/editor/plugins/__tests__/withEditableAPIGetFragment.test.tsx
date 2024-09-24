@@ -1,7 +1,7 @@
-import {describe, expect, it, jest} from '@jest/globals'
 import {isPortableTextTextBlock} from '@sanity/types'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
+import {describe, expect, it, vi} from 'vitest'
 import {
   PortableTextEditorTester,
   schemaType,
@@ -52,7 +52,7 @@ const initialValue = [
 describe('plugin:withEditableAPI: .getFragment()', () => {
   it('can get a Portable Text fragment of the current selection in a single block', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
+    const onChange = vi.fn()
 
     render(
       <PortableTextEditorTester
@@ -93,7 +93,7 @@ describe('plugin:withEditableAPI: .getFragment()', () => {
 
   it('can get a Portable Text fragment of the current selection in multiple blocks', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
+    const onChange = vi.fn()
 
     render(
       <PortableTextEditorTester
@@ -124,43 +124,43 @@ describe('plugin:withEditableAPI: .getFragment()', () => {
         PortableTextEditor.select(editorRef.current, initialSelection)
         const fragment = PortableTextEditor.getFragment(editorRef.current)
         expect(fragment).toMatchInlineSnapshot(`
-          Array [
-            Object {
+          [
+            {
               "_key": "a",
               "_type": "myTestBlockType",
-              "children": Array [
-                Object {
+              "children": [
+                {
                   "_key": "a1",
                   "_type": "span",
-                  "marks": Array [],
+                  "marks": [],
                   "text": "A",
                 },
               ],
-              "markDefs": Array [],
+              "markDefs": [],
               "style": "normal",
             },
-            Object {
+            {
               "_key": "b",
               "_type": "myTestBlockType",
-              "children": Array [
-                Object {
+              "children": [
+                {
                   "_key": "b1",
                   "_type": "span",
-                  "marks": Array [],
+                  "marks": [],
                   "text": "Block B ",
                 },
-                Object {
+                {
                   "_key": "b2",
                   "_type": "someObject",
                 },
-                Object {
+                {
                   "_key": "b3",
                   "_type": "span",
-                  "marks": Array [],
+                  "marks": [],
                   "text": " contains",
                 },
               ],
-              "markDefs": Array [],
+              "markDefs": [],
               "style": "normal",
             },
           ]

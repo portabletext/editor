@@ -1,6 +1,6 @@
-import {describe, expect, it, jest} from '@jest/globals'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
+import {describe, expect, it, vi} from 'vitest'
 import {
   PortableTextEditorTester,
   schemaType,
@@ -27,7 +27,7 @@ const initialValue = [
 describe('useSyncValue', () => {
   it('updates span text', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     const syncedValue = [
       {
         _key: '77071c3af231',
@@ -70,7 +70,7 @@ describe('useSyncValue', () => {
   })
   it('replaces span nodes with different keys inside the same children array', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     const syncedValue = [
       {
         _key: '77071c3af231',
@@ -107,19 +107,19 @@ describe('useSyncValue', () => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current))
           .toMatchInlineSnapshot(`
-          Array [
-            Object {
+          [
+            {
               "_key": "77071c3af231",
               "_type": "myTestBlockType",
-              "children": Array [
-                Object {
+              "children": [
+                {
                   "_key": "c001f0e92c1f0__NEW_KEY_YA!",
                   "_type": "span",
-                  "marks": Array [],
+                  "marks": [],
                   "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. ",
                 },
               ],
-              "markDefs": Array [],
+              "markDefs": [],
               "style": "normal",
             },
           ]

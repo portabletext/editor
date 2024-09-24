@@ -1,4 +1,3 @@
-import {describe, expect, test} from '@jest/globals'
 import type {DiffMatchPatch} from '@portabletext/patches'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {
@@ -10,6 +9,7 @@ import {
   type PortableTextTextBlock,
 } from '@sanity/types'
 import type {Descendant, Operation} from 'slate'
+import {describe, expect, test} from 'vitest'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import {diffMatchPatch} from '../applyPatch'
 

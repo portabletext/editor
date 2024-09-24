@@ -1,7 +1,7 @@
-import {describe, expect, it, jest} from '@jest/globals'
 import type {PortableTextBlock} from '@sanity/types'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
+import {describe, expect, it, vi} from 'vitest'
 import {PortableTextEditor} from '../PortableTextEditor'
 import {PortableTextEditorTester, schemaType} from './PortableTextEditorTester'
 
@@ -24,7 +24,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
       },
     ]
 
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -80,7 +80,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
       },
     ]
 
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -137,7 +137,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
       },
     ]
 
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -209,7 +209,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
       },
     ]
 
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -273,7 +273,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
       },
     ]
 
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -316,7 +316,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
     const initialValue = [] as PortableTextBlock[]
 
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     render(
       <PortableTextEditorTester
         onChange={onChange}
