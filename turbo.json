@@ -27,20 +27,20 @@
       "outputs": [""]
     },
     "test": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["build"],
       "outputs": [""]
     },
     "test:watch": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["build"],
       "persistent": true,
       "cache": false
     },
     "test:e2e": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["build"],
       "outputs": [""]
     },
     "test:e2e:watch": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["build"],
       "persistent": true,
       "cache": false
     }
