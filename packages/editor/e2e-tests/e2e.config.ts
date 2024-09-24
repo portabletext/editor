@@ -1,29 +1,11 @@
-import path from 'node:path'
-import type {Config} from '@jest/types'
+import type {Config} from 'jest'
 
-const config: Config.InitialOptions = {
-  globals: {},
+const config: Config = {
   globalSetup: './setup/globalSetup.ts',
   globalTeardown: './setup/globalTeardown.ts',
   moduleFileExtensions: ['feature', 'js', 'ts'],
-  modulePathIgnorePatterns: [
-    '<rootDir>/bin/',
-    '<rootDir>/coverage/',
-    '<rootDir>/lib/',
-  ],
-  resolver: path.resolve(__dirname, './resolver.cjs'),
-  setupFiles: [path.resolve(__dirname, './setup.ts')],
   setupFilesAfterEnv: ['./setup/afterEnv.ts'],
-  snapshotFormat: {
-    escapeString: true,
-    printBasicPrototype: true,
-  },
-  testEnvironment: path.resolve(__dirname, './jsdom.jest.env.ts'),
-  testEnvironmentOptions: {
-    url: 'http://localhost:3333',
-  },
-  testMatch: ['<rootDir>/**/*.{test,spec}.{js,ts,tsx}'],
-  testPathIgnorePatterns: ['/node_modules/', '/.yalc/'],
+  testMatch: ['<rootDir>/**/*.test.ts'],
   transform: {
     '\\.feature$': '<rootDir>/feature-file-transformer.js',
     '\\.[jt]sx?$': [
@@ -52,7 +34,6 @@ const config: Config.InitialOptions = {
       },
     ],
   },
-  transformIgnorePatterns: ['/node_modules/(?!(get-random-values-esm)/)'],
 }
 
 export default config
