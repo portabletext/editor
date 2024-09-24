@@ -192,19 +192,19 @@ describe('collaborate editing', () => {
     valB = await editorB.getValue()
     expect(valA).toEqual(valB)
     expect(valA).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "B-9",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "B-8",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "1",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -214,19 +214,19 @@ describe('collaborate editing', () => {
     valB = await editorB.getValue()
     expect(valA).toEqual(valB)
     expect(valB).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "B-9",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "B-8",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "12",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -635,74 +635,74 @@ describe('collaborate editing', () => {
     const valB = await editorB.getValue()
     expect(valA).toEqual(valB)
     expect(valA).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "Hello world<- I left off here. And you wrote that ->",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
-        Object {
+        {
           "_key": "A-6",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "A-5",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": " there!",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
-        Object {
+        {
           "_key": "B-3",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "B-2",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "I'm writing here!",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
     `)
     expect(await editorA.getSelection()).toMatchInlineSnapshot(`
-      Object {
-        "anchor": Object {
+      {
+        "anchor": {
           "offset": 0,
-          "path": Array [
-            Object {
+          "path": [
+            {
               "_key": "A-6",
             },
             "children",
-            Object {
+            {
               "_key": "A-5",
             },
           ],
         },
         "backward": false,
-        "focus": Object {
+        "focus": {
           "offset": 0,
-          "path": Array [
-            Object {
+          "path": [
+            {
               "_key": "A-6",
             },
             "children",
-            Object {
+            {
               "_key": "A-5",
             },
           ],
@@ -712,61 +712,61 @@ describe('collaborate editing', () => {
     await editorA.pressKey('Enter')
     const valAAfterSecondEnter = await editorA.getValue()
     expect(valAAfterSecondEnter).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "Hello world<- I left off here. And you wrote that ->",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
-        Object {
+        {
           "_key": "A-9",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "A-8",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
-        Object {
+        {
           "_key": "A-6",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "A-5",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": " there!",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
-        Object {
+        {
           "_key": "B-3",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "B-2",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "I'm writing here!",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -829,33 +829,33 @@ describe('collaborate editing', () => {
     await editorA.insertText('!')
     const valueB = await editorB.getValue()
     expect(valueB).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "26901064a3c9",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "b629e8140c25",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "pweoirrporiwpweporiwproi wer",
             },
-            Object {
+            {
               "_key": "ef4627c1c11b",
               "_type": "span",
-              "marks": Array [
+              "marks": [
                 "strong",
               ],
               "text": "poiwyuXty45....!....ytutyy666uerpwer1",
             },
-            Object {
+            {
               "_key": "7d3c9bcc9c10",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "weuirwer werewopri",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -905,19 +905,19 @@ describe('collaborate editing', () => {
     await editorA.insertText('1')
     const newValA = await editorA.getValue()
     expect(newValA).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "A-4",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "A-3",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "1",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]

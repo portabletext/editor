@@ -71,19 +71,19 @@ describe('undo/redo', () => {
     let valB = await editorB.getValue()
     expect(valA).toEqual(valB)
     expect(valB).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "Hello worl there!",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -93,19 +93,19 @@ describe('undo/redo', () => {
     valB = await editorB.getValue()
     expect(valA).toEqual(valB)
     expect(valB).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "Hello world there!",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -206,33 +206,33 @@ describe('undo/redo', () => {
     let valB = await editorB.getValue()
     expect(valA).toEqual(valB)
     expect(valB).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "Hello world there!",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
-        Object {
+        {
           "_key": "A-6",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "A-5",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "Hey!",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -243,33 +243,33 @@ describe('undo/redo', () => {
     valB = await editorB.getValue()
     expect(valA).toEqual(valB)
     expect(valB).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "Hello world",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
-        Object {
+        {
           "_key": "A-6",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "A-5",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -324,19 +324,19 @@ describe('undo/redo', () => {
     let valA = await editorA.getValue()
     let valB = await editorB.getValue()
     expect(valA).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "Hello123 worldABC there!",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -347,19 +347,19 @@ describe('undo/redo', () => {
     valB = await editorB.getValue()
     expect(valA).toEqual(valB)
     expect(valB).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "Hello worldABC there!",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -369,19 +369,19 @@ describe('undo/redo', () => {
     valB = await editorB.getValue()
     expect(valA).toEqual(valB)
     expect(valB).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "Hello world there!",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -441,19 +441,19 @@ describe('undo/redo', () => {
     let valB = await editorB.getValue()
     expect(valA).toEqual(valB)
     expect(valA).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "Hello123 world there",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -463,19 +463,19 @@ describe('undo/redo', () => {
     valB = await editorB.getValue()
     expect(valA).toEqual(valB)
     expect(valA).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "Hello123 world there!",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -485,19 +485,19 @@ describe('undo/redo', () => {
     valB = await editorB.getValue()
     expect(valA).toEqual(valB)
     expect(valA).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "Hello world there!",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -536,33 +536,33 @@ describe('undo/redo', () => {
     let valB = await editorB.getValue()
     expect(valA).toEqual(valB)
     expect(valB).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "Hello world there!",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
-        Object {
+        {
           "_key": "A-6",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "A-5",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "Hey!",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -573,19 +573,19 @@ describe('undo/redo', () => {
     valB = await editorB.getValue()
     expect(valA).toEqual(valB)
     expect(valB).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "Hello world there!",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -642,33 +642,33 @@ describe('undo/redo', () => {
     let valB = await editorB.getValue()
     expect(valA).toEqual(valB)
     expect(valB).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "Hello123",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
-        Object {
+        {
           "_key": "A-6",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "A-5",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": " worldABC there!",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -679,47 +679,47 @@ describe('undo/redo', () => {
     valB = await editorB.getValue()
     expect(valA).toEqual(valB)
     expect(valB).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "Hello123 world there!",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
     `)
     const selectionA = await editorA.getSelection()
     expect(selectionA).toMatchInlineSnapshot(`
-      Object {
-        "anchor": Object {
+      {
+        "anchor": {
           "offset": 8,
-          "path": Array [
-            Object {
+          "path": [
+            {
               "_key": "randomKey0",
             },
             "children",
-            Object {
+            {
               "_key": "randomKey1",
             },
           ],
         },
         "backward": false,
-        "focus": Object {
+        "focus": {
           "offset": 8,
-          "path": Array [
-            Object {
+          "path": [
+            {
               "_key": "randomKey0",
             },
             "children",
-            Object {
+            {
               "_key": "randomKey1",
             },
           ],
@@ -728,28 +728,28 @@ describe('undo/redo', () => {
     `)
     const selectionB = await editorB.getSelection()
     expect(selectionB).toMatchInlineSnapshot(`
-      Object {
-        "anchor": Object {
+      {
+        "anchor": {
           "offset": 14,
-          "path": Array [
-            Object {
+          "path": [
+            {
               "_key": "randomKey0",
             },
             "children",
-            Object {
+            {
               "_key": "randomKey1",
             },
           ],
         },
         "backward": false,
-        "focus": Object {
+        "focus": {
           "offset": 14,
-          "path": Array [
-            Object {
+          "path": [
+            {
               "_key": "randomKey0",
             },
             "children",
-            Object {
+            {
               "_key": "randomKey1",
             },
           ],
@@ -810,19 +810,19 @@ describe('undo/redo', () => {
     let valA = await editorA.getValue()
     let valB = await editorB.getValue()
     expect(valA).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "Hello123 worldABC there!",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -833,19 +833,19 @@ describe('undo/redo', () => {
     valB = await editorB.getValue()
     expect(valA).toEqual(valB)
     expect(valB).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "Hello worldABC there!",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -855,19 +855,19 @@ describe('undo/redo', () => {
     valB = await editorB.getValue()
     expect(valA).toEqual(valB)
     expect(valB).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "Hello world there!",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -881,19 +881,19 @@ describe('undo/redo', () => {
     valB = await editorB.getValue()
     expect(valA).toEqual(valB)
     expect(valB).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "Hello123 world there!",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -903,19 +903,19 @@ describe('undo/redo', () => {
     valB = await editorB.getValue()
     expect(valA).toEqual(valB)
     expect(valB).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "Hello123 worldABC there!",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -984,33 +984,33 @@ describe('undo/redo', () => {
     let valA = await editorA.getValue()
     let valB = await editorB.getValue()
     expect(valA).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "1a",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
-        Object {
+        {
           "_key": "randomKey2",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey3",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "2b",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -1021,33 +1021,33 @@ describe('undo/redo', () => {
     valB = await editorB.getValue()
     expect(valA).toEqual(valB)
     expect(valB).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "1",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
-        Object {
+        {
           "_key": "randomKey2",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey3",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "2b",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -1057,33 +1057,33 @@ describe('undo/redo', () => {
     valB = await editorB.getValue()
     expect(valA).toEqual(valB)
     expect(valB).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "1",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
-        Object {
+        {
           "_key": "randomKey2",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey3",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "2",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -1097,33 +1097,33 @@ describe('undo/redo', () => {
     valB = await editorB.getValue()
     expect(valA).toEqual(valB)
     expect(valB).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "1a",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
-        Object {
+        {
           "_key": "randomKey2",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey3",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "2",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -1133,33 +1133,33 @@ describe('undo/redo', () => {
     valB = await editorB.getValue()
     expect(valA).toEqual(valB)
     expect(valB).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "randomKey0",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "1a",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
-        Object {
+        {
           "_key": "randomKey2",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "randomKey3",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "2b",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]

@@ -33,61 +33,61 @@ describe('selection adjustment', () => {
       expect(selectionA).toEqual(expectedSelectionA)
       await editorB.pressKey('Enter')
       expect(await editorA.getValue()).toMatchInlineSnapshot(`
-        Array [
-          Object {
+        [
+          {
             "_key": "B-7",
             "_type": "block",
-            "children": Array [
-              Object {
+            "children": [
+              {
                 "_key": "B-6",
                 "_type": "span",
-                "marks": Array [],
+                "marks": [],
                 "text": "",
               },
             ],
-            "markDefs": Array [],
+            "markDefs": [],
             "style": "normal",
           },
-          Object {
+          {
             "_key": "someKey",
             "_type": "block",
-            "children": Array [
-              Object {
+            "children": [
+              {
                 "_key": "anotherKey",
                 "_type": "span",
-                "marks": Array [],
+                "marks": [],
                 "text": "Hello",
               },
             ],
-            "markDefs": Array [],
+            "markDefs": [],
             "style": "normal",
           },
         ]
       `)
       selectionA = await editorA.getSelection()
       expect(selectionA).toMatchInlineSnapshot(`
-        Object {
-          "anchor": Object {
+        {
+          "anchor": {
             "offset": 2,
-            "path": Array [
-              Object {
+            "path": [
+              {
                 "_key": "someKey",
               },
               "children",
-              Object {
+              {
                 "_key": "anotherKey",
               },
             ],
           },
           "backward": false,
-          "focus": Object {
+          "focus": {
             "offset": 2,
-            "path": Array [
-              Object {
+            "path": [
+              {
                 "_key": "someKey",
               },
               "children",
-              Object {
+              {
                 "_key": "anotherKey",
               },
             ],
@@ -255,33 +255,33 @@ describe('selection adjustment', () => {
       const valueA = await editorA.getValue()
       const valueB = await editorB.getValue()
       expect(valueB).toMatchInlineSnapshot(`
-        Array [
-          Object {
+        [
+          {
             "_key": "someKey4",
             "_type": "block",
-            "children": Array [
-              Object {
+            "children": [
+              {
                 "_key": "anotherKey4",
                 "_type": "span",
-                "marks": Array [],
+                "marks": [],
                 "text": "",
               },
             ],
-            "markDefs": Array [],
+            "markDefs": [],
             "style": "normal",
           },
-          Object {
+          {
             "_key": "someKey5",
             "_type": "block",
-            "children": Array [
-              Object {
+            "children": [
+              {
                 "_key": "anotherKey5",
                 "_type": "span",
-                "marks": Array [],
+                "marks": [],
                 "text": "Three",
               },
             ],
-            "markDefs": Array [],
+            "markDefs": [],
             "style": "normal",
           },
         ]
@@ -381,28 +381,28 @@ describe('selection adjustment', () => {
       const valueA = await editorA.getValue()
       expect(valueA).toEqual(valueB)
       expect(await editorA.getSelection()).toMatchInlineSnapshot(`
-        Object {
-          "anchor": Object {
+        {
+          "anchor": {
             "offset": 0,
-            "path": Array [
-              Object {
+            "path": [
+              {
                 "_key": "someKey7",
               },
               "children",
-              Object {
+              {
                 "_key": "anotherKey7",
               },
             ],
           },
           "backward": false,
-          "focus": Object {
+          "focus": {
             "offset": 0,
-            "path": Array [
-              Object {
+            "path": [
+              {
                 "_key": "someKey7",
               },
               "children",
-              Object {
+              {
                 "_key": "anotherKey7",
               },
             ],
@@ -455,19 +455,19 @@ describe('selection adjustment', () => {
     await editorB.toggleDecoratorUsingKeyboard('strong')
     const valueB = await editorB.getValue()
     expect(valueB).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "someKey",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "anotherKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "1 22 333",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
@@ -534,33 +534,33 @@ describe('selection adjustment', () => {
     await editorA.toggleDecoratorUsingKeyboard('strong')
     const valueB = await editorB.getValue()
     expect(valueB).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "someKey1",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "anotherKey1",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "1",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
-        Object {
+        {
           "_key": "someKey2",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "anotherKey2",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "2",
             },
           ],
-          "markDefs": Array [],
+          "markDefs": [],
           "style": "normal",
         },
       ]
