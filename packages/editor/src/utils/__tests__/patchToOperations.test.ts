@@ -1,7 +1,7 @@
-import {beforeEach, describe, expect, it} from '@jest/globals'
 import type {Patch} from '@portabletext/patches'
 import {noop} from 'lodash'
 import {createEditor, type Descendant} from 'slate'
+import {beforeEach, describe, expect, it} from 'vitest'
 import {keyGenerator, PortableTextEditor} from '../..'
 import {schemaType} from '../../editor/__tests__/PortableTextEditorTester'
 import {withPlugins} from '../../editor/plugins'
@@ -70,21 +70,21 @@ describe('operationToPatches', () => {
       patchToOperations(editor, p)
     })
     expect(editor.children).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "__inline": false,
           "_key": "c01739b0d03b",
           "_type": "image",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "${VOID_CHILD_KEY}",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "",
             },
           ],
-          "value": Object {
-            "asset": Object {
+          "value": {
+            "asset": {
               "_ref": "image-f52f71bc1df46e080dabe43a8effe8ccfb5f21de-4032x3024-png",
               "_type": "reference",
             },
@@ -93,7 +93,7 @@ describe('operationToPatches', () => {
       ]
     `)
   })
-  it('will not create operations for insertion inside object blocks', () => {
+  it('will not create operations for insertion inside blocks', () => {
     editor.children = [
       {
         _type: 'someType',
@@ -127,31 +127,31 @@ describe('operationToPatches', () => {
       patchToOperations(editor, p)
     })
     expect(editor.children).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "__inline": false,
           "_key": "c01739b0d03b",
           "_type": "someType",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "${VOID_CHILD_KEY}",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "",
             },
           ],
-          "value": Object {
-            "asset": Object {
+          "value": {
+            "asset": {
               "_ref": "image-f52f71bc1df46e080dabe43a8effe8ccfb5f21de-4032x3024-png",
               "_type": "reference",
             },
-            "nestedArray": Array [],
+            "nestedArray": [],
           },
         },
       ]
     `)
   })
-  it('will not create operations for removal inside object blocks', () => {
+  it('will not create operations for removal inside blocks', () => {
     editor.children = [
       {
         _type: 'someType',
@@ -190,26 +190,26 @@ describe('operationToPatches', () => {
       patchToOperations(editor, p)
     })
     expect(editor.children).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "__inline": false,
           "_key": "c01739b0d03b",
           "_type": "someType",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "${VOID_CHILD_KEY}",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "",
             },
           ],
-          "value": Object {
-            "asset": Object {
+          "value": {
+            "asset": {
               "_ref": "image-f52f71bc1df46e080dabe43a8effe8ccfb5f21de-4032x3024-png",
               "_type": "reference",
             },
-            "nestedArray": Array [
-              Object {
+            "nestedArray": [
+              {
                 "_key": "foo",
                 "_type": "nestedValue",
               },
@@ -219,7 +219,7 @@ describe('operationToPatches', () => {
       ]
     `)
   })
-  it('will not create operations for setting data inside object blocks', () => {
+  it('will not create operations for setting data inside blocks', () => {
     editor.children = [
       {
         _key: '1335959d4d03',
@@ -265,34 +265,34 @@ describe('operationToPatches', () => {
       patchToOperations(editor, p)
     })
     expect(editor.children).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "_key": "1335959d4d03",
           "_type": "block",
-          "children": Array [
-            Object {
+          "children": [
+            {
               "_key": "9bd868adcd6b",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": "1 ",
             },
-            Object {
+            {
               "_key": "6f75d593f3fc",
               "_type": "span",
-              "marks": Array [
+              "marks": [
                 "11de7fcea659",
               ],
               "text": "2",
             },
-            Object {
+            {
               "_key": "033618a7f081",
               "_type": "span",
-              "marks": Array [],
+              "marks": [],
               "text": " 3",
             },
           ],
-          "markDefs": Array [
-            Object {
+          "markDefs": [
+            {
               "_key": "11de7fcea659",
               "_type": "link",
             },

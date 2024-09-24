@@ -1,6 +1,7 @@
-import {describe, expect, it, jest} from '@jest/globals'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
+import * as React from 'react'
+import {describe, expect, it, vi} from 'vitest'
 import {
   PortableTextEditorTester,
   schemaType,
@@ -25,7 +26,7 @@ describe('values: normalization', () => {
         markDefs: [],
       },
     ]
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -34,6 +35,17 @@ describe('values: normalization', () => {
         value={initialValue}
       />,
     )
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({
+          type: 'value',
+          value: initialValue,
+        })
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
     await waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)

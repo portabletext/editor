@@ -1,7 +1,7 @@
-import {describe, expect, it, jest} from '@jest/globals'
 import type {PortableTextBlock} from '@sanity/types'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
+import {describe, expect, it, vi} from 'vitest'
 import {
   PortableTextEditorTester,
   schemaType,
@@ -28,7 +28,7 @@ const INITIAL_VALUE: PortableTextBlock[] = [
 describe('plugin:withEditableAPI: .isSelectionsOverlapping', () => {
   it('returns true if the selections are partially overlapping', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -62,7 +62,7 @@ describe('plugin:withEditableAPI: .isSelectionsOverlapping', () => {
 
   it('returns true if the selections are fully overlapping', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -96,7 +96,7 @@ describe('plugin:withEditableAPI: .isSelectionsOverlapping', () => {
 
   it('return true if selection is fully inside another selection', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -130,7 +130,7 @@ describe('plugin:withEditableAPI: .isSelectionsOverlapping', () => {
 
   it('returns false if the selections are not overlapping', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     render(
       <PortableTextEditorTester
         onChange={onChange}

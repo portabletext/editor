@@ -1,5 +1,5 @@
-import {describe, expect, it} from '@jest/globals'
 import type {InsertTextOperation, Range} from 'slate'
+import {describe, expect, it} from 'vitest'
 import {moveRangeByOperation} from '../ranges'
 
 describe('moveRangeByOperation', () => {

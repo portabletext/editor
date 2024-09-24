@@ -1,6 +1,6 @@
-import {describe, expect, it, jest} from '@jest/globals'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
+import {describe, expect, it, vi} from 'vitest'
 import {
   PortableTextEditorTester,
   schemaType,
@@ -58,7 +58,7 @@ const emptyBlockSelection = {
 describe('plugin:withEditableAPI: .insertChild()', () => {
   it('inserts child nodes correctly', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
+    const onChange = vi.fn()
 
     render(
       <PortableTextEditorTester
@@ -200,7 +200,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
         style: 'normal',
       },
     ]
-    const onChange = jest.fn()
+    const onChange = vi.fn()
 
     render(
       <PortableTextEditorTester
@@ -248,7 +248,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
 
   it('should not add empty blank blocks: non-empty block', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
+    const onChange = vi.fn()
 
     render(
       <PortableTextEditorTester
@@ -300,7 +300,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
 
   it('should be inserted before if focus is on start of block', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
+    const onChange = vi.fn()
 
     render(
       <PortableTextEditorTester
@@ -358,7 +358,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       ...initialValue,
       {_key: 'b', _type: 'someObject', color: 'red'},
     ]
-    const onChange = jest.fn()
+    const onChange = vi.fn()
 
     render(
       <PortableTextEditorTester
@@ -414,7 +414,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       ...initialValue,
       {_key: 'b', _type: 'someObject', color: 'red'},
     ]
-    const onChange = jest.fn()
+    const onChange = vi.fn()
 
     render(
       <PortableTextEditorTester
@@ -465,7 +465,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
   it('should not add empty blank blocks: in new empty text block', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
     const value = [...initialValue, ...emptyTextBlock]
-    const onChange = jest.fn()
+    const onChange = vi.fn()
 
     render(
       <PortableTextEditorTester

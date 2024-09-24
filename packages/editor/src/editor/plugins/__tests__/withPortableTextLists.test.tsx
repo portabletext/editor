@@ -1,6 +1,6 @@
-import {describe, expect, it, jest} from '@jest/globals'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
+import {describe, expect, it, vi} from 'vitest'
 import {
   PortableTextEditorTester,
   schemaType,
@@ -42,7 +42,7 @@ describe('plugin:withPortableTextLists', () => {
         style: 'normal',
       },
     ]
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     await waitFor(() => {
       render(
         <PortableTextEditorTester

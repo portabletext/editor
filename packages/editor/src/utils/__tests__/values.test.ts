@@ -1,4 +1,4 @@
-import {describe, expect, it} from '@jest/globals'
+import {describe, expect, it} from 'vitest'
 import {schemaType} from '../../editor/__tests__/PortableTextEditorTester'
 import {getPortableTextMemberSchemaTypes} from '../getPortableTextMemberSchemaTypes'
 import {fromSlateValue, toSlateValue} from '../values'
@@ -59,12 +59,12 @@ describe('toSlateValue', () => {
       {schemaTypes},
     )
     expect(result).toMatchInlineSnapshot(`
-Array [
-  Object {
+[
+  {
     "_key": "123",
     "_type": "myTestBlockType",
-    "children": Array [
-      Object {
+    "children": [
+      {
         "_key": "1231",
         "_type": "span",
         "text": "123",
@@ -76,7 +76,7 @@ Array [
 `)
   })
 
-  it('given type is block and has custom object in children', () => {
+  it('given type is block and has custom in children', () => {
     const result = toSlateValue(
       [
         {
@@ -102,30 +102,30 @@ Array [
     )
 
     expect(result).toMatchInlineSnapshot(`
-Array [
-  Object {
+[
+  {
     "_key": "123",
     "_type": "myTestBlockType",
-    "children": Array [
-      Object {
+    "children": [
+      {
         "_key": "1231",
         "_type": "span",
         "text": "123",
       },
-      Object {
+      {
         "__inline": true,
         "_key": "1232",
         "_type": "image",
-        "children": Array [
-          Object {
+        "children": [
+          {
             "_key": "void-child",
             "_type": "span",
-            "marks": Array [],
+            "marks": [],
             "text": "",
           },
         ],
-        "value": Object {
-          "asset": Object {
+        "value": {
+          "asset": {
             "_ref": "ref-123",
           },
         },
@@ -213,7 +213,7 @@ describe('fromSlateValue', () => {
     ])
   })
 
-  it('has object equality', () => {
+  it('has equality', () => {
     const keyMap = {}
     const value = [
       {

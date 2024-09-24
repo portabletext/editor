@@ -1,7 +1,7 @@
-import {describe, expect, it, jest} from '@jest/globals'
 import type {PortableTextBlock} from '@sanity/types'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
+import {describe, expect, it, vi} from 'vitest'
 import type {EditorSelection} from '../..'
 import {PortableTextEditor} from '../PortableTextEditor'
 import {PortableTextEditorTester, schemaType} from './PortableTextEditorTester'
@@ -18,7 +18,7 @@ const renderPlaceholder = () => 'Jot something down here'
 describe('initialization', () => {
   it('receives initial onChange events and has custom placeholder', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     const {container} = render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -88,7 +88,7 @@ describe('initialization', () => {
   })
   it('takes value from props and confirms it by emitting value change event', async () => {
     const initialValue = [helloBlock]
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     const editorRef = createRef<PortableTextEditor>()
     render(
       <PortableTextEditorTester
@@ -120,7 +120,7 @@ describe('initialization', () => {
       focus: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
       backward: false,
     }
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -164,7 +164,7 @@ describe('initialization', () => {
       focus: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 3},
       backward: false,
     }
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     const {rerender} = render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -223,7 +223,7 @@ describe('initialization', () => {
       anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
       focus: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
     }
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -266,7 +266,7 @@ describe('initialization', () => {
       anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
       focus: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
     }
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     let _rerender: any
     await waitFor(() => {
       render(
@@ -300,7 +300,7 @@ describe('initialization', () => {
       expect(onChange).toHaveBeenCalledWith({type: 'value', value})
     })
     value = [{_type: 'banana', _key: '123'}]
-    const newOnChange = jest.fn()
+    const newOnChange = vi.fn()
     _rerender(
       <PortableTextEditorTester
         onChange={newOnChange}
@@ -352,7 +352,7 @@ describe('initialization', () => {
       anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
       focus: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
     }
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     render(
       <PortableTextEditorTester
         onChange={onChange}

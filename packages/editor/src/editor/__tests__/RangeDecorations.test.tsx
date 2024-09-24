@@ -1,7 +1,7 @@
-import {describe, expect, it, jest} from '@jest/globals'
 import type {PortableTextBlock} from '@sanity/types'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type ReactNode, type RefObject} from 'react'
+import {describe, expect, it, vi} from 'vitest'
 import type {RangeDecoration} from '../..'
 import type {PortableTextEditor} from '../PortableTextEditor'
 import {PortableTextEditorTester, schemaType} from './PortableTextEditorTester'
@@ -23,7 +23,7 @@ const RangeDecorationTestComponent = ({children}: {children?: ReactNode}) => {
 describe('RangeDecorations', () => {
   it('only render range decorations as necessary', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     const value = [helloBlock]
     let rangeDecorations: RangeDecoration[] = [
       {

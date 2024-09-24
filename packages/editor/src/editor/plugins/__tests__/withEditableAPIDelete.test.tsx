@@ -1,6 +1,6 @@
-import {describe, expect, it, jest} from '@jest/globals'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
+import {describe, expect, it, vi} from 'vitest'
 import {
   PortableTextEditorTester,
   schemaType,
@@ -46,7 +46,7 @@ const initialSelection = {
 describe('plugin:withEditableAPI: .delete()', () => {
   it('deletes block', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -77,19 +77,19 @@ describe('plugin:withEditableAPI: .delete()', () => {
         )
         expect(PortableTextEditor.getValue(editorRef.current))
           .toMatchInlineSnapshot(`
-          Array [
-            Object {
+          [
+            {
               "_key": "a",
               "_type": "myTestBlockType",
-              "children": Array [
-                Object {
+              "children": [
+                {
                   "_key": "a1",
                   "_type": "span",
-                  "marks": Array [],
+                  "marks": [],
                   "text": "Block A",
                 },
               ],
-              "markDefs": Array [],
+              "markDefs": [],
               "style": "normal",
             },
           ]
@@ -100,7 +100,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
 
   it('deletes all the blocks, but leaves a placeholder block', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
+    const onChange = vi.fn()
     render(
       <PortableTextEditorTester
         onChange={onChange}
@@ -135,19 +135,19 @@ describe('plugin:withEditableAPI: .delete()', () => {
         // New keys here confirms that a placeholder block has been created
         expect(PortableTextEditor.getValue(editorRef.current))
           .toMatchInlineSnapshot(`
-          Array [
-            Object {
+          [
+            {
               "_key": "1",
               "_type": "myTestBlockType",
-              "children": Array [
-                Object {
+              "children": [
+                {
                   "_key": "2",
                   "_type": "span",
-                  "marks": Array [],
+                  "marks": [],
                   "text": "",
                 },
               ],
-              "markDefs": Array [],
+              "markDefs": [],
               "style": "normal",
             },
           ]
@@ -158,7 +158,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
 
   it('deletes children', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
+    const onChange = vi.fn()
 
     render(
       <PortableTextEditorTester
@@ -202,33 +202,33 @@ describe('plugin:withEditableAPI: .delete()', () => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current))
           .toMatchInlineSnapshot(`
-                  Array [
-                    Object {
+                  [
+                    {
                       "_key": "a",
                       "_type": "myTestBlockType",
-                      "children": Array [
-                        Object {
+                      "children": [
+                        {
                           "_key": "a1",
                           "_type": "span",
-                          "marks": Array [],
+                          "marks": [],
                           "text": "Block A",
                         },
                       ],
-                      "markDefs": Array [],
+                      "markDefs": [],
                       "style": "normal",
                     },
-                    Object {
+                    {
                       "_key": "b",
                       "_type": "myTestBlockType",
-                      "children": Array [
-                        Object {
+                      "children": [
+                        {
                           "_key": "1",
                           "_type": "span",
-                          "marks": Array [],
+                          "marks": [],
                           "text": "",
                         },
                       ],
-                      "markDefs": Array [],
+                      "markDefs": [],
                       "style": "normal",
                     },
                   ]
@@ -239,7 +239,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
 
   it('deletes selected', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
-    const onChange = jest.fn()
+    const onChange = vi.fn()
 
     render(
       <PortableTextEditorTester
