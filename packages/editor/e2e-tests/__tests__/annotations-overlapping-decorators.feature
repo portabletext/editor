@@ -1,7 +1,7 @@
 Feature: Annotations Overlapping Decorators
 
   Background:
-    Given two editors
+    Given one editor
     And a global keymap
 
   Scenario: Annotation and decorator on the same text

@@ -2,7 +2,7 @@
 Feature: Annotations
 
   Background:
-    Given two editors
+    Given one editor
     And a global keymap
 
   Scenario: Selection after adding an annotation

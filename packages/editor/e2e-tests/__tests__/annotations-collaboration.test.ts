@@ -1,11 +1,11 @@
-/** @jest-environment ./setup/jest.env.ts */
+/** @jest-environment ./setup/collaborative.jest.env.ts */
 
 import {Feature} from '@sanity/gherkin-driver/jest'
+import annotationsCollaboration from './annotations-collaboration.feature'
 import {parameterTypes, stepDefinitions} from './gherkin-step-definitions'
-import featureFile from './undo-redo.feature'
 
 Feature({
-  featureText: featureFile,
+  featureText: annotationsCollaboration,
   stepDefinitions,
   parameterTypes,
 })

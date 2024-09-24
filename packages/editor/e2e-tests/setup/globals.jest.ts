@@ -32,6 +32,7 @@ export type Editor = {
 }
 
 declare global {
+  function getEditor(): Promise<Editor>
   function getEditors(): Promise<Editor[]>
   function setDocumentValue(
     value: PortableTextBlock[] | undefined,

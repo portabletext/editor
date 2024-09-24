@@ -1,4 +1,4 @@
-/** @jest-environment ./setup/collaborative.jest.env.ts */
+/** @jest-environment ./setup/jest.env.ts */
 
 import {Feature} from '@sanity/gherkin-driver/jest'
 import featureFile from './block-objects.feature'

@@ -1,7 +1,7 @@
 Feature: Splitting Blocks
 
   Background:
-    Given two editors
+    Given one editor
     And a global keymap
 
   Scenario: Splitting block at the beginning
