@@ -10,7 +10,8 @@ import type {
   SpanSchemaType,
 } from '@sanity/types'
 import {Component, type MutableRefObject, type PropsWithChildren} from 'react'
-import {Subject} from 'rxjs'
+import {Subject, type Subscription} from 'rxjs'
+import {createEditorStore, type EditorStore} from '../editor-store'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
@@ -42,6 +43,11 @@ const debug = debugWithName('component:PortableTextEditor')
  */
 export type PortableTextEditorProps = PropsWithChildren<{
   /**
+   * Used to interact with and listen to events from the editor
+   */
+  store?: EditorStore
+
+  /**
    * Function that gets called when the editor changes the value
    */
   onChange: (change: EditorChange) => void
@@ -72,6 +78,7 @@ export type PortableTextEditorProps = PropsWithChildren<{
   keyGenerator?: () => string
 
   /**
+   * @deprecated Use `store` instead.
    * Observable of local and remote patches for the edited value.
    */
   patches$?: PatchObservable
@@ -100,6 +107,11 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
    */
   private editable?: EditableAPI
 
+  private store: EditorStore
+
+  private patches$?: PatchObservable
+  private patchesSubscription?: Subscription
+
   constructor(props: PortableTextEditorProps) {
     super(props)
 
@@ -114,6 +126,27 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
         ? props.schemaType
         : compileType(props.schemaType),
     )
+
+    // If no store is provided then we just create one
+    this.store = props.store ?? createEditorStore()
+
+    this.patches$ = props.patches$
+  }
+
+  componentDidMount(): void {
+    this.store.start()
+
+    // For backwards compatibility, if `patches$` is used, we subscribe to it
+    // and send the patches to the store.
+    this.patchesSubscription = this.patches$?.subscribe(
+      ({patches, snapshot}) => {
+        this.store.send({type: 'patches', patches, snapshot})
+      },
+    )
+  }
+
+  componentWillUnmount(): void {
+    this.patchesSubscription?.unsubscribe()
   }
 
   componentDidUpdate(prevProps: PortableTextEditorProps) {
@@ -143,7 +176,7 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
   }
 
   render() {
-    const {onChange, value, children, patches$} = this.props
+    const {onChange, value, children} = this.props
     const {change$} = this
 
     const maxBlocks =
@@ -157,9 +190,9 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
       <SlateContainer
         keyGenerator={keyGenerator}
         maxBlocks={maxBlocks}
-        patches$={patches$}
         portableTextEditor={this}
         readOnly={readOnly}
+        store={this.store}
       >
         <PortableTextEditorKeyGeneratorContext.Provider value={keyGenerator}>
           <PortableTextEditorContext.Provider value={this}>

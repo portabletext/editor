@@ -1,7 +1,7 @@
 import {useEffect, useMemo, useState, type PropsWithChildren} from 'react'
 import {createEditor} from 'slate'
 import {Slate, withReact} from 'slate-react'
-import type {PatchObservable} from '../../types/editor'
+import type {EditorStore} from '../../editor-store'
 import {debugWithName} from '../../utils/debug'
 import {KEY_TO_SLATE_ELEMENT, KEY_TO_VALUE_ELEMENT} from '../../utils/weakMaps'
 import {withPlugins} from '../plugins'
@@ -15,9 +15,9 @@ const debug = debugWithName('component:PortableTextEditor:SlateContainer')
 export interface SlateContainerProps extends PropsWithChildren {
   keyGenerator: () => string
   maxBlocks: number | undefined
-  patches$?: PatchObservable
   portableTextEditor: PortableTextEditor
   readOnly: boolean
+  store: EditorStore
 }
 
 /**
@@ -25,8 +25,7 @@ export interface SlateContainerProps extends PropsWithChildren {
  * @internal
  */
 export function SlateContainer(props: SlateContainerProps) {
-  const {patches$, portableTextEditor, readOnly, maxBlocks, keyGenerator} =
-    props
+  const {portableTextEditor, readOnly, maxBlocks, keyGenerator, store} = props
 
   // Create the slate instance, using `useState` ensures setup is only run once, initially
   const [[slateEditor, subscribe]] = useState(() => {
@@ -34,7 +33,7 @@ export function SlateContainer(props: SlateContainerProps) {
     const {editor, subscribe: _sub} = withPlugins(withReact(createEditor()), {
       keyGenerator,
       maxBlocks,
-      patches$,
+      store,
       portableTextEditor,
       readOnly,
     })
@@ -45,6 +44,7 @@ export function SlateContainer(props: SlateContainerProps) {
 
   useEffect(() => {
     const unsubscribe = subscribe()
+
     return () => {
       unsubscribe()
     }
@@ -56,7 +56,7 @@ export function SlateContainer(props: SlateContainerProps) {
     withPlugins(slateEditor, {
       keyGenerator,
       maxBlocks,
-      patches$,
+      store,
       portableTextEditor,
       readOnly,
     })
@@ -65,7 +65,7 @@ export function SlateContainer(props: SlateContainerProps) {
     portableTextEditor,
     maxBlocks,
     readOnly,
-    patches$,
+    store,
     slateEditor,
   ])
 

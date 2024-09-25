@@ -132,15 +132,11 @@ export function Synchronizer(props: SynchronizerProps) {
 
   // Notify about window online and offline status changes
   useEffect(() => {
-    if (portableTextEditor.props.patches$) {
-      window.addEventListener('online', handleOnline)
-      window.addEventListener('offline', handleOffline)
-    }
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
     return () => {
-      if (portableTextEditor.props.patches$) {
-        window.removeEventListener('online', handleOnline)
-        window.removeEventListener('offline', handleOffline)
-      }
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
     }
   })
 

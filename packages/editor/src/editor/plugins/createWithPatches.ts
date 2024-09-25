@@ -13,9 +13,9 @@ import {
   type SetNodeOperation,
   type SplitNodeOperation,
 } from 'slate'
+import type {EditorStore} from '../../editor-store'
 import type {
   EditorChange,
-  PatchObservable,
   PortableTextMemberSchemaTypes,
   PortableTextSlateEditor,
 } from '../../types/editor'
@@ -83,7 +83,7 @@ export interface PatchFunctions {
 interface Options {
   change$: Subject<EditorChange>
   keyGenerator: () => string
-  patches$?: PatchObservable
+  store: EditorStore
   patchFunctions: PatchFunctions
   readOnly: boolean
   schemaTypes: PortableTextMemberSchemaTypes
@@ -91,7 +91,7 @@ interface Options {
 
 export function createWithPatches({
   change$,
-  patches$,
+  store,
   patchFunctions,
   readOnly,
   schemaTypes,
@@ -145,16 +145,14 @@ export function createWithPatches({
       handleBufferedRemotePatches()
     }
 
-    if (patches$) {
-      editor.subscriptions.push(() => {
-        debug('Subscribing to patches$')
-        const sub = patches$.subscribe(handlePatches)
-        return () => {
-          debug('Unsubscribing to patches$')
-          sub.unsubscribe()
-        }
-      })
-    }
+    editor.subscriptions.push(() => {
+      debug('Subscribing to patches')
+      const sub = store.on('remote patches', handlePatches)
+      return () => {
+        debug('Unsubscribing to patches')
+        sub.unsubscribe()
+      }
+    })
 
     editor.apply = (operation: Operation): void | Editor => {
       if (readOnly) {

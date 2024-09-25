@@ -47,10 +47,11 @@ export const withPlugins = <T extends Editor>(
   options: createEditorOptions,
 ): {editor: PortableTextSlateEditor; subscribe: () => () => void} => {
   const e = editor as T & PortableTextSlateEditor
-  const {keyGenerator, portableTextEditor, patches$, readOnly, maxBlocks} =
-    options
+  const {keyGenerator, portableTextEditor, readOnly, maxBlocks, store} = options
   const {schemaTypes, change$} = portableTextEditor
+
   e.subscriptions = []
+
   if (e.destroy) {
     e.destroy()
   } else {
@@ -62,6 +63,7 @@ export const withPlugins = <T extends Editor>(
       normalizeNode: e.normalizeNode,
     })
   }
+
   const operationToPatches = createOperationToPatches(schemaTypes)
   const withObjectKeys = createWithObjectKeys(schemaTypes, keyGenerator)
   const withSchemaTypes = createWithSchemaTypes({schemaTypes, keyGenerator})
@@ -73,7 +75,7 @@ export const withPlugins = <T extends Editor>(
   const withPatches = createWithPatches({
     change$,
     keyGenerator,
-    patches$,
+    store,
     patchFunctions: operationToPatches,
     readOnly,
     schemaTypes,
@@ -82,7 +84,7 @@ export const withPlugins = <T extends Editor>(
   const withPortableTextLists = createWithPortableTextLists(schemaTypes)
   const withUndoRedo = createWithUndoRedo({
     readOnly,
-    patches$,
+    store,
     blockSchemaType: schemaTypes.block,
   })
   const withPortableTextMarkModel = createWithPortableTextMarkModel(
@@ -117,6 +119,7 @@ export const withPlugins = <T extends Editor>(
     e.normalizeNode = originalFunctions.normalizeNode
     e.onChange = originalFunctions.onChange
   }
+
   if (readOnly) {
     return {
       editor: withSchemaTypes(

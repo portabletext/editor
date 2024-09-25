@@ -1,7 +1,12 @@
 import type {PortableTextTextBlock} from '@sanity/types'
 import {createEditor, type Descendant} from 'slate'
 import {beforeEach, describe, expect, it} from 'vitest'
-import {PortableTextEditor, type PortableTextEditorProps} from '../..'
+import {createActor} from 'xstate'
+import {
+  createEditorStore,
+  PortableTextEditor,
+  type PortableTextEditorProps,
+} from '../..'
 import {schemaType} from '../../editor/__tests__/PortableTextEditorTester'
 import {defaultKeyGenerator} from '../../editor/hooks/usePortableTextEditorKeyGenerator'
 import {withPlugins} from '../../editor/plugins'
@@ -18,6 +23,7 @@ const {editor} = withPlugins(createEditor(), {
   } as PortableTextEditorProps),
   keyGenerator: defaultKeyGenerator,
   readOnly: false,
+  store: createEditorStore(),
 })
 
 const createDefaultValue = () =>
