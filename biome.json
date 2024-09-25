@@ -26,6 +26,7 @@
       "suspicious": {
         "noConfusingVoidType": "off",
         "noExplicitAny": "off",
+        "noConsoleLog": "error",
         "noPrototypeBuiltins": "off"
       },
       "style": {
