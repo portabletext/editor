@@ -77,11 +77,6 @@ export type PortableTextEditorProps = PropsWithChildren<{
   patches$?: PatchObservable
 
   /**
-   * Backward compatibility (renamed to patches$).
-   */
-  incomingPatches$?: PatchObservable
-
-  /**
    * A ref to the editor instance
    */
   editorRef?: MutableRefObject<PortableTextEditor | null>
@@ -110,12 +105,6 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
 
     if (!props.schemaType) {
       throw new Error('PortableTextEditor: missing "schemaType" property')
-    }
-
-    if (props.incomingPatches$) {
-      console.warn(
-        `The prop 'incomingPatches$' is deprecated and renamed to 'patches$'`,
-      )
     }
 
     this.change$.next({type: 'loading', isLoading: true})
@@ -154,9 +143,8 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
   }
 
   render() {
-    const {onChange, value, children, patches$, incomingPatches$} = this.props
+    const {onChange, value, children, patches$} = this.props
     const {change$} = this
-    const _patches$ = incomingPatches$ || patches$ // Backward compatibility
 
     const maxBlocks =
       typeof this.props.maxBlocks === 'undefined'
@@ -169,7 +157,7 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
       <SlateContainer
         keyGenerator={keyGenerator}
         maxBlocks={maxBlocks}
-        patches$={_patches$}
+        patches$={patches$}
         portableTextEditor={this}
         readOnly={readOnly}
       >
