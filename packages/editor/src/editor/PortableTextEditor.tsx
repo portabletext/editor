@@ -78,7 +78,7 @@ export type PortableTextEditorProps = PropsWithChildren<{
   keyGenerator?: () => string
 
   /**
-   * @deprecated Use `store` instead.
+   * @deprecated Use `editor` instead.
    * Observable of local and remote patches for the edited value.
    */
   patches$?: PatchObservable

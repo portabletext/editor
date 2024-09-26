@@ -27,14 +27,14 @@ export const editorMachine = setup({
       snapshot: Array<PortableTextBlock> | undefined
     },
     emitted: {} as {
-      type: 'remote patches'
+      type: 'remote patches received'
       patches: Array<Patch>
       snapshot: Array<PortableTextBlock> | undefined
     },
   },
   actions: {
-    'emit remote patches': emit(({event}) => ({
-      type: 'remote patches' as const,
+    'emit remote patches received': emit(({event}) => ({
+      type: 'remote patches received' as const,
       patches: event.patches.filter((patch) => patch.origin !== 'local'),
       snapshot: event.snapshot,
     })),
@@ -47,7 +47,7 @@ export const editorMachine = setup({
   id: 'editor',
   on: {
     patches: {
-      actions: ['emit remote patches'],
+      actions: ['emit remote patches received'],
       guard: 'has remote patches',
     },
   },

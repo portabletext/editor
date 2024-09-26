@@ -78,30 +78,33 @@ export function createWithUndoRedo(
 
     editor.subscriptions.push(() => {
       debug('Subscribing to patches in createWithUndoRedo')
-      const sub = editorActor.on('remote patches', ({patches, snapshot}) => {
-        let reset = false
-        patches.forEach((patch) => {
-          if (!reset && patch.origin !== 'local' && remotePatches) {
-            if (patch.type === 'unset' && patch.path.length === 0) {
-              debug(
-                'Someone else cleared the content, resetting undo/redo history',
-              )
-              editor.history = {undos: [], redos: []}
-              remotePatches.splice(0, remotePatches.length)
-              SAVING.set(editor, true)
-              reset = true
-              return
+      const sub = editorActor.on(
+        'remote patches received',
+        ({patches, snapshot}) => {
+          let reset = false
+          patches.forEach((patch) => {
+            if (!reset && patch.origin !== 'local' && remotePatches) {
+              if (patch.type === 'unset' && patch.path.length === 0) {
+                debug(
+                  'Someone else cleared the content, resetting undo/redo history',
+                )
+                editor.history = {undos: [], redos: []}
+                remotePatches.splice(0, remotePatches.length)
+                SAVING.set(editor, true)
+                reset = true
+                return
+              }
+              remotePatches.push({
+                patch,
+                time: new Date(),
+                snapshot,
+                previousSnapshot,
+              })
             }
-            remotePatches.push({
-              patch,
-              time: new Date(),
-              snapshot,
-              previousSnapshot,
-            })
-          }
-        })
-        previousSnapshot = snapshot
-      })
+          })
+          previousSnapshot = snapshot
+        },
+      )
       return () => {
         debug('Unsubscribing to patches in createWithUndoRedo')
         sub.unsubscribe()

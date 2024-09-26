@@ -147,7 +147,7 @@ export function createWithPatches({
 
     editor.subscriptions.push(() => {
       debug('Subscribing to patches')
-      const sub = editorActor.on('remote patches', handlePatches)
+      const sub = editorActor.on('remote patches received', handlePatches)
       return () => {
         debug('Unsubscribing to patches')
         sub.unsubscribe()
