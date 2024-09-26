@@ -4,7 +4,7 @@ Feature: Selection Adjustment
     Given two editors
     And a global keymap
 
-  Scenario: Selection is kept if another editor insert a line above
+  Scenario: Selection is kept if another editor inserts a line above
     Given the text "foo" in block "b1"
     When the caret is put before "foo" by editor B
     And "Enter" is pressed by editor B
@@ -22,7 +22,7 @@ Feature: Selection Adjustment
     Then the text is "barbaz"
     And "barbaz" is in block "b2"
 
-  Scenario: Selection is kept if antoerh editor backspace-deletes empty lines above
+  Scenario: Selection is kept if another editor backspace-deletes empty lines above
     Given the text "foo" in block "b1"
     And the text "bar" in block "b2"
     When the caret is put after "bar"
