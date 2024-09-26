@@ -35,6 +35,8 @@ Feature: Selection Adjustment
     And "barbaz" is in block "b2"
 
   # Currently fails
+  # When the "b2" block gets deleted the editor selection is moved to
+  # before "d" and the text becomes "ab,\n,cd"
   @skip
   Scenario: Selection is kept when another editor merges the line into the line above
     Given the text "a" in block "b1"
@@ -47,6 +49,8 @@ Feature: Selection Adjustment
     Then the text is "abc,\n,d"
 
   # Currently fails
+  # When the "b3" block gets deleted the editor selection is moved to
+  # after "a" and the text becomes "ac,\n,bd"
   @skip
   Scenario: Selection is kept when another editor merges the line below into the current line
     Given the text "a" in block "b1"
@@ -59,6 +63,8 @@ Feature: Selection Adjustment
     Then the text is "a,\n,bcd"
 
   # Currently fails
+  # When the spans get merged the editor selection is moved to
+  # then end and the text becomes "abdc"
   @skip
   Scenario: Selection is kept when another editor changes marks on the same line
     Given the text "abd"
