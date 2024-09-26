@@ -1,7 +1,7 @@
 import {
   BlockDecoratorRenderProps,
   BlockStyleRenderProps,
-  createEditorStore,
+  createEditor,
   PortableTextEditable,
   PortableTextEditor,
   RenderAnnotationFunction,
@@ -14,7 +14,7 @@ import {
 } from '@portabletext/editor'
 import {useSelector} from '@xstate/react'
 import {CopyIcon, ImageIcon, TrashIcon} from 'lucide-react'
-import {useEffect, useState} from 'react'
+import {useEffect, useMemo, useState} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
 import {reverse} from 'remeda'
 import {Button} from './components/button'
@@ -40,7 +40,7 @@ import {SelectionPreview} from './selection-preview'
 import {wait} from './wait'
 
 export function Editor(props: {editorRef: EditorActorRef}) {
-  const [editorStore] = useState(() => createEditorStore())
+  const editor = useMemo(() => createEditor(), [])
   const showingPatchesPreview = useSelector(props.editorRef, (s) =>
     s.matches({'patches preview': 'shown'}),
   )
@@ -58,7 +58,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
 
   useEffect(() => {
     const subscription = props.editorRef.on('patches', (event) => {
-      editorStore.send({
+      editor.send({
         type: 'patches',
         patches: event.patches,
         snapshot: event.snapshot,
@@ -68,7 +68,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
     return () => {
       subscription.unsubscribe()
     }
-  }, [props.editorRef, editorStore])
+  }, [props.editorRef, editor])
 
   const [loading, setLoading] = useState(false)
 
@@ -83,8 +83,8 @@ export function Editor(props: {editorRef: EditorActorRef}) {
         onError={console.error}
       >
         <PortableTextEditor
+          editor={editor}
           value={value}
-          store={editorStore}
           onChange={(change) => {
             if (change.type === 'mutation') {
               props.editorRef.send(change)
