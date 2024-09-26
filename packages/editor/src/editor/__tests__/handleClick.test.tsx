@@ -1,9 +1,29 @@
 import {fireEvent, render, waitFor} from '@testing-library/react'
-import {createRef, type RefObject} from 'react'
+import {act, createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
 import {PortableTextEditor} from '../PortableTextEditor'
 import {PortableTextEditorTester, schemaType} from './PortableTextEditorTester'
-import {getEditableElement} from './utils'
+
+async function getEditableElement(
+  component: ReturnType<typeof render>,
+): Promise<Element> {
+  await act(async () => component)
+  const element = component.container.querySelector(
+    '[data-slate-editor="true"]',
+  )
+  if (!element) {
+    throw new Error('Could not find element')
+  }
+  /**
+   * Manually add this because JSDom doesn't implement this and Slate checks for it
+   * internally before doing stuff.
+   *
+   * https://github.com/jsdom/jsdom/issues/1670
+   */
+  // @ts-ignore
+  element.isContentEditable = true
+  return element
+}
 
 describe('adds empty text block if its needed', () => {
   const newBlock = {
