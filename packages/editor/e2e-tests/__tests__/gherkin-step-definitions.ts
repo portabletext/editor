@@ -272,6 +272,12 @@ export const stepDefinitions = [
       await editorA.toggleDecoratorUsingKeyboard(decorator)
     },
   ),
+  When(
+    '{decorator} is toggled using the keyboard by editor B',
+    async ({editorB}: Context, decorator: 'em' | 'strong') => {
+      await editorB.toggleDecoratorUsingKeyboard(decorator)
+    },
+  ),
   Then(
     '{string} has marks {marks}',
     async ({editorA, keyMap}: Context, text: string, marks: Array<string>) => {
@@ -331,6 +337,16 @@ export const stepDefinitions = [
       await selectEditorText(editorA, text)
     }
   }),
+  When(
+    '{string} is selected by editor B',
+    async ({editorB}: Context, text: string) => {
+      if (text === 'stock-ticker') {
+        await selectEditorInlineObject(editorB, text)
+      } else {
+        await selectEditorText(editorB, text)
+      }
+    },
+  ),
   When(
     '{string} is selected backwards',
     async ({editorA}: Context, text: string) => {
@@ -446,6 +462,12 @@ export const stepDefinitions = [
     '{button} is pressed {int} times',
     async ({editorA}: Context, button: string, times: number) => {
       await editorA.pressKey(button, times)
+    },
+  ),
+  When(
+    '{button} is pressed {int} times by editor B',
+    async ({editorB}: Context, button: string, times: number) => {
+      await editorB.pressKey(button, times)
     },
   ),
 
