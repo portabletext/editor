@@ -1,5 +1,5 @@
 import type {BaseSyntheticEvent} from 'react'
-import type {EditorStore} from '../editor-store'
+import type {EditorActor} from '../editor-machine'
 import type {PortableTextEditor} from '../editor/PortableTextEditor'
 import type {PatchObservable} from './editor'
 
@@ -7,11 +7,11 @@ import type {PatchObservable} from './editor'
  * @internal
  */
 export type createEditorOptions = {
+  editorActor: EditorActor
   keyGenerator: () => string
   portableTextEditor: PortableTextEditor
   readOnly: boolean
   maxBlocks?: number
-  store: EditorStore
 }
 
 /**

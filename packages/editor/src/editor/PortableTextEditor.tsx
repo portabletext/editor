@@ -11,7 +11,7 @@ import type {
 } from '@sanity/types'
 import {Component, type MutableRefObject, type PropsWithChildren} from 'react'
 import {Subject, type Subscription} from 'rxjs'
-import {createEditorStore, type EditorStore} from '../editor-store'
+import {createEditorActor, type EditorActor} from '../editor-machine'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
@@ -43,9 +43,9 @@ const debug = debugWithName('component:PortableTextEditor')
  */
 export type PortableTextEditorProps = PropsWithChildren<{
   /**
-   * Used to interact with and listen to events from the editor
+   * Used to interact with and listen to events from the editor instance
    */
-  store?: EditorStore
+  editor?: EditorActor
 
   /**
    * Function that gets called when the editor changes the value
@@ -107,7 +107,7 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
    */
   private editable?: EditableAPI
 
-  private store: EditorStore
+  private editorActor: EditorActor
 
   private patches$?: PatchObservable
   private patchesSubscription?: Subscription
@@ -128,19 +128,19 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
     )
 
     // If no store is provided then we just create one
-    this.store = props.store ?? createEditorStore()
+    this.editorActor = props.editor ?? createEditorActor()
 
     this.patches$ = props.patches$
   }
 
   componentDidMount(): void {
-    this.store.start()
+    this.editorActor.start()
 
     // For backwards compatibility, if `patches$` is used, we subscribe to it
     // and send the patches to the store.
     this.patchesSubscription = this.patches$?.subscribe(
       ({patches, snapshot}) => {
-        this.store.send({type: 'patches', patches, snapshot})
+        this.editorActor.send({type: 'patches', patches, snapshot})
       },
     )
   }
@@ -188,11 +188,11 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
     const keyGenerator = this.props.keyGenerator || defaultKeyGenerator
     return (
       <SlateContainer
+        editorActor={this.editorActor}
         keyGenerator={keyGenerator}
         maxBlocks={maxBlocks}
         portableTextEditor={this}
         readOnly={readOnly}
-        store={this.store}
       >
         <PortableTextEditorKeyGeneratorContext.Provider value={keyGenerator}>
           <PortableTextEditorContext.Provider value={this}>

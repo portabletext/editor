@@ -2,8 +2,7 @@ import type {Patch} from '@portabletext/patches'
 import {noop} from 'lodash'
 import {createEditor, type Descendant} from 'slate'
 import {beforeEach, describe, expect, it} from 'vitest'
-import {createActor} from 'xstate'
-import {createEditorStore, keyGenerator, PortableTextEditor} from '../..'
+import {createEditorActor, keyGenerator, PortableTextEditor} from '../..'
 import {schemaType} from '../../editor/__tests__/PortableTextEditorTester'
 import {withPlugins} from '../../editor/plugins'
 import {createApplyPatch} from '../applyPatch'
@@ -16,10 +15,10 @@ const patchToOperations = createApplyPatch(schemaTypes)
 const portableTextEditor = new PortableTextEditor({schemaType, onChange: noop})
 
 const {editor} = withPlugins(createEditor(), {
+  editorActor: createEditorActor(),
   portableTextEditor,
   keyGenerator,
   readOnly: false,
-  store: createEditorStore(),
 })
 
 const createDefaultValue = (): Descendant[] => [

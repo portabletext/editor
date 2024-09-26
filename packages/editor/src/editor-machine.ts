@@ -1,28 +1,25 @@
 import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@sanity/types'
-import {createActor, emit, setup} from 'xstate'
-
-/********************
- * Editor Store
- ********************/
+import {ActorRefFrom, createActor, emit, setup} from 'xstate'
 
 /**
  * @alpha
  */
-export type EditorStore = ReturnType<typeof createEditorStore>
+export type EditorActor = ActorRefFrom<typeof editorMachine>
 
 /**
  * @alpha
  */
-export function createEditorStore() {
-  return createActor(editorStoreMachine)
+export function createEditorActor() {
+  return createActor(editorMachine)
 }
 
-/********************
- * Editor Store Machine
- ********************/
+export {createEditorActor as createEditor}
 
-const editorStoreMachine = setup({
+/**
+ * @alpha
+ */
+export const editorMachine = setup({
   types: {
     events: {} as {
       type: 'patches'
@@ -47,7 +44,7 @@ const editorStoreMachine = setup({
       event.patches.some((patch) => patch.origin !== 'local'),
   },
 }).createMachine({
-  id: 'editor store',
+  id: 'editor',
   on: {
     patches: {
       actions: ['emit remote patches'],

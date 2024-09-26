@@ -1,12 +1,8 @@
 import type {PortableTextTextBlock} from '@sanity/types'
 import {createEditor, type Descendant} from 'slate'
 import {beforeEach, describe, expect, it} from 'vitest'
-import {createActor} from 'xstate'
-import {
-  createEditorStore,
-  PortableTextEditor,
-  type PortableTextEditorProps,
-} from '../..'
+import {PortableTextEditor, type PortableTextEditorProps} from '../..'
+import {createEditorActor} from '../../editor-machine'
 import {schemaType} from '../../editor/__tests__/PortableTextEditorTester'
 import {defaultKeyGenerator} from '../../editor/hooks/usePortableTextEditorKeyGenerator'
 import {withPlugins} from '../../editor/plugins'
@@ -18,12 +14,12 @@ const portableTextFeatures = getPortableTextMemberSchemaTypes(schemaType)
 const operationToPatches = createOperationToPatches(portableTextFeatures)
 
 const {editor} = withPlugins(createEditor(), {
+  editorActor: createEditorActor(),
   portableTextEditor: new PortableTextEditor({
     schemaType,
   } as PortableTextEditorProps),
   keyGenerator: defaultKeyGenerator,
   readOnly: false,
-  store: createEditorStore(),
 })
 
 const createDefaultValue = () =>

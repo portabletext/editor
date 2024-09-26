@@ -20,7 +20,7 @@ import {
   type Descendant,
   type SelectionOperation,
 } from 'slate'
-import type {EditorStore} from '../../editor-store'
+import type {EditorActor} from '../../editor-machine'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {fromSlateValue} from '../../utils/values'
@@ -52,7 +52,7 @@ const isSaving = (editor: Editor): boolean | undefined => {
 }
 
 export interface Options {
-  store: EditorStore
+  editorActor: EditorActor
   readOnly: boolean
   blockSchemaType: ObjectSchemaType
 }
@@ -67,7 +67,7 @@ const getRemotePatches = (editor: Editor) => {
 export function createWithUndoRedo(
   options: Options,
 ): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
-  const {readOnly, blockSchemaType, store} = options
+  const {readOnly, blockSchemaType, editorActor} = options
 
   return (editor: PortableTextSlateEditor) => {
     let previousSnapshot: PortableTextBlock[] | undefined = fromSlateValue(
@@ -78,7 +78,7 @@ export function createWithUndoRedo(
 
     editor.subscriptions.push(() => {
       debug('Subscribing to patches in createWithUndoRedo')
-      const sub = store.on('remote patches', ({patches, snapshot}) => {
+      const sub = editorActor.on('remote patches', ({patches, snapshot}) => {
         let reset = false
         patches.forEach((patch) => {
           if (!reset && patch.origin !== 'local' && remotePatches) {
