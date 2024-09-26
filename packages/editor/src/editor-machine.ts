@@ -1,6 +1,6 @@
 import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@sanity/types'
-import {ActorRefFrom, createActor, emit, setup} from 'xstate'
+import {createActor, emit, setup, type ActorRefFrom} from 'xstate'
 
 /**
  * @alpha
