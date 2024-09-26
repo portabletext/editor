@@ -477,6 +477,9 @@ export const stepDefinitions = [
   When('undo is performed', async ({editorA}: Context) => {
     await editorA.undo()
   }),
+  When('undo is performed by editor B', async ({editorB}: Context) => {
+    await editorB.undo()
+  }),
   When('redo is performed', async ({editorA}: Context) => {
     await editorA.redo()
   }),
