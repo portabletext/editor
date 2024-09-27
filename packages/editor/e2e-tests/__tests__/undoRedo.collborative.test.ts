@@ -3,6 +3,10 @@ import '../setup/globals.jest'
 import {describe, expect, it} from '@jest/globals'
 import {toPlainText} from '@portabletext/toolkit'
 import type {PortableTextBlock} from '@sanity/types'
+import {
+  selectAfterEditorText,
+  selectBeforeEditorText,
+} from './gherkin-step-helpers'
 
 function getInitialValue(text = 'Hello world'): PortableTextBlock[] {
   return [
@@ -33,18 +37,7 @@ describe('undo/redo', () => {
     expect(toPlainText((await editorA.getValue()) || [])).toBe(initialText)
 
     // Editor A sets selection at end of the second paragraph (after "!"), and adds a question mark
-    const charOffset = initialText.indexOf('!') + 1
-    const desiredSelectionA = {
-      anchor: {
-        path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-        offset: charOffset,
-      },
-      focus: {
-        path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-        offset: charOffset,
-      },
-    }
-    await editorA.setSelection(desiredSelectionA)
+    await selectAfterEditorText(editorA, '!')
     await editorA.insertText('?')
 
     // Sanity-test for edit
@@ -55,13 +48,7 @@ describe('undo/redo', () => {
 
     // Editor B adds a new paragraph (_within same block_) to the start of the editor
     const newPrefix = 'Welcome.\n\n'
-    await editorB.setSelection({
-      anchor: {
-        path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-        offset: 0,
-      },
-      focus: {path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}], offset: 0},
-    })
+    await selectBeforeEditorText(editorB, 'First')
     await editorB.insertText(newPrefix)
 
     // Editors should be in sync
@@ -97,19 +84,9 @@ describe('undo/redo', () => {
       expect(toPlainText((await editorA.getValue()) || [])).toBe(initialKanji)
 
       // Editor A sets selection at start of span, and prepends "Paragraph 1: "
-      const desiredSelectionA = {
-        anchor: {
-          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-          offset: 0,
-        },
-        focus: {
-          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-          offset: 0,
-        },
-        backward: false,
-      }
       const p1Prefix = 'Paragraph 1: '
-      await editorA.setSelection(desiredSelectionA)
+      await selectBeforeEditorText(editorA, '速')
+      // await editorA.setSelection(desiredSelectionA)
       await editorA.insertText(p1Prefix)
 
       // Sanity-test for edit
@@ -118,17 +95,7 @@ describe('undo/redo', () => {
 
       // Editor B moves to the end of the first paragraph, and adds ` (end of paragraph 1)`
       const p1Suffix = ' (end of paragraph 1)'
-      const p1SuffixOffset = prefixedValue.indexOf('\n\n')
-      await editorB.setSelection({
-        anchor: {
-          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-          offset: p1SuffixOffset,
-        },
-        focus: {
-          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-          offset: p1SuffixOffset,
-        },
-      })
+      await selectBeforeEditorText(editorB, '\n\n')
       await editorB.insertText(p1Suffix)
 
       // Editors should be in sync
@@ -147,16 +114,7 @@ describe('undo/redo', () => {
 
       // Editor A moves to the end of the editor and adds a final `. EOL.` - eg "end of line"
       const p2EOL = `. EOL.`
-      await editorA.setSelection({
-        anchor: {
-          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-          offset: expectedPreAndPostfixedValue.length,
-        },
-        focus: {
-          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-          offset: expectedPreAndPostfixedValue.length,
-        },
-      })
+      await selectAfterEditorText(editorA, 'ぼ。')
       await editorA.insertText(p2EOL)
 
       // Editors should still be in sync
@@ -204,19 +162,9 @@ describe('undo/redo', () => {
       expect(toPlainText((await editorA.getValue()) || [])).toBe(initialKanji)
 
       // Editor A sets selection at start of span, and prepends "Paragraph 1: "
-      const desiredSelectionA = {
-        anchor: {
-          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-          offset: 0,
-        },
-        focus: {
-          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-          offset: 0,
-        },
-        backward: false,
-      }
       const p1Prefix = 'Paragraph 1: '
-      await editorA.setSelection(desiredSelectionA)
+      await selectBeforeEditorText(editorA, '速')
+      // await editorA.setSelection(desiredSelectionA)
       await editorA.insertText(p1Prefix)
 
       // Sanity-test for edit
@@ -225,17 +173,7 @@ describe('undo/redo', () => {
 
       // Editor B moves to the end of the first paragraph, and adds ` (end of paragraph 1)`
       const p1Suffix = ' (end of paragraph 1)'
-      const p1SuffixOffset = prefixedValue.indexOf('\n\n')
-      await editorB.setSelection({
-        anchor: {
-          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-          offset: p1SuffixOffset,
-        },
-        focus: {
-          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-          offset: p1SuffixOffset,
-        },
-      })
+      await selectBeforeEditorText(editorB, '\n\n')
       await editorB.insertText(p1Suffix)
 
       // Editors should be in sync
@@ -254,16 +192,7 @@ describe('undo/redo', () => {
 
       // Editor A moves to the end of the editor and adds a final `. EOL.` - eg "end of line"
       const p2EOL = `. EOL.`
-      await editorA.setSelection({
-        anchor: {
-          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-          offset: expectedPreAndPostfixedValue.length,
-        },
-        focus: {
-          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-          offset: expectedPreAndPostfixedValue.length,
-        },
-      })
+      await selectAfterEditorText(editorA, 'ぼ。')
       await editorA.insertText(p2EOL)
 
       // Editors should still be in sync
@@ -323,19 +252,7 @@ describe('undo/redo', () => {
       expect(toPlainText((await editorA.getValue()) || [])).toBe(initialText)
 
       // Editor A sets selection at end of the text (after the character `!`), and removes it
-      const charOffset = initialText.indexOf('!') + 1
-      const desiredSelectionA = {
-        anchor: {
-          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-          offset: charOffset,
-        },
-        focus: {
-          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-          offset: charOffset,
-        },
-        backward: false,
-      }
-      await editorA.setSelection(desiredSelectionA)
+      await selectAfterEditorText(editorA, '!')
       await editorA.pressKey('Backspace')
 
       // Sanity-test for edit
@@ -346,17 +263,7 @@ describe('undo/redo', () => {
       expect(await editorB.getValue()).toEqual(await editorA.getValue())
 
       // Editor B adds some new text in the middle of the span (after `🌌. `)
-      await editorB.setSelection({
-        anchor: {
-          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-          offset: 127,
-        },
-        focus: {
-          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-          offset: 127,
-        },
-      })
-
+      await selectAfterEditorText(editorB, '🌌. ')
       await editorB.insertText(middle)
 
       // Editors should be in sync
@@ -394,19 +301,7 @@ describe('undo/redo', () => {
       expect(toPlainText((await editorA.getValue()) || [])).toBe(initialText)
 
       // Editor A sets selection at end of the second paragraph (after the character `!`), and removes it
-      const charOffset = initialText.indexOf('!') + 1
-      const desiredSelectionA = {
-        anchor: {
-          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-          offset: charOffset,
-        },
-        focus: {
-          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-          offset: charOffset,
-        },
-        backward: false,
-      }
-      await editorA.setSelection(desiredSelectionA)
+      await selectAfterEditorText(editorA, '!')
       await editorA.pressKey('Backspace')
 
       // Sanity-test for edit
@@ -419,16 +314,7 @@ describe('undo/redo', () => {
       // Editor B adds a new paragraph (_within same block_) to the start of the editor
       const newPrefix =
         'A curious 🦊 named Felix lived in the 🪄🌲 of Willowwood. One day, he discovered a mysterious 🕳️, which lead to a magical 🌌.\n\n'
-      await editorB.setSelection({
-        anchor: {
-          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-          offset: 0,
-        },
-        focus: {
-          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-          offset: 0,
-        },
-      })
+      await selectBeforeEditorText(editorB, 'In')
       await editorB.insertText(newPrefix)
 
       // Editors should be in sync
@@ -463,19 +349,7 @@ describe('undo/redo', () => {
       expect(toPlainText((await editorA.getValue()) || [])).toBe(initialText)
 
       // Editor A sets selection at end of the second paragraph (after the number `1`), and removes it
-      const charOffset = initialText.indexOf('1') + 1
-      const desiredSelectionA = {
-        anchor: {
-          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-          offset: charOffset,
-        },
-        focus: {
-          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-          offset: charOffset,
-        },
-        backward: false,
-      }
-      await editorA.setSelection(desiredSelectionA)
+      await selectAfterEditorText(editorA, '1')
       await editorA.pressKey('Backspace')
 
       // Sanity-test for edit
@@ -488,16 +362,7 @@ describe('undo/redo', () => {
       // Editor B adds a new paragraph (_within same block_) to the start of the editor
       const newPrefix =
         '彼の背後で、領主のリングメイルの柔らかい金属の滑り音、葉のカサカサ音、そして伸びた枝が彼の長剣を掴み、華麗なクロテンのマントを引っ張りながら呪いの言葉をつぶやくのが聞こえた。\n\n'
-      await editorB.setSelection({
-        anchor: {
-          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-          offset: 0,
-        },
-        focus: {
-          path: [{_key: 'blockA'}, 'children', {_key: 'spanA'}],
-          offset: 0,
-        },
-      })
+      await selectBeforeEditorText(editorB, '彼は、')
       await editorB.insertText(newPrefix)
 
       // Editors should be in sync
