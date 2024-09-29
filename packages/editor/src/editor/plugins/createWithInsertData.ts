@@ -180,7 +180,6 @@ export function createWithInsertData(
         debug('No selection, not inserting')
         return false
       }
-      change$.next({type: 'loading', isLoading: true}) // This could potentially take some time
       const html = data.getData('text/html')
       const text = data.getData('text/plain')
 
@@ -246,10 +245,8 @@ export function createWithInsertData(
           `Inserting ${insertedType} fragment at ${JSON.stringify(editor.selection)}`,
         )
         _insertFragment(editor, fragment, schemaTypes)
-        change$.next({type: 'loading', isLoading: false})
         return true
       }
-      change$.next({type: 'loading', isLoading: false})
       return false
     }
 
