@@ -118,8 +118,6 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
       )
     }
 
-    this.change$.next({type: 'loading', isLoading: true})
-
     this.schemaTypes = getPortableTextMemberSchemaTypes(
       props.schemaType.hasOwnProperty('jsonType')
         ? props.schemaType

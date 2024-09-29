@@ -152,7 +152,6 @@ export function Synchronizer(props: SynchronizerProps) {
     syncValue(value)
     // Signal that we have our first value, and are ready to roll.
     if (isInitialValueFromProps.current) {
-      change$.next({type: 'loading', isLoading: false})
       change$.next({type: 'ready'})
       isInitialValueFromProps.current = false
     }
