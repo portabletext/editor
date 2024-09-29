@@ -10,7 +10,8 @@ import type {
   SpanSchemaType,
 } from '@sanity/types'
 import {Component, type MutableRefObject, type PropsWithChildren} from 'react'
-import {Subject} from 'rxjs'
+import {Subject, type Subscription} from 'rxjs'
+import {createEditorActor, type EditorActor} from '../editor-machine'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
@@ -42,6 +43,11 @@ const debug = debugWithName('component:PortableTextEditor')
  */
 export type PortableTextEditorProps = PropsWithChildren<{
   /**
+   * Used to interact with and listen to events from the editor instance
+   */
+  editor?: EditorActor
+
+  /**
    * Function that gets called when the editor changes the value
    */
   onChange: (change: EditorChange) => void
@@ -72,14 +78,10 @@ export type PortableTextEditorProps = PropsWithChildren<{
   keyGenerator?: () => string
 
   /**
+   * @deprecated Use `editor` instead.
    * Observable of local and remote patches for the edited value.
    */
   patches$?: PatchObservable
-
-  /**
-   * Backward compatibility (renamed to patches$).
-   */
-  incomingPatches$?: PatchObservable
 
   /**
    * A ref to the editor instance
@@ -105,17 +107,16 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
    */
   private editable?: EditableAPI
 
+  private editorActor: EditorActor
+
+  private patches$?: PatchObservable
+  private patchesSubscription?: Subscription
+
   constructor(props: PortableTextEditorProps) {
     super(props)
 
     if (!props.schemaType) {
       throw new Error('PortableTextEditor: missing "schemaType" property')
-    }
-
-    if (props.incomingPatches$) {
-      console.warn(
-        `The prop 'incomingPatches$' is deprecated and renamed to 'patches$'`,
-      )
     }
 
     this.change$.next({type: 'loading', isLoading: true})
@@ -125,6 +126,27 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
         ? props.schemaType
         : compileType(props.schemaType),
     )
+
+    // If no store is provided then we just create one
+    this.editorActor = props.editor ?? createEditorActor()
+
+    this.patches$ = props.patches$
+  }
+
+  componentDidMount(): void {
+    this.editorActor.start()
+
+    // For backwards compatibility, if `patches$` is used, we subscribe to it
+    // and send the patches to the store.
+    this.patchesSubscription = this.patches$?.subscribe(
+      ({patches, snapshot}) => {
+        this.editorActor.send({type: 'patches', patches, snapshot})
+      },
+    )
+  }
+
+  componentWillUnmount(): void {
+    this.patchesSubscription?.unsubscribe()
   }
 
   componentDidUpdate(prevProps: PortableTextEditorProps) {
@@ -154,9 +176,8 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
   }
 
   render() {
-    const {onChange, value, children, patches$, incomingPatches$} = this.props
+    const {onChange, value, children} = this.props
     const {change$} = this
-    const _patches$ = incomingPatches$ || patches$ // Backward compatibility
 
     const maxBlocks =
       typeof this.props.maxBlocks === 'undefined'
@@ -167,9 +188,9 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
     const keyGenerator = this.props.keyGenerator || defaultKeyGenerator
     return (
       <SlateContainer
+        editorActor={this.editorActor}
         keyGenerator={keyGenerator}
         maxBlocks={maxBlocks}
-        patches$={_patches$}
         portableTextEditor={this}
         readOnly={readOnly}
       >

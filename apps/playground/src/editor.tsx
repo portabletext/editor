@@ -1,7 +1,7 @@
 import {
   BlockDecoratorRenderProps,
   BlockStyleRenderProps,
-  Patch,
+  createEditor,
   PortableTextEditable,
   PortableTextEditor,
   RenderAnnotationFunction,
@@ -12,13 +12,11 @@ import {
   RenderPlaceholderFunction,
   RenderStyleFunction,
 } from '@portabletext/editor'
-import {PortableTextBlock} from '@sanity/types'
 import {useSelector} from '@xstate/react'
 import {CopyIcon, ImageIcon, TrashIcon} from 'lucide-react'
 import {useEffect, useMemo, useState} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
 import {reverse} from 'remeda'
-import {Subject} from 'rxjs'
 import {Button} from './components/button'
 import {ErrorBoundary} from './components/error-boundary'
 import {ErrorScreen} from './components/error-screen'
@@ -42,6 +40,7 @@ import {SelectionPreview} from './selection-preview'
 import {wait} from './wait'
 
 export function Editor(props: {editorRef: EditorActorRef}) {
+  const editor = useMemo(() => createEditor(), [])
   const showingPatchesPreview = useSelector(props.editorRef, (s) =>
     s.matches({'patches preview': 'shown'}),
   )
@@ -56,17 +55,11 @@ export function Editor(props: {editorRef: EditorActorRef}) {
   const patchesReceived = useSelector(props.editorRef, (s) =>
     reverse(s.context.patchesReceived),
   )
-  const patches$ = useMemo(
-    () =>
-      new Subject<{
-        patches: Array<Patch>
-        snapshot: Array<PortableTextBlock> | undefined
-      }>(),
-    [],
-  )
+
   useEffect(() => {
     const subscription = props.editorRef.on('patches', (event) => {
-      patches$.next({
+      editor.send({
+        type: 'patches',
         patches: event.patches,
         snapshot: event.snapshot,
       })
@@ -75,7 +68,8 @@ export function Editor(props: {editorRef: EditorActorRef}) {
     return () => {
       subscription.unsubscribe()
     }
-  }, [patches$, props.editorRef])
+  }, [props.editorRef, editor])
+
   const [loading, setLoading] = useState(false)
 
   return (
@@ -89,8 +83,8 @@ export function Editor(props: {editorRef: EditorActorRef}) {
         onError={console.error}
       >
         <PortableTextEditor
+          editor={editor}
           value={value}
-          patches$={patches$}
           onChange={(change) => {
             if (change.type === 'mutation') {
               props.editorRef.send(change)

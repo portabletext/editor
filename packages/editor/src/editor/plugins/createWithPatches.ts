@@ -13,9 +13,9 @@ import {
   type SetNodeOperation,
   type SplitNodeOperation,
 } from 'slate'
+import type {EditorActor} from '../../editor-machine'
 import type {
   EditorChange,
-  PatchObservable,
   PortableTextMemberSchemaTypes,
   PortableTextSlateEditor,
 } from '../../types/editor'
@@ -81,9 +81,9 @@ export interface PatchFunctions {
 }
 
 interface Options {
+  editorActor: EditorActor
   change$: Subject<EditorChange>
   keyGenerator: () => string
-  patches$?: PatchObservable
   patchFunctions: PatchFunctions
   readOnly: boolean
   schemaTypes: PortableTextMemberSchemaTypes
@@ -91,7 +91,7 @@ interface Options {
 
 export function createWithPatches({
   change$,
-  patches$,
+  editorActor,
   patchFunctions,
   readOnly,
   schemaTypes,
@@ -145,16 +145,14 @@ export function createWithPatches({
       handleBufferedRemotePatches()
     }
 
-    if (patches$) {
-      editor.subscriptions.push(() => {
-        debug('Subscribing to patches$')
-        const sub = patches$.subscribe(handlePatches)
-        return () => {
-          debug('Unsubscribing to patches$')
-          sub.unsubscribe()
-        }
-      })
-    }
+    editor.subscriptions.push(() => {
+      debug('Subscribing to patches')
+      const sub = editorActor.on('remote patches received', handlePatches)
+      return () => {
+        debug('Unsubscribing to patches')
+        sub.unsubscribe()
+      }
+    })
 
     editor.apply = (operation: Operation): void | Editor => {
       if (readOnly) {

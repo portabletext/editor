@@ -1,7 +1,7 @@
 import {useEffect, useMemo, useState, type PropsWithChildren} from 'react'
 import {createEditor} from 'slate'
 import {Slate, withReact} from 'slate-react'
-import type {PatchObservable} from '../../types/editor'
+import type {EditorActor} from '../../editor-machine'
 import {debugWithName} from '../../utils/debug'
 import {KEY_TO_SLATE_ELEMENT, KEY_TO_VALUE_ELEMENT} from '../../utils/weakMaps'
 import {withPlugins} from '../plugins'
@@ -13,9 +13,9 @@ const debug = debugWithName('component:PortableTextEditor:SlateContainer')
  * @internal
  */
 export interface SlateContainerProps extends PropsWithChildren {
+  editorActor: EditorActor
   keyGenerator: () => string
   maxBlocks: number | undefined
-  patches$?: PatchObservable
   portableTextEditor: PortableTextEditor
   readOnly: boolean
 }
@@ -25,16 +25,16 @@ export interface SlateContainerProps extends PropsWithChildren {
  * @internal
  */
 export function SlateContainer(props: SlateContainerProps) {
-  const {patches$, portableTextEditor, readOnly, maxBlocks, keyGenerator} =
+  const {portableTextEditor, readOnly, maxBlocks, keyGenerator, editorActor} =
     props
 
   // Create the slate instance, using `useState` ensures setup is only run once, initially
   const [[slateEditor, subscribe]] = useState(() => {
     debug('Creating new Slate editor instance')
     const {editor, subscribe: _sub} = withPlugins(withReact(createEditor()), {
+      editorActor,
       keyGenerator,
       maxBlocks,
-      patches$,
       portableTextEditor,
       readOnly,
     })
@@ -45,6 +45,7 @@ export function SlateContainer(props: SlateContainerProps) {
 
   useEffect(() => {
     const unsubscribe = subscribe()
+
     return () => {
       unsubscribe()
     }
@@ -54,18 +55,18 @@ export function SlateContainer(props: SlateContainerProps) {
   useEffect(() => {
     debug('Re-initializing plugin chain')
     withPlugins(slateEditor, {
+      editorActor,
       keyGenerator,
       maxBlocks,
-      patches$,
       portableTextEditor,
       readOnly,
     })
   }, [
+    editorActor,
     keyGenerator,
     portableTextEditor,
     maxBlocks,
     readOnly,
-    patches$,
     slateEditor,
   ])
 

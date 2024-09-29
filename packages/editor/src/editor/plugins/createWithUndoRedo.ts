@@ -20,7 +20,8 @@ import {
   type Descendant,
   type SelectionOperation,
 } from 'slate'
-import type {PatchObservable, PortableTextSlateEditor} from '../../types/editor'
+import type {EditorActor} from '../../editor-machine'
+import type {PortableTextSlateEditor} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {fromSlateValue} from '../../utils/values'
 import {
@@ -51,7 +52,7 @@ const isSaving = (editor: Editor): boolean | undefined => {
 }
 
 export interface Options {
-  patches$?: PatchObservable
+  editorActor: EditorActor
   readOnly: boolean
   blockSchemaType: ObjectSchemaType
 }
@@ -66,7 +67,7 @@ const getRemotePatches = (editor: Editor) => {
 export function createWithUndoRedo(
   options: Options,
 ): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
-  const {readOnly, patches$, blockSchemaType} = options
+  const {readOnly, blockSchemaType, editorActor} = options
 
   return (editor: PortableTextSlateEditor) => {
     let previousSnapshot: PortableTextBlock[] | undefined = fromSlateValue(
@@ -74,10 +75,12 @@ export function createWithUndoRedo(
       blockSchemaType.name,
     )
     const remotePatches = getRemotePatches(editor)
-    if (patches$) {
-      editor.subscriptions.push(() => {
-        debug('Subscribing to patches')
-        const sub = patches$.subscribe(({patches, snapshot}) => {
+
+    editor.subscriptions.push(() => {
+      debug('Subscribing to patches in createWithUndoRedo')
+      const sub = editorActor.on(
+        'remote patches received',
+        ({patches, snapshot}) => {
           let reset = false
           patches.forEach((patch) => {
             if (!reset && patch.origin !== 'local' && remotePatches) {
@@ -100,15 +103,18 @@ export function createWithUndoRedo(
             }
           })
           previousSnapshot = snapshot
-        })
-        return () => {
-          debug('Unsubscribing to patches')
-          sub.unsubscribe()
-        }
-      })
-    }
+        },
+      )
+      return () => {
+        debug('Unsubscribing to patches in createWithUndoRedo')
+        sub.unsubscribe()
+      }
+    })
+
     editor.history = {undos: [], redos: []}
+
     const {apply} = editor
+
     editor.apply = (op: Operation) => {
       if (readOnly) {
         apply(op)
