@@ -103,13 +103,9 @@ describe('Feature: Self-solving', () => {
           value: initialValue,
         })
         expect(onChange).toHaveBeenNthCalledWith(4, {
-          type: 'loading',
-          isLoading: false,
-        })
-        expect(onChange).toHaveBeenNthCalledWith(5, {
           type: 'ready',
         })
-        expect(onChange).toHaveBeenNthCalledWith(6, {
+        expect(onChange).toHaveBeenNthCalledWith(5, {
           type: 'mutation',
           patches: [spanPatch, blockPatch],
           snapshot: [
