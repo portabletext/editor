@@ -217,6 +217,7 @@ export function createWithPortableTextMarkModel(
         if (markDefs.length !== newMarkDefs.length) {
           debug('Removing duplicate markDefs')
           Transforms.setNodes(editor, {markDefs: newMarkDefs}, {at: path})
+          return
         }
       }
 
