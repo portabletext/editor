@@ -64,6 +64,8 @@
     "xstate": "^5.18.2"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.25.4",
+    "@babel/preset-react": "^7.24.7",
     "@jest/globals": "^29.7.0",
     "@jest/types": "^29.6.3",
     "@playwright/test": "1.47.2",
