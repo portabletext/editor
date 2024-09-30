@@ -3,7 +3,7 @@ import {debounce, isEqual} from 'lodash'
 import {useCallback, useMemo, useRef} from 'react'
 import {Editor, Text, Transforms, type Descendant, type Node} from 'slate'
 import {useSlate} from 'slate-react'
-import type {EditorChange, PortableTextSlateEditor} from '../../types/editor'
+import type {PortableTextSlateEditor} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {validateValue} from '../../utils/validateValue'
 import {toSlateValue, VOID_CHILD_KEY} from '../../utils/values'
@@ -13,6 +13,7 @@ import {
   withRemoteChanges,
 } from '../../utils/withChanges'
 import {withoutPatching} from '../../utils/withoutPatching'
+import type {EditorActor} from '../editor-machine'
 import {withoutSaving} from '../plugins/createWithUndoRedo'
 import type {PortableTextEditor} from '../PortableTextEditor'
 
@@ -22,8 +23,8 @@ const debug = debugWithName('hook:useSyncValue')
  * @internal
  */
 export interface UseSyncValueProps {
+  editorActor: EditorActor
   keyGenerator: () => string
-  onChange: (change: EditorChange) => void
   portableTextEditor: PortableTextEditor
   readOnly: boolean
 }
@@ -51,8 +52,8 @@ export function useSyncValue(
   value: PortableTextBlock[] | undefined,
   userCallbackFn?: () => void,
 ) => void {
-  const {portableTextEditor, readOnly, keyGenerator} = props
-  const {change$, schemaTypes} = portableTextEditor
+  const {editorActor, portableTextEditor, readOnly, keyGenerator} = props
+  const {schemaTypes} = portableTextEditor
   const previousValue = useRef<PortableTextBlock[] | undefined>()
   const slateEditor = useSlate()
   const updateValueFunctionRef =
@@ -180,7 +181,7 @@ export function useSyncValue(
                             `${validation.resolution.action} for block with _key '${validationValue[0]._key}'. ${validation.resolution?.description}`,
                           )
                           validation.resolution.patches.forEach((patch) => {
-                            change$.next({type: 'patch', patch})
+                            editorActor.send({type: 'patch', patch})
                           })
                         }
                       }
@@ -208,8 +209,8 @@ export function useSyncValue(
                         }
                         isChanged = true
                       } else {
-                        change$.next({
-                          type: 'invalidValue',
+                        editorActor.send({
+                          type: 'invalid value',
                           resolution: validation.resolution,
                           value,
                         })
@@ -237,8 +238,8 @@ export function useSyncValue(
                         })
                       } else {
                         debug('Invalid', validation)
-                        change$.next({
-                          type: 'invalidValue',
+                        editorActor.send({
+                          type: 'invalid value',
                           resolution: validation.resolution,
                           value,
                         })
@@ -263,8 +264,8 @@ export function useSyncValue(
           slateEditor.onChange()
         } catch (err) {
           console.error(err)
-          change$.next({
-            type: 'invalidValue',
+          editorActor.send({
+            type: 'invalid value',
             resolution: null,
             value,
           })
@@ -277,7 +278,7 @@ export function useSyncValue(
           })
           slateEditor.onChange()
         }
-        change$.next({type: 'value', value})
+        editorActor.send({type: 'value changed', value})
       } else {
         debug('Server value and editor value is equal, no need to sync.')
       }
@@ -286,7 +287,7 @@ export function useSyncValue(
     updateValueFunctionRef.current = updateFunction
     return updateFunction
   }, [
-    change$,
+    editorActor,
     keyGenerator,
     portableTextEditor,
     readOnly,

@@ -1,7 +1,5 @@
-import type {Subject} from 'rxjs'
 import type {BaseRange} from 'slate'
 import type {
-  EditorChange,
   EditorSelection,
   PortableTextMemberSchemaTypes,
   PortableTextSlateEditor,
@@ -12,13 +10,14 @@ import {
   type ObjectWithKeyAndType,
 } from '../../utils/ranges'
 import {SLATE_TO_PORTABLE_TEXT_RANGE} from '../../utils/weakMaps'
+import type {EditorActor} from '../editor-machine'
 
 const debug = debugWithName('plugin:withPortableTextSelections')
 const debugVerbose = debug.enabled && false
 
 // This plugin will make sure that we emit a PT selection whenever the editor has changed.
 export function createWithPortableTextSelections(
-  change$: Subject<EditorChange>,
+  editorActor: EditorActor,
   types: PortableTextMemberSchemaTypes,
 ): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
   let prevSelection: BaseRange | null = null
@@ -46,9 +45,9 @@ export function createWithPortableTextSelections(
           )
         }
         if (ptRange) {
-          change$.next({type: 'selection', selection: ptRange})
+          editorActor.send({type: 'selection', selection: ptRange})
         } else {
-          change$.next({type: 'selection', selection: null})
+          editorActor.send({type: 'selection', selection: null})
         }
       }
       prevSelection = editor.selection

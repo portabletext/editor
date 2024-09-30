@@ -161,15 +161,15 @@ export const PortableTextEditable = forwardRef(function PortableTextEditable(
 
   const rangeDecorationsRef = useRef(rangeDecorations)
 
-  const {change$, schemaTypes} = portableTextEditor
+  const {editorActor, schemaTypes} = portableTextEditor
   const slateEditor = useSlate()
 
   const blockTypeName = schemaTypes.block.name
 
   // React/UI-specific plugins
   const withInsertData = useMemo(
-    () => createWithInsertData(change$, schemaTypes, keyGenerator),
-    [change$, keyGenerator, schemaTypes],
+    () => createWithInsertData(editorActor, schemaTypes, keyGenerator),
+    [editorActor, keyGenerator, schemaTypes],
   )
   const withHotKeys = useMemo(
     () => createWithHotkeys(schemaTypes, portableTextEditor, hotkeys),
@@ -278,13 +278,16 @@ export const PortableTextEditable = forwardRef(function PortableTextEditable(
           // Output selection here in those cases where the editor selection was the same, and there are no set_selection operations made.
           // The selection is usually automatically emitted to change$ by the withPortableTextSelections plugin whenever there is a set_selection operation applied.
           if (!slateEditor.operations.some((o) => o.type === 'set_selection')) {
-            change$.next({type: 'selection', selection: normalizedSelection})
+            editorActor.send({
+              type: 'selection',
+              selection: normalizedSelection,
+            })
           }
           slateEditor.onChange()
         }
       }
     }
-  }, [propsSelection, slateEditor, blockTypeName, change$])
+  }, [editorActor, propsSelection, slateEditor])
 
   const syncRangeDecorations = useCallback(
     (operation?: Operation) => {
@@ -348,28 +351,24 @@ export const PortableTextEditable = forwardRef(function PortableTextEditable(
     [portableTextEditor, rangeDecorations, schemaTypes, slateEditor],
   )
 
-  // Subscribe to change$ and restore selection from props when the editor has been initialized properly with it's value
+  // Restore selection from props when the editor has been initialized properly with it's value
   useEffect(() => {
-    // debug('Subscribing to editor changes$')
-    const sub = change$.subscribe((next: EditorChange): void => {
-      switch (next.type) {
-        case 'ready':
-          restoreSelectionFromProps()
-          break
-        case 'invalidValue':
-          setHasInvalidValue(true)
-          break
-        case 'value':
-          setHasInvalidValue(false)
-          break
-        default:
-      }
+    const onReady = editorActor.on('ready', () => {
+      restoreSelectionFromProps()
     })
+    const onInvalidValue = editorActor.on('invalid value', () => {
+      setHasInvalidValue(true)
+    })
+    const onValueChanged = editorActor.on('value changed', () => {
+      setHasInvalidValue(false)
+    })
+
     return () => {
-      // debug('Unsubscribing to changes$')
-      sub.unsubscribe()
+      onReady.unsubscribe()
+      onInvalidValue.unsubscribe()
+      onValueChanged.unsubscribe()
     }
-  }, [change$, restoreSelectionFromProps])
+  }, [editorActor, restoreSelectionFromProps])
 
   // Restore selection from props when it changes
   useEffect(() => {
@@ -451,7 +450,7 @@ export const PortableTextEditable = forwardRef(function PortableTextEditable(
         slateEditor.insertData(event.clipboardData)
       } else {
         // Resolve it as promise (can be either async promise or sync return value)
-        change$.next({type: 'loading', isLoading: true})
+        editorActor.send({type: 'loading'})
         Promise.resolve(onPasteResult)
           .then((result) => {
             debug('Custom paste function from client resolved', result)
@@ -476,11 +475,11 @@ export const PortableTextEditable = forwardRef(function PortableTextEditable(
             return error
           })
           .finally(() => {
-            change$.next({type: 'loading', isLoading: false})
+            editorActor.send({type: 'done loading'})
           })
       }
     },
-    [change$, onPaste, portableTextEditor, schemaTypes, slateEditor],
+    [onPaste, portableTextEditor, schemaTypes, slateEditor],
   )
 
   const handleOnFocus: FocusEventHandler<HTMLDivElement> = useCallback(
@@ -495,18 +494,18 @@ export const PortableTextEditable = forwardRef(function PortableTextEditable(
           Transforms.select(slateEditor, Editor.start(slateEditor, []))
           slateEditor.onChange()
         }
-        change$.next({type: 'focus', event})
+        editorActor.send({type: 'focus', event})
         const newSelection = PortableTextEditor.getSelection(portableTextEditor)
         // If the selection is the same, emit it explicitly here as there is no actual onChange event triggered.
         if (selection === newSelection) {
-          change$.next({
+          editorActor.send({
             type: 'selection',
             selection,
           })
         }
       }
     },
-    [onFocus, portableTextEditor, change$, slateEditor],
+    [editorActor, onFocus, portableTextEditor, slateEditor],
   )
 
   const handleClick = useCallback(
@@ -542,10 +541,10 @@ export const PortableTextEditable = forwardRef(function PortableTextEditable(
         onBlur(event)
       }
       if (!event.isPropagationStopped()) {
-        change$.next({type: 'blur', event})
+        editorActor.send({type: 'blur', event})
       }
     },
-    [change$, onBlur],
+    [editorActor, onBlur],
   )
 
   const handleOnBeforeInput = useCallback(

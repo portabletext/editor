@@ -11,12 +11,14 @@ import type {
 } from '@sanity/types'
 import {Component, type MutableRefObject, type PropsWithChildren} from 'react'
 import {Subject} from 'rxjs'
+import {createActor, type Subscription} from 'xstate'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
   EditorChange,
   EditorChanges,
   EditorSelection,
+  MutationChange,
   PatchObservable,
   PortableTextMemberSchemaTypes,
 } from '../types/editor'
@@ -25,6 +27,7 @@ import {getPortableTextMemberSchemaTypes} from '../utils/getPortableTextMemberSc
 import {compileType} from '../utils/schema'
 import {SlateContainer} from './components/SlateContainer'
 import {Synchronizer} from './components/Synchronizer'
+import {editorMachine, type EditorActor} from './editor-machine'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {
   defaultKeyGenerator,
@@ -93,6 +96,11 @@ export type PortableTextEditorProps = PropsWithChildren<{
  */
 export class PortableTextEditor extends Component<PortableTextEditorProps> {
   /**
+   * @internal
+   * Don't use this API directly. It's subject to change.
+   */
+  public editorActor: EditorActor
+  /**
    * An observable of all the editor changes.
    */
   public change$: EditorChanges = new Subject()
@@ -117,6 +125,9 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
         `The prop 'incomingPatches$' is deprecated and renamed to 'patches$'`,
       )
     }
+
+    this.editorActor = createActor(editorMachine)
+    this.editorActor.start()
 
     this.schemaTypes = getPortableTextMemberSchemaTypes(
       props.schemaType.hasOwnProperty('jsonType')
@@ -152,8 +163,7 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
   }
 
   render() {
-    const {onChange, value, children, patches$, incomingPatches$} = this.props
-    const {change$} = this
+    const {value, children, patches$, incomingPatches$} = this.props
     const _patches$ = incomingPatches$ || patches$ // Backward compatibility
 
     const maxBlocks =
@@ -174,11 +184,20 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
         <PortableTextEditorKeyGeneratorContext.Provider value={keyGenerator}>
           <PortableTextEditorContext.Provider value={this}>
             <PortableTextEditorReadOnlyContext.Provider value={readOnly}>
-              <PortableTextEditorSelectionProvider change$={change$}>
+              <PortableTextEditorSelectionProvider
+                editorActor={this.editorActor}
+              >
                 <Synchronizer
-                  change$={change$}
+                  editorActor={this.editorActor}
                   getValue={this.getValue}
-                  onChange={onChange}
+                  onChange={(change) => {
+                    this.props.onChange(change)
+                    /**
+                     * For backwards compatibility, we relay all changes to the
+                     * `change$` Subject as well.
+                     */
+                    this.change$.next(change)
+                  }}
                   value={value}
                 />
                 {children}
