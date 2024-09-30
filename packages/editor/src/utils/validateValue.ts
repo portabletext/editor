@@ -10,7 +10,6 @@ import type {
   InvalidValueResolution,
   PortableTextMemberSchemaTypes,
 } from '../types/editor'
-import {EMPTY_MARKDEFS} from './values'
 
 export interface Validation {
   valid: boolean
@@ -227,28 +226,7 @@ export function validateValue(
           }
           return true
         }
-        // Test that markDefs are valid if they exists
-        if (blk.markDefs && !Array.isArray(blk.markDefs)) {
-          resolution = {
-            patches: [
-              set({...textBlock, markDefs: EMPTY_MARKDEFS}, [
-                {_key: textBlock._key},
-              ]),
-            ],
-            description: `Block has invalid required property 'markDefs'.`,
-            action: 'Add empty markDefs array',
-            item: textBlock,
 
-            i18n: {
-              description:
-                'inputs.portable-text.invalid-value.missing-or-invalid-markdefs.description',
-              action:
-                'inputs.portable-text.invalid-value.missing-or-invalid-markdefs.action',
-              values: {key: textBlock._key},
-            },
-          }
-          return true
-        }
         const allUsedMarks = uniq(
           flatten(
             textBlock.children
