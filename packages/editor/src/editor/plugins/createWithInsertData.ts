@@ -15,6 +15,7 @@ import {
   isEqualToEmptyEditor,
   toSlateValue,
 } from '../../utils/values'
+import type {EditorActor} from '../editor-machine'
 
 const debug = debugWithName('plugin:withInsertData')
 
@@ -23,7 +24,7 @@ const debug = debugWithName('plugin:withInsertData')
  *
  */
 export function createWithInsertData(
-  change$: EditorChanges,
+  editorActor: EditorActor,
   schemaTypes: PortableTextMemberSchemaTypes,
   keyGenerator: () => string,
 ) {
@@ -158,9 +159,8 @@ export function createWithInsertData(
           // Bail out if it's not valid
           if (!validation.valid && !validation.resolution?.autoResolve) {
             const errorDescription = `${validation.resolution?.description}`
-            change$.next({
+            editorActor.send({
               type: 'error',
-              level: 'warning',
               name: 'pasteError',
               description: errorDescription,
               data: validation,
@@ -231,9 +231,8 @@ export function createWithInsertData(
         // Bail out if it's not valid
         if (!validation.valid) {
           const errorDescription = `Could not validate the resulting portable text to insert.\n${validation.resolution?.description}\nTry to insert as plain text (shift-paste) instead.`
-          change$.next({
+          editorActor.send({
             type: 'error',
-            level: 'warning',
             name: 'pasteError',
             description: errorDescription,
             data: validation,

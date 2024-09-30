@@ -7,7 +7,6 @@
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import type {PortableTextObject} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
-import type {Subject} from 'rxjs'
 import {
   Editor,
   Element,
@@ -19,7 +18,6 @@ import {
   type Descendant,
 } from 'slate'
 import type {
-  EditorChange,
   PortableTextMemberSchemaTypes,
   PortableTextSlateEditor,
 } from '../../types/editor'
@@ -27,12 +25,13 @@ import {debugWithName} from '../../utils/debug'
 import {toPortableTextRange} from '../../utils/ranges'
 import {isChangingRemotely} from '../../utils/withChanges'
 import {isRedoing, isUndoing} from '../../utils/withUndoRedo'
+import type {EditorActor} from '../editor-machine'
 
 const debug = debugWithName('plugin:withPortableTextMarkModel')
 
 export function createWithPortableTextMarkModel(
+  editorActor: EditorActor,
   types: PortableTextMemberSchemaTypes,
-  change$: Subject<EditorChange>,
   keyGenerator: () => string,
 ): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
   return function withPortableTextMarkModel(editor: PortableTextSlateEditor) {
@@ -59,7 +58,7 @@ export function createWithPortableTextMarkModel(
         editor.selection,
         types,
       )
-      change$.next({type: 'selection', selection: ptRange})
+      editorActor.send({type: 'selection', selection: ptRange})
     }
 
     // Extend Slate's default normalization. Merge spans with same set of .marks when doing merge_node operations, and clean up markDefs / marks

@@ -1,5 +1,4 @@
 import {insert, setIfMissing, unset, type Patch} from '@portabletext/patches'
-import type {Subject} from 'rxjs'
 import {
   Editor,
   type Descendant,
@@ -14,7 +13,6 @@ import {
   type SplitNodeOperation,
 } from 'slate'
 import type {
-  EditorChange,
   PatchObservable,
   PortableTextMemberSchemaTypes,
   PortableTextSlateEditor,
@@ -32,6 +30,7 @@ import {
   PATCHING,
   withoutPatching,
 } from '../../utils/withoutPatching'
+import type {EditorActor} from '../editor-machine'
 import {withoutSaving} from './createWithUndoRedo'
 
 const debug = debugWithName('plugin:withPatches')
@@ -81,7 +80,7 @@ export interface PatchFunctions {
 }
 
 interface Options {
-  change$: Subject<EditorChange>
+  editorActor: EditorActor
   keyGenerator: () => string
   patches$?: PatchObservable
   patchFunctions: PatchFunctions
@@ -90,7 +89,7 @@ interface Options {
 }
 
 export function createWithPatches({
-  change$,
+  editorActor,
   patches$,
   patchFunctions,
   readOnly,
@@ -281,7 +280,7 @@ export function createWithPatches({
         )
       ) {
         patches = [...patches, unset([])]
-        change$.next({
+        editorActor.send({
           type: 'unset',
           previousValue: fromSlateValue(
             previousChildren,
@@ -299,7 +298,7 @@ export function createWithPatches({
       // Emit all patches
       if (patches.length > 0) {
         patches.forEach((patch) => {
-          change$.next({
+          editorActor.send({
             type: 'patch',
             patch: {...patch, origin: 'local'},
           })

@@ -49,7 +49,7 @@ export const withPlugins = <T extends Editor>(
   const e = editor as T & PortableTextSlateEditor
   const {keyGenerator, portableTextEditor, patches$, readOnly, maxBlocks} =
     options
-  const {schemaTypes, change$} = portableTextEditor
+  const {editorActor, schemaTypes} = portableTextEditor
   e.subscriptions = []
   if (e.destroy) {
     e.destroy()
@@ -71,7 +71,7 @@ export const withPlugins = <T extends Editor>(
     keyGenerator,
   )
   const withPatches = createWithPatches({
-    change$,
+    editorActor,
     keyGenerator,
     patches$,
     patchFunctions: operationToPatches,
@@ -86,8 +86,8 @@ export const withPlugins = <T extends Editor>(
     blockSchemaType: schemaTypes.block,
   })
   const withPortableTextMarkModel = createWithPortableTextMarkModel(
+    editorActor,
     schemaTypes,
-    change$,
     keyGenerator,
   )
   const withPortableTextBlockStyle =
@@ -103,7 +103,7 @@ export const withPlugins = <T extends Editor>(
     portableTextEditor,
   })
   const withPortableTextSelections = createWithPortableTextSelections(
-    change$,
+    editorActor,
     schemaTypes,
   )
 

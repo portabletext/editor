@@ -4,9 +4,10 @@ import {throttle} from 'lodash'
 import {useCallback, useEffect, useMemo, useRef} from 'react'
 import {Editor} from 'slate'
 import {useSlate} from 'slate-react'
-import type {EditorChange, EditorChanges} from '../../types/editor'
+import type {EditorChange} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {IS_PROCESSING_LOCAL_CHANGES} from '../../utils/weakMaps'
+import type {EditorActor} from '../editor-machine'
 import {usePortableTextEditor} from '../hooks/usePortableTextEditor'
 import {usePortableTextEditorKeyGenerator} from '../hooks/usePortableTextEditorKeyGenerator'
 import {usePortableTextEditorReadOnlyStatus} from '../hooks/usePortableTextReadOnly'
@@ -23,7 +24,7 @@ const FLUSH_PATCHES_THROTTLED_MS = process.env.NODE_ENV === 'test' ? 500 : 1000
  * @internal
  */
 export interface SynchronizerProps {
-  change$: EditorChanges
+  editorActor: EditorActor
   getValue: () => Array<PortableTextBlock> | undefined
   onChange: (change: EditorChange) => void
   value: Array<PortableTextBlock> | undefined
@@ -37,12 +38,12 @@ export function Synchronizer(props: SynchronizerProps) {
   const portableTextEditor = usePortableTextEditor()
   const keyGenerator = usePortableTextEditorKeyGenerator()
   const readOnly = usePortableTextEditorReadOnlyStatus()
-  const {change$, getValue, onChange, value} = props
+  const {editorActor, getValue, onChange, value} = props
   const pendingPatches = useRef<Patch[]>([])
 
   const syncValue = useSyncValue({
+    editorActor,
     keyGenerator,
-    onChange,
     portableTextEditor,
     readOnly,
   })
@@ -60,7 +61,7 @@ export function Synchronizer(props: SynchronizerProps) {
         debug(`Patches:\n${JSON.stringify(pendingPatches.current, null, 2)}`)
       }
       const snapshot = getValue()
-      change$.next({
+      editorActor.send({
         type: 'mutation',
         patches: pendingPatches.current,
         snapshot,
@@ -68,7 +69,7 @@ export function Synchronizer(props: SynchronizerProps) {
       pendingPatches.current = []
     }
     IS_PROCESSING_LOCAL_CHANGES.set(slateEditor, false)
-  }, [slateEditor, getValue, change$])
+  }, [editorActor, slateEditor, getValue])
 
   const onFlushPendingPatchesThrottled = useMemo(() => {
     return throttle(
@@ -99,50 +100,78 @@ export function Synchronizer(props: SynchronizerProps) {
 
   // Subscribe to, and handle changes from the editor
   useEffect(() => {
-    debug('Subscribing to editor changes$')
-    const sub = change$.subscribe((next: EditorChange): void => {
-      switch (next.type) {
+    debug('Subscribing to editor changes')
+    const sub = editorActor.on('*', (event) => {
+      switch (event.type) {
         case 'patch':
           IS_PROCESSING_LOCAL_CHANGES.set(slateEditor, true)
-          pendingPatches.current.push(next.patch)
+          pendingPatches.current.push(event.patch)
           onFlushPendingPatchesThrottled()
-          onChange(next)
+          onChange(event)
           break
+        case 'loading': {
+          onChange({type: 'loading', isLoading: true})
+          break
+        }
+        case 'done loading': {
+          onChange({type: 'loading', isLoading: false})
+          break
+        }
+        case 'offline': {
+          onChange({type: 'connection', value: 'offline'})
+          break
+        }
+        case 'online': {
+          onChange({type: 'connection', value: 'online'})
+          break
+        }
+        case 'value changed': {
+          onChange({type: 'value', value: event.value})
+          break
+        }
+        case 'invalid value': {
+          onChange({
+            type: 'invalidValue',
+            resolution: event.resolution,
+            value: event.value,
+          })
+          break
+        }
+        case 'error': {
+          onChange({
+            ...event,
+            level: 'warning',
+          })
+          break
+        }
         default:
-          onChange(next)
+          onChange(event)
       }
     })
     return () => {
-      debug('Unsubscribing to changes$')
+      debug('Unsubscribing to changes')
       sub.unsubscribe()
     }
-  }, [change$, onChange, onFlushPendingPatchesThrottled, slateEditor])
+  }, [editorActor, onFlushPendingPatchesThrottled, slateEditor])
 
   // Sync the value when going online
   const handleOnline = useCallback(() => {
     debug('Editor is online, syncing from props.value')
-    change$.next({type: 'connection', value: 'online'})
     syncValue(value)
-  }, [change$, syncValue, value])
-
-  const handleOffline = useCallback(() => {
-    debug('Editor is offline')
-    change$.next({type: 'connection', value: 'offline'})
-  }, [change$])
+  }, [syncValue, value])
 
   // Notify about window online and offline status changes
   useEffect(() => {
-    if (portableTextEditor.props.patches$) {
-      window.addEventListener('online', handleOnline)
-      window.addEventListener('offline', handleOffline)
-    }
-    return () => {
+    const subscription = editorActor.on('online', () => {
       if (portableTextEditor.props.patches$) {
-        window.removeEventListener('online', handleOnline)
-        window.removeEventListener('offline', handleOffline)
+        handleOnline()
       }
+    })
+
+    return () => {
+      subscription.unsubscribe()
     }
-  })
+  }, [editorActor])
 
   // This hook must be set up after setting up the subscription above, or it will not pick up validation errors from the useSyncValue hook.
   // This will cause the editor to not be able to signal a validation error and offer invalid value resolution of the initial value.
@@ -152,10 +181,10 @@ export function Synchronizer(props: SynchronizerProps) {
     syncValue(value)
     // Signal that we have our first value, and are ready to roll.
     if (isInitialValueFromProps.current) {
-      change$.next({type: 'ready'})
+      editorActor.send({type: 'ready'})
       isInitialValueFromProps.current = false
     }
-  }, [change$, syncValue, value])
+  }, [editorActor, syncValue, value])
 
   return null
 }

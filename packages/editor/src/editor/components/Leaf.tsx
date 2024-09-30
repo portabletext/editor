@@ -141,28 +141,30 @@ export const Leaf = (props: LeafProps) => {
     if (!shouldTrackSelectionAndFocus) {
       return undefined
     }
-    const sub = portableTextEditor.change$.subscribe((next) => {
-      if (next.type === 'blur') {
-        setFocused(false)
-        setSelected(false)
-        return
+
+    const onBlur = portableTextEditor.editorActor.on('blur', () => {
+      setFocused(false)
+      setSelected(false)
+    })
+
+    const onFocus = portableTextEditor.editorActor.on('focus', () => {
+      const sel = PortableTextEditor.getSelection(portableTextEditor)
+      if (
+        sel &&
+        isEqual(sel.focus.path, path) &&
+        PortableTextEditor.isCollapsedSelection(portableTextEditor)
+      ) {
+        setFocused(true)
       }
-      if (next.type === 'focus') {
-        const sel = PortableTextEditor.getSelection(portableTextEditor)
+      setSelectedFromRange()
+    })
+
+    const onSelection = portableTextEditor.editorActor.on(
+      'selection',
+      (event) => {
         if (
-          sel &&
-          isEqual(sel.focus.path, path) &&
-          PortableTextEditor.isCollapsedSelection(portableTextEditor)
-        ) {
-          setFocused(true)
-        }
-        setSelectedFromRange()
-        return
-      }
-      if (next.type === 'selection') {
-        if (
-          next.selection &&
-          isEqual(next.selection.focus.path, path) &&
+          event.selection &&
+          isEqual(event.selection.focus.path, path) &&
           PortableTextEditor.isCollapsedSelection(portableTextEditor)
         ) {
           setFocused(true)
@@ -170,10 +172,13 @@ export const Leaf = (props: LeafProps) => {
           setFocused(false)
         }
         setSelectedFromRange()
-      }
-    })
+      },
+    )
+
     return () => {
-      sub.unsubscribe()
+      onBlur.unsubscribe()
+      onFocus.unsubscribe()
+      onSelection.unsubscribe()
     }
   }, [
     path,
