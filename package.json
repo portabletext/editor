@@ -13,7 +13,6 @@
     "dev": "turbo dev",
     "dev:editor": "turbo dev --filter=@portabletext/editor",
     "dev:playground": "turbo dev --filter=playground...",
-    "dev:react-compiler": "turbo dev --filter=react-compiler",
     "dev:sanity-studio": "turbo dev --filter=sanity-studio...",
     "format": "prettier --cache --write .",
     "format:staged": "pretty-quick --staged",
