@@ -11,14 +11,13 @@ import type {
 } from '@sanity/types'
 import {Component, type MutableRefObject, type PropsWithChildren} from 'react'
 import {Subject} from 'rxjs'
-import {createActor, type Subscription} from 'xstate'
+import {createActor} from 'xstate'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
   EditorChange,
   EditorChanges,
   EditorSelection,
-  MutationChange,
   PatchObservable,
   PortableTextMemberSchemaTypes,
 } from '../types/editor'
