@@ -1,7 +1,15 @@
 import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@sanity/types'
 import type {FocusEvent} from 'react'
-import {emit, fromCallback, setup, type ActorRefFrom} from 'xstate'
+import {
+  assertEvent,
+  assign,
+  emit,
+  enqueueActions,
+  fromCallback,
+  setup,
+  type ActorRefFrom,
+} from 'xstate'
 import type {EditorSelection, InvalidValueResolution} from '../types/editor'
 
 /**
@@ -26,20 +34,32 @@ const networkLogic = fromCallback(({sendBack}) => {
   }
 })
 
+/**
+ * @internal
+ */
+export type PatchEvent = {type: 'patch'; patch: Patch}
+
+/**
+ * @internal
+ */
+export type MutationEvent = {
+  type: 'mutation'
+  patches: Array<Patch>
+  snapshot: Array<PortableTextBlock> | undefined
+}
+
 type EditorEvent =
+  | {type: 'normalizing'}
+  | {type: 'done normalizing'}
+  | EditorEmittedEvent
+
+type EditorEmittedEvent =
   | {type: 'ready'}
-  | {
-      type: 'patch'
-      patch: Patch
-    }
+  | PatchEvent
+  | MutationEvent
   | {
       type: 'unset'
       previousValue: Array<PortableTextBlock>
-    }
-  | {
-      type: 'mutation'
-      patches: Array<Patch>
-      snapshot: Array<PortableTextBlock> | undefined
     }
   | {
       type: 'value changed'
@@ -69,22 +89,50 @@ type EditorEvent =
  */
 export const editorMachine = setup({
   types: {
+    context: {} as {
+      pendingEvents: Array<PatchEvent | MutationEvent>
+    },
     events: {} as EditorEvent,
-    emitted: {} as EditorEvent,
+    emitted: {} as EditorEmittedEvent,
+  },
+  actions: {
+    'emit patch event': emit(({event}) => {
+      assertEvent(event, 'patch')
+      return event
+    }),
+    'emit mutation event': emit(({event}) => {
+      assertEvent(event, 'mutation')
+      return event
+    }),
+    'defer event': assign({
+      pendingEvents: ({context, event}) => {
+        assertEvent(event, ['patch', 'mutation'])
+        return [...context.pendingEvents, event]
+      },
+    }),
+    'emit pending events': enqueueActions(({context, enqueue}) => {
+      for (const event of context.pendingEvents) {
+        enqueue(emit(event))
+      }
+    }),
+    'clear pending events': assign({
+      pendingEvents: [],
+    }),
   },
   actors: {
     networkLogic,
   },
 }).createMachine({
   id: 'editor',
-  initial: 'setting up',
+  context: {
+    pendingEvents: [],
+  },
   invoke: {
     id: 'networkLogic',
     src: 'networkLogic',
   },
   on: {
-    'patch': {actions: emit(({event}) => event)},
-    'mutation': {actions: emit(({event}) => event)},
+    'ready': {actions: emit(({event}) => event)},
     'unset': {actions: emit(({event}) => event)},
     'value changed': {actions: emit(({event}) => event)},
     'invalid value': {actions: emit(({event}) => event)},
@@ -97,13 +145,51 @@ export const editorMachine = setup({
     'loading': {actions: emit({type: 'loading'})},
     'done loading': {actions: emit({type: 'done loading'})},
   },
+  initial: 'pristine',
   states: {
-    'setting up': {
-      exit: emit({type: 'ready'}),
-      on: {
-        ready: {target: 'ready'},
+    pristine: {
+      initial: 'idle',
+      states: {
+        idle: {
+          on: {
+            normalizing: {
+              target: 'normalizing',
+            },
+            patch: {
+              actions: 'defer event',
+              target: '#editor.dirty',
+            },
+            mutation: {
+              actions: 'defer event',
+              target: '#editor.dirty',
+            },
+          },
+        },
+        normalizing: {
+          on: {
+            'done normalizing': {
+              target: 'idle',
+            },
+            'patch': {
+              actions: 'defer event',
+            },
+            'mutation': {
+              actions: 'defer event',
+            },
+          },
+        },
       },
     },
-    'ready': {},
+    dirty: {
+      entry: ['emit pending events', 'clear pending events'],
+      on: {
+        patch: {
+          actions: 'emit patch event',
+        },
+        mutation: {
+          actions: 'emit mutation event',
+        },
+      },
+    },
   },
 })

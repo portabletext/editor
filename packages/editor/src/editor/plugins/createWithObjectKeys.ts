@@ -5,12 +5,14 @@ import type {
 } from '../../types/editor'
 import {isChangingRemotely} from '../../utils/withChanges'
 import {isRedoing, isUndoing} from '../../utils/withUndoRedo'
+import type {EditorActor} from '../editor-machine'
 
 /**
  * This plugin makes sure that every new node in the editor get a new _key prop when created
  *
  */
 export function createWithObjectKeys(
+  editorActor: EditorActor,
   schemaTypes: PortableTextMemberSchemaTypes,
   keyGenerator: () => string,
 ) {
@@ -75,12 +77,17 @@ export function createWithObjectKeys(
       if (Element.isElement(node) && node._type === schemaTypes.block.name) {
         // Set key on block itself
         if (!node._key) {
+          editorActor.send({type: 'normalizing'})
           Transforms.setNodes(editor, {_key: keyGenerator()}, {at: path})
+          editorActor.send({type: 'done normalizing'})
+          return
         }
         // Set keys on it's children
         for (const [child, childPath] of Node.children(editor, path)) {
           if (!child._key) {
+            editorActor.send({type: 'normalizing'})
             Transforms.setNodes(editor, {_key: keyGenerator()}, {at: childPath})
+            editorActor.send({type: 'done normalizing'})
             return
           }
         }
