@@ -75,7 +75,6 @@
     "@sanity/gherkin-driver": "workspace:^",
     "@sanity/pkg-utils": "^6.11.2",
     "@sanity/schema": "^3.55.0",
-    "@sanity/test": "0.0.1-alpha.1",
     "@sanity/types": "^3.55.0",
     "@sanity/ui": "^2.8.9",
     "@sanity/util": "^3.55.0",
