@@ -271,18 +271,16 @@ export function createWithEditableAPI(
       hasBlockStyle: (style: string): boolean => {
         try {
           return editor.pteHasBlockStyle(style)
-        } catch (err) {
+        } catch {
           // This is fine.
-          // debug(err)
           return false
         }
       },
       hasListStyle: (listStyle: string): boolean => {
         try {
           return editor.pteHasListStyle(listStyle)
-        } catch (err) {
+        } catch {
           // This is fine.
-          // debug(err)
           return false
         }
       },
@@ -341,7 +339,7 @@ export function createWithEditableAPI(
             }) || [],
           )[0] || [undefined]
           node = ReactEditor.toDOMNode(editor, item)
-        } catch (err) {
+        } catch {
           // Nothing
         }
         return node
@@ -376,7 +374,7 @@ export function createWithEditableAPI(
             }
           }
           return activeAnnotations
-        } catch (err) {
+        } catch {
           return []
         }
       },
@@ -427,7 +425,7 @@ export function createWithEditableAPI(
 
             return spanMarkDefs?.includes(annotationType)
           })
-        } catch (err) {
+        } catch {
           return false
         }
       },
