@@ -1,6 +1,5 @@
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
-import * as React from 'react'
 import {describe, expect, it, vi} from 'vitest'
 import {
   PortableTextEditorTester,

@@ -36,7 +36,6 @@ import {
   type RenderLeafProps,
 } from 'slate-react'
 import type {
-  EditorChange,
   EditorSelection,
   OnCopyFn,
   OnPasteFn,

@@ -18,7 +18,8 @@
       },
       "correctness": {
         "useExhaustiveDependencies": "off",
-        "noVoidTypeReturn": "off"
+        "noVoidTypeReturn": "off",
+        "noUnusedImports": "error"
       },
       "performance": {
         "noAccumulatingSpread": "off"
