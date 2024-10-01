@@ -63,8 +63,16 @@ export const withPlugins = <T extends Editor>(
     })
   }
   const operationToPatches = createOperationToPatches(schemaTypes)
-  const withObjectKeys = createWithObjectKeys(schemaTypes, keyGenerator)
-  const withSchemaTypes = createWithSchemaTypes({schemaTypes, keyGenerator})
+  const withObjectKeys = createWithObjectKeys(
+    editorActor,
+    schemaTypes,
+    keyGenerator,
+  )
+  const withSchemaTypes = createWithSchemaTypes({
+    editorActor,
+    schemaTypes,
+    keyGenerator,
+  })
   const withEditableAPI = createWithEditableAPI(
     portableTextEditor,
     schemaTypes,
@@ -90,8 +98,10 @@ export const withPlugins = <T extends Editor>(
     schemaTypes,
     keyGenerator,
   )
-  const withPortableTextBlockStyle =
-    createWithPortableTextBlockStyle(schemaTypes)
+  const withPortableTextBlockStyle = createWithPortableTextBlockStyle(
+    editorActor,
+    schemaTypes,
+  )
 
   const withPlaceholderBlock = createWithPlaceholderBlock()
 

@@ -4,10 +4,12 @@ import type {
   PortableTextSlateEditor,
 } from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
+import type {EditorActor} from '../editor-machine'
 
 const debug = debugWithName('plugin:withPortableTextBlockStyle')
 
 export function createWithPortableTextBlockStyle(
+  editorActor: EditorActor,
   types: PortableTextMemberSchemaTypes,
 ): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
   const defaultStyle = types.styles[0].value
@@ -17,9 +19,10 @@ export function createWithPortableTextBlockStyle(
     // Extend Slate's default normalization to reset split node to normal style
     // if there is no text at the right end of the split.
     const {normalizeNode} = editor
+
     editor.normalizeNode = (nodeEntry) => {
-      normalizeNode(nodeEntry)
       const [, path] = nodeEntry
+
       for (const op of editor.operations) {
         if (
           op.type === 'split_node' &&
@@ -32,16 +35,21 @@ export function createWithPortableTextBlockStyle(
           const [child] = Editor.node(editor, [op.path[0] + 1, 0])
           if (SlateText.isText(child) && child.text === '') {
             debug(`Normalizing split node to ${defaultStyle} style`, op)
+            editorActor.send({type: 'normalizing'})
             Transforms.setNodes(
               editor,
               {style: defaultStyle},
               {at: [op.path[0] + 1], voids: false},
             )
-            break
+            editorActor.send({type: 'done normalizing'})
+            return
           }
         }
       }
+
+      normalizeNode(nodeEntry)
     }
+
     editor.pteHasBlockStyle = (style: string): boolean => {
       if (!editor.selection) {
         return false

@@ -81,10 +81,12 @@ export function createWithPortableTextMarkModel(
               JSON.stringify(child, null, 2),
               JSON.stringify(nextNode, null, 2),
             )
+            editorActor.send({type: 'normalizing'})
             Transforms.mergeNodes(editor, {
               at: [childPath[0], childPath[1] + 1],
               voids: true,
             })
+            editorActor.send({type: 'done normalizing'})
             return
           }
         }
@@ -95,7 +97,9 @@ export function createWithPortableTextMarkModel(
        */
       if (editor.isTextBlock(node) && !Array.isArray(node.markDefs)) {
         debug('Adding .markDefs to block node')
+        editorActor.send({type: 'normalizing'})
         Transforms.setNodes(editor, {markDefs: []}, {at: path})
+        editorActor.send({type: 'done normalizing'})
         return
       }
 
@@ -104,7 +108,9 @@ export function createWithPortableTextMarkModel(
        */
       if (editor.isTextSpan(node) && !Array.isArray(node.marks)) {
         debug('Adding .marks to span node')
+        editorActor.send({type: 'normalizing'})
         Transforms.setNodes(editor, {marks: []}, {at: path})
+        editorActor.send({type: 'done normalizing'})
         return
       }
 
@@ -122,11 +128,13 @@ export function createWithPortableTextMarkModel(
         if (editor.isTextBlock(block)) {
           if (node.text === '' && annotations && annotations.length > 0) {
             debug('Removing annotations from empty span node')
+            editorActor.send({type: 'normalizing'})
             Transforms.setNodes(
               editor,
               {marks: node.marks?.filter((mark) => decorators.includes(mark))},
               {at: path},
             )
+            editorActor.send({type: 'done normalizing'})
             return
           }
         }
@@ -150,6 +158,7 @@ export function createWithPortableTextMarkModel(
 
             if (orphanedAnnotations.length > 0) {
               debug('Removing orphaned annotations from span node')
+              editorActor.send({type: 'normalizing'})
               Transforms.setNodes(
                 editor,
                 {
@@ -159,6 +168,7 @@ export function createWithPortableTextMarkModel(
                 },
                 {at: childPath},
               )
+              editorActor.send({type: 'done normalizing'})
               return
             }
           }
@@ -186,6 +196,7 @@ export function createWithPortableTextMarkModel(
 
           if (orphanedAnnotations.length > 0) {
             debug('Removing orphaned annotations from span node')
+            editorActor.send({type: 'normalizing'})
             Transforms.setNodes(
               editor,
               {
@@ -195,6 +206,7 @@ export function createWithPortableTextMarkModel(
               },
               {at: path},
             )
+            editorActor.send({type: 'done normalizing'})
             return
           }
         }
@@ -215,7 +227,9 @@ export function createWithPortableTextMarkModel(
 
         if (markDefs.length !== newMarkDefs.length) {
           debug('Removing duplicate markDefs')
+          editorActor.send({type: 'normalizing'})
           Transforms.setNodes(editor, {markDefs: newMarkDefs}, {at: path})
+          editorActor.send({type: 'done normalizing'})
           return
         }
       }
@@ -241,6 +255,7 @@ export function createWithPortableTextMarkModel(
         })
         if (node.markDefs && !isEqual(newMarkDefs, node.markDefs)) {
           debug('Removing markDef not in use')
+          editorActor.send({type: 'normalizing'})
           Transforms.setNodes(
             editor,
             {
@@ -248,6 +263,7 @@ export function createWithPortableTextMarkModel(
             },
             {at: path},
           )
+          editorActor.send({type: 'done normalizing'})
           return
         }
       }

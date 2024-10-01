@@ -4,6 +4,7 @@ import type {PortableTextBlock, PortableTextSpan} from '@sanity/types'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type ComponentProps, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
+import {getTextSelection} from '../../../e2e-tests/__tests__/gherkin-step-helpers'
 import {PortableTextEditable} from '../Editable'
 import {PortableTextEditor} from '../PortableTextEditor'
 
@@ -38,7 +39,7 @@ function span(
 }
 
 describe('Feature: Self-solving', () => {
-  it('Scenario: Missing .markDefs and .marks are added', async () => {
+  it('Scenario: Missing .markDefs and .marks are added after the editor is made dirty', async () => {
     const editorRef: RefObject<PortableTextEditor> = createRef()
     const onChange = vi.fn<OnChange>()
     const initialValue = [
@@ -76,6 +77,12 @@ describe('Feature: Self-solving', () => {
       }) as JSONValue,
       origin: 'local',
     }
+    const strongPatch: Patch = {
+      type: 'set',
+      path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'marks'],
+      value: ['strong'],
+      origin: 'local',
+    }
 
     render(
       <PortableTextEditor
@@ -91,23 +98,63 @@ describe('Feature: Self-solving', () => {
     await waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenNthCalledWith(1, {
-          type: 'patch',
-          patch: spanPatch,
-        })
-        expect(onChange).toHaveBeenNthCalledWith(2, {
-          type: 'patch',
-          patch: blockPatch,
-        })
-        expect(onChange).toHaveBeenNthCalledWith(3, {
           type: 'value',
           value: initialValue,
         })
-        expect(onChange).toHaveBeenNthCalledWith(4, {
+        expect(onChange).toHaveBeenNthCalledWith(2, {
           type: 'ready',
         })
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        PortableTextEditor.select(
+          editorRef.current,
+          getTextSelection(initialValue, 'foo'),
+        )
+        PortableTextEditor.toggleMark(editorRef.current, 'strong')
+      }
+    })
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenNthCalledWith(3, {
+          type: 'selection',
+          selection: {
+            ...getTextSelection(initialValue, 'foo'),
+            backward: false,
+          },
+        })
+        expect(onChange).toHaveBeenNthCalledWith(4, {
+          type: 'patch',
+          patch: spanPatch,
+        })
         expect(onChange).toHaveBeenNthCalledWith(5, {
+          type: 'patch',
+          patch: blockPatch,
+        })
+        expect(onChange).toHaveBeenNthCalledWith(6, {
+          type: 'patch',
+          patch: strongPatch,
+        })
+        expect(onChange).toHaveBeenNthCalledWith(7, {
+          type: 'selection',
+          selection: {
+            ...getTextSelection(initialValue, 'foo'),
+            backward: false,
+          },
+        })
+        expect(onChange).toHaveBeenNthCalledWith(8, {
+          type: 'selection',
+          selection: {
+            ...getTextSelection(initialValue, 'foo'),
+            backward: false,
+          },
+        })
+        expect(onChange).toHaveBeenNthCalledWith(9, {
           type: 'mutation',
-          patches: [spanPatch, blockPatch],
+          patches: [spanPatch, blockPatch, strongPatch],
           snapshot: [
             block({
               _key: 'b1',
@@ -115,7 +162,7 @@ describe('Feature: Self-solving', () => {
                 span({
                   _key: 's1',
                   text: 'foo',
-                  marks: [],
+                  marks: ['strong'],
                 }),
               ],
               style: 'normal',
