@@ -183,7 +183,7 @@ export const Editor = ({
   )
 
   const renderListItem = useCallback((props: BlockListItemRenderProps) => {
-    const {level, schemaType, value: listType, children} = props
+    const {level, schemaType, children} = props
     const listStyleType = schemaType.value === 'number' ? 'decimal' : 'inherit'
     return (
       <li style={{listStyleType, paddingLeft: `${level * 10}pt`}}>

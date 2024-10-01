@@ -47,8 +47,6 @@ const debugVerbose = debug.enabled && true
 export function createApplyPatch(
   schemaTypes: PortableTextMemberSchemaTypes,
 ): (editor: PortableTextSlateEditor, patch: Patch) => boolean {
-  let previousPatch: Patch | undefined
-
   return (editor: PortableTextSlateEditor, patch: Patch): boolean => {
     let changed = false
 
@@ -66,7 +64,7 @@ export function createApplyPatch(
           changed = insertPatch(editor, patch, schemaTypes)
           break
         case 'unset':
-          changed = unsetPatch(editor, patch, previousPatch)
+          changed = unsetPatch(editor, patch)
           break
         case 'set':
           changed = setPatch(editor, patch)
@@ -80,7 +78,7 @@ export function createApplyPatch(
     } catch (err) {
       console.error(err)
     }
-    previousPatch = patch
+
     return changed
   }
 }
@@ -308,18 +306,14 @@ function setPatch(editor: PortableTextSlateEditor, patch: SetPatch) {
   return true
 }
 
-function unsetPatch(
-  editor: PortableTextSlateEditor,
-  patch: UnsetPatch,
-  previousPatch?: Patch,
-) {
+function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
   // Value
   if (patch.path.length === 0) {
     debug('Removing everything')
     debugState(editor, 'before')
     const previousSelection = editor.selection
     Transforms.deselect(editor)
-    editor.children.forEach((c, i) => {
+    editor.children.forEach((_child, i) => {
       Transforms.removeNodes(editor, {at: [i]})
     })
     Transforms.insertNodes(editor, editor.pteCreateTextBlock({decorators: []}))

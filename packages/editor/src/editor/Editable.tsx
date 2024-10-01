@@ -602,7 +602,7 @@ export const PortableTextEditable = forwardRef(function PortableTextEditable(
         // Set the correct range
         domSelection.addRange(newDOMRange)
       }
-    } catch (error) {
+    } catch {
       debug(`Could not resolve selection, selecting top document`)
       // Deselect the editor
       Transforms.deselect(slateEditor)
@@ -655,7 +655,7 @@ export const PortableTextEditable = forwardRef(function PortableTextEditable(
       return noop
     }
     // Translate PortableTextEditor prop fn to Slate plugin fn
-    return (editor: ReactEditor, domRange: Range) => {
+    return (_editor: ReactEditor, domRange: Range) => {
       scrollSelectionIntoView(portableTextEditor, domRange)
     }
   }, [portableTextEditor, scrollSelectionIntoView])
