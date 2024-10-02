@@ -53,6 +53,10 @@ export function Editor(props: {editorRef: EditorActorRef}) {
   )
   const color = useSelector(props.editorRef, (s) => s.context.color)
   const value = useSelector(props.editorRef, (s) => s.context.value)
+  const keyGenerator = useSelector(
+    props.editorRef,
+    (s) => s.context.keyGenerator,
+  )
   const patchesReceived = useSelector(props.editorRef, (s) =>
     reverse(s.context.patchesReceived),
   )
@@ -91,6 +95,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
         <PortableTextEditor
           value={value}
           patches$={patches$}
+          keyGenerator={keyGenerator}
           onChange={(change) => {
             if (change.type === 'mutation') {
               props.editorRef.send(change)
