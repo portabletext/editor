@@ -1,7 +1,7 @@
 import {
   composeRenderProps,
   Toolbar as RACToolbar,
-  ToolbarProps,
+  type ToolbarProps,
 } from 'react-aria-components'
 import {tv} from 'tailwind-variants'
 

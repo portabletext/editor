@@ -1,10 +1,10 @@
 import {
-  EditorSelection,
   PortableTextEditor,
   usePortableTextEditor,
   usePortableTextEditorSelection,
+  type EditorSelection,
 } from '@portabletext/editor'
-import {
+import type {
   BlockDecoratorDefinition,
   BlockListDefinition,
   ObjectSchemaType,

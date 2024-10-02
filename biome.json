@@ -25,6 +25,9 @@
       "performance": {
         "noAccumulatingSpread": "off"
       },
+      "security": {
+        "noDangerouslySetInnerHtml": "off"
+      },
       "suspicious": {
         "noConfusingVoidType": "off",
         "noExplicitAny": "off",

@@ -1,18 +1,18 @@
 import {
-  BlockDecoratorRenderProps,
-  BlockStyleRenderProps,
-  Patch,
   PortableTextEditable,
   PortableTextEditor,
-  RenderAnnotationFunction,
-  RenderBlockFunction,
-  RenderChildFunction,
-  RenderDecoratorFunction,
-  RenderListItemFunction,
-  RenderPlaceholderFunction,
-  RenderStyleFunction,
+  type BlockDecoratorRenderProps,
+  type BlockStyleRenderProps,
+  type Patch,
+  type RenderAnnotationFunction,
+  type RenderBlockFunction,
+  type RenderChildFunction,
+  type RenderDecoratorFunction,
+  type RenderListItemFunction,
+  type RenderPlaceholderFunction,
+  type RenderStyleFunction,
 } from '@portabletext/editor'
-import {PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock} from '@sanity/types'
 import {useSelector} from '@xstate/react'
 import {CopyIcon, ImageIcon, TrashIcon} from 'lucide-react'
 import {useEffect, useMemo, useState} from 'react'
@@ -29,7 +29,7 @@ import {Toolbar} from './components/toolbar'
 import {Tooltip} from './components/tooltip'
 import {EditorPatchesPreview} from './editor-patches-preview'
 import {EditorPortableTextPreview} from './editor-portable-text-preview'
-import {EditorActorRef} from './playground-machine'
+import type {EditorActorRef} from './playground-machine'
 import {PortableTextToolbar} from './portable-text-toolbar'
 import {
   CommentAnnotationSchema,
