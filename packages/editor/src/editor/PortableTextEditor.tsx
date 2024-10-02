@@ -30,6 +30,7 @@ import {editorMachine, type EditorActor} from './editor-machine'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
 import {PortableTextEditorReadOnlyContext} from './hooks/usePortableTextReadOnly'
+import {nonStickyAnnotations} from './internal-behaviour'
 import {defaultKeyGenerator} from './key-generator'
 
 const debug = debugWithName('component:PortableTextEditor')
@@ -130,6 +131,7 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
 
     this.editorActor = createActor(editorMachine, {
       input: {
+        behaviours: [nonStickyAnnotations],
         keyGenerator: props.keyGenerator ?? defaultKeyGenerator,
         schemaTypes: this.schemaTypes,
       },

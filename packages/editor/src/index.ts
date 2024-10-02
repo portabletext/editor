@@ -1,9 +1,18 @@
 export {type Patch} from '@portabletext/patches'
 export {PortableTextEditable} from './editor/Editable'
 export type {PortableTextEditableProps} from './editor/Editable'
+export type {
+  Behaviour,
+  BehaviourContext,
+  BehaviourEvent,
+  BehaviourGuard,
+  RaiseBehaviourEvent,
+} from './editor/editor-behaviour'
 export {
   editorMachine,
   type EditorActor,
+  type EditorContext,
+  type InsertTextEvent,
   type MutationEvent,
   type PatchEvent,
 } from './editor/editor-machine'
