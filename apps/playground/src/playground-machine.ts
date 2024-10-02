@@ -14,6 +14,7 @@ import {
   stopChild,
 } from 'xstate'
 import {generateColor} from './generate-color'
+import {createKeyGenerator} from './key-generator'
 
 const copyToTextClipboardActor = fromPromise(
   ({input}: {input: {text: string}}) => {
@@ -32,6 +33,7 @@ const editorMachine = setup({
       color: string
       value: Array<PortableTextBlock> | undefined
       patchesReceived: Array<Patch & {new: boolean; id: string}>
+      keyGenerator: () => string
     },
     events: {} as
       | MutationChange
@@ -52,7 +54,11 @@ const editorMachine = setup({
       patches: MutationChange['patches']
       snapshot: MutationChange['snapshot']
     },
-    input: {} as {color: string; value: Array<PortableTextBlock> | undefined},
+    input: {} as {
+      color: string
+      value: Array<PortableTextBlock> | undefined
+      keyGenerator: () => string
+    },
   },
   actions: {
     'store patches received': assign({
@@ -81,6 +87,7 @@ const editorMachine = setup({
     color: input.color,
     value: input.value,
     patchesReceived: [],
+    keyGenerator: input.keyGenerator,
   }),
   on: {
     'mutation': {
@@ -224,14 +231,16 @@ export const playgroundMachine = setup({
     'add editor to context': assign({
       editors: ({context, event, spawn}) => {
         assertEvent(event, 'add editor')
+        const editorId = context.editorIdGenerator.next().value
         return [
           ...context.editors,
           spawn('editor machine', {
             input: {
               color: context.colorGenerator.next().value,
               value: context.value,
+              keyGenerator: createKeyGenerator(`e${editorId}-k`),
             },
-            id: context.editorIdGenerator.next().value,
+            id: `editor-${editorId}`,
           }),
         ]
       },
