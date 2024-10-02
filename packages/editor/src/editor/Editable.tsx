@@ -549,6 +549,14 @@ export const PortableTextEditable = forwardRef(function PortableTextEditable(
       if (onBeforeInput) {
         onBeforeInput(event)
       }
+      if (!event.defaultPrevented && event.inputType === 'insertText') {
+        editorActor.send({
+          type: 'insert text',
+          text: event.data ?? '',
+          editor: slateEditor,
+        })
+        event.preventDefault()
+      }
     },
     [onBeforeInput],
   )

@@ -122,18 +122,19 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
       )
     }
 
-    this.editorActor = createActor(editorMachine, {
-      input: {
-        keyGenerator: props.keyGenerator || defaultKeyGenerator,
-      },
-    })
-    this.editorActor.start()
-
     this.schemaTypes = getPortableTextMemberSchemaTypes(
       props.schemaType.hasOwnProperty('jsonType')
         ? props.schemaType
         : compileType(props.schemaType),
     )
+
+    this.editorActor = createActor(editorMachine, {
+      input: {
+        keyGenerator: props.keyGenerator ?? defaultKeyGenerator,
+        schemaTypes: this.schemaTypes,
+      },
+    })
+    this.editorActor.start()
   }
 
   componentDidUpdate(prevProps: PortableTextEditorProps) {
@@ -144,6 +145,10 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
           ? this.props.schemaType
           : compileType(this.props.schemaType),
       )
+      this.editorActor.send({
+        type: 'update schema',
+        schemaTypes: this.schemaTypes,
+      })
     }
     if (this.props.editorRef !== prevProps.editorRef && this.props.editorRef) {
       this.props.editorRef.current = this

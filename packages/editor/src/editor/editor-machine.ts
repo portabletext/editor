@@ -1,16 +1,27 @@
 import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@sanity/types'
 import type {FocusEvent} from 'react'
+import {Editor, Range, Transforms} from 'slate'
 import {
+  and,
   assertEvent,
   assign,
   emit,
   enqueueActions,
   fromCallback,
+  or,
+  raise,
   setup,
   type ActorRefFrom,
 } from 'xstate'
-import type {EditorSelection, InvalidValueResolution} from '../types/editor'
+import type {
+  EditorSelection,
+  InvalidValueResolution,
+  PortableTextMemberSchemaTypes,
+  PortableTextSlateEditor,
+} from '../types/editor'
+
+export * from 'xstate/guards'
 
 /**
  * @internal
@@ -52,6 +63,21 @@ type EditorEvent =
   | {type: 'normalizing'}
   | {type: 'done normalizing'}
   | EditorEmittedEvent
+  | {
+      type: 'update schema'
+      schemaTypes: PortableTextMemberSchemaTypes
+    }
+  | {
+      type: 'insert text'
+      text: string
+      editor: PortableTextSlateEditor
+    }
+  | {
+      type: 'insert span'
+      editor: PortableTextSlateEditor
+      text: string
+      marks: Array<string>
+    }
 
 type EditorEmittedEvent =
   | {type: 'ready'}
@@ -92,14 +118,28 @@ export const editorMachine = setup({
     context: {} as {
       keyGenerator: () => string
       pendingEvents: Array<PatchEvent | MutationEvent>
+      schema: {
+        decorators: Array<string>
+      }
     },
     events: {} as EditorEvent,
     emitted: {} as EditorEmittedEvent,
     input: {} as {
       keyGenerator: () => string
+      schemaTypes: PortableTextMemberSchemaTypes
     },
   },
   actions: {
+    'assign schema': assign({
+      schema: ({event}) => {
+        assertEvent(event, 'update schema')
+        return {
+          decorators: event.schemaTypes.decorators.map(
+            (decorator) => decorator.value,
+          ),
+        }
+      },
+    }),
     'emit patch event': emit(({event}) => {
       assertEvent(event, 'patch')
       return event
@@ -123,6 +163,84 @@ export const editorMachine = setup({
       pendingEvents: [],
     }),
   },
+  guards: {
+    'selection collapsed': ({event}) => {
+      assertEvent(event, 'insert text')
+
+      return (
+        event.editor.selection != null &&
+        Range.isCollapsed(event.editor.selection)
+      )
+    },
+    'selecting span': ({event}) => {
+      assertEvent(event, 'insert text')
+
+      if (!event.editor.selection) {
+        return false
+      }
+
+      const [span] = Array.from(
+        Editor.nodes(event.editor, {
+          mode: 'lowest',
+          at: event.editor.selection.focus,
+          match: (n) => event.editor.isTextSpan(n),
+          voids: false,
+        }),
+      )[0]
+
+      return span !== undefined
+    },
+    'at the start of span': ({event}) => {
+      assertEvent(event, 'insert text')
+
+      if (!event.editor.selection) {
+        return false
+      }
+
+      return event.editor.selection.focus.offset === 0
+    },
+    'at the end of span': ({event}) => {
+      assertEvent(event, 'insert text')
+
+      if (!event.editor.selection) {
+        return false
+      }
+
+      const [span] = Array.from(
+        Editor.nodes(event.editor, {
+          mode: 'lowest',
+          at: event.editor.selection.focus,
+          match: (n) => event.editor.isTextSpan(n),
+          voids: false,
+        }),
+      )[0]
+
+      return span.text.length === event.editor.selection.focus.offset
+    },
+    'span has annotations': ({context, event}) => {
+      assertEvent(event, 'insert text')
+
+      if (!event.editor.selection) {
+        return false
+      }
+
+      const [span] = Array.from(
+        Editor.nodes(event.editor, {
+          mode: 'lowest',
+          at: event.editor.selection.focus,
+          match: (n) => event.editor.isTextSpan(n),
+          voids: false,
+        }),
+      )[0]
+
+      const marks = span.marks ?? []
+      const marksWithoutAnnotations = marks.filter((mark) =>
+        context.schema.decorators.includes(mark),
+      )
+
+      return marks.length > marksWithoutAnnotations.length
+    },
+  },
   actors: {
     networkLogic,
   },
@@ -131,6 +249,11 @@ export const editorMachine = setup({
   context: ({input}) => ({
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
+    schema: {
+      decorators: input.schemaTypes.decorators.map(
+        (decorator) => decorator.value,
+      ),
+    },
   }),
   invoke: {
     id: 'networkLogic',
@@ -149,6 +272,40 @@ export const editorMachine = setup({
     'offline': {actions: emit({type: 'offline'})},
     'loading': {actions: emit({type: 'loading'})},
     'done loading': {actions: emit({type: 'done loading'})},
+    'update schema': {actions: 'assign schema'},
+    'insert text': [
+      {
+        guard: and([
+          'selecting span',
+          'selection collapsed',
+          or(['at the start of span', 'at the end of span']),
+          'span has annotations',
+        ]),
+        actions: raise(({context, event}) => ({
+          type: 'insert span',
+          text: event.text,
+          editor: event.editor,
+          marks: (Editor.marks(event.editor)?.marks ?? []).filter((mark) =>
+            context.schema.decorators.includes(mark),
+          ),
+        })),
+      },
+      {
+        actions: ({event}) => {
+          Editor.insertText(event.editor, event.text)
+        },
+      },
+    ],
+    'insert span': {
+      actions: ({context, event}) => {
+        Transforms.insertNodes(event.editor, {
+          _type: 'span',
+          _key: context.keyGenerator(),
+          text: event.text,
+          marks: event.marks,
+        })
+      },
+    },
   },
   initial: 'pristine',
   states: {
