@@ -1,15 +1,15 @@
 import {
   composeRenderProps,
-  FieldErrorProps,
   Group,
-  GroupProps,
-  InputProps,
-  LabelProps,
   FieldError as RACFieldError,
   Input as RACInput,
   Label as RACLabel,
   Text,
-  TextProps,
+  type FieldErrorProps,
+  type GroupProps,
+  type InputProps,
+  type LabelProps,
+  type TextProps,
 } from 'react-aria-components'
 import {twMerge} from 'tailwind-merge'
 import {tv} from 'tailwind-variants'

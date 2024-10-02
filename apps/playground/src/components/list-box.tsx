@@ -4,9 +4,9 @@ import {
   Collection,
   composeRenderProps,
   Header,
-  ListBoxItemProps,
   Section,
-  SectionProps,
+  type ListBoxItemProps,
+  type SectionProps,
 } from 'react-aria-components'
 import {tv} from 'tailwind-variants'
 

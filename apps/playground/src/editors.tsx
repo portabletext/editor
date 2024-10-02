@@ -4,7 +4,7 @@ import {TooltipTrigger} from 'react-aria-components'
 import {Button} from './components/button'
 import {Tooltip} from './components/tooltip'
 import {Editor} from './editor'
-import {PlaygroundActorRef} from './playground-machine'
+import type {PlaygroundActorRef} from './playground-machine'
 import {PortableTextPreview} from './portable-text-preview'
 
 export function Editors(props: {playgroundRef: PlaygroundActorRef}) {

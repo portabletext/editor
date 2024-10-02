@@ -1,4 +1,4 @@
-import {COLOR_HUES, ColorTintKey, hues} from '@sanity/color'
+import {COLOR_HUES, hues, type ColorTintKey} from '@sanity/color'
 
 export function* generateColor(tint: ColorTintKey): Generator<string, string> {
   let colorCursor = 0

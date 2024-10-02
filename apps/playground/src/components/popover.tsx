@@ -1,11 +1,11 @@
-import React from 'react'
+import type React from 'react'
 import {
   Popover as AriaPopover,
-  PopoverProps as AriaPopoverProps,
   composeRenderProps,
   OverlayArrow,
   PopoverContext,
   useSlottedContext,
+  type PopoverProps as AriaPopoverProps,
 } from 'react-aria-components'
 import {tv} from 'tailwind-variants'
 
@@ -52,6 +52,7 @@ export function Popover({
             viewBox="0 0 12 12"
             className="block fill-white dark:fill-[#1f1f21] forced-colors:fill-[Canvas] stroke-1 stroke-black/10 dark:stroke-zinc-600 forced-colors:stroke-[ButtonBorder] group-placement-bottom:rotate-180 group-placement-left:-rotate-90 group-placement-right:rotate-90"
           >
+            <title>Popover Arrow</title>
             <path d="M0 0 L6 6 L12 0" />
           </svg>
         </OverlayArrow>

@@ -1,9 +1,9 @@
-import React from 'react'
+import type React from 'react'
 import {
   Tooltip as AriaTooltip,
-  TooltipProps as AriaTooltipProps,
   composeRenderProps,
   OverlayArrow,
+  type TooltipProps as AriaTooltipProps,
 } from 'react-aria-components'
 import {tv} from 'tailwind-variants'
 
@@ -39,6 +39,7 @@ export function Tooltip({children, ...props}: TooltipProps) {
           viewBox="0 0 8 8"
           className="fill-slate-700 dark:fill-slate-600 forced-colors:fill-[Canvas] stroke-gray-800 dark:stroke-white/10 forced-colors:stroke-[ButtonBorder] group-placement-bottom:rotate-180 group-placement-left:-rotate-90 group-placement-right:rotate-90"
         >
+          <title>Tooltip Arrow</title>
           <path d="M0 0 L4 4 L8 0" />
         </svg>
       </OverlayArrow>

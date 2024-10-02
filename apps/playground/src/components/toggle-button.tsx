@@ -1,7 +1,7 @@
 import {
   composeRenderProps,
   ToggleButton as RACToggleButton,
-  ToggleButtonProps,
+  type ToggleButtonProps,
 } from 'react-aria-components'
 import {tv} from 'tailwind-variants'
 import {focusRing} from './utils'

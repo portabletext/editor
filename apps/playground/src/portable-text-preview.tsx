@@ -2,7 +2,7 @@ import {useActorRef, useSelector} from '@xstate/react'
 import {useEffect} from 'react'
 import {Spinner} from './components/spinner'
 import {higlightMachine} from './highlight-json-machine'
-import {PlaygroundActorRef} from './playground-machine'
+import type {PlaygroundActorRef} from './playground-machine'
 
 export function PortableTextPreview(props: {
   playgroundRef: PlaygroundActorRef
