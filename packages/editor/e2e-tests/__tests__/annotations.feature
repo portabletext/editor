@@ -130,6 +130,14 @@ Feature: Annotations
     Then the text is "foo removed baz"
     And "foo removed baz" has no marks
 
+  Scenario: Writing inside an annotation
+    Given the text "foo baz"
+    And a "link" "l1" around "foo baz"
+    When the caret is put after "foo"
+    And " bar " is typed
+    Then the text is "foo bar baz"
+    And "foo bar baz" has marks "l1"
+
   Scenario: Inserting text after an annotation
     Given the text "foo"
     And a "comment" "c1" around "foo"
