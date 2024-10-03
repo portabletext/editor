@@ -7,16 +7,7 @@
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import type {PortableTextObject} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
-import {
-  Editor,
-  Element,
-  Node,
-  Path,
-  Range,
-  Text,
-  Transforms,
-  type Descendant,
-} from 'slate'
+import {Editor, Element, Node, Path, Range, Text, Transforms} from 'slate'
 import type {
   PortableTextMemberSchemaTypes,
   PortableTextSlateEditor,
@@ -292,39 +283,36 @@ export function createWithPortableTextMarkModel(
 
       if (op.type === 'insert_text') {
         const {selection} = editor
-        if (
-          selection &&
-          Range.isCollapsed(selection) &&
-          Editor.marks(editor)?.marks?.some(
-            (mark) => !decorators.includes(mark),
-          )
-        ) {
-          const [node] = Array.from(
+        const collapsedSelection = selection
+          ? Range.isCollapsed(selection)
+          : false
+
+        if (selection && collapsedSelection) {
+          const [span] = Array.from(
             Editor.nodes(editor, {
               mode: 'lowest',
               at: selection.focus,
-              match: (n) =>
-                (n as unknown as Descendant)._type === types.span.name,
+              match: (n) => editor.isTextSpan(n),
               voids: false,
             }),
-          )[0] || [undefined]
+          )[0]
+          const marks = span.marks ?? []
+          const marksWithoutAnnotations = marks.filter((mark) =>
+            decorators.includes(mark),
+          )
+          const spanHasAnnotations =
+            marks.length > marksWithoutAnnotations.length
+
           if (
-            Text.isText(node) &&
+            spanHasAnnotations &&
             (selection.anchor.offset === 0 ||
-              node.text.length === selection.focus.offset) &&
-            Array.isArray(node.marks) &&
-            node.marks.length > 0
+              span.text.length === selection.focus.offset)
           ) {
-            const marksWithoutAnnotationMarks: string[] = (
-              {
-                ...(Editor.marks(editor) || {}),
-              }.marks || []
-            ).filter((mark) => decorators.includes(mark))
             Transforms.insertNodes(editor, {
               _type: 'span',
               _key: keyGenerator(),
               text: op.text,
-              marks: marksWithoutAnnotationMarks,
+              marks: marksWithoutAnnotations,
             })
             debug('Inserting text at end of annotation')
             return
