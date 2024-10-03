@@ -290,7 +290,6 @@ export function createWithPortableTextMarkModel(
         return
       }
 
-      // Special hook before inserting text at the end of an annotation.
       if (op.type === 'insert_text') {
         const {selection} = editor
         if (
@@ -311,7 +310,8 @@ export function createWithPortableTextMarkModel(
           )[0] || [undefined]
           if (
             Text.isText(node) &&
-            node.text.length === selection.focus.offset &&
+            (selection.anchor.offset === 0 ||
+              node.text.length === selection.focus.offset) &&
             Array.isArray(node.marks) &&
             node.marks.length > 0
           ) {
