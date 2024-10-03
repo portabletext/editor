@@ -8,7 +8,6 @@ import {
   emit,
   enqueueActions,
   fromCallback,
-  raise,
   setup,
   type ActorRefFrom,
 } from 'xstate'
@@ -96,6 +95,23 @@ type EditorEvent =
       text: string
       editor: PortableTextSlateEditor
     }
+  | {
+      type: 'command.insert text'
+      text: string
+      editor: PortableTextSlateEditor
+    }
+  | {
+      type: 'internal.insert span'
+      text: string
+      marks: Array<string>
+      editor: PortableTextSlateEditor
+    }
+  | {
+      type: 'command.insert span'
+      text: string
+      marks: Array<string>
+      editor: PortableTextSlateEditor
+    }
   | (BehaviourEvent & {editor: PortableTextSlateEditor})
   | {type: 'internal.noop'}
 
@@ -177,7 +193,7 @@ export const editorMachine = setup({
     'clear pending events': assign({
       pendingEvents: [],
     }),
-    'on internal insert text': raise(({context, event}) => {
+    'handle insert text': enqueueActions(({context, event, enqueue}) => {
       assertEvent(event, 'internal.insert text')
 
       const behaviourEvent: BehaviourEvent = {
@@ -215,42 +231,82 @@ export const editorMachine = setup({
       )
 
       if (!behaviour) {
-        return {
-          type: 'insert text' as const,
-          text: event.text,
+        enqueue.raise({
+          type: 'command.insert text',
           editor: event.editor,
-        }
-      }
-
-      if (behaviour) {
+          text: event.text,
+        })
+      } else {
         if (
           behaviour.guard({
             context: behaviourContext,
             event: behaviourEvent,
           })
         ) {
-          return {
-            ...behaviour.raise({
-              context: behaviourContext,
-              event: behaviourEvent,
-            }),
-            editor: event.editor,
+          const behaviourActions = behaviour.actions({
+            context: behaviourContext,
+            event: behaviourEvent,
+          })
+
+          for (const action of behaviourActions) {
+            if (action.type === 'raise') {
+              if (action.event.type === 'insert text') {
+                enqueue.raise({
+                  type: 'internal.insert text',
+                  editor: event.editor,
+                  text: action.event.text,
+                })
+              } else {
+                enqueue.raise({
+                  type: 'internal.insert span',
+                  editor: event.editor,
+                  text: action.event.text,
+                  marks: action.event.marks,
+                })
+              }
+            } else {
+              if (action.type === 'apply insert text') {
+                enqueue.raise({
+                  type: 'command.insert text',
+                  editor: event.editor,
+                  text: action.params.text,
+                })
+              } else {
+                enqueue.raise({
+                  type: 'command.insert span',
+                  editor: event.editor,
+                  text: action.params.text,
+                  marks: action.params.marks,
+                })
+              }
+            }
           }
+
+          return
         }
 
         if (!behaviour.preventDefault) {
-          return {
+          return enqueue.raise({
             type: 'insert text' as const,
             text: event.text,
             editor: event.editor,
-          }
+          })
         }
       }
-
-      return {
-        type: 'internal.noop' as const,
-      }
     }),
+    'apply insert text': ({event}) => {
+      assertEvent(event, 'command.insert text')
+      Editor.insertText(event.editor, event.text)
+    },
+    'apply insert span': ({context, event}) => {
+      assertEvent(event, 'command.insert span')
+      Transforms.insertNodes(event.editor, {
+        _type: 'span',
+        _key: context.keyGenerator(),
+        text: event.text,
+        marks: event.marks,
+      })
+    },
   },
   actors: {
     networkLogic,
@@ -286,23 +342,18 @@ export const editorMachine = setup({
     'done loading': {actions: emit({type: 'done loading'})},
     'update schema': {actions: 'assign schema'},
     'internal.insert text': {
-      actions: 'on internal insert text',
+      actions: 'handle insert text',
     },
-    'insert text': {
+    'internal.insert span': {
       actions: ({event}) => {
-        assertEvent(event, 'insert text')
-        Editor.insertText(event.editor, event.text)
+        console.warn(`Unhandled event: ${event.type}`)
       },
     },
-    'insert span': {
-      actions: ({context, event}) => {
-        Transforms.insertNodes(event.editor, {
-          _type: 'span',
-          _key: context.keyGenerator(),
-          text: event.text,
-          marks: event.marks,
-        })
-      },
+    'command.insert text': {
+      actions: 'apply insert text',
+    },
+    'command.insert span': {
+      actions: 'apply insert span',
     },
   },
   initial: 'pristine',

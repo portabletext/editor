@@ -33,12 +33,16 @@ export const nonStickyAnnotations = defineBehaviour({
     )
   },
   preventDefault: false,
-  raise: ({context, event}) => ({
-    type: 'insert span',
-    text: event.text,
-    marks:
-      context.focusSpan?.marks?.filter((mark) =>
-        context.schema.decorators.includes(mark),
-      ) ?? [],
-  }),
+  actions: ({context, event}) => [
+    {
+      type: 'apply insert span',
+      params: {
+        text: event.text,
+        marks:
+          context.focusSpan?.marks?.filter((mark) =>
+            context.schema.decorators.includes(mark),
+          ) ?? [],
+      },
+    },
+  ],
 })

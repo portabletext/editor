@@ -7,7 +7,7 @@ import type {EditorSelection} from '../types/editor'
 export type Behaviour = {
   event: BehaviourEvent['type']
   guard: BehaviourGuard
-  raise: RaiseBehaviourEvent
+  actions: EnqueueBeviourActions
   preventDefault: boolean
 }
 
@@ -50,13 +50,21 @@ export type BehaviourGuard = ({
 /**
  * @internal
  */
-export type RaiseBehaviourEvent = ({
+export type BehaviourAction =
+  | {type: 'apply insert text'; params: {text: string}}
+  | {type: 'apply insert span'; params: {text: string; marks: Array<string>}}
+  | {type: 'raise'; event: BehaviourEvent}
+
+/**
+ * @internal
+ */
+export type EnqueueBeviourActions = ({
   context,
   event,
 }: {
   context: BehaviourContext
   event: BehaviourEvent
-}) => BehaviourEvent
+}) => Array<BehaviourAction>
 
 /**
  * @internal
