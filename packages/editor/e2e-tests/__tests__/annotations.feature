@@ -138,11 +138,18 @@ Feature: Annotations
     Then the text is "foo bar baz"
     And "foo bar baz" has marks "l1"
 
-  Scenario: Inserting text after an annotation
-    Given the text "foo"
-    And a "comment" "c1" around "foo"
-    When the caret is put after "foo"
-    And "bar" is typed
-    Then the text is "foo,bar"
-    And "foo" has marks "c1"
-    And "bar" has no marks
+  Scenario Outline: Inserting text at the edge of an annotation
+    Given the text <text>
+    And a "link" "l1" around <annotated>
+    When the caret is put <position>
+    And "new" is typed
+    Then the text is <new text>
+
+    Examples:
+      | text          | annotated | position      | new text           |
+      | "foo bar baz" | "bar"     | after "foo "  | "foo new,bar, baz" |
+      | "foo bar baz" | "bar"     | before "bar"  | "foo new,bar, baz" |
+      | "foo bar baz" | "bar"     | after "bar"   | "foo ,bar,new baz" |
+      | "foo bar baz" | "bar"     | before " baz" | "foo ,bar,new baz" |
+      | "foo"         | "foo"     | before "foo"  | "new,foo"          |
+      | "foo"         | "foo"     | after "foo"   | "foo,new"          |
