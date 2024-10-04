@@ -220,77 +220,55 @@ export const editorMachine = setup({
         focusSpan,
       }
 
-      const behaviour = context.behaviours.find(
-        (behaviour) =>
-          behaviour.event === behaviourEvent.type &&
-          (behaviour.guard({
-            context: behaviourContext,
-            event: behaviourEvent,
-          }) ||
-            behaviour.preventDefault),
-      )
-
-      if (!behaviour) {
-        enqueue.raise({
-          type: 'command.insert text',
-          editor: event.editor,
-          text: event.text,
-        })
-      } else {
-        if (
-          behaviour.guard({
-            context: behaviourContext,
-            event: behaviourEvent,
-          })
-        ) {
-          const behaviourActions = behaviour.actions({
-            context: behaviourContext,
-            event: behaviourEvent,
-          })
-
-          for (const action of behaviourActions) {
-            if (action.type === 'raise') {
-              if (action.event.type === 'insert text') {
-                enqueue.raise({
-                  type: 'internal.insert text',
-                  editor: event.editor,
-                  text: action.event.text,
-                })
-              } else {
-                enqueue.raise({
-                  type: 'internal.insert span',
-                  editor: event.editor,
-                  text: action.event.text,
-                  marks: action.event.marks,
-                })
-              }
-            } else {
-              if (action.type === 'apply insert text') {
-                enqueue.raise({
-                  type: 'command.insert text',
-                  editor: event.editor,
-                  text: action.params.text,
-                })
-              } else {
-                enqueue.raise({
-                  type: 'command.insert span',
-                  editor: event.editor,
-                  text: action.params.text,
-                  marks: action.params.marks,
-                })
-              }
-            }
-          }
-
-          return
+      for (const behaviour of context.behaviours) {
+        if (behaviour.on !== 'insert text') {
+          break
         }
 
-        if (!behaviour.preventDefault) {
-          return enqueue.raise({
-            type: 'insert text' as const,
-            text: event.text,
-            editor: event.editor,
-          })
+        for (const transition of behaviour.transitions) {
+          if (
+            !transition.guard ||
+            transition.guard({context: behaviourContext, event: behaviourEvent})
+          ) {
+            for (const action of transition.actions({
+              context: behaviourContext,
+              event: behaviourEvent,
+            })) {
+              if (action.type === 'raise') {
+                if (action.event.type === 'insert text') {
+                  enqueue.raise({
+                    type: 'internal.insert text',
+                    editor: event.editor,
+                    text: action.event.text,
+                  })
+                } else {
+                  enqueue.raise({
+                    type: 'internal.insert span',
+                    editor: event.editor,
+                    text: action.event.text,
+                    marks: action.event.marks,
+                  })
+                }
+              } else {
+                if (action.type === 'apply insert text') {
+                  enqueue.raise({
+                    type: 'command.insert text',
+                    editor: event.editor,
+                    text: action.params.text,
+                  })
+                } else {
+                  enqueue.raise({
+                    type: 'command.insert span',
+                    editor: event.editor,
+                    text: action.params.text,
+                    marks: action.params.marks,
+                  })
+                }
+              }
+            }
+
+            break
+          }
         }
       }
     }),

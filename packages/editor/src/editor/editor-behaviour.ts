@@ -5,10 +5,11 @@ import type {EditorSelection} from '../types/editor'
  * @internal
  */
 export type Behaviour = {
-  event: BehaviourEvent['type']
-  guard: BehaviourGuard
-  actions: EnqueueBeviourActions
-  preventDefault: boolean
+  on: BehaviourEvent['type']
+  transitions: Array<{
+    guard?: BehaviourGuard
+    actions: EnqueueBeviourActions
+  }>
 }
 
 /**
