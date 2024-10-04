@@ -34,8 +34,8 @@ export const nonStickyAnnotations = defineBehaviour({
           spanHasAnnotations
         )
       },
-      actions: ({context, event}) => [
-        {
+      actions: [
+        ({context, event}) => ({
           type: 'apply insert span',
           params: {
             text: event.text,
@@ -44,15 +44,15 @@ export const nonStickyAnnotations = defineBehaviour({
                 context.schema.decorators.includes(mark),
               ) ?? [],
           },
-        },
+        }),
       ],
     },
     {
-      actions: ({event}) => [
-        {
+      actions: [
+        ({event}) => ({
           type: 'apply insert text',
           params: {text: event.text},
-        },
+        }),
       ],
     },
   ],

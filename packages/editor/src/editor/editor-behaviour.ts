@@ -8,7 +8,7 @@ export type Behaviour = {
   on: BehaviourEvent['type']
   transitions: Array<{
     guard?: BehaviourGuard
-    actions: EnqueueBeviourActions
+    actions: Array<EnqueueBehaviourAction>
   }>
 }
 
@@ -59,13 +59,13 @@ export type BehaviourAction =
 /**
  * @internal
  */
-export type EnqueueBeviourActions = ({
+export type EnqueueBehaviourAction = ({
   context,
   event,
 }: {
   context: BehaviourContext
   event: BehaviourEvent
-}) => Array<BehaviourAction>
+}) => BehaviourAction
 
 /**
  * @internal

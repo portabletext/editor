@@ -7,7 +7,7 @@ export type {
   BehaviourContext,
   BehaviourEvent,
   BehaviourGuard,
-  EnqueueBeviourActions,
+  EnqueueBehaviourAction
 } from './editor/editor-behaviour'
 export {
   editorMachine,

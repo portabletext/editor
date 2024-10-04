@@ -230,10 +230,12 @@ export const editorMachine = setup({
             !transition.guard ||
             transition.guard({context: behaviourContext, event: behaviourEvent})
           ) {
-            for (const action of transition.actions({
-              context: behaviourContext,
-              event: behaviourEvent,
-            })) {
+            for (const enqueueAction of transition.actions) {
+              const action = enqueueAction({
+                context: behaviourContext,
+                event: behaviourEvent,
+              })
+
               if (action.type === 'raise') {
                 if (action.event.type === 'insert text') {
                   enqueue.raise({
