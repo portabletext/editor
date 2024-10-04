@@ -5,7 +5,7 @@
  */
 
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
-import type {PortableTextObject} from '@sanity/types'
+import type {PortableTextObject, PortableTextSpan} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {Editor, Element, Node, Path, Range, Text, Transforms} from 'slate'
 import type {
@@ -288,14 +288,20 @@ export function createWithPortableTextMarkModel(
           : false
 
         if (selection && collapsedSelection) {
-          const [span] = Array.from(
-            Editor.nodes(editor, {
-              mode: 'lowest',
-              at: selection.focus,
-              match: (n) => editor.isTextSpan(n),
-              voids: false,
-            }),
-          )[0]
+          const [_block, blockPath] = Editor.node(editor, selection, {
+            depth: 1,
+          })
+
+          const [span, spanPath] =
+            Array.from(
+              Editor.nodes(editor, {
+                mode: 'lowest',
+                at: selection.focus,
+                match: (n) => editor.isTextSpan(n),
+                voids: false,
+              }),
+            )[0] ?? ([undefined, undefined] as const)
+
           const marks = span.marks ?? []
           const marksWithoutAnnotations = marks.filter((mark) =>
             decorators.includes(mark),
@@ -303,19 +309,97 @@ export function createWithPortableTextMarkModel(
           const spanHasAnnotations =
             marks.length > marksWithoutAnnotations.length
 
-          if (
-            spanHasAnnotations &&
-            (selection.anchor.offset === 0 ||
-              span.text.length === selection.focus.offset)
-          ) {
-            Transforms.insertNodes(editor, {
-              _type: 'span',
-              _key: keyGenerator(),
-              text: op.text,
-              marks: marksWithoutAnnotations,
-            })
-            debug('Inserting text at end of annotation')
-            return
+          const spanIsEmpty = span.text.length === 0
+
+          const atTheBeginningOfSpan = selection.anchor.offset === 0
+          const atTheEndOfSpan = selection.anchor.offset === span.text.length
+
+          let previousSpan: PortableTextSpan | undefined
+          let nextSpan: PortableTextSpan | undefined
+
+          for (const [child, childPath] of Node.children(editor, blockPath, {
+            reverse: true,
+          })) {
+            if (!editor.isTextSpan(child)) {
+              continue
+            }
+
+            if (Path.isBefore(childPath, spanPath)) {
+              previousSpan = child
+              break
+            }
+          }
+
+          for (const [child, childPath] of Node.children(editor, blockPath)) {
+            if (!editor.isTextSpan(child)) {
+              continue
+            }
+
+            if (Path.isAfter(childPath, spanPath)) {
+              nextSpan = child
+              break
+            }
+          }
+
+          const previousSpanHasSameAnnotation = previousSpan
+            ? previousSpan.marks?.some(
+                (mark) => !decorators.includes(mark) && marks.includes(mark),
+              )
+            : false
+          const previousSpanHasSameMarks = previousSpan
+            ? previousSpan.marks?.every((mark) => marks.includes(mark))
+            : false
+          const nextSpanHasSameAnnotation = nextSpan
+            ? nextSpan.marks?.some(
+                (mark) => !decorators.includes(mark) && marks.includes(mark),
+              )
+            : false
+          const nextSpanHasSameMarks = nextSpan
+            ? nextSpan.marks?.every((mark) => marks.includes(mark))
+            : false
+
+          if (spanHasAnnotations && !spanIsEmpty) {
+            if (atTheBeginningOfSpan) {
+              if (previousSpanHasSameMarks) {
+                Transforms.insertNodes(editor, {
+                  _type: 'span',
+                  _key: keyGenerator(),
+                  text: op.text,
+                  marks: previousSpan?.marks ?? [],
+                })
+              } else if (previousSpanHasSameAnnotation) {
+                apply(op)
+              } else {
+                Transforms.insertNodes(editor, {
+                  _type: 'span',
+                  _key: keyGenerator(),
+                  text: op.text,
+                  marks: [],
+                })
+              }
+              return
+            }
+
+            if (atTheEndOfSpan) {
+              if (nextSpanHasSameMarks) {
+                Transforms.insertNodes(editor, {
+                  _type: 'span',
+                  _key: keyGenerator(),
+                  text: op.text,
+                  marks: nextSpan?.marks ?? [],
+                })
+              } else if (nextSpanHasSameAnnotation) {
+                apply(op)
+              } else {
+                Transforms.insertNodes(editor, {
+                  _type: 'span',
+                  _key: keyGenerator(),
+                  text: op.text,
+                  marks: [],
+                })
+              }
+              return
+            }
           }
         }
       }
