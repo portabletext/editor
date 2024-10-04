@@ -9,7 +9,6 @@ import {debugWithName} from '../../utils/debug'
 import {IS_PROCESSING_LOCAL_CHANGES} from '../../utils/weakMaps'
 import type {EditorActor} from '../editor-machine'
 import {usePortableTextEditor} from '../hooks/usePortableTextEditor'
-import {usePortableTextEditorKeyGenerator} from '../hooks/usePortableTextEditorKeyGenerator'
 import {usePortableTextEditorReadOnlyStatus} from '../hooks/usePortableTextReadOnly'
 import {useSyncValue} from '../hooks/useSyncValue'
 
@@ -36,14 +35,12 @@ export interface SynchronizerProps {
  */
 export function Synchronizer(props: SynchronizerProps) {
   const portableTextEditor = usePortableTextEditor()
-  const keyGenerator = usePortableTextEditorKeyGenerator()
   const readOnly = usePortableTextEditorReadOnlyStatus()
   const {editorActor, getValue, onChange, value} = props
   const pendingPatches = useRef<Patch[]>([])
 
   const syncValue = useSyncValue({
     editorActor,
-    keyGenerator,
     portableTextEditor,
     readOnly,
   })

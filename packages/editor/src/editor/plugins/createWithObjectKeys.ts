@@ -14,7 +14,6 @@ import type {EditorActor} from '../editor-machine'
 export function createWithObjectKeys(
   editorActor: EditorActor,
   schemaTypes: PortableTextMemberSchemaTypes,
-  keyGenerator: () => string,
 ) {
   return function withKeys(
     editor: PortableTextSlateEditor,
@@ -48,7 +47,7 @@ export function createWithObjectKeys(
           ...operation,
           properties: {
             ...operation.properties,
-            _key: keyGenerator(),
+            _key: editorActor.getSnapshot().context.keyGenerator(),
           },
         })
 
@@ -61,7 +60,7 @@ export function createWithObjectKeys(
             ...operation,
             node: {
               ...operation.node,
-              _key: keyGenerator(),
+              _key: editorActor.getSnapshot().context.keyGenerator(),
             },
           })
 
@@ -78,7 +77,11 @@ export function createWithObjectKeys(
         // Set key on block itself
         if (!node._key) {
           editorActor.send({type: 'normalizing'})
-          Transforms.setNodes(editor, {_key: keyGenerator()}, {at: path})
+          Transforms.setNodes(
+            editor,
+            {_key: editorActor.getSnapshot().context.keyGenerator()},
+            {at: path},
+          )
           editorActor.send({type: 'done normalizing'})
           return
         }
@@ -86,7 +89,11 @@ export function createWithObjectKeys(
         for (const [child, childPath] of Node.children(editor, path)) {
           if (!child._key) {
             editorActor.send({type: 'normalizing'})
-            Transforms.setNodes(editor, {_key: keyGenerator()}, {at: childPath})
+            Transforms.setNodes(
+              editor,
+              {_key: editorActor.getSnapshot().context.keyGenerator()},
+              {at: childPath},
+            )
             editorActor.send({type: 'done normalizing'})
             return
           }

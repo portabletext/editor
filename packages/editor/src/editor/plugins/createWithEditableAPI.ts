@@ -38,14 +38,15 @@ import {
   KEY_TO_VALUE_ELEMENT,
   SLATE_TO_PORTABLE_TEXT_RANGE,
 } from '../../utils/weakMaps'
+import type {EditorActor} from '../editor-machine'
 import type {PortableTextEditor} from '../PortableTextEditor'
 
 const debug = debugWithName('API:editable')
 
 export function createWithEditableAPI(
+  editorActor: EditorActor,
   portableTextEditor: PortableTextEditor,
   types: PortableTextMemberSchemaTypes,
-  keyGenerator: () => string,
 ) {
   return function withEditableAPI(
     editor: PortableTextSlateEditor,
@@ -151,11 +152,11 @@ export function createWithEditableAPI(
         const block = toSlateValue(
           [
             {
-              _key: keyGenerator(),
+              _key: editorActor.getSnapshot().context.keyGenerator(),
               _type: types.block.name,
               children: [
                 {
-                  _key: keyGenerator(),
+                  _key: editorActor.getSnapshot().context.keyGenerator(),
                   _type: type.name,
                   ...(value ? value : {}),
                 },
@@ -199,7 +200,7 @@ export function createWithEditableAPI(
         const block = toSlateValue(
           [
             {
-              _key: keyGenerator(),
+              _key: editorActor.getSnapshot().context.keyGenerator(),
               _type: type.name,
               ...(value ? value : {}),
             },
@@ -469,7 +470,9 @@ export function createWithEditableAPI(
                   continue
                 }
 
-                const annotationKey = keyGenerator()
+                const annotationKey = editorActor
+                  .getSnapshot()
+                  .context.keyGenerator()
                 const markDefs = block.markDefs ?? []
                 const existingMarkDef = markDefs.find(
                   (markDef) =>

@@ -90,10 +90,14 @@ type EditorEmittedEvent =
 export const editorMachine = setup({
   types: {
     context: {} as {
+      keyGenerator: () => string
       pendingEvents: Array<PatchEvent | MutationEvent>
     },
     events: {} as EditorEvent,
     emitted: {} as EditorEmittedEvent,
+    input: {} as {
+      keyGenerator: () => string
+    },
   },
   actions: {
     'emit patch event': emit(({event}) => {
@@ -124,9 +128,10 @@ export const editorMachine = setup({
   },
 }).createMachine({
   id: 'editor',
-  context: {
+  context: ({input}) => ({
+    keyGenerator: input.keyGenerator,
     pendingEvents: [],
-  },
+  }),
   invoke: {
     id: 'networkLogic',
     src: 'networkLogic',

@@ -2,7 +2,7 @@ import type {Patch} from '@portabletext/patches'
 import {noop} from 'lodash'
 import {createEditor, type Descendant} from 'slate'
 import {beforeEach, describe, expect, it} from 'vitest'
-import {keyGenerator, PortableTextEditor} from '../..'
+import {PortableTextEditor} from '../..'
 import {schemaType} from '../../editor/__tests__/PortableTextEditorTester'
 import {withPlugins} from '../../editor/plugins'
 import {createApplyPatch} from '../applyPatch'
@@ -16,7 +16,6 @@ const portableTextEditor = new PortableTextEditor({schemaType, onChange: noop})
 
 const {editor} = withPlugins(createEditor(), {
   portableTextEditor,
-  keyGenerator,
   readOnly: false,
 })
 

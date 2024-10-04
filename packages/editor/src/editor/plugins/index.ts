@@ -47,8 +47,7 @@ export const withPlugins = <T extends Editor>(
   options: createEditorOptions,
 ): {editor: PortableTextSlateEditor; subscribe: () => () => void} => {
   const e = editor as T & PortableTextSlateEditor
-  const {keyGenerator, portableTextEditor, patches$, readOnly, maxBlocks} =
-    options
+  const {portableTextEditor, patches$, readOnly, maxBlocks} = options
   const {editorActor, schemaTypes} = portableTextEditor
   e.subscriptions = []
   if (e.destroy) {
@@ -63,24 +62,18 @@ export const withPlugins = <T extends Editor>(
     })
   }
   const operationToPatches = createOperationToPatches(schemaTypes)
-  const withObjectKeys = createWithObjectKeys(
-    editorActor,
-    schemaTypes,
-    keyGenerator,
-  )
+  const withObjectKeys = createWithObjectKeys(editorActor, schemaTypes)
   const withSchemaTypes = createWithSchemaTypes({
     editorActor,
     schemaTypes,
-    keyGenerator,
   })
   const withEditableAPI = createWithEditableAPI(
+    editorActor,
     portableTextEditor,
     schemaTypes,
-    keyGenerator,
   )
   const withPatches = createWithPatches({
     editorActor,
-    keyGenerator,
     patches$,
     patchFunctions: operationToPatches,
     readOnly,
@@ -96,7 +89,6 @@ export const withPlugins = <T extends Editor>(
   const withPortableTextMarkModel = createWithPortableTextMarkModel(
     editorActor,
     schemaTypes,
-    keyGenerator,
   )
   const withPortableTextBlockStyle = createWithPortableTextBlockStyle(
     editorActor,
@@ -105,10 +97,10 @@ export const withPlugins = <T extends Editor>(
 
   const withPlaceholderBlock = createWithPlaceholderBlock()
 
-  const withInsertBreak = createWithInsertBreak(schemaTypes, keyGenerator)
+  const withInsertBreak = createWithInsertBreak(editorActor, schemaTypes)
 
   const withUtils = createWithUtils({
-    keyGenerator,
+    editorActor,
     schemaTypes,
     portableTextEditor,
   })

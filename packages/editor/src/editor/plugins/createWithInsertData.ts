@@ -25,7 +25,6 @@ const debug = debugWithName('plugin:withInsertData')
 export function createWithInsertData(
   editorActor: EditorActor,
   schemaTypes: PortableTextMemberSchemaTypes,
-  keyGenerator: () => string,
 ) {
   return function withInsertData(
     editor: PortableTextSlateEditor,
@@ -149,12 +148,16 @@ export function createWithInsertData(
           const slateValue = _regenerateKeys(
             editor,
             toSlateValue(parsed, {schemaTypes}),
-            keyGenerator,
+            editorActor.getSnapshot().context.keyGenerator,
             spanTypeName,
             schemaTypes,
           )
           // Validate the result
-          const validation = validateValue(parsed, schemaTypes, keyGenerator)
+          const validation = validateValue(
+            parsed,
+            schemaTypes,
+            editorActor.getSnapshot().context.keyGenerator,
+          )
           // Bail out if it's not valid
           if (!validation.valid && !validation.resolution?.autoResolve) {
             const errorDescription = `${validation.resolution?.description}`
@@ -224,7 +227,7 @@ export function createWithInsertData(
         const validation = validateValue(
           portableText,
           schemaTypes,
-          keyGenerator,
+          editorActor.getSnapshot().context.keyGenerator,
         )
 
         // Bail out if it's not valid

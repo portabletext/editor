@@ -23,7 +23,6 @@ const debug = debugWithName('plugin:withPortableTextMarkModel')
 export function createWithPortableTextMarkModel(
   editorActor: EditorActor,
   types: PortableTextMemberSchemaTypes,
-  keyGenerator: () => string,
 ): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
   return function withPortableTextMarkModel(editor: PortableTextSlateEditor) {
     const {apply, normalizeNode} = editor
@@ -363,7 +362,7 @@ export function createWithPortableTextMarkModel(
               if (previousSpanHasSameMarks) {
                 Transforms.insertNodes(editor, {
                   _type: 'span',
-                  _key: keyGenerator(),
+                  _key: editorActor.getSnapshot().context.keyGenerator(),
                   text: op.text,
                   marks: previousSpan?.marks ?? [],
                 })
@@ -372,7 +371,7 @@ export function createWithPortableTextMarkModel(
               } else {
                 Transforms.insertNodes(editor, {
                   _type: 'span',
-                  _key: keyGenerator(),
+                  _key: editorActor.getSnapshot().context.keyGenerator(),
                   text: op.text,
                   marks: [],
                 })
@@ -384,7 +383,7 @@ export function createWithPortableTextMarkModel(
               if (nextSpanHasSameMarks) {
                 Transforms.insertNodes(editor, {
                   _type: 'span',
-                  _key: keyGenerator(),
+                  _key: editorActor.getSnapshot().context.keyGenerator(),
                   text: op.text,
                   marks: nextSpan?.marks ?? [],
                 })
@@ -393,7 +392,7 @@ export function createWithPortableTextMarkModel(
               } else {
                 Transforms.insertNodes(editor, {
                   _type: 'span',
-                  _key: keyGenerator(),
+                  _key: editorActor.getSnapshot().context.keyGenerator(),
                   text: op.text,
                   marks: [],
                 })
