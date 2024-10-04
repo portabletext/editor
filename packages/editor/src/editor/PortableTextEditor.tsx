@@ -30,6 +30,7 @@ import {editorMachine, type EditorActor} from './editor-machine'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
 import {PortableTextEditorReadOnlyContext} from './hooks/usePortableTextReadOnly'
+import {nonStickyAnnotations} from './internal-behaviour'
 import {defaultKeyGenerator} from './key-generator'
 
 const debug = debugWithName('component:PortableTextEditor')
@@ -122,18 +123,20 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
       )
     }
 
-    this.editorActor = createActor(editorMachine, {
-      input: {
-        keyGenerator: props.keyGenerator || defaultKeyGenerator,
-      },
-    })
-    this.editorActor.start()
-
     this.schemaTypes = getPortableTextMemberSchemaTypes(
       props.schemaType.hasOwnProperty('jsonType')
         ? props.schemaType
         : compileType(props.schemaType),
     )
+
+    this.editorActor = createActor(editorMachine, {
+      input: {
+        behaviours: [nonStickyAnnotations],
+        keyGenerator: props.keyGenerator ?? defaultKeyGenerator,
+        schemaTypes: this.schemaTypes,
+      },
+    })
+    this.editorActor.start()
   }
 
   componentDidUpdate(prevProps: PortableTextEditorProps) {
@@ -144,6 +147,10 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
           ? this.props.schemaType
           : compileType(this.props.schemaType),
       )
+      this.editorActor.send({
+        type: 'update schema',
+        schemaTypes: this.schemaTypes,
+      })
     }
     if (this.props.editorRef !== prevProps.editorRef && this.props.editorRef) {
       this.props.editorRef.current = this
