@@ -8,7 +8,7 @@ export {
   type PatchEvent,
 } from './editor/editor-machine'
 export {usePortableTextEditor} from './editor/hooks/usePortableTextEditor'
-export {defaultKeyGenerator as keyGenerator} from './editor/hooks/usePortableTextEditorKeyGenerator'
+export {defaultKeyGenerator as keyGenerator} from './editor/key-generator'
 export {usePortableTextEditorSelection} from './editor/hooks/usePortableTextEditorSelection'
 export {PortableTextEditor} from './editor/PortableTextEditor'
 export type {PortableTextEditorProps} from './editor/PortableTextEditor'

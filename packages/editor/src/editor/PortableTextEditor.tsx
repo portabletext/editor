@@ -28,9 +28,9 @@ import {SlateContainer} from './components/SlateContainer'
 import {Synchronizer} from './components/Synchronizer'
 import {editorMachine, type EditorActor} from './editor-machine'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
-import {defaultKeyGenerator} from './hooks/usePortableTextEditorKeyGenerator'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
 import {PortableTextEditorReadOnlyContext} from './hooks/usePortableTextReadOnly'
+import {defaultKeyGenerator} from './key-generator'
 
 const debug = debugWithName('component:PortableTextEditor')
 
