@@ -21,6 +21,24 @@ export function createWithInsertBreak(
         return
       }
 
+      const [focusSpan] = Array.from(
+        Editor.nodes(editor, {
+          mode: 'lowest',
+          at: editor.selection.focus,
+          match: (n) => editor.isTextSpan(n),
+          voids: false,
+        }),
+      )[0] ?? [undefined]
+      const focusDecorators =
+        focusSpan.marks?.filter((mark) =>
+          types.decorators.some((decorator) => decorator.value === mark),
+        ) ?? []
+      const focusAnnotations =
+        focusSpan.marks?.filter(
+          (mark) =>
+            !types.decorators.some((decorator) => decorator.value === mark),
+        ) ?? []
+
       const focusBlockPath = editor.selection.focus.path.slice(0, 1)
       const focusBlock = Node.descendant(editor, focusBlockPath) as
         | SlateTextBlock
@@ -34,15 +52,11 @@ export function createWithInsertBreak(
         })
 
         if (isEndAtStartOfBlock && Range.isCollapsed(editor.selection)) {
-          const focusDecorators = editor.isTextSpan(focusBlock.children[0])
-            ? (focusBlock.children[0].marks ?? []).filter((mark) =>
-                types.decorators.some((decorator) => decorator.value === mark),
-              )
-            : []
-
           Editor.insertNode(
             editor,
-            editor.pteCreateTextBlock({decorators: focusDecorators}),
+            editor.pteCreateTextBlock({
+              decorators: focusAnnotations.length === 0 ? focusDecorators : [],
+            }),
           )
 
           const [nextBlockPath] = Path.next(focusBlockPath)
@@ -64,6 +78,36 @@ export function createWithInsertBreak(
             ? lastFocusBlockChild.text.length
             : 0,
         })
+
+        if (
+          isStartAtEndOfBlock &&
+          Range.isCollapsed(editor.selection) &&
+          focusDecorators.length > 0 &&
+          focusAnnotations.length > 0
+        ) {
+          Editor.withoutNormalizing(editor, () => {
+            if (!editor.selection) {
+              return
+            }
+
+            Editor.insertNode(
+              editor,
+              editor.pteCreateTextBlock({
+                decorators: [],
+              }),
+            )
+
+            const [nextBlockPath] = Path.next(focusBlockPath)
+
+            Transforms.setSelection(editor, {
+              anchor: {path: [nextBlockPath, 0], offset: 0},
+              focus: {path: [nextBlockPath, 0], offset: 0},
+            })
+          })
+          editor.onChange()
+          return
+        }
+
         const isInTheMiddleOfNode = !isEndAtStartOfBlock && !isStartAtEndOfBlock
 
         if (isInTheMiddleOfNode) {

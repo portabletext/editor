@@ -4,6 +4,61 @@ Feature: Annotations Overlapping Decorators
     Given one editor
     And a global keymap
 
+  Scenario Outline: Inserting text at the edge of a decorated annotation
+    Given the text <text>
+    And a "link" "l1" around <annotated>
+    And "strong" around <decorated>
+    When the caret is put <position>
+    And "new" is typed
+    Then the text is <new text>
+
+    Examples:
+      | text          | annotated     | decorated | position      | new text           |
+      | "foo bar baz" | "bar"         | "bar"     | after "foo "  | "foo new,bar, baz" |
+      | "foo bar baz" | "bar"         | "bar"     | before "bar"  | "foo new,bar, baz" |
+      | "foo bar baz" | "bar"         | "bar"     | after "bar"   | "foo ,bar,new baz" |
+      | "foo bar baz" | "bar"         | "bar"     | before " baz" | "foo ,bar,new baz" |
+      | "foo"         | "foo"         | "foo"     | before "foo"  | "new,foo"          |
+      | "foo"         | "foo"         | "foo"     | after "foo"   | "foo,new"          |
+      | "foo bar baz" | "foo bar baz" | "bar"     | after "foo "  | "foo new,bar, baz" |
+      | "foo bar baz" | "foo bar baz" | "bar"     | before "bar"  | "foo new,bar, baz" |
+      | "foo bar baz" | "foo bar baz" | "bar"     | after "bar"   | "foo ,bar,new baz" |
+      | "foo bar baz" | "foo bar baz" | "bar"     | before " baz" | "foo ,bar,new baz" |
+
+  Scenario: Splitting block before a decorated annotation
+    Given the text "bar"
+    And a "link" "l1" around "bar"
+    And "strong" around "bar"
+    When the caret is put before "bar"
+    And "Enter" is pressed
+    And "ArrowUp" is pressed
+    And "foo" is typed
+    Then the text is "foo,\n,bar"
+    And the caret is after "foo"
+    And "foo" has no marks
+
+  Scenario: Splitting block after a decorated annotation
+    Given the text "bar"
+    And a "link" "l1" around "bar"
+    And "strong" around "bar"
+    When the caret is put after "bar"
+    And "Enter" is pressed
+    And "baz" is typed
+    Then the text is "bar,\n,baz"
+    And the caret is after "baz"
+    And "baz" has no marks
+
+  Scenario: Splitting block after a decorated annotation #2
+    Given the text "foobar"
+    And a "link" "l1" around "bar"
+    And "strong" around "bar"
+    When the caret is put after "bar"
+    And "Enter" is pressed
+    And "baz" is typed
+    Then the text is "foo,bar,\n,baz"
+    And the caret is after "baz"
+    And "baz" has no marks
+
   Scenario: Annotation and decorator on the same text
     Given the text "foo bar baz"
     When "bar" is selected

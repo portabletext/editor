@@ -5,14 +5,21 @@ Feature: Decorators
     Given one editor
     And a global keymap
 
-  Scenario: Inserting text after a decorator
-    Given the text "foo"
-    And "strong" around "foo"
-    Then "foo" has marks "strong"
-    When the caret is put after "foo"
-    And "bar" is typed
-    Then the text is "foobar"
-    Then "foobar" has marks "strong"
+  Scenario Outline: Inserting text at the edge of a decorator
+    Given the text <text>
+    And "strong" around <decorated>
+    When the caret is put <position>
+    And "new" is typed
+    Then the text is <new text>
+
+    Examples:
+      | text          | decorated | position      | new text           |
+      | "foo bar baz" | "bar"     | after "foo "  | "foo new,bar, baz" |
+      | "foo bar baz" | "bar"     | before "bar"  | "foo new,bar, baz" |
+      | "foo bar baz" | "bar"     | after "bar"   | "foo ,barnew, baz" |
+      | "foo bar baz" | "bar"     | before " baz" | "foo ,barnew, baz" |
+      | "foo"         | "foo"     | before "foo"  | "newfoo"           |
+      | "foo"         | "foo"     | after "foo"   | "foonew"           |
 
   Scenario: Toggling bold inside italic
     Given the text "foo bar baz"
