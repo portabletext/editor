@@ -22,11 +22,9 @@ const debug = debugWithName('plugin:withSchemaTypes')
 export function createWithSchemaTypes({
   editorActor,
   schemaTypes,
-  keyGenerator,
 }: {
   editorActor: EditorActor
   schemaTypes: PortableTextMemberSchemaTypes
-  keyGenerator: () => string
 }) {
   return function withSchemaTypes(
     editor: PortableTextSlateEditor,
@@ -73,7 +71,8 @@ export function createWithSchemaTypes({
       if (node._type === undefined && path.length === 2) {
         debug('Setting span type on text node without a type')
         const span = node as PortableTextSpan
-        const key = span._key || keyGenerator()
+        const key =
+          span._key || editorActor.getSnapshot().context.keyGenerator()
         editorActor.send({type: 'normalizing'})
         Transforms.setNodes(
           editor,
@@ -87,7 +86,7 @@ export function createWithSchemaTypes({
       // catches cases when the children are missing keys but excludes it when the normalize is running the node as the editor object
       if (node._key === undefined && (path.length === 1 || path.length === 2)) {
         debug('Setting missing key on child node without a key')
-        const key = keyGenerator()
+        const key = editorActor.getSnapshot().context.keyGenerator()
         editorActor.send({type: 'normalizing'})
         Transforms.setNodes(editor, {_key: key}, {at: path})
         editorActor.send({type: 'done normalizing'})

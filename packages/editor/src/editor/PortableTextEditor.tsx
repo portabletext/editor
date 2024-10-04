@@ -28,10 +28,7 @@ import {SlateContainer} from './components/SlateContainer'
 import {Synchronizer} from './components/Synchronizer'
 import {editorMachine, type EditorActor} from './editor-machine'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
-import {
-  defaultKeyGenerator,
-  PortableTextEditorKeyGeneratorContext,
-} from './hooks/usePortableTextEditorKeyGenerator'
+import {defaultKeyGenerator} from './hooks/usePortableTextEditorKeyGenerator'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
 import {PortableTextEditorReadOnlyContext} from './hooks/usePortableTextReadOnly'
 
@@ -125,7 +122,11 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
       )
     }
 
-    this.editorActor = createActor(editorMachine)
+    this.editorActor = createActor(editorMachine, {
+      input: {
+        keyGenerator: props.keyGenerator || defaultKeyGenerator,
+      },
+    })
     this.editorActor.start()
 
     this.schemaTypes = getPortableTextMemberSchemaTypes(
@@ -171,39 +172,34 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
         : Number.parseInt(this.props.maxBlocks.toString(), 10) || undefined
 
     const readOnly = Boolean(this.props.readOnly)
-    const keyGenerator = this.props.keyGenerator || defaultKeyGenerator
+
     return (
       <SlateContainer
-        keyGenerator={keyGenerator}
         maxBlocks={maxBlocks}
         patches$={_patches$}
         portableTextEditor={this}
         readOnly={readOnly}
       >
-        <PortableTextEditorKeyGeneratorContext.Provider value={keyGenerator}>
-          <PortableTextEditorContext.Provider value={this}>
-            <PortableTextEditorReadOnlyContext.Provider value={readOnly}>
-              <PortableTextEditorSelectionProvider
+        <PortableTextEditorContext.Provider value={this}>
+          <PortableTextEditorReadOnlyContext.Provider value={readOnly}>
+            <PortableTextEditorSelectionProvider editorActor={this.editorActor}>
+              <Synchronizer
                 editorActor={this.editorActor}
-              >
-                <Synchronizer
-                  editorActor={this.editorActor}
-                  getValue={this.getValue}
-                  onChange={(change) => {
-                    this.props.onChange(change)
-                    /**
-                     * For backwards compatibility, we relay all changes to the
-                     * `change$` Subject as well.
-                     */
-                    this.change$.next(change)
-                  }}
-                  value={value}
-                />
-                {children}
-              </PortableTextEditorSelectionProvider>
-            </PortableTextEditorReadOnlyContext.Provider>
-          </PortableTextEditorContext.Provider>
-        </PortableTextEditorKeyGeneratorContext.Provider>
+                getValue={this.getValue}
+                onChange={(change) => {
+                  this.props.onChange(change)
+                  /**
+                   * For backwards compatibility, we relay all changes to the
+                   * `change$` Subject as well.
+                   */
+                  this.change$.next(change)
+                }}
+                value={value}
+              />
+              {children}
+            </PortableTextEditorSelectionProvider>
+          </PortableTextEditorReadOnlyContext.Provider>
+        </PortableTextEditorContext.Provider>
       </SlateContainer>
     )
   }

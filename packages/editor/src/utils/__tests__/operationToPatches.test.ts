@@ -3,7 +3,6 @@ import {createEditor, type Descendant} from 'slate'
 import {beforeEach, describe, expect, it} from 'vitest'
 import {PortableTextEditor, type PortableTextEditorProps} from '../..'
 import {schemaType} from '../../editor/__tests__/PortableTextEditorTester'
-import {defaultKeyGenerator} from '../../editor/hooks/usePortableTextEditorKeyGenerator'
 import {withPlugins} from '../../editor/plugins'
 import {getPortableTextMemberSchemaTypes} from '../getPortableTextMemberSchemaTypes'
 import {createOperationToPatches} from '../operationToPatches'
@@ -16,7 +15,6 @@ const {editor} = withPlugins(createEditor(), {
   portableTextEditor: new PortableTextEditor({
     schemaType,
   } as PortableTextEditorProps),
-  keyGenerator: defaultKeyGenerator,
   readOnly: false,
 })
 

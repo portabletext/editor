@@ -81,7 +81,6 @@ export interface PatchFunctions {
 
 interface Options {
   editorActor: EditorActor
-  keyGenerator: () => string
   patches$?: PatchObservable
   patchFunctions: PatchFunctions
   readOnly: boolean

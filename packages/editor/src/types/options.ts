@@ -6,7 +6,6 @@ import type {PatchObservable} from './editor'
  * @internal
  */
 export type createEditorOptions = {
-  keyGenerator: () => string
   patches$?: PatchObservable
   portableTextEditor: PortableTextEditor
   readOnly: boolean

@@ -5,13 +5,14 @@ import type {
 } from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {toSlateValue} from '../../utils/values'
+import type {EditorActor} from '../editor-machine'
 import type {PortableTextEditor} from '../PortableTextEditor'
 
 const debug = debugWithName('plugin:withUtils')
 
 interface Options {
+  editorActor: EditorActor
   schemaTypes: PortableTextMemberSchemaTypes
-  keyGenerator: () => string
   portableTextEditor: PortableTextEditor
 }
 /**
@@ -19,8 +20,8 @@ interface Options {
  *
  */
 export function createWithUtils({
+  editorActor,
   schemaTypes,
-  keyGenerator,
   portableTextEditor,
 }: Options) {
   return function withUtils(
@@ -79,13 +80,13 @@ export function createWithUtils({
         [
           {
             _type: schemaTypes.block.name,
-            _key: keyGenerator(),
+            _key: editorActor.getSnapshot().context.keyGenerator(),
             style: schemaTypes.styles[0].value || 'normal',
             markDefs: [],
             children: [
               {
                 _type: 'span',
-                _key: keyGenerator(),
+                _key: editorActor.getSnapshot().context.keyGenerator(),
                 text: '',
                 marks: options.decorators.filter((decorator) =>
                   schemaTypes.decorators.find(({value}) => value === decorator),

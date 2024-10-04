@@ -5,10 +5,11 @@ import type {
   PortableTextSlateEditor,
 } from '../../types/editor'
 import type {SlateTextBlock, VoidElement} from '../../types/slate'
+import type {EditorActor} from '../editor-machine'
 
 export function createWithInsertBreak(
+  editorActor: EditorActor,
   types: PortableTextMemberSchemaTypes,
-  keyGenerator: () => string,
 ): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
   return function withInsertBreak(
     editor: PortableTextSlateEditor,
@@ -175,7 +176,10 @@ export function createWithInsertBreak(
                   ) {
                     // This annotation is both present in the previous block
                     // and this block, so let's assign a new key to it
-                    newMarkDefKeys.set(mark, keyGenerator())
+                    newMarkDefKeys.set(
+                      mark,
+                      editorActor.getSnapshot().context.keyGenerator(),
+                    )
                   }
                 }
 

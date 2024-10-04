@@ -24,7 +24,6 @@ const debug = debugWithName('hook:useSyncValue')
  */
 export interface UseSyncValueProps {
   editorActor: EditorActor
-  keyGenerator: () => string
   portableTextEditor: PortableTextEditor
   readOnly: boolean
 }
@@ -52,7 +51,7 @@ export function useSyncValue(
   value: PortableTextBlock[] | undefined,
   userCallbackFn?: () => void,
 ) => void {
-  const {editorActor, portableTextEditor, readOnly, keyGenerator} = props
+  const {editorActor, portableTextEditor, readOnly} = props
   const {schemaTypes} = portableTextEditor
   const previousValue = useRef<PortableTextBlock[] | undefined>()
   const slateEditor = useSlate()
@@ -162,7 +161,7 @@ export function useSyncValue(
                       const validation = validateValue(
                         validationValue,
                         schemaTypes,
-                        keyGenerator,
+                        editorActor.getSnapshot().context.keyGenerator,
                       )
                       // Resolve validations that can be resolved automatically, without involving the user (but only if the value was changed)
                       if (
@@ -222,7 +221,7 @@ export function useSyncValue(
                       const validation = validateValue(
                         validationValue,
                         schemaTypes,
-                        keyGenerator,
+                        editorActor.getSnapshot().context.keyGenerator,
                       )
                       if (debug.enabled)
                         debug(
@@ -288,7 +287,6 @@ export function useSyncValue(
     return updateFunction
   }, [
     editorActor,
-    keyGenerator,
     portableTextEditor,
     readOnly,
     schemaTypes,

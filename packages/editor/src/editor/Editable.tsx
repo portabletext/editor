@@ -66,7 +66,6 @@ import {
 import {Element} from './components/Element'
 import {Leaf} from './components/Leaf'
 import {usePortableTextEditor} from './hooks/usePortableTextEditor'
-import {usePortableTextEditorKeyGenerator} from './hooks/usePortableTextEditorKeyGenerator'
 import {usePortableTextEditorReadOnlyStatus} from './hooks/usePortableTextReadOnly'
 import {createWithHotkeys, createWithInsertData} from './plugins'
 import {PortableTextEditor} from './PortableTextEditor'
@@ -142,7 +141,6 @@ export const PortableTextEditable = forwardRef(function PortableTextEditable(
 
   const portableTextEditor = usePortableTextEditor()
   const readOnly = usePortableTextEditorReadOnlyStatus()
-  const keyGenerator = usePortableTextEditorKeyGenerator()
   const ref = useRef<HTMLDivElement | null>(null)
   const [editableElement, setEditableElement] = useState<HTMLDivElement | null>(
     null,
@@ -167,8 +165,8 @@ export const PortableTextEditable = forwardRef(function PortableTextEditable(
 
   // React/UI-specific plugins
   const withInsertData = useMemo(
-    () => createWithInsertData(editorActor, schemaTypes, keyGenerator),
-    [editorActor, keyGenerator, schemaTypes],
+    () => createWithInsertData(editorActor, schemaTypes),
+    [editorActor, schemaTypes],
   )
   const withHotKeys = useMemo(
     () => createWithHotkeys(schemaTypes, portableTextEditor, hotkeys),
