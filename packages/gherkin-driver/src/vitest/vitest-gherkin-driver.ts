@@ -1,5 +1,5 @@
 import type {ParameterType} from '@cucumber/cucumber-expressions'
-import {describe, test} from '@jest/globals'
+import {describe, test} from 'vitest'
 import {compileFeature} from '../compile-feature'
 import type {StepDefinition} from '../step-definitions'
 

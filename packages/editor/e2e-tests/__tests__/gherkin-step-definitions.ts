@@ -1,6 +1,5 @@
 import {expect} from '@jest/globals'
-import {createParameterType} from '@sanity/gherkin-driver'
-import {Given, Then, When} from '@sanity/gherkin-driver/jest'
+import {createParameterType, Given, Then, When} from '@sanity/gherkin-driver'
 import type {Editor} from '../setup/globals.jest'
 import {
   getEditorBlockKey,
