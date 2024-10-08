@@ -313,7 +313,7 @@ export function getSelectionText(
   return text
 }
 
-function getInlineObjectSelection(
+export function getInlineObjectSelection(
   value: Array<PortableTextBlock> | undefined,
   inlineObjectName: string,
 ) {
@@ -533,7 +533,9 @@ export function stringOverlap(string: string, searchString: string) {
   return overlap
 }
 
-function reverseTextSelection(selection: EditorSelection): EditorSelection {
+export function reverseTextSelection(
+  selection: EditorSelection,
+): EditorSelection {
   if (!selection) {
     return selection
   }
@@ -598,7 +600,7 @@ async function getNewBlockKeys(editor: Editor, step: () => Promise<void>) {
   )
 }
 
-function getBlockKeys(value: Array<PortableTextBlock> | undefined) {
+export function getBlockKeys(value: Array<PortableTextBlock> | undefined) {
   if (!value) {
     return []
   }
@@ -619,7 +621,7 @@ async function getNewAnnotations(editor: Editor, step: () => Promise<void>) {
   )
 }
 
-function getAnnotations(
+export function getAnnotations(
   value: Array<PortableTextBlock> | undefined,
 ): Array<string> {
   if (!value) {
