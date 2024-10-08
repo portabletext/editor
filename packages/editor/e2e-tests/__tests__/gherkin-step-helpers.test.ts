@@ -3,9 +3,9 @@ import {
   getBlockKey,
   getEditorSelection,
   getSelectionText,
-  getText,
   getTextMarks,
   getTextSelection,
+  getValueText,
   stringOverlap,
 } from './gherkin-step-helpers'
 
@@ -25,7 +25,7 @@ test(getBlockKey.name, () => {
   expect(getBlockKey([emptyBlock, fooBlock], 'foo')).toBe('b2')
 })
 
-test(getText.name, () => {
+test(getValueText.name, () => {
   const fooBlock = {
     _key: 'b1',
     _type: 'block',
@@ -42,9 +42,9 @@ test(getText.name, () => {
     children: [{_key: 's3', _type: 'span', text: 'bar'}],
   }
 
-  expect(getText([fooBlock, barBlock])).toEqual(['foo', '\n', 'bar'])
-  expect(getText([emptyBlock, barBlock])).toEqual(['', '\n', 'bar'])
-  expect(getText([fooBlock, emptyBlock, barBlock])).toEqual([
+  expect(getValueText([fooBlock, barBlock])).toEqual(['foo', '\n', 'bar'])
+  expect(getValueText([emptyBlock, barBlock])).toEqual(['', '\n', 'bar'])
+  expect(getValueText([fooBlock, emptyBlock, barBlock])).toEqual([
     'foo',
     '\n',
     '',
