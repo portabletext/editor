@@ -11,8 +11,6 @@ import {
   type ClipboardEvent,
   type CSSProperties,
   type FocusEventHandler,
-  type ForwardedRef,
-  type HTMLProps,
   type KeyboardEvent,
   type MutableRefObject,
   type TextareaHTMLAttributes,
@@ -112,11 +110,10 @@ export type PortableTextEditableProps = Omit<
 /**
  * @public
  */
-export const PortableTextEditable = forwardRef(function PortableTextEditable(
-  props: PortableTextEditableProps &
-    Omit<HTMLProps<HTMLDivElement>, 'as' | 'onPaste' | 'onBeforeInput'>,
-  forwardedRef: ForwardedRef<HTMLDivElement>,
-) {
+export const PortableTextEditable = forwardRef<
+  Omit<HTMLDivElement, 'as' | 'onPaste' | 'onBeforeInput'>,
+  PortableTextEditableProps
+>(function PortableTextEditable(props, forwardedRef) {
   const {
     hotkeys,
     onBlur,
