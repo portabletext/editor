@@ -134,7 +134,7 @@ Feature: Annotations
     Given the text "foo baz"
     And a "link" "l1" around "foo baz"
     When the caret is put after "foo"
-    And " bar " is typed
+    And " bar" is typed
     Then the text is "foo bar baz"
     And "foo bar baz" has marks "l1"
 
