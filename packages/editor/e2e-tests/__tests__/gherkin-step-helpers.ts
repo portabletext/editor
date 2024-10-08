@@ -12,7 +12,7 @@ export async function getEditorBlockKey(editor: Editor, text: string) {
 }
 
 export function getEditorText(editor: Editor) {
-  return editor.getValue().then(getText)
+  return editor.getValue().then(getValueText)
 }
 
 export async function insertEditorText(editor: Editor, text: string) {
@@ -28,7 +28,7 @@ export async function insertBlockObject(editor: Editor, name: 'image') {
   })
 }
 
-export function getText(value: Array<PortableTextBlock> | undefined) {
+export function getValueText(value: Array<PortableTextBlock> | undefined) {
   if (!value) {
     return undefined
   }
