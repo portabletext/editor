@@ -34,7 +34,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@sanity/types": "^3.55.0",
+    "@sanity/types": "^3.60.0",
     "@types/lodash.startcase": "^4.4.9",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
