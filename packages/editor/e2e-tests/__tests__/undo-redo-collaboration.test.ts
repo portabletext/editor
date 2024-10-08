@@ -4,7 +4,8 @@ import {describe, expect, it} from '@jest/globals'
 import {toPlainText} from '@portabletext/toolkit'
 import {Feature} from '@sanity/gherkin-driver/jest'
 import type {PortableTextBlock} from '@sanity/types'
-import {parameterTypes, stepDefinitions} from './gherkin-step-definitions'
+import {parameterTypes} from './gherkin-parameter-types'
+import {stepDefinitions} from './gherkin-step-definitions'
 import {
   selectAfterEditorText,
   selectBeforeEditorText,
