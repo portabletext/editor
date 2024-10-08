@@ -198,7 +198,7 @@ export async function getPageEditor({
       intent?: 'navigation',
     ) => {
       const pressKey = async () => {
-        await editableHandle.press(keyName)
+        await editableHandle.press(keyName === 'Space' ? ' ' : keyName)
       }
       for (let i = 0; i < (times || 1); i++) {
         // Value manipulation keys
@@ -206,7 +206,8 @@ export async function getPageEditor({
           keyName.length === 1 ||
           keyName === 'Backspace' ||
           keyName === 'Delete' ||
-          keyName === 'Enter'
+          keyName === 'Enter' ||
+          keyName === 'Space'
         ) {
           if (intent === 'navigation') {
             await waitForNewSelection(pressKey)

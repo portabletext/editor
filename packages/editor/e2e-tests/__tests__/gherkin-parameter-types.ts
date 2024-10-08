@@ -29,7 +29,7 @@ export const parameterTypes = [
     'button',
     /"(ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Backspace|Delete|Enter|Space)"/,
     String,
-    (input) => (input === 'Space' ? ' ' : input),
+    (input) => input,
     false,
     true,
   ),
