@@ -96,6 +96,7 @@ export function createWithHotkeys(
                 at: nextPath,
               },
             )
+            Transforms.select(editor, {path: [...nextPath, 0], offset: 0})
             editor.onChange()
             return
           }
