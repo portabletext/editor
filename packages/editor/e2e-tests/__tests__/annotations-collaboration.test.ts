@@ -1,7 +1,7 @@
 /** @jest-environment ./setup/collaborative.jest.env.ts */
 
 import {Feature} from '@sanity/gherkin-driver/jest'
-import annotationsCollaboration from './annotations-collaboration.feature'
+import annotationsCollaboration from '../../gherkin-spec/annotations-collaboration.feature'
 import {parameterTypes} from './gherkin-parameter-types'
 import {stepDefinitions} from './gherkin-step-definitions'
 
