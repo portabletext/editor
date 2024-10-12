@@ -7,7 +7,7 @@ export default defineWorkspace([
     plugins: [react()],
     test: {
       name: 'browser',
-      include: ['vitest-e2e-tests/**/*.test.ts'],
+      include: ['gherkin-tests/**/*.test.ts'],
       browser: {
         enabled: true,
         headless: true,
@@ -21,7 +21,7 @@ export default defineWorkspace([
     plugins: [react()],
     test: {
       name: 'unit',
-      exclude: ['e2e-tests', 'vitest-e2e-tests'],
+      exclude: ['e2e-tests', 'gherkin-tests'],
       environment: 'jsdom',
       setupFiles: ['./vitest.setup.ts'],
     },
