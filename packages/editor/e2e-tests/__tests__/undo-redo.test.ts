@@ -1,9 +1,9 @@
 /** @jest-environment ./setup/jest.env.ts */
 
 import {Feature} from '@sanity/gherkin-driver/jest'
+import featureFile from '../../gherkin-spec/undo-redo.feature'
 import {parameterTypes} from './gherkin-parameter-types'
 import {stepDefinitions} from './gherkin-step-definitions'
-import featureFile from './undo-redo.feature'
 
 Feature({
   featureText: featureFile,
