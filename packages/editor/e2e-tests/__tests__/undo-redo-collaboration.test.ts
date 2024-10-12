@@ -1,22 +1,9 @@
 /** @jest-environment ./setup/collaborative.jest.env.ts */
-import '../setup/globals.jest'
 import {describe, expect, it} from '@jest/globals'
 import {toPlainText} from '@portabletext/toolkit'
-import {Feature} from '@sanity/gherkin-driver/jest'
 import type {PortableTextBlock} from '@sanity/types'
-import {parameterTypes} from '../../gherkin-spec/gherkin-parameter-types'
-import undoRedoCollaboration from '../../gherkin-spec/undo-redo-collaboration.feature'
-import {
-  selectAfterEditorText,
-  selectBeforeEditorText,
-  stepDefinitions,
-} from './gherkin-step-definitions'
-
-Feature({
-  featureText: undoRedoCollaboration,
-  stepDefinitions,
-  parameterTypes,
-})
+import '../setup/globals.jest'
+import {selectAfterEditorText, selectBeforeEditorText} from './test-helpers'
 
 function getInitialValue(text = 'Hello world'): PortableTextBlock[] {
   return [
