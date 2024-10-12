@@ -20,7 +20,6 @@ Feature: Splitting Blocks
 
   Scenario: Splitting block at the end
     Given the text "foo" in block "b1"
-    When the caret is put after "foo"
-    And "Enter" is pressed
+    When "Enter" is pressed
     Then the text is "foo,\n,"
     And "foo" is in block "b1"

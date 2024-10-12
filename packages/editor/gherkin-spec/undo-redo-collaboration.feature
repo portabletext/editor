@@ -6,8 +6,7 @@ Feature: Undo/Redo Collaboration
 
   Scenario: Undoing deleting before remote text
     Given the text "hello world"
-    When the caret is put after "hello world"
-    And "Backspace" is pressed
+    When "Backspace" is pressed
     And the caret is put after "hello worl" by editor B
     And " there" is typed by editor B
     Then the text is "hello worl there"
