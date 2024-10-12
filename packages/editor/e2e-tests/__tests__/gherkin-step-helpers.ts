@@ -1,161 +1,6 @@
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import type {KeyedSegment, PathSegment, PortableTextBlock} from '@sanity/types'
 import type {EditorSelection, EditorSelectionPoint} from '../../src'
-import type {Editor} from '../setup/globals.jest'
-
-/********************
- * Step helpers
- ********************/
-
-export async function getEditorBlockKey(editor: Editor, text: string) {
-  return editor.getValue().then((value) => getBlockKey(value, text))
-}
-
-export function getEditorText(editor: Editor) {
-  return editor.getValue().then(getValueText)
-}
-
-export async function insertEditorText(editor: Editor, text: string) {
-  await editor.insertText(text)
-  const value = await editor.getValue()
-
-  return getBlockKey(value, text)
-}
-
-export async function insertBlockObject(editor: Editor, name: 'image') {
-  return getNewBlockKeys(editor, async () => {
-    await editor.pressButton(`insert-${name}`)
-  })
-}
-
-export function getValueText(value: Array<PortableTextBlock> | undefined) {
-  if (!value) {
-    return undefined
-  }
-
-  const text: Array<string> = []
-
-  for (const block of value) {
-    if (text.length > 0) {
-      text.push('\n')
-    }
-    if (isPortableTextBlock(block)) {
-      for (const child of block.children) {
-        if (isPortableTextSpan(child)) {
-          text.push(child.text)
-        } else {
-          text.push(child._type)
-        }
-      }
-    } else {
-      text.push(block._type)
-    }
-  }
-
-  return text
-}
-
-export function getEditorTextMarks(editor: Editor, text: string) {
-  return editor.getValue().then((value) => getTextMarks(value, text))
-}
-
-export function getTextMarks(
-  value: Array<PortableTextBlock> | undefined,
-  text: string,
-) {
-  if (!value) {
-    return undefined
-  }
-
-  let marks: Array<string> | undefined = undefined
-
-  for (const block of value) {
-    if (isPortableTextBlock(block)) {
-      for (const child of block.children) {
-        if (isPortableTextSpan(child) && child.text === text) {
-          marks = child.marks ?? []
-          break
-        }
-      }
-    }
-  }
-
-  return marks
-}
-
-export function toggleAnnotation(
-  editor: Editor,
-  annotation: 'comment' | 'link',
-) {
-  return getNewAnnotations(editor, async () => {
-    await editor.toggleAnnotation(annotation)
-  })
-}
-
-export function selectEditorInlineObject(
-  editor: Editor,
-  inlineObjectName: string,
-) {
-  return editor
-    .getValue()
-    .then((value) => getInlineObjectSelection(value, inlineObjectName))
-    .then(editor.setSelection)
-}
-
-export function selectBeforeEditorInlineObject(
-  editor: Editor,
-  inlineObjectName: string,
-) {
-  return selectEditorInlineObject(editor, inlineObjectName).then(() =>
-    editor.pressKey('ArrowLeft'),
-  )
-}
-
-export function selectAfterEditorInlineObject(
-  editor: Editor,
-  inlineObjectName: string,
-) {
-  return selectEditorInlineObject(editor, inlineObjectName).then(() =>
-    editor.pressKey('ArrowRight'),
-  )
-}
-
-export function selectEditor(editor: Editor) {
-  return editor.getValue().then(getEditorSelection).then(editor.setSelection)
-}
-
-export function selectEditorBackwards(editor: Editor) {
-  return editor
-    .getValue()
-    .then(getEditorSelection)
-    .then(reverseTextSelection)
-    .then(editor.setSelection)
-}
-
-export function selectEditorText(editor: Editor, text: string) {
-  return editor
-    .getValue()
-    .then((value) => getTextSelection(value, text))
-    .then(editor.setSelection)
-}
-
-export function selectEditorTextBackwards(editor: Editor, text: string) {
-  return editor
-    .getValue()
-    .then((value) => getTextSelection(value, text))
-    .then(reverseTextSelection)
-    .then(editor.setSelection)
-}
-
-export function selectBeforeEditorText(editor: Editor, text: string) {
-  return selectEditorText(editor, text).then(() => editor.pressKey('ArrowLeft'))
-}
-
-export function selectAfterEditorText(editor: Editor, text: string) {
-  return selectEditorText(editor, text).then(() =>
-    editor.pressKey('ArrowRight'),
-  )
-}
 
 /********************
  * Selection utility functions
@@ -559,6 +404,57 @@ export function reverseTextSelection(
  * Value utility functions
  ********************/
 
+export function getValueText(value: Array<PortableTextBlock> | undefined) {
+  if (!value) {
+    return undefined
+  }
+
+  const text: Array<string> = []
+
+  for (const block of value) {
+    if (text.length > 0) {
+      text.push('\n')
+    }
+    if (isPortableTextBlock(block)) {
+      for (const child of block.children) {
+        if (isPortableTextSpan(child)) {
+          text.push(child.text)
+        } else {
+          text.push(child._type)
+        }
+      }
+    } else {
+      text.push(block._type)
+    }
+  }
+
+  return text
+}
+
+export function getTextMarks(
+  value: Array<PortableTextBlock> | undefined,
+  text: string,
+) {
+  if (!value) {
+    return undefined
+  }
+
+  let marks: Array<string> | undefined = undefined
+
+  for (const block of value) {
+    if (isPortableTextBlock(block)) {
+      for (const child of block.children) {
+        if (isPortableTextSpan(child) && child.text === text) {
+          marks = child.marks ?? []
+          break
+        }
+      }
+    }
+  }
+
+  return marks
+}
+
 export function getBlockKey(
   value: Array<PortableTextBlock> | undefined,
   text: string,
@@ -587,38 +483,12 @@ export function getBlockKey(
   return blockKey
 }
 
-async function getNewBlockKeys(editor: Editor, step: () => Promise<void>) {
-  const value = await editor.getValue()
-  const blockKeysBefore = getBlockKeys(value)
-
-  await step()
-
-  const newValue = await editor.getValue()
-
-  return getBlockKeys(newValue).filter(
-    (blockKey) => !blockKeysBefore.includes(blockKey),
-  )
-}
-
 export function getBlockKeys(value: Array<PortableTextBlock> | undefined) {
   if (!value) {
     return []
   }
 
   return value.map((block) => block._key)
-}
-
-async function getNewAnnotations(editor: Editor, step: () => Promise<void>) {
-  const value = await editor.getValue()
-  const annotationsBefore = getAnnotations(value)
-
-  await step()
-
-  const newValue = await editor.getValue()
-
-  return getAnnotations(newValue).filter(
-    (annotation) => !annotationsBefore.includes(annotation),
-  )
 }
 
 export function getAnnotations(

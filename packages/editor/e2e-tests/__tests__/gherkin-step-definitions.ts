@@ -2,25 +2,19 @@ import {expect} from '@jest/globals'
 import {Given, Then, When} from '@sanity/gherkin-driver'
 import type {Editor} from '../setup/globals.jest'
 import {
-  getEditorBlockKey,
-  getEditorText,
-  getEditorTextMarks,
+  getAnnotations,
+  getBlockKey,
+  getBlockKeys,
+  getEditorSelection,
+  getInlineObjectSelection,
   getSelectionBlockKeys,
   getSelectionFocusText,
   getSelectionText,
-  insertBlockObject,
-  insertEditorText,
-  selectAfterEditorInlineObject,
-  selectAfterEditorText,
-  selectBeforeEditorInlineObject,
-  selectBeforeEditorText,
-  selectEditor,
-  selectEditorBackwards,
-  selectEditorInlineObject,
-  selectEditorText,
-  selectEditorTextBackwards,
+  getTextMarks,
+  getTextSelection,
+  getValueText,
+  reverseTextSelection,
   selectionIsCollapsed,
-  toggleAnnotation,
 } from './gherkin-step-helpers'
 
 type Context = {
@@ -483,3 +477,126 @@ export const stepDefinitions = [
     await editorA.redo()
   }),
 ]
+
+/********************
+ * Step helpers
+ ********************/
+
+async function getEditorBlockKey(editor: Editor, text: string) {
+  return editor.getValue().then((value) => getBlockKey(value, text))
+}
+
+function getEditorText(editor: Editor) {
+  return editor.getValue().then(getValueText)
+}
+
+async function insertEditorText(editor: Editor, text: string) {
+  await editor.insertText(text)
+  const value = await editor.getValue()
+
+  return getBlockKey(value, text)
+}
+
+async function insertBlockObject(editor: Editor, name: 'image') {
+  return getNewBlockKeys(editor, async () => {
+    await editor.pressButton(`insert-${name}`)
+  })
+}
+
+async function getNewBlockKeys(editor: Editor, step: () => Promise<void>) {
+  const value = await editor.getValue()
+  const blockKeysBefore = getBlockKeys(value)
+
+  await step()
+
+  const newValue = await editor.getValue()
+
+  return getBlockKeys(newValue).filter(
+    (blockKey) => !blockKeysBefore.includes(blockKey),
+  )
+}
+
+function getEditorTextMarks(editor: Editor, text: string) {
+  return editor.getValue().then((value) => getTextMarks(value, text))
+}
+
+function toggleAnnotation(editor: Editor, annotation: 'comment' | 'link') {
+  return getNewAnnotations(editor, async () => {
+    await editor.toggleAnnotation(annotation)
+  })
+}
+
+async function getNewAnnotations(editor: Editor, step: () => Promise<void>) {
+  const value = await editor.getValue()
+  const annotationsBefore = getAnnotations(value)
+
+  await step()
+
+  const newValue = await editor.getValue()
+
+  return getAnnotations(newValue).filter(
+    (annotation) => !annotationsBefore.includes(annotation),
+  )
+}
+
+function selectEditorInlineObject(editor: Editor, inlineObjectName: string) {
+  return editor
+    .getValue()
+    .then((value) => getInlineObjectSelection(value, inlineObjectName))
+    .then(editor.setSelection)
+}
+
+function selectBeforeEditorInlineObject(
+  editor: Editor,
+  inlineObjectName: string,
+) {
+  return selectEditorInlineObject(editor, inlineObjectName).then(() =>
+    editor.pressKey('ArrowLeft'),
+  )
+}
+
+function selectAfterEditorInlineObject(
+  editor: Editor,
+  inlineObjectName: string,
+) {
+  return selectEditorInlineObject(editor, inlineObjectName).then(() =>
+    editor.pressKey('ArrowRight'),
+  )
+}
+
+function selectEditor(editor: Editor) {
+  return editor.getValue().then(getEditorSelection).then(editor.setSelection)
+}
+
+function selectEditorBackwards(editor: Editor) {
+  return editor
+    .getValue()
+    .then(getEditorSelection)
+    .then(reverseTextSelection)
+    .then(editor.setSelection)
+}
+
+function selectEditorText(editor: Editor, text: string) {
+  return editor
+    .getValue()
+    .then((value) => getTextSelection(value, text))
+    .then(editor.setSelection)
+}
+
+function selectEditorTextBackwards(editor: Editor, text: string) {
+  return editor
+    .getValue()
+    .then((value) => getTextSelection(value, text))
+    .then(reverseTextSelection)
+    .then(editor.setSelection)
+}
+
+export function selectBeforeEditorText(editor: Editor, text: string) {
+  return selectEditorText(editor, text).then(() => editor.pressKey('ArrowLeft'))
+}
+
+export function selectAfterEditorText(editor: Editor, text: string) {
+  return selectEditorText(editor, text).then(() =>
+    editor.pressKey('ArrowRight'),
+  )
+}
