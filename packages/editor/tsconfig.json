@@ -1,7 +1,12 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "./tsconfig.base.json",
-  "include": ["./src", "./e2e-tests", "./vitest-e2e-tests"],
+  "include": [
+    "./src",
+    "./e2e-tests",
+    "./vitest-e2e-tests",
+    "gherkin-spec/gherkin-parameter-types.ts"
+  ],
   "compilerOptions": {
     "rootDir": ".",
     "outDir": "./lib",
