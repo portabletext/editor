@@ -43,6 +43,7 @@ type EditorContext = {
 
 type Context = {
   editorA: EditorContext
+  editorB: EditorContext
   keyMap: Map<string, string>
 }
 
@@ -80,6 +81,63 @@ export const stepDefinitions = [
 
     vi.waitFor(async () => {
       await expect.element(context.editorA.locator).toBeInTheDocument()
+    })
+  }),
+  Given('two editors', async (context: Context) => {
+    const testActor = createActor(testMachine, {
+      input: {schema, value: undefined},
+    })
+    testActor.start()
+    testActor.send({type: 'add editor'})
+    testActor.send({type: 'add editor'})
+
+    render(<Editors testRef={testActor} />)
+
+    const editorARef = testActor.getSnapshot().context.editors[0]
+    const editorALocator = page.getByTestId(editorARef.id)
+
+    context.editorA = {
+      ref: editorARef,
+      locator: editorALocator.getByRole('textbox'),
+      insertObjectButtonLocator: {
+        image: editorALocator.getByTestId('button-insert-image'),
+      },
+      insertInlineObjectButtonLocator: {
+        'stock-ticker': editorALocator.getByTestId(
+          'button-insert-stock-ticker',
+        ),
+      },
+      selectionLocator: editorALocator.getByTestId('selection'),
+      toggleAnnotationButtonLocator: {
+        comment: editorALocator.getByTestId('button-toggle-comment'),
+        link: editorALocator.getByTestId('button-toggle-link'),
+      },
+    }
+
+    const editorBRef = testActor.getSnapshot().context.editors[1]
+    const editorBLocator = page.getByTestId(editorBRef.id)
+
+    context.editorB = {
+      ref: editorBRef,
+      locator: editorBLocator.getByRole('textbox'),
+      insertObjectButtonLocator: {
+        image: editorBLocator.getByTestId('button-insert-image'),
+      },
+      insertInlineObjectButtonLocator: {
+        'stock-ticker': editorBLocator.getByTestId(
+          'button-insert-stock-ticker',
+        ),
+      },
+      selectionLocator: editorBLocator.getByTestId('selection'),
+      toggleAnnotationButtonLocator: {
+        comment: editorBLocator.getByTestId('button-toggle-comment'),
+        link: editorBLocator.getByTestId('button-toggle-link'),
+      },
+    }
+
+    vi.waitFor(async () => {
+      await expect.element(context.editorA.locator).toBeInTheDocument()
+      await expect.element(context.editorB.locator).toBeInTheDocument()
     })
   }),
   Given('a global keymap', async (context: Context) => {
@@ -408,6 +466,27 @@ export const stepDefinitions = [
       }
     },
   ),
+  When(
+    'the caret is put after {string} by editor B',
+    async (context: Context, text: string) => {
+      if (text === 'stock-ticker') {
+        await waitForNewSelection(context.editorB, async () => {
+          await selectEditorInlineObject(context.editorB, text)
+        })
+        await waitForNewSelection(context.editorB, async () => {
+          await userEvent.keyboard('{ArrowRight}')
+        })
+      } else {
+        await waitForNewSelection(context.editorB, async () => {
+          await selectEditorText(context.editorB, text)
+        })
+        await waitForNewSelection(context.editorB, async () => {
+          await userEvent.click(context.editorB.locator)
+          await userEvent.keyboard('{ArrowRight}')
+        })
+      }
+    },
+  ),
   Then(
     'the caret is before {string}',
     async (context: Context, text: string) => {
@@ -455,6 +534,12 @@ export const stepDefinitions = [
   When('{string} is typed', async (context: Context, text: string) => {
     await waitForNewValue(() => userEvent.type(context.editorA.locator, text))
   }),
+  When(
+    '{string} is typed by editor B',
+    async (context: Context, text: string) => {
+      await waitForNewValue(() => userEvent.type(context.editorB.locator, text))
+    },
+  ),
 
   /**
    * Text block steps

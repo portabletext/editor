@@ -1,5 +1,6 @@
 import {Feature} from '@sanity/gherkin-driver/vitest'
 import annotationsAcrossBlocksFeature from '../gherkin-spec/annotations-across-blocks.feature?raw'
+import annotationsCollaborationFeature from '../gherkin-spec/annotations-collaboration.feature?raw'
 import annotationsEdgeCasesFeature from '../gherkin-spec/annotations-edge-cases.feature?raw'
 import annotationsOverlappingDecoratorsFeature from '../gherkin-spec/annotations-overlapping-decorators.feature?raw'
 import annotationsOverlappingFeature from '../gherkin-spec/annotations-overlapping.feature?raw'
@@ -9,6 +10,12 @@ import {stepDefinitions} from './vitest-gherkin-step-definitions'
 
 Feature({
   featureText: annotationsFeature,
+  stepDefinitions,
+  parameterTypes,
+})
+
+Feature({
+  featureText: annotationsCollaborationFeature,
   stepDefinitions,
   parameterTypes,
 })
