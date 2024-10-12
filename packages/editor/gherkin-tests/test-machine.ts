@@ -28,7 +28,15 @@ type SelectionEvent = {
   selection: EditorSelection
 }
 
-export type EditorEvent = MutationEvent | PatchesEvent | SelectionEvent
+type FocusEvent = {
+  type: 'focus'
+}
+
+export type EditorEvent =
+  | MutationEvent
+  | PatchesEvent
+  | SelectionEvent
+  | FocusEvent
 
 export type EditorActorRef = ActorRefFrom<typeof editorMachine>
 
@@ -42,7 +50,7 @@ const editorMachine = setup({
       keyGenerator: () => string
     },
     events: {} as EditorEvent,
-    emitted: {} as PatchesEvent,
+    emitted: {} as PatchesEvent | FocusEvent,
   },
   actions: {
     'assign selection': assign({
@@ -51,6 +59,7 @@ const editorMachine = setup({
         return event.selection
       },
     }),
+    'emit focus': emit({type: 'focus'}),
     'emit patches': emit(({event}) => {
       assertEvent(event, 'patches')
       return event
@@ -79,6 +88,9 @@ const editorMachine = setup({
     },
     selection: {
       actions: 'assign selection',
+    },
+    focus: {
+      actions: ['emit focus'],
     },
   },
 })
