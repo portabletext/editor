@@ -1,4 +1,4 @@
-/** @jest-environment ./setup/jest.env.ts */
+/** @jest-environment ./setup/collaborative.jest.env.ts */
 
 import {describe, expect, it} from '@jest/globals'
 
@@ -7,7 +7,7 @@ import {describe, expect, it} from '@jest/globals'
 // We can do it in these test's though (as we can override browser permissions through packages/@sanity/portable-text-editor/test/setup/collaborative.jest.env.ts)
 describe('Feature: Pasting', () => {
   it('can paste into an empty editor', async () => {
-    const editorA = await getEditor()
+    const [editorA] = await getEditors()
     await editorA.paste('Yo!')
     const valueA = await editorA.getValue()
     expect(valueA).toMatchObject([
@@ -22,7 +22,7 @@ describe('Feature: Pasting', () => {
   })
 
   it('can paste empty lines from clipboard without duplicating keys', async () => {
-    const editorA = await getEditor()
+    const [editorA] = await getEditors()
     await editorA.paste('\n\n', 'text/plain')
     const data = `<meta charset='utf-8'><div class="pt-block pt-text-block pt-text-block-style-normal" spellcheck="true"><div><div><div data-as="div" data-ui="Box" data-testid="text-block" class="sc-pyfCe ejpaYo"><div data-as="div" data-ui="Box" data-testid="text-block__wrapper" class="sc-pyfCe fzrBED sc-cqQeAO jubvhE"><div data-as="div" data-ui="Flex" class="sc-pyfCe hDoDhD sc-csuSiG dCdti"><div data-as="div" data-ui="Box" class="sc-pyfCe jRVwRg"><div data-read-only="false" data-testid="text-block__text" class="sc-jeToga carTaU"><div data-as="div" data-ui="Flex" class="sc-pyfCe fzrBED sc-csuSiG jCgSkH sc-cTVMo ixGLsO"><div data-text=""><div data-ui="Text" data-testid="text-style--normal" class="sc-bcXHqe bHshCf"><span><div class="sc-dMVFSy jJslKz"><div data-testid="text-style--normal" class="sc-dMVFSy jJslKz"><span><span><span data-slate-length="0">
     </span></span></span></div></div></span></div></div></div></div></div><div data-as="div" data-ui="Box" class="sc-pyfCe fzrBED sc-eSEOys fsTfdf"><div data-as="div" data-ui="Box" class="sc-pyfCe kflhPW sc-ayeQl gUcksj"><div data-as="div" data-ui="Flex" class="sc-pyfCe fzrBED sc-csuSiG dCdti sc-iQAVnG htHGtr"></div></div></div></div></div></div></div></div></div><div class="pt-block pt-text-block pt-text-block-style-normal" spellcheck="true"><div><div><div data-as="div" data-ui="Box" data-testid="text-block" class="sc-pyfCe ejpaYo"><div data-as="div" data-ui="Box" data-testid="text-block__wrapper" class="sc-pyfCe fzrBED sc-cqQeAO jubvhE"><div data-as="div" data-ui="Flex" class="sc-pyfCe hDoDhD sc-csuSiG dCdti"><div data-as="div" data-ui="Box" class="sc-pyfCe jRVwRg"><div data-read-only="false" data-testid="text-block__text" class="sc-jeToga carTaU"><div data-as="div" data-ui="Flex" class="sc-pyfCe fzrBED sc-csuSiG jCgSkH sc-cTVMo ixGLsO"><div data-text=""><div data-ui="Text" data-testid="text-style--normal" class="sc-bcXHqe bHshCf"><span><div class="sc-dMVFSy jJslKz"><div data-testid="text-style--normal" class="sc-dMVFSy jJslKz"><span><span><span>
