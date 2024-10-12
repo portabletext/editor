@@ -192,6 +192,84 @@ export function getInlineObjectSelection(
   return selection
 }
 
+export function getSelectionAfterInlineObject(
+  value: Array<PortableTextBlock> | undefined,
+  inlineObjectName: string,
+) {
+  if (!value) {
+    throw new Error(`Unable to find selection for value ${value}`)
+  }
+
+  let inlineObjectFound = false
+  let selection: EditorSelection = null
+
+  for (const block of value) {
+    if (isPortableTextBlock(block)) {
+      for (const child of block.children) {
+        if (isPortableTextSpan(child)) {
+          if (inlineObjectFound) {
+            selection = {
+              anchor: {
+                path: [{_key: block._key}, 'children', {_key: child._key}],
+                offset: 0,
+              },
+              focus: {
+                path: [{_key: block._key}, 'children', {_key: child._key}],
+                offset: 0,
+              },
+            }
+            break
+          }
+        }
+
+        if (child._type === inlineObjectName) {
+          inlineObjectFound = true
+        }
+      }
+    }
+  }
+
+  return selection
+}
+
+export function getSelectionBeforeInlineObject(
+  value: Array<PortableTextBlock> | undefined,
+  inlineObjectName: string,
+) {
+  if (!value) {
+    throw new Error(`Unable to find selection for value ${value}`)
+  }
+
+  let selection: EditorSelection = null
+  let prevSpanSelection: EditorSelection = null
+
+  for (const block of value) {
+    if (isPortableTextBlock(block)) {
+      for (const child of block.children) {
+        if (isPortableTextSpan(child)) {
+          prevSpanSelection = {
+            anchor: {
+              path: [{_key: block._key}, 'children', {_key: child._key}],
+              offset: child.text.length,
+            },
+            focus: {
+              path: [{_key: block._key}, 'children', {_key: child._key}],
+              offset: child.text.length,
+            },
+          }
+        }
+
+        if (child._type === inlineObjectName) {
+          selection = prevSpanSelection
+          break
+        }
+      }
+    }
+  }
+
+  return selection
+}
+
 export function getEditorSelection(
   blocks: Array<PortableTextBlock> | undefined,
 ): EditorSelection {
@@ -344,6 +422,55 @@ export function getTextSelection(
     anchor,
     focus,
   }
+}
+
+export function getSelectionBeforeText(
+  value: Array<PortableTextBlock> | undefined,
+  text: string,
+): EditorSelection {
+  return collapseSelection(getTextSelection(value, text), 'start')
+}
+
+export function getSelectionAfterText(
+  value: Array<PortableTextBlock> | undefined,
+  text: string,
+): EditorSelection {
+  return collapseSelection(getTextSelection(value, text), 'end')
+}
+
+function collapseSelection(
+  selection: EditorSelection,
+  direction: 'start' | 'end',
+): EditorSelection {
+  if (!selection) {
+    return selection
+  }
+
+  if (direction === 'start') {
+    return selection.backward
+      ? {
+          anchor: selection.focus,
+          focus: selection.focus,
+          backward: false,
+        }
+      : {
+          anchor: selection.anchor,
+          focus: selection.anchor,
+          backward: false,
+        }
+  }
+
+  return selection.backward
+    ? {
+        anchor: selection.anchor,
+        focus: selection.anchor,
+        backward: false,
+      }
+    : {
+        anchor: selection.focus,
+        focus: selection.focus,
+        backward: false,
+      }
 }
 
 export function stringOverlap(string: string, searchString: string) {

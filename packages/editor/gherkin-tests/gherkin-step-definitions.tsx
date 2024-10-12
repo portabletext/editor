@@ -12,6 +12,10 @@ import {
   getBlockKeys,
   getEditorSelection,
   getInlineObjectSelection,
+  getSelectionAfterInlineObject,
+  getSelectionAfterText,
+  getSelectionBeforeInlineObject,
+  getSelectionBeforeText,
   getSelectionBlockKeys,
   getSelectionFocusText,
   getSelectionText,
@@ -225,10 +229,14 @@ export const stepDefinitions = [
       keyKey: string,
       text: string,
     ) => {
-      await waitForNewSelection(context.editorA, () =>
-        selectEditorText(context.editorA, text),
-      )
+      const value = await getValue()
 
+      await waitForNewSelection(context.editorA, async () => {
+        context.editorA.ref.send({
+          type: 'selection',
+          selection: getTextSelection(value, text),
+        })
+      })
       const newAnnotationKeys = await toggleAnnotation(
         context.editorA,
         annotation,
@@ -255,9 +263,14 @@ export const stepDefinitions = [
       keyKey: string,
       text: string,
     ) => {
-      await waitForNewSelection(context.editorB, () =>
-        selectEditorText(context.editorB, text),
-      )
+      const value = await getValue()
+
+      await waitForNewSelection(context.editorB, async () => {
+        context.editorB.ref.send({
+          type: 'selection',
+          selection: getTextSelection(value, text),
+        })
+      })
 
       const newAnnotationKeys = await toggleAnnotation(
         context.editorB,
@@ -314,9 +327,14 @@ export const stepDefinitions = [
       annotation: 'comment' | 'link',
       keyKey: string,
     ) => {
-      await waitForNewSelection(context.editorA, () =>
-        selectEditorText(context.editorA, text),
-      )
+      const value = await getValue()
+
+      await waitForNewSelection(context.editorA, async () => {
+        context.editorA.ref.send({
+          type: 'selection',
+          selection: getTextSelection(value, text),
+        })
+      })
 
       const newAnnotationKeys = await toggleAnnotation(
         context.editorA,
@@ -339,18 +357,28 @@ export const stepDefinitions = [
   When(
     '{string} is marked with {decorator}',
     async (context: Context, text: string, decorator: 'em' | 'strong') => {
-      await waitForNewSelection(context.editorA, () =>
-        selectEditorText(context.editorA, text),
-      )
+      const value = await getValue()
+
+      await waitForNewSelection(context.editorA, async () => {
+        context.editorA.ref.send({
+          type: 'selection',
+          selection: getTextSelection(value, text),
+        })
+      })
       await waitForNewValue(() => toggleDecoratorUsingKeyboard(decorator))
     },
   ),
   Given(
     '{decorator} around {string}',
     async (context: Context, decorator: 'em' | 'strong', text: string) => {
-      await waitForNewSelection(context.editorA, () =>
-        selectEditorText(context.editorA, text),
-      )
+      const value = await getValue()
+
+      await waitForNewSelection(context.editorA, async () => {
+        context.editorA.ref.send({
+          type: 'selection',
+          selection: getTextSelection(value, text),
+        })
+      })
       await waitForNewValue(() => toggleDecoratorUsingKeyboard(decorator))
     },
   ),
@@ -442,36 +470,53 @@ export const stepDefinitions = [
     })
   }),
   When('{string} is selected', async (context: Context, text: string) => {
+    const value = await getValue()
+
     await waitForNewSelection(context.editorA, async () => {
       if (text === 'stock-ticker') {
-        await selectEditorInlineObject(context.editorA, text)
+        context.editorA.ref.send({
+          type: 'selection',
+          selection: getInlineObjectSelection(value, text),
+        })
       } else {
-        await selectEditorText(context.editorA, text)
+        context.editorA.ref.send({
+          type: 'selection',
+          selection: getTextSelection(value, text),
+        })
       }
     })
   }),
   When(
     '{string} is selected backwards',
     async (context: Context, text: string) => {
-      await selectEditorTextBackwards(context.editorA, text)
+      const value = await getValue()
+
+      await waitForNewSelection(context.editorA, async () => {
+        context.editorA.ref.send({
+          type: 'selection',
+          selection: reverseTextSelection(getTextSelection(value, text)),
+        })
+      })
     },
   ),
   When(
     'the caret is put before {string}',
     async (context: Context, text: string) => {
+      const value = await getValue()
+
       if (text === 'stock-ticker') {
         await waitForNewSelection(context.editorA, async () => {
-          await selectEditorInlineObject(context.editorA, text)
-        })
-        await waitForNewSelection(context.editorA, async () => {
-          await userEvent.keyboard('{ArrowLeft}')
+          context.editorA.ref.send({
+            type: 'selection',
+            selection: getSelectionBeforeInlineObject(value, text),
+          })
         })
       } else {
         await waitForNewSelection(context.editorA, async () => {
-          await selectEditorText(context.editorA, text)
-        })
-        await waitForNewSelection(context.editorA, async () => {
-          await userEvent.keyboard('{ArrowLeft}')
+          context.editorA.ref.send({
+            type: 'selection',
+            selection: getSelectionBeforeText(value, text),
+          })
         })
       }
     },
@@ -479,19 +524,21 @@ export const stepDefinitions = [
   When(
     'the caret is put after {string}',
     async (context: Context, text: string) => {
+      const value = await getValue()
+
       if (text === 'stock-ticker') {
         await waitForNewSelection(context.editorA, async () => {
-          await selectEditorInlineObject(context.editorA, text)
-        })
-        await waitForNewSelection(context.editorA, async () => {
-          await userEvent.keyboard('{ArrowRight}')
+          context.editorA.ref.send({
+            type: 'selection',
+            selection: getSelectionAfterInlineObject(value, text),
+          })
         })
       } else {
         await waitForNewSelection(context.editorA, async () => {
-          await selectEditorText(context.editorA, text)
-        })
-        await waitForNewSelection(context.editorA, async () => {
-          await userEvent.keyboard('{ArrowRight}')
+          context.editorA.ref.send({
+            type: 'selection',
+            selection: getSelectionAfterText(value, text),
+          })
         })
       }
     },
@@ -499,20 +546,21 @@ export const stepDefinitions = [
   When(
     'the caret is put after {string} by editor B',
     async (context: Context, text: string) => {
+      const value = await getValue()
+
       if (text === 'stock-ticker') {
         await waitForNewSelection(context.editorB, async () => {
-          await selectEditorInlineObject(context.editorB, text)
-        })
-        await waitForNewSelection(context.editorB, async () => {
-          await userEvent.keyboard('{ArrowRight}')
+          context.editorB.ref.send({
+            type: 'selection',
+            selection: getSelectionAfterInlineObject(value, text),
+          })
         })
       } else {
         await waitForNewSelection(context.editorB, async () => {
-          await selectEditorText(context.editorB, text)
-        })
-        await waitForNewSelection(context.editorB, async () => {
-          await userEvent.click(context.editorB.locator)
-          await userEvent.keyboard('{ArrowRight}')
+          context.editorB.ref.send({
+            type: 'selection',
+            selection: getSelectionAfterText(value, text),
+          })
         })
       }
     },
@@ -769,35 +817,5 @@ const waitForNewSelection = async (
   return vi.waitFor(async () => {
     const newSelection = await getSelection(editor)
     expect(oldSelection).not.toEqual(newSelection)
-  })
-}
-
-async function selectEditorInlineObject(
-  editor: EditorContext,
-  inlineObjectName: string,
-) {
-  const value = await getValue()
-  const selection = getInlineObjectSelection(value, inlineObjectName)
-  editor.ref.send({
-    type: 'selection',
-    selection,
-  })
-}
-
-async function selectEditorText(editor: EditorContext, text: string) {
-  const value = await getValue()
-  const selection = getTextSelection(value, text)
-  editor.ref.send({
-    type: 'selection',
-    selection,
-  })
-}
-
-async function selectEditorTextBackwards(editor: EditorContext, text: string) {
-  const value = await getValue()
-  const selection = getTextSelection(value, text)
-  editor.ref.send({
-    type: 'selection',
-    selection: reverseTextSelection(selection),
   })
 }
