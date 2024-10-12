@@ -6,7 +6,7 @@ import annotationsEdgeCases from '../../gherkin-spec/annotations-edge-cases.feat
 import annotationsOverlappingDecorators from '../../gherkin-spec/annotations-overlapping-decorators.feature'
 import annotationsOverlapping from '../../gherkin-spec/annotations-overlapping.feature'
 import annotations from '../../gherkin-spec/annotations.feature'
-import {parameterTypes} from './gherkin-parameter-types'
+import {parameterTypes} from '../../gherkin-spec/gherkin-parameter-types'
 import {stepDefinitions} from './gherkin-step-definitions'
 
 Feature({

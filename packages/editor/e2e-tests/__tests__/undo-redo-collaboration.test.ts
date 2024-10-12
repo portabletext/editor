@@ -4,8 +4,8 @@ import {describe, expect, it} from '@jest/globals'
 import {toPlainText} from '@portabletext/toolkit'
 import {Feature} from '@sanity/gherkin-driver/jest'
 import type {PortableTextBlock} from '@sanity/types'
+import {parameterTypes} from '../../gherkin-spec/gherkin-parameter-types'
 import undoRedoCollaboration from '../../gherkin-spec/undo-redo-collaboration.feature'
-import {parameterTypes} from './gherkin-parameter-types'
 import {stepDefinitions} from './gherkin-step-definitions'
 import {
   selectAfterEditorText,
