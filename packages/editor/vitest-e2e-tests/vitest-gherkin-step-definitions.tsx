@@ -5,6 +5,7 @@ import {isEqual} from 'lodash'
 import {expect, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {createActor} from 'xstate'
+import {schema} from '../e2e-tests/schema'
 import {
   getAnnotations,
   getBlockKey,
@@ -19,8 +20,7 @@ import {
   getValueText,
   reverseTextSelection,
   selectionIsCollapsed,
-} from '../e2e-tests/__tests__/gherkin-step-helpers'
-import {schema} from '../e2e-tests/schema'
+} from '../gherkin-spec/gherkin-step-helpers'
 import type {EditorSelection} from '../src'
 import {Editors} from './editors'
 import {testMachine, type EditorActorRef} from './test-machine'

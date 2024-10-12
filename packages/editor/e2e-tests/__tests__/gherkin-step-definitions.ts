@@ -1,6 +1,5 @@
 import {expect} from '@jest/globals'
 import {Given, Then, When} from '@sanity/gherkin-driver'
-import type {Editor} from '../setup/globals.jest'
 import {
   getAnnotations,
   getBlockKey,
@@ -15,7 +14,8 @@ import {
   getValueText,
   reverseTextSelection,
   selectionIsCollapsed,
-} from './gherkin-step-helpers'
+} from '../../gherkin-spec/gherkin-step-helpers'
+import type {Editor} from '../setup/globals.jest'
 
 type Context = {
   editorA: Editor

@@ -4,7 +4,7 @@ import type {PortableTextBlock, PortableTextSpan} from '@sanity/types'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type ComponentProps, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {getTextSelection} from '../../../e2e-tests/__tests__/gherkin-step-helpers'
+import {getTextSelection} from '../../../gherkin-spec/gherkin-step-helpers'
 import {PortableTextEditable} from '../Editable'
 import {PortableTextEditor} from '../PortableTextEditor'
 
