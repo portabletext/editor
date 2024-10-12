@@ -1,6 +1,6 @@
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import type {KeyedSegment, PathSegment, PortableTextBlock} from '@sanity/types'
-import type {EditorSelection, EditorSelectionPoint} from '../../src'
+import type {EditorSelection, EditorSelectionPoint} from '../src'
 
 /********************
  * Selection utility functions
