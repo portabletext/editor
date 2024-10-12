@@ -91,6 +91,7 @@ function Editor(props: {
           }
         }}
       >
+        <FocusListener editorRef={props.editorRef} />
         <BlockButtons />
         <InlineObjectButtons />
         <CommentButtons />
@@ -102,6 +103,22 @@ function Editor(props: {
       </pre>
     </div>
   )
+}
+
+function FocusListener(props: {editorRef: EditorActorRef}) {
+  const editor = usePortableTextEditor()
+
+  useEffect(() => {
+    const subscription = props.editorRef.on('focus', () => {
+      PortableTextEditor.focus(editor)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [editor, props.editorRef])
+
+  return null
 }
 
 function BlockButtons() {

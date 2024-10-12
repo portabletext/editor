@@ -247,6 +247,36 @@ export const stepDefinitions = [
       context.keyMap.set(keyKey, newAnnotationKeys[0])
     },
   ),
+  Given(
+    'a(n) {annotation} {key} around {string} by editor B',
+    async (
+      context: Context,
+      annotation: 'comment' | 'link',
+      keyKey: string,
+      text: string,
+    ) => {
+      await waitForNewSelection(context.editorB, () =>
+        selectEditorText(context.editorB, text),
+      )
+
+      const newAnnotationKeys = await toggleAnnotation(
+        context.editorB,
+        annotation,
+      )
+
+      if (newAnnotationKeys.length === 0) {
+        throw new Error('No new annotation key was added')
+      }
+
+      if (newAnnotationKeys.length > 1) {
+        throw new Error(
+          `More than one new annotation key was added: ${JSON.stringify(newAnnotationKeys)}`,
+        )
+      }
+
+      context.keyMap.set(keyKey, newAnnotationKeys[0])
+    },
+  ),
   When(
     '{annotation} is toggled',
     async (context: Context, annotation: 'comment' | 'link') => {
@@ -532,12 +562,18 @@ export const stepDefinitions = [
    * Typing steps
    */
   When('{string} is typed', async (context: Context, text: string) => {
-    await waitForNewValue(() => userEvent.type(context.editorA.locator, text))
+    await waitForNewValue(async () => {
+      context.editorA.ref.send({type: 'focus'})
+      await userEvent.type(context.editorA.locator, text)
+    })
   }),
   When(
     '{string} is typed by editor B',
     async (context: Context, text: string) => {
-      await waitForNewValue(() => userEvent.type(context.editorB.locator, text))
+      await waitForNewValue(async () => {
+        context.editorB.ref.send({type: 'focus'})
+        await userEvent.type(context.editorB.locator, text)
+      })
     },
   ),
 
@@ -580,6 +616,12 @@ export const stepDefinitions = [
     await pressButton(context.editorA, button)
   }),
   When(
+    '{button} is pressed by editor B',
+    async (context: Context, button: ButtonName) => {
+      await pressButton(context.editorB, button)
+    },
+  ),
+  When(
     '{button} is pressed {int} times',
     async (context: Context, button: ButtonName, times: number) => {
       for (let i = 0; i < times; i++) {
@@ -591,13 +633,21 @@ export const stepDefinitions = [
   /**
    * Undo/redo steps
    */
-  When('undo is performed', async () => {
+  When('undo is performed', async (context: Context) => {
     await waitForNewValue(async () => {
+      context.editorA.ref.send({type: 'focus'})
       await userEvent.keyboard(`{${getMetaKey()}>}z{/${getMetaKey()}}`)
     })
   }),
-  When('redo is performed', async () => {
+  When('undo is performed by editor B', async (context: Context) => {
     await waitForNewValue(async () => {
+      context.editorB.ref.send({type: 'focus'})
+      await userEvent.keyboard(`{${getMetaKey()}>}z{/${getMetaKey()}}`)
+    })
+  }),
+  When('redo is performed', async (context: Context) => {
+    await waitForNewValue(async () => {
+      context.editorA.ref.send({type: 'focus'})
       await userEvent.keyboard(`{${getMetaKey()}>}y{/${getMetaKey()}}`)
     })
   }),
