@@ -6,11 +6,11 @@ import {Feature} from '@sanity/gherkin-driver/jest'
 import type {PortableTextBlock} from '@sanity/types'
 import {parameterTypes} from '../../gherkin-spec/gherkin-parameter-types'
 import undoRedoCollaboration from '../../gherkin-spec/undo-redo-collaboration.feature'
-import {stepDefinitions} from './gherkin-step-definitions'
 import {
   selectAfterEditorText,
   selectBeforeEditorText,
-} from './gherkin-step-helpers'
+  stepDefinitions,
+} from './gherkin-step-definitions'
 
 Feature({
   featureText: undoRedoCollaboration,
