@@ -125,7 +125,7 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       '@vitejs/plugin-react':
-        specifier: ^4.3.1
+        specifier: ^4.3.2
         version: 4.3.2(vite@5.4.8(@types/node@22.7.4)(terser@5.34.1))
       autoprefixer:
         specifier: ^10.4.20
@@ -258,7 +258,7 @@ importers:
         specifier: ~8.5.12
         version: 8.5.12
       '@vitejs/plugin-react':
-        specifier: ^4.3.1
+        specifier: ^4.3.2
         version: 4.3.2(vite@5.4.8(@types/node@18.19.54)(terser@5.34.1))
       '@vitest/browser':
         specifier: ^2.1.2
