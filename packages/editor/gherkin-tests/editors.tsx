@@ -96,6 +96,7 @@ function Editor(props: {
         <InlineObjectButtons />
         <CommentButtons />
         <LinkButtons />
+        <StyleButtons />
         <PortableTextEditable hotkeys={hotkeys} selection={selection} />
       </PortableTextEditor>
       <pre data-testid="selection">
@@ -317,4 +318,27 @@ function removeLink(editor: PortableTextEditor) {
     fields: [],
     __experimental_search: [],
   })
+}
+
+function StyleButtons() {
+  const editor = usePortableTextEditor()
+  const styles = editor.schemaTypes.styles
+
+  return (
+    <>
+      {styles.map((style) => (
+        <button
+          key={style.value}
+          data-testid={`button-toggle-style-${style.value}`}
+          type="button"
+          onClick={() => {
+            PortableTextEditor.toggleBlockStyle(editor, style.value)
+            PortableTextEditor.focus(editor)
+          }}
+        >
+          {style.title}
+        </button>
+      ))}
+    </>
+  )
 }
