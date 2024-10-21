@@ -6,6 +6,8 @@ import {expect, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {createActor} from 'xstate'
 import {schema} from '../e2e-tests/schema'
+import type {EditorSelection} from '../src'
+import {Editors} from './editors'
 import {
   getAnnotations,
   getBlockKey,
@@ -24,9 +26,7 @@ import {
   getValueText,
   reverseTextSelection,
   selectionIsCollapsed,
-} from '../gherkin-spec/gherkin-step-helpers'
-import type {EditorSelection} from '../src'
-import {Editors} from './editors'
+} from './gherkin-step-helpers'
 import {testMachine, type EditorActorRef} from './test-machine'
 
 type EditorContext = {
