@@ -21,7 +21,7 @@ export default defineWorkspace([
     plugins: [react()],
     test: {
       name: 'unit',
-      exclude: ['e2e-tests', 'gherkin-tests'],
+      exclude: ['node_modules', 'e2e-tests', 'gherkin-tests'],
       environment: 'jsdom',
       setupFiles: ['./vitest.setup.ts'],
     },
