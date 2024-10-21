@@ -43,6 +43,16 @@
       ],
       "dependencyDashboardApproval": false,
       "schedule": ["every weekday"]
+    },
+    {
+      "description": "Group Tailwind packages",
+      "matchPackageNames": ["/tailwind/"],
+      "groupName": "tailwind"
+    },
+    {
+      "description": "Group XState packages",
+      "matchPackageNames": ["/xstate/"],
+      "groupName": "xstate"
     }
   ]
 }
