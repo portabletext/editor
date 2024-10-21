@@ -11,3 +11,7 @@
 
 > [!NOTE]
 > We are currently working hard on the general release of this component. Docs and refined APIs are coming.
+
+## End-User Experience
+
+In order to provide a robust and consistent end-user experience, the editor is backed by an elaborate E2E test suite generated from a [human-readable Gherkin spec](./gherkin-spec/).
