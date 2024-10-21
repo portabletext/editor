@@ -204,7 +204,7 @@ importers:
         specifier: workspace:^
         version: link:../gherkin-driver
       '@sanity/pkg-utils':
-        specifier: ^6.11.4
+        specifier: ^6.11.2
         version: 6.11.4(@types/babel__core@7.20.5)(@types/node@18.19.54)(debug@4.3.7)(typescript@5.6.3)
       '@sanity/schema':
         specifier: ^3.61.0
