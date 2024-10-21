@@ -1,4 +1,4 @@
-import {getTextSelection} from '../../gherkin-spec/gherkin-step-helpers'
+import {getTextSelection} from '../../gherkin-tests/gherkin-step-helpers'
 import type {Editor} from '../setup/globals.jest'
 
 function selectEditorText(editor: Editor, text: string) {
