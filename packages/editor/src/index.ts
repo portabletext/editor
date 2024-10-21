@@ -1,4 +1,4 @@
-export {type Patch} from '@portabletext/patches'
+export type {Patch} from '@portabletext/patches'
 export {PortableTextEditable} from './editor/Editable'
 export type {PortableTextEditableProps} from './editor/Editable'
 export {
