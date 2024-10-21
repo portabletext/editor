@@ -1,6 +1,7 @@
 import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@sanity/types'
 import type {FocusEvent} from 'react'
+import {Editor, Transforms} from 'slate'
 import {
   assertEvent,
   assign,
@@ -10,7 +11,19 @@ import {
   setup,
   type ActorRefFrom,
 } from 'xstate'
-import type {EditorSelection, InvalidValueResolution} from '../types/editor'
+import type {
+  EditorSelection,
+  InvalidValueResolution,
+  PortableTextMemberSchemaTypes,
+  PortableTextSlateEditor,
+} from '../types/editor'
+import type {
+  Behaviour,
+  BehaviourContext,
+  BehaviourEvent,
+} from './editor-behaviour'
+
+export * from 'xstate/guards'
 
 /**
  * @internal
@@ -42,16 +55,65 @@ export type PatchEvent = {type: 'patch'; patch: Patch}
 /**
  * @internal
  */
+export type EditorContext = {
+  behaviours: Array<Behaviour>
+  keyGenerator: () => string
+  pendingEvents: Array<PatchEvent | MutationEvent>
+  schema: {
+    decorators: Array<string>
+  }
+}
+
+/**
+ * @internal
+ */
 export type MutationEvent = {
   type: 'mutation'
   patches: Array<Patch>
   snapshot: Array<PortableTextBlock> | undefined
 }
 
+/**
+ * @internal
+ */
+export type InsertTextEvent = {
+  type: 'insert text'
+  text: string
+  editor: PortableTextSlateEditor
+}
+
 type EditorEvent =
   | {type: 'normalizing'}
   | {type: 'done normalizing'}
   | EditorEmittedEvent
+  | {
+      type: 'update schema'
+      schemaTypes: PortableTextMemberSchemaTypes
+    }
+  | {
+      type: 'internal.insert text'
+      text: string
+      editor: PortableTextSlateEditor
+    }
+  | {
+      type: 'command.insert text'
+      text: string
+      editor: PortableTextSlateEditor
+    }
+  | {
+      type: 'internal.insert span'
+      text: string
+      marks: Array<string>
+      editor: PortableTextSlateEditor
+    }
+  | {
+      type: 'command.insert span'
+      text: string
+      marks: Array<string>
+      editor: PortableTextSlateEditor
+    }
+  | (BehaviourEvent & {editor: PortableTextSlateEditor})
+  | {type: 'internal.noop'}
 
 type EditorEmittedEvent =
   | {type: 'ready'}
@@ -89,17 +151,26 @@ type EditorEmittedEvent =
  */
 export const editorMachine = setup({
   types: {
-    context: {} as {
-      keyGenerator: () => string
-      pendingEvents: Array<PatchEvent | MutationEvent>
-    },
+    context: {} as EditorContext,
     events: {} as EditorEvent,
     emitted: {} as EditorEmittedEvent,
     input: {} as {
+      behaviours: Array<Behaviour>
       keyGenerator: () => string
+      schemaTypes: PortableTextMemberSchemaTypes
     },
   },
   actions: {
+    'assign schema': assign({
+      schema: ({event}) => {
+        assertEvent(event, 'update schema')
+        return {
+          decorators: event.schemaTypes.decorators.map(
+            (decorator) => decorator.value,
+          ),
+        }
+      },
+    }),
     'emit patch event': emit(({event}) => {
       assertEvent(event, 'patch')
       return event
@@ -122,6 +193,100 @@ export const editorMachine = setup({
     'clear pending events': assign({
       pendingEvents: [],
     }),
+    'handle insert text': enqueueActions(({context, event, enqueue}) => {
+      assertEvent(event, 'internal.insert text')
+
+      const behaviourEvent: BehaviourEvent = {
+        ...event,
+        type: 'insert text',
+      }
+
+      const [focusSpan] = event.editor.selection
+        ? Array.from(
+            Editor.nodes(event.editor, {
+              mode: 'lowest',
+              at: event.editor.selection.focus,
+              match: (n) => event.editor.isTextSpan(n),
+              voids: false,
+            }),
+          )[0]
+        : [undefined]
+
+      const behaviourContext: BehaviourContext = {
+        schema: {
+          decorators: context.schema.decorators,
+        },
+        selection: event.editor.selection,
+        focusSpan,
+      }
+
+      for (const behaviour of context.behaviours) {
+        if (behaviour.on !== 'insert text') {
+          break
+        }
+
+        for (const transition of behaviour.transitions) {
+          if (
+            !transition.guard ||
+            transition.guard({context: behaviourContext, event: behaviourEvent})
+          ) {
+            for (const enqueueAction of transition.actions) {
+              const action = enqueueAction({
+                context: behaviourContext,
+                event: behaviourEvent,
+              })
+
+              if (action.type === 'raise') {
+                if (action.event.type === 'insert text') {
+                  enqueue.raise({
+                    type: 'internal.insert text',
+                    editor: event.editor,
+                    text: action.event.text,
+                  })
+                } else {
+                  enqueue.raise({
+                    type: 'internal.insert span',
+                    editor: event.editor,
+                    text: action.event.text,
+                    marks: action.event.marks,
+                  })
+                }
+              } else {
+                if (action.type === 'apply insert text') {
+                  enqueue.raise({
+                    type: 'command.insert text',
+                    editor: event.editor,
+                    text: action.params.text,
+                  })
+                } else {
+                  enqueue.raise({
+                    type: 'command.insert span',
+                    editor: event.editor,
+                    text: action.params.text,
+                    marks: action.params.marks,
+                  })
+                }
+              }
+            }
+
+            break
+          }
+        }
+      }
+    }),
+    'apply insert text': ({event}) => {
+      assertEvent(event, 'command.insert text')
+      Editor.insertText(event.editor, event.text)
+    },
+    'apply insert span': ({context, event}) => {
+      assertEvent(event, 'command.insert span')
+      Transforms.insertNodes(event.editor, {
+        _type: 'span',
+        _key: context.keyGenerator(),
+        text: event.text,
+        marks: event.marks,
+      })
+    },
   },
   actors: {
     networkLogic,
@@ -129,8 +294,14 @@ export const editorMachine = setup({
 }).createMachine({
   id: 'editor',
   context: ({input}) => ({
+    behaviours: input.behaviours,
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
+    schema: {
+      decorators: input.schemaTypes.decorators.map(
+        (decorator) => decorator.value,
+      ),
+    },
   }),
   invoke: {
     id: 'networkLogic',
@@ -149,6 +320,21 @@ export const editorMachine = setup({
     'offline': {actions: emit({type: 'offline'})},
     'loading': {actions: emit({type: 'loading'})},
     'done loading': {actions: emit({type: 'done loading'})},
+    'update schema': {actions: 'assign schema'},
+    'internal.insert text': {
+      actions: 'handle insert text',
+    },
+    'internal.insert span': {
+      actions: ({event}) => {
+        console.warn(`Unhandled event: ${event.type}`)
+      },
+    },
+    'command.insert text': {
+      actions: 'apply insert text',
+    },
+    'command.insert span': {
+      actions: 'apply insert span',
+    },
   },
   initial: 'pristine',
   states: {
