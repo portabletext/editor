@@ -213,8 +213,8 @@ importers:
         specifier: ^3.61.0
         version: 3.61.0(debug@4.3.7)
       '@sanity/ui':
-        specifier: ^2.8.9
-        version: 2.8.9(react-dom@18.3.1(react@18.3.1))(react-is@19.0.0-rc-fb9a90fa48-20240614)(react@18.3.1)(styled-components@6.1.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
+        specifier: ^2.8.10
+        version: 2.8.10(react-dom@18.3.1(react@18.3.1))(react-is@19.0.0-rc-fb9a90fa48-20240614)(react@18.3.1)(styled-components@6.1.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
       '@sanity/util':
         specifier: ^3.61.0
         version: 3.61.0(debug@4.3.7)
@@ -2441,8 +2441,8 @@ packages:
   '@sanity/types@3.61.0':
     resolution: {integrity: sha512-JXJ7hb615/jj929J5p6g7i0GTP5USmshFOKyrLBib98lEufQZjjzUKh/Tx1MOqk/CSYWkRkl/qY96/hc9FnN4A==}
 
-  '@sanity/ui@2.8.9':
-    resolution: {integrity: sha512-ii5pa3HSA5DonhY+IRb5FHpS5rIM3gyMGTfX+HjaPqRy1itSNs1EqetI9oMVsheCYWEQTdZFzIpIX2mEsGVKKw==}
+  '@sanity/ui@2.8.10':
+    resolution: {integrity: sha512-TcYrLksnsh668NqFjiHJMfOfqPIw3e0WixHPc8v1AR/SIVV6c/Osho5bXWKC4rIormnTUhsy19E8MEyYODhYKg==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
       react: ^18
@@ -8738,7 +8738,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  '@sanity/ui@2.8.9(react-dom@18.3.1(react@18.3.1))(react-is@19.0.0-rc-fb9a90fa48-20240614)(react@18.3.1)(styled-components@6.1.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))':
+  '@sanity/ui@2.8.10(react-dom@18.3.1(react@18.3.1))(react-is@19.0.0-rc-fb9a90fa48-20240614)(react@18.3.1)(styled-components@6.1.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))':
     dependencies:
       '@floating-ui/react-dom': 2.1.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@sanity/color': 3.0.6
