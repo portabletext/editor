@@ -9,20 +9,20 @@ Feature: Block Objects
     Given an "image"
     When "ArrowUp" is pressed
     And editors have settled
-    Then the text is ",\n,image"
+    Then the text is "|image"
 
   Scenario: Pressing ArrowDown on a lonely image
     Given an "image"
     When "ArrowDown" is pressed
     And editors have settled
-    Then the text is "image,\n,"
+    Then the text is "image|"
 
   Scenario: Pressing ArrowDown on image at the bottom
     Given the text "foo"
     And an "image"
     When "ArrowDown" is pressed
     And editors have settled
-    Then the text is "foo,\n,image,\n,"
+    Then the text is "foo|image|"
 
   Scenario: ArrowRight before an image selects it
     Given the text "foo"
@@ -49,7 +49,7 @@ Feature: Block Objects
     And "bar" is typed
     And the caret is put after "foo"
     And "Delete" is pressed
-    Then the text is "foo,\n,bar"
+    Then the text is "foo|bar"
 
   Scenario: Pressing Backspace after an image
     Given the text "foo"
@@ -58,7 +58,7 @@ Feature: Block Objects
     And "bar" is typed
     And the caret is put before "bar"
     And "Backspace" is pressed
-    Then the text is "foo,\n,bar"
+    Then the text is "foo|bar"
 
   Scenario Outline: Deleting a lonely image
     Given an "image"

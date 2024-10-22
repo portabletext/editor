@@ -80,6 +80,6 @@ Feature: Undo/Redo
     And "foobar" is selected
     And "link" is toggled
     And undo is performed
-    Then the text is "foo,\n,bar"
+    Then the text is "foo|bar"
     And "foo" has no marks
     And "bar" has no marks

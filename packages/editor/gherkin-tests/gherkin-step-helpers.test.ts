@@ -6,6 +6,7 @@ import {
   getTextMarks,
   getTextSelection,
   getValueText,
+  parseGherkinTextParameter,
   stringOverlap,
 } from './gherkin-step-helpers'
 
@@ -41,16 +42,55 @@ test(getValueText.name, () => {
     _type: 'block',
     children: [{_key: 's3', _type: 'span', text: 'bar'}],
   }
+  const softReturnBlock = {
+    _key: 'b4',
+    _type: 'block',
+    children: [{_key: 's4', _type: 'span', text: 'foo\nbar'}],
+  }
 
-  expect(getValueText([fooBlock, barBlock])).toEqual(['foo', '\n', 'bar'])
-  expect(getValueText([emptyBlock, barBlock])).toEqual(['', '\n', 'bar'])
+  expect(getValueText([fooBlock, barBlock])).toEqual(['foo', '|', 'bar'])
+  expect(getValueText([emptyBlock, barBlock])).toEqual(['', '|', 'bar'])
   expect(getValueText([fooBlock, emptyBlock, barBlock])).toEqual([
     'foo',
-    '\n',
+    '|',
     '',
-    '\n',
+    '|',
     'bar',
   ])
+  expect(getValueText([fooBlock, softReturnBlock])).toEqual([
+    'foo',
+    '|',
+    'foo\nbar',
+  ])
+})
+
+test(parseGherkinTextParameter.name, () => {
+  expect(parseGherkinTextParameter('foo')).toEqual(['foo'])
+  expect(parseGherkinTextParameter('foo,bar')).toEqual(['foo', 'bar'])
+  expect(parseGherkinTextParameter('foo,bar|baz')).toEqual([
+    'foo',
+    'bar',
+    '|',
+    'baz',
+  ])
+  expect(parseGherkinTextParameter('|foo')).toEqual(['', '|', 'foo'])
+  expect(parseGherkinTextParameter('foo|')).toEqual(['foo', '|', ''])
+  expect(parseGherkinTextParameter('foo|bar\nbaz')).toEqual([
+    'foo',
+    '|',
+    'bar\nbaz',
+  ])
+  expect(parseGherkinTextParameter('f,oo||ba,r')).toEqual([
+    'f',
+    'oo',
+    '|',
+    '',
+    '|',
+    'ba',
+    'r',
+  ])
+  expect(parseGherkinTextParameter('|')).toEqual(['', '|', ''])
+  expect(parseGherkinTextParameter('||')).toEqual(['', '|', '', '|', ''])
 })
 
 test(getTextMarks.name, () => {

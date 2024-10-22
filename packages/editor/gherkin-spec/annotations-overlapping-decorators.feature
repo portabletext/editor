@@ -33,7 +33,7 @@ Feature: Annotations Overlapping Decorators
     And "Enter" is pressed
     And "ArrowUp" is pressed
     And "foo" is typed
-    Then the text is "foo,\n,bar"
+    Then the text is "foo|bar"
     And the caret is after "foo"
     And "foo" has no marks
 
@@ -44,7 +44,7 @@ Feature: Annotations Overlapping Decorators
     When the caret is put after "bar"
     And "Enter" is pressed
     And "baz" is typed
-    Then the text is "bar,\n,baz"
+    Then the text is "bar|baz"
     And the caret is after "baz"
     And "baz" has no marks
 
@@ -55,7 +55,7 @@ Feature: Annotations Overlapping Decorators
     When the caret is put after "bar"
     And "Enter" is pressed
     And "baz" is typed
-    Then the text is "foo,bar,\n,baz"
+    Then the text is "foo,bar|baz"
     And the caret is after "baz"
     And "baz" has no marks
 
