@@ -692,10 +692,19 @@ export const stepDefinitions = [
     },
   ),
   Then(
-    '{string} is in block {key}',
-    async (context: Context, text: string, keyKey: string) => {
+    '{text} is in block {key}',
+    async (context: Context, text: Array<string>, keyKey: string) => {
+      if (text.length === 0) {
+        throw new Error(`No block to find a key for: ${text}`)
+      }
+
+      if (text.length > 1) {
+        throw new Error(`Unable to find key for multiple blocks: ${text}`)
+      }
+
       const value = await getValue()
-      expect(getBlockKey(value, text)).toBe(context.keyMap.get(keyKey))
+
+      expect(getBlockKey(value, text[0])).toBe(context.keyMap.get(keyKey))
     },
   ),
 
@@ -799,10 +808,15 @@ type ButtonName =
   | 'Backspace'
   | 'Delete'
   | 'Enter'
+  | 'Shift+Enter'
   | 'Space'
 async function pressButton(editor: EditorContext, button: ButtonName) {
   if (button === 'Backspace' || button === 'Delete' || button === 'Enter') {
     return waitForNewValue(() => userEvent.keyboard(`{${button}}`))
+  }
+
+  if (button === 'Shift+Enter') {
+    return waitForNewValue(() => userEvent.keyboard('{Shift>}{Enter}{/Shift}'))
   }
 
   if (button === 'Space') {

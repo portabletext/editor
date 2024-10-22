@@ -36,7 +36,7 @@ export const parameterTypes = [
   ),
   createParameterType(
     'button',
-    /"(ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Backspace|Delete|Enter|Space)"/,
+    /"(ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Backspace|Delete|Enter|Shift\+Enter|Space)"/,
     String,
     (input) => input,
     false,

@@ -21,9 +21,17 @@ test(getBlockKey.name, () => {
     _type: 'block',
     children: [{_key: 's2', _type: 'span', text: 'foo'}],
   }
+  const softReturnBlock = {
+    _key: 'b3',
+    _type: 'block',
+    children: [{_key: 's3', _type: 'span', text: 'foo\nbar'}],
+  }
 
-  expect(getBlockKey([emptyBlock, fooBlock], '')).toBe('b1')
-  expect(getBlockKey([emptyBlock, fooBlock], 'foo')).toBe('b2')
+  expect(getBlockKey([emptyBlock, fooBlock, softReturnBlock], '')).toBe('b1')
+  expect(getBlockKey([emptyBlock, fooBlock, softReturnBlock], 'foo')).toBe('b2')
+  expect(getBlockKey([emptyBlock, fooBlock, softReturnBlock], 'foo\nbar')).toBe(
+    'b3',
+  )
 })
 
 test(getValueText.name, () => {
