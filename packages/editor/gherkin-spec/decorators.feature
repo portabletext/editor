@@ -79,14 +79,14 @@ Feature: Decorators
     Given the text "foo"
     When "Enter" is pressed 2 times
     And "bar" is typed
-    Then the text is "foo,\n,,\n,bar"
+    Then the text is "foo||bar"
     When "ooba" is selected
     And "strong" is toggled using the keyboard
-    Then the text is "f,oo,\n,,\n,ba,r"
+    Then the text is "f,oo||ba,r"
     And "oo" has marks "strong"
     And "ba" has marks "strong"
     When "strong" is toggled using the keyboard
-    Then the text is "foo,\n,,\n,bar"
+    Then the text is "foo||bar"
 
   Scenario Outline: Toggling bold on a cross-selection with the first line empty
     Given the text "foo"
@@ -94,11 +94,11 @@ Feature: Decorators
     And "Enter" is pressed
     And everything is <selection>
     And "strong" is toggled using the keyboard
-    Then the text is ",\n,foo"
+    Then the text is "|foo"
     And "" has marks "strong"
     And "foo" has marks "strong"
     When "strong" is toggled using the keyboard
-    Then the text is ",\n,foo"
+    Then the text is "|foo"
     And "" has no marks
     And "foo" has no marks
 
@@ -112,11 +112,11 @@ Feature: Decorators
     When "Enter" is pressed
     And everything is <selection>
     And "strong" is toggled using the keyboard
-    Then the text is "foo,\n,"
+    Then the text is "foo|"
     And "foo" has marks "strong"
     And "" has marks "strong"
     When "strong" is toggled using the keyboard
-    Then the text is "foo,\n,"
+    Then the text is "foo|"
     And "foo" has no marks
     And "" has no marks
 
@@ -132,7 +132,7 @@ Feature: Decorators
     And "Enter" is pressed
     And "ArrowUp" is pressed
     And "bar" is typed
-    Then the text is "bar,\n,foo"
+    Then the text is "bar|foo"
     And "bar" has marks "strong"
     And "foo" has marks "strong"
 
@@ -145,11 +145,11 @@ Feature: Decorators
     And the caret is <new position>
 
     Examples:
-      | position      | new text            | new position  |
-      | after "foo "  | "foo ,\\n,bar, baz" | before "bar"  |
-      | before "bar"  | "foo ,\\n,bar, baz" | before "bar"  |
-      | after "bar"   | "foo ,bar,\\n, baz" | before " baz" |
-      | before " baz" | "foo ,bar,\\n, baz" | before " baz" |
+      | position      | new text         | new position  |
+      | after "foo "  | "foo \|bar, baz" | before "bar"  |
+      | before "bar"  | "foo \|bar, baz" | before "bar"  |
+      | after "bar"   | "foo ,bar\| baz" | before " baz" |
+      | before " baz" | "foo ,bar\| baz" | before " baz" |
 
   Scenario: Toggling decorators in empty block
     Given an empty editor
@@ -169,7 +169,7 @@ Feature: Decorators
     And "bar" is typed
     And "ArrowDown" is pressed
     And "baz" is typed
-    Then the text is "foo,\n,bar,\n,baz"
+    Then the text is "foo|bar|baz"
     And "foo" has no marks
     And "bar" has marks "strong"
     And "baz" has marks "strong"

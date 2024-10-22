@@ -33,7 +33,7 @@ Feature: Annotations Across Blocks
     And "link" "l1,l2" is toggled
     Then "foo" has marks "l1"
     And "bar" has marks "l2"
-    And "foo,\n,image,\n,bar" is selected
+    And "foo|image|bar" is selected
 
   Scenario: Adding annotation across an image (backwards selection)
     Given the text "foo"
@@ -44,14 +44,14 @@ Feature: Annotations Across Blocks
     And "link" "l1,l2" is toggled
     Then "foo" has marks "l1"
     And "bar" has marks "l2"
-    And "foo,\n,image,\n,bar" is selected
+    And "foo|image|bar" is selected
 
   Scenario: Splitting an annotation across blocks
     Given the text "foobar"
     And a "link" "l1" around "foobar"
     When the caret is put after "foo"
     And "Enter" is pressed
-    Then the text is "foo,\n,bar"
+    Then the text is "foo|bar"
     And "foo" has marks "l1"
     And "bar" has an annotation different than "l1"
 
@@ -60,7 +60,7 @@ Feature: Annotations Across Blocks
     And a "link" "l1" around "foo bar baz"
     When "bar" is selected
     And "Enter" is pressed
-    Then the text is "foo ,\n, baz"
+    Then the text is "foo | baz"
     And "foo " has marks "l1"
     And " baz" has an annotation different than "l1"
 
@@ -70,7 +70,7 @@ Feature: Annotations Across Blocks
     And "strong" around "bar"
     When the caret is put after "foo"
     And "Enter" is pressed
-    Then the text is "foo,\n, ,bar, baz"
+    Then the text is "foo| ,bar, baz"
     And "foo" has marks "l1"
     And " " has an annotation different than "l1"
     And "bar" has an annotation different than "l1"
@@ -82,7 +82,7 @@ Feature: Annotations Across Blocks
     And a "link" "l1" around "baz"
     When the caret is put before "bar"
     And "Enter" is pressed
-    Then the text is "foo ,\n,bar ,baz"
+    Then the text is "foo |bar ,baz"
     And "baz" has marks "l1"
 
   Scenario: Splitting text after annotation doesn't touch the annotation
@@ -90,7 +90,7 @@ Feature: Annotations Across Blocks
     And a "link" "l1" around "foo"
     When the caret is put after "bar"
     And "Enter" is pressed
-    Then the text is "foo, bar,\n, baz"
+    Then the text is "foo, bar| baz"
     And "foo" has marks "l1"
 
   # Warning: Possible wrong behaviour
@@ -124,7 +124,7 @@ Feature: Annotations Across Blocks
     And a "link" "l1" around "foo"
     When the caret is put before "foo"
     And "Enter" is pressed
-    Then the text is ",\n,foo"
+    Then the text is "|foo"
     And "" has no marks
     And "foo" has marks "l1"
 
@@ -133,7 +133,7 @@ Feature: Annotations Across Blocks
     And a "link" "l1" around "foo"
     When the caret is put after "foo"
     And "Enter" is pressed
-    Then the text is "foo,\n,"
+    Then the text is "foo|"
     And "foo" has marks "l1"
     And "" has no marks
 

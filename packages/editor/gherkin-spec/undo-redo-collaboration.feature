@@ -40,11 +40,11 @@ Feature: Undo/Redo Collaboration
     And "r" is typed by editor B
     And "r" is typed by editor B
     And "r" is typed by editor B
-    Then the text is "fooooo,\n,barrrr"
+    Then the text is "fooooo|barrrr"
     When undo is performed
-    Then the text is "foo,\n,barrrr"
+    Then the text is "foo|barrrr"
     When undo is performed by editor B
-    Then the text is "foo,\n,bar"
+    Then the text is "foo|bar"
 
   # Currently fails
   @skip
@@ -55,7 +55,7 @@ Feature: Undo/Redo Collaboration
     And the caret is put after "foo" by editor B
     And "Enter" is pressed by editor B
     And undo is performed
-    Then the text is "foo,\n, bar"
+    Then the text is "foo| bar"
 
   Scenario: Undoing local annotation added before remote annotation
     Given the text "foobar"

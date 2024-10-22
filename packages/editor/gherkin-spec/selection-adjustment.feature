@@ -9,7 +9,7 @@ Feature: Selection Adjustment
     When the caret is put before "foo" by editor B
     And "Enter" is pressed by editor B
     And "bar" is typed
-    Then the text is ",\n,foobar"
+    Then the text is "|foobar"
     And "foobar" is in block "b1"
 
   Scenario: Selection is kept if another editor deletes the line above
@@ -31,12 +31,12 @@ Feature: Selection Adjustment
     And the caret is put after "foo" by editor B
     And "Backspace" is pressed 4 times by editor B
     And "baz" is typed
-    Then the text is ",\n,barbaz"
+    Then the text is "|barbaz"
     And "barbaz" is in block "b2"
 
   # Currently fails
   # When the "b2" block gets deleted the editor selection is moved to
-  # before "d" and the text becomes "ab,\n,cd"
+  # before "d" and the text becomes "ab|cd"
   @skip
   Scenario: Selection is kept when another editor merges the line into the line above
     Given the text "a" in block "b1"
@@ -46,11 +46,11 @@ Feature: Selection Adjustment
     And the caret is put before "b" by editor B
     And "Backspace" is pressed by editor B
     And "c" is typed
-    Then the text is "abc,\n,d"
+    Then the text is "abc|d"
 
   # Currently fails
   # When the "b3" block gets deleted the editor selection is moved to
-  # after "a" and the text becomes "ac,\n,bd"
+  # after "a" and the text becomes "ac|bd"
   @skip
   Scenario: Selection is kept when another editor merges the line below into the current line
     Given the text "a" in block "b1"
@@ -60,7 +60,7 @@ Feature: Selection Adjustment
     And the caret is put before "d" by editor B
     And "Backspace" is pressed by editor B
     And "c" is typed
-    Then the text is "a,\n,bcd"
+    Then the text is "a|bcd"
 
   # Currently fails
   # When the spans get merged the editor selection is moved to

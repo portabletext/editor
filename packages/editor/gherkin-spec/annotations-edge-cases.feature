@@ -39,6 +39,6 @@ Feature: Annotations Edge Cases
     And "bar" is marked with a "link" "l2"
     And "ooba" is selected
     And "Backspace" is pressed
-    Then the text is "f,\n,r"
+    Then the text is "f|r"
     And "f" has marks "l1"
     And "r" has marks "l2"

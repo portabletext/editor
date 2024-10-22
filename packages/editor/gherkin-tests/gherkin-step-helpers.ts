@@ -101,7 +101,7 @@ export function getSelectionText(
     }
 
     if (text.length > 0) {
-      text.push('\n')
+      text.push('|')
     }
 
     if (isPortableTextBlock(block)) {
@@ -536,26 +536,33 @@ export function getValueText(value: Array<PortableTextBlock> | undefined) {
     return undefined
   }
 
-  const text: Array<string> = []
+  const blocks: Array<string> = []
 
   for (const block of value) {
-    if (text.length > 0) {
-      text.push('\n')
+    if (blocks.length > 0) {
+      blocks.push('|')
     }
     if (isPortableTextBlock(block)) {
       for (const child of block.children) {
         if (isPortableTextSpan(child)) {
-          text.push(child.text)
+          blocks.push(child.text)
         } else {
-          text.push(child._type)
+          blocks.push(child._type)
         }
       }
     } else {
-      text.push(block._type)
+      blocks.push(block._type)
     }
   }
 
+  return blocks
+}
+
+export function parseGherkinTextParameter(text: string) {
   return text
+    .replace(/\|/g, ',|,')
+    .split(',')
+    .map((span) => span.replace(/\\n/g, '\n'))
 }
 
 export function getTextMarks(

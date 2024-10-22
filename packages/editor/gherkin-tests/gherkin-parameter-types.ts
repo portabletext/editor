@@ -1,4 +1,5 @@
 import {createParameterType} from '@sanity/gherkin-driver'
+import {parseGherkinTextParameter} from './gherkin-step-helpers'
 
 export const parameterTypes = [
   createParameterType(
@@ -83,15 +84,9 @@ export const parameterTypes = [
   ),
   createParameterType(
     'text',
-    /"([a-z-,\\n ]*)"/,
+    /"([a-z-,\\n |]*)"/,
     Array,
-    (input) =>
-      input.split(',').map((item) => {
-        if (item === '\\n') {
-          return '\n'
-        }
-        return item
-      }),
+    parseGherkinTextParameter,
     false,
     true,
   ),
