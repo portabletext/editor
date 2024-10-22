@@ -187,7 +187,7 @@ export const stepDefinitions = [
       await userEvent.type(context.editorA.locator, text)
     })
   }),
-  Then('the text is {text}', async (_: Context, text: string) => {
+  Then('the text is {text}', async (_: Context, text: Array<string>) => {
     await getText().then((actualText) => expect(actualText).toEqual(text))
   }),
 
