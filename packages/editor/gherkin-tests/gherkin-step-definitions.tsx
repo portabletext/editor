@@ -618,8 +618,8 @@ export const stepDefinitions = [
     await getSelection(context.editorA).then((selection) => {
       const selectionBlockKeys = getSelectionBlockKeys(selection)
 
-      expect(selectionBlockKeys?.anchor).toEqual(context.keyMap.get(keyKey))
-      expect(selectionBlockKeys?.focus).toEqual(context.keyMap.get(keyKey))
+      expect(selectionBlockKeys?.anchor).toBe(context.keyMap.get(keyKey))
+      expect(selectionBlockKeys?.focus).toBe(context.keyMap.get(keyKey))
     })
   }),
 
@@ -695,7 +695,7 @@ export const stepDefinitions = [
     '{string} is in block {key}',
     async (context: Context, text: string, keyKey: string) => {
       const value = await getValue()
-      expect(getBlockKey(value, text)).toEqual(context.keyMap.get(keyKey))
+      expect(getBlockKey(value, text)).toBe(context.keyMap.get(keyKey))
     },
   ),
 
