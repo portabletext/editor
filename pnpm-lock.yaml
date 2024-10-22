@@ -240,8 +240,8 @@ importers:
         specifier: ^3.0.5
         version: 3.0.5
       '@types/lodash':
-        specifier: ^4.17.7
-        version: 4.17.10
+        specifier: ^4.17.12
+        version: 4.17.12
       '@types/node':
         specifier: ^18.19.8
         version: 18.19.54
@@ -358,8 +358,8 @@ importers:
         specifier: ^6.11.4
         version: 6.11.4(@types/babel__core@7.20.5)(@types/node@22.7.4)(typescript@5.6.3)
       '@types/lodash':
-        specifier: ^4.17.7
-        version: 4.17.10
+        specifier: ^4.17.12
+        version: 4.17.12
       typescript:
         specifier: 5.6.3
         version: 5.6.3
@@ -2613,8 +2613,8 @@ packages:
   '@types/lodash.startcase@4.4.9':
     resolution: {integrity: sha512-C0M4DlN1pnn2vEEhLHkTHxiRZ+3GlTegpoAEHHGXnuJkSOXyJMHGiSc+SLRzBlFZWHsBkixe6FqvEAEU04g14g==}
 
-  '@types/lodash@4.17.10':
-    resolution: {integrity: sha512-YpS0zzoduEhuOWjAotS6A5AVCva7X4lVlYLF0FYHAY9sdraBfnatttHItlWeZdGhuEkf+OzMNg2ZYAx8t+52uQ==}
+  '@types/lodash@4.17.12':
+    resolution: {integrity: sha512-sviUmCE8AYdaF/KIHLDJBQgeYzPBI0vf/17NaYehBJfYD1j6/L95Slh07NlyK2iNyBNaEkb3En2jRt+a8y3xZQ==}
 
   '@types/mdast@4.0.4':
     resolution: {integrity: sha512-kGaNbPh1k7AFzgpud/gMdvIm5xuECykRR+JnWKQno9TAXVa6WIVCGTPvYGekIDL4uwCZQSYbUxNBSb1aUo79oA==}
@@ -8957,9 +8957,9 @@ snapshots:
 
   '@types/lodash.startcase@4.4.9':
     dependencies:
-      '@types/lodash': 4.17.10
+      '@types/lodash': 4.17.12
 
-  '@types/lodash@4.17.10': {}
+  '@types/lodash@4.17.12': {}
 
   '@types/mdast@4.0.4':
     dependencies:
