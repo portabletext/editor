@@ -24,6 +24,8 @@ import type {
 import {debugWithName} from '../utils/debug'
 import {getPortableTextMemberSchemaTypes} from '../utils/getPortableTextMemberSchemaTypes'
 import {compileType} from '../utils/schema'
+import type {Behavior} from './behavior/behavior'
+import {coreBehaviors} from './behavior/behavior.core'
 import {SlateContainer} from './components/SlateContainer'
 import {Synchronizer} from './components/Synchronizer'
 import {editorMachine, type EditorActor} from './editor-machine'
@@ -84,6 +86,11 @@ export type PortableTextEditorProps = PropsWithChildren<{
    * A ref to the editor instance
    */
   editorRef?: MutableRefObject<PortableTextEditor | null>
+
+  /**
+   * @alpha
+   */
+  behaviors?: Array<Behavior>
 }>
 
 /**
@@ -122,18 +129,20 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
       )
     }
 
-    this.editorActor = createActor(editorMachine, {
-      input: {
-        keyGenerator: props.keyGenerator || defaultKeyGenerator,
-      },
-    })
-    this.editorActor.start()
-
     this.schemaTypes = getPortableTextMemberSchemaTypes(
       props.schemaType.hasOwnProperty('jsonType')
         ? props.schemaType
         : compileType(props.schemaType),
     )
+
+    this.editorActor = createActor(editorMachine, {
+      input: {
+        behaviors: [...coreBehaviors, ...(this.props.behaviors ?? [])],
+        keyGenerator: props.keyGenerator || defaultKeyGenerator,
+        schema: this.schemaTypes,
+      },
+    })
+    this.editorActor.start()
   }
 
   componentDidUpdate(prevProps: PortableTextEditorProps) {
@@ -144,7 +153,20 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
           ? this.props.schemaType
           : compileType(this.props.schemaType),
       )
+
+      this.editorActor.send({
+        type: 'update schema',
+        schema: this.schemaTypes,
+      })
     }
+
+    if (this.props.behaviors !== prevProps.behaviors) {
+      this.editorActor.send({
+        type: 'update behaviors',
+        behaviors: [...coreBehaviors, ...(this.props.behaviors ?? [])],
+      })
+    }
+
     if (this.props.editorRef !== prevProps.editorRef && this.props.editorRef) {
       this.props.editorRef.current = this
     }

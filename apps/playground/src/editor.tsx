@@ -1,4 +1,5 @@
 import {
+  markdownBehaviors,
   PortableTextEditable,
   PortableTextEditor,
   type BlockDecoratorRenderProps,
@@ -94,6 +95,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
       >
         <PortableTextEditor
           value={value}
+          behaviors={markdownBehaviors}
           patches$={patches$}
           keyGenerator={keyGenerator}
           onChange={(change) => {

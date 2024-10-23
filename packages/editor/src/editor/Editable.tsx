@@ -546,6 +546,13 @@ export const PortableTextEditable = forwardRef<
       if (onBeforeInput) {
         onBeforeInput(event)
       }
+      if (!event.defaultPrevented && event.inputType === 'insertText') {
+        editorActor.send({
+          type: 'before:native:insert text',
+          event,
+          editor: slateEditor,
+        })
+      }
     },
     [onBeforeInput],
   )
@@ -634,6 +641,11 @@ export const PortableTextEditable = forwardRef<
         props.onKeyDown(event)
       }
       if (!event.isDefaultPrevented()) {
+        editorActor.send({
+          type: 'before:native:key down',
+          event: event.nativeEvent,
+          editor: slateEditor,
+        })
         slateEditor.pteWithHotKeys(event)
       }
     },

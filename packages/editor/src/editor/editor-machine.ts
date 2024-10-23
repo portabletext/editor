@@ -1,6 +1,7 @@
 import type {Patch} from '@portabletext/patches'
-import type {PortableTextBlock} from '@sanity/types'
+import type {KeyedSegment, PortableTextBlock} from '@sanity/types'
 import type {FocusEvent} from 'react'
+import {Editor, Transforms} from 'slate'
 import {
   assertEvent,
   assign,
@@ -10,7 +11,16 @@ import {
   setup,
   type ActorRefFrom,
 } from 'xstate'
-import type {EditorSelection, InvalidValueResolution} from '../types/editor'
+import type {
+  EditorSelection,
+  InvalidValueResolution,
+  PortableTextMemberSchemaTypes,
+  PortableTextSlateEditor,
+} from '../types/editor'
+import {toPortableTextRange, toSlateRange} from '../utils/ranges'
+import {fromSlateValue} from '../utils/values'
+import {KEY_TO_VALUE_ELEMENT} from '../utils/weakMaps'
+import type {Behavior, BehaviorContext} from './behavior/behavior'
 
 /**
  * @internal
@@ -51,6 +61,55 @@ export type MutationEvent = {
 type EditorEvent =
   | {type: 'normalizing'}
   | {type: 'done normalizing'}
+  | {
+      type: 'before:native:key down'
+      event: KeyboardEvent
+      editor: PortableTextSlateEditor
+    }
+  | {
+      type: 'before:native:insert text'
+      event: InputEvent
+      editor: PortableTextSlateEditor
+    }
+  | {
+      type: 'before:insert text'
+      text: string
+      editor: PortableTextSlateEditor
+    }
+  | {
+      type: 'insert text'
+      text: string
+      editor: PortableTextSlateEditor
+    }
+  | {
+      type: 'insert text block'
+      decorators: Array<string>
+      editor: PortableTextSlateEditor
+    }
+  | {
+      type: 'after:insert text'
+      text: string
+      editor: PortableTextSlateEditor
+    }
+  | {
+      type: 'apply block style'
+      style: string
+      paths: Array<[KeyedSegment]>
+      editor: PortableTextSlateEditor
+    }
+  | {
+      type: 'delete text'
+      selection: NonNullable<EditorSelection>
+      editor: PortableTextSlateEditor
+    }
+  | {
+      type: 'update schema'
+      schema: PortableTextMemberSchemaTypes
+    }
+  | {
+      type: 'update behaviors'
+      behaviors: Array<Behavior>
+    }
   | EditorEmittedEvent
 
 type EditorEmittedEvent =
@@ -90,16 +149,77 @@ type EditorEmittedEvent =
 export const editorMachine = setup({
   types: {
     context: {} as {
+      behaviors: Array<Behavior>
       keyGenerator: () => string
       pendingEvents: Array<PatchEvent | MutationEvent>
+      schema: PortableTextMemberSchemaTypes
     },
     events: {} as EditorEvent,
     emitted: {} as EditorEmittedEvent,
     input: {} as {
+      behaviors: Array<Behavior>
       keyGenerator: () => string
+      schema: PortableTextMemberSchemaTypes
     },
   },
   actions: {
+    'handle insert text': ({event}) => {
+      assertEvent(event, 'insert text')
+      Editor.insertText(event.editor, event.text)
+    },
+    'handle insert text block': ({context, event}) => {
+      assertEvent(event, 'insert text block')
+      Editor.insertNode(event.editor, {
+        _key: context.keyGenerator(),
+        _type: context.schema.block.name,
+        style: context.schema.styles[0].value ?? 'normal',
+        markDefs: [],
+        children: [
+          {
+            _key: context.keyGenerator(),
+            _type: 'span',
+            text: '',
+          },
+        ],
+      })
+    },
+    'handle:apply block style': ({event}) => {
+      assertEvent(event, 'apply block style')
+      for (const path of event.paths) {
+        const at = toSlateRange(
+          {anchor: {path, offset: 0}, focus: {path, offset: 0}},
+          event.editor,
+        )!
+
+        Transforms.setNodes(
+          event.editor,
+          {
+            style: event.style,
+          },
+          {
+            at,
+          },
+        )
+      }
+    },
+    'handle delete text': ({event}) => {
+      assertEvent(event, 'delete text')
+      Transforms.delete(event.editor, {
+        at: toSlateRange(event.selection, event.editor)!,
+      })
+    },
+    'assign schema': assign({
+      schema: ({event}) => {
+        assertEvent(event, 'update schema')
+        return event.schema
+      },
+    }),
+    'assign behaviors': assign({
+      behaviors: ({event}) => {
+        assertEvent(event, 'update behaviors')
+        return event.behaviors
+      },
+    }),
     'emit patch event': emit(({event}) => {
       assertEvent(event, 'patch')
       return event
@@ -122,6 +242,94 @@ export const editorMachine = setup({
     'clear pending events': assign({
       pendingEvents: [],
     }),
+    'handle event': enqueueActions(({context, event, enqueue}) => {
+      assertEvent(event, [
+        'before:native:key down',
+        'before:native:insert text',
+        'before:insert text',
+        'after:insert text',
+      ])
+
+      const eventBehaviors = context.behaviors.filter(
+        (behavior) => behavior.on === event.type,
+      )
+
+      if (eventBehaviors.length === 0) {
+        return
+      }
+
+      const value = fromSlateValue(
+        event.editor.children,
+        context.schema.block.name,
+        KEY_TO_VALUE_ELEMENT.get(event.editor),
+      )
+      const selection = toPortableTextRange(
+        value,
+        event.editor.selection,
+        context.schema,
+      )
+
+      if (!selection) {
+        console.warn(
+          `Unable to handle event ${event.type} due to missing selection`,
+        )
+        return
+      }
+
+      const behaviorContext = {
+        schema: context.schema,
+        value,
+        selection,
+      } satisfies BehaviorContext
+
+      for (const eventBehavior of eventBehaviors) {
+        const shouldRun =
+          eventBehavior.guard?.({
+            context: behaviorContext,
+            event,
+          }) ?? true
+
+        if (!shouldRun) {
+          continue
+        }
+
+        const actions = eventBehavior.actions.map((action) =>
+          action({context: behaviorContext, event}, shouldRun),
+        )
+
+        for (const action of actions) {
+          if (typeof action !== 'object') {
+            continue
+          }
+
+          enqueue.raise(
+            action.type === 'insert text'
+              ? {
+                  ...action,
+                  type: action.type,
+                  editor: event.editor,
+                }
+              : action.type === 'insert text block'
+                ? {
+                    ...action,
+                    type: action.type,
+                    editor: event.editor,
+                  }
+                : action.type === 'apply block style'
+                  ? {
+                      ...action,
+                      type: action.type,
+                      editor: event.editor,
+                    }
+                  : {
+                      ...action,
+                      type: action.type,
+                      editor: event.editor,
+                    },
+          )
+        }
+      }
+    }),
   },
   actors: {
     networkLogic,
@@ -129,8 +337,10 @@ export const editorMachine = setup({
 }).createMachine({
   id: 'editor',
   context: ({input}) => ({
+    behaviors: input.behaviors,
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
+    schema: input.schema,
   }),
   invoke: {
     id: 'networkLogic',
@@ -149,6 +359,32 @@ export const editorMachine = setup({
     'offline': {actions: emit({type: 'offline'})},
     'loading': {actions: emit({type: 'loading'})},
     'done loading': {actions: emit({type: 'done loading'})},
+    'update schema': {actions: 'assign schema'},
+    'update behaviors': {actions: ['assign behaviors']},
+    'before:native:key down': {
+      actions: ['handle event'],
+    },
+    'before:native:insert text': {
+      actions: ['handle event'],
+    },
+    'before:insert text': {
+      actions: ['handle event'],
+    },
+    'insert text': {
+      actions: ['handle insert text'],
+    },
+    'after:insert text': {
+      actions: ['handle event'],
+    },
+    'insert text block': {
+      actions: ['handle insert text block'],
+    },
+    'apply block style': {
+      actions: ['handle:apply block style'],
+    },
+    'delete text': {
+      actions: ['handle delete text'],
+    },
   },
   initial: 'pristine',
   states: {
