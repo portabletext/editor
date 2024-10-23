@@ -33,7 +33,7 @@ Feature: Annotations Across Blocks
     And "link" "l1,l2" is toggled
     Then "foo" has marks "l1"
     And "bar" has marks "l2"
-    And "foo|image|bar" is selected
+    And "foo|[image]|bar" is selected
 
   Scenario: Adding annotation across an image (backwards selection)
     Given the text "foo"
@@ -44,7 +44,7 @@ Feature: Annotations Across Blocks
     And "link" "l1,l2" is toggled
     Then "foo" has marks "l1"
     And "bar" has marks "l2"
-    And "foo|image|bar" is selected
+    And "foo|[image]|bar" is selected
 
   Scenario: Splitting an annotation across blocks
     Given the text "foobar"

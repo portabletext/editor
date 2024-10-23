@@ -144,7 +144,7 @@ export function getSelectionText(
         }
       }
     } else {
-      text.push(block._type)
+      text.push(`[${block._type}]`)
     }
 
     if (
@@ -547,11 +547,11 @@ export function getValueText(value: Array<PortableTextBlock> | undefined) {
         if (isPortableTextSpan(child)) {
           blocks.push(child.text)
         } else {
-          blocks.push(child._type)
+          blocks.push(`[${child._type}]`)
         }
       }
     } else {
-      blocks.push(block._type)
+      blocks.push(`[${block._type}]`)
     }
   }
 
