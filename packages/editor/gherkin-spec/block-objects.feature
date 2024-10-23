@@ -9,20 +9,20 @@ Feature: Block Objects
     Given an "image"
     When "ArrowUp" is pressed
     And editors have settled
-    Then the text is "|image"
+    Then the text is "|[image]"
 
   Scenario: Pressing ArrowDown on a lonely image
     Given an "image"
     When "ArrowDown" is pressed
     And editors have settled
-    Then the text is "image|"
+    Then the text is "[image]|"
 
   Scenario: Pressing ArrowDown on image at the bottom
     Given the text "foo"
     And an "image"
     When "ArrowDown" is pressed
     And editors have settled
-    Then the text is "foo|image|"
+    Then the text is "foo|[image]|"
 
   Scenario: ArrowRight before an image selects it
     Given the text "foo"

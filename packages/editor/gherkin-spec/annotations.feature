@@ -164,9 +164,9 @@ Feature: Annotations
     And "bar" is marked with a "link" "l1"
     And the caret is put <position>
     And "foo " is typed
-    Then the text is ",stock-ticker,foo ,bar"
+    Then the text is ",[stock-ticker],foo ,bar"
 
     Examples:
-      | position             |
-      | after "stock-ticker" |
-      | before "bar"         |
+      | position               |
+      | after "[stock-ticker]" |
+      | before "bar"           |

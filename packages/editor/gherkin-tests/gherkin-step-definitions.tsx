@@ -490,10 +490,13 @@ export const stepDefinitions = [
     const value = await getValue()
 
     await waitForNewSelection(context.editorA, async () => {
-      if (text === 'stock-ticker') {
+      if (text === '[stock-ticker]') {
         context.editorA.ref.send({
           type: 'selection',
-          selection: getInlineObjectSelection(value, text),
+          selection: getInlineObjectSelection(
+            value,
+            text.replace('[', '').replace(']', ''),
+          ),
         })
       } else {
         context.editorA.ref.send({
@@ -521,11 +524,14 @@ export const stepDefinitions = [
     async (context: Context, text: string) => {
       const value = await getValue()
 
-      if (text === 'stock-ticker') {
+      if (text === '[stock-ticker]') {
         await waitForNewSelection(context.editorA, async () => {
           context.editorA.ref.send({
             type: 'selection',
-            selection: getSelectionBeforeInlineObject(value, text),
+            selection: getSelectionBeforeInlineObject(
+              value,
+              text.replace('[', '').replace(']', ''),
+            ),
           })
         })
       } else {
@@ -543,11 +549,14 @@ export const stepDefinitions = [
     async (context: Context, text: string) => {
       const value = await getValue()
 
-      if (text === 'stock-ticker') {
+      if (text === '[stock-ticker]') {
         await waitForNewSelection(context.editorA, async () => {
           context.editorA.ref.send({
             type: 'selection',
-            selection: getSelectionAfterInlineObject(value, text),
+            selection: getSelectionAfterInlineObject(
+              value,
+              text.replace('[', '').replace(']', ''),
+            ),
           })
         })
       } else {
@@ -565,11 +574,14 @@ export const stepDefinitions = [
     async (context: Context, text: string) => {
       const value = await getValue()
 
-      if (text === 'stock-ticker') {
+      if (text === '[stock-ticker]') {
         await waitForNewSelection(context.editorB, async () => {
           context.editorB.ref.send({
             type: 'selection',
-            selection: getSelectionAfterInlineObject(value, text),
+            selection: getSelectionAfterInlineObject(
+              value,
+              text.replace('[', '').replace(']', ''),
+            ),
           })
         })
       } else {
