@@ -186,24 +186,6 @@ export function createWithHotkeys(
             return
           }
         }
-        // Block object enter key
-        if (focusBlock && Editor.isVoid(editor, focusBlock)) {
-          Editor.insertNode(editor, editor.pteCreateTextBlock({decorators: []}))
-          event.preventDefault()
-          editor.onChange()
-          return
-        }
-        // Default enter key behavior
-        event.preventDefault()
-        editor.insertBreak()
-        editor.onChange()
-      }
-
-      // Soft line breaks
-      if (isShiftEnter) {
-        event.preventDefault()
-        editor.insertText('\n')
-        return
       }
     }
     return editor
