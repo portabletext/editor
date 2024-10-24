@@ -4,7 +4,7 @@
  *
  */
 
-import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
+import {isPortableTextBlock} from '@portabletext/toolkit'
 import type {PortableTextObject} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {Editor, Element, Node, Path, Range, Text, Transforms} from 'slate'
@@ -381,81 +381,70 @@ export function createWithPortableTextMarkModel(
       }
 
       if (op.type === 'remove_text') {
-        const nodeEntry = Array.from(
-          Editor.nodes(editor, {
-            mode: 'lowest',
-            at: {path: op.path, offset: op.offset},
-            match: (n) => n._type === types.span.name,
-            voids: false,
-          }),
-        )[0]
-        const node = nodeEntry[0]
-        const blockEntry = Editor.node(editor, Path.parent(op.path))
-        const block = blockEntry[0]
+        const {selection} = editor
 
-        if (
-          node &&
-          isPortableTextSpan(node) &&
-          block &&
-          isPortableTextBlock(block)
-        ) {
-          const markDefs = block.markDefs ?? []
-          const nodeHasAnnotations = (node.marks ?? []).some((mark) =>
-            markDefs.find((markDef) => markDef._key === mark),
-          )
-          const deletingPartOfTheNode = op.offset !== 0
-          const deletingFromTheEnd =
-            op.offset + op.text.length === node.text.length
-
-          if (
-            nodeHasAnnotations &&
-            deletingPartOfTheNode &&
-            deletingFromTheEnd
-          ) {
-            Editor.withoutNormalizing(editor, () => {
-              Transforms.splitNodes(editor, {
-                match: Text.isText,
+        if (selection && Range.isExpanded(selection)) {
+          const [block, blockPath] = Editor.node(editor, selection, {
+            depth: 1,
+          })
+          const [span, spanPath] =
+            Array.from(
+              Editor.nodes(editor, {
+                mode: 'lowest',
                 at: {path: op.path, offset: op.offset},
+                match: (n) => editor.isTextSpan(n),
+                voids: false,
+              }),
+            )[0] ?? ([undefined, undefined] as const)
+
+          if (span && block && isPortableTextBlock(block)) {
+            const markDefs = block.markDefs ?? []
+            const marks = span.marks ?? []
+            const spanHasAnnotations = marks.some((mark) =>
+              markDefs.find((markDef) => markDef._key === mark),
+            )
+            const deletingFromTheEnd =
+              op.offset + op.text.length === span.text.length
+            const deletingAllText = op.offset === 0 && deletingFromTheEnd
+
+            const previousSpan = getPreviousSpan({editor, blockPath, spanPath})
+            const nextSpan = getNextSpan({editor, blockPath, spanPath})
+
+            const previousSpanHasSameAnnotation = previousSpan
+              ? previousSpan.marks?.some(
+                  (mark) => !decorators.includes(mark) && marks.includes(mark),
+                )
+              : false
+            const nextSpanHasSameAnnotation = nextSpan
+              ? nextSpan.marks?.some(
+                  (mark) => !decorators.includes(mark) && marks.includes(mark),
+                )
+              : false
+
+            if (
+              spanHasAnnotations &&
+              deletingAllText &&
+              !previousSpanHasSameAnnotation &&
+              !nextSpanHasSameAnnotation
+            ) {
+              const marksWithoutAnnotationMarks: string[] = (
+                {
+                  ...(Editor.marks(editor) || {}),
+                }.marks || []
+              ).filter((mark) => decorators.includes(mark))
+
+              Editor.withoutNormalizing(editor, () => {
+                apply(op)
+                Transforms.setNodes(
+                  editor,
+                  {marks: marksWithoutAnnotationMarks},
+                  {at: op.path},
+                )
               })
-              Transforms.removeNodes(editor, {at: Path.next(op.path)})
-            })
 
-            editor.onChange()
-            return
-          }
-
-          const deletingAllText = op.offset === 0 && deletingFromTheEnd
-
-          if (nodeHasAnnotations && deletingAllText) {
-            const marksWithoutAnnotationMarks: string[] = (
-              {
-                ...(Editor.marks(editor) || {}),
-              }.marks || []
-            ).filter((mark) => decorators.includes(mark))
-
-            Editor.withoutNormalizing(editor, () => {
-              apply(op)
-              Transforms.setNodes(
-                editor,
-                {marks: marksWithoutAnnotationMarks},
-                {at: op.path},
-              )
-            })
-
-            editor.onChange()
-            return
-          }
-
-          const nodeHasMarks = node.marks !== undefined && node.marks.length > 0
-
-          if (nodeHasMarks && deletingAllText) {
-            Editor.withoutNormalizing(editor, () => {
-              apply(op)
-              Transforms.setNodes(editor, {marks: []}, {at: op.path})
-            })
-
-            editor.onChange()
-            return
+              editor.onChange()
+              return
+            }
           }
         }
       }
