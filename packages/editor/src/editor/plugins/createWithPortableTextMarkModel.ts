@@ -5,7 +5,7 @@
  */
 
 import {isPortableTextBlock} from '@portabletext/toolkit'
-import type {PortableTextObject, PortableTextSpan} from '@sanity/types'
+import type {PortableTextObject} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {Editor, Element, Node, Path, Range, Text, Transforms} from 'slate'
 import type {
@@ -314,32 +314,13 @@ export function createWithPortableTextMarkModel(
           const atTheBeginningOfSpan = selection.anchor.offset === 0
           const atTheEndOfSpan = selection.anchor.offset === span.text.length
 
-          let previousSpan: PortableTextSpan | undefined
-          let nextSpan: PortableTextSpan | undefined
-
-          for (const [child, childPath] of Node.children(editor, blockPath, {
-            reverse: true,
-          })) {
-            if (!editor.isTextSpan(child)) {
-              continue
-            }
-
-            if (Path.isBefore(childPath, spanPath)) {
-              previousSpan = child
-              break
-            }
-          }
-
-          for (const [child, childPath] of Node.children(editor, blockPath)) {
-            if (!editor.isTextSpan(child)) {
-              continue
-            }
-
-            if (Path.isAfter(childPath, spanPath)) {
-              nextSpan = child
-              break
-            }
-          }
+          const previousSpan = getPreviousSpan({editor, blockPath, spanPath})
+          const nextSpan = getNextSpan({editor, blockPath, spanPath})
+          const nextSpanAnnotations =
+            nextSpan?.marks?.filter((mark) => !decorators.includes(mark)) ?? []
+          const spanAnnotations = marks.filter(
+            (mark) => !decorators.includes(mark),
+          )
 
           const previousSpanHasSameAnnotation = previousSpan
             ? previousSpan.marks?.some(
@@ -349,14 +330,9 @@ export function createWithPortableTextMarkModel(
           const previousSpanHasSameMarks = previousSpan
             ? previousSpan.marks?.every((mark) => marks.includes(mark))
             : false
-          const nextSpanHasSameAnnotation = nextSpan
-            ? nextSpan.marks?.some(
-                (mark) => !decorators.includes(mark) && marks.includes(mark),
-              )
-            : false
-          const nextSpanHasSameMarks = nextSpan
-            ? nextSpan.marks?.every((mark) => marks.includes(mark))
-            : false
+          const nextSpanSharesSomeAnnotations = spanAnnotations.some((mark) =>
+            nextSpanAnnotations?.includes(mark),
+          )
 
           if (spanHasAnnotations && !spanIsEmpty) {
             if (atTheBeginningOfSpan) {
@@ -381,24 +357,30 @@ export function createWithPortableTextMarkModel(
             }
 
             if (atTheEndOfSpan) {
-              if (nextSpanHasSameMarks) {
+              if (
+                (nextSpan &&
+                  nextSpanSharesSomeAnnotations &&
+                  nextSpanAnnotations.length < spanAnnotations.length) ||
+                !nextSpanSharesSomeAnnotations
+              ) {
                 Transforms.insertNodes(editor, {
                   _type: 'span',
                   _key: editorActor.getSnapshot().context.keyGenerator(),
                   text: op.text,
                   marks: nextSpan?.marks ?? [],
                 })
-              } else if (nextSpanHasSameAnnotation) {
-                apply(op)
-              } else {
+                return
+              }
+
+              if (!nextSpan) {
                 Transforms.insertNodes(editor, {
                   _type: 'span',
                   _key: editorActor.getSnapshot().context.keyGenerator(),
                   text: op.text,
                   marks: [],
                 })
+                return
               }
-              return
             }
           }
         }
