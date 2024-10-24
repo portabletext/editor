@@ -426,26 +426,8 @@ export function createWithPortableTextMarkModel(
           const nodeHasAnnotations = (node.marks ?? []).some((mark) =>
             markDefs.find((markDef) => markDef._key === mark),
           )
-          const deletingPartOfTheNode = op.offset !== 0
           const deletingFromTheEnd =
             op.offset + op.text.length === node.text.length
-
-          if (
-            nodeHasAnnotations &&
-            deletingPartOfTheNode &&
-            deletingFromTheEnd
-          ) {
-            Editor.withoutNormalizing(editor, () => {
-              Transforms.splitNodes(editor, {
-                match: Text.isText,
-                at: {path: op.path, offset: op.offset},
-              })
-              Transforms.removeNodes(editor, {at: Path.next(op.path)})
-            })
-
-            editor.onChange()
-            return
-          }
 
           const deletingAllText = op.offset === 0 && deletingFromTheEnd
 

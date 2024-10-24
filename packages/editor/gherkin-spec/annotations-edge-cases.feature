@@ -28,8 +28,6 @@ Feature: Annotations Edge Cases
     Then the text is "foo baz"
     And "foo baz" has no marks
 
-  # Warning: Possible wrong behaviour
-  # "f" and "r" should end up on the same line
   Scenario: Deleting across annotated blocks
     Given an empty editor
     When "foo" is typed
@@ -39,6 +37,6 @@ Feature: Annotations Edge Cases
     And "bar" is marked with a "link" "l2"
     And "ooba" is selected
     And "Backspace" is pressed
-    Then the text is "f|r"
+    Then the text is "f,r"
     And "f" has marks "l1"
     And "r" has marks "l2"
