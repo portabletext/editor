@@ -22,8 +22,22 @@ Feature: Annotations Overlapping Decorators
       | "foo"         | "foo"         | "foo"     | after "foo"   | "foo,new"          |
       | "foo bar baz" | "foo bar baz" | "bar"     | after "foo "  | "foo new,bar, baz" |
       | "foo bar baz" | "foo bar baz" | "bar"     | before "bar"  | "foo new,bar, baz" |
-      | "foo bar baz" | "foo bar baz" | "bar"     | after "bar"   | "foo ,bar,new baz" |
-      | "foo bar baz" | "foo bar baz" | "bar"     | before " baz" | "foo ,bar,new baz" |
+      | "foo bar baz" | "foo bar baz" | "bar"     | after "bar"   | "foo ,barnew, baz" |
+      | "foo bar baz" | "foo bar baz" | "bar"     | before " baz" | "foo ,barnew, baz" |
+
+  Scenario Outline: Writing on top of a decorated annotation
+    Given the text "foo bar baz"
+    And a "link" "l1" around <annotated>
+    And "strong" around <decorated>
+    When <selected> is selected
+    And "removed" is typed
+    Then the text is <new text>
+    And "removed" has marks <marks>
+
+    Examples:
+      | annotated     | decorated | selected | new text            | marks       |
+      | "bar"         | "bar"     | "bar"    | "foo ,removed, baz" | "strong"    |
+      | "foo bar baz" | "bar"     | "bar"    | "foo ,removed, baz" | "l1,strong" |
 
   Scenario: Splitting block before a decorated annotation
     Given the text "bar"

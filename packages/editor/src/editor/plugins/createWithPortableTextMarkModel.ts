@@ -316,6 +316,11 @@ export function createWithPortableTextMarkModel(
 
           const previousSpan = getPreviousSpan({editor, blockPath, spanPath})
           const nextSpan = getNextSpan({editor, blockPath, spanPath})
+          const nextSpanAnnotations =
+            nextSpan?.marks?.filter((mark) => !decorators.includes(mark)) ?? []
+          const spanAnnotations = marks.filter(
+            (mark) => !decorators.includes(mark),
+          )
 
           const previousSpanHasSameAnnotation = previousSpan
             ? previousSpan.marks?.some(
@@ -325,14 +330,9 @@ export function createWithPortableTextMarkModel(
           const previousSpanHasSameMarks = previousSpan
             ? previousSpan.marks?.every((mark) => marks.includes(mark))
             : false
-          const nextSpanHasSameAnnotation = nextSpan
-            ? nextSpan.marks?.some(
-                (mark) => !decorators.includes(mark) && marks.includes(mark),
-              )
-            : false
-          const nextSpanHasSameMarks = nextSpan
-            ? nextSpan.marks?.every((mark) => marks.includes(mark))
-            : false
+          const nextSpanSharesSomeAnnotations = spanAnnotations.some((mark) =>
+            nextSpanAnnotations?.includes(mark),
+          )
 
           if (spanHasAnnotations && !spanIsEmpty) {
             if (atTheBeginningOfSpan) {
@@ -357,24 +357,30 @@ export function createWithPortableTextMarkModel(
             }
 
             if (atTheEndOfSpan) {
-              if (nextSpanHasSameMarks) {
+              if (
+                (nextSpan &&
+                  nextSpanSharesSomeAnnotations &&
+                  nextSpanAnnotations.length < spanAnnotations.length) ||
+                !nextSpanSharesSomeAnnotations
+              ) {
                 Transforms.insertNodes(editor, {
                   _type: 'span',
                   _key: editorActor.getSnapshot().context.keyGenerator(),
                   text: op.text,
                   marks: nextSpan?.marks ?? [],
                 })
-              } else if (nextSpanHasSameAnnotation) {
-                apply(op)
-              } else {
+                return
+              }
+
+              if (!nextSpan) {
                 Transforms.insertNodes(editor, {
                   _type: 'span',
                   _key: editorActor.getSnapshot().context.keyGenerator(),
                   text: op.text,
                   marks: [],
                 })
+                return
               }
-              return
             }
           }
         }
