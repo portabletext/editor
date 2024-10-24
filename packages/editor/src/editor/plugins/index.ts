@@ -3,6 +3,7 @@ import type {BaseOperation, Editor, Node, NodeEntry} from 'slate'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {createEditorOptions} from '../../types/options'
 import {createOperationToPatches} from '../../utils/operationToPatches'
+import {createWithEventListener} from './create-with-event-listener'
 import {createWithEditableAPI} from './createWithEditableAPI'
 import {createWithInsertBreak} from './createWithInsertBreak'
 import {createWithMaxBlocks} from './createWithMaxBlocks'
@@ -108,6 +109,7 @@ export const withPlugins = <T extends Editor>(
     editorActor,
     schemaTypes,
   )
+  const withEventListener = createWithEventListener(editorActor)
 
   e.destroy = () => {
     const originalFunctions = originalFnMap.get(e)
@@ -144,18 +146,20 @@ export const withPlugins = <T extends Editor>(
 
   // Ordering is important here, selection dealing last, data manipulation in the middle and core model stuff first.
   return {
-    editor: withSchemaTypes(
-      withObjectKeys(
-        withPortableTextMarkModel(
-          withPortableTextBlockStyle(
-            withPortableTextLists(
-              withPlaceholderBlock(
-                withUtils(
-                  withMaxBlocks(
-                    withUndoRedo(
-                      withPatches(
-                        withPortableTextSelections(
-                          withEditableAPI(withInsertBreak(e)),
+    editor: withEventListener(
+      withSchemaTypes(
+        withObjectKeys(
+          withPortableTextMarkModel(
+            withPortableTextBlockStyle(
+              withPortableTextLists(
+                withPlaceholderBlock(
+                  withUtils(
+                    withMaxBlocks(
+                      withUndoRedo(
+                        withPatches(
+                          withPortableTextSelections(
+                            withEditableAPI(withInsertBreak(e)),
+                          ),
                         ),
                       ),
                     ),

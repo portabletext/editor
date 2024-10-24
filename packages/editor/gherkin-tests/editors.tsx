@@ -10,9 +10,14 @@ import {
   usePortableTextEditor,
   type HotkeyOptions,
 } from '../src'
+import type {Behavior} from '../src/editor/behavior/behavior'
 import type {EditorActorRef, TestActorRef} from './test-machine'
 
 export function Editors(props: {testRef: TestActorRef}) {
+  const behaviors = useSelector(
+    props.testRef,
+    (state) => state.context.behaviors,
+  )
   const editors = useSelector(props.testRef, (state) => state.context.editors)
   const schema = useSelector(props.testRef, (state) => state.context.schema)
   const value = useSelector(props.testRef, (state) => state.context.value)
@@ -22,6 +27,7 @@ export function Editors(props: {testRef: TestActorRef}) {
       {editors.map((editor) => (
         <Editor
           key={editor.id}
+          behaviors={behaviors}
           editorRef={editor}
           schema={schema}
           value={value}
@@ -41,6 +47,7 @@ const hotkeys: HotkeyOptions = {
 
 function Editor(props: {
   editorRef: EditorActorRef
+  behaviors: Array<Behavior>
   schema: React.ComponentProps<typeof PortableTextEditor>['schemaType']
   value: Array<PortableTextBlock> | undefined
 }) {
@@ -78,6 +85,7 @@ function Editor(props: {
   return (
     <div data-testid={props.editorRef.id}>
       <PortableTextEditor
+        behaviors={props.behaviors}
         schemaType={props.schema}
         keyGenerator={keyGenerator}
         patches$={patches$}

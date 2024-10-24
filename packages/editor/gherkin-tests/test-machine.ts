@@ -10,6 +10,7 @@ import {
   type ActorRefFrom,
 } from 'xstate'
 import type {EditorSelection, PortableTextEditor} from '../src'
+import type {Behavior} from '../src/editor/behavior/behavior'
 
 type MutationEvent = {
   type: 'mutation'
@@ -105,18 +106,24 @@ export type TestMachineEvent =
       patches: MutationEvent['patches']
       snapshot: MutationEvent['snapshot']
     }
+  | {
+      type: 'update behaviors'
+      behaviors: Array<Behavior>
+    }
 
 export type TestActorRef = ActorRefFrom<typeof testMachine>
 
 export const testMachine = setup({
   types: {
     context: {} as {
+      behaviors: Array<Behavior>
       editorIdGenerator: () => string
       editors: Array<EditorActorRef>
       schema: ComponentProps<typeof PortableTextEditor>['schemaType']
       value: Array<PortableTextBlock> | undefined
     },
     input: {} as {
+      behaviors: Array<Behavior>
       schema: ComponentProps<typeof PortableTextEditor>['schemaType']
       value: Array<PortableTextBlock> | undefined
     },
@@ -157,6 +164,12 @@ export const testMachine = setup({
         return applyAll(context.value, event.patches)
       },
     }),
+    'assign behaviors': assign({
+      behaviors: ({event}) => {
+        assertEvent(event, 'update behaviors')
+        return event.behaviors
+      },
+    }),
   },
   actors: {
     'editor machine': editorMachine,
@@ -164,6 +177,7 @@ export const testMachine = setup({
 }).createMachine({
   id: 'test',
   context: ({input}) => ({
+    behaviors: input.behaviors,
     editorIdGenerator: createKeyGenerator('e'),
     editors: [],
     schema: input.schema,
@@ -175,6 +189,9 @@ export const testMachine = setup({
     },
     'editor.mutation': {
       actions: ['broadcast patches', 'update value'],
+    },
+    'update behaviors': {
+      actions: ['assign behaviors'],
     },
   },
 })
