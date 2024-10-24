@@ -5,7 +5,7 @@
  */
 
 import {isPortableTextBlock} from '@portabletext/toolkit'
-import type {PortableTextObject} from '@sanity/types'
+import {isPortableTextSpan, type PortableTextObject} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {Editor, Element, Node, Path, Range, Text, Transforms} from 'slate'
 import type {
@@ -279,6 +279,74 @@ export function createWithPortableTextMarkModel(
       if (isUndoing(editor) || isRedoing(editor)) {
         apply(op)
         return
+      }
+
+      if (op.type === 'insert_node') {
+        const {selection} = editor
+        const span = isPortableTextSpan(op.node) ? op.node : undefined
+        const [block, blockPath] = selection
+          ? (Editor.node(editor, selection, {
+              depth: 1,
+            }) ?? [undefined, undefined])
+          : [undefined, undefined]
+        const textBlock =
+          block && isPortableTextBlock(block) ? block : undefined
+
+        if (
+          textBlock &&
+          blockPath &&
+          span &&
+          selection &&
+          Range.isCollapsed(selection)
+        ) {
+          const previousSpan = getPreviousSpan({
+            editor,
+            blockPath,
+            spanPath: op.path,
+          })
+          const nextSpan = getNextSpan({
+            editor,
+            blockPath,
+            spanPath: [op.path[0], op.path[1] - 1],
+          })
+          const marks = span.marks ?? []
+          const spanHasAnnotations = marks.some(
+            (mark) => !decorators.includes(mark),
+          )
+          const spanHasDecorators = marks.some((mark) =>
+            decorators.includes(mark),
+          )
+          const previousSpanHasAnnotations = previousSpan?.marks?.some(
+            (mark) => !decorators.includes(mark),
+          )
+
+          debugger
+
+          if (!nextSpan && span) {
+          }
+
+          if (
+            !previousSpan &&
+            !nextSpan &&
+            selection.focus.offset === 0 &&
+            spanHasAnnotations &&
+            spanHasDecorators
+          ) {
+            Transforms.insertNodes(editor, {
+              ...span,
+              marks: marks.filter((mark) => decorators.includes(mark)),
+            })
+            return
+          }
+
+          if (!nextSpan && previousSpanHasAnnotations && spanHasAnnotations) {
+            Transforms.insertNodes(editor, {
+              ...span,
+              marks: marks.filter((mark) => decorators.includes(mark)),
+            })
+            return
+          }
+        }
       }
 
       if (op.type === 'insert_text') {

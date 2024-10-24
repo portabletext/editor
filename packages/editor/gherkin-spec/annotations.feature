@@ -170,3 +170,21 @@ Feature: Annotations
       | position               |
       | after "[stock-ticker]" |
       | before "bar"           |
+
+  Scenario Outline: Toggling decorator at the edge of an annotation
+    Given the text <text>
+    And a "link" "l1" around <annotated>
+    When the caret is put <position>
+    And "strong" is toggled using the keyboard
+    And "new" is typed
+    Then the text is <new text>
+    And "new" has marks "strong"
+
+    Examples:
+      | text          | annotated | position      | new text            |
+      | "foo bar baz" | "bar"     | after "foo "  | "foo ,new,bar, baz" |
+      | "foo bar baz" | "bar"     | before "bar"  | "foo ,new,bar, baz" |
+      | "foo bar baz" | "bar"     | after "bar"   | "foo ,bar,new, baz" |
+      | "foo bar baz" | "bar"     | before " baz" | "foo ,bar,new, baz" |
+      | "foo"         | "foo"     | before "foo"  | "new,foo"           |
+      | "foo"         | "foo"     | after "foo"   | "foo,new"           |
