@@ -205,20 +205,6 @@ export function createWithHotkeys(
         editor.insertText('\n')
         return
       }
-
-      // Undo/redo
-      if (isHotkey('mod+z', event.nativeEvent)) {
-        event.preventDefault()
-        editor.undo()
-        return
-      }
-      if (
-        isHotkey('mod+y', event.nativeEvent) ||
-        isHotkey('mod+shift+z', event.nativeEvent)
-      ) {
-        event.preventDefault()
-        editor.redo()
-      }
     }
     return editor
   }
