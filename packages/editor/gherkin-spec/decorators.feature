@@ -21,6 +21,24 @@ Feature: Decorators
       | "foo"         | "foo"     | before "foo"  | "newfoo"           |
       | "foo"         | "foo"     | after "foo"   | "foonew"           |
 
+  Scenario Outline: Toggling decorator at the edge of a decorator
+    Given the text <text>
+    And "em" around <decorated>
+    When the caret is put <position>
+    And "strong" is toggled using the keyboard
+    And "new" is typed
+    Then the text is <new text>
+    And "new" has marks <marks>
+
+    Examples:
+      | text          | decorated | position      | new text            | marks       |
+      | "foo bar baz" | "bar"     | after "foo "  | "foo ,new,bar, baz" | "strong"    |
+      | "foo bar baz" | "bar"     | before "bar"  | "foo ,new,bar, baz" | "strong"    |
+      | "foo bar baz" | "bar"     | after "bar"   | "foo ,bar,new, baz" | "em,strong" |
+      | "foo bar baz" | "bar"     | before " baz" | "foo ,bar,new, baz" | "em,strong" |
+      | "foo"         | "foo"     | before "foo"  | "new,foo"           | "em,strong" |
+      | "foo"         | "foo"     | after "foo"   | "foo,new"           | "em,strong" |
+
   Scenario: Toggling bold inside italic
     Given the text "foo bar baz"
     And "em" around "foo bar baz"
