@@ -43,10 +43,7 @@ type EditorContext = {
     comment: Locator
     link: Locator
   }
-  toggleStyleButtonLocator: {
-    normal: Locator
-    h1: Locator
-  }
+  toggleStyleButtonLocator: (style: 'normal' | `h${number}`) => Locator
   ref: EditorActorRef
 }
 
@@ -62,7 +59,10 @@ export const stepDefinitions = [
    */
   Given('one editor', async (context: Context) => {
     const testActor = createActor(testMachine, {
-      input: {schema, value: undefined},
+      input: {
+        schema,
+        value: undefined,
+      },
     })
     testActor.start()
     testActor.send({type: 'add editor'})
@@ -86,10 +86,8 @@ export const stepDefinitions = [
         comment: locator.getByTestId('button-toggle-comment'),
         link: locator.getByTestId('button-toggle-link'),
       },
-      toggleStyleButtonLocator: {
-        normal: locator.getByTestId('button-toggle-style-normal'),
-        h1: locator.getByTestId('button-toggle-style-h1'),
-      },
+      toggleStyleButtonLocator: (style) =>
+        locator.getByTestId(`button-toggle-style-${style}`),
     }
 
     vi.waitFor(async () => {
@@ -98,7 +96,10 @@ export const stepDefinitions = [
   }),
   Given('two editors', async (context: Context) => {
     const testActor = createActor(testMachine, {
-      input: {schema, value: undefined},
+      input: {
+        schema,
+        value: undefined,
+      },
     })
     testActor.start()
     testActor.send({type: 'add editor'})
@@ -125,10 +126,8 @@ export const stepDefinitions = [
         comment: editorALocator.getByTestId('button-toggle-comment'),
         link: editorALocator.getByTestId('button-toggle-link'),
       },
-      toggleStyleButtonLocator: {
-        normal: editorALocator.getByTestId('button-toggle-style-normal'),
-        h1: editorALocator.getByTestId('button-toggle-style-h1'),
-      },
+      toggleStyleButtonLocator: (style) =>
+        editorALocator.getByTestId(`button-toggle-style-${style}`),
     }
 
     const editorBRef = testActor.getSnapshot().context.editors[1]
@@ -150,10 +149,8 @@ export const stepDefinitions = [
         comment: editorBLocator.getByTestId('button-toggle-comment'),
         link: editorBLocator.getByTestId('button-toggle-link'),
       },
-      toggleStyleButtonLocator: {
-        normal: editorBLocator.getByTestId('button-toggle-style-normal'),
-        h1: editorBLocator.getByTestId('button-toggle-style-h1'),
-      },
+      toggleStyleButtonLocator: (style) =>
+        editorBLocator.getByTestId(`button-toggle-style-${style}`),
     }
 
     vi.waitFor(async () => {
@@ -640,9 +637,9 @@ export const stepDefinitions = [
    */
   When(
     '{style} is toggled',
-    async (context: Context, style: 'h1' | 'normal') => {
+    async (context: Context, style: 'normal' | `h${number}`) => {
       await waitForNewValue(async () =>
-        context.editorA.toggleStyleButtonLocator[style].click(),
+        context.editorA.toggleStyleButtonLocator(style).click(),
       )
     },
   ),
