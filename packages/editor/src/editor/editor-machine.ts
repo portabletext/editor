@@ -10,7 +10,21 @@ import {
   setup,
   type ActorRefFrom,
 } from 'xstate'
-import type {EditorSelection, InvalidValueResolution} from '../types/editor'
+import type {
+  EditorSelection,
+  InvalidValueResolution,
+  PortableTextMemberSchemaTypes,
+} from '../types/editor'
+import {toPortableTextRange} from '../utils/ranges'
+import {fromSlateValue} from '../utils/values'
+import {KEY_TO_VALUE_ELEMENT} from '../utils/weakMaps'
+import {inserText, inserTextBlock} from './behavior/behavior.actions'
+import type {
+  Behavior,
+  BehaviorAction,
+  BehaviorContext,
+  BehaviorEvent,
+} from './behavior/behavior.types'
 
 /**
  * @internal
@@ -51,6 +65,12 @@ export type MutationEvent = {
 type EditorEvent =
   | {type: 'normalizing'}
   | {type: 'done normalizing'}
+  | BehaviorEvent
+  | BehaviorAction
+  | {
+      type: 'update schema'
+      schema: PortableTextMemberSchemaTypes
+    }
   | EditorEmittedEvent
 
 type EditorEmittedEvent =
@@ -90,16 +110,34 @@ type EditorEmittedEvent =
 export const editorMachine = setup({
   types: {
     context: {} as {
+      behaviors: Array<Behavior>
       keyGenerator: () => string
       pendingEvents: Array<PatchEvent | MutationEvent>
+      schema: PortableTextMemberSchemaTypes
     },
     events: {} as EditorEvent,
     emitted: {} as EditorEmittedEvent,
     input: {} as {
+      behaviors: Array<Behavior>
       keyGenerator: () => string
+      schema: PortableTextMemberSchemaTypes
     },
   },
   actions: {
+    'apply:insert text': ({context, event}) => {
+      assertEvent(event, 'insert text')
+      inserText({context, event})
+    },
+    'apply:insert text block': ({context, event}) => {
+      assertEvent(event, 'insert text block')
+      inserTextBlock({context, event})
+    },
+    'assign schema': assign({
+      schema: ({event}) => {
+        assertEvent(event, 'update schema')
+        return event.schema
+      },
+    }),
     'emit patch event': emit(({event}) => {
       assertEvent(event, 'patch')
       return event
@@ -122,6 +160,68 @@ export const editorMachine = setup({
     'clear pending events': assign({
       pendingEvents: [],
     }),
+    'handle behavior event': enqueueActions(({context, event, enqueue}) => {
+      assertEvent(event, ['key down'])
+
+      const eventBehaviors = context.behaviors.filter(
+        (behavior) => behavior.on === event.type,
+      )
+
+      if (eventBehaviors.length === 0) {
+        return
+      }
+
+      const value = fromSlateValue(
+        event.editor.children,
+        context.schema.block.name,
+        KEY_TO_VALUE_ELEMENT.get(event.editor),
+      )
+      const selection = toPortableTextRange(
+        value,
+        event.editor.selection,
+        context.schema,
+      )
+
+      if (!selection) {
+        console.warn(
+          `Unable to handle event ${event.type} due to missing selection`,
+        )
+        return
+      }
+
+      const behaviorContext = {
+        schema: context.schema,
+        value,
+        selection,
+      } satisfies BehaviorContext
+
+      for (const eventBehavior of eventBehaviors) {
+        const shouldRun =
+          eventBehavior.guard?.({
+            context: behaviorContext,
+            event,
+          }) ?? true
+
+        if (!shouldRun) {
+          continue
+        }
+
+        const actions = eventBehavior.actions.map((action) =>
+          action({context: behaviorContext, event}, shouldRun),
+        )
+
+        for (const action of actions) {
+          if (typeof action !== 'object') {
+            continue
+          }
+
+          enqueue.raise({
+            ...action,
+            editor: event.editor,
+          })
+        }
+      }
+    }),
   },
   actors: {
     networkLogic,
@@ -129,8 +229,10 @@ export const editorMachine = setup({
 }).createMachine({
   id: 'editor',
   context: ({input}) => ({
+    behaviors: input.behaviors,
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
+    schema: input.schema,
   }),
   invoke: {
     id: 'networkLogic',
@@ -149,6 +251,16 @@ export const editorMachine = setup({
     'offline': {actions: emit({type: 'offline'})},
     'loading': {actions: emit({type: 'loading'})},
     'done loading': {actions: emit({type: 'done loading'})},
+    'update schema': {actions: 'assign schema'},
+    'key down': {
+      actions: ['handle behavior event'],
+    },
+    'insert text': {
+      actions: ['apply:insert text'],
+    },
+    'insert text block': {
+      actions: ['apply:insert text block'],
+    },
   },
   initial: 'pristine',
   states: {

@@ -634,6 +634,11 @@ export const PortableTextEditable = forwardRef<
         props.onKeyDown(event)
       }
       if (!event.isDefaultPrevented()) {
+        editorActor.send({
+          type: 'key down',
+          nativeEvent: event.nativeEvent,
+          editor: slateEditor,
+        })
         slateEditor.pteWithHotKeys(event)
       }
     },
