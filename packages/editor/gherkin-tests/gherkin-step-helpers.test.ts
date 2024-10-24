@@ -2,6 +2,8 @@ import {expect, test} from 'vitest'
 import {
   getBlockKey,
   getEditorSelection,
+  getSelectionAfterText,
+  getSelectionBeforeText,
   getSelectionText,
   getTextMarks,
   getTextSelection,
@@ -272,6 +274,62 @@ test(getTextSelection.name, () => {
   expect(getTextSelection(twoBlocks, 'ooba')).toEqual({
     anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
     focus: {path: [{_key: 'b2'}, 'children', {_key: 's2'}], offset: 2},
+  })
+})
+
+test(getSelectionBeforeText.name, () => {
+  const splitBlock = {
+    _type: 'block',
+    _key: 'b1',
+    children: [
+      {_type: 'span', _key: 's1', text: 'foo '},
+      {_type: 'span', _key: 's2', text: 'bar'},
+      {_type: 'span', _key: 's3', text: ' baz'},
+    ],
+  }
+
+  expect(getSelectionBeforeText([splitBlock], 'foo ')).toEqual({
+    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
+    focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
+    backward: false,
+  })
+  expect(getSelectionBeforeText([splitBlock], 'bar')).toEqual({
+    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 0},
+    focus: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 0},
+    backward: false,
+  })
+  expect(getSelectionBeforeText([splitBlock], ' baz')).toEqual({
+    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 0},
+    focus: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 0},
+    backward: false,
+  })
+})
+
+test(getSelectionAfterText.name, () => {
+  const splitBlock = {
+    _type: 'block',
+    _key: 'b1',
+    children: [
+      {_type: 'span', _key: 's1', text: 'foo '},
+      {_type: 'span', _key: 's2', text: 'bar'},
+      {_type: 'span', _key: 's3', text: ' baz'},
+    ],
+  }
+
+  expect(getSelectionAfterText([splitBlock], 'foo ')).toEqual({
+    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 4},
+    focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 4},
+    backward: false,
+  })
+  expect(getSelectionAfterText([splitBlock], 'bar')).toEqual({
+    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 3},
+    focus: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 3},
+    backward: false,
+  })
+  expect(getSelectionAfterText([splitBlock], ' baz')).toEqual({
+    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 4},
+    focus: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 4},
+    backward: false,
   })
 })
 
