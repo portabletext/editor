@@ -21,6 +21,13 @@ Feature: Decorators
       | "foo"         | "foo"     | before "foo"  | "newfoo"           |
       | "foo"         | "foo"     | after "foo"   | "foonew"           |
 
+  Scenario: Writing on top of a decorator
+    Given the text "foo bar baz"
+    And "strong" around "bar"
+    When "removed" is typed
+    Then the text is "foo ,removed, baz"
+    And "removed" has marks "strong"
+
   Scenario: Toggling bold inside italic
     Given the text "foo bar baz"
     And "em" around "foo bar baz"
@@ -57,13 +64,13 @@ Feature: Decorators
     Then the text is "foobar"
     And "foobar" has no marks
 
-  Scenario: Deleting marked text and writing again, unmarked
+  Scenario: Deleting marked text and writing again, marked
     Given an empty editor
     When "strong" is toggled using the keyboard
     And "foo" is typed
     And "Backspace" is pressed 3 times
     And "bar" is typed
-    Then "bar" has no marks
+    Then "bar" has marks "strong"
 
   Scenario: Adding bold across an empty block and typing in the same
     Given the text "foo"

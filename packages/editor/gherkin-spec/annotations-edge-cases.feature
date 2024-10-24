@@ -10,7 +10,7 @@ Feature: Annotations Edge Cases
     And a "comment" "c1" around "bar"
     When "foo bar baz" is selected
     And "Backspace" is pressed
-    Then the editor is empty
+    Then "" has marks "em"
 
   Scenario: Deleting half of annotated text
     Given the text "foo bar baz"
