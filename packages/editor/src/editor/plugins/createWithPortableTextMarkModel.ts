@@ -5,7 +5,7 @@
  */
 
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
-import type {PortableTextObject, PortableTextSpan} from '@sanity/types'
+import type {PortableTextObject} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {Editor, Element, Node, Path, Range, Text, Transforms} from 'slate'
 import type {
@@ -14,6 +14,7 @@ import type {
 } from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {toPortableTextRange} from '../../utils/ranges'
+import {getNextSpan, getPreviousSpan} from '../../utils/sibling-utils'
 import {isChangingRemotely} from '../../utils/withChanges'
 import {isRedoing, isUndoing} from '../../utils/withUndoRedo'
 import type {EditorActor} from '../editor-machine'
@@ -313,32 +314,8 @@ export function createWithPortableTextMarkModel(
           const atTheBeginningOfSpan = selection.anchor.offset === 0
           const atTheEndOfSpan = selection.anchor.offset === span.text.length
 
-          let previousSpan: PortableTextSpan | undefined
-          let nextSpan: PortableTextSpan | undefined
-
-          for (const [child, childPath] of Node.children(editor, blockPath, {
-            reverse: true,
-          })) {
-            if (!editor.isTextSpan(child)) {
-              continue
-            }
-
-            if (Path.isBefore(childPath, spanPath)) {
-              previousSpan = child
-              break
-            }
-          }
-
-          for (const [child, childPath] of Node.children(editor, blockPath)) {
-            if (!editor.isTextSpan(child)) {
-              continue
-            }
-
-            if (Path.isAfter(childPath, spanPath)) {
-              nextSpan = child
-              break
-            }
-          }
+          const previousSpan = getPreviousSpan({editor, blockPath, spanPath})
+          const nextSpan = getNextSpan({editor, blockPath, spanPath})
 
           const previousSpanHasSameAnnotation = previousSpan
             ? previousSpan.marks?.some(
