@@ -318,8 +318,8 @@ importers:
         specifier: ^2.1.3
         version: 2.1.3(@types/node@18.19.54)(@vitest/browser@2.1.3)(jsdom@25.0.1)(msw@2.4.9(typescript@5.6.3))(terser@5.34.1)
       vitest-browser-react:
-        specifier: ^0.0.2
-        version: 0.0.2(@types/react-dom@18.3.1)(@types/react@18.3.12)(@vitest/browser@2.1.3(@vitest/spy@2.1.3)(playwright@1.48.1)(typescript@5.6.3)(vite@5.4.10(@types/node@18.19.54)(terser@5.34.1))(vitest@2.1.3))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vitest@2.1.3(@types/node@18.19.54)(@vitest/browser@2.1.3)(jsdom@25.0.1)(msw@2.4.9(typescript@5.6.3))(terser@5.34.1))
+        specifier: ^0.0.3
+        version: 0.0.3(@types/react-dom@18.3.1)(@types/react@18.3.12)(@vitest/browser@2.1.3(@vitest/spy@2.1.3)(playwright@1.48.1)(typescript@5.6.3)(vite@5.4.10(@types/node@18.19.54)(terser@5.34.1))(vitest@2.1.3))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vitest@2.1.3(@types/node@18.19.54)(@vitest/browser@2.1.3)(jsdom@25.0.1)(msw@2.4.9(typescript@5.6.3))(terser@5.34.1))
 
   packages/gherkin-driver:
     devDependencies:
@@ -5673,8 +5673,8 @@ packages:
       terser:
         optional: true
 
-  vitest-browser-react@0.0.2:
-    resolution: {integrity: sha512-5NGhaK2j5KrBK8yp7KPYGH8r/UD/kp9d+69jxj1JG9oP5vBVbRNtgj+RKm4ap+zVfxM1PNDXPtpcC0BS91j2mw==}
+  vitest-browser-react@0.0.3:
+    resolution: {integrity: sha512-bNAE5ANYpGtwxdpN5qc4WxZnIjU0WYhOPMLAamm1/143tTBUFLHXe/rGSiy8q5xid/zrCRfC7AmKUA0LYNyUMg==}
     engines: {node: ^18.0.0 || >=20.0.0}
     peerDependencies:
       '@types/react': '>18.0.0'
@@ -12435,7 +12435,7 @@ snapshots:
       fsevents: 2.3.3
       terser: 5.34.1
 
-  vitest-browser-react@0.0.2(@types/react-dom@18.3.1)(@types/react@18.3.12)(@vitest/browser@2.1.3(@vitest/spy@2.1.3)(playwright@1.48.1)(typescript@5.6.3)(vite@5.4.10(@types/node@18.19.54)(terser@5.34.1))(vitest@2.1.3))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vitest@2.1.3(@types/node@18.19.54)(@vitest/browser@2.1.3)(jsdom@25.0.1)(msw@2.4.9(typescript@5.6.3))(terser@5.34.1)):
+  vitest-browser-react@0.0.3(@types/react-dom@18.3.1)(@types/react@18.3.12)(@vitest/browser@2.1.3(@vitest/spy@2.1.3)(playwright@1.48.1)(typescript@5.6.3)(vite@5.4.10(@types/node@18.19.54)(terser@5.34.1))(vitest@2.1.3))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vitest@2.1.3(@types/node@18.19.54)(@vitest/browser@2.1.3)(jsdom@25.0.1)(msw@2.4.9(typescript@5.6.3))(terser@5.34.1)):
     dependencies:
       '@vitest/browser': 2.1.3(@vitest/spy@2.1.3)(playwright@1.48.1)(typescript@5.6.3)(vite@5.4.10(@types/node@18.19.54)(terser@5.34.1))(vitest@2.1.3)
       react: 18.3.1
