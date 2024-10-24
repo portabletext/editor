@@ -412,6 +412,7 @@ export const stepDefinitions = [
       }
 
       if (selection && isEqual(selection.anchor, selection.focus)) {
+        console.log('here')
         return toggleDecoratorUsingKeyboard(decorator)
       }
 
