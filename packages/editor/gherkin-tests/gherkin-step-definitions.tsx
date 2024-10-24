@@ -759,7 +759,9 @@ export const stepDefinitions = [
   When('redo is performed', async (context: Context) => {
     await waitForNewValue(async () => {
       context.editorA.ref.send({type: 'focus'})
-      await userEvent.keyboard(`{${getMetaKey()}>}y{/${getMetaKey()}}`)
+      await userEvent.keyboard(
+        `{Shift>}{${getMetaKey()}>}z{/${getMetaKey()}}{/Shift}`,
+      )
     })
   }),
 ]
