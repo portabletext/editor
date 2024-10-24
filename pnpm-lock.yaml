@@ -327,8 +327,8 @@ importers:
         specifier: ^17.1.0
         version: 17.1.0
       '@cucumber/gherkin':
-        specifier: ^29.0.0
-        version: 29.0.0
+        specifier: ^30.0.0
+        version: 30.0.0
       '@cucumber/messages':
         specifier: ^26.0.1
         version: 26.0.1
@@ -1085,17 +1085,14 @@ packages:
   '@cucumber/gherkin@27.0.0':
     resolution: {integrity: sha512-j5rCsjqzRiC3iVTier3sa0kzyNbkcAmF7xr7jKnyO7qDeK3Z8Ye1P3KSVpeQRMY+KCDJ3WbTDdyxH0FwfA/fIw==}
 
-  '@cucumber/gherkin@29.0.0':
-    resolution: {integrity: sha512-6t3V7fFsLlyhLSj4FS+fPz22pPVcFhFZ3QOP7otFYmkhZ4g1ierj5pf7fxJWvEsI555hGatg+Iql6cqK93RFUg==}
+  '@cucumber/gherkin@30.0.0':
+    resolution: {integrity: sha512-ng23BG8ASMUWNTbH1rL6I7d33CY9o3jgIpw3F0j7vL9Axm4mFngL0/6VPJ2HPZeBsFEzAcy7U9IdJNYIz4vFMQ==}
 
   '@cucumber/messages@22.0.0':
     resolution: {integrity: sha512-EuaUtYte9ilkxcKmfqGF9pJsHRUU0jwie5ukuZ/1NPTuHS1LxHPsGEODK17RPRbZHOFhqybNzG2rHAwThxEymg==}
 
   '@cucumber/messages@23.0.0':
     resolution: {integrity: sha512-2ZWKNnikNMBnle3P3cgy+fgzhABrY4oBbiWp9wcI8ANdT4LlYRN6jQ6j/9CQGTDGRfkyRtr/5VkYq7q24XCsuA==}
-
-  '@cucumber/messages@25.0.1':
-    resolution: {integrity: sha512-RjjhmzcauX5eYfcKns5pgenefDJQcfXE3ZDrVWdUDGcoaoyFVDmj+ZzQZWRWqFrfMjP3lKHJss6LtvIP/z+h8g==}
 
   '@cucumber/messages@26.0.1':
     resolution: {integrity: sha512-DIxSg+ZGariumO+Lq6bn4kOUIUET83A4umrnWmidjGFl8XxkBieUZtsmNbLYgH/gnsmP07EfxxdTr0hOchV1Sg==}
@@ -2693,9 +2690,6 @@ packages:
 
   '@types/uuid@9.0.6':
     resolution: {integrity: sha512-BT2Krtx4xaO6iwzwMFUYvWBWkV2pr37zD68Vmp1CDV196MzczBRxuEpD6Pr395HAgebC/co7hOphs53r8V7jew==}
-
-  '@types/uuid@9.0.8':
-    resolution: {integrity: sha512-jg+97EGIcY9AGHJJRaaPVgetKDsrTgbRjQ5Msgjh/DQKEFl0DtyRr/VCOyD1T2R1MNeWPK/u7JoGhlDZnKBAfA==}
 
   '@types/wrap-ansi@3.0.0':
     resolution: {integrity: sha512-ltIpx+kM7g/MLRZfkbL7EsCEjfzCcScLpkg37eXEtx5kmrAKBkTJwd1GIAjDSL8wTpM6Hzn5YO4pSb91BEwu1g==}
@@ -6760,9 +6754,9 @@ snapshots:
     dependencies:
       '@cucumber/messages': 22.0.0
 
-  '@cucumber/gherkin@29.0.0':
+  '@cucumber/gherkin@30.0.0':
     dependencies:
-      '@cucumber/messages': 25.0.1
+      '@cucumber/messages': 26.0.1
 
   '@cucumber/messages@22.0.0':
     dependencies:
@@ -6776,13 +6770,6 @@ snapshots:
       '@types/uuid': 9.0.6
       class-transformer: 0.5.1
       reflect-metadata: 0.1.13
-      uuid: 9.0.1
-
-  '@cucumber/messages@25.0.1':
-    dependencies:
-      '@types/uuid': 9.0.8
-      class-transformer: 0.5.1
-      reflect-metadata: 0.2.2
       uuid: 9.0.1
 
   '@cucumber/messages@26.0.1':
@@ -9033,8 +9020,6 @@ snapshots:
   '@types/uuid@9.0.1': {}
 
   '@types/uuid@9.0.6': {}
-
-  '@types/uuid@9.0.8': {}
 
   '@types/wrap-ansi@3.0.0': {}
 
