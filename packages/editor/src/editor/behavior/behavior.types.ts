@@ -1,4 +1,4 @@
-import type {PortableTextBlock} from '@sanity/types'
+import type {KeyedSegment, PortableTextBlock} from '@sanity/types'
 import type {
   EditorSelection,
   PortableTextMemberSchemaTypes,
@@ -17,11 +17,17 @@ export type BehaviorContext = {
 /**
  * @alpha
  */
-export type BehaviorEvent = {
-  type: 'key down'
-  nativeEvent: KeyboardEvent
-  editor: PortableTextSlateEditor
-}
+export type BehaviorEvent =
+  | {
+      type: 'key down'
+      nativeEvent: KeyboardEvent
+      editor: PortableTextSlateEditor
+    }
+  | {
+      type: 'before insert text'
+      nativeEvent: InputEvent
+      editor: PortableTextSlateEditor
+    }
 
 /**
  * @alpha
@@ -48,6 +54,15 @@ export type BehaviorActionIntend =
   | {
       type: 'insert text block'
       decorators: Array<string>
+    }
+  | {
+      type: 'apply block style'
+      paths: Array<[KeyedSegment]>
+      style: string
+    }
+  | {
+      type: 'delete text'
+      selection: NonNullable<EditorSelection>
     }
 
 /**
@@ -89,6 +104,9 @@ export type RaiseBehaviorActionIntend<
   guardResponse: TGuardResponse,
 ) => BehaviorActionIntend | void
 
+/**
+ * @alpha
+ */
 export function defineBehavior<
   TBehaviorEventType extends BehaviorEvent['type'],
   TGuardResponse = true,
