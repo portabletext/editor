@@ -29,7 +29,6 @@ import type {
 import {debugWithName} from '../utils/debug'
 import {getPortableTextMemberSchemaTypes} from '../utils/getPortableTextMemberSchemaTypes'
 import {compileType} from '../utils/schema'
-import {coreBehaviors} from './behavior/behavior.core'
 import {SlateContainer} from './components/SlateContainer'
 import {Synchronizer} from './components/Synchronizer'
 import {EditorActorContext} from './editor-actor-context'
@@ -38,6 +37,7 @@ import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
 import {PortableTextEditorReadOnlyContext} from './hooks/usePortableTextReadOnly'
 import {defaultKeyGenerator} from './key-generator'
+import type {Editor} from './use-editor'
 
 const debug = debugWithName('component:PortableTextEditor')
 
@@ -46,58 +46,73 @@ const debug = debugWithName('component:PortableTextEditor')
  *
  * @public
  */
-export type PortableTextEditorProps = PropsWithChildren<{
-  /**
-   * Function that gets called when the editor changes the value
-   */
-  onChange: (change: EditorChange) => void
+export type PortableTextEditorProps<
+  TEditor extends Editor | undefined = undefined,
+> = PropsWithChildren<
+  (TEditor extends Editor
+    ? {
+        /**
+         * @alpha
+         */
+        editor: TEditor
+      }
+    : {
+        editor?: undefined
 
-  /**
-   * Schema type for the portable text field
-   */
-  schemaType: ArraySchemaType<PortableTextBlock> | ArrayDefinition
+        /**
+         * Function that gets called when the editor changes the value
+         */
+        onChange: (change: EditorChange) => void
 
-  /**
-   * Maximum number of blocks to allow within the editor
-   */
-  maxBlocks?: number | string
+        /**
+         * Schema type for the portable text field
+         */
+        schemaType: ArraySchemaType<PortableTextBlock> | ArrayDefinition
 
-  /**
-   * Whether or not the editor should be in read-only mode
-   */
-  readOnly?: boolean
+        /**
+         * Maximum number of blocks to allow within the editor
+         */
+        maxBlocks?: number | string
 
-  /**
-   * The current value of the portable text field
-   */
-  value?: PortableTextBlock[]
+        /**
+         * Function used to generate keys for array items (`_key`)
+         */
+        keyGenerator?: () => string
 
-  /**
-   * Function used to generate keys for array items (`_key`)
-   */
-  keyGenerator?: () => string
+        /**
+         * Observable of local and remote patches for the edited value.
+         */
+        patches$?: PatchObservable
 
-  /**
-   * Observable of local and remote patches for the edited value.
-   */
-  patches$?: PatchObservable
+        /**
+         * Backward compatibility (renamed to patches$).
+         */
+        incomingPatches$?: PatchObservable
+      }) & {
+    /**
+     * Whether or not the editor should be in read-only mode
+     */
+    readOnly?: boolean
 
-  /**
-   * Backward compatibility (renamed to patches$).
-   */
-  incomingPatches$?: PatchObservable
+    /**
+     * The current value of the portable text field
+     */
+    value?: PortableTextBlock[]
 
-  /**
-   * A ref to the editor instance
-   */
-  editorRef?: MutableRefObject<PortableTextEditor | null>
-}>
+    /**
+     * A ref to the editor instance
+     */
+    editorRef?: MutableRefObject<PortableTextEditor | null>
+  }
+>
 
 /**
  * The main Portable Text Editor component.
  * @public
  */
-export class PortableTextEditor extends Component<PortableTextEditorProps> {
+export class PortableTextEditor extends Component<
+  PortableTextEditorProps<Editor | undefined>
+> {
   public static displayName = 'PortableTextEditor'
   /**
    * An observable of all the editor changes.
@@ -116,35 +131,46 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
   constructor(props: PortableTextEditorProps) {
     super(props)
 
-    if (!props.schemaType) {
-      throw new Error('PortableTextEditor: missing "schemaType" property')
-    }
+    if (props.editor) {
+      this.editorActor = props.editor
+      this.editorActor.start()
+      this.schemaTypes = this.editorActor.getSnapshot().context.schema
+    } else {
+      if (!props.schemaType) {
+        throw new Error('PortableTextEditor: missing "schemaType" property')
+      }
 
-    if (props.incomingPatches$) {
-      console.warn(
-        `The prop 'incomingPatches$' is deprecated and renamed to 'patches$'`,
+      if (props.incomingPatches$) {
+        console.warn(
+          `The prop 'incomingPatches$' is deprecated and renamed to 'patches$'`,
+        )
+      }
+
+      this.schemaTypes = getPortableTextMemberSchemaTypes(
+        props.schemaType.hasOwnProperty('jsonType')
+          ? props.schemaType
+          : compileType(props.schemaType),
       )
+
+      this.editorActor =
+        props.editor ??
+        createActor(editorMachine, {
+          input: {
+            keyGenerator: props.keyGenerator || defaultKeyGenerator,
+            schema: this.schemaTypes,
+          },
+        })
+      this.editorActor.start()
     }
-
-    this.schemaTypes = getPortableTextMemberSchemaTypes(
-      props.schemaType.hasOwnProperty('jsonType')
-        ? props.schemaType
-        : compileType(props.schemaType),
-    )
-
-    this.editorActor = createActor(editorMachine, {
-      input: {
-        behaviors: coreBehaviors,
-        keyGenerator: props.keyGenerator || defaultKeyGenerator,
-        schema: this.schemaTypes,
-      },
-    })
-    this.editorActor.start()
   }
 
   componentDidUpdate(prevProps: PortableTextEditorProps) {
     // Set up the schema type lookup table again if the source schema type changes
-    if (this.props.schemaType !== prevProps.schemaType) {
+    if (
+      !this.props.editor &&
+      !prevProps.editor &&
+      this.props.schemaType !== prevProps.schemaType
+    ) {
       this.schemaTypes = getPortableTextMemberSchemaTypes(
         this.props.schemaType.hasOwnProperty('jsonType')
           ? this.props.schemaType
@@ -175,22 +201,23 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
   }
 
   render() {
-    const {value, children, patches$, incomingPatches$} = this.props
-    const _patches$ = incomingPatches$ || patches$ // Backward compatibility
-
-    const maxBlocks =
-      typeof this.props.maxBlocks === 'undefined'
+    const maxBlocks = !this.props.editor
+      ? typeof this.props.maxBlocks === 'undefined'
         ? undefined
         : Number.parseInt(this.props.maxBlocks.toString(), 10) || undefined
+      : undefined
 
     const readOnly = Boolean(this.props.readOnly)
+    const legacyPatches = !this.props.editor
+      ? (this.props.incomingPatches$ ?? this.props.patches$)
+      : undefined
 
     return (
       <>
-        {_patches$ ? (
+        {legacyPatches ? (
           <RoutePatchesObservableToEditorActor
             editorActor={this.editorActor}
-            patches$={_patches$}
+            patches$={legacyPatches}
           />
         ) : null}
         <EditorActorContext.Provider value={this.editorActor}>
@@ -209,16 +236,18 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
                     editorActor={this.editorActor}
                     getValue={this.getValue}
                     onChange={(change) => {
-                      this.props.onChange(change)
+                      if (!this.props.editor) {
+                        this.props.onChange(change)
+                      }
                       /**
                        * For backwards compatibility, we relay all changes to the
                        * `change$` Subject as well.
                        */
                       this.change$.next(change)
                     }}
-                    value={value}
+                    value={this.props.value}
                   />
-                  {children}
+                  {this.props.children}
                 </PortableTextEditorSelectionProvider>
               </PortableTextEditorReadOnlyContext.Provider>
             </PortableTextEditorContext.Provider>
