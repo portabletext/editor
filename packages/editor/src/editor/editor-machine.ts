@@ -21,6 +21,7 @@ import {toPortableTextRange} from '../utils/ranges'
 import {fromSlateValue} from '../utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../utils/weakMaps'
 import {performAction, performDefaultAction} from './behavior/behavior.actions'
+import {coreBehaviors} from './behavior/behavior.core'
 import type {
   Behavior,
   BehaviorAction,
@@ -91,6 +92,10 @@ type EditorEvent =
       type: 'update schema'
       schema: PortableTextMemberSchemaTypes
     }
+  | {
+      type: 'update behaviors'
+      behaviors: Array<Behavior>
+    }
   | EditorEmittedEvent
 
 type EditorEmittedEvent =
@@ -139,12 +144,18 @@ export const editorMachine = setup({
     events: {} as EditorEvent,
     emitted: {} as EditorEmittedEvent,
     input: {} as {
-      behaviors: Array<Behavior>
+      behaviors?: Array<Behavior>
       keyGenerator: () => string
       schema: PortableTextMemberSchemaTypes
     },
   },
   actions: {
+    'assign behaviors': assign({
+      behaviors: ({event}) => {
+        assertEvent(event, 'update behaviors')
+        return [...coreBehaviors, ...event.behaviors]
+      },
+    }),
     'assign schema': assign({
       schema: ({event}) => {
         assertEvent(event, 'update schema')
@@ -263,7 +274,9 @@ export const editorMachine = setup({
 }).createMachine({
   id: 'editor',
   context: ({input}) => ({
-    behaviors: input.behaviors,
+    behaviors: input.behaviors
+      ? [...coreBehaviors, ...input.behaviors]
+      : coreBehaviors,
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
     schema: input.schema,
@@ -286,6 +299,7 @@ export const editorMachine = setup({
     'loading': {actions: emit({type: 'loading'})},
     'patches': {actions: emit(({event}) => event)},
     'done loading': {actions: emit({type: 'done loading'})},
+    'update behaviors': {actions: 'assign behaviors'},
     'update schema': {actions: 'assign schema'},
     'behavior event': {actions: 'handle behavior event'},
     'behavior action intends': {

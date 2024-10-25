@@ -1,12 +1,13 @@
 export type {Patch} from '@portabletext/patches'
-export type {
-  Behavior,
-  BehaviorActionIntend,
-  BehaviorContext,
-  BehaviorEvent,
-  BehaviorGuard,
-  PickFromUnion,
-  BehaviorActionIntendSet,
+export {
+  type Behavior,
+  type BehaviorActionIntend,
+  type BehaviorContext,
+  type BehaviorEvent,
+  type BehaviorGuard,
+  type PickFromUnion,
+  type BehaviorActionIntendSet,
+  defineBehavior,
 } from './editor/behavior/behavior.types'
 export {PortableTextEditable} from './editor/Editable'
 export type {PortableTextEditableProps} from './editor/Editable'
@@ -22,5 +23,6 @@ export {usePortableTextEditorSelection} from './editor/hooks/usePortableTextEdit
 export {defaultKeyGenerator as keyGenerator} from './editor/key-generator'
 export {PortableTextEditor} from './editor/PortableTextEditor'
 export type {PortableTextEditorProps} from './editor/PortableTextEditor'
+export {useEditor, type Editor, type EditorConfig} from './editor/use-editor'
 export * from './types/editor'
 export * from './types/options'
