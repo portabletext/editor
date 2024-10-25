@@ -52,7 +52,7 @@ export function useSyncValue(
   userCallbackFn?: () => void,
 ) => void {
   const {editorActor, portableTextEditor, readOnly} = props
-  const {schemaTypes} = portableTextEditor
+  const schemaTypes = editorActor.getSnapshot().context.schema
   const previousValue = useRef<PortableTextBlock[] | undefined>()
   const slateEditor = useSlate()
   const updateValueFunctionRef =
