@@ -25,6 +25,7 @@ import type {
   RenderDecoratorFunction,
 } from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
+import type {EditorActor} from '../editor-machine'
 import {usePortableTextEditor} from '../hooks/usePortableTextEditor'
 import {DefaultAnnotation} from '../nodes/DefaultAnnotation'
 import {PortableTextEditor} from '../PortableTextEditor'
@@ -37,6 +38,7 @@ const EMPTY_MARKS: string[] = []
  * @internal
  */
 export interface LeafProps extends RenderLeafProps {
+  editorActor: EditorActor
   children: ReactElement
   schemaTypes: PortableTextMemberSchemaTypes
   renderAnnotation?: RenderAnnotationFunction
@@ -51,6 +53,7 @@ export interface LeafProps extends RenderLeafProps {
  */
 export const Leaf = (props: LeafProps) => {
   const {
+    editorActor,
     attributes,
     children,
     leaf,
@@ -142,12 +145,12 @@ export const Leaf = (props: LeafProps) => {
       return undefined
     }
 
-    const onBlur = portableTextEditor.editorActor.on('blur', () => {
+    const onBlur = editorActor.on('blur', () => {
       setFocused(false)
       setSelected(false)
     })
 
-    const onFocus = portableTextEditor.editorActor.on('focus', () => {
+    const onFocus = editorActor.on('focus', () => {
       const sel = PortableTextEditor.getSelection(portableTextEditor)
       if (
         sel &&
@@ -159,21 +162,18 @@ export const Leaf = (props: LeafProps) => {
       setSelectedFromRange()
     })
 
-    const onSelection = portableTextEditor.editorActor.on(
-      'selection',
-      (event) => {
-        if (
-          event.selection &&
-          isEqual(event.selection.focus.path, path) &&
-          PortableTextEditor.isCollapsedSelection(portableTextEditor)
-        ) {
-          setFocused(true)
-        } else {
-          setFocused(false)
-        }
-        setSelectedFromRange()
-      },
-    )
+    const onSelection = editorActor.on('selection', (event) => {
+      if (
+        event.selection &&
+        isEqual(event.selection.focus.path, path) &&
+        PortableTextEditor.isCollapsedSelection(portableTextEditor)
+      ) {
+        setFocused(true)
+      } else {
+        setFocused(false)
+      }
+      setSelectedFromRange()
+    })
 
     return () => {
       onBlur.unsubscribe()

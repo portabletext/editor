@@ -47,8 +47,9 @@ export const withPlugins = <T extends Editor>(
   options: createEditorOptions,
 ): {editor: PortableTextSlateEditor; subscribe: () => () => void} => {
   const e = editor as T & PortableTextSlateEditor
-  const {portableTextEditor, patches$, readOnly, maxBlocks} = options
-  const {editorActor, schemaTypes} = portableTextEditor
+  const {editorActor, portableTextEditor, patches$, readOnly, maxBlocks} =
+    options
+  const {schemaTypes} = portableTextEditor
   e.subscriptions = []
   if (e.destroy) {
     e.destroy()

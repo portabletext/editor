@@ -3,6 +3,7 @@ import {isEqual, noop} from 'lodash'
 import {
   forwardRef,
   useCallback,
+  useContext,
   useEffect,
   useImperativeHandle,
   useMemo,
@@ -63,6 +64,7 @@ import {
 } from '../utils/values'
 import {Element} from './components/Element'
 import {Leaf} from './components/Leaf'
+import {EditorActorContext} from './editor-actor-context'
 import {usePortableTextEditor} from './hooks/usePortableTextEditor'
 import {usePortableTextEditorReadOnlyStatus} from './hooks/usePortableTextReadOnly'
 import {createWithHotkeys, createWithInsertData} from './plugins'
@@ -155,7 +157,8 @@ export const PortableTextEditable = forwardRef<
 
   const rangeDecorationsRef = useRef(rangeDecorations)
 
-  const {editorActor, schemaTypes} = portableTextEditor
+  const editorActor = useContext(EditorActorContext)
+  const {schemaTypes} = portableTextEditor
   const slateEditor = useSlate()
 
   const blockTypeName = schemaTypes.block.name
@@ -216,6 +219,7 @@ export const PortableTextEditable = forwardRef<
         let rendered = (
           <Leaf
             {...lProps}
+            editorActor={editorActor}
             schemaTypes={schemaTypes}
             renderAnnotation={renderAnnotation}
             renderChild={renderChild}

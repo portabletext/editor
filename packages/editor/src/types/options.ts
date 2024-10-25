@@ -1,4 +1,5 @@
 import type {BaseSyntheticEvent} from 'react'
+import type {EditorActor} from '../editor/editor-machine'
 import type {PortableTextEditor} from '../editor/PortableTextEditor'
 import type {PatchObservable} from './editor'
 
@@ -6,6 +7,7 @@ import type {PatchObservable} from './editor'
  * @internal
  */
 export type createEditorOptions = {
+  editorActor: EditorActor
   patches$?: PatchObservable
   portableTextEditor: PortableTextEditor
   readOnly: boolean

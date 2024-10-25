@@ -4,6 +4,7 @@ import {Slate, withReact} from 'slate-react'
 import type {PatchObservable} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {KEY_TO_SLATE_ELEMENT, KEY_TO_VALUE_ELEMENT} from '../../utils/weakMaps'
+import type {EditorActor} from '../editor-machine'
 import {withPlugins} from '../plugins'
 import type {PortableTextEditor} from '../PortableTextEditor'
 
@@ -13,6 +14,7 @@ const debug = debugWithName('component:PortableTextEditor:SlateContainer')
  * @internal
  */
 export interface SlateContainerProps extends PropsWithChildren {
+  editorActor: EditorActor
   maxBlocks: number | undefined
   patches$?: PatchObservable
   portableTextEditor: PortableTextEditor
@@ -24,12 +26,13 @@ export interface SlateContainerProps extends PropsWithChildren {
  * @internal
  */
 export function SlateContainer(props: SlateContainerProps) {
-  const {patches$, portableTextEditor, readOnly, maxBlocks} = props
+  const {editorActor, patches$, portableTextEditor, readOnly, maxBlocks} = props
 
   // Create the slate instance, using `useState` ensures setup is only run once, initially
   const [[slateEditor, subscribe]] = useState(() => {
     debug('Creating new Slate editor instance')
     const {editor, subscribe: _sub} = withPlugins(withReact(createEditor()), {
+      editorActor,
       maxBlocks,
       patches$,
       portableTextEditor,
@@ -51,6 +54,7 @@ export function SlateContainer(props: SlateContainerProps) {
   useEffect(() => {
     debug('Re-initializing plugin chain')
     withPlugins(slateEditor, {
+      editorActor,
       maxBlocks,
       patches$,
       portableTextEditor,
