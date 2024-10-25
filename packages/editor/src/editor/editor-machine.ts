@@ -18,7 +18,7 @@ import type {
 import {toPortableTextRange} from '../utils/ranges'
 import {fromSlateValue} from '../utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../utils/weakMaps'
-import {inserText, inserTextBlock} from './behavior/behavior.actions'
+import {behaviorActionImplementations} from './behavior/behavior.actions'
 import type {
   Behavior,
   BehaviorAction,
@@ -124,14 +124,6 @@ export const editorMachine = setup({
     },
   },
   actions: {
-    'apply:insert text': ({context, event}) => {
-      assertEvent(event, 'insert text')
-      inserText({context, event})
-    },
-    'apply:insert text block': ({context, event}) => {
-      assertEvent(event, 'insert text block')
-      inserTextBlock({context, event})
-    },
     'assign schema': assign({
       schema: ({event}) => {
         assertEvent(event, 'update schema')
@@ -161,7 +153,7 @@ export const editorMachine = setup({
       pendingEvents: [],
     }),
     'handle behavior event': enqueueActions(({context, event, enqueue}) => {
-      assertEvent(event, ['key down'])
+      assertEvent(event, ['key down', 'before insert text'])
 
       const eventBehaviors = context.behaviors.filter(
         (behavior) => behavior.on === event.type,
@@ -255,11 +247,20 @@ export const editorMachine = setup({
     'key down': {
       actions: ['handle behavior event'],
     },
+    'before insert text': {
+      actions: ['handle behavior event'],
+    },
+    'apply block style': {
+      actions: [behaviorActionImplementations['apply block style']],
+    },
+    'delete text': {
+      actions: [behaviorActionImplementations['delete text']],
+    },
     'insert text': {
-      actions: ['apply:insert text'],
+      actions: [behaviorActionImplementations['insert text']],
     },
     'insert text block': {
-      actions: ['apply:insert text block'],
+      actions: [behaviorActionImplementations['insert text block']],
     },
   },
   initial: 'pristine',
