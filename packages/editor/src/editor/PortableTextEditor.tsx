@@ -27,6 +27,7 @@ import {compileType} from '../utils/schema'
 import {coreBehaviors} from './behavior/behavior.core'
 import {SlateContainer} from './components/SlateContainer'
 import {Synchronizer} from './components/Synchronizer'
+import {EditorActorContext} from './editor-actor-context'
 import {editorMachine, type EditorActor} from './editor-machine'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
@@ -93,11 +94,6 @@ export type PortableTextEditorProps = PropsWithChildren<{
  */
 export class PortableTextEditor extends Component<PortableTextEditorProps> {
   /**
-   * @internal
-   * Don't use this API directly. It's subject to change.
-   */
-  public editorActor: EditorActor
-  /**
    * An observable of all the editor changes.
    */
   public change$: EditorChanges = new Subject()
@@ -109,6 +105,7 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
    * The editor API (currently implemented with Slate).
    */
   private editable?: EditableAPI
+  private editorActor: EditorActor
 
   constructor(props: PortableTextEditorProps) {
     super(props)
@@ -183,33 +180,38 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
     const readOnly = Boolean(this.props.readOnly)
 
     return (
-      <SlateContainer
-        maxBlocks={maxBlocks}
-        patches$={_patches$}
-        portableTextEditor={this}
-        readOnly={readOnly}
-      >
-        <PortableTextEditorContext.Provider value={this}>
-          <PortableTextEditorReadOnlyContext.Provider value={readOnly}>
-            <PortableTextEditorSelectionProvider editorActor={this.editorActor}>
-              <Synchronizer
+      <EditorActorContext.Provider value={this.editorActor}>
+        <SlateContainer
+          editorActor={this.editorActor}
+          maxBlocks={maxBlocks}
+          patches$={_patches$}
+          portableTextEditor={this}
+          readOnly={readOnly}
+        >
+          <PortableTextEditorContext.Provider value={this}>
+            <PortableTextEditorReadOnlyContext.Provider value={readOnly}>
+              <PortableTextEditorSelectionProvider
                 editorActor={this.editorActor}
-                getValue={this.getValue}
-                onChange={(change) => {
-                  this.props.onChange(change)
-                  /**
-                   * For backwards compatibility, we relay all changes to the
-                   * `change$` Subject as well.
-                   */
-                  this.change$.next(change)
-                }}
-                value={value}
-              />
-              {children}
-            </PortableTextEditorSelectionProvider>
-          </PortableTextEditorReadOnlyContext.Provider>
-        </PortableTextEditorContext.Provider>
-      </SlateContainer>
+              >
+                <Synchronizer
+                  editorActor={this.editorActor}
+                  getValue={this.getValue}
+                  onChange={(change) => {
+                    this.props.onChange(change)
+                    /**
+                     * For backwards compatibility, we relay all changes to the
+                     * `change$` Subject as well.
+                     */
+                    this.change$.next(change)
+                  }}
+                  value={value}
+                />
+                {children}
+              </PortableTextEditorSelectionProvider>
+            </PortableTextEditorReadOnlyContext.Provider>
+          </PortableTextEditorContext.Provider>
+        </SlateContainer>
+      </EditorActorContext.Provider>
     )
   }
 
