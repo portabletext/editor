@@ -92,3 +92,49 @@ Feature: Splitting Blocks
     And "Shift+Enter" is pressed
     Then block "0" has style "h1"
     And "foo\n" is in block "b1"
+
+  Scenario: Splitting decorated styled block at the beginning
+    Given the text "foo bar baz"
+    And "strong" around "foo"
+    When "h1" is toggled
+    And the caret is put before "foo"
+    And "Enter" is pressed
+    And "ArrowUp" is pressed
+    And "new" is typed
+    Then the text is "new|foo, bar baz"
+    And block "0" has style "normal"
+    And block "1" has style "h1"
+    And "new" has marks "strong"
+
+  Scenario Outline: Splitting decorated styled block in the middle
+    Given the text "foo bar baz" in block "b1"
+    And "strong" around <decorated>
+    When "h1" is toggled
+    And the caret is put <position>
+    And "Enter" is pressed
+    And "new" is typed
+    Then the text is <new text>
+    And block "0" has style "h1"
+    And block "1" has style "h1"
+
+    Examples:
+      | decorated | position      | new text            |
+      | "foo"     | after "foo"   | "foo\|new bar baz"  |
+      | "bar"     | after "foo "  | "foo \|newbar, baz" |
+      | "bar"     | before "bar"  | "foo \|newbar, baz" |
+      | "bar"     | after "bar"   | "foo ,bar\|new baz" |
+      | "bar"     | before " baz" | "foo ,bar\|new baz" |
+      | "baz"     | before "baz"  | "foo bar \|newbaz"  |
+      | "baz"     | after "bar "  | "foo bar \|newbaz"  |
+
+  Scenario: Splitting decorated styled block at the end
+    Given the text "foo bar baz"
+    And "strong" around "baz"
+    When "h1" is toggled
+    And the caret is put after "baz"
+    And "Enter" is pressed
+    And "new" is typed
+    Then the text is "foo bar ,baz|new"
+    And block "0" has style "h1"
+    And block "1" has style "normal"
+    And "new" has no marks
