@@ -330,8 +330,8 @@ importers:
         specifier: ^30.0.0
         version: 30.0.0
       '@cucumber/messages':
-        specifier: ^26.0.1
-        version: 26.0.1
+        specifier: ^27.0.0
+        version: 27.0.0
       '@jest/globals':
         specifier: ^29.7.0
         version: 29.7.0
@@ -1096,6 +1096,9 @@ packages:
 
   '@cucumber/messages@26.0.1':
     resolution: {integrity: sha512-DIxSg+ZGariumO+Lq6bn4kOUIUET83A4umrnWmidjGFl8XxkBieUZtsmNbLYgH/gnsmP07EfxxdTr0hOchV1Sg==}
+
+  '@cucumber/messages@27.0.0':
+    resolution: {integrity: sha512-w0Qfu+IibH/uAMcf8TZPvSXSrbf7BLIfIxMmYvwx31jH6wuBcf/3RQetutS7Ge98rydjmpRphs2HCbugySarCA==}
 
   '@emotion/is-prop-valid@0.8.8':
     resolution: {integrity: sha512-u5WtneEAr5IDG2Wv65yhunPSMLIpuKsbuOktRojfrEiEvRyC85LgPMZI63cr7NUqT8ZIGdSVg8ZKGxIug4lXcA==}
@@ -6765,6 +6768,13 @@ snapshots:
       uuid: 9.0.1
 
   '@cucumber/messages@26.0.1':
+    dependencies:
+      '@types/uuid': 10.0.0
+      class-transformer: 0.5.1
+      reflect-metadata: 0.2.2
+      uuid: 10.0.0
+
+  '@cucumber/messages@27.0.0':
     dependencies:
       '@types/uuid': 10.0.0
       class-transformer: 0.5.1
