@@ -10,7 +10,7 @@ on:
 jobs:
   test:
     timeout-minutes: 60
-    name: E2E tests (${{ matrix.os }} / node ${{ matrix.node }})
+    name: E2E tests (${{ matrix.browser }})
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.experimental }}
 
@@ -19,6 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
+        browser: [chromium, firefox, webkit]
         node: [20]
         experimental: [false]
 
@@ -81,4 +82,4 @@ jobs:
         run: |
           node -v
           pnpm -v
-          pnpm test -- -- --project e2e-chromium
+          pnpm test -- -- --project ${{ matrix.browser }}
