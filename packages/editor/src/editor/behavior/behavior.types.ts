@@ -1,4 +1,5 @@
 import type {KeyedSegment, PortableTextBlock} from '@sanity/types'
+import type {TextUnit} from 'slate'
 import type {
   EditorSelection,
   PortableTextMemberSchemaTypes,
@@ -19,14 +20,22 @@ export type BehaviorContext = {
  */
 export type BehaviorEvent =
   | {
-      type: 'key down'
-      nativeEvent: KeyboardEvent
-      editor: PortableTextSlateEditor
+      type: 'delete backward'
+      unit: TextUnit
+      default: () => void
     }
   | {
-      type: 'before insert text'
-      nativeEvent: InputEvent
-      editor: PortableTextSlateEditor
+      type: 'insert soft break'
+      default: () => void
+    }
+  | {
+      type: 'insert break'
+      default: () => void
+    }
+  | {
+      type: 'insert text'
+      text: string
+      default: () => void
     }
 
 /**
@@ -48,9 +57,11 @@ export type BehaviorGuard<
  */
 export type BehaviorActionIntend =
   | {
-      type: 'insert text'
-      text: string
-    }
+      [TBehaviorEvent in BehaviorEvent as TBehaviorEvent['type']]: Omit<
+        TBehaviorEvent,
+        'default'
+      >
+    }[BehaviorEvent['type']]
   | {
       type: 'insert text block'
       decorators: Array<string>

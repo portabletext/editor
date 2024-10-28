@@ -14,6 +14,7 @@ import type {
   EditorSelection,
   InvalidValueResolution,
   PortableTextMemberSchemaTypes,
+  PortableTextSlateEditor,
 } from '../types/editor'
 import {toPortableTextRange} from '../utils/ranges'
 import {fromSlateValue} from '../utils/values'
@@ -65,7 +66,11 @@ export type MutationEvent = {
 type EditorEvent =
   | {type: 'normalizing'}
   | {type: 'done normalizing'}
-  | BehaviorEvent
+  | {
+      type: 'behavior event'
+      behaviorEvent: BehaviorEvent
+      editor: PortableTextSlateEditor
+    }
   | BehaviorAction
   | {
       type: 'update schema'
@@ -153,13 +158,14 @@ export const editorMachine = setup({
       pendingEvents: [],
     }),
     'handle behavior event': enqueueActions(({context, event, enqueue}) => {
-      assertEvent(event, ['key down', 'before insert text'])
+      assertEvent(event, ['behavior event'])
 
       const eventBehaviors = context.behaviors.filter(
-        (behavior) => behavior.on === event.type,
+        (behavior) => behavior.on === event.behaviorEvent.type,
       )
 
       if (eventBehaviors.length === 0) {
+        event.behaviorEvent.default()
         return
       }
 
@@ -178,6 +184,7 @@ export const editorMachine = setup({
         console.warn(
           `Unable to handle event ${event.type} due to missing selection`,
         )
+        event.behaviorEvent.default()
         return
       }
 
@@ -187,11 +194,13 @@ export const editorMachine = setup({
         selection,
       } satisfies BehaviorContext
 
+      let behaviorOverwritten = false
+
       for (const eventBehavior of eventBehaviors) {
         const shouldRun =
           eventBehavior.guard?.({
             context: behaviorContext,
-            event,
+            event: event.behaviorEvent,
           }) ?? true
 
         if (!shouldRun) {
@@ -199,7 +208,10 @@ export const editorMachine = setup({
         }
 
         const actions = eventBehavior.actions.map((action) =>
-          action({context: behaviorContext, event}, shouldRun),
+          action(
+            {context: behaviorContext, event: event.behaviorEvent},
+            shouldRun,
+          ),
         )
 
         for (const action of actions) {
@@ -207,11 +219,17 @@ export const editorMachine = setup({
             continue
           }
 
+          behaviorOverwritten = true
+
           enqueue.raise({
             ...action,
             editor: event.editor,
           })
         }
+      }
+
+      if (!behaviorOverwritten) {
+        event.behaviorEvent.default()
       }
     }),
   },
@@ -244,17 +262,21 @@ export const editorMachine = setup({
     'loading': {actions: emit({type: 'loading'})},
     'done loading': {actions: emit({type: 'done loading'})},
     'update schema': {actions: 'assign schema'},
-    'key down': {
-      actions: ['handle behavior event'],
-    },
-    'before insert text': {
-      actions: ['handle behavior event'],
-    },
+    'behavior event': {actions: 'handle behavior event'},
     'apply block style': {
       actions: [behaviorActionImplementations['apply block style']],
     },
+    'delete backward': {
+      actions: [behaviorActionImplementations['delete backward']],
+    },
     'delete text': {
       actions: [behaviorActionImplementations['delete text']],
+    },
+    'insert break': {
+      actions: [behaviorActionImplementations['insert break']],
+    },
+    'insert soft break': {
+      actions: [behaviorActionImplementations['insert soft break']],
     },
     'insert text': {
       actions: [behaviorActionImplementations['insert text']],
