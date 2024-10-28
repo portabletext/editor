@@ -33,12 +33,29 @@ export const behaviorActionImplementations: BehaviourActionImplementations = {
       Transforms.setNodes(event.editor, {style: event.style}, {at})
     }
   },
+  'delete backward': ({event}) => {
+    // Since this calls the native Editor method it will trigger a new behavior
+    // event
+    Editor.deleteBackward(event.editor, {unit: event.unit})
+  },
   'delete text': ({event}) => {
     Transforms.delete(event.editor, {
       at: toSlateRange(event.selection, event.editor)!,
     })
   },
+  'insert break': ({event}) => {
+    // Since this calls the native Editor method it will trigger a new behavior
+    // event
+    Editor.insertBreak(event.editor)
+  },
+  'insert soft break': ({event}) => {
+    // Since this calls the native Editor method it will trigger a new behavior
+    // event
+    Editor.insertSoftBreak(event.editor)
+  },
   'insert text': ({event}) => {
+    // Since this calls the native Editor method it will trigger a new behavior
+    // event
     Editor.insertText(event.editor, event.text)
   },
   'insert text block': ({context, event}) => {
