@@ -10,7 +10,7 @@ on:
 jobs:
   test:
     timeout-minutes: 60
-    name: E2E (legacy) tests (${{ matrix.os }} / node ${{ matrix.node }}))
+    name: E2E (legacy) tests (node ${{ matrix.node }})
     runs-on: ubuntu-latest
 
     strategy:
