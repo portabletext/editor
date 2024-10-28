@@ -10,7 +10,7 @@ on:
 jobs:
   test:
     timeout-minutes: 60
-    name: Test (${{ matrix.os }} / node ${{ matrix.node }})
+    name: Unit tests (${{ matrix.os }} / node ${{ matrix.node }})
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.experimental }}
 
@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        node: [18, 20]
+        node: [20]
         experimental: [false]
 
     steps:
@@ -59,26 +59,9 @@ jobs:
       - name: Install project dependencies
         run: pnpm install
 
-      - name: Store Playwright's Version
-        run: |
-          PLAYWRIGHT_VERSION=$(npx playwright --version | sed 's/Version //')
-          echo "Playwright's Version: $PLAYWRIGHT_VERSION"
-          echo "PLAYWRIGHT_VERSION=$PLAYWRIGHT_VERSION" >> $GITHUB_ENV
-
-      - name: Cache Playwright Browsers for Playwright's Version
-        id: cache-playwright-browsers
-        uses: actions/cache/restore@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-browsers-${{ env.PLAYWRIGHT_VERSION }}
-
-      - name: Install Playwright Browsers
-        if: steps.cache-playwright-browsers.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps
-
       - name: Test
         id: test
         run: |
           node -v
           pnpm -v
-          pnpm test
+          pnpm test -- -- --project unit

@@ -51,8 +51,8 @@
     "prepublishOnly": "turbo run build",
     "test": "vitest --run",
     "test:watch": "vitest",
-    "test:e2e": "jest --config=e2e-tests/e2e.config.ts",
-    "test:e2e:watch": "jest --config=e2e-tests/e2e.config.ts --watch"
+    "test:e2e-legacy": "jest --config=e2e-tests/e2e.config.ts",
+    "test:e2e-legacy:watch": "jest --config=e2e-tests/e2e.config.ts --watch"
   },
   "dependencies": {
     "@portabletext/patches": "1.1.0",
