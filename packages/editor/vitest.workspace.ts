@@ -6,13 +6,41 @@ export default defineWorkspace([
   {
     plugins: [react()],
     test: {
-      name: 'browser',
+      name: 'e2e-chromium',
       include: ['gherkin-tests/**/*.test.ts'],
       browser: {
         enabled: true,
         headless: true,
         provider: 'playwright',
         name: 'chromium',
+        screenshotFailures: false,
+      },
+    },
+  },
+  {
+    plugins: [react()],
+    test: {
+      name: 'e2e-firefox',
+      include: ['gherkin-tests/**/*.test.ts'],
+      browser: {
+        enabled: true,
+        headless: true,
+        provider: 'playwright',
+        name: 'firefox',
+        screenshotFailures: false,
+      },
+    },
+  },
+  {
+    plugins: [react()],
+    test: {
+      name: 'e2e-webkit',
+      include: ['gherkin-tests/**/*.test.ts'],
+      browser: {
+        enabled: true,
+        headless: true,
+        provider: 'playwright',
+        name: 'webkit',
         screenshotFailures: false,
       },
     },

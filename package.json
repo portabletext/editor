@@ -18,9 +18,9 @@
     "postinstall": "husky",
     "lint:fix": "turbo lint:fix",
     "test": "turbo test",
-    "test:e2e": "turbo test:e2e",
-    "test:e2e:watch": "turbo test:e2e:watch",
-    "test:watch": "turbo test:watch"
+    "test:watch": "turbo test:watch",
+    "test:e2e-legacy": "turbo test:e2e-legacy",
+    "test:e2e-legacy:watch": "turbo test:e2e-legacy:watch"
   },
   "lint-staged": {
     "*": [

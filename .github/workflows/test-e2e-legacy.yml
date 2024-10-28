@@ -1,4 +1,4 @@
-name: E2E tests
+name: E2E (legacy) tests
 
 on:
   # Build on pushes branches that have a PR (including drafts)
@@ -10,9 +10,8 @@ on:
 jobs:
   test:
     timeout-minutes: 60
-    name: E2E tests (${{ matrix.os }} / node ${{ matrix.node }})
-    runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.experimental }}
+    name: E2E (legacy) tests (${{ matrix.os }} / node ${{ matrix.node }}))
+    runs-on: ubuntu-latest
 
     strategy:
       # we want to know if a test fails on a specific node version
@@ -81,4 +80,4 @@ jobs:
         run: |
           node -v
           pnpm -v
-          pnpm test -- -- --project e2e-chromium
+          pnpm test:e2e-legacy
