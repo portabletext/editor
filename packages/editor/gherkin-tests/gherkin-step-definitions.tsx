@@ -688,7 +688,7 @@ export const stepDefinitions = [
 
       // Slightly naive way to figure out if we need to put the text in a new block
       if (selectionFocusText !== undefined) {
-        await pressButton(context.editorA, 'Enter')
+        await pressButton(context.editorA, 'Enter', 1)
       }
 
       await waitForNewValue(async () => {
@@ -721,20 +721,18 @@ export const stepDefinitions = [
    * Button steps
    */
   When('{button} is pressed', async (context: Context, button: ButtonName) => {
-    await pressButton(context.editorA, button)
+    await pressButton(context.editorA, button, 1)
   }),
   When(
     '{button} is pressed by editor B',
     async (context: Context, button: ButtonName) => {
-      await pressButton(context.editorB, button)
+      await pressButton(context.editorB, button, 1)
     },
   ),
   When(
     '{button} is pressed {int} times',
     async (context: Context, button: ButtonName, times: number) => {
-      for (let i = 0; i < times; i++) {
-        await pressButton(context.editorA, button)
-      }
+      await pressButton(context.editorA, button, times)
     },
   ),
 
@@ -821,20 +819,40 @@ type ButtonName =
   | 'Enter'
   | 'Shift+Enter'
   | 'Space'
-async function pressButton(editor: EditorContext, button: ButtonName) {
+async function pressButton(
+  editor: EditorContext,
+  button: ButtonName,
+  times: number,
+) {
   if (button === 'Backspace' || button === 'Delete' || button === 'Enter') {
-    return waitForNewValue(() => userEvent.keyboard(`{${button}}`))
+    return waitForNewValue(async () => {
+      for (let i = 0; i < times; i++) {
+        await userEvent.keyboard(`{${button}}`)
+      }
+    })
   }
 
   if (button === 'Shift+Enter') {
-    return waitForNewValue(() => userEvent.keyboard('{Shift>}{Enter}{/Shift}'))
+    return waitForNewValue(async () => {
+      for (let i = 0; i < times; i++) {
+        userEvent.keyboard('{Shift>}{Enter}{/Shift}')
+      }
+    })
   }
 
   if (button === 'Space') {
-    return waitForNewValue(() => userEvent.type(editor.locator, ' '))
+    return waitForNewValue(async () => {
+      for (let i = 0; i < times; i++) {
+        userEvent.type(editor.locator, ' ')
+      }
+    })
   }
 
-  return waitForNewSelection(editor, () => userEvent.keyboard(`{${button}}`))
+  return waitForNewSelection(editor, async () => {
+    for (let i = 0; i < times; i++) {
+      userEvent.keyboard(`{${button}}`)
+    }
+  })
 }
 
 function getEditorTextMarks(text: string) {
