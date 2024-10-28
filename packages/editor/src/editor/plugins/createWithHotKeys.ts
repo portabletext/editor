@@ -3,10 +3,7 @@ import {isHotkey} from 'is-hotkey-esm'
 import type {KeyboardEvent} from 'react'
 import {Editor, Node, Path, Range, Transforms} from 'slate'
 import type {ReactEditor} from 'slate-react'
-import type {
-  PortableTextMemberSchemaTypes,
-  PortableTextSlateEditor,
-} from '../../types/editor'
+import type {PortableTextSlateEditor} from '../../types/editor'
 import type {HotkeyOptions} from '../../types/options'
 import type {SlateTextBlock, VoidElement} from '../../types/slate'
 import {debugWithName} from '../../utils/debug'
@@ -29,7 +26,6 @@ const DEFAULT_HOTKEYS: HotkeyOptions = {
  *
  */
 export function createWithHotkeys(
-  types: PortableTextMemberSchemaTypes,
   portableTextEditor: PortableTextEditor,
   hotkeysFromOptions?: HotkeyOptions,
 ): (editor: PortableTextSlateEditor & ReactEditor) => any {
@@ -166,25 +162,6 @@ export function createWithHotkeys(
             event.preventDefault()
           }
           return
-        }
-
-        // Enter from another style than the first (default one)
-        if (
-          editor.isTextBlock(focusBlock) &&
-          focusBlock.style &&
-          focusBlock.style !== types.styles[0].value
-        ) {
-          const [, end] = Range.edges(editor.selection)
-          const endAtEndOfNode = Editor.isEnd(editor, end, end.path)
-          if (endAtEndOfNode) {
-            Editor.insertNode(
-              editor,
-              editor.pteCreateTextBlock({decorators: []}),
-            )
-            event.preventDefault()
-            editor.onChange()
-            return
-          }
         }
       }
     }
