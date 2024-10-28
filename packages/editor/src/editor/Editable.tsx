@@ -169,8 +169,8 @@ export const PortableTextEditable = forwardRef<
     [editorActor, schemaTypes],
   )
   const withHotKeys = useMemo(
-    () => createWithHotkeys(schemaTypes, portableTextEditor, hotkeys),
-    [hotkeys, portableTextEditor, schemaTypes],
+    () => createWithHotkeys(portableTextEditor, hotkeys),
+    [hotkeys, portableTextEditor],
   )
 
   // Output a minimal React editor inside Editable when in readOnly mode.

@@ -47,12 +47,12 @@ export function createWithInsertBreak(
 
       if (editor.isTextBlock(focusBlock)) {
         const [start, end] = Range.edges(editor.selection)
-        const isEndAtStartOfBlock = isEqual(end, {
+        const atTheStartOfBlock = isEqual(end, {
           path: [...focusBlockPath, 0],
           offset: 0,
         })
 
-        if (isEndAtStartOfBlock && Range.isCollapsed(editor.selection)) {
+        if (atTheStartOfBlock && Range.isCollapsed(editor.selection)) {
           Editor.insertNode(
             editor,
             editor.pteCreateTextBlock({
@@ -67,49 +67,37 @@ export function createWithInsertBreak(
             focus: {path: [nextBlockPath, 0], offset: 0},
           })
 
-          editor.onChange()
           return
         }
 
         const lastFocusBlockChild =
           focusBlock.children[focusBlock.children.length - 1]
-        const isStartAtEndOfBlock = isEqual(start, {
+        const atTheEndOfBlock = isEqual(start, {
           path: [...focusBlockPath, focusBlock.children.length - 1],
           offset: editor.isTextSpan(lastFocusBlockChild)
             ? lastFocusBlockChild.text.length
             : 0,
         })
 
-        if (
-          isStartAtEndOfBlock &&
-          Range.isCollapsed(editor.selection) &&
-          focusDecorators.length > 0 &&
-          focusAnnotations.length > 0
-        ) {
-          Editor.withoutNormalizing(editor, () => {
-            if (!editor.selection) {
-              return
-            }
+        if (atTheEndOfBlock && Range.isCollapsed(editor.selection)) {
+          Editor.insertNode(
+            editor,
+            editor.pteCreateTextBlock({
+              decorators: [],
+            }),
+          )
 
-            Editor.insertNode(
-              editor,
-              editor.pteCreateTextBlock({
-                decorators: [],
-              }),
-            )
+          const [nextBlockPath] = Path.next(focusBlockPath)
 
-            const [nextBlockPath] = Path.next(focusBlockPath)
-
-            Transforms.setSelection(editor, {
-              anchor: {path: [nextBlockPath, 0], offset: 0},
-              focus: {path: [nextBlockPath, 0], offset: 0},
-            })
+          Transforms.setSelection(editor, {
+            anchor: {path: [nextBlockPath, 0], offset: 0},
+            focus: {path: [nextBlockPath, 0], offset: 0},
           })
-          editor.onChange()
+
           return
         }
 
-        const isInTheMiddleOfNode = !isEndAtStartOfBlock && !isStartAtEndOfBlock
+        const isInTheMiddleOfNode = !atTheStartOfBlock && !atTheEndOfBlock
 
         if (isInTheMiddleOfNode) {
           Editor.withoutNormalizing(editor, () => {
