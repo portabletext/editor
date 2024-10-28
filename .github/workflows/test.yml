@@ -10,7 +10,7 @@ on:
 jobs:
   test:
     timeout-minutes: 60
-    name: Unit tests (${{ matrix.os }} / node ${{ matrix.node }})
+    name: Unit tests (node ${{ matrix.node }})
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.experimental }}
 
