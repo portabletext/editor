@@ -383,6 +383,18 @@ export function createWithPortableTextMarkModel(
               }
             }
           }
+
+          if (atTheBeginningOfSpan && !spanIsEmpty && !!previousSpan) {
+            Transforms.insertNodes(editor, {
+              _type: 'span',
+              _key: editorActor.getSnapshot().context.keyGenerator(),
+              text: op.text,
+              marks: (previousSpan.marks ?? []).filter((mark) =>
+                decorators.includes(mark),
+              ),
+            })
+            return
+          }
         }
       }
 
