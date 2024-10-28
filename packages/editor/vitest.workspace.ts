@@ -6,7 +6,7 @@ export default defineWorkspace([
   {
     plugins: [react()],
     test: {
-      name: 'e2e-chromium',
+      name: 'chromium',
       include: ['gherkin-tests/**/*.test.ts'],
       browser: {
         enabled: true,
@@ -20,7 +20,7 @@ export default defineWorkspace([
   {
     plugins: [react()],
     test: {
-      name: 'e2e-firefox',
+      name: 'firefox',
       include: ['gherkin-tests/**/*.test.ts'],
       browser: {
         enabled: true,
@@ -34,7 +34,7 @@ export default defineWorkspace([
   {
     plugins: [react()],
     test: {
-      name: 'e2e-webkit',
+      name: 'webkit',
       include: ['gherkin-tests/**/*.test.ts'],
       browser: {
         enabled: true,
