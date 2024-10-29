@@ -15,8 +15,7 @@ Feature: Selection Adjustment
   Scenario: Selection is kept if another editor deletes the line above
     Given the text "foo" in block "b1"
     And the text "bar" in block "b2"
-    When the caret is put after "bar"
-    And the caret is put before "foo" by editor B
+    When the caret is put before "foo" by editor B
     And "Delete" is pressed 4 times by editor B
     And "baz" is typed
     Then the text is "barbaz"
@@ -25,8 +24,7 @@ Feature: Selection Adjustment
   Scenario: Selection is kept if another editor backspace-deletes empty lines above
     Given the text "foo" in block "b1"
     And the text "bar" in block "b2"
-    When the caret is put after "bar"
-    And the caret is put before "foo" by editor B
+    When the caret is put before "foo" by editor B
     And "Enter" is pressed by editor B
     And the caret is put after "foo" by editor B
     And "Backspace" is pressed 4 times by editor B
