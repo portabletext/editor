@@ -1,19 +1,26 @@
-import {Editor, Transforms} from 'slate'
+import {deleteBackward, Editor, insertText, Transforms} from 'slate'
 import type {PortableTextMemberSchemaTypes} from '../../types/editor'
 import {toSlateRange} from '../../utils/ranges'
-import type {BehaviorAction, PickFromUnion} from './behavior.types'
+import {insertBreakActionImplementation} from '../plugins/createWithInsertBreak'
+import type {
+  BehaviorAction,
+  BehaviorEvent,
+  PickFromUnion,
+} from './behavior.types'
 
-type BehaviorActionContext = {
+export type BehaviorActionContext = {
   keyGenerator: () => string
   schema: PortableTextMemberSchemaTypes
 }
 
-type BehaviourActionImplementation<TBehaviorAction extends BehaviorAction> = ({
+export type BehaviourActionImplementation<
+  TBehaviorAction extends BehaviorAction,
+> = ({
   context,
-  event,
+  action,
 }: {
   context: BehaviorActionContext
-  event: TBehaviorAction
+  action: TBehaviorAction
 }) => void
 
 type BehaviourActionImplementations = {
@@ -23,43 +30,51 @@ type BehaviourActionImplementations = {
 }
 
 export const behaviorActionImplementations: BehaviourActionImplementations = {
-  'apply block style': ({event}) => {
-    for (const path of event.paths) {
+  'set block': ({action}) => {
+    for (const path of action.paths) {
       const at = toSlateRange(
         {anchor: {path, offset: 0}, focus: {path, offset: 0}},
-        event.editor,
+        action.editor,
       )!
 
-      Transforms.setNodes(event.editor, {style: event.style}, {at})
+      Transforms.setNodes(
+        action.editor,
+        {
+          ...(action.style ? {style: action.style} : {}),
+          ...(action.listItem ? {listItem: action.listItem} : {}),
+          ...(action.level ? {level: action.level} : {}),
+        },
+        {at},
+      )
     }
   },
-  'delete backward': ({event}) => {
-    // Since this calls the native Editor method it will trigger a new behavior
-    // event
-    Editor.deleteBackward(event.editor, {unit: event.unit})
+  'unset block': ({action}) => {
+    for (const path of action.paths) {
+      const at = toSlateRange(
+        {anchor: {path, offset: 0}, focus: {path, offset: 0}},
+        action.editor,
+      )!
+
+      Transforms.unsetNodes(action.editor, action.props, {at})
+    }
   },
-  'delete text': ({event}) => {
-    Transforms.delete(event.editor, {
-      at: toSlateRange(event.selection, event.editor)!,
+  'delete backward': ({action}) => {
+    deleteBackward(action.editor, action.unit)
+  },
+  'delete text': ({action}) => {
+    Transforms.delete(action.editor, {
+      at: toSlateRange(action.selection, action.editor)!,
     })
   },
-  'insert break': ({event}) => {
-    // Since this calls the native Editor method it will trigger a new behavior
-    // event
-    Editor.insertBreak(event.editor)
+  'insert break': insertBreakActionImplementation,
+  // This mimics Slate's internal which also just does a regular insert break
+  // when on soft break
+  'insert soft break': insertBreakActionImplementation,
+  'insert text': ({action}) => {
+    insertText(action.editor, action.text)
   },
-  'insert soft break': ({event}) => {
-    // Since this calls the native Editor method it will trigger a new behavior
-    // event
-    Editor.insertSoftBreak(event.editor)
-  },
-  'insert text': ({event}) => {
-    // Since this calls the native Editor method it will trigger a new behavior
-    // event
-    Editor.insertText(event.editor, event.text)
-  },
-  'insert text block': ({context, event}) => {
-    Editor.insertNode(event.editor, {
+  'insert text block': ({context, action}) => {
+    Editor.insertNode(action.editor, {
       _key: context.keyGenerator(),
       _type: context.schema.block.name,
       style: context.schema.styles[0].value ?? 'normal',
@@ -73,4 +88,46 @@ export const behaviorActionImplementations: BehaviourActionImplementations = {
       ],
     })
   },
+  'effect': ({action}) => {
+    action.effect()
+  },
+}
+
+export function performDefaultAction({
+  context,
+  action,
+}: {
+  context: BehaviorActionContext
+  action: PickFromUnion<BehaviorAction, 'type', BehaviorEvent['type']>
+}) {
+  switch (action.type) {
+    case 'delete backward': {
+      behaviorActionImplementations['delete backward']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'insert break': {
+      behaviorActionImplementations['insert break']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'insert soft break': {
+      behaviorActionImplementations['insert soft break']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'insert text': {
+      behaviorActionImplementations['insert text']({
+        context,
+        action,
+      })
+      break
+    }
+  }
 }

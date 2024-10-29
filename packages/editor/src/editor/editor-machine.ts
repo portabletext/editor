@@ -1,6 +1,7 @@
 import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@sanity/types'
 import type {FocusEvent} from 'react'
+import {Editor} from 'slate'
 import {
   assertEvent,
   assign,
@@ -19,10 +20,14 @@ import type {
 import {toPortableTextRange} from '../utils/ranges'
 import {fromSlateValue} from '../utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../utils/weakMaps'
-import {behaviorActionImplementations} from './behavior/behavior.actions'
+import {
+  behaviorActionImplementations,
+  performDefaultAction,
+} from './behavior/behavior.actions'
 import type {
   Behavior,
   BehaviorAction,
+  BehaviorActionIntend,
   BehaviorContext,
   BehaviorEvent,
 } from './behavior/behavior.types'
@@ -71,7 +76,11 @@ type EditorEvent =
       behaviorEvent: BehaviorEvent
       editor: PortableTextSlateEditor
     }
-  | BehaviorAction
+  | {
+      type: 'behavior action intends'
+      editor: PortableTextSlateEditor
+      actionIntends: Array<BehaviorActionIntend>
+    }
   | {
       type: 'update schema'
       schema: PortableTextMemberSchemaTypes
@@ -160,12 +169,17 @@ export const editorMachine = setup({
     'handle behavior event': enqueueActions(({context, event, enqueue}) => {
       assertEvent(event, ['behavior event'])
 
+      const defaultAction = {
+        ...event.behaviorEvent,
+        editor: event.editor,
+      } satisfies BehaviorAction
+
       const eventBehaviors = context.behaviors.filter(
         (behavior) => behavior.on === event.behaviorEvent.type,
       )
 
       if (eventBehaviors.length === 0) {
-        event.behaviorEvent.default()
+        performDefaultAction({context, action: defaultAction})
         return
       }
 
@@ -184,7 +198,7 @@ export const editorMachine = setup({
         console.warn(
           `Unable to handle event ${event.type} due to missing selection`,
         )
-        event.behaviorEvent.default()
+        performDefaultAction({context, action: defaultAction})
         return
       }
 
@@ -207,29 +221,28 @@ export const editorMachine = setup({
           continue
         }
 
-        const actions = eventBehavior.actions.map((action) =>
-          action(
+        const actionIntendSets = eventBehavior.actions.map((actionSet) =>
+          actionSet(
             {context: behaviorContext, event: event.behaviorEvent},
             shouldRun,
           ),
         )
 
-        for (const action of actions) {
-          if (typeof action !== 'object') {
-            continue
-          }
-
-          behaviorOverwritten = true
+        for (const actionIntends of actionIntendSets) {
+          behaviorOverwritten =
+            actionIntends.length > 0 &&
+            actionIntends.some((actionIntend) => actionIntend.type !== 'effect')
 
           enqueue.raise({
-            ...action,
+            type: 'behavior action intends',
             editor: event.editor,
+            actionIntends,
           })
         }
       }
 
       if (!behaviorOverwritten) {
-        event.behaviorEvent.default()
+        performDefaultAction({context, action: defaultAction})
       }
     }),
   },
@@ -263,26 +276,85 @@ export const editorMachine = setup({
     'done loading': {actions: emit({type: 'done loading'})},
     'update schema': {actions: 'assign schema'},
     'behavior event': {actions: 'handle behavior event'},
-    'apply block style': {
-      actions: [behaviorActionImplementations['apply block style']],
-    },
-    'delete backward': {
-      actions: [behaviorActionImplementations['delete backward']],
-    },
-    'delete text': {
-      actions: [behaviorActionImplementations['delete text']],
-    },
-    'insert break': {
-      actions: [behaviorActionImplementations['insert break']],
-    },
-    'insert soft break': {
-      actions: [behaviorActionImplementations['insert soft break']],
-    },
-    'insert text': {
-      actions: [behaviorActionImplementations['insert text']],
-    },
-    'insert text block': {
-      actions: [behaviorActionImplementations['insert text block']],
+    'behavior action intends': {
+      actions: [
+        ({context, event}) => {
+          Editor.withoutNormalizing(event.editor, () => {
+            for (const actionIntend of event.actionIntends) {
+              const action = {
+                ...actionIntend,
+                editor: event.editor,
+              }
+
+              switch (action.type) {
+                case 'delete backward': {
+                  behaviorActionImplementations['delete backward']({
+                    context,
+                    action,
+                  })
+                  break
+                }
+                case 'delete text': {
+                  behaviorActionImplementations['delete text']({
+                    context,
+                    action,
+                  })
+                  break
+                }
+                case 'insert break': {
+                  behaviorActionImplementations['insert break']({
+                    context,
+                    action,
+                  })
+                  break
+                }
+                case 'insert soft break': {
+                  behaviorActionImplementations['insert soft break']({
+                    context,
+                    action,
+                  })
+                  break
+                }
+                case 'insert text': {
+                  behaviorActionImplementations['insert text']({
+                    context,
+                    action,
+                  })
+                  break
+                }
+                case 'insert text block': {
+                  behaviorActionImplementations['insert text block']({
+                    context,
+                    action,
+                  })
+                  break
+                }
+                case 'set block': {
+                  behaviorActionImplementations['set block']({
+                    context,
+                    action,
+                  })
+                  break
+                }
+                case 'unset block': {
+                  behaviorActionImplementations['unset block']({
+                    context,
+                    action,
+                  })
+                  break
+                }
+                default: {
+                  behaviorActionImplementations.effect({
+                    context,
+                    action,
+                  })
+                }
+              }
+            }
+          })
+          event.editor.onChange()
+        },
+      ],
     },
   },
   initial: 'pristine',

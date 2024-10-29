@@ -5,8 +5,8 @@ export type {
   BehaviorContext,
   BehaviorEvent,
   BehaviorGuard,
-  RaiseBehaviorActionIntend,
   PickFromUnion,
+  BehaviorActionIntendSet,
 } from './editor/behavior/behavior.types'
 export {PortableTextEditable} from './editor/Editable'
 export type {PortableTextEditableProps} from './editor/Editable'

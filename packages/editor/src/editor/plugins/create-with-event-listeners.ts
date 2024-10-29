@@ -3,15 +3,12 @@ import type {EditorActor} from '../editor-machine'
 
 export function createWithEventListeners(editorActor: EditorActor) {
   return function withEventListeners(editor: Editor) {
-    const {deleteBackward, insertBreak, insertSoftBreak, insertText} = editor
-
     editor.deleteBackward = (unit) => {
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
           type: 'delete backward',
           unit,
-          default: () => deleteBackward(unit),
         },
         editor,
       })
@@ -23,7 +20,6 @@ export function createWithEventListeners(editorActor: EditorActor) {
         type: 'behavior event',
         behaviorEvent: {
           type: 'insert break',
-          default: insertBreak,
         },
         editor,
       })
@@ -35,7 +31,6 @@ export function createWithEventListeners(editorActor: EditorActor) {
         type: 'behavior event',
         behaviorEvent: {
           type: 'insert soft break',
-          default: insertSoftBreak,
         },
         editor,
       })
@@ -48,7 +43,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
         behaviorEvent: {
           type: 'insert text',
           text,
-          default: () => insertText(text, options),
+          options,
         },
         editor,
       })

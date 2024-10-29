@@ -5,7 +5,6 @@ import type {createEditorOptions} from '../../types/options'
 import {createOperationToPatches} from '../../utils/operationToPatches'
 import {createWithEventListeners} from './create-with-event-listeners'
 import {createWithEditableAPI} from './createWithEditableAPI'
-import {createWithInsertBreak} from './createWithInsertBreak'
 import {createWithMaxBlocks} from './createWithMaxBlocks'
 import {createWithObjectKeys} from './createWithObjectKeys'
 import {createWithPatches} from './createWithPatches'
@@ -99,8 +98,6 @@ export const withPlugins = <T extends Editor>(
 
   const withPlaceholderBlock = createWithPlaceholderBlock()
 
-  const withInsertBreak = createWithInsertBreak(editorActor, schemaTypes)
-
   const withUtils = createWithUtils({
     editorActor,
     schemaTypes,
@@ -131,9 +128,7 @@ export const withPlugins = <T extends Editor>(
               withUtils(
                 withPlaceholderBlock(
                   withPortableTextLists(
-                    withPortableTextSelections(
-                      withEditableAPI(withInsertBreak(e)),
-                    ),
+                    withPortableTextSelections(withEditableAPI(e)),
                   ),
                 ),
               ),
@@ -158,9 +153,7 @@ export const withPlugins = <T extends Editor>(
                     withMaxBlocks(
                       withUndoRedo(
                         withPatches(
-                          withPortableTextSelections(
-                            withEditableAPI(withInsertBreak(e)),
-                          ),
+                          withPortableTextSelections(withEditableAPI(e)),
                         ),
                       ),
                     ),

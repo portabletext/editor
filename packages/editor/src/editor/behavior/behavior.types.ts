@@ -1,5 +1,6 @@
 import type {KeyedSegment, PortableTextBlock} from '@sanity/types'
 import type {TextUnit} from 'slate'
+import type {TextInsertTextOptions} from 'slate/dist/interfaces/transforms/text'
 import type {
   EditorSelection,
   PortableTextMemberSchemaTypes,
@@ -22,20 +23,17 @@ export type BehaviorEvent =
   | {
       type: 'delete backward'
       unit: TextUnit
-      default: () => void
     }
   | {
       type: 'insert soft break'
-      default: () => void
     }
   | {
       type: 'insert break'
-      default: () => void
     }
   | {
       type: 'insert text'
       text: string
-      default: () => void
+      options?: TextInsertTextOptions
     }
 
 /**
@@ -56,24 +54,30 @@ export type BehaviorGuard<
  * @alpha
  */
 export type BehaviorActionIntend =
-  | {
-      [TBehaviorEvent in BehaviorEvent as TBehaviorEvent['type']]: Omit<
-        TBehaviorEvent,
-        'default'
-      >
-    }[BehaviorEvent['type']]
+  | BehaviorEvent
   | {
       type: 'insert text block'
       decorators: Array<string>
     }
   | {
-      type: 'apply block style'
+      type: 'set block'
       paths: Array<[KeyedSegment]>
-      style: string
+      style?: string
+      listItem?: string
+      level?: number
+    }
+  | {
+      type: 'unset block'
+      paths: Array<[KeyedSegment]>
+      props: Array<'style' | 'listItem' | 'level'>
     }
   | {
       type: 'delete text'
       selection: NonNullable<EditorSelection>
+    }
+  | {
+      type: 'effect'
+      effect: () => void
     }
 
 /**
@@ -90,18 +94,29 @@ export type Behavior<
   TBehaviorEventType extends BehaviorEvent['type'] = BehaviorEvent['type'],
   TGuardResponse = true,
 > = {
+  /**
+   * The internal editor event that triggers this behavior.
+   */
   on: TBehaviorEventType
+  /**
+   * Predicate function that determines if the behavior should be executed.
+   * Returning a non-nullable value from the guard will pass the value to the
+   * actions and execute them.
+   */
   guard?: BehaviorGuard<
     PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
     TGuardResponse
   >
-  actions: Array<RaiseBehaviorActionIntend<TBehaviorEventType, TGuardResponse>>
+  /**
+   * Array of behavior action sets.
+   */
+  actions: Array<BehaviorActionIntendSet<TBehaviorEventType, TGuardResponse>>
 }
 
 /**
  * @alpha
  */
-export type RaiseBehaviorActionIntend<
+export type BehaviorActionIntendSet<
   TBehaviorEventType extends BehaviorEvent['type'] = BehaviorEvent['type'],
   TGuardResponse = true,
 > = (
@@ -113,7 +128,7 @@ export type RaiseBehaviorActionIntend<
     event: PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>
   },
   guardResponse: TGuardResponse,
-) => BehaviorActionIntend | void
+) => Array<BehaviorActionIntend>
 
 /**
  * @alpha
