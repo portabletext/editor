@@ -1,4 +1,5 @@
 import {isPortableTextTextBlock} from '@sanity/types'
+import {coreListBehaviors} from './behavior.core.lists'
 import {defineBehavior} from './behavior.types'
 import {
   getFocusBlockObject,
@@ -109,4 +110,5 @@ export const coreBehaviors = [
   breakingVoidBlock,
   deletingEmptyTextBlockAfterBlockObject,
   deletingEmptyTextBlockBeforeBlockObject,
+  ...coreListBehaviors,
 ]
