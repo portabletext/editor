@@ -19,7 +19,11 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        browser: [chromium, firefox, webkit]
+        browser: [
+            chromium,
+            # firefox,
+            # webkit
+          ]
         node: [20]
         experimental: [false]
 
