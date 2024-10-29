@@ -3,7 +3,7 @@ import {getFocusBlockObject} from './behavior.utils'
 
 const softReturn = defineBehavior({
   on: 'insert soft break',
-  actions: [() => ({type: 'insert text', text: '\n'})],
+  actions: [() => [{type: 'insert text', text: '\n'}]],
 })
 
 const breakingVoidBlock = defineBehavior({
@@ -13,7 +13,7 @@ const breakingVoidBlock = defineBehavior({
 
     return !!focusBlockObject
   },
-  actions: [() => ({type: 'insert text block', decorators: []})],
+  actions: [() => [{type: 'insert text block', decorators: []}]],
 })
 
 export const coreBehaviors = [softReturn, breakingVoidBlock]
