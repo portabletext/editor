@@ -76,7 +76,7 @@
     "@sanity/pkg-utils": "^6.11.6",
     "@sanity/schema": "^3.62.2",
     "@sanity/types": "^3.62.2",
-    "@sanity/ui": "^2.8.10",
+    "@sanity/ui": "^2.8.13",
     "@sanity/util": "^3.62.2",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.2",
