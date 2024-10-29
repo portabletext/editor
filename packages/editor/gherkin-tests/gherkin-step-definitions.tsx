@@ -3,7 +3,7 @@ import {Given, Then, When} from '@sanity/gherkin-driver'
 import type {PortableTextBlock} from '@sanity/types'
 import {page, userEvent, type Locator} from '@vitest/browser/context'
 import {isEqual} from 'lodash'
-import {expect, vi} from 'vitest'
+import {assert, expect, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {createActor} from 'xstate'
 import {schema} from '../e2e-tests/schema'
@@ -172,7 +172,9 @@ export const stepDefinitions = [
     await waitForNewValue(() => Promise.resolve())
   }),
   Then('the editor is empty', async () => {
-    await getValue().then((value) => expect(value).toEqual([]))
+    await getValue().then((value) =>
+      expect(value, 'The editor is not empty').toEqual([]),
+    )
   }),
 
   /**
@@ -185,7 +187,9 @@ export const stepDefinitions = [
     })
   }),
   Then('the text is {text}', async (_: Context, text: Array<string>) => {
-    await getText().then((actualText) => expect(actualText).toEqual(text))
+    await getText().then((actualText) =>
+      expect(actualText, 'Unexpected editor text').toEqual(text),
+    )
   }),
 
   /**
@@ -210,11 +214,11 @@ export const stepDefinitions = [
       )
 
       if (newBlockKeys.length === 0) {
-        throw new Error('No new block key was added')
+        assert.fail('No new block key was added')
       }
 
       if (newBlockKeys.length > 1) {
-        throw new Error(
+        assert.fail(
           `More than one new block key was added: ${JSON.stringify(newBlockKeys)}`,
         )
       }
@@ -257,11 +261,11 @@ export const stepDefinitions = [
       )
 
       if (newAnnotationKeys.length === 0) {
-        throw new Error('No new annotation key was added')
+        assert.fail('No new annotation key was added')
       }
 
       if (newAnnotationKeys.length > 1) {
-        throw new Error(
+        assert.fail(
           `More than one new annotation key was added: ${JSON.stringify(newAnnotationKeys)}`,
         )
       }
@@ -292,11 +296,11 @@ export const stepDefinitions = [
       )
 
       if (newAnnotationKeys.length === 0) {
-        throw new Error('No new annotation key was added')
+        assert.fail('No new annotation key was added')
       }
 
       if (newAnnotationKeys.length > 1) {
-        throw new Error(
+        assert.fail(
           `More than one new annotation key was added: ${JSON.stringify(newAnnotationKeys)}`,
         )
       }
@@ -323,7 +327,7 @@ export const stepDefinitions = [
       )
 
       if (newAnnotationKeys.length !== keyKeys.length) {
-        throw new Error(
+        assert.fail(
           `Expected ${keyKeys.length} new annotation keys, but got ${newAnnotationKeys.length}`,
         )
       }
@@ -356,11 +360,11 @@ export const stepDefinitions = [
       )
 
       if (newAnnotationKeys.length === 0) {
-        throw new Error('No new annotation key was added')
+        assert.fail('No new annotation key was added')
       }
 
       if (newAnnotationKeys.length > 1) {
-        throw new Error(
+        assert.fail(
           `More than one new annotation key was added: ${JSON.stringify(newAnnotationKeys)}`,
         )
       }
@@ -419,13 +423,17 @@ export const stepDefinitions = [
     '{string} has marks {marks}',
     async (context: Context, text: string, marks: Array<string>) => {
       await getEditorTextMarks(text).then((actualMarks) => {
-        expect(actualMarks).toEqual(
-          marks.map((mark) =>
-            mark === 'em' || mark === 'strong'
-              ? mark
-              : (context.keyMap.get(mark) ?? mark),
-          ),
+        const expectedMarks = marks.map((mark) =>
+          mark === 'em' || mark === 'strong'
+            ? mark
+            : (context.keyMap.get(mark) ?? mark),
         )
+
+        if (!isEqual(actualMarks, expectedMarks)) {
+          assert.fail(
+            `Expected "${text}" to have marks [${expectedMarks}] but received [${actualMarks}]`,
+          )
+        }
       })
     },
   ),
@@ -436,11 +444,15 @@ export const stepDefinitions = [
         const annotations =
           marks?.filter((mark) => mark !== 'em' && mark !== 'strong') ?? []
 
-        expect(annotations.length).toBeGreaterThan(0)
+        expect(
+          annotations.length,
+          `Expected at least one annotation for "${text}"`,
+        ).toBeGreaterThan(0)
         expect(
           annotations.some(
             (annotation) => annotation === context.keyMap.get(key),
           ),
+          `Expected "${text}" to not have annotation ${key}`,
         ).toBeFalsy()
       })
     },
@@ -451,11 +463,16 @@ export const stepDefinitions = [
       const marksA = await getEditorTextMarks(textA)
       const marksB = await getEditorTextMarks(textB)
 
-      expect(marksA).toEqual(marksB)
+      expect(
+        marksA,
+        `Expected "${textA}" and "${textB}" to have the same marks`,
+      ).toEqual(marksB)
     },
   ),
   Then('{string} has no marks', async (_: Context, text: string) => {
-    await getEditorTextMarks(text).then((marks) => expect(marks).toEqual([]))
+    await getEditorTextMarks(text).then((marks) =>
+      expect(marks, `Expected "${text} to have no marks"`).toEqual([]),
+    )
   }),
 
   /**
@@ -600,8 +617,11 @@ export const stepDefinitions = [
       const collapsed = selectionIsCollapsed(selection)
       const focusText = getSelectionFocusText(value, selection)
 
-      expect(collapsed).toBe(true)
-      expect(focusText?.slice(selection?.focus.offset)).toBe(text)
+      expect(collapsed, 'Selection is not collapsed').toBe(true)
+      expect(
+        focusText?.slice(selection?.focus.offset),
+        'Unexpected focus text',
+      ).toBe(text)
     },
   ),
   Then(
@@ -613,22 +633,33 @@ export const stepDefinitions = [
       const collapsed = selectionIsCollapsed(selection)
       const focusText = getSelectionFocusText(value, selection)
 
-      expect(collapsed).toBe(true)
-      expect(focusText?.slice(0, selection?.focus.offset)).toBe(text)
+      expect(collapsed, 'Selection is not collapsed').toBe(true)
+      expect(
+        focusText?.slice(0, selection?.focus.offset),
+        'Unexpected focus text',
+      ).toBe(text)
     },
   ),
   Then('{text} is selected', async (context: Context, text: Array<string>) => {
     const value = await getValue()
     const selection = await getSelection(context.editorA)
 
-    expect(getSelectionText(value, selection)).toEqual(text)
+    expect(getSelectionText(value, selection), 'Unexpected selection').toEqual(
+      text,
+    )
   }),
   Then('block {key} is selected', async (context: Context, keyKey: string) => {
     await getSelection(context.editorA).then((selection) => {
       const selectionBlockKeys = getSelectionBlockKeys(selection)
 
-      expect(selectionBlockKeys?.anchor).toBe(context.keyMap.get(keyKey))
-      expect(selectionBlockKeys?.focus).toBe(context.keyMap.get(keyKey))
+      expect(
+        selectionBlockKeys?.anchor,
+        'Unexpected selection anchor block key',
+      ).toBe(context.keyMap.get(keyKey))
+      expect(
+        selectionBlockKeys?.focus,
+        'Unexpected selectoin focus block key',
+      ).toBe(context.keyMap.get(keyKey))
     })
   }),
 
@@ -650,10 +681,10 @@ export const stepDefinitions = [
       const block = value ? value[index] : undefined
 
       if (!block || !isPortableTextBlock(block)) {
-        throw new Error(`Unable to find text block at index ${index}`)
+        assert.fail(`Unable to find text block at index ${index}`)
       }
 
-      expect(block.style).toBe(style)
+      expect(block.style, `Unexpected marks for block ${index}`).toBe(style)
     },
   ),
 
@@ -704,16 +735,19 @@ export const stepDefinitions = [
     '{text} is in block {key}',
     async (context: Context, text: Array<string>, keyKey: string) => {
       if (text.length === 0) {
-        throw new Error(`No block to find a key for: ${text}`)
+        assert.fail(`No block to find a key for: ${text}`)
       }
 
       if (text.length > 1) {
-        throw new Error(`Unable to find key for multiple blocks: ${text}`)
+        assert.fail(`Unable to find key for multiple blocks: ${text}`)
       }
 
       const value = await getValue()
 
-      expect(getBlockKey(value, text[0])).toBe(context.keyMap.get(keyKey))
+      expect(
+        getBlockKey(value, text[0]),
+        `"${text}" ("${text[0]}") is in an unexpected block`,
+      ).toBe(context.keyMap.get(keyKey))
     },
   ),
 
