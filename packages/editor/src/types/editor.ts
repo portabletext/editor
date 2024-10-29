@@ -222,7 +222,11 @@ export interface PortableTextSlateEditor extends ReactEditor {
   /**
    * Helper function that creates a text block
    */
-  pteCreateTextBlock: (options: {decorators: Array<string>}) => Descendant
+  pteCreateTextBlock: (options: {
+    decorators: Array<string>
+    listItem?: string
+    level?: number
+  }) => Descendant
 
   /**
    * Undo

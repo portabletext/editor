@@ -75,13 +75,19 @@ export function createWithUtils({
       }
     }
 
-    editor.pteCreateTextBlock = (options: {decorators: Array<string>}) => {
+    editor.pteCreateTextBlock = (options: {
+      decorators: Array<string>
+      listItem?: string
+      level?: number
+    }) => {
       const block = toSlateValue(
         [
           {
             _type: schemaTypes.block.name,
             _key: editorActor.getSnapshot().context.keyGenerator(),
             style: schemaTypes.styles[0].value || 'normal',
+            ...(options.listItem ? {listItem: options.listItem} : {}),
+            ...(options.level ? {level: options.level} : {}),
             markDefs: [],
             children: [
               {
