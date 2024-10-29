@@ -29,6 +29,7 @@ import {Toolbar} from './components/toolbar'
 import {Tooltip} from './components/tooltip'
 import {EditorPatchesPreview} from './editor-patches-preview'
 import {EditorPortableTextPreview} from './editor-portable-text-preview'
+import './editor.css'
 import type {EditorActorRef} from './playground-machine'
 import {PortableTextToolbar} from './portable-text-toolbar'
 import {
