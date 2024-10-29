@@ -57,6 +57,8 @@ export function createWithInsertBreak(
             editor,
             editor.pteCreateTextBlock({
               decorators: focusAnnotations.length === 0 ? focusDecorators : [],
+              listItem: focusBlock.listItem,
+              level: focusBlock.level,
             }),
           )
 
