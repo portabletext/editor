@@ -204,8 +204,8 @@ importers:
         specifier: workspace:^
         version: link:../gherkin-driver
       '@sanity/pkg-utils':
-        specifier: ^6.11.6
-        version: 6.11.6(@types/babel__core@7.20.5)(@types/node@18.19.59)(debug@4.3.7)(typescript@5.6.3)
+        specifier: ^6.11.7
+        version: 6.11.7(@types/babel__core@7.20.5)(@types/node@18.19.59)(debug@4.3.7)(typescript@5.6.3)
       '@sanity/schema':
         specifier: ^3.62.2
         version: 3.62.2(debug@4.3.7)
@@ -336,8 +336,8 @@ importers:
         specifier: ^29.7.0
         version: 29.7.0
       '@sanity/pkg-utils':
-        specifier: ^6.11.6
-        version: 6.11.6(@types/babel__core@7.20.5)(@types/node@18.19.59)(debug@4.3.7)(typescript@5.6.3)
+        specifier: ^6.11.7
+        version: 6.11.7(@types/babel__core@7.20.5)(@types/node@18.19.59)(debug@4.3.7)(typescript@5.6.3)
       typescript:
         specifier: 5.6.3
         version: 5.6.3
@@ -355,8 +355,8 @@ importers:
         version: 4.17.21
     devDependencies:
       '@sanity/pkg-utils':
-        specifier: ^6.11.6
-        version: 6.11.6(@types/babel__core@7.20.5)(typescript@5.6.3)
+        specifier: ^6.11.7
+        version: 6.11.7(@types/babel__core@7.20.5)(typescript@5.6.3)
       '@types/lodash':
         specifier: ^4.17.12
         version: 4.17.12
@@ -2420,8 +2420,8 @@ packages:
     peerDependencies:
       react: ^18.3 || >=19.0.0-rc
 
-  '@sanity/pkg-utils@6.11.6':
-    resolution: {integrity: sha512-/tPCwN1wF5Btb8UTXGg2RX1A7Xl2iZmDV/juVy/w9KqhppdE5jP0l72ZmB86AQXUllSdtX3a2S4G3RqJ6CmiRg==}
+  '@sanity/pkg-utils@6.11.7':
+    resolution: {integrity: sha512-MLlQJsMOhKXzcYVwSSM35t8DEfcOodzDkwXURl+MTfRNVhQr0AMilGDgH3WTZUl2ZvbaEBHDkTRBKLeID1zAyQ==}
     engines: {node: '>=18.17.0'}
     hasBin: true
     peerDependencies:
@@ -8460,7 +8460,7 @@ snapshots:
     dependencies:
       react: 18.3.1
 
-  '@sanity/pkg-utils@6.11.6(@types/babel__core@7.20.5)(@types/node@18.19.59)(debug@4.3.7)(typescript@5.6.3)':
+  '@sanity/pkg-utils@6.11.7(@types/babel__core@7.20.5)(@types/node@18.19.59)(debug@4.3.7)(typescript@5.6.3)':
     dependencies:
       '@babel/core': 7.26.0
       '@babel/preset-typescript': 7.26.0(@babel/core@7.26.0)
@@ -8510,7 +8510,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@sanity/pkg-utils@6.11.6(@types/babel__core@7.20.5)(typescript@5.6.3)':
+  '@sanity/pkg-utils@6.11.7(@types/babel__core@7.20.5)(typescript@5.6.3)':
     dependencies:
       '@babel/core': 7.26.0
       '@babel/preset-typescript': 7.26.0(@babel/core@7.26.0)

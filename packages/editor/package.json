@@ -73,7 +73,7 @@
     "@sanity/block-tools": "^3.62.2",
     "@sanity/diff-match-patch": "^3.1.1",
     "@sanity/gherkin-driver": "workspace:^",
-    "@sanity/pkg-utils": "^6.11.6",
+    "@sanity/pkg-utils": "^6.11.7",
     "@sanity/schema": "^3.62.2",
     "@sanity/types": "^3.62.2",
     "@sanity/ui": "^2.8.10",
