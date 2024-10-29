@@ -419,6 +419,25 @@ export const stepDefinitions = [
       await waitForNewValue(() => toggleDecoratorUsingKeyboard(decorator))
     },
   ),
+  When(
+    '{decorator} is toggled using the keyboard by editor B',
+    async (context: Context, decorator: 'em' | 'strong') => {
+      const selection = await getSelection(context.editorB)
+
+      if (!selection) {
+        await waitForNewSelection(context.editorB, () =>
+          userEvent.click(context.editorB.locator),
+        )
+        return toggleDecoratorUsingKeyboard(decorator)
+      }
+
+      if (selection && isEqual(selection.anchor, selection.focus)) {
+        return toggleDecoratorUsingKeyboard(decorator)
+      }
+
+      await waitForNewValue(() => toggleDecoratorUsingKeyboard(decorator))
+    },
+  ),
   Then(
     '{string} has marks {marks}',
     async (context: Context, text: string, marks: Array<string>) => {
@@ -521,6 +540,29 @@ export const stepDefinitions = [
     })
   }),
   When(
+    '{string} is selected by editor B',
+    async (context: Context, text: string) => {
+      const value = await getValue()
+
+      await waitForNewSelection(context.editorB, async () => {
+        if (text === '[stock-ticker]') {
+          context.editorB.ref.send({
+            type: 'selection',
+            selection: getInlineObjectSelection(
+              value,
+              text.replace('[', '').replace(']', ''),
+            ),
+          })
+        } else {
+          context.editorB.ref.send({
+            type: 'selection',
+            selection: getTextSelection(value, text),
+          })
+        }
+      })
+    },
+  ),
+  When(
     '{string} is selected backwards',
     async (context: Context, text: string) => {
       const value = await getValue()
@@ -551,6 +593,31 @@ export const stepDefinitions = [
       } else {
         await waitForNewSelection(context.editorA, async () => {
           context.editorA.ref.send({
+            type: 'selection',
+            selection: getSelectionBeforeText(value, text),
+          })
+        })
+      }
+    },
+  ),
+  When(
+    'the caret is put before {string} by editor B',
+    async (context: Context, text: string) => {
+      const value = await getValue()
+
+      if (text === '[stock-ticker]') {
+        await waitForNewSelection(context.editorB, async () => {
+          context.editorB.ref.send({
+            type: 'selection',
+            selection: getSelectionBeforeInlineObject(
+              value,
+              text.replace('[', '').replace(']', ''),
+            ),
+          })
+        })
+      } else {
+        await waitForNewSelection(context.editorB, async () => {
+          context.editorB.ref.send({
             type: 'selection',
             selection: getSelectionBeforeText(value, text),
           })
@@ -760,6 +827,7 @@ export const stepDefinitions = [
   When(
     '{button} is pressed by editor B',
     async (context: Context, button: ButtonName) => {
+      context.editorB.ref.send({type: 'focus'})
       await pressButton(context.editorB, button, 1)
     },
   ),
@@ -767,6 +835,13 @@ export const stepDefinitions = [
     '{button} is pressed {int} times',
     async (context: Context, button: ButtonName, times: number) => {
       await pressButton(context.editorA, button, times)
+    },
+  ),
+  When(
+    '{button} is pressed {int} times by editor B',
+    async (context: Context, button: ButtonName, times: number) => {
+      context.editorB.ref.send({type: 'focus'})
+      await pressButton(context.editorB, button, times)
     },
   ),
 
