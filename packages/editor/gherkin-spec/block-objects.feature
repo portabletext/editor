@@ -51,6 +51,16 @@ Feature: Block Objects
     And "Delete" is pressed
     Then the text is "foo|bar"
 
+  Scenario: Pressing Delete in an empty paragraph before an image
+    Given the text "foo"
+    And an "image" "m1"
+    When "Enter" is pressed
+    And "bar" is typed
+    And the caret is put before "foo"
+    And "Delete" is pressed 4 times
+    Then the text is "[image]|bar"
+    And block "m1" is selected
+
   Scenario: Pressing Backspace after an image
     Given the text "foo"
     And an "image"
@@ -59,6 +69,14 @@ Feature: Block Objects
     And the caret is put before "bar"
     And "Backspace" is pressed
     Then the text is "foo|bar"
+
+  Scenario: Pressing Backspace in an empty paragraph after an image
+    Given the text "foo"
+    And an "image" "m1"
+    When "Enter" is pressed
+    And "Backspace" is pressed
+    Then the text is "foo|[image]"
+    And block "m1" is selected
 
   Scenario Outline: Deleting a lonely image
     Given an "image"
