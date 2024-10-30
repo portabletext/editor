@@ -13,7 +13,6 @@ import {
   ImageIcon,
   ItalicIcon,
   LinkIcon,
-  ListChecksIcon,
   ListIcon,
   ListOrderedIcon,
   MessageSquareTextIcon,
@@ -96,11 +95,6 @@ const portableTextSchema = defineField({
           title: 'Numbered list',
           value: 'number',
           icon: ListOrderedIcon,
-        },
-        {
-          title: 'To-do list',
-          value: 'to-do',
-          icon: ListChecksIcon,
         },
       ],
       /**
