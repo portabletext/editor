@@ -1,7 +1,7 @@
 import {deleteBackward, Editor, insertText, Transforms} from 'slate'
 import type {PortableTextMemberSchemaTypes} from '../../types/editor'
 import {toSlateRange} from '../../utils/ranges'
-import {insertBreakActionImplementation} from '../plugins/createWithInsertBreak'
+import {insertBreakActionImplementation} from './behavior.action.insert-break'
 import type {
   BehaviorAction,
   BehaviorEvent,

@@ -1,8 +1,8 @@
 import {isEqual} from 'lodash'
 import {Editor, Node, Path, Range, Transforms} from 'slate'
 import type {SlateTextBlock, VoidElement} from '../../types/slate'
-import type {BehaviourActionImplementation} from '../behavior/behavior.actions'
-import type {BehaviorAction, PickFromUnion} from '../behavior/behavior.types'
+import type {BehaviourActionImplementation} from './behavior.actions'
+import type {BehaviorAction, PickFromUnion} from './behavior.types'
 
 export const insertBreakActionImplementation: BehaviourActionImplementation<
   PickFromUnion<BehaviorAction, 'type', 'insert break' | 'insert soft break'>
