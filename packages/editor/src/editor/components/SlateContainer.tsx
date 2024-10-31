@@ -60,7 +60,14 @@ export function SlateContainer(props: SlateContainerProps) {
       portableTextEditor,
       readOnly,
     })
-  }, [portableTextEditor, maxBlocks, readOnly, patches$, slateEditor])
+  }, [
+    editorActor,
+    portableTextEditor,
+    maxBlocks,
+    readOnly,
+    patches$,
+    slateEditor,
+  ])
 
   const initialValue = useMemo(() => {
     return [slateEditor.pteCreateTextBlock({decorators: []})]

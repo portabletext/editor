@@ -181,6 +181,7 @@ export const Leaf = (props: LeafProps) => {
       onSelection.unsubscribe()
     }
   }, [
+    editorActor,
     path,
     portableTextEditor,
     setSelectedFromRange,
