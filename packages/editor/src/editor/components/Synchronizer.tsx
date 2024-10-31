@@ -4,6 +4,7 @@ import {throttle} from 'lodash'
 import {useCallback, useEffect, useMemo, useRef} from 'react'
 import {Editor} from 'slate'
 import {useSlate} from 'slate-react'
+import {useEffectEvent} from 'use-effect-event'
 import type {EditorChange} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {IS_PROCESSING_LOCAL_CHANGES} from '../../utils/weakMaps'
@@ -95,6 +96,14 @@ export function Synchronizer(props: SynchronizerProps) {
     }
   }, [onFlushPendingPatches])
 
+  // We want to ensure that _when_ `props.onChange` is called, it uses the current value.
+  // But we don't want to have the `useEffect` run setup + teardown + setup every time the prop might change, as that's unnecessary.
+  // So we use our own polyfill that lets us use an upcoming React hook that solves this exact problem.
+  // https://19.react.dev/learn/separating-events-from-effects#declaring-an-effect-event
+  const handleChange = useEffectEvent((change: EditorChange) =>
+    onChange(change),
+  )
+
   // Subscribe to, and handle changes from the editor
   useEffect(() => {
     debug('Subscribing to editor changes')
@@ -104,30 +113,30 @@ export function Synchronizer(props: SynchronizerProps) {
           IS_PROCESSING_LOCAL_CHANGES.set(slateEditor, true)
           pendingPatches.current.push(event.patch)
           onFlushPendingPatchesThrottled()
-          onChange(event)
+          handleChange(event)
           break
         case 'loading': {
-          onChange({type: 'loading', isLoading: true})
+          handleChange({type: 'loading', isLoading: true})
           break
         }
         case 'done loading': {
-          onChange({type: 'loading', isLoading: false})
+          handleChange({type: 'loading', isLoading: false})
           break
         }
         case 'offline': {
-          onChange({type: 'connection', value: 'offline'})
+          handleChange({type: 'connection', value: 'offline'})
           break
         }
         case 'online': {
-          onChange({type: 'connection', value: 'online'})
+          handleChange({type: 'connection', value: 'online'})
           break
         }
         case 'value changed': {
-          onChange({type: 'value', value: event.value})
+          handleChange({type: 'value', value: event.value})
           break
         }
         case 'invalid value': {
-          onChange({
+          handleChange({
             type: 'invalidValue',
             resolution: event.resolution,
             value: event.value,
@@ -135,21 +144,21 @@ export function Synchronizer(props: SynchronizerProps) {
           break
         }
         case 'error': {
-          onChange({
+          handleChange({
             ...event,
             level: 'warning',
           })
           break
         }
         default:
-          onChange(event)
+          handleChange(event)
       }
     })
     return () => {
       debug('Unsubscribing to changes')
       sub.unsubscribe()
     }
-  }, [editorActor, onFlushPendingPatchesThrottled, slateEditor])
+  }, [handleChange, editorActor, onFlushPendingPatchesThrottled, slateEditor])
 
   // Sync the value when going online
   const handleOnline = useCallback(() => {
@@ -168,7 +177,7 @@ export function Synchronizer(props: SynchronizerProps) {
     return () => {
       subscription.unsubscribe()
     }
-  }, [editorActor])
+  }, [handleOnline, editorActor, portableTextEditor.props.patches$])
 
   // This hook must be set up after setting up the subscription above, or it will not pick up validation errors from the useSyncValue hook.
   // This will cause the editor to not be able to signal a validation error and offer invalid value resolution of the initial value.

@@ -250,6 +250,7 @@ export const PortableTextEditable = forwardRef<
       return lProps.children
     },
     [
+      editorActor,
       readOnly,
       renderAnnotation,
       renderChild,
@@ -285,7 +286,7 @@ export const PortableTextEditable = forwardRef<
         }
       }
     }
-  }, [editorActor, propsSelection, slateEditor])
+  }, [blockTypeName, editorActor, propsSelection, slateEditor])
 
   const syncRangeDecorations = useCallback(
     (operation?: Operation) => {
@@ -342,9 +343,14 @@ export const PortableTextEditable = forwardRef<
           return
         }
       }
-      if (rangeDecorationState.length > 0) {
-        setRangeDecorationsState([])
-      }
+      setRangeDecorationsState((rangeDecorationState) => {
+        // If there's state then we want to reset
+        if (rangeDecorationState.length > 0) {
+          return []
+        }
+        // Otherwise we no-op, React will skip a state update if what we return has reference equality to the previous state
+        return rangeDecorationState
+      })
     },
     [portableTextEditor, rangeDecorations, schemaTypes, slateEditor],
   )
@@ -477,7 +483,7 @@ export const PortableTextEditable = forwardRef<
           })
       }
     },
-    [onPaste, portableTextEditor, schemaTypes, slateEditor],
+    [editorActor, onPaste, portableTextEditor, schemaTypes, slateEditor],
   )
 
   const handleOnFocus: FocusEventHandler<HTMLDivElement> = useCallback(
