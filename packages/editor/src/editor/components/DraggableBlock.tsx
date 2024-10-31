@@ -308,3 +308,5 @@ export const DraggableBlock = ({
     </div>
   )
 }
+
+DraggableBlock.displayName = 'DraggableBlock'

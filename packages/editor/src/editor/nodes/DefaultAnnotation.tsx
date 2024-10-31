@@ -16,3 +16,5 @@ export function DefaultAnnotation(props: Props) {
     </span>
   )
 }
+
+DefaultAnnotation.displayName = 'DefaultAnnotation'

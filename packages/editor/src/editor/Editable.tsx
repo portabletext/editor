@@ -745,3 +745,5 @@ export const PortableTextEditable = forwardRef<
     />
   )
 })
+
+PortableTextEditable.displayName = 'ForwardRef(PortableTextEditable)'

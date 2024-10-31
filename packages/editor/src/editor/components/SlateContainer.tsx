@@ -79,3 +79,5 @@ export function SlateContainer(props: SlateContainerProps) {
     </Slate>
   )
 }
+
+SlateContainer.displayName = 'SlateContainer'

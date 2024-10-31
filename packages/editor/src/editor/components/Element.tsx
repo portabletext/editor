@@ -317,3 +317,5 @@ export const Element: FunctionComponent<ElementProps> = ({
     </div>
   )
 }
+
+Element.displayName = 'Element'
