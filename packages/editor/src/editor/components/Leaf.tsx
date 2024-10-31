@@ -329,3 +329,5 @@ export const Leaf = (props: LeafProps) => {
     [leaf, attributes, content],
   )
 }
+
+Leaf.displayName = 'Leaf'

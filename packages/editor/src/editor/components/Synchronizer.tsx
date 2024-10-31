@@ -185,3 +185,5 @@ export function Synchronizer(props: SynchronizerProps) {
 
   return null
 }
+
+Synchronizer.displayName = 'Synchronizer'

@@ -93,6 +93,7 @@ export type PortableTextEditorProps = PropsWithChildren<{
  * @public
  */
 export class PortableTextEditor extends Component<PortableTextEditorProps> {
+  public static displayName = 'PortableTextEditor'
   /**
    * An observable of all the editor changes.
    */

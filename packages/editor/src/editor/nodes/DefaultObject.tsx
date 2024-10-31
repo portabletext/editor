@@ -12,4 +12,6 @@ const DefaultObject = (props: Props): JSX.Element => {
   )
 }
 
+DefaultObject.displayName = 'DefaultObject'
+
 export default DefaultObject
