@@ -15,6 +15,18 @@ export function createWithEventListeners(editorActor: EditorActor) {
       return
     }
 
+    editor.deleteForward = (unit) => {
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'delete forward',
+          unit,
+        },
+        editor,
+      })
+      return
+    }
+
     editor.insertBreak = () => {
       editorActor.send({
         type: 'behavior event',

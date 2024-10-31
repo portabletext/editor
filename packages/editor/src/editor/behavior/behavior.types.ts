@@ -25,6 +25,10 @@ export type BehaviorEvent =
       unit: TextUnit
     }
   | {
+      type: 'delete forward'
+      unit: TextUnit
+    }
+  | {
       type: 'insert soft break'
     }
   | {
@@ -72,12 +76,16 @@ export type BehaviorActionIntend =
       props: Array<'style' | 'listItem' | 'level'>
     }
   | {
-      type: 'delete text'
+      type: 'delete'
       selection: NonNullable<EditorSelection>
     }
   | {
       type: 'effect'
       effect: () => void
+    }
+  | {
+      type: 'select'
+      selection: EditorSelection
     }
 
 /**
