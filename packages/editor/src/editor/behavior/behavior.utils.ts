@@ -100,3 +100,108 @@ export function getFocusSpan(
     ? {node: focusChild.node, path: focusChild.path}
     : undefined
 }
+
+export function getSelectionStartBlock(context: BehaviorContext):
+  | {
+      node: PortableTextBlock
+      path: [KeyedSegment]
+    }
+  | undefined {
+  const key = context.selection.backward
+    ? isKeySegment(context.selection.focus.path[0])
+      ? context.selection.focus.path[0]._key
+      : undefined
+    : isKeySegment(context.selection.anchor.path[0])
+      ? context.selection.anchor.path[0]._key
+      : undefined
+
+  const node = key
+    ? context.value.find((block) => block._key === key)
+    : undefined
+
+  return node && key ? {node, path: [{_key: key}]} : undefined
+}
+
+export function getSelectionEndBlock(context: BehaviorContext):
+  | {
+      node: PortableTextBlock
+      path: [KeyedSegment]
+    }
+  | undefined {
+  const key = context.selection.backward
+    ? isKeySegment(context.selection.anchor.path[0])
+      ? context.selection.anchor.path[0]._key
+      : undefined
+    : isKeySegment(context.selection.focus.path[0])
+      ? context.selection.focus.path[0]._key
+      : undefined
+
+  const node = key
+    ? context.value.find((block) => block._key === key)
+    : undefined
+
+  return node && key ? {node, path: [{_key: key}]} : undefined
+}
+
+export function getPreviousBlock(
+  context: BehaviorContext,
+): {node: PortableTextBlock; path: [KeyedSegment]} | undefined {
+  let previousBlock: {node: PortableTextBlock; path: [KeyedSegment]} | undefined
+  const selectionStartBlock = getSelectionStartBlock(context)
+
+  if (!selectionStartBlock) {
+    return undefined
+  }
+
+  let foundSelectionStartBlock = false
+
+  for (const block of context.value) {
+    if (block._key === selectionStartBlock.node._key) {
+      foundSelectionStartBlock = true
+      break
+    }
+
+    previousBlock = {node: block, path: [{_key: block._key}]}
+  }
+
+  if (foundSelectionStartBlock && previousBlock) {
+    return previousBlock
+  }
+
+  return undefined
+}
+
+export function getNextBlock(
+  context: BehaviorContext,
+): {node: PortableTextBlock; path: [KeyedSegment]} | undefined {
+  let nextBlock: {node: PortableTextBlock; path: [KeyedSegment]} | undefined
+  const selectionEndBlock = getSelectionEndBlock(context)
+
+  if (!selectionEndBlock) {
+    return undefined
+  }
+
+  let foundSelectionEndBlock = false
+
+  for (const block of context.value) {
+    if (block._key === selectionEndBlock.node._key) {
+      foundSelectionEndBlock = true
+      continue
+    }
+
+    if (foundSelectionEndBlock) {
+      nextBlock = {node: block, path: [{_key: block._key}]}
+      break
+    }
+  }
+
+  if (foundSelectionEndBlock && nextBlock) {
+    return nextBlock
+  }
+
+  return undefined
+}
+
+export function isEmptyTextBlock(block: PortableTextTextBlock) {
+  return block.children.length === 1 && block.children[0].text === ''
+}

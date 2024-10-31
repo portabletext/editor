@@ -20,10 +20,7 @@ import type {
 import {toPortableTextRange} from '../utils/ranges'
 import {fromSlateValue} from '../utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../utils/weakMaps'
-import {
-  behaviorActionImplementations,
-  performDefaultAction,
-} from './behavior/behavior.actions'
+import {performAction, performDefaultAction} from './behavior/behavior.actions'
 import type {
   Behavior,
   BehaviorAction,
@@ -239,6 +236,10 @@ export const editorMachine = setup({
             actionIntends,
           })
         }
+
+        if (behaviorOverwritten) {
+          break
+        }
       }
 
       if (!behaviorOverwritten) {
@@ -286,70 +287,7 @@ export const editorMachine = setup({
                 editor: event.editor,
               }
 
-              switch (action.type) {
-                case 'delete backward': {
-                  behaviorActionImplementations['delete backward']({
-                    context,
-                    action,
-                  })
-                  break
-                }
-                case 'delete text': {
-                  behaviorActionImplementations['delete text']({
-                    context,
-                    action,
-                  })
-                  break
-                }
-                case 'insert break': {
-                  behaviorActionImplementations['insert break']({
-                    context,
-                    action,
-                  })
-                  break
-                }
-                case 'insert soft break': {
-                  behaviorActionImplementations['insert soft break']({
-                    context,
-                    action,
-                  })
-                  break
-                }
-                case 'insert text': {
-                  behaviorActionImplementations['insert text']({
-                    context,
-                    action,
-                  })
-                  break
-                }
-                case 'insert text block': {
-                  behaviorActionImplementations['insert text block']({
-                    context,
-                    action,
-                  })
-                  break
-                }
-                case 'set block': {
-                  behaviorActionImplementations['set block']({
-                    context,
-                    action,
-                  })
-                  break
-                }
-                case 'unset block': {
-                  behaviorActionImplementations['unset block']({
-                    context,
-                    action,
-                  })
-                  break
-                }
-                default: {
-                  behaviorActionImplementations.effect({
-                    context,
-                    action,
-                  })
-                }
-              }
+              performAction({context, action})
             }
           })
           event.editor.onChange()
