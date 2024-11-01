@@ -1,19 +1,23 @@
-import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@sanity/types'
 import {useSelector} from '@xstate/react'
 import * as React from 'react'
-import {useEffect, useMemo} from 'react'
-import {Subject} from 'rxjs'
+import {useEffect} from 'react'
 import {
   PortableTextEditable,
   PortableTextEditor,
+  useEditor,
   usePortableTextEditor,
+  type Behavior,
   type HotkeyOptions,
 } from '../src'
 import type {EditorActorRef, TestActorRef} from './test-machine'
 
 export function Editors(props: {testRef: TestActorRef}) {
   const editors = useSelector(props.testRef, (state) => state.context.editors)
+  const behaviors = useSelector(
+    props.testRef,
+    (state) => state.context.behaviors,
+  )
   const schema = useSelector(props.testRef, (state) => state.context.schema)
   const value = useSelector(props.testRef, (state) => state.context.value)
 
@@ -21,6 +25,7 @@ export function Editors(props: {testRef: TestActorRef}) {
     <div>
       {editors.map((editor) => (
         <Editor
+          behaviors={behaviors}
           key={editor.id}
           editorRef={editor}
           schema={schema}
@@ -41,6 +46,7 @@ const hotkeys: HotkeyOptions = {
 
 function Editor(props: {
   editorRef: EditorActorRef
+  behaviors: Array<Behavior>
   schema: React.ComponentProps<typeof PortableTextEditor>['schemaType']
   value: Array<PortableTextBlock> | undefined
 }) {
@@ -53,44 +59,47 @@ function Editor(props: {
     props.editorRef,
     (state) => state.context.keyGenerator,
   )
-  const patches$ = useMemo(
-    () =>
-      new Subject<{
-        patches: Array<Patch>
-        snapshot: Array<PortableTextBlock> | undefined
-      }>(),
-    [],
-  )
+  const editor = useEditor({
+    behaviors: props.behaviors,
+    keyGenerator,
+    schema: props.schema,
+  })
+
+  useEffect(() => {
+    editor.send({
+      type: 'update behaviors',
+      behaviors: props.behaviors,
+    })
+  }, [editor, props.behaviors])
 
   useEffect(() => {
     const subscription = props.editorRef.on('patches', (event) => {
-      patches$.next({
-        patches: event.patches,
-        snapshot: event.snapshot,
-      })
+      editor.send(event)
     })
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [patches$, props.editorRef])
+  }, [props.editorRef, editor])
+
+  useEffect(() => {
+    const subscription = editor.on('*', (event) => {
+      if (event.type === 'mutation') {
+        props.editorRef.send(event)
+      }
+      if (event.type === 'selection') {
+        setSelectionValue(event.selection)
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [props.editorRef, editor])
 
   return (
     <div data-testid={props.editorRef.id}>
-      <PortableTextEditor
-        schemaType={props.schema}
-        keyGenerator={keyGenerator}
-        patches$={patches$}
-        value={props.value}
-        onChange={(change) => {
-          if (change.type === 'mutation') {
-            props.editorRef.send(change)
-          }
-          if (change.type === 'selection') {
-            setSelectionValue(change.selection)
-          }
-        }}
-      >
+      <PortableTextEditor editor={editor} value={props.value}>
         <FocusListener editorRef={props.editorRef} />
         <BlockButtons />
         <InlineObjectButtons />

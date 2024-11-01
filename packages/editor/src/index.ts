@@ -9,6 +9,10 @@ export {
   type BehaviorActionIntendSet,
   defineBehavior,
 } from './editor/behavior/behavior.types'
+export {
+  createMarkdownBehaviors,
+  type MarkdownBehaviorsConfig,
+} from './editor/behavior/behavior.markdown'
 export {PortableTextEditable} from './editor/Editable'
 export type {PortableTextEditableProps} from './editor/Editable'
 export {
