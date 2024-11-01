@@ -69,6 +69,7 @@ import {usePortableTextEditor} from './hooks/usePortableTextEditor'
 import {usePortableTextEditorReadOnlyStatus} from './hooks/usePortableTextReadOnly'
 import {createWithHotkeys, createWithInsertData} from './plugins'
 import {PortableTextEditor} from './PortableTextEditor'
+import {withSyncRangeDecorations} from './withSyncRangeDecorations'
 
 const debug = debugWithName('component:Editable')
 
@@ -163,27 +164,33 @@ export const PortableTextEditable = forwardRef<
 
   const blockTypeName = schemaTypes.block.name
 
-  // React/UI-specific plugins
-  const withInsertData = useMemo(
-    () => createWithInsertData(editorActor, schemaTypes),
-    [editorActor, schemaTypes],
-  )
-  const withHotKeys = useMemo(
-    () => createWithHotkeys(editorActor, portableTextEditor, hotkeys),
-    [editorActor, hotkeys, portableTextEditor],
-  )
-
   // Output a minimal React editor inside Editable when in readOnly mode.
   // NOTE: make sure all the plugins used here can be safely run over again at any point.
   // There will be a problem if they redefine editor methods and then calling the original method within themselves.
   useMemo(() => {
+    // React/UI-specific plugins
+    const withInsertData = createWithInsertData(editorActor, schemaTypes)
+
     if (readOnly) {
       debug('Editable is in read only mode')
       return withInsertData(slateEditor)
     }
+    const withHotKeys = createWithHotkeys(
+      editorActor,
+      portableTextEditor,
+      hotkeys,
+    )
+
     debug('Editable is in edit mode')
     return withInsertData(withHotKeys(slateEditor))
-  }, [readOnly, slateEditor, withHotKeys, withInsertData])
+  }, [
+    editorActor,
+    hotkeys,
+    portableTextEditor,
+    readOnly,
+    schemaTypes,
+    slateEditor,
+  ])
 
   const renderElement = useCallback(
     (eProps: RenderElementProps) => (
@@ -381,9 +388,6 @@ export const PortableTextEditable = forwardRef<
     }
   }, [hasInvalidValue, propsSelection, restoreSelectionFromProps])
 
-  // Store reference to original apply function (see below for usage in useEffect)
-  const originalApply = useMemo(() => slateEditor.apply, [slateEditor])
-
   const [syncedRangeDecorations, setSyncedRangeDecorations] = useState(false)
   useEffect(() => {
     if (!syncedRangeDecorations) {
@@ -402,16 +406,9 @@ export const PortableTextEditable = forwardRef<
 
   // Sync range decorations after an operation is applied
   useEffect(() => {
-    slateEditor.apply = (op: Operation) => {
-      originalApply(op)
-      if (op.type !== 'set_selection') {
-        syncRangeDecorations(op)
-      }
-    }
-    return () => {
-      slateEditor.apply = originalApply
-    }
-  }, [originalApply, slateEditor, syncRangeDecorations])
+    const teardown = withSyncRangeDecorations(slateEditor, syncRangeDecorations)
+    return () => teardown()
+  }, [slateEditor, syncRangeDecorations])
 
   // Handle from props onCopy function
   const handleCopy = useCallback(
