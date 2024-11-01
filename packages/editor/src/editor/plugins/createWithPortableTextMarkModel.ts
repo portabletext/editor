@@ -4,8 +4,8 @@
  *
  */
 
-import {isPortableTextBlock} from '@portabletext/toolkit'
-import type {PortableTextObject} from '@sanity/types'
+import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
+import type {PortableTextObject, PortableTextSpan} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {Editor, Element, Node, Path, Range, Text, Transforms} from 'slate'
 import type {
@@ -281,6 +281,139 @@ export function createWithPortableTextMarkModel(
         return
       }
 
+      if (op.type === 'set_selection') {
+        const marks = Editor.marks(editor)
+
+        if (
+          marks &&
+          op.properties &&
+          op.newProperties &&
+          op.properties.anchor &&
+          op.properties.focus &&
+          op.newProperties.anchor &&
+          op.newProperties.focus
+        ) {
+          const previousSelectionIsCollapsed = Range.isCollapsed({
+            anchor: op.properties.anchor,
+            focus: op.properties.focus,
+          })
+          const newSelectionIsCollapsed = Range.isCollapsed({
+            anchor: op.newProperties.anchor,
+            focus: op.newProperties.focus,
+          })
+
+          if (previousSelectionIsCollapsed && newSelectionIsCollapsed) {
+            const focusSpan: PortableTextSpan | undefined = Array.from(
+              Editor.nodes(editor, {
+                mode: 'lowest',
+                at: op.properties.focus,
+                match: (n) => editor.isTextSpan(n),
+                voids: false,
+              }),
+            )[0]?.[0]
+            const newFocusSpan: PortableTextSpan | undefined = Array.from(
+              Editor.nodes(editor, {
+                mode: 'lowest',
+                at: op.newProperties.focus,
+                match: (n) => editor.isTextSpan(n),
+                voids: false,
+              }),
+            )[0]?.[0]
+            const movedToNextSpan =
+              focusSpan &&
+              newFocusSpan &&
+              op.newProperties.focus.path[0] === op.properties.focus.path[0] &&
+              op.newProperties.focus.path[1] ===
+                op.properties.focus.path[1] + 1 &&
+              focusSpan.text.length === op.properties.focus.offset &&
+              op.newProperties.focus.offset === 0
+            const movedToPreviousSpan =
+              focusSpan &&
+              newFocusSpan &&
+              op.newProperties.focus.path[0] === op.properties.focus.path[0] &&
+              op.newProperties.focus.path[1] ===
+                op.properties.focus.path[1] - 1 &&
+              op.properties.focus.offset === 0 &&
+              newFocusSpan.text.length === op.newProperties.focus.offset
+
+            // If the editor has marks and we are not visually moving the
+            // selection then we just abort. Otherwise the marks would be
+            // cleared and we can't use them for the possible subsequent insert
+            // operation.
+            if (movedToNextSpan || movedToPreviousSpan) {
+              return
+            }
+          }
+        }
+      }
+
+      if (op.type === 'insert_node') {
+        const {selection} = editor
+
+        if (selection) {
+          const [_block, blockPath] = Editor.node(editor, selection, {depth: 1})
+          const previousSpan = getPreviousSpan({
+            editor,
+            blockPath,
+            spanPath: op.path,
+          })
+          const previousSpanAnnotations = previousSpan
+            ? previousSpan.marks?.filter((mark) => !decorators.includes(mark))
+            : []
+
+          const nextSpan = getNextSpan({
+            editor,
+            blockPath,
+            spanPath: [op.path[0], op.path[1] - 1],
+          })
+          const nextSpanAnnotations = nextSpan
+            ? nextSpan.marks?.filter((mark) => !decorators.includes(mark))
+            : []
+
+          const annotationsEnding =
+            previousSpanAnnotations?.filter(
+              (annotation) => !nextSpanAnnotations?.includes(annotation),
+            ) ?? []
+          const atTheEndOfAnnotation = annotationsEnding.length > 0
+
+          if (
+            atTheEndOfAnnotation &&
+            isPortableTextSpan(op.node) &&
+            op.node.marks?.some((mark) => annotationsEnding.includes(mark))
+          ) {
+            Transforms.insertNodes(editor, {
+              ...op.node,
+              marks:
+                op.node.marks?.filter(
+                  (mark) => !annotationsEnding.includes(mark),
+                ) ?? [],
+            })
+            return
+          }
+
+          const annotationsStarting =
+            nextSpanAnnotations?.filter(
+              (annotation) => !previousSpanAnnotations?.includes(annotation),
+            ) ?? []
+          const atTheStartOfAnnotation = annotationsStarting.length > 0
+
+          if (
+            atTheStartOfAnnotation &&
+            isPortableTextSpan(op.node) &&
+            op.node.marks?.some((mark) => annotationsStarting.includes(mark))
+          ) {
+            Transforms.insertNodes(editor, {
+              ...op.node,
+              marks:
+                op.node.marks?.filter(
+                  (mark) => !annotationsStarting.includes(mark),
+                ) ?? [],
+            })
+            return
+          }
+        }
+      }
+
       if (op.type === 'insert_text') {
         const {selection} = editor
         const collapsedSelection = selection
@@ -322,11 +455,20 @@ export function createWithPortableTextMarkModel(
             (mark) => !decorators.includes(mark),
           )
 
+          const previousSpanHasAnnotations = previousSpan
+            ? previousSpan.marks?.some((mark) => !decorators.includes(mark))
+            : false
+          const previousSpanHasSameAnnotations = previousSpan
+            ? previousSpan.marks
+                ?.filter((mark) => !decorators.includes(mark))
+                .every((mark) => marks.includes(mark))
+            : false
           const previousSpanHasSameAnnotation = previousSpan
             ? previousSpan.marks?.some(
                 (mark) => !decorators.includes(mark) && marks.includes(mark),
               )
             : false
+
           const previousSpanHasSameMarks = previousSpan
             ? previousSpan.marks?.every((mark) => marks.includes(mark))
             : false
@@ -343,17 +485,27 @@ export function createWithPortableTextMarkModel(
                   text: op.text,
                   marks: previousSpan?.marks ?? [],
                 })
+                return
+              } else if (previousSpanHasSameAnnotations) {
+                Transforms.insertNodes(editor, {
+                  _type: 'span',
+                  _key: editorActor.getSnapshot().context.keyGenerator(),
+                  text: op.text,
+                  marks: previousSpan?.marks ?? [],
+                })
+                return
               } else if (previousSpanHasSameAnnotation) {
                 apply(op)
-              } else {
+                return
+              } else if (!previousSpan) {
                 Transforms.insertNodes(editor, {
                   _type: 'span',
                   _key: editorActor.getSnapshot().context.keyGenerator(),
                   text: op.text,
                   marks: [],
                 })
+                return
               }
-              return
             }
 
             if (atTheEndOfSpan) {
@@ -389,9 +541,11 @@ export function createWithPortableTextMarkModel(
               _type: 'span',
               _key: editorActor.getSnapshot().context.keyGenerator(),
               text: op.text,
-              marks: (previousSpan.marks ?? []).filter((mark) =>
-                decorators.includes(mark),
-              ),
+              marks: previousSpanHasAnnotations
+                ? []
+                : (previousSpan.marks ?? []).filter((mark) =>
+                    decorators.includes(mark),
+                  ),
             })
             return
           }
