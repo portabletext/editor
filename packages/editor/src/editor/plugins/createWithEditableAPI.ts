@@ -18,8 +18,8 @@ import {
   Text,
   Transforms,
 } from 'slate'
+import type {DOMNode} from 'slate-dom'
 import {ReactEditor} from 'slate-react'
-import type {DOMNode} from 'slate-react/dist/utils/dom'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
