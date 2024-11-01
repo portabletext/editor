@@ -22,7 +22,7 @@
     "lint:fix": "biome lint --write ."
   },
   "devDependencies": {
-    "@cucumber/cucumber-expressions": "^17.1.0",
+    "@cucumber/cucumber-expressions": "^18.0.1",
     "@cucumber/gherkin": "^30.0.0",
     "@cucumber/messages": "^27.0.0",
     "@jest/globals": "^29.7.0",
