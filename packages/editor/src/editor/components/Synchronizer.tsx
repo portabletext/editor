@@ -1,7 +1,7 @@
 import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@sanity/types'
 import {throttle} from 'lodash'
-import {useCallback, useEffect, useMemo, useRef} from 'react'
+import {useCallback, useEffect, useRef} from 'react'
 import {Editor} from 'slate'
 import {useSlate} from 'slate-react'
 import {useEffectEvent} from 'use-effect-event'
@@ -69,26 +69,6 @@ export function Synchronizer(props: SynchronizerProps) {
     IS_PROCESSING_LOCAL_CHANGES.set(slateEditor, false)
   }, [editorActor, slateEditor, getValue])
 
-  const onFlushPendingPatchesThrottled = useMemo(() => {
-    return throttle(
-      () => {
-        // If the editor is normalizing (each operation) it means that it's not in the middle of a bigger transform,
-        // and we can flush these changes immediately.
-        if (Editor.isNormalizing(slateEditor)) {
-          onFlushPendingPatches()
-          return
-        }
-        // If it's in the middle of something, try again.
-        onFlushPendingPatchesThrottled()
-      },
-      FLUSH_PATCHES_THROTTLED_MS,
-      {
-        leading: false,
-        trailing: true,
-      },
-    )
-  }, [onFlushPendingPatches, slateEditor])
-
   // Flush pending patches immediately on unmount
   useEffect(() => {
     return () => {
@@ -106,6 +86,24 @@ export function Synchronizer(props: SynchronizerProps) {
 
   // Subscribe to, and handle changes from the editor
   useEffect(() => {
+    const onFlushPendingPatchesThrottled = throttle(
+      () => {
+        // If the editor is normalizing (each operation) it means that it's not in the middle of a bigger transform,
+        // and we can flush these changes immediately.
+        if (Editor.isNormalizing(slateEditor)) {
+          onFlushPendingPatches()
+          return
+        }
+        // If it's in the middle of something, try again.
+        onFlushPendingPatchesThrottled()
+      },
+      FLUSH_PATCHES_THROTTLED_MS,
+      {
+        leading: false,
+        trailing: true,
+      },
+    )
+
     debug('Subscribing to editor changes')
     const sub = editorActor.on('*', (event) => {
       switch (event.type) {
@@ -161,7 +159,7 @@ export function Synchronizer(props: SynchronizerProps) {
       debug('Unsubscribing to changes')
       sub.unsubscribe()
     }
-  }, [handleChange, editorActor, onFlushPendingPatchesThrottled, slateEditor])
+  }, [editorActor, handleChange, onFlushPendingPatches, slateEditor])
 
   // Sync the value when going online
   const handleOnline = useCallback(() => {
