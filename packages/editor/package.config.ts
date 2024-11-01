@@ -32,4 +32,6 @@ export default defineConfig({
     noImplicitBrowsersList: 'off',
     noImplicitSideEffects: 'error',
   },
+  babel: {reactCompiler: true},
+  reactCompilerOptions: {target: '18'},
 })

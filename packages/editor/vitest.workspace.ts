@@ -4,7 +4,11 @@ import {defineWorkspace} from 'vitest/config'
 
 export default defineWorkspace([
   {
-    plugins: [react()],
+    plugins: [
+      react({
+        babel: {plugins: [['babel-plugin-react-compiler', {target: '18'}]]},
+      }),
+    ],
     test: {
       name: 'chromium',
       include: ['gherkin-tests/**/*.test.ts'],
@@ -18,7 +22,11 @@ export default defineWorkspace([
     },
   },
   {
-    plugins: [react()],
+    plugins: [
+      react({
+        babel: {plugins: [['babel-plugin-react-compiler', {target: '18'}]]},
+      }),
+    ],
     test: {
       name: 'firefox',
       include: ['gherkin-tests/**/*.test.ts'],
@@ -32,7 +40,11 @@ export default defineWorkspace([
     },
   },
   {
-    plugins: [react()],
+    plugins: [
+      react({
+        babel: {plugins: [['babel-plugin-react-compiler', {target: '18'}]]},
+      }),
+    ],
     test: {
       name: 'webkit',
       include: ['gherkin-tests/**/*.test.ts'],
@@ -46,7 +58,11 @@ export default defineWorkspace([
     },
   },
   {
-    plugins: [react()],
+    plugins: [
+      react({
+        babel: {plugins: [['babel-plugin-react-compiler', {target: '18'}]]},
+      }),
+    ],
     test: {
       name: 'unit',
       exclude: ['node_modules', 'e2e-tests', 'gherkin-tests'],
