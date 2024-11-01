@@ -369,8 +369,8 @@ importers:
   packages/gherkin-driver:
     devDependencies:
       '@cucumber/cucumber-expressions':
-        specifier: ^17.1.0
-        version: 17.1.0
+        specifier: ^18.0.1
+        version: 18.0.1
       '@cucumber/gherkin':
         specifier: ^30.0.0
         version: 30.0.0
@@ -1124,8 +1124,8 @@ packages:
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
     engines: {node: '>=12'}
 
-  '@cucumber/cucumber-expressions@17.1.0':
-    resolution: {integrity: sha512-PCv/ppsPynniKPWJr5v566daCVe+pbxQpHGrIu/Ev57cCH9Rv+X0F6lio4Id3Z64TaG7btCRLUGewIgLwmrwOA==}
+  '@cucumber/cucumber-expressions@18.0.1':
+    resolution: {integrity: sha512-NSid6bI+7UlgMywl5octojY5NXnxR9uq+JisjOrO52VbFsQM6gTWuQFE8syI10KnIBEdPzuEUSVEeZ0VFzRnZA==}
 
   '@cucumber/gherkin@27.0.0':
     resolution: {integrity: sha512-j5rCsjqzRiC3iVTier3sa0kzyNbkcAmF7xr7jKnyO7qDeK3Z8Ye1P3KSVpeQRMY+KCDJ3WbTDdyxH0FwfA/fIw==}
@@ -6985,7 +6985,7 @@ snapshots:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
 
-  '@cucumber/cucumber-expressions@17.1.0':
+  '@cucumber/cucumber-expressions@18.0.1':
     dependencies:
       regexp-match-indices: 1.0.2
 
