@@ -9,7 +9,12 @@ import type {
   PortableTextObject,
   SpanSchemaType,
 } from '@sanity/types'
-import {Component, type MutableRefObject, type PropsWithChildren} from 'react'
+import {
+  Component,
+  useEffect,
+  type MutableRefObject,
+  type PropsWithChildren,
+} from 'react'
 import {Subject} from 'rxjs'
 import {createActor} from 'xstate'
 import type {
@@ -181,38 +186,45 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
     const readOnly = Boolean(this.props.readOnly)
 
     return (
-      <EditorActorContext.Provider value={this.editorActor}>
-        <SlateContainer
-          editorActor={this.editorActor}
-          maxBlocks={maxBlocks}
-          patches$={_patches$}
-          portableTextEditor={this}
-          readOnly={readOnly}
-        >
-          <PortableTextEditorContext.Provider value={this}>
-            <PortableTextEditorReadOnlyContext.Provider value={readOnly}>
-              <PortableTextEditorSelectionProvider
-                editorActor={this.editorActor}
-              >
-                <Synchronizer
+      <>
+        {_patches$ ? (
+          <RoutePatchesObservableToEditorActor
+            editorActor={this.editorActor}
+            patches$={_patches$}
+          />
+        ) : null}
+        <EditorActorContext.Provider value={this.editorActor}>
+          <SlateContainer
+            editorActor={this.editorActor}
+            maxBlocks={maxBlocks}
+            portableTextEditor={this}
+            readOnly={readOnly}
+          >
+            <PortableTextEditorContext.Provider value={this}>
+              <PortableTextEditorReadOnlyContext.Provider value={readOnly}>
+                <PortableTextEditorSelectionProvider
                   editorActor={this.editorActor}
-                  getValue={this.getValue}
-                  onChange={(change) => {
-                    this.props.onChange(change)
-                    /**
-                     * For backwards compatibility, we relay all changes to the
-                     * `change$` Subject as well.
-                     */
-                    this.change$.next(change)
-                  }}
-                  value={value}
-                />
-                {children}
-              </PortableTextEditorSelectionProvider>
-            </PortableTextEditorReadOnlyContext.Provider>
-          </PortableTextEditorContext.Provider>
-        </SlateContainer>
-      </EditorActorContext.Provider>
+                >
+                  <Synchronizer
+                    editorActor={this.editorActor}
+                    getValue={this.getValue}
+                    onChange={(change) => {
+                      this.props.onChange(change)
+                      /**
+                       * For backwards compatibility, we relay all changes to the
+                       * `change$` Subject as well.
+                       */
+                      this.change$.next(change)
+                    }}
+                    value={value}
+                  />
+                  {children}
+                </PortableTextEditorSelectionProvider>
+              </PortableTextEditorReadOnlyContext.Provider>
+            </PortableTextEditorContext.Provider>
+          </SlateContainer>
+        </EditorActorContext.Provider>
+      </>
     )
   }
 
@@ -377,4 +389,24 @@ export class PortableTextEditor extends Component<PortableTextEditorProps> {
   ) => {
     return editor.editable?.isSelectionsOverlapping(selectionA, selectionB)
   }
+}
+
+function RoutePatchesObservableToEditorActor(props: {
+  editorActor: EditorActor
+  patches$: PatchObservable
+}) {
+  useEffect(() => {
+    const subscription = props.patches$.subscribe((payload) => {
+      props.editorActor.send({
+        type: 'patches',
+        ...payload,
+      })
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [props.editorActor, props.patches$])
+
+  return null
 }

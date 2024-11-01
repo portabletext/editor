@@ -20,7 +20,7 @@ import {
   type Descendant,
   type SelectionOperation,
 } from 'slate'
-import type {PatchObservable, PortableTextSlateEditor} from '../../types/editor'
+import type {PortableTextSlateEditor} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {fromSlateValue} from '../../utils/values'
 import {
@@ -29,6 +29,7 @@ import {
   withRedoing,
   withUndoing,
 } from '../../utils/withUndoRedo'
+import type {EditorActor} from '../editor-machine'
 
 const debug = debugWithName('plugin:withUndoRedo')
 const debugVerbose = debug.enabled && false
@@ -51,7 +52,7 @@ const isSaving = (editor: Editor): boolean | undefined => {
 }
 
 export interface Options {
-  patches$?: PatchObservable
+  editorActor: EditorActor
   readOnly: boolean
   blockSchemaType: ObjectSchemaType
 }
@@ -66,7 +67,7 @@ const getRemotePatches = (editor: Editor) => {
 export function createWithUndoRedo(
   options: Options,
 ): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
-  const {readOnly, patches$, blockSchemaType} = options
+  const {editorActor, readOnly, blockSchemaType} = options
 
   return (editor: PortableTextSlateEditor) => {
     let previousSnapshot: PortableTextBlock[] | undefined = fromSlateValue(
@@ -74,39 +75,39 @@ export function createWithUndoRedo(
       blockSchemaType.name,
     )
     const remotePatches = getRemotePatches(editor)
-    if (patches$) {
-      editor.subscriptions.push(() => {
-        debug('Subscribing to patches')
-        const sub = patches$.subscribe(({patches, snapshot}) => {
-          let reset = false
-          patches.forEach((patch) => {
-            if (!reset && patch.origin !== 'local' && remotePatches) {
-              if (patch.type === 'unset' && patch.path.length === 0) {
-                debug(
-                  'Someone else cleared the content, resetting undo/redo history',
-                )
-                editor.history = {undos: [], redos: []}
-                remotePatches.splice(0, remotePatches.length)
-                SAVING.set(editor, true)
-                reset = true
-                return
-              }
-              remotePatches.push({
-                patch,
-                time: new Date(),
-                snapshot,
-                previousSnapshot,
-              })
+
+    editor.subscriptions.push(() => {
+      debug('Subscribing to patches')
+      const sub = editorActor.on('patches', ({patches, snapshot}) => {
+        let reset = false
+        patches.forEach((patch) => {
+          if (!reset && patch.origin !== 'local' && remotePatches) {
+            if (patch.type === 'unset' && patch.path.length === 0) {
+              debug(
+                'Someone else cleared the content, resetting undo/redo history',
+              )
+              editor.history = {undos: [], redos: []}
+              remotePatches.splice(0, remotePatches.length)
+              SAVING.set(editor, true)
+              reset = true
+              return
             }
-          })
-          previousSnapshot = snapshot
+            remotePatches.push({
+              patch,
+              time: new Date(),
+              snapshot,
+              previousSnapshot,
+            })
+          }
         })
-        return () => {
-          debug('Unsubscribing to patches')
-          sub.unsubscribe()
-        }
+        previousSnapshot = snapshot
       })
-    }
+      return () => {
+        debug('Unsubscribing to patches')
+        sub.unsubscribe()
+      }
+    })
+
     editor.history = {undos: [], redos: []}
     const {apply} = editor
     editor.apply = (op: Operation) => {

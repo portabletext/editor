@@ -150,6 +150,9 @@ export function Synchronizer(props: SynchronizerProps) {
           })
           break
         }
+        case 'patches': {
+          break
+        }
         default:
           handleChange(event)
       }
@@ -168,16 +171,12 @@ export function Synchronizer(props: SynchronizerProps) {
 
   // Notify about window online and offline status changes
   useEffect(() => {
-    const subscription = editorActor.on('online', () => {
-      if (portableTextEditor.props.patches$) {
-        handleOnline()
-      }
-    })
+    const subscription = editorActor.on('online', handleOnline)
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [handleOnline, editorActor, portableTextEditor.props.patches$])
+  }, [handleOnline, editorActor])
 
   // This hook must be set up after setting up the subscription above, or it will not pick up validation errors from the useSyncValue hook.
   // This will cause the editor to not be able to signal a validation error and offer invalid value resolution of the initial value.
