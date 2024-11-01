@@ -1,9 +1,10 @@
 import {
+  createMarkdownBehaviors,
   PortableTextEditable,
   PortableTextEditor,
+  useEditor,
   type BlockDecoratorRenderProps,
   type BlockStyleRenderProps,
-  type Patch,
   type RenderAnnotationFunction,
   type RenderBlockFunction,
   type RenderChildFunction,
@@ -12,13 +13,11 @@ import {
   type RenderPlaceholderFunction,
   type RenderStyleFunction,
 } from '@portabletext/editor'
-import type {PortableTextBlock} from '@sanity/types'
 import {useSelector} from '@xstate/react'
 import {CopyIcon, ImageIcon, TrashIcon} from 'lucide-react'
-import {useEffect, useMemo, useState} from 'react'
+import {useEffect, useState} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
 import {reverse} from 'remeda'
-import {Subject} from 'rxjs'
 import {Button} from './components/button'
 import {ErrorBoundary} from './components/error-boundary'
 import {ErrorScreen} from './components/error-screen'
@@ -58,30 +57,52 @@ export function Editor(props: {editorRef: EditorActorRef}) {
     props.editorRef,
     (s) => s.context.keyGenerator,
   )
+  const editor = useEditor({
+    behaviors: createMarkdownBehaviors({
+      mapDefaultStyle: (schema) => schema.styles[0].value,
+      mapHeadingStyle: (schema, level) => schema.styles[level]?.value,
+      mapBlockquoteStyle: (schema) =>
+        schema.styles.find((style) => style.value === 'blockquote')?.value,
+      mapUnorderedListStyle: (schema) =>
+        schema.lists.find((list) => list.value === 'bullet')?.value,
+      mapOrderedListStyle: (schema) =>
+        schema.lists.find((list) => list.value === 'number')?.value,
+    }),
+    keyGenerator,
+    schema,
+  })
   const patchesReceived = useSelector(props.editorRef, (s) =>
     reverse(s.context.patchesReceived),
   )
-  const patches$ = useMemo(
-    () =>
-      new Subject<{
-        patches: Array<Patch>
-        snapshot: Array<PortableTextBlock> | undefined
-      }>(),
-    [],
-  )
   useEffect(() => {
     const subscription = props.editorRef.on('patches', (event) => {
-      patches$.next({
-        patches: event.patches,
-        snapshot: event.snapshot,
-      })
+      editor.send(event)
     })
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [patches$, props.editorRef])
+  }, [props.editorRef, editor])
+
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const subscription = editor.on('*', (event) => {
+      if (event.type === 'mutation') {
+        props.editorRef.send(event)
+      }
+      if (event.type === 'loading') {
+        setLoading(true)
+      }
+      if (event.type === 'done loading') {
+        setLoading(false)
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [editor, setLoading, props.editorRef])
 
   return (
     <div
@@ -93,20 +114,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
         fallback={ErrorScreen}
         onError={console.error}
       >
-        <PortableTextEditor
-          value={value}
-          patches$={patches$}
-          keyGenerator={keyGenerator}
-          onChange={(change) => {
-            if (change.type === 'mutation') {
-              props.editorRef.send(change)
-            }
-            if (change.type === 'loading') {
-              setLoading(change.isLoading)
-            }
-          }}
-          schemaType={schema}
-        >
+        <PortableTextEditor editor={editor} value={value}>
           <div className="flex flex-col gap-2">
             <PortableTextToolbar />
             <div className="flex gap-2 items-center">
