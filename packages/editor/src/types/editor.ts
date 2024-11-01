@@ -30,8 +30,8 @@ import type {
   Node as SlateNode,
   Operation as SlateOperation,
 } from 'slate'
+import type {DOMNode} from 'slate-dom'
 import type {ReactEditor} from 'slate-react'
-import type {DOMNode} from 'slate-react/dist/utils/dom'
 import type {PortableTextEditableProps} from '../editor/Editable'
 import type {PortableTextEditor} from '../editor/PortableTextEditor'
 

@@ -62,7 +62,8 @@
     "lodash": "^4.17.21",
     "react-compiler-runtime": "19.0.0-beta-6fc168f-20241025",
     "slate": "0.110.2",
-    "slate-react": "0.110.3",
+    "slate-dom": "^0.111.0",
+    "slate-react": "0.111.0",
     "use-effect-event": "^1.0.2",
     "xstate": "^5.18.2"
   },

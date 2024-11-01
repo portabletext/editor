@@ -37,6 +37,7 @@
         "react",
         "rxjs",
         "slate",
+        "slate-dom",
         "slate-react",
         "styled-components",
         "typescript"
