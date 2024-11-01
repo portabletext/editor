@@ -28,7 +28,11 @@ import {
   reverseTextSelection,
   selectionIsCollapsed,
 } from './gherkin-step-helpers'
-import {testMachine, type EditorActorRef} from './test-machine'
+import {
+  testMachine,
+  type EditorActorRef,
+  type TestActorRef,
+} from './test-machine'
 
 type EditorContext = {
   locator: Locator
@@ -47,7 +51,8 @@ type EditorContext = {
   ref: EditorActorRef
 }
 
-type Context = {
+export type Context = {
+  testRef: TestActorRef
   editorA: EditorContext
   editorB: EditorContext
   keyMap: Map<string, string>
@@ -60,6 +65,7 @@ export const stepDefinitions = [
   Given('one editor', async (context: Context) => {
     const testActor = createActor(testMachine, {
       input: {
+        behaviors: [],
         schema,
         value: undefined,
       },
@@ -72,6 +78,7 @@ export const stepDefinitions = [
     const editorARef = testActor.getSnapshot().context.editors[0]
     const locator = page.getByTestId(editorARef.id)
 
+    context.testRef = testActor
     context.editorA = {
       ref: editorARef,
       locator: locator.getByRole('textbox'),
@@ -97,6 +104,7 @@ export const stepDefinitions = [
   Given('two editors', async (context: Context) => {
     const testActor = createActor(testMachine, {
       input: {
+        behaviors: [],
         schema,
         value: undefined,
       },
@@ -110,6 +118,7 @@ export const stepDefinitions = [
     const editorARef = testActor.getSnapshot().context.editors[0]
     const editorALocator = page.getByTestId(editorARef.id)
 
+    context.testRef = testActor
     context.editorA = {
       ref: editorARef,
       locator: editorALocator.getByRole('textbox'),
