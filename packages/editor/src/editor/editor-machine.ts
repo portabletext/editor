@@ -59,6 +59,15 @@ export type PatchEvent = {type: 'patch'; patch: Patch}
 /**
  * @internal
  */
+export type PatchesEvent = {
+  type: 'patches'
+  patches: Array<Patch>
+  snapshot: Array<PortableTextBlock> | undefined
+}
+
+/**
+ * @internal
+ */
 export type MutationEvent = {
   type: 'mutation'
   patches: Array<Patch>
@@ -87,6 +96,7 @@ type EditorEvent =
 type EditorEmittedEvent =
   | {type: 'ready'}
   | PatchEvent
+  | PatchesEvent
   | MutationEvent
   | {
       type: 'unset'
@@ -274,6 +284,7 @@ export const editorMachine = setup({
     'online': {actions: emit({type: 'online'})},
     'offline': {actions: emit({type: 'offline'})},
     'loading': {actions: emit({type: 'loading'})},
+    'patches': {actions: emit(({event}) => event)},
     'done loading': {actions: emit({type: 'done loading'})},
     'update schema': {actions: 'assign schema'},
     'behavior event': {actions: 'handle behavior event'},

@@ -1,7 +1,6 @@
 import {useEffect, useMemo, useState, type PropsWithChildren} from 'react'
 import {createEditor} from 'slate'
 import {Slate, withReact} from 'slate-react'
-import type {PatchObservable} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {KEY_TO_SLATE_ELEMENT, KEY_TO_VALUE_ELEMENT} from '../../utils/weakMaps'
 import type {EditorActor} from '../editor-machine'
@@ -16,7 +15,6 @@ const debug = debugWithName('component:PortableTextEditor:SlateContainer')
 export interface SlateContainerProps extends PropsWithChildren {
   editorActor: EditorActor
   maxBlocks: number | undefined
-  patches$?: PatchObservable
   portableTextEditor: PortableTextEditor
   readOnly: boolean
 }
@@ -26,7 +24,7 @@ export interface SlateContainerProps extends PropsWithChildren {
  * @internal
  */
 export function SlateContainer(props: SlateContainerProps) {
-  const {editorActor, patches$, portableTextEditor, readOnly, maxBlocks} = props
+  const {editorActor, portableTextEditor, readOnly, maxBlocks} = props
 
   // Create the slate instance, using `useState` ensures setup is only run once, initially
   const [[slateEditor, subscribe]] = useState(() => {
@@ -34,7 +32,6 @@ export function SlateContainer(props: SlateContainerProps) {
     const {editor, subscribe: _sub} = withPlugins(withReact(createEditor()), {
       editorActor,
       maxBlocks,
-      patches$,
       portableTextEditor,
       readOnly,
     })
@@ -56,18 +53,10 @@ export function SlateContainer(props: SlateContainerProps) {
     withPlugins(slateEditor, {
       editorActor,
       maxBlocks,
-      patches$,
       portableTextEditor,
       readOnly,
     })
-  }, [
-    editorActor,
-    portableTextEditor,
-    maxBlocks,
-    readOnly,
-    patches$,
-    slateEditor,
-  ])
+  }, [editorActor, portableTextEditor, maxBlocks, readOnly, slateEditor])
 
   const initialValue = useMemo(() => {
     return [slateEditor.pteCreateTextBlock({decorators: []})]

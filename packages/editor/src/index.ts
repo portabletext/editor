@@ -15,6 +15,7 @@ export {
   type EditorActor,
   type MutationEvent,
   type PatchEvent,
+  type PatchesEvent,
 } from './editor/editor-machine'
 export {usePortableTextEditor} from './editor/hooks/usePortableTextEditor'
 export {usePortableTextEditorSelection} from './editor/hooks/usePortableTextEditorSelection'
