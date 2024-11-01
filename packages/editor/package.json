@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/editor",
-  "version": "1.1.12-canary.3",
+  "version": "1.2.1",
   "description": "Portable Text Editor made in React",
   "keywords": [
     "sanity",
@@ -79,7 +79,7 @@
     "@sanity/pkg-utils": "^6.11.8",
     "@sanity/schema": "^3.62.3",
     "@sanity/types": "^3.62.3",
-    "@sanity/ui": "^2.8.14",
+    "@sanity/ui": "^2.8.17",
     "@sanity/util": "^3.62.3",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.2",
