@@ -59,7 +59,7 @@ importers:
         version: 3.0.6
       '@sanity/schema':
         specifier: ^3.52.4
-        version: 3.62.3
+        version: 3.62.3(debug@4.3.7)
       '@xstate/react':
         specifier: ^4.1.3
         version: 4.1.3(@types/react@18.3.12)(react@18.3.1)(xstate@5.18.2)
@@ -108,7 +108,7 @@ importers:
     devDependencies:
       '@sanity/types':
         specifier: ^3.62.3
-        version: 3.62.3
+        version: 3.62.3(debug@4.3.7)
       '@types/lodash.startcase':
         specifier: ^4.4.9
         version: 4.4.9
@@ -237,8 +237,8 @@ importers:
         specifier: ^3.62.3
         version: 3.62.3(debug@4.3.7)
       '@sanity/ui':
-        specifier: ^2.8.17
-        version: 2.8.17(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1)(styled-components@6.1.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
+        specifier: ^2.8.18
+        version: 2.8.18(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1)(styled-components@6.1.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
       '@sanity/util':
         specifier: ^3.62.3
         version: 3.62.3(debug@4.3.7)
@@ -2522,8 +2522,8 @@ packages:
   '@sanity/types@3.62.3':
     resolution: {integrity: sha512-9dXm3KCbpGezzJ50mOQbkgGb0kRS+tt5hHX9hJsBdQ7J+hYO/X4nBOqqf7VFNqYE0LNnxjrceIwKHZqAlNGRNg==}
 
-  '@sanity/ui@2.8.17':
-    resolution: {integrity: sha512-lckBR2qEeRMI4nIMtLmc1/4898gJ8e3bYRGl+/JRpqg4cgCOYM8eM+o8Mz14po+XQ/n5Jac0wLlOsHOhTxiMTw==}
+  '@sanity/ui@2.8.18':
+    resolution: {integrity: sha512-oHEkHY3SnII1Bpna3w4/QXY5+jCQL3ge3d20QuYWAEu/93mWzpg0i0RscPbmBimguu5amOsR4EjkQP3fFQNAeQ==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
       react: ^18 || >=19.0.0-0
@@ -8787,14 +8787,6 @@ snapshots:
 
   '@sanity/browserslist-config@1.0.3': {}
 
-  '@sanity/client@6.22.2':
-    dependencies:
-      '@sanity/eventsource': 5.0.2
-      get-it: 8.6.5
-      rxjs: 7.8.1
-    transitivePeerDependencies:
-      - debug
-
   '@sanity/client@6.22.2(debug@4.3.7)':
     dependencies:
       '@sanity/eventsource': 5.0.2
@@ -8927,20 +8919,6 @@ snapshots:
       prettier: 3.3.3
       prettier-plugin-packagejson: 2.5.3(prettier@3.3.3)
 
-  '@sanity/schema@3.62.3':
-    dependencies:
-      '@sanity/generate-help-url': 3.0.0
-      '@sanity/types': 3.62.3
-      arrify: 1.0.1
-      groq-js: 1.13.0
-      humanize-list: 1.0.1
-      leven: 3.1.0
-      lodash: 4.17.21
-      object-inspect: 1.13.2
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
   '@sanity/schema@3.62.3(debug@4.3.7)':
     dependencies:
       '@sanity/generate-help-url': 3.0.0
@@ -8955,13 +8933,6 @@ snapshots:
       - debug
       - supports-color
 
-  '@sanity/types@3.62.3':
-    dependencies:
-      '@sanity/client': 6.22.2
-      '@types/react': 18.3.12
-    transitivePeerDependencies:
-      - debug
-
   '@sanity/types@3.62.3(debug@4.3.7)':
     dependencies:
       '@sanity/client': 6.22.2(debug@4.3.7)
@@ -8969,7 +8940,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  '@sanity/ui@2.8.17(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1)(styled-components@6.1.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))':
+  '@sanity/ui@2.8.18(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1)(styled-components@6.1.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))':
     dependencies:
       '@floating-ui/react-dom': 2.1.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@sanity/color': 3.0.6
@@ -10376,8 +10347,6 @@ snapshots:
 
   flatted@3.3.1: {}
 
-  follow-redirects@1.15.9: {}
-
   follow-redirects@1.15.9(debug@4.3.7):
     optionalDependencies:
       debug: 4.3.7
@@ -10438,18 +10407,6 @@ snapshots:
       has-proto: 1.0.3
       has-symbols: 1.0.3
       hasown: 2.0.2
-
-  get-it@8.6.5:
-    dependencies:
-      '@types/follow-redirects': 1.14.4
-      '@types/progress-stream': 2.0.5
-      decompress-response: 7.0.0
-      follow-redirects: 1.15.9
-      is-retry-allowed: 2.2.0
-      progress-stream: 2.0.0
-      tunnel-agent: 0.6.0
-    transitivePeerDependencies:
-      - debug
 
   get-it@8.6.5(debug@4.3.7):
     dependencies:
