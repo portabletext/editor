@@ -1,13 +1,11 @@
 import {
   isPortableTextSpan,
-  type ObjectSchemaType,
   type Path,
   type PortableTextBlock,
   type PortableTextChild,
   type PortableTextObject,
   type PortableTextSpan,
   type PortableTextTextBlock,
-  type SchemaType,
 } from '@sanity/types'
 import {
   Editor,
@@ -128,7 +126,10 @@ export function createWithEditableAPI(
         }
         return undefined
       },
-      insertChild: (type: SchemaType, value?: {[prop: string]: any}): Path => {
+      insertChild: <TSchemaType extends {name: string}>(
+        type: TSchemaType,
+        value?: {[prop: string]: any},
+      ): Path => {
         if (!editor.selection) {
           throw new Error('The editor has no selection')
         }
@@ -196,7 +197,10 @@ export function createWithEditableAPI(
           )?.focus.path || []
         )
       },
-      insertBlock: (type: SchemaType, value?: {[prop: string]: any}): Path => {
+      insertBlock: <TSchemaType extends {name: string}>(
+        type: TSchemaType,
+        value?: {[prop: string]: any},
+      ): Path => {
         const block = toSlateValue(
           [
             {
@@ -622,7 +626,9 @@ export function createWithEditableAPI(
           }
         }
       },
-      removeAnnotation: (type: ObjectSchemaType): void => {
+      removeAnnotation: <TSchemaType extends {name: string}>(
+        type: TSchemaType,
+      ): void => {
         debug('Removing annotation', type)
 
         Editor.withoutNormalizing(editor, () => {

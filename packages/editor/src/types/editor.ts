@@ -3,7 +3,6 @@ import type {
   ArraySchemaType,
   BlockDecoratorDefinition,
   BlockListDefinition,
-  BlockSchemaType,
   BlockStyleDefinition,
   ObjectSchemaType,
   Path,
@@ -13,7 +12,6 @@ import type {
   PortableTextObject,
   PortableTextSpan,
   PortableTextTextBlock,
-  SpanSchemaType,
   TypedObject,
 } from '@sanity/types'
 import type {
@@ -44,8 +42,8 @@ export interface EditableAPIDeleteOptions {
 export interface EditableAPI {
   activeAnnotations: () => PortableTextObject[]
   isAnnotationActive: (annotationType: PortableTextObject['_type']) => boolean
-  addAnnotation: (
-    type: ObjectSchemaType,
+  addAnnotation: <TSchemaType extends {name: string}>(
+    type: TSchemaType,
     value?: {[prop: string]: unknown},
   ) =>
     | {markDefPath: Path; markDefPaths: Array<Path>; spanPath: Path}
@@ -69,12 +67,12 @@ export interface EditableAPI {
   getValue: () => PortableTextBlock[] | undefined
   hasBlockStyle: (style: string) => boolean
   hasListStyle: (listStyle: string) => boolean
-  insertBlock: (
-    type: BlockSchemaType | ObjectSchemaType,
+  insertBlock: <TSchemaType extends {name: string}>(
+    type: TSchemaType,
     value?: {[prop: string]: unknown},
   ) => Path
-  insertChild: (
-    type: SpanSchemaType | ObjectSchemaType,
+  insertChild: <TSchemaType extends {name: string}>(
+    type: TSchemaType,
     value?: {[prop: string]: unknown},
   ) => Path
   insertBreak: () => void
@@ -88,7 +86,9 @@ export interface EditableAPI {
   isVoid: (element: PortableTextBlock | PortableTextChild) => boolean
   marks: () => string[]
   redo: () => void
-  removeAnnotation: (type: ObjectSchemaType) => void
+  removeAnnotation: <TSchemaType extends {name: string}>(
+    type: TSchemaType,
+  ) => void
   select: (selection: EditorSelection) => void
   toggleBlockStyle: (blockStyle: string) => void
   toggleList: (listStyle: string) => void

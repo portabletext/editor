@@ -1,18 +1,23 @@
 export type {Patch} from '@portabletext/patches'
 export {
+  createMarkdownBehaviors,
+  type MarkdownBehaviorsConfig,
+} from './editor/behavior/behavior.markdown'
+export {
+  defineBehavior,
   type Behavior,
   type BehaviorActionIntend,
+  type BehaviorActionIntendSet,
   type BehaviorContext,
   type BehaviorEvent,
   type BehaviorGuard,
   type PickFromUnion,
-  type BehaviorActionIntendSet,
-  defineBehavior,
 } from './editor/behavior/behavior.types'
 export {
-  createMarkdownBehaviors,
-  type MarkdownBehaviorsConfig,
-} from './editor/behavior/behavior.markdown'
+  defineSchema,
+  type SchemaDefinition,
+  type BaseDefinition,
+} from './editor/define-schema'
 export {PortableTextEditable} from './editor/Editable'
 export type {PortableTextEditableProps} from './editor/Editable'
 export {
