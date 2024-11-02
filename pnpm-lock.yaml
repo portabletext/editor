@@ -321,8 +321,8 @@ importers:
         specifier: ^29.7.0
         version: 29.7.0(@types/node@18.19.59)(ts-node@10.9.2(@types/node@18.19.59)(typescript@5.6.3))
       jest-dev-server:
-        specifier: ^10.1.1
-        version: 10.1.1(debug@4.3.7)
+        specifier: ^10.1.4
+        version: 10.1.4(debug@4.3.7)
       jest-environment-node:
         specifier: ^29.7.0
         version: 29.7.0
@@ -4248,8 +4248,8 @@ packages:
       ts-node:
         optional: true
 
-  jest-dev-server@10.1.1:
-    resolution: {integrity: sha512-Yk9gmW/io2udONlhdrsC69ZGYM2CISvGItyYk9zD5QK3tGq8ZAJP27NDHma4hI6ey/zcaiqbrDkIf7dmpHq86w==}
+  jest-dev-server@10.1.4:
+    resolution: {integrity: sha512-bGQ6sedNGtT6AFHhCVqGTXMPz7UyJi/ZrhNBgyqsP0XU9N8acCEIfqZEA22rOaZ+NdEVsaltk6tL7UT6aXfI7w==}
     engines: {node: '>=16'}
 
   jest-diff@29.7.0:
@@ -5408,8 +5408,8 @@ packages:
   space-separated-tokens@2.0.2:
     resolution: {integrity: sha512-PEGlAwrG8yXGXRjW32fGbg66JAlOAwbObuqVoJpv/mRgoWDQfgH1wDPvtzWyUSNAXBGSk8h755YDbbcEy3SH2Q==}
 
-  spawnd@10.1.1:
-    resolution: {integrity: sha512-kTim9sz8KuKX7ZcO8imlvEvbaJmFtFhT5tKS0WP5FRlmWLH5Pd9qj9u29nbMrvDcJPj8ltwOG+QAiZq928GKCw==}
+  spawnd@10.1.4:
+    resolution: {integrity: sha512-drqHc0mKJmtMsiGMOCwzlc5eZ0RPtRvT7tQAluW2A0qUc0G7TQ8KLcn3E6K5qzkLkH2UkS3nYQiVGULvvsD9dw==}
     engines: {node: '>=16'}
 
   speedometer@1.0.0:
@@ -5951,8 +5951,8 @@ packages:
     resolution: {integrity: sha512-o8qghlI8NZHU1lLPrpi2+Uq7abh4GGPpYANlalzWxyWteJOCsr/P+oPBA49TOLu5FTZO4d3F9MnWJfiMo4BkmA==}
     engines: {node: '>=18'}
 
-  wait-on@7.2.0:
-    resolution: {integrity: sha512-wCQcHkRazgjG5XoAq9jbTMLpNIjoSlZslrJ2+N9MxDsGEv1HnFoVjOCexL0ESva7Y9cu350j+DWADdk54s4AFQ==}
+  wait-on@8.0.1:
+    resolution: {integrity: sha512-1wWQOyR2LVVtaqrcIL2+OM+x7bkpmzVROa0Nf6FryXkS+er5Sa1kzFGjzZRqLnHa3n1rACFLeTwUqE1ETL9Mig==}
     engines: {node: '>=12.0.0'}
     hasBin: true
 
@@ -10908,15 +10908,15 @@ snapshots:
       - babel-plugin-macros
       - supports-color
 
-  jest-dev-server@10.1.1(debug@4.3.7):
+  jest-dev-server@10.1.4(debug@4.3.7):
     dependencies:
       chalk: 4.1.2
       cwd: 0.10.0
       find-process: 1.4.7
       prompts: 2.4.2
-      spawnd: 10.1.1
+      spawnd: 10.1.4
       tree-kill: 1.2.2
-      wait-on: 7.2.0(debug@4.3.7)
+      wait-on: 8.0.1(debug@4.3.7)
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -12301,7 +12301,7 @@ snapshots:
 
   space-separated-tokens@2.0.2: {}
 
-  spawnd@10.1.1:
+  spawnd@10.1.4:
     dependencies:
       signal-exit: 4.1.0
       tree-kill: 1.2.2
@@ -12816,7 +12816,7 @@ snapshots:
     dependencies:
       xml-name-validator: 5.0.0
 
-  wait-on@7.2.0(debug@4.3.7):
+  wait-on@8.0.1(debug@4.3.7):
     dependencies:
       axios: 1.7.7(debug@4.3.7)
       joi: 17.13.3
