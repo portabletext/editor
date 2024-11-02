@@ -1,4 +1,5 @@
 export type {Patch} from '@portabletext/patches'
+export type {PortableTextBlock} from '@sanity/types'
 export {
   createMarkdownBehaviors,
   type MarkdownBehaviorsConfig,
