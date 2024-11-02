@@ -187,6 +187,9 @@ importers:
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
+      lodash.startcase:
+        specifier: ^4.4.0
+        version: 4.4.0
       react-compiler-runtime:
         specifier: 19.0.0-beta-6fc168f-20241025
         version: 19.0.0-beta-6fc168f-20241025(react@18.3.1)
@@ -272,6 +275,9 @@ importers:
       '@types/lodash':
         specifier: ^4.17.13
         version: 4.17.13
+      '@types/lodash.startcase':
+        specifier: ^4.4.9
+        version: 4.4.9
       '@types/node':
         specifier: ^18.19.8
         version: 18.19.59

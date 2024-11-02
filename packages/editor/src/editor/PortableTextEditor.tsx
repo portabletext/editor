@@ -1,13 +1,10 @@
 import type {
   ArrayDefinition,
   ArraySchemaType,
-  BlockSchemaType,
-  ObjectSchemaType,
   Path,
   PortableTextBlock,
   PortableTextChild,
   PortableTextObject,
-  SpanSchemaType,
 } from '@sanity/types'
 import {
   Component,
@@ -271,9 +268,9 @@ export class PortableTextEditor extends Component<
       ? editor.editable.isAnnotationActive(annotationType)
       : false
   }
-  static addAnnotation = (
+  static addAnnotation = <TSchemaType extends {name: string}>(
     editor: PortableTextEditor,
-    type: ObjectSchemaType,
+    type: TSchemaType,
     value?: {[prop: string]: unknown},
   ):
     | {
@@ -339,17 +336,17 @@ export class PortableTextEditor extends Component<
     editor.editable?.isExpandedSelection()
   static isMarkActive = (editor: PortableTextEditor, mark: string) =>
     editor.editable?.isMarkActive(mark)
-  static insertChild = (
+  static insertChild = <TSchemaType extends {name: string}>(
     editor: PortableTextEditor,
-    type: SpanSchemaType | ObjectSchemaType,
+    type: TSchemaType,
     value?: {[prop: string]: unknown},
   ): Path | undefined => {
     debug(`Host inserting child`)
     return editor.editable?.insertChild(type, value)
   }
-  static insertBlock = (
+  static insertBlock = <TSchemaType extends {name: string}>(
     editor: PortableTextEditor,
-    type: BlockSchemaType | ObjectSchemaType,
+    type: TSchemaType,
     value?: {[prop: string]: unknown},
   ): Path | undefined => {
     return editor.editable?.insertBlock(type, value)
@@ -379,9 +376,9 @@ export class PortableTextEditor extends Component<
     debug(`Host setting selection`, selection)
     editor.editable?.select(selection)
   }
-  static removeAnnotation = (
+  static removeAnnotation = <TSchemaType extends {name: string}>(
     editor: PortableTextEditor,
-    type: ObjectSchemaType,
+    type: TSchemaType,
   ) => editor.editable?.removeAnnotation(type)
   static toggleBlockStyle = (
     editor: PortableTextEditor,
