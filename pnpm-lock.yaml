@@ -140,7 +140,7 @@ importers:
         specifier: beta
         version: 19.0.0-beta-6fc168f-20241025
       eslint:
-        specifier: '8'
+        specifier: 8.57.1
         version: 8.57.1
       eslint-plugin-react-compiler:
         specifier: beta
@@ -303,7 +303,7 @@ importers:
         specifier: ^16.4.5
         version: 16.4.5
       eslint:
-        specifier: '8'
+        specifier: 8.57.1
         version: 8.57.1
       eslint-plugin-react-compiler:
         specifier: beta
