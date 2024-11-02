@@ -35,7 +35,7 @@ import {
   CommentAnnotationSchema,
   ImageSchema,
   LinkAnnotationSchema,
-  schema,
+  schemaDefinition,
   StockTickerSchema,
 } from './schema'
 import {SelectionPreview} from './selection-preview'
@@ -69,7 +69,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
         schema.lists.find((list) => list.value === 'number')?.value,
     }),
     keyGenerator,
-    schema,
+    schemaDefinition,
   })
   const patchesReceived = useSelector(props.editorRef, (s) =>
     reverse(s.context.patchesReceived),
@@ -116,7 +116,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
       >
         <PortableTextEditor editor={editor} value={value}>
           <div className="flex flex-col gap-2">
-            <PortableTextToolbar />
+            <PortableTextToolbar schemaDefinition={schemaDefinition} />
             <div className="flex gap-2 items-center">
               <ErrorBoundary
                 fallbackProps={{area: 'PortableTextEditable'}}

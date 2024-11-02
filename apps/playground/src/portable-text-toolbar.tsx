@@ -4,12 +4,6 @@ import {
   usePortableTextEditorSelection,
   type EditorSelection,
 } from '@portabletext/editor'
-import type {
-  BlockDecoratorDefinition,
-  BlockListDefinition,
-  ObjectSchemaType,
-} from '@sanity/types'
-import startCase from 'lodash.startcase'
 import {SquareDashedMousePointerIcon} from 'lucide-react'
 import {isValidElement, useMemo} from 'react'
 import {Group, TooltipTrigger} from 'react-aria-components'
@@ -20,24 +14,26 @@ import {Separator} from './components/separator'
 import {ToggleButton} from './components/toggle-button'
 import {Toolbar} from './components/toolbar'
 import {Tooltip} from './components/tooltip'
+import type {SchemaDefinition} from './schema'
 
-export function PortableTextToolbar() {
+export function PortableTextToolbar(props: {
+  schemaDefinition: SchemaDefinition
+}) {
   const editor = usePortableTextEditor()
   const selection = usePortableTextEditorSelection()
-  const decorators = editor.schemaTypes.decorators
-  const annotations = editor.schemaTypes.annotations
-  const lists = editor.schemaTypes.lists
-  const inlineObjects = editor.schemaTypes.inlineObjects
-  const blockObjects = editor.schemaTypes.blockObjects
 
   return (
     <Toolbar aria-label="Text formatting">
-      <StyleSelector editor={editor} selection={selection} />
+      <StyleSelector
+        schemaDefinition={props.schemaDefinition}
+        editor={editor}
+        selection={selection}
+      />
       <Separator orientation="vertical" />
       <Group aria-label="Decorators" className="contents">
-        {decorators.map((decorator) => (
+        {props.schemaDefinition.decorators?.map((decorator) => (
           <DecoratorToolbarButton
-            key={decorator.value}
+            key={decorator.name}
             decorator={decorator}
             editor={editor}
             selection={selection}
@@ -46,7 +42,7 @@ export function PortableTextToolbar() {
       </Group>
       <Separator orientation="vertical" />
       <Group aria-label="Annotations" className="contents">
-        {annotations.map((annotation) => (
+        {props.schemaDefinition.annotations.map((annotation) => (
           <AnnotationToolbarButton
             key={annotation.name}
             annotation={annotation}
@@ -57,9 +53,9 @@ export function PortableTextToolbar() {
       </Group>
       <Separator orientation="vertical" />
       <Group aria-label="Lists" className="contents">
-        {lists.map((list) => (
+        {props.schemaDefinition.lists.map((list) => (
           <ListToolbarButton
-            key={list.value}
+            key={list.name}
             list={list}
             editor={editor}
             selection={selection}
@@ -68,7 +64,7 @@ export function PortableTextToolbar() {
       </Group>
       <Separator orientation="vertical" />
       <Group aria-label="Block objects" className="contents">
-        {blockObjects.map((blockObject) => (
+        {props.schemaDefinition.blockObjects.map((blockObject) => (
           <BlockObjectButton
             key={blockObject.name}
             blockObject={blockObject}
@@ -78,7 +74,7 @@ export function PortableTextToolbar() {
       </Group>
       <Separator orientation="vertical" />
       <Group aria-label="Inline objects" className="contents">
-        {inlineObjects.map((inlineObject) => (
+        {props.schemaDefinition.inlineObjects.map((inlineObject) => (
           <InlineObjectButton
             key={inlineObject.name}
             inlineObject={inlineObject}
@@ -105,19 +101,19 @@ export function PortableTextToolbar() {
 }
 
 function StyleSelector(props: {
+  schemaDefinition: SchemaDefinition
   editor: PortableTextEditor
   selection: EditorSelection
 }) {
-  const styles = props.editor.schemaTypes.styles
   const focusBlock = PortableTextEditor.focusBlock(props.editor)
   const activeStyle = useMemo(
     () =>
       focusBlock
-        ? (styles.find((style) =>
-            PortableTextEditor.hasBlockStyle(props.editor, style.value),
-          )?.value ?? null)
+        ? (props.schemaDefinition.styles.find((style) =>
+            PortableTextEditor.hasBlockStyle(props.editor, style.name),
+          )?.name ?? null)
         : null,
-    [props.editor, focusBlock, styles],
+    [props.editor, focusBlock, props.schemaDefinition],
   )
 
   return (
@@ -132,8 +128,8 @@ function StyleSelector(props: {
         }
       }}
     >
-      {styles.map((style) => (
-        <SelectItem key={style.value} id={style.value} textValue={style.title}>
+      {props.schemaDefinition.styles.map((style) => (
+        <SelectItem key={style.name} id={style.name} textValue={style.title}>
           <Icon icon={style.icon} fallback={null} />
           {style.title}
         </SelectItem>
@@ -143,28 +139,29 @@ function StyleSelector(props: {
 }
 
 function AnnotationToolbarButton(props: {
-  annotation: ObjectSchemaType
+  annotation: SchemaDefinition['annotations'][number]
   editor: PortableTextEditor
   selection: EditorSelection
 }) {
   const active =
     props.selection !== null &&
     PortableTextEditor.isAnnotationActive(props.editor, props.annotation.name)
-  const title = props.annotation.title ?? startCase(props.annotation.name)
 
   return (
     <TooltipTrigger>
       <ToggleButton
-        aria-label={title}
+        aria-label={props.annotation.title}
         size="sm"
         isSelected={active}
         onPress={() => {
           if (active) {
-            PortableTextEditor.removeAnnotation(props.editor, props.annotation)
+            PortableTextEditor.removeAnnotation(props.editor, {
+              name: props.annotation.name,
+            })
           } else {
             PortableTextEditor.addAnnotation(
               props.editor,
-              props.annotation,
+              {name: props.annotation.name},
               props.annotation.name === 'comment'
                 ? {
                     text: 'Consider rewriting this',
@@ -179,21 +176,21 @@ function AnnotationToolbarButton(props: {
           PortableTextEditor.focus(props.editor)
         }}
       >
-        <Icon icon={props.annotation.icon} fallback={title} />
+        <Icon icon={props.annotation.icon} fallback={props.annotation.title} />
       </ToggleButton>
-      <Tooltip>{title}</Tooltip>
+      <Tooltip>{props.annotation.title}</Tooltip>
     </TooltipTrigger>
   )
 }
 
 function DecoratorToolbarButton(props: {
-  decorator: BlockDecoratorDefinition
+  decorator: SchemaDefinition['decorators'][number]
   editor: PortableTextEditor
   selection: EditorSelection
 }) {
   const active =
     props.selection !== null &&
-    PortableTextEditor.isMarkActive(props.editor, props.decorator.value)
+    PortableTextEditor.isMarkActive(props.editor, props.decorator.name)
 
   return (
     <TooltipTrigger>
@@ -202,7 +199,7 @@ function DecoratorToolbarButton(props: {
         size="sm"
         isSelected={active}
         onPress={() => {
-          PortableTextEditor.toggleMark(props.editor, props.decorator.value)
+          PortableTextEditor.toggleMark(props.editor, props.decorator.name)
           PortableTextEditor.focus(props.editor)
         }}
       >
@@ -214,13 +211,13 @@ function DecoratorToolbarButton(props: {
 }
 
 function ListToolbarButton(props: {
-  list: BlockListDefinition
+  list: SchemaDefinition['lists'][number]
   editor: PortableTextEditor
   selection: EditorSelection
 }) {
   const active =
     props.selection !== null &&
-    PortableTextEditor.hasListStyle(props.editor, props.list.value)
+    PortableTextEditor.hasListStyle(props.editor, props.list.name)
 
   return (
     <TooltipTrigger>
@@ -229,7 +226,7 @@ function ListToolbarButton(props: {
         size="sm"
         isSelected={active}
         onPress={() => {
-          PortableTextEditor.toggleList(props.editor, props.list.value)
+          PortableTextEditor.toggleList(props.editor, props.list.name)
           PortableTextEditor.focus(props.editor)
         }}
       >
@@ -241,7 +238,7 @@ function ListToolbarButton(props: {
 }
 
 function InlineObjectButton(props: {
-  inlineObject: ObjectSchemaType
+  inlineObject: SchemaDefinition['inlineObjects'][number]
   editor: PortableTextEditor
 }) {
   return (
@@ -249,9 +246,11 @@ function InlineObjectButton(props: {
       variant="secondary"
       size="sm"
       onPress={() => {
-        PortableTextEditor.insertChild(props.editor, props.inlineObject, {
-          symbol: 'NVDA',
-        })
+        PortableTextEditor.insertChild(
+          props.editor,
+          {name: props.inlineObject.name},
+          {symbol: 'NVDA'},
+        )
         PortableTextEditor.focus(props.editor)
       }}
     >
@@ -262,7 +261,7 @@ function InlineObjectButton(props: {
 }
 
 function BlockObjectButton(props: {
-  blockObject: ObjectSchemaType
+  blockObject: SchemaDefinition['blockObjects'][number]
   editor: PortableTextEditor
 }) {
   return (
@@ -272,8 +271,8 @@ function BlockObjectButton(props: {
       onPress={() => {
         PortableTextEditor.insertBlock(
           props.editor,
-          props.blockObject,
-          props.blockObject.name === 'img'
+          {name: props.blockObject.name},
+          props.blockObject.name === 'image'
             ? {url: 'http://example.com/image.png'}
             : {},
         )
