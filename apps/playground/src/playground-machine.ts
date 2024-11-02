@@ -1,6 +1,5 @@
-import type {MutationChange} from '@portabletext/editor'
+import type {MutationChange, PortableTextBlock} from '@portabletext/editor'
 import {applyAll, type Patch} from '@portabletext/patches'
-import type {PortableTextBlock} from '@sanity/types'
 import {v4 as uuid} from 'uuid'
 import {
   assertEvent,
