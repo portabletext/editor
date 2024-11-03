@@ -74,7 +74,7 @@
     "@jest/globals": "^29.7.0",
     "@jest/types": "^29.6.3",
     "@playwright/test": "1.48.2",
-    "@portabletext/toolkit": "^2.0.15",
+    "@portabletext/toolkit": "^2.0.16",
     "@sanity/block-tools": "^3.62.3",
     "@sanity/diff-match-patch": "^3.1.1",
     "@sanity/gherkin-driver": "workspace:^",
