@@ -75,6 +75,11 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       ],
       (_, {focusTextBlock, focusSpan, style}) => [
         {
+          type: 'unset block',
+          props: ['listItem', 'level'],
+          paths: [focusTextBlock.path],
+        },
+        {
           type: 'set block',
           style,
           paths: [focusTextBlock.path],
