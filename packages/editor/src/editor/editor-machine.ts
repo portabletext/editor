@@ -153,7 +153,7 @@ export const editorMachine = setup({
     'assign behaviors': assign({
       behaviors: ({event}) => {
         assertEvent(event, 'update behaviors')
-        return [...coreBehaviors, ...event.behaviors]
+        return event.behaviors
       },
     }),
     'assign schema': assign({
@@ -274,9 +274,7 @@ export const editorMachine = setup({
 }).createMachine({
   id: 'editor',
   context: ({input}) => ({
-    behaviors: input.behaviors
-      ? [...coreBehaviors, ...input.behaviors]
-      : coreBehaviors,
+    behaviors: input.behaviors ?? coreBehaviors,
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
     schema: input.schema,

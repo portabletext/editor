@@ -7,8 +7,23 @@ const softReturn = defineBehavior({
   actions: [() => [{type: 'insert text', text: '\n'}]],
 })
 
+/**
+ * @alpha
+ */
 export const coreBehaviors = [
   softReturn,
-  ...coreBlockObjectBehaviors,
-  ...coreListBehaviors,
+  coreBlockObjectBehaviors.breakingBlockObject,
+  coreBlockObjectBehaviors.deletingEmptyTextBlockAfterBlockObject,
+  coreBlockObjectBehaviors.deletingEmptyTextBlockBeforeBlockObject,
+  coreListBehaviors.clearListOnBackspace,
+  coreListBehaviors.unindentListOnBackspace,
 ]
+
+/**
+ * @alpha
+ */
+export const coreBehavior = {
+  softReturn,
+  blockObjects: coreBlockObjectBehaviors,
+  lists: coreListBehaviors,
+}
