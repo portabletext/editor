@@ -13,17 +13,21 @@ Feature: Annotations Overlapping Decorators
     Then the text is <new text>
 
     Examples:
-      | text          | annotated     | decorated | position      | new text           |
-      | "foo bar baz" | "bar"         | "bar"     | after "foo "  | "foo new,bar, baz" |
-      | "foo bar baz" | "bar"         | "bar"     | before "bar"  | "foo new,bar, baz" |
-      | "foo bar baz" | "bar"         | "bar"     | after "bar"   | "foo ,bar,new baz" |
-      | "foo bar baz" | "bar"         | "bar"     | before " baz" | "foo ,bar,new baz" |
-      | "foo"         | "foo"         | "foo"     | before "foo"  | "new,foo"          |
-      | "foo"         | "foo"         | "foo"     | after "foo"   | "foo,new"          |
-      | "foo bar baz" | "foo bar baz" | "bar"     | after "foo "  | "foo new,bar, baz" |
-      | "foo bar baz" | "foo bar baz" | "bar"     | before "bar"  | "foo new,bar, baz" |
-      | "foo bar baz" | "foo bar baz" | "bar"     | after "bar"   | "foo ,barnew, baz" |
-      | "foo bar baz" | "foo bar baz" | "bar"     | before " baz" | "foo ,barnew, baz" |
+      | text          | annotated     | decorated     | position      | new text           |
+      | "foo bar baz" | "bar"         | "bar"         | after "foo "  | "foo new,bar, baz" |
+      | "foo bar baz" | "bar"         | "bar"         | before "bar"  | "foo new,bar, baz" |
+      | "foo bar baz" | "bar"         | "bar"         | after "bar"   | "foo ,bar,new baz" |
+      | "foo bar baz" | "bar"         | "bar"         | before " baz" | "foo ,bar,new baz" |
+      | "foo"         | "foo"         | "foo"         | before "foo"  | "new,foo"          |
+      | "foo"         | "foo"         | "foo"         | after "foo"   | "foo,new"          |
+      | "foo bar baz" | "foo bar baz" | "bar"         | after "foo "  | "foo new,bar, baz" |
+      | "foo bar baz" | "foo bar baz" | "bar"         | before "bar"  | "foo new,bar, baz" |
+      | "foo bar baz" | "foo bar baz" | "bar"         | after "bar"   | "foo ,barnew, baz" |
+      | "foo bar baz" | "foo bar baz" | "bar"         | before " baz" | "foo ,barnew, baz" |
+      | "foo bar baz" | "bar"         | "foo bar baz" | after "foo "  | "foo new,bar, baz" |
+      | "foo bar baz" | "bar"         | "foo bar baz" | before "bar"  | "foo new,bar, baz" |
+      | "foo bar baz" | "bar"         | "foo bar baz" | after "bar"   | "foo ,bar,new baz" |
+      | "foo bar baz" | "bar"         | "foo bar baz" | before " baz" | "foo ,bar,new baz" |
 
   Scenario Outline: Writing on top of a decorated annotation
     Given the text "foo bar baz"
