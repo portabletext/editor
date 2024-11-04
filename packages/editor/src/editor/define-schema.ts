@@ -3,8 +3,10 @@ import {
   defineField,
   defineType,
   type BlockDecoratorDefinition,
+  type ObjectSchemaType,
 } from '@sanity/types'
 import startCase from 'lodash.startcase'
+import type {PortableTextMemberSchemaTypes} from '../types/editor'
 import {getPortableTextMemberSchemaTypes} from '../utils/getPortableTextMemberSchemaTypes'
 
 /**
@@ -46,7 +48,9 @@ export function compileSchemaDefinition<
     definition?.blockObjects?.map((blockObject) =>
       defineType({
         type: 'object',
-        name: blockObject.name,
+        // Very naive way to work around `SanitySchema.compile` adding default
+        // fields to objects with the name `image`
+        name: blockObject.name === 'image' ? 'tmp-image' : blockObject.name,
         title: blockObject.title,
         icon: blockObject.icon,
         fields: [],
@@ -107,5 +111,21 @@ export function compileSchemaDefinition<
     types: [portableTextSchema, ...blockObjects, ...inlineObjects],
   }).get('portable-text')
 
-  return getPortableTextMemberSchemaTypes(schema)
+  const pteSchema = getPortableTextMemberSchemaTypes(schema)
+
+  return {
+    ...pteSchema,
+    blockObjects: pteSchema.blockObjects.map((blockObject) =>
+      blockObject.name === 'tmp-image'
+        ? ({
+            ...blockObject,
+            name: 'image',
+            type: {
+              ...blockObject.type,
+              name: 'image',
+            },
+          } as ObjectSchemaType)
+        : blockObject,
+    ),
+  } satisfies PortableTextMemberSchemaTypes
 }
