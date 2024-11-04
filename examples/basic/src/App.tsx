@@ -43,7 +43,7 @@ const schemaDefinition = defineSchema({
 })
 
 function App() {
-  // Creata an editor
+  // Create an editor
   const editor = useEditor({
     schemaDefinition,
   })

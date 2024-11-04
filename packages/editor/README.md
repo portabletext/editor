@@ -57,7 +57,7 @@ Use `useEditor` to create an `editor` and pass that into `PortableTextEditor`. U
 
 ```tsx
 function App() {
-  // Creata an editor
+  // Create an editor
   const editor = useEditor({
     schemaDefinition,
   })
