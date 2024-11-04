@@ -280,8 +280,8 @@ importers:
         specifier: ^3.62.3
         version: 3.62.3(debug@4.3.7)
       '@sanity/ui':
-        specifier: ^2.8.18
-        version: 2.8.18(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1)(styled-components@6.1.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
+        specifier: ^2.8.19
+        version: 2.8.19(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1)(styled-components@6.1.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
       '@sanity/util':
         specifier: ^3.62.3
         version: 3.62.3(debug@4.3.7)
@@ -2613,8 +2613,8 @@ packages:
   '@sanity/types@3.62.3':
     resolution: {integrity: sha512-9dXm3KCbpGezzJ50mOQbkgGb0kRS+tt5hHX9hJsBdQ7J+hYO/X4nBOqqf7VFNqYE0LNnxjrceIwKHZqAlNGRNg==}
 
-  '@sanity/ui@2.8.18':
-    resolution: {integrity: sha512-oHEkHY3SnII1Bpna3w4/QXY5+jCQL3ge3d20QuYWAEu/93mWzpg0i0RscPbmBimguu5amOsR4EjkQP3fFQNAeQ==}
+  '@sanity/ui@2.8.19':
+    resolution: {integrity: sha512-3o5yQJXzTtXSRCptinYqPP8ME2+vatN7q42bSB96T45viX1tVHETGR3s2KCQCLFskdCHSwC3gsPLl8RbTZQmDw==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
       react: ^18 || >=19.0.0-0
@@ -5208,11 +5208,6 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0
       react-dom: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0
-
-  react-compiler-runtime@19.0.0-beta-6fc168f-20241025:
-    resolution: {integrity: sha512-XY5p6GUVaz8P0c/B/2ebqz/xdp0YOtidtOSuiYyQB05fMws0Qys+zubDH7IKQBEtw4AKoCzrJ6ReeTtFLOKniw==}
-    peerDependencies:
-      react: ^17.0.0 || ^18.0.0 || ^19.0.0
 
   react-compiler-runtime@19.0.0-beta-9ee70a1-20241017:
     resolution: {integrity: sha512-hVrlYbVacwEdZi08RUxSwIzZR2/+WxUsWRa7mjViRhqcqUYK+7u8UEVZoJrF5/gsCHMU9PhJRvolygSCaaE0nA==}
@@ -9151,7 +9146,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  '@sanity/ui@2.8.18(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1)(styled-components@6.1.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))':
+  '@sanity/ui@2.8.19(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1)(styled-components@6.1.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1))':
     dependencies:
       '@floating-ui/react-dom': 2.1.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@sanity/color': 3.0.6
@@ -9159,7 +9154,7 @@ snapshots:
       csstype: 3.1.3
       framer-motion: 11.0.8(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
-      react-compiler-runtime: 19.0.0-beta-6fc168f-20241025(react@18.3.1)
+      react-compiler-runtime: 19.0.0-beta-9ee70a1-20241017(react@18.3.1)
       react-dom: 18.3.1(react@18.3.1)
       react-is: 18.3.1
       react-refractor: 2.2.0(react@18.3.1)
@@ -12234,10 +12229,6 @@ snapshots:
       '@react-types/shared': 3.25.0(react@18.3.1)
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
-
-  react-compiler-runtime@19.0.0-beta-6fc168f-20241025(react@18.3.1):
-    dependencies:
-      react: 18.3.1
 
   react-compiler-runtime@19.0.0-beta-9ee70a1-20241017(react@18.3.1):
     dependencies:
