@@ -73,8 +73,8 @@ importers:
         specifier: ^1.2.1
         version: 1.4.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-compiler-runtime:
-        specifier: 19.0.0-beta-6fc168f-20241025
-        version: 19.0.0-beta-6fc168f-20241025(react@18.3.1)
+        specifier: 19.0.0-beta-9ee70a1-20241017
+        version: 19.0.0-beta-9ee70a1-20241017(react@18.3.1)
       react-dom:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
@@ -126,13 +126,13 @@ importers:
         version: 10.4.20(postcss@8.4.47)
       babel-plugin-react-compiler:
         specifier: beta
-        version: 19.0.0-beta-6fc168f-20241025
+        version: 19.0.0-beta-63b359f-20241101
       eslint:
         specifier: 8.57.1
         version: 8.57.1
       eslint-plugin-react-compiler:
         specifier: beta
-        version: 19.0.0-beta-6fc168f-20241025(eslint@8.57.1)
+        version: 19.0.0-beta-63b359f-20241101(eslint@8.57.1)
       eslint-plugin-react-hooks:
         specifier: ^5.0.0
         version: 5.0.0(eslint@8.57.1)
@@ -225,8 +225,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.0
       react-compiler-runtime:
-        specifier: 19.0.0-beta-6fc168f-20241025
-        version: 19.0.0-beta-6fc168f-20241025(react@18.3.1)
+        specifier: 19.0.0-beta-9ee70a1-20241017
+        version: 19.0.0-beta-9ee70a1-20241017(react@18.3.1)
       slate:
         specifier: 0.110.2
         version: 0.110.2
@@ -272,7 +272,7 @@ importers:
         version: link:../gherkin-driver
       '@sanity/pkg-utils':
         specifier: ^6.11.8
-        version: 6.11.8(@types/babel__core@7.20.5)(@types/node@18.19.59)(babel-plugin-react-compiler@19.0.0-beta-6fc168f-20241025)(debug@4.3.7)(typescript@5.6.3)
+        version: 6.11.8(@types/babel__core@7.20.5)(@types/node@18.19.59)(babel-plugin-react-compiler@19.0.0-beta-63b359f-20241101)(debug@4.3.7)(typescript@5.6.3)
       '@sanity/schema':
         specifier: ^3.62.3
         version: 3.62.3(debug@4.3.7)
@@ -341,7 +341,7 @@ importers:
         version: 2.1.4(@types/node@18.19.59)(playwright@1.48.2)(typescript@5.6.3)(vite@5.4.10(@types/node@18.19.59)(terser@5.36.0))(vitest@2.1.4)
       babel-plugin-react-compiler:
         specifier: beta
-        version: 19.0.0-beta-6fc168f-20241025
+        version: 19.0.0-beta-63b359f-20241101
       dotenv:
         specifier: ^16.4.5
         version: 16.4.5
@@ -350,7 +350,7 @@ importers:
         version: 8.57.1
       eslint-plugin-react-compiler:
         specifier: beta
-        version: 19.0.0-beta-6fc168f-20241025(eslint@8.57.1)
+        version: 19.0.0-beta-63b359f-20241101(eslint@8.57.1)
       eslint-plugin-react-hooks:
         specifier: ^5.0.0
         version: 5.0.0(eslint@8.57.1)
@@ -422,7 +422,7 @@ importers:
         version: 29.7.0
       '@sanity/pkg-utils':
         specifier: ^6.11.8
-        version: 6.11.8(@types/babel__core@7.20.5)(@types/node@18.19.59)(babel-plugin-react-compiler@19.0.0-beta-6fc168f-20241025)(debug@4.3.7)(typescript@5.6.3)
+        version: 6.11.8(@types/babel__core@7.20.5)(@types/node@18.19.59)(babel-plugin-react-compiler@19.0.0-beta-63b359f-20241101)(debug@4.3.7)(typescript@5.6.3)
       typescript:
         specifier: 5.6.3
         version: 5.6.3
@@ -3151,8 +3151,8 @@ packages:
     peerDependencies:
       '@babel/core': ^7.4.0 || ^8.0.0-0 <8.0.0
 
-  babel-plugin-react-compiler@19.0.0-beta-6fc168f-20241025:
-    resolution: {integrity: sha512-wFVeXhF0hkiRe4bEM0jzeTFMlMbcKNTwhXcFvqUIVB6WXf+3vdwOWGWnw7jwvDb2mzvsIZOFt/96itOFt1rwjw==}
+  babel-plugin-react-compiler@19.0.0-beta-63b359f-20241101:
+    resolution: {integrity: sha512-qrmTHJP3O2kGbtL7kuySX3Lmk+5/4ZR1rHr8QhKa0GzKbmpAUGrTeWOg0NCI5t+QUfKKizxIO1+t0HsZW9x4vQ==}
 
   babel-preset-current-node-syntax@1.1.0:
     resolution: {integrity: sha512-ldYss8SbBlWva1bs28q78Ju5Zq1F+8BrqBZZ0VFhLBvhh6lCpC2o3gDJi/5DRLs9FgYZCnmPYIVFU4lRXCkyUw==}
@@ -3654,8 +3654,8 @@ packages:
     resolution: {integrity: sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==}
     engines: {node: '>=10'}
 
-  eslint-plugin-react-compiler@19.0.0-beta-6fc168f-20241025:
-    resolution: {integrity: sha512-mHn5tYt9dT4GiXHF5muiz6p+4Lirgi0Oc87N2KrbB/ciSkT+VZ8iJA+6bbS4//ljYzYbxBbPMHWS/dZWhQrbpQ==}
+  eslint-plugin-react-compiler@19.0.0-beta-63b359f-20241101:
+    resolution: {integrity: sha512-b7edYKziu3EFUh9I2UirMnzlKT/80TS1i9pHHp5Rssv5HG74wPtxxdU13BN42hNFj2/Wnq4ToPjMVyuIFO5dhA==}
     engines: {node: ^14.17.0 || ^16.0.0 || >= 18.0.0}
     peerDependencies:
       eslint: '>=7'
@@ -5211,6 +5211,11 @@ packages:
     resolution: {integrity: sha512-XY5p6GUVaz8P0c/B/2ebqz/xdp0YOtidtOSuiYyQB05fMws0Qys+zubDH7IKQBEtw4AKoCzrJ6ReeTtFLOKniw==}
     peerDependencies:
       react: ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  react-compiler-runtime@19.0.0-beta-9ee70a1-20241017:
+    resolution: {integrity: sha512-hVrlYbVacwEdZi08RUxSwIzZR2/+WxUsWRa7mjViRhqcqUYK+7u8UEVZoJrF5/gsCHMU9PhJRvolygSCaaE0nA==}
+    peerDependencies:
+      react: ^18.2.0 || ^19.0.0
 
   react-dom@18.3.1:
     resolution: {integrity: sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw==}
@@ -9017,7 +9022,7 @@ snapshots:
     dependencies:
       react: 18.3.1
 
-  '@sanity/pkg-utils@6.11.8(@types/babel__core@7.20.5)(@types/node@18.19.59)(babel-plugin-react-compiler@19.0.0-beta-6fc168f-20241025)(debug@4.3.7)(typescript@5.6.3)':
+  '@sanity/pkg-utils@6.11.8(@types/babel__core@7.20.5)(@types/node@18.19.59)(babel-plugin-react-compiler@19.0.0-beta-63b359f-20241101)(debug@4.3.7)(typescript@5.6.3)':
     dependencies:
       '@babel/core': 7.26.0
       '@babel/preset-typescript': 7.26.0(@babel/core@7.26.0)
@@ -9062,7 +9067,7 @@ snapshots:
       zod: 3.23.8
       zod-validation-error: 3.4.0(zod@3.23.8)
     optionalDependencies:
-      babel-plugin-react-compiler: 19.0.0-beta-6fc168f-20241025
+      babel-plugin-react-compiler: 19.0.0-beta-63b359f-20241101
     transitivePeerDependencies:
       - '@types/babel__core'
       - '@types/node'
@@ -9852,7 +9857,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  babel-plugin-react-compiler@19.0.0-beta-6fc168f-20241025:
+  babel-plugin-react-compiler@19.0.0-beta-63b359f-20241101:
     dependencies:
       '@babel/types': 7.26.0
 
@@ -10333,7 +10338,7 @@ snapshots:
 
   escape-string-regexp@4.0.0: {}
 
-  eslint-plugin-react-compiler@19.0.0-beta-6fc168f-20241025(eslint@8.57.1):
+  eslint-plugin-react-compiler@19.0.0-beta-63b359f-20241101(eslint@8.57.1):
     dependencies:
       '@babel/core': 7.26.0
       '@babel/parser': 7.26.1
@@ -12229,6 +12234,10 @@ snapshots:
       react-dom: 18.3.1(react@18.3.1)
 
   react-compiler-runtime@19.0.0-beta-6fc168f-20241025(react@18.3.1):
+    dependencies:
+      react: 18.3.1
+
+  react-compiler-runtime@19.0.0-beta-9ee70a1-20241017(react@18.3.1):
     dependencies:
       react: 18.3.1
 
