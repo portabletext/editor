@@ -411,6 +411,24 @@ export function createWithPortableTextMarkModel(
             })
             return
           }
+
+          const nextSpanDecorators =
+            nextSpan?.marks?.filter((mark) => decorators.includes(mark)) ?? []
+          const decoratorStarting = nextSpanDecorators.length > 0
+
+          if (
+            decoratorStarting &&
+            atTheEndOfAnnotation &&
+            !atTheStartOfAnnotation &&
+            isPortableTextSpan(op.node) &&
+            op.node.marks?.length === 0
+          ) {
+            Transforms.insertNodes(editor, {
+              ...op.node,
+              marks: nextSpanDecorators,
+            })
+            return
+          }
         }
       }
 
