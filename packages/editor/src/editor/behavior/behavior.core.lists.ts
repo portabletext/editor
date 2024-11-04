@@ -73,4 +73,4 @@ const unindentListOnBackspace = defineBehavior({
   ],
 })
 
-export const coreListBehaviors = [clearListOnBackspace, unindentListOnBackspace]
+export const coreListBehaviors = {clearListOnBackspace, unindentListOnBackspace}

@@ -9,7 +9,11 @@ import {
   setup,
   type ActorRefFrom,
 } from 'xstate'
-import type {EditorSelection, PortableTextEditor} from '../src'
+import {
+  coreBehaviors,
+  type EditorSelection,
+  type PortableTextEditor,
+} from '../src'
 import type {Behavior} from '../src/editor/behavior/behavior.types'
 
 type MutationEvent = {
@@ -123,7 +127,7 @@ export const testMachine = setup({
       value: Array<PortableTextBlock> | undefined
     },
     input: {} as {
-      behaviors: Array<Behavior>
+      behaviors?: Array<Behavior>
       schema: ComponentProps<typeof PortableTextEditor>['schemaType']
       value: Array<PortableTextBlock> | undefined
     },
@@ -177,7 +181,7 @@ export const testMachine = setup({
 }).createMachine({
   id: 'test',
   context: ({input}) => ({
-    behaviors: input.behaviors,
+    behaviors: input.behaviors ?? coreBehaviors,
     editorIdGenerator: createKeyGenerator('e'),
     editors: [],
     schema: input.schema,

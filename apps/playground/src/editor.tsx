@@ -1,4 +1,5 @@
 import {
+  coreBehaviors,
   createMarkdownBehaviors,
   PortableTextEditable,
   PortableTextEditor,
@@ -58,16 +59,19 @@ export function Editor(props: {editorRef: EditorActorRef}) {
     (s) => s.context.keyGenerator,
   )
   const editor = useEditor({
-    behaviors: createMarkdownBehaviors({
-      mapDefaultStyle: (schema) => schema.styles[0].value,
-      mapHeadingStyle: (schema, level) => schema.styles[level]?.value,
-      mapBlockquoteStyle: (schema) =>
-        schema.styles.find((style) => style.value === 'blockquote')?.value,
-      mapUnorderedListStyle: (schema) =>
-        schema.lists.find((list) => list.value === 'bullet')?.value,
-      mapOrderedListStyle: (schema) =>
-        schema.lists.find((list) => list.value === 'number')?.value,
-    }),
+    behaviors: [
+      ...coreBehaviors,
+      ...createMarkdownBehaviors({
+        mapDefaultStyle: (schema) => schema.styles[0].value,
+        mapHeadingStyle: (schema, level) => schema.styles[level]?.value,
+        mapBlockquoteStyle: (schema) =>
+          schema.styles.find((style) => style.value === 'blockquote')?.value,
+        mapUnorderedListStyle: (schema) =>
+          schema.lists.find((list) => list.value === 'bullet')?.value,
+        mapOrderedListStyle: (schema) =>
+          schema.lists.find((list) => list.value === 'number')?.value,
+      }),
+    ],
     keyGenerator,
     schemaDefinition,
   })

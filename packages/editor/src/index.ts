@@ -1,5 +1,6 @@
 export type {Patch} from '@portabletext/patches'
 export type {PortableTextBlock, PortableTextChild} from '@sanity/types'
+export {coreBehavior, coreBehaviors} from './editor/behavior/behavior.core'
 export {
   createMarkdownBehaviors,
   type MarkdownBehaviorsConfig,
@@ -16,8 +17,8 @@ export {
 } from './editor/behavior/behavior.types'
 export {
   defineSchema,
-  type SchemaDefinition,
   type BaseDefinition,
+  type SchemaDefinition,
 } from './editor/define-schema'
 export {PortableTextEditable} from './editor/Editable'
 export type {PortableTextEditableProps} from './editor/Editable'

@@ -9,7 +9,7 @@ import {
   selectionIsCollapsed,
 } from './behavior.utils'
 
-const breakingVoidBlock = defineBehavior({
+const breakingBlockObject = defineBehavior({
   on: 'insert break',
   guard: ({context}) => {
     const focusBlockObject = getFocusBlockObject(context)
@@ -99,8 +99,8 @@ const deletingEmptyTextBlockBeforeBlockObject = defineBehavior({
   ],
 })
 
-export const coreBlockObjectBehaviors = [
-  breakingVoidBlock,
+export const coreBlockObjectBehaviors = {
+  breakingBlockObject,
   deletingEmptyTextBlockAfterBlockObject,
   deletingEmptyTextBlockBeforeBlockObject,
-]
+}
