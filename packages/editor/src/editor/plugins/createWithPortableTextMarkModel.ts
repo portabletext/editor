@@ -65,7 +65,8 @@ export function createWithPortableTextMarkModel(
           if (
             editor.isTextSpan(child) &&
             editor.isTextSpan(nextNode) &&
-            isEqual(child.marks, nextNode.marks)
+            child.marks?.every((mark) => nextNode.marks?.includes(mark)) &&
+            nextNode.marks?.every((mark) => child.marks?.includes(mark))
           ) {
             debug(
               'Merging spans',

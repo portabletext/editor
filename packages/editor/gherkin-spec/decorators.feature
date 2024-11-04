@@ -198,3 +198,17 @@ Feature: Decorators
     And "foo" has no marks
     And "bar" has marks "strong"
     And "baz" has marks "strong"
+
+  Scenario: Merging spans with same but different-ordered decorators
+    Given the text "foobar"
+    And "strong" around "foo"
+    And "em" around "bar"
+    Then the text is "foo,bar"
+    And "foo" has marks "strong"
+    And "bar" has marks "em"
+    When "foo" is selected
+    And "em" is toggled using the keyboard
+    And "bar" is selected
+    And "strong" is toggled using the keyboard
+    Then the text is "foobar"
+    And "foobar" has marks "strong,em"
