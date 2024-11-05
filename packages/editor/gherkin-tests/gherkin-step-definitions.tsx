@@ -34,7 +34,7 @@ import {
   type TestActorRef,
 } from './test-machine'
 
-type EditorContext = {
+export type EditorContext = {
   locator: Locator
   insertObjectButtonLocator: {
     image: Locator
@@ -49,6 +49,32 @@ type EditorContext = {
   }
   toggleStyleButtonLocator: (style: 'normal' | `h${number}`) => Locator
   ref: EditorActorRef
+}
+
+export function createEditorContext({
+  ref,
+  locator,
+}: {
+  ref: EditorActorRef
+  locator: Locator
+}): EditorContext {
+  return {
+    ref,
+    locator: locator.getByRole('textbox'),
+    insertObjectButtonLocator: {
+      image: locator.getByTestId('button-insert-image'),
+    },
+    insertInlineObjectButtonLocator: {
+      'stock-ticker': locator.getByTestId('button-insert-stock-ticker'),
+    },
+    selectionLocator: locator.getByTestId('selection'),
+    toggleAnnotationButtonLocator: {
+      comment: locator.getByTestId('button-toggle-comment'),
+      link: locator.getByTestId('button-toggle-link'),
+    },
+    toggleStyleButtonLocator: (style) =>
+      locator.getByTestId(`button-toggle-style-${style}`),
+  }
 }
 
 export type Context = {
@@ -78,23 +104,7 @@ export const stepDefinitions = [
     const locator = page.getByTestId(editorARef.id)
 
     context.testRef = testActor
-    context.editorA = {
-      ref: editorARef,
-      locator: locator.getByRole('textbox'),
-      insertObjectButtonLocator: {
-        image: locator.getByTestId('button-insert-image'),
-      },
-      insertInlineObjectButtonLocator: {
-        'stock-ticker': locator.getByTestId('button-insert-stock-ticker'),
-      },
-      selectionLocator: locator.getByTestId('selection'),
-      toggleAnnotationButtonLocator: {
-        comment: locator.getByTestId('button-toggle-comment'),
-        link: locator.getByTestId('button-toggle-link'),
-      },
-      toggleStyleButtonLocator: (style) =>
-        locator.getByTestId(`button-toggle-style-${style}`),
-    }
+    context.editorA = createEditorContext({ref: editorARef, locator})
 
     vi.waitFor(async () => {
       await expect.element(context.editorA.locator).toBeInTheDocument()
@@ -118,48 +128,18 @@ export const stepDefinitions = [
     const editorALocator = page.getByTestId(editorARef.id)
 
     context.testRef = testActor
-    context.editorA = {
+    context.editorA = createEditorContext({
       ref: editorARef,
-      locator: editorALocator.getByRole('textbox'),
-      insertObjectButtonLocator: {
-        image: editorALocator.getByTestId('button-insert-image'),
-      },
-      insertInlineObjectButtonLocator: {
-        'stock-ticker': editorALocator.getByTestId(
-          'button-insert-stock-ticker',
-        ),
-      },
-      selectionLocator: editorALocator.getByTestId('selection'),
-      toggleAnnotationButtonLocator: {
-        comment: editorALocator.getByTestId('button-toggle-comment'),
-        link: editorALocator.getByTestId('button-toggle-link'),
-      },
-      toggleStyleButtonLocator: (style) =>
-        editorALocator.getByTestId(`button-toggle-style-${style}`),
-    }
+      locator: editorALocator,
+    })
 
     const editorBRef = testActor.getSnapshot().context.editors[1]
     const editorBLocator = page.getByTestId(editorBRef.id)
 
-    context.editorB = {
+    context.editorB = createEditorContext({
       ref: editorBRef,
-      locator: editorBLocator.getByRole('textbox'),
-      insertObjectButtonLocator: {
-        image: editorBLocator.getByTestId('button-insert-image'),
-      },
-      insertInlineObjectButtonLocator: {
-        'stock-ticker': editorBLocator.getByTestId(
-          'button-insert-stock-ticker',
-        ),
-      },
-      selectionLocator: editorBLocator.getByTestId('selection'),
-      toggleAnnotationButtonLocator: {
-        comment: editorBLocator.getByTestId('button-toggle-comment'),
-        link: editorBLocator.getByTestId('button-toggle-link'),
-      },
-      toggleStyleButtonLocator: (style) =>
-        editorBLocator.getByTestId(`button-toggle-style-${style}`),
-    }
+      locator: editorBLocator,
+    })
 
     vi.waitFor(async () => {
       await expect.element(context.editorA.locator).toBeInTheDocument()
@@ -599,12 +579,7 @@ export const stepDefinitions = [
           })
         })
       } else {
-        await waitForNewSelection(context.editorA, async () => {
-          context.editorA.ref.send({
-            type: 'selection',
-            selection: getSelectionBeforeText(value, text),
-          })
-        })
+        await putCaretBeforeText(context.editorA, text)
       }
     },
   ),
@@ -624,12 +599,7 @@ export const stepDefinitions = [
           })
         })
       } else {
-        await waitForNewSelection(context.editorB, async () => {
-          context.editorB.ref.send({
-            type: 'selection',
-            selection: getSelectionBeforeText(value, text),
-          })
-        })
+        await putCaretBeforeText(context.editorB, text)
       }
     },
   ),
@@ -649,12 +619,7 @@ export const stepDefinitions = [
           })
         })
       } else {
-        await waitForNewSelection(context.editorA, async () => {
-          context.editorA.ref.send({
-            type: 'selection',
-            selection: getSelectionAfterText(value, text),
-          })
-        })
+        await putCaretAfterText(context.editorA, text)
       }
     },
   ),
@@ -674,12 +639,7 @@ export const stepDefinitions = [
           })
         })
       } else {
-        await waitForNewSelection(context.editorB, async () => {
-          context.editorB.ref.send({
-            type: 'selection',
-            selection: getSelectionAfterText(value, text),
-          })
-        })
+        await putCaretAfterText(context.editorB, text)
       }
     },
   ),
@@ -767,18 +727,12 @@ export const stepDefinitions = [
    * Typing steps
    */
   When('{string} is typed', async (context: Context, text: string) => {
-    await waitForNewValue(async () => {
-      context.editorA.ref.send({type: 'focus'})
-      await userEvent.type(context.editorA.locator, text)
-    })
+    await type(context.editorA, text)
   }),
   When(
     '{string} is typed by editor B',
     async (context: Context, text: string) => {
-      await waitForNewValue(async () => {
-        context.editorB.ref.send({type: 'focus'})
-        await userEvent.type(context.editorB.locator, text)
-      })
+      await type(context.editorB, text)
     },
   ),
 
@@ -857,24 +811,13 @@ export const stepDefinitions = [
    * Undo/redo steps
    */
   When('undo is performed', async (context: Context) => {
-    await waitForNewValue(async () => {
-      context.editorA.ref.send({type: 'focus'})
-      await userEvent.keyboard(`{${getMetaKey()}>}z{/${getMetaKey()}}`)
-    })
+    await undo(context.editorA)
   }),
   When('undo is performed by editor B', async (context: Context) => {
-    await waitForNewValue(async () => {
-      context.editorB.ref.send({type: 'focus'})
-      await userEvent.keyboard(`{${getMetaKey()}>}z{/${getMetaKey()}}`)
-    })
+    await undo(context.editorB)
   }),
   When('redo is performed', async (context: Context) => {
-    await waitForNewValue(async () => {
-      context.editorA.ref.send({type: 'focus'})
-      await userEvent.keyboard(
-        `{Shift>}{${getMetaKey()}>}z{/${getMetaKey()}}{/Shift}`,
-      )
-    })
+    await redo(context.editorA)
   }),
 ]
 
@@ -936,7 +879,7 @@ type ButtonName =
   | 'Enter'
   | 'Shift+Enter'
   | 'Space'
-async function pressButton(
+export async function pressButton(
   editor: EditorContext,
   button: ButtonName,
   times: number,
@@ -976,7 +919,9 @@ function getEditorTextMarks(text: string) {
   return getValue().then((value) => getTextMarks(value, text))
 }
 
-async function getValue(): Promise<Array<PortableTextBlock> | undefined> {
+export async function getValue(): Promise<
+  Array<PortableTextBlock> | undefined
+> {
   const valueLocator = await page.getByTestId('value')
   const valueNode = await valueLocator.query()
 
@@ -987,11 +932,11 @@ async function getValue(): Promise<Array<PortableTextBlock> | undefined> {
   return value
 }
 
-function getText() {
+export function getText() {
   return getValue().then(getValueText)
 }
 
-const waitForNewValue = async (changeFn: () => Promise<void>) => {
+export const waitForNewValue = async (changeFn: () => Promise<void>) => {
   const oldValue = await getValue()
   await changeFn()
   return vi.waitFor(async () => {
@@ -1010,7 +955,7 @@ async function getSelection(editor: EditorContext): Promise<EditorSelection> {
   return selection
 }
 
-const waitForNewSelection = async (
+export const waitForNewSelection = async (
   editor: EditorContext,
   changeFn: () => Promise<void>,
 ) => {
@@ -1019,5 +964,50 @@ const waitForNewSelection = async (
   return vi.waitFor(async () => {
     const newSelection = await getSelection(editor)
     expect(oldSelection).not.toEqual(newSelection)
+  })
+}
+
+export async function putCaretBeforeText(editor: EditorContext, text: string) {
+  const value = await getValue()
+
+  await waitForNewSelection(editor, async () => {
+    editor.ref.send({
+      type: 'selection',
+      selection: getSelectionBeforeText(value, text),
+    })
+  })
+}
+
+export async function putCaretAfterText(editor: EditorContext, text: string) {
+  const value = await getValue()
+
+  await waitForNewSelection(editor, async () => {
+    editor.ref.send({
+      type: 'selection',
+      selection: getSelectionAfterText(value, text),
+    })
+  })
+}
+
+export async function type(editor: EditorContext, text: string) {
+  await waitForNewValue(async () => {
+    editor.ref.send({type: 'focus'})
+    await userEvent.type(editor.locator, text)
+  })
+}
+
+export async function undo(editor: EditorContext) {
+  await waitForNewValue(async () => {
+    editor.ref.send({type: 'focus'})
+    await userEvent.keyboard(`{${getMetaKey()}>}z{/${getMetaKey()}}`)
+  })
+}
+
+export async function redo(editor: EditorContext) {
+  await waitForNewValue(async () => {
+    editor.ref.send({type: 'focus'})
+    await userEvent.keyboard(
+      `{Shift>}{${getMetaKey()}>}z{/${getMetaKey()}}{/Shift}`,
+    )
   })
 }
