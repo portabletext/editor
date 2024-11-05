@@ -1,9 +1,8 @@
-import {PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock} from '@sanity/types'
 import {page, userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {createActor} from 'xstate'
-import {schema} from '../e2e-tests/schema'
 import {Editors} from './editors'
 import {
   createEditorContext,
@@ -14,6 +13,7 @@ import {
   type,
   undo,
 } from './gherkin-step-definitions'
+import {schema} from './schema'
 import {testMachine} from './test-machine'
 
 function createInitialValue(text: string): Array<PortableTextBlock> {

@@ -3,6 +3,7 @@ import {Box, Card, Code, Text} from '@sanity/ui'
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import type {Subject} from 'rxjs'
 import {styled} from 'styled-components'
+import {schema} from '../../../gherkin-tests/schema'
 import {
   PortableTextEditable,
   PortableTextEditor,
@@ -18,7 +19,6 @@ import {
   type RenderBlockFunction,
   type RenderChildFunction,
 } from '../../../src'
-import {schema} from '../../schema'
 import {createKeyGenerator} from '../keyGenerator'
 
 export const HOTKEYS: HotkeyOptions = {

@@ -6,7 +6,6 @@ import {isEqual} from 'lodash'
 import {assert, expect, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {createActor} from 'xstate'
-import {schema} from '../e2e-tests/schema'
 import type {EditorSelection} from '../src'
 import {Editors} from './editors'
 import {
@@ -28,6 +27,7 @@ import {
   reverseTextSelection,
   selectionIsCollapsed,
 } from './gherkin-step-helpers'
+import {schema} from './schema'
 import {
   testMachine,
   type EditorActorRef,
