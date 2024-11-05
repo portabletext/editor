@@ -34,15 +34,6 @@
       "dependsOn": ["build"],
       "persistent": true,
       "cache": false
-    },
-    "test:e2e-legacy": {
-      "dependsOn": ["build"],
-      "outputs": [""]
-    },
-    "test:e2e-legacy:watch": {
-      "dependsOn": ["build"],
-      "persistent": true,
-      "cache": false
     }
   }
 }
