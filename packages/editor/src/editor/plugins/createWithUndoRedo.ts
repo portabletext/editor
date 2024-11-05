@@ -23,7 +23,10 @@ import {
 import type {PortableTextSlateEditor} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {fromSlateValue} from '../../utils/values'
+import {isChangingRemotely} from '../../utils/withChanges'
 import {
+  isRedoing,
+  isUndoing,
   setIsRedoing,
   setIsUndoing,
   withRedoing,
@@ -115,6 +118,25 @@ export function createWithUndoRedo(
         apply(op)
         return
       }
+
+      /**
+       * We don't want to run any side effects when the editor is processing
+       * remote changes.
+       */
+      if (isChangingRemotely(editor)) {
+        apply(op)
+        return
+      }
+
+      /**
+       * We don't want to run any side effects when the editor is undoing or
+       * redoing operations.
+       */
+      if (isUndoing(editor) || isRedoing(editor)) {
+        apply(op)
+        return
+      }
+
       const {operations, history} = editor
       const {undos} = history
       const step = undos[undos.length - 1]
