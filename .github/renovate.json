@@ -7,6 +7,10 @@
   "ignorePresets": ["github>sanity-io/renovate-config:group-non-major"],
   "packageRules": [
     {
+      "matchFileNames": ["apps/**/*", "examples/**/*"],
+      "semanticCommitType": "chore"
+    },
+    {
       "matchFileNames": [
         "packages/editor/package.json",
         "packages/patches/package.json"
