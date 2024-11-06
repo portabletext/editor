@@ -225,18 +225,38 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
-      const looksLikeUnorderedList = /^-/.test(focusSpan.node.text)
+      const looksLikeUnorderedList = /^(-|\*)/.test(focusSpan.node.text)
       const unorderedListStyle = config.mapUnorderedListStyle(context.schema)
+      const caretAtTheEndOfUnorderedList = context.selection.focus.offset === 1
 
-      if (looksLikeUnorderedList && unorderedListStyle !== undefined) {
-        return {focusTextBlock, focusSpan, listItem: unorderedListStyle}
+      if (
+        caretAtTheEndOfUnorderedList &&
+        looksLikeUnorderedList &&
+        unorderedListStyle !== undefined
+      ) {
+        return {
+          focusTextBlock,
+          focusSpan,
+          listItem: unorderedListStyle,
+          listItemLength: 1,
+        }
       }
 
       const looksLikeOrderedList = /^1./.test(focusSpan.node.text)
       const orderedListStyle = config.mapOrderedListStyle(context.schema)
+      const caretAtTheEndOfOrderedList = context.selection.focus.offset === 2
 
-      if (looksLikeOrderedList && orderedListStyle !== undefined) {
-        return {focusTextBlock, focusSpan, listItem: orderedListStyle}
+      if (
+        caretAtTheEndOfOrderedList &&
+        looksLikeOrderedList &&
+        orderedListStyle !== undefined
+      ) {
+        return {
+          focusTextBlock,
+          focusSpan,
+          listItem: orderedListStyle,
+          listItemLength: 2,
+        }
       }
 
       return false
@@ -248,7 +268,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           text: ' ',
         },
       ],
-      (_, {focusTextBlock, focusSpan, listItem}) => [
+      (_, {focusTextBlock, focusSpan, listItem, listItemLength}) => [
         {
           type: 'unset block',
           props: ['style'],
@@ -263,10 +283,13 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         {
           type: 'delete',
           selection: {
-            anchor: {path: focusSpan.path, offset: 0},
+            anchor: {
+              path: focusSpan.path,
+              offset: 0,
+            },
             focus: {
               path: focusSpan.path,
-              offset: focusSpan.node.text.length + 1,
+              offset: listItemLength + 1,
             },
           },
         },
