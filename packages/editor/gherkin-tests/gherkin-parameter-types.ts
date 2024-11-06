@@ -84,7 +84,7 @@ export const parameterTypes = [
   ),
   createParameterType(
     'text',
-    /"([a-z-,#\\n |\[\]]*)"/,
+    /"([a-z-,#>\\n |\[\]]*)"/,
     Array,
     parseGherkinTextParameter,
     false,
