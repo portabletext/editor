@@ -30,7 +30,7 @@ export type MarkdownBehaviorsConfig = {
  * @alpha
  */
 export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
-  const automaticStyleOnSpace = defineBehavior({
+  const automaticBlockquoteOnSpace = defineBehavior({
     on: 'insert text',
     guard: ({context, event}) => {
       const isSpace = event.text === ' '
@@ -47,18 +47,8 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
-      const looksLikeMarkdownHeading = /^#+/.test(focusSpan.node.text)
-      const headingStyle = config.mapHeadingStyle(
-        context.schema,
-        focusSpan.node.text.length,
-      )
-
       const looksLikeMarkdownQuote = /^>/.test(focusSpan.node.text)
       const blockquoteStyle = config.mapBlockquoteStyle(context.schema)
-
-      if (looksLikeMarkdownHeading && headingStyle !== undefined) {
-        return {focusTextBlock, focusSpan, style: headingStyle}
-      }
 
       if (looksLikeMarkdownQuote && blockquoteStyle !== undefined) {
         return {focusTextBlock, focusSpan, style: blockquoteStyle}
@@ -87,10 +77,85 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         {
           type: 'delete',
           selection: {
-            anchor: {path: focusSpan.path, offset: 0},
+            anchor: {
+              path: focusSpan.path,
+              offset: 0,
+            },
             focus: {
               path: focusSpan.path,
-              offset: focusSpan.node.text.length + 1,
+              offset: 1,
+            },
+          },
+        },
+      ],
+    ],
+  })
+  const automaticHeadingOnSpace = defineBehavior({
+    on: 'insert text',
+    guard: ({context, event}) => {
+      const isSpace = event.text === ' '
+
+      if (!isSpace) {
+        return false
+      }
+
+      const selectionCollapsed = selectionIsCollapsed(context)
+      const focusTextBlock = getFocusTextBlock(context)
+      const focusSpan = getFocusSpan(context)
+
+      if (!selectionCollapsed || !focusTextBlock || !focusSpan) {
+        return false
+      }
+
+      const markdownHeadingSearch = /^#+/.exec(focusSpan.node.text)
+      const headingLevel = markdownHeadingSearch
+        ? markdownHeadingSearch[0].length
+        : undefined
+
+      const headingStyle =
+        headingLevel !== undefined
+          ? config.mapHeadingStyle(context.schema, headingLevel)
+          : undefined
+
+      if (headingLevel !== undefined && headingStyle !== undefined) {
+        return {
+          focusTextBlock,
+          focusSpan,
+          style: headingStyle,
+          level: headingLevel,
+        }
+      }
+
+      return false
+    },
+    actions: [
+      () => [
+        {
+          type: 'insert text',
+          text: ' ',
+        },
+      ],
+      (_, {focusTextBlock, focusSpan, style, level}) => [
+        {
+          type: 'unset block',
+          props: ['listItem', 'level'],
+          paths: [focusTextBlock.path],
+        },
+        {
+          type: 'set block',
+          style,
+          paths: [focusTextBlock.path],
+        },
+        {
+          type: 'delete',
+          selection: {
+            anchor: {
+              path: focusSpan.path,
+              offset: 0,
+            },
+            focus: {
+              path: focusSpan.path,
+              offset: level + 1,
             },
           },
         },
@@ -199,7 +264,8 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   })
 
   const markdownBehaviors = [
-    automaticStyleOnSpace,
+    automaticBlockquoteOnSpace,
+    automaticHeadingOnSpace,
     clearStyleOnBackspace,
     automaticListOnSpace,
   ]
