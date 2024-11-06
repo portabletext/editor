@@ -85,7 +85,23 @@ Feature: Markdown Behaviors
       | "######foo"  | before "foo" | "h6"      | "foo"         |
       | "#######foo" | before "foo" | "normal"  | "####### foo" |
 
-  Scenario Outline: Auto-deleting headings
+  Scenario Outline: Clear style on Backspace
+    Given the text "foo"
+    When <style> is toggled
+    And the caret is put before "foo"
+    And "Backspace" is pressed 4 times
+    Then block "0" has style "normal"
+
+    Examples:
+      | style |
+      | "h1"  |
+      | "h2"  |
+      | "h3"  |
+      | "h4"  |
+      | "h5"  |
+      | "h6"  |
+
+  Scenario Outline: Clear style on Backspace in empty block
     Given the text "foo"
     When <style> is toggled
     And "Backspace" is pressed 4 times
