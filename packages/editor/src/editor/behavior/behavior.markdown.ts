@@ -47,10 +47,15 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
+      const caretAtTheEndOfQuote = context.selection.focus.offset === 1
       const looksLikeMarkdownQuote = /^>/.test(focusSpan.node.text)
       const blockquoteStyle = config.mapBlockquoteStyle(context.schema)
 
-      if (looksLikeMarkdownQuote && blockquoteStyle !== undefined) {
+      if (
+        caretAtTheEndOfQuote &&
+        looksLikeMarkdownQuote &&
+        blockquoteStyle !== undefined
+      ) {
         return {focusTextBlock, focusSpan, style: blockquoteStyle}
       }
 
@@ -83,7 +88,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
             },
             focus: {
               path: focusSpan.path,
-              offset: 1,
+              offset: 2,
             },
           },
         },
