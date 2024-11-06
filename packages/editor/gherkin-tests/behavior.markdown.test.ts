@@ -14,7 +14,8 @@ const givenMarkdownBehaviors = Given(
         ...coreBehaviors,
         ...createMarkdownBehaviors({
           mapDefaultStyle: (schema) => schema.styles[0]?.value,
-          mapHeadingStyle: (schema, level) => schema.styles[level]?.value,
+          mapHeadingStyle: (schema, level) =>
+            schema.styles.find((style) => style.value === `h${level}`)?.value,
           mapBlockquoteStyle: (schema) =>
             schema.styles.find((style) => style.value === 'blockquote')?.value,
           mapUnorderedListStyle: (schema) =>
