@@ -111,6 +111,12 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       const headingLevel = markdownHeadingSearch
         ? markdownHeadingSearch[0].length
         : undefined
+      const caretAtTheEndOfHeading =
+        context.selection.focus.offset === headingLevel
+
+      if (!caretAtTheEndOfHeading) {
+        return false
+      }
 
       const headingStyle =
         headingLevel !== undefined
