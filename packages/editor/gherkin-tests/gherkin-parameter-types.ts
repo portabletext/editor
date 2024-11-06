@@ -76,7 +76,7 @@ export const parameterTypes = [
   ),
   createParameterType(
     'style',
-    /"(normal|h\d)"/,
+    /"(normal|blockquote|h\d)"/,
     String,
     (input) => input,
     false,
