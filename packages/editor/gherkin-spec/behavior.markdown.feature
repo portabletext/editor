@@ -5,6 +5,26 @@ Feature: Markdown Behaviors
     And markdown behaviors
     And a global keymap
 
+  Scenario: Automatic blockquote
+    Given the text ">"
+    When "Space" is pressed
+    Then block "0" has style "blockquote"
+    And the text is ""
+
+  Scenario: Automatic blockquote not toggled by space in the beginning
+    Given the text ">"
+    When the caret is put before ">"
+    When "Space" is pressed
+    Then block "0" has style "normal"
+    And the text is " >"
+
+  Scenario: Automatic blockquote in non-empty block
+    Given the text ">foo"
+    When the caret is put before "f"
+    And "Space" is pressed
+    Then block "0" has style "blockquote"
+    And the text is "foo"
+
   Scenario Outline: Automatic headings
     Given the text <text>
     When "Space" is pressed
