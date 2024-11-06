@@ -21,6 +21,32 @@ Feature: Markdown Behaviors
       | "######"  | "h6"      | ""         |
       | "#######" | "normal"  | "####### " |
 
+  Scenario Outline: Automatic headings not toggled by space in the beginning
+    Given the text <text>
+    When the caret is put <position>
+    When "Space" is pressed
+    Then block "0" has style "normal"
+    And the text is <new text>
+
+    Examples:
+      | text  | position     | new text |
+      | "#"   | before "#"   | " #"     |
+      | "##"  | before "##"  | " ##"    |
+      | "###" | before "###" | " ###"   |
+
+  Scenario Outline: Automatic headings not toggled by space mid-heading
+    Given the text <text>
+    When the caret is put <position>
+    When "ArrowRight" is pressed
+    When "Space" is pressed
+    Then block "0" has style "normal"
+    And the text is <new text>
+
+    Examples:
+      | text  | position     | new text |
+      | "##"  | before "##"  | "# #"    |
+      | "###" | before "###" | "# ##"   |
+
   Scenario Outline: Automatic headings in non-empty block
     Given the text <text>
     When the caret is put <position>
