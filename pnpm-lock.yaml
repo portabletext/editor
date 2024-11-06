@@ -256,8 +256,8 @@ importers:
         specifier: workspace:^
         version: link:../gherkin-driver
       '@sanity/pkg-utils':
-        specifier: ^6.11.8
-        version: 6.11.8(@types/babel__core@7.20.5)(@types/node@22.9.0)(babel-plugin-react-compiler@19.0.0-beta-63b359f-20241101)(debug@4.3.7)(typescript@5.6.3)
+        specifier: ^6.11.9
+        version: 6.11.9(@types/babel__core@7.20.5)(@types/node@22.9.0)(babel-plugin-react-compiler@19.0.0-beta-63b359f-20241101)(debug@4.3.7)(typescript@5.6.3)
       '@sanity/schema':
         specifier: ^3.63.0
         version: 3.63.0(debug@4.3.7)
@@ -355,8 +355,8 @@ importers:
         specifier: ^29.7.0
         version: 29.7.0
       '@sanity/pkg-utils':
-        specifier: ^6.11.8
-        version: 6.11.8(@types/babel__core@7.20.5)(@types/node@22.9.0)(babel-plugin-react-compiler@19.0.0-beta-63b359f-20241101)(debug@4.3.7)(typescript@5.6.3)
+        specifier: ^6.11.9
+        version: 6.11.9(@types/babel__core@7.20.5)(@types/node@22.9.0)(babel-plugin-react-compiler@19.0.0-beta-63b359f-20241101)(debug@4.3.7)(typescript@5.6.3)
       typescript:
         specifier: 5.6.3
         version: 5.6.3
@@ -374,8 +374,8 @@ importers:
         version: 4.17.21
     devDependencies:
       '@sanity/pkg-utils':
-        specifier: ^6.11.8
-        version: 6.11.8(@types/babel__core@7.20.5)(@types/node@22.9.0)(babel-plugin-react-compiler@19.0.0-beta-63b359f-20241101)(debug@4.3.7)(typescript@5.6.3)
+        specifier: ^6.11.9
+        version: 6.11.9(@types/babel__core@7.20.5)(@types/node@22.9.0)(babel-plugin-react-compiler@19.0.0-beta-63b359f-20241101)(debug@4.3.7)(typescript@5.6.3)
       '@types/lodash':
         specifier: ^4.17.13
         version: 4.17.13
@@ -2032,8 +2032,8 @@ packages:
   '@sanity/generate-help-url@3.0.0':
     resolution: {integrity: sha512-wtMYcV5GIDIhVyF/jjmdwq1GdlK07dRL40XMns73VbrFI7FteRltxv48bhYVZPcLkRXb0SHjpDS/icj9/yzbVA==}
 
-  '@sanity/pkg-utils@6.11.8':
-    resolution: {integrity: sha512-pC6gfutzdOHkOeVacaKo1rjMcGJc95FwdSHY/mfzSUISGSr8eRPtDD0lrxNWC7NRkkhH8o+GpUvRt3Hmqc29hQ==}
+  '@sanity/pkg-utils@6.11.9':
+    resolution: {integrity: sha512-NqkerOH8zrOFjQykIAiWoGksTDZPSzvKn70KkWL3tKVhgwKvZMOPrEGJ9tlCtZ3nfL+dLuUGVw6mJO1NAHMNkw==}
     engines: {node: '>=18.17.0'}
     hasBin: true
     peerDependencies:
@@ -6986,7 +6986,7 @@ snapshots:
 
   '@sanity/generate-help-url@3.0.0': {}
 
-  '@sanity/pkg-utils@6.11.8(@types/babel__core@7.20.5)(@types/node@22.9.0)(babel-plugin-react-compiler@19.0.0-beta-63b359f-20241101)(debug@4.3.7)(typescript@5.6.3)':
+  '@sanity/pkg-utils@6.11.9(@types/babel__core@7.20.5)(@types/node@22.9.0)(babel-plugin-react-compiler@19.0.0-beta-63b359f-20241101)(debug@4.3.7)(typescript@5.6.3)':
     dependencies:
       '@babel/core': 7.26.0
       '@babel/preset-typescript': 7.26.0(@babel/core@7.26.0)
