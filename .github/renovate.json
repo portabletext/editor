@@ -58,6 +58,10 @@
       "description": "Group XState packages",
       "matchPackageNames": ["/xstate/"],
       "groupName": "xstate"
+    },
+    {
+      "matchPackageNames": ["react-compiler-runtime"],
+      "followTag": "beta"
     }
   ]
 }
