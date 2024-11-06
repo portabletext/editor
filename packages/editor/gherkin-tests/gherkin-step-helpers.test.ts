@@ -204,6 +204,10 @@ test(getTextSelection.name, () => {
     anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
     focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 4},
   })
+  expect(getTextSelection([joinedBlock], 'o')).toEqual({
+    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
+    focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
+  })
   expect(getTextSelection([joinedBlock], 'bar')).toEqual({
     anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 4},
     focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 7},
@@ -225,6 +229,21 @@ test(getTextSelection.name, () => {
   expect(getTextSelection([noSpaceBlock], 'obar')).toEqual({
     anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
     focus: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 3},
+  })
+
+  const emptyLineBlock = {
+    _key: 'b1',
+    _type: 'block',
+    children: [
+      {_key: 's1', _type: 'span', text: 'foo'},
+      {_key: 's2', _type: 'span', text: ''},
+      {_key: 's3', _type: 'span', text: 'bar'},
+    ],
+  }
+
+  expect(getTextSelection([emptyLineBlock], 'foobar')).toEqual({
+    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
+    focus: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 3},
   })
 
   const splitBlock = {
@@ -293,6 +312,16 @@ test(getSelectionBeforeText.name, () => {
     focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
     backward: false,
   })
+  expect(getSelectionBeforeText([splitBlock], 'f')).toEqual({
+    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
+    focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
+    backward: false,
+  })
+  expect(getSelectionBeforeText([splitBlock], 'o')).toEqual({
+    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
+    focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
+    backward: false,
+  })
   expect(getSelectionBeforeText([splitBlock], 'bar')).toEqual({
     anchor: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 0},
     focus: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 0},
@@ -334,7 +363,13 @@ test(getSelectionAfterText.name, () => {
 })
 
 test(stringOverlap.name, () => {
+  expect(stringOverlap('', 'foobar')).toBe('')
   expect(stringOverlap('foo ', 'o bar b')).toBe('o ')
+  expect(stringOverlap('foo', 'o')).toBe('o')
+  expect(stringOverlap('foo bar baz', 'o')).toBe('o')
   expect(stringOverlap('bar', 'o bar b')).toBe('bar')
   expect(stringOverlap(' baz', 'o bar b')).toBe(' b')
+  expect(stringOverlap('fofofo', 'fo')).toBe('fo')
+  expect(stringOverlap('fofofo', 'fof')).toBe('fof')
+  expect(stringOverlap('fofofo', 'fofofof')).toBe('fofofo')
 })

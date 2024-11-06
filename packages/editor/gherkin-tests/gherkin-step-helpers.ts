@@ -354,9 +354,37 @@ export function getTextSelection(
             break
           }
 
-          const splitChildText = child.text.split(text)
+          const splitChildText = splitString(child.text, text)
 
-          if (splitChildText.length === 2) {
+          if (splitChildText[0] === '' && splitChildText[1] !== '') {
+            anchor = {
+              path: [{_key: block._key}, 'children', {_key: child._key}],
+              offset: 0,
+            }
+            focus = {
+              path: [{_key: block._key}, 'children', {_key: child._key}],
+              offset: text.length,
+            }
+            break
+          }
+
+          if (
+            splitChildText[0] !== '' &&
+            splitChildText[1] === '' &&
+            child.text.indexOf(text) !== -1
+          ) {
+            anchor = {
+              path: [{_key: block._key}, 'children', {_key: child._key}],
+              offset: child.text.length - text.length,
+            }
+            focus = {
+              path: [{_key: block._key}, 'children', {_key: child._key}],
+              offset: child.text.length,
+            }
+            break
+          }
+
+          if (splitChildText[0] !== '' && splitChildText[1] !== '') {
             anchor = {
               path: [{_key: block._key}, 'children', {_key: child._key}],
               offset: splitChildText[0].length,
@@ -368,40 +396,17 @@ export function getTextSelection(
             break
           }
 
-          const splitText = text.split(child.text)
-          const textIndex = text.indexOf(child.text)
-
-          if (splitText.length === 2 && textIndex !== -1) {
-            if (splitText[0] === '') {
-              anchor = {
-                path: [{_key: block._key}, 'children', {_key: child._key}],
-                offset: 0,
-              }
-              continue
-            }
-            if (splitText[splitText.length - 1] === '') {
-              focus = {
-                path: [{_key: block._key}, 'children', {_key: child._key}],
-                offset: child.text.length,
-              }
-              continue
-            }
-            if (splitText.join('') !== text) {
-              continue
-            }
-            break
-          }
-
           const overlap = stringOverlap(child.text, text)
 
           if (overlap !== '') {
-            if (child.text.lastIndexOf(overlap) > 0) {
+            if (child.text.lastIndexOf(overlap) >= 0 && !anchor) {
               anchor = {
                 path: [{_key: block._key}, 'children', {_key: child._key}],
                 offset: child.text.lastIndexOf(overlap),
               }
               continue
             }
+
             if (child.text.indexOf(overlap) === 0) {
               focus = {
                 path: [{_key: block._key}, 'children', {_key: child._key}],
@@ -473,36 +478,46 @@ function collapseSelection(
       }
 }
 
-export function stringOverlap(string: string, searchString: string) {
+export function stringOverlap(x: string, y: string) {
   let overlap = ''
 
-  for (let i = 0; i < string.length; i++) {
-    const slice = string.slice(i)
-    const split = searchString.split(slice)
+  const [string, searchString] = y.length >= x.length ? [x, y] : [y, x]
 
-    if (split.length > 1 && split[0] === '') {
-      overlap = slice
-      break
-    }
+  for (let i = -1; i > -string.length + -searchString.length; i--) {
+    if (i >= -string.length) {
+      const stringSlice = string.slice(0, i * -1)
+      const searchStringSlice = searchString.slice(i)
 
-    if (split.length === 2 && split.join('') !== searchString) {
-      overlap = slice
-      break
-    }
+      if (stringSlice === searchStringSlice) {
+        overlap = stringSlice.length > overlap.length ? stringSlice : overlap
+      }
+    } else {
+      const searchStringSlice = searchString.slice(i, i + string.length)
+      const stringSlice =
+        searchStringSlice.length === string.length
+          ? string
+          : string.slice(string.length - searchStringSlice.length)
 
-    const reverseSlice = string.slice(0, i)
-    const reverseSliceSplit = searchString.split(reverseSlice)
-
-    if (
-      reverseSlice !== '' &&
-      reverseSliceSplit[reverseSliceSplit.length - 1] === ''
-    ) {
-      overlap = reverseSlice
-      break
+      if (stringSlice === searchStringSlice) {
+        overlap = stringSlice.length > overlap.length ? stringSlice : overlap
+      }
     }
   }
 
   return overlap
+}
+
+function splitString(string: string, searchString: string) {
+  const searchStringIndex = string.indexOf(searchString)
+
+  if (searchStringIndex === -1) {
+    return [string, ''] as const
+  }
+
+  const firstPart = string.slice(0, searchStringIndex)
+  const secondPart = string.slice(searchStringIndex + searchString.length)
+
+  return [firstPart, secondPart] as const
 }
 
 export function reverseTextSelection(
