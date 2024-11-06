@@ -184,13 +184,16 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
+      const atTheBeginningOfBLock =
+        focusTextBlock.node.children[0]._key === focusSpan.node._key &&
+        context.selection.focus.offset === 0
+
       const defaultStyle = config.mapDefaultStyle(context.schema)
 
       if (
+        atTheBeginningOfBLock &&
         defaultStyle &&
-        focusTextBlock.node.children.length === 1 &&
-        focusTextBlock.node.style !== config.mapDefaultStyle(context.schema) &&
-        focusSpan.node.text === ''
+        focusTextBlock.node.style !== defaultStyle
       ) {
         return {defaultStyle, focusTextBlock}
       }
@@ -207,7 +210,6 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       ],
     ],
   })
-
   const automaticListOnSpace = defineBehavior({
     on: 'insert text',
     guard: ({context, event}) => {
