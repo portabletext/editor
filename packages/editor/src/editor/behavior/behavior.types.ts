@@ -21,6 +21,18 @@ export type BehaviorContext = {
  */
 export type BehaviorEvent =
   | {
+      type: 'decorator.add'
+      decorator: string
+    }
+  | {
+      type: 'decorator.remove'
+      decorator: string
+    }
+  | {
+      type: 'decorator.toggle'
+      decorator: string
+    }
+  | {
       type: 'delete backward'
       unit: TextUnit
     }
@@ -86,6 +98,9 @@ export type BehaviorActionIntend =
   | {
       type: 'select'
       selection: EditorSelection
+    }
+  | {
+      type: 'reselect'
     }
 
 /**

@@ -127,23 +127,23 @@ describe('Feature: Self-solving', () => {
           },
         })
         expect(onChange).toHaveBeenNthCalledWith(4, {
-          type: 'patch',
-          patch: spanPatch,
-        })
-        expect(onChange).toHaveBeenNthCalledWith(5, {
-          type: 'patch',
-          patch: blockPatch,
-        })
-        expect(onChange).toHaveBeenNthCalledWith(6, {
-          type: 'patch',
-          patch: strongPatch,
-        })
-        expect(onChange).toHaveBeenNthCalledWith(7, {
           type: 'selection',
           selection: {
             ...getTextSelection(initialValue, 'foo'),
             backward: false,
           },
+        })
+        expect(onChange).toHaveBeenNthCalledWith(5, {
+          type: 'patch',
+          patch: spanPatch,
+        })
+        expect(onChange).toHaveBeenNthCalledWith(6, {
+          type: 'patch',
+          patch: blockPatch,
+        })
+        expect(onChange).toHaveBeenNthCalledWith(7, {
+          type: 'patch',
+          patch: strongPatch,
         })
         expect(onChange).toHaveBeenNthCalledWith(8, {
           type: 'selection',

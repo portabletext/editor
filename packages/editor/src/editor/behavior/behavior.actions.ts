@@ -7,6 +7,11 @@ import {
 } from 'slate'
 import type {PortableTextMemberSchemaTypes} from '../../types/editor'
 import {toSlateRange} from '../../utils/ranges'
+import {
+  addDecoratorActionImplementation,
+  removeDecoratorActionImplementation,
+  toggleDecoratorActionImplementation,
+} from '../plugins/createWithPortableTextMarkModel'
 import {insertBreakActionImplementation} from './behavior.action.insert-break'
 import type {
   BehaviorAction,
@@ -36,6 +41,9 @@ type BehaviourActionImplementations = {
 }
 
 const behaviorActionImplementations: BehaviourActionImplementations = {
+  'decorator.add': addDecoratorActionImplementation,
+  'decorator.remove': removeDecoratorActionImplementation,
+  'decorator.toggle': toggleDecoratorActionImplementation,
   'set block': ({action}) => {
     for (const path of action.paths) {
       const at = toSlateRange(
@@ -116,10 +124,21 @@ const behaviorActionImplementations: BehaviourActionImplementations = {
     action.effect()
   },
   'select': ({action}) => {
-    Transforms.select(
-      action.editor,
-      toSlateRange(action.selection, action.editor)!,
-    )
+    const newSelection = toSlateRange(action.selection, action.editor)
+
+    if (newSelection) {
+      Transforms.select(action.editor, newSelection)
+    } else {
+      Transforms.deselect(action.editor)
+    }
+  },
+  'reselect': ({action}) => {
+    const selection = action.editor.selection
+
+    if (selection) {
+      Transforms.select(action.editor, {...selection})
+      action.editor.selection = {...selection}
+    }
   },
 }
 
@@ -173,6 +192,13 @@ export function performAction({
       })
       break
     }
+    case 'reselect': {
+      behaviorActionImplementations.reselect({
+        context,
+        action,
+      })
+      break
+    }
     default: {
       performDefaultAction({context, action})
     }
@@ -187,6 +213,27 @@ export function performDefaultAction({
   action: PickFromUnion<BehaviorAction, 'type', BehaviorEvent['type']>
 }) {
   switch (action.type) {
+    case 'decorator.add': {
+      behaviorActionImplementations['decorator.add']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'decorator.remove': {
+      behaviorActionImplementations['decorator.remove']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'decorator.toggle': {
+      behaviorActionImplementations['decorator.toggle']({
+        context,
+        action,
+      })
+      break
+    }
     case 'delete backward': {
       behaviorActionImplementations['delete backward']({
         context,

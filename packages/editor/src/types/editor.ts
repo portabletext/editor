@@ -172,20 +172,6 @@ export interface PortableTextSlateEditor extends ReactEditor {
   pteEndList: () => boolean
 
   /**
-   * Toggle marks in the selection
-   *
-   * @param mark - Mark to toggle on/off
-   */
-  pteToggleMark: (mark: string) => void
-
-  /**
-   * Test if a mark is active in the current selection
-   *
-   * @param mark - Mark to check whether or not is active
-   */
-  pteIsMarkActive: (mark: string) => boolean
-
-  /**
    * Toggle the selected block style
    *
    * @param style - The style name
