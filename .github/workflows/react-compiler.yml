@@ -2,7 +2,7 @@ name: Maintain React Compiler
 
 on:
   schedule:
-    - cron: '0 0 * * 1-5' # Runs at midnight UTC every weekday (Monday to Friday)
+    - cron: "0 0 * * 1-5" # Runs at midnight UTC every weekday (Monday to Friday)
   workflow_dispatch:
 
 concurrency:
@@ -17,22 +17,18 @@ jobs:
     name: Should React Compiler dependencies be updated? 🤔
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/create-github-app-token@v1
-        id: generate-token
-        with:
-          app-id: ${{ secrets.ECOSCRIPT_APP_ID }}
-          private-key: ${{ secrets.ECOSCRIPT_APP_PRIVATE_KEY }}
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-          token: ${{ steps.generate-token.outputs.token }}
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           cache: pnpm
           node-version: lts/*
       - run: pnpm -r up --ignore-scripts react-compiler-runtime@beta babel-plugin-react-compiler@beta eslint-plugin-react-compiler@beta
+      - uses: actions/create-github-app-token@v1
+        id: generate-token
+        with:
+          app-id: ${{ secrets.ECOSCRIPT_APP_ID }}
+          private-key: ${{ secrets.ECOSCRIPT_APP_PRIVATE_KEY }}
       - id: check-changes
         run: |
           if git diff --name-only | grep -q 'package.json'; then
