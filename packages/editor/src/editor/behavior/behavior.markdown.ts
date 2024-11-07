@@ -227,11 +227,13 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
+      const defaultStyle = config.mapDefaultStyle(context.schema)
       const looksLikeUnorderedList = /^(-|\*)/.test(focusSpan.node.text)
       const unorderedListStyle = config.mapUnorderedListStyle(context.schema)
       const caretAtTheEndOfUnorderedList = context.selection.focus.offset === 1
 
       if (
+        defaultStyle &&
         caretAtTheEndOfUnorderedList &&
         looksLikeUnorderedList &&
         unorderedListStyle !== undefined
@@ -241,6 +243,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           focusSpan,
           listItem: unorderedListStyle,
           listItemLength: 1,
+          style: defaultStyle,
         }
       }
 
@@ -249,6 +252,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       const caretAtTheEndOfOrderedList = context.selection.focus.offset === 2
 
       if (
+        defaultStyle &&
         caretAtTheEndOfOrderedList &&
         looksLikeOrderedList &&
         orderedListStyle !== undefined
@@ -258,6 +262,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           focusSpan,
           listItem: orderedListStyle,
           listItemLength: 2,
+          style: defaultStyle,
         }
       }
 
@@ -270,16 +275,12 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           text: ' ',
         },
       ],
-      (_, {focusTextBlock, focusSpan, listItem, listItemLength}) => [
-        {
-          type: 'unset block',
-          props: ['style'],
-          paths: [focusTextBlock.path],
-        },
+      (_, {focusTextBlock, focusSpan, style, listItem, listItemLength}) => [
         {
           type: 'set block',
           listItem,
           level: 1,
+          style,
           paths: [focusTextBlock.path],
         },
         {
