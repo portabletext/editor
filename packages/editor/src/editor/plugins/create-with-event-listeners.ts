@@ -3,6 +3,30 @@ import type {EditorActor} from '../editor-machine'
 
 export function createWithEventListeners(editorActor: EditorActor) {
   return function withEventListeners(editor: Editor) {
+    editor.addMark = (mark) => {
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'decorator.add',
+          decorator: mark,
+        },
+        editor,
+      })
+      return
+    }
+
+    editor.removeMark = (mark) => {
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'decorator.remove',
+          decorator: mark,
+        },
+        editor,
+      })
+      return
+    }
+
     editor.deleteBackward = (unit) => {
       editorActor.send({
         type: 'behavior event',

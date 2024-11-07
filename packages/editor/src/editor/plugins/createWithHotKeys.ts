@@ -7,6 +7,7 @@ import type {PortableTextSlateEditor} from '../../types/editor'
 import type {HotkeyOptions} from '../../types/options'
 import type {SlateTextBlock, VoidElement} from '../../types/slate'
 import {debugWithName} from '../../utils/debug'
+import type {EditorActor} from '../editor-machine'
 import type {PortableTextEditor} from '../PortableTextEditor'
 
 const debug = debugWithName('plugin:withHotKeys')
@@ -26,6 +27,7 @@ const DEFAULT_HOTKEYS: HotkeyOptions = {
  *
  */
 export function createWithHotkeys(
+  editorActor: EditorActor,
   portableTextEditor: PortableTextEditor,
   hotkeysFromOptions?: HotkeyOptions,
 ): (editor: PortableTextSlateEditor & ReactEditor) => any {
@@ -46,7 +48,14 @@ export function createWithHotkeys(
               if (possibleMark) {
                 const mark = possibleMark[hotkey]
                 debug(`HotKey ${hotkey} to toggle ${mark}`)
-                editor.pteToggleMark(mark)
+                editorActor.send({
+                  type: 'behavior event',
+                  behaviorEvent: {
+                    type: 'decorator.toggle',
+                    decorator: mark,
+                  },
+                  editor,
+                })
               }
             }
           }

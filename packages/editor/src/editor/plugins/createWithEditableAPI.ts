@@ -38,6 +38,7 @@ import {
 } from '../../utils/weakMaps'
 import type {EditorActor} from '../editor-machine'
 import type {PortableTextEditor} from '../PortableTextEditor'
+import {isDecoratorActive} from './createWithPortableTextMarkModel'
 
 const debug = debugWithName('API:editable')
 
@@ -57,7 +58,14 @@ export function createWithEditableAPI(
         ReactEditor.blur(editor)
       },
       toggleMark: (mark: string): void => {
-        editor.pteToggleMark(mark)
+        editorActor.send({
+          type: 'behavior event',
+          behaviorEvent: {
+            type: 'decorator.toggle',
+            decorator: mark,
+          },
+          editor,
+        })
       },
       toggleList: (listStyle: string): void => {
         editor.pteToggleListItem(listStyle)
@@ -69,7 +77,7 @@ export function createWithEditableAPI(
         // Try/catch this, as Slate may error because the selection is currently wrong
         // TODO: catch only relevant error from Slate
         try {
-          return editor.pteIsMarkActive(mark)
+          return isDecoratorActive({editor, decorator: mark})
         } catch (err) {
           console.warn(err)
           return false

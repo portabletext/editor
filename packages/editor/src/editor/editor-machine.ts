@@ -20,7 +20,7 @@ import type {
 import {toPortableTextRange} from '../utils/ranges'
 import {fromSlateValue} from '../utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../utils/weakMaps'
-import {performAction, performDefaultAction} from './behavior/behavior.actions'
+import {performAction} from './behavior/behavior.actions'
 import {coreBehaviors} from './behavior/behavior.core'
 import type {
   Behavior,
@@ -197,7 +197,11 @@ export const editorMachine = setup({
       )
 
       if (eventBehaviors.length === 0) {
-        performDefaultAction({context, action: defaultAction})
+        enqueue.raise({
+          type: 'behavior action intends',
+          editor: event.editor,
+          actionIntends: [defaultAction],
+        })
         return
       }
 
@@ -216,7 +220,11 @@ export const editorMachine = setup({
         console.warn(
           `Unable to handle event ${event.type} due to missing selection`,
         )
-        performDefaultAction({context, action: defaultAction})
+        enqueue.raise({
+          type: 'behavior action intends',
+          editor: event.editor,
+          actionIntends: [defaultAction],
+        })
         return
       }
 
@@ -264,7 +272,11 @@ export const editorMachine = setup({
       }
 
       if (!behaviorOverwritten) {
-        performDefaultAction({context, action: defaultAction})
+        enqueue.raise({
+          type: 'behavior action intends',
+          editor: event.editor,
+          actionIntends: [defaultAction],
+        })
       }
     }),
   },
@@ -315,6 +327,22 @@ export const editorMachine = setup({
           })
           event.editor.onChange()
         },
+        enqueueActions(({context, event, enqueue}) => {
+          if (
+            event.actionIntends.some(
+              (actionIntend) => actionIntend.type === 'reselect',
+            )
+          ) {
+            enqueue.raise({
+              type: 'selection',
+              selection: toPortableTextRange(
+                event.editor.children,
+                event.editor.selection,
+                context.schema,
+              ),
+            })
+          }
+        }),
       ],
     },
   },
