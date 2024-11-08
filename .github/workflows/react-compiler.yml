@@ -2,7 +2,7 @@ name: Maintain React Compiler
 
 on:
   schedule:
-    - cron: "0 0 * * 1-5" # Runs at midnight UTC every weekday (Monday to Friday)
+    - cron: "10 12 * * 1" # Runs at 12:10 PM UTC every Monday, which is 3 hours after the React Compiler release: https://github.com/facebook/react/blob/989af12f72080c17db03ead91d99b6394a215564/.github/workflows/compiler_prereleases_weekly.yml#L5-L6
   workflow_dispatch:
 
 concurrency:
