@@ -205,7 +205,7 @@ export function performAction({
   }
 }
 
-export function performDefaultAction({
+function performDefaultAction({
   context,
   action,
 }: {
