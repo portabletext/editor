@@ -83,7 +83,7 @@ importers:
         version: 18.3.1
       remeda:
         specifier: ^2.2.2
-        version: 2.16.0
+        version: 2.17.0
       shiki:
         specifier: ^1.9.1
         version: 1.22.2
@@ -4102,8 +4102,8 @@ packages:
     resolution: {integrity: sha512-8acYXXTI0AkQv6RAOjE3vOaIXZkT9wo4LOFbBKYQEEnnMNBpKqdUrI6S4NT0KPIo/WVvJ5tE/X5LF/TQUf0ekw==}
     engines: {node: '>=8'}
 
-  remeda@2.16.0:
-    resolution: {integrity: sha512-HOymkGg58HW4LT8MBEabQEdW76YsqcRNNFPXPrOrnYm+/9Pmk0b9fm8PKgQxoRPa6WDLnRM/LxTXkHdXf9Ab0w==}
+  remeda@2.17.0:
+    resolution: {integrity: sha512-mBsn4rGLSE788XqzOlePZiXUFNCrLIBVFl1ntzjBq8NqdsLZUQydxQ2naqNr13eBEDoictYLqKlwzhFTxgfydA==}
 
   require-directory@2.1.1:
     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
@@ -9422,7 +9422,7 @@ snapshots:
     dependencies:
       rc: 1.2.8
 
-  remeda@2.16.0:
+  remeda@2.17.0:
     dependencies:
       type-fest: 4.26.1
 
