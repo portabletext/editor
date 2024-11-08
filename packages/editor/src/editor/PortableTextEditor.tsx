@@ -34,6 +34,7 @@ import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
 import {PortableTextEditorReadOnlyContext} from './hooks/usePortableTextReadOnly'
 import {defaultKeyGenerator} from './key-generator'
+import type {AddedAnnotationPaths} from './plugins/createWithEditableAPI'
 import type {Editor} from './use-editor'
 
 const debug = debugWithName('component:PortableTextEditor')
@@ -272,22 +273,8 @@ export class PortableTextEditor extends Component<
     editor: PortableTextEditor,
     type: TSchemaType,
     value?: {[prop: string]: unknown},
-  ):
-    | {
-        /**
-         * @deprecated An annotation may be applied to multiple blocks, resulting
-         * in multiple `markDef`'s being created. Use `markDefPaths` instead.
-         */
-        markDefPath: Path
-        markDefPaths: Array<Path>
-        /**
-         * @deprecated Does not return anything meaningful since an annotation
-         * can span multiple blocks and spans. If references the span closest
-         * to the focus point of the selection.
-         */
-        spanPath: Path
-      }
-    | undefined => editor.editable?.addAnnotation(type, value)
+  ): AddedAnnotationPaths | undefined =>
+    editor.editable?.addAnnotation(type, value)
   static blur = (editor: PortableTextEditor): void => {
     debug('Host blurred')
     editor.editable?.blur()

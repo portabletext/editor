@@ -21,6 +21,26 @@ export type BehaviorContext = {
  */
 export type BehaviorEvent =
   | {
+      type: 'annotation.add'
+      annotation: {
+        name: string
+        value: {[prop: string]: unknown}
+      }
+    }
+  | {
+      type: 'annotation.remove'
+      annotation: {
+        name: string
+      }
+    }
+  | {
+      type: 'annotation.toggle'
+      annotation: {
+        name: string
+        value: {[prop: string]: unknown}
+      }
+    }
+  | {
       type: 'decorator.add'
       decorator: string
     }
