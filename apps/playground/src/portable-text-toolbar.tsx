@@ -2,6 +2,7 @@ import {
   PortableTextEditor,
   usePortableTextEditor,
   usePortableTextEditorSelection,
+  type Editor,
   type EditorSelection,
 } from '@portabletext/editor'
 import {SquareDashedMousePointerIcon} from 'lucide-react'
@@ -17,16 +18,17 @@ import {Tooltip} from './components/tooltip'
 import type {SchemaDefinition} from './schema'
 
 export function PortableTextToolbar(props: {
+  editor: Editor
   schemaDefinition: SchemaDefinition
 }) {
-  const editor = usePortableTextEditor()
+  const editorInstance = usePortableTextEditor()
   const selection = usePortableTextEditorSelection()
 
   return (
     <Toolbar aria-label="Text formatting">
       <StyleSelector
         schemaDefinition={props.schemaDefinition}
-        editor={editor}
+        editor={editorInstance}
         selection={selection}
       />
       <Separator orientation="vertical" />
@@ -35,7 +37,7 @@ export function PortableTextToolbar(props: {
           <DecoratorToolbarButton
             key={decorator.name}
             decorator={decorator}
-            editor={editor}
+            editor={editorInstance}
             selection={selection}
           />
         ))}
@@ -46,7 +48,8 @@ export function PortableTextToolbar(props: {
           <AnnotationToolbarButton
             key={annotation.name}
             annotation={annotation}
-            editor={editor}
+            editor={props.editor}
+            editorInstance={editorInstance}
             selection={selection}
           />
         ))}
@@ -57,7 +60,7 @@ export function PortableTextToolbar(props: {
           <ListToolbarButton
             key={list.name}
             list={list}
-            editor={editor}
+            editor={editorInstance}
             selection={selection}
           />
         ))}
@@ -68,7 +71,7 @@ export function PortableTextToolbar(props: {
           <BlockObjectButton
             key={blockObject.name}
             blockObject={blockObject}
-            editor={editor}
+            editor={editorInstance}
           />
         ))}
       </Group>
@@ -78,7 +81,7 @@ export function PortableTextToolbar(props: {
           <InlineObjectButton
             key={inlineObject.name}
             inlineObject={inlineObject}
-            editor={editor}
+            editor={editorInstance}
           />
         ))}
       </Group>
@@ -89,7 +92,7 @@ export function PortableTextToolbar(props: {
           variant="secondary"
           size="sm"
           onPress={() => {
-            PortableTextEditor.focus(editor)
+            PortableTextEditor.focus(editorInstance)
           }}
         >
           <SquareDashedMousePointerIcon className="size-4" />
@@ -140,12 +143,16 @@ function StyleSelector(props: {
 
 function AnnotationToolbarButton(props: {
   annotation: SchemaDefinition['annotations'][number]
-  editor: PortableTextEditor
+  editor: Editor
+  editorInstance: PortableTextEditor
   selection: EditorSelection
 }) {
   const active =
     props.selection !== null &&
-    PortableTextEditor.isAnnotationActive(props.editor, props.annotation.name)
+    PortableTextEditor.isAnnotationActive(
+      props.editorInstance,
+      props.annotation.name,
+    )
 
   return (
     <TooltipTrigger>
@@ -154,26 +161,23 @@ function AnnotationToolbarButton(props: {
         size="sm"
         isSelected={active}
         onPress={() => {
-          if (active) {
-            PortableTextEditor.removeAnnotation(props.editor, {
+          props.editor.send({
+            type: 'annotation.toggle',
+            annotation: {
               name: props.annotation.name,
-            })
-          } else {
-            PortableTextEditor.addAnnotation(
-              props.editor,
-              {name: props.annotation.name},
-              props.annotation.name === 'comment'
-                ? {
-                    text: 'Consider rewriting this',
-                  }
-                : props.annotation.name === 'link'
+              value:
+                props.annotation.name === 'comment'
                   ? {
-                      href: 'https://example.com',
+                      text: 'Consider rewriting this',
                     }
-                  : {},
-            )
-          }
-          PortableTextEditor.focus(props.editor)
+                  : props.annotation.name === 'link'
+                    ? {
+                        href: 'https://example.com',
+                      }
+                    : {},
+            },
+          })
+          props.editor.send({type: 'focus'})
         }}
       >
         <Icon icon={props.annotation.icon} fallback={props.annotation.title} />

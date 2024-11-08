@@ -121,7 +121,10 @@ export function Editor(props: {editorRef: EditorActorRef}) {
       >
         <PortableTextEditor editor={editor} value={value}>
           <div className="flex flex-col gap-2">
-            <PortableTextToolbar schemaDefinition={schemaDefinition} />
+            <PortableTextToolbar
+              editor={editor}
+              schemaDefinition={schemaDefinition}
+            />
             <div className="flex gap-2 items-center">
               <ErrorBoundary
                 fallbackProps={{area: 'PortableTextEditable'}}
