@@ -495,7 +495,7 @@ export const PortableTextEditable = forwardRef<
           Transforms.select(slateEditor, Editor.start(slateEditor, []))
           slateEditor.onChange()
         }
-        editorActor.send({type: 'focus', event})
+        editorActor.send({type: 'focused', event})
         const newSelection = PortableTextEditor.getSelection(portableTextEditor)
         // If the selection is the same, emit it explicitly here as there is no actual onChange event triggered.
         if (selection === newSelection) {

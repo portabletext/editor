@@ -61,6 +61,9 @@ export type BehaviorEvent =
       unit: TextUnit
     }
   | {
+      type: 'focus'
+    }
+  | {
       type: 'insert soft break'
     }
   | {
