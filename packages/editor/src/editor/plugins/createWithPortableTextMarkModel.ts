@@ -17,7 +17,6 @@ import {getNextSpan, getPreviousSpan} from '../../utils/sibling-utils'
 import {isChangingRemotely} from '../../utils/withChanges'
 import {isRedoing, isUndoing} from '../../utils/withUndoRedo'
 import type {BehaviourActionImplementation} from '../behavior/behavior.actions'
-import type {BehaviorAction, PickFromUnion} from '../behavior/behavior.types'
 import type {EditorActor} from '../editor-machine'
 
 const debug = debugWithName('plugin:withPortableTextMarkModel')
@@ -656,7 +655,7 @@ export function createWithPortableTextMarkModel(
 }
 
 export const addDecoratorActionImplementation: BehaviourActionImplementation<
-  PickFromUnion<BehaviorAction, 'type', 'decorator.add'>
+  'decorator.add'
 > = ({action}) => {
   const editor = action.editor
   const mark = action.decorator
@@ -747,7 +746,7 @@ export const addDecoratorActionImplementation: BehaviourActionImplementation<
 }
 
 export const removeDecoratorActionImplementation: BehaviourActionImplementation<
-  PickFromUnion<BehaviorAction, 'type', 'decorator.remove'>
+  'decorator.remove'
 > = ({action}) => {
   const editor = action.editor
   const mark = action.decorator
@@ -858,7 +857,7 @@ export function isDecoratorActive({
 }
 
 export const toggleDecoratorActionImplementation: BehaviourActionImplementation<
-  PickFromUnion<BehaviorAction, 'type', 'decorator.toggle'>
+  'decorator.toggle'
 > = ({context, action}) => {
   const isActive = isDecoratorActive({
     editor: action.editor,
