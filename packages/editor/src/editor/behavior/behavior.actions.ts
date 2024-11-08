@@ -8,6 +8,11 @@ import {
 import type {PortableTextMemberSchemaTypes} from '../../types/editor'
 import {toSlateRange} from '../../utils/ranges'
 import {
+  addAnnotationActionImplementation,
+  removeAnnotationActionImplementation,
+  toggleAnnotationActionImplementation,
+} from '../plugins/createWithEditableAPI'
+import {
   addDecoratorActionImplementation,
   removeDecoratorActionImplementation,
   toggleDecoratorActionImplementation,
@@ -29,19 +34,23 @@ export type BehaviorActionContext = {
 
 export type BehaviourActionImplementation<
   TBehaviorActionType extends BehaviorAction['type'],
+  TReturnType = void,
 > = ({
   context,
   action,
 }: {
   context: BehaviorActionContext
   action: PickFromUnion<BehaviorAction, 'type', TBehaviorActionType>
-}) => void
+}) => TReturnType
 
 type BehaviourActionImplementations = {
   [TBehaviorActionType in BehaviorAction['type']]: BehaviourActionImplementation<TBehaviorActionType>
 }
 
 const behaviorActionImplementations: BehaviourActionImplementations = {
+  'annotation.add': addAnnotationActionImplementation,
+  'annotation.remove': removeAnnotationActionImplementation,
+  'annotation.toggle': toggleAnnotationActionImplementation,
   'decorator.add': addDecoratorActionImplementation,
   'decorator.remove': removeDecoratorActionImplementation,
   'decorator.toggle': toggleDecoratorActionImplementation,
@@ -212,6 +221,27 @@ function performDefaultAction({
   action: PickFromUnion<BehaviorAction, 'type', BehaviorEvent['type']>
 }) {
   switch (action.type) {
+    case 'annotation.add': {
+      behaviorActionImplementations['annotation.add']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'annotation.remove': {
+      behaviorActionImplementations['annotation.remove']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'annotation.toggle': {
+      behaviorActionImplementations['annotation.toggle']({
+        context,
+        action,
+      })
+      break
+    }
     case 'decorator.add': {
       behaviorActionImplementations['decorator.add']({
         context,
