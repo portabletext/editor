@@ -28,6 +28,7 @@ import type {
   BehaviorActionIntend,
   BehaviorContext,
   BehaviorEvent,
+  PickFromUnion,
 } from './behavior/behavior.types'
 
 /**
@@ -124,11 +125,16 @@ type EditorEmittedEvent =
     }
   | {type: 'selection'; selection: EditorSelection}
   | {type: 'blur'; event: FocusEvent<HTMLDivElement, Element>}
-  | {type: 'focus'; event: FocusEvent<HTMLDivElement, Element>}
+  | {type: 'focused'; event: FocusEvent<HTMLDivElement, Element>}
   | {type: 'online'}
   | {type: 'offline'}
   | {type: 'loading'}
   | {type: 'done loading'}
+  | PickFromUnion<
+      BehaviorEvent,
+      'type',
+      'annotation.add' | 'annotation.remove' | 'annotation.toggle' | 'focus'
+    >
 
 /**
  * @internal
@@ -296,6 +302,10 @@ export const editorMachine = setup({
     src: 'networkLogic',
   },
   on: {
+    'annotation.add': {actions: emit(({event}) => event)},
+    'annotation.remove': {actions: emit(({event}) => event)},
+    'annotation.toggle': {actions: emit(({event}) => event)},
+    'focus': {actions: emit(({event}) => event)},
     'ready': {actions: emit(({event}) => event)},
     'unset': {actions: emit(({event}) => event)},
     'value changed': {actions: emit(({event}) => event)},
@@ -303,7 +313,7 @@ export const editorMachine = setup({
     'error': {actions: emit(({event}) => event)},
     'selection': {actions: emit(({event}) => event)},
     'blur': {actions: emit(({event}) => event)},
-    'focus': {actions: emit(({event}) => event)},
+    'focused': {actions: emit(({event}) => event)},
     'online': {actions: emit({type: 'online'})},
     'offline': {actions: emit({type: 'offline'})},
     'loading': {actions: emit({type: 'loading'})},

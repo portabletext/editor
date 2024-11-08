@@ -121,6 +121,10 @@ export function Synchronizer(props: SynchronizerProps) {
           handleChange({type: 'loading', isLoading: false})
           break
         }
+        case 'focused': {
+          handleChange({type: 'focus', event: event.event})
+          break
+        }
         case 'offline': {
           handleChange({type: 'connection', value: 'offline'})
           break
@@ -148,9 +152,12 @@ export function Synchronizer(props: SynchronizerProps) {
           })
           break
         }
-        case 'patches': {
+        case 'annotation.add':
+        case 'annotation.remove':
+        case 'annotation.toggle':
+        case 'focus':
+        case 'patches':
           break
-        }
         default:
           handleChange(event)
       }

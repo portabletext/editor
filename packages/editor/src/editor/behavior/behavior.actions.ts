@@ -5,6 +5,7 @@ import {
   insertText,
   Transforms,
 } from 'slate'
+import {ReactEditor} from 'slate-react'
 import type {PortableTextMemberSchemaTypes} from '../../types/editor'
 import {toSlateRange} from '../../utils/ranges'
 import {
@@ -54,6 +55,9 @@ const behaviorActionImplementations: BehaviourActionImplementations = {
   'decorator.add': addDecoratorActionImplementation,
   'decorator.remove': removeDecoratorActionImplementation,
   'decorator.toggle': toggleDecoratorActionImplementation,
+  'focus': ({action}) => {
+    ReactEditor.focus(action.editor)
+  },
   'set block': ({action}) => {
     for (const path of action.paths) {
       const at = toSlateRange(
@@ -272,6 +276,13 @@ function performDefaultAction({
     }
     case 'delete forward': {
       behaviorActionImplementations['delete forward']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'focus': {
+      behaviorActionImplementations.focus({
         context,
         action,
       })
