@@ -2,10 +2,9 @@ import {isEqual} from 'lodash'
 import {Editor, Node, Path, Range, Transforms} from 'slate'
 import type {SlateTextBlock, VoidElement} from '../../types/slate'
 import type {BehaviourActionImplementation} from './behavior.actions'
-import type {BehaviorAction, PickFromUnion} from './behavior.types'
 
 export const insertBreakActionImplementation: BehaviourActionImplementation<
-  PickFromUnion<BehaviorAction, 'type', 'insert break' | 'insert soft break'>
+  'insert break'
 > = ({context, action}) => {
   const keyGenerator = context.keyGenerator
   const schema = context.schema
@@ -203,4 +202,15 @@ export const insertBreakActionImplementation: BehaviourActionImplementation<
       return
     }
   }
+}
+
+export const insertSoftBreakActionImplementation: BehaviourActionImplementation<
+  'insert soft break'
+> = ({context, action}) => {
+  // This mimics Slate's internal which also just does a regular insert break
+  // when soft-breaking
+  insertBreakActionImplementation({
+    context,
+    action: {...action, type: 'insert break'},
+  })
 }

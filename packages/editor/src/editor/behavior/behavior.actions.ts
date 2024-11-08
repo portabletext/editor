@@ -12,7 +12,10 @@ import {
   removeDecoratorActionImplementation,
   toggleDecoratorActionImplementation,
 } from '../plugins/createWithPortableTextMarkModel'
-import {insertBreakActionImplementation} from './behavior.action.insert-break'
+import {
+  insertBreakActionImplementation,
+  insertSoftBreakActionImplementation,
+} from './behavior.action.insert-break'
 import type {
   BehaviorAction,
   BehaviorEvent,
@@ -25,19 +28,17 @@ export type BehaviorActionContext = {
 }
 
 export type BehaviourActionImplementation<
-  TBehaviorAction extends BehaviorAction,
+  TBehaviorActionType extends BehaviorAction['type'],
 > = ({
   context,
   action,
 }: {
   context: BehaviorActionContext
-  action: TBehaviorAction
+  action: PickFromUnion<BehaviorAction, 'type', TBehaviorActionType>
 }) => void
 
 type BehaviourActionImplementations = {
-  [TBehaviorActionType in BehaviorAction['type']]: BehaviourActionImplementation<
-    PickFromUnion<BehaviorAction, 'type', TBehaviorActionType>
-  >
+  [TBehaviorActionType in BehaviorAction['type']]: BehaviourActionImplementation<TBehaviorActionType>
 }
 
 const behaviorActionImplementations: BehaviourActionImplementations = {
@@ -99,9 +100,7 @@ const behaviorActionImplementations: BehaviourActionImplementations = {
     }
   },
   'insert break': insertBreakActionImplementation,
-  // This mimics Slate's internal which also just does a regular insert break
-  // when on soft break
-  'insert soft break': insertBreakActionImplementation,
+  'insert soft break': insertSoftBreakActionImplementation,
   'insert text': ({action}) => {
     insertText(action.editor, action.text)
   },
