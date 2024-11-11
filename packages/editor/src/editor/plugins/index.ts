@@ -4,7 +4,6 @@ import type {PortableTextSlateEditor} from '../../types/editor'
 import type {createEditorOptions} from '../../types/options'
 import {createOperationToPatches} from '../../utils/operationToPatches'
 import {createWithEventListeners} from './create-with-event-listeners'
-import {createWithEditableAPI} from './createWithEditableAPI'
 import {createWithMaxBlocks} from './createWithMaxBlocks'
 import {createWithObjectKeys} from './createWithObjectKeys'
 import {createWithPatches} from './createWithPatches'
@@ -17,7 +16,7 @@ import {createWithSchemaTypes} from './createWithSchemaTypes'
 import {createWithUndoRedo} from './createWithUndoRedo'
 import {createWithUtils} from './createWithUtils'
 
-export {createWithEditableAPI} from './createWithEditableAPI'
+export {createEditableAPI as createWithEditableAPI} from './createWithEditableAPI'
 export {createWithHotkeys} from './createWithHotKeys'
 export {createWithInsertData} from './createWithInsertData'
 export {createWithMaxBlocks} from './createWithMaxBlocks'
@@ -47,8 +46,8 @@ export const withPlugins = <T extends Editor>(
   options: createEditorOptions,
 ): {editor: PortableTextSlateEditor; subscribe: () => () => void} => {
   const e = editor as T & PortableTextSlateEditor
-  const {editorActor, portableTextEditor, readOnly, maxBlocks} = options
-  const {schemaTypes} = portableTextEditor
+  const {editorActor, readOnly, maxBlocks} = options
+  const schemaTypes = editorActor.getSnapshot().context.schema
   e.subscriptions = []
   if (e.destroy) {
     e.destroy()
@@ -67,11 +66,6 @@ export const withPlugins = <T extends Editor>(
     editorActor,
     schemaTypes,
   })
-  const withEditableAPI = createWithEditableAPI(
-    editorActor,
-    portableTextEditor,
-    schemaTypes,
-  )
   const withPatches = createWithPatches({
     editorActor,
     patchFunctions: operationToPatches,
@@ -99,7 +93,6 @@ export const withPlugins = <T extends Editor>(
   const withUtils = createWithUtils({
     editorActor,
     schemaTypes,
-    portableTextEditor,
   })
   const withPortableTextSelections = createWithPortableTextSelections(
     editorActor,
@@ -125,9 +118,7 @@ export const withPlugins = <T extends Editor>(
             withPortableTextBlockStyle(
               withUtils(
                 withPlaceholderBlock(
-                  withPortableTextLists(
-                    withPortableTextSelections(withEditableAPI(e)),
-                  ),
+                  withPortableTextLists(withPortableTextSelections(e)),
                 ),
               ),
             ),
@@ -149,11 +140,7 @@ export const withPlugins = <T extends Editor>(
                 withPlaceholderBlock(
                   withUtils(
                     withMaxBlocks(
-                      withUndoRedo(
-                        withPatches(
-                          withPortableTextSelections(withEditableAPI(e)),
-                        ),
-                      ),
+                      withUndoRedo(withPatches(withPortableTextSelections(e))),
                     ),
                   ),
                 ),

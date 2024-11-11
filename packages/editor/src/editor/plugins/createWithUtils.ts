@@ -6,24 +6,18 @@ import type {
 import {debugWithName} from '../../utils/debug'
 import {toSlateValue} from '../../utils/values'
 import type {EditorActor} from '../editor-machine'
-import type {PortableTextEditor} from '../PortableTextEditor'
 
 const debug = debugWithName('plugin:withUtils')
 
 interface Options {
   editorActor: EditorActor
   schemaTypes: PortableTextMemberSchemaTypes
-  portableTextEditor: PortableTextEditor
 }
 /**
  * This plugin makes various util commands available in the editor
  *
  */
-export function createWithUtils({
-  editorActor,
-  schemaTypes,
-  portableTextEditor,
-}: Options) {
+export function createWithUtils({editorActor, schemaTypes}: Options) {
   return function withUtils(
     editor: PortableTextSlateEditor,
   ): PortableTextSlateEditor {
@@ -101,7 +95,7 @@ export function createWithUtils({
             ],
           },
         ],
-        portableTextEditor,
+        {schemaTypes},
       )[0]
       return block
     }
