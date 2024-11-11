@@ -92,7 +92,7 @@ importers:
         version: 6.1.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       uuid:
         specifier: ^11.0.0
-        version: 11.0.2
+        version: 11.0.3
       xstate:
         specifier: ^5.18.2
         version: 5.18.2
@@ -4675,8 +4675,8 @@ packages:
     resolution: {integrity: sha512-8XkAphELsDnEGrDxUOHB3RGvXz6TeuYSGEZBOjtTtPm2lwhGBjLgOzLHB63IUWfBpNucQjND6d3AOudO+H3RWQ==}
     hasBin: true
 
-  uuid@11.0.2:
-    resolution: {integrity: sha512-14FfcOJmqdjbBPdDjFQyk/SdT4NySW4eM0zcG+HqbHP5jzuH56xO3J1DGhgs/cEMCfwYi3HQI1gnTO62iaG+tQ==}
+  uuid@11.0.3:
+    resolution: {integrity: sha512-d0z310fCWv5dJwnX1Y/MncBAqGMKEzlBb1AOf7z9K8ALnd0utBX/msg/fA0+sbyN1ihbMsLhrBlnl1ak7Wa0rg==}
     hasBin: true
 
   uuid@9.0.0:
@@ -10001,7 +10001,7 @@ snapshots:
 
   uuid@10.0.0: {}
 
-  uuid@11.0.2: {}
+  uuid@11.0.3: {}
 
   uuid@9.0.0: {}
 
