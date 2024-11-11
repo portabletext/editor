@@ -4,7 +4,7 @@ import {withReact} from 'slate-react'
 import {debugWithName} from '../../utils/debug'
 import {KEY_TO_SLATE_ELEMENT, KEY_TO_VALUE_ELEMENT} from '../../utils/weakMaps'
 import type {EditorActor} from '../editor-machine'
-import {withPlugins} from '../plugins'
+import {withPlugins} from '../plugins/with-plugins'
 
 const debug = debugWithName('component:PortableTextEditor:SlateContainer')
 

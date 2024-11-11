@@ -16,20 +16,6 @@ import {createWithSchemaTypes} from './createWithSchemaTypes'
 import {createWithUndoRedo} from './createWithUndoRedo'
 import {createWithUtils} from './createWithUtils'
 
-export {createEditableAPI as createWithEditableAPI} from './createWithEditableAPI'
-export {createWithHotkeys} from './createWithHotKeys'
-export {createWithInsertData} from './createWithInsertData'
-export {createWithMaxBlocks} from './createWithMaxBlocks'
-export {createWithObjectKeys} from './createWithObjectKeys'
-export {createWithPatches} from './createWithPatches'
-export {createWithPortableTextBlockStyle} from './createWithPortableTextBlockStyle'
-export {createWithPortableTextLists} from './createWithPortableTextLists'
-export {createWithPortableTextMarkModel} from './createWithPortableTextMarkModel'
-export {createWithPortableTextSelections} from './createWithPortableTextSelections'
-export {createWithSchemaTypes} from './createWithSchemaTypes'
-export {createWithUndoRedo} from './createWithUndoRedo'
-export {createWithUtils} from './createWithUtils'
-
 export interface OriginalEditorFunctions {
   apply: (operation: BaseOperation) => void
   onChange: () => void
