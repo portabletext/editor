@@ -76,6 +76,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
     keyGenerator,
     schemaDefinition,
   })
+  const readOnly = useSelector(props.editorRef, (s) => s.context.readOnly)
   const patchesReceived = useSelector(props.editorRef, (s) =>
     reverse(s.context.patchesReceived),
   )
@@ -119,7 +120,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
         fallback={ErrorScreen}
         onError={console.error}
       >
-        <PortableTextEditor editor={editor} value={value}>
+        <PortableTextEditor editor={editor} value={value} readOnly={readOnly}>
           <div className="flex flex-col gap-2">
             <PortableTextToolbar
               editor={editor}
@@ -177,6 +178,14 @@ export function Editor(props: {editorRef: EditorActorRef}) {
                 </Button>
                 <Tooltip>Remove editor</Tooltip>
               </TooltipTrigger>
+              <Switch
+                isSelected={readOnly}
+                onChange={() => {
+                  props.editorRef.send({type: 'toggle readOnly'})
+                }}
+              >
+                <code>readOnly</code>
+              </Switch>
             </div>
           </div>
           <div className="flex flex-col gap-2">
