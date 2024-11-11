@@ -47,7 +47,6 @@ const editorMachine = setup({
       | {type: 'clear stored patches'}
       | {type: 'copy patches'}
       | {type: 'toggle patches preview'}
-      | {type: 'toggle value preview'}
       | {type: 'toggle selection preview'}
       | {type: 'toggle readOnly'},
     emitted: {} as {
@@ -132,13 +131,6 @@ const editorMachine = setup({
       states: {
         hidden: {on: {'toggle patches preview': {target: 'shown'}}},
         shown: {on: {'toggle patches preview': {target: 'hidden'}}},
-      },
-    },
-    'value preview': {
-      initial: 'hidden',
-      states: {
-        hidden: {on: {'toggle value preview': {target: 'shown'}}},
-        shown: {on: {'toggle value preview': {target: 'hidden'}}},
       },
     },
     'selection preview': {

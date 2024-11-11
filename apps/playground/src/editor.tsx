@@ -28,7 +28,6 @@ import {Switch} from './components/switch'
 import {Toolbar} from './components/toolbar'
 import {Tooltip} from './components/tooltip'
 import {EditorPatchesPreview} from './editor-patches-preview'
-import {EditorPortableTextPreview} from './editor-portable-text-preview'
 import './editor.css'
 import type {EditorActorRef} from './playground-machine'
 import {PortableTextToolbar} from './portable-text-toolbar'
@@ -45,9 +44,6 @@ import {wait} from './wait'
 export function Editor(props: {editorRef: EditorActorRef}) {
   const showingPatchesPreview = useSelector(props.editorRef, (s) =>
     s.matches({'patches preview': 'shown'}),
-  )
-  const showingValuePreview = useSelector(props.editorRef, (s) =>
-    s.matches({'value preview': 'shown'}),
   )
   const showingSelectionPreivew = useSelector(props.editorRef, (s) =>
     s.matches({'selection preview': 'shown'}),
@@ -225,22 +221,6 @@ export function Editor(props: {editorRef: EditorActorRef}) {
             </Toolbar>
             {showingPatchesPreview ? (
               <EditorPatchesPreview patches={patchesReceived} />
-            ) : null}
-            <Toolbar>
-              <Switch
-                isSelected={showingValuePreview}
-                onChange={() => {
-                  props.editorRef.send({type: 'toggle value preview'})
-                }}
-              >
-                Value
-              </Switch>
-            </Toolbar>
-            {showingValuePreview ? (
-              <EditorPortableTextPreview
-                editorId={props.editorRef.id}
-                value={value}
-              />
             ) : null}
             <Toolbar>
               <Switch
