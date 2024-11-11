@@ -6,7 +6,7 @@ import {editorMachine} from '../..'
 import {schemaType} from '../../editor/__tests__/PortableTextEditorTester'
 import {coreBehaviors} from '../../editor/behavior/behavior.core'
 import {defaultKeyGenerator} from '../../editor/key-generator'
-import {withPlugins} from '../../editor/plugins'
+import {withPlugins} from '../../editor/plugins/with-plugins'
 import {getPortableTextMemberSchemaTypes} from '../getPortableTextMemberSchemaTypes'
 import {createOperationToPatches} from '../operationToPatches'
 
