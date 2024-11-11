@@ -9,10 +9,12 @@ import type {
 import {
   Component,
   useEffect,
+  useMemo,
   type MutableRefObject,
   type PropsWithChildren,
 } from 'react'
 import {Subject} from 'rxjs'
+import {Slate} from 'slate-react'
 import {createActor} from 'xstate'
 import type {
   EditableAPI,
@@ -26,15 +28,18 @@ import type {
 import {debugWithName} from '../utils/debug'
 import {getPortableTextMemberSchemaTypes} from '../utils/getPortableTextMemberSchemaTypes'
 import {compileType} from '../utils/schema'
-import {SlateContainer} from './components/SlateContainer'
 import {Synchronizer} from './components/Synchronizer'
+import {useSlateEditor} from './components/use-slate-editor'
 import {EditorActorContext} from './editor-actor-context'
 import {editorMachine, type EditorActor} from './editor-machine'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
 import {PortableTextEditorReadOnlyContext} from './hooks/usePortableTextReadOnly'
 import {defaultKeyGenerator} from './key-generator'
-import type {AddedAnnotationPaths} from './plugins/createWithEditableAPI'
+import {
+  createEditableAPI,
+  type AddedAnnotationPaths,
+} from './plugins/createWithEditableAPI'
 import type {Editor} from './use-editor'
 
 const debug = debugWithName('component:PortableTextEditor')
@@ -423,3 +428,35 @@ function RoutePatchesObservableToEditorActor(props: {
 
   return null
 }
+
+function SlateContainer(
+  props: React.PropsWithChildren<{
+    portableTextEditor: PortableTextEditor
+    editorActor: EditorActor
+    maxBlocks: number | undefined
+    readOnly: boolean
+  }>,
+) {
+  const slateEditor = useSlateEditor({
+    editorActor: props.editorActor,
+    maxBlocks: props.maxBlocks,
+    readOnly: props.readOnly,
+  })
+
+  useEffect(() => {
+    props.portableTextEditor.setEditable(
+      createEditableAPI(slateEditor, props.editorActor),
+    )
+  }, [props.portableTextEditor, props.editorActor, slateEditor])
+
+  const initialValue = useMemo(() => {
+    return [slateEditor.pteCreateTextBlock({decorators: []})]
+  }, [slateEditor])
+
+  return (
+    <Slate editor={slateEditor} initialValue={initialValue}>
+      {props.children}
+    </Slate>
+  )
+}
+SlateContainer.displayName = 'SlateContainer'

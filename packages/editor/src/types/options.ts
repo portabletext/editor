@@ -7,7 +7,6 @@ import type {PortableTextEditor} from '../editor/PortableTextEditor'
  */
 export type createEditorOptions = {
   editorActor: EditorActor
-  portableTextEditor: PortableTextEditor
   readOnly: boolean
   maxBlocks?: number
 }

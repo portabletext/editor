@@ -1,9 +1,8 @@
 import type {Patch} from '@portabletext/patches'
-import {noop} from 'lodash'
 import {createEditor, type Descendant} from 'slate'
 import {beforeEach, describe, expect, it} from 'vitest'
 import {createActor} from 'xstate'
-import {editorMachine, PortableTextEditor} from '../..'
+import {editorMachine} from '../..'
 import {schemaType} from '../../editor/__tests__/PortableTextEditorTester'
 import {coreBehaviors} from '../../editor/behavior/behavior.core'
 import {defaultKeyGenerator} from '../../editor/key-generator'
@@ -15,7 +14,6 @@ import {VOID_CHILD_KEY} from '../values'
 const schemaTypes = getPortableTextMemberSchemaTypes(schemaType)
 
 const patchToOperations = createApplyPatch(schemaTypes)
-const portableTextEditor = new PortableTextEditor({schemaType, onChange: noop})
 
 const {editor} = withPlugins(createEditor(), {
   editorActor: createActor(editorMachine, {
@@ -25,7 +23,6 @@ const {editor} = withPlugins(createEditor(), {
       keyGenerator: defaultKeyGenerator,
     },
   }),
-  portableTextEditor,
   readOnly: false,
 })
 
