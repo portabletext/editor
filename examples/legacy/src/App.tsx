@@ -1,4 +1,6 @@
 import {
+  MutationChange,
+  Patch,
   PortableTextBlock,
   PortableTextChild,
   PortableTextEditable,
@@ -11,23 +13,143 @@ import {
   usePortableTextEditor,
   usePortableTextEditorSelection,
 } from '@portabletext/editor'
-import {useState} from 'react'
+import {applyAll} from '@portabletext/patches'
+import {useActorRef, useSelector} from '@xstate/react'
+import {useEffect, useMemo} from 'react'
+import {Subject} from 'rxjs'
+import {ActorRefFrom, assign, emit, sendParent, setup} from 'xstate'
 import './editor.css'
 import {schema} from './schema'
 
+const editorMachine = setup({
+  types: {
+    events: {} as
+      | MutationChange
+      | {
+          type: 'patches'
+          patches: MutationChange['patches']
+          snapshot: MutationChange['snapshot']
+        },
+    emitted: {} as {
+      type: 'patches'
+      patches: MutationChange['patches']
+      snapshot: MutationChange['snapshot']
+    },
+  },
+}).createMachine({
+  id: 'editor',
+  on: {
+    mutation: {
+      actions: sendParent(({event, self}) => ({
+        ...event,
+        type: 'editor.mutation',
+        editorId: self.id,
+      })),
+    },
+    patches: {
+      actions: emit(({event}) => event),
+    },
+  },
+})
+
+const playgroundMachine = setup({
+  types: {
+    context: {} as {
+      editors: Array<ActorRefFrom<typeof editorMachine>>
+      value: Array<PortableTextBlock> | undefined
+    },
+    events: {} as {
+      type: 'editor.mutation'
+      editorId: ActorRefFrom<typeof editorMachine>['id']
+      patches: Array<Patch>
+      snapshot: Array<PortableTextBlock> | undefined
+    },
+  },
+  actors: {
+    'editor machine': editorMachine,
+  },
+}).createMachine({
+  id: 'playground',
+  context: ({spawn}) => ({
+    editors: [spawn(editorMachine), spawn(editorMachine)],
+    value: undefined,
+  }),
+  on: {
+    'editor.mutation': {
+      actions: [
+        ({context, event}) => {
+          for (const editor of context.editors) {
+            editor.send({
+              type: 'patches',
+              patches: event.patches.map((patch) => ({
+                ...patch,
+                origin: event.editorId === editor.id ? 'local' : 'remote',
+              })),
+              snapshot: event.snapshot,
+            })
+          }
+        },
+        assign({
+          value: ({context, event}) => {
+            return applyAll(context.value, event.patches)
+          },
+        }),
+      ],
+    },
+  },
+})
+
+/**
+ * WARNING: This is just an example app to make sure that legacy APIs are still
+ * working. Don't use this as a reference for your own project.
+ */
 function App() {
-  const [value, setValue] = useState<Array<PortableTextBlock> | undefined>(
-    undefined,
-  )
+  const playground = useActorRef(playgroundMachine)
+  const editors = useSelector(playground, (s) => s.context.editors)
+  const value = useSelector(playground, (s) => s.context.value)
 
   return (
     <>
+      {editors.map((editor) => (
+        <Editor key={editor.id} editorRef={editor} value={value} />
+      ))}
+      <pre style={{border: '1px dashed black', padding: '0.5em'}}>
+        {JSON.stringify(value, null, 2)}
+      </pre>
+    </>
+  )
+}
+
+function Editor(props: {
+  editorRef: ActorRefFrom<typeof editorMachine>
+  value: Array<PortableTextBlock> | undefined
+}) {
+  const patches$ = useMemo(
+    () =>
+      new Subject<{
+        patches: Patch[]
+        snapshot: PortableTextBlock[] | undefined
+      }>(),
+    [],
+  )
+  useEffect(() => {
+    props.editorRef.on('patches', (event) => {
+      patches$.next({
+        patches: event.patches,
+        snapshot: event.snapshot,
+      })
+    })
+  }, [props.editorRef, patches$])
+
+  return (
+    <div style={{border: '1px solid black', padding: '0.5em'}}>
       <PortableTextEditor
+        patches$={patches$}
         schemaType={schema}
-        value={value}
+        value={props.value}
         onChange={(change) => {
           if (change.type === 'mutation') {
-            setValue(change.snapshot)
+            props.editorRef.send(change)
           }
         }}
       >
@@ -42,10 +164,7 @@ function App() {
           renderListItem={(props) => <>{props.children}</>}
         />
       </PortableTextEditor>
-      <pre style={{border: '1px dashed black', padding: '0.5em'}}>
-        {JSON.stringify(value, null, 2)}
-      </pre>
-    </>
+    </div>
   )
 }
 
