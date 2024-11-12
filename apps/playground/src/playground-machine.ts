@@ -277,7 +277,7 @@ export const playgroundMachine = setup({
       actions: ['broadcast patches', 'update value', 'broadcast value'],
     },
   },
-  entry: [raise({type: 'add editor'}), raise({type: 'add editor'})],
+  entry: [raise({type: 'add editor'})],
   initial: 'value shown',
   states: {
     'value shown': {on: {'toggle value': {target: 'value hidden'}}},
