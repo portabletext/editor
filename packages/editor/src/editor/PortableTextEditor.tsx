@@ -136,6 +136,7 @@ export class PortableTextEditor extends Component<
     if (props.editor) {
       const editor = props.editor as Editor
       this.editorActor = editor._internal.editorActor
+      this.slateEditor = editor._internal.slateEditor
       this.editorActor.start()
       this.schemaTypes = this.editorActor.getSnapshot().context.schema
     } else {
@@ -163,6 +164,10 @@ export class PortableTextEditor extends Component<
       })
       this.editorActor.start()
 
+      this.slateEditor = createSlateEditor({
+        editorActor: this.editorActor,
+      })
+
       if (props.readOnly) {
         this.editorActor.send({
           type: 'toggle readOnly',
@@ -179,9 +184,6 @@ export class PortableTextEditor extends Component<
         })
       }
     }
-    this.slateEditor = createSlateEditor({
-      editorActor: this.editorActor,
-    })
     this.editable = createEditableAPI(
       this.slateEditor.instance,
       this.editorActor,

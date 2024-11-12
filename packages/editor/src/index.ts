@@ -15,6 +15,7 @@ export {
   type BehaviorGuard,
   type PickFromUnion,
 } from './editor/behavior/behavior.types'
+export type {SlateEditor} from './editor/create-slate-editor'
 export {
   defineSchema,
   type BaseDefinition,

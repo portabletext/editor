@@ -7,6 +7,7 @@ import {useActorRef, useSelector} from '@xstate/react'
 import {getPortableTextMemberSchemaTypes} from '../utils/getPortableTextMemberSchemaTypes'
 import {compileType} from '../utils/schema'
 import type {Behavior, PickFromUnion} from './behavior/behavior.types'
+import {createSlateEditor, type SlateEditor} from './create-slate-editor'
 import {compileSchemaDefinition, type SchemaDefinition} from './define-schema'
 import {
   editorMachine,
@@ -54,6 +55,7 @@ export type Editor = {
   readOnly: boolean
   _internal: {
     editorActor: EditorActor
+    slateEditor: SlateEditor
   }
 }
 
@@ -74,6 +76,7 @@ export function useEditor(config: EditorConfig): Editor {
           ),
     },
   })
+  const slateEditor = createSlateEditor({editorActor})
   const readOnly = useSelector(editorActor, (s) => s.context.readOnly)
 
   return {
@@ -84,6 +87,7 @@ export function useEditor(config: EditorConfig): Editor {
     readOnly,
     _internal: {
       editorActor,
+      slateEditor,
     },
   }
 }
