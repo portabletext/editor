@@ -14,6 +14,7 @@
     "dev:editor": "turbo dev --filter=@portabletext/editor",
     "dev:playground": "turbo dev --filter=playground...",
     "dev:example-basic": "turbo dev --filter=example-basic...",
+    "dev:example-legacy": "turbo dev --filter=example-legacy...",
     "format": "prettier --cache --write .",
     "format:staged": "pretty-quick --staged",
     "postinstall": "husky",

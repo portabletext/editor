@@ -204,6 +204,58 @@ importers:
         specifier: ^5.4.10
         version: 5.4.10(@types/node@22.9.0)(terser@5.36.0)
 
+  examples/legacy:
+    dependencies:
+      '@portabletext/editor':
+        specifier: workspace:*
+        version: link:../../packages/editor
+      '@sanity/schema':
+        specifier: ^3.63.0
+        version: 3.63.0(debug@4.3.7)
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
+    devDependencies:
+      '@eslint/js':
+        specifier: ^9.13.0
+        version: 9.14.0
+      '@sanity/types':
+        specifier: ^3.63.0
+        version: 3.63.0(debug@4.3.7)
+      '@types/react':
+        specifier: ^18.3.12
+        version: 18.3.12
+      '@types/react-dom':
+        specifier: ^18.3.1
+        version: 18.3.1
+      '@vitejs/plugin-react':
+        specifier: ^4.3.3
+        version: 4.3.3(vite@5.4.10(@types/node@22.9.0)(terser@5.36.0))
+      eslint:
+        specifier: ^9.13.0
+        version: 9.14.0(jiti@1.21.6)
+      eslint-plugin-react-hooks:
+        specifier: ^5.0.0
+        version: 5.0.0(eslint@9.14.0(jiti@1.21.6))
+      eslint-plugin-react-refresh:
+        specifier: ^0.4.14
+        version: 0.4.14(eslint@9.14.0(jiti@1.21.6))
+      globals:
+        specifier: ^15.11.0
+        version: 15.12.0
+      typescript:
+        specifier: ~5.6.2
+        version: 5.6.3
+      typescript-eslint:
+        specifier: ^8.11.0
+        version: 8.13.0(eslint@9.14.0(jiti@1.21.6))(typescript@5.6.3)
+      vite:
+        specifier: ^5.4.10
+        version: 5.4.10(@types/node@22.9.0)(terser@5.36.0)
+
   packages/editor:
     dependencies:
       '@portabletext/patches':
