@@ -81,15 +81,15 @@ export interface PatchFunctions {
 interface Options {
   editorActor: EditorActor
   patchFunctions: PatchFunctions
-  readOnly: boolean
   schemaTypes: PortableTextMemberSchemaTypes
+  subscriptions: Array<() => () => void>
 }
 
 export function createWithPatches({
   editorActor,
   patchFunctions,
-  readOnly,
   schemaTypes,
+  subscriptions,
 }: Options): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
   // The previous editor children are needed to figure out the _key of deleted nodes
   // The editor.children would no longer contain that information if the node is already deleted.
@@ -140,7 +140,7 @@ export function createWithPatches({
       handleBufferedRemotePatches()
     }
 
-    editor.subscriptions.push(() => {
+    subscriptions.push(() => {
       debug('Subscribing to remote patches')
       const sub = editorActor.on('patches', handlePatches)
       return () => {
@@ -150,7 +150,7 @@ export function createWithPatches({
     })
 
     editor.apply = (operation: Operation): void | Editor => {
-      if (readOnly) {
+      if (editorActor.getSnapshot().context.readOnly) {
         apply(operation)
         return editor
       }

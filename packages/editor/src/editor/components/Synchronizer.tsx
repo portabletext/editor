@@ -1,5 +1,6 @@
 import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@sanity/types'
+import {useSelector} from '@xstate/react'
 import {throttle} from 'lodash'
 import {useCallback, useEffect, useRef} from 'react'
 import {Editor} from 'slate'
@@ -10,7 +11,6 @@ import {debugWithName} from '../../utils/debug'
 import {IS_PROCESSING_LOCAL_CHANGES} from '../../utils/weakMaps'
 import type {EditorActor} from '../editor-machine'
 import {usePortableTextEditor} from '../hooks/usePortableTextEditor'
-import {usePortableTextEditorReadOnlyStatus} from '../hooks/usePortableTextReadOnly'
 import {useSyncValue} from '../hooks/useSyncValue'
 
 const debug = debugWithName('component:PortableTextEditor:Synchronizer')
@@ -36,7 +36,7 @@ export interface SynchronizerProps {
  */
 export function Synchronizer(props: SynchronizerProps) {
   const portableTextEditor = usePortableTextEditor()
-  const readOnly = usePortableTextEditorReadOnlyStatus()
+  const readOnly = useSelector(props.editorActor, (s) => s.context.readOnly)
   const {editorActor, getValue, onChange, value} = props
   const pendingPatches = useRef<Patch[]>([])
 

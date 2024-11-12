@@ -33,7 +33,6 @@ const editorMachine = setup({
       value: Array<PortableTextBlock> | undefined
       patchesReceived: Array<Patch & {new: boolean; id: string}>
       keyGenerator: () => string
-      readOnly: boolean
     },
     events: {} as
       | MutationChange
@@ -47,8 +46,7 @@ const editorMachine = setup({
       | {type: 'clear stored patches'}
       | {type: 'copy patches'}
       | {type: 'toggle patches preview'}
-      | {type: 'toggle selection preview'}
-      | {type: 'toggle readOnly'},
+      | {type: 'toggle selection preview'},
     emitted: {} as {
       type: 'patches'
       patches: MutationChange['patches']
@@ -117,11 +115,6 @@ const editorMachine = setup({
     },
     'clear stored patches': {
       actions: ['remove patches from context'],
-    },
-    'toggle readOnly': {
-      actions: assign({
-        readOnly: ({context}) => !context.readOnly,
-      }),
     },
   },
   type: 'parallel',

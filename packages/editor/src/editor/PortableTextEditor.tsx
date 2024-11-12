@@ -9,7 +9,6 @@ import type {
 import {
   Component,
   useEffect,
-  useMemo,
   type MutableRefObject,
   type PropsWithChildren,
 } from 'react'
@@ -29,12 +28,14 @@ import {debugWithName} from '../utils/debug'
 import {getPortableTextMemberSchemaTypes} from '../utils/getPortableTextMemberSchemaTypes'
 import {compileType} from '../utils/schema'
 import {Synchronizer} from './components/Synchronizer'
-import {useSlateEditor} from './components/use-slate-editor'
+import {
+  createSlateEditor,
+  type SlateEditor,
+} from './components/use-slate-editor'
 import {EditorActorContext} from './editor-actor-context'
 import {editorMachine, type EditorActor} from './editor-machine'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
-import {PortableTextEditorReadOnlyContext} from './hooks/usePortableTextReadOnly'
 import {defaultKeyGenerator} from './key-generator'
 import {
   createEditableAPI,
@@ -91,12 +92,12 @@ export type PortableTextEditorProps<
          * Backward compatibility (renamed to patches$).
          */
         incomingPatches$?: PatchObservable
-      }) & {
-    /**
-     * Whether or not the editor should be in read-only mode
-     */
-    readOnly?: boolean
 
+        /**
+         * Whether or not the editor should be in read-only mode
+         */
+        readOnly?: boolean
+      }) & {
     /**
      * The current value of the portable text field
      */
@@ -130,12 +131,14 @@ export class PortableTextEditor extends Component<
    */
   private editable?: EditableAPI
   private editorActor: EditorActor
+  private slateEditor: SlateEditor
 
   constructor(props: PortableTextEditorProps) {
     super(props)
 
     if (props.editor) {
-      this.editorActor = props.editor
+      const editor = props.editor as Editor
+      this.editorActor = editor._internal.editorActor
       this.editorActor.start()
       this.schemaTypes = this.editorActor.getSnapshot().context.schema
     } else {
@@ -164,7 +167,30 @@ export class PortableTextEditor extends Component<
           },
         })
       this.editorActor.start()
+
+      if (props.readOnly) {
+        this.editorActor.send({
+          type: 'toggle readOnly',
+        })
+      }
+
+      if (props.maxBlocks) {
+        this.editorActor.send({
+          type: 'update maxBlocks',
+          maxBlocks:
+            props.maxBlocks === undefined
+              ? undefined
+              : Number.parseInt(props.maxBlocks.toString(), 10),
+        })
+      }
     }
+    this.slateEditor = createSlateEditor({
+      editorActor: this.editorActor,
+    })
+    this.editable = createEditableAPI(
+      this.slateEditor.instance,
+      this.editorActor,
+    )
   }
 
   componentDidUpdate(prevProps: PortableTextEditorProps) {
@@ -186,9 +212,31 @@ export class PortableTextEditor extends Component<
       })
     }
 
+    if (!this.props.editor && !prevProps.editor) {
+      if (this.props.readOnly !== prevProps.readOnly) {
+        this.editorActor.send({
+          type: 'toggle readOnly',
+        })
+      }
+
+      if (this.props.maxBlocks !== prevProps.maxBlocks) {
+        this.editorActor.send({
+          type: 'update maxBlocks',
+          maxBlocks:
+            this.props.maxBlocks === undefined
+              ? undefined
+              : Number.parseInt(this.props.maxBlocks.toString(), 10),
+        })
+      }
+    }
+
     if (this.props.editorRef !== prevProps.editorRef && this.props.editorRef) {
       this.props.editorRef.current = this
     }
+  }
+
+  componentWillUnmount(): void {
+    this.slateEditor.destroy()
   }
 
   public setEditable = (editable: EditableAPI) => {
@@ -204,13 +252,6 @@ export class PortableTextEditor extends Component<
   }
 
   render() {
-    const maxBlocks = !this.props.editor
-      ? typeof this.props.maxBlocks === 'undefined'
-        ? undefined
-        : Number.parseInt(this.props.maxBlocks.toString(), 10) || undefined
-      : undefined
-
-    const readOnly = Boolean(this.props.readOnly)
     const legacyPatches = !this.props.editor
       ? (this.props.incomingPatches$ ?? this.props.patches$)
       : undefined
@@ -224,37 +265,33 @@ export class PortableTextEditor extends Component<
           />
         ) : null}
         <EditorActorContext.Provider value={this.editorActor}>
-          <SlateContainer
-            editorActor={this.editorActor}
-            maxBlocks={maxBlocks}
-            portableTextEditor={this}
-            readOnly={readOnly}
+          <Slate
+            editor={this.slateEditor.instance}
+            initialValue={this.slateEditor.initialValue}
           >
             <PortableTextEditorContext.Provider value={this}>
-              <PortableTextEditorReadOnlyContext.Provider value={readOnly}>
-                <PortableTextEditorSelectionProvider
+              <PortableTextEditorSelectionProvider
+                editorActor={this.editorActor}
+              >
+                <Synchronizer
                   editorActor={this.editorActor}
-                >
-                  <Synchronizer
-                    editorActor={this.editorActor}
-                    getValue={this.getValue}
-                    onChange={(change) => {
-                      if (!this.props.editor) {
-                        this.props.onChange(change)
-                      }
-                      /**
-                       * For backwards compatibility, we relay all changes to the
-                       * `change$` Subject as well.
-                       */
-                      this.change$.next(change)
-                    }}
-                    value={this.props.value}
-                  />
-                  {this.props.children}
-                </PortableTextEditorSelectionProvider>
-              </PortableTextEditorReadOnlyContext.Provider>
+                  getValue={this.getValue}
+                  onChange={(change) => {
+                    if (!this.props.editor) {
+                      this.props.onChange(change)
+                    }
+                    /**
+                     * For backwards compatibility, we relay all changes to the
+                     * `change$` Subject as well.
+                     */
+                    this.change$.next(change)
+                  }}
+                  value={this.props.value}
+                />
+                {this.props.children}
+              </PortableTextEditorSelectionProvider>
             </PortableTextEditorContext.Provider>
-          </SlateContainer>
+          </Slate>
         </EditorActorContext.Provider>
       </>
     )
@@ -428,35 +465,3 @@ function RoutePatchesObservableToEditorActor(props: {
 
   return null
 }
-
-function SlateContainer(
-  props: React.PropsWithChildren<{
-    portableTextEditor: PortableTextEditor
-    editorActor: EditorActor
-    maxBlocks: number | undefined
-    readOnly: boolean
-  }>,
-) {
-  const slateEditor = useSlateEditor({
-    editorActor: props.editorActor,
-    maxBlocks: props.maxBlocks,
-    readOnly: props.readOnly,
-  })
-
-  useEffect(() => {
-    props.portableTextEditor.setEditable(
-      createEditableAPI(slateEditor, props.editorActor),
-    )
-  }, [props.portableTextEditor, props.editorActor, slateEditor])
-
-  const initialValue = useMemo(() => {
-    return [slateEditor.pteCreateTextBlock({decorators: []})]
-  }, [slateEditor])
-
-  return (
-    <Slate editor={slateEditor} initialValue={initialValue}>
-      {props.children}
-    </Slate>
-  )
-}
-SlateContainer.displayName = 'SlateContainer'

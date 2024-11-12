@@ -7,8 +7,7 @@ import type {PortableTextEditor} from '../editor/PortableTextEditor'
  */
 export type createEditorOptions = {
   editorActor: EditorActor
-  readOnly: boolean
-  maxBlocks?: number
+  subscriptions: Array<() => () => void>
 }
 
 /**

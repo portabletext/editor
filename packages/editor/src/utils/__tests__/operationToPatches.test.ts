@@ -14,7 +14,7 @@ const schemaTypes = getPortableTextMemberSchemaTypes(schemaType)
 
 const operationToPatches = createOperationToPatches(schemaTypes)
 
-const {editor} = withPlugins(createEditor(), {
+const editor = withPlugins(createEditor(), {
   editorActor: createActor(editorMachine, {
     input: {
       behaviors: coreBehaviors,
@@ -22,7 +22,7 @@ const {editor} = withPlugins(createEditor(), {
       keyGenerator: defaultKeyGenerator,
     },
   }),
-  readOnly: false,
+  subscriptions: [],
 })
 
 const createDefaultValue = () =>

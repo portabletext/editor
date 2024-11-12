@@ -1,6 +1,6 @@
-import {useEffect, useState} from 'react'
-import {createEditor} from 'slate'
+import {createEditor, type Descendant} from 'slate'
 import {withReact} from 'slate-react'
+import type {PortableTextSlateEditor} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {KEY_TO_SLATE_ELEMENT, KEY_TO_VALUE_ELEMENT} from '../../utils/weakMaps'
 import type {EditorActor} from '../editor-machine'
@@ -8,49 +8,60 @@ import {withPlugins} from '../plugins/with-plugins'
 
 const debug = debugWithName('component:PortableTextEditor:SlateContainer')
 
-export function useSlateEditor(config: {
+type SlateEditorConfig = {
   editorActor: EditorActor
-  maxBlocks: number | undefined
-  readOnly: boolean
-}) {
-  const {editorActor, readOnly, maxBlocks} = config
+}
 
-  // Create the slate instance, using `useState` ensures setup is only run once, initially
-  const [[slateEditor, subscribe]] = useState(() => {
-    debug('Creating new Slate editor instance')
-    const {editor, subscribe: _sub} = withPlugins(withReact(createEditor()), {
-      editorActor,
-      maxBlocks,
-      readOnly,
-    })
-    KEY_TO_VALUE_ELEMENT.set(editor, {})
-    KEY_TO_SLATE_ELEMENT.set(editor, {})
-    return [editor, _sub] as const
+export type SlateEditor = {
+  instance: PortableTextSlateEditor
+  initialValue: Array<Descendant>
+  destroy: () => void
+}
+
+const slateEditors = new WeakMap<EditorActor, SlateEditor>()
+
+export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
+  const existingSlateEditor = slateEditors.get(config.editorActor)
+
+  if (existingSlateEditor) {
+    debug('Reusing existing Slate editor instance', config.editorActor.id)
+    return existingSlateEditor
+  }
+
+  debug('Creating new Slate editor instance', config.editorActor.id)
+
+  let unsubscriptions: Array<() => void> = []
+  let subscriptions: Array<() => () => void> = []
+
+  const instance = withPlugins(withReact(createEditor()), {
+    editorActor: config.editorActor,
+    subscriptions,
   })
 
-  useEffect(() => {
-    const unsubscribe = subscribe()
-    return () => {
-      unsubscribe()
-    }
-  }, [subscribe])
+  KEY_TO_VALUE_ELEMENT.set(instance, {})
+  KEY_TO_SLATE_ELEMENT.set(instance, {})
 
-  // Update the slate instance when plugin dependent props change.
-  useEffect(() => {
-    debug('Re-initializing plugin chain')
-    withPlugins(slateEditor, {
-      editorActor,
-      maxBlocks,
-      readOnly,
-    })
-  }, [editorActor, maxBlocks, readOnly, slateEditor])
+  for (const subscription of subscriptions) {
+    unsubscriptions.push(subscription())
+  }
 
-  useEffect(() => {
-    return () => {
+  const initialValue = [instance.pteCreateTextBlock({decorators: []})]
+
+  const slateEditor: SlateEditor = {
+    instance,
+    initialValue,
+    destroy: () => {
       debug('Destroying Slate editor')
-      slateEditor.destroy()
-    }
-  }, [slateEditor])
+      instance.destroy()
+      for (const unsubscribe of unsubscriptions) {
+        unsubscribe()
+      }
+      subscriptions = []
+      unsubscriptions = []
+    },
+  }
+
+  slateEditors.set(config.editorActor, slateEditor)
 
   return slateEditor
 }
