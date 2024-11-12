@@ -12,6 +12,9 @@ type SlateEditorConfig = {
   editorActor: EditorActor
 }
 
+/**
+ * @internal
+ */
 export type SlateEditor = {
   instance: PortableTextSlateEditor
   initialValue: Array<Descendant>
