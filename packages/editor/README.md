@@ -18,7 +18,8 @@ In order to provide a robust and consistent end-user experience, the editor is b
 
 ## Build Your Own Portable Text Editor
 
-> [!WARNING] > `@portabletext/editor` is currently on path to deprecate legacy APIs and introduce new ones. The end goals are to make the editor easier to use outside of `Sanity` (and without `@sanity/*` libraries) as well as providing a brand new API to configure the behavior of the editor.
+> [!WARNING]
+> `@portabletext/editor` is currently on path to deprecate legacy APIs and introduce new ones. The end goals are to make the editor easier to use outside of `Sanity` (and without `@sanity/*` libraries) as well as providing a brand new API to configure the behavior of the editor.
 >
 > This means that the `defineSchema` and `useEditor` APIs showcased here are still experimental APIs tagged with `@alpha` and cannot be considered stable yet. At the same time, the examples below showcase usages of legacy static methods on the `PortableTextEditor` (for example, `PortableTextEditor.isMarkActive(...)` and `PortableTextEditor.toggleMark(...)`) that will soon be discouraged and deprecrated.
 
