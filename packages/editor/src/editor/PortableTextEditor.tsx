@@ -158,14 +158,12 @@ export class PortableTextEditor extends Component<
           : compileType(props.schemaType),
       )
 
-      this.editorActor =
-        props.editor ??
-        createActor(editorMachine, {
-          input: {
-            keyGenerator: props.keyGenerator || defaultKeyGenerator,
-            schema: this.schemaTypes,
-          },
-        })
+      this.editorActor = createActor(editorMachine, {
+        input: {
+          keyGenerator: props.keyGenerator || defaultKeyGenerator,
+          schema: this.schemaTypes,
+        },
+      })
       this.editorActor.start()
 
       if (props.readOnly) {
