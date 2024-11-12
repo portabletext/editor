@@ -4,9 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "clean": "del .turbo && del dist && del node_modules",
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "check:lint": "eslint .",
+    "check:types": "tsc",
     "preview": "vite preview"
   },
   "dependencies": {
