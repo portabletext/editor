@@ -4,6 +4,7 @@ import type {SlateTextBlock, VoidElement} from '../../types/slate'
 import {debugWithName} from '../../utils/debug'
 import {isChangingRemotely} from '../../utils/withChanges'
 import {isRedoing, isUndoing} from '../../utils/withUndoRedo'
+import type {EditorActor} from '../editor-machine'
 
 const debug = debugWithName('plugin:withPlaceholderBlock')
 
@@ -11,15 +12,19 @@ const debug = debugWithName('plugin:withPlaceholderBlock')
  * Keep a "placeholder" block present when the editor is empty
  *
  */
-export function createWithPlaceholderBlock(): (
-  editor: PortableTextSlateEditor,
-) => PortableTextSlateEditor {
+export function createWithPlaceholderBlock(
+  editorActor: EditorActor,
+): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
   return function withPlaceholderBlock(
     editor: PortableTextSlateEditor,
   ): PortableTextSlateEditor {
     const {apply} = editor
 
     editor.apply = (op) => {
+      if (editorActor.getSnapshot().context.readOnly) {
+        return
+      }
+
       /**
        * We don't want to run any side effects when the editor is processing
        * remote changes.

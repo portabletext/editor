@@ -1,9 +1,16 @@
 import type {Editor} from 'slate'
 import type {EditorActor} from '../editor-machine'
 
-export function createWithEventListeners(editorActor: EditorActor) {
+export function createWithEventListeners(
+  editorActor: EditorActor,
+  subscriptions: Array<() => () => void>,
+) {
   return function withEventListeners(editor: Editor) {
-    editor.subscriptions.push(() => {
+    if (editorActor.getSnapshot().context.maxBlocks !== undefined) {
+      return editor
+    }
+
+    subscriptions.push(() => {
       const subscription = editorActor.on('*', (event) => {
         switch (event.type) {
           case 'annotation.add': {

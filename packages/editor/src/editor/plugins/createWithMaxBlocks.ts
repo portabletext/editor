@@ -1,17 +1,22 @@
 import type {PortableTextSlateEditor} from '../../types/editor'
 import {isChangingRemotely} from '../../utils/withChanges'
 import {isRedoing, isUndoing} from '../../utils/withUndoRedo'
+import type {EditorActor} from '../editor-machine'
 
 /**
  * This plugin makes sure that the PTE maxBlocks prop is respected
  *
  */
-export function createWithMaxBlocks(maxBlocks: number) {
+export function createWithMaxBlocks(editorActor: EditorActor) {
   return function withMaxBlocks(
     editor: PortableTextSlateEditor,
   ): PortableTextSlateEditor {
     const {apply} = editor
     editor.apply = (operation) => {
+      if (editorActor.getSnapshot().context.readOnly) {
+        return
+      }
+
       /**
        * We don't want to run any side effects when the editor is processing
        * remote changes.
@@ -30,7 +35,7 @@ export function createWithMaxBlocks(maxBlocks: number) {
         return
       }
 
-      const rows = maxBlocks
+      const rows = editorActor.getSnapshot().context.maxBlocks ?? -1
       if (rows > 0 && editor.children.length >= rows) {
         if (
           (operation.type === 'insert_node' ||

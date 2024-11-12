@@ -133,7 +133,6 @@ export interface PortableTextSlateEditor extends ReactEditor {
   isTextBlock: (value: unknown) => value is PortableTextTextBlock
   isTextSpan: (value: unknown) => value is PortableTextSpan
   isListBlock: (value: unknown) => value is PortableTextListBlock
-  subscriptions: (() => () => void)[]
 
   /**
    * Increments selected list items levels, or decrements them if `reverse` is true.

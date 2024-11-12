@@ -1,4 +1,5 @@
 import type {PortableTextBlock} from '@sanity/types'
+import {useSelector} from '@xstate/react'
 import {isEqual, noop} from 'lodash'
 import {
   forwardRef,
@@ -66,7 +67,6 @@ import {Element} from './components/Element'
 import {Leaf} from './components/Leaf'
 import {EditorActorContext} from './editor-actor-context'
 import {usePortableTextEditor} from './hooks/usePortableTextEditor'
-import {usePortableTextEditorReadOnlyStatus} from './hooks/usePortableTextReadOnly'
 import {createWithHotkeys} from './plugins/createWithHotKeys'
 import {createWithInsertData} from './plugins/createWithInsertData'
 import {PortableTextEditor} from './PortableTextEditor'
@@ -141,7 +141,6 @@ export const PortableTextEditable = forwardRef<
   } = props
 
   const portableTextEditor = usePortableTextEditor()
-  const readOnly = usePortableTextEditorReadOnlyStatus()
   const ref = useRef<HTMLDivElement | null>(null)
   const [editableElement, setEditableElement] = useState<HTMLDivElement | null>(
     null,
@@ -160,6 +159,7 @@ export const PortableTextEditable = forwardRef<
   const rangeDecorationsRef = useRef(rangeDecorations)
 
   const editorActor = useContext(EditorActorContext)
+  const readOnly = useSelector(editorActor, (s) => s.context.readOnly)
   const {schemaTypes} = portableTextEditor
   const slateEditor = useSlate()
 

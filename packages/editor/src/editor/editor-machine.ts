@@ -31,6 +31,8 @@ import type {
   PickFromUnion,
 } from './behavior/behavior.types'
 
+export * from 'xstate/guards'
+
 /**
  * @internal
  */
@@ -76,7 +78,10 @@ export type MutationEvent = {
   snapshot: Array<PortableTextBlock> | undefined
 }
 
-type EditorEvent =
+/**
+ * @internal
+ */
+export type InternalEditorEvent =
   | {type: 'normalizing'}
   | {type: 'done normalizing'}
   | {
@@ -97,9 +102,19 @@ type EditorEvent =
       type: 'update behaviors'
       behaviors: Array<Behavior>
     }
-  | EditorEmittedEvent
+  | {
+      type: 'toggle readOnly'
+    }
+  | {
+      type: 'update maxBlocks'
+      maxBlocks: number | undefined
+    }
+  | InternalEditorEmittedEvent
 
-type EditorEmittedEvent =
+/**
+ * @internal
+ */
+export type InternalEditorEmittedEvent =
   | {type: 'ready'}
   | PatchEvent
   | PatchesEvent
@@ -146,9 +161,11 @@ export const editorMachine = setup({
       keyGenerator: () => string
       pendingEvents: Array<PatchEvent | MutationEvent>
       schema: PortableTextMemberSchemaTypes
+      readOnly: boolean
+      maxBlocks: number | undefined
     },
-    events: {} as EditorEvent,
-    emitted: {} as EditorEmittedEvent,
+    events: {} as InternalEditorEvent,
+    emitted: {} as InternalEditorEmittedEvent,
     input: {} as {
       behaviors?: Array<Behavior>
       keyGenerator: () => string
@@ -296,16 +313,30 @@ export const editorMachine = setup({
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
     schema: input.schema,
+    readOnly: false,
+    maxBlocks: undefined,
   }),
   invoke: {
     id: 'networkLogic',
     src: 'networkLogic',
   },
   on: {
-    'annotation.add': {actions: emit(({event}) => event)},
-    'annotation.remove': {actions: emit(({event}) => event)},
-    'annotation.toggle': {actions: emit(({event}) => event)},
-    'focus': {actions: emit(({event}) => event)},
+    'annotation.add': {
+      actions: emit(({event}) => event),
+      guard: ({context}) => !context.readOnly,
+    },
+    'annotation.remove': {
+      actions: emit(({event}) => event),
+      guard: ({context}) => !context.readOnly,
+    },
+    'annotation.toggle': {
+      actions: emit(({event}) => event),
+      guard: ({context}) => !context.readOnly,
+    },
+    'focus': {
+      actions: emit(({event}) => event),
+      guard: ({context}) => !context.readOnly,
+    },
     'ready': {actions: emit(({event}) => event)},
     'unset': {actions: emit(({event}) => event)},
     'value changed': {actions: emit(({event}) => event)},
@@ -321,7 +352,16 @@ export const editorMachine = setup({
     'done loading': {actions: emit({type: 'done loading'})},
     'update behaviors': {actions: 'assign behaviors'},
     'update schema': {actions: 'assign schema'},
-    'behavior event': {actions: 'handle behavior event'},
+    'toggle readOnly': {
+      actions: assign({readOnly: ({context}) => !context.readOnly}),
+    },
+    'update maxBlocks': {
+      actions: assign({maxBlocks: ({event}) => event.maxBlocks}),
+    },
+    'behavior event': {
+      actions: 'handle behavior event',
+      guard: ({context}) => !context.readOnly,
+    },
     'behavior action intends': {
       actions: [
         ({context, event}) => {

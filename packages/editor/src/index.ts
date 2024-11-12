@@ -25,6 +25,8 @@ export type {PortableTextEditableProps} from './editor/Editable'
 export {
   editorMachine,
   type EditorActor,
+  type InternalEditorEmittedEvent,
+  type InternalEditorEvent,
   type MutationEvent,
   type PatchEvent,
   type PatchesEvent,
@@ -35,6 +37,11 @@ export {defaultKeyGenerator as keyGenerator} from './editor/key-generator'
 export type {AddedAnnotationPaths} from './editor/plugins/createWithEditableAPI'
 export {PortableTextEditor} from './editor/PortableTextEditor'
 export type {PortableTextEditorProps} from './editor/PortableTextEditor'
-export {useEditor, type Editor, type EditorConfig} from './editor/use-editor'
+export {
+  useEditor,
+  type Editor,
+  type EditorConfig,
+  type EditorEvent,
+} from './editor/use-editor'
 export * from './types/editor'
 export * from './types/options'

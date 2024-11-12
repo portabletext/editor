@@ -1,4 +1,3 @@
-import {noop} from 'lodash'
 import type {BaseOperation, Editor, Node, NodeEntry} from 'slate'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {createEditorOptions} from '../../types/options'
@@ -30,11 +29,10 @@ const originalFnMap = new WeakMap<
 export const withPlugins = <T extends Editor>(
   editor: T,
   options: createEditorOptions,
-): {editor: PortableTextSlateEditor; subscribe: () => () => void} => {
+): PortableTextSlateEditor => {
   const e = editor as T & PortableTextSlateEditor
-  const {editorActor, readOnly, maxBlocks} = options
+  const {editorActor} = options
   const schemaTypes = editorActor.getSnapshot().context.schema
-  e.subscriptions = []
   if (e.destroy) {
     e.destroy()
   } else {
@@ -55,15 +53,15 @@ export const withPlugins = <T extends Editor>(
   const withPatches = createWithPatches({
     editorActor,
     patchFunctions: operationToPatches,
-    readOnly,
     schemaTypes,
+    subscriptions: options.subscriptions,
   })
-  const withMaxBlocks = createWithMaxBlocks(maxBlocks || -1)
+  const withMaxBlocks = createWithMaxBlocks(editorActor)
   const withPortableTextLists = createWithPortableTextLists(schemaTypes)
   const withUndoRedo = createWithUndoRedo({
     editorActor,
-    readOnly,
     blockSchemaType: schemaTypes.block,
+    subscriptions: options.subscriptions,
   })
   const withPortableTextMarkModel = createWithPortableTextMarkModel(
     editorActor,
@@ -74,7 +72,7 @@ export const withPlugins = <T extends Editor>(
     schemaTypes,
   )
 
-  const withPlaceholderBlock = createWithPlaceholderBlock()
+  const withPlaceholderBlock = createWithPlaceholderBlock(editorActor)
 
   const withUtils = createWithUtils({
     editorActor,
@@ -84,7 +82,10 @@ export const withPlugins = <T extends Editor>(
     editorActor,
     schemaTypes,
   )
-  const withEventListeners = createWithEventListeners(editorActor)
+  const withEventListeners = createWithEventListeners(
+    editorActor,
+    options.subscriptions,
+  )
 
   e.destroy = () => {
     const originalFunctions = originalFnMap.get(e)
@@ -96,38 +97,18 @@ export const withPlugins = <T extends Editor>(
     e.normalizeNode = originalFunctions.normalizeNode
     e.onChange = originalFunctions.onChange
   }
-  if (readOnly) {
-    return {
-      editor: withSchemaTypes(
-        withObjectKeys(
-          withPortableTextMarkModel(
-            withPortableTextBlockStyle(
-              withUtils(
-                withPlaceholderBlock(
-                  withPortableTextLists(withPortableTextSelections(e)),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-      subscribe: () => noop,
-    }
-  }
 
   // Ordering is important here, selection dealing last, data manipulation in the middle and core model stuff first.
-  return {
-    editor: withEventListeners(
-      withSchemaTypes(
-        withObjectKeys(
-          withPortableTextMarkModel(
-            withPortableTextBlockStyle(
-              withPortableTextLists(
-                withPlaceholderBlock(
-                  withUtils(
-                    withMaxBlocks(
-                      withUndoRedo(withPatches(withPortableTextSelections(e))),
-                    ),
+  return withEventListeners(
+    withSchemaTypes(
+      withObjectKeys(
+        withPortableTextMarkModel(
+          withPortableTextBlockStyle(
+            withPortableTextLists(
+              withPlaceholderBlock(
+                withUtils(
+                  withMaxBlocks(
+                    withUndoRedo(withPatches(withPortableTextSelections(e))),
                   ),
                 ),
               ),
@@ -136,16 +117,5 @@ export const withPlugins = <T extends Editor>(
         ),
       ),
     ),
-    subscribe: () => {
-      const unsubscribes: (() => void)[] = []
-      editor.subscriptions.forEach((subscribeFn) => {
-        unsubscribes.push(subscribeFn())
-      })
-      return () => {
-        unsubscribes.forEach((unsubscribeFn) => {
-          unsubscribeFn()
-        })
-      }
-    },
-  }
+  )
 }

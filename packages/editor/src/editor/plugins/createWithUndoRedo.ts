@@ -56,8 +56,8 @@ const isSaving = (editor: Editor): boolean | undefined => {
 
 export interface Options {
   editorActor: EditorActor
-  readOnly: boolean
   blockSchemaType: ObjectSchemaType
+  subscriptions: Array<() => () => void>
 }
 
 const getRemotePatches = (editor: Editor) => {
@@ -70,7 +70,7 @@ const getRemotePatches = (editor: Editor) => {
 export function createWithUndoRedo(
   options: Options,
 ): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
-  const {editorActor, readOnly, blockSchemaType} = options
+  const {editorActor, blockSchemaType} = options
 
   return (editor: PortableTextSlateEditor) => {
     let previousSnapshot: PortableTextBlock[] | undefined = fromSlateValue(
@@ -79,7 +79,7 @@ export function createWithUndoRedo(
     )
     const remotePatches = getRemotePatches(editor)
 
-    editor.subscriptions.push(() => {
+    options.subscriptions.push(() => {
       debug('Subscribing to patches')
       const sub = editorActor.on('patches', ({patches, snapshot}) => {
         let reset = false
@@ -114,8 +114,7 @@ export function createWithUndoRedo(
     editor.history = {undos: [], redos: []}
     const {apply} = editor
     editor.apply = (op: Operation) => {
-      if (readOnly) {
-        apply(op)
+      if (editorActor.getSnapshot().context.readOnly) {
         return
       }
 
@@ -181,7 +180,7 @@ export function createWithUndoRedo(
     }
 
     editor.undo = () => {
-      if (readOnly) {
+      if (editorActor.getSnapshot().context.readOnly) {
         return
       }
       const {undos} = editor.history
@@ -239,7 +238,7 @@ export function createWithUndoRedo(
     }
 
     editor.redo = () => {
-      if (readOnly) {
+      if (editorActor.getSnapshot().context.readOnly) {
         return
       }
       const {redos} = editor.history

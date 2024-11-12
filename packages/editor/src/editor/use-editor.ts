@@ -3,12 +3,16 @@ import type {
   ArraySchemaType,
   PortableTextBlock,
 } from '@sanity/types'
-import {useActorRef} from '@xstate/react'
+import {useActorRef, useSelector} from '@xstate/react'
 import {getPortableTextMemberSchemaTypes} from '../utils/getPortableTextMemberSchemaTypes'
 import {compileType} from '../utils/schema'
-import type {Behavior} from './behavior/behavior.types'
+import type {Behavior, PickFromUnion} from './behavior/behavior.types'
 import {compileSchemaDefinition, type SchemaDefinition} from './define-schema'
-import {editorMachine} from './editor-machine'
+import {
+  editorMachine,
+  type EditorActor,
+  type InternalEditorEvent,
+} from './editor-machine'
 import {defaultKeyGenerator} from './key-generator'
 
 /**
@@ -31,27 +35,55 @@ export type EditorConfig = {
 /**
  * @alpha
  */
-export type Editor = ReturnType<typeof useEditor>
+export type EditorEvent = PickFromUnion<
+  InternalEditorEvent,
+  'type',
+  | 'annotation.toggle'
+  | 'focus'
+  | 'patches'
+  | 'toggle readOnly'
+  | 'update behaviors'
+>
 
 /**
  * @alpha
  */
-export function useEditor(config: EditorConfig) {
-  const schema = config.schemaDefinition
-    ? compileSchemaDefinition(config.schemaDefinition)
-    : getPortableTextMemberSchemaTypes(
-        config.schema.hasOwnProperty('jsonType')
-          ? config.schema
-          : compileType(config.schema),
-      )
+export type Editor = {
+  send: (event: EditorEvent) => void
+  on: EditorActor['on']
+  readOnly: boolean
+  _internal: {
+    editorActor: EditorActor
+  }
+}
 
+/**
+ * @alpha
+ */
+export function useEditor(config: EditorConfig): Editor {
   const editorActor = useActorRef(editorMachine, {
     input: {
       behaviors: config.behaviors,
       keyGenerator: config.keyGenerator ?? defaultKeyGenerator,
-      schema,
+      schema: config.schemaDefinition
+        ? compileSchemaDefinition(config.schemaDefinition)
+        : getPortableTextMemberSchemaTypes(
+            config.schema.hasOwnProperty('jsonType')
+              ? config.schema
+              : compileType(config.schema),
+          ),
     },
   })
+  const readOnly = useSelector(editorActor, (s) => s.context.readOnly)
 
-  return editorActor
+  return {
+    send: (event) => {
+      editorActor.send(event)
+    },
+    on: (event, listener) => editorActor.on(event, listener),
+    readOnly,
+    _internal: {
+      editorActor,
+    },
+  }
 }
