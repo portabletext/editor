@@ -28,10 +28,7 @@ import {debugWithName} from '../utils/debug'
 import {getPortableTextMemberSchemaTypes} from '../utils/getPortableTextMemberSchemaTypes'
 import {compileType} from '../utils/schema'
 import {Synchronizer} from './components/Synchronizer'
-import {
-  createSlateEditor,
-  type SlateEditor,
-} from './components/use-slate-editor'
+import {createSlateEditor, type SlateEditor} from './create-slate-editor'
 import {EditorActorContext} from './editor-actor-context'
 import {editorMachine, type EditorActor} from './editor-machine'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
