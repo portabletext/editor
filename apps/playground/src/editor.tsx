@@ -58,6 +58,12 @@ export function Editor(props: {editorRef: EditorActorRef}) {
     behaviors: [
       ...coreBehaviors,
       ...createMarkdownBehaviors({
+        mapBreakObject: (schema) => {
+          const name = schema.blockObjects.find(
+            (object) => object.name === 'break',
+          )?.name
+          return name ? {name} : undefined
+        },
         mapDefaultStyle: (schema) => schema.styles[0].value,
         mapHeadingStyle: (schema, level) =>
           schema.styles.find((style) => style.value === `h${level}`)?.value,
