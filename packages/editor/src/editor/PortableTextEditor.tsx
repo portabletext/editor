@@ -232,10 +232,6 @@ export class PortableTextEditor extends Component<
     }
   }
 
-  componentWillUnmount(): void {
-    this.slateEditor.destroy()
-  }
-
   public setEditable = (editable: EditableAPI) => {
     this.editable = {...this.editable, ...editable}
   }
