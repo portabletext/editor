@@ -95,6 +95,11 @@ export type BehaviorGuard<
 export type BehaviorActionIntend =
   | BehaviorEvent
   | {
+      type: 'insert block object'
+      name: string
+      value?: {[prop: string]: unknown}
+    }
+  | {
       type: 'insert text block'
       decorators: Array<string>
     }

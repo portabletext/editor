@@ -10,6 +10,7 @@ import type {PortableTextMemberSchemaTypes} from '../../types/editor'
 import {toSlateRange} from '../../utils/ranges'
 import {
   addAnnotationActionImplementation,
+  insertBlockObjectActionImplementation,
   removeAnnotationActionImplementation,
   toggleAnnotationActionImplementation,
 } from '../plugins/createWithEditableAPI'
@@ -112,6 +113,7 @@ const behaviorActionImplementations: BehaviourActionImplementations = {
       })
     }
   },
+  'insert block object': insertBlockObjectActionImplementation,
   'insert break': insertBreakActionImplementation,
   'insert soft break': insertSoftBreakActionImplementation,
   'insert text': ({action}) => {
@@ -164,6 +166,13 @@ export function performAction({
   switch (action.type) {
     case 'delete': {
       behaviorActionImplementations.delete({
+        context,
+        action,
+      })
+      break
+    }
+    case 'insert block object': {
+      behaviorActionImplementations['insert block object']({
         context,
         action,
       })
