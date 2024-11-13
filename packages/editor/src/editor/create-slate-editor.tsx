@@ -18,7 +18,6 @@ type SlateEditorConfig = {
 export type SlateEditor = {
   instance: PortableTextSlateEditor
   initialValue: Array<Descendant>
-  destroy: () => void
 }
 
 const slateEditors = new WeakMap<EditorActor, SlateEditor>()
@@ -48,12 +47,8 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
     unsubscriptions.push(subscription())
   }
 
-  const initialValue = [instance.pteCreateTextBlock({decorators: []})]
-
-  const slateEditor: SlateEditor = {
-    instance,
-    initialValue,
-    destroy: () => {
+  config.editorActor.subscribe((snapshot) => {
+    if (snapshot.status !== 'active') {
       debug('Destroying Slate editor')
       instance.destroy()
       for (const unsubscribe of unsubscriptions) {
@@ -61,7 +56,14 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
       }
       subscriptions = []
       unsubscriptions = []
-    },
+    }
+  })
+
+  const initialValue = [instance.pteCreateTextBlock({decorators: []})]
+
+  const slateEditor: SlateEditor = {
+    instance,
+    initialValue,
   }
 
   slateEditors.set(config.editorActor, slateEditor)
