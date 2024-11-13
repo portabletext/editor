@@ -10,6 +10,7 @@ import {
   type Behavior,
   type HotkeyOptions,
   type PortableTextEditorInstance,
+  type PortableTextEditorProps,
 } from '../src'
 import type {EditorActorRef, TestActorRef} from './test-machine'
 
@@ -48,7 +49,7 @@ const hotkeys: HotkeyOptions = {
 function Editor(props: {
   editorRef: EditorActorRef
   behaviors: Array<Behavior>
-  schema: React.ComponentProps<typeof PortableTextEditor>['schemaType']
+  schema: PortableTextEditorProps['schemaType']
   value: Array<PortableTextBlock> | undefined
 }) {
   const selection = useSelector(

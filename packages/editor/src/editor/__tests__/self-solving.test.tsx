@@ -2,13 +2,14 @@ import type {JSONValue, Patch} from '@portabletext/patches'
 import {Schema} from '@sanity/schema'
 import type {PortableTextBlock, PortableTextSpan} from '@sanity/types'
 import {render, waitFor} from '@testing-library/react'
-import {createRef, type ComponentProps, type RefObject} from 'react'
+import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
 import {getTextSelection} from '../../../gherkin-tests/gherkin-step-helpers'
 import {PortableTextEditable} from '../Editable'
 import {
   PortableTextEditor,
   type PortableTextEditorInstance,
+  type PortableTextEditorProps,
 } from '../PortableTextEditor'
 
 const schema = Schema.compile({
@@ -21,7 +22,7 @@ const schema = Schema.compile({
     {name: 'image', type: 'object'},
   ],
 }).get('portable-text')
-type OnChange = ComponentProps<typeof PortableTextEditor>['onChange']
+type OnChange = PortableTextEditorProps['onChange']
 
 function block(
   props?: Partial<Omit<PortableTextBlock, '_type'>>,

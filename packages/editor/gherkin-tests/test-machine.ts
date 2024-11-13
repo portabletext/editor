@@ -1,6 +1,5 @@
 import {applyAll, type Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@sanity/types'
-import type {ComponentProps} from 'react'
 import {
   assertEvent,
   assign,
@@ -12,7 +11,7 @@ import {
 import {
   coreBehaviors,
   type EditorSelection,
-  type PortableTextEditor,
+  type PortableTextEditorProps,
 } from '../src'
 import type {Behavior} from '../src/editor/behavior/behavior.types'
 
@@ -123,12 +122,12 @@ export const testMachine = setup({
       behaviors: Array<Behavior>
       editorIdGenerator: () => string
       editors: Array<EditorActorRef>
-      schema: ComponentProps<typeof PortableTextEditor>['schemaType']
+      schema: PortableTextEditorProps['schemaType']
       value: Array<PortableTextBlock> | undefined
     },
     input: {} as {
       behaviors?: Array<Behavior>
-      schema: ComponentProps<typeof PortableTextEditor>['schemaType']
+      schema: PortableTextEditorProps['schemaType']
       value: Array<PortableTextBlock> | undefined
     },
     events: {} as TestMachineEvent,

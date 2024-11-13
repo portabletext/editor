@@ -1,465 +1,314 @@
 import type {
-  ArrayDefinition,
-  ArraySchemaType,
   Path,
   PortableTextBlock,
   PortableTextChild,
   PortableTextObject,
 } from '@sanity/types'
 import {
-  Component,
-  useEffect,
-  type MutableRefObject,
-  type PropsWithChildren,
+  forwardRef,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type ForwardedRef,
 } from 'react'
 import {Subject} from 'rxjs'
 import {Slate} from 'slate-react'
-import {createActor} from 'xstate'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
-  EditorChange,
-  EditorChanges,
   EditorSelection,
-  PatchObservable,
-  PortableTextMemberSchemaTypes,
 } from '../types/editor'
 import {debugWithName} from '../utils/debug'
-import {getPortableTextMemberSchemaTypes} from '../utils/getPortableTextMemberSchemaTypes'
-import {compileType} from '../utils/schema'
 import {Synchronizer} from './components/Synchronizer'
-import {createSlateEditor, type SlateEditor} from './create-slate-editor'
 import {EditorActorContext} from './editor-actor-context'
-import {editorMachine, type EditorActor} from './editor-machine'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
-import {defaultKeyGenerator} from './key-generator'
 import {
   createEditableAPI,
   type AddedAnnotationPaths,
 } from './plugins/createWithEditableAPI'
+import {PortableTextEditorWithoutEditorProp} from './PortableTextEditorLegacy'
+import type {PortableTextEditorInstance, PortableTextEditorProps} from './types'
 import type {Editor} from './use-editor'
 
 const debug = debugWithName('component:PortableTextEditor')
 
-/**
- * Props for the PortableTextEditor component
- *
- * @public
- */
-export type PortableTextEditorProps<
-  TEditor extends Editor | undefined = undefined,
-> = PropsWithChildren<
-  (TEditor extends Editor
-    ? {
-        /**
-         * @alpha
-         */
-        editor: TEditor
-      }
-    : {
-        editor?: undefined
+export type {PortableTextEditorInstance, PortableTextEditorProps}
 
-        /**
-         * Function that gets called when the editor changes the value
-         */
-        onChange: (change: EditorChange) => void
+const PortableTextEditorWithEditorProp = forwardRef(
+  (
+    props: Omit<PortableTextEditorProps<Editor>, 'editorRef'>,
+    forwardedRef: ForwardedRef<PortableTextEditorInstance>,
+  ) => {
+    const [instance] = useState<PortableTextEditorInstance>(() => {
+      const {editor} = props
+      const {editorActor, slateEditor} = editor._internal
+      editorActor.start()
 
-        /**
-         * Schema type for the portable text field
-         */
-        schemaType: ArraySchemaType<PortableTextBlock> | ArrayDefinition
+      let editable = createEditableAPI(slateEditor.instance, editorActor)
 
-        /**
-         * Maximum number of blocks to allow within the editor
-         */
-        maxBlocks?: number | string
+      const schemaTypes = editorActor.getSnapshot().context.schema
+      return {
+        change$: new Subject(),
+        editorActor,
+        slateEditor,
+        schemaTypes,
+        editable,
 
-        /**
-         * Function used to generate keys for array items (`_key`)
-         */
-        keyGenerator?: () => string
-
-        /**
-         * Observable of local and remote patches for the edited value.
-         */
-        patches$?: PatchObservable
-
-        /**
-         * Backward compatibility (renamed to patches$).
-         */
-        incomingPatches$?: PatchObservable
-
-        /**
-         * Whether or not the editor should be in read-only mode
-         */
-        readOnly?: boolean
-      }) & {
-    /**
-     * The current value of the portable text field
-     */
-    value?: PortableTextBlock[]
-
-    /**
-     * A ref to the editor instance
-     */
-    editorRef?: MutableRefObject<PortableTextEditor | null>
-  }
->
-
-/**
- * The main Portable Text Editor component.
- * @public
- */
-export class PortableTextEditor extends Component<
-  PortableTextEditorProps<Editor | undefined>
-> {
-  public static displayName = 'PortableTextEditor'
-  /**
-   * An observable of all the editor changes.
-   */
-  public change$: EditorChanges = new Subject()
-  /**
-   * A lookup table for all the relevant schema types for this portable text type.
-   */
-  public schemaTypes: PortableTextMemberSchemaTypes
-  /**
-   * The editor API (currently implemented with Slate).
-   */
-  private editable?: EditableAPI
-  private editorActor: EditorActor
-  private slateEditor: SlateEditor
-
-  constructor(props: PortableTextEditorProps) {
-    super(props)
-
-    if (props.editor) {
-      const editor = props.editor as Editor
-      this.editorActor = editor._internal.editorActor
-      this.slateEditor = editor._internal.slateEditor
-      this.editorActor.start()
-      this.schemaTypes = this.editorActor.getSnapshot().context.schema
-    } else {
-      if (!props.schemaType) {
-        throw new Error('PortableTextEditor: missing "schemaType" property')
-      }
-
-      if (props.incomingPatches$) {
-        console.warn(
-          `The prop 'incomingPatches$' is deprecated and renamed to 'patches$'`,
-        )
-      }
-
-      this.schemaTypes = getPortableTextMemberSchemaTypes(
-        props.schemaType.hasOwnProperty('jsonType')
-          ? props.schemaType
-          : compileType(props.schemaType),
-      )
-
-      this.editorActor = createActor(editorMachine, {
-        input: {
-          keyGenerator: props.keyGenerator || defaultKeyGenerator,
-          schema: this.schemaTypes,
+        setEditable: (nextEditable: EditableAPI) => {
+          editable = {...editable, ...nextEditable}
         },
-      })
-      this.editorActor.start()
+        getValue: () => {
+          if (editable) {
+            return editable.getValue()
+          }
 
-      this.slateEditor = createSlateEditor({
-        editorActor: this.editorActor,
-      })
-
-      if (props.readOnly) {
-        this.editorActor.send({
-          type: 'toggle readOnly',
-        })
+          return undefined
+        },
       }
+    })
 
-      if (props.maxBlocks) {
-        this.editorActor.send({
-          type: 'update maxBlocks',
-          maxBlocks:
-            props.maxBlocks === undefined
-              ? undefined
-              : Number.parseInt(props.maxBlocks.toString(), 10),
-        })
-      }
-    }
-    this.editable = createEditableAPI(
-      this.slateEditor.instance,
-      this.editorActor,
-    )
-  }
-
-  componentDidUpdate(prevProps: PortableTextEditorProps) {
-    // Set up the schema type lookup table again if the source schema type changes
-    if (
-      !this.props.editor &&
-      !prevProps.editor &&
-      this.props.schemaType !== prevProps.schemaType
-    ) {
-      this.schemaTypes = getPortableTextMemberSchemaTypes(
-        this.props.schemaType.hasOwnProperty('jsonType')
-          ? this.props.schemaType
-          : compileType(this.props.schemaType),
-      )
-
-      this.editorActor.send({
-        type: 'update schema',
-        schema: this.schemaTypes,
-      })
-    }
-
-    if (!this.props.editor && !prevProps.editor) {
-      if (this.props.readOnly !== prevProps.readOnly) {
-        this.editorActor.send({
-          type: 'toggle readOnly',
-        })
-      }
-
-      if (this.props.maxBlocks !== prevProps.maxBlocks) {
-        this.editorActor.send({
-          type: 'update maxBlocks',
-          maxBlocks:
-            this.props.maxBlocks === undefined
-              ? undefined
-              : Number.parseInt(this.props.maxBlocks.toString(), 10),
-        })
-      }
-    }
-
-    if (this.props.editorRef !== prevProps.editorRef && this.props.editorRef) {
-      this.props.editorRef.current = this
-    }
-  }
-
-  public setEditable = (editable: EditableAPI) => {
-    this.editable = {...this.editable, ...editable}
-  }
-
-  private getValue = () => {
-    if (this.editable) {
-      return this.editable.getValue()
-    }
-
-    return undefined
-  }
-
-  render() {
-    const legacyPatches = !this.props.editor
-      ? (this.props.incomingPatches$ ?? this.props.patches$)
-      : undefined
+    /**
+     * Forward ref to the instance, this mimics the previous behaviour that allowed consumers to get a class instance by setting a ref
+     */
+    useImperativeHandle(forwardedRef, () => instance, [instance])
 
     return (
       <>
-        {legacyPatches ? (
-          <RoutePatchesObservableToEditorActor
-            editorActor={this.editorActor}
-            patches$={legacyPatches}
-          />
-        ) : null}
-        <EditorActorContext.Provider value={this.editorActor}>
+        <EditorActorContext.Provider value={instance.editorActor}>
           <Slate
-            editor={this.slateEditor.instance}
-            initialValue={this.slateEditor.initialValue}
+            editor={instance.slateEditor.instance}
+            initialValue={instance.slateEditor.initialValue}
           >
-            <PortableTextEditorContext.Provider value={this}>
+            <PortableTextEditorContext.Provider value={instance}>
               <PortableTextEditorSelectionProvider
-                editorActor={this.editorActor}
+                editorActor={instance.editorActor}
               >
                 <Synchronizer
-                  editorActor={this.editorActor}
-                  getValue={this.getValue}
+                  editorActor={instance.editorActor}
+                  getValue={instance.getValue}
                   onChange={(change) => {
-                    if (!this.props.editor) {
-                      this.props.onChange(change)
-                    }
                     /**
                      * For backwards compatibility, we relay all changes to the
                      * `change$` Subject as well.
                      */
-                    this.change$.next(change)
+                    instance.change$.next(change)
                   }}
-                  value={this.props.value}
+                  value={props.value}
                 />
-                {this.props.children}
+                {props.children}
               </PortableTextEditorSelectionProvider>
             </PortableTextEditorContext.Provider>
           </Slate>
         </EditorActorContext.Provider>
       </>
     )
-  }
+  },
+)
+PortableTextEditorWithEditorProp.displayName =
+  'ForwardRef(PortableTextEditorWithEditorProp)'
 
-  // Static API methods
-  static activeAnnotations = (
-    editor: PortableTextEditor,
+const PortableTextEditorComponent = forwardRef(
+  (
+    props: PortableTextEditorProps<Editor | undefined>,
+    forwardedRef: ForwardedRef<PortableTextEditorInstance>,
+  ) => {
+    const ref = useRef<PortableTextEditorInstance | null>(null)
+
+    /**
+     * Forward ref to the instance, this mimics the previous behaviour that allowed consumers to get a class instance by setting a ref
+     */
+    useImperativeHandle(forwardedRef, () => ref.current!)
+
+    /**
+     * Unclear if `editorRef` is really needed, as setting a regular `ref` has the same effect (and always has been)
+     */
+    useImperativeHandle(props.editorRef, () => ref.current!)
+
+    return props.editor ? (
+      <PortableTextEditorWithEditorProp
+        ref={ref}
+        editor={props.editor}
+        value={props.value}
+      >
+        {props.children}
+      </PortableTextEditorWithEditorProp>
+    ) : (
+      <PortableTextEditorWithoutEditorProp
+        ref={(instance) => {
+          ref.current = instance ? instance.getInstance() : null
+        }}
+        onChange={props.onChange}
+        schemaType={props.schemaType}
+        incomingPatches$={props.incomingPatches$}
+        keyGenerator={props.keyGenerator}
+        maxBlocks={props.maxBlocks}
+        patches$={props.patches$}
+        value={props.value}
+        readOnly={props.readOnly}
+      >
+        {props.children}
+      </PortableTextEditorWithoutEditorProp>
+    )
+  },
+)
+PortableTextEditorComponent.displayName = 'ForwardRef(PortableTextEditor)'
+
+// Static API methods
+const PortableTextEditorStaticMethods = {
+  activeAnnotations: (
+    editor: PortableTextEditorInstance,
   ): PortableTextObject[] => {
     return editor && editor.editable ? editor.editable.activeAnnotations() : []
-  }
-  static isAnnotationActive = (
-    editor: PortableTextEditor,
+  },
+  isAnnotationActive: (
+    editor: PortableTextEditorInstance,
     annotationType: PortableTextObject['_type'],
   ): boolean => {
     return editor && editor.editable
       ? editor.editable.isAnnotationActive(annotationType)
       : false
-  }
-  static addAnnotation = <TSchemaType extends {name: string}>(
-    editor: PortableTextEditor,
+  },
+  addAnnotation: <TSchemaType extends {name: string}>(
+    editor: PortableTextEditorInstance,
     type: TSchemaType,
     value?: {[prop: string]: unknown},
   ): AddedAnnotationPaths | undefined =>
-    editor.editable?.addAnnotation(type, value)
-  static blur = (editor: PortableTextEditor): void => {
+    editor.editable?.addAnnotation(type, value),
+  blur: (editor: PortableTextEditorInstance): void => {
     debug('Host blurred')
     editor.editable?.blur()
-  }
-  static delete = (
-    editor: PortableTextEditor,
+  },
+  delete: (
+    editor: PortableTextEditorInstance,
     selection: EditorSelection,
     options?: EditableAPIDeleteOptions,
-  ) => editor.editable?.delete(selection, options)
-  static findDOMNode = (
-    editor: PortableTextEditor,
+  ) => editor.editable?.delete(selection, options),
+  findDOMNode: (
+    editor: PortableTextEditorInstance,
     element: PortableTextBlock | PortableTextChild,
   ) => {
     return editor.editable?.findDOMNode(element)
-  }
-  static findByPath = (editor: PortableTextEditor, path: Path) => {
+  },
+  findByPath: (editor: PortableTextEditorInstance, path: Path) => {
     return editor.editable?.findByPath(path) || []
-  }
-  static focus = (editor: PortableTextEditor): void => {
+  },
+  focus: (editor: PortableTextEditorInstance): void => {
     debug('Host requesting focus')
     editor.editable?.focus()
-  }
-  static focusBlock = (editor: PortableTextEditor) => {
+  },
+  focusBlock: (editor: PortableTextEditorInstance) => {
     return editor.editable?.focusBlock()
-  }
-  static focusChild = (
-    editor: PortableTextEditor,
+  },
+  focusChild: (
+    editor: PortableTextEditorInstance,
   ): PortableTextChild | undefined => {
     return editor.editable?.focusChild()
-  }
-  static getSelection = (editor: PortableTextEditor) => {
+  },
+  getSelection: (editor: PortableTextEditorInstance) => {
     return editor.editable ? editor.editable.getSelection() : null
-  }
-  static getValue = (editor: PortableTextEditor) => {
+  },
+  getValue: (editor: PortableTextEditorInstance) => {
     return editor.editable?.getValue()
-  }
-  static hasBlockStyle = (editor: PortableTextEditor, blockStyle: string) => {
+  },
+  hasBlockStyle: (editor: PortableTextEditorInstance, blockStyle: string) => {
     return editor.editable?.hasBlockStyle(blockStyle)
-  }
-  static hasListStyle = (editor: PortableTextEditor, listStyle: string) => {
+  },
+  hasListStyle: (editor: PortableTextEditorInstance, listStyle: string) => {
     return editor.editable?.hasListStyle(listStyle)
-  }
-  static isCollapsedSelection = (editor: PortableTextEditor) =>
-    editor.editable?.isCollapsedSelection()
-  static isExpandedSelection = (editor: PortableTextEditor) =>
-    editor.editable?.isExpandedSelection()
-  static isMarkActive = (editor: PortableTextEditor, mark: string) =>
-    editor.editable?.isMarkActive(mark)
-  static insertChild = <TSchemaType extends {name: string}>(
-    editor: PortableTextEditor,
+  },
+  isCollapsedSelection: (editor: PortableTextEditorInstance) =>
+    editor.editable?.isCollapsedSelection(),
+  isExpandedSelection: (editor: PortableTextEditorInstance) =>
+    editor.editable?.isExpandedSelection(),
+  isMarkActive: (editor: PortableTextEditorInstance, mark: string) =>
+    editor.editable?.isMarkActive(mark),
+  insertChild: <TSchemaType extends {name: string}>(
+    editor: PortableTextEditorInstance,
     type: TSchemaType,
     value?: {[prop: string]: unknown},
   ): Path | undefined => {
     debug(`Host inserting child`)
     return editor.editable?.insertChild(type, value)
-  }
-  static insertBlock = <TSchemaType extends {name: string}>(
-    editor: PortableTextEditor,
+  },
+  insertBlock: <TSchemaType extends {name: string}>(
+    editor: PortableTextEditorInstance,
     type: TSchemaType,
     value?: {[prop: string]: unknown},
   ): Path | undefined => {
     return editor.editable?.insertBlock(type, value)
-  }
-  static insertBreak = (editor: PortableTextEditor): void => {
+  },
+  insertBreak: (editor: PortableTextEditorInstance): void => {
     return editor.editable?.insertBreak()
-  }
-  static isVoid = (
-    editor: PortableTextEditor,
+  },
+  isVoid: (
+    editor: PortableTextEditorInstance,
     element: PortableTextBlock | PortableTextChild,
   ) => {
     return editor.editable?.isVoid(element)
-  }
-  static isObjectPath = (_editor: PortableTextEditor, path: Path): boolean => {
+  },
+  isObjectPath: (_editor: PortableTextEditorInstance, path: Path): boolean => {
     if (!path || !Array.isArray(path)) return false
     const isChildObjectEditPath = path.length > 3 && path[1] === 'children'
     const isBlockObjectEditPath = path.length > 1 && path[1] !== 'children'
     return isBlockObjectEditPath || isChildObjectEditPath
-  }
-  static marks = (editor: PortableTextEditor) => {
+  },
+  marks: (editor: PortableTextEditorInstance) => {
     return editor.editable?.marks()
-  }
-  static select = (
-    editor: PortableTextEditor,
+  },
+  select: (
+    editor: PortableTextEditorInstance,
     selection: EditorSelection | null,
   ) => {
     debug(`Host setting selection`, selection)
     editor.editable?.select(selection)
-  }
-  static removeAnnotation = <TSchemaType extends {name: string}>(
-    editor: PortableTextEditor,
+  },
+  removeAnnotation: <TSchemaType extends {name: string}>(
+    editor: PortableTextEditorInstance,
     type: TSchemaType,
-  ) => editor.editable?.removeAnnotation(type)
-  static toggleBlockStyle = (
-    editor: PortableTextEditor,
+  ) => editor.editable?.removeAnnotation(type),
+  toggleBlockStyle: (
+    editor: PortableTextEditorInstance,
     blockStyle: string,
   ) => {
     debug(`Host is toggling block style`)
     return editor.editable?.toggleBlockStyle(blockStyle)
-  }
-  static toggleList = (editor: PortableTextEditor, listStyle: string): void => {
+  },
+  toggleList: (editor: PortableTextEditorInstance, listStyle: string): void => {
     return editor.editable?.toggleList(listStyle)
-  }
-  static toggleMark = (editor: PortableTextEditor, mark: string): void => {
+  },
+  toggleMark: (editor: PortableTextEditorInstance, mark: string): void => {
     debug(`Host toggling mark`, mark)
     editor.editable?.toggleMark(mark)
-  }
-  static getFragment = (
-    editor: PortableTextEditor,
+  },
+  getFragment: (
+    editor: PortableTextEditorInstance,
   ): PortableTextBlock[] | undefined => {
     debug(`Host getting fragment`)
     return editor.editable?.getFragment()
-  }
-  static undo = (editor: PortableTextEditor): void => {
+  },
+  undo: (editor: PortableTextEditorInstance): void => {
     debug('Host undoing')
     editor.editable?.undo()
-  }
-  static redo = (editor: PortableTextEditor): void => {
+  },
+  redo: (editor: PortableTextEditorInstance): void => {
     debug('Host redoing')
     editor.editable?.redo()
-  }
-  static isSelectionsOverlapping = (
-    editor: PortableTextEditor,
+  },
+  isSelectionsOverlapping: (
+    editor: PortableTextEditorInstance,
     selectionA: EditorSelection,
     selectionB: EditorSelection,
   ) => {
     return editor.editable?.isSelectionsOverlapping(selectionA, selectionB)
-  }
+  },
 }
 
 /**
+ * The main Portable Text Editor component.
  * @public
  */
-export type PortableTextEditorInstance = PortableTextEditor
-
-function RoutePatchesObservableToEditorActor(props: {
-  editorActor: EditorActor
-  patches$: PatchObservable
-}) {
-  useEffect(() => {
-    const subscription = props.patches$.subscribe((payload) => {
-      props.editorActor.send({
-        type: 'patches',
-        ...payload,
-      })
-    })
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [props.editorActor, props.patches$])
-
-  return null
-}
+export const PortableTextEditor = Object.assign(
+  PortableTextEditorComponent,
+  PortableTextEditorStaticMethods,
+)
