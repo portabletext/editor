@@ -45,4 +45,4 @@ export {
   type EditorEvent,
 } from './editor/use-editor'
 export * from './types/editor'
-export * from './types/options'
+export type {HotkeyOptions} from './types/options'
