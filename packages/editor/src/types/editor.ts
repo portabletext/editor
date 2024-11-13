@@ -31,7 +31,7 @@ import type {
 import type {DOMNode} from 'slate-dom'
 import type {ReactEditor} from 'slate-react'
 import type {PortableTextEditableProps} from '../editor/Editable'
-import type {PortableTextEditor} from '../editor/PortableTextEditor'
+import type {PortableTextEditorInstance} from '../editor/PortableTextEditor'
 
 /** @beta */
 export interface EditableAPIDeleteOptions {
@@ -547,7 +547,7 @@ export type RenderDecoratorFunction = (
 
 /** @beta */
 export type ScrollSelectionIntoViewFunction = (
-  editor: PortableTextEditor,
+  editor: PortableTextEditorInstance,
   domRange: globalThis.Range,
 ) => void
 

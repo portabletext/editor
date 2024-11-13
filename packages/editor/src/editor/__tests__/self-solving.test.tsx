@@ -6,7 +6,10 @@ import {createRef, type ComponentProps, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
 import {getTextSelection} from '../../../gherkin-tests/gherkin-step-helpers'
 import {PortableTextEditable} from '../Editable'
-import {PortableTextEditor} from '../PortableTextEditor'
+import {
+  PortableTextEditor,
+  type PortableTextEditorInstance,
+} from '../PortableTextEditor'
 
 const schema = Schema.compile({
   types: [
@@ -40,7 +43,7 @@ function span(
 
 describe('Feature: Self-solving', () => {
   it('Scenario: Missing .markDefs and .marks are added after the editor is made dirty', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const onChange = vi.fn<OnChange>()
     const initialValue = [
       block({

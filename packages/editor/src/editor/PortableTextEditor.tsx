@@ -439,6 +439,11 @@ export class PortableTextEditor extends Component<
   }
 }
 
+/**
+ * @public
+ */
+export type PortableTextEditorInstance = PortableTextEditor
+
 function RoutePatchesObservableToEditorActor(props: {
   editorActor: EditorActor
   patches$: PatchObservable

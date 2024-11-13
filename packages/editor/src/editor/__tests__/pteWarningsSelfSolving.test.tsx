@@ -2,12 +2,15 @@ import type {PortableTextBlock} from '@sanity/types'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {PortableTextEditor} from '../PortableTextEditor'
+import {
+  PortableTextEditor,
+  type PortableTextEditorInstance,
+} from '../PortableTextEditor'
 import {PortableTextEditorTester, schemaType} from './PortableTextEditorTester'
 
 describe('when PTE would display warnings, instead it self solves', () => {
   it('when child at index is missing required _key in block with _key', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const initialValue = [
       {
         _key: 'abc',
@@ -63,7 +66,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
   })
 
   it('self-solves missing .markDefs', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const initialValue = [
       {
         _key: 'abc',
@@ -120,7 +123,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
   })
 
   it('adds missing .children', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const initialValue = [
       {
         _key: 'abc',
@@ -191,7 +194,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
   })
 
   it('removes orphaned marks', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const initialValue = [
       {
         _key: 'abc',
@@ -249,7 +252,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
   })
 
   it('removes orphaned marksDefs', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const initialValue = [
       {
         _key: 'abc',
@@ -313,7 +316,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
   })
 
   it('allows empty array of blocks', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const initialValue = [] as PortableTextBlock[]
 
     const onChange = vi.fn()

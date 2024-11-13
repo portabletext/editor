@@ -15,7 +15,7 @@ import {
 import {withoutPatching} from '../../utils/withoutPatching'
 import type {EditorActor} from '../editor-machine'
 import {withoutSaving} from '../plugins/createWithUndoRedo'
-import type {PortableTextEditor} from '../PortableTextEditor'
+import type {PortableTextEditorInstance} from '../PortableTextEditor'
 
 const debug = debugWithName('hook:useSyncValue')
 
@@ -24,12 +24,12 @@ const debug = debugWithName('hook:useSyncValue')
  */
 export interface UseSyncValueProps {
   editorActor: EditorActor
-  portableTextEditor: PortableTextEditor
+  portableTextEditor: PortableTextEditorInstance
   readOnly: boolean
 }
 
 const CURRENT_VALUE = new WeakMap<
-  PortableTextEditor,
+  PortableTextEditorInstance,
   PortableTextBlock[] | undefined
 >()
 

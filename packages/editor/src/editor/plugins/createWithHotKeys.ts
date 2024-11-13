@@ -8,7 +8,7 @@ import type {HotkeyOptions} from '../../types/options'
 import type {SlateTextBlock, VoidElement} from '../../types/slate'
 import {debugWithName} from '../../utils/debug'
 import type {EditorActor} from '../editor-machine'
-import type {PortableTextEditor} from '../PortableTextEditor'
+import type {PortableTextEditorInstance} from '../PortableTextEditor'
 
 const debug = debugWithName('plugin:withHotKeys')
 
@@ -28,7 +28,7 @@ const DEFAULT_HOTKEYS: HotkeyOptions = {
  */
 export function createWithHotkeys(
   editorActor: EditorActor,
-  portableTextEditor: PortableTextEditor,
+  portableTextEditor: PortableTextEditorInstance,
   hotkeysFromOptions?: HotkeyOptions,
 ): (editor: PortableTextSlateEditor & ReactEditor) => any {
   const reservedHotkeys = ['enter', 'tab', 'shift', 'delete', 'end']

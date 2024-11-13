@@ -5,11 +5,14 @@ import {
   PortableTextEditorTester,
   schemaType,
 } from '../../__tests__/PortableTextEditorTester'
-import {PortableTextEditor} from '../../PortableTextEditor'
+import {
+  PortableTextEditor,
+  type PortableTextEditorInstance,
+} from '../../PortableTextEditor'
 
 describe('plugin:withPortableTextLists', () => {
   it('should return active list styles that cover the whole selection', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const initialValue = [
       {
         _key: 'a',

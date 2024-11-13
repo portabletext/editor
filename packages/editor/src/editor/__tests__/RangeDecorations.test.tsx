@@ -3,7 +3,7 @@ import {render, waitFor} from '@testing-library/react'
 import {createRef, type ReactNode, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
 import type {RangeDecoration} from '../..'
-import type {PortableTextEditor} from '../PortableTextEditor'
+import type {PortableTextEditorInstance} from '../PortableTextEditor'
 import {PortableTextEditorTester, schemaType} from './PortableTextEditorTester'
 
 const helloBlock: PortableTextBlock = {
@@ -22,7 +22,7 @@ const RangeDecorationTestComponent = ({children}: {children?: ReactNode}) => {
 
 describe('RangeDecorations', () => {
   it('only render range decorations as necessary', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const onChange = vi.fn()
     const value = [helloBlock]
     let rangeDecorations: RangeDecoration[] = [

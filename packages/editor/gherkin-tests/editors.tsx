@@ -9,6 +9,7 @@ import {
   usePortableTextEditor,
   type Behavior,
   type HotkeyOptions,
+  type PortableTextEditorInstance,
 } from '../src'
 import type {EditorActorRef, TestActorRef} from './test-machine'
 
@@ -265,7 +266,7 @@ function LinkButtons() {
   )
 }
 
-function toggleComment(editor: PortableTextEditor) {
+function toggleComment(editor: PortableTextEditorInstance) {
   const active = PortableTextEditor.isAnnotationActive(editor, 'comment')
 
   if (active) {
@@ -275,7 +276,7 @@ function toggleComment(editor: PortableTextEditor) {
   }
 }
 
-function addComment(editor: PortableTextEditor) {
+function addComment(editor: PortableTextEditorInstance) {
   PortableTextEditor.addAnnotation(
     editor,
     {
@@ -288,7 +289,7 @@ function addComment(editor: PortableTextEditor) {
   )
 }
 
-function removeComment(editor: PortableTextEditor) {
+function removeComment(editor: PortableTextEditorInstance) {
   PortableTextEditor.removeAnnotation(editor, {
     jsonType: 'object',
     name: 'comment',
@@ -297,7 +298,7 @@ function removeComment(editor: PortableTextEditor) {
   })
 }
 
-function toggleLink(editor: PortableTextEditor) {
+function toggleLink(editor: PortableTextEditorInstance) {
   const active = PortableTextEditor.isAnnotationActive(editor, 'link')
 
   if (active) {
@@ -307,7 +308,7 @@ function toggleLink(editor: PortableTextEditor) {
   }
 }
 
-function addLink(editor: PortableTextEditor) {
+function addLink(editor: PortableTextEditorInstance) {
   PortableTextEditor.addAnnotation(
     editor,
     {
@@ -320,7 +321,7 @@ function addLink(editor: PortableTextEditor) {
   )
 }
 
-function removeLink(editor: PortableTextEditor) {
+function removeLink(editor: PortableTextEditorInstance) {
   PortableTextEditor.removeAnnotation(editor, {
     jsonType: 'object',
     name: 'link',

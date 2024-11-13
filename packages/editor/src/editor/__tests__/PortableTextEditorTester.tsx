@@ -12,6 +12,7 @@ import {
   PortableTextEditable,
   PortableTextEditor,
   type PortableTextEditableProps,
+  type PortableTextEditorInstance,
   type PortableTextEditorProps,
 } from '../../index'
 
@@ -91,7 +92,7 @@ export const PortableTextEditorTester = forwardRef(
       selection?: PortableTextEditableProps['selection']
       value?: PortableTextEditorProps['value']
     },
-    ref: ForwardedRef<PortableTextEditor>,
+    ref: ForwardedRef<PortableTextEditorInstance>,
   ) {
     useEffect(() => {
       key = 0

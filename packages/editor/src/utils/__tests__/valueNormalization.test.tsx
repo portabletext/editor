@@ -5,11 +5,14 @@ import {
   PortableTextEditorTester,
   schemaType,
 } from '../../editor/__tests__/PortableTextEditorTester'
-import {PortableTextEditor} from '../../editor/PortableTextEditor'
+import {
+  PortableTextEditor,
+  type PortableTextEditorInstance,
+} from '../../editor/PortableTextEditor'
 
 describe('values: normalization', () => {
   it("accepts incoming value with blocks without a style or markDefs prop, but doesn't leave them without them when editing them", async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const initialValue = [
       {
         _key: '5fc57af23597',

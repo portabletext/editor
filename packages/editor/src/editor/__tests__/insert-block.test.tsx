@@ -5,7 +5,10 @@ import {createRef, type RefObject} from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import type {EditorChange, EditorSelection} from '../../types/editor'
 import {PortableTextEditable} from '../Editable'
-import {PortableTextEditor} from '../PortableTextEditor'
+import {
+  PortableTextEditor,
+  type PortableTextEditorInstance,
+} from '../PortableTextEditor'
 
 const schema = Schema.compile({
   types: [
@@ -20,7 +23,7 @@ const schema = Schema.compile({
 
 describe(PortableTextEditor.insertBlock.name, () => {
   test('Scenario: Inserting a custom block without a selection #1', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const emptyTextBlock: PortableTextBlock = {
       _key: 'ba',
       _type: 'block',
@@ -88,7 +91,7 @@ describe(PortableTextEditor.insertBlock.name, () => {
   })
 
   test('Scenario: Inserting a custom block without a selection #2', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const nonEmptyTextBlock: PortableTextBlock = {
       _key: 'ba',
       _type: 'block',
@@ -158,7 +161,7 @@ describe(PortableTextEditor.insertBlock.name, () => {
   })
 
   test('Scenario: Replacing an empty text block with a custom block', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const emptyTextBlock: PortableTextBlock = {
       _key: 'ba',
       _type: 'block',

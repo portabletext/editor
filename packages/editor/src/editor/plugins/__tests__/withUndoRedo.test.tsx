@@ -5,7 +5,10 @@ import {
   PortableTextEditorTester,
   schemaType,
 } from '../../__tests__/PortableTextEditorTester'
-import {PortableTextEditor} from '../../PortableTextEditor'
+import {
+  PortableTextEditor,
+  type PortableTextEditorInstance,
+} from '../../PortableTextEditor'
 
 const initialValue = [
   {
@@ -45,7 +48,7 @@ const initialSelection = {
 
 describe('plugin:withUndoRedo', () => {
   it('preserves the keys when undoing ', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const onChange = vi.fn()
     render(
       <PortableTextEditorTester
@@ -102,7 +105,7 @@ describe('plugin:withUndoRedo', () => {
     })
   })
   it('preserves the keys when redoing ', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const onChange = vi.fn()
 
     render(

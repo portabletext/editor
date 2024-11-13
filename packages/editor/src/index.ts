@@ -37,7 +37,10 @@ export {usePortableTextEditorSelection} from './editor/hooks/usePortableTextEdit
 export {defaultKeyGenerator as keyGenerator} from './editor/key-generator'
 export type {AddedAnnotationPaths} from './editor/plugins/createWithEditableAPI'
 export {PortableTextEditor} from './editor/PortableTextEditor'
-export type {PortableTextEditorProps} from './editor/PortableTextEditor'
+export type {
+  PortableTextEditorProps,
+  PortableTextEditorInstance,
+} from './editor/PortableTextEditor'
 export {
   useEditor,
   type Editor,

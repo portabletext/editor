@@ -5,7 +5,10 @@ import {
   PortableTextEditorTester,
   schemaType,
 } from '../../__tests__/PortableTextEditorTester'
-import {PortableTextEditor} from '../../PortableTextEditor'
+import {
+  PortableTextEditor,
+  type PortableTextEditorInstance,
+} from '../../PortableTextEditor'
 
 const initialValue = [
   {
@@ -57,7 +60,7 @@ const emptyBlockSelection = {
 
 describe('plugin:withEditableAPI: .insertChild()', () => {
   it('inserts child nodes correctly', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const onChange = vi.fn()
 
     render(
@@ -183,7 +186,7 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
 
 describe('plugin:withEditableAPI: .insertBlock()', () => {
   it('should not add empty blank blocks: empty block', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const value = [
       {
         _key: 'emptyBlock',
@@ -247,7 +250,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
   })
 
   it('should not add empty blank blocks: non-empty block', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const onChange = vi.fn()
 
     render(
@@ -299,7 +302,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
   })
 
   it('should be inserted before if focus is on start of block', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const onChange = vi.fn()
 
     render(
@@ -353,7 +356,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
   })
 
   it('should not add empty blank blocks: non text block', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const value = [
       ...initialValue,
       {_key: 'b', _type: 'someObject', color: 'red'},
@@ -409,7 +412,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
   })
 
   it('should not add empty blank blocks: in between blocks', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const value = [
       ...initialValue,
       {_key: 'b', _type: 'someObject', color: 'red'},
@@ -463,7 +466,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
   })
 
   it('should not add empty blank blocks: in new empty text block', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const value = [...initialValue, ...emptyTextBlock]
     const onChange = vi.fn()
 

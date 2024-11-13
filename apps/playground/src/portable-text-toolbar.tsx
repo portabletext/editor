@@ -4,6 +4,7 @@ import {
   usePortableTextEditorSelection,
   type Editor,
   type EditorSelection,
+  type PortableTextEditorInstance,
 } from '@portabletext/editor'
 import {SquareDashedMousePointerIcon} from 'lucide-react'
 import {isValidElement, useMemo} from 'react'
@@ -105,7 +106,7 @@ export function PortableTextToolbar(props: {
 
 function StyleSelector(props: {
   schemaDefinition: SchemaDefinition
-  editor: PortableTextEditor
+  editor: PortableTextEditorInstance
   selection: EditorSelection
 }) {
   const focusBlock = PortableTextEditor.focusBlock(props.editor)
@@ -144,7 +145,7 @@ function StyleSelector(props: {
 function AnnotationToolbarButton(props: {
   annotation: SchemaDefinition['annotations'][number]
   editor: Editor
-  editorInstance: PortableTextEditor
+  editorInstance: PortableTextEditorInstance
   selection: EditorSelection
 }) {
   const active =
@@ -189,7 +190,7 @@ function AnnotationToolbarButton(props: {
 
 function DecoratorToolbarButton(props: {
   decorator: SchemaDefinition['decorators'][number]
-  editor: PortableTextEditor
+  editor: PortableTextEditorInstance
   selection: EditorSelection
 }) {
   const active =
@@ -216,7 +217,7 @@ function DecoratorToolbarButton(props: {
 
 function ListToolbarButton(props: {
   list: SchemaDefinition['lists'][number]
-  editor: PortableTextEditor
+  editor: PortableTextEditorInstance
   selection: EditorSelection
 }) {
   const active =
@@ -243,7 +244,7 @@ function ListToolbarButton(props: {
 
 function InlineObjectButton(props: {
   inlineObject: SchemaDefinition['inlineObjects'][number]
-  editor: PortableTextEditor
+  editor: PortableTextEditorInstance
 }) {
   return (
     <Button
@@ -266,7 +267,7 @@ function InlineObjectButton(props: {
 
 function BlockObjectButton(props: {
   blockObject: SchemaDefinition['blockObjects'][number]
-  editor: PortableTextEditor
+  editor: PortableTextEditorInstance
 }) {
   return (
     <Button

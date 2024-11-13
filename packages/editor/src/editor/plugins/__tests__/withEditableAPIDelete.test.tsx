@@ -5,7 +5,10 @@ import {
   PortableTextEditorTester,
   schemaType,
 } from '../../__tests__/PortableTextEditorTester'
-import {PortableTextEditor} from '../../PortableTextEditor'
+import {
+  PortableTextEditor,
+  type PortableTextEditorInstance,
+} from '../../PortableTextEditor'
 
 const initialValue = [
   {
@@ -45,7 +48,7 @@ const initialSelection = {
 
 describe('plugin:withEditableAPI: .delete()', () => {
   it('deletes block', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const onChange = vi.fn()
     render(
       <PortableTextEditorTester
@@ -99,7 +102,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
   })
 
   it('deletes all the blocks, but leaves a placeholder block', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const onChange = vi.fn()
     render(
       <PortableTextEditorTester
@@ -157,7 +160,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
   })
 
   it('deletes children', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const onChange = vi.fn()
 
     render(
@@ -238,7 +241,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
   })
 
   it('deletes selected', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const onChange = vi.fn()
 
     render(

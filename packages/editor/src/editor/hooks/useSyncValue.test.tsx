@@ -5,7 +5,10 @@ import {
   PortableTextEditorTester,
   schemaType,
 } from '../__tests__/PortableTextEditorTester'
-import {PortableTextEditor} from '../PortableTextEditor'
+import {
+  PortableTextEditor,
+  type PortableTextEditorInstance,
+} from '../PortableTextEditor'
 
 const initialValue = [
   {
@@ -26,7 +29,7 @@ const initialValue = [
 
 describe('useSyncValue', () => {
   it('updates span text', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const onChange = vi.fn()
     const syncedValue = [
       {
@@ -69,7 +72,7 @@ describe('useSyncValue', () => {
     })
   })
   it('replaces span nodes with different keys inside the same children array', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditorInstance> = createRef()
     const onChange = vi.fn()
     const syncedValue = [
       {

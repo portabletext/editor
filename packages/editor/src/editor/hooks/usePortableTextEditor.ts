@@ -1,17 +1,17 @@
 import {createContext, useContext} from 'react'
-import type {PortableTextEditor} from '../PortableTextEditor'
+import type {PortableTextEditorInstance} from '../PortableTextEditor'
 
 /**
  * A React context for sharing the editor object.
  */
 export const PortableTextEditorContext =
-  createContext<PortableTextEditor | null>(null)
+  createContext<PortableTextEditorInstance | null>(null)
 
 /**
  * @public
  * Get the current editor object from the React context.
  */
-export const usePortableTextEditor = (): PortableTextEditor => {
+export const usePortableTextEditor = (): PortableTextEditorInstance => {
   const editor = useContext(PortableTextEditorContext)
 
   if (!editor) {

@@ -210,7 +210,7 @@ function isStockTicker(
 
 ### Render the Toolbar
 
-Your toolbar needs to be rendered within `PortableTextEditor` because it requires a reference to the `editorInstance` that it produces. To toggle marks and styles and to insert objects, you'll have to use this `editorInstance` together with static methods on the `PortableTextEditor` class.
+Your toolbar needs to be rendered within `PortableTextEditor` because it requires a reference to the `editorInstance` that it produces. To toggle marks and styles and to insert objects, you'll have to use this `editorInstance` together with static methods on the `PortableTextEditor` component.
 
 ```tsx
 function Toolbar() {
