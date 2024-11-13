@@ -1,7 +1,7 @@
 import type {BaseOperation, Editor, Node, NodeEntry} from 'slate'
 import type {PortableTextSlateEditor} from '../../types/editor'
-import type {createEditorOptions} from '../../types/options'
 import {createOperationToPatches} from '../../utils/operationToPatches'
+import type {EditorActor} from '../editor-machine'
 import {createWithEventListeners} from './create-with-event-listeners'
 import {createWithMaxBlocks} from './createWithMaxBlocks'
 import {createWithObjectKeys} from './createWithObjectKeys'
@@ -26,9 +26,14 @@ const originalFnMap = new WeakMap<
   OriginalEditorFunctions
 >()
 
+type PluginsOptions = {
+  editorActor: EditorActor
+  subscriptions: Array<() => () => void>
+}
+
 export const withPlugins = <T extends Editor>(
   editor: T,
-  options: createEditorOptions,
+  options: PluginsOptions,
 ): PortableTextSlateEditor => {
   const e = editor as T & PortableTextSlateEditor
   const {editorActor} = options
