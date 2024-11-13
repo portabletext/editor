@@ -1,3 +1,4 @@
+import {isPortableTextSpan} from '@portabletext/toolkit'
 import type {PortableTextMemberSchemaTypes} from '../../types/editor'
 import {defineBehavior} from './behavior.types'
 import {
@@ -10,6 +11,9 @@ import {
  * @alpha
  */
 export type MarkdownBehaviorsConfig = {
+  mapBreakObject?: (
+    schema: PortableTextMemberSchemaTypes,
+  ) => {name: string; value?: {[prop: string]: unknown}} | undefined
   mapDefaultStyle?: (
     schema: PortableTextMemberSchemaTypes,
   ) => string | undefined
@@ -93,6 +97,66 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
               offset: 2,
             },
           },
+        },
+      ],
+    ],
+  })
+  const automaticBreak = defineBehavior({
+    on: 'insert text',
+    guard: ({context, event}) => {
+      const isDash = event.text === '-'
+
+      if (!isDash) {
+        return false
+      }
+
+      const breakObject = config.mapBreakObject?.(context.schema)
+      const focusBlock = getFocusTextBlock(context)
+      const selectionCollapsed = selectionIsCollapsed(context)
+
+      if (!breakObject || !focusBlock || !selectionCollapsed) {
+        return false
+      }
+
+      const onlyText = focusBlock.node.children.every(isPortableTextSpan)
+      const blockText = focusBlock.node.children
+        .map((child) => child.text ?? '')
+        .join('')
+
+      if (onlyText && blockText === '--') {
+        return {breakObject, focusBlock}
+      }
+
+      return false
+    },
+    actions: [
+      () => [
+        {
+          type: 'insert text',
+          text: '-',
+        },
+      ],
+      (_, {breakObject, focusBlock}) => [
+        {
+          type: 'insert block object',
+          ...breakObject,
+        },
+        {
+          type: 'delete',
+          selection: {
+            anchor: {
+              path: focusBlock.path,
+              offset: 0,
+            },
+            focus: {
+              path: focusBlock.path,
+              offset: 0,
+            },
+          },
+        },
+        {
+          type: 'insert text block',
+          decorators: [],
         },
       ],
     ],
@@ -304,6 +368,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
 
   const markdownBehaviors = [
     automaticBlockquoteOnSpace,
+    automaticBreak,
     automaticHeadingOnSpace,
     clearStyleOnBackspace,
     automaticListOnSpace,
