@@ -66,7 +66,7 @@
     "slate-dom": "^0.111.0",
     "slate-react": "0.111.0",
     "use-effect-event": "^1.0.2",
-    "xstate": "^5.18.2"
+    "xstate": "^5.19.0"
   },
   "devDependencies": {
     "@portabletext/toolkit": "^2.0.16",
