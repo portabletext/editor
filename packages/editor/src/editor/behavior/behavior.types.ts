@@ -100,6 +100,15 @@ export type BehaviorActionIntend =
       value?: {[prop: string]: unknown}
     }
   | {
+      type: 'insert span'
+      text: string
+      annotations?: Array<{
+        name: string
+        value: {[prop: string]: unknown}
+      }>
+      decorators?: Array<string>
+    }
+  | {
       type: 'insert text block'
       decorators: Array<string>
     }
