@@ -6,6 +6,10 @@ export {
   type MarkdownBehaviorsConfig,
 } from './editor/behavior/behavior.markdown'
 export {
+  createLinkBehaviors,
+  type LinkBehaviorsConfig,
+} from './editor/behavior/behavior.links'
+export {
   defineBehavior,
   type Behavior,
   type BehaviorActionIntend,
