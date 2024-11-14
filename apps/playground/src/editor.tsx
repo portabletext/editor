@@ -1,5 +1,6 @@
 import {
   coreBehaviors,
+  createLinkBehaviors,
   createMarkdownBehaviors,
   PortableTextEditable,
   PortableTextEditor,
@@ -57,6 +58,14 @@ export function Editor(props: {editorRef: EditorActorRef}) {
   const editor = useEditor({
     behaviors: [
       ...coreBehaviors,
+      ...createLinkBehaviors({
+        mapLinkAnnotation: ({schema, url}) => {
+          const name = schema.annotations.find(
+            (annotation) => annotation.name === 'link',
+          )?.name
+          return name ? {name, value: {href: url}} : undefined
+        },
+      }),
       ...createMarkdownBehaviors({
         mapBreakObject: (schema) => {
           const name = schema.blockObjects.find(
