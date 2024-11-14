@@ -23,6 +23,7 @@ import {
   insertBreakActionImplementation,
   insertSoftBreakActionImplementation,
 } from './behavior.action.insert-break'
+import {insertSpanActionImplementation} from './behavior.action.insert-span'
 import type {
   BehaviorAction,
   BehaviorEvent,
@@ -116,6 +117,7 @@ const behaviorActionImplementations: BehaviourActionImplementations = {
   'insert block object': insertBlockObjectActionImplementation,
   'insert break': insertBreakActionImplementation,
   'insert soft break': insertSoftBreakActionImplementation,
+  'insert span': insertSpanActionImplementation,
   'insert text': ({action}) => {
     insertText(action.editor, action.text)
   },
@@ -173,6 +175,13 @@ export function performAction({
     }
     case 'insert block object': {
       behaviorActionImplementations['insert block object']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'insert span': {
+      behaviorActionImplementations['insert span']({
         context,
         action,
       })
