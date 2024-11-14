@@ -428,15 +428,6 @@ export const PortableTextEditable = forwardRef<
   // Handle incoming pasting events in the editor
   const handlePaste = useCallback(
     (event: ClipboardEvent<HTMLDivElement>): Promise<void> | void => {
-      if (!slateEditor.selection) {
-        return
-      }
-
-      if (!onPaste) {
-        debug('Pasting normally')
-        return
-      }
-
       const value = PortableTextEditor.getValue(portableTextEditor)
       const ptRange = toPortableTextRange(
         value,
@@ -444,9 +435,9 @@ export const PortableTextEditable = forwardRef<
         schemaTypes,
       )
       const path = ptRange?.focus.path || []
-      const onPasteResult = onPaste({event, value, path, schemaTypes})
+      const onPasteResult = onPaste?.({event, value, path, schemaTypes})
 
-      if (onPasteResult) {
+      if (onPasteResult || !slateEditor.selection) {
         event.preventDefault()
 
         // Resolve it as promise (can be either async promise or sync return value)
@@ -481,6 +472,17 @@ export const PortableTextEditable = forwardRef<
           .finally(() => {
             editorActor.send({type: 'done loading'})
           })
+      } else if (event.nativeEvent.clipboardData) {
+        event.preventDefault()
+
+        editorActor.send({
+          type: 'behavior event',
+          behaviorEvent: {
+            type: 'paste',
+            clipboardData: event.nativeEvent.clipboardData,
+          },
+          editor: slateEditor,
+        })
       }
 
       debug('No result from custom paste handler, pasting normally')

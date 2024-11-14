@@ -139,6 +139,9 @@ const behaviorActionImplementations: BehaviourActionImplementations = {
   'effect': ({action}) => {
     action.effect()
   },
+  'paste': ({action}) => {
+    action.editor.insertData(action.clipboardData)
+  },
   'select': ({action}) => {
     const newSelection = toSlateRange(action.selection, action.editor)
 
@@ -320,8 +323,15 @@ function performDefaultAction({
       })
       break
     }
-    default: {
+    case 'insert text': {
       behaviorActionImplementations['insert text']({
+        context,
+        action,
+      })
+      break
+    }
+    default: {
+      behaviorActionImplementations.paste({
         context,
         action,
       })
