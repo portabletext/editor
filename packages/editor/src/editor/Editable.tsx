@@ -428,13 +428,12 @@ export const PortableTextEditable = forwardRef<
   // Handle incoming pasting events in the editor
   const handlePaste = useCallback(
     (event: ClipboardEvent<HTMLDivElement>): Promise<void> | void => {
-      event.preventDefault()
       if (!slateEditor.selection) {
         return
       }
+
       if (!onPaste) {
         debug('Pasting normally')
-        slateEditor.insertData(event.clipboardData)
         return
       }
 
@@ -447,17 +446,19 @@ export const PortableTextEditable = forwardRef<
       const path = ptRange?.focus.path || []
       const onPasteResult = onPaste({event, value, path, schemaTypes})
 
-      if (onPasteResult === undefined) {
-        debug('No result from custom paste handler, pasting normally')
-        slateEditor.insertData(event.clipboardData)
-      } else {
+      if (onPasteResult) {
+        event.preventDefault()
+
         // Resolve it as promise (can be either async promise or sync return value)
         editorActor.send({type: 'loading'})
+
         Promise.resolve(onPasteResult)
           .then((result) => {
             debug('Custom paste function from client resolved', result)
+
             if (!result || !result.insert) {
               debug('No result from custom paste handler, pasting normally')
+
               slateEditor.insertData(event.clipboardData)
             } else if (result.insert) {
               slateEditor.insertFragment(
@@ -474,12 +475,15 @@ export const PortableTextEditable = forwardRef<
           })
           .catch((error) => {
             console.error(error)
+
             return error
           })
           .finally(() => {
             editorActor.send({type: 'done loading'})
           })
       }
+
+      debug('No result from custom paste handler, pasting normally')
     },
     [editorActor, onPaste, portableTextEditor, schemaTypes, slateEditor],
   )
