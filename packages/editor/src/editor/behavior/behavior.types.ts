@@ -74,6 +74,10 @@ export type BehaviorEvent =
       text: string
       options?: TextInsertTextOptions
     }
+  | {
+      type: 'paste'
+      clipboardData: NonNullable<ClipboardEvent['clipboardData']>
+    }
 
 /**
  * @alpha
