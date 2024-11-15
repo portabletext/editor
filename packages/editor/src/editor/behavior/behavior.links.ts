@@ -6,7 +6,7 @@ import {getFocusSpan, selectionIsCollapsed} from './behavior.utils'
  * @alpha
  */
 export type LinkBehaviorsConfig = {
-  mapLinkAnnotation?: (config: {
+  linkAnnotation?: (context: {
     schema: PortableTextMemberSchemaTypes
     url: string
   }) => {name: string; value: {[prop: string]: unknown}} | undefined
@@ -24,7 +24,7 @@ export function createLinkBehaviors(config: LinkBehaviorsConfig) {
       const url = looksLikeUrl(text) ? text : undefined
       const annotation =
         url !== undefined
-          ? config.mapLinkAnnotation?.({url, schema: context.schema})
+          ? config.linkAnnotation?.({url, schema: context.schema})
           : undefined
 
       if (annotation && !selectionCollapsed) {
@@ -56,7 +56,7 @@ export function createLinkBehaviors(config: LinkBehaviorsConfig) {
       const url = looksLikeUrl(text) ? text : undefined
       const annotation =
         url !== undefined
-          ? config.mapLinkAnnotation?.({url, schema: context.schema})
+          ? config.linkAnnotation?.({url, schema: context.schema})
           : undefined
 
       if (url && annotation && selectionCollapsed) {

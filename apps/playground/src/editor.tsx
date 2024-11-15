@@ -59,7 +59,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
     behaviors: [
       ...coreBehaviors,
       ...createLinkBehaviors({
-        mapLinkAnnotation: ({schema, url}) => {
+        linkAnnotation: ({schema, url}) => {
           const name = schema.annotations.find(
             (annotation) => annotation.name === 'link',
           )?.name
