@@ -521,23 +521,32 @@ export const PortableTextEditable = forwardRef<
       if (onClick) {
         onClick(event)
       }
-      // Inserts a new block if it's clicking on the editor, focused on the last block and it's a void element
-      if (slateEditor.selection && event.target === event.currentTarget) {
-        const [lastBlock, path] = Node.last(slateEditor, [])
-        const focusPath = slateEditor.selection.focus.path.slice(0, 1)
-        const lastPath = path.slice(0, 1)
-        if (Path.equals(focusPath, lastPath)) {
-          const node = Node.descendant(slateEditor, path.slice(0, 1)) as
+
+      const focusBlockPath = slateEditor.selection
+        ? slateEditor.selection.focus.path.slice(0, 1)
+        : undefined
+      const focusBlock = focusBlockPath
+        ? (Node.descendant(slateEditor, focusBlockPath) as
             | SlateTextBlock
-            | VoidElement
-          if (lastBlock && Editor.isVoid(slateEditor, node)) {
-            Transforms.insertNodes(
-              slateEditor,
-              slateEditor.pteCreateTextBlock({decorators: []}),
-            )
-            slateEditor.onChange()
-          }
-        }
+            | VoidElement)
+        : undefined
+      const [_, lastNodePath] = Node.last(slateEditor, [])
+      const lastBlockPath = lastNodePath.slice(0, 1)
+      const lastNodeFocused = focusBlockPath
+        ? Path.equals(lastBlockPath, focusBlockPath)
+        : false
+      const lastBlockIsVoid = focusBlock
+        ? !slateEditor.isTextBlock(focusBlock)
+        : false
+      const collapsedSelection =
+        slateEditor.selection && SlateRange.isCollapsed(slateEditor.selection)
+
+      if (collapsedSelection && lastNodeFocused && lastBlockIsVoid) {
+        Transforms.insertNodes(
+          slateEditor,
+          slateEditor.pteCreateTextBlock({decorators: []}),
+        )
+        slateEditor.onChange()
       }
     },
     [onClick, slateEditor],
