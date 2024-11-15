@@ -13,14 +13,14 @@ const givenMarkdownBehaviors = Given(
       behaviors: [
         ...coreBehaviors,
         ...createMarkdownBehaviors({
-          mapDefaultStyle: (schema) => schema.styles[0]?.value,
-          mapHeadingStyle: (schema, level) =>
+          defaultStyle: ({schema}) => schema.styles[0]?.value,
+          headingStyle: ({schema, level}) =>
             schema.styles.find((style) => style.value === `h${level}`)?.value,
-          mapBlockquoteStyle: (schema) =>
+          blockquoteStyle: ({schema}) =>
             schema.styles.find((style) => style.value === 'blockquote')?.value,
-          mapUnorderedListStyle: (schema) =>
+          unorderedListStyle: ({schema}) =>
             schema.lists.find((list) => list.value === 'bullet')?.value,
-          mapOrderedListStyle: (schema) =>
+          orderedListStyle: ({schema}) =>
             schema.lists.find((list) => list.value === 'number')?.value,
         }),
       ],

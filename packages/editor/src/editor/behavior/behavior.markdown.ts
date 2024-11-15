@@ -11,25 +11,25 @@ import {
  * @alpha
  */
 export type MarkdownBehaviorsConfig = {
-  mapBreakObject?: (
-    schema: PortableTextMemberSchemaTypes,
-  ) => {name: string; value?: {[prop: string]: unknown}} | undefined
-  mapDefaultStyle?: (
-    schema: PortableTextMemberSchemaTypes,
-  ) => string | undefined
-  mapHeadingStyle?: (
-    schema: PortableTextMemberSchemaTypes,
-    level: number,
-  ) => string | undefined
-  mapBlockquoteStyle?: (
-    schema: PortableTextMemberSchemaTypes,
-  ) => string | undefined
-  mapUnorderedListStyle?: (
-    schema: PortableTextMemberSchemaTypes,
-  ) => string | undefined
-  mapOrderedListStyle?: (
-    schema: PortableTextMemberSchemaTypes,
-  ) => string | undefined
+  horizontalRuleObject?: (context: {
+    schema: PortableTextMemberSchemaTypes
+  }) => {name: string; value?: {[prop: string]: unknown}} | undefined
+  defaultStyle?: (context: {
+    schema: PortableTextMemberSchemaTypes
+  }) => string | undefined
+  headingStyle?: (context: {
+    schema: PortableTextMemberSchemaTypes
+    level: number
+  }) => string | undefined
+  blockquoteStyle?: (context: {
+    schema: PortableTextMemberSchemaTypes
+  }) => string | undefined
+  unorderedListStyle?: (context: {
+    schema: PortableTextMemberSchemaTypes
+  }) => string | undefined
+  orderedListStyle?: (context: {
+    schema: PortableTextMemberSchemaTypes
+  }) => string | undefined
 }
 
 /**
@@ -55,7 +55,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
 
       const caretAtTheEndOfQuote = context.selection.focus.offset === 1
       const looksLikeMarkdownQuote = /^>/.test(focusSpan.node.text)
-      const blockquoteStyle = config.mapBlockquoteStyle?.(context.schema)
+      const blockquoteStyle = config.blockquoteStyle?.({schema: context.schema})
 
       if (
         caretAtTheEndOfQuote &&
@@ -110,7 +110,9 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
-      const breakObject = config.mapBreakObject?.(context.schema)
+      const breakObject = config.horizontalRuleObject?.({
+        schema: context.schema,
+      })
       const focusBlock = getFocusTextBlock(context)
       const selectionCollapsed = selectionIsCollapsed(context)
 
@@ -179,27 +181,26 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       }
 
       const markdownHeadingSearch = /^#+/.exec(focusSpan.node.text)
-      const headingLevel = markdownHeadingSearch
+      const level = markdownHeadingSearch
         ? markdownHeadingSearch[0].length
         : undefined
-      const caretAtTheEndOfHeading =
-        context.selection.focus.offset === headingLevel
+      const caretAtTheEndOfHeading = context.selection.focus.offset === level
 
       if (!caretAtTheEndOfHeading) {
         return false
       }
 
-      const headingStyle =
-        headingLevel !== undefined
-          ? config.mapHeadingStyle?.(context.schema, headingLevel)
+      const style =
+        level !== undefined
+          ? config.headingStyle?.({schema: context.schema, level})
           : undefined
 
-      if (headingLevel !== undefined && headingStyle !== undefined) {
+      if (level !== undefined && style !== undefined) {
         return {
           focusTextBlock,
           focusSpan,
-          style: headingStyle,
-          level: headingLevel,
+          style: style,
+          level,
         }
       }
 
@@ -254,7 +255,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         focusTextBlock.node.children[0]._key === focusSpan.node._key &&
         context.selection.focus.offset === 0
 
-      const defaultStyle = config.mapDefaultStyle?.(context.schema)
+      const defaultStyle = config.defaultStyle?.({schema: context.schema})
 
       if (
         atTheBeginningOfBLock &&
@@ -293,9 +294,11 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
-      const defaultStyle = config.mapDefaultStyle?.(context.schema)
+      const defaultStyle = config.defaultStyle?.({schema: context.schema})
       const looksLikeUnorderedList = /^(-|\*)/.test(focusSpan.node.text)
-      const unorderedListStyle = config.mapUnorderedListStyle?.(context.schema)
+      const unorderedListStyle = config.unorderedListStyle?.({
+        schema: context.schema,
+      })
       const caretAtTheEndOfUnorderedList = context.selection.focus.offset === 1
 
       if (
@@ -314,7 +317,9 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       }
 
       const looksLikeOrderedList = /^1./.test(focusSpan.node.text)
-      const orderedListStyle = config.mapOrderedListStyle?.(context.schema)
+      const orderedListStyle = config.orderedListStyle?.({
+        schema: context.schema,
+      })
       const caretAtTheEndOfOrderedList = context.selection.focus.offset === 2
 
       if (
