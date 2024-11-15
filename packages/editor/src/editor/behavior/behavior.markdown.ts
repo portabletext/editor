@@ -104,9 +104,16 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   const automaticBreak = defineBehavior({
     on: 'insert text',
     guard: ({context, event}) => {
-      const isDash = event.text === '-'
+      const hrCharacter =
+        event.text === '-'
+          ? '-'
+          : event.text === '*'
+            ? '*'
+            : event.text === '_'
+              ? '_'
+              : undefined
 
-      if (!isDash) {
+      if (hrCharacter === undefined) {
         return false
       }
 
@@ -125,17 +132,17 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         .map((child) => child.text ?? '')
         .join('')
 
-      if (onlyText && blockText === '--') {
-        return {breakObject, focusBlock}
+      if (onlyText && blockText === `${hrCharacter}${hrCharacter}`) {
+        return {breakObject, focusBlock, hrCharacter}
       }
 
       return false
     },
     actions: [
-      () => [
+      (_, {hrCharacter}) => [
         {
           type: 'insert text',
-          text: '-',
+          text: hrCharacter,
         },
       ],
       (_, {breakObject, focusBlock}) => [
