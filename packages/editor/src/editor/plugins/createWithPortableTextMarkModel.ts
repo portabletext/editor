@@ -837,12 +837,16 @@ export function isDecoratorActive({
     return false
   }
 
-  const selectedNodes = Array.from(
+  const selectedTextNodes = Array.from(
     Editor.nodes(editor, {match: Text.isText, at: editor.selection}),
   )
 
+  if (selectedTextNodes.length === 0) {
+    return false
+  }
+
   if (Range.isExpanded(editor.selection)) {
-    return selectedNodes.every((n) => {
+    return selectedTextNodes.every((n) => {
       const [node] = n
 
       return node.marks?.includes(decorator)
