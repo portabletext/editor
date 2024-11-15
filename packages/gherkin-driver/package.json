@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@cucumber/cucumber-expressions": "^18.0.1",
-    "@cucumber/gherkin": "^30.0.1",
+    "@cucumber/gherkin": "^30.0.3",
     "@cucumber/messages": "^27.0.1",
     "@jest/globals": "^29.7.0",
     "@sanity/pkg-utils": "^6.11.11",
