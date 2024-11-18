@@ -46,12 +46,16 @@ const networkLogic = fromCallback(({sendBack}) => {
     sendBack({type: 'offline'})
   }
 
-  window.addEventListener('online', onlineHandler)
-  window.addEventListener('offline', offlineHandler)
+  if (window) {
+    window.addEventListener('online', onlineHandler)
+    window.addEventListener('offline', offlineHandler)
+  }
 
   return () => {
-    window.removeEventListener('online', onlineHandler)
-    window.removeEventListener('offline', offlineHandler)
+    if (window) {
+      window.removeEventListener('online', onlineHandler)
+      window.removeEventListener('offline', offlineHandler)
+    }
   }
 })
 
