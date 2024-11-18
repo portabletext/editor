@@ -125,14 +125,6 @@ export function Synchronizer(props: SynchronizerProps) {
           handleChange({type: 'focus', event: event.event})
           break
         }
-        case 'offline': {
-          handleChange({type: 'connection', value: 'offline'})
-          break
-        }
-        case 'online': {
-          handleChange({type: 'connection', value: 'online'})
-          break
-        }
         case 'value changed': {
           handleChange({type: 'value', value: event.value})
           break
@@ -167,21 +159,6 @@ export function Synchronizer(props: SynchronizerProps) {
       sub.unsubscribe()
     }
   }, [editorActor, handleChange, onFlushPendingPatches, slateEditor])
-
-  // Sync the value when going online
-  const handleOnline = useCallback(() => {
-    debug('Editor is online, syncing from props.value')
-    syncValue(value)
-  }, [syncValue, value])
-
-  // Notify about window online and offline status changes
-  useEffect(() => {
-    const subscription = editorActor.on('online', handleOnline)
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [handleOnline, editorActor])
 
   // This hook must be set up after setting up the subscription above, or it will not pick up validation errors from the useSyncValue hook.
   // This will cause the editor to not be able to signal a validation error and offer invalid value resolution of the initial value.

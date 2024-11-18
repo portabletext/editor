@@ -7,7 +7,6 @@ import {
   assign,
   emit,
   enqueueActions,
-  fromCallback,
   setup,
   type ActorRefFrom,
 } from 'xstate'
@@ -37,27 +36,6 @@ export * from 'xstate/guards'
  * @internal
  */
 export type EditorActor = ActorRefFrom<typeof editorMachine>
-
-const networkLogic = fromCallback(({sendBack}) => {
-  const onlineHandler = () => {
-    sendBack({type: 'online'})
-  }
-  const offlineHandler = () => {
-    sendBack({type: 'offline'})
-  }
-
-  if (window) {
-    window.addEventListener('online', onlineHandler)
-    window.addEventListener('offline', offlineHandler)
-  }
-
-  return () => {
-    if (window) {
-      window.removeEventListener('online', onlineHandler)
-      window.removeEventListener('offline', offlineHandler)
-    }
-  }
-})
 
 /**
  * @internal
@@ -149,8 +127,6 @@ export type InternalEditorEmittedEvent =
   | {type: 'selection'; selection: EditorSelection}
   | {type: 'blur'; event: FocusEvent<HTMLDivElement, Element>}
   | {type: 'focused'; event: FocusEvent<HTMLDivElement, Element>}
-  | {type: 'online'}
-  | {type: 'offline'}
   | {type: 'loading'}
   | {type: 'done loading'}
   | PickFromUnion<
@@ -313,9 +289,6 @@ export const editorMachine = setup({
       }
     }),
   },
-  actors: {
-    networkLogic,
-  },
 }).createMachine({
   id: 'editor',
   context: ({input}) => ({
@@ -327,10 +300,6 @@ export const editorMachine = setup({
     maxBlocks: undefined,
     value: input.value,
   }),
-  invoke: {
-    id: 'networkLogic',
-    src: 'networkLogic',
-  },
   on: {
     'annotation.add': {
       actions: emit(({event}) => event),
@@ -356,8 +325,6 @@ export const editorMachine = setup({
     'selection': {actions: emit(({event}) => event)},
     'blur': {actions: emit(({event}) => event)},
     'focused': {actions: emit(({event}) => event)},
-    'online': {actions: emit({type: 'online'})},
-    'offline': {actions: emit({type: 'offline'})},
     'loading': {actions: emit({type: 'loading'})},
     'patches': {actions: emit(({event}) => event)},
     'done loading': {actions: emit({type: 'done loading'})},
