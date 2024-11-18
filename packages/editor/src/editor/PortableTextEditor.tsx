@@ -50,7 +50,7 @@ const debug = debugWithName('component:PortableTextEditor')
 export type PortableTextEditorProps<
   TEditor extends Editor | undefined = undefined,
 > = PropsWithChildren<
-  (TEditor extends Editor
+  TEditor extends Editor
     ? {
         /**
          * @alpha
@@ -104,7 +104,7 @@ export type PortableTextEditorProps<
          * A ref to the editor instance
          */
         editorRef?: MutableRefObject<PortableTextEditor | null>
-      }) & {}
+      }
 >
 
 /**
