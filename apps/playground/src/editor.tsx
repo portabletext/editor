@@ -90,6 +90,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
   const patchesReceived = useSelector(props.editorRef, (s) =>
     reverse(s.context.patchesReceived),
   )
+
   useEffect(() => {
     const subscription = props.editorRef.on('patches', (event) => {
       editor.send(event)
@@ -120,6 +121,13 @@ export function Editor(props: {editorRef: EditorActorRef}) {
     }
   }, [editor, setLoading, props.editorRef])
 
+  useEffect(() => {
+    editor.send({
+      type: 'update value',
+      value,
+    })
+  }, [editor, value])
+
   return (
     <div
       data-testid={props.editorRef.id}
@@ -130,7 +138,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
         fallback={ErrorScreen}
         onError={console.error}
       >
-        <PortableTextEditor editor={editor} value={value}>
+        <PortableTextEditor editor={editor}>
           <div className="flex flex-col gap-2">
             <PortableTextToolbar
               editor={editor}

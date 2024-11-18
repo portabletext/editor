@@ -22,6 +22,7 @@ import {defaultKeyGenerator} from './key-generator'
 export type EditorConfig = {
   behaviors?: Array<Behavior>
   keyGenerator?: () => string
+  initialValue?: Array<PortableTextBlock>
 } & (
   | {
       schemaDefinition: SchemaDefinition
@@ -44,6 +45,7 @@ export type EditorEvent = PickFromUnion<
   | 'patches'
   | 'toggle readOnly'
   | 'update behaviors'
+  | 'update value'
 >
 
 /**
@@ -74,6 +76,7 @@ export function useEditor(config: EditorConfig): Editor {
               ? config.schema
               : compileType(config.schema),
           ),
+      value: config.initialValue,
     },
   })
   const slateEditor = createSlateEditor({editorActor})
