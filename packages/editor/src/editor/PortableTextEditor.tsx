@@ -99,12 +99,12 @@ export type PortableTextEditorProps<
          * The current value of the portable text field
          */
         value?: PortableTextBlock[]
-      }) & {
-    /**
-     * A ref to the editor instance
-     */
-    editorRef?: MutableRefObject<PortableTextEditor | null>
-  }
+
+        /**
+         * A ref to the editor instance
+         */
+        editorRef?: MutableRefObject<PortableTextEditor | null>
+      }) & {}
 >
 
 /**
@@ -233,10 +233,13 @@ export class PortableTextEditor extends Component<
           value: this.props.value,
         })
       }
-    }
 
-    if (this.props.editorRef !== prevProps.editorRef && this.props.editorRef) {
-      this.props.editorRef.current = this
+      if (
+        this.props.editorRef !== prevProps.editorRef &&
+        this.props.editorRef
+      ) {
+        this.props.editorRef.current = this
+      }
     }
   }
 
