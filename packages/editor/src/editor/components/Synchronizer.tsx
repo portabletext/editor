@@ -27,7 +27,6 @@ export interface SynchronizerProps {
   editorActor: EditorActor
   getValue: () => Array<PortableTextBlock> | undefined
   onChange: (change: EditorChange) => void
-  value: Array<PortableTextBlock> | undefined
 }
 
 /**
@@ -37,7 +36,8 @@ export interface SynchronizerProps {
 export function Synchronizer(props: SynchronizerProps) {
   const portableTextEditor = usePortableTextEditor()
   const readOnly = useSelector(props.editorActor, (s) => s.context.readOnly)
-  const {editorActor, getValue, onChange, value} = props
+  const value = useSelector(props.editorActor, (s) => s.context.value)
+  const {editorActor, getValue, onChange} = props
   const pendingPatches = useRef<Patch[]>([])
 
   const syncValue = useSyncValue({

@@ -1,5 +1,6 @@
 import {
   defineSchema,
+  keyGenerator,
   PortableTextBlock,
   PortableTextChild,
   PortableTextEditable,
@@ -43,14 +44,31 @@ const schemaDefinition = defineSchema({
 })
 
 function App() {
+  const [value, setValue] = useState<Array<PortableTextBlock> | undefined>(
+    // Initial value
+    () => [
+      {
+        _type: 'block',
+        _key: keyGenerator(),
+        children: [
+          {_type: 'span', _key: keyGenerator(), text: 'Hello, '},
+          {
+            _type: 'span',
+            _key: keyGenerator(),
+            text: 'world!',
+            marks: ['strong'],
+          },
+        ],
+      },
+    ],
+  )
+
   // Create an editor
   const editor = useEditor({
     schemaDefinition,
+    // With an optional initial value
+    initialValue: value,
   })
-
-  const [value, setValue] = useState<Array<PortableTextBlock> | undefined>(
-    undefined,
-  )
 
   // Subscribe to editor changes
   useEffect(() => {
@@ -68,8 +86,6 @@ function App() {
       <PortableTextEditor
         // Pass in the `editor` you created earlier
         editor={editor}
-        // And an optional value
-        value={value}
       >
         {/* Toolbar needs to be rendered inside the `PortableTextEditor` component */}
         <Toolbar />

@@ -73,6 +73,13 @@ function Editor(props: {
   }, [editor, props.behaviors])
 
   useEffect(() => {
+    editor.send({
+      type: 'update value',
+      value: props.value,
+    })
+  }, [editor, props.value])
+
+  useEffect(() => {
     const subscription = props.editorRef.on('patches', (event) => {
       editor.send(event)
     })
@@ -99,7 +106,7 @@ function Editor(props: {
 
   return (
     <div data-testid={props.editorRef.id}>
-      <PortableTextEditor editor={editor} value={props.value}>
+      <PortableTextEditor editor={editor}>
         <FocusListener editorRef={props.editorRef} />
         <BlockButtons />
         <InlineObjectButtons />

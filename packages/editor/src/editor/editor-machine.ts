@@ -103,6 +103,10 @@ export type InternalEditorEvent =
       behaviors: Array<Behavior>
     }
   | {
+      type: 'update value'
+      value: Array<PortableTextBlock> | undefined
+    }
+  | {
       type: 'toggle readOnly'
     }
   | {
@@ -163,6 +167,7 @@ export const editorMachine = setup({
       schema: PortableTextMemberSchemaTypes
       readOnly: boolean
       maxBlocks: number | undefined
+      value: Array<PortableTextBlock> | undefined
     },
     events: {} as InternalEditorEvent,
     emitted: {} as InternalEditorEmittedEvent,
@@ -170,6 +175,7 @@ export const editorMachine = setup({
       behaviors?: Array<Behavior>
       keyGenerator: () => string
       schema: PortableTextMemberSchemaTypes
+      value?: Array<PortableTextBlock>
     },
   },
   actions: {
@@ -315,6 +321,7 @@ export const editorMachine = setup({
     schema: input.schema,
     readOnly: false,
     maxBlocks: undefined,
+    value: input.value,
   }),
   invoke: {
     id: 'networkLogic',
@@ -352,6 +359,7 @@ export const editorMachine = setup({
     'done loading': {actions: emit({type: 'done loading'})},
     'update behaviors': {actions: 'assign behaviors'},
     'update schema': {actions: 'assign schema'},
+    'update value': {actions: assign({value: ({event}) => event.value})},
     'toggle readOnly': {
       actions: assign({readOnly: ({context}) => !context.readOnly}),
     },

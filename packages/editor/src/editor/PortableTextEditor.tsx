@@ -94,12 +94,12 @@ export type PortableTextEditorProps<
          * Whether or not the editor should be in read-only mode
          */
         readOnly?: boolean
-      }) & {
-    /**
-     * The current value of the portable text field
-     */
-    value?: PortableTextBlock[]
 
+        /**
+         * The current value of the portable text field
+         */
+        value?: PortableTextBlock[]
+      }) & {
     /**
      * A ref to the editor instance
      */
@@ -160,6 +160,7 @@ export class PortableTextEditor extends Component<
         input: {
           keyGenerator: props.keyGenerator || defaultKeyGenerator,
           schema: this.schemaTypes,
+          value: props.value,
         },
       })
       this.editorActor.start()
@@ -225,6 +226,13 @@ export class PortableTextEditor extends Component<
               : Number.parseInt(this.props.maxBlocks.toString(), 10),
         })
       }
+
+      if (this.props.value !== prevProps.value) {
+        this.editorActor.send({
+          type: 'update value',
+          value: this.props.value,
+        })
+      }
     }
 
     if (this.props.editorRef !== prevProps.editorRef && this.props.editorRef) {
@@ -279,7 +287,6 @@ export class PortableTextEditor extends Component<
                      */
                     this.change$.next(change)
                   }}
-                  value={this.props.value}
                 />
                 {this.props.children}
               </PortableTextEditorSelectionProvider>
