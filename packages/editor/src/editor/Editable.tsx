@@ -160,7 +160,7 @@ export const PortableTextEditable = forwardRef<
 
   const editorActor = useContext(EditorActorContext)
   const readOnly = useSelector(editorActor, (s) => s.context.readOnly)
-  const {schemaTypes} = portableTextEditor
+  const schemaTypes = useSelector(editorActor, (s) => s.context.schema)
   const slateEditor = useSlate()
 
   const blockTypeName = schemaTypes.block.name
