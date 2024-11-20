@@ -4,6 +4,8 @@
   "scripts": {
     "build": "turbo build",
     "build:editor": "turbo build --filter=@portabletext/editor...",
+    "build:example-basic": "turbo build --filter=example-basic...",
+    "build:example-legacy": "turbo build --filter=example-legacy...",
     "build:patches": "turbo build --filter=@portabletext/patches...",
     "build:playground": "turbo build --filter=playground...",
     "check:format": "prettier . --check",
