@@ -2,7 +2,6 @@ import type {PortableTextBlock} from '@sanity/types'
 import {debounce, isEqual} from 'lodash'
 import {useCallback, useMemo, useRef} from 'react'
 import {Editor, Text, Transforms, type Descendant, type Node} from 'slate'
-import {useSlate} from 'slate-react'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {validateValue} from '../../utils/validateValue'
@@ -26,6 +25,7 @@ export interface UseSyncValueProps {
   editorActor: EditorActor
   portableTextEditor: PortableTextEditor
   readOnly: boolean
+  slateEditor: PortableTextSlateEditor
 }
 
 const CURRENT_VALUE = new WeakMap<
@@ -51,10 +51,9 @@ export function useSyncValue(
   value: PortableTextBlock[] | undefined,
   userCallbackFn?: () => void,
 ) => void {
-  const {editorActor, portableTextEditor, readOnly} = props
+  const {editorActor, portableTextEditor, readOnly, slateEditor} = props
   const schemaTypes = editorActor.getSnapshot().context.schema
   const previousValue = useRef<PortableTextBlock[] | undefined>()
-  const slateEditor = useSlate()
   const updateValueFunctionRef =
     useRef<(value: PortableTextBlock[] | undefined) => void>()
 
