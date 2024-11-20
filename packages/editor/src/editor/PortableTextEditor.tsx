@@ -127,7 +127,7 @@ export class PortableTextEditor extends Component<
   /**
    * The editor API (currently implemented with Slate).
    */
-  private editable?: EditableAPI
+  private editable: EditableAPI
   private editorActor: EditorActor
   private slateEditor: SlateEditor
 
@@ -186,6 +186,7 @@ export class PortableTextEditor extends Component<
         })
       }
     }
+
     this.editable = createEditableAPI(
       this.slateEditor.instance,
       this.editorActor,
@@ -248,14 +249,6 @@ export class PortableTextEditor extends Component<
     this.editable = {...this.editable, ...editable}
   }
 
-  private getValue = () => {
-    if (this.editable) {
-      return this.editable.getValue()
-    }
-
-    return undefined
-  }
-
   render() {
     const legacyPatches = !this.props.editor
       ? (this.props.incomingPatches$ ?? this.props.patches$)
@@ -284,7 +277,7 @@ export class PortableTextEditor extends Component<
         />
         <Synchronizer
           editorActor={this.editorActor}
-          getValue={this.getValue}
+          getValue={this.editable.getValue}
           portableTextEditor={this}
           slateEditor={this.slateEditor.instance}
         />
