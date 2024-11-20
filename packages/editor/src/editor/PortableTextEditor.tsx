@@ -523,6 +523,7 @@ export function RouteEventsToChanges(props: {
         case 'annotation.toggle':
         case 'focus':
         case 'patches':
+        case 'readOnly toggled':
           break
         default:
           handleChange(event)
