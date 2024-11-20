@@ -124,7 +124,6 @@ export type EditorSelection = {
 export interface PortableTextSlateEditor extends ReactEditor {
   _key: 'editor'
   _type: 'editor'
-  destroy: () => void
   createPlaceholderBlock: () => Descendant
   editable: EditableAPI
   history: History

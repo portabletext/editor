@@ -32,8 +32,8 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
 
   debug('Creating new Slate editor instance', config.editorActor.id)
 
-  let unsubscriptions: Array<() => void> = []
-  let subscriptions: Array<() => () => void> = []
+  const unsubscriptions: Array<() => void> = []
+  const subscriptions: Array<() => () => void> = []
 
   const instance = withPlugins(withReact(createEditor()), {
     editorActor: config.editorActor,
@@ -46,18 +46,6 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
   for (const subscription of subscriptions) {
     unsubscriptions.push(subscription())
   }
-
-  config.editorActor.subscribe((snapshot) => {
-    if (snapshot.status !== 'active') {
-      debug('Destroying Slate editor')
-      instance.destroy()
-      for (const unsubscribe of unsubscriptions) {
-        unsubscribe()
-      }
-      subscriptions = []
-      unsubscriptions = []
-    }
-  })
 
   const initialValue = [instance.pteCreateTextBlock({decorators: []})]
 

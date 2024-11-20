@@ -21,11 +21,6 @@ export interface OriginalEditorFunctions {
   normalizeNode: (entry: NodeEntry<Node>) => void
 }
 
-const originalFnMap = new WeakMap<
-  PortableTextSlateEditor,
-  OriginalEditorFunctions
->()
-
 type PluginsOptions = {
   editorActor: EditorActor
   subscriptions: Array<() => () => void>
@@ -38,17 +33,6 @@ export const withPlugins = <T extends Editor>(
   const e = editor as T & PortableTextSlateEditor
   const {editorActor} = options
   const schemaTypes = editorActor.getSnapshot().context.schema
-  if (e.destroy) {
-    e.destroy()
-  } else {
-    // Save a copy of the original editor functions here before they were changed by plugins.
-    // We will put them back when .destroy is called (see below).
-    originalFnMap.set(e, {
-      apply: e.apply,
-      onChange: e.onChange,
-      normalizeNode: e.normalizeNode,
-    })
-  }
   const operationToPatches = createOperationToPatches(schemaTypes)
   const withObjectKeys = createWithObjectKeys(editorActor, schemaTypes)
   const withSchemaTypes = createWithSchemaTypes({
@@ -91,17 +75,6 @@ export const withPlugins = <T extends Editor>(
     editorActor,
     options.subscriptions,
   )
-
-  e.destroy = () => {
-    const originalFunctions = originalFnMap.get(e)
-    if (!originalFunctions) {
-      throw new Error('Could not find pristine versions of editor functions')
-    }
-    e.apply = originalFunctions.apply
-    e.history = {undos: [], redos: []}
-    e.normalizeNode = originalFunctions.normalizeNode
-    e.onChange = originalFunctions.onChange
-  }
 
   // Ordering is important here, selection dealing last, data manipulation in the middle and core model stuff first.
   return withEventListeners(
