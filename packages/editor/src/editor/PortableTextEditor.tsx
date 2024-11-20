@@ -282,6 +282,12 @@ export class PortableTextEditor extends Component<
             this.change$.next(change)
           }}
         />
+        <Synchronizer
+          editorActor={this.editorActor}
+          getValue={this.getValue}
+          portableTextEditor={this}
+          slateEditor={this.slateEditor.instance}
+        />
         <EditorActorContext.Provider value={this.editorActor}>
           <Slate
             editor={this.slateEditor.instance}
@@ -291,10 +297,6 @@ export class PortableTextEditor extends Component<
               <PortableTextEditorSelectionProvider
                 editorActor={this.editorActor}
               >
-                <Synchronizer
-                  editorActor={this.editorActor}
-                  getValue={this.getValue}
-                />
                 {this.props.children}
               </PortableTextEditorSelectionProvider>
             </PortableTextEditorContext.Provider>

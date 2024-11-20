@@ -4,12 +4,12 @@ import {useSelector} from '@xstate/react'
 import {throttle} from 'lodash'
 import {useCallback, useEffect, useRef} from 'react'
 import {Editor} from 'slate'
-import {useSlate} from 'slate-react'
+import type {PortableTextSlateEditor} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {IS_PROCESSING_LOCAL_CHANGES} from '../../utils/weakMaps'
 import type {EditorActor} from '../editor-machine'
-import {usePortableTextEditor} from '../hooks/usePortableTextEditor'
 import {useSyncValue} from '../hooks/useSyncValue'
+import type {PortableTextEditor} from '../PortableTextEditor'
 
 const debug = debugWithName('component:PortableTextEditor:Synchronizer')
 const debugVerbose = debug.enabled && false
@@ -24,6 +24,8 @@ const FLUSH_PATCHES_THROTTLED_MS = process.env.NODE_ENV === 'test' ? 500 : 1000
 export interface SynchronizerProps {
   editorActor: EditorActor
   getValue: () => Array<PortableTextBlock> | undefined
+  portableTextEditor: PortableTextEditor
+  slateEditor: PortableTextSlateEditor
 }
 
 /**
@@ -31,19 +33,17 @@ export interface SynchronizerProps {
  * @internal
  */
 export function Synchronizer(props: SynchronizerProps) {
-  const portableTextEditor = usePortableTextEditor()
   const readOnly = useSelector(props.editorActor, (s) => s.context.readOnly)
   const value = useSelector(props.editorActor, (s) => s.context.value)
-  const {editorActor, getValue} = props
+  const {editorActor, getValue, portableTextEditor, slateEditor} = props
   const pendingPatches = useRef<Patch[]>([])
 
   const syncValue = useSyncValue({
     editorActor,
     portableTextEditor,
     readOnly,
+    slateEditor,
   })
-
-  const slateEditor = useSlate()
 
   useEffect(() => {
     IS_PROCESSING_LOCAL_CHANGES.set(slateEditor, false)
