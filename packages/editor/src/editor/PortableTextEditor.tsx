@@ -141,16 +141,6 @@ export class PortableTextEditor extends Component<
       this.editorActor.start()
       this.schemaTypes = this.editorActor.getSnapshot().context.schema
     } else {
-      if (!props.schemaType) {
-        throw new Error('PortableTextEditor: missing "schemaType" property')
-      }
-
-      if (props.incomingPatches$) {
-        console.warn(
-          `The prop 'incomingPatches$' is deprecated and renamed to 'patches$'`,
-        )
-      }
-
       this.schemaTypes = getPortableTextMemberSchemaTypes(
         props.schemaType.hasOwnProperty('jsonType')
           ? props.schemaType
