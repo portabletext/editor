@@ -5,8 +5,6 @@ import {throttle} from 'lodash'
 import {useCallback, useEffect, useRef} from 'react'
 import {Editor} from 'slate'
 import {useSlate} from 'slate-react'
-import {useEffectEvent} from 'use-effect-event'
-import type {EditorChange} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {IS_PROCESSING_LOCAL_CHANGES} from '../../utils/weakMaps'
 import type {EditorActor} from '../editor-machine'
@@ -26,7 +24,6 @@ const FLUSH_PATCHES_THROTTLED_MS = process.env.NODE_ENV === 'test' ? 500 : 1000
 export interface SynchronizerProps {
   editorActor: EditorActor
   getValue: () => Array<PortableTextBlock> | undefined
-  onChange: (change: EditorChange) => void
 }
 
 /**
@@ -37,7 +34,7 @@ export function Synchronizer(props: SynchronizerProps) {
   const portableTextEditor = usePortableTextEditor()
   const readOnly = useSelector(props.editorActor, (s) => s.context.readOnly)
   const value = useSelector(props.editorActor, (s) => s.context.value)
-  const {editorActor, getValue, onChange} = props
+  const {editorActor, getValue} = props
   const pendingPatches = useRef<Patch[]>([])
 
   const syncValue = useSyncValue({
@@ -76,14 +73,6 @@ export function Synchronizer(props: SynchronizerProps) {
     }
   }, [onFlushPendingPatches])
 
-  // We want to ensure that _when_ `props.onChange` is called, it uses the current value.
-  // But we don't want to have the `useEffect` run setup + teardown + setup every time the prop might change, as that's unnecessary.
-  // So we use our own polyfill that lets us use an upcoming React hook that solves this exact problem.
-  // https://19.react.dev/learn/separating-events-from-effects#declaring-an-effect-event
-  const handleChange = useEffectEvent((change: EditorChange) =>
-    onChange(change),
-  )
-
   // Subscribe to, and handle changes from the editor
   useEffect(() => {
     const onFlushPendingPatchesThrottled = throttle(
@@ -104,61 +93,17 @@ export function Synchronizer(props: SynchronizerProps) {
       },
     )
 
-    debug('Subscribing to editor changes')
-    const sub = editorActor.on('*', (event) => {
-      switch (event.type) {
-        case 'patch':
-          IS_PROCESSING_LOCAL_CHANGES.set(slateEditor, true)
-          pendingPatches.current.push(event.patch)
-          onFlushPendingPatchesThrottled()
-          handleChange(event)
-          break
-        case 'loading': {
-          handleChange({type: 'loading', isLoading: true})
-          break
-        }
-        case 'done loading': {
-          handleChange({type: 'loading', isLoading: false})
-          break
-        }
-        case 'focused': {
-          handleChange({type: 'focus', event: event.event})
-          break
-        }
-        case 'value changed': {
-          handleChange({type: 'value', value: event.value})
-          break
-        }
-        case 'invalid value': {
-          handleChange({
-            type: 'invalidValue',
-            resolution: event.resolution,
-            value: event.value,
-          })
-          break
-        }
-        case 'error': {
-          handleChange({
-            ...event,
-            level: 'warning',
-          })
-          break
-        }
-        case 'annotation.add':
-        case 'annotation.remove':
-        case 'annotation.toggle':
-        case 'focus':
-        case 'patches':
-          break
-        default:
-          handleChange(event)
-      }
+    debug('Subscribing to patch events')
+    const sub = editorActor.on('patch', (event) => {
+      IS_PROCESSING_LOCAL_CHANGES.set(slateEditor, true)
+      pendingPatches.current.push(event.patch)
+      onFlushPendingPatchesThrottled()
     })
     return () => {
-      debug('Unsubscribing to changes')
+      debug('Unsubscribing to patch events')
       sub.unsubscribe()
     }
-  }, [editorActor, handleChange, onFlushPendingPatches, slateEditor])
+  }, [editorActor, onFlushPendingPatches, slateEditor])
 
   // This hook must be set up after setting up the subscription above, or it will not pick up validation errors from the useSyncValue hook.
   // This will cause the editor to not be able to signal a validation error and offer invalid value resolution of the initial value.
