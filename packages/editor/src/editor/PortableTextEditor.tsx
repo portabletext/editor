@@ -14,6 +14,7 @@ import {
 } from 'react'
 import {Subject} from 'rxjs'
 import {Slate} from 'slate-react'
+import {useEffectEvent} from 'use-effect-event'
 import {createActor} from 'xstate'
 import type {
   EditableAPI,
@@ -268,6 +269,19 @@ export class PortableTextEditor extends Component<
             patches$={legacyPatches}
           />
         ) : null}
+        <RouteEventsToChanges
+          editorActor={this.editorActor}
+          onChange={(change) => {
+            if (!this.props.editor) {
+              this.props.onChange(change)
+            }
+            /**
+             * For backwards compatibility, we relay all changes to the
+             * `change$` Subject as well.
+             */
+            this.change$.next(change)
+          }}
+        />
         <EditorActorContext.Provider value={this.editorActor}>
           <Slate
             editor={this.slateEditor.instance}
@@ -280,16 +294,6 @@ export class PortableTextEditor extends Component<
                 <Synchronizer
                   editorActor={this.editorActor}
                   getValue={this.getValue}
-                  onChange={(change) => {
-                    if (!this.props.editor) {
-                      this.props.onChange(change)
-                    }
-                    /**
-                     * For backwards compatibility, we relay all changes to the
-                     * `change$` Subject as well.
-                     */
-                    this.change$.next(change)
-                  }}
                 />
                 {this.props.children}
               </PortableTextEditorSelectionProvider>
@@ -465,6 +469,75 @@ function RoutePatchesObservableToEditorActor(props: {
       subscription.unsubscribe()
     }
   }, [props.editorActor, props.patches$])
+
+  return null
+}
+
+export function RouteEventsToChanges(props: {
+  editorActor: EditorActor
+  onChange: (change: EditorChange) => void
+}) {
+  // We want to ensure that _when_ `props.onChange` is called, it uses the current value.
+  // But we don't want to have the `useEffect` run setup + teardown + setup every time the prop might change, as that's unnecessary.
+  // So we use our own polyfill that lets us use an upcoming React hook that solves this exact problem.
+  // https://19.react.dev/learn/separating-events-from-effects#declaring-an-effect-event
+  const handleChange = useEffectEvent((change: EditorChange) =>
+    props.onChange(change),
+  )
+
+  useEffect(() => {
+    debug('Subscribing to editor changes')
+    const sub = props.editorActor.on('*', (event) => {
+      switch (event.type) {
+        case 'patch':
+          handleChange(event)
+          break
+        case 'loading': {
+          handleChange({type: 'loading', isLoading: true})
+          break
+        }
+        case 'done loading': {
+          handleChange({type: 'loading', isLoading: false})
+          break
+        }
+        case 'focused': {
+          handleChange({type: 'focus', event: event.event})
+          break
+        }
+        case 'value changed': {
+          handleChange({type: 'value', value: event.value})
+          break
+        }
+        case 'invalid value': {
+          handleChange({
+            type: 'invalidValue',
+            resolution: event.resolution,
+            value: event.value,
+          })
+          break
+        }
+        case 'error': {
+          handleChange({
+            ...event,
+            level: 'warning',
+          })
+          break
+        }
+        case 'annotation.add':
+        case 'annotation.remove':
+        case 'annotation.toggle':
+        case 'focus':
+        case 'patches':
+          break
+        default:
+          handleChange(event)
+      }
+    })
+    return () => {
+      debug('Unsubscribing to changes')
+      sub.unsubscribe()
+    }
+  }, [props.editorActor, handleChange])
 
   return null
 }
