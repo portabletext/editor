@@ -7,7 +7,7 @@ import {
 } from 'react'
 import type {EditorSelection} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
-import type {EditorActor} from '../editor-machine'
+import type {Editor} from '../create-editor'
 
 /**
  * A React context for sharing the editor selection.
@@ -37,7 +37,7 @@ const debugVerbose = debug.enabled && false
  */
 export function PortableTextEditorSelectionProvider(
   props: React.PropsWithChildren<{
-    editorActor: EditorActor
+    editor: Editor
   }>,
 ) {
   const [selection, setSelection] = useState<EditorSelection>(null)
@@ -45,7 +45,7 @@ export function PortableTextEditorSelectionProvider(
   // Subscribe to, and handle changes from the editor
   useEffect(() => {
     debug('Subscribing to selection changes')
-    const subscription = props.editorActor.on('selection', (event) => {
+    const subscription = props.editor.on('selection', (event) => {
       // Set the selection state in a transition, we don't need the state immediately.
       startTransition(() => {
         if (debugVerbose) debug('Setting selection')
@@ -57,7 +57,7 @@ export function PortableTextEditorSelectionProvider(
       debug('Unsubscribing to selection changes')
       subscription.unsubscribe()
     }
-  }, [props.editorActor])
+  }, [props.editor])
 
   return (
     <PortableTextEditorSelectionContext.Provider value={selection}>

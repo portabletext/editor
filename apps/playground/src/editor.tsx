@@ -2,9 +2,9 @@ import {
   coreBehaviors,
   createLinkBehaviors,
   createMarkdownBehaviors,
+  EditorProvider,
   PortableTextEditable,
-  PortableTextEditor,
-  useEditor,
+  useEditorRef,
   type BlockDecoratorRenderProps,
   type BlockStyleRenderProps,
   type RenderAnnotationFunction,
@@ -55,7 +55,8 @@ export function Editor(props: {editorRef: EditorActorRef}) {
     props.editorRef,
     (s) => s.context.keyGenerator,
   )
-  const editor = useEditor({
+  const [readOnly, setReadOnly] = useState(false)
+  const editor = useEditorRef({
     behaviors: [
       ...coreBehaviors,
       ...createLinkBehaviors({
@@ -85,8 +86,10 @@ export function Editor(props: {editorRef: EditorActorRef}) {
       }),
     ],
     keyGenerator,
+    readOnly,
     schemaDefinition,
   })
+
   const patchesReceived = useSelector(props.editorRef, (s) =>
     reverse(s.context.patchesReceived),
   )
@@ -105,6 +108,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
 
   useEffect(() => {
     const subscription = editor.on('*', (event) => {
+      console.log('editor event', event)
       if (event.type === 'mutation') {
         props.editorRef.send(event)
       }
@@ -114,12 +118,15 @@ export function Editor(props: {editorRef: EditorActorRef}) {
       if (event.type === 'done loading') {
         setLoading(false)
       }
+      if (event.type === 'readOnly toggled') {
+        setReadOnly(event.readOnly)
+      }
     })
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [editor, setLoading, props.editorRef])
+  }, [editor, setReadOnly, setLoading, props.editorRef])
 
   useEffect(() => {
     editor.send({
@@ -138,7 +145,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
         fallback={ErrorScreen}
         onError={console.error}
       >
-        <PortableTextEditor editor={editor}>
+        <EditorProvider editor={editor}>
           <div className="flex flex-col gap-2">
             <PortableTextToolbar
               editor={editor}
@@ -197,7 +204,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
                 <Tooltip>Remove editor</Tooltip>
               </TooltipTrigger>
               <Switch
-                isSelected={editor.readOnly}
+                isSelected={readOnly}
                 onChange={() => {
                   editor.send({type: 'toggle readOnly'})
                 }}
@@ -258,7 +265,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
               <SelectionPreview editorId={props.editorRef.id} />
             ) : null}
           </div>
-        </PortableTextEditor>
+        </EditorProvider>
       </ErrorBoundary>
     </div>
   )

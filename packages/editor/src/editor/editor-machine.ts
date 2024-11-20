@@ -27,6 +27,7 @@ import type {
   BehaviorActionIntend,
   BehaviorContext,
   BehaviorEvent,
+  OmitFromUnion,
   PickFromUnion,
 } from './behavior/behavior.types'
 
@@ -95,7 +96,7 @@ export type InternalEditorEvent =
       type: 'update maxBlocks'
       maxBlocks: number | undefined
     }
-  | InternalEditorEmittedEvent
+  | OmitFromUnion<InternalEditorEmittedEvent, 'type', 'readOnly toggled'>
 
 /**
  * @internal
@@ -129,6 +130,7 @@ export type InternalEditorEmittedEvent =
   | {type: 'focused'; event: FocusEvent<HTMLDivElement, Element>}
   | {type: 'loading'}
   | {type: 'done loading'}
+  | {type: 'readOnly toggled'; readOnly: boolean}
   | PickFromUnion<
       BehaviorEvent,
       'type',
@@ -154,6 +156,7 @@ export const editorMachine = setup({
     input: {} as {
       behaviors?: Array<Behavior>
       keyGenerator: () => string
+      readOnly?: boolean
       schema: PortableTextMemberSchemaTypes
       value?: Array<PortableTextBlock>
     },
@@ -296,7 +299,7 @@ export const editorMachine = setup({
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
     schema: input.schema,
-    readOnly: false,
+    readOnly: input.readOnly ?? false,
     maxBlocks: undefined,
     value: input.value,
   }),
@@ -332,7 +335,13 @@ export const editorMachine = setup({
     'update schema': {actions: 'assign schema'},
     'update value': {actions: assign({value: ({event}) => event.value})},
     'toggle readOnly': {
-      actions: assign({readOnly: ({context}) => !context.readOnly}),
+      actions: [
+        assign({readOnly: ({context}) => !context.readOnly}),
+        emit(({context}) => ({
+          type: 'readOnly toggled',
+          readOnly: context.readOnly,
+        })),
+      ],
     },
     'update maxBlocks': {
       actions: assign({maxBlocks: ({event}) => event.maxBlocks}),

@@ -3,15 +3,13 @@ import type {PortableTextBlock} from '@sanity/types'
 import {useSelector} from '@xstate/react'
 import {throttle} from 'lodash'
 import {useCallback, useEffect, useRef} from 'react'
-import {Editor} from 'slate'
+import {Editor as SlateEditor} from 'slate'
 import {useSlate} from 'slate-react'
-import {useEffectEvent} from 'use-effect-event'
-import type {EditorChange} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {IS_PROCESSING_LOCAL_CHANGES} from '../../utils/weakMaps'
-import type {EditorActor} from '../editor-machine'
-import {usePortableTextEditor} from '../hooks/usePortableTextEditor'
+import type {Editor} from '../create-editor'
 import {useSyncValue} from '../hooks/useSyncValue'
+import type {PortableTextEditor} from '../PortableTextEditor'
 
 const debug = debugWithName('component:PortableTextEditor:Synchronizer')
 const debugVerbose = debug.enabled && false
@@ -24,9 +22,9 @@ const FLUSH_PATCHES_THROTTLED_MS = process.env.NODE_ENV === 'test' ? 500 : 1000
  * @internal
  */
 export interface SynchronizerProps {
-  editorActor: EditorActor
+  editor: Editor
+  portableTextEditor: PortableTextEditor
   getValue: () => Array<PortableTextBlock> | undefined
-  onChange: (change: EditorChange) => void
 }
 
 /**
@@ -34,15 +32,19 @@ export interface SynchronizerProps {
  * @internal
  */
 export function Synchronizer(props: SynchronizerProps) {
-  const portableTextEditor = usePortableTextEditor()
-  const readOnly = useSelector(props.editorActor, (s) => s.context.readOnly)
-  const value = useSelector(props.editorActor, (s) => s.context.value)
-  const {editorActor, getValue, onChange} = props
+  const readOnly = useSelector(
+    props.editor._internal.editorActor,
+    (s) => s.context.readOnly,
+  )
+  const value = useSelector(
+    props.editor._internal.editorActor,
+    (s) => s.context.value,
+  )
   const pendingPatches = useRef<Patch[]>([])
 
   const syncValue = useSyncValue({
-    editorActor,
-    portableTextEditor,
+    editorActor: props.editor._internal.editorActor,
+    portableTextEditor: props.portableTextEditor,
     readOnly,
   })
 
@@ -58,8 +60,8 @@ export function Synchronizer(props: SynchronizerProps) {
       if (debugVerbose) {
         debug(`Patches:\n${JSON.stringify(pendingPatches.current, null, 2)}`)
       }
-      const snapshot = getValue()
-      editorActor.send({
+      const snapshot = props.getValue()
+      props.editor._internal.editorActor.send({
         type: 'mutation',
         patches: pendingPatches.current,
         snapshot,
@@ -67,7 +69,7 @@ export function Synchronizer(props: SynchronizerProps) {
       pendingPatches.current = []
     }
     IS_PROCESSING_LOCAL_CHANGES.set(slateEditor, false)
-  }, [editorActor, slateEditor, getValue])
+  }, [props.editor, slateEditor, props.getValue])
 
   // Flush pending patches immediately on unmount
   useEffect(() => {
@@ -76,21 +78,13 @@ export function Synchronizer(props: SynchronizerProps) {
     }
   }, [onFlushPendingPatches])
 
-  // We want to ensure that _when_ `props.onChange` is called, it uses the current value.
-  // But we don't want to have the `useEffect` run setup + teardown + setup every time the prop might change, as that's unnecessary.
-  // So we use our own polyfill that lets us use an upcoming React hook that solves this exact problem.
-  // https://19.react.dev/learn/separating-events-from-effects#declaring-an-effect-event
-  const handleChange = useEffectEvent((change: EditorChange) =>
-    onChange(change),
-  )
-
   // Subscribe to, and handle changes from the editor
   useEffect(() => {
     const onFlushPendingPatchesThrottled = throttle(
       () => {
         // If the editor is normalizing (each operation) it means that it's not in the middle of a bigger transform,
         // and we can flush these changes immediately.
-        if (Editor.isNormalizing(slateEditor)) {
+        if (SlateEditor.isNormalizing(slateEditor)) {
           onFlushPendingPatches()
           return
         }
@@ -105,60 +99,20 @@ export function Synchronizer(props: SynchronizerProps) {
     )
 
     debug('Subscribing to editor changes')
-    const sub = editorActor.on('*', (event) => {
+    const sub = props.editor.on('*', (event) => {
       switch (event.type) {
         case 'patch':
           IS_PROCESSING_LOCAL_CHANGES.set(slateEditor, true)
           pendingPatches.current.push(event.patch)
           onFlushPendingPatchesThrottled()
-          handleChange(event)
           break
-        case 'loading': {
-          handleChange({type: 'loading', isLoading: true})
-          break
-        }
-        case 'done loading': {
-          handleChange({type: 'loading', isLoading: false})
-          break
-        }
-        case 'focused': {
-          handleChange({type: 'focus', event: event.event})
-          break
-        }
-        case 'value changed': {
-          handleChange({type: 'value', value: event.value})
-          break
-        }
-        case 'invalid value': {
-          handleChange({
-            type: 'invalidValue',
-            resolution: event.resolution,
-            value: event.value,
-          })
-          break
-        }
-        case 'error': {
-          handleChange({
-            ...event,
-            level: 'warning',
-          })
-          break
-        }
-        case 'annotation.add':
-        case 'annotation.remove':
-        case 'annotation.toggle':
-        case 'focus':
-        case 'patches':
-          break
-        default:
-          handleChange(event)
       }
     })
     return () => {
       debug('Unsubscribing to changes')
       sub.unsubscribe()
     }
-  }, [editorActor, handleChange, onFlushPendingPatches, slateEditor])
+  }, [props.editor, onFlushPendingPatches, slateEditor])
 
   // This hook must be set up after setting up the subscription above, or it will not pick up validation errors from the useSyncValue hook.
   // This will cause the editor to not be able to signal a validation error and offer invalid value resolution of the initial value.
@@ -168,10 +122,10 @@ export function Synchronizer(props: SynchronizerProps) {
     syncValue(value)
     // Signal that we have our first value, and are ready to roll.
     if (isInitialValueFromProps.current) {
-      editorActor.send({type: 'ready'})
+      props.editor._internal.editorActor.send({type: 'ready'})
       isInitialValueFromProps.current = false
     }
-  }, [editorActor, syncValue, value])
+  }, [props.editor, syncValue, value])
 
   return null
 }

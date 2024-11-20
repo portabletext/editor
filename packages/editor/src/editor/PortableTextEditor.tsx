@@ -13,8 +13,7 @@ import {
   type PropsWithChildren,
 } from 'react'
 import {Subject} from 'rxjs'
-import {Slate} from 'slate-react'
-import {createActor} from 'xstate'
+import {useEffectEvent} from 'use-effect-event'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
@@ -27,18 +26,13 @@ import type {
 import {debugWithName} from '../utils/debug'
 import {getPortableTextMemberSchemaTypes} from '../utils/getPortableTextMemberSchemaTypes'
 import {compileType} from '../utils/schema'
-import {Synchronizer} from './components/Synchronizer'
-import {createSlateEditor, type SlateEditor} from './create-slate-editor'
-import {EditorActorContext} from './editor-actor-context'
-import {editorMachine, type EditorActor} from './editor-machine'
-import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
-import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
+import {createEditor, type Editor} from './create-editor'
+import {EditorProvider} from './editor-provider'
 import {defaultKeyGenerator} from './key-generator'
 import {
   createEditableAPI,
   type AddedAnnotationPaths,
 } from './plugins/createWithEditableAPI'
-import type {Editor} from './use-editor'
 
 const debug = debugWithName('component:PortableTextEditor')
 
@@ -48,17 +42,14 @@ const debug = debugWithName('component:PortableTextEditor')
  * @public
  */
 export type PortableTextEditorProps<
-  TEditor extends Editor | undefined = undefined,
+  TLegacyMode extends true | undefined = undefined,
 > = PropsWithChildren<
-  TEditor extends Editor
+  TLegacyMode extends true
     ? {
-        /**
-         * @alpha
-         */
-        editor: TEditor
+        legacyMode: true
       }
     : {
-        editor?: undefined
+        legacyMode?: undefined
 
         /**
          * Function that gets called when the editor changes the value
@@ -112,7 +103,7 @@ export type PortableTextEditorProps<
  * @public
  */
 export class PortableTextEditor extends Component<
-  PortableTextEditorProps<Editor | undefined>
+  PortableTextEditorProps<true | undefined>
 > {
   public static displayName = 'PortableTextEditor'
   /**
@@ -127,75 +118,68 @@ export class PortableTextEditor extends Component<
    * The editor API (currently implemented with Slate).
    */
   private editable?: EditableAPI
-  private editorActor: EditorActor
-  private slateEditor: SlateEditor
+  private editor?: Editor
 
   constructor(props: PortableTextEditorProps) {
     super(props)
 
-    if (props.editor) {
-      const editor = props.editor as Editor
-      this.editorActor = editor._internal.editorActor
-      this.slateEditor = editor._internal.slateEditor
-      this.editorActor.start()
-      this.schemaTypes = this.editorActor.getSnapshot().context.schema
-    } else {
-      if (!props.schemaType) {
-        throw new Error('PortableTextEditor: missing "schemaType" property')
-      }
-
-      if (props.incomingPatches$) {
-        console.warn(
-          `The prop 'incomingPatches$' is deprecated and renamed to 'patches$'`,
-        )
-      }
-
-      this.schemaTypes = getPortableTextMemberSchemaTypes(
-        props.schemaType.hasOwnProperty('jsonType')
-          ? props.schemaType
-          : compileType(props.schemaType),
-      )
-
-      this.editorActor = createActor(editorMachine, {
-        input: {
-          keyGenerator: props.keyGenerator || defaultKeyGenerator,
-          schema: this.schemaTypes,
-          value: props.value,
-        },
-      })
-      this.editorActor.start()
-
-      this.slateEditor = createSlateEditor({
-        editorActor: this.editorActor,
-      })
-
-      if (props.readOnly) {
-        this.editorActor.send({
-          type: 'toggle readOnly',
-        })
-      }
-
-      if (props.maxBlocks) {
-        this.editorActor.send({
-          type: 'update maxBlocks',
-          maxBlocks:
-            props.maxBlocks === undefined
-              ? undefined
-              : Number.parseInt(props.maxBlocks.toString(), 10),
-        })
-      }
+    if (!props.schemaType) {
+      throw new Error('PortableTextEditor: missing "schemaType" property')
     }
+
+    if (props.incomingPatches$) {
+      console.warn(
+        `The prop 'incomingPatches$' is deprecated and renamed to 'patches$'`,
+      )
+    }
+
+    const schema = props.schemaType.hasOwnProperty('jsonType')
+      ? props.schemaType
+      : compileType(props.schemaType)
+    this.schemaTypes = getPortableTextMemberSchemaTypes(
+      props.schemaType.hasOwnProperty('jsonType')
+        ? props.schemaType
+        : compileType(props.schemaType),
+    )
+
+    if (props.legacyMode) {
+      return
+    }
+
+    this.editor = createEditor({
+      keyGenerator: props.keyGenerator ?? defaultKeyGenerator,
+      schema,
+      initialValue: props.value,
+    })
+    this.editor._internal.editorActor.start()
+
+    if (props.readOnly) {
+      this.editor.send({
+        type: 'toggle readOnly',
+      })
+    }
+
+    if (props.maxBlocks) {
+      this.editor._internal.editorActor.send({
+        type: 'update maxBlocks',
+        maxBlocks:
+          props.maxBlocks === undefined
+            ? undefined
+            : Number.parseInt(props.maxBlocks.toString(), 10),
+      })
+    }
+
     this.editable = createEditableAPI(
-      this.slateEditor.instance,
-      this.editorActor,
+      this.editor._internal.slateEditor.instance,
+      this.editor._internal.editorActor,
     )
   }
 
   componentDidUpdate(prevProps: PortableTextEditorProps) {
     // Set up the schema type lookup table again if the source schema type changes
     if (
-      !this.props.editor &&
-      !prevProps.editor &&
+      !this.props.legacyMode &&
+      !prevProps.legacyMode &&
       this.props.schemaType !== prevProps.schemaType
     ) {
       this.schemaTypes = getPortableTextMemberSchemaTypes(
@@ -204,42 +188,54 @@ export class PortableTextEditor extends Component<
           : compileType(this.props.schemaType),
       )
 
-      this.editorActor.send({
+      this.editor?.send({
         type: 'update schema',
         schema: this.schemaTypes,
       })
     }
 
-    if (!this.props.editor && !prevProps.editor) {
-      if (this.props.readOnly !== prevProps.readOnly) {
-        this.editorActor.send({
-          type: 'toggle readOnly',
-        })
-      }
+    if (
+      !this.props.legacyMode &&
+      !prevProps.legacyMode &&
+      this.props.readOnly !== prevProps.readOnly
+    ) {
+      this.editor?.send({
+        type: 'toggle readOnly',
+      })
+    }
 
-      if (this.props.maxBlocks !== prevProps.maxBlocks) {
-        this.editorActor.send({
-          type: 'update maxBlocks',
-          maxBlocks:
-            this.props.maxBlocks === undefined
-              ? undefined
-              : Number.parseInt(this.props.maxBlocks.toString(), 10),
-        })
-      }
+    if (
+      !this.props.legacyMode &&
+      !prevProps.legacyMode &&
+      this.props.maxBlocks !== prevProps.maxBlocks
+    ) {
+      this.editor?._internal.editorActor.send({
+        type: 'update maxBlocks',
+        maxBlocks:
+          this.props.maxBlocks === undefined
+            ? undefined
+            : Number.parseInt(this.props.maxBlocks.toString(), 10),
+      })
+    }
 
-      if (this.props.value !== prevProps.value) {
-        this.editorActor.send({
-          type: 'update value',
-          value: this.props.value,
-        })
-      }
+    if (
+      !this.props.legacyMode &&
+      !prevProps.legacyMode &&
+      this.props.value !== prevProps.value
+    ) {
+      this.editor?.send({
+        type: 'update value',
+        value: this.props.value,
+      })
+    }
 
-      if (
-        this.props.editorRef !== prevProps.editorRef &&
-        this.props.editorRef
-      ) {
-        this.props.editorRef.current = this
-      }
+    if (
+      !this.props.legacyMode &&
+      !prevProps.legacyMode &&
+      this.props.editorRef !== prevProps.editorRef &&
+      this.props.editorRef
+    ) {
+      this.props.editorRef.current = this
     }
   }
 
@@ -247,16 +243,12 @@ export class PortableTextEditor extends Component<
     this.editable = {...this.editable, ...editable}
   }
 
-  private getValue = () => {
-    if (this.editable) {
-      return this.editable.getValue()
+  render() {
+    if (this.props.legacyMode || !this.editor) {
+      return null
     }
 
-    return undefined
-  }
-
-  render() {
-    const legacyPatches = !this.props.editor
+    const legacyPatches = !this.props.legacyMode
       ? (this.props.incomingPatches$ ?? this.props.patches$)
       : undefined
 
@@ -264,38 +256,26 @@ export class PortableTextEditor extends Component<
       <>
         {legacyPatches ? (
           <RoutePatchesObservableToEditorActor
-            editorActor={this.editorActor}
+            editor={this.editor}
             patches$={legacyPatches}
           />
         ) : null}
-        <EditorActorContext.Provider value={this.editorActor}>
-          <Slate
-            editor={this.slateEditor.instance}
-            initialValue={this.slateEditor.initialValue}
-          >
-            <PortableTextEditorContext.Provider value={this}>
-              <PortableTextEditorSelectionProvider
-                editorActor={this.editorActor}
-              >
-                <Synchronizer
-                  editorActor={this.editorActor}
-                  getValue={this.getValue}
-                  onChange={(change) => {
-                    if (!this.props.editor) {
-                      this.props.onChange(change)
-                    }
-                    /**
-                     * For backwards compatibility, we relay all changes to the
-                     * `change$` Subject as well.
-                     */
-                    this.change$.next(change)
-                  }}
-                />
-                {this.props.children}
-              </PortableTextEditorSelectionProvider>
-            </PortableTextEditorContext.Provider>
-          </Slate>
-        </EditorActorContext.Provider>
+        <RouteEventsToChanges
+          editor={this.editor}
+          onChange={(change) => {
+            if (!this.props.legacyMode) {
+              this.props.onChange(change)
+            }
+            /**
+             * For backwards compatibility, we relay all changes to the
+             * `change$` Subject as well.
+             */
+            this.change$.next(change)
+          }}
+        />
+        <EditorProvider editor={this.editor} portableTextEditor={this}>
+          {this.props.children}
+        </EditorProvider>
       </>
     )
   }
@@ -450,12 +430,12 @@ export class PortableTextEditor extends Component<
 }
 
 function RoutePatchesObservableToEditorActor(props: {
-  editorActor: EditorActor
+  editor: Editor
   patches$: PatchObservable
 }) {
   useEffect(() => {
     const subscription = props.patches$.subscribe((payload) => {
-      props.editorActor.send({
+      props.editor.send({
         type: 'patches',
         ...payload,
       })
@@ -464,7 +444,77 @@ function RoutePatchesObservableToEditorActor(props: {
     return () => {
       subscription.unsubscribe()
     }
-  }, [props.editorActor, props.patches$])
+  }, [props.editor, props.patches$])
+
+  return null
+}
+
+export function RouteEventsToChanges(props: {
+  editor: Editor
+  onChange: (change: EditorChange) => void
+}) {
+  // We want to ensure that _when_ `props.onChange` is called, it uses the current value.
+  // But we don't want to have the `useEffect` run setup + teardown + setup every time the prop might change, as that's unnecessary.
+  // So we use our own polyfill that lets us use an upcoming React hook that solves this exact problem.
+  // https://19.react.dev/learn/separating-events-from-effects#declaring-an-effect-event
+  const handleChange = useEffectEvent((change: EditorChange) =>
+    props.onChange(change),
+  )
+
+  useEffect(() => {
+    debug('Subscribing to editor changes')
+    const sub = props.editor.on('*', (event) => {
+      switch (event.type) {
+        case 'patch':
+          handleChange(event)
+          break
+        case 'loading': {
+          handleChange({type: 'loading', isLoading: true})
+          break
+        }
+        case 'done loading': {
+          handleChange({type: 'loading', isLoading: false})
+          break
+        }
+        case 'focused': {
+          handleChange({type: 'focus', event: event.event})
+          break
+        }
+        case 'value changed': {
+          handleChange({type: 'value', value: event.value})
+          break
+        }
+        case 'invalid value': {
+          handleChange({
+            type: 'invalidValue',
+            resolution: event.resolution,
+            value: event.value,
+          })
+          break
+        }
+        case 'error': {
+          handleChange({
+            ...event,
+            level: 'warning',
+          })
+          break
+        }
+        case 'annotation.add':
+        case 'annotation.remove':
+        case 'annotation.toggle':
+        case 'focus':
+        case 'patches':
+        case 'readOnly toggled':
+          break
+        default:
+          handleChange(event)
+      }
+    })
+    return () => {
+      debug('Unsubscribing to changes')
+      sub.unsubscribe()
+    }
+  }, [props.editor, handleChange])
 
   return null
 }

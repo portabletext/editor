@@ -1,4 +1,4 @@
-import {createEditor, type Descendant} from 'slate'
+import {createEditor} from 'slate'
 import {withReact} from 'slate-react'
 import type {PortableTextSlateEditor} from '../types/editor'
 import {debugWithName} from '../utils/debug'
@@ -10,63 +10,53 @@ const debug = debugWithName('component:PortableTextEditor:SlateContainer')
 
 type SlateEditorConfig = {
   editorActor: EditorActor
+  subscriptions: Array<() => () => void>
 }
 
 /**
  * @internal
  */
-export type SlateEditor = {
-  instance: PortableTextSlateEditor
-  initialValue: Array<Descendant>
-}
+export type SlateEditor = PortableTextSlateEditor
 
-const slateEditors = new WeakMap<EditorActor, SlateEditor>()
+export function createSlateEditor({
+  editorActor,
+  subscriptions,
+}: SlateEditorConfig): SlateEditor {
+  debug('Creating new Slate editor instance', editorActor.id)
 
-export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
-  const existingSlateEditor = slateEditors.get(config.editorActor)
-
-  if (existingSlateEditor) {
-    debug('Reusing existing Slate editor instance', config.editorActor.id)
-    return existingSlateEditor
-  }
-
-  debug('Creating new Slate editor instance', config.editorActor.id)
-
-  let unsubscriptions: Array<() => void> = []
-  let subscriptions: Array<() => () => void> = []
+  // let unsubscriptions: Array<() => void> = []
 
   const instance = withPlugins(withReact(createEditor()), {
-    editorActor: config.editorActor,
+    editorActor,
     subscriptions,
   })
 
   KEY_TO_VALUE_ELEMENT.set(instance, {})
   KEY_TO_SLATE_ELEMENT.set(instance, {})
 
-  for (const subscription of subscriptions) {
-    unsubscriptions.push(subscription())
-  }
+  return instance
 
-  config.editorActor.subscribe((snapshot) => {
-    if (snapshot.status !== 'active') {
-      debug('Destroying Slate editor')
-      instance.destroy()
-      for (const unsubscribe of unsubscriptions) {
-        unsubscribe()
-      }
-      subscriptions = []
-      unsubscriptions = []
-    }
-  })
+  // for (const subscription of subscriptions) {
+  //   unsubscriptions.push(subscription())
+  // }
 
-  const initialValue = [instance.pteCreateTextBlock({decorators: []})]
+  // config.editorActor.subscribe((snapshot) => {
+  //   if (snapshot.status !== 'active') {
+  //     debug('Destroying Slate editor')
+  //     instance.destroy()
+  //     for (const unsubscribe of unsubscriptions) {
+  //       unsubscribe()
+  //     }
+  //     subscriptions = []
+  //     unsubscriptions = []
+  //   }
+  // })
 
-  const slateEditor: SlateEditor = {
-    instance,
-    initialValue,
-  }
+  // const slateEditor: SlateEditor = instance
 
-  slateEditors.set(config.editorActor, slateEditor)
+  // slateEditors.set(config.editorActor, slateEditor)
 
-  return slateEditor
+  // return slateEditor
 }
+
+// const initialValue = [instance.pteCreateTextBlock({decorators: []})]

@@ -74,6 +74,7 @@ export function createWithUtils({editorActor, schemaTypes}: Options) {
       listItem?: string
       level?: number
     }) => {
+      debugger
       const block = toSlateValue(
         [
           {

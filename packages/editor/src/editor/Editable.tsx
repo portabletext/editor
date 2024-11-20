@@ -4,7 +4,6 @@ import {isEqual, noop} from 'lodash'
 import {
   forwardRef,
   useCallback,
-  useContext,
   useEffect,
   useImperativeHandle,
   useMemo,
@@ -65,7 +64,7 @@ import {
 } from '../utils/values'
 import {Element} from './components/Element'
 import {Leaf} from './components/Leaf'
-import {EditorActorContext} from './editor-actor-context'
+import {useEditor} from './editor-provider'
 import {usePortableTextEditor} from './hooks/usePortableTextEditor'
 import {createWithHotkeys} from './plugins/createWithHotKeys'
 import {createWithInsertData} from './plugins/createWithInsertData'
@@ -158,7 +157,8 @@ export const PortableTextEditable = forwardRef<
 
   const rangeDecorationsRef = useRef(rangeDecorations)
 
-  const editorActor = useContext(EditorActorContext)
+  const editor = useEditor()
+  const editorActor = editor._internal.editorActor
   const readOnly = useSelector(editorActor, (s) => s.context.readOnly)
   const schemaTypes = useSelector(editorActor, (s) => s.context.schema)
   const slateEditor = useSlate()

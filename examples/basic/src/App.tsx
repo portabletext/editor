@@ -1,5 +1,7 @@
 import {
+  createEditor,
   defineSchema,
+  EditorProvider,
   keyGenerator,
   PortableTextBlock,
   PortableTextChild,
@@ -10,7 +12,6 @@ import {
   RenderChildFunction,
   RenderDecoratorFunction,
   RenderStyleFunction,
-  useEditor,
   usePortableTextEditor,
   usePortableTextEditorSelection,
 } from '@portabletext/editor'
@@ -64,11 +65,13 @@ function App() {
   )
 
   // Create an editor
-  const editor = useEditor({
-    schemaDefinition,
-    // With an optional initial value
-    initialValue: value,
-  })
+  const [editor] = useState(() =>
+    createEditor({
+      schemaDefinition,
+      // With an optional initial value
+      initialValue: value,
+    }),
+  )
 
   // Subscribe to editor changes
   useEffect(() => {
@@ -83,11 +86,9 @@ function App() {
 
   return (
     <>
-      <PortableTextEditor
-        // Pass in the `editor` you created earlier
-        editor={editor}
-      >
-        {/* Toolbar needs to be rendered inside the `PortableTextEditor` component */}
+      {/* Provide the `editor` */}
+      <EditorProvider editor={editor}>
+        {/* Toolbar needs to be rendered inside the `EditorProvider` component */}
         <Toolbar />
         {/* Component that controls the actual rendering of the editor */}
         <PortableTextEditable
@@ -107,7 +108,7 @@ function App() {
           // Next, look in the imported `editor.css` file to see how list styles are implemented
           renderListItem={(props) => <>{props.children}</>}
         />
-      </PortableTextEditor>
+      </EditorProvider>
       <pre style={{border: '1px dashed black', padding: '0.5em'}}>
         {JSON.stringify(value, null, 2)}
       </pre>

@@ -3,13 +3,14 @@ import {useSelector} from '@xstate/react'
 import * as React from 'react'
 import {useEffect} from 'react'
 import {
+  EditorProvider,
   PortableTextEditable,
   PortableTextEditor,
-  useEditor,
   usePortableTextEditor,
   type Behavior,
   type HotkeyOptions,
 } from '../src'
+import {createEditor} from '../src/editor/create-editor'
 import type {EditorActorRef, TestActorRef} from './test-machine'
 
 export function Editors(props: {testRef: TestActorRef}) {
@@ -59,11 +60,13 @@ function Editor(props: {
     props.editorRef,
     (state) => state.context.keyGenerator,
   )
-  const editor = useEditor({
-    behaviors: props.behaviors,
-    keyGenerator,
-    schema: props.schema,
-  })
+  const [editor] = React.useState(() =>
+    createEditor({
+      behaviors: props.behaviors,
+      keyGenerator,
+      schema: props.schema,
+    }),
+  )
 
   useEffect(() => {
     editor.send({
@@ -106,7 +109,7 @@ function Editor(props: {
 
   return (
     <div data-testid={props.editorRef.id}>
-      <PortableTextEditor editor={editor}>
+      <EditorProvider editor={editor}>
         <FocusListener editorRef={props.editorRef} />
         <BlockButtons />
         <InlineObjectButtons />
@@ -114,7 +117,7 @@ function Editor(props: {
         <LinkButtons />
         <StyleButtons />
         <PortableTextEditable hotkeys={hotkeys} selection={selection} />
-      </PortableTextEditor>
+      </EditorProvider>
       <pre data-testid="selection">
         {JSON.stringify(selectionValue ?? null, null, 2)}
       </pre>

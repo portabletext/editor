@@ -2,11 +2,11 @@ import {Schema as SanitySchema} from '@sanity/schema'
 import {
   defineField,
   defineType,
+  type ArraySchemaType,
   type BlockDecoratorDefinition,
-  type ObjectSchemaType,
+  type PortableTextBlock,
 } from '@sanity/types'
 import startCase from 'lodash.startcase'
-import type {PortableTextMemberSchemaTypes} from '../types/editor'
 import {getPortableTextMemberSchemaTypes} from '../utils/getPortableTextMemberSchemaTypes'
 
 /**
@@ -109,23 +109,30 @@ export function compileSchemaDefinition<
 
   const schema = SanitySchema.compile({
     types: [portableTextSchema, ...blockObjects, ...inlineObjects],
-  }).get('portable-text')
+  }).get('portable-text') as ArraySchemaType<PortableTextBlock>
 
-  const pteSchema = getPortableTextMemberSchemaTypes(schema)
+  const schemaWithRenamedImage = {
+    ...schema,
+    of:
+      schema.of?.map((field) =>
+        field.name === 'tmp-image'
+          ? {
+              ...field,
+              name: 'image',
+              ...(field.type
+                ? {
+                    type: {...field.type, name: 'image'},
+                  }
+                : {}),
+            }
+          : field,
+      ) ?? [],
+  } satisfies ArraySchemaType<PortableTextBlock>
+
+  const pteSchema = getPortableTextMemberSchemaTypes(schemaWithRenamedImage)
 
   return {
-    ...pteSchema,
-    blockObjects: pteSchema.blockObjects.map((blockObject) =>
-      blockObject.name === 'tmp-image'
-        ? ({
-            ...blockObject,
-            name: 'image',
-            type: {
-              ...blockObject.type,
-              name: 'image',
-            },
-          } as ObjectSchemaType)
-        : blockObject,
-    ),
-  } satisfies PortableTextMemberSchemaTypes
+    pteSchema,
+    schema,
+  }
 }
