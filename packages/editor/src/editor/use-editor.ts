@@ -3,7 +3,7 @@ import type {
   ArraySchemaType,
   PortableTextBlock,
 } from '@sanity/types'
-import {useActorRef, useSelector} from '@xstate/react'
+import {useActorRef} from '@xstate/react'
 import {getPortableTextMemberSchemaTypes} from '../utils/getPortableTextMemberSchemaTypes'
 import {compileType} from '../utils/schema'
 import type {Behavior, PickFromUnion} from './behavior/behavior.types'
@@ -22,6 +22,7 @@ import {defaultKeyGenerator} from './key-generator'
 export type EditorConfig = {
   behaviors?: Array<Behavior>
   keyGenerator?: () => string
+  readOnly?: boolean
   initialValue?: Array<PortableTextBlock>
 } & (
   | {
@@ -54,7 +55,6 @@ export type EditorEvent = PickFromUnion<
 export type Editor = {
   send: (event: EditorEvent) => void
   on: EditorActor['on']
-  readOnly: boolean
   _internal: {
     editorActor: EditorActor
     slateEditor: SlateEditor
@@ -69,6 +69,7 @@ export function useEditor(config: EditorConfig): Editor {
     input: {
       behaviors: config.behaviors,
       keyGenerator: config.keyGenerator ?? defaultKeyGenerator,
+      readOnly: config.readOnly,
       schema: config.schemaDefinition
         ? compileSchemaDefinition(config.schemaDefinition)
         : getPortableTextMemberSchemaTypes(
@@ -80,14 +81,12 @@ export function useEditor(config: EditorConfig): Editor {
     },
   })
   const slateEditor = createSlateEditor({editorActor})
-  const readOnly = useSelector(editorActor, (s) => s.context.readOnly)
 
   return {
     send: (event) => {
       editorActor.send(event)
     },
     on: (event, listener) => editorActor.on(event, listener),
-    readOnly,
     _internal: {
       editorActor,
       slateEditor,

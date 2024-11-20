@@ -55,6 +55,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
     props.editorRef,
     (s) => s.context.keyGenerator,
   )
+  const [readOnly, setReadOnly] = useState(false)
   const editor = useEditor({
     behaviors: [
       ...coreBehaviors,
@@ -85,6 +86,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
       }),
     ],
     keyGenerator,
+    readOnly,
     schemaDefinition,
   })
   const patchesReceived = useSelector(props.editorRef, (s) =>
@@ -113,6 +115,9 @@ export function Editor(props: {editorRef: EditorActorRef}) {
       }
       if (event.type === 'done loading') {
         setLoading(false)
+      }
+      if (event.type === 'readOnly toggled') {
+        setReadOnly(event.readOnly)
       }
     })
 
@@ -197,7 +202,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
                 <Tooltip>Remove editor</Tooltip>
               </TooltipTrigger>
               <Switch
-                isSelected={editor.readOnly}
+                isSelected={readOnly}
                 onChange={() => {
                   editor.send({type: 'toggle readOnly'})
                 }}

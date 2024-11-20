@@ -17,6 +17,7 @@ export {
   type BehaviorContext,
   type BehaviorEvent,
   type BehaviorGuard,
+  type OmitFromUnion,
   type PickFromUnion,
 } from './editor/behavior/behavior.types'
 export type {SlateEditor} from './editor/create-slate-editor'
