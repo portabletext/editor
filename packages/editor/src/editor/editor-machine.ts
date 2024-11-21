@@ -99,6 +99,26 @@ export type InternalEditorEvent =
   | OmitFromUnion<InternalEditorEmittedEvent, 'type', 'readOnly toggled'>
 
 /**
+ * @alpha
+ */
+export type EditorEmittedEvent = PickFromUnion<
+  InternalEditorEmittedEvent,
+  'type',
+  | 'blur'
+  | 'done loading'
+  | 'error'
+  | 'focus'
+  | 'invalid value'
+  | 'loading'
+  | 'mutation'
+  | 'patch'
+  | 'readOnly toggled'
+  | 'ready'
+  | 'selection'
+  | 'value changed'
+>
+
+/**
  * @internal
  */
 export type InternalEditorEmittedEvent =

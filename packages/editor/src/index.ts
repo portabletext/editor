@@ -2,13 +2,13 @@ export type {Patch} from '@portabletext/patches'
 export type {PortableTextBlock, PortableTextChild} from '@sanity/types'
 export {coreBehavior, coreBehaviors} from './editor/behavior/behavior.core'
 export {
-  createMarkdownBehaviors,
-  type MarkdownBehaviorsConfig,
-} from './editor/behavior/behavior.markdown'
-export {
   createLinkBehaviors,
   type LinkBehaviorsConfig,
 } from './editor/behavior/behavior.links'
+export {
+  createMarkdownBehaviors,
+  type MarkdownBehaviorsConfig,
+} from './editor/behavior/behavior.markdown'
 export {
   defineBehavior,
   type Behavior,
@@ -31,6 +31,7 @@ export type {PortableTextEditableProps} from './editor/Editable'
 export {
   editorMachine,
   type EditorActor,
+  type EditorEmittedEvent,
   type InternalEditorEmittedEvent,
   type InternalEditorEvent,
   type MutationEvent,
