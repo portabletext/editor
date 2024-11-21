@@ -115,6 +115,7 @@ export function createWithUndoRedo(
     const {apply} = editor
     editor.apply = (op: Operation) => {
       if (editorActor.getSnapshot().context.readOnly) {
+        apply(op)
         return
       }
 

@@ -14,6 +14,7 @@ export function createWithMaxBlocks(editorActor: EditorActor) {
     const {apply} = editor
     editor.apply = (operation) => {
       if (editorActor.getSnapshot().context.readOnly) {
+        apply(operation)
         return
       }
 
