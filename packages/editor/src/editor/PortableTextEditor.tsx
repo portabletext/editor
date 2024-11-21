@@ -426,7 +426,7 @@ function RoutePatchesObservableToEditorActor(props: {
   return null
 }
 
-function RouteEventsToChanges(props: {
+export function RouteEventsToChanges(props: {
   editorActor: EditorActor
   onChange: (change: EditorChange) => void
 }) {

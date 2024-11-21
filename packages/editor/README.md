@@ -58,7 +58,7 @@ const schemaDefinition = defineSchema({
 
 ### Render the Editor Component
 
-Use `useEditor` to create an `editor` and pass that into `PortableTextEditor`. Use the `editor.on` method to listen for `mutation` changes inside the editor so you can use and store the value produced.
+Use `EditorProvider` to configure an editor and use `EditorEventListener` to listen for `mutation` changes inside the editor so you can use and store the value produced.
 
 ```tsx
 function App() {
@@ -81,31 +81,24 @@ function App() {
     ],
   )
 
-  // Create an editor
-  const editor = useEditor({
-    schemaDefinition,
-    // With an optional initial value
-    initialValue: value,
-  })
-
-  // Subscribe to editor changes
-  useEffect(() => {
-    const subscription = editor.on('mutation', (mutation) => {
-      setValue(mutation.snapshot)
-    })
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [editor])
-
   return (
     <>
-      <PortableTextEditor
-        // Pass in the `editor` you created earlier
-        editor={editor}
+      {/* Create an editor */}
+      <EditorProvider
+        config={{
+          schemaDefinition,
+          initialValue: value,
+        }}
       >
-        {/* Toolbar needs to be rendered inside the `PortableTextEditor` component */}
+        {/* Subscribe to editor changes */}
+        <EditorEventListener
+          on={(event) => {
+            if (event.type === 'mutation') {
+              setValue(event.snapshot)
+            }
+          }}
+        />
+        {/* Toolbar needs to be rendered inside the `EditorProvider` component */}
         <Toolbar />
         {/* Component that controls the actual rendering of the editor */}
         <PortableTextEditable
@@ -121,10 +114,11 @@ function App() {
           // Control how inline objects are rendered
           renderChild={renderChild}
           // Rendering lists is harder and most likely requires a fair amount of CSS
-          // However, we still need to return and render the list item's children to ensure proper rendering
+          // First, return the children like here
+          // Next, look in the imported `editor.css` file to see how list styles are implemented
           renderListItem={(props) => <>{props.children}</>}
         />
-      </PortableTextEditor>
+      </EditorProvider>
       <pre style={{border: '1px dashed black', padding: '0.5em'}}>
         {JSON.stringify(value, null, 2)}
       </pre>
@@ -225,11 +219,11 @@ function isStockTicker(
 
 ### Render the Toolbar
 
-Your toolbar needs to be rendered within `PortableTextEditor` because it requires a reference to the `editorInstance` that it produces. To toggle marks and styles and to insert objects, you'll have to use this `editorInstance` together with static methods on the `PortableTextEditor` class.
+Your toolbar needs to be rendered within `EditorProvider` because it requires a reference to the `editorInstance` that it produces. To toggle marks and styles and to insert objects, you'll have to use this `editorInstance` together with static methods on the `PortableTextEditor` class.
 
 ```tsx
 function Toolbar() {
-  // Obtain the editor instance provided from the `PortableTextEditor` component
+  // Obtain the editor instance
   const editorInstance = usePortableTextEditor()
   // Rerender the toolbar whenever the selection changes
   usePortableTextEditorSelection()

@@ -5,11 +5,12 @@ import {useEffect} from 'react'
 import {
   PortableTextEditable,
   PortableTextEditor,
-  useEditor,
   usePortableTextEditor,
   type Behavior,
   type HotkeyOptions,
 } from '../src'
+import type {EditorEmittedEvent} from '../src/editor/editor-machine'
+import {EditorProvider, useEditorContext} from '../src/editor/editor-provider'
 import type {EditorActorRef, TestActorRef} from './test-machine'
 
 export function Editors(props: {testRef: TestActorRef}) {
@@ -59,11 +60,51 @@ function Editor(props: {
     props.editorRef,
     (state) => state.context.keyGenerator,
   )
-  const editor = useEditor({
-    behaviors: props.behaviors,
-    keyGenerator,
-    schema: props.schema,
-  })
+
+  return (
+    <div data-testid={props.editorRef.id}>
+      <EditorProvider
+        config={{
+          behaviors: props.behaviors,
+          keyGenerator,
+          schema: props.schema,
+        }}
+      >
+        <EditorEventListener
+          editorRef={props.editorRef}
+          behaviors={props.behaviors}
+          value={props.value}
+          on={(event) => {
+            if (event.type === 'mutation') {
+              props.editorRef.send(event)
+            }
+            if (event.type === 'selection') {
+              setSelectionValue(event.selection)
+            }
+          }}
+        />
+        <FocusListener editorRef={props.editorRef} />
+        <BlockButtons />
+        <InlineObjectButtons />
+        <CommentButtons />
+        <LinkButtons />
+        <StyleButtons />
+        <PortableTextEditable hotkeys={hotkeys} selection={selection} />
+      </EditorProvider>
+      <pre data-testid="selection">
+        {JSON.stringify(selectionValue ?? null, null, 2)}
+      </pre>
+    </div>
+  )
+}
+
+function EditorEventListener(props: {
+  behaviors: Array<Behavior>
+  editorRef: EditorActorRef
+  on: (event: EditorEmittedEvent) => void
+  value: Array<PortableTextBlock> | undefined
+}) {
+  const editor = useEditorContext()
 
   useEffect(() => {
     editor.send({
@@ -90,36 +131,14 @@ function Editor(props: {
   }, [props.editorRef, editor])
 
   useEffect(() => {
-    const subscription = editor.on('*', (event) => {
-      if (event.type === 'mutation') {
-        props.editorRef.send(event)
-      }
-      if (event.type === 'selection') {
-        setSelectionValue(event.selection)
-      }
-    })
+    const subscription = editor.on('*', props.on)
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [props.editorRef, editor])
+  }, [props.editorRef, editor, props.on])
 
-  return (
-    <div data-testid={props.editorRef.id}>
-      <PortableTextEditor editor={editor}>
-        <FocusListener editorRef={props.editorRef} />
-        <BlockButtons />
-        <InlineObjectButtons />
-        <CommentButtons />
-        <LinkButtons />
-        <StyleButtons />
-        <PortableTextEditable hotkeys={hotkeys} selection={selection} />
-      </PortableTextEditor>
-      <pre data-testid="selection">
-        {JSON.stringify(selectionValue ?? null, null, 2)}
-      </pre>
-    </div>
-  )
+  return null
 }
 
 function FocusListener(props: {editorRef: EditorActorRef}) {

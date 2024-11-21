@@ -28,6 +28,7 @@ export {
 } from './editor/define-schema'
 export {PortableTextEditable} from './editor/Editable'
 export type {PortableTextEditableProps} from './editor/Editable'
+export {EditorEventListener} from './editor/editor-event-listener'
 export {
   editorMachine,
   type EditorActor,
@@ -38,6 +39,11 @@ export {
   type PatchEvent,
   type PatchesEvent,
 } from './editor/editor-machine'
+export {
+  EditorProvider,
+  useEditorContext,
+  type EditorProviderProps,
+} from './editor/editor-provider'
 export {usePortableTextEditor} from './editor/hooks/usePortableTextEditor'
 export {usePortableTextEditorSelection} from './editor/hooks/usePortableTextEditorSelection'
 export {defaultKeyGenerator as keyGenerator} from './editor/key-generator'
