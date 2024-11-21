@@ -22,6 +22,7 @@ export function createWithPlaceholderBlock(
 
     editor.apply = (op) => {
       if (editorActor.getSnapshot().context.readOnly) {
+        apply(op)
         return
       }
 
