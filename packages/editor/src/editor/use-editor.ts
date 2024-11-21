@@ -4,7 +4,13 @@ import type {
   PortableTextBlock,
 } from '@sanity/types'
 import {useActorRef} from '@xstate/react'
-import {createActor} from 'xstate'
+import {useCallback, useMemo} from 'react'
+import {
+  createActor,
+  type ActorRef,
+  type EventObject,
+  type Snapshot,
+} from 'xstate'
 import type {EditableAPI} from '../types/editor'
 import {getPortableTextMemberSchemaTypes} from '../utils/getPortableTextMemberSchemaTypes'
 import {compileType} from '../utils/schema'
@@ -14,6 +20,7 @@ import {compileSchemaDefinition, type SchemaDefinition} from './define-schema'
 import {
   editorMachine,
   type EditorActor,
+  type EditorEmittedEvent,
   type InternalEditorEvent,
 } from './editor-machine'
 import {defaultKeyGenerator} from './key-generator'
@@ -58,7 +65,7 @@ export type EditorEvent = PickFromUnion<
  */
 export type Editor = {
   send: (event: EditorEvent) => void
-  on: EditorActor['on']
+  on: ActorRef<Snapshot<unknown>, EventObject, EditorEmittedEvent>['on']
   editable: EditableAPI
   _internal: {
     editorActor: EditorActor
@@ -83,7 +90,12 @@ export function createEditor(config: EditorConfig): Editor {
     send: (event) => {
       editorActor.send(event)
     },
-    on: (event, listener) => editorActor.on(event, listener),
+    on: (event, listener) =>
+      editorActor.on(
+        event,
+        // @ts-ignore
+        listener,
+      ),
     editable,
     _internal: {
       editorActor,
@@ -100,19 +112,39 @@ export function useEditor(config: EditorConfig): Editor {
     input: editorConfigToMachineInput(config),
   })
   const slateEditor = createSlateEditor({editorActor})
-  const editable = createEditableAPI(slateEditor.instance, editorActor)
-
-  return {
-    send: (event) => {
+  const editable = useMemo(
+    () => createEditableAPI(slateEditor.instance, editorActor),
+    [slateEditor.instance, editorActor],
+  )
+  const send = useCallback(
+    (event: EditorEvent) => {
       editorActor.send(event)
     },
-    on: (event, listener) => editorActor.on(event, listener),
-    editable,
-    _internal: {
-      editorActor,
-      slateEditor,
-    },
-  }
+    [editorActor],
+  )
+  const on = useCallback<Editor['on']>(
+    (event, listener) =>
+      editorActor.on(
+        event,
+        // @ts-ignore
+        listener,
+      ),
+    [editorActor],
+  )
+  const editor: Editor = useMemo(
+    () => ({
+      send,
+      on,
+      editable,
+      _internal: {
+        editorActor,
+        slateEditor,
+      },
+    }),
+    [send, on, editable, editorActor, slateEditor],
+  )
+
+  return editor
 }
 
 function editorConfigToMachineInput(config: EditorConfig) {
