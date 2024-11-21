@@ -1,5 +1,6 @@
 import {
   PortableTextEditor,
+  useEditorContext,
   usePortableTextEditor,
   usePortableTextEditorSelection,
   type Editor,
@@ -18,9 +19,9 @@ import {Tooltip} from './components/tooltip'
 import type {SchemaDefinition} from './schema'
 
 export function PortableTextToolbar(props: {
-  editor: Editor
   schemaDefinition: SchemaDefinition
 }) {
+  const editor = useEditorContext()
   const editorInstance = usePortableTextEditor()
   const selection = usePortableTextEditorSelection()
 
@@ -48,7 +49,7 @@ export function PortableTextToolbar(props: {
           <AnnotationToolbarButton
             key={annotation.name}
             annotation={annotation}
-            editor={props.editor}
+            editor={editor}
             editorInstance={editorInstance}
             selection={selection}
           />
