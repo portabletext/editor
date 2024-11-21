@@ -1,5 +1,7 @@
 import {
   defineSchema,
+  EditorEventListener,
+  EditorProvider,
   keyGenerator,
   PortableTextBlock,
   PortableTextChild,
@@ -10,11 +12,10 @@ import {
   RenderChildFunction,
   RenderDecoratorFunction,
   RenderStyleFunction,
-  useEditor,
   usePortableTextEditor,
   usePortableTextEditorSelection,
 } from '@portabletext/editor'
-import {useEffect, useState} from 'react'
+import {useState} from 'react'
 import './editor.css'
 
 // Define the schema for the editor
@@ -63,31 +64,24 @@ function App() {
     ],
   )
 
-  // Create an editor
-  const editor = useEditor({
-    schemaDefinition,
-    // With an optional initial value
-    initialValue: value,
-  })
-
-  // Subscribe to editor changes
-  useEffect(() => {
-    const subscription = editor.on('mutation', (mutation) => {
-      setValue(mutation.snapshot)
-    })
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [editor])
-
   return (
     <>
-      <PortableTextEditor
-        // Pass in the `editor` you created earlier
-        editor={editor}
+      {/* Create an editor */}
+      <EditorProvider
+        config={{
+          schemaDefinition,
+          initialValue: value,
+        }}
       >
-        {/* Toolbar needs to be rendered inside the `PortableTextEditor` component */}
+        {/* Subscribe to editor changes */}
+        <EditorEventListener
+          on={(event) => {
+            if (event.type === 'mutation') {
+              setValue(event.snapshot)
+            }
+          }}
+        />
+        {/* Toolbar needs to be rendered inside the `EditorProvider` component */}
         <Toolbar />
         {/* Component that controls the actual rendering of the editor */}
         <PortableTextEditable
@@ -107,7 +101,7 @@ function App() {
           // Next, look in the imported `editor.css` file to see how list styles are implemented
           renderListItem={(props) => <>{props.children}</>}
         />
-      </PortableTextEditor>
+      </EditorProvider>
       <pre style={{border: '1px dashed black', padding: '0.5em'}}>
         {JSON.stringify(value, null, 2)}
       </pre>
@@ -200,7 +194,7 @@ function isStockTicker(
 }
 
 function Toolbar() {
-  // Obtain the editor instance provided from the `PortableTextEditor` component
+  // Obtain the editor instance
   const editorInstance = usePortableTextEditor()
   // Rerender the toolbar whenever the selection changes
   usePortableTextEditorSelection()
