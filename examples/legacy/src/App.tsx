@@ -155,6 +155,25 @@ function Editor(props: {
       >
         <Toolbar />
         <PortableTextEditable
+          hotkeys={{
+            custom: {
+              'mod+k': (_, editor) => {
+                /**
+                 * In a real-world scenario you would want to trigger a dialog
+                 * here so you can ask the user to input the URL for the link.
+                 */
+                if (PortableTextEditor.isAnnotationActive(editor, 'link')) {
+                  PortableTextEditor.removeAnnotation(editor, {name: 'link'})
+                } else {
+                  PortableTextEditor.addAnnotation(
+                    editor,
+                    {name: 'link'},
+                    {href: 'https://example.com'},
+                  )
+                }
+              },
+            },
+          }}
           style={{border: '1px solid black', padding: '0.5em'}}
           renderDecorator={renderDecorator}
           renderAnnotation={renderAnnotation}
