@@ -42,7 +42,7 @@
     "@vitejs/plugin-react": "^4.3.3",
     "autoprefixer": "^10.4.20",
     "babel-plugin-react-compiler": "19.0.0-beta-0dec889-20241115",
-    "eslint": "8.57.1",
+    "eslint": "9.15.0",
     "eslint-plugin-react-compiler": "19.0.0-beta-0dec889-20241115",
     "eslint-plugin-react-hooks": "^5.0.0",
     "postcss": "^8.4.49",
