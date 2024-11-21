@@ -2,11 +2,13 @@ import {
   coreBehaviors,
   createLinkBehaviors,
   createMarkdownBehaviors,
+  EditorProvider,
   PortableTextEditable,
-  PortableTextEditor,
-  useEditor,
+  useEditorContext,
   type BlockDecoratorRenderProps,
   type BlockStyleRenderProps,
+  type EditorEmittedEvent,
+  type PortableTextBlock,
   type RenderAnnotationFunction,
   type RenderBlockFunction,
   type RenderChildFunction,
@@ -55,83 +57,11 @@ export function Editor(props: {editorRef: EditorActorRef}) {
     props.editorRef,
     (s) => s.context.keyGenerator,
   )
+  const [loading, setLoading] = useState(false)
   const [readOnly, setReadOnly] = useState(false)
-  const editor = useEditor({
-    behaviors: [
-      ...coreBehaviors,
-      ...createLinkBehaviors({
-        linkAnnotation: ({schema, url}) => {
-          const name = schema.annotations.find(
-            (annotation) => annotation.name === 'link',
-          )?.name
-          return name ? {name, value: {href: url}} : undefined
-        },
-      }),
-      ...createMarkdownBehaviors({
-        horizontalRuleObject: ({schema}) => {
-          const name = schema.blockObjects.find(
-            (object) => object.name === 'break',
-          )?.name
-          return name ? {name} : undefined
-        },
-        defaultStyle: ({schema}) => schema.styles[0].value,
-        headingStyle: ({schema, level}) =>
-          schema.styles.find((style) => style.value === `h${level}`)?.value,
-        blockquoteStyle: ({schema}) =>
-          schema.styles.find((style) => style.value === 'blockquote')?.value,
-        unorderedListStyle: ({schema}) =>
-          schema.lists.find((list) => list.value === 'bullet')?.value,
-        orderedListStyle: ({schema}) =>
-          schema.lists.find((list) => list.value === 'number')?.value,
-      }),
-    ],
-    keyGenerator,
-    readOnly,
-    schemaDefinition,
-  })
   const patchesReceived = useSelector(props.editorRef, (s) =>
     reverse(s.context.patchesReceived),
   )
-
-  useEffect(() => {
-    const subscription = props.editorRef.on('patches', (event) => {
-      editor.send(event)
-    })
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [props.editorRef, editor])
-
-  const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    const subscription = editor.on('*', (event) => {
-      if (event.type === 'mutation') {
-        props.editorRef.send(event)
-      }
-      if (event.type === 'loading') {
-        setLoading(true)
-      }
-      if (event.type === 'done loading') {
-        setLoading(false)
-      }
-      if (event.type === 'readOnly toggled') {
-        setReadOnly(event.readOnly)
-      }
-    })
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [editor, setLoading, props.editorRef])
-
-  useEffect(() => {
-    editor.send({
-      type: 'update value',
-      value,
-    })
-  }, [editor, value])
 
   return (
     <div
@@ -143,12 +73,63 @@ export function Editor(props: {editorRef: EditorActorRef}) {
         fallback={ErrorScreen}
         onError={console.error}
       >
-        <PortableTextEditor editor={editor}>
+        <EditorProvider
+          config={{
+            behaviors: [
+              ...coreBehaviors,
+              ...createLinkBehaviors({
+                linkAnnotation: ({schema, url}) => {
+                  const name = schema.annotations.find(
+                    (annotation) => annotation.name === 'link',
+                  )?.name
+                  return name ? {name, value: {href: url}} : undefined
+                },
+              }),
+              ...createMarkdownBehaviors({
+                horizontalRuleObject: ({schema}) => {
+                  const name = schema.blockObjects.find(
+                    (object) => object.name === 'break',
+                  )?.name
+                  return name ? {name} : undefined
+                },
+                defaultStyle: ({schema}) => schema.styles[0].value,
+                headingStyle: ({schema, level}) =>
+                  schema.styles.find((style) => style.value === `h${level}`)
+                    ?.value,
+                blockquoteStyle: ({schema}) =>
+                  schema.styles.find((style) => style.value === 'blockquote')
+                    ?.value,
+                unorderedListStyle: ({schema}) =>
+                  schema.lists.find((list) => list.value === 'bullet')?.value,
+                orderedListStyle: ({schema}) =>
+                  schema.lists.find((list) => list.value === 'number')?.value,
+              }),
+            ],
+            keyGenerator,
+            readOnly,
+            schemaDefinition,
+          }}
+        >
+          <EditorEventListener
+            editorRef={props.editorRef}
+            value={value}
+            on={(event) => {
+              if (event.type === 'mutation') {
+                props.editorRef.send(event)
+              }
+              if (event.type === 'loading') {
+                setLoading(true)
+              }
+              if (event.type === 'done loading') {
+                setLoading(false)
+              }
+              if (event.type === 'readOnly toggled') {
+                setReadOnly(event.readOnly)
+              }
+            }}
+          />
           <div className="flex flex-col gap-2">
-            <PortableTextToolbar
-              editor={editor}
-              schemaDefinition={schemaDefinition}
-            />
+            <PortableTextToolbar schemaDefinition={schemaDefinition} />
             <div className="flex gap-2 items-center">
               <ErrorBoundary
                 fallbackProps={{area: 'PortableTextEditable'}}
@@ -201,14 +182,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
                 </Button>
                 <Tooltip>Remove editor</Tooltip>
               </TooltipTrigger>
-              <Switch
-                isSelected={readOnly}
-                onChange={() => {
-                  editor.send({type: 'toggle readOnly'})
-                }}
-              >
-                <code>readOnly</code>
-              </Switch>
+              <ToggleReadOnly readOnly={readOnly} />
             </div>
           </div>
           <div className="flex flex-col gap-2">
@@ -263,9 +237,59 @@ export function Editor(props: {editorRef: EditorActorRef}) {
               <SelectionPreview editorId={props.editorRef.id} />
             ) : null}
           </div>
-        </PortableTextEditor>
+        </EditorProvider>
       </ErrorBoundary>
     </div>
+  )
+}
+
+function EditorEventListener(props: {
+  editorRef: EditorActorRef
+  on: (event: EditorEmittedEvent) => void
+  value: Array<PortableTextBlock> | undefined
+}) {
+  const editor = useEditorContext()
+
+  useEffect(() => {
+    const subscription = props.editorRef.on('patches', (event) => {
+      editor.send(event)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [props.editorRef, editor])
+
+  useEffect(() => {
+    const subscription = editor.on('*', props.on)
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [editor, props.on])
+
+  useEffect(() => {
+    editor.send({
+      type: 'update value',
+      value: props.value,
+    })
+  }, [editor, props.value])
+
+  return null
+}
+
+function ToggleReadOnly(props: {readOnly: boolean}) {
+  const editor = useEditorContext()
+
+  return (
+    <Switch
+      isSelected={props.readOnly}
+      onChange={() => {
+        editor.send({type: 'toggle readOnly'})
+      }}
+    >
+      <code>readOnly</code>
+    </Switch>
   )
 }
 
