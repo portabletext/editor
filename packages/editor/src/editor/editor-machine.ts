@@ -156,6 +156,7 @@ export const editorMachine = setup({
     input: {} as {
       behaviors?: Array<Behavior>
       keyGenerator: () => string
+      maxBlocks?: number
       readOnly?: boolean
       schema: PortableTextMemberSchemaTypes
       value?: Array<PortableTextBlock>
@@ -300,7 +301,7 @@ export const editorMachine = setup({
     pendingEvents: [],
     schema: input.schema,
     readOnly: input.readOnly ?? false,
-    maxBlocks: undefined,
+    maxBlocks: input.maxBlocks,
     value: input.value,
   }),
   on: {
