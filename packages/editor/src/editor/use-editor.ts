@@ -4,6 +4,8 @@ import type {
   PortableTextBlock,
 } from '@sanity/types'
 import {useActorRef} from '@xstate/react'
+import {createActor} from 'xstate'
+import type {EditableAPI} from '../types/editor'
 import {getPortableTextMemberSchemaTypes} from '../utils/getPortableTextMemberSchemaTypes'
 import {compileType} from '../utils/schema'
 import type {Behavior, PickFromUnion} from './behavior/behavior.types'
@@ -15,6 +17,7 @@ import {
   type InternalEditorEvent,
 } from './editor-machine'
 import {defaultKeyGenerator} from './key-generator'
+import {createEditableAPI} from './plugins/createWithEditableAPI'
 
 /**
  * @alpha
@@ -22,6 +25,7 @@ import {defaultKeyGenerator} from './key-generator'
 export type EditorConfig = {
   behaviors?: Array<Behavior>
   keyGenerator?: () => string
+  maxBlocks?: number
   readOnly?: boolean
   initialValue?: Array<PortableTextBlock>
 } & (
@@ -55,6 +59,7 @@ export type EditorEvent = PickFromUnion<
 export type Editor = {
   send: (event: EditorEvent) => void
   on: EditorActor['on']
+  editable: EditableAPI
   _internal: {
     editorActor: EditorActor
     slateEditor: SlateEditor
@@ -64,32 +69,65 @@ export type Editor = {
 /**
  * @alpha
  */
-export function useEditor(config: EditorConfig): Editor {
-  const editorActor = useActorRef(editorMachine, {
-    input: {
-      behaviors: config.behaviors,
-      keyGenerator: config.keyGenerator ?? defaultKeyGenerator,
-      readOnly: config.readOnly,
-      schema: config.schemaDefinition
-        ? compileSchemaDefinition(config.schemaDefinition)
-        : getPortableTextMemberSchemaTypes(
-            config.schema.hasOwnProperty('jsonType')
-              ? config.schema
-              : compileType(config.schema),
-          ),
-      value: config.initialValue,
-    },
+export function createEditor(config: EditorConfig): Editor {
+  const editorActor = createActor(editorMachine, {
+    input: editorConfigToMachineInput(config),
   })
+
+  editorActor.start()
+
   const slateEditor = createSlateEditor({editorActor})
+  const editable = createEditableAPI(slateEditor.instance, editorActor)
 
   return {
     send: (event) => {
       editorActor.send(event)
     },
     on: (event, listener) => editorActor.on(event, listener),
+    editable,
     _internal: {
       editorActor,
       slateEditor,
     },
   }
+}
+
+/**
+ * @alpha
+ */
+export function useEditor(config: EditorConfig): Editor {
+  const editorActor = useActorRef(editorMachine, {
+    input: editorConfigToMachineInput(config),
+  })
+  const slateEditor = createSlateEditor({editorActor})
+  const editable = createEditableAPI(slateEditor.instance, editorActor)
+
+  return {
+    send: (event) => {
+      editorActor.send(event)
+    },
+    on: (event, listener) => editorActor.on(event, listener),
+    editable,
+    _internal: {
+      editorActor,
+      slateEditor,
+    },
+  }
+}
+
+function editorConfigToMachineInput(config: EditorConfig) {
+  return {
+    behaviors: config.behaviors,
+    keyGenerator: config.keyGenerator ?? defaultKeyGenerator,
+    maxBlocks: config.maxBlocks,
+    readOnly: config.readOnly,
+    schema: config.schemaDefinition
+      ? compileSchemaDefinition(config.schemaDefinition)
+      : getPortableTextMemberSchemaTypes(
+          config.schema.hasOwnProperty('jsonType')
+            ? config.schema
+            : compileType(config.schema),
+        ),
+    value: config.initialValue,
+  } as const
 }

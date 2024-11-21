@@ -15,7 +15,6 @@ import {
 import {Subject} from 'rxjs'
 import {Slate} from 'slate-react'
 import {useEffectEvent} from 'use-effect-event'
-import {createActor} from 'xstate'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
@@ -29,17 +28,13 @@ import {debugWithName} from '../utils/debug'
 import {getPortableTextMemberSchemaTypes} from '../utils/getPortableTextMemberSchemaTypes'
 import {compileType} from '../utils/schema'
 import {Synchronizer} from './components/Synchronizer'
-import {createSlateEditor, type SlateEditor} from './create-slate-editor'
 import {EditorActorContext} from './editor-actor-context'
-import {editorMachine, type EditorActor} from './editor-machine'
+import type {EditorActor} from './editor-machine'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
 import {defaultKeyGenerator} from './key-generator'
-import {
-  createEditableAPI,
-  type AddedAnnotationPaths,
-} from './plugins/createWithEditableAPI'
-import type {Editor} from './use-editor'
+import type {AddedAnnotationPaths} from './plugins/createWithEditableAPI'
+import {createEditor, type Editor} from './use-editor'
 
 const debug = debugWithName('component:PortableTextEditor')
 
@@ -125,62 +120,35 @@ export class PortableTextEditor extends Component<
    */
   public schemaTypes: PortableTextMemberSchemaTypes
   /**
+   * The editor instance
+   */
+  private editor: Editor
+  /*
    * The editor API (currently implemented with Slate).
    */
   private editable: EditableAPI
-  private editorActor: EditorActor
-  private slateEditor: SlateEditor
 
   constructor(props: PortableTextEditorProps) {
     super(props)
 
     if (props.editor) {
-      const editor = props.editor as Editor
-      this.editorActor = editor._internal.editorActor
-      this.slateEditor = editor._internal.slateEditor
-      this.editorActor.start()
-      this.schemaTypes = this.editorActor.getSnapshot().context.schema
+      this.editor = props.editor as Editor
     } else {
-      this.schemaTypes = getPortableTextMemberSchemaTypes(
-        props.schemaType.hasOwnProperty('jsonType')
-          ? props.schemaType
-          : compileType(props.schemaType),
-      )
-
-      this.editorActor = createActor(editorMachine, {
-        input: {
-          keyGenerator: props.keyGenerator || defaultKeyGenerator,
-          schema: this.schemaTypes,
-          value: props.value,
-        },
+      this.editor = createEditor({
+        keyGenerator: props.keyGenerator ?? defaultKeyGenerator,
+        schema: props.schemaType,
+        initialValue: props.value,
+        maxBlocks:
+          props.maxBlocks === undefined
+            ? undefined
+            : Number.parseInt(props.maxBlocks.toString(), 10),
+        readOnly: props.readOnly,
       })
-      this.editorActor.start()
-
-      this.slateEditor = createSlateEditor({
-        editorActor: this.editorActor,
-      })
-
-      if (props.readOnly) {
-        this.editorActor.send({
-          type: 'toggle readOnly',
-        })
-      }
-
-      if (props.maxBlocks) {
-        this.editorActor.send({
-          type: 'update maxBlocks',
-          maxBlocks:
-            props.maxBlocks === undefined
-              ? undefined
-              : Number.parseInt(props.maxBlocks.toString(), 10),
-        })
-      }
     }
 
-    this.editable = createEditableAPI(
-      this.slateEditor.instance,
-      this.editorActor,
-    )
+    this.schemaTypes =
+      this.editor._internal.editorActor.getSnapshot().context.schema
+    this.editable = this.editor.editable
   }
 
   componentDidUpdate(prevProps: PortableTextEditorProps) {
@@ -196,7 +164,7 @@ export class PortableTextEditor extends Component<
           : compileType(this.props.schemaType),
       )
 
-      this.editorActor.send({
+      this.editor._internal.editorActor.send({
         type: 'update schema',
         schema: this.schemaTypes,
       })
@@ -204,13 +172,13 @@ export class PortableTextEditor extends Component<
 
     if (!this.props.editor && !prevProps.editor) {
       if (this.props.readOnly !== prevProps.readOnly) {
-        this.editorActor.send({
+        this.editor._internal.editorActor.send({
           type: 'toggle readOnly',
         })
       }
 
       if (this.props.maxBlocks !== prevProps.maxBlocks) {
-        this.editorActor.send({
+        this.editor._internal.editorActor.send({
           type: 'update maxBlocks',
           maxBlocks:
             this.props.maxBlocks === undefined
@@ -220,7 +188,7 @@ export class PortableTextEditor extends Component<
       }
 
       if (this.props.value !== prevProps.value) {
-        this.editorActor.send({
+        this.editor._internal.editorActor.send({
           type: 'update value',
           value: this.props.value,
         })
@@ -236,7 +204,7 @@ export class PortableTextEditor extends Component<
   }
 
   public setEditable = (editable: EditableAPI) => {
-    this.editable = {...this.editable, ...editable}
+    this.editor.editable = {...this.editor.editable, ...editable}
   }
 
   render() {
@@ -248,12 +216,12 @@ export class PortableTextEditor extends Component<
       <>
         {legacyPatches ? (
           <RoutePatchesObservableToEditorActor
-            editorActor={this.editorActor}
+            editorActor={this.editor._internal.editorActor}
             patches$={legacyPatches}
           />
         ) : null}
         <RouteEventsToChanges
-          editorActor={this.editorActor}
+          editorActor={this.editor._internal.editorActor}
           onChange={(change) => {
             if (!this.props.editor) {
               this.props.onChange(change)
@@ -266,19 +234,19 @@ export class PortableTextEditor extends Component<
           }}
         />
         <Synchronizer
-          editorActor={this.editorActor}
-          getValue={this.editable.getValue}
+          editorActor={this.editor._internal.editorActor}
+          getValue={this.editor.editable.getValue}
           portableTextEditor={this}
-          slateEditor={this.slateEditor.instance}
+          slateEditor={this.editor._internal.slateEditor.instance}
         />
-        <EditorActorContext.Provider value={this.editorActor}>
+        <EditorActorContext.Provider value={this.editor._internal.editorActor}>
           <Slate
-            editor={this.slateEditor.instance}
-            initialValue={this.slateEditor.initialValue}
+            editor={this.editor._internal.slateEditor.instance}
+            initialValue={this.editor._internal.slateEditor.initialValue}
           >
             <PortableTextEditorContext.Provider value={this}>
               <PortableTextEditorSelectionProvider
-                editorActor={this.editorActor}
+                editorActor={this.editor._internal.editorActor}
               >
                 {this.props.children}
               </PortableTextEditorSelectionProvider>
