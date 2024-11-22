@@ -35,7 +35,7 @@ export type BehaviorActionContext = {
   schema: PortableTextMemberSchemaTypes
 }
 
-export type BehaviourActionImplementation<
+export type BehaviorActionImplementation<
   TBehaviorActionType extends BehaviorAction['type'],
   TReturnType = void,
 > = ({
@@ -46,11 +46,11 @@ export type BehaviourActionImplementation<
   action: PickFromUnion<BehaviorAction, 'type', TBehaviorActionType>
 }) => TReturnType
 
-type BehaviourActionImplementations = {
-  [TBehaviorActionType in BehaviorAction['type']]: BehaviourActionImplementation<TBehaviorActionType>
+type BehaviorActionImplementations = {
+  [TBehaviorActionType in BehaviorAction['type']]: BehaviorActionImplementation<TBehaviorActionType>
 }
 
-const behaviorActionImplementations: BehaviourActionImplementations = {
+const behaviorActionImplementations: BehaviorActionImplementations = {
   'annotation.add': addAnnotationActionImplementation,
   'annotation.remove': removeAnnotationActionImplementation,
   'annotation.toggle': toggleAnnotationActionImplementation,

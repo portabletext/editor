@@ -35,7 +35,7 @@ import {
   KEY_TO_VALUE_ELEMENT,
   SLATE_TO_PORTABLE_TEXT_RANGE,
 } from '../../utils/weakMaps'
-import type {BehaviourActionImplementation} from '../behavior/behavior.actions'
+import type {BehaviorActionImplementation} from '../behavior/behavior.actions'
 import type {EditorActor} from '../editor-machine'
 import {isDecoratorActive} from './createWithPortableTextMarkModel'
 
@@ -487,7 +487,7 @@ export function createEditableAPI(
   return editableApi
 }
 
-export const insertBlockObjectActionImplementation: BehaviourActionImplementation<
+export const insertBlockObjectActionImplementation: BehaviorActionImplementation<
   'insert block object',
   Path
 > = ({context, action}) => {
@@ -640,7 +640,7 @@ export type AddedAnnotationPaths = {
   spanPath: Path
 }
 
-export const addAnnotationActionImplementation: BehaviourActionImplementation<
+export const addAnnotationActionImplementation: BehaviorActionImplementation<
   'annotation.add',
   AddedAnnotationPaths | undefined
 > = ({context, action}) => {
@@ -761,7 +761,7 @@ export const addAnnotationActionImplementation: BehaviourActionImplementation<
   return paths
 }
 
-export const removeAnnotationActionImplementation: BehaviourActionImplementation<
+export const removeAnnotationActionImplementation: BehaviorActionImplementation<
   'annotation.remove'
 > = ({action}) => {
   const editor = action.editor
@@ -910,7 +910,7 @@ export const removeAnnotationActionImplementation: BehaviourActionImplementation
   }
 }
 
-export const toggleAnnotationActionImplementation: BehaviourActionImplementation<
+export const toggleAnnotationActionImplementation: BehaviorActionImplementation<
   'annotation.toggle',
   AddedAnnotationPaths | undefined
 > = ({context, action}) => {
