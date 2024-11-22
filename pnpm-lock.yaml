@@ -214,7 +214,7 @@ importers:
         version: link:../../packages/patches
       '@sanity/schema':
         specifier: ^3.63.0
-        version: 3.64.2(debug@4.3.7)
+        version: 3.64.3(debug@4.3.7)
       '@xstate/react':
         specifier: ^4.1.3
         version: 4.1.3(@types/react@18.3.12)(react@18.3.1)(xstate@5.19.0)
@@ -239,7 +239,7 @@ importers:
         version: 9.14.0
       '@sanity/types':
         specifier: ^3.63.0
-        version: 3.64.2(debug@4.3.7)
+        version: 3.64.3(debug@4.3.7)
       '@types/react':
         specifier: ^18.3.12
         version: 18.3.12
@@ -320,8 +320,8 @@ importers:
         specifier: ^2.0.16
         version: 2.0.16
       '@sanity/block-tools':
-        specifier: ^3.64.2
-        version: 3.64.2(debug@4.3.7)
+        specifier: ^3.64.3
+        version: 3.64.3(debug@4.3.7)
       '@sanity/diff-match-patch':
         specifier: ^3.1.1
         version: 3.1.1
@@ -332,11 +332,11 @@ importers:
         specifier: ^6.11.12
         version: 6.11.12(@types/babel__core@7.20.5)(@types/node@22.9.0)(babel-plugin-react-compiler@19.0.0-beta-0dec889-20241115)(debug@4.3.7)(typescript@5.6.3)
       '@sanity/schema':
-        specifier: ^3.64.2
-        version: 3.64.2(debug@4.3.7)
+        specifier: ^3.64.3
+        version: 3.64.3(debug@4.3.7)
       '@sanity/types':
-        specifier: ^3.64.2
-        version: 3.64.2(debug@4.3.7)
+        specifier: ^3.64.3
+        version: 3.64.3(debug@4.3.7)
       '@testing-library/jest-dom':
         specifier: ^6.6.3
         version: 6.6.3
@@ -2078,8 +2078,8 @@ packages:
   '@rushstack/ts-command-line@4.23.0':
     resolution: {integrity: sha512-jYREBtsxduPV6ptNq8jOKp9+yx0ld1Tb/Tkdnlj8gTjazl1sF3DwX2VbluyYrNd0meWIL0bNeer7WDf5tKFjaQ==}
 
-  '@sanity/block-tools@3.64.2':
-    resolution: {integrity: sha512-JrUc4WCFt1YsqCVkhL4bP82/iHSclPtjQ08D2iEaycmxueeneSfpJ9mBFy8ibvvfFvBQIPFGVt0lmYg4CFk1eg==}
+  '@sanity/block-tools@3.64.3':
+    resolution: {integrity: sha512-d/OAPit7Wgj6REhNcZklUvEMX7RkCgeNew2dJJadl1ikYXxXRygfTMTGEirqOW32CbKIkHAZd1QiaDoAg+dcbA==}
 
   '@sanity/browserslist-config@1.0.3':
     resolution: {integrity: sha512-UkJuiTyROgPcxbvpHYyXwr+T88Np4eLzu3h05gMgeZ2hv3EM7g/4VMyng5HuA1JdPQPEdq8bmmfQDR+u4KC+TA==}
@@ -2118,11 +2118,11 @@ packages:
     peerDependencies:
       prettier: ^3.2.5
 
-  '@sanity/schema@3.64.2':
-    resolution: {integrity: sha512-Z9gB8caGbpYtvaii586trte0+J4jrE1MVlM8KdHRU86jRQ2Z51Q1cRce7Dq7UrbonNvWNzRSirVwS66yEPU5vw==}
+  '@sanity/schema@3.64.3':
+    resolution: {integrity: sha512-g2Zw7WM1Gmjb+mEWnRd500eNtCl6gfRLD1fKGEcQczJue7CePRtsJM1rhnKd0whlPyBLgld8WWGr0L4B5LfX7w==}
 
-  '@sanity/types@3.64.2':
-    resolution: {integrity: sha512-nRdYV4LN4WCB0JXkDMbadidk3gNMnzVH7FH72nuT4vtkql5nsIq0vsyepwpb5fLoWJyipOcbLvHEcbT9+mP/6g==}
+  '@sanity/types@3.64.3':
+    resolution: {integrity: sha512-xO3vH+eBt8LvX5/Ujk7i6Y39bsmV1KfY1RCuXb4h+KlyRzt+ercum80W0ScMFbuazM8IaPSIkj1KVkKmMwBgpQ==}
 
   '@shikijs/core@1.22.2':
     resolution: {integrity: sha512-bvIQcd8BEeR1yFvOYv6HDiyta2FFVePbzeowf5pPS1avczrPK+cjmaxxh0nx5QzbON7+Sv0sQfQVciO7bN72sg==}
@@ -7087,9 +7087,9 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@sanity/block-tools@3.64.2(debug@4.3.7)':
+  '@sanity/block-tools@3.64.3(debug@4.3.7)':
     dependencies:
-      '@sanity/types': 3.64.2(debug@4.3.7)
+      '@sanity/types': 3.64.3(debug@4.3.7)
       '@types/react': 18.3.12
       get-random-values-esm: 1.0.2
       lodash: 4.17.21
@@ -7176,10 +7176,10 @@ snapshots:
       prettier: 3.3.3
       prettier-plugin-packagejson: 2.5.3(prettier@3.3.3)
 
-  '@sanity/schema@3.64.2(debug@4.3.7)':
+  '@sanity/schema@3.64.3(debug@4.3.7)':
     dependencies:
       '@sanity/generate-help-url': 3.0.0
-      '@sanity/types': 3.64.2(debug@4.3.7)
+      '@sanity/types': 3.64.3(debug@4.3.7)
       arrify: 1.0.1
       groq-js: 1.14.0
       humanize-list: 1.0.1
@@ -7190,7 +7190,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@sanity/types@3.64.2(debug@4.3.7)':
+  '@sanity/types@3.64.3(debug@4.3.7)':
     dependencies:
       '@sanity/client': 6.22.5(debug@4.3.7)
       '@types/react': 18.3.12
