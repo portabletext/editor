@@ -289,8 +289,11 @@ export const editorMachine = setup({
 
         for (const actionIntends of actionIntendSets) {
           behaviorOverwritten =
-            actionIntends.length > 0 &&
-            actionIntends.some((actionIntend) => actionIntend.type !== 'effect')
+            behaviorOverwritten ||
+            (actionIntends.length > 0 &&
+              actionIntends.some(
+                (actionIntend) => actionIntend.type !== 'effect',
+              ))
 
           enqueue.raise({
             type: 'behavior action intends',
