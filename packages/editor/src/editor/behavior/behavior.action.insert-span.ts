@@ -1,7 +1,7 @@
 import {Editor, Transforms} from 'slate'
-import type {BehaviourActionImplementation} from './behavior.actions'
+import type {BehaviorActionImplementation} from './behavior.actions'
 
-export const insertSpanActionImplementation: BehaviourActionImplementation<
+export const insertSpanActionImplementation: BehaviorActionImplementation<
   'insert span'
 > = ({context, action}) => {
   if (!action.editor.selection) {

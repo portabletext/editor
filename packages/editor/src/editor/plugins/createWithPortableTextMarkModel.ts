@@ -16,7 +16,7 @@ import {debugWithName} from '../../utils/debug'
 import {getNextSpan, getPreviousSpan} from '../../utils/sibling-utils'
 import {isChangingRemotely} from '../../utils/withChanges'
 import {isRedoing, isUndoing} from '../../utils/withUndoRedo'
-import type {BehaviourActionImplementation} from '../behavior/behavior.actions'
+import type {BehaviorActionImplementation} from '../behavior/behavior.actions'
 import type {EditorActor} from '../editor-machine'
 
 const debug = debugWithName('plugin:withPortableTextMarkModel')
@@ -654,7 +654,7 @@ export function createWithPortableTextMarkModel(
   }
 }
 
-export const addDecoratorActionImplementation: BehaviourActionImplementation<
+export const addDecoratorActionImplementation: BehaviorActionImplementation<
   'decorator.add'
 > = ({action}) => {
   const editor = action.editor
@@ -745,7 +745,7 @@ export const addDecoratorActionImplementation: BehaviourActionImplementation<
   }
 }
 
-export const removeDecoratorActionImplementation: BehaviourActionImplementation<
+export const removeDecoratorActionImplementation: BehaviorActionImplementation<
   'decorator.remove'
 > = ({action}) => {
   const editor = action.editor
@@ -860,7 +860,7 @@ export function isDecoratorActive({
   ).includes(decorator)
 }
 
-export const toggleDecoratorActionImplementation: BehaviourActionImplementation<
+export const toggleDecoratorActionImplementation: BehaviorActionImplementation<
   'decorator.toggle'
 > = ({context, action}) => {
   const isActive = isDecoratorActive({
