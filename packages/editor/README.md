@@ -369,3 +369,12 @@ function Toolbar() {
   )
 }
 ```
+
+## Behavior API (Coming Soon)
+
+The Behavior API is a new way of interfacing with the Portable Text Editor. It allows you to think of and treat the editor as a state machine by:
+
+1. Declaratively hooking into editor **events** and defining new behaviors using `defineBehavior`. (A "Behavior" (1) listens for an **event**, (2) uses a **guard** to determine whether it should run and (3) raises a set of **actions** to be performed on the editor.)
+2. Imperatively trigger **events** using `editor.send(…)` which in turn can trigger behaviors defined using `defineBehavior`.
+3. Deriving editor **state** using **pure functions**.
+4. Subscribe to **emitted** editor **events** using `editor.on(…)`.
