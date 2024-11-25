@@ -35,6 +35,8 @@ import {
   KEY_TO_VALUE_ELEMENT,
   SLATE_TO_PORTABLE_TEXT_RANGE,
 } from '../../utils/weakMaps'
+import {insertBlock} from '../behavior/behavior.action-utils.insert-block'
+import {insertBlockObjectActionImplementation} from '../behavior/behavior.action.insert-block-object'
 import type {BehaviorActionImplementation} from '../behavior/behavior.actions'
 import type {EditorActor} from '../editor-machine'
 import {isDecoratorActive} from './createWithPortableTextMarkModel'
@@ -206,7 +208,7 @@ export function createEditableAPI(
       type: TSchemaType,
       value?: {[prop: string]: any},
     ): Path => {
-      return insertBlockObjectActionImplementation({
+      insertBlockObjectActionImplementation({
         context: {
           keyGenerator: editorActor.getSnapshot().context.keyGenerator,
           schema: types,
@@ -218,6 +220,20 @@ export function createEditableAPI(
           editor,
         },
       })
+
+      editor.onChange()
+
+      return (
+        toPortableTextRange(
+          fromSlateValue(
+            editor.children,
+            types.block.name,
+            KEY_TO_VALUE_ELEMENT.get(editor),
+          ),
+          editor.selection,
+          types,
+        )?.focus.path ?? []
+      )
     },
     hasBlockStyle: (style: string): boolean => {
       try {
@@ -485,85 +501,6 @@ export function createEditableAPI(
   }
 
   return editableApi
-}
-
-export const insertBlockObjectActionImplementation: BehaviorActionImplementation<
-  'insert block object',
-  Path
-> = ({context, action}) => {
-  const editor = action.editor
-  const types = context.schema
-  const block = toSlateValue(
-    [
-      {
-        _key: context.keyGenerator(),
-        _type: action.name,
-        ...(action.value ? action.value : {}),
-      },
-    ],
-    {schemaTypes: context.schema},
-  )[0] as unknown as Node
-
-  if (!editor.selection) {
-    const lastBlock = Array.from(
-      Editor.nodes(editor, {
-        match: (n) => !Editor.isEditor(n),
-        at: [],
-        reverse: true,
-      }),
-    )[0]
-
-    // If there is no selection, let's just insert the new block at the
-    // end of the document
-    Editor.insertNode(editor, block)
-
-    if (lastBlock && isEqualToEmptyEditor([lastBlock[0]], types)) {
-      // And if the last block was an empty text block, let's remove
-      // that too
-      Transforms.removeNodes(editor, {at: lastBlock[1]})
-    }
-
-    editor.onChange()
-
-    return (
-      toPortableTextRange(
-        fromSlateValue(
-          editor.children,
-          types.block.name,
-          KEY_TO_VALUE_ELEMENT.get(editor),
-        ),
-        editor.selection,
-        types,
-      )?.focus.path ?? []
-    )
-  }
-
-  const focusBlock = Array.from(
-    Editor.nodes(editor, {
-      at: editor.selection.focus.path.slice(0, 1),
-      match: (n) => n._type === types.block.name,
-    }),
-  )[0]
-
-  Editor.insertNode(editor, block)
-
-  if (focusBlock && isEqualToEmptyEditor([focusBlock[0]], types)) {
-    Transforms.removeNodes(editor, {at: focusBlock[1]})
-  }
-
-  editor.onChange()
-
-  return (
-    toPortableTextRange(
-      fromSlateValue(
-        editor.children,
-        types.block.name,
-        KEY_TO_VALUE_ELEMENT.get(editor),
-      ),
-      editor.selection,
-      types,
-    )?.focus.path || []
-  )
 }
 
 function isAnnotationActive({
