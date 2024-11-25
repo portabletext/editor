@@ -202,6 +202,13 @@ export function getNextBlock(
   return undefined
 }
 
-export function isEmptyTextBlock(block: PortableTextTextBlock) {
-  return block.children.length === 1 && block.children[0].text === ''
+export function isEmptyTextBlock(block: PortableTextBlock) {
+  if (!isPortableTextTextBlock(block)) {
+    return false
+  }
+
+  const onlyText = block.children.every(isPortableTextSpan)
+  const blockText = block.children.map((child) => child.text ?? '').join('')
+
+  return onlyText && blockText === ''
 }
