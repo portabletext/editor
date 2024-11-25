@@ -6,8 +6,10 @@ import {
   getFocusBlock,
   getFocusSpan,
   getFocusTextBlock,
+  getTextBlockText,
   selectionIsCollapsed,
 } from './behavior.utils'
+import {spanSelectionPointToBlockOffset} from './behavior.utils.block-offset'
 
 /**
  * @alpha
@@ -55,8 +57,25 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
-      const caretAtTheEndOfQuote = context.selection.focus.offset === 1
-      const looksLikeMarkdownQuote = /^>/.test(focusSpan.node.text)
+      const blockOffset = spanSelectionPointToBlockOffset({
+        value: context.value,
+        selectionPoint: {
+          path: [
+            {_key: focusTextBlock.node._key},
+            'children',
+            {_key: focusSpan.node._key},
+          ],
+          offset: context.selection.focus.offset,
+        },
+      })
+
+      if (!blockOffset) {
+        return false
+      }
+
+      const blockText = getTextBlockText(focusTextBlock.node)
+      const caretAtTheEndOfQuote = blockOffset.offset === 1
+      const looksLikeMarkdownQuote = /^>/.test(blockText)
       const blockquoteStyle = config.blockquoteStyle?.({schema: context.schema})
 
       if (
@@ -227,11 +246,28 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
-      const markdownHeadingSearch = /^#+/.exec(focusSpan.node.text)
+      const blockOffset = spanSelectionPointToBlockOffset({
+        value: context.value,
+        selectionPoint: {
+          path: [
+            {_key: focusTextBlock.node._key},
+            'children',
+            {_key: focusSpan.node._key},
+          ],
+          offset: context.selection.focus.offset,
+        },
+      })
+
+      if (!blockOffset) {
+        return false
+      }
+
+      const blockText = getTextBlockText(focusTextBlock.node)
+      const markdownHeadingSearch = /^#+/.exec(blockText)
       const level = markdownHeadingSearch
         ? markdownHeadingSearch[0].length
         : undefined
-      const caretAtTheEndOfHeading = context.selection.focus.offset === level
+      const caretAtTheEndOfHeading = blockOffset.offset === level
 
       if (!caretAtTheEndOfHeading) {
         return false
@@ -338,12 +374,29 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
+      const blockOffset = spanSelectionPointToBlockOffset({
+        value: context.value,
+        selectionPoint: {
+          path: [
+            {_key: focusTextBlock.node._key},
+            'children',
+            {_key: focusSpan.node._key},
+          ],
+          offset: context.selection.focus.offset,
+        },
+      })
+
+      if (!blockOffset) {
+        return false
+      }
+
+      const blockText = getTextBlockText(focusTextBlock.node)
       const defaultStyle = config.defaultStyle?.({schema: context.schema})
-      const looksLikeUnorderedList = /^(-|\*)/.test(focusSpan.node.text)
+      const looksLikeUnorderedList = /^(-|\*)/.test(blockText)
       const unorderedListStyle = config.unorderedListStyle?.({
         schema: context.schema,
       })
-      const caretAtTheEndOfUnorderedList = context.selection.focus.offset === 1
+      const caretAtTheEndOfUnorderedList = blockOffset.offset === 1
 
       if (
         defaultStyle &&
