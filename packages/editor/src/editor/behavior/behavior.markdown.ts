@@ -151,17 +151,8 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           ...breakObject,
         },
         {
-          type: 'delete',
-          selection: {
-            anchor: {
-              path: focusBlock.path,
-              offset: 0,
-            },
-            focus: {
-              path: focusBlock.path,
-              offset: 0,
-            },
-          },
+          type: 'delete block',
+          blockPath: focusBlock.path,
         },
         {
           type: 'insert text block',

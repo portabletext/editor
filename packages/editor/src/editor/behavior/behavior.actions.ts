@@ -114,6 +114,26 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
       })
     }
   },
+  'delete block': ({action}) => {
+    const location = toSlateRange(
+      {
+        anchor: {path: action.blockPath, offset: 0},
+        focus: {path: action.blockPath, offset: 0},
+      },
+      action.editor,
+    )
+
+    if (!location) {
+      console.error(
+        `Could not find Slate location from block path ${action.blockPath}`,
+      )
+      return
+    }
+
+    Transforms.removeNodes(action.editor, {
+      at: location,
+    })
+  },
   'insert block object': insertBlockObjectActionImplementation,
   'insert break': insertBreakActionImplementation,
   'insert soft break': insertSoftBreakActionImplementation,
@@ -171,6 +191,13 @@ export function performAction({
   switch (action.type) {
     case 'delete': {
       behaviorActionImplementations.delete({
+        context,
+        action,
+      })
+      break
+    }
+    case 'delete block': {
+      behaviorActionImplementations['delete block']({
         context,
         action,
       })
