@@ -42,11 +42,8 @@ const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
   actions: [
     (_, {focusTextBlock, previousBlock}) => [
       {
-        type: 'delete',
-        selection: {
-          anchor: {path: focusTextBlock.path, offset: 0},
-          focus: {path: focusTextBlock.path, offset: 0},
-        },
+        type: 'delete block',
+        blockPath: focusTextBlock.path,
       },
       {
         type: 'select',

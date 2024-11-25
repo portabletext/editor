@@ -133,6 +133,10 @@ export type BehaviorActionIntend =
       selection: NonNullable<EditorSelection>
     }
   | {
+      type: 'delete block'
+      blockPath: [KeyedSegment]
+    }
+  | {
       type: 'effect'
       effect: () => void
     }
