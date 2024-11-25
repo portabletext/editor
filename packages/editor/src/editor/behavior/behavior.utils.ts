@@ -208,7 +208,11 @@ export function isEmptyTextBlock(block: PortableTextBlock) {
   }
 
   const onlyText = block.children.every(isPortableTextSpan)
-  const blockText = block.children.map((child) => child.text ?? '').join('')
+  const blockText = getTextBlockText(block)
 
   return onlyText && blockText === ''
+}
+
+export function getTextBlockText(block: PortableTextTextBlock) {
+  return block.children.map((child) => child.text ?? '').join('')
 }

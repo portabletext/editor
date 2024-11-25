@@ -61,3 +61,41 @@ export function blockOffsetToSpanSelectionPoint({
 
   return selectionPoint
 }
+
+export function spanSelectionPointToBlockOffset({
+  value,
+  selectionPoint,
+}: {
+  value: Array<PortableTextBlock>
+  selectionPoint: {
+    path: [KeyedSegment, 'children', KeyedSegment]
+    offset: number
+  }
+}): BlockOffset | undefined {
+  let offset = 0
+
+  for (const block of value) {
+    if (block._key !== selectionPoint.path[0]._key) {
+      continue
+    }
+
+    if (!isPortableTextTextBlock(block)) {
+      continue
+    }
+
+    for (const child of block.children) {
+      if (!isPortableTextSpan(child)) {
+        continue
+      }
+
+      if (child._key === selectionPoint.path[2]._key) {
+        return {
+          path: [{_key: block._key}],
+          offset: offset + selectionPoint.offset,
+        }
+      }
+
+      offset += child.text.length
+    }
+  }
+}
