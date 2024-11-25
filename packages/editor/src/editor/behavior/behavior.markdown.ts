@@ -150,7 +150,8 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       (_, {hrObject, focusBlock}) => [
         {
           type: 'insert block object',
-          ...hrObject,
+          placement: 'after',
+          blockObject: hrObject,
         },
         {
           type: 'delete block',
@@ -158,6 +159,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         },
         {
           type: 'insert text block',
+          placement: 'after',
         },
       ],
     ],
@@ -189,14 +191,23 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       (_, {hrObject, focusBlock}) =>
         isPortableTextTextBlock(focusBlock.node)
           ? [
-              {type: 'insert text block', children: focusBlock.node.children},
-              {type: 'insert block object', ...hrObject},
+              {
+                type: 'insert text block',
+                textBlock: {children: focusBlock.node.children},
+                placement: 'after',
+              },
+              {
+                type: 'insert block object',
+                blockObject: hrObject,
+                placement: 'after',
+              },
               {type: 'delete block', blockPath: focusBlock.path},
             ]
           : [
               {
                 type: 'insert block object',
-                ...hrObject,
+                blockObject: hrObject,
+                placement: 'after',
               },
             ],
     ],

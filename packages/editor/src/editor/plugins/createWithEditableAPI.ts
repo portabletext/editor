@@ -215,8 +215,11 @@ export function createEditableAPI(
         },
         action: {
           type: 'insert block object',
-          name: type.name,
-          value,
+          blockObject: {
+            name: type.name,
+            value,
+          },
+          placement: 'auto',
           editor,
         },
       })

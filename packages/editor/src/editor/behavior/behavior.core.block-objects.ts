@@ -16,7 +16,7 @@ const breakingBlockObject = defineBehavior({
 
     return !!focusBlockObject
   },
-  actions: [() => [{type: 'insert text block'}]],
+  actions: [() => [{type: 'insert text block', placement: 'after'}]],
 })
 
 const deletingEmptyTextBlockAfterBlockObject = defineBehavior({

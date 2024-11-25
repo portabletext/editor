@@ -1,4 +1,4 @@
-import {Descendant, Editor, Path, Transforms} from 'slate'
+import {Descendant, Editor, Transforms} from 'slate'
 import {
   PortableTextMemberSchemaTypes,
   PortableTextSlateEditor,
@@ -7,10 +7,12 @@ import {isEqualToEmptyEditor} from '../../utils/values'
 
 export function insertBlock({
   block,
+  placement,
   editor,
   schema,
 }: {
   block: Descendant
+  placement: 'auto' | 'after'
   editor: PortableTextSlateEditor
   schema: PortableTextMemberSchemaTypes
 }) {
@@ -40,13 +42,17 @@ export function insertBlock({
       }),
     )[0] ?? [undefined, undefined]
 
-    const nextPath = [focusBlockPath[0] + 1]
+    if (placement === 'after') {
+      const nextPath = [focusBlockPath[0] + 1]
 
-    Transforms.insertNodes(editor, block, {at: nextPath})
-    Transforms.select(editor, {
-      anchor: {path: [nextPath[0], 0], offset: 0},
-      focus: {path: [nextPath[0], 0], offset: 0},
-    })
+      Transforms.insertNodes(editor, block, {at: nextPath})
+      Transforms.select(editor, {
+        anchor: {path: [nextPath[0], 0], offset: 0},
+        focus: {path: [nextPath[0], 0], offset: 0},
+      })
+    } else {
+      Editor.insertNode(editor, block)
+    }
 
     if (focusBlock && isEqualToEmptyEditor([focusBlock], schema)) {
       Transforms.removeNodes(editor, {at: focusBlockPath})

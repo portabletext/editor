@@ -9,8 +9,8 @@ export const insertBlockObjectActionImplementation: BehaviorActionImplementation
     [
       {
         _key: context.keyGenerator(),
-        _type: action.name,
-        ...(action.value ? action.value : {}),
+        _type: action.blockObject.name,
+        ...(action.blockObject.value ? action.blockObject.value : {}),
       },
     ],
     {schemaTypes: context.schema},
@@ -18,6 +18,7 @@ export const insertBlockObjectActionImplementation: BehaviorActionImplementation
 
   insertBlock({
     block,
+    placement: action.placement,
     editor: action.editor,
     schema: context.schema,
   })
