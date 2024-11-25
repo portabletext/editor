@@ -1,16 +1,10 @@
-import {
-  deleteBackward,
-  deleteForward,
-  Editor,
-  insertText,
-  Transforms,
-} from 'slate'
+import {deleteBackward, deleteForward, insertText, Transforms} from 'slate'
 import {ReactEditor} from 'slate-react'
 import type {PortableTextMemberSchemaTypes} from '../../types/editor'
 import {toSlateRange} from '../../utils/ranges'
+import {toSlateValue} from '../../utils/values'
 import {
   addAnnotationActionImplementation,
-  insertBlockObjectActionImplementation,
   removeAnnotationActionImplementation,
   toggleAnnotationActionImplementation,
 } from '../plugins/createWithEditableAPI'
@@ -19,6 +13,8 @@ import {
   removeDecoratorActionImplementation,
   toggleDecoratorActionImplementation,
 } from '../plugins/createWithPortableTextMarkModel'
+import {insertBlock} from './behavior.action-utils.insert-block'
+import {insertBlockObjectActionImplementation} from './behavior.action.insert-block-object'
 import {
   insertBreakActionImplementation,
   insertSoftBreakActionImplementation,
@@ -142,19 +138,29 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
     insertText(action.editor, action.text)
   },
   'insert text block': ({context, action}) => {
-    Editor.insertNode(action.editor, {
-      _key: context.keyGenerator(),
-      _type: context.schema.block.name,
-      style: context.schema.styles[0].value ?? 'normal',
-      markDefs: [],
-      children: [
+    const block = toSlateValue(
+      [
         {
           _key: context.keyGenerator(),
-          _type: 'span',
-          text: '',
+          _type: context.schema.block.name,
+          style: context.schema.styles[0].value ?? 'normal',
+          markDefs: [],
+          children: action.children?.map((child) => ({
+            ...child,
+            _key: context.keyGenerator(),
+          })) ?? [
+            {
+              _type: context.schema.span.name,
+              _key: context.keyGenerator(),
+              text: '',
+            },
+          ],
         },
       ],
-    })
+      {schemaTypes: context.schema},
+    )[0]
+
+    insertBlock({block, editor: action.editor, schema: context.schema})
   },
   'effect': ({action}) => {
     action.effect()

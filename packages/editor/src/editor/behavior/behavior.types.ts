@@ -1,4 +1,8 @@
-import type {KeyedSegment, PortableTextBlock} from '@sanity/types'
+import type {
+  KeyedSegment,
+  PortableTextBlock,
+  PortableTextTextBlock,
+} from '@sanity/types'
 import type {TextUnit} from 'slate'
 import type {TextInsertTextOptions} from 'slate/dist/interfaces/transforms/text'
 import type {
@@ -114,7 +118,7 @@ export type BehaviorActionIntend =
     }
   | {
       type: 'insert text block'
-      decorators: Array<string>
+      children?: PortableTextTextBlock['children']
     }
   | {
       type: 'set block'

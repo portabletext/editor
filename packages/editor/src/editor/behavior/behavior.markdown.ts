@@ -156,7 +156,6 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         },
         {
           type: 'insert text block',
-          decorators: [],
         },
       ],
     ],
