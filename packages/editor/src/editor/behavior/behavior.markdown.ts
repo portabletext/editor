@@ -1,7 +1,9 @@
 import {isPortableTextSpan} from '@portabletext/toolkit'
+import {isPortableTextTextBlock} from '@sanity/types'
 import type {PortableTextMemberSchemaTypes} from '../../types/editor'
 import {defineBehavior} from './behavior.types'
 import {
+  getFocusBlock,
   getFocusSpan,
   getFocusTextBlock,
   selectionIsCollapsed,
@@ -158,6 +160,45 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           type: 'insert text block',
         },
       ],
+    ],
+  })
+  const automaticHrOnPaste = defineBehavior({
+    on: 'paste',
+    guard: ({context, event}) => {
+      const text = event.clipboardData.getData('text/plain')
+      const hrRegExp = /^(---)$|(___)$|(\*\*\*)$/gm
+      const hrCharacters = text.match(hrRegExp)?.[0]
+      const hrObject = config.horizontalRuleObject?.({
+        schema: context.schema,
+      })
+      const focusBlock = getFocusBlock(context)
+
+      if (!hrCharacters || !hrObject || !focusBlock) {
+        return false
+      }
+
+      return {hrCharacters, hrObject, focusBlock}
+    },
+    actions: [
+      (_, {hrCharacters}) => [
+        {
+          type: 'insert text',
+          text: hrCharacters,
+        },
+      ],
+      (_, {hrObject, focusBlock}) =>
+        isPortableTextTextBlock(focusBlock.node)
+          ? [
+              {type: 'insert text block', children: focusBlock.node.children},
+              {type: 'insert block object', ...hrObject},
+              {type: 'delete block', blockPath: focusBlock.path},
+            ]
+          : [
+              {
+                type: 'insert block object',
+                ...hrObject,
+              },
+            ],
     ],
   })
   const automaticHeadingOnSpace = defineBehavior({
@@ -372,6 +413,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
     automaticBlockquoteOnSpace,
     automaticBreak,
     automaticHeadingOnSpace,
+    automaticHrOnPaste,
     clearStyleOnBackspace,
     automaticListOnSpace,
   ]
