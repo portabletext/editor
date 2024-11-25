@@ -10,6 +10,7 @@ import type {
   PortableTextMemberSchemaTypes,
   PortableTextSlateEditor,
 } from '../../types/editor'
+import type {BlockOffset} from './behavior.utils.block-offset'
 
 /**
  * @alpha
@@ -139,12 +140,13 @@ export type BehaviorActionIntend =
       props: Array<'style' | 'listItem' | 'level'>
     }
   | {
-      type: 'delete'
-      selection: NonNullable<EditorSelection>
-    }
-  | {
       type: 'delete block'
       blockPath: [KeyedSegment]
+    }
+  | {
+      type: 'delete text'
+      anchor: BlockOffset
+      focus: BlockOffset
     }
   | {
       type: 'effect'

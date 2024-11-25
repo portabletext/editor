@@ -1,5 +1,5 @@
-import {Descendant, Editor, Transforms} from 'slate'
-import {
+import {Editor, Transforms, type Descendant} from 'slate'
+import type {
   PortableTextMemberSchemaTypes,
   PortableTextSlateEditor,
 } from '../../types/editor'
