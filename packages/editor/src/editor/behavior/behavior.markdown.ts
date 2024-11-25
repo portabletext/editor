@@ -64,7 +64,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         looksLikeMarkdownQuote &&
         blockquoteStyle !== undefined
       ) {
-        return {focusTextBlock, focusSpan, style: blockquoteStyle}
+        return {focusTextBlock, style: blockquoteStyle}
       }
 
       return false
@@ -76,7 +76,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           text: ' ',
         },
       ],
-      (_, {focusTextBlock, focusSpan, style}) => [
+      (_, {focusTextBlock, style}) => [
         {
           type: 'unset block',
           props: ['listItem', 'level'],
@@ -88,16 +88,14 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           paths: [focusTextBlock.path],
         },
         {
-          type: 'delete',
-          selection: {
-            anchor: {
-              path: focusSpan.path,
-              offset: 0,
-            },
-            focus: {
-              path: focusSpan.path,
-              offset: 2,
-            },
+          type: 'delete text',
+          anchor: {
+            path: focusTextBlock.path,
+            offset: 0,
+          },
+          focus: {
+            path: focusTextBlock.path,
+            offset: 2,
           },
         },
       ],
@@ -247,7 +245,6 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       if (level !== undefined && style !== undefined) {
         return {
           focusTextBlock,
-          focusSpan,
           style: style,
           level,
         }
@@ -262,7 +259,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           text: ' ',
         },
       ],
-      (_, {focusTextBlock, focusSpan, style, level}) => [
+      (_, {focusTextBlock, style, level}) => [
         {
           type: 'unset block',
           props: ['listItem', 'level'],
@@ -274,16 +271,14 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           paths: [focusTextBlock.path],
         },
         {
-          type: 'delete',
-          selection: {
-            anchor: {
-              path: focusSpan.path,
-              offset: 0,
-            },
-            focus: {
-              path: focusSpan.path,
-              offset: level + 1,
-            },
+          type: 'delete text',
+          anchor: {
+            path: focusTextBlock.path,
+            offset: 0,
+          },
+          focus: {
+            path: focusTextBlock.path,
+            offset: level + 1,
           },
         },
       ],
@@ -358,7 +353,6 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       ) {
         return {
           focusTextBlock,
-          focusSpan,
           listItem: unorderedListStyle,
           listItemLength: 1,
           style: defaultStyle,
@@ -379,7 +373,6 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       ) {
         return {
           focusTextBlock,
-          focusSpan,
           listItem: orderedListStyle,
           listItemLength: 2,
           style: defaultStyle,
@@ -395,7 +388,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           text: ' ',
         },
       ],
-      (_, {focusTextBlock, focusSpan, style, listItem, listItemLength}) => [
+      (_, {focusTextBlock, style, listItem, listItemLength}) => [
         {
           type: 'set block',
           listItem,
@@ -404,16 +397,14 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           paths: [focusTextBlock.path],
         },
         {
-          type: 'delete',
-          selection: {
-            anchor: {
-              path: focusSpan.path,
-              offset: 0,
-            },
-            focus: {
-              path: focusSpan.path,
-              offset: listItemLength + 1,
-            },
+          type: 'delete text',
+          anchor: {
+            path: focusTextBlock.path,
+            offset: 0,
+          },
+          focus: {
+            path: focusTextBlock.path,
+            offset: listItemLength + 1,
           },
         },
       ],

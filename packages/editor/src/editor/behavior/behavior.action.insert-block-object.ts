@@ -1,6 +1,6 @@
 import {toSlateValue} from '../../utils/values'
 import {insertBlock} from './behavior.action-utils.insert-block'
-import {BehaviorActionImplementation} from './behavior.actions'
+import type {BehaviorActionImplementation} from './behavior.actions'
 
 export const insertBlockObjectActionImplementation: BehaviorActionImplementation<
   'insert block object'

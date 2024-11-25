@@ -26,16 +26,11 @@ import type {
 } from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {toPortableTextRange, toSlateRange} from '../../utils/ranges'
-import {
-  fromSlateValue,
-  isEqualToEmptyEditor,
-  toSlateValue,
-} from '../../utils/values'
+import {fromSlateValue, toSlateValue} from '../../utils/values'
 import {
   KEY_TO_VALUE_ELEMENT,
   SLATE_TO_PORTABLE_TEXT_RANGE,
 } from '../../utils/weakMaps'
-import {insertBlock} from '../behavior/behavior.action-utils.insert-block'
 import {insertBlockObjectActionImplementation} from '../behavior/behavior.action.insert-block-object'
 import type {BehaviorActionImplementation} from '../behavior/behavior.actions'
 import type {EditorActor} from '../editor-machine'

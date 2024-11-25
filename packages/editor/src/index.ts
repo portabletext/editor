@@ -20,6 +20,7 @@ export {
   type OmitFromUnion,
   type PickFromUnion,
 } from './editor/behavior/behavior.types'
+export type {BlockOffset} from './editor/behavior/behavior.utils.block-offset'
 export type {SlateEditor} from './editor/create-slate-editor'
 export {
   defineSchema,

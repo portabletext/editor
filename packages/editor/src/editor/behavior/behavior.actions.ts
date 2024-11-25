@@ -2,7 +2,8 @@ import {deleteBackward, deleteForward, insertText, Transforms} from 'slate'
 import {ReactEditor} from 'slate-react'
 import type {PortableTextMemberSchemaTypes} from '../../types/editor'
 import {toSlateRange} from '../../utils/ranges'
-import {toSlateValue} from '../../utils/values'
+import {fromSlateValue, toSlateValue} from '../../utils/values'
+import {KEY_TO_VALUE_ELEMENT} from '../../utils/weakMaps'
 import {
   addAnnotationActionImplementation,
   removeAnnotationActionImplementation,
@@ -25,6 +26,7 @@ import type {
   BehaviorEvent,
   PickFromUnion,
 } from './behavior.types'
+import {blockOffsetToSpanSelectionPoint} from './behavior.utils.block-offset'
 
 export type BehaviorActionContext = {
   keyGenerator: () => string
@@ -90,28 +92,8 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'delete forward': ({action}) => {
     deleteForward(action.editor, action.unit)
   },
-  'delete': ({action}) => {
-    const location = toSlateRange(action.selection, action.editor)
-
-    if (!location) {
-      console.error(
-        `Could not find Slate location from selection ${action.selection}`,
-      )
-      return
-    }
-
-    if (location.anchor.path.length === 1 && location.focus.path.length === 1) {
-      Transforms.removeNodes(action.editor, {
-        at: location,
-      })
-    } else {
-      Transforms.delete(action.editor, {
-        at: location,
-      })
-    }
-  },
   'delete block': ({action}) => {
-    const location = toSlateRange(
+    const range = toSlateRange(
       {
         anchor: {path: action.blockPath, offset: 0},
         focus: {path: action.blockPath, offset: 0},
@@ -119,15 +101,51 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
       action.editor,
     )
 
-    if (!location) {
-      console.error(
-        `Could not find Slate location from block path ${action.blockPath}`,
-      )
+    if (!range) {
+      console.error('Unable to find Slate range from selection points')
       return
     }
 
     Transforms.removeNodes(action.editor, {
-      at: location,
+      at: range,
+    })
+  },
+  'delete text': ({context, action}) => {
+    const value = fromSlateValue(
+      action.editor.children,
+      context.schema.block.name,
+      KEY_TO_VALUE_ELEMENT.get(action.editor),
+    )
+
+    const anchor = blockOffsetToSpanSelectionPoint({
+      value,
+      blockOffset: action.anchor,
+    })
+    const focus = blockOffsetToSpanSelectionPoint({
+      value,
+      blockOffset: action.focus,
+    })
+
+    if (!anchor || !focus) {
+      console.error('Unable to find anchor or focus selection point')
+      return
+    }
+
+    const range = toSlateRange(
+      {
+        anchor,
+        focus,
+      },
+      action.editor,
+    )
+
+    if (!range) {
+      console.error('Unable to find Slate range from selection points')
+      return
+    }
+
+    Transforms.delete(action.editor, {
+      at: range,
     })
   },
   'insert block object': insertBlockObjectActionImplementation,
@@ -200,15 +218,15 @@ export function performAction({
   action: BehaviorAction
 }) {
   switch (action.type) {
-    case 'delete': {
-      behaviorActionImplementations.delete({
+    case 'delete block': {
+      behaviorActionImplementations['delete block']({
         context,
         action,
       })
       break
     }
-    case 'delete block': {
-      behaviorActionImplementations['delete block']({
+    case 'delete text': {
+      behaviorActionImplementations['delete text']({
         context,
         action,
       })
