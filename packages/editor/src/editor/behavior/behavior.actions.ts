@@ -145,7 +145,7 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
           _type: context.schema.block.name,
           style: context.schema.styles[0].value ?? 'normal',
           markDefs: [],
-          children: action.children?.map((child) => ({
+          children: action.textBlock?.children?.map((child) => ({
             ...child,
             _key: context.keyGenerator(),
           })) ?? [
@@ -160,7 +160,12 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
       {schemaTypes: context.schema},
     )[0]
 
-    insertBlock({block, editor: action.editor, schema: context.schema})
+    insertBlock({
+      block,
+      editor: action.editor,
+      schema: context.schema,
+      placement: action.placement,
+    })
   },
   'effect': ({action}) => {
     action.effect()
