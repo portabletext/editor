@@ -103,7 +103,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       ],
     ],
   })
-  const automaticBreak = defineBehavior({
+  const automaticHr = defineBehavior({
     on: 'insert text',
     guard: ({context, event}) => {
       const hrCharacter =
@@ -119,13 +119,13 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
-      const breakObject = config.horizontalRuleObject?.({
+      const hrObject = config.horizontalRuleObject?.({
         schema: context.schema,
       })
       const focusBlock = getFocusTextBlock(context)
       const selectionCollapsed = selectionIsCollapsed(context)
 
-      if (!breakObject || !focusBlock || !selectionCollapsed) {
+      if (!hrObject || !focusBlock || !selectionCollapsed) {
         return false
       }
 
@@ -135,7 +135,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         .join('')
 
       if (onlyText && blockText === `${hrCharacter}${hrCharacter}`) {
-        return {breakObject, focusBlock, hrCharacter}
+        return {hrObject, focusBlock, hrCharacter}
       }
 
       return false
@@ -147,10 +147,10 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           text: hrCharacter,
         },
       ],
-      (_, {breakObject, focusBlock}) => [
+      (_, {hrObject, focusBlock}) => [
         {
           type: 'insert block object',
-          ...breakObject,
+          ...hrObject,
         },
         {
           type: 'delete block',
@@ -411,8 +411,8 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
 
   const markdownBehaviors = [
     automaticBlockquoteOnSpace,
-    automaticBreak,
     automaticHeadingOnSpace,
+    automaticHr,
     automaticHrOnPaste,
     clearStyleOnBackspace,
     automaticListOnSpace,
