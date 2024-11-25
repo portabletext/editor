@@ -378,3 +378,14 @@ The Behavior API is a new way of interfacing with the Portable Text Editor. It a
 2. Imperatively trigger **events** using `editor.send(…)` which in turn can trigger behaviors defined using `defineBehavior`.
 3. Deriving editor **state** using **pure functions**.
 4. Subscribe to **emitted** editor **events** using `editor.on(…)`.
+
+## Development
+
+### Develop Together with Sanity Studio
+
+1. Run `pnpm build:editor` to make sure it builds correctly
+2. Now run `pnpm dev:editor` to run it in dev mode
+3. In another terminal, open your local version of the [sanity](https://github.com/sanity-io/sanity) monorepo
+4. `cd` into the `sanity` package and run `pnpm link <relative path to the **editor** package in this repo>`
+
+Now, you should be able to run `pnpm dev:test-studio` in the `sanity` repo to test Studio with a locally running Portable Text Editor.
