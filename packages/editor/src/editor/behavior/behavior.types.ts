@@ -105,7 +105,7 @@ export type BehaviorActionIntend =
   | BehaviorEvent
   | {
       type: 'insert block object'
-      placement: 'auto' | 'after'
+      placement: 'auto' | 'after' | 'before'
       blockObject: {
         name: string
         value?: {[prop: string]: unknown}
@@ -122,7 +122,7 @@ export type BehaviorActionIntend =
     }
   | {
       type: 'insert text block'
-      placement: 'auto' | 'after'
+      placement: 'auto' | 'after' | 'before'
       textBlock?: {
         children?: PortableTextTextBlock['children']
       }
