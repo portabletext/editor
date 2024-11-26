@@ -50,6 +50,6 @@
   "devDependencies": {
     "@sanity/pkg-utils": "^6.11.13",
     "@types/lodash": "^4.17.13",
-    "typescript": "5.6.3"
+    "typescript": "5.7.2"
   }
 }
