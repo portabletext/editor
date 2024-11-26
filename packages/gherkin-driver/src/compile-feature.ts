@@ -11,7 +11,7 @@ import type {
 } from './step-definitions'
 
 /**
- * @internal
+ * @public
  */
 export type CompiledFeature = {
   name: string
@@ -24,7 +24,7 @@ export type CompiledFeature = {
 }
 
 /**
- * @internal
+ * @public
  */
 export function compileFeature<TContext extends Record<string, any> = object>({
   featureText,
