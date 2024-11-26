@@ -13,7 +13,8 @@
     {
       "matchFileNames": [
         "packages/editor/package.json",
-        "packages/patches/package.json"
+        "packages/patches/package.json",
+        "packages/racejar/package.json"
       ],
       "matchDepTypes": ["dependencies", "peerDependencies"],
       "rangeStrategy": "bump",
