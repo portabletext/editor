@@ -1,5 +1,5 @@
-import {Given} from '@sanity/gherkin-driver'
-import {Feature} from '@sanity/gherkin-driver/vitest'
+import {Given} from 'racejar'
+import {Feature} from 'racejar/vitest'
 import behaviorMarkdownFeature from '../gherkin-spec/behavior.markdown.feature?raw'
 import {coreBehaviors, createMarkdownBehaviors} from '../src'
 import {parameterTypes} from './gherkin-parameter-types'

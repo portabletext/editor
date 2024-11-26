@@ -325,9 +325,6 @@ importers:
       '@sanity/diff-match-patch':
         specifier: ^3.1.1
         version: 3.1.1
-      '@sanity/gherkin-driver':
-        specifier: workspace:^
-        version: link:../gherkin-driver
       '@sanity/pkg-utils':
         specifier: ^6.11.12
         version: 6.11.12(@types/babel__core@7.20.5)(@types/node@22.9.0)(babel-plugin-react-compiler@19.0.0-beta-df7b47d-20241124)(debug@4.3.7)(typescript@5.6.3)
@@ -385,6 +382,9 @@ importers:
       jsdom:
         specifier: ^25.0.1
         version: 25.0.1
+      racejar:
+        specifier: workspace:^
+        version: link:../racejar
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -410,7 +410,26 @@ importers:
         specifier: ^0.0.3
         version: 0.0.3(@types/react-dom@18.3.1)(@types/react@18.3.12)(@vitest/browser@2.1.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vitest@2.1.5)
 
-  packages/gherkin-driver:
+  packages/patches:
+    dependencies:
+      '@sanity/diff-match-patch':
+        specifier: ^3.1.1
+        version: 3.1.1
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
+    devDependencies:
+      '@sanity/pkg-utils':
+        specifier: ^6.11.12
+        version: 6.11.12(@types/babel__core@7.20.5)(@types/node@22.9.0)(babel-plugin-react-compiler@19.0.0-beta-df7b47d-20241124)(debug@4.3.7)(typescript@5.6.3)
+      '@types/lodash':
+        specifier: ^4.17.13
+        version: 4.17.13
+      typescript:
+        specifier: 5.6.3
+        version: 5.6.3
+
+  packages/racejar:
     devDependencies:
       '@cucumber/cucumber-expressions':
         specifier: ^18.0.1
@@ -433,25 +452,6 @@ importers:
       vitest:
         specifier: ^2.1.5
         version: 2.1.5(@types/node@22.9.0)(@vitest/browser@2.1.5)(jsdom@25.0.1)(msw@2.6.4(@types/node@22.9.0)(typescript@5.6.3))(terser@5.36.0)
-
-  packages/patches:
-    dependencies:
-      '@sanity/diff-match-patch':
-        specifier: ^3.1.1
-        version: 3.1.1
-      lodash:
-        specifier: ^4.17.21
-        version: 4.17.21
-    devDependencies:
-      '@sanity/pkg-utils':
-        specifier: ^6.11.12
-        version: 6.11.12(@types/babel__core@7.20.5)(@types/node@22.9.0)(babel-plugin-react-compiler@19.0.0-beta-df7b47d-20241124)(debug@4.3.7)(typescript@5.6.3)
-      '@types/lodash':
-        specifier: ^4.17.13
-        version: 4.17.13
-      typescript:
-        specifier: 5.6.3
-        version: 5.6.3
 
 packages:
 

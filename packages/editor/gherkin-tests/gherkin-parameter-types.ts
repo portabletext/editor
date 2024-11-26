@@ -1,4 +1,4 @@
-import {createParameterType} from '@sanity/gherkin-driver'
+import {createParameterType} from 'racejar'
 import {parseGherkinTextParameter} from './gherkin-step-helpers'
 
 export const parameterTypes = [
