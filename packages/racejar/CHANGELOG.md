@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/portabletext/editor/compare/racejar-v1.0.0...racejar-v1.0.1) (2024-11-26)
+
+
+### Bug Fixes
+
+* **deps:** update dependency vitest to ^2.1.5 ([bbceed5](https://github.com/portabletext/editor/commit/bbceed5c72ba6a9a9860fbbf89a939ae066d93f5))
+* export ParameterType ([259c1a7](https://github.com/portabletext/editor/commit/259c1a7cce60a9c2106d6ee4c5d7c4d5da6c1917))
+
 ## 1.0.0 (2024-11-26)
 
 
