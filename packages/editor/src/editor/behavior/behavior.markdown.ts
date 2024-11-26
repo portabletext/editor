@@ -1,4 +1,3 @@
-import {isPortableTextSpan} from '@portabletext/toolkit'
 import {isPortableTextTextBlock} from '@sanity/types'
 import type {PortableTextMemberSchemaTypes} from '../../types/editor'
 import {defineBehavior} from './behavior.types'
@@ -10,6 +9,7 @@ import {
   selectionIsCollapsed,
 } from './behavior.utils'
 import {spanSelectionPointToBlockOffset} from './behavior.utils.block-offset'
+import {getBlockTextBefore} from './behavior.utilts.get-text-before'
 
 /**
  * @alpha
@@ -146,13 +146,23 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
-      const onlyText = focusBlock.node.children.every(isPortableTextSpan)
-      const blockText = focusBlock.node.children
-        .map((child) => child.text ?? '')
-        .join('')
+      const textBefore = getBlockTextBefore({
+        value: context.value,
+        point: context.selection.focus,
+      })
+      const hrBlockOffsets = {
+        anchor: {
+          path: focusBlock.path,
+          offset: 0,
+        },
+        focus: {
+          path: focusBlock.path,
+          offset: 3,
+        },
+      }
 
-      if (onlyText && blockText === `${hrCharacter}${hrCharacter}`) {
-        return {hrObject, focusBlock, hrCharacter}
+      if (textBefore === `${hrCharacter}${hrCharacter}`) {
+        return {hrObject, focusBlock, hrCharacter, hrBlockOffsets}
       }
 
       return false
@@ -164,19 +174,15 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           text: hrCharacter,
         },
       ],
-      (_, {hrObject, focusBlock}) => [
+      (_, {hrObject, hrBlockOffsets}) => [
         {
           type: 'insert block object',
-          placement: 'after',
+          placement: 'before',
           blockObject: hrObject,
         },
         {
-          type: 'delete block',
-          blockPath: focusBlock.path,
-        },
-        {
-          type: 'insert text block',
-          placement: 'after',
+          type: 'delete text',
+          ...hrBlockOffsets,
         },
       ],
     ],
