@@ -10,6 +10,8 @@ export type ParameterTypeConfig<TType = string> = {
   transform?: (...match: string[]) => TType
 }
 
+export type {ParameterType}
+
 /**
  * @public
  */
