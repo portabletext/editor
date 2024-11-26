@@ -36,6 +36,12 @@
       "semanticCommitType": "fix"
     },
     {
+      "matchFileNames": ["packages/editor/package.json"],
+      "matchPackageNames": ["racejar"],
+      "rangeStrategy": "bump",
+      "semanticCommitType": "chore"
+    },
+    {
       "description": "Ensure internal and important packages open a PRs right away, without waiting for manual approval",
       "matchPackageNames": [
         "@sanity/*",
