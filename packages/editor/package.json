@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/editor",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "description": "Portable Text Editor made in React",
   "keywords": [
     "sanity",
@@ -91,7 +91,7 @@
     "eslint-plugin-react-compiler": "19.0.0-beta-df7b47d-20241124",
     "eslint-plugin-react-hooks": "^5.0.0",
     "jsdom": "^25.0.1",
-    "racejar": "1.0.0",
+    "racejar": "2.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "rxjs": "^7.8.1",
