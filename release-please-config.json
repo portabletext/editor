@@ -6,6 +6,7 @@
   "plugins": ["node-workspace"],
   "packages": {
     "packages/editor": {},
-    "packages/patches": {}
+    "packages/patches": {},
+    "packages/racejar": {}
   }
 }
