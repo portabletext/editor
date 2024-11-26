@@ -12,7 +12,7 @@ export function insertBlock({
   schema,
 }: {
   block: Descendant
-  placement: 'auto' | 'after'
+  placement: 'auto' | 'after' | 'before'
   editor: PortableTextSlateEditor
   schema: PortableTextMemberSchemaTypes
 }) {
@@ -50,6 +50,8 @@ export function insertBlock({
         anchor: {path: [nextPath[0], 0], offset: 0},
         focus: {path: [nextPath[0], 0], offset: 0},
       })
+    } else if (placement === 'before') {
+      Transforms.insertNodes(editor, block, {at: focusBlockPath})
     } else {
       Editor.insertNode(editor, block)
     }
