@@ -383,7 +383,7 @@ importers:
         specifier: ^25.0.1
         version: 25.0.1
       racejar:
-        specifier: 1.0.0
+        specifier: workspace:*
         version: link:../racejar
       react:
         specifier: ^18.3.1
