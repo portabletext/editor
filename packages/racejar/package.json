@@ -45,7 +45,7 @@
     "@cucumber/gherkin": "^30.0.4",
     "@cucumber/messages": "^27.0.2",
     "@jest/globals": "^29.7.0",
-    "@sanity/pkg-utils": "^6.11.12",
+    "@sanity/pkg-utils": "^6.11.13",
     "typescript": "5.6.3",
     "vitest": "^2.1.5"
   },

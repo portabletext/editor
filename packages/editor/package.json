@@ -72,7 +72,7 @@
     "@portabletext/toolkit": "^2.0.16",
     "@sanity/block-tools": "^3.64.3",
     "@sanity/diff-match-patch": "^3.1.1",
-    "@sanity/pkg-utils": "^6.11.12",
+    "@sanity/pkg-utils": "^6.11.13",
     "@sanity/schema": "^3.64.3",
     "@sanity/types": "^3.64.3",
     "@testing-library/jest-dom": "^6.6.3",
