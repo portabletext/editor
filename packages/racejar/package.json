@@ -46,7 +46,7 @@
     "@cucumber/messages": "^27.0.2",
     "@jest/globals": "^29.7.0",
     "@sanity/pkg-utils": "^6.11.13",
-    "typescript": "5.6.3",
+    "typescript": "5.7.2",
     "vitest": "^2.1.5"
   },
   "peerDependencies": {
