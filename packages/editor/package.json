@@ -99,7 +99,7 @@
     "typescript": "5.7.2",
     "vite": "^5.4.11",
     "vitest": "^2.1.5",
-    "vitest-browser-react": "^0.0.3"
+    "vitest-browser-react": "^0.0.4"
   },
   "peerDependencies": {
     "@sanity/block-tools": "^3.65.0",
