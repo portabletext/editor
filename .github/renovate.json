@@ -27,7 +27,6 @@
         "@sanity/block-tools",
         "@sanity/schema",
         "@sanity/types",
-        "@sanity/util",
         "react",
         "rxjs",
         "styled-components"
