@@ -407,8 +407,8 @@ importers:
         specifier: ^2.1.5
         version: 2.1.5(@types/node@22.9.0)(@vitest/browser@2.1.5)(jsdom@25.0.1)(msw@2.6.4(@types/node@22.9.0)(typescript@5.7.2))(terser@5.36.0)
       vitest-browser-react:
-        specifier: ^0.0.3
-        version: 0.0.3(@types/react-dom@18.3.1)(@types/react@18.3.12)(@vitest/browser@2.1.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vitest@2.1.5)
+        specifier: ^0.0.4
+        version: 0.0.4(@types/react-dom@18.3.1)(@types/react@18.3.12)(@vitest/browser@2.1.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vitest@2.1.5)
 
   packages/patches:
     dependencies:
@@ -4871,8 +4871,8 @@ packages:
       terser:
         optional: true
 
-  vitest-browser-react@0.0.3:
-    resolution: {integrity: sha512-bNAE5ANYpGtwxdpN5qc4WxZnIjU0WYhOPMLAamm1/143tTBUFLHXe/rGSiy8q5xid/zrCRfC7AmKUA0LYNyUMg==}
+  vitest-browser-react@0.0.4:
+    resolution: {integrity: sha512-4uK8zgo5eHlhrBVEPX8ejRt8Bn4gzV6OZFTPdb1en3FtgjEhhst400XkIQHUC875Q90rOO5Tc4zPpCl8YXvoxg==}
     engines: {node: ^18.0.0 || >=20.0.0}
     peerDependencies:
       '@types/react': '>18.0.0'
@@ -10222,7 +10222,7 @@ snapshots:
       fsevents: 2.3.3
       terser: 5.36.0
 
-  vitest-browser-react@0.0.3(@types/react-dom@18.3.1)(@types/react@18.3.12)(@vitest/browser@2.1.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vitest@2.1.5):
+  vitest-browser-react@0.0.4(@types/react-dom@18.3.1)(@types/react@18.3.12)(@vitest/browser@2.1.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vitest@2.1.5):
     dependencies:
       '@vitest/browser': 2.1.5(@types/node@22.9.0)(playwright@1.49.0)(typescript@5.7.2)(vite@5.4.11(@types/node@22.9.0)(terser@5.36.0))(vitest@2.1.5)
       react: 18.3.1
