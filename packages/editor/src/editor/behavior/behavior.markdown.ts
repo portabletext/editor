@@ -418,7 +418,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         }
       }
 
-      const looksLikeOrderedList = /^1./.test(focusSpan.node.text)
+      const looksLikeOrderedList = /^1\./.test(focusSpan.node.text)
       const orderedListStyle = config.orderedListStyle?.({
         schema: context.schema,
       })
