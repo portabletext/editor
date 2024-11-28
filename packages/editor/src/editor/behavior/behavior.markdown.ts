@@ -418,11 +418,11 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         }
       }
 
-      const looksLikeOrderedList = /^1\./.test(focusSpan.node.text)
+      const looksLikeOrderedList = /^1\./.test(blockText)
       const orderedListStyle = config.orderedListStyle?.({
         schema: context.schema,
       })
-      const caretAtTheEndOfOrderedList = context.selection.focus.offset === 2
+      const caretAtTheEndOfOrderedList = blockOffset.offset === 2
 
       if (
         defaultStyle &&
