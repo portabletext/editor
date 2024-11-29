@@ -13,7 +13,7 @@ export function Feature<TContext extends Record<string, any> = object>({
 }: {
   featureText: string
   stepDefinitions: Array<StepDefinition<TContext, any, any, any>>
-  parameterTypes: Array<ParameterType<unknown>>
+  parameterTypes?: Array<ParameterType<unknown>>
 }) {
   const feature = compileFeature({
     featureText,

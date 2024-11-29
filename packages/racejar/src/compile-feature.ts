@@ -33,7 +33,7 @@ export function compileFeature<TContext extends Record<string, any> = object>({
 }: {
   featureText: string
   stepDefinitions: Array<StepDefinition<TContext, any, any, any>>
-  parameterTypes: Array<ParameterType<unknown>>
+  parameterTypes?: Array<ParameterType<unknown>>
 }): CompiledFeature {
   const uuidFn = Messages.IdGenerator.uuid()
   const builder = new Gherkin.AstBuilder(uuidFn)
@@ -48,9 +48,11 @@ export function compileFeature<TContext extends Record<string, any> = object>({
   )
 
   const parameterTypeRegistry = new ParameterTypeRegistry()
-  parameterTypes.forEach((parameterType) =>
-    parameterTypeRegistry.defineParameterType(parameterType),
-  )
+  if (parameterTypes) {
+    parameterTypes.forEach((parameterType) =>
+      parameterTypeRegistry.defineParameterType(parameterType),
+    )
+  }
 
   if (!gherkinDocument.feature) {
     throw new Error('No feature found')
