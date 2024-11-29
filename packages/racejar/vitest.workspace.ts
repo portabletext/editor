@@ -8,4 +8,10 @@ export default defineWorkspace([
       name: 'unit',
     },
   },
+  {
+    plugins: [],
+    test: {
+      name: 'chromium',
+    },
+  },
 ])
