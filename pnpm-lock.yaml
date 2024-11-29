@@ -288,9 +288,6 @@ importers:
       get-random-values-esm:
         specifier: ^1.0.2
         version: 1.0.2
-      is-hotkey-esm:
-        specifier: ^1.0.0
-        version: 1.0.0
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -3425,9 +3422,6 @@ packages:
   is-glob@4.0.3:
     resolution: {integrity: sha512-xelSayHH36ZgE7ZWhli7pW34hNbNl8Ojv5KVmkJD4hBdD3th8Tfk9vYasLM+mXWOZhFkgZfxhLSnrwRr4elSSg==}
     engines: {node: '>=0.10.0'}
-
-  is-hotkey-esm@1.0.0:
-    resolution: {integrity: sha512-eTXNmLCPXpKEZUERK6rmFsqmL66+5iNB998JMO+/61fSxBZFuUR1qHyFyx7ocBl5Vs8qjFzRAJLACpYfhS5g5w==}
 
   is-hotkey@0.2.0:
     resolution: {integrity: sha512-UknnZK4RakDmTgz4PI1wIph5yxSs/mvChWs9ifnlXsKuXgWmOkY/hAE0H/k2MIqH0RlRye0i1oC07MCRSD28Mw==}
@@ -8686,8 +8680,6 @@ snapshots:
   is-glob@4.0.3:
     dependencies:
       is-extglob: 2.1.1
-
-  is-hotkey-esm@1.0.0: {}
 
   is-hotkey@0.2.0: {}
 

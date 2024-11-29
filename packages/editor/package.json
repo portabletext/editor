@@ -62,7 +62,6 @@
     "@xstate/react": "^5.0.0",
     "debug": "^4.3.4",
     "get-random-values-esm": "^1.0.2",
-    "is-hotkey-esm": "^1.0.0",
     "lodash": "^4.17.21",
     "lodash.startcase": "^4.4.0",
     "react-compiler-runtime": "19.0.0-beta-df7b47d-20241124",
