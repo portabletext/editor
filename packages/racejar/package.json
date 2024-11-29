@@ -38,7 +38,9 @@
   "scripts": {
     "check:lint": "biome lint .",
     "check:types": "tsc",
-    "lint:fix": "biome lint --write ."
+    "lint:fix": "biome lint --write .",
+    "test": "vitest --run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@cucumber/cucumber-expressions": "^18.0.1",
