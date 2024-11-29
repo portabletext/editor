@@ -51,7 +51,11 @@
     "lint:fix": "biome lint --write .",
     "prepublishOnly": "turbo run build",
     "test": "vitest --run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:chromium": "vitest --run --project chromium",
+    "test:chromium:watch": "vitest --project chromium",
+    "test:unit": "vitest --run --project unit",
+    "test:unit:watch": "vitest --project unit"
   },
   "dependencies": {
     "@portabletext/patches": "1.1.0",
