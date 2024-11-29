@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.2](https://github.com/portabletext/editor/compare/racejar-v1.0.1...racejar-v1.0.2) (2024-11-29)
+
+
+### Bug Fixes
+
+* allow synchronous step callbacks ([a8b1848](https://github.com/portabletext/editor/commit/a8b18489a5beaa1bd013d4753361357d53f44650))
+* make parameter types optional ([3f35c97](https://github.com/portabletext/editor/commit/3f35c97cc2fcb7790f2edcd733132cefc35ae17d))
+
 ## [1.0.1](https://github.com/portabletext/editor/compare/racejar-v1.0.0...racejar-v1.0.1) (2024-11-26)
 
 
