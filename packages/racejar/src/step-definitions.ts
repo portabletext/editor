@@ -24,7 +24,7 @@ export type StepDefinitionCallback<
 > = (
   context: TContext,
   ...args: StepDefinitionCallbackParameters<TParamA, TParamB, TParamC>
-) => Promise<void>
+) => Promise<void> | void
 
 /**
  * @public

@@ -19,7 +19,7 @@ export type CompiledFeature = {
   scenarios: Array<{
     name: string
     tag?: 'only' | 'skip'
-    steps: Array<() => Promise<void>>
+    steps: Array<() => Promise<void> | void>
   }>
 }
 
