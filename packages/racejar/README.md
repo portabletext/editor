@@ -106,7 +106,44 @@ import {createParameterType} from 'racejar'
 const parameterTypes = [createParameterType(/* ... */)]
 ```
 
-## Example Usage
+## Basic Example
+
+```ts
+import {Given, Then, When} from 'racejar'
+import {Feature} from 'racejar/vitest'
+import {expect} from 'vitest'
+
+function greet(name: string) {
+  return `Hello, ${name}!`
+}
+
+type Context = {
+  person: string
+  greeting: string
+}
+
+Feature({
+  featureText: `
+    Feature: Greeting
+      Scenario: Greeting a person
+        Given the person "Herman"
+        When greeting the person
+        Then the greeting is "Hello, Herman!"`,
+  stepDefinitions: [
+    Given<Context, string>('the person {string}', (context, person) => {
+      context.person = person
+    }),
+    When<Context>('greeting the person', (context) => {
+      context.greeting = greet(context.person)
+    }),
+    Then<Context, string>('the greeting is {string}', (context, greeting) => {
+      expect(context.greeting).toBe(greeting)
+    }),
+  ],
+})
+```
+
+## Advanced Example
 
 The following example is taken from the [`editor`](/packages/editor/) package in this repository. For a full example of how to use `racejar`, head over to [/packages/editor/gherkin-tests/](/packages/editor/gherkin-tests/). The package uses `racejar` to run a [Playwright](https://playwright.dev/) E2E test suite powered by [Vitest Browser Mode](https://vitest.dev/guide/browser/).
 
