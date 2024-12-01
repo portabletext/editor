@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.12.4](https://github.com/portabletext/editor/compare/editor-v1.12.3...editor-v1.12.4) (2024-12-01)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * racejar bumped to 1.0.3
+
 ## [1.12.3](https://github.com/portabletext/editor/compare/editor-v1.12.2...editor-v1.12.3) (2024-11-29)
 
 
