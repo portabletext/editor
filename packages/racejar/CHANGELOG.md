@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/portabletext/editor/compare/racejar-v1.0.2...racejar-v1.0.3) (2024-12-01)
+
+
+### Bug Fixes
+
+* fix type error when defining inline steps without using generics ([d371044](https://github.com/portabletext/editor/commit/d371044dae46e87188bfc52cbadd8708748bb0ce))
+
 ## [1.0.2](https://github.com/portabletext/editor/compare/racejar-v1.0.1...racejar-v1.0.2) (2024-11-29)
 
 
