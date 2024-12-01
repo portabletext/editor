@@ -19,13 +19,13 @@ Feature({
         When greeting the person
         Then the greeting is "Hello, Herman!"`,
   stepDefinitions: [
-    Given<Context, string>('the person {string}', (context, person) => {
+    Given('the person {string}', (context: Context, person: string) => {
       context.person = person
     }),
-    When<Context>('greeting the person', (context) => {
+    When('greeting the person', (context: Context) => {
       context.greeting = greet(context.person)
     }),
-    Then<Context, string>('the greeting is {string}', (context, greeting) => {
+    Then('the greeting is {string}', (context: Context, greeting: string) => {
       expect(context.greeting).toBe(greeting)
     }),
   ],

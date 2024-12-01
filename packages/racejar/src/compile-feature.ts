@@ -5,10 +5,7 @@ import {
 } from '@cucumber/cucumber-expressions'
 import * as Gherkin from '@cucumber/gherkin'
 import * as Messages from '@cucumber/messages'
-import type {
-  StepDefinition,
-  StepDefinitionCallbackParameters,
-} from './step-definitions'
+import type {StepDefinition} from './step-definitions'
 
 /**
  * @public
@@ -116,11 +113,9 @@ export function compileFeature<TContext extends Record<string, any> = object>({
         throw new Error(`Multiple implementations found for step: ${step.text}`)
       }
 
-      const args = matchingStep.args.map((arg) =>
-        arg.getValue(matchingStep),
-      ) as StepDefinitionCallbackParameters<any, any, any>
+      const args = matchingStep.args.map((arg) => arg.getValue(matchingStep))
 
-      return () => matchingStep.callback(context, ...args)
+      return () => matchingStep.callback(context, args[0], args[1], args[2])
     })
 
     return {

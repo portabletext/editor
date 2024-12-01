@@ -1,30 +1,27 @@
 /**
  * @public
  */
-export type StepDefinitionCallbackParameters<
-  TParamA = undefined,
-  TParamB = undefined,
-  TParamC = undefined,
-> = TParamA extends undefined
-  ? []
-  : TParamB extends undefined
-    ? [TParamA]
-    : TParamC extends undefined
-      ? [TParamA, TParamB]
-      : [TParamA, TParamB, TParamC]
-
-/**
- * @public
- */
 export type StepDefinitionCallback<
   TContext extends Record<string, any> = object,
   TParamA = undefined,
   TParamB = undefined,
   TParamC = undefined,
-> = (
-  context: TContext,
-  ...args: StepDefinitionCallbackParameters<TParamA, TParamB, TParamC>
-) => Promise<void> | void
+> = TParamA extends undefined
+  ? (context: TContext) => Promise<void> | void
+  : TParamB extends undefined
+    ? (context: TContext, paramA: TParamA) => Promise<void> | void
+    : TParamC extends undefined
+      ? (
+          context: TContext,
+          paramA: TParamA,
+          paramB: TParamB,
+        ) => Promise<void> | void
+      : (
+          context: TContext,
+          paramA: TParamA,
+          paramB: TParamB,
+          paramC: TParamC,
+        ) => Promise<void> | void
 
 /**
  * @public
