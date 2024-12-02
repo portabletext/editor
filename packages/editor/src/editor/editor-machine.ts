@@ -71,6 +71,7 @@ export type InternalEditorEvent =
       type: 'behavior event'
       behaviorEvent: BehaviorEvent
       editor: PortableTextSlateEditor
+      nativeEvent?: {preventDefault: () => void}
     }
   | {
       type: 'behavior action intends'
@@ -303,12 +304,7 @@ export const editorMachine = setup({
         }
 
         if (behaviorOverwritten) {
-          if (
-            event.behaviorEvent.type === 'key.down' ||
-            event.behaviorEvent.type === 'key.up'
-          ) {
-            event.behaviorEvent.nativeEvent.preventDefault()
-          }
+          event.nativeEvent?.preventDefault()
           break
         }
       }
