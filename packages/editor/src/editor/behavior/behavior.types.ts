@@ -83,6 +83,22 @@ export type BehaviorEvent =
       type: 'paste'
       clipboardData: NonNullable<ClipboardEvent['clipboardData']>
     }
+  | {
+      type: 'key.down'
+      keyboardEvent: Pick<
+        KeyboardEvent,
+        'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
+      >
+      nativeEvent: KeyboardEvent
+    }
+  | {
+      type: 'key.up'
+      keyboardEvent: Pick<
+        KeyboardEvent,
+        'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
+      >
+      nativeEvent: KeyboardEvent
+    }
 
 /**
  * @alpha
@@ -94,7 +110,9 @@ export type BehaviorGuard<
   context,
   event,
 }: {
-  event: TBehaviorEvent
+  event: TBehaviorEvent['type'] extends 'key.down' | 'key.up'
+    ? Omit<TBehaviorEvent, 'nativeEvent'>
+    : TBehaviorEvent
   context: BehaviorContext
 }) => TGuardResponse | false
 
@@ -102,7 +120,9 @@ export type BehaviorGuard<
  * @alpha
  */
 export type BehaviorActionIntend =
-  | BehaviorEvent
+  | OmitFromUnion<BehaviorEvent, 'type', 'key.down' | 'key.up'>
+  | Omit<PickFromUnion<BehaviorEvent, 'type', 'key.down'>, 'nativeEvent'>
+  | Omit<PickFromUnion<BehaviorEvent, 'type', 'key.up'>, 'nativeEvent'>
   | {
       type: 'insert block object'
       placement: 'auto' | 'after' | 'before'
@@ -208,7 +228,7 @@ export type BehaviorActionIntendSet<
     event: PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>
   },
   guardResponse: TGuardResponse,
-) => Array<BehaviorActionIntend>
+) => Array<OmitFromUnion<BehaviorActionIntend, 'type', 'key.down' | 'key.up'>>
 
 /**
  * @alpha

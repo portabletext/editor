@@ -659,8 +659,53 @@ export const PortableTextEditable = forwardRef<
       if (!event.isDefaultPrevented()) {
         slateEditor.pteWithHotKeys(event)
       }
+      if (!event.isDefaultPrevented()) {
+        editorActor.send({
+          type: 'behavior event',
+          behaviorEvent: {
+            type: 'key.down',
+            keyboardEvent: {
+              key: event.nativeEvent.key,
+              code: event.nativeEvent.code,
+              altKey: event.nativeEvent.altKey,
+              ctrlKey: event.nativeEvent.ctrlKey,
+              metaKey: event.nativeEvent.metaKey,
+              shiftKey: event.nativeEvent.shiftKey,
+            },
+            nativeEvent: event.nativeEvent,
+          },
+          editor: slateEditor,
+        })
+      }
     },
-    [props, slateEditor],
+    [props, editorActor, slateEditor],
+  )
+
+  const handleKeyUp = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      if (props.onKeyUp) {
+        props.onKeyUp(event)
+      }
+      if (!event.isDefaultPrevented()) {
+        editorActor.send({
+          type: 'behavior event',
+          behaviorEvent: {
+            type: 'key.up',
+            keyboardEvent: {
+              key: event.nativeEvent.key,
+              code: event.nativeEvent.code,
+              altKey: event.nativeEvent.altKey,
+              ctrlKey: event.nativeEvent.ctrlKey,
+              metaKey: event.nativeEvent.metaKey,
+              shiftKey: event.nativeEvent.shiftKey,
+            },
+            nativeEvent: event.nativeEvent,
+          },
+          editor: slateEditor,
+        })
+      }
+    },
+    [props, editorActor, slateEditor],
   )
 
   const scrollSelectionIntoViewToSlate = useMemo(() => {
@@ -753,6 +798,7 @@ export const PortableTextEditable = forwardRef<
       onDOMBeforeInput={handleOnBeforeInput}
       onFocus={handleOnFocus}
       onKeyDown={handleKeyDown}
+      onKeyUp={handleKeyUp}
       onPaste={handlePaste}
       readOnly={readOnly}
       // We have implemented our own placeholder logic with decorations.
