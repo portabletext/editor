@@ -46,6 +46,10 @@ export type BehaviorEvent =
       }
     }
   | {
+      type: 'copy'
+      data: DataTransfer
+    }
+  | {
       type: 'decorator.add'
       decorator: string
     }
@@ -223,7 +227,11 @@ export type BehaviorActionIntendSet<
   },
   guardResponse: TGuardResponse,
 ) => Array<
-  OmitFromUnion<BehaviorActionIntend, 'type', 'key.down' | 'key.up' | 'paste'>
+  OmitFromUnion<
+    BehaviorActionIntend,
+    'type',
+    'copy' | 'key.down' | 'key.up' | 'paste'
+  >
 >
 
 /**

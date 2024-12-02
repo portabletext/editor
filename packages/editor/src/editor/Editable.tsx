@@ -420,9 +420,19 @@ export const PortableTextEditable = forwardRef<
         if (result !== undefined) {
           event.preventDefault()
         }
+      } else if (event.nativeEvent.clipboardData) {
+        editorActor.send({
+          type: 'behavior event',
+          behaviorEvent: {
+            type: 'copy',
+            data: event.nativeEvent.clipboardData,
+          },
+          editor: slateEditor,
+          nativeEvent: event,
+        })
       }
     },
-    [onCopy],
+    [onCopy, editorActor, slateEditor],
   )
 
   // Handle incoming pasting events in the editor
