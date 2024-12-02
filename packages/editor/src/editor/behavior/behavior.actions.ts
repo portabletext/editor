@@ -86,6 +86,7 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
       Transforms.unsetNodes(action.editor, action.props, {at})
     }
   },
+  'copy': () => {},
   'delete backward': ({action}) => {
     deleteBackward(action.editor, action.unit)
   },
@@ -318,6 +319,13 @@ function performDefaultAction({
     }
     case 'annotation.toggle': {
       behaviorActionImplementations['annotation.toggle']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'copy': {
+      behaviorActionImplementations.copy({
         context,
         action,
       })
