@@ -10,20 +10,24 @@ import type {StepDefinition} from './step-definitions'
 /**
  * @public
  */
-export type CompiledFeature = {
-  name: string
-  tag?: 'only' | 'skip'
-  scenarios: Array<{
+export type CompiledFeature<TStepContext extends Record<string, any> = object> =
+  {
     name: string
     tag?: 'only' | 'skip'
-    steps: Array<() => Promise<void> | void>
-  }>
-}
+    scenarios: Array<{
+      name: string
+      tag?: 'only' | 'skip'
+      steps: Array<(stepContext?: TStepContext) => Promise<void> | void>
+    }>
+  }
 
 /**
  * @public
  */
-export function compileFeature<TContext extends Record<string, any> = object>({
+export function compileFeature<
+  TContext extends Record<string, any> = object,
+  TStepContext extends Record<string, any> = object,
+>({
   featureText,
   stepDefinitions,
   parameterTypes,
@@ -31,7 +35,7 @@ export function compileFeature<TContext extends Record<string, any> = object>({
   featureText: string
   stepDefinitions: Array<StepDefinition<TContext, any, any, any>>
   parameterTypes?: Array<ParameterType<unknown>>
-}): CompiledFeature {
+}): CompiledFeature<TStepContext> {
   const uuidFn = Messages.IdGenerator.uuid()
   const builder = new Gherkin.AstBuilder(uuidFn)
   const matcher = new Gherkin.GherkinClassicTokenMatcher()
@@ -115,7 +119,13 @@ export function compileFeature<TContext extends Record<string, any> = object>({
 
       const args = matchingStep.args.map((arg) => arg.getValue(matchingStep))
 
-      return () => matchingStep.callback(context, args[0], args[1], args[2])
+      return (stepContext: TStepContext | undefined) =>
+        matchingStep.callback(
+          Object.assign(context, stepContext),
+          args[0],
+          args[1],
+          args[2],
+        )
     })
 
     return {
