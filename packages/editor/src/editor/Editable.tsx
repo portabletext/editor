@@ -672,9 +672,9 @@ export const PortableTextEditable = forwardRef<
               metaKey: event.nativeEvent.metaKey,
               shiftKey: event.nativeEvent.shiftKey,
             },
-            nativeEvent: event.nativeEvent,
           },
           editor: slateEditor,
+          nativeEvent: event.nativeEvent,
         })
       }
     },
@@ -699,9 +699,9 @@ export const PortableTextEditable = forwardRef<
               metaKey: event.nativeEvent.metaKey,
               shiftKey: event.nativeEvent.shiftKey,
             },
-            nativeEvent: event.nativeEvent,
           },
           editor: slateEditor,
+          nativeEvent: event.nativeEvent,
         })
       }
     },

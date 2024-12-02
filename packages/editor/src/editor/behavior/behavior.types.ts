@@ -89,7 +89,6 @@ export type BehaviorEvent =
         KeyboardEvent,
         'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
       >
-      nativeEvent: KeyboardEvent
     }
   | {
       type: 'key.up'
@@ -97,7 +96,6 @@ export type BehaviorEvent =
         KeyboardEvent,
         'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
       >
-      nativeEvent: KeyboardEvent
     }
 
 /**
@@ -110,9 +108,7 @@ export type BehaviorGuard<
   context,
   event,
 }: {
-  event: TBehaviorEvent['type'] extends 'key.down' | 'key.up'
-    ? Omit<TBehaviorEvent, 'nativeEvent'>
-    : TBehaviorEvent
+  event: TBehaviorEvent
   context: BehaviorContext
 }) => TGuardResponse | false
 
@@ -120,9 +116,7 @@ export type BehaviorGuard<
  * @alpha
  */
 export type BehaviorActionIntend =
-  | OmitFromUnion<BehaviorEvent, 'type', 'key.down' | 'key.up'>
-  | Omit<PickFromUnion<BehaviorEvent, 'type', 'key.down'>, 'nativeEvent'>
-  | Omit<PickFromUnion<BehaviorEvent, 'type', 'key.up'>, 'nativeEvent'>
+  | BehaviorEvent
   | {
       type: 'insert block object'
       placement: 'auto' | 'after' | 'before'
