@@ -222,7 +222,9 @@ export type BehaviorActionIntendSet<
     event: PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>
   },
   guardResponse: TGuardResponse,
-) => Array<OmitFromUnion<BehaviorActionIntend, 'type', 'key.down' | 'key.up'>>
+) => Array<
+  OmitFromUnion<BehaviorActionIntend, 'type', 'key.down' | 'key.up' | 'paste'>
+>
 
 /**
  * @alpha
