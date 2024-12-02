@@ -96,7 +96,7 @@ Feature: Decorators
     And "bar" is typed
     And "foobar" is marked with "strong"
     And the caret is put after "foo"
-    And "ArrowDown" is pressed
+    And "ArrowRight" is pressed
     And "bar" is typed
     Then "bar" has marks "strong"
 
