@@ -188,6 +188,8 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'effect': ({action}) => {
     action.effect()
   },
+  'key.down': () => {},
+  'key.up': () => {},
   'paste': ({action}) => {
     action.editor.insertData(action.clipboardData)
   },
@@ -381,6 +383,20 @@ function performDefaultAction({
     }
     case 'insert text': {
       behaviorActionImplementations['insert text']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'key.down': {
+      behaviorActionImplementations['key.down']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'key.up': {
+      behaviorActionImplementations['key.up']({
         context,
         action,
       })

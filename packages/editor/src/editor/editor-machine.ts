@@ -303,6 +303,12 @@ export const editorMachine = setup({
         }
 
         if (behaviorOverwritten) {
+          if (
+            event.behaviorEvent.type === 'key.down' ||
+            event.behaviorEvent.type === 'key.up'
+          ) {
+            event.behaviorEvent.nativeEvent.preventDefault()
+          }
           break
         }
       }
