@@ -30,6 +30,10 @@
       "default": "./src/jest/index.ts",
       "types": "./src/jest/index.ts"
     },
+    "./playwright": {
+      "default": "./src/playwright/index.ts",
+      "types": "./src/playwright/index.ts"
+    },
     "./vitest": {
       "default": "./src/vitest/index.ts",
       "types": "./src/vitest/index.ts"
@@ -47,12 +51,14 @@
     "@cucumber/gherkin": "^30.0.4",
     "@cucumber/messages": "^27.0.2",
     "@jest/globals": "^29.7.0",
+    "@playwright/test": "^1.49.0",
     "@sanity/pkg-utils": "^6.11.13",
     "typescript": "5.7.2",
     "vitest": "^2.1.5"
   },
   "peerDependencies": {
     "@jest/globals": "^29.7.0",
+    "@playwright/test": "^1.49.0",
     "vitest": "^2.1.5"
   }
 }

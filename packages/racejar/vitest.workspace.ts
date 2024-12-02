@@ -6,12 +6,14 @@ export default defineWorkspace([
     plugins: [],
     test: {
       name: 'unit',
+      exclude: ['example-playwright'],
     },
   },
   {
     plugins: [],
     test: {
       name: 'chromium',
+      exclude: ['example-playwright'],
     },
   },
 ])
