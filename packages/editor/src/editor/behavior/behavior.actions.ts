@@ -190,9 +190,7 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   },
   'key.down': () => {},
   'key.up': () => {},
-  'paste': ({action}) => {
-    action.editor.insertData(action.clipboardData)
-  },
+  'paste': () => {},
   'select': ({action}) => {
     const newSelection = toSlateRange(action.selection, action.editor)
 

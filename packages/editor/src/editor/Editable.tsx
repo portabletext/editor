@@ -473,8 +473,6 @@ export const PortableTextEditable = forwardRef<
             editorActor.send({type: 'done loading'})
           })
       } else if (event.nativeEvent.clipboardData) {
-        event.preventDefault()
-
         editorActor.send({
           type: 'behavior event',
           behaviorEvent: {
@@ -482,6 +480,7 @@ export const PortableTextEditable = forwardRef<
             clipboardData: event.nativeEvent.clipboardData,
           },
           editor: slateEditor,
+          nativeEvent: event,
         })
       }
 
