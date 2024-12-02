@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0](https://github.com/portabletext/editor/compare/racejar-v1.0.3...racejar-v1.1.0) (2024-12-02)
+
+
+### Features
+
+* **`compileFeature`:** allow passing context to each `step` ([05d6a23](https://github.com/portabletext/editor/commit/05d6a233d18eada7a46ff52520155f22d58f6ae4))
+* add initial version of `racejar/playwright` ([2cac384](https://github.com/portabletext/editor/commit/2cac3846db0f01a157c00d55b0b7ba802278fe0a))
+
 ## [1.0.3](https://github.com/portabletext/editor/compare/racejar-v1.0.2...racejar-v1.0.3) (2024-12-01)
 
 
