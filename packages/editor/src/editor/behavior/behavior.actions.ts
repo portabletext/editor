@@ -197,6 +197,51 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   },
   'key.down': () => {},
   'key.up': () => {},
+  'move block': ({action}) => {
+    const location = toSlateRange(
+      {
+        anchor: {
+          path: action.blockPath,
+          offset: 0,
+        },
+        focus: {
+          path: action.blockPath,
+          offset: 0,
+        },
+      },
+      action.editor,
+    )
+
+    if (!location) {
+      console.error('Unable to find Slate range from selection points')
+      return
+    }
+
+    const newLocation = toSlateRange(
+      {
+        anchor: {
+          path: action.to,
+          offset: 0,
+        },
+        focus: {
+          path: action.to,
+          offset: 0,
+        },
+      },
+      action.editor,
+    )
+
+    if (!newLocation) {
+      console.error('Unable to find Slate range from selection points')
+      return
+    }
+
+    Transforms.moveNodes(action.editor, {
+      at: location,
+      to: newLocation.anchor.path.slice(0, 1),
+      mode: 'highest',
+    })
+  },
   'paste': () => {},
   'select': ({action}) => {
     const newSelection = toSlateRange(action.selection, action.editor)
@@ -283,6 +328,13 @@ export function performAction({
     }
     case 'insert text block': {
       behaviorActionImplementations['insert text block']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'move block': {
+      behaviorActionImplementations['move block']({
         context,
         action,
       })

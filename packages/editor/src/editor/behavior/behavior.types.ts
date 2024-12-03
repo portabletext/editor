@@ -146,6 +146,11 @@ export type BehaviorActionIntend =
       }
     }
   | {
+      type: 'move block'
+      blockPath: [KeyedSegment]
+      to: [KeyedSegment]
+    }
+  | {
       type: 'set block'
       paths: Array<[KeyedSegment]>
       style?: string
