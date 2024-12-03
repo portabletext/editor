@@ -10,6 +10,10 @@ export {
   type MarkdownBehaviorsConfig,
 } from './editor/behavior/behavior.markdown'
 export {
+  createCodeEditorBehaviors,
+  type CodeEditorBehaviorsConfig,
+} from './editor/behavior/behavior.code-editor'
+export {
   defineBehavior,
   type Behavior,
   type BehaviorActionIntend,
