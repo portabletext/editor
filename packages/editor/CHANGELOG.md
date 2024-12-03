@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.13.0](https://github.com/portabletext/editor/compare/editor-v1.12.3...editor-v1.13.0) (2024-12-03)
+
+
+### Features
+
+* **behavior:** add 'copy' event ([54db5e9](https://github.com/portabletext/editor/commit/54db5e978f36371e3e64453c97382a9c653208cd))
+* **behavior:** add 'key.down' and 'key.up' events ([99d7335](https://github.com/portabletext/editor/commit/99d733520d48e34098ac7702720d7a3c96149616))
+* **behavior:** add 'move block' action ([69a259e](https://github.com/portabletext/editor/commit/69a259e5f144df97833bfa2d222a36afb2deea46))
+* **behavior:** add 'select previous block' and 'select next block' actions ([9b5fecb](https://github.com/portabletext/editor/commit/9b5fecb34deeab0805f2d8d0c2712ba205706e92))
+* **behavior:** ship experimental code editor behaviors ([b97b218](https://github.com/portabletext/editor/commit/b97b218b9a696c71d1e1a517c5dd6e6d72a5d071))
+
+
+### Bug Fixes
+
+* **behavior:** allow guards to return falsy ([21cb638](https://github.com/portabletext/editor/commit/21cb638bf3baad74f6937bb79c73505c7e94958f))
+* **behavior:** fix `selectionIsCollapsed` utility function ([dd67720](https://github.com/portabletext/editor/commit/dd67720c7418eb9120ad5d7e0f008766f55a9f59))
+* **behavior:** rename `clipboardData`-&gt;`data` ([6e139c8](https://github.com/portabletext/editor/commit/6e139c80986585c9d93f61053eb0781e8d532f70))
+* **behavior:** use React event as 'native' event ([35a9fcf](https://github.com/portabletext/editor/commit/35a9fcfc9822443da450fae802b5905d06ba6ede))
+* make sure you can hit Enter on an expanded selection ([d2ebbbe](https://github.com/portabletext/editor/commit/d2ebbbe90e4f977970476c149bf0b74427c910ae))
+* remove decorators from new block when splitting empty decorated block ([109b7c4](https://github.com/portabletext/editor/commit/109b7c41465813bb9b8b9e0780e6f695b00bc678))
+
 ## [1.12.3](https://github.com/portabletext/editor/compare/editor-v1.12.2...editor-v1.12.3) (2024-11-29)
 
 
