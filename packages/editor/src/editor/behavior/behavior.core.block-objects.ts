@@ -1,4 +1,5 @@
 import {isPortableTextTextBlock} from '@sanity/types'
+import {isHotkey} from '../../utils/is-hotkey'
 import {defineBehavior} from './behavior.types'
 import {
   getFocusBlockObject,
@@ -8,6 +9,35 @@ import {
   isEmptyTextBlock,
   selectionIsCollapsed,
 } from './behavior.utils'
+
+const arrowDownOnLonelyBlockObject = defineBehavior({
+  on: 'key.down',
+  guard: ({context, event}) => {
+    const isArrowDown = isHotkey('ArrowDown', event.keyboardEvent)
+    const focusBlockObject = getFocusBlockObject(context)
+    const nextBlock = getNextBlock(context)
+
+    return isArrowDown && focusBlockObject && !nextBlock
+  },
+  actions: [() => [{type: 'insert text block', placement: 'after'}]],
+})
+
+const arrowUpOnLonelyBlockObject = defineBehavior({
+  on: 'key.down',
+  guard: ({context, event}) => {
+    const isArrowUp = isHotkey('ArrowUp', event.keyboardEvent)
+    const focusBlockObject = getFocusBlockObject(context)
+    const previousBlock = getPreviousBlock(context)
+
+    return isArrowUp && focusBlockObject && !previousBlock
+  },
+  actions: [
+    () => [
+      {type: 'insert text block', placement: 'before'},
+      {type: 'select previous block'},
+    ],
+  ],
+})
 
 const breakingBlockObject = defineBehavior({
   on: 'insert break',
@@ -94,6 +124,8 @@ const deletingEmptyTextBlockBeforeBlockObject = defineBehavior({
 })
 
 export const coreBlockObjectBehaviors = {
+  arrowDownOnLonelyBlockObject,
+  arrowUpOnLonelyBlockObject,
   breakingBlockObject,
   deletingEmptyTextBlockAfterBlockObject,
   deletingEmptyTextBlockBeforeBlockObject,
