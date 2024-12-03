@@ -175,6 +175,12 @@ export type BehaviorActionIntend =
       selection: EditorSelection
     }
   | {
+      type: 'select previous block'
+    }
+  | {
+      type: 'select next block'
+    }
+  | {
       type: 'reselect'
     }
 
