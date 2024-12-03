@@ -16,8 +16,8 @@ import type {BehaviorContext} from './behavior.types'
 
 export function selectionIsCollapsed(context: BehaviorContext) {
   return (
-    context.selection?.anchor.path.join() ===
-      context.selection?.focus.path.join() &&
+    JSON.stringify(context.selection?.anchor.path) ===
+      JSON.stringify(context.selection?.focus.path) &&
     context.selection?.anchor.offset === context.selection?.focus.offset
   )
 }
