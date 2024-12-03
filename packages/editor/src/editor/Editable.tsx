@@ -487,7 +487,7 @@ export const PortableTextEditable = forwardRef<
           type: 'behavior event',
           behaviorEvent: {
             type: 'paste',
-            clipboardData: event.nativeEvent.clipboardData,
+            data: event.nativeEvent.clipboardData,
           },
           editor: slateEditor,
           nativeEvent: event,
