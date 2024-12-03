@@ -1,6 +1,6 @@
 import {isPortableTextSpan, isPortableTextTextBlock} from '@sanity/types'
 import type {KeyboardEvent} from 'react'
-import {Editor, Node, Path, Range, Transforms} from 'slate'
+import {Editor, Node, Range} from 'slate'
 import type {ReactEditor} from 'slate-react'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {HotkeyOptions} from '../../types/options'
@@ -80,53 +80,6 @@ export function createWithHotkeys(
       const isTab = isHotkey('tab', event.nativeEvent)
       const isShiftEnter = isHotkey('shift+enter', event.nativeEvent)
       const isShiftTab = isHotkey('shift+tab', event.nativeEvent)
-      const isArrowDown = isHotkey('down', event.nativeEvent)
-      const isArrowUp = isHotkey('up', event.nativeEvent)
-
-      // Check if the user is in a void block, in that case, add an empty text block below if there is no next block
-      if (isArrowDown && editor.selection) {
-        const focusBlock = Node.descendant(
-          editor,
-          editor.selection.focus.path.slice(0, 1),
-        ) as SlateTextBlock | VoidElement
-
-        if (focusBlock && Editor.isVoid(editor, focusBlock)) {
-          const nextPath = Path.next(editor.selection.focus.path.slice(0, 1))
-          const nextBlock = Node.has(editor, nextPath)
-          if (!nextBlock) {
-            Transforms.insertNodes(
-              editor,
-              editor.pteCreateTextBlock({decorators: []}),
-              {
-                at: nextPath,
-              },
-            )
-            Transforms.select(editor, {path: [...nextPath, 0], offset: 0})
-            editor.onChange()
-            return
-          }
-        }
-      }
-      if (isArrowUp && editor.selection) {
-        const isFirstBlock = editor.selection.focus.path[0] === 0
-        const focusBlock = Node.descendant(
-          editor,
-          editor.selection.focus.path.slice(0, 1),
-        ) as SlateTextBlock | VoidElement
-
-        if (isFirstBlock && focusBlock && Editor.isVoid(editor, focusBlock)) {
-          Transforms.insertNodes(
-            editor,
-            editor.pteCreateTextBlock({decorators: []}),
-            {
-              at: [0],
-            },
-          )
-          Transforms.select(editor, {path: [0, 0], offset: 0})
-          editor.onChange()
-          return
-        }
-      }
 
       // Tab for lists
       // Only steal tab when we are on a plain text span or we are at the start of the line (fallback if the whole block is annotated or contains a single inline object)

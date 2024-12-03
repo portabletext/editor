@@ -16,6 +16,8 @@ export const coreBehaviors = [
   coreDecoratorBehaviors.decoratorAdd,
   coreDecoratorBehaviors.decoratorRemove,
   coreDecoratorBehaviors.decoratorToggle,
+  coreBlockObjectBehaviors.arrowDownOnLonelyBlockObject,
+  coreBlockObjectBehaviors.arrowUpOnLonelyBlockObject,
   coreBlockObjectBehaviors.breakingBlockObject,
   coreBlockObjectBehaviors.deletingEmptyTextBlockAfterBlockObject,
   coreBlockObjectBehaviors.deletingEmptyTextBlockBeforeBlockObject,
