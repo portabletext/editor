@@ -43,8 +43,9 @@ const breakingBlockObject = defineBehavior({
   on: 'insert break',
   guard: ({context}) => {
     const focusBlockObject = getFocusBlockObject(context)
+    const collapsedSelection = selectionIsCollapsed(context)
 
-    return !!focusBlockObject
+    return collapsedSelection && focusBlockObject !== undefined
   },
   actions: [() => [{type: 'insert text block', placement: 'after'}]],
 })

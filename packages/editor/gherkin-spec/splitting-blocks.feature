@@ -148,3 +148,22 @@ Feature: Splitting Blocks
     And block "0" has style "h1"
     And block "1" has style "normal"
     And "new" has no marks
+
+  Scenario Outline: Splitting block with an expanded selection
+    Given the text "foo" in block "b1"
+    And the text "bar" in block "b2"
+    When <selection> is selected
+    And "Enter" is pressed
+    Then the text is <new text>
+
+    Examples:
+      | selection | new text |
+      | "foobar"  | "\|"     |
+      | "ooba"    | "f\|r"   |
+
+  Scenario: Pressing Enter when selecting multiple block objects
+    Given an "image" "m1"
+    And an "image" "m2"
+    When everything is selected
+    And "Enter" is pressed
+    Then the editor is empty
