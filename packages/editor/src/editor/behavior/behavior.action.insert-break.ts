@@ -39,10 +39,31 @@ export const insertBreakActionImplementation: BehaviorActionImplementation<
 
   if (editor.isTextBlock(focusBlock)) {
     const [start, end] = Range.edges(editor.selection)
+    const lastFocusBlockChild =
+      focusBlock.children[focusBlock.children.length - 1]
+    const atTheEndOfBlock = isEqual(start, {
+      path: [...focusBlockPath, focusBlock.children.length - 1],
+      offset: editor.isTextSpan(lastFocusBlockChild)
+        ? lastFocusBlockChild.text.length
+        : 0,
+    })
     const atTheStartOfBlock = isEqual(end, {
       path: [...focusBlockPath, 0],
       offset: 0,
     })
+
+    if (atTheEndOfBlock && Range.isCollapsed(editor.selection)) {
+      Editor.insertNode(
+        editor,
+        editor.pteCreateTextBlock({
+          decorators: [],
+          listItem: focusBlock.listItem,
+          level: focusBlock.level,
+        }),
+      )
+
+      return
+    }
 
     if (atTheStartOfBlock && Range.isCollapsed(editor.selection)) {
       Editor.insertNode(
@@ -57,35 +78,6 @@ export const insertBreakActionImplementation: BehaviorActionImplementation<
       const [nextBlockPath] = Path.next(focusBlockPath)
 
       Transforms.select(editor, {
-        anchor: {path: [nextBlockPath, 0], offset: 0},
-        focus: {path: [nextBlockPath, 0], offset: 0},
-      })
-
-      return
-    }
-
-    const lastFocusBlockChild =
-      focusBlock.children[focusBlock.children.length - 1]
-    const atTheEndOfBlock = isEqual(start, {
-      path: [...focusBlockPath, focusBlock.children.length - 1],
-      offset: editor.isTextSpan(lastFocusBlockChild)
-        ? lastFocusBlockChild.text.length
-        : 0,
-    })
-
-    if (atTheEndOfBlock && Range.isCollapsed(editor.selection)) {
-      Editor.insertNode(
-        editor,
-        editor.pteCreateTextBlock({
-          decorators: [],
-          listItem: focusBlock.listItem,
-          level: focusBlock.level,
-        }),
-      )
-
-      const [nextBlockPath] = Path.next(focusBlockPath)
-
-      Transforms.setSelection(editor, {
         anchor: {path: [nextBlockPath, 0], offset: 0},
         focus: {path: [nextBlockPath, 0], offset: 0},
       })

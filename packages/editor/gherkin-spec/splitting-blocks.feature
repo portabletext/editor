@@ -24,6 +24,16 @@ Feature: Splitting Blocks
     Then the text is "foo|"
     And "foo" is in block "b1"
 
+  Scenario: Splitting empty block creates a new block below
+    Given the text "foo" in block "b1"
+    And the text "bar" in block "b2"
+    When "Backspace" is pressed 3 times
+    And "Enter" is pressed
+    And "baz" is typed
+    Then the text is "foo||baz"
+    And "foo" is in block "b1"
+    And "" is in block "b2"
+
   Scenario: Soft-splitting block at the beginning
     Given the text "foo" in block "b1"
     When the caret is put before "foo"
