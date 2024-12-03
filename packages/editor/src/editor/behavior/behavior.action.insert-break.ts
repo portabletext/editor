@@ -23,15 +23,16 @@ export const insertBreakActionImplementation: BehaviorActionImplementation<
     }),
   )[0] ?? [undefined]
   const focusDecorators =
-    focusSpan.marks?.filter((mark) =>
+    focusSpan?.marks?.filter((mark) =>
       schema.decorators.some((decorator) => decorator.value === mark),
     ) ?? []
   const focusAnnotations =
-    focusSpan.marks?.filter(
+    focusSpan?.marks?.filter(
       (mark) =>
         !schema.decorators.some((decorator) => decorator.value === mark),
     ) ?? []
 
+  const anchorBlockPath = editor.selection.anchor.path.slice(0, 1)
   const focusBlockPath = editor.selection.focus.path.slice(0, 1)
   const focusBlock = Node.descendant(editor, focusBlockPath) as
     | SlateTextBlock
@@ -85,9 +86,11 @@ export const insertBreakActionImplementation: BehaviorActionImplementation<
       return
     }
 
+    const selectionAcrossBlocks = anchorBlockPath[0] !== focusBlockPath[0]
+
     const isInTheMiddleOfNode = !atTheStartOfBlock && !atTheEndOfBlock
 
-    if (isInTheMiddleOfNode) {
+    if (isInTheMiddleOfNode && !selectionAcrossBlocks) {
       Editor.withoutNormalizing(editor, () => {
         if (!editor.selection) {
           return
@@ -194,6 +197,8 @@ export const insertBreakActionImplementation: BehaviorActionImplementation<
       return
     }
   }
+
+  Transforms.splitNodes(editor, {always: true})
 }
 
 export const insertSoftBreakActionImplementation: BehaviorActionImplementation<
