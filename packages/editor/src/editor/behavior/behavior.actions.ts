@@ -1,4 +1,10 @@
-import {deleteBackward, deleteForward, insertText, Transforms} from 'slate'
+import {
+  deleteBackward,
+  deleteForward,
+  insertText,
+  Path,
+  Transforms,
+} from 'slate'
 import {ReactEditor} from 'slate-react'
 import type {PortableTextMemberSchemaTypes} from '../../types/editor'
 import {toSlateRange} from '../../utils/ranges'
@@ -201,6 +207,34 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
       Transforms.deselect(action.editor)
     }
   },
+  'select previous block': ({action}) => {
+    if (!action.editor.selection) {
+      console.error('Unable to select previous block without a selection')
+      return
+    }
+
+    const blockPath = action.editor.selection.focus.path.slice(0, 1)
+
+    if (!Path.hasPrevious(blockPath)) {
+      console.error("There's no previous block to select")
+      return
+    }
+
+    const previousBlockPath = Path.previous(blockPath)
+
+    Transforms.select(action.editor, previousBlockPath)
+  },
+  'select next block': ({action}) => {
+    if (!action.editor.selection) {
+      console.error('Unable to select next block without a selection')
+      return
+    }
+
+    const blockPath = action.editor.selection.focus.path.slice(0, 1)
+    const nextBlockPath = [blockPath[0] + 1]
+
+    Transforms.select(action.editor, nextBlockPath)
+  },
   'reselect': ({action}) => {
     const selection = action.editor.selection
 
@@ -277,6 +311,20 @@ export function performAction({
     }
     case 'select': {
       behaviorActionImplementations.select({
+        context,
+        action,
+      })
+      break
+    }
+    case 'select previous block': {
+      behaviorActionImplementations['select previous block']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'select next block': {
+      behaviorActionImplementations['select next block']({
         context,
         action,
       })
