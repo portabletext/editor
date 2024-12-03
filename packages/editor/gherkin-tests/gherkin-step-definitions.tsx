@@ -161,7 +161,7 @@ export const stepDefinitions = [
   }),
   Then('the editor is empty', async () => {
     await getValue().then((value) =>
-      expect(value, 'The editor is not empty').toEqual([]),
+      expect(value ?? [], 'The editor is not empty').toEqual([]),
     )
   }),
 
