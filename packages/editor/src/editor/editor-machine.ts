@@ -272,10 +272,11 @@ export const editorMachine = setup({
 
       for (const eventBehavior of eventBehaviors) {
         const shouldRun =
-          eventBehavior.guard?.({
+          eventBehavior.guard === undefined ||
+          eventBehavior.guard({
             context: behaviorContext,
             event: event.behaviorEvent,
-          }) ?? true
+          })
 
         if (!shouldRun) {
           continue
