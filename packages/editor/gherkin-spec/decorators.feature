@@ -197,7 +197,7 @@ Feature: Decorators
     Then the text is "foo|bar|baz"
     And "foo" has no marks
     And "bar" has marks "strong"
-    And "baz" has marks "strong"
+    And "baz" has no marks
 
   Scenario: Merging spans with same but different-ordered decorators
     Given the text "foobar"
