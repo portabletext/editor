@@ -895,7 +895,7 @@ export async function pressButton(
   if (button === 'Shift+Enter') {
     return waitForNewValue(async () => {
       for (let i = 0; i < times; i++) {
-        userEvent.keyboard('{Shift>}{Enter}{/Shift}')
+        await userEvent.keyboard('{Shift>}{Enter}{/Shift}')
       }
     })
   }
@@ -903,14 +903,14 @@ export async function pressButton(
   if (button === 'Space') {
     return waitForNewValue(async () => {
       for (let i = 0; i < times; i++) {
-        userEvent.type(editor.locator, ' ')
+        await userEvent.type(editor.locator, ' ')
       }
     })
   }
 
   return waitForNewSelection(editor, async () => {
     for (let i = 0; i < times; i++) {
-      userEvent.keyboard(`{${button}}`)
+      await userEvent.keyboard(`{${button}}`)
     }
   })
 }
