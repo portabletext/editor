@@ -20,7 +20,7 @@ export function createLinkBehaviors(config: LinkBehaviorsConfig) {
     on: 'paste',
     guard: ({context, event}) => {
       const selectionCollapsed = selectionIsCollapsed(context)
-      const text = event.clipboardData.getData('text/plain')
+      const text = event.data.getData('text/plain')
       const url = looksLikeUrl(text) ? text : undefined
       const annotation =
         url !== undefined
@@ -52,7 +52,7 @@ export function createLinkBehaviors(config: LinkBehaviorsConfig) {
         return false
       }
 
-      const text = event.clipboardData.getData('text/plain')
+      const text = event.data.getData('text/plain')
       const url = looksLikeUrl(text) ? text : undefined
       const annotation =
         url !== undefined

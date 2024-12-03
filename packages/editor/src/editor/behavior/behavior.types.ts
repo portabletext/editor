@@ -85,7 +85,7 @@ export type BehaviorEvent =
     }
   | {
       type: 'paste'
-      clipboardData: NonNullable<ClipboardEvent['clipboardData']>
+      data: DataTransfer
     }
   | {
       type: 'key.down'

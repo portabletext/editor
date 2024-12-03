@@ -190,7 +190,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   const automaticHrOnPaste = defineBehavior({
     on: 'paste',
     guard: ({context, event}) => {
-      const text = event.clipboardData.getData('text/plain')
+      const text = event.data.getData('text/plain')
       const hrRegExp = /^(---)$|(___)$|(\*\*\*)$/gm
       const hrCharacters = text.match(hrRegExp)?.[0]
       const hrObject = config.horizontalRuleObject?.({
