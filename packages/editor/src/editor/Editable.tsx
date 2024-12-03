@@ -674,16 +674,16 @@ export const PortableTextEditable = forwardRef<
           behaviorEvent: {
             type: 'key.down',
             keyboardEvent: {
-              key: event.nativeEvent.key,
-              code: event.nativeEvent.code,
-              altKey: event.nativeEvent.altKey,
-              ctrlKey: event.nativeEvent.ctrlKey,
-              metaKey: event.nativeEvent.metaKey,
-              shiftKey: event.nativeEvent.shiftKey,
+              key: event.key,
+              code: event.code,
+              altKey: event.altKey,
+              ctrlKey: event.ctrlKey,
+              metaKey: event.metaKey,
+              shiftKey: event.shiftKey,
             },
           },
           editor: slateEditor,
-          nativeEvent: event.nativeEvent,
+          nativeEvent: event,
         })
       }
     },
@@ -701,16 +701,16 @@ export const PortableTextEditable = forwardRef<
           behaviorEvent: {
             type: 'key.up',
             keyboardEvent: {
-              key: event.nativeEvent.key,
-              code: event.nativeEvent.code,
-              altKey: event.nativeEvent.altKey,
-              ctrlKey: event.nativeEvent.ctrlKey,
-              metaKey: event.nativeEvent.metaKey,
-              shiftKey: event.nativeEvent.shiftKey,
+              key: event.key,
+              code: event.code,
+              altKey: event.altKey,
+              ctrlKey: event.ctrlKey,
+              metaKey: event.metaKey,
+              shiftKey: event.shiftKey,
             },
           },
           editor: slateEditor,
-          nativeEvent: event.nativeEvent,
+          nativeEvent: event,
         })
       }
     },
