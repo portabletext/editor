@@ -1,6 +1,6 @@
 export interface KeyboardEventLike {
   key: string
-  keyCode: number
+  keyCode?: number
   altKey: boolean
   ctrlKey: boolean
   metaKey: boolean
