@@ -1,5 +1,6 @@
 import {
   coreBehaviors,
+  createCodeEditorBehaviors,
   createLinkBehaviors,
   createMarkdownBehaviors,
   EditorProvider,
@@ -103,6 +104,10 @@ export function Editor(props: {editorRef: EditorActorRef}) {
                   schema.lists.find((list) => list.value === 'bullet')?.value,
                 orderedListStyle: ({schema}) =>
                   schema.lists.find((list) => list.value === 'number')?.value,
+              }),
+              ...createCodeEditorBehaviors({
+                moveBlockUpShortcut: 'Alt+ArrowUp',
+                moveBlockDownShortcut: 'Alt+ArrowDown',
               }),
             ],
             keyGenerator,
