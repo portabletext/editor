@@ -7,10 +7,7 @@ import {
   type Point,
   type Path as SlatePath,
 } from 'slate'
-import type {
-  EditorSelectionPoint,
-  PortableTextMemberSchemaTypes,
-} from '../types/editor'
+import type {PortableTextMemberSchemaTypes} from '../types/editor'
 import type {ObjectWithKeyAndType} from './ranges'
 
 export function createKeyedPath(
@@ -41,10 +38,7 @@ export function createKeyedPath(
   ) as Path
 }
 
-export function createArrayedPath(
-  point: EditorSelectionPoint,
-  editor: Editor,
-): SlatePath {
+export function createArrayedPath(path: Path, editor: Editor): SlatePath {
   if (!editor) {
     return []
   }
@@ -52,8 +46,7 @@ export function createArrayedPath(
     Editor.nodes(editor, {
       at: [],
       match: (n) =>
-        isKeySegment(point.path[0]) &&
-        (n as Descendant)._key === point.path[0]._key,
+        isKeySegment(path[0]) && (n as Descendant)._key === path[0]._key,
     }),
   )[0] || [undefined, undefined]
   if (!block || !Element.isElement(block)) {
@@ -62,7 +55,7 @@ export function createArrayedPath(
   if (editor.isVoid(block)) {
     return [blockPath[0], 0]
   }
-  const childPath = [point.path[2]]
+  const childPath = [path[2]]
   const childIndex = block.children.findIndex((child) =>
     isEqual([{_key: child._key}], childPath),
   )
