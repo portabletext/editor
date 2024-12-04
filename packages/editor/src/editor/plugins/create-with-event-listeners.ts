@@ -89,6 +89,17 @@ export function createWithEventListeners(
             })
             break
           }
+          case 'list item.toggle': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {
+                type: 'list item.toggle',
+                listItem: event.listItem,
+              },
+              editor,
+            })
+            break
+          }
         }
       })
 
