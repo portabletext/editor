@@ -106,7 +106,7 @@ export const stepDefinitions = [
     context.testRef = testActor
     context.editorA = createEditorContext({ref: editorARef, locator})
 
-    vi.waitFor(async () => {
+    await vi.waitFor(async () => {
       await expect.element(context.editorA.locator).toBeInTheDocument()
     })
   }),
@@ -141,12 +141,12 @@ export const stepDefinitions = [
       locator: editorBLocator,
     })
 
-    vi.waitFor(async () => {
+    await vi.waitFor(async () => {
       await expect.element(context.editorA.locator).toBeInTheDocument()
       await expect.element(context.editorB.locator).toBeInTheDocument()
     })
   }),
-  Given('a global keymap', async (context: Context) => {
+  Given('a global keymap', (context: Context) => {
     context.keyMap = new Map()
   }),
 
@@ -238,7 +238,7 @@ export const stepDefinitions = [
       const value = await getValue()
 
       await waitForNewSelection(context.editorA, async () => {
-        context.editorA.ref.send({
+        await context.editorA.ref.send({
           type: 'selection',
           selection: getTextSelection(value, text),
         })
@@ -272,7 +272,7 @@ export const stepDefinitions = [
       const value = await getValue()
 
       await waitForNewSelection(context.editorB, async () => {
-        context.editorB.ref.send({
+        await context.editorB.ref.send({
           type: 'selection',
           selection: getTextSelection(value, text),
         })
@@ -336,7 +336,7 @@ export const stepDefinitions = [
       const value = await getValue()
 
       await waitForNewSelection(context.editorA, async () => {
-        context.editorA.ref.send({
+        await context.editorA.ref.send({
           type: 'selection',
           selection: getTextSelection(value, text),
         })
@@ -366,7 +366,7 @@ export const stepDefinitions = [
       const value = await getValue()
 
       await waitForNewSelection(context.editorA, async () => {
-        context.editorA.ref.send({
+        await context.editorA.ref.send({
           type: 'selection',
           selection: getTextSelection(value, text),
         })
@@ -380,7 +380,7 @@ export const stepDefinitions = [
       const value = await getValue()
 
       await waitForNewSelection(context.editorA, async () => {
-        context.editorA.ref.send({
+        await context.editorA.ref.send({
           type: 'selection',
           selection: getTextSelection(value, text),
         })
@@ -512,7 +512,7 @@ export const stepDefinitions = [
 
     await waitForNewSelection(context.editorA, async () => {
       if (text === '[stock-ticker]') {
-        context.editorA.ref.send({
+        await context.editorA.ref.send({
           type: 'selection',
           selection: getInlineObjectSelection(
             value,
@@ -534,7 +534,7 @@ export const stepDefinitions = [
 
       await waitForNewSelection(context.editorB, async () => {
         if (text === '[stock-ticker]') {
-          context.editorB.ref.send({
+          await context.editorB.ref.send({
             type: 'selection',
             selection: getInlineObjectSelection(
               value,
@@ -542,7 +542,7 @@ export const stepDefinitions = [
             ),
           })
         } else {
-          context.editorB.ref.send({
+          await context.editorB.ref.send({
             type: 'selection',
             selection: getTextSelection(value, text),
           })
@@ -556,7 +556,7 @@ export const stepDefinitions = [
       const value = await getValue()
 
       await waitForNewSelection(context.editorA, async () => {
-        context.editorA.ref.send({
+        await context.editorA.ref.send({
           type: 'selection',
           selection: reverseTextSelection(getTextSelection(value, text)),
         })
@@ -570,7 +570,7 @@ export const stepDefinitions = [
 
       if (text === '[stock-ticker]') {
         await waitForNewSelection(context.editorA, async () => {
-          context.editorA.ref.send({
+          await context.editorA.ref.send({
             type: 'selection',
             selection: getSelectionBeforeInlineObject(
               value,
@@ -590,7 +590,7 @@ export const stepDefinitions = [
 
       if (text === '[stock-ticker]') {
         await waitForNewSelection(context.editorB, async () => {
-          context.editorB.ref.send({
+          await context.editorB.ref.send({
             type: 'selection',
             selection: getSelectionBeforeInlineObject(
               value,
@@ -610,7 +610,7 @@ export const stepDefinitions = [
 
       if (text === '[stock-ticker]') {
         await waitForNewSelection(context.editorA, async () => {
-          context.editorA.ref.send({
+          await context.editorA.ref.send({
             type: 'selection',
             selection: getSelectionAfterInlineObject(
               value,
@@ -630,7 +630,7 @@ export const stepDefinitions = [
 
       if (text === '[stock-ticker]') {
         await waitForNewSelection(context.editorB, async () => {
-          context.editorB.ref.send({
+          await context.editorB.ref.send({
             type: 'selection',
             selection: getSelectionAfterInlineObject(
               value,
@@ -908,7 +908,7 @@ export async function pressButton(
     })
   }
 
-  return waitForNewSelection(editor, async () => {
+  return await waitForNewSelection(editor, async () => {
     for (let i = 0; i < times; i++) {
       await userEvent.keyboard(`{${button}}`)
     }
@@ -971,7 +971,7 @@ export async function putCaretBeforeText(editor: EditorContext, text: string) {
   const value = await getValue()
 
   await waitForNewSelection(editor, async () => {
-    editor.ref.send({
+    await editor.ref.send({
       type: 'selection',
       selection: getSelectionBeforeText(value, text),
     })
@@ -982,7 +982,7 @@ export async function putCaretAfterText(editor: EditorContext, text: string) {
   const value = await getValue()
 
   await waitForNewSelection(editor, async () => {
-    editor.ref.send({
+    await editor.ref.send({
       type: 'selection',
       selection: getSelectionAfterText(value, text),
     })

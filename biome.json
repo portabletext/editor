@@ -32,7 +32,8 @@
         "noConfusingVoidType": "off",
         "noExplicitAny": "off",
         "noConsoleLog": "error",
-        "noPrototypeBuiltins": "off"
+        "noPrototypeBuiltins": "off",
+        "useAwait": "error"
       },
       "style": {
         "noNonNullAssertion": "off",

@@ -76,7 +76,7 @@ describe('adds empty text block if its needed', () => {
 
     const element = await getEditableElement(component)
 
-    await waitFor(async () => {
+    await waitFor(() => {
       if (editorRef.current && element) {
         PortableTextEditor.focus(editorRef.current)
         PortableTextEditor.select(editorRef.current, initialSelection)
@@ -127,7 +127,7 @@ describe('adds empty text block if its needed', () => {
     )
     const element = await getEditableElement(component)
 
-    await waitFor(async () => {
+    await waitFor(() => {
       if (editorRef.current && element) {
         PortableTextEditor.focus(editorRef.current)
         PortableTextEditor.select(editorRef.current, initialSelection)
@@ -193,7 +193,7 @@ describe('adds empty text block if its needed', () => {
 
     const element = await getEditableElement(component)
 
-    await waitFor(async () => {
+    await waitFor(() => {
       if (editorRef.current && element) {
         PortableTextEditor.focus(editorRef.current)
         PortableTextEditor.select(editorRef.current, initialSelection)
@@ -263,7 +263,7 @@ describe('adds empty text block if its needed', () => {
     const inlineType = editor?.schemaTypes.inlineObjects.find(
       (t) => t.name === 'someObject',
     )
-    await waitFor(async () => {
+    await waitFor(() => {
       if (editor && inlineType && element) {
         PortableTextEditor.focus(editor)
         PortableTextEditor.select(editor, initialSelection)
