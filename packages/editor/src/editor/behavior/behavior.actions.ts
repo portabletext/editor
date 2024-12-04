@@ -66,32 +66,34 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
     ReactEditor.focus(action.editor)
   },
   'set block': ({action}) => {
-    for (const path of action.paths) {
-      const at = toSlateRange(
-        {anchor: {path, offset: 0}, focus: {path, offset: 0}},
-        action.editor,
-      )!
+    const at = toSlateRange(
+      {
+        anchor: {path: action.at, offset: 0},
+        focus: {path: action.at, offset: 0},
+      },
+      action.editor,
+    )!
 
-      Transforms.setNodes(
-        action.editor,
-        {
-          ...(action.style ? {style: action.style} : {}),
-          ...(action.listItem ? {listItem: action.listItem} : {}),
-          ...(action.level ? {level: action.level} : {}),
-        },
-        {at},
-      )
-    }
+    Transforms.setNodes(
+      action.editor,
+      {
+        ...(action.style ? {style: action.style} : {}),
+        ...(action.listItem ? {listItem: action.listItem} : {}),
+        ...(action.level ? {level: action.level} : {}),
+      },
+      {at},
+    )
   },
   'unset block': ({action}) => {
-    for (const path of action.paths) {
-      const at = toSlateRange(
-        {anchor: {path, offset: 0}, focus: {path, offset: 0}},
-        action.editor,
-      )!
+    const at = toSlateRange(
+      {
+        anchor: {path: action.at, offset: 0},
+        focus: {path: action.at, offset: 0},
+      },
+      action.editor,
+    )!
 
-      Transforms.unsetNodes(action.editor, action.props, {at})
-    }
+    Transforms.unsetNodes(action.editor, action.props, {at})
   },
   'copy': () => {},
   'delete backward': ({action}) => {

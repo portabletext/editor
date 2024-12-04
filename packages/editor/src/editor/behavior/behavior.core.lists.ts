@@ -31,7 +31,7 @@ const clearListOnBackspace = defineBehavior({
       {
         type: 'unset block',
         props: ['listItem', 'level'],
-        paths: [focusTextBlock.path],
+        at: focusTextBlock.path,
       },
     ],
   ],
@@ -67,7 +67,7 @@ const unindentListOnBackspace = defineBehavior({
       {
         type: 'set block',
         level,
-        paths: [focusTextBlock.path],
+        at: focusTextBlock.path,
       },
     ],
   ],

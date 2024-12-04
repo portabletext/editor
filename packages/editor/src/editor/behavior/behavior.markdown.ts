@@ -99,12 +99,12 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         {
           type: 'unset block',
           props: ['listItem', 'level'],
-          paths: [focusTextBlock.path],
+          at: focusTextBlock.path,
         },
         {
           type: 'set block',
           style,
-          paths: [focusTextBlock.path],
+          at: focusTextBlock.path,
         },
         {
           type: 'delete text',
@@ -305,12 +305,12 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         {
           type: 'unset block',
           props: ['listItem', 'level'],
-          paths: [focusTextBlock.path],
+          at: focusTextBlock.path,
         },
         {
           type: 'set block',
           style,
-          paths: [focusTextBlock.path],
+          at: focusTextBlock.path,
         },
         {
           type: 'delete text',
@@ -358,7 +358,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         {
           type: 'set block',
           style: defaultStyle,
-          paths: [focusTextBlock.path],
+          at: focusTextBlock.path,
         },
       ],
     ],
@@ -453,7 +453,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           listItem,
           level: 1,
           style,
-          paths: [focusTextBlock.path],
+          at: focusTextBlock.path,
         },
         {
           type: 'delete text',
