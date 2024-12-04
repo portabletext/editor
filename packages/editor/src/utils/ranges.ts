@@ -50,11 +50,11 @@ export function toSlateRange(
     return null
   }
   const anchor = {
-    path: createArrayedPath(selection.anchor, editor),
+    path: createArrayedPath(selection.anchor.path, editor),
     offset: selection.anchor.offset,
   }
   const focus = {
-    path: createArrayedPath(selection.focus, editor),
+    path: createArrayedPath(selection.focus.path, editor),
     offset: selection.focus.offset,
   }
   if (focus.path.length === 0 || anchor.path.length === 0) {
