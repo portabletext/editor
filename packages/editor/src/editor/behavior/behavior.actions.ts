@@ -208,6 +208,31 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
       mode: 'highest',
     })
   },
+  'move block down': ({action}) => {
+    const at = [toSlatePath(action.at, action.editor)[0]]
+    const to = [Path.next(at)[0]]
+
+    Transforms.moveNodes(action.editor, {
+      at,
+      to,
+      mode: 'highest',
+    })
+  },
+  'move block up': ({action}) => {
+    const at = [toSlatePath(action.at, action.editor)[0]]
+
+    if (!Path.hasPrevious(at)) {
+      return
+    }
+
+    const to = [Path.previous(at)[0]]
+
+    Transforms.moveNodes(action.editor, {
+      at,
+      to,
+      mode: 'highest',
+    })
+  },
   'paste': () => {},
   'select': ({action}) => {
     const newSelection = toSlateRange(action.selection, action.editor)
@@ -301,6 +326,20 @@ export function performAction({
     }
     case 'move block': {
       behaviorActionImplementations['move block']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'move block down': {
+      behaviorActionImplementations['move block down']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'move block up': {
+      behaviorActionImplementations['move block up']({
         context,
         action,
       })

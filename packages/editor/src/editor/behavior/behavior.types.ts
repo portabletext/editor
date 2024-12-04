@@ -151,6 +151,14 @@ export type BehaviorActionIntend =
       to: [KeyedSegment]
     }
   | {
+      type: 'move block down'
+      at: [KeyedSegment]
+    }
+  | {
+      type: 'move block up'
+      at: [KeyedSegment]
+    }
+  | {
       type: 'set block'
       paths: Array<[KeyedSegment]>
       style?: string
