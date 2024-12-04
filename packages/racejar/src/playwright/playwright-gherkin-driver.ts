@@ -40,7 +40,7 @@ export function Feature<
         ? test.describe.skip
         : test.describe
 
-  describeFn(feature.name, async () => {
+  describeFn(feature.name, () => {
     for (const scenario of feature.scenarios) {
       const testFn =
         scenario.tag === 'only'
