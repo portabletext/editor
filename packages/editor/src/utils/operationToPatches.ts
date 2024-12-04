@@ -438,6 +438,11 @@ export function createOperationToPatches(
     const patches: Patch[] = []
     const block = beforeValue[operation.path[0]]
     const targetBlock = beforeValue[operation.newPath[0]]
+
+    if (!targetBlock) {
+      return patches
+    }
+
     if (operation.path.length === 1) {
       const position: InsertPosition =
         operation.path[0] > operation.newPath[0] ? 'before' : 'after'
