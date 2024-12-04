@@ -4,7 +4,7 @@ import type {
   EditorSelectionPoint,
   PortableTextMemberSchemaTypes,
 } from '../types/editor'
-import {createArrayedPath, createKeyedPath} from './paths'
+import {createKeyedPath, toSlatePath} from './paths'
 
 export interface ObjectWithKeyAndType {
   _key: string
@@ -50,11 +50,11 @@ export function toSlateRange(
     return null
   }
   const anchor = {
-    path: createArrayedPath(selection.anchor.path, editor),
+    path: toSlatePath(selection.anchor.path, editor),
     offset: selection.anchor.offset,
   }
   const focus = {
-    path: createArrayedPath(selection.focus.path, editor),
+    path: toSlatePath(selection.focus.path, editor),
     offset: selection.focus.offset,
   }
   if (focus.path.length === 0 || anchor.path.length === 0) {
