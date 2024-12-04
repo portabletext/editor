@@ -1,6 +1,6 @@
 import {isHotkey} from '../../utils/is-hotkey'
 import {defineBehavior} from './behavior.types'
-import {getFocusBlock, selectionIsCollapsed} from './behavior.utils'
+import {getFirstBlock, getLastBlock, getSelectedBlocks} from './behavior.utils'
 
 /**
  * @alpha
@@ -22,21 +22,23 @@ export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
           config.moveBlockUpShortcut,
           event.keyboardEvent,
         )
-        const at = getFocusBlock(context)?.path
+        const firstBlock = getFirstBlock(context)
+        const selectedBlocks = getSelectedBlocks(context)
+        const blocksAbove =
+          firstBlock?.node._key !== selectedBlocks[0]?.node._key
 
-        if (!isAltArrowUp || !selectionIsCollapsed(context) || !at) {
+        if (!isAltArrowUp || !blocksAbove) {
           return false
         }
 
-        return {at}
+        return {paths: selectedBlocks.map((block) => block.path)}
       },
       actions: [
-        (_, {at}) => [
-          {
+        (_, {paths}) =>
+          paths.map((at) => ({
             type: 'move block up',
             at,
-          },
-        ],
+          })),
       ],
     }),
     defineBehavior({
@@ -46,21 +48,24 @@ export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
           config.moveBlockDownShortcut,
           event.keyboardEvent,
         )
-        const at = getFocusBlock(context)?.path
+        const lastBlock = getLastBlock(context)
+        const selectedBlocks = getSelectedBlocks(context)
+        const blocksBelow =
+          lastBlock?.node._key !==
+          selectedBlocks[selectedBlocks.length - 1]?.node._key
 
-        if (!isAltArrowDown || !selectionIsCollapsed(context) || !at) {
+        if (!isAltArrowDown || !blocksBelow) {
           return false
         }
 
-        return {at}
+        return {paths: selectedBlocks.map((block) => block.path).reverse()}
       },
       actions: [
-        (_, {at}) => [
-          {
+        (_, {paths}) =>
+          paths.map((at) => ({
             type: 'move block down',
             at,
-          },
-        ],
+          })),
       ],
     }),
   ]

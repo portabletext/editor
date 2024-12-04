@@ -101,6 +101,71 @@ export function getFocusSpan(
     : undefined
 }
 
+export function getFirstBlock(
+  context: BehaviorContext,
+): {node: PortableTextBlock; path: [KeyedSegment]} | undefined {
+  const node = context.value[0]
+
+  return node ? {node, path: [{_key: node._key}]} : undefined
+}
+
+export function getLastBlock(
+  context: BehaviorContext,
+): {node: PortableTextBlock; path: [KeyedSegment]} | undefined {
+  const node = context.value[context.value.length - 1]
+    ? context.value[context.value.length - 1]
+    : undefined
+
+  return node ? {node, path: [{_key: node._key}]} : undefined
+}
+
+export function getSelectedBlocks(
+  context: BehaviorContext,
+): Array<{node: PortableTextBlock; path: [KeyedSegment]}> {
+  const selectedBlocks: Array<{node: PortableTextBlock; path: [KeyedSegment]}> =
+    []
+  const startKey = context.selection.backward
+    ? isKeySegment(context.selection.focus.path[0])
+      ? context.selection.focus.path[0]._key
+      : undefined
+    : isKeySegment(context.selection.anchor.path[0])
+      ? context.selection.anchor.path[0]._key
+      : undefined
+  const endKey = context.selection.backward
+    ? isKeySegment(context.selection.anchor.path[0])
+      ? context.selection.anchor.path[0]._key
+      : undefined
+    : isKeySegment(context.selection.focus.path[0])
+      ? context.selection.focus.path[0]._key
+      : undefined
+
+  if (!startKey || !endKey) {
+    return selectedBlocks
+  }
+
+  for (const block of context.value) {
+    if (block._key === startKey) {
+      selectedBlocks.push({node: block, path: [{_key: block._key}]})
+
+      if (startKey === endKey) {
+        break
+      }
+      continue
+    }
+
+    if (block._key === endKey) {
+      selectedBlocks.push({node: block, path: [{_key: block._key}]})
+      break
+    }
+
+    if (selectedBlocks.length > 0) {
+      selectedBlocks.push({node: block, path: [{_key: block._key}]})
+    }
+  }
+
+  return selectedBlocks
+}
+
 export function getSelectionStartBlock(context: BehaviorContext):
   | {
       node: PortableTextBlock
