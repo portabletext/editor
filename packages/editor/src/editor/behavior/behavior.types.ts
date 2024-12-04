@@ -160,14 +160,14 @@ export type BehaviorActionIntend =
     }
   | {
       type: 'set block'
-      paths: Array<[KeyedSegment]>
+      at: [KeyedSegment]
       style?: string
       listItem?: string
       level?: number
     }
   | {
       type: 'unset block'
-      paths: Array<[KeyedSegment]>
+      at: [KeyedSegment]
       props: Array<'style' | 'listItem' | 'level'>
     }
   | {
