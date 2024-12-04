@@ -91,6 +91,8 @@ const testCases: TestCase[] = [
   ['Enter', e('Enter'), true],
   ['enter', e(13), true],
   ['Enter', e(13), true],
+  ['enter', e('Enter', ['shiftKey']), false],
+  ['Enter', e('Enter', ['shiftKey']), false],
 
   ['cmd+=', e(187, ['metaKey']), true],
   ['Cmd+=', e(187, ['metaKey']), true],
