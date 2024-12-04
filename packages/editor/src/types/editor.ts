@@ -134,14 +134,6 @@ export interface PortableTextSlateEditor extends ReactEditor {
   isListBlock: (value: unknown) => value is PortableTextListBlock
 
   /**
-   * Increments selected list items levels, or decrements them if `reverse` is true.
-   *
-   * @param reverse - if true, decrement instead of incrementing
-   * @returns True if anything was incremented in the selection
-   */
-  pteIncrementBlockLevels: (reverse?: boolean) => boolean
-
-  /**
    * Toggle selected blocks as listItem
    *
    * @param listStyle - Style of list item to toggle on/off

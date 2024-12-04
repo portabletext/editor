@@ -23,6 +23,8 @@ export const coreBehaviors = [
   coreBlockObjectBehaviors.deletingEmptyTextBlockBeforeBlockObject,
   coreListBehaviors.clearListOnBackspace,
   coreListBehaviors.unindentListOnBackspace,
+  coreListBehaviors.indentListOnTab,
+  coreListBehaviors.unindentListOnShiftTab,
 ]
 
 /**

@@ -1,9 +1,14 @@
+import {isHotkey} from '../../utils/is-hotkey'
+import {createGuards} from './behavior.guards'
 import {defineBehavior} from './behavior.types'
 import {
   getFocusSpan,
   getFocusTextBlock,
+  getSelectedBlocks,
   selectionIsCollapsed,
 } from './behavior.utils'
+
+const MAX_LIST_LEVEL = 10
 
 const clearListOnBackspace = defineBehavior({
   on: 'delete backward',
@@ -73,4 +78,91 @@ const unindentListOnBackspace = defineBehavior({
   ],
 })
 
-export const coreListBehaviors = {clearListOnBackspace, unindentListOnBackspace}
+const indentListOnTab = defineBehavior({
+  on: 'key.down',
+  guard: ({context, event}) => {
+    const isTab = isHotkey('Tab', event.keyboardEvent)
+
+    if (!isTab) {
+      return false
+    }
+
+    const selectedBlocks = getSelectedBlocks(context)
+    const guards = createGuards(context)
+    const selectedListBlocks = selectedBlocks.flatMap((block) =>
+      guards.isListBlock(block.node)
+        ? [
+            {
+              node: block.node,
+              path: block.path,
+            },
+          ]
+        : [],
+    )
+
+    if (selectedListBlocks.length === selectedBlocks.length) {
+      return {selectedListBlocks}
+    }
+
+    return false
+  },
+  actions: [
+    (_, {selectedListBlocks}) =>
+      selectedListBlocks.map((selectedListBlock) => ({
+        type: 'set block',
+        level: Math.min(
+          MAX_LIST_LEVEL,
+          Math.max(1, selectedListBlock.node.level + 1),
+        ),
+        at: selectedListBlock.path,
+      })),
+  ],
+})
+
+const unindentListOnShiftTab = defineBehavior({
+  on: 'key.down',
+  guard: ({context, event}) => {
+    const isShiftTab = isHotkey('Shift+Tab', event.keyboardEvent)
+
+    if (!isShiftTab) {
+      return false
+    }
+
+    const selectedBlocks = getSelectedBlocks(context)
+    const guards = createGuards(context)
+    const selectedListBlocks = selectedBlocks.flatMap((block) =>
+      guards.isListBlock(block.node)
+        ? [
+            {
+              node: block.node,
+              path: block.path,
+            },
+          ]
+        : [],
+    )
+
+    if (selectedListBlocks.length === selectedBlocks.length) {
+      return {selectedListBlocks}
+    }
+
+    return false
+  },
+  actions: [
+    (_, {selectedListBlocks}) =>
+      selectedListBlocks.map((selectedListBlock) => ({
+        type: 'set block',
+        level: Math.min(
+          MAX_LIST_LEVEL,
+          Math.max(1, selectedListBlock.node.level - 1),
+        ),
+        at: selectedListBlock.path,
+      })),
+  ],
+})
+
+export const coreListBehaviors = {
+  clearListOnBackspace,
+  unindentListOnBackspace,
+  indentListOnTab,
+  unindentListOnShiftTab,
+}
