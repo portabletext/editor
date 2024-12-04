@@ -74,7 +74,8 @@ export function PortableTextToolbar(props: {
           <BlockObjectButton
             key={blockObject.name}
             blockObject={blockObject}
-            editor={editorInstance}
+            editor={editor}
+            editorInstance={editorInstance}
           />
         ))}
       </Group>
@@ -277,21 +278,26 @@ function InlineObjectButton(props: {
 
 function BlockObjectButton(props: {
   blockObject: SchemaDefinition['blockObjects'][number]
-  editor: PortableTextEditor
+  editor: Editor
+  editorInstance: PortableTextEditor
 }) {
   return (
     <Button
       variant="secondary"
       size="sm"
       onPress={() => {
-        PortableTextEditor.insertBlock(
-          props.editor,
-          {name: props.blockObject.name},
-          props.blockObject.name === 'image'
-            ? {url: 'http://example.com/image.png'}
-            : {},
-        )
-        PortableTextEditor.focus(props.editor)
+        props.editor.send({
+          type: 'insert block object',
+          placement: 'auto',
+          blockObject: {
+            name: props.blockObject.name,
+            value:
+              props.blockObject.name === 'image'
+                ? {url: 'http://example.com/image.png'}
+                : {},
+          },
+        })
+        props.editor.send({type: 'focus'})
       }}
     >
       <Icon icon={props.blockObject.icon} fallback={null} />
