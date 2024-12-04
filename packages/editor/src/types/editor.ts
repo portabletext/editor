@@ -134,27 +134,6 @@ export interface PortableTextSlateEditor extends ReactEditor {
   isListBlock: (value: unknown) => value is PortableTextListBlock
 
   /**
-   * Toggle selected blocks as listItem
-   *
-   * @param listStyle - Style of list item to toggle on/off
-   */
-  pteToggleListItem: (listStyle: string) => void
-
-  /**
-   * Set selected block as listItem
-   *
-   * @param listStyle - Style of list item to set
-   */
-  pteSetListItem: (listStyle: string) => void
-
-  /**
-   * Unset selected block as listItem
-   *
-   * @param listStyle - Style of list item to unset
-   */
-  pteUnsetListItem: (listStyle: string) => void
-
-  /**
    * Toggle the selected block style
    *
    * @param style - The style name
@@ -169,14 +148,6 @@ export interface PortableTextSlateEditor extends ReactEditor {
    *
    */
   pteHasBlockStyle: (style: string) => boolean
-
-  /**
-   * Test if the current selection has a certain list style
-   *
-   * @param listStyle - Style name to check whether or not the selection has
-   *
-   */
-  pteHasListStyle: (style: string) => boolean
 
   /**
    * Try to expand the current selection to a word

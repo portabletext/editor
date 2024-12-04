@@ -101,6 +101,10 @@ export type BehaviorEvent =
         'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
       >
     }
+  | {
+      type: 'list item.toggle'
+      listItem: string
+    }
 
 /**
  * @alpha
@@ -144,6 +148,14 @@ export type BehaviorActionIntend =
       textBlock?: {
         children?: PortableTextTextBlock['children']
       }
+    }
+  | {
+      type: 'list item.add'
+      listItem: string
+    }
+  | {
+      type: 'list item.remove'
+      listItem: string
     }
   | {
       type: 'move block'

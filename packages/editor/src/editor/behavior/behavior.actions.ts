@@ -17,6 +17,11 @@ import {
   toggleAnnotationActionImplementation,
 } from '../plugins/createWithEditableAPI'
 import {
+  addListItemActionImplementation,
+  removeListItemActionImplementation,
+  toggleListItemActionImplementation,
+} from '../plugins/createWithPortableTextLists'
+import {
   addDecoratorActionImplementation,
   removeDecoratorActionImplementation,
   toggleDecoratorActionImplementation,
@@ -200,6 +205,9 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   },
   'key.down': () => {},
   'key.up': () => {},
+  'list item.add': addListItemActionImplementation,
+  'list item.remove': removeListItemActionImplementation,
+  'list item.toggle': toggleListItemActionImplementation,
   'move block': ({action}) => {
     const at = [toSlatePath(action.at, action.editor)[0]]
     const to = [toSlatePath(action.to, action.editor)[0]]
@@ -321,6 +329,20 @@ export function performAction({
     }
     case 'insert text block': {
       behaviorActionImplementations['insert text block']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'list item.add': {
+      behaviorActionImplementations['list item.add']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'list item.remove': {
+      behaviorActionImplementations['list item.remove']({
         context,
         action,
       })
@@ -510,6 +532,13 @@ function performDefaultAction({
     }
     case 'key.up': {
       behaviorActionImplementations['key.up']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'list item.toggle': {
+      behaviorActionImplementations['list item.toggle']({
         context,
         action,
       })

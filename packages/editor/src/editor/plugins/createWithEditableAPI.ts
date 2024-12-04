@@ -34,6 +34,7 @@ import {
 import {insertBlockObjectActionImplementation} from '../behavior/behavior.action.insert-block-object'
 import type {BehaviorActionImplementation} from '../behavior/behavior.actions'
 import type {EditorActor} from '../editor-machine'
+import {isListItemActive} from './createWithPortableTextLists'
 import {isDecoratorActive} from './createWithPortableTextMarkModel'
 
 const debug = debugWithName('API:editable')
@@ -61,8 +62,15 @@ export function createEditableAPI(
         editor,
       })
     },
-    toggleList: (listStyle: string): void => {
-      editor.pteToggleListItem(listStyle)
+    toggleList: (listItem: string): void => {
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'list item.toggle',
+          listItem,
+        },
+        editor,
+      })
     },
     toggleBlockStyle: (blockStyle: string): void => {
       editor.pteToggleBlockStyle(blockStyle)
@@ -241,9 +249,9 @@ export function createEditableAPI(
         return false
       }
     },
-    hasListStyle: (listStyle: string): boolean => {
+    hasListStyle: (listItem: string): boolean => {
       try {
-        return editor.pteHasListStyle(listStyle)
+        return isListItemActive({editor, listItem})
       } catch {
         // This is fine.
         return false
