@@ -89,6 +89,18 @@ export function createWithEventListeners(
             })
             break
           }
+          case 'insert block object': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {
+                type: 'insert block object',
+                placement: event.placement,
+                blockObject: event.blockObject,
+              },
+              editor,
+            })
+            break
+          }
           case 'list item.toggle': {
             editorActor.send({
               type: 'behavior event',

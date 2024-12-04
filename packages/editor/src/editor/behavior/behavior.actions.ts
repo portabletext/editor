@@ -313,13 +313,6 @@ export function performAction({
       })
       break
     }
-    case 'insert block object': {
-      behaviorActionImplementations['insert block object']({
-        context,
-        action,
-      })
-      break
-    }
     case 'insert span': {
       behaviorActionImplementations['insert span']({
         context,
@@ -497,6 +490,13 @@ function performDefaultAction({
     }
     case 'focus': {
       behaviorActionImplementations.focus({
+        context,
+        action,
+      })
+      break
+    }
+    case 'insert block object': {
+      behaviorActionImplementations['insert block object']({
         context,
         action,
       })
