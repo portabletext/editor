@@ -155,7 +155,13 @@ export type InternalEditorEmittedEvent =
   | PickFromUnion<
       BehaviorEvent,
       'type',
-      'annotation.add' | 'annotation.remove' | 'annotation.toggle' | 'focus'
+      | 'annotation.add'
+      | 'annotation.remove'
+      | 'annotation.toggle'
+      | 'decorator.add'
+      | 'decorator.remove'
+      | 'decorator.toggle'
+      | 'focus'
     >
 
 /**
@@ -340,6 +346,10 @@ export const editorMachine = setup({
       guard: ({context}) => !context.readOnly,
     },
     'annotation.toggle': {
+      actions: emit(({event}) => event),
+      guard: ({context}) => !context.readOnly,
+    },
+    'decorator.*': {
       actions: emit(({event}) => event),
       guard: ({context}) => !context.readOnly,
     },

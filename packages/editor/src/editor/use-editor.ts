@@ -53,6 +53,9 @@ export type EditorEvent = PickFromUnion<
   InternalEditorEvent,
   'type',
   | 'annotation.toggle'
+  | 'decorator.add'
+  | 'decorator.remove'
+  | 'decorator.toggle'
   | 'focus'
   | 'patches'
   | 'toggle readOnly'

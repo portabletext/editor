@@ -479,6 +479,9 @@ export function RouteEventsToChanges(props: {
         case 'annotation.add':
         case 'annotation.remove':
         case 'annotation.toggle':
+        case 'decorator.add':
+        case 'decorator.remove':
+        case 'decorator.toggle':
         case 'focus':
         case 'patches':
         case 'readOnly toggled':
