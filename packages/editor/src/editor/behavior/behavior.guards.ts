@@ -1,7 +1,8 @@
 import {
   isPortableTextListBlock,
-  type PortableTextBlock,
+  isPortableTextTextBlock,
   type PortableTextListBlock,
+  type PortableTextTextBlock,
 } from '@sanity/types'
 import type {PortableTextMemberSchemaTypes} from '../../types/editor'
 
@@ -15,11 +16,13 @@ export function createGuards({
 }: {
   schema: PortableTextMemberSchemaTypes
 }) {
-  function isListBlock(
-    block: PortableTextBlock,
-  ): block is PortableTextListBlock {
+  function isListBlock(block: unknown): block is PortableTextListBlock {
     return isPortableTextListBlock(block) && block._type === schema.block.name
   }
 
-  return {isListBlock}
+  function isTextBlock(block: unknown): block is PortableTextTextBlock {
+    return isPortableTextTextBlock(block) && block._type === schema.block.name
+  }
+
+  return {isListBlock, isTextBlock}
 }
