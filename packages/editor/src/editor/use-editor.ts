@@ -57,6 +57,7 @@ export type EditorEvent = PickFromUnion<
   | 'decorator.remove'
   | 'decorator.toggle'
   | 'focus'
+  | 'list item.toggle'
   | 'patches'
   | 'toggle readOnly'
   | 'update behaviors'
