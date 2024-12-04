@@ -31,7 +31,6 @@ import {
   KEY_TO_VALUE_ELEMENT,
   SLATE_TO_PORTABLE_TEXT_RANGE,
 } from '../../utils/weakMaps'
-import {insertBlockObjectActionImplementation} from '../behavior/behavior.action.insert-block-object'
 import {isListItemActive} from '../behavior/behavior.action.list-item'
 import type {BehaviorActionImplementation} from '../behavior/behavior.actions'
 import type {EditorActor} from '../editor-machine'
@@ -211,23 +210,18 @@ export function createEditableAPI(
       type: TSchemaType,
       value?: {[prop: string]: any},
     ): Path => {
-      insertBlockObjectActionImplementation({
-        context: {
-          keyGenerator: editorActor.getSnapshot().context.keyGenerator,
-          schema: types,
-        },
-        action: {
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
           type: 'insert block object',
           blockObject: {
             name: type.name,
             value,
           },
           placement: 'auto',
-          editor,
         },
+        editor,
       })
-
-      editor.onChange()
 
       return (
         toPortableTextRange(
