@@ -18,7 +18,7 @@ export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
     defineBehavior({
       on: 'key.down',
       guard: ({context, event}) => {
-        const isAltArrowUp = isHotkey(
+        const isMoveUpShortcut = isHotkey(
           config.moveBlockUpShortcut,
           event.keyboardEvent,
         )
@@ -27,7 +27,7 @@ export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
         const blocksAbove =
           firstBlock?.node._key !== selectedBlocks[0]?.node._key
 
-        if (!isAltArrowUp || !blocksAbove) {
+        if (!isMoveUpShortcut || !blocksAbove) {
           return false
         }
 
@@ -44,7 +44,7 @@ export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
     defineBehavior({
       on: 'key.down',
       guard: ({context, event}) => {
-        const isAltArrowDown = isHotkey(
+        const isMoveDownShortcut = isHotkey(
           config.moveBlockDownShortcut,
           event.keyboardEvent,
         )
@@ -54,7 +54,7 @@ export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
           lastBlock?.node._key !==
           selectedBlocks[selectedBlocks.length - 1]?.node._key
 
-        if (!isAltArrowDown || !blocksBelow) {
+        if (!isMoveDownShortcut || !blocksBelow) {
           return false
         }
 
