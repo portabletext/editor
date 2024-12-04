@@ -38,7 +38,7 @@ export function createKeyedPath(
   ) as Path
 }
 
-export function createArrayedPath(path: Path, editor: Editor): SlatePath {
+export function toSlatePath(path: Path, editor: Editor): SlatePath {
   if (!editor) {
     return []
   }
