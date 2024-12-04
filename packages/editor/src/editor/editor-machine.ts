@@ -161,6 +161,7 @@ export type InternalEditorEmittedEvent =
       | 'decorator.add'
       | 'decorator.remove'
       | 'decorator.toggle'
+      | 'insert block object'
       | 'list item.toggle'
       | 'focus'
     >
@@ -355,6 +356,10 @@ export const editorMachine = setup({
       guard: ({context}) => !context.readOnly,
     },
     'focus': {
+      actions: emit(({event}) => event),
+      guard: ({context}) => !context.readOnly,
+    },
+    'insert block object': {
       actions: emit(({event}) => event),
       guard: ({context}) => !context.readOnly,
     },

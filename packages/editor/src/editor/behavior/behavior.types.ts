@@ -73,6 +73,14 @@ export type BehaviorEvent =
       type: 'focus'
     }
   | {
+      type: 'insert block object'
+      placement: 'auto' | 'after' | 'before'
+      blockObject: {
+        name: string
+        value?: {[prop: string]: unknown}
+      }
+    }
+  | {
       type: 'insert soft break'
     }
   | {
@@ -125,14 +133,6 @@ export type BehaviorGuard<
  */
 export type BehaviorActionIntend =
   | BehaviorEvent
-  | {
-      type: 'insert block object'
-      placement: 'auto' | 'after' | 'before'
-      blockObject: {
-        name: string
-        value?: {[prop: string]: unknown}
-      }
-    }
   | {
       type: 'insert span'
       text: string
