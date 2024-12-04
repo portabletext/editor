@@ -92,6 +92,9 @@ export type BehaviorEvent =
       options?: TextInsertTextOptions
     }
   | {
+      type: 'noop'
+    }
+  | {
       type: 'paste'
       data: DataTransfer
     }

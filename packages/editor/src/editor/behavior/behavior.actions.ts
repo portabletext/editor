@@ -243,6 +243,7 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
       mode: 'highest',
     })
   },
+  'noop': () => {},
   'paste': () => {},
   'select': ({action}) => {
     const newSelection = toSlateRange(action.selection, action.editor)
@@ -539,6 +540,13 @@ function performDefaultAction({
     }
     case 'list item.toggle': {
       behaviorActionImplementations['list item.toggle']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'noop': {
+      behaviorActionImplementations.noop({
         context,
         action,
       })
