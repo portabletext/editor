@@ -45,7 +45,7 @@ export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
         (_, {focusBlock, previousBlock}) => [
           {
             type: 'move block',
-            blockPath: focusBlock.path,
+            at: focusBlock.path,
             to: previousBlock.path,
           },
         ],
@@ -76,7 +76,7 @@ export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
         (_, {focusBlock, nextBlock}) => [
           {
             type: 'move block',
-            blockPath: focusBlock.path,
+            at: focusBlock.path,
             to: nextBlock.path,
           },
         ],
