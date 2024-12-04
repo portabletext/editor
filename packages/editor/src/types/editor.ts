@@ -155,13 +155,6 @@ export interface PortableTextSlateEditor extends ReactEditor {
   pteUnsetListItem: (listStyle: string) => void
 
   /**
-   * Ends a list
-   *
-   * @returns True if a list was ended in the selection
-   */
-  pteEndList: () => boolean
-
-  /**
    * Toggle the selected block style
    *
    * @param style - The style name

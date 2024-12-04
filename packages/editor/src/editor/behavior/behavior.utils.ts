@@ -2,12 +2,14 @@ import {
   isKeySegment,
   isPortableTextSpan,
   isPortableTextTextBlock,
+  PortableTextListBlock,
   type KeyedSegment,
   type PortableTextBlock,
   type PortableTextObject,
   type PortableTextSpan,
   type PortableTextTextBlock,
 } from '@sanity/types'
+import {createGuards} from './behavior.guards'
 import type {BehaviorContext} from './behavior.types'
 
 /**
@@ -48,6 +50,17 @@ export function getFocusTextBlock(
   const focusBlock = getFocusBlock(context)
 
   return focusBlock && isPortableTextTextBlock(focusBlock.node)
+    ? {node: focusBlock.node, path: focusBlock.path}
+    : undefined
+}
+
+export function getFocusListBlock(
+  context: BehaviorContext,
+): {node: PortableTextListBlock; path: [KeyedSegment]} | undefined {
+  const guards = createGuards(context)
+  const focusBlock = getFocusBlock(context)
+
+  return focusBlock && guards.isListBlock(focusBlock.node)
     ? {node: focusBlock.node, path: focusBlock.path}
     : undefined
 }
