@@ -38,7 +38,8 @@ export function PortableTextToolbar(props: {
           <DecoratorToolbarButton
             key={decorator.name}
             decorator={decorator}
-            editor={editorInstance}
+            editor={editor}
+            editorInstance={editorInstance}
             selection={selection}
           />
         ))}
@@ -190,12 +191,13 @@ function AnnotationToolbarButton(props: {
 
 function DecoratorToolbarButton(props: {
   decorator: SchemaDefinition['decorators'][number]
-  editor: PortableTextEditor
+  editor: Editor
+  editorInstance: PortableTextEditor
   selection: EditorSelection
 }) {
   const active =
     props.selection !== null &&
-    PortableTextEditor.isMarkActive(props.editor, props.decorator.name)
+    PortableTextEditor.isMarkActive(props.editorInstance, props.decorator.name)
 
   return (
     <TooltipTrigger>
@@ -204,8 +206,11 @@ function DecoratorToolbarButton(props: {
         size="sm"
         isSelected={active}
         onPress={() => {
-          PortableTextEditor.toggleMark(props.editor, props.decorator.name)
-          PortableTextEditor.focus(props.editor)
+          props.editor.send({
+            type: 'decorator.toggle',
+            decorator: props.decorator.name,
+          })
+          props.editor.send({type: 'focus'})
         }}
       >
         <Icon icon={props.decorator.icon} fallback={props.decorator.title} />
