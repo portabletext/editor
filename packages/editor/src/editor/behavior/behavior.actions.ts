@@ -7,6 +7,7 @@ import {
 } from 'slate'
 import {ReactEditor} from 'slate-react'
 import type {PortableTextMemberSchemaTypes} from '../../types/editor'
+import {toSlatePath} from '../../utils/paths'
 import {toSlateRange} from '../../utils/ranges'
 import {fromSlateValue, toSlateValue} from '../../utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../../utils/weakMaps'
@@ -198,47 +199,12 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'key.down': () => {},
   'key.up': () => {},
   'move block': ({action}) => {
-    const location = toSlateRange(
-      {
-        anchor: {
-          path: action.at,
-          offset: 0,
-        },
-        focus: {
-          path: action.at,
-          offset: 0,
-        },
-      },
-      action.editor,
-    )
-
-    if (!location) {
-      console.error('Unable to find Slate range from selection points')
-      return
-    }
-
-    const newLocation = toSlateRange(
-      {
-        anchor: {
-          path: action.to,
-          offset: 0,
-        },
-        focus: {
-          path: action.to,
-          offset: 0,
-        },
-      },
-      action.editor,
-    )
-
-    if (!newLocation) {
-      console.error('Unable to find Slate range from selection points')
-      return
-    }
+    const at = [toSlatePath(action.at, action.editor)[0]]
+    const to = [toSlatePath(action.to, action.editor)[0]]
 
     Transforms.moveNodes(action.editor, {
-      at: location,
-      to: newLocation.anchor.path.slice(0, 1),
+      at,
+      to,
       mode: 'highest',
     })
   },
