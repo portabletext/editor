@@ -1,6 +1,5 @@
-import {isPortableTextSpan, isPortableTextTextBlock} from '@sanity/types'
 import type {KeyboardEvent} from 'react'
-import {Editor, Node, Range} from 'slate'
+import {Node} from 'slate'
 import type {ReactEditor} from 'slate-react'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {HotkeyOptions} from '../../types/options'
@@ -77,39 +76,7 @@ export function createWithHotkeys(
       })
 
       const isEnter = isHotkey('enter', event.nativeEvent)
-      const isTab = isHotkey('tab', event.nativeEvent)
       const isShiftEnter = isHotkey('shift+enter', event.nativeEvent)
-      const isShiftTab = isHotkey('shift+tab', event.nativeEvent)
-
-      // Tab for lists
-      // Only steal tab when we are on a plain text span or we are at the start of the line (fallback if the whole block is annotated or contains a single inline object)
-      // Otherwise tab is reserved for accessability for buttons etc.
-      if ((isTab || isShiftTab) && editor.selection) {
-        const [focusChild] = Editor.node(editor, editor.selection.focus, {
-          depth: 2,
-        })
-        const [focusBlock] = isPortableTextSpan(focusChild)
-          ? Editor.node(editor, editor.selection.focus, {depth: 1})
-          : []
-        const hasAnnotationFocus =
-          focusChild &&
-          isPortableTextTextBlock(focusBlock) &&
-          isPortableTextSpan(focusChild) &&
-          (focusChild.marks || ([] as string[])).filter((m) =>
-            (focusBlock.markDefs || []).map((def) => def._key).includes(m),
-          ).length > 0
-        const [start] = Range.edges(editor.selection)
-        const atStartOfNode = Editor.isStart(editor, start, start.path)
-
-        if (
-          focusChild &&
-          isPortableTextSpan(focusChild) &&
-          (!hasAnnotationFocus || atStartOfNode) &&
-          editor.pteIncrementBlockLevels(isShiftTab)
-        ) {
-          event.preventDefault()
-        }
-      }
 
       // Deal with enter key combos
       if (isEnter && !isShiftEnter && editor.selection) {

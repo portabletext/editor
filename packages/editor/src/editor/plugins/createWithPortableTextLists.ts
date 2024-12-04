@@ -6,7 +6,6 @@ import type {
 import {debugWithName} from '../../utils/debug'
 
 const debug = debugWithName('plugin:withPortableTextLists')
-const MAX_LIST_LEVEL = 10
 
 export function createWithPortableTextLists(
   types: PortableTextMemberSchemaTypes,
@@ -107,45 +106,6 @@ export function createWithPortableTextLists(
         }
       })
       return true // Note: we are exiting the plugin chain by not returning editor (or hotkey plugin 'enter' will fire)
-    }
-
-    editor.pteIncrementBlockLevels = (reverse?: boolean): boolean => {
-      if (!editor.selection) {
-        return false
-      }
-      const selectedBlocks = [
-        ...Editor.nodes(editor, {
-          at: editor.selection,
-          match: (node) => !!editor.isListBlock(node),
-        }),
-      ]
-      if (selectedBlocks.length === 0) {
-        return false
-      }
-      selectedBlocks.forEach(([node, path]) => {
-        if (editor.isListBlock(node)) {
-          let level = node.level || 1
-          if (reverse) {
-            level--
-            debug(
-              'Decrementing list level',
-              Math.min(MAX_LIST_LEVEL, Math.max(1, level)),
-            )
-          } else {
-            level++
-            debug(
-              'Incrementing list level',
-              Math.min(MAX_LIST_LEVEL, Math.max(1, level)),
-            )
-          }
-          Transforms.setNodes(
-            editor,
-            {level: Math.min(MAX_LIST_LEVEL, Math.max(1, level))},
-            {at: path},
-          )
-        }
-      })
-      return true
     }
 
     editor.pteHasListStyle = (listStyle: string): boolean => {
