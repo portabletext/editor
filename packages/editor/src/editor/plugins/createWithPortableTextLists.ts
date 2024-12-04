@@ -1,4 +1,4 @@
-import {Editor, Element, Text, Transforms, type Node} from 'slate'
+import {Editor, Element, Transforms, type Node} from 'slate'
 import type {
   PortableTextMemberSchemaTypes,
   PortableTextSlateEditor,
@@ -71,41 +71,6 @@ export function createWithPortableTextLists(
           {at: path},
         )
       })
-    }
-
-    editor.pteEndList = () => {
-      if (!editor.selection) {
-        return false
-      }
-      const selectedBlocks = [
-        ...Editor.nodes(editor, {
-          at: editor.selection,
-          match: (node) =>
-            Element.isElement(node) &&
-            editor.isListBlock(node) &&
-            node.children.length === 1 &&
-            Text.isText(node.children[0]) &&
-            node.children[0].text === '',
-        }),
-      ]
-      if (selectedBlocks.length === 0) {
-        return false
-      }
-      selectedBlocks.forEach(([node, path]) => {
-        if (Element.isElement(node)) {
-          debug('Unset list')
-          Transforms.setNodes(
-            editor,
-            {
-              ...node,
-              level: undefined,
-              listItem: undefined,
-            },
-            {at: path},
-          )
-        }
-      })
-      return true // Note: we are exiting the plugin chain by not returning editor (or hotkey plugin 'enter' will fire)
     }
 
     editor.pteHasListStyle = (listStyle: string): boolean => {

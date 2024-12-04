@@ -2,9 +2,11 @@ import {isHotkey} from '../../utils/is-hotkey'
 import {createGuards} from './behavior.guards'
 import {defineBehavior} from './behavior.types'
 import {
+  getFocusListBlock,
   getFocusSpan,
   getFocusTextBlock,
   getSelectedBlocks,
+  isEmptyTextBlock,
   selectionIsCollapsed,
 } from './behavior.utils'
 
@@ -73,6 +75,33 @@ const unindentListOnBackspace = defineBehavior({
         type: 'set block',
         level,
         at: focusTextBlock.path,
+      },
+    ],
+  ],
+})
+
+const clearListOnEnter = defineBehavior({
+  on: 'insert break',
+  guard: ({context}) => {
+    const focusListBlock = getFocusListBlock(context)
+    const selectionCollapsed = selectionIsCollapsed(context)
+
+    if (!focusListBlock || !selectionCollapsed) {
+      return false
+    }
+
+    if (!isEmptyTextBlock(focusListBlock.node)) {
+      return false
+    }
+
+    return {focusListBlock}
+  },
+  actions: [
+    (_, {focusListBlock}) => [
+      {
+        type: 'unset block',
+        props: ['listItem', 'level'],
+        at: focusListBlock.path,
       },
     ],
   ],
@@ -163,6 +192,7 @@ const unindentListOnShiftTab = defineBehavior({
 export const coreListBehaviors = {
   clearListOnBackspace,
   unindentListOnBackspace,
+  clearListOnEnter,
   indentListOnTab,
   unindentListOnShiftTab,
 }

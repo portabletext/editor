@@ -1,9 +1,7 @@
 import type {KeyboardEvent} from 'react'
-import {Node} from 'slate'
 import type {ReactEditor} from 'slate-react'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {HotkeyOptions} from '../../types/options'
-import type {SlateTextBlock, VoidElement} from '../../types/slate'
 import {debugWithName} from '../../utils/debug'
 import {isHotkey} from '../../utils/is-hotkey'
 import type {EditorActor} from '../editor-machine'
@@ -74,25 +72,6 @@ export function createWithHotkeys(
           }
         }
       })
-
-      const isEnter = isHotkey('enter', event.nativeEvent)
-      const isShiftEnter = isHotkey('shift+enter', event.nativeEvent)
-
-      // Deal with enter key combos
-      if (isEnter && !isShiftEnter && editor.selection) {
-        const focusBlockPath = editor.selection.focus.path.slice(0, 1)
-        const focusBlock = Node.descendant(editor, focusBlockPath) as
-          | SlateTextBlock
-          | VoidElement
-
-        // List item enter key
-        if (editor.isListBlock(focusBlock)) {
-          if (editor.pteEndList()) {
-            event.preventDefault()
-          }
-          return
-        }
-      }
     }
     return editor
   }
