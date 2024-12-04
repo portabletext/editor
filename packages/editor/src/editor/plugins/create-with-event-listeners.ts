@@ -46,6 +46,39 @@ export function createWithEventListeners(
             })
             break
           }
+          case 'decorator.add': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {
+                type: 'decorator.add',
+                decorator: event.decorator,
+              },
+              editor,
+            })
+            break
+          }
+          case 'decorator.remove': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {
+                type: 'decorator.remove',
+                decorator: event.decorator,
+              },
+              editor,
+            })
+            break
+          }
+          case 'decorator.toggle': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {
+                type: 'decorator.toggle',
+                decorator: event.decorator,
+              },
+              editor,
+            })
+            break
+          }
           case 'focus': {
             editorActor.send({
               type: 'behavior event',
