@@ -32,9 +32,9 @@ import {
   SLATE_TO_PORTABLE_TEXT_RANGE,
 } from '../../utils/weakMaps'
 import {insertBlockObjectActionImplementation} from '../behavior/behavior.action.insert-block-object'
+import {isListItemActive} from '../behavior/behavior.action.list-item'
 import type {BehaviorActionImplementation} from '../behavior/behavior.actions'
 import type {EditorActor} from '../editor-machine'
-import {isListItemActive} from './createWithPortableTextLists'
 import {isDecoratorActive} from './createWithPortableTextMarkModel'
 
 const debug = debugWithName('API:editable')

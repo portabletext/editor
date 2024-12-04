@@ -17,11 +17,6 @@ import {
   toggleAnnotationActionImplementation,
 } from '../plugins/createWithEditableAPI'
 import {
-  addListItemActionImplementation,
-  removeListItemActionImplementation,
-  toggleListItemActionImplementation,
-} from '../plugins/createWithPortableTextLists'
-import {
   addDecoratorActionImplementation,
   removeDecoratorActionImplementation,
   toggleDecoratorActionImplementation,
@@ -33,6 +28,11 @@ import {
   insertSoftBreakActionImplementation,
 } from './behavior.action.insert-break'
 import {insertSpanActionImplementation} from './behavior.action.insert-span'
+import {
+  addListItemActionImplementation,
+  removeListItemActionImplementation,
+  toggleListItemActionImplementation,
+} from './behavior.action.list-item'
 import type {
   BehaviorAction,
   BehaviorEvent,
