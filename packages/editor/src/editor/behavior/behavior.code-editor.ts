@@ -1,11 +1,6 @@
 import {isHotkey} from '../../utils/is-hotkey'
 import {defineBehavior} from './behavior.types'
-import {
-  getFocusBlock,
-  getNextBlock,
-  getPreviousBlock,
-  selectionIsCollapsed,
-} from './behavior.utils'
+import {getFocusBlock, selectionIsCollapsed} from './behavior.utils'
 
 /**
  * @alpha
@@ -27,26 +22,19 @@ export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
           config.moveBlockUpShortcut,
           event.keyboardEvent,
         )
+        const at = getFocusBlock(context)?.path
 
-        if (!isAltArrowUp || !selectionIsCollapsed(context)) {
+        if (!isAltArrowUp || !selectionIsCollapsed(context) || !at) {
           return false
         }
 
-        const focusBlock = getFocusBlock(context)
-        const previousBlock = getPreviousBlock(context)
-
-        if (focusBlock && previousBlock) {
-          return {focusBlock, previousBlock}
-        }
-
-        return false
+        return {at}
       },
       actions: [
-        (_, {focusBlock, previousBlock}) => [
+        (_, {at}) => [
           {
-            type: 'move block',
-            at: focusBlock.path,
-            to: previousBlock.path,
+            type: 'move block up',
+            at,
           },
         ],
       ],
@@ -58,26 +46,19 @@ export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
           config.moveBlockDownShortcut,
           event.keyboardEvent,
         )
+        const at = getFocusBlock(context)?.path
 
-        if (!isAltArrowDown || !selectionIsCollapsed(context)) {
+        if (!isAltArrowDown || !selectionIsCollapsed(context) || !at) {
           return false
         }
 
-        const focusBlock = getFocusBlock(context)
-        const nextBlock = getNextBlock(context)
-
-        if (focusBlock && nextBlock) {
-          return {focusBlock, nextBlock}
-        }
-
-        return false
+        return {at}
       },
       actions: [
-        (_, {focusBlock, nextBlock}) => [
+        (_, {at}) => [
           {
-            type: 'move block',
-            at: focusBlock.path,
-            to: nextBlock.path,
+            type: 'move block down',
+            at,
           },
         ],
       ],
