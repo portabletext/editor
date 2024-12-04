@@ -201,11 +201,11 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
     const location = toSlateRange(
       {
         anchor: {
-          path: action.blockPath,
+          path: action.at,
           offset: 0,
         },
         focus: {
-          path: action.blockPath,
+          path: action.at,
           offset: 0,
         },
       },

@@ -147,7 +147,7 @@ export type BehaviorActionIntend =
     }
   | {
       type: 'move block'
-      blockPath: [KeyedSegment]
+      at: [KeyedSegment]
       to: [KeyedSegment]
     }
   | {
