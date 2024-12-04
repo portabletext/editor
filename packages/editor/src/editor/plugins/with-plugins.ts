@@ -8,7 +8,6 @@ import {createWithObjectKeys} from './createWithObjectKeys'
 import {createWithPatches} from './createWithPatches'
 import {createWithPlaceholderBlock} from './createWithPlaceholderBlock'
 import {createWithPortableTextBlockStyle} from './createWithPortableTextBlockStyle'
-import {createWithPortableTextLists} from './createWithPortableTextLists'
 import {createWithPortableTextMarkModel} from './createWithPortableTextMarkModel'
 import {createWithPortableTextSelections} from './createWithPortableTextSelections'
 import {createWithSchemaTypes} from './createWithSchemaTypes'
@@ -46,7 +45,6 @@ export const withPlugins = <T extends Editor>(
     subscriptions: options.subscriptions,
   })
   const withMaxBlocks = createWithMaxBlocks(editorActor)
-  const withPortableTextLists = createWithPortableTextLists(schemaTypes)
   const withUndoRedo = createWithUndoRedo({
     editorActor,
     blockSchemaType: schemaTypes.block,
@@ -82,12 +80,10 @@ export const withPlugins = <T extends Editor>(
       withObjectKeys(
         withPortableTextMarkModel(
           withPortableTextBlockStyle(
-            withPortableTextLists(
-              withPlaceholderBlock(
-                withUtils(
-                  withMaxBlocks(
-                    withUndoRedo(withPatches(withPortableTextSelections(e))),
-                  ),
+            withPlaceholderBlock(
+              withUtils(
+                withMaxBlocks(
+                  withUndoRedo(withPatches(withPortableTextSelections(e))),
                 ),
               ),
             ),
