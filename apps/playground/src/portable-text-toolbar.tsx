@@ -62,7 +62,8 @@ export function PortableTextToolbar(props: {
           <ListToolbarButton
             key={list.name}
             list={list}
-            editor={editorInstance}
+            editor={editor}
+            editorInstance={editorInstance}
             selection={selection}
           />
         ))}
@@ -222,12 +223,13 @@ function DecoratorToolbarButton(props: {
 
 function ListToolbarButton(props: {
   list: SchemaDefinition['lists'][number]
-  editor: PortableTextEditor
+  editor: Editor
+  editorInstance: PortableTextEditor
   selection: EditorSelection
 }) {
   const active =
     props.selection !== null &&
-    PortableTextEditor.hasListStyle(props.editor, props.list.name)
+    PortableTextEditor.hasListStyle(props.editorInstance, props.list.name)
 
   return (
     <TooltipTrigger>
@@ -236,8 +238,11 @@ function ListToolbarButton(props: {
         size="sm"
         isSelected={active}
         onPress={() => {
-          PortableTextEditor.toggleList(props.editor, props.list.name)
-          PortableTextEditor.focus(props.editor)
+          props.editor.send({
+            type: 'list item.toggle',
+            listItem: props.list.name,
+          })
+          props.editor.send({type: 'focus'})
         }}
       >
         <Icon icon={props.list.icon} fallback={props.list.title} />
