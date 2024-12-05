@@ -14,10 +14,10 @@ const MAX_LIST_LEVEL = 10
 
 const clearListOnBackspace = defineBehavior({
   on: 'delete backward',
-  guard: ({context}) => {
-    const selectionCollapsed = selectionIsCollapsed(context)
-    const focusTextBlock = getFocusTextBlock(context)
-    const focusSpan = getFocusSpan(context)
+  guard: ({state}) => {
+    const selectionCollapsed = selectionIsCollapsed(state)
+    const focusTextBlock = getFocusTextBlock(state)
+    const focusSpan = getFocusSpan(state)
 
     if (!selectionCollapsed || !focusTextBlock || !focusSpan) {
       return false
@@ -25,7 +25,7 @@ const clearListOnBackspace = defineBehavior({
 
     const atTheBeginningOfBLock =
       focusTextBlock.node.children[0]._key === focusSpan.node._key &&
-      context.selection.focus.offset === 0
+      state.selection.focus.offset === 0
 
     if (atTheBeginningOfBLock && focusTextBlock.node.level === 1) {
       return {focusTextBlock}
@@ -46,10 +46,10 @@ const clearListOnBackspace = defineBehavior({
 
 const unindentListOnBackspace = defineBehavior({
   on: 'delete backward',
-  guard: ({context}) => {
-    const selectionCollapsed = selectionIsCollapsed(context)
-    const focusTextBlock = getFocusTextBlock(context)
-    const focusSpan = getFocusSpan(context)
+  guard: ({state}) => {
+    const selectionCollapsed = selectionIsCollapsed(state)
+    const focusTextBlock = getFocusTextBlock(state)
+    const focusSpan = getFocusSpan(state)
 
     if (!selectionCollapsed || !focusTextBlock || !focusSpan) {
       return false
@@ -57,7 +57,7 @@ const unindentListOnBackspace = defineBehavior({
 
     const atTheBeginningOfBLock =
       focusTextBlock.node.children[0]._key === focusSpan.node._key &&
-      context.selection.focus.offset === 0
+      state.selection.focus.offset === 0
 
     if (
       atTheBeginningOfBLock &&
@@ -82,9 +82,9 @@ const unindentListOnBackspace = defineBehavior({
 
 const clearListOnEnter = defineBehavior({
   on: 'insert.break',
-  guard: ({context}) => {
-    const focusListBlock = getFocusListBlock(context)
-    const selectionCollapsed = selectionIsCollapsed(context)
+  guard: ({state}) => {
+    const focusListBlock = getFocusListBlock(state)
+    const selectionCollapsed = selectionIsCollapsed(state)
 
     if (!focusListBlock || !selectionCollapsed) {
       return false
@@ -109,15 +109,15 @@ const clearListOnEnter = defineBehavior({
 
 const indentListOnTab = defineBehavior({
   on: 'key.down',
-  guard: ({context, event}) => {
+  guard: ({state, event}) => {
     const isTab = isHotkey('Tab', event.keyboardEvent)
 
     if (!isTab) {
       return false
     }
 
-    const selectedBlocks = getSelectedBlocks(context)
-    const guards = createGuards(context)
+    const selectedBlocks = getSelectedBlocks(state)
+    const guards = createGuards(state)
     const selectedListBlocks = selectedBlocks.flatMap((block) =>
       guards.isListBlock(block.node)
         ? [
@@ -150,15 +150,15 @@ const indentListOnTab = defineBehavior({
 
 const unindentListOnShiftTab = defineBehavior({
   on: 'key.down',
-  guard: ({context, event}) => {
+  guard: ({state, event}) => {
     const isShiftTab = isHotkey('Shift+Tab', event.keyboardEvent)
 
     if (!isShiftTab) {
       return false
     }
 
-    const selectedBlocks = getSelectedBlocks(context)
-    const guards = createGuards(context)
+    const selectedBlocks = getSelectedBlocks(state)
+    const guards = createGuards(state)
     const selectedListBlocks = selectedBlocks.flatMap((block) =>
       guards.isListBlock(block.node)
         ? [

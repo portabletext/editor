@@ -18,7 +18,7 @@ export {
   type Behavior,
   type BehaviorActionIntend,
   type BehaviorActionIntendSet,
-  type BehaviorContext,
+  type EditorState,
   type BehaviorEvent,
   type BehaviorGuard,
   type OmitFromUnion,

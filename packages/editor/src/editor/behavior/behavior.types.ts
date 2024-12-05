@@ -15,7 +15,7 @@ import type {BlockOffset} from './behavior.utils.block-offset'
 /**
  * @alpha
  */
-export type BehaviorContext = {
+export type EditorState = {
   schema: PortableTextMemberSchemaTypes
   value: Array<PortableTextBlock>
   selection: NonNullable<EditorSelection>
@@ -138,11 +138,11 @@ export type BehaviorGuard<
   TBehaviorEvent extends BehaviorEvent,
   TGuardResponse,
 > = ({
-  context,
+  state,
   event,
 }: {
+  state: EditorState
   event: TBehaviorEvent
-  context: BehaviorContext
 }) => TGuardResponse | false
 
 /**
@@ -275,10 +275,10 @@ export type BehaviorActionIntendSet<
   TGuardResponse = true,
 > = (
   {
-    context,
+    state,
     event,
   }: {
-    context: BehaviorContext
+    state: EditorState
     event: PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>
   },
   guardResponse: TGuardResponse,

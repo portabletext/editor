@@ -10,17 +10,17 @@ import {
   type PortableTextTextBlock,
 } from '@sanity/types'
 import {createGuards} from './behavior.guards'
-import type {BehaviorContext} from './behavior.types'
+import type {EditorState} from './behavior.types'
 
 /**
  * Selection utilities
  */
 
-export function selectionIsCollapsed(context: BehaviorContext) {
+export function selectionIsCollapsed(state: EditorState) {
   return (
-    JSON.stringify(context.selection?.anchor.path) ===
-      JSON.stringify(context.selection?.focus.path) &&
-    context.selection?.anchor.offset === context.selection?.focus.offset
+    JSON.stringify(state.selection?.anchor.path) ===
+      JSON.stringify(state.selection?.focus.path) &&
+    state.selection?.anchor.offset === state.selection?.focus.offset
   )
 }
 
@@ -29,25 +29,23 @@ export function selectionIsCollapsed(context: BehaviorContext) {
  */
 
 export function getFocusBlock(
-  context: BehaviorContext,
+  state: EditorState,
 ): {node: PortableTextBlock; path: [KeyedSegment]} | undefined {
-  const key = context.selection
-    ? isKeySegment(context.selection.focus.path[0])
-      ? context.selection.focus.path[0]._key
+  const key = state.selection
+    ? isKeySegment(state.selection.focus.path[0])
+      ? state.selection.focus.path[0]._key
       : undefined
     : undefined
 
-  const node = key
-    ? context.value.find((block) => block._key === key)
-    : undefined
+  const node = key ? state.value.find((block) => block._key === key) : undefined
 
   return node && key ? {node, path: [{_key: key}]} : undefined
 }
 
 export function getFocusTextBlock(
-  context: BehaviorContext,
+  state: EditorState,
 ): {node: PortableTextTextBlock; path: [KeyedSegment]} | undefined {
-  const focusBlock = getFocusBlock(context)
+  const focusBlock = getFocusBlock(state)
 
   return focusBlock && isPortableTextTextBlock(focusBlock.node)
     ? {node: focusBlock.node, path: focusBlock.path}
@@ -55,10 +53,10 @@ export function getFocusTextBlock(
 }
 
 export function getFocusListBlock(
-  context: BehaviorContext,
+  state: EditorState,
 ): {node: PortableTextListBlock; path: [KeyedSegment]} | undefined {
-  const guards = createGuards(context)
-  const focusBlock = getFocusBlock(context)
+  const guards = createGuards(state)
+  const focusBlock = getFocusBlock(state)
 
   return focusBlock && guards.isListBlock(focusBlock.node)
     ? {node: focusBlock.node, path: focusBlock.path}
@@ -66,30 +64,30 @@ export function getFocusListBlock(
 }
 
 export function getFocusBlockObject(
-  context: BehaviorContext,
+  state: EditorState,
 ): {node: PortableTextObject; path: [KeyedSegment]} | undefined {
-  const focusBlock = getFocusBlock(context)
+  const focusBlock = getFocusBlock(state)
 
   return focusBlock && !isPortableTextTextBlock(focusBlock.node)
     ? {node: focusBlock.node, path: focusBlock.path}
     : undefined
 }
 
-export function getFocusChild(context: BehaviorContext):
+export function getFocusChild(state: EditorState):
   | {
       node: PortableTextObject | PortableTextSpan
       path: [KeyedSegment, 'children', KeyedSegment]
     }
   | undefined {
-  const focusBlock = getFocusTextBlock(context)
+  const focusBlock = getFocusTextBlock(state)
 
   if (!focusBlock) {
     return undefined
   }
 
-  const key = context.selection
-    ? isKeySegment(context.selection.focus.path[2])
-      ? context.selection.focus.path[2]._key
+  const key = state.selection
+    ? isKeySegment(state.selection.focus.path[2])
+      ? state.selection.focus.path[2]._key
       : undefined
     : undefined
 
@@ -103,11 +101,11 @@ export function getFocusChild(context: BehaviorContext):
 }
 
 export function getFocusSpan(
-  context: BehaviorContext,
+  state: EditorState,
 ):
   | {node: PortableTextSpan; path: [KeyedSegment, 'children', KeyedSegment]}
   | undefined {
-  const focusChild = getFocusChild(context)
+  const focusChild = getFocusChild(state)
 
   return focusChild && isPortableTextSpan(focusChild.node)
     ? {node: focusChild.node, path: focusChild.path}
@@ -115,48 +113,48 @@ export function getFocusSpan(
 }
 
 export function getFirstBlock(
-  context: BehaviorContext,
+  state: EditorState,
 ): {node: PortableTextBlock; path: [KeyedSegment]} | undefined {
-  const node = context.value[0]
+  const node = state.value[0]
 
   return node ? {node, path: [{_key: node._key}]} : undefined
 }
 
 export function getLastBlock(
-  context: BehaviorContext,
+  state: EditorState,
 ): {node: PortableTextBlock; path: [KeyedSegment]} | undefined {
-  const node = context.value[context.value.length - 1]
-    ? context.value[context.value.length - 1]
+  const node = state.value[state.value.length - 1]
+    ? state.value[state.value.length - 1]
     : undefined
 
   return node ? {node, path: [{_key: node._key}]} : undefined
 }
 
 export function getSelectedBlocks(
-  context: BehaviorContext,
+  state: EditorState,
 ): Array<{node: PortableTextBlock; path: [KeyedSegment]}> {
   const selectedBlocks: Array<{node: PortableTextBlock; path: [KeyedSegment]}> =
     []
-  const startKey = context.selection.backward
-    ? isKeySegment(context.selection.focus.path[0])
-      ? context.selection.focus.path[0]._key
+  const startKey = state.selection.backward
+    ? isKeySegment(state.selection.focus.path[0])
+      ? state.selection.focus.path[0]._key
       : undefined
-    : isKeySegment(context.selection.anchor.path[0])
-      ? context.selection.anchor.path[0]._key
+    : isKeySegment(state.selection.anchor.path[0])
+      ? state.selection.anchor.path[0]._key
       : undefined
-  const endKey = context.selection.backward
-    ? isKeySegment(context.selection.anchor.path[0])
-      ? context.selection.anchor.path[0]._key
+  const endKey = state.selection.backward
+    ? isKeySegment(state.selection.anchor.path[0])
+      ? state.selection.anchor.path[0]._key
       : undefined
-    : isKeySegment(context.selection.focus.path[0])
-      ? context.selection.focus.path[0]._key
+    : isKeySegment(state.selection.focus.path[0])
+      ? state.selection.focus.path[0]._key
       : undefined
 
   if (!startKey || !endKey) {
     return selectedBlocks
   }
 
-  for (const block of context.value) {
+  for (const block of state.value) {
     if (block._key === startKey) {
       selectedBlocks.push({node: block, path: [{_key: block._key}]})
 
@@ -179,53 +177,49 @@ export function getSelectedBlocks(
   return selectedBlocks
 }
 
-export function getSelectionStartBlock(context: BehaviorContext):
+export function getSelectionStartBlock(state: EditorState):
   | {
       node: PortableTextBlock
       path: [KeyedSegment]
     }
   | undefined {
-  const key = context.selection.backward
-    ? isKeySegment(context.selection.focus.path[0])
-      ? context.selection.focus.path[0]._key
+  const key = state.selection.backward
+    ? isKeySegment(state.selection.focus.path[0])
+      ? state.selection.focus.path[0]._key
       : undefined
-    : isKeySegment(context.selection.anchor.path[0])
-      ? context.selection.anchor.path[0]._key
+    : isKeySegment(state.selection.anchor.path[0])
+      ? state.selection.anchor.path[0]._key
       : undefined
 
-  const node = key
-    ? context.value.find((block) => block._key === key)
-    : undefined
+  const node = key ? state.value.find((block) => block._key === key) : undefined
 
   return node && key ? {node, path: [{_key: key}]} : undefined
 }
 
-export function getSelectionEndBlock(context: BehaviorContext):
+export function getSelectionEndBlock(state: EditorState):
   | {
       node: PortableTextBlock
       path: [KeyedSegment]
     }
   | undefined {
-  const key = context.selection.backward
-    ? isKeySegment(context.selection.anchor.path[0])
-      ? context.selection.anchor.path[0]._key
+  const key = state.selection.backward
+    ? isKeySegment(state.selection.anchor.path[0])
+      ? state.selection.anchor.path[0]._key
       : undefined
-    : isKeySegment(context.selection.focus.path[0])
-      ? context.selection.focus.path[0]._key
+    : isKeySegment(state.selection.focus.path[0])
+      ? state.selection.focus.path[0]._key
       : undefined
 
-  const node = key
-    ? context.value.find((block) => block._key === key)
-    : undefined
+  const node = key ? state.value.find((block) => block._key === key) : undefined
 
   return node && key ? {node, path: [{_key: key}]} : undefined
 }
 
 export function getPreviousBlock(
-  context: BehaviorContext,
+  state: EditorState,
 ): {node: PortableTextBlock; path: [KeyedSegment]} | undefined {
   let previousBlock: {node: PortableTextBlock; path: [KeyedSegment]} | undefined
-  const selectionStartBlock = getSelectionStartBlock(context)
+  const selectionStartBlock = getSelectionStartBlock(state)
 
   if (!selectionStartBlock) {
     return undefined
@@ -233,7 +227,7 @@ export function getPreviousBlock(
 
   let foundSelectionStartBlock = false
 
-  for (const block of context.value) {
+  for (const block of state.value) {
     if (block._key === selectionStartBlock.node._key) {
       foundSelectionStartBlock = true
       break
@@ -250,10 +244,10 @@ export function getPreviousBlock(
 }
 
 export function getNextBlock(
-  context: BehaviorContext,
+  state: EditorState,
 ): {node: PortableTextBlock; path: [KeyedSegment]} | undefined {
   let nextBlock: {node: PortableTextBlock; path: [KeyedSegment]} | undefined
-  const selectionEndBlock = getSelectionEndBlock(context)
+  const selectionEndBlock = getSelectionEndBlock(state)
 
   if (!selectionEndBlock) {
     return undefined
@@ -261,7 +255,7 @@ export function getNextBlock(
 
   let foundSelectionEndBlock = false
 
-  for (const block of context.value) {
+  for (const block of state.value) {
     if (block._key === selectionEndBlock.node._key) {
       foundSelectionEndBlock = true
       continue

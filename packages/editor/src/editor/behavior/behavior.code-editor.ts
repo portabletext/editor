@@ -17,13 +17,13 @@ export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
   return [
     defineBehavior({
       on: 'key.down',
-      guard: ({context, event}) => {
+      guard: ({state, event}) => {
         const isMoveUpShortcut = isHotkey(
           config.moveBlockUpShortcut,
           event.keyboardEvent,
         )
-        const firstBlock = getFirstBlock(context)
-        const selectedBlocks = getSelectedBlocks(context)
+        const firstBlock = getFirstBlock(state)
+        const selectedBlocks = getSelectedBlocks(state)
         const blocksAbove =
           firstBlock?.node._key !== selectedBlocks[0]?.node._key
 
@@ -43,13 +43,13 @@ export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
     }),
     defineBehavior({
       on: 'key.down',
-      guard: ({context, event}) => {
+      guard: ({state, event}) => {
         const isMoveDownShortcut = isHotkey(
           config.moveBlockDownShortcut,
           event.keyboardEvent,
         )
-        const lastBlock = getLastBlock(context)
-        const selectedBlocks = getSelectedBlocks(context)
+        const lastBlock = getLastBlock(state)
+        const selectedBlocks = getSelectedBlocks(state)
         const blocksBelow =
           lastBlock?.node._key !==
           selectedBlocks[selectedBlocks.length - 1]?.node._key

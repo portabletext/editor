@@ -18,13 +18,13 @@ export type LinkBehaviorsConfig = {
 export function createLinkBehaviors(config: LinkBehaviorsConfig) {
   const pasteLinkOnSelection = defineBehavior({
     on: 'paste',
-    guard: ({context, event}) => {
-      const selectionCollapsed = selectionIsCollapsed(context)
+    guard: ({state, event}) => {
+      const selectionCollapsed = selectionIsCollapsed(state)
       const text = event.data.getData('text/plain')
       const url = looksLikeUrl(text) ? text : undefined
       const annotation =
         url !== undefined
-          ? config.linkAnnotation?.({url, schema: context.schema})
+          ? config.linkAnnotation?.({url, schema: state.schema})
           : undefined
 
       if (annotation && !selectionCollapsed) {
@@ -44,9 +44,9 @@ export function createLinkBehaviors(config: LinkBehaviorsConfig) {
   })
   const pasteLinkAtCaret = defineBehavior({
     on: 'paste',
-    guard: ({context, event}) => {
-      const focusSpan = getFocusSpan(context)
-      const selectionCollapsed = selectionIsCollapsed(context)
+    guard: ({state, event}) => {
+      const focusSpan = getFocusSpan(state)
+      const selectionCollapsed = selectionIsCollapsed(state)
 
       if (!focusSpan || !selectionCollapsed) {
         return false
@@ -56,7 +56,7 @@ export function createLinkBehaviors(config: LinkBehaviorsConfig) {
       const url = looksLikeUrl(text) ? text : undefined
       const annotation =
         url !== undefined
-          ? config.linkAnnotation?.({url, schema: context.schema})
+          ? config.linkAnnotation?.({url, schema: state.schema})
           : undefined
 
       if (url && annotation && selectionCollapsed) {

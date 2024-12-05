@@ -26,8 +26,8 @@ import type {
   Behavior,
   BehaviorAction,
   BehaviorActionIntend,
-  BehaviorContext,
   BehaviorEvent,
+  EditorState,
   OmitFromUnion,
   PickFromUnion,
 } from './behavior/behavior.types'
@@ -276,11 +276,11 @@ export const editorMachine = setup({
         return
       }
 
-      const behaviorContext = {
+      const editorState = {
         schema: context.schema,
         value,
         selection,
-      } satisfies BehaviorContext
+      } satisfies EditorState
 
       let behaviorOverwritten = false
 
@@ -288,7 +288,7 @@ export const editorMachine = setup({
         const shouldRun =
           eventBehavior.guard === undefined ||
           eventBehavior.guard({
-            context: behaviorContext,
+            state: editorState,
             event: event.behaviorEvent,
           })
 
@@ -298,7 +298,7 @@ export const editorMachine = setup({
 
         const actionIntendSets = eventBehavior.actions.map((actionSet) =>
           actionSet(
-            {context: behaviorContext, event: event.behaviorEvent},
+            {state: editorState, event: event.behaviorEvent},
             shouldRun,
           ),
         )
