@@ -183,6 +183,7 @@ export const editorMachine = setup({
       schema: PortableTextMemberSchemaTypes
       readOnly: boolean
       maxBlocks: number | undefined
+      selection: NonNullable<EditorSelection> | undefined
       value: Array<PortableTextBlock> | undefined
     },
     events: {} as InternalEditorEvent,
@@ -342,6 +343,7 @@ export const editorMachine = setup({
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
     schema: input.schema,
+    selection: undefined,
     readOnly: input.readOnly ?? false,
     maxBlocks: input.maxBlocks,
     value: input.value,
@@ -388,7 +390,12 @@ export const editorMachine = setup({
     'value changed': {actions: emit(({event}) => event)},
     'invalid value': {actions: emit(({event}) => event)},
     'error': {actions: emit(({event}) => event)},
-    'selection': {actions: emit(({event}) => event)},
+    'selection': {
+      actions: [
+        assign({selection: ({event}) => event.selection ?? undefined}),
+        emit(({event}) => event),
+      ],
+    },
     'blurred': {actions: emit(({event}) => event)},
     'focused': {actions: emit(({event}) => event)},
     'loading': {actions: emit({type: 'loading'})},
