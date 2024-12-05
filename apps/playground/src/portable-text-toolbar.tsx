@@ -29,7 +29,8 @@ export function PortableTextToolbar(props: {
     <Toolbar aria-label="Text formatting">
       <StyleSelector
         schemaDefinition={props.schemaDefinition}
-        editor={editorInstance}
+        editor={editor}
+        editorInstance={editorInstance}
         selection={selection}
       />
       <Separator orientation="vertical" />
@@ -109,18 +110,19 @@ export function PortableTextToolbar(props: {
 
 function StyleSelector(props: {
   schemaDefinition: SchemaDefinition
-  editor: PortableTextEditor
+  editor: Editor
+  editorInstance: PortableTextEditor
   selection: EditorSelection
 }) {
-  const focusBlock = PortableTextEditor.focusBlock(props.editor)
+  const focusBlock = PortableTextEditor.focusBlock(props.editorInstance)
   const activeStyle = useMemo(
     () =>
       focusBlock
         ? (props.schemaDefinition.styles.find((style) =>
-            PortableTextEditor.hasBlockStyle(props.editor, style.name),
+            PortableTextEditor.hasBlockStyle(props.editorInstance, style.name),
           )?.name ?? null)
         : null,
-    [props.editor, focusBlock, props.schemaDefinition],
+    [props.editorInstance, focusBlock, props.schemaDefinition],
   )
 
   return (
@@ -130,8 +132,8 @@ function StyleSelector(props: {
       selectedKey={activeStyle}
       onSelectionChange={(style) => {
         if (typeof style === 'string') {
-          PortableTextEditor.toggleBlockStyle(props.editor, style)
-          PortableTextEditor.focus(props.editor)
+          props.editor.send({type: 'style.toggle', style})
+          props.editor.send({type: 'focus'})
         }
       }}
     >
