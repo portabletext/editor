@@ -71,7 +71,7 @@ const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
     return false
   },
   actions: [
-    (_, {focusTextBlock, previousBlock}) => [
+    ({focusTextBlock, previousBlock}) => [
       {
         type: 'delete block',
         blockPath: focusTextBlock.path,
@@ -108,7 +108,7 @@ const deletingEmptyTextBlockBeforeBlockObject = defineBehavior({
     return false
   },
   actions: [
-    (_, {focusTextBlock, nextBlock}) => [
+    ({focusTextBlock, nextBlock}) => [
       {
         type: 'delete block',
         blockPath: focusTextBlock.path,
