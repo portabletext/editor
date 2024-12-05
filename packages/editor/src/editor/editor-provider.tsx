@@ -28,7 +28,7 @@ export function EditorProvider(props: EditorProviderProps) {
   const editor = useEditor(props.initialConfig)
   const editorActor = editor._internal.editorActor
   const slateEditor = editor._internal.slateEditor
-  const editable = editor.editable
+  const editable = editor._internal.editable
   const portableTextEditor = useMemo(
     () =>
       new PortableTextEditor({

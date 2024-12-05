@@ -74,8 +74,8 @@ export type EditorEvent = PickFromUnion<
 export type Editor = {
   send: (event: EditorEvent) => void
   on: ActorRef<Snapshot<unknown>, EventObject, EditorEmittedEvent>['on']
-  editable: EditableAPI
   _internal: {
+    editable: EditableAPI
     editorActor: EditorActor
     slateEditor: SlateEditor
   }
@@ -104,8 +104,8 @@ export function createEditor(config: EditorConfig): Editor {
         // @ts-ignore
         listener,
       ),
-    editable,
     _internal: {
+      editable,
       editorActor,
       slateEditor,
     },
@@ -143,8 +143,8 @@ export function useEditor(config: EditorConfig): Editor {
     () => ({
       send,
       on,
-      editable,
       _internal: {
+        editable,
         editorActor,
         slateEditor,
       },

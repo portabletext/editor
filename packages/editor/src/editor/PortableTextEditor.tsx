@@ -148,7 +148,7 @@ export class PortableTextEditor extends Component<
 
     this.schemaTypes =
       this.editor._internal.editorActor.getSnapshot().context.schema
-    this.editable = this.editor.editable
+    this.editable = this.editor._internal.editable
   }
 
   componentDidUpdate(prevProps: PortableTextEditorProps) {
@@ -204,7 +204,10 @@ export class PortableTextEditor extends Component<
   }
 
   public setEditable = (editable: EditableAPI) => {
-    this.editor.editable = {...this.editor.editable, ...editable}
+    this.editor._internal.editable = {
+      ...this.editor._internal.editable,
+      ...editable,
+    }
   }
 
   render() {
@@ -235,7 +238,7 @@ export class PortableTextEditor extends Component<
         />
         <Synchronizer
           editorActor={this.editor._internal.editorActor}
-          getValue={this.editor.editable.getValue}
+          getValue={this.editor._internal.editable.getValue}
           portableTextEditor={this}
           slateEditor={this.editor._internal.slateEditor.instance}
         />
