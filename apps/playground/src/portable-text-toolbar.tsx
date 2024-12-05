@@ -1,6 +1,8 @@
 import {
+  getActiveListItem,
   PortableTextEditor,
   useEditor,
+  useEditorSelector,
   usePortableTextEditor,
   usePortableTextEditorSelection,
   type Editor,
@@ -60,13 +62,7 @@ export function PortableTextToolbar(props: {
       <Separator orientation="vertical" />
       <Group aria-label="Lists" className="contents">
         {props.schemaDefinition.lists.map((list) => (
-          <ListToolbarButton
-            key={list.name}
-            list={list}
-            editor={editor}
-            editorInstance={editorInstance}
-            selection={selection}
-          />
+          <ListToolbarButton key={list.name} list={list} />
         ))}
       </Group>
       <Separator orientation="vertical" />
@@ -224,15 +220,10 @@ function DecoratorToolbarButton(props: {
   )
 }
 
-function ListToolbarButton(props: {
-  list: SchemaDefinition['lists'][number]
-  editor: Editor
-  editorInstance: PortableTextEditor
-  selection: EditorSelection
-}) {
-  const active =
-    props.selection !== null &&
-    PortableTextEditor.hasListStyle(props.editorInstance, props.list.name)
+function ListToolbarButton(props: {list: SchemaDefinition['lists'][number]}) {
+  const editor = useEditor()
+  const activeListItem = useEditorSelector(editor, getActiveListItem)
+  const active = activeListItem === props.list.name
 
   return (
     <TooltipTrigger>
@@ -241,11 +232,11 @@ function ListToolbarButton(props: {
         size="sm"
         isSelected={active}
         onPress={() => {
-          props.editor.send({
+          editor.send({
             type: 'list item.toggle',
             listItem: props.list.name,
           })
-          props.editor.send({type: 'focus'})
+          editor.send({type: 'focus'})
         }}
       >
         <Icon icon={props.list.icon} fallback={props.list.title} />
