@@ -6,7 +6,6 @@ import {
   Transforms,
 } from 'slate'
 import {ReactEditor} from 'slate-react'
-import type {PortableTextMemberSchemaTypes} from '../../types/editor'
 import debug from '../../utils/debug'
 import {toSlatePath} from '../../utils/paths'
 import {toSlateRange} from '../../utils/ranges'
@@ -43,14 +42,10 @@ import {
 import type {
   BehaviorAction,
   BehaviorEvent,
+  EditorContext,
   PickFromUnion,
 } from './behavior.types'
 import {blockOffsetToSpanSelectionPoint} from './behavior.utils.block-offset'
-
-export type BehaviorActionContext = {
-  keyGenerator: () => string
-  schema: PortableTextMemberSchemaTypes
-}
 
 export type BehaviorActionImplementation<
   TBehaviorActionType extends BehaviorAction['type'],
@@ -59,7 +54,7 @@ export type BehaviorActionImplementation<
   context,
   action,
 }: {
-  context: BehaviorActionContext
+  context: EditorContext
   action: PickFromUnion<BehaviorAction, 'type', TBehaviorActionType>
 }) => TReturnType
 
@@ -310,7 +305,7 @@ export function performAction({
   context,
   action,
 }: {
-  context: BehaviorActionContext
+  context: EditorContext
   action: BehaviorAction
 }) {
   debug('Behavior action', action)
@@ -452,7 +447,7 @@ function performDefaultAction({
   context,
   action,
 }: {
-  context: BehaviorActionContext
+  context: EditorContext
   action: PickFromUnion<BehaviorAction, 'type', BehaviorEvent['type']>
 }) {
   switch (action.type) {
