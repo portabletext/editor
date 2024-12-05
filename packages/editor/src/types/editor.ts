@@ -134,22 +134,6 @@ export interface PortableTextSlateEditor extends ReactEditor {
   isListBlock: (value: unknown) => value is PortableTextListBlock
 
   /**
-   * Toggle the selected block style
-   *
-   * @param style - The style name
-   *
-   */
-  pteToggleBlockStyle: (style: string) => void
-
-  /**
-   * Test if the current selection has a certain block style
-   *
-   * @param style - The style name
-   *
-   */
-  pteHasBlockStyle: (style: string) => boolean
-
-  /**
    * Try to expand the current selection to a word
    */
   pteExpandToWord: () => void
