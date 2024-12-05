@@ -47,7 +47,13 @@ export function createEditableAPI(
 
   const editableApi: EditableAPI = {
     focus: (): void => {
-      ReactEditor.focus(editor)
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'focus',
+        },
+        editor,
+      })
     },
     blur: (): void => {
       ReactEditor.blur(editor)
