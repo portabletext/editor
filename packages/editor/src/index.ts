@@ -26,6 +26,7 @@ export {
   type PickFromUnion,
 } from './editor/behavior/behavior.types'
 export type {BlockOffset} from './editor/behavior/behavior.utils.block-offset'
+export type {Editor, EditorConfig, EditorEvent} from './editor/create-editor'
 export type {SlateEditor} from './editor/create-slate-editor'
 export {
   defineSchema,
@@ -47,7 +48,7 @@ export {
 } from './editor/editor-machine'
 export {
   EditorProvider,
-  useEditorContext,
+  useEditor,
   type EditorProviderProps,
 } from './editor/editor-provider'
 export {usePortableTextEditor} from './editor/hooks/usePortableTextEditor'
@@ -56,11 +57,5 @@ export {defaultKeyGenerator as keyGenerator} from './editor/key-generator'
 export type {AddedAnnotationPaths} from './editor/plugins/createWithEditableAPI'
 export {PortableTextEditor} from './editor/PortableTextEditor'
 export type {PortableTextEditorProps} from './editor/PortableTextEditor'
-export {
-  useEditor,
-  type Editor,
-  type EditorConfig,
-  type EditorEvent,
-} from './editor/use-editor'
 export * from './types/editor'
 export type {HotkeyOptions} from './types/options'

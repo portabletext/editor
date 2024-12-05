@@ -1,7 +1,7 @@
 import {useEffect} from 'react'
 import {useEffectEvent} from 'use-effect-event'
 import type {EditorEmittedEvent} from './editor-machine'
-import {useEditorContext} from './editor-provider'
+import {useEditor} from './editor-provider'
 
 /**
  * @alpha
@@ -9,7 +9,7 @@ import {useEditorContext} from './editor-provider'
 export function EditorEventListener(props: {
   on: (event: EditorEmittedEvent) => void
 }) {
-  const editor = useEditorContext()
+  const editor = useEditor()
   const on = useEffectEvent(props.on)
 
   useEffect(() => {

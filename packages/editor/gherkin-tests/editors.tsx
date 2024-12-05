@@ -10,7 +10,7 @@ import {
   type HotkeyOptions,
 } from '../src'
 import type {EditorEmittedEvent} from '../src/editor/editor-machine'
-import {EditorProvider, useEditorContext} from '../src/editor/editor-provider'
+import {EditorProvider, useEditor} from '../src/editor/editor-provider'
 import type {EditorActorRef, TestActorRef} from './test-machine'
 
 export function Editors(props: {testRef: TestActorRef}) {
@@ -104,7 +104,7 @@ function EditorEventListener(props: {
   on: (event: EditorEmittedEvent) => void
   value: Array<PortableTextBlock> | undefined
 }) {
-  const editor = useEditorContext()
+  const editor = useEditor()
 
   useEffect(() => {
     editor.send({
