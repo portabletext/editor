@@ -13,6 +13,7 @@ export {
   createMarkdownBehaviors,
   type MarkdownBehaviorsConfig,
 } from './editor/behavior/behavior.markdown'
+export {getActiveListItem} from './editor/behavior/behavior.selector.get-active-list-item'
 export {
   defineBehavior,
   type Behavior,
