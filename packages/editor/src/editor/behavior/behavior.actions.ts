@@ -33,6 +33,11 @@ import {
   removeListItemActionImplementation,
   toggleListItemActionImplementation,
 } from './behavior.action.list-item'
+import {
+  addStyleActionImplementation,
+  removeStyleActionImplementation,
+  toggleStyleActionImplementation,
+} from './behavior.action.style'
 import type {
   BehaviorAction,
   BehaviorEvent,
@@ -290,6 +295,9 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
       action.editor.selection = {...selection}
     }
   },
+  'style.toggle': toggleStyleActionImplementation,
+  'style.add': addStyleActionImplementation,
+  'style.remove': removeStyleActionImplementation,
 }
 
 export function performAction({
@@ -407,6 +415,20 @@ export function performAction({
     }
     case 'reselect': {
       behaviorActionImplementations.reselect({
+        context,
+        action,
+      })
+      break
+    }
+    case 'style.add': {
+      behaviorActionImplementations['style.add']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'style.remove': {
+      behaviorActionImplementations['style.remove']({
         context,
         action,
       })
@@ -552,8 +574,15 @@ function performDefaultAction({
       })
       break
     }
-    default: {
+    case 'paste': {
       behaviorActionImplementations.paste({
+        context,
+        action,
+      })
+      break
+    }
+    default: {
+      behaviorActionImplementations['style.toggle']({
         context,
         action,
       })

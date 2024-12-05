@@ -1,4 +1,4 @@
-import {Editor, Path, Text as SlateText, Transforms, type Node} from 'slate'
+import {Editor, Path, Text as SlateText, Transforms} from 'slate'
 import type {
   PortableTextMemberSchemaTypes,
   PortableTextSlateEditor,
@@ -50,60 +50,6 @@ export function createWithPortableTextBlockStyle(
       normalizeNode(nodeEntry)
     }
 
-    editor.pteHasBlockStyle = (style: string): boolean => {
-      if (!editor.selection) {
-        return false
-      }
-      const selectedBlocks = [
-        ...Editor.nodes(editor, {
-          at: editor.selection,
-          match: (node) => editor.isTextBlock(node) && node.style === style,
-        }),
-      ]
-      if (selectedBlocks.length > 0) {
-        return true
-      }
-      return false
-    }
-
-    editor.pteToggleBlockStyle = (blockStyle: string): void => {
-      if (!editor.selection) {
-        return
-      }
-      const selectedBlocks = [
-        ...Editor.nodes(editor, {
-          at: editor.selection,
-          match: (node) => editor.isTextBlock(node),
-        }),
-      ]
-      selectedBlocks.forEach(([node, path]) => {
-        if (editor.isTextBlock(node) && node.style === blockStyle) {
-          debug(`Unsetting block style '${blockStyle}'`)
-          Transforms.setNodes(
-            editor,
-            {...node, style: defaultStyle} as Partial<Node>,
-            {
-              at: path,
-            },
-          )
-        } else {
-          if (blockStyle) {
-            debug(`Setting style '${blockStyle}'`)
-          } else {
-            debug('Setting default style', defaultStyle)
-          }
-          Transforms.setNodes(
-            editor,
-            {
-              ...node,
-              style: blockStyle || defaultStyle,
-            } as Partial<Node>,
-            {at: path},
-          )
-        }
-      })
-      editor.onChange()
-    }
     return editor
   }
 }

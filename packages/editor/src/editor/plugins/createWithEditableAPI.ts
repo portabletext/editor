@@ -32,6 +32,7 @@ import {
   SLATE_TO_PORTABLE_TEXT_RANGE,
 } from '../../utils/weakMaps'
 import {isListItemActive} from '../behavior/behavior.action.list-item'
+import {isStyleActive} from '../behavior/behavior.action.style'
 import type {BehaviorActionImplementation} from '../behavior/behavior.actions'
 import type {EditorActor} from '../editor-machine'
 import {isDecoratorActive} from './createWithPortableTextMarkModel'
@@ -71,8 +72,15 @@ export function createEditableAPI(
         editor,
       })
     },
-    toggleBlockStyle: (blockStyle: string): void => {
-      editor.pteToggleBlockStyle(blockStyle)
+    toggleBlockStyle: (style: string): void => {
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'style.toggle',
+          style,
+        },
+        editor,
+      })
     },
     isMarkActive: (mark: string): boolean => {
       // Try/catch this, as Slate may error because the selection is currently wrong
@@ -237,7 +245,7 @@ export function createEditableAPI(
     },
     hasBlockStyle: (style: string): boolean => {
       try {
-        return editor.pteHasBlockStyle(style)
+        return isStyleActive({editor, style})
       } catch {
         // This is fine.
         return false

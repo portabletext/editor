@@ -116,6 +116,10 @@ export type BehaviorEvent =
       type: 'list item.toggle'
       listItem: string
     }
+  | {
+      type: 'style.toggle'
+      style: string
+    }
 
 /**
  * @alpha
@@ -210,6 +214,14 @@ export type BehaviorActionIntend =
     }
   | {
       type: 'reselect'
+    }
+  | {
+      type: 'style.add'
+      style: string
+    }
+  | {
+      type: 'style.remove'
+      style: string
     }
 
 /**
