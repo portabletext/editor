@@ -7,6 +7,7 @@ import {
 } from 'slate'
 import {ReactEditor} from 'slate-react'
 import type {PortableTextMemberSchemaTypes} from '../../types/editor'
+import debug from '../../utils/debug'
 import {toSlatePath} from '../../utils/paths'
 import {toSlateRange} from '../../utils/ranges'
 import {fromSlateValue, toSlateValue} from '../../utils/values'
@@ -312,6 +313,8 @@ export function performAction({
   context: BehaviorActionContext
   action: BehaviorAction
 }) {
+  debug('Behavior action', action)
+
   switch (action.type) {
     case 'delete block': {
       behaviorActionImplementations['delete block']({
