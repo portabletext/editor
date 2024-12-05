@@ -86,7 +86,7 @@ export function PortableTextToolbar(props: {
           <InlineObjectButton
             key={inlineObject.name}
             inlineObject={inlineObject}
-            editor={editorInstance}
+            editor={editor}
           />
         ))}
       </Group>
@@ -257,19 +257,24 @@ function ListToolbarButton(props: {
 
 function InlineObjectButton(props: {
   inlineObject: SchemaDefinition['inlineObjects'][number]
-  editor: PortableTextEditor
+  editor: Editor
 }) {
   return (
     <Button
       variant="secondary"
       size="sm"
       onPress={() => {
-        PortableTextEditor.insertChild(
-          props.editor,
-          {name: props.inlineObject.name},
-          {symbol: 'NVDA'},
-        )
-        PortableTextEditor.focus(props.editor)
+        props.editor.send({
+          type: 'insert.inline object',
+          inlineObject: {
+            name: props.inlineObject.name,
+            value:
+              props.inlineObject.name === 'stock-ticker'
+                ? {symbol: 'NVDA'}
+                : {},
+          },
+        })
+        props.editor.send({type: 'focus'})
       }}
     >
       <Icon icon={props.inlineObject.icon} fallback={null} />
