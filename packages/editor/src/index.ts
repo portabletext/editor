@@ -51,6 +51,11 @@ export {
   useEditor,
   type EditorProviderProps,
 } from './editor/editor-provider'
+export {
+  useEditorSelector,
+  type EditorSelector,
+  type SelectorEditorState,
+} from './editor/editor-selector'
 export {usePortableTextEditor} from './editor/hooks/usePortableTextEditor'
 export {usePortableTextEditorSelection} from './editor/hooks/usePortableTextEditorSelection'
 export {defaultKeyGenerator as keyGenerator} from './editor/key-generator'
