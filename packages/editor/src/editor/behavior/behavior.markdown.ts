@@ -95,7 +95,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           text: ' ',
         },
       ],
-      (_, {focusTextBlock, style}) => [
+      ({focusTextBlock, style}) => [
         {
           type: 'unset block',
           props: ['listItem', 'level'],
@@ -168,13 +168,13 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       return false
     },
     actions: [
-      (_, {hrCharacter}) => [
+      ({hrCharacter}) => [
         {
           type: 'insert.text',
           text: hrCharacter,
         },
       ],
-      (_, {hrObject, hrBlockOffsets}) => [
+      ({hrObject, hrBlockOffsets}) => [
         {
           type: 'insert.block object',
           placement: 'before',
@@ -205,13 +205,13 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       return {hrCharacters, hrObject, focusBlock}
     },
     actions: [
-      (_, {hrCharacters}) => [
+      ({hrCharacters}) => [
         {
           type: 'insert.text',
           text: hrCharacters,
         },
       ],
-      (_, {hrObject, focusBlock}) =>
+      ({hrObject, focusBlock}) =>
         isPortableTextTextBlock(focusBlock.node)
           ? [
               {
@@ -301,7 +301,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           text: ' ',
         },
       ],
-      (_, {focusTextBlock, style, level}) => [
+      ({focusTextBlock, style, level}) => [
         {
           type: 'unset block',
           props: ['listItem', 'level'],
@@ -354,7 +354,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       return false
     },
     actions: [
-      (_, {defaultStyle, focusTextBlock}) => [
+      ({defaultStyle, focusTextBlock}) => [
         {
           type: 'set block',
           style: defaultStyle,
@@ -447,7 +447,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           text: ' ',
         },
       ],
-      (_, {focusTextBlock, style, listItem, listItemLength}) => [
+      ({focusTextBlock, style, listItem, listItemLength}) => [
         {
           type: 'set block',
           listItem,

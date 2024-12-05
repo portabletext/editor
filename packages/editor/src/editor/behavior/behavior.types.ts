@@ -264,23 +264,13 @@ export type Behavior<
   /**
    * Array of behavior action sets.
    */
-  actions: Array<BehaviorActionIntendSet<TBehaviorEventType, TGuardResponse>>
+  actions: Array<BehaviorActionIntendSet<TGuardResponse>>
 }
 
 /**
  * @alpha
  */
-export type BehaviorActionIntendSet<
-  TBehaviorEventType extends BehaviorEvent['type'] = BehaviorEvent['type'],
-  TGuardResponse = true,
-> = (
-  {
-    state,
-    event,
-  }: {
-    state: EditorState
-    event: PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>
-  },
+export type BehaviorActionIntendSet<TGuardResponse = true> = (
   guardResponse: TGuardResponse,
 ) => Array<
   OmitFromUnion<

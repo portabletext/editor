@@ -2,11 +2,12 @@ import {defineBehavior} from './behavior.types'
 
 const decoratorAdd = defineBehavior({
   on: 'decorator.add',
+  guard: ({event}) => ({decorator: event.decorator}),
   actions: [
-    ({event}) => [
+    ({decorator}) => [
       {
         type: 'decorator.add',
-        decorator: event.decorator,
+        decorator,
       },
       {
         type: 'reselect',
@@ -17,11 +18,12 @@ const decoratorAdd = defineBehavior({
 
 const decoratorRemove = defineBehavior({
   on: 'decorator.remove',
+  guard: ({event}) => ({decorator: event.decorator}),
   actions: [
-    ({event}) => [
+    ({decorator}) => [
       {
         type: 'decorator.remove',
-        decorator: event.decorator,
+        decorator,
       },
       {
         type: 'reselect',
@@ -32,11 +34,12 @@ const decoratorRemove = defineBehavior({
 
 const decoratorToggle = defineBehavior({
   on: 'decorator.toggle',
+  guard: ({event}) => ({decorator: event.decorator}),
   actions: [
-    ({event}) => [
+    ({decorator}) => [
       {
         type: 'decorator.toggle',
-        decorator: event.decorator,
+        decorator,
       },
       {
         type: 'reselect',
