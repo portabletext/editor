@@ -24,6 +24,7 @@ export type EditorState = {
  * @alpha
  */
 export type EditorContext = {
+  keyGenerator: () => string
   schema: PortableTextMemberSchemaTypes
 }
 

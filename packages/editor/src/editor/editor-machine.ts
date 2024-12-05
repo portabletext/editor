@@ -278,6 +278,7 @@ export const editorMachine = setup({
       }
 
       const behaviorContext = {
+        keyGenerator: context.keyGenerator,
         schema: context.schema,
       } satisfies EditorContext
       const editorState = {
