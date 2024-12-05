@@ -97,7 +97,7 @@ export function PortableTextToolbar(props: {
           variant="secondary"
           size="sm"
           onPress={() => {
-            PortableTextEditor.focus(editorInstance)
+            editor.send({type: 'focus'})
           }}
         >
           <SquareDashedMousePointerIcon className="size-4" />
