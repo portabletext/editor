@@ -9,7 +9,7 @@ import {
   selectionIsCollapsed,
 } from './behavior.utils'
 import {spanSelectionPointToBlockOffset} from './behavior.utils.block-offset'
-import {getBlockTextBefore} from './behavior.utilts.get-text-before'
+import {getBlockTextBefore} from './behavior.utils.get-text-before'
 
 /**
  * @alpha
@@ -144,10 +144,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
-      const textBefore = getBlockTextBefore({
-        value: state.value,
-        point: state.selection.focus,
-      })
+      const textBefore = getBlockTextBefore(state)
       const hrBlockOffsets = {
         anchor: {
           path: focusBlock.path,

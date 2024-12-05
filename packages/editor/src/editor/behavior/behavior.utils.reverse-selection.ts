@@ -1,10 +1,8 @@
 import type {EditorSelection} from '../../types/editor'
 
-export function reverseSelection(selection: EditorSelection): EditorSelection {
-  if (!selection) {
-    return selection
-  }
-
+export function reverseSelection(
+  selection: NonNullable<EditorSelection>,
+): NonNullable<EditorSelection> {
   if (selection.backward) {
     return {
       anchor: selection.focus,

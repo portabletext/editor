@@ -1,19 +1,9 @@
-import {
-  isPortableTextSpan,
-  isPortableTextTextBlock,
-  type PortableTextBlock,
-} from '@sanity/types'
-import type {EditorSelection} from '../../types/editor'
+import {isPortableTextSpan, isPortableTextTextBlock} from '@sanity/types'
+import type {EditorState} from './behavior.types'
 import {isKeyedSegment} from './behavior.utils.is-keyed-segment'
 import {reverseSelection} from './behavior.utils.reverse-selection'
 
-export function getSelectionText({
-  value,
-  selection,
-}: {
-  value: Array<PortableTextBlock>
-  selection: NonNullable<EditorSelection>
-}): string {
+export function getSelectionText({value, selection}: EditorState): string {
   let text = ''
 
   if (!value || !selection) {
