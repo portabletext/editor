@@ -17,7 +17,7 @@ const EditorContext = React.createContext<Editor | undefined>(undefined)
  * @alpha
  */
 export type EditorProviderProps = {
-  config: EditorConfig
+  initialConfig: EditorConfig
   children?: React.ReactNode
 }
 
@@ -25,7 +25,7 @@ export type EditorProviderProps = {
  * @alpha
  */
 export function EditorProvider(props: EditorProviderProps) {
-  const editor = useEditor(props.config)
+  const editor = useEditor(props.initialConfig)
   const editorActor = editor._internal.editorActor
   const slateEditor = editor._internal.slateEditor
   const editable = editor.editable

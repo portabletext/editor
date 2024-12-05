@@ -85,7 +85,7 @@ function App() {
     <>
       {/* Create an editor */}
       <EditorProvider
-        config={{
+        initialConfig={{
           schemaDefinition,
           initialValue: value,
         }}
