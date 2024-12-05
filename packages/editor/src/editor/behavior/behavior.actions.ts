@@ -27,6 +27,7 @@ import {
   insertBreakActionImplementation,
   insertSoftBreakActionImplementation,
 } from './behavior.action.insert-break'
+import {insertInlineObjectActionImplementation} from './behavior.action.insert-inline-object'
 import {insertSpanActionImplementation} from './behavior.action.insert-span'
 import {
   addListItemActionImplementation,
@@ -170,6 +171,7 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   },
   'insert.block object': insertBlockObjectActionImplementation,
   'insert.break': insertBreakActionImplementation,
+  'insert.inline object': insertInlineObjectActionImplementation,
   'insert.soft break': insertSoftBreakActionImplementation,
   'insert.span': insertSpanActionImplementation,
   'insert.text': ({action}) => {
@@ -520,6 +522,13 @@ function performDefaultAction({
     }
     case 'insert.block object': {
       behaviorActionImplementations['insert.block object']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'insert.inline object': {
+      behaviorActionImplementations['insert.inline object']({
         context,
         action,
       })

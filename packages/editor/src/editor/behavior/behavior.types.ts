@@ -81,6 +81,13 @@ export type BehaviorEvent =
       }
     }
   | {
+      type: 'insert.inline object'
+      inlineObject: {
+        name: string
+        value?: {[prop: string]: unknown}
+      }
+    }
+  | {
       type: 'insert.soft break'
     }
   | {

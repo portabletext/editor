@@ -147,6 +147,32 @@ export function createEditableAPI(
       type: TSchemaType,
       value?: {[prop: string]: any},
     ): Path => {
+      if (type.name !== types.span.name) {
+        editorActor.send({
+          type: 'behavior event',
+          behaviorEvent: {
+            type: 'insert.inline object',
+            inlineObject: {
+              name: type.name,
+              value,
+            },
+          },
+          editor,
+        })
+
+        return (
+          toPortableTextRange(
+            fromSlateValue(
+              editor.children,
+              types.block.name,
+              KEY_TO_VALUE_ELEMENT.get(editor),
+            ),
+            editor.selection,
+            types,
+          )?.focus.path ?? []
+        )
+      }
+
       if (!editor.selection) {
         throw new Error('The editor has no selection')
       }
@@ -202,6 +228,7 @@ export function createEditableAPI(
         at: editor.selection,
       })
       editor.onChange()
+
       return (
         toPortableTextRange(
           fromSlateValue(
