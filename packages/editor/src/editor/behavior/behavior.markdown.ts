@@ -42,7 +42,7 @@ export type MarkdownBehaviorsConfig = {
 export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   const automaticBlockquoteOnSpace = defineBehavior({
     on: 'insert.text',
-    guard: ({state, event}) => {
+    guard: ({context, state, event}) => {
       const isSpace = event.text === ' '
 
       if (!isSpace) {
@@ -76,7 +76,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       const blockText = getTextBlockText(focusTextBlock.node)
       const caretAtTheEndOfQuote = blockOffset.offset === 1
       const looksLikeMarkdownQuote = /^>/.test(blockText)
-      const blockquoteStyle = config.blockquoteStyle?.({schema: state.schema})
+      const blockquoteStyle = config.blockquoteStyle?.(context)
 
       if (
         caretAtTheEndOfQuote &&
@@ -122,7 +122,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   })
   const automaticHr = defineBehavior({
     on: 'insert.text',
-    guard: ({state, event}) => {
+    guard: ({context, state, event}) => {
       const hrCharacter =
         event.text === '-'
           ? '-'
@@ -136,9 +136,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
-      const hrObject = config.horizontalRuleObject?.({
-        schema: state.schema,
-      })
+      const hrObject = config.horizontalRuleObject?.(context)
       const focusBlock = getFocusTextBlock(state)
       const selectionCollapsed = selectionIsCollapsed(state)
 
@@ -189,13 +187,11 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   })
   const automaticHrOnPaste = defineBehavior({
     on: 'paste',
-    guard: ({state, event}) => {
+    guard: ({context, state, event}) => {
       const text = event.data.getData('text/plain')
       const hrRegExp = /^(---)$|(___)$|(\*\*\*)$/gm
       const hrCharacters = text.match(hrRegExp)?.[0]
-      const hrObject = config.horizontalRuleObject?.({
-        schema: state.schema,
-      })
+      const hrObject = config.horizontalRuleObject?.(context)
       const focusBlock = getFocusBlock(state)
 
       if (!hrCharacters || !hrObject || !focusBlock) {
@@ -237,7 +233,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   })
   const automaticHeadingOnSpace = defineBehavior({
     on: 'insert.text',
-    guard: ({state, event}) => {
+    guard: ({context, state, event}) => {
       const isSpace = event.text === ' '
 
       if (!isSpace) {
@@ -281,7 +277,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
 
       const style =
         level !== undefined
-          ? config.headingStyle?.({schema: state.schema, level})
+          ? config.headingStyle?.({schema: context.schema, level})
           : undefined
 
       if (level !== undefined && style !== undefined) {
@@ -328,7 +324,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   })
   const clearStyleOnBackspace = defineBehavior({
     on: 'delete backward',
-    guard: ({state}) => {
+    guard: ({context, state}) => {
       const selectionCollapsed = selectionIsCollapsed(state)
       const focusTextBlock = getFocusTextBlock(state)
       const focusSpan = getFocusSpan(state)
@@ -341,7 +337,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         focusTextBlock.node.children[0]._key === focusSpan.node._key &&
         state.selection.focus.offset === 0
 
-      const defaultStyle = config.defaultStyle?.({schema: state.schema})
+      const defaultStyle = config.defaultStyle?.(context)
 
       if (
         atTheBeginningOfBLock &&
@@ -365,7 +361,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   })
   const automaticListOnSpace = defineBehavior({
     on: 'insert.text',
-    guard: ({state, event}) => {
+    guard: ({context, state, event}) => {
       const isSpace = event.text === ' '
 
       if (!isSpace) {
@@ -397,11 +393,9 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       }
 
       const blockText = getTextBlockText(focusTextBlock.node)
-      const defaultStyle = config.defaultStyle?.({schema: state.schema})
+      const defaultStyle = config.defaultStyle?.(context)
       const looksLikeUnorderedList = /^(-|\*)/.test(blockText)
-      const unorderedListStyle = config.unorderedListStyle?.({
-        schema: state.schema,
-      })
+      const unorderedListStyle = config.unorderedListStyle?.(context)
       const caretAtTheEndOfUnorderedList = blockOffset.offset === 1
 
       if (
@@ -419,9 +413,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       }
 
       const looksLikeOrderedList = /^1\./.test(blockText)
-      const orderedListStyle = config.orderedListStyle?.({
-        schema: state.schema,
-      })
+      const orderedListStyle = config.orderedListStyle?.(context)
       const caretAtTheEndOfOrderedList = blockOffset.offset === 2
 
       if (

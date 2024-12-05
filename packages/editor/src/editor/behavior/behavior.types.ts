@@ -16,9 +16,15 @@ import type {BlockOffset} from './behavior.utils.block-offset'
  * @alpha
  */
 export type EditorState = {
-  schema: PortableTextMemberSchemaTypes
   value: Array<PortableTextBlock>
   selection: NonNullable<EditorSelection>
+}
+
+/**
+ * @alpha
+ */
+export type EditorContext = {
+  schema: PortableTextMemberSchemaTypes
 }
 
 /**
@@ -138,9 +144,11 @@ export type BehaviorGuard<
   TBehaviorEvent extends BehaviorEvent,
   TGuardResponse,
 > = ({
+  context,
   state,
   event,
 }: {
+  context: EditorContext
   state: EditorState
   event: TBehaviorEvent
 }) => TGuardResponse | false
