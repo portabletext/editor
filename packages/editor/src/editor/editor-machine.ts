@@ -164,6 +164,7 @@ export type InternalEditorEmittedEvent =
       | 'insert block object'
       | 'list item.toggle'
       | 'focus'
+      | 'style.toggle'
     >
 
 /**
@@ -364,6 +365,10 @@ export const editorMachine = setup({
       guard: ({context}) => !context.readOnly,
     },
     'list item.*': {
+      actions: emit(({event}) => event),
+      guard: ({context}) => !context.readOnly,
+    },
+    'style.*': {
       actions: emit(({event}) => event),
       guard: ({context}) => !context.readOnly,
     },

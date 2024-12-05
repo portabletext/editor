@@ -485,6 +485,7 @@ export function RouteEventsToChanges(props: {
         case 'focus':
         case 'insert block object':
         case 'list item.toggle':
+        case 'style.toggle':
         case 'patches':
         case 'readOnly toggled':
           break
