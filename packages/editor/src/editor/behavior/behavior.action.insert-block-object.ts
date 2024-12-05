@@ -3,7 +3,7 @@ import {insertBlock} from './behavior.action-utils.insert-block'
 import type {BehaviorActionImplementation} from './behavior.actions'
 
 export const insertBlockObjectActionImplementation: BehaviorActionImplementation<
-  'insert block object'
+  'insert.block object'
 > = ({context, action}) => {
   const block = toSlateValue(
     [

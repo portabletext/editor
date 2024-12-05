@@ -289,7 +289,7 @@ function BlockObjectButton(props: {
       size="sm"
       onPress={() => {
         props.editor.send({
-          type: 'insert block object',
+          type: 'insert.block object',
           placement: 'auto',
           blockObject: {
             name: props.blockObject.name,

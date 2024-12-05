@@ -68,7 +68,7 @@ export function createLinkBehaviors(config: LinkBehaviorsConfig) {
     actions: [
       (_, {annotation, url}) => [
         {
-          type: 'insert span',
+          type: 'insert.span',
           text: url,
           annotations: [annotation],
         },

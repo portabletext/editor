@@ -81,7 +81,7 @@ const unindentListOnBackspace = defineBehavior({
 })
 
 const clearListOnEnter = defineBehavior({
-  on: 'insert break',
+  on: 'insert.break',
   guard: ({context}) => {
     const focusListBlock = getFocusListBlock(context)
     const selectionCollapsed = selectionIsCollapsed(context)

@@ -41,7 +41,7 @@ export type MarkdownBehaviorsConfig = {
  */
 export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   const automaticBlockquoteOnSpace = defineBehavior({
-    on: 'insert text',
+    on: 'insert.text',
     guard: ({context, event}) => {
       const isSpace = event.text === ' '
 
@@ -91,7 +91,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
     actions: [
       () => [
         {
-          type: 'insert text',
+          type: 'insert.text',
           text: ' ',
         },
       ],
@@ -121,7 +121,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
     ],
   })
   const automaticHr = defineBehavior({
-    on: 'insert text',
+    on: 'insert.text',
     guard: ({context, event}) => {
       const hrCharacter =
         event.text === '-'
@@ -170,13 +170,13 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
     actions: [
       (_, {hrCharacter}) => [
         {
-          type: 'insert text',
+          type: 'insert.text',
           text: hrCharacter,
         },
       ],
       (_, {hrObject, hrBlockOffsets}) => [
         {
-          type: 'insert block object',
+          type: 'insert.block object',
           placement: 'before',
           blockObject: hrObject,
         },
@@ -207,7 +207,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
     actions: [
       (_, {hrCharacters}) => [
         {
-          type: 'insert text',
+          type: 'insert.text',
           text: hrCharacters,
         },
       ],
@@ -215,12 +215,12 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         isPortableTextTextBlock(focusBlock.node)
           ? [
               {
-                type: 'insert text block',
+                type: 'insert.text block',
                 textBlock: {children: focusBlock.node.children},
                 placement: 'after',
               },
               {
-                type: 'insert block object',
+                type: 'insert.block object',
                 blockObject: hrObject,
                 placement: 'after',
               },
@@ -228,7 +228,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
             ]
           : [
               {
-                type: 'insert block object',
+                type: 'insert.block object',
                 blockObject: hrObject,
                 placement: 'after',
               },
@@ -236,7 +236,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
     ],
   })
   const automaticHeadingOnSpace = defineBehavior({
-    on: 'insert text',
+    on: 'insert.text',
     guard: ({context, event}) => {
       const isSpace = event.text === ' '
 
@@ -297,7 +297,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
     actions: [
       () => [
         {
-          type: 'insert text',
+          type: 'insert.text',
           text: ' ',
         },
       ],
@@ -364,7 +364,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
     ],
   })
   const automaticListOnSpace = defineBehavior({
-    on: 'insert text',
+    on: 'insert.text',
     guard: ({context, event}) => {
       const isSpace = event.text === ' '
 
@@ -443,7 +443,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
     actions: [
       () => [
         {
-          type: 'insert text',
+          type: 'insert.text',
           text: ' ',
         },
       ],

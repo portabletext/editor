@@ -221,7 +221,7 @@ export function createEditableAPI(
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
-          type: 'insert block object',
+          type: 'insert.block object',
           blockObject: {
             name: type.name,
             value,

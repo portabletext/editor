@@ -73,7 +73,7 @@ export type BehaviorEvent =
       type: 'focus'
     }
   | {
-      type: 'insert block object'
+      type: 'insert.block object'
       placement: 'auto' | 'after' | 'before'
       blockObject: {
         name: string
@@ -81,13 +81,13 @@ export type BehaviorEvent =
       }
     }
   | {
-      type: 'insert soft break'
+      type: 'insert.soft break'
     }
   | {
-      type: 'insert break'
+      type: 'insert.break'
     }
   | {
-      type: 'insert text'
+      type: 'insert.text'
       text: string
       options?: TextInsertTextOptions
     }
@@ -141,7 +141,7 @@ export type BehaviorGuard<
 export type BehaviorActionIntend =
   | BehaviorEvent
   | {
-      type: 'insert span'
+      type: 'insert.span'
       text: string
       annotations?: Array<{
         name: string
@@ -150,7 +150,7 @@ export type BehaviorActionIntend =
       decorators?: Array<string>
     }
   | {
-      type: 'insert text block'
+      type: 'insert.text block'
       placement: 'auto' | 'after' | 'before'
       textBlock?: {
         children?: PortableTextTextBlock['children']
