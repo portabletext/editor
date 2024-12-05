@@ -148,7 +148,7 @@ export type InternalEditorEmittedEvent =
       data: unknown
     }
   | {type: 'selection'; selection: EditorSelection}
-  | {type: 'blur'; event: FocusEvent<HTMLDivElement, Element>}
+  | {type: 'blurred'; event: FocusEvent<HTMLDivElement, Element>}
   | {type: 'focused'; event: FocusEvent<HTMLDivElement, Element>}
   | {type: 'loading'}
   | {type: 'done loading'}
@@ -159,6 +159,7 @@ export type InternalEditorEmittedEvent =
       | 'annotation.add'
       | 'annotation.remove'
       | 'annotation.toggle'
+      | 'blur'
       | 'decorator.add'
       | 'decorator.remove'
       | 'decorator.toggle'
@@ -356,6 +357,10 @@ export const editorMachine = setup({
       actions: emit(({event}) => event),
       guard: ({context}) => !context.readOnly,
     },
+    'blur': {
+      actions: emit(({event}) => event),
+      guard: ({context}) => !context.readOnly,
+    },
     'decorator.*': {
       actions: emit(({event}) => event),
       guard: ({context}) => !context.readOnly,
@@ -382,7 +387,7 @@ export const editorMachine = setup({
     'invalid value': {actions: emit(({event}) => event)},
     'error': {actions: emit(({event}) => event)},
     'selection': {actions: emit(({event}) => event)},
-    'blur': {actions: emit(({event}) => event)},
+    'blurred': {actions: emit(({event}) => event)},
     'focused': {actions: emit(({event}) => event)},
     'loading': {actions: emit({type: 'loading'})},
     'patches': {actions: emit(({event}) => event)},

@@ -46,6 +46,9 @@ export type BehaviorEvent =
       }
     }
   | {
+      type: 'blur'
+    }
+  | {
       type: 'copy'
       data: DataTransfer
     }

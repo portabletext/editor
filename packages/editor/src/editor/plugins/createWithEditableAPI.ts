@@ -56,7 +56,13 @@ export function createEditableAPI(
       })
     },
     blur: (): void => {
-      ReactEditor.blur(editor)
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'blur',
+        },
+        editor,
+      })
     },
     toggleMark: (mark: string): void => {
       editorActor.send({

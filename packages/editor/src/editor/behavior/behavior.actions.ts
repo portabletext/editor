@@ -70,6 +70,9 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'annotation.add': addAnnotationActionImplementation,
   'annotation.remove': removeAnnotationActionImplementation,
   'annotation.toggle': toggleAnnotationActionImplementation,
+  'blur': ({action}) => {
+    ReactEditor.blur(action.editor)
+  },
   'decorator.add': addDecoratorActionImplementation,
   'decorator.remove': removeDecoratorActionImplementation,
   'decorator.toggle': toggleDecoratorActionImplementation,
@@ -466,6 +469,13 @@ function performDefaultAction({
     }
     case 'annotation.toggle': {
       behaviorActionImplementations['annotation.toggle']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'blur': {
+      behaviorActionImplementations.blur({
         context,
         action,
       })
