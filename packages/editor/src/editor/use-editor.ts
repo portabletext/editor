@@ -59,6 +59,7 @@ export type EditorEvent = PickFromUnion<
   | 'focus'
   | 'insert block object'
   | 'list item.toggle'
+  | 'style.toggle'
   | 'patches'
   | 'toggle readOnly'
   | 'update behaviors'
