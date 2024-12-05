@@ -75,7 +75,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
         onError={console.error}
       >
         <EditorProvider
-          config={{
+          initialConfig={{
             behaviors: [
               ...coreBehaviors,
               ...createLinkBehaviors({

@@ -64,7 +64,7 @@ function Editor(props: {
   return (
     <div data-testid={props.editorRef.id}>
       <EditorProvider
-        config={{
+        initialConfig={{
           behaviors: props.behaviors,
           keyGenerator,
           schema: props.schema,
