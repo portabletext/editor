@@ -27,6 +27,7 @@ import type {
   BehaviorAction,
   BehaviorActionIntend,
   BehaviorEvent,
+  EditorContext,
   EditorState,
   OmitFromUnion,
   PickFromUnion,
@@ -276,8 +277,10 @@ export const editorMachine = setup({
         return
       }
 
-      const editorState = {
+      const behaviorContext = {
         schema: context.schema,
+      } satisfies EditorContext
+      const editorState = {
         value,
         selection,
       } satisfies EditorState
@@ -288,6 +291,7 @@ export const editorMachine = setup({
         const shouldRun =
           eventBehavior.guard === undefined ||
           eventBehavior.guard({
+            context: behaviorContext,
             state: editorState,
             event: event.behaviorEvent,
           })

@@ -10,7 +10,7 @@ import {
   type PortableTextTextBlock,
 } from '@sanity/types'
 import {createGuards} from './behavior.guards'
-import type {EditorState} from './behavior.types'
+import type {EditorContext, EditorState} from './behavior.types'
 
 /**
  * Selection utilities
@@ -52,10 +52,14 @@ export function getFocusTextBlock(
     : undefined
 }
 
-export function getFocusListBlock(
-  state: EditorState,
-): {node: PortableTextListBlock; path: [KeyedSegment]} | undefined {
-  const guards = createGuards(state)
+export function getFocusListBlock({
+  context,
+  state,
+}: {
+  context: EditorContext
+  state: EditorState
+}): {node: PortableTextListBlock; path: [KeyedSegment]} | undefined {
+  const guards = createGuards(context)
   const focusBlock = getFocusBlock(state)
 
   return focusBlock && guards.isListBlock(focusBlock.node)

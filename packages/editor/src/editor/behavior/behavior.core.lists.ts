@@ -82,8 +82,8 @@ const unindentListOnBackspace = defineBehavior({
 
 const clearListOnEnter = defineBehavior({
   on: 'insert.break',
-  guard: ({state}) => {
-    const focusListBlock = getFocusListBlock(state)
+  guard: ({context, state}) => {
+    const focusListBlock = getFocusListBlock({context, state})
     const selectionCollapsed = selectionIsCollapsed(state)
 
     if (!focusListBlock || !selectionCollapsed) {
@@ -109,7 +109,7 @@ const clearListOnEnter = defineBehavior({
 
 const indentListOnTab = defineBehavior({
   on: 'key.down',
-  guard: ({state, event}) => {
+  guard: ({context, state, event}) => {
     const isTab = isHotkey('Tab', event.keyboardEvent)
 
     if (!isTab) {
@@ -117,7 +117,7 @@ const indentListOnTab = defineBehavior({
     }
 
     const selectedBlocks = getSelectedBlocks(state)
-    const guards = createGuards(state)
+    const guards = createGuards(context)
     const selectedListBlocks = selectedBlocks.flatMap((block) =>
       guards.isListBlock(block.node)
         ? [
@@ -150,7 +150,7 @@ const indentListOnTab = defineBehavior({
 
 const unindentListOnShiftTab = defineBehavior({
   on: 'key.down',
-  guard: ({state, event}) => {
+  guard: ({context, state, event}) => {
     const isShiftTab = isHotkey('Shift+Tab', event.keyboardEvent)
 
     if (!isShiftTab) {
@@ -158,7 +158,7 @@ const unindentListOnShiftTab = defineBehavior({
     }
 
     const selectedBlocks = getSelectedBlocks(state)
-    const guards = createGuards(state)
+    const guards = createGuards(context)
     const selectedListBlocks = selectedBlocks.flatMap((block) =>
       guards.isListBlock(block.node)
         ? [

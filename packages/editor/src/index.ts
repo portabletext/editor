@@ -1,5 +1,9 @@
 export type {Patch} from '@portabletext/patches'
 export type {PortableTextBlock, PortableTextChild} from '@sanity/types'
+export {
+  createCodeEditorBehaviors,
+  type CodeEditorBehaviorsConfig,
+} from './editor/behavior/behavior.code-editor'
 export {coreBehavior, coreBehaviors} from './editor/behavior/behavior.core'
 export {
   createLinkBehaviors,
@@ -10,17 +14,14 @@ export {
   type MarkdownBehaviorsConfig,
 } from './editor/behavior/behavior.markdown'
 export {
-  createCodeEditorBehaviors,
-  type CodeEditorBehaviorsConfig,
-} from './editor/behavior/behavior.code-editor'
-export {
   defineBehavior,
   type Behavior,
   type BehaviorActionIntend,
   type BehaviorActionIntendSet,
-  type EditorState,
   type BehaviorEvent,
   type BehaviorGuard,
+  type EditorContext,
+  type EditorState,
   type OmitFromUnion,
   type PickFromUnion,
 } from './editor/behavior/behavior.types'
