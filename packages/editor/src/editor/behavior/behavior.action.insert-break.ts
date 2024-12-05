@@ -4,7 +4,7 @@ import type {SlateTextBlock, VoidElement} from '../../types/slate'
 import type {BehaviorActionImplementation} from './behavior.actions'
 
 export const insertBreakActionImplementation: BehaviorActionImplementation<
-  'insert break'
+  'insert.break'
 > = ({context, action}) => {
   const keyGenerator = context.keyGenerator
   const schema = context.schema
@@ -202,12 +202,12 @@ export const insertBreakActionImplementation: BehaviorActionImplementation<
 }
 
 export const insertSoftBreakActionImplementation: BehaviorActionImplementation<
-  'insert soft break'
+  'insert.soft break'
 > = ({context, action}) => {
   // This mimics Slate's internal which also just does a regular insert break
   // when soft-breaking
   insertBreakActionImplementation({
     context,
-    action: {...action, type: 'insert break'},
+    action: {...action, type: 'insert.break'},
   })
 }

@@ -2,7 +2,7 @@ import {Editor, Transforms} from 'slate'
 import type {BehaviorActionImplementation} from './behavior.actions'
 
 export const insertSpanActionImplementation: BehaviorActionImplementation<
-  'insert span'
+  'insert.span'
 > = ({context, action}) => {
   if (!action.editor.selection) {
     console.error('Unable to perform action without selection', action)

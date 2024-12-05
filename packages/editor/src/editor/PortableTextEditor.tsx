@@ -483,7 +483,7 @@ export function RouteEventsToChanges(props: {
         case 'decorator.remove':
         case 'decorator.toggle':
         case 'focus':
-        case 'insert block object':
+        case 'insert.block object':
         case 'list item.toggle':
         case 'style.toggle':
         case 'patches':

@@ -168,14 +168,14 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
       at: range,
     })
   },
-  'insert block object': insertBlockObjectActionImplementation,
-  'insert break': insertBreakActionImplementation,
-  'insert soft break': insertSoftBreakActionImplementation,
-  'insert span': insertSpanActionImplementation,
-  'insert text': ({action}) => {
+  'insert.block object': insertBlockObjectActionImplementation,
+  'insert.break': insertBreakActionImplementation,
+  'insert.soft break': insertSoftBreakActionImplementation,
+  'insert.span': insertSpanActionImplementation,
+  'insert.text': ({action}) => {
     insertText(action.editor, action.text)
   },
-  'insert text block': ({context, action}) => {
+  'insert.text block': ({context, action}) => {
     const block = toSlateValue(
       [
         {
@@ -322,15 +322,15 @@ export function performAction({
       })
       break
     }
-    case 'insert span': {
-      behaviorActionImplementations['insert span']({
+    case 'insert.span': {
+      behaviorActionImplementations['insert.span']({
         context,
         action,
       })
       break
     }
-    case 'insert text block': {
-      behaviorActionImplementations['insert text block']({
+    case 'insert.text block': {
+      behaviorActionImplementations['insert.text block']({
         context,
         action,
       })
@@ -518,29 +518,29 @@ function performDefaultAction({
       })
       break
     }
-    case 'insert block object': {
-      behaviorActionImplementations['insert block object']({
+    case 'insert.block object': {
+      behaviorActionImplementations['insert.block object']({
         context,
         action,
       })
       break
     }
-    case 'insert break': {
-      behaviorActionImplementations['insert break']({
+    case 'insert.break': {
+      behaviorActionImplementations['insert.break']({
         context,
         action,
       })
       break
     }
-    case 'insert soft break': {
-      behaviorActionImplementations['insert soft break']({
+    case 'insert.soft break': {
+      behaviorActionImplementations['insert.soft break']({
         context,
         action,
       })
       break
     }
-    case 'insert text': {
-      behaviorActionImplementations['insert text']({
+    case 'insert.text': {
+      behaviorActionImplementations['insert.text']({
         context,
         action,
       })

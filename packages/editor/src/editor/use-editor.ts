@@ -57,7 +57,7 @@ export type EditorEvent = PickFromUnion<
   | 'decorator.remove'
   | 'decorator.toggle'
   | 'focus'
-  | 'insert block object'
+  | 'insert.block object'
   | 'list item.toggle'
   | 'style.toggle'
   | 'patches'

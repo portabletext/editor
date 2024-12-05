@@ -89,11 +89,11 @@ export function createWithEventListeners(
             })
             break
           }
-          case 'insert block object': {
+          case 'insert.block object': {
             editorActor.send({
               type: 'behavior event',
               behaviorEvent: {
-                type: 'insert block object',
+                type: 'insert.block object',
                 placement: event.placement,
                 blockObject: event.blockObject,
               },
@@ -183,7 +183,7 @@ export function createWithEventListeners(
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
-          type: 'insert break',
+          type: 'insert.break',
         },
         editor,
       })
@@ -194,7 +194,7 @@ export function createWithEventListeners(
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
-          type: 'insert soft break',
+          type: 'insert.soft break',
         },
         editor,
       })
@@ -205,7 +205,7 @@ export function createWithEventListeners(
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
-          type: 'insert text',
+          type: 'insert.text',
           text,
           options,
         },
