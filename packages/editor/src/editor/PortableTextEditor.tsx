@@ -442,6 +442,10 @@ export function RouteEventsToChanges(props: {
     debug('Subscribing to editor changes')
     const sub = props.editorActor.on('*', (event) => {
       switch (event.type) {
+        case 'blurred': {
+          handleChange({type: 'blur', event: event.event})
+          break
+        }
         case 'patch':
           handleChange(event)
           break
@@ -479,6 +483,7 @@ export function RouteEventsToChanges(props: {
         case 'annotation.add':
         case 'annotation.remove':
         case 'annotation.toggle':
+        case 'blur':
         case 'decorator.add':
         case 'decorator.remove':
         case 'decorator.toggle':

@@ -46,6 +46,16 @@ export function createWithEventListeners(
             })
             break
           }
+          case 'blur': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {
+                type: 'blur',
+              },
+              editor,
+            })
+            break
+          }
           case 'decorator.add': {
             editorActor.send({
               type: 'behavior event',

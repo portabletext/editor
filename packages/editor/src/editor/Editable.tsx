@@ -567,7 +567,7 @@ export const PortableTextEditable = forwardRef<
         onBlur(event)
       }
       if (!event.isPropagationStopped()) {
-        editorActor.send({type: 'blur', event})
+        editorActor.send({type: 'blurred', event})
       }
     },
     [editorActor, onBlur],
