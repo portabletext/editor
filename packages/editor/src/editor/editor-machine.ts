@@ -162,6 +162,7 @@ export type InternalEditorEmittedEvent =
       | 'decorator.remove'
       | 'decorator.toggle'
       | 'insert.block object'
+      | 'insert.inline object'
       | 'list item.toggle'
       | 'focus'
       | 'style.toggle'

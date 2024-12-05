@@ -101,6 +101,17 @@ export function createWithEventListeners(
             })
             break
           }
+          case 'insert.inline object': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {
+                type: 'insert.inline object',
+                inlineObject: event.inlineObject,
+              },
+              editor,
+            })
+            break
+          }
           case 'list item.toggle': {
             editorActor.send({
               type: 'behavior event',
