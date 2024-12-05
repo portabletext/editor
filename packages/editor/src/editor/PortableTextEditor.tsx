@@ -28,13 +28,13 @@ import {debugWithName} from '../utils/debug'
 import {getPortableTextMemberSchemaTypes} from '../utils/getPortableTextMemberSchemaTypes'
 import {compileType} from '../utils/schema'
 import {Synchronizer} from './components/Synchronizer'
+import {createEditor, type Editor} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
 import type {EditorActor} from './editor-machine'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
 import {defaultKeyGenerator} from './key-generator'
 import type {AddedAnnotationPaths} from './plugins/createWithEditableAPI'
-import {createEditor, type Editor} from './use-editor'
 
 const debug = debugWithName('component:PortableTextEditor')
 

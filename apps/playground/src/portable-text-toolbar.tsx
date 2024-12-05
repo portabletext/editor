@@ -1,6 +1,6 @@
 import {
   PortableTextEditor,
-  useEditorContext,
+  useEditor,
   usePortableTextEditor,
   usePortableTextEditorSelection,
   type Editor,
@@ -21,7 +21,7 @@ import type {SchemaDefinition} from './schema'
 export function PortableTextToolbar(props: {
   schemaDefinition: SchemaDefinition
 }) {
-  const editor = useEditorContext()
+  const editor = useEditor()
   const editorInstance = usePortableTextEditor()
   const selection = usePortableTextEditorSelection()
 

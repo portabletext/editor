@@ -5,7 +5,7 @@ import {
   createMarkdownBehaviors,
   EditorProvider,
   PortableTextEditable,
-  useEditorContext,
+  useEditor,
   type BlockDecoratorRenderProps,
   type BlockStyleRenderProps,
   type EditorEmittedEvent,
@@ -253,7 +253,7 @@ function EditorEventListener(props: {
   on: (event: EditorEmittedEvent) => void
   value: Array<PortableTextBlock> | undefined
 }) {
-  const editor = useEditorContext()
+  const editor = useEditor()
 
   useEffect(() => {
     const subscription = props.editorRef.on('patches', (event) => {
@@ -284,7 +284,7 @@ function EditorEventListener(props: {
 }
 
 function ToggleReadOnly(props: {readOnly: boolean}) {
-  const editor = useEditorContext()
+  const editor = useEditor()
 
   return (
     <Switch

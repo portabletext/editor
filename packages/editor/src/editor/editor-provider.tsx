@@ -1,6 +1,7 @@
 import React, {useMemo} from 'react'
 import {Slate} from 'slate-react'
 import {Synchronizer} from './components/Synchronizer'
+import {useCreateEditor, type Editor, type EditorConfig} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
@@ -9,7 +10,6 @@ import {
   RouteEventsToChanges,
   type PortableTextEditorProps,
 } from './PortableTextEditor'
-import {useEditor, type Editor, type EditorConfig} from './use-editor'
 
 const EditorContext = React.createContext<Editor | undefined>(undefined)
 
@@ -25,7 +25,7 @@ export type EditorProviderProps = {
  * @alpha
  */
 export function EditorProvider(props: EditorProviderProps) {
-  const editor = useEditor(props.initialConfig)
+  const editor = useCreateEditor(props.initialConfig)
   const editorActor = editor._internal.editorActor
   const slateEditor = editor._internal.slateEditor
   const editable = editor._internal.editable
@@ -70,7 +70,7 @@ export function EditorProvider(props: EditorProviderProps) {
 /**
  * @alpha
  */
-export function useEditorContext() {
+export function useEditor() {
   const editor = React.useContext(EditorContext)
 
   if (!editor) {

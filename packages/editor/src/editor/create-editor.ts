@@ -112,10 +112,7 @@ export function createEditor(config: EditorConfig): Editor {
   }
 }
 
-/**
- * @alpha
- */
-export function useEditor(config: EditorConfig): Editor {
+export function useCreateEditor(config: EditorConfig): Editor {
   const editorActor = useActorRef(editorMachine, {
     input: editorConfigToMachineInput(config),
   })
