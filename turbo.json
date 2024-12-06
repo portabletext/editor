@@ -1,6 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalDependencies": [".npmrc", "biome.json"],
+  "globalDependencies": [".npmrc", "biome.json", "pnpm-lock.yaml"],
   "tasks": {
     "build": {
       "outputs": ["dist/**", "lib/**"],
