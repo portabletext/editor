@@ -39,7 +39,7 @@ const EMPTY_MARKS: string[] = []
  */
 export interface LeafProps extends RenderLeafProps {
   editorActor: EditorActor
-  children: ReactElement
+  children: ReactElement<any>
   schemaTypes: PortableTextMemberSchemaTypes
   renderAnnotation?: RenderAnnotationFunction
   renderChild?: RenderChildFunction

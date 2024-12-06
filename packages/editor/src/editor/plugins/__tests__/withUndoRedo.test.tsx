@@ -45,7 +45,7 @@ const initialSelection = {
 
 describe('plugin:withUndoRedo', () => {
   it('preserves the keys when undoing ', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
     render(
       <PortableTextEditorTester
@@ -102,7 +102,7 @@ describe('plugin:withUndoRedo', () => {
     })
   })
   it('preserves the keys when redoing ', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
 
     render(

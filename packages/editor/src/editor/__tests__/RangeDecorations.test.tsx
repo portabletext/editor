@@ -22,7 +22,7 @@ const RangeDecorationTestComponent = ({children}: {children?: ReactNode}) => {
 
 describe('RangeDecorations', () => {
   it('only render range decorations as necessary', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
     const value = [helloBlock]
     let rangeDecorations: RangeDecoration[] = [

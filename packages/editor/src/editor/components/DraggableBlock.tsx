@@ -42,7 +42,7 @@ export const DraggableBlock = ({
   blockRef,
 }: DraggableBlockProps) => {
   const editor = useSlateStatic()
-  const dragGhostRef: MutableRefObject<undefined | HTMLElement> = useRef()
+  const dragGhostRef = useRef<HTMLElement>(undefined)
   const [isDragOver, setIsDragOver] = useState(false)
   const isVoid = useMemo(
     () => Editor.isVoid(editor, element),

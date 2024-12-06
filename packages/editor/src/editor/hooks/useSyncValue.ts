@@ -53,9 +53,9 @@ export function useSyncValue(
 ) => void {
   const {editorActor, portableTextEditor, readOnly, slateEditor} = props
   const schemaTypes = editorActor.getSnapshot().context.schema
-  const previousValue = useRef<PortableTextBlock[] | undefined>()
+  const previousValue = useRef<PortableTextBlock[]>(undefined)
   const updateValueFunctionRef =
-    useRef<(value: PortableTextBlock[] | undefined) => void>()
+    useRef<(value: PortableTextBlock[] | undefined) => void>(undefined)
 
   const updateFromCurrentValue = useCallback(() => {
     const currentValue = CURRENT_VALUE.get(portableTextEditor)

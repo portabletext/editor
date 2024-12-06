@@ -45,7 +45,7 @@ const initialSelection = {
 
 describe('plugin:withEditableAPI: .delete()', () => {
   it('deletes block', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
     render(
       <PortableTextEditorTester
@@ -99,7 +99,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
   })
 
   it('deletes all the blocks, but leaves a placeholder block', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
     render(
       <PortableTextEditorTester
@@ -157,7 +157,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
   })
 
   it('deletes children', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
 
     render(
@@ -238,7 +238,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
   })
 
   it('deletes selected', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
 
     render(

@@ -27,7 +27,7 @@ const INITIAL_VALUE: PortableTextBlock[] = [
 
 describe('plugin:withEditableAPI: .isSelectionsOverlapping', () => {
   it('returns true if the selections are partially overlapping', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
     render(
       <PortableTextEditorTester
@@ -61,7 +61,7 @@ describe('plugin:withEditableAPI: .isSelectionsOverlapping', () => {
   })
 
   it('returns true if the selections are fully overlapping', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
     render(
       <PortableTextEditorTester
@@ -95,7 +95,7 @@ describe('plugin:withEditableAPI: .isSelectionsOverlapping', () => {
   })
 
   it('return true if selection is fully inside another selection', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
     render(
       <PortableTextEditorTester
@@ -129,7 +129,7 @@ describe('plugin:withEditableAPI: .isSelectionsOverlapping', () => {
   })
 
   it('returns false if the selections are not overlapping', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
     render(
       <PortableTextEditorTester

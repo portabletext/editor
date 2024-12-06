@@ -4,7 +4,7 @@ import type {
   PortableTextBlock,
 } from '@sanity/types'
 import {useActorRef} from '@xstate/react'
-import {useCallback, useMemo} from 'react'
+import {useMemo} from 'react'
 import {
   createActor,
   type ActorRef,
@@ -101,7 +101,7 @@ export function createEditor(config: EditorConfig): Editor {
     on: (event, listener) =>
       editorActor.on(
         event,
-        // @ts-ignore
+        // @ts-expect-error
         listener,
       ),
     _internal: {
@@ -116,38 +116,27 @@ export function useCreateEditor(config: EditorConfig): Editor {
   const editorActor = useActorRef(editorMachine, {
     input: editorConfigToMachineInput(config),
   })
-  const slateEditor = createSlateEditor({editorActor})
-  const editable = useMemo(
-    () => createEditableAPI(slateEditor.instance, editorActor),
-    [slateEditor.instance, editorActor],
-  )
-  const send = useCallback(
-    (event: EditorEvent) => {
-      editorActor.send(event)
-    },
-    [editorActor],
-  )
-  const on = useCallback<Editor['on']>(
-    (event, listener) =>
-      editorActor.on(
-        event,
-        // @ts-ignore
-        listener,
-      ),
-    [editorActor],
-  )
-  const editor: Editor = useMemo(
-    () => ({
-      send,
-      on,
+  const editor: Editor = useMemo(() => {
+    const slateEditor = createSlateEditor({editorActor})
+    const editable = createEditableAPI(slateEditor.instance, editorActor)
+
+    return {
+      send: (event: EditorEvent) => {
+        editorActor.send(event)
+      },
+      on: (event, listener) =>
+        editorActor.on(
+          event,
+          // @ts-expect-error
+          listener,
+        ),
       _internal: {
         editable,
         editorActor,
         slateEditor,
       },
-    }),
-    [send, on, editable, editorActor, slateEditor],
-  )
+    }
+  }, [editorActor])
 
   return editor
 }

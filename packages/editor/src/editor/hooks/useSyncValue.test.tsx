@@ -26,7 +26,7 @@ const initialValue = [
 
 describe('useSyncValue', () => {
   it('updates span text', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
     const syncedValue = [
       {
@@ -69,7 +69,7 @@ describe('useSyncValue', () => {
     })
   })
   it('replaces span nodes with different keys inside the same children array', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
     const syncedValue = [
       {

@@ -7,7 +7,7 @@ import {PortableTextEditorTester, schemaType} from './PortableTextEditorTester'
 
 describe('when PTE would display warnings, instead it self solves', () => {
   it('when child at index is missing required _key in block with _key', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const initialValue = [
       {
         _key: 'abc',
@@ -63,7 +63,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
   })
 
   it('self-solves missing .markDefs', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const initialValue = [
       {
         _key: 'abc',
@@ -120,7 +120,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
   })
 
   it('adds missing .children', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const initialValue = [
       {
         _key: 'abc',
@@ -191,7 +191,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
   })
 
   it('removes orphaned marks', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const initialValue = [
       {
         _key: 'abc',
@@ -249,7 +249,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
   })
 
   it('removes orphaned marksDefs', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const initialValue = [
       {
         _key: 'abc',
@@ -313,7 +313,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
   })
 
   it('allows empty array of blocks', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const initialValue = [] as PortableTextBlock[]
 
     const onChange = vi.fn()

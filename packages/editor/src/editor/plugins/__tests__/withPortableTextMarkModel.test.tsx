@@ -12,7 +12,7 @@ import {PortableTextEditor} from '../../PortableTextEditor'
 describe('plugin:withPortableTextMarksModel', () => {
   describe('normalization', () => {
     it('merges children correctly when toggling marks in various ranges', async () => {
-      const editorRef: RefObject<PortableTextEditor> = createRef()
+      const editorRef: RefObject<PortableTextEditor | null> = createRef()
       const initialValue = [
         {
           _key: 'a',
@@ -146,7 +146,7 @@ describe('plugin:withPortableTextMarksModel', () => {
     })
 
     it('toggles marks on children with annotation marks correctly', async () => {
-      const editorRef: RefObject<PortableTextEditor> = createRef()
+      const editorRef: RefObject<PortableTextEditor | null> = createRef()
       const initialValue = [
         {
           _key: 'a',
@@ -242,7 +242,7 @@ describe('plugin:withPortableTextMarksModel', () => {
     })
 
     it('merges blocks correctly when containing links', async () => {
-      const editorRef: RefObject<PortableTextEditor> = createRef()
+      const editorRef: RefObject<PortableTextEditor | null> = createRef()
       const initialValue = [
         {
           _key: '5fc57af23597',
@@ -378,7 +378,7 @@ describe('plugin:withPortableTextMarksModel', () => {
     })
 
     it('resets markDefs when splitting a block in the beginning', async () => {
-      const editorRef: RefObject<PortableTextEditor> = createRef()
+      const editorRef: RefObject<PortableTextEditor | null> = createRef()
       const initialValue = [
         {
           _key: 'ba',
@@ -505,7 +505,7 @@ describe('plugin:withPortableTextMarksModel', () => {
   })
   describe('selection', () => {
     it('should emit a new selection object when toggling marks, even though the value is the same', async () => {
-      const editorRef: RefObject<PortableTextEditor> = createRef()
+      const editorRef: RefObject<PortableTextEditor | null> = createRef()
       const initialValue = [
         {
           _key: 'ba',
@@ -569,7 +569,7 @@ describe('plugin:withPortableTextMarksModel', () => {
     })
 
     it('should return active marks that cover the whole selection', async () => {
-      const editorRef: RefObject<PortableTextEditor> = createRef()
+      const editorRef: RefObject<PortableTextEditor | null> = createRef()
       const initialValue = [
         {
           _key: 'a',
@@ -618,7 +618,7 @@ describe('plugin:withPortableTextMarksModel', () => {
     })
 
     it('should return active annotation types that cover the whole selection', async () => {
-      const editorRef: RefObject<PortableTextEditor> = createRef()
+      const editorRef: RefObject<PortableTextEditor | null> = createRef()
       const initialValue = [
         {
           _key: 'a',
@@ -675,7 +675,7 @@ describe('plugin:withPortableTextMarksModel', () => {
 
   describe('removing annotations', () => {
     it('preserves other marks that apply to the spans', async () => {
-      const editorRef: RefObject<PortableTextEditor> = createRef()
+      const editorRef: RefObject<PortableTextEditor | null> = createRef()
       const initialValue = [
         {
           _key: '5fc57af23597',
@@ -838,7 +838,7 @@ describe('plugin:withPortableTextMarksModel', () => {
 
   describe('removing nodes', () => {
     it('should not insert a new block if we have more blocks available', async () => {
-      const editorRef: RefObject<PortableTextEditor> = createRef()
+      const editorRef: RefObject<PortableTextEditor | null> = createRef()
       const initialValue = [
         {
           _key: '5fc57af23597',

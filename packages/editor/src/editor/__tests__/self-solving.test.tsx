@@ -40,7 +40,7 @@ function span(
 
 describe('Feature: Self-solving', () => {
   it('Scenario: Missing .markDefs and .marks are added after the editor is made dirty', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn<OnChange>()
     const initialValue = [
       block({

@@ -1,4 +1,5 @@
 import type {PortableTextBlock, PortableTextChild} from '@sanity/types'
+import type {JSX} from 'react'
 
 type Props = {
   value: PortableTextBlock | PortableTextChild

@@ -20,7 +20,7 @@ import {
 } from '@portabletext/editor'
 import {useSelector} from '@xstate/react'
 import {CopyIcon, ImageIcon, TrashIcon} from 'lucide-react'
-import {useEffect, useState} from 'react'
+import {useEffect, useState, type JSX} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
 import {reverse} from 'remeda'
 import {Button} from './components/button'

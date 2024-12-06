@@ -20,7 +20,7 @@ const schema = Schema.compile({
 
 describe(PortableTextEditor.insertBlock.name, () => {
   test('Scenario: Inserting a custom block without a selection #1', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const emptyTextBlock: PortableTextBlock = {
       _key: 'ba',
       _type: 'block',
@@ -88,7 +88,7 @@ describe(PortableTextEditor.insertBlock.name, () => {
   })
 
   test('Scenario: Inserting a custom block without a selection #2', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const nonEmptyTextBlock: PortableTextBlock = {
       _key: 'ba',
       _type: 'block',
@@ -158,7 +158,7 @@ describe(PortableTextEditor.insertBlock.name, () => {
   })
 
   test('Scenario: Replacing an empty text block with a custom block', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const emptyTextBlock: PortableTextBlock = {
       _key: 'ba',
       _type: 'block',
