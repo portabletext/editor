@@ -1,10 +1,12 @@
 import {isPortableTextSpan, isPortableTextTextBlock} from '@sanity/types'
-import type {EditorState} from './behavior.types'
+import type {EditorSnapshot} from '../editor-snapshot'
 import {isKeyedSegment} from './behavior.utils.is-keyed-segment'
 import {reverseSelection} from './behavior.utils.reverse-selection'
 
-export function getSelectionText({value, selection}: EditorState): string {
+export function getSelectionText({context}: EditorSnapshot): string {
   let text = ''
+
+  const {value, selection} = context
 
   if (!value || !selection) {
     return text

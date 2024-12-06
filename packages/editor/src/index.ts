@@ -21,8 +21,6 @@ export {
   type BehaviorActionIntendSet,
   type BehaviorEvent,
   type BehaviorGuard,
-  type EditorContext,
-  type EditorState,
   type OmitFromUnion,
   type PickFromUnion,
 } from './editor/behavior/behavior.types'
@@ -55,8 +53,9 @@ export {
 export {
   useEditorSelector,
   type EditorSelector,
-  type SelectorEditorState,
+  type EditorSelectorSnapshot,
 } from './editor/editor-selector'
+export type {EditorContext, EditorSnapshot} from './editor/editor-snapshot'
 export {usePortableTextEditor} from './editor/hooks/usePortableTextEditor'
 export {usePortableTextEditorSelection} from './editor/hooks/usePortableTextEditorSelection'
 export {defaultKeyGenerator as keyGenerator} from './editor/key-generator'

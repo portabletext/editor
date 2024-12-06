@@ -1,32 +1,9 @@
-import type {
-  KeyedSegment,
-  PortableTextBlock,
-  PortableTextTextBlock,
-} from '@sanity/types'
+import type {KeyedSegment, PortableTextTextBlock} from '@sanity/types'
 import type {TextUnit} from 'slate'
 import type {TextInsertTextOptions} from 'slate/dist/interfaces/transforms/text'
-import type {
-  EditorSelection,
-  PortableTextMemberSchemaTypes,
-  PortableTextSlateEditor,
-} from '../../types/editor'
+import type {EditorSelection, PortableTextSlateEditor} from '../../types/editor'
+import type {EditorContext} from '../editor-snapshot'
 import type {BlockOffset} from './behavior.utils.block-offset'
-
-/**
- * @alpha
- */
-export type EditorState = {
-  value: Array<PortableTextBlock>
-  selection: NonNullable<EditorSelection>
-}
-
-/**
- * @alpha
- */
-export type EditorContext = {
-  keyGenerator: () => string
-  schema: PortableTextMemberSchemaTypes
-}
 
 /**
  * @alpha
@@ -143,11 +120,9 @@ export type BehaviorGuard<
   TGuardResponse,
 > = ({
   context,
-  state,
   event,
 }: {
   context: EditorContext
-  state: EditorState
   event: TBehaviorEvent
 }) => TGuardResponse | false
 
