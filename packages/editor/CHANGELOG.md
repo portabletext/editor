@@ -1,5 +1,48 @@
 # Changelog
 
+## [1.14.0](https://github.com/portabletext/editor/compare/editor-v1.13.0...editor-v1.14.0) (2024-12-06)
+
+
+### Features
+
+* add experimental `useEditorSelector` ([04a290c](https://github.com/portabletext/editor/commit/04a290c7ad7b2d4b156a6f18fbe411fcde920023))
+* **behavior:** add 'move block down/up' actions ([d53a844](https://github.com/portabletext/editor/commit/d53a84466259297a187e5bddc1c3bc623c4690de))
+* **behavior:** add `blur` event and action ([e4720e5](https://github.com/portabletext/editor/commit/e4720e5b2ee468fba2347239b0db3d5af59c55c0))
+* **behavior:** add `insert.inline object` event and action ([39407b8](https://github.com/portabletext/editor/commit/39407b8dee8a8070f0bace569256b7a4e8062819))
+* **behavior:** add `list item.toggle` event and `list item.(add|remove|toggle)` actions ([2152950](https://github.com/portabletext/editor/commit/2152950dc11d0ad638c7e67531608841bbe25ec7))
+* **behavior:** add `noop` action ([0139a7c](https://github.com/portabletext/editor/commit/0139a7cf7d494eff2d524f175132d82213ff5243))
+* **behavior:** add `style.toggle` event and `style.(add|remove|toggle)` actions ([12825bd](https://github.com/portabletext/editor/commit/12825bd4c2ea70ff259847a858b1a8368f539b8a))
+* **behavior:** allow code editor behaviors to move multiple blocks ([5da6b4f](https://github.com/portabletext/editor/commit/5da6b4fa324a7ecbc7b722af905da41ee8905172))
+* **behavior:** allow imperative `decorator.(add|remove|toggle)` ([bb5fbfd](https://github.com/portabletext/editor/commit/bb5fbfd0e2199c8997aa436783e73c7e2d07e54c))
+* **behavior:** allow imperative `insert block object` ([eaeb5ed](https://github.com/portabletext/editor/commit/eaeb5ed1a413a34ba5f5421d9bdc8c3579201ea9))
+* **behavior:** allow imperative `insert.inline object` ([3ddf73d](https://github.com/portabletext/editor/commit/3ddf73d1347f4b11ed8933622d1fd3ace16054bd))
+* **behavior:** allow imperative `list item.toggle` ([3927074](https://github.com/portabletext/editor/commit/39270745a968f7973e1133f83957525dbac8cf79))
+* **behavior:** allow imperative `style.toggle` ([174b64d](https://github.com/portabletext/editor/commit/174b64d002aed98e427bb26f0cb9305fed3a329d))
+* export experimental `getActiveListItem` selector ([2fd7261](https://github.com/portabletext/editor/commit/2fd72612eb5df50712efef5e9c428db3855cb09a))
+
+
+### Bug Fixes
+
+* **behavior:** '(un)set block' actions now only accept one path ([35ed503](https://github.com/portabletext/editor/commit/35ed5030e517a219547b813327d4621436026ff0))
+* **behavior:** mark `editable` as `_internal` ([a8156fc](https://github.com/portabletext/editor/commit/a8156fccc58ec0c8004c5c6a4e7706ade51c4b6b))
+* **behavior:** merge `EditorContext` and `EditorState` into `EditorSnapshot` ([27ee5ac](https://github.com/portabletext/editor/commit/27ee5ac0e3df43589ecf0eaf53a1dca4c4ddb1a0))
+* **behavior:** move `schema` from `EditorState` to `EditorContext` ([cc3d61b](https://github.com/portabletext/editor/commit/cc3d61bc4de423ae8bc49e8ec45cd6caad39773d))
+* **behavior:** namespace all `delete.*` events and actions ([915d373](https://github.com/portabletext/editor/commit/915d373bd24e9e5f66208f1015bdef09382d4948))
+* **behavior:** namespace all `insert.*` events and actions ([982cc9e](https://github.com/portabletext/editor/commit/982cc9ec66a56e98fa8d9a0bf3cabbad0b7d9250))
+* **behavior:** namespace all `move.*` actions ([46b1249](https://github.com/portabletext/editor/commit/46b124996eb4e3ab559d5cd4ddadb96a80e85604))
+* **behavior:** remove `noop` event ([763fdff](https://github.com/portabletext/editor/commit/763fdffde290e2f86db7e7cdaf5072c6a3ae7ad2))
+* **behavior:** rename `(set|unset) block` to `text block.(set|unset)` ([0ef0396](https://github.com/portabletext/editor/commit/0ef039669e5256a73e23da3386f9026ad61c6981))
+* **behavior:** rename `BehaviorContext`-&gt;`EditorState` ([88fd672](https://github.com/portabletext/editor/commit/88fd672716da84a6707b53cfb5eaf26388a97a1e))
+* **behavior:** rename `blockPath`-&gt;`at` in 'move block' action ([4bb435e](https://github.com/portabletext/editor/commit/4bb435ee68687715e8180fe24674dad14143857b))
+* **behavior:** rename `config`-&gt;`initialConfig` ([48718be](https://github.com/portabletext/editor/commit/48718be23346d084bc574db1ffd5bf88938634a3))
+* **behavior:** rename `useEditorContext`-&gt;`useEditor` ([927e165](https://github.com/portabletext/editor/commit/927e1650b97506f3a59aa869a757f901b04df0bd))
+* **behavior:** route legacy focus method through behaviors ([3d091c7](https://github.com/portabletext/editor/commit/3d091c791d6516b1e7f65bfbe404059711a5dc37))
+* **behavior:** simplify `BehaviorActionIntendSet` callback ([a6f9a48](https://github.com/portabletext/editor/commit/a6f9a48f2c402024deac4fbec26855aefe858789))
+* **deps:** update sanity monorepo to ^3.66.0 ([#505](https://github.com/portabletext/editor/issues/505)) ([58fa31e](https://github.com/portabletext/editor/commit/58fa31e623b4f8c2a3f25a0a8827a11dbfbb82c9))
+* guard against nullable target block when producing move node patch ([eb7049f](https://github.com/portabletext/editor/commit/eb7049f80cd05de8f62077decf8726c6397bfcf3))
+* **selectors:** export all experimental selectors ([cf042a7](https://github.com/portabletext/editor/commit/cf042a7e611db753a04f2d5e06c07e09aa4fbcef))
+* switch to `"type": "module"` ([a8c7c78](https://github.com/portabletext/editor/commit/a8c7c789e750dfa4699d06b8b2311e42786d5210))
+
 ## [1.13.0](https://github.com/portabletext/editor/compare/editor-v1.12.3...editor-v1.13.0) (2024-12-03)
 
 
