@@ -107,7 +107,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           at: focusTextBlock.path,
         },
         {
-          type: 'delete text',
+          type: 'delete.text',
           anchor: {
             path: focusTextBlock.path,
             offset: 0,
@@ -176,7 +176,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           blockObject: hrObject,
         },
         {
-          type: 'delete text',
+          type: 'delete.text',
           ...hrBlockOffsets,
         },
       ],
@@ -217,7 +217,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
                 blockObject: hrObject,
                 placement: 'after',
               },
-              {type: 'delete block', blockPath: focusBlock.path},
+              {type: 'delete.block', blockPath: focusBlock.path},
             ]
           : [
               {
@@ -306,7 +306,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           at: focusTextBlock.path,
         },
         {
-          type: 'delete text',
+          type: 'delete.text',
           anchor: {
             path: focusTextBlock.path,
             offset: 0,
@@ -320,7 +320,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
     ],
   })
   const clearStyleOnBackspace = defineBehavior({
-    on: 'delete backward',
+    on: 'delete.backward',
     guard: ({context, state}) => {
       const selectionCollapsed = selectionIsCollapsed(state)
       const focusTextBlock = getFocusTextBlock(state)
@@ -445,7 +445,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           at: focusTextBlock.path,
         },
         {
-          type: 'delete text',
+          type: 'delete.text',
           anchor: {
             path: focusTextBlock.path,
             offset: 0,

@@ -72,11 +72,11 @@ export type BehaviorEvent =
       decorator: string
     }
   | {
-      type: 'delete backward'
+      type: 'delete.backward'
       unit: TextUnit
     }
   | {
-      type: 'delete forward'
+      type: 'delete.forward'
       unit: TextUnit
     }
   | {
@@ -209,11 +209,11 @@ export type BehaviorActionIntend =
       props: Array<'style' | 'listItem' | 'level'>
     }
   | {
-      type: 'delete block'
+      type: 'delete.block'
       blockPath: [KeyedSegment]
     }
   | {
-      type: 'delete text'
+      type: 'delete.text'
       anchor: BlockOffset
       focus: BlockOffset
     }
