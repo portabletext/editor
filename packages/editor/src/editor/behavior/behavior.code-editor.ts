@@ -36,7 +36,7 @@ export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
       actions: [
         ({paths}) =>
           paths.map((at) => ({
-            type: 'move block up',
+            type: 'move.block up',
             at,
           })),
       ],
@@ -63,7 +63,7 @@ export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
       actions: [
         ({paths}) =>
           paths.map((at) => ({
-            type: 'move block down',
+            type: 'move.block down',
             at,
           })),
       ],
