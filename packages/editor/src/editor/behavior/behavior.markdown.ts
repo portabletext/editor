@@ -97,12 +97,12 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       ],
       ({focusTextBlock, style}) => [
         {
-          type: 'unset block',
+          type: 'text block.unset',
           props: ['listItem', 'level'],
           at: focusTextBlock.path,
         },
         {
-          type: 'set block',
+          type: 'text block.set',
           style,
           at: focusTextBlock.path,
         },
@@ -296,12 +296,12 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       ],
       ({focusTextBlock, style, level}) => [
         {
-          type: 'unset block',
+          type: 'text block.unset',
           props: ['listItem', 'level'],
           at: focusTextBlock.path,
         },
         {
-          type: 'set block',
+          type: 'text block.set',
           style,
           at: focusTextBlock.path,
         },
@@ -349,7 +349,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
     actions: [
       ({defaultStyle, focusTextBlock}) => [
         {
-          type: 'set block',
+          type: 'text block.set',
           style: defaultStyle,
           at: focusTextBlock.path,
         },
@@ -438,7 +438,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       ],
       ({focusTextBlock, style, listItem, listItemLength}) => [
         {
-          type: 'set block',
+          type: 'text block.set',
           listItem,
           level: 1,
           style,

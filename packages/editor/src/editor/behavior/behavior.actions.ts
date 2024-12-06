@@ -39,6 +39,8 @@ import {
   removeStyleActionImplementation,
   toggleStyleActionImplementation,
 } from './behavior.action.style'
+import {textBlockSetActionImplementation} from './behavior.action.text-block.set'
+import {textBlockUnsetActionImplementation} from './behavior.action.text-block.unset'
 import type {
   BehaviorAction,
   BehaviorEvent,
@@ -74,36 +76,6 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'decorator.toggle': toggleDecoratorActionImplementation,
   'focus': ({action}) => {
     ReactEditor.focus(action.editor)
-  },
-  'set block': ({action}) => {
-    const at = toSlateRange(
-      {
-        anchor: {path: action.at, offset: 0},
-        focus: {path: action.at, offset: 0},
-      },
-      action.editor,
-    )!
-
-    Transforms.setNodes(
-      action.editor,
-      {
-        ...(action.style ? {style: action.style} : {}),
-        ...(action.listItem ? {listItem: action.listItem} : {}),
-        ...(action.level ? {level: action.level} : {}),
-      },
-      {at},
-    )
-  },
-  'unset block': ({action}) => {
-    const at = toSlateRange(
-      {
-        anchor: {path: action.at, offset: 0},
-        focus: {path: action.at, offset: 0},
-      },
-      action.editor,
-    )!
-
-    Transforms.unsetNodes(action.editor, action.props, {at})
   },
   'copy': () => {},
   'delete.backward': ({action}) => {
@@ -299,6 +271,8 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'style.toggle': toggleStyleActionImplementation,
   'style.add': addStyleActionImplementation,
   'style.remove': removeStyleActionImplementation,
+  'text block.set': textBlockSetActionImplementation,
+  'text block.unset': textBlockUnsetActionImplementation,
 }
 
 export function performAction({
@@ -381,20 +355,6 @@ export function performAction({
       })
       break
     }
-    case 'set block': {
-      behaviorActionImplementations['set block']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'unset block': {
-      behaviorActionImplementations['unset block']({
-        context,
-        action,
-      })
-      break
-    }
     case 'effect': {
       behaviorActionImplementations.effect({
         context,
@@ -439,6 +399,20 @@ export function performAction({
     }
     case 'style.remove': {
       behaviorActionImplementations['style.remove']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'text block.set': {
+      behaviorActionImplementations['text block.set']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'text block.unset': {
+      behaviorActionImplementations['text block.unset']({
         context,
         action,
       })

@@ -197,18 +197,6 @@ export type BehaviorActionIntend =
       type: 'noop'
     }
   | {
-      type: 'set block'
-      at: [KeyedSegment]
-      style?: string
-      listItem?: string
-      level?: number
-    }
-  | {
-      type: 'unset block'
-      at: [KeyedSegment]
-      props: Array<'style' | 'listItem' | 'level'>
-    }
-  | {
       type: 'delete.block'
       blockPath: [KeyedSegment]
     }
@@ -241,6 +229,18 @@ export type BehaviorActionIntend =
   | {
       type: 'style.remove'
       style: string
+    }
+  | {
+      type: 'text block.set'
+      at: [KeyedSegment]
+      level?: number
+      listItem?: string
+      style?: string
+    }
+  | {
+      type: 'text block.unset'
+      at: [KeyedSegment]
+      props: Array<'level' | 'listItem' | 'style'>
     }
 
 /**
