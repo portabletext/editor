@@ -8,15 +8,15 @@ import {getSelectedBlocks} from './behavior.utils'
  */
 export const getActiveListItem: EditorSelector<
   PortableTextListBlock['listItem'] | undefined
-> = ({context, state}) => {
-  if (!state.selection) {
+> = ({context}) => {
+  if (!context.selection) {
     return undefined
   }
 
   const guards = createGuards(context)
   const selectedBlocks = getSelectedBlocks({
-    value: state.value,
-    selection: state.selection,
+    ...context,
+    selection: context.selection,
   }).map((block) => block.node)
   const selectedTextBlocks = selectedBlocks.filter(guards.isTextBlock)
 

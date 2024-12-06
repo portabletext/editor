@@ -1,18 +1,18 @@
-import type {EditorState} from './behavior.types'
+import type {EditorSnapshot} from '../editor-snapshot'
 import {getSelectionText} from './behavior.utils.get-selection-text'
 import {getStartPoint} from './behavior.utils.get-start-point'
 import {isKeyedSegment} from './behavior.utils.is-keyed-segment'
 import {reverseSelection} from './behavior.utils.reverse-selection'
 
-export function getBlockTextBefore(state: EditorState) {
-  const selection = state.selection.backward
-    ? reverseSelection(state.selection)
-    : state.selection
+export function getBlockTextBefore({context}: EditorSnapshot) {
+  const selection = context.selection.backward
+    ? reverseSelection(context.selection)
+    : context.selection
   const point = selection.anchor
   const key = isKeyedSegment(point.path[0]) ? point.path[0]._key : undefined
 
   const block = key
-    ? state.value.find((block) => block._key === key)
+    ? context.value.find((block) => block._key === key)
     : undefined
 
   if (!block) {
@@ -22,10 +22,13 @@ export function getBlockTextBefore(state: EditorState) {
   const startOfBlock = getStartPoint({node: block, path: [{_key: block._key}]})
 
   return getSelectionText({
-    value: state.value,
-    selection: {
-      anchor: startOfBlock,
-      focus: point,
+    context: {
+      ...context,
+      value: context.value,
+      selection: {
+        anchor: startOfBlock,
+        focus: point,
+      },
     },
   })
 }

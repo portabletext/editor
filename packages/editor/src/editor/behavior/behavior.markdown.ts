@@ -42,30 +42,30 @@ export type MarkdownBehaviorsConfig = {
 export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   const automaticBlockquoteOnSpace = defineBehavior({
     on: 'insert.text',
-    guard: ({context, state, event}) => {
+    guard: ({context, event}) => {
       const isSpace = event.text === ' '
 
       if (!isSpace) {
         return false
       }
 
-      const selectionCollapsed = selectionIsCollapsed(state)
-      const focusTextBlock = getFocusTextBlock(state)
-      const focusSpan = getFocusSpan(state)
+      const selectionCollapsed = selectionIsCollapsed(context)
+      const focusTextBlock = getFocusTextBlock(context)
+      const focusSpan = getFocusSpan(context)
 
       if (!selectionCollapsed || !focusTextBlock || !focusSpan) {
         return false
       }
 
       const blockOffset = spanSelectionPointToBlockOffset({
-        value: state.value,
+        value: context.value,
         selectionPoint: {
           path: [
             {_key: focusTextBlock.node._key},
             'children',
             {_key: focusSpan.node._key},
           ],
-          offset: state.selection.focus.offset,
+          offset: context.selection.focus.offset,
         },
       })
 
@@ -122,7 +122,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   })
   const automaticHr = defineBehavior({
     on: 'insert.text',
-    guard: ({context, state, event}) => {
+    guard: ({context, event}) => {
       const hrCharacter =
         event.text === '-'
           ? '-'
@@ -137,14 +137,14 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       }
 
       const hrObject = config.horizontalRuleObject?.(context)
-      const focusBlock = getFocusTextBlock(state)
-      const selectionCollapsed = selectionIsCollapsed(state)
+      const focusBlock = getFocusTextBlock(context)
+      const selectionCollapsed = selectionIsCollapsed(context)
 
       if (!hrObject || !focusBlock || !selectionCollapsed) {
         return false
       }
 
-      const textBefore = getBlockTextBefore(state)
+      const textBefore = getBlockTextBefore({context})
       const hrBlockOffsets = {
         anchor: {
           path: focusBlock.path,
@@ -184,12 +184,12 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   })
   const automaticHrOnPaste = defineBehavior({
     on: 'paste',
-    guard: ({context, state, event}) => {
+    guard: ({context, event}) => {
       const text = event.data.getData('text/plain')
       const hrRegExp = /^(---)$|(___)$|(\*\*\*)$/gm
       const hrCharacters = text.match(hrRegExp)?.[0]
       const hrObject = config.horizontalRuleObject?.(context)
-      const focusBlock = getFocusBlock(state)
+      const focusBlock = getFocusBlock(context)
 
       if (!hrCharacters || !hrObject || !focusBlock) {
         return false
@@ -230,30 +230,30 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   })
   const automaticHeadingOnSpace = defineBehavior({
     on: 'insert.text',
-    guard: ({context, state, event}) => {
+    guard: ({context, event}) => {
       const isSpace = event.text === ' '
 
       if (!isSpace) {
         return false
       }
 
-      const selectionCollapsed = selectionIsCollapsed(state)
-      const focusTextBlock = getFocusTextBlock(state)
-      const focusSpan = getFocusSpan(state)
+      const selectionCollapsed = selectionIsCollapsed(context)
+      const focusTextBlock = getFocusTextBlock(context)
+      const focusSpan = getFocusSpan(context)
 
       if (!selectionCollapsed || !focusTextBlock || !focusSpan) {
         return false
       }
 
       const blockOffset = spanSelectionPointToBlockOffset({
-        value: state.value,
+        value: context.value,
         selectionPoint: {
           path: [
             {_key: focusTextBlock.node._key},
             'children',
             {_key: focusSpan.node._key},
           ],
-          offset: state.selection.focus.offset,
+          offset: context.selection.focus.offset,
         },
       })
 
@@ -321,10 +321,10 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   })
   const clearStyleOnBackspace = defineBehavior({
     on: 'delete.backward',
-    guard: ({context, state}) => {
-      const selectionCollapsed = selectionIsCollapsed(state)
-      const focusTextBlock = getFocusTextBlock(state)
-      const focusSpan = getFocusSpan(state)
+    guard: ({context}) => {
+      const selectionCollapsed = selectionIsCollapsed(context)
+      const focusTextBlock = getFocusTextBlock(context)
+      const focusSpan = getFocusSpan(context)
 
       if (!selectionCollapsed || !focusTextBlock || !focusSpan) {
         return false
@@ -332,7 +332,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
 
       const atTheBeginningOfBLock =
         focusTextBlock.node.children[0]._key === focusSpan.node._key &&
-        state.selection.focus.offset === 0
+        context.selection.focus.offset === 0
 
       const defaultStyle = config.defaultStyle?.(context)
 
@@ -358,30 +358,30 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   })
   const automaticListOnSpace = defineBehavior({
     on: 'insert.text',
-    guard: ({context, state, event}) => {
+    guard: ({context, event}) => {
       const isSpace = event.text === ' '
 
       if (!isSpace) {
         return false
       }
 
-      const selectionCollapsed = selectionIsCollapsed(state)
-      const focusTextBlock = getFocusTextBlock(state)
-      const focusSpan = getFocusSpan(state)
+      const selectionCollapsed = selectionIsCollapsed(context)
+      const focusTextBlock = getFocusTextBlock(context)
+      const focusSpan = getFocusSpan(context)
 
       if (!selectionCollapsed || !focusTextBlock || !focusSpan) {
         return false
       }
 
       const blockOffset = spanSelectionPointToBlockOffset({
-        value: state.value,
+        value: context.value,
         selectionPoint: {
           path: [
             {_key: focusTextBlock.node._key},
             'children',
             {_key: focusSpan.node._key},
           ],
-          offset: state.selection.focus.offset,
+          offset: context.selection.focus.offset,
         },
       })
 

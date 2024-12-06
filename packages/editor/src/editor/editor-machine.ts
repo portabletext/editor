@@ -27,11 +27,10 @@ import type {
   BehaviorAction,
   BehaviorActionIntend,
   BehaviorEvent,
-  EditorContext,
-  EditorState,
   OmitFromUnion,
   PickFromUnion,
 } from './behavior/behavior.types'
+import type {EditorContext} from './editor-snapshot'
 
 export * from 'xstate/guards'
 
@@ -278,14 +277,12 @@ export const editorMachine = setup({
         return
       }
 
-      const behaviorContext = {
+      const editorContext = {
         keyGenerator: context.keyGenerator,
         schema: context.schema,
-      } satisfies EditorContext
-      const editorState = {
-        value,
         selection,
-      } satisfies EditorState
+        value,
+      } satisfies EditorContext
 
       let behaviorOverwritten = false
 
@@ -293,8 +290,7 @@ export const editorMachine = setup({
         const shouldRun =
           eventBehavior.guard === undefined ||
           eventBehavior.guard({
-            context: behaviorContext,
-            state: editorState,
+            context: editorContext,
             event: event.behaviorEvent,
           })
 

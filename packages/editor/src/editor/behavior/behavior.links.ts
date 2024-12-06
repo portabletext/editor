@@ -18,8 +18,8 @@ export type LinkBehaviorsConfig = {
 export function createLinkBehaviors(config: LinkBehaviorsConfig) {
   const pasteLinkOnSelection = defineBehavior({
     on: 'paste',
-    guard: ({context, state, event}) => {
-      const selectionCollapsed = selectionIsCollapsed(state)
+    guard: ({context, event}) => {
+      const selectionCollapsed = selectionIsCollapsed(context)
       const text = event.data.getData('text/plain')
       const url = looksLikeUrl(text) ? text : undefined
       const annotation =
@@ -44,9 +44,9 @@ export function createLinkBehaviors(config: LinkBehaviorsConfig) {
   })
   const pasteLinkAtCaret = defineBehavior({
     on: 'paste',
-    guard: ({context, state, event}) => {
-      const focusSpan = getFocusSpan(state)
-      const selectionCollapsed = selectionIsCollapsed(state)
+    guard: ({context, event}) => {
+      const focusSpan = getFocusSpan(context)
+      const selectionCollapsed = selectionIsCollapsed(context)
 
       if (!focusSpan || !selectionCollapsed) {
         return false
