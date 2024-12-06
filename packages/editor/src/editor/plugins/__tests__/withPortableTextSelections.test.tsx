@@ -40,7 +40,7 @@ const initialValue = [
 
 describe('plugin:withPortableTextSelections', () => {
   it('will report that a selection is made backward', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
     render(
       <PortableTextEditorTester

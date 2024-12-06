@@ -17,7 +17,7 @@ const renderPlaceholder = () => 'Jot something down here'
 
 describe('initialization', () => {
   it('receives initial onChange events and has custom placeholder', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
     const {container} = render(
       <PortableTextEditorTester
@@ -113,7 +113,7 @@ describe('initialization', () => {
   })
 
   it('takes initial selection from props', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const initialValue = [helloBlock]
     const initialSelection: EditorSelection = {
       anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
@@ -152,7 +152,7 @@ describe('initialization', () => {
   })
 
   it('updates editor selection from new prop and keeps object equality in editor.getSelection()', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const initialValue = [helloBlock]
     const initialSelection: EditorSelection = {
       anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 0},
@@ -217,7 +217,7 @@ describe('initialization', () => {
   })
 
   it('handles empty array value', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const initialValue: PortableTextBlock[] = []
     const initialSelection: EditorSelection = {
       anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
@@ -260,7 +260,7 @@ describe('initialization', () => {
     })
   })
   it('validates a non-initial value', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     let value: PortableTextBlock[] = [helloBlock]
     const initialSelection: EditorSelection = {
       anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
@@ -338,7 +338,7 @@ describe('initialization', () => {
     })
   })
   it("doesn't crash when containing a invalid block somewhere inside the content", async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const initialValue: PortableTextBlock[] = [
       helloBlock,
       {

@@ -51,7 +51,7 @@ const initialValue = [
 
 describe('plugin:withEditableAPI: .getFragment()', () => {
   it('can get a Portable Text fragment of the current selection in a single block', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
 
     render(
@@ -92,7 +92,7 @@ describe('plugin:withEditableAPI: .getFragment()', () => {
   })
 
   it('can get a Portable Text fragment of the current selection in multiple blocks', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
 
     render(

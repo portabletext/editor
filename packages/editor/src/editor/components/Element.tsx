@@ -4,7 +4,13 @@ import type {
   PortableTextObject,
   PortableTextTextBlock,
 } from '@sanity/types'
-import {useMemo, useRef, type FunctionComponent, type ReactElement} from 'react'
+import {
+  useMemo,
+  useRef,
+  type FunctionComponent,
+  type JSX,
+  type ReactElement,
+} from 'react'
 import {Editor, Range, Element as SlateElement} from 'slate'
 import {
   ReactEditor,
@@ -40,7 +46,7 @@ const EMPTY_ANNOTATIONS: PortableTextObject[] = []
  */
 export interface ElementProps {
   attributes: RenderElementProps['attributes']
-  children: ReactElement
+  children: ReactElement<any>
   element: SlateElement
   schemaTypes: PortableTextMemberSchemaTypes
   readOnly: boolean

@@ -17,6 +17,7 @@ import type {
 import type {
   ClipboardEvent,
   FocusEvent,
+  JSX,
   KeyboardEvent,
   PropsWithChildren,
   ReactElement,
@@ -374,8 +375,8 @@ export type PatchObservable = Observable<{
 
 /** @beta */
 export interface BlockRenderProps {
-  children: ReactElement
-  editorElementRef: RefObject<HTMLElement>
+  children: ReactElement<any>
+  editorElementRef: RefObject<HTMLElement | null>
   focused: boolean
   level?: number
   listItem?: string
@@ -391,8 +392,8 @@ export interface BlockRenderProps {
 /** @beta */
 export interface BlockChildRenderProps {
   annotations: PortableTextObject[]
-  children: ReactElement
-  editorElementRef: RefObject<HTMLElement>
+  children: ReactElement<any>
+  editorElementRef: RefObject<HTMLElement | null>
   focused: boolean
   path: Path
   selected: boolean
@@ -405,8 +406,8 @@ export interface BlockChildRenderProps {
 /** @beta */
 export interface BlockAnnotationRenderProps {
   block: PortableTextBlock
-  children: ReactElement
-  editorElementRef: RefObject<HTMLElement>
+  children: ReactElement<any>
+  editorElementRef: RefObject<HTMLElement | null>
   focused: boolean
   path: Path
   schemaType: ObjectSchemaType
@@ -417,8 +418,8 @@ export interface BlockAnnotationRenderProps {
 }
 /** @beta */
 export interface BlockDecoratorRenderProps {
-  children: ReactElement
-  editorElementRef: RefObject<HTMLElement>
+  children: ReactElement<any>
+  editorElementRef: RefObject<HTMLElement | null>
   focused: boolean
   path: Path
   schemaType: BlockDecoratorDefinition
@@ -430,8 +431,8 @@ export interface BlockDecoratorRenderProps {
 /** @beta */
 export interface BlockListItemRenderProps {
   block: PortableTextTextBlock
-  children: ReactElement
-  editorElementRef: RefObject<HTMLElement>
+  children: ReactElement<any>
+  editorElementRef: RefObject<HTMLElement | null>
   focused: boolean
   level: number
   path: Path
@@ -465,8 +466,8 @@ export type RenderStyleFunction = (props: BlockStyleRenderProps) => JSX.Element
 /** @beta */
 export interface BlockStyleRenderProps {
   block: PortableTextTextBlock
-  children: ReactElement
-  editorElementRef: RefObject<HTMLElement>
+  children: ReactElement<any>
+  editorElementRef: RefObject<HTMLElement | null>
   focused: boolean
   path: Path
   selected: boolean
@@ -517,7 +518,7 @@ export interface RangeDecoration {
    *  )
    * ```
    */
-  component: (props: PropsWithChildren) => ReactElement
+  component: (props: PropsWithChildren) => ReactElement<any>
   /**
    * The editor content selection range
    */

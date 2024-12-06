@@ -9,7 +9,7 @@ import {PortableTextEditor} from '../../PortableTextEditor'
 
 describe('plugin:withPortableTextLists', () => {
   it('should return active list styles that cover the whole selection', async () => {
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const initialValue = [
       {
         _key: 'a',

@@ -53,7 +53,7 @@ describe('adds empty text block if its needed', () => {
       anchor: {path: [{_key: 'b'}], offset: 0},
     }
 
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
     const component = render(
       <PortableTextEditorTester
@@ -115,7 +115,7 @@ describe('adds empty text block if its needed', () => {
       anchor: {path: [{_key: 'b'}], offset: 0},
     }
 
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
     const component = render(
       <PortableTextEditorTester
@@ -170,7 +170,7 @@ describe('adds empty text block if its needed', () => {
       anchor: {path: [{_key: 'b'}, 'children', {_key: 'b1'}], offset: 0},
     }
 
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
     const component = render(
       <PortableTextEditorTester
@@ -236,7 +236,7 @@ describe('adds empty text block if its needed', () => {
       anchor: {path: [{_key: 'c'}], offset: 0},
     }
 
-    const editorRef: RefObject<PortableTextEditor> = createRef()
+    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
     const component = render(
       <PortableTextEditorTester
