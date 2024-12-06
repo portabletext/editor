@@ -1,6 +1,10 @@
 import {isHotkey} from '../../utils/is-hotkey'
+import {
+  getFirstBlock,
+  getLastBlock,
+  getSelectedBlocks,
+} from '../selectors/selectors'
 import {defineBehavior} from './behavior.types'
-import {getFirstBlock, getLastBlock, getSelectedBlocks} from './behavior.utils'
 
 /**
  * @alpha
@@ -22,8 +26,8 @@ export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
           config.moveBlockUpShortcut,
           event.keyboardEvent,
         )
-        const firstBlock = getFirstBlock(context)
-        const selectedBlocks = getSelectedBlocks(context)
+        const firstBlock = getFirstBlock({context})
+        const selectedBlocks = getSelectedBlocks({context})
         const blocksAbove =
           firstBlock?.node._key !== selectedBlocks[0]?.node._key
 
@@ -48,8 +52,8 @@ export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
           config.moveBlockDownShortcut,
           event.keyboardEvent,
         )
-        const lastBlock = getLastBlock(context)
-        const selectedBlocks = getSelectedBlocks(context)
+        const lastBlock = getLastBlock({context})
+        const selectedBlocks = getSelectedBlocks({context})
         const blocksBelow =
           lastBlock?.node._key !==
           selectedBlocks[selectedBlocks.length - 1]?.node._key

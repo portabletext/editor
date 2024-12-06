@@ -1,6 +1,6 @@
 import type {PortableTextBlock} from '@sanity/types'
 import {expect, test} from 'vitest'
-import {blockOffsetToSpanSelectionPoint} from './behavior.utils.block-offset'
+import {blockOffsetToSpanSelectionPoint} from './utils.block-offset'
 
 test(blockOffsetToSpanSelectionPoint.name, () => {
   const value: Array<PortableTextBlock> = [

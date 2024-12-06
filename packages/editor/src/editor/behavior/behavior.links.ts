@@ -1,6 +1,6 @@
 import type {PortableTextMemberSchemaTypes} from '../../types/editor'
+import {getFocusSpan, selectionIsCollapsed} from '../selectors/selectors'
 import {defineBehavior} from './behavior.types'
-import {getFocusSpan, selectionIsCollapsed} from './behavior.utils'
 
 /**
  * @alpha
@@ -19,7 +19,7 @@ export function createLinkBehaviors(config: LinkBehaviorsConfig) {
   const pasteLinkOnSelection = defineBehavior({
     on: 'paste',
     guard: ({context, event}) => {
-      const selectionCollapsed = selectionIsCollapsed(context)
+      const selectionCollapsed = selectionIsCollapsed({context})
       const text = event.data.getData('text/plain')
       const url = looksLikeUrl(text) ? text : undefined
       const annotation =
@@ -45,8 +45,8 @@ export function createLinkBehaviors(config: LinkBehaviorsConfig) {
   const pasteLinkAtCaret = defineBehavior({
     on: 'paste',
     guard: ({context, event}) => {
-      const focusSpan = getFocusSpan(context)
-      const selectionCollapsed = selectionIsCollapsed(context)
+      const focusSpan = getFocusSpan({context})
+      const selectionCollapsed = selectionIsCollapsed({context})
 
       if (!focusSpan || !selectionCollapsed) {
         return false

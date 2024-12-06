@@ -1,10 +1,14 @@
-import type {EditorSnapshot} from '../editor-snapshot'
-import {getSelectionText} from './behavior.utils.get-selection-text'
-import {getStartPoint} from './behavior.utils.get-start-point'
-import {isKeyedSegment} from './behavior.utils.is-keyed-segment'
-import {reverseSelection} from './behavior.utils.reverse-selection'
+import type {EditorSelector} from '../editor-selector'
+import {getStartPoint} from '../utils/utils.get-start-point'
+import {isKeyedSegment} from '../utils/utils.is-keyed-segment'
+import {reverseSelection} from '../utils/utils.reverse-selection'
+import {getSelectionText} from './selector.get-selection-text'
 
-export function getBlockTextBefore({context}: EditorSnapshot) {
+export const getBlockTextBefore: EditorSelector<string> = ({context}) => {
+  if (!context.selection) {
+    return ''
+  }
+
   const selection = context.selection.backward
     ? reverseSelection(context.selection)
     : context.selection

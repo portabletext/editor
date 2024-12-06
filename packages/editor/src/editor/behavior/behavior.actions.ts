@@ -22,6 +22,7 @@ import {
   removeDecoratorActionImplementation,
   toggleDecoratorActionImplementation,
 } from '../plugins/createWithPortableTextMarkModel'
+import {blockOffsetToSpanSelectionPoint} from '../utils/utils.block-offset'
 import {insertBlock} from './behavior.action-utils.insert-block'
 import {insertBlockObjectActionImplementation} from './behavior.action.insert-block-object'
 import {
@@ -47,7 +48,6 @@ import type {
   BehaviorEvent,
   PickFromUnion,
 } from './behavior.types'
-import {blockOffsetToSpanSelectionPoint} from './behavior.utils.block-offset'
 
 export type BehaviorActionImplementationContext = Pick<
   EditorContext,

@@ -9,14 +9,10 @@ import {
   type PortableTextSpan,
   type PortableTextTextBlock,
 } from '@sanity/types'
-import type {EditorContext} from '../editor-snapshot'
-import {createGuards} from './behavior.guards'
+import {createGuards} from '../behavior/behavior.guards'
+import type {EditorSelector} from '../editor-selector'
 
-/**
- * Selection utilities
- */
-
-export function selectionIsCollapsed(context: EditorContext) {
+export const selectionIsCollapsed: EditorSelector<boolean> = ({context}) => {
   return (
     JSON.stringify(context.selection?.anchor.path) ===
       JSON.stringify(context.selection?.focus.path) &&
@@ -24,13 +20,9 @@ export function selectionIsCollapsed(context: EditorContext) {
   )
 }
 
-/**
- * Value utilities
- */
-
-export function getFocusBlock(
-  context: EditorContext,
-): {node: PortableTextBlock; path: [KeyedSegment]} | undefined {
+export const getFocusBlock: EditorSelector<
+  {node: PortableTextBlock; path: [KeyedSegment]} | undefined
+> = ({context}) => {
   const key = context.selection
     ? isKeySegment(context.selection.focus.path[0])
       ? context.selection.focus.path[0]._key
@@ -44,46 +36,45 @@ export function getFocusBlock(
   return node && key ? {node, path: [{_key: key}]} : undefined
 }
 
-export function getFocusTextBlock(
-  context: EditorContext,
-): {node: PortableTextTextBlock; path: [KeyedSegment]} | undefined {
-  const focusBlock = getFocusBlock(context)
-
-  return focusBlock && isPortableTextTextBlock(focusBlock.node)
-    ? {node: focusBlock.node, path: focusBlock.path}
-    : undefined
-}
-
-export function getFocusListBlock({
-  context,
-}: {
-  context: EditorContext
-}): {node: PortableTextListBlock; path: [KeyedSegment]} | undefined {
+export const getFocusListBlock: EditorSelector<
+  {node: PortableTextListBlock; path: [KeyedSegment]} | undefined
+> = ({context}) => {
   const guards = createGuards(context)
-  const focusBlock = getFocusBlock(context)
+  const focusBlock = getFocusBlock({context})
 
   return focusBlock && guards.isListBlock(focusBlock.node)
     ? {node: focusBlock.node, path: focusBlock.path}
     : undefined
 }
 
-export function getFocusBlockObject(
-  context: EditorContext,
-): {node: PortableTextObject; path: [KeyedSegment]} | undefined {
-  const focusBlock = getFocusBlock(context)
+export const getFocusTextBlock: EditorSelector<
+  {node: PortableTextTextBlock; path: [KeyedSegment]} | undefined
+> = ({context}) => {
+  const focusBlock = getFocusBlock({context})
+
+  return focusBlock && isPortableTextTextBlock(focusBlock.node)
+    ? {node: focusBlock.node, path: focusBlock.path}
+    : undefined
+}
+
+export const getFocusBlockObject: EditorSelector<
+  {node: PortableTextObject; path: [KeyedSegment]} | undefined
+> = ({context}) => {
+  const focusBlock = getFocusBlock({context})
 
   return focusBlock && !isPortableTextTextBlock(focusBlock.node)
     ? {node: focusBlock.node, path: focusBlock.path}
     : undefined
 }
 
-export function getFocusChild(context: EditorContext):
+export const getFocusChild: EditorSelector<
   | {
       node: PortableTextObject | PortableTextSpan
       path: [KeyedSegment, 'children', KeyedSegment]
     }
-  | undefined {
-  const focusBlock = getFocusTextBlock(context)
+  | undefined
+> = ({context}) => {
+  const focusBlock = getFocusTextBlock({context})
 
   if (!focusBlock) {
     return undefined
@@ -104,29 +95,28 @@ export function getFocusChild(context: EditorContext):
     : undefined
 }
 
-export function getFocusSpan(
-  context: EditorContext,
-):
+export const getFocusSpan: EditorSelector<
   | {node: PortableTextSpan; path: [KeyedSegment, 'children', KeyedSegment]}
-  | undefined {
-  const focusChild = getFocusChild(context)
+  | undefined
+> = ({context}) => {
+  const focusChild = getFocusChild({context})
 
   return focusChild && isPortableTextSpan(focusChild.node)
     ? {node: focusChild.node, path: focusChild.path}
     : undefined
 }
 
-export function getFirstBlock(
-  context: EditorContext,
-): {node: PortableTextBlock; path: [KeyedSegment]} | undefined {
+export const getFirstBlock: EditorSelector<
+  {node: PortableTextBlock; path: [KeyedSegment]} | undefined
+> = ({context}) => {
   const node = context.value[0]
 
   return node ? {node, path: [{_key: node._key}]} : undefined
 }
 
-export function getLastBlock(
-  context: EditorContext,
-): {node: PortableTextBlock; path: [KeyedSegment]} | undefined {
+export const getLastBlock: EditorSelector<
+  {node: PortableTextBlock; path: [KeyedSegment]} | undefined
+> = ({context}) => {
   const node = context.value[context.value.length - 1]
     ? context.value[context.value.length - 1]
     : undefined
@@ -134,9 +124,13 @@ export function getLastBlock(
   return node ? {node, path: [{_key: node._key}]} : undefined
 }
 
-export function getSelectedBlocks(
-  context: EditorContext,
-): Array<{node: PortableTextBlock; path: [KeyedSegment]}> {
+export const getSelectedBlocks: EditorSelector<
+  Array<{node: PortableTextBlock; path: [KeyedSegment]}>
+> = ({context}) => {
+  if (!context.selection) {
+    return []
+  }
+
   const selectedBlocks: Array<{node: PortableTextBlock; path: [KeyedSegment]}> =
     []
   const startKey = context.selection.backward
@@ -181,12 +175,17 @@ export function getSelectedBlocks(
   return selectedBlocks
 }
 
-export function getSelectionStartBlock(context: EditorContext):
+export const getSelectionStartBlock: EditorSelector<
   | {
       node: PortableTextBlock
       path: [KeyedSegment]
     }
-  | undefined {
+  | undefined
+> = ({context}) => {
+  if (!context.selection) {
+    return undefined
+  }
+
   const key = context.selection.backward
     ? isKeySegment(context.selection.focus.path[0])
       ? context.selection.focus.path[0]._key
@@ -202,12 +201,17 @@ export function getSelectionStartBlock(context: EditorContext):
   return node && key ? {node, path: [{_key: key}]} : undefined
 }
 
-export function getSelectionEndBlock(context: EditorContext):
+export const getSelectionEndBlock: EditorSelector<
   | {
       node: PortableTextBlock
       path: [KeyedSegment]
     }
-  | undefined {
+  | undefined
+> = ({context}) => {
+  if (!context.selection) {
+    return undefined
+  }
+
   const key = context.selection.backward
     ? isKeySegment(context.selection.anchor.path[0])
       ? context.selection.anchor.path[0]._key
@@ -223,11 +227,11 @@ export function getSelectionEndBlock(context: EditorContext):
   return node && key ? {node, path: [{_key: key}]} : undefined
 }
 
-export function getPreviousBlock(
-  context: EditorContext,
-): {node: PortableTextBlock; path: [KeyedSegment]} | undefined {
+export const getPreviousBlock: EditorSelector<
+  {node: PortableTextBlock; path: [KeyedSegment]} | undefined
+> = ({context}) => {
   let previousBlock: {node: PortableTextBlock; path: [KeyedSegment]} | undefined
-  const selectionStartBlock = getSelectionStartBlock(context)
+  const selectionStartBlock = getSelectionStartBlock({context})
 
   if (!selectionStartBlock) {
     return undefined
@@ -251,11 +255,11 @@ export function getPreviousBlock(
   return undefined
 }
 
-export function getNextBlock(
-  context: EditorContext,
-): {node: PortableTextBlock; path: [KeyedSegment]} | undefined {
+export const getNextBlock: EditorSelector<
+  {node: PortableTextBlock; path: [KeyedSegment]} | undefined
+> = ({context}) => {
   let nextBlock: {node: PortableTextBlock; path: [KeyedSegment]} | undefined
-  const selectionEndBlock = getSelectionEndBlock(context)
+  const selectionEndBlock = getSelectionEndBlock({context})
 
   if (!selectionEndBlock) {
     return undefined
@@ -280,19 +284,4 @@ export function getNextBlock(
   }
 
   return undefined
-}
-
-export function isEmptyTextBlock(block: PortableTextBlock) {
-  if (!isPortableTextTextBlock(block)) {
-    return false
-  }
-
-  const onlyText = block.children.every(isPortableTextSpan)
-  const blockText = getTextBlockText(block)
-
-  return onlyText && blockText === ''
-}
-
-export function getTextBlockText(block: PortableTextTextBlock) {
-  return block.children.map((child) => child.text ?? '').join('')
 }
