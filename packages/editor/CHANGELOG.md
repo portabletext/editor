@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.0](https://github.com/portabletext/editor/compare/editor-v1.14.2...editor-v1.15.0) (2024-12-06)
+
+
+### Features
+
+* support React 19 ([#526](https://github.com/portabletext/editor/issues/526)) ([cb87f1b](https://github.com/portabletext/editor/commit/cb87f1bae5f4e172f20f65c01cbbb7bdf41d7a8d))
+
 ## [1.14.2](https://github.com/portabletext/editor/compare/editor-v1.14.1...editor-v1.14.2) (2024-12-06)
 
 
