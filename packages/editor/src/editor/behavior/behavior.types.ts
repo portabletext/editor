@@ -109,9 +109,6 @@ export type BehaviorEvent =
       options?: TextInsertTextOptions
     }
   | {
-      type: 'noop'
-    }
-  | {
       type: 'paste'
       data: DataTransfer
     }
@@ -195,6 +192,9 @@ export type BehaviorActionIntend =
   | {
       type: 'move block up'
       at: [KeyedSegment]
+    }
+  | {
+      type: 'noop'
     }
   | {
       type: 'set block'
