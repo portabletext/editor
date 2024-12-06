@@ -23,7 +23,6 @@ export default defineConfig({
       'ae-incompatible-release-tags': 'off',
     },
   },
-  legacyExports: true,
   rollup: {
     optimizeLodash: true,
   },
