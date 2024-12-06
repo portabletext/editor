@@ -5,7 +5,7 @@ export type ErrorBoundaryFallbackUI<FallbackProps> = (
     dismiss: () => void
     error: Error
   } & FallbackProps,
-) => JSX.Element
+) => React.JSX.Element
 
 export class ErrorBoundary<FallbackProps> extends React.Component<
   {
