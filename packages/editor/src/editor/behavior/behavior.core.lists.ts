@@ -1,11 +1,11 @@
-import {isHotkey} from '../../utils/is-hotkey'
 import {
   getFocusListBlock,
   getFocusSpan,
   getFocusTextBlock,
   getSelectedBlocks,
   selectionIsCollapsed,
-} from '../selectors/selectors'
+} from '../../selectors/selectors'
+import {isHotkey} from '../../utils/is-hotkey'
 import {isEmptyTextBlock} from '../utils/utils'
 import {createGuards} from './behavior.guards'
 import {defineBehavior} from './behavior.types'

@@ -1,9 +1,9 @@
-import {isHotkey} from '../../utils/is-hotkey'
 import {
   getFirstBlock,
   getLastBlock,
   getSelectedBlocks,
-} from '../selectors/selectors'
+} from '../../selectors/selectors'
+import {isHotkey} from '../../utils/is-hotkey'
 import {defineBehavior} from './behavior.types'
 
 /**

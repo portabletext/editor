@@ -9,9 +9,12 @@ import {
   type PortableTextSpan,
   type PortableTextTextBlock,
 } from '@sanity/types'
-import {createGuards} from '../behavior/behavior.guards'
-import type {EditorSelector} from '../editor-selector'
+import {createGuards} from '../editor/behavior/behavior.guards'
+import type {EditorSelector} from '../editor/editor-selector'
 
+/**
+ * @alpha
+ */
 export const selectionIsCollapsed: EditorSelector<boolean> = ({context}) => {
   return (
     JSON.stringify(context.selection?.anchor.path) ===
@@ -20,6 +23,9 @@ export const selectionIsCollapsed: EditorSelector<boolean> = ({context}) => {
   )
 }
 
+/**
+ * @alpha
+ */
 export const getFocusBlock: EditorSelector<
   {node: PortableTextBlock; path: [KeyedSegment]} | undefined
 > = ({context}) => {
@@ -36,6 +42,9 @@ export const getFocusBlock: EditorSelector<
   return node && key ? {node, path: [{_key: key}]} : undefined
 }
 
+/**
+ * @alpha
+ */
 export const getFocusListBlock: EditorSelector<
   {node: PortableTextListBlock; path: [KeyedSegment]} | undefined
 > = ({context}) => {
@@ -47,6 +56,9 @@ export const getFocusListBlock: EditorSelector<
     : undefined
 }
 
+/**
+ * @alpha
+ */
 export const getFocusTextBlock: EditorSelector<
   {node: PortableTextTextBlock; path: [KeyedSegment]} | undefined
 > = ({context}) => {
@@ -57,6 +69,9 @@ export const getFocusTextBlock: EditorSelector<
     : undefined
 }
 
+/**
+ * @alpha
+ */
 export const getFocusBlockObject: EditorSelector<
   {node: PortableTextObject; path: [KeyedSegment]} | undefined
 > = ({context}) => {
@@ -67,6 +82,9 @@ export const getFocusBlockObject: EditorSelector<
     : undefined
 }
 
+/**
+ * @alpha
+ */
 export const getFocusChild: EditorSelector<
   | {
       node: PortableTextObject | PortableTextSpan
@@ -95,6 +113,9 @@ export const getFocusChild: EditorSelector<
     : undefined
 }
 
+/**
+ * @alpha
+ */
 export const getFocusSpan: EditorSelector<
   | {node: PortableTextSpan; path: [KeyedSegment, 'children', KeyedSegment]}
   | undefined
@@ -106,6 +127,9 @@ export const getFocusSpan: EditorSelector<
     : undefined
 }
 
+/**
+ * @alpha
+ */
 export const getFirstBlock: EditorSelector<
   {node: PortableTextBlock; path: [KeyedSegment]} | undefined
 > = ({context}) => {
@@ -114,6 +138,9 @@ export const getFirstBlock: EditorSelector<
   return node ? {node, path: [{_key: node._key}]} : undefined
 }
 
+/**
+ * @alpha
+ */
 export const getLastBlock: EditorSelector<
   {node: PortableTextBlock; path: [KeyedSegment]} | undefined
 > = ({context}) => {
@@ -124,6 +151,9 @@ export const getLastBlock: EditorSelector<
   return node ? {node, path: [{_key: node._key}]} : undefined
 }
 
+/**
+ * @alpha
+ */
 export const getSelectedBlocks: EditorSelector<
   Array<{node: PortableTextBlock; path: [KeyedSegment]}>
 > = ({context}) => {
@@ -175,6 +205,9 @@ export const getSelectedBlocks: EditorSelector<
   return selectedBlocks
 }
 
+/**
+ * @alpha
+ */
 export const getSelectionStartBlock: EditorSelector<
   | {
       node: PortableTextBlock
@@ -201,6 +234,9 @@ export const getSelectionStartBlock: EditorSelector<
   return node && key ? {node, path: [{_key: key}]} : undefined
 }
 
+/**
+ * @alpha
+ */
 export const getSelectionEndBlock: EditorSelector<
   | {
       node: PortableTextBlock
@@ -227,6 +263,9 @@ export const getSelectionEndBlock: EditorSelector<
   return node && key ? {node, path: [{_key: key}]} : undefined
 }
 
+/**
+ * @alpha
+ */
 export const getPreviousBlock: EditorSelector<
   {node: PortableTextBlock; path: [KeyedSegment]} | undefined
 > = ({context}) => {
@@ -255,6 +294,9 @@ export const getPreviousBlock: EditorSelector<
   return undefined
 }
 
+/**
+ * @alpha
+ */
 export const getNextBlock: EditorSelector<
   {node: PortableTextBlock; path: [KeyedSegment]} | undefined
 > = ({context}) => {
