@@ -1,12 +1,12 @@
 import {isPortableTextTextBlock} from '@sanity/types'
-import {isHotkey} from '../../utils/is-hotkey'
 import {
   getFocusBlockObject,
   getFocusTextBlock,
   getNextBlock,
   getPreviousBlock,
   selectionIsCollapsed,
-} from '../selectors/selectors'
+} from '../../selectors/selectors'
+import {isHotkey} from '../../utils/is-hotkey'
 import {isEmptyTextBlock} from '../utils/utils'
 import {defineBehavior} from './behavior.types'
 

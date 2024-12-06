@@ -33,6 +33,12 @@
       "require": "./lib/index.cjs",
       "default": "./lib/index.js"
     },
+    "./selectors": {
+      "source": "./src/selectors/index.ts",
+      "import": "./lib/selectors/index.js",
+      "require": "./lib/selectors/index.cjs",
+      "default": "./lib/selectors/index.js"
+    },
     "./package.json": "./package.json"
   },
   "main": "./lib/index.cjs",

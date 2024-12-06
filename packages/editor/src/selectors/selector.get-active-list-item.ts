@@ -1,6 +1,6 @@
 import type {PortableTextListBlock} from '@sanity/types'
-import {createGuards} from '../behavior/behavior.guards'
-import type {EditorSelector} from '../editor-selector'
+import {createGuards} from '../editor/behavior/behavior.guards'
+import type {EditorSelector} from '../editor/editor-selector'
 import {getSelectedBlocks} from './selectors'
 
 /**

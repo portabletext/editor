@@ -1,8 +1,11 @@
 import {isPortableTextSpan, isPortableTextTextBlock} from '@sanity/types'
-import type {EditorSelector} from '../editor-selector'
-import {isKeyedSegment} from '../utils/utils.is-keyed-segment'
-import {reverseSelection} from '../utils/utils.reverse-selection'
+import type {EditorSelector} from '../editor/editor-selector'
+import {isKeyedSegment} from '../editor/utils/utils.is-keyed-segment'
+import {reverseSelection} from '../editor/utils/utils.reverse-selection'
 
+/**
+ * @alpha
+ */
 export const getSelectionText: EditorSelector<string> = ({context}) => {
   let text = ''
 

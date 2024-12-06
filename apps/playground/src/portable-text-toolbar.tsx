@@ -1,5 +1,4 @@
 import {
-  getActiveListItem,
   PortableTextEditor,
   useEditor,
   useEditorSelector,
@@ -8,6 +7,7 @@ import {
   type Editor,
   type EditorSelection,
 } from '@portabletext/editor'
+import * as selectors from '@portabletext/editor/selectors'
 import {SquareDashedMousePointerIcon} from 'lucide-react'
 import {isValidElement, useMemo} from 'react'
 import {Group, TooltipTrigger} from 'react-aria-components'
@@ -222,7 +222,7 @@ function DecoratorToolbarButton(props: {
 
 function ListToolbarButton(props: {list: SchemaDefinition['lists'][number]}) {
   const editor = useEditor()
-  const activeListItem = useEditorSelector(editor, getActiveListItem)
+  const activeListItem = useEditorSelector(editor, selectors.getActiveListItem)
   const active = activeListItem === props.list.name
 
   return (
