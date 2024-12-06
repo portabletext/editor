@@ -17,6 +17,7 @@
     "@sanity/schema": "^3.63.0",
     "@xstate/react": "^4.1.3",
     "react": "^19.0.0",
+    "react-compiler-runtime": "19.0.0-beta-df7b47d-20241124",
     "react-dom": "^19.0.0",
     "rxjs": "^7.8.1",
     "xstate": "^5.18.2"

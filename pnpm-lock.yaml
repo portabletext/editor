@@ -236,6 +236,9 @@ importers:
       react:
         specifier: ^19.0.0
         version: 19.0.0
+      react-compiler-runtime:
+        specifier: 19.0.0-beta-df7b47d-20241124
+        version: 19.0.0-beta-df7b47d-20241124(react@19.0.0)
       react-dom:
         specifier: ^19.0.0
         version: 19.0.0(react@19.0.0)
