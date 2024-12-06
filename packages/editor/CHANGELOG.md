@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.1](https://github.com/portabletext/editor/compare/editor-v1.14.0...editor-v1.14.1) (2024-12-06)
+
+
+### Bug Fixes
+
+* **editor-events:** emit `blurred/focused` instead of `blur/focus` ([30a93d4](https://github.com/portabletext/editor/commit/30a93d4af81f58559aee55d99b07db0284629221))
+
 ## [1.14.0](https://github.com/portabletext/editor/compare/editor-v1.13.0...editor-v1.14.0) (2024-12-06)
 
 
