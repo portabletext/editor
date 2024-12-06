@@ -186,7 +186,7 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'list item.add': addListItemActionImplementation,
   'list item.remove': removeListItemActionImplementation,
   'list item.toggle': toggleListItemActionImplementation,
-  'move block': ({action}) => {
+  'move.block': ({action}) => {
     const at = [toSlatePath(action.at, action.editor)[0]]
     const to = [toSlatePath(action.to, action.editor)[0]]
 
@@ -196,7 +196,7 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
       mode: 'highest',
     })
   },
-  'move block down': ({action}) => {
+  'move.block down': ({action}) => {
     const at = [toSlatePath(action.at, action.editor)[0]]
     const to = [Path.next(at)[0]]
 
@@ -206,7 +206,7 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
       mode: 'highest',
     })
   },
-  'move block up': ({action}) => {
+  'move.block up': ({action}) => {
     const at = [toSlatePath(action.at, action.editor)[0]]
 
     if (!Path.hasPrevious(at)) {
@@ -327,22 +327,22 @@ export function performAction({
       })
       break
     }
-    case 'move block': {
-      behaviorActionImplementations['move block']({
+    case 'move.block': {
+      behaviorActionImplementations['move.block']({
         context,
         action,
       })
       break
     }
-    case 'move block down': {
-      behaviorActionImplementations['move block down']({
+    case 'move.block down': {
+      behaviorActionImplementations['move.block down']({
         context,
         action,
       })
       break
     }
-    case 'move block up': {
-      behaviorActionImplementations['move block up']({
+    case 'move.block up': {
+      behaviorActionImplementations['move.block up']({
         context,
         action,
       })

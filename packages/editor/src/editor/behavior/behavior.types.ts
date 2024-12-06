@@ -181,16 +181,16 @@ export type BehaviorActionIntend =
       listItem: string
     }
   | {
-      type: 'move block'
+      type: 'move.block'
       at: [KeyedSegment]
       to: [KeyedSegment]
     }
   | {
-      type: 'move block down'
+      type: 'move.block down'
       at: [KeyedSegment]
     }
   | {
-      type: 'move block up'
+      type: 'move.block up'
       at: [KeyedSegment]
     }
   | {
