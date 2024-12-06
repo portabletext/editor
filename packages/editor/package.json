@@ -25,17 +25,18 @@
   "license": "MIT",
   "author": "Sanity.io <hello@sanity.io>",
   "sideEffects": false,
+  "type": "module",
   "exports": {
     ".": {
       "source": "./src/index.ts",
-      "import": "./lib/index.mjs",
-      "require": "./lib/index.js",
+      "import": "./lib/index.js",
+      "require": "./lib/index.cjs",
       "default": "./lib/index.js"
     },
     "./package.json": "./package.json"
   },
-  "main": "./lib/index.js",
-  "module": "./lib/index.esm.js",
+  "main": "./lib/index.cjs",
+  "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
     "lib",
