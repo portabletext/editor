@@ -4,7 +4,7 @@ import type {
   PortableTextBlock,
 } from '@sanity/types'
 import {useActorRef} from '@xstate/react'
-import {useCallback, useMemo} from 'react'
+import {useMemo} from 'react'
 import {
   createActor,
   type ActorRef,
