@@ -13,7 +13,7 @@ export {
   createMarkdownBehaviors,
   type MarkdownBehaviorsConfig,
 } from './editor/behavior/behavior.markdown'
-export {getActiveListItem} from './editor/behavior/behavior.selector.get-active-list-item'
+export {getActiveListItem} from './editor/selectors/selector.get-active-list-item'
 export {
   defineBehavior,
   type Behavior,
@@ -23,8 +23,8 @@ export {
   type BehaviorGuard,
   type OmitFromUnion,
   type PickFromUnion,
+  type BlockOffset,
 } from './editor/behavior/behavior.types'
-export type {BlockOffset} from './editor/behavior/behavior.utils.block-offset'
 export type {Editor, EditorConfig, EditorEvent} from './editor/create-editor'
 export type {SlateEditor} from './editor/create-slate-editor'
 export {

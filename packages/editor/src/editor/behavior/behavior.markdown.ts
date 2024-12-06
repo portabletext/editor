@@ -1,15 +1,15 @@
 import {isPortableTextTextBlock} from '@sanity/types'
 import type {PortableTextMemberSchemaTypes} from '../../types/editor'
-import {defineBehavior} from './behavior.types'
+import {getBlockTextBefore} from '../selectors/selector.get-text-before'
 import {
   getFocusBlock,
   getFocusSpan,
   getFocusTextBlock,
-  getTextBlockText,
   selectionIsCollapsed,
-} from './behavior.utils'
-import {spanSelectionPointToBlockOffset} from './behavior.utils.block-offset'
-import {getBlockTextBefore} from './behavior.utils.get-text-before'
+} from '../selectors/selectors'
+import {getTextBlockText} from '../utils/utils'
+import {spanSelectionPointToBlockOffset} from '../utils/utils.block-offset'
+import {defineBehavior} from './behavior.types'
 
 /**
  * @alpha
@@ -49,9 +49,9 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
-      const selectionCollapsed = selectionIsCollapsed(context)
-      const focusTextBlock = getFocusTextBlock(context)
-      const focusSpan = getFocusSpan(context)
+      const selectionCollapsed = selectionIsCollapsed({context})
+      const focusTextBlock = getFocusTextBlock({context})
+      const focusSpan = getFocusSpan({context})
 
       if (!selectionCollapsed || !focusTextBlock || !focusSpan) {
         return false
@@ -137,8 +137,8 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       }
 
       const hrObject = config.horizontalRuleObject?.(context)
-      const focusBlock = getFocusTextBlock(context)
-      const selectionCollapsed = selectionIsCollapsed(context)
+      const focusBlock = getFocusTextBlock({context})
+      const selectionCollapsed = selectionIsCollapsed({context})
 
       if (!hrObject || !focusBlock || !selectionCollapsed) {
         return false
@@ -189,7 +189,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       const hrRegExp = /^(---)$|(___)$|(\*\*\*)$/gm
       const hrCharacters = text.match(hrRegExp)?.[0]
       const hrObject = config.horizontalRuleObject?.(context)
-      const focusBlock = getFocusBlock(context)
+      const focusBlock = getFocusBlock({context})
 
       if (!hrCharacters || !hrObject || !focusBlock) {
         return false
@@ -237,9 +237,9 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
-      const selectionCollapsed = selectionIsCollapsed(context)
-      const focusTextBlock = getFocusTextBlock(context)
-      const focusSpan = getFocusSpan(context)
+      const selectionCollapsed = selectionIsCollapsed({context})
+      const focusTextBlock = getFocusTextBlock({context})
+      const focusSpan = getFocusSpan({context})
 
       if (!selectionCollapsed || !focusTextBlock || !focusSpan) {
         return false
@@ -322,9 +322,9 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   const clearStyleOnBackspace = defineBehavior({
     on: 'delete.backward',
     guard: ({context}) => {
-      const selectionCollapsed = selectionIsCollapsed(context)
-      const focusTextBlock = getFocusTextBlock(context)
-      const focusSpan = getFocusSpan(context)
+      const selectionCollapsed = selectionIsCollapsed({context})
+      const focusTextBlock = getFocusTextBlock({context})
+      const focusSpan = getFocusSpan({context})
 
       if (!selectionCollapsed || !focusTextBlock || !focusSpan) {
         return false
@@ -365,9 +365,9 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
-      const selectionCollapsed = selectionIsCollapsed(context)
-      const focusTextBlock = getFocusTextBlock(context)
-      const focusSpan = getFocusSpan(context)
+      const selectionCollapsed = selectionIsCollapsed({context})
+      const focusTextBlock = getFocusTextBlock({context})
+      const focusSpan = getFocusSpan({context})
 
       if (!selectionCollapsed || !focusTextBlock || !focusSpan) {
         return false

@@ -1,7 +1,7 @@
 import type {PortableTextListBlock} from '@sanity/types'
+import {createGuards} from '../behavior/behavior.guards'
 import type {EditorSelector} from '../editor-selector'
-import {createGuards} from './behavior.guards'
-import {getSelectedBlocks} from './behavior.utils'
+import {getSelectedBlocks} from './selectors'
 
 /**
  * @alpha
@@ -14,10 +14,7 @@ export const getActiveListItem: EditorSelector<
   }
 
   const guards = createGuards(context)
-  const selectedBlocks = getSelectedBlocks({
-    ...context,
-    selection: context.selection,
-  }).map((block) => block.node)
+  const selectedBlocks = getSelectedBlocks({context}).map((block) => block.node)
   const selectedTextBlocks = selectedBlocks.filter(guards.isTextBlock)
 
   const firstTextBlock = selectedTextBlocks.at(0)

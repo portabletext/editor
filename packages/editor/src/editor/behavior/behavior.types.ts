@@ -3,7 +3,6 @@ import type {TextUnit} from 'slate'
 import type {TextInsertTextOptions} from 'slate/dist/interfaces/transforms/text'
 import type {EditorSelection, PortableTextSlateEditor} from '../../types/editor'
 import type {EditorContext} from '../editor-snapshot'
-import type {BlockOffset} from './behavior.utils.block-offset'
 
 /**
  * @alpha
@@ -272,6 +271,14 @@ export function defineBehavior<
   TGuardResponse = true,
 >(behavior: Behavior<TBehaviorEventType, TGuardResponse>): Behavior {
   return behavior as unknown as Behavior
+}
+
+/**
+ * @alpha
+ */
+export type BlockOffset = {
+  path: [KeyedSegment]
+  offset: number
 }
 
 /**
