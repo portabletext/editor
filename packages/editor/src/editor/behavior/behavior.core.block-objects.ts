@@ -51,7 +51,7 @@ const breakingBlockObject = defineBehavior({
 })
 
 const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
-  on: 'delete backward',
+  on: 'delete.backward',
   guard: ({state}) => {
     const focusTextBlock = getFocusTextBlock(state)
     const selectionCollapsed = selectionIsCollapsed(state)
@@ -73,7 +73,7 @@ const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
   actions: [
     ({focusTextBlock, previousBlock}) => [
       {
-        type: 'delete block',
+        type: 'delete.block',
         blockPath: focusTextBlock.path,
       },
       {
@@ -88,7 +88,7 @@ const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
 })
 
 const deletingEmptyTextBlockBeforeBlockObject = defineBehavior({
-  on: 'delete forward',
+  on: 'delete.forward',
   guard: ({state}) => {
     const focusTextBlock = getFocusTextBlock(state)
     const selectionCollapsed = selectionIsCollapsed(state)
@@ -110,7 +110,7 @@ const deletingEmptyTextBlockBeforeBlockObject = defineBehavior({
   actions: [
     ({focusTextBlock, nextBlock}) => [
       {
-        type: 'delete block',
+        type: 'delete.block',
         blockPath: focusTextBlock.path,
       },
       {

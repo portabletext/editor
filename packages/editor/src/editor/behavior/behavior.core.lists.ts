@@ -13,7 +13,7 @@ import {
 const MAX_LIST_LEVEL = 10
 
 const clearListOnBackspace = defineBehavior({
-  on: 'delete backward',
+  on: 'delete.backward',
   guard: ({state}) => {
     const selectionCollapsed = selectionIsCollapsed(state)
     const focusTextBlock = getFocusTextBlock(state)
@@ -45,7 +45,7 @@ const clearListOnBackspace = defineBehavior({
 })
 
 const unindentListOnBackspace = defineBehavior({
-  on: 'delete backward',
+  on: 'delete.backward',
   guard: ({state}) => {
     const selectionCollapsed = selectionIsCollapsed(state)
     const focusTextBlock = getFocusTextBlock(state)

@@ -180,7 +180,7 @@ export function createWithEventListeners(
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
-          type: 'delete backward',
+          type: 'delete.backward',
           unit,
         },
         editor,
@@ -192,7 +192,7 @@ export function createWithEventListeners(
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
-          type: 'delete forward',
+          type: 'delete.forward',
           unit,
         },
         editor,

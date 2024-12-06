@@ -106,13 +106,13 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
     Transforms.unsetNodes(action.editor, action.props, {at})
   },
   'copy': () => {},
-  'delete backward': ({action}) => {
+  'delete.backward': ({action}) => {
     deleteBackward(action.editor, action.unit)
   },
-  'delete forward': ({action}) => {
+  'delete.forward': ({action}) => {
     deleteForward(action.editor, action.unit)
   },
-  'delete block': ({action}) => {
+  'delete.block': ({action}) => {
     const range = toSlateRange(
       {
         anchor: {path: action.blockPath, offset: 0},
@@ -130,7 +130,7 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
       at: range,
     })
   },
-  'delete text': ({context, action}) => {
+  'delete.text': ({context, action}) => {
     const value = fromSlateValue(
       action.editor.children,
       context.schema.block.name,
@@ -311,15 +311,15 @@ export function performAction({
   debug('Behavior action', action)
 
   switch (action.type) {
-    case 'delete block': {
-      behaviorActionImplementations['delete block']({
+    case 'delete.block': {
+      behaviorActionImplementations['delete.block']({
         context,
         action,
       })
       break
     }
-    case 'delete text': {
-      behaviorActionImplementations['delete text']({
+    case 'delete.text': {
+      behaviorActionImplementations['delete.text']({
         context,
         action,
       })
@@ -507,15 +507,15 @@ function performDefaultAction({
       })
       break
     }
-    case 'delete backward': {
-      behaviorActionImplementations['delete backward']({
+    case 'delete.backward': {
+      behaviorActionImplementations['delete.backward']({
         context,
         action,
       })
       break
     }
-    case 'delete forward': {
-      behaviorActionImplementations['delete forward']({
+    case 'delete.forward': {
+      behaviorActionImplementations['delete.forward']({
         context,
         action,
       })
