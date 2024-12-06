@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.14.2](https://github.com/portabletext/editor/compare/editor-v1.14.1...editor-v1.14.2) (2024-12-06)
+
+
+### Bug Fixes
+
+* **deps:** Update sanity monorepo to ^3.66.1 ([#510](https://github.com/portabletext/editor/issues/510)) ([6d1f0d0](https://github.com/portabletext/editor/commit/6d1f0d0e5401ab8f326388179958ad53fb624a2a))
+* **performance regression:** bail out quicker on native behavior events ([437e87e](https://github.com/portabletext/editor/commit/437e87e7efff54f6fea6157462a0391a4317f53e))
+
 ## [1.14.1](https://github.com/portabletext/editor/compare/editor-v1.14.0...editor-v1.14.1) (2024-12-06)
 
 
