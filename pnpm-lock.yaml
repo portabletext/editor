@@ -83,7 +83,7 @@ importers:
         version: 18.3.1
       remeda:
         specifier: ^2.2.2
-        version: 2.17.0
+        version: 2.17.4
       shiki:
         specifier: ^1.9.1
         version: 1.22.2
@@ -4266,8 +4266,8 @@ packages:
     resolution: {integrity: sha512-8acYXXTI0AkQv6RAOjE3vOaIXZkT9wo4LOFbBKYQEEnnMNBpKqdUrI6S4NT0KPIo/WVvJ5tE/X5LF/TQUf0ekw==}
     engines: {node: '>=8'}
 
-  remeda@2.17.0:
-    resolution: {integrity: sha512-mBsn4rGLSE788XqzOlePZiXUFNCrLIBVFl1ntzjBq8NqdsLZUQydxQ2naqNr13eBEDoictYLqKlwzhFTxgfydA==}
+  remeda@2.17.4:
+    resolution: {integrity: sha512-pviU2Ag7Qx9mOCAKO4voxDx/scfLzdhp3v85qDO4xxntQsU76uE9sgrAAdK1ATn4zzaOJqCXYMMNRP+O9F4Wiw==}
 
   require-directory@2.1.1:
     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
@@ -4748,8 +4748,8 @@ packages:
     resolution: {integrity: sha512-t0rzBq87m3fVcduHDUFhKmyyX+9eo6WQjZvf51Ea/M0Q7+T374Jp1aUiyUl0GKxp8M/OETVHSDvmkyPgvX+X2w==}
     engines: {node: '>=10'}
 
-  type-fest@4.26.1:
-    resolution: {integrity: sha512-yOGpmOAL7CkKe/91I5O3gPICmJNLJ1G4zFYVAsRHg7M64biSnPtRj0WNQt++bRkjYOqjWXrhnUw1utzmVErAdg==}
+  type-fest@4.30.0:
+    resolution: {integrity: sha512-G6zXWS1dLj6eagy6sVhOMQiLtJdxQBHIA9Z6HFUNLOlr6MFOgzV8wvmidtPONfPtEUv0uZsy77XJNzTAfwPDaA==}
     engines: {node: '>=16'}
 
   typescript-eslint@8.13.0:
@@ -9191,7 +9191,7 @@ snapshots:
       outvariant: 1.4.3
       path-to-regexp: 6.3.0
       strict-event-emitter: 0.5.1
-      type-fest: 4.26.1
+      type-fest: 4.30.0
       yargs: 17.7.2
     optionalDependencies:
       typescript: 5.7.2
@@ -9679,9 +9679,9 @@ snapshots:
     dependencies:
       rc: 1.2.8
 
-  remeda@2.17.0:
+  remeda@2.17.4:
     dependencies:
-      type-fest: 4.26.1
+      type-fest: 4.30.0
 
   require-directory@2.1.1: {}
 
@@ -10181,7 +10181,7 @@ snapshots:
 
   type-fest@0.21.3: {}
 
-  type-fest@4.26.1: {}
+  type-fest@4.30.0: {}
 
   typescript-eslint@8.13.0(eslint@9.14.0(jiti@1.21.6))(typescript@5.6.3):
     dependencies:
