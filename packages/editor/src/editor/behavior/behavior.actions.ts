@@ -374,6 +374,13 @@ export function performAction({
       })
       break
     }
+    case 'noop': {
+      behaviorActionImplementations.noop({
+        context,
+        action,
+      })
+      break
+    }
     case 'set block': {
       behaviorActionImplementations['set block']({
         context,
@@ -579,13 +586,6 @@ function performDefaultAction({
     }
     case 'list item.toggle': {
       behaviorActionImplementations['list item.toggle']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'noop': {
-      behaviorActionImplementations.noop({
         context,
         action,
       })
