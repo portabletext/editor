@@ -106,10 +106,10 @@ export type InternalEditorEvent =
 export type EditorEmittedEvent = PickFromUnion<
   InternalEditorEmittedEvent,
   'type',
-  | 'blur'
+  | 'blurred'
   | 'done loading'
   | 'error'
-  | 'focus'
+  | 'focused'
   | 'invalid value'
   | 'loading'
   | 'mutation'
