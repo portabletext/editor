@@ -26,9 +26,10 @@ import type {
   Behavior,
   BehaviorAction,
   BehaviorActionIntend,
-  BehaviorEvent,
+  NativeBehaviorEvent,
   OmitFromUnion,
   PickFromUnion,
+  SyntheticBehaviorEvent,
 } from './behavior/behavior.types'
 import type {EditorContext} from './editor-snapshot'
 
@@ -70,7 +71,7 @@ export type InternalEditorEvent =
   | {type: 'done normalizing'}
   | {
       type: 'behavior event'
-      behaviorEvent: BehaviorEvent
+      behaviorEvent: SyntheticBehaviorEvent | NativeBehaviorEvent
       editor: PortableTextSlateEditor
       nativeEvent?: {preventDefault: () => void}
     }
@@ -154,7 +155,7 @@ export type InternalEditorEmittedEvent =
   | {type: 'done loading'}
   | {type: 'readOnly toggled'; readOnly: boolean}
   | PickFromUnion<
-      BehaviorEvent,
+      SyntheticBehaviorEvent,
       'type',
       | 'annotation.add'
       | 'annotation.remove'
@@ -236,16 +237,26 @@ export const editorMachine = setup({
 
       debug('Behavior event', event)
 
-      const defaultAction = {
-        ...event.behaviorEvent,
-        editor: event.editor,
-      } satisfies BehaviorAction
+      const defaultAction =
+        event.behaviorEvent.type === 'copy' ||
+        event.behaviorEvent.type === 'key.down' ||
+        event.behaviorEvent.type === 'key.up' ||
+        event.behaviorEvent.type === 'paste'
+          ? undefined
+          : ({
+              ...event.behaviorEvent,
+              editor: event.editor,
+            } satisfies BehaviorAction)
 
       const eventBehaviors = context.behaviors.filter(
         (behavior) => behavior.on === event.behaviorEvent.type,
       )
 
       if (eventBehaviors.length === 0) {
+        if (!defaultAction) {
+          return
+        }
+
         enqueue.raise({
           type: 'behavior action intends',
           editor: event.editor,
@@ -269,6 +280,11 @@ export const editorMachine = setup({
         console.warn(
           `Unable to handle event ${event.type} due to missing selection`,
         )
+
+        if (!defaultAction) {
+          return
+        }
+
         enqueue.raise({
           type: 'behavior action intends',
           editor: event.editor,
@@ -324,6 +340,10 @@ export const editorMachine = setup({
       }
 
       if (!behaviorOverwritten) {
+        if (!defaultAction) {
+          return
+        }
+
         enqueue.raise({
           type: 'behavior action intends',
           editor: event.editor,

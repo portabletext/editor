@@ -45,8 +45,8 @@ import {textBlockSetActionImplementation} from './behavior.action.text-block.set
 import {textBlockUnsetActionImplementation} from './behavior.action.text-block.unset'
 import type {
   BehaviorAction,
-  BehaviorEvent,
   PickFromUnion,
+  SyntheticBehaviorEvent,
 } from './behavior.types'
 
 export type BehaviorActionImplementationContext = Pick<
@@ -82,7 +82,6 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'focus': ({action}) => {
     ReactEditor.focus(action.editor)
   },
-  'copy': () => {},
   'delete.backward': ({action}) => {
     deleteBackward(action.editor, action.unit)
   },
@@ -186,8 +185,6 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'effect': ({action}) => {
     action.effect()
   },
-  'key.down': () => {},
-  'key.up': () => {},
   'list item.add': addListItemActionImplementation,
   'list item.remove': removeListItemActionImplementation,
   'list item.toggle': toggleListItemActionImplementation,
@@ -227,7 +224,6 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
     })
   },
   'noop': () => {},
-  'paste': () => {},
   'select': ({action}) => {
     const newSelection = toSlateRange(action.selection, action.editor)
 
@@ -434,7 +430,7 @@ function performDefaultAction({
   action,
 }: {
   context: BehaviorActionImplementationContext
-  action: PickFromUnion<BehaviorAction, 'type', BehaviorEvent['type']>
+  action: PickFromUnion<BehaviorAction, 'type', SyntheticBehaviorEvent['type']>
 }) {
   switch (action.type) {
     case 'annotation.add': {
@@ -460,13 +456,6 @@ function performDefaultAction({
     }
     case 'blur': {
       behaviorActionImplementations.blur({
-        context,
-        action,
-      })
-      break
-    }
-    case 'copy': {
-      behaviorActionImplementations.copy({
         context,
         action,
       })
@@ -549,29 +538,8 @@ function performDefaultAction({
       })
       break
     }
-    case 'key.down': {
-      behaviorActionImplementations['key.down']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'key.up': {
-      behaviorActionImplementations['key.up']({
-        context,
-        action,
-      })
-      break
-    }
     case 'list item.toggle': {
       behaviorActionImplementations['list item.toggle']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'paste': {
-      behaviorActionImplementations.paste({
         context,
         action,
       })

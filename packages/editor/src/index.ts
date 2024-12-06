@@ -15,14 +15,16 @@ export {
 } from './editor/behavior/behavior.markdown'
 export {
   defineBehavior,
+  type BehaviorEvent,
   type Behavior,
   type BehaviorActionIntend,
   type BehaviorActionIntendSet,
-  type BehaviorEvent,
+  type SyntheticBehaviorEvent,
   type BehaviorGuard,
+  type BlockOffset,
+  type NativeBehaviorEvent,
   type OmitFromUnion,
   type PickFromUnion,
-  type BlockOffset,
 } from './editor/behavior/behavior.types'
 export type {Editor, EditorConfig, EditorEvent} from './editor/create-editor'
 export type {SlateEditor} from './editor/create-slate-editor'

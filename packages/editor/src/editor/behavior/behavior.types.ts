@@ -7,7 +7,7 @@ import type {EditorContext} from '../editor-snapshot'
 /**
  * @alpha
  */
-export type BehaviorEvent =
+export type SyntheticBehaviorEvent =
   | {
       type: 'annotation.add'
       annotation: {
@@ -30,10 +30,6 @@ export type BehaviorEvent =
     }
   | {
       type: 'blur'
-    }
-  | {
-      type: 'copy'
-      data: DataTransfer
     }
   | {
       type: 'decorator.add'
@@ -85,7 +81,20 @@ export type BehaviorEvent =
       options?: TextInsertTextOptions
     }
   | {
-      type: 'paste'
+      type: 'list item.toggle'
+      listItem: string
+    }
+  | {
+      type: 'style.toggle'
+      style: string
+    }
+
+/**
+ * @alpha
+ */
+export type NativeBehaviorEvent =
+  | {
+      type: 'copy'
       data: DataTransfer
     }
   | {
@@ -103,33 +112,29 @@ export type BehaviorEvent =
       >
     }
   | {
-      type: 'list item.toggle'
-      listItem: string
-    }
-  | {
-      type: 'style.toggle'
-      style: string
+      type: 'paste'
+      data: DataTransfer
     }
 
 /**
  * @alpha
  */
 export type BehaviorGuard<
-  TBehaviorEvent extends BehaviorEvent,
+  TAnyBehaviorEvent extends BehaviorEvent,
   TGuardResponse,
 > = ({
   context,
   event,
 }: {
   context: EditorContext
-  event: TBehaviorEvent
+  event: TAnyBehaviorEvent
 }) => TGuardResponse | false
 
 /**
  * @alpha
  */
 export type BehaviorActionIntend =
-  | BehaviorEvent
+  | SyntheticBehaviorEvent
   | {
       type: 'insert.span'
       text: string
@@ -227,21 +232,26 @@ export type BehaviorAction = BehaviorActionIntend & {
 /**
  * @alpha
  */
+export type BehaviorEvent = SyntheticBehaviorEvent | NativeBehaviorEvent
+
+/**
+ * @alpha
+ */
 export type Behavior<
-  TBehaviorEventType extends BehaviorEvent['type'] = BehaviorEvent['type'],
+  TAnyBehaviorEventType extends BehaviorEvent['type'] = BehaviorEvent['type'],
   TGuardResponse = true,
 > = {
   /**
    * The internal editor event that triggers this behavior.
    */
-  on: TBehaviorEventType
+  on: TAnyBehaviorEventType
   /**
    * Predicate function that determines if the behavior should be executed.
    * Returning a non-nullable value from the guard will pass the value to the
    * actions and execute them.
    */
   guard?: BehaviorGuard<
-    PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
+    PickFromUnion<BehaviorEvent, 'type', TAnyBehaviorEventType>,
     TGuardResponse
   >
   /**
@@ -255,21 +265,15 @@ export type Behavior<
  */
 export type BehaviorActionIntendSet<TGuardResponse = true> = (
   guardResponse: TGuardResponse,
-) => Array<
-  OmitFromUnion<
-    BehaviorActionIntend,
-    'type',
-    'copy' | 'key.down' | 'key.up' | 'paste'
-  >
->
+) => Array<BehaviorActionIntend>
 
 /**
  * @alpha
  */
 export function defineBehavior<
-  TBehaviorEventType extends BehaviorEvent['type'],
+  TAnyBehaviorEventType extends BehaviorEvent['type'],
   TGuardResponse = true,
->(behavior: Behavior<TBehaviorEventType, TGuardResponse>): Behavior {
+>(behavior: Behavior<TAnyBehaviorEventType, TGuardResponse>): Behavior {
   return behavior as unknown as Behavior
 }
 
