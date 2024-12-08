@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.1](https://github.com/portabletext/editor/compare/editor-v1.15.0...editor-v1.15.1) (2024-12-08)
+
+
+### Bug Fixes
+
+* **deps:** Update slate to v0.112.0 ([6caa85a](https://github.com/portabletext/editor/commit/6caa85aae2ae287e48fd32c20a92e0bd01893df4))
+
 ## [1.15.0](https://github.com/portabletext/editor/compare/editor-v1.14.2...editor-v1.15.0) (2024-12-06)
 
 
