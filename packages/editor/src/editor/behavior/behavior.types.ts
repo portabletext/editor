@@ -119,20 +119,6 @@ export type NativeBehaviorEvent =
 /**
  * @alpha
  */
-export type BehaviorGuard<
-  TAnyBehaviorEvent extends BehaviorEvent,
-  TGuardResponse,
-> = ({
-  context,
-  event,
-}: {
-  context: EditorContext
-  event: TAnyBehaviorEvent
-}) => TGuardResponse | false
-
-/**
- * @alpha
- */
 export type BehaviorActionIntend =
   | SyntheticBehaviorEvent
   | {
@@ -238,32 +224,56 @@ export type BehaviorEvent = SyntheticBehaviorEvent | NativeBehaviorEvent
  * @alpha
  */
 export type Behavior<
-  TAnyBehaviorEventType extends BehaviorEvent['type'] = BehaviorEvent['type'],
+  TBehaviorEventType extends BehaviorEvent['type'] = BehaviorEvent['type'],
   TGuardResponse = true,
 > = {
   /**
    * The internal editor event that triggers this behavior.
    */
-  on: TAnyBehaviorEventType
+  on: TBehaviorEventType
   /**
    * Predicate function that determines if the behavior should be executed.
    * Returning a non-nullable value from the guard will pass the value to the
    * actions and execute them.
    */
   guard?: BehaviorGuard<
-    PickFromUnion<BehaviorEvent, 'type', TAnyBehaviorEventType>,
+    PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
     TGuardResponse
   >
   /**
    * Array of behavior action sets.
    */
-  actions: Array<BehaviorActionIntendSet<TGuardResponse>>
+  actions: Array<BehaviorActionIntendSet<TBehaviorEventType, TGuardResponse>>
 }
 
 /**
  * @alpha
  */
-export type BehaviorActionIntendSet<TGuardResponse = true> = (
+export type BehaviorGuard<
+  TBehaviorEvent extends BehaviorEvent,
+  TGuardResponse,
+> = ({
+  context,
+  event,
+}: {
+  context: EditorContext
+  event: TBehaviorEvent
+}) => TGuardResponse | false
+
+/**
+ * @alpha
+ */
+export type BehaviorActionIntendSet<
+  TBehaviorEventType extends BehaviorEvent['type'] = BehaviorEvent['type'],
+  TGuardResponse = true,
+> = (
+  {
+    context,
+    event,
+  }: {
+    context: EditorContext
+    event: PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>
+  },
   guardResponse: TGuardResponse,
 ) => Array<BehaviorActionIntend>
 

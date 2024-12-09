@@ -34,7 +34,7 @@ const clearListOnBackspace = defineBehavior({
     return false
   },
   actions: [
-    ({focusTextBlock}) => [
+    (_, {focusTextBlock}) => [
       {
         type: 'text block.unset',
         props: ['listItem', 'level'],
@@ -70,7 +70,7 @@ const unindentListOnBackspace = defineBehavior({
     return false
   },
   actions: [
-    ({focusTextBlock, level}) => [
+    (_, {focusTextBlock, level}) => [
       {
         type: 'text block.set',
         level,
@@ -97,7 +97,7 @@ const clearListOnEnter = defineBehavior({
     return {focusListBlock}
   },
   actions: [
-    ({focusListBlock}) => [
+    (_, {focusListBlock}) => [
       {
         type: 'text block.unset',
         props: ['listItem', 'level'],
@@ -136,7 +136,7 @@ const indentListOnTab = defineBehavior({
     return false
   },
   actions: [
-    ({selectedListBlocks}) =>
+    (_, {selectedListBlocks}) =>
       selectedListBlocks.map((selectedListBlock) => ({
         type: 'text block.set',
         level: Math.min(
@@ -177,7 +177,7 @@ const unindentListOnShiftTab = defineBehavior({
     return false
   },
   actions: [
-    ({selectedListBlocks}) =>
+    (_, {selectedListBlocks}) =>
       selectedListBlocks.map((selectedListBlock) => ({
         type: 'text block.set',
         level: Math.min(

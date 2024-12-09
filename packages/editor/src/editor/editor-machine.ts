@@ -315,7 +315,10 @@ export const editorMachine = setup({
         }
 
         const actionIntendSets = eventBehavior.actions.map((actionSet) =>
-          actionSet(shouldRun),
+          actionSet(
+            {context: editorContext, event: event.behaviorEvent},
+            shouldRun,
+          ),
         )
 
         for (const actionIntends of actionIntendSets) {
