@@ -1,5 +1,5 @@
-import {getFocusSpan, selectionIsCollapsed} from '../../selectors/selectors'
-import type {PortableTextMemberSchemaTypes} from '../../types/editor'
+import {getFocusSpan, selectionIsCollapsed} from '../selectors/selectors'
+import type {PortableTextMemberSchemaTypes} from '../types/editor'
 import {defineBehavior} from './behavior.types'
 
 /**

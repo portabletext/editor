@@ -1,31 +1,15 @@
 export type {Patch} from '@portabletext/patches'
 export type {PortableTextBlock, PortableTextChild} from '@sanity/types'
-export {
-  createCodeEditorBehaviors,
-  type CodeEditorBehaviorsConfig,
-} from './editor/behavior/behavior.code-editor'
-export {coreBehavior, coreBehaviors} from './editor/behavior/behavior.core'
-export {
-  createLinkBehaviors,
-  type LinkBehaviorsConfig,
-} from './editor/behavior/behavior.links'
-export {
-  createMarkdownBehaviors,
-  type MarkdownBehaviorsConfig,
-} from './editor/behavior/behavior.markdown'
-export {
-  defineBehavior,
-  type BehaviorEvent,
-  type Behavior,
-  type BehaviorActionIntend,
-  type BehaviorActionIntendSet,
-  type SyntheticBehaviorEvent,
-  type BehaviorGuard,
-  type BlockOffset,
-  type NativeBehaviorEvent,
-  type OmitFromUnion,
-  type PickFromUnion,
-} from './editor/behavior/behavior.types'
+export type {
+  Behavior,
+  BehaviorActionIntend,
+  BehaviorActionIntendSet,
+  BehaviorEvent,
+  BehaviorGuard,
+  BlockOffset,
+  NativeBehaviorEvent,
+  SyntheticBehaviorEvent,
+} from './behaviors/index'
 export type {Editor, EditorConfig, EditorEvent} from './editor/create-editor'
 export type {SlateEditor} from './editor/create-slate-editor'
 export {
@@ -63,5 +47,6 @@ export {defaultKeyGenerator as keyGenerator} from './editor/key-generator'
 export type {AddedAnnotationPaths} from './editor/plugins/createWithEditableAPI'
 export {PortableTextEditor} from './editor/PortableTextEditor'
 export type {PortableTextEditorProps} from './editor/PortableTextEditor'
+export type {OmitFromUnion, PickFromUnion} from './type-utils'
 export * from './types/editor'
 export type {HotkeyOptions} from './types/options'

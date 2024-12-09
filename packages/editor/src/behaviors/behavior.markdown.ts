@@ -1,14 +1,14 @@
 import {isPortableTextTextBlock} from '@sanity/types'
-import {getBlockTextBefore} from '../../selectors/selector.get-text-before'
+import {getTextBlockText} from '../editor/utils/utils'
+import {spanSelectionPointToBlockOffset} from '../editor/utils/utils.block-offset'
+import {getBlockTextBefore} from '../selectors/selector.get-text-before'
 import {
   getFocusBlock,
   getFocusSpan,
   getFocusTextBlock,
   selectionIsCollapsed,
-} from '../../selectors/selectors'
-import type {PortableTextMemberSchemaTypes} from '../../types/editor'
-import {getTextBlockText} from '../utils/utils'
-import {spanSelectionPointToBlockOffset} from '../utils/utils.block-offset'
+} from '../selectors/selectors'
+import type {PortableTextMemberSchemaTypes} from '../types/editor'
 import {defineBehavior} from './behavior.types'
 
 /**

@@ -6,9 +6,9 @@ import {
   PortableTextEditable,
   PortableTextEditor,
   usePortableTextEditor,
-  type Behavior,
   type HotkeyOptions,
 } from '../src'
+import type {Behavior} from '../src/behaviors'
 import type {EditorEmittedEvent} from '../src/editor/editor-machine'
 import {EditorProvider, useEditor} from '../src/editor/editor-provider'
 import type {EditorActorRef, TestActorRef} from './test-machine'
