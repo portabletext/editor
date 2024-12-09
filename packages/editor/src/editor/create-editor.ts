@@ -11,10 +11,11 @@ import {
   type EventObject,
   type Snapshot,
 } from 'xstate'
+import type {Behavior} from '../behaviors/behavior.types'
+import type {PickFromUnion} from '../type-utils'
 import type {EditableAPI} from '../types/editor'
 import {getPortableTextMemberSchemaTypes} from '../utils/getPortableTextMemberSchemaTypes'
 import {compileType} from '../utils/schema'
-import type {Behavior, PickFromUnion} from './behavior/behavior.types'
 import {createSlateEditor, type SlateEditor} from './create-slate-editor'
 import {compileSchemaDefinition, type SchemaDefinition} from './define-schema'
 import {

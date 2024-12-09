@@ -1,8 +1,4 @@
 import {
-  coreBehaviors,
-  createCodeEditorBehaviors,
-  createLinkBehaviors,
-  createMarkdownBehaviors,
   EditorProvider,
   PortableTextEditable,
   useEditor,
@@ -18,6 +14,12 @@ import {
   type RenderPlaceholderFunction,
   type RenderStyleFunction,
 } from '@portabletext/editor'
+import {
+  coreBehaviors,
+  createCodeEditorBehaviors,
+  createLinkBehaviors,
+  createMarkdownBehaviors,
+} from '@portabletext/editor/behaviors'
 import {useSelector} from '@xstate/react'
 import {CopyIcon, ImageIcon, TrashIcon} from 'lucide-react'
 import {useEffect, useState, type JSX} from 'react'

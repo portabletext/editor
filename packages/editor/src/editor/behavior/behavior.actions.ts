@@ -6,6 +6,11 @@ import {
   Transforms,
 } from 'slate'
 import {ReactEditor} from 'slate-react'
+import type {
+  BehaviorAction,
+  SyntheticBehaviorEvent,
+} from '../../behaviors/behavior.types'
+import type {PickFromUnion} from '../../type-utils'
 import debug from '../../utils/debug'
 import {toSlatePath} from '../../utils/paths'
 import {toSlateRange} from '../../utils/ranges'
@@ -43,11 +48,6 @@ import {
 } from './behavior.action.style'
 import {textBlockSetActionImplementation} from './behavior.action.text-block.set'
 import {textBlockUnsetActionImplementation} from './behavior.action.text-block.unset'
-import type {
-  BehaviorAction,
-  PickFromUnion,
-  SyntheticBehaviorEvent,
-} from './behavior.types'
 
 export type BehaviorActionImplementationContext = Pick<
   EditorContext,

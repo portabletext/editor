@@ -9,12 +9,9 @@ import {
   setup,
   type ActorRefFrom,
 } from 'xstate'
-import {
-  coreBehaviors,
-  type EditorSelection,
-  type PortableTextEditor,
-} from '../src'
-import type {Behavior} from '../src/editor/behavior/behavior.types'
+import type {EditorSelection, PortableTextEditor} from '../src'
+import {coreBehaviors} from '../src/behaviors'
+import type {Behavior} from '../src/behaviors/behavior.types'
 
 type MutationEvent = {
   type: 'mutation'

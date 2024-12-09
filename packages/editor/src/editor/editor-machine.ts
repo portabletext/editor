@@ -10,6 +10,15 @@ import {
   setup,
   type ActorRefFrom,
 } from 'xstate'
+import {coreBehaviors} from '../behaviors/behavior.core'
+import type {
+  Behavior,
+  BehaviorAction,
+  BehaviorActionIntend,
+  NativeBehaviorEvent,
+  SyntheticBehaviorEvent,
+} from '../behaviors/behavior.types'
+import type {OmitFromUnion, PickFromUnion} from '../type-utils'
 import type {
   EditorSelection,
   InvalidValueResolution,
@@ -21,16 +30,6 @@ import {toPortableTextRange} from '../utils/ranges'
 import {fromSlateValue} from '../utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../utils/weakMaps'
 import {performAction} from './behavior/behavior.actions'
-import {coreBehaviors} from './behavior/behavior.core'
-import type {
-  Behavior,
-  BehaviorAction,
-  BehaviorActionIntend,
-  NativeBehaviorEvent,
-  OmitFromUnion,
-  PickFromUnion,
-  SyntheticBehaviorEvent,
-} from './behavior/behavior.types'
 import type {EditorContext} from './editor-snapshot'
 
 export * from 'xstate/guards'

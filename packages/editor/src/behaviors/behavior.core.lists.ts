@@ -1,13 +1,13 @@
+import {createGuards} from '../editor/behavior/behavior.guards'
+import {isEmptyTextBlock} from '../editor/utils/utils'
 import {
   getFocusListBlock,
   getFocusSpan,
   getFocusTextBlock,
   getSelectedBlocks,
   selectionIsCollapsed,
-} from '../../selectors/selectors'
-import {isHotkey} from '../../utils/is-hotkey'
-import {isEmptyTextBlock} from '../utils/utils'
-import {createGuards} from './behavior.guards'
+} from '../selectors/selectors'
+import {isHotkey} from '../utils/is-hotkey'
 import {defineBehavior} from './behavior.types'
 
 const MAX_LIST_LEVEL = 10

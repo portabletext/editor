@@ -1,8 +1,9 @@
 import type {KeyedSegment, PortableTextTextBlock} from '@sanity/types'
 import type {TextUnit} from 'slate'
 import type {TextInsertTextOptions} from 'slate/dist/interfaces/transforms/text'
-import type {EditorSelection, PortableTextSlateEditor} from '../../types/editor'
-import type {EditorContext} from '../editor-snapshot'
+import type {EditorContext} from '../editor/editor-snapshot'
+import type {PickFromUnion} from '../type-utils'
+import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
 
 /**
  * @alpha
@@ -294,21 +295,3 @@ export type BlockOffset = {
   path: [KeyedSegment]
   offset: number
 }
-
-/**
- * @alpha
- */
-export type PickFromUnion<
-  TUnion,
-  TTagKey extends keyof TUnion,
-  TPickedTags extends TUnion[TTagKey],
-> = TUnion extends Record<TTagKey, TPickedTags> ? TUnion : never
-
-/**
- * @alpha
- */
-export type OmitFromUnion<
-  TUnion,
-  TTagKey extends keyof TUnion,
-  TOmittedTags extends TUnion[TTagKey],
-> = TUnion extends Record<TTagKey, TOmittedTags> ? never : TUnion

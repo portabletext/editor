@@ -1,13 +1,13 @@
 import {isPortableTextTextBlock} from '@sanity/types'
+import {isEmptyTextBlock} from '../editor/utils/utils'
 import {
   getFocusBlockObject,
   getFocusTextBlock,
   getNextBlock,
   getPreviousBlock,
   selectionIsCollapsed,
-} from '../../selectors/selectors'
-import {isHotkey} from '../../utils/is-hotkey'
-import {isEmptyTextBlock} from '../utils/utils'
+} from '../selectors/selectors'
+import {isHotkey} from '../utils/is-hotkey'
 import {defineBehavior} from './behavior.types'
 
 const arrowDownOnLonelyBlockObject = defineBehavior({
