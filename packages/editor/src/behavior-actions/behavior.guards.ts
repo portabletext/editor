@@ -4,18 +4,14 @@ import {
   type PortableTextListBlock,
   type PortableTextTextBlock,
 } from '@sanity/types'
-import type {PortableTextMemberSchemaTypes} from '../types/editor'
+import type {EditorSchema} from '../editor/define-schema'
 
 /**
  * @alpha
  */
 export type BehaviorGuards = ReturnType<typeof createGuards>
 
-export function createGuards({
-  schema,
-}: {
-  schema: PortableTextMemberSchemaTypes
-}) {
+export function createGuards({schema}: {schema: EditorSchema}) {
   function isListBlock(block: unknown): block is PortableTextListBlock {
     return isPortableTextListBlock(block) && block._type === schema.block.name
   }

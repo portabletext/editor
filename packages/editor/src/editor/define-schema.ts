@@ -7,7 +7,7 @@ import {
 } from '@sanity/types'
 import startCase from 'lodash.startcase'
 import type {PortableTextMemberSchemaTypes} from '../types/editor'
-import {getPortableTextMemberSchemaTypes} from '../utils/getPortableTextMemberSchemaTypes'
+import {createEditorSchema} from './create-editor-schema'
 
 /**
  * @alpha
@@ -40,6 +40,11 @@ export function defineSchema<const TSchemaDefinition extends SchemaDefinition>(
 ): TSchemaDefinition {
   return definition
 }
+
+/**
+ * @alpha
+ */
+export type EditorSchema = PortableTextMemberSchemaTypes
 
 export function compileSchemaDefinition<
   TSchemaDefinition extends SchemaDefinition,
@@ -111,7 +116,7 @@ export function compileSchemaDefinition<
     types: [portableTextSchema, ...blockObjects, ...inlineObjects],
   }).get('portable-text')
 
-  const pteSchema = getPortableTextMemberSchemaTypes(schema)
+  const pteSchema = createEditorSchema(schema)
 
   return {
     ...pteSchema,
@@ -127,5 +132,5 @@ export function compileSchemaDefinition<
           } as ObjectSchemaType)
         : blockObject,
     ),
-  } satisfies PortableTextMemberSchemaTypes
+  } satisfies EditorSchema
 }

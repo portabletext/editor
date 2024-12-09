@@ -23,13 +23,13 @@ import type {OmitFromUnion, PickFromUnion} from '../type-utils'
 import type {
   EditorSelection,
   InvalidValueResolution,
-  PortableTextMemberSchemaTypes,
   PortableTextSlateEditor,
 } from '../types/editor'
 import debug from '../utils/debug'
 import {toPortableTextRange} from '../utils/ranges'
 import {fromSlateValue} from '../utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../utils/weakMaps'
+import type {EditorSchema} from './define-schema'
 import type {EditorContext} from './editor-snapshot'
 
 export * from 'xstate/guards'
@@ -81,7 +81,7 @@ export type InternalEditorEvent =
     }
   | {
       type: 'update schema'
-      schema: PortableTextMemberSchemaTypes
+      schema: EditorSchema
     }
   | {
       type: 'update behaviors'
@@ -179,7 +179,7 @@ export const editorMachine = setup({
       behaviors: Array<Behavior>
       keyGenerator: () => string
       pendingEvents: Array<PatchEvent | MutationEvent>
-      schema: PortableTextMemberSchemaTypes
+      schema: EditorSchema
       readOnly: boolean
       maxBlocks: number | undefined
       selection: NonNullable<EditorSelection> | undefined
@@ -192,7 +192,7 @@ export const editorMachine = setup({
       keyGenerator: () => string
       maxBlocks?: number
       readOnly?: boolean
-      schema: PortableTextMemberSchemaTypes
+      schema: EditorSchema
       value?: Array<PortableTextBlock>
     },
   },
