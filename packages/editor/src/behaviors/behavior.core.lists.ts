@@ -25,7 +25,7 @@ const clearListOnBackspace = defineBehavior({
 
     const atTheBeginningOfBLock =
       focusTextBlock.node.children[0]._key === focusSpan.node._key &&
-      context.selection.focus.offset === 0
+      context.selection?.focus.offset === 0
 
     if (atTheBeginningOfBLock && focusTextBlock.node.level === 1) {
       return {focusTextBlock}
@@ -57,7 +57,7 @@ const unindentListOnBackspace = defineBehavior({
 
     const atTheBeginningOfBLock =
       focusTextBlock.node.children[0]._key === focusSpan.node._key &&
-      context.selection.focus.offset === 0
+      context.selection?.focus.offset === 0
 
     if (
       atTheBeginningOfBLock &&

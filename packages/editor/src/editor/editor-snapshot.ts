@@ -8,7 +8,7 @@ import type {EditorSchema} from './define-schema'
 export type EditorContext = {
   keyGenerator: () => string
   schema: EditorSchema
-  selection: NonNullable<EditorSelection>
+  selection: EditorSelection
   value: Array<PortableTextBlock>
 }
 
