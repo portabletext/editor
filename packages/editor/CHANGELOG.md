@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.15.3](https://github.com/portabletext/editor/compare/editor-v1.15.2...editor-v1.15.3) (2024-12-09)
+
+
+### Bug Fixes
+
+* **behavior:** make `EditorSnapshot.selection` nullable ([a69f570](https://github.com/portabletext/editor/commit/a69f57023ddef599eecca3c30843e5a7a02c3216))
+* **behavior:** namespace all `select.*` actions ([7c04667](https://github.com/portabletext/editor/commit/7c046673ec59682df6b8ec39e84476ccbe026b0c))
+* **types:** reexport `PortableTextMemberSchemaTypes` as `EditorSchema` ([2d70782](https://github.com/portabletext/editor/commit/2d707825ef41a7f02cee9c3aacaafbe165a62193))
+
 ## [1.15.2](https://github.com/portabletext/editor/compare/editor-v1.15.1...editor-v1.15.2) (2024-12-09)
 
 
