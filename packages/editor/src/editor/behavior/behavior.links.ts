@@ -34,7 +34,7 @@ export function createLinkBehaviors(config: LinkBehaviorsConfig) {
       return false
     },
     actions: [
-      ({annotation}) => [
+      (_, {annotation}) => [
         {
           type: 'annotation.add',
           annotation,
@@ -66,7 +66,7 @@ export function createLinkBehaviors(config: LinkBehaviorsConfig) {
       return false
     },
     actions: [
-      ({annotation, url}) => [
+      (_, {annotation, url}) => [
         {
           type: 'insert.span',
           text: url,

@@ -95,7 +95,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           text: ' ',
         },
       ],
-      ({focusTextBlock, style}) => [
+      (_, {focusTextBlock, style}) => [
         {
           type: 'text block.unset',
           props: ['listItem', 'level'],
@@ -163,13 +163,13 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       return false
     },
     actions: [
-      ({hrCharacter}) => [
+      (_, {hrCharacter}) => [
         {
           type: 'insert.text',
           text: hrCharacter,
         },
       ],
-      ({hrObject, hrBlockOffsets}) => [
+      (_, {hrObject, hrBlockOffsets}) => [
         {
           type: 'insert.block object',
           placement: 'before',
@@ -198,13 +198,13 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       return {hrCharacters, hrObject, focusBlock}
     },
     actions: [
-      ({hrCharacters}) => [
+      (_, {hrCharacters}) => [
         {
           type: 'insert.text',
           text: hrCharacters,
         },
       ],
-      ({hrObject, focusBlock}) =>
+      (_, {hrObject, focusBlock}) =>
         isPortableTextTextBlock(focusBlock.node)
           ? [
               {
@@ -288,13 +288,8 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       return false
     },
     actions: [
-      () => [
-        {
-          type: 'insert.text',
-          text: ' ',
-        },
-      ],
-      ({focusTextBlock, style, level}) => [
+      ({event}) => [event],
+      (_, {focusTextBlock, style, level}) => [
         {
           type: 'text block.unset',
           props: ['listItem', 'level'],
@@ -347,7 +342,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       return false
     },
     actions: [
-      ({defaultStyle, focusTextBlock}) => [
+      (_, {defaultStyle, focusTextBlock}) => [
         {
           type: 'text block.set',
           style: defaultStyle,
@@ -430,13 +425,8 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       return false
     },
     actions: [
-      () => [
-        {
-          type: 'insert.text',
-          text: ' ',
-        },
-      ],
-      ({focusTextBlock, style, listItem, listItemLength}) => [
+      ({event}) => [event],
+      (_, {focusTextBlock, style, listItem, listItemLength}) => [
         {
           type: 'text block.set',
           listItem,
