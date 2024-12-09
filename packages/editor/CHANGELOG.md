@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.15.2](https://github.com/portabletext/editor/compare/editor-v1.15.1...editor-v1.15.2) (2024-12-09)
+
+
+### Bug Fixes
+
+* **behavior:** add `context`/`event` back in `BehaviorActionIntendSet` callback ([af9e9e4](https://github.com/portabletext/editor/commit/af9e9e462d4c14506d27c00d70cc3618eb241dde))
+* **behavior:** export behaviors and behavior types from subpath ([618cc16](https://github.com/portabletext/editor/commit/618cc16a338298f4b0826c7c2c02864104069df4))
+* **deps:** update react compiler dependencies 🤖 ✨ ([#540](https://github.com/portabletext/editor/issues/540)) ([fe3438a](https://github.com/portabletext/editor/commit/fe3438ace20a1f81b6a9238dcde7fb2244c8753f))
+
 ## [1.15.1](https://github.com/portabletext/editor/compare/editor-v1.15.0...editor-v1.15.1) (2024-12-08)
 
 
