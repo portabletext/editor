@@ -1,4 +1,4 @@
-import {createGuards} from '../editor/behavior/behavior.guards'
+import {createGuards} from '../behavior-actions/behavior.guards'
 import {isEmptyTextBlock} from '../editor/utils/utils'
 import {
   getFocusListBlock,

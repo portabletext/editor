@@ -1,6 +1,6 @@
 import {Editor, Transforms} from 'slate'
-import type {BehaviorActionImplementation} from '../behavior/behavior.actions'
-import {createGuards} from '../behavior/behavior.guards'
+import type {BehaviorActionImplementation} from './behavior.actions'
+import {createGuards} from './behavior.guards'
 
 export const toggleListItemActionImplementation: BehaviorActionImplementation<
   'list item.toggle'

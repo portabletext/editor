@@ -10,6 +10,7 @@ import {
   setup,
   type ActorRefFrom,
 } from 'xstate'
+import {performAction} from '../behavior-actions/behavior.actions'
 import {coreBehaviors} from '../behaviors/behavior.core'
 import type {
   Behavior,
@@ -29,7 +30,6 @@ import debug from '../utils/debug'
 import {toPortableTextRange} from '../utils/ranges'
 import {fromSlateValue} from '../utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../utils/weakMaps'
-import {performAction} from './behavior/behavior.actions'
 import type {EditorContext} from './editor-snapshot'
 
 export * from 'xstate/guards'

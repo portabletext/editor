@@ -1,6 +1,6 @@
 import {isEqual} from 'lodash'
 import {Editor, Node, Path, Range, Transforms} from 'slate'
-import type {SlateTextBlock, VoidElement} from '../../types/slate'
+import type {SlateTextBlock, VoidElement} from '../types/slate'
 import type {BehaviorActionImplementation} from './behavior.actions'
 
 export const insertBreakActionImplementation: BehaviorActionImplementation<

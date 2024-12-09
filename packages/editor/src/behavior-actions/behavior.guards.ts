@@ -4,7 +4,7 @@ import {
   type PortableTextListBlock,
   type PortableTextTextBlock,
 } from '@sanity/types'
-import type {PortableTextMemberSchemaTypes} from '../../types/editor'
+import type {PortableTextMemberSchemaTypes} from '../types/editor'
 
 /**
  * @alpha

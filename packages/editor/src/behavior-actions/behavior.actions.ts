@@ -9,25 +9,25 @@ import {ReactEditor} from 'slate-react'
 import type {
   BehaviorAction,
   SyntheticBehaviorEvent,
-} from '../../behaviors/behavior.types'
-import type {PickFromUnion} from '../../type-utils'
-import debug from '../../utils/debug'
-import {toSlatePath} from '../../utils/paths'
-import {toSlateRange} from '../../utils/ranges'
-import {fromSlateValue, toSlateValue} from '../../utils/values'
-import {KEY_TO_VALUE_ELEMENT} from '../../utils/weakMaps'
-import type {EditorContext} from '../editor-snapshot'
+} from '../behaviors/behavior.types'
+import type {EditorContext} from '../editor/editor-snapshot'
 import {
   addAnnotationActionImplementation,
   removeAnnotationActionImplementation,
   toggleAnnotationActionImplementation,
-} from '../plugins/createWithEditableAPI'
+} from '../editor/plugins/createWithEditableAPI'
 import {
   addDecoratorActionImplementation,
   removeDecoratorActionImplementation,
   toggleDecoratorActionImplementation,
-} from '../plugins/createWithPortableTextMarkModel'
-import {blockOffsetToSpanSelectionPoint} from '../utils/utils.block-offset'
+} from '../editor/plugins/createWithPortableTextMarkModel'
+import {blockOffsetToSpanSelectionPoint} from '../editor/utils/utils.block-offset'
+import type {PickFromUnion} from '../type-utils'
+import debug from '../utils/debug'
+import {toSlatePath} from '../utils/paths'
+import {toSlateRange} from '../utils/ranges'
+import {fromSlateValue, toSlateValue} from '../utils/values'
+import {KEY_TO_VALUE_ELEMENT} from '../utils/weakMaps'
 import {insertBlock} from './behavior.action-utils.insert-block'
 import {insertBlockObjectActionImplementation} from './behavior.action.insert-block-object'
 import {
