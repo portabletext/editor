@@ -37,11 +37,7 @@ export {
   useEditor,
   type EditorProviderProps,
 } from './editor/editor-provider'
-export {
-  useEditorSelector,
-  type EditorSelector,
-  type EditorSelectorSnapshot,
-} from './editor/editor-selector'
+export {useEditorSelector, type EditorSelector} from './editor/editor-selector'
 export type {EditorContext, EditorSnapshot} from './editor/editor-snapshot'
 export {usePortableTextEditor} from './editor/hooks/usePortableTextEditor'
 export {usePortableTextEditorSelection} from './editor/hooks/usePortableTextEditorSelection'

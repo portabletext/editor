@@ -1,7 +1,4 @@
-export type {
-  EditorSelector,
-  EditorSelectorSnapshot,
-} from '../editor/editor-selector'
+export type {EditorSelector} from '../editor/editor-selector'
 export type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
 export type {
   EditorSelection,

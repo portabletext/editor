@@ -1,5 +1,4 @@
 import {useSelector} from '@xstate/react'
-import type {EditorSelection} from '../types/editor'
 import type {Editor} from './create-editor'
 import type {EditorSnapshot} from './editor-snapshot'
 import {getValue} from './get-value'
@@ -11,18 +10,7 @@ function defaultCompare<T>(a: T, b: T) {
 /**
  * @alpha
  */
-export type EditorSelectorSnapshot = {
-  context: Omit<EditorSnapshot['context'], 'selection'> & {
-    selection?: NonNullable<EditorSelection>
-  }
-}
-
-/**
- * @alpha
- */
-export type EditorSelector<TSelected> = (
-  snapshot: EditorSelectorSnapshot,
-) => TSelected
+export type EditorSelector<TSelected> = (snapshot: EditorSnapshot) => TSelected
 
 /**
  * @alpha

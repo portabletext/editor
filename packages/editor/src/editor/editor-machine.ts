@@ -182,7 +182,7 @@ export const editorMachine = setup({
       schema: EditorSchema
       readOnly: boolean
       maxBlocks: number | undefined
-      selection: NonNullable<EditorSelection> | undefined
+      selection: EditorSelection
       value: Array<PortableTextBlock> | undefined
     },
     events: {} as InternalEditorEvent,
@@ -275,23 +275,6 @@ export const editorMachine = setup({
         context.schema,
       )
 
-      if (!selection) {
-        console.warn(
-          `Unable to handle event ${event.type} due to missing selection`,
-        )
-
-        if (!defaultAction) {
-          return
-        }
-
-        enqueue.raise({
-          type: 'behavior action intends',
-          editor: event.editor,
-          actionIntends: [defaultAction],
-        })
-        return
-      }
-
       const editorContext = {
         keyGenerator: context.keyGenerator,
         schema: context.schema,
@@ -361,7 +344,7 @@ export const editorMachine = setup({
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
     schema: input.schema,
-    selection: undefined,
+    selection: null,
     readOnly: input.readOnly ?? false,
     maxBlocks: input.maxBlocks,
     value: input.value,
@@ -410,7 +393,7 @@ export const editorMachine = setup({
     'error': {actions: emit(({event}) => event)},
     'selection': {
       actions: [
-        assign({selection: ({event}) => event.selection ?? undefined}),
+        assign({selection: ({event}) => event.selection}),
         emit(({event}) => event),
       ],
     },
