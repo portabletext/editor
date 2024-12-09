@@ -4,14 +4,14 @@ import {beforeEach, describe, expect, it} from 'vitest'
 import {createActor} from 'xstate'
 import {coreBehaviors} from '../../behaviors/behavior.core'
 import {schemaType} from '../../editor/__tests__/PortableTextEditorTester'
+import {createEditorSchema} from '../../editor/create-editor-schema'
 import {editorMachine} from '../../editor/editor-machine'
 import {defaultKeyGenerator} from '../../editor/key-generator'
 import {withPlugins} from '../../editor/plugins/with-plugins'
 import {createApplyPatch} from '../applyPatch'
-import {getPortableTextMemberSchemaTypes} from '../getPortableTextMemberSchemaTypes'
 import {VOID_CHILD_KEY} from '../values'
 
-const schemaTypes = getPortableTextMemberSchemaTypes(schemaType)
+const schemaTypes = createEditorSchema(schemaType)
 
 const patchToOperations = createApplyPatch(schemaTypes)
 

@@ -25,10 +25,10 @@ import type {
   PortableTextMemberSchemaTypes,
 } from '../types/editor'
 import {debugWithName} from '../utils/debug'
-import {getPortableTextMemberSchemaTypes} from '../utils/getPortableTextMemberSchemaTypes'
 import {compileType} from '../utils/schema'
 import {Synchronizer} from './components/Synchronizer'
 import {createEditor, type Editor} from './create-editor'
+import {createEditorSchema} from './create-editor-schema'
 import {EditorActorContext} from './editor-actor-context'
 import type {EditorActor} from './editor-machine'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
@@ -158,7 +158,7 @@ export class PortableTextEditor extends Component<
       !prevProps.editor &&
       this.props.schemaType !== prevProps.schemaType
     ) {
-      this.schemaTypes = getPortableTextMemberSchemaTypes(
+      this.schemaTypes = createEditorSchema(
         this.props.schemaType.hasOwnProperty('jsonType')
           ? this.props.schemaType
           : compileType(this.props.schemaType),

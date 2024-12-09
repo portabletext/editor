@@ -14,8 +14,8 @@ import {
 import type {Behavior} from '../behaviors/behavior.types'
 import type {PickFromUnion} from '../type-utils'
 import type {EditableAPI} from '../types/editor'
-import {getPortableTextMemberSchemaTypes} from '../utils/getPortableTextMemberSchemaTypes'
 import {compileType} from '../utils/schema'
+import {createEditorSchema} from './create-editor-schema'
 import {createSlateEditor, type SlateEditor} from './create-slate-editor'
 import {compileSchemaDefinition, type SchemaDefinition} from './define-schema'
 import {
@@ -107,7 +107,7 @@ function editorConfigToMachineInput(config: EditorConfig) {
     readOnly: config.readOnly,
     schema: config.schemaDefinition
       ? compileSchemaDefinition(config.schemaDefinition)
-      : getPortableTextMemberSchemaTypes(
+      : createEditorSchema(
           config.schema.hasOwnProperty('jsonType')
             ? config.schema
             : compileType(config.schema),

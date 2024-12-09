@@ -1,8 +1,6 @@
 import {Editor, Transforms, type Descendant} from 'slate'
-import type {
-  PortableTextMemberSchemaTypes,
-  PortableTextSlateEditor,
-} from '../types/editor'
+import type {EditorSchema} from '../editor/define-schema'
+import type {PortableTextSlateEditor} from '../types/editor'
 import {isEqualToEmptyEditor} from '../utils/values'
 
 export function insertBlock({
@@ -14,7 +12,7 @@ export function insertBlock({
   block: Descendant
   placement: 'auto' | 'after' | 'before'
   editor: PortableTextSlateEditor
-  schema: PortableTextMemberSchemaTypes
+  schema: EditorSchema
 }) {
   if (!editor.selection) {
     const lastBlock = Array.from(

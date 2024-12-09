@@ -1,15 +1,13 @@
 import type {PortableTextBlock} from '@sanity/types'
-import type {
-  EditorSelection,
-  PortableTextMemberSchemaTypes,
-} from '../types/editor'
+import type {EditorSelection} from '../types/editor'
+import type {EditorSchema} from './define-schema'
 
 /**
  * @alpha
  */
 export type EditorContext = {
   keyGenerator: () => string
-  schema: PortableTextMemberSchemaTypes
+  schema: EditorSchema
   selection: NonNullable<EditorSelection>
   value: Array<PortableTextBlock>
 }

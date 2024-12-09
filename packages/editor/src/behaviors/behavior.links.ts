@@ -1,5 +1,5 @@
+import type {EditorSchema} from '../editor/define-schema'
 import {getFocusSpan, selectionIsCollapsed} from '../selectors/selectors'
-import type {PortableTextMemberSchemaTypes} from '../types/editor'
 import {defineBehavior} from './behavior.types'
 
 /**
@@ -7,7 +7,7 @@ import {defineBehavior} from './behavior.types'
  */
 export type LinkBehaviorsConfig = {
   linkAnnotation?: (context: {
-    schema: PortableTextMemberSchemaTypes
+    schema: EditorSchema
     url: string
   }) => {name: string; value: {[prop: string]: unknown}} | undefined
 }

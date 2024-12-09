@@ -4,13 +4,13 @@ import {beforeEach, describe, expect, it} from 'vitest'
 import {createActor} from 'xstate'
 import {coreBehaviors} from '../../behaviors/behavior.core'
 import {schemaType} from '../../editor/__tests__/PortableTextEditorTester'
+import {createEditorSchema} from '../../editor/create-editor-schema'
 import {editorMachine} from '../../editor/editor-machine'
 import {defaultKeyGenerator} from '../../editor/key-generator'
 import {withPlugins} from '../../editor/plugins/with-plugins'
-import {getPortableTextMemberSchemaTypes} from '../getPortableTextMemberSchemaTypes'
 import {createOperationToPatches} from '../operationToPatches'
 
-const schemaTypes = getPortableTextMemberSchemaTypes(schemaType)
+const schemaTypes = createEditorSchema(schemaType)
 
 const operationToPatches = createOperationToPatches(schemaTypes)
 

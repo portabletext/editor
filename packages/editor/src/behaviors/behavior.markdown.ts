@@ -1,4 +1,5 @@
 import {isPortableTextTextBlock} from '@sanity/types'
+import type {EditorSchema} from '../editor/define-schema'
 import {getTextBlockText} from '../editor/utils/utils'
 import {spanSelectionPointToBlockOffset} from '../editor/utils/utils.block-offset'
 import {getBlockTextBefore} from '../selectors/selector.get-text-before'
@@ -8,7 +9,6 @@ import {
   getFocusTextBlock,
   selectionIsCollapsed,
 } from '../selectors/selectors'
-import type {PortableTextMemberSchemaTypes} from '../types/editor'
 import {defineBehavior} from './behavior.types'
 
 /**
@@ -16,24 +16,16 @@ import {defineBehavior} from './behavior.types'
  */
 export type MarkdownBehaviorsConfig = {
   horizontalRuleObject?: (context: {
-    schema: PortableTextMemberSchemaTypes
+    schema: EditorSchema
   }) => {name: string; value?: {[prop: string]: unknown}} | undefined
-  defaultStyle?: (context: {
-    schema: PortableTextMemberSchemaTypes
-  }) => string | undefined
+  defaultStyle?: (context: {schema: EditorSchema}) => string | undefined
   headingStyle?: (context: {
-    schema: PortableTextMemberSchemaTypes
+    schema: EditorSchema
     level: number
   }) => string | undefined
-  blockquoteStyle?: (context: {
-    schema: PortableTextMemberSchemaTypes
-  }) => string | undefined
-  unorderedListStyle?: (context: {
-    schema: PortableTextMemberSchemaTypes
-  }) => string | undefined
-  orderedListStyle?: (context: {
-    schema: PortableTextMemberSchemaTypes
-  }) => string | undefined
+  blockquoteStyle?: (context: {schema: EditorSchema}) => string | undefined
+  unorderedListStyle?: (context: {schema: EditorSchema}) => string | undefined
+  orderedListStyle?: (context: {schema: EditorSchema}) => string | undefined
 }
 
 /**
