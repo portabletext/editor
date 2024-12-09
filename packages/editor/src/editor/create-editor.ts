@@ -81,9 +81,6 @@ export type Editor = {
   }
 }
 
-/**
- * @internal
- */
 export function createEditor(config: EditorConfig): Editor {
   const editorActor = createActor(editorMachine, {
     input: editorConfigToMachineInput(config),
