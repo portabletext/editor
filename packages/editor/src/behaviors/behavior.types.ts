@@ -71,10 +71,10 @@ export type SyntheticBehaviorEvent =
       }
     }
   | {
-      type: 'insert.soft break'
+      type: 'insert.break'
     }
   | {
-      type: 'insert.break'
+      type: 'insert.soft break'
     }
   | {
       type: 'insert.text'
