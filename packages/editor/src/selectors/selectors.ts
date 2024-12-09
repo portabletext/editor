@@ -9,7 +9,7 @@ import {
   type PortableTextSpan,
   type PortableTextTextBlock,
 } from '@sanity/types'
-import {createGuards} from '../editor/behavior/behavior.guards'
+import {createGuards} from '../behavior-actions/behavior.guards'
 import type {EditorSelector} from '../editor/editor-selector'
 
 /**

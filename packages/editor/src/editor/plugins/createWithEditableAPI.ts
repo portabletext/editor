@@ -18,6 +18,9 @@ import {
 } from 'slate'
 import type {DOMNode} from 'slate-dom'
 import {ReactEditor} from 'slate-react'
+import {isListItemActive} from '../../behavior-actions/behavior.action.list-item'
+import {isStyleActive} from '../../behavior-actions/behavior.action.style'
+import type {BehaviorActionImplementation} from '../../behavior-actions/behavior.actions'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
@@ -31,9 +34,6 @@ import {
   KEY_TO_VALUE_ELEMENT,
   SLATE_TO_PORTABLE_TEXT_RANGE,
 } from '../../utils/weakMaps'
-import {isListItemActive} from '../behavior/behavior.action.list-item'
-import {isStyleActive} from '../behavior/behavior.action.style'
-import type {BehaviorActionImplementation} from '../behavior/behavior.actions'
 import type {EditorActor} from '../editor-machine'
 import {isDecoratorActive} from './createWithPortableTextMarkModel'
 

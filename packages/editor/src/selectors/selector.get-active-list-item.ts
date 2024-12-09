@@ -1,5 +1,5 @@
 import type {PortableTextListBlock} from '@sanity/types'
-import {createGuards} from '../editor/behavior/behavior.guards'
+import {createGuards} from '../behavior-actions/behavior.guards'
 import type {EditorSelector} from '../editor/editor-selector'
 import {getSelectedBlocks} from './selectors'
 

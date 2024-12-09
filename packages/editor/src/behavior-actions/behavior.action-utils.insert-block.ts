@@ -2,8 +2,8 @@ import {Editor, Transforms, type Descendant} from 'slate'
 import type {
   PortableTextMemberSchemaTypes,
   PortableTextSlateEditor,
-} from '../../types/editor'
-import {isEqualToEmptyEditor} from '../../utils/values'
+} from '../types/editor'
+import {isEqualToEmptyEditor} from '../utils/values'
 
 export function insertBlock({
   block,

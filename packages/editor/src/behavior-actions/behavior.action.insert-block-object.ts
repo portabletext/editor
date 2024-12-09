@@ -1,4 +1,4 @@
-import {toSlateValue} from '../../utils/values'
+import {toSlateValue} from '../utils/values'
 import {insertBlock} from './behavior.action-utils.insert-block'
 import type {BehaviorActionImplementation} from './behavior.actions'
 
