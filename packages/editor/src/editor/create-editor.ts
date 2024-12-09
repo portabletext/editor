@@ -88,9 +88,37 @@ export function createEditor(config: EditorConfig): Editor {
   const editorActor = createActor(editorMachine, {
     input: editorConfigToMachineInput(config),
   })
-
   editorActor.start()
 
+  return createEditorFromActor(editorActor)
+}
+
+export function useCreateEditor(config: EditorConfig): Editor {
+  const editorActor = useActorRef(editorMachine, {
+    input: editorConfigToMachineInput(config),
+  })
+
+  return useMemo(() => createEditorFromActor(editorActor), [editorActor])
+}
+
+function editorConfigToMachineInput(config: EditorConfig) {
+  return {
+    behaviors: config.behaviors,
+    keyGenerator: config.keyGenerator ?? defaultKeyGenerator,
+    maxBlocks: config.maxBlocks,
+    readOnly: config.readOnly,
+    schema: config.schemaDefinition
+      ? compileSchemaDefinition(config.schemaDefinition)
+      : getPortableTextMemberSchemaTypes(
+          config.schema.hasOwnProperty('jsonType')
+            ? config.schema
+            : compileType(config.schema),
+        ),
+    value: config.initialValue,
+  } as const
+}
+
+function createEditorFromActor(editorActor: EditorActor): Editor {
   const slateEditor = createSlateEditor({editorActor})
   const editable = createEditableAPI(slateEditor.instance, editorActor)
 
@@ -110,50 +138,4 @@ export function createEditor(config: EditorConfig): Editor {
       slateEditor,
     },
   }
-}
-
-export function useCreateEditor(config: EditorConfig): Editor {
-  const editorActor = useActorRef(editorMachine, {
-    input: editorConfigToMachineInput(config),
-  })
-  const editor: Editor = useMemo(() => {
-    const slateEditor = createSlateEditor({editorActor})
-    const editable = createEditableAPI(slateEditor.instance, editorActor)
-
-    return {
-      send: (event: EditorEvent) => {
-        editorActor.send(event)
-      },
-      on: (event, listener) =>
-        editorActor.on(
-          event,
-          // @ts-expect-error
-          listener,
-        ),
-      _internal: {
-        editable,
-        editorActor,
-        slateEditor,
-      },
-    }
-  }, [editorActor])
-
-  return editor
-}
-
-function editorConfigToMachineInput(config: EditorConfig) {
-  return {
-    behaviors: config.behaviors,
-    keyGenerator: config.keyGenerator ?? defaultKeyGenerator,
-    maxBlocks: config.maxBlocks,
-    readOnly: config.readOnly,
-    schema: config.schemaDefinition
-      ? compileSchemaDefinition(config.schemaDefinition)
-      : getPortableTextMemberSchemaTypes(
-          config.schema.hasOwnProperty('jsonType')
-            ? config.schema
-            : compileType(config.schema),
-        ),
-    value: config.initialValue,
-  } as const
 }
