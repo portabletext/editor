@@ -233,7 +233,7 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
       Transforms.deselect(action.editor)
     }
   },
-  'select previous block': ({action}) => {
+  'select.previous block': ({action}) => {
     if (!action.editor.selection) {
       console.error('Unable to select previous block without a selection')
       return
@@ -250,7 +250,7 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
 
     Transforms.select(action.editor, previousBlockPath)
   },
-  'select next block': ({action}) => {
+  'select.next block': ({action}) => {
     if (!action.editor.selection) {
       console.error('Unable to select next block without a selection')
       return
@@ -370,15 +370,15 @@ export function performAction({
       })
       break
     }
-    case 'select previous block': {
-      behaviorActionImplementations['select previous block']({
+    case 'select.previous block': {
+      behaviorActionImplementations['select.previous block']({
         context,
         action,
       })
       break
     }
-    case 'select next block': {
-      behaviorActionImplementations['select next block']({
+    case 'select.next block': {
+      behaviorActionImplementations['select.next block']({
         context,
         action,
       })

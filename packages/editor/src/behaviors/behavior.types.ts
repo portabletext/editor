@@ -176,17 +176,17 @@ export type BehaviorActionIntend =
       effect: () => void
     }
   | {
+      type: 'reselect'
+    }
+  | {
       type: 'select'
       selection: EditorSelection
     }
   | {
-      type: 'select previous block'
+      type: 'select.previous block'
     }
   | {
-      type: 'select next block'
-    }
-  | {
-      type: 'reselect'
+      type: 'select.next block'
     }
   | {
       type: 'style.add'

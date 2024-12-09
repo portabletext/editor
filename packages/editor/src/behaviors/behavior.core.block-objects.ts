@@ -34,7 +34,7 @@ const arrowUpOnLonelyBlockObject = defineBehavior({
   actions: [
     () => [
       {type: 'insert.text block', placement: 'before'},
-      {type: 'select previous block'},
+      {type: 'select.previous block'},
     ],
   ],
 })
