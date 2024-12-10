@@ -86,11 +86,11 @@
   },
   "devDependencies": {
     "@portabletext/toolkit": "^2.0.16",
-    "@sanity/block-tools": "^3.66.1",
+    "@sanity/block-tools": "^3.67.0",
     "@sanity/diff-match-patch": "^3.1.1",
     "@sanity/pkg-utils": "^6.11.15",
-    "@sanity/schema": "^3.66.1",
-    "@sanity/types": "^3.66.1",
+    "@sanity/schema": "^3.67.0",
+    "@sanity/types": "^3.67.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
     "@types/debug": "^4.1.5",
@@ -119,9 +119,9 @@
     "vitest-browser-react": "^0.0.4"
   },
   "peerDependencies": {
-    "@sanity/block-tools": "^3.66.1",
-    "@sanity/schema": "^3.66.1",
-    "@sanity/types": "^3.66.1",
+    "@sanity/block-tools": "^3.67.0",
+    "@sanity/schema": "^3.67.0",
+    "@sanity/types": "^3.67.0",
     "react": "^16.9 || ^17 || ^18 || ^19",
     "rxjs": "^7.8.1",
     "styled-components": "^6.1.13"
