@@ -4,7 +4,11 @@ import {Editor, Text, Transforms, type Descendant, type Node} from 'slate'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {validateValue} from '../../utils/validateValue'
-import {toSlateValue, VOID_CHILD_KEY} from '../../utils/values'
+import {
+  isEqualToEmptyEditor,
+  toSlateValue,
+  VOID_CHILD_KEY,
+} from '../../utils/values'
 import {
   isChangingLocally,
   isChangingRemotely,
@@ -113,11 +117,39 @@ export function syncValue({
       })
       isChanged = true
     }
-    // Remove, replace or add nodes according to what is changed.
-    if (value && value.length > 0) {
-      const slateValueFromProps = toSlateValue(value, {
-        schemaTypes: editorActor.getSnapshot().context.schema,
+
+    const slateValueFromProps = toSlateValue(value, {
+      schemaTypes: editorActor.getSnapshot().context.schema,
+    })
+
+    const emptyEditor = isEqualToEmptyEditor(
+      slateEditor.children,
+      editorActor.getSnapshot().context.schema,
+    )
+
+    if (emptyEditor && value) {
+      debug('Empty editor, inserting new blocks')
+      Editor.withoutNormalizing(slateEditor, () => {
+        withRemoteChanges(slateEditor, () => {
+          withoutSaving(slateEditor, () => {
+            withoutPatching(slateEditor, () => {
+              Transforms.insertFragment(slateEditor, slateValueFromProps)
+              isChanged = true
+
+              const validation = validateValue(
+                value,
+                editorActor.getSnapshot().context.schema,
+                editorActor.getSnapshot().context.keyGenerator,
+              )
+              isValid = isValid && validation.valid
+            })
+          })
+        })
       })
+    }
+
+    // Remove, replace or add nodes according to what is changed.
+    if (!emptyEditor && value && value.length > 0) {
       Editor.withoutNormalizing(slateEditor, () => {
         withRemoteChanges(slateEditor, () => {
           withoutSaving(slateEditor, () => {
