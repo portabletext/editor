@@ -10,17 +10,28 @@ hero:
     - text: Get Started
       link: /getting-started/
       icon: right-arrow
-    - text: Read the Starlight docs
-      link: https://starlight.astro.build
+    - text: Check out Sanity
+      link: https://www.sanity.io
       icon: external
       variant: minimal
 ---
 
-import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import {Card, CardGrid, LinkCard} from '@astrojs/starlight/components'
+import PortableTextEditor from '../../components/editor/editor.astro'
+
+<PortableTextEditor />
 
 ## Next steps
 
 <CardGrid>
-	<LinkCard title="Create a Behavior" description="Add custom behaviors to the editor" href="/guides/create-behavior/" />
-	<LinkCard title="Customize the Toolbar" description="Change how the editor displays the toolbar" href="/guides/customize-toolbar/" />
+  <LinkCard
+    title="Create a Behavior"
+    description="Add custom behaviors to the editor"
+    href="/guides/create-behavior/"
+  />
+  <LinkCard
+    title="Customize the Toolbar"
+    description="Change how the editor displays the toolbar"
+    href="/guides/customize-toolbar/"
+  />
 </CardGrid>
