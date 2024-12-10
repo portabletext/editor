@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.4](https://github.com/portabletext/editor/compare/editor-v1.15.3...editor-v1.15.4) (2024-12-10)
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^3.67.0 ([3526fa5](https://github.com/portabletext/editor/commit/3526fa507a3dce51bb206ca0de045d26730881f3))
+
 ## [1.15.3](https://github.com/portabletext/editor/compare/editor-v1.15.2...editor-v1.15.3) (2024-12-09)
 
 
