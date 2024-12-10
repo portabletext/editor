@@ -145,6 +145,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
               >
                 <PortableTextEditable
                   className="flex-1 p-2 border"
+                  style={{maxHeight: '50vh', overflowY: 'auto'}}
                   onPaste={(data) => {
                     const text = data.event.clipboardData.getData('text')
                     if (text === 'heading') {
