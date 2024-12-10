@@ -8,7 +8,7 @@ import type {PortableTextSlateEditor} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {IS_PROCESSING_LOCAL_CHANGES} from '../../utils/weakMaps'
 import type {EditorActor} from '../editor-machine'
-import {useSyncValue} from '../hooks/useSyncValue'
+import {syncValue} from '../hooks/useSyncValue'
 import type {PortableTextEditor} from '../PortableTextEditor'
 
 const debug = debugWithName('component:PortableTextEditor:Synchronizer')
@@ -33,17 +33,9 @@ export interface SynchronizerProps {
  * @internal
  */
 export function Synchronizer(props: SynchronizerProps) {
-  const readOnly = useSelector(props.editorActor, (s) => s.context.readOnly)
   const value = useSelector(props.editorActor, (s) => s.context.value)
   const {editorActor, getValue, portableTextEditor, slateEditor} = props
   const pendingPatches = useRef<Patch[]>([])
-
-  const syncValue = useSyncValue({
-    editorActor,
-    portableTextEditor,
-    readOnly,
-    slateEditor,
-  })
 
   useEffect(() => {
     IS_PROCESSING_LOCAL_CHANGES.set(slateEditor, false)
@@ -110,13 +102,18 @@ export function Synchronizer(props: SynchronizerProps) {
   const isInitialValueFromProps = useRef(true)
   useEffect(() => {
     debug('Value from props changed, syncing new value')
-    syncValue(value)
+    syncValue({
+      editorActor,
+      slateEditor,
+      portableTextEditor,
+      value,
+    })
     // Signal that we have our first value, and are ready to roll.
     if (isInitialValueFromProps.current) {
       editorActor.send({type: 'ready'})
       isInitialValueFromProps.current = false
     }
-  }, [editorActor, syncValue, value])
+  }, [editorActor, slateEditor, portableTextEditor, value])
 
   return null
 }
