@@ -47,149 +47,189 @@ export function syncValue({
   slateEditor: PortableTextSlateEditor
   value: Array<PortableTextBlock> | undefined
 }): void {
-  const updateFromCurrentValue = () => {
-    const currentValue = CURRENT_VALUE.get(portableTextEditor)
-    if (previousValue === currentValue) {
-      debug('Value is the same object as previous, not need to sync')
+  updateValue({
+    editorActor,
+    portableTextEditor,
+    slateEditor,
+    value,
+  })
+}
+
+function updateFromCurrentValue({
+  editorActor,
+  slateEditor,
+  portableTextEditor,
+}: {
+  editorActor: EditorActor
+  portableTextEditor: PortableTextEditor
+  slateEditor: PortableTextSlateEditor
+}) {
+  const currentValue = CURRENT_VALUE.get(portableTextEditor)
+  if (previousValue === currentValue) {
+    debug('Value is the same object as previous, not need to sync')
+    return
+  }
+  debug('Updating the value debounced')
+  updateValue({
+    editorActor,
+    portableTextEditor,
+    slateEditor,
+    value: currentValue,
+  })
+}
+
+const updateValueDebounced = debounce(updateFromCurrentValue, 1000, {
+  trailing: true,
+  leading: false,
+})
+
+function updateValue({
+  editorActor,
+  portableTextEditor,
+  slateEditor,
+  value,
+}: {
+  editorActor: EditorActor
+  portableTextEditor: PortableTextEditor
+  slateEditor: PortableTextSlateEditor
+  value: PortableTextBlock[] | undefined
+}) {
+  CURRENT_VALUE.set(portableTextEditor, value)
+
+  const isProcessingLocalChanges = isChangingLocally(slateEditor)
+  const isProcessingRemoteChanges = isChangingRemotely(slateEditor)
+
+  if (!editorActor.getSnapshot().context.readOnly) {
+    if (isProcessingLocalChanges) {
+      debug('Has local changes, not syncing value right now')
+      updateValueDebounced({
+        editorActor,
+        portableTextEditor,
+        slateEditor,
+      })
       return
     }
-    debug('Updating the value debounced')
-    updateValue(currentValue)
+    if (isProcessingRemoteChanges) {
+      debug('Has remote changes, not syncing value right now')
+      updateValueDebounced({
+        editorActor,
+        portableTextEditor,
+        slateEditor,
+      })
+      return
+    }
   }
 
-  const updateValueDebounced = debounce(updateFromCurrentValue, 1000, {
-    trailing: true,
-    leading: false,
-  })
+  let isChanged = false
+  let isValid = true
 
-  const updateValue = (value: PortableTextBlock[] | undefined) => {
-    CURRENT_VALUE.set(portableTextEditor, value)
-    const isProcessingLocalChanges = isChangingLocally(slateEditor)
-    const isProcessingRemoteChanges = isChangingRemotely(slateEditor)
-    if (!editorActor.getSnapshot().context.readOnly) {
-      if (isProcessingLocalChanges) {
-        debug('Has local changes, not syncing value right now')
-        updateValueDebounced()
-        return
-      }
-      if (isProcessingRemoteChanges) {
-        debug('Has remote changes, not syncing value right now')
-        updateValueDebounced()
-        return
-      }
-    }
+  const hadSelection = !!slateEditor.selection
 
-    let isChanged = false
-    let isValid = true
+  // If empty value, remove everything in the editor and insert a placeholder block
+  if (!value || value.length === 0) {
+    debug('Value is empty')
+    Editor.withoutNormalizing(slateEditor, () => {
+      withoutSaving(slateEditor, () => {
+        withoutPatching(slateEditor, () => {
+          if (hadSelection) {
+            Transforms.deselect(slateEditor)
+          }
+          const childrenLength = slateEditor.children.length
+          slateEditor.children.forEach((_, index) => {
+            Transforms.removeNodes(slateEditor, {
+              at: [childrenLength - 1 - index],
+            })
+          })
+          Transforms.insertNodes(
+            slateEditor,
+            slateEditor.pteCreateTextBlock({decorators: []}),
+            {at: [0]},
+          )
+          // Add a new selection in the top of the document
+          if (hadSelection) {
+            Transforms.select(slateEditor, [0, 0])
+          }
+        })
+      })
+    })
+    isChanged = true
+  }
+  // Remove, replace or add nodes according to what is changed.
+  if (value && value.length > 0) {
+    const slateValueFromProps = toSlateValue(value, {
+      schemaTypes: editorActor.getSnapshot().context.schema,
+    })
 
-    const hadSelection = !!slateEditor.selection
-
-    // If empty value, remove everything in the editor and insert a placeholder block
-    if (!value || value.length === 0) {
-      debug('Value is empty')
-      Editor.withoutNormalizing(slateEditor, () => {
+    Editor.withoutNormalizing(slateEditor, () => {
+      withRemoteChanges(slateEditor, () => {
         withoutSaving(slateEditor, () => {
           withoutPatching(slateEditor, () => {
-            if (hadSelection) {
-              Transforms.deselect(slateEditor)
-            }
             const childrenLength = slateEditor.children.length
-            slateEditor.children.forEach((_, index) => {
-              Transforms.removeNodes(slateEditor, {
-                at: [childrenLength - 1 - index],
+
+            // Remove blocks that have become superfluous
+            if (slateValueFromProps.length < childrenLength) {
+              for (
+                let i = childrenLength - 1;
+                i > slateValueFromProps.length - 1;
+                i--
+              ) {
+                Transforms.removeNodes(slateEditor, {
+                  at: [i],
+                })
+              }
+              isChanged = true
+            }
+
+            for (const [
+              currentBlockIndex,
+              currentBlock,
+            ] of slateValueFromProps.entries()) {
+              // Go through all of the blocks and see if they need to be updated
+              const {blockChanged, blockValid} = syncBlock({
+                block: currentBlock,
+                index: currentBlockIndex,
+                editorActor,
+                slateEditor,
+                value,
               })
-            })
-            Transforms.insertNodes(
-              slateEditor,
-              slateEditor.pteCreateTextBlock({decorators: []}),
-              {at: [0]},
-            )
-            // Add a new selection in the top of the document
-            if (hadSelection) {
-              Transforms.select(slateEditor, [0, 0])
+              isChanged = blockChanged || isChanged
+              isValid = isValid && blockValid
             }
           })
         })
       })
-      isChanged = true
-    }
-    // Remove, replace or add nodes according to what is changed.
-    if (value && value.length > 0) {
-      const slateValueFromProps = toSlateValue(value, {
-        schemaTypes: editorActor.getSnapshot().context.schema,
-      })
-      Editor.withoutNormalizing(slateEditor, () => {
-        withRemoteChanges(slateEditor, () => {
-          withoutSaving(slateEditor, () => {
-            withoutPatching(slateEditor, () => {
-              const childrenLength = slateEditor.children.length
-              // Remove blocks that have become superfluous
-              if (slateValueFromProps.length < childrenLength) {
-                for (
-                  let i = childrenLength - 1;
-                  i > slateValueFromProps.length - 1;
-                  i--
-                ) {
-                  Transforms.removeNodes(slateEditor, {
-                    at: [i],
-                  })
-                }
-                isChanged = true
-              }
-
-              // Go through all of the blocks and see if they need to be updated
-              for (const [
-                currentBlockIndex,
-                currentBlock,
-              ] of slateValueFromProps.entries()) {
-                const {blockChanged, blockValid} = syncBlock({
-                  block: currentBlock,
-                  index: currentBlockIndex,
-                  editorActor,
-                  slateEditor,
-                  value,
-                })
-                isChanged = blockChanged || isChanged
-                isValid = isValid && blockValid
-              }
-            })
-          })
-        })
-      })
-    }
-
-    if (!isValid) {
-      debug('Invalid value, returning')
-      return
-    }
-    if (isChanged) {
-      debug('Server value changed, syncing editor')
-      try {
-        slateEditor.onChange()
-      } catch (err) {
-        console.error(err)
-        editorActor.send({
-          type: 'invalid value',
-          resolution: null,
-          value,
-        })
-        return
-      }
-      if (hadSelection && !slateEditor.selection) {
-        Transforms.select(slateEditor, {
-          anchor: {path: [0, 0], offset: 0},
-          focus: {path: [0, 0], offset: 0},
-        })
-        slateEditor.onChange()
-      }
-      editorActor.send({type: 'value changed', value})
-    } else {
-      debug('Server value and editor value is equal, no need to sync.')
-    }
-    previousValue = value
+    })
   }
 
-  updateValue(value)
+  if (!isValid) {
+    debug('Invalid value, returning')
+    return
+  }
+  if (isChanged) {
+    debug('Server value changed, syncing editor')
+    try {
+      slateEditor.onChange()
+    } catch (err) {
+      console.error(err)
+      editorActor.send({
+        type: 'invalid value',
+        resolution: null,
+        value,
+      })
+      return
+    }
+    if (hadSelection && !slateEditor.selection) {
+      Transforms.select(slateEditor, {
+        anchor: {path: [0, 0], offset: 0},
+        focus: {path: [0, 0], offset: 0},
+      })
+      slateEditor.onChange()
+    }
+    editorActor.send({type: 'value changed', value})
+  } else {
+    debug('Server value and editor value is equal, no need to sync.')
+  }
+  previousValue = value
 }
 
 function syncBlock({
