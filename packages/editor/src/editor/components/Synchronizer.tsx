@@ -8,8 +8,8 @@ import type {PortableTextSlateEditor} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {IS_PROCESSING_LOCAL_CHANGES} from '../../utils/weakMaps'
 import type {EditorActor} from '../editor-machine'
-import {syncValue} from '../hooks/useSyncValue'
 import type {PortableTextEditor} from '../PortableTextEditor'
+import {syncValue} from './sync-value'
 
 const debug = debugWithName('component:PortableTextEditor:Synchronizer')
 const debugVerbose = debug.enabled && false
