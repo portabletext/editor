@@ -136,94 +136,22 @@ export function syncValue({
                 }
                 isChanged = true
               }
+
               // Go through all of the blocks and see if they need to be updated
-              slateValueFromProps.forEach((currentBlock, currentBlockIndex) => {
-                const oldBlock = slateEditor.children[currentBlockIndex]
-                const hasChanges = oldBlock && !isEqual(currentBlock, oldBlock)
-                if (hasChanges && isValid) {
-                  const validationValue = [value[currentBlockIndex]]
-                  const validation = validateValue(
-                    validationValue,
-                    editorActor.getSnapshot().context.schema,
-                    editorActor.getSnapshot().context.keyGenerator,
-                  )
-                  // Resolve validations that can be resolved automatically, without involving the user (but only if the value was changed)
-                  if (
-                    !validation.valid &&
-                    validation.resolution?.autoResolve &&
-                    validation.resolution?.patches.length > 0
-                  ) {
-                    // Only apply auto resolution if the value has been populated before and is different from the last one.
-                    if (
-                      !editorActor.getSnapshot().context.readOnly &&
-                      previousValue &&
-                      previousValue !== value
-                    ) {
-                      // Give a console warning about the fact that it did an auto resolution
-                      console.warn(
-                        `${validation.resolution.action} for block with _key '${validationValue[0]._key}'. ${validation.resolution?.description}`,
-                      )
-                      validation.resolution.patches.forEach((patch) => {
-                        editorActor.send({type: 'patch', patch})
-                      })
-                    }
-                  }
-                  if (validation.valid || validation.resolution?.autoResolve) {
-                    if (oldBlock._key === currentBlock._key) {
-                      if (debug.enabled)
-                        debug('Updating block', oldBlock, currentBlock)
-                      _updateBlock(
-                        slateEditor,
-                        currentBlock,
-                        oldBlock,
-                        currentBlockIndex,
-                      )
-                    } else {
-                      if (debug.enabled)
-                        debug('Replacing block', oldBlock, currentBlock)
-                      _replaceBlock(
-                        slateEditor,
-                        currentBlock,
-                        currentBlockIndex,
-                      )
-                    }
-                    isChanged = true
-                  } else {
-                    editorActor.send({
-                      type: 'invalid value',
-                      resolution: validation.resolution,
-                      value,
-                    })
-                    isValid = false
-                  }
-                }
-                if (!oldBlock && isValid) {
-                  const validationValue = [value[currentBlockIndex]]
-                  const validation = validateValue(
-                    validationValue,
-                    editorActor.getSnapshot().context.schema,
-                    editorActor.getSnapshot().context.keyGenerator,
-                  )
-                  if (debug.enabled)
-                    debug(
-                      'Validating and inserting new block in the end of the value',
-                      currentBlock,
-                    )
-                  if (validation.valid || validation.resolution?.autoResolve) {
-                    Transforms.insertNodes(slateEditor, currentBlock, {
-                      at: [currentBlockIndex],
-                    })
-                  } else {
-                    debug('Invalid', validation)
-                    editorActor.send({
-                      type: 'invalid value',
-                      resolution: validation.resolution,
-                      value,
-                    })
-                    isValid = false
-                  }
-                }
-              })
+              for (const [
+                currentBlockIndex,
+                currentBlock,
+              ] of slateValueFromProps.entries()) {
+                const {blockChanged, blockValid} = syncBlock({
+                  block: currentBlock,
+                  index: currentBlockIndex,
+                  editorActor,
+                  slateEditor,
+                  value,
+                })
+                isChanged = blockChanged || isChanged
+                isValid = isValid && blockValid
+              }
             })
           })
         })
@@ -262,6 +190,103 @@ export function syncValue({
   }
 
   updateValue(value)
+}
+
+function syncBlock({
+  block,
+  index,
+  editorActor,
+  slateEditor,
+  value,
+}: {
+  block: Descendant
+  index: number
+  editorActor: EditorActor
+  slateEditor: PortableTextSlateEditor
+  value: Array<PortableTextBlock>
+}) {
+  let blockChanged = false
+  let blockValid = true
+  const currentBlock = block
+  const currentBlockIndex = index
+  const oldBlock = slateEditor.children[currentBlockIndex]
+  const hasChanges = oldBlock && !isEqual(currentBlock, oldBlock)
+
+  if (hasChanges && blockValid) {
+    const validationValue = [value[currentBlockIndex]]
+    const validation = validateValue(
+      validationValue,
+      editorActor.getSnapshot().context.schema,
+      editorActor.getSnapshot().context.keyGenerator,
+    )
+    // Resolve validations that can be resolved automatically, without involving the user (but only if the value was changed)
+    if (
+      !validation.valid &&
+      validation.resolution?.autoResolve &&
+      validation.resolution?.patches.length > 0
+    ) {
+      // Only apply auto resolution if the value has been populated before and is different from the last one.
+      if (
+        !editorActor.getSnapshot().context.readOnly &&
+        previousValue &&
+        previousValue !== value
+      ) {
+        // Give a console warning about the fact that it did an auto resolution
+        console.warn(
+          `${validation.resolution.action} for block with _key '${validationValue[0]._key}'. ${validation.resolution?.description}`,
+        )
+        validation.resolution.patches.forEach((patch) => {
+          editorActor.send({type: 'patch', patch})
+        })
+      }
+    }
+    if (validation.valid || validation.resolution?.autoResolve) {
+      if (oldBlock._key === currentBlock._key) {
+        if (debug.enabled) debug('Updating block', oldBlock, currentBlock)
+        _updateBlock(slateEditor, currentBlock, oldBlock, currentBlockIndex)
+      } else {
+        if (debug.enabled) debug('Replacing block', oldBlock, currentBlock)
+        _replaceBlock(slateEditor, currentBlock, currentBlockIndex)
+      }
+      blockChanged = true
+    } else {
+      editorActor.send({
+        type: 'invalid value',
+        resolution: validation.resolution,
+        value,
+      })
+      blockValid = false
+    }
+  }
+
+  if (!oldBlock && blockValid) {
+    const validationValue = [value[currentBlockIndex]]
+    const validation = validateValue(
+      validationValue,
+      editorActor.getSnapshot().context.schema,
+      editorActor.getSnapshot().context.keyGenerator,
+    )
+    if (debug.enabled)
+      debug(
+        'Validating and inserting new block in the end of the value',
+        currentBlock,
+      )
+    if (validation.valid || validation.resolution?.autoResolve) {
+      Transforms.insertNodes(slateEditor, currentBlock, {
+        at: [currentBlockIndex],
+      })
+    } else {
+      debug('Invalid', validation)
+      editorActor.send({
+        type: 'invalid value',
+        resolution: validation.resolution,
+        value,
+      })
+      blockValid = false
+    }
+  }
+
+  return {blockChanged, blockValid}
 }
 
 /**
