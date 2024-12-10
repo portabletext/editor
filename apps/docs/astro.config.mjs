@@ -13,15 +13,17 @@ export default defineConfig({
 				{ slug: 'getting-started'},
 				{
 					label: 'Guides',
-					items: [
-						// Each item here is one entry in the navigation menu.
-						{ label: 'Behavior cheat sheet', slug: 'guides/behavior-cheat-sheet' },
-					],
+					autogenerate: { directory: 'guides'}
+				},
+				{
+					label: 'Concepts',
+					autogenerate: { directory: 'concepts'}
 				},
 				{
 					label: 'Reference',
 					autogenerate: { directory: 'reference' },
 				},
+
 			],
 		}),
 	],
