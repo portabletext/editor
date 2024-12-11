@@ -101,7 +101,8 @@ export function Synchronizer(props: SynchronizerProps) {
   useEffect(() => {
     debug('Value from props changed, syncing new value')
     syncValue({
-      editorActor,
+      snapshot: editorActor.getSnapshot(),
+      sendBack: editorActor.send,
       slateEditor,
       value,
     })

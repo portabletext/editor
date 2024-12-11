@@ -36,26 +36,31 @@ let previousValue: PortableTextBlock[] | undefined
  * @internal
  */
 export function syncValue({
-  editorActor,
+  snapshot,
+  sendBack,
   slateEditor,
   value,
 }: {
-  editorActor: EditorActor
+  snapshot: ReturnType<EditorActor['getSnapshot']>
+  sendBack: EditorActor['send']
   slateEditor: PortableTextSlateEditor
   value: Array<PortableTextBlock> | undefined
 }): void {
   updateValue({
-    editorActor,
+    snapshot,
+    sendBack,
     slateEditor,
     value,
   })
 }
 
 function updateFromCurrentValue({
-  editorActor,
+  snapshot,
+  sendBack,
   slateEditor,
 }: {
-  editorActor: EditorActor
+  snapshot: ReturnType<EditorActor['getSnapshot']>
+  sendBack: EditorActor['send']
   slateEditor: PortableTextSlateEditor
 }) {
   const currentValue = CURRENT_VALUE.get(slateEditor)
@@ -65,7 +70,8 @@ function updateFromCurrentValue({
   }
   debug('Updating the value debounced')
   updateValue({
-    editorActor,
+    snapshot,
+    sendBack,
     slateEditor,
     value: currentValue,
   })
@@ -77,11 +83,13 @@ const updateValueDebounced = debounce(updateFromCurrentValue, 1000, {
 })
 
 function updateValue({
-  editorActor,
+  snapshot,
+  sendBack,
   slateEditor,
   value,
 }: {
-  editorActor: EditorActor
+  snapshot: ReturnType<EditorActor['getSnapshot']>
+  sendBack: EditorActor['send']
   slateEditor: PortableTextSlateEditor
   value: PortableTextBlock[] | undefined
 }) {
@@ -90,11 +98,12 @@ function updateValue({
   const isProcessingLocalChanges = isChangingLocally(slateEditor)
   const isProcessingRemoteChanges = isChangingRemotely(slateEditor)
 
-  if (!editorActor.getSnapshot().context.readOnly) {
+  if (!snapshot.context.readOnly) {
     if (isProcessingLocalChanges) {
       debug('Has local changes, not syncing value right now')
       updateValueDebounced({
-        editorActor,
+        snapshot,
+        sendBack,
         slateEditor,
       })
       return
@@ -102,7 +111,8 @@ function updateValue({
     if (isProcessingRemoteChanges) {
       debug('Has remote changes, not syncing value right now')
       updateValueDebounced({
-        editorActor,
+        snapshot,
+        sendBack,
         slateEditor,
       })
       return
@@ -146,7 +156,7 @@ function updateValue({
   // Remove, replace or add nodes according to what is changed.
   if (value && value.length > 0) {
     const slateValueFromProps = toSlateValue(value, {
-      schemaTypes: editorActor.getSnapshot().context.schema,
+      schemaTypes: snapshot.context.schema,
     })
 
     Editor.withoutNormalizing(slateEditor, () => {
@@ -175,9 +185,10 @@ function updateValue({
             ] of slateValueFromProps.entries()) {
               // Go through all of the blocks and see if they need to be updated
               const {blockChanged, blockValid} = syncBlock({
+                snapshot,
+                sendBack,
                 block: currentBlock,
                 index: currentBlockIndex,
-                editorActor,
                 slateEditor,
                 value,
               })
@@ -200,7 +211,7 @@ function updateValue({
       slateEditor.onChange()
     } catch (err) {
       console.error(err)
-      editorActor.send({
+      sendBack({
         type: 'invalid value',
         resolution: null,
         value,
@@ -214,7 +225,7 @@ function updateValue({
       })
       slateEditor.onChange()
     }
-    editorActor.send({type: 'value changed', value})
+    sendBack({type: 'value changed', value})
   } else {
     debug('Server value and editor value is equal, no need to sync.')
   }
@@ -222,15 +233,17 @@ function updateValue({
 }
 
 function syncBlock({
+  snapshot,
+  sendBack,
   block,
   index,
-  editorActor,
   slateEditor,
   value,
 }: {
+  snapshot: ReturnType<EditorActor['getSnapshot']>
+  sendBack: EditorActor['send']
   block: Descendant
   index: number
-  editorActor: EditorActor
   slateEditor: PortableTextSlateEditor
   value: Array<PortableTextBlock>
 }) {
@@ -245,8 +258,8 @@ function syncBlock({
     const validationValue = [value[currentBlockIndex]]
     const validation = validateValue(
       validationValue,
-      editorActor.getSnapshot().context.schema,
-      editorActor.getSnapshot().context.keyGenerator,
+      snapshot.context.schema,
+      snapshot.context.keyGenerator,
     )
     // Resolve validations that can be resolved automatically, without involving the user (but only if the value was changed)
     if (
@@ -256,7 +269,7 @@ function syncBlock({
     ) {
       // Only apply auto resolution if the value has been populated before and is different from the last one.
       if (
-        !editorActor.getSnapshot().context.readOnly &&
+        !snapshot.context.readOnly &&
         previousValue &&
         previousValue !== value
       ) {
@@ -265,7 +278,7 @@ function syncBlock({
           `${validation.resolution.action} for block with _key '${validationValue[0]._key}'. ${validation.resolution?.description}`,
         )
         validation.resolution.patches.forEach((patch) => {
-          editorActor.send({type: 'patch', patch})
+          sendBack({type: 'patch', patch})
         })
       }
     }
@@ -279,7 +292,7 @@ function syncBlock({
       }
       blockChanged = true
     } else {
-      editorActor.send({
+      sendBack({
         type: 'invalid value',
         resolution: validation.resolution,
         value,
@@ -292,8 +305,8 @@ function syncBlock({
     const validationValue = [value[currentBlockIndex]]
     const validation = validateValue(
       validationValue,
-      editorActor.getSnapshot().context.schema,
-      editorActor.getSnapshot().context.keyGenerator,
+      snapshot.context.schema,
+      snapshot.context.keyGenerator,
     )
     if (debug.enabled)
       debug(
@@ -306,7 +319,7 @@ function syncBlock({
       })
     } else {
       debug('Invalid', validation)
-      editorActor.send({
+      sendBack({
         type: 'invalid value',
         resolution: validation.resolution,
         value,
