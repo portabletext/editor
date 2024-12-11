@@ -13,12 +13,11 @@ import {
 import {withoutPatching} from '../../utils/withoutPatching'
 import type {EditorActor} from '../editor-machine'
 import {withoutSaving} from '../plugins/createWithUndoRedo'
-import type {PortableTextEditor} from '../PortableTextEditor'
 
 const debug = debugWithName('hook:useSyncValue')
 
 const CURRENT_VALUE = new WeakMap<
-  PortableTextEditor,
+  PortableTextSlateEditor,
   PortableTextBlock[] | undefined
 >()
 
@@ -38,18 +37,15 @@ let previousValue: PortableTextBlock[] | undefined
  */
 export function syncValue({
   editorActor,
-  portableTextEditor,
   slateEditor,
   value,
 }: {
   editorActor: EditorActor
-  portableTextEditor: PortableTextEditor
   slateEditor: PortableTextSlateEditor
   value: Array<PortableTextBlock> | undefined
 }): void {
   updateValue({
     editorActor,
-    portableTextEditor,
     slateEditor,
     value,
   })
@@ -58,13 +54,11 @@ export function syncValue({
 function updateFromCurrentValue({
   editorActor,
   slateEditor,
-  portableTextEditor,
 }: {
   editorActor: EditorActor
-  portableTextEditor: PortableTextEditor
   slateEditor: PortableTextSlateEditor
 }) {
-  const currentValue = CURRENT_VALUE.get(portableTextEditor)
+  const currentValue = CURRENT_VALUE.get(slateEditor)
   if (previousValue === currentValue) {
     debug('Value is the same object as previous, not need to sync')
     return
@@ -72,7 +66,6 @@ function updateFromCurrentValue({
   debug('Updating the value debounced')
   updateValue({
     editorActor,
-    portableTextEditor,
     slateEditor,
     value: currentValue,
   })
@@ -85,16 +78,14 @@ const updateValueDebounced = debounce(updateFromCurrentValue, 1000, {
 
 function updateValue({
   editorActor,
-  portableTextEditor,
   slateEditor,
   value,
 }: {
   editorActor: EditorActor
-  portableTextEditor: PortableTextEditor
   slateEditor: PortableTextSlateEditor
   value: PortableTextBlock[] | undefined
 }) {
-  CURRENT_VALUE.set(portableTextEditor, value)
+  CURRENT_VALUE.set(slateEditor, value)
 
   const isProcessingLocalChanges = isChangingLocally(slateEditor)
   const isProcessingRemoteChanges = isChangingRemotely(slateEditor)
@@ -104,7 +95,6 @@ function updateValue({
       debug('Has local changes, not syncing value right now')
       updateValueDebounced({
         editorActor,
-        portableTextEditor,
         slateEditor,
       })
       return
@@ -113,7 +103,6 @@ function updateValue({
       debug('Has remote changes, not syncing value right now')
       updateValueDebounced({
         editorActor,
-        portableTextEditor,
         slateEditor,
       })
       return

@@ -48,7 +48,6 @@ export function EditorProvider(props: EditorProviderProps) {
       <Synchronizer
         editorActor={editorActor}
         getValue={editable.getValue}
-        portableTextEditor={portableTextEditor}
         slateEditor={slateEditor.instance}
       />
       <EditorActorContext.Provider value={editorActor}>
