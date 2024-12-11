@@ -4,18 +4,24 @@ import {
   keyGenerator,
   PortableTextEditable,
   type PortableTextBlock,
+  type SchemaDefinition,
 } from '@portabletext/editor'
 import {PortableText} from '@portabletext/react'
 import {useState} from 'react'
-import {schemaDefinition} from './schema'
+import {defaultSchema} from './defaultSchema'
 import {Toolbar} from './toolbar'
 
-export function PortableTextEditor() {
+type PortableTextEditorProps = {
+  customSchema?: SchemaDefinition
+}
+
+export function PortableTextEditor({customSchema}: PortableTextEditorProps) {
   const [value, setValue] = useState<Array<PortableTextBlock> | undefined>(
     undefined,
   )
   const [showJsonPreview, setShowJsonPreview] = useState(true)
   const [showPortableTextPreview, setShowPortableTextPreview] = useState(true)
+  const schemaDefinition = customSchema || defaultSchema
 
   return (
     <div>

@@ -1,6 +1,6 @@
 import {defineSchema} from '@portabletext/editor'
 
-export const schemaDefinition = defineSchema({
+export const defaultSchema = defineSchema({
   decorators: [{name: 'strong'}, {name: 'em'}, {name: 'underline'}],
   annotations: [{name: 'link'}],
   styles: [
