@@ -49,26 +49,22 @@ describe('plugin:withPortableTextMarksModel', () => {
           anchor: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 4},
         })
         PortableTextEditor.toggleMark(editor, 'strong')
-        expect(PortableTextEditor.getValue(editor)).toMatchInlineSnapshot(`
-        [
+        expect(PortableTextEditor.getValue(editor)).toEqual([
           {
-            "_key": "a",
-            "_type": "myTestBlockType",
-            "children": [
+            _key: 'a',
+            _type: 'myTestBlockType',
+            children: [
               {
-                "_key": "a1",
-                "_type": "span",
-                "marks": [
-                  "strong",
-                ],
-                "text": "1234",
+                _key: 'a1',
+                _type: 'span',
+                marks: ['strong'],
+                text: '1234',
               },
             ],
-            "markDefs": [],
-            "style": "normal",
+            markDefs: [],
+            style: 'normal',
           },
-        ]
-      `)
+        ])
       })
       await waitFor(() => {
         if (editorRef.current) {
@@ -869,6 +865,16 @@ describe('plugin:withPortableTextMarksModel', () => {
             value={initialValue}
           />,
         )
+      })
+
+      await waitFor(() => {
+        if (editorRef.current) {
+          expect(onChange).toHaveBeenCalledWith({
+            type: 'value',
+            value: initialValue,
+          })
+          expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+        }
       })
 
       await waitFor(() => {
