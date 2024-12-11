@@ -114,7 +114,7 @@ export const syncMachine = setup({
     emitted: {} as PickFromUnion<
       SyncValueEvent,
       'type',
-      'invalid value' | 'patch' | 'value changed'
+      'done syncing' | 'invalid value' | 'patch' | 'value changed'
     >,
   },
   actions: {
@@ -135,6 +135,10 @@ export const syncMachine = setup({
         assertEvent(event, 'done syncing')
         return event.value
       },
+    }),
+    'emit done syncing': emit(({event}) => {
+      assertEvent(event, 'done syncing')
+      return event
     }),
   },
   guards: {
@@ -238,12 +242,16 @@ export const syncMachine = setup({
         'done syncing': [
           {
             guard: 'value changed while syncing',
-            actions: ['assign previous value'],
+            actions: ['assign previous value', 'emit done syncing'],
             reenter: true,
           },
           {
             target: 'idle',
-            actions: ['clear pending value', 'assign previous value'],
+            actions: [
+              'clear pending value',
+              'assign previous value',
+              'emit done syncing',
+            ],
           },
         ],
       },

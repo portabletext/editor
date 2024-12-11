@@ -58,6 +58,11 @@ export function Synchronizer(props: SynchronizerProps) {
     syncActorRef.send({type: 'toggle readOnly'})
   }, [syncActorRef, readOnly])
 
+  useEffect(() => {
+    debug('Value from props changed, syncing new value')
+    syncActorRef.send({type: 'update value', value})
+  }, [syncActorRef, value])
+
   const pendingPatches = useRef<Patch[]>([])
 
   useEffect(() => {
@@ -119,19 +124,6 @@ export function Synchronizer(props: SynchronizerProps) {
       sub.unsubscribe()
     }
   }, [editorActor, onFlushPendingPatches, slateEditor])
-
-  // This hook must be set up after setting up the subscription above, or it will not pick up validation errors from the useSyncValue hook.
-  // This will cause the editor to not be able to signal a validation error and offer invalid value resolution of the initial value.
-  const isInitialValueFromProps = useRef(true)
-  useEffect(() => {
-    debug('Value from props changed, syncing new value')
-    syncActorRef.send({type: 'update value', value})
-    // Signal that we have our first value, and are ready to roll.
-    if (isInitialValueFromProps.current) {
-      editorActor.send({type: 'ready'})
-      isInitialValueFromProps.current = false
-    }
-  }, [editorActor, syncActorRef, value])
 
   return null
 }

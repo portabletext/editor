@@ -68,6 +68,7 @@ export type MutationEvent = {
 export type InternalEditorEvent =
   | {type: 'normalizing'}
   | {type: 'done normalizing'}
+  | {type: 'done syncing'}
   | {
       type: 'behavior event'
       behaviorEvent: SyntheticBehaviorEvent | NativeBehaviorEvent
@@ -228,6 +229,7 @@ export const editorMachine = setup({
         enqueue(emit(event))
       }
     }),
+    'emit ready': emit({type: 'ready'}),
     'clear pending events': assign({
       pendingEvents: [],
     }),
@@ -386,7 +388,6 @@ export const editorMachine = setup({
       actions: emit(({event}) => event),
       guard: ({context}) => !context.readOnly,
     },
-    'ready': {actions: emit(({event}) => event)},
     'unset': {actions: emit(({event}) => event)},
     'value changed': {actions: emit(({event}) => event)},
     'invalid value': {actions: emit(({event}) => event)},
@@ -455,9 +456,23 @@ export const editorMachine = setup({
       ],
     },
   },
-  initial: 'pristine',
+  initial: 'setting up',
   states: {
-    pristine: {
+    'setting up': {
+      exit: ['emit ready'],
+      on: {
+        'patch': {
+          actions: 'defer event',
+        },
+        'mutation': {
+          actions: 'defer event',
+        },
+        'done syncing': {
+          target: 'pristine',
+        },
+      },
+    },
+    'pristine': {
       initial: 'idle',
       states: {
         idle: {
@@ -490,7 +505,7 @@ export const editorMachine = setup({
         },
       },
     },
-    dirty: {
+    'dirty': {
       entry: ['emit pending events', 'clear pending events'],
       on: {
         patch: {
