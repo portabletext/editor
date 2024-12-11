@@ -5,6 +5,7 @@ import {defineConfig} from 'astro/config'
 // https://astro.build/config
 export default defineConfig({
   integrations: [
+    react(),
     starlight({
       title: 'Portable Text Editor Docs',
       social: {
@@ -26,6 +27,5 @@ export default defineConfig({
         },
       ],
     }),
-    react(),
   ],
 })
