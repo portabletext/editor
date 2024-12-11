@@ -1,6 +1,6 @@
 import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@sanity/types'
-import {useSelector} from '@xstate/react'
+import {useActorRef, useSelector} from '@xstate/react'
 import {throttle} from 'lodash'
 import {useCallback, useEffect, useRef} from 'react'
 import {Editor} from 'slate'
@@ -8,7 +8,7 @@ import type {PortableTextSlateEditor} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {IS_PROCESSING_LOCAL_CHANGES} from '../../utils/weakMaps'
 import type {EditorActor} from '../editor-machine'
-import {syncValue} from './sync-value'
+import {syncMachine} from './sync-value'
 
 const debug = debugWithName('component:PortableTextEditor:Synchronizer')
 const debugVerbose = debug.enabled && false
@@ -31,8 +31,33 @@ export interface SynchronizerProps {
  * @internal
  */
 export function Synchronizer(props: SynchronizerProps) {
-  const value = useSelector(props.editorActor, (s) => s.context.value)
   const {editorActor, getValue, slateEditor} = props
+
+  const value = useSelector(props.editorActor, (s) => s.context.value)
+  const readOnly = useSelector(props.editorActor, (s) => s.context.readOnly)
+  const syncActorRef = useActorRef(syncMachine, {
+    input: {
+      keyGenerator: props.editorActor.getSnapshot().context.keyGenerator,
+      readOnly: props.editorActor.getSnapshot().context.readOnly,
+      schema: props.editorActor.getSnapshot().context.schema,
+      slateEditor,
+    },
+  })
+
+  useEffect(() => {
+    const subscription = syncActorRef.on('*', (event) => {
+      props.editorActor.send(event)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [props.editorActor, syncActorRef])
+
+  useEffect(() => {
+    syncActorRef.send({type: 'toggle readOnly'})
+  }, [syncActorRef, readOnly])
+
   const pendingPatches = useRef<Patch[]>([])
 
   useEffect(() => {
@@ -100,18 +125,13 @@ export function Synchronizer(props: SynchronizerProps) {
   const isInitialValueFromProps = useRef(true)
   useEffect(() => {
     debug('Value from props changed, syncing new value')
-    syncValue({
-      snapshot: editorActor.getSnapshot(),
-      sendBack: editorActor.send,
-      slateEditor,
-      value,
-    })
+    syncActorRef.send({type: 'update value', value})
     // Signal that we have our first value, and are ready to roll.
     if (isInitialValueFromProps.current) {
       editorActor.send({type: 'ready'})
       isInitialValueFromProps.current = false
     }
-  }, [editorActor, slateEditor, value])
+  }, [editorActor, syncActorRef, value])
 
   return null
 }
