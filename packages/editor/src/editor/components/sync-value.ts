@@ -1,7 +1,24 @@
+import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@sanity/types'
-import {debounce, isEqual} from 'lodash'
+import {isEqual} from 'lodash'
 import {Editor, Text, Transforms, type Descendant, type Node} from 'slate'
-import type {PortableTextSlateEditor} from '../../types/editor'
+import {
+  and,
+  assertEvent,
+  assign,
+  emit,
+  fromCallback,
+  not,
+  or,
+  setup,
+  type AnyEventObject,
+  type CallbackLogicFunction,
+} from 'xstate'
+import type {PickFromUnion} from '../../type-utils'
+import type {
+  InvalidValueResolution,
+  PortableTextSlateEditor,
+} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {validateValue} from '../../utils/validateValue'
 import {toSlateValue, VOID_CHILD_KEY} from '../../utils/values'
@@ -11,17 +28,51 @@ import {
   withRemoteChanges,
 } from '../../utils/withChanges'
 import {withoutPatching} from '../../utils/withoutPatching'
-import type {EditorActor} from '../editor-machine'
+import type {EditorSchema} from '../define-schema'
 import {withoutSaving} from '../plugins/createWithUndoRedo'
 
-const debug = debugWithName('hook:useSyncValue')
+type SyncValueEvent =
+  | {
+      type: 'patch'
+      patch: Patch
+    }
+  | {
+      type: 'invalid value'
+      resolution: InvalidValueResolution | null
+      value: Array<PortableTextBlock> | undefined
+    }
+  | {
+      type: 'value changed'
+      value: Array<PortableTextBlock> | undefined
+    }
+  | {
+      type: 'done syncing'
+      value: Array<PortableTextBlock> | undefined
+    }
 
-const CURRENT_VALUE = new WeakMap<
-  PortableTextSlateEditor,
-  PortableTextBlock[] | undefined
->()
+const syncValueCallback: CallbackLogicFunction<
+  AnyEventObject,
+  SyncValueEvent,
+  {
+    context: {
+      keyGenerator: () => string
+      previousValue: Array<PortableTextBlock> | undefined
+      readOnly: boolean
+      schema: EditorSchema
+    }
+    slateEditor: PortableTextSlateEditor
+    value: Array<PortableTextBlock> | undefined
+  }
+> = ({sendBack, input}) => {
+  updateValue({
+    context: input.context,
+    sendBack,
+    slateEditor: input.slateEditor,
+    value: input.value,
+  })
+}
 
-let previousValue: PortableTextBlock[] | undefined
+const syncValueLogic = fromCallback(syncValueCallback)
 
 /**
  * Sync value with the editor state
@@ -35,90 +86,190 @@ let previousValue: PortableTextBlock[] | undefined
  *
  * @internal
  */
-export function syncValue({
-  snapshot,
-  sendBack,
-  slateEditor,
-  value,
-}: {
-  snapshot: ReturnType<EditorActor['getSnapshot']>
-  sendBack: EditorActor['send']
-  slateEditor: PortableTextSlateEditor
-  value: Array<PortableTextBlock> | undefined
-}): void {
-  updateValue({
-    snapshot,
-    sendBack,
-    slateEditor,
-    value,
-  })
-}
-
-function updateFromCurrentValue({
-  snapshot,
-  sendBack,
-  slateEditor,
-}: {
-  snapshot: ReturnType<EditorActor['getSnapshot']>
-  sendBack: EditorActor['send']
-  slateEditor: PortableTextSlateEditor
-}) {
-  const currentValue = CURRENT_VALUE.get(slateEditor)
-  if (previousValue === currentValue) {
-    debug('Value is the same object as previous, not need to sync')
-    return
-  }
-  debug('Updating the value debounced')
-  updateValue({
-    snapshot,
-    sendBack,
-    slateEditor,
-    value: currentValue,
-  })
-}
-
-const updateValueDebounced = debounce(updateFromCurrentValue, 1000, {
-  trailing: true,
-  leading: false,
+export const syncMachine = setup({
+  types: {
+    context: {} as {
+      keyGenerator: () => string
+      schema: EditorSchema
+      readOnly: boolean
+      slateEditor: PortableTextSlateEditor
+      pendingValue: Array<PortableTextBlock> | undefined
+      previousValue: Array<PortableTextBlock> | undefined
+    },
+    input: {} as {
+      keyGenerator: () => string
+      schema: EditorSchema
+      readOnly: boolean
+      slateEditor: PortableTextSlateEditor
+    },
+    events: {} as
+      | {
+          type: 'update value'
+          value: Array<PortableTextBlock> | undefined
+        }
+      | {
+          type: 'toggle readOnly'
+        }
+      | SyncValueEvent,
+    emitted: {} as PickFromUnion<
+      SyncValueEvent,
+      'type',
+      'invalid value' | 'patch' | 'value changed'
+    >,
+  },
+  actions: {
+    'assign readOnly': assign({
+      readOnly: ({context}) => !context.readOnly,
+    }),
+    'assign pending value': assign({
+      pendingValue: ({event}) => {
+        assertEvent(event, 'update value')
+        return event.value
+      },
+    }),
+    'clear pending value': assign({
+      pendingValue: undefined,
+    }),
+    'assign previous value': assign({
+      previousValue: ({event}) => {
+        assertEvent(event, 'done syncing')
+        return event.value
+      },
+    }),
+  },
+  guards: {
+    'is readOnly': ({context}) => context.readOnly,
+    'is processing local changes': ({context}) =>
+      isChangingLocally(context.slateEditor) ?? false,
+    'is processing remote changes': ({context}) =>
+      isChangingRemotely(context.slateEditor) ?? false,
+    'is busy': and([
+      not('is readOnly'),
+      or(['is processing local changes', 'is processing remote changes']),
+    ]),
+    'value changed while syncing': ({context, event}) => {
+      assertEvent(event, 'done syncing')
+      return context.pendingValue !== event.value
+    },
+  },
+  actors: {
+    'sync value': syncValueLogic,
+  },
+}).createMachine({
+  /** @xstate-layout N4IgpgJg5mDOIC5SwJ4DsDGBiALgeyigBswACAJzAEMIB5NIlAbQAYBdRUABz1gEscfPGk4gAHogBMATgBsAOgCMAFgDsqgKyzVAZi3TpynQBoQKRAFpFknUuXTJLAy1kqNqgL4fTqTPL4QJFgArlwQVDhkAG5URMFgrBxIIDz8gsKiEghWLAAc8iwsGrlyKtKKuRpapuYIGpL5GuWyeeUaOpKKOl4+6Bj+gWAhYRHRsfFMikncvAJCIslZOfmFxaX2FVWyNYg6ihrykkeyhqquypKyPSC+-QBGwajD4ZGkMXEJ7KKpcxmLiPtVPINMonGdFF0KhcTGZEMpivJQblkaoWKpFNo0ddbvIHk9Qi8xh9JtMUrN0gtQFkdNJbLTlBUdLJlBdisodgg1IolLJZJdablHNIWN1vDc+rjHigsGJYDhRvIqAAzSLkAAUikKLAAlFgcXjmF9kj8KZldrT5PTGczWbl2bC6rzgTpcrIQYVJO5pJ4xTjbnw0FBnqM3uNPqSTfMzQhVJ7LWsabSiqpcqoORcVnpZC73Cy9NINNiJf7A1guBEMAALRLfclR-4x9EFAvM8qORQFjQcnQdeS8jrtAs05TaIt+EtBgPvAKh4lGmZpetUxCabl8mQOHtOYX22o2IEyPInHs6eG6Qu+4t9ANB97xUhVqiByA1411v7LmNGeSo7MuhqFN6aYOio3LlHadrojIsi5GO-QTlgEDCGQE6vguvyUuIK4sMoiJ6BoLBdHkTK6OmCggq4WoOGoro+r047XqWSFoChjFQCStaLh+WEIDSdKntaLKenaHJuPIOg4bGHadGiKaimKaB4BAcCiLcnEYdGFiSCyfYaIosY6Gc9T6buligj+ZyCh2modA40hwQMJDqaaDZWHIun6fubqdKopm8XofbMk4kjqPsrj2ZefgGs5S48TY3LwoZRw4fpWjWByVT5Cm1joicnQtIoDkTjF3FZDBQK5IRhnWIROW5BlDSInkLDxYYDggl4XhAA */
+  id: 'sync',
+  context: ({input}) => ({
+    keyGenerator: input.keyGenerator,
+    schema: input.schema,
+    readOnly: input.readOnly,
+    slateEditor: input.slateEditor,
+    pendingValue: undefined,
+    previousValue: undefined,
+  }),
+  initial: 'idle',
+  on: {
+    'toggle readOnly': {
+      actions: ['assign readOnly'],
+    },
+  },
+  states: {
+    idle: {
+      on: {
+        'update value': [
+          {
+            guard: 'is busy',
+            target: 'busy',
+            actions: ['assign pending value'],
+          },
+          {
+            target: 'syncing',
+            actions: ['assign pending value'],
+          },
+        ],
+      },
+    },
+    busy: {
+      after: {
+        1000: {
+          target: 'syncing',
+        },
+      },
+      on: {
+        'update value': [
+          {
+            guard: 'is busy',
+            reenter: true,
+            actions: ['assign pending value'],
+          },
+          {
+            target: 'syncing',
+            actions: ['assign pending value'],
+          },
+        ],
+      },
+    },
+    syncing: {
+      invoke: {
+        src: 'sync value',
+        id: 'sync value',
+        input: ({context}) => ({
+          context: {
+            keyGenerator: context.keyGenerator,
+            previousValue: context.previousValue,
+            readOnly: context.readOnly,
+            schema: context.schema,
+          },
+          slateEditor: context.slateEditor,
+          value: context.pendingValue ?? undefined,
+        }),
+      },
+      on: {
+        'update value': {
+          actions: ['assign pending value'],
+        },
+        'patch': {
+          actions: [emit(({event}) => event)],
+        },
+        'invalid value': {
+          actions: [emit(({event}) => event)],
+        },
+        'value changed': {
+          actions: [emit(({event}) => event)],
+        },
+        'done syncing': [
+          {
+            guard: 'value changed while syncing',
+            actions: ['assign previous value'],
+            reenter: true,
+          },
+          {
+            target: 'idle',
+            actions: ['clear pending value', 'assign previous value'],
+          },
+        ],
+      },
+    },
+  },
 })
 
+const debug = debugWithName('hook:useSyncValue')
+
 function updateValue({
-  snapshot,
+  context,
   sendBack,
   slateEditor,
   value,
 }: {
-  snapshot: ReturnType<EditorActor['getSnapshot']>
-  sendBack: EditorActor['send']
+  context: {
+    keyGenerator: () => string
+    previousValue: Array<PortableTextBlock> | undefined
+    readOnly: boolean
+    schema: EditorSchema
+  }
+  sendBack: (event: SyncValueEvent) => void
   slateEditor: PortableTextSlateEditor
   value: PortableTextBlock[] | undefined
 }) {
-  CURRENT_VALUE.set(slateEditor, value)
-
-  const isProcessingLocalChanges = isChangingLocally(slateEditor)
-  const isProcessingRemoteChanges = isChangingRemotely(slateEditor)
-
-  if (!snapshot.context.readOnly) {
-    if (isProcessingLocalChanges) {
-      debug('Has local changes, not syncing value right now')
-      updateValueDebounced({
-        snapshot,
-        sendBack,
-        slateEditor,
-      })
-      return
-    }
-    if (isProcessingRemoteChanges) {
-      debug('Has remote changes, not syncing value right now')
-      updateValueDebounced({
-        snapshot,
-        sendBack,
-        slateEditor,
-      })
-      return
-    }
-  }
-
   let isChanged = false
   let isValid = true
 
@@ -156,7 +307,7 @@ function updateValue({
   // Remove, replace or add nodes according to what is changed.
   if (value && value.length > 0) {
     const slateValueFromProps = toSlateValue(value, {
-      schemaTypes: snapshot.context.schema,
+      schemaTypes: context.schema,
     })
 
     Editor.withoutNormalizing(slateEditor, () => {
@@ -185,7 +336,7 @@ function updateValue({
             ] of slateValueFromProps.entries()) {
               // Go through all of the blocks and see if they need to be updated
               const {blockChanged, blockValid} = syncBlock({
-                snapshot,
+                context,
                 sendBack,
                 block: currentBlock,
                 index: currentBlockIndex,
@@ -203,8 +354,10 @@ function updateValue({
 
   if (!isValid) {
     debug('Invalid value, returning')
+    sendBack({type: 'done syncing', value})
     return
   }
+
   if (isChanged) {
     debug('Server value changed, syncing editor')
     try {
@@ -216,6 +369,7 @@ function updateValue({
         resolution: null,
         value,
       })
+      sendBack({type: 'done syncing', value})
       return
     }
     if (hadSelection && !slateEditor.selection) {
@@ -229,19 +383,25 @@ function updateValue({
   } else {
     debug('Server value and editor value is equal, no need to sync.')
   }
-  previousValue = value
+
+  sendBack({type: 'done syncing', value})
 }
 
 function syncBlock({
-  snapshot,
+  context,
   sendBack,
   block,
   index,
   slateEditor,
   value,
 }: {
-  snapshot: ReturnType<EditorActor['getSnapshot']>
-  sendBack: EditorActor['send']
+  context: {
+    keyGenerator: () => string
+    previousValue: Array<PortableTextBlock> | undefined
+    readOnly: boolean
+    schema: EditorSchema
+  }
+  sendBack: (event: SyncValueEvent) => void
   block: Descendant
   index: number
   slateEditor: PortableTextSlateEditor
@@ -258,8 +418,8 @@ function syncBlock({
     const validationValue = [value[currentBlockIndex]]
     const validation = validateValue(
       validationValue,
-      snapshot.context.schema,
-      snapshot.context.keyGenerator,
+      context.schema,
+      context.keyGenerator,
     )
     // Resolve validations that can be resolved automatically, without involving the user (but only if the value was changed)
     if (
@@ -269,9 +429,9 @@ function syncBlock({
     ) {
       // Only apply auto resolution if the value has been populated before and is different from the last one.
       if (
-        !snapshot.context.readOnly &&
-        previousValue &&
-        previousValue !== value
+        !context.readOnly &&
+        context.previousValue &&
+        context.previousValue !== value
       ) {
         // Give a console warning about the fact that it did an auto resolution
         console.warn(
@@ -305,8 +465,8 @@ function syncBlock({
     const validationValue = [value[currentBlockIndex]]
     const validation = validateValue(
       validationValue,
-      snapshot.context.schema,
-      snapshot.context.keyGenerator,
+      context.schema,
+      context.keyGenerator,
     )
     if (debug.enabled)
       debug(
