@@ -8,7 +8,6 @@ import type {PortableTextSlateEditor} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import {IS_PROCESSING_LOCAL_CHANGES} from '../../utils/weakMaps'
 import type {EditorActor} from '../editor-machine'
-import type {PortableTextEditor} from '../PortableTextEditor'
 import {syncValue} from './sync-value'
 
 const debug = debugWithName('component:PortableTextEditor:Synchronizer')
@@ -24,7 +23,6 @@ const FLUSH_PATCHES_THROTTLED_MS = process.env.NODE_ENV === 'test' ? 500 : 1000
 export interface SynchronizerProps {
   editorActor: EditorActor
   getValue: () => Array<PortableTextBlock> | undefined
-  portableTextEditor: PortableTextEditor
   slateEditor: PortableTextSlateEditor
 }
 
@@ -34,7 +32,7 @@ export interface SynchronizerProps {
  */
 export function Synchronizer(props: SynchronizerProps) {
   const value = useSelector(props.editorActor, (s) => s.context.value)
-  const {editorActor, getValue, portableTextEditor, slateEditor} = props
+  const {editorActor, getValue, slateEditor} = props
   const pendingPatches = useRef<Patch[]>([])
 
   useEffect(() => {
@@ -105,7 +103,6 @@ export function Synchronizer(props: SynchronizerProps) {
     syncValue({
       editorActor,
       slateEditor,
-      portableTextEditor,
       value,
     })
     // Signal that we have our first value, and are ready to roll.
@@ -113,7 +110,7 @@ export function Synchronizer(props: SynchronizerProps) {
       editorActor.send({type: 'ready'})
       isInitialValueFromProps.current = false
     }
-  }, [editorActor, slateEditor, portableTextEditor, value])
+  }, [editorActor, slateEditor, value])
 
   return null
 }
