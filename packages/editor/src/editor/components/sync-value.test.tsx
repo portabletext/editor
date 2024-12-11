@@ -52,6 +52,17 @@ describe('useSyncValue', () => {
         value={initialValue}
       />,
     )
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({
+          type: 'value',
+          value: initialValue,
+        })
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
     rerender(
       <PortableTextEditorTester
         onChange={onChange}
@@ -60,6 +71,7 @@ describe('useSyncValue', () => {
         value={syncedValue}
       />,
     )
+
     await waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual(
@@ -68,6 +80,7 @@ describe('useSyncValue', () => {
       }
     })
   })
+
   it('replaces span nodes with different keys inside the same children array', async () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
@@ -95,6 +108,17 @@ describe('useSyncValue', () => {
         value={initialValue}
       />,
     )
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({
+          type: 'value',
+          value: initialValue,
+        })
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
     rerender(
       <PortableTextEditorTester
         onChange={onChange}
@@ -103,27 +127,25 @@ describe('useSyncValue', () => {
         value={syncedValue}
       />,
     )
+
     await waitFor(() => {
       if (editorRef.current) {
-        expect(PortableTextEditor.getValue(editorRef.current))
-          .toMatchInlineSnapshot(`
-          [
-            {
-              "_key": "77071c3af231",
-              "_type": "myTestBlockType",
-              "children": [
-                {
-                  "_key": "c001f0e92c1f0__NEW_KEY_YA!",
-                  "_type": "span",
-                  "marks": [],
-                  "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. ",
-                },
-              ],
-              "markDefs": [],
-              "style": "normal",
-            },
-          ]
-        `)
+        expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
+          {
+            _key: '77071c3af231',
+            _type: 'myTestBlockType',
+            children: [
+              {
+                _key: 'c001f0e92c1f0__NEW_KEY_YA!',
+                _type: 'span',
+                marks: [],
+                text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. ',
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
       }
     })
   })
