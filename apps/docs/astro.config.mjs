@@ -1,6 +1,7 @@
 import react from '@astrojs/react'
 import starlight from '@astrojs/starlight'
 import {defineConfig} from 'astro/config'
+import starlightTypeDoc, {typeDocSidebarGroup} from 'starlight-typedoc'
 
 // https://astro.build/config
 export default defineConfig({
@@ -25,6 +26,16 @@ export default defineConfig({
           label: 'Reference',
           autogenerate: {directory: 'reference'},
         },
+        typeDocSidebarGroup,
+      ],
+      plugins: [
+        starlightTypeDoc({
+          entryPoints: [
+            '../../packages/editor/src/types/editor.ts',
+            '../../packages/editor/src/index.ts',
+          ],
+          tsconfig: '../../packages/editor/tsconfig.json',
+        }),
       ],
     }),
   ],
