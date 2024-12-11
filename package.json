@@ -61,7 +61,8 @@
       "@portabletext/patches": "workspace:*",
       "@types/react": "$@types/react",
       "@types/react-dom": "$@types/react-dom",
-      "@types/react-is": "$@types/react-is"
+      "@types/react-is": "$@types/react-is",
+      "@astrojs/mdx": "^4.0.0"
     }
   }
 }
