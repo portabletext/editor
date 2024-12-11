@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "build": "turbo build",
+    "build:docs": "turbo build --filter=docs",
     "build:editor": "turbo build --filter=@portabletext/editor...",
     "build:example-basic": "turbo build --filter=example-basic...",
     "build:example-legacy": "turbo build --filter=example-legacy...",
@@ -17,6 +18,7 @@
     "dev:playground": "turbo dev --filter=playground...",
     "dev:example-basic": "turbo dev --filter=example-basic...",
     "dev:example-legacy": "turbo dev --filter=example-legacy...",
+    "dev:docs": "turbo dev --filter=docs",
     "format": "prettier --cache --write .",
     "format:staged": "pretty-quick --staged",
     "postinstall": "husky",
@@ -59,7 +61,8 @@
       "@portabletext/patches": "workspace:*",
       "@types/react": "$@types/react",
       "@types/react-dom": "$@types/react-dom",
-      "@types/react-is": "$@types/react-is"
+      "@types/react-is": "$@types/react-is",
+      "@astrojs/mdx": "^4.0.0"
     }
   }
 }
