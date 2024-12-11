@@ -311,41 +311,39 @@ function updateValue({
 
     Editor.withoutNormalizing(slateEditor, () => {
       withRemoteChanges(slateEditor, () => {
-        withoutSaving(slateEditor, () => {
-          withoutPatching(slateEditor, () => {
-            const childrenLength = slateEditor.children.length
+        withoutPatching(slateEditor, () => {
+          const childrenLength = slateEditor.children.length
 
-            // Remove blocks that have become superfluous
-            if (slateValueFromProps.length < childrenLength) {
-              for (
-                let i = childrenLength - 1;
-                i > slateValueFromProps.length - 1;
-                i--
-              ) {
-                Transforms.removeNodes(slateEditor, {
-                  at: [i],
-                })
-              }
-              isChanged = true
-            }
-
-            for (const [
-              currentBlockIndex,
-              currentBlock,
-            ] of slateValueFromProps.entries()) {
-              // Go through all of the blocks and see if they need to be updated
-              const {blockChanged, blockValid} = syncBlock({
-                context,
-                sendBack,
-                block: currentBlock,
-                index: currentBlockIndex,
-                slateEditor,
-                value,
+          // Remove blocks that have become superfluous
+          if (slateValueFromProps.length < childrenLength) {
+            for (
+              let i = childrenLength - 1;
+              i > slateValueFromProps.length - 1;
+              i--
+            ) {
+              Transforms.removeNodes(slateEditor, {
+                at: [i],
               })
-              isChanged = blockChanged || isChanged
-              isValid = isValid && blockValid
             }
-          })
+            isChanged = true
+          }
+
+          for (const [
+            currentBlockIndex,
+            currentBlock,
+          ] of slateValueFromProps.entries()) {
+            // Go through all of the blocks and see if they need to be updated
+            const {blockChanged, blockValid} = syncBlock({
+              context,
+              sendBack,
+              block: currentBlock,
+              index: currentBlockIndex,
+              slateEditor,
+              value,
+            })
+            isChanged = blockChanged || isChanged
+            isValid = isValid && blockValid
+          }
         })
       })
     })
