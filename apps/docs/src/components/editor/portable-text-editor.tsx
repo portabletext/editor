@@ -6,8 +6,16 @@ import {
   type PortableTextBlock,
   type SchemaDefinition,
 } from '@portabletext/editor'
+import {defineBehavior} from '@portabletext/editor/behaviors'
+import {
+  getFocusBlock,
+  getFocusSpan,
+  getFocusTextBlock,
+  selectionIsCollapsed,
+} from '@portabletext/editor/selectors'
 import {PortableText} from '@portabletext/react'
 import {useState} from 'react'
+import {Button} from '../ui/button'
 import {defaultSchema} from './defaultSchema'
 import {Toolbar} from './toolbar'
 
@@ -24,10 +32,43 @@ export function PortableTextEditor({customSchema}: PortableTextEditorProps) {
   const schemaDefinition = customSchema || defaultSchema
 
   return (
-    <div>
+    <div className="not-content">
       <EditorProvider
         initialConfig={{
           schemaDefinition,
+          behaviors: [
+            defineBehavior({
+              on: 'paste',
+              guard: ({context, event}) => {
+                // Check if the inserted text is a known emoji shortcode
+                const text = event.data.getData('text/plain')
+                const isEmojiShortcode = text === ':)'
+
+                // Only proceed if it's an emoji shortcode and the selection is collapsed
+                if (!isEmojiShortcode || !selectionIsCollapsed({context})) {
+                  return false
+                }
+
+                const focusTextBlock = getFocusTextBlock({context})
+                const focusSpan = getFocusSpan({context})
+
+                if (!focusTextBlock || !focusSpan) {
+                  return false
+                }
+
+                return {focusTextBlock, focusSpan}
+              },
+              actions: [
+                (_, {focusTextBlock}) => [
+                  {
+                    type: 'insert.text',
+                    at: focusTextBlock.path,
+                    text: '😊', // Replace with actual emoji
+                  },
+                ],
+              ],
+            }),
+          ],
         }}
       >
         <EditorEventListener
@@ -37,44 +78,38 @@ export function PortableTextEditor({customSchema}: PortableTextEditorProps) {
             }
           }}
         />
-        <Toolbar />
-        <PortableTextEditable
-          style={{
-            border: '1px solid black',
-            padding: '0.5em',
-            minHeight: '2em',
-          }}
-        />
+        <div className="w-full max-w-4xl mx-auto space-y-4 mb-4">
+          <Toolbar />
+          <PortableTextEditable className="min-h-[200px] border border-gray-200 rounded-md p-2" />
+        </div>
       </EditorProvider>
       {value && (
-        <div style={{display: 'flex', flexDirection: 'column', gap: '1em'}}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <button onClick={() => setShowJsonPreview(!showJsonPreview)}>
+        <div>
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => setShowJsonPreview(!showJsonPreview)}
+            >
               Toggle JSON Preview
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
               onClick={() =>
                 setShowPortableTextPreview(!showPortableTextPreview)
               }
             >
               Toggle Portable Text Preview
-            </button>
+            </Button>
           </div>
           {showJsonPreview && (
-            <div>
+            <div className="not-content text-sm p-2">
               <pre>
                 <code>{JSON.stringify(value, null, 2)}</code>
               </pre>
             </div>
           )}
           {showPortableTextPreview && (
-            <div>
+            <div className="text-sm p-2">
               <PortableText value={value} />
             </div>
           )}

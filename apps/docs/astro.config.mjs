@@ -1,5 +1,6 @@
 import react from '@astrojs/react'
 import starlight from '@astrojs/starlight'
+import tailwind from '@astrojs/tailwind'
 import {defineConfig} from 'astro/config'
 import starlightTypeDoc, {typeDocSidebarGroup} from 'starlight-typedoc'
 
@@ -9,6 +10,7 @@ export default defineConfig({
     react(),
     starlight({
       title: 'Portable Text Editor Docs',
+      customCss: ['./src/styles/globals.css'],
       social: {
         github: 'https://github.com/portabletext/editor',
       },
@@ -41,6 +43,9 @@ export default defineConfig({
           tsconfig: '../../packages/editor/tsconfig.json',
         }),
       ],
+    }),
+    tailwind({
+      applyBaseStyles: false,
     }),
   ],
 })
