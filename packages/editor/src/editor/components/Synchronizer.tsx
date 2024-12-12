@@ -4,7 +4,7 @@ import type {PortableTextSlateEditor} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
 import type {EditorActor} from '../editor-machine'
 import {mutationMachine} from '../mutation-machine'
-import {syncMachine} from './sync-value'
+import {syncMachine} from '../sync-machine'
 
 const debug = debugWithName('component:PortableTextEditor:Synchronizer')
 
