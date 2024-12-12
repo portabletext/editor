@@ -21,7 +21,7 @@ export function createWithPlaceholderBlock(
     const {apply} = editor
 
     editor.apply = (op) => {
-      if (editorActor.getSnapshot().context.readOnly) {
+      if (editorActor.getSnapshot().matches({'edit mode': 'read only'})) {
         apply(op)
         return
       }

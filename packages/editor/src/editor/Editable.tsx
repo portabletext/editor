@@ -159,7 +159,9 @@ export const PortableTextEditable = forwardRef<
   const rangeDecorationsRef = useRef(rangeDecorations)
 
   const editorActor = useContext(EditorActorContext)
-  const readOnly = useSelector(editorActor, (s) => s.context.readOnly)
+  const readOnly = useSelector(editorActor, (s) =>
+    s.matches({'edit mode': 'read only'}),
+  )
   const schemaTypes = useSelector(editorActor, (s) => s.context.schema)
   const slateEditor = useSlate()
 

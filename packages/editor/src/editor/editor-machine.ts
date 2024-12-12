@@ -99,7 +99,7 @@ export type InternalEditorEvent =
       type: 'update maxBlocks'
       maxBlocks: number | undefined
     }
-  | OmitFromUnion<InternalEditorEmittedEvent, 'type', 'readOnly toggled'>
+  | OmitFromUnion<InternalEditorEmittedEvent, 'type', 'read only' | 'editable'>
 
 /**
  * @alpha
@@ -109,13 +109,14 @@ export type EditorEmittedEvent = PickFromUnion<
   'type',
   | 'blurred'
   | 'done loading'
+  | 'editable'
   | 'error'
   | 'focused'
   | 'invalid value'
   | 'loading'
   | 'mutation'
   | 'patch'
-  | 'readOnly toggled'
+  | 'read only'
   | 'ready'
   | 'selection'
   | 'value changed'
@@ -153,7 +154,8 @@ export type InternalEditorEmittedEvent =
   | {type: 'focused'; event: FocusEvent<HTMLDivElement, Element>}
   | {type: 'loading'}
   | {type: 'done loading'}
-  | {type: 'readOnly toggled'; readOnly: boolean}
+  | {type: 'read only'}
+  | {type: 'editable'}
   | PickFromUnion<
       SyntheticBehaviorEvent,
       'type',
@@ -181,7 +183,7 @@ export const editorMachine = setup({
       keyGenerator: () => string
       pendingEvents: Array<PatchEvent | MutationEvent>
       schema: EditorSchema
-      readOnly: boolean
+      initialReadOnly: boolean
       maxBlocks: number | undefined
       selection: EditorSelection
       value: Array<PortableTextBlock> | undefined
@@ -218,6 +220,8 @@ export const editorMachine = setup({
       assertEvent(event, 'mutation')
       return event
     }),
+    'emit read only': emit({type: 'read only'}),
+    'emit editable': emit({type: 'editable'}),
     'defer event': assign({
       pendingEvents: ({context, event}) => {
         assertEvent(event, ['patch', 'mutation'])
@@ -347,47 +351,11 @@ export const editorMachine = setup({
     pendingEvents: [],
     schema: input.schema,
     selection: null,
-    readOnly: input.readOnly ?? false,
+    initialReadOnly: input.readOnly ?? false,
     maxBlocks: input.maxBlocks,
     value: input.value,
   }),
   on: {
-    'annotation.add': {
-      actions: emit(({event}) => event),
-      guard: ({context}) => !context.readOnly,
-    },
-    'annotation.remove': {
-      actions: emit(({event}) => event),
-      guard: ({context}) => !context.readOnly,
-    },
-    'annotation.toggle': {
-      actions: emit(({event}) => event),
-      guard: ({context}) => !context.readOnly,
-    },
-    'blur': {
-      actions: emit(({event}) => event),
-      guard: ({context}) => !context.readOnly,
-    },
-    'decorator.*': {
-      actions: emit(({event}) => event),
-      guard: ({context}) => !context.readOnly,
-    },
-    'focus': {
-      actions: emit(({event}) => event),
-      guard: ({context}) => !context.readOnly,
-    },
-    'insert.*': {
-      actions: emit(({event}) => event),
-      guard: ({context}) => !context.readOnly,
-    },
-    'list item.*': {
-      actions: emit(({event}) => event),
-      guard: ({context}) => !context.readOnly,
-    },
-    'style.*': {
-      actions: emit(({event}) => event),
-      guard: ({context}) => !context.readOnly,
-    },
     'unset': {actions: emit(({event}) => event)},
     'value changed': {actions: emit(({event}) => event)},
     'invalid value': {actions: emit(({event}) => event)},
@@ -406,21 +374,8 @@ export const editorMachine = setup({
     'update behaviors': {actions: 'assign behaviors'},
     'update schema': {actions: 'assign schema'},
     'update value': {actions: assign({value: ({event}) => event.value})},
-    'toggle readOnly': {
-      actions: [
-        assign({readOnly: ({context}) => !context.readOnly}),
-        emit(({context}) => ({
-          type: 'readOnly toggled',
-          readOnly: context.readOnly,
-        })),
-      ],
-    },
     'update maxBlocks': {
       actions: assign({maxBlocks: ({event}) => event.maxBlocks}),
-    },
-    'behavior event': {
-      actions: 'handle behavior event',
-      guard: ({context}) => !context.readOnly,
     },
     'behavior action intends': {
       actions: [
@@ -456,63 +411,137 @@ export const editorMachine = setup({
       ],
     },
   },
-  initial: 'setting up',
+  type: 'parallel',
   states: {
-    'setting up': {
-      exit: ['emit ready'],
-      on: {
-        'patch': {
-          actions: 'defer event',
-        },
-        'mutation': {
-          actions: 'defer event',
-        },
-        'done syncing': {
-          target: 'pristine',
-        },
-      },
-    },
-    'pristine': {
-      initial: 'idle',
+    'edit mode': {
+      initial: 'read only',
       states: {
-        idle: {
-          on: {
-            normalizing: {
-              target: 'normalizing',
+        'read only': {
+          initial: 'determine initial edit mode',
+          states: {
+            'determine initial edit mode': {
+              on: {
+                'done syncing': [
+                  {
+                    target: '#editor.edit mode.read only.read only',
+                    guard: ({context}) => context.initialReadOnly,
+                  },
+                  {
+                    target: '#editor.edit mode.editable',
+                  },
+                ],
+              },
             },
-            patch: {
-              actions: 'defer event',
-              target: '#editor.dirty',
-            },
-            mutation: {
-              actions: 'defer event',
-              target: '#editor.dirty',
+            'read only': {
+              on: {
+                'toggle readOnly': {
+                  target: '#editor.edit mode.editable',
+                  actions: ['emit editable'],
+                },
+              },
             },
           },
         },
-        normalizing: {
+        'editable': {
           on: {
-            'done normalizing': {
-              target: 'idle',
+            'toggle readOnly': {
+              target: '#editor.edit mode.read only.read only',
+              actions: ['emit read only'],
             },
+            'behavior event': {
+              actions: 'handle behavior event',
+            },
+            'annotation.add': {
+              actions: emit(({event}) => event),
+            },
+            'annotation.remove': {
+              actions: emit(({event}) => event),
+            },
+            'annotation.toggle': {
+              actions: emit(({event}) => event),
+            },
+            'blur': {
+              actions: emit(({event}) => event),
+            },
+            'decorator.*': {
+              actions: emit(({event}) => event),
+            },
+            'focus': {
+              actions: emit(({event}) => event),
+            },
+            'insert.*': {
+              actions: emit(({event}) => event),
+            },
+            'list item.*': {
+              actions: emit(({event}) => event),
+            },
+            'style.*': {
+              actions: emit(({event}) => event),
+            },
+          },
+        },
+      },
+    },
+    'setup': {
+      initial: 'setting up',
+      states: {
+        'setting up': {
+          exit: ['emit ready'],
+          on: {
             'patch': {
               actions: 'defer event',
             },
             'mutation': {
               actions: 'defer event',
             },
+            'done syncing': {
+              target: 'pristine',
+            },
           },
         },
-      },
-    },
-    'dirty': {
-      entry: ['emit pending events', 'clear pending events'],
-      on: {
-        patch: {
-          actions: 'emit patch event',
+        'pristine': {
+          initial: 'idle',
+          states: {
+            idle: {
+              on: {
+                normalizing: {
+                  target: 'normalizing',
+                },
+                patch: {
+                  actions: 'defer event',
+                  target: '#editor.setup.dirty',
+                },
+                mutation: {
+                  actions: 'defer event',
+                  target: '#editor.setup.dirty',
+                },
+              },
+            },
+            normalizing: {
+              on: {
+                'done normalizing': {
+                  target: 'idle',
+                },
+                'patch': {
+                  actions: 'defer event',
+                },
+                'mutation': {
+                  actions: 'defer event',
+                },
+              },
+            },
+          },
         },
-        mutation: {
-          actions: 'emit mutation event',
+        'dirty': {
+          entry: ['emit pending events', 'clear pending events'],
+          on: {
+            patch: {
+              actions: 'emit patch event',
+            },
+            mutation: {
+              actions: 'emit mutation event',
+            },
+          },
         },
       },
     },

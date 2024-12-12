@@ -13,7 +13,7 @@ export function createWithMaxBlocks(editorActor: EditorActor) {
   ): PortableTextSlateEditor {
     const {apply} = editor
     editor.apply = (operation) => {
-      if (editorActor.getSnapshot().context.readOnly) {
+      if (editorActor.getSnapshot().matches({'edit mode': 'read only'})) {
         apply(operation)
         return
       }

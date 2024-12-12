@@ -19,7 +19,7 @@ export function withSyncRangeDecorations({
     originalApply(op)
 
     if (
-      !editorActor.getSnapshot().matches('setting up') &&
+      !editorActor.getSnapshot().matches({'edit mode': 'read only'}) &&
       op.type !== 'set_selection'
     ) {
       syncRangeDecorations(op)

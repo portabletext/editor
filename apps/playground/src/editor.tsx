@@ -130,8 +130,11 @@ export function Editor(props: {editorRef: EditorActorRef}) {
               if (event.type === 'done loading') {
                 setLoading(false)
               }
-              if (event.type === 'readOnly toggled') {
-                setReadOnly(event.readOnly)
+              if (event.type === 'editable') {
+                setReadOnly(false)
+              }
+              if (event.type === 'read only') {
+                setReadOnly(true)
               }
             }}
           />

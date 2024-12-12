@@ -34,11 +34,15 @@ export function Synchronizer(props: SynchronizerProps) {
   const {editorActor, getValue, slateEditor} = props
 
   const value = useSelector(props.editorActor, (s) => s.context.value)
-  const readOnly = useSelector(props.editorActor, (s) => s.context.readOnly)
+  const readOnly = useSelector(props.editorActor, (s) =>
+    s.matches({'edit mode': 'read only'}),
+  )
   const syncActorRef = useActorRef(syncMachine, {
     input: {
       keyGenerator: props.editorActor.getSnapshot().context.keyGenerator,
-      readOnly: props.editorActor.getSnapshot().context.readOnly,
+      readOnly: props.editorActor
+        .getSnapshot()
+        .matches({'edit mode': 'read only'}),
       schema: props.editorActor.getSnapshot().context.schema,
       slateEditor,
     },
