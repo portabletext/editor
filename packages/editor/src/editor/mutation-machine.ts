@@ -7,8 +7,6 @@ import {fromSlateValue} from '../utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../utils/weakMaps'
 import type {EditorSchema} from './define-schema'
 
-const FLUSH_PATCHES_THROTTLED_MS = process.env.NODE_ENV === 'test' ? 500 : 1000
-
 /**
  * Makes sure editor mutation events are debounced
  */
@@ -78,7 +76,7 @@ export const mutationMachine = setup({
     },
     'has pending patches': {
       after: {
-        [FLUSH_PATCHES_THROTTLED_MS]: [
+        250: [
           {
             guard: 'slate is normalizing',
             target: 'idle',
