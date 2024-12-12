@@ -1,11 +1,8 @@
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {
-  PortableTextEditorTester,
-  schemaType,
-} from '../__tests__/PortableTextEditorTester'
 import {PortableTextEditor} from '../PortableTextEditor'
+import {PortableTextEditorTester, schemaType} from './PortableTextEditorTester'
 
 const initialValue = [
   {
