@@ -1,28 +1,18 @@
-import type {Patch} from '@portabletext/patches'
-import type {PortableTextBlock} from '@sanity/types'
 import {useActorRef, useSelector} from '@xstate/react'
-import {throttle} from 'lodash'
-import {useCallback, useEffect, useRef} from 'react'
-import {Editor} from 'slate'
+import {useEffect} from 'react'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import {debugWithName} from '../../utils/debug'
-import {IS_PROCESSING_LOCAL_CHANGES} from '../../utils/weakMaps'
 import type {EditorActor} from '../editor-machine'
+import {mutationMachine} from '../mutation-machine'
 import {syncMachine} from './sync-value'
 
 const debug = debugWithName('component:PortableTextEditor:Synchronizer')
-const debugVerbose = debug.enabled && false
-
-// The editor will commit changes in a throttled fashion in order
-// not to overload the network and degrade performance while typing.
-const FLUSH_PATCHES_THROTTLED_MS = process.env.NODE_ENV === 'test' ? 500 : 1000
 
 /**
  * @internal
  */
 export interface SynchronizerProps {
   editorActor: EditorActor
-  getValue: () => Array<PortableTextBlock> | undefined
   slateEditor: PortableTextSlateEditor
 }
 
@@ -31,7 +21,7 @@ export interface SynchronizerProps {
  * @internal
  */
 export function Synchronizer(props: SynchronizerProps) {
-  const {editorActor, getValue, slateEditor} = props
+  const {editorActor, slateEditor} = props
 
   const value = useSelector(props.editorActor, (s) => s.context.value)
   const readOnly = useSelector(props.editorActor, (s) =>
@@ -47,6 +37,28 @@ export function Synchronizer(props: SynchronizerProps) {
       slateEditor,
     },
   })
+  const mutationActorRef = useActorRef(mutationMachine, {
+    input: {
+      schema: editorActor.getSnapshot().context.schema,
+      slateEditor,
+    },
+  })
+
+  useEffect(() => {
+    const subscription = mutationActorRef.on('*', (event) => {
+      if (event.type === 'has pending patches') {
+        syncActorRef.send({type: 'has pending patches'})
+      }
+      if (event.type === 'mutation') {
+        syncActorRef.send({type: 'mutation'})
+        editorActor.send(event)
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [mutationActorRef, syncActorRef, editorActor])
 
   useEffect(() => {
     const subscription = syncActorRef.on('*', (event) => {
@@ -67,67 +79,17 @@ export function Synchronizer(props: SynchronizerProps) {
     syncActorRef.send({type: 'update value', value})
   }, [syncActorRef, value])
 
-  const pendingPatches = useRef<Patch[]>([])
-
-  useEffect(() => {
-    IS_PROCESSING_LOCAL_CHANGES.set(slateEditor, false)
-  }, [slateEditor])
-
-  const onFlushPendingPatches = useCallback(() => {
-    if (pendingPatches.current.length > 0) {
-      debug('Flushing pending patches')
-      if (debugVerbose) {
-        debug(`Patches:\n${JSON.stringify(pendingPatches.current, null, 2)}`)
-      }
-      const snapshot = getValue()
-      editorActor.send({
-        type: 'mutation',
-        patches: pendingPatches.current,
-        snapshot,
-      })
-      pendingPatches.current = []
-    }
-    IS_PROCESSING_LOCAL_CHANGES.set(slateEditor, false)
-  }, [editorActor, slateEditor, getValue])
-
-  // Flush pending patches immediately on unmount
-  useEffect(() => {
-    return () => {
-      onFlushPendingPatches()
-    }
-  }, [onFlushPendingPatches])
-
   // Subscribe to, and handle changes from the editor
   useEffect(() => {
-    const onFlushPendingPatchesThrottled = throttle(
-      () => {
-        // If the editor is normalizing (each operation) it means that it's not in the middle of a bigger transform,
-        // and we can flush these changes immediately.
-        if (Editor.isNormalizing(slateEditor)) {
-          onFlushPendingPatches()
-          return
-        }
-        // If it's in the middle of something, try again.
-        onFlushPendingPatchesThrottled()
-      },
-      FLUSH_PATCHES_THROTTLED_MS,
-      {
-        leading: false,
-        trailing: true,
-      },
-    )
-
     debug('Subscribing to patch events')
     const sub = editorActor.on('patch', (event) => {
-      IS_PROCESSING_LOCAL_CHANGES.set(slateEditor, true)
-      pendingPatches.current.push(event.patch)
-      onFlushPendingPatchesThrottled()
+      mutationActorRef.send(event)
     })
     return () => {
       debug('Unsubscribing to patch events')
       sub.unsubscribe()
     }
-  }, [editorActor, onFlushPendingPatches, slateEditor])
+  }, [editorActor, mutationActorRef, slateEditor])
 
   return null
 }

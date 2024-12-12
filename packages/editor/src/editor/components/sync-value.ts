@@ -22,11 +22,7 @@ import type {
 import {debugWithName} from '../../utils/debug'
 import {validateValue} from '../../utils/validateValue'
 import {toSlateValue, VOID_CHILD_KEY} from '../../utils/values'
-import {
-  isChangingLocally,
-  isChangingRemotely,
-  withRemoteChanges,
-} from '../../utils/withChanges'
+import {isChangingRemotely, withRemoteChanges} from '../../utils/withChanges'
 import {withoutPatching} from '../../utils/withoutPatching'
 import type {EditorSchema} from '../define-schema'
 import {withoutSaving} from '../plugins/createWithUndoRedo'
@@ -89,6 +85,7 @@ const syncValueLogic = fromCallback(syncValueCallback)
 export const syncMachine = setup({
   types: {
     context: {} as {
+      isProcessingLocalChanges: boolean
       keyGenerator: () => string
       schema: EditorSchema
       readOnly: boolean
@@ -103,6 +100,12 @@ export const syncMachine = setup({
       slateEditor: PortableTextSlateEditor
     },
     events: {} as
+      | {
+          type: 'has pending patches'
+        }
+      | {
+          type: 'mutation'
+        }
       | {
           type: 'update value'
           value: Array<PortableTextBlock> | undefined
@@ -144,7 +147,7 @@ export const syncMachine = setup({
   guards: {
     'is readOnly': ({context}) => context.readOnly,
     'is processing local changes': ({context}) =>
-      isChangingLocally(context.slateEditor) ?? false,
+      context.isProcessingLocalChanges,
     'is processing remote changes': ({context}) =>
       isChangingRemotely(context.slateEditor) ?? false,
     'is busy': and([
@@ -162,6 +165,7 @@ export const syncMachine = setup({
 }).createMachine({
   id: 'sync',
   context: ({input}) => ({
+    isProcessingLocalChanges: false,
     keyGenerator: input.keyGenerator,
     schema: input.schema,
     readOnly: input.readOnly,
@@ -171,6 +175,16 @@ export const syncMachine = setup({
   }),
   initial: 'idle',
   on: {
+    'has pending patches': {
+      actions: assign({
+        isProcessingLocalChanges: true,
+      }),
+    },
+    'mutation': {
+      actions: assign({
+        isProcessingLocalChanges: false,
+      }),
+    },
     'toggle readOnly': {
       actions: ['assign readOnly'],
     },
