@@ -35,7 +35,7 @@
     "@playwright/test": "^1.49.0",
     "@sanity/prettier-config": "^1.0.3",
     "@types/react": "^19.0.1",
-    "@types/react-dom": "^19.0.1",
+    "@types/react-dom": "^19.0.2",
     "@types/react-is": "^19.0.0",
     "del-cli": "^6.0.0",
     "husky": "^9.0.11",
