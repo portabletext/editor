@@ -48,7 +48,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
             _type: 'myTestBlockType',
             children: [
               {
-                _key: '4',
+                _key: '2',
                 _type: 'span',
                 text: 'Hello with a new key',
                 marks: [],
@@ -162,7 +162,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
             _type: 'myTestBlockType',
             children: [
               {
-                _key: '5',
+                _key: '2',
                 _type: 'span',
                 text: '',
                 marks: [],
@@ -176,7 +176,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
             _type: 'myTestBlockType',
             children: [
               {
-                _key: '6',
+                _key: '4',
                 _type: 'span',
                 text: '',
                 marks: [],

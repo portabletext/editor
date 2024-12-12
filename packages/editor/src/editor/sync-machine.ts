@@ -57,6 +57,7 @@ const syncValueCallback: CallbackLogicFunction<
       schema: EditorSchema
     }
     slateEditor: PortableTextSlateEditor
+    streamBlocks: boolean
     value: Array<PortableTextBlock> | undefined
   }
 > = ({sendBack, input}) => {
@@ -65,6 +66,7 @@ const syncValueCallback: CallbackLogicFunction<
     sendBack,
     slateEditor: input.slateEditor,
     value: input.value,
+    streamBlocks: input.streamBlocks,
   })
 }
 
@@ -85,6 +87,7 @@ const syncValueLogic = fromCallback(syncValueCallback)
 export const syncMachine = setup({
   types: {
     context: {} as {
+      initialValueSynced: boolean
       isProcessingLocalChanges: boolean
       keyGenerator: () => string
       schema: EditorSchema
@@ -122,6 +125,9 @@ export const syncMachine = setup({
     >,
   },
   actions: {
+    'assign initial value synced': assign({
+      initialValueSynced: true,
+    }),
     'assign readOnly': assign({
       readOnly: ({event}) => {
         assertEvent(event, 'update readOnly')
@@ -174,6 +180,7 @@ export const syncMachine = setup({
 }).createMachine({
   id: 'sync',
   context: ({input}) => ({
+    initialValueSynced: false,
     isProcessingLocalChanges: false,
     keyGenerator: input.keyGenerator,
     schema: input.schema,
@@ -238,16 +245,19 @@ export const syncMachine = setup({
       invoke: {
         src: 'sync value',
         id: 'sync value',
-        input: ({context}) => ({
-          context: {
-            keyGenerator: context.keyGenerator,
-            previousValue: context.previousValue,
-            readOnly: context.readOnly,
-            schema: context.schema,
-          },
-          slateEditor: context.slateEditor,
-          value: context.pendingValue ?? undefined,
-        }),
+        input: ({context}) => {
+          return {
+            context: {
+              keyGenerator: context.keyGenerator,
+              previousValue: context.previousValue,
+              readOnly: context.readOnly,
+              schema: context.schema,
+            },
+            slateEditor: context.slateEditor,
+            streamBlocks: !context.initialValueSynced,
+            value: context.pendingValue ?? undefined,
+          }
+        },
       },
       always: {
         guard: 'pending value equals previous value',
@@ -275,7 +285,11 @@ export const syncMachine = setup({
         'done syncing': [
           {
             guard: 'value changed while syncing',
-            actions: ['assign previous value', 'emit done syncing'],
+            actions: [
+              'assign previous value',
+              'emit done syncing',
+              'assign initial value synced',
+            ],
             reenter: true,
           },
           {
@@ -284,6 +298,7 @@ export const syncMachine = setup({
               'clear pending value',
               'assign previous value',
               'emit done syncing',
+              'assign initial value synced',
             ],
           },
         ],
@@ -294,10 +309,11 @@ export const syncMachine = setup({
 
 const debug = debugWithName('hook:useSyncValue')
 
-function updateValue({
+async function updateValue({
   context,
   sendBack,
   slateEditor,
+  streamBlocks,
   value,
 }: {
   context: {
@@ -308,6 +324,7 @@ function updateValue({
   }
   sendBack: (event: SyncValueEvent) => void
   slateEditor: PortableTextSlateEditor
+  streamBlocks: boolean
   value: PortableTextBlock[] | undefined
 }) {
   let isChanged = false
@@ -350,41 +367,45 @@ function updateValue({
       schemaTypes: context.schema,
     })
 
-    Editor.withoutNormalizing(slateEditor, () => {
-      withRemoteChanges(slateEditor, () => {
-        withoutPatching(slateEditor, () => {
-          const childrenLength = slateEditor.children.length
+    await new Promise<void>((resolve) => {
+      Editor.withoutNormalizing(slateEditor, () => {
+        withRemoteChanges(slateEditor, () => {
+          withoutPatching(slateEditor, async () => {
+            const childrenLength = slateEditor.children.length
 
-          // Remove blocks that have become superfluous
-          if (slateValueFromProps.length < childrenLength) {
-            for (
-              let i = childrenLength - 1;
-              i > slateValueFromProps.length - 1;
-              i--
-            ) {
-              Transforms.removeNodes(slateEditor, {
-                at: [i],
-              })
+            // Remove blocks that have become superfluous
+            if (slateValueFromProps.length < childrenLength) {
+              for (
+                let i = childrenLength - 1;
+                i > slateValueFromProps.length - 1;
+                i--
+              ) {
+                Transforms.removeNodes(slateEditor, {
+                  at: [i],
+                })
+              }
+              isChanged = true
             }
-            isChanged = true
-          }
 
-          for (const [
-            currentBlockIndex,
-            currentBlock,
-          ] of slateValueFromProps.entries()) {
-            // Go through all of the blocks and see if they need to be updated
-            const {blockChanged, blockValid} = syncBlock({
-              context,
-              sendBack,
-              block: currentBlock,
-              index: currentBlockIndex,
-              slateEditor,
-              value,
-            })
-            isChanged = blockChanged || isChanged
-            isValid = isValid && blockValid
-          }
+            for await (const [currentBlock, currentBlockIndex] of getBlocks({
+              slateValue: slateValueFromProps,
+              streamBlocks,
+            })) {
+              // Go through all of the blocks and see if they need to be updated
+              const {blockChanged, blockValid} = syncBlock({
+                context,
+                sendBack,
+                block: currentBlock,
+                index: currentBlockIndex,
+                slateEditor,
+                value,
+              })
+              isChanged = blockChanged || isChanged
+              isValid = isValid && blockValid
+            }
+
+            resolve()
+          })
         })
       })
     })
@@ -425,6 +446,23 @@ function updateValue({
   sendBack({type: 'done syncing', value})
 }
 
+async function* getBlocks({
+  slateValue,
+  streamBlocks,
+}: {
+  slateValue: Array<Descendant>
+  streamBlocks: boolean
+}) {
+  let index = 0
+  for await (const block of slateValue) {
+    if (streamBlocks) {
+      await new Promise<void>((resolve) => setTimeout(resolve, 0))
+    }
+    yield [block, index] as const
+    index++
+  }
+}
+
 function syncBlock({
   context,
   sendBack,
@@ -452,79 +490,91 @@ function syncBlock({
   const oldBlock = slateEditor.children[currentBlockIndex]
   const hasChanges = oldBlock && !isEqual(currentBlock, oldBlock)
 
-  if (hasChanges && blockValid) {
-    const validationValue = [value[currentBlockIndex]]
-    const validation = validateValue(
-      validationValue,
-      context.schema,
-      context.keyGenerator,
-    )
-    // Resolve validations that can be resolved automatically, without involving the user (but only if the value was changed)
-    if (
-      !validation.valid &&
-      validation.resolution?.autoResolve &&
-      validation.resolution?.patches.length > 0
-    ) {
-      // Only apply auto resolution if the value has been populated before and is different from the last one.
-      if (
-        !context.readOnly &&
-        context.previousValue &&
-        context.previousValue !== value
-      ) {
-        // Give a console warning about the fact that it did an auto resolution
-        console.warn(
-          `${validation.resolution.action} for block with _key '${validationValue[0]._key}'. ${validation.resolution?.description}`,
-        )
-        validation.resolution.patches.forEach((patch) => {
-          sendBack({type: 'patch', patch})
-        })
-      }
-    }
-    if (validation.valid || validation.resolution?.autoResolve) {
-      if (oldBlock._key === currentBlock._key) {
-        if (debug.enabled) debug('Updating block', oldBlock, currentBlock)
-        _updateBlock(slateEditor, currentBlock, oldBlock, currentBlockIndex)
-      } else {
-        if (debug.enabled) debug('Replacing block', oldBlock, currentBlock)
-        _replaceBlock(slateEditor, currentBlock, currentBlockIndex)
-      }
-      blockChanged = true
-    } else {
-      sendBack({
-        type: 'invalid value',
-        resolution: validation.resolution,
-        value,
-      })
-      blockValid = false
-    }
-  }
+  Editor.withoutNormalizing(slateEditor, () => {
+    withRemoteChanges(slateEditor, () => {
+      withoutPatching(slateEditor, () => {
+        if (hasChanges && blockValid) {
+          const validationValue = [value[currentBlockIndex]]
+          const validation = validateValue(
+            validationValue,
+            context.schema,
+            context.keyGenerator,
+          )
+          // Resolve validations that can be resolved automatically, without involving the user (but only if the value was changed)
+          if (
+            !validation.valid &&
+            validation.resolution?.autoResolve &&
+            validation.resolution?.patches.length > 0
+          ) {
+            // Only apply auto resolution if the value has been populated before and is different from the last one.
+            if (
+              !context.readOnly &&
+              context.previousValue &&
+              context.previousValue !== value
+            ) {
+              // Give a console warning about the fact that it did an auto resolution
+              console.warn(
+                `${validation.resolution.action} for block with _key '${validationValue[0]._key}'. ${validation.resolution?.description}`,
+              )
+              validation.resolution.patches.forEach((patch) => {
+                sendBack({type: 'patch', patch})
+              })
+            }
+          }
+          if (validation.valid || validation.resolution?.autoResolve) {
+            if (oldBlock._key === currentBlock._key) {
+              if (debug.enabled) debug('Updating block', oldBlock, currentBlock)
+              _updateBlock(
+                slateEditor,
+                currentBlock,
+                oldBlock,
+                currentBlockIndex,
+              )
+            } else {
+              if (debug.enabled)
+                debug('Replacing block', oldBlock, currentBlock)
+              _replaceBlock(slateEditor, currentBlock, currentBlockIndex)
+            }
+            blockChanged = true
+          } else {
+            sendBack({
+              type: 'invalid value',
+              resolution: validation.resolution,
+              value,
+            })
+            blockValid = false
+          }
+        }
 
-  if (!oldBlock && blockValid) {
-    const validationValue = [value[currentBlockIndex]]
-    const validation = validateValue(
-      validationValue,
-      context.schema,
-      context.keyGenerator,
-    )
-    if (debug.enabled)
-      debug(
-        'Validating and inserting new block in the end of the value',
-        currentBlock,
-      )
-    if (validation.valid || validation.resolution?.autoResolve) {
-      Transforms.insertNodes(slateEditor, currentBlock, {
-        at: [currentBlockIndex],
+        if (!oldBlock && blockValid) {
+          const validationValue = [value[currentBlockIndex]]
+          const validation = validateValue(
+            validationValue,
+            context.schema,
+            context.keyGenerator,
+          )
+          if (debug.enabled)
+            debug(
+              'Validating and inserting new block in the end of the value',
+              currentBlock,
+            )
+          if (validation.valid || validation.resolution?.autoResolve) {
+            Transforms.insertNodes(slateEditor, currentBlock, {
+              at: [currentBlockIndex],
+            })
+          } else {
+            debug('Invalid', validation)
+            sendBack({
+              type: 'invalid value',
+              resolution: validation.resolution,
+              value,
+            })
+            blockValid = false
+          }
+        }
       })
-    } else {
-      debug('Invalid', validation)
-      sendBack({
-        type: 'invalid value',
-        resolution: validation.resolution,
-        value,
-      })
-      blockValid = false
-    }
-  }
+    })
+  })
 
   return {blockChanged, blockValid}
 }
