@@ -158,6 +158,11 @@ export const syncMachine = setup({
       assertEvent(event, 'done syncing')
       return context.pendingValue !== event.value
     },
+    'pending value equals previous value': ({context}) =>
+      !(
+        context.previousValue === undefined &&
+        context.pendingValue === undefined
+      ) && isEqual(context.pendingValue, context.previousValue),
   },
   actors: {
     'sync value': syncValueLogic,
@@ -239,6 +244,16 @@ export const syncMachine = setup({
           slateEditor: context.slateEditor,
           value: context.pendingValue ?? undefined,
         }),
+      },
+      always: {
+        guard: 'pending value equals previous value',
+        actions: [
+          emit(({context}) => ({
+            type: 'done syncing',
+            value: context.previousValue,
+          })),
+        ],
+        target: 'idle',
       },
       on: {
         'update value': {
