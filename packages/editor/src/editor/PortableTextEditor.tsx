@@ -238,7 +238,6 @@ export class PortableTextEditor extends Component<
         />
         <Synchronizer
           editorActor={this.editor._internal.editorActor}
-          getValue={this.editor._internal.editable.getValue}
           slateEditor={this.editor._internal.slateEditor.instance}
         />
         <EditorActorContext.Provider value={this.editor._internal.editorActor}>
