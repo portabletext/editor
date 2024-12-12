@@ -1,0 +1,64 @@
+---
+title: Getting started
+description: Start building with the Portable Text Editor.
+---
+
+import {LinkCard, Steps} from '@astrojs/starlight/components'
+import {PackageManagers} from 'starlight-package-managers'
+
+{/* TODO */}
+This guide leads the reader through installing and using common features of the portable text editor (PTE).
+
+One paragraph intro of the PTE. Link to learn more about PT and the PTE ecosystem.
+
+## Add the PTE to your project
+
+Start by installing the editor to your project
+
+<PackageManagers pkg="@portabletext/editor" />
+
+## Define your schema
+
+Before you can render the editor, you need a schema. The editor schema configures the types of content rendered by the editor.
+
+We'll start with a schema that includes some common rich text elements.
+
+```ts
+const schemaDefinition = defineSchema({
+  // Decorators are simple marks that don't hold any data
+  decorators: [{name: 'strong'}, {name: 'em'}, {name: 'underline'}],
+  // Annotations are more complex marks that can hold data
+  annotations: [{name: 'link'}],
+  // Styles apply to entire text blocks
+  // There's always a 'normal' style that can be considered the paragraph style
+  styles: [
+    {name: 'normal'},
+    {name: 'h1'},
+    {name: 'h2'},
+    {name: 'h3'},
+    {name: 'blockqoute'},
+  ],
+  // Lists apply to entire text blocks as well
+  lists: [{name: 'bullet'}, {name: 'number'}],
+  // Inline objects hold arbitrary data that can be inserted into the text
+  inlineObjects: [{name: 'stock-ticker'}],
+  // Block objects hold arbitrary data that live side-by-side with text blocks
+  blockObjects: [{name: 'image'}],
+})
+```
+
+<LinkCard
+  title="The parts of the Portable Text editor"
+  description="Learn more about schemas and the editor."
+  href="/concepts/portabletext/"
+/>
+
+## Add custom annotations, decorators, and styles
+
+Light example, then link out to guide.
+
+## View the Portable text data
+
+Explain how to retrieve data (state).
+
+## Resources

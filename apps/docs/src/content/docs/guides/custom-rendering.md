@@ -1,6 +1,8 @@
 ---
 title: Customize how elements render
 description: Change the way the editor renders and styles text.
+sidebar:
+  order: 1
 ---
 
 Expand on readme info:
