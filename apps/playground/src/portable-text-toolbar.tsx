@@ -38,13 +38,7 @@ export function PortableTextToolbar(props: {
       <Separator orientation="vertical" />
       <Group aria-label="Decorators" className="contents">
         {props.schemaDefinition.decorators?.map((decorator) => (
-          <DecoratorToolbarButton
-            key={decorator.name}
-            decorator={decorator}
-            editor={editor}
-            editorInstance={editorInstance}
-            selection={selection}
-          />
+          <DecoratorToolbarButton key={decorator.name} decorator={decorator} />
         ))}
       </Group>
       <Separator orientation="vertical" />
@@ -191,13 +185,12 @@ function AnnotationToolbarButton(props: {
 
 function DecoratorToolbarButton(props: {
   decorator: SchemaDefinition['decorators'][number]
-  editor: Editor
-  editorInstance: PortableTextEditor
-  selection: EditorSelection
 }) {
-  const active =
-    props.selection !== null &&
-    PortableTextEditor.isMarkActive(props.editorInstance, props.decorator.name)
+  const editor = useEditor()
+  const active = useEditorSelector(
+    editor,
+    selectors.isDecoratorActive(props.decorator.name),
+  )
 
   return (
     <TooltipTrigger>
@@ -206,11 +199,11 @@ function DecoratorToolbarButton(props: {
         size="sm"
         isSelected={active}
         onPress={() => {
-          props.editor.send({
+          editor.send({
             type: 'decorator.toggle',
             decorator: props.decorator.name,
           })
-          props.editor.send({type: 'focus'})
+          editor.send({type: 'focus'})
         }}
       >
         <Icon icon={props.decorator.icon} fallback={props.decorator.title} />
