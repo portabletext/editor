@@ -1,5 +1,18 @@
 import starlightPlugin from '@astrojs/starlight-tailwind'
 
+// Generated color palettes
+const accent = {200: '#aecaf8', 600: '#0049b4', 900: '#0c2f68', 950: '#0d2346'}
+const gray = {
+  100: '#f4f6fa',
+  200: '#eaeef5',
+  300: '#bdc2cb',
+  400: '#828c9c',
+  500: '#4f5967',
+  700: '#303946',
+  800: '#1f2734',
+  900: '#15181e',
+}
+
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: ['class'],
@@ -34,10 +47,8 @@ export default {
           DEFAULT: 'hsl(var(--muted))',
           foreground: 'hsl(var(--muted-foreground))',
         },
-        accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
-        },
+        accent,
+        gray,
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
