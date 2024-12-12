@@ -495,7 +495,8 @@ export function RouteEventsToChanges(props: {
         case 'list item.toggle':
         case 'style.toggle':
         case 'patches':
-        case 'readOnly toggled':
+        case 'editable':
+        case 'read only':
           break
         default:
           handleChange(event)

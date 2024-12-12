@@ -114,7 +114,7 @@ export function createWithUndoRedo(
     editor.history = {undos: [], redos: []}
     const {apply} = editor
     editor.apply = (op: Operation) => {
-      if (editorActor.getSnapshot().context.readOnly) {
+      if (editorActor.getSnapshot().matches({'edit mode': 'read only'})) {
         apply(op)
         return
       }
@@ -181,7 +181,7 @@ export function createWithUndoRedo(
     }
 
     editor.undo = () => {
-      if (editorActor.getSnapshot().context.readOnly) {
+      if (editorActor.getSnapshot().matches({'edit mode': 'read only'})) {
         return
       }
       const {undos} = editor.history
@@ -239,7 +239,7 @@ export function createWithUndoRedo(
     }
 
     editor.redo = () => {
-      if (editorActor.getSnapshot().context.readOnly) {
+      if (editorActor.getSnapshot().matches({'edit mode': 'read only'})) {
         return
       }
       const {redos} = editor.history
