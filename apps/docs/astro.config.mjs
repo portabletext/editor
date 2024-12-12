@@ -27,6 +27,10 @@ export default defineConfig({
           autogenerate: {directory: 'reference'},
         },
         typeDocSidebarGroup,
+        {
+          label: 'Integrations',
+          autogenerate: {directory: 'integrations'},
+        },
       ],
       plugins: [
         starlightTypeDoc({
