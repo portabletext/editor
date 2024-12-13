@@ -197,8 +197,10 @@ function DecoratorToolbarButton(props: {
 
 function ListToolbarButton(props: {list: SchemaDefinition['lists'][number]}) {
   const editor = useEditor()
-  const activeListItem = useEditorSelector(editor, selectors.getActiveListItem)
-  const active = activeListItem === props.list.name
+  const active = useEditorSelector(
+    editor,
+    selectors.isActiveListItem(props.list.name),
+  )
 
   return (
     <TooltipTrigger>
