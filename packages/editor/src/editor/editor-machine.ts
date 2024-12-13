@@ -31,6 +31,7 @@ import {fromSlateValue} from '../utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../utils/weakMaps'
 import type {EditorSchema} from './define-schema'
 import type {EditorContext} from './editor-snapshot'
+import {getActiveDecorators} from './get-active-decorators'
 
 export * from 'xstate/guards'
 
@@ -282,6 +283,10 @@ export const editorMachine = setup({
       )
 
       const editorContext = {
+        activeDecorators: getActiveDecorators({
+          schema: context.schema,
+          slateEditorInstance: event.editor,
+        }),
         keyGenerator: context.keyGenerator,
         schema: context.schema,
         selection,
