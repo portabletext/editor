@@ -40,7 +40,7 @@
       "default": "./lib/behaviors/index.js"
     },
     "./selectors": {
-      "source": "./src/selectors/index.ts",
+      "source": "./src/selectors/_exports/index.ts",
       "import": "./lib/selectors/index.js",
       "require": "./lib/selectors/index.cjs",
       "default": "./lib/selectors/index.js"

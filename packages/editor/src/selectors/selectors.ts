@@ -15,17 +15,6 @@ import type {EditorSelector} from '../editor/editor-selector'
 /**
  * @alpha
  */
-export const selectionIsCollapsed: EditorSelector<boolean> = ({context}) => {
-  return (
-    JSON.stringify(context.selection?.anchor.path) ===
-      JSON.stringify(context.selection?.focus.path) &&
-    context.selection?.anchor.offset === context.selection?.focus.offset
-  )
-}
-
-/**
- * @alpha
- */
 export const getFocusBlock: EditorSelector<
   {node: PortableTextBlock; path: [KeyedSegment]} | undefined
 > = ({context}) => {

@@ -1,5 +1,5 @@
 import type {EditorSchema} from '../editor/define-schema'
-import {getFocusSpan, selectionIsCollapsed} from '../selectors/selectors'
+import * as selectors from '../selectors'
 import {defineBehavior} from './behavior.types'
 
 /**
@@ -19,7 +19,7 @@ export function createLinkBehaviors(config: LinkBehaviorsConfig) {
   const pasteLinkOnSelection = defineBehavior({
     on: 'paste',
     guard: ({context, event}) => {
-      const selectionCollapsed = selectionIsCollapsed({context})
+      const selectionCollapsed = selectors.isSelectionCollapsed({context})
       const text = event.data.getData('text/plain')
       const url = looksLikeUrl(text) ? text : undefined
       const annotation =
@@ -45,8 +45,8 @@ export function createLinkBehaviors(config: LinkBehaviorsConfig) {
   const pasteLinkAtCaret = defineBehavior({
     on: 'paste',
     guard: ({context, event}) => {
-      const focusSpan = getFocusSpan({context})
-      const selectionCollapsed = selectionIsCollapsed({context})
+      const focusSpan = selectors.getFocusSpan({context})
+      const selectionCollapsed = selectors.isSelectionCollapsed({context})
 
       if (!focusSpan || !selectionCollapsed) {
         return false

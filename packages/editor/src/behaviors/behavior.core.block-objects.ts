@@ -1,12 +1,6 @@
 import {isPortableTextTextBlock} from '@sanity/types'
 import {isEmptyTextBlock} from '../editor/utils/utils'
-import {
-  getFocusBlockObject,
-  getFocusTextBlock,
-  getNextBlock,
-  getPreviousBlock,
-  selectionIsCollapsed,
-} from '../selectors/selectors'
+import * as selectors from '../selectors'
 import {isHotkey} from '../utils/is-hotkey'
 import {defineBehavior} from './behavior.types'
 
@@ -14,8 +8,8 @@ const arrowDownOnLonelyBlockObject = defineBehavior({
   on: 'key.down',
   guard: ({context, event}) => {
     const isArrowDown = isHotkey('ArrowDown', event.keyboardEvent)
-    const focusBlockObject = getFocusBlockObject({context})
-    const nextBlock = getNextBlock({context})
+    const focusBlockObject = selectors.getFocusBlockObject({context})
+    const nextBlock = selectors.getNextBlock({context})
 
     return isArrowDown && focusBlockObject && !nextBlock
   },
@@ -26,8 +20,8 @@ const arrowUpOnLonelyBlockObject = defineBehavior({
   on: 'key.down',
   guard: ({context, event}) => {
     const isArrowUp = isHotkey('ArrowUp', event.keyboardEvent)
-    const focusBlockObject = getFocusBlockObject({context})
-    const previousBlock = getPreviousBlock({context})
+    const focusBlockObject = selectors.getFocusBlockObject({context})
+    const previousBlock = selectors.getPreviousBlock({context})
 
     return isArrowUp && focusBlockObject && !previousBlock
   },
@@ -42,8 +36,8 @@ const arrowUpOnLonelyBlockObject = defineBehavior({
 const breakingBlockObject = defineBehavior({
   on: 'insert.break',
   guard: ({context}) => {
-    const focusBlockObject = getFocusBlockObject({context})
-    const collapsedSelection = selectionIsCollapsed({context})
+    const focusBlockObject = selectors.getFocusBlockObject({context})
+    const collapsedSelection = selectors.isSelectionCollapsed({context})
 
     return collapsedSelection && focusBlockObject !== undefined
   },
@@ -53,9 +47,9 @@ const breakingBlockObject = defineBehavior({
 const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
   on: 'delete.backward',
   guard: ({context}) => {
-    const focusTextBlock = getFocusTextBlock({context})
-    const selectionCollapsed = selectionIsCollapsed({context})
-    const previousBlock = getPreviousBlock({context})
+    const focusTextBlock = selectors.getFocusTextBlock({context})
+    const selectionCollapsed = selectors.isSelectionCollapsed({context})
+    const previousBlock = selectors.getPreviousBlock({context})
 
     if (!focusTextBlock || !selectionCollapsed || !previousBlock) {
       return false
@@ -90,9 +84,9 @@ const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
 const deletingEmptyTextBlockBeforeBlockObject = defineBehavior({
   on: 'delete.forward',
   guard: ({context}) => {
-    const focusTextBlock = getFocusTextBlock({context})
-    const selectionCollapsed = selectionIsCollapsed({context})
-    const nextBlock = getNextBlock({context})
+    const focusTextBlock = selectors.getFocusTextBlock({context})
+    const selectionCollapsed = selectors.isSelectionCollapsed({context})
+    const nextBlock = selectors.getNextBlock({context})
 
     if (!focusTextBlock || !selectionCollapsed || !nextBlock) {
       return false
