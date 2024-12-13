@@ -25,7 +25,6 @@ export function PortableTextToolbar(props: {
 }) {
   const editor = useEditor()
   const editorInstance = usePortableTextEditor()
-  const selection = usePortableTextEditorSelection()
 
   return (
     <Toolbar aria-label="Text formatting">
@@ -42,9 +41,6 @@ export function PortableTextToolbar(props: {
           <AnnotationToolbarButton
             key={annotation.name}
             annotation={annotation}
-            editor={editor}
-            editorInstance={editorInstance}
-            selection={selection}
           />
         ))}
       </Group>
@@ -121,16 +117,12 @@ function StyleSelector(props: {schemaDefinition: SchemaDefinition}) {
 
 function AnnotationToolbarButton(props: {
   annotation: SchemaDefinition['annotations'][number]
-  editor: Editor
-  editorInstance: PortableTextEditor
-  selection: EditorSelection
 }) {
-  const active =
-    props.selection !== null &&
-    PortableTextEditor.isAnnotationActive(
-      props.editorInstance,
-      props.annotation.name,
-    )
+  const editor = useEditor()
+  const active = useEditorSelector(
+    editor,
+    selectors.isActiveAnnotation(props.annotation.name),
+  )
 
   return (
     <TooltipTrigger>
@@ -139,7 +131,7 @@ function AnnotationToolbarButton(props: {
         size="sm"
         isSelected={active}
         onPress={() => {
-          props.editor.send({
+          editor.send({
             type: 'annotation.toggle',
             annotation: {
               name: props.annotation.name,
@@ -155,7 +147,7 @@ function AnnotationToolbarButton(props: {
                     : {},
             },
           })
-          props.editor.send({type: 'focus'})
+          editor.send({type: 'focus'})
         }}
       >
         <Icon icon={props.annotation.icon} fallback={props.annotation.title} />
