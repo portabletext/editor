@@ -1,0 +1,121 @@
+---
+title: Behaviors
+description: Description of behaviors
+---
+
+import {LinkCard} from '@astrojs/starlight/components'
+
+Behaviors are allow you to customize how users interact with the editor by hooking into events during the editing experience.
+
+All behaviors follow this process:
+
+1. Listen for an **event**.
+2. Use a **guard** to decide if they should run or not.
+3. Trigger a set of **actions** to perform on the editor.
+
+This pattern is influenced by [Statecharts](https://statecharts.dev/).
+
+Behaviors are defined with the `defineBehavior` helper. Here's an example event from the [behavior guide](/guides/create-behavior/):
+
+```tsx
+defineBehavior({
+  on: 'insert.text',
+  guard: ({context, event}) => event.text === 'a',
+  actions: [({context, event}) => [{type: 'insert.text', text: 'A'}]],
+})
+```
+
+Revisiting the three step process above:
+
+- `on` listens for the event.
+- `guard` handles the conditional.
+- `actions` sends, or invokes, the desired actions.
+
+## Events
+
+Whenever you enter text into the editor, activate a toolbar button, or anything else happens in the editor it sends an event.
+
+There are two categories of Behavior Events:
+
+- Native Events: Events that come from the browser or device directly.
+- Synthetic Events: Abstracted events specific to the editor.
+
+<LinkCard
+  title="Behavior API reference"
+  description="Review the full list of native an synthetic events."
+  href="/reference/behavior-api/"
+/>
+
+The Behavior API uses events to trigger actions by listening for a specific event.
+
+:::note
+Synthetic events have default actions that share their name. Only one behavior per event is allowed to alter the default action.
+:::
+
+## Guards
+
+A guard is a condition that helps the behavior determine if it should perform the actions.
+
+The `guard` key expects a response or `false`. The example above shows a simple _truthy_ guard. Here it is again:
+
+```js
+guard: ({context, event}) => event.text === 'a'
+```
+
+Guards can also return parameters that you can access when firing an action.
+
+```js
+guard: ({context, event}) => {
+    if (event.text === 'a') {
+        return {
+            secret: 'secret text'
+        }
+    }
+    return false
+},
+actions: [
+    ({context, event}, {secret}) => [
+        /* ... */
+    ]
+]
+```
+
+Passing parameters allows you to reuse conditional behavior, such as selecting part of a string, without rewriting the logic.
+
+Guards are optional. This means it's possible to create an unconditional behavior that always runs when an event occurs. The "soft return" behavior build into the PTE is one example:
+
+```js
+const softReturn = defineBehavior({
+  on: 'insert.soft break',
+  actions: [() => [{type: 'insert.text', text: '\n'}]],
+})
+```
+
+This behavior listens for soft break events and uses the `insert.text` action to insert a `\n` instead to prevent splitting text blocks with `Shift+Enter`. These unconditional behaviors are rare and you'll mostly encounter conditional behaviors.
+
+## Actions
+
+Actions make things happen in the editor. This is where you change the standard behavior by modifying actions before they occur or by circumventing them completely. You've seen actions in some of the guard examples above.
+
+The `actions` key expects an array of behavior action sets. As with guards, you have access to the `event` and `context`.
+
+So far we've only seen examples that invoke a single action, but you can send multiple actions or sets of actions from a single event.
+
+{/* While some actions share names with events, it's important to remember that actions don't send events. */}
+
+## Selectors
+
+Selectors are pure functions that derive state from the editor context (`context` in the examples). A collection of selectors is included with the core library.
+
+```tsx
+// import all selectors
+import * as selectors from '@portabletext/editor/selectors'
+// or individual ones
+import {
+  getFocusSpan,
+  getFocusTextBlock,
+  selectionIsCollapsed,
+} from '@portabletext/editor/selectors'
+```
+
+The core selectors are useful helper functions for checking conditions of the editor, finding selected text, and more.

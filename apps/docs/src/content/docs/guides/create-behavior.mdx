@@ -1,0 +1,76 @@
+---
+title: Create a custom behavior
+description: Add custom behaviors to the Portable Text Editor
+---
+
+import {LinkCard} from '@astrojs/starlight/components'
+
+Behaviors add functionality to the Portable Text Editor (PTE) in a declarative way.
+
+For a deep dive into behaviors and how they work, check out [Behaviors](/concepts/behaviors).
+
+## Import the behavior helper
+
+Begin by importing `defineBehavior`.
+
+```tsx
+import {defineBehavior} from '@portabletext/editor'
+```
+
+## Define the behavior
+
+Behaviors need three things:
+
+- A triggering event. See the [full list of events]().
+- A guard, or condition that determines if this behavior should apply.
+- An action to invoke if the event and guard are met.
+
+Here's an example behavior:
+
+```tsx
+const noLowerCaseA = defineBehavior({
+  on: 'insert.text',
+  guard: ({event}) => event.text === 'a',
+  actions: [() => [{type: 'insert.text', text: 'A'}]],
+})
+```
+
+Let's break it down:
+
+1. It listens for the `insert.text` event. You can use any [native or synthetic event]() here.
+2. The guard checks if the text that triggered this event is equal to a lowercase `a`. The guard is true and the behavior will perform the actions.
+3. It sends an `insert.text` action with with "A" instead of "a".
+
+<LinkCard
+  title="Understanding Behaviors"
+  description="Learn more about how each part of the Behavior API works."
+  href="concepts/behavior/"
+/>
+
+## Register the behavior
+
+In order to use the behavior, add it to the `EditorProvider`. If you want to avoid overwriting the default behaviors, import them and register them with your custom behavior.
+
+```tsx
+import {coreBehavior, defineBehavior} from '@portabletext/editor/behaviors'
+
+const noLowerCaseA = defineBehavior({
+    on: 'insert.text',
+    guard: ({event}) => event.text === 'a',
+    actions: [() => [{type: 'insert.text', text: 'A'}]],
+})
+
+// ...
+
+<EditorProvider
+    initialConfig={{
+        schemaDefinition,
+        behaviors: [
+            ...coreBehaviors,
+            noLowerCaseA,
+        ]
+    }}
+>
+    {/* ... */}
+</EditorProvider>
+```

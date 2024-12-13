@@ -1,0 +1,42 @@
+---
+title: Behavior Recipes
+description: Common solutions using the Behavior API.
+---
+
+import {CardGrid, LinkCard} from '@astrojs/starlight/components'
+
+Below are some common behavior examples. You can also find a list of core behaviors [on GitHub](https://github.com/portabletext/editor/tree/main/packages/editor/src/behaviors)
+
+## Log inserted text
+
+Send and `effect` type action along with an `effect` to perform side effects.
+
+```js
+const logInsertText = defineBehavior({
+    on: 'insert.text',
+    actions: [
+      ({event}) => [
+        {
+          type: 'effect',
+          effect: () => {
+            console.log(event)
+          },
+        },
+        event,
+      ],
+    ],
+  }
+```
+
+<CardGrid>
+  <LinkCard
+    title="Behaviors"
+    description="Learn more about the Behavior API"
+    href="concepts/behavior/"
+  />
+  <LinkCard
+    title="Create a custom behavior"
+    description="Learn to create and register a custom behavior"
+    href="guides/create-behavior/"
+  />
+</CardGrid>
