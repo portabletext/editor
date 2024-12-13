@@ -171,7 +171,7 @@ function DecoratorToolbarButton(props: {
   const editor = useEditor()
   const active = useEditorSelector(
     editor,
-    selectors.isDecoratorActive(props.decorator.name),
+    selectors.isActiveDecorator(props.decorator.name),
   )
 
   return (
