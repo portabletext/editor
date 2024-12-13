@@ -78,6 +78,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
       >
         <EditorProvider
           initialConfig={{
+            initialValue: value,
             behaviors: [
               ...coreBehaviors,
               ...createLinkBehaviors({
