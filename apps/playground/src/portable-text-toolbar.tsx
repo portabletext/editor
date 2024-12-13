@@ -1,12 +1,4 @@
-import {
-  PortableTextEditor,
-  useEditor,
-  useEditorSelector,
-  usePortableTextEditor,
-  usePortableTextEditorSelection,
-  type Editor,
-  type EditorSelection,
-} from '@portabletext/editor'
+import {useEditor, useEditorSelector} from '@portabletext/editor'
 import * as selectors from '@portabletext/editor/selectors'
 import {SquareDashedMousePointerIcon} from 'lucide-react'
 import {isValidElement} from 'react'
@@ -24,7 +16,6 @@ export function PortableTextToolbar(props: {
   schemaDefinition: SchemaDefinition
 }) {
   const editor = useEditor()
-  const editorInstance = usePortableTextEditor()
 
   return (
     <Toolbar aria-label="Text formatting">
@@ -53,12 +44,7 @@ export function PortableTextToolbar(props: {
       <Separator orientation="vertical" />
       <Group aria-label="Block objects" className="contents">
         {props.schemaDefinition.blockObjects.map((blockObject) => (
-          <BlockObjectButton
-            key={blockObject.name}
-            blockObject={blockObject}
-            editor={editor}
-            editorInstance={editorInstance}
-          />
+          <BlockObjectButton key={blockObject.name} blockObject={blockObject} />
         ))}
       </Group>
       <Separator orientation="vertical" />
@@ -67,7 +53,6 @@ export function PortableTextToolbar(props: {
           <InlineObjectButton
             key={inlineObject.name}
             inlineObject={inlineObject}
-            editor={editor}
           />
         ))}
       </Group>
@@ -217,14 +202,15 @@ function ListToolbarButton(props: {list: SchemaDefinition['lists'][number]}) {
 
 function InlineObjectButton(props: {
   inlineObject: SchemaDefinition['inlineObjects'][number]
-  editor: Editor
 }) {
+  const editor = useEditor()
+
   return (
     <Button
       variant="secondary"
       size="sm"
       onPress={() => {
-        props.editor.send({
+        editor.send({
           type: 'insert.inline object',
           inlineObject: {
             name: props.inlineObject.name,
@@ -234,7 +220,7 @@ function InlineObjectButton(props: {
                 : {},
           },
         })
-        props.editor.send({type: 'focus'})
+        editor.send({type: 'focus'})
       }}
     >
       <Icon icon={props.inlineObject.icon} fallback={null} />
@@ -245,15 +231,15 @@ function InlineObjectButton(props: {
 
 function BlockObjectButton(props: {
   blockObject: SchemaDefinition['blockObjects'][number]
-  editor: Editor
-  editorInstance: PortableTextEditor
 }) {
+  const editor = useEditor()
+
   return (
     <Button
       variant="secondary"
       size="sm"
       onPress={() => {
-        props.editor.send({
+        editor.send({
           type: 'insert.block object',
           placement: 'auto',
           blockObject: {
@@ -264,7 +250,7 @@ function BlockObjectButton(props: {
                 : {},
           },
         })
-        props.editor.send({type: 'focus'})
+        editor.send({type: 'focus'})
       }}
     >
       <Icon icon={props.blockObject.icon} fallback={null} />
