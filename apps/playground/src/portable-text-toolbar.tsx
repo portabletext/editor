@@ -9,7 +9,7 @@ import {
 } from '@portabletext/editor'
 import * as selectors from '@portabletext/editor/selectors'
 import {SquareDashedMousePointerIcon} from 'lucide-react'
-import {isValidElement, useMemo} from 'react'
+import {isValidElement} from 'react'
 import {Group, TooltipTrigger} from 'react-aria-components'
 import {isValidElementType} from 'react-is'
 import {Button} from './components/button'
@@ -29,12 +29,7 @@ export function PortableTextToolbar(props: {
 
   return (
     <Toolbar aria-label="Text formatting">
-      <StyleSelector
-        schemaDefinition={props.schemaDefinition}
-        editor={editor}
-        editorInstance={editorInstance}
-        selection={selection}
-      />
+      <StyleSelector schemaDefinition={props.schemaDefinition} />
       <Separator orientation="vertical" />
       <Group aria-label="Decorators" className="contents">
         {props.schemaDefinition.decorators?.map((decorator) => (
@@ -98,32 +93,19 @@ export function PortableTextToolbar(props: {
   )
 }
 
-function StyleSelector(props: {
-  schemaDefinition: SchemaDefinition
-  editor: Editor
-  editorInstance: PortableTextEditor
-  selection: EditorSelection
-}) {
-  const focusBlock = PortableTextEditor.focusBlock(props.editorInstance)
-  const activeStyle = useMemo(
-    () =>
-      focusBlock
-        ? (props.schemaDefinition.styles.find((style) =>
-            PortableTextEditor.hasBlockStyle(props.editorInstance, style.name),
-          )?.name ?? null)
-        : null,
-    [props.editorInstance, focusBlock, props.schemaDefinition],
-  )
+function StyleSelector(props: {schemaDefinition: SchemaDefinition}) {
+  const editor = useEditor()
+  const activeStyle = useEditorSelector(editor, selectors.getActiveStyle)
 
   return (
     <Select
       placeholder="Select style"
       aria-label="Style"
-      selectedKey={activeStyle}
+      selectedKey={activeStyle ?? null}
       onSelectionChange={(style) => {
         if (typeof style === 'string') {
-          props.editor.send({type: 'style.toggle', style})
-          props.editor.send({type: 'focus'})
+          editor.send({type: 'style.toggle', style})
+          editor.send({type: 'focus'})
         }
       }}
     >
