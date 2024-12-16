@@ -1,6 +1,8 @@
 ---
 title: Behavior Recipes
 description: Common solutions using the Behavior API.
+sidebar:
+  order: 10
 ---
 
 import {CardGrid, LinkCard} from '@astrojs/starlight/components'
@@ -26,6 +28,46 @@ const logInsertText = defineBehavior({
       ],
     ],
   }
+```
+
+## Auto-close parenthesis
+
+You can write behaviors to auto-close common paired characters. This example closes parenthesis, and then moves the cursor in between the two characters. This logic can expand to cover more sets.
+
+```js
+const autoCloseParens = defineBehavior({
+  on: 'insert.text',
+  guard: ({context, event}) => {
+    if (event.text !== '(') {
+      return false
+    }
+  },
+  actions: [
+    ({event, context}) => [
+      // Send the original event that includes the '('
+      event,
+      // Send a new insert.text event with a closing parenthesis
+      {
+        type: 'insert.text',
+        text: ')',
+      },
+      // Send a select event to move the cursor in between the parens
+      {
+        type: 'select',
+        selection: {
+          anchor: {
+            path: context.selection.anchor.path,
+            offset: context.selection.anchor.offset + 1,
+          },
+          focus: {
+            path: context.selection.focus.path,
+            offset: context.selection.focus.offset + 1,
+          },
+        },
+      },
+    ],
+  ],
+})
 ```
 
 <CardGrid>

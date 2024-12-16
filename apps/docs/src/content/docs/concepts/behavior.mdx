@@ -3,7 +3,7 @@ title: Behaviors
 description: Description of behaviors
 ---
 
-import {LinkCard} from '@astrojs/starlight/components'
+import {CardGrid, LinkCard} from '@astrojs/starlight/components'
 
 Behaviors are allow you to customize how users interact with the editor by hooking into events during the editing experience.
 
@@ -118,4 +118,21 @@ import {
 } from '@portabletext/editor/selectors'
 ```
 
-The core selectors are useful helper functions for checking conditions of the editor, finding selected text, and more.
+The core selectors are useful helper functions for checking conditions of the editor, finding selected text, and more. You can manually do anything a selector can do by parsing the editor context.
+
+## Behavior Examples
+
+Browse the existing behaviors, or check out the Behavior Recipes documentation for examples of real-world behaviors.
+
+<CardGrid>
+  <LinkCard
+    title="Behavior Recipes"
+    description="Examples of useful behaviors."
+    href="/guides/behavior-cheat-sheet/"
+  />
+  <LinkCard
+    title="Core Behaviors"
+    description="Analyze the core behaviors included with the PTE."
+    href="https://github.com/portabletext/editor/tree/main/packages/editor/src/behaviors"
+  />
+</CardGrid>

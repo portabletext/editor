@@ -8,9 +8,20 @@ Reference docs for the behavior API.
 ## defineBehavior
 
 Options Object
+
 - on (string): Internal editor event
 - guard (function or boolean): function accepts `context` and `event`, returns boolean
 - actions (array): function accepts `context` and `event`, returns array of actions
+
+### Example
+
+```tsx
+const noLowerCaseA = defineBehavior({
+  on: 'insert.text',
+  guard: ({event, context}) => event.text === 'a',
+  actions: [({event, context}) => [{type: 'insert.text', text: 'A'}]],
+})
+```
 
 ## Behavior Event types
 

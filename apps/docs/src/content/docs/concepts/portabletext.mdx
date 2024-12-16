@@ -55,7 +55,7 @@ Decorators are inline text with added meaning. Examples include:
 - Emphasis or italicized text
 - Underlined text
 
-Decorators are a type of [Portable Text mark](https://github.com/portabletext/portabletext?tab=readme-ov-file#markdefs-array).
+Decorators are a type of [Portable Text mark](https://github.com/portabletext/portabletext?tab=readme-ov-file#markdefs-array) that adds additional meaning to existing text.
 
 ### Annotations
 
@@ -64,7 +64,7 @@ Like decorators, annotations are inline text with added meaning. Annotations are
 - Links
 - References
 
-Annotations are a type of [Portable Text mark](https://github.com/portabletext/portabletext?tab=readme-ov-file#markdefs-array).
+Annotations are a type of [Portable Text mark](https://github.com/portabletext/portabletext?tab=readme-ov-file#markdefs-array) that adds additional meaning to existing text.
 
 ### Lists
 
@@ -135,3 +135,18 @@ The editor comes with many behaviors by default, but you can also create your ow
   <LinkCard title="Learn more about behaviors" href="/concepts/behavior/" />
   <LinkCard title="Create your own behavior" href="/guides/create-behavior/" />
 </CardGrid>
+
+## Common terms
+
+The following terms come up when dealing with Portable Text and the editor. Some overlap with the schema above, while others are more general.
+
+- Block: Broken down into standard and custom blocks. Standard blocks are sections of text, like paragraphs and headings. Custom blocks are block objects like images, code blocks, embeds, etc.
+- Span: A standard way to express inline text within a block.
+- Children: An array of spans or other inline types contained within a block.
+- Marks: `markDefs` exist in the Portable Text format and connect spans with annotations and decorators. A span can have multiple marks associated with it. Such as text that is bold and italic.
+- List items: Blocks can be labeled as list items to resemble lists.
+- Selection: The range of text selected, or the cursor location in the editor at a given time.
+- Section collapse: A collapsed section is one where nothing is selected and is instead a single point.
+- Anchor: Where the user began the selection.
+- Focus: Where the user ends the selection.
+- Offset: A distance, in characters, from the selection.

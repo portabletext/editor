@@ -5,9 +5,23 @@ sidebar:
   order: 1
 ---
 
-Expand on readme info:
+The Portable Text Editor gives you control of how it renders each schema type element. You need to explicitly tell it what. These choices have no impact on the Portable Text output—they only affect how the editor itself renders content.
 
-All the different render functions passed to `PortableTextEditable` can be defined as stand-alone React components. Most of these are fairly straightforward to render because everything you need is provided via `props`. However, lists are a little special. Since Portable Text has no concept of block nesting, the easiest way get something looking like lists is with pure CSS. Head over to [/examples/basic/src/editor.css](/examples/basic/src/editor.css) for a full example.
+The following props can be passed to the `PortableTextEditable` component:
+
+- `renderAnnotation`: For annotations (e.g., hyperlinks).
+- `renderBlock`: For block objects (e.g., images, embeds).
+- `renderChild`: For inline objects (e.g., custom emoji, stock symbols).
+- `renderDecorator`: For decorators (e.g., strong, italic, emphasis text).
+- `renderStyle`: For core text block types (e.g., normal, h1, h2, h3, blockquote)
+
+All the different render functions passed to `PortableTextEditable` can be defined as stand-alone React components.
+
+Most follow the same pattern of reading `props` and conditionally rendering elements based on schema data.
+
+Lists are a bit unique. Portable Text has no concept of block nesting, so the solution is to use pure CSS to style them. We suggest [including this example CSS](https://github.com/portabletext/editor/blob/main/examples/basic/src/editor.css) or similar to manage list rendering.
+
+Here are basic implementations of some core types:
 
 ```tsx
 const renderDecorator: RenderDecoratorFunction = (props) => {
@@ -23,6 +37,7 @@ const renderDecorator: RenderDecoratorFunction = (props) => {
   return <>{props.children}</>
 }
 
+// Annotations
 const renderAnnotation: RenderAnnotationFunction = (props) => {
   if (props.schemaType.name === 'link') {
     return <span style={{textDecoration: 'underline'}}>{props.children}</span>
@@ -31,6 +46,7 @@ const renderAnnotation: RenderAnnotationFunction = (props) => {
   return <>{props.children}</>
 }
 
+// Block objects
 const renderBlock: RenderBlockFunction = (props) => {
   if (props.schemaType.name === 'image' && isImage(props.value)) {
     return (
@@ -49,12 +65,14 @@ const renderBlock: RenderBlockFunction = (props) => {
   return <div style={{marginBlockEnd: '0.25em'}}>{props.children}</div>
 }
 
+// Check the shape of an image and confirm it has a src.
 function isImage(
   props: PortableTextBlock,
 ): props is PortableTextBlock & {src: string} {
   return 'src' in props
 }
 
+// Styles
 const renderStyle: RenderStyleFunction = (props) => {
   if (props.schemaType.value === 'h1') {
     return <h1>{props.children}</h1>
@@ -71,6 +89,7 @@ const renderStyle: RenderStyleFunction = (props) => {
   return <>{props.children}</>
 }
 
+// Inline objects
 const renderChild: RenderChildFunction = (props) => {
   if (props.schemaType.name === 'stock-ticker' && isStockTicker(props.value)) {
     return (
@@ -88,9 +107,12 @@ const renderChild: RenderChildFunction = (props) => {
   return <>{props.children}</>
 }
 
+// Check the shape of the object by confirming it has a symbol.
 function isStockTicker(
   props: PortableTextChild,
 ): props is PortableTextChild & {symbol: string} {
   return 'symbol' in props
 }
 ```
+
+You can apply styles, libraries like Tailwind, or use custom react components within the rendering functions.
