@@ -3,13 +3,10 @@ import type {PortableTextBlock} from '@sanity/types'
 import {isEqual} from 'lodash'
 import {Editor, Text, Transforms, type Descendant, type Node} from 'slate'
 import {
-  and,
   assertEvent,
   assign,
   emit,
   fromCallback,
-  not,
-  or,
   setup,
   type AnyEventObject,
   type CallbackLogicFunction,
@@ -118,11 +115,13 @@ export const syncMachine = setup({
           readOnly: boolean
         }
       | SyncValueEvent,
-    emitted: {} as PickFromUnion<
-      SyncValueEvent,
-      'type',
-      'done syncing' | 'invalid value' | 'patch' | 'value changed'
-    >,
+    emitted: {} as
+      | PickFromUnion<
+          SyncValueEvent,
+          'type',
+          'invalid value' | 'patch' | 'value changed'
+        >
+      | {type: 'done syncing initial value'},
   },
   actions: {
     'assign initial value synced': assign({
@@ -149,21 +148,19 @@ export const syncMachine = setup({
         return event.value
       },
     }),
-    'emit done syncing': emit(({event}) => {
-      assertEvent(event, 'done syncing')
-      return event
+    'emit done syncing initial value': emit({
+      type: 'done syncing initial value',
     }),
   },
   guards: {
-    'is readOnly': ({context}) => context.readOnly,
-    'is processing local changes': ({context}) =>
-      context.isProcessingLocalChanges,
-    'is processing remote changes': ({context}) =>
-      isChangingRemotely(context.slateEditor) ?? false,
-    'is busy': and([
-      not('is readOnly'),
-      or(['is processing local changes', 'is processing remote changes']),
-    ]),
+    'initial value synced': ({context}) => context.initialValueSynced,
+    'is busy': ({context}) => {
+      return (
+        !context.readOnly &&
+        (context.isProcessingLocalChanges ||
+          (isChangingRemotely(context.slateEditor) ?? false))
+      )
+    },
     'value changed while syncing': ({context, event}) => {
       assertEvent(event, 'done syncing')
       return context.pendingValue !== event.value
@@ -189,7 +186,6 @@ export const syncMachine = setup({
     pendingValue: undefined,
     previousValue: undefined,
   }),
-  initial: 'idle',
   on: {
     'has pending patches': {
       actions: assign({
@@ -205,103 +201,117 @@ export const syncMachine = setup({
       actions: ['assign readOnly'],
     },
   },
+  type: 'parallel',
   states: {
-    idle: {
-      on: {
-        'update value': [
-          {
-            guard: 'is busy',
-            target: 'busy',
-            actions: ['assign pending value'],
+    'setting up': {
+      initial: 'syncing initial value',
+      states: {
+        'syncing initial value': {
+          always: {
+            guard: 'initial value synced',
+            target: 'done syncing initial value',
           },
-          {
-            target: 'syncing',
-            actions: ['assign pending value'],
-          },
-        ],
+        },
+        'done syncing initial value': {
+          entry: ['emit done syncing initial value'],
+          type: 'final',
+        },
       },
     },
-    busy: {
-      after: {
-        1000: {
-          target: 'syncing',
-        },
-      },
-      on: {
-        'update value': [
-          {
-            guard: 'is busy',
-            actions: ['assign pending value'],
-            reenter: true,
-          },
-          {
-            target: 'syncing',
-            actions: ['assign pending value'],
-          },
-        ],
-      },
-    },
-    syncing: {
-      invoke: {
-        src: 'sync value',
-        id: 'sync value',
-        input: ({context}) => {
-          return {
-            context: {
-              keyGenerator: context.keyGenerator,
-              previousValue: context.previousValue,
-              readOnly: context.readOnly,
-              schema: context.schema,
-            },
-            slateEditor: context.slateEditor,
-            streamBlocks: !context.initialValueSynced,
-            value: context.pendingValue ?? undefined,
-          }
-        },
-      },
-      always: {
-        guard: 'pending value equals previous value',
-        actions: [
-          emit(({context}) => ({
-            type: 'done syncing',
-            value: context.previousValue,
-          })),
-        ],
-        target: 'idle',
-      },
-      on: {
-        'update value': {
-          actions: ['assign pending value'],
-        },
-        'patch': {
-          actions: [emit(({event}) => event)],
-        },
-        'invalid value': {
-          actions: [emit(({event}) => event)],
-        },
-        'value changed': {
-          actions: [emit(({event}) => event)],
-        },
-        'done syncing': [
-          {
-            guard: 'value changed while syncing',
-            actions: [
-              'assign previous value',
-              'emit done syncing',
-              'assign initial value synced',
+    'syncing': {
+      initial: 'idle',
+      states: {
+        idle: {
+          on: {
+            'update value': [
+              {
+                guard: 'is busy',
+                target: 'busy',
+                actions: ['assign pending value'],
+              },
+              {
+                target: 'syncing',
+                actions: ['assign pending value'],
+              },
             ],
-            reenter: true,
           },
-          {
+        },
+        busy: {
+          after: {
+            1000: [
+              {
+                guard: 'is busy',
+                reenter: true,
+              },
+              {
+                target: 'syncing',
+              },
+            ],
+          },
+          on: {
+            'update value': [
+              {
+                actions: ['assign pending value'],
+              },
+            ],
+          },
+        },
+        syncing: {
+          always: {
+            guard: 'pending value equals previous value',
             target: 'idle',
-            actions: [
-              'clear pending value',
-              'assign previous value',
-              'emit done syncing',
-              'assign initial value synced',
+            actions: ['clear pending value', 'assign initial value synced'],
+          },
+          invoke: {
+            src: 'sync value',
+            id: 'sync value',
+            input: ({context}) => {
+              return {
+                context: {
+                  keyGenerator: context.keyGenerator,
+                  previousValue: context.previousValue,
+                  readOnly: context.readOnly,
+                  schema: context.schema,
+                },
+                slateEditor: context.slateEditor,
+                streamBlocks: !context.initialValueSynced,
+                value: context.pendingValue,
+              }
+            },
+          },
+          on: {
+            'update value': {
+              actions: ['assign pending value'],
+            },
+            'patch': {
+              actions: [emit(({event}) => event)],
+            },
+            'invalid value': {
+              actions: [emit(({event}) => event)],
+            },
+            'value changed': {
+              actions: [emit(({event}) => event)],
+            },
+            'done syncing': [
+              {
+                guard: 'value changed while syncing',
+                actions: [
+                  'assign previous value',
+                  'assign initial value synced',
+                ],
+                reenter: true,
+              },
+              {
+                target: 'idle',
+                actions: [
+                  'clear pending value',
+                  'assign previous value',
+                  'assign initial value synced',
+                ],
+              },
             ],
           },
-        ],
+        },
       },
     },
   },

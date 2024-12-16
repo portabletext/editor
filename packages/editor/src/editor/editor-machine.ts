@@ -69,7 +69,7 @@ export type MutationEvent = {
 export type InternalEditorEvent =
   | {type: 'normalizing'}
   | {type: 'done normalizing'}
-  | {type: 'done syncing'}
+  | {type: 'done syncing initial value'}
   | {
       type: 'behavior event'
       behaviorEvent: SyntheticBehaviorEvent | NativeBehaviorEvent
@@ -101,7 +101,11 @@ export type InternalEditorEvent =
       type: 'update maxBlocks'
       maxBlocks: number | undefined
     }
-  | OmitFromUnion<InternalEditorEmittedEvent, 'type', 'read only' | 'editable'>
+  | OmitFromUnion<
+      InternalEditorEmittedEvent,
+      'type',
+      'ready' | 'read only' | 'editable'
+    >
 
 /**
  * @alpha
@@ -427,7 +431,7 @@ export const editorMachine = setup({
           states: {
             'determine initial edit mode': {
               on: {
-                'done syncing': [
+                'done syncing initial value': [
                   {
                     target: '#editor.edit mode.read only.read only',
                     guard: ({context}) => context.initialReadOnly,
@@ -502,7 +506,7 @@ export const editorMachine = setup({
             'mutation': {
               actions: 'defer event',
             },
-            'done syncing': {
+            'done syncing initial value': {
               target: 'pristine',
             },
           },
