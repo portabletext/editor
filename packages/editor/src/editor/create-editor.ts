@@ -33,6 +33,9 @@ import {createEditableAPI} from './plugins/createWithEditableAPI'
 export type EditorConfig = {
   behaviors?: Array<Behavior>
   keyGenerator?: () => string
+  /**
+   * @deprecated Will be removed in the next major version
+   */
   maxBlocks?: number
   readOnly?: boolean
   initialValue?: Array<PortableTextBlock>
