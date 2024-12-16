@@ -10,7 +10,7 @@ export default defineConfig({
   integrations: [
     react(),
     starlight({
-      title: 'Portable Text Editor Docs',
+      title: 'Portable Text Editor',
       customCss: ['./src/styles/globals.css'],
       social: {
         github: 'https://github.com/portabletext/editor',
