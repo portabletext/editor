@@ -23,7 +23,6 @@ import {
 } from '../editor/plugins/createWithPortableTextMarkModel'
 import {blockOffsetToSpanSelectionPoint} from '../editor/utils/utils.block-offset'
 import type {PickFromUnion} from '../type-utils'
-import debug from '../utils/debug'
 import {toSlatePath} from '../utils/paths'
 import {toSlateRange} from '../utils/ranges'
 import {fromSlateValue, toSlateValue} from '../utils/values'
@@ -283,8 +282,6 @@ export function performAction({
   context: BehaviorActionImplementationContext
   action: BehaviorAction
 }) {
-  debug('Behavior action', action)
-
   switch (action.type) {
     case 'delete.block': {
       behaviorActionImplementations['delete.block']({

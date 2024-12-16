@@ -25,7 +25,6 @@ import type {
   InvalidValueResolution,
   PortableTextSlateEditor,
 } from '../types/editor'
-import debug from '../utils/debug'
 import {toPortableTextRange} from '../utils/ranges'
 import {fromSlateValue} from '../utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../utils/weakMaps'
@@ -245,8 +244,6 @@ export const editorMachine = setup({
     }),
     'handle behavior event': enqueueActions(({context, event, enqueue}) => {
       assertEvent(event, ['behavior event'])
-
-      debug('Behavior event', event)
 
       const defaultAction =
         event.behaviorEvent.type === 'copy' ||
