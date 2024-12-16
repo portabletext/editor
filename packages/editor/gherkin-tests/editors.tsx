@@ -7,6 +7,7 @@ import {
   PortableTextEditor,
   usePortableTextEditor,
   type HotkeyOptions,
+  type RangeDecoration,
 } from '../src'
 import type {Behavior} from '../src/behaviors'
 import type {EditorEmittedEvent} from '../src/editor/editor-machine'
@@ -20,6 +21,10 @@ export function Editors(props: {testRef: TestActorRef}) {
     (state) => state.context.behaviors,
   )
   const schema = useSelector(props.testRef, (state) => state.context.schema)
+  const rangeDecorations = useSelector(
+    props.testRef,
+    (state) => state.context.rangeDecorations,
+  )
   const value = useSelector(props.testRef, (state) => state.context.value)
 
   return (
@@ -29,6 +34,7 @@ export function Editors(props: {testRef: TestActorRef}) {
           behaviors={behaviors}
           key={editor.id}
           editorRef={editor}
+          rangeDecorations={rangeDecorations}
           schema={schema}
           value={value}
         />
@@ -48,6 +54,7 @@ const hotkeys: HotkeyOptions = {
 function Editor(props: {
   editorRef: EditorActorRef
   behaviors: Array<Behavior>
+  rangeDecorations?: Array<RangeDecoration>
   schema: React.ComponentProps<typeof PortableTextEditor>['schemaType']
   value: Array<PortableTextBlock> | undefined
 }) {
@@ -89,7 +96,11 @@ function Editor(props: {
         <CommentButtons />
         <LinkButtons />
         <StyleButtons />
-        <PortableTextEditable hotkeys={hotkeys} selection={selection} />
+        <PortableTextEditable
+          rangeDecorations={props.rangeDecorations}
+          hotkeys={hotkeys}
+          selection={selection}
+        />
       </EditorProvider>
       <pre data-testid="selection">
         {JSON.stringify(selectionValue ?? null, null, 2)}

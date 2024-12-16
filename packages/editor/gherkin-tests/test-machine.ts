@@ -9,7 +9,7 @@ import {
   setup,
   type ActorRefFrom,
 } from 'xstate'
-import type {EditorSelection, PortableTextEditor} from '../src'
+import type {EditorSelection, PortableTextEditor, RangeDecoration} from '../src'
 import {coreBehaviors} from '../src/behaviors'
 import type {Behavior} from '../src/behaviors/behavior.types'
 
@@ -111,6 +111,15 @@ export type TestMachineEvent =
       type: 'update behaviors'
       behaviors: Array<Behavior>
     }
+  | {
+      type: 'update range decorations'
+      rangeDecorations: Array<RangeDecoration>
+    }
+  | {
+      type: 'update range decoration selection'
+      selection: EditorSelection
+      newSelection: EditorSelection
+    }
 
 export type TestActorRef = ActorRefFrom<typeof testMachine>
 
@@ -120,11 +129,13 @@ export const testMachine = setup({
       behaviors: Array<Behavior>
       editorIdGenerator: () => string
       editors: Array<EditorActorRef>
+      rangeDecorations?: Array<RangeDecoration>
       schema: ComponentProps<typeof PortableTextEditor>['schemaType']
       value: Array<PortableTextBlock> | undefined
     },
     input: {} as {
       behaviors?: Array<Behavior>
+      rangeDecorations?: Array<RangeDecoration>
       schema: ComponentProps<typeof PortableTextEditor>['schemaType']
       value: Array<PortableTextBlock> | undefined
     },
@@ -171,6 +182,26 @@ export const testMachine = setup({
         return event.behaviors
       },
     }),
+    'assign range decorations': assign({
+      rangeDecorations: ({event}) => {
+        assertEvent(event, 'update range decorations')
+        return event.rangeDecorations
+      },
+    }),
+    'assign range decoration selection': assign({
+      rangeDecorations: ({context, event}) => {
+        assertEvent(event, 'update range decoration selection')
+        return context.rangeDecorations?.map((decoration) => {
+          if (decoration.selection === event.selection) {
+            return {
+              ...decoration,
+              selection: event.newSelection,
+            }
+          }
+          return decoration
+        })
+      },
+    }),
   },
   actors: {
     'editor machine': editorMachine,
@@ -181,6 +212,7 @@ export const testMachine = setup({
     behaviors: input.behaviors ?? coreBehaviors,
     editorIdGenerator: createKeyGenerator('e'),
     editors: [],
+    rangeDecorations: input.rangeDecorations,
     schema: input.schema,
     value: input.value,
   }),
@@ -193,6 +225,12 @@ export const testMachine = setup({
     },
     'update behaviors': {
       actions: ['assign behaviors'],
+    },
+    'update range decorations': {
+      actions: ['assign range decorations'],
+    },
+    'update range decoration selection': {
+      actions: ['assign range decoration selection'],
     },
   },
 })
