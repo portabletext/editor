@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.16.2](https://github.com/portabletext/editor/compare/editor-v1.16.1...editor-v1.16.2) (2024-12-16)
+
+
+### Bug Fixes
+
+* **perf:** stream the initial value into the editor ([135288b](https://github.com/portabletext/editor/commit/135288b582527683390e416f9f64e0c709deaa37))
+
 ## [1.16.1](https://github.com/portabletext/editor/compare/editor-v1.16.0...editor-v1.16.1) (2024-12-16)
 
 
