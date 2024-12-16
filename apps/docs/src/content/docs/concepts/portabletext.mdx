@@ -1,6 +1,6 @@
 ---
 title: Portable Text Editor
-description: TBD
+description: Learn more about the parts of Portable Text and the Editor, including common terms and concepts.
 prev: false
 sidebar:
   order: 1
@@ -97,8 +97,6 @@ The schema serves as a foundation for how the PTE renders the text. On it's own,
 
 To affect the way text renders in the editor, pass custom renderers to the editor.
 
-{/* <!-- Link block to render guide --> */}
-
 <LinkCard
   title="Customize how elements render"
   description="Custom renderers let you style schema elements in the PTE."
@@ -150,3 +148,5 @@ The following terms come up when dealing with Portable Text and the editor. Some
 - Anchor: Where the user began the selection.
 - Focus: Where the user ends the selection.
 - Offset: A distance, in characters, from the selection.
+- Path: A representation of the location of elements. Used in the behavior API to target or select specific blocks, spans, or text.
+- Node: A representation of an element. Contains details about it's type and content.
