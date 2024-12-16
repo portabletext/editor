@@ -34,6 +34,10 @@ export default defineConfig({
           label: 'Integrations',
           autogenerate: {directory: 'integrations'},
         },
+        {
+          label: 'Portable Text Specification',
+          link: 'https://github.com/portabletext/portabletext',
+        },
       ],
       plugins: [
         starlightTypeDoc({
