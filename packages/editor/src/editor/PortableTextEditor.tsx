@@ -173,7 +173,8 @@ export class PortableTextEditor extends Component<
     if (!this.props.editor && !prevProps.editor) {
       if (this.props.readOnly !== prevProps.readOnly) {
         this.editor._internal.editorActor.send({
-          type: 'toggle readOnly',
+          type: 'update readOnly',
+          readOnly: this.props.readOnly ?? false,
         })
       }
 

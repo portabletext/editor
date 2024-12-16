@@ -82,6 +82,10 @@ export type InternalEditorEvent =
       actionIntends: Array<BehaviorActionIntend>
     }
   | {
+      type: 'update readOnly'
+      readOnly: boolean
+    }
+  | {
       type: 'update schema'
       schema: EditorSchema
     }
@@ -92,9 +96,6 @@ export type InternalEditorEvent =
   | {
       type: 'update value'
       value: Array<PortableTextBlock> | undefined
-    }
-  | {
-      type: 'toggle readOnly'
     }
   | {
       type: 'update maxBlocks'
@@ -439,7 +440,8 @@ export const editorMachine = setup({
             },
             'read only': {
               on: {
-                'toggle readOnly': {
+                'update readOnly': {
+                  guard: ({event}) => !event.readOnly,
                   target: '#editor.edit mode.editable',
                   actions: ['emit editable'],
                 },
@@ -449,7 +451,8 @@ export const editorMachine = setup({
         },
         'editable': {
           on: {
-            'toggle readOnly': {
+            'update readOnly': {
+              guard: ({event}) => event.readOnly,
               target: '#editor.edit mode.read only.read only',
               actions: ['emit read only'],
             },

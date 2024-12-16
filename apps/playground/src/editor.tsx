@@ -297,7 +297,7 @@ function ToggleReadOnly(props: {readOnly: boolean}) {
     <Switch
       isSelected={props.readOnly}
       onChange={() => {
-        editor.send({type: 'toggle readOnly'})
+        editor.send({type: 'update readOnly', readOnly: !props.readOnly})
       }}
     >
       <code>readOnly</code>

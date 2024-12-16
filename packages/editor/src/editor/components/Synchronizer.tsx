@@ -71,7 +71,7 @@ export function Synchronizer(props: SynchronizerProps) {
   }, [props.editorActor, syncActorRef])
 
   useEffect(() => {
-    syncActorRef.send({type: 'toggle readOnly'})
+    syncActorRef.send({type: 'update readOnly', readOnly})
   }, [syncActorRef, readOnly])
 
   useEffect(() => {

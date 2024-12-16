@@ -111,7 +111,8 @@ export const syncMachine = setup({
           value: Array<PortableTextBlock> | undefined
         }
       | {
-          type: 'toggle readOnly'
+          type: 'update readOnly'
+          readOnly: boolean
         }
       | SyncValueEvent,
     emitted: {} as PickFromUnion<
@@ -122,7 +123,10 @@ export const syncMachine = setup({
   },
   actions: {
     'assign readOnly': assign({
-      readOnly: ({context}) => !context.readOnly,
+      readOnly: ({event}) => {
+        assertEvent(event, 'update readOnly')
+        return event.readOnly
+      },
     }),
     'assign pending value': assign({
       pendingValue: ({event}) => {
@@ -190,7 +194,7 @@ export const syncMachine = setup({
         isProcessingLocalChanges: false,
       }),
     },
-    'toggle readOnly': {
+    'update readOnly': {
       actions: ['assign readOnly'],
     },
   },
