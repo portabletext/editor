@@ -6,7 +6,7 @@ import {createActor} from 'xstate'
 import {Editors} from './editors'
 import {
   createEditorContext,
-  getText,
+  expectText,
   pressButton,
   putCaretAfterText,
   putCaretBeforeText,
@@ -231,13 +231,11 @@ describe('Feature: Range Decorations', () => {
 
     await type(editorA, '123 ')
 
-    await getText().then((text) =>
-      expect(text).toEqual([
-        '123 Hello there world',
-        '|',
-        "It's a beautiful day on planet earth",
-      ]),
-    )
+    await expectText([
+      '123 Hello there world',
+      '|',
+      "It's a beautiful day on planet earth",
+    ])
 
     await vi.waitFor(() =>
       expect
@@ -315,9 +313,7 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     await putCaretAfterText(editorA, '!')
     await type(editorA, '?')
 
-    await getText().then((text) =>
-      expect(text).toEqual(['First paragraph\n\nSecond paragraph!?']),
-    )
+    await expectText(['First paragraph\n\nSecond paragraph!?'])
 
     await userEvent.click(editorB.locator)
     await putCaretBeforeText(editorB, 'First')
@@ -327,17 +323,11 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     await putCaretBeforeText(editorB, 'First')
     await pressButton(editorB, 'Shift+Enter', 2)
 
-    await getText().then((text) =>
-      expect(text).toEqual([
-        'Welcome\n\nFirst paragraph\n\nSecond paragraph!?',
-      ]),
-    )
+    await expectText(['Welcome\n\nFirst paragraph\n\nSecond paragraph!?'])
 
     await undo(editorA)
 
-    await getText().then((text) =>
-      expect(text).toEqual(['Welcome\n\nFirst paragraph\n\nSecond paragraph!']),
-    )
+    await expectText(['Welcome\n\nFirst paragraph\n\nSecond paragraph!'])
   })
 
   test('undoing in reverse order as applied', async () => {
@@ -353,60 +343,44 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     await putCaretBeforeText(editorA, '速')
     await type(editorA, 'Paragraph 1: ')
 
-    await getText().then((text) =>
-      expect(text).toEqual([
-        `Paragraph 1: ${firstParagraph}\n\n${secondParagraph}`,
-      ]),
-    )
+    await expectText([`Paragraph 1: ${firstParagraph}\n\n${secondParagraph}`])
 
     await userEvent.click(editorB.locator)
     await putCaretAfterText(editorB, 'ド。')
     await type(editorB, ' (end of paragraph 1)')
 
-    await getText().then((text) =>
-      expect(text).toEqual([
-        `Paragraph 1: ${firstParagraph} (end of paragraph 1)\n\n${secondParagraph}`,
-      ]),
-    )
+    await expectText([
+      `Paragraph 1: ${firstParagraph} (end of paragraph 1)\n\n${secondParagraph}`,
+    ])
 
     await userEvent.click(editorA.locator)
     await putCaretAfterText(editorA, 'ぼ。')
     await type(editorA, '. EOL.')
 
-    await getText().then((text) =>
-      expect(text).toEqual([
-        `Paragraph 1: ${firstParagraph} (end of paragraph 1)\n\n${secondParagraph}. EOL.`,
-      ]),
-    )
+    await expectText([
+      `Paragraph 1: ${firstParagraph} (end of paragraph 1)\n\n${secondParagraph}. EOL.`,
+    ])
 
     // Spaces in the text creates more undo steps
     await undo(editorA)
     await undo(editorA)
 
-    await getText().then((text) =>
-      expect(text).toEqual([
-        `Paragraph 1: ${firstParagraph} (end of paragraph 1)\n\n${secondParagraph}`,
-      ]),
-    )
+    await expectText([
+      `Paragraph 1: ${firstParagraph} (end of paragraph 1)\n\n${secondParagraph}`,
+    ])
 
     await undo(editorB)
     await undo(editorB)
     await undo(editorB)
     await undo(editorB)
 
-    await getText().then((text) =>
-      expect(text).toEqual([
-        `Paragraph 1: ${firstParagraph}\n\n${secondParagraph}`,
-      ]),
-    )
+    await expectText([`Paragraph 1: ${firstParagraph}\n\n${secondParagraph}`])
 
     await undo(editorA)
     await undo(editorA)
     await undo(editorA)
 
-    await getText().then((text) =>
-      expect(text).toEqual([`${firstParagraph}\n\n${secondParagraph}`]),
-    )
+    await expectText([`${firstParagraph}\n\n${secondParagraph}`])
   })
 
   test('undoing out-of-order', async () => {
@@ -437,20 +411,16 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     await undo(editorA)
     await undo(editorA)
 
-    await getText().then((text) =>
-      expect(text).toEqual([
-        `${firstParagraph} (end of paragraph 1)\n\n${secondParagraph}`,
-      ]),
-    )
+    await expectText([
+      `${firstParagraph} (end of paragraph 1)\n\n${secondParagraph}`,
+    ])
 
     await undo(editorB)
     await undo(editorB)
     await undo(editorB)
     await undo(editorB)
 
-    await getText().then((text) =>
-      expect(text).toEqual([`${firstParagraph}\n\n${secondParagraph}`]),
-    )
+    await expectText([`${firstParagraph}\n\n${secondParagraph}`])
   })
 
   test('editor A undo their change after B did an unrelated change (single-line, emoji)', async () => {
@@ -473,9 +443,7 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
 
     await undo(editorA)
 
-    await getText().then((text) =>
-      expect(text).toEqual([`${beginning}${middle}${end}`]),
-    )
+    await expectText([`${beginning}${middle}${end}`])
   })
 
   test('editor A undo their change after B did an unrelated change (multi-line block, emoji)', async () => {
@@ -499,9 +467,7 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
 
     await undo(editorA)
 
-    await getText().then((text) =>
-      expect(text).toEqual([`${newPrefix}\n\n${initialText}`]),
-    )
+    await expectText([`${newPrefix}\n\n${initialText}`])
   })
 
   test('editor A undo their change after B did an unrelated change (multi-line block, kanji)', async () => {
@@ -526,8 +492,6 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
 
     await undo(editorA)
 
-    await getText().then((text) =>
-      expect(text).toEqual([`${newPrefix}\n\n${initialText}`]),
-    )
+    await expectText([`${newPrefix}\n\n${initialText}`])
   })
 })
