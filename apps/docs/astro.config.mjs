@@ -6,12 +6,15 @@ import starlightTypeDoc, {typeDocSidebarGroup} from 'starlight-typedoc'
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://portabletext.org',
+  site: 'https://www.portabletext.org',
   integrations: [
     react(),
     starlight({
       title: 'Portable Text Editor',
       customCss: ['./src/styles/globals.css'],
+      editLink: {
+        baseUrl: 'https://github.com/portabletext/editor/tree/main/apps/docs/',
+      },
       head: [
         import.meta.env.PROD && {
           tag: 'script',
