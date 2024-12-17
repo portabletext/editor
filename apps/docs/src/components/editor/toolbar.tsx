@@ -1,9 +1,9 @@
 import {
-  PortableTextEditor,
-  usePortableTextEditor,
-  usePortableTextEditorSelection,
+  useEditor,
+  useEditorSelector,
   type SchemaDefinition,
 } from '@portabletext/editor'
+import * as selectors from '@portabletext/editor/selectors'
 import {
   Bold,
   Heading1,
@@ -49,130 +49,28 @@ export function Toolbar({customSchema}: ToolbarProps) {
   if (!schemaDefinition) {
     return null
   }
-  // Obtain the editor instance
-  const editorInstance = usePortableTextEditor()
-  // Rerender the toolbar whenever the selection changes
-  usePortableTextEditorSelection()
 
   const decoratorButtons = schemaDefinition.decorators
-    ? schemaDefinition.decorators.map((decorator) => {
-        return (
-          <Tooltip key={decorator.name}>
-            <TooltipTrigger asChild>
-              <Button
-                variant={
-                  PortableTextEditor.isMarkActive(
-                    editorInstance,
-                    decorator.name,
-                  )
-                    ? 'secondary'
-                    : 'ghost'
-                }
-                size="icon"
-                onClick={() => {
-                  // Toggle the decorator by name
-                  PortableTextEditor.toggleMark(editorInstance, decorator.name)
-                  // Pressing this button steals focus so let's focus the editor again
-                  PortableTextEditor.focus(editorInstance)
-                }}
-              >
-                {iconMap[decorator.name] || <></>}
-                <span className="sr-only">{decorator.name}</span>
-              </Button>
-            </TooltipTrigger>
-          </Tooltip>
-        )
-      })
+    ? schemaDefinition.decorators.map((decorator) => (
+        <DecoratorButton key={decorator.name} decorator={decorator.name} />
+      ))
     : null
 
-  const linkButton = (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant={
-            schemaDefinition.annotations &&
-            PortableTextEditor.isAnnotationActive(
-              editorInstance,
-              schemaDefinition.annotations[0].name,
-            )
-              ? 'secondary'
-              : 'ghost'
-          }
-          size="icon"
-          onClick={() => {
-            if (
-              schemaDefinition.annotations &&
-              PortableTextEditor.isAnnotationActive(
-                editorInstance,
-                schemaDefinition.annotations[0].name,
-              )
-            ) {
-              PortableTextEditor.removeAnnotation(
-                editorInstance,
-                schemaDefinition.annotations[0],
-              )
-            } else if (schemaDefinition.annotations) {
-              PortableTextEditor.addAnnotation(
-                editorInstance,
-                schemaDefinition.annotations[0],
-                {href: 'https://example.com'},
-              )
-            }
-            PortableTextEditor.focus(editorInstance)
-          }}
-        >
-          <Link2 />
-          <span className="sr-only">Link</span>
-        </Button>
-      </TooltipTrigger>
-    </Tooltip>
-  )
+  const annotationButtons = schemaDefinition.annotations
+    ? schemaDefinition.annotations.map((annotation) => (
+        <AnnotationButton key={annotation.name} annotation={annotation} />
+      ))
+    : null
 
   const styleButtons = schemaDefinition.styles
     ? schemaDefinition.styles.map((style) => (
-        <Tooltip key={style.name}>
-          <TooltipTrigger asChild>
-            <Button
-              variant={
-                PortableTextEditor.hasBlockStyle(editorInstance, style.name)
-                  ? 'secondary'
-                  : 'ghost'
-              }
-              size="icon"
-              onClick={() => {
-                PortableTextEditor.toggleBlockStyle(editorInstance, style.name)
-                PortableTextEditor.focus(editorInstance)
-              }}
-            >
-              {styleMap[style.name] || <></>}
-              <span className="sr-only">Toggle {style.name}</span>
-            </Button>
-          </TooltipTrigger>
-        </Tooltip>
+        <StyleButton key={style.name} style={style.name} />
       ))
     : null
 
   const listButtons = schemaDefinition.lists
     ? schemaDefinition.lists.map((list) => (
-        <Tooltip key={list.name}>
-          <TooltipTrigger asChild>
-            <Button
-              variant={
-                PortableTextEditor.hasListStyle(editorInstance, list.name)
-                  ? 'secondary'
-                  : 'ghost'
-              }
-              size="icon"
-              onClick={() => {
-                PortableTextEditor.toggleList(editorInstance, list.name)
-                PortableTextEditor.focus(editorInstance)
-              }}
-            >
-              {listMap[list.name] || <></>}
-              <span className="sr-only">Toggle {list.name}</span>
-            </Button>
-          </TooltipTrigger>
-        </Tooltip>
+        <ListButton key={list.name} list={list.name} />
       ))
     : null
 
@@ -181,11 +79,124 @@ export function Toolbar({customSchema}: ToolbarProps) {
       <div className="inline-flex items-center ">
         <div className="flex flex-wrap items-center gap-1">
           {decoratorButtons}
-          {linkButton}
+          {annotationButtons}
           {styleButtons}
           {listButtons}
         </div>
       </div>
     </TooltipProvider>
+  )
+}
+
+function DecoratorButton(props: {decorator: string}) {
+  const editor = useEditor()
+  const active = useEditorSelector(
+    editor,
+    selectors.isActiveDecorator(props.decorator),
+  )
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant={active ? 'secondary' : 'ghost'}
+          size="icon"
+          onClick={() => {
+            editor.send({type: 'decorator.toggle', decorator: props.decorator})
+            editor.send({type: 'focus'})
+          }}
+        >
+          {iconMap[props.decorator] || <></>}
+          <span className="sr-only">{props.decorator}</span>
+        </Button>
+      </TooltipTrigger>
+    </Tooltip>
+  )
+}
+
+function AnnotationButton(props: {annotation: {name: string}}) {
+  const editor = useEditor()
+  const active = useEditorSelector(
+    editor,
+    selectors.isActiveAnnotation(props.annotation.name),
+  )
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant={active ? 'secondary' : 'ghost'}
+          size="icon"
+          onClick={() => {
+            editor.send({
+              type: 'annotation.toggle',
+              annotation: {
+                name: props.annotation.name,
+                value:
+                  props.annotation.name === 'link'
+                    ? {href: 'https://example.com'}
+                    : {},
+              },
+            })
+            editor.send({type: 'focus'})
+          }}
+        >
+          <Link2 />
+          <span className="sr-only">Link</span>
+        </Button>
+      </TooltipTrigger>
+    </Tooltip>
+  )
+}
+
+function StyleButton(props: {style: string}) {
+  const editor = useEditor()
+  const active = useEditorSelector(editor, selectors.isActiveStyle(props.style))
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant={active ? 'secondary' : 'ghost'}
+          size="icon"
+          onClick={() => {
+            editor.send({type: 'style.toggle', style: props.style})
+            editor.send({type: 'focus'})
+          }}
+        >
+          {styleMap[props.style] || <></>}
+          <span className="sr-only">Toggle {props.style}</span>
+        </Button>
+      </TooltipTrigger>
+    </Tooltip>
+  )
+}
+
+function ListButton(props: {list: string}) {
+  const editor = useEditor()
+  const active = useEditorSelector(
+    editor,
+    selectors.isActiveListItem(props.list),
+  )
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant={active ? 'secondary' : 'ghost'}
+          size="icon"
+          onClick={() => {
+            editor.send({
+              type: 'list item.toggle',
+              listItem: props.list,
+            })
+            editor.send({type: 'focus'})
+          }}
+        >
+          {listMap[props.list] || <></>}
+          <span className="sr-only">Toggle {props.list}</span>
+        </Button>
+      </TooltipTrigger>
+    </Tooltip>
   )
 }
