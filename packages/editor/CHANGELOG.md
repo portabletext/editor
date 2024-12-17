@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.16.4](https://github.com/portabletext/editor/compare/editor-v1.16.3...editor-v1.16.4) (2024-12-17)
+
+
+### Bug Fixes
+
+* **event:** allow `annotation.add` and `annotation.remove` ([64d54e3](https://github.com/portabletext/editor/commit/64d54e36d7380bcb5137a41c08b344264df2604d))
+
 ## [1.16.3](https://github.com/portabletext/editor/compare/editor-v1.16.2...editor-v1.16.3) (2024-12-16)
 
 
