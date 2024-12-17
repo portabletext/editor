@@ -12,6 +12,16 @@ export default defineConfig({
     starlight({
       title: 'Portable Text Editor',
       customCss: ['./src/styles/globals.css'],
+      head: [
+        import.meta.env.PROD && {
+          tag: 'script',
+          attrs: {
+            'src': 'https://cdn.usefathom.com/script.js',
+            'data-site': 'DEFNRQRQ',
+            'defer': true,
+          },
+        },
+      ].filter(Boolean),
       social: {
         github: 'https://github.com/portabletext/editor',
       },
