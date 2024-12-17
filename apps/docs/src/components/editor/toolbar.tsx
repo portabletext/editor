@@ -99,7 +99,7 @@ function DecoratorButton(props: {decorator: string}) {
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
-          variant={active ? 'secondary' : 'ghost'}
+          variant={active ? 'default' : 'ghost'}
           size="icon"
           onClick={() => {
             editor.send({type: 'decorator.toggle', decorator: props.decorator})
@@ -125,7 +125,7 @@ function AnnotationButton(props: {annotation: {name: string}}) {
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
-          variant={active ? 'secondary' : 'ghost'}
+          variant={active ? 'default' : 'ghost'}
           size="icon"
           onClick={() => {
             editor.send({
@@ -157,7 +157,7 @@ function StyleButton(props: {style: string}) {
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
-          variant={active ? 'secondary' : 'ghost'}
+          variant={active ? 'default' : 'ghost'}
           size="icon"
           onClick={() => {
             editor.send({type: 'style.toggle', style: props.style})
@@ -183,7 +183,7 @@ function ListButton(props: {list: string}) {
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
-          variant={active ? 'secondary' : 'ghost'}
+          variant={active ? 'default' : 'ghost'}
           size="icon"
           onClick={() => {
             editor.send({

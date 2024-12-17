@@ -32,7 +32,7 @@ export function PortableTextEditor({customSchema}: PortableTextEditorProps) {
   const schemaDefinition = customSchema || defaultSchema
 
   return (
-    <div className="not-content">
+    <div className="not-content max-w-4xl">
       <EditorProvider
         initialConfig={{
           schemaDefinition,
@@ -146,13 +146,13 @@ export function PortableTextEditor({customSchema}: PortableTextEditorProps) {
         <div>
           <div className="flex gap-2">
             <Button
-              variant="ghost"
+              variant={showJsonPreview ? 'default' : 'ghost'}
               onClick={() => setShowJsonPreview(!showJsonPreview)}
             >
               Toggle JSON Preview
             </Button>
             <Button
-              variant="ghost"
+              variant={showPortableTextPreview ? 'default' : 'ghost'}
               onClick={() =>
                 setShowPortableTextPreview(!showPortableTextPreview)
               }
