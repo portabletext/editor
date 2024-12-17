@@ -1,0 +1,369 @@
+---
+title: Getting started
+description: Start building with the Portable Text Editor.
+next: false
+prev: false
+---
+
+import {CardGrid, LinkCard, Steps} from '@astrojs/starlight/components'
+import {PackageManagers} from 'starlight-package-managers'
+
+The PTE is a fully customizable rich text editor that uses the Portable Text format.
+This guide leads you through installing and using the basic features of the Portable Text Editor (PTE).
+
+In order to set up a PTE implementation, you must:
+
+- Create a schema that defines the rich text elements.
+- Create a toolbar to toggle these elements on and off.
+- Write render functions to style and display each element type in the editor.
+- Render the editor.
+
+## Parts of the editor
+
+Before we begin, it's helpful to understand the components that make up the editor.
+
+- Schema: A description of the type of content the editor accepts. Think of this as the foundation for configuring the editor.
+- `EditorProvider`: Supplies the schema and initial state to the editor.
+- `EditorEventListener`: Allows you to listen to events emitted by the editor and act on them. Commonly used to update application state.
+- `Toolbars`: Toolbars allow you to create UI elements that interact with the editor.
+- `PortableTextEditable`: The core editor component. It handles the rendering of text and manages behavior.
+
+## Add the PTE to your project
+
+Start by installing the editor to your project
+
+<PackageManagers pkg="@portabletext/editor" />
+
+Next, import `EditorProvider`, `EditorEventListener`, `PortableTextEditable`, `defineSchema`, and the types in the code below.
+
+```tsx
+// App.tsx
+import {
+  defineSchema,
+  EditorEventListener,
+  EditorProvider,
+  PortableTextEditable,
+} from '@portabletext/editor'
+import type {
+  PortableTextBlock,
+  RenderDecoratorFunction,
+  RenderStyleFunction,
+} from '@portabletext/editor'
+```
+
+You won't need all of these right away, but you can add them now.
+
+## Define your schema
+
+Before you can render the editor, you need a schema. The editor schema configures the types of content rendered by the editor.
+
+We'll start with a schema that includes some common rich text elements.
+
+:::note
+This guide includes a limited set of schema types, or rich text elements, to get you started. See the [rendering guide](/guides/custom-rendering/) for additional examples.
+:::
+
+```tsx
+// App.tsx
+// ...
+const schemaDefinition = defineSchema({
+  // Decorators are simple marks that don't hold any data
+  decorators: [{name: 'strong'}, {name: 'em'}, {name: 'underline'}],
+  // Styles apply to entire text blocks
+  // There's always a 'normal' style that can be considered the paragraph style
+  styles: [
+    {name: 'normal'},
+    {name: 'h1'},
+    {name: 'h2'},
+    {name: 'h3'},
+    {name: 'blockquote'},
+  ],
+
+  // The types below are left empty for this example.
+  // See the rendering guide to learn more about each type.
+
+  // Annotations are more complex marks that can hold data (e.g., hyperlinks).
+  annotations: [],
+  // Lists apply to entire text blocks as well (e.g., bullet, numbered).
+  lists: [],
+  // Inline objects hold arbitrary data that can be inserted into the text (e.g., custom emoji).
+  inlineObjects: [],
+  // Block objects hold arbitrary data that live side-by-side with text blocks (e.g., images).
+  blockObjects: [],
+})
+```
+
+<LinkCard
+  title="The parts of the Portable Text editor"
+  description="Learn more about schemas and the editor."
+  href="/concepts/portabletext/"
+/>
+
+## Render the editor
+
+With a schema defined, you have enough to render the editor. It won't do much yet, but you can confirm your progress.
+
+Add `react` and `useState`, then scaffold out a basic application component. For example:
+
+```tsx
+// app.tsx
+import {
+  defineSchema,
+  EditorEventListener,
+  EditorProvider,
+  PortableTextEditable,
+} from '@portabletext/editor'
+import type {
+  PortableTextBlock,
+  RenderDecoratorFunction,
+  RenderStyleFunction,
+} from '@portabletext/editor'
+import React, {useState} from 'react'
+
+const schemaDefinition = defineSchema({
+  /* your schema from the previous step */
+})
+
+function App() {
+  // Set up the initial state getter and setter. Leave the starting value as undefined for now.
+  const [value, setValue] = useState<Array<PortableTextBlock> | undefined>(
+    undefined,
+  )
+
+  return (
+    <>
+      <EditorProvider
+        initialConfig={{
+          schemaDefinition,
+          initialValue: value,
+        }}
+      >
+        <EditorEventListener
+          on={(event) => {
+            if (event.type === 'mutation') {
+              setValue(event.snapshot)
+            }
+          }}
+        />
+        <PortableTextEditable
+          // Add an optional style to see it more easily on the page
+          style={{border: '1px solid black', padding: '0.5em'}}
+        />
+      </EditorProvider>
+    </>
+  )
+}
+
+export default App
+```
+
+Include the `App` component in your application and run it. You should see an outlined editor that accepts text, but doesn't do much else.
+
+## Create render functions for schema elements
+
+At this point the PTE only has a schema, but it doesn't know how to render anything. Fix that by creating render functions for each property in the schema.
+
+Start by creating a render function for styles.
+
+```tsx
+const renderStyle: RenderStyleFunction = (props) => {
+  if (props.schemaType.value === 'h1') {
+    return <h1>{props.children}</h1>
+  }
+  if (props.schemaType.value === 'h2') {
+    return <h2>{props.children}</h2>
+  }
+  if (props.schemaType.value === 'h3') {
+    return <h3>{props.children}</h3>
+  }
+  if (props.schemaType.value === 'blockquote') {
+    return <blockquote>{props.children}</blockquote>
+  }
+  return <>{props.children}</>
+}
+```
+
+Render functions all follow the same format.
+
+- They take in props and return JSX elements.
+- They use the schema to make decisions.
+- They return JSX and pass `children` as a fallback.
+
+With this in mind, continue for the remaining schema types.
+
+Create a render function for decorators.
+
+```tsx
+const renderDecorator: RenderDecoratorFunction = (props) => {
+  if (props.value === 'strong') {
+    return <strong>{props.children}</strong>
+  }
+  if (props.value === 'em') {
+    return <em>{props.children}</em>
+  }
+  if (props.value === 'underline') {
+    return <u>{props.children}</u>
+  }
+  return <>{props.children}</>
+}
+```
+
+:::note
+By default, text is rendered as an inline `span` element in the editor. While most render functions return a fragment (`<>`) as the fallback, make sure block level elements return blocks, like `<div>` elements.
+:::
+
+Update the `PortableTextEditable` with each corresponding function to attach them to the editor.
+
+You may notice that we skipped a few types from the schema. Declare these inline in the configuration, like in the code below.
+
+```tsx
+<PortableTextEditable
+  style={{border: '1px solid black', padding: '0.5em'}}
+  renderStyle={renderStyle}
+  renderDecorator={renderDecorator}
+  renderBlock={(props) => <div>{props.children}</div>}
+  renderListItem={(props) => <>{props.children}</>}
+/>
+```
+
+Before you can see if anything changed, you need a way to interact with the editor.
+
+## Create a toolbar
+
+A toolbar is a collection of UI elements for interacting with the editor. The PTE library gives you the necessary hooks to create a toolbar however you like.
+
+1. Create a `Toolbar` component in the same file.
+2. Import the `useEditor` hook, and declare an `editor` constant in the component.
+3. Iterate over the schema types to create toggle buttons for each style and decorator.
+4. Send events to the editor to toggle the styles and decorators whenever the buttons are clicked.
+5. Render the toolbar buttons.
+
+```tsx
+// App.tsx
+// ...
+import {useEditor} from '@portabletext/editor'
+
+function Toolbar() {
+  // useEditor provides access to the PTE
+  const editor = useEditor()
+
+  // Iterate over the schema (defined earlier), or manually create buttons.
+  const styleButtons = schemaDefinition.styles.map((style) => (
+    <button
+      key={style.name}
+      onClick={() => {
+        // Send style toggle event
+        editor.send({
+          type: 'style.toggle',
+          style: style.name,
+        })
+        editor.send({
+          type: 'focus',
+        })
+      }}
+    >
+      {style.name}
+    </button>
+  ))
+
+  const decoratorButtons = schemaDefinition.decorators.map((decorator) => (
+    <button
+      key={decorator.name}
+      onClick={() => {
+        // Send decorator toggle event
+        editor.send({
+          type: 'decorator.toggle',
+          decorator: decorator.name,
+        })
+        editor.send({
+          type: 'focus',
+        })
+      }}
+    >
+      {decorator.name}
+    </button>
+  ))
+  return (
+    <>
+      {styleButtons}
+      {decoratorButtons}
+    </>
+  )
+}
+```
+
+The `useEditor` hook gives you access to the active editor. `send` lets you send events to the editor. You can view the full list of events in the [Behavior API reference](/reference/behavior-api/).
+
+:::note
+The example above sends a `focus` event after each action. Normally when interacting with a button, the browser removes focus from the text editing area. This event returns focus to the field to prevent interrupting the user.
+:::
+
+## Bring it all together
+
+With render functions created and a toolbar in place, you can fully render the editor. Add the `Toolbar` inside the `EditorProvider`.
+
+```tsx
+// App.tsx
+// ...
+function App() {
+  const [value, setValue] = useState<Array<PortableTextBlock> | undefined>(
+    undefined,
+  )
+
+  return (
+    <>
+      <EditorProvider
+        initialConfig={{
+          schemaDefinition,
+          initialValue: value,
+        }}
+      >
+        <EditorEventListener
+          on={(event) => {
+            if (event.type === 'mutation') {
+              setValue(event.snapshot)
+            }
+          }}
+        />
+        <Toolbar />
+        <PortableTextEditable
+          style={{border: '1px solid black', padding: '0.5em'}}
+          renderStyle={renderStyle}
+          renderDecorator={renderDecorator}
+          renderBlock={(props) => <div>{props.children}</div>}
+          renderListItem={(props) => <>{props.children}</>}
+        />
+      </EditorProvider>
+    </>
+  )
+}
+// ...
+```
+
+You can now enter text and interact with the toolbar buttons to toggle the styles and decorators. These are only a small portion of the types of things you can do. Check out the [custom rendering guide](/guides/custom-rendering/) and the [toolbar customization guide](/guides/customize-toolbar/) for options.
+
+## View the Portable text data
+
+You can preview the Portable Text from the editor by reading the state. Add the following after the `EditorProvider`.
+
+```tsx
+<pre style={{border: '1px dashed black', padding: '0.5em'}}>
+  {JSON.stringify(value, null, 2)}
+</pre>
+```
+
+This displays the raw Portable Text. To customize how Portable Text renders in your apps, explore the collection of serializers.
+
+<LinkCard
+  title="Serializers"
+  description="Use a serializer to render Portable Text in your app"
+  href="/integrations/serializers/"
+/>
+
+## Next Steps
+
+<CardGrid>
+<LinkCard title="Create your own behavior" description="Learn to intercept editor events and add functionality with the Behavior API." href="/guides/create-behavior/" />
+<LinkCard title="Further customize the toolbar" description="Dive deeper into toolbar customization." href="/guides/customize-toolbar/" />
+
+</CardGrid>

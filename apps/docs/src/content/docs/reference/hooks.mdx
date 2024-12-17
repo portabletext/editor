@@ -1,0 +1,26 @@
+---
+title: Hooks
+description: Hooks reference
+---
+
+## `useEditor`
+
+Access the editor context. Commonly used when building toolbars or passing context to selectors.
+
+```tsx
+import {useEditor} from '@portabletext/editor'
+
+const editor = useEditor()
+```
+
+## `useEditorSelector`
+
+Access selectors in areas where the context is unavailable by combining with `useEditor`.
+
+```tsx
+import {useEditor, useEditorSelector} from '@portabletext/editor'
+import * as selectors from '@portabletext/editor/selectors'
+
+const editor = useEditor()
+const isActive = useEditorSelector(editor, selectors.isActiveDecorator('em'))
+```

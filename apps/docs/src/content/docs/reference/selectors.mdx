@@ -1,0 +1,67 @@
+---
+title: Selectors
+description: Selectors reference
+prev: false
+next: false
+---
+
+import {CardGrid, LinkCard} from '@astrojs/starlight/components'
+
+Selectors are pure functions that act like shortcuts for deriving state from the editor context.
+
+```tsx
+import * as selectors from '@portabletext/editor/selectors'
+```
+
+Selectors are commonly used for creating behaviors and toolbar components.
+
+<CardGrid>
+  <LinkCard
+    title="Create a behavior"
+    description="Custom behaviors let you control how the editor reacts to events and input."
+    href="/guides/create-behavior/"
+  />
+  <LinkCard
+    title="Customize the toolbar"
+    description="Create custom toolbar components for your editor."
+    href="/guides/customize-toolbar/"
+  />
+</CardGrid>
+
+## Condition selectors
+
+Condition selectors return a truth response if the condition is met.
+
+- isActiveAnnotation
+- isActiveDecorator
+- isActiveListItem
+- isActiveStyle
+- isSelectionCollapsed
+- isSelectionExpanded
+
+## Getters
+
+Getter type selectors retrieve information from the editor context.
+
+:::note
+Unsure what a "span" is or what "focus" means in this context? Check the [common terms](/concepts/portabletext/#common-terms) section.
+:::
+
+- getActiveListItem
+- getActiveStyle
+- getSelectedSpans
+- getSelectionText
+- getBlockTextBefore
+- getFocusBlock
+- getFocusListBlock
+- getFocusTextBlock
+- getFocusBlockObjects
+- getFocusChild
+- getFocusSpan
+- getFirstBlock
+- getLastBlock
+- getSelectedBlocks
+- getSelectionStartBlock
+- getSelectionEndBlock
+- getPreviousBlock
+- getNextBlock

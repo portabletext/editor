@@ -1,0 +1,48 @@
+---
+title: Portable Text Editor
+description: Fully customizable authoring of rich text and block content
+template: splash
+hero:
+  tagline: Get started building with the Portable Text Editor.
+  image:
+    file: ../../assets/logo.svg
+  actions:
+    - text: Get Started
+      link: /getting-started/
+      icon: right-arrow
+    - text: Check out Sanity
+      link: https://www.sanity.io
+      icon: external
+      variant: minimal
+---
+
+import '@/styles/globals.css'
+import {Card, CardGrid, LinkCard} from '@astrojs/starlight/components'
+import PortableTextEditor from '../../components/editor/editor.astro'
+
+<PortableTextEditor />
+
+## Next steps
+
+<CardGrid>
+  <LinkCard
+    title="Portable Text Editor Concepts"
+    description="Learn more about the different parts that make up the Portable Text Editor"
+    href="/concepts/portabletext/"
+  />
+  <LinkCard
+    title="Customize text rendering"
+    description="Customize how content is rendered in the PTE"
+    href="/guides/custom-rendering/"
+  />
+  <LinkCard
+    title="Customize the Toolbar"
+    description="Change how the editor displays the toolbar"
+    href="/guides/customize-toolbar/"
+  />
+  <LinkCard
+    title="Learn about the Behavior API"
+    description="Behaviors drive actions in the editor experience"
+    href="/concepts/behavior/"
+  />
+</CardGrid>

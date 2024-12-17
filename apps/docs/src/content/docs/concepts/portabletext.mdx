@@ -1,0 +1,152 @@
+---
+title: Portable Text Editor
+description: Learn more about the parts of Portable Text and the Editor, including common terms and concepts.
+prev: false
+sidebar:
+  order: 1
+---
+
+import {CardGrid, LinkCard} from '@astrojs/starlight/components'
+
+The Portable Text Editor (PTE) is the officially supported editor for working with [Portable Text](https://github.com/portabletext/portabletext). Customize it to fit the needs of your authors and content team using a schema,
+
+## Schema
+
+The PTE accepts a schema that describes the kinds of content it can implement. This is used throughout the editor to configure parts of the interface and aspects of the Portable Text output.
+
+{/* <!-- Add some note in here about how the PTE schema differs from a Sanity schema --> */}
+
+A schema consists of styles, decorators, annotations, block objects, inline objects, and lists. Here is an example schema from the [getting started guide](/getting-started/):
+
+```js
+{
+  decorators: [{name: 'strong'}, {name: 'em'}, {name: 'underline'}],
+  annotations: [{name: 'link'}],
+  styles: [
+    {name: 'normal'},
+    {name: 'h1'},
+    {name: 'h2'},
+    {name: 'h3'},
+    {name: 'blockquote'},
+  ],
+  lists: [{name: 'bullet'}, {name: 'number'}],
+  inlineObjects: [{name: 'stock-ticker'}],
+  blockObjects: [{name: 'image'}],
+}
+```
+
+You'll likely see connections to the elements found in rich text editors, along with some extras.
+
+### Styles
+
+Styles are a way to identify text blocks in Portable Text and signal to the editor how to classify the block. They don't add any other data to the text. Examples include:
+
+- Headings (H1, H2, H3, etc.)
+- Block quotes
+- Normal paragraphs
+
+Convention uses HTML naming for these styles, but it is not required and has no direct impact on the style of the content.
+
+### Decorators
+
+Decorators are inline text with added meaning. Examples include:
+
+- Bold text
+- Emphasis or italicized text
+- Underlined text
+
+Decorators are a type of [Portable Text mark](https://github.com/portabletext/portabletext?tab=readme-ov-file#markdefs-array) that adds additional meaning to existing text.
+
+### Annotations
+
+Like decorators, annotations are inline text with added meaning. Annotations are more complex than decorators, and often include additional functionality. Examples include:
+
+- Links
+- References
+
+Annotations are a type of [Portable Text mark](https://github.com/portabletext/portabletext?tab=readme-ov-file#markdefs-array) that adds additional meaning to existing text.
+
+### Lists
+
+Lists are groups of text blocks. They take into account the position each block has in a group. Examples include:
+
+- Bullet lists
+- Numbered lists
+
+### Block objects
+
+Block objects sit alongside text. For example, an image block may sit between a heading and a paragraph. They can hold any kind of data. Some examples include:
+
+- Images
+- Code blocks
+- Videos
+- Portable Text editors
+
+### Inline objects
+
+Inline objects, much like block objects, can hold any kind of data. Instead of existing alongside text, inline objects exist inside text blocks. Examples include:
+
+- Footnote indicators
+- Non-text emoji substitutes
+
+Inline objects differ from annotations and decorators because they aren't wrapping existing text. Instead, they are self contained.
+
+## Rendering content in and out of the editor
+
+The schema serves as a foundation for how the PTE renders the text. On it's own, passing just a schema to the editor only annotates or _describes_ text, but it won't change the way it renders.
+
+To affect the way text renders in the editor, pass custom renderers to the editor.
+
+<LinkCard
+  title="Customize how elements render"
+  description="Custom renderers let you style schema elements in the PTE."
+  href="/guides/custom-rendering/"
+/>
+
+To affect the way text renders once it's stored as Portable Text, use an existing serializer or write your own.
+
+<LinkCard
+  title="Integrations"
+  description="Serializers render Portable Text to common formats."
+  href="/integrations/serializers/"
+/>
+
+## The toolbar
+
+A schema describes the type of content an author can create in the editor, but without a toolbar there's no way to assign the schema to each piece of text.
+
+The toolbar allows you to define the graphical user interface for creating rich text in the PTE. The most common way to do this is by using the schema as a foundation.
+
+<LinkCard
+  title="Customize the toolbar"
+  description="Create a toolbar to enable authors to customize text."
+  href="/guides/customize-toolbar/"
+/>
+
+## Behaviors
+
+Behaviors change how users interact with the editor. They handle everything from direct text input, to changing paste behavior, to allowing you to write custom shortcuts.
+
+The editor comes with many behaviors by default, but you can also create your own.
+
+<CardGrid>
+  <LinkCard title="Learn more about behaviors" href="/concepts/behavior/" />
+  <LinkCard title="Create your own behavior" href="/guides/create-behavior/" />
+</CardGrid>
+
+## Common terms
+
+The following terms come up when dealing with Portable Text and the editor. Some overlap with the schema above, while others are more general.
+
+- Block: Broken down into standard and custom blocks. Standard blocks are sections of text, like paragraphs and headings. Custom blocks are block objects like images, code blocks, embeds, etc.
+- Span: A standard way to express inline text within a block.
+- Children: An array of spans or other inline types contained within a block.
+- Marks: `markDefs` exist in the Portable Text format and connect spans with annotations and decorators. A span can have multiple marks associated with it. Such as text that is bold and italic.
+- List items: Blocks can be labeled as list items to resemble lists.
+- Selection: The range of text selected, or the cursor location in the editor at a given time.
+- Section collapse: A collapsed section is one where nothing is selected and is instead a single point.
+- Anchor: Where the user began the selection.
+- Focus: Where the user ends the selection.
+- Offset: A distance, in characters, from the selection.
+- Path: A representation of the location of elements. Used in the behavior API to target or select specific blocks, spans, or text.
+- Node: A representation of an element. Contains details about it's type and content.
