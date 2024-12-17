@@ -28,7 +28,6 @@ export function EditorProvider(props: EditorProviderProps) {
   const editor = useCreateEditor(props.initialConfig)
   const editorActor = editor._internal.editorActor
   const slateEditor = editor._internal.slateEditor
-  const editable = editor._internal.editable
   const portableTextEditor = useMemo(
     () =>
       new PortableTextEditor({
@@ -47,8 +46,6 @@ export function EditorProvider(props: EditorProviderProps) {
       />
       <Synchronizer
         editorActor={editorActor}
-        getValue={editable.getValue}
-        portableTextEditor={portableTextEditor}
         slateEditor={slateEditor.instance}
       />
       <EditorActorContext.Provider value={editorActor}>

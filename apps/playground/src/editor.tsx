@@ -78,6 +78,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
       >
         <EditorProvider
           initialConfig={{
+            initialValue: value,
             behaviors: [
               ...coreBehaviors,
               ...createLinkBehaviors({
@@ -130,8 +131,11 @@ export function Editor(props: {editorRef: EditorActorRef}) {
               if (event.type === 'done loading') {
                 setLoading(false)
               }
-              if (event.type === 'readOnly toggled') {
-                setReadOnly(event.readOnly)
+              if (event.type === 'editable') {
+                setReadOnly(false)
+              }
+              if (event.type === 'read only') {
+                setReadOnly(true)
               }
             }}
           />
@@ -145,6 +149,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
               >
                 <PortableTextEditable
                   className="flex-1 p-2 border"
+                  style={{maxHeight: '50vh', overflowY: 'auto'}}
                   onPaste={(data) => {
                     const text = data.event.clipboardData.getData('text')
                     if (text === 'heading') {
@@ -292,7 +297,7 @@ function ToggleReadOnly(props: {readOnly: boolean}) {
     <Switch
       isSelected={props.readOnly}
       onChange={() => {
-        editor.send({type: 'toggle readOnly'})
+        editor.send({type: 'update readOnly', readOnly: !props.readOnly})
       }}
     >
       <code>readOnly</code>

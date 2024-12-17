@@ -1,12 +1,6 @@
 import {createGuards} from '../behavior-actions/behavior.guards'
 import {isEmptyTextBlock} from '../editor/utils/utils'
-import {
-  getFocusListBlock,
-  getFocusSpan,
-  getFocusTextBlock,
-  getSelectedBlocks,
-  selectionIsCollapsed,
-} from '../selectors/selectors'
+import * as selectors from '../selectors'
 import {isHotkey} from '../utils/is-hotkey'
 import {defineBehavior} from './behavior.types'
 
@@ -15,9 +9,9 @@ const MAX_LIST_LEVEL = 10
 const clearListOnBackspace = defineBehavior({
   on: 'delete.backward',
   guard: ({context}) => {
-    const selectionCollapsed = selectionIsCollapsed({context})
-    const focusTextBlock = getFocusTextBlock({context})
-    const focusSpan = getFocusSpan({context})
+    const selectionCollapsed = selectors.isSelectionCollapsed({context})
+    const focusTextBlock = selectors.getFocusTextBlock({context})
+    const focusSpan = selectors.getFocusSpan({context})
 
     if (!selectionCollapsed || !focusTextBlock || !focusSpan) {
       return false
@@ -47,9 +41,9 @@ const clearListOnBackspace = defineBehavior({
 const unindentListOnBackspace = defineBehavior({
   on: 'delete.backward',
   guard: ({context}) => {
-    const selectionCollapsed = selectionIsCollapsed({context})
-    const focusTextBlock = getFocusTextBlock({context})
-    const focusSpan = getFocusSpan({context})
+    const selectionCollapsed = selectors.isSelectionCollapsed({context})
+    const focusTextBlock = selectors.getFocusTextBlock({context})
+    const focusSpan = selectors.getFocusSpan({context})
 
     if (!selectionCollapsed || !focusTextBlock || !focusSpan) {
       return false
@@ -83,8 +77,8 @@ const unindentListOnBackspace = defineBehavior({
 const clearListOnEnter = defineBehavior({
   on: 'insert.break',
   guard: ({context}) => {
-    const selectionCollapsed = selectionIsCollapsed({context})
-    const focusListBlock = getFocusListBlock({context})
+    const selectionCollapsed = selectors.isSelectionCollapsed({context})
+    const focusListBlock = selectors.getFocusListBlock({context})
 
     if (
       !selectionCollapsed ||
@@ -116,7 +110,7 @@ const indentListOnTab = defineBehavior({
       return false
     }
 
-    const selectedBlocks = getSelectedBlocks({context})
+    const selectedBlocks = selectors.getSelectedBlocks({context})
     const guards = createGuards(context)
     const selectedListBlocks = selectedBlocks.flatMap((block) =>
       guards.isListBlock(block.node)
@@ -157,7 +151,7 @@ const unindentListOnShiftTab = defineBehavior({
       return false
     }
 
-    const selectedBlocks = getSelectedBlocks({context})
+    const selectedBlocks = selectors.getSelectedBlocks({context})
     const guards = createGuards(context)
     const selectedListBlocks = selectedBlocks.flatMap((block) =>
       guards.isListBlock(block.node)

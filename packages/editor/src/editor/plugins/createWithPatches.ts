@@ -150,10 +150,6 @@ export function createWithPatches({
     })
 
     editor.apply = (operation: Operation): void | Editor => {
-      if (editorActor.getSnapshot().context.readOnly) {
-        apply(operation)
-        return editor
-      }
       let patches: Patch[] = []
 
       // Update previous children here before we apply

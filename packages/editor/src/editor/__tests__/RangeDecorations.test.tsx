@@ -34,18 +34,33 @@ describe('RangeDecorations', () => {
         },
       },
     ]
-    const {rerender} = render(
-      <PortableTextEditorTester
-        onChange={onChange}
-        rangeDecorations={rangeDecorations}
-        ref={editorRef}
-        schemaType={schemaType}
-        value={value}
-      />,
+
+    const {rerender} = await waitFor(() =>
+      render(
+        <PortableTextEditorTester
+          onChange={onChange}
+          rangeDecorations={rangeDecorations}
+          ref={editorRef}
+          schemaType={schemaType}
+          value={value}
+        />,
+      ),
     )
+
+    await waitFor(() => {
+      if (editorRef.current) {
+        expect(onChange).toHaveBeenCalledWith({
+          type: 'value',
+          value,
+        })
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      }
+    })
+
     await waitFor(() => {
       expect([rangeDecorationIteration, 'initial']).toEqual([1, 'initial'])
     })
+
     // Re-render with the same range decorations
     rerender(
       <PortableTextEditorTester

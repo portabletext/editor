@@ -1,15 +1,7 @@
-import {
-  PortableTextEditor,
-  useEditor,
-  useEditorSelector,
-  usePortableTextEditor,
-  usePortableTextEditorSelection,
-  type Editor,
-  type EditorSelection,
-} from '@portabletext/editor'
+import {useEditor, useEditorSelector} from '@portabletext/editor'
 import * as selectors from '@portabletext/editor/selectors'
 import {SquareDashedMousePointerIcon} from 'lucide-react'
-import {isValidElement, useMemo} from 'react'
+import {isValidElement} from 'react'
 import {Group, TooltipTrigger} from 'react-aria-components'
 import {isValidElementType} from 'react-is'
 import {Button} from './components/button'
@@ -24,27 +16,14 @@ export function PortableTextToolbar(props: {
   schemaDefinition: SchemaDefinition
 }) {
   const editor = useEditor()
-  const editorInstance = usePortableTextEditor()
-  const selection = usePortableTextEditorSelection()
 
   return (
     <Toolbar aria-label="Text formatting">
-      <StyleSelector
-        schemaDefinition={props.schemaDefinition}
-        editor={editor}
-        editorInstance={editorInstance}
-        selection={selection}
-      />
+      <StyleSelector schemaDefinition={props.schemaDefinition} />
       <Separator orientation="vertical" />
       <Group aria-label="Decorators" className="contents">
         {props.schemaDefinition.decorators?.map((decorator) => (
-          <DecoratorToolbarButton
-            key={decorator.name}
-            decorator={decorator}
-            editor={editor}
-            editorInstance={editorInstance}
-            selection={selection}
-          />
+          <DecoratorToolbarButton key={decorator.name} decorator={decorator} />
         ))}
       </Group>
       <Separator orientation="vertical" />
@@ -53,9 +32,6 @@ export function PortableTextToolbar(props: {
           <AnnotationToolbarButton
             key={annotation.name}
             annotation={annotation}
-            editor={editor}
-            editorInstance={editorInstance}
-            selection={selection}
           />
         ))}
       </Group>
@@ -68,12 +44,7 @@ export function PortableTextToolbar(props: {
       <Separator orientation="vertical" />
       <Group aria-label="Block objects" className="contents">
         {props.schemaDefinition.blockObjects.map((blockObject) => (
-          <BlockObjectButton
-            key={blockObject.name}
-            blockObject={blockObject}
-            editor={editor}
-            editorInstance={editorInstance}
-          />
+          <BlockObjectButton key={blockObject.name} blockObject={blockObject} />
         ))}
       </Group>
       <Separator orientation="vertical" />
@@ -82,7 +53,6 @@ export function PortableTextToolbar(props: {
           <InlineObjectButton
             key={inlineObject.name}
             inlineObject={inlineObject}
-            editor={editor}
           />
         ))}
       </Group>
@@ -104,32 +74,19 @@ export function PortableTextToolbar(props: {
   )
 }
 
-function StyleSelector(props: {
-  schemaDefinition: SchemaDefinition
-  editor: Editor
-  editorInstance: PortableTextEditor
-  selection: EditorSelection
-}) {
-  const focusBlock = PortableTextEditor.focusBlock(props.editorInstance)
-  const activeStyle = useMemo(
-    () =>
-      focusBlock
-        ? (props.schemaDefinition.styles.find((style) =>
-            PortableTextEditor.hasBlockStyle(props.editorInstance, style.name),
-          )?.name ?? null)
-        : null,
-    [props.editorInstance, focusBlock, props.schemaDefinition],
-  )
+function StyleSelector(props: {schemaDefinition: SchemaDefinition}) {
+  const editor = useEditor()
+  const activeStyle = useEditorSelector(editor, selectors.getActiveStyle)
 
   return (
     <Select
       placeholder="Select style"
       aria-label="Style"
-      selectedKey={activeStyle}
+      selectedKey={activeStyle ?? null}
       onSelectionChange={(style) => {
         if (typeof style === 'string') {
-          props.editor.send({type: 'style.toggle', style})
-          props.editor.send({type: 'focus'})
+          editor.send({type: 'style.toggle', style})
+          editor.send({type: 'focus'})
         }
       }}
     >
@@ -145,16 +102,12 @@ function StyleSelector(props: {
 
 function AnnotationToolbarButton(props: {
   annotation: SchemaDefinition['annotations'][number]
-  editor: Editor
-  editorInstance: PortableTextEditor
-  selection: EditorSelection
 }) {
-  const active =
-    props.selection !== null &&
-    PortableTextEditor.isAnnotationActive(
-      props.editorInstance,
-      props.annotation.name,
-    )
+  const editor = useEditor()
+  const active = useEditorSelector(
+    editor,
+    selectors.isActiveAnnotation(props.annotation.name),
+  )
 
   return (
     <TooltipTrigger>
@@ -163,7 +116,7 @@ function AnnotationToolbarButton(props: {
         size="sm"
         isSelected={active}
         onPress={() => {
-          props.editor.send({
+          editor.send({
             type: 'annotation.toggle',
             annotation: {
               name: props.annotation.name,
@@ -179,7 +132,7 @@ function AnnotationToolbarButton(props: {
                     : {},
             },
           })
-          props.editor.send({type: 'focus'})
+          editor.send({type: 'focus'})
         }}
       >
         <Icon icon={props.annotation.icon} fallback={props.annotation.title} />
@@ -191,13 +144,12 @@ function AnnotationToolbarButton(props: {
 
 function DecoratorToolbarButton(props: {
   decorator: SchemaDefinition['decorators'][number]
-  editor: Editor
-  editorInstance: PortableTextEditor
-  selection: EditorSelection
 }) {
-  const active =
-    props.selection !== null &&
-    PortableTextEditor.isMarkActive(props.editorInstance, props.decorator.name)
+  const editor = useEditor()
+  const active = useEditorSelector(
+    editor,
+    selectors.isActiveDecorator(props.decorator.name),
+  )
 
   return (
     <TooltipTrigger>
@@ -206,11 +158,11 @@ function DecoratorToolbarButton(props: {
         size="sm"
         isSelected={active}
         onPress={() => {
-          props.editor.send({
+          editor.send({
             type: 'decorator.toggle',
             decorator: props.decorator.name,
           })
-          props.editor.send({type: 'focus'})
+          editor.send({type: 'focus'})
         }}
       >
         <Icon icon={props.decorator.icon} fallback={props.decorator.title} />
@@ -222,8 +174,10 @@ function DecoratorToolbarButton(props: {
 
 function ListToolbarButton(props: {list: SchemaDefinition['lists'][number]}) {
   const editor = useEditor()
-  const activeListItem = useEditorSelector(editor, selectors.getActiveListItem)
-  const active = activeListItem === props.list.name
+  const active = useEditorSelector(
+    editor,
+    selectors.isActiveListItem(props.list.name),
+  )
 
   return (
     <TooltipTrigger>
@@ -248,14 +202,15 @@ function ListToolbarButton(props: {list: SchemaDefinition['lists'][number]}) {
 
 function InlineObjectButton(props: {
   inlineObject: SchemaDefinition['inlineObjects'][number]
-  editor: Editor
 }) {
+  const editor = useEditor()
+
   return (
     <Button
       variant="secondary"
       size="sm"
       onPress={() => {
-        props.editor.send({
+        editor.send({
           type: 'insert.inline object',
           inlineObject: {
             name: props.inlineObject.name,
@@ -265,7 +220,7 @@ function InlineObjectButton(props: {
                 : {},
           },
         })
-        props.editor.send({type: 'focus'})
+        editor.send({type: 'focus'})
       }}
     >
       <Icon icon={props.inlineObject.icon} fallback={null} />
@@ -276,15 +231,15 @@ function InlineObjectButton(props: {
 
 function BlockObjectButton(props: {
   blockObject: SchemaDefinition['blockObjects'][number]
-  editor: Editor
-  editorInstance: PortableTextEditor
 }) {
+  const editor = useEditor()
+
   return (
     <Button
       variant="secondary"
       size="sm"
       onPress={() => {
-        props.editor.send({
+        editor.send({
           type: 'insert.block object',
           placement: 'auto',
           blockObject: {
@@ -295,7 +250,7 @@ function BlockObjectButton(props: {
                 : {},
           },
         })
-        props.editor.send({type: 'focus'})
+        editor.send({type: 'focus'})
       }}
     >
       <Icon icon={props.blockObject.icon} fallback={null} />

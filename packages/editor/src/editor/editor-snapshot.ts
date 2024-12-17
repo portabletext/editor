@@ -6,6 +6,7 @@ import type {EditorSchema} from './define-schema'
  * @alpha
  */
 export type EditorContext = {
+  activeDecorators: Array<string>
   keyGenerator: () => string
   schema: EditorSchema
   selection: EditorSelection

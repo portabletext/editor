@@ -173,7 +173,8 @@ export class PortableTextEditor extends Component<
     if (!this.props.editor && !prevProps.editor) {
       if (this.props.readOnly !== prevProps.readOnly) {
         this.editor._internal.editorActor.send({
-          type: 'toggle readOnly',
+          type: 'update readOnly',
+          readOnly: this.props.readOnly ?? false,
         })
       }
 
@@ -238,8 +239,6 @@ export class PortableTextEditor extends Component<
         />
         <Synchronizer
           editorActor={this.editor._internal.editorActor}
-          getValue={this.editor._internal.editable.getValue}
-          portableTextEditor={this}
           slateEditor={this.editor._internal.slateEditor.instance}
         />
         <EditorActorContext.Provider value={this.editor._internal.editorActor}>
@@ -496,7 +495,8 @@ export function RouteEventsToChanges(props: {
         case 'list item.toggle':
         case 'style.toggle':
         case 'patches':
-        case 'readOnly toggled':
+        case 'editable':
+        case 'read only':
           break
         default:
           handleChange(event)

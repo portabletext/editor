@@ -25,12 +25,12 @@ import type {
   InvalidValueResolution,
   PortableTextSlateEditor,
 } from '../types/editor'
-import debug from '../utils/debug'
 import {toPortableTextRange} from '../utils/ranges'
 import {fromSlateValue} from '../utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../utils/weakMaps'
 import type {EditorSchema} from './define-schema'
 import type {EditorContext} from './editor-snapshot'
+import {getActiveDecorators} from './get-active-decorators'
 
 export * from 'xstate/guards'
 
@@ -68,6 +68,7 @@ export type MutationEvent = {
 export type InternalEditorEvent =
   | {type: 'normalizing'}
   | {type: 'done normalizing'}
+  | {type: 'done syncing initial value'}
   | {
       type: 'behavior event'
       behaviorEvent: SyntheticBehaviorEvent | NativeBehaviorEvent
@@ -78,6 +79,10 @@ export type InternalEditorEvent =
       type: 'behavior action intends'
       editor: PortableTextSlateEditor
       actionIntends: Array<BehaviorActionIntend>
+    }
+  | {
+      type: 'update readOnly'
+      readOnly: boolean
     }
   | {
       type: 'update schema'
@@ -92,13 +97,14 @@ export type InternalEditorEvent =
       value: Array<PortableTextBlock> | undefined
     }
   | {
-      type: 'toggle readOnly'
-    }
-  | {
       type: 'update maxBlocks'
       maxBlocks: number | undefined
     }
-  | OmitFromUnion<InternalEditorEmittedEvent, 'type', 'readOnly toggled'>
+  | OmitFromUnion<
+      InternalEditorEmittedEvent,
+      'type',
+      'ready' | 'read only' | 'editable'
+    >
 
 /**
  * @alpha
@@ -108,13 +114,14 @@ export type EditorEmittedEvent = PickFromUnion<
   'type',
   | 'blurred'
   | 'done loading'
+  | 'editable'
   | 'error'
   | 'focused'
   | 'invalid value'
   | 'loading'
   | 'mutation'
   | 'patch'
-  | 'readOnly toggled'
+  | 'read only'
   | 'ready'
   | 'selection'
   | 'value changed'
@@ -152,7 +159,8 @@ export type InternalEditorEmittedEvent =
   | {type: 'focused'; event: FocusEvent<HTMLDivElement, Element>}
   | {type: 'loading'}
   | {type: 'done loading'}
-  | {type: 'readOnly toggled'; readOnly: boolean}
+  | {type: 'read only'}
+  | {type: 'editable'}
   | PickFromUnion<
       SyntheticBehaviorEvent,
       'type',
@@ -180,7 +188,7 @@ export const editorMachine = setup({
       keyGenerator: () => string
       pendingEvents: Array<PatchEvent | MutationEvent>
       schema: EditorSchema
-      readOnly: boolean
+      initialReadOnly: boolean
       maxBlocks: number | undefined
       selection: EditorSelection
       value: Array<PortableTextBlock> | undefined
@@ -217,6 +225,8 @@ export const editorMachine = setup({
       assertEvent(event, 'mutation')
       return event
     }),
+    'emit read only': emit({type: 'read only'}),
+    'emit editable': emit({type: 'editable'}),
     'defer event': assign({
       pendingEvents: ({context, event}) => {
         assertEvent(event, ['patch', 'mutation'])
@@ -228,13 +238,12 @@ export const editorMachine = setup({
         enqueue(emit(event))
       }
     }),
+    'emit ready': emit({type: 'ready'}),
     'clear pending events': assign({
       pendingEvents: [],
     }),
     'handle behavior event': enqueueActions(({context, event, enqueue}) => {
       assertEvent(event, ['behavior event'])
-
-      debug('Behavior event', event)
 
       const defaultAction =
         event.behaviorEvent.type === 'copy' ||
@@ -276,6 +285,10 @@ export const editorMachine = setup({
       )
 
       const editorContext = {
+        activeDecorators: getActiveDecorators({
+          schema: context.schema,
+          slateEditorInstance: event.editor,
+        }),
         keyGenerator: context.keyGenerator,
         schema: context.schema,
         selection,
@@ -345,48 +358,11 @@ export const editorMachine = setup({
     pendingEvents: [],
     schema: input.schema,
     selection: null,
-    readOnly: input.readOnly ?? false,
+    initialReadOnly: input.readOnly ?? false,
     maxBlocks: input.maxBlocks,
     value: input.value,
   }),
   on: {
-    'annotation.add': {
-      actions: emit(({event}) => event),
-      guard: ({context}) => !context.readOnly,
-    },
-    'annotation.remove': {
-      actions: emit(({event}) => event),
-      guard: ({context}) => !context.readOnly,
-    },
-    'annotation.toggle': {
-      actions: emit(({event}) => event),
-      guard: ({context}) => !context.readOnly,
-    },
-    'blur': {
-      actions: emit(({event}) => event),
-      guard: ({context}) => !context.readOnly,
-    },
-    'decorator.*': {
-      actions: emit(({event}) => event),
-      guard: ({context}) => !context.readOnly,
-    },
-    'focus': {
-      actions: emit(({event}) => event),
-      guard: ({context}) => !context.readOnly,
-    },
-    'insert.*': {
-      actions: emit(({event}) => event),
-      guard: ({context}) => !context.readOnly,
-    },
-    'list item.*': {
-      actions: emit(({event}) => event),
-      guard: ({context}) => !context.readOnly,
-    },
-    'style.*': {
-      actions: emit(({event}) => event),
-      guard: ({context}) => !context.readOnly,
-    },
-    'ready': {actions: emit(({event}) => event)},
     'unset': {actions: emit(({event}) => event)},
     'value changed': {actions: emit(({event}) => event)},
     'invalid value': {actions: emit(({event}) => event)},
@@ -405,21 +381,8 @@ export const editorMachine = setup({
     'update behaviors': {actions: 'assign behaviors'},
     'update schema': {actions: 'assign schema'},
     'update value': {actions: assign({value: ({event}) => event.value})},
-    'toggle readOnly': {
-      actions: [
-        assign({readOnly: ({context}) => !context.readOnly}),
-        emit(({context}) => ({
-          type: 'readOnly toggled',
-          readOnly: context.readOnly,
-        })),
-      ],
-    },
     'update maxBlocks': {
       actions: assign({maxBlocks: ({event}) => event.maxBlocks}),
-    },
-    'behavior event': {
-      actions: 'handle behavior event',
-      guard: ({context}) => !context.readOnly,
     },
     'behavior action intends': {
       actions: [
@@ -455,49 +418,139 @@ export const editorMachine = setup({
       ],
     },
   },
-  initial: 'pristine',
+  type: 'parallel',
   states: {
-    pristine: {
-      initial: 'idle',
+    'edit mode': {
+      initial: 'read only',
       states: {
-        idle: {
-          on: {
-            normalizing: {
-              target: 'normalizing',
+        'read only': {
+          initial: 'determine initial edit mode',
+          states: {
+            'determine initial edit mode': {
+              on: {
+                'done syncing initial value': [
+                  {
+                    target: '#editor.edit mode.read only.read only',
+                    guard: ({context}) => context.initialReadOnly,
+                  },
+                  {
+                    target: '#editor.edit mode.editable',
+                  },
+                ],
+              },
             },
-            patch: {
-              actions: 'defer event',
-              target: '#editor.dirty',
-            },
-            mutation: {
-              actions: 'defer event',
-              target: '#editor.dirty',
+            'read only': {
+              on: {
+                'update readOnly': {
+                  guard: ({event}) => !event.readOnly,
+                  target: '#editor.edit mode.editable',
+                  actions: ['emit editable'],
+                },
+              },
             },
           },
         },
-        normalizing: {
+        'editable': {
           on: {
-            'done normalizing': {
-              target: 'idle',
+            'update readOnly': {
+              guard: ({event}) => event.readOnly,
+              target: '#editor.edit mode.read only.read only',
+              actions: ['emit read only'],
             },
+            'behavior event': {
+              actions: 'handle behavior event',
+            },
+            'annotation.add': {
+              actions: emit(({event}) => event),
+            },
+            'annotation.remove': {
+              actions: emit(({event}) => event),
+            },
+            'annotation.toggle': {
+              actions: emit(({event}) => event),
+            },
+            'blur': {
+              actions: emit(({event}) => event),
+            },
+            'decorator.*': {
+              actions: emit(({event}) => event),
+            },
+            'focus': {
+              actions: emit(({event}) => event),
+            },
+            'insert.*': {
+              actions: emit(({event}) => event),
+            },
+            'list item.*': {
+              actions: emit(({event}) => event),
+            },
+            'style.*': {
+              actions: emit(({event}) => event),
+            },
+          },
+        },
+      },
+    },
+    'setup': {
+      initial: 'setting up',
+      states: {
+        'setting up': {
+          exit: ['emit ready'],
+          on: {
             'patch': {
               actions: 'defer event',
             },
             'mutation': {
               actions: 'defer event',
             },
+            'done syncing initial value': {
+              target: 'pristine',
+            },
           },
         },
-      },
-    },
-    dirty: {
-      entry: ['emit pending events', 'clear pending events'],
-      on: {
-        patch: {
-          actions: 'emit patch event',
+        'pristine': {
+          initial: 'idle',
+          states: {
+            idle: {
+              on: {
+                normalizing: {
+                  target: 'normalizing',
+                },
+                patch: {
+                  actions: 'defer event',
+                  target: '#editor.setup.dirty',
+                },
+                mutation: {
+                  actions: 'defer event',
+                  target: '#editor.setup.dirty',
+                },
+              },
+            },
+            normalizing: {
+              on: {
+                'done normalizing': {
+                  target: 'idle',
+                },
+                'patch': {
+                  actions: 'defer event',
+                },
+                'mutation': {
+                  actions: 'defer event',
+                },
+              },
+            },
+          },
         },
-        mutation: {
-          actions: 'emit mutation event',
+        'dirty': {
+          entry: ['emit pending events', 'clear pending events'],
+          on: {
+            patch: {
+              actions: 'emit patch event',
+            },
+            mutation: {
+              actions: 'emit mutation event',
+            },
+          },
         },
       },
     },

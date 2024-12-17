@@ -159,7 +159,9 @@ export const PortableTextEditable = forwardRef<
   const rangeDecorationsRef = useRef(rangeDecorations)
 
   const editorActor = useContext(EditorActorContext)
-  const readOnly = useSelector(editorActor, (s) => s.context.readOnly)
+  const readOnly = useSelector(editorActor, (s) =>
+    s.matches({'edit mode': 'read only'}),
+  )
   const schemaTypes = useSelector(editorActor, (s) => s.context.schema)
   const slateEditor = useSlate()
 
@@ -366,6 +368,7 @@ export const PortableTextEditable = forwardRef<
   // Restore selection from props when the editor has been initialized properly with it's value
   useEffect(() => {
     const onReady = editorActor.on('ready', () => {
+      syncRangeDecorations()
       restoreSelectionFromProps()
     })
     const onInvalidValue = editorActor.on('invalid value', () => {
@@ -380,7 +383,7 @@ export const PortableTextEditable = forwardRef<
       onInvalidValue.unsubscribe()
       onValueChanged.unsubscribe()
     }
-  }, [editorActor, restoreSelectionFromProps])
+  }, [editorActor, restoreSelectionFromProps, syncRangeDecorations])
 
   // Restore selection from props when it changes
   useEffect(() => {
@@ -407,9 +410,13 @@ export const PortableTextEditable = forwardRef<
 
   // Sync range decorations after an operation is applied
   useEffect(() => {
-    const teardown = withSyncRangeDecorations(slateEditor, syncRangeDecorations)
+    const teardown = withSyncRangeDecorations({
+      editorActor,
+      slateEditor,
+      syncRangeDecorations,
+    })
     return () => teardown()
-  }, [slateEditor, syncRangeDecorations])
+  }, [editorActor, slateEditor, syncRangeDecorations])
 
   // Handle from props onCopy function
   const handleCopy = useCallback(

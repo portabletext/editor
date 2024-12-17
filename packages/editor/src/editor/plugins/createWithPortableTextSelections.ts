@@ -57,7 +57,10 @@ export function createWithPortableTextSelections(
     editor.onChange = () => {
       const hasChanges = editor.operations.length > 0
       onChange()
-      if (hasChanges) {
+      if (
+        hasChanges &&
+        !editorActor.getSnapshot().matches({setup: 'setting up'})
+      ) {
         emitPortableTextSelection()
       }
     }

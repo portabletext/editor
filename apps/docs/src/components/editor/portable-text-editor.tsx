@@ -11,7 +11,7 @@ import {
   getFocusBlock,
   getFocusSpan,
   getFocusTextBlock,
-  selectionIsCollapsed,
+  isSelectionCollapsed,
 } from '@portabletext/editor/selectors'
 import {PortableText} from '@portabletext/react'
 import {useState} from 'react'
@@ -45,7 +45,7 @@ export function PortableTextEditor({customSchema}: PortableTextEditorProps) {
                 const isEmojiShortcode = text === ':)'
 
                 // Only proceed if it's an emoji shortcode and the selection is collapsed
-                if (!isEmojiShortcode || !selectionIsCollapsed({context})) {
+                if (!isEmojiShortcode || !isSelectionCollapsed({context})) {
                   return false
                 }
 

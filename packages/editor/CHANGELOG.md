@@ -1,5 +1,52 @@
 # Changelog
 
+## [1.16.3](https://github.com/portabletext/editor/compare/editor-v1.16.2...editor-v1.16.3) (2024-12-16)
+
+
+### Bug Fixes
+
+* **deps:** update react compiler dependencies 🤖 ✨ ([f6845e9](https://github.com/portabletext/editor/commit/f6845e9fbda5df7471ac72bc6a04e40df1941a78))
+
+## [1.16.2](https://github.com/portabletext/editor/compare/editor-v1.16.1...editor-v1.16.2) (2024-12-16)
+
+
+### Bug Fixes
+
+* **perf:** stream the initial value into the editor ([135288b](https://github.com/portabletext/editor/commit/135288b582527683390e416f9f64e0c709deaa37))
+
+## [1.16.1](https://github.com/portabletext/editor/compare/editor-v1.16.0...editor-v1.16.1) (2024-12-16)
+
+
+### Bug Fixes
+
+* **event:** replace `toggle readOnly` with `update readOnly` ([0e6efbc](https://github.com/portabletext/editor/commit/0e6efbc70e5e23d4b36a9d4b897809fc00ceb546))
+
+## [1.16.0](https://github.com/portabletext/editor/compare/editor-v1.15.3...editor-v1.16.0) (2024-12-13)
+
+
+### Features
+
+* add `activeDecorators` to `EditorContext` ([e38e020](https://github.com/portabletext/editor/commit/e38e020ce108864ec3f4a270ec5301cfb9f708d6))
+* **selectors:** add `getActiveStyle` and `isActiveStyle` ([37ba256](https://github.com/portabletext/editor/commit/37ba2567b7d299e7263cf4ce513e6184a28d7a14))
+* **selectors:** add `getSelectedSpans` ([55b5e9e](https://github.com/portabletext/editor/commit/55b5e9e0beb3340d0e9495629dacf026b0357991))
+* **selectors:** add `isActiveAnnotation` ([6f7a172](https://github.com/portabletext/editor/commit/6f7a1725bf086646ff984a8349d89e1004a1046c))
+* **selectors:** add `isActiveListItem` ([efd64bf](https://github.com/portabletext/editor/commit/efd64bfe1de4c8f1d401f91381179563fbcbe21c))
+* **selectors:** add `isSelection(Collapsed|Expanded)` ([8440022](https://github.com/portabletext/editor/commit/8440022a8743d367ee73ae47427a19d7530f44bf))
+* **selectors:** add higher-order `isDecoratorActive` ([4ce4e55](https://github.com/portabletext/editor/commit/4ce4e554de3c107689430c1fde08839beec9841d))
+
+
+### Bug Fixes
+
+* abort value sync if value hasn't changed ([1590795](https://github.com/portabletext/editor/commit/15907955f391367869ff4d8dd1399ff1f050c97f))
+* **deps:** update sanity monorepo to ^3.67.0 ([3526fa5](https://github.com/portabletext/editor/commit/3526fa507a3dce51bb206ca0de045d26730881f3))
+* **deps:** update sanity monorepo to ^3.67.1 ([1852219](https://github.com/portabletext/editor/commit/18522190a7eb3194c02b428cb2e2997e539715d0))
+* make editor read-only while setting up ([3ff4318](https://github.com/portabletext/editor/commit/3ff431853e7c3a385698f30b2bba7e3f160feb87))
+* **perf:** don't emit selection while setting up ([6f92cf2](https://github.com/portabletext/editor/commit/6f92cf29851441059be3e0e346a59b9a35601558))
+* **perf:** don't sync range decorations while setting up ([af70759](https://github.com/portabletext/editor/commit/af7075954b035956413317fecb56fbbb67bc214d))
+* **selectors:** account for non-span decorators in `isActiveDecorator` ([9e287da](https://github.com/portabletext/editor/commit/9e287da46755fd7bb05069757aaef277f46d40fa))
+* **selectors:** rename `isDecoratorActive`-&gt;`isActiveDecorator` ([184f7f6](https://github.com/portabletext/editor/commit/184f7f6ddd86f14cf2ee294a9914b44c99540a7b))
+* **selectors:** rename `selectionIsCollapsed`-&gt;`isSelectionCollapsed` ([6d880d0](https://github.com/portabletext/editor/commit/6d880d03440a531f37ccfc9afb9dbdbb6b72c047))
+
 ## [1.15.3](https://github.com/portabletext/editor/compare/editor-v1.15.2...editor-v1.15.3) (2024-12-09)
 
 
