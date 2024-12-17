@@ -36,7 +36,7 @@ const styleMap: Record<string, React.ReactNode> = {
   h1: <Heading1 className="h-4 w-4" />,
   h2: <Heading2 className="h-4 w-4" />,
   h3: <Heading3 className="h-4 w-4" />,
-  blockqoute: <Quote className="h-4 w-4" />,
+  blockquote: <Quote className="h-4 w-4" />,
 }
 
 const listMap: Record<string, React.ReactNode> = {

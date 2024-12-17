@@ -8,7 +8,7 @@ export const defaultSchema = defineSchema({
     {name: 'h1'},
     {name: 'h2'},
     {name: 'h3'},
-    {name: 'blockqoute'},
+    {name: 'blockquote'},
   ],
   lists: [{name: 'bullet'}, {name: 'number'}],
   inlineObjects: [{name: 'stock-ticker'}],
