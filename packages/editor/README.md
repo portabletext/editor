@@ -9,10 +9,6 @@
 
 > The official editor for editing [Portable Text](https://github.com/portabletext/portabletext) – the JSON based rich text specification for modern content editing platforms.
 
-## End-User Experience
-
-In order to provide a robust and consistent end-user experience, the editor is backed by an elaborate E2E test suite generated from a [human-readable Gherkin spec](/packages/editor/gherkin-spec/).
-
 ## Build Your Own Portable Text Editor
 
 Check [/examples/basic/src/App.tsx](/examples/basic/src/App.tsx) for a basic example of how to set up the edior. Most of the source code from this example app can also be found in the instructions below.
@@ -394,6 +390,10 @@ The Behavior API is a new way of interfacing with the Portable Text Editor. It a
 2. Imperatively trigger **events** using `editor.send(…)` which in turn can trigger behaviors defined using `defineBehavior`.
 3. Deriving editor **state** using **pure functions**.
 4. Subscribe to **emitted** editor **events** using `editor.on(…)`.
+
+## End-User Experience
+
+In order to provide a robust and consistent end-user experience, the editor is backed by an elaborate E2E test suite generated from a [human-readable Gherkin spec](/packages/editor/gherkin-spec/).
 
 ## Development
 
