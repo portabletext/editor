@@ -1,14 +1,12 @@
 import {
   EditorEventListener,
   EditorProvider,
-  keyGenerator,
   PortableTextEditable,
   type PortableTextBlock,
   type SchemaDefinition,
 } from '@portabletext/editor'
-import {defineBehavior} from '@portabletext/editor/behaviors'
+import {coreBehaviors, defineBehavior} from '@portabletext/editor/behaviors'
 import {
-  getFocusBlock,
   getFocusSpan,
   getFocusTextBlock,
   isSelectionCollapsed,
@@ -37,6 +35,7 @@ export function PortableTextEditor({customSchema}: PortableTextEditorProps) {
         initialConfig={{
           schemaDefinition,
           behaviors: [
+            ...coreBehaviors,
             defineBehavior({
               on: 'paste',
               guard: ({context, event}) => {
