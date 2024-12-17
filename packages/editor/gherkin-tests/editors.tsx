@@ -4,9 +4,9 @@ import * as React from 'react'
 import {useEffect} from 'react'
 import {
   PortableTextEditable,
-  PortableTextEditor,
-  usePortableTextEditor,
+  useEditorSelector,
   type HotkeyOptions,
+  type PortableTextEditor,
   type RangeDecoration,
 } from '../src'
 import type {Behavior} from '../src/behaviors'
@@ -153,11 +153,11 @@ function EditorEventListener(props: {
 }
 
 function FocusListener(props: {editorRef: EditorActorRef}) {
-  const editor = usePortableTextEditor()
+  const editor = useEditor()
 
   useEffect(() => {
     const subscription = props.editorRef.on('focus', () => {
-      PortableTextEditor.focus(editor)
+      editor.send({type: 'focus'})
     })
 
     return () => {
@@ -169,7 +169,7 @@ function FocusListener(props: {editorRef: EditorActorRef}) {
 }
 
 function BlockButtons() {
-  const editor = usePortableTextEditor()
+  const editor = useEditor()
 
   return (
     <>
@@ -177,17 +177,15 @@ function BlockButtons() {
         type="button"
         data-testid="button-insert-image"
         onClick={() => {
-          PortableTextEditor.insertBlock(
-            editor,
-            {
-              jsonType: 'object',
+          editor.send({
+            type: 'insert.block object',
+            blockObject: {
               name: 'image',
-              fields: [],
-              __experimental_search: [],
+              value: {url: 'http://example.com/image.png'},
             },
-            {url: 'http://example.com/image.png'},
-          )
-          PortableTextEditor.focus(editor)
+            placement: 'auto',
+          })
+          editor.send({type: 'focus'})
         }}
       >
         Insert image
@@ -197,7 +195,7 @@ function BlockButtons() {
 }
 
 function InlineObjectButtons() {
-  const editor = usePortableTextEditor()
+  const editor = useEditor()
 
   return (
     <>
@@ -205,17 +203,14 @@ function InlineObjectButtons() {
         type="button"
         data-testid="button-insert-stock-ticker"
         onClick={() => {
-          PortableTextEditor.insertChild(
-            editor,
-            {
-              jsonType: 'object',
+          editor.send({
+            type: 'insert.inline object',
+            inlineObject: {
               name: 'stock-ticker',
-              fields: [],
-              __experimental_search: [],
+              value: {symbol: 'NVDA'},
             },
-            {symbol: 'NVDA'},
-          )
-          PortableTextEditor.focus(editor)
+          })
+          editor.send({type: 'focus'})
         }}
       >
         Insert stock ticker
@@ -225,7 +220,7 @@ function InlineObjectButtons() {
 }
 
 function CommentButtons() {
-  const editor = usePortableTextEditor()
+  const editor = useEditor()
 
   return (
     <>
@@ -233,8 +228,14 @@ function CommentButtons() {
         type="button"
         data-testid="button-add-comment"
         onClick={() => {
-          addComment(editor)
-          PortableTextEditor.focus(editor)
+          editor.send({
+            type: 'annotation.add',
+            annotation: {
+              name: 'comment',
+              value: {text: 'Consider rewriting this'},
+            },
+          })
+          editor.send({type: 'focus'})
         }}
       >
         Add comment
@@ -243,8 +244,13 @@ function CommentButtons() {
         type="button"
         data-testid="button-remove-comment"
         onClick={() => {
-          removeComment(editor)
-          PortableTextEditor.focus(editor)
+          editor.send({
+            type: 'annotation.remove',
+            annotation: {
+              name: 'comment',
+            },
+          })
+          editor.send({type: 'focus'})
         }}
       >
         Remove comment
@@ -253,8 +259,14 @@ function CommentButtons() {
         type="button"
         data-testid="button-toggle-comment"
         onClick={() => {
-          toggleComment(editor)
-          PortableTextEditor.focus(editor)
+          editor.send({
+            type: 'annotation.toggle',
+            annotation: {
+              name: 'comment',
+              value: {text: 'Consider rewriting this'},
+            },
+          })
+          editor.send({type: 'focus'})
         }}
       >
         Toggle comment
@@ -264,7 +276,7 @@ function CommentButtons() {
 }
 
 function LinkButtons() {
-  const editor = usePortableTextEditor()
+  const editor = useEditor()
 
   return (
     <>
@@ -272,8 +284,14 @@ function LinkButtons() {
         type="button"
         data-testid="button-add-link"
         onClick={() => {
-          addLink(editor)
-          PortableTextEditor.focus(editor)
+          editor.send({
+            type: 'annotation.add',
+            annotation: {
+              name: 'link',
+              value: {href: 'https://example.com'},
+            },
+          })
+          editor.send({type: 'focus'})
         }}
       >
         Add link
@@ -282,8 +300,13 @@ function LinkButtons() {
         type="button"
         data-testid="button-remove-link"
         onClick={() => {
-          removeLink(editor)
-          PortableTextEditor.focus(editor)
+          editor.send({
+            type: 'annotation.remove',
+            annotation: {
+              name: 'link',
+            },
+          })
+          editor.send({type: 'focus'})
         }}
       >
         Remove link
@@ -292,8 +315,14 @@ function LinkButtons() {
         type="button"
         data-testid="button-toggle-link"
         onClick={() => {
-          toggleLink(editor)
-          PortableTextEditor.focus(editor)
+          editor.send({
+            type: 'annotation.toggle',
+            annotation: {
+              name: 'link',
+              value: {href: 'https://example.com'},
+            },
+          })
+          editor.send({type: 'focus'})
         }}
       >
         Toggle link
@@ -302,73 +331,9 @@ function LinkButtons() {
   )
 }
 
-function toggleComment(editor: PortableTextEditor) {
-  const active = PortableTextEditor.isAnnotationActive(editor, 'comment')
-
-  if (active) {
-    removeComment(editor)
-  } else {
-    addComment(editor)
-  }
-}
-
-function addComment(editor: PortableTextEditor) {
-  PortableTextEditor.addAnnotation(
-    editor,
-    {
-      jsonType: 'object',
-      name: 'comment',
-      fields: [],
-      __experimental_search: [],
-    },
-    {text: 'Consider rewriting this'},
-  )
-}
-
-function removeComment(editor: PortableTextEditor) {
-  PortableTextEditor.removeAnnotation(editor, {
-    jsonType: 'object',
-    name: 'comment',
-    fields: [],
-    __experimental_search: [],
-  })
-}
-
-function toggleLink(editor: PortableTextEditor) {
-  const active = PortableTextEditor.isAnnotationActive(editor, 'link')
-
-  if (active) {
-    removeLink(editor)
-  } else {
-    addLink(editor)
-  }
-}
-
-function addLink(editor: PortableTextEditor) {
-  PortableTextEditor.addAnnotation(
-    editor,
-    {
-      jsonType: 'object',
-      name: 'link',
-      fields: [],
-      __experimental_search: [],
-    },
-    {href: 'https://example.com'},
-  )
-}
-
-function removeLink(editor: PortableTextEditor) {
-  PortableTextEditor.removeAnnotation(editor, {
-    jsonType: 'object',
-    name: 'link',
-    fields: [],
-    __experimental_search: [],
-  })
-}
-
 function StyleButtons() {
-  const editor = usePortableTextEditor()
-  const styles = editor.schemaTypes.styles
+  const editor = useEditor()
+  const styles = useEditorSelector(editor, (s) => s.context.schema.styles)
 
   return (
     <>
@@ -378,8 +343,11 @@ function StyleButtons() {
           data-testid={`button-toggle-style-${style.value}`}
           type="button"
           onClick={() => {
-            PortableTextEditor.toggleBlockStyle(editor, style.value)
-            PortableTextEditor.focus(editor)
+            editor.send({
+              type: 'style.toggle',
+              style: style.value,
+            })
+            editor.send({type: 'focus'})
           }}
         >
           {style.title}
