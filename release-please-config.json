@@ -3,7 +3,6 @@
   "last-release-sha": "a847c6e72cdf2474ee7e36a04c39cf1792121333",
   "bump-minor-pre-major": true,
   "always-link-local": true,
-  "separate-pull-requests": true,
   "plugins": ["node-workspace"],
   "packages": {
     "packages/editor": {},
