@@ -3,6 +3,7 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
+    "clean": "del .astro && del .turbo && del dist && del node_modules",
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
