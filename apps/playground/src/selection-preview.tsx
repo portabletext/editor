@@ -1,4 +1,4 @@
-import {usePortableTextEditorSelection} from '@portabletext/editor'
+import {useEditor, useEditorSelector} from '@portabletext/editor'
 import {useActorRef, useSelector} from '@xstate/react'
 import {useEffect} from 'react'
 import {Spinner} from './components/spinner'
@@ -9,7 +9,11 @@ export function SelectionPreview(props: {editorId: EditorActorRef['id']}) {
   const highlightSelectionActor = useActorRef(higlightMachine, {
     input: {code: ''},
   })
-  const selection = usePortableTextEditorSelection()
+  const editor = useEditor()
+  const selection = useEditorSelector(
+    editor,
+    (snapshot) => snapshot.context.selection,
+  )
 
   useEffect(() => {
     highlightSelectionActor.send({
