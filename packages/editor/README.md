@@ -33,7 +33,7 @@ const schemaDefinition = defineSchema({
     {name: 'h1'},
     {name: 'h2'},
     {name: 'h3'},
-    {name: 'blockqoute'},
+    {name: 'blockquote'},
   ],
   // Lists apply to entire text blocks as well
   lists: [{name: 'bullet'}, {name: 'number'}],
