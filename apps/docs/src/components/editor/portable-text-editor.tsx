@@ -11,6 +11,7 @@ import {
   getFocusTextBlock,
   isSelectionCollapsed,
 } from '@portabletext/editor/selectors'
+import {applyAll} from '@portabletext/patches'
 import {PortableText} from '@portabletext/react'
 import {useState} from 'react'
 import {Button} from '../ui/button'
@@ -72,6 +73,9 @@ export function PortableTextEditor({customSchema}: PortableTextEditorProps) {
       >
         <EditorEventListener
           on={(event) => {
+            if (event.type === 'patch') {
+              setValue((prevValue) => applyAll(prevValue, [event.patch]))
+            }
             if (event.type === 'mutation') {
               setValue(event.snapshot)
             }
