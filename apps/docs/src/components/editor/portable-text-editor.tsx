@@ -16,6 +16,7 @@ import {PortableText} from '@portabletext/react'
 import {useState} from 'react'
 import {Button} from '../ui/button'
 import {defaultSchema} from './defaultSchema'
+import './editor.css'
 import {Toolbar} from './toolbar'
 
 type PortableTextEditorProps = {
@@ -83,7 +84,62 @@ export function PortableTextEditor({customSchema}: PortableTextEditorProps) {
         />
         <div className="w-full max-w-4xl mx-auto space-y-4 mb-4">
           <Toolbar />
-          <PortableTextEditable className="min-h-[200px] border border-gray-200 rounded-md p-2" />
+          <PortableTextEditable
+            className="min-h-[200px] border border-gray-200 rounded-md p-2"
+            renderBlock={(props) => props.children}
+            renderChild={(props) => props.children}
+            renderListItem={(props) => props.children}
+            renderStyle={(props) => {
+              if (props.value === 'h1') {
+                return (
+                  <h1 className="mb-1 font-bold text-3xl">{props.children}</h1>
+                )
+              }
+              if (props.value === 'h2') {
+                return (
+                  <h2 className="mb-1 font-bold text-2xl">{props.children}</h2>
+                )
+              }
+              if (props.value === 'h3') {
+                return (
+                  <h3 className="mb-1 font-bold text-xl">{props.children}</h3>
+                )
+              }
+              if (props.value === 'blockquote') {
+                return (
+                  <blockquote className="mb-1 pl-2 py-1 border-gray-200 border-l-4">
+                    {props.children}
+                  </blockquote>
+                )
+              }
+              return <p className="mb-1">{props.children}</p>
+            }}
+            renderDecorator={(props) => {
+              if (props.value === 'strong') {
+                return <strong>{props.children}</strong>
+              }
+              if (props.value === 'em') {
+                return <em>{props.children}</em>
+              }
+              if (props.value === 'underline') {
+                return <span className="underline">{props.children}</span>
+              }
+              return props.children
+            }}
+            renderAnnotation={(props) => {
+              if (props.schemaType.name === 'link') {
+                return (
+                  <span className="text-blue-800 underline">
+                    {props.children}
+                  </span>
+                )
+              }
+              return props.children
+            }}
+            renderPlaceholder={() => (
+              <span className="text-gray-400 px-2">Type something</span>
+            )}
+          />
         </div>
       </EditorProvider>
       {value && (
