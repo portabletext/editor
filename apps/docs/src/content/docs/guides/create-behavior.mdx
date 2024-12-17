@@ -21,7 +21,7 @@ import {defineBehavior} from '@portabletext/editor'
 
 Behaviors need three things:
 
-- A triggering event. See the [full list of events]().
+- A triggering event. See the [full list of events](/reference/behavior-api#behavior-event-types).
 - A guard, or condition that determines if this behavior should apply.
 - An action to invoke if the event and guard are met.
 
@@ -37,7 +37,7 @@ const noLowerCaseA = defineBehavior({
 
 Let's break it down:
 
-1. It listens for the `insert.text` event. You can use any [native or synthetic event]() here.
+1. It listens for the `insert.text` event. You can use any [native or synthetic event](/reference/behavior-api#behavior-event-types) here.
 2. The guard checks if the text that triggered this event is equal to a lowercase `a`. The guard is true and the behavior will perform the actions.
 3. It sends an `insert.text` action with with "A" instead of "a".
 
