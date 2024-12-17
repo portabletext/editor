@@ -175,9 +175,7 @@ export const stepDefinitions = [
     })
   }),
   Then('the text is {text}', async (_: Context, text: Array<string>) => {
-    await getText().then((actualText) =>
-      expect(actualText, 'Unexpected editor text').toEqual(text),
-    )
+    await expectText(text)
   }),
 
   /**
@@ -932,10 +930,6 @@ export async function getValue(): Promise<
   return value
 }
 
-export function getText() {
-  return getValue().then(getValueText)
-}
-
 export const waitForNewValue = async (changeFn: () => Promise<void>) => {
   const oldValue = await getValue()
   await changeFn()
@@ -1014,8 +1008,10 @@ export async function redo(editor: EditorContext) {
 
 export async function expectText(text: Array<string>) {
   await vi.waitFor(() =>
-    getText().then((actualText) => {
-      expect(actualText, 'Unexpected editor text').toEqual(text)
-    }),
+    getValue()
+      .then(getValueText)
+      .then((actualText) => {
+        expect(actualText, 'Unexpected editor text').toEqual(text)
+      }),
   )
 }
