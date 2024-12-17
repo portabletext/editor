@@ -9,19 +9,11 @@
 
 > The official editor for editing [Portable Text](https://github.com/portabletext/portabletext) – the JSON based rich text specification for modern content editing platforms.
 
-> [!NOTE]
-> We are currently working hard on the general release of this component. Better docs and refined APIs are coming.
-
 ## End-User Experience
 
 In order to provide a robust and consistent end-user experience, the editor is backed by an elaborate E2E test suite generated from a [human-readable Gherkin spec](/packages/editor/gherkin-spec/).
 
 ## Build Your Own Portable Text Editor
-
-> [!WARNING]
-> The `@portabletext/editor` is currently on the path to deprecate legacy APIs and introduce new ones. The end goals are to make the editor easier to use outside of `Sanity` (and without `@sanity/*` libraries) as well as providing a brand new API to configure the behavior of the editor.
->
-> This means that the `defineSchema` and `EditorProvider` APIs showcased here are still experimental APIs tagged with `@alpha` and cannot be considered stable yet. At the same time, the examples below showcase usages of legacy static methods on the `PortableTextEditor` (for example, `PortableTextEditor.isMarkActive(...)` and `PortableTextEditor.toggleMark(...)`) that will soon be discouraged and deprecrated.
 
 Check [/examples/basic/src/App.tsx](/examples/basic/src/App.tsx) for a basic example of how to set up the edior. Most of the source code from this example app can also be found in the instructions below.
 
@@ -219,123 +211,41 @@ function isStockTicker(
 
 ### Render the Toolbar
 
-Your toolbar needs to be rendered within `EditorProvider` because it requires a reference to the `editorInstance` that it produces. To toggle marks and styles and to insert objects, you'll have to use this `editorInstance` together with static methods on the `PortableTextEditor` class.
+Your toolbar needs to be rendered within `EditorProvider` because it requires a reference to the `editor` that it produces. To toggle marks and styles and to insert objects, you'll have to use the `.send` method on this `editor` instance.
 
 ```tsx
 function Toolbar() {
   // Obtain the editor instance
-  const editorInstance = usePortableTextEditor()
-  // Rerender the toolbar whenever the selection changes
-  usePortableTextEditorSelection()
+  const editor = useEditor()
 
-  const decoratorButtons = schemaDefinition.decorators.map((decorator) => {
-    return (
-      <button
-        key={decorator.name}
-        style={{
-          textDecoration: PortableTextEditor.isMarkActive(
-            editorInstance,
-            decorator.name,
-          )
-            ? 'underline'
-            : 'unset',
-        }}
-        onClick={() => {
-          // Toggle the decorator by name
-          PortableTextEditor.toggleMark(editorInstance, decorator.name)
-          // Pressing this button steals focus so let's focus the editor again
-          PortableTextEditor.focus(editorInstance)
-        }}
-      >
-        {decorator.name}
-      </button>
-    )
-  })
+  const decoratorButtons = schemaDefinition.decorators.map((decorator) => (
+    <DecoratorButton key={decorator.name} decorator={decorator.name} />
+  ))
 
-  const linkButton = (
-    <button
-      style={{
-        textDecoration: PortableTextEditor.isAnnotationActive(
-          editorInstance,
-          schemaDefinition.annotations[0].name,
-        )
-          ? 'underline'
-          : 'unset',
-      }}
-      onClick={() => {
-        if (
-          PortableTextEditor.isAnnotationActive(
-            editorInstance,
-            schemaDefinition.annotations[0].name,
-          )
-        ) {
-          PortableTextEditor.removeAnnotation(
-            editorInstance,
-            schemaDefinition.annotations[0],
-          )
-        } else {
-          PortableTextEditor.addAnnotation(
-            editorInstance,
-            schemaDefinition.annotations[0],
-            {href: 'https://example.com'},
-          )
-        }
-        PortableTextEditor.focus(editorInstance)
-      }}
-    >
-      link
-    </button>
-  )
+  const annotationButtons = schemaDefinition.annotations.map((annotation) => (
+    <AnnotationButton key={annotation.name} annotation={annotation} />
+  ))
 
   const styleButtons = schemaDefinition.styles.map((style) => (
-    <button
-      key={style.name}
-      style={{
-        textDecoration: PortableTextEditor.hasBlockStyle(
-          editorInstance,
-          style.name,
-        )
-          ? 'underline'
-          : 'unset',
-      }}
-      onClick={() => {
-        PortableTextEditor.toggleBlockStyle(editorInstance, style.name)
-        PortableTextEditor.focus(editorInstance)
-      }}
-    >
-      {style.name}
-    </button>
+    <StyleButton key={style.name} style={style.name} />
   ))
 
   const listButtons = schemaDefinition.lists.map((list) => (
-    <button
-      key={list.name}
-      style={{
-        textDecoration: PortableTextEditor.hasListStyle(
-          editorInstance,
-          list.name,
-        )
-          ? 'underline'
-          : 'unset',
-      }}
-      onClick={() => {
-        PortableTextEditor.toggleList(editorInstance, list.name)
-        PortableTextEditor.focus(editorInstance)
-      }}
-    >
-      {list.name}
-    </button>
+    <ListButton key={list.name} list={list.name} />
   ))
 
   const imageButton = (
     <button
       onClick={() => {
-        PortableTextEditor.insertBlock(
-          editorInstance,
-          schemaDefinition.blockObjects[0],
-          {src: 'https://example.com/image.jpg'},
-        )
-        PortableTextEditor.focus(editorInstance)
+        editor.send({
+          type: 'insert.block object',
+          blockObject: {
+            name: 'image',
+            value: {src: 'https://example.com/image.jpg'},
+          },
+          placement: 'auto',
+        })
+        editor.send({type: 'focus'})
       }}
     >
       {schemaDefinition.blockObjects[0].name}
@@ -345,12 +255,14 @@ function Toolbar() {
   const stockTickerButton = (
     <button
       onClick={() => {
-        PortableTextEditor.insertChild(
-          editorInstance,
-          schemaDefinition.inlineObjects[0],
-          {symbol: 'AAPL'},
-        )
-        PortableTextEditor.focus(editorInstance)
+        editor.send({
+          type: 'insert.inline object',
+          inlineObject: {
+            name: 'stock-ticker',
+            value: {symbol: 'AAPL'},
+          },
+        })
+        editor.send({type: 'focus'})
       }}
     >
       {schemaDefinition.inlineObjects[0].name}
@@ -360,12 +272,116 @@ function Toolbar() {
   return (
     <>
       <div>{decoratorButtons}</div>
-      <div>{linkButton}</div>
+      <div>{annotationButtons}</div>
       <div>{styleButtons}</div>
       <div>{listButtons}</div>
       <div>{imageButton}</div>
       <div>{stockTickerButton}</div>
     </>
+  )
+}
+
+function DecoratorButton(props: {decorator: string}) {
+  // Obtain the editor instance
+  const editor = useEditor()
+  // Check if the decorator is active using a selector
+  const active = useEditorSelector(
+    editor,
+    selectors.isActiveDecorator(props.decorator),
+  )
+
+  return (
+    <button
+      style={{
+        textDecoration: active ? 'underline' : 'unset',
+      }}
+      onClick={() => {
+        // Toggle the decorator
+        editor.send({
+          type: 'decorator.toggle',
+          decorator: props.decorator,
+        })
+        // Pressing this button steals focus so let's focus the editor again
+        editor.send({type: 'focus'})
+      }}
+    >
+      {props.decorator}
+    </button>
+  )
+}
+
+function AnnotationButton(props: {annotation: {name: string}}) {
+  const editor = useEditor()
+  const active = useEditorSelector(
+    editor,
+    selectors.isActiveAnnotation(props.annotation.name),
+  )
+
+  return (
+    <button
+      style={{
+        textDecoration: active ? 'underline' : 'unset',
+      }}
+      onClick={() => {
+        editor.send({
+          type: 'annotation.toggle',
+          annotation: {
+            name: props.annotation.name,
+            value:
+              props.annotation.name === 'link'
+                ? {href: 'https://example.com'}
+                : {},
+          },
+        })
+        editor.send({type: 'focus'})
+      }}
+    >
+      {props.annotation.name}
+    </button>
+  )
+}
+
+function StyleButton(props: {style: string}) {
+  const editor = useEditor()
+  const active = useEditorSelector(editor, selectors.isActiveStyle(props.style))
+
+  return (
+    <button
+      style={{
+        textDecoration: active ? 'underline' : 'unset',
+      }}
+      onClick={() => {
+        editor.send({type: 'style.toggle', style: props.style})
+        editor.send({type: 'focus'})
+      }}
+    >
+      {props.style}
+    </button>
+  )
+}
+
+function ListButton(props: {list: string}) {
+  const editor = useEditor()
+  const active = useEditorSelector(
+    editor,
+    selectors.isActiveListItem(props.list),
+  )
+
+  return (
+    <button
+      style={{
+        textDecoration: active ? 'underline' : 'unset',
+      }}
+      onClick={() => {
+        editor.send({
+          type: 'list item.toggle',
+          listItem: props.list,
+        })
+        editor.send({type: 'focus'})
+      }}
+    >
+      {props.list}
+    </button>
   )
 }
 ```
