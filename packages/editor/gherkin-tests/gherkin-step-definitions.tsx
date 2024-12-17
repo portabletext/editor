@@ -1011,3 +1011,11 @@ export async function redo(editor: EditorContext) {
     )
   })
 }
+
+export async function expectText(text: Array<string>) {
+  await vi.waitFor(() =>
+    getText().then((actualText) => {
+      expect(actualText, 'Unexpected editor text').toEqual(text)
+    }),
+  )
+}
