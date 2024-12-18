@@ -311,7 +311,7 @@ importers:
         version: link:../../packages/patches
       '@sanity/schema':
         specifier: ^3.63.0
-        version: 3.67.1(debug@4.4.0)
+        version: 3.68.0(debug@4.4.0)
       '@xstate/react':
         specifier: ^4.1.3
         version: 4.1.3(@types/react@19.0.1)(react@19.0.0)(xstate@5.19.0)
@@ -336,7 +336,7 @@ importers:
         version: 9.16.0
       '@sanity/types':
         specifier: ^3.63.0
-        version: 3.67.1(debug@4.4.0)
+        version: 3.68.0(debug@4.4.0)
       '@types/react':
         specifier: ^19.0.1
         version: 19.0.1
@@ -417,8 +417,8 @@ importers:
         specifier: ^2.0.16
         version: 2.0.16
       '@sanity/block-tools':
-        specifier: ^3.67.1
-        version: 3.67.1(debug@4.4.0)
+        specifier: ^3.68.0
+        version: 3.68.0(debug@4.4.0)
       '@sanity/diff-match-patch':
         specifier: ^3.1.2
         version: 3.1.2
@@ -426,11 +426,11 @@ importers:
         specifier: ^6.12.0
         version: 6.12.0(@types/babel__core@7.20.5)(@types/node@22.9.0)(babel-plugin-react-compiler@19.0.0-beta-201e55d-20241215)(debug@4.4.0)(typescript@5.7.2)
       '@sanity/schema':
-        specifier: ^3.67.1
-        version: 3.67.1(debug@4.4.0)
+        specifier: ^3.68.0
+        version: 3.68.0(debug@4.4.0)
       '@sanity/types':
-        specifier: ^3.67.1
-        version: 3.67.1(debug@4.4.0)
+        specifier: ^3.68.0
+        version: 3.68.0(debug@4.4.0)
       '@testing-library/jest-dom':
         specifier: ^6.6.3
         version: 6.6.3
@@ -2623,8 +2623,8 @@ packages:
   '@rushstack/ts-command-line@4.23.1':
     resolution: {integrity: sha512-40jTmYoiu/xlIpkkRsVfENtBq4CW3R4azbL0Vmda+fMwHWqss6wwf/Cy/UJmMqIzpfYc2OTnjYP1ZLD3CmyeCA==}
 
-  '@sanity/block-tools@3.67.1':
-    resolution: {integrity: sha512-PQ+KgS8/+xfM6XauZxiiMfRfY8uo2lMtbhAF/8QJ8kXapq/EFQcai5jDkWaB03tqlQVUrS4rMyKLBf9dvIFvOg==}
+  '@sanity/block-tools@3.68.0':
+    resolution: {integrity: sha512-RD9SYjgpMFsS4JVKKy/JtQAJme6nwZP9SnCsUhDnh9GAHDJ+TgH5all8pcBjpbeByEjC8gCtf3Gb3ytVqjSpAg==}
 
   '@sanity/browserslist-config@1.0.3':
     resolution: {integrity: sha512-UkJuiTyROgPcxbvpHYyXwr+T88Np4eLzu3h05gMgeZ2hv3EM7g/4VMyng5HuA1JdPQPEdq8bmmfQDR+u4KC+TA==}
@@ -2663,11 +2663,11 @@ packages:
     peerDependencies:
       prettier: ^3.2.5
 
-  '@sanity/schema@3.67.1':
-    resolution: {integrity: sha512-yjlxsfClQgi7941/WeqRV8q2FZYnFsj/TDmrP0IAgsg4cs30o5jqLyJ2UGDcKfTGeYb9cW2xtNl9q8LgOrI4bw==}
+  '@sanity/schema@3.68.0':
+    resolution: {integrity: sha512-XMu+gU2LVFZSxrfjvh89fdzpvTFF9DVborJ3Ub8FYbsHFs5XyNyQ4JwWMJ0zgMzhWpsBLs05em172HitnfcKhQ==}
 
-  '@sanity/types@3.67.1':
-    resolution: {integrity: sha512-zK9kazYnwN8X5TLZrmhIgTCiRJKCYg4B9soSFcX1SxZUP90cJpF7MCWh5p73f/9JgZA1nzkolHU4p0GAk5d0zA==}
+  '@sanity/types@3.68.0':
+    resolution: {integrity: sha512-OusUI2A9TLERj2XQXbNgiAGpEK1pdUziVKZpQKlRuts75rXFPbNZ06K/vVHR64dqsm050SSvMSEA+h5RNdNyzw==}
 
   '@shikijs/core@1.24.2':
     resolution: {integrity: sha512-BpbNUSKIwbKrRRA+BQj0BEWSw+8kOPKDJevWeSE/xIqGX7K0xrCZQ9kK0nnEQyrzsUoka1l81ZtJ2mGaCA32HQ==}
@@ -3142,9 +3142,9 @@ packages:
     resolution: {integrity: sha512-HGyxoOTYUyCM6stUe6EJgnd4EoewAI7zMdfqO+kGjnlZmBDz/cR5pf8r/cR4Wq60sL/p0IkcjUEEPwS3GFrIyw==}
     engines: {node: '>=8'}
 
-  arrify@1.0.1:
-    resolution: {integrity: sha512-3CYzex9M9FGQjCGMGyi6/31c8GJbgb0qGyrx5HWxPd0aCwh4cB2YjMb2Xf9UuoogrMrlO9cTqnB5rI5GHZTcUA==}
-    engines: {node: '>=0.10.0'}
+  arrify@2.0.1:
+    resolution: {integrity: sha512-3duEwti880xqi4eAMN8AyR4a0ByT90zoYdLlevfrvU43vb0YZwZVfxOgxWrLXXXpyugL0hNZc9G6BiB5B3nUug==}
+    engines: {node: '>=8'}
 
   assertion-error@2.0.1:
     resolution: {integrity: sha512-Izi8RQcffqCeNVgFigKli1ssklIbpHnCYc6AknXGYoB6grJqyeby7jv12JUQgmTAnIDnbck1uxksT4dzN3PWBA==}
@@ -8903,9 +8903,9 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@sanity/block-tools@3.67.1(debug@4.4.0)':
+  '@sanity/block-tools@3.68.0(debug@4.4.0)':
     dependencies:
-      '@sanity/types': 3.67.1(debug@4.4.0)
+      '@sanity/types': 3.68.0(debug@4.4.0)
       '@types/react': 19.0.1
       get-random-values-esm: 1.0.2
       lodash: 4.17.21
@@ -8992,11 +8992,11 @@ snapshots:
       prettier: 3.4.2
       prettier-plugin-packagejson: 2.5.3(prettier@3.4.2)
 
-  '@sanity/schema@3.67.1(debug@4.4.0)':
+  '@sanity/schema@3.68.0(debug@4.4.0)':
     dependencies:
       '@sanity/generate-help-url': 3.0.0
-      '@sanity/types': 3.67.1(debug@4.4.0)
-      arrify: 1.0.1
+      '@sanity/types': 3.68.0(debug@4.4.0)
+      arrify: 2.0.1
       groq-js: 1.14.2
       humanize-list: 1.0.1
       leven: 3.1.0
@@ -9006,7 +9006,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@sanity/types@3.67.1(debug@4.4.0)':
+  '@sanity/types@3.68.0(debug@4.4.0)':
     dependencies:
       '@sanity/client': 6.24.1(debug@4.4.0)
       '@types/react': 19.0.1
@@ -9609,7 +9609,7 @@ snapshots:
 
   array-union@2.1.0: {}
 
-  arrify@1.0.1: {}
+  arrify@2.0.1: {}
 
   assertion-error@2.0.1: {}
 
