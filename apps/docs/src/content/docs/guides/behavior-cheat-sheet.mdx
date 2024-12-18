@@ -76,9 +76,7 @@ You can write behaviors to auto-close common paired characters. This example clo
 const autoCloseParens = defineBehavior({
   on: 'insert.text',
   guard: ({context, event}) => {
-    if (event.text !== '(') {
-      return false
-    }
+    return event.text === '('
   },
   actions: [
     ({event, context}) => [
