@@ -42,172 +42,6 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
 
   return [
     defineBehavior({
-      on: 'key.down',
-      guard: ({context, event}) => {
-        const isArrowDown = isHotkey('ArrowDown', event.keyboardEvent)
-        const isArrowUp = isHotkey('ArrowUp', event.keyboardEvent)
-        const isEnter = isHotkey('Enter', event.keyboardEvent)
-        const isTab = isHotkey('Tab', event.keyboardEvent)
-
-        if (isEnter || isTab) {
-          const matches = emojiPickerActor.getSnapshot().context.matches
-          const selectedIndex =
-            emojiPickerActor.getSnapshot().context.selectedIndex
-
-          const emoji = matches[selectedIndex]
-            ? config.parseMatch({match: matches[selectedIndex]})
-            : undefined
-
-          if (!emoji) {
-            return false
-          }
-
-          const focusBlock = selectors.getFocusTextBlock({context})
-          const textBefore = selectors.getBlockTextBefore({context})
-          const emojiKeyword = textBefore.match(incompleteEmojiRegEx)?.[1]
-
-          if (!focusBlock || emojiKeyword === undefined) {
-            return false
-          }
-
-          const emojiStringLength = emojiKeyword.length + 1
-
-          if (emoji) {
-            emojiPickerActor.send({type: 'select'})
-
-            return {
-              action: 'select' as const,
-              focusBlock,
-              emoji,
-              emojiStringLength,
-              textBeforeLength: textBefore.length,
-            }
-          }
-
-          return false
-        }
-
-        if (isArrowDown) {
-          emojiPickerActor.send({type: 'navigate down'})
-
-          return {action: 'navigate' as const}
-        }
-
-        if (isArrowUp) {
-          emojiPickerActor.send({type: 'navigate up'})
-
-          return {action: 'navigate' as const}
-        }
-
-        emojiPickerActor.send({type: 'reset'})
-
-        return false
-      },
-      actions: [
-        (_, params) => {
-          if (params.action === 'navigate') {
-            // If we are navigating then we want to hijack the key event and
-            // turn it into a noop.
-            return [
-              {
-                type: 'noop',
-              },
-            ]
-          }
-
-          return [
-            {
-              type: 'delete.text',
-              anchor: {
-                path: params.focusBlock.path,
-                offset: params.textBeforeLength - params.emojiStringLength,
-              },
-              focus: {
-                path: params.focusBlock.path,
-                offset: params.textBeforeLength,
-              },
-            },
-            {
-              type: 'insert.text',
-              text: params.emoji,
-            },
-          ]
-        },
-      ],
-    }),
-    defineBehavior({
-      on: 'insert.text',
-      guard: ({context, event}) => {
-        const isEmojiChar = emojiCharRegEx.test(event.text)
-
-        if (!isEmojiChar) {
-          return {emojis: []}
-        }
-
-        const focusBlock = selectors.getFocusTextBlock({context})
-        const textBefore = selectors.getBlockTextBefore({context})
-        const emojiKeyword = `${textBefore}${event.text}`.match(
-          incompleteEmojiRegEx,
-        )?.[1]
-
-        if (!focusBlock || emojiKeyword === undefined) {
-          return {emojis: []}
-        }
-
-        const emojis = config.matchEmojis({keyword: emojiKeyword})
-
-        return {emojis}
-      },
-      actions: [
-        (_, params) => [
-          {
-            type: 'effect',
-            effect: () => {
-              emojiPickerActor.send({
-                type: 'emojis found',
-                matches: params.emojis,
-              })
-            },
-          },
-        ],
-      ],
-    }),
-    defineBehavior({
-      on: 'delete.backward',
-      guard: ({context, event}) => {
-        if (event.unit !== 'character') {
-          return false
-        }
-
-        const focusBlock = selectors.getFocusTextBlock({context})
-        const textBefore = selectors.getBlockTextBefore({context})
-        const emojiKeyword = textBefore
-          .slice(0, textBefore.length - 1)
-          .match(incompleteEmojiRegEx)?.[1]
-
-        if (!focusBlock || emojiKeyword === undefined) {
-          return {emojis: [], event}
-        }
-
-        const emojis = config.matchEmojis({keyword: emojiKeyword})
-
-        return {emojis}
-      },
-      actions: [
-        (_, params) => [
-          {
-            type: 'effect',
-            effect: () => {
-              emojiPickerActor.send({
-                type: 'emojis found',
-                matches: params.emojis,
-              })
-            },
-          },
-        ],
-      ],
-    }),
-    defineBehavior({
       on: 'insert.text',
       guard: ({context, event}) => {
         const isColon = event.text === ':'
@@ -250,6 +84,12 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
         ],
         (_, params) => [
           {
+            type: 'effect',
+            effect: () => {
+              emojiPickerActor.send({type: 'select'})
+            },
+          },
+          {
             type: 'delete.text',
             anchor: {
               path: params.focusBlock.path,
@@ -263,6 +103,203 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
           {
             type: 'insert.text',
             text: params.emoji,
+          },
+        ],
+      ],
+    }),
+    defineBehavior({
+      on: 'insert.text',
+      guard: ({context, event}) => {
+        const isEmojiChar = emojiCharRegEx.test(event.text)
+
+        if (!isEmojiChar) {
+          return {emojis: []}
+        }
+
+        const focusBlock = selectors.getFocusTextBlock({context})
+        const textBefore = selectors.getBlockTextBefore({context})
+        const emojiKeyword = `${textBefore}${event.text}`.match(
+          incompleteEmojiRegEx,
+        )?.[1]
+
+        if (!focusBlock || emojiKeyword === undefined) {
+          return {emojis: []}
+        }
+
+        const emojis = config.matchEmojis({keyword: emojiKeyword})
+
+        return {emojis}
+      },
+      actions: [
+        (_, params) => [
+          {
+            type: 'effect',
+            effect: () => {
+              emojiPickerActor.send({
+                type: 'emojis found',
+                matches: params.emojis,
+              })
+            },
+          },
+        ],
+      ],
+    }),
+    defineBehavior({
+      on: 'key.down',
+      guard: ({context, event}) => {
+        const isArrowDown = isHotkey('ArrowDown', event.keyboardEvent)
+        const isArrowUp = isHotkey('ArrowUp', event.keyboardEvent)
+        const isEnter = isHotkey('Enter', event.keyboardEvent)
+        const isTab = isHotkey('Tab', event.keyboardEvent)
+
+        if (isEnter || isTab) {
+          const matches = emojiPickerActor.getSnapshot().context.matches
+          const selectedIndex =
+            emojiPickerActor.getSnapshot().context.selectedIndex
+
+          const emoji = matches[selectedIndex]
+            ? config.parseMatch({match: matches[selectedIndex]})
+            : undefined
+
+          if (!emoji) {
+            return false
+          }
+
+          const focusBlock = selectors.getFocusTextBlock({context})
+          const textBefore = selectors.getBlockTextBefore({context})
+          const emojiKeyword = textBefore.match(incompleteEmojiRegEx)?.[1]
+
+          if (!focusBlock || emojiKeyword === undefined) {
+            return false
+          }
+
+          const emojiStringLength = emojiKeyword.length + 1
+
+          if (emoji) {
+            return {
+              action: 'select' as const,
+              focusBlock,
+              emoji,
+              emojiStringLength,
+              textBeforeLength: textBefore.length,
+            }
+          }
+
+          return false
+        }
+
+        if (isArrowDown) {
+          return {action: 'navigate down' as const}
+        }
+
+        if (isArrowUp) {
+          return {action: 'navigate up' as const}
+        }
+
+        return {action: 'reset' as const}
+      },
+      actions: [
+        (_, params) => {
+          if (params.action === 'select') {
+            return [
+              {
+                type: 'effect',
+                effect: () => {
+                  emojiPickerActor.send({type: 'select'})
+                },
+              },
+              {
+                type: 'delete.text',
+                anchor: {
+                  path: params.focusBlock.path,
+                  offset: params.textBeforeLength - params.emojiStringLength,
+                },
+                focus: {
+                  path: params.focusBlock.path,
+                  offset: params.textBeforeLength,
+                },
+              },
+              {
+                type: 'insert.text',
+                text: params.emoji,
+              },
+            ]
+          }
+
+          if (params.action === 'navigate up') {
+            return [
+              // If we are navigating then we want to hijack the key event and
+              // turn it into a noop.
+              {
+                type: 'noop',
+              },
+              {
+                type: 'effect',
+                effect: () => {
+                  emojiPickerActor.send({type: 'navigate up'})
+                },
+              },
+            ]
+          }
+
+          if (params.action === 'navigate down') {
+            return [
+              // If we are navigating then we want to hijack the key event and
+              // turn it into a noop.
+              {
+                type: 'noop',
+              },
+              {
+                type: 'effect',
+                effect: () => {
+                  emojiPickerActor.send({type: 'navigate down'})
+                },
+              },
+            ]
+          }
+
+          return [
+            {
+              type: 'effect',
+              effect: () => {
+                emojiPickerActor.send({type: 'reset'})
+              },
+            },
+          ]
+        },
+      ],
+    }),
+    defineBehavior({
+      on: 'delete.backward',
+      guard: ({context, event}) => {
+        if (event.unit !== 'character') {
+          return false
+        }
+
+        const focusBlock = selectors.getFocusTextBlock({context})
+        const textBefore = selectors.getBlockTextBefore({context})
+        const emojiKeyword = textBefore
+          .slice(0, textBefore.length - 1)
+          .match(incompleteEmojiRegEx)?.[1]
+
+        if (!focusBlock || emojiKeyword === undefined) {
+          return {emojis: [], event}
+        }
+
+        const emojis = config.matchEmojis({keyword: emojiKeyword})
+
+        return {emojis}
+      },
+      actions: [
+        (_, params) => [
+          {
+            type: 'effect',
+            effect: () => {
+              emojiPickerActor.send({
+                type: 'emojis found',
+                matches: params.emojis,
+              })
+            },
           },
         ],
       ],
