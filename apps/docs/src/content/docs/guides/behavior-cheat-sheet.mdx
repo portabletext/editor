@@ -7,7 +7,45 @@ sidebar:
 
 import {CardGrid, LinkCard} from '@astrojs/starlight/components'
 
-Below are some common behavior examples. You can also find a list of core behaviors [on GitHub](https://github.com/portabletext/editor/tree/main/packages/editor/src/behaviors)
+Below are some common behavior examples. You can also find a list of core behaviors [on GitHub](https://github.com/portabletext/editor/tree/main/packages/editor/src/behaviors).
+
+To add these to your editor, first import `defineBehavior` and optionally the `coreBehaviors`.
+
+```tsx
+import {coreBehaviors, defineBehavior} from '@portabletext/editor'
+```
+
+Then, register the behavior with the `EditorProvider`. Spread the core behaviors if you want to include them.
+
+```tsx
+<EditorProvider
+  initialConfig={{
+    schemaDefinition,
+    behaviors: [
+      ...coreBehaviors,
+      // Your behaviors here
+      logInsertText,
+    ],
+  }}
+>
+  {/* ... */}
+</EditorProvider>
+```
+
+Read more about using behaviors and building your own with these guides:
+
+<CardGrid>
+  <LinkCard
+    title="Create a custom behavior"
+    description="Learn to create and register a custom behavior"
+    href="/guides/create-behavior/"
+  />
+  <LinkCard
+    title="Behaviors"
+    description="Learn more about the Behavior API"
+    href="/concepts/behavior/"
+  />
+</CardGrid>
 
 ## Log inserted text
 
@@ -69,16 +107,3 @@ const autoCloseParens = defineBehavior({
   ],
 })
 ```
-
-<CardGrid>
-  <LinkCard
-    title="Behaviors"
-    description="Learn more about the Behavior API"
-    href="/concepts/behavior/"
-  />
-  <LinkCard
-    title="Create a custom behavior"
-    description="Learn to create and register a custom behavior"
-    href="/guides/create-behavior/"
-  />
-</CardGrid>
