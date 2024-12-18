@@ -420,8 +420,8 @@ importers:
         specifier: ^3.67.1
         version: 3.67.1(debug@4.4.0)
       '@sanity/diff-match-patch':
-        specifier: ^3.1.1
-        version: 3.1.1
+        specifier: ^3.1.2
+        version: 3.1.2
       '@sanity/pkg-utils':
         specifier: ^6.12.0
         version: 6.12.0(@types/babel__core@7.20.5)(@types/node@22.9.0)(babel-plugin-react-compiler@19.0.0-beta-201e55d-20241215)(debug@4.4.0)(typescript@5.7.2)
@@ -513,8 +513,8 @@ importers:
   packages/patches:
     dependencies:
       '@sanity/diff-match-patch':
-        specifier: ^3.1.1
-        version: 3.1.1
+        specifier: ^3.1.2
+        version: 3.1.2
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -2637,9 +2637,9 @@ packages:
     resolution: {integrity: sha512-2TjYEvOftD0v7ukx3Csdh9QIu44P2z7NDJtlC3qITJRYV36J7R6Vfd3trVhFnN77/7CZrGjqngrtohv8VqO5nw==}
     engines: {node: '>=18.0.0'}
 
-  '@sanity/diff-match-patch@3.1.1':
-    resolution: {integrity: sha512-dSZqGeYjHKGIkqAzGqLcG92LZyJGX+nYbs/FWawhBbTBDWi21kvQ0hsL3DJThuFVWtZMWTQijN3z6Cnd44Pf2g==}
-    engines: {node: '>=14.18'}
+  '@sanity/diff-match-patch@3.1.2':
+    resolution: {integrity: sha512-jW2zqnnV3cLXy7exOKbqaWJPb15rFSQGseAhlPljzbg5CP0hrujk0TwYpsNMz2xwTELOk1JkBUINQYbPE4TmaA==}
+    engines: {node: '>=18.18'}
 
   '@sanity/eventsource@5.0.2':
     resolution: {integrity: sha512-/B9PMkUvAlUrpRq0y+NzXgRv5lYCLxZNsBJD2WXVnqZYOfByL9oQBV7KiTaARuObp5hcQYuPfOAVjgXe3hrixA==}
@@ -8924,7 +8924,7 @@ snapshots:
 
   '@sanity/color@3.0.6': {}
 
-  '@sanity/diff-match-patch@3.1.1': {}
+  '@sanity/diff-match-patch@3.1.2': {}
 
   '@sanity/eventsource@5.0.2':
     dependencies:
