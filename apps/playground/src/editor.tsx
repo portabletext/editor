@@ -17,6 +17,7 @@ import {
 import {
   coreBehaviors,
   createCodeEditorBehaviors,
+  createEmojiPickerBehaviors,
   createLinkBehaviors,
   createMarkdownBehaviors,
 } from '@portabletext/editor/behaviors'
@@ -35,6 +36,8 @@ import {Toolbar} from './components/toolbar'
 import {Tooltip} from './components/tooltip'
 import {EditorPatchesPreview} from './editor-patches-preview'
 import './editor.css'
+import {EmojiListBox} from './emoji-picker'
+import {matchEmojis, type EmojiMatch} from './emoji-search'
 import type {EditorActorRef} from './playground-machine'
 import {PortableTextToolbar} from './portable-text-toolbar'
 import {
@@ -65,6 +68,8 @@ export function Editor(props: {editorRef: EditorActorRef}) {
   const patchesReceived = useSelector(props.editorRef, (s) =>
     reverse(s.context.patchesReceived),
   )
+  const [emojiMatches, setEmojiMatches] = useState<Array<EmojiMatch>>([])
+  const [selectedEmojiIndex, setSelectedEmojiIndex] = useState(0)
 
   return (
     <div
@@ -81,6 +86,16 @@ export function Editor(props: {editorRef: EditorActorRef}) {
             initialValue: value,
             behaviors: [
               ...coreBehaviors,
+              ...createEmojiPickerBehaviors({
+                matchEmojis: ({keyword}) => matchEmojis(keyword),
+                onMatchesChanged: ({matches}) => {
+                  setEmojiMatches(matches)
+                },
+                onSelectedIndexChanged: ({selectedIndex}) => {
+                  setSelectedEmojiIndex(selectedIndex)
+                },
+                parseMatch: ({match}) => match.emoji,
+              }),
               ...createLinkBehaviors({
                 linkAnnotation: ({schema, url}) => {
                   const name = schema.annotations.find(
@@ -141,6 +156,10 @@ export function Editor(props: {editorRef: EditorActorRef}) {
           />
           <div className="flex flex-col gap-2">
             <PortableTextToolbar schemaDefinition={schemaDefinition} />
+            <EmojiListBox
+              matches={emojiMatches}
+              selectedIndex={selectedEmojiIndex}
+            />
             <div className="flex gap-2 items-center">
               <ErrorBoundary
                 fallbackProps={{area: 'PortableTextEditable'}}
