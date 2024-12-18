@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.17.0](https://github.com/portabletext/editor/compare/editor-v1.16.4...editor-v1.17.0) (2024-12-18)
+
+
+### Features
+
+* **behavior:** add experimental emoji picker behavior ([bbe5ebf](https://github.com/portabletext/editor/commit/bbe5ebf56ea387c9b27f6b30b47d4b5c2832820f))
+
 ## [1.16.4](https://github.com/portabletext/editor/compare/editor-v1.16.3...editor-v1.16.4) (2024-12-17)
 
 
