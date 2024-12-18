@@ -11,6 +11,10 @@ export {
   type CodeEditorBehaviorsConfig,
 } from './behavior.code-editor'
 export {coreBehavior, coreBehaviors} from './behavior.core'
+export {
+  type EmojiPickerBehaviorsConfig,
+  createEmojiPickerBehaviors,
+} from './behavior.emoji-picker'
 export {createLinkBehaviors, type LinkBehaviorsConfig} from './behavior.links'
 export {
   createMarkdownBehaviors,
