@@ -54,10 +54,7 @@ export default defineConfig({
       ],
       plugins: [
         starlightTypeDoc({
-          entryPoints: [
-            '../../packages/editor/src/types/editor.ts',
-            '../../packages/editor/src/index.ts',
-          ],
+          entryPoints: ['../../packages/editor/src/index.ts'],
           tsconfig: '../../packages/editor/tsconfig.json',
         }),
       ],
