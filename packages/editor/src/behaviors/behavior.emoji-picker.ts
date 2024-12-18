@@ -158,9 +158,9 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
         const isArrowUp = isHotkey('ArrowUp', event.keyboardEvent)
         const isEnter = isHotkey('Enter', event.keyboardEvent)
         const isTab = isHotkey('Tab', event.keyboardEvent)
+        const matches = emojiPickerActor.getSnapshot().context.matches
 
         if (isEnter || isTab) {
-          const matches = emojiPickerActor.getSnapshot().context.matches
           const selectedIndex =
             emojiPickerActor.getSnapshot().context.selectedIndex
 
@@ -195,11 +195,11 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
           return false
         }
 
-        if (isArrowDown) {
+        if (isArrowDown && matches.length > 0) {
           return {action: 'navigate down' as const}
         }
 
-        if (isArrowUp) {
+        if (isArrowUp && matches.length > 0) {
           return {action: 'navigate up' as const}
         }
 
