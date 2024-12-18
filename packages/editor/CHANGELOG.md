@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.17.1](https://github.com/portabletext/editor/compare/editor-v1.17.0...editor-v1.17.1) (2024-12-18)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @sanity/diff-match-patch to ^3.1.2 ([29af4b0](https://github.com/portabletext/editor/commit/29af4b00c2d2631d38252125a2312e8c5e4c83d1))
+* **deps:** update sanity monorepo to ^3.68.0 ([23fc94c](https://github.com/portabletext/editor/commit/23fc94cb098a42ac4def3c8dc5bbc46bde63e774))
+* **emoji picker:** only hijack ArrowUp/ArrowDown if we have matches ([f0356de](https://github.com/portabletext/editor/commit/f0356deba787ba6d5eef7948fe51065244f5d7e0))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/patches bumped from 1.1.0 to 1.1.1
+
 ## [1.17.0](https://github.com/portabletext/editor/compare/editor-v1.16.4...editor-v1.17.0) (2024-12-18)
 
 
