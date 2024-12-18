@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/editor",
-  "version": "1.17.0",
+  "version": "1.17.1",
   "description": "Portable Text Editor made in React",
   "keywords": [
     "sanity",
@@ -71,7 +71,7 @@
     "test:unit:watch": "vitest --project unit"
   },
   "dependencies": {
-    "@portabletext/patches": "1.1.0",
+    "@portabletext/patches": "1.1.1",
     "@xstate/react": "^5.0.0",
     "debug": "^4.3.4",
     "get-random-values-esm": "^1.0.2",
