@@ -332,7 +332,7 @@ function App() {
 
 You can now enter text and interact with the toolbar buttons to toggle the styles and decorators. These are only a small portion of the types of things you can do. Check out the [custom rendering guide](https://www.portabletext.org/guides/custom-rendering/) and the [toolbar customization guide](https://www.portabletext.org/guides/customize-toolbar/) for options.
 
-### View the Portable text data
+### View the Portable Text data
 
 You can preview the Portable Text from the editor by reading the state. Add the following after the `EditorProvider`.
 
