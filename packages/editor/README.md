@@ -80,13 +80,13 @@ const schemaDefinition = defineSchema({
   // The types below are left empty for this example.
   // See the rendering guide to learn more about each type.
 
-  // Annotations are more complex marks that can hold data (e.g., hyperlinks).
+  // Annotations are more complex marks that can hold data (for example, hyperlinks).
   annotations: [],
-  // Lists apply to entire text blocks as well (e.g., bullet, numbered).
+  // Lists apply to entire text blocks as well (for example, bullet, numbered).
   lists: [],
-  // Inline objects hold arbitrary data that can be inserted into the text (e.g., custom emoji).
+  // Inline objects hold arbitrary data that can be inserted into the text (for example, custom emoji).
   inlineObjects: [],
-  // Block objects hold arbitrary data that live side-by-side with text blocks (e.g., images).
+  // Block objects hold arbitrary data that live side-by-side with text blocks (for example, images, code blocks, and tables).
   blockObjects: [],
 })
 ```
@@ -97,7 +97,7 @@ Learn more about the different types that exist in schema in the [Portable Text 
 
 With a schema defined, you have enough to render the editor. It won't do much yet, but you can confirm your progress.
 
-Add `react` and `useState`, then scaffold out a basic application component. For example:
+Add `useState` from React, then scaffold out a basic application component. For example:
 
 ```tsx
 // app.tsx
@@ -112,7 +112,7 @@ import type {
   RenderDecoratorFunction,
   RenderStyleFunction,
 } from '@portabletext/editor'
-import React, {useState} from 'react'
+import {useState} from 'react'
 
 const schemaDefinition = defineSchema({
   /* your schema from the previous step */
