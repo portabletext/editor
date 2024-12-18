@@ -120,7 +120,7 @@ importers:
         version: 0.33.5
       starlight-package-managers:
         specifier: ^0.8.0
-        version: 0.8.0(@astrojs/starlight@0.29.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.6)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1)))(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.6)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))
+        version: 0.8.1(@astrojs/starlight@0.29.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.6)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1)))
       starlight-typedoc:
         specifier: ^0.17.0
         version: 0.17.0(@astrojs/starlight@0.29.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.6)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1)))(typedoc-plugin-markdown@4.3.2(typedoc@0.27.4(typescript@5.7.2)))(typedoc@0.27.4(typescript@5.7.2))
@@ -5603,12 +5603,11 @@ packages:
   stackback@0.0.2:
     resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
 
-  starlight-package-managers@0.8.0:
-    resolution: {integrity: sha512-FietpigUue9fViKumtt4978F41QPYkbywk5ysZR3242pzBb0+RLfF/IHA9xjNEEYw5/ZMrcBfXRVt+yoVA1SDA==}
-    engines: {node: '>=18.14.1'}
+  starlight-package-managers@0.8.1:
+    resolution: {integrity: sha512-a+zGIOdbN7B4T/VaszuvW8585Aau4LSU8HlVCmBCJJwxkrGAUC9lRya4y0md5tOAFyW/gfhUNJZM8qqyMNTe7Q==}
+    engines: {node: '>=18.17.1'}
     peerDependencies:
       '@astrojs/starlight': '>=0.22.0'
-      astro: '>=4.2.7'
 
   starlight-typedoc@0.17.0:
     resolution: {integrity: sha512-7ARUGo45ZWfAF5UI5HLLmLFGlMYdWW27Xfqcm4PBgcjZaGnEeEayqbusqc+5qAX46R5gzJ9ei8fxfMKZWMtgqg==}
@@ -12907,10 +12906,9 @@ snapshots:
 
   stackback@0.0.2: {}
 
-  starlight-package-managers@0.8.0(@astrojs/starlight@0.29.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.6)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1)))(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.6)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1)):
+  starlight-package-managers@0.8.1(@astrojs/starlight@0.29.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.6)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))):
     dependencies:
       '@astrojs/starlight': 0.29.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.6)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))
-      astro: 5.0.9(@types/node@22.9.0)(jiti@1.21.6)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1)
 
   starlight-typedoc@0.17.0(@astrojs/starlight@0.29.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.6)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1)))(typedoc-plugin-markdown@4.3.2(typedoc@0.27.4(typescript@5.7.2)))(typedoc@0.27.4(typescript@5.7.2)):
     dependencies:
