@@ -9,7 +9,7 @@
 
 > The official editor for editing [Portable Text](https://github.com/portabletext/portabletext) – the JSON based rich text specification for modern content editing platforms.
 
-## Build Your Own Portable Text Editor
+## Get started with the Portable Text Editor
 
 This library provides you with the building blocks to create a completely custom editor experience built on top of Portable Text. We recommend [checking out the official documentation](https://www.portabletext.org/). The following guide includes the basics to get your started.
 
