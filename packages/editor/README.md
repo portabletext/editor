@@ -16,7 +16,7 @@ This library provides you with the building blocks to create a completely custom
 In order to set up an editor you'll need to:
 
 - Create a schema that defines the rich text and block content elements.
-- Create a toolbar to toggle these elements on and off.
+- Create a toolbar to toggle and insert these elements.
 - Write render functions to style and display each element type in the editor.
 - Render the editor.
 
