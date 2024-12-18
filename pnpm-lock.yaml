@@ -122,8 +122,8 @@ importers:
         specifier: ^0.8.0
         version: 0.8.1(@astrojs/starlight@0.29.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.6)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1)))
       starlight-typedoc:
-        specifier: ^0.17.0
-        version: 0.17.0(@astrojs/starlight@0.29.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.6)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1)))(typedoc-plugin-markdown@4.3.2(typedoc@0.27.4(typescript@5.7.2)))(typedoc@0.27.4(typescript@5.7.2))
+        specifier: ^0.18.0
+        version: 0.18.0(@astrojs/starlight@0.29.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.6)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1)))(typedoc-plugin-markdown@4.3.2(typedoc@0.27.4(typescript@5.7.2)))(typedoc@0.27.4(typescript@5.7.2))
       tailwind-merge:
         specifier: ^2.5.5
         version: 2.5.5
@@ -5600,11 +5600,11 @@ packages:
     peerDependencies:
       '@astrojs/starlight': '>=0.22.0'
 
-  starlight-typedoc@0.17.0:
-    resolution: {integrity: sha512-7ARUGo45ZWfAF5UI5HLLmLFGlMYdWW27Xfqcm4PBgcjZaGnEeEayqbusqc+5qAX46R5gzJ9ei8fxfMKZWMtgqg==}
-    engines: {node: '>=18.14.1'}
+  starlight-typedoc@0.18.0:
+    resolution: {integrity: sha512-DdyoAkK20zmfiqKaDQgSF8wDFCKaxo/EzRvC3+4OJJgDtzjMZdBy1mY5JMJLw46UCvBs/tvGVjI1rIeovwd6lQ==}
+    engines: {node: '>=18.17.1'}
     peerDependencies:
-      '@astrojs/starlight': '>=0.25.0'
+      '@astrojs/starlight': '>=0.30.0'
       typedoc: '>=0.26.5'
       typedoc-plugin-markdown: '>=4.1.1'
 
@@ -12895,7 +12895,7 @@ snapshots:
     dependencies:
       '@astrojs/starlight': 0.29.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.6)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))
 
-  starlight-typedoc@0.17.0(@astrojs/starlight@0.29.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.6)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1)))(typedoc-plugin-markdown@4.3.2(typedoc@0.27.4(typescript@5.7.2)))(typedoc@0.27.4(typescript@5.7.2)):
+  starlight-typedoc@0.18.0(@astrojs/starlight@0.29.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.6)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1)))(typedoc-plugin-markdown@4.3.2(typedoc@0.27.4(typescript@5.7.2)))(typedoc@0.27.4(typescript@5.7.2)):
     dependencies:
       '@astrojs/starlight': 0.29.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.6)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))
       github-slugger: 2.0.0
