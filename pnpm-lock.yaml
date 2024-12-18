@@ -65,11 +65,11 @@ importers:
         specifier: ^4.0.0
         version: 4.1.1(@types/node@22.9.0)(@types/react-dom@19.0.2(@types/react@19.0.1))(@types/react@19.0.1)(jiti@1.21.7)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(terser@5.36.0)(yaml@2.6.1)
       '@astrojs/starlight':
-        specifier: ^0.29.2
-        version: 0.29.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))
+        specifier: ^0.30.0
+        version: 0.30.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))
       '@astrojs/starlight-tailwind':
         specifier: ^2.0.3
-        version: 2.0.3(@astrojs/starlight@0.29.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1)))(@astrojs/tailwind@5.1.3(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))(tailwindcss@3.4.17))(tailwindcss@3.4.17)
+        version: 2.0.3(@astrojs/starlight@0.30.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1)))(@astrojs/tailwind@5.1.3(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))(tailwindcss@3.4.17))(tailwindcss@3.4.17)
       '@astrojs/tailwind':
         specifier: ^5.1.3
         version: 5.1.3(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))(tailwindcss@3.4.17)
@@ -120,10 +120,10 @@ importers:
         version: 0.33.5
       starlight-package-managers:
         specifier: ^0.8.0
-        version: 0.8.1(@astrojs/starlight@0.29.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1)))
+        version: 0.8.1(@astrojs/starlight@0.30.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1)))
       starlight-typedoc:
         specifier: ^0.18.0
-        version: 0.18.0(@astrojs/starlight@0.29.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1)))(typedoc-plugin-markdown@4.3.2(typedoc@0.27.5(typescript@5.7.2)))(typedoc@0.27.5(typescript@5.7.2))
+        version: 0.18.0(@astrojs/starlight@0.30.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1)))(typedoc-plugin-markdown@4.3.2(typedoc@0.27.5(typescript@5.7.2)))(typedoc@0.27.5(typescript@5.7.2))
       tailwind-merge:
         specifier: ^2.5.5
         version: 2.5.5
@@ -607,10 +607,10 @@ packages:
       '@astrojs/tailwind': ^5.0.0
       tailwindcss: ^3.3.3
 
-  '@astrojs/starlight@0.29.2':
-    resolution: {integrity: sha512-xv9AhWkP3fxCB6EF6MlT4yEbxzye3aMSbuVbFEGbQh8G/w1MPhdNCnQakIHpmIwwyxwG9cW3mQdAZum4oOO39w==}
+  '@astrojs/starlight@0.30.2':
+    resolution: {integrity: sha512-KUNnIhiBgX3hV2mUIqwv2R5b7tBFRVr68Wj0wEyN8E2x0MtAos7qRPytWha/WchAtpO1eIt6sqAT0KfTvBZt5g==}
     peerDependencies:
-      astro: ^4.14.0
+      astro: ^5.0.0
 
   '@astrojs/tailwind@5.1.3':
     resolution: {integrity: sha512-XF7WhXRhqEHGvADqc0kDtF7Yv/g4wAWTaj91jBBTBaYnc4+MQLH94duFfFa4NlTkRG40VQd012eF3MhO3Kk+bg==}
@@ -2785,6 +2785,9 @@ packages:
 
   '@types/istanbul-reports@3.0.4':
     resolution: {integrity: sha512-pk2B1NWalF9toCRu6gjBzR69syFjP4Od8WRAX+0mmf9lAjCRicLOWc+ZrxZHx/0XRjotgkF9t6iaMJ+aXcOdZQ==}
+
+  '@types/js-yaml@4.0.9':
+    resolution: {integrity: sha512-k4MGaQl5TGo/iipqb2UDG2UwjXziSWkh0uysQelTlJpX1qGlpUZYm8PnO4DxG1qBomtJUdYJ6qR6xdIah10JLg==}
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
@@ -6455,18 +6458,19 @@ snapshots:
       stream-replace-string: 2.0.0
       zod: 3.24.1
 
-  '@astrojs/starlight-tailwind@2.0.3(@astrojs/starlight@0.29.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1)))(@astrojs/tailwind@5.1.3(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))(tailwindcss@3.4.17))(tailwindcss@3.4.17)':
+  '@astrojs/starlight-tailwind@2.0.3(@astrojs/starlight@0.30.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1)))(@astrojs/tailwind@5.1.3(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))(tailwindcss@3.4.17))(tailwindcss@3.4.17)':
     dependencies:
-      '@astrojs/starlight': 0.29.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))
+      '@astrojs/starlight': 0.30.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))
       '@astrojs/tailwind': 5.1.3(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))(tailwindcss@3.4.17)
       tailwindcss: 3.4.17
 
-  '@astrojs/starlight@0.29.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))':
+  '@astrojs/starlight@0.30.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))':
     dependencies:
       '@astrojs/mdx': 4.0.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))
       '@astrojs/sitemap': 3.2.1
       '@pagefind/default-ui': 1.2.0
       '@types/hast': 3.0.4
+      '@types/js-yaml': 4.0.9
       '@types/mdast': 4.0.4
       astro: 5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1)
       astro-expressive-code: 0.38.3(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))
@@ -9153,6 +9157,8 @@ snapshots:
   '@types/istanbul-reports@3.0.4':
     dependencies:
       '@types/istanbul-lib-report': 3.0.3
+
+  '@types/js-yaml@4.0.9': {}
 
   '@types/json-schema@7.0.15': {}
 
@@ -12891,13 +12897,13 @@ snapshots:
 
   stackback@0.0.2: {}
 
-  starlight-package-managers@0.8.1(@astrojs/starlight@0.29.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))):
+  starlight-package-managers@0.8.1(@astrojs/starlight@0.30.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))):
     dependencies:
-      '@astrojs/starlight': 0.29.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))
+      '@astrojs/starlight': 0.30.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))
 
-  starlight-typedoc@0.18.0(@astrojs/starlight@0.29.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1)))(typedoc-plugin-markdown@4.3.2(typedoc@0.27.5(typescript@5.7.2)))(typedoc@0.27.5(typescript@5.7.2)):
+  starlight-typedoc@0.18.0(@astrojs/starlight@0.30.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1)))(typedoc-plugin-markdown@4.3.2(typedoc@0.27.5(typescript@5.7.2)))(typedoc@0.27.5(typescript@5.7.2)):
     dependencies:
-      '@astrojs/starlight': 0.29.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))
+      '@astrojs/starlight': 0.30.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))
       github-slugger: 2.0.0
       typedoc: 0.27.5(typescript@5.7.2)
       typedoc-plugin-markdown: 4.3.2(typedoc@0.27.5(typescript@5.7.2))
