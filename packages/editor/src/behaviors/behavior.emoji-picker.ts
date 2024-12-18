@@ -3,7 +3,7 @@ import * as selectors from '../selectors'
 import {isHotkey} from '../utils/is-hotkey'
 import {defineBehavior} from './behavior.types'
 
-const emojiCharRegEx = /[a-zA-Z-_0-9]/
+const emojiCharRegEx = /^[a-zA-Z-_0-9]{1}$/
 const incompleteEmojiRegEx = /:([a-zA-Z-_0-9]+)$/
 const emojiRegEx = /:([a-zA-Z-_0-9]+):$/
 
@@ -11,10 +11,6 @@ const emojiRegEx = /:([a-zA-Z-_0-9]+):$/
  * @alpha
  */
 export type EmojiPickerBehaviorsConfig<TEmojiMatch> = {
-  /**
-   * Match an emoji by keyword.
-   */
-  matchEmoji: ({keyword}: {keyword: string}) => TEmojiMatch | undefined
   /**
    * Match emojis by keyword.
    */
@@ -50,6 +46,13 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
           return false
         }
 
+        const matches = emojiPickerActor.getSnapshot().context.matches
+        const selectedIndex =
+          emojiPickerActor.getSnapshot().context.selectedIndex
+        const emoji = matches[selectedIndex]
+          ? config.parseMatch({match: matches[selectedIndex]})
+          : undefined
+
         const focusBlock = selectors.getFocusTextBlock({context})
         const textBefore = selectors.getBlockTextBefore({context})
         const emojiKeyword = `${textBefore}:`.match(emojiRegEx)?.[1]
@@ -58,10 +61,6 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
           return false
         }
 
-        const emojiMatch = config.matchEmoji({keyword: emojiKeyword})
-        const emoji = emojiMatch
-          ? config.parseMatch({match: emojiMatch})
-          : undefined
         const emojiStringLength = emojiKeyword.length + 2
 
         if (emoji) {
@@ -147,6 +146,14 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
     defineBehavior({
       on: 'key.down',
       guard: ({context, event}) => {
+        const isShift = isHotkey('Shift', event.keyboardEvent)
+        const isColon = event.keyboardEvent.key === ':'
+        const isEmojiChar = emojiCharRegEx.test(event.keyboardEvent.key)
+
+        if (isShift || isColon || isEmojiChar) {
+          return false
+        }
+
         const isArrowDown = isHotkey('ArrowDown', event.keyboardEvent)
         const isArrowUp = isHotkey('ArrowUp', event.keyboardEvent)
         const isEnter = isHotkey('Enter', event.keyboardEvent)

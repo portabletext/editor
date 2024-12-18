@@ -53,32 +53,6 @@ export function matchEmojis(keyword: string): Array<EmojiMatch> {
   return foundEmojis
 }
 
-export function matchEmoji(keyword: string): EmojiMatch | undefined {
-  let foundEmoji: {emoji: string; index: number} | undefined
-
-  for (const emoji in emojis) {
-    const keywordIndex = emojis[emoji]?.indexOf(keyword)
-
-    if (keywordIndex !== -1) {
-      if (foundEmoji) {
-        if (keywordIndex < foundEmoji.index) {
-          foundEmoji = {emoji, index: keywordIndex}
-        }
-      } else {
-        foundEmoji = {emoji, index: keywordIndex}
-      }
-    }
-  }
-
-  return foundEmoji
-    ? {
-        type: 'exact',
-        emoji: foundEmoji.emoji,
-        keyword,
-      }
-    : undefined
-}
-
 const emojis: Record<string, Array<string>> = {
   '😀': [
     'grinning_face',
