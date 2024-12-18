@@ -59,7 +59,8 @@ Before you can render the editor, you need a schema. The editor schema configure
 
 We'll start with a schema that includes some common rich text elements.
 
-_Note: This guide includes a limited set of schema types, or rich text elements, to get you started. See the [rendering guide](https://www.portabletext.org/guides/custom-rendering/) for additional examples._
+> [!NOTE]
+> This guide includes a limited set of schema types, or rich text elements, to get you started. See the [rendering guide](https://www.portabletext.org/guides/custom-rendering/) for additional examples.
 
 ```tsx
 // App.tsx
@@ -202,7 +203,8 @@ const renderDecorator: RenderDecoratorFunction = (props) => {
 }
 ```
 
-_Note: By default, text is rendered as an inline `span` element in the editor. While most render functions return a fragment (`<>`) as the fallback, make sure block level elements return blocks, like `<div>` elements._
+> [!NOTE]
+> By default, text is rendered as an inline `span` element in the editor. While most render functions return a fragment (`<>`) as the fallback, make sure block level elements return blocks, like `<div>` elements.
 
 Update the `PortableTextEditable` with each corresponding function to attach them to the editor.
 
@@ -286,7 +288,8 @@ function Toolbar() {
 
 The `useEditor` hook gives you access to the active editor. `send` lets you send events to the editor. You can view the full list of events in the [Behavior API reference](https://www.portabletext.org/reference/behavior-api/).
 
-_Note: The example above sends a `focus` event after each action. Normally when interacting with a button, the browser removes focus from the text editing area. This event returns focus to the field to prevent interrupting the user._
+> [!NOTE]
+> The example above sends a `focus` event after each action. Normally when interacting with a button, the browser removes focus from the text editing area. This event returns focus to the field to prevent interrupting the user.
 
 ### Bring it all together
 
