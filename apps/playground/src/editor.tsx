@@ -37,7 +37,7 @@ import {Tooltip} from './components/tooltip'
 import {EditorPatchesPreview} from './editor-patches-preview'
 import './editor.css'
 import {EmojiListBox} from './emoji-picker'
-import {matchEmoji, matchEmojis, type EmojiMatch} from './emoji-search'
+import {matchEmojis, type EmojiMatch} from './emoji-search'
 import type {EditorActorRef} from './playground-machine'
 import {PortableTextToolbar} from './portable-text-toolbar'
 import {
@@ -87,7 +87,6 @@ export function Editor(props: {editorRef: EditorActorRef}) {
             behaviors: [
               ...coreBehaviors,
               ...createEmojiPickerBehaviors({
-                matchEmoji: ({keyword}) => matchEmoji(keyword),
                 matchEmojis: ({keyword}) => matchEmojis(keyword),
                 onMatchesChanged: ({matches}) => {
                   setEmojiMatches(matches)
