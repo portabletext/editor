@@ -40,6 +40,43 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
     defineBehavior({
       on: 'insert.text',
       guard: ({context, event}) => {
+        const isEmojiChar = emojiCharRegEx.test(event.text)
+
+        if (!isEmojiChar) {
+          return {emojis: []}
+        }
+
+        const focusBlock = selectors.getFocusTextBlock({context})
+        const textBefore = selectors.getBlockTextBefore({context})
+        const emojiKeyword = `${textBefore}${event.text}`.match(
+          incompleteEmojiRegEx,
+        )?.[1]
+
+        if (!focusBlock || emojiKeyword === undefined) {
+          return {emojis: []}
+        }
+
+        const emojis = config.matchEmojis({keyword: emojiKeyword})
+
+        return {emojis}
+      },
+      actions: [
+        (_, params) => [
+          {
+            type: 'effect',
+            effect: () => {
+              emojiPickerActor.send({
+                type: 'emojis found',
+                matches: params.emojis,
+              })
+            },
+          },
+        ],
+      ],
+    }),
+    defineBehavior({
+      on: 'insert.text',
+      guard: ({context, event}) => {
         const isColon = event.text === ':'
 
         if (!isColon) {
@@ -102,43 +139,6 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
           {
             type: 'insert.text',
             text: params.emoji,
-          },
-        ],
-      ],
-    }),
-    defineBehavior({
-      on: 'insert.text',
-      guard: ({context, event}) => {
-        const isEmojiChar = emojiCharRegEx.test(event.text)
-
-        if (!isEmojiChar) {
-          return {emojis: []}
-        }
-
-        const focusBlock = selectors.getFocusTextBlock({context})
-        const textBefore = selectors.getBlockTextBefore({context})
-        const emojiKeyword = `${textBefore}${event.text}`.match(
-          incompleteEmojiRegEx,
-        )?.[1]
-
-        if (!focusBlock || emojiKeyword === undefined) {
-          return {emojis: []}
-        }
-
-        const emojis = config.matchEmojis({keyword: emojiKeyword})
-
-        return {emojis}
-      },
-      actions: [
-        (_, params) => [
-          {
-            type: 'effect',
-            effect: () => {
-              emojiPickerActor.send({
-                type: 'emojis found',
-                matches: params.emojis,
-              })
-            },
           },
         ],
       ],
@@ -283,6 +283,12 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
           return false
         }
 
+        const matches = emojiPickerActor.getSnapshot().context.matches
+
+        if (matches.length === 0) {
+          return false
+        }
+
         const focusBlock = selectors.getFocusTextBlock({context})
         const textBefore = selectors.getBlockTextBefore({context})
         const emojiKeyword = textBefore
@@ -290,7 +296,7 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
           .match(incompleteEmojiRegEx)?.[1]
 
         if (!focusBlock || emojiKeyword === undefined) {
-          return {emojis: [], event}
+          return {emojis: []}
         }
 
         const emojis = config.matchEmojis({keyword: emojiKeyword})
