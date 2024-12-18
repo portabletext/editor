@@ -351,10 +351,10 @@ This displays the raw Portable Text. To customize how Portable Text renders in y
 
 The Behavior API is a new way of interfacing with the Portable Text Editor. It allows you to think of and treat the editor as a state machine by:
 
-1. Declaratively hooking into editor **events** and defining new behaviors.
-2. Imperatively trigger **events**.
-3. Deriving editor **state** using **pure functions**.
-4. Subscribe to **emitted** editor **events**.
+- Declaratively hooking into editor **events** and defining new behaviors.
+- Imperatively triggering **events**.
+- Deriving editor **state** using **pure functions**.
+- Subscribing to **emitted** editor **events**.
 
 Learn more about the [Behaviors](https://www.portabletext.org/concepts/behavior/) and how to [create your own behaviors](https://www.portabletext.org/guides/create-behavior/) in the documentation.
 
