@@ -118,6 +118,9 @@ importers:
       sharp:
         specifier: ^0.33.5
         version: 0.33.5
+      starlight-links-validator:
+        specifier: ^0.14.0
+        version: 0.14.0(@astrojs/starlight@0.30.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1)))
       starlight-package-managers:
         specifier: ^0.8.0
         version: 0.8.1(@astrojs/starlight@0.30.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1)))
@@ -2819,6 +2822,9 @@ packages:
   '@types/parse-path@7.0.3':
     resolution: {integrity: sha512-LriObC2+KYZD3FzCrgWGv/qufdUy4eXrxcLgQMfYXgPbLIecKIsVBaQgUPmxSSLcjmYbDTQbMgr6qr6l/eb7Bg==}
 
+  '@types/picomatch@3.0.1':
+    resolution: {integrity: sha512-1MRgzpzY0hOp9pW/kLRxeQhUWwil6gnrUYd3oEpeYBqp/FexhaCPv3F8LsYr47gtUU45fO2cm1dbwkSrHEo8Uw==}
+
   '@types/progress-stream@2.0.5':
     resolution: {integrity: sha512-5YNriuEZkHlFHHepLIaxzq3atGeav1qCTGzB74HKWpo66qjfostF+rHc785YYYHeBytve8ZG3ejg42jEIfXNiQ==}
 
@@ -4181,6 +4187,10 @@ packages:
 
   intl-messageformat@10.7.10:
     resolution: {integrity: sha512-hp7iejCBiJdW3zmOe18FdlJu8U/JsADSDiBPQhfdSeI8B9POtvPRvPh3nMlvhYayGMKLv6maldhR7y3Pf1vkpw==}
+
+  is-absolute-url@4.0.1:
+    resolution: {integrity: sha512-/51/TKE88Lmm7Gc4/8btclNXWS+g50wXhYJq8HWIBAGUBnoAdRu1aXeh364t/O7wXDAcTJDP8PNuNKWUDWie+A==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
   is-alphabetical@2.0.1:
     resolution: {integrity: sha512-FWyyY60MeTNyeSRpkM2Iry0G9hpr7/9kD40mD/cGQEuilcZYS4okz8SN2Q6rLCJ8gbCt6fN+rC+6tMGS99LaxQ==}
@@ -5596,6 +5606,12 @@ packages:
 
   stackback@0.0.2:
     resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
+
+  starlight-links-validator@0.14.0:
+    resolution: {integrity: sha512-mxaNtlSl+BR32PoBkFPymhNNttrozGLQan2Nkki7mzQw2Z+li5o3c1ltds+EnbIh/RuVm3xHUxZz8THQW6Xgbw==}
+    engines: {node: '>=18.17.1'}
+    peerDependencies:
+      '@astrojs/starlight': '>=0.15.0'
 
   starlight-package-managers@0.8.1:
     resolution: {integrity: sha512-a+zGIOdbN7B4T/VaszuvW8585Aau4LSU8HlVCmBCJJwxkrGAUC9lRya4y0md5tOAFyW/gfhUNJZM8qqyMNTe7Q==}
@@ -9185,6 +9201,8 @@ snapshots:
 
   '@types/parse-path@7.0.3': {}
 
+  '@types/picomatch@3.0.1': {}
+
   '@types/progress-stream@2.0.5':
     dependencies:
       '@types/node': 22.9.0
@@ -9408,6 +9426,28 @@ snapshots:
       vite: 6.0.3(@types/node@22.9.0)(jiti@1.21.7)(terser@5.36.0)(yaml@2.6.1)
     transitivePeerDependencies:
       - supports-color
+
+  '@vitest/browser@2.1.8(@types/node@22.9.0)(playwright@1.49.1)(typescript@5.7.2)(vite@5.4.11(@types/node@22.9.0)(terser@5.36.0))(vitest@2.1.8)':
+    dependencies:
+      '@testing-library/dom': 10.4.0
+      '@testing-library/user-event': 14.5.2(@testing-library/dom@10.4.0)
+      '@vitest/mocker': 2.1.8(msw@2.6.4(@types/node@22.9.0)(typescript@5.7.2))(vite@5.4.11(@types/node@22.9.0)(terser@5.36.0))
+      '@vitest/utils': 2.1.8
+      magic-string: 0.30.17
+      msw: 2.6.4(@types/node@22.9.0)(typescript@5.7.2)
+      sirv: 3.0.0
+      tinyrainbow: 1.2.0
+      vitest: 2.1.8(@types/node@22.9.0)(@vitest/browser@2.1.8)(jsdom@25.0.1)(msw@2.6.4(@types/node@22.9.0)(typescript@5.7.2))(terser@5.36.0)
+      ws: 8.18.0
+    optionalDependencies:
+      playwright: 1.49.1
+    transitivePeerDependencies:
+      - '@types/node'
+      - bufferutil
+      - typescript
+      - utf-8-validate
+      - vite
+    optional: true
 
   '@vitest/browser@2.1.8(@types/node@22.9.0)(playwright@1.49.1)(typescript@5.7.2)(vite@6.0.3(@types/node@22.9.0)(jiti@1.21.7)(terser@5.36.0)(yaml@2.6.1))(vitest@2.1.8)':
     dependencies:
@@ -10950,6 +10990,8 @@ snapshots:
       '@formatjs/fast-memoize': 2.2.5
       '@formatjs/icu-messageformat-parser': 2.9.7
       tslib: 2.8.1
+
+  is-absolute-url@4.0.1: {}
 
   is-alphabetical@2.0.1: {}
 
@@ -12894,6 +12936,19 @@ snapshots:
 
   stackback@0.0.2: {}
 
+  starlight-links-validator@0.14.0(@astrojs/starlight@0.30.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))):
+    dependencies:
+      '@astrojs/starlight': 0.30.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))
+      '@types/picomatch': 3.0.1
+      github-slugger: 2.0.0
+      hast-util-from-html: 2.0.3
+      hast-util-has-property: 3.0.0
+      is-absolute-url: 4.0.1
+      kleur: 4.1.5
+      mdast-util-to-string: 4.0.0
+      picomatch: 4.0.2
+      unist-util-visit: 5.0.0
+
   starlight-package-managers@0.8.1(@astrojs/starlight@0.30.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))):
     dependencies:
       '@astrojs/starlight': 0.30.2(astro@5.0.9(@types/node@22.9.0)(jiti@1.21.7)(rollup@4.28.1)(terser@5.36.0)(typescript@5.7.2)(yaml@2.6.1))
@@ -13436,7 +13491,7 @@ snapshots:
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 22.9.0
-      '@vitest/browser': 2.1.8(@types/node@22.9.0)(playwright@1.49.1)(typescript@5.7.2)(vite@6.0.3(@types/node@22.9.0)(jiti@1.21.7)(terser@5.36.0)(yaml@2.6.1))(vitest@2.1.8)
+      '@vitest/browser': 2.1.8(@types/node@22.9.0)(playwright@1.49.1)(typescript@5.7.2)(vite@5.4.11(@types/node@22.9.0)(terser@5.36.0))(vitest@2.1.8)
       jsdom: 25.0.1
     transitivePeerDependencies:
       - less
