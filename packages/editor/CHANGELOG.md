@@ -1,5 +1,34 @@
 # Changelog
 
+## [1.18.2](https://github.com/portabletext/editor/compare/editor-v1.18.1...editor-v1.18.2) (2024-12-19)
+
+
+### Bug Fixes
+
+* **link behavior:** improve URL matching ([2aacbc8](https://github.com/portabletext/editor/commit/2aacbc8a132ffcad6317406efe0a7fdc9c9e50b7))
+
+## [1.18.1](https://github.com/portabletext/editor/compare/editor-v1.18.0...editor-v1.18.1) (2024-12-19)
+
+
+### Bug Fixes
+
+* **emoji picker:** direct-hit : selection ([5a9d57c](https://github.com/portabletext/editor/commit/5a9d57c41aba24ca2a4330e0a21ca3618b34d194))
+
+## [1.18.0](https://github.com/portabletext/editor/compare/editor-v1.17.1...editor-v1.18.0) (2024-12-19)
+
+
+### Features
+
+* add `editor.getSnapshot()` ([f74cbea](https://github.com/portabletext/editor/commit/f74cbeae8ce9664d75fc0228eb8e701d5bed825a))
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^3.68.1 ([97e42e1](https://github.com/portabletext/editor/commit/97e42e1fe8670a36d04b02e5b5a7d461d791bb5d))
+* offer `value` alternative to `snapshot` ([1e91d07](https://github.com/portabletext/editor/commit/1e91d079c971fe0d395af005bc192ea226797e36))
+* **types:** deprecate `PortableTextEditor` and `usePortableTextEditor(Selection)()` ([01a4009](https://github.com/portabletext/editor/commit/01a400954c063bd13a5017fe039733babadd0e3b))
+* **types:** mark Behavior API `beta` and all other new APIs `public` ([5fc4a1e](https://github.com/portabletext/editor/commit/5fc4a1e02b3088360caa622a1db5cfc6b6dae05d))
+
 ## [1.17.1](https://github.com/portabletext/editor/compare/editor-v1.17.0...editor-v1.17.1) (2024-12-18)
 
 

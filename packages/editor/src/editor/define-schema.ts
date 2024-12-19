@@ -10,7 +10,7 @@ import type {PortableTextMemberSchemaTypes} from '../types/editor'
 import {createEditorSchema} from './create-editor-schema'
 
 /**
- * @alpha
+ * @public
  */
 export type BaseDefinition = {
   name: string
@@ -19,7 +19,7 @@ export type BaseDefinition = {
 }
 
 /**
- * @alpha
+ * @public
  */
 export type SchemaDefinition<
   TBaseDefinition extends BaseDefinition = BaseDefinition,
@@ -33,7 +33,7 @@ export type SchemaDefinition<
 }
 
 /**
- * @alpha
+ * @public
  */
 export function defineSchema<const TSchemaDefinition extends SchemaDefinition>(
   definition: TSchemaDefinition,
@@ -42,7 +42,7 @@ export function defineSchema<const TSchemaDefinition extends SchemaDefinition>(
 }
 
 /**
- * @alpha
+ * @public
  */
 export type EditorSchema = PortableTextMemberSchemaTypes
 

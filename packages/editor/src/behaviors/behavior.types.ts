@@ -6,7 +6,7 @@ import type {PickFromUnion} from '../type-utils'
 import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
 
 /**
- * @alpha
+ * @beta
  */
 export type SyntheticBehaviorEvent =
   | {
@@ -91,7 +91,7 @@ export type SyntheticBehaviorEvent =
     }
 
 /**
- * @alpha
+ * @beta
  */
 export type NativeBehaviorEvent =
   | {
@@ -118,7 +118,7 @@ export type NativeBehaviorEvent =
     }
 
 /**
- * @alpha
+ * @beta
  */
 export type BehaviorActionIntend =
   | SyntheticBehaviorEvent
@@ -210,19 +210,19 @@ export type BehaviorActionIntend =
     }
 
 /**
- * @alpha
+ * @beta
  */
 export type BehaviorAction = BehaviorActionIntend & {
   editor: PortableTextSlateEditor
 }
 
 /**
- * @alpha
+ * @beta
  */
 export type BehaviorEvent = SyntheticBehaviorEvent | NativeBehaviorEvent
 
 /**
- * @alpha
+ * @beta
  */
 export type Behavior<
   TBehaviorEventType extends BehaviorEvent['type'] = BehaviorEvent['type'],
@@ -248,7 +248,7 @@ export type Behavior<
 }
 
 /**
- * @alpha
+ * @beta
  */
 export type BehaviorGuard<
   TBehaviorEvent extends BehaviorEvent,
@@ -262,7 +262,7 @@ export type BehaviorGuard<
 }) => TGuardResponse | false
 
 /**
- * @alpha
+ * @beta
  */
 export type BehaviorActionIntendSet<
   TBehaviorEventType extends BehaviorEvent['type'] = BehaviorEvent['type'],
@@ -279,7 +279,7 @@ export type BehaviorActionIntendSet<
 ) => Array<BehaviorActionIntend>
 
 /**
- * @alpha
+ * @beta
  */
 export function defineBehavior<
   TAnyBehaviorEventType extends BehaviorEvent['type'],
@@ -289,7 +289,7 @@ export function defineBehavior<
 }
 
 /**
- * @alpha
+ * @beta
  */
 export type BlockOffset = {
   path: [KeyedSegment]

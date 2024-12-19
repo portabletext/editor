@@ -8,7 +8,7 @@ import {
 import type {EditorSelector} from '../editor/editor-selector'
 
 /**
- * @alpha
+ * @public
  */
 export const getSelectedSpans: EditorSelector<
   Array<{

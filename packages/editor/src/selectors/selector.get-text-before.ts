@@ -5,7 +5,7 @@ import {reverseSelection} from '../editor/utils/utils.reverse-selection'
 import {getSelectionText} from './selector.get-selection-text'
 
 /**
- * @alpha
+ * @public
  */
 export const getBlockTextBefore: EditorSelector<string> = ({context}) => {
   if (!context.selection) {

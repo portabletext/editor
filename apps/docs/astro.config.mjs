@@ -2,6 +2,7 @@ import react from '@astrojs/react'
 import starlight from '@astrojs/starlight'
 import tailwind from '@astrojs/tailwind'
 import {defineConfig} from 'astro/config'
+import starlightLinksValidator from 'starlight-links-validator'
 import starlightTypeDoc, {typeDocSidebarGroup} from 'starlight-typedoc'
 
 // https://astro.build/config
@@ -54,12 +55,10 @@ export default defineConfig({
       ],
       plugins: [
         starlightTypeDoc({
-          entryPoints: [
-            '../../packages/editor/src/types/editor.ts',
-            '../../packages/editor/src/index.ts',
-          ],
+          entryPoints: ['../../packages/editor/src/index.ts'],
           tsconfig: '../../packages/editor/tsconfig.json',
         }),
+        ...(process.env.CHECK_LINKS ? [starlightLinksValidator()] : []),
       ],
     }),
     tailwind({

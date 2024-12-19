@@ -13,7 +13,7 @@ import {createGuards} from '../behavior-actions/behavior.guards'
 import type {EditorSelector} from '../editor/editor-selector'
 
 /**
- * @alpha
+ * @public
  */
 export const getFocusBlock: EditorSelector<
   {node: PortableTextBlock; path: [KeyedSegment]} | undefined
@@ -32,7 +32,7 @@ export const getFocusBlock: EditorSelector<
 }
 
 /**
- * @alpha
+ * @public
  */
 export const getFocusListBlock: EditorSelector<
   {node: PortableTextListBlock; path: [KeyedSegment]} | undefined
@@ -46,7 +46,7 @@ export const getFocusListBlock: EditorSelector<
 }
 
 /**
- * @alpha
+ * @public
  */
 export const getFocusTextBlock: EditorSelector<
   {node: PortableTextTextBlock; path: [KeyedSegment]} | undefined
@@ -59,7 +59,7 @@ export const getFocusTextBlock: EditorSelector<
 }
 
 /**
- * @alpha
+ * @public
  */
 export const getFocusBlockObject: EditorSelector<
   {node: PortableTextObject; path: [KeyedSegment]} | undefined
@@ -72,7 +72,7 @@ export const getFocusBlockObject: EditorSelector<
 }
 
 /**
- * @alpha
+ * @public
  */
 export const getFocusChild: EditorSelector<
   | {
@@ -103,7 +103,7 @@ export const getFocusChild: EditorSelector<
 }
 
 /**
- * @alpha
+ * @public
  */
 export const getFocusSpan: EditorSelector<
   | {node: PortableTextSpan; path: [KeyedSegment, 'children', KeyedSegment]}
@@ -117,7 +117,7 @@ export const getFocusSpan: EditorSelector<
 }
 
 /**
- * @alpha
+ * @public
  */
 export const getFirstBlock: EditorSelector<
   {node: PortableTextBlock; path: [KeyedSegment]} | undefined
@@ -128,7 +128,7 @@ export const getFirstBlock: EditorSelector<
 }
 
 /**
- * @alpha
+ * @public
  */
 export const getLastBlock: EditorSelector<
   {node: PortableTextBlock; path: [KeyedSegment]} | undefined
@@ -141,7 +141,7 @@ export const getLastBlock: EditorSelector<
 }
 
 /**
- * @alpha
+ * @public
  */
 export const getSelectedBlocks: EditorSelector<
   Array<{node: PortableTextBlock; path: [KeyedSegment]}>
@@ -195,7 +195,7 @@ export const getSelectedBlocks: EditorSelector<
 }
 
 /**
- * @alpha
+ * @public
  */
 export const getSelectionStartBlock: EditorSelector<
   | {
@@ -224,7 +224,7 @@ export const getSelectionStartBlock: EditorSelector<
 }
 
 /**
- * @alpha
+ * @public
  */
 export const getSelectionEndBlock: EditorSelector<
   | {
@@ -253,7 +253,7 @@ export const getSelectionEndBlock: EditorSelector<
 }
 
 /**
- * @alpha
+ * @public
  */
 export const getPreviousBlock: EditorSelector<
   {node: PortableTextBlock; path: [KeyedSegment]} | undefined
@@ -284,7 +284,7 @@ export const getPreviousBlock: EditorSelector<
 }
 
 /**
- * @alpha
+ * @public
  */
 export const getNextBlock: EditorSelector<
   {node: PortableTextBlock; path: [KeyedSegment]} | undefined

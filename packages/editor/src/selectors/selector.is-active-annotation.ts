@@ -4,7 +4,7 @@ import {getSelectedSpans} from './selector.get-selected-spans'
 import {getSelectedBlocks} from './selectors'
 
 /**
- * @alpha
+ * @public
  */
 export function isActiveAnnotation(
   annotation: string,

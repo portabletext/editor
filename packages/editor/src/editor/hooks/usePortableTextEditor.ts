@@ -8,6 +8,7 @@ export const PortableTextEditorContext =
   createContext<PortableTextEditor | null>(null)
 
 /**
+ * @deprecated Use `useEditor` to get the current editor instance.
  * @public
  * Get the current editor object from the React context.
  */

@@ -4,7 +4,7 @@ import type {EditorSelector} from '../editor/editor-selector'
 import {getSelectedBlocks} from './selectors'
 
 /**
- * @alpha
+ * @public
  */
 export const getActiveStyle: EditorSelector<PortableTextTextBlock['style']> = ({
   context,

@@ -8,7 +8,7 @@ const incompleteEmojiRegEx = /:([a-zA-Z-_0-9]+)$/
 const emojiRegEx = /:([a-zA-Z-_0-9]+):$/
 
 /**
- * @alpha
+ * @beta
  */
 export type EmojiPickerBehaviorsConfig<TEmojiMatch> = {
   /**
@@ -24,7 +24,7 @@ export type EmojiPickerBehaviorsConfig<TEmojiMatch> = {
 }
 
 /**
- * @alpha
+ * @beta
  */
 export function createEmojiPickerBehaviors<TEmojiMatch>(
   config: EmojiPickerBehaviorsConfig<TEmojiMatch>,
@@ -40,6 +40,10 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
     defineBehavior({
       on: 'insert.text',
       guard: ({context, event}) => {
+        if (event.text === ':') {
+          return false
+        }
+
         const isEmojiChar = emojiCharRegEx.test(event.text)
 
         if (!isEmojiChar) {
@@ -146,6 +150,12 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
     defineBehavior({
       on: 'key.down',
       guard: ({context, event}) => {
+        const matches = emojiPickerActor.getSnapshot().context.matches
+
+        if (matches.length === 0) {
+          return false
+        }
+
         const isShift = isHotkey('Shift', event.keyboardEvent)
         const isColon = event.keyboardEvent.key === ':'
         const isEmojiChar = emojiCharRegEx.test(event.keyboardEvent.key)
@@ -158,7 +168,6 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
         const isArrowUp = isHotkey('ArrowUp', event.keyboardEvent)
         const isEnter = isHotkey('Enter', event.keyboardEvent)
         const isTab = isHotkey('Tab', event.keyboardEvent)
-        const matches = emojiPickerActor.getSnapshot().context.matches
 
         if (isEnter || isTab) {
           const selectedIndex =

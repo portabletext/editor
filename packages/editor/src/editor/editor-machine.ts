@@ -15,7 +15,6 @@ import {coreBehaviors} from '../behaviors/behavior.core'
 import type {
   Behavior,
   BehaviorAction,
-  BehaviorActionIntend,
   NativeBehaviorEvent,
   SyntheticBehaviorEvent,
 } from '../behaviors/behavior.types'
@@ -59,7 +58,11 @@ export type PatchesEvent = {
 export type MutationEvent = {
   type: 'mutation'
   patches: Array<Patch>
+  /**
+   * @deprecated Use `value` instead
+   */
   snapshot: Array<PortableTextBlock> | undefined
+  value: Array<PortableTextBlock> | undefined
 }
 
 /**
@@ -74,11 +77,6 @@ export type InternalEditorEvent =
       behaviorEvent: SyntheticBehaviorEvent | NativeBehaviorEvent
       editor: PortableTextSlateEditor
       nativeEvent?: {preventDefault: () => void}
-    }
-  | {
-      type: 'behavior action intends'
-      editor: PortableTextSlateEditor
-      actionIntends: Array<BehaviorActionIntend>
     }
   | {
       type: 'update readOnly'
@@ -107,7 +105,7 @@ export type InternalEditorEvent =
     >
 
 /**
- * @alpha
+ * @public
  */
 export type EditorEmittedEvent = PickFromUnion<
   InternalEditorEmittedEvent,
@@ -265,11 +263,13 @@ export const editorMachine = setup({
           return
         }
 
-        enqueue.raise({
-          type: 'behavior action intends',
-          editor: event.editor,
-          actionIntends: [defaultAction],
+        Editor.withoutNormalizing(event.editor, () => {
+          performAction({
+            context,
+            action: defaultAction,
+          })
         })
+        event.editor.onChange()
         return
       }
 
@@ -324,11 +324,32 @@ export const editorMachine = setup({
                 (actionIntend) => actionIntend.type !== 'effect',
               ))
 
-          enqueue.raise({
-            type: 'behavior action intends',
-            editor: event.editor,
-            actionIntends,
+          Editor.withoutNormalizing(event.editor, () => {
+            for (const actionIntend of actionIntends) {
+              const action = {
+                ...actionIntend,
+                editor: event.editor,
+              }
+
+              performAction({context, action})
+            }
           })
+          event.editor.onChange()
+
+          if (
+            actionIntends.some(
+              (actionIntend) => actionIntend.type === 'reselect',
+            )
+          ) {
+            enqueue.raise({
+              type: 'selection',
+              selection: toPortableTextRange(
+                event.editor.children,
+                event.editor.selection,
+                context.schema,
+              ),
+            })
+          }
         }
 
         if (behaviorOverwritten) {
@@ -342,11 +363,13 @@ export const editorMachine = setup({
           return
         }
 
-        enqueue.raise({
-          type: 'behavior action intends',
-          editor: event.editor,
-          actionIntends: [defaultAction],
+        Editor.withoutNormalizing(event.editor, () => {
+          performAction({
+            context,
+            action: defaultAction,
+          })
         })
+        event.editor.onChange()
       }
     }),
   },
@@ -383,39 +406,6 @@ export const editorMachine = setup({
     'update value': {actions: assign({value: ({event}) => event.value})},
     'update maxBlocks': {
       actions: assign({maxBlocks: ({event}) => event.maxBlocks}),
-    },
-    'behavior action intends': {
-      actions: [
-        ({context, event}) => {
-          Editor.withoutNormalizing(event.editor, () => {
-            for (const actionIntend of event.actionIntends) {
-              const action = {
-                ...actionIntend,
-                editor: event.editor,
-              }
-
-              performAction({context, action})
-            }
-          })
-          event.editor.onChange()
-        },
-        enqueueActions(({context, event, enqueue}) => {
-          if (
-            event.actionIntends.some(
-              (actionIntend) => actionIntend.type === 'reselect',
-            )
-          ) {
-            enqueue.raise({
-              type: 'selection',
-              selection: toPortableTextRange(
-                event.editor.children,
-                event.editor.selection,
-                context.schema,
-              ),
-            })
-          }
-        }),
-      ],
     },
   },
   type: 'parallel',

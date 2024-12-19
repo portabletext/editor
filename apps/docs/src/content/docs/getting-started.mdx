@@ -8,27 +8,26 @@ prev: false
 import {CardGrid, LinkCard, Steps} from '@astrojs/starlight/components'
 import {PackageManagers} from 'starlight-package-managers'
 
-The PTE is a fully customizable rich text editor that uses the Portable Text format.
 This guide leads you through installing and using the basic features of the Portable Text Editor (PTE).
 
-In order to set up a PTE implementation, you must:
+In order to set up an editor, you'll need to:
 
-- Create a schema that defines the rich text elements.
-- Create a toolbar to toggle these elements on and off.
+- Create a schema that defines the rich text and block content elements.
+- Create a toolbar to toggle and insert these elements.
 - Write render functions to style and display each element type in the editor.
 - Render the editor.
 
 ## Parts of the editor
 
-Before we begin, it's helpful to understand the components that make up the editor.
+Before starting, it's helpful to understand the components that make up the editor.
 
 - Schema: A description of the type of content the editor accepts. Think of this as the foundation for configuring the editor.
 - `EditorProvider`: Supplies the schema and initial state to the editor.
 - `EditorEventListener`: Allows you to listen to events emitted by the editor and act on them. Commonly used to update application state.
-- `Toolbars`: Toolbars allow you to create UI elements that interact with the editor.
+- Toolbars: Toolbars allow you to create UI elements that interact with the editor.
 - `PortableTextEditable`: The core editor component. It handles the rendering of text and manages behavior.
 
-## Add the PTE to your project
+## Add the library to your project
 
 Start by installing the editor to your project
 
@@ -82,13 +81,13 @@ const schemaDefinition = defineSchema({
   // The types below are left empty for this example.
   // See the rendering guide to learn more about each type.
 
-  // Annotations are more complex marks that can hold data (e.g., hyperlinks).
+  // Annotations are more complex marks that can hold data (for example, hyperlinks).
   annotations: [],
-  // Lists apply to entire text blocks as well (e.g., bullet, numbered).
+  // Lists apply to entire text blocks as well (for example, bullet, numbered).
   lists: [],
-  // Inline objects hold arbitrary data that can be inserted into the text (e.g., custom emoji).
+  // Inline objects hold arbitrary data that can be inserted into the text (for example, custom emoji).
   inlineObjects: [],
-  // Block objects hold arbitrary data that live side-by-side with text blocks (e.g., images).
+  // Block objects hold arbitrary data that live side-by-side with text blocks (for example, images, code blocks, and tables).
   blockObjects: [],
 })
 ```
@@ -118,7 +117,7 @@ import type {
   RenderDecoratorFunction,
   RenderStyleFunction,
 } from '@portabletext/editor'
-import React, {useState} from 'react'
+import {useState} from 'react'
 
 const schemaDefinition = defineSchema({
   /* your schema from the previous step */
@@ -141,7 +140,7 @@ function App() {
         <EditorEventListener
           on={(event) => {
             if (event.type === 'mutation') {
-              setValue(event.snapshot)
+              setValue(event.value)
             }
           }}
         />
@@ -321,7 +320,7 @@ function App() {
         <EditorEventListener
           on={(event) => {
             if (event.type === 'mutation') {
-              setValue(event.snapshot)
+              setValue(event.value)
             }
           }}
         />
@@ -342,7 +341,7 @@ function App() {
 
 You can now enter text and interact with the toolbar buttons to toggle the styles and decorators. These are only a small portion of the types of things you can do. Check out the [custom rendering guide](/guides/custom-rendering/) and the [toolbar customization guide](/guides/customize-toolbar/) for options.
 
-## View the Portable text data
+## View the Portable Text data
 
 You can preview the Portable Text from the editor by reading the state. Add the following after the `EditorProvider`.
 
@@ -360,10 +359,33 @@ This displays the raw Portable Text. To customize how Portable Text renders in y
   href="/integrations/serializers/"
 />
 
+## Behavior API
+
+The Behavior API is a new way of interfacing with the Portable Text Editor. It allows you to think of and treat the editor as a state machine by:
+
+- Declaratively hooking into editor **events** and defining new behaviors.
+- Imperatively triggering **events**.
+- Deriving editor **state** using **pure functions**.
+- Subscribing to **emitted** editor **events**.
+
+Learn more about the [Behaviors](/concepts/behavior/) and how to [create your own behaviors](/guides/create-behavior/) in the documentation.
+
 ## Next Steps
 
 <CardGrid>
-<LinkCard title="Create your own behavior" description="Learn to intercept editor events and add functionality with the Behavior API." href="/guides/create-behavior/" />
-<LinkCard title="Further customize the toolbar" description="Dive deeper into toolbar customization." href="/guides/customize-toolbar/" />
-
+  <LinkCard
+    title="Create additional render functions"
+    description="Create more render functions for your schema."
+    href="/guides/custom-rendering/"
+  />
+  <LinkCard
+    title="Further customize the toolbar"
+    description="Dive deeper into toolbar customization."
+    href="/guides/customize-toolbar/"
+  />
+  <LinkCard
+    title="Create your own behaviors"
+    description="Learn to intercept editor events and add functionality with the Behavior API."
+    href="/guides/create-behavior/"
+  />
 </CardGrid>

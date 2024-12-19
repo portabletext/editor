@@ -4,7 +4,7 @@ import type {EditorEmittedEvent} from './editor-machine'
 import {useEditor} from './editor-provider'
 
 /**
- * @alpha
+ * @public
  */
 export function EditorEventListener(props: {
   on: (event: EditorEmittedEvent) => void

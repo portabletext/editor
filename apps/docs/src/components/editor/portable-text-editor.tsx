@@ -78,7 +78,7 @@ export function PortableTextEditor({customSchema}: PortableTextEditorProps) {
               setValue((prevValue) => applyAll(prevValue, [event.patch]))
             }
             if (event.type === 'mutation') {
-              setValue(event.snapshot)
+              setValue(event.value)
             }
           }}
         />

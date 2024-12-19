@@ -3,7 +3,7 @@ import type {EditorSelection} from '../types/editor'
 import type {EditorSchema} from './define-schema'
 
 /**
- * @alpha
+ * @public
  */
 export type EditorContext = {
   activeDecorators: Array<string>
@@ -14,7 +14,7 @@ export type EditorContext = {
 }
 
 /**
- * @alpha
+ * @public
  */
 export type EditorSnapshot = {
   context: EditorContext
