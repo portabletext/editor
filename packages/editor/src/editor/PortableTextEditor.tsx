@@ -42,6 +42,7 @@ const debug = debugWithName('component:PortableTextEditor')
  * Props for the PortableTextEditor component
  *
  * @public
+ * @deprecated Use `EditorProvider` instead
  */
 export type PortableTextEditorProps<
   TEditor extends Editor | undefined = undefined,
@@ -106,6 +107,7 @@ export type PortableTextEditorProps<
 /**
  * The main Portable Text Editor component.
  * @public
+ * @deprecated Use `EditorProvider` instead
  */
 export class PortableTextEditor extends Component<
   PortableTextEditorProps<Editor | undefined>
