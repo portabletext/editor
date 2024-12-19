@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.18.1](https://github.com/portabletext/editor/compare/editor-v1.18.0...editor-v1.18.1) (2024-12-19)
+
+
+### Bug Fixes
+
+* **emoji picker:** direct-hit : selection ([5a9d57c](https://github.com/portabletext/editor/commit/5a9d57c41aba24ca2a4330e0a21ca3618b34d194))
+
 ## [1.18.0](https://github.com/portabletext/editor/compare/editor-v1.17.1...editor-v1.18.0) (2024-12-19)
 
 
