@@ -34,6 +34,26 @@ export type SchemaDefinition<
 
 /**
  * @public
+ * A helper wrapper that adds editor support, such as autocomplete and type checking, for a schema definition.
+ * @example
+ * ```ts
+ * import { defineSchema } from '@portabletext/editor'
+ *
+ * const schemaDefinition = defineSchema({
+ *  decorators: [{name: 'strong'}, {name: 'em'}, {name: 'underline'}],
+ *  annotations: [{name: 'link'}],
+ *  styles: [
+ *    {name: 'normal'},
+ *    {name: 'h1'},
+ *    {name: 'h2'},
+ *    {name: 'h3'},
+ *    {name: 'blockquote'},
+ *  ],
+ *  lists: [],
+ *  inlineObjects: [],
+ *  blockObjects: [],
+ * }
+ * ```
  */
 export function defineSchema<const TSchemaDefinition extends SchemaDefinition>(
   definition: TSchemaDefinition,

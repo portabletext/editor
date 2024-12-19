@@ -113,6 +113,23 @@ export type PortableTextEditableProps = Omit<
 
 /**
  * @public
+ *
+ *
+ * The core component that renders the editor. Must be placed within the {@link EventProvider} component.
+ *
+ * @example
+ * ```tsx
+ * import { PortableTextEditable, EditorProvider } from '@portabletext/editor'
+ *
+ * function MyComponent() {
+ *  return (
+ *   <EditorProvider>
+ *    <PortableTextEditable />
+ *  </EditorProvider>
+ *  )
+ * }
+ * ```
+ * @group Components
  */
 export const PortableTextEditable = forwardRef<
   Omit<HTMLDivElement, 'as' | 'onPaste' | 'onBeforeInput'>,
