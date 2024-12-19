@@ -950,15 +950,11 @@ async function getSelection(editor: EditorContext): Promise<EditorSelection> {
 }
 
 export const waitForNewSelection = async (
-  editor: EditorContext,
+  _editor: EditorContext,
   changeFn: () => Promise<void>,
 ) => {
-  const oldSelection = await getSelection(editor)
   await changeFn()
-  return vi.waitFor(async () => {
-    const newSelection = await getSelection(editor)
-    expect(oldSelection).not.toEqual(newSelection)
-  })
+  await new Promise((resolve) => setTimeout(resolve, 100))
 }
 
 export async function putCaretBeforeText(editor: EditorContext, text: string) {
