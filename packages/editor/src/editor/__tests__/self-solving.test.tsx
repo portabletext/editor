@@ -169,6 +169,20 @@ describe('Feature: Self-solving', () => {
               markDefs: [],
             }),
           ],
+          value: [
+            block({
+              _key: 'b1',
+              children: [
+                span({
+                  _key: 's1',
+                  text: 'foo',
+                  marks: ['strong'],
+                }),
+              ],
+              style: 'normal',
+              markDefs: [],
+            }),
+          ],
         })
       }
     })
