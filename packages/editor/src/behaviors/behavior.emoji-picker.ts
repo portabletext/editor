@@ -146,6 +146,12 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
     defineBehavior({
       on: 'key.down',
       guard: ({context, event}) => {
+        const matches = emojiPickerActor.getSnapshot().context.matches
+
+        if (matches.length === 0) {
+          return false
+        }
+
         const isShift = isHotkey('Shift', event.keyboardEvent)
         const isColon = event.keyboardEvent.key === ':'
         const isEmojiChar = emojiCharRegEx.test(event.keyboardEvent.key)
@@ -158,7 +164,6 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
         const isArrowUp = isHotkey('ArrowUp', event.keyboardEvent)
         const isEnter = isHotkey('Enter', event.keyboardEvent)
         const isTab = isHotkey('Tab', event.keyboardEvent)
-        const matches = emojiPickerActor.getSnapshot().context.matches
 
         if (isEnter || isTab) {
           const selectedIndex =
