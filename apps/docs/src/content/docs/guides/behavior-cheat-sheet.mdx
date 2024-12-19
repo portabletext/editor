@@ -105,3 +105,16 @@ const autoCloseParens = defineBehavior({
   ],
 })
 ```
+
+## Emoji Picker
+
+Using a factory to create behaviors, a state machine, and custom components results in an emoji picker that triggers when you insert `:`.
+
+![Emoji picker in Portable Text Editor](../../../assets/emoji-picker.png)
+
+Test it out in the [Playground](https://playground.portabletext.org).
+
+- [View the behavior source](https://github.com/portabletext/editor/blob/main/packages/editor/src/behaviors/behavior.emoji-picker.ts).
+- [View the editor source](https://github.com/portabletext/editor/blob/main/apps/playground/src/editor.tsx).
+
+You can leverage the behavior by importing `createEmojiPickerBehaviors` from `@portabletext/editor/behaviors`. See the editor source above for a usage example.
