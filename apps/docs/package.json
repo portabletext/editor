@@ -21,7 +21,7 @@
     "@radix-ui/react-separator": "^1.1.0",
     "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-tooltip": "^1.1.4",
-    "@types/react": "^18.3.15",
+    "@types/react": "^19.0.1",
     "@types/react-dom": "^18.3.4",
     "astro": "^5.0.4",
     "class-variance-authority": "^0.7.1",
