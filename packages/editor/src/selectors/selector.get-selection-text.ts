@@ -4,7 +4,7 @@ import {isKeyedSegment} from '../editor/utils/utils.is-keyed-segment'
 import {reverseSelection} from '../editor/utils/utils.reverse-selection'
 
 /**
- * @alpha
+ * @public
  */
 export const getSelectionText: EditorSelector<string> = ({context}) => {
   let text = ''

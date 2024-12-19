@@ -28,9 +28,12 @@ import {defaultKeyGenerator} from './key-generator'
 import {createEditableAPI} from './plugins/createWithEditableAPI'
 
 /**
- * @alpha
+ * @public
  */
 export type EditorConfig = {
+  /**
+   * @beta
+   */
   behaviors?: Array<Behavior>
   keyGenerator?: () => string
   /**
@@ -51,7 +54,7 @@ export type EditorConfig = {
 )
 
 /**
- * @alpha
+ * @public
  */
 export type EditorEvent = PickFromUnion<
   InternalEditorEvent,
@@ -75,7 +78,7 @@ export type EditorEvent = PickFromUnion<
 >
 
 /**
- * @alpha
+ * @public
  */
 export type Editor = {
   send: (event: EditorEvent) => void

@@ -8,7 +8,7 @@ const incompleteEmojiRegEx = /:([a-zA-Z-_0-9]+)$/
 const emojiRegEx = /:([a-zA-Z-_0-9]+):$/
 
 /**
- * @alpha
+ * @beta
  */
 export type EmojiPickerBehaviorsConfig<TEmojiMatch> = {
   /**
@@ -24,7 +24,7 @@ export type EmojiPickerBehaviorsConfig<TEmojiMatch> = {
 }
 
 /**
- * @alpha
+ * @beta
  */
 export function createEmojiPickerBehaviors<TEmojiMatch>(
   config: EmojiPickerBehaviorsConfig<TEmojiMatch>,

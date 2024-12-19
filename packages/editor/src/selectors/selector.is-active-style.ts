@@ -2,7 +2,7 @@ import type {EditorSelector} from '../editor/editor-selector'
 import {getActiveStyle} from './selector.get-active-style'
 
 /**
- * @alpha
+ * @public
  */
 export function isActiveStyle(style: string): EditorSelector<boolean> {
   return (snapshot) => {

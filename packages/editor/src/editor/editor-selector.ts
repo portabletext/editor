@@ -9,12 +9,12 @@ function defaultCompare<T>(a: T, b: T) {
 }
 
 /**
- * @alpha
+ * @public
  */
 export type EditorSelector<TSelected> = (snapshot: EditorSnapshot) => TSelected
 
 /**
- * @alpha
+ * @public
  */
 export function useEditorSelector<TSelected>(
   editor: Editor,

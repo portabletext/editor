@@ -7,7 +7,7 @@ import {getBlockTextBefore} from '../selectors/selector.get-text-before'
 import {defineBehavior} from './behavior.types'
 
 /**
- * @alpha
+ * @beta
  */
 export type MarkdownBehaviorsConfig = {
   horizontalRuleObject?: (context: {
@@ -24,7 +24,7 @@ export type MarkdownBehaviorsConfig = {
 }
 
 /**
- * @alpha
+ * @beta
  */
 export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   const automaticBlockquoteOnSpace = defineBehavior({

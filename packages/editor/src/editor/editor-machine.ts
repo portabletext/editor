@@ -107,7 +107,7 @@ export type InternalEditorEvent =
     >
 
 /**
- * @alpha
+ * @public
  */
 export type EditorEmittedEvent = PickFromUnion<
   InternalEditorEmittedEvent,

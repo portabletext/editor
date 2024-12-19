@@ -2,7 +2,7 @@ import type {EditorSelector} from '../editor/editor-selector'
 import {getActiveListItem} from './selector.get-active-list-item'
 
 /**
- * @alpha
+ * @public
  */
 export function isActiveListItem(listItem: string): EditorSelector<boolean> {
   return (snapshot) => {

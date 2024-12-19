@@ -1,7 +1,7 @@
 import type {EditorSelector} from '../editor/editor-selector'
 
 /**
- * @alpha
+ * @public
  */
 export const isSelectionCollapsed: EditorSelector<boolean> = ({context}) => {
   return (
