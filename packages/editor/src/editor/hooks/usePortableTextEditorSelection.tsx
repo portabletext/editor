@@ -16,6 +16,7 @@ const PortableTextEditorSelectionContext =
   createContext<EditorSelection | null>(null)
 
 /**
+ * @deprecated Use `useEditorSelector` to get the current editor selection.
  * @public
  * Get the current editor selection from the React context.
  */
