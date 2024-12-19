@@ -136,7 +136,7 @@ function App() {
         <EditorEventListener
           on={(event) => {
             if (event.type === 'mutation') {
-              setValue(event.snapshot)
+              setValue(event.value)
             }
           }}
         />
@@ -314,7 +314,7 @@ function App() {
         <EditorEventListener
           on={(event) => {
             if (event.type === 'mutation') {
-              setValue(event.snapshot)
+              setValue(event.value)
             }
           }}
         />
