@@ -51,7 +51,7 @@ export const parameterTypes = [
   }),
   createParameterType({
     name: 'text',
-    matcher: /"([a-z-,#>\\n |\[\]]*)"/,
+    matcher: /"([a-z-,#>\\n |\[\]😂😹:]*)"/u,
     type: Array,
     transform: parseGherkinTextParameter,
   }),
