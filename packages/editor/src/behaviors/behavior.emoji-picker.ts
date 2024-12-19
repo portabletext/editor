@@ -40,6 +40,10 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
     defineBehavior({
       on: 'insert.text',
       guard: ({context, event}) => {
+        if (event.text === ':') {
+          return false
+        }
+
         const isEmojiChar = emojiCharRegEx.test(event.text)
 
         if (!isEmojiChar) {
