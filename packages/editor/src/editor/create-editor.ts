@@ -24,6 +24,8 @@ import {
   type EditorEmittedEvent,
   type InternalEditorEvent,
 } from './editor-machine'
+import {getEditorSnapshot} from './editor-selector'
+import type {EditorSnapshot} from './editor-snapshot'
 import {defaultKeyGenerator} from './key-generator'
 import {createEditableAPI} from './plugins/createWithEditableAPI'
 
@@ -81,6 +83,7 @@ export type EditorEvent = PickFromUnion<
  * @public
  */
 export type Editor = {
+  getSnapshot: () => EditorSnapshot
   send: (event: EditorEvent) => void
   on: ActorRef<Snapshot<unknown>, EventObject, EditorEmittedEvent>['on']
   _internal: {
@@ -129,6 +132,11 @@ function createEditorFromActor(editorActor: EditorActor): Editor {
   const editable = createEditableAPI(slateEditor.instance, editorActor)
 
   return {
+    getSnapshot: () =>
+      getEditorSnapshot({
+        editorActorSnapshot: editorActor.getSnapshot(),
+        slateEditorInstance: slateEditor.instance,
+      }),
     send: (event) => {
       editorActor.send(event)
     },
