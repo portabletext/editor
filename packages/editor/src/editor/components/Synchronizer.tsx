@@ -51,7 +51,12 @@ export function Synchronizer(props: SynchronizerProps) {
       }
       if (event.type === 'mutation') {
         syncActorRef.send({type: 'mutation'})
-        editorActor.send(event)
+        editorActor.send({
+          type: 'mutation',
+          patches: event.patches,
+          snapshot: event.snapshot,
+          value: event.snapshot,
+        })
       }
     })
 

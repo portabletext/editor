@@ -59,7 +59,11 @@ export type PatchesEvent = {
 export type MutationEvent = {
   type: 'mutation'
   patches: Array<Patch>
+  /**
+   * @deprecated Use `value` instead
+   */
   snapshot: Array<PortableTextBlock> | undefined
+  value: Array<PortableTextBlock> | undefined
 }
 
 /**
