@@ -23,6 +23,21 @@ export type EditorProviderProps = {
 
 /**
  * @public
+ * The EditorProvider component is used to set up the editor context and configure the Portable Text Editor.
+ * @example
+ * ```tsx
+ * import {EditorProvider} from '@portabletext/editor'
+ *
+ * function App() {
+ *  return (
+ *    <EditorProvider initialConfig={{ ... }} >
+ *      ...
+ *    </EditorProvider>
+ *  )
+ * }
+ *
+ * ```
+ * @group Components
  */
 export function EditorProvider(props: EditorProviderProps) {
   const editor = useCreateEditor(props.initialConfig)
@@ -66,6 +81,18 @@ export function EditorProvider(props: EditorProviderProps) {
 
 /**
  * @public
+ * Get the current editor context from the `EditorProvider`.
+ * Must be used inside the `EditorProvider` component.
+ * @returns The current editor object.
+ * @example
+ * ```tsx
+ * import { useEditor } from '@portabletext/editor'
+ *
+ * function MyComponent() {
+ *  const editor = useEditor()
+ * }
+ * ```
+ * @group Hooks
  */
 export function useEditor() {
   const editor = React.useContext(EditorContext)
