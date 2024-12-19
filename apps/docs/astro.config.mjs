@@ -72,7 +72,20 @@ export default defineConfig({
       ],
       plugins: [
         starlightTypeDoc({
-          entryPoints: ['../../packages/editor/src/index.ts'],
+          entryPoints: [
+            '../../packages/editor/src/index.ts',
+            '../../packages/editor/src/behaviors/index.ts',
+            '../../packages/editor/src/selectors/index.ts',
+          ],
+          typeDoc: {
+            navigation: {
+              includeGroups: true,
+            },
+            categorizeByGroup: true,
+            excludeReferences: true,
+            groupOrder: ['Components', '*'],
+          },
+
           tsconfig: '../../packages/editor/tsconfig.json',
         }),
         ...(process.env.CHECK_LINKS ? [starlightLinksValidator()] : []),
