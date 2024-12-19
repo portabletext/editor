@@ -52,7 +52,7 @@ Let's break it down:
 In order to use the behavior, add it to the `EditorProvider`. If you want to avoid overwriting the default behaviors, import them and register them with your custom behavior.
 
 ```tsx
-import {coreBehavior, defineBehavior} from '@portabletext/editor/behaviors'
+import {coreBehaviors, defineBehavior} from '@portabletext/editor/behaviors'
 
 const noLowerCaseA = defineBehavior({
     on: 'insert.text',
