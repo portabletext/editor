@@ -3,7 +3,7 @@ import {getSelectedSpans} from './selector.get-selected-spans'
 import {isSelectionExpanded} from './selector.is-selection-expanded'
 
 /**
- * @alpha
+ * @public
  */
 export function isActiveDecorator(decorator: string): EditorSelector<boolean> {
   return (snapshot) => {

@@ -3,7 +3,7 @@ import {isHotkey} from '../utils/is-hotkey'
 import {defineBehavior} from './behavior.types'
 
 /**
- * @alpha
+ * @beta
  */
 export type CodeEditorBehaviorsConfig = {
   moveBlockUpShortcut: string
@@ -11,7 +11,7 @@ export type CodeEditorBehaviorsConfig = {
 }
 
 /**
- * @alpha
+ * @beta
  */
 export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
   return [

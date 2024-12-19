@@ -113,9 +113,9 @@ export interface History {
   undos: HistoryItem[]
 }
 
-/** @beta */
+/** @public */
 export type EditorSelectionPoint = {path: Path; offset: number}
-/** @beta */
+/** @public */
 export type EditorSelection = {
   anchor: EditorSelectionPoint
   focus: EditorSelectionPoint

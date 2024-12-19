@@ -14,7 +14,7 @@ import {
 const EditorContext = React.createContext<Editor | undefined>(undefined)
 
 /**
- * @alpha
+ * @public
  */
 export type EditorProviderProps = {
   initialConfig: EditorConfig
@@ -22,7 +22,7 @@ export type EditorProviderProps = {
 }
 
 /**
- * @alpha
+ * @public
  */
 export function EditorProvider(props: EditorProviderProps) {
   const editor = useCreateEditor(props.initialConfig)
@@ -65,7 +65,7 @@ export function EditorProvider(props: EditorProviderProps) {
 }
 
 /**
- * @alpha
+ * @public
  */
 export function useEditor() {
   const editor = React.useContext(EditorContext)

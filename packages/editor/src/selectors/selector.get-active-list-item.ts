@@ -4,7 +4,7 @@ import type {EditorSelector} from '../editor/editor-selector'
 import {getSelectedBlocks} from './selectors'
 
 /**
- * @alpha
+ * @public
  */
 export const getActiveListItem: EditorSelector<
   PortableTextListBlock['listItem'] | undefined

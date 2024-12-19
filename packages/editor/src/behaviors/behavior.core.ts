@@ -9,7 +9,7 @@ const softReturn = defineBehavior({
 })
 
 /**
- * @alpha
+ * @beta
  */
 export const coreBehaviors = [
   softReturn,
@@ -29,7 +29,7 @@ export const coreBehaviors = [
 ]
 
 /**
- * @alpha
+ * @beta
  */
 export const coreBehavior = {
   softReturn,

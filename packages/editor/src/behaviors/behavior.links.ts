@@ -3,7 +3,7 @@ import * as selectors from '../selectors'
 import {defineBehavior} from './behavior.types'
 
 /**
- * @alpha
+ * @beta
  */
 export type LinkBehaviorsConfig = {
   linkAnnotation?: (context: {
@@ -13,7 +13,7 @@ export type LinkBehaviorsConfig = {
 }
 
 /**
- * @alpha
+ * @beta
  */
 export function createLinkBehaviors(config: LinkBehaviorsConfig) {
   const pasteLinkOnSelection = defineBehavior({
