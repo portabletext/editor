@@ -1,5 +1,6 @@
 import type {EditorSchema} from '../editor/define-schema'
 import * as selectors from '../selectors'
+import {looksLikeUrl} from '../utils/looks-like-url'
 import {defineBehavior} from './behavior.types'
 
 /**
@@ -79,13 +80,4 @@ export function createLinkBehaviors(config: LinkBehaviorsConfig) {
   const linkBehaviors = [pasteLinkOnSelection, pasteLinkAtCaret]
 
   return linkBehaviors
-}
-
-function looksLikeUrl(text: string) {
-  let looksLikeUrl = false
-  try {
-    new URL(text)
-    looksLikeUrl = true
-  } catch {}
-  return looksLikeUrl
 }
