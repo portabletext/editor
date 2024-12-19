@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.18.2](https://github.com/portabletext/editor/compare/editor-v1.18.1...editor-v1.18.2) (2024-12-19)
+
+
+### Bug Fixes
+
+* **link behavior:** improve URL matching ([2aacbc8](https://github.com/portabletext/editor/commit/2aacbc8a132ffcad6317406efe0a7fdc9c9e50b7))
+
 ## [1.18.1](https://github.com/portabletext/editor/compare/editor-v1.18.0...editor-v1.18.1) (2024-12-19)
 
 
