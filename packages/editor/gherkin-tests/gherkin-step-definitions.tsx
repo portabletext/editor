@@ -954,7 +954,7 @@ export const waitForNewSelection = async (
   changeFn: () => Promise<void>,
 ) => {
   await changeFn()
-  await new Promise((resolve) => setTimeout(resolve, 100))
+  await new Promise((resolve) => setTimeout(resolve, 50))
 }
 
 export async function putCaretBeforeText(editor: EditorContext, text: string) {
