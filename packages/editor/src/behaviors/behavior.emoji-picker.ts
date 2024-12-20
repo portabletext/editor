@@ -156,16 +156,12 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
           return false
         }
 
-        const isShift = isHotkey('Shift', event.keyboardEvent)
-        const isColon = event.keyboardEvent.key === ':'
-        const isEmojiChar = emojiCharRegEx.test(event.keyboardEvent.key)
+        const isEscape = isHotkey('Escape', event.keyboardEvent)
 
-        if (isShift || isColon || isEmojiChar) {
-          return false
+        if (isEscape) {
+          return {action: 'reset' as const}
         }
 
-        const isArrowDown = isHotkey('ArrowDown', event.keyboardEvent)
-        const isArrowUp = isHotkey('ArrowUp', event.keyboardEvent)
         const isEnter = isHotkey('Enter', event.keyboardEvent)
         const isTab = isHotkey('Tab', event.keyboardEvent)
 
@@ -204,6 +200,9 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
           return false
         }
 
+        const isArrowDown = isHotkey('ArrowDown', event.keyboardEvent)
+        const isArrowUp = isHotkey('ArrowUp', event.keyboardEvent)
+
         if (isArrowDown && matches.length > 0) {
           return {action: 'navigate down' as const}
         }
@@ -212,7 +211,7 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
           return {action: 'navigate up' as const}
         }
 
-        return {action: 'reset' as const}
+        return false
       },
       actions: [
         (_, params) => {
