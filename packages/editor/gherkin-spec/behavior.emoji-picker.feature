@@ -16,3 +16,17 @@ Feature: Emoji Picker
     And "ArrowDown" is pressed
     And "Enter" is pressed
     Then the text is "😹"
+
+  Scenario: Aborting on Escape
+    Given an empty editor
+    When ":joy" is typed
+    And "Escape" is pressed
+    And "Enter" is pressed
+    Then the text is ":joy|"
+
+  Scenario: Backspacing to narrow search
+    Given an empty editor
+    When ":joy" is typed
+    And "Backspace" is pressed
+    And "Enter" is pressed
+    Then the text is "😂"
