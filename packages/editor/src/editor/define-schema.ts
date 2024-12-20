@@ -1,10 +1,5 @@
 import {Schema as SanitySchema} from '@sanity/schema'
-import {
-  defineField,
-  defineType,
-  type BlockDecoratorDefinition,
-  type ObjectSchemaType,
-} from '@sanity/types'
+import {defineField, defineType, type ObjectSchemaType} from '@sanity/types'
 import startCase from 'lodash.startcase'
 import type {PortableTextMemberSchemaTypes} from '../types/editor'
 import {createEditorSchema} from './create-editor-schema'
@@ -15,7 +10,6 @@ import {createEditorSchema} from './create-editor-schema'
 export type BaseDefinition = {
   name: string
   title?: string
-  icon?: BlockDecoratorDefinition['icon']
 }
 
 /**
@@ -77,7 +71,6 @@ export function compileSchemaDefinition<
         // fields to objects with the name `image`
         name: blockObject.name === 'image' ? 'tmp-image' : blockObject.name,
         title: blockObject.title,
-        icon: blockObject.icon,
         fields: [],
       }),
     ) ?? []
@@ -87,7 +80,6 @@ export function compileSchemaDefinition<
         type: 'object',
         name: inlineObject.name,
         title: inlineObject.title,
-        icon: inlineObject.icon,
         fields: [],
       }),
     ) ?? []
@@ -106,27 +98,23 @@ export function compileSchemaDefinition<
             definition?.decorators?.map((decorator) => ({
               title: decorator.title ?? startCase(decorator.name),
               value: decorator.name,
-              icon: decorator.icon,
             })) ?? [],
           annotations:
             definition?.annotations?.map((annotation) => ({
               name: annotation.name,
               type: 'object',
               title: annotation.title,
-              icon: annotation.icon,
             })) ?? [],
         },
         lists:
           definition?.lists?.map((list) => ({
             value: list.name,
             title: list.title ?? startCase(list.name),
-            icon: list.icon,
           })) ?? [],
         styles:
           definition?.styles?.map((style) => ({
             value: style.name,
             title: style.title ?? startCase(style.name),
-            icon: style.icon,
           })) ?? [],
       },
     ],
