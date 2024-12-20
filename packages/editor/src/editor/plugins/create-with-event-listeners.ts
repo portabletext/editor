@@ -1,4 +1,7 @@
-import type {Editor} from 'slate'
+import {Path, Point, type Editor} from 'slate'
+import {toPortableTextRange} from '../../utils/ranges'
+import {fromSlateValue} from '../../utils/values'
+import {KEY_TO_VALUE_ELEMENT} from '../../utils/weakMaps'
 import type {EditorActor} from '../editor-machine'
 
 export function createWithEventListeners(
@@ -133,6 +136,17 @@ export function createWithEventListeners(
             })
             break
           }
+          case 'select': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {
+                type: 'select',
+                selection: event.selection,
+              },
+              editor,
+            })
+            break
+          }
           case 'style.toggle': {
             editorActor.send({
               type: 'behavior event',
@@ -229,6 +243,42 @@ export function createWithEventListeners(
           type: 'insert.text',
           text,
           options,
+        },
+        editor,
+      })
+      return
+    }
+
+    editor.select = (location) => {
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'select',
+          selection: toPortableTextRange(
+            fromSlateValue(
+              editor.children,
+              editorActor.getSnapshot().context.schema.block.name,
+              KEY_TO_VALUE_ELEMENT.get(editor),
+            ),
+            Path.isPath(location)
+              ? {
+                  anchor: {
+                    path: location,
+                    offset: 0,
+                  },
+                  focus: {
+                    path: location,
+                    offset: 0,
+                  },
+                }
+              : Point.isPoint(location)
+                ? {
+                    anchor: location,
+                    focus: location,
+                  }
+                : location,
+            editorActor.getSnapshot().context.schema,
+          ),
         },
         editor,
       })
