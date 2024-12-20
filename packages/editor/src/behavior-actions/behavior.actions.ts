@@ -1,8 +1,10 @@
 import {
   deleteBackward,
   deleteForward,
+  deselect,
   insertText,
   Path,
+  select,
   Transforms,
 } from 'slate'
 import {ReactEditor} from 'slate-react'
@@ -227,9 +229,9 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
     const newSelection = toSlateRange(action.selection, action.editor)
 
     if (newSelection) {
-      Transforms.select(action.editor, newSelection)
+      select(action.editor, newSelection)
     } else {
-      Transforms.deselect(action.editor)
+      deselect(action.editor)
     }
   },
   'select.previous block': ({action}) => {
@@ -247,7 +249,7 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
 
     const previousBlockPath = Path.previous(blockPath)
 
-    Transforms.select(action.editor, previousBlockPath)
+    select(action.editor, previousBlockPath)
   },
   'select.next block': ({action}) => {
     if (!action.editor.selection) {
@@ -258,13 +260,13 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
     const blockPath = action.editor.selection.focus.path.slice(0, 1)
     const nextBlockPath = [blockPath[0] + 1]
 
-    Transforms.select(action.editor, nextBlockPath)
+    select(action.editor, nextBlockPath)
   },
   'reselect': ({action}) => {
     const selection = action.editor.selection
 
     if (selection) {
-      Transforms.select(action.editor, {...selection})
+      select(action.editor, {...selection})
       action.editor.selection = {...selection}
     }
   },
@@ -537,6 +539,13 @@ function performDefaultAction({
     }
     case 'list item.toggle': {
       behaviorActionImplementations['list item.toggle']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'select': {
+      behaviorActionImplementations.select({
         context,
         action,
       })
