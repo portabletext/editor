@@ -72,6 +72,7 @@ export type EditorEvent = PickFromUnion<
   | 'insert.block object'
   | 'insert.inline object'
   | 'list item.toggle'
+  | 'select'
   | 'style.toggle'
   | 'patches'
   | 'update behaviors'
