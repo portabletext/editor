@@ -30,3 +30,12 @@ Feature: Emoji Picker
     And "Backspace" is pressed
     And "Enter" is pressed
     Then the text is "😂"
+
+  @only
+  Scenario: Backspacing at the beginning to narrow search
+    Given an empty editor
+    When ":joy" is typed
+    And "ArrowLeft" is pressed 2 times
+    And "Backspace" is pressed
+    And "Enter" is pressed
+    Then the text is "😂"
