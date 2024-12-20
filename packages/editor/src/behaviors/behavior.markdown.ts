@@ -25,6 +25,48 @@ export type MarkdownBehaviorsConfig = {
 
 /**
  * @beta
+ * Create markdown behaviors for common markdown actions such as converting ### to headings, --- to HRs, and more.
+ *
+ * @example
+ * Configure the bundled markdown behaviors
+ * ```ts
+ * import {EditorProvider} from '@portabletext/editor'
+ * import {createMarkdownBehaviors, coreBehaviors} from '@portabletext/editor/behaviors'
+ *
+ * function App() {
+ *  return (
+ *   <EditorProvider
+ *    initialConfig={{
+ *    behaviors: [
+ *    ...coreBehaviors,
+ *    ...createMarkdownBehaviors({
+ *        horizontalRuleObject: ({schema}) => {
+ *          const name = schema.blockObjects.find(
+ *            (object) => object.name === 'break',
+ *          )?.name
+ *          return name ? {name} : undefined
+ *        },
+ *        defaultStyle: ({schema}) => schema.styles[0].value,
+ *        headingStyle: ({schema, level}) =>
+ *          schema.styles.find((style) => style.value === `h${level}`)
+ *            ?.value,
+ *        blockquoteStyle: ({schema}) =>
+ *          schema.styles.find((style) => style.value === 'blockquote')
+ *            ?.value,
+ *        unorderedListStyle: ({schema}) =>
+ *          schema.lists.find((list) => list.value === 'bullet')?.value,
+ *        orderedListStyle: ({schema}) =>
+ *          schema.lists.find((list) => list.value === 'number')?.value,
+ *      }),
+ *      ]
+ *    }}
+ *    >
+ *    {...}
+ *    </EditorProvider>
+ *  )
+ * }
+ * ```
+ *
  */
 export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   const automaticBlockquoteOnSpace = defineBehavior({
