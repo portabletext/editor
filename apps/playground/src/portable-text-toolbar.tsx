@@ -19,6 +19,26 @@ export function PortableTextToolbar(props: {
 
   return (
     <Toolbar aria-label="Text formatting">
+      <button
+        onClick={() => {
+          editor.send({
+            type: 'select',
+            selection: {
+              anchor: {
+                path: [{_key: 'e0-k8'}, 'children', {_key: 'e0-k7'}],
+                offset: 3,
+              },
+              focus: {
+                path: [{_key: 'e0-k8'}, 'children', {_key: 'e0-k7'}],
+                offset: 3,
+              },
+            },
+          })
+          editor.send({type: 'focus'})
+        }}
+      >
+        x
+      </button>
       <StyleSelector schemaDefinition={props.schemaDefinition} />
       <Separator orientation="vertical" />
       <Group aria-label="Decorators" className="contents">
