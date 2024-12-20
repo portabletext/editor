@@ -136,6 +136,17 @@ export function createWithEventListeners(
             })
             break
           }
+          case 'select': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {
+                type: 'select',
+                selection: event.selection,
+              },
+              editor,
+            })
+            break
+          }
           case 'style.toggle': {
             editorActor.send({
               type: 'behavior event',
