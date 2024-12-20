@@ -23,7 +23,7 @@ export const parameterTypes = [
   createParameterType({
     name: 'button',
     matcher:
-      /"(ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Backspace|Delete|Enter|Shift\+Enter|Space)"/,
+      /"(ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Backspace|Delete|Enter|Escape|Shift\+Enter|Space)"/,
   }),
   createParameterType({
     name: 'key',
