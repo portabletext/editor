@@ -668,6 +668,7 @@ export const addDecoratorActionImplementation: BehaviorActionImplementation<
         {},
         {match: Text.isText, split: true, hanging: true},
       )
+      debugger
       // Use new selection
       const splitTextNodes = Range.isRange(editor.selection)
         ? [

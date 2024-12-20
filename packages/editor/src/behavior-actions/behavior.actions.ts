@@ -228,6 +228,8 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'select': ({action}) => {
     const newSelection = toSlateRange(action.selection, action.editor)
 
+    console.log(action.selection, newSelection)
+
     if (newSelection) {
       select(action.editor, newSelection)
     } else {

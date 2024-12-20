@@ -20,6 +20,7 @@ export function toPortableTextRange(
   if (!range) {
     return null
   }
+
   let anchor: EditorSelectionPoint | null = null
   let focus: EditorSelectionPoint | null = null
   const anchorPath = range.anchor && createKeyedPath(range.anchor, value, types)
@@ -38,6 +39,9 @@ export function toPortableTextRange(
   }
   const backward = Boolean(
     Range.isRange(range) ? Range.isBackward(range) : undefined,
+  )
+  console.log(
+    `${JSON.stringify(range)}->${JSON.stringify({anchor, focus, backward})}`,
   )
   return anchor && focus ? {anchor, focus, backward} : null
 }
@@ -61,6 +65,7 @@ export function toSlateRange(
     return null
   }
   const range = anchor && focus ? {anchor, focus} : null
+  console.log(`${JSON.stringify(selection)}->${JSON.stringify(range)}`)
   return range
 }
 

@@ -1,4 +1,4 @@
-import {Path, Point, type Editor} from 'slate'
+import {Path, Point, Range, type Editor} from 'slate'
 import {toPortableTextRange} from '../../utils/ranges'
 import {fromSlateValue} from '../../utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../../utils/weakMaps'
@@ -249,41 +249,44 @@ export function createWithEventListeners(
       return
     }
 
-    editor.select = (location) => {
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'select',
-          selection: toPortableTextRange(
-            fromSlateValue(
-              editor.children,
-              editorActor.getSnapshot().context.schema.block.name,
-              KEY_TO_VALUE_ELEMENT.get(editor),
-            ),
-            Path.isPath(location)
-              ? {
-                  anchor: {
-                    path: location,
-                    offset: 0,
-                  },
-                  focus: {
-                    path: location,
-                    offset: 0,
-                  },
-                }
-              : Point.isPoint(location)
-                ? {
-                    anchor: location,
-                    focus: location,
-                  }
-                : location,
-            editorActor.getSnapshot().context.schema,
-          ),
-        },
-        editor,
-      })
-      return
-    }
+    // editor.select = (location) => {
+    //   if (Range.isRange(location) && location.focus.offset ===2 ) {
+    //   }
+    //   console.log(location)
+    //   editorActor.send({
+    //     type: 'behavior event',
+    //     behaviorEvent: {
+    //       type: 'select',
+    //       selection: toPortableTextRange(
+    //         fromSlateValue(
+    //           editor.children,
+    //           editorActor.getSnapshot().context.schema.block.name,
+    //           KEY_TO_VALUE_ELEMENT.get(editor),
+    //         ),
+    //         Path.isPath(location)
+    //           ? {
+    //               anchor: {
+    //                 path: location,
+    //                 offset: 0,
+    //               },
+    //               focus: {
+    //                 path: location,
+    //                 offset: 0,
+    //               },
+    //             }
+    //           : Point.isPoint(location)
+    //             ? {
+    //                 anchor: location,
+    //                 focus: location,
+    //               }
+    //             : location,
+    //         editorActor.getSnapshot().context.schema,
+    //       ),
+    //     },
+    //     editor,
+    //   })
+    //   return
+    // }
 
     return editor
   }
