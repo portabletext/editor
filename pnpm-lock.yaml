@@ -317,7 +317,7 @@ importers:
         version: link:../../packages/patches
       '@sanity/schema':
         specifier: ^3.63.0
-        version: 3.68.2(debug@4.4.0)
+        version: 3.68.3(@types/react@19.0.2)(debug@4.4.0)
       '@xstate/react':
         specifier: ^4.1.3
         version: 4.1.3(@types/react@19.0.2)(react@19.0.0)(xstate@5.19.0)
@@ -342,7 +342,7 @@ importers:
         version: 9.17.0
       '@sanity/types':
         specifier: ^3.63.0
-        version: 3.68.2(debug@4.4.0)
+        version: 3.68.3(@types/react@19.0.2)(debug@4.4.0)
       '@types/react':
         specifier: ^19.0.2
         version: 19.0.2
@@ -423,8 +423,8 @@ importers:
         specifier: ^2.0.16
         version: 2.0.16
       '@sanity/block-tools':
-        specifier: ^3.68.2
-        version: 3.68.2(debug@4.4.0)
+        specifier: ^3.68.3
+        version: 3.68.3(debug@4.4.0)
       '@sanity/diff-match-patch':
         specifier: ^3.1.2
         version: 3.1.2
@@ -432,11 +432,11 @@ importers:
         specifier: ^6.12.2
         version: 6.12.2(@types/babel__core@7.20.5)(@types/node@22.10.2)(babel-plugin-react-compiler@19.0.0-beta-201e55d-20241215)(debug@4.4.0)(typescript@5.7.2)
       '@sanity/schema':
-        specifier: ^3.68.2
-        version: 3.68.2(debug@4.4.0)
+        specifier: ^3.68.3
+        version: 3.68.3(@types/react@19.0.2)(debug@4.4.0)
       '@sanity/types':
-        specifier: ^3.68.2
-        version: 3.68.2(debug@4.4.0)
+        specifier: ^3.68.3
+        version: 3.68.3(@types/react@19.0.2)(debug@4.4.0)
       '@testing-library/jest-dom':
         specifier: ^6.6.3
         version: 6.6.3
@@ -2713,8 +2713,8 @@ packages:
   '@rushstack/ts-command-line@4.23.2':
     resolution: {integrity: sha512-JJ7XZX5K3ThBBva38aomgsPv1L7FV6XmSOcR6HtM7HDFZJkepqT65imw26h9ggGqMjsY0R9jcl30tzKcVj9aOQ==}
 
-  '@sanity/block-tools@3.68.2':
-    resolution: {integrity: sha512-IVpyYHdTsrQM/sEUdvvNvd6TiopDNj+K1lKogWHGWd3zRZtIBhLWrWk/ndN4kM+x62BoFFMNjthrMUJHZE4u7A==}
+  '@sanity/block-tools@3.68.3':
+    resolution: {integrity: sha512-XptqCO8yoj69fdao/goS69ITJatN6YD7aLOus6T5V13I62lFBdjmZS9nBJ7i1DxchKDbsUyuyw1aPcqoECsedA==}
 
   '@sanity/browserslist-config@1.0.5':
     resolution: {integrity: sha512-so+/UtCge8t1jq509hH0otbbptRz0zM/Aa0dh5MhMD7HGT6n2igWIL2VWH/9QR9e77Jn3dJsjz23mW1WCxT+sg==}
@@ -2753,11 +2753,13 @@ packages:
     peerDependencies:
       prettier: ^3.2.5
 
-  '@sanity/schema@3.68.2':
-    resolution: {integrity: sha512-p1Zexf4mmd2jyBNVwpcs9qDp3MV+OIeTUD6hx6+GRTIEygS+1RJgn/0fbaaR8HE1AUrRYkhApuiqQwKP9tsXGg==}
+  '@sanity/schema@3.68.3':
+    resolution: {integrity: sha512-JMeenS3OOJPoFbFZm1dPc/IJgpnj5hRvLlj23ayhNHr0aGuMHUprlgBOijUuXKu9XYK1AveeMhB9XDuzqRqMEA==}
 
-  '@sanity/types@3.68.2':
-    resolution: {integrity: sha512-Qj4OFOyH8icbAqk4vMQDVfmH2sLJ1k5qFHfGOODniTZdHwZf3flpoaBamJt0EIkC4zxdpsB8y5XSkiF562N/sg==}
+  '@sanity/types@3.68.3':
+    resolution: {integrity: sha512-JemibQXC08rHIXgjUH/p2TCiiD9wq6+dDkCvVHOooCvaYZNhAe2S9FAEkaA6qwWtPzyY2r6/tj1eDgNeLgXN1Q==}
+    peerDependencies:
+      '@types/react': ^19.0.2
 
   '@shikijs/core@1.24.3':
     resolution: {integrity: sha512-VRcf4GYUIkxIchGM9DrapRcxtgojg4IWKUtX5EtW+4PJiGzF2xQqZSv27PJt+WLc18KT3CNLpNWow9JYV5n+Rg==}
@@ -9191,9 +9193,9 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@sanity/block-tools@3.68.2(debug@4.4.0)':
+  '@sanity/block-tools@3.68.3(debug@4.4.0)':
     dependencies:
-      '@sanity/types': 3.68.2(debug@4.4.0)
+      '@sanity/types': 3.68.3(@types/react@19.0.2)(debug@4.4.0)
       '@types/react': 19.0.2
       get-random-values-esm: 1.0.2
       lodash: 4.17.21
@@ -9280,10 +9282,10 @@ snapshots:
       prettier: 3.4.2
       prettier-plugin-packagejson: 2.5.6(prettier@3.4.2)
 
-  '@sanity/schema@3.68.2(debug@4.4.0)':
+  '@sanity/schema@3.68.3(@types/react@19.0.2)(debug@4.4.0)':
     dependencies:
       '@sanity/generate-help-url': 3.0.0
-      '@sanity/types': 3.68.2(debug@4.4.0)
+      '@sanity/types': 3.68.3(@types/react@19.0.2)(debug@4.4.0)
       arrify: 2.0.1
       groq-js: 1.14.2
       humanize-list: 1.0.1
@@ -9291,10 +9293,11 @@ snapshots:
       lodash: 4.17.21
       object-inspect: 1.13.3
     transitivePeerDependencies:
+      - '@types/react'
       - debug
       - supports-color
 
-  '@sanity/types@3.68.2(debug@4.4.0)':
+  '@sanity/types@3.68.3(@types/react@19.0.2)(debug@4.4.0)':
     dependencies:
       '@sanity/client': 6.24.1(debug@4.4.0)
       '@types/react': 19.0.2
