@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.18.5](https://github.com/portabletext/editor/compare/editor-v1.18.4...editor-v1.18.5) (2024-12-20)
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^3.68.2 ([4a17f61](https://github.com/portabletext/editor/commit/4a17f616bba3c80b63c483f8f2e2ada9b6c69343))
+* **deps:** update sanity monorepo to ^3.68.3 ([4b633fa](https://github.com/portabletext/editor/commit/4b633fa15521b4fd2a65a3f97b284f65be3678c7))
+* **emoji picker:** only abort on Escape ([5a0ef7b](https://github.com/portabletext/editor/commit/5a0ef7b116d9dd2b5ff9145188411a8ed7741f28))
+* guard against trying to select a block directly ([bbd3a22](https://github.com/portabletext/editor/commit/bbd3a22e6740416dcc5e0584b2305eeb682cc6f0))
+
 ## [1.18.4](https://github.com/portabletext/editor/compare/editor-v1.18.3...editor-v1.18.4) (2024-12-20)
 
 
