@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.18.4](https://github.com/portabletext/editor/compare/editor-v1.18.3...editor-v1.18.4) (2024-12-20)
+
+
+### Bug Fixes
+
+* **schema definition:** remove `icon` ([b83c1e4](https://github.com/portabletext/editor/commit/b83c1e47c6bced5df40b1503e1cdb3f5a505de5e))
+
 ## [1.18.3](https://github.com/portabletext/editor/compare/editor-v1.18.2...editor-v1.18.3) (2024-12-20)
 
 
