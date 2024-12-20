@@ -1,5 +1,6 @@
 import type {KeyedSegment, PortableTextTextBlock} from '@sanity/types'
 import type {TextUnit} from 'slate'
+import type {SelectionMoveOptions} from 'slate/dist/interfaces/transforms/selection'
 import type {TextInsertTextOptions} from 'slate/dist/interfaces/transforms/text'
 import type {EditorContext} from '../editor/editor-snapshot'
 import type {PickFromUnion} from '../type-utils'
@@ -84,6 +85,10 @@ export type SyntheticBehaviorEvent =
   | {
       type: 'list item.toggle'
       listItem: string
+    }
+  | {
+      type: 'select'
+      selection: EditorSelection
     }
   | {
       type: 'style.toggle'
@@ -177,10 +182,6 @@ export type BehaviorActionIntend =
     }
   | {
       type: 'reselect'
-    }
-  | {
-      type: 'select'
-      selection: EditorSelection
     }
   | {
       type: 'select.previous block'
