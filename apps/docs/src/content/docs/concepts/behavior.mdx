@@ -111,10 +111,7 @@ Selectors are pure functions that derive state from the editor context (`context
 // import all selectors
 import * as selectors from '@portabletext/editor/selectors'
 // or individual ones
-import {
-  getFocusSpan,
-  getFocusTextBlock
-} from '@portabletext/editor/selectors'
+import {getFocusSpan, getFocusTextBlock} from '@portabletext/editor/selectors'
 ```
 
 The core selectors are useful helper functions for checking conditions of the editor, finding selected text, and more. You can manually do anything a selector can do by parsing the editor context.
