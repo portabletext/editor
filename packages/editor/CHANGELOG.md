@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.18.6](https://github.com/portabletext/editor/compare/editor-v1.18.5...editor-v1.18.6) (2024-12-24)
+
+
+### Bug Fixes
+
+* **deps:** update react compiler dependencies 🤖 ✨ ([566120a](https://github.com/portabletext/editor/commit/566120a4c3b99bca6250ddc5255793bb37076365))
+
 ## [1.18.5](https://github.com/portabletext/editor/compare/editor-v1.18.4...editor-v1.18.5) (2024-12-20)
 
 
