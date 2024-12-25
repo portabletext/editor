@@ -72,7 +72,7 @@
   },
   "dependencies": {
     "@portabletext/patches": "1.1.1",
-    "@xstate/react": "^5.0.0",
+    "@xstate/react": "^5.0.1",
     "debug": "^4.3.4",
     "get-random-values-esm": "^1.0.2",
     "lodash": "^4.17.21",
@@ -82,7 +82,7 @@
     "slate-dom": "^0.111.0",
     "slate-react": "0.112.0",
     "use-effect-event": "^1.0.2",
-    "xstate": "^5.19.0"
+    "xstate": "^5.19.1"
   },
   "devDependencies": {
     "@portabletext/toolkit": "^2.0.16",
