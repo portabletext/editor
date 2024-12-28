@@ -20,6 +20,7 @@ import {
   createEmojiPickerBehaviors,
   createLinkBehaviors,
   createMarkdownBehaviors,
+  defineBehavior,
 } from '@portabletext/editor/behaviors'
 import {useSelector} from '@xstate/react'
 import {CopyIcon, ImageIcon, TrashIcon} from 'lucide-react'
@@ -86,6 +87,19 @@ export function Editor(props: {editorRef: EditorActorRef}) {
             initialValue: value,
             behaviors: [
               ...coreBehaviors,
+              defineBehavior({
+                on: 'select',
+                actions: [
+                  ({event}) => [
+                    {
+                      type: 'effect',
+                      effect: () => {
+                        console.log(event)
+                      },
+                    },
+                  ],
+                ],
+              }),
               ...createEmojiPickerBehaviors({
                 matchEmojis: ({keyword}) => matchEmojis(keyword),
                 onMatchesChanged: ({matches}) => {
