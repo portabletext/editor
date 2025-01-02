@@ -741,7 +741,12 @@ export const addDecoratorActionImplementation: BehaviorActionImplementation<
         editor.marks = marks as Text
       }
     }
-    editor.onChange()
+
+    if (editor.selection) {
+      // Reselect
+      const selection = editor.selection
+      editor.selection = {...selection}
+    }
   }
 }
 
@@ -822,6 +827,12 @@ export const removeDecoratorActionImplementation: BehaviorActionImplementation<
         } as Text
         editor.marks = {marks: marks.marks, _type: 'span'} as Text
       }
+    }
+
+    if (editor.selection) {
+      // Reselect
+      const selection = editor.selection
+      editor.selection = {...selection}
     }
   }
 }
