@@ -527,6 +527,13 @@ function performDefaultAction({
       })
       break
     }
+    case 'select': {
+      behaviorActionImplementations.select({
+        context,
+        action,
+      })
+      break
+    }
     default: {
       behaviorActionImplementations['style.toggle']({
         context,

@@ -86,6 +86,10 @@ export type SyntheticBehaviorEvent =
       listItem: string
     }
   | {
+      type: 'select'
+      selection: EditorSelection
+    }
+  | {
       type: 'style.toggle'
       style: string
     }
@@ -174,10 +178,6 @@ export type BehaviorActionIntend =
   | {
       type: 'effect'
       effect: () => void
-    }
-  | {
-      type: 'select'
-      selection: EditorSelection
     }
   | {
       type: 'select.previous block'

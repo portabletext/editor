@@ -1,5 +1,9 @@
-import type {Editor} from 'slate'
+import {Editor} from 'slate'
+import {toPortableTextRange} from '../../utils/ranges'
+import {fromSlateValue} from '../../utils/values'
+import {KEY_TO_VALUE_ELEMENT} from '../../utils/weakMaps'
 import type {EditorActor} from '../editor-machine'
+import {isApplyingBehaviorActions} from '../with-applying-behavior-actions'
 
 export function createWithEventListeners(
   editorActor: EditorActor,
@@ -133,6 +137,17 @@ export function createWithEventListeners(
             })
             break
           }
+          case 'select': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {
+                type: 'select',
+                selection: event.selection,
+              },
+              editor,
+            })
+            break
+          }
           case 'style.toggle': {
             editorActor.send({
               type: 'behavior event',
@@ -151,6 +166,8 @@ export function createWithEventListeners(
         subscription.unsubscribe()
       }
     })
+
+    const {select} = editor
 
     editor.addMark = (mark) => {
       editorActor.send({
@@ -229,6 +246,33 @@ export function createWithEventListeners(
           type: 'insert.text',
           text,
           options,
+        },
+        editor,
+      })
+      return
+    }
+
+    editor.select = (location) => {
+      if (isApplyingBehaviorActions(editor)) {
+        select(location)
+        return
+      }
+
+      const range = Editor.range(editor, location)
+
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'select',
+          selection: toPortableTextRange(
+            fromSlateValue(
+              editor.children,
+              editorActor.getSnapshot().context.schema.block.name,
+              KEY_TO_VALUE_ELEMENT.get(editor),
+            ),
+            range,
+            editorActor.getSnapshot().context.schema,
+          ),
         },
         editor,
       })
