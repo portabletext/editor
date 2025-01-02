@@ -9,16 +9,6 @@ import type {PortableTextEditor} from '../PortableTextEditor'
 
 const debug = debugWithName('plugin:withHotKeys')
 
-const DEFAULT_HOTKEYS: HotkeyOptions = {
-  marks: {
-    'mod+b': 'strong',
-    'mod+i': 'em',
-    'mod+u': 'underline',
-    "mod+'": 'code',
-  },
-  custom: {},
-}
-
 /**
  * This plugin takes care of all hotkeys in the editor
  *
@@ -29,7 +19,7 @@ export function createWithHotkeys(
   hotkeysFromOptions?: HotkeyOptions,
 ): (editor: PortableTextSlateEditor & ReactEditor) => any {
   const reservedHotkeys = ['enter', 'tab', 'shift', 'delete', 'end']
-  const activeHotkeys = hotkeysFromOptions || DEFAULT_HOTKEYS // TODO: Merge where possible? A union?
+  const activeHotkeys = hotkeysFromOptions ?? {}
   return function withHotKeys(editor: PortableTextSlateEditor & ReactEditor) {
     editor.pteWithHotKeys = (event: KeyboardEvent<HTMLDivElement>): void => {
       // Wire up custom marks hotkeys
