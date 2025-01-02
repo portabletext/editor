@@ -30,6 +30,7 @@ import {KEY_TO_VALUE_ELEMENT} from '../utils/weakMaps'
 import type {EditorSchema} from './define-schema'
 import type {EditorContext} from './editor-snapshot'
 import {getActiveDecorators} from './get-active-decorators'
+import {withApplyingBehaviorActions} from './with-applying-behavior-actions'
 
 export * from 'xstate/guards'
 
@@ -152,6 +153,7 @@ export type InternalEditorEmittedEvent =
       description: string
       data: unknown
     }
+  | {type: 'select'; selection: EditorSelection}
   | {type: 'selection'; selection: EditorSelection}
   | {type: 'blurred'; event: FocusEvent<HTMLDivElement, Element>}
   | {type: 'focused'; event: FocusEvent<HTMLDivElement, Element>}
@@ -263,10 +265,12 @@ export const editorMachine = setup({
           return
         }
 
-        Editor.withoutNormalizing(event.editor, () => {
-          performAction({
-            context,
-            action: defaultAction,
+        withApplyingBehaviorActions(event.editor, () => {
+          Editor.withoutNormalizing(event.editor, () => {
+            performAction({
+              context,
+              action: defaultAction,
+            })
           })
         })
         event.editor.onChange()
@@ -324,15 +328,17 @@ export const editorMachine = setup({
                 (actionIntend) => actionIntend.type !== 'effect',
               ))
 
-          Editor.withoutNormalizing(event.editor, () => {
-            for (const actionIntend of actionIntends) {
-              const action = {
-                ...actionIntend,
-                editor: event.editor,
-              }
+          withApplyingBehaviorActions(event.editor, () => {
+            Editor.withoutNormalizing(event.editor, () => {
+              for (const actionIntend of actionIntends) {
+                const action = {
+                  ...actionIntend,
+                  editor: event.editor,
+                }
 
-              performAction({context, action})
-            }
+                performAction({context, action})
+              }
+            })
           })
           event.editor.onChange()
         }
@@ -348,10 +354,12 @@ export const editorMachine = setup({
           return
         }
 
-        Editor.withoutNormalizing(event.editor, () => {
-          performAction({
-            context,
-            action: defaultAction,
+        withApplyingBehaviorActions(event.editor, () => {
+          Editor.withoutNormalizing(event.editor, () => {
+            performAction({
+              context,
+              action: defaultAction,
+            })
           })
         })
         event.editor.onChange()
@@ -457,6 +465,9 @@ export const editorMachine = setup({
               actions: emit(({event}) => event),
             },
             'list item.*': {
+              actions: emit(({event}) => event),
+            },
+            'select': {
               actions: emit(({event}) => event),
             },
             'style.*': {
