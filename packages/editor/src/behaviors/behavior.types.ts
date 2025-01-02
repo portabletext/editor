@@ -176,9 +176,6 @@ export type BehaviorActionIntend =
       effect: () => void
     }
   | {
-      type: 'reselect'
-    }
-  | {
       type: 'select'
       selection: EditorSelection
     }
