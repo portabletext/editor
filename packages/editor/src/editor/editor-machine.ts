@@ -240,7 +240,7 @@ export const editorMachine = setup({
     'clear pending events': assign({
       pendingEvents: [],
     }),
-    'handle behavior event': enqueueActions(({context, event, enqueue}) => {
+    'handle behavior event': ({context, event}) => {
       assertEvent(event, ['behavior event'])
 
       const defaultAction =
@@ -335,21 +335,6 @@ export const editorMachine = setup({
             }
           })
           event.editor.onChange()
-
-          if (
-            actionIntends.some(
-              (actionIntend) => actionIntend.type === 'reselect',
-            )
-          ) {
-            enqueue.raise({
-              type: 'selection',
-              selection: toPortableTextRange(
-                event.editor.children,
-                event.editor.selection,
-                context.schema,
-              ),
-            })
-          }
         }
 
         if (behaviorOverwritten) {
@@ -371,7 +356,7 @@ export const editorMachine = setup({
         })
         event.editor.onChange()
       }
-    }),
+    },
   },
 }).createMachine({
   id: 'editor',
