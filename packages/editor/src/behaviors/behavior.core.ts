@@ -1,4 +1,5 @@
 import {coreBlockObjectBehaviors} from './behavior.core.block-objects'
+import {coreDecoratorBehaviors} from './behavior.core.decorators'
 import {coreListBehaviors} from './behavior.core.lists'
 import {defineBehavior} from './behavior.types'
 
@@ -12,6 +13,10 @@ const softReturn = defineBehavior({
  */
 export const coreBehaviors = [
   softReturn,
+  coreDecoratorBehaviors.strongShortcut,
+  coreDecoratorBehaviors.emShortcut,
+  coreDecoratorBehaviors.underlineShortcut,
+  coreDecoratorBehaviors.codeShortcut,
   coreBlockObjectBehaviors.arrowDownOnLonelyBlockObject,
   coreBlockObjectBehaviors.arrowUpOnLonelyBlockObject,
   coreBlockObjectBehaviors.breakingBlockObject,
@@ -29,6 +34,7 @@ export const coreBehaviors = [
  */
 export const coreBehavior = {
   softReturn,
+  decorators: coreDecoratorBehaviors,
   blockObjects: coreBlockObjectBehaviors,
   lists: coreListBehaviors,
 }
