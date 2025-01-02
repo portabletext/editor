@@ -260,14 +260,6 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
 
     Transforms.select(action.editor, nextBlockPath)
   },
-  'reselect': ({action}) => {
-    const selection = action.editor.selection
-
-    if (selection) {
-      Transforms.select(action.editor, {...selection})
-      action.editor.selection = {...selection}
-    }
-  },
   'style.toggle': toggleStyleActionImplementation,
   'style.add': addStyleActionImplementation,
   'style.remove': removeStyleActionImplementation,
@@ -376,13 +368,6 @@ export function performAction({
     }
     case 'select.next block': {
       behaviorActionImplementations['select.next block']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'reselect': {
-      behaviorActionImplementations.reselect({
         context,
         action,
       })
