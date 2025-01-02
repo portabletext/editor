@@ -2,7 +2,7 @@ import type {KeyedSegment, PortableTextTextBlock} from '@sanity/types'
 import type {TextUnit} from 'slate'
 import type {TextInsertTextOptions} from 'slate/dist/interfaces/transforms/text'
 import type {EditorContext} from '../editor/editor-snapshot'
-import type {PickFromUnion} from '../type-utils'
+import type {OmitFromUnion, PickFromUnion} from '../type-utils'
 import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
 
 /**
@@ -127,6 +127,10 @@ export type NativeBehaviorEvent =
 export type BehaviorActionIntend =
   | SyntheticBehaviorEvent
   | {
+      type: 'raise'
+      event: SyntheticBehaviorEvent
+    }
+  | {
       type: 'insert.span'
       text: string
       annotations?: Array<{
@@ -209,8 +213,21 @@ export type BehaviorActionIntend =
 /**
  * @beta
  */
-export type BehaviorAction = BehaviorActionIntend & {
+export type BehaviorAction = OmitFromUnion<
+  BehaviorActionIntend,
+  'type',
+  'raise'
+> & {
   editor: PortableTextSlateEditor
+}
+
+/**
+ * @beta
+ */
+export function raise(
+  event: SyntheticBehaviorEvent,
+): PickFromUnion<BehaviorActionIntend, 'type', 'raise'> {
+  return {type: 'raise', event}
 }
 
 /**
