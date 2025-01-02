@@ -242,7 +242,7 @@ export const editorMachine = setup({
     'clear pending events': assign({
       pendingEvents: [],
     }),
-    'handle behavior event': ({context, event}) => {
+    'handle behavior event': enqueueActions(({context, event, enqueue}) => {
       assertEvent(event, ['behavior event'])
 
       const defaultAction =
@@ -331,6 +331,15 @@ export const editorMachine = setup({
           withApplyingBehaviorActions(event.editor, () => {
             Editor.withoutNormalizing(event.editor, () => {
               for (const actionIntend of actionIntends) {
+                if (actionIntend.type === 'raise') {
+                  enqueue.raise({
+                    type: 'behavior event',
+                    behaviorEvent: actionIntend.event,
+                    editor: event.editor,
+                  })
+                  continue
+                }
+
                 const action = {
                   ...actionIntend,
                   editor: event.editor,
@@ -364,7 +373,7 @@ export const editorMachine = setup({
         })
         event.editor.onChange()
       }
-    },
+    }),
   },
 }).createMachine({
   id: 'editor',
