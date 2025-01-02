@@ -275,27 +275,9 @@ function Toolbar() {
   const editor = usePortableTextEditor()
   usePortableTextEditorSelection()
 
-  const decoratorButtons = editor.schemaTypes.decorators.map((decorator) => {
-    return (
-      <button
-        key={decorator.value}
-        style={{
-          textDecoration: PortableTextEditor.isMarkActive(
-            editor,
-            decorator.value,
-          )
-            ? 'underline'
-            : 'unset',
-        }}
-        onClick={() => {
-          PortableTextEditor.toggleMark(editor, decorator.value)
-          PortableTextEditor.focus(editor)
-        }}
-      >
-        {decorator.value}
-      </button>
-    )
-  })
+  const decoratorButtons = editor.schemaTypes.decorators.map((decorator) => (
+    <DecoratorButton key={decorator.value} decorator={decorator.value} />
+  ))
 
   const linkButton = (
     <button
@@ -405,6 +387,28 @@ function Toolbar() {
       <div>{imageButton}</div>
       <div>{stockTickerButton}</div>
     </>
+  )
+}
+
+function DecoratorButton(props: {decorator: string}) {
+  const editor = usePortableTextEditor()
+  usePortableTextEditorSelection()
+
+  return (
+    <button
+      key={props.decorator}
+      style={{
+        textDecoration: PortableTextEditor.isMarkActive(editor, props.decorator)
+          ? 'underline'
+          : 'unset',
+      }}
+      onClick={() => {
+        PortableTextEditor.toggleMark(editor, props.decorator)
+        PortableTextEditor.focus(editor)
+      }}
+    >
+      {props.decorator}
+    </button>
   )
 }
 
