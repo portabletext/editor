@@ -22,6 +22,7 @@ export {
 } from './behavior.markdown'
 export {
   defineBehavior,
+  raise,
   type Behavior,
   type BehaviorActionIntend,
   type BehaviorActionIntendSet,
