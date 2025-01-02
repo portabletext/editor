@@ -484,24 +484,22 @@ export function RouteEventsToChanges(props: {
           })
           break
         }
-        case 'annotation.add':
-        case 'annotation.remove':
-        case 'annotation.toggle':
-        case 'blur':
-        case 'decorator.add':
-        case 'decorator.remove':
-        case 'decorator.toggle':
-        case 'focus':
-        case 'insert.block object':
-        case 'insert.inline object':
-        case 'list item.toggle':
-        case 'style.toggle':
-        case 'patches':
-        case 'editable':
-        case 'read only':
-          break
-        default:
+        case 'mutation': {
           handleChange(event)
+          break
+        }
+        case 'ready': {
+          handleChange(event)
+          break
+        }
+        case 'selection': {
+          handleChange(event)
+          break
+        }
+        case 'unset': {
+          handleChange(event)
+          break
+        }
       }
     })
     return () => {
