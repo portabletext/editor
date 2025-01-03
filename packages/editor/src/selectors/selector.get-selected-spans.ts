@@ -67,9 +67,11 @@ export const getSelectedSpans: EditorSelector<
             path: [{_key: block._key}, 'children', {_key: child._key}],
           })
 
-          if (startBlockKey === endBlockKey) {
+          if (startSpanKey === endSpanKey) {
             break
           }
+
+          continue
         }
 
         if (endSpanKey && child._key === endSpanKey) {
