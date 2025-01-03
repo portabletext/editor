@@ -63,10 +63,7 @@ export type EditorEvent = PickFromUnion<
   'type',
   | 'annotation.add'
   | 'annotation.remove'
-  | 'annotation.toggle'
   | 'blur'
-  | 'decorator.add'
-  | 'decorator.remove'
   | 'decorator.toggle'
   | 'focus'
   | 'insert.block object'

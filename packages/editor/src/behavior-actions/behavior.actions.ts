@@ -275,6 +275,27 @@ export function performAction({
   action: BehaviorAction
 }) {
   switch (action.type) {
+    case 'annotation.toggle': {
+      behaviorActionImplementations['annotation.toggle']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'decorator.add': {
+      behaviorActionImplementations['decorator.add']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'decorator.remove': {
+      behaviorActionImplementations['decorator.remove']({
+        context,
+        action,
+      })
+      break
+    }
     case 'delete.block': {
       behaviorActionImplementations['delete.block']({
         context,
@@ -429,29 +450,8 @@ function performDefaultAction({
       })
       break
     }
-    case 'annotation.toggle': {
-      behaviorActionImplementations['annotation.toggle']({
-        context,
-        action,
-      })
-      break
-    }
     case 'blur': {
       behaviorActionImplementations.blur({
-        context,
-        action,
-      })
-      break
-    }
-    case 'decorator.add': {
-      behaviorActionImplementations['decorator.add']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'decorator.remove': {
-      behaviorActionImplementations['decorator.remove']({
         context,
         action,
       })
