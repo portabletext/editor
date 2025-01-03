@@ -296,9 +296,9 @@ export type BehaviorActionIntendSet<
  * @beta
  */
 export function defineBehavior<
-  TAnyBehaviorEventType extends BehaviorEvent['type'],
+  TBehaviorEventType extends BehaviorEvent['type'],
   TGuardResponse = true,
->(behavior: Behavior<TAnyBehaviorEventType, TGuardResponse>): Behavior {
+>(behavior: Behavior<TBehaviorEventType, TGuardResponse>): Behavior {
   return behavior as unknown as Behavior
 }
 
