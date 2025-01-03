@@ -39,44 +39,11 @@ export function createWithEventListeners(
             })
             break
           }
-          case 'annotation.toggle': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {
-                type: 'annotation.toggle',
-                annotation: event.annotation,
-              },
-              editor,
-            })
-            break
-          }
           case 'blur': {
             editorActor.send({
               type: 'behavior event',
               behaviorEvent: {
                 type: 'blur',
-              },
-              editor,
-            })
-            break
-          }
-          case 'decorator.add': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {
-                type: 'decorator.add',
-                decorator: event.decorator,
-              },
-              editor,
-            })
-            break
-          }
-          case 'decorator.remove': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {
-                type: 'decorator.remove',
-                decorator: event.decorator,
               },
               editor,
             })
@@ -168,30 +135,6 @@ export function createWithEventListeners(
     })
 
     const {select} = editor
-
-    editor.addMark = (mark) => {
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'decorator.add',
-          decorator: mark,
-        },
-        editor,
-      })
-      return
-    }
-
-    editor.removeMark = (mark) => {
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'decorator.remove',
-          decorator: mark,
-        },
-        editor,
-      })
-      return
-    }
 
     editor.deleteBackward = (unit) => {
       editorActor.send({

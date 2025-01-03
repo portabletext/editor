@@ -166,10 +166,7 @@ export type InternalEditorEmittedEvent =
       'type',
       | 'annotation.add'
       | 'annotation.remove'
-      | 'annotation.toggle'
       | 'blur'
-      | 'decorator.add'
-      | 'decorator.remove'
       | 'decorator.toggle'
       | 'insert.block object'
       | 'insert.inline object'
@@ -452,13 +449,7 @@ export const editorMachine = setup({
             'behavior event': {
               actions: 'handle behavior event',
             },
-            'annotation.add': {
-              actions: emit(({event}) => event),
-            },
-            'annotation.remove': {
-              actions: emit(({event}) => event),
-            },
-            'annotation.toggle': {
+            'annotation.*': {
               actions: emit(({event}) => event),
             },
             'blur': {

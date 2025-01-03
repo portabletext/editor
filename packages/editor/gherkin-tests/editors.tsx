@@ -12,6 +12,7 @@ import {
 import type {Behavior} from '../src/behaviors'
 import type {EditorEmittedEvent} from '../src/editor/editor-machine'
 import {EditorProvider, useEditor} from '../src/editor/editor-provider'
+import * as selectors from '../src/selectors'
 import type {EditorActorRef, TestActorRef} from './test-machine'
 
 export function Editors(props: {testRef: TestActorRef}) {
@@ -221,6 +222,10 @@ function InlineObjectButtons() {
 
 function CommentButtons() {
   const editor = useEditor()
+  const isActive = useEditorSelector(
+    editor,
+    selectors.isActiveAnnotation('comment'),
+  )
 
   return (
     <>
@@ -259,13 +264,22 @@ function CommentButtons() {
         type="button"
         data-testid="button-toggle-comment"
         onClick={() => {
-          editor.send({
-            type: 'annotation.toggle',
-            annotation: {
-              name: 'comment',
-              value: {text: 'Consider rewriting this'},
-            },
-          })
+          if (isActive) {
+            editor.send({
+              type: 'annotation.remove',
+              annotation: {
+                name: 'comment',
+              },
+            })
+          } else {
+            editor.send({
+              type: 'annotation.add',
+              annotation: {
+                name: 'comment',
+                value: {text: 'Consider rewriting this'},
+              },
+            })
+          }
           editor.send({type: 'focus'})
         }}
       >
@@ -277,6 +291,10 @@ function CommentButtons() {
 
 function LinkButtons() {
   const editor = useEditor()
+  const isActive = useEditorSelector(
+    editor,
+    selectors.isActiveAnnotation('link'),
+  )
 
   return (
     <>
@@ -315,13 +333,22 @@ function LinkButtons() {
         type="button"
         data-testid="button-toggle-link"
         onClick={() => {
-          editor.send({
-            type: 'annotation.toggle',
-            annotation: {
-              name: 'link',
-              value: {href: 'https://example.com'},
-            },
-          })
+          if (isActive) {
+            editor.send({
+              type: 'annotation.remove',
+              annotation: {
+                name: 'link',
+              },
+            })
+          } else {
+            editor.send({
+              type: 'annotation.add',
+              annotation: {
+                name: 'link',
+                value: {href: 'https://example.com'},
+              },
+            })
+          }
           editor.send({type: 'focus'})
         }}
       >
