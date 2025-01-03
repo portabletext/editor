@@ -89,9 +89,56 @@ Additional actions
 - delete.block
 - delete.text
 - effect
+- raise
 - select.previous block
 - select.next block
 - style.add
 - style.remove
 - text block.set
 - text block.unset
+
+## Raising Synthetic Events
+
+Synthetic events can be raised using the `raise` action:
+
+```tsx
+const raisedUppercaseA = defineBehavior({
+  on: 'insert.text',
+  guard: ({event, context}) => event.text === 'a',
+  actions: [
+    ({event, context}) => [
+      {type: 'raise', event: {type: 'insert.text', text: 'A'}},
+    ],
+  ],
+})
+```
+
+The `raise` action also has a handy shorthand function:
+
+```tsx
+const raisedUppercaseA = defineBehavior({
+  on: 'insert.text',
+  guard: ({event, context}) => event.text === 'a',
+  actions: [({event, context}) => [raise({type: 'insert.text', text: 'A'})]],
+})
+```
+
+When raising and event rather than performing the action directly, the event is sent back into the editor, allowing other behaviors to respond:
+
+```tsx
+const unoReverseUppercaseA = defineBehavior({
+  on: 'insert.text',
+  guard: ({event, context}) => event.text === 'A',
+  actions: [({event, context}) => [{type: 'insert.text', text: 'a'}]],
+})
+```
+
+However, be careful as this can can lead to infinite loops:
+
+```tsx
+const raisedLowercaseA = defineBehavior({
+  on: 'insert.text',
+  guard: ({event, context}) => event.text === 'A',
+  actions: [({event, context}) => [raise({type: 'insert.text', text: 'a'})]],
+})
+```
