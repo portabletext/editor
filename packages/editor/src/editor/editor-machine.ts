@@ -181,7 +181,7 @@ export type InternalEditorEmittedEvent =
 export const editorMachine = setup({
   types: {
     context: {} as {
-      behaviors: Array<Behavior>
+      behaviors: Set<Behavior>
       keyGenerator: () => string
       pendingEvents: Array<PatchEvent | MutationEvent>
       schema: EditorSchema
@@ -205,7 +205,7 @@ export const editorMachine = setup({
     'assign behaviors': assign({
       behaviors: ({event}) => {
         assertEvent(event, 'update behaviors')
-        return event.behaviors
+        return new Set(event.behaviors)
       },
     }),
     'assign schema': assign({
@@ -253,7 +253,7 @@ export const editorMachine = setup({
               editor: event.editor,
             } satisfies BehaviorAction)
 
-      const eventBehaviors = context.behaviors.filter(
+      const eventBehaviors = [...context.behaviors.values()].filter(
         (behavior) => behavior.on === event.behaviorEvent.type,
       )
 
@@ -375,7 +375,7 @@ export const editorMachine = setup({
 }).createMachine({
   id: 'editor',
   context: ({input}) => ({
-    behaviors: input.behaviors ?? coreBehaviors,
+    behaviors: new Set(input.behaviors ?? coreBehaviors),
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
     schema: input.schema,
