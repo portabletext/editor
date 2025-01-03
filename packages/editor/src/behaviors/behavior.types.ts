@@ -23,22 +23,7 @@ export type SyntheticBehaviorEvent =
       }
     }
   | {
-      type: 'annotation.toggle'
-      annotation: {
-        name: string
-        value: {[prop: string]: unknown}
-      }
-    }
-  | {
       type: 'blur'
-    }
-  | {
-      type: 'decorator.add'
-      decorator: string
-    }
-  | {
-      type: 'decorator.remove'
-      decorator: string
     }
   | {
       type: 'decorator.toggle'
@@ -129,6 +114,21 @@ export type BehaviorActionIntend =
   | {
       type: 'raise'
       event: SyntheticBehaviorEvent
+    }
+  | {
+      type: 'annotation.toggle'
+      annotation: {
+        name: string
+        value: {[prop: string]: unknown}
+      }
+    }
+  | {
+      type: 'decorator.add'
+      decorator: string
+    }
+  | {
+      type: 'decorator.remove'
+      decorator: string
     }
   | {
       type: 'insert.span'

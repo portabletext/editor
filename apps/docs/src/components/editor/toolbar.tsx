@@ -128,16 +128,25 @@ function AnnotationButton(props: {annotation: {name: string}}) {
           variant={active ? 'default' : 'ghost'}
           size="icon"
           onClick={() => {
-            editor.send({
-              type: 'annotation.toggle',
-              annotation: {
-                name: props.annotation.name,
-                value:
-                  props.annotation.name === 'link'
-                    ? {href: 'https://example.com'}
-                    : {},
-              },
-            })
+            if (active) {
+              editor.send({
+                type: 'annotation.remove',
+                annotation: {
+                  name: props.annotation.name,
+                },
+              })
+            } else {
+              editor.send({
+                type: 'annotation.add',
+                annotation: {
+                  name: props.annotation.name,
+                  value:
+                    props.annotation.name === 'link'
+                      ? {href: 'https://example.com'}
+                      : {},
+                },
+              })
+            }
             editor.send({type: 'focus'})
           }}
         >
