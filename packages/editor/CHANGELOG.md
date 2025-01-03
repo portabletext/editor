@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.19.0](https://github.com/portabletext/editor/compare/editor-v1.18.7...editor-v1.19.0) (2025-01-03)
+
+
+### Features
+
+* **behavior:** add `raise` action for raising synthetic events ([3cd64ac](https://github.com/portabletext/editor/commit/3cd64ac994f2e384bd7782424bc6f6a98286a650))
+* **behavior:** add `select` event ([b2dcb37](https://github.com/portabletext/editor/commit/b2dcb372f5d7796ac44b35a1ac961d81304e5689))
+
+
+### Bug Fixes
+
+* **behavior:** remove `annotation.toggle` and `decorator.(add|remove)` events ([3888535](https://github.com/portabletext/editor/commit/38885357f0bb17a7ad221bf7b132b5c97e7fdd64))
+* **behavior:** remove `reselect` action ([eddd8b3](https://github.com/portabletext/editor/commit/eddd8b3aeddb12e2a29436ba23a39fce89294286))
+* **selectors:** fix issue with `getSelectedSpans` selecting too much ([bd0f8c0](https://github.com/portabletext/editor/commit/bd0f8c03e84f0fd58193215409c1572f8e3f4f2a))
+
 ## [1.18.7](https://github.com/portabletext/editor/compare/editor-v1.18.6...editor-v1.18.7) (2024-12-30)
 
 
