@@ -80,6 +80,14 @@ export type InternalEditorEvent =
       nativeEvent?: {preventDefault: () => void}
     }
   | {
+      type: 'add behavior'
+      behavior: Behavior
+    }
+  | {
+      type: 'remove behavior'
+      behavior: Behavior
+    }
+  | {
       type: 'update readOnly'
       readOnly: boolean
     }
@@ -202,6 +210,22 @@ export const editorMachine = setup({
     },
   },
   actions: {
+    'add behavior to context': assign({
+      behaviors: ({context, event}) => {
+        assertEvent(event, 'add behavior')
+
+        return new Set([...context.behaviors, event.behavior])
+      },
+    }),
+    'remove behavior from context': assign({
+      behaviors: ({context, event}) => {
+        assertEvent(event, 'remove behavior')
+
+        context.behaviors.delete(event.behavior)
+
+        return new Set([...context.behaviors])
+      },
+    }),
     'assign behaviors': assign({
       behaviors: ({event}) => {
         assertEvent(event, 'update behaviors')
@@ -385,6 +409,8 @@ export const editorMachine = setup({
     value: input.value,
   }),
   on: {
+    'add behavior': {actions: 'add behavior to context'},
+    'remove behavior': {actions: 'remove behavior from context'},
     'unset': {actions: emit(({event}) => event)},
     'value changed': {actions: emit(({event}) => event)},
     'invalid value': {actions: emit(({event}) => event)},
