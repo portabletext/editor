@@ -15,7 +15,6 @@ import {
   type RenderStyleFunction,
 } from '@portabletext/editor'
 import {
-  coreBehaviors,
   createCodeEditorBehaviors,
   createEmojiPickerBehaviors,
   createLinkBehaviors,
@@ -68,8 +67,10 @@ export function Editor(props: {editorRef: EditorActorRef}) {
   const patchesReceived = useSelector(props.editorRef, (s) =>
     reverse(s.context.patchesReceived),
   )
-  const [emojiMatches, setEmojiMatches] = useState<Array<EmojiMatch>>([])
-  const [selectedEmojiIndex, setSelectedEmojiIndex] = useState(0)
+  const [enableMarkdownPlugin, setEnableMarkdownPlugin] = useState(false)
+  const [enableEmojiPickerPlugin, setEnableEmojiPickerPlugin] = useState(false)
+  const [enableCodeEditorPlugin, setEnableCodeEditorPlugin] = useState(false)
+  const [enableLinkPlugin, setEnableLinkPlugin] = useState(false)
 
   return (
     <div
@@ -84,55 +85,12 @@ export function Editor(props: {editorRef: EditorActorRef}) {
         <EditorProvider
           initialConfig={{
             initialValue: value,
-            behaviors: [
-              ...coreBehaviors,
-              ...createEmojiPickerBehaviors({
-                matchEmojis: ({keyword}) => matchEmojis(keyword),
-                onMatchesChanged: ({matches}) => {
-                  setEmojiMatches(matches)
-                },
-                onSelectedIndexChanged: ({selectedIndex}) => {
-                  setSelectedEmojiIndex(selectedIndex)
-                },
-                parseMatch: ({match}) => match.emoji,
-              }),
-              ...createLinkBehaviors({
-                linkAnnotation: ({schema, url}) => {
-                  const name = schema.annotations.find(
-                    (annotation) => annotation.name === 'link',
-                  )?.name
-                  return name ? {name, value: {href: url}} : undefined
-                },
-              }),
-              ...createMarkdownBehaviors({
-                horizontalRuleObject: ({schema}) => {
-                  const name = schema.blockObjects.find(
-                    (object) => object.name === 'break',
-                  )?.name
-                  return name ? {name} : undefined
-                },
-                defaultStyle: ({schema}) => schema.styles[0].value,
-                headingStyle: ({schema, level}) =>
-                  schema.styles.find((style) => style.value === `h${level}`)
-                    ?.value,
-                blockquoteStyle: ({schema}) =>
-                  schema.styles.find((style) => style.value === 'blockquote')
-                    ?.value,
-                unorderedListStyle: ({schema}) =>
-                  schema.lists.find((list) => list.value === 'bullet')?.value,
-                orderedListStyle: ({schema}) =>
-                  schema.lists.find((list) => list.value === 'number')?.value,
-              }),
-              ...createCodeEditorBehaviors({
-                moveBlockUpShortcut: 'Alt+ArrowUp',
-                moveBlockDownShortcut: 'Alt+ArrowDown',
-              }),
-            ],
             keyGenerator,
             readOnly,
             schemaDefinition,
           }}
         >
+          {enableMarkdownPlugin ? <MarkdownPlugin /> : null}
           <EditorEventListener
             editorRef={props.editorRef}
             value={value}
@@ -156,10 +114,9 @@ export function Editor(props: {editorRef: EditorActorRef}) {
           />
           <div className="flex flex-col gap-2">
             <PortableTextToolbar schemaDefinition={schemaDefinition} />
-            <EmojiListBox
-              matches={emojiMatches}
-              selectedIndex={selectedEmojiIndex}
-            />
+            {enableEmojiPickerPlugin ? <EmojiPickerPlugin /> : null}
+            {enableCodeEditorPlugin ? <CodeEditorPlugin /> : null}
+            {enableLinkPlugin ? <LinkPlugin /> : null}
             <div className="flex gap-2 items-center">
               <ErrorBoundary
                 fallbackProps={{area: 'PortableTextEditable'}}
@@ -219,6 +176,46 @@ export function Editor(props: {editorRef: EditorActorRef}) {
           <div className="flex flex-col gap-2">
             <Toolbar>
               <Switch
+                isSelected={enableMarkdownPlugin}
+                onChange={() => {
+                  setEnableMarkdownPlugin(!enableMarkdownPlugin)
+                }}
+              >
+                Markdown plugin
+              </Switch>
+            </Toolbar>
+            <Toolbar>
+              <Switch
+                isSelected={enableEmojiPickerPlugin}
+                onChange={() => {
+                  setEnableEmojiPickerPlugin(!enableEmojiPickerPlugin)
+                }}
+              >
+                Emoji picker plugin
+              </Switch>
+            </Toolbar>
+            <Toolbar>
+              <Switch
+                isSelected={enableCodeEditorPlugin}
+                onChange={() => {
+                  setEnableCodeEditorPlugin(!enableCodeEditorPlugin)
+                }}
+              >
+                Code editor plugin
+              </Switch>
+            </Toolbar>
+            <Toolbar>
+              <Switch
+                isSelected={enableLinkPlugin}
+                onChange={() => {
+                  setEnableLinkPlugin(!enableLinkPlugin)
+                }}
+              >
+                Link plugin
+              </Switch>
+            </Toolbar>
+            <Toolbar>
+              <Switch
                 isSelected={showingPatchesPreview}
                 onChange={() => {
                   props.editorRef.send({type: 'toggle patches preview'})
@@ -272,6 +269,125 @@ export function Editor(props: {editorRef: EditorActorRef}) {
       </ErrorBoundary>
     </div>
   )
+}
+
+function MarkdownPlugin() {
+  const editor = useEditor()
+
+  useEffect(() => {
+    const behaviors = createMarkdownBehaviors({
+      horizontalRuleObject: ({schema}) => {
+        const name = schema.blockObjects.find(
+          (object) => object.name === 'break',
+        )?.name
+        return name ? {name} : undefined
+      },
+      defaultStyle: ({schema}) => schema.styles[0].value,
+      headingStyle: ({schema, level}) =>
+        schema.styles.find((style) => style.value === `h${level}`)?.value,
+      blockquoteStyle: ({schema}) =>
+        schema.styles.find((style) => style.value === 'blockquote')?.value,
+      unorderedListStyle: ({schema}) =>
+        schema.lists.find((list) => list.value === 'bullet')?.value,
+      orderedListStyle: ({schema}) =>
+        schema.lists.find((list) => list.value === 'number')?.value,
+    })
+
+    const unregisterBehaviors = behaviors.map((behavior) =>
+      editor.registerBehavior({behavior}),
+    )
+
+    return () => {
+      for (const unregisterBehavior of unregisterBehaviors) {
+        unregisterBehavior()
+      }
+    }
+  }, [editor])
+
+  return null
+}
+
+function EmojiPickerPlugin() {
+  const editor = useEditor()
+  const [emojiMatches, setEmojiMatches] = useState<Array<EmojiMatch>>([])
+  const [selectedEmojiIndex, setSelectedEmojiIndex] = useState(0)
+
+  useEffect(() => {
+    const behaviors = createEmojiPickerBehaviors({
+      matchEmojis: ({keyword}) => matchEmojis(keyword),
+      onMatchesChanged: ({matches}) => {
+        setEmojiMatches(matches)
+      },
+      onSelectedIndexChanged: ({selectedIndex}) => {
+        setSelectedEmojiIndex(selectedIndex)
+      },
+      parseMatch: ({match}) => match.emoji,
+    })
+
+    const unregisterBehaviors = behaviors.map((behavior) =>
+      editor.registerBehavior({behavior}),
+    )
+
+    return () => {
+      for (const unregisterBehavior of unregisterBehaviors) {
+        unregisterBehavior()
+      }
+    }
+  }, [editor])
+
+  return (
+    <EmojiListBox matches={emojiMatches} selectedIndex={selectedEmojiIndex} />
+  )
+}
+
+function CodeEditorPlugin() {
+  const editor = useEditor()
+
+  useEffect(() => {
+    const behaviors = createCodeEditorBehaviors({
+      moveBlockUpShortcut: 'Alt+ArrowUp',
+      moveBlockDownShortcut: 'Alt+ArrowDown',
+    })
+
+    const unregisterBehaviors = behaviors.map((behavior) =>
+      editor.registerBehavior({behavior}),
+    )
+
+    return () => {
+      for (const unregisterBehavior of unregisterBehaviors) {
+        unregisterBehavior()
+      }
+    }
+  }, [editor])
+
+  return null
+}
+
+function LinkPlugin() {
+  const editor = useEditor()
+
+  useEffect(() => {
+    const behaviors = createLinkBehaviors({
+      linkAnnotation: ({schema, url}) => {
+        const name = schema.annotations.find(
+          (annotation) => annotation.name === 'link',
+        )?.name
+        return name ? {name, value: {href: url}} : undefined
+      },
+    })
+
+    const unregisterBehaviors = behaviors.map((behavior) =>
+      editor.registerBehavior({behavior}),
+    )
+
+    return () => {
+      for (const unregisterBehavior of unregisterBehaviors) {
+        unregisterBehavior()
+      }
+    }
+  }, [editor])
+
+  return null
 }
 
 function EditorEventListener(props: {
