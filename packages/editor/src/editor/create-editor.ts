@@ -82,6 +82,10 @@ export type EditorEvent = PickFromUnion<
  */
 export type Editor = {
   getSnapshot: () => EditorSnapshot
+  /**
+   * @beta
+   */
+  registerBehavior: (config: {behavior: Behavior}) => () => void
   send: (event: EditorEvent) => void
   on: ActorRef<Snapshot<unknown>, EventObject, EditorEmittedEvent>['on']
   _internal: {
@@ -135,6 +139,19 @@ function createEditorFromActor(editorActor: EditorActor): Editor {
         editorActorSnapshot: editorActor.getSnapshot(),
         slateEditorInstance: slateEditor.instance,
       }),
+    registerBehavior: (config) => {
+      editorActor.send({
+        type: 'add behavior',
+        behavior: config.behavior,
+      })
+
+      return () => {
+        editorActor.send({
+          type: 'remove behavior',
+          behavior: config.behavior,
+        })
+      }
+    },
     send: (event) => {
       editorActor.send(event)
     },
