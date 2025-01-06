@@ -7,8 +7,8 @@ type Props = {
 
 const DefaultObject = (props: Props): JSX.Element => {
   return (
-    <div>
-      <pre>{JSON.stringify(props.value, null, 2)}</pre>
+    <div style={{userSelect: 'none'}}>
+      [{props.value._type}: {props.value._key}]
     </div>
   )
 }
