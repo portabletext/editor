@@ -88,7 +88,7 @@
     "@portabletext/toolkit": "^2.0.16",
     "@sanity/block-tools": "^3.68.3",
     "@sanity/diff-match-patch": "^3.1.2",
-    "@sanity/pkg-utils": "^6.13.0",
+    "@sanity/pkg-utils": "^6.13.1",
     "@sanity/schema": "^3.68.3",
     "@sanity/types": "^3.68.3",
     "@testing-library/jest-dom": "^6.6.3",
