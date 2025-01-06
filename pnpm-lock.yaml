@@ -500,9 +500,6 @@ importers:
       rxjs:
         specifier: ^7.8.1
         version: 7.8.1
-      styled-components:
-        specifier: ^6.1.13
-        version: 6.1.13(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       typescript:
         specifier: 5.7.2
         version: 5.7.2

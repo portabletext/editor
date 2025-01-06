@@ -30,11 +30,6 @@ import {debugWithName} from '../../utils/debug'
 import {fromSlateValue} from '../../utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../../utils/weakMaps'
 import ObjectNode from '../nodes/DefaultObject'
-import {
-  DefaultBlockObject,
-  DefaultListItem,
-  DefaultListItemInner,
-} from '../nodes/index'
 import {DraggableBlock} from './DraggableBlock'
 
 const debug = debugWithName('components:Element')
@@ -185,12 +180,14 @@ export const Element: FunctionComponent<ElementProps> = ({
       })
     }
     let level: number | undefined
+
     if (isListItem) {
       if (typeof element.level === 'number') {
         level = element.level
       }
       className += ` pt-list-item pt-list-item-${element.listItem} pt-list-item-level-${level || 1}`
     }
+
     if (editor.isListBlock(value) && isListItem && element.listItem) {
       const listType = schemaTypes.lists.find(
         (item) => item.value === element.listItem,
@@ -207,17 +204,9 @@ export const Element: FunctionComponent<ElementProps> = ({
           level: value.level || 1,
           editorElementRef: blockRef,
         })
-      } else {
-        renderedBlock = (
-          <DefaultListItem
-            listStyle={value.listItem || schemaTypes.lists[0].value}
-            listLevel={value.level || 1}
-          >
-            <DefaultListItemInner>{renderedBlock}</DefaultListItemInner>
-          </DefaultListItem>
-        )
       }
     }
+
     const renderProps: Omit<BlockRenderProps, 'type'> = Object.defineProperty(
       {
         children: renderedBlock,
@@ -263,24 +252,31 @@ export const Element: FunctionComponent<ElementProps> = ({
       </div>
     )
   }
+
   const schemaType = schemaTypes.blockObjects.find(
     (_type) => _type.name === element._type,
   )
+
   if (!schemaType) {
     throw new Error(
       `Could not find schema type for block element of _type ${element._type}`,
     )
   }
+
   if (debugRenders) {
     debug(`Render ${element._key} (object block)`)
   }
+
   className = 'pt-block pt-object-block'
+
   const block = fromSlateValue(
     [element],
     schemaTypes.block.name,
     KEY_TO_VALUE_ELEMENT.get(editor),
   )[0]
+
   let renderedBlockFromProps: JSX.Element | undefined
+
   if (renderBlock) {
     const _props: Omit<BlockRenderProps, 'type'> = Object.defineProperty(
       {
@@ -305,20 +301,18 @@ export const Element: FunctionComponent<ElementProps> = ({
     )
     renderedBlockFromProps = renderBlock(_props as BlockRenderProps)
   }
+
   return (
     <div key={element._key} {...attributes} className={className}>
       {children}
       <DraggableBlock element={element} readOnly={readOnly} blockRef={blockRef}>
-        {renderedBlockFromProps && (
-          <div ref={blockRef} contentEditable={false}>
-            {renderedBlockFromProps}
-          </div>
-        )}
-        {!renderedBlockFromProps && (
-          <DefaultBlockObject selected={selected}>
+        <div ref={blockRef} contentEditable={false}>
+          {renderedBlockFromProps ? (
+            renderedBlockFromProps
+          ) : (
             <ObjectNode value={value} />
-          </DefaultBlockObject>
-        )}
+          )}
+        </div>
       </DraggableBlock>
     </div>
   )
