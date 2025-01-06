@@ -28,8 +28,7 @@
         "@sanity/schema",
         "@sanity/types",
         "react",
-        "rxjs",
-        "styled-components"
+        "rxjs"
       ],
       "rangeStrategy": "bump",
       "semanticCommitType": "fix"
@@ -49,7 +48,6 @@
         "slate",
         "slate-dom",
         "slate-react",
-        "styled-components",
         "typescript"
       ],
       "dependencyDashboardApproval": false,
