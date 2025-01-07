@@ -118,3 +118,33 @@ Test it out in the [Playground](https://playground.portabletext.org).
 - [View the editor source](https://github.com/portabletext/editor/blob/main/apps/playground/src/editor.tsx).
 
 You can leverage the behavior by importing `createEmojiPickerBehaviors` from `@portabletext/editor/behaviors`. See the editor source above for a usage example.
+
+## Raise a synthetic event
+
+Sometimes you want to trigger a synthetic event from within an action. This sends the event back to the editor, where the editor treats it like any other event.
+
+```tsx
+const raisedUppercaseA = defineBehavior({
+  on: 'insert.text',
+  guard: ({event, context}) => event.text === 'a',
+  actions: [
+    ({event, context}) => [
+      {type: 'raise', event: {type: 'insert.text', text: 'A'}},
+    ],
+  ],
+})
+```
+
+The `raise` action also has a shorthand function:
+
+```tsx
+const raisedUppercaseA = defineBehavior({
+  on: 'insert.text',
+  guard: ({event, context}) => event.text === 'a',
+  actions: [({event, context}) => [raise({type: 'insert.text', text: 'A'})]],
+})
+```
+
+:::note
+Be careful when raising events, as this technique can lead to infinite loops if behaviors dispatch actions and events that trigger one another.
+:::
