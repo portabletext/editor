@@ -1,5 +1,9 @@
 export type {Patch} from '@portabletext/patches'
-export type {PortableTextBlock, PortableTextChild} from '@sanity/types'
+export type {
+  PortableTextBlock,
+  PortableTextChild,
+  PortableTextSpan,
+} from '@sanity/types'
 export type {
   Behavior,
   BehaviorActionIntend,
