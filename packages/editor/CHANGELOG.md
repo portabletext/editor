@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.20.0](https://github.com/portabletext/editor/compare/editor-v1.19.0...editor-v1.20.0) (2025-01-07)
+
+
+### Features
+
+* **behavior:** add `editor.registerBehavior` for ad-hoc behavior registering ([b482ad0](https://github.com/portabletext/editor/commit/b482ad0c86a1a5fe39789efd4074e3000496463d))
+
+
+### Bug Fixes
+
+* **deps:** update react compiler dependencies 🤖 ✨ ([b58e9f9](https://github.com/portabletext/editor/commit/b58e9f900488593f94b97a7268aecd0305004f96))
+* remove styled-components ([f7fcd53](https://github.com/portabletext/editor/commit/f7fcd534a43dc668c62b5294dfd780316dac73f8))
+* temp downgrade compiler runtime ([1b2ecea](https://github.com/portabletext/editor/commit/1b2ecea0c488ea9edf68a915ce6b984095f181f9))
+
 ## [1.19.0](https://github.com/portabletext/editor/compare/editor-v1.18.7...editor-v1.19.0) (2025-01-03)
 
 
