@@ -86,9 +86,41 @@ Additional actions
 - delete.block
 - delete.text
 - effect
+- [raise](#raise)
 - select.previous block
 - select.next block
 - style.add
 - style.remove
 - text block.set
 - text block.unset
+
+### `raise`
+
+The `raise` action type is used to trigger synthetic events.
+
+Properties:
+
+- type: `raise`
+- event: Behavior event object
+
+```tsx
+const raisedUppercaseA = defineBehavior({
+  on: 'insert.text',
+  guard: ({event, context}) => event.text === 'a',
+  actions: [
+    ({event, context}) => [
+      {type: 'raise', event: {type: 'insert.text', text: 'A'}},
+    ],
+  ],
+})
+```
+
+The `raise` action also has a handy shorthand function. It accepts a behavior event object.
+
+```tsx
+const raisedUppercaseA = defineBehavior({
+  on: 'insert.text',
+  guard: ({event, context}) => event.text === 'a',
+  actions: [({event, context}) => [raise({type: 'insert.text', text: 'A'})]],
+})
+```
