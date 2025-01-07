@@ -294,6 +294,21 @@ export type BehaviorActionIntendSet<
 
 /**
  * @beta
+ *
+ * @example
+ *
+ * ```tsx
+ * const noLowerCaseA = defineBehavior({
+ *   on: 'insert.text',
+ *   guard: ({event, context}) => event.text === 'a',
+ *   actions: [({event, context}) => [{type: 'insert.text', text: 'A'}]],
+ * })
+ * ```
+ *
+ *
+ *
+ *
+ *
  */
 export function defineBehavior<
   TBehaviorEventType extends BehaviorEvent['type'],
