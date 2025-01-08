@@ -15,7 +15,7 @@ export type EmojiMatch =
 export function matchEmojis(keyword: string): Array<EmojiMatch> {
   const foundEmojis: Array<EmojiMatch> = []
 
-  if (keyword.length < 2) {
+  if (keyword.length < 1) {
     return foundEmojis
   }
 
