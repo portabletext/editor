@@ -5,6 +5,8 @@ import {
   type PortableTextBlock,
 } from '@sanity/types'
 import type {BlockOffset} from '../behaviors/behavior.types'
+import type {EditorSelectionPoint} from '../types/editor'
+import {isKeyedSegment} from './util.is-keyed-segment'
 
 /**
  * @public
@@ -66,15 +68,23 @@ export function spanSelectionPointToBlockOffset({
   selectionPoint,
 }: {
   value: Array<PortableTextBlock>
-  selectionPoint: {
-    path: [KeyedSegment, 'children', KeyedSegment]
-    offset: number
-  }
+  selectionPoint: EditorSelectionPoint
 }): BlockOffset | undefined {
   let offset = 0
 
+  const blockKey = isKeyedSegment(selectionPoint.path[0])
+    ? selectionPoint.path[0]._key
+    : undefined
+  const spanKey = isKeyedSegment(selectionPoint.path[2])
+    ? selectionPoint.path[2]._key
+    : undefined
+
+  if (!blockKey || !spanKey) {
+    return undefined
+  }
+
   for (const block of value) {
-    if (block._key !== selectionPoint.path[0]._key) {
+    if (block._key !== blockKey) {
       continue
     }
 
@@ -87,7 +97,7 @@ export function spanSelectionPointToBlockOffset({
         continue
       }
 
-      if (child._key === selectionPoint.path[2]._key) {
+      if (child._key === spanKey) {
         return {
           path: [{_key: block._key}],
           offset: offset + selectionPoint.offset,
