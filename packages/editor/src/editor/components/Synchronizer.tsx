@@ -1,7 +1,7 @@
 import {useActorRef, useSelector} from '@xstate/react'
 import {useEffect} from 'react'
+import {debugWithName} from '../../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../../types/editor'
-import {debugWithName} from '../../utils/debug'
 import type {EditorActor} from '../editor-machine'
 import {mutationMachine} from '../mutation-machine'
 import {syncMachine} from '../sync-machine'

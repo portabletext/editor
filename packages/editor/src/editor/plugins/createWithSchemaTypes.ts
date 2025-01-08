@@ -7,11 +7,11 @@ import {
   type PortableTextTextBlock,
 } from '@sanity/types'
 import {Transforms, type Element} from 'slate'
+import {debugWithName} from '../../internal-utils/debug'
 import type {
   PortableTextMemberSchemaTypes,
   PortableTextSlateEditor,
 } from '../../types/editor'
-import {debugWithName} from '../../utils/debug'
 import type {EditorActor} from '../editor-machine'
 
 const debug = debugWithName('plugin:withSchemaTypes')

@@ -10,13 +10,13 @@ import {
 } from 'react'
 import {Editor, Path, Transforms, type Element as SlateElement} from 'slate'
 import {ReactEditor, useSlateStatic} from 'slate-react'
-import {debugWithName} from '../../utils/debug'
+import {debugWithName} from '../../internal-utils/debug'
 import {
   IS_DRAGGING,
   IS_DRAGGING_BLOCK_ELEMENT,
   IS_DRAGGING_BLOCK_TARGET_POSITION,
   IS_DRAGGING_ELEMENT_TARGET,
-} from '../../utils/weakMaps'
+} from '../../internal-utils/weakMaps'
 
 const debug = debugWithName('components:DraggableBlock')
 const debugRenders = false

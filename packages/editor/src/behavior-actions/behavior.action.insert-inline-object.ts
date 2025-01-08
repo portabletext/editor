@@ -1,5 +1,5 @@
 import {Editor, Transforms, type Element} from 'slate'
-import {toSlateValue} from '../utils/values'
+import {toSlateValue} from '../internal-utils/values'
 import type {BehaviorActionImplementation} from './behavior.actions'
 
 export const insertInlineObjectActionImplementation: BehaviorActionImplementation<

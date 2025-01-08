@@ -15,6 +15,8 @@ import {
 import {Subject} from 'rxjs'
 import {Slate} from 'slate-react'
 import {useEffectEvent} from 'use-effect-event'
+import {debugWithName} from '../internal-utils/debug'
+import {compileType} from '../internal-utils/schema'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
@@ -24,8 +26,6 @@ import type {
   PatchObservable,
   PortableTextMemberSchemaTypes,
 } from '../types/editor'
-import {debugWithName} from '../utils/debug'
-import {compileType} from '../utils/schema'
 import {Synchronizer} from './components/Synchronizer'
 import {createEditor, type Editor} from './create-editor'
 import {createEditorSchema} from './create-editor-schema'

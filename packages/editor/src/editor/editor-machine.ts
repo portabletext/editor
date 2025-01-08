@@ -18,15 +18,15 @@ import type {
   NativeBehaviorEvent,
   SyntheticBehaviorEvent,
 } from '../behaviors/behavior.types'
+import {toPortableTextRange} from '../internal-utils/ranges'
+import {fromSlateValue} from '../internal-utils/values'
+import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
 import type {OmitFromUnion, PickFromUnion} from '../type-utils'
 import type {
   EditorSelection,
   InvalidValueResolution,
   PortableTextSlateEditor,
 } from '../types/editor'
-import {toPortableTextRange} from '../utils/ranges'
-import {fromSlateValue} from '../utils/values'
-import {KEY_TO_VALUE_ELEMENT} from '../utils/weakMaps'
 import type {EditorSchema} from './define-schema'
 import type {EditorContext} from './editor-snapshot'
 import {getActiveDecorators} from './get-active-decorators'

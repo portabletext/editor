@@ -11,16 +11,19 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
+import {debugWithName} from '../internal-utils/debug'
+import {validateValue} from '../internal-utils/validateValue'
+import {toSlateValue, VOID_CHILD_KEY} from '../internal-utils/values'
+import {
+  isChangingRemotely,
+  withRemoteChanges,
+} from '../internal-utils/withChanges'
+import {withoutPatching} from '../internal-utils/withoutPatching'
 import type {PickFromUnion} from '../type-utils'
 import type {
   InvalidValueResolution,
   PortableTextSlateEditor,
 } from '../types/editor'
-import {debugWithName} from '../utils/debug'
-import {validateValue} from '../utils/validateValue'
-import {toSlateValue, VOID_CHILD_KEY} from '../utils/values'
-import {isChangingRemotely, withRemoteChanges} from '../utils/withChanges'
-import {withoutPatching} from '../utils/withoutPatching'
 import type {EditorSchema} from './define-schema'
 import {withoutSaving} from './plugins/createWithUndoRedo'
 

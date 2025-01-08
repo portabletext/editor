@@ -1,9 +1,9 @@
 import type {KeyboardEvent} from 'react'
 import type {ReactEditor} from 'slate-react'
+import {debugWithName} from '../../internal-utils/debug'
+import {isHotkey} from '../../internal-utils/is-hotkey'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {HotkeyOptions} from '../../types/options'
-import {debugWithName} from '../../utils/debug'
-import {isHotkey} from '../../utils/is-hotkey'
 import type {EditorActor} from '../editor-machine'
 import type {PortableTextEditor} from '../PortableTextEditor'
 

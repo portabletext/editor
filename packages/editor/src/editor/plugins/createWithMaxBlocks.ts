@@ -1,6 +1,6 @@
+import {isChangingRemotely} from '../../internal-utils/withChanges'
+import {isRedoing, isUndoing} from '../../internal-utils/withUndoRedo'
 import type {PortableTextSlateEditor} from '../../types/editor'
-import {isChangingRemotely} from '../../utils/withChanges'
-import {isRedoing, isUndoing} from '../../utils/withUndoRedo'
 import type {EditorActor} from '../editor-machine'
 
 /**

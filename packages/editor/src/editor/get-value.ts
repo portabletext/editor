@@ -1,6 +1,6 @@
+import {fromSlateValue} from '../internal-utils/values'
+import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
 import type {PortableTextSlateEditor} from '../types/editor'
-import {fromSlateValue} from '../utils/values'
-import {KEY_TO_VALUE_ELEMENT} from '../utils/weakMaps'
 import type {EditorActor} from './editor-machine'
 
 export function getValue({

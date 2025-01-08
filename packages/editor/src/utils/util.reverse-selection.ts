@@ -1,5 +1,8 @@
-import type {EditorSelection} from '../../types/editor'
+import type {EditorSelection} from '../types/editor'
 
+/**
+ * @public
+ */
 export function reverseSelection(
   selection: NonNullable<EditorSelection>,
 ): NonNullable<EditorSelection> {

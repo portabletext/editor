@@ -15,6 +15,7 @@ import {
 } from 'react'
 import {Text} from 'slate'
 import {useSelected, type RenderLeafProps} from 'slate-react'
+import {debugWithName} from '../../internal-utils/debug'
 import type {
   BlockAnnotationRenderProps,
   BlockChildRenderProps,
@@ -24,7 +25,6 @@ import type {
   RenderChildFunction,
   RenderDecoratorFunction,
 } from '../../types/editor'
-import {debugWithName} from '../../utils/debug'
 import type {EditorActor} from '../editor-machine'
 import {usePortableTextEditor} from '../hooks/usePortableTextEditor'
 import {DefaultAnnotation} from '../nodes/DefaultAnnotation'

@@ -18,6 +18,9 @@ import {
   useSlateStatic,
   type RenderElementProps,
 } from 'slate-react'
+import {debugWithName} from '../../internal-utils/debug'
+import {fromSlateValue} from '../../internal-utils/values'
+import {KEY_TO_VALUE_ELEMENT} from '../../internal-utils/weakMaps'
 import type {
   BlockRenderProps,
   PortableTextMemberSchemaTypes,
@@ -26,9 +29,6 @@ import type {
   RenderListItemFunction,
   RenderStyleFunction,
 } from '../../types/editor'
-import {debugWithName} from '../../utils/debug'
-import {fromSlateValue} from '../../utils/values'
-import {KEY_TO_VALUE_ELEMENT} from '../../utils/weakMaps'
 import ObjectNode from '../nodes/DefaultObject'
 import {DraggableBlock} from './DraggableBlock'
 

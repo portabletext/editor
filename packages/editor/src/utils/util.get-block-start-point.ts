@@ -3,9 +3,12 @@ import {
   type KeyedSegment,
   type PortableTextBlock,
 } from '@sanity/types'
-import type {EditorSelectionPoint} from '../../types/editor'
+import type {EditorSelectionPoint} from '../types/editor'
 
-export function getStartPoint({
+/**
+ * @public
+ */
+export function getBlockStartPoint({
   node,
   path,
 }: {

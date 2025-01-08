@@ -1,7 +1,7 @@
 import {Editor} from 'slate'
-import {toPortableTextRange} from '../../utils/ranges'
-import {fromSlateValue} from '../../utils/values'
-import {KEY_TO_VALUE_ELEMENT} from '../../utils/weakMaps'
+import {toPortableTextRange} from '../../internal-utils/ranges'
+import {fromSlateValue} from '../../internal-utils/values'
+import {KEY_TO_VALUE_ELEMENT} from '../../internal-utils/weakMaps'
 import type {EditorActor} from '../editor-machine'
 import {isApplyingBehaviorActions} from '../with-applying-behavior-actions'
 

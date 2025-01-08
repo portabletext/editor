@@ -20,10 +20,9 @@ import {
   type Descendant,
   type SelectionOperation,
 } from 'slate'
-import type {PortableTextSlateEditor} from '../../types/editor'
-import {debugWithName} from '../../utils/debug'
-import {fromSlateValue} from '../../utils/values'
-import {isChangingRemotely} from '../../utils/withChanges'
+import {debugWithName} from '../../internal-utils/debug'
+import {fromSlateValue} from '../../internal-utils/values'
+import {isChangingRemotely} from '../../internal-utils/withChanges'
 import {
   isRedoing,
   isUndoing,
@@ -31,7 +30,8 @@ import {
   setIsUndoing,
   withRedoing,
   withUndoing,
-} from '../../utils/withUndoRedo'
+} from '../../internal-utils/withUndoRedo'
+import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 
 const debug = debugWithName('plugin:withUndoRedo')

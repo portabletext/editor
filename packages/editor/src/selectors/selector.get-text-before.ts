@@ -1,7 +1,7 @@
 import type {EditorSelector} from '../editor/editor-selector'
-import {getStartPoint} from '../editor/utils/utils.get-start-point'
-import {isKeyedSegment} from '../editor/utils/utils.is-keyed-segment'
-import {reverseSelection} from '../editor/utils/utils.reverse-selection'
+import {getBlockStartPoint} from '../utils/util.get-block-start-point'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
+import {reverseSelection} from '../utils/util.reverse-selection'
 import {getSelectionText} from './selector.get-selection-text'
 
 /**
@@ -26,7 +26,10 @@ export const getBlockTextBefore: EditorSelector<string> = ({context}) => {
     return ''
   }
 
-  const startOfBlock = getStartPoint({node: block, path: [{_key: block._key}]})
+  const startOfBlock = getBlockStartPoint({
+    node: block,
+    path: [{_key: block._key}],
+  })
 
   return getSelectionText({
     context: {
