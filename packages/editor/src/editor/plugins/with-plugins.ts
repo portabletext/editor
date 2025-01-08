@@ -1,6 +1,6 @@
 import type {BaseOperation, Editor, Node, NodeEntry} from 'slate'
+import {createOperationToPatches} from '../../internal-utils/operationToPatches'
 import type {PortableTextSlateEditor} from '../../types/editor'
-import {createOperationToPatches} from '../../utils/operationToPatches'
 import type {EditorActor} from '../editor-machine'
 import {createWithEventListeners} from './create-with-event-listeners'
 import {createWithMaxBlocks} from './createWithMaxBlocks'

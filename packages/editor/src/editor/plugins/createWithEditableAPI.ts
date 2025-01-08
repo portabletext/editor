@@ -21,19 +21,19 @@ import {ReactEditor} from 'slate-react'
 import {isListItemActive} from '../../behavior-actions/behavior.action.list-item'
 import {isStyleActive} from '../../behavior-actions/behavior.action.style'
 import type {BehaviorActionImplementation} from '../../behavior-actions/behavior.actions'
+import {debugWithName} from '../../internal-utils/debug'
+import {toPortableTextRange, toSlateRange} from '../../internal-utils/ranges'
+import {fromSlateValue, toSlateValue} from '../../internal-utils/values'
+import {
+  KEY_TO_VALUE_ELEMENT,
+  SLATE_TO_PORTABLE_TEXT_RANGE,
+} from '../../internal-utils/weakMaps'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
   EditorSelection,
   PortableTextSlateEditor,
 } from '../../types/editor'
-import {debugWithName} from '../../utils/debug'
-import {toPortableTextRange, toSlateRange} from '../../utils/ranges'
-import {fromSlateValue, toSlateValue} from '../../utils/values'
-import {
-  KEY_TO_VALUE_ELEMENT,
-  SLATE_TO_PORTABLE_TEXT_RANGE,
-} from '../../utils/weakMaps'
 import type {EditorActor} from '../editor-machine'
 import {isDecoratorActive} from './createWithPortableTextMarkModel'
 

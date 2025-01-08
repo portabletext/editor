@@ -1,4 +1,4 @@
-import {isHotkey} from '../utils/is-hotkey'
+import {isHotkey} from '../internal-utils/is-hotkey'
 import {defineBehavior, raise} from './behavior.types'
 
 export const coreDecoratorBehaviors = {

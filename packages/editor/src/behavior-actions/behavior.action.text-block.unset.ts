@@ -1,5 +1,5 @@
 import {Transforms} from 'slate'
-import {toSlateRange} from '../utils/ranges'
+import {toSlateRange} from '../internal-utils/ranges'
 import type {BehaviorActionImplementation} from './behavior.actions'
 
 export const textBlockUnsetActionImplementation: BehaviorActionImplementation<

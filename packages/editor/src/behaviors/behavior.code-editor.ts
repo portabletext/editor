@@ -1,5 +1,5 @@
+import {isHotkey} from '../internal-utils/is-hotkey'
 import * as selectors from '../selectors'
-import {isHotkey} from '../utils/is-hotkey'
 import {defineBehavior} from './behavior.types'
 
 /**

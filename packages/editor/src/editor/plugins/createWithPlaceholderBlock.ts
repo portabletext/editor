@@ -1,9 +1,9 @@
 import {Editor, Path} from 'slate'
+import {debugWithName} from '../../internal-utils/debug'
+import {isChangingRemotely} from '../../internal-utils/withChanges'
+import {isRedoing, isUndoing} from '../../internal-utils/withUndoRedo'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {SlateTextBlock, VoidElement} from '../../types/slate'
-import {debugWithName} from '../../utils/debug'
-import {isChangingRemotely} from '../../utils/withChanges'
-import {isRedoing, isUndoing} from '../../utils/withUndoRedo'
 import type {EditorActor} from '../editor-machine'
 
 const debug = debugWithName('plugin:withPlaceholderBlock')

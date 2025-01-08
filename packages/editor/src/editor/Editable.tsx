@@ -35,6 +35,18 @@ import {
   type RenderElementProps,
   type RenderLeafProps,
 } from 'slate-react'
+import {debugWithName} from '../internal-utils/debug'
+import {
+  moveRangeByOperation,
+  toPortableTextRange,
+  toSlateRange,
+} from '../internal-utils/ranges'
+import {normalizeSelection} from '../internal-utils/selection'
+import {
+  fromSlateValue,
+  isEqualToEmptyEditor,
+  toSlateValue,
+} from '../internal-utils/values'
 import type {
   EditorSelection,
   OnCopyFn,
@@ -51,18 +63,6 @@ import type {
 } from '../types/editor'
 import type {HotkeyOptions} from '../types/options'
 import type {SlateTextBlock, VoidElement} from '../types/slate'
-import {debugWithName} from '../utils/debug'
-import {
-  moveRangeByOperation,
-  toPortableTextRange,
-  toSlateRange,
-} from '../utils/ranges'
-import {normalizeSelection} from '../utils/selection'
-import {
-  fromSlateValue,
-  isEqualToEmptyEditor,
-  toSlateValue,
-} from '../utils/values'
 import {Element} from './components/Element'
 import {Leaf} from './components/Leaf'
 import {EditorActorContext} from './editor-actor-context'

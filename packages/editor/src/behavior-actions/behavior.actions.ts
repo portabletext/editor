@@ -21,12 +21,12 @@ import {
   removeDecoratorActionImplementation,
   toggleDecoratorActionImplementation,
 } from '../editor/plugins/createWithPortableTextMarkModel'
-import {blockOffsetToSpanSelectionPoint} from '../editor/utils/utils.block-offset'
+import {toSlatePath} from '../internal-utils/paths'
+import {toSlateRange} from '../internal-utils/ranges'
+import {fromSlateValue, toSlateValue} from '../internal-utils/values'
+import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
 import type {PickFromUnion} from '../type-utils'
-import {toSlatePath} from '../utils/paths'
-import {toSlateRange} from '../utils/ranges'
-import {fromSlateValue, toSlateValue} from '../utils/values'
-import {KEY_TO_VALUE_ELEMENT} from '../utils/weakMaps'
+import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
 import {insertBlock} from './behavior.action-utils.insert-block'
 import {insertBlockObjectActionImplementation} from './behavior.action.insert-block-object'
 import {

@@ -3,17 +3,17 @@ import type {PortableTextBlock, PortableTextChild} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {Editor, Range, Transforms, type Descendant, type Node} from 'slate'
 import {ReactEditor} from 'slate-react'
-import type {
-  PortableTextMemberSchemaTypes,
-  PortableTextSlateEditor,
-} from '../../types/editor'
-import {debugWithName} from '../../utils/debug'
-import {validateValue} from '../../utils/validateValue'
+import {debugWithName} from '../../internal-utils/debug'
+import {validateValue} from '../../internal-utils/validateValue'
 import {
   fromSlateValue,
   isEqualToEmptyEditor,
   toSlateValue,
-} from '../../utils/values'
+} from '../../internal-utils/values'
+import type {
+  PortableTextMemberSchemaTypes,
+  PortableTextSlateEditor,
+} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 
 const debug = debugWithName('plugin:withInsertData')

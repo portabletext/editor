@@ -1,7 +1,7 @@
 import {createGuards} from '../behavior-actions/behavior.guards'
-import {isEmptyTextBlock} from '../editor/utils/utils'
+import {isHotkey} from '../internal-utils/is-hotkey'
 import * as selectors from '../selectors'
-import {isHotkey} from '../utils/is-hotkey'
+import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {defineBehavior} from './behavior.types'
 
 const MAX_LIST_LEVEL = 10

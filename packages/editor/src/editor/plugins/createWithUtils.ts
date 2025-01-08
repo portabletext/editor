@@ -1,10 +1,10 @@
 import {Editor, Range, Text, Transforms} from 'slate'
+import {debugWithName} from '../../internal-utils/debug'
+import {toSlateValue} from '../../internal-utils/values'
 import type {
   PortableTextMemberSchemaTypes,
   PortableTextSlateEditor,
 } from '../../types/editor'
-import {debugWithName} from '../../utils/debug'
-import {toSlateValue} from '../../utils/values'
 import type {EditorActor} from '../editor-machine'
 
 const debug = debugWithName('plugin:withUtils')

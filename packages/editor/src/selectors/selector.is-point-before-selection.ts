@@ -1,7 +1,7 @@
 import {isKeySegment, isPortableTextTextBlock} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
-import {reverseSelection} from '../editor/utils/utils.reverse-selection'
 import type {EditorSelectionPoint} from '../types/editor'
+import {reverseSelection} from '../utils/util.reverse-selection'
 
 /**
  * @public

@@ -1,10 +1,10 @@
 import {Editor, Element, Node, Transforms} from 'slate'
+import {isChangingRemotely} from '../../internal-utils/withChanges'
+import {isRedoing, isUndoing} from '../../internal-utils/withUndoRedo'
 import type {
   PortableTextMemberSchemaTypes,
   PortableTextSlateEditor,
 } from '../../types/editor'
-import {isChangingRemotely} from '../../utils/withChanges'
-import {isRedoing, isUndoing} from '../../utils/withUndoRedo'
 import type {EditorActor} from '../editor-machine'
 
 /**

@@ -12,23 +12,23 @@ import {
   type SetNodeOperation,
   type SplitNodeOperation,
 } from 'slate'
-import type {
-  PortableTextMemberSchemaTypes,
-  PortableTextSlateEditor,
-} from '../../types/editor'
-import {createApplyPatch} from '../../utils/applyPatch'
-import {debugWithName} from '../../utils/debug'
-import {fromSlateValue, isEqualToEmptyEditor} from '../../utils/values'
+import {createApplyPatch} from '../../internal-utils/applyPatch'
+import {debugWithName} from '../../internal-utils/debug'
+import {fromSlateValue, isEqualToEmptyEditor} from '../../internal-utils/values'
 import {
   IS_PROCESSING_REMOTE_CHANGES,
   KEY_TO_VALUE_ELEMENT,
-} from '../../utils/weakMaps'
-import {withRemoteChanges} from '../../utils/withChanges'
+} from '../../internal-utils/weakMaps'
+import {withRemoteChanges} from '../../internal-utils/withChanges'
 import {
   isPatching,
   PATCHING,
   withoutPatching,
-} from '../../utils/withoutPatching'
+} from '../../internal-utils/withoutPatching'
+import type {
+  PortableTextMemberSchemaTypes,
+  PortableTextSlateEditor,
+} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 import {withoutSaving} from './createWithUndoRedo'
 

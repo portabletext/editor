@@ -1,15 +1,15 @@
 import type {BaseRange} from 'slate'
+import {debugWithName} from '../../internal-utils/debug'
+import {
+  toPortableTextRange,
+  type ObjectWithKeyAndType,
+} from '../../internal-utils/ranges'
+import {SLATE_TO_PORTABLE_TEXT_RANGE} from '../../internal-utils/weakMaps'
 import type {
   EditorSelection,
   PortableTextMemberSchemaTypes,
   PortableTextSlateEditor,
 } from '../../types/editor'
-import {debugWithName} from '../../utils/debug'
-import {
-  toPortableTextRange,
-  type ObjectWithKeyAndType,
-} from '../../utils/ranges'
-import {SLATE_TO_PORTABLE_TEXT_RANGE} from '../../utils/weakMaps'
 import type {EditorActor} from '../editor-machine'
 
 const debug = debugWithName('plugin:withPortableTextSelections')

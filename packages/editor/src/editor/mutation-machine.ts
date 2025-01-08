@@ -2,9 +2,9 @@ import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@sanity/types'
 import {Editor} from 'slate'
 import {assign, emit, setup} from 'xstate'
+import {fromSlateValue} from '../internal-utils/values'
+import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
 import type {PortableTextSlateEditor} from '../types/editor'
-import {fromSlateValue} from '../utils/values'
-import {KEY_TO_VALUE_ELEMENT} from '../utils/weakMaps'
 import type {EditorSchema} from './define-schema'
 
 const FLUSH_PATCHES_THROTTLED_MS = process.env.NODE_ENV === 'test' ? 500 : 1000

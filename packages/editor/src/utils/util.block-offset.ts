@@ -4,8 +4,11 @@ import {
   type KeyedSegment,
   type PortableTextBlock,
 } from '@sanity/types'
-import type {BlockOffset} from '../../behaviors/behavior.types'
+import type {BlockOffset} from '../behaviors/behavior.types'
 
+/**
+ * @public
+ */
 export function blockOffsetToSpanSelectionPoint({
   value,
   blockOffset,
@@ -55,6 +58,9 @@ export function blockOffsetToSpanSelectionPoint({
   return selectionPoint
 }
 
+/**
+ * @public
+ */
 export function spanSelectionPointToBlockOffset({
   value,
   selectionPoint,

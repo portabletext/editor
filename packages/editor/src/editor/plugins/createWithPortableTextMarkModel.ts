@@ -9,14 +9,14 @@ import type {PortableTextObject, PortableTextSpan} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {Editor, Element, Node, Path, Range, Text, Transforms} from 'slate'
 import type {BehaviorActionImplementation} from '../../behavior-actions/behavior.actions'
+import {debugWithName} from '../../internal-utils/debug'
+import {getNextSpan, getPreviousSpan} from '../../internal-utils/sibling-utils'
+import {isChangingRemotely} from '../../internal-utils/withChanges'
+import {isRedoing, isUndoing} from '../../internal-utils/withUndoRedo'
 import type {
   PortableTextMemberSchemaTypes,
   PortableTextSlateEditor,
 } from '../../types/editor'
-import {debugWithName} from '../../utils/debug'
-import {getNextSpan, getPreviousSpan} from '../../utils/sibling-utils'
-import {isChangingRemotely} from '../../utils/withChanges'
-import {isRedoing, isUndoing} from '../../utils/withUndoRedo'
 import type {EditorActor} from '../editor-machine'
 
 const debug = debugWithName('plugin:withPortableTextMarkModel')
