@@ -70,7 +70,7 @@ export const getSelectionText: EditorSelector<string> = ({context}) => {
         }
 
         if (text.length > 0) {
-          text + child.text
+          text = text + child.text
         }
       }
     }
