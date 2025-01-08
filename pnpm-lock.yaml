@@ -426,8 +426,8 @@ importers:
         specifier: ^3.1.2
         version: 3.1.2
       '@sanity/pkg-utils':
-        specifier: ^6.13.3
-        version: 6.13.3(@types/babel__core@7.20.5)(@types/node@22.10.2)(babel-plugin-react-compiler@19.0.0-beta-63e3235-20250105)(debug@4.4.0)(typescript@5.7.2)
+        specifier: ^6.13.4
+        version: 6.13.4(@types/babel__core@7.20.5)(@types/node@22.10.2)(babel-plugin-react-compiler@19.0.0-beta-63e3235-20250105)(debug@4.4.0)(typescript@5.7.2)
       '@sanity/schema':
         specifier: ^3.69.0
         version: 3.69.0(@types/react@19.0.2)(debug@4.4.0)
@@ -520,8 +520,8 @@ importers:
         version: 4.17.21
     devDependencies:
       '@sanity/pkg-utils':
-        specifier: ^6.13.3
-        version: 6.13.3(@types/babel__core@7.20.5)(@types/node@22.10.2)(babel-plugin-react-compiler@19.0.0-beta-63e3235-20250105)(debug@4.4.0)(typescript@5.7.2)
+        specifier: ^6.13.4
+        version: 6.13.4(@types/babel__core@7.20.5)(@types/node@22.10.2)(babel-plugin-react-compiler@19.0.0-beta-63e3235-20250105)(debug@4.4.0)(typescript@5.7.2)
       '@types/lodash':
         specifier: ^4.17.13
         version: 4.17.13
@@ -547,8 +547,8 @@ importers:
         specifier: ^1.49.1
         version: 1.49.1
       '@sanity/pkg-utils':
-        specifier: ^6.13.3
-        version: 6.13.3(@types/babel__core@7.20.5)(@types/node@22.10.2)(babel-plugin-react-compiler@19.0.0-beta-63e3235-20250105)(debug@4.4.0)(typescript@5.7.2)
+        specifier: ^6.13.4
+        version: 6.13.4(@types/babel__core@7.20.5)(@types/node@22.10.2)(babel-plugin-react-compiler@19.0.0-beta-63e3235-20250105)(debug@4.4.0)(typescript@5.7.2)
       typescript:
         specifier: 5.7.2
         version: 5.7.2
@@ -1563,8 +1563,8 @@ packages:
   '@microsoft/api-extractor-model@7.30.1':
     resolution: {integrity: sha512-CTS2PlASJHxVY8hqHORVb1HdECWOEMcMnM6/kDkPr0RZapAFSIHhg9D4jxuE8g+OWYHtPc10LCpmde5pylTRlA==}
 
-  '@microsoft/api-extractor@7.49.0':
-    resolution: {integrity: sha512-X5b462k0/yl8qWdGx3siq5vyI8fTDU9fRnwqTMlGHqFhLxpASmLWA2EU6nft+ZG8cQM2HRZlr4HSo62UqiAnug==}
+  '@microsoft/api-extractor@7.48.1':
+    resolution: {integrity: sha512-HN9Osa1WxqLM66RaqB5nPAadx+nTIQmY/XtkFdaJvusjG8Tus++QqZtD7KPZDSkhEMGHsYeSyeU8qUzCDUXPjg==}
     hasBin: true
 
   '@microsoft/tsdoc-config@0.17.1':
@@ -2730,8 +2730,8 @@ packages:
   '@sanity/generate-help-url@3.0.0':
     resolution: {integrity: sha512-wtMYcV5GIDIhVyF/jjmdwq1GdlK07dRL40XMns73VbrFI7FteRltxv48bhYVZPcLkRXb0SHjpDS/icj9/yzbVA==}
 
-  '@sanity/pkg-utils@6.13.3':
-    resolution: {integrity: sha512-RelSmFTfJQMIu7Q03/FVmnCcCJWCbI4CQH5V4cIy1xFh/NkgI8Bj5pCkD8SPa65b9dBWpVBsQpwEi7Asj2lu2g==}
+  '@sanity/pkg-utils@6.13.4':
+    resolution: {integrity: sha512-m4x0qyu2wiUHKuVxy/B2kcQRh20RvsyvUlUjPbiM5ENt4hwpJPLFfxtPe53GOCf3NJfcSK/te4yQkMOyL8RzAA==}
     engines: {node: '>=18.17.0'}
     hasBin: true
     peerDependencies:
@@ -6058,6 +6058,11 @@ packages:
       eslint: ^8.57.0 || ^9.0.0
       typescript: '>=4.8.4 <5.8.0'
 
+  typescript@5.4.2:
+    resolution: {integrity: sha512-+2/g0Fds1ERlP6JsakQQDXjZdZMM+rqpamFZJEKh4kwTIn3iDkgKtby0CeNd5ATNZ4Ry1ax15TMx0W2V+miizQ==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
   typescript@5.6.3:
     resolution: {integrity: sha512-hjcS1mhfuyi4WW8IWtjP7brDrG2cuDZukyrYrSauoXGNgx0S7zceP07adYkJycEr56BOUTNPzbInooiN3fn1qw==}
     engines: {node: '>=14.17'}
@@ -7662,7 +7667,7 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@microsoft/api-extractor@7.49.0(@types/node@22.10.2)':
+  '@microsoft/api-extractor@7.48.1(@types/node@22.10.2)':
     dependencies:
       '@microsoft/api-extractor-model': 7.30.1(@types/node@22.10.2)
       '@microsoft/tsdoc': 0.15.1
@@ -7676,7 +7681,7 @@ snapshots:
       resolve: 1.22.9
       semver: 7.5.4
       source-map: 0.6.1
-      typescript: 5.7.2
+      typescript: 5.4.2
     transitivePeerDependencies:
       - '@types/node'
 
@@ -9175,12 +9180,12 @@ snapshots:
 
   '@sanity/generate-help-url@3.0.0': {}
 
-  '@sanity/pkg-utils@6.13.3(@types/babel__core@7.20.5)(@types/node@22.10.2)(babel-plugin-react-compiler@19.0.0-beta-63e3235-20250105)(debug@4.4.0)(typescript@5.7.2)':
+  '@sanity/pkg-utils@6.13.4(@types/babel__core@7.20.5)(@types/node@22.10.2)(babel-plugin-react-compiler@19.0.0-beta-63e3235-20250105)(debug@4.4.0)(typescript@5.7.2)':
     dependencies:
       '@babel/core': 7.26.0
       '@babel/preset-typescript': 7.26.0(@babel/core@7.26.0)
       '@babel/types': 7.26.3
-      '@microsoft/api-extractor': 7.49.0(@types/node@22.10.2)
+      '@microsoft/api-extractor': 7.48.1(@types/node@22.10.2)
       '@microsoft/tsdoc-config': 0.17.1
       '@optimize-lodash/rollup-plugin': 5.0.0(rollup@4.30.1)
       '@rollup/plugin-alias': 5.1.1(rollup@4.30.1)
@@ -13569,6 +13574,8 @@ snapshots:
       typescript: 5.6.3
     transitivePeerDependencies:
       - supports-color
+
+  typescript@5.4.2: {}
 
   typescript@5.6.3: {}
 
