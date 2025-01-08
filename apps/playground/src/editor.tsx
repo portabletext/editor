@@ -16,7 +16,6 @@ import {
 } from '@portabletext/editor'
 import {
   createCodeEditorBehaviors,
-  createEmojiPickerBehaviors,
   createLinkBehaviors,
 } from '@portabletext/editor/behaviors'
 import {MarkdownPlugin, OneLinePlugin} from '@portabletext/editor/plugins'
@@ -35,8 +34,7 @@ import {Toolbar} from './components/toolbar'
 import {Tooltip} from './components/tooltip'
 import {EditorPatchesPreview} from './editor-patches-preview'
 import './editor.css'
-import {EmojiListBox} from './emoji-picker'
-import {matchEmojis, type EmojiMatch} from './emoji-search'
+import {EmojiPickerPlugin} from './emoji-picker'
 import type {EditorActorRef} from './playground-machine'
 import {PortableTextToolbar} from './portable-text-toolbar'
 import {
@@ -396,39 +394,6 @@ function EditorPlaygroundToolbar(props: {
       {enableCodeEditorPlugin ? <CodeEditorPlugin /> : null}
       {enableLinkPlugin ? <LinkPlugin /> : null}
     </>
-  )
-}
-
-function EmojiPickerPlugin() {
-  const editor = useEditor()
-  const [emojiMatches, setEmojiMatches] = useState<Array<EmojiMatch>>([])
-  const [selectedEmojiIndex, setSelectedEmojiIndex] = useState(0)
-
-  useEffect(() => {
-    const behaviors = createEmojiPickerBehaviors({
-      matchEmojis: ({keyword}) => matchEmojis(keyword),
-      onMatchesChanged: ({matches}) => {
-        setEmojiMatches(matches)
-      },
-      onSelectedIndexChanged: ({selectedIndex}) => {
-        setSelectedEmojiIndex(selectedIndex)
-      },
-      parseMatch: ({match}) => match.emoji,
-    })
-
-    const unregisterBehaviors = behaviors.map((behavior) =>
-      editor.registerBehavior({behavior}),
-    )
-
-    return () => {
-      for (const unregisterBehavior of unregisterBehaviors) {
-        unregisterBehavior()
-      }
-    }
-  }, [editor])
-
-  return (
-    <EmojiListBox matches={emojiMatches} selectedIndex={selectedEmojiIndex} />
   )
 }
 
