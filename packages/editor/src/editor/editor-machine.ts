@@ -12,12 +12,13 @@ import {
 } from 'xstate'
 import {performAction} from '../behavior-actions/behavior.actions'
 import {coreBehaviors} from '../behaviors/behavior.core'
-import type {
-  Behavior,
-  BehaviorAction,
-  CustomBehaviorEvent,
-  NativeBehaviorEvent,
-  SyntheticBehaviorEvent,
+import {
+  isCustomBehaviorEvent,
+  type Behavior,
+  type BehaviorAction,
+  type CustomBehaviorEvent,
+  type NativeBehaviorEvent,
+  type SyntheticBehaviorEvent,
 } from '../behaviors/behavior.types'
 import {toPortableTextRange} from '../internal-utils/ranges'
 import {fromSlateValue} from '../internal-utils/values'
@@ -366,11 +367,19 @@ export const editorMachine = setup({
             Editor.withoutNormalizing(event.editor, () => {
               for (const actionIntend of actionIntends) {
                 if (actionIntend.type === 'raise') {
-                  enqueue.raise({
-                    type: 'behavior event',
-                    behaviorEvent: actionIntend.event,
-                    editor: event.editor,
-                  })
+                  if (isCustomBehaviorEvent(actionIntend.event)) {
+                    enqueue.raise({
+                      type: 'custom behavior event',
+                      behaviorEvent: actionIntend.event as CustomBehaviorEvent,
+                      editor: event.editor,
+                    })
+                  } else {
+                    enqueue.raise({
+                      type: 'behavior event',
+                      behaviorEvent: actionIntend.event,
+                      editor: event.editor,
+                    })
+                  }
                   continue
                 }
 
