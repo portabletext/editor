@@ -29,6 +29,7 @@ export {
   type BehaviorEvent,
   type BehaviorGuard,
   type BlockOffset,
+  type CustomBehaviorEvent,
   type NativeBehaviorEvent,
   type SyntheticBehaviorEvent,
 } from './behavior.types'

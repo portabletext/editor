@@ -49,6 +49,14 @@ export function createWithEventListeners(
             })
             break
           }
+          case 'custom.*': {
+            editorActor.send({
+              type: 'custom behavior event',
+              behaviorEvent: event.event,
+              editor,
+            })
+            break
+          }
           case 'decorator.toggle': {
             editorActor.send({
               type: 'behavior event',

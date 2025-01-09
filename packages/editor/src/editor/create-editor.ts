@@ -11,7 +11,7 @@ import {
   type EventObject,
   type Snapshot,
 } from 'xstate'
-import type {Behavior} from '../behaviors/behavior.types'
+import type {Behavior, CustomBehaviorEvent} from '../behaviors/behavior.types'
 import {compileType} from '../internal-utils/schema'
 import type {PickFromUnion} from '../type-utils'
 import type {EditableAPI} from '../types/editor'
@@ -58,24 +58,26 @@ export type EditorConfig = {
 /**
  * @public
  */
-export type EditorEvent = PickFromUnion<
-  InternalEditorEvent,
-  'type',
-  | 'annotation.add'
-  | 'annotation.remove'
-  | 'blur'
-  | 'decorator.toggle'
-  | 'focus'
-  | 'insert.block object'
-  | 'insert.inline object'
-  | 'list item.toggle'
-  | 'select'
-  | 'style.toggle'
-  | 'patches'
-  | 'update behaviors'
-  | 'update readOnly'
-  | 'update value'
->
+export type EditorEvent =
+  | PickFromUnion<
+      InternalEditorEvent,
+      'type',
+      | 'annotation.add'
+      | 'annotation.remove'
+      | 'blur'
+      | 'decorator.toggle'
+      | 'focus'
+      | 'insert.block object'
+      | 'insert.inline object'
+      | 'list item.toggle'
+      | 'select'
+      | 'style.toggle'
+      | 'patches'
+      | 'update behaviors'
+      | 'update readOnly'
+      | 'update value'
+    >
+  | CustomBehaviorEvent
 
 /**
  * @public
