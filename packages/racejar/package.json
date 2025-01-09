@@ -53,7 +53,7 @@
     "@jest/globals": "^29.7.0",
     "@playwright/test": "^1.49.1",
     "@sanity/pkg-utils": "^6.13.4",
-    "typescript": "5.7.2",
+    "typescript": "5.7.3",
     "vitest": "^2.1.8"
   },
   "peerDependencies": {
