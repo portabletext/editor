@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.21.0](https://github.com/portabletext/editor/compare/editor-v1.20.0...editor-v1.21.0) (2025-01-09)
+
+
+### Features
+
+* **behaviors:** allow raising of custom events ([4fb287c](https://github.com/portabletext/editor/commit/4fb287c00610088bb2016e59680224416299241b))
+* **behaviors:** support custom behavior events ([3e61f6d](https://github.com/portabletext/editor/commit/3e61f6dc83baafa839e44756a69daa7c02a93495))
+* **selectors:** add `isPointAfterSelection` ([83f50f7](https://github.com/portabletext/editor/commit/83f50f79e4330c89db9ca280828bf41dca697677))
+* **selectors:** add `isPointBeforeSelection` ([e07875b](https://github.com/portabletext/editor/commit/e07875b072e9f90358f747c76a0e5991cbb7fd8d))
+* ship initial `@portabletext/editor/utils` ([c0022ad](https://github.com/portabletext/editor/commit/c0022ad98b5871621717e336bfd308578f2294d4))
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^3.69.0 ([f9336b8](https://github.com/portabletext/editor/commit/f9336b81e06735c86e1fbb980282a5b805d5ecb4))
+* export `PortableTextSpan` ([5dcb14a](https://github.com/portabletext/editor/commit/5dcb14aaf62586280c49fbb497ee67f0e5878a4b))
+* **selectors:** fix issue with `getSelectionText` ([aa8e247](https://github.com/portabletext/editor/commit/aa8e2478eb71881ed8eb5099c8c03c60a05452c7))
+* **utils:** make `spanSelectionPointToBlockOffset` more lax ([7593026](https://github.com/portabletext/editor/commit/759302641219a5ce79c5b077d3240f77f5521fd2))
+
 ## [1.20.0](https://github.com/portabletext/editor/compare/editor-v1.19.0...editor-v1.20.0) (2025-01-07)
 
 
