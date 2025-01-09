@@ -117,6 +117,12 @@ export type CustomBehaviorEvent<
   type: TInternalType
 } & TPayload
 
+export function isCustomBehaviorEvent(
+  event: BehaviorEvent,
+): event is CustomBehaviorEvent {
+  return event.type.startsWith('custom.')
+}
+
 /**
  * @beta
  */
@@ -124,7 +130,7 @@ export type BehaviorActionIntend =
   | SyntheticBehaviorEvent
   | {
       type: 'raise'
-      event: SyntheticBehaviorEvent
+      event: SyntheticBehaviorEvent | CustomBehaviorEvent
     }
   | {
       type: 'annotation.toggle'
@@ -236,7 +242,7 @@ export type BehaviorAction = OmitFromUnion<
  * @beta
  */
 export function raise(
-  event: SyntheticBehaviorEvent,
+  event: SyntheticBehaviorEvent | CustomBehaviorEvent,
 ): PickFromUnion<BehaviorActionIntend, 'type', 'raise'> {
   return {type: 'raise', event}
 }
