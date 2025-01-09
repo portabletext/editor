@@ -15,6 +15,7 @@ import {coreBehaviors} from '../behaviors/behavior.core'
 import type {
   Behavior,
   BehaviorAction,
+  CustomBehaviorEvent,
   NativeBehaviorEvent,
   SyntheticBehaviorEvent,
 } from '../behaviors/behavior.types'
@@ -79,6 +80,13 @@ export type InternalEditorEvent =
       editor: PortableTextSlateEditor
       nativeEvent?: {preventDefault: () => void}
     }
+  | {
+      type: 'custom behavior event'
+      behaviorEvent: CustomBehaviorEvent
+      editor: PortableTextSlateEditor
+      nativeEvent?: {preventDefault: () => void}
+    }
+  | CustomBehaviorEvent
   | {
       type: 'add behavior'
       behavior: Behavior
@@ -182,6 +190,10 @@ export type InternalEditorEmittedEvent =
       | 'focus'
       | 'style.toggle'
     >
+  | {
+      type: 'custom.*'
+      event: CustomBehaviorEvent
+    }
 
 /**
  * @internal
@@ -264,9 +276,10 @@ export const editorMachine = setup({
       pendingEvents: [],
     }),
     'handle behavior event': enqueueActions(({context, event, enqueue}) => {
-      assertEvent(event, ['behavior event'])
+      assertEvent(event, ['behavior event', 'custom behavior event'])
 
       const defaultAction =
+        event.type === 'custom behavior event' ||
         event.behaviorEvent.type === 'copy' ||
         event.behaviorEvent.type === 'key.down' ||
         event.behaviorEvent.type === 'key.up' ||
@@ -475,11 +488,17 @@ export const editorMachine = setup({
             'behavior event': {
               actions: 'handle behavior event',
             },
+            'custom behavior event': {
+              actions: 'handle behavior event',
+            },
             'annotation.*': {
               actions: emit(({event}) => event),
             },
             'blur': {
               actions: emit(({event}) => event),
+            },
+            'custom.*': {
+              actions: emit(({event}) => ({type: 'custom.*', event})),
             },
             'decorator.*': {
               actions: emit(({event}) => event),

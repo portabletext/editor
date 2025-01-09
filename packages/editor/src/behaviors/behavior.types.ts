@@ -109,6 +109,17 @@ export type NativeBehaviorEvent =
 /**
  * @beta
  */
+export type CustomBehaviorEvent<
+  TPayload extends Record<string, unknown> = Record<string, unknown>,
+  TType extends string = string,
+  TInternalType extends `custom.${TType}` = `custom.${TType}`,
+> = {
+  type: TInternalType
+} & TPayload
+
+/**
+ * @beta
+ */
 export type BehaviorActionIntend =
   | SyntheticBehaviorEvent
   | {
@@ -233,7 +244,10 @@ export function raise(
 /**
  * @beta
  */
-export type BehaviorEvent = SyntheticBehaviorEvent | NativeBehaviorEvent
+export type BehaviorEvent =
+  | SyntheticBehaviorEvent
+  | NativeBehaviorEvent
+  | CustomBehaviorEvent
 
 /**
  * @beta
@@ -241,6 +255,7 @@ export type BehaviorEvent = SyntheticBehaviorEvent | NativeBehaviorEvent
 export type Behavior<
   TBehaviorEventType extends BehaviorEvent['type'] = BehaviorEvent['type'],
   TGuardResponse = true,
+  TBehaviorEvent extends BehaviorEvent = BehaviorEvent,
 > = {
   /**
    * The internal editor event that triggers this behavior.
@@ -251,28 +266,17 @@ export type Behavior<
    * Returning a non-nullable value from the guard will pass the value to the
    * actions and execute them.
    */
-  guard?: BehaviorGuard<
-    PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
-    TGuardResponse
-  >
+  guard?: BehaviorGuard<TBehaviorEvent, TGuardResponse>
   /**
    * Array of behavior action sets.
    */
-  actions: Array<
-    BehaviorActionIntendSet<
-      PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
-      TGuardResponse
-    >
-  >
+  actions: Array<BehaviorActionIntendSet<TBehaviorEvent, TGuardResponse>>
 }
 
 /**
  * @beta
  */
-export type BehaviorGuard<
-  TBehaviorEvent extends BehaviorEvent,
-  TGuardResponse,
-> = ({
+export type BehaviorGuard<TBehaviorEvent, TGuardResponse> = ({
   context,
   event,
 }: {
@@ -283,10 +287,7 @@ export type BehaviorGuard<
 /**
  * @beta
  */
-export type BehaviorActionIntendSet<
-  TBehaviorEvent extends BehaviorEvent,
-  TGuardResponse = true,
-> = (
+export type BehaviorActionIntendSet<TBehaviorEvent, TGuardResponse> = (
   {
     context,
     event,
@@ -301,9 +302,30 @@ export type BehaviorActionIntendSet<
  * @beta
  */
 export function defineBehavior<
-  TBehaviorEventType extends BehaviorEvent['type'],
+  TPayload extends Record<string, unknown>,
+  TBehaviorEventType extends
+    BehaviorEvent['type'] = CustomBehaviorEvent['type'],
   TGuardResponse = true,
->(behavior: Behavior<TBehaviorEventType, TGuardResponse>): Behavior {
+>(
+  behavior: Behavior<
+    TBehaviorEventType,
+    TGuardResponse,
+    TBehaviorEventType extends `custom.${infer TType}`
+      ? CustomBehaviorEvent<TPayload, TType>
+      : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>
+  >,
+): Behavior
+export function defineBehavior<
+  TPayload extends never = never,
+  TBehaviorEventType extends BehaviorEvent['type'] = BehaviorEvent['type'],
+  TGuardResponse = true,
+  TBehaviorEvent extends
+    BehaviorEvent = TBehaviorEventType extends `custom.${infer TType}`
+    ? CustomBehaviorEvent<TPayload, TType>
+    : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
+>(
+  behavior: Behavior<TBehaviorEventType, TGuardResponse, TBehaviorEvent>,
+): Behavior {
   return behavior as unknown as Behavior
 }
 
