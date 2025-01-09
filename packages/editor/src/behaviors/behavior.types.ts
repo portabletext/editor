@@ -258,7 +258,12 @@ export type Behavior<
   /**
    * Array of behavior action sets.
    */
-  actions: Array<BehaviorActionIntendSet<TBehaviorEventType, TGuardResponse>>
+  actions: Array<
+    BehaviorActionIntendSet<
+      PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
+      TGuardResponse
+    >
+  >
 }
 
 /**
@@ -279,7 +284,7 @@ export type BehaviorGuard<
  * @beta
  */
 export type BehaviorActionIntendSet<
-  TBehaviorEventType extends BehaviorEvent['type'] = BehaviorEvent['type'],
+  TBehaviorEvent extends BehaviorEvent,
   TGuardResponse = true,
 > = (
   {
@@ -287,7 +292,7 @@ export type BehaviorActionIntendSet<
     event,
   }: {
     context: EditorContext
-    event: PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>
+    event: TBehaviorEvent
   },
   guardResponse: TGuardResponse,
 ) => Array<BehaviorActionIntend>
