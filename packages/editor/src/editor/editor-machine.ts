@@ -79,6 +79,7 @@ export type InternalEditorEvent =
       type: 'behavior event'
       behaviorEvent: SyntheticBehaviorEvent | NativeBehaviorEvent
       editor: PortableTextSlateEditor
+      defaultActionCallback?: () => void
       nativeEvent?: {preventDefault: () => void}
     }
   | {
@@ -290,12 +291,25 @@ export const editorMachine = setup({
               ...event.behaviorEvent,
               editor: event.editor,
             } satisfies BehaviorAction)
+      const defaultActionCallback =
+        event.type === 'behavior event'
+          ? event.defaultActionCallback
+          : undefined
 
       const eventBehaviors = [...context.behaviors.values()].filter(
         (behavior) => behavior.on === event.behaviorEvent.type,
       )
 
       if (eventBehaviors.length === 0) {
+        if (defaultActionCallback) {
+          withApplyingBehaviorActions(event.editor, () => {
+            Editor.withoutNormalizing(event.editor, () => {
+              defaultActionCallback()
+            })
+          })
+          return
+        }
+
         if (!defaultAction) {
           return
         }
@@ -402,6 +416,15 @@ export const editorMachine = setup({
       }
 
       if (!behaviorOverwritten) {
+        if (defaultActionCallback) {
+          withApplyingBehaviorActions(event.editor, () => {
+            Editor.withoutNormalizing(event.editor, () => {
+              defaultActionCallback()
+            })
+          })
+          return
+        }
+
         if (!defaultAction) {
           return
         }
