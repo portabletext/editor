@@ -142,9 +142,21 @@ export function createWithEventListeners(
       }
     })
 
-    const {select} = editor
+    const {
+      deleteBackward,
+      deleteForward,
+      insertBreak,
+      insertSoftBreak,
+      insertText,
+      select,
+    } = editor
 
     editor.deleteBackward = (unit) => {
+      if (isApplyingBehaviorActions(editor)) {
+        deleteBackward(unit)
+        return
+      }
+
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
@@ -157,6 +169,11 @@ export function createWithEventListeners(
     }
 
     editor.deleteForward = (unit) => {
+      if (isApplyingBehaviorActions(editor)) {
+        deleteForward(unit)
+        return
+      }
+
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
@@ -169,6 +186,11 @@ export function createWithEventListeners(
     }
 
     editor.insertBreak = () => {
+      if (isApplyingBehaviorActions(editor)) {
+        insertBreak()
+        return
+      }
+
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
@@ -180,6 +202,11 @@ export function createWithEventListeners(
     }
 
     editor.insertSoftBreak = () => {
+      if (isApplyingBehaviorActions(editor)) {
+        insertSoftBreak()
+        return
+      }
+
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
@@ -191,6 +218,11 @@ export function createWithEventListeners(
     }
 
     editor.insertText = (text, options) => {
+      if (isApplyingBehaviorActions(editor)) {
+        insertText(text, options)
+        return
+      }
+
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
