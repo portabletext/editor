@@ -304,7 +304,15 @@ export const editorMachine = setup({
         if (defaultActionCallback) {
           withApplyingBehaviorActions(event.editor, () => {
             Editor.withoutNormalizing(event.editor, () => {
-              defaultActionCallback()
+              try {
+                defaultActionCallback()
+              } catch (error) {
+                console.error(
+                  new Error(
+                    `Performing action "${event.behaviorEvent.type}" failed due to: ${error.message}`,
+                  ),
+                )
+              }
             })
           })
           return
@@ -316,10 +324,18 @@ export const editorMachine = setup({
 
         withApplyingBehaviorActions(event.editor, () => {
           Editor.withoutNormalizing(event.editor, () => {
-            performAction({
-              context,
-              action: defaultAction,
-            })
+            try {
+              performAction({
+                context,
+                action: defaultAction,
+              })
+            } catch (error) {
+              console.error(
+                new Error(
+                  `Performing action "${defaultAction.type}" as a result of "${event.behaviorEvent.type}" failed due to: ${error.message}`,
+                ),
+              )
+            }
           })
         })
         event.editor.onChange()
@@ -402,7 +418,16 @@ export const editorMachine = setup({
                   editor: event.editor,
                 }
 
-                performAction({context, action})
+                try {
+                  performAction({context, action})
+                } catch (error) {
+                  console.error(
+                    new Error(
+                      `Performing action "${action.type}" as a result of "${event.behaviorEvent.type}" failed due to: ${error.message}`,
+                    ),
+                  )
+                  break
+                }
               }
             })
           })
@@ -419,7 +444,15 @@ export const editorMachine = setup({
         if (defaultActionCallback) {
           withApplyingBehaviorActions(event.editor, () => {
             Editor.withoutNormalizing(event.editor, () => {
-              defaultActionCallback()
+              try {
+                defaultActionCallback()
+              } catch (error) {
+                console.error(
+                  new Error(
+                    `Performing "${event.behaviorEvent.type}" failed due to: ${error.message}`,
+                  ),
+                )
+              }
             })
           })
           return
@@ -431,10 +464,18 @@ export const editorMachine = setup({
 
         withApplyingBehaviorActions(event.editor, () => {
           Editor.withoutNormalizing(event.editor, () => {
-            performAction({
-              context,
-              action: defaultAction,
-            })
+            try {
+              performAction({
+                context,
+                action: defaultAction,
+              })
+            } catch (error) {
+              console.error(
+                new Error(
+                  `Performing action "${defaultAction.type}" as a result of "${event.behaviorEvent.type}" failed due to: ${error.message}`,
+                ),
+              )
+            }
           })
         })
         event.editor.onChange()
