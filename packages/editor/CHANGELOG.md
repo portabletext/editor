@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.21.1](https://github.com/portabletext/editor/compare/editor-v1.21.0...editor-v1.21.1) (2025-01-10)
+
+
+### Bug Fixes
+
+* automatically recover from faulty operations ([710d079](https://github.com/portabletext/editor/commit/710d079cef45cdad9a1cfce6e0c9d066499f56ea))
+* **behaviors:** fall back to built-in Slate `select` and `insertText` events ([ce182c2](https://github.com/portabletext/editor/commit/ce182c2221260f0e52a71ca76043123c2f4f97a4))
+* guard against potential infinite loops ([aa5b43f](https://github.com/portabletext/editor/commit/aa5b43f29a2782ba95c8e863ada78a408db28f92))
+
 ## [1.21.0](https://github.com/portabletext/editor/compare/editor-v1.20.0...editor-v1.21.0) (2025-01-09)
 
 
