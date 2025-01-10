@@ -206,7 +206,15 @@ export const playgroundMachine = setup({
     'update value': assign({
       value: ({context, event}) => {
         assertEvent(event, 'editor.mutation')
-        return applyAll(context.value, event.patches)
+        let newValue = context.value
+
+        try {
+          newValue = applyAll(context.value, event.patches)
+        } catch (error) {
+          console.error(error)
+        }
+
+        return newValue
       },
     }),
     'broadcast value': ({context}) => {
