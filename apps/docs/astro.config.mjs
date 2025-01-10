@@ -25,6 +25,23 @@ export default defineConfig({
             'defer': true,
           },
         },
+        {
+          tag: 'meta',
+          attrs: {
+            property: 'og:image',
+            content:
+              'https://cdn.sanity.io/images/3do82whm/next/af75536d90557ab2644502be89cd6635ce7afbe8-2560x1600.png?w=1200&h=630&q=80&dpi=2&fit=crop',
+          },
+        },
+        {
+          tag: 'meta',
+          attrs: {
+            name: 'twitter:card',
+            content: 'summary_large_image',
+          },
+        },
+        {tag: 'meta', attrs: {name: 'og:image:width', content: '1200'}},
+        {tag: 'meta', attrs: {name: 'og:image:height', content: '630'}},
       ].filter(Boolean),
       social: {
         github: 'https://github.com/portabletext/editor',
