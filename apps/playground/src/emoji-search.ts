@@ -15206,7 +15206,6 @@ const emojis: Record<string, Array<string>> = {
   '🧑‍🦯‍➡️': [
     'person with white cane facing right',
     'walk',
-    'walk',
     'visually impaired',
     'blind',
   ],
