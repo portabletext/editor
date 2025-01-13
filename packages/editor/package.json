@@ -113,7 +113,7 @@
     "eslint": "8.57.1",
     "eslint-plugin-react-compiler": "19.0.0-beta-e552027-20250112",
     "eslint-plugin-react-hooks": "^5.1.0",
-    "jsdom": "^25.0.1",
+    "jsdom": "^26.0.0",
     "racejar": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
