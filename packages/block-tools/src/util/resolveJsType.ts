@@ -1,9 +1,9 @@
-const toString = Object.prototype.toString
+const objectToString = Object.prototype.toString
 
 // Copied from https://github.com/ForbesLindesay/type-of
 // but inlined to have fine grained control
 export function resolveJsType(val: unknown) {
-  switch (toString.call(val)) {
+  switch (objectToString.call(val)) {
     case '[object Function]':
       return 'function'
     case '[object Date]':

@@ -1,9 +1,14 @@
-import {type HtmlPreprocessorOptions} from '../../types'
+import type {HtmlPreprocessorOptions} from '../../types'
 import {normalizeWhitespace, removeAllWhitespace, tagName} from '../helpers'
 import {_XPathResult} from './xpathResult'
 
-export default (html: string, doc: Document, options: HtmlPreprocessorOptions): Document => {
-  const whitespaceOnPasteMode = options?.unstable_whitespaceOnPasteMode || 'preserve'
+export default (
+  _html: string,
+  doc: Document,
+  options: HtmlPreprocessorOptions,
+): Document => {
+  const whitespaceOnPasteMode =
+    options?.unstable_whitespaceOnPasteMode || 'preserve'
   let gDocsRootOrSiblingNode = doc
     .evaluate(
       '//*[@id and contains(@id, "docs-internal-guid")]',
@@ -59,14 +64,20 @@ export default (html: string, doc: Document, options: HtmlPreprocessorOptions): 
 
       // Handle checkmark lists - The first child of a list item is an image with a checkmark, and the serializer
       // expects the first child to be the text node
-      if (tagName(elm) === 'li' && elm.firstChild && tagName(elm?.firstChild) === 'img') {
+      if (
+        tagName(elm) === 'li' &&
+        elm.firstChild &&
+        tagName(elm?.firstChild) === 'img'
+      ) {
         elm.removeChild(elm.firstChild)
       }
     }
 
     // Remove that 'b' which Google Docs wraps the HTML content in
     if (isWrappedRootTag) {
-      doc.body.firstElementChild?.replaceWith(...Array.from(gDocsRootOrSiblingNode.childNodes))
+      doc.body.firstElementChild?.replaceWith(
+        ...Array.from(gDocsRootOrSiblingNode.childNodes),
+      )
     }
 
     return doc

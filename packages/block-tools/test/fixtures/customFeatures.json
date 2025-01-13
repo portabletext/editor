@@ -13,7 +13,12 @@
       "title": "Author",
       "type": {
         "jsonType": "object",
-        "type": {"name": "reference", "title": "Reference", "type": null, "jsonType": "object"},
+        "type": {
+          "name": "reference",
+          "title": "Reference",
+          "type": null,
+          "jsonType": "object"
+        },
         "name": "author",
         "title": "Author",
         "to": [
@@ -21,7 +26,12 @@
             "jsonType": "object",
             "type": {
               "jsonType": "object",
-              "type": {"name": "document", "title": "Document", "type": null, "jsonType": "object"},
+              "type": {
+                "name": "document",
+                "title": "Document",
+                "type": null,
+                "jsonType": "object"
+              },
               "name": "author",
               "title": "Author",
               "fields": [
@@ -43,7 +53,11 @@
               ],
               "options": {},
               "orderings": [
-                {"name": "name", "title": "Name", "by": [{"field": "name", "direction": "asc"}]}
+                {
+                  "name": "name",
+                  "title": "Name",
+                  "by": [{"field": "name", "direction": "asc"}]
+                }
               ],
               "fieldsets": [
                 {
@@ -75,7 +89,12 @@
                 "name": "name",
                 "type": {
                   "jsonType": "string",
-                  "type": {"name": "string", "title": "String", "type": null, "jsonType": "string"},
+                  "type": {
+                    "name": "string",
+                    "title": "String",
+                    "type": null,
+                    "jsonType": "string"
+                  },
                   "name": "string",
                   "title": "Name",
                   "preview": {}
@@ -84,7 +103,11 @@
             ],
             "options": {},
             "orderings": [
-              {"name": "name", "title": "Name", "by": [{"field": "name", "direction": "asc"}]}
+              {
+                "name": "name",
+                "title": "Name",
+                "by": [{"field": "name", "direction": "asc"}]
+              }
             ],
             "fieldsets": [
               {
@@ -120,7 +143,12 @@
             "name": "_ref",
             "type": {
               "jsonType": "string",
-              "type": {"name": "string", "title": "String", "type": null, "jsonType": "string"},
+              "type": {
+                "name": "string",
+                "title": "String",
+                "type": null,
+                "jsonType": "string"
+              },
               "name": "string",
               "title": "Referenced document ID",
               "preview": {}
@@ -130,7 +158,12 @@
             "name": "_weak",
             "type": {
               "jsonType": "boolean",
-              "type": {"name": "boolean", "title": "Boolean", "type": null, "jsonType": "boolean"},
+              "type": {
+                "name": "boolean",
+                "title": "Boolean",
+                "type": null,
+                "jsonType": "boolean"
+              },
               "name": "boolean",
               "title": "Weak reference",
               "preview": {}
@@ -144,7 +177,12 @@
               "name": "_ref",
               "type": {
                 "jsonType": "string",
-                "type": {"name": "string", "title": "String", "type": null, "jsonType": "string"},
+                "type": {
+                  "name": "string",
+                  "title": "String",
+                  "type": null,
+                  "jsonType": "string"
+                },
                 "name": "string",
                 "title": "Referenced document ID",
                 "preview": {}
@@ -184,7 +222,12 @@
       "of": [
         {
           "type": {
-            "type": {"name": "block", "title": "Block", "type": null, "jsonType": "object"},
+            "type": {
+              "name": "block",
+              "title": "Block",
+              "type": null,
+              "jsonType": "object"
+            },
             "name": "customBlock",
             "title": "Block",
             "jsonType": "object",
@@ -194,12 +237,22 @@
                 "name": "children",
                 "type": {
                   "jsonType": "array",
-                  "type": {"name": "array", "type": null, "jsonType": "array", "of": []},
+                  "type": {
+                    "name": "array",
+                    "type": null,
+                    "jsonType": "array",
+                    "of": []
+                  },
                   "name": "array",
                   "title": "Content",
                   "of": [
                     {
-                      "type": {"name": "span", "title": "Span", "type": null, "jsonType": "object"},
+                      "type": {
+                        "name": "span",
+                        "title": "Span",
+                        "type": null,
+                        "jsonType": "object"
+                      },
                       "name": "span",
                       "title": "Span",
                       "jsonType": "object",
@@ -208,7 +261,12 @@
                           "name": "marks",
                           "type": {
                             "jsonType": "array",
-                            "type": {"name": "array", "type": null, "jsonType": "array", "of": []},
+                            "type": {
+                              "name": "array",
+                              "type": null,
+                              "jsonType": "array",
+                              "of": []
+                            },
                             "name": "array",
                             "title": "Marks",
                             "of": [
@@ -289,7 +347,9 @@
                                   {
                                     "name": "name",
                                     "title": "Name",
-                                    "by": [{"field": "name", "direction": "asc"}]
+                                    "by": [
+                                      {"field": "name", "direction": "asc"}
+                                    ]
                                   }
                                 ],
                                 "fieldsets": [
@@ -458,7 +518,12 @@
                 "name": "style",
                 "type": {
                   "jsonType": "string",
-                  "type": {"name": "string", "title": "String", "type": null, "jsonType": "string"},
+                  "type": {
+                    "name": "string",
+                    "title": "String",
+                    "type": null,
+                    "jsonType": "string"
+                  },
                   "name": "string",
                   "title": "Style",
                   "options": {
@@ -475,10 +540,17 @@
                 "name": "list",
                 "type": {
                   "jsonType": "string",
-                  "type": {"name": "string", "title": "String", "type": null, "jsonType": "string"},
+                  "type": {
+                    "name": "string",
+                    "title": "String",
+                    "type": null,
+                    "jsonType": "string"
+                  },
                   "name": "string",
                   "title": "List type",
-                  "options": {"list": [{"title": "Numbered", "value": "number"}]},
+                  "options": {
+                    "list": [{"title": "Numbered", "value": "number"}]
+                  },
                   "preview": {}
                 }
               },
@@ -486,7 +558,12 @@
                 "name": "markDefs",
                 "type": {
                   "jsonType": "array",
-                  "type": {"name": "array", "type": null, "jsonType": "array", "of": []},
+                  "type": {
+                    "name": "array",
+                    "type": null,
+                    "jsonType": "array",
+                    "of": []
+                  },
                   "name": "array",
                   "title": "Mark definitions",
                   "of": [
@@ -703,12 +780,22 @@
               "name": "children",
               "type": {
                 "jsonType": "array",
-                "type": {"name": "array", "type": null, "jsonType": "array", "of": []},
+                "type": {
+                  "name": "array",
+                  "type": null,
+                  "jsonType": "array",
+                  "of": []
+                },
                 "name": "array",
                 "title": "Content",
                 "of": [
                   {
-                    "type": {"name": "span", "title": "Span", "type": null, "jsonType": "object"},
+                    "type": {
+                      "name": "span",
+                      "title": "Span",
+                      "type": null,
+                      "jsonType": "object"
+                    },
                     "name": "span",
                     "title": "Span",
                     "jsonType": "object",
@@ -717,7 +804,12 @@
                         "name": "marks",
                         "type": {
                           "jsonType": "array",
-                          "type": {"name": "array", "type": null, "jsonType": "array", "of": []},
+                          "type": {
+                            "name": "array",
+                            "type": null,
+                            "jsonType": "array",
+                            "of": []
+                          },
                           "name": "array",
                           "title": "Marks",
                           "of": [
@@ -967,7 +1059,12 @@
               "name": "style",
               "type": {
                 "jsonType": "string",
-                "type": {"name": "string", "title": "String", "type": null, "jsonType": "string"},
+                "type": {
+                  "name": "string",
+                  "title": "String",
+                  "type": null,
+                  "jsonType": "string"
+                },
                 "name": "string",
                 "title": "Style",
                 "options": {
@@ -984,7 +1081,12 @@
               "name": "list",
               "type": {
                 "jsonType": "string",
-                "type": {"name": "string", "title": "String", "type": null, "jsonType": "string"},
+                "type": {
+                  "name": "string",
+                  "title": "String",
+                  "type": null,
+                  "jsonType": "string"
+                },
                 "name": "string",
                 "title": "List type",
                 "options": {"list": [{"title": "Numbered", "value": "number"}]},
@@ -995,7 +1097,12 @@
               "name": "markDefs",
               "type": {
                 "jsonType": "array",
-                "type": {"name": "array", "type": null, "jsonType": "array", "of": []},
+                "type": {
+                  "name": "array",
+                  "type": null,
+                  "jsonType": "array",
+                  "of": []
+                },
                 "name": "array",
                 "title": "Mark definitions",
                 "of": [
@@ -1206,7 +1313,12 @@
       ]
     },
     "span": {
-      "type": {"name": "span", "title": "Span", "type": null, "jsonType": "object"},
+      "type": {
+        "name": "span",
+        "title": "Span",
+        "type": null,
+        "jsonType": "object"
+      },
       "name": "span",
       "title": "Span",
       "jsonType": "object",
@@ -1215,13 +1327,23 @@
           "name": "marks",
           "type": {
             "jsonType": "array",
-            "type": {"name": "array", "type": null, "jsonType": "array", "of": []},
+            "type": {
+              "name": "array",
+              "type": null,
+              "jsonType": "array",
+              "of": []
+            },
             "name": "array",
             "title": "Marks",
             "of": [
               {
                 "jsonType": "string",
-                "type": {"name": "string", "title": "String", "type": null, "jsonType": "string"},
+                "type": {
+                  "name": "string",
+                  "title": "String",
+                  "type": null,
+                  "jsonType": "string"
+                },
                 "name": "string",
                 "title": "String",
                 "preview": {}
@@ -1233,7 +1355,12 @@
           "name": "text",
           "type": {
             "jsonType": "string",
-            "type": {"name": "string", "title": "String", "type": null, "jsonType": "string"},
+            "type": {
+              "name": "string",
+              "title": "String",
+              "type": null,
+              "jsonType": "string"
+            },
             "name": "string",
             "title": "Text",
             "preview": {}
@@ -1243,7 +1370,12 @@
       "annotations": [
         {
           "jsonType": "object",
-          "type": {"name": "reference", "title": "Reference", "type": null, "jsonType": "object"},
+          "type": {
+            "name": "reference",
+            "title": "Reference",
+            "type": null,
+            "jsonType": "object"
+          },
           "name": "author",
           "title": "Author",
           "to": [
@@ -1278,7 +1410,11 @@
                 ],
                 "options": {},
                 "orderings": [
-                  {"name": "name", "title": "Name", "by": [{"field": "name", "direction": "asc"}]}
+                  {
+                    "name": "name",
+                    "title": "Name",
+                    "by": [{"field": "name", "direction": "asc"}]
+                  }
                 ],
                 "fieldsets": [
                   {
@@ -1324,7 +1460,11 @@
               ],
               "options": {},
               "orderings": [
-                {"name": "name", "title": "Name", "by": [{"field": "name", "direction": "asc"}]}
+                {
+                  "name": "name",
+                  "title": "Name",
+                  "by": [{"field": "name", "direction": "asc"}]
+                }
               ],
               "fieldsets": [
                 {
@@ -1360,7 +1500,12 @@
               "name": "_ref",
               "type": {
                 "jsonType": "string",
-                "type": {"name": "string", "title": "String", "type": null, "jsonType": "string"},
+                "type": {
+                  "name": "string",
+                  "title": "String",
+                  "type": null,
+                  "jsonType": "string"
+                },
                 "name": "string",
                 "title": "Referenced document ID",
                 "preview": {}
@@ -1389,7 +1534,12 @@
                 "name": "_ref",
                 "type": {
                   "jsonType": "string",
-                  "type": {"name": "string", "title": "String", "type": null, "jsonType": "string"},
+                  "type": {
+                    "name": "string",
+                    "title": "String",
+                    "type": null,
+                    "jsonType": "string"
+                  },
                   "name": "string",
                   "title": "Referenced document ID",
                   "preview": {}

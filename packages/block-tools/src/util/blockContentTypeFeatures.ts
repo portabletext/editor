@@ -1,20 +1,19 @@
 import {
-  type ArraySchemaType,
-  type BlockSchemaType,
-  type EnumListProps,
-  type I18nTitledListValue,
   isBlockChildrenObjectField,
   isBlockListObjectField,
   isBlockSchemaType,
   isBlockStyleObjectField,
   isObjectSchemaType,
   isTitledListValue,
+  type ArraySchemaType,
+  type BlockSchemaType,
+  type EnumListProps,
+  type I18nTitledListValue,
   type ObjectSchemaType,
   type SpanSchemaType,
   type TitledListValue,
 } from '@sanity/types'
-
-import {type BlockContentFeatures, type ResolvedAnnotationType} from '../types'
+import type {BlockContentFeatures, ResolvedAnnotationType} from '../types'
 import {findBlockType} from './findBlockType'
 
 // Helper method for describing a blockContentType's feature set
@@ -35,9 +34,13 @@ export default function blockContentFeatures(
     throw new Error('No `of` declaration found for blocks `children` field')
   }
 
-  const spanType = ofType.find((member): member is SpanSchemaType => member.name === 'span')
+  const spanType = ofType.find(
+    (member): member is SpanSchemaType => member.name === 'span',
+  )
   if (!spanType) {
-    throw new Error('No `span` type found in `block` schema type `children` definition')
+    throw new Error(
+      'No `span` type found in `block` schema type `children` definition',
+    )
   }
 
   const inlineObjectTypes = ofType.filter(
@@ -64,13 +67,19 @@ export default function blockContentFeatures(
   }
 }
 
-function resolveEnabledStyles(blockType: BlockSchemaType): TitledListValue<string>[] {
+function resolveEnabledStyles(
+  blockType: BlockSchemaType,
+): TitledListValue<string>[] {
   const styleField = blockType.fields.find(isBlockStyleObjectField)
   if (!styleField) {
-    throw new Error("A field with name 'style' is not defined in the block type (required).")
+    throw new Error(
+      "A field with name 'style' is not defined in the block type (required).",
+    )
   }
 
-  const textStyles = getTitledListValuesFromEnumListOptions(styleField.type.options)
+  const textStyles = getTitledListValuesFromEnumListOptions(
+    styleField.type.options,
+  )
   if (textStyles.length === 0) {
     throw new Error(
       'The style fields need at least one style ' +
@@ -81,7 +90,9 @@ function resolveEnabledStyles(blockType: BlockSchemaType): TitledListValue<strin
   return textStyles
 }
 
-function resolveEnabledAnnotationTypes(spanType: SpanSchemaType): ResolvedAnnotationType[] {
+function resolveEnabledAnnotationTypes(
+  spanType: SpanSchemaType,
+): ResolvedAnnotationType[] {
   return spanType.annotations.map((annotation) => ({
     title: annotation.title,
     type: annotation,
@@ -90,17 +101,25 @@ function resolveEnabledAnnotationTypes(spanType: SpanSchemaType): ResolvedAnnota
   }))
 }
 
-function resolveEnabledDecorators(spanType: SpanSchemaType): TitledListValue<string>[] {
+function resolveEnabledDecorators(
+  spanType: SpanSchemaType,
+): TitledListValue<string>[] {
   return spanType.decorators
 }
 
-function resolveEnabledListItems(blockType: BlockSchemaType): I18nTitledListValue<string>[] {
+function resolveEnabledListItems(
+  blockType: BlockSchemaType,
+): I18nTitledListValue<string>[] {
   const listField = blockType.fields.find(isBlockListObjectField)
   if (!listField) {
-    throw new Error("A field with name 'list' is not defined in the block type (required).")
+    throw new Error(
+      "A field with name 'list' is not defined in the block type (required).",
+    )
   }
 
-  const listItems = getTitledListValuesFromEnumListOptions(listField.type.options)
+  const listItems = getTitledListValuesFromEnumListOptions(
+    listField.type.options,
+  )
   if (!listItems) {
     throw new Error('The list field need at least to be an empty array')
   }
@@ -116,5 +135,7 @@ function getTitledListValuesFromEnumListOptions(
     return []
   }
 
-  return list.map((item) => (isTitledListValue(item) ? item : {title: item, value: item}))
+  return list.map((item) =>
+    isTitledListValue(item) ? item : {title: item, value: item},
+  )
 }

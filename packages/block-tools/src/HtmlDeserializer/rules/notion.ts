@@ -1,7 +1,6 @@
-import {type ArraySchemaType} from '@sanity/types'
-
-import {DEFAULT_SPAN, HTML_BLOCK_TAGS, HTML_HEADER_TAGS} from '../../constants'
-import {type DeserializerRule} from '../../types'
+import type {ArraySchemaType} from '@sanity/types'
+import {DEFAULT_SPAN} from '../../constants'
+import type {DeserializerRule} from '../../types'
 import {isElement, tagName} from '../helpers'
 
 // font-style:italic seems like the most important rule for italic / emphasis in their html
@@ -13,7 +12,9 @@ function isEmphasis(el: Node): boolean {
 // font-weight:700 or 600 seems like the most important rule for bold in their html
 function isStrong(el: Node): boolean {
   const style = isElement(el) && el.getAttribute('style')
-  return /font-weight:700/.test(style || '') || /font-weight:600/.test(style || '')
+  return (
+    /font-weight:700/.test(style || '') || /font-weight:600/.test(style || '')
+  )
 }
 
 // text-decoration seems like the most important rule for underline in their html
@@ -27,12 +28,9 @@ function isNotion(el: Node): boolean {
   return isElement(el) && Boolean(el.getAttribute('data-is-notion'))
 }
 
-const blocks: Record<string, {style: string} | undefined> = {
-  ...HTML_BLOCK_TAGS,
-  ...HTML_HEADER_TAGS,
-}
-
-export default function createNotionRules(_blockContentType: ArraySchemaType): DeserializerRule[] {
+export default function createNotionRules(
+  _blockContentType: ArraySchemaType,
+): DeserializerRule[] {
   return [
     {
       deserialize(el) {
