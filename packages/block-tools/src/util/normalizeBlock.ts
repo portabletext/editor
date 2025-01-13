@@ -1,7 +1,10 @@
-import {isPortableTextSpan, type PortableTextSpan, type PortableTextTextBlock} from '@sanity/types'
+import {
+  isPortableTextSpan,
+  type PortableTextSpan,
+  type PortableTextTextBlock,
+} from '@sanity/types'
 import {isEqual} from 'lodash'
-
-import {type TypedObject} from '../types'
+import type {TypedObject} from '../types'
 import {randomKey} from './randomKey'
 
 /**
@@ -39,14 +42,22 @@ export interface BlockNormalizationOptions {
 export function normalizeBlock(
   node: TypedObject,
   options: BlockNormalizationOptions = {},
-): Omit<TypedObject | PortableTextTextBlock<TypedObject | PortableTextSpan>, '_key'> & {
+): Omit<
+  TypedObject | PortableTextTextBlock<TypedObject | PortableTextSpan>,
+  '_key'
+> & {
   _key: string
 } {
   if (node._type !== (options.blockTypeName || 'block')) {
-    return '_key' in node ? (node as TypedObject & {_key: string}) : {...node, _key: randomKey(12)}
+    return '_key' in node
+      ? (node as TypedObject & {_key: string})
+      : {...node, _key: randomKey(12)}
   }
 
-  const block: Omit<PortableTextTextBlock<TypedObject | PortableTextSpan>, 'style'> = {
+  const block: Omit<
+    PortableTextTextBlock<TypedObject | PortableTextSpan>,
+    'style'
+  > = {
     _key: randomKey(12),
     children: [],
     markDefs: [],
@@ -83,7 +94,12 @@ export function normalizeBlock(
           isPortableTextSpan(previousChild) &&
           isEqual(previousChild.marks, child.marks)
         ) {
-          if (lastChild && lastChild === child && child.text === '' && block.children.length > 1) {
+          if (
+            lastChild &&
+            lastChild === child &&
+            child.text === '' &&
+            block.children.length > 1
+          ) {
             return acc
           }
 
@@ -119,6 +135,8 @@ export function normalizeBlock(
     })
 
   // Remove leftover (unused) markDefs
-  block.markDefs = (block.markDefs || []).filter((markDef) => usedMarkDefs.includes(markDef._key))
+  block.markDefs = (block.markDefs || []).filter((markDef) =>
+    usedMarkDefs.includes(markDef._key),
+  )
   return block
 }

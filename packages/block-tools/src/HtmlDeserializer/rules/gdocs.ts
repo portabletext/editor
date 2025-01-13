@@ -1,5 +1,4 @@
-import {type ArraySchemaType} from '@sanity/types'
-
+import type {ArraySchemaType} from '@sanity/types'
 import {
   BLOCK_DEFAULT_STYLE,
   DEFAULT_BLOCK,
@@ -8,7 +7,7 @@ import {
   HTML_HEADER_TAGS,
   HTML_LIST_CONTAINER_TAGS,
 } from '../../constants'
-import {type BlockEnabledFeatures, type DeserializerRule} from '../../types'
+import type {BlockEnabledFeatures, DeserializerRule} from '../../types'
 import {isElement, tagName} from '../helpers'
 
 const LIST_CONTAINER_TAGS = Object.keys(HTML_LIST_CONTAINER_TAGS)
@@ -166,7 +165,12 @@ export default function createGDocsRules(
         }
 
         // BRs on the root
-        if (tagName(el) === 'br' && isGoogleDocs(el) && isElement(el) && isRootNode(el)) {
+        if (
+          tagName(el) === 'br' &&
+          isGoogleDocs(el) &&
+          isElement(el) &&
+          isRootNode(el)
+        ) {
           return {
             ...DEFAULT_SPAN,
             text: '',

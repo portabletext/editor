@@ -1,6 +1,7 @@
 import {_XPathResult} from './xpathResult'
 
-const WORD_HTML_REGEX = /(class="?Mso|style=(?:"|')[^"]*?\bmso-|w:WordDocument|<o:\w+>|<\/font>)/
+const WORD_HTML_REGEX =
+  /(class="?Mso|style=(?:"|')[^"]*?\bmso-|w:WordDocument|<o:\w+>|<\/font>)/
 
 // xPaths for elements that will be removed from the document
 const unwantedPaths = [

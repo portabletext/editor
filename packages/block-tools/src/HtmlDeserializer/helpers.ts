@@ -1,21 +1,20 @@
 import {
-  type ArraySchemaType,
   isPortableTextTextBlock,
+  type ArraySchemaType,
   type PortableTextTextBlock,
 } from '@sanity/types'
 import {vercelStegaClean} from '@vercel/stega'
 import {isEqual} from 'lodash'
-
 import {DEFAULT_BLOCK} from '../constants'
-import {
-  type BlockEnabledFeatures,
-  type HtmlParser,
-  type HtmlPreprocessorOptions,
-  type MinimalBlock,
-  type MinimalSpan,
-  type PlaceholderAnnotation,
-  type PlaceholderDecorator,
-  type TypedObject,
+import type {
+  BlockEnabledFeatures,
+  HtmlParser,
+  HtmlPreprocessorOptions,
+  MinimalBlock,
+  MinimalSpan,
+  PlaceholderAnnotation,
+  PlaceholderDecorator,
+  TypedObject,
 } from '../types'
 import blockContentTypeFeatures from '../util/blockContentTypeFeatures'
 import {resolveJsType} from '../util/resolveJsType'
@@ -28,12 +27,22 @@ import preprocessors from './preprocessors'
  * @param blockContentType - Schema type for array containing _at least_ a block child type
  * @returns
  */
-export function createRuleOptions(blockContentType: ArraySchemaType): BlockEnabledFeatures {
+export function createRuleOptions(
+  blockContentType: ArraySchemaType,
+): BlockEnabledFeatures {
   const features = blockContentTypeFeatures(blockContentType)
-  const enabledBlockStyles = features.styles.map((item) => item.value || item.title)
-  const enabledSpanDecorators = features.decorators.map((item) => item.value || item.title)
-  const enabledBlockAnnotations = features.annotations.map((item) => item.value || item.title || '')
-  const enabledListTypes = features.lists.map((item) => item.value || item.title || '')
+  const enabledBlockStyles = features.styles.map(
+    (item) => item.value || item.title,
+  )
+  const enabledSpanDecorators = features.decorators.map(
+    (item) => item.value || item.title,
+  )
+  const enabledBlockAnnotations = features.annotations.map(
+    (item) => item.value || item.title || '',
+  )
+  const enabledListTypes = features.lists.map(
+    (item) => item.value || item.title || '',
+  )
   return {
     enabledBlockStyles,
     enabledSpanDecorators,
@@ -181,7 +190,11 @@ export function trimWhitespace(blocks: TypedObject[]): TypedObject[] {
       if (!child.text) {
         block.children.splice(index, 1)
       }
-      if (prevChild && isEqual(prevChild.marks, child.marks) && isWhiteSpaceChar(child.text)) {
+      if (
+        prevChild &&
+        isEqual(prevChild.marks, child.marks) &&
+        isWhiteSpaceChar(child.text)
+      ) {
         prevChild.text += ' '
         block.children.splice(index, 1)
       } else if (
@@ -231,7 +244,7 @@ export function ensureRootIsBlocks(blocks: TypedObject[]): TypedObject[] {
 }
 
 export function isNodeList(node: unknown): node is NodeList {
-  return Object.prototype.toString.call(node) == '[object NodeList]'
+  return Object.prototype.toString.call(node) === '[object NodeList]'
 }
 
 export function isMinimalSpan(node: TypedObject): node is MinimalSpan {
@@ -242,11 +255,15 @@ export function isMinimalBlock(node: TypedObject): node is MinimalBlock {
   return node._type === 'block'
 }
 
-export function isPlaceholderDecorator(node: TypedObject): node is PlaceholderDecorator {
+export function isPlaceholderDecorator(
+  node: TypedObject,
+): node is PlaceholderDecorator {
   return node._type === '__decorator'
 }
 
-export function isPlaceholderAnnotation(node: TypedObject): node is PlaceholderAnnotation {
+export function isPlaceholderAnnotation(
+  node: TypedObject,
+): node is PlaceholderAnnotation {
   return node._type === '__annotation'
 }
 
@@ -310,7 +327,8 @@ export function removeAllWhitespace(rootNode: Node) {
       // Handle <br> tags that is between <p> tags
       if (
         tagName(elm) === 'br' &&
-        (tagName(elm.nextElementSibling) === 'p' || tagName(elm.previousElementSibling) === 'p')
+        (tagName(elm.nextElementSibling) === 'p' ||
+          tagName(elm.previousElementSibling) === 'p')
       ) {
         nodesToRemove.push(elm)
 

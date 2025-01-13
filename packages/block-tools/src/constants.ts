@@ -32,7 +32,10 @@ export const HTML_SPAN_TAGS = {
   span: {object: 'text'},
 }
 
-export const HTML_LIST_CONTAINER_TAGS: Record<string, {object: null} | undefined> = {
+export const HTML_LIST_CONTAINER_TAGS: Record<
+  string,
+  {object: null} | undefined
+> = {
   ol: {object: null},
   ul: {object: null},
 }
@@ -94,6 +97,8 @@ export const DEFAULT_SUPPORTED_STYLES = uniq(
     .map((tag) => tag.style),
 )
 
-export const DEFAULT_SUPPORTED_DECORATORS = uniq(Object.values(HTML_DECORATOR_TAGS))
+export const DEFAULT_SUPPORTED_DECORATORS = uniq(
+  Object.values(HTML_DECORATOR_TAGS),
+)
 
 export const DEFAULT_SUPPORTED_ANNOTATIONS = ['link']

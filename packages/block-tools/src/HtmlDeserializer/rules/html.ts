@@ -1,5 +1,4 @@
-import {type ArraySchemaType} from '@sanity/types'
-
+import type {ArraySchemaType, TypedObject} from '@sanity/types'
 import {
   DEFAULT_BLOCK,
   DEFAULT_SPAN,
@@ -11,7 +10,7 @@ import {
   HTML_SPAN_TAGS,
   type PartialBlock,
 } from '../../constants'
-import {type BlockEnabledFeatures, type DeserializerRule} from '../../types'
+import type {BlockEnabledFeatures, DeserializerRule} from '../../types'
 import {randomKey} from '../../util/randomKey'
 import {isElement, tagName} from '../helpers'
 
@@ -29,7 +28,7 @@ export function resolveListItem(
 }
 
 export default function createHTMLRules(
-  blockContentType: ArraySchemaType,
+  _blockContentType: ArraySchemaType,
   options: BlockEnabledFeatures,
 ): DeserializerRule[] {
   return [
@@ -41,13 +40,16 @@ export default function createHTMLRules(
         }
         const isValidWhiteSpace =
           el.nodeType === 3 &&
-          (el.textContent || '').replace(/[\r\n]/g, ' ').replace(/\s\s+/g, ' ') === ' ' &&
+          (el.textContent || '')
+            .replace(/[\r\n]/g, ' ')
+            .replace(/\s\s+/g, ' ') === ' ' &&
           el.nextSibling &&
           el.nextSibling.nodeType !== 3 &&
           el.previousSibling &&
           el.previousSibling.nodeType !== 3
         const isValidText =
-          (isValidWhiteSpace || el.textContent !== ' ') && tagName(el.parentNode) !== 'body'
+          (isValidWhiteSpace || el.textContent !== ' ') &&
+          tagName(el.parentNode) !== 'body'
         if (el.nodeName === '#text' && isValidText) {
           return {
             ...DEFAULT_SPAN,
@@ -95,7 +97,9 @@ export default function createHTMLRules(
         el.childNodes.forEach((node, index) => {
           if (
             node.nodeType === 1 &&
-            Object.keys(blocks).includes((node as Element).localName.toLowerCase())
+            Object.keys(blocks).includes(
+              (node as Element).localName.toLowerCase(),
+            )
           ) {
             if (!el.ownerDocument) {
               return
@@ -191,10 +195,17 @@ export default function createHTMLRules(
         const tag = tagName(el)
         const listItem = tag ? HTML_LIST_ITEM_TAGS[tag] : undefined
         const parentTag = tagName(el.parentNode) || ''
-        if (!listItem || !el.parentNode || !HTML_LIST_CONTAINER_TAGS[parentTag]) {
+        if (
+          !listItem ||
+          !el.parentNode ||
+          !HTML_LIST_CONTAINER_TAGS[parentTag]
+        ) {
           return undefined
         }
-        const enabledListItem = resolveListItem(parentTag, options.enabledListTypes)
+        const enabledListItem = resolveListItem(
+          parentTag,
+          options.enabledListTypes,
+        )
         // If the list item style is not supported, return a new default block
         if (!enabledListItem) {
           return block({_type: 'block', children: next(el.childNodes)})
@@ -222,7 +233,7 @@ export default function createHTMLRules(
     // If not supported just write out the link text and href in plain text.
     {
       deserialize(el, next) {
-        if (tagName(el) != 'a') {
+        if (tagName(el) !== 'a') {
           return undefined
         }
         const linkEnabled = options.enabledBlockAnnotations.includes('link')
@@ -230,7 +241,7 @@ export default function createHTMLRules(
         if (!href) {
           return next(el.childNodes)
         }
-        let markDef
+        let markDef: TypedObject | undefined
         if (linkEnabled) {
           markDef = {
             _key: randomKey(12),
@@ -243,7 +254,10 @@ export default function createHTMLRules(
             children: next(el.childNodes),
           }
         }
-        return el.appendChild(el.ownerDocument.createTextNode(` (${href})`)) && next(el.childNodes)
+        return (
+          el.appendChild(el.ownerDocument.createTextNode(` (${href})`)) &&
+          next(el.childNodes)
+        )
       },
     },
   ]

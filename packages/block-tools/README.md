@@ -1,16 +1,16 @@
-# Sanity Block Tools
+# `@portabletext/block-tools`
 
-Various tools for processing Sanity block content. Mostly used internally in the Studio code, but it got some nice functions (especially `htmlToBlocks`) which is handy when you are importing data from HTML into your dataset as block text.
+> Various tools for processing Portable Text.
 
-**NOTE:** To use `@sanity/block-tools` in a Node.js script, you will need to provide a `parseHtml` method - generally using `JSDOM`. [Read more](#jsdom-example).
+**NOTE:** To use `@portabletext/block-tools` in a Node.js script, you will need to provide a `parseHtml` method - generally using `JSDOM`. [Read more](#jsdom-example).
 
 ## Example
 
 Let's start with a complete example:
 
 ```js
+import {getBlockContentFeatures, htmlToBlocks} from '@portabletext/block-tools'
 import {Schema} from '@sanity/schema'
-import {htmlToBlocks, getBlockContentFeatures} from '@sanity/block-tools'
 
 // Start with compiling a schema we can work against
 const defaultSchema = Schema.compile({
@@ -42,7 +42,10 @@ const blockContentType = defaultSchema
   .fields.find((field) => field.name === 'body').type
 
 // Convert HTML to block array
-const blocks = htmlToBlocks('<html><body><h1>Hello world!</h1><body></html>', blockContentType)
+const blocks = htmlToBlocks(
+  '<html><body><h1>Hello world!</h1><body></html>',
+  blockContentType,
+)
 // Outputs
 //
 //  {
@@ -107,11 +110,15 @@ that parses the html into a DOMParser compatible model / API.
 
 ```js
 const {JSDOM} = require('jsdom')
-const {htmlToBlocks} = require('@sanity/block-tools')
+const {htmlToBlocks} = require('@portabletext/block-tools')
 
-const blocks = htmlToBlocks('<html><body><h1>Hello world!</h1><body></html>', blockContentType, {
-  parseHtml: (html) => new JSDOM(html).window.document,
-})
+const blocks = htmlToBlocks(
+  '<html><body><h1>Hello world!</h1><body></html>',
+  blockContentType,
+  {
+    parseHtml: (html) => new JSDOM(html).window.document,
+  },
+)
 ```
 
 ##### `rules`
@@ -133,7 +140,9 @@ htmlToBlocks(
           }
           const code = el.children[0]
           const childNodes =
-            code && code.tagName.toLowerCase() === 'code' ? code.childNodes : el.childNodes
+            code && code.tagName.toLowerCase() === 'code'
+              ? code.childNodes
+              : el.childNodes
           let text = ''
           childNodes.forEach((node) => {
             text += node.textContent
@@ -156,7 +165,8 @@ htmlToBlocks(
 Normalize a block object structure to make sure it has what it needs.
 
 ```js
-import {normalizeBlock} from '@sanity/block-tools'
+import {normalizeBlock} from '@portabletext/block-tools'
+
 const partialBlock = {
   _type: 'block',
   children: [

@@ -1,6 +1,5 @@
-import {type ArraySchemaType} from '@sanity/types'
-
-import {type BlockEnabledFeatures, type DeserializerRule} from '../../types'
+import type {ArraySchemaType} from '@sanity/types'
+import type {BlockEnabledFeatures, DeserializerRule} from '../../types'
 import createGDocsRules from './gdocs'
 import createHTMLRules from './html'
 import createNotionRules from './notion'
