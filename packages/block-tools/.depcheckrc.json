@@ -1,3 +1,8 @@
 {
-  "ignores": ["@repo/tsconfig", "@sanity/pkg-utils", "react", "@vitest/coverage-v8"]
+  "ignores": [
+    "@repo/tsconfig",
+    "@sanity/pkg-utils",
+    "react",
+    "@vitest/coverage-v8"
+  ]
 }

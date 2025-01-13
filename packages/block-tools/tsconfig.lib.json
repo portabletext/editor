@@ -1,5 +1,5 @@
 {
-  "extends": "@repo/tsconfig/build.json",
+  "extends": "./tsconfig.build.json",
   "include": ["./src"],
   "exclude": [
     "./src/**/__fixtures__",

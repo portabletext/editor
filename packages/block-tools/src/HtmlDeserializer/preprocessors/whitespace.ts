@@ -7,7 +7,9 @@ export default (_: string, doc: Document): Document => {
     // If this is a text node and not inside a tag where whitespace should be preserved, process it.
     if (
       node.nodeType === _XPathResult.BOOLEAN_TYPE &&
-      !PRESERVE_WHITESPACE_TAGS.includes(node.parentElement?.tagName.toLowerCase() || '')
+      !PRESERVE_WHITESPACE_TAGS.includes(
+        node.parentElement?.tagName.toLowerCase() || '',
+      )
     ) {
       node.textContent =
         node.textContent

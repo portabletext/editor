@@ -1,12 +1,12 @@
-import {
-  type ArraySchemaType,
-  type I18nTitledListValue,
-  type ObjectSchemaType,
-  type PortableTextObject,
-  type SpanSchemaType,
-  type TitledListValue,
+import type {
+  ArraySchemaType,
+  I18nTitledListValue,
+  ObjectSchemaType,
+  PortableTextObject,
+  SpanSchemaType,
+  TitledListValue,
 } from '@sanity/types'
-import {type ComponentType} from 'react'
+import type {ComponentType} from 'react'
 
 /**
  * @public
@@ -118,7 +118,9 @@ export interface HtmlPreprocessorOptions {
 export interface DeserializerRule {
   deserialize: (
     el: Node,
-    next: (elements: Node | Node[] | NodeList) => TypedObject | TypedObject[] | undefined,
+    next: (
+      elements: Node | Node[] | NodeList,
+    ) => TypedObject | TypedObject[] | undefined,
     createBlock: (props: ArbitraryTypedObject) => {
       _type: string
       block: ArbitraryTypedObject

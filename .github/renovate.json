@@ -12,6 +12,7 @@
     },
     {
       "matchFileNames": [
+        "packages/block-tools/package.json",
         "packages/editor/package.json",
         "packages/patches/package.json",
         "packages/racejar/package.json"

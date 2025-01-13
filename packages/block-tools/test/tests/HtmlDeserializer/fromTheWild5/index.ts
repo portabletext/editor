@@ -1,9 +1,8 @@
 import {JSDOM} from 'jsdom'
-
 import {isElement} from '../../../../src/HtmlDeserializer/helpers'
-import {type DeserializerRule} from '../../../../src/types'
+import type {DeserializerRule} from '../../../../src/types'
 import defaultSchema from '../../../fixtures/defaultSchema'
-import {type BlockTestFn} from '../types'
+import type {BlockTestFn} from '../types'
 
 const blockContentType = defaultSchema
   .get('blogPost')
@@ -33,7 +32,7 @@ const testFn: BlockTestFn = (html, blockTools, commonOptions) => {
 
   const rules: DeserializerRule[] = [
     {
-      deserialize(el, next, block) {
+      deserialize(el, _next, block) {
         if (isElement(el) && el.tagName.toLowerCase() === 'cta') {
           const items = Array.from(el.childNodes)
           return block(getCtaBlock(items))

@@ -1,5 +1,5 @@
 import {BLOCK_DEFAULT_STYLE, DEFAULT_BLOCK} from '../../constants'
-import {type DeserializerRule} from '../../types'
+import type {DeserializerRule} from '../../types'
 import {isElement, tagName} from '../helpers'
 
 function getListItemStyle(el: Node): string | undefined {
@@ -27,7 +27,7 @@ function getListItemLevel(el: Node): number | undefined {
   }
 
   const [level] = levelMatch[0].match(/\d/) || []
-  const levelNum = level ? parseInt(level, 10) : 1
+  const levelNum = level ? Number.parseInt(level, 10) : 1
   return levelNum || 1
 }
 

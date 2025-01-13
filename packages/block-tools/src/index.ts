@@ -1,7 +1,10 @@
-import {type ArraySchemaType, type PortableTextTextBlock} from '@sanity/types'
-
+import type {ArraySchemaType, PortableTextTextBlock} from '@sanity/types'
 import HtmlDeserializer from './HtmlDeserializer'
-import {type BlockContentFeatures, type HtmlDeserializerOptions, type TypedObject} from './types'
+import type {
+  BlockContentFeatures,
+  HtmlDeserializerOptions,
+  TypedObject,
+} from './types'
 import blockContentTypeFeatures from './util/blockContentTypeFeatures'
 import {normalizeBlock} from './util/normalizeBlock'
 
@@ -30,7 +33,9 @@ export function htmlToBlocks(
  * @returns Returns the featureset of a compiled block content type.
  * @public
  */
-export function getBlockContentFeatures(blockContentType: ArraySchemaType): BlockContentFeatures {
+export function getBlockContentFeatures(
+  blockContentType: ArraySchemaType,
+): BlockContentFeatures {
   return blockContentTypeFeatures(blockContentType)
 }
 
