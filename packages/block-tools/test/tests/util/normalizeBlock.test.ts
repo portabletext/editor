@@ -1,7 +1,5 @@
 import assert from 'node:assert'
-
 import {describe, it} from 'vitest'
-
 import {normalizeBlock} from '../../../src/util/normalizeBlock'
 
 describe('normalizeBlock', () => {

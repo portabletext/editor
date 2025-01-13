@@ -1,6 +1,6 @@
 import {isElement} from '../../../../src/HtmlDeserializer/helpers'
 import defaultSchema from '../../../fixtures/defaultSchema'
-import {type BlockTestFn} from '../types'
+import type {BlockTestFn} from '../types'
 
 const blockContentType = defaultSchema
   .get('blogPost')
@@ -12,7 +12,7 @@ const testFn: BlockTestFn = (html, blockTools, commonOptions) => {
     rules: [
       {
         // Special case for pictures
-        deserialize(el, next, block) {
+        deserialize(el, _next, block) {
           if (!isElement(el) || el.tagName.toLowerCase() !== 'picture') {
             return undefined
           }

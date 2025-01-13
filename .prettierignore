@@ -6,3 +6,4 @@ CHANGELOG.md
 pnpm-lock.yaml
 
 apps/docs/src/content/docs/api
+packages/block-tools/test/**/input.html

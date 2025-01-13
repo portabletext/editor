@@ -1,18 +1,17 @@
-import {
-  type ArraySchemaType,
-  type PortableTextBlock,
-  type PortableTextObject,
-  type PortableTextTextBlock,
+import type {
+  ArraySchemaType,
+  PortableTextBlock,
+  PortableTextObject,
+  PortableTextTextBlock,
 } from '@sanity/types'
 import {flatten} from 'lodash'
-
-import {
-  type ArbitraryTypedObject,
-  type DeserializerRule,
-  type HtmlDeserializerOptions,
-  type PlaceholderAnnotation,
-  type PlaceholderDecorator,
-  type TypedObject,
+import type {
+  ArbitraryTypedObject,
+  DeserializerRule,
+  HtmlDeserializerOptions,
+  PlaceholderAnnotation,
+  PlaceholderDecorator,
+  TypedObject,
 } from '../types'
 import {findBlockType} from '../util/findBlockType'
 import {resolveJsType} from '../util/resolveJsType'
@@ -48,12 +47,18 @@ export default class HtmlDeserializer {
    * @param blockContentType - Schema type for array containing _at least_ a block child type
    * @param options - Options for the deserialization process
    */
-  constructor(blockContentType: ArraySchemaType, options: HtmlDeserializerOptions = {}) {
+  constructor(
+    blockContentType: ArraySchemaType,
+    options: HtmlDeserializerOptions = {},
+  ) {
     const {rules = [], unstable_whitespaceOnPasteMode = 'preserve'} = options
     if (!blockContentType) {
       throw new Error("Parameter 'blockContentType' is required")
     }
-    const standardRules = createRules(blockContentType, createRuleOptions(blockContentType))
+    const standardRules = createRules(
+      blockContentType,
+      createRuleOptions(blockContentType),
+    )
     this.rules = [...rules, ...standardRules]
     const parseHtml = options.parseHtml || defaultParseHtml()
     this.blockContentType = blockContentType
@@ -76,17 +81,23 @@ export default class HtmlDeserializer {
     const children = Array.from(fragment.childNodes) as HTMLElement[]
     // Ensure that there are no blocks within blocks, and trim whitespace
     const blocks = trimWhitespace(
-      flattenNestedBlocks(ensureRootIsBlocks(this.deserializeElements(children))),
+      flattenNestedBlocks(
+        ensureRootIsBlocks(this.deserializeElements(children)),
+      ),
     )
 
     if (this._markDefs.length > 0) {
       blocks
-        .filter((block): block is PortableTextTextBlock => block._type === 'block')
+        .filter(
+          (block): block is PortableTextTextBlock => block._type === 'block',
+        )
         .forEach((block) => {
           block.markDefs = block.markDefs || []
           block.markDefs = block.markDefs.concat(
             this._markDefs.filter((def) => {
-              return flatten(block.children.map((child) => child.marks || [])).includes(def._key)
+              return flatten(
+                block.children.map((child) => child.marks || []),
+              ).includes(def._key)
             }),
           )
         })
@@ -127,7 +138,9 @@ export default class HtmlDeserializer {
    * @returns
    */
   deserializeElement = (element: Node): TypedObject | TypedObject[] => {
-    const next = (elements: Node | Node[] | NodeList): TypedObject | TypedObject[] | undefined => {
+    const next = (
+      elements: Node | Node[] | NodeList,
+    ): TypedObject | TypedObject[] | undefined => {
       if (isNodeList(elements)) {
         return this.deserializeElements(Array.from(elements))
       }
@@ -150,7 +163,7 @@ export default class HtmlDeserializer {
       }
     }
 
-    let node
+    let node: TypedObject | Array<TypedObject> | undefined
     for (let i = 0; i < this.rules.length; i++) {
       const rule = this.rules[i]
       if (!rule.deserialize) {
@@ -160,8 +173,15 @@ export default class HtmlDeserializer {
       const ret = rule.deserialize(element, next, block)
       const type = resolveJsType(ret)
 
-      if (type !== 'array' && type !== 'object' && type !== 'null' && type !== 'undefined') {
-        throw new Error(`A rule returned an invalid deserialized representation: "${node}".`)
+      if (
+        type !== 'array' &&
+        type !== 'object' &&
+        type !== 'null' &&
+        type !== 'undefined'
+      ) {
+        throw new Error(
+          `A rule returned an invalid deserialized representation: "${node}".`,
+        )
       }
 
       if (ret === undefined) {
@@ -179,7 +199,12 @@ export default class HtmlDeserializer {
       }
 
       // Set list level on list item
-      if (ret && !Array.isArray(ret) && isMinimalBlock(ret) && 'listItem' in ret) {
+      if (
+        ret &&
+        !Array.isArray(ret) &&
+        isMinimalBlock(ret) &&
+        'listItem' in ret
+      ) {
         let parent = element.parentNode?.parentNode
         while (parent && tagName(parent) === 'li') {
           parent = parent.parentNode?.parentNode
@@ -188,7 +213,12 @@ export default class HtmlDeserializer {
       }
 
       // Set newlines on spans orginating from a block element within a blockquote
-      if (ret && !Array.isArray(ret) && isMinimalBlock(ret) && ret.style === 'blockquote') {
+      if (
+        ret &&
+        !Array.isArray(ret) &&
+        isMinimalBlock(ret) &&
+        ret.style === 'blockquote'
+      ) {
         ret.children.forEach((child, index) => {
           if (isMinimalSpan(child) && child.text === '\r') {
             child.text = '\n\n'
@@ -222,7 +252,10 @@ export default class HtmlDeserializer {
           // Only apply marks if this is an actual text
           node.marks.unshift(name)
         }
-      } else if ('children' in node && Array.isArray((node as PortableTextBlock).children)) {
+      } else if (
+        'children' in node &&
+        Array.isArray((node as PortableTextBlock).children)
+      ) {
         const block = node as any
         block.children = block.children.map(applyDecorator)
       }
@@ -245,7 +278,9 @@ export default class HtmlDeserializer {
    * @param annotation -
    * @returns Array of...
    */
-  deserializeAnnotation = (annotation: PlaceholderAnnotation): TypedObject[] => {
+  deserializeAnnotation = (
+    annotation: PlaceholderAnnotation,
+  ): TypedObject[] => {
     const {markDef} = annotation
     this._markDefs.push(markDef)
     const applyAnnotation = (node: TypedObject) => {
@@ -257,7 +292,10 @@ export default class HtmlDeserializer {
           // Only apply marks if this is an actual text
           node.marks.unshift(markDef._key)
         }
-      } else if ('children' in node && Array.isArray((node as PortableTextBlock).children)) {
+      } else if (
+        'children' in node &&
+        Array.isArray((node as PortableTextBlock).children)
+      ) {
         const block = node as any
         block.children = block.children.map(applyAnnotation)
       }
