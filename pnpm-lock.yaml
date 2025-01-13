@@ -5,6 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
+  '@portabletext/block-tools': workspace:*
   '@portabletext/editor': workspace:*
   '@portabletext/patches': workspace:*
   '@types/react': ^19.0.2
@@ -422,6 +423,9 @@ importers:
 
   packages/editor:
     dependencies:
+      '@portabletext/block-tools':
+        specifier: workspace:*
+        version: link:../block-tools
       '@portabletext/patches':
         specifier: workspace:*
         version: link:../patches
@@ -462,9 +466,6 @@ importers:
       '@portabletext/toolkit':
         specifier: ^2.0.16
         version: 2.0.16
-      '@sanity/block-tools':
-        specifier: ^3.69.0
-        version: 3.69.0(@types/react@19.0.2)(debug@4.4.0)
       '@sanity/diff-match-patch':
         specifier: ^3.1.2
         version: 3.1.2
@@ -2780,11 +2781,6 @@ packages:
 
   '@rushstack/ts-command-line@4.23.3':
     resolution: {integrity: sha512-HazKL8fv4HMQMzrKJCrOrhyBPPdzk7iajUXgsASwjQ8ROo1cmgyqxt/k9+SdmrNLGE1zATgRqMUH3s/6smbRMA==}
-
-  '@sanity/block-tools@3.69.0':
-    resolution: {integrity: sha512-KCMXPt6apZ/vE6PZ/6gr8LRS9Co/iCSJY5rDlr2dnonjYrMXs7Nl+olWCpCGLrwhu5FB8szUAQwVwJ7C6W1TaA==}
-    peerDependencies:
-      '@types/react': ^19.0.2
 
   '@sanity/browserslist-config@1.0.5':
     resolution: {integrity: sha512-so+/UtCge8t1jq509hH0otbbptRz0zM/Aa0dh5MhMD7HGT6n2igWIL2VWH/9QR9e77Jn3dJsjz23mW1WCxT+sg==}
@@ -9273,15 +9269,6 @@ snapshots:
       string-argv: 0.3.2
     transitivePeerDependencies:
       - '@types/node'
-
-  '@sanity/block-tools@3.69.0(@types/react@19.0.2)(debug@4.4.0)':
-    dependencies:
-      '@sanity/types': 3.69.0(@types/react@19.0.2)(debug@4.4.0)
-      '@types/react': 19.0.2
-      get-random-values-esm: 1.0.2
-      lodash: 4.17.21
-    transitivePeerDependencies:
-      - debug
 
   '@sanity/browserslist-config@1.0.5': {}
 

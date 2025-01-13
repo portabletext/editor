@@ -77,6 +77,7 @@
     "test:unit:watch": "vitest --project unit"
   },
   "dependencies": {
+    "@portabletext/block-tools": "workspace:^",
     "@portabletext/patches": "1.1.1",
     "@xstate/react": "^5.0.1",
     "debug": "^4.3.4",
@@ -92,7 +93,6 @@
   },
   "devDependencies": {
     "@portabletext/toolkit": "^2.0.16",
-    "@sanity/block-tools": "^3.69.0",
     "@sanity/diff-match-patch": "^3.1.2",
     "@sanity/pkg-utils": "^7.0.1",
     "@sanity/schema": "^3.69.0",
@@ -124,7 +124,6 @@
     "vitest-browser-react": "^0.0.4"
   },
   "peerDependencies": {
-    "@sanity/block-tools": "^3.69.0",
     "@sanity/schema": "^3.69.0",
     "@sanity/types": "^3.69.0",
     "react": "^16.9 || ^17 || ^18 || ^19",

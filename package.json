@@ -58,6 +58,7 @@
       ]
     },
     "overrides": {
+      "@portabletext/block-tools": "workspace:*",
       "@portabletext/editor": "workspace:*",
       "@portabletext/patches": "workspace:*",
       "@types/react": "$@types/react",
