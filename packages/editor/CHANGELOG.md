@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.21.3](https://github.com/portabletext/editor/compare/editor-v1.21.2...editor-v1.21.3) (2025-01-13)
+
+
+### Bug Fixes
+
+* **editor:** use `@portabletext/block-tools` ([01f70e6](https://github.com/portabletext/editor/commit/01f70e6b0dda909742129339630c2cedb1cc5db2))
+
 ## [1.21.2](https://github.com/portabletext/editor/compare/editor-v1.21.1...editor-v1.21.2) (2025-01-13)
 
 
