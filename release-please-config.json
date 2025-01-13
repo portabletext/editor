@@ -5,6 +5,7 @@
   "always-link-local": true,
   "plugins": ["node-workspace"],
   "packages": {
+    "packages/block-tools": {},
     "packages/editor": {},
     "packages/patches": {},
     "packages/racejar": {}

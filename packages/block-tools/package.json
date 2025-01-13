@@ -1,7 +1,6 @@
 {
   "name": "@portabletext/block-tools",
-  "private": true,
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "Can format HTML, Slate JSON or Sanity block array into any other format.",
   "keywords": [
     "portable-text",
@@ -66,5 +65,8 @@
   "peerDependencies": {
     "@sanity/types": "^3.69.0",
     "@types/react": "18 || 19"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
