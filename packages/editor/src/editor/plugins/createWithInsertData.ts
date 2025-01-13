@@ -1,4 +1,4 @@
-import {htmlToBlocks, normalizeBlock} from '@sanity/block-tools'
+import {htmlToBlocks, normalizeBlock} from '@portabletext/block-tools'
 import type {PortableTextBlock, PortableTextChild} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {Editor, Range, Transforms, type Descendant, type Node} from 'slate'
