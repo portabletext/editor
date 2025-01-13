@@ -4,3 +4,5 @@ lib
 .release-please-manifest.json
 CHANGELOG.md
 pnpm-lock.yaml
+
+apps/docs/src/content/docs/api
