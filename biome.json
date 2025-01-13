@@ -4,7 +4,7 @@
     "enabled": false
   },
   "linter": {
-    "ignore": ["tsconfig.base.json", "coverage", "dist", "lib"],
+    "ignore": ["tsconfig.*.json", "coverage", "dist", "lib"],
     "enabled": true,
     "rules": {
       "recommended": true,
