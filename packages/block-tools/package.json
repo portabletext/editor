@@ -38,7 +38,7 @@
   "scripts": {
     "build": "pkg-utils build --strict --check --clean",
     "check:lint": "biome lint .",
-    "check:types": "tsc --project tsconfig.lib.json",
+    "check:types": "tsc",
     "clean": "del .turbo && del lib && del node_modules",
     "dev": "pkg-utils watch",
     "lint:fix": "biome lint --write .",
