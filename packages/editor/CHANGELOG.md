@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.21.5](https://github.com/portabletext/editor/compare/editor-v1.21.4...editor-v1.21.5) (2025-01-14)
+
+
+### Bug Fixes
+
+* **editor:** align workspace package references ([ed09c5d](https://github.com/portabletext/editor/commit/ed09c5dac4db8db8cba2839beaa3a861b97a7f66))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.0.2
+
 ## [1.21.4](https://github.com/portabletext/editor/compare/editor-v1.21.3...editor-v1.21.4) (2025-01-14)
 
 
