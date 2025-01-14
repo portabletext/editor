@@ -433,7 +433,7 @@ importers:
         specifier: ^5.0.2
         version: 5.0.2(@types/react@19.0.2)(react@19.0.0)(xstate@5.19.2)
       debug:
-        specifier: ^4.3.4
+        specifier: ^4.4.0
         version: 4.4.0
       get-random-values-esm:
         specifier: ^1.0.2
@@ -485,7 +485,7 @@ importers:
         specifier: ^16.1.0
         version: 16.1.0(@testing-library/dom@10.4.0)(@types/react-dom@19.0.2(@types/react@19.0.2))(@types/react@19.0.2)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@types/debug':
-        specifier: ^4.1.5
+        specifier: ^4.1.12
         version: 4.1.12
       '@types/lodash':
         specifier: ^4.17.13
