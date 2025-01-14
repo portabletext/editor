@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.2](https://github.com/portabletext/editor/compare/block-tools-v1.0.1...block-tools-v1.0.2) (2025-01-14)
+
+
+### Bug Fixes
+
+* **block-tools:** simplify package config ([e855e06](https://github.com/portabletext/editor/commit/e855e0614fbc4f407b62df4c3464eec4e993dc14))
+* **block-tools:** switch module type back to `module` ([92d8652](https://github.com/portabletext/editor/commit/92d865258f4f6fe0669c4002c4b197f1c6108c19))
+
 ## [1.0.1](https://github.com/portabletext/editor/compare/block-tools-v1.0.0...block-tools-v1.0.1) (2025-01-14)
 
 
