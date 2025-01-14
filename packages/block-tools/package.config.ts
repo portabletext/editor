@@ -21,14 +21,12 @@ export default defineConfig({
     rules: {
       // Disable rules for now
       'ae-incompatible-release-tags': 'off',
-      'ae-internal-missing-underscore': 'off',
-      'ae-missing-release-tag': 'off',
     },
   },
   rollup: {
     optimizeLodash: true,
   },
-  tsconfig: 'tsconfig.lib.json',
+  tsconfig: 'tsconfig.json',
   strictOptions: {
     noImplicitBrowsersList: 'off',
     noImplicitSideEffects: 'error',
