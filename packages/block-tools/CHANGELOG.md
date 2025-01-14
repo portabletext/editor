@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/portabletext/editor/compare/block-tools-v1.0.0...block-tools-v1.0.1) (2025-01-14)
+
+
+### Bug Fixes
+
+* **block-tools:** switch module to `commonjs` ([9a2d26f](https://github.com/portabletext/editor/commit/9a2d26f24ca75d8cde84e21826599e4e6289b1ba))
+
 ## 1.0.0 (2025-01-13)
 
 
