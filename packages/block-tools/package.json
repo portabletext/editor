@@ -51,8 +51,8 @@
   },
   "devDependencies": {
     "@sanity/pkg-utils": "^7.0.1",
-    "@sanity/schema": "^3.69.0",
-    "@sanity/types": "^3.69.0",
+    "@sanity/schema": "^3.70.0",
+    "@sanity/types": "^3.70.0",
     "@types/jsdom": "^20.0.0",
     "@types/lodash": "^4.17.7",
     "@types/react": "^19.0.3",
@@ -63,7 +63,7 @@
     "vitest": "^2.1.8"
   },
   "peerDependencies": {
-    "@sanity/types": "^3.69.0",
+    "@sanity/types": "^3.70.0",
     "@types/react": "18 || 19"
   },
   "publishConfig": {
