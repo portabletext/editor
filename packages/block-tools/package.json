@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/block-tools",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Can format HTML, Slate JSON or Sanity block array into any other format.",
   "keywords": [
     "portable-text",
