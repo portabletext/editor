@@ -77,8 +77,8 @@
     "test:unit:watch": "vitest --project unit"
   },
   "dependencies": {
-    "@portabletext/block-tools": "workspace:^",
-    "@portabletext/patches": "1.1.1",
+    "@portabletext/block-tools": "workspace:*",
+    "@portabletext/patches": "workspace:*",
     "@xstate/react": "^5.0.1",
     "debug": "^4.3.4",
     "get-random-values-esm": "^1.0.2",
