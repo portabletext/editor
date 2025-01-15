@@ -17,6 +17,27 @@ export type EditorSelector<TSelected> = (snapshot: EditorSnapshot) => TSelected
 
 /**
  * @public
+ * Hook to select a value from the editor state.
+ * @example
+ * Pass a selector as the second argument
+ * ```tsx
+ * import { useEditorSelector } from '@portabletext/editor'
+ *
+ * function MyComponent(editor) {
+ *  const value = useEditorSelector(editor, selector)
+ * }
+ * ```
+ * @example
+ * Pass an inline selector as the second argument.
+ * In this case, use the editor context to obtain the schema.
+ * ```tsx
+ * import { useEditorSelector } from '@portabletext/editor'
+ *
+ * function MyComponent(editor) {
+ *  const schema = useEditorSelector(editor, (snapshot) => snapshot.context.schema)
+ * }
+ * ```
+ * @group Hooks
  */
 export function useEditorSelector<TSelected>(
   editor: Editor,

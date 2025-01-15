@@ -17,6 +17,16 @@ export default defineConfig({
         allowMultiple: true,
         syntaxKind: 'block',
       },
+      {
+        name: 'group',
+        allowMultiple: true,
+        syntaxKind: 'block',
+      },
+      {
+        name: 'groupDescription',
+        allowMultiple: true,
+        syntaxKind: 'block',
+      },
     ],
     rules: {
       // Disable rules for now

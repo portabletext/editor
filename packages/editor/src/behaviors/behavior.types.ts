@@ -306,6 +306,21 @@ export type BehaviorActionIntendSet<TBehaviorEvent, TGuardResponse> = (
 
 /**
  * @beta
+ *
+ * @example
+ *
+ * ```tsx
+ * const noLowerCaseA = defineBehavior({
+ *   on: 'insert.text',
+ *   guard: ({event, context}) => event.text === 'a',
+ *   actions: [({event, context}) => [{type: 'insert.text', text: 'A'}]],
+ * })
+ * ```
+ *
+ *
+ *
+ *
+ *
  */
 export function defineBehavior<
   TPayload extends Record<string, unknown>,
