@@ -4,6 +4,7 @@ import path from 'node:path'
 import {JSDOM} from 'jsdom'
 import {describe, it} from 'vitest'
 import * as blockTools from '../../../src'
+import {createTestKeyGenerator} from '../../test-key-generator'
 import type {BlockTestFn} from './types'
 
 describe('HtmlDeserializer', () => {
@@ -21,6 +22,7 @@ describe('HtmlDeserializer', () => {
       // eslint-disable-next-line import/no-dynamic-require
       const fn = (await import(path.resolve(dir))).default as BlockTestFn
       const commonOptions = {
+        keyGenerator: createTestKeyGenerator(),
         parseHtml: (html: string) => new JSDOM(html).window.document,
       }
       const output = fn(input, blockTools, commonOptions)

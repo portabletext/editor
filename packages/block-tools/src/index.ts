@@ -23,7 +23,9 @@ export function htmlToBlocks(
   options: HtmlDeserializerOptions = {},
 ): (TypedObject | PortableTextTextBlock)[] {
   const deserializer = new HtmlDeserializer(blockContentType, options)
-  return deserializer.deserialize(html).map((block) => normalizeBlock(block))
+  return deserializer
+    .deserialize(html)
+    .map((block) => normalizeBlock(block, {keyGenerator: options.keyGenerator}))
 }
 
 /**
@@ -39,9 +41,6 @@ export function getBlockContentFeatures(
   return blockContentTypeFeatures(blockContentType)
 }
 
-export {normalizeBlock}
-export {randomKey} from './util/randomKey'
-export type {BlockContentFeatures, HtmlDeserializerOptions, TypedObject}
 export type {
   ArbitraryTypedObject,
   BlockEditorSchemaProps,
@@ -50,3 +49,6 @@ export type {
   ResolvedAnnotationType,
 } from './types'
 export type {BlockNormalizationOptions} from './util/normalizeBlock'
+export {randomKey} from './util/randomKey'
+export {normalizeBlock}
+export type {BlockContentFeatures, HtmlDeserializerOptions, TypedObject}

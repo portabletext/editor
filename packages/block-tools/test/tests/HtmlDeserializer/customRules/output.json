@@ -8,13 +8,13 @@
         "_type": "span",
         "marks": ["strong"],
         "text": "Hei",
-        "_key": "randomKey10"
+        "_key": "randomKey2"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "const foo = 'bar'",
-        "_key": "randomKey11"
+        "_key": "randomKey3"
       }
     ],
     "_key": "randomKey1"
@@ -28,28 +28,28 @@
         "_type": "span",
         "marks": [],
         "text": "Quote ",
-        "_key": "randomKey20"
+        "_key": "randomKey5"
       },
       {
         "_type": "span",
         "marks": ["strong"],
         "text": "with emphasis",
-        "_key": "randomKey21"
+        "_key": "randomKey6"
       },
       {
         "_type": "span",
         "marks": [],
         "text": "\n\n",
-        "_key": "randomKey22"
+        "_key": "randomKey7"
       },
       {
         "_type": "span",
         "marks": ["strong"],
         "text": "Emphasis!",
-        "_key": "randomKey23"
+        "_key": "randomKey8"
       }
     ],
-    "_key": "randomKey2"
+    "_key": "randomKey4"
   },
   {
     "_type": "block",
@@ -65,15 +65,15 @@
       {
         "_type": "image",
         "src": "http://image.gif",
-        "_key": "randomKey30"
+        "_key": "randomKey10"
       },
       {
         "_type": "span",
         "text": "Image link",
         "marks": ["randomKey0"],
-        "_key": "randomKey31"
+        "_key": "randomKey11"
       }
     ],
-    "_key": "randomKey3"
+    "_key": "randomKey9"
   }
 ]
