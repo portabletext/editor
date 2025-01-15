@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/portabletext/editor/compare/block-tools-v1.0.2...block-tools-v1.1.0) (2025-01-15)
+
+
+### Features
+
+* allow passing `keyGenerator` to `htmlToBlocks` and `normalizeBlock` ([e8a4502](https://github.com/portabletext/editor/commit/e8a4502b44f3bdfbc8bbac5b9ad56df57efc77b9))
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^3.70.0 ([b345181](https://github.com/portabletext/editor/commit/b345181e424e8702f88f5d2f10a0ca7cbce0061e))
+
 ## [1.0.2](https://github.com/portabletext/editor/compare/block-tools-v1.0.1...block-tools-v1.0.2) (2025-01-14)
 
 
