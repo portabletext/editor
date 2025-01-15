@@ -149,6 +149,9 @@ importers:
 
   apps/playground:
     dependencies:
+      '@portabletext/block-tools':
+        specifier: workspace:*
+        version: link:../../packages/block-tools
       '@portabletext/editor':
         specifier: workspace:*
         version: link:../../packages/editor
@@ -13984,7 +13987,7 @@ snapshots:
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 22.10.2
-      '@vitest/browser': 2.1.8(@types/node@22.10.2)(playwright@1.49.1)(typescript@5.7.3)(vite@6.0.4(@types/node@22.10.2)(jiti@2.4.2)(terser@5.37.0)(yaml@2.6.1))(vitest@2.1.8)
+      '@vitest/browser': 2.1.8(@types/node@22.10.2)(playwright@1.49.1)(typescript@5.7.3)(vite@5.4.11(@types/node@22.10.2)(terser@5.37.0))(vitest@2.1.8)
       jsdom: 26.0.0
     transitivePeerDependencies:
       - less
