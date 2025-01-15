@@ -43,7 +43,8 @@
     "dev": "pkg-utils watch",
     "lint:fix": "biome lint --write .",
     "prepublishOnly": "turbo run build",
-    "test": "vitest --run"
+    "test": "vitest --run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "get-random-values-esm": "1.0.2",
