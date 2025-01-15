@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.21.6](https://github.com/portabletext/editor/compare/editor-v1.21.5...editor-v1.21.6) (2025-01-15)
+
+
+### Bug Fixes
+
+* **deps:** update dependency debug to ^4.4.0 ([388a8fa](https://github.com/portabletext/editor/commit/388a8fa1c5ca36c5be0c1a2e1dbca5c958690d34))
+* **deps:** update sanity monorepo to ^3.70.0 ([b345181](https://github.com/portabletext/editor/commit/b345181e424e8702f88f5d2f10a0ca7cbce0061e))
+* **deps:** Update xstate ([35e12a1](https://github.com/portabletext/editor/commit/35e12a18fbeefc940ca89e442ffc9bce54d16050))
+* forward `keyGenerator` to `block-tools` ([dedba0c](https://github.com/portabletext/editor/commit/dedba0cb40219fe239938acba1d04bee99b092c5))
+* remove redundant calls to `normalizeBlock` ([e1bf217](https://github.com/portabletext/editor/commit/e1bf217499257bc581ca1220525ddf27a5500ad4))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.0
+
 ## [1.21.5](https://github.com/portabletext/editor/compare/editor-v1.21.4...editor-v1.21.5) (2025-01-14)
 
 
