@@ -149,6 +149,9 @@ importers:
 
   apps/playground:
     dependencies:
+      '@portabletext/block-tools':
+        specifier: workspace:*
+        version: link:../../packages/block-tools
       '@portabletext/editor':
         specifier: workspace:*
         version: link:../../packages/editor
