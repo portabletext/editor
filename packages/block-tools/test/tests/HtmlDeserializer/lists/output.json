@@ -4,31 +4,15 @@
     "_type": "block",
     "children": [
       {
-        "_key": "randomKey10",
+        "_key": "randomKey2",
         "_type": "span",
         "marks": [],
         "text": "1 a"
       }
     ],
+    "markDefs": [],
     "level": 1,
     "listItem": "bullet",
-    "markDefs": [],
-    "style": "normal"
-  },
-  {
-    "_key": "randomKey2",
-    "_type": "block",
-    "children": [
-      {
-        "_key": "randomKey20",
-        "_type": "span",
-        "marks": [],
-        "text": "2 a"
-      }
-    ],
-    "level": 2,
-    "listItem": "bullet",
-    "markDefs": [],
     "style": "normal"
   },
   {
@@ -36,31 +20,15 @@
     "_type": "block",
     "children": [
       {
-        "_key": "randomKey30",
+        "_key": "randomKey4",
         "_type": "span",
         "marks": [],
-        "text": "3 a"
+        "text": "2 a"
       }
     ],
-    "level": 3,
-    "listItem": "bullet",
     "markDefs": [],
-    "style": "normal"
-  },
-  {
-    "_key": "randomKey4",
-    "_type": "block",
-    "children": [
-      {
-        "_key": "randomKey40",
-        "_type": "span",
-        "marks": [],
-        "text": "3 b"
-      }
-    ],
-    "level": 3,
+    "level": 2,
     "listItem": "bullet",
-    "markDefs": [],
     "style": "normal"
   },
   {
@@ -68,37 +36,15 @@
     "_type": "block",
     "children": [
       {
-        "_key": "randomKey50",
+        "_key": "randomKey6",
         "_type": "span",
         "marks": [],
-        "text": "2 b"
+        "text": "3 a"
       }
     ],
-    "level": 2,
-    "listItem": "bullet",
     "markDefs": [],
-    "style": "normal"
-  },
-  {
-    "_key": "randomKey6",
-    "_type": "block",
-    "children": [
-      {
-        "_key": "randomKey60",
-        "_type": "span",
-        "marks": [],
-        "text": "1 "
-      },
-      {
-        "_key": "randomKey61",
-        "_type": "span",
-        "marks": ["strong"],
-        "text": "b"
-      }
-    ],
-    "level": 1,
+    "level": 3,
     "listItem": "bullet",
-    "markDefs": [],
     "style": "normal"
   },
   {
@@ -106,14 +52,66 @@
     "_type": "block",
     "children": [
       {
-        "_key": "randomKey70",
+        "_key": "randomKey8",
+        "_type": "span",
+        "marks": [],
+        "text": "3 b"
+      }
+    ],
+    "markDefs": [],
+    "level": 3,
+    "listItem": "bullet",
+    "style": "normal"
+  },
+  {
+    "_key": "randomKey9",
+    "_type": "block",
+    "children": [
+      {
+        "_key": "randomKey10",
+        "_type": "span",
+        "marks": [],
+        "text": "2 b"
+      }
+    ],
+    "markDefs": [],
+    "level": 2,
+    "listItem": "bullet",
+    "style": "normal"
+  },
+  {
+    "_key": "randomKey11",
+    "_type": "block",
+    "children": [
+      {
+        "_key": "randomKey12",
+        "_type": "span",
+        "marks": [],
+        "text": "1 "
+      },
+      {
+        "_key": "randomKey13",
+        "_type": "span",
+        "marks": ["strong"],
+        "text": "b"
+      }
+    ],
+    "markDefs": [],
+    "level": 1,
+    "listItem": "bullet",
+    "style": "normal"
+  },
+  {
+    "_key": "randomKey14",
+    "_type": "block",
+    "children": [
+      {
+        "_key": "randomKey15",
         "_type": "span",
         "marks": ["randomKey0"],
         "text": "Link"
       }
     ],
-    "level": 1,
-    "listItem": "bullet",
     "markDefs": [
       {
         "_key": "randomKey0",
@@ -121,28 +119,30 @@
         "href": "/"
       }
     ],
+    "level": 1,
+    "listItem": "bullet",
     "style": "normal"
   },
   {
-    "_key": "randomKey8",
+    "_key": "randomKey16",
     "_type": "block",
     "children": [
       {
-        "_key": "randomKey80",
+        "_key": "randomKey17",
         "_type": "span",
         "marks": [],
         "text": "p in li. block children are still "
       },
       {
-        "_key": "randomKey81",
+        "_key": "randomKey18",
         "_type": "span",
         "marks": ["strong"],
         "text": "processed."
       }
     ],
+    "markDefs": [],
     "level": 1,
     "listItem": "bullet",
-    "markDefs": [],
     "style": "normal"
   }
 ]

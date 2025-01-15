@@ -4,37 +4,37 @@
     "_type": "block",
     "children": [
       {
-        "_key": "randomKey30",
+        "_key": "randomKey4",
         "_type": "span",
         "marks": ["randomKey0"],
         "text": "I am a "
       },
       {
-        "_key": "randomKey31",
+        "_key": "randomKey5",
         "_type": "span",
         "marks": ["randomKey0", "strong"],
         "text": "strong"
       },
       {
-        "_key": "randomKey32",
+        "_key": "randomKey6",
         "_type": "span",
         "marks": ["randomKey0"],
         "text": " link"
       },
       {
-        "_key": "randomKey33",
+        "_key": "randomKey7",
         "_type": "span",
         "marks": [],
         "text": " "
       },
       {
-        "_key": "randomKey34",
+        "_key": "randomKey8",
         "_type": "span",
         "marks": ["em"],
         "text": "and "
       },
       {
-        "_key": "randomKey35",
+        "_key": "randomKey9",
         "_type": "span",
         "marks": ["em", "randomKey1"],
         "text": "I am a emphasized link"
@@ -55,11 +55,11 @@
     "style": "normal"
   },
   {
-    "_key": "randomKey4",
+    "_key": "randomKey10",
     "_type": "block",
     "children": [
       {
-        "_key": "randomKey40",
+        "_key": "randomKey11",
         "_type": "span",
         "marks": ["randomKey2"],
         "text": "I am a totally different link"

@@ -5,7 +5,7 @@ import {
 } from '@sanity/types'
 import {isEqual} from 'lodash'
 import type {TypedObject} from '../types'
-import {randomKey} from './randomKey'
+import {keyGenerator} from './randomKey'
 
 /**
  * Block normalization options
@@ -22,6 +22,11 @@ export interface BlockNormalizationOptions {
    * Name of the portable text block type, if not `block`
    */
   blockTypeName?: string
+
+  /**
+   * Custom key generator function
+   */
+  keyGenerator?: () => string
 }
 
 /**
@@ -51,26 +56,30 @@ export function normalizeBlock(
   if (node._type !== (options.blockTypeName || 'block')) {
     return '_key' in node
       ? (node as TypedObject & {_key: string})
-      : {...node, _key: randomKey(12)}
+      : {
+          ...node,
+          _key: options.keyGenerator ? options.keyGenerator() : keyGenerator(),
+        }
   }
 
   const block: Omit<
     PortableTextTextBlock<TypedObject | PortableTextSpan>,
     'style'
   > = {
-    _key: randomKey(12),
+    _key: options.keyGenerator ? options.keyGenerator() : keyGenerator(),
     children: [],
     markDefs: [],
     ...node,
   }
 
   const lastChild = block.children[block.children.length - 1]
+
   if (!lastChild) {
     // A block must at least have an empty span type child
     block.children = [
       {
         _type: 'span',
-        _key: `${block._key}${0}`,
+        _key: options.keyGenerator ? options.keyGenerator() : keyGenerator(),
         text: '',
         marks: [],
       },
@@ -111,12 +120,15 @@ export function normalizeBlock(
       },
       [] as (TypedObject | PortableTextSpan)[],
     )
-    .map((child, index) => {
+    .map((child) => {
       if (!child) {
         throw new Error('missing child')
       }
 
-      child._key = `${block._key}${index}`
+      child._key = options.keyGenerator
+        ? options.keyGenerator()
+        : keyGenerator()
+
       if (isPortableTextSpan(child)) {
         if (!child.marks) {
           child.marks = []
@@ -138,5 +150,6 @@ export function normalizeBlock(
   block.markDefs = (block.markDefs || []).filter((markDef) =>
     usedMarkDefs.includes(markDef._key),
   )
+
   return block
 }

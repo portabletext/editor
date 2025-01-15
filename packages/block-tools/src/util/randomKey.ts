@@ -1,5 +1,9 @@
 import getRandomValues from 'get-random-values-esm'
 
+export function keyGenerator() {
+  return randomKey(12)
+}
+
 // WHATWG crypto RNG - https://w3c.github.io/webcrypto/Overview.html
 function whatwgRNG(length = 16) {
   const rnds8 = new Uint8Array(length)
