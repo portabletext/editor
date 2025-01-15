@@ -1,4 +1,4 @@
-import {htmlToBlocks, normalizeBlock} from '@portabletext/block-tools'
+import {htmlToBlocks} from '@portabletext/block-tools'
 import type {PortableTextBlock, PortableTextChild} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {Editor, Range, Transforms, type Descendant, type Node} from 'slate'
@@ -195,12 +195,7 @@ export function createWithInsertData(
           portableText = htmlToBlocks(html, schemaTypes.portableText, {
             unstable_whitespaceOnPasteMode: whitespaceOnPasteMode,
             keyGenerator: editorActor.getSnapshot().context.keyGenerator,
-          }).map((block) =>
-            normalizeBlock(block, {
-              blockTypeName,
-              keyGenerator: editorActor.getSnapshot().context.keyGenerator,
-            }),
-          ) as PortableTextBlock[]
+          }) as PortableTextBlock[]
           fragment = toSlateValue(portableText, {schemaTypes})
           insertedType = 'HTML'
 
@@ -220,12 +215,7 @@ export function createWithInsertData(
           const textToHtml = `<html><body>${blocks}</body></html>`
           portableText = htmlToBlocks(textToHtml, schemaTypes.portableText, {
             keyGenerator: editorActor.getSnapshot().context.keyGenerator,
-          }).map((block) =>
-            normalizeBlock(block, {
-              blockTypeName,
-              keyGenerator: editorActor.getSnapshot().context.keyGenerator,
-            }),
-          ) as PortableTextBlock[]
+          }) as PortableTextBlock[]
           fragment = toSlateValue(portableText, {
             schemaTypes,
           })
