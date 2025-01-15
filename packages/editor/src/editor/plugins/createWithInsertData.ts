@@ -194,8 +194,12 @@ export function createWithInsertData(
         if (html) {
           portableText = htmlToBlocks(html, schemaTypes.portableText, {
             unstable_whitespaceOnPasteMode: whitespaceOnPasteMode,
+            keyGenerator: editorActor.getSnapshot().context.keyGenerator,
           }).map((block) =>
-            normalizeBlock(block, {blockTypeName}),
+            normalizeBlock(block, {
+              blockTypeName,
+              keyGenerator: editorActor.getSnapshot().context.keyGenerator,
+            }),
           ) as PortableTextBlock[]
           fragment = toSlateValue(portableText, {schemaTypes})
           insertedType = 'HTML'
@@ -214,8 +218,13 @@ export function createWithInsertData(
             )
             .join('')
           const textToHtml = `<html><body>${blocks}</body></html>`
-          portableText = htmlToBlocks(textToHtml, schemaTypes.portableText).map(
-            (block) => normalizeBlock(block, {blockTypeName}),
+          portableText = htmlToBlocks(textToHtml, schemaTypes.portableText, {
+            keyGenerator: editorActor.getSnapshot().context.keyGenerator,
+          }).map((block) =>
+            normalizeBlock(block, {
+              blockTypeName,
+              keyGenerator: editorActor.getSnapshot().context.keyGenerator,
+            }),
           ) as PortableTextBlock[]
           fragment = toSlateValue(portableText, {
             schemaTypes,
