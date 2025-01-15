@@ -1,63 +1,77 @@
 [
   {
+    "_key": "randomKey1",
     "_type": "block",
-    "markDefs": [],
-    "style": "normal",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "Header",
-        "_key": "randomKey10"
+        "_key": "randomKey2"
       }
     ],
-    "_key": "randomKey1"
+    "markDefs": [],
+    "style": "normal"
   },
   {
+    "_key": "randomKey3",
     "_type": "block",
-    "style": "blockquote",
-    "markDefs": [],
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "I'm a quote.",
-        "_key": "randomKey20"
+        "_key": "randomKey4"
       }
     ],
-    "_key": "randomKey2"
+    "markDefs": [],
+    "style": "blockquote"
   },
   {
+    "_key": "randomKey5",
     "_type": "block",
-    "style": "blockquote",
-    "markDefs": [],
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "And I'm a quote within a quote.",
-        "_key": "randomKey30"
+        "_key": "randomKey6"
       }
     ],
-    "_key": "randomKey3"
+    "markDefs": [],
+    "style": "blockquote"
   },
   {
+    "_key": "randomKey7",
     "_type": "block",
-    "style": "blockquote",
-    "markDefs": [],
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "And I'm a quote within a quote within a quote.",
-        "_key": "randomKey40"
+        "_key": "randomKey8"
       }
     ],
-    "_key": "randomKey4"
+    "markDefs": [],
+    "style": "blockquote"
   },
   {
+    "_key": "randomKey9",
     "_type": "block",
-    "style": "blockquote",
+    "children": [
+      {
+        "_type": "span",
+        "marks": [],
+        "text": "And I'm a quote within a quote within a quote within a quote.\n\nI am a stupid paragraph within with a stupid ",
+        "_key": "randomKey10"
+      },
+      {
+        "_type": "span",
+        "marks": ["randomKey0"],
+        "text": "link",
+        "_key": "randomKey11"
+      }
+    ],
     "markDefs": [
       {
         "_key": "randomKey0",
@@ -65,34 +79,20 @@
         "href": "foo"
       }
     ],
-    "children": [
-      {
-        "_type": "span",
-        "marks": [],
-        "text": "And I'm a quote within a quote within a quote within a quote.\n\nI am a stupid paragraph within with a stupid ",
-        "_key": "randomKey50"
-      },
-      {
-        "_type": "span",
-        "marks": ["randomKey0"],
-        "text": "link",
-        "_key": "randomKey51"
-      }
-    ],
-    "_key": "randomKey5"
+    "style": "blockquote"
   },
   {
+    "_key": "randomKey12",
     "_type": "block",
-    "markDefs": [],
-    "style": "normal",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "Footer",
-        "_key": "randomKey60"
+        "_key": "randomKey13"
       }
     ],
-    "_key": "randomKey6"
+    "markDefs": [],
+    "style": "normal"
   }
 ]

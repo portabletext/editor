@@ -6,7 +6,7 @@
         "_type": "span",
         "marks": [],
         "text": "# 1. Clone the repository:\n      git clone ...\n      # 2. Navigate to the client directory:\n      cd ...\n      # 3. Create a new Python virtual environment:\n      python3 -m venv ...\n",
-        "_key": "randomKey00"
+        "_key": "randomKey1"
       }
     ],
     "markDefs": [],
@@ -14,13 +14,13 @@
     "style": "normal"
   },
   {
-    "_key": "randomKey1",
+    "_key": "randomKey2",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "# 1. Clone the repository: git clone ... # 2. Navigate to the client directory: cd ... # 3. Create a new Python virtual environment: python3 -m venv ...",
-        "_key": "randomKey10"
+        "_key": "randomKey3"
       }
     ],
     "markDefs": [],

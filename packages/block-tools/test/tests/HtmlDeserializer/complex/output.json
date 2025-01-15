@@ -8,7 +8,7 @@
         "_type": "span",
         "marks": [],
         "text": "Jeg er overskrift",
-        "_key": "randomKey10"
+        "_key": "randomKey2"
       }
     ],
     "_key": "randomKey1"
@@ -22,88 +22,88 @@
         "_type": "span",
         "marks": [],
         "text": "Hei jeg er en paragraph.\nJeg har ",
-        "_key": "randomKey20"
+        "_key": "randomKey4"
       },
       {
         "_type": "span",
         "marks": ["strong"],
         "text": "strong",
-        "_key": "randomKey21"
+        "_key": "randomKey5"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " og ",
-        "_key": "randomKey22"
+        "_key": "randomKey6"
       },
       {
         "_type": "span",
         "marks": ["strong"],
         "text": "bold",
-        "_key": "randomKey23"
+        "_key": "randomKey7"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " og ",
-        "_key": "randomKey24"
+        "_key": "randomKey8"
       },
       {
         "_type": "span",
         "marks": ["em"],
         "text": "italic",
-        "_key": "randomKey25"
+        "_key": "randomKey9"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " og ",
-        "_key": "randomKey26"
+        "_key": "randomKey10"
       },
       {
         "_type": "span",
         "marks": ["em"],
         "text": "emphasis",
-        "_key": "randomKey27"
+        "_key": "randomKey11"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " og greier og greier.\nJa, og så",
-        "_key": "randomKey28"
+        "_key": "randomKey12"
       },
       {
         "_type": "span",
         "marks": ["strike-through"],
         "text": " < del>",
-        "_key": "randomKey29"
+        "_key": "randomKey13"
       },
       {
         "_type": "span",
         "marks": [],
         "text": "\nJa, og så",
-        "_key": "randomKey210"
+        "_key": "randomKey14"
       },
       {
         "_type": "span",
         "marks": ["strike-through"],
         "text": " < strike>",
-        "_key": "randomKey211"
+        "_key": "randomKey15"
       },
       {
         "_type": "span",
         "marks": [],
         "text": "\nJa, og så",
-        "_key": "randomKey212"
+        "_key": "randomKey16"
       },
       {
         "_type": "span",
         "marks": ["strike-through"],
         "text": " < s>",
-        "_key": "randomKey213"
+        "_key": "randomKey17"
       }
     ],
-    "_key": "randomKey2"
+    "_key": "randomKey3"
   },
   {
     "_type": "block",
@@ -114,10 +114,10 @@
         "_type": "span",
         "marks": [],
         "text": "\n\n",
-        "_key": "randomKey30"
+        "_key": "randomKey19"
       }
     ],
-    "_key": "randomKey3"
+    "_key": "randomKey18"
   },
   {
     "_type": "block",
@@ -130,10 +130,10 @@
         "_type": "span",
         "marks": [],
         "text": "Og jeg er et bullet-liste-element",
-        "_key": "randomKey40"
+        "_key": "randomKey21"
       }
     ],
-    "_key": "randomKey4"
+    "_key": "randomKey20"
   },
   {
     "_type": "block",
@@ -146,28 +146,28 @@
         "_type": "span",
         "marks": [],
         "text": "Det er ",
-        "_key": "randomKey50"
+        "_key": "randomKey23"
       },
       {
         "_type": "span",
         "marks": ["em"],
         "text": "faktisk",
-        "_key": "randomKey51"
+        "_key": "randomKey24"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " jeg ",
-        "_key": "randomKey52"
+        "_key": "randomKey25"
       },
       {
         "_type": "span",
         "marks": ["strong"],
         "text": "også",
-        "_key": "randomKey53"
+        "_key": "randomKey26"
       }
     ],
-    "_key": "randomKey5"
+    "_key": "randomKey22"
   },
   {
     "_type": "block",
@@ -178,10 +178,10 @@
         "_type": "span",
         "marks": [],
         "text": "\n\n",
-        "_key": "randomKey60"
+        "_key": "randomKey28"
       }
     ],
-    "_key": "randomKey6"
+    "_key": "randomKey27"
   },
   {
     "_type": "block",
@@ -194,10 +194,10 @@
         "_type": "span",
         "marks": [],
         "text": "Og jeg er et nummer-liste-element",
-        "_key": "randomKey70"
+        "_key": "randomKey30"
       }
     ],
-    "_key": "randomKey7"
+    "_key": "randomKey29"
   },
   {
     "_type": "block",
@@ -210,28 +210,28 @@
         "_type": "span",
         "marks": [],
         "text": "Det er ",
-        "_key": "randomKey80"
+        "_key": "randomKey32"
       },
       {
         "_type": "span",
         "marks": ["em"],
         "text": "faktisk",
-        "_key": "randomKey81"
+        "_key": "randomKey33"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " jeg ",
-        "_key": "randomKey82"
+        "_key": "randomKey34"
       },
       {
         "_type": "span",
         "marks": ["strong"],
         "text": "også",
-        "_key": "randomKey83"
+        "_key": "randomKey35"
       }
     ],
-    "_key": "randomKey8"
+    "_key": "randomKey31"
   },
   {
     "_type": "block",
@@ -248,16 +248,16 @@
         "_type": "span",
         "marks": [],
         "text": "Hvis du ser her, så ",
-        "_key": "randomKey90"
+        "_key": "randomKey37"
       },
       {
         "_type": "span",
         "marks": ["randomKey0"],
         "text": "ser du at jeg er en lenke",
-        "_key": "randomKey91"
+        "_key": "randomKey38"
       }
     ],
-    "_key": "randomKey9"
+    "_key": "randomKey36"
   },
   {
     "_type": "block",
@@ -268,10 +268,10 @@
         "_type": "span",
         "marks": [],
         "text": "\n\n",
-        "_key": "randomKey100"
+        "_key": "randomKey40"
       }
     ],
-    "_key": "randomKey10"
+    "_key": "randomKey39"
   },
   {
     "_type": "block",
@@ -282,10 +282,10 @@
         "_type": "span",
         "marks": [],
         "text": "Jeg er en blockquote",
-        "_key": "randomKey110"
+        "_key": "randomKey42"
       }
     ],
-    "_key": "randomKey11"
+    "_key": "randomKey41"
   },
   {
     "_type": "block",
@@ -296,10 +296,10 @@
         "_type": "span",
         "marks": [],
         "text": "Og jeg er en blockquote i en blockquote.",
-        "_key": "randomKey120"
+        "_key": "randomKey44"
       }
     ],
-    "_key": "randomKey12"
+    "_key": "randomKey43"
   },
   {
     "_type": "block",
@@ -310,10 +310,10 @@
         "_type": "span",
         "marks": [],
         "text": "Og jeg er en blockquote i en blockquote i en blockquote.",
-        "_key": "randomKey130"
+        "_key": "randomKey46"
       }
     ],
-    "_key": "randomKey13"
+    "_key": "randomKey45"
   },
   {
     "_type": "block",
@@ -324,10 +324,10 @@
         "_type": "span",
         "marks": [],
         "text": "Test test",
-        "_key": "randomKey140"
+        "_key": "randomKey48"
       }
     ],
-    "_key": "randomKey14"
+    "_key": "randomKey47"
   },
   {
     "_type": "block",
@@ -338,10 +338,10 @@
         "_type": "span",
         "marks": [],
         "text": "Lala",
-        "_key": "randomKey150"
+        "_key": "randomKey50"
       }
     ],
-    "_key": "randomKey15"
+    "_key": "randomKey49"
   },
   {
     "_type": "block",
@@ -352,10 +352,10 @@
         "_type": "span",
         "marks": [],
         "text": "Test test Div i div",
-        "_key": "randomKey160"
+        "_key": "randomKey52"
       }
     ],
-    "_key": "randomKey16"
+    "_key": "randomKey51"
   },
   {
     "_type": "block",
@@ -366,10 +366,10 @@
         "_type": "span",
         "marks": [],
         "text": "Lala",
-        "_key": "randomKey170"
+        "_key": "randomKey54"
       }
     ],
-    "_key": "randomKey17"
+    "_key": "randomKey53"
   },
   {
     "_type": "block",
@@ -380,9 +380,9 @@
         "_type": "span",
         "marks": [],
         "text": "Span på rootSpan på root 2 Span i span",
-        "_key": "randomKey180"
+        "_key": "randomKey56"
       }
     ],
-    "_key": "randomKey18"
+    "_key": "randomKey55"
   }
 ]

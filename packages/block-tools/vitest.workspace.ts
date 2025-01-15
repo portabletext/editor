@@ -7,7 +7,6 @@ export default defineWorkspace([
     test: {
       name: 'unit',
       environment: 'node',
-      setupFiles: ['./test/setup.ts'],
     },
   },
   {
@@ -15,7 +14,6 @@ export default defineWorkspace([
     test: {
       name: 'chromium',
       environment: 'node',
-      setupFiles: ['./test/setup.ts'],
     },
   },
 ])

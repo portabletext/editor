@@ -1,410 +1,410 @@
 [
   {
     "_key": "randomKey0",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": ["strong"],
         "text": "Heading in bold",
-        "_key": "randomKey00"
+        "_key": "randomKey1"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal"
   },
   {
-    "_key": "randomKey1",
+    "_key": "randomKey2",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "Level 1",
-        "_key": "randomKey10"
+        "_key": "randomKey3"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal",
     "listItem": "bullet",
     "level": 1
   },
   {
-    "_key": "randomKey2",
-    "children": [
-      {
-        "_type": "span",
-        "marks": [],
-        "text": "Level 2",
-        "_key": "randomKey20"
-      }
-    ],
-    "markDefs": [],
-    "_type": "block",
-    "style": "normal",
-    "listItem": "bullet",
-    "level": 2
-  },
-  {
-    "_key": "randomKey3",
-    "children": [
-      {
-        "_type": "span",
-        "marks": [],
-        "text": "Level 2",
-        "_key": "randomKey30"
-      }
-    ],
-    "markDefs": [],
-    "_type": "block",
-    "style": "normal",
-    "listItem": "bullet",
-    "level": 2
-  },
-  {
     "_key": "randomKey4",
-    "children": [
-      {
-        "_type": "span",
-        "marks": ["strike-through"],
-        "text": "Level 2",
-        "_key": "randomKey40"
-      }
-    ],
-    "markDefs": [],
     "_type": "block",
-    "style": "normal",
-    "listItem": "bullet",
-    "level": 2
-  },
-  {
-    "_key": "randomKey5",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "Level 2",
-        "_key": "randomKey50"
+        "_key": "randomKey5"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal",
     "listItem": "bullet",
     "level": 2
   },
   {
     "_key": "randomKey6",
-    "children": [
-      {
-        "_type": "span",
-        "marks": [],
-        "text": "Level 1",
-        "_key": "randomKey60"
-      }
-    ],
-    "markDefs": [],
     "_type": "block",
-    "style": "normal",
-    "listItem": "bullet",
-    "level": 1
-  },
-  {
-    "_key": "randomKey7",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "Level 2",
-        "_key": "randomKey70"
+        "_key": "randomKey7"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal",
     "listItem": "bullet",
     "level": 2
   },
   {
     "_key": "randomKey8",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": ["strike-through"],
         "text": "Level 2",
-        "_key": "randomKey80"
+        "_key": "randomKey9"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal",
     "listItem": "bullet",
     "level": 2
-  },
-  {
-    "_key": "randomKey9",
-    "children": [
-      {
-        "_type": "span",
-        "marks": [],
-        "text": "Level 3",
-        "_key": "randomKey90"
-      }
-    ],
-    "markDefs": [],
-    "_type": "block",
-    "style": "normal",
-    "listItem": "bullet",
-    "level": 3
   },
   {
     "_key": "randomKey10",
-    "children": [
-      {
-        "_type": "span",
-        "marks": [],
-        "text": "Level 3",
-        "_key": "randomKey100"
-      }
-    ],
-    "markDefs": [],
     "_type": "block",
-    "style": "normal",
-    "listItem": "bullet",
-    "level": 3
-  },
-  {
-    "_key": "randomKey11",
-    "children": [
-      {
-        "_type": "span",
-        "marks": [],
-        "text": "Level 3",
-        "_key": "randomKey110"
-      }
-    ],
-    "markDefs": [],
-    "_type": "block",
-    "style": "normal",
-    "listItem": "bullet",
-    "level": 3
-  },
-  {
-    "_key": "randomKey12",
-    "children": [
-      {
-        "_type": "span",
-        "marks": [],
-        "text": "Level 1",
-        "_key": "randomKey120"
-      }
-    ],
-    "markDefs": [],
-    "_type": "block",
-    "style": "normal",
-    "listItem": "bullet",
-    "level": 1
-  },
-  {
-    "_key": "randomKey13",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "Level 2",
-        "_key": "randomKey130"
+        "_key": "randomKey11"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal",
     "listItem": "bullet",
     "level": 2
   },
   {
-    "_key": "randomKey14",
+    "_key": "randomKey12",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "Level 1",
-        "_key": "randomKey140"
+        "_key": "randomKey13"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal",
     "listItem": "bullet",
     "level": 1
   },
   {
-    "_key": "randomKey15",
+    "_key": "randomKey14",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "Level 2",
-        "_key": "randomKey150"
+        "_key": "randomKey15"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal",
     "listItem": "bullet",
     "level": 2
   },
   {
     "_key": "randomKey16",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
-        "_key": "randomKey160",
-        "text": "",
-        "marks": []
+        "marks": ["strike-through"],
+        "text": "Level 2",
+        "_key": "randomKey17"
       }
     ],
     "markDefs": [],
-    "_type": "block",
-    "style": "normal"
-  },
-  {
-    "_key": "randomKey17",
-    "children": [
-      {
-        "_type": "span",
-        "marks": ["strong"],
-        "text": "Simple bullet list",
-        "_key": "randomKey170"
-      }
-    ],
-    "markDefs": [],
-    "_type": "block",
-    "style": "normal"
+    "style": "normal",
+    "listItem": "bullet",
+    "level": 2
   },
   {
     "_key": "randomKey18",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
-        "text": "Bullet list",
-        "_key": "randomKey180"
+        "text": "Level 3",
+        "_key": "randomKey19"
       }
     ],
     "markDefs": [],
-    "_type": "block",
-    "style": "normal",
-    "listItem": "bullet",
-    "level": 1
-  },
-  {
-    "_key": "randomKey19",
-    "children": [
-      {
-        "_type": "span",
-        "marks": [],
-        "text": "Bullet list",
-        "_key": "randomKey190"
-      }
-    ],
-    "markDefs": [],
-    "_type": "block",
-    "style": "normal",
-    "listItem": "bullet",
-    "level": 1
-  },
-  {
-    "_key": "randomKey20",
-    "children": [
-      {
-        "_type": "span",
-        "marks": [],
-        "text": "Bullet list",
-        "_key": "randomKey200"
-      }
-    ],
-    "markDefs": [],
-    "_type": "block",
-    "style": "normal",
-    "listItem": "bullet",
-    "level": 1
-  },
-  {
-    "_key": "randomKey21",
-    "children": [
-      {
-        "_type": "span",
-        "marks": [],
-        "text": "Nested list",
-        "_key": "randomKey210"
-      }
-    ],
-    "markDefs": [],
-    "_type": "block",
-    "style": "normal",
-    "listItem": "bullet",
-    "level": 2
-  },
-  {
-    "_key": "randomKey22",
-    "children": [
-      {
-        "_type": "span",
-        "marks": [],
-        "text": "Nested",
-        "_key": "randomKey220"
-      }
-    ],
-    "markDefs": [],
-    "_type": "block",
-    "style": "normal",
-    "listItem": "bullet",
-    "level": 2
-  },
-  {
-    "_key": "randomKey23",
-    "children": [
-      {
-        "_type": "span",
-        "marks": [],
-        "text": "Nested",
-        "_key": "randomKey230"
-      }
-    ],
-    "markDefs": [],
-    "_type": "block",
-    "style": "normal",
-    "listItem": "bullet",
-    "level": 2
-  },
-  {
-    "_key": "randomKey24",
-    "children": [
-      {
-        "_type": "span",
-        "marks": [],
-        "text": "Nested 3rd level",
-        "_key": "randomKey240"
-      }
-    ],
-    "markDefs": [],
-    "_type": "block",
     "style": "normal",
     "listItem": "bullet",
     "level": 3
   },
   {
-    "_key": "randomKey25",
+    "_key": "randomKey20",
+    "_type": "block",
+    "children": [
+      {
+        "_type": "span",
+        "marks": [],
+        "text": "Level 3",
+        "_key": "randomKey21"
+      }
+    ],
+    "markDefs": [],
+    "style": "normal",
+    "listItem": "bullet",
+    "level": 3
+  },
+  {
+    "_key": "randomKey22",
+    "_type": "block",
+    "children": [
+      {
+        "_type": "span",
+        "marks": [],
+        "text": "Level 3",
+        "_key": "randomKey23"
+      }
+    ],
+    "markDefs": [],
+    "style": "normal",
+    "listItem": "bullet",
+    "level": 3
+  },
+  {
+    "_key": "randomKey24",
+    "_type": "block",
+    "children": [
+      {
+        "_type": "span",
+        "marks": [],
+        "text": "Level 1",
+        "_key": "randomKey25"
+      }
+    ],
+    "markDefs": [],
+    "style": "normal",
+    "listItem": "bullet",
+    "level": 1
+  },
+  {
+    "_key": "randomKey26",
+    "_type": "block",
+    "children": [
+      {
+        "_type": "span",
+        "marks": [],
+        "text": "Level 2",
+        "_key": "randomKey27"
+      }
+    ],
+    "markDefs": [],
+    "style": "normal",
+    "listItem": "bullet",
+    "level": 2
+  },
+  {
+    "_key": "randomKey28",
+    "_type": "block",
+    "children": [
+      {
+        "_type": "span",
+        "marks": [],
+        "text": "Level 1",
+        "_key": "randomKey29"
+      }
+    ],
+    "markDefs": [],
+    "style": "normal",
+    "listItem": "bullet",
+    "level": 1
+  },
+  {
+    "_key": "randomKey30",
+    "_type": "block",
+    "children": [
+      {
+        "_type": "span",
+        "marks": [],
+        "text": "Level 2",
+        "_key": "randomKey31"
+      }
+    ],
+    "markDefs": [],
+    "style": "normal",
+    "listItem": "bullet",
+    "level": 2
+  },
+  {
+    "_key": "randomKey32",
+    "_type": "block",
+    "children": [
+      {
+        "_type": "span",
+        "_key": "randomKey33",
+        "text": "",
+        "marks": []
+      }
+    ],
+    "markDefs": [],
+    "style": "normal"
+  },
+  {
+    "_key": "randomKey34",
+    "_type": "block",
+    "children": [
+      {
+        "_type": "span",
+        "marks": ["strong"],
+        "text": "Simple bullet list",
+        "_key": "randomKey35"
+      }
+    ],
+    "markDefs": [],
+    "style": "normal"
+  },
+  {
+    "_key": "randomKey36",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "Bullet list",
-        "_key": "randomKey250"
+        "_key": "randomKey37"
       }
     ],
     "markDefs": [],
+    "style": "normal",
+    "listItem": "bullet",
+    "level": 1
+  },
+  {
+    "_key": "randomKey38",
     "_type": "block",
+    "children": [
+      {
+        "_type": "span",
+        "marks": [],
+        "text": "Bullet list",
+        "_key": "randomKey39"
+      }
+    ],
+    "markDefs": [],
+    "style": "normal",
+    "listItem": "bullet",
+    "level": 1
+  },
+  {
+    "_key": "randomKey40",
+    "_type": "block",
+    "children": [
+      {
+        "_type": "span",
+        "marks": [],
+        "text": "Bullet list",
+        "_key": "randomKey41"
+      }
+    ],
+    "markDefs": [],
+    "style": "normal",
+    "listItem": "bullet",
+    "level": 1
+  },
+  {
+    "_key": "randomKey42",
+    "_type": "block",
+    "children": [
+      {
+        "_type": "span",
+        "marks": [],
+        "text": "Nested list",
+        "_key": "randomKey43"
+      }
+    ],
+    "markDefs": [],
+    "style": "normal",
+    "listItem": "bullet",
+    "level": 2
+  },
+  {
+    "_key": "randomKey44",
+    "_type": "block",
+    "children": [
+      {
+        "_type": "span",
+        "marks": [],
+        "text": "Nested",
+        "_key": "randomKey45"
+      }
+    ],
+    "markDefs": [],
+    "style": "normal",
+    "listItem": "bullet",
+    "level": 2
+  },
+  {
+    "_key": "randomKey46",
+    "_type": "block",
+    "children": [
+      {
+        "_type": "span",
+        "marks": [],
+        "text": "Nested",
+        "_key": "randomKey47"
+      }
+    ],
+    "markDefs": [],
+    "style": "normal",
+    "listItem": "bullet",
+    "level": 2
+  },
+  {
+    "_key": "randomKey48",
+    "_type": "block",
+    "children": [
+      {
+        "_type": "span",
+        "marks": [],
+        "text": "Nested 3rd level",
+        "_key": "randomKey49"
+      }
+    ],
+    "markDefs": [],
+    "style": "normal",
+    "listItem": "bullet",
+    "level": 3
+  },
+  {
+    "_key": "randomKey50",
+    "_type": "block",
+    "children": [
+      {
+        "_type": "span",
+        "marks": [],
+        "text": "Bullet list",
+        "_key": "randomKey51"
+      }
+    ],
+    "markDefs": [],
     "style": "normal",
     "listItem": "bullet",
     "level": 1

@@ -100,6 +100,7 @@ export type WhiteSpacePasteMode = 'preserve' | 'remove' | 'normalize'
  * @public
  */
 export interface HtmlDeserializerOptions {
+  keyGenerator?: () => string
   rules?: DeserializerRule[]
   parseHtml?: HtmlParser
   unstable_whitespaceOnPasteMode?: WhiteSpacePasteMode

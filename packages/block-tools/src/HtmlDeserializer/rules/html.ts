@@ -11,7 +11,7 @@ import {
   type PartialBlock,
 } from '../../constants'
 import type {BlockEnabledFeatures, DeserializerRule} from '../../types'
-import {randomKey} from '../../util/randomKey'
+import {keyGenerator} from '../../util/randomKey'
 import {isElement, tagName} from '../helpers'
 
 export function resolveListItem(
@@ -29,7 +29,7 @@ export function resolveListItem(
 
 export default function createHTMLRules(
   _blockContentType: ArraySchemaType,
-  options: BlockEnabledFeatures,
+  options: BlockEnabledFeatures & {keyGenerator?: () => string},
 ): DeserializerRule[] {
   return [
     // Text nodes
@@ -244,7 +244,9 @@ export default function createHTMLRules(
         let markDef: TypedObject | undefined
         if (linkEnabled) {
           markDef = {
-            _key: randomKey(12),
+            _key: options.keyGenerator
+              ? options.keyGenerator()
+              : keyGenerator(),
             _type: 'link',
             href: href,
           }

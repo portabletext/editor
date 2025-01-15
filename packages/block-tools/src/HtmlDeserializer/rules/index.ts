@@ -7,7 +7,7 @@ import createWordRules from './word'
 
 export function createRules(
   blockContentType: ArraySchemaType,
-  options: BlockEnabledFeatures,
+  options: BlockEnabledFeatures & {keyGenerator?: () => string},
 ): DeserializerRule[] {
   return [
     ...createWordRules(),

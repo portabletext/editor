@@ -55,10 +55,10 @@ export default class HtmlDeserializer {
     if (!blockContentType) {
       throw new Error("Parameter 'blockContentType' is required")
     }
-    const standardRules = createRules(
-      blockContentType,
-      createRuleOptions(blockContentType),
-    )
+    const standardRules = createRules(blockContentType, {
+      ...createRuleOptions(blockContentType),
+      keyGenerator: options.keyGenerator,
+    })
     this.rules = [...rules, ...standardRules]
     const parseHtml = options.parseHtml || defaultParseHtml()
     this.blockContentType = blockContentType

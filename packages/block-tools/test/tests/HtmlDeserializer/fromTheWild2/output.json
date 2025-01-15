@@ -1,290 +1,291 @@
 [
   {
     "_key": "randomKey9",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "You might think you’re writing JSX:",
-        "_key": "randomKey90"
+        "_key": "randomKey10"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal"
   },
   {
     "_type": "code",
     "language": "javascript",
     "code": "<marquee bgcolor=\"#ffa7c4\">hi</marquee>\n\t",
-    "_key": "randomKey10"
+    "_key": "randomKey11"
   },
   {
-    "_key": "randomKey11",
+    "_key": "randomKey12",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "But really, you’re calling a function:",
-        "_key": "randomKey110"
+        "_key": "randomKey13"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal"
   },
   {
     "_type": "code",
     "language": "javascript",
     "code": "React.createElement(\n\t\t/* type */ 'marquee',\n\t\t/* props */ { bgcolor: '#ffa7c4' },\n\t\t/* children */ 'hi'\n\t)\n\t",
-    "_key": "randomKey12"
+    "_key": "randomKey14"
   },
   {
-    "_key": "randomKey13",
+    "_key": "randomKey15",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "And that function gives you back an object. We call this object a React ",
-        "_key": "randomKey130"
+        "_key": "randomKey16"
       },
       {
         "_type": "span",
         "marks": ["em"],
         "text": "element",
-        "_key": "randomKey131"
+        "_key": "randomKey17"
       },
       {
         "_type": "span",
         "marks": [],
         "text": ". It tells React what to render next. Your components return a tree of them.",
-        "_key": "randomKey132"
+        "_key": "randomKey18"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal"
   },
   {
     "_type": "code",
     "language": "javascript",
     "code": "{\n\t\ttype: 'marquee',\n\t\tprops: {\n\t\t\tbgcolor: '#ffa7c4',\n\t\t\tchildren: 'hi',\n\t\t},\n\t\tkey: null,\n\t\tref: null,\n\t\t$$typeof: Symbol.for('react.element'), // 🧐 Who dis\n\t}\n\t",
-    "_key": "randomKey14"
+    "_key": "randomKey19"
   },
   {
-    "_key": "randomKey15",
+    "_key": "randomKey20",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "If you used React you might be familiar with ",
-        "_key": "randomKey150"
+        "_key": "randomKey21"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "type",
-        "_key": "randomKey151"
+        "_key": "randomKey22"
       },
       {
         "_type": "span",
         "marks": [],
         "text": ", ",
-        "_key": "randomKey152"
+        "_key": "randomKey23"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "props",
-        "_key": "randomKey153"
+        "_key": "randomKey24"
       },
       {
         "_type": "span",
         "marks": [],
         "text": ", ",
-        "_key": "randomKey154"
+        "_key": "randomKey25"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "key",
-        "_key": "randomKey155"
+        "_key": "randomKey26"
       },
       {
         "_type": "span",
         "marks": [],
         "text": ", and ",
-        "_key": "randomKey156"
+        "_key": "randomKey27"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "ref",
-        "_key": "randomKey157"
+        "_key": "randomKey28"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " fields. ",
-        "_key": "randomKey158"
+        "_key": "randomKey29"
       },
       {
         "_type": "span",
         "marks": ["strong"],
         "text": "But what is ",
-        "_key": "randomKey159"
+        "_key": "randomKey30"
       },
       {
         "_type": "span",
         "marks": ["strong", "code"],
         "text": "$$typeof",
-        "_key": "randomKey1510"
+        "_key": "randomKey31"
       },
       {
         "_type": "span",
         "marks": ["strong"],
         "text": "? And why does it have a ",
-        "_key": "randomKey1511"
+        "_key": "randomKey32"
       },
       {
         "_type": "span",
         "marks": ["strong", "code"],
         "text": "Symbol()",
-        "_key": "randomKey1512"
+        "_key": "randomKey33"
       },
       {
         "_type": "span",
         "marks": ["strong"],
         "text": " as a value?",
-        "_key": "randomKey1513"
+        "_key": "randomKey34"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal"
   },
   {
-    "_key": "randomKey16",
+    "_key": "randomKey35",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "That’s another one of those things that you don’t ",
-        "_key": "randomKey160"
+        "_key": "randomKey36"
       },
       {
         "_type": "span",
         "marks": ["em"],
         "text": "need",
-        "_key": "randomKey161"
+        "_key": "randomKey37"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " to know to use React, but that will make you feel good when you do. There’s also some tips about security in this post that you might want to know. Maybe one day you’ll write your own UI library and all of this will come in handy. I certainly hope so.",
-        "_key": "randomKey162"
+        "_key": "randomKey38"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal"
   },
   {
-    "_key": "randomKey17",
+    "_key": "randomKey39",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "Before client-side UI libraries became common and added basic protection, it was common for app code to construct HTML and insert it into the DOM:",
-        "_key": "randomKey170"
+        "_key": "randomKey40"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal"
   },
   {
     "_type": "code",
     "language": "javascript",
     "code": "const messageEl = document.getElementById('message');\n\tmessageEl.innerHTML = '<p>' + message.text + '</p>';\n\t",
-    "_key": "randomKey18"
+    "_key": "randomKey41"
   },
   {
-    "_key": "randomKey19",
+    "_key": "randomKey42",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "That works fine, except when your ",
-        "_key": "randomKey190"
+        "_key": "randomKey43"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "message.text",
-        "_key": "randomKey191"
+        "_key": "randomKey44"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " is something like ",
-        "_key": "randomKey192"
+        "_key": "randomKey45"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "'<img src onerror=\"stealYourPassword()\">'",
-        "_key": "randomKey193"
+        "_key": "randomKey46"
       },
       {
         "_type": "span",
         "marks": [],
         "text": ". ",
-        "_key": "randomKey194"
+        "_key": "randomKey47"
       },
       {
         "_type": "span",
         "marks": ["strong"],
         "text": "You don’t want things written by strangers to appear verbatim in your app’s rendered HTML.",
-        "_key": "randomKey195"
+        "_key": "randomKey48"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal"
   },
   {
-    "_key": "randomKey20",
+    "_key": "randomKey49",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "(Fun fact: if you only do client-side rendering, a ",
-        "_key": "randomKey200"
+        "_key": "randomKey50"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "<script>",
-        "_key": "randomKey201"
+        "_key": "randomKey51"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " tag here wouldn’t let you run JavaScript. But ",
-        "_key": "randomKey202"
+        "_key": "randomKey52"
       },
       {
         "_type": "span",
         "marks": ["randomKey0"],
         "text": "don’t let this",
-        "_key": "randomKey203"
+        "_key": "randomKey53"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " lull you into a false sense of security.)",
-        "_key": "randomKey204"
+        "_key": "randomKey54"
       }
     ],
     "markDefs": [
@@ -294,283 +295,283 @@
         "href": "https://gomakethings.com/preventing-cross-site-scripting-attacks-when-using-innerhtml-in-vanilla-javascript/"
       }
     ],
-    "_type": "block",
     "style": "normal"
   },
   {
-    "_key": "randomKey21",
+    "_key": "randomKey55",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "To protect against such attacks, you can use safe APIs like ",
-        "_key": "randomKey210"
+        "_key": "randomKey56"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "document.createTextNode()",
-        "_key": "randomKey211"
+        "_key": "randomKey57"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " or ",
-        "_key": "randomKey212"
+        "_key": "randomKey58"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "textContent",
-        "_key": "randomKey213"
+        "_key": "randomKey59"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " that only deal with text. You can also preemptively “escape” inputs by replacing potentially dangerous characters like ",
-        "_key": "randomKey214"
+        "_key": "randomKey60"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "<",
-        "_key": "randomKey215"
+        "_key": "randomKey61"
       },
       {
         "_type": "span",
         "marks": [],
         "text": ", ",
-        "_key": "randomKey216"
+        "_key": "randomKey62"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": ">",
-        "_key": "randomKey217"
+        "_key": "randomKey63"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " and others in any user-provided text.",
-        "_key": "randomKey218"
+        "_key": "randomKey64"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal"
   },
   {
-    "_key": "randomKey22",
+    "_key": "randomKey65",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "Still, the cost of a mistake is high and it’s a hassle to remember it every time you interpolate a user-written string into your output. ",
-        "_key": "randomKey220"
+        "_key": "randomKey66"
       },
       {
         "_type": "span",
         "marks": ["strong"],
         "text": "This is why modern libraries like React escape text content for strings by default:",
-        "_key": "randomKey221"
+        "_key": "randomKey67"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal"
   },
   {
     "_type": "code",
     "language": "javascript",
     "code": "<p>\n\t\t{message.text}\n\t</p>\n\t",
-    "_key": "randomKey23"
+    "_key": "randomKey68"
   },
   {
-    "_key": "randomKey24",
+    "_key": "randomKey69",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "If ",
-        "_key": "randomKey240"
+        "_key": "randomKey70"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "message.text",
-        "_key": "randomKey241"
+        "_key": "randomKey71"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " is a malicious string with an ",
-        "_key": "randomKey242"
+        "_key": "randomKey72"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "<img>",
-        "_key": "randomKey243"
+        "_key": "randomKey73"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " or another tag, it won’t turn into a real ",
-        "_key": "randomKey244"
+        "_key": "randomKey74"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "<img>",
-        "_key": "randomKey245"
+        "_key": "randomKey75"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " tag. React will escape the content and ",
-        "_key": "randomKey246"
+        "_key": "randomKey76"
       },
       {
         "_type": "span",
         "marks": ["em"],
         "text": "then",
-        "_key": "randomKey247"
+        "_key": "randomKey77"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " insert it into the DOM. So instead of seeing the ",
-        "_key": "randomKey248"
+        "_key": "randomKey78"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "<img>",
-        "_key": "randomKey249"
+        "_key": "randomKey79"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " tag you’ll just see its markup.",
-        "_key": "randomKey2410"
+        "_key": "randomKey80"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal"
   },
   {
-    "_key": "randomKey25",
+    "_key": "randomKey81",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "To render arbitrary HTML inside a React element, you have to write ",
-        "_key": "randomKey250"
+        "_key": "randomKey82"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "dangerouslySetInnerHTML={{ __html: message.text }}",
-        "_key": "randomKey251"
+        "_key": "randomKey83"
       },
       {
         "_type": "span",
         "marks": [],
         "text": ". ",
-        "_key": "randomKey252"
+        "_key": "randomKey84"
       },
       {
         "_type": "span",
         "marks": ["strong"],
         "text": "The fact that it’s clumsy to write is a ",
-        "_key": "randomKey253"
+        "_key": "randomKey85"
       },
       {
         "_type": "span",
         "marks": ["strong", "em"],
         "text": "feature",
-        "_key": "randomKey254"
+        "_key": "randomKey86"
       },
       {
         "_type": "span",
         "marks": ["strong"],
         "text": ".",
-        "_key": "randomKey255"
+        "_key": "randomKey87"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " It’s meant to be highly visible so that you can catch it in code reviews and codebase audits.",
-        "_key": "randomKey256"
+        "_key": "randomKey88"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal"
   },
   {
-    "_key": "randomKey26",
+    "_key": "randomKey89",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": ["strong"],
         "text": "Does it mean React is entirely safe from injection attacks? No.",
-        "_key": "randomKey260"
+        "_key": "randomKey90"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " HTML and DOM offer ",
-        "_key": "randomKey261"
+        "_key": "randomKey91"
       },
       {
         "_type": "span",
         "marks": ["randomKey1"],
         "text": "plenty of attack surface",
-        "_key": "randomKey262"
+        "_key": "randomKey92"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " that is too difficult or slow for React or other UI libraries to mitigate against. Most of the remaining attack vectors involve attributes. For example, if you render ",
-        "_key": "randomKey263"
+        "_key": "randomKey93"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "<a href={user.website}>",
-        "_key": "randomKey264"
+        "_key": "randomKey94"
       },
       {
         "_type": "span",
         "marks": [],
         "text": ", beware of the user whose website is ",
-        "_key": "randomKey265"
+        "_key": "randomKey95"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "'javascript: stealYourPassword()'",
-        "_key": "randomKey266"
+        "_key": "randomKey96"
       },
       {
         "_type": "span",
         "marks": [],
         "text": ". Spreading user input like ",
-        "_key": "randomKey267"
+        "_key": "randomKey97"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "<div {...userData}>",
-        "_key": "randomKey268"
+        "_key": "randomKey98"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " is rare but also dangerous.",
-        "_key": "randomKey269"
+        "_key": "randomKey99"
       }
     ],
     "markDefs": [
@@ -580,41 +581,41 @@
         "href": "https://github.com/facebook/react/issues/3473#issuecomment-90594748"
       }
     ],
-    "_type": "block",
     "style": "normal"
   },
   {
-    "_key": "randomKey27",
+    "_key": "randomKey100",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "React ",
-        "_key": "randomKey270"
+        "_key": "randomKey101"
       },
       {
         "_type": "span",
         "marks": ["randomKey2"],
         "text": "could",
-        "_key": "randomKey271"
+        "_key": "randomKey102"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " provide more protection over time but in many cases these are consequences of server issues that ",
-        "_key": "randomKey272"
+        "_key": "randomKey103"
       },
       {
         "_type": "span",
         "marks": ["randomKey3"],
         "text": "should",
-        "_key": "randomKey273"
+        "_key": "randomKey104"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " be fixed there anyway.",
-        "_key": "randomKey274"
+        "_key": "randomKey105"
       }
     ],
     "markDefs": [
@@ -629,125 +630,125 @@
         "href": "https://github.com/facebook/react/issues/3473#issuecomment-91327040"
       }
     ],
-    "_type": "block",
     "style": "normal"
   },
   {
-    "_key": "randomKey28",
+    "_key": "randomKey106",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "Still, escaping text content is a reasonable first line of defence that catches a lot of potential attacks. Isn’t it nice to know that code like this is safe?",
-        "_key": "randomKey280"
+        "_key": "randomKey107"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal"
   },
   {
     "_type": "code",
     "language": "javascript",
     "code": "// Escaped automatically\n\t<p>\n\t\t{message.text}\n\t</p>\n\t",
-    "_key": "randomKey29"
+    "_key": "randomKey108"
   },
   {
-    "_key": "randomKey30",
+    "_key": "randomKey109",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": ["strong"],
         "text": "Well, that wasn’t always true either.",
-        "_key": "randomKey300"
+        "_key": "randomKey110"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " And that’s where ",
-        "_key": "randomKey301"
+        "_key": "randomKey111"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "$$typeof",
-        "_key": "randomKey302"
+        "_key": "randomKey112"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " comes in.",
-        "_key": "randomKey303"
+        "_key": "randomKey113"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal"
   },
   {
-    "_key": "randomKey31",
+    "_key": "randomKey114",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "React elements are plain objects by design:",
-        "_key": "randomKey310"
+        "_key": "randomKey115"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal"
   },
   {
     "_type": "code",
     "language": "javascript",
     "code": "{\n\t\ttype: 'marquee',\n\t\tprops: {\n\t\t\tbgcolor: '#ffa7c4',\n\t\t\tchildren: 'hi',\n\t\t},\n\t\tkey: null,\n\t\tref: null,\n\t\t$$typeof: Symbol.for('react.element'),\n\t}\n\t",
-    "_key": "randomKey32"
+    "_key": "randomKey116"
   },
   {
-    "_key": "randomKey33",
+    "_key": "randomKey117",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "While normally you create them with ",
-        "_key": "randomKey330"
+        "_key": "randomKey118"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "React.createElement()",
-        "_key": "randomKey331"
+        "_key": "randomKey119"
       },
       {
         "_type": "span",
         "marks": [],
         "text": ", it is not required. There are valid use cases for React to support plain element objects written like I just did above. Of course, you probably wouldn’t ",
-        "_key": "randomKey332"
+        "_key": "randomKey120"
       },
       {
         "_type": "span",
         "marks": ["em"],
         "text": "want",
-        "_key": "randomKey333"
+        "_key": "randomKey121"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " to write them like this — but this ",
-        "_key": "randomKey334"
+        "_key": "randomKey122"
       },
       {
         "_type": "span",
         "marks": ["randomKey4"],
         "text": "can be",
-        "_key": "randomKey335"
+        "_key": "randomKey123"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " useful for an optimizing compiler, passing UI elements between workers, or for decoupling JSX from the React package.",
-        "_key": "randomKey336"
+        "_key": "randomKey124"
       }
     ],
     "markDefs": [
@@ -757,73 +758,73 @@
         "href": "https://github.com/facebook/react/pull/3583#issuecomment-90296667"
       }
     ],
-    "_type": "block",
     "style": "normal"
   },
   {
-    "_key": "randomKey34",
+    "_key": "randomKey125",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "However, ",
-        "_key": "randomKey340"
+        "_key": "randomKey126"
       },
       {
         "_type": "span",
         "marks": ["strong"],
         "text": "if your server has a hole that lets the user store an arbitrary JSON object",
-        "_key": "randomKey341"
+        "_key": "randomKey127"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " while the client code expects a string, this could become a problem:",
-        "_key": "randomKey342"
+        "_key": "randomKey128"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal"
   },
   {
     "_type": "code",
     "language": "javascript",
     "code": "// Server could have a hole that lets user store JSON\n\tlet expectedTextButGotJSON = {\n\t\ttype: 'div',\n\t\tprops: {\n\t\t\tdangerouslySetInnerHTML: {\n\t\t\t\t__html: '/* put your exploit here */'\n\t\t\t},\n\t\t},\n\t\t// ...\n\t};\n\tlet message = { text: expectedTextButGotJSON };\n\n\t// Dangerous in React 0.13\n\t<p>\n\t\t{message.text}\n\t</p>\n\t",
-    "_key": "randomKey35"
+    "_key": "randomKey129"
   },
   {
-    "_key": "randomKey36",
+    "_key": "randomKey130",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "In that case, React 0.13 would be ",
-        "_key": "randomKey360"
+        "_key": "randomKey131"
       },
       {
         "_type": "span",
         "marks": ["randomKey5"],
         "text": "vulnerable",
-        "_key": "randomKey361"
+        "_key": "randomKey132"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " to an XSS attack. To clarify, again, ",
-        "_key": "randomKey362"
+        "_key": "randomKey133"
       },
       {
         "_type": "span",
         "marks": ["strong"],
         "text": "this attack depends on an existing server hole",
-        "_key": "randomKey363"
+        "_key": "randomKey134"
       },
       {
         "_type": "span",
         "marks": [],
         "text": ". Still, React could do a better job of protecting people against it. And starting with React 0.14, it does.",
-        "_key": "randomKey364"
+        "_key": "randomKey135"
       }
     ],
     "markDefs": [
@@ -833,29 +834,29 @@
         "href": "http://danlec.com/blog/xss-via-a-spoofed-react-element"
       }
     ],
-    "_type": "block",
     "style": "normal"
   },
   {
-    "_key": "randomKey37",
+    "_key": "randomKey136",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "The fix in React 0.14 was to ",
-        "_key": "randomKey370"
+        "_key": "randomKey137"
       },
       {
         "_type": "span",
         "marks": ["randomKey6"],
         "text": "tag every React element with a Symbol",
-        "_key": "randomKey371"
+        "_key": "randomKey138"
       },
       {
         "_type": "span",
         "marks": [],
         "text": ":",
-        "_key": "randomKey372"
+        "_key": "randomKey139"
       }
     ],
     "markDefs": [
@@ -865,147 +866,147 @@
         "href": "https://github.com/facebook/react/pull/4832"
       }
     ],
-    "_type": "block",
     "style": "normal"
   },
   {
     "_type": "code",
     "language": "javascript",
     "code": "{\n\t\ttype: 'marquee',\n\t\tprops: {\n\t\t\tbgcolor: '#ffa7c4',\n\t\t\tchildren: 'hi',\n\t\t},\n\t\tkey: null,\n\t\tref: null,\n\t\t$$typeof: Symbol.for('react.element'),\n\t}\n\t",
-    "_key": "randomKey38"
+    "_key": "randomKey140"
   },
   {
-    "_key": "randomKey39",
+    "_key": "randomKey141",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "This works because you can’t just put ",
-        "_key": "randomKey390"
+        "_key": "randomKey142"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "Symbol",
-        "_key": "randomKey391"
+        "_key": "randomKey143"
       },
       {
         "_type": "span",
         "marks": [],
         "text": "s in JSON. ",
-        "_key": "randomKey392"
+        "_key": "randomKey144"
       },
       {
         "_type": "span",
         "marks": ["strong"],
         "text": "So even if the server has a security hole and returns JSON instead of text, that JSON can’t include ",
-        "_key": "randomKey393"
+        "_key": "randomKey145"
       },
       {
         "_type": "span",
         "marks": ["strong", "code"],
         "text": "Symbol.for('react.element')",
-        "_key": "randomKey394"
+        "_key": "randomKey146"
       },
       {
         "_type": "span",
         "marks": ["strong"],
         "text": ".",
-        "_key": "randomKey395"
+        "_key": "randomKey147"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " React will check ",
-        "_key": "randomKey396"
+        "_key": "randomKey148"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "element.$$typeof",
-        "_key": "randomKey397"
+        "_key": "randomKey149"
       },
       {
         "_type": "span",
         "marks": [],
         "text": ", and will refuse to process the element if it’s missing or invalid.",
-        "_key": "randomKey398"
+        "_key": "randomKey150"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal"
   },
   {
-    "_key": "randomKey40",
+    "_key": "randomKey151",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "The nice thing about using ",
-        "_key": "randomKey400"
+        "_key": "randomKey152"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "Symbol.for()",
-        "_key": "randomKey401"
+        "_key": "randomKey153"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " specifically is that ",
-        "_key": "randomKey402"
+        "_key": "randomKey154"
       },
       {
         "_type": "span",
         "marks": ["strong"],
         "text": "Symbols are global between environments like iframes and workers.",
-        "_key": "randomKey403"
+        "_key": "randomKey155"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " So this fix doesn’t prevent passing trusted elements between different parts of the app even in more exotic conditions. Similarly, even if there are multiple copies of React on the page, they can still “agree” on the valid ",
-        "_key": "randomKey404"
+        "_key": "randomKey156"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "$$typeof",
-        "_key": "randomKey405"
+        "_key": "randomKey157"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " value.",
-        "_key": "randomKey406"
+        "_key": "randomKey158"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal"
   },
   {
-    "_key": "randomKey41",
+    "_key": "randomKey159",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "What about the browsers that ",
-        "_key": "randomKey410"
+        "_key": "randomKey160"
       },
       {
         "_type": "span",
         "marks": ["randomKey7"],
         "text": "don’t support",
-        "_key": "randomKey411"
+        "_key": "randomKey161"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " Symbols?",
-        "_key": "randomKey412"
+        "_key": "randomKey162"
       }
     ],
     "markDefs": [
@@ -1015,53 +1016,53 @@
         "href": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol#Browser_compatibility"
       }
     ],
-    "_type": "block",
     "style": "normal"
   },
   {
-    "_key": "randomKey42",
+    "_key": "randomKey163",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "Alas, they don’t get this extra protection. React still includes the ",
-        "_key": "randomKey420"
+        "_key": "randomKey164"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "$$typeof",
-        "_key": "randomKey421"
+        "_key": "randomKey165"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " field on the element for consistency, but it’s ",
-        "_key": "randomKey422"
+        "_key": "randomKey166"
       },
       {
         "_type": "span",
         "marks": ["randomKey8"],
         "text": "set to a number",
-        "_key": "randomKey423"
+        "_key": "randomKey167"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " — ",
-        "_key": "randomKey424"
+        "_key": "randomKey168"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "0xeac7",
-        "_key": "randomKey425"
+        "_key": "randomKey169"
       },
       {
         "_type": "span",
         "marks": [],
         "text": ".",
-        "_key": "randomKey426"
+        "_key": "randomKey170"
       }
     ],
     "markDefs": [
@@ -1071,33 +1072,32 @@
         "href": "https://github.com/facebook/react/blob/8482cbe22d1a421b73db602e1f470c632b09f693/packages/shared/ReactSymbols.js#L14-L16"
       }
     ],
-    "_type": "block",
     "style": "normal"
   },
   {
-    "_key": "randomKey43",
+    "_key": "randomKey171",
+    "_type": "block",
     "children": [
       {
         "_type": "span",
         "marks": [],
         "text": "Why this number specifically? ",
-        "_key": "randomKey430"
+        "_key": "randomKey172"
       },
       {
         "_type": "span",
         "marks": ["code"],
         "text": "0xeac7",
-        "_key": "randomKey431"
+        "_key": "randomKey173"
       },
       {
         "_type": "span",
         "marks": [],
         "text": " kinda looks like “React”.",
-        "_key": "randomKey432"
+        "_key": "randomKey174"
       }
     ],
     "markDefs": [],
-    "_type": "block",
     "style": "normal"
   }
 ]
