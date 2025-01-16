@@ -20,9 +20,6 @@ import {
   type NativeBehaviorEvent,
   type SyntheticBehaviorEvent,
 } from '../behaviors/behavior.types'
-import {toPortableTextRange} from '../internal-utils/ranges'
-import {fromSlateValue} from '../internal-utils/values'
-import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
 import type {OmitFromUnion, PickFromUnion} from '../type-utils'
 import type {
   EditorSelection,
@@ -30,8 +27,7 @@ import type {
   PortableTextSlateEditor,
 } from '../types/editor'
 import type {EditorSchema} from './define-schema'
-import type {EditorContext} from './editor-snapshot'
-import {getActiveDecorators} from './get-active-decorators'
+import {createEditorSnapshot} from './editor-snapshot'
 import {withApplyingBehaviorActions} from './with-applying-behavior-actions'
 
 export * from 'xstate/guards'
@@ -342,27 +338,11 @@ export const editorMachine = setup({
         return
       }
 
-      const value = fromSlateValue(
-        event.editor.children,
-        context.schema.block.name,
-        KEY_TO_VALUE_ELEMENT.get(event.editor),
-      )
-      const selection = toPortableTextRange(
-        value,
-        event.editor.selection,
-        context.schema,
-      )
-
-      const editorContext = {
-        activeDecorators: getActiveDecorators({
-          schema: context.schema,
-          slateEditorInstance: event.editor,
-        }),
+      const editorSnapshot = createEditorSnapshot({
+        editor: event.editor,
         keyGenerator: context.keyGenerator,
         schema: context.schema,
-        selection,
-        value,
-      } satisfies EditorContext
+      })
 
       let behaviorOverwritten = false
 
@@ -370,7 +350,7 @@ export const editorMachine = setup({
         const shouldRun =
           eventBehavior.guard === undefined ||
           eventBehavior.guard({
-            context: editorContext,
+            context: editorSnapshot.context,
             event: event.behaviorEvent,
           })
 
@@ -380,7 +360,7 @@ export const editorMachine = setup({
 
         const actionIntendSets = eventBehavior.actions.map((actionSet) =>
           actionSet(
-            {context: editorContext, event: event.behaviorEvent},
+            {context: editorSnapshot.context, event: event.behaviorEvent},
             shouldRun,
           ),
         )
