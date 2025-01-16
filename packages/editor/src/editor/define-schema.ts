@@ -70,7 +70,10 @@ export function compileSchemaDefinition<
         // Very naive way to work around `SanitySchema.compile` adding default
         // fields to objects with the name `image`
         name: blockObject.name === 'image' ? 'tmp-image' : blockObject.name,
-        title: blockObject.title,
+        title:
+          blockObject.name === 'image' && blockObject.title === undefined
+            ? 'Image'
+            : blockObject.title,
         fields: [],
       }),
     ) ?? []
