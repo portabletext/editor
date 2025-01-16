@@ -98,7 +98,7 @@
     "@sanity/schema": "^3.70.0",
     "@sanity/types": "^3.70.0",
     "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.1.0",
+    "@testing-library/react": "^16.2.0",
     "@types/debug": "^4.1.12",
     "@types/lodash": "^4.17.13",
     "@types/lodash.startcase": "^4.4.9",
