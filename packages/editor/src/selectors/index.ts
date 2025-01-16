@@ -9,6 +9,7 @@ export type {
 export type {EditorSchema} from '../editor/define-schema'
 export {getActiveListItem} from './selector.get-active-list-item'
 export {getActiveStyle} from './selector.get-active-style'
+export {getSelectedSlice} from './selector.get-selected-slice'
 export {getSelectedSpans} from './selector.get-selected-spans'
 export {getSelectionText} from './selector.get-selection-text'
 export {getBlockTextBefore} from './selector.get-text-before'
