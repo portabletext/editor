@@ -106,6 +106,10 @@ export type InternalEditorEvent =
       behaviors: Array<Behavior>
     }
   | {
+      type: 'update key generator'
+      keyGenerator: () => string
+    }
+  | {
       type: 'update value'
       value: Array<PortableTextBlock> | undefined
     }
@@ -493,6 +497,9 @@ export const editorMachine = setup({
     'patches': {actions: emit(({event}) => event)},
     'done loading': {actions: emit({type: 'done loading'})},
     'update behaviors': {actions: 'assign behaviors'},
+    'update key generator': {
+      actions: assign({keyGenerator: ({event}) => event.keyGenerator}),
+    },
     'update schema': {actions: 'assign schema'},
     'update value': {actions: assign({value: ({event}) => event.value})},
     'update maxBlocks': {
