@@ -46,7 +46,8 @@ const editorMachine = setup({
       | {type: 'clear stored patches'}
       | {type: 'copy patches'}
       | {type: 'toggle patches preview'}
-      | {type: 'toggle selection preview'},
+      | {type: 'toggle selection preview'}
+      | {type: 'toggle value preview'},
     emitted: {} as {
       type: 'patches'
       patches: MutationChange['patches']
@@ -131,6 +132,13 @@ const editorMachine = setup({
       states: {
         hidden: {on: {'toggle selection preview': {target: 'shown'}}},
         shown: {on: {'toggle selection preview': {target: 'hidden'}}},
+      },
+    },
+    'value preview': {
+      initial: 'hidden',
+      states: {
+        hidden: {on: {'toggle value preview': {target: 'shown'}}},
+        shown: {on: {'toggle value preview': {target: 'hidden'}}},
       },
     },
     'copying patches': {

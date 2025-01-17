@@ -47,6 +47,7 @@ import {
   StockTickerSchema,
 } from './schema'
 import {SelectionPreview} from './selection-preview'
+import {ValuePreview} from './value-preview'
 import {wait} from './wait'
 
 export function Editor(props: {editorRef: EditorActorRef}) {
@@ -55,6 +56,9 @@ export function Editor(props: {editorRef: EditorActorRef}) {
   )
   const showingSelectionPreivew = useSelector(props.editorRef, (s) =>
     s.matches({'selection preview': 'shown'}),
+  )
+  const showingValuePreview = useSelector(props.editorRef, (s) =>
+    s.matches({'value preview': 'shown'}),
   )
   const color = useSelector(props.editorRef, (s) => s.context.color)
   const value = useSelector(props.editorRef, (s) => s.context.value)
@@ -263,6 +267,19 @@ export function Editor(props: {editorRef: EditorActorRef}) {
             </Toolbar>
             {showingSelectionPreivew ? (
               <SelectionPreview editorId={props.editorRef.id} />
+            ) : null}
+            <Toolbar>
+              <Switch
+                isSelected={showingValuePreview}
+                onChange={() => {
+                  props.editorRef.send({type: 'toggle value preview'})
+                }}
+              >
+                Value
+              </Switch>
+            </Toolbar>
+            {showingValuePreview ? (
+              <ValuePreview editorId={props.editorRef.id} />
             ) : null}
           </div>
         </EditorProvider>
