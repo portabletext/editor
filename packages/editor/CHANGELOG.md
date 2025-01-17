@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.22.0](https://github.com/portabletext/editor/compare/editor-v1.21.6...editor-v1.22.0) (2025-01-17)
+
+
+### Features
+
+* **selectors:** add `getSelectedSlice` ([401429e](https://github.com/portabletext/editor/commit/401429e112e8a87f24a85c4675c2ae3c629b883b))
+* **utils:** add `sliceBlocks` ([d623151](https://github.com/portabletext/editor/commit/d623151e666e12a48619dc9aa58045e0baaad4d8))
+
+
+### Bug Fixes
+
+* avoid accidentally titling `image` `"Tmp Image"` ([1c0cb2c](https://github.com/portabletext/editor/commit/1c0cb2c4ead0814854b409040c863d66e1ee6323))
+
 ## [1.21.6](https://github.com/portabletext/editor/compare/editor-v1.21.5...editor-v1.21.6) (2025-01-15)
 
 
