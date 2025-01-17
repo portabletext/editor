@@ -51,15 +51,6 @@ import {ValuePreview} from './value-preview'
 import {wait} from './wait'
 
 export function Editor(props: {editorRef: EditorActorRef}) {
-  const showingPatchesPreview = useSelector(props.editorRef, (s) =>
-    s.matches({'patches preview': 'shown'}),
-  )
-  const showingSelectionPreivew = useSelector(props.editorRef, (s) =>
-    s.matches({'selection preview': 'shown'}),
-  )
-  const showingValuePreview = useSelector(props.editorRef, (s) =>
-    s.matches({'value preview': 'shown'}),
-  )
   const color = useSelector(props.editorRef, (s) => s.context.color)
   const value = useSelector(props.editorRef, (s) => s.context.value)
   const keyGenerator = useSelector(
@@ -68,13 +59,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
   )
   const [loading, setLoading] = useState(false)
   const [readOnly, setReadOnly] = useState(false)
-  const patchesReceived = useSelector(props.editorRef, (s) =>
-    reverse(s.context.patchesReceived),
-  )
-  const [enableMarkdownPlugin, setEnableMarkdownPlugin] = useState(false)
   const [enableEmojiPickerPlugin, setEnableEmojiPickerPlugin] = useState(false)
-  const [enableCodeEditorPlugin, setEnableCodeEditorPlugin] = useState(false)
-  const [enableLinkPlugin, setEnableLinkPlugin] = useState(false)
 
   return (
     <div
@@ -94,7 +79,6 @@ export function Editor(props: {editorRef: EditorActorRef}) {
             schemaDefinition,
           }}
         >
-          {enableMarkdownPlugin ? <MarkdownPlugin /> : null}
           <EditorEventListener
             editorRef={props.editorRef}
             value={value}
@@ -119,8 +103,6 @@ export function Editor(props: {editorRef: EditorActorRef}) {
           <div className="flex flex-col gap-2">
             <PortableTextToolbar schemaDefinition={schemaDefinition} />
             {enableEmojiPickerPlugin ? <EmojiPickerPlugin /> : null}
-            {enableCodeEditorPlugin ? <CodeEditorPlugin /> : null}
-            {enableLinkPlugin ? <LinkPlugin /> : null}
             <div className="flex gap-2 items-center">
               <ErrorBoundary
                 fallbackProps={{area: 'PortableTextEditable'}}
@@ -177,114 +159,204 @@ export function Editor(props: {editorRef: EditorActorRef}) {
               <ToggleReadOnly readOnly={readOnly} />
             </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <Toolbar>
-              <Switch
-                isSelected={enableMarkdownPlugin}
-                onChange={() => {
-                  setEnableMarkdownPlugin(!enableMarkdownPlugin)
-                }}
-              >
-                Markdown plugin
-              </Switch>
-            </Toolbar>
-            <Toolbar>
-              <Switch
-                isSelected={enableEmojiPickerPlugin}
-                onChange={() => {
-                  setEnableEmojiPickerPlugin(!enableEmojiPickerPlugin)
-                }}
-              >
-                Emoji picker plugin
-              </Switch>
-            </Toolbar>
-            <Toolbar>
-              <Switch
-                isSelected={enableCodeEditorPlugin}
-                onChange={() => {
-                  setEnableCodeEditorPlugin(!enableCodeEditorPlugin)
-                }}
-              >
-                Code editor plugin
-              </Switch>
-            </Toolbar>
-            <Toolbar>
-              <Switch
-                isSelected={enableLinkPlugin}
-                onChange={() => {
-                  setEnableLinkPlugin(!enableLinkPlugin)
-                }}
-              >
-                Link plugin
-              </Switch>
-            </Toolbar>
-            <Toolbar>
-              <Switch
-                isSelected={showingPatchesPreview}
-                onChange={() => {
-                  props.editorRef.send({type: 'toggle patches preview'})
-                }}
-              >
-                Patches
-              </Switch>
-              <TooltipTrigger>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onPress={() => {
-                    props.editorRef.send({type: 'clear stored patches'})
-                  }}
-                >
-                  <TrashIcon className="size-3" />
-                </Button>
-                <Tooltip>Clear patches</Tooltip>
-              </TooltipTrigger>
-              <TooltipTrigger>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onPress={() => {
-                    props.editorRef.send({type: 'copy patches'})
-                  }}
-                >
-                  <CopyIcon className="size-3" />
-                </Button>
-                <Tooltip>Copy</Tooltip>
-              </TooltipTrigger>
-            </Toolbar>
-            {showingPatchesPreview ? (
-              <EditorPatchesPreview patches={patchesReceived} />
-            ) : null}
-            <Toolbar>
-              <Switch
-                isSelected={showingSelectionPreivew}
-                onChange={() => {
-                  props.editorRef.send({type: 'toggle selection preview'})
-                }}
-              >
-                Selection
-              </Switch>
-            </Toolbar>
-            {showingSelectionPreivew ? (
-              <SelectionPreview editorId={props.editorRef.id} />
-            ) : null}
-            <Toolbar>
-              <Switch
-                isSelected={showingValuePreview}
-                onChange={() => {
-                  props.editorRef.send({type: 'toggle value preview'})
-                }}
-              >
-                Value
-              </Switch>
-            </Toolbar>
-            {showingValuePreview ? (
-              <ValuePreview editorId={props.editorRef.id} />
-            ) : null}
-          </div>
+          <EditorPlaygroundToolbar
+            editorRef={props.editorRef}
+            enableEmojiPickerPlugin={enableEmojiPickerPlugin}
+            setEnableEmojiPickerPlugin={setEnableEmojiPickerPlugin}
+          />
         </EditorProvider>
       </ErrorBoundary>
     </div>
+  )
+}
+
+function EditorPlaygroundToolbar(props: {
+  editorRef: EditorActorRef
+  enableEmojiPickerPlugin: boolean
+  setEnableEmojiPickerPlugin: (enable: boolean) => void
+}) {
+  const editor = useEditor()
+  const provokeDuplicateKeys = useSelector(props.editorRef, (s) =>
+    s.matches({'key generator': 'duplicate'}),
+  )
+  const showingPatchesPreview = useSelector(props.editorRef, (s) =>
+    s.matches({'patches preview': 'shown'}),
+  )
+  const showingSelectionPreivew = useSelector(props.editorRef, (s) =>
+    s.matches({'selection preview': 'shown'}),
+  )
+  const showingValuePreview = useSelector(props.editorRef, (s) =>
+    s.matches({'value preview': 'shown'}),
+  )
+  const patchSubscriptionActive = useSelector(props.editorRef, (s) =>
+    s.matches({'patch subscription': 'active'}),
+  )
+  const valueSubscriptionActive = useSelector(props.editorRef, (s) =>
+    s.matches({'value subscription': 'active'}),
+  )
+  const patchesReceived = useSelector(props.editorRef, (s) =>
+    reverse(s.context.patchesReceived),
+  )
+  const [enableMarkdownPlugin, setEnableMarkdownPlugin] = useState(false)
+
+  const [enableCodeEditorPlugin, setEnableCodeEditorPlugin] = useState(false)
+  const [enableLinkPlugin, setEnableLinkPlugin] = useState(false)
+
+  return (
+    <>
+      <div className="flex flex-col gap-2">
+        <Toolbar>
+          <Switch
+            isSelected={patchSubscriptionActive}
+            onChange={() => {
+              props.editorRef.send({type: 'toggle patch subscription'})
+            }}
+          >
+            Patch subscription
+          </Switch>
+        </Toolbar>
+        <Toolbar>
+          <Switch
+            isSelected={valueSubscriptionActive}
+            onChange={() => {
+              props.editorRef.send({type: 'toggle value subscription'})
+            }}
+          >
+            Value subscription
+          </Switch>
+        </Toolbar>
+        <Toolbar>
+          <Switch
+            isSelected={provokeDuplicateKeys}
+            onChange={(isSelected) => {
+              props.editorRef.send({type: 'toggle key generator'})
+              if (isSelected) {
+                editor.send({
+                  type: 'update key generator',
+                  keyGenerator: () => 'key',
+                })
+              } else {
+                editor.send({
+                  type: 'update key generator',
+                  keyGenerator:
+                    props.editorRef.getSnapshot().context.keyGenerator,
+                })
+              }
+            }}
+          >
+            Provoke duplicate keys
+          </Switch>
+        </Toolbar>
+        <Separator orientation="horizontal" />
+        <Toolbar>
+          <Switch
+            isSelected={enableMarkdownPlugin}
+            onChange={() => {
+              setEnableMarkdownPlugin(!enableMarkdownPlugin)
+            }}
+          >
+            Markdown plugin
+          </Switch>
+        </Toolbar>
+        <Toolbar>
+          <Switch
+            isSelected={props.enableEmojiPickerPlugin}
+            onChange={(isSelected) => {
+              props.setEnableEmojiPickerPlugin(isSelected)
+            }}
+          >
+            Emoji picker plugin
+          </Switch>
+        </Toolbar>
+        <Toolbar>
+          <Switch
+            isSelected={enableCodeEditorPlugin}
+            onChange={() => {
+              setEnableCodeEditorPlugin(!enableCodeEditorPlugin)
+            }}
+          >
+            Code editor plugin
+          </Switch>
+        </Toolbar>
+        <Toolbar>
+          <Switch
+            isSelected={enableLinkPlugin}
+            onChange={() => {
+              setEnableLinkPlugin(!enableLinkPlugin)
+            }}
+          >
+            Link plugin
+          </Switch>
+        </Toolbar>
+        <Separator orientation="horizontal" />
+        <Toolbar>
+          <Switch
+            isSelected={showingPatchesPreview}
+            onChange={() => {
+              props.editorRef.send({type: 'toggle patches preview'})
+            }}
+          >
+            Patches
+          </Switch>
+          <TooltipTrigger>
+            <Button
+              size="sm"
+              variant="destructive"
+              onPress={() => {
+                props.editorRef.send({type: 'clear stored patches'})
+              }}
+            >
+              <TrashIcon className="size-3" />
+            </Button>
+            <Tooltip>Clear patches</Tooltip>
+          </TooltipTrigger>
+          <TooltipTrigger>
+            <Button
+              size="sm"
+              variant="secondary"
+              onPress={() => {
+                props.editorRef.send({type: 'copy patches'})
+              }}
+            >
+              <CopyIcon className="size-3" />
+            </Button>
+            <Tooltip>Copy</Tooltip>
+          </TooltipTrigger>
+        </Toolbar>
+        {showingPatchesPreview ? (
+          <EditorPatchesPreview patches={patchesReceived} />
+        ) : null}
+        <Toolbar>
+          <Switch
+            isSelected={showingSelectionPreivew}
+            onChange={() => {
+              props.editorRef.send({type: 'toggle selection preview'})
+            }}
+          >
+            Selection
+          </Switch>
+        </Toolbar>
+        {showingSelectionPreivew ? (
+          <SelectionPreview editorId={props.editorRef.id} />
+        ) : null}
+        <Toolbar>
+          <Switch
+            isSelected={showingValuePreview}
+            onChange={() => {
+              props.editorRef.send({type: 'toggle value preview'})
+            }}
+          >
+            Value
+          </Switch>
+        </Toolbar>
+        {showingValuePreview ? (
+          <ValuePreview editorId={props.editorRef.id} />
+        ) : null}
+      </div>
+      {enableMarkdownPlugin ? <MarkdownPlugin /> : null}
+      {enableCodeEditorPlugin ? <CodeEditorPlugin /> : null}
+      {enableLinkPlugin ? <LinkPlugin /> : null}
+    </>
   )
 }
 
@@ -412,17 +484,25 @@ function EditorEventListener(props: {
   on: (event: EditorEmittedEvent) => void
   value: Array<PortableTextBlock> | undefined
 }) {
+  const patchSubscriptionActive = useSelector(props.editorRef, (s) =>
+    s.matches({'patch subscription': 'active'}),
+  )
+  const valueSubscriptionActive = useSelector(props.editorRef, (s) =>
+    s.matches({'value subscription': 'active'}),
+  )
   const editor = useEditor()
 
   useEffect(() => {
     const subscription = props.editorRef.on('patches', (event) => {
-      editor.send(event)
+      if (patchSubscriptionActive) {
+        editor.send(event)
+      }
     })
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [props.editorRef, editor])
+  }, [props.editorRef, editor, patchSubscriptionActive])
 
   useEffect(() => {
     const subscription = editor.on('*', props.on)
@@ -433,11 +513,13 @@ function EditorEventListener(props: {
   }, [editor, props.on])
 
   useEffect(() => {
-    editor.send({
-      type: 'update value',
-      value: props.value,
-    })
-  }, [editor, props.value])
+    if (valueSubscriptionActive) {
+      editor.send({
+        type: 'update value',
+        value: props.value,
+      })
+    }
+  }, [editor, props.value, valueSubscriptionActive])
 
   return null
 }

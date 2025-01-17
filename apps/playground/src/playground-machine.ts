@@ -45,6 +45,9 @@ const editorMachine = setup({
       | {type: 'remove'}
       | {type: 'clear stored patches'}
       | {type: 'copy patches'}
+      | {type: 'toggle key generator'}
+      | {type: 'toggle patch subscription'}
+      | {type: 'toggle value subscription'}
       | {type: 'toggle patches preview'}
       | {type: 'toggle selection preview'}
       | {type: 'toggle value preview'},
@@ -139,6 +142,27 @@ const editorMachine = setup({
       states: {
         hidden: {on: {'toggle value preview': {target: 'shown'}}},
         shown: {on: {'toggle value preview': {target: 'hidden'}}},
+      },
+    },
+    'patch subscription': {
+      initial: 'active',
+      states: {
+        active: {on: {'toggle patch subscription': {target: 'paused'}}},
+        paused: {on: {'toggle patch subscription': {target: 'active'}}},
+      },
+    },
+    'value subscription': {
+      initial: 'active',
+      states: {
+        active: {on: {'toggle value subscription': {target: 'paused'}}},
+        paused: {on: {'toggle value subscription': {target: 'active'}}},
+      },
+    },
+    'key generator': {
+      initial: 'random',
+      states: {
+        random: {on: {'toggle key generator': {target: 'duplicate'}}},
+        duplicate: {on: {'toggle key generator': {target: 'random'}}},
       },
     },
     'copying patches': {
