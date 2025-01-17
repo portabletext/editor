@@ -74,6 +74,7 @@ export type EditorEvent =
       | 'style.toggle'
       | 'patches'
       | 'update behaviors'
+      | 'update key generator'
       | 'update readOnly'
       | 'update value'
     >
