@@ -124,7 +124,7 @@ const editorMachine = setup({
   type: 'parallel',
   states: {
     'patches preview': {
-      initial: 'shown',
+      initial: 'hidden',
       states: {
         hidden: {on: {'toggle patches preview': {target: 'shown'}}},
         shown: {on: {'toggle patches preview': {target: 'hidden'}}},
