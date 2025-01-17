@@ -106,9 +106,8 @@ So far we've only seen examples that invoke a single action, but you can send mu
 While some actions share names with events, it's important to remember that actions don't send events. To send an event with an action, use the `raise` action type or the `raise` helper. This is useful for chaining behaviors and default events.
 
 ```tsx
-
 // Approach A: With the type set to 'raise'
-import { defineBehavior } from '@portabletext/editor'
+import {defineBehavior} from '@portabletext/editor'
 const raisedUppercaseA = defineBehavior({
   on: 'insert.text',
   guard: ({event, context}) => event.text === 'a',
@@ -120,7 +119,7 @@ const raisedUppercaseA = defineBehavior({
 })
 
 // Approach B: With the raise helper
-import { defineBehavior, raise } from '@portabletext/editor'
+import {defineBehavior, raise} from '@portabletext/editor'
 const raisedUppercaseA = defineBehavior({
   on: 'insert.text',
   guard: ({event, context}) => event.text === 'a',
