@@ -66,13 +66,16 @@ export function sliceBlocks({
                   },
                 ],
               }
-              break
+              continue
             }
 
             startBlock = {
               ...block,
               children: [child],
             }
+          }
+
+          if (startChildKey === endChildKey) {
             break
           }
 
@@ -97,6 +100,10 @@ export function sliceBlocks({
       }
 
       startBlock = block
+
+      if (startBlockKey === endBlockKey) {
+        break
+      }
     }
 
     if (block._key === endBlockKey) {
@@ -111,8 +118,9 @@ export function sliceBlocks({
             if (child._key === endChildKey && isPortableTextSpan(child)) {
               endBlock.children.push({
                 ...child,
-                text: child.text.slice(endPoint.offset),
+                text: child.text.slice(0, endPoint.offset),
               })
+
               break
             }
 
@@ -124,7 +132,7 @@ export function sliceBlocks({
           }
         }
 
-        continue
+        break
       }
 
       endBlock = block
@@ -132,7 +140,9 @@ export function sliceBlocks({
       break
     }
 
-    middleBlocks.push(block)
+    if (startBlock) {
+      middleBlocks.push(block)
+    }
   }
 
   return [

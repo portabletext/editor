@@ -2,43 +2,62 @@ import type {PortableTextBlock, PortableTextTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
 import {sliceBlocks} from './util.slice-blocks'
 
-const textBlock1: PortableTextTextBlock = {
+const b1: PortableTextTextBlock = {
   _type: 'block',
   _key: 'b1',
   children: [
     {
       _type: 'span',
-      _key: 's1',
+      _key: 'b1c1',
       text: 'foo',
-      marks: ['strong'],
     },
     {
       _type: 'span',
-      _key: 's2',
+      _key: 'b1c2',
       text: 'bar',
     },
   ],
 }
-const textBlock2: PortableTextTextBlock = {
+const b2: PortableTextBlock = {
+  _type: 'image',
+  _key: 'b2',
+  src: 'https://example.com/image.jpg',
+  alt: 'Example',
+}
+const b3: PortableTextTextBlock = {
   _type: 'block',
   _key: 'b3',
   children: [
     {
       _type: 'span',
-      _key: 's3',
+      _key: 'b3c1',
       text: 'baz',
     },
   ],
 }
+const b4: PortableTextTextBlock = {
+  _type: 'block',
+  _key: 'b4',
+  children: [
+    {
+      _type: 'span',
+      _key: 'b4c1',
+      text: 'fizz',
+    },
+    {
+      _type: 'stock-ticker',
+      _key: 'b4c2',
+      symbol: 'AAPL',
+    },
+    {
+      _type: 'span',
+      _key: 'b4c3',
+      text: 'buzz',
+    },
+  ],
+}
 
-const blocks: Array<PortableTextBlock> = [
-  textBlock1,
-  {
-    _type: 'image',
-    _key: 'b2',
-  },
-  textBlock2,
-]
+const blocks: Array<PortableTextBlock> = [b1, b2, b3, b4]
 
 describe(sliceBlocks.name, () => {
   test('sensible defaults', () => {
@@ -52,19 +71,19 @@ describe(sliceBlocks.name, () => {
         blocks,
         selection: {
           anchor: {
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            path: [{_key: b1._key}, 'children', {_key: b1.children[0]._key}],
             offset: 0,
           },
           focus: {
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            path: [{_key: b1._key}, 'children', {_key: b1.children[0]._key}],
             offset: 3,
           },
         },
       }),
     ).toEqual([
       {
-        ...textBlock1,
-        children: [textBlock1.children[0]],
+        ...b1,
+        children: [b1.children[0]],
       },
     ])
   })
@@ -75,26 +94,44 @@ describe(sliceBlocks.name, () => {
         blocks,
         selection: {
           anchor: {
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            path: [{_key: b1._key}, 'children', {_key: b1.children[0]._key}],
             offset: 1,
           },
           focus: {
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            path: [{_key: b1._key}, 'children', {_key: b1.children[0]._key}],
             offset: 2,
           },
         },
       }),
     ).toEqual([
       {
-        ...textBlock1,
+        ...b1,
         children: [
           {
-            ...textBlock1.children[0],
+            ...b1.children[0],
             text: 'o',
           },
         ],
       },
     ])
+  })
+
+  test('starting and ending selection on a block object', () => {
+    expect(
+      sliceBlocks({
+        blocks,
+        selection: {
+          anchor: {
+            path: [{_key: b2._key}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: b2._key}],
+            offset: 0,
+          },
+        },
+      }),
+    ).toEqual([b2])
   })
 
   test('ending selection on a block object', () => {
@@ -103,27 +140,46 @@ describe(sliceBlocks.name, () => {
         blocks,
         selection: {
           anchor: {
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            path: [{_key: b1._key}, 'children', {_key: b1.children[0]._key}],
             offset: 3,
           },
           focus: {
-            path: [{_key: 'b2'}],
+            path: [{_key: b2._key}],
             offset: 0,
           },
         },
       }),
     ).toEqual([
       {
-        ...textBlock1,
+        ...b1,
         children: [
           {
-            ...textBlock1.children[0],
+            ...b1.children[0],
             text: '',
           },
+          ...b1.children.slice(1),
         ],
       },
       blocks[1],
     ])
+  })
+
+  test('slicing across block object', () => {
+    expect(
+      sliceBlocks({
+        blocks,
+        selection: {
+          anchor: {
+            path: [{_key: b1._key}, 'children', {_key: b1.children[0]._key}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: b3._key}, 'children', {_key: b3.children[0]._key}],
+            offset: 3,
+          },
+        },
+      }),
+    ).toEqual([b1, b2, b3])
   })
 
   test('starting and ending mid-span', () => {
@@ -132,29 +188,67 @@ describe(sliceBlocks.name, () => {
         blocks,
         selection: {
           anchor: {
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            path: [{_key: b3._key}, 'children', {_key: b3.children[0]._key}],
             offset: 2,
           },
-          focus: {path: [{_key: 'b3'}, 'children', {_key: 's3'}], offset: 1},
+          focus: {
+            path: [{_key: b4._key}, 'children', {_key: b4.children[0]._key}],
+            offset: 1,
+          },
         },
       }),
     ).toEqual([
       {
-        ...textBlock1,
+        ...b3,
         children: [
           {
-            ...textBlock1.children[0],
-            text: 'o',
+            ...b3.children[0],
+            text: 'z',
           },
         ],
       },
-      blocks[1],
       {
-        ...textBlock2,
+        ...b4,
         children: [
           {
-            ...textBlock2.children[0],
-            text: 'az',
+            ...b4.children[0],
+            text: 'f',
+          },
+        ],
+      },
+    ])
+  })
+
+  test('starting mid-span and ending end-span', () => {
+    expect(
+      sliceBlocks({
+        blocks,
+        selection: {
+          anchor: {
+            path: [{_key: b3._key}, 'children', {_key: b3.children[0]._key}],
+            offset: 2,
+          },
+          focus: {
+            path: [{_key: b4._key}, 'children', {_key: b4.children[0]._key}],
+            offset: 4,
+          },
+        },
+      }),
+    ).toEqual([
+      {
+        ...b3,
+        children: [
+          {
+            ...b3.children[0],
+            text: 'z',
+          },
+        ],
+      },
+      {
+        ...b4,
+        children: [
+          {
+            ...b4.children[0],
           },
         ],
       },
