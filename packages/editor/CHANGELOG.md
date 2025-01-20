@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.23.0](https://github.com/portabletext/editor/compare/editor-v1.22.0...editor-v1.23.0) (2025-01-20)
+
+
+### Features
+
+* allow updating `keyGenerator` using event ([b3b31dc](https://github.com/portabletext/editor/commit/b3b31dcd62549bb3a015f973dd399d93aae39236))
+
+
+### Bug Fixes
+
+* **deps:** update react compiler dependencies 🤖 ✨ ([#711](https://github.com/portabletext/editor/issues/711)) ([dc88d46](https://github.com/portabletext/editor/commit/dc88d4696bee390d1eac18296b251e3b0600a2bb))
+* **utils:** improve `sliceBlocks` ([17e4eaa](https://github.com/portabletext/editor/commit/17e4eaac7c91f063bd84cfc9fe6177b1ba6be4ba))
+
 ## [1.22.0](https://github.com/portabletext/editor/compare/editor-v1.21.6...editor-v1.22.0) (2025-01-17)
 
 
