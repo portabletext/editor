@@ -12,7 +12,7 @@ export default defineWorkspace([
   {
     plugins: [],
     test: {
-      name: 'chromium',
+      name: 'browser (chromium)',
       environment: 'node',
     },
   },
