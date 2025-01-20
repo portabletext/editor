@@ -10,49 +10,23 @@ export default defineWorkspace([
       }),
     ],
     test: {
-      name: 'chromium',
+      name: 'browser',
       include: ['gherkin-tests/**/*.test.ts', 'gherkin-tests/**/*.test.tsx'],
       browser: {
         enabled: true,
         headless: true,
         provider: 'playwright',
-        name: 'chromium',
-        screenshotFailures: false,
-      },
-    },
-  },
-  {
-    plugins: [
-      react({
-        babel: {plugins: [['babel-plugin-react-compiler', {target: '18'}]]},
-      }),
-    ],
-    test: {
-      name: 'firefox',
-      include: ['gherkin-tests/**/*.test.ts', 'gherkin-tests/**/*.test.tsx'],
-      browser: {
-        enabled: true,
-        headless: true,
-        provider: 'playwright',
-        name: 'firefox',
-        screenshotFailures: false,
-      },
-    },
-  },
-  {
-    plugins: [
-      react({
-        babel: {plugins: [['babel-plugin-react-compiler', {target: '18'}]]},
-      }),
-    ],
-    test: {
-      name: 'webkit',
-      include: ['gherkin-tests/**/*.test.ts', 'gherkin-tests/**/*.test.tsx'],
-      browser: {
-        enabled: true,
-        headless: true,
-        provider: 'playwright',
-        name: 'webkit',
+        instances: [
+          {
+            browser: 'chromium',
+          },
+          {
+            browser: 'firefox',
+          },
+          {
+            browser: 'webkit',
+          },
+        ],
         screenshotFailures: false,
       },
     },
