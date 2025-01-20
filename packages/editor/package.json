@@ -91,7 +91,7 @@
     "react-compiler-runtime": "19.0.0-beta-decd7b8-20250118",
     "slate": "0.112.0",
     "slate-dom": "^0.111.0",
-    "slate-react": "0.112.0",
+    "slate-react": "0.112.1",
     "use-effect-event": "^1.0.2",
     "xstate": "^5.19.2"
   },
