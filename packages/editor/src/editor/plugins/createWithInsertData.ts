@@ -1,20 +1,17 @@
-import {htmlToBlocks} from '@portabletext/block-tools'
-import type {PortableTextBlock, PortableTextChild} from '@sanity/types'
+import type {PortableTextBlock} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {Editor, Range, Transforms, type Descendant, type Node} from 'slate'
 import {ReactEditor} from 'slate-react'
+import {converters} from '../../converters/converters'
 import {debugWithName} from '../../internal-utils/debug'
 import {validateValue} from '../../internal-utils/validateValue'
-import {
-  fromSlateValue,
-  isEqualToEmptyEditor,
-  toSlateValue,
-} from '../../internal-utils/values'
+import {isEqualToEmptyEditor, toSlateValue} from '../../internal-utils/values'
 import type {
   PortableTextMemberSchemaTypes,
   PortableTextSlateEditor,
 } from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
+import {createEditorSnapshot} from '../editor-snapshot'
 
 const debug = debugWithName('plugin:withInsertData')
 
@@ -29,34 +26,7 @@ export function createWithInsertData(
   return function withInsertData(
     editor: PortableTextSlateEditor,
   ): PortableTextSlateEditor {
-    const blockTypeName = schemaTypes.block.name
     const spanTypeName = schemaTypes.span.name
-    const whitespaceOnPasteMode =
-      schemaTypes.block.options.unstable_whitespaceOnPasteMode
-
-    const toPlainText = (blocks: PortableTextBlock[]) => {
-      return blocks
-        .map((block) => {
-          if (editor.isTextBlock(block)) {
-            return block.children
-              .map((child: PortableTextChild) => {
-                if (child._type === spanTypeName) {
-                  return child.text
-                }
-                return `[${
-                  schemaTypes.inlineObjects.find((t) => t.name === child._type)
-                    ?.title || 'Object'
-                }]`
-              })
-              .join('')
-          }
-          return `[${
-            schemaTypes.blockObjects.find((t) => t.name === block._type)
-              ?.title || 'Object'
-          }]`
-        })
-        .join('\n\n')
-    }
 
     editor.setFragmentData = (data: DataTransfer, originEvent) => {
       const {selection} = editor
@@ -64,6 +34,12 @@ export function createWithInsertData(
       if (!selection) {
         return
       }
+
+      const snapshot = createEditorSnapshot({
+        editor,
+        keyGenerator: editorActor.getSnapshot().context.keyGenerator,
+        schema: editorActor.getSnapshot().context.schema,
+      })
 
       const [start, end] = Range.edges(selection)
       const startVoid = Editor.void(editor, {at: start.path})
@@ -117,63 +93,127 @@ export function createWithInsertData(
       contents.ownerDocument.body.appendChild(div)
       const asHTML = div.innerHTML
       contents.ownerDocument.body.removeChild(div)
-      const fragment = editor.getFragment()
-      const portableText = fromSlateValue(fragment, blockTypeName)
 
-      const asJSON = JSON.stringify(portableText)
-      const asPlainText = toPlainText(portableText)
       data.clearData()
-      data.setData('text/plain', asPlainText)
-      data.setData('text/html', asHTML)
-      data.setData('application/json', asJSON)
-      data.setData('application/x-portable-text', asJSON)
-      debug('text', asPlainText)
-      data.setData(
-        'application/x-portable-text-event-origin',
-        originEvent || 'external',
-      )
-      debug('Set fragment data', asJSON, asHTML)
+
+      const serializedJsonEvent = converters['application/json'].serialize({
+        context: snapshot.context,
+        event: {
+          type: 'serialize',
+          originEvent: originEvent ?? 'unknown',
+        },
+      })
+      if (serializedJsonEvent.type === 'serialization.success') {
+        data.setData(serializedJsonEvent.mimeType, serializedJsonEvent.data)
+      }
+
+      const serializedPortableTextEvent = converters[
+        'application/x-portable-text'
+      ].serialize({
+        context: snapshot.context,
+        event: {
+          type: 'serialize',
+          originEvent: originEvent ?? 'unknown',
+        },
+      })
+      if (serializedPortableTextEvent.type === 'serialization.success') {
+        data.setData(
+          serializedPortableTextEvent.mimeType,
+          serializedPortableTextEvent.data,
+        )
+        data.setData(
+          'application/x-portable-text-event-origin',
+          originEvent ?? 'external',
+        )
+      }
+
+      const serializedTextPlainEvent = converters['text/plain'].serialize({
+        context: snapshot.context,
+        event: {
+          type: 'serialize',
+          originEvent: originEvent ?? 'unknown',
+        },
+      })
+      if (serializedTextPlainEvent.type === 'serialization.success') {
+        data.setData(
+          serializedTextPlainEvent.mimeType,
+          serializedTextPlainEvent.data,
+        )
+      }
+
+      data.setData(converters['text/html'].mimeType, asHTML)
     }
 
     editor.insertPortableTextData = (data: DataTransfer): boolean => {
       if (!editor.selection) {
         return false
       }
-      const pText = data.getData('application/x-portable-text')
-      const origin = data.getData('application/x-portable-text-event-origin')
-      debug(`Inserting portable text from ${origin} event`, pText)
-      if (pText) {
-        const parsed = JSON.parse(pText) as PortableTextBlock[]
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const slateValue = _regenerateKeys(
-            editor,
-            toSlateValue(parsed, {schemaTypes}),
-            editorActor.getSnapshot().context.keyGenerator,
-            spanTypeName,
-            schemaTypes,
-          )
-          // Validate the result
-          const validation = validateValue(
-            parsed,
-            schemaTypes,
-            editorActor.getSnapshot().context.keyGenerator,
-          )
-          // Bail out if it's not valid
-          if (!validation.valid && !validation.resolution?.autoResolve) {
-            const errorDescription = `${validation.resolution?.description}`
-            editorActor.send({
-              type: 'error',
-              name: 'pasteError',
-              description: errorDescription,
-              data: validation,
-            })
-            debug('Invalid insert result', validation)
-            return false
-          }
-          _insertFragment(editor, slateValue, schemaTypes)
-          return true
-        }
+
+      const snapshot = createEditorSnapshot({
+        editor,
+        keyGenerator: editorActor.getSnapshot().context.keyGenerator,
+        schema: editorActor.getSnapshot().context.schema,
+      })
+
+      const serializedPortableText = data.getData(
+        converters['application/x-portable-text'].mimeType,
+      )
+
+      if (!serializedPortableText) {
+        return false
       }
+
+      const deserializedPortableTextEvent = converters[
+        'application/x-portable-text'
+      ].deserialize({
+        context: snapshot.context,
+        event: {
+          type: 'deserialize',
+          data: serializedPortableText,
+        },
+      })
+
+      const origin = data.getData('application/x-portable-text-event-origin')
+
+      debug(
+        `Inserting portable text from ${origin} event`,
+        deserializedPortableTextEvent,
+      )
+
+      if (deserializedPortableTextEvent.type === 'deserialization.success') {
+        const slateValue = _regenerateKeys(
+          editor,
+          toSlateValue(deserializedPortableTextEvent.data, {schemaTypes}),
+          editorActor.getSnapshot().context.keyGenerator,
+          spanTypeName,
+          schemaTypes,
+        )
+
+        // Validate the result
+        const validation = validateValue(
+          deserializedPortableTextEvent.data,
+          schemaTypes,
+          editorActor.getSnapshot().context.keyGenerator,
+        )
+
+        // Bail out if it's not valid
+        if (!validation.valid && !validation.resolution?.autoResolve) {
+          const errorDescription = `${validation.resolution?.description}`
+          editorActor.send({
+            type: 'error',
+            name: 'pasteError',
+            description: errorDescription,
+            data: validation,
+          })
+          debug('Invalid insert result', validation)
+          return false
+        }
+
+        _insertFragment(editor, slateValue, schemaTypes)
+
+        return true
+      }
+
       return false
     }
 
@@ -182,6 +222,11 @@ export function createWithInsertData(
         debug('No selection, not inserting')
         return false
       }
+      const snapshot = createEditorSnapshot({
+        editor,
+        keyGenerator: editorActor.getSnapshot().context.keyGenerator,
+        schema: editorActor.getSnapshot().context.schema,
+      })
       const html = data.getData('text/html')
       const text = data.getData('text/plain')
 
@@ -192,33 +237,44 @@ export function createWithInsertData(
         let insertedType: string | undefined
 
         if (html) {
-          portableText = htmlToBlocks(html, schemaTypes.portableText, {
-            unstable_whitespaceOnPasteMode: whitespaceOnPasteMode,
-            keyGenerator: editorActor.getSnapshot().context.keyGenerator,
-          }) as PortableTextBlock[]
+          const deserializedHtmlEvent = converters['text/html'].deserialize({
+            context: snapshot.context,
+            event: {
+              type: 'deserialize',
+              data: html,
+            },
+          })
+
+          portableText =
+            deserializedHtmlEvent.type === 'deserialization.success'
+              ? deserializedHtmlEvent.data
+              : []
+
           fragment = toSlateValue(portableText, {schemaTypes})
+
           insertedType = 'HTML'
 
           if (portableText.length === 0) {
             return false
           }
         } else {
-          // plain text
-          const blocks = escapeHtml(text)
-            .split(/\n{2,}/)
-            .map((line) =>
-              line
-                ? `<p>${line.replace(/(?:\r\n|\r|\n)/g, '<br/>')}</p>`
-                : '<p></p>',
-            )
-            .join('')
-          const textToHtml = `<html><body>${blocks}</body></html>`
-          portableText = htmlToBlocks(textToHtml, schemaTypes.portableText, {
-            keyGenerator: editorActor.getSnapshot().context.keyGenerator,
-          }) as PortableTextBlock[]
+          const deserializedTextEvent = converters['text/plain'].deserialize({
+            context: snapshot.context,
+            event: {
+              type: 'deserialize',
+              data: text,
+            },
+          })
+
+          portableText =
+            deserializedTextEvent.type === 'deserialization.success'
+              ? deserializedTextEvent.data
+              : []
+
           fragment = toSlateValue(portableText, {
             schemaTypes,
           })
+
           insertedType = 'text'
         }
 
@@ -257,31 +313,42 @@ export function createWithInsertData(
     }
 
     editor.insertFragmentData = (data: DataTransfer): boolean => {
-      const fragment = data.getData('application/x-portable-text')
-      if (fragment) {
-        const parsed = JSON.parse(fragment)
-        editor.insertFragment(parsed)
+      const snapshot = createEditorSnapshot({
+        editor,
+        keyGenerator: editorActor.getSnapshot().context.keyGenerator,
+        schema: editorActor.getSnapshot().context.schema,
+      })
+
+      const serializedPortableText = data.getData(
+        converters['application/x-portable-text'].mimeType,
+      )
+
+      if (!serializedPortableText) {
+        return false
+      }
+
+      const deserializationEvent = converters[
+        'application/x-portable-text'
+      ].deserialize({
+        context: snapshot.context,
+        event: {
+          type: 'deserialize',
+          data: serializedPortableText,
+        },
+      })
+
+      if (deserializationEvent.type === 'deserialization.success') {
+        editor.insertFragment(
+          toSlateValue(deserializationEvent.data, {schemaTypes}),
+        )
         return true
       }
+
       return false
     }
 
     return editor
   }
-}
-
-const entityMap: Record<string, string> = {
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-  "'": '&#39;',
-  '/': '&#x2F;',
-  '`': '&#x60;',
-  '=': '&#x3D;',
-}
-function escapeHtml(str: string) {
-  return String(str).replace(/[&<>"'`=/]/g, (s: string) => entityMap[s])
 }
 
 /**
