@@ -25,77 +25,13 @@ export function createWithInsertData(
   return function withInsertData(
     editor: PortableTextSlateEditor,
   ): PortableTextSlateEditor {
-    editor.setFragmentData = (data: DataTransfer, originEvent) => {
-      const snapshot = createEditorSnapshot({
-        editor,
-        keyGenerator: editorActor.getSnapshot().context.keyGenerator,
-        schema: editorActor.getSnapshot().context.schema,
-      })
-
-      data.clearData()
-
-      const serializedJsonEvent = converters['application/json'].serialize({
-        context: snapshot.context,
-        event: {
-          type: 'serialize',
-          originEvent: originEvent ?? 'unknown',
-        },
-      })
-      if (serializedJsonEvent.type === 'serialization.success') {
-        data.setData(serializedJsonEvent.mimeType, serializedJsonEvent.data)
-      }
-
-      const serializedPortableTextEvent = converters[
-        'application/x-portable-text'
-      ].serialize({
-        context: snapshot.context,
-        event: {
-          type: 'serialize',
-          originEvent: originEvent ?? 'unknown',
-        },
-      })
-      if (serializedPortableTextEvent.type === 'serialization.success') {
-        data.setData(
-          serializedPortableTextEvent.mimeType,
-          serializedPortableTextEvent.data,
-        )
-      }
-
-      const serializedTextHtmlEvent = converters['text/html'].serialize({
-        context: snapshot.context,
-        event: {
-          type: 'serialize',
-          originEvent: originEvent ?? 'unknown',
-        },
-      })
-      if (serializedTextHtmlEvent.type === 'serialization.success') {
-        data.setData(
-          serializedTextHtmlEvent.mimeType,
-          serializedTextHtmlEvent.data,
-        )
-      }
-
-      const serializedTextPlainEvent = converters['text/plain'].serialize({
-        context: snapshot.context,
-        event: {
-          type: 'serialize',
-          originEvent: originEvent ?? 'unknown',
-        },
-      })
-      if (serializedTextPlainEvent.type === 'serialization.success') {
-        data.setData(
-          serializedTextPlainEvent.mimeType,
-          serializedTextPlainEvent.data,
-        )
-      }
-    }
-
     editor.insertPortableTextData = (data: DataTransfer): boolean => {
       if (!editor.selection) {
         return false
       }
 
       const snapshot = createEditorSnapshot({
+        converters: [...editorActor.getSnapshot().context.converters],
         editor,
         keyGenerator: editorActor.getSnapshot().context.keyGenerator,
         schema: editorActor.getSnapshot().context.schema,
@@ -158,6 +94,7 @@ export function createWithInsertData(
         return false
       }
       const snapshot = createEditorSnapshot({
+        converters: [...editorActor.getSnapshot().context.converters],
         editor,
         keyGenerator: editorActor.getSnapshot().context.keyGenerator,
         schema: editorActor.getSnapshot().context.schema,

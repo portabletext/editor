@@ -1,9 +1,20 @@
 import type {Converter} from './converter'
-import {converterPortableText} from './converter.portable-text'
 
 export const converterJson: Converter<'application/json'> = {
   serialize: ({context, event}) => {
-    const serializationEvent = converterPortableText.serialize({
+    const portableTextConverter = context.converters.find(
+      (converter) => converter.mimeType === 'application/x-portable-text',
+    )
+
+    if (!portableTextConverter) {
+      return {
+        type: 'serialization.failure',
+        mimeType: 'application/json',
+        originEvent: event.originEvent,
+      }
+    }
+
+    const serializationEvent = portableTextConverter.serialize({
       context,
       event,
     })
@@ -11,6 +22,7 @@ export const converterJson: Converter<'application/json'> = {
     return {
       ...serializationEvent,
       mimeType: 'application/json',
+      originEvent: event.originEvent,
     }
   },
   deserialize: () => {

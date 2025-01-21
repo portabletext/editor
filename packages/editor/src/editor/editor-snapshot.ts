@@ -1,4 +1,5 @@
 import type {PortableTextBlock} from '@sanity/types'
+import type {Converter} from '../converters/converter'
 import {toPortableTextRange} from '../internal-utils/ranges'
 import {fromSlateValue} from '../internal-utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
@@ -11,6 +12,7 @@ import {getActiveDecorators} from './get-active-decorators'
  */
 export type EditorContext = {
   activeDecorators: Array<string>
+  converters: Array<Converter>
   keyGenerator: () => string
   schema: EditorSchema
   selection: EditorSelection
@@ -25,10 +27,12 @@ export type EditorSnapshot = {
 }
 
 export function createEditorSnapshot({
+  converters,
   editor,
   keyGenerator,
   schema,
 }: {
+  converters: Array<Converter>
   editor: PortableTextSlateEditor
   keyGenerator: () => string
   schema: EditorSchema
@@ -45,6 +49,7 @@ export function createEditorSnapshot({
       schema,
       slateEditorInstance: editor,
     }),
+    converters,
     keyGenerator,
     schema,
     selection,

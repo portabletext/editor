@@ -8,6 +8,7 @@ import {
 import type {EditorContext} from '../editor/editor-snapshot'
 import type {EditorSelection} from '../utils'
 import {converterTextPlain} from './converter.text-plain'
+import {coreConverters} from './converters'
 
 const b1: PortableTextTextBlock = {
   _type: 'block',
@@ -72,6 +73,7 @@ function createContext({
   selection: EditorSelection
 }): EditorContext {
   return {
+    converters: coreConverters,
     activeDecorators: [],
     keyGenerator: () => '',
     schema: compileSchemaDefinition(schema),

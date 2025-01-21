@@ -8,6 +8,7 @@ import {
 import {createTestKeyGenerator} from '../internal-utils/test-key-generator'
 import type {EditorSelection} from '../utils'
 import {converterTextHtml} from './converter.text-html'
+import {coreConverters} from './converters'
 
 const decoratedParagraph: PortableTextTextBlock = {
   _key: 'k0',
@@ -76,6 +77,7 @@ const paragraphWithInlineBlock: PortableTextTextBlock = {
 
 function createContext(schema: SchemaDefinition, selection: EditorSelection) {
   return {
+    converters: coreConverters,
     activeDecorators: [],
     keyGenerator: createTestKeyGenerator(),
     schema: compileSchemaDefinition(schema),
@@ -174,6 +176,7 @@ describe(converterTextHtml.serialize.name, () => {
     expect(
       converterTextHtml.serialize({
         context: {
+          converters: coreConverters,
           activeDecorators: [],
           keyGenerator: createTestKeyGenerator(),
           schema: compileSchemaDefinition(defineSchema({})),

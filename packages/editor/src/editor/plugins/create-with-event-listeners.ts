@@ -149,6 +149,7 @@ export function createWithEventListeners(
       insertSoftBreak,
       insertText,
       select,
+      setFragmentData,
     } = editor
 
     editor.deleteBackward = (unit) => {
@@ -264,6 +265,26 @@ export function createWithEventListeners(
         defaultActionCallback: () => {
           select(location)
         },
+      })
+      return
+    }
+
+    editor.setFragmentData = (dataTransfer, originEvent) => {
+      if (isApplyingBehaviorActions(editor)) {
+        setFragmentData(dataTransfer)
+        return
+      }
+
+      dataTransfer.clearData()
+
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'serialize',
+          dataTransfer,
+          originEvent: originEvent ?? 'unknown',
+        },
+        editor,
       })
       return
     }

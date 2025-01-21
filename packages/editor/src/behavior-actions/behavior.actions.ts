@@ -260,6 +260,12 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
 
     Transforms.select(action.editor, nextBlockPath)
   },
+  'serialization.failure': ({action}) => {
+    console.error(`Serialization of ${action.mimeType} failed`)
+  },
+  'serialization.success': ({action}) => {
+    action.dataTransfer.setData(action.mimeType, action.data)
+  },
   'style.toggle': toggleStyleActionImplementation,
   'style.add': addStyleActionImplementation,
   'style.remove': removeStyleActionImplementation,
@@ -529,6 +535,20 @@ function performDefaultAction({
     }
     case 'select': {
       behaviorActionImplementations.select({
+        context,
+        action,
+      })
+      break
+    }
+    case 'serialization.failure': {
+      behaviorActionImplementations['serialization.failure']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'serialization.success': {
+      behaviorActionImplementations['serialization.success']({
         context,
         action,
       })

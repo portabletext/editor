@@ -6,9 +6,11 @@ import {
 } from '../editor/define-schema'
 import {createTestKeyGenerator} from '../internal-utils/test-key-generator'
 import {converterPortableText} from './converter.portable-text'
+import {coreConverters} from './converters'
 
 function createContext(schema: SchemaDefinition) {
   return {
+    converters: coreConverters,
     activeDecorators: [],
     keyGenerator: createTestKeyGenerator(),
     schema: compileSchemaDefinition(schema),

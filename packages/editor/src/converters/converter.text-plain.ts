@@ -5,11 +5,12 @@ import type {Converter} from './converter'
 
 export const converterTextPlain: Converter<'text/plain'> = {
   mimeType: 'text/plain',
-  serialize: ({context}) => {
+  serialize: ({context, event}) => {
     if (!context.selection) {
       return {
         type: 'serialization.failure',
         mimeType: 'text/plain',
+        originEvent: event.originEvent,
       }
     }
 
@@ -48,6 +49,7 @@ export const converterTextPlain: Converter<'text/plain'> = {
       type: 'serialization.success',
       data,
       mimeType: 'text/plain',
+      originEvent: event.originEvent,
     }
   },
   deserialize: ({context, event}) => {
