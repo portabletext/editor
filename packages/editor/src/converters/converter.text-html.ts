@@ -1,11 +1,41 @@
 import {htmlToBlocks} from '@portabletext/block-tools'
+import {toHTML} from '@portabletext/to-html'
 import type {PortableTextBlock} from '@sanity/types'
+import {sliceBlocks} from '../utils'
 import type {Converter} from './converter'
 
 export const converterTextHtml: Converter<'text/html'> = {
-  serialize: () => {
+  serialize: ({context}) => {
+    if (!context.selection) {
+      return {
+        type: 'serialization.failure',
+        mimeType: 'text/html',
+      }
+    }
+
+    const blocks = sliceBlocks({
+      blocks: context.value,
+      selection: context.selection,
+    })
+
+    const html = toHTML(blocks, {
+      onMissingComponent: false,
+      components: {
+        unknownType: ({children}) =>
+          children !== undefined ? `${children}` : '',
+      },
+    })
+
+    if (html === '') {
+      return {
+        type: 'serialization.failure',
+        mimeType: 'text/html',
+      }
+    }
+
     return {
-      type: 'serialization.failure',
+      type: 'serialization.success',
+      data: html,
       mimeType: 'text/html',
     }
   },

@@ -432,6 +432,9 @@ importers:
       '@portabletext/patches':
         specifier: workspace:*
         version: link:../patches
+      '@portabletext/to-html':
+        specifier: ^2.0.13
+        version: 2.0.13
       '@xstate/react':
         specifier: ^5.0.2
         version: 5.0.2(@types/react@19.0.2)(react@19.0.0)(xstate@5.19.2)
@@ -1757,6 +1760,10 @@ packages:
     engines: {node: ^14.13.1 || >=16.0.0}
     peerDependencies:
       react: ^17 || ^18 || >=19.0.0-0
+
+  '@portabletext/to-html@2.0.13':
+    resolution: {integrity: sha512-T3zL+2RcPCPGCp7rRrGrNJnGAqkdlpiOZnb/wh4tjDYJevteGY+5hmA0/5idLXzLiPv6vT8Gld852Sc0aFXwUA==}
+    engines: {node: ^14.13.1 || >=16.0.0}
 
   '@portabletext/toolkit@2.0.16':
     resolution: {integrity: sha512-aBvnD8MscoAlEIuZBn0Aksd+oCuoMGFOT3CtHIgRBaac0Vu4YnnMUF45xo/B/T5vmwWcnDXoJEJdn+SKDg1m+A==}
@@ -7805,6 +7812,11 @@ snapshots:
       '@portabletext/toolkit': 2.0.16
       '@portabletext/types': 2.0.13
       react: 19.0.0
+
+  '@portabletext/to-html@2.0.13':
+    dependencies:
+      '@portabletext/toolkit': 2.0.16
+      '@portabletext/types': 2.0.13
 
   '@portabletext/toolkit@2.0.16':
     dependencies:

@@ -1,7 +1,6 @@
 import type {PortableTextBlock} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
-import {Editor, Range, Transforms, type Descendant, type Node} from 'slate'
-import {ReactEditor} from 'slate-react'
+import {Editor, Transforms, type Descendant, type Node} from 'slate'
 import {converters} from '../../converters/converters'
 import {debugWithName} from '../../internal-utils/debug'
 import {validateValue} from '../../internal-utils/validateValue'
@@ -29,70 +28,11 @@ export function createWithInsertData(
     const spanTypeName = schemaTypes.span.name
 
     editor.setFragmentData = (data: DataTransfer, originEvent) => {
-      const {selection} = editor
-
-      if (!selection) {
-        return
-      }
-
       const snapshot = createEditorSnapshot({
         editor,
         keyGenerator: editorActor.getSnapshot().context.keyGenerator,
         schema: editorActor.getSnapshot().context.schema,
       })
-
-      const [start, end] = Range.edges(selection)
-      const startVoid = Editor.void(editor, {at: start.path})
-      const endVoid = Editor.void(editor, {at: end.path})
-
-      if (Range.isCollapsed(selection) && !startVoid) {
-        return
-      }
-
-      // Create a fake selection so that we can add a Base64-encoded copy of the
-      // fragment to the HTML, to decode on future pastes.
-      const domRange = ReactEditor.toDOMRange(editor, selection)
-      let contents = domRange.cloneContents()
-      // COMPAT: If the end node is a void node, we need to move the end of the
-      // range from the void node's spacer span, to the end of the void node's
-      // content, since the spacer is before void's content in the DOM.
-      if (endVoid) {
-        const [voidNode] = endVoid
-        const r = domRange.cloneRange()
-        const domNode = ReactEditor.toDOMNode(editor, voidNode)
-        r.setEndAfter(domNode)
-        contents = r.cloneContents()
-      }
-      // Remove any zero-width space spans from the cloned DOM so that they don't
-      // show up elsewhere when pasted.
-      Array.from(contents.querySelectorAll('[data-slate-zero-width]')).forEach(
-        (zw) => {
-          const isNewline = zw.getAttribute('data-slate-zero-width') === 'n'
-          zw.textContent = isNewline ? '\n' : ''
-        },
-      )
-      // Clean up the clipboard HTML for editor spesific attributes
-      Array.from(contents.querySelectorAll('*')).forEach((elm) => {
-        elm.removeAttribute('contentEditable')
-        elm.removeAttribute('data-slate-inline')
-        elm.removeAttribute('data-slate-leaf')
-        elm.removeAttribute('data-slate-node')
-        elm.removeAttribute('data-slate-spacer')
-        elm.removeAttribute('data-slate-string')
-        elm.removeAttribute('data-slate-zero-width')
-        elm.removeAttribute('draggable')
-        for (const key in elm.attributes) {
-          if (elm.hasAttribute(key)) {
-            elm.removeAttribute(key)
-          }
-        }
-      })
-      const div = contents.ownerDocument.createElement('div')
-      div.appendChild(contents)
-      div.setAttribute('hidden', 'true')
-      contents.ownerDocument.body.appendChild(div)
-      const asHTML = div.innerHTML
-      contents.ownerDocument.body.removeChild(div)
 
       data.clearData()
 
@@ -127,6 +67,20 @@ export function createWithInsertData(
         )
       }
 
+      const serializedTextHtmlEvent = converters['text/html'].serialize({
+        context: snapshot.context,
+        event: {
+          type: 'serialize',
+          originEvent: originEvent ?? 'unknown',
+        },
+      })
+      if (serializedTextHtmlEvent.type === 'serialization.success') {
+        data.setData(
+          serializedTextHtmlEvent.mimeType,
+          serializedTextHtmlEvent.data,
+        )
+      }
+
       const serializedTextPlainEvent = converters['text/plain'].serialize({
         context: snapshot.context,
         event: {
@@ -140,8 +94,6 @@ export function createWithInsertData(
           serializedTextPlainEvent.data,
         )
       }
-
-      data.setData(converters['text/html'].mimeType, asHTML)
     }
 
     editor.insertPortableTextData = (data: DataTransfer): boolean => {
