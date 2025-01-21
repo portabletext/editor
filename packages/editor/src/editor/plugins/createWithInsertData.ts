@@ -59,10 +59,6 @@ export function createWithInsertData(
           serializedPortableTextEvent.mimeType,
           serializedPortableTextEvent.data,
         )
-        data.setData(
-          'application/x-portable-text-event-origin',
-          originEvent ?? 'external',
-        )
       }
 
       const serializedTextHtmlEvent = converters['text/html'].serialize({
@@ -122,13 +118,6 @@ export function createWithInsertData(
           data: serializedPortableText,
         },
       })
-
-      const origin = data.getData('application/x-portable-text-event-origin')
-
-      debug(
-        `Inserting portable text from ${origin} event`,
-        deserializedPortableTextEvent,
-      )
 
       if (deserializedPortableTextEvent.type === 'deserialization.success') {
         const slateValue = toSlateValue(deserializedPortableTextEvent.data, {
