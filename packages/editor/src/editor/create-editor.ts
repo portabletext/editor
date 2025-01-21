@@ -12,6 +12,7 @@ import {
   type Snapshot,
 } from 'xstate'
 import type {Behavior, CustomBehaviorEvent} from '../behaviors/behavior.types'
+import {coreConverters} from '../converters/converters'
 import {compileType} from '../internal-utils/schema'
 import type {PickFromUnion} from '../type-utils'
 import type {EditableAPI} from '../types/editor'
@@ -118,6 +119,7 @@ export function useCreateEditor(config: EditorConfig): Editor {
 function editorConfigToMachineInput(config: EditorConfig) {
   return {
     behaviors: config.behaviors,
+    converters: coreConverters,
     keyGenerator: config.keyGenerator ?? defaultKeyGenerator,
     maxBlocks: config.maxBlocks,
     readOnly: config.readOnly,

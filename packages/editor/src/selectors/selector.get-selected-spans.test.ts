@@ -6,6 +6,7 @@ test(getSelectedSpans.name, () => {
   function snapshot(selection: EditorSelection): EditorSnapshot {
     return {
       context: {
+        converters: [],
         schema: {} as EditorSchema,
         keyGenerator: () => '',
         activeDecorators: [],

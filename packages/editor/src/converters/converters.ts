@@ -9,3 +9,10 @@ export const converters = {
   [converterTextHtml.mimeType]: converterTextHtml,
   [converterTextPlain.mimeType]: converterTextPlain,
 } as const
+
+export const coreConverters = [
+  converterJson,
+  converterPortableText,
+  converterTextHtml,
+  converterTextPlain,
+]

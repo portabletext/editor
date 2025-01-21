@@ -20,6 +20,7 @@ import {
   type NativeBehaviorEvent,
   type SyntheticBehaviorEvent,
 } from '../behaviors/behavior.types'
+import type {Converter} from '../converters/converter'
 import type {OmitFromUnion, PickFromUnion} from '../type-utils'
 import type {
   EditorSelection,
@@ -204,6 +205,7 @@ export const editorMachine = setup({
   types: {
     context: {} as {
       behaviors: Set<Behavior>
+      converters: Set<Converter>
       keyGenerator: () => string
       pendingEvents: Array<PatchEvent | MutationEvent>
       schema: EditorSchema
@@ -216,6 +218,7 @@ export const editorMachine = setup({
     emitted: {} as InternalEditorEmittedEvent,
     input: {} as {
       behaviors?: Array<Behavior>
+      converters?: Array<Converter>
       keyGenerator: () => string
       maxBlocks?: number
       readOnly?: boolean
@@ -285,7 +288,8 @@ export const editorMachine = setup({
         event.behaviorEvent.type === 'copy' ||
         event.behaviorEvent.type === 'key.down' ||
         event.behaviorEvent.type === 'key.up' ||
-        event.behaviorEvent.type === 'paste'
+        event.behaviorEvent.type === 'paste' ||
+        event.behaviorEvent.type === 'serialize'
           ? undefined
           : ({
               ...event.behaviorEvent,
@@ -343,6 +347,7 @@ export const editorMachine = setup({
       }
 
       const editorSnapshot = createEditorSnapshot({
+        converters: [...context.converters],
         editor: event.editor,
         keyGenerator: context.keyGenerator,
         schema: context.schema,
@@ -470,6 +475,7 @@ export const editorMachine = setup({
   id: 'editor',
   context: ({input}) => ({
     behaviors: new Set(input.behaviors ?? coreBehaviors),
+    converters: new Set(input.converters ?? []),
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
     schema: input.schema,

@@ -5,11 +5,12 @@ import {sliceBlocks} from '../utils'
 import type {Converter} from './converter'
 
 export const converterTextHtml: Converter<'text/html'> = {
-  serialize: ({context}) => {
+  serialize: ({context, event}) => {
     if (!context.selection) {
       return {
         type: 'serialization.failure',
         mimeType: 'text/html',
+        originEvent: event.originEvent,
       }
     }
 
@@ -30,6 +31,7 @@ export const converterTextHtml: Converter<'text/html'> = {
       return {
         type: 'serialization.failure',
         mimeType: 'text/html',
+        originEvent: event.originEvent,
       }
     }
 
@@ -37,6 +39,7 @@ export const converterTextHtml: Converter<'text/html'> = {
       type: 'serialization.success',
       data: html,
       mimeType: 'text/html',
+      originEvent: event.originEvent,
     }
   },
   deserialize: ({context, event}) => {

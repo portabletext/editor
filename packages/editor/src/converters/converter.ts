@@ -1,27 +1,25 @@
 import type {PortableTextBlock} from '@sanity/types'
+import type {BehaviorEvent} from '../behaviors'
 import type {EditorContext} from '../editor/editor-snapshot'
+import type {MIMEType} from '../internal-utils/mime-type'
 import type {PickFromUnion} from '../type-utils'
 
-export type Converter<TMIMEType extends MIMEType> = {
+export type Converter<TMIMEType extends MIMEType = MIMEType> = {
   mimeType: TMIMEType
   serialize: Serializer<TMIMEType>
   deserialize: Deserializer<TMIMEType>
 }
 
 export type ConverterEvent<TMIMEType extends MIMEType> =
-  | {
-      type: 'serialize'
-      originEvent: 'drag' | 'copy' | 'cut' | 'unknown'
-    }
-  | {
-      type: 'serialization.success'
-      data: string
-      mimeType: TMIMEType
-    }
-  | {
-      type: 'serialization.failure'
-      mimeType: TMIMEType
-    }
+  | Omit<PickFromUnion<BehaviorEvent, 'type', 'serialize'>, 'dataTransfer'>
+  | Omit<
+      PickFromUnion<BehaviorEvent, 'type', 'serialization.failure'>,
+      'dataTransfer'
+    >
+  | Omit<
+      PickFromUnion<BehaviorEvent, 'type', 'serialization.success'>,
+      'dataTransfer'
+    >
   | {
       type: 'deserialize'
       data: string
@@ -35,8 +33,6 @@ export type ConverterEvent<TMIMEType extends MIMEType> =
       type: 'deserialization.failure'
       mimeType: TMIMEType
     }
-
-export type MIMEType = `${string}/${string}`
 
 export type Serializer<TMIMEType extends MIMEType> = ({
   context,

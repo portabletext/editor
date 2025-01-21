@@ -3,11 +3,12 @@ import {sliceBlocks} from '../utils'
 import type {Converter} from './converter'
 
 export const converterPortableText: Converter<'application/x-portable-text'> = {
-  serialize: ({context}) => {
+  serialize: ({context, event}) => {
     if (!context.selection) {
       return {
         type: 'serialization.failure',
         mimeType: 'application/x-portable-text',
+        originEvent: event.originEvent,
       }
     }
 
@@ -20,6 +21,7 @@ export const converterPortableText: Converter<'application/x-portable-text'> = {
       type: 'serialization.success',
       data: JSON.stringify(blocks),
       mimeType: 'application/x-portable-text',
+      originEvent: event.originEvent,
     }
   },
   deserialize: ({context, event}) => {

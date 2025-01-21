@@ -67,6 +67,7 @@ export function getEditorSnapshot({
 }): EditorSnapshot {
   return {
     context: {
+      converters: [...editorActorSnapshot.context.converters],
       activeDecorators: getActiveDecorators({
         schema: editorActorSnapshot.context.schema,
         slateEditorInstance,
