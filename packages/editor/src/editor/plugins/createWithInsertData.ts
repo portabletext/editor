@@ -25,8 +25,6 @@ export function createWithInsertData(
   return function withInsertData(
     editor: PortableTextSlateEditor,
   ): PortableTextSlateEditor {
-    const spanTypeName = schemaTypes.span.name
-
     editor.setFragmentData = (data: DataTransfer, originEvent) => {
       const snapshot = createEditorSnapshot({
         editor,
@@ -133,13 +131,9 @@ export function createWithInsertData(
       )
 
       if (deserializedPortableTextEvent.type === 'deserialization.success') {
-        const slateValue = _regenerateKeys(
-          editor,
-          toSlateValue(deserializedPortableTextEvent.data, {schemaTypes}),
-          editorActor.getSnapshot().context.keyGenerator,
-          spanTypeName,
+        const slateValue = toSlateValue(deserializedPortableTextEvent.data, {
           schemaTypes,
-        )
+        })
 
         // Validate the result
         const validation = validateValue(
@@ -269,75 +263,6 @@ export function createWithInsertData(
 }
 
 /**
- * Shared helper function to regenerate the keys on a fragment.
- *
- * @internal
- */
-function _regenerateKeys(
-  editor: Pick<PortableTextSlateEditor, 'isTextBlock' | 'isTextSpan'>,
-  fragment: Descendant[],
-  keyGenerator: () => string,
-  spanTypeName: string,
-  editorTypes: Pick<PortableTextMemberSchemaTypes, 'annotations'>,
-): Descendant[] {
-  return fragment.map((node) => {
-    const newNode: Descendant = {...node}
-    // Ensure the copy has new keys
-    if (editor.isTextBlock(newNode)) {
-      const annotations = editorTypes.annotations.map((t) => t.name)
-
-      // Ensure that if there are no annotations, we remove the markDefs
-      if (annotations.length === 0) {
-        const {markDefs, ...NewNodeNoDefs} = newNode
-
-        return {...NewNodeNoDefs, _key: keyGenerator()}
-      }
-
-      // Ensure that all annotations are allowed
-      const hasForbiddenAnnotations = (newNode.markDefs || []).some((def) => {
-        return !annotations.includes(def._type)
-      })
-
-      // if they have forbidden annotations, we remove them and keep the rest
-      if (hasForbiddenAnnotations) {
-        const allowedAnnotations = (newNode.markDefs || []).filter((def) => {
-          return annotations.includes(def._type)
-        })
-
-        return {...newNode, markDefs: allowedAnnotations, _key: keyGenerator()}
-      }
-
-      newNode.markDefs = (newNode.markDefs || []).map((def) => {
-        const oldKey = def._key
-        const newKey = keyGenerator()
-        newNode.children = newNode.children.map((child) =>
-          child._type === spanTypeName && editor.isTextSpan(child)
-            ? {
-                ...child,
-                marks:
-                  child.marks && child.marks.includes(oldKey)
-                    ? [...child.marks]
-                        .filter((mark) => mark !== oldKey)
-                        .concat(newKey)
-                    : child.marks,
-              }
-            : child,
-        )
-        return {...def, _key: newKey}
-      })
-    }
-    const nodeWithNewKeys = {...newNode, _key: keyGenerator()}
-    if (editor.isTextBlock(nodeWithNewKeys)) {
-      nodeWithNewKeys.children = nodeWithNewKeys.children.map((child) => ({
-        ...child,
-        _key: keyGenerator(),
-      }))
-    }
-    return nodeWithNewKeys as Descendant
-  })
-}
-
-/**
  * Shared helper function to insert the final fragment into the editor
  *
  * @internal
@@ -398,12 +323,4 @@ function _insertFragment(
   })
 
   editor.onChange()
-}
-
-/**
- * functions we don't want to export but want to test
- * @internal
- */
-export const exportedForTesting = {
-  _regenerateKeys,
 }
