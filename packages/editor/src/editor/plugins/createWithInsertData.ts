@@ -312,41 +312,6 @@ export function createWithInsertData(
       }
     }
 
-    editor.insertFragmentData = (data: DataTransfer): boolean => {
-      const snapshot = createEditorSnapshot({
-        editor,
-        keyGenerator: editorActor.getSnapshot().context.keyGenerator,
-        schema: editorActor.getSnapshot().context.schema,
-      })
-
-      const serializedPortableText = data.getData(
-        converters['application/x-portable-text'].mimeType,
-      )
-
-      if (!serializedPortableText) {
-        return false
-      }
-
-      const deserializationEvent = converters[
-        'application/x-portable-text'
-      ].deserialize({
-        context: snapshot.context,
-        event: {
-          type: 'deserialize',
-          data: serializedPortableText,
-        },
-      })
-
-      if (deserializationEvent.type === 'deserialization.success') {
-        editor.insertFragment(
-          toSlateValue(deserializationEvent.data, {schemaTypes}),
-        )
-        return true
-      }
-
-      return false
-    }
-
     return editor
   }
 }
