@@ -137,6 +137,14 @@ export function createWithEventListeners(
             })
             break
           }
+          case 'insert.text block': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: event,
+              editor,
+            })
+            break
+          }
           case 'list item.toggle': {
             editorActor.send({
               type: 'behavior event',

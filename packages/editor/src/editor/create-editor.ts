@@ -73,6 +73,7 @@ export type EditorEvent =
       | 'insert.block object'
       | 'insert.inline object'
       | 'insert.span'
+      | 'insert.text block'
       | 'list item.toggle'
       | 'move.block'
       | 'move.block down'

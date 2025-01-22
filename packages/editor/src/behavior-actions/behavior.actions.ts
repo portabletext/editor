@@ -329,13 +329,6 @@ export function performAction({
       })
       break
     }
-    case 'insert.text block': {
-      behaviorActionImplementations['insert.text block']({
-        context,
-        action,
-      })
-      break
-    }
     case 'list item.add': {
       behaviorActionImplementations['list item.add']({
         context,
@@ -527,6 +520,13 @@ function performDefaultAction({
     }
     case 'insert.text': {
       behaviorActionImplementations['insert.text']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'insert.text block': {
+      behaviorActionImplementations['insert.text block']({
         context,
         action,
       })
