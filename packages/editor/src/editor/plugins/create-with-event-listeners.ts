@@ -68,6 +68,18 @@ export function createWithEventListeners(
             })
             break
           }
+          case 'delete.text': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {
+                type: 'delete.text',
+                anchor: event.anchor,
+                focus: event.focus,
+              },
+              editor,
+            })
+            break
+          }
           case 'decorator.toggle': {
             editorActor.send({
               type: 'behavior event',

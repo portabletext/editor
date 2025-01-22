@@ -54,6 +54,11 @@ export type SyntheticBehaviorEvent =
       unit: TextUnit
     }
   | {
+      type: 'delete.text'
+      anchor: BlockOffset
+      focus: BlockOffset
+    }
+  | {
       type: 'focus'
     }
   | {
@@ -223,11 +228,6 @@ export type BehaviorActionIntend =
     }
   | {
       type: 'noop'
-    }
-  | {
-      type: 'delete.text'
-      anchor: BlockOffset
-      focus: BlockOffset
     }
   | {
       type: 'effect'
