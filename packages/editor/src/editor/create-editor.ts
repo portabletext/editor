@@ -183,12 +183,29 @@ function createEditorFromActor(editorActor: EditorActor): Editor {
     send: (event) => {
       editorActor.send(event)
     },
-    on: (event, listener) =>
-      editorActor.on(
-        event,
-        // @ts-expect-error
-        listener,
-      ),
+    on: (event, listener) => {
+      const subscription = editorActor.on(event, (event) => {
+        switch (event.type) {
+          case 'blurred':
+          case 'done loading':
+          case 'editable':
+          case 'error':
+          case 'focused':
+          case 'invalid value':
+          case 'loading':
+          case 'mutation':
+          case 'patch':
+          case 'read only':
+          case 'ready':
+          case 'selection':
+          case 'value changed':
+            listener(event)
+            break
+        }
+      })
+
+      return subscription
+    },
     _internal: {
       editable,
       editorActor,
