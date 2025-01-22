@@ -134,6 +134,24 @@ describe(sliceBlocks.name, () => {
     ).toEqual([b2])
   })
 
+  test('starting selection on a block object', () => {
+    expect(
+      sliceBlocks({
+        blocks,
+        selection: {
+          anchor: {
+            path: [{_key: b2._key}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: b3._key}, 'children', {_key: b3.children[0]._key}],
+            offset: 3,
+          },
+        },
+      }),
+    ).toEqual([b2, b3])
+  })
+
   test('ending selection on a block object', () => {
     expect(
       sliceBlocks({

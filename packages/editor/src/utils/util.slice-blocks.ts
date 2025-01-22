@@ -47,8 +47,20 @@ export function sliceBlocks({
   }
 
   for (const block of blocks) {
+    if (!isPortableTextTextBlock(block)) {
+      if (block._key === startBlockKey && block._key === endBlockKey) {
+        startBlock = block
+        break
+      }
+    }
+
     if (block._key === startBlockKey) {
-      if (isPortableTextTextBlock(block) && startChildKey) {
+      if (!isPortableTextTextBlock(block)) {
+        startBlock = block
+        continue
+      }
+
+      if (startChildKey) {
         for (const child of block.children) {
           if (child._key === startChildKey) {
             if (isPortableTextSpan(child)) {
@@ -107,7 +119,12 @@ export function sliceBlocks({
     }
 
     if (block._key === endBlockKey) {
-      if (isPortableTextTextBlock(block) && endBlockKey) {
+      if (!isPortableTextTextBlock(block)) {
+        endBlock = block
+        break
+      }
+
+      if (endChildKey) {
         endBlock = {
           ...block,
           children: [],
