@@ -2,7 +2,7 @@ import {isPortableTextTextBlock} from '@sanity/types'
 import {isHotkey} from '../internal-utils/is-hotkey'
 import * as selectors from '../selectors'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
-import {defineBehavior} from './behavior.types'
+import {defineBehavior, raise} from './behavior.types'
 
 const arrowDownOnLonelyBlockObject = defineBehavior({
   on: 'key.down',
@@ -66,17 +66,17 @@ const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
   },
   actions: [
     (_, {focusTextBlock, previousBlock}) => [
-      {
+      raise({
         type: 'delete.block',
         blockPath: focusTextBlock.path,
-      },
-      {
+      }),
+      raise({
         type: 'select',
         selection: {
           anchor: {path: previousBlock.path, offset: 0},
           focus: {path: previousBlock.path, offset: 0},
         },
-      },
+      }),
     ],
   ],
 })
@@ -103,17 +103,17 @@ const deletingEmptyTextBlockBeforeBlockObject = defineBehavior({
   },
   actions: [
     (_, {focusTextBlock, nextBlock}) => [
-      {
+      raise({
         type: 'delete.block',
         blockPath: focusTextBlock.path,
-      },
-      {
+      }),
+      raise({
         type: 'select',
         selection: {
           anchor: {path: nextBlock.path, offset: 0},
           focus: {path: nextBlock.path, offset: 0},
         },
-      },
+      }),
     ],
   ],
 })
