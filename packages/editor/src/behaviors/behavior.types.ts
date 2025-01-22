@@ -38,6 +38,14 @@ export type SyntheticBehaviorEvent =
       mimeType: MIMEType
     }
   | {
+      type: 'decorator.add'
+      decorator: string
+    }
+  | {
+      type: 'decorator.remove'
+      decorator: string
+    }
+  | {
       type: 'decorator.toggle'
       decorator: string
     }
@@ -235,14 +243,6 @@ export type BehaviorActionIntend =
         name: string
         value: {[prop: string]: unknown}
       }
-    }
-  | {
-      type: 'decorator.add'
-      decorator: string
-    }
-  | {
-      type: 'decorator.remove'
-      decorator: string
     }
   | {
       type: 'noop'

@@ -315,20 +315,6 @@ export function performAction({
       })
       break
     }
-    case 'decorator.add': {
-      behaviorActionImplementations['decorator.add']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'decorator.remove': {
-      behaviorActionImplementations['decorator.remove']({
-        context,
-        action,
-      })
-      break
-    }
     case 'noop': {
       behaviorActionImplementations.noop({
         context,
@@ -401,6 +387,20 @@ function performDefaultAction({
     }
     case 'data transfer.set': {
       behaviorActionImplementations['data transfer.set']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'decorator.add': {
+      behaviorActionImplementations['decorator.add']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'decorator.remove': {
+      behaviorActionImplementations['decorator.remove']({
         context,
         action,
       })
