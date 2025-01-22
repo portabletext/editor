@@ -336,13 +336,6 @@ export function performAction({
       })
       break
     }
-    case 'insert.span': {
-      behaviorActionImplementations['insert.span']({
-        context,
-        action,
-      })
-      break
-    }
     case 'insert.text block': {
       behaviorActionImplementations['insert.text block']({
         context,
@@ -569,6 +562,13 @@ function performDefaultAction({
     }
     case 'insert.soft break': {
       behaviorActionImplementations['insert.soft break']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'insert.span': {
+      behaviorActionImplementations['insert.span']({
         context,
         action,
       })

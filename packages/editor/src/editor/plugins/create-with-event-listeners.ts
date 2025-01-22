@@ -112,6 +112,19 @@ export function createWithEventListeners(
             })
             break
           }
+          case 'insert.span': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {
+                type: 'insert.span',
+                text: event.text,
+                annotations: event.annotations,
+                decorators: event.decorators,
+              },
+              editor,
+            })
+            break
+          }
           case 'list item.toggle': {
             editorActor.send({
               type: 'behavior event',

@@ -82,6 +82,15 @@ export type SyntheticBehaviorEvent =
       type: 'insert.soft break'
     }
   | {
+      type: 'insert.span'
+      text: string
+      annotations?: Array<{
+        name: string
+        value: {[prop: string]: unknown}
+      }>
+      decorators?: Array<string>
+    }
+  | {
       type: 'insert.text'
       text: string
       options?: TextInsertTextOptions
@@ -183,15 +192,6 @@ export type BehaviorActionIntend =
   | {
       type: 'decorator.remove'
       decorator: string
-    }
-  | {
-      type: 'insert.span'
-      text: string
-      annotations?: Array<{
-        name: string
-        value: {[prop: string]: unknown}
-      }>
-      decorators?: Array<string>
     }
   | {
       type: 'insert.text block'
