@@ -371,20 +371,6 @@ export function performAction({
       })
       break
     }
-    case 'select.previous block': {
-      behaviorActionImplementations['select.previous block']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'select.next block': {
-      behaviorActionImplementations['select.next block']({
-        context,
-        action,
-      })
-      break
-    }
     case 'style.add': {
       behaviorActionImplementations['style.add']({
         context,
@@ -576,6 +562,20 @@ function performDefaultAction({
     }
     case 'select': {
       behaviorActionImplementations.select({
+        context,
+        action,
+      })
+      break
+    }
+    case 'select.previous block': {
+      behaviorActionImplementations['select.previous block']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'select.next block': {
+      behaviorActionImplementations['select.next block']({
         context,
         action,
       })

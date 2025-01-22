@@ -122,6 +122,12 @@ export type SyntheticBehaviorEvent =
       selection: EditorSelection
     }
   | {
+      type: 'select.previous block'
+    }
+  | {
+      type: 'select.next block'
+    }
+  | {
       type: 'style.toggle'
       style: string
     }
@@ -244,12 +250,6 @@ export type BehaviorActionIntend =
   | {
       type: 'effect'
       effect: () => void
-    }
-  | {
-      type: 'select.previous block'
-    }
-  | {
-      type: 'select.next block'
     }
   | {
       type: 'style.add'
