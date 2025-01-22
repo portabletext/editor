@@ -1,5 +1,40 @@
 # Changelog
 
+## [1.24.0](https://github.com/portabletext/editor/compare/editor-v1.23.0...editor-v1.24.0) (2025-01-22)
+
+
+### Features
+
+* **behaviors:** add `data transfer.set` event and action ([be40256](https://github.com/portabletext/editor/commit/be402565a6b69569b46f677bd5b19f54fe1bb2e9))
+* **behaviors:** add `deserialize`/`deserialization.(failure|success)` events ([e7e0327](https://github.com/portabletext/editor/commit/e7e0327383937f6277e90b74043bbd7d484278f1))
+* **behaviors:** add `insert.blocks` event and action ([eb3d40f](https://github.com/portabletext/editor/commit/eb3d40fee67be6d904def56fda7bbc3ec9e94535))
+* **behaviors:** add `serialize`/`serialization.(failure|success)` events ([7381a27](https://github.com/portabletext/editor/commit/7381a27990e281a813b153e9cc5f382d497b2009))
+
+
+### Bug Fixes
+
+* **behaviors:** add `reason` to `(de)serialization.failure` events ([e925306](https://github.com/portabletext/editor/commit/e925306ebb2915337c1fe975371dde8967135e10))
+* **behaviors:** allow `selection` events when read-only ([3fed8d4](https://github.com/portabletext/editor/commit/3fed8d464c7d6c6821e11f5630cd61befab4a43b))
+* **behaviors:** handle `copy/deserialize` events when read-only ([f92006d](https://github.com/portabletext/editor/commit/f92006dfd1955c79541a7c5b482c17a15c7166bf))
+* **converters:** implement `application/json` deserialization ([d32e582](https://github.com/portabletext/editor/commit/d32e582366d967f1c1626756d8b57ed324767d72))
+* **deps:** update dependency @sanity/diff-match-patch to ^3.2.0 ([371ac30](https://github.com/portabletext/editor/commit/371ac30d5ae8d3eece2fa9789a227a34ae35afc6))
+* **deps:** update dependency slate-react to v0.112.1 ([7f34dab](https://github.com/portabletext/editor/commit/7f34dab6a2d914d61632da32c51e2e4da75505f1))
+* **deps:** update sanity monorepo to ^3.71.0 ([8527763](https://github.com/portabletext/editor/commit/85277637914a4f9b00e79346874fbe9b3a35eac8))
+* improve default `application/x-portable-text` deserialization ([fb36703](https://github.com/portabletext/editor/commit/fb3670364bd54611377742def115d223172a988c))
+* improve default `text/html` serialization ([f0c1380](https://github.com/portabletext/editor/commit/f0c138079dc5f94c1b0de721aa39248253648071))
+* remove unused `application/x-portable-text-event-origin` ([d018a88](https://github.com/portabletext/editor/commit/d018a88c76f85871a48ab4b51bac0739b6ca43e8))
+* **serialize:** remove `drag` `originEvent` ([6610f24](https://github.com/portabletext/editor/commit/6610f2466278b83c3744dce8ecb63be421fa6e43))
+* **sliceBlocks:** better inline object handling ([1007296](https://github.com/portabletext/editor/commit/100729683b05be67a81f71a15fc0b86cc96bcd83))
+* **sliceBlocks:** handle starting on a non-text block ([b6e936d](https://github.com/portabletext/editor/commit/b6e936d804adc2eced79f9fa52f67ecffba90d0d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.1
+    * @portabletext/patches bumped to 1.1.2
+
 ## [1.23.0](https://github.com/portabletext/editor/compare/editor-v1.22.0...editor-v1.23.0) (2025-01-20)
 
 
