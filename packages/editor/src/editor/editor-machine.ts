@@ -187,6 +187,7 @@ export type InternalEditorEmittedEvent =
       | 'annotation.remove'
       | 'blur'
       | 'decorator.toggle'
+      | 'delete.block'
       | 'insert.block object'
       | 'insert.inline object'
       | 'list item.toggle'
@@ -578,6 +579,9 @@ export const editorMachine = setup({
               actions: emit(({event}) => ({type: 'custom.*', event})),
             },
             'decorator.*': {
+              actions: emit(({event}) => event),
+            },
+            'delete.*': {
               actions: emit(({event}) => event),
             },
             'focus': {

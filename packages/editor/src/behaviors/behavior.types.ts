@@ -46,6 +46,10 @@ export type SyntheticBehaviorEvent =
       unit: TextUnit
     }
   | {
+      type: 'delete.block'
+      blockPath: [KeyedSegment]
+    }
+  | {
       type: 'delete.forward'
       unit: TextUnit
     }
@@ -219,10 +223,6 @@ export type BehaviorActionIntend =
     }
   | {
       type: 'noop'
-    }
-  | {
-      type: 'delete.block'
-      blockPath: [KeyedSegment]
     }
   | {
       type: 'delete.text'
