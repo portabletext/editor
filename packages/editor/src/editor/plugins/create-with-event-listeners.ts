@@ -193,6 +193,22 @@ export function createWithEventListeners(
             })
             break
           }
+          case 'select.next block': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: event,
+              editor,
+            })
+            break
+          }
+          case 'select.previous block': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: event,
+              editor,
+            })
+            break
+          }
           case 'style.toggle': {
             editorActor.send({
               type: 'behavior event',

@@ -78,6 +78,8 @@ export type EditorEvent =
       | 'move.block down'
       | 'move.block up'
       | 'select'
+      | 'select.next block'
+      | 'select.previous block'
       | 'style.toggle'
       | 'patches'
       | 'text block.set'
