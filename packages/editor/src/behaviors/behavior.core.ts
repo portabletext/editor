@@ -15,6 +15,8 @@ const softReturn = defineBehavior({
  */
 export const coreBehaviors = [
   softReturn,
+  coreDecoratorBehaviors.toggleDecoratorOff,
+  coreDecoratorBehaviors.toggleDecoratorOn,
   coreDecoratorBehaviors.strongShortcut,
   coreDecoratorBehaviors.emShortcut,
   coreDecoratorBehaviors.underlineShortcut,
