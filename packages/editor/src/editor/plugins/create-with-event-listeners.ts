@@ -80,6 +80,22 @@ export function createWithEventListeners(
             })
             break
           }
+          case 'decorator.add': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: event,
+              editor,
+            })
+            break
+          }
+          case 'decorator.remove': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: event,
+              editor,
+            })
+            break
+          }
           case 'decorator.toggle': {
             editorActor.send({
               type: 'behavior event',
