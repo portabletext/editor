@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/portabletext/editor/compare/patches-v1.1.1...patches-v1.1.2) (2025-01-22)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @sanity/diff-match-patch to ^3.2.0 ([371ac30](https://github.com/portabletext/editor/commit/371ac30d5ae8d3eece2fa9789a227a34ae35afc6))
+
 ## [1.1.1](https://github.com/portabletext/editor/compare/patches-v1.1.0...patches-v1.1.1) (2024-12-18)
 
 
