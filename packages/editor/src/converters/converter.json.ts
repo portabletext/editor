@@ -25,9 +25,25 @@ export const converterJson: Converter<'application/json'> = {
       originEvent: event.originEvent,
     }
   },
-  deserialize: () => {
+  deserialize: ({context, event}) => {
+    const portableTextConverter = context.converters.find(
+      (converter) => converter.mimeType === 'application/x-portable-text',
+    )
+
+    if (!portableTextConverter) {
+      return {
+        type: 'deserialization.failure',
+        mimeType: 'application/json',
+      }
+    }
+
+    const deserializationEvent = portableTextConverter.deserialize({
+      context,
+      event,
+    })
+
     return {
-      type: 'deserialization.failure',
+      ...deserializationEvent,
       mimeType: 'application/json',
     }
   },
