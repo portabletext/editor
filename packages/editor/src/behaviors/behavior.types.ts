@@ -1,4 +1,8 @@
-import type {KeyedSegment, PortableTextTextBlock} from '@sanity/types'
+import type {
+  KeyedSegment,
+  PortableTextBlock,
+  PortableTextTextBlock,
+} from '@sanity/types'
 import type {TextUnit} from 'slate'
 import type {TextInsertTextOptions} from 'slate/dist/interfaces/transforms/text'
 import type {ConverterEvent} from '../converters/converter'
@@ -40,6 +44,10 @@ export type SyntheticBehaviorEvent =
     }
   | {
       type: 'focus'
+    }
+  | {
+      type: 'insert.blocks'
+      blocks: Array<PortableTextBlock>
     }
   | {
       type: 'insert.block object'

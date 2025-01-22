@@ -1,34 +1,33 @@
-import type {PortableTextBlock} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {Editor, Transforms} from 'slate'
-import type {EditorSchema} from '../editor/define-schema'
 import {isEqualToEmptyEditor, toSlateValue} from '../internal-utils/values'
-import type {PortableTextSlateEditor} from '../types/editor'
+import type {BehaviorActionImplementation} from './behavior.actions'
 
-export function insertBlocks({
-  blocks,
-  editor,
-  schema,
-}: {
-  blocks: Array<PortableTextBlock>
-  editor: PortableTextSlateEditor
-  schema: EditorSchema
-}) {
-  const fragment = toSlateValue(blocks, {schemaTypes: schema})
+export const insertBlocksActionImplementation: BehaviorActionImplementation<
+  'insert.blocks'
+> = ({context, action}) => {
+  const fragment = toSlateValue(action.blocks, {schemaTypes: context.schema})
 
-  if (!editor.selection) {
+  if (!action.editor.selection) {
     return
   }
   // Ensure that markDefs for any annotations inside this fragment are copied over to the focused text block.
-  const [focusBlock, focusPath] = Editor.node(editor, editor.selection, {
-    depth: 1,
-  })
+  const [focusBlock, focusPath] = Editor.node(
+    action.editor,
+    action.editor.selection,
+    {
+      depth: 1,
+    },
+  )
 
-  if (editor.isTextBlock(focusBlock) && editor.isTextBlock(fragment[0])) {
+  if (
+    action.editor.isTextBlock(focusBlock) &&
+    action.editor.isTextBlock(fragment[0])
+  ) {
     const {markDefs} = focusBlock
     if (!isEqual(markDefs, fragment[0].markDefs)) {
       Transforms.setNodes(
-        editor,
+        action.editor,
         {
           markDefs: uniq([
             ...(fragment[0].markDefs || []),
@@ -40,7 +39,10 @@ export function insertBlocks({
     }
   }
 
-  const isPasteToEmptyEditor = isEqualToEmptyEditor(editor.children, schema)
+  const isPasteToEmptyEditor = isEqualToEmptyEditor(
+    action.editor.children,
+    context.schema,
+  )
 
   if (isPasteToEmptyEditor) {
     // Special case for pasting directly into an empty editor (a placeholder block).
@@ -49,11 +51,11 @@ export function insertBlocks({
     // the placeholder block because of operations that happen
     // inside `editor.insertFragment` (involves an `insert_node` operation).
     // However by splitting the placeholder block first in this situation we are good.
-    Transforms.splitNodes(editor, {at: [0, 0]})
-    editor.insertFragment(fragment)
-    Transforms.removeNodes(editor, {at: [0]})
+    Transforms.splitNodes(action.editor, {at: [0, 0]})
+    action.editor.insertFragment(fragment)
+    Transforms.removeNodes(action.editor, {at: [0]})
   } else {
     // All other inserts
-    editor.insertFragment(fragment)
+    action.editor.insertFragment(fragment)
   }
 }
