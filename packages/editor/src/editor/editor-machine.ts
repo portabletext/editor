@@ -536,6 +536,14 @@ export const editorMachine = setup({
             },
             'read only': {
               on: {
+                'behavior event': {
+                  actions: 'handle behavior event',
+                  guard: ({event}) =>
+                    event.behaviorEvent.type === 'copy' ||
+                    event.behaviorEvent.type === 'serialize' ||
+                    event.behaviorEvent.type === 'serialization.failure' ||
+                    event.behaviorEvent.type === 'serialization.success',
+                },
                 'update readOnly': {
                   guard: ({event}) => !event.readOnly,
                   target: '#editor.edit mode.editable',
