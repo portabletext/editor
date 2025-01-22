@@ -148,6 +148,40 @@ export function createWithEventListeners(
             })
             break
           }
+          case 'move.block': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {
+                type: 'move.block',
+                at: event.at,
+                to: event.to,
+              },
+              editor,
+            })
+            break
+          }
+          case 'move.block down': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {
+                type: 'move.block down',
+                at: event.at,
+              },
+              editor,
+            })
+            break
+          }
+          case 'move.block up': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {
+                type: 'move.block up',
+                at: event.at,
+              },
+              editor,
+            })
+            break
+          }
           case 'select': {
             editorActor.send({
               type: 'behavior event',

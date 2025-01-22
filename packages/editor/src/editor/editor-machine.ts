@@ -194,6 +194,9 @@ export type InternalEditorEmittedEvent =
       | 'insert.span'
       | 'list item.toggle'
       | 'focus'
+      | 'move.block'
+      | 'move.block down'
+      | 'move.block up'
       | 'style.toggle'
     >
   | {
@@ -593,6 +596,9 @@ export const editorMachine = setup({
               actions: emit(({event}) => event),
             },
             'list item.*': {
+              actions: emit(({event}) => event),
+            },
+            'move.*': {
               actions: emit(({event}) => event),
             },
             'select': {

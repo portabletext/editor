@@ -105,6 +105,19 @@ export type SyntheticBehaviorEvent =
       listItem: string
     }
   | {
+      type: 'move.block'
+      at: [KeyedSegment]
+      to: [KeyedSegment]
+    }
+  | {
+      type: 'move.block down'
+      at: [KeyedSegment]
+    }
+  | {
+      type: 'move.block up'
+      at: [KeyedSegment]
+    }
+  | {
       type: 'select'
       selection: EditorSelection
     }
@@ -212,19 +225,6 @@ export type BehaviorActionIntend =
   | {
       type: 'list item.remove'
       listItem: string
-    }
-  | {
-      type: 'move.block'
-      at: [KeyedSegment]
-      to: [KeyedSegment]
-    }
-  | {
-      type: 'move.block down'
-      at: [KeyedSegment]
-    }
-  | {
-      type: 'move.block up'
-      at: [KeyedSegment]
     }
   | {
       type: 'noop'

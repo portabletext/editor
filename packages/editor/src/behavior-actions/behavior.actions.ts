@@ -350,27 +350,6 @@ export function performAction({
       })
       break
     }
-    case 'move.block': {
-      behaviorActionImplementations['move.block']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'move.block down': {
-      behaviorActionImplementations['move.block down']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'move.block up': {
-      behaviorActionImplementations['move.block up']({
-        context,
-        action,
-      })
-      break
-    }
     case 'noop': {
       behaviorActionImplementations.noop({
         context,
@@ -583,6 +562,27 @@ function performDefaultAction({
     }
     case 'list item.toggle': {
       behaviorActionImplementations['list item.toggle']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'move.block': {
+      behaviorActionImplementations['move.block']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'move.block down': {
+      behaviorActionImplementations['move.block down']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'move.block up': {
+      behaviorActionImplementations['move.block up']({
         context,
         action,
       })
