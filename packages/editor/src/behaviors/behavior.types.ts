@@ -7,6 +7,7 @@ import type {TextUnit} from 'slate'
 import type {TextInsertTextOptions} from 'slate/dist/interfaces/transforms/text'
 import type {ConverterEvent} from '../converters/converter'
 import type {EditorContext} from '../editor/editor-snapshot'
+import type {MIMEType} from '../internal-utils/mime-type'
 import type {OmitFromUnion, PickFromUnion} from '../type-utils'
 import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
 
@@ -29,6 +30,12 @@ export type SyntheticBehaviorEvent =
     }
   | {
       type: 'blur'
+    }
+  | {
+      type: 'data transfer.set'
+      data: string
+      dataTransfer: DataTransfer
+      mimeType: MIMEType
     }
   | {
       type: 'decorator.toggle'
