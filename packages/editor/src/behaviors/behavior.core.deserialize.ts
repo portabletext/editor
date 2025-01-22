@@ -23,6 +23,13 @@ export const coreDeserializeBehavior = defineBehavior({
       return {
         type: 'deserialization.failure',
         mimeType: '*/*',
+        reason: deserializeEvents
+          .map((deserializeEvent) =>
+            deserializeEvent.type === 'deserialization.failure'
+              ? deserializeEvent.reason
+              : '',
+          )
+          .join(', '),
       } as const
     }
 

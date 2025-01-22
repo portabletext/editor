@@ -147,7 +147,9 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
     })
   },
   'deserialization.failure': ({action}) => {
-    console.error(`Deserialization of ${action.mimeType} failed`)
+    console.error(
+      `Deserialization of ${action.mimeType} failed with reason ${action.reason}`,
+    )
   },
   'deserialization.success': ({context, action}) => {
     insertBlocksActionImplementation({
@@ -278,7 +280,9 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
     Transforms.select(action.editor, nextBlockPath)
   },
   'serialization.failure': ({action}) => {
-    console.error(`Serialization of ${action.mimeType} failed`)
+    console.error(
+      `Serialization of ${action.mimeType} failed with reason ${action.reason}`,
+    )
   },
   'serialization.success': ({context, action}) => {
     dataTransferSetActionImplementation({

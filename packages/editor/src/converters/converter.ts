@@ -17,6 +17,7 @@ export type ConverterEvent<TMIMEType extends MIMEType = MIMEType> =
   | {
       type: 'serialization.failure'
       mimeType: TMIMEType
+      reason: string
     }
   | {
       type: 'serialization.success'
@@ -31,6 +32,7 @@ export type ConverterEvent<TMIMEType extends MIMEType = MIMEType> =
   | {
       type: 'deserialization.failure'
       mimeType: TMIMEType
+      reason: string
     }
   | {
       type: 'deserialization.success'
