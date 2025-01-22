@@ -29,7 +29,7 @@ import type {PickFromUnion} from '../type-utils'
 import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
 import {insertBlock} from './behavior.action-utils.insert-block'
 import {insertBlockObjectActionImplementation} from './behavior.action.insert-block-object'
-import {insertBlocks} from './behavior.action.insert-blocks'
+import {insertBlocksActionImplementation} from './behavior.action.insert-blocks'
 import {
   insertBreakActionImplementation,
   insertSoftBreakActionImplementation,
@@ -148,12 +148,16 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
     console.error(`Deserialization of ${action.mimeType} failed`)
   },
   'deserialization.success': ({context, action}) => {
-    insertBlocks({
-      blocks: action.data,
-      editor: action.editor,
-      schema: context.schema,
+    insertBlocksActionImplementation({
+      context,
+      action: {
+        type: 'insert.blocks',
+        blocks: action.data,
+        editor: action.editor,
+      },
     })
   },
+  'insert.blocks': insertBlocksActionImplementation,
   'insert.block object': insertBlockObjectActionImplementation,
   'insert.break': insertBreakActionImplementation,
   'insert.inline object': insertInlineObjectActionImplementation,
@@ -511,6 +515,13 @@ function performDefaultAction({
     }
     case 'focus': {
       behaviorActionImplementations.focus({
+        context,
+        action,
+      })
+      break
+    }
+    case 'insert.blocks': {
+      behaviorActionImplementations['insert.blocks']({
         context,
         action,
       })
