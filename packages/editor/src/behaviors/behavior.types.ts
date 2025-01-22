@@ -135,7 +135,7 @@ export type NativeBehaviorEvent =
     }
   | {
       type: 'serialize'
-      originEvent: 'copy' | 'cut' | 'drag' | 'unknown'
+      originEvent: 'copy' | 'cut' | 'unknown'
       dataTransfer: DataTransfer
     }
 

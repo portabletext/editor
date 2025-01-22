@@ -12,7 +12,7 @@ export type Converter<TMIMEType extends MIMEType = MIMEType> = {
 export type ConverterEvent<TMIMEType extends MIMEType = MIMEType> =
   | {
       type: 'serialize'
-      originEvent: 'copy' | 'cut' | 'drag' | 'unknown'
+      originEvent: 'copy' | 'cut' | 'unknown'
     }
   | {
       type: 'serialization.failure'
@@ -23,7 +23,7 @@ export type ConverterEvent<TMIMEType extends MIMEType = MIMEType> =
       type: 'serialization.success'
       data: string
       mimeType: TMIMEType
-      originEvent: 'copy' | 'cut' | 'drag' | 'unknown'
+      originEvent: 'copy' | 'cut' | 'unknown'
     }
   | {
       type: 'deserialize'

@@ -288,6 +288,11 @@ export function createWithEventListeners(
     }
 
     editor.setFragmentData = (dataTransfer, originEvent) => {
+      if (originEvent === 'drag') {
+        setFragmentData(dataTransfer)
+        return
+      }
+
       if (isApplyingBehaviorActions(editor)) {
         setFragmentData(dataTransfer)
         return
