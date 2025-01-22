@@ -190,6 +190,7 @@ export type InternalEditorEmittedEvent =
       | 'delete.block'
       | 'insert.block object'
       | 'insert.inline object'
+      | 'insert.span'
       | 'list item.toggle'
       | 'focus'
       | 'style.toggle'

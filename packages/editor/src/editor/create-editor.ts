@@ -71,6 +71,7 @@ export type EditorEvent =
       | 'focus'
       | 'insert.block object'
       | 'insert.inline object'
+      | 'insert.span'
       | 'list item.toggle'
       | 'select'
       | 'style.toggle'
