@@ -1,5 +1,6 @@
 import {coreBlockObjectBehaviors} from './behavior.core.block-objects'
 import {coreDecoratorBehaviors} from './behavior.core.decorators'
+import {coreDeserializeBehavior} from './behavior.core.deserialize'
 import {coreListBehaviors} from './behavior.core.lists'
 import {coreSerializeBehavior} from './behavior.core.serialize'
 import {defineBehavior} from './behavior.types'
@@ -18,6 +19,7 @@ export const coreBehaviors = [
   coreDecoratorBehaviors.emShortcut,
   coreDecoratorBehaviors.underlineShortcut,
   coreDecoratorBehaviors.codeShortcut,
+  coreDeserializeBehavior,
   coreBlockObjectBehaviors.arrowDownOnLonelyBlockObject,
   coreBlockObjectBehaviors.arrowUpOnLonelyBlockObject,
   coreBlockObjectBehaviors.breakingBlockObject,
@@ -37,6 +39,7 @@ export const coreBehaviors = [
 export const coreBehavior = {
   softReturn,
   decorators: coreDecoratorBehaviors,
+  deserialize: coreDeserializeBehavior,
   blockObjects: coreBlockObjectBehaviors,
   lists: coreListBehaviors,
   serialize: coreSerializeBehavior,

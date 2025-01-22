@@ -16,6 +16,7 @@ import {
   removeAnnotationActionImplementation,
   toggleAnnotationActionImplementation,
 } from '../editor/plugins/createWithEditableAPI'
+import {_insertFragment} from '../editor/plugins/createWithInsertData'
 import {
   addDecoratorActionImplementation,
   removeDecoratorActionImplementation,
@@ -142,6 +143,16 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
     Transforms.delete(action.editor, {
       at: range,
     })
+  },
+  'deserialization.failure': ({action}) => {
+    console.error(`Deserialization of ${action.mimeType} failed`)
+  },
+  'deserialization.success': ({context, action}) => {
+    const slateValue = toSlateValue(action.data, {
+      schemaTypes: context.schema,
+    })
+
+    _insertFragment(action.editor, slateValue, context.schema)
   },
   'insert.block object': insertBlockObjectActionImplementation,
   'insert.break': insertBreakActionImplementation,
@@ -479,6 +490,20 @@ function performDefaultAction({
     }
     case 'delete.forward': {
       behaviorActionImplementations['delete.forward']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'deserialization.failure': {
+      behaviorActionImplementations['deserialization.failure']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'deserialization.success': {
+      behaviorActionImplementations['deserialization.success']({
         context,
         action,
       })

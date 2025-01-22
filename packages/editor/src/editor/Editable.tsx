@@ -68,7 +68,6 @@ import {Leaf} from './components/Leaf'
 import {EditorActorContext} from './editor-actor-context'
 import {usePortableTextEditor} from './hooks/usePortableTextEditor'
 import {createWithHotkeys} from './plugins/createWithHotKeys'
-import {createWithInsertData} from './plugins/createWithInsertData'
 import {PortableTextEditor} from './PortableTextEditor'
 import {withSyncRangeDecorations} from './withSyncRangeDecorations'
 
@@ -189,11 +188,9 @@ export const PortableTextEditable = forwardRef<
   // There will be a problem if they redefine editor methods and then calling the original method within themselves.
   useMemo(() => {
     // React/UI-specific plugins
-    const withInsertData = createWithInsertData(editorActor, schemaTypes)
-
     if (readOnly) {
       debug('Editable is in read only mode')
-      return withInsertData(slateEditor)
+      return slateEditor
     }
     const withHotKeys = createWithHotkeys(
       editorActor,
@@ -202,15 +199,8 @@ export const PortableTextEditable = forwardRef<
     )
 
     debug('Editable is in edit mode')
-    return withInsertData(withHotKeys(slateEditor))
-  }, [
-    editorActor,
-    hotkeys,
-    portableTextEditor,
-    readOnly,
-    schemaTypes,
-    slateEditor,
-  ])
+    return withHotKeys(slateEditor)
+  }, [editorActor, hotkeys, portableTextEditor, readOnly, slateEditor])
 
   const renderElement = useCallback(
     (eProps: RenderElementProps) => (

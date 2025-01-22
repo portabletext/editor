@@ -286,6 +286,7 @@ export const editorMachine = setup({
       const defaultAction =
         event.type === 'custom behavior event' ||
         event.behaviorEvent.type === 'copy' ||
+        event.behaviorEvent.type === 'deserialize' ||
         event.behaviorEvent.type === 'key.down' ||
         event.behaviorEvent.type === 'key.up' ||
         event.behaviorEvent.type === 'paste' ||

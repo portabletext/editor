@@ -1,5 +1,4 @@
 import type {PortableTextBlock} from '@sanity/types'
-import type {BehaviorEvent} from '../behaviors'
 import type {EditorContext} from '../editor/editor-snapshot'
 import type {MIMEType} from '../internal-utils/mime-type'
 import type {PickFromUnion} from '../type-utils'
@@ -10,27 +9,32 @@ export type Converter<TMIMEType extends MIMEType = MIMEType> = {
   deserialize: Deserializer<TMIMEType>
 }
 
-export type ConverterEvent<TMIMEType extends MIMEType> =
-  | Omit<PickFromUnion<BehaviorEvent, 'type', 'serialize'>, 'dataTransfer'>
-  | Omit<
-      PickFromUnion<BehaviorEvent, 'type', 'serialization.failure'>,
-      'dataTransfer'
-    >
-  | Omit<
-      PickFromUnion<BehaviorEvent, 'type', 'serialization.success'>,
-      'dataTransfer'
-    >
+export type ConverterEvent<TMIMEType extends MIMEType = MIMEType> =
+  | {
+      type: 'serialize'
+      originEvent: 'copy' | 'cut' | 'drag' | 'unknown'
+    }
+  | {
+      type: 'serialization.failure'
+      mimeType: TMIMEType
+    }
+  | {
+      type: 'serialization.success'
+      data: string
+      mimeType: TMIMEType
+      originEvent: 'copy' | 'cut' | 'drag' | 'unknown'
+    }
   | {
       type: 'deserialize'
       data: string
     }
   | {
-      type: 'deserialization.success'
-      data: Array<PortableTextBlock>
+      type: 'deserialization.failure'
       mimeType: TMIMEType
     }
   | {
-      type: 'deserialization.failure'
+      type: 'deserialization.success'
+      data: Array<PortableTextBlock>
       mimeType: TMIMEType
     }
 
