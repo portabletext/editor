@@ -17,289 +17,55 @@ export function createWithEventListeners(
     subscriptions.push(() => {
       const subscription = editorActor.on('*', (event) => {
         switch (event.type) {
-          case 'annotation.add': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {
-                type: 'annotation.add',
-                annotation: event.annotation,
-              },
-              editor,
-            })
-            break
-          }
-          case 'annotation.remove': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {
-                type: 'annotation.remove',
-                annotation: event.annotation,
-              },
-              editor,
-            })
-            break
-          }
-          case 'annotation.toggle': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: event,
-              editor,
-            })
-            break
-          }
-          case 'blur': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {
-                type: 'blur',
-              },
-              editor,
-            })
-            break
-          }
-          case 'custom.*': {
+          case 'custom.*':
             editorActor.send({
               type: 'custom behavior event',
               behaviorEvent: event.event,
               editor,
             })
             break
-          }
-          case 'delete.block': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {
-                type: 'delete.block',
-                blockPath: event.blockPath,
-              },
-              editor,
-            })
-            break
-          }
-          case 'delete.text': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {
-                type: 'delete.text',
-                anchor: event.anchor,
-                focus: event.focus,
-              },
-              editor,
-            })
-            break
-          }
-          case 'decorator.add': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: event,
-              editor,
-            })
-            break
-          }
-          case 'decorator.remove': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: event,
-              editor,
-            })
-            break
-          }
-          case 'decorator.toggle': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {
-                type: 'decorator.toggle',
-                decorator: event.decorator,
-              },
-              editor,
-            })
-            break
-          }
-          case 'focus': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {
-                type: 'focus',
-              },
-              editor,
-            })
-            break
-          }
-          case 'insert.block object': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {
-                type: 'insert.block object',
-                placement: event.placement,
-                blockObject: event.blockObject,
-              },
-              editor,
-            })
-            break
-          }
-          case 'insert.inline object': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {
-                type: 'insert.inline object',
-                inlineObject: event.inlineObject,
-              },
-              editor,
-            })
-            break
-          }
-          case 'insert.span': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {
-                type: 'insert.span',
-                text: event.text,
-                annotations: event.annotations,
-                decorators: event.decorators,
-              },
-              editor,
-            })
-            break
-          }
-          case 'insert.text block': {
+
+          case 'annotation.add':
+          case 'annotation.remove':
+          case 'annotation.toggle':
+          case 'blur':
+          case 'data transfer.set':
+          case 'decorator.add':
+          case 'decorator.remove':
+          case 'decorator.toggle':
+          case 'delete.backward':
+          case 'delete.block':
+          case 'delete.forward':
+          case 'delete.text':
+          case 'deserialization.failure':
+          case 'deserialization.success':
+          case 'focus':
+          case 'insert.block object':
+          case 'insert.inline object':
+          case 'insert.span':
+          case 'insert.text block':
+          case 'list item.add':
+          case 'list item.remove':
+          case 'list item.toggle':
+          case 'move.block':
+          case 'move.block down':
+          case 'move.block up':
+          case 'select':
+          case 'select.next block':
+          case 'select.previous block':
+          case 'serialization.failure':
+          case 'serialization.success':
+          case 'style.add':
+          case 'style.remove':
+          case 'style.toggle':
+          case 'text block.set':
+          case 'text block.unset':
             editorActor.send({
               type: 'behavior event',
               behaviorEvent: event,
               editor,
             })
             break
-          }
-          case 'list item.add': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: event,
-              editor,
-            })
-            break
-          }
-          case 'list item.remove': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: event,
-              editor,
-            })
-            break
-          }
-          case 'list item.toggle': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {
-                type: 'list item.toggle',
-                listItem: event.listItem,
-              },
-              editor,
-            })
-            break
-          }
-          case 'move.block': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {
-                type: 'move.block',
-                at: event.at,
-                to: event.to,
-              },
-              editor,
-            })
-            break
-          }
-          case 'move.block down': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {
-                type: 'move.block down',
-                at: event.at,
-              },
-              editor,
-            })
-            break
-          }
-          case 'move.block up': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {
-                type: 'move.block up',
-                at: event.at,
-              },
-              editor,
-            })
-            break
-          }
-          case 'select': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {
-                type: 'select',
-                selection: event.selection,
-              },
-              editor,
-            })
-            break
-          }
-          case 'select.next block': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: event,
-              editor,
-            })
-            break
-          }
-          case 'select.previous block': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: event,
-              editor,
-            })
-            break
-          }
-          case 'style.add': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: event,
-              editor,
-            })
-            break
-          }
-          case 'style.remove': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: event,
-              editor,
-            })
-            break
-          }
-          case 'style.toggle': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {
-                type: 'style.toggle',
-                style: event.style,
-              },
-              editor,
-            })
-            break
-          }
-          case 'text block.set': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: event,
-              editor,
-            })
-            break
-          }
-          case 'text block.unset': {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: event,
-              editor,
-            })
-            break
-          }
         }
       })
 
