@@ -1,3 +1,4 @@
+import {coreAnnotationBehaviors} from './behavior.core.annotations'
 import {coreBlockObjectBehaviors} from './behavior.core.block-objects'
 import {coreDecoratorBehaviors} from './behavior.core.decorators'
 import {coreDeserializeBehavior} from './behavior.core.deserialize'
@@ -16,6 +17,8 @@ const softReturn = defineBehavior({
  */
 export const coreBehaviors = [
   softReturn,
+  coreAnnotationBehaviors.toggleAnnotationOff,
+  coreAnnotationBehaviors.toggleAnnotationOn,
   coreDecoratorBehaviors.toggleDecoratorOff,
   coreDecoratorBehaviors.toggleDecoratorOn,
   coreDecoratorBehaviors.strongShortcut,
@@ -46,6 +49,7 @@ export const coreBehaviors = [
  */
 export const coreBehavior = {
   softReturn,
+  annotation: coreAnnotationBehaviors,
   decorators: coreDecoratorBehaviors,
   deserialize: coreDeserializeBehavior,
   blockObjects: coreBlockObjectBehaviors,
