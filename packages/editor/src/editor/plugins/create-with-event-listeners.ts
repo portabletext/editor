@@ -145,6 +145,22 @@ export function createWithEventListeners(
             })
             break
           }
+          case 'list item.add': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: event,
+              editor,
+            })
+            break
+          }
+          case 'list item.remove': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: event,
+              editor,
+            })
+            break
+          }
           case 'list item.toggle': {
             editorActor.send({
               type: 'behavior event',

@@ -329,20 +329,6 @@ export function performAction({
       })
       break
     }
-    case 'list item.add': {
-      behaviorActionImplementations['list item.add']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'list item.remove': {
-      behaviorActionImplementations['list item.remove']({
-        context,
-        action,
-      })
-      break
-    }
     case 'noop': {
       behaviorActionImplementations.noop({
         context,
@@ -527,6 +513,20 @@ function performDefaultAction({
     }
     case 'insert.text block': {
       behaviorActionImplementations['insert.text block']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'list item.add': {
+      behaviorActionImplementations['list item.add']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'list item.remove': {
+      behaviorActionImplementations['list item.remove']({
         context,
         action,
       })
