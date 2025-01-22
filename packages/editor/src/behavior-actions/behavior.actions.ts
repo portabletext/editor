@@ -16,7 +16,6 @@ import {
   removeAnnotationActionImplementation,
   toggleAnnotationActionImplementation,
 } from '../editor/plugins/createWithEditableAPI'
-import {insertBlocks} from '../editor/plugins/createWithInsertData'
 import {
   addDecoratorActionImplementation,
   removeDecoratorActionImplementation,
@@ -30,6 +29,7 @@ import type {PickFromUnion} from '../type-utils'
 import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
 import {insertBlock} from './behavior.action-utils.insert-block'
 import {insertBlockObjectActionImplementation} from './behavior.action.insert-block-object'
+import {insertBlocks} from './behavior.action.insert-blocks'
 import {
   insertBreakActionImplementation,
   insertSoftBreakActionImplementation,

@@ -1,9 +1,9 @@
 import type {PortableTextBlock} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {Editor, Transforms} from 'slate'
-import {isEqualToEmptyEditor, toSlateValue} from '../../internal-utils/values'
-import type {PortableTextSlateEditor} from '../../types/editor'
-import type {EditorSchema} from '../define-schema'
+import type {EditorSchema} from '../editor/define-schema'
+import {isEqualToEmptyEditor, toSlateValue} from '../internal-utils/values'
+import type {PortableTextSlateEditor} from '../types/editor'
 
 export function insertBlocks({
   blocks,
