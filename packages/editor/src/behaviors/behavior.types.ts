@@ -101,6 +101,13 @@ export type SyntheticBehaviorEvent =
       options?: TextInsertTextOptions
     }
   | {
+      type: 'insert.text block'
+      placement: 'auto' | 'after' | 'before'
+      textBlock?: {
+        children?: PortableTextTextBlock['children']
+      }
+    }
+  | {
       type: 'list item.toggle'
       listItem: string
     }
@@ -228,13 +235,6 @@ export type BehaviorActionIntend =
   | {
       type: 'decorator.remove'
       decorator: string
-    }
-  | {
-      type: 'insert.text block'
-      placement: 'auto' | 'after' | 'before'
-      textBlock?: {
-        children?: PortableTextTextBlock['children']
-      }
     }
   | {
       type: 'list item.add'

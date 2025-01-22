@@ -192,6 +192,7 @@ export type InternalEditorEmittedEvent =
       | 'insert.block object'
       | 'insert.inline object'
       | 'insert.span'
+      | 'insert.text block'
       | 'list item.toggle'
       | 'focus'
       | 'move.block'
