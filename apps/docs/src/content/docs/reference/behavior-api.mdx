@@ -28,27 +28,57 @@ const noLowerCaseA = defineBehavior({
 ### Native event types
 
 - copy
-- paste
+- deserialize
 - key.down
 - key.up
+- paste
+- serialize
 
 ### Synthetic event types
 
 - annotation.add
 - annotation.remove
+- annotation.toggle
 - blur
+- data transfer.set
+- decorator.add
+- decorator.remove
 - decorator.toggle
 - delete.backward
+- delete.block
 - delete.forward
+- delete.text
+- deserialization.failure
+- deserialization.success
 - focus
+- insert.blocks
 - insert.block object
 - insert.inline object
 - insert.break
 - insert.sort break
+- insert.span
 - insert.text
+- insert.text block
+- list item.add
+- list item.remove
 - list item.toggle
+- move.block
+- move.block down
+- move.block up
 - select
+- select.next block
+- select.previous block
+- serialization.failure
+- serialization.success
+- style.add
+- style.remove
 - style.toggle
+- text block.set
+- text block.unset
+
+### Custom event types
+
+- custom.\* (e.g. custom.add link)
 
 ## Behavior Actions
 
@@ -56,43 +86,49 @@ Actions as part of synthetic events
 
 - annotation.add
 - annotation.remove
+- annotation.toggle
 - blur
+- data transfer.set
+- decorator.add
+- decorator.remove
 - decorator.toggle
 - delete.backward
+- delete.block
 - delete.forward
+- delete.text
+- deserialization.failure
+- deserialization.success
 - focus
+- insert.blocks
 - insert.block object
 - insert.inline object
 - insert.break
 - insert.sort break
-- insert.text
-- list item.toggle
-- select
-- style.toggle
-
-Additional actions
-
-- annotation.toggle
-- decorator.add
-- decorator.remove
 - insert.span
+- insert.text
 - insert.text block
 - list item.add
 - list item.remove
+- list item.toggle
 - move.block
 - move.block down
 - move.block up
-- noop
-- delete.block
-- delete.text
-- effect
-- [raise](#raise)
-- select.previous block
+- select
 - select.next block
+- select.previous block
+- serialization.failure
+- serialization.success
 - style.add
 - style.remove
+- style.toggle
 - text block.set
 - text block.unset
+
+Additional actions
+
+- noop
+- effect
+- [raise](#raise)
 
 ### `raise`
 
