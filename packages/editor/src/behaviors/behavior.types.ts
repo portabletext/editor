@@ -108,6 +108,14 @@ export type SyntheticBehaviorEvent =
       }
     }
   | {
+      type: 'list item.add'
+      listItem: string
+    }
+  | {
+      type: 'list item.remove'
+      listItem: string
+    }
+  | {
       type: 'list item.toggle'
       listItem: string
     }
@@ -235,14 +243,6 @@ export type BehaviorActionIntend =
   | {
       type: 'decorator.remove'
       decorator: string
-    }
-  | {
-      type: 'list item.add'
-      listItem: string
-    }
-  | {
-      type: 'list item.remove'
-      listItem: string
     }
   | {
       type: 'noop'
