@@ -97,7 +97,7 @@
   },
   "devDependencies": {
     "@portabletext/toolkit": "^2.0.16",
-    "@sanity/diff-match-patch": "^3.1.2",
+    "@sanity/diff-match-patch": "^3.2.0",
     "@sanity/pkg-utils": "^7.0.2",
     "@sanity/schema": "^3.70.0",
     "@sanity/types": "^3.70.0",
