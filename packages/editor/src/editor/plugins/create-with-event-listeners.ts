@@ -146,6 +146,7 @@ export function createWithEventListeners(
       deleteBackward,
       deleteForward,
       insertBreak,
+      insertData,
       insertSoftBreak,
       insertText,
       select,
@@ -196,6 +197,23 @@ export function createWithEventListeners(
         type: 'behavior event',
         behaviorEvent: {
           type: 'insert.break',
+        },
+        editor,
+      })
+      return
+    }
+
+    editor.insertData = (dataTransfer) => {
+      if (isApplyingBehaviorActions(editor)) {
+        insertData(dataTransfer)
+        return
+      }
+
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'deserialize',
+          dataTransfer,
         },
         editor,
       })
