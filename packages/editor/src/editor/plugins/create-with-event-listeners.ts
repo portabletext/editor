@@ -57,6 +57,17 @@ export function createWithEventListeners(
             })
             break
           }
+          case 'delete.block': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {
+                type: 'delete.block',
+                blockPath: event.blockPath,
+              },
+              editor,
+            })
+            break
+          }
           case 'decorator.toggle': {
             editorActor.send({
               type: 'behavior event',

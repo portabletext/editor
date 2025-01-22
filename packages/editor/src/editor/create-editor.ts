@@ -67,6 +67,7 @@ export type EditorEvent =
       | 'annotation.remove'
       | 'blur'
       | 'decorator.toggle'
+      | 'delete.block'
       | 'focus'
       | 'insert.block object'
       | 'insert.inline object'
