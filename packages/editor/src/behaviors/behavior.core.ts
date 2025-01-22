@@ -3,6 +3,7 @@ import {coreDecoratorBehaviors} from './behavior.core.decorators'
 import {coreDeserializeBehavior} from './behavior.core.deserialize'
 import {coreListBehaviors} from './behavior.core.lists'
 import {coreSerializeBehaviors} from './behavior.core.serialize'
+import {coreStyleBehaviors} from './behavior.core.style'
 import {defineBehavior} from './behavior.types'
 
 const softReturn = defineBehavior({
@@ -36,6 +37,8 @@ export const coreBehaviors = [
   coreListBehaviors.unindentListOnShiftTab,
   coreSerializeBehaviors.serialize,
   coreSerializeBehaviors['serialization.success'],
+  coreStyleBehaviors.toggleStyleOff,
+  coreStyleBehaviors.toggleStyleOn,
 ]
 
 /**
@@ -48,4 +51,5 @@ export const coreBehavior = {
   blockObjects: coreBlockObjectBehaviors,
   lists: coreListBehaviors,
   ...coreSerializeBehaviors,
+  style: coreSerializeBehaviors,
 }
