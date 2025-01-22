@@ -28,6 +28,7 @@ import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
 import type {PickFromUnion} from '../type-utils'
 import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
 import {insertBlock} from './behavior.action-utils.insert-block'
+import {dataTransferSetActionImplementation} from './behavior.action.data-transfer-set'
 import {insertBlockObjectActionImplementation} from './behavior.action.insert-block-object'
 import {insertBlocksActionImplementation} from './behavior.action.insert-blocks'
 import {
@@ -76,6 +77,7 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'blur': ({action}) => {
     ReactEditor.blur(action.editor)
   },
+  'data transfer.set': dataTransferSetActionImplementation,
   'decorator.add': addDecoratorActionImplementation,
   'decorator.remove': removeDecoratorActionImplementation,
   'decorator.toggle': toggleDecoratorActionImplementation,
@@ -278,8 +280,14 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'serialization.failure': ({action}) => {
     console.error(`Serialization of ${action.mimeType} failed`)
   },
-  'serialization.success': ({action}) => {
-    action.dataTransfer.setData(action.mimeType, action.data)
+  'serialization.success': ({context, action}) => {
+    dataTransferSetActionImplementation({
+      context,
+      action: {
+        ...action,
+        type: 'data transfer.set',
+      },
+    })
   },
   'style.toggle': toggleStyleActionImplementation,
   'style.add': addStyleActionImplementation,
@@ -473,6 +481,13 @@ function performDefaultAction({
     }
     case 'blur': {
       behaviorActionImplementations.blur({
+        context,
+        action,
+      })
+      break
+    }
+    case 'data transfer.set': {
+      behaviorActionImplementations['data transfer.set']({
         context,
         action,
       })

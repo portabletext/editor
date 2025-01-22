@@ -540,6 +540,7 @@ export const editorMachine = setup({
                   actions: 'handle behavior event',
                   guard: ({event}) =>
                     event.behaviorEvent.type === 'copy' ||
+                    event.behaviorEvent.type === 'data transfer.set' ||
                     event.behaviorEvent.type === 'serialize' ||
                     event.behaviorEvent.type === 'serialization.failure' ||
                     event.behaviorEvent.type === 'serialization.success',
