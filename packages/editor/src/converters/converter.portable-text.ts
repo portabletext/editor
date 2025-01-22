@@ -9,6 +9,7 @@ export const converterPortableText: Converter<'application/x-portable-text'> = {
         type: 'serialization.failure',
         mimeType: 'application/x-portable-text',
         originEvent: event.originEvent,
+        reason: 'No selection',
       }
     }
 
@@ -31,6 +32,7 @@ export const converterPortableText: Converter<'application/x-portable-text'> = {
       return {
         type: 'deserialization.failure',
         mimeType: 'application/x-portable-text',
+        reason: 'Data is not an array',
       }
     }
 
@@ -43,6 +45,7 @@ export const converterPortableText: Converter<'application/x-portable-text'> = {
       return {
         type: 'deserialization.failure',
         mimeType: 'application/x-portable-text',
+        reason: 'No blocks were parsed',
       }
     }
 

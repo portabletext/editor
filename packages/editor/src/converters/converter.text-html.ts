@@ -11,6 +11,7 @@ export const converterTextHtml: Converter<'text/html'> = {
         type: 'serialization.failure',
         mimeType: 'text/html',
         originEvent: event.originEvent,
+        reason: 'No selection',
       }
     }
 
@@ -32,6 +33,7 @@ export const converterTextHtml: Converter<'text/html'> = {
         type: 'serialization.failure',
         mimeType: 'text/html',
         originEvent: event.originEvent,
+        reason: 'Serialized HTML is empty',
       }
     }
 

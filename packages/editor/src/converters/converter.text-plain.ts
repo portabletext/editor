@@ -11,6 +11,7 @@ export const converterTextPlain: Converter<'text/plain'> = {
         type: 'serialization.failure',
         mimeType: 'text/plain',
         originEvent: event.originEvent,
+        reason: 'No selection',
       }
     }
 

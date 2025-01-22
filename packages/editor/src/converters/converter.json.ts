@@ -11,6 +11,7 @@ export const converterJson: Converter<'application/json'> = {
         type: 'serialization.failure',
         mimeType: 'application/json',
         originEvent: event.originEvent,
+        reason: 'No application/x-portable-text Converter found',
       }
     }
 
@@ -34,6 +35,7 @@ export const converterJson: Converter<'application/json'> = {
       return {
         type: 'deserialization.failure',
         mimeType: 'application/json',
+        reason: 'No application/x-portable-text Converter found',
       }
     }
 
