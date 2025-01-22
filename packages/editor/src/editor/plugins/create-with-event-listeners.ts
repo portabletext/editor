@@ -39,6 +39,14 @@ export function createWithEventListeners(
             })
             break
           }
+          case 'annotation.toggle': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: event,
+              editor,
+            })
+            break
+          }
           case 'blur': {
             editorActor.send({
               type: 'behavior event',

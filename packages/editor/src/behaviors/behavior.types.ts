@@ -29,6 +29,13 @@ export type SyntheticBehaviorEvent =
       }
     }
   | {
+      type: 'annotation.toggle'
+      annotation: {
+        name: string
+        value: {[prop: string]: unknown}
+      }
+    }
+  | {
       type: 'blur'
     }
   | {
@@ -244,13 +251,6 @@ export type BehaviorActionIntend =
   | {
       type: 'raise'
       event: SyntheticBehaviorEvent | CustomBehaviorEvent
-    }
-  | {
-      type: 'annotation.toggle'
-      annotation: {
-        name: string
-        value: {[prop: string]: unknown}
-      }
     }
   | {
       type: 'noop'

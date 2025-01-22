@@ -308,13 +308,6 @@ export function performAction({
   action: BehaviorAction
 }) {
   switch (action.type) {
-    case 'annotation.toggle': {
-      behaviorActionImplementations['annotation.toggle']({
-        context,
-        action,
-      })
-      break
-    }
     case 'noop': {
       behaviorActionImplementations.noop({
         context,
@@ -359,6 +352,13 @@ function performDefaultAction({
     }
     case 'annotation.remove': {
       behaviorActionImplementations['annotation.remove']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'annotation.toggle': {
+      behaviorActionImplementations['annotation.toggle']({
         context,
         action,
       })
