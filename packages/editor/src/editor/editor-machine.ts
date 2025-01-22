@@ -188,6 +188,7 @@ export type InternalEditorEmittedEvent =
       | 'blur'
       | 'decorator.toggle'
       | 'delete.block'
+      | 'delete.text'
       | 'insert.block object'
       | 'insert.inline object'
       | 'insert.span'

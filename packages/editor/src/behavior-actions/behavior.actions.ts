@@ -329,13 +329,6 @@ export function performAction({
       })
       break
     }
-    case 'delete.text': {
-      behaviorActionImplementations['delete.text']({
-        context,
-        action,
-      })
-      break
-    }
     case 'insert.text block': {
       behaviorActionImplementations['insert.text block']({
         context,
@@ -506,6 +499,13 @@ function performDefaultAction({
     }
     case 'delete.forward': {
       behaviorActionImplementations['delete.forward']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'delete.text': {
+      behaviorActionImplementations['delete.text']({
         context,
         action,
       })

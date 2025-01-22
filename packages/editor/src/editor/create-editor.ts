@@ -68,6 +68,7 @@ export type EditorEvent =
       | 'blur'
       | 'decorator.toggle'
       | 'delete.block'
+      | 'delete.text'
       | 'focus'
       | 'insert.block object'
       | 'insert.inline object'
