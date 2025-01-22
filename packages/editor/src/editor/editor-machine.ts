@@ -204,6 +204,8 @@ export type InternalEditorEmittedEvent =
       | 'move.block up'
       | 'select.next block'
       | 'select.previous block'
+      | 'style.add'
+      | 'style.remove'
       | 'style.toggle'
       | 'text block.set'
       | 'text block.unset'

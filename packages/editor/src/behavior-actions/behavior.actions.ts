@@ -336,20 +336,6 @@ export function performAction({
       })
       break
     }
-    case 'style.add': {
-      behaviorActionImplementations['style.add']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'style.remove': {
-      behaviorActionImplementations['style.remove']({
-        context,
-        action,
-      })
-      break
-    }
     default: {
       performDefaultAction({context, action})
     }
@@ -590,6 +576,20 @@ function performDefaultAction({
     }
     case 'serialization.success': {
       behaviorActionImplementations['serialization.success']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'style.add': {
+      behaviorActionImplementations['style.add']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'style.remove': {
+      behaviorActionImplementations['style.remove']({
         context,
         action,
       })

@@ -151,6 +151,14 @@ export type SyntheticBehaviorEvent =
       type: 'select.next block'
     }
   | {
+      type: 'style.add'
+      style: string
+    }
+  | {
+      type: 'style.remove'
+      style: string
+    }
+  | {
       type: 'style.toggle'
       style: string
     }
@@ -250,14 +258,6 @@ export type BehaviorActionIntend =
   | {
       type: 'effect'
       effect: () => void
-    }
-  | {
-      type: 'style.add'
-      style: string
-    }
-  | {
-      type: 'style.remove'
-      style: string
     }
 
 /**

@@ -249,6 +249,22 @@ export function createWithEventListeners(
             })
             break
           }
+          case 'style.add': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: event,
+              editor,
+            })
+            break
+          }
+          case 'style.remove': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: event,
+              editor,
+            })
+            break
+          }
           case 'style.toggle': {
             editorActor.send({
               type: 'behavior event',

@@ -85,6 +85,8 @@ export type EditorEvent =
       | 'select'
       | 'select.next block'
       | 'select.previous block'
+      | 'style.add'
+      | 'style.remove'
       | 'style.toggle'
       | 'patches'
       | 'text block.set'
