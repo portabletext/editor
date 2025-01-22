@@ -272,4 +272,73 @@ describe(sliceBlocks.name, () => {
       },
     ])
   })
+
+  test('starting on inline object', () => {
+    expect(
+      sliceBlocks({
+        blocks,
+        selection: {
+          anchor: {
+            path: [{_key: b4._key}, 'children', {_key: b4.children[1]._key}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: b4._key}, 'children', {_key: b4.children[2]._key}],
+            offset: 4,
+          },
+        },
+      }),
+    ).toEqual([
+      {
+        ...b4,
+        children: [b4.children[1], b4.children[2]],
+      },
+    ])
+  })
+
+  test('ending on inline object', () => {
+    expect(
+      sliceBlocks({
+        blocks,
+        selection: {
+          anchor: {
+            path: [{_key: b4._key}, 'children', {_key: b4.children[0]._key}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: b4._key}, 'children', {_key: b4.children[1]._key}],
+            offset: 0,
+          },
+        },
+      }),
+    ).toEqual([
+      {
+        ...b4,
+        children: [b4.children[0], b4.children[1]],
+      },
+    ])
+  })
+
+  test('starting and ending on inline object', () => {
+    expect(
+      sliceBlocks({
+        blocks,
+        selection: {
+          anchor: {
+            path: [{_key: b4._key}, 'children', {_key: b4.children[1]._key}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: b4._key}, 'children', {_key: b4.children[1]._key}],
+            offset: 0,
+          },
+        },
+      }),
+    ).toEqual([
+      {
+        ...b4,
+        children: [b4.children[1]],
+      },
+    ])
+  })
 })

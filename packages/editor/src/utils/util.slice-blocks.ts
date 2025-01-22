@@ -78,17 +78,17 @@ export function sliceBlocks({
                   },
                 ],
               }
-              continue
+            } else {
+              startBlock = {
+                ...block,
+                children: [child],
+              }
             }
 
-            startBlock = {
-              ...block,
-              children: [child],
+            if (startChildKey === endChildKey) {
+              break
             }
-          }
-
-          if (startChildKey === endChildKey) {
-            break
+            continue
           }
 
           if (startBlock && isPortableTextTextBlock(startBlock)) {
