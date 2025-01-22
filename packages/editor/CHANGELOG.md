@@ -1,5 +1,43 @@
 # Changelog
 
+## [1.25.0](https://github.com/portabletext/editor/compare/editor-v1.24.0...editor-v1.25.0) (2025-01-22)
+
+
+### Features
+
+* **behaviors:** promote `annotation.toggle` to an event ([8383b3b](https://github.com/portabletext/editor/commit/8383b3bf14106c889d75c86a34311e699e38312e))
+* **behaviors:** promote `decorator.(add|remove)` to events ([079b4e4](https://github.com/portabletext/editor/commit/079b4e48ab5ec3103fe619099823486115de82d4))
+* **behaviors:** promote `delete.block` to an event ([df466a3](https://github.com/portabletext/editor/commit/df466a3c19cef002c943dd6da9530e80ab7af232))
+* **behaviors:** promote `delete.text` to an event ([435de66](https://github.com/portabletext/editor/commit/435de66c00e811b9d4241aa3b6d7d50fd47d2c45))
+* **behaviors:** promote `insert.span` to an event ([7b3b2c3](https://github.com/portabletext/editor/commit/7b3b2c34876a852a29499391fe85dd1f092c5011))
+* **behaviors:** promote `insert.text block` to an event ([3c78ed2](https://github.com/portabletext/editor/commit/3c78ed2906feed58bc08bbbb2e55ddb5f1742400))
+* **behaviors:** promote `list item.(add|remove)` to events ([63cbaca](https://github.com/portabletext/editor/commit/63cbacac38bc95c0e986f35547572a3d8a6d678e))
+* **behaviors:** promote `move.*` actions to events ([485e189](https://github.com/portabletext/editor/commit/485e189b0569748a2af40d7d16c4d09fc5ab035a))
+* **behaviors:** promote `select.*` actions to events ([81f3858](https://github.com/portabletext/editor/commit/81f385805631b21bb75b3b3c77454437da2b0cb9))
+* **behaviors:** promote `style.(add|remove)` to events ([6a5f1f6](https://github.com/portabletext/editor/commit/6a5f1f6a5e645f1d2e1083dd3c6eb447ab0dab8e))
+* **behaviors:** promote `text block.*` actions to events ([b9057da](https://github.com/portabletext/editor/commit/b9057daaa1c90fa90802964002f55411be6a6efa))
+* **core behaviors:** raise `annotation.(add|remove)` events ([3ff7498](https://github.com/portabletext/editor/commit/3ff74985d90d2552f2f796a2582679442ce280ae))
+* **core behaviors:** raise `decorator.(add|remove)` events ([ce99235](https://github.com/portabletext/editor/commit/ce99235d4faadb144acc057016cd75499754a911))
+* **core behaviors:** raise `delete.block` and `select` ([ab5fb23](https://github.com/portabletext/editor/commit/ab5fb23c119fcc73cd3bfa777558dc3469505270))
+* **core behaviors:** raise `insert.text block` and `select.previous block` events ([17bc728](https://github.com/portabletext/editor/commit/17bc72801b8b40bc812a8e117e2bb2dc39cfa511))
+* **core behaviors:** raise `list item.(add|remove)` events ([2b1fdb7](https://github.com/portabletext/editor/commit/2b1fdb7658c360ec82cff41fc82711f9eb07c193))
+* **core behaviors:** raise `style.(add|remove)` events ([6f5acb8](https://github.com/portabletext/editor/commit/6f5acb85d5a928cc58ed2929b32bbe981e540fb1))
+* **core behaviors:** raise `text block.*` events ([6c4b581](https://github.com/portabletext/editor/commit/6c4b581695a81628e13b84845fcd29de8b3be4de))
+
+
+### Bug Fixes
+
+* **behaviors:** add missing events to `editor.send(...)` ([03f3192](https://github.com/portabletext/editor/commit/03f31922f25805947277f089132b8372ab280b39))
+* **deps:** update sanity monorepo to ^3.71.1 ([6234d33](https://github.com/portabletext/editor/commit/6234d33cd970e2a7f8b9397848181e5c9c8685fc))
+* **EditorEventListener:** only emit external events ([f5df2e3](https://github.com/portabletext/editor/commit/f5df2e307c3d38b448e3f3a89084721dd5ba3839))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.2
+
 ## [1.24.0](https://github.com/portabletext/editor/compare/editor-v1.23.0...editor-v1.24.0) (2025-01-22)
 
 
