@@ -399,20 +399,6 @@ export function performAction({
       })
       break
     }
-    case 'text block.set': {
-      behaviorActionImplementations['text block.set']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'text block.unset': {
-      behaviorActionImplementations['text block.unset']({
-        context,
-        action,
-      })
-      break
-    }
     default: {
       performDefaultAction({context, action})
     }
@@ -609,11 +595,26 @@ function performDefaultAction({
       })
       break
     }
-    default: {
+    case 'style.toggle': {
       behaviorActionImplementations['style.toggle']({
         context,
         action,
       })
+      break
+    }
+    case 'text block.set': {
+      behaviorActionImplementations['text block.set']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'text block.unset': {
+      behaviorActionImplementations['text block.unset']({
+        context,
+        action,
+      })
+      break
     }
   }
 }

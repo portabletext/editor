@@ -204,6 +204,22 @@ export function createWithEventListeners(
             })
             break
           }
+          case 'text block.set': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: event,
+              editor,
+            })
+            break
+          }
+          case 'text block.unset': {
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: event,
+              editor,
+            })
+            break
+          }
         }
       })
 

@@ -80,6 +80,8 @@ export type EditorEvent =
       | 'select'
       | 'style.toggle'
       | 'patches'
+      | 'text block.set'
+      | 'text block.unset'
       | 'update behaviors'
       | 'update key generator'
       | 'update readOnly'

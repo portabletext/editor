@@ -198,6 +198,8 @@ export type InternalEditorEmittedEvent =
       | 'move.block down'
       | 'move.block up'
       | 'style.toggle'
+      | 'text block.set'
+      | 'text block.unset'
     >
   | {
       type: 'custom.*'
@@ -605,6 +607,9 @@ export const editorMachine = setup({
               actions: emit(({event}) => event),
             },
             'style.*': {
+              actions: emit(({event}) => event),
+            },
+            'text block.*': {
               actions: emit(({event}) => event),
             },
           },
