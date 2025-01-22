@@ -25,6 +25,8 @@ export const coreBehaviors = [
   coreBlockObjectBehaviors.breakingBlockObject,
   coreBlockObjectBehaviors.deletingEmptyTextBlockAfterBlockObject,
   coreBlockObjectBehaviors.deletingEmptyTextBlockBeforeBlockObject,
+  coreListBehaviors.toggleListItemOff,
+  coreListBehaviors.toggleListItemOn,
   coreListBehaviors.clearListOnBackspace,
   coreListBehaviors.unindentListOnBackspace,
   coreListBehaviors.clearListOnEnter,

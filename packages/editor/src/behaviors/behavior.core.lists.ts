@@ -6,6 +6,34 @@ import {defineBehavior, raise} from './behavior.types'
 
 const MAX_LIST_LEVEL = 10
 
+const toggleListItemOff = defineBehavior({
+  on: 'list item.toggle',
+  guard: ({context, event}) =>
+    selectors.isActiveListItem(event.listItem)({context}),
+  actions: [
+    ({event}) => [
+      raise({
+        type: 'list item.remove',
+        listItem: event.listItem,
+      }),
+    ],
+  ],
+})
+
+const toggleListItemOn = defineBehavior({
+  on: 'list item.toggle',
+  guard: ({context, event}) =>
+    !selectors.isActiveListItem(event.listItem)({context}),
+  actions: [
+    ({event}) => [
+      raise({
+        type: 'list item.add',
+        listItem: event.listItem,
+      }),
+    ],
+  ],
+})
+
 const clearListOnBackspace = defineBehavior({
   on: 'delete.backward',
   guard: ({context}) => {
@@ -188,6 +216,8 @@ const unindentListOnShiftTab = defineBehavior({
 })
 
 export const coreListBehaviors = {
+  toggleListItemOff,
+  toggleListItemOn,
   clearListOnBackspace,
   unindentListOnBackspace,
   clearListOnEnter,
