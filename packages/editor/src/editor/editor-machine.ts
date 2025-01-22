@@ -185,6 +185,7 @@ export type InternalEditorEmittedEvent =
       'type',
       | 'annotation.add'
       | 'annotation.remove'
+      | 'annotation.toggle'
       | 'blur'
       | 'decorator.add'
       | 'decorator.remove'
