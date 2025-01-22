@@ -16,7 +16,7 @@ import {
   removeAnnotationActionImplementation,
   toggleAnnotationActionImplementation,
 } from '../editor/plugins/createWithEditableAPI'
-import {_insertFragment} from '../editor/plugins/createWithInsertData'
+import {insertBlocks} from '../editor/plugins/createWithInsertData'
 import {
   addDecoratorActionImplementation,
   removeDecoratorActionImplementation,
@@ -148,11 +148,11 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
     console.error(`Deserialization of ${action.mimeType} failed`)
   },
   'deserialization.success': ({context, action}) => {
-    const slateValue = toSlateValue(action.data, {
-      schemaTypes: context.schema,
+    insertBlocks({
+      blocks: action.data,
+      editor: action.editor,
+      schema: context.schema,
     })
-
-    _insertFragment(action.editor, slateValue, context.schema)
   },
   'insert.block object': insertBlockObjectActionImplementation,
   'insert.break': insertBreakActionImplementation,
