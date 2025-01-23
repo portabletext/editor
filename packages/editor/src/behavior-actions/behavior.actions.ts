@@ -322,13 +322,6 @@ export function performAction({
       })
       break
     }
-    case 'select': {
-      behaviorActionImplementations.select({
-        context,
-        action,
-      })
-      break
-    }
     default: {
       performDefaultAction({context, action})
     }
