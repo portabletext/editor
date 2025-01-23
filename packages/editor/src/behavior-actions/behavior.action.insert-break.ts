@@ -1,5 +1,5 @@
 import {isEqual} from 'lodash'
-import {Editor, Node, Path, Range, Transforms} from 'slate'
+import {Editor, Node, Path, Transforms} from 'slate'
 import type {SlateTextBlock, VoidElement} from '../types/slate'
 import type {BehaviorActionImplementation} from './behavior.actions'
 
@@ -14,24 +14,6 @@ export const insertBreakActionImplementation: BehaviorActionImplementation<
     return
   }
 
-  const [focusSpan] = Array.from(
-    Editor.nodes(editor, {
-      mode: 'lowest',
-      at: editor.selection.focus,
-      match: (n) => editor.isTextSpan(n),
-      voids: false,
-    }),
-  )[0] ?? [undefined]
-  const focusDecorators =
-    focusSpan?.marks?.filter((mark) =>
-      schema.decorators.some((decorator) => decorator.value === mark),
-    ) ?? []
-  const focusAnnotations =
-    focusSpan?.marks?.filter(
-      (mark) =>
-        !schema.decorators.some((decorator) => decorator.value === mark),
-    ) ?? []
-
   const anchorBlockPath = editor.selection.anchor.path.slice(0, 1)
   const focusBlockPath = editor.selection.focus.path.slice(0, 1)
   const focusBlock = Node.descendant(editor, focusBlockPath) as
@@ -39,58 +21,9 @@ export const insertBreakActionImplementation: BehaviorActionImplementation<
     | VoidElement
 
   if (editor.isTextBlock(focusBlock)) {
-    const [start, end] = Range.edges(editor.selection)
-    const lastFocusBlockChild =
-      focusBlock.children[focusBlock.children.length - 1]
-    const atTheEndOfBlock = isEqual(start, {
-      path: [...focusBlockPath, focusBlock.children.length - 1],
-      offset: editor.isTextSpan(lastFocusBlockChild)
-        ? lastFocusBlockChild.text.length
-        : 0,
-    })
-    const atTheStartOfBlock = isEqual(end, {
-      path: [...focusBlockPath, 0],
-      offset: 0,
-    })
-
-    if (atTheEndOfBlock && Range.isCollapsed(editor.selection)) {
-      Editor.insertNode(
-        editor,
-        editor.pteCreateTextBlock({
-          decorators: [],
-          listItem: focusBlock.listItem,
-          level: focusBlock.level,
-        }),
-      )
-
-      return
-    }
-
-    if (atTheStartOfBlock && Range.isCollapsed(editor.selection)) {
-      Editor.insertNode(
-        editor,
-        editor.pteCreateTextBlock({
-          decorators: focusAnnotations.length === 0 ? focusDecorators : [],
-          listItem: focusBlock.listItem,
-          level: focusBlock.level,
-        }),
-      )
-
-      const [nextBlockPath] = Path.next(focusBlockPath)
-
-      Transforms.select(editor, {
-        anchor: {path: [nextBlockPath, 0], offset: 0},
-        focus: {path: [nextBlockPath, 0], offset: 0},
-      })
-
-      return
-    }
-
     const selectionAcrossBlocks = anchorBlockPath[0] !== focusBlockPath[0]
 
-    const isInTheMiddleOfNode = !atTheStartOfBlock && !atTheEndOfBlock
-
-    if (isInTheMiddleOfNode && !selectionAcrossBlocks) {
+    if (!selectionAcrossBlocks) {
       Editor.withoutNormalizing(editor, () => {
         if (!editor.selection) {
           return
