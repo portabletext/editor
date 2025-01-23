@@ -36,6 +36,16 @@ export type SyntheticBehaviorEvent =
       }
     }
   | {
+      type: 'block.set'
+      at: [KeyedSegment]
+      [props: string]: unknown
+    }
+  | {
+      type: 'block.unset'
+      at: [KeyedSegment]
+      props: Array<string>
+    }
+  | {
       type: 'blur'
     }
   | {
