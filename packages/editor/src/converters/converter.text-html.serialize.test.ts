@@ -8,7 +8,7 @@ import {
 import {createTestKeyGenerator} from '../internal-utils/test-key-generator'
 import type {EditorSelection} from '../utils'
 import {converterTextHtml} from './converter.text-html'
-import {coreConverters} from './converters'
+import {coreConverters} from './converters.core'
 
 const decoratedParagraph: PortableTextTextBlock = {
   _key: 'k0',

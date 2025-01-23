@@ -12,7 +12,7 @@ import {
   type Snapshot,
 } from 'xstate'
 import type {Behavior, CustomBehaviorEvent} from '../behaviors/behavior.types'
-import {coreConverters} from '../converters/converters'
+import {coreConverters} from '../converters/converters.core'
 import {compileType} from '../internal-utils/schema'
 import type {PickFromUnion} from '../type-utils'
 import type {EditableAPI} from '../types/editor'
