@@ -42,6 +42,7 @@ export function createWithEventListeners(
           case 'deserialization.failure':
           case 'deserialization.success':
           case 'focus':
+          case 'insert.block':
           case 'insert.block object':
           case 'insert.inline object':
           case 'insert.span':
