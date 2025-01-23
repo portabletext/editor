@@ -5,11 +5,11 @@ import {coreDeserializeBehavior} from './behavior.core.deserialize'
 import {coreListBehaviors} from './behavior.core.lists'
 import {coreSerializeBehaviors} from './behavior.core.serialize'
 import {coreStyleBehaviors} from './behavior.core.style'
-import {defineBehavior} from './behavior.types'
+import {defineBehavior, raise} from './behavior.types'
 
 const softReturn = defineBehavior({
   on: 'insert.soft break',
-  actions: [() => [{type: 'insert.text', text: '\n'}]],
+  actions: [() => [raise({type: 'insert.text', text: '\n'})]],
 })
 
 /**
