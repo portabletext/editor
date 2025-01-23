@@ -113,7 +113,6 @@ export const stepDefinitions = [
   Given('two editors', async (context: Context) => {
     const testActor = createActor(testMachine, {
       input: {
-        behaviors: [],
         schema,
         value: undefined,
       },
