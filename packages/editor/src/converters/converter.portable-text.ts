@@ -1,6 +1,6 @@
 import {parseBlock} from '../internal-utils/parse-blocks'
 import {sliceBlocks} from '../utils'
-import type {Converter} from './converter'
+import type {Converter} from './converter.types'
 
 export const converterPortableText: Converter<'application/x-portable-text'> = {
   serialize: ({context, event}) => {

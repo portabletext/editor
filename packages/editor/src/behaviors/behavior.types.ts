@@ -5,7 +5,7 @@ import type {
 } from '@sanity/types'
 import type {TextUnit} from 'slate'
 import type {TextInsertTextOptions} from 'slate/dist/interfaces/transforms/text'
-import type {ConverterEvent} from '../converters/converter'
+import type {ConverterEvent} from '../converters/converter.types'
 import type {EditorContext} from '../editor/editor-snapshot'
 import type {MIMEType} from '../internal-utils/mime-type'
 import type {OmitFromUnion, PickFromUnion} from '../type-utils'

@@ -2,7 +2,7 @@ import {htmlToBlocks} from '@portabletext/block-tools'
 import {toHTML} from '@portabletext/to-html'
 import type {PortableTextBlock} from '@sanity/types'
 import {sliceBlocks} from '../utils'
-import type {Converter} from './converter'
+import type {Converter} from './converter.types'
 
 export const converterTextHtml: Converter<'text/html'> = {
   serialize: ({context, event}) => {

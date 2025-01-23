@@ -1,7 +1,7 @@
 import {htmlToBlocks} from '@portabletext/block-tools'
 import {isPortableTextTextBlock, type PortableTextBlock} from '@sanity/types'
 import {sliceBlocks} from '../utils'
-import type {Converter} from './converter'
+import type {Converter} from './converter.types'
 
 export const converterTextPlain: Converter<'text/plain'> = {
   mimeType: 'text/plain',
