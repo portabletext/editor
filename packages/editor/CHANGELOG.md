@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.26.0](https://github.com/portabletext/editor/compare/editor-v1.25.0...editor-v1.26.0) (2025-01-23)
+
+
+### Features
+
+* **behaviors:** add `block.(set|unset)` events and actions ([f804157](https://github.com/portabletext/editor/commit/f804157fb2f2bfa6d099dc20086980ac0487eafd))
+* **behaviors:** add `insert.block` event and action ([0fd745b](https://github.com/portabletext/editor/commit/0fd745b9358c4622056a3541e44c3b92cb018b0c))
+* **core behaviors:** raise `insert.text` event from `insert.sort break` Behavior ([c35b7bd](https://github.com/portabletext/editor/commit/c35b7bd284278f3d7eee89c4fd0382a0c4bbbfc9))
+* move `insert.break` at start/end of text block to core Behaviors ([56ff60b](https://github.com/portabletext/editor/commit/56ff60bd1e3c1eb71379b31448fb066d6e3edd49))
+* **selectors:** add `isAtThe(End|Start)OfBlock` ([470d533](https://github.com/portabletext/editor/commit/470d53390074878485f2e25d2d8697ee8a22e8c6))
+* **utils:** add `getBlockEndPoint` ([e9d208f](https://github.com/portabletext/editor/commit/e9d208f89eb31ae8106f9517d16afdbacdd1ff2f))
+* **utils:** add `isEqualSelectionPoints` ([d8c3941](https://github.com/portabletext/editor/commit/d8c394131b6da6b62960ee88a34292d925fae3ad))
+
+
+### Bug Fixes
+
+* fix issue with inserting block before/after empty block in empty editor ([3622e7d](https://github.com/portabletext/editor/commit/3622e7de303e493a7730b0fc9b524b6cf7db48ae))
+* **selectors:** account for no selection in `isSelectionCollapsed` ([e3e5766](https://github.com/portabletext/editor/commit/e3e5766a3b323193ebf0577e2a46b1ee73230ffe))
+
 ## [1.25.0](https://github.com/portabletext/editor/compare/editor-v1.24.0...editor-v1.25.0) (2025-01-22)
 
 
