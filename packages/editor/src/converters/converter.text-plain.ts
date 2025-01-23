@@ -1,9 +1,9 @@
 import {htmlToBlocks} from '@portabletext/block-tools'
 import {isPortableTextTextBlock, type PortableTextBlock} from '@sanity/types'
 import {sliceBlocks} from '../utils'
-import type {Converter} from './converter.types'
+import {defineConverter} from './converter.types'
 
-export const converterTextPlain: Converter<'text/plain'> = {
+export const converterTextPlain = defineConverter({
   mimeType: 'text/plain',
   serialize: ({context, event}) => {
     if (!context.selection) {
@@ -73,7 +73,7 @@ export const converterTextPlain: Converter<'text/plain'> = {
       mimeType: 'text/plain',
     }
   },
-}
+})
 
 const entityMap: Record<string, string> = {
   '&': '&amp;',
