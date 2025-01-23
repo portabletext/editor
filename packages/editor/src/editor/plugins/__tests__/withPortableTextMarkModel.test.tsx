@@ -461,11 +461,11 @@ describe('plugin:withPortableTextMarksModel', () => {
               style: 'normal',
             },
             {
-              _key: '3',
+              _key: '5',
               _type: 'myTestBlockType',
               children: [
                 {
-                  _key: '2',
+                  _key: '3',
                   _type: 'span',
                   marks: [],
                   text: '',

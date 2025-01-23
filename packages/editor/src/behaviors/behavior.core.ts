@@ -2,6 +2,7 @@ import {coreAnnotationBehaviors} from './behavior.core.annotations'
 import {coreBlockObjectBehaviors} from './behavior.core.block-objects'
 import {coreDecoratorBehaviors} from './behavior.core.decorators'
 import {coreDeserializeBehavior} from './behavior.core.deserialize'
+import {coreInsertBreakBehaviors} from './behavior.core.insert-break'
 import {coreListBehaviors} from './behavior.core.lists'
 import {coreSerializeBehaviors} from './behavior.core.serialize'
 import {coreStyleBehaviors} from './behavior.core.style'
@@ -38,6 +39,8 @@ export const coreBehaviors = [
   coreListBehaviors.clearListOnEnter,
   coreListBehaviors.indentListOnTab,
   coreListBehaviors.unindentListOnShiftTab,
+  coreInsertBreakBehaviors.atTheEndOfTextBlock,
+  coreInsertBreakBehaviors.atTheStartOfTextBlock,
   coreSerializeBehaviors.serialize,
   coreSerializeBehaviors['serialization.success'],
   coreStyleBehaviors.toggleStyleOff,
@@ -53,6 +56,7 @@ export const coreBehavior = {
   decorators: coreDecoratorBehaviors,
   deserialize: coreDeserializeBehavior,
   blockObjects: coreBlockObjectBehaviors,
+  insertBreak: coreInsertBreakBehaviors,
   lists: coreListBehaviors,
   ...coreSerializeBehaviors,
   style: coreSerializeBehaviors,
