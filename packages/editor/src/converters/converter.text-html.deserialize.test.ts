@@ -6,7 +6,7 @@ import {
 } from '../editor/define-schema'
 import {createTestKeyGenerator} from '../internal-utils/test-key-generator'
 import {converterTextHtml} from './converter.text-html'
-import {coreConverters} from './converters'
+import {coreConverters} from './converters.core'
 
 function createContext(schema: SchemaDefinition) {
   return {

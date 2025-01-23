@@ -8,7 +8,7 @@ import {
 import type {EditorContext} from '../editor/editor-snapshot'
 import type {EditorSelection} from '../utils'
 import {converterTextPlain} from './converter.text-plain'
-import {coreConverters} from './converters'
+import {coreConverters} from './converters.core'
 
 const b1: PortableTextTextBlock = {
   _type: 'block',
