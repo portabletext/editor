@@ -4,6 +4,7 @@ export {
   blockOffsetToSpanSelectionPoint,
   spanSelectionPointToBlockOffset,
 } from './util.block-offset'
+export {getBlockEndPoint} from './util.get-block-end-point'
 export {getBlockStartPoint} from './util.get-block-start-point'
 export {getTextBlockText} from './util.get-text-block-text'
 export {isEmptyTextBlock} from './util.is-empty-text-block'
