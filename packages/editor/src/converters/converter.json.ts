@@ -1,6 +1,7 @@
-import type {Converter} from './converter.types'
+import {defineConverter} from './converter.types'
 
-export const converterJson: Converter<'application/json'> = {
+export const converterJson = defineConverter({
+  mimeType: 'application/json',
   serialize: ({context, event}) => {
     const portableTextConverter = context.converters.find(
       (converter) => converter.mimeType === 'application/x-portable-text',
@@ -49,5 +50,4 @@ export const converterJson: Converter<'application/json'> = {
       mimeType: 'application/json',
     }
   },
-  mimeType: 'application/json',
-}
+})

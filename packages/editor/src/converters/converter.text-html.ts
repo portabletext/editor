@@ -2,9 +2,10 @@ import {htmlToBlocks} from '@portabletext/block-tools'
 import {toHTML} from '@portabletext/to-html'
 import type {PortableTextBlock} from '@sanity/types'
 import {sliceBlocks} from '../utils'
-import type {Converter} from './converter.types'
+import {defineConverter} from './converter.types'
 
-export const converterTextHtml: Converter<'text/html'> = {
+export const converterTextHtml = defineConverter({
+  mimeType: 'text/html',
   serialize: ({context, event}) => {
     if (!context.selection) {
       return {
@@ -57,5 +58,4 @@ export const converterTextHtml: Converter<'text/html'> = {
       mimeType: 'text/html',
     }
   },
-  mimeType: 'text/html',
-}
+})

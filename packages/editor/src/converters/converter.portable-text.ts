@@ -1,8 +1,9 @@
 import {parseBlock} from '../internal-utils/parse-blocks'
 import {sliceBlocks} from '../utils'
-import type {Converter} from './converter.types'
+import {defineConverter} from './converter.types'
 
-export const converterPortableText: Converter<'application/x-portable-text'> = {
+export const converterPortableText = defineConverter({
+  mimeType: 'application/x-portable-text',
   serialize: ({context, event}) => {
     if (!context.selection) {
       return {
@@ -55,5 +56,4 @@ export const converterPortableText: Converter<'application/x-portable-text'> = {
       mimeType: 'application/x-portable-text',
     }
   },
-  mimeType: 'application/x-portable-text',
-}
+})

@@ -9,6 +9,12 @@ export type Converter<TMIMEType extends MIMEType = MIMEType> = {
   deserialize: Deserializer<TMIMEType>
 }
 
+export function defineConverter<TMIMEType extends MIMEType>(
+  converter: Converter<TMIMEType>,
+): Converter<TMIMEType> {
+  return converter
+}
+
 export type ConverterEvent<TMIMEType extends MIMEType = MIMEType> =
   | {
       type: 'serialize'
