@@ -66,6 +66,8 @@ export type EditorEvent =
       | 'annotation.add'
       | 'annotation.remove'
       | 'annotation.toggle'
+      | 'block.set'
+      | 'block.unset'
       | 'blur'
       | 'data transfer.set'
       | 'decorator.add'

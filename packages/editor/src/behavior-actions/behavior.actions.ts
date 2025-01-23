@@ -28,6 +28,8 @@ import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
 import type {PickFromUnion} from '../type-utils'
 import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
 import {insertBlock} from './behavior.action-utils.insert-block'
+import {blockSetBehaviorActionImplementation} from './behavior.action.block.set'
+import {blockUnsetBehaviorActionImplementation} from './behavior.action.block.unset'
 import {dataTransferSetActionImplementation} from './behavior.action.data-transfer-set'
 import {insertBlockObjectActionImplementation} from './behavior.action.insert-block-object'
 import {insertBlocksActionImplementation} from './behavior.action.insert-blocks'
@@ -74,6 +76,8 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'annotation.add': addAnnotationActionImplementation,
   'annotation.remove': removeAnnotationActionImplementation,
   'annotation.toggle': toggleAnnotationActionImplementation,
+  'block.set': blockSetBehaviorActionImplementation,
+  'block.unset': blockUnsetBehaviorActionImplementation,
   'blur': ({action}) => {
     ReactEditor.blur(action.editor)
   },
@@ -357,6 +361,20 @@ function performDefaultAction({
       })
       break
     }
+    case 'block.set': {
+      behaviorActionImplementations['block.set']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'block.unset': {
+      behaviorActionImplementations['block.unset']({
+        context,
+        action,
+      })
+      break
+    }
     case 'blur': {
       behaviorActionImplementations.blur({
         context,
@@ -602,12 +620,11 @@ function performDefaultAction({
       })
       break
     }
-    case 'text block.unset': {
+    default: {
       behaviorActionImplementations['text block.unset']({
         context,
         action,
       })
-      break
     }
   }
 }

@@ -28,6 +28,8 @@ export function createWithEventListeners(
           case 'annotation.add':
           case 'annotation.remove':
           case 'annotation.toggle':
+          case 'block.set':
+          case 'block.unset':
           case 'blur':
           case 'data transfer.set':
           case 'decorator.add':
