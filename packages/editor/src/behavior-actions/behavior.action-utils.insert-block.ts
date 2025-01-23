@@ -52,10 +52,10 @@ export function insertBlock({
       Transforms.insertNodes(editor, block, {at: focusBlockPath})
     } else {
       Editor.insertNode(editor, block)
-    }
 
-    if (focusBlock && isEqualToEmptyEditor([focusBlock], schema)) {
-      Transforms.removeNodes(editor, {at: focusBlockPath})
+      if (focusBlock && isEqualToEmptyEditor([focusBlock], schema)) {
+        Transforms.removeNodes(editor, {at: focusBlockPath})
+      }
     }
   }
 }
