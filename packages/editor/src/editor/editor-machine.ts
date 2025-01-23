@@ -172,7 +172,6 @@ export type InternalEditorEmittedEvent =
       description: string
       data: unknown
     }
-  | {type: 'select'; selection: EditorSelection}
   | {type: 'selection'; selection: EditorSelection}
   | {type: 'blurred'; event: FocusEvent<HTMLDivElement, Element>}
   | {type: 'focused'; event: FocusEvent<HTMLDivElement, Element>}
@@ -208,6 +207,7 @@ export type InternalEditorEmittedEvent =
       | 'move.block'
       | 'move.block down'
       | 'move.block up'
+      | 'select'
       | 'select.next block'
       | 'select.previous block'
       | 'serialization.failure'
