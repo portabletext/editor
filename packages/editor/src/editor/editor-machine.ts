@@ -199,6 +199,7 @@ export type InternalEditorEmittedEvent =
       | 'deserialization.failure'
       | 'deserialization.success'
       | 'focus'
+      | 'insert.block'
       | 'insert.block object'
       | 'insert.inline object'
       | 'insert.span'

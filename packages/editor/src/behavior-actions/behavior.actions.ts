@@ -39,6 +39,7 @@ import {
 } from './behavior.action.insert-break'
 import {insertInlineObjectActionImplementation} from './behavior.action.insert-inline-object'
 import {insertSpanActionImplementation} from './behavior.action.insert-span'
+import {insertBlockActionImplementation} from './behavior.action.insert.block'
 import {
   addListItemActionImplementation,
   removeListItemActionImplementation,
@@ -165,6 +166,7 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
       },
     })
   },
+  'insert.block': insertBlockActionImplementation,
   'insert.blocks': insertBlocksActionImplementation,
   'insert.block object': insertBlockObjectActionImplementation,
   'insert.break': insertBreakActionImplementation,
@@ -454,6 +456,13 @@ function performDefaultAction({
     }
     case 'focus': {
       behaviorActionImplementations.focus({
+        context,
+        action,
+      })
+      break
+    }
+    case 'insert.block': {
+      behaviorActionImplementations['insert.block']({
         context,
         action,
       })

@@ -78,6 +78,7 @@ export type EditorEvent =
       | 'deserialization.failure'
       | 'deserialization.success'
       | 'focus'
+      | 'insert.block'
       | 'insert.block object'
       | 'insert.inline object'
       | 'insert.span'

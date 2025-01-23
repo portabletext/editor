@@ -112,6 +112,11 @@ export type SyntheticBehaviorEvent =
       type: 'insert.soft break'
     }
   | {
+      type: 'insert.block'
+      block: PortableTextBlock
+      placement: 'auto' | 'after' | 'before'
+    }
+  | {
       type: 'insert.span'
       text: string
       annotations?: Array<{
