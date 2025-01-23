@@ -20,7 +20,7 @@ import {
   type NativeBehaviorEvent,
   type SyntheticBehaviorEvent,
 } from '../behaviors/behavior.types'
-import type {Converter} from '../converters/converter'
+import type {Converter} from '../converters/converter.types'
 import type {OmitFromUnion, PickFromUnion} from '../type-utils'
 import type {
   EditorSelection,

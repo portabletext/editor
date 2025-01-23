@@ -1,5 +1,5 @@
 import type {PortableTextBlock} from '@sanity/types'
-import type {Converter} from '../converters/converter'
+import type {Converter} from '../converters/converter.types'
 import {toPortableTextRange} from '../internal-utils/ranges'
 import {fromSlateValue} from '../internal-utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'

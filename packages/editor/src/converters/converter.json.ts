@@ -1,4 +1,4 @@
-import type {Converter} from './converter'
+import type {Converter} from './converter.types'
 
 export const converterJson: Converter<'application/json'> = {
   serialize: ({context, event}) => {
