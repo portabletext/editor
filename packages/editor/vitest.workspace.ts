@@ -11,7 +11,12 @@ export default defineWorkspace([
     ],
     test: {
       name: 'browser',
-      include: ['gherkin-tests/**/*.test.ts', 'gherkin-tests/**/*.test.tsx'],
+      include: [
+        'gherkin-tests/**/*.test.ts',
+        'gherkin-tests/**/*.test.tsx',
+        'tests/**/*.test.ts',
+        'tests/**/*.test.tsx',
+      ],
       browser: {
         enabled: true,
         headless: true,
@@ -39,7 +44,7 @@ export default defineWorkspace([
     ],
     test: {
       name: 'unit',
-      exclude: ['node_modules', 'e2e-tests', 'gherkin-tests'],
+      exclude: ['node_modules', 'e2e-tests', 'gherkin-tests', 'tests'],
       environment: 'jsdom',
       setupFiles: ['./vitest.setup.ts'],
     },
