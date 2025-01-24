@@ -111,12 +111,12 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
                 text: 'Block A',
               },
               {
-                _key: '3',
+                _key: '2',
                 _type: 'someObject',
                 color: 'red',
               },
               {
-                _key: '4',
+                _key: '3',
                 _type: 'span',
                 marks: [],
                 text: '',
@@ -155,12 +155,12 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
                 text: 'Block A',
               },
               {
-                _key: '3',
+                _key: '2',
                 _type: 'someObject',
                 color: 'red',
               },
               {
-                _key: '7',
+                _key: '5',
                 _type: 'span',
                 marks: [],
                 text: ' ',
@@ -172,8 +172,8 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
         ])
 
         expect(PortableTextEditor.getSelection(editorRef.current)).toEqual({
-          anchor: {path: [{_key: 'a'}, 'children', {_key: '7'}], offset: 1},
-          focus: {path: [{_key: 'a'}, 'children', {_key: '7'}], offset: 1},
+          anchor: {path: [{_key: 'a'}, 'children', {_key: '5'}], offset: 1},
+          focus: {path: [{_key: 'a'}, 'children', {_key: '5'}], offset: 1},
           backward: false,
         })
       }
@@ -240,7 +240,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
     await waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
-          {_key: '2', _type: 'someObject', color: 'red'},
+          {_key: '1', _type: 'someObject', color: 'red'},
         ])
       }
     })
@@ -292,7 +292,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           ...initialValue,
-          {_key: '2', _type: 'someObject', color: 'red'},
+          {_key: '1', _type: 'someObject', color: 'red'},
         ])
       }
     })
@@ -345,7 +345,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
     await waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
-          {_key: '2', _type: 'someObject', color: 'red'},
+          {_key: '1', _type: 'someObject', color: 'red'},
           ...initialValue,
         ])
       }
@@ -402,7 +402,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           ...value,
-          {_key: '2', _type: 'someObject', color: 'yellow'},
+          {_key: '1', _type: 'someObject', color: 'yellow'},
         ])
       }
     })
@@ -455,7 +455,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           value[0],
-          {_key: '2', _type: 'someObject', color: 'yellow'},
+          {_key: '1', _type: 'someObject', color: 'yellow'},
           value[1],
         ])
       }
@@ -504,7 +504,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           value[0],
-          {_key: '2', _type: 'someObject', color: 'yellow'},
+          {_key: '1', _type: 'someObject', color: 'yellow'},
         ])
       }
     })

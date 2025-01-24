@@ -73,41 +73,34 @@ describe('plugin:withPortableTextMarksModel', () => {
             anchor: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 3},
           })
           PortableTextEditor.toggleMark(editorRef.current, 'strong')
-          expect(PortableTextEditor.getValue(editorRef.current))
-            .toMatchInlineSnapshot(`
-        [
-          {
-            "_key": "a",
-            "_type": "myTestBlockType",
-            "children": [
-              {
-                "_key": "a1",
-                "_type": "span",
-                "marks": [
-                  "strong",
-                ],
-                "text": "1",
-              },
-              {
-                "_key": "2",
-                "_type": "span",
-                "marks": [],
-                "text": "23",
-              },
-              {
-                "_key": "1",
-                "_type": "span",
-                "marks": [
-                  "strong",
-                ],
-                "text": "4",
-              },
-            ],
-            "markDefs": [],
-            "style": "normal",
-          },
-        ]
-      `)
+          expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
+            {
+              _key: 'a',
+              _type: 'myTestBlockType',
+              children: [
+                {
+                  _key: 'a1',
+                  _type: 'span',
+                  marks: ['strong'],
+                  text: '1',
+                },
+                {
+                  _key: '2',
+                  _type: 'span',
+                  marks: [],
+                  text: '23',
+                },
+                {
+                  _key: '1',
+                  _type: 'span',
+                  marks: ['strong'],
+                  text: '4',
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ])
         }
       })
       await waitFor(() => {
@@ -461,11 +454,11 @@ describe('plugin:withPortableTextMarksModel', () => {
               style: 'normal',
             },
             {
-              _key: '5',
+              _key: '1',
               _type: 'myTestBlockType',
               children: [
                 {
-                  _key: '3',
+                  _key: '2',
                   _type: 'span',
                   marks: [],
                   text: '',

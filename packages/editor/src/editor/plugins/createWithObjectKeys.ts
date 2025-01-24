@@ -43,11 +43,19 @@ export function createWithObjectKeys(
       }
 
       if (operation.type === 'split_node') {
+        const existingKeys = [...Node.descendants(editor)].map(
+          ([node]) => node._key,
+        )
+
         apply({
           ...operation,
           properties: {
             ...operation.properties,
-            _key: editorActor.getSnapshot().context.keyGenerator(),
+            _key:
+              operation.properties._key === undefined ||
+              existingKeys.includes(operation.properties._key)
+                ? editorActor.getSnapshot().context.keyGenerator()
+                : operation.properties._key,
           },
         })
 
@@ -56,11 +64,19 @@ export function createWithObjectKeys(
 
       if (operation.type === 'insert_node') {
         if (!Editor.isEditor(operation.node)) {
+          const existingKeys = [...Node.descendants(editor)].map(
+            ([node]) => node._key,
+          )
+
           apply({
             ...operation,
             node: {
               ...operation.node,
-              _key: editorActor.getSnapshot().context.keyGenerator(),
+              _key:
+                operation.node._key === undefined ||
+                existingKeys.includes(operation.node._key)
+                  ? editorActor.getSnapshot().context.keyGenerator()
+                  : operation.node._key,
             },
           })
 
