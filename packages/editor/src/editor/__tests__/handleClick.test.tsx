@@ -28,7 +28,7 @@ async function getEditableElement(
 describe('adds empty text block if its needed', () => {
   const newBlock = {
     _type: 'myTestBlockType',
-    _key: '3',
+    _key: '1',
     style: 'normal',
     markDefs: [],
     children: [
@@ -96,7 +96,7 @@ describe('adds empty text block if its needed', () => {
       },
       {
         _type: 'myTestBlockType',
-        _key: '3',
+        _key: '1',
         style: 'normal',
         markDefs: [],
         children: [

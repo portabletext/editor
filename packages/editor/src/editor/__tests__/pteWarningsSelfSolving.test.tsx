@@ -337,7 +337,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
         PortableTextEditor.focus(editorRef.current)
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           {
-            _key: '5',
+            _key: '3',
             _type: 'myTestBlockType',
             children: [{_key: '4', _type: 'span', marks: [], text: ''}],
             markDefs: [],

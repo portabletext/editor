@@ -38,7 +38,11 @@ export const converterPortableText = defineConverter({
     }
 
     const parsedBlocks = blocks.flatMap((block) => {
-      const parsedBlock = parseBlock({context, block})
+      const parsedBlock = parseBlock({
+        context,
+        block,
+        options: {refreshKeys: true},
+      })
       return parsedBlock ? [parsedBlock] : []
     })
 

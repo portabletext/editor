@@ -9,9 +9,13 @@ import {isTypedObject} from './asserters'
 export function parseBlock({
   context,
   block,
+  options,
 }: {
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>
   block: unknown
+  options: {
+    refreshKeys: boolean
+  }
 }): PortableTextBlock | undefined {
   if (!isTypedObject(block)) {
     return undefined
@@ -26,11 +30,20 @@ export function parseBlock({
     return undefined
   }
 
-  if (!isPortableTextTextBlock(block)) {
+  if (block._type !== context.schema.block.name) {
+    const _key = options.refreshKeys
+      ? context.keyGenerator()
+      : typeof block._key === 'string'
+        ? block._key
+        : context.keyGenerator()
     return {
       ...block,
-      _key: context.keyGenerator(),
+      _key,
     }
+  }
+
+  if (!isPortableTextTextBlock(block)) {
+    return undefined
   }
 
   const markDefKeyMap = new Map<string, string>()
@@ -40,7 +53,7 @@ export function parseBlock({
         (annotation) => annotation.name === markDef._type,
       )
     ) {
-      const _key = context.keyGenerator()
+      const _key = options.refreshKeys ? context.keyGenerator() : markDef._key
       markDefKeyMap.set(markDef._key, _key)
 
       return [
@@ -72,7 +85,7 @@ export function parseBlock({
       return [
         {
           ...child,
-          _key: context.keyGenerator(),
+          _key: options.refreshKeys ? context.keyGenerator() : child._key,
         },
       ]
     }
@@ -94,7 +107,7 @@ export function parseBlock({
     return [
       {
         ...child,
-        _key: context.keyGenerator(),
+        _key: options.refreshKeys ? context.keyGenerator() : child._key,
         marks,
       },
     ]
@@ -102,7 +115,7 @@ export function parseBlock({
 
   const parsedBlock = {
     ...block,
-    _key: context.keyGenerator(),
+    _key: options.refreshKeys ? context.keyGenerator() : block._key,
     children:
       children.length > 0
         ? children

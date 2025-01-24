@@ -361,6 +361,7 @@ export function createWithPortableTextMarkModel(
           ) {
             Transforms.insertNodes(editor, {
               ...op.node,
+              _key: editorActor.getSnapshot().context.keyGenerator(),
               marks:
                 op.node.marks?.filter(
                   (mark) => !annotationsEnding.includes(mark),
@@ -382,6 +383,7 @@ export function createWithPortableTextMarkModel(
           ) {
             Transforms.insertNodes(editor, {
               ...op.node,
+              _key: editorActor.getSnapshot().context.keyGenerator(),
               marks:
                 op.node.marks?.filter(
                   (mark) => !annotationsStarting.includes(mark),
@@ -403,6 +405,7 @@ export function createWithPortableTextMarkModel(
           ) {
             Transforms.insertNodes(editor, {
               ...op.node,
+              _key: editorActor.getSnapshot().context.keyGenerator(),
               marks: nextSpanDecorators,
             })
             return
