@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.26.1](https://github.com/portabletext/editor/compare/editor-v1.26.0...editor-v1.26.1) (2025-01-24)
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^3.71.2 ([5c815ce](https://github.com/portabletext/editor/commit/5c815ce18ce0e7445cedf09749161d768fe51cc7))
+* make text block parsing more lax ([7032886](https://github.com/portabletext/editor/commit/703288667ca038c79baa156f253535189856f59f))
+* only generate new `_key`s when necessary ([4552bd4](https://github.com/portabletext/editor/commit/4552bd4b017b9d8782ee5a2c5f37eb0dc9893db7))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.3
+
 ## [1.26.0](https://github.com/portabletext/editor/compare/editor-v1.25.0...editor-v1.26.0) (2025-01-23)
 
 
