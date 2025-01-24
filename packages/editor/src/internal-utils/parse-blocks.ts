@@ -43,7 +43,24 @@ export function parseBlock({
   }
 
   if (!isPortableTextTextBlock(block)) {
-    return undefined
+    return {
+      _type: context.schema.block.name,
+      _key: options.refreshKeys
+        ? context.keyGenerator()
+        : typeof block._key === 'string'
+          ? block._key
+          : context.keyGenerator(),
+      children: [
+        {
+          _key: context.keyGenerator(),
+          _type: context.schema.span.name,
+          text: '',
+          marks: [],
+        },
+      ],
+      markDefs: [],
+      style: context.schema.styles[0].value,
+    }
   }
 
   const markDefKeyMap = new Map<string, string>()
