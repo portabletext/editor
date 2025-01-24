@@ -58,10 +58,10 @@
     "@types/lodash": "^4.17.7",
     "@types/react": "^19.0.3",
     "@vercel/stega": "0.1.2",
-    "@vitest/coverage-v8": "^3.0.2",
+    "@vitest/coverage-v8": "^3.0.4",
     "jsdom": "^26.0.0",
     "typescript": "^5.7.3",
-    "vitest": "^3.0.2"
+    "vitest": "^3.0.4"
   },
   "peerDependencies": {
     "@sanity/types": "^3.71.2",
