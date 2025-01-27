@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.26.3](https://github.com/portabletext/editor/compare/editor-v1.26.2...editor-v1.26.3) (2025-01-27)
+
+
+### Bug Fixes
+
+* allow safe behaviors while syncing ([cd2813a](https://github.com/portabletext/editor/commit/cd2813ae0b4c1633e25911b4cc5bac7a504a1b6d))
+
 ## [1.26.2](https://github.com/portabletext/editor/compare/editor-v1.26.1...editor-v1.26.2) (2025-01-27)
 
 
