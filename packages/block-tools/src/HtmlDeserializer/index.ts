@@ -80,11 +80,14 @@ export default class HtmlDeserializer {
     const fragment = parseHtml(html)
     const children = Array.from(fragment.childNodes) as HTMLElement[]
     // Ensure that there are no blocks within blocks, and trim whitespace
-    const blocks = trimWhitespace(
-      flattenNestedBlocks(
-        ensureRootIsBlocks(this.deserializeElements(children)),
-      ),
-    )
+    const deserializedElements = this.deserializeElements(children)
+    // console.log('deserializedElements', deserializedElements)
+    const rawBlocks = ensureRootIsBlocks(deserializedElements)
+    // console.log('rawBlocks', rawBlocks)
+    const flattenedBlocks = flattenNestedBlocks(rawBlocks)
+    // console.log('flattenedBlocks', flattenedBlocks)
+    const blocks = trimWhitespace(flattenedBlocks)
+    // console.log('blocks', blocks)
 
     if (this._markDefs.length > 0) {
       blocks
