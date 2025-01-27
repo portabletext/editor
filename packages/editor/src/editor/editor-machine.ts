@@ -548,6 +548,18 @@ export const editorMachine = setup({
       states: {
         'read only': {
           initial: 'determine initial edit mode',
+          on: {
+            'behavior event': {
+              actions: 'handle behavior event',
+              guard: ({event}) =>
+                event.behaviorEvent.type === 'copy' ||
+                event.behaviorEvent.type === 'data transfer.set' ||
+                event.behaviorEvent.type === 'serialize' ||
+                event.behaviorEvent.type === 'serialization.failure' ||
+                event.behaviorEvent.type === 'serialization.success' ||
+                event.behaviorEvent.type === 'select',
+            },
+          },
           states: {
             'determine initial edit mode': {
               on: {
@@ -564,16 +576,6 @@ export const editorMachine = setup({
             },
             'read only': {
               on: {
-                'behavior event': {
-                  actions: 'handle behavior event',
-                  guard: ({event}) =>
-                    event.behaviorEvent.type === 'copy' ||
-                    event.behaviorEvent.type === 'data transfer.set' ||
-                    event.behaviorEvent.type === 'serialize' ||
-                    event.behaviorEvent.type === 'serialization.failure' ||
-                    event.behaviorEvent.type === 'serialization.success' ||
-                    event.behaviorEvent.type === 'select',
-                },
                 'update readOnly': {
                   guard: ({event}) => !event.readOnly,
                   target: '#editor.edit mode.editable',
