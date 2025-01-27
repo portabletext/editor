@@ -99,7 +99,7 @@
   "devDependencies": {
     "@portabletext/toolkit": "^2.0.16",
     "@sanity/diff-match-patch": "^3.2.0",
-    "@sanity/pkg-utils": "^7.0.2",
+    "@sanity/pkg-utils": "^7.0.3",
     "@sanity/schema": "^3.71.2",
     "@sanity/types": "^3.71.2",
     "@testing-library/jest-dom": "^6.6.3",
