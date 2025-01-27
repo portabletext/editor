@@ -13,6 +13,7 @@ import {
 import type {BlockEnabledFeatures, DeserializerRule} from '../../types'
 import {keyGenerator} from '../../util/randomKey'
 import {isElement, tagName} from '../helpers'
+import {whitespaceTextNodeRule} from './whitespace-text-node'
 
 export function resolveListItem(
   listNodeTagName: string,
@@ -32,35 +33,9 @@ export default function createHTMLRules(
   options: BlockEnabledFeatures & {keyGenerator?: () => string},
 ): DeserializerRule[] {
   return [
-    // Text nodes
+    whitespaceTextNodeRule,
     {
-      deserialize(el) {
-        if (tagName(el) === 'pre') {
-          return undefined
-        }
-        const isValidWhiteSpace =
-          el.nodeType === 3 &&
-          (el.textContent || '')
-            .replace(/[\r\n]/g, ' ')
-            .replace(/\s\s+/g, ' ') === ' ' &&
-          el.nextSibling &&
-          el.nextSibling.nodeType !== 3 &&
-          el.previousSibling &&
-          el.previousSibling.nodeType !== 3
-        const isValidText =
-          (isValidWhiteSpace || el.textContent !== ' ') &&
-          tagName(el.parentNode) !== 'body'
-        if (el.nodeName === '#text' && isValidText) {
-          return {
-            ...DEFAULT_SPAN,
-            marks: [],
-            text: (el.textContent || '').replace(/\s\s+/g, ' '),
-          }
-        }
-        return undefined
-      },
-    }, // Pre element
-    {
+      // Pre element
       deserialize(el) {
         if (tagName(el) !== 'pre') {
           return undefined
