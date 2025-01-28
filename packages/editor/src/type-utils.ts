@@ -1,5 +1,5 @@
 /**
- * @alpha
+ * @internal
  */
 export type PickFromUnion<
   TUnion,
@@ -8,7 +8,7 @@ export type PickFromUnion<
 > = TUnion extends Record<TTagKey, TPickedTags> ? TUnion : never
 
 /**
- * @alpha
+ * @internal
  */
 export type OmitFromUnion<
   TUnion,
