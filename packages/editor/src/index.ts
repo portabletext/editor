@@ -26,10 +26,10 @@ export type {EditorSchema} from './editor/define-schema'
 export {PortableTextEditable} from './editor/Editable'
 export type {PortableTextEditableProps} from './editor/Editable'
 export {EditorEventListener} from './editor/editor-event-listener'
-export {
-  type EditorEmittedEvent,
-  type MutationEvent,
-  type PatchesEvent,
+export type {
+  EditorEmittedEvent,
+  MutationEvent,
+  PatchesEvent,
 } from './editor/editor-machine'
 export {
   EditorProvider,

@@ -45,9 +45,9 @@ export function createWithPortableTextSelections(
           )
         }
         if (ptRange) {
-          editorActor.send({type: 'selection', selection: ptRange})
+          editorActor.send({type: 'notify.selection', selection: ptRange})
         } else {
-          editorActor.send({type: 'selection', selection: null})
+          editorActor.send({type: 'notify.selection', selection: null})
         }
       }
       prevSelection = editor.selection

@@ -21,7 +21,7 @@ import {
   type SyntheticBehaviorEvent,
 } from '../behaviors/behavior.types'
 import type {Converter} from '../converters/converter.types'
-import type {OmitFromUnion, PickFromUnion} from '../type-utils'
+import type {NamespaceEvent} from '../type-utils'
 import type {
   EditorSelection,
   InvalidValueResolution,
@@ -32,16 +32,6 @@ import {createEditorSnapshot} from './editor-snapshot'
 import {withApplyingBehaviorActions} from './with-applying-behavior-actions'
 
 export * from 'xstate/guards'
-
-/**
- * @internal
- */
-export type EditorActor = ActorRefFrom<typeof editorMachine>
-
-/**
- * @internal
- */
-export type PatchEvent = {type: 'patch'; patch: Patch}
 
 /**
  * @public
@@ -66,26 +56,9 @@ export type MutationEvent = {
 }
 
 /**
- * @internal
+ * @public
  */
-export type InternalEditorEvent =
-  | {type: 'normalizing'}
-  | {type: 'done normalizing'}
-  | {type: 'done syncing initial value'}
-  | {
-      type: 'behavior event'
-      behaviorEvent: SyntheticBehaviorEvent | NativeBehaviorEvent
-      editor: PortableTextSlateEditor
-      defaultActionCallback?: () => void
-      nativeEvent?: {preventDefault: () => void}
-    }
-  | {
-      type: 'custom behavior event'
-      behaviorEvent: CustomBehaviorEvent
-      editor: PortableTextSlateEditor
-      nativeEvent?: {preventDefault: () => void}
-    }
-  | CustomBehaviorEvent
+export type ExternalEditorEvent =
   | {
       type: 'add behavior'
       behavior: Behavior
@@ -118,53 +91,21 @@ export type InternalEditorEvent =
       type: 'update maxBlocks'
       maxBlocks: number | undefined
     }
-  | OmitFromUnion<
-      InternalEditorEmittedEvent,
-      'type',
-      'ready' | 'read only' | 'editable'
-    >
+  | PatchesEvent
 
 /**
  * @public
  */
-export type EditorEmittedEvent = PickFromUnion<
-  InternalEditorEmittedEvent,
-  'type',
-  | 'blurred'
-  | 'done loading'
-  | 'editable'
-  | 'error'
-  | 'focused'
-  | 'invalid value'
-  | 'loading'
-  | 'mutation'
-  | 'patch'
-  | 'read only'
-  | 'ready'
-  | 'selection'
-  | 'value changed'
->
-
-/**
- * @internal
- */
-export type InternalEditorEmittedEvent =
-  | {type: 'ready'}
-  | PatchEvent
-  | PatchesEvent
-  | MutationEvent
+export type EditorEmittedEvent =
   | {
-      type: 'unset'
-      previousValue: Array<PortableTextBlock>
+      type: 'blurred'
+      event: FocusEvent<HTMLDivElement, Element>
     }
   | {
-      type: 'value changed'
-      value: Array<PortableTextBlock> | undefined
+      type: 'done loading'
     }
   | {
-      type: 'invalid value'
-      resolution: InvalidValueResolution | null
-      value: Array<PortableTextBlock> | undefined
+      type: 'editable'
     }
   | {
       type: 'error'
@@ -172,59 +113,96 @@ export type InternalEditorEmittedEvent =
       description: string
       data: unknown
     }
-  | {type: 'selection'; selection: EditorSelection}
-  | {type: 'blurred'; event: FocusEvent<HTMLDivElement, Element>}
-  | {type: 'focused'; event: FocusEvent<HTMLDivElement, Element>}
-  | {type: 'loading'}
-  | {type: 'done loading'}
-  | {type: 'read only'}
-  | {type: 'editable'}
-  | PickFromUnion<
-      SyntheticBehaviorEvent,
-      'type',
-      | 'annotation.add'
-      | 'annotation.remove'
-      | 'annotation.toggle'
-      | 'block.set'
-      | 'block.unset'
-      | 'blur'
-      | 'data transfer.set'
-      | 'decorator.add'
-      | 'decorator.remove'
-      | 'decorator.toggle'
-      | 'delete.backward'
-      | 'delete.block'
-      | 'delete.forward'
-      | 'delete.text'
-      | 'deserialization.failure'
-      | 'deserialization.success'
-      | 'focus'
-      | 'insert.block'
-      | 'insert.block object'
-      | 'insert.inline object'
-      | 'insert.span'
-      | 'insert.text block'
-      | 'list item.add'
-      | 'list item.remove'
-      | 'list item.toggle'
-      | 'move.block'
-      | 'move.block down'
-      | 'move.block up'
-      | 'select'
-      | 'select.next block'
-      | 'select.previous block'
-      | 'serialization.failure'
-      | 'serialization.success'
-      | 'style.add'
-      | 'style.remove'
-      | 'style.toggle'
-      | 'text block.set'
-      | 'text block.unset'
-    >
+  | {
+      type: 'focused'
+      event: FocusEvent<HTMLDivElement, Element>
+    }
+  | {
+      type: 'invalid value'
+      resolution: InvalidValueResolution | null
+      value: Array<PortableTextBlock> | undefined
+    }
+  | {
+      type: 'loading'
+    }
+  | MutationEvent
+  | PatchEvent
+  | {
+      type: 'read only'
+    }
+  | {
+      type: 'ready'
+    }
+  | {
+      type: 'selection'
+      selection: EditorSelection
+    }
+  | {
+      type: 'value changed'
+      value: Array<PortableTextBlock> | undefined
+    }
+
+type PatchEvent = {
+  type: 'patch'
+  patch: Patch
+}
+
+type UnsetEvent = {
+  type: 'unset'
+  previousValue: Array<PortableTextBlock>
+}
+
+/**
+ * @internal
+ */
+export type EditorActor = ActorRefFrom<typeof editorMachine>
+
+/**
+ * @internal
+ */
+export type InternalEditorEvent =
+  | {
+      type: 'normalizing'
+    }
+  | {
+      type: 'done normalizing'
+    }
+  | {
+      type: 'done syncing initial value'
+    }
+  | {
+      type: 'behavior event'
+      behaviorEvent: SyntheticBehaviorEvent | NativeBehaviorEvent
+      editor: PortableTextSlateEditor
+      defaultActionCallback?: () => void
+      nativeEvent?: {preventDefault: () => void}
+    }
+  | {
+      type: 'custom behavior event'
+      behaviorEvent: CustomBehaviorEvent
+      editor: PortableTextSlateEditor
+      nativeEvent?: {preventDefault: () => void}
+    }
+  | CustomBehaviorEvent
+  | ExternalEditorEvent
+  | MutationEvent
+  | NamespaceEvent<EditorEmittedEvent, 'notify'>
+  | NamespaceEvent<UnsetEvent, 'notify'>
+  | PatchEvent
+  | SyntheticBehaviorEvent
+
+/**
+ * @internal
+ */
+export type InternalEditorEmittedEvent =
+  | EditorEmittedEvent
+  | PatchesEvent
+  | UnsetEvent
   | {
       type: 'custom.*'
       event: CustomBehaviorEvent
     }
+  | SyntheticBehaviorEvent
 
 /**
  * @internal
@@ -514,23 +492,32 @@ export const editorMachine = setup({
     value: input.value,
   }),
   on: {
-    'add behavior': {actions: 'add behavior to context'},
-    'remove behavior': {actions: 'remove behavior from context'},
-    'unset': {actions: emit(({event}) => event)},
-    'value changed': {actions: emit(({event}) => event)},
-    'invalid value': {actions: emit(({event}) => event)},
-    'error': {actions: emit(({event}) => event)},
-    'selection': {
+    'notify.blurred': {
+      actions: emit(({event}) => ({...event, type: 'blurred'})),
+    },
+    'notify.done loading': {actions: emit({type: 'done loading'})},
+    'notify.error': {actions: emit(({event}) => ({...event, type: 'error'}))},
+    'notify.invalid value': {
+      actions: emit(({event}) => ({...event, type: 'invalid value'})),
+    },
+    'notify.focused': {
+      actions: emit(({event}) => ({...event, type: 'focused'})),
+    },
+    'notify.selection': {
       actions: [
         assign({selection: ({event}) => event.selection}),
-        emit(({event}) => event),
+        emit(({event}) => ({...event, type: 'selection'})),
       ],
     },
-    'blurred': {actions: emit(({event}) => event)},
-    'focused': {actions: emit(({event}) => event)},
-    'loading': {actions: emit({type: 'loading'})},
+    'notify.unset': {actions: emit(({event}) => ({...event, type: 'unset'}))},
+    'notify.loading': {actions: emit({type: 'loading'})},
+    'notify.value changed': {
+      actions: emit(({event}) => ({...event, type: 'value changed'})),
+    },
+
+    'add behavior': {actions: 'add behavior to context'},
+    'remove behavior': {actions: 'remove behavior from context'},
     'patches': {actions: emit(({event}) => event)},
-    'done loading': {actions: emit({type: 'done loading'})},
     'update behaviors': {actions: 'assign behaviors'},
     'update key generator': {
       actions: assign({keyGenerator: ({event}) => event.keyGenerator}),

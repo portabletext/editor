@@ -67,7 +67,22 @@ export function Synchronizer(props: SynchronizerProps) {
 
   useEffect(() => {
     const subscription = syncActorRef.on('*', (event) => {
-      props.editorActor.send(event)
+      switch (event.type) {
+        case 'invalid value':
+          props.editorActor.send({
+            ...event,
+            type: 'notify.invalid value',
+          })
+          break
+        case 'value changed':
+          props.editorActor.send({
+            ...event,
+            type: 'notify.value changed',
+          })
+          break
+        default:
+          props.editorActor.send(event)
+      }
     })
 
     return () => {

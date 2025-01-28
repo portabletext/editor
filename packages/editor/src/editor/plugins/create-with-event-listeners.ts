@@ -17,6 +17,24 @@ export function createWithEventListeners(
     subscriptions.push(() => {
       const subscription = editorActor.on('*', (event) => {
         switch (event.type) {
+          // These events are not relevant for Behaviors
+          case 'blurred':
+          case 'done loading':
+          case 'editable':
+          case 'error':
+          case 'focused':
+          case 'invalid value':
+          case 'loading':
+          case 'mutation':
+          case 'patch':
+          case 'patches':
+          case 'read only':
+          case 'ready':
+          case 'selection':
+          case 'value changed':
+          case 'unset':
+            break
+
           case 'custom.*':
             editorActor.send({
               type: 'custom behavior event',
@@ -25,44 +43,7 @@ export function createWithEventListeners(
             })
             break
 
-          case 'annotation.add':
-          case 'annotation.remove':
-          case 'annotation.toggle':
-          case 'block.set':
-          case 'block.unset':
-          case 'blur':
-          case 'data transfer.set':
-          case 'decorator.add':
-          case 'decorator.remove':
-          case 'decorator.toggle':
-          case 'delete.backward':
-          case 'delete.block':
-          case 'delete.forward':
-          case 'delete.text':
-          case 'deserialization.failure':
-          case 'deserialization.success':
-          case 'focus':
-          case 'insert.block':
-          case 'insert.block object':
-          case 'insert.inline object':
-          case 'insert.span':
-          case 'insert.text block':
-          case 'list item.add':
-          case 'list item.remove':
-          case 'list item.toggle':
-          case 'move.block':
-          case 'move.block down':
-          case 'move.block up':
-          case 'select':
-          case 'select.next block':
-          case 'select.previous block':
-          case 'serialization.failure':
-          case 'serialization.success':
-          case 'style.add':
-          case 'style.remove':
-          case 'style.toggle':
-          case 'text block.set':
-          case 'text block.unset':
+          default:
             editorActor.send({
               type: 'behavior event',
               behaviorEvent: event,
