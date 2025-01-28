@@ -44,7 +44,7 @@ export type EditorActor = ActorRefFrom<typeof editorMachine>
 export type PatchEvent = {type: 'patch'; patch: Patch}
 
 /**
- * @internal
+ * @public
  */
 export type PatchesEvent = {
   type: 'patches'
@@ -53,7 +53,7 @@ export type PatchesEvent = {
 }
 
 /**
- * @internal
+ * @public
  */
 export type MutationEvent = {
   type: 'mutation'
