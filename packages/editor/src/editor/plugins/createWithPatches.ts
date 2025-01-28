@@ -271,7 +271,7 @@ export function createWithPatches({
       ) {
         patches = [...patches, unset([])]
         editorActor.send({
-          type: 'unset',
+          type: 'notify.unset',
           previousValue: fromSlateValue(
             previousChildren,
             schemaTypes.block.name,

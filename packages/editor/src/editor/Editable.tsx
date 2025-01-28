@@ -295,7 +295,7 @@ export const PortableTextEditable = forwardRef<
           // The selection is usually automatically emitted to change$ by the withPortableTextSelections plugin whenever there is a set_selection operation applied.
           if (!slateEditor.operations.some((o) => o.type === 'set_selection')) {
             editorActor.send({
-              type: 'selection',
+              type: 'notify.selection',
               selection: normalizedSelection,
             })
           }
@@ -465,7 +465,7 @@ export const PortableTextEditable = forwardRef<
         event.preventDefault()
 
         // Resolve it as promise (can be either async promise or sync return value)
-        editorActor.send({type: 'loading'})
+        editorActor.send({type: 'notify.loading'})
 
         Promise.resolve(onPasteResult)
           .then((result) => {
@@ -494,7 +494,7 @@ export const PortableTextEditable = forwardRef<
             return error
           })
           .finally(() => {
-            editorActor.send({type: 'done loading'})
+            editorActor.send({type: 'notify.done loading'})
           })
       } else if (event.nativeEvent.clipboardData) {
         editorActor.send({
@@ -525,12 +525,12 @@ export const PortableTextEditable = forwardRef<
           Transforms.select(slateEditor, Editor.start(slateEditor, []))
           slateEditor.onChange()
         }
-        editorActor.send({type: 'focused', event})
+        editorActor.send({type: 'notify.focused', event})
         const newSelection = PortableTextEditor.getSelection(portableTextEditor)
         // If the selection is the same, emit it explicitly here as there is no actual onChange event triggered.
         if (selection === newSelection) {
           editorActor.send({
-            type: 'selection',
+            type: 'notify.selection',
             selection,
           })
         }
@@ -581,7 +581,7 @@ export const PortableTextEditable = forwardRef<
         onBlur(event)
       }
       if (!event.isPropagationStopped()) {
-        editorActor.send({type: 'blurred', event})
+        editorActor.send({type: 'notify.blurred', event})
       }
     },
     [editorActor, onBlur],

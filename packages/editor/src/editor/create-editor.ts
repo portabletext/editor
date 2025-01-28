@@ -11,10 +11,13 @@ import {
   type EventObject,
   type Snapshot,
 } from 'xstate'
-import type {Behavior, CustomBehaviorEvent} from '../behaviors/behavior.types'
+import type {
+  Behavior,
+  CustomBehaviorEvent,
+  SyntheticBehaviorEvent,
+} from '../behaviors/behavior.types'
 import {coreConverters} from '../converters/converters.core'
 import {compileType} from '../internal-utils/schema'
-import type {PickFromUnion} from '../type-utils'
 import type {EditableAPI} from '../types/editor'
 import {createEditorSchema} from './create-editor-schema'
 import {createSlateEditor, type SlateEditor} from './create-slate-editor'
@@ -23,7 +26,7 @@ import {
   editorMachine,
   type EditorActor,
   type EditorEmittedEvent,
-  type InternalEditorEvent,
+  type ExternalEditorEvent,
 } from './editor-machine'
 import {getEditorSnapshot} from './editor-selector'
 import type {EditorSnapshot} from './editor-snapshot'
@@ -60,51 +63,8 @@ export type EditorConfig = {
  * @public
  */
 export type EditorEvent =
-  | PickFromUnion<
-      InternalEditorEvent,
-      'type',
-      | 'annotation.add'
-      | 'annotation.remove'
-      | 'annotation.toggle'
-      | 'block.set'
-      | 'block.unset'
-      | 'blur'
-      | 'data transfer.set'
-      | 'decorator.add'
-      | 'decorator.remove'
-      | 'decorator.toggle'
-      | 'delete.block'
-      | 'delete.text'
-      | 'deserialization.failure'
-      | 'deserialization.success'
-      | 'focus'
-      | 'insert.block'
-      | 'insert.block object'
-      | 'insert.inline object'
-      | 'insert.span'
-      | 'insert.text block'
-      | 'list item.add'
-      | 'list item.remove'
-      | 'list item.toggle'
-      | 'move.block'
-      | 'move.block down'
-      | 'move.block up'
-      | 'select'
-      | 'select.next block'
-      | 'select.previous block'
-      | 'serialization.failure'
-      | 'serialization.success'
-      | 'style.add'
-      | 'style.remove'
-      | 'style.toggle'
-      | 'text block.set'
-      | 'text block.unset'
-      | 'patches'
-      | 'update behaviors'
-      | 'update key generator'
-      | 'update readOnly'
-      | 'update value'
-    >
+  | ExternalEditorEvent
+  | SyntheticBehaviorEvent
   | CustomBehaviorEvent
 
 /**
