@@ -27,13 +27,8 @@ export {PortableTextEditable} from './editor/Editable'
 export type {PortableTextEditableProps} from './editor/Editable'
 export {EditorEventListener} from './editor/editor-event-listener'
 export {
-  editorMachine,
-  type EditorActor,
   type EditorEmittedEvent,
-  type InternalEditorEmittedEvent,
-  type InternalEditorEvent,
   type MutationEvent,
-  type PatchEvent,
   type PatchesEvent,
 } from './editor/editor-machine'
 export {
@@ -49,6 +44,5 @@ export {defaultKeyGenerator as keyGenerator} from './editor/key-generator'
 export type {AddedAnnotationPaths} from './editor/plugins/createWithEditableAPI'
 export {PortableTextEditor} from './editor/PortableTextEditor'
 export type {PortableTextEditorProps} from './editor/PortableTextEditor'
-export type {OmitFromUnion, PickFromUnion} from './type-utils'
 export * from './types/editor'
 export type {HotkeyOptions} from './types/options'
