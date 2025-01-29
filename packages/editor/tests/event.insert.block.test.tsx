@@ -26,11 +26,11 @@ describe('event.insert.block', () => {
 
     expect(editorRef.current?.getSnapshot().context.value).toEqual([
       {
-        _key: 'k2',
+        _key: 'k0',
         _type: 'block',
         children: [
           {
-            _key: 'k3',
+            _key: 'k1',
             _type: 'span',
             text: '',
             marks: [],
@@ -62,7 +62,7 @@ describe('event.insert.block', () => {
         _type: 'block',
         children: [
           {
-            _key: 'k4',
+            _key: 'k2',
             _type: 'span',
             text: 'foo',
             marks: [],
@@ -91,11 +91,11 @@ describe('event.insert.block', () => {
 
     expect(editorRef.current?.getSnapshot().context.value).toEqual([
       {
-        _key: 'k2',
+        _key: 'k0',
         _type: 'block',
         children: [
           {
-            _key: 'k3',
+            _key: 'k1',
             _type: 'span',
             text: '',
             marks: [],
@@ -142,7 +142,7 @@ describe('event.insert.block', () => {
         _type: 'block',
         children: [
           {
-            _key: 'k4',
+            _key: 'k2',
             _type: 'span',
             text: 'foo',
             marks: [],
@@ -152,11 +152,11 @@ describe('event.insert.block', () => {
         style: 'normal',
       },
       {
-        _key: 'k5',
+        _key: 'k3',
         _type: 'block',
         children: [
           {
-            _key: 'k6',
+            _key: 'k4',
             _type: 'span',
             text: 'bar',
             marks: [],

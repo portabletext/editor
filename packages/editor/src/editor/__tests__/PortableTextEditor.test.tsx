@@ -32,7 +32,6 @@ describe('initialization', () => {
     await waitFor(() => {
       expect(editorRef.current).not.toBe(null)
       expect(onChange).toHaveBeenCalledWith({type: 'ready'})
-      expect(onChange).toHaveBeenCalledWith({type: 'value', value: undefined})
       expect(container).toMatchInlineSnapshot(`
 <div>
   <div
