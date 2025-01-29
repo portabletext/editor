@@ -4,8 +4,9 @@ import {render} from 'vitest-browser-react'
 import type {Editor} from '../src/editor/create-editor'
 import {defineSchema} from '../src/editor/define-schema'
 import {PortableTextEditable} from '../src/editor/Editable'
-import {EditorProvider, useEditor} from '../src/editor/editor-provider'
+import {EditorProvider} from '../src/editor/editor-provider'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
+import {EditorRefPlugin} from '../src/react-plugins/editor-ref-plugin'
 
 describe('event.insert.block', () => {
   test('Scenario: Inserting block with custom _key', () => {
@@ -166,14 +167,4 @@ describe('event.insert.block', () => {
       },
     ])
   })
-})
-
-const EditorRefPlugin = React.forwardRef<Editor | null>((_, ref) => {
-  const editor = useEditor()
-
-  const portableTextEditorRef = React.useRef(editor)
-
-  React.useImperativeHandle(ref, () => portableTextEditorRef.current, [])
-
-  return null
 })
