@@ -8,7 +8,7 @@ import {
   type Editor,
 } from '../src'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
-import {EditorRefPlugin} from '../src/react-plugins/editor-ref-plugin'
+import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 
 describe('event.update value', () => {
   test('Scenario: Clearing placeholder value', async () => {

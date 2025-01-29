@@ -23,12 +23,13 @@ import {useEditor} from '../editor/editor-provider'
  * @example
  * Listen and log events.
  * ```tsx
- * import {EditorEventListener, EditorProvider} from '@portabletext/editor'
+ * import {EditorProvider} from '@portabletext/editor'
+ * import {EventListenerPlugin} from '@portabletext/editor/plugins'
  *
  * function MyComponent() {
  *  return (
  *  <EditorProvider>
- *   <EditorEventListener
+ *   <EventListenerPlugin
  *    on={(event) => {
  *     console.log(event)
  *    }
@@ -41,7 +42,7 @@ import {useEditor} from '../editor/editor-provider'
  * @example
  * Handle events when there is a mutation.
  * ```tsx
- * <EditorEventListener
+ * <EventListenerPlugin
  *  on={(event) => {
  *    if (event.type === 'mutation') {
  *      console.log('Value changed:', event.snapshot)
@@ -51,7 +52,7 @@ import {useEditor} from '../editor/editor-provider'
  * ```
  * @group Components
  */
-export function EditorEventListener(props: {
+export function EventListenerPlugin(props: {
   on: (event: EditorEmittedEvent) => void
 }) {
   const editor = useEditor()

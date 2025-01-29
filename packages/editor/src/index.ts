@@ -25,7 +25,7 @@ export type {PortableTextMemberSchemaTypes} from './types/editor'
 export type {EditorSchema} from './editor/define-schema'
 export {PortableTextEditable} from './editor/Editable'
 export type {PortableTextEditableProps} from './editor/Editable'
-export {EditorEventListener} from './react-plugins/editor-event-listener'
+export {EventListenerPlugin as EditorEventListener} from './plugins/plugin.event-listener'
 export type {
   EditorEmittedEvent,
   MutationEvent,
