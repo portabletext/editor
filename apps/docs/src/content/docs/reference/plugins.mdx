@@ -1,0 +1,38 @@
+---
+title: Plugins
+description: Plugins reference
+prev: false
+next: false
+---
+
+Plugins are React components placed inside the `EditorProvider`, and are primarily used to register [Behaviors](/concepts/behavior/) ad-hoc in the Editor using the `editor.registerBehavior(...)` API:
+
+```tsx
+function LogTextPlugin() {
+  const editor = useEditor()
+
+  useEffect(() => {
+    const unregisterBehavior = editor.registerBehavior({
+      behavior: defineBehavior({
+        on: 'insert.text',
+        actions: [
+          ({event}) => [
+            {
+              type: 'effect',
+              effect: () => {
+                console.log(event)
+              },
+            },
+          ],
+        ],
+      }),
+    })
+
+    return () => {
+      unregisterBehavior()
+    }
+  }, [editor])
+
+  return null
+}
+```

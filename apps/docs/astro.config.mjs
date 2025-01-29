@@ -7,6 +7,7 @@ import {createStarlightTypeDocPlugin} from 'starlight-typedoc'
 
 const [editorTypeDoc, editorTypeDocSidebar] = createStarlightTypeDocPlugin()
 const [behaviorTypeDoc, behaviorTypeDocSidebar] = createStarlightTypeDocPlugin()
+const [pluginsTypeDoc, pluginsTypeDocSidebar] = createStarlightTypeDocPlugin()
 const [selectorsTypeDoc, selectorsTypeDocSidebar] =
   createStarlightTypeDocPlugin()
 const tsconfig = '../../packages/editor/tsconfig.json'
@@ -81,6 +82,13 @@ export default defineConfig({
               ],
             },
             {
+              label: 'Plugins',
+              items: [
+                {label: 'Overview', slug: 'reference/plugins'},
+                {...pluginsTypeDocSidebar, badge: 'Generated'},
+              ],
+            },
+            {
               label: 'Selectors',
               items: [
                 {label: 'Overview', slug: 'reference/selectors'},
@@ -113,6 +121,17 @@ export default defineConfig({
         behaviorTypeDoc({
           entryPoints: ['../../packages/editor/src/behaviors/index.ts'],
           output: 'api/behaviors',
+          typeDoc: {
+            excludeReferences: true,
+          },
+          sidebar: {
+            collapsed: true,
+          },
+          tsconfig,
+        }),
+        pluginsTypeDoc({
+          entryPoints: ['../../packages/editor/src/plugins/index.ts'],
+          output: 'api/plugins',
           typeDoc: {
             excludeReferences: true,
           },
