@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.27.0](https://github.com/portabletext/editor/compare/editor-v1.26.3...editor-v1.27.0) (2025-01-29)
+
+
+### Features
+
+* ship initial `@portabletext/editor/plugins` ([c026557](https://github.com/portabletext/editor/commit/c0265574960cfcdfcf0244dcb84397de8d9555e1))
+
+
+### Bug Fixes
+
+* avoid clearing initial placeholder value ([072d729](https://github.com/portabletext/editor/commit/072d729c31d4aaf9782a7c2708edeb59f1d4eedd))
+* **deps:** update sanity monorepo to ^3.72.1 ([8a82ff8](https://github.com/portabletext/editor/commit/8a82ff8a838d2ee7759060a81fbd819b64061a9c))
+* mark `mutation` and `patches` events `[@public](https://github.com/public)` ([17eea93](https://github.com/portabletext/editor/commit/17eea932bc6e923ffeed2a08af98452098c1217d))
+* mark `PickFromUnion`/`OmitFromUnion` `[@internal](https://github.com/internal)` ([76dd35b](https://github.com/portabletext/editor/commit/76dd35bf0ce181d885b7a139d6eadf35f1ba7ee8))
+* remove `[@internal](https://github.com/internal)` type exports ([8c74ea3](https://github.com/portabletext/editor/commit/8c74ea3c3a2029c5d58b247bb0dad1cc27a43386))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.4
+
 ## [1.26.3](https://github.com/portabletext/editor/compare/editor-v1.26.2...editor-v1.26.3) (2025-01-27)
 
 
