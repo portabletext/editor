@@ -168,11 +168,9 @@ export const syncMachine = setup({
       assertEvent(event, 'done syncing')
       return context.pendingValue !== event.value
     },
-    'pending value equals previous value': ({context}) =>
-      !(
-        context.previousValue === undefined &&
-        context.pendingValue === undefined
-      ) && isEqual(context.pendingValue, context.previousValue),
+    'pending value equals previous value': ({context}) => {
+      return isEqual(context.pendingValue, context.previousValue)
+    },
   },
   actors: {
     'sync value': syncValueLogic,
