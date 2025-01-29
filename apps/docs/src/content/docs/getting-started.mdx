@@ -33,13 +33,12 @@ Start by installing the editor to your project
 
 <PackageManagers pkg="@portabletext/editor" />
 
-Next, import `EditorProvider`, `EditorEventListener`, `PortableTextEditable`, `defineSchema`, and the types in the code below.
+Next, import `EditorProvider`, `EventListenerPlugin`, `PortableTextEditable`, `defineSchema`, and the types in the code below.
 
 ```tsx
 // App.tsx
 import {
   defineSchema,
-  EditorEventListener,
   EditorProvider,
   PortableTextEditable,
 } from '@portabletext/editor'
@@ -48,6 +47,7 @@ import type {
   RenderDecoratorFunction,
   RenderStyleFunction,
 } from '@portabletext/editor'
+import {EventListenerPlugin} from '@portabletext/editor/plugins'
 ```
 
 You won't need all of these right away, but you can add them now.
@@ -108,7 +108,6 @@ Add `react` and `useState`, then scaffold out a basic application component. For
 // app.tsx
 import {
   defineSchema,
-  EditorEventListener,
   EditorProvider,
   PortableTextEditable,
 } from '@portabletext/editor'
@@ -117,6 +116,7 @@ import type {
   RenderDecoratorFunction,
   RenderStyleFunction,
 } from '@portabletext/editor'
+import {EventListenerPlugin} from '@portabletext/editor/plugins'
 import {useState} from 'react'
 
 const schemaDefinition = defineSchema({
@@ -137,7 +137,7 @@ function App() {
           initialValue: value,
         }}
       >
-        <EditorEventListener
+        <EventListenerPlugin
           on={(event) => {
             if (event.type === 'mutation') {
               setValue(event.value)
@@ -317,7 +317,7 @@ function App() {
           initialValue: value,
         }}
       >
-        <EditorEventListener
+        <EventListenerPlugin
           on={(event) => {
             if (event.type === 'mutation') {
               setValue(event.value)

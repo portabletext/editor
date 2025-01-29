@@ -1,11 +1,11 @@
 import {
-  EditorEventListener,
   EditorProvider,
   PortableTextEditable,
   type PortableTextBlock,
   type SchemaDefinition,
 } from '@portabletext/editor'
 import {coreBehaviors, defineBehavior} from '@portabletext/editor/behaviors'
+import {EventListenerPlugin} from '@portabletext/editor/plugins'
 import {
   getFocusSpan,
   getFocusTextBlock,
@@ -72,7 +72,7 @@ export function PortableTextEditor({customSchema}: PortableTextEditorProps) {
           ],
         }}
       >
-        <EditorEventListener
+        <EventListenerPlugin
           on={(event) => {
             if (event.type === 'patch') {
               setValue((prevValue) => applyAll(prevValue, [event.patch]))
