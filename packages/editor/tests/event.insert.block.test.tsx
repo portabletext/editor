@@ -6,7 +6,7 @@ import {defineSchema} from '../src/editor/define-schema'
 import {PortableTextEditable} from '../src/editor/Editable'
 import {EditorProvider} from '../src/editor/editor-provider'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
-import {EditorRefPlugin} from '../src/react-plugins/editor-ref-plugin'
+import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 
 describe('event.insert.block', () => {
   test('Scenario: Inserting block with custom _key', () => {

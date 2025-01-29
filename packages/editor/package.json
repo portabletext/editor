@@ -39,6 +39,12 @@
       "require": "./lib/behaviors/index.cjs",
       "default": "./lib/behaviors/index.js"
     },
+    "./plugins": {
+      "source": "./src/plugins/index.ts",
+      "import": "./lib/plugins/index.js",
+      "require": "./lib/plugins/index.cjs",
+      "default": "./lib/plugins/index.js"
+    },
     "./selectors": {
       "source": "./src/selectors/_exports/index.ts",
       "import": "./lib/selectors/index.js",
