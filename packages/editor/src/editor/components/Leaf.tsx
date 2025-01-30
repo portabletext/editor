@@ -27,7 +27,6 @@ import type {
 } from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 import {usePortableTextEditor} from '../hooks/usePortableTextEditor'
-import {DefaultAnnotation} from '../nodes/DefaultAnnotation'
 import {PortableTextEditor} from '../PortableTextEditor'
 
 const debug = debugWithName('components:Leaf')
@@ -264,11 +263,7 @@ export const Leaf = (props: LeafProps) => {
                 </span>
               )
             } else {
-              returnedChildren = (
-                <DefaultAnnotation annotation={annotation}>
-                  <span ref={spanRef}>{returnedChildren}</span>
-                </DefaultAnnotation>
-              )
+              returnedChildren = <span ref={spanRef}>{returnedChildren}</span>
             }
           }
         })
