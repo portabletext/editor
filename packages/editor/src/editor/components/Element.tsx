@@ -29,7 +29,7 @@ import type {
   RenderListItemFunction,
   RenderStyleFunction,
 } from '../../types/editor'
-import ObjectNode from '../nodes/DefaultObject'
+import {DefaultObject} from './DefaultObject'
 import {DraggableBlock} from './DraggableBlock'
 
 const debug = debugWithName('components:Element')
@@ -137,7 +137,7 @@ export const Element: FunctionComponent<ElementProps> = ({
             {renderChild &&
               renderChild({
                 annotations: EMPTY_ANNOTATIONS, // These inline objects currently doesn't support annotations. This is a limitation of the current PT spec/model.
-                children: <ObjectNode value={value} />,
+                children: <DefaultObject value={value} />,
                 editorElementRef: inlineBlockObjectRef,
                 focused,
                 path: elmPath,
@@ -146,7 +146,7 @@ export const Element: FunctionComponent<ElementProps> = ({
                 type: schemaType,
                 value: value as PortableTextChild,
               })}
-            {!renderChild && <ObjectNode value={value} />}
+            {!renderChild && <DefaultObject value={value} />}
           </span>
         </span>
       )
@@ -280,7 +280,7 @@ export const Element: FunctionComponent<ElementProps> = ({
   if (renderBlock) {
     const _props: Omit<BlockRenderProps, 'type'> = Object.defineProperty(
       {
-        children: <ObjectNode value={value} />,
+        children: <DefaultObject value={value} />,
         editorElementRef: blockRef,
         focused,
         path: blockPath,
@@ -310,7 +310,7 @@ export const Element: FunctionComponent<ElementProps> = ({
           {renderedBlockFromProps ? (
             renderedBlockFromProps
           ) : (
-            <ObjectNode value={value} />
+            <DefaultObject value={value} />
           )}
         </div>
       </DraggableBlock>
