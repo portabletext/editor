@@ -1,3 +1,4 @@
+export type {EditorSchema} from '../editor/define-schema'
 export type {EditorSelector} from '../editor/editor-selector'
 export type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
 export type {
@@ -5,8 +6,7 @@ export type {
   EditorSelectionPoint,
   PortableTextMemberSchemaTypes,
 } from '../types/editor'
-
-export type {EditorSchema} from '../editor/define-schema'
+export {getActiveAnnotations} from './selector.get-active-annotations'
 export {getActiveListItem} from './selector.get-active-list-item'
 export {getActiveStyle} from './selector.get-active-style'
 export {getSelectedSlice} from './selector.get-selected-slice'
