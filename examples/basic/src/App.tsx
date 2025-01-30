@@ -1,6 +1,5 @@
 import {
   defineSchema,
-  EditorEventListener,
   EditorProvider,
   keyGenerator,
   PortableTextBlock,
@@ -17,6 +16,7 @@ import {
 import * as selectors from '@portabletext/editor/selectors'
 import {useState} from 'react'
 import './editor.css'
+import {EventListenerPlugin} from '@portabletext/editor/plugins'
 
 // Define the schema for the editor
 // All options are optional
@@ -74,7 +74,7 @@ function App() {
         }}
       >
         {/* Subscribe to editor changes */}
-        <EditorEventListener
+        <EventListenerPlugin
           on={(event) => {
             if (event.type === 'mutation') {
               setValue(event.value)
