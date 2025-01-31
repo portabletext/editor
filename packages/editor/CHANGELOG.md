@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.28.0](https://github.com/portabletext/editor/compare/editor-v1.27.0...editor-v1.28.0) (2025-01-31)
+
+
+### Features
+
+* **selectors:** add `getActiveAnnotations` ([2c86729](https://github.com/portabletext/editor/commit/2c8672957958c04ce7bfed61d631fabeeb1f7558))
+* **selectors:** add `getSelection` ([950df9f](https://github.com/portabletext/editor/commit/950df9f6e7210bf57fa238cf02611cb861766c8d))
+* **selectors:** add `getValue` ([b43e54d](https://github.com/portabletext/editor/commit/b43e54dcdd3efa48947f8286f94680ab8c103ad2))
+
+
+### Bug Fixes
+
+* add deprecation messages to `PortableTextEditor` methods ([e21a591](https://github.com/portabletext/editor/commit/e21a591483c52bc23577c14602485570dc01bd8c))
+* avoid crash on `insert.break` before inline object ([a759bd4](https://github.com/portabletext/editor/commit/a759bd4a1cdfa6c0b56b377a5042cd7f8f2ec8a1))
+* **deps:** update dependency slate-dom to ^0.112.2 ([50cf13a](https://github.com/portabletext/editor/commit/50cf13a7c60b05239726f49551a1cfa61423652c))
+* remove confusing default annotation component ([9c0c903](https://github.com/portabletext/editor/commit/9c0c9033139735894716b2fbf29826ad9d1b161f))
+* render default inline object as a span ([8fb51ae](https://github.com/portabletext/editor/commit/8fb51ae540b18008d21e237335538bbf7cb7e009))
+
 ## [1.27.0](https://github.com/portabletext/editor/compare/editor-v1.26.3...editor-v1.27.0) (2025-01-29)
 
 
