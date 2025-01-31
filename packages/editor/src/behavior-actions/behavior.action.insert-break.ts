@@ -33,24 +33,45 @@ export const insertBreakActionImplementation: BehaviorActionImplementation<
           at: editor.selection,
         })
 
-        const [nextNode, nextNodePath] = Editor.node(
+        const [nextBlock, nextBlockPath] = Editor.node(
           editor,
           Path.next(focusBlockPath),
           {depth: 1},
         )
 
+        const nextChild = Node.child(nextBlock, 0)
+        const firstChildIsInlineObject = !editor.isTextSpan(nextChild)
+
+        if (firstChildIsInlineObject) {
+          // If the first child in the next block is an inline object then we
+          // add an empty span right before it to a place to put the cursor.
+          // This is a Slate constraint that we have to adhere to.
+          Transforms.insertNodes(
+            editor,
+            {
+              _key: context.keyGenerator(),
+              _type: 'span',
+              text: '',
+              marks: [],
+            },
+            {
+              at: [nextBlockPath[0], 0],
+            },
+          )
+        }
+
         Transforms.setSelection(editor, {
-          anchor: {path: [...nextNodePath, 0], offset: 0},
-          focus: {path: [...nextNodePath, 0], offset: 0},
+          anchor: {path: [...nextBlockPath, 0], offset: 0},
+          focus: {path: [...nextBlockPath, 0], offset: 0},
         })
 
         /**
          * Assign new keys to markDefs that are now split across two blocks
          */
         if (
-          editor.isTextBlock(nextNode) &&
-          nextNode.markDefs &&
-          nextNode.markDefs.length > 0
+          editor.isTextBlock(nextBlock) &&
+          nextBlock.markDefs &&
+          nextBlock.markDefs.length > 0
         ) {
           const newMarkDefKeys = new Map<string, string>()
 
@@ -59,7 +80,7 @@ export const insertBreakActionImplementation: BehaviorActionImplementation<
           )
             .map((entry) => entry[0])
             .filter((node) => editor.isTextSpan(node))
-          const children = Node.children(editor, nextNodePath)
+          const children = Node.children(editor, nextBlockPath)
 
           for (const [child, childPath] of children) {
             if (!editor.isTextSpan(child)) {
@@ -108,18 +129,18 @@ export const insertBreakActionImplementation: BehaviorActionImplementation<
 
           // Time to update all the markDefs that need a new key because
           // they've been split across blocks
-          const newMarkDefs = nextNode.markDefs.map((markDef) => ({
+          const newMarkDefs = nextBlock.markDefs.map((markDef) => ({
             ...markDef,
             _key: newMarkDefKeys.get(markDef._key) ?? markDef._key,
           }))
 
           // No need to update the markDefs if they are the same
-          if (!isEqual(nextNode.markDefs, newMarkDefs)) {
+          if (!isEqual(nextBlock.markDefs, newMarkDefs)) {
             Transforms.setNodes(
               editor,
               {markDefs: newMarkDefs},
               {
-                at: nextNodePath,
+                at: nextBlockPath,
                 match: (node) => editor.isTextBlock(node),
               },
             )
