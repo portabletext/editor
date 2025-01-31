@@ -24,130 +24,119 @@ export const insertBreakActionImplementation: BehaviorActionImplementation<
     const selectionAcrossBlocks = anchorBlockPath[0] !== focusBlockPath[0]
 
     if (!selectionAcrossBlocks) {
-      Editor.withoutNormalizing(editor, () => {
-        if (!editor.selection) {
-          return
-        }
+      Transforms.splitNodes(editor, {
+        at: editor.selection,
+      })
 
-        Transforms.splitNodes(editor, {
-          at: editor.selection,
-        })
+      const [nextBlock, nextBlockPath] = Editor.node(
+        editor,
+        Path.next(focusBlockPath),
+        {depth: 1},
+      )
 
-        const [nextBlock, nextBlockPath] = Editor.node(
+      const nextChild = Node.child(nextBlock, 0)
+      const firstChildIsInlineObject = !editor.isTextSpan(nextChild)
+
+      if (firstChildIsInlineObject) {
+        // If the first child in the next block is an inline object then we
+        // add an empty span right before it to a place to put the cursor.
+        // This is a Slate constraint that we have to adhere to.
+        Transforms.insertNodes(
           editor,
-          Path.next(focusBlockPath),
-          {depth: 1},
+          {
+            _key: context.keyGenerator(),
+            _type: 'span',
+            text: '',
+            marks: [],
+          },
+          {
+            at: [nextBlockPath[0], 0],
+          },
         )
+      }
 
-        const nextChild = Node.child(nextBlock, 0)
-        const firstChildIsInlineObject = !editor.isTextSpan(nextChild)
+      Transforms.setSelection(editor, {
+        anchor: {path: [...nextBlockPath, 0], offset: 0},
+        focus: {path: [...nextBlockPath, 0], offset: 0},
+      })
 
-        if (firstChildIsInlineObject) {
-          // If the first child in the next block is an inline object then we
-          // add an empty span right before it to a place to put the cursor.
-          // This is a Slate constraint that we have to adhere to.
-          Transforms.insertNodes(
-            editor,
-            {
-              _key: context.keyGenerator(),
-              _type: 'span',
-              text: '',
-              marks: [],
-            },
-            {
-              at: [nextBlockPath[0], 0],
-            },
-          )
-        }
+      /**
+       * Assign new keys to markDefs that are now split across two blocks
+       */
+      if (
+        editor.isTextBlock(nextBlock) &&
+        nextBlock.markDefs &&
+        nextBlock.markDefs.length > 0
+      ) {
+        const newMarkDefKeys = new Map<string, string>()
 
-        Transforms.setSelection(editor, {
-          anchor: {path: [...nextBlockPath, 0], offset: 0},
-          focus: {path: [...nextBlockPath, 0], offset: 0},
-        })
+        const prevNodeSpans = Array.from(Node.children(editor, focusBlockPath))
+          .map((entry) => entry[0])
+          .filter((node) => editor.isTextSpan(node))
+        const children = Node.children(editor, nextBlockPath)
 
-        /**
-         * Assign new keys to markDefs that are now split across two blocks
-         */
-        if (
-          editor.isTextBlock(nextBlock) &&
-          nextBlock.markDefs &&
-          nextBlock.markDefs.length > 0
-        ) {
-          const newMarkDefKeys = new Map<string, string>()
+        for (const [child, childPath] of children) {
+          if (!editor.isTextSpan(child)) {
+            continue
+          }
 
-          const prevNodeSpans = Array.from(
-            Node.children(editor, focusBlockPath),
-          )
-            .map((entry) => entry[0])
-            .filter((node) => editor.isTextSpan(node))
-          const children = Node.children(editor, nextBlockPath)
+          const marks = child.marks ?? []
 
-          for (const [child, childPath] of children) {
-            if (!editor.isTextSpan(child)) {
+          // Go through the marks of the span and figure out if any of
+          // them refer to annotations that are also present in the
+          // previous block
+          for (const mark of marks) {
+            if (
+              schema.decorators.some((decorator) => decorator.value === mark)
+            ) {
               continue
             }
 
-            const marks = child.marks ?? []
-
-            // Go through the marks of the span and figure out if any of
-            // them refer to annotations that are also present in the
-            // previous block
-            for (const mark of marks) {
-              if (
-                schema.decorators.some((decorator) => decorator.value === mark)
-              ) {
-                continue
-              }
-
-              if (
-                prevNodeSpans.some((prevNodeSpan) =>
-                  prevNodeSpan.marks?.includes(mark),
-                ) &&
-                !newMarkDefKeys.has(mark)
-              ) {
-                // This annotation is both present in the previous block
-                // and this block, so let's assign a new key to it
-                newMarkDefKeys.set(mark, keyGenerator())
-              }
-            }
-
-            const newMarks = marks.map(
-              (mark) => newMarkDefKeys.get(mark) ?? mark,
-            )
-
-            // No need to update the marks if they are the same
-            if (!isEqual(marks, newMarks)) {
-              Transforms.setNodes(
-                editor,
-                {marks: newMarks},
-                {
-                  at: childPath,
-                },
-              )
+            if (
+              prevNodeSpans.some((prevNodeSpan) =>
+                prevNodeSpan.marks?.includes(mark),
+              ) &&
+              !newMarkDefKeys.has(mark)
+            ) {
+              // This annotation is both present in the previous block
+              // and this block, so let's assign a new key to it
+              newMarkDefKeys.set(mark, keyGenerator())
             }
           }
 
-          // Time to update all the markDefs that need a new key because
-          // they've been split across blocks
-          const newMarkDefs = nextBlock.markDefs.map((markDef) => ({
-            ...markDef,
-            _key: newMarkDefKeys.get(markDef._key) ?? markDef._key,
-          }))
+          const newMarks = marks.map((mark) => newMarkDefKeys.get(mark) ?? mark)
 
-          // No need to update the markDefs if they are the same
-          if (!isEqual(nextBlock.markDefs, newMarkDefs)) {
+          // No need to update the marks if they are the same
+          if (!isEqual(marks, newMarks)) {
             Transforms.setNodes(
               editor,
-              {markDefs: newMarkDefs},
+              {marks: newMarks},
               {
-                at: nextBlockPath,
-                match: (node) => editor.isTextBlock(node),
+                at: childPath,
               },
             )
           }
         }
-      })
-      editor.onChange()
+
+        // Time to update all the markDefs that need a new key because
+        // they've been split across blocks
+        const newMarkDefs = nextBlock.markDefs.map((markDef) => ({
+          ...markDef,
+          _key: newMarkDefKeys.get(markDef._key) ?? markDef._key,
+        }))
+
+        // No need to update the markDefs if they are the same
+        if (!isEqual(nextBlock.markDefs, newMarkDefs)) {
+          Transforms.setNodes(
+            editor,
+            {markDefs: newMarkDefs},
+            {
+              at: nextBlockPath,
+              match: (node) => editor.isTextBlock(node),
+            },
+          )
+        }
+      }
       return
     }
   }
