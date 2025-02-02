@@ -501,6 +501,8 @@ function syncBlock({
   const oldBlock = slateEditor.children[currentBlockIndex]
   const hasChanges = oldBlock && !isEqual(currentBlock, oldBlock)
 
+  console.log({hasChanges, blockValid})
+
   Editor.withoutNormalizing(slateEditor, () => {
     withRemoteChanges(slateEditor, () => {
       withoutPatching(slateEditor, () => {
@@ -511,6 +513,7 @@ function syncBlock({
             context.schema,
             context.keyGenerator,
           )
+          console.log(validation)
           // Resolve validations that can be resolved automatically, without involving the user (but only if the value was changed)
           if (
             !validation.valid &&
@@ -535,6 +538,7 @@ function syncBlock({
           if (validation.valid || validation.resolution?.autoResolve) {
             if (oldBlock._key === currentBlock._key) {
               if (debug.enabled) debug('Updating block', oldBlock, currentBlock)
+              console.log('valid')
               _updateBlock(
                 slateEditor,
                 currentBlock,
@@ -625,6 +629,7 @@ function _updateBlock(
   oldBlock: Descendant,
   currentBlockIndex: number,
 ) {
+  console.log(currentBlock)
   // Update the root props on the block
   Transforms.setNodes(slateEditor, currentBlock as Partial<Node>, {
     at: [currentBlockIndex],

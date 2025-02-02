@@ -34,6 +34,7 @@ import type {
   PortableTextMemberSchemaTypes,
   PortableTextSlateEditor,
 } from '../types/editor'
+import {VoidElement} from '../types/slate'
 import {debugWithName} from './debug'
 import {toSlateValue} from './values'
 import {KEY_TO_SLATE_ELEMENT} from './weakMaps'
@@ -269,8 +270,16 @@ function setPatch(editor: PortableTextSlateEditor, patch: SetPatch) {
     return true
   } else if (Element.isElement(block) && patch.path.length === 1 && blockPath) {
     debug('Setting block property')
-    const {children, ...nextRest} = value as unknown as PortableTextBlock
-    const {children: prevChildren, ...prevRest} = block || {children: undefined}
+    const {children, _key, _type, ...nextRest} =
+      value as unknown as PortableTextBlock
+    const {
+      children: prevChildren,
+      _key: prevKey,
+      _type: prevType,
+      value: prevValue,
+      ...prevRest
+    } = (block as VoidElement) || {children: undefined}
+    console.log('setPatch', patch, {prevRest}, {nextRest})
     // Set any block properties
     editor.apply({
       type: 'set_node',
@@ -299,6 +308,7 @@ function setPatch(editor: PortableTextSlateEditor, patch: SetPatch) {
     }
   } else if (block && 'value' in block) {
     const newVal = applyAll([block.value], [patch])[0]
+    console.log('3', block, block.value, patch, newVal)
     Transforms.setNodes(editor, {...block, value: newVal}, {at: blockPath})
     return true
   }

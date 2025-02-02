@@ -96,6 +96,7 @@ export function Synchronizer(props: SynchronizerProps) {
 
   useEffect(() => {
     debug('Value from props changed, syncing new value')
+    console.log('Value from props changed, syncing new value', value)
     syncActorRef.send({type: 'update value', value})
   }, [syncActorRef, value])
 
