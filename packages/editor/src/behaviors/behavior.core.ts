@@ -1,7 +1,7 @@
 import {coreAnnotationBehaviors} from './behavior.core.annotations'
 import {coreBlockObjectBehaviors} from './behavior.core.block-objects'
 import {coreDecoratorBehaviors} from './behavior.core.decorators'
-import {coreDeserializeBehavior} from './behavior.core.deserialize'
+import {coreDeserializeBehaviors} from './behavior.core.deserialize'
 import {coreInsertBreakBehaviors} from './behavior.core.insert-break'
 import {coreListBehaviors} from './behavior.core.lists'
 import {coreSerializeBehaviors} from './behavior.core.serialize'
@@ -19,7 +19,8 @@ export const coreBehaviors = [
   coreDecoratorBehaviors.emShortcut,
   coreDecoratorBehaviors.underlineShortcut,
   coreDecoratorBehaviors.codeShortcut,
-  coreDeserializeBehavior,
+  coreDeserializeBehaviors.deserialize,
+  coreDeserializeBehaviors['deserialization.success'],
   coreBlockObjectBehaviors.arrowDownOnLonelyBlockObject,
   coreBlockObjectBehaviors.arrowUpOnLonelyBlockObject,
   coreBlockObjectBehaviors.breakingBlockObject,
@@ -46,7 +47,7 @@ export const coreBehaviors = [
 export const coreBehavior = {
   annotation: coreAnnotationBehaviors,
   decorators: coreDecoratorBehaviors,
-  deserialize: coreDeserializeBehavior,
+  deserialize: coreDeserializeBehaviors,
   blockObjects: coreBlockObjectBehaviors,
   insertBreak: coreInsertBreakBehaviors,
   lists: coreListBehaviors,
