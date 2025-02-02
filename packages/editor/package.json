@@ -34,7 +34,7 @@
       "default": "./lib/index.js"
     },
     "./behaviors": {
-      "source": "./src/behaviors/index.ts",
+      "source": "./src/behaviors/_exports/index.ts",
       "import": "./lib/behaviors/index.js",
       "require": "./lib/behaviors/index.cjs",
       "default": "./lib/behaviors/index.js"
