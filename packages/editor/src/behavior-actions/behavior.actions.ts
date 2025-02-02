@@ -31,6 +31,7 @@ import {insertBlock} from './behavior.action-utils.insert-block'
 import {blockSetBehaviorActionImplementation} from './behavior.action.block.set'
 import {blockUnsetBehaviorActionImplementation} from './behavior.action.block.unset'
 import {dataTransferSetActionImplementation} from './behavior.action.data-transfer-set'
+import {deleteActionImplementation} from './behavior.action.delete'
 import {insertBlockObjectActionImplementation} from './behavior.action.insert-block-object'
 import {insertBlocksActionImplementation} from './behavior.action.insert-blocks'
 import {
@@ -89,6 +90,7 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'focus': ({action}) => {
     ReactEditor.focus(action.editor)
   },
+  'delete': deleteActionImplementation,
   'delete.backward': ({action}) => {
     deleteBackward(action.editor, action.unit)
   },
@@ -407,6 +409,13 @@ function performDefaultAction({
     }
     case 'decorator.toggle': {
       behaviorActionImplementations['decorator.toggle']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'delete': {
+      behaviorActionImplementations.delete({
         context,
         action,
       })

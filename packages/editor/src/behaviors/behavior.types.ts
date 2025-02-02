@@ -67,6 +67,10 @@ export type SyntheticBehaviorEvent =
       decorator: string
     }
   | {
+      type: 'delete'
+      selection: NonNullable<EditorSelection>
+    }
+  | {
       type: 'delete.backward'
       unit: TextUnit
     }
