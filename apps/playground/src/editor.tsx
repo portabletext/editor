@@ -19,7 +19,7 @@ import {
   createEmojiPickerBehaviors,
   createLinkBehaviors,
 } from '@portabletext/editor/behaviors'
-import {MarkdownPlugin} from '@portabletext/editor/plugins'
+import {MarkdownPlugin, OneLinePlugin} from '@portabletext/editor/plugins'
 import {useSelector} from '@xstate/react'
 import {CopyIcon, ImageIcon, TrashIcon} from 'lucide-react'
 import {useEffect, useState, type JSX} from 'react'
@@ -198,7 +198,7 @@ function EditorPlaygroundToolbar(props: {
     reverse(s.context.patchesReceived),
   )
   const [enableMarkdownPlugin, setEnableMarkdownPlugin] = useState(false)
-
+  const [enableOneLinePlugin, setEnableOneLinePLugin] = useState(false)
   const [enableCodeEditorPlugin, setEnableCodeEditorPlugin] = useState(false)
   const [enableLinkPlugin, setEnableLinkPlugin] = useState(false)
 
@@ -256,6 +256,16 @@ function EditorPlaygroundToolbar(props: {
             }}
           >
             Markdown plugin
+          </Switch>
+        </Toolbar>
+        <Toolbar>
+          <Switch
+            isSelected={enableOneLinePlugin}
+            onChange={() => {
+              setEnableOneLinePLugin(!enableOneLinePlugin)
+            }}
+          >
+            One-line plugin
           </Switch>
         </Toolbar>
         <Toolbar>
@@ -375,6 +385,7 @@ function EditorPlaygroundToolbar(props: {
           }}
         />
       ) : null}
+      {enableOneLinePlugin ? <OneLinePlugin /> : null}
       {enableCodeEditorPlugin ? <CodeEditorPlugin /> : null}
       {enableLinkPlugin ? <LinkPlugin /> : null}
     </>
