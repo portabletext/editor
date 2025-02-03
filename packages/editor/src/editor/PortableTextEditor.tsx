@@ -671,6 +671,16 @@ export class PortableTextEditor extends Component<
     editor.editable?.toggleMark(mark)
   }
 
+  /**
+   * @deprecated
+   * Use built-in selectors or write your own: https://www.portabletext.org/reference/selectors/
+   *
+   * ```
+   * import * as selectors from '@portabletext/editor/selectors'
+   * const editor = useEditor()
+   * const selectedSlice = useEditorSelector(editor, selectors.getSelectedSlice)
+   * ```
+   */
   static getFragment = (
     editor: PortableTextEditor,
   ): PortableTextBlock[] | undefined => {
@@ -688,6 +698,16 @@ export class PortableTextEditor extends Component<
     editor.editable?.redo()
   }
 
+  /**
+   * @deprecated
+   * Use built-in selectors or write your own: https://www.portabletext.org/reference/selectors/
+   *
+   * ```
+   * import * as selectors from '@portabletext/editor/selectors'
+   * const editor = useEditor()
+   * const isOverlapping = useEditorSelector(editor, selectors.isOverlappingSelection(selectionB))
+   * ```
+   */
   static isSelectionsOverlapping = (
     editor: PortableTextEditor,
     selectionA: EditorSelection,
