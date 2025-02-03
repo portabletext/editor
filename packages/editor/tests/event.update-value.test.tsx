@@ -146,4 +146,62 @@ describe('event.update value', () => {
       ])
     })
   })
+
+  test('Scenario: updating block object property', async () => {
+    const editorRef = React.createRef<Editor>()
+    const keyGenerator = createTestKeyGenerator()
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            blockObjects: [{name: 'url'}],
+          }),
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <PortableTextEditable />
+      </EditorProvider>,
+    )
+
+    editorRef.current?.send({
+      type: 'insert.block object',
+      blockObject: {
+        name: 'url',
+        value: {
+          href: 'https://www.sanity.io',
+        },
+      },
+      placement: 'auto',
+    })
+
+    editorRef.current?.send({
+      type: 'update value',
+      value: [
+        {
+          _key: 'k2',
+          _type: 'url',
+          href: 'https://www.sanity.io',
+          description: 'Sanity is a headless CMS',
+        },
+      ],
+    })
+
+    await vi.waitFor(
+      () => {
+        return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+          {
+            _key: 'k2',
+            _type: 'url',
+            description: 'Sanity is a headless CMS',
+            href: 'https://www.sanity.io',
+          },
+        ])
+      },
+      {
+        timeout: 1100,
+      },
+    )
+  })
 })
