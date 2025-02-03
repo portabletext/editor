@@ -41,7 +41,11 @@
     "check:types": "tsc --noEmit --pretty",
     "clean": "del .turbo && del dist && del node_modules",
     "dev": "pkg-utils watch",
-    "lint:fix": "biome lint --write ."
+    "lint:fix": "biome lint --write .",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "test:unit": "vitest --run --project unit",
+    "test:unit:watch": "vitest --project unit"
   },
   "dependencies": {
     "@sanity/diff-match-patch": "^3.2.0",
@@ -50,6 +54,7 @@
   "devDependencies": {
     "@sanity/pkg-utils": "^7.0.4",
     "@types/lodash": "^4.17.13",
-    "typescript": "5.7.3"
+    "typescript": "5.7.3",
+    "vitest": "^3.0.4"
   }
 }
