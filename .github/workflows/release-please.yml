@@ -44,6 +44,8 @@ jobs:
         with:
           cache: pnpm
           node-version: lts/*
+      - name: install corepack
+        run: npm install -g corepack@latest
       - name: install deps & build
         run: corepack enable && pnpm --version && pnpm install --ignore-scripts && pnpm build --filter=./packages/*
         if: ${{ steps.release.outputs.releases_created || github.event.inputs.publish == 'true' }}
