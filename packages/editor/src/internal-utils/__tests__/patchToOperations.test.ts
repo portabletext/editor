@@ -75,29 +75,27 @@ describe('operationToPatches', () => {
     patches.forEach((p) => {
       patchToOperations(editor, p)
     })
-    expect(editor.children).toMatchInlineSnapshot(`
-      [
-        {
-          "__inline": false,
-          "_key": "c01739b0d03b",
-          "_type": "image",
-          "children": [
-            {
-              "_key": "${VOID_CHILD_KEY}",
-              "_type": "span",
-              "marks": [],
-              "text": "",
-            },
-          ],
-          "value": {
-            "asset": {
-              "_ref": "image-f52f71bc1df46e080dabe43a8effe8ccfb5f21de-4032x3024-png",
-              "_type": "reference",
-            },
+    expect(editor.children).toEqual([
+      {
+        __inline: false,
+        _key: 'c01739b0d03b',
+        _type: 'image',
+        children: [
+          {
+            _key: VOID_CHILD_KEY,
+            _type: 'span',
+            marks: [],
+            text: '',
+          },
+        ],
+        value: {
+          asset: {
+            _ref: 'image-b5681d9d0b2b6c922238e7c694500dd7c1349b19-256x256-jpg',
+            _type: 'reference',
           },
         },
-      ]
-    `)
+      },
+    ])
   })
   it('will not create operations for insertion inside blocks', () => {
     editor.children = [
