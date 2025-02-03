@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.30.0](https://github.com/portabletext/editor/compare/editor-v1.29.0...editor-v1.30.0) (2025-02-03)
+
+
+### Features
+
+* **selectors:** add `isOverlappingSelection` ([906f577](https://github.com/portabletext/editor/commit/906f577708c269e05535ae23853ceff71eda2f11))
+
+
+### Bug Fixes
+
+* add more deprecation messages to `PortableTextEditor` methods ([aaf0736](https://github.com/portabletext/editor/commit/aaf073619e022ebec7cbfde84f8fef4696252b93))
+* make sure you can set block object properties using patches ([268dec9](https://github.com/portabletext/editor/commit/268dec92e30a0e5c6ba7a49acac627b92db08d0e))
+
 ## [1.29.0](https://github.com/portabletext/editor/compare/editor-v1.28.0...editor-v1.29.0) (2025-02-03)
 
 
