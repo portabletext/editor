@@ -54,11 +54,11 @@
     "@playwright/test": "^1.50.0",
     "@sanity/pkg-utils": "^7.0.4",
     "typescript": "5.7.3",
-    "vitest": "^3.0.4"
+    "vitest": "^3.0.5"
   },
   "peerDependencies": {
     "@jest/globals": "^29.7.0",
     "@playwright/test": "^1.50.0",
-    "vitest": "^3.0.4"
+    "vitest": "^3.0.5"
   }
 }
