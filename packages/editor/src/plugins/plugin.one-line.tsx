@@ -5,7 +5,8 @@ import {BehaviorPlugin} from './plugin.behavior'
 
 const oneLineBehaviors = [
   /**
-   * Hitting Enter on an expanded selection will just delete that selection.
+   * Hitting Enter on an expanded selection should just delete that selection
+   * without causing a line break.
    */
   defineBehavior({
     on: 'insert.break',
@@ -32,6 +33,8 @@ const oneLineBehaviors = [
     actions: [() => [{type: 'noop'}]],
   }),
   /**
+   * Other cases of `insert.block` are allowed.
+   *
    * If a text block is inserted and the focus block is fully selected, then
    * the focus block can be replaced with the inserted block.
    */
@@ -150,7 +153,8 @@ const oneLineBehaviors = [
     ],
   }),
   /**
-   * Fallback behavior in case the Behavior above ends up with a falsy guard.
+   * Fallback Behavior to avoid `insert.block` in case the Behaviors above all
+   * end up with a falsy guard.
    */
   defineBehavior({
     on: 'insert.block',
@@ -186,9 +190,9 @@ const oneLineBehaviors = [
     on: 'insert.block object',
     actions: [() => [{type: 'noop'}]],
   }),
-
   /**
-   * `insert.text block` is
+   * `insert.text block` is raised as an `insert.block` so it can be handled
+   * by the Behaviors above.
    */
   defineBehavior({
     on: 'insert.text block',
