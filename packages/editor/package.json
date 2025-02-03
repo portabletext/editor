@@ -118,8 +118,8 @@
     "@typescript-eslint/eslint-plugin": "^8.18.1",
     "@typescript-eslint/parser": "^8.18.1",
     "@vitejs/plugin-react": "^4.3.4",
-    "@vitest/browser": "^3.0.4",
-    "@vitest/coverage-istanbul": "^3.0.4",
+    "@vitest/browser": "^3.0.5",
+    "@vitest/coverage-istanbul": "^3.0.5",
     "babel-plugin-react-compiler": "19.0.0-beta-714736e-20250131",
     "eslint": "8.57.1",
     "eslint-plugin-react-compiler": "19.0.0-beta-714736e-20250131",
@@ -131,7 +131,7 @@
     "rxjs": "^7.8.1",
     "typescript": "5.7.3",
     "vite": "^6.0.11",
-    "vitest": "^3.0.4",
+    "vitest": "^3.0.5",
     "vitest-browser-react": "^0.0.4"
   },
   "peerDependencies": {
