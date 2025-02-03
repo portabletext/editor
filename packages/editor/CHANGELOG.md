@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.29.0](https://github.com/portabletext/editor/compare/editor-v1.28.0...editor-v1.29.0) (2025-02-03)
+
+
+### Features
+
+* **behaviors:** add `delete` event and action ([d8673cd](https://github.com/portabletext/editor/commit/d8673cd5d7554f29e305ba657fc1e7f40e916a58))
+* **plugins:** add `BehaviorPlugin` ([cf45c53](https://github.com/portabletext/editor/commit/cf45c5373012f986ae3c67ac397ac02c58ccb828))
+* **plugins:** add `OneLinePlugin` ([e31fd23](https://github.com/portabletext/editor/commit/e31fd232afe4ba0c2c929da6046f2a2ee05d7528))
+* **selectors:** add `getSelection(Start|End)Point` ([9dfca56](https://github.com/portabletext/editor/commit/9dfca5604ce47e36a10cb624610b7966c8269841))
+* **utils:** add `isSpan/isTextBlock/mergeTextBlocks/splitTextBlock` ([97d08bf](https://github.com/portabletext/editor/commit/97d08bf6bbdb600be30c4965fc4159be9ab63987))
+
+
+### Bug Fixes
+
+* **behaviors:** don't hijack `insert.soft break` ([111b66f](https://github.com/portabletext/editor/commit/111b66f9fbcb32f9bdd95528cfb19a438e6b7695))
+* **behaviors:** raise `insert.blocks` on `deserialization.success` ([324c64b](https://github.com/portabletext/editor/commit/324c64ba1e917c6cd5af583c9432ca69873b1803))
+
 ## [1.28.0](https://github.com/portabletext/editor/compare/editor-v1.27.0...editor-v1.28.0) (2025-01-31)
 
 
