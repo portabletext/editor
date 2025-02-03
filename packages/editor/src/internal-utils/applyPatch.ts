@@ -298,9 +298,17 @@ function setPatch(editor: PortableTextSlateEditor, patch: SetPatch) {
       })
     }
   } else if (block && 'value' in block) {
-    const newVal = applyAll([block.value], [patch])[0]
-    Transforms.setNodes(editor, {...block, value: newVal}, {at: blockPath})
-    return true
+    if (patch.path.length > 1 && patch.path[1] !== 'children') {
+      const newVal = applyAll(block.value, [
+        {
+          ...patch,
+          path: patch.path.slice(1),
+        },
+      ])
+      Transforms.setNodes(editor, {...block, value: newVal}, {at: blockPath})
+    } else {
+      return false
+    }
   }
   debugState(editor, 'after')
   return true
