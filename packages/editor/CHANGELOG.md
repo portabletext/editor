@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.30.2](https://github.com/portabletext/editor/compare/editor-v1.30.1...editor-v1.30.2) (2025-02-04)
+
+
+### Bug Fixes
+
+* fall back to custom insert.soft break action ([bf7e467](https://github.com/portabletext/editor/commit/bf7e467d425136c029f7d02d8950a51b8ca43824))
+* make line breaks work on WebKit ([9d40139](https://github.com/portabletext/editor/commit/9d401392bbd58bcef7dbc0510b87988b2fe47f5e))
+* remove `coreBehavior` export ([1c801dd](https://github.com/portabletext/editor/commit/1c801dd79ea0ccc330d109bafa726bb178cd635a))
+
 ## [1.30.1](https://github.com/portabletext/editor/compare/editor-v1.30.0...editor-v1.30.1) (2025-02-03)
 
 
