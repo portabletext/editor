@@ -40,18 +40,3 @@ export const coreBehaviors = [
   coreStyleBehaviors.toggleStyleOff,
   coreStyleBehaviors.toggleStyleOn,
 ]
-
-/**
- * @beta
- */
-export const coreBehavior = {
-  foundational: foundationalBehaviors,
-  annotation: coreAnnotationBehaviors,
-  decorators: coreDecoratorBehaviors,
-  deserialize: coreDeserializeBehaviors,
-  blockObjects: coreBlockObjectBehaviors,
-  insertBreak: coreInsertBreakBehaviors,
-  lists: coreListBehaviors,
-  ...coreSerializeBehaviors,
-  style: coreSerializeBehaviors,
-}
