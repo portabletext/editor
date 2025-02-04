@@ -45,6 +45,7 @@ export const coreBehaviors = [
  * @beta
  */
 export const coreBehavior = {
+  foundational: foundationalBehaviors,
   annotation: coreAnnotationBehaviors,
   decorators: coreDecoratorBehaviors,
   deserialize: coreDeserializeBehaviors,

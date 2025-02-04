@@ -12,6 +12,7 @@ import {
 } from 'xstate'
 import {performAction} from '../behavior-actions/behavior.actions'
 import {coreBehaviors} from '../behaviors/behavior.core'
+import {foundationalBehaviors} from '../behaviors/behavior.foundational'
 import {
   isCustomBehaviorEvent,
   type Behavior,
@@ -252,7 +253,7 @@ export const editorMachine = setup({
     'assign behaviors': assign({
       behaviors: ({event}) => {
         assertEvent(event, 'update behaviors')
-        return new Set(event.behaviors)
+        return new Set([...foundationalBehaviors, ...event.behaviors])
       },
     }),
     'assign schema': assign({
@@ -481,7 +482,10 @@ export const editorMachine = setup({
 }).createMachine({
   id: 'editor',
   context: ({input}) => ({
-    behaviors: new Set(input.behaviors ?? coreBehaviors),
+    behaviors: new Set([
+      ...foundationalBehaviors,
+      ...(input.behaviors ?? coreBehaviors),
+    ]),
     converters: new Set(input.converters ?? []),
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
