@@ -1,4 +1,5 @@
 import {Editor} from 'slate'
+import {insertSoftBreakActionImplementation} from '../../behavior-actions/behavior.action.insert-break'
 import {toPortableTextRange} from '../../internal-utils/ranges'
 import {fromSlateValue} from '../../internal-utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../../internal-utils/weakMaps'
@@ -63,7 +64,6 @@ export function createWithEventListeners(
       deleteForward,
       insertBreak,
       insertData,
-      insertSoftBreak,
       insertText,
       select,
       setFragmentData,
@@ -138,7 +138,13 @@ export function createWithEventListeners(
 
     editor.insertSoftBreak = () => {
       if (isApplyingBehaviorActions(editor)) {
-        insertSoftBreak()
+        insertSoftBreakActionImplementation({
+          context: {
+            keyGenerator: editorActor.getSnapshot().context.keyGenerator,
+            schema: editorActor.getSnapshot().context.schema,
+          },
+          action: {type: 'insert.soft break', editor},
+        })
         return
       }
 
