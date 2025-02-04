@@ -10,7 +10,7 @@ export {
   createCodeEditorBehaviors,
   type CodeEditorBehaviorsConfig,
 } from './behavior.code-editor'
-export {coreBehavior, coreBehaviors} from './behavior.core'
+export {coreBehaviors} from './behavior.core'
 export {
   type EmojiPickerBehaviorsConfig,
   createEmojiPickerBehaviors,
