@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/editor",
-  "version": "1.30.3",
+  "version": "1.30.4",
   "description": "Portable Text Editor made in React",
   "keywords": [
     "sanity",
