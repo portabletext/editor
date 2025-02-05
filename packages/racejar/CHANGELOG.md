@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.3](https://github.com/portabletext/editor/compare/racejar-v1.1.2...racejar-v1.1.3) (2025-02-05)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @playwright/test to ^1.50.1 ([5801c0e](https://github.com/portabletext/editor/commit/5801c0ed2cbfc85185b75cecd07cdb89a47a498b))
+
 ## [1.1.2](https://github.com/portabletext/editor/compare/racejar-v1.1.1...racejar-v1.1.2) (2025-01-27)
 
 

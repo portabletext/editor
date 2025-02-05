@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.30.3](https://github.com/portabletext/editor/compare/editor-v1.30.2...editor-v1.30.3) (2025-02-05)
+
+
+### Bug Fixes
+
+* add debug statements to sync machine ([1b88141](https://github.com/portabletext/editor/commit/1b88141b8df307aa9aac80dbfc18a5ca23cbd8b7))
+* **deps:** update sanity monorepo to ^3.73.0 ([8825ef6](https://github.com/portabletext/editor/commit/8825ef6ad652c1227f404eb222b8bcda2638c4c8))
+* **deps:** update sanity monorepo to ^3.74.0 ([1a3296e](https://github.com/portabletext/editor/commit/1a3296e506f06a23a2a7a82c9ecec45bfac41f39))
+* make sure value sync is retried when busy ([02213d1](https://github.com/portabletext/editor/commit/02213d1b792664488d6a75019170f3599e906be2))
+* remove noisy debug statement ([7078fcd](https://github.com/portabletext/editor/commit/7078fcd91934488c42eb6d4ff24135a659db258a))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.5
+  * devDependencies
+    * racejar bumped to 1.1.3
+
 ## [1.30.2](https://github.com/portabletext/editor/compare/editor-v1.30.1...editor-v1.30.2) (2025-02-04)
 
 
