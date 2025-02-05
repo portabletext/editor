@@ -287,6 +287,7 @@ export const syncMachine = setup({
             1000: [
               {
                 guard: 'is busy',
+                target: '.',
                 reenter: true,
                 actions: [
                   () => {
