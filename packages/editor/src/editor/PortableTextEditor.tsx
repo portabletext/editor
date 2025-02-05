@@ -684,7 +684,6 @@ export class PortableTextEditor extends Component<
   static getFragment = (
     editor: PortableTextEditor,
   ): PortableTextBlock[] | undefined => {
-    debug(`Host getting fragment`)
     return editor.editable?.getFragment()
   }
 
