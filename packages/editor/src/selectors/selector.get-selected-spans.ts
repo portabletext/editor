@@ -62,10 +62,12 @@ export const getSelectedSpans: EditorSelector<
         }
 
         if (startSpanKey && child._key === startSpanKey) {
-          selectedSpans.push({
-            node: child,
-            path: [{_key: block._key}, 'children', {_key: child._key}],
-          })
+          if (startPoint.offset < child.text.length) {
+            selectedSpans.push({
+              node: child,
+              path: [{_key: block._key}, 'children', {_key: child._key}],
+            })
+          }
 
           if (startSpanKey === endSpanKey) {
             break
@@ -75,10 +77,12 @@ export const getSelectedSpans: EditorSelector<
         }
 
         if (endSpanKey && child._key === endSpanKey) {
-          selectedSpans.push({
-            node: child,
-            path: [{_key: block._key}, 'children', {_key: child._key}],
-          })
+          if (endPoint.offset > 0) {
+            selectedSpans.push({
+              node: child,
+              path: [{_key: block._key}, 'children', {_key: child._key}],
+            })
+          }
           break
         }
 
@@ -104,10 +108,12 @@ export const getSelectedSpans: EditorSelector<
         }
 
         if (endSpanKey && child._key === endSpanKey) {
-          selectedSpans.push({
-            node: child,
-            path: [{_key: block._key}, 'children', {_key: child._key}],
-          })
+          if (endPoint.offset > 0) {
+            selectedSpans.push({
+              node: child,
+              path: [{_key: block._key}, 'children', {_key: child._key}],
+            })
+          }
           break
         }
 

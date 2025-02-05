@@ -1,7 +1,8 @@
 import {isPortableTextTextBlock} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import {getSelectedSpans} from './selector.get-selected-spans'
-import {getSelectedBlocks} from './selectors'
+import {isSelectionExpanded} from './selector.is-selection-expanded'
+import {getFocusSpan, getSelectedBlocks} from './selectors'
 
 /**
  * @public
@@ -15,7 +16,13 @@ export function isActiveAnnotation(
     }
 
     const selectedBlocks = getSelectedBlocks(snapshot)
-    const selectedSpans = getSelectedSpans(snapshot)
+    const focusSpan = getFocusSpan(snapshot)
+
+    const selectedSpans = isSelectionExpanded(snapshot)
+      ? getSelectedSpans(snapshot)
+      : focusSpan
+        ? [focusSpan]
+        : []
 
     if (selectedSpans.length === 0) {
       return false
