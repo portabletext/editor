@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.30.4](https://github.com/portabletext/editor/compare/editor-v1.30.3...editor-v1.30.4) (2025-02-05)
+
+
+### Bug Fixes
+
+* **selector.getSelectedSpans:** don't include spans at the edge of a selection ([9f50557](https://github.com/portabletext/editor/commit/9f505579036e1280ac4aeb4cf16b78adcde65e9b))
+
 ## [1.30.3](https://github.com/portabletext/editor/compare/editor-v1.30.2...editor-v1.30.3) (2025-02-05)
 
 
