@@ -27,6 +27,8 @@ import type {
 import type {EditorSchema} from './define-schema'
 import {withoutSaving} from './plugins/createWithUndoRedo'
 
+const debug = debugWithName('sync machine')
+
 type SyncValueEvent =
   | {
       type: 'patch'
@@ -158,11 +160,14 @@ export const syncMachine = setup({
   guards: {
     'initial value synced': ({context}) => context.initialValueSynced,
     'is busy': ({context}) => {
-      return (
-        !context.readOnly &&
-        (context.isProcessingLocalChanges ||
-          (isChangingRemotely(context.slateEditor) ?? false))
-      )
+      const editable = !context.readOnly
+      const isProcessingLocalChanges = context.isProcessingLocalChanges
+      const isChanging = isChangingRemotely(context.slateEditor) ?? false
+      const isBusy = editable && (isProcessingLocalChanges || isChanging)
+
+      debug('isBusy', {isBusy, editable, isProcessingLocalChanges, isChanging})
+
+      return isBusy
     },
     'value changed while syncing': ({context, event}) => {
       assertEvent(event, 'done syncing')
@@ -208,13 +213,33 @@ export const syncMachine = setup({
       initial: 'syncing initial value',
       states: {
         'syncing initial value': {
+          entry: [
+            () => {
+              debug('entry: syncing initial value')
+            },
+          ],
+          exit: [
+            () => {
+              debug('exit: syncing initial value')
+            },
+          ],
           always: {
             guard: 'initial value synced',
             target: 'done syncing initial value',
           },
         },
         'done syncing initial value': {
-          entry: ['emit done syncing initial value'],
+          entry: [
+            'emit done syncing initial value',
+            () => {
+              debug('entry: done syncing initial value')
+            },
+          ],
+          exit: [
+            () => {
+              debug('exit: done syncing initial value')
+            },
+          ],
           type: 'final',
         },
       },
@@ -223,6 +248,16 @@ export const syncMachine = setup({
       initial: 'idle',
       states: {
         idle: {
+          entry: [
+            () => {
+              debug('entry: syncing->idle')
+            },
+          ],
+          exit: [
+            () => {
+              debug('exit: syncing->idle')
+            },
+          ],
           on: {
             'update value': [
               {
@@ -238,11 +273,26 @@ export const syncMachine = setup({
           },
         },
         busy: {
+          entry: [
+            () => {
+              debug('entry: syncing->busy')
+            },
+          ],
+          exit: [
+            () => {
+              debug('exit: syncing->busy')
+            },
+          ],
           after: {
             1000: [
               {
                 guard: 'is busy',
                 reenter: true,
+                actions: [
+                  () => {
+                    debug('reenter: syncing->busy')
+                  },
+                ],
               },
               {
                 target: 'syncing',
@@ -258,6 +308,16 @@ export const syncMachine = setup({
           },
         },
         syncing: {
+          entry: [
+            () => {
+              debug('entry: syncing->syncing')
+            },
+          ],
+          exit: [
+            () => {
+              debug('exit: syncing->syncing')
+            },
+          ],
           always: {
             guard: 'pending value equals previous value',
             target: 'idle',
@@ -317,8 +377,6 @@ export const syncMachine = setup({
     },
   },
 })
-
-const debug = debugWithName('hook:useSyncValue')
 
 async function updateValue({
   context,
