@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.6](https://github.com/portabletext/editor/compare/block-tools-v1.1.5...block-tools-v1.1.6) (2025-02-06)
+
+
+### Bug Fixes
+
+* **block-tools:** ensure single line breaks in blockquotes ([faa7eda](https://github.com/portabletext/editor/commit/faa7eda6f71076e1c43357182287a430dae27b68))
+* **deps:** update sanity monorepo to ^3.74.1 ([bc4b1bc](https://github.com/portabletext/editor/commit/bc4b1bcb15e66d9ff49771944c20e4c9eccae45d))
+
 ## [1.1.5](https://github.com/portabletext/editor/compare/block-tools-v1.1.4...block-tools-v1.1.5) (2025-02-05)
 
 
