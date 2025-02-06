@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.30.6](https://github.com/portabletext/editor/compare/editor-v1.30.5...editor-v1.30.6) (2025-02-06)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/patches bumped to 1.1.3
+
 ## [1.30.5](https://github.com/portabletext/editor/compare/editor-v1.30.4...editor-v1.30.5) (2025-02-06)
 
 
