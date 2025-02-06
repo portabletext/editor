@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.30.6](https://github.com/portabletext/editor/compare/editor-v1.30.5...editor-v1.30.6) (2025-02-06)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @portabletext/to-html to ^2.0.14 ([e44c098](https://github.com/portabletext/editor/commit/e44c098b69874ebd0ef84aa197d8ec561947ffe3))
+
 ## [1.30.5](https://github.com/portabletext/editor/compare/editor-v1.30.4...editor-v1.30.5) (2025-02-06)
 
 
