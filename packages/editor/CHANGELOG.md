@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.30.5](https://github.com/portabletext/editor/compare/editor-v1.30.4...editor-v1.30.5) (2025-02-06)
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^3.74.1 ([bc4b1bc](https://github.com/portabletext/editor/commit/bc4b1bcb15e66d9ff49771944c20e4c9eccae45d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.6
+
 ## [1.30.4](https://github.com/portabletext/editor/compare/editor-v1.30.3...editor-v1.30.4) (2025-02-05)
 
 
