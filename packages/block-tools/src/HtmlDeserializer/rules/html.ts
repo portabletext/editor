@@ -67,27 +67,44 @@ export default function createHTMLRules(
           ...HTML_HEADER_TAGS,
         }
         delete blocks.blockquote
+        const nonBlockquoteBlocks = Object.keys(blocks)
 
         const children: HTMLElement[] = []
+
         el.childNodes.forEach((node, index) => {
+          if (!el.ownerDocument) {
+            return
+          }
+
           if (
             node.nodeType === 1 &&
-            Object.keys(blocks).includes(
+            nonBlockquoteBlocks.includes(
               (node as Element).localName.toLowerCase(),
             )
           ) {
-            if (!el.ownerDocument) {
-              return
+            const span = el.ownerDocument.createElement('span')
+
+            const previousChild = children[children.length - 1]
+
+            if (
+              previousChild &&
+              previousChild.nodeType === 3 &&
+              previousChild.textContent?.trim()
+            ) {
+              // Only prepend line break if the previous node is a non-empty
+              // text node.
+              span.appendChild(el.ownerDocument.createTextNode('\r'))
             }
 
-            const span = el.ownerDocument.createElement('span')
-            span.appendChild(el.ownerDocument.createTextNode('\r'))
             node.childNodes.forEach((cn) => {
               span.appendChild(cn.cloneNode(true))
             })
+
             if (index !== el.childNodes.length) {
+              // Only append line break if this is not the last child
               span.appendChild(el.ownerDocument.createTextNode('\r'))
             }
+
             children.push(span)
           } else {
             children.push(node as HTMLElement)

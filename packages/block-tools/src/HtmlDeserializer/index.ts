@@ -221,7 +221,7 @@ export default class HtmlDeserializer {
       ) {
         ret.children.forEach((child, index) => {
           if (isMinimalSpan(child) && child.text === '\r') {
-            child.text = '\n\n'
+            child.text = '\n'
             if (index === 0 || index === ret.children.length - 1) {
               ret.children.splice(index, 1)
             }
