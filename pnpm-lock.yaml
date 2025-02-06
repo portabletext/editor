@@ -470,8 +470,8 @@ importers:
         version: 5.19.2
     devDependencies:
       '@portabletext/toolkit':
-        specifier: ^2.0.16
-        version: 2.0.16
+        specifier: ^2.0.17
+        version: 2.0.17
       '@sanity/diff-match-patch':
         specifier: ^3.2.0
         version: 3.2.0
@@ -1765,8 +1765,8 @@ packages:
     resolution: {integrity: sha512-T3zL+2RcPCPGCp7rRrGrNJnGAqkdlpiOZnb/wh4tjDYJevteGY+5hmA0/5idLXzLiPv6vT8Gld852Sc0aFXwUA==}
     engines: {node: ^14.13.1 || >=16.0.0}
 
-  '@portabletext/toolkit@2.0.16':
-    resolution: {integrity: sha512-aBvnD8MscoAlEIuZBn0Aksd+oCuoMGFOT3CtHIgRBaac0Vu4YnnMUF45xo/B/T5vmwWcnDXoJEJdn+SKDg1m+A==}
+  '@portabletext/toolkit@2.0.17':
+    resolution: {integrity: sha512-5wj+oUaCmHm9Ay1cytPmT1Yc0SrR1twwUIc0qNQ3MtaXaNMPw99Gjt1NcA34yfyKmEf/TAB2NiiT72jFxdddIQ==}
     engines: {node: ^14.13.1 || >=16.0.0}
 
   '@portabletext/types@2.0.13':
@@ -7809,16 +7809,16 @@ snapshots:
 
   '@portabletext/react@3.2.0(react@19.0.0)':
     dependencies:
-      '@portabletext/toolkit': 2.0.16
+      '@portabletext/toolkit': 2.0.17
       '@portabletext/types': 2.0.13
       react: 19.0.0
 
   '@portabletext/to-html@2.0.13':
     dependencies:
-      '@portabletext/toolkit': 2.0.16
+      '@portabletext/toolkit': 2.0.17
       '@portabletext/types': 2.0.13
 
-  '@portabletext/toolkit@2.0.16':
+  '@portabletext/toolkit@2.0.17':
     dependencies:
       '@portabletext/types': 2.0.13
 
