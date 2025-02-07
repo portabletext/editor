@@ -13,6 +13,7 @@ import {coreStyleBehaviors} from './behavior.core.style'
 export const coreBehaviors = [
   coreAnnotationBehaviors.toggleAnnotationOff,
   coreAnnotationBehaviors.toggleAnnotationOn,
+  coreAnnotationBehaviors.addAnnotationOnCollapsedSelection,
   coreDecoratorBehaviors.toggleDecoratorOff,
   coreDecoratorBehaviors.toggleDecoratorOn,
   coreDecoratorBehaviors.strongShortcut,

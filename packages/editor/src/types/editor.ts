@@ -135,11 +135,6 @@ export interface PortableTextSlateEditor extends ReactEditor {
   isListBlock: (value: unknown) => value is PortableTextListBlock
 
   /**
-   * Try to expand the current selection to a word
-   */
-  pteExpandToWord: () => void
-
-  /**
    * Use hotkeys
    */
   pteWithHotKeys: (event: KeyboardEvent<HTMLDivElement>) => void

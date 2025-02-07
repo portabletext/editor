@@ -634,8 +634,7 @@ export const addAnnotationActionImplementation: BehaviorActionImplementation<
 
   if (originalSelection) {
     if (Range.isCollapsed(originalSelection)) {
-      editor.pteExpandToWord()
-      editor.onChange()
+      return
     }
 
     // If we still have a selection, add the annotation to the selected text
