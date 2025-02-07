@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.31.0](https://github.com/portabletext/editor/compare/editor-v1.30.6...editor-v1.31.0) (2025-02-07)
+
+
+### Features
+
+* **selectors:** add `getCaretWordSelection` and more ([763e64a](https://github.com/portabletext/editor/commit/763e64a98a7779fc3c3696d7601df423ffc3f05d))
+
+
+### Bug Fixes
+
+* avoid error when adding annotation ad the end of a block ([501fc0f](https://github.com/portabletext/editor/commit/501fc0f8684b12779d27a1a5425e739acfe47a69))
+
 ## [1.30.6](https://github.com/portabletext/editor/compare/editor-v1.30.5...editor-v1.30.6) (2025-02-06)
 
 
