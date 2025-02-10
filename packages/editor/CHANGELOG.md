@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.32.0](https://github.com/portabletext/editor/compare/editor-v1.31.2...editor-v1.32.0) (2025-02-10)
+
+
+### Features
+
+* **behaviors:** add `history.redo`/`history.undo` events and actions ([9e1e78d](https://github.com/portabletext/editor/commit/9e1e78d838d515a4ba196bdb533e4e78807eb23d))
+* **behaviors:** merge action sets into single undo steps ([7d1d24b](https://github.com/portabletext/editor/commit/7d1d24b7fe185af0f802837c97469aec5d132a6b))
+
 ## [1.31.2](https://github.com/portabletext/editor/compare/editor-v1.31.1...editor-v1.31.2) (2025-02-10)
 
 
