@@ -118,6 +118,16 @@ export function compileFeature<
       }
 
       const args = matchingStep.args.map((arg) => arg.getValue(matchingStep))
+      if (step.argument?.dataTable) {
+        args.push(
+          step.argument.dataTable.rows.map((row) =>
+            row.cells.map((cell) => cell.value),
+          ),
+        )
+      }
+      if (step.argument?.docString) {
+        args.push(step.argument.docString.content)
+      }
 
       return (stepContext: TStepContext | undefined) =>
         matchingStep.callback(
