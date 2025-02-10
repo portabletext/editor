@@ -1,7 +1,6 @@
 import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@sanity/types'
 import type {FocusEvent} from 'react'
-import {Editor} from 'slate'
 import {
   assertEvent,
   assign,
@@ -315,17 +314,15 @@ export const editorMachine = setup({
       if (eventBehaviors.length === 0) {
         if (defaultActionCallback) {
           withApplyingBehaviorActions(event.editor, () => {
-            Editor.withoutNormalizing(event.editor, () => {
-              try {
-                defaultActionCallback()
-              } catch (error) {
-                console.error(
-                  new Error(
-                    `Performing action "${event.behaviorEvent.type}" failed due to: ${error.message}`,
-                  ),
-                )
-              }
-            })
+            try {
+              defaultActionCallback()
+            } catch (error) {
+              console.error(
+                new Error(
+                  `Performing action "${event.behaviorEvent.type}" failed due to: ${error.message}`,
+                ),
+              )
+            }
           })
           return
         }
@@ -335,20 +332,18 @@ export const editorMachine = setup({
         }
 
         withApplyingBehaviorActions(event.editor, () => {
-          Editor.withoutNormalizing(event.editor, () => {
-            try {
-              performAction({
-                context,
-                action: defaultAction,
-              })
-            } catch (error) {
-              console.error(
-                new Error(
-                  `Performing action "${defaultAction.type}" as a result of "${event.behaviorEvent.type}" failed due to: ${error.message}`,
-                ),
-              )
-            }
-          })
+          try {
+            performAction({
+              context,
+              action: defaultAction,
+            })
+          } catch (error) {
+            console.error(
+              new Error(
+                `Performing action "${defaultAction.type}" as a result of "${event.behaviorEvent.type}" failed due to: ${error.message}`,
+              ),
+            )
+          }
         })
         event.editor.onChange()
         return
@@ -391,42 +386,40 @@ export const editorMachine = setup({
               ))
 
           withApplyingBehaviorActions(event.editor, () => {
-            Editor.withoutNormalizing(event.editor, () => {
-              for (const actionIntend of actionIntends) {
-                if (actionIntend.type === 'raise') {
-                  if (isCustomBehaviorEvent(actionIntend.event)) {
-                    enqueue.raise({
-                      type: 'custom behavior event',
-                      behaviorEvent: actionIntend.event as CustomBehaviorEvent,
-                      editor: event.editor,
-                    })
-                  } else {
-                    enqueue.raise({
-                      type: 'behavior event',
-                      behaviorEvent: actionIntend.event,
-                      editor: event.editor,
-                    })
-                  }
-                  continue
+            for (const actionIntend of actionIntends) {
+              if (actionIntend.type === 'raise') {
+                if (isCustomBehaviorEvent(actionIntend.event)) {
+                  enqueue.raise({
+                    type: 'custom behavior event',
+                    behaviorEvent: actionIntend.event as CustomBehaviorEvent,
+                    editor: event.editor,
+                  })
+                } else {
+                  enqueue.raise({
+                    type: 'behavior event',
+                    behaviorEvent: actionIntend.event,
+                    editor: event.editor,
+                  })
                 }
-
-                const action = {
-                  ...actionIntend,
-                  editor: event.editor,
-                }
-
-                try {
-                  performAction({context, action})
-                } catch (error) {
-                  console.error(
-                    new Error(
-                      `Performing action "${action.type}" as a result of "${event.behaviorEvent.type}" failed due to: ${error.message}`,
-                    ),
-                  )
-                  break
-                }
+                continue
               }
-            })
+
+              const action = {
+                ...actionIntend,
+                editor: event.editor,
+              }
+
+              try {
+                performAction({context, action})
+              } catch (error) {
+                console.error(
+                  new Error(
+                    `Performing action "${action.type}" as a result of "${event.behaviorEvent.type}" failed due to: ${error.message}`,
+                  ),
+                )
+                break
+              }
+            }
           })
           event.editor.onChange()
         }
@@ -440,17 +433,15 @@ export const editorMachine = setup({
       if (!behaviorOverwritten) {
         if (defaultActionCallback) {
           withApplyingBehaviorActions(event.editor, () => {
-            Editor.withoutNormalizing(event.editor, () => {
-              try {
-                defaultActionCallback()
-              } catch (error) {
-                console.error(
-                  new Error(
-                    `Performing "${event.behaviorEvent.type}" failed due to: ${error.message}`,
-                  ),
-                )
-              }
-            })
+            try {
+              defaultActionCallback()
+            } catch (error) {
+              console.error(
+                new Error(
+                  `Performing "${event.behaviorEvent.type}" failed due to: ${error.message}`,
+                ),
+              )
+            }
           })
           return
         }
@@ -460,20 +451,18 @@ export const editorMachine = setup({
         }
 
         withApplyingBehaviorActions(event.editor, () => {
-          Editor.withoutNormalizing(event.editor, () => {
-            try {
-              performAction({
-                context,
-                action: defaultAction,
-              })
-            } catch (error) {
-              console.error(
-                new Error(
-                  `Performing action "${defaultAction.type}" as a result of "${event.behaviorEvent.type}" failed due to: ${error.message}`,
-                ),
-              )
-            }
-          })
+          try {
+            performAction({
+              context,
+              action: defaultAction,
+            })
+          } catch (error) {
+            console.error(
+              new Error(
+                `Performing action "${defaultAction.type}" as a result of "${event.behaviorEvent.type}" failed due to: ${error.message}`,
+              ),
+            )
+          }
         })
         event.editor.onChange()
       }

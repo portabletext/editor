@@ -1,4 +1,4 @@
-import type {Editor} from 'slate'
+import {Editor} from 'slate'
 
 const IS_APPLYING_BEHAVIOR_ACTIONS: WeakMap<Editor, boolean | undefined> =
   new WeakMap()
@@ -6,7 +6,7 @@ const IS_APPLYING_BEHAVIOR_ACTIONS: WeakMap<Editor, boolean | undefined> =
 export function withApplyingBehaviorActions(editor: Editor, fn: () => void) {
   const prev = isApplyingBehaviorActions(editor)
   IS_APPLYING_BEHAVIOR_ACTIONS.set(editor, true)
-  fn()
+  Editor.withoutNormalizing(editor, fn)
   IS_APPLYING_BEHAVIOR_ACTIONS.set(editor, prev)
 }
 
