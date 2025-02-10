@@ -91,6 +91,12 @@ export type SyntheticBehaviorEvent =
       type: 'focus'
     }
   | {
+      type: 'history.redo'
+    }
+  | {
+      type: 'history.undo'
+    }
+  | {
       type: 'insert.blocks'
       blocks: Array<PortableTextBlock>
     }

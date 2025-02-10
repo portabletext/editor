@@ -1,5 +1,6 @@
 import {Editor} from 'slate'
 import {insertSoftBreakActionImplementation} from '../../behavior-actions/behavior.action.insert-break'
+import {performAction} from '../../behavior-actions/behavior.actions'
 import {toPortableTextRange} from '../../internal-utils/ranges'
 import {fromSlateValue} from '../../internal-utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../../internal-utils/weakMaps'
@@ -179,6 +180,31 @@ export function createWithEventListeners(
       return
     }
 
+    editor.redo = () => {
+      if (isApplyingBehaviorActions(editor)) {
+        performAction({
+          context: {
+            keyGenerator: editorActor.getSnapshot().context.keyGenerator,
+            schema: editorActor.getSnapshot().context.schema,
+          },
+          action: {
+            type: 'history.redo',
+            editor,
+          },
+        })
+        return
+      }
+
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'history.redo',
+        },
+        editor,
+      })
+      return
+    }
+
     editor.select = (location) => {
       if (isApplyingBehaviorActions(editor)) {
         select(location)
@@ -228,6 +254,31 @@ export function createWithEventListeners(
           type: 'serialize',
           dataTransfer,
           originEvent: originEvent ?? 'unknown',
+        },
+        editor,
+      })
+      return
+    }
+
+    editor.undo = () => {
+      if (isApplyingBehaviorActions(editor)) {
+        performAction({
+          context: {
+            keyGenerator: editorActor.getSnapshot().context.keyGenerator,
+            schema: editorActor.getSnapshot().context.schema,
+          },
+          action: {
+            type: 'history.undo',
+            editor,
+          },
+        })
+        return
+      }
+
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'history.undo',
         },
         editor,
       })

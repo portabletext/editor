@@ -21,6 +21,10 @@ import {
   removeDecoratorActionImplementation,
   toggleDecoratorActionImplementation,
 } from '../editor/plugins/createWithPortableTextMarkModel'
+import {
+  historyRedoActionImplementation,
+  historyUndoActionImplementation,
+} from '../editor/plugins/createWithUndoRedo'
 import {toSlatePath} from '../internal-utils/paths'
 import {toSlateRange} from '../internal-utils/ranges'
 import {fromSlateValue, toSlateValue} from '../internal-utils/values'
@@ -168,6 +172,8 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
       },
     })
   },
+  'history.redo': historyRedoActionImplementation,
+  'history.undo': historyUndoActionImplementation,
   'insert.block': insertBlockActionImplementation,
   'insert.blocks': insertBlocksActionImplementation,
   'insert.block object': insertBlockObjectActionImplementation,
@@ -465,6 +471,20 @@ function performDefaultAction({
     }
     case 'focus': {
       behaviorActionImplementations.focus({
+        context,
+        action,
+      })
+      break
+    }
+    case 'history.redo': {
+      behaviorActionImplementations['history.redo']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'history.undo': {
+      behaviorActionImplementations['history.undo']({
         context,
         action,
       })
