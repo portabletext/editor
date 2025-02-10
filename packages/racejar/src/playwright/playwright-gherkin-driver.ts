@@ -1,16 +1,25 @@
 import type {ParameterType} from '@cucumber/cucumber-expressions'
-import {test, type BrowserContext, type Page} from '@playwright/test'
+import {
+  test,
+  type PlaywrightTestArgs,
+  type PlaywrightTestOptions,
+  type PlaywrightWorkerArgs,
+  type PlaywrightWorkerOptions,
+} from '@playwright/test'
 import {compileFeature} from '../compile-feature'
+import type {Hook} from '../hooks'
 import type {StepDefinition} from '../step-definitions'
+
+type PlaywrightOptions = PlaywrightTestArgs &
+  PlaywrightTestOptions &
+  PlaywrightWorkerArgs &
+  PlaywrightWorkerOptions
 
 /**
  * @public
  */
-export type PlaywrightContext = {
-  playwright: {
-    page: Page
-    context: BrowserContext
-  }
+export type PlaywrightContext = Record<'string', any> & {
+  playwright: PlaywrightOptions
 }
 
 /**
@@ -20,15 +29,18 @@ export function Feature<
   TContext extends PlaywrightContext = PlaywrightContext,
 >({
   featureText,
+  hooks,
   stepDefinitions,
   parameterTypes,
 }: {
   featureText: string
+  hooks: Array<Hook<TContext>>
   stepDefinitions: Array<StepDefinition<TContext, any, any, any>>
   parameterTypes?: Array<ParameterType<unknown>>
 }) {
   const feature = compileFeature({
     featureText,
+    hooks,
     stepDefinitions,
     parameterTypes,
   })
@@ -42,6 +54,22 @@ export function Feature<
 
   describeFn(feature.name, () => {
     for (const scenario of feature.scenarios) {
+      for (const before of scenario.beforeHooks) {
+        test.beforeEach(async (playwrightOptions) => {
+          await before({
+            playwright: playwrightOptions,
+          } as TContext)
+        })
+      }
+
+      for (const after of scenario.afterHooks) {
+        test.afterEach(async (playwrightOptions) => {
+          await after({
+            playwright: playwrightOptions,
+          } as TContext)
+        })
+      }
+
       const testFn =
         scenario.tag === 'only'
           ? test.only
@@ -49,14 +77,11 @@ export function Feature<
             ? test.skip
             : test
 
-      testFn(scenario.name, async ({page, context}) => {
+      testFn(scenario.name, async (playwrightOptions) => {
         for (const step of scenario.steps) {
           await step({
-            playwright: {
-              page,
-              context,
-            },
-          })
+            playwright: playwrightOptions,
+          } as TContext)
         }
       })
     }
