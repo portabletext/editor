@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.0](https://github.com/portabletext/editor/compare/racejar-v1.1.3...racejar-v1.2.0) (2025-02-10)
+
+
+### Features
+
+* add support for `Before` and `After` hooks ([#784](https://github.com/portabletext/editor/issues/784)) ([0cee059](https://github.com/portabletext/editor/commit/0cee059aff7bb799ed51b608d8068490bc379d12))
+* Add support for Data Tables and Doc Strings ([#783](https://github.com/portabletext/editor/issues/783)) ([2083aab](https://github.com/portabletext/editor/commit/2083aab7637ef5c5f95e25b5b4373b63869dde74))
+
 ## [1.1.3](https://github.com/portabletext/editor/compare/racejar-v1.1.2...racejar-v1.1.3) (2025-02-05)
 
 
