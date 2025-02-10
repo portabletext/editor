@@ -20,6 +20,7 @@ import {
   type Descendant,
   type SelectionOperation,
 } from 'slate'
+import type {BehaviorActionImplementation} from '../../behavior-actions/behavior.actions'
 import {debugWithName} from '../../internal-utils/debug'
 import {fromSlateValue} from '../../internal-utils/values'
 import {isChangingRemotely} from '../../internal-utils/withChanges'
@@ -112,7 +113,9 @@ export function createWithUndoRedo(
     })
 
     editor.history = {undos: [], redos: []}
+
     const {apply} = editor
+
     editor.apply = (op: Operation) => {
       if (editorActor.getSnapshot().matches({'edit mode': 'read only'})) {
         apply(op)
@@ -180,120 +183,120 @@ export function createWithUndoRedo(
       apply(op)
     }
 
-    editor.undo = () => {
-      if (editorActor.getSnapshot().matches({'edit mode': 'read only'})) {
-        return
-      }
-      const {undos} = editor.history
-      if (undos.length > 0) {
-        const step = undos[undos.length - 1]
-        debug('Undoing', step)
-        if (step.operations.length > 0) {
-          const otherPatches = remotePatches.filter(
-            (item) => item.time >= step.timestamp,
-          )
-          let transformedOperations = step.operations
-          otherPatches.forEach((item) => {
-            transformedOperations = flatten(
-              transformedOperations.map((op) =>
-                transformOperation(
-                  editor,
-                  item.patch,
-                  op,
-                  item.snapshot,
-                  item.previousSnapshot,
-                ),
-              ),
-            )
-          })
-          const reversedOperations = transformedOperations
-            .map(Operation.inverse)
-            .reverse()
-
-          try {
-            Editor.withoutNormalizing(editor, () => {
-              withUndoing(editor, () => {
-                withoutSaving(editor, () => {
-                  reversedOperations.forEach((op) => {
-                    editor.apply(op)
-                  })
-                })
-              })
-            })
-            editor.normalize()
-            editor.onChange()
-          } catch (err) {
-            debug('Could not perform undo step', err)
-            remotePatches.splice(0, remotePatches.length)
-            Transforms.deselect(editor)
-            editor.history = {undos: [], redos: []}
-            SAVING.set(editor, true)
-            setIsUndoing(editor, false)
-            editor.onChange()
-            return
-          }
-          editor.history.redos.push(step)
-          editor.history.undos.pop()
-        }
-      }
-    }
-
-    editor.redo = () => {
-      if (editorActor.getSnapshot().matches({'edit mode': 'read only'})) {
-        return
-      }
-      const {redos} = editor.history
-      if (redos.length > 0) {
-        const step = redos[redos.length - 1]
-        debug('Redoing', step)
-        if (step.operations.length > 0) {
-          const otherPatches = remotePatches.filter(
-            (item) => item.time >= step.timestamp,
-          )
-          let transformedOperations = step.operations
-          otherPatches.forEach((item) => {
-            transformedOperations = flatten(
-              transformedOperations.map((op) =>
-                transformOperation(
-                  editor,
-                  item.patch,
-                  op,
-                  item.snapshot,
-                  item.previousSnapshot,
-                ),
-              ),
-            )
-          })
-          try {
-            Editor.withoutNormalizing(editor, () => {
-              withRedoing(editor, () => {
-                withoutSaving(editor, () => {
-                  transformedOperations.forEach((op) => {
-                    editor.apply(op)
-                  })
-                })
-              })
-            })
-            editor.normalize()
-            editor.onChange()
-          } catch (err) {
-            debug('Could not perform redo step', err)
-            remotePatches.splice(0, remotePatches.length)
-            Transforms.deselect(editor)
-            editor.history = {undos: [], redos: []}
-            SAVING.set(editor, true)
-            setIsRedoing(editor, false)
-            editor.onChange()
-            return
-          }
-          editor.history.undos.push(step)
-          editor.history.redos.pop()
-        }
-      }
-    }
-
     // Plugin return
     return editor
+  }
+}
+
+export const historyUndoActionImplementation: BehaviorActionImplementation<
+  'history.undo'
+> = ({action}) => {
+  const editor = action.editor
+  const {undos} = editor.history
+  const remotePatches = getRemotePatches(editor)
+
+  if (undos.length > 0) {
+    const step = undos[undos.length - 1]
+    debug('Undoing', step)
+    if (step.operations.length > 0) {
+      const otherPatches = remotePatches.filter(
+        (item) => item.time >= step.timestamp,
+      )
+      let transformedOperations = step.operations
+      otherPatches.forEach((item) => {
+        transformedOperations = flatten(
+          transformedOperations.map((op) =>
+            transformOperation(
+              editor,
+              item.patch,
+              op,
+              item.snapshot,
+              item.previousSnapshot,
+            ),
+          ),
+        )
+      })
+      const reversedOperations = transformedOperations
+        .map(Operation.inverse)
+        .reverse()
+
+      try {
+        Editor.withoutNormalizing(editor, () => {
+          withUndoing(editor, () => {
+            withoutSaving(editor, () => {
+              reversedOperations.forEach((op) => {
+                editor.apply(op)
+              })
+            })
+          })
+        })
+      } catch (err) {
+        debug('Could not perform undo step', err)
+        remotePatches.splice(0, remotePatches.length)
+        Transforms.deselect(editor)
+        editor.history = {undos: [], redos: []}
+        SAVING.set(editor, true)
+        setIsUndoing(editor, false)
+        editor.onChange()
+        return
+      }
+      editor.history.redos.push(step)
+      editor.history.undos.pop()
+    }
+  }
+}
+
+export const historyRedoActionImplementation: BehaviorActionImplementation<
+  'history.redo'
+> = ({action}) => {
+  const editor = action.editor
+  const {redos} = editor.history
+  const remotePatches = getRemotePatches(editor)
+
+  if (redos.length > 0) {
+    const step = redos[redos.length - 1]
+    debug('Redoing', step)
+    if (step.operations.length > 0) {
+      const otherPatches = remotePatches.filter(
+        (item) => item.time >= step.timestamp,
+      )
+      let transformedOperations = step.operations
+      otherPatches.forEach((item) => {
+        transformedOperations = flatten(
+          transformedOperations.map((op) =>
+            transformOperation(
+              editor,
+              item.patch,
+              op,
+              item.snapshot,
+              item.previousSnapshot,
+            ),
+          ),
+        )
+      })
+      try {
+        Editor.withoutNormalizing(editor, () => {
+          withRedoing(editor, () => {
+            withoutSaving(editor, () => {
+              transformedOperations.forEach((op) => {
+                editor.apply(op)
+              })
+            })
+          })
+        })
+      } catch (err) {
+        debug('Could not perform redo step', err)
+        remotePatches.splice(0, remotePatches.length)
+        Transforms.deselect(editor)
+        editor.history = {undos: [], redos: []}
+        SAVING.set(editor, true)
+        setIsRedoing(editor, false)
+        editor.onChange()
+        return
+      }
+      editor.history.undos.push(step)
+      editor.history.redos.pop()
+    }
   }
 }
 

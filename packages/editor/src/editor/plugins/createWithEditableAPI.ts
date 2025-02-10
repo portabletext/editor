@@ -111,8 +111,24 @@ export function createEditableAPI(
         }.marks || []
       )
     },
-    undo: (): void => editor.undo(),
-    redo: (): void => editor.redo(),
+    undo: (): void => {
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'history.undo',
+        },
+        editor,
+      })
+    },
+    redo: (): void => {
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'history.redo',
+        },
+        editor,
+      })
+    },
     select: (selection: EditorSelection): void => {
       const slateSelection = toSlateRange(selection, editor)
       if (slateSelection) {

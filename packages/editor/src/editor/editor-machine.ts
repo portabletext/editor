@@ -610,6 +610,9 @@ export const editorMachine = setup({
             'focus': {
               actions: emit(({event}) => event),
             },
+            'history.*': {
+              actions: emit(({event}) => event),
+            },
             'insert.*': {
               actions: emit(({event}) => event),
             },
