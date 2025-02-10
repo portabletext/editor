@@ -34,6 +34,7 @@ import {
 } from '../../internal-utils/withUndoRedo'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
+import {getCurrentBehaviorActionSetId} from '../with-applying-behavior-actions'
 
 const debug = debugWithName('plugin:withUndoRedo')
 const debugVerbose = debug.enabled && false
@@ -79,6 +80,8 @@ export function createWithUndoRedo(
       blockSchemaType.name,
     )
     const remotePatches = getRemotePatches(editor)
+    let previousBehaviorActionIntendSetId =
+      getCurrentBehaviorActionSetId(editor)
 
     options.subscriptions.push(() => {
       debug('Subscribing to patches')
@@ -148,12 +151,28 @@ export function createWithUndoRedo(
       const overwrite = shouldOverwrite(op, lastOp)
       const save = isSaving(editor)
 
-      let merge = true
+      const currentBehaviorActionIntendSetId =
+        getCurrentBehaviorActionSetId(editor)
+
+      let merge =
+        currentBehaviorActionIntendSetId !== undefined &&
+        previousBehaviorActionIntendSetId === undefined
+          ? false
+          : currentBehaviorActionIntendSetId !== undefined &&
+              previousBehaviorActionIntendSetId !== undefined
+            ? currentBehaviorActionIntendSetId ===
+              previousBehaviorActionIntendSetId
+            : true
+
       if (save) {
         if (!step) {
           merge = false
         } else if (operations.length === 0) {
-          merge = shouldMerge(op, lastOp) || overwrite
+          merge =
+            currentBehaviorActionIntendSetId === undefined &&
+            previousBehaviorActionIntendSetId === undefined
+              ? shouldMerge(op, lastOp) || overwrite
+              : merge
         }
 
         if (step && merge) {
@@ -180,6 +199,9 @@ export function createWithUndoRedo(
           history.redos = []
         }
       }
+
+      previousBehaviorActionIntendSetId = currentBehaviorActionIntendSetId
+
       apply(op)
     }
 
