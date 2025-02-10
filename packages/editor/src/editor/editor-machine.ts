@@ -29,7 +29,10 @@ import type {
 } from '../types/editor'
 import type {EditorSchema} from './define-schema'
 import {createEditorSnapshot} from './editor-snapshot'
-import {withApplyingBehaviorActions} from './with-applying-behavior-actions'
+import {
+  withApplyingBehaviorActionIntendSet,
+  withApplyingBehaviorActions,
+} from './with-applying-behavior-actions'
 
 export * from 'xstate/guards'
 
@@ -385,7 +388,7 @@ export const editorMachine = setup({
                 (actionIntend) => actionIntend.type !== 'effect',
               ))
 
-          withApplyingBehaviorActions(event.editor, () => {
+          withApplyingBehaviorActionIntendSet(event.editor, () => {
             for (const actionIntend of actionIntends) {
               if (actionIntend.type === 'raise') {
                 if (isCustomBehaviorEvent(actionIntend.event)) {
