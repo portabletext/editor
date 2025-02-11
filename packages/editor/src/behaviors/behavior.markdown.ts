@@ -86,6 +86,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
+      const previousInlineObject = selectors.getPreviousInlineObject({context})
       const blockOffset = spanSelectionPointToBlockOffset({
         value: context.value,
         selectionPoint: {
@@ -98,7 +99,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         },
       })
 
-      if (!blockOffset) {
+      if (previousInlineObject || !blockOffset) {
         return false
       }
 
@@ -173,6 +174,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
+      const previousInlineObject = selectors.getPreviousInlineObject({context})
       const textBefore = getBlockTextBefore({context})
       const hrBlockOffsets = {
         anchor: {
@@ -185,7 +187,10 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         },
       }
 
-      if (textBefore === `${hrCharacter}${hrCharacter}`) {
+      if (
+        !previousInlineObject &&
+        textBefore === `${hrCharacter}${hrCharacter}`
+      ) {
         return {hrObject, focusBlock, hrCharacter, hrBlockOffsets}
       }
 
@@ -290,6 +295,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
+      const previousInlineObject = selectors.getPreviousInlineObject({context})
       const blockText = getTextBlockText(focusTextBlock.node)
       const markdownHeadingSearch = /^#+/.exec(blockText)
       const level = markdownHeadingSearch
@@ -297,7 +303,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         : undefined
       const caretAtTheEndOfHeading = blockOffset.offset === level
 
-      if (!caretAtTheEndOfHeading) {
+      if (previousInlineObject || !caretAtTheEndOfHeading) {
         return false
       }
 
@@ -397,6 +403,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
+      const previousInlineObject = selectors.getPreviousInlineObject({context})
       const blockOffset = spanSelectionPointToBlockOffset({
         value: context.value,
         selectionPoint: {
@@ -409,7 +416,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         },
       })
 
-      if (!blockOffset) {
+      if (previousInlineObject || !blockOffset) {
         return false
       }
 
