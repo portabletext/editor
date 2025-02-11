@@ -17,7 +17,6 @@ import {
   toggleAnnotationActionImplementation,
 } from '../editor/plugins/createWithEditableAPI'
 import {
-  addDecoratorActionImplementation,
   removeDecoratorActionImplementation,
   toggleDecoratorActionImplementation,
 } from '../editor/plugins/createWithPortableTextMarkModel'
@@ -33,6 +32,7 @@ import {insertBlock} from './behavior.action-utils.insert-block'
 import {blockSetBehaviorActionImplementation} from './behavior.action.block.set'
 import {blockUnsetBehaviorActionImplementation} from './behavior.action.block.unset'
 import {dataTransferSetActionImplementation} from './behavior.action.data-transfer-set'
+import {decoratorAddActionImplementation} from './behavior.action.decorator.add'
 import {deleteActionImplementation} from './behavior.action.delete'
 import {deleteTextActionImplementation} from './behavior.action.delete.text'
 import {insertBlockObjectActionImplementation} from './behavior.action.insert-block-object'
@@ -87,7 +87,7 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
     ReactEditor.blur(action.editor)
   },
   'data transfer.set': dataTransferSetActionImplementation,
-  'decorator.add': addDecoratorActionImplementation,
+  'decorator.add': decoratorAddActionImplementation,
   'decorator.remove': removeDecoratorActionImplementation,
   'decorator.toggle': toggleDecoratorActionImplementation,
   'focus': ({action}) => {

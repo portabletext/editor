@@ -1,0 +1,161 @@
+import {Editor, Range, Text, Transforms} from 'slate'
+import {toPortableTextRange, toSlateRange} from '../internal-utils/ranges'
+import {fromSlateValue} from '../internal-utils/values'
+import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
+import * as selectors from '../selectors'
+import * as utils from '../utils'
+import type {BehaviorActionImplementation} from './behavior.actions'
+
+export const decoratorAddActionImplementation: BehaviorActionImplementation<
+  'decorator.add'
+> = ({context, action}) => {
+  const editor = action.editor
+  const mark = action.decorator
+  const selection = action.selection
+    ? (toSlateRange(action.selection, action.editor) ?? editor.selection)
+    : editor.selection
+
+  if (!selection) {
+    return
+  }
+
+  const value = fromSlateValue(
+    editor.children,
+    context.schema.block.name,
+    KEY_TO_VALUE_ELEMENT.get(editor),
+  )
+
+  const editorSelection = toPortableTextRange(value, selection, context.schema)
+  const anchorOffset = editorSelection
+    ? utils.spanSelectionPointToBlockOffset({
+        value,
+        selectionPoint: editorSelection.anchor,
+      })
+    : undefined
+  const focusOffset = editorSelection
+    ? utils.spanSelectionPointToBlockOffset({
+        value,
+        selectionPoint: editorSelection.focus,
+      })
+    : undefined
+
+  if (!anchorOffset || !focusOffset) {
+    throw new Error('Unable to find anchor or focus offset')
+  }
+
+  if (Range.isExpanded(selection)) {
+    // Split if needed
+    Transforms.setNodes(
+      editor,
+      {},
+      {at: selection, match: Text.isText, split: true, hanging: true},
+    )
+
+    // The value might have changed after splitting
+    const newValue = fromSlateValue(
+      editor.children,
+      context.schema.block.name,
+      KEY_TO_VALUE_ELEMENT.get(editor),
+    )
+    // We need to find the new selection from the original offsets because the
+    // split operation might have changed the value.
+    const newSelection = utils.blockOffsetsToSelection({
+      value: newValue,
+      offsets: {anchor: anchorOffset, focus: focusOffset},
+      backward: editorSelection?.backward,
+    })
+
+    const trimmedSelection = selectors.getTrimmedSelection({
+      context: {
+        activeDecorators: [],
+        converters: [],
+        keyGenerator: context.keyGenerator,
+        schema: context.schema,
+        selection: newSelection,
+        value: newValue,
+      },
+    })
+
+    if (!trimmedSelection) {
+      throw new Error('Unable to find trimmed selection')
+    }
+
+    const newRange = toSlateRange(trimmedSelection, editor)
+
+    if (!newRange) {
+      throw new Error('Unable to find new selection')
+    }
+
+    // Use new selection to find nodes to decorate
+    const splitTextNodes = Range.isRange(newRange)
+      ? [
+          ...Editor.nodes(editor, {
+            at: newRange,
+            match: (node) => Text.isText(node),
+          }),
+        ]
+      : []
+
+    for (const [node, path] of splitTextNodes) {
+      const marks = [
+        ...(Array.isArray(node.marks) ? node.marks : []).filter(
+          (eMark: string) => eMark !== mark,
+        ),
+        mark,
+      ]
+      Transforms.setNodes(
+        editor,
+        {marks},
+        {at: path, match: Text.isText, split: true, hanging: true},
+      )
+    }
+  } else {
+    const [block, blockPath] = Editor.node(editor, selection, {
+      depth: 1,
+    })
+    const lonelyEmptySpan =
+      editor.isTextBlock(block) &&
+      block.children.length === 1 &&
+      editor.isTextSpan(block.children[0]) &&
+      block.children[0].text === ''
+        ? block.children[0]
+        : undefined
+
+    if (lonelyEmptySpan) {
+      const existingMarks = lonelyEmptySpan.marks ?? []
+      const existingMarksWithoutDecorator = existingMarks.filter(
+        (existingMark) => existingMark !== mark,
+      )
+
+      Transforms.setNodes(
+        editor,
+        {
+          marks:
+            existingMarks.length === existingMarksWithoutDecorator.length
+              ? [...existingMarks, mark]
+              : existingMarksWithoutDecorator,
+        },
+        {
+          at: blockPath,
+          match: (node) => editor.isTextSpan(node),
+        },
+      )
+    } else {
+      const existingMarks: string[] =
+        {
+          ...(Editor.marks(editor) || {}),
+        }.marks || []
+      const marks = {
+        ...(Editor.marks(editor) || {}),
+        marks: [...existingMarks, mark],
+      }
+      editor.marks = marks as Text
+    }
+  }
+
+  if (editor.selection) {
+    // Reselect
+    const selection = editor.selection
+    editor.selection = {...selection}
+  }
+}
