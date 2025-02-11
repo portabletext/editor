@@ -57,6 +57,7 @@ export type SyntheticBehaviorEvent =
   | {
       type: 'decorator.add'
       decorator: string
+      selection?: NonNullable<EditorSelection>
     }
   | {
       type: 'decorator.remove'

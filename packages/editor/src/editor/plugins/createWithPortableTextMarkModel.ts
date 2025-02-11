@@ -8,6 +8,7 @@ import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import type {PortableTextObject, PortableTextSpan} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {Editor, Element, Node, Path, Range, Text, Transforms} from 'slate'
+import {decoratorAddActionImplementation} from '../../behavior-actions/behavior.action.decorator.add'
 import type {BehaviorActionImplementation} from '../../behavior-actions/behavior.actions'
 import {debugWithName} from '../../internal-utils/debug'
 import {getNextSpan, getPreviousSpan} from '../../internal-utils/sibling-utils'
@@ -657,102 +658,6 @@ export function createWithPortableTextMarkModel(
   }
 }
 
-export const addDecoratorActionImplementation: BehaviorActionImplementation<
-  'decorator.add'
-> = ({action}) => {
-  const editor = action.editor
-  const mark = action.decorator
-
-  if (editor.selection) {
-    if (Range.isExpanded(editor.selection)) {
-      // Split if needed
-      Transforms.setNodes(
-        editor,
-        {},
-        {match: Text.isText, split: true, hanging: true},
-      )
-      // Use new selection
-      const splitTextNodes = Range.isRange(editor.selection)
-        ? [
-            ...Editor.nodes(editor, {
-              at: editor.selection,
-              match: Text.isText,
-            }),
-          ]
-        : []
-      const shouldRemoveMark =
-        splitTextNodes.length > 1 &&
-        splitTextNodes.every((node) => node[0].marks?.includes(mark))
-
-      if (shouldRemoveMark) {
-        editor.removeMark(mark)
-      } else {
-        splitTextNodes.forEach(([node, path]) => {
-          const marks = [
-            ...(Array.isArray(node.marks) ? node.marks : []).filter(
-              (eMark: string) => eMark !== mark,
-            ),
-            mark,
-          ]
-          Transforms.setNodes(
-            editor,
-            {marks},
-            {at: path, match: Text.isText, split: true, hanging: true},
-          )
-        })
-      }
-    } else {
-      const [block, blockPath] = Editor.node(editor, editor.selection, {
-        depth: 1,
-      })
-      const lonelyEmptySpan =
-        editor.isTextBlock(block) &&
-        block.children.length === 1 &&
-        editor.isTextSpan(block.children[0]) &&
-        block.children[0].text === ''
-          ? block.children[0]
-          : undefined
-
-      if (lonelyEmptySpan) {
-        const existingMarks = lonelyEmptySpan.marks ?? []
-        const existingMarksWithoutDecorator = existingMarks.filter(
-          (existingMark) => existingMark !== mark,
-        )
-
-        Transforms.setNodes(
-          editor,
-          {
-            marks:
-              existingMarks.length === existingMarksWithoutDecorator.length
-                ? [...existingMarks, mark]
-                : existingMarksWithoutDecorator,
-          },
-          {
-            at: blockPath,
-            match: (node) => editor.isTextSpan(node),
-          },
-        )
-      } else {
-        const existingMarks: string[] =
-          {
-            ...(Editor.marks(editor) || {}),
-          }.marks || []
-        const marks = {
-          ...(Editor.marks(editor) || {}),
-          marks: [...existingMarks, mark],
-        }
-        editor.marks = marks as Text
-      }
-    }
-
-    if (editor.selection) {
-      // Reselect
-      const selection = editor.selection
-      editor.selection = {...selection}
-    }
-  }
-}
-
 export const removeDecoratorActionImplementation: BehaviorActionImplementation<
   'decorator.remove'
 > = ({action}) => {
@@ -892,7 +797,7 @@ export const toggleDecoratorActionImplementation: BehaviorActionImplementation<
       },
     })
   } else {
-    addDecoratorActionImplementation({
+    decoratorAddActionImplementation({
       context,
       action: {
         type: 'decorator.add',
