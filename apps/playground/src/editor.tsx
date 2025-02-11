@@ -366,6 +366,13 @@ function EditorPlaygroundToolbar(props: {
       {enableMarkdownPlugin ? (
         <MarkdownPlugin
           config={{
+            boldDecorator: ({schema}) =>
+              schema.decorators.find(
+                (decorator) => decorator.value === 'strong',
+              )?.value,
+            italicDecorator: ({schema}) =>
+              schema.decorators.find((decorator) => decorator.value === 'em')
+                ?.value,
             horizontalRuleObject: ({schema}) => {
               const name = schema.blockObjects.find(
                 (object) => object.name === 'break',
