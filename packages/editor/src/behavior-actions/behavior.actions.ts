@@ -27,15 +27,14 @@ import {
 } from '../editor/plugins/createWithUndoRedo'
 import {toSlatePath} from '../internal-utils/paths'
 import {toSlateRange} from '../internal-utils/ranges'
-import {fromSlateValue, toSlateValue} from '../internal-utils/values'
-import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
+import {toSlateValue} from '../internal-utils/values'
 import type {PickFromUnion} from '../type-utils'
-import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
 import {insertBlock} from './behavior.action-utils.insert-block'
 import {blockSetBehaviorActionImplementation} from './behavior.action.block.set'
 import {blockUnsetBehaviorActionImplementation} from './behavior.action.block.unset'
 import {dataTransferSetActionImplementation} from './behavior.action.data-transfer-set'
 import {deleteActionImplementation} from './behavior.action.delete'
+import {deleteTextActionImplementation} from './behavior.action.delete.text'
 import {insertBlockObjectActionImplementation} from './behavior.action.insert-block-object'
 import {insertBlocksActionImplementation} from './behavior.action.insert-blocks'
 import {
@@ -119,44 +118,7 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
       at: range,
     })
   },
-  'delete.text': ({context, action}) => {
-    const value = fromSlateValue(
-      action.editor.children,
-      context.schema.block.name,
-      KEY_TO_VALUE_ELEMENT.get(action.editor),
-    )
-
-    const anchor = blockOffsetToSpanSelectionPoint({
-      value,
-      blockOffset: action.anchor,
-    })
-    const focus = blockOffsetToSpanSelectionPoint({
-      value,
-      blockOffset: action.focus,
-    })
-
-    if (!anchor || !focus) {
-      console.error('Unable to find anchor or focus selection point')
-      return
-    }
-
-    const range = toSlateRange(
-      {
-        anchor,
-        focus,
-      },
-      action.editor,
-    )
-
-    if (!range) {
-      console.error('Unable to find Slate range from selection points')
-      return
-    }
-
-    Transforms.delete(action.editor, {
-      at: range,
-    })
-  },
+  'delete.text': deleteTextActionImplementation,
   'deserialization.failure': ({action}) => {
     console.error(
       `Deserialization of ${action.mimeType} failed with reason ${action.reason}`,
