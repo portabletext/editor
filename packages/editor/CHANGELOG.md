@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.33.0](https://github.com/portabletext/editor/compare/editor-v1.32.0...editor-v1.33.0) (2025-02-11)
+
+
+### Features
+
+* **`decorator.add`:** allow manual `selection` ([1d1daaa](https://github.com/portabletext/editor/commit/1d1daaa589df023e7563ac95ce39b1be13fda7b9))
+* **markdown plugin:** add bold/italic shortcut support ([1051546](https://github.com/portabletext/editor/commit/1051546e8017c5ddd6d41b98f1d522e5821d0d0c))
+* **selectors:** add `getAnchor(Block|Child|Span|TextBlock)` ([e860e22](https://github.com/portabletext/editor/commit/e860e220459668d074e2b6f58991f102b670f3fd))
+* **selectors:** add `getTrimmedSelection` ([0f71c5f](https://github.com/portabletext/editor/commit/0f71c5f0bc668c6851a239abb582b6aadf67741c))
+* **utils:** add `blockOffsetsToSelection` ([09de8d8](https://github.com/portabletext/editor/commit/09de8d8557632ab7097a08238ec8a830518d9ac1))
+
+
+### Bug Fixes
+
+* **`delete.text`:** trim inline objects on the selection edge ([ef387b4](https://github.com/portabletext/editor/commit/ef387b4dc1019db2bc8aae14d9cbe4658ad095ca))
+* **markdown behaviors:** respect preceding inline objects ([31d06ab](https://github.com/portabletext/editor/commit/31d06abd5afc4e982cdd203a555ade5eb7fb961c))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/patches bumped to 1.1.3
+
 ## [1.32.0](https://github.com/portabletext/editor/compare/editor-v1.31.2...editor-v1.32.0) (2025-02-10)
 
 

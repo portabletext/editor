@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.3](https://github.com/portabletext/editor/compare/patches-v1.1.2...patches-v1.1.3) (2025-02-11)
+
+
+### Bug Fixes
+
+* make sure you can set block object properties using patches ([268dec9](https://github.com/portabletext/editor/commit/268dec92e30a0e5c6ba7a49acac627b92db08d0e))
+
 ## [1.1.2](https://github.com/portabletext/editor/compare/patches-v1.1.1...patches-v1.1.2) (2025-01-22)
 
 
