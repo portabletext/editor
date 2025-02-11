@@ -3,12 +3,17 @@ import {
   createMarkdownBehaviors,
   type MarkdownBehaviorsConfig,
 } from '../behaviors/behavior.markdown'
+import {
+  useMarkdownEmphasisBehaviors,
+  type MarkdownEmphasisBehaviorsConfig,
+} from '../behaviors/behavior.markdown-emphasis'
 import {useEditor} from '../editor/editor-provider'
 
 /**
  * @beta
  */
-export type MarkdownPluginConfig = MarkdownBehaviorsConfig
+export type MarkdownPluginConfig = MarkdownBehaviorsConfig &
+  MarkdownEmphasisBehaviorsConfig
 
 /**
  * @beta
@@ -25,6 +30,10 @@ export type MarkdownPluginConfig = MarkdownBehaviorsConfig
  *    <EditorProvider>
  *      <MarkdownPlugin
  *        config={{
+ *          boldDecorator: ({schema}) =>
+ *            schema.decorators.find((decorator) => decorator.value === 'strong')?.value,
+ *          italicDecorator: ({schema}) =>
+ *            schema.decorators.find((decorator) => decorator.value === 'em')?.value,
  *          horizontalRuleObject: ({schema}) => {
  *            const name = schema.blockObjects.find(
  *              (object) => object.name === 'break',
@@ -51,6 +60,7 @@ export type MarkdownPluginConfig = MarkdownBehaviorsConfig
  */
 export function MarkdownPlugin(props: {config: MarkdownPluginConfig}) {
   const editor = useEditor()
+  useMarkdownEmphasisBehaviors({config: props.config})
 
   useEffect(() => {
     const behaviors = createMarkdownBehaviors(props.config)
