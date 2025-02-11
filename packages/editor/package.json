@@ -106,8 +106,8 @@
     "@portabletext/toolkit": "^2.0.17",
     "@sanity/diff-match-patch": "^3.2.0",
     "@sanity/pkg-utils": "^7.0.4",
-    "@sanity/schema": "^3.74.1",
-    "@sanity/types": "^3.74.1",
+    "@sanity/schema": "^3.75.0",
+    "@sanity/types": "^3.75.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
     "@types/debug": "^4.1.12",
@@ -135,8 +135,8 @@
     "vitest-browser-react": "^0.0.4"
   },
   "peerDependencies": {
-    "@sanity/schema": "^3.74.1",
-    "@sanity/types": "^3.74.1",
+    "@sanity/schema": "^3.75.0",
+    "@sanity/types": "^3.75.0",
     "react": "^16.9 || ^17 || ^18 || ^19",
     "rxjs": "^7.8.1"
   },
