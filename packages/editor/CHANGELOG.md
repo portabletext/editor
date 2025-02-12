@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.33.1](https://github.com/portabletext/editor/compare/editor-v1.33.0...editor-v1.33.1) (2025-02-12)
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^3.75.0 ([8f9bd9b](https://github.com/portabletext/editor/commit/8f9bd9bccdb0ba824885a592be3c497280af288b))
+* **markdown emphasis:** fix edge case producing wrong match ([48361cf](https://github.com/portabletext/editor/commit/48361cf968fd1eac0d7e3ca94331de03cd1da7f6))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.7
+
 ## [1.33.0](https://github.com/portabletext/editor/compare/editor-v1.32.0...editor-v1.33.0) (2025-02-11)
 
 
