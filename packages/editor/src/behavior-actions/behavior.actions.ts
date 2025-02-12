@@ -1,10 +1,4 @@
-import {
-  deleteBackward,
-  deleteForward,
-  insertText,
-  Path,
-  Transforms,
-} from 'slate'
+import {deleteForward, insertText, Path, Transforms} from 'slate'
 import {ReactEditor} from 'slate-react'
 import type {
   BehaviorAction,
@@ -95,7 +89,7 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   },
   'delete': deleteActionImplementation,
   'delete.backward': ({action}) => {
-    deleteBackward(action.editor, action.unit)
+    action.editor.deleteBackward(action.unit)
   },
   'delete.forward': ({action}) => {
     deleteForward(action.editor, action.unit)
