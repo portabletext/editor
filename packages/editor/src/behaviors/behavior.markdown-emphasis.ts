@@ -9,6 +9,10 @@ import {
 } from 'xstate'
 import type {Editor} from '../editor/create-editor'
 import {useEditor} from '../editor/editor-provider'
+import {
+  getTextToBold,
+  getTextToItalic,
+} from '../internal-utils/get-text-to-emphasize'
 import type {EditorSchema} from '../selectors'
 import * as selectors from '../selectors'
 import * as utils from '../utils'
@@ -42,11 +46,6 @@ export function useMarkdownEmphasisBehaviors(props: {
     },
   })
 }
-
-const italicRegex =
-  /(?<!\*)\*(?!\s)([^*\n]+?)(?<!\s)\*(?!\*)|(?<!_)_(?!\s)([^_\n]+?)(?<!\s)_(?!_)$/
-const boldRegex =
-  /(?<!\*)\*\*(?!\s)([^*\n]+?)(?<!\s)\*\*(?!\*)|(?<!_)__(?!\s)([^_\n]+?)(?<!\s)__(?!_)$/
 
 type MarkdownEmphasisEvent =
   | {
@@ -99,9 +98,7 @@ const emphasisListener: CallbackLogicFunction<
 
         const textBefore = selectors.getBlockTextBefore({context})
 
-        const textToItalic = `${textBefore}${event.text}`
-          .match(italicRegex)
-          ?.at(0)
+        const textToItalic = getTextToItalic(`${textBefore}${event.text}`)
 
         if (textToItalic !== undefined && italicDecorator !== undefined) {
           const prefixOffsets = {
@@ -146,7 +143,7 @@ const emphasisListener: CallbackLogicFunction<
           }
         }
 
-        const textToBold = `${textBefore}${event.text}`.match(boldRegex)?.at(0)
+        const textToBold = getTextToBold(`${textBefore}${event.text}`)
 
         if (textToBold !== undefined && boldDecorator !== undefined) {
           const prefixOffsets = {
