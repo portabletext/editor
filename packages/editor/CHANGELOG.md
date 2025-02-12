@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.33.2](https://github.com/portabletext/editor/compare/editor-v1.33.1...editor-v1.33.2) (2025-02-12)
+
+
+### Bug Fixes
+
+* make sure Mod+Backspace can delete line backwards ([da95223](https://github.com/portabletext/editor/commit/da9522342c451e8b1ffe6ac055cf537a49310a2a))
+
 ## [1.33.1](https://github.com/portabletext/editor/compare/editor-v1.33.0...editor-v1.33.1) (2025-02-12)
 
 
