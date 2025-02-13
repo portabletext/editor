@@ -125,10 +125,12 @@ const emphasisListener: CallbackLogicFunction<
           const anchor = utils.blockOffsetToSpanSelectionPoint({
             value: context.value,
             blockOffset: prefixOffsets.focus,
+            direction: 'backward',
           })
           const focus = utils.blockOffsetToSpanSelectionPoint({
             value: context.value,
             blockOffset: suffixOffsets.anchor,
+            direction: 'forward',
           })
 
           if (!anchor || !focus) {
@@ -169,10 +171,12 @@ const emphasisListener: CallbackLogicFunction<
           const anchor = utils.blockOffsetToSpanSelectionPoint({
             value: context.value,
             blockOffset: prefixOffsets.focus,
+            direction: 'backward',
           })
           const focus = utils.blockOffsetToSpanSelectionPoint({
             value: context.value,
             blockOffset: suffixOffsets.anchor,
+            direction: 'forward',
           })
 
           if (!anchor || !focus) {

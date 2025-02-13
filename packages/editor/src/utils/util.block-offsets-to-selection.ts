@@ -18,10 +18,12 @@ export function blockOffsetsToSelection({
   const anchor = blockOffsetToSpanSelectionPoint({
     value,
     blockOffset: offsets.anchor,
+    direction: backward ? 'backward' : 'forward',
   })
   const focus = blockOffsetToSpanSelectionPoint({
     value,
     blockOffset: offsets.focus,
+    direction: backward ? 'forward' : 'backward',
   })
 
   if (!anchor || !focus) {
