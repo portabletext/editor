@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.33.3](https://github.com/portabletext/editor/compare/editor-v1.33.2...editor-v1.33.3) (2025-02-13)
+
+
+### Bug Fixes
+
+* **`blockOffsetToSpanSelectionPoint`:** account for the direction of the offset ([b55d3f2](https://github.com/portabletext/editor/commit/b55d3f26919c3e62a217b045b2fcf885e0c0b945))
+* **`getSelectionText`:** account for more edge cases ([9a73f62](https://github.com/portabletext/editor/commit/9a73f624448812cdaaea773996143072e49afb87))
+
 ## [1.33.2](https://github.com/portabletext/editor/compare/editor-v1.33.1...editor-v1.33.2) (2025-02-12)
 
 
