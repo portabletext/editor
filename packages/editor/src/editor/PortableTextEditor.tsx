@@ -812,7 +812,7 @@ export function RouteEventsToChanges(props: {
       debug('Unsubscribing to changes')
       sub.unsubscribe()
     }
-  }, [props.editorActor, handleChange])
+  }, [props.editorActor])
 
   return null
 }
