@@ -23,62 +23,77 @@ export const getSelectionText: EditorSelector<string> = ({context}) => {
     return text
   }
 
+  const startBlockKey = isKeyedSegment(forwardSelection.anchor.path[0])
+    ? forwardSelection.anchor.path[0]._key
+    : undefined
+  const endBlockKey = isKeyedSegment(forwardSelection.focus.path[0])
+    ? forwardSelection.focus.path[0]._key
+    : undefined
+  const startChildKey = isKeyedSegment(forwardSelection.anchor.path[2])
+    ? forwardSelection.anchor.path[2]._key
+    : undefined
+  const endChildKey = isKeyedSegment(forwardSelection.focus.path[2])
+    ? forwardSelection.focus.path[2]._key
+    : undefined
+  let startFound = false
+
+  if (!startBlockKey || !endBlockKey) {
+    return text
+  }
+
   for (const block of value) {
-    if (
-      isKeyedSegment(forwardSelection.anchor.path[0]) &&
-      block._key !== forwardSelection.anchor.path[0]._key
-    ) {
-      continue
-    }
+    if (block._key === startBlockKey) {
+      if (!isPortableTextTextBlock(block)) {
+        continue
+      }
 
-    if (!isPortableTextTextBlock(block)) {
-      continue
-    }
-
-    for (const child of block.children) {
-      if (isPortableTextSpan(child)) {
-        if (
-          isKeyedSegment(forwardSelection.anchor.path[2]) &&
-          child._key === forwardSelection.anchor.path[2]._key &&
-          isKeyedSegment(forwardSelection.focus.path[2]) &&
-          child._key === forwardSelection.focus.path[2]._key
-        ) {
-          text =
-            text +
-            child.text.slice(
-              forwardSelection.anchor.offset,
-              forwardSelection.focus.offset,
-            )
-
-          break
+      for (const child of block.children) {
+        if (child._key === startChildKey) {
+          startFound = true
         }
 
-        if (
-          isKeyedSegment(forwardSelection.anchor.path[2]) &&
-          child._key === forwardSelection.anchor.path[2]._key
-        ) {
-          text = text + child.text.slice(forwardSelection.anchor.offset)
+        if (!startFound) {
           continue
         }
 
-        if (
-          isKeyedSegment(forwardSelection.focus.path[2]) &&
-          child._key === forwardSelection.focus.path[2]._key
-        ) {
-          text = text + child.text.slice(0, forwardSelection.focus.offset)
+        if (isPortableTextSpan(child) && startChildKey) {
+          if (child._key === startChildKey && child._key === endChildKey) {
+            text =
+              text +
+              child.text.slice(
+                forwardSelection.anchor.offset,
+                forwardSelection.focus.offset,
+              )
+          } else if (child._key === startChildKey) {
+            text = text + child.text.slice(forwardSelection.anchor.offset)
+          } else if (child._key === endChildKey) {
+            text = text + child.text.slice(0, forwardSelection.focus.offset)
+          } else {
+            text = text + child.text
+          }
+        }
+
+        if (child._key === endChildKey) {
           break
         }
-
-        if (text.length > 0) {
-          text = text + child.text
-        }
       }
+      continue
     }
 
-    if (
-      isKeyedSegment(forwardSelection.focus.path[0]) &&
-      block._key === forwardSelection.focus.path[0]._key
-    ) {
+    if (block._key === endBlockKey) {
+      if (!isPortableTextTextBlock(block)) {
+        continue
+      }
+
+      for (const child of block.children) {
+        if (isPortableTextSpan(child) && endChildKey) {
+          text = text + child.text.slice(0, forwardSelection.focus.offset)
+        }
+
+        if (child._key === endChildKey) {
+          break
+        }
+      }
       break
     }
   }
