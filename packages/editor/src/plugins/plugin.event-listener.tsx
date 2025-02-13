@@ -64,7 +64,7 @@ export function EventListenerPlugin(props: {
     return () => {
       subscription.unsubscribe()
     }
-  }, [editor, on])
+  }, [editor])
 
   return null
 }
