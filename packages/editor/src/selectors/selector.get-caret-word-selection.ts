@@ -74,6 +74,13 @@ export const getCaretWordSelection: EditorSelector<EditorSelection> = ({
   })
   const textDirectlyAfter = textAfter.split(/\s+/).at(0)
 
+  if (
+    (textDirectlyBefore === undefined || textDirectlyBefore === '') &&
+    (textDirectlyAfter === undefined || textDirectlyAfter === '')
+  ) {
+    return null
+  }
+
   const caretWordStartOffset: BlockOffset = textDirectlyBefore
     ? {
         ...selectionStartOffset,
@@ -90,10 +97,12 @@ export const getCaretWordSelection: EditorSelector<EditorSelection> = ({
   const caretWordStartSelectionPoint = blockOffsetToSpanSelectionPoint({
     value: context.value,
     blockOffset: caretWordStartOffset,
+    direction: 'backward',
   })
   const caretWordEndSelectionPoint = blockOffsetToSpanSelectionPoint({
     value: context.value,
     blockOffset: caretWordEndOffset,
+    direction: 'forward',
   })
 
   if (!caretWordStartSelectionPoint || !caretWordEndSelectionPoint) {

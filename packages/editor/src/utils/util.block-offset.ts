@@ -14,14 +14,17 @@ import {isKeyedSegment} from './util.is-keyed-segment'
 export function blockOffsetToSpanSelectionPoint({
   value,
   blockOffset,
+  direction,
 }: {
   value: Array<PortableTextBlock>
   blockOffset: BlockOffset
+  direction: 'forward' | 'backward'
 }) {
   let offsetLeft = blockOffset.offset
   let selectionPoint:
     | {path: [KeyedSegment, 'children', KeyedSegment]; offset: number}
     | undefined
+  let skippedInlineObject = false
 
   for (const block of value) {
     if (block._key !== blockOffset.path[0]._key) {
@@ -33,16 +36,42 @@ export function blockOffsetToSpanSelectionPoint({
     }
 
     for (const child of block.children) {
-      if (!isPortableTextSpan(child)) {
+      if (direction === 'forward') {
+        if (!isPortableTextSpan(child)) {
+          continue
+        }
+
+        if (offsetLeft <= child.text.length) {
+          selectionPoint = {
+            path: [...blockOffset.path, 'children', {_key: child._key}],
+            offset: offsetLeft,
+          }
+          break
+        }
+
+        offsetLeft -= child.text.length
+
         continue
       }
 
-      if (offsetLeft === 0) {
-        selectionPoint = {
-          path: [...blockOffset.path, 'children', {_key: child._key}],
-          offset: 0,
+      if (!isPortableTextSpan(child)) {
+        skippedInlineObject = true
+        continue
+      }
+
+      if (offsetLeft === 0 && selectionPoint && !skippedInlineObject) {
+        if (skippedInlineObject) {
+          selectionPoint = {
+            path: [...blockOffset.path, 'children', {_key: child._key}],
+            offset: 0,
+          }
         }
         break
+      }
+
+      if (offsetLeft > child.text.length) {
+        offsetLeft -= child.text.length
+        continue
       }
 
       if (offsetLeft <= child.text.length) {
@@ -50,10 +79,13 @@ export function blockOffsetToSpanSelectionPoint({
           path: [...blockOffset.path, 'children', {_key: child._key}],
           offset: offsetLeft,
         }
-        break
-      }
 
-      offsetLeft -= child.text.length
+        offsetLeft -= child.text.length
+
+        if (offsetLeft !== 0) {
+          break
+        }
+      }
     }
   }
 
