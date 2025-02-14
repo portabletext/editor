@@ -168,7 +168,7 @@ describe(converterTextHtml.serialize.name, () => {
         },
       }),
     ).toMatchObject({
-      data: '<p>fizz  buzz</p>',
+      data: '<p>fizz  buz</p>',
     })
   })
 

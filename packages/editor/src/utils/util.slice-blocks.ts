@@ -92,7 +92,18 @@ export function sliceBlocks({
           }
 
           if (startBlock && isPortableTextTextBlock(startBlock)) {
-            startBlock.children.push(child)
+            if (
+              endChildKey &&
+              child._key === endChildKey &&
+              isPortableTextSpan(child)
+            ) {
+              startBlock.children.push({
+                ...child,
+                text: child.text.slice(0, endPoint.offset),
+              })
+            } else {
+              startBlock.children.push(child)
+            }
 
             if (
               block._key === endBlockKey &&
