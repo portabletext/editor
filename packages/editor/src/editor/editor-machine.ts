@@ -11,6 +11,7 @@ import {
 } from 'xstate'
 import {performAction} from '../behavior-actions/behavior.actions'
 import {coreBehaviors} from '../behaviors/behavior.core'
+import {defaultBehaviors} from '../behaviors/behavior.default'
 import {foundationalBehaviors} from '../behaviors/behavior.foundational'
 import {
   isCustomBehaviorEvent,
@@ -255,7 +256,7 @@ export const editorMachine = setup({
     'assign behaviors': assign({
       behaviors: ({event}) => {
         assertEvent(event, 'update behaviors')
-        return new Set([...foundationalBehaviors, ...event.behaviors])
+        return new Set([...event.behaviors])
       },
     }),
     'assign schema': assign({
@@ -310,9 +311,11 @@ export const editorMachine = setup({
           ? event.defaultActionCallback
           : undefined
 
-      const eventBehaviors = [...context.behaviors.values()].filter(
-        (behavior) => behavior.on === event.behaviorEvent.type,
-      )
+      const eventBehaviors = [
+        ...foundationalBehaviors,
+        ...context.behaviors.values(),
+        ...defaultBehaviors,
+      ].filter((behavior) => behavior.on === event.behaviorEvent.type)
 
       if (eventBehaviors.length === 0) {
         if (defaultActionCallback) {
@@ -474,10 +477,7 @@ export const editorMachine = setup({
 }).createMachine({
   id: 'editor',
   context: ({input}) => ({
-    behaviors: new Set([
-      ...foundationalBehaviors,
-      ...(input.behaviors ?? coreBehaviors),
-    ]),
+    behaviors: new Set([...(input.behaviors ?? coreBehaviors)]),
     converters: new Set(input.converters ?? []),
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
