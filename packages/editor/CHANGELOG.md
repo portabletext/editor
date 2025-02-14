@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.33.4](https://github.com/portabletext/editor/compare/editor-v1.33.3...editor-v1.33.4) (2025-02-14)
+
+
+### Bug Fixes
+
+* **`sliceBlock`:** issue with slicing a single block ([ee42fa2](https://github.com/portabletext/editor/commit/ee42fa238ee3c5d427c6056613ee659f9b6ea1ec))
+
 ## [1.33.3](https://github.com/portabletext/editor/compare/editor-v1.33.2...editor-v1.33.3) (2025-02-13)
 
 
