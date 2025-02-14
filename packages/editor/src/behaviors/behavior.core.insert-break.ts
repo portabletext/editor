@@ -1,7 +1,7 @@
 import * as selectors from '../selectors'
 import {defineBehavior, raise} from './behavior.types'
 
-const atTheEndOfTextBlock = defineBehavior({
+const breakingAtTheEndOfTextBlock = defineBehavior({
   on: 'insert.break',
   guard: ({context}) => {
     const focusTextBlock = selectors.getFocusTextBlock({context})
@@ -50,7 +50,7 @@ const atTheEndOfTextBlock = defineBehavior({
   ],
 })
 
-const atTheStartOfTextBlock = defineBehavior({
+const breakingAtTheStartOfTextBlock = defineBehavior({
   on: 'insert.break',
   guard: ({context}) => {
     const focusTextBlock = selectors.getFocusTextBlock({context})
@@ -117,6 +117,6 @@ const atTheStartOfTextBlock = defineBehavior({
 })
 
 export const coreInsertBreakBehaviors = {
-  atTheEndOfTextBlock,
-  atTheStartOfTextBlock,
+  breakingAtTheEndOfTextBlock,
+  breakingAtTheStartOfTextBlock,
 }
