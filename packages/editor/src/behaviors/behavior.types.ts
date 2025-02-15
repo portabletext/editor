@@ -38,7 +38,7 @@ export type SyntheticBehaviorEvent =
   | {
       type: 'block.set'
       at: [KeyedSegment]
-      [props: string]: unknown
+      props: Record<string, unknown>
     }
   | {
       type: 'block.unset'
