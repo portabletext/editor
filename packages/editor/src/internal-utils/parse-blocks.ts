@@ -4,6 +4,7 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@sanity/types'
+import type {EditorSchema} from '../editor/define-schema'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {isTypedObject} from './asserters'
 
@@ -53,6 +54,19 @@ function parseBlockObject({
         ? blockObject._key
         : context.keyGenerator(),
   }
+}
+
+export function isTextBlock(
+  schema: EditorSchema,
+  block: unknown,
+): block is PortableTextTextBlock {
+  return (
+    parseTextBlock({
+      block,
+      context: {schema, keyGenerator: () => ''},
+      options: {refreshKeys: false},
+    }) !== undefined
+  )
 }
 
 function parseTextBlock({
