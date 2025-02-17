@@ -152,11 +152,11 @@ describe('event.insert.block', () => {
         style: 'normal',
       },
       {
-        _key: 'k3',
+        _key: 'k4',
         _type: 'block',
         children: [
           {
-            _key: 'k4',
+            _key: 'k3',
             _type: 'span',
             text: 'bar',
             marks: [],

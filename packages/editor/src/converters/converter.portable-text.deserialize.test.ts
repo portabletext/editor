@@ -412,6 +412,7 @@ describe(converterPortableText.deserialize, () => {
           },
         ],
         markDefs: [],
+        level: 1,
         style: 'normal',
       },
     ])
@@ -568,7 +569,7 @@ describe(converterPortableText.deserialize, () => {
             {
               _type: 'span',
               text: 'foo',
-              marks: ['k0'],
+              marks: ['k1'],
             },
             {
               _type: 'span',
@@ -578,7 +579,7 @@ describe(converterPortableText.deserialize, () => {
           ],
           markDefs: [
             {
-              _key: 'k0',
+              _key: 'k1',
               _type: 'link',
               href: 'https://example.com',
             },
