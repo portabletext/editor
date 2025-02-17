@@ -48,8 +48,6 @@ import {
   removeStyleActionImplementation,
   toggleStyleActionImplementation,
 } from './behavior.action.style'
-import {textBlockSetActionImplementation} from './behavior.action.text-block.set'
-import {textBlockUnsetActionImplementation} from './behavior.action.text-block.unset'
 
 export type BehaviorActionImplementationContext = Pick<
   EditorContext,
@@ -266,8 +264,6 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'style.toggle': toggleStyleActionImplementation,
   'style.add': addStyleActionImplementation,
   'style.remove': removeStyleActionImplementation,
-  'text block.set': textBlockSetActionImplementation,
-  'text block.unset': textBlockUnsetActionImplementation,
 }
 
 export function performAction({
@@ -600,25 +596,12 @@ function performDefaultAction({
       })
       break
     }
-    case 'style.toggle': {
+    default: {
       behaviorActionImplementations['style.toggle']({
         context,
         action,
       })
       break
-    }
-    case 'text block.set': {
-      behaviorActionImplementations['text block.set']({
-        context,
-        action,
-      })
-      break
-    }
-    default: {
-      behaviorActionImplementations['text block.unset']({
-        context,
-        action,
-      })
     }
   }
 }
