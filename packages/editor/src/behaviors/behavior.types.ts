@@ -195,18 +195,6 @@ export type SyntheticBehaviorEvent =
       type: 'style.toggle'
       style: string
     }
-  | {
-      type: 'text block.set'
-      at: [KeyedSegment]
-      level?: number
-      listItem?: string
-      style?: string
-    }
-  | {
-      type: 'text block.unset'
-      at: [KeyedSegment]
-      props: Array<'level' | 'listItem' | 'style'>
-    }
   | (PickFromUnion<
       ConverterEvent,
       'type',

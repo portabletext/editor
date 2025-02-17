@@ -30,7 +30,7 @@ const clearListOnBackspace = defineBehavior({
   actions: [
     (_, {focusTextBlock}) => [
       raise({
-        type: 'text block.unset',
+        type: 'block.unset',
         props: ['listItem', 'level'],
         at: focusTextBlock.path,
       }),
@@ -66,8 +66,8 @@ const unindentListOnBackspace = defineBehavior({
   actions: [
     (_, {focusTextBlock, level}) => [
       raise({
-        type: 'text block.set',
-        level,
+        type: 'block.set',
+        props: {level},
         at: focusTextBlock.path,
       }),
     ],
@@ -93,7 +93,7 @@ const clearListOnEnter = defineBehavior({
   actions: [
     (_, {focusListBlock}) => [
       raise({
-        type: 'text block.unset',
+        type: 'block.unset',
         props: ['listItem', 'level'],
         at: focusListBlock.path,
       }),
@@ -133,11 +133,13 @@ const indentListOnTab = defineBehavior({
     (_, {selectedListBlocks}) =>
       selectedListBlocks.map((selectedListBlock) =>
         raise({
-          type: 'text block.set',
-          level: Math.min(
-            MAX_LIST_LEVEL,
-            Math.max(1, selectedListBlock.node.level + 1),
-          ),
+          type: 'block.set',
+          props: {
+            level: Math.min(
+              MAX_LIST_LEVEL,
+              Math.max(1, selectedListBlock.node.level + 1),
+            ),
+          },
           at: selectedListBlock.path,
         }),
       ),
@@ -176,11 +178,13 @@ const unindentListOnShiftTab = defineBehavior({
     (_, {selectedListBlocks}) =>
       selectedListBlocks.map((selectedListBlock) =>
         raise({
-          type: 'text block.set',
-          level: Math.min(
-            MAX_LIST_LEVEL,
-            Math.max(1, selectedListBlock.node.level - 1),
-          ),
+          type: 'block.set',
+          props: {
+            level: Math.min(
+              MAX_LIST_LEVEL,
+              Math.max(1, selectedListBlock.node.level - 1),
+            ),
+          },
           at: selectedListBlock.path,
         }),
       ),
