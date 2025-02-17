@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.33.6](https://github.com/portabletext/editor/compare/editor-v1.33.5...editor-v1.33.6) (2025-02-17)
+
+
+### Bug Fixes
+
+* **`block.set`:** remove reliance on knowing block type ([eaa9f0c](https://github.com/portabletext/editor/commit/eaa9f0cfafbcd817a9265f8ce8e83110225aec08))
+* **`block.unset`:** remove reliance on knowing block type ([12d01fc](https://github.com/portabletext/editor/commit/12d01fc7a69068fb82396fb230651f3cb9393d58))
+* **behaviors:** remove `text block.(set|unset)` ([be9d834](https://github.com/portabletext/editor/commit/be9d834a3671a6ab297aade5458543885daea51b))
+* **deps:** update sanity monorepo to ^3.75.1 ([144b978](https://github.com/portabletext/editor/commit/144b978191b78a48f944b0e885c11f6263ec7ba4))
+* improve block parsing ([5a14b0e](https://github.com/portabletext/editor/commit/5a14b0e7fe04d66774f4b32156c55dd23e05853f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.8
+
 ## [1.33.5](https://github.com/portabletext/editor/compare/editor-v1.33.4...editor-v1.33.5) (2025-02-17)
 
 
