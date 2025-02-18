@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.34.0](https://github.com/portabletext/editor/compare/editor-v1.33.6...editor-v1.34.0) (2025-02-18)
+
+
+### Features
+
+* **utils:** add `childSelectionPointToBlockOffset` ([a30afea](https://github.com/portabletext/editor/commit/a30afea94535c12caf050f21e360e91c33b48726))
+
+
+### Bug Fixes
+
+* **`decorator.add`:** use `offsets` rather than `selection` ([3911b20](https://github.com/portabletext/editor/commit/3911b20fde1dbc269e7ca73e623c3520aa263a48))
+* **markdown emphasis:** account for variable `insert.text` text length ([9fb8d31](https://github.com/portabletext/editor/commit/9fb8d31366df63b2c5ba99e80612fe95b52a5267))
+* **markdown emphasis:** guard against inline objects in prefixes/suffixes ([37e5a06](https://github.com/portabletext/editor/commit/37e5a0659ce56e5dd4b366095fb71abae003b6bb))
+* **markdown emphasis:** remove decorator from caret after emphasis ([7665f29](https://github.com/portabletext/editor/commit/7665f2939711dddd4e5d10023048b1d38844cec8))
+
 ## [1.33.6](https://github.com/portabletext/editor/compare/editor-v1.33.5...editor-v1.33.6) (2025-02-17)
 
 
