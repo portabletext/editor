@@ -57,7 +57,7 @@ export type SyntheticBehaviorEvent =
   | {
       type: 'decorator.add'
       decorator: string
-      selection?: NonNullable<EditorSelection>
+      offsets?: {anchor: BlockOffset; focus: BlockOffset}
     }
   | {
       type: 'decorator.remove'

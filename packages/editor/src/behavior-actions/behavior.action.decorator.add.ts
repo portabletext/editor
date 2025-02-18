@@ -11,19 +11,41 @@ export const decoratorAddActionImplementation: BehaviorActionImplementation<
 > = ({context, action}) => {
   const editor = action.editor
   const mark = action.decorator
-  const selection = action.selection
-    ? (toSlateRange(action.selection, action.editor) ?? editor.selection)
-    : editor.selection
-
-  if (!selection) {
-    return
-  }
-
   const value = fromSlateValue(
     editor.children,
     context.schema.block.name,
     KEY_TO_VALUE_ELEMENT.get(editor),
   )
+
+  const manualAnchor = action.offsets?.anchor
+    ? utils.blockOffsetToSpanSelectionPoint({
+        value,
+        blockOffset: action.offsets.anchor,
+        direction: 'backward',
+      })
+    : undefined
+  const manualFocus = action.offsets?.focus
+    ? utils.blockOffsetToSpanSelectionPoint({
+        value,
+        blockOffset: action.offsets.focus,
+        direction: 'forward',
+      })
+    : undefined
+  const manualSelection =
+    manualAnchor && manualFocus
+      ? {
+          anchor: manualAnchor,
+          focus: manualFocus,
+        }
+      : undefined
+
+  const selection = manualSelection
+    ? (toSlateRange(manualSelection, action.editor) ?? editor.selection)
+    : editor.selection
+
+  if (!selection) {
+    return
+  }
 
   const editorSelection = toPortableTextRange(value, selection, context.schema)
   const anchorOffset = editorSelection

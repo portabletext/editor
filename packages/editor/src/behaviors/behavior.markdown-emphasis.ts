@@ -123,26 +123,10 @@ const emphasisListener: CallbackLogicFunction<
             },
           }
 
-          const anchor = utils.blockOffsetToSpanSelectionPoint({
-            value: context.value,
-            blockOffset: prefixOffsets.focus,
-            direction: 'backward',
-          })
-          const focus = utils.blockOffsetToSpanSelectionPoint({
-            value: context.value,
-            blockOffset: suffixOffsets.anchor,
-            direction: 'forward',
-          })
-
-          if (!anchor || !focus) {
-            return false
-          }
-
           return {
             prefixOffsets,
             suffixOffsets,
             decorator: italicDecorator,
-            selection: {anchor, focus},
           }
         }
 
@@ -174,26 +158,11 @@ const emphasisListener: CallbackLogicFunction<
               offset: selectionStartOffset.offset + event.text.length,
             },
           }
-          const anchor = utils.blockOffsetToSpanSelectionPoint({
-            value: context.value,
-            blockOffset: prefixOffsets.focus,
-            direction: 'backward',
-          })
-          const focus = utils.blockOffsetToSpanSelectionPoint({
-            value: context.value,
-            blockOffset: suffixOffsets.anchor,
-            direction: 'forward',
-          })
-
-          if (!anchor || !focus) {
-            return false
-          }
 
           return {
             prefixOffsets,
             suffixOffsets,
             decorator: boldDecorator,
-            selection: {anchor, focus},
           }
         }
 
@@ -201,11 +170,14 @@ const emphasisListener: CallbackLogicFunction<
       },
       actions: [
         ({event}) => [event],
-        (_, {prefixOffsets, suffixOffsets, decorator, selection}) => [
+        (_, {prefixOffsets, suffixOffsets, decorator}) => [
           {
             type: 'decorator.add',
             decorator,
-            selection,
+            offsets: {
+              anchor: prefixOffsets.focus,
+              focus: suffixOffsets.anchor,
+            },
           },
           {
             type: 'delete.text',
