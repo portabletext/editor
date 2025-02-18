@@ -247,6 +247,10 @@ const emphasisListener: CallbackLogicFunction<
             ...prefixOffsets,
           },
           {
+            type: 'decorator.remove',
+            decorator,
+          },
+          {
             type: 'effect',
             effect: () => {
               sendBack({
