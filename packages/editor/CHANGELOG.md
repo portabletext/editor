@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.34.1](https://github.com/portabletext/editor/compare/editor-v1.34.0...editor-v1.34.1) (2025-02-18)
+
+
+### Bug Fixes
+
+* add missing `originEvent` on `serialization.failure` ([9f7ce71](https://github.com/portabletext/editor/commit/9f7ce718dd96fee97932720d883d46c43e301aca))
+* allow serializing dragged data ([a503272](https://github.com/portabletext/editor/commit/a5032729d553bfe26f05121157d2cb7f0fbe6cfd))
+
 ## [1.34.0](https://github.com/portabletext/editor/compare/editor-v1.33.6...editor-v1.34.0) (2025-02-18)
 
 
