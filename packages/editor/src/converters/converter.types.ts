@@ -23,6 +23,7 @@ export type ConverterEvent<TMIMEType extends MIMEType = MIMEType> =
   | {
       type: 'serialization.failure'
       mimeType: TMIMEType
+      originEvent: 'copy' | 'cut' | 'drag' | 'unknown'
       reason: string
     }
   | {
