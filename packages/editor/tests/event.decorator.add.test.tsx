@@ -53,7 +53,7 @@ function createSpan(text: string) {
 }
 
 describe('event.decorator.add', () => {
-  describe('manual selection', () => {
+  describe('manual offsets', () => {
     test('Scenario: Adding decorator with inline object at the end', async () => {
       const editorRef = React.createRef<Editor>()
       const block = createBlock([foo, stockTicker, empty])
@@ -83,43 +83,14 @@ describe('event.decorator.add', () => {
       editorRef.current?.send({
         type: 'decorator.add',
         decorator: 'strong',
-        selection: {
+        offsets: {
           anchor: {
-            path: [{_key: block._key}, 'children', {_key: foo._key}],
+            path: [{_key: block._key}],
             offset: 0,
           },
           focus: {
-            path: [{_key: block._key}, 'children', {_key: foo._key}],
+            path: [{_key: block._key}],
             offset: 3,
-          },
-        },
-      })
-
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
-        {
-          ...block,
-          children: [
-            {
-              ...foo,
-              marks: ['strong'],
-            },
-            stockTicker,
-            empty,
-          ],
-        },
-      ])
-
-      editorRef.current?.send({
-        type: 'decorator.add',
-        decorator: 'strong',
-        selection: {
-          anchor: {
-            path: [{_key: block._key}, 'children', {_key: foo._key}],
-            offset: 0,
-          },
-          focus: {
-            path: [{_key: block._key}, 'children', {_key: empty._key}],
-            offset: 0,
           },
         },
       })
@@ -200,7 +171,7 @@ describe('event.decorator.add', () => {
       ])
     })
 
-    test('Scenario: Adding decorator between two block edges with manual selection', async () => {
+    test('Scenario: Adding decorator between two block edges with manual offsets', async () => {
       const editorRef = React.createRef<Editor>()
       const foo = createSpan('foo')
       const block1 = createBlock([foo])
@@ -235,13 +206,13 @@ describe('event.decorator.add', () => {
       editorRef.current?.send({
         type: 'decorator.add',
         decorator: 'strong',
-        selection: {
+        offsets: {
           anchor: {
-            path: [{_key: block1._key}, 'children', {_key: foo._key}],
+            path: [{_key: block1._key}],
             offset: 3,
           },
           focus: {
-            path: [{_key: block3._key}, 'children', {_key: baz._key}],
+            path: [{_key: block3._key}],
             offset: 0,
           },
         },
@@ -286,13 +257,13 @@ describe('event.decorator.add', () => {
       editorRef.current?.send({
         type: 'decorator.add',
         decorator: 'strong',
-        selection: {
+        offsets: {
           anchor: {
-            path: [{_key: block._key}, 'children', {_key: fooBar._key}],
+            path: [{_key: block._key}],
             offset: 4,
           },
           focus: {
-            path: [{_key: block._key}, 'children', {_key: fooBar._key}],
+            path: [{_key: block._key}],
             offset: 7,
           },
         },
