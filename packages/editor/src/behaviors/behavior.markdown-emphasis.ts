@@ -79,10 +79,6 @@ const emphasisListener: CallbackLogicFunction<
           return false
         }
 
-        if (event.text !== '*' && event.text !== '_') {
-          return false
-        }
-
         const focusTextBlock = selectors.getFocusTextBlock({context})
         const selectionStartPoint = selectors.getSelectionStartPoint({context})
         const selectionStartOffset = selectionStartPoint
@@ -104,21 +100,26 @@ const emphasisListener: CallbackLogicFunction<
           const prefixOffsets = {
             anchor: {
               path: focusTextBlock.path,
-              offset: textBefore.length - textToItalic.length + 1,
+              // Example: "foo *bar*".length - "*bar*".length = 4
+              offset: `${textBefore}${event.text}`.length - textToItalic.length,
             },
             focus: {
               path: focusTextBlock.path,
-              offset: textBefore.length - textToItalic.length + 1 + 1,
+              // Example: "foo *bar*".length - "*bar*".length + 1 = 5
+              offset:
+                `${textBefore}${event.text}`.length - textToItalic.length + 1,
             },
           }
           const suffixOffsets = {
             anchor: {
               path: focusTextBlock.path,
-              offset: selectionStartOffset.offset,
+              // Example: "foo *bar|" (8) + "*".length - 1 = 8
+              offset: selectionStartOffset.offset + event.text.length - 1,
             },
             focus: {
               path: focusTextBlock.path,
-              offset: selectionStartOffset.offset + 1,
+              // Example: "foo *bar|" (8) + "*".length = 9
+              offset: selectionStartOffset.offset + event.text.length,
             },
           }
 
@@ -151,21 +152,26 @@ const emphasisListener: CallbackLogicFunction<
           const prefixOffsets = {
             anchor: {
               path: focusTextBlock.path,
-              offset: textBefore.length - textToBold.length + 1,
+              // Example: "foo **bar**".length - "**bar**".length = 4
+              offset: `${textBefore}${event.text}`.length - textToBold.length,
             },
             focus: {
               path: focusTextBlock.path,
-              offset: textBefore.length - textToBold.length + 1 + 2,
+              // Example: "foo **bar**".length - "**bar**".length + 2 = 6
+              offset:
+                `${textBefore}${event.text}`.length - textToBold.length + 2,
             },
           }
           const suffixOffsets = {
             anchor: {
               path: focusTextBlock.path,
-              offset: selectionStartOffset.offset - 1,
+              // Example: "foo **bar*|" (10) + "*".length - 2 = 9
+              offset: selectionStartOffset.offset + event.text.length - 2,
             },
             focus: {
               path: focusTextBlock.path,
-              offset: selectionStartOffset.offset + 1,
+              // Example: "foo **bar*|" (10) + "*".length = 11
+              offset: selectionStartOffset.offset + event.text.length,
             },
           }
           const anchor = utils.blockOffsetToSpanSelectionPoint({
