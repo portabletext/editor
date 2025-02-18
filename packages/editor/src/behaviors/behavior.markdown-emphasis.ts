@@ -146,6 +146,44 @@ const emphasisListener: CallbackLogicFunction<
                 `${textBefore}${event.text}`.length - textToBold.length + 2,
             },
           }
+
+          const prefixSelection = utils.blockOffsetsToSelection({
+            value: context.value,
+            offsets: prefixOffsets,
+          })
+          const inlineObjectBeforePrefixFocus =
+            selectors.getPreviousInlineObject({
+              context: {
+                ...context,
+                selection: prefixSelection
+                  ? {
+                      anchor: prefixSelection.focus,
+                      focus: prefixSelection.focus,
+                    }
+                  : null,
+              },
+            })
+          const inlineObjectBeforePrefixFocusOffset =
+            inlineObjectBeforePrefixFocus
+              ? utils.childSelectionPointToBlockOffset({
+                  value: context.value,
+                  selectionPoint: {
+                    path: inlineObjectBeforePrefixFocus.path,
+                    offset: 0,
+                  },
+                })
+              : undefined
+
+          if (
+            inlineObjectBeforePrefixFocusOffset &&
+            inlineObjectBeforePrefixFocusOffset.offset >
+              prefixOffsets.anchor.offset &&
+            inlineObjectBeforePrefixFocusOffset.offset <
+              prefixOffsets.focus.offset
+          ) {
+            return false
+          }
+
           const suffixOffsets = {
             anchor: {
               path: focusTextBlock.path,
@@ -157,6 +195,27 @@ const emphasisListener: CallbackLogicFunction<
               // Example: "foo **bar*|" (10) + "*".length = 11
               offset: selectionStartOffset.offset + event.text.length,
             },
+          }
+
+          const previousInlineObject = selectors.getPreviousInlineObject({
+            context,
+          })
+          const previousInlineObjectOffset = previousInlineObject
+            ? utils.childSelectionPointToBlockOffset({
+                value: context.value,
+                selectionPoint: {
+                  path: previousInlineObject.path,
+                  offset: 0,
+                },
+              })
+            : undefined
+
+          if (
+            previousInlineObjectOffset &&
+            previousInlineObjectOffset.offset > suffixOffsets.anchor.offset &&
+            previousInlineObjectOffset.offset < suffixOffsets.focus.offset
+          ) {
+            return false
           }
 
           return {
