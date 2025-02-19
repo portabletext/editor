@@ -53,19 +53,19 @@ Send and `effect` type action along with an `effect` to perform side effects.
 
 ```js
 const logInsertText = defineBehavior({
-    on: 'insert.text',
-    actions: [
-      ({event}) => [
-        {
-          type: 'effect',
-          effect: () => {
-            console.log(event)
-          },
+  on: 'insert.text',
+  actions: [
+    ({event}) => [
+      {
+        type: 'effect',
+        effect: () => {
+          console.log(event)
         },
-        event,
-      ],
+      },
+      event,
     ],
-  }
+  ],
+})
 ```
 
 ## Auto-close parenthesis
