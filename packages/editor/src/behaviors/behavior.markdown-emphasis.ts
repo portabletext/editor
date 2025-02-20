@@ -9,13 +9,9 @@ import {
 } from 'xstate'
 import type {Editor} from '../editor/create-editor'
 import {useEditor} from '../editor/editor-provider'
-import {
-  getTextToBold,
-  getTextToItalic,
-} from '../internal-utils/get-text-to-emphasize'
 import type {EditorSchema} from '../selectors'
-import * as selectors from '../selectors'
 import * as utils from '../utils'
+import {createDecoratorPairBehavior} from './behavior.decorator-pair'
 import {defineBehavior} from './behavior.types'
 
 /**
@@ -68,208 +64,59 @@ const emphasisListener: CallbackLogicFunction<
   MarkdownEmphasisEvent,
   {editor: Editor; boldDecorator?: string; italicDecorator?: string}
 > = ({sendBack, input}) => {
-  const unregister = input.editor.registerBehavior({
-    behavior: defineBehavior({
-      on: 'insert.text',
-      guard: ({context, event}) => {
-        const boldDecorator = input.boldDecorator
-        const italicDecorator = input.italicDecorator
-
-        if (boldDecorator === undefined && italicDecorator === undefined) {
-          return false
-        }
-
-        const focusTextBlock = selectors.getFocusTextBlock({context})
-        const selectionStartPoint = selectors.getSelectionStartPoint({context})
-        const selectionStartOffset = selectionStartPoint
-          ? utils.spanSelectionPointToBlockOffset({
-              value: context.value,
-              selectionPoint: selectionStartPoint,
-            })
-          : undefined
-
-        if (!focusTextBlock || !selectionStartOffset) {
-          return false
-        }
-
-        const textBefore = selectors.getBlockTextBefore({context})
-
-        const textToItalic = getTextToItalic(`${textBefore}${event.text}`)
-
-        if (textToItalic !== undefined && italicDecorator !== undefined) {
-          const prefixOffsets = {
-            anchor: {
-              path: focusTextBlock.path,
-              // Example: "foo *bar*".length - "*bar*".length = 4
-              offset: `${textBefore}${event.text}`.length - textToItalic.length,
+  const unregisterBoldBehaviors = input.boldDecorator
+    ? [
+        input.editor.registerBehavior({
+          behavior: createDecoratorPairBehavior({
+            decorator: () => input.boldDecorator,
+            pair: {char: '*', amount: 2},
+            onDecorate: (offset) => {
+              sendBack({type: 'emphasis.add', blockOffset: offset})
             },
-            focus: {
-              path: focusTextBlock.path,
-              // Example: "foo *bar*".length - "*bar*".length + 1 = 5
-              offset:
-                `${textBefore}${event.text}`.length - textToItalic.length + 1,
+          }),
+        }),
+        input.editor.registerBehavior({
+          behavior: createDecoratorPairBehavior({
+            decorator: () => input.boldDecorator,
+            pair: {char: '_', amount: 2},
+            onDecorate: (offset) => {
+              sendBack({type: 'emphasis.add', blockOffset: offset})
             },
-          }
-          const suffixOffsets = {
-            anchor: {
-              path: focusTextBlock.path,
-              // Example: "foo *bar|" (8) + "*".length - 1 = 8
-              offset: selectionStartOffset.offset + event.text.length - 1,
+          }),
+        }),
+      ]
+    : []
+  const unregisterItalicBehaviors = input.italicDecorator
+    ? [
+        input.editor.registerBehavior({
+          behavior: createDecoratorPairBehavior({
+            decorator: () => input.italicDecorator,
+            pair: {char: '*', amount: 1},
+            onDecorate: (offset) => {
+              sendBack({type: 'emphasis.add', blockOffset: offset})
             },
-            focus: {
-              path: focusTextBlock.path,
-              // Example: "foo *bar|" (8) + "*".length = 9
-              offset: selectionStartOffset.offset + event.text.length,
+          }),
+        }),
+        input.editor.registerBehavior({
+          behavior: createDecoratorPairBehavior({
+            decorator: () => input.italicDecorator,
+            pair: {char: '_', amount: 1},
+            onDecorate: (offset) => {
+              sendBack({type: 'emphasis.add', blockOffset: offset})
             },
-          }
+          }),
+        }),
+      ]
+    : []
 
-          return {
-            prefixOffsets,
-            suffixOffsets,
-            decorator: italicDecorator,
-          }
-        }
-
-        const textToBold = getTextToBold(`${textBefore}${event.text}`)
-
-        if (textToBold !== undefined && boldDecorator !== undefined) {
-          const prefixOffsets = {
-            anchor: {
-              path: focusTextBlock.path,
-              // Example: "foo **bar**".length - "**bar**".length = 4
-              offset: `${textBefore}${event.text}`.length - textToBold.length,
-            },
-            focus: {
-              path: focusTextBlock.path,
-              // Example: "foo **bar**".length - "**bar**".length + 2 = 6
-              offset:
-                `${textBefore}${event.text}`.length - textToBold.length + 2,
-            },
-          }
-
-          const prefixSelection = utils.blockOffsetsToSelection({
-            value: context.value,
-            offsets: prefixOffsets,
-          })
-          const inlineObjectBeforePrefixFocus =
-            selectors.getPreviousInlineObject({
-              context: {
-                ...context,
-                selection: prefixSelection
-                  ? {
-                      anchor: prefixSelection.focus,
-                      focus: prefixSelection.focus,
-                    }
-                  : null,
-              },
-            })
-          const inlineObjectBeforePrefixFocusOffset =
-            inlineObjectBeforePrefixFocus
-              ? utils.childSelectionPointToBlockOffset({
-                  value: context.value,
-                  selectionPoint: {
-                    path: inlineObjectBeforePrefixFocus.path,
-                    offset: 0,
-                  },
-                })
-              : undefined
-
-          if (
-            inlineObjectBeforePrefixFocusOffset &&
-            inlineObjectBeforePrefixFocusOffset.offset >
-              prefixOffsets.anchor.offset &&
-            inlineObjectBeforePrefixFocusOffset.offset <
-              prefixOffsets.focus.offset
-          ) {
-            return false
-          }
-
-          const suffixOffsets = {
-            anchor: {
-              path: focusTextBlock.path,
-              // Example: "foo **bar*|" (10) + "*".length - 2 = 9
-              offset: selectionStartOffset.offset + event.text.length - 2,
-            },
-            focus: {
-              path: focusTextBlock.path,
-              // Example: "foo **bar*|" (10) + "*".length = 11
-              offset: selectionStartOffset.offset + event.text.length,
-            },
-          }
-
-          const previousInlineObject = selectors.getPreviousInlineObject({
-            context,
-          })
-          const previousInlineObjectOffset = previousInlineObject
-            ? utils.childSelectionPointToBlockOffset({
-                value: context.value,
-                selectionPoint: {
-                  path: previousInlineObject.path,
-                  offset: 0,
-                },
-              })
-            : undefined
-
-          if (
-            previousInlineObjectOffset &&
-            previousInlineObjectOffset.offset > suffixOffsets.anchor.offset &&
-            previousInlineObjectOffset.offset < suffixOffsets.focus.offset
-          ) {
-            return false
-          }
-
-          return {
-            prefixOffsets,
-            suffixOffsets,
-            decorator: boldDecorator,
-          }
-        }
-
-        return false
-      },
-      actions: [
-        ({event}) => [event],
-        (_, {prefixOffsets, suffixOffsets, decorator}) => [
-          {
-            type: 'decorator.add',
-            decorator,
-            offsets: {
-              anchor: prefixOffsets.focus,
-              focus: suffixOffsets.anchor,
-            },
-          },
-          {
-            type: 'delete.text',
-            ...suffixOffsets,
-          },
-          {
-            type: 'delete.text',
-            ...prefixOffsets,
-          },
-          {
-            type: 'decorator.remove',
-            decorator,
-          },
-          {
-            type: 'effect',
-            effect: () => {
-              sendBack({
-                type: 'emphasis.add',
-                blockOffset: {
-                  ...suffixOffsets.anchor,
-                  offset:
-                    suffixOffsets.anchor.offset -
-                    (prefixOffsets.focus.offset - prefixOffsets.anchor.offset),
-                },
-              })
-            },
-          },
-        ],
-      ],
-    }),
-  })
-
-  return unregister
+  return () => {
+    for (const unregisterBehavior of [
+      ...unregisterBoldBehaviors,
+      ...unregisterItalicBehaviors,
+    ]) {
+      unregisterBehavior()
+    }
+  }
 }
 
 const selectionListenerCallback: CallbackLogicFunction<

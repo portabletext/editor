@@ -1,4 +1,4 @@
-function createPairRegex(char: string, amount: number) {
+export function createPairRegex(char: string, amount: number) {
   // Negative lookbehind: Ensures that the matched sequence is not preceded by the same character
   const prePrefix = `(?<!\\${char})`
 
