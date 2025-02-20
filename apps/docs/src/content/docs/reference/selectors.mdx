@@ -7,7 +7,7 @@ next: false
 
 import {CardGrid, LinkCard} from '@astrojs/starlight/components'
 
-Selectors are pure functions that act like shortcuts for deriving state from the editor context.
+Selectors are pure functions that act like shortcuts for deriving state from the editor snapshot.
 
 ```tsx
 import * as selectors from '@portabletext/editor/selectors'
@@ -41,7 +41,7 @@ Condition selectors return a truth response if the condition is met.
 
 ## Getters
 
-Getter type selectors retrieve information from the editor context.
+Getter type selectors retrieve information from the editor snapshot.
 
 :::note
 Unsure what a "span" is or what "focus" means in this context? Check the [common terms](/concepts/portabletext/#common-terms) section.

@@ -3,13 +3,13 @@ title: Editor API Overview
 description: Editor API reference overview
 ---
 
-The editor API provides access to the editor context and selectors for deriving state.
+The editor API provides access to the editor instance and selectors for deriving state.
 
 Use the following hooks to access the editor from within your components.
 
 ## `useEditor`
 
-Access the editor context. Commonly used when building toolbars or passing context to selectors.
+Access the editor instance. Commonly used when building toolbars or passing snapshot to selectors.
 
 ```tsx
 import {useEditor} from '@portabletext/editor'
@@ -19,7 +19,7 @@ const editor = useEditor()
 
 ## `useEditorSelector`
 
-Access selectors in areas where the context is unavailable by combining with `useEditor`.
+Access selectors in areas where the snapshot is available by combining with `useEditor`.
 
 ```tsx
 import {useEditor, useEditorSelector} from '@portabletext/editor'

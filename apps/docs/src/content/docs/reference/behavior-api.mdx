@@ -10,16 +10,16 @@ Reference docs for the behavior API.
 Options Object
 
 - on (string): Internal editor event
-- guard (function or boolean): function accepts `context` and `event`, returns boolean
-- actions (array): function accepts `context` and `event`, returns array of actions
+- guard (function or boolean): function accepts `snapshot` and `event`, returns boolean
+- actions (array): function accepts `snapshot` and `event`, returns array of actions
 
 ### Example
 
 ```tsx
 const noLowerCaseA = defineBehavior({
   on: 'insert.text',
-  guard: ({event, context}) => event.text === 'a',
-  actions: [({event, context}) => [{type: 'insert.text', text: 'A'}]],
+  guard: ({snapshot, event}) => event.text === 'a',
+  actions: [({snapshot, event}) => [{type: 'insert.text', text: 'A'}]],
 })
 ```
 
@@ -144,9 +144,9 @@ Properties:
 ```tsx
 const raisedUppercaseA = defineBehavior({
   on: 'insert.text',
-  guard: ({event, context}) => event.text === 'a',
+  guard: ({snapshot, event}) => event.text === 'a',
   actions: [
-    ({event, context}) => [
+    ({snapshot, event}) => [
       {type: 'raise', event: {type: 'insert.text', text: 'A'}},
     ],
   ],
@@ -158,7 +158,7 @@ The `raise` action also has a handy shorthand function. It accepts a behavior ev
 ```tsx
 const raisedUppercaseA = defineBehavior({
   on: 'insert.text',
-  guard: ({event, context}) => event.text === 'a',
-  actions: [({event, context}) => [raise({type: 'insert.text', text: 'A'})]],
+  guard: ({snapshot, event}) => event.text === 'a',
+  actions: [({snapshot, event}) => [raise({type: 'insert.text', text: 'A'})]],
 })
 ```

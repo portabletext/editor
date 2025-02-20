@@ -75,11 +75,11 @@ You can write behaviors to auto-close common paired characters. This example clo
 ```js
 const autoCloseParens = defineBehavior({
   on: 'insert.text',
-  guard: ({context, event}) => {
+  guard: ({snapshot, event}) => {
     return event.text === '('
   },
   actions: [
-    ({event, context}) => [
+    ({snapshot, event}) => [
       // Send the original event that includes the '('
       event,
       // Send a new insert.text event with a closing parenthesis
@@ -92,12 +92,12 @@ const autoCloseParens = defineBehavior({
         type: 'select',
         selection: {
           anchor: {
-            path: context.selection.anchor.path,
-            offset: context.selection.anchor.offset + 1,
+            path: snapshot.context.selection.anchor.path,
+            offset: snapshot.context.selection.anchor.offset + 1,
           },
           focus: {
-            path: context.selection.focus.path,
-            offset: context.selection.focus.offset + 1,
+            path: snapshot.context.selection.focus.path,
+            offset: snapshot.context.selection.focus.offset + 1,
           },
         },
       },
@@ -126,9 +126,9 @@ Sometimes you want to trigger a synthetic event from within an action. This send
 ```tsx
 const raisedUppercaseA = defineBehavior({
   on: 'insert.text',
-  guard: ({event, context}) => event.text === 'a',
+  guard: ({snapshot, event}) => event.text === 'a',
   actions: [
-    ({event, context}) => [
+    ({snapshot, event}) => [
       {type: 'raise', event: {type: 'insert.text', text: 'A'}},
     ],
   ],
@@ -140,8 +140,8 @@ The `raise` action also has a shorthand function:
 ```tsx
 const raisedUppercaseA = defineBehavior({
   on: 'insert.text',
-  guard: ({event, context}) => event.text === 'a',
-  actions: [({event, context}) => [raise({type: 'insert.text', text: 'A'})]],
+  guard: ({snapshot, event}) => event.text === 'a',
+  actions: [({snapshot, event}) => [raise({type: 'insert.text', text: 'A'})]],
 })
 ```
 

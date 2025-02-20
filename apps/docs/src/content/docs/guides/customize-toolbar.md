@@ -49,7 +49,7 @@ const decoratorButtons = schemaDefinition.decorators.map((decorator) => (
 
 ## Use selectors to reflect editor state
 
-The PTE ships with a collection of helpful selectors. Selectors are pure functions that derive state from the editor context. You can find the full list in the [selectors reference](/reference/selectors/).
+The PTE ships with a collection of helpful selectors. Selectors are pure functions that derive state from the editor snapshot. You can find the full list in the [selectors reference](/reference/selectors/).
 
 A few useful selectors for using in the toolbar are:
 
@@ -71,7 +71,7 @@ function AnnotationButton(props: {
   annotation: SchemaDefinition['annotations'][number]
 }) {
   const editor = useEditor()
-  // useEditorSelector takes the editor context and the selector
+  // useEditorSelector takes the editor instance and the selector
   const active = useEditorSelector(
     editor,
     selectors.isActiveAnnotation(props.annotation.name),
