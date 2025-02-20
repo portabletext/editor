@@ -40,18 +40,18 @@ export function PortableTextEditor({customSchema}: PortableTextEditorProps) {
             ...coreBehaviors,
             defineBehavior({
               on: 'paste',
-              guard: ({context, event}) => {
+              guard: ({snapshot, event}) => {
                 // Check if the inserted text is a known emoji shortcode
                 const text = event.data.getData('text/plain')
                 const isEmojiShortcode = text === ':)'
 
                 // Only proceed if it's an emoji shortcode and the selection is collapsed
-                if (!isEmojiShortcode || !isSelectionCollapsed({context})) {
+                if (!isEmojiShortcode || !isSelectionCollapsed(snapshot)) {
                   return false
                 }
 
-                const focusTextBlock = getFocusTextBlock({context})
-                const focusSpan = getFocusSpan({context})
+                const focusTextBlock = getFocusTextBlock(snapshot)
+                const focusSpan = getFocusSpan(snapshot)
 
                 if (!focusTextBlock || !focusSpan) {
                   return false

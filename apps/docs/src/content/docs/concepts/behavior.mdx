@@ -20,8 +20,8 @@ Behaviors are defined with the `defineBehavior` helper. Here's an example event 
 ```tsx
 defineBehavior({
   on: 'insert.text',
-  guard: ({context, event}) => event.text === 'a',
-  actions: [({context, event}) => [{type: 'insert.text', text: 'A'}]],
+  guard: ({snapshot, event}) => event.text === 'a',
+  actions: [({snapshot, event}) => [{type: 'insert.text', text: 'A'}]],
 })
 ```
 
@@ -59,13 +59,13 @@ A guard is a condition that helps the behavior determine if it should perform th
 The `guard` key expects a response or `false`. The example above shows a simple _truthy_ guard. Here it is again:
 
 ```js
-guard: ({context, event}) => event.text === 'a'
+guard: ({snapshot, event}) => event.text === 'a'
 ```
 
 Guards can also return parameters that you can access when firing an action.
 
 ```js
-guard: ({context, event}) => {
+guard: ({snapshot, event}) => {
     if (event.text === 'a') {
         return {
             secret: 'secret text'
@@ -74,7 +74,7 @@ guard: ({context, event}) => {
     return false
 },
 actions: [
-    ({context, event}, {secret}) => [
+    ({snapshot, event}, {secret}) => [
         /* ... */
     ]
 ]
@@ -97,7 +97,7 @@ This behavior listens for soft break events and uses the `insert.text` action to
 
 Actions make things happen in the editor. This is where you change the standard behavior by modifying actions before they occur or by circumventing them completely. You've seen actions in some of the guard examples above.
 
-The `actions` key expects an array of behavior action sets. As with guards, you have access to the `event` and `context`.
+The `actions` key expects an array of behavior action sets. As with guards, you have access to the `event` and `snapshot`.
 
 So far we've only seen examples that invoke a single action, but you can send multiple actions or sets of actions from a single event.
 
@@ -110,9 +110,9 @@ While some actions share names with events, it's important to remember that acti
 import {defineBehavior} from '@portabletext/editor'
 const raisedUppercaseA = defineBehavior({
   on: 'insert.text',
-  guard: ({event, context}) => event.text === 'a',
+  guard: ({snapshot, event}) => event.text === 'a',
   actions: [
-    ({event, context}) => [
+    ({snapshot, event}) => [
       {type: 'raise', event: {type: 'insert.text', text: 'A'}},
     ],
   ],
@@ -122,14 +122,14 @@ const raisedUppercaseA = defineBehavior({
 import {defineBehavior, raise} from '@portabletext/editor'
 const raisedUppercaseA = defineBehavior({
   on: 'insert.text',
-  guard: ({event, context}) => event.text === 'a',
-  actions: [({event, context}) => [raise({type: 'insert.text', text: 'A'})]],
+  guard: ({snapshot, event}) => event.text === 'a',
+  actions: [({snapshot, event}) => [raise({type: 'insert.text', text: 'A'})]],
 })
 ```
 
 ## Selectors
 
-Selectors are pure functions that derive state from the editor context (`context` in the examples). A collection of selectors is included with the core library.
+Selectors are pure functions that derive state from the editor snapshot (`snapshot` in the examples). A collection of selectors is included with the core library.
 
 ```tsx
 // import all selectors
@@ -138,7 +138,7 @@ import * as selectors from '@portabletext/editor/selectors'
 import {getFocusSpan, getFocusTextBlock} from '@portabletext/editor/selectors'
 ```
 
-The core selectors are useful helper functions for checking conditions of the editor, finding selected text, and more. You can manually do anything a selector can do by parsing the editor context.
+The core selectors are useful helper functions for checking conditions of the editor, finding selected text, and more. You can manually do anything a selector can do by parsing the editor snapshot.
 
 ## Behavior Examples
 
