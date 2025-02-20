@@ -4,8 +4,8 @@ import {defineConverter} from './converter.types'
 
 export const converterPortableText = defineConverter({
   mimeType: 'application/x-portable-text',
-  serialize: ({context, event}) => {
-    if (!context.selection) {
+  serialize: ({snapshot, event}) => {
+    if (!snapshot.context.selection) {
       return {
         type: 'serialization.failure',
         mimeType: 'application/x-portable-text',
@@ -15,8 +15,8 @@ export const converterPortableText = defineConverter({
     }
 
     const blocks = sliceBlocks({
-      blocks: context.value,
-      selection: context.selection,
+      blocks: snapshot.context.value,
+      selection: snapshot.context.selection,
     })
 
     return {
@@ -26,7 +26,7 @@ export const converterPortableText = defineConverter({
       originEvent: event.originEvent,
     }
   },
-  deserialize: ({context, event}) => {
+  deserialize: ({snapshot, event}) => {
     const blocks = JSON.parse(event.data)
 
     if (!Array.isArray(blocks)) {
@@ -39,7 +39,7 @@ export const converterPortableText = defineConverter({
 
     const parsedBlocks = blocks.flatMap((block) => {
       const parsedBlock = parseBlock({
-        context,
+        context: snapshot.context,
         block,
         options: {refreshKeys: true},
       })

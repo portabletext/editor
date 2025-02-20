@@ -8,14 +8,16 @@ import {createTestKeyGenerator} from '../internal-utils/test-key-generator'
 import {converterTextHtml} from './converter.text-html'
 import {coreConverters} from './converters.core'
 
-function createContext(schema: SchemaDefinition) {
+function createSnapshot(schema: SchemaDefinition) {
   return {
-    converters: coreConverters,
-    activeDecorators: [],
-    keyGenerator: createTestKeyGenerator(),
-    schema: compileSchemaDefinition(schema),
-    selection: null,
-    value: [],
+    context: {
+      converters: coreConverters,
+      activeDecorators: [],
+      keyGenerator: createTestKeyGenerator(),
+      schema: compileSchemaDefinition(schema),
+      selection: null,
+      value: [],
+    },
   }
 }
 
@@ -31,7 +33,7 @@ describe(converterTextHtml.deserialize.name, () => {
   test('paragraph with unknown decorators', () => {
     expect(
       converterTextHtml.deserialize({
-        context: createContext(defineSchema({})),
+        snapshot: createSnapshot(defineSchema({})),
         event: {
           type: 'deserialize',
           data: decoratedParagraph,
@@ -60,7 +62,7 @@ describe(converterTextHtml.deserialize.name, () => {
   test('paragraph with known decorators', () => {
     expect(
       converterTextHtml.deserialize({
-        context: createContext(
+        snapshot: createSnapshot(
           defineSchema({
             decorators: [{name: 'strong'}, {name: 'em'}, {name: 'code'}],
           }),
@@ -105,7 +107,7 @@ describe(converterTextHtml.deserialize.name, () => {
   test('image', () => {
     expect(
       converterTextHtml.deserialize({
-        context: createContext(
+        snapshot: createSnapshot(
           defineSchema({
             blockObjects: [{name: 'image'}],
           }),
@@ -123,7 +125,7 @@ describe(converterTextHtml.deserialize.name, () => {
   test('paragraph with unknown link', () => {
     expect(
       converterTextHtml.deserialize({
-        context: createContext(defineSchema({})),
+        snapshot: createSnapshot(defineSchema({})),
         event: {
           type: 'deserialize',
           data: paragraphWithLink,
@@ -152,7 +154,7 @@ describe(converterTextHtml.deserialize.name, () => {
   test('paragraph with known link', () => {
     expect(
       converterTextHtml.deserialize({
-        context: createContext(
+        snapshot: createSnapshot(
           defineSchema({
             annotations: [{name: 'link'}],
           }),
@@ -197,7 +199,7 @@ describe(converterTextHtml.deserialize.name, () => {
   test('unordered list', () => {
     expect(
       converterTextHtml.deserialize({
-        context: createContext(
+        snapshot: createSnapshot(
           defineSchema({
             lists: [{name: 'bullet'}],
           }),
@@ -248,7 +250,7 @@ describe(converterTextHtml.deserialize.name, () => {
   test('ordered list', () => {
     expect(
       converterTextHtml.deserialize({
-        context: createContext(
+        snapshot: createSnapshot(
           defineSchema({
             lists: [{name: 'number'}],
           }),
@@ -299,7 +301,7 @@ describe(converterTextHtml.deserialize.name, () => {
   test('nested list', () => {
     expect(
       converterTextHtml.deserialize({
-        context: createContext(
+        snapshot: createSnapshot(
           defineSchema({
             lists: [{name: 'bullet'}, {name: 'number'}],
           }),

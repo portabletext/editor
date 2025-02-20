@@ -1,5 +1,5 @@
 import type {PortableTextBlock} from '@sanity/types'
-import type {EditorContext} from '../editor/editor-snapshot'
+import type {EditorSnapshot} from '../editor/editor-snapshot'
 import type {MIMEType} from '../internal-utils/mime-type'
 import type {PickFromUnion} from '../type-utils'
 
@@ -48,10 +48,10 @@ export type ConverterEvent<TMIMEType extends MIMEType = MIMEType> =
     }
 
 export type Serializer<TMIMEType extends MIMEType> = ({
-  context,
+  snapshot,
   event,
 }: {
-  context: EditorContext
+  snapshot: EditorSnapshot
   event: PickFromUnion<ConverterEvent<TMIMEType>, 'type', 'serialize'>
 }) => PickFromUnion<
   ConverterEvent<TMIMEType>,
@@ -60,10 +60,10 @@ export type Serializer<TMIMEType extends MIMEType> = ({
 >
 
 export type Deserializer<TMIMEType extends MIMEType> = ({
-  context,
+  snapshot,
   event,
 }: {
-  context: EditorContext
+  snapshot: EditorSnapshot
   event: PickFromUnion<ConverterEvent<TMIMEType>, 'type', 'deserialize'>
 }) => PickFromUnion<
   ConverterEvent<TMIMEType>,

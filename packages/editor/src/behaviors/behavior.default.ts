@@ -96,7 +96,7 @@ const raiseDeserializationSuccessOrFailure = defineBehavior({
 
         return [
           converter.deserialize({
-            context: snapshot.context,
+            snapshot,
             event: {type: 'deserialize', data},
           }),
         ]
@@ -153,7 +153,7 @@ const raiseSerializationSuccessOrFailure = defineBehavior({
     }
 
     const serializeEvents = snapshot.context.converters.map((converter) =>
-      converter.serialize({context: snapshot.context, event}),
+      converter.serialize({snapshot, event}),
     )
 
     if (serializeEvents.length === 0) {
