@@ -3,18 +3,19 @@ import {defineBehavior, raise} from './behavior.types'
 
 const addAnnotationOnCollapsedSelection = defineBehavior({
   on: 'annotation.add',
-  guard: ({context}) => {
-    if (!selectors.isSelectionCollapsed({context})) {
+  guard: ({snapshot}) => {
+    if (!selectors.isSelectionCollapsed(snapshot)) {
       return false
     }
 
-    const caretWordSelection = selectors.getCaretWordSelection({context})
+    const caretWordSelection = selectors.getCaretWordSelection(snapshot)
 
     if (
       !caretWordSelection ||
       !selectors.isSelectionExpanded({
+        ...snapshot,
         context: {
-          ...context,
+          ...snapshot.context,
           selection: caretWordSelection,
         },
       })

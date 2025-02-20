@@ -19,13 +19,13 @@ export type LinkBehaviorsConfig = {
 export function createLinkBehaviors(config: LinkBehaviorsConfig) {
   const pasteLinkOnSelection = defineBehavior({
     on: 'paste',
-    guard: ({context, event}) => {
-      const selectionCollapsed = selectors.isSelectionCollapsed({context})
+    guard: ({snapshot, event}) => {
+      const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
       const text = event.data.getData('text/plain')
       const url = looksLikeUrl(text) ? text : undefined
       const annotation =
         url !== undefined
-          ? config.linkAnnotation?.({url, schema: context.schema})
+          ? config.linkAnnotation?.({url, schema: snapshot.context.schema})
           : undefined
 
       if (annotation && !selectionCollapsed) {
@@ -45,9 +45,9 @@ export function createLinkBehaviors(config: LinkBehaviorsConfig) {
   })
   const pasteLinkAtCaret = defineBehavior({
     on: 'paste',
-    guard: ({context, event}) => {
-      const focusSpan = selectors.getFocusSpan({context})
-      const selectionCollapsed = selectors.isSelectionCollapsed({context})
+    guard: ({snapshot, event}) => {
+      const focusSpan = selectors.getFocusSpan(snapshot)
+      const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
 
       if (!focusSpan || !selectionCollapsed) {
         return false
@@ -57,7 +57,7 @@ export function createLinkBehaviors(config: LinkBehaviorsConfig) {
       const url = looksLikeUrl(text) ? text : undefined
       const annotation =
         url !== undefined
-          ? config.linkAnnotation?.({url, schema: context.schema})
+          ? config.linkAnnotation?.({url, schema: snapshot.context.schema})
           : undefined
 
       if (url && annotation && selectionCollapsed) {

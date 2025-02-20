@@ -13,16 +13,16 @@ export const getAnchorChild: EditorSelector<
       path: [KeyedSegment, 'children', KeyedSegment]
     }
   | undefined
-> = ({context}) => {
-  const anchorBlock = getAnchorTextBlock({context})
+> = (snapshot) => {
+  const anchorBlock = getAnchorTextBlock(snapshot)
 
   if (!anchorBlock) {
     return undefined
   }
 
-  const key = context.selection
-    ? isKeyedSegment(context.selection.anchor.path[2])
-      ? context.selection.anchor.path[2]._key
+  const key = snapshot.context.selection
+    ? isKeyedSegment(snapshot.context.selection.anchor.path[2])
+      ? snapshot.context.selection.anchor.path[2]._key
       : undefined
     : undefined
 

@@ -1,7 +1,6 @@
 import {isPortableTextTextBlock} from '@sanity/types'
 import type {EditorSchema} from '../editor/define-schema'
 import * as selectors from '../selectors'
-import {getBlockTextBefore} from '../selectors/selector.get-text-before'
 import {spanSelectionPointToBlockOffset} from '../utils/util.block-offset'
 import {getTextBlockText} from '../utils/util.get-text-block-text'
 import {defineBehavior} from './behavior.types'
@@ -71,31 +70,31 @@ export type MarkdownBehaviorsConfig = {
 export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   const automaticBlockquoteOnSpace = defineBehavior({
     on: 'insert.text',
-    guard: ({context, event}) => {
+    guard: ({snapshot, event}) => {
       const isSpace = event.text === ' '
 
       if (!isSpace) {
         return false
       }
 
-      const selectionCollapsed = selectors.isSelectionCollapsed({context})
-      const focusTextBlock = selectors.getFocusTextBlock({context})
-      const focusSpan = selectors.getFocusSpan({context})
+      const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
+      const focusTextBlock = selectors.getFocusTextBlock(snapshot)
+      const focusSpan = selectors.getFocusSpan(snapshot)
 
       if (!selectionCollapsed || !focusTextBlock || !focusSpan) {
         return false
       }
 
-      const previousInlineObject = selectors.getPreviousInlineObject({context})
+      const previousInlineObject = selectors.getPreviousInlineObject(snapshot)
       const blockOffset = spanSelectionPointToBlockOffset({
-        value: context.value,
+        value: snapshot.context.value,
         selectionPoint: {
           path: [
             {_key: focusTextBlock.node._key},
             'children',
             {_key: focusSpan.node._key},
           ],
-          offset: context.selection?.focus.offset ?? 0,
+          offset: snapshot.context.selection?.focus.offset ?? 0,
         },
       })
 
@@ -106,7 +105,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       const blockText = getTextBlockText(focusTextBlock.node)
       const caretAtTheEndOfQuote = blockOffset.offset === 1
       const looksLikeMarkdownQuote = /^>/.test(blockText)
-      const blockquoteStyle = config.blockquoteStyle?.(context)
+      const blockquoteStyle = config.blockquoteStyle?.(snapshot.context)
 
       if (
         caretAtTheEndOfQuote &&
@@ -152,7 +151,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   })
   const automaticHr = defineBehavior({
     on: 'insert.text',
-    guard: ({context, event}) => {
+    guard: ({snapshot, event}) => {
       const hrCharacter =
         event.text === '-'
           ? '-'
@@ -166,16 +165,16 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
-      const hrObject = config.horizontalRuleObject?.(context)
-      const focusBlock = selectors.getFocusTextBlock({context})
-      const selectionCollapsed = selectors.isSelectionCollapsed({context})
+      const hrObject = config.horizontalRuleObject?.(snapshot.context)
+      const focusBlock = selectors.getFocusTextBlock(snapshot)
+      const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
 
       if (!hrObject || !focusBlock || !selectionCollapsed) {
         return false
       }
 
-      const previousInlineObject = selectors.getPreviousInlineObject({context})
-      const textBefore = getBlockTextBefore({context})
+      const previousInlineObject = selectors.getPreviousInlineObject(snapshot)
+      const textBefore = selectors.getBlockTextBefore(snapshot)
       const hrBlockOffsets = {
         anchor: {
           path: focusBlock.path,
@@ -218,12 +217,12 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   })
   const automaticHrOnPaste = defineBehavior({
     on: 'paste',
-    guard: ({context, event}) => {
+    guard: ({snapshot, event}) => {
       const text = event.data.getData('text/plain')
       const hrRegExp = /^(---)$|(___)$|(\*\*\*)$/gm
       const hrCharacters = text.match(hrRegExp)?.[0]
-      const hrObject = config.horizontalRuleObject?.(context)
-      const focusBlock = selectors.getFocusBlock({context})
+      const hrObject = config.horizontalRuleObject?.(snapshot.context)
+      const focusBlock = selectors.getFocusBlock(snapshot)
 
       if (!hrCharacters || !hrObject || !focusBlock) {
         return false
@@ -264,30 +263,30 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   })
   const automaticHeadingOnSpace = defineBehavior({
     on: 'insert.text',
-    guard: ({context, event}) => {
+    guard: ({snapshot, event}) => {
       const isSpace = event.text === ' '
 
       if (!isSpace) {
         return false
       }
 
-      const selectionCollapsed = selectors.isSelectionCollapsed({context})
-      const focusTextBlock = selectors.getFocusTextBlock({context})
-      const focusSpan = selectors.getFocusSpan({context})
+      const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
+      const focusTextBlock = selectors.getFocusTextBlock(snapshot)
+      const focusSpan = selectors.getFocusSpan(snapshot)
 
       if (!selectionCollapsed || !focusTextBlock || !focusSpan) {
         return false
       }
 
       const blockOffset = spanSelectionPointToBlockOffset({
-        value: context.value,
+        value: snapshot.context.value,
         selectionPoint: {
           path: [
             {_key: focusTextBlock.node._key},
             'children',
             {_key: focusSpan.node._key},
           ],
-          offset: context.selection?.focus.offset ?? 0,
+          offset: snapshot.context.selection?.focus.offset ?? 0,
         },
       })
 
@@ -295,7 +294,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
-      const previousInlineObject = selectors.getPreviousInlineObject({context})
+      const previousInlineObject = selectors.getPreviousInlineObject(snapshot)
       const blockText = getTextBlockText(focusTextBlock.node)
       const markdownHeadingSearch = /^#+/.exec(blockText)
       const level = markdownHeadingSearch
@@ -309,7 +308,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
 
       const style =
         level !== undefined
-          ? config.headingStyle?.({schema: context.schema, level})
+          ? config.headingStyle?.({schema: snapshot.context.schema, level})
           : undefined
 
       if (level !== undefined && style !== undefined) {
@@ -351,10 +350,10 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   })
   const clearStyleOnBackspace = defineBehavior({
     on: 'delete.backward',
-    guard: ({context}) => {
-      const selectionCollapsed = selectors.isSelectionCollapsed({context})
-      const focusTextBlock = selectors.getFocusTextBlock({context})
-      const focusSpan = selectors.getFocusSpan({context})
+    guard: ({snapshot}) => {
+      const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
+      const focusTextBlock = selectors.getFocusTextBlock(snapshot)
+      const focusSpan = selectors.getFocusSpan(snapshot)
 
       if (!selectionCollapsed || !focusTextBlock || !focusSpan) {
         return false
@@ -362,9 +361,9 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
 
       const atTheBeginningOfBLock =
         focusTextBlock.node.children[0]._key === focusSpan.node._key &&
-        context.selection?.focus.offset === 0
+        snapshot.context.selection?.focus.offset === 0
 
-      const defaultStyle = config.defaultStyle?.(context)
+      const defaultStyle = config.defaultStyle?.(snapshot.context)
 
       if (
         atTheBeginningOfBLock &&
@@ -388,31 +387,31 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   })
   const automaticListOnSpace = defineBehavior({
     on: 'insert.text',
-    guard: ({context, event}) => {
+    guard: ({snapshot, event}) => {
       const isSpace = event.text === ' '
 
       if (!isSpace) {
         return false
       }
 
-      const selectionCollapsed = selectors.isSelectionCollapsed({context})
-      const focusTextBlock = selectors.getFocusTextBlock({context})
-      const focusSpan = selectors.getFocusSpan({context})
+      const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
+      const focusTextBlock = selectors.getFocusTextBlock(snapshot)
+      const focusSpan = selectors.getFocusSpan(snapshot)
 
       if (!selectionCollapsed || !focusTextBlock || !focusSpan) {
         return false
       }
 
-      const previousInlineObject = selectors.getPreviousInlineObject({context})
+      const previousInlineObject = selectors.getPreviousInlineObject(snapshot)
       const blockOffset = spanSelectionPointToBlockOffset({
-        value: context.value,
+        value: snapshot.context.value,
         selectionPoint: {
           path: [
             {_key: focusTextBlock.node._key},
             'children',
             {_key: focusSpan.node._key},
           ],
-          offset: context.selection?.focus.offset ?? 0,
+          offset: snapshot.context.selection?.focus.offset ?? 0,
         },
       })
 
@@ -421,9 +420,9 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       }
 
       const blockText = getTextBlockText(focusTextBlock.node)
-      const defaultStyle = config.defaultStyle?.(context)
+      const defaultStyle = config.defaultStyle?.(snapshot.context)
       const looksLikeUnorderedList = /^(-|\*)/.test(blockText)
-      const unorderedListStyle = config.unorderedListStyle?.(context)
+      const unorderedListStyle = config.unorderedListStyle?.(snapshot.context)
       const caretAtTheEndOfUnorderedList = blockOffset.offset === 1
 
       if (
@@ -441,7 +440,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       }
 
       const looksLikeOrderedList = /^1\./.test(blockText)
-      const orderedListStyle = config.orderedListStyle?.(context)
+      const orderedListStyle = config.orderedListStyle?.(snapshot.context)
       const caretAtTheEndOfOrderedList = blockOffset.offset === 2
 
       if (

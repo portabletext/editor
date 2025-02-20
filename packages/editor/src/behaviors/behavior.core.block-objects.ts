@@ -6,10 +6,10 @@ import {defineBehavior, raise} from './behavior.types'
 
 const arrowDownOnLonelyBlockObject = defineBehavior({
   on: 'key.down',
-  guard: ({context, event}) => {
+  guard: ({snapshot, event}) => {
     const isArrowDown = isHotkey('ArrowDown', event.keyboardEvent)
-    const focusBlockObject = selectors.getFocusBlockObject({context})
-    const nextBlock = selectors.getNextBlock({context})
+    const focusBlockObject = selectors.getFocusBlockObject(snapshot)
+    const nextBlock = selectors.getNextBlock(snapshot)
 
     return isArrowDown && focusBlockObject && !nextBlock
   },
@@ -18,10 +18,10 @@ const arrowDownOnLonelyBlockObject = defineBehavior({
 
 const arrowUpOnLonelyBlockObject = defineBehavior({
   on: 'key.down',
-  guard: ({context, event}) => {
+  guard: ({snapshot, event}) => {
     const isArrowUp = isHotkey('ArrowUp', event.keyboardEvent)
-    const focusBlockObject = selectors.getFocusBlockObject({context})
-    const previousBlock = selectors.getPreviousBlock({context})
+    const focusBlockObject = selectors.getFocusBlockObject(snapshot)
+    const previousBlock = selectors.getPreviousBlock(snapshot)
 
     return isArrowUp && focusBlockObject && !previousBlock
   },
@@ -35,9 +35,9 @@ const arrowUpOnLonelyBlockObject = defineBehavior({
 
 const breakingBlockObject = defineBehavior({
   on: 'insert.break',
-  guard: ({context}) => {
-    const focusBlockObject = selectors.getFocusBlockObject({context})
-    const collapsedSelection = selectors.isSelectionCollapsed({context})
+  guard: ({snapshot}) => {
+    const focusBlockObject = selectors.getFocusBlockObject(snapshot)
+    const collapsedSelection = selectors.isSelectionCollapsed(snapshot)
 
     return collapsedSelection && focusBlockObject !== undefined
   },
@@ -46,10 +46,10 @@ const breakingBlockObject = defineBehavior({
 
 const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
   on: 'delete.backward',
-  guard: ({context}) => {
-    const focusTextBlock = selectors.getFocusTextBlock({context})
-    const selectionCollapsed = selectors.isSelectionCollapsed({context})
-    const previousBlock = selectors.getPreviousBlock({context})
+  guard: ({snapshot}) => {
+    const focusTextBlock = selectors.getFocusTextBlock(snapshot)
+    const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
+    const previousBlock = selectors.getPreviousBlock(snapshot)
 
     if (!focusTextBlock || !selectionCollapsed || !previousBlock) {
       return false
@@ -83,10 +83,10 @@ const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
 
 const deletingEmptyTextBlockBeforeBlockObject = defineBehavior({
   on: 'delete.forward',
-  guard: ({context}) => {
-    const focusTextBlock = selectors.getFocusTextBlock({context})
-    const selectionCollapsed = selectors.isSelectionCollapsed({context})
-    const nextBlock = selectors.getNextBlock({context})
+  guard: ({snapshot}) => {
+    const focusTextBlock = selectors.getFocusTextBlock(snapshot)
+    const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
+    const nextBlock = selectors.getNextBlock(snapshot)
 
     if (!focusTextBlock || !selectionCollapsed || !nextBlock) {
       return false

@@ -39,7 +39,7 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
   return [
     defineBehavior({
       on: 'insert.text',
-      guard: ({context, event}) => {
+      guard: ({snapshot, event}) => {
         if (event.text === ':') {
           return false
         }
@@ -50,8 +50,8 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
           return {emojis: []}
         }
 
-        const focusBlock = selectors.getFocusTextBlock({context})
-        const textBefore = selectors.getBlockTextBefore({context})
+        const focusBlock = selectors.getFocusTextBlock(snapshot)
+        const textBefore = selectors.getBlockTextBefore(snapshot)
         const emojiKeyword = `${textBefore}${event.text}`.match(
           incompleteEmojiRegEx,
         )?.[1]
@@ -80,7 +80,7 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
     }),
     defineBehavior({
       on: 'insert.text',
-      guard: ({context, event}) => {
+      guard: ({snapshot, event}) => {
         const isColon = event.text === ':'
 
         if (!isColon) {
@@ -94,8 +94,8 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
           ? config.parseMatch({match: matches[selectedIndex]})
           : undefined
 
-        const focusBlock = selectors.getFocusTextBlock({context})
-        const textBefore = selectors.getBlockTextBefore({context})
+        const focusBlock = selectors.getFocusTextBlock(snapshot)
+        const textBefore = selectors.getBlockTextBefore(snapshot)
         const emojiKeyword = `${textBefore}:`.match(emojiRegEx)?.[1]
 
         if (!focusBlock || emojiKeyword === undefined) {
@@ -149,7 +149,7 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
     }),
     defineBehavior({
       on: 'key.down',
-      guard: ({context, event}) => {
+      guard: ({snapshot, event}) => {
         const matches = emojiPickerActor.getSnapshot().context.matches
 
         if (matches.length === 0) {
@@ -177,8 +177,8 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
             return false
           }
 
-          const focusBlock = selectors.getFocusTextBlock({context})
-          const textBefore = selectors.getBlockTextBefore({context})
+          const focusBlock = selectors.getFocusTextBlock(snapshot)
+          const textBefore = selectors.getBlockTextBefore(snapshot)
           const emojiKeyword = textBefore.match(incompleteEmojiRegEx)?.[1]
 
           if (!focusBlock || emojiKeyword === undefined) {
@@ -286,7 +286,7 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
     }),
     defineBehavior({
       on: 'delete.backward',
-      guard: ({context, event}) => {
+      guard: ({snapshot, event}) => {
         if (event.unit !== 'character') {
           return false
         }
@@ -297,8 +297,8 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
           return false
         }
 
-        const focusBlock = selectors.getFocusTextBlock({context})
-        const textBefore = selectors.getBlockTextBefore({context})
+        const focusBlock = selectors.getFocusTextBlock(snapshot)
+        const textBefore = selectors.getBlockTextBefore(snapshot)
         const emojiKeyword = textBefore
           .slice(0, textBefore.length - 1)
           .match(incompleteEmojiRegEx)?.[1]

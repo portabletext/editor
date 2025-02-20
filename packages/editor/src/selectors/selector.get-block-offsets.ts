@@ -8,24 +8,24 @@ import {getSelectionStartPoint} from './selector.get-selection-start-point'
  */
 export const getBlockOffsets: EditorSelector<
   {start: utils.BlockOffset; end: utils.BlockOffset} | undefined
-> = ({context}) => {
-  if (!context.selection) {
+> = (snapshot) => {
+  if (!snapshot.context.selection) {
     return undefined
   }
 
-  const selectionStartPoint = getSelectionStartPoint({context})
-  const selectionEndPoint = getSelectionEndPoint({context})
+  const selectionStartPoint = getSelectionStartPoint(snapshot)
+  const selectionEndPoint = getSelectionEndPoint(snapshot)
 
   if (!selectionStartPoint || !selectionEndPoint) {
     return undefined
   }
 
   const start = utils.spanSelectionPointToBlockOffset({
-    value: context.value,
+    value: snapshot.context.value,
     selectionPoint: selectionStartPoint,
   })
   const end = utils.spanSelectionPointToBlockOffset({
-    value: context.value,
+    value: snapshot.context.value,
     selectionPoint: selectionEndPoint,
   })
 

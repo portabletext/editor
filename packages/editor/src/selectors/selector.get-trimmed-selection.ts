@@ -14,18 +14,18 @@ import {getFocusTextBlock} from './selectors'
 /**
  * @public
  */
-export const getTrimmedSelection: EditorSelector<EditorSelection> = ({
-  context,
-}) => {
-  if (!context.selection) {
-    return context.selection
+export const getTrimmedSelection: EditorSelector<EditorSelection> = (
+  snapshot,
+) => {
+  if (!snapshot.context.selection) {
+    return snapshot.context.selection
   }
 
-  const startPoint = getSelectionStartPoint({context})
-  const endPoint = getSelectionEndPoint({context})
+  const startPoint = getSelectionStartPoint(snapshot)
+  const endPoint = getSelectionEndPoint(snapshot)
 
   if (!startPoint || !endPoint) {
-    return context.selection
+    return snapshot.context.selection
   }
 
   const startBlockKey = isKeyedSegment(startPoint.path[0])
@@ -42,7 +42,7 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = ({
     : null
 
   if (!startBlockKey || !endBlockKey) {
-    return context.selection
+    return snapshot.context.selection
   }
 
   let startBlockFound = false
@@ -54,7 +54,7 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = ({
     | {blockKey: string; span: PortableTextSpan}
     | undefined
 
-  for (const block of context.value) {
+  for (const block of snapshot.context.value) {
     if (block._key === startBlockKey) {
       startBlockFound = true
 
@@ -140,7 +140,7 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = ({
     }
   }
 
-  const trimmedSelection = context.selection.backward
+  const trimmedSelection = snapshot.context.selection.backward
     ? {
         anchor: trimEndPoint && adjustedEndPoint ? adjustedEndPoint : endPoint,
         focus: adjustedStartPoint ?? startPoint,
@@ -153,15 +153,17 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = ({
 
   if (
     isSelectionCollapsed({
+      ...snapshot,
       context: {
-        ...context,
+        ...snapshot.context,
         selection: trimmedSelection,
       },
     })
   ) {
     const focusTextBlock = getFocusTextBlock({
+      ...snapshot,
       context: {
-        ...context,
+        ...snapshot.context,
         selection: trimmedSelection,
       },
     })

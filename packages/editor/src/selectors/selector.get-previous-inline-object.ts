@@ -17,9 +17,9 @@ export const getPreviousInlineObject: EditorSelector<
       path: [KeyedSegment, 'children', KeyedSegment]
     }
   | undefined
-> = ({context}) => {
-  const focusTextBlock = getFocusTextBlock({context})
-  const selectionStartPoint = getSelectionStartPoint({context})
+> = (snapshot) => {
+  const focusTextBlock = getFocusTextBlock(snapshot)
+  const selectionStartPoint = getSelectionStartPoint(snapshot)
   const selectionStartPointChildKey =
     selectionStartPoint && isKeySegment(selectionStartPoint.path[2])
       ? selectionStartPoint.path[2]._key
@@ -41,7 +41,7 @@ export const getPreviousInlineObject: EditorSelector<
       break
     }
 
-    if (!isSpan(context, child)) {
+    if (!isSpan(snapshot.context, child)) {
       inlineObject = {
         node: child,
         path: [...focusTextBlock.path, 'children', {_key: child._key}],

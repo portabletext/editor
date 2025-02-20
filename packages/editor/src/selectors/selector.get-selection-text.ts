@@ -5,8 +5,8 @@ import {getSelectedSlice} from './selector.get-selected-slice'
 /**
  * @public
  */
-export const getSelectionText: EditorSelector<string> = ({context}) => {
-  const selectedSlice = getSelectedSlice({context})
+export const getSelectionText: EditorSelector<string> = (snapshot) => {
+  const selectedSlice = getSelectedSlice(snapshot)
 
   return selectedSlice.reduce((text, block) => {
     if (!isPortableTextTextBlock(block)) {
