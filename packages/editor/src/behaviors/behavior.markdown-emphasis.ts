@@ -10,6 +10,7 @@ import {
 import type {Editor} from '../editor/create-editor'
 import {useEditor} from '../editor/editor-provider'
 import type {EditorSchema} from '../selectors'
+import type {BlockOffset} from '../types/block-offset'
 import * as utils from '../utils'
 import {createDecoratorPairBehavior} from './behavior.decorator-pair'
 import {defineBehavior} from './behavior.types'
@@ -46,13 +47,13 @@ export function useMarkdownEmphasisBehaviors(props: {
 type MarkdownEmphasisEvent =
   | {
       type: 'emphasis.add'
-      blockOffset: utils.BlockOffset
+      blockOffset: BlockOffset
     }
   | {
       type: 'selection'
       blockOffsets?: {
-        anchor: utils.BlockOffset
-        focus: utils.BlockOffset
+        anchor: BlockOffset
+        focus: BlockOffset
       }
     }
   | {
@@ -200,7 +201,7 @@ const emphasisMachine = setup({
     context: {} as {
       boldDecorator?: string
       italicDecorator?: string
-      offsetAfterEmphasis?: utils.BlockOffset
+      offsetAfterEmphasis?: BlockOffset
       editor: Editor
     },
     input: {} as {

@@ -3,7 +3,7 @@ import {
   isPortableTextTextBlock,
   type PortableTextBlock,
 } from '@sanity/types'
-import type {BlockOffset} from '../behaviors/behavior.types'
+import type {BlockOffset} from '../types/block-offset'
 import type {EditorSelectionPoint} from '../types/editor'
 import {isKeyedSegment} from './util.is-keyed-segment'
 

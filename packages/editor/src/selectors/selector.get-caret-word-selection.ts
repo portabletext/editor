@@ -1,11 +1,11 @@
 import type {EditorSelector} from '../editor/editor-selector'
+import type {BlockOffset} from '../types/block-offset'
 import type {EditorSelection} from '../types/editor'
 import {
   blockOffsetToSpanSelectionPoint,
   getBlockEndPoint,
   getBlockStartPoint,
   spanSelectionPointToBlockOffset,
-  type BlockOffset,
 } from '../utils'
 import {getNextInlineObject} from './selector.get-next-inline-object'
 import {getPreviousInlineObject} from './selector.get-previous-inline-object'

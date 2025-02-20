@@ -1,4 +1,5 @@
 import type {EditorSelector} from '../editor/editor-selector'
+import type {BlockOffset} from '../types/block-offset'
 import * as utils from '../utils'
 import {getSelectionEndPoint} from './selector.get-selection-end-point'
 import {getSelectionStartPoint} from './selector.get-selection-start-point'
@@ -7,7 +8,7 @@ import {getSelectionStartPoint} from './selector.get-selection-start-point'
  * @public
  */
 export const getBlockOffsets: EditorSelector<
-  {start: utils.BlockOffset; end: utils.BlockOffset} | undefined
+  {start: BlockOffset; end: BlockOffset} | undefined
 > = (snapshot) => {
   if (!snapshot.context.selection) {
     return undefined

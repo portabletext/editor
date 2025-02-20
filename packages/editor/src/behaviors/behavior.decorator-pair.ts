@@ -1,12 +1,13 @@
 import {createPairRegex} from '../internal-utils/get-text-to-emphasize'
 import * as selectors from '../selectors'
+import type {BlockOffset} from '../types/block-offset'
 import * as utils from '../utils'
 import {defineBehavior} from './behavior.types'
 
 export function createDecoratorPairBehavior(config: {
   decorator: ({schema}: {schema: selectors.EditorSchema}) => string | undefined
   pair: {char: string; amount: number}
-  onDecorate: (offset: utils.BlockOffset) => void
+  onDecorate: (offset: BlockOffset) => void
 }) {
   if (config.pair.amount < 1) {
     console.warn(

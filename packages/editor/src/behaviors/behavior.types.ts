@@ -9,6 +9,7 @@ import type {ConverterEvent} from '../converters/converter.types'
 import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
 import type {MIMEType} from '../internal-utils/mime-type'
 import type {OmitFromUnion, PickFromUnion} from '../type-utils'
+import type {BlockOffset} from '../types/block-offset'
 import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
 
 /**
@@ -403,12 +404,4 @@ export function defineBehavior<
   behavior: Behavior<TBehaviorEventType, TGuardResponse, TBehaviorEvent>,
 ): Behavior {
   return behavior as unknown as Behavior
-}
-
-/**
- * @beta
- */
-export type BlockOffset = {
-  path: [KeyedSegment]
-  offset: number
 }

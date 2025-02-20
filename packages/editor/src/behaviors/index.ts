@@ -28,7 +28,6 @@ export {
   type BehaviorActionIntendSet,
   type BehaviorEvent,
   type BehaviorGuard,
-  type BlockOffset,
   type CustomBehaviorEvent,
   type NativeBehaviorEvent,
   type SyntheticBehaviorEvent,
