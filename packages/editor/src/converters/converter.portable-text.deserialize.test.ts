@@ -8,14 +8,16 @@ import {createTestKeyGenerator} from '../internal-utils/test-key-generator'
 import {converterPortableText} from './converter.portable-text'
 import {coreConverters} from './converters.core'
 
-function createContext(schema: SchemaDefinition) {
+function createSnapshot(schema: SchemaDefinition) {
   return {
-    converters: coreConverters,
-    activeDecorators: [],
-    keyGenerator: createTestKeyGenerator(),
-    schema: compileSchemaDefinition(schema),
-    value: [],
-    selection: null,
+    context: {
+      converters: coreConverters,
+      activeDecorators: [],
+      keyGenerator: createTestKeyGenerator(),
+      schema: compileSchemaDefinition(schema),
+      value: [],
+      selection: null,
+    },
   }
 }
 
@@ -23,7 +25,7 @@ describe(converterPortableText.deserialize, () => {
   test('non-array', () => {
     expect(
       converterPortableText.deserialize({
-        context: createContext(defineSchema({})),
+        snapshot: createSnapshot(defineSchema({})),
         event: {
           type: 'deserialize',
           data: JSON.stringify(''),
@@ -37,7 +39,7 @@ describe(converterPortableText.deserialize, () => {
   test('empty array', () => {
     expect(
       converterPortableText.deserialize({
-        context: createContext(defineSchema({})),
+        snapshot: createSnapshot(defineSchema({})),
         event: {
           type: 'deserialize',
           data: JSON.stringify([]),
@@ -51,7 +53,7 @@ describe(converterPortableText.deserialize, () => {
   test('no known array entries', () => {
     expect(
       converterPortableText.deserialize({
-        context: createContext(defineSchema({})),
+        snapshot: createSnapshot(defineSchema({})),
         event: {
           type: 'deserialize',
           data: JSON.stringify([{foo: 'bar'}]),
@@ -65,7 +67,7 @@ describe(converterPortableText.deserialize, () => {
   test('some known array entries', () => {
     expect(
       converterPortableText.deserialize({
-        context: createContext(defineSchema({})),
+        snapshot: createSnapshot(defineSchema({})),
         event: {
           type: 'deserialize',
           data: JSON.stringify([{_type: 'block', children: []}, {foo: 'bar'}]),
@@ -93,7 +95,7 @@ describe(converterPortableText.deserialize, () => {
   test('no marks or markDefs', () => {
     expect(
       converterPortableText.deserialize({
-        context: createContext(defineSchema({})),
+        snapshot: createSnapshot(defineSchema({})),
         event: {
           type: 'deserialize',
           data: JSON.stringify([
@@ -129,7 +131,7 @@ describe(converterPortableText.deserialize, () => {
   test('unknown block object', () => {
     expect(
       converterPortableText.deserialize({
-        context: createContext(defineSchema({})),
+        snapshot: createSnapshot(defineSchema({})),
         event: {
           type: 'deserialize',
           data: JSON.stringify([{_type: 'foo'}]),
@@ -143,7 +145,7 @@ describe(converterPortableText.deserialize, () => {
   test('known block object', () => {
     expect(
       converterPortableText.deserialize({
-        context: createContext(
+        snapshot: createSnapshot(
           defineSchema({
             blockObjects: [{name: 'image'}],
           }),
@@ -173,7 +175,7 @@ describe(converterPortableText.deserialize, () => {
   test('unknown inline object', () => {
     expect(
       converterPortableText.deserialize({
-        context: createContext(defineSchema({})),
+        snapshot: createSnapshot(defineSchema({})),
         event: {
           type: 'deserialize',
           data: JSON.stringify([
@@ -204,7 +206,7 @@ describe(converterPortableText.deserialize, () => {
   test('known inline object', () => {
     expect(
       converterPortableText.deserialize({
-        context: createContext(
+        snapshot: createSnapshot(
           defineSchema({
             inlineObjects: [{name: 'stock-ticker'}],
           }),
@@ -231,7 +233,7 @@ describe(converterPortableText.deserialize, () => {
 
   test('no style', () => {
     const deserializedEvent = converterPortableText.deserialize({
-      context: createContext(defineSchema({})),
+      snapshot: createSnapshot(defineSchema({})),
       event: {
         type: 'deserialize',
         data: JSON.stringify([
@@ -267,7 +269,7 @@ describe(converterPortableText.deserialize, () => {
 
   test('default style', () => {
     const deserializedEvent = converterPortableText.deserialize({
-      context: createContext(defineSchema({styles: [{name: 'h1'}]})),
+      snapshot: createSnapshot(defineSchema({styles: [{name: 'h1'}]})),
       event: {
         type: 'deserialize',
         data: JSON.stringify([
@@ -303,7 +305,7 @@ describe(converterPortableText.deserialize, () => {
 
   test('unknown style', () => {
     const deserializedEvent = converterPortableText.deserialize({
-      context: createContext(defineSchema({})),
+      snapshot: createSnapshot(defineSchema({})),
       event: {
         type: 'deserialize',
         data: JSON.stringify([
@@ -340,7 +342,7 @@ describe(converterPortableText.deserialize, () => {
 
   test('known style', () => {
     const deserializedEvent = converterPortableText.deserialize({
-      context: createContext(
+      snapshot: createSnapshot(
         defineSchema({
           styles: [{name: 'h1'}],
         }),
@@ -381,7 +383,7 @@ describe(converterPortableText.deserialize, () => {
 
   test('unknown listItem', () => {
     const deserializedEvent = converterPortableText.deserialize({
-      context: createContext(defineSchema({})),
+      snapshot: createSnapshot(defineSchema({})),
       event: {
         type: 'deserialize',
         data: JSON.stringify([
@@ -420,7 +422,7 @@ describe(converterPortableText.deserialize, () => {
 
   test('known listItem', () => {
     const deserializedEvent = converterPortableText.deserialize({
-      context: createContext(
+      snapshot: createSnapshot(
         defineSchema({
           lists: [{name: 'bullet'}],
         }),
@@ -465,7 +467,7 @@ describe(converterPortableText.deserialize, () => {
   test('unknown annotations', () => {
     expect(
       converterPortableText.deserialize({
-        context: createContext(defineSchema({})),
+        snapshot: createSnapshot(defineSchema({})),
         event: {
           type: 'deserialize',
           data: JSON.stringify([
@@ -523,7 +525,7 @@ describe(converterPortableText.deserialize, () => {
   test('known annotations', () => {
     expect(
       converterPortableText.deserialize({
-        context: createContext(
+        snapshot: createSnapshot(
           defineSchema({
             annotations: [{name: 'link'}],
           }),
@@ -592,7 +594,7 @@ describe(converterPortableText.deserialize, () => {
   test('unknown decorators', () => {
     expect(
       converterPortableText.deserialize({
-        context: createContext(defineSchema({})),
+        snapshot: createSnapshot(defineSchema({})),
         event: {
           type: 'deserialize',
           data: JSON.stringify([
@@ -638,7 +640,7 @@ describe(converterPortableText.deserialize, () => {
   test('known decorators', () => {
     expect(
       converterPortableText.deserialize({
-        context: createContext(
+        snapshot: createSnapshot(
           defineSchema({
             decorators: [{name: 'strong'}],
           }),

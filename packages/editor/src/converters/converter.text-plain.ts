@@ -5,8 +5,8 @@ import {defineConverter} from './converter.types'
 
 export const converterTextPlain = defineConverter({
   mimeType: 'text/plain',
-  serialize: ({context, event}) => {
-    if (!context.selection) {
+  serialize: ({snapshot, event}) => {
+    if (!snapshot.context.selection) {
       return {
         type: 'serialization.failure',
         mimeType: 'text/plain',
@@ -16,8 +16,8 @@ export const converterTextPlain = defineConverter({
     }
 
     const blocks = sliceBlocks({
-      blocks: context.value,
-      selection: context.selection,
+      blocks: snapshot.context.value,
+      selection: snapshot.context.selection,
     })
 
     const data = blocks
@@ -25,12 +25,12 @@ export const converterTextPlain = defineConverter({
         if (isPortableTextTextBlock(block)) {
           return block.children
             .map((child) => {
-              if (child._type === context.schema.span.name) {
+              if (child._type === snapshot.context.schema.span.name) {
                 return child.text
               }
 
               return `[${
-                context.schema.inlineObjects.find(
+                snapshot.context.schema.inlineObjects.find(
                   (inlineObjectType) => inlineObjectType.name === child._type,
                 )?.title ?? 'Object'
               }]`
@@ -39,7 +39,7 @@ export const converterTextPlain = defineConverter({
         }
 
         return `[${
-          context.schema.blockObjects.find(
+          snapshot.context.schema.blockObjects.find(
             (blockObjectType) => blockObjectType.name === block._type,
           )?.title ?? 'Object'
         }]`
@@ -53,7 +53,7 @@ export const converterTextPlain = defineConverter({
       originEvent: event.originEvent,
     }
   },
-  deserialize: ({context, event}) => {
+  deserialize: ({snapshot, event}) => {
     const html = escapeHtml(event.data)
       .split(/\n{2,}/)
       .map((line) =>
@@ -63,9 +63,13 @@ export const converterTextPlain = defineConverter({
 
     const textToHtml = `<html><body>${html}</body></html>`
 
-    const blocks = htmlToBlocks(textToHtml, context.schema.portableText, {
-      keyGenerator: context.keyGenerator,
-    }) as Array<PortableTextBlock>
+    const blocks = htmlToBlocks(
+      textToHtml,
+      snapshot.context.schema.portableText,
+      {
+        keyGenerator: snapshot.context.keyGenerator,
+      },
+    ) as Array<PortableTextBlock>
 
     return {
       type: 'deserialization.success',

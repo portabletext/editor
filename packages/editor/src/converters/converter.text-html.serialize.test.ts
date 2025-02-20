@@ -75,14 +75,16 @@ const paragraphWithInlineBlock: PortableTextTextBlock = {
   ],
 }
 
-function createContext(schema: SchemaDefinition, selection: EditorSelection) {
+function createSnapshot(schema: SchemaDefinition, selection: EditorSelection) {
   return {
-    converters: coreConverters,
-    activeDecorators: [],
-    keyGenerator: createTestKeyGenerator(),
-    schema: compileSchemaDefinition(schema),
-    selection,
-    value: [decoratedParagraph, image, b2, paragraphWithInlineBlock],
+    context: {
+      converters: coreConverters,
+      activeDecorators: [],
+      keyGenerator: createTestKeyGenerator(),
+      schema: compileSchemaDefinition(schema),
+      selection,
+      value: [decoratedParagraph, image, b2, paragraphWithInlineBlock],
+    },
   }
 }
 
@@ -90,7 +92,7 @@ describe(converterTextHtml.serialize.name, () => {
   test('paragraph with decorators', () => {
     expect(
       converterTextHtml.serialize({
-        context: createContext(defineSchema({}), {
+        snapshot: createSnapshot(defineSchema({}), {
           anchor: {
             path: [
               {_key: decoratedParagraph._key},
@@ -121,7 +123,7 @@ describe(converterTextHtml.serialize.name, () => {
   test('image', () => {
     expect(
       converterTextHtml.serialize({
-        context: createContext(defineSchema({}), {
+        snapshot: createSnapshot(defineSchema({}), {
           anchor: {
             path: [{_key: image._key}],
             offset: 0,
@@ -144,7 +146,7 @@ describe(converterTextHtml.serialize.name, () => {
   test('inline object', () => {
     expect(
       converterTextHtml.serialize({
-        context: createContext(defineSchema({}), {
+        snapshot: createSnapshot(defineSchema({}), {
           anchor: {
             path: [
               {_key: paragraphWithInlineBlock._key},
@@ -175,49 +177,51 @@ describe(converterTextHtml.serialize.name, () => {
   test('lists', () => {
     expect(
       converterTextHtml.serialize({
-        context: {
-          converters: coreConverters,
-          activeDecorators: [],
-          keyGenerator: createTestKeyGenerator(),
-          schema: compileSchemaDefinition(defineSchema({})),
-          value: [
-            {
-              _key: 'k0',
-              _type: 'block',
-              children: [
-                {
-                  _key: 'k1',
-                  _type: 'span',
-                  marks: [],
-                  text: 'foo',
-                },
-              ],
-              level: 1,
-              listItem: 'number',
-            },
-            {
-              _key: 'k2',
-              _type: 'block',
-              children: [
-                {
-                  _key: 'k3',
-                  _type: 'span',
-                  marks: [],
-                  text: 'bar',
-                },
-              ],
-              level: 2,
-              listItem: 'bullet',
-            },
-          ],
-          selection: {
-            anchor: {
-              path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
-              offset: 0,
-            },
-            focus: {
-              path: [{_key: 'k2'}, 'children', {_key: 'k3'}],
-              offset: 3,
+        snapshot: {
+          context: {
+            converters: coreConverters,
+            activeDecorators: [],
+            keyGenerator: createTestKeyGenerator(),
+            schema: compileSchemaDefinition(defineSchema({})),
+            value: [
+              {
+                _key: 'k0',
+                _type: 'block',
+                children: [
+                  {
+                    _key: 'k1',
+                    _type: 'span',
+                    marks: [],
+                    text: 'foo',
+                  },
+                ],
+                level: 1,
+                listItem: 'number',
+              },
+              {
+                _key: 'k2',
+                _type: 'block',
+                children: [
+                  {
+                    _key: 'k3',
+                    _type: 'span',
+                    marks: [],
+                    text: 'bar',
+                  },
+                ],
+                level: 2,
+                listItem: 'bullet',
+              },
+            ],
+            selection: {
+              anchor: {
+                path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+                offset: 0,
+              },
+              focus: {
+                path: [{_key: 'k2'}, 'children', {_key: 'k3'}],
+                offset: 3,
+              },
             },
           },
         },

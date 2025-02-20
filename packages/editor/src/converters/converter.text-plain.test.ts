@@ -5,7 +5,7 @@ import {
   defineSchema,
   type SchemaDefinition,
 } from '../editor/define-schema'
-import type {EditorContext} from '../editor/editor-snapshot'
+import type {EditorSnapshot} from '../editor/editor-snapshot'
 import type {EditorSelection} from '../utils'
 import {converterTextPlain} from './converter.text-plain'
 import {coreConverters} from './converters.core'
@@ -65,27 +65,29 @@ const b4: PortableTextTextBlock = {
   ],
 }
 
-function createContext({
+function createSnapshot({
   schema,
   selection,
 }: {
   schema: SchemaDefinition
   selection: EditorSelection
-}): EditorContext {
+}): EditorSnapshot {
   return {
-    converters: coreConverters,
-    activeDecorators: [],
-    keyGenerator: () => '',
-    schema: compileSchemaDefinition(schema),
-    selection,
-    value: [b1, b2, b3, b4],
+    context: {
+      converters: coreConverters,
+      activeDecorators: [],
+      keyGenerator: () => '',
+      schema: compileSchemaDefinition(schema),
+      selection,
+      value: [b1, b2, b3, b4],
+    },
   }
 }
 
 test(converterTextPlain.serialize.name, () => {
   expect(
     converterTextPlain.serialize({
-      context: createContext({
+      snapshot: createSnapshot({
         schema: defineSchema({}),
         selection: {
           anchor: {
@@ -109,7 +111,7 @@ test(converterTextPlain.serialize.name, () => {
 
   expect(
     converterTextPlain.serialize({
-      context: createContext({
+      snapshot: createSnapshot({
         schema: defineSchema({}),
         selection: {
           anchor: {
@@ -133,7 +135,7 @@ test(converterTextPlain.serialize.name, () => {
 
   expect(
     converterTextPlain.serialize({
-      context: createContext({
+      snapshot: createSnapshot({
         schema: defineSchema({}),
         selection: {
           anchor: {
@@ -157,7 +159,7 @@ test(converterTextPlain.serialize.name, () => {
 
   expect(
     converterTextPlain.serialize({
-      context: createContext({
+      snapshot: createSnapshot({
         schema: defineSchema({
           blockObjects: [
             {
@@ -187,7 +189,7 @@ test(converterTextPlain.serialize.name, () => {
 
   expect(
     converterTextPlain.serialize({
-      context: createContext({
+      snapshot: createSnapshot({
         schema: defineSchema({}),
         selection: {
           anchor: {
@@ -211,7 +213,7 @@ test(converterTextPlain.serialize.name, () => {
 
   expect(
     converterTextPlain.serialize({
-      context: createContext({
+      snapshot: createSnapshot({
         schema: defineSchema({
           inlineObjects: [
             {

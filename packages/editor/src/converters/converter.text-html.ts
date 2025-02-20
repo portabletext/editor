@@ -6,8 +6,8 @@ import {defineConverter} from './converter.types'
 
 export const converterTextHtml = defineConverter({
   mimeType: 'text/html',
-  serialize: ({context, event}) => {
-    if (!context.selection) {
+  serialize: ({snapshot, event}) => {
+    if (!snapshot.context.selection) {
       return {
         type: 'serialization.failure',
         mimeType: 'text/html',
@@ -17,8 +17,8 @@ export const converterTextHtml = defineConverter({
     }
 
     const blocks = sliceBlocks({
-      blocks: context.value,
-      selection: context.selection,
+      blocks: snapshot.context.value,
+      selection: snapshot.context.selection,
     })
 
     const html = toHTML(blocks, {
@@ -45,12 +45,16 @@ export const converterTextHtml = defineConverter({
       originEvent: event.originEvent,
     }
   },
-  deserialize: ({context, event}) => {
-    const blocks = htmlToBlocks(event.data, context.schema.portableText, {
-      keyGenerator: context.keyGenerator,
-      unstable_whitespaceOnPasteMode:
-        context.schema.block.options.unstable_whitespaceOnPasteMode,
-    }) as Array<PortableTextBlock>
+  deserialize: ({snapshot, event}) => {
+    const blocks = htmlToBlocks(
+      event.data,
+      snapshot.context.schema.portableText,
+      {
+        keyGenerator: snapshot.context.keyGenerator,
+        unstable_whitespaceOnPasteMode:
+          snapshot.context.schema.block.options.unstable_whitespaceOnPasteMode,
+      },
+    ) as Array<PortableTextBlock>
 
     return {
       type: 'deserialization.success',

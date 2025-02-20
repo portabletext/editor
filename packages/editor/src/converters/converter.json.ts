@@ -2,8 +2,8 @@ import {defineConverter} from './converter.types'
 
 export const converterJson = defineConverter({
   mimeType: 'application/json',
-  serialize: ({context, event}) => {
-    const portableTextConverter = context.converters.find(
+  serialize: ({snapshot, event}) => {
+    const portableTextConverter = snapshot.context.converters.find(
       (converter) => converter.mimeType === 'application/x-portable-text',
     )
 
@@ -17,7 +17,7 @@ export const converterJson = defineConverter({
     }
 
     const serializationEvent = portableTextConverter.serialize({
-      context,
+      snapshot,
       event,
     })
 
@@ -27,8 +27,8 @@ export const converterJson = defineConverter({
       originEvent: event.originEvent,
     }
   },
-  deserialize: ({context, event}) => {
-    const portableTextConverter = context.converters.find(
+  deserialize: ({snapshot, event}) => {
+    const portableTextConverter = snapshot.context.converters.find(
       (converter) => converter.mimeType === 'application/x-portable-text',
     )
 
@@ -41,7 +41,7 @@ export const converterJson = defineConverter({
     }
 
     const deserializationEvent = portableTextConverter.deserialize({
-      context,
+      snapshot,
       event,
     })
 
