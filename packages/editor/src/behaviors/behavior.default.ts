@@ -3,8 +3,8 @@ import {defineBehavior, raise} from './behavior.types'
 
 const toggleAnnotationOff = defineBehavior({
   on: 'annotation.toggle',
-  guard: ({context, event}) =>
-    selectors.isActiveAnnotation(event.annotation.name)({context}),
+  guard: ({snapshot, event}) =>
+    selectors.isActiveAnnotation(event.annotation.name)(snapshot),
   actions: [
     ({event}) => [
       raise({type: 'annotation.remove', annotation: event.annotation}),
@@ -14,8 +14,8 @@ const toggleAnnotationOff = defineBehavior({
 
 const toggleAnnotationOn = defineBehavior({
   on: 'annotation.toggle',
-  guard: ({context, event}) =>
-    !selectors.isActiveAnnotation(event.annotation.name)({context}),
+  guard: ({snapshot, event}) =>
+    !selectors.isActiveAnnotation(event.annotation.name)(snapshot),
   actions: [
     ({event}) => [
       raise({type: 'annotation.add', annotation: event.annotation}),
@@ -25,8 +25,8 @@ const toggleAnnotationOn = defineBehavior({
 
 const toggleDecoratorOff = defineBehavior({
   on: 'decorator.toggle',
-  guard: ({context, event}) =>
-    selectors.isActiveDecorator(event.decorator)({context}),
+  guard: ({snapshot, event}) =>
+    selectors.isActiveDecorator(event.decorator)(snapshot),
   actions: [
     ({event}) => [
       raise({type: 'decorator.remove', decorator: event.decorator}),
@@ -36,8 +36,8 @@ const toggleDecoratorOff = defineBehavior({
 
 const toggleDecoratorOn = defineBehavior({
   on: 'decorator.toggle',
-  guard: ({context, event}) =>
-    !selectors.isActiveDecorator(event.decorator)({context}),
+  guard: ({snapshot, event}) =>
+    !selectors.isActiveDecorator(event.decorator)(snapshot),
   actions: [
     ({event}) => [raise({type: 'decorator.add', decorator: event.decorator})],
   ],
@@ -45,8 +45,8 @@ const toggleDecoratorOn = defineBehavior({
 
 const toggleListItemOff = defineBehavior({
   on: 'list item.toggle',
-  guard: ({context, event}) =>
-    selectors.isActiveListItem(event.listItem)({context}),
+  guard: ({snapshot, event}) =>
+    selectors.isActiveListItem(event.listItem)(snapshot),
   actions: [
     ({event}) => [
       raise({
@@ -59,8 +59,8 @@ const toggleListItemOff = defineBehavior({
 
 const toggleListItemOn = defineBehavior({
   on: 'list item.toggle',
-  guard: ({context, event}) =>
-    !selectors.isActiveListItem(event.listItem)({context}),
+  guard: ({snapshot, event}) =>
+    !selectors.isActiveListItem(event.listItem)(snapshot),
   actions: [
     ({event}) => [
       raise({
@@ -73,30 +73,35 @@ const toggleListItemOn = defineBehavior({
 
 const toggleStyleOff = defineBehavior({
   on: 'style.toggle',
-  guard: ({context, event}) => selectors.isActiveStyle(event.style)({context}),
+  guard: ({snapshot, event}) => selectors.isActiveStyle(event.style)(snapshot),
   actions: [({event}) => [raise({type: 'style.remove', style: event.style})]],
 })
 
 const toggleStyleOn = defineBehavior({
   on: 'style.toggle',
-  guard: ({context, event}) => !selectors.isActiveStyle(event.style)({context}),
+  guard: ({snapshot, event}) => !selectors.isActiveStyle(event.style)(snapshot),
   actions: [({event}) => [raise({type: 'style.add', style: event.style})]],
 })
 
 const raiseDeserializationSuccessOrFailure = defineBehavior({
   on: 'deserialize',
-  guard: ({context, event}) => {
-    const deserializeEvents = context.converters.flatMap((converter) => {
-      const data = event.dataTransfer.getData(converter.mimeType)
+  guard: ({snapshot, event}) => {
+    const deserializeEvents = snapshot.context.converters.flatMap(
+      (converter) => {
+        const data = event.dataTransfer.getData(converter.mimeType)
 
-      if (!data) {
-        return []
-      }
+        if (!data) {
+          return []
+        }
 
-      return [
-        converter.deserialize({context, event: {type: 'deserialize', data}}),
-      ]
-    })
+        return [
+          converter.deserialize({
+            context: snapshot.context,
+            event: {type: 'deserialize', data},
+          }),
+        ]
+      },
+    )
 
     const firstSuccess = deserializeEvents.find(
       (deserializeEvent) => deserializeEvent.type === 'deserialization.success',
@@ -142,13 +147,13 @@ const raiseInsertBlocks = defineBehavior({
 
 const raiseSerializationSuccessOrFailure = defineBehavior({
   on: 'serialize',
-  guard: ({context, event}) => {
-    if (context.converters.length === 0) {
+  guard: ({snapshot, event}) => {
+    if (snapshot.context.converters.length === 0) {
       return false
     }
 
-    const serializeEvents = context.converters.map((converter) =>
-      converter.serialize({context, event}),
+    const serializeEvents = snapshot.context.converters.map((converter) =>
+      converter.serialize({context: snapshot.context, event}),
     )
 
     if (serializeEvents.length === 0) {

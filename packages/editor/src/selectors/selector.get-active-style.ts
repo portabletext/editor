@@ -6,15 +6,15 @@ import {getSelectedBlocks} from './selectors'
 /**
  * @public
  */
-export const getActiveStyle: EditorSelector<PortableTextTextBlock['style']> = ({
-  context,
-}) => {
-  if (!context.selection) {
+export const getActiveStyle: EditorSelector<PortableTextTextBlock['style']> = (
+  snapshot,
+) => {
+  if (!snapshot.context.selection) {
     return undefined
   }
 
-  const guards = createGuards(context)
-  const selectedBlocks = getSelectedBlocks({context}).map((block) => block.node)
+  const guards = createGuards(snapshot.context)
+  const selectedBlocks = getSelectedBlocks(snapshot).map((block) => block.node)
   const selectedTextBlocks = selectedBlocks.filter(guards.isTextBlock)
 
   const firstTextBlock = selectedTextBlocks.at(0)

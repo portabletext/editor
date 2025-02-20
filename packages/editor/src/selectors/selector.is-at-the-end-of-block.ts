@@ -10,13 +10,16 @@ export function isAtTheEndOfBlock(block: {
   node: PortableTextBlock
   path: [KeyedSegment]
 }): EditorSelector<boolean> {
-  return ({context}) => {
-    if (!context.selection || !isSelectionCollapsed({context})) {
+  return (snapshot) => {
+    if (!snapshot.context.selection || !isSelectionCollapsed(snapshot)) {
       return false
     }
 
     const blockEndPoint = utils.getBlockEndPoint(block)
 
-    return utils.isEqualSelectionPoints(context.selection.focus, blockEndPoint)
+    return utils.isEqualSelectionPoints(
+      snapshot.context.selection.focus,
+      blockEndPoint,
+    )
   }
 }

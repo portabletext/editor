@@ -10,15 +10,15 @@ export function isAtTheStartOfBlock(block: {
   node: PortableTextBlock
   path: [KeyedSegment]
 }): EditorSelector<boolean> {
-  return ({context}) => {
-    if (!context.selection || !isSelectionCollapsed({context})) {
+  return (snapshot) => {
+    if (!snapshot.context.selection || !isSelectionCollapsed(snapshot)) {
       return false
     }
 
     const blockStartPoint = utils.getBlockStartPoint(block)
 
     return utils.isEqualSelectionPoints(
-      context.selection.focus,
+      snapshot.context.selection.focus,
       blockStartPoint,
     )
   }

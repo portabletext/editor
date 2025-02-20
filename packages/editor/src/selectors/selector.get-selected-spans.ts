@@ -15,8 +15,8 @@ export const getSelectedSpans: EditorSelector<
     node: PortableTextSpan
     path: [KeyedSegment, 'children', KeyedSegment]
   }>
-> = ({context}) => {
-  if (!context.selection) {
+> = (snapshot) => {
+  if (!snapshot.context.selection) {
     return []
   }
 
@@ -25,12 +25,12 @@ export const getSelectedSpans: EditorSelector<
     path: [KeyedSegment, 'children', KeyedSegment]
   }> = []
 
-  const startPoint = context.selection.backward
-    ? context.selection.focus
-    : context.selection.anchor
-  const endPoint = context.selection.backward
-    ? context.selection.anchor
-    : context.selection.focus
+  const startPoint = snapshot.context.selection.backward
+    ? snapshot.context.selection.focus
+    : snapshot.context.selection.anchor
+  const endPoint = snapshot.context.selection.backward
+    ? snapshot.context.selection.anchor
+    : snapshot.context.selection.focus
 
   const startBlockKey = isKeySegment(startPoint.path[0])
     ? startPoint.path[0]._key
@@ -50,7 +50,7 @@ export const getSelectedSpans: EditorSelector<
     ? endPoint.path[2]._key
     : undefined
 
-  for (const block of context.value) {
+  for (const block of snapshot.context.value) {
     if (!isPortableTextTextBlock(block)) {
       continue
     }

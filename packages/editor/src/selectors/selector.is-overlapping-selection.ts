@@ -11,20 +11,22 @@ import {isPointBeforeSelection} from './selector.is-point-before-selection'
 export function isOverlappingSelection(
   selection: EditorSelection,
 ): EditorSelector<boolean> {
-  return ({context}) => {
-    if (!selection || !context.selection) {
+  return (snapshot) => {
+    if (!selection || !snapshot.context.selection) {
       return false
     }
 
     const selectionStartPoint = getSelectionStartPoint({
+      ...snapshot,
       context: {
-        ...context,
+        ...snapshot.context,
         selection,
       },
     })
     const selectionEndPoint = getSelectionEndPoint({
+      ...snapshot,
       context: {
-        ...context,
+        ...snapshot.context,
         selection,
       },
     })
@@ -33,11 +35,11 @@ export function isOverlappingSelection(
       return false
     }
 
-    if (!isPointAfterSelection(selectionStartPoint)({context})) {
+    if (!isPointAfterSelection(selectionStartPoint)(snapshot)) {
       return false
     }
 
-    if (!isPointBeforeSelection(selectionEndPoint)({context})) {
+    if (!isPointBeforeSelection(selectionEndPoint)(snapshot)) {
       return false
     }
 

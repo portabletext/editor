@@ -4,6 +4,6 @@ import {isSelectionCollapsed} from './selector.is-selection-collapsed'
 /**
  * @public
  */
-export const isSelectionExpanded: EditorSelector<boolean> = ({context}) => {
-  return !isSelectionCollapsed({context})
+export const isSelectionExpanded: EditorSelector<boolean> = (snapshot) => {
+  return !isSelectionCollapsed(snapshot)
 }

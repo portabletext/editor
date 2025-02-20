@@ -7,15 +7,15 @@ import {isKeyedSegment} from '../utils'
  */
 export const getAnchorBlock: EditorSelector<
   {node: PortableTextBlock; path: [KeyedSegment]} | undefined
-> = ({context}) => {
-  const key = context.selection
-    ? isKeyedSegment(context.selection.anchor.path[0])
-      ? context.selection.anchor.path[0]._key
+> = (snapshot) => {
+  const key = snapshot.context.selection
+    ? isKeyedSegment(snapshot.context.selection.anchor.path[0])
+      ? snapshot.context.selection.anchor.path[0]._key
       : undefined
     : undefined
 
   const node = key
-    ? context.value.find((block) => block._key === key)
+    ? snapshot.context.value.find((block) => block._key === key)
     : undefined
 
   return node && key ? {node, path: [{_key: key}]} : undefined

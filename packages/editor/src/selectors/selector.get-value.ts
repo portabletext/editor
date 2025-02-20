@@ -4,8 +4,8 @@ import type {EditorSelector} from './_exports'
 /**
  * @public
  */
-export const getValue: EditorSelector<Array<PortableTextBlock>> = ({
-  context,
-}) => {
-  return context.value
+export const getValue: EditorSelector<Array<PortableTextBlock>> = (
+  snapshot,
+) => {
+  return snapshot.context.value
 }

@@ -10,9 +10,9 @@ const oneLineBehaviors = [
    */
   defineBehavior({
     on: 'insert.break',
-    guard: ({context}) =>
-      context.selection && selectors.isSelectionExpanded({context})
-        ? {selection: context.selection}
+    guard: (snapshot) =>
+      snapshot.context.selection && selectors.isSelectionExpanded(snapshot)
+        ? {selection: snapshot.context.selection}
         : false,
     actions: [(_, {selection}) => [{type: 'delete', selection}]],
   }),
@@ -40,14 +40,14 @@ const oneLineBehaviors = [
    */
   defineBehavior({
     on: 'insert.block',
-    guard: ({context, event}) => {
-      const focusTextBlock = selectors.getFocusTextBlock({context})
-      const selectionStartPoint = selectors.getSelectionStartPoint({context})
-      const selectionEndPoint = selectors.getSelectionEndPoint({context})
+    guard: ({snapshot, event}) => {
+      const focusTextBlock = selectors.getFocusTextBlock(snapshot)
+      const selectionStartPoint = selectors.getSelectionStartPoint(snapshot)
+      const selectionEndPoint = selectors.getSelectionEndPoint(snapshot)
 
       if (
         !focusTextBlock ||
-        !utils.isTextBlock(context, event.block) ||
+        !utils.isTextBlock(snapshot.context, event.block) ||
         !selectionStartPoint ||
         !selectionEndPoint
       ) {
@@ -90,14 +90,14 @@ const oneLineBehaviors = [
    */
   defineBehavior({
     on: 'insert.block',
-    guard: ({context, event}) => {
-      const focusTextBlock = selectors.getFocusTextBlock({context})
-      const selectionStartPoint = selectors.getSelectionStartPoint({context})
-      const selectionEndPoint = selectors.getSelectionEndPoint({context})
+    guard: ({snapshot, event}) => {
+      const focusTextBlock = selectors.getFocusTextBlock(snapshot)
+      const selectionStartPoint = selectors.getSelectionStartPoint(snapshot)
+      const selectionEndPoint = selectors.getSelectionEndPoint(snapshot)
 
       if (
         !focusTextBlock ||
-        !utils.isTextBlock(context, event.block) ||
+        !utils.isTextBlock(snapshot.context, event.block) ||
         !selectionStartPoint ||
         !selectionEndPoint
       ) {
@@ -105,12 +105,12 @@ const oneLineBehaviors = [
       }
 
       const blockBeforeStartPoint = utils.splitTextBlock({
-        context,
+        context: snapshot.context,
         block: focusTextBlock.node,
         point: selectionStartPoint,
       })?.before
       const blockAfterEndPoint = utils.splitTextBlock({
-        context,
+        context: snapshot.context,
         block: focusTextBlock.node,
         point: selectionEndPoint,
       })?.after
@@ -120,7 +120,7 @@ const oneLineBehaviors = [
       }
 
       const targetBlock = utils.mergeTextBlocks({
-        context,
+        context: snapshot.context,
         targetBlock: blockBeforeStartPoint,
         incomingBlock: event.block,
       })
@@ -131,7 +131,7 @@ const oneLineBehaviors = [
       })
 
       const mergedBlock = utils.mergeTextBlocks({
-        context,
+        context: snapshot.context,
         targetBlock,
         incomingBlock: blockAfterEndPoint,
       })

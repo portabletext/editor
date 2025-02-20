@@ -5,8 +5,11 @@ import {sliceBlocks} from '../utils'
 /**
  * @public
  */
-export const getSelectedSlice: EditorSelector<Array<PortableTextBlock>> = ({
-  context,
-}) => {
-  return sliceBlocks({blocks: context.value, selection: context.selection})
+export const getSelectedSlice: EditorSelector<Array<PortableTextBlock>> = (
+  snapshot,
+) => {
+  return sliceBlocks({
+    blocks: snapshot.context.value,
+    selection: snapshot.context.selection,
+  })
 }

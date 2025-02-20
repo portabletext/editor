@@ -11,8 +11,8 @@ import {getAnchorBlock} from './selector.get-anchor-block'
  */
 export const getAnchorTextBlock: EditorSelector<
   {node: PortableTextTextBlock; path: [KeyedSegment]} | undefined
-> = ({context}) => {
-  const anchorBlock = getAnchorBlock({context})
+> = (snapshot) => {
+  const anchorBlock = getAnchorBlock(snapshot)
 
   return anchorBlock && isPortableTextTextBlock(anchorBlock.node)
     ? {node: anchorBlock.node, path: anchorBlock.path}

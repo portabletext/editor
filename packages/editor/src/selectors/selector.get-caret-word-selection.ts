@@ -20,22 +20,22 @@ import {getFocusTextBlock} from './selectors'
  * Returns the selection of the of the word the caret is placed in.
  * Note: Only returns a word selection if the current selection is collapsed
  */
-export const getCaretWordSelection: EditorSelector<EditorSelection> = ({
-  context,
-}) => {
-  if (!context.selection) {
+export const getCaretWordSelection: EditorSelector<EditorSelection> = (
+  snapshot,
+) => {
+  if (!snapshot.context.selection) {
     return null
   }
 
-  if (!isSelectionCollapsed({context})) {
+  if (!isSelectionCollapsed(snapshot)) {
     return null
   }
 
-  const focusTextBlock = getFocusTextBlock({context})
-  const selectionStartPoint = getSelectionStartPoint({context})
+  const focusTextBlock = getFocusTextBlock(snapshot)
+  const selectionStartPoint = getSelectionStartPoint(snapshot)
   const selectionStartOffset = selectionStartPoint
     ? spanSelectionPointToBlockOffset({
-        value: context.value,
+        value: snapshot.context.value,
         selectionPoint: selectionStartPoint,
       })
     : undefined
@@ -44,11 +44,12 @@ export const getCaretWordSelection: EditorSelector<EditorSelection> = ({
     return null
   }
 
-  const previousInlineObject = getPreviousInlineObject({context})
+  const previousInlineObject = getPreviousInlineObject(snapshot)
   const blockStartPoint = getBlockStartPoint(focusTextBlock)
   const textBefore = getSelectionText({
+    ...snapshot,
     context: {
-      ...context,
+      ...snapshot.context,
       selection: {
         anchor: previousInlineObject
           ? {path: previousInlineObject.path, offset: 0}
@@ -59,11 +60,12 @@ export const getCaretWordSelection: EditorSelector<EditorSelection> = ({
   })
   const textDirectlyBefore = textBefore.split(/\s+/).at(-1)
 
-  const nextInlineObject = getNextInlineObject({context})
+  const nextInlineObject = getNextInlineObject(snapshot)
   const blockEndPoint = getBlockEndPoint(focusTextBlock)
   const textAfter = getSelectionText({
+    ...snapshot,
     context: {
-      ...context,
+      ...snapshot.context,
       selection: {
         anchor: selectionStartPoint,
         focus: nextInlineObject
@@ -95,12 +97,12 @@ export const getCaretWordSelection: EditorSelector<EditorSelection> = ({
     : selectionStartOffset
 
   const caretWordStartSelectionPoint = blockOffsetToSpanSelectionPoint({
-    value: context.value,
+    value: snapshot.context.value,
     blockOffset: caretWordStartOffset,
     direction: 'backward',
   })
   const caretWordEndSelectionPoint = blockOffsetToSpanSelectionPoint({
-    value: context.value,
+    value: snapshot.context.value,
     blockOffset: caretWordEndOffset,
     direction: 'forward',
   })
@@ -115,8 +117,9 @@ export const getCaretWordSelection: EditorSelector<EditorSelection> = ({
   }
 
   return isSelectionExpanded({
+    ...snapshot,
     context: {
-      ...context,
+      ...snapshot.context,
       selection: caretWordSelection,
     },
   })

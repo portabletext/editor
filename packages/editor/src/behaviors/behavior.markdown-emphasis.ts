@@ -127,17 +127,17 @@ const selectionListenerCallback: CallbackLogicFunction<
   const unregister = input.editor.registerBehavior({
     behavior: defineBehavior({
       on: 'select',
-      guard: ({context, event}) => {
+      guard: ({snapshot, event}) => {
         if (!event.selection) {
           return {blockOffsets: undefined}
         }
 
         const anchor = utils.spanSelectionPointToBlockOffset({
-          value: context.value,
+          value: snapshot.context.value,
           selectionPoint: event.selection.anchor,
         })
         const focus = utils.spanSelectionPointToBlockOffset({
-          value: context.value,
+          value: snapshot.context.value,
           selectionPoint: event.selection.focus,
         })
 

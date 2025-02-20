@@ -6,12 +6,12 @@ import type {EditorSelectionPoint} from '../utils'
  */
 export const getSelectionStartPoint: EditorSelector<
   EditorSelectionPoint | undefined
-> = ({context}) => {
-  if (!context.selection) {
+> = (snapshot) => {
+  if (!snapshot.context.selection) {
     return undefined
   }
 
-  return context.selection.backward
-    ? context.selection.focus
-    : context.selection.anchor
+  return snapshot.context.selection.backward
+    ? snapshot.context.selection.focus
+    : snapshot.context.selection.anchor
 }

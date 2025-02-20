@@ -19,22 +19,22 @@ export function createDecoratorPairBehavior(config: {
 
   return defineBehavior({
     on: 'insert.text',
-    guard: ({context, event}) => {
+    guard: ({snapshot, event}) => {
       if (config.pair.amount < 1) {
         return false
       }
 
-      const decorator = config.decorator({schema: context.schema})
+      const decorator = config.decorator({schema: snapshot.context.schema})
 
       if (decorator === undefined) {
         return false
       }
 
-      const focusTextBlock = selectors.getFocusTextBlock({context})
-      const selectionStartPoint = selectors.getSelectionStartPoint({context})
+      const focusTextBlock = selectors.getFocusTextBlock(snapshot)
+      const selectionStartPoint = selectors.getSelectionStartPoint(snapshot)
       const selectionStartOffset = selectionStartPoint
         ? utils.spanSelectionPointToBlockOffset({
-            value: context.value,
+            value: snapshot.context.value,
             selectionPoint: selectionStartPoint,
           })
         : undefined
@@ -43,7 +43,7 @@ export function createDecoratorPairBehavior(config: {
         return false
       }
 
-      const textBefore = selectors.getBlockTextBefore({context})
+      const textBefore = selectors.getBlockTextBefore(snapshot)
       const newText = `${textBefore}${event.text}`
       const textToDecorate = newText.match(regEx)?.at(0)
 
@@ -87,13 +87,13 @@ export function createDecoratorPairBehavior(config: {
       // there is an inline object inside it
       if (prefixOffsets.focus.offset - prefixOffsets.anchor.offset > 1) {
         const prefixSelection = utils.blockOffsetsToSelection({
-          value: context.value,
+          value: snapshot.context.value,
           offsets: prefixOffsets,
         })
         const inlineObjectBeforePrefixFocus = selectors.getPreviousInlineObject(
           {
             context: {
-              ...context,
+              ...snapshot.context,
               selection: prefixSelection
                 ? {
                     anchor: prefixSelection.focus,
@@ -106,7 +106,7 @@ export function createDecoratorPairBehavior(config: {
         const inlineObjectBeforePrefixFocusOffset =
           inlineObjectBeforePrefixFocus
             ? utils.childSelectionPointToBlockOffset({
-                value: context.value,
+                value: snapshot.context.value,
                 selectionPoint: {
                   path: inlineObjectBeforePrefixFocus.path,
                   offset: 0,
@@ -128,12 +128,10 @@ export function createDecoratorPairBehavior(config: {
       // If the suffix is more than one character, then we need to check if
       // there is an inline object inside it
       if (suffixOffsets.focus.offset - suffixOffsets.anchor.offset > 1) {
-        const previousInlineObject = selectors.getPreviousInlineObject({
-          context,
-        })
+        const previousInlineObject = selectors.getPreviousInlineObject(snapshot)
         const previousInlineObjectOffset = previousInlineObject
           ? utils.childSelectionPointToBlockOffset({
-              value: context.value,
+              value: snapshot.context.value,
               selectionPoint: {
                 path: previousInlineObject.path,
                 offset: 0,
