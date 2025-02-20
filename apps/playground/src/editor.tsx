@@ -374,6 +374,10 @@ function EditorPlaygroundToolbar(props: {
             italicDecorator: ({schema}) =>
               schema.decorators.find((decorator) => decorator.value === 'em')
                 ?.value,
+            strikeThroughDecorator: ({schema}) =>
+              schema.decorators.find(
+                (decorator) => decorator.value === 'strike-through',
+              )?.value,
             horizontalRuleObject: ({schema}) => {
               const name = schema.blockObjects.find(
                 (object) => object.name === 'break',
