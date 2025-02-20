@@ -6,7 +6,7 @@ import type {
 import type {TextUnit} from 'slate'
 import type {TextInsertTextOptions} from 'slate/dist/interfaces/transforms/text'
 import type {ConverterEvent} from '../converters/converter.types'
-import type {EditorContext} from '../editor/editor-snapshot'
+import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
 import type {MIMEType} from '../internal-utils/mime-type'
 import type {OmitFromUnion, PickFromUnion} from '../type-utils'
 import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
@@ -333,11 +333,13 @@ export type Behavior<
 /**
  * @beta
  */
-export type BehaviorGuard<TBehaviorEvent, TGuardResponse> = ({
-  context,
-  event,
-}: {
+export type BehaviorGuard<TBehaviorEvent, TGuardResponse> = (payload: {
+  /**
+   * @deprecated
+   * Use `snapshot` instead
+   */
   context: EditorContext
+  snapshot: EditorSnapshot
   event: TBehaviorEvent
 }) => TGuardResponse | false
 
@@ -345,11 +347,13 @@ export type BehaviorGuard<TBehaviorEvent, TGuardResponse> = ({
  * @beta
  */
 export type BehaviorActionIntendSet<TBehaviorEvent, TGuardResponse> = (
-  {
-    context,
-    event,
-  }: {
+  payload: {
+    /**
+     * @deprecated
+     * Use `snapshot` instead
+     */
     context: EditorContext
+    snapshot: EditorSnapshot
     event: TBehaviorEvent
   },
   guardResponse: TGuardResponse,
