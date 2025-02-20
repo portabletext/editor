@@ -20,6 +20,7 @@ import {defineBehavior} from './behavior.types'
  */
 export type MarkdownEmphasisBehaviorsConfig = {
   boldDecorator?: ({schema}: {schema: EditorSchema}) => string | undefined
+  codeDecorator?: ({schema}: {schema: EditorSchema}) => string | undefined
   italicDecorator?: ({schema}: {schema: EditorSchema}) => string | undefined
 }
 
@@ -35,6 +36,9 @@ export function useMarkdownEmphasisBehaviors(props: {
     input: {
       editor,
       boldDecorator: props.config.boldDecorator?.({
+        schema: editor.getSnapshot().context.schema,
+      }),
+      codeDecorator: props.config.codeDecorator?.({
         schema: editor.getSnapshot().context.schema,
       }),
       italicDecorator: props.config.italicDecorator?.({
@@ -63,7 +67,12 @@ type MarkdownEmphasisEvent =
 const emphasisListener: CallbackLogicFunction<
   AnyEventObject,
   MarkdownEmphasisEvent,
-  {editor: Editor; boldDecorator?: string; italicDecorator?: string}
+  {
+    editor: Editor
+    boldDecorator?: string
+    codeDecorator?: string
+    italicDecorator?: string
+  }
 > = ({sendBack, input}) => {
   const unregisterBoldBehaviors = input.boldDecorator
     ? [
@@ -87,6 +96,17 @@ const emphasisListener: CallbackLogicFunction<
         }),
       ]
     : []
+  const unregisterCodeBehavior = input.codeDecorator
+    ? input.editor.registerBehavior({
+        behavior: createDecoratorPairBehavior({
+          decorator: () => input.codeDecorator,
+          pair: {char: '`', amount: 1},
+          onDecorate: (offset) => {
+            sendBack({type: 'emphasis.add', blockOffset: offset})
+          },
+        }),
+      })
+    : undefined
   const unregisterItalicBehaviors = input.italicDecorator
     ? [
         input.editor.registerBehavior({
@@ -113,6 +133,7 @@ const emphasisListener: CallbackLogicFunction<
   return () => {
     for (const unregisterBehavior of [
       ...unregisterBoldBehaviors,
+      ...(unregisterCodeBehavior ? [unregisterCodeBehavior] : []),
       ...unregisterItalicBehaviors,
     ]) {
       unregisterBehavior()
@@ -200,12 +221,14 @@ const emphasisMachine = setup({
   types: {
     context: {} as {
       boldDecorator?: string
+      codeDecorator?: string
       italicDecorator?: string
       offsetAfterEmphasis?: BlockOffset
       editor: Editor
     },
     input: {} as {
       boldDecorator?: string
+      codeDecorator?: string
       italicDecorator?: string
       editor: Editor
     },
@@ -220,6 +243,7 @@ const emphasisMachine = setup({
   id: 'emphasis',
   context: ({input}) => ({
     boldDecorator: input.boldDecorator,
+    codeDecorator: input.codeDecorator,
     italicDecorator: input.italicDecorator,
     editor: input.editor,
   }),
@@ -232,6 +256,7 @@ const emphasisMachine = setup({
           input: ({context}) => ({
             editor: context.editor,
             boldDecorator: context.boldDecorator,
+            codeDecorator: context.codeDecorator,
             italicDecorator: context.italicDecorator,
           }),
         },
