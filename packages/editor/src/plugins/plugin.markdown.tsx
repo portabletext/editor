@@ -32,6 +32,8 @@ export type MarkdownPluginConfig = MarkdownBehaviorsConfig &
  *        config={{
  *          boldDecorator: ({schema}) =>
  *            schema.decorators.find((decorator) => decorator.value === 'strong')?.value,
+ *          codeDecorator: ({schema}) =>
+ *            schema.decorators.find((decorator) => decorator.value === 'code')?.value,
  *          italicDecorator: ({schema}) =>
  *            schema.decorators.find((decorator) => decorator.value === 'em')?.value,
  *          horizontalRuleObject: ({schema}) => {
