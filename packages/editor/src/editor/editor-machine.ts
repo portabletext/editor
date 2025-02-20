@@ -369,6 +369,7 @@ export const editorMachine = setup({
           eventBehavior.guard === undefined ||
           eventBehavior.guard({
             context: editorSnapshot.context,
+            snapshot: editorSnapshot,
             event: event.behaviorEvent,
           })
 
@@ -378,7 +379,11 @@ export const editorMachine = setup({
 
         const actionIntendSets = eventBehavior.actions.map((actionSet) =>
           actionSet(
-            {context: editorSnapshot.context, event: event.behaviorEvent},
+            {
+              context: editorSnapshot.context,
+              snapshot: editorSnapshot,
+              event: event.behaviorEvent,
+            },
             shouldRun,
           ),
         )
