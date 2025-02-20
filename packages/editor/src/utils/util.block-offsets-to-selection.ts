@@ -1,6 +1,6 @@
 import type {PortableTextBlock} from '@sanity/types'
-import type {BlockOffset} from '../behaviors'
 import type {EditorSelection} from '../selectors'
+import type {BlockOffset} from '../types/block-offset'
 import {blockOffsetToSpanSelectionPoint} from './util.block-offset'
 
 /**

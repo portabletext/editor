@@ -10,7 +10,6 @@ export type {
   BehaviorActionIntendSet,
   BehaviorEvent,
   BehaviorGuard,
-  BlockOffset,
   NativeBehaviorEvent,
   SyntheticBehaviorEvent,
 } from './behaviors/index'
@@ -21,11 +20,9 @@ export {
   type BaseDefinition,
   type SchemaDefinition,
 } from './editor/define-schema'
-export type {PortableTextMemberSchemaTypes} from './types/editor'
 export type {EditorSchema} from './editor/define-schema'
 export {PortableTextEditable} from './editor/Editable'
 export type {PortableTextEditableProps} from './editor/Editable'
-export {EventListenerPlugin as EditorEventListener} from './plugins/plugin.event-listener'
 export type {
   EditorEmittedEvent,
   MutationEvent,
@@ -44,5 +41,8 @@ export {defaultKeyGenerator as keyGenerator} from './editor/key-generator'
 export type {AddedAnnotationPaths} from './editor/plugins/createWithEditableAPI'
 export {PortableTextEditor} from './editor/PortableTextEditor'
 export type {PortableTextEditorProps} from './editor/PortableTextEditor'
+export {EventListenerPlugin as EditorEventListener} from './plugins/plugin.event-listener'
+export type {BlockOffset} from './types/block-offset'
 export * from './types/editor'
+export type {PortableTextMemberSchemaTypes} from './types/editor'
 export type {HotkeyOptions} from './types/options'
