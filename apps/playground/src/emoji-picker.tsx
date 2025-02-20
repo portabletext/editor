@@ -85,19 +85,19 @@ const colonListenerCallback: CallbackLogicFunction<
   return input.editor.registerBehavior({
     behavior: defineBehavior({
       on: 'insert.text',
-      guard: ({context, event}) => {
-        if (event.text !== ':' || !context.selection) {
+      guard: ({snapshot, event}) => {
+        if (event.text !== ':' || !snapshot.context.selection) {
           return false
         }
 
         const blockOffset = utils.spanSelectionPointToBlockOffset({
-          value: context.value,
-          selectionPoint: context.selection.focus,
+          value: snapshot.context.value,
+          selectionPoint: snapshot.context.selection.focus,
         })
 
         return blockOffset
           ? {
-              point: context.selection.focus,
+              point: snapshot.context.selection.focus,
               blockOffset,
             }
           : false
@@ -350,8 +350,10 @@ const textChangeListener: CallbackLogicFunction<
     input.editor.registerBehavior({
       behavior: defineBehavior({
         on: 'insert.text',
-        guard: ({context}) =>
-          context.selection ? {focus: context.selection.focus} : false,
+        guard: ({snapshot}) =>
+          snapshot.context.selection
+            ? {focus: snapshot.context.selection.focus}
+            : false,
         actions: [
           ({event}, {focus}) => [
             {
@@ -371,9 +373,9 @@ const textChangeListener: CallbackLogicFunction<
     input.editor.registerBehavior({
       behavior: defineBehavior({
         on: 'delete.backward',
-        guard: ({context, event}) =>
-          event.unit === 'character' && context.selection
-            ? {focus: context.selection.focus}
+        guard: ({snapshot, event}) =>
+          event.unit === 'character' && snapshot.context.selection
+            ? {focus: snapshot.context.selection.focus}
             : false,
         actions: [
           ({event}, {focus}) => [
@@ -394,9 +396,9 @@ const textChangeListener: CallbackLogicFunction<
     input.editor.registerBehavior({
       behavior: defineBehavior({
         on: 'delete.forward',
-        guard: ({context, event}) =>
-          event.unit === 'character' && context.selection
-            ? {focus: context.selection.focus}
+        guard: ({snapshot, event}) =>
+          event.unit === 'character' && snapshot.context.selection
+            ? {focus: snapshot.context.selection.focus}
             : false,
         actions: [
           ({event}, {focus}) => [
@@ -502,6 +504,7 @@ const emojiPickerMachine = setup({
         }
 
         return selectors.getSelectionText({
+          ...event.snapshot,
           context: {
             ...event.snapshot.context,
             selection: {
