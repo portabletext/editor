@@ -7,45 +7,29 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
+import {createDecoratorPairBehavior} from '../behaviors/behavior.decorator-pair'
+import {defineBehavior} from '../behaviors/behavior.types'
 import type {Editor} from '../editor/create-editor'
 import {useEditor} from '../editor/editor-provider'
 import type {EditorSchema} from '../selectors'
 import type {BlockOffset} from '../types/block-offset'
 import * as utils from '../utils'
-import {createDecoratorPairBehavior} from './behavior.decorator-pair'
-import {defineBehavior} from './behavior.types'
 
-/**
- * @beta
- */
-export type MarkdownEmphasisBehaviorsConfig = {
-  boldDecorator?: ({schema}: {schema: EditorSchema}) => string | undefined
-  codeDecorator?: ({schema}: {schema: EditorSchema}) => string | undefined
-  italicDecorator?: ({schema}: {schema: EditorSchema}) => string | undefined
-}
-
-/**
- * @beta
- */
-export function useMarkdownEmphasisBehaviors(props: {
-  config: MarkdownEmphasisBehaviorsConfig
+export function DecoratorShortcutPlugin(config: {
+  decorator: ({schema}: {schema: EditorSchema}) => string | undefined
+  pair: {char: string; amount: number}
 }) {
   const editor = useEditor()
 
-  useActorRef(emphasisMachine, {
+  useActorRef(decoratorPairMachine, {
     input: {
       editor,
-      boldDecorator: props.config.boldDecorator?.({
-        schema: editor.getSnapshot().context.schema,
-      }),
-      codeDecorator: props.config.codeDecorator?.({
-        schema: editor.getSnapshot().context.schema,
-      }),
-      italicDecorator: props.config.italicDecorator?.({
-        schema: editor.getSnapshot().context.schema,
-      }),
+      decorator: config.decorator,
+      pair: config.pair,
     },
   })
+
+  return null
 }
 
 type MarkdownEmphasisEvent =
@@ -68,77 +52,22 @@ const emphasisListener: CallbackLogicFunction<
   AnyEventObject,
   MarkdownEmphasisEvent,
   {
+    decorator: ({schema}: {schema: EditorSchema}) => string | undefined
     editor: Editor
-    boldDecorator?: string
-    codeDecorator?: string
-    italicDecorator?: string
+    pair: {char: string; amount: number}
   }
 > = ({sendBack, input}) => {
-  const unregisterBoldBehaviors = input.boldDecorator
-    ? [
-        input.editor.registerBehavior({
-          behavior: createDecoratorPairBehavior({
-            decorator: () => input.boldDecorator,
-            pair: {char: '*', amount: 2},
-            onDecorate: (offset) => {
-              sendBack({type: 'emphasis.add', blockOffset: offset})
-            },
-          }),
-        }),
-        input.editor.registerBehavior({
-          behavior: createDecoratorPairBehavior({
-            decorator: () => input.boldDecorator,
-            pair: {char: '_', amount: 2},
-            onDecorate: (offset) => {
-              sendBack({type: 'emphasis.add', blockOffset: offset})
-            },
-          }),
-        }),
-      ]
-    : []
-  const unregisterCodeBehavior = input.codeDecorator
-    ? input.editor.registerBehavior({
-        behavior: createDecoratorPairBehavior({
-          decorator: () => input.codeDecorator,
-          pair: {char: '`', amount: 1},
-          onDecorate: (offset) => {
-            sendBack({type: 'emphasis.add', blockOffset: offset})
-          },
-        }),
-      })
-    : undefined
-  const unregisterItalicBehaviors = input.italicDecorator
-    ? [
-        input.editor.registerBehavior({
-          behavior: createDecoratorPairBehavior({
-            decorator: () => input.italicDecorator,
-            pair: {char: '*', amount: 1},
-            onDecorate: (offset) => {
-              sendBack({type: 'emphasis.add', blockOffset: offset})
-            },
-          }),
-        }),
-        input.editor.registerBehavior({
-          behavior: createDecoratorPairBehavior({
-            decorator: () => input.italicDecorator,
-            pair: {char: '_', amount: 1},
-            onDecorate: (offset) => {
-              sendBack({type: 'emphasis.add', blockOffset: offset})
-            },
-          }),
-        }),
-      ]
-    : []
+  const unregister = input.editor.registerBehavior({
+    behavior: createDecoratorPairBehavior({
+      decorator: input.decorator,
+      pair: input.pair,
+      onDecorate: (offset) => {
+        sendBack({type: 'emphasis.add', blockOffset: offset})
+      },
+    }),
+  })
 
-  return () => {
-    for (const unregisterBehavior of [
-      ...unregisterBoldBehaviors,
-      ...(unregisterCodeBehavior ? [unregisterCodeBehavior] : []),
-      ...unregisterItalicBehaviors,
-    ]) {
-      unregisterBehavior()
-    }
-  }
+  return unregister
 }
 
 const selectionListenerCallback: CallbackLogicFunction<
@@ -217,20 +146,18 @@ const deleteBackwardListenerCallback: CallbackLogicFunction<
   return unregister
 }
 
-const emphasisMachine = setup({
+const decoratorPairMachine = setup({
   types: {
     context: {} as {
-      boldDecorator?: string
-      codeDecorator?: string
-      italicDecorator?: string
-      offsetAfterEmphasis?: BlockOffset
+      decorator: ({schema}: {schema: EditorSchema}) => string | undefined
       editor: Editor
+      offsetAfterEmphasis?: BlockOffset
+      pair: {char: string; amount: number}
     },
     input: {} as {
-      boldDecorator?: string
-      codeDecorator?: string
-      italicDecorator?: string
+      decorator: ({schema}: {schema: EditorSchema}) => string | undefined
       editor: Editor
+      pair: {char: string; amount: number}
     },
     events: {} as MarkdownEmphasisEvent,
   },
@@ -240,12 +167,11 @@ const emphasisMachine = setup({
     'selection listener': fromCallback(selectionListenerCallback),
   },
 }).createMachine({
-  id: 'emphasis',
+  id: 'decorator pair',
   context: ({input}) => ({
-    boldDecorator: input.boldDecorator,
-    codeDecorator: input.codeDecorator,
-    italicDecorator: input.italicDecorator,
+    decorator: input.decorator,
     editor: input.editor,
+    pair: input.pair,
   }),
   initial: 'idle',
   states: {
@@ -254,10 +180,9 @@ const emphasisMachine = setup({
         {
           src: 'emphasis listener',
           input: ({context}) => ({
+            decorator: context.decorator,
             editor: context.editor,
-            boldDecorator: context.boldDecorator,
-            codeDecorator: context.codeDecorator,
-            italicDecorator: context.italicDecorator,
+            pair: context.pair,
           }),
         },
       ],

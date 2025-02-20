@@ -3,17 +3,18 @@ import {
   createMarkdownBehaviors,
   type MarkdownBehaviorsConfig,
 } from '../behaviors/behavior.markdown'
-import {
-  useMarkdownEmphasisBehaviors,
-  type MarkdownEmphasisBehaviorsConfig,
-} from '../behaviors/behavior.markdown-emphasis'
+import type {EditorSchema} from '../editor/define-schema'
 import {useEditor} from '../editor/editor-provider'
+import {DecoratorShortcutPlugin} from './plugin.decorator-shortcut'
 
 /**
  * @beta
  */
-export type MarkdownPluginConfig = MarkdownBehaviorsConfig &
-  MarkdownEmphasisBehaviorsConfig
+export type MarkdownPluginConfig = MarkdownBehaviorsConfig & {
+  boldDecorator?: ({schema}: {schema: EditorSchema}) => string | undefined
+  codeDecorator?: ({schema}: {schema: EditorSchema}) => string | undefined
+  italicDecorator?: ({schema}: {schema: EditorSchema}) => string | undefined
+}
 
 /**
  * @beta
@@ -62,7 +63,6 @@ export type MarkdownPluginConfig = MarkdownBehaviorsConfig &
  */
 export function MarkdownPlugin(props: {config: MarkdownPluginConfig}) {
   const editor = useEditor()
-  useMarkdownEmphasisBehaviors({config: props.config})
 
   useEffect(() => {
     const behaviors = createMarkdownBehaviors(props.config)
@@ -78,5 +78,38 @@ export function MarkdownPlugin(props: {config: MarkdownPluginConfig}) {
     }
   }, [editor, props.config])
 
-  return null
+  return (
+    <>
+      {props.config.boldDecorator ? (
+        <>
+          <DecoratorShortcutPlugin
+            decorator={props.config.boldDecorator}
+            pair={{char: '*', amount: 2}}
+          />
+          <DecoratorShortcutPlugin
+            decorator={props.config.boldDecorator}
+            pair={{char: '_', amount: 2}}
+          />
+        </>
+      ) : null}
+      {props.config.codeDecorator ? (
+        <DecoratorShortcutPlugin
+          decorator={props.config.codeDecorator}
+          pair={{char: '`', amount: 1}}
+        />
+      ) : null}
+      {props.config.italicDecorator ? (
+        <>
+          <DecoratorShortcutPlugin
+            decorator={props.config.italicDecorator}
+            pair={{char: '*', amount: 1}}
+          />
+          <DecoratorShortcutPlugin
+            decorator={props.config.italicDecorator}
+            pair={{char: '_', amount: 1}}
+          />
+        </>
+      ) : null}
+    </>
+  )
 }
