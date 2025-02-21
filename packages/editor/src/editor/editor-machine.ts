@@ -160,6 +160,7 @@ type UnsetEvent = {
  * @internal
  */
 export type EditorActor = ActorRefFrom<typeof editorMachine>
+export type HasTag = ReturnType<EditorActor['getSnapshot']>['hasTag']
 
 /**
  * @internal
@@ -194,6 +195,9 @@ export type InternalEditorEvent =
   | NamespaceEvent<UnsetEvent, 'notify'>
   | PatchEvent
   | SyntheticBehaviorEvent
+  | {type: 'dragstart'}
+  | {type: 'dragend'}
+  | {type: 'drop'}
 
 /**
  * @internal
@@ -235,6 +239,7 @@ export const editorMachine = setup({
       schema: EditorSchema
       value?: Array<PortableTextBlock>
     },
+    tags: {} as 'dragging internally',
   },
   actions: {
     'add behavior to context': assign({
@@ -290,194 +295,197 @@ export const editorMachine = setup({
     'clear pending events': assign({
       pendingEvents: [],
     }),
-    'handle behavior event': enqueueActions(({context, event, enqueue}) => {
-      assertEvent(event, ['behavior event', 'custom behavior event'])
+    'handle behavior event': enqueueActions(
+      ({context, event, enqueue, self}) => {
+        assertEvent(event, ['behavior event', 'custom behavior event'])
 
-      const defaultAction =
-        event.type === 'custom behavior event' ||
-        event.behaviorEvent.type === 'copy' ||
-        event.behaviorEvent.type === 'deserialize' ||
-        event.behaviorEvent.type === 'key.down' ||
-        event.behaviorEvent.type === 'key.up' ||
-        event.behaviorEvent.type === 'paste' ||
-        event.behaviorEvent.type === 'serialize'
-          ? undefined
-          : ({
-              ...event.behaviorEvent,
-              editor: event.editor,
-            } satisfies BehaviorAction)
-      const defaultActionCallback =
-        event.type === 'behavior event'
-          ? event.defaultActionCallback
-          : undefined
+        const defaultAction =
+          event.type === 'custom behavior event' ||
+          event.behaviorEvent.type === 'copy' ||
+          event.behaviorEvent.type === 'deserialize' ||
+          event.behaviorEvent.type === 'key.down' ||
+          event.behaviorEvent.type === 'key.up' ||
+          event.behaviorEvent.type === 'paste' ||
+          event.behaviorEvent.type === 'serialize'
+            ? undefined
+            : ({
+                ...event.behaviorEvent,
+                editor: event.editor,
+              } satisfies BehaviorAction)
+        const defaultActionCallback =
+          event.type === 'behavior event'
+            ? event.defaultActionCallback
+            : undefined
 
-      const eventBehaviors = [
-        ...foundationalBehaviors,
-        ...context.behaviors.values(),
-        ...defaultBehaviors,
-      ].filter((behavior) => behavior.on === event.behaviorEvent.type)
+        const eventBehaviors = [
+          ...foundationalBehaviors,
+          ...context.behaviors.values(),
+          ...defaultBehaviors,
+        ].filter((behavior) => behavior.on === event.behaviorEvent.type)
 
-      if (eventBehaviors.length === 0) {
-        if (defaultActionCallback) {
+        if (eventBehaviors.length === 0) {
+          if (defaultActionCallback) {
+            withApplyingBehaviorActions(event.editor, () => {
+              try {
+                defaultActionCallback()
+              } catch (error) {
+                console.error(
+                  new Error(
+                    `Performing action "${event.behaviorEvent.type}" failed due to: ${error.message}`,
+                  ),
+                )
+              }
+            })
+            return
+          }
+
+          if (!defaultAction) {
+            return
+          }
+
           withApplyingBehaviorActions(event.editor, () => {
             try {
-              defaultActionCallback()
+              performAction({
+                context,
+                action: defaultAction,
+              })
             } catch (error) {
               console.error(
                 new Error(
-                  `Performing action "${event.behaviorEvent.type}" failed due to: ${error.message}`,
+                  `Performing action "${defaultAction.type}" as a result of "${event.behaviorEvent.type}" failed due to: ${error.message}`,
                 ),
               )
             }
           })
+          event.editor.onChange()
           return
         }
 
-        if (!defaultAction) {
-          return
-        }
-
-        withApplyingBehaviorActions(event.editor, () => {
-          try {
-            performAction({
-              context,
-              action: defaultAction,
-            })
-          } catch (error) {
-            console.error(
-              new Error(
-                `Performing action "${defaultAction.type}" as a result of "${event.behaviorEvent.type}" failed due to: ${error.message}`,
-              ),
-            )
-          }
+        const editorSnapshot = createEditorSnapshot({
+          converters: [...context.converters],
+          editor: event.editor,
+          keyGenerator: context.keyGenerator,
+          schema: context.schema,
+          hasTag: (tag) => self.getSnapshot().hasTag(tag),
         })
-        event.editor.onChange()
-        return
-      }
 
-      const editorSnapshot = createEditorSnapshot({
-        converters: [...context.converters],
-        editor: event.editor,
-        keyGenerator: context.keyGenerator,
-        schema: context.schema,
-      })
+        let behaviorOverwritten = false
 
-      let behaviorOverwritten = false
-
-      for (const eventBehavior of eventBehaviors) {
-        const shouldRun =
-          eventBehavior.guard === undefined ||
-          eventBehavior.guard({
-            context: editorSnapshot.context,
-            snapshot: editorSnapshot,
-            event: event.behaviorEvent,
-          })
-
-        if (!shouldRun) {
-          continue
-        }
-
-        const actionIntendSets = eventBehavior.actions.map((actionSet) =>
-          actionSet(
-            {
+        for (const eventBehavior of eventBehaviors) {
+          const shouldRun =
+            eventBehavior.guard === undefined ||
+            eventBehavior.guard({
               context: editorSnapshot.context,
               snapshot: editorSnapshot,
               event: event.behaviorEvent,
-            },
-            shouldRun,
-          ),
-        )
+            })
 
-        for (const actionIntends of actionIntendSets) {
-          behaviorOverwritten =
-            behaviorOverwritten ||
-            (actionIntends.length > 0 &&
-              actionIntends.some(
-                (actionIntend) => actionIntend.type !== 'effect',
-              ))
+          if (!shouldRun) {
+            continue
+          }
 
-          withApplyingBehaviorActionIntendSet(event.editor, () => {
-            for (const actionIntend of actionIntends) {
-              if (actionIntend.type === 'raise') {
-                if (isCustomBehaviorEvent(actionIntend.event)) {
-                  enqueue.raise({
-                    type: 'custom behavior event',
-                    behaviorEvent: actionIntend.event as CustomBehaviorEvent,
-                    editor: event.editor,
-                  })
-                } else {
-                  enqueue.raise({
-                    type: 'behavior event',
-                    behaviorEvent: actionIntend.event,
-                    editor: event.editor,
-                  })
+          const actionIntendSets = eventBehavior.actions.map((actionSet) =>
+            actionSet(
+              {
+                context: editorSnapshot.context,
+                snapshot: editorSnapshot,
+                event: event.behaviorEvent,
+              },
+              shouldRun,
+            ),
+          )
+
+          for (const actionIntends of actionIntendSets) {
+            behaviorOverwritten =
+              behaviorOverwritten ||
+              (actionIntends.length > 0 &&
+                actionIntends.some(
+                  (actionIntend) => actionIntend.type !== 'effect',
+                ))
+
+            withApplyingBehaviorActionIntendSet(event.editor, () => {
+              for (const actionIntend of actionIntends) {
+                if (actionIntend.type === 'raise') {
+                  if (isCustomBehaviorEvent(actionIntend.event)) {
+                    enqueue.raise({
+                      type: 'custom behavior event',
+                      behaviorEvent: actionIntend.event as CustomBehaviorEvent,
+                      editor: event.editor,
+                    })
+                  } else {
+                    enqueue.raise({
+                      type: 'behavior event',
+                      behaviorEvent: actionIntend.event,
+                      editor: event.editor,
+                    })
+                  }
+                  continue
                 }
-                continue
-              }
 
-              const action = {
-                ...actionIntend,
-                editor: event.editor,
-              }
+                const action = {
+                  ...actionIntend,
+                  editor: event.editor,
+                }
 
+                try {
+                  performAction({context, action})
+                } catch (error) {
+                  console.error(
+                    new Error(
+                      `Performing action "${action.type}" as a result of "${event.behaviorEvent.type}" failed due to: ${error.message}`,
+                    ),
+                  )
+                  break
+                }
+              }
+            })
+            event.editor.onChange()
+          }
+
+          if (behaviorOverwritten) {
+            event.nativeEvent?.preventDefault()
+            break
+          }
+        }
+
+        if (!behaviorOverwritten) {
+          if (defaultActionCallback) {
+            withApplyingBehaviorActions(event.editor, () => {
               try {
-                performAction({context, action})
+                defaultActionCallback()
               } catch (error) {
                 console.error(
                   new Error(
-                    `Performing action "${action.type}" as a result of "${event.behaviorEvent.type}" failed due to: ${error.message}`,
+                    `Performing "${event.behaviorEvent.type}" failed due to: ${error.message}`,
                   ),
                 )
-                break
               }
+            })
+            return
+          }
+
+          if (!defaultAction) {
+            return
+          }
+
+          withApplyingBehaviorActions(event.editor, () => {
+            try {
+              performAction({
+                context,
+                action: defaultAction,
+              })
+            } catch (error) {
+              console.error(
+                new Error(
+                  `Performing action "${defaultAction.type}" as a result of "${event.behaviorEvent.type}" failed due to: ${error.message}`,
+                ),
+              )
             }
           })
           event.editor.onChange()
         }
-
-        if (behaviorOverwritten) {
-          event.nativeEvent?.preventDefault()
-          break
-        }
-      }
-
-      if (!behaviorOverwritten) {
-        if (defaultActionCallback) {
-          withApplyingBehaviorActions(event.editor, () => {
-            try {
-              defaultActionCallback()
-            } catch (error) {
-              console.error(
-                new Error(
-                  `Performing "${event.behaviorEvent.type}" failed due to: ${error.message}`,
-                ),
-              )
-            }
-          })
-          return
-        }
-
-        if (!defaultAction) {
-          return
-        }
-
-        withApplyingBehaviorActions(event.editor, () => {
-          try {
-            performAction({
-              context,
-              action: defaultAction,
-            })
-          } catch (error) {
-            console.error(
-              new Error(
-                `Performing action "${defaultAction.type}" as a result of "${event.behaviorEvent.type}" failed due to: ${error.message}`,
-              ),
-            )
-          }
-        })
-        event.editor.onChange()
-      }
-    }),
+      },
+    ),
   },
 }).createMachine({
   id: 'editor',
@@ -630,6 +638,21 @@ export const editorMachine = setup({
             },
             'text block.*': {
               actions: emit(({event}) => event),
+            },
+          },
+          initial: 'idle',
+          states: {
+            'idle': {
+              on: {
+                dragstart: {target: 'dragging internally'},
+              },
+            },
+            'dragging internally': {
+              tags: ['dragging internally'],
+              on: {
+                dragend: {target: 'idle'},
+                drop: {target: 'idle'},
+              },
             },
           },
         },
