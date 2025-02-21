@@ -1,7 +1,7 @@
 import type {PortableTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
-import {getSelectedSpans, type EditorSchema, type EditorSelection} from '.'
-import type {EditorSnapshot} from '../editor/editor-snapshot'
+import {getSelectedSpans, type EditorSelection} from '.'
+import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 
 const fooBar = {
   _type: 'block',
@@ -40,17 +40,13 @@ describe(getSelectedSpans.name, () => {
   function snapshot(
     value: Array<PortableTextBlock>,
     selection: EditorSelection,
-  ): EditorSnapshot {
-    return {
+  ) {
+    return createTestSnapshot({
       context: {
-        converters: [],
-        schema: {} as EditorSchema,
-        keyGenerator: () => '',
-        activeDecorators: [],
         value,
         selection,
       },
-    }
+    })
   }
 
   test('selecting a single span', () => {

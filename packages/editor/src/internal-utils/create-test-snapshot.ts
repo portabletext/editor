@@ -1,0 +1,19 @@
+import {compileSchemaDefinition, defineSchema} from '../editor/define-schema'
+import type {EditorSnapshot} from '../selectors'
+import {createTestKeyGenerator} from './test-key-generator'
+
+export function createTestSnapshot(snapshot: {
+  context?: Partial<EditorSnapshot['context']>
+}): EditorSnapshot {
+  return {
+    context: {
+      converters: snapshot.context?.converters ?? [],
+      schema:
+        snapshot.context?.schema ?? compileSchemaDefinition(defineSchema({})),
+      keyGenerator: snapshot.context?.keyGenerator ?? createTestKeyGenerator(),
+      activeDecorators: snapshot.context?.activeDecorators ?? [],
+      value: snapshot.context?.value ?? [],
+      selection: snapshot.context?.selection ?? null,
+    },
+  }
+}
