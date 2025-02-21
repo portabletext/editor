@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.35.0](https://github.com/portabletext/editor/compare/editor-v1.34.1...editor-v1.35.0) (2025-02-21)
+
+
+### Features
+
+* **behavior:** provide `EditorSnapshot` in guards and actions ([7922708](https://github.com/portabletext/editor/commit/79227080dde8bb739ba0a5ee7eb15e2dc6fa1a3a))
+* **markdown plugin:** add ``code`` shortcut support ([522afb9](https://github.com/portabletext/editor/commit/522afb945bebed964d75dce9a9294293e7d18302))
+* **markdown plugin:** add ~~strike-through~~ shortcut support ([cc718d3](https://github.com/portabletext/editor/commit/cc718d335f916c6284f93294b3a879be29fbeede))
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^3.76.1 ([03e26b9](https://github.com/portabletext/editor/commit/03e26b9939ef0bb8e1679927c5261a60859cf2fd))
+* **deps:** update sanity monorepo to ^3.76.3 ([149a654](https://github.com/portabletext/editor/commit/149a6548afed5464f289fd2f2a6fce453873f7d3))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.9
+
 ## [1.34.1](https://github.com/portabletext/editor/compare/editor-v1.34.0...editor-v1.34.1) (2025-02-18)
 
 
