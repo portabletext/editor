@@ -93,6 +93,7 @@ export function createDecoratorPairBehavior(config: {
         })
         const inlineObjectBeforePrefixFocus = selectors.getPreviousInlineObject(
           {
+            ...snapshot,
             context: {
               ...snapshot.context,
               selection: prefixSelection

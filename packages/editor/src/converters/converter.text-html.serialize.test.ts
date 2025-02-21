@@ -5,7 +5,7 @@ import {
   defineSchema,
   type SchemaDefinition,
 } from '../editor/define-schema'
-import {createTestKeyGenerator} from '../internal-utils/test-key-generator'
+import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import type {EditorSelection} from '../utils'
 import {converterTextHtml} from './converter.text-html'
 import {coreConverters} from './converters.core'
@@ -76,16 +76,14 @@ const paragraphWithInlineBlock: PortableTextTextBlock = {
 }
 
 function createSnapshot(schema: SchemaDefinition, selection: EditorSelection) {
-  return {
+  return createTestSnapshot({
     context: {
       converters: coreConverters,
-      activeDecorators: [],
-      keyGenerator: createTestKeyGenerator(),
       schema: compileSchemaDefinition(schema),
       selection,
       value: [decoratedParagraph, image, b2, paragraphWithInlineBlock],
     },
-  }
+  })
 }
 
 describe(converterTextHtml.serialize.name, () => {
@@ -177,12 +175,9 @@ describe(converterTextHtml.serialize.name, () => {
   test('lists', () => {
     expect(
       converterTextHtml.serialize({
-        snapshot: {
+        snapshot: createTestSnapshot({
           context: {
             converters: coreConverters,
-            activeDecorators: [],
-            keyGenerator: createTestKeyGenerator(),
-            schema: compileSchemaDefinition(defineSchema({})),
             value: [
               {
                 _key: 'k0',
@@ -224,7 +219,7 @@ describe(converterTextHtml.serialize.name, () => {
               },
             },
           },
-        },
+        }),
         event: {
           type: 'serialize',
           originEvent: 'unknown',

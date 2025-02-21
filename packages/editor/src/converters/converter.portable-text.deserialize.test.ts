@@ -4,21 +4,17 @@ import {
   defineSchema,
   type SchemaDefinition,
 } from '../editor/define-schema'
-import {createTestKeyGenerator} from '../internal-utils/test-key-generator'
+import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {converterPortableText} from './converter.portable-text'
 import {coreConverters} from './converters.core'
 
 function createSnapshot(schema: SchemaDefinition) {
-  return {
+  return createTestSnapshot({
     context: {
       converters: coreConverters,
-      activeDecorators: [],
-      keyGenerator: createTestKeyGenerator(),
       schema: compileSchemaDefinition(schema),
-      value: [],
-      selection: null,
     },
-  }
+  })
 }
 
 describe(converterPortableText.deserialize, () => {
