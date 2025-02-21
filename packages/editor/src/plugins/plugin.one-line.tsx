@@ -10,7 +10,7 @@ const oneLineBehaviors = [
    */
   defineBehavior({
     on: 'insert.break',
-    guard: (snapshot) =>
+    guard: ({snapshot}) =>
       snapshot.context.selection && selectors.isSelectionExpanded(snapshot)
         ? {selection: snapshot.context.selection}
         : false,
