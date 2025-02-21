@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.35.1](https://github.com/portabletext/editor/compare/editor-v1.35.0...editor-v1.35.1) (2025-02-21)
+
+
+### Bug Fixes
+
+* deprecate `EditorEventListener` ([3c83e84](https://github.com/portabletext/editor/commit/3c83e84d6ec656a5dd8dd8b29319bd1198b73d51))
+* don't refresh keys when dragging internally ([14ec982](https://github.com/portabletext/editor/commit/14ec982d6545b243f6eb55badf9bc658096c7abf))
+
 ## [1.35.0](https://github.com/portabletext/editor/compare/editor-v1.34.1...editor-v1.35.0) (2025-02-21)
 
 
