@@ -1,7 +1,8 @@
 import type {PortableTextBlock} from '@sanity/types'
 import {expect, test} from 'vitest'
-import type {EditorSelection, EditorSnapshot} from '.'
+import type {EditorSelection} from '.'
 import {compileSchemaDefinition, defineSchema} from '../editor/define-schema'
+import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {getSelectionText} from './selector.get-selection-text'
 
 const brokenBlock = {
@@ -67,21 +68,18 @@ test(getSelectionText.name, () => {
   function snapshot(
     value: Array<PortableTextBlock>,
     selection: EditorSelection,
-  ): EditorSnapshot {
-    return {
+  ) {
+    return createTestSnapshot({
       context: {
-        converters: [],
         schema: compileSchemaDefinition(
           defineSchema({
             inlineObjects: [{name: 'stock-ticker'}],
           }),
         ),
-        keyGenerator: () => '',
-        activeDecorators: [],
         value,
         selection,
       },
-    }
+    })
   }
 
   expect(

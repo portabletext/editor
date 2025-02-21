@@ -5,7 +5,7 @@ import {
   defineSchema,
   type SchemaDefinition,
 } from '../editor/define-schema'
-import type {EditorSnapshot} from '../editor/editor-snapshot'
+import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import type {EditorSelection} from '../utils'
 import {converterTextPlain} from './converter.text-plain'
 import {coreConverters} from './converters.core'
@@ -71,17 +71,15 @@ function createSnapshot({
 }: {
   schema: SchemaDefinition
   selection: EditorSelection
-}): EditorSnapshot {
-  return {
+}) {
+  return createTestSnapshot({
     context: {
       converters: coreConverters,
-      activeDecorators: [],
-      keyGenerator: () => '',
       schema: compileSchemaDefinition(schema),
       selection,
       value: [b1, b2, b3, b4],
     },
-  }
+  })
 }
 
 test(converterTextPlain.serialize.name, () => {

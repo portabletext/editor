@@ -1,16 +1,12 @@
 import {expect, test} from 'vitest'
-import type {EditorSchema, EditorSelection} from '.'
-import type {EditorSnapshot} from '../editor/editor-snapshot'
+import type {EditorSelection} from '.'
+import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {isActiveDecorator} from './selector.is-active-decorator'
 
 test(isActiveDecorator.name, () => {
-  function snapshot(selection: EditorSelection): EditorSnapshot {
-    return {
+  function snapshot(selection: EditorSelection) {
+    return createTestSnapshot({
       context: {
-        converters: [],
-        schema: {} as EditorSchema,
-        keyGenerator: () => '',
-        activeDecorators: [],
         value: [
           {
             _type: '_block',
@@ -32,7 +28,7 @@ test(isActiveDecorator.name, () => {
         ],
         selection,
       },
-    }
+    })
   }
 
   expect(

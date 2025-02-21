@@ -1,25 +1,16 @@
 import type {PortableTextBlock} from '@sanity/types'
 import {expect, test} from 'vitest'
-import type {EditorSchema} from '../editor/define-schema'
-import type {EditorSnapshot} from '../editor/editor-snapshot'
-import {createTestKeyGenerator} from '../internal-utils/test-key-generator'
+import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import type {EditorSelection} from '../utils'
 import {getActiveAnnotations} from './selector.get-active-annotations'
 
-function snapshot(
-  value: Array<PortableTextBlock>,
-  selection: EditorSelection,
-): EditorSnapshot {
-  return {
+function snapshot(value: Array<PortableTextBlock>, selection: EditorSelection) {
+  return createTestSnapshot({
     context: {
-      converters: [],
-      schema: {} as EditorSchema,
-      keyGenerator: createTestKeyGenerator(),
-      activeDecorators: [],
       value,
       selection,
     },
-  }
+  })
 }
 
 const link = {

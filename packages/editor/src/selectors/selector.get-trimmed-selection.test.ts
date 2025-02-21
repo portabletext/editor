@@ -1,7 +1,7 @@
 import type {PortableTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
 import {compileSchemaDefinition, defineSchema} from '../editor/define-schema'
-import type {EditorSnapshot} from '../editor/editor-snapshot'
+import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {parseBlock} from '../internal-utils/parse-blocks'
 import {createTestKeyGenerator} from '../internal-utils/test-key-generator'
 import type {EditorSelection} from '../types/editor'
@@ -20,10 +20,8 @@ function snapshot(
     }),
   )
 
-  return {
+  return createTestSnapshot({
     context: {
-      activeDecorators: [],
-      converters: [],
       keyGenerator,
       schema,
       selection,
@@ -42,7 +40,7 @@ function snapshot(
         return parsedBlock ? [parsedBlock] : []
       }),
     },
-  } satisfies EditorSnapshot
+  })
 }
 
 function createSpan(text: string, marks: Array<string> = []) {

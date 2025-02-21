@@ -1,7 +1,6 @@
 import type {PortableTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
-import {compileSchemaDefinition, defineSchema} from '../editor/define-schema'
-import type {EditorSnapshot} from '../editor/editor-snapshot'
+import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {createTestKeyGenerator} from '../internal-utils/test-key-generator'
 import type {EditorSelection} from '../utils'
 import {getCaretWordSelection} from './selector.get-caret-word-selection'
@@ -9,16 +8,13 @@ import {getCaretWordSelection} from './selector.get-caret-word-selection'
 const keyGenerator = createTestKeyGenerator()
 
 function snapshot(value: Array<PortableTextBlock>, selection: EditorSelection) {
-  return {
+  return createTestSnapshot({
     context: {
       value,
       selection,
       keyGenerator,
-      activeDecorators: [],
-      converters: [],
-      schema: compileSchemaDefinition(defineSchema({})),
     },
-  } satisfies EditorSnapshot
+  })
 }
 
 describe(getCaretWordSelection.name, () => {
