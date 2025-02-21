@@ -77,5 +77,8 @@ export function getEditorSnapshot({
       selection: editorActorSnapshot.context.selection,
       value: getValue({editorActorSnapshot, slateEditorInstance}),
     },
+    beta: {
+      hasTag: (tag) => editorActorSnapshot.hasTag(tag),
+    },
   }
 }

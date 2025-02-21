@@ -88,6 +88,7 @@ export const decoratorAddActionImplementation: BehaviorActionImplementation<
     })
 
     const trimmedSelection = selectors.getTrimmedSelection({
+      beta: {hasTag: () => false},
       context: {
         activeDecorators: [],
         converters: [],

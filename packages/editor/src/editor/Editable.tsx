@@ -806,6 +806,25 @@ export const PortableTextEditable = forwardRef<
     setEditableElement(ref.current)
   }, [slateEditor, ref])
 
+  useEffect(() => {
+    const window = ReactEditor.getWindow(slateEditor)
+
+    const onDragEnd = () => {
+      editorActor.send({type: 'dragend'})
+    }
+    const onDrop = () => {
+      editorActor.send({type: 'drop'})
+    }
+
+    window.document.addEventListener('dragend', onDragEnd)
+    window.document.addEventListener('drop', onDrop)
+
+    return () => {
+      window.document.removeEventListener('dragend', onDragEnd)
+      window.document.removeEventListener('drop', onDrop)
+    }
+  }, [slateEditor, editorActor])
+
   if (!portableTextEditor) {
     return null
   }
@@ -819,6 +838,13 @@ export const PortableTextEditable = forwardRef<
       onCopy={handleCopy}
       onClick={handleClick}
       onDOMBeforeInput={handleOnBeforeInput}
+      onDragStart={(event) => {
+        props.onDragStart?.(event)
+
+        if (!event.isDefaultPrevented() && !event.isPropagationStopped()) {
+          editorActor.send({type: 'dragstart'})
+        }
+      }}
       onFocus={handleOnFocus}
       onKeyDown={handleKeyDown}
       onKeyUp={handleKeyUp}
