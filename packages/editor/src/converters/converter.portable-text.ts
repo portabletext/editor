@@ -41,7 +41,13 @@ export const converterPortableText = defineConverter({
       const parsedBlock = parseBlock({
         context: snapshot.context,
         block,
-        options: {refreshKeys: true},
+        options: {
+          /**
+           * If we are dragging internally then we would like to keep the
+           * dropped portable text as is.
+           */
+          refreshKeys: !snapshot.beta.hasTag?.('dragging internally'),
+        },
       })
       return parsedBlock ? [parsedBlock] : []
     })
