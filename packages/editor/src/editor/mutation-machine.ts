@@ -85,12 +85,14 @@ export const mutationMachine = setup({
             actions: ['emit mutation', 'clear pending patches'],
           },
           {
+            target: 'has pending patches',
             reenter: true,
           },
         ],
       },
       on: {
         patch: {
+          target: 'has pending patches',
           actions: ['defer patch'],
           reenter: true,
         },
