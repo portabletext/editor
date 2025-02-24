@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.35.4](https://github.com/portabletext/editor/compare/editor-v1.35.3...editor-v1.35.4) (2025-02-24)
+
+
+### Bug Fixes
+
+* bulk mutations by action ID ([3cc2e69](https://github.com/portabletext/editor/commit/3cc2e69fee91196a0036dd0c3c3a9d71843cede5))
+* replace mutation debounce with a typing debounce ([9114aa3](https://github.com/portabletext/editor/commit/9114aa3a2fd1f93348b89da5d04429d82650aadc))
+
 ## [1.35.3](https://github.com/portabletext/editor/compare/editor-v1.35.2...editor-v1.35.3) (2025-02-24)
 
 
