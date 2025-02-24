@@ -151,6 +151,11 @@ type PatchEvent = {
   patch: Patch
 }
 
+type InternalPatchEvent = NamespaceEvent<PatchEvent, 'internal'> & {
+  actionId?: string
+  value: Array<PortableTextBlock>
+}
+
 type UnsetEvent = {
   type: 'unset'
   previousValue: Array<PortableTextBlock>
@@ -191,9 +196,9 @@ export type InternalEditorEvent =
   | CustomBehaviorEvent
   | ExternalEditorEvent
   | MutationEvent
+  | InternalPatchEvent
   | NamespaceEvent<EditorEmittedEvent, 'notify'>
   | NamespaceEvent<UnsetEvent, 'notify'>
-  | PatchEvent
   | SyntheticBehaviorEvent
   | {type: 'dragstart'}
   | {type: 'dragend'}
@@ -204,6 +209,7 @@ export type InternalEditorEvent =
  */
 export type InternalEditorEmittedEvent =
   | EditorEmittedEvent
+  | InternalPatchEvent
   | PatchesEvent
   | UnsetEvent
   | {
@@ -221,7 +227,7 @@ export const editorMachine = setup({
       behaviors: Set<Behavior>
       converters: Set<Converter>
       keyGenerator: () => string
-      pendingEvents: Array<PatchEvent | MutationEvent>
+      pendingEvents: Array<InternalPatchEvent | MutationEvent>
       schema: EditorSchema
       initialReadOnly: boolean
       maxBlocks: number | undefined
@@ -270,9 +276,11 @@ export const editorMachine = setup({
         return event.schema
       },
     }),
-    'emit patch event': emit(({event}) => {
-      assertEvent(event, 'patch')
-      return event
+    'emit patch event': enqueueActions(({event, enqueue}) => {
+      assertEvent(event, 'internal.patch')
+
+      enqueue.emit(event)
+      enqueue.emit({type: 'patch', patch: event.patch})
     }),
     'emit mutation event': emit(({event}) => {
       assertEvent(event, 'mutation')
@@ -282,13 +290,18 @@ export const editorMachine = setup({
     'emit editable': emit({type: 'editable'}),
     'defer event': assign({
       pendingEvents: ({context, event}) => {
-        assertEvent(event, ['patch', 'mutation'])
+        assertEvent(event, ['internal.patch', 'mutation'])
         return [...context.pendingEvents, event]
       },
     }),
     'emit pending events': enqueueActions(({context, enqueue}) => {
       for (const event of context.pendingEvents) {
-        enqueue(emit(event))
+        if (event.type === 'internal.patch') {
+          enqueue.emit(event)
+          enqueue.emit({type: 'patch', patch: event.patch})
+        } else {
+          enqueue.emit(event)
+        }
       }
     }),
     'emit ready': emit({type: 'ready'}),
@@ -664,7 +677,7 @@ export const editorMachine = setup({
         'setting up': {
           exit: ['emit ready'],
           on: {
-            'patch': {
+            'internal.patch': {
               actions: 'defer event',
             },
             'mutation': {
@@ -680,14 +693,14 @@ export const editorMachine = setup({
           states: {
             idle: {
               on: {
-                normalizing: {
+                'normalizing': {
                   target: 'normalizing',
                 },
-                patch: {
+                'internal.patch': {
                   actions: 'defer event',
                   target: '#editor.setup.dirty',
                 },
-                mutation: {
+                'mutation': {
                   actions: 'defer event',
                   target: '#editor.setup.dirty',
                 },
@@ -698,7 +711,7 @@ export const editorMachine = setup({
                 'done normalizing': {
                   target: 'idle',
                 },
-                'patch': {
+                'internal.patch': {
                   actions: 'defer event',
                 },
                 'mutation': {
@@ -711,10 +724,10 @@ export const editorMachine = setup({
         'dirty': {
           entry: ['emit pending events', 'clear pending events'],
           on: {
-            patch: {
+            'internal.patch': {
               actions: 'emit patch event',
             },
-            mutation: {
+            'mutation': {
               actions: 'emit mutation event',
             },
           },

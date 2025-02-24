@@ -30,6 +30,7 @@ import type {
   PortableTextSlateEditor,
 } from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
+import {getCurrentActionId} from '../with-applying-behavior-actions'
 import {withoutSaving} from './createWithUndoRedo'
 
 const debug = debugWithName('plugin:withPatches')
@@ -287,12 +288,18 @@ export function createWithPatches({
 
       // Emit all patches
       if (patches.length > 0) {
-        patches.forEach((patch) => {
+        for (const patch of patches) {
           editorActor.send({
-            type: 'patch',
+            type: 'internal.patch',
             patch: {...patch, origin: 'local'},
+            actionId: getCurrentActionId(editor),
+            value: fromSlateValue(
+              editor.children,
+              schemaTypes.block.name,
+              KEY_TO_VALUE_ELEMENT.get(editor),
+            ),
           })
-        })
+        }
       }
       return editor
     }
