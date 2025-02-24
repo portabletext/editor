@@ -1,11 +1,20 @@
 import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@sanity/types'
 import {Editor} from 'slate'
-import {assign, emit, enqueueActions, setup} from 'xstate'
+import {
+  and,
+  assertEvent,
+  assign,
+  emit,
+  enqueueActions,
+  fromCallback,
+  not,
+  setup,
+  stateIn,
+  type AnyEventObject,
+} from 'xstate'
 import type {PortableTextSlateEditor} from '../types/editor'
 import type {EditorSchema} from './define-schema'
-
-const FLUSH_PATCHES_THROTTLED_MS = process.env.NODE_ENV === 'test' ? 500 : 1000
 
 /**
  * Makes sure editor mutation events are debounced
@@ -21,12 +30,19 @@ export const mutationMachine = setup({
       schema: EditorSchema
       slateEditor: PortableTextSlateEditor
     },
-    events: {} as {
-      type: 'patch'
-      patch: Patch
-      actionId?: string
-      value: Array<PortableTextBlock>
-    },
+    events: {} as
+      | {
+          type: 'patch'
+          patch: Patch
+          actionId?: string
+          value: Array<PortableTextBlock>
+        }
+      | {
+          type: 'typing'
+        }
+      | {
+          type: 'not typing'
+        },
     input: {} as {
       schema: EditorSchema
       slateEditor: PortableTextSlateEditor
@@ -57,6 +73,8 @@ export const mutationMachine = setup({
     }),
     'defer patch': assign({
       pendingMutations: ({context, event}) => {
+        assertEvent(event, 'patch')
+
         if (context.pendingMutations.length === 0) {
           return [
             {
@@ -85,11 +103,38 @@ export const mutationMachine = setup({
       },
     }),
   },
+  actors: {
+    'type listener': fromCallback<
+      AnyEventObject,
+      {slateEditor: PortableTextSlateEditor},
+      {type: 'typing'} | {type: 'not typing'}
+    >(({input, sendBack}) => {
+      const originalApply = input.slateEditor.apply
+
+      input.slateEditor.apply = (op) => {
+        if (op.type === 'insert_text' || op.type === 'remove_text') {
+          sendBack({type: 'typing'})
+        } else {
+          sendBack({type: 'not typing'})
+        }
+        originalApply(op)
+      }
+
+      return () => {
+        input.slateEditor.apply = originalApply
+      }
+    }),
+  },
   guards: {
+    'is typing': stateIn({typing: 'typing'}),
     'no pending mutations': ({context}) =>
       context.pendingMutations.length === 0,
     'slate is normalizing': ({context}) =>
       Editor.isNormalizing(context.slateEditor),
+  },
+  delays: {
+    'mutation debounce': process.env.NODE_ENV === 'test' ? 250 : 0,
+    'type debounce': process.env.NODE_ENV === 'test' ? 0 : 250,
   },
 }).createMachine({
   id: 'mutation',
@@ -98,35 +143,72 @@ export const mutationMachine = setup({
     schema: input.schema,
     slateEditor: input.slateEditor,
   }),
-  initial: 'idle',
+  type: 'parallel',
   states: {
-    'idle': {
-      on: {
-        patch: {
-          actions: ['defer patch', 'emit has pending patches'],
-          target: 'emitting mutations',
+    typing: {
+      initial: 'idle',
+      invoke: {
+        src: 'type listener',
+        input: ({context}) => ({slateEditor: context.slateEditor}),
+      },
+      states: {
+        idle: {
+          on: {
+            typing: {
+              target: 'typing',
+            },
+          },
+        },
+        typing: {
+          after: {
+            'type debounce': {
+              target: 'idle',
+            },
+          },
+          on: {
+            'not typing': {
+              target: 'idle',
+            },
+            'typing': {
+              target: 'typing',
+              reenter: true,
+            },
+          },
         },
       },
     },
-    'emitting mutations': {
-      after: {
-        [FLUSH_PATCHES_THROTTLED_MS]: [
-          {
-            guard: 'slate is normalizing',
-            target: 'idle',
-            actions: ['emit mutations', 'clear pending mutations'],
+    mutations: {
+      initial: 'idle',
+      states: {
+        'idle': {
+          on: {
+            patch: {
+              actions: ['defer patch', 'emit has pending patches'],
+              target: 'emitting mutations',
+            },
           },
-          {
-            target: 'emitting mutations',
-            reenter: true,
+        },
+        'emitting mutations': {
+          after: {
+            'mutation debounce': [
+              {
+                guard: and([not('is typing'), 'slate is normalizing']),
+                target: 'idle',
+                actions: ['emit mutations', 'clear pending mutations'],
+              },
+              {
+                target: 'emitting mutations',
+                reenter: true,
+              },
+            ],
           },
-        ],
-      },
-      on: {
-        patch: {
-          target: 'emitting mutations',
-          actions: ['defer patch'],
-          reenter: true,
+          on: {
+            patch: {
+              target: 'emitting mutations',
+              actions: ['defer patch'],
+              reenter: true,
+            },
+          },
         },
       },
     },
