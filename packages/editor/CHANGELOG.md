@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.35.2](https://github.com/portabletext/editor/compare/editor-v1.35.1...editor-v1.35.2) (2025-02-24)
+
+
+### Bug Fixes
+
+* avoid mutation emission getting stuck ([71f66d4](https://github.com/portabletext/editor/commit/71f66d4dd95f546c3ecf0d91234404cac955960e))
+* **deps:** update dependency rxjs to ^7.8.2 ([be33cc7](https://github.com/portabletext/editor/commit/be33cc7c42e3c3609b8fd6f38167f6f736023b1b))
+
 ## [1.35.1](https://github.com/portabletext/editor/compare/editor-v1.35.0...editor-v1.35.1) (2025-02-21)
 
 
