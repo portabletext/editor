@@ -233,7 +233,7 @@ importers:
         version: 19.0.0-beta-21e868a-20250216(eslint@8.57.1)
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-fcb4e0f1-20250219(eslint@8.57.1)
+        version: 0.0.0-experimental-662957cc-20250221(eslint@8.57.1)
       postcss:
         specifier: ^8.4.49
         version: 8.5.1
@@ -291,7 +291,7 @@ importers:
         version: 19.0.0-beta-21e868a-20250216(eslint@9.19.0(jiti@1.21.7))
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-fcb4e0f1-20250219(eslint@9.19.0(jiti@1.21.7))
+        version: 0.0.0-experimental-662957cc-20250221(eslint@9.19.0(jiti@1.21.7))
       eslint-plugin-react-refresh:
         specifier: ^0.4.14
         version: 0.4.18(eslint@9.19.0(jiti@1.21.7))
@@ -333,7 +333,7 @@ importers:
         version: 19.0.0(react@19.0.0)
       rxjs:
         specifier: ^7.8.1
-        version: 7.8.1
+        version: 7.8.2
       xstate:
         specifier: ^5.18.2
         version: 5.19.2
@@ -364,7 +364,7 @@ importers:
         version: 19.0.0-beta-21e868a-20250216(eslint@9.19.0(jiti@1.21.7))
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-fcb4e0f1-20250219(eslint@9.19.0(jiti@1.21.7))
+        version: 0.0.0-experimental-662957cc-20250221(eslint@9.19.0(jiti@1.21.7))
       eslint-plugin-react-refresh:
         specifier: ^0.4.14
         version: 0.4.18(eslint@9.19.0(jiti@1.21.7))
@@ -531,7 +531,7 @@ importers:
         version: 19.0.0-beta-21e868a-20250216(eslint@8.57.1)
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-fcb4e0f1-20250219(eslint@8.57.1)
+        version: 0.0.0-experimental-662957cc-20250221(eslint@8.57.1)
       jsdom:
         specifier: ^26.0.0
         version: 26.0.0
@@ -545,8 +545,8 @@ importers:
         specifier: ^19.0.0
         version: 19.0.0(react@19.0.0)
       rxjs:
-        specifier: ^7.8.1
-        version: 7.8.1
+        specifier: ^7.8.2
+        version: 7.8.2
       typescript:
         specifier: 5.7.3
         version: 5.7.3
@@ -3736,8 +3736,8 @@ packages:
     peerDependencies:
       eslint: '>=7'
 
-  eslint-plugin-react-hooks@0.0.0-experimental-fcb4e0f1-20250219:
-    resolution: {integrity: sha512-wVUOs3lIFAvqkAkW+C8sqRLjBvFXVm/r+Rd2RITCcyyu1/69NYXuAVFlHWk2UOIGDGDfsUAV8b+/BYPeJz21zg==}
+  eslint-plugin-react-hooks@0.0.0-experimental-662957cc-20250221:
+    resolution: {integrity: sha512-dJayzJnqPks712ho4HVoVkpF/aNN3Os8RgmiMZdONqmD7ToQM3BSWRIKOGLdl8n7vnva4spmTZnAX82ZvYgDgQ==}
     engines: {node: '>=10'}
     peerDependencies:
       eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0
@@ -5560,8 +5560,8 @@ packages:
   run-parallel@1.2.0:
     resolution: {integrity: sha512-5l4VyZR86LZ/lDxZTR6jqL8AFE2S0IFLMP26AbjsLVADxHdhB/c0GUsH+y39UfCi3dzz8OlQuPmnaJOMoDHQBA==}
 
-  rxjs@7.8.1:
-    resolution: {integrity: sha512-AA3TVj+0A2iuIoQkWEK/tqFjBq2j+6PO6Y0zJcvzLAFhEFIO3HL0vls9hWLncZbAAbK0mar7oZ4V079I/qPMxg==}
+  rxjs@7.8.2:
+    resolution: {integrity: sha512-dhKf903U/PQZY6boNNtAGdWbG85WAbjT/1xYoZIC7FAY0yWapOBQVsVrDl58W86//e1VpMNBtRV4MaXfdMySFA==}
 
   s.color@0.0.15:
     resolution: {integrity: sha512-AUNrbEUHeKY8XsYr/DYpl+qk5+aM+DChopnWOPEzn8YKzOhv4l2zH6LzZms3tOZP3wwdOyc0RmTciyi46HLIuA==}
@@ -9181,7 +9181,7 @@ snapshots:
     dependencies:
       '@sanity/eventsource': 5.0.2
       get-it: 8.6.7(debug@4.4.0)
-      rxjs: 7.8.1
+      rxjs: 7.8.2
     transitivePeerDependencies:
       - debug
 
@@ -9236,7 +9236,7 @@ snapshots:
       rimraf: 4.4.1
       rollup: 4.32.1
       rollup-plugin-esbuild: 6.1.1(esbuild@0.24.2)(rollup@4.32.1)
-      rxjs: 7.8.1
+      rxjs: 7.8.2
       treeify: 1.1.0
       typescript: 5.7.3
       uuid: 11.0.5
@@ -10487,11 +10487,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-react-hooks@0.0.0-experimental-fcb4e0f1-20250219(eslint@8.57.1):
+  eslint-plugin-react-hooks@0.0.0-experimental-662957cc-20250221(eslint@8.57.1):
     dependencies:
       eslint: 8.57.1
 
-  eslint-plugin-react-hooks@0.0.0-experimental-fcb4e0f1-20250219(eslint@9.19.0(jiti@1.21.7)):
+  eslint-plugin-react-hooks@0.0.0-experimental-662957cc-20250221(eslint@9.19.0(jiti@1.21.7)):
     dependencies:
       eslint: 9.19.0(jiti@1.21.7)
 
@@ -13036,7 +13036,7 @@ snapshots:
     dependencies:
       queue-microtask: 1.2.3
 
-  rxjs@7.8.1:
+  rxjs@7.8.2:
     dependencies:
       tslib: 2.8.1
 
