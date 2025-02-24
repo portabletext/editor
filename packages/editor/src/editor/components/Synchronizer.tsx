@@ -1,6 +1,8 @@
 import {useActorRef, useSelector} from '@xstate/react'
 import {useEffect} from 'react'
 import {debugWithName} from '../../internal-utils/debug'
+import {fromSlateValue} from '../../internal-utils/values'
+import {KEY_TO_VALUE_ELEMENT} from '../../internal-utils/weakMaps'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 import {mutationMachine} from '../mutation-machine'
@@ -80,6 +82,18 @@ export function Synchronizer(props: SynchronizerProps) {
             type: 'notify.value changed',
           })
           break
+        case 'patch':
+          props.editorActor.send({
+            ...event,
+            type: 'internal.patch',
+            value: fromSlateValue(
+              slateEditor.children,
+              props.editorActor.getSnapshot().context.schema.block.name,
+              KEY_TO_VALUE_ELEMENT.get(slateEditor),
+            ),
+          })
+          break
+
         default:
           props.editorActor.send(event)
       }
@@ -88,7 +102,7 @@ export function Synchronizer(props: SynchronizerProps) {
     return () => {
       subscription.unsubscribe()
     }
-  }, [props.editorActor, syncActorRef])
+  }, [props.editorActor, slateEditor, syncActorRef])
 
   useEffect(() => {
     syncActorRef.send({type: 'update readOnly', readOnly})
@@ -102,8 +116,8 @@ export function Synchronizer(props: SynchronizerProps) {
   // Subscribe to, and handle changes from the editor
   useEffect(() => {
     debug('Subscribing to patch events')
-    const sub = editorActor.on('patch', (event) => {
-      mutationActorRef.send(event)
+    const sub = editorActor.on('internal.patch', (event) => {
+      mutationActorRef.send({...event, type: 'patch'})
     })
     return () => {
       debug('Unsubscribing to patch events')

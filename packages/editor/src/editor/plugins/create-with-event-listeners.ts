@@ -29,6 +29,7 @@ export function createWithEventListeners(
           case 'loading':
           case 'mutation':
           case 'patch':
+          case 'internal.patch':
           case 'patches':
           case 'read only':
           case 'ready':

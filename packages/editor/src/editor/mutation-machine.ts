@@ -1,9 +1,7 @@
 import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@sanity/types'
 import {Editor} from 'slate'
-import {assign, emit, setup} from 'xstate'
-import {fromSlateValue} from '../internal-utils/values'
-import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
+import {assign, emit, enqueueActions, setup} from 'xstate'
 import type {PortableTextSlateEditor} from '../types/editor'
 import type {EditorSchema} from './define-schema'
 
@@ -15,11 +13,20 @@ const FLUSH_PATCHES_THROTTLED_MS = process.env.NODE_ENV === 'test' ? 500 : 1000
 export const mutationMachine = setup({
   types: {
     context: {} as {
-      pendingPatches: Array<Patch>
+      pendingMutations: Array<{
+        actionId?: string
+        value: Array<PortableTextBlock> | undefined
+        patches: Array<Patch>
+      }>
       schema: EditorSchema
       slateEditor: PortableTextSlateEditor
     },
-    events: {} as {type: 'patch'; patch: Patch},
+    events: {} as {
+      type: 'patch'
+      patch: Patch
+      actionId?: string
+      value: Array<PortableTextBlock>
+    },
     input: {} as {
       schema: EditorSchema
       slateEditor: PortableTextSlateEditor
@@ -36,33 +43,58 @@ export const mutationMachine = setup({
   },
   actions: {
     'emit has pending patches': emit({type: 'has pending patches'}),
-    'emit mutation': emit(({context}) => ({
-      type: 'mutation' as const,
-      patches: context.pendingPatches,
-      snapshot: fromSlateValue(
-        context.slateEditor.children,
-        context.schema.block.name,
-        KEY_TO_VALUE_ELEMENT.get(context.slateEditor),
-      ),
-    })),
-    'clear pending patches': assign({
-      pendingPatches: [],
+    'emit mutations': enqueueActions(({context, enqueue}) => {
+      for (const bulk of context.pendingMutations) {
+        enqueue.emit({
+          type: 'mutation',
+          patches: bulk.patches,
+          snapshot: bulk.value,
+        })
+      }
+    }),
+    'clear pending mutations': assign({
+      pendingMutations: [],
     }),
     'defer patch': assign({
-      pendingPatches: ({context, event}) => [
-        ...context.pendingPatches,
-        event.patch,
-      ],
+      pendingMutations: ({context, event}) => {
+        if (context.pendingMutations.length === 0) {
+          return [
+            {
+              actionId: event.actionId,
+              value: event.value,
+              patches: [event.patch],
+            },
+          ]
+        }
+
+        const lastBulk = context.pendingMutations.at(-1)
+
+        if (lastBulk && lastBulk.actionId === event.actionId) {
+          return context.pendingMutations.slice(0, -1).concat({
+            value: event.value,
+            actionId: lastBulk.actionId,
+            patches: [...lastBulk.patches, event.patch],
+          })
+        }
+
+        return context.pendingMutations.concat({
+          value: event.value,
+          actionId: event.actionId,
+          patches: [event.patch],
+        })
+      },
     }),
   },
   guards: {
+    'no pending mutations': ({context}) =>
+      context.pendingMutations.length === 0,
     'slate is normalizing': ({context}) =>
       Editor.isNormalizing(context.slateEditor),
   },
 }).createMachine({
   id: 'mutation',
   context: ({input}) => ({
-    pendingPatches: [],
+    pendingMutations: [],
     schema: input.schema,
     slateEditor: input.slateEditor,
   }),
@@ -72,27 +104,27 @@ export const mutationMachine = setup({
       on: {
         patch: {
           actions: ['defer patch', 'emit has pending patches'],
-          target: 'has pending patches',
+          target: 'emitting mutations',
         },
       },
     },
-    'has pending patches': {
+    'emitting mutations': {
       after: {
         [FLUSH_PATCHES_THROTTLED_MS]: [
           {
             guard: 'slate is normalizing',
             target: 'idle',
-            actions: ['emit mutation', 'clear pending patches'],
+            actions: ['emit mutations', 'clear pending mutations'],
           },
           {
-            target: 'has pending patches',
+            target: 'emitting mutations',
             reenter: true,
           },
         ],
       },
       on: {
         patch: {
-          target: 'has pending patches',
+          target: 'emitting mutations',
           actions: ['defer patch'],
           reenter: true,
         },
