@@ -302,6 +302,7 @@ export type BehaviorEvent =
   | SyntheticBehaviorEvent
   | NativeBehaviorEvent
   | CustomBehaviorEvent
+  | {type: '*'}
 
 /**
  * @beta
@@ -309,11 +310,9 @@ export type BehaviorEvent =
 export type Behavior<
   TBehaviorEventType extends BehaviorEvent['type'] = BehaviorEvent['type'],
   TGuardResponse = true,
-  TBehaviorEvent extends BehaviorEvent = PickFromUnion<
-    BehaviorEvent,
-    'type',
-    TBehaviorEventType
-  >,
+  TBehaviorEvent extends BehaviorEvent = TBehaviorEventType extends '*'
+    ? BehaviorEvent
+    : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
 > = {
   /**
    * The internal editor event that triggers this behavior.
@@ -389,7 +388,9 @@ export function defineBehavior<
     TGuardResponse,
     TBehaviorEventType extends `custom.${infer TType}`
       ? CustomBehaviorEvent<TPayload, TType>
-      : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>
+      : TBehaviorEventType extends '*'
+        ? OmitFromUnion<BehaviorEvent, 'type', '*'>
+        : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>
   >,
 ): Behavior
 export function defineBehavior<
@@ -399,7 +400,9 @@ export function defineBehavior<
   TBehaviorEvent extends
     BehaviorEvent = TBehaviorEventType extends `custom.${infer TType}`
     ? CustomBehaviorEvent<TPayload, TType>
-    : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
+    : TBehaviorEventType extends '*'
+      ? OmitFromUnion<BehaviorEvent, 'type', '*'>
+      : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
 >(
   behavior: Behavior<TBehaviorEventType, TGuardResponse, TBehaviorEvent>,
 ): Behavior {

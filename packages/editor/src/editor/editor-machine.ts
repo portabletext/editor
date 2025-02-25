@@ -334,7 +334,10 @@ export const editorMachine = setup({
           ...foundationalBehaviors,
           ...context.behaviors.values(),
           ...defaultBehaviors,
-        ].filter((behavior) => behavior.on === event.behaviorEvent.type)
+        ].filter(
+          (behavior) =>
+            behavior.on === '*' || behavior.on === event.behaviorEvent.type,
+        )
 
         if (eventBehaviors.length === 0) {
           if (defaultActionCallback) {
