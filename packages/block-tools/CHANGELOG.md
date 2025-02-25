@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.10](https://github.com/portabletext/editor/compare/block-tools-v1.1.9...block-tools-v1.1.10) (2025-02-25)
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^3.77.1 ([3704f06](https://github.com/portabletext/editor/commit/3704f069fce69fd9c6956fa14d557223ee56e01a))
+
 ## [1.1.9](https://github.com/portabletext/editor/compare/block-tools-v1.1.8...block-tools-v1.1.9) (2025-02-21)
 
 

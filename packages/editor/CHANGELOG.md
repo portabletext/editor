@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.36.0](https://github.com/portabletext/editor/compare/editor-v1.35.4...editor-v1.36.0) (2025-02-25)
+
+
+### Features
+
+* **behaviors:** allow listening for all events using `"*"` ([baaf310](https://github.com/portabletext/editor/commit/baaf3107be5bad8fcd0436e79932cdda6db85bb6))
+* **plugins:** export `DecoratorShortcutPlugin` ([3dc9d1a](https://github.com/portabletext/editor/commit/3dc9d1af7f7da7bddc5b801bad0c23fc147f1cfa))
+
+
+### Bug Fixes
+
+* deprecate `PortableTextEditor.(undo|redo)` ([73fd0b0](https://github.com/portabletext/editor/commit/73fd0b0d6de9fc3cf0f723608912af67d05644c1))
+* **deps:** update sanity monorepo to ^3.77.1 ([3704f06](https://github.com/portabletext/editor/commit/3704f069fce69fd9c6956fa14d557223ee56e01a))
+* only warn on `(deserialization|serialization).failure` ([b28369c](https://github.com/portabletext/editor/commit/b28369c4216fecb4320c73d17c4fe89ded111a15))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.10
+
 ## [1.35.4](https://github.com/portabletext/editor/compare/editor-v1.35.3...editor-v1.35.4) (2025-02-24)
 
 
