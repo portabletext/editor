@@ -361,6 +361,7 @@ export const syncMachine = setup({
                   'assign previous value',
                   'assign initial value synced',
                 ],
+                target: 'syncing',
                 reenter: true,
               },
               {
