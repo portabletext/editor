@@ -112,7 +112,7 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   },
   'delete.text': deleteTextActionImplementation,
   'deserialization.failure': ({action}) => {
-    console.error(
+    console.warn(
       `Deserialization of ${action.mimeType} failed with reason ${action.reason}`,
     )
   },
@@ -248,7 +248,7 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
     Transforms.select(action.editor, nextBlockPath)
   },
   'serialization.failure': ({action}) => {
-    console.error(
+    console.warn(
       `Serialization of ${action.mimeType} failed with reason ${action.reason}`,
     )
   },
