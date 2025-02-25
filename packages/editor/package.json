@@ -132,7 +132,7 @@
     "typescript": "5.7.3",
     "vite": "^6.0.11",
     "vitest": "^3.0.7",
-    "vitest-browser-react": "^0.0.4"
+    "vitest-browser-react": "^0.1.1"
   },
   "peerDependencies": {
     "@sanity/schema": "^3.77.1",
