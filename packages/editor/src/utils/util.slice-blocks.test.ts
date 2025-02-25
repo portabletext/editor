@@ -341,4 +341,68 @@ describe(sliceBlocks.name, () => {
       },
     ])
   })
+
+  test('slicing text block with custom props', () => {
+    expect(
+      sliceBlocks({
+        blocks: [
+          {
+            _key: 'b0',
+            _type: 'block',
+            children: [{_key: 's0', _type: 'span', text: 'Hello, world!'}],
+            _map: {},
+          },
+        ],
+        selection: {
+          anchor: {
+            path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+            offset: 7,
+          },
+          focus: {
+            path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+            offset: 12,
+          },
+        },
+      }),
+    ).toEqual([
+      {
+        _key: 'b0',
+        _type: 'block',
+        children: [{_key: 's0', _type: 'span', text: 'world'}],
+        _map: {},
+      },
+    ])
+  })
+
+  test('slicing span with custom props', () => {
+    expect(
+      sliceBlocks({
+        blocks: [
+          {
+            _key: 'b0',
+            _type: 'block',
+            children: [
+              {_key: 's0', _type: 'span', text: 'Hello, world!', _map: {}},
+            ],
+          },
+        ],
+        selection: {
+          anchor: {
+            path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+            offset: 7,
+          },
+          focus: {
+            path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+            offset: 12,
+          },
+        },
+      }),
+    ).toEqual([
+      {
+        _key: 'b0',
+        _type: 'block',
+        children: [{_key: 's0', _type: 'span', text: 'world', _map: {}}],
+      },
+    ])
+  })
 })
