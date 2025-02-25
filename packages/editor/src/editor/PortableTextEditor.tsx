@@ -687,11 +687,33 @@ export class PortableTextEditor extends Component<
     return editor.editable?.getFragment()
   }
 
+  /**
+   * @deprecated
+   * Use `editor.send(...)` instead
+   *
+   * ```
+   * const editor = useEditor()
+   * editor.send({
+   *   type: 'history.undo',
+   * })
+   * ```
+   */
   static undo = (editor: PortableTextEditor): void => {
     debug('Host undoing')
     editor.editable?.undo()
   }
 
+  /**
+   * @deprecated
+   * Use `editor.send(...)` instead
+   *
+   * ```
+   * const editor = useEditor()
+   * editor.send({
+   *   type: 'history.redo',
+   * })
+   * ```
+   */
   static redo = (editor: PortableTextEditor): void => {
     debug('Host redoing')
     editor.editable?.redo()
