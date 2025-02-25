@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.36.1](https://github.com/portabletext/editor/compare/editor-v1.36.0...editor-v1.36.1) (2025-02-25)
+
+
+### Bug Fixes
+
+* mitigate syncing getting stuck if value changed while syncing ([cfa7523](https://github.com/portabletext/editor/commit/cfa7523cab8cd160086fdddde1f3d9b7a5e58ca3))
+
 ## [1.36.0](https://github.com/portabletext/editor/compare/editor-v1.35.4...editor-v1.36.0) (2025-02-25)
 
 
