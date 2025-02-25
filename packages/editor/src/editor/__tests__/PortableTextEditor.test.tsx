@@ -52,9 +52,7 @@ describe('initialization', () => {
       class="pt-block pt-text-block pt-text-block-style-normal"
       data-slate-node="element"
     >
-      <div
-        draggable="false"
-      >
+      <div>
         <div>
           <span
             data-slate-node="text"

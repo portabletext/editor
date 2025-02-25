@@ -29,8 +29,10 @@ import type {
   RenderListItemFunction,
   RenderStyleFunction,
 } from '../../types/editor'
+import type {VoidElement} from '../../types/slate'
 import {DefaultBlockObject, DefaultInlineObject} from './DefaultObject'
-import {DraggableBlock} from './DraggableBlock'
+import {DraggableBlock} from './draggable-block'
+import {DroppableBlock} from './droppable-block'
 
 const debug = debugWithName('components:Element')
 const debugRenders = false
@@ -235,22 +237,48 @@ export const Element: FunctionComponent<ElementProps> = ({
     const propsOrDefaultRendered = renderBlock
       ? renderBlock(renderProps as BlockRenderProps)
       : children
-    return (
-      <div
-        key={element._key}
-        {...attributes}
-        className={className}
-        spellCheck={spellCheck}
-      >
-        <DraggableBlock
-          element={element}
-          readOnly={readOnly}
-          blockRef={blockRef}
+
+    if (Editor.isVoid(editor, element)) {
+      return (
+        <div
+          key={element._key}
+          {...attributes}
+          className={className}
+          spellCheck={spellCheck}
         >
-          <div ref={blockRef}>{propsOrDefaultRendered}</div>
-        </DraggableBlock>
-      </div>
-    )
+          <DraggableBlock
+            element={element as VoidElement}
+            readOnly={readOnly}
+            blockRef={blockRef}
+          >
+            <DroppableBlock
+              element={element}
+              readOnly={readOnly}
+              blockRef={blockRef}
+            >
+              <div ref={blockRef}>{propsOrDefaultRendered}</div>
+            </DroppableBlock>
+          </DraggableBlock>
+        </div>
+      )
+    } else {
+      return (
+        <div
+          key={element._key}
+          {...attributes}
+          className={className}
+          spellCheck={spellCheck}
+        >
+          <DroppableBlock
+            element={element}
+            readOnly={readOnly}
+            blockRef={blockRef}
+          >
+            <div ref={blockRef}>{propsOrDefaultRendered}</div>
+          </DroppableBlock>
+        </div>
+      )
+    }
   }
 
   const schemaType = schemaTypes.blockObjects.find(
@@ -302,20 +330,51 @@ export const Element: FunctionComponent<ElementProps> = ({
     renderedBlockFromProps = renderBlock(_props as BlockRenderProps)
   }
 
-  return (
-    <div key={element._key} {...attributes} className={className}>
-      {children}
-      <DraggableBlock element={element} readOnly={readOnly} blockRef={blockRef}>
-        <div ref={blockRef} contentEditable={false}>
-          {renderedBlockFromProps ? (
-            renderedBlockFromProps
-          ) : (
-            <DefaultBlockObject value={value} />
-          )}
-        </div>
-      </DraggableBlock>
-    </div>
-  )
+  if (Editor.isVoid(editor, element)) {
+    return (
+      <div key={element._key} {...attributes} className={className}>
+        {children}
+        <DraggableBlock
+          element={element as VoidElement}
+          readOnly={readOnly}
+          blockRef={blockRef}
+        >
+          <DroppableBlock
+            element={element}
+            readOnly={readOnly}
+            blockRef={blockRef}
+          >
+            <div ref={blockRef} contentEditable={false}>
+              {renderedBlockFromProps ? (
+                renderedBlockFromProps
+              ) : (
+                <DefaultBlockObject value={value} />
+              )}
+            </div>
+          </DroppableBlock>
+        </DraggableBlock>
+      </div>
+    )
+  } else {
+    return (
+      <div key={element._key} {...attributes} className={className}>
+        {children}
+        <DroppableBlock
+          element={element}
+          readOnly={readOnly}
+          blockRef={blockRef}
+        >
+          <div ref={blockRef} contentEditable={false}>
+            {renderedBlockFromProps ? (
+              renderedBlockFromProps
+            ) : (
+              <DefaultBlockObject value={value} />
+            )}
+          </div>
+        </DroppableBlock>
+      </div>
+    )
+  }
 }
 
 Element.displayName = 'Element'
