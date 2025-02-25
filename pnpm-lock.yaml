@@ -233,7 +233,7 @@ importers:
         version: 19.0.0-beta-e1e972c-20250221(eslint@8.57.1)
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-25677265-20250224(eslint@8.57.1)
+        version: 0.0.0-experimental-22e39ea7-20250225(eslint@8.57.1)
       postcss:
         specifier: ^8.4.49
         version: 8.5.1
@@ -291,7 +291,7 @@ importers:
         version: 19.0.0-beta-e1e972c-20250221(eslint@9.19.0(jiti@1.21.7))
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-25677265-20250224(eslint@9.19.0(jiti@1.21.7))
+        version: 0.0.0-experimental-22e39ea7-20250225(eslint@9.19.0(jiti@1.21.7))
       eslint-plugin-react-refresh:
         specifier: ^0.4.14
         version: 0.4.18(eslint@9.19.0(jiti@1.21.7))
@@ -364,7 +364,7 @@ importers:
         version: 19.0.0-beta-e1e972c-20250221(eslint@9.19.0(jiti@1.21.7))
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-25677265-20250224(eslint@9.19.0(jiti@1.21.7))
+        version: 0.0.0-experimental-22e39ea7-20250225(eslint@9.19.0(jiti@1.21.7))
       eslint-plugin-react-refresh:
         specifier: ^0.4.14
         version: 0.4.18(eslint@9.19.0(jiti@1.21.7))
@@ -531,7 +531,7 @@ importers:
         version: 19.0.0-beta-e1e972c-20250221(eslint@8.57.1)
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-25677265-20250224(eslint@8.57.1)
+        version: 0.0.0-experimental-22e39ea7-20250225(eslint@8.57.1)
       jsdom:
         specifier: ^26.0.0
         version: 26.0.0
@@ -588,8 +588,8 @@ importers:
         specifier: ^18.0.1
         version: 18.0.1
       '@cucumber/gherkin':
-        specifier: ^31.0.0
-        version: 31.0.0
+        specifier: ^32.0.0
+        version: 32.0.0
       '@cucumber/messages':
         specifier: ^27.2.0
         version: 27.2.0
@@ -1009,17 +1009,14 @@ packages:
   '@cucumber/gherkin@27.0.0':
     resolution: {integrity: sha512-j5rCsjqzRiC3iVTier3sa0kzyNbkcAmF7xr7jKnyO7qDeK3Z8Ye1P3KSVpeQRMY+KCDJ3WbTDdyxH0FwfA/fIw==}
 
-  '@cucumber/gherkin@31.0.0':
-    resolution: {integrity: sha512-wlZfdPif7JpBWJdqvHk1Mkr21L5vl4EfxVUOS4JinWGf3FLRV6IKUekBv5bb5VX79fkDcfDvESzcQ8WQc07Wgw==}
+  '@cucumber/gherkin@32.0.0':
+    resolution: {integrity: sha512-fztn+axbboFEEHDD1+wnvdwXfubCSb6peM0JQsDoxNKwJ6avJYroZxtf02JBxdgRVyqN5Xmx4/VUJ01rOjQfdA==}
 
   '@cucumber/messages@22.0.0':
     resolution: {integrity: sha512-EuaUtYte9ilkxcKmfqGF9pJsHRUU0jwie5ukuZ/1NPTuHS1LxHPsGEODK17RPRbZHOFhqybNzG2rHAwThxEymg==}
 
   '@cucumber/messages@23.0.0':
     resolution: {integrity: sha512-2ZWKNnikNMBnle3P3cgy+fgzhABrY4oBbiWp9wcI8ANdT4LlYRN6jQ6j/9CQGTDGRfkyRtr/5VkYq7q24XCsuA==}
-
-  '@cucumber/messages@26.0.1':
-    resolution: {integrity: sha512-DIxSg+ZGariumO+Lq6bn4kOUIUET83A4umrnWmidjGFl8XxkBieUZtsmNbLYgH/gnsmP07EfxxdTr0hOchV1Sg==}
 
   '@cucumber/messages@27.2.0':
     resolution: {integrity: sha512-f2o/HqKHgsqzFLdq6fAhfG1FNOQPdBdyMGpKwhb7hZqg0yZtx9BVqkTyuoNk83Fcvk3wjMVfouFXXHNEk4nddA==}
@@ -3736,8 +3733,8 @@ packages:
     peerDependencies:
       eslint: '>=7'
 
-  eslint-plugin-react-hooks@0.0.0-experimental-25677265-20250224:
-    resolution: {integrity: sha512-roqs24mfKML15hgj5sHqSo2WIGWOUeQ2sNQUaeySmkL0c9X6Vgvf2utWROua+fupQ+BhnI5IDm9p5ZR91PAGgQ==}
+  eslint-plugin-react-hooks@0.0.0-experimental-22e39ea7-20250225:
+    resolution: {integrity: sha512-wssDAyI+7Qsj8z/1tt+mS5NKy6sux9gYxMj/3s3QT5/dEssdHodOAwfqd42kJWwnTsMqDPZ3Ndk52M/pgNVQ7A==}
     engines: {node: '>=10'}
     peerDependencies:
       eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0
@@ -6236,10 +6233,6 @@ packages:
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
-  uuid@10.0.0:
-    resolution: {integrity: sha512-8XkAphELsDnEGrDxUOHB3RGvXz6TeuYSGEZBOjtTtPm2lwhGBjLgOzLHB63IUWfBpNucQjND6d3AOudO+H3RWQ==}
-    hasBin: true
-
   uuid@11.0.5:
     resolution: {integrity: sha512-508e6IcKLrhxKdBbcA2b4KQZlLVp2+J5UwQ6F7Drckkc5N9ZJwFa4TgWtsww9UG8fGHbm6gbV19TdM5pQ4GaIA==}
     hasBin: true
@@ -7077,9 +7070,9 @@ snapshots:
     dependencies:
       '@cucumber/messages': 22.0.0
 
-  '@cucumber/gherkin@31.0.0':
+  '@cucumber/gherkin@32.0.0':
     dependencies:
-      '@cucumber/messages': 26.0.1
+      '@cucumber/messages': 27.2.0
 
   '@cucumber/messages@22.0.0':
     dependencies:
@@ -7094,13 +7087,6 @@ snapshots:
       class-transformer: 0.5.1
       reflect-metadata: 0.1.13
       uuid: 9.0.1
-
-  '@cucumber/messages@26.0.1':
-    dependencies:
-      '@types/uuid': 10.0.0
-      class-transformer: 0.5.1
-      reflect-metadata: 0.2.2
-      uuid: 10.0.0
 
   '@cucumber/messages@27.2.0':
     dependencies:
@@ -10487,11 +10473,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-react-hooks@0.0.0-experimental-25677265-20250224(eslint@8.57.1):
+  eslint-plugin-react-hooks@0.0.0-experimental-22e39ea7-20250225(eslint@8.57.1):
     dependencies:
       eslint: 8.57.1
 
-  eslint-plugin-react-hooks@0.0.0-experimental-25677265-20250224(eslint@9.19.0(jiti@1.21.7)):
+  eslint-plugin-react-hooks@0.0.0-experimental-22e39ea7-20250225(eslint@9.19.0(jiti@1.21.7)):
     dependencies:
       eslint: 9.19.0(jiti@1.21.7)
 
@@ -13692,8 +13678,6 @@ snapshots:
       os-homedir: 1.0.2
 
   util-deprecate@1.0.2: {}
-
-  uuid@10.0.0: {}
 
   uuid@11.0.5: {}
 
