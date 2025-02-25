@@ -15,6 +15,9 @@ import type {EditorSchema} from '../selectors'
 import type {BlockOffset} from '../types/block-offset'
 import * as utils from '../utils'
 
+/**
+ * @beta
+ */
 export function DecoratorShortcutPlugin(config: {
   decorator: ({schema}: {schema: EditorSchema}) => string | undefined
   pair: {char: string; amount: number}
