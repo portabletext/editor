@@ -1,14 +1,13 @@
 import {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
   type DragEvent,
-  type MutableRefObject,
   type ReactNode,
+  type RefObject,
 } from 'react'
-import {Editor, Path, Transforms, type Element as SlateElement} from 'slate'
+import {Path, Transforms} from 'slate'
 import {ReactEditor, useSlateStatic} from 'slate-react'
 import {debugWithName} from '../../internal-utils/debug'
 import {
@@ -17,38 +16,26 @@ import {
   IS_DRAGGING_BLOCK_TARGET_POSITION,
   IS_DRAGGING_ELEMENT_TARGET,
 } from '../../internal-utils/weakMaps'
+import type {VoidElement} from '../../types/slate'
 
 const debug = debugWithName('components:DraggableBlock')
 const debugRenders = false
 
-/**
- * @internal
- */
 export interface DraggableBlockProps {
   children: ReactNode
-  element: SlateElement
+  element: VoidElement
   readOnly: boolean
-  blockRef: MutableRefObject<HTMLDivElement | null>
+  blockRef: RefObject<HTMLDivElement | null>
 }
 
-/**
- * Implements drag and drop functionality on editor block nodes
- * @internal
- */
-export const DraggableBlock = ({
+export function DraggableBlock({
   children,
   element,
   readOnly,
   blockRef,
-}: DraggableBlockProps) => {
+}: DraggableBlockProps) {
   const editor = useSlateStatic()
   const dragGhostRef = useRef<HTMLElement>(undefined)
-  const [isDragOver, setIsDragOver] = useState(false)
-  const isVoid = useMemo(
-    () => Editor.isVoid(editor, element),
-    [editor, element],
-  )
-
   const [blockElement, setBlockElement] = useState<HTMLElement | null>(null)
 
   useEffect(
@@ -58,46 +45,6 @@ export const DraggableBlock = ({
       ),
     [editor, element, blockRef],
   )
-
-  // Note: this is called not for the dragging block, but for the targets when the block is dragged over them
-  const handleDragOver = useCallback(
-    (event: DragEvent) => {
-      const isMyDragOver = IS_DRAGGING_BLOCK_ELEMENT.get(editor)
-      // debug('Drag over', blockElement)
-      if (!isMyDragOver || !blockElement) {
-        return
-      }
-      event.preventDefault()
-      event.dataTransfer.dropEffect = 'move'
-      IS_DRAGGING_ELEMENT_TARGET.set(editor, element)
-      const elementRect = blockElement.getBoundingClientRect()
-      const offset = elementRect.top
-      const height = elementRect.height
-      const Y = event.pageY
-      const loc = Math.abs(offset - Y)
-      let position: 'top' | 'bottom' = 'bottom'
-      if (element === editor.children[0]) {
-        position = 'top'
-      } else if (loc < height / 2) {
-        position = 'top'
-        IS_DRAGGING_BLOCK_TARGET_POSITION.set(editor, position)
-      } else {
-        position = 'bottom'
-        IS_DRAGGING_BLOCK_TARGET_POSITION.set(editor, position)
-      }
-      if (isMyDragOver === element) {
-        event.dataTransfer.dropEffect = 'none'
-        return
-      }
-      setIsDragOver(true)
-    },
-    [blockElement, editor, element],
-  )
-
-  // Note: this is called not for the dragging block, but for the targets when the block is dragged over them
-  const handleDragLeave = useCallback(() => {
-    setIsDragOver(false)
-  }, [])
 
   // Note: this is called for the dragging block
   const handleDragEnd = useCallback(
@@ -162,25 +109,10 @@ export const DraggableBlock = ({
     },
     [editor, element],
   )
-  // Note: this is called not for the dragging block, but for the drop target
-  const handleDrop = useCallback(
-    (event: DragEvent) => {
-      if (IS_DRAGGING_BLOCK_ELEMENT.get(editor)) {
-        debug('On drop (prevented)', element)
-        event.preventDefault()
-        event.stopPropagation()
-        setIsDragOver(false)
-      }
-    },
-    [editor, element],
-  )
+
   // Note: this is called for the dragging block
   const handleDrag = useCallback(
     (event: DragEvent) => {
-      if (!isVoid) {
-        IS_DRAGGING_BLOCK_ELEMENT.delete(editor)
-        return
-      }
       IS_DRAGGING.set(editor, true)
       IS_DRAGGING_BLOCK_ELEMENT.set(editor, element)
       event.stopPropagation() // Stop propagation so that leafs don't get this and take focus/selection!
@@ -191,18 +123,12 @@ export const DraggableBlock = ({
         target.style.opacity = '1'
       }
     },
-    [editor, element, isVoid],
+    [editor, element],
   )
 
   // Note: this is called for the dragging block
   const handleDragStart = useCallback(
     (event: DragEvent) => {
-      if (!isVoid) {
-        debug('Not dragging block')
-        IS_DRAGGING_BLOCK_ELEMENT.delete(editor)
-        IS_DRAGGING.set(editor, false)
-        return
-      }
       debug('Drag start')
       IS_DRAGGING.set(editor, true)
       if (event.dataTransfer) {
@@ -240,44 +166,7 @@ export const DraggableBlock = ({
       }
       handleDrag(event)
     },
-    [blockElement, editor, handleDrag, isVoid],
-  )
-
-  const isDraggingOverFirstBlock =
-    isDragOver && editor.children[0] === IS_DRAGGING_ELEMENT_TARGET.get(editor)
-  const isDraggingOverLastBlock =
-    isDragOver &&
-    editor.children[editor.children.length - 1] ===
-      IS_DRAGGING_ELEMENT_TARGET.get(editor)
-  const dragPosition = IS_DRAGGING_BLOCK_TARGET_POSITION.get(editor)
-
-  const isDraggingOverTop =
-    isDraggingOverFirstBlock ||
-    (isDragOver &&
-      !isDraggingOverFirstBlock &&
-      !isDraggingOverLastBlock &&
-      dragPosition === 'top')
-  const isDraggingOverBottom =
-    isDraggingOverLastBlock ||
-    (isDragOver &&
-      !isDraggingOverFirstBlock &&
-      !isDraggingOverLastBlock &&
-      dragPosition === 'bottom')
-
-  const dropIndicator = useMemo(
-    () => (
-      <div
-        className="pt-drop-indicator"
-        style={{
-          position: 'absolute',
-          width: '100%',
-          height: 1,
-          borderBottom: '1px solid currentColor',
-          zIndex: 5,
-        }}
-      />
-    ),
-    [],
+    [blockElement, editor, handleDrag],
   )
 
   if (readOnly) {
@@ -290,19 +179,12 @@ export const DraggableBlock = ({
 
   return (
     <div
-      draggable={isVoid}
+      draggable
       onDragStart={handleDragStart}
       onDrag={handleDrag}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
       onDragEnd={handleDragEnd}
-      onDrop={handleDrop}
     >
-      {isDraggingOverTop && dropIndicator}
       {children}
-      {isDraggingOverBottom && dropIndicator}
     </div>
   )
 }
-
-DraggableBlock.displayName = 'DraggableBlock'
