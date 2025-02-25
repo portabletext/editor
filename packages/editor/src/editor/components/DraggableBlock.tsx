@@ -48,10 +48,6 @@ export const DraggableBlock = ({
     () => Editor.isVoid(editor, element),
     [editor, element],
   )
-  const isInline = useMemo(
-    () => Editor.isInline(editor, element),
-    [editor, element],
-  )
 
   const [blockElement, setBlockElement] = useState<HTMLElement | null>(null)
 
@@ -201,7 +197,7 @@ export const DraggableBlock = ({
   // Note: this is called for the dragging block
   const handleDragStart = useCallback(
     (event: DragEvent) => {
-      if (!isVoid || isInline) {
+      if (!isVoid) {
         debug('Not dragging block')
         IS_DRAGGING_BLOCK_ELEMENT.delete(editor)
         IS_DRAGGING.set(editor, false)
@@ -244,7 +240,7 @@ export const DraggableBlock = ({
       }
       handleDrag(event)
     },
-    [blockElement, editor, handleDrag, isInline, isVoid],
+    [blockElement, editor, handleDrag, isVoid],
   )
 
   const isDraggingOverFirstBlock =
