@@ -1,5 +1,11 @@
+import type {MIMEType} from '../internal-utils/mime-type'
 import * as selectors from '../selectors'
+import {converterBehaviorJson} from './behavior.default.converter.json'
+import {converterBehaviorPortableText} from './behavior.default.converter.portable-text'
+import {converterBehaviorTextHtml} from './behavior.default.converter.text-html'
+import {converterBehaviorTextPlain} from './behavior.default.converter.text-plain'
 import {defineBehavior, raise} from './behavior.types'
+import {runBehavior} from './run-behavior'
 
 const toggleAnnotationOff = defineBehavior({
   on: 'annotation.toggle',
@@ -83,53 +89,26 @@ const toggleStyleOn = defineBehavior({
   actions: [({event}) => [raise({type: 'style.add', style: event.style})]],
 })
 
-const raiseDeserializationSuccessOrFailure = defineBehavior({
+const raiseDeserializationFailure = defineBehavior({
   on: 'deserialize',
-  guard: ({snapshot, event}) => {
-    const deserializeEvents = snapshot.context.converters.flatMap(
-      (converter) => {
-        const data = event.dataTransfer.getData(converter.mimeType)
-
-        if (!data) {
-          return []
-        }
-
-        return [
-          converter.deserialize({
-            snapshot,
-            event: {type: 'deserialize', data},
-          }),
-        ]
-      },
-    )
-
-    const firstSuccess = deserializeEvents.find(
-      (deserializeEvent) => deserializeEvent.type === 'deserialization.success',
-    )
-
-    if (!firstSuccess) {
-      return {
-        type: 'deserialization.failure',
-        mimeType: '*/*',
-        reason: deserializeEvents
-          .map((deserializeEvent) =>
-            deserializeEvent.type === 'deserialization.failure'
-              ? deserializeEvent.reason
-              : '',
-          )
-          .join(', '),
-      } as const
-    }
-
-    return firstSuccess
+  guard: ({event}) => {
+    const mimeTypes = event.dataTransfer.types.flatMap((type) =>
+      type === 'Files'
+        ? Array.from(event.dataTransfer.files).map((file) => file.type)
+        : type,
+    ) as Array<MIMEType>
+    return {mimeTypes}
   },
   actions: [
-    ({event}, deserializeEvent) => [
-      raise({
-        ...deserializeEvent,
-        dataTransfer: event.dataTransfer,
-      }),
-    ],
+    ({event}, {mimeTypes}) =>
+      mimeTypes.map((mimeType) =>
+        raise({
+          type: 'deserialization.failure',
+          dataTransfer: event.dataTransfer,
+          mimeType,
+          reason: 'Unhandled "deserialize" event',
+        }),
+      ),
   ],
 })
 
@@ -147,29 +126,35 @@ const raiseInsertBlocks = defineBehavior({
 
 const raiseSerializationSuccessOrFailure = defineBehavior({
   on: 'serialize',
-  guard: ({snapshot, event}) => {
-    if (snapshot.context.converters.length === 0) {
-      return false
-    }
-
-    const serializeEvents = snapshot.context.converters.map((converter) =>
-      converter.serialize({snapshot, event}),
+  guard: ({snapshot, context, event}) => {
+    const actionSet = [
+      converterBehaviorJson.serialize,
+      converterBehaviorPortableText.serialize,
+      converterBehaviorTextHtml.serialize,
+      converterBehaviorTextPlain.serialize,
+    ].flatMap(
+      (behavior) =>
+        runBehavior(behavior)({snapshot, context, event})?.actionSets.flat() ??
+        [],
     )
 
-    if (serializeEvents.length === 0) {
-      return false
-    }
-
-    return serializeEvents
+    return actionSet
   },
+  actions: [(_, actionSet) => actionSet],
+})
+
+const raiseSerializationFailure = defineBehavior({
+  on: 'serialize',
   actions: [
-    ({event}, serializeEvents) =>
-      serializeEvents.map((serializeEvent) =>
-        raise({
-          ...serializeEvent,
-          dataTransfer: event.dataTransfer,
-        }),
-      ),
+    ({event}) => [
+      raise({
+        type: 'serialization.failure',
+        dataTransfer: event.dataTransfer,
+        reason: 'Unhandled "serialize" event',
+        mimeType: 'application/x-portable-text',
+        originEvent: event.originEvent,
+      }),
+    ],
   ],
 })
 
@@ -196,8 +181,13 @@ export const defaultBehaviors = [
   toggleListItemOn,
   toggleStyleOff,
   toggleStyleOn,
-  raiseDeserializationSuccessOrFailure,
+  converterBehaviorJson.deserialize,
+  converterBehaviorPortableText.deserialize,
+  converterBehaviorTextHtml.deserialize,
+  converterBehaviorTextPlain.deserialize,
+  raiseDeserializationFailure,
   raiseInsertBlocks,
   raiseSerializationSuccessOrFailure,
+  raiseSerializationFailure,
   raiseDataTransferSet,
 ]

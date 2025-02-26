@@ -258,15 +258,21 @@ export function isCustomBehaviorEvent(
   return event.type.startsWith('custom.')
 }
 
+export type RaiseBehaviorActionIntend<
+  TBehaviorEvent extends SyntheticBehaviorEvent | CustomBehaviorEvent =
+    | SyntheticBehaviorEvent
+    | CustomBehaviorEvent,
+> = {
+  type: 'raise'
+  event: TBehaviorEvent
+}
+
 /**
  * @beta
  */
 export type BehaviorActionIntend =
   | SyntheticBehaviorEvent
-  | {
-      type: 'raise'
-      event: SyntheticBehaviorEvent | CustomBehaviorEvent
-    }
+  | RaiseBehaviorActionIntend
   | {
       type: 'noop'
     }
@@ -289,9 +295,11 @@ export type BehaviorAction = OmitFromUnion<
 /**
  * @beta
  */
-export function raise(
-  event: SyntheticBehaviorEvent | CustomBehaviorEvent,
-): PickFromUnion<BehaviorActionIntend, 'type', 'raise'> {
+export function raise<
+  TBehaviorEvent extends SyntheticBehaviorEvent | CustomBehaviorEvent =
+    | SyntheticBehaviorEvent
+    | CustomBehaviorEvent,
+>(event: TBehaviorEvent): RaiseBehaviorActionIntend<TBehaviorEvent> {
   return {type: 'raise', event}
 }
 
@@ -313,6 +321,7 @@ export type Behavior<
   TBehaviorEvent extends BehaviorEvent = TBehaviorEventType extends '*'
     ? BehaviorEvent
     : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
+  TBehaviorActionIntend extends BehaviorActionIntend = BehaviorActionIntend,
 > = {
   /**
    * The internal editor event that triggers this behavior.
@@ -327,7 +336,13 @@ export type Behavior<
   /**
    * Array of behavior action sets.
    */
-  actions: Array<BehaviorActionIntendSet<TBehaviorEvent, TGuardResponse>>
+  actions: Array<
+    BehaviorActionIntendSet<
+      TBehaviorEvent,
+      TGuardResponse,
+      TBehaviorActionIntend
+    >
+  >
 }
 
 /**
@@ -346,7 +361,11 @@ export type BehaviorGuard<TBehaviorEvent, TGuardResponse> = (payload: {
 /**
  * @beta
  */
-export type BehaviorActionIntendSet<TBehaviorEvent, TGuardResponse> = (
+export type BehaviorActionIntendSet<
+  TBehaviorEvent,
+  TGuardResponse,
+  TBehaviorActionIntend extends BehaviorActionIntend,
+> = (
   payload: {
     /**
      * @deprecated
@@ -356,8 +375,8 @@ export type BehaviorActionIntendSet<TBehaviorEvent, TGuardResponse> = (
     snapshot: EditorSnapshot
     event: TBehaviorEvent
   },
-  guardResponse: TGuardResponse,
-) => Array<BehaviorActionIntend>
+  guardResponse: NonNullable<TGuardResponse>,
+) => Array<TBehaviorActionIntend>
 
 /**
  * @beta
