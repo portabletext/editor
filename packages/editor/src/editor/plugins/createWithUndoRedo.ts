@@ -80,8 +80,7 @@ export function createWithUndoRedo(
       blockSchemaType.name,
     )
     const remotePatches = getRemotePatches(editor)
-    let previousBehaviorActionIntendSetId =
-      getCurrentBehaviorActionSetId(editor)
+    let previousBehaviorActionSetId = getCurrentBehaviorActionSetId(editor)
 
     options.subscriptions.push(() => {
       debug('Subscribing to patches')
@@ -151,17 +150,15 @@ export function createWithUndoRedo(
       const overwrite = shouldOverwrite(op, lastOp)
       const save = isSaving(editor)
 
-      const currentBehaviorActionIntendSetId =
-        getCurrentBehaviorActionSetId(editor)
+      const currentBehaviorActionSetId = getCurrentBehaviorActionSetId(editor)
 
       let merge =
-        currentBehaviorActionIntendSetId !== undefined &&
-        previousBehaviorActionIntendSetId === undefined
+        currentBehaviorActionSetId !== undefined &&
+        previousBehaviorActionSetId === undefined
           ? false
-          : currentBehaviorActionIntendSetId !== undefined &&
-              previousBehaviorActionIntendSetId !== undefined
-            ? currentBehaviorActionIntendSetId ===
-              previousBehaviorActionIntendSetId
+          : currentBehaviorActionSetId !== undefined &&
+              previousBehaviorActionSetId !== undefined
+            ? currentBehaviorActionSetId === previousBehaviorActionSetId
             : true
 
       if (save) {
@@ -169,8 +166,8 @@ export function createWithUndoRedo(
           merge = false
         } else if (operations.length === 0) {
           merge =
-            currentBehaviorActionIntendSetId === undefined &&
-            previousBehaviorActionIntendSetId === undefined
+            currentBehaviorActionSetId === undefined &&
+            previousBehaviorActionSetId === undefined
               ? shouldMerge(op, lastOp) || overwrite
               : merge
         }
@@ -200,7 +197,7 @@ export function createWithUndoRedo(
         }
       }
 
-      previousBehaviorActionIntendSetId = currentBehaviorActionIntendSetId
+      previousBehaviorActionSetId = currentBehaviorActionSetId
 
       apply(op)
     }

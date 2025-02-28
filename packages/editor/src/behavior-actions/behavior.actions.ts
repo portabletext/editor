@@ -1,7 +1,7 @@
 import {deleteForward, insertText, Path, Transforms} from 'slate'
 import {ReactEditor} from 'slate-react'
 import type {
-  BehaviorAction,
+  InternalBehaviorAction,
   SyntheticBehaviorEvent,
 } from '../behaviors/behavior.types'
 import type {EditorContext} from '../editor/editor-snapshot'
@@ -55,18 +55,18 @@ export type BehaviorActionImplementationContext = Pick<
 >
 
 export type BehaviorActionImplementation<
-  TBehaviorActionType extends BehaviorAction['type'],
+  TBehaviorActionType extends InternalBehaviorAction['type'],
   TReturnType = void,
 > = ({
   context,
   action,
 }: {
   context: BehaviorActionImplementationContext
-  action: PickFromUnion<BehaviorAction, 'type', TBehaviorActionType>
+  action: PickFromUnion<InternalBehaviorAction, 'type', TBehaviorActionType>
 }) => TReturnType
 
 type BehaviorActionImplementations = {
-  [TBehaviorActionType in BehaviorAction['type']]: BehaviorActionImplementation<TBehaviorActionType>
+  [TBehaviorActionType in InternalBehaviorAction['type']]: BehaviorActionImplementation<TBehaviorActionType>
 }
 
 const behaviorActionImplementations: BehaviorActionImplementations = {
@@ -271,7 +271,7 @@ export function performAction({
   action,
 }: {
   context: BehaviorActionImplementationContext
-  action: BehaviorAction
+  action: InternalBehaviorAction
 }) {
   switch (action.type) {
     case 'noop': {
@@ -299,7 +299,11 @@ function performDefaultAction({
   action,
 }: {
   context: BehaviorActionImplementationContext
-  action: PickFromUnion<BehaviorAction, 'type', SyntheticBehaviorEvent['type']>
+  action: PickFromUnion<
+    InternalBehaviorAction,
+    'type',
+    SyntheticBehaviorEvent['type']
+  >
 }) {
   switch (action.type) {
     case 'annotation.add': {

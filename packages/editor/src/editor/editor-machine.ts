@@ -15,8 +15,8 @@ import {defaultBehaviors} from '../behaviors/behavior.default'
 import {
   isCustomBehaviorEvent,
   type Behavior,
-  type BehaviorAction,
   type CustomBehaviorEvent,
+  type InternalBehaviorAction,
   type NativeBehaviorEvent,
   type SyntheticBehaviorEvent,
 } from '../behaviors/behavior.types'
@@ -30,8 +30,8 @@ import type {
 import type {EditorSchema} from './define-schema'
 import {createEditorSnapshot} from './editor-snapshot'
 import {
-  withApplyingBehaviorActionIntendSet,
   withApplyingBehaviorActions,
+  withApplyingBehaviorActionSet,
 } from './with-applying-behavior-actions'
 
 export * from 'xstate/guards'
@@ -323,7 +323,7 @@ export const editorMachine = setup({
             : ({
                 ...event.behaviorEvent,
                 editor: event.editor,
-              } satisfies BehaviorAction)
+              } satisfies InternalBehaviorAction)
         const defaultActionCallback =
           event.type === 'behavior event'
             ? event.defaultActionCallback
@@ -398,7 +398,7 @@ export const editorMachine = setup({
             continue
           }
 
-          const actionIntendSets = eventBehavior.actions.map((actionSet) =>
+          const actionSets = eventBehavior.actions.map((actionSet) =>
             actionSet(
               {
                 context: editorSnapshot.context,
@@ -409,44 +409,42 @@ export const editorMachine = setup({
             ),
           )
 
-          for (const actionIntends of actionIntendSets) {
+          for (const actionSet of actionSets) {
             behaviorOverwritten =
               behaviorOverwritten ||
-              (actionIntends.length > 0 &&
-                actionIntends.some(
-                  (actionIntend) => actionIntend.type !== 'effect',
-                ))
+              (actionSet.length > 0 &&
+                actionSet.some((action) => action.type !== 'effect'))
 
-            withApplyingBehaviorActionIntendSet(event.editor, () => {
-              for (const actionIntend of actionIntends) {
-                if (actionIntend.type === 'raise') {
-                  if (isCustomBehaviorEvent(actionIntend.event)) {
+            withApplyingBehaviorActionSet(event.editor, () => {
+              for (const action of actionSet) {
+                if (action.type === 'raise') {
+                  if (isCustomBehaviorEvent(action.event)) {
                     enqueue.raise({
                       type: 'custom behavior event',
-                      behaviorEvent: actionIntend.event as CustomBehaviorEvent,
+                      behaviorEvent: action.event as CustomBehaviorEvent,
                       editor: event.editor,
                     })
                   } else {
                     enqueue.raise({
                       type: 'behavior event',
-                      behaviorEvent: actionIntend.event,
+                      behaviorEvent: action.event,
                       editor: event.editor,
                     })
                   }
                   continue
                 }
 
-                const action = {
-                  ...actionIntend,
+                const internalAction = {
+                  ...action,
                   editor: event.editor,
                 }
 
                 try {
-                  performAction({context, action})
+                  performAction({context, action: internalAction})
                 } catch (error) {
                   console.error(
                     new Error(
-                      `Performing action "${action.type}" as a result of "${event.behaviorEvent.type}" failed due to: ${error.message}`,
+                      `Performing action "${internalAction.type}" as a result of "${event.behaviorEvent.type}" failed due to: ${error.message}`,
                     ),
                   )
                   break
