@@ -12,7 +12,6 @@ import {
 import {performAction} from '../behavior-actions/behavior.actions'
 import {coreBehaviors} from '../behaviors/behavior.core'
 import {defaultBehaviors} from '../behaviors/behavior.default'
-import {foundationalBehaviors} from '../behaviors/behavior.foundational'
 import {
   isCustomBehaviorEvent,
   type Behavior,
@@ -331,7 +330,6 @@ export const editorMachine = setup({
             : undefined
 
         const eventBehaviors = [
-          ...foundationalBehaviors,
           ...context.behaviors.values(),
           ...defaultBehaviors,
         ].filter(

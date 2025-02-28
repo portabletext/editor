@@ -1,4 +1,5 @@
 import * as selectors from '../selectors'
+import {raiseInsertSoftBreak} from './behavior.default.raise-soft-break'
 import {defineBehavior, raise} from './behavior.types'
 
 const toggleAnnotationOff = defineBehavior({
@@ -200,4 +201,5 @@ export const defaultBehaviors = [
   raiseInsertBlocks,
   raiseSerializationSuccessOrFailure,
   raiseDataTransferSet,
+  raiseInsertSoftBreak,
 ]
