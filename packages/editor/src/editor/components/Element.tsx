@@ -30,9 +30,9 @@ import type {
   RenderStyleFunction,
 } from '../../types/editor'
 import {DefaultBlockObject, DefaultInlineObject} from './DefaultObject'
-import {useDraggable} from './draggable-block'
 import {DropIndicator} from './drop-indicator'
-import {useDroppable} from './droppable-block'
+import {useDraggable} from './use-draggable'
+import {useDroppable} from './use-droppable'
 
 const debug = debugWithName('components:Element')
 const debugRenders = false
