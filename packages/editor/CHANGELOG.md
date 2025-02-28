@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.36.2](https://github.com/portabletext/editor/compare/editor-v1.36.1...editor-v1.36.2) (2025-02-28)
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^3.77.2 ([1f9792e](https://github.com/portabletext/editor/commit/1f9792ea6468e2ca13c819b0abe94041b5238a27))
+* **text/html converter:** fail if no blocks were deserialized ([6be9830](https://github.com/portabletext/editor/commit/6be98301b94d40e959b24882ff20153712a0bfad))
+* **text/plain converter:** fail if no blocks were deserialized ([6921d73](https://github.com/portabletext/editor/commit/6921d736b17ffd0a064b38a9804c7760521e3572))
+* **types:** don't reexport behavior types ([0e8b47f](https://github.com/portabletext/editor/commit/0e8b47fee156210655b481023a106130abd859c1))
+* **types:** fix typedoc issues ([a7706bd](https://github.com/portabletext/editor/commit/a7706bd8a5e8fbbeef7b0c21599caea6616f4915))
+* **types:** remove cyclic dependencies ([d718b2d](https://github.com/portabletext/editor/commit/d718b2da6624b4a90c4cb8e27b6987f9fe9bdb4f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.11
+
 ## [1.36.1](https://github.com/portabletext/editor/compare/editor-v1.36.0...editor-v1.36.1) (2025-02-25)
 
 
