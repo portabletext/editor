@@ -114,7 +114,7 @@ describe(converterTextHtml.deserialize.name, () => {
         },
       }),
     ).toMatchObject({
-      data: [],
+      type: 'deserialization.failure',
     })
   })
 
