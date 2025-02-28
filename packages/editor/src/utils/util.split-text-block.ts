@@ -1,7 +1,9 @@
 import type {PortableTextTextBlock} from '@sanity/types'
-import {isTextBlock, sliceBlocks, type EditorSelectionPoint} from '.'
-import type {EditorContext} from '../selectors'
+import type {EditorSelectionPoint} from '..'
+import type {EditorContext} from '../editor/editor-snapshot'
 import {isSpan} from './util.is-span'
+import {isTextBlock} from './util.is-text-block'
+import {sliceBlocks} from './util.slice-blocks'
 
 /**
  * @beta

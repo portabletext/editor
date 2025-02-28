@@ -1,11 +1,3 @@
-export type {EditorSchema} from '../editor/define-schema'
-export type {EditorContext} from '../editor/editor-snapshot'
-export type {PickFromUnion} from '../type-utils'
-export type {
-  EditorSelection,
-  EditorSelectionPoint,
-  PortableTextMemberSchemaTypes,
-} from '../types/editor'
 export {
   createCodeEditorBehaviors,
   type CodeEditorBehaviorsConfig,

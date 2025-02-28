@@ -1,3 +1,4 @@
+import type {EditorSchema} from '../editor/define-schema'
 import {createPairRegex} from '../internal-utils/get-text-to-emphasize'
 import * as selectors from '../selectors'
 import type {BlockOffset} from '../types/block-offset'
@@ -5,7 +6,7 @@ import * as utils from '../utils'
 import {defineBehavior} from './behavior.types'
 
 export function createDecoratorPairBehavior(config: {
-  decorator: ({schema}: {schema: selectors.EditorSchema}) => string | undefined
+  decorator: ({schema}: {schema: EditorSchema}) => string | undefined
   pair: {char: string; amount: number}
   onDecorate: (offset: BlockOffset) => void
 }) {

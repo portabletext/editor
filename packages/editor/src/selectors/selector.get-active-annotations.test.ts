@@ -1,7 +1,7 @@
 import type {PortableTextBlock} from '@sanity/types'
 import {expect, test} from 'vitest'
+import type {EditorSelection} from '..'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
-import type {EditorSelection} from '../utils'
 import {getActiveAnnotations} from './selector.get-active-annotations'
 
 function snapshot(value: Array<PortableTextBlock>, selection: EditorSelection) {

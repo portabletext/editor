@@ -10,8 +10,8 @@ import {
 import {createDecoratorPairBehavior} from '../behaviors/behavior.decorator-pair'
 import {defineBehavior} from '../behaviors/behavior.types'
 import type {Editor} from '../editor/create-editor'
+import type {EditorSchema} from '../editor/define-schema'
 import {useEditor} from '../editor/editor-provider'
-import type {EditorSchema} from '../selectors'
 import type {BlockOffset} from '../types/block-offset'
 import * as utils from '../utils'
 

@@ -1,6 +1,6 @@
 import type {PortableTextTextBlock} from '@sanity/types'
+import type {EditorContext} from '..'
 import {parseBlock} from '../internal-utils/parse-blocks'
-import type {EditorContext} from '../selectors'
 import {isTextBlock} from './util.is-text-block'
 
 /**
