@@ -71,6 +71,14 @@ export const converterTextPlain = defineConverter({
       },
     ) as Array<PortableTextBlock>
 
+    if (blocks.length === 0) {
+      return {
+        type: 'deserialization.failure',
+        mimeType: 'text/plain',
+        reason: 'No blocks deserialized',
+      }
+    }
+
     return {
       type: 'deserialization.success',
       data: blocks,
