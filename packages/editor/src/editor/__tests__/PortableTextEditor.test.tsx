@@ -53,29 +53,27 @@ describe('initialization', () => {
       data-slate-node="element"
     >
       <div>
-        <div>
+        <span
+          data-slate-node="text"
+        >
           <span
-            data-slate-node="text"
+            contenteditable="false"
+            style="position: absolute; user-select: none; pointer-events: none; left: 0px; right: 0px;"
+          >
+            Jot something down here
+          </span>
+          <span
+            data-slate-leaf="true"
           >
             <span
-              contenteditable="false"
-              style="position: absolute; user-select: none; pointer-events: none; left: 0px; right: 0px;"
+              data-slate-length="0"
+              data-slate-zero-width="n"
             >
-              Jot something down here
-            </span>
-            <span
-              data-slate-leaf="true"
-            >
-              <span
-                data-slate-length="0"
-                data-slate-zero-width="n"
-              >
-                ﻿
-                <br />
-              </span>
+              ﻿
+              <br />
             </span>
           </span>
-        </div>
+        </span>
       </div>
     </div>
   </div>

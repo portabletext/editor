@@ -9,15 +9,23 @@ import {
   IS_DRAGGING_ELEMENT_TARGET,
 } from '../../internal-utils/weakMaps'
 
-const debug = debugWithName('components:DroppableBlock')
+const debug = debugWithName('useDroppable')
 
-export function DroppableBlock(
-  props: React.PropsWithChildren<{
-    element: SlateElement
-    readOnly: boolean
-    blockRef: React.RefObject<HTMLDivElement | null>
-  }>,
-) {
+type Droppable = {
+  droppableProps: {
+    onDragOver?: (event: DragEvent) => void
+    onDragLeave?: () => void
+    onDrop?: (event: DragEvent) => void
+  }
+  isDraggingOverTop: boolean
+  isDraggingOverBottom: boolean
+}
+
+export function useDroppable(props: {
+  element: SlateElement
+  blockRef: React.RefObject<HTMLDivElement | null>
+  readOnly: boolean
+}): Droppable {
   const editor = useSlateStatic()
   const [isDragOver, setIsDragOver] = useState(false)
   const [blockElement, setBlockElement] = useState<HTMLElement | null>(null)
@@ -104,33 +112,24 @@ export function DroppableBlock(
       dragPosition === 'bottom')
 
   if (props.readOnly) {
-    return <>{props.children}</>
+    return {
+      droppableProps: {
+        onDragOver: undefined,
+        onDragLeave: undefined,
+        onDrop: undefined,
+      },
+      isDraggingOverTop: false,
+      isDraggingOverBottom: false,
+    }
   }
 
-  return (
-    <div
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
-      {isDraggingOverTop && <DropIndicator />}
-      {props.children}
-      {isDraggingOverBottom && <DropIndicator />}
-    </div>
-  )
-}
-
-function DropIndicator() {
-  return (
-    <div
-      className="pt-drop-indicator"
-      style={{
-        position: 'absolute',
-        width: '100%',
-        height: 1,
-        borderBottom: '1px solid currentColor',
-        zIndex: 5,
-      }}
-    />
-  )
+  return {
+    droppableProps: {
+      onDragOver: handleDragOver,
+      onDragLeave: handleDragLeave,
+      onDrop: handleDrop,
+    },
+    isDraggingOverTop,
+    isDraggingOverBottom,
+  }
 }

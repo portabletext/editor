@@ -4,10 +4,9 @@ import {
   useRef,
   useState,
   type DragEvent,
-  type ReactNode,
   type RefObject,
 } from 'react'
-import {Path, Transforms} from 'slate'
+import {Path, Transforms, type Element as SlateElement} from 'slate'
 import {ReactEditor, useSlateStatic} from 'slate-react'
 import {debugWithName} from '../../internal-utils/debug'
 import {
@@ -16,24 +15,23 @@ import {
   IS_DRAGGING_BLOCK_TARGET_POSITION,
   IS_DRAGGING_ELEMENT_TARGET,
 } from '../../internal-utils/weakMaps'
-import type {VoidElement} from '../../types/slate'
 
-const debug = debugWithName('components:DraggableBlock')
-const debugRenders = false
+const debug = debugWithName('useDraggable')
 
-export interface DraggableBlockProps {
-  children: ReactNode
-  element: VoidElement
-  readOnly: boolean
-  blockRef: RefObject<HTMLDivElement | null>
+type Draggable = {
+  draggableProps: {
+    draggable: boolean
+    onDragStart?: (event: DragEvent) => void
+    onDrag?: (event: DragEvent) => void
+    onDragEnd?: (event: DragEvent) => void
+  }
 }
 
-export function DraggableBlock({
-  children,
-  element,
-  readOnly,
-  blockRef,
-}: DraggableBlockProps) {
+export function useDraggable(props: {
+  element: SlateElement
+  readOnly: boolean
+  blockRef: RefObject<HTMLDivElement | null>
+}): Draggable {
   const editor = useSlateStatic()
   const dragGhostRef = useRef<HTMLElement>(undefined)
   const [blockElement, setBlockElement] = useState<HTMLElement | null>(null)
@@ -41,9 +39,11 @@ export function DraggableBlock({
   useEffect(
     () =>
       setBlockElement(
-        blockRef ? blockRef.current : ReactEditor.toDOMNode(editor, element),
+        props.blockRef
+          ? props.blockRef.current
+          : ReactEditor.toDOMNode(editor, props.element),
       ),
-    [editor, element, blockRef],
+    [editor, props.element, props.blockRef],
   )
 
   // Note: this is called for the dragging block
@@ -62,7 +62,7 @@ export function DraggableBlock({
         const dragPosition = IS_DRAGGING_BLOCK_TARGET_POSITION.get(editor)
         IS_DRAGGING_BLOCK_TARGET_POSITION.delete(editor)
         let targetPath = ReactEditor.findPath(editor, targetBlock)
-        const myPath = ReactEditor.findPath(editor, element)
+        const myPath = ReactEditor.findPath(editor, props.element)
         const isBefore = Path.isBefore(myPath, targetPath)
         if (dragPosition === 'bottom' && !isBefore) {
           // If it is already at the bottom, don't do anything.
@@ -97,7 +97,7 @@ export function DraggableBlock({
           return
         }
         debug(
-          `Moving element ${element._key} from path ${JSON.stringify(myPath)} to ${JSON.stringify(
+          `Moving element ${props.element._key} from path ${JSON.stringify(myPath)} to ${JSON.stringify(
             targetPath,
           )} (${dragPosition})`,
         )
@@ -107,14 +107,14 @@ export function DraggableBlock({
       }
       debug('No target element, not doing anything')
     },
-    [editor, element],
+    [editor, props.element],
   )
 
   // Note: this is called for the dragging block
   const handleDrag = useCallback(
     (event: DragEvent) => {
       IS_DRAGGING.set(editor, true)
-      IS_DRAGGING_BLOCK_ELEMENT.set(editor, element)
+      IS_DRAGGING_BLOCK_ELEMENT.set(editor, props.element)
       event.stopPropagation() // Stop propagation so that leafs don't get this and take focus/selection!
 
       const target = event.target
@@ -123,7 +123,7 @@ export function DraggableBlock({
         target.style.opacity = '1'
       }
     },
-    [editor, element],
+    [editor, props.element],
   )
 
   // Note: this is called for the dragging block
@@ -169,22 +169,23 @@ export function DraggableBlock({
     [blockElement, editor, handleDrag],
   )
 
-  if (readOnly) {
-    return <>{children}</>
+  if (props.readOnly) {
+    return {
+      draggableProps: {
+        draggable: false,
+        onDragStart: undefined,
+        onDrag: undefined,
+        onDragEnd: undefined,
+      },
+    }
   }
 
-  if (debugRenders) {
-    debug('render')
+  return {
+    draggableProps: {
+      draggable: true,
+      onDragStart: handleDragStart,
+      onDrag: handleDrag,
+      onDragEnd: handleDragEnd,
+    },
   }
-
-  return (
-    <div
-      draggable
-      onDragStart={handleDragStart}
-      onDrag={handleDrag}
-      onDragEnd={handleDragEnd}
-    >
-      {children}
-    </div>
-  )
 }
