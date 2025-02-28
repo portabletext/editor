@@ -261,7 +261,7 @@ export function isCustomBehaviorEvent(
 /**
  * @beta
  */
-export type BehaviorActionIntend =
+export type BehaviorAction =
   | SyntheticBehaviorEvent
   | {
       type: 'raise'
@@ -275,11 +275,8 @@ export type BehaviorActionIntend =
       effect: () => void
     }
 
-/**
- * @beta
- */
-export type BehaviorAction = OmitFromUnion<
-  BehaviorActionIntend,
+export type InternalBehaviorAction = OmitFromUnion<
+  BehaviorAction,
   'type',
   'raise'
 > & {
@@ -291,7 +288,7 @@ export type BehaviorAction = OmitFromUnion<
  */
 export function raise(
   event: SyntheticBehaviorEvent | CustomBehaviorEvent,
-): PickFromUnion<BehaviorActionIntend, 'type', 'raise'> {
+): PickFromUnion<BehaviorAction, 'type', 'raise'> {
   return {type: 'raise', event}
 }
 
@@ -327,7 +324,7 @@ export type Behavior<
   /**
    * Array of behavior action sets.
    */
-  actions: Array<BehaviorActionIntendSet<TBehaviorEvent, TGuardResponse>>
+  actions: Array<BehaviorActionSet<TBehaviorEvent, TGuardResponse>>
 }
 
 /**
@@ -346,7 +343,7 @@ export type BehaviorGuard<TBehaviorEvent, TGuardResponse> = (payload: {
 /**
  * @beta
  */
-export type BehaviorActionIntendSet<TBehaviorEvent, TGuardResponse> = (
+export type BehaviorActionSet<TBehaviorEvent, TGuardResponse> = (
   payload: {
     /**
      * @deprecated
@@ -357,7 +354,7 @@ export type BehaviorActionIntendSet<TBehaviorEvent, TGuardResponse> = (
     event: TBehaviorEvent
   },
   guardResponse: TGuardResponse,
-) => Array<BehaviorActionIntend>
+) => Array<BehaviorAction>
 
 /**
  * @beta

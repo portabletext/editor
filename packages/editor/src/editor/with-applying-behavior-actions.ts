@@ -19,23 +19,20 @@ export function isApplyingBehaviorActions(editor: Editor) {
 
 ////////
 
-const CURRENT_BEHAVIOR_ACTION_INTEND_SET: WeakMap<
+const CURRENT_BEHAVIOR_ACTION_SET: WeakMap<
   Editor,
   {actionSetId: string} | undefined
 > = new WeakMap()
 
-export function withApplyingBehaviorActionIntendSet(
-  editor: Editor,
-  fn: () => void,
-) {
-  const current = CURRENT_BEHAVIOR_ACTION_INTEND_SET.get(editor)
-  CURRENT_BEHAVIOR_ACTION_INTEND_SET.set(editor, {
+export function withApplyingBehaviorActionSet(editor: Editor, fn: () => void) {
+  const current = CURRENT_BEHAVIOR_ACTION_SET.get(editor)
+  CURRENT_BEHAVIOR_ACTION_SET.set(editor, {
     actionSetId: defaultKeyGenerator(),
   })
   withApplyingBehaviorActions(editor, fn)
-  CURRENT_BEHAVIOR_ACTION_INTEND_SET.set(editor, current)
+  CURRENT_BEHAVIOR_ACTION_SET.set(editor, current)
 }
 
 export function getCurrentBehaviorActionSetId(editor: Editor) {
-  return CURRENT_BEHAVIOR_ACTION_INTEND_SET.get(editor)?.actionSetId
+  return CURRENT_BEHAVIOR_ACTION_SET.get(editor)?.actionSetId
 }
