@@ -58,7 +58,7 @@
     "@sanity/types": "^3.77.1",
     "@types/jsdom": "^20.0.0",
     "@types/lodash": "^4.17.7",
-    "@types/react": "^19.0.3",
+    "@types/react": "^19.0.10",
     "@vercel/stega": "0.1.2",
     "@vitest/coverage-v8": "^3.0.7",
     "jsdom": "^26.0.0",
