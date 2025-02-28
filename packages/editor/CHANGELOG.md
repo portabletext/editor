@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.36.4](https://github.com/portabletext/editor/compare/editor-v1.36.3...editor-v1.36.4) (2025-02-28)
+
+
+### Bug Fixes
+
+* **types:** rename `BehaviorActionIntend`-&gt;`BehaviorAction` ([907cf8c](https://github.com/portabletext/editor/commit/907cf8c8883d93e70a6ab3b7b1536a4296be3f8e))
+
 ## [1.36.3](https://github.com/portabletext/editor/compare/editor-v1.36.2...editor-v1.36.3) (2025-02-28)
 
 
