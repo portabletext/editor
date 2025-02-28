@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.36.3](https://github.com/portabletext/editor/compare/editor-v1.36.2...editor-v1.36.3) (2025-02-28)
+
+
+### Bug Fixes
+
+* avoid hijacking Shift+Enter `key.down` event ([087bea2](https://github.com/portabletext/editor/commit/087bea29ccd7259c079d35491fa36f82ceee1e12))
+
 ## [1.36.2](https://github.com/portabletext/editor/compare/editor-v1.36.1...editor-v1.36.2) (2025-02-28)
 
 
