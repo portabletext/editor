@@ -24,11 +24,7 @@ import type {
   RefObject,
 } from 'react'
 import type {Observable, Subject} from 'rxjs'
-import type {
-  Descendant,
-  Node as SlateNode,
-  Operation as SlateOperation,
-} from 'slate'
+import type {Descendant, Operation as SlateOperation} from 'slate'
 import type {DOMNode} from 'slate-dom'
 import type {ReactEditor} from 'slate-react'
 import type {PortableTextEditableProps} from '../editor/Editable'
@@ -97,18 +93,12 @@ export interface EditableAPI {
   undo: () => void
 }
 
-/** @internal */
-export type EditorNode = SlateNode & {
-  _key: string
-  _type: string
-}
-/** @internal */
-export type HistoryItem = {
+type HistoryItem = {
   operations: SlateOperation[]
   timestamp: Date
 }
-/** @internal */
-export interface History {
+
+interface History {
   redos: HistoryItem[]
   undos: HistoryItem[]
 }
@@ -121,7 +111,7 @@ export type EditorSelection = {
   focus: EditorSelectionPoint
   backward?: boolean
 } | null
-/** @internal */
+
 export interface PortableTextSlateEditor extends ReactEditor {
   _key: 'editor'
   _type: 'editor'
@@ -528,7 +518,7 @@ export interface RangeDecoration {
   payload?: Record<string, unknown>
 }
 
-/** @internal */
+/** @beta */
 export type PortableTextMemberSchemaTypes = {
   annotations: (ObjectSchemaType & {i18nTitleKey?: string})[]
   block: ObjectSchemaType

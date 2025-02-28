@@ -67,6 +67,7 @@ export type MarkdownPluginConfig = MarkdownBehaviorsConfig & {
  *    </EditorProvider>
  *  )
  * }
+ * ```
  */
 export function MarkdownPlugin(props: {config: MarkdownPluginConfig}) {
   const editor = useEditor()
