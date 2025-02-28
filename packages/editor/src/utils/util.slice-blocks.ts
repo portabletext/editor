@@ -4,7 +4,7 @@ import {
   isPortableTextTextBlock,
   type PortableTextBlock,
 } from '@sanity/types'
-import type {EditorSelection} from '../selectors'
+import type {EditorSelection} from '..'
 
 /**
  * @public

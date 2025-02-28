@@ -1,7 +1,8 @@
 import type {PortableTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
-import {getSelectedSpans, type EditorSelection} from '.'
+import type {EditorSelection} from '..'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
+import {getSelectedSpans} from './selector.get-selected-spans'
 
 const fooBar = {
   _type: 'block',

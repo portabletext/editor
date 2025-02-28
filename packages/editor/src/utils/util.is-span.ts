@@ -1,5 +1,5 @@
 import type {PortableTextChild, PortableTextSpan} from '@sanity/types'
-import type {EditorContext} from '../selectors'
+import type {EditorContext} from '..'
 
 /**
  * @public

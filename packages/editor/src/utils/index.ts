@@ -1,4 +1,3 @@
-export type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 export {
   blockOffsetToSpanSelectionPoint,
   spanSelectionPointToBlockOffset,

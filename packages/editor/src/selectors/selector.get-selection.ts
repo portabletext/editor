@@ -1,4 +1,5 @@
-import type {EditorSelection, EditorSelector} from './_exports'
+import type {EditorSelection} from '..'
+import type {EditorSelector} from '../editor/editor-selector'
 
 /**
  * @public

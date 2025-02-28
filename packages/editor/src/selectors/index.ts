@@ -1,11 +1,3 @@
-export type {EditorSchema} from '../editor/define-schema'
-export type {EditorSelector} from '../editor/editor-selector'
-export type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
-export type {
-  EditorSelection,
-  EditorSelectionPoint,
-  PortableTextMemberSchemaTypes,
-} from '../types/editor'
 export {getActiveAnnotations} from './selector.get-active-annotations'
 export {getActiveListItem} from './selector.get-active-list-item'
 export {getActiveStyle} from './selector.get-active-style'

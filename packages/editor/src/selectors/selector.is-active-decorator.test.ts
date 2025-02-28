@@ -1,5 +1,5 @@
 import {expect, test} from 'vitest'
-import type {EditorSelection} from '.'
+import type {EditorSelection} from '..'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {isActiveDecorator} from './selector.is-active-decorator'
 

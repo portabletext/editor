@@ -1,5 +1,5 @@
 import type {PortableTextBlock} from '@sanity/types'
-import type {EditorSelector} from './_exports'
+import type {EditorSelector} from '../editor/editor-selector'
 
 /**
  * @public

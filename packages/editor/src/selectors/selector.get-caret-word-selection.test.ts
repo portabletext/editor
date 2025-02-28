@@ -1,8 +1,8 @@
 import type {PortableTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
+import type {EditorSelection} from '..'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {createTestKeyGenerator} from '../internal-utils/test-key-generator'
-import type {EditorSelection} from '../utils'
 import {getCaretWordSelection} from './selector.get-caret-word-selection'
 
 const keyGenerator = createTestKeyGenerator()
