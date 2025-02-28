@@ -29,10 +29,10 @@ import type {
   RenderListItemFunction,
   RenderStyleFunction,
 } from '../../types/editor'
-import type {VoidElement} from '../../types/slate'
 import {DefaultBlockObject, DefaultInlineObject} from './DefaultObject'
-import {DraggableBlock} from './draggable-block'
-import {DroppableBlock} from './droppable-block'
+import {useDraggable} from './draggable-block'
+import {DropIndicator} from './drop-indicator'
+import {useDroppable} from './droppable-block'
 
 const debug = debugWithName('components:Element')
 const debugRenders = false
@@ -79,6 +79,8 @@ export const Element: FunctionComponent<ElementProps> = ({
   const focused =
     (selected && editor.selection && Range.isCollapsed(editor.selection)) ||
     false
+  const droppable = useDroppable({element, blockRef, readOnly})
+  const draggable = useDraggable({element, blockRef, readOnly})
 
   const value = useMemo(
     () =>
@@ -238,47 +240,19 @@ export const Element: FunctionComponent<ElementProps> = ({
       ? renderBlock(renderProps as BlockRenderProps)
       : children
 
-    if (Editor.isVoid(editor, element)) {
-      return (
-        <div
-          key={element._key}
-          {...attributes}
-          className={className}
-          spellCheck={spellCheck}
-        >
-          <DraggableBlock
-            element={element as VoidElement}
-            readOnly={readOnly}
-            blockRef={blockRef}
-          >
-            <DroppableBlock
-              element={element}
-              readOnly={readOnly}
-              blockRef={blockRef}
-            >
-              <div ref={blockRef}>{propsOrDefaultRendered}</div>
-            </DroppableBlock>
-          </DraggableBlock>
-        </div>
-      )
-    } else {
-      return (
-        <div
-          key={element._key}
-          {...attributes}
-          className={className}
-          spellCheck={spellCheck}
-        >
-          <DroppableBlock
-            element={element}
-            readOnly={readOnly}
-            blockRef={blockRef}
-          >
-            <div ref={blockRef}>{propsOrDefaultRendered}</div>
-          </DroppableBlock>
-        </div>
-      )
-    }
+    return (
+      <div
+        key={element._key}
+        {...attributes}
+        className={className}
+        spellCheck={spellCheck}
+        {...droppable.droppableProps}
+      >
+        {droppable.isDraggingOverTop ? <DropIndicator /> : null}
+        <div ref={blockRef}>{propsOrDefaultRendered}</div>
+        {droppable.isDraggingOverBottom ? <DropIndicator /> : null}
+      </div>
+    )
   }
 
   const schemaType = schemaTypes.blockObjects.find(
@@ -330,51 +304,26 @@ export const Element: FunctionComponent<ElementProps> = ({
     renderedBlockFromProps = renderBlock(_props as BlockRenderProps)
   }
 
-  if (Editor.isVoid(editor, element)) {
-    return (
-      <div key={element._key} {...attributes} className={className}>
-        {children}
-        <DraggableBlock
-          element={element as VoidElement}
-          readOnly={readOnly}
-          blockRef={blockRef}
-        >
-          <DroppableBlock
-            element={element}
-            readOnly={readOnly}
-            blockRef={blockRef}
-          >
-            <div ref={blockRef} contentEditable={false}>
-              {renderedBlockFromProps ? (
-                renderedBlockFromProps
-              ) : (
-                <DefaultBlockObject value={value} />
-              )}
-            </div>
-          </DroppableBlock>
-        </DraggableBlock>
+  return (
+    <div
+      key={element._key}
+      {...attributes}
+      className={className}
+      {...droppable.droppableProps}
+      {...draggable.draggableProps}
+    >
+      {droppable.isDraggingOverTop ? <DropIndicator /> : null}
+      {children}
+      <div ref={blockRef} contentEditable={false}>
+        {renderedBlockFromProps ? (
+          renderedBlockFromProps
+        ) : (
+          <DefaultBlockObject value={value} />
+        )}
       </div>
-    )
-  } else {
-    return (
-      <div key={element._key} {...attributes} className={className}>
-        {children}
-        <DroppableBlock
-          element={element}
-          readOnly={readOnly}
-          blockRef={blockRef}
-        >
-          <div ref={blockRef} contentEditable={false}>
-            {renderedBlockFromProps ? (
-              renderedBlockFromProps
-            ) : (
-              <DefaultBlockObject value={value} />
-            )}
-          </div>
-        </DroppableBlock>
-      </div>
-    )
-  }
+      {droppable.isDraggingOverBottom ? <DropIndicator /> : null}
+    </div>
+  )
 }
 
 Element.displayName = 'Element'
