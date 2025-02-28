@@ -114,7 +114,7 @@ export type PortableTextEditableProps = Omit<
  * @public
  *
  *
- * The core component that renders the editor. Must be placed within the {@link EventProvider} component.
+ * The core component that renders the editor. Must be placed within the {@link EditorProvider} component.
  *
  * @example
  * ```tsx

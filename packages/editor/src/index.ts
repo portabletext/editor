@@ -14,7 +14,6 @@ export type {
   SyntheticBehaviorEvent,
 } from './behaviors/index'
 export type {Editor, EditorConfig, EditorEvent} from './editor/create-editor'
-export type {SlateEditor} from './editor/create-slate-editor'
 export {
   defineSchema,
   type BaseDefinition,
@@ -43,6 +42,52 @@ export {PortableTextEditor} from './editor/PortableTextEditor'
 export type {PortableTextEditorProps} from './editor/PortableTextEditor'
 export {EditorEventListener} from './editor-event-listener'
 export type {BlockOffset} from './types/block-offset'
-export * from './types/editor'
-export type {PortableTextMemberSchemaTypes} from './types/editor'
+export type {
+  EditableAPIDeleteOptions,
+  EditableAPI,
+  EditorSelectionPoint,
+  EditorSelection,
+  MutationChange,
+  PatchChange,
+  ValueChange,
+  SelectionChange,
+  FocusChange,
+  UnsetChange,
+  BlurChange,
+  LoadingChange,
+  ReadyChange,
+  ErrorChange,
+  InvalidValueResolution,
+  InvalidValue,
+  UndoChange,
+  RedoChange,
+  ConnectionChange,
+  EditorChange,
+  EditorChanges,
+  OnPasteResult,
+  OnPasteResultOrPromise,
+  PasteData,
+  OnPasteFn,
+  OnBeforeInputFn,
+  OnCopyFn,
+  PatchObservable,
+  BlockRenderProps,
+  BlockChildRenderProps,
+  BlockAnnotationRenderProps,
+  BlockDecoratorRenderProps,
+  BlockListItemRenderProps,
+  RenderBlockFunction,
+  RenderChildFunction,
+  RenderEditableFunction,
+  RenderAnnotationFunction,
+  RenderPlaceholderFunction,
+  RenderStyleFunction,
+  BlockStyleRenderProps,
+  RenderListItemFunction,
+  RenderDecoratorFunction,
+  ScrollSelectionIntoViewFunction,
+  RangeDecorationOnMovedDetails,
+  RangeDecoration,
+  PortableTextMemberSchemaTypes,
+} from './types/editor'
 export type {HotkeyOptions} from './types/options'
