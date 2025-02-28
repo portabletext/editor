@@ -4,15 +4,6 @@ export type {
   PortableTextChild,
   PortableTextSpan,
 } from '@sanity/types'
-export type {
-  Behavior,
-  BehaviorActionIntend,
-  BehaviorActionIntendSet,
-  BehaviorEvent,
-  BehaviorGuard,
-  NativeBehaviorEvent,
-  SyntheticBehaviorEvent,
-} from './behaviors/index'
 export type {Editor, EditorConfig, EditorEvent} from './editor/create-editor'
 export {
   defineSchema,
