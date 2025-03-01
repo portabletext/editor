@@ -3,10 +3,11 @@ import type {PortableTextBlock} from '@sanity/types'
 import {page, userEvent, type Locator} from '@vitest/browser/context'
 import {isEqual} from 'lodash'
 import {Given, Then, When} from 'racejar'
+import React from 'react'
 import {assert, expect, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {createActor} from 'xstate'
-import type {EditorSelection} from '../src'
+import type {Editor, EditorSelection} from '../src'
 import {Editors} from './editors'
 import {
   getAnnotations,
@@ -35,6 +36,7 @@ import {
 } from './test-machine'
 
 export type EditorContext = {
+  ref: React.RefObject<Editor>
   locator: Locator
   insertObjectButtonLocator: {
     image: Locator
@@ -48,18 +50,21 @@ export type EditorContext = {
     link: Locator
   }
   toggleStyleButtonLocator: (style: 'normal' | `h${number}`) => Locator
-  ref: EditorActorRef
+  actorRef: EditorActorRef
 }
 
 export function createEditorContext({
   ref,
+  actorRef,
   locator,
 }: {
-  ref: EditorActorRef
+  ref: React.RefObject<Editor | null>
+  actorRef: EditorActorRef
   locator: Locator
 }): EditorContext {
   return {
-    ref,
+    ref: ref as React.RefObject<Editor>,
+    actorRef,
     locator: locator.getByRole('textbox'),
     insertObjectButtonLocator: {
       image: locator.getByTestId('button-insert-image'),
@@ -95,16 +100,21 @@ export const stepDefinitions = [
         value: undefined,
       },
     })
+    const editorRef = React.createRef<Editor>()
     testActor.start()
-    testActor.send({type: 'add editor'})
+    testActor.send({type: 'add editor', editorRef})
 
     render(<Editors testRef={testActor} />)
 
-    const editorARef = testActor.getSnapshot().context.editors[0]
-    const locator = page.getByTestId(editorARef.id)
+    const editorActorRef = testActor.getSnapshot().context.editors[0]
+    const locator = page.getByTestId(editorActorRef.id)
 
     context.testRef = testActor
-    context.editorA = createEditorContext({ref: editorARef, locator})
+    context.editorA = createEditorContext({
+      actorRef: editorActorRef,
+      locator,
+      ref: editorRef,
+    })
 
     await vi.waitFor(async () => {
       await expect.element(context.editorA.locator).toBeInTheDocument()
@@ -118,26 +128,30 @@ export const stepDefinitions = [
       },
     })
     testActor.start()
-    testActor.send({type: 'add editor'})
-    testActor.send({type: 'add editor'})
+    const editorARef = React.createRef<Editor>()
+    testActor.send({type: 'add editor', editorRef: editorARef})
+    const editorBRef = React.createRef<Editor>()
+    testActor.send({type: 'add editor', editorRef: editorBRef})
 
     render(<Editors testRef={testActor} />)
 
-    const editorARef = testActor.getSnapshot().context.editors[0]
-    const editorALocator = page.getByTestId(editorARef.id)
+    const editorAActorRef = testActor.getSnapshot().context.editors[0]
+    const editorALocator = page.getByTestId(editorAActorRef.id)
 
     context.testRef = testActor
     context.editorA = createEditorContext({
-      ref: editorARef,
+      actorRef: editorAActorRef,
       locator: editorALocator,
+      ref: editorARef,
     })
 
-    const editorBRef = testActor.getSnapshot().context.editors[1]
-    const editorBLocator = page.getByTestId(editorBRef.id)
+    const editorBActorRef = testActor.getSnapshot().context.editors[1]
+    const editorBLocator = page.getByTestId(editorBActorRef.id)
 
     context.editorB = createEditorContext({
-      ref: editorBRef,
+      actorRef: editorBActorRef,
       locator: editorBLocator,
+      ref: editorBRef,
     })
 
     await vi.waitFor(async () => {
@@ -191,9 +205,18 @@ export const stepDefinitions = [
   When(
     'a(n) {block-object} is inserted',
     async (context: Context, blockObject: 'image') => {
-      await waitForNewValue(() =>
-        context.editorA.insertObjectButtonLocator[blockObject].click(),
-      )
+      await waitForNewValue(async () => {
+        await context.editorA.ref.current.send({
+          type: 'insert.block',
+          block: {
+            _key: context.editorA.ref.current
+              .getSnapshot()
+              .context.keyGenerator(),
+            _type: blockObject,
+          },
+          placement: 'auto',
+        })
+      })
     },
   ),
   Given(
@@ -243,7 +266,7 @@ export const stepDefinitions = [
       const value = await getValue()
 
       await waitForNewSelection(context.editorA, async () => {
-        await context.editorA.ref.send({
+        await context.editorA.actorRef.send({
           type: 'selection',
           selection: getTextSelection(value, text),
         })
@@ -277,7 +300,7 @@ export const stepDefinitions = [
       const value = await getValue()
 
       await waitForNewSelection(context.editorB, async () => {
-        await context.editorB.ref.send({
+        await context.editorB.actorRef.send({
           type: 'selection',
           selection: getTextSelection(value, text),
         })
@@ -341,7 +364,7 @@ export const stepDefinitions = [
       const value = await getValue()
 
       await waitForNewSelection(context.editorA, async () => {
-        await context.editorA.ref.send({
+        await context.editorA.actorRef.send({
           type: 'selection',
           selection: getTextSelection(value, text),
         })
@@ -371,7 +394,7 @@ export const stepDefinitions = [
       const value = await getValue()
 
       await waitForNewSelection(context.editorA, async () => {
-        await context.editorA.ref.send({
+        await context.editorA.actorRef.send({
           type: 'selection',
           selection: getTextSelection(value, text),
         })
@@ -385,7 +408,7 @@ export const stepDefinitions = [
       const value = await getValue()
 
       await waitForNewSelection(context.editorA, async () => {
-        await context.editorA.ref.send({
+        await context.editorA.actorRef.send({
           type: 'selection',
           selection: getTextSelection(value, text),
         })
@@ -495,7 +518,7 @@ export const stepDefinitions = [
       const value = await getValue()
       const selection = await getEditorSelection(value)
 
-      context.editorA.ref.send({
+      context.editorA.actorRef.send({
         type: 'selection',
         selection,
       })
@@ -506,7 +529,7 @@ export const stepDefinitions = [
       const value = await getValue()
       const selection = await getEditorSelection(value)
 
-      context.editorA.ref.send({
+      context.editorA.actorRef.send({
         type: 'selection',
         selection: reverseTextSelection(selection),
       })
@@ -517,7 +540,7 @@ export const stepDefinitions = [
 
     await waitForNewSelection(context.editorA, async () => {
       if (text === '[stock-ticker]') {
-        await context.editorA.ref.send({
+        await context.editorA.actorRef.send({
           type: 'selection',
           selection: getInlineObjectSelection(
             value,
@@ -525,7 +548,7 @@ export const stepDefinitions = [
           ),
         })
       } else {
-        context.editorA.ref.send({
+        context.editorA.actorRef.send({
           type: 'selection',
           selection: getTextSelection(value, text),
         })
@@ -539,7 +562,7 @@ export const stepDefinitions = [
 
       await waitForNewSelection(context.editorB, async () => {
         if (text === '[stock-ticker]') {
-          await context.editorB.ref.send({
+          await context.editorB.actorRef.send({
             type: 'selection',
             selection: getInlineObjectSelection(
               value,
@@ -547,7 +570,7 @@ export const stepDefinitions = [
             ),
           })
         } else {
-          await context.editorB.ref.send({
+          await context.editorB.actorRef.send({
             type: 'selection',
             selection: getTextSelection(value, text),
           })
@@ -561,7 +584,7 @@ export const stepDefinitions = [
       const value = await getValue()
 
       await waitForNewSelection(context.editorA, async () => {
-        await context.editorA.ref.send({
+        await context.editorA.actorRef.send({
           type: 'selection',
           selection: reverseTextSelection(getTextSelection(value, text)),
         })
@@ -575,7 +598,7 @@ export const stepDefinitions = [
 
       if (text === '[stock-ticker]') {
         await waitForNewSelection(context.editorA, async () => {
-          await context.editorA.ref.send({
+          await context.editorA.actorRef.send({
             type: 'selection',
             selection: getSelectionBeforeInlineObject(
               value,
@@ -595,7 +618,7 @@ export const stepDefinitions = [
 
       if (text === '[stock-ticker]') {
         await waitForNewSelection(context.editorB, async () => {
-          await context.editorB.ref.send({
+          await context.editorB.actorRef.send({
             type: 'selection',
             selection: getSelectionBeforeInlineObject(
               value,
@@ -615,7 +638,7 @@ export const stepDefinitions = [
 
       if (text === '[stock-ticker]') {
         await waitForNewSelection(context.editorA, async () => {
-          await context.editorA.ref.send({
+          await context.editorA.actorRef.send({
             type: 'selection',
             selection: getSelectionAfterInlineObject(
               value,
@@ -635,7 +658,7 @@ export const stepDefinitions = [
 
       if (text === '[stock-ticker]') {
         await waitForNewSelection(context.editorB, async () => {
-          await context.editorB.ref.send({
+          await context.editorB.actorRef.send({
             type: 'selection',
             selection: getSelectionAfterInlineObject(
               value,
@@ -794,7 +817,7 @@ export const stepDefinitions = [
   When(
     '{button} is pressed by editor B',
     async (context: Context, button: ButtonName) => {
-      context.editorB.ref.send({type: 'focus'})
+      context.editorB.actorRef.send({type: 'focus'})
       await pressButton(context.editorB, button, 1)
     },
   ),
@@ -807,7 +830,7 @@ export const stepDefinitions = [
   When(
     '{button} is pressed {int} times by editor B',
     async (context: Context, button: ButtonName, times: number) => {
-      context.editorB.ref.send({type: 'focus'})
+      context.editorB.actorRef.send({type: 'focus'})
       await pressButton(context.editorB, button, times)
     },
   ),
@@ -968,7 +991,7 @@ export async function putCaretBeforeText(editor: EditorContext, text: string) {
   const value = await getValue()
 
   await waitForNewSelection(editor, async () => {
-    await editor.ref.send({
+    await editor.actorRef.send({
       type: 'selection',
       selection: getSelectionBeforeText(value, text),
     })
@@ -979,7 +1002,7 @@ export async function putCaretAfterText(editor: EditorContext, text: string) {
   const value = await getValue()
 
   await waitForNewSelection(editor, async () => {
-    await editor.ref.send({
+    await editor.actorRef.send({
       type: 'selection',
       selection: getSelectionAfterText(value, text),
     })
@@ -988,21 +1011,21 @@ export async function putCaretAfterText(editor: EditorContext, text: string) {
 
 export async function type(editor: EditorContext, text: string) {
   await waitForNewValue(async () => {
-    editor.ref.send({type: 'focus'})
+    editor.actorRef.send({type: 'focus'})
     await userEvent.type(editor.locator, text)
   })
 }
 
 export async function undo(editor: EditorContext) {
   await waitForNewValue(async () => {
-    editor.ref.send({type: 'focus'})
+    editor.actorRef.send({type: 'focus'})
     await userEvent.keyboard(`{${getMetaKey()}>}z{/${getMetaKey()}}`)
   })
 }
 
 export async function redo(editor: EditorContext) {
   await waitForNewValue(async () => {
-    editor.ref.send({type: 'focus'})
+    editor.actorRef.send({type: 'focus'})
     await userEvent.keyboard(
       `{Shift>}{${getMetaKey()}>}z{/${getMetaKey()}}{/Shift}`,
     )

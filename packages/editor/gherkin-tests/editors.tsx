@@ -12,11 +12,15 @@ import {
 import type {Behavior} from '../src/behaviors'
 import type {EditorEmittedEvent} from '../src/editor/editor-machine'
 import {EditorProvider, useEditor} from '../src/editor/editor-provider'
+import {EditorRefPlugin} from '../src/plugins'
 import * as selectors from '../src/selectors'
 import type {EditorActorRef, TestActorRef} from './test-machine'
 
 export function Editors(props: {testRef: TestActorRef}) {
-  const editors = useSelector(props.testRef, (state) => state.context.editors)
+  const editorActorRefs = useSelector(
+    props.testRef,
+    (state) => state.context.editors,
+  )
   const behaviors = useSelector(
     props.testRef,
     (state) => state.context.behaviors,
@@ -30,11 +34,11 @@ export function Editors(props: {testRef: TestActorRef}) {
 
   return (
     <div>
-      {editors.map((editor) => (
+      {editorActorRefs.map((editorActorRef) => (
         <Editor
           behaviors={behaviors}
-          key={editor.id}
-          editorRef={editor}
+          key={editorActorRef.id}
+          editorActorRef={editorActorRef}
           rangeDecorations={rangeDecorations}
           schema={schema}
           value={value}
@@ -53,24 +57,28 @@ const hotkeys: HotkeyOptions = {
 }
 
 function Editor(props: {
-  editorRef: EditorActorRef
+  editorActorRef: EditorActorRef
   behaviors: Array<Behavior>
   rangeDecorations?: Array<RangeDecoration>
   schema: React.ComponentProps<typeof PortableTextEditor>['schemaType']
   value: Array<PortableTextBlock> | undefined
 }) {
+  const editorRef = useSelector(
+    props.editorActorRef,
+    (state) => state.context.editorRef,
+  )
   const selection = useSelector(
-    props.editorRef,
+    props.editorActorRef,
     (state) => state.context.selection,
   )
   const [selectionValue, setSelectionValue] = React.useState(() => selection)
   const keyGenerator = useSelector(
-    props.editorRef,
+    props.editorActorRef,
     (state) => state.context.keyGenerator,
   )
 
   return (
-    <div data-testid={props.editorRef.id}>
+    <div data-testid={props.editorActorRef.id}>
       <EditorProvider
         initialConfig={{
           behaviors: props.behaviors,
@@ -78,20 +86,21 @@ function Editor(props: {
           schema: props.schema,
         }}
       >
+        <EditorRefPlugin ref={editorRef} />
         <EditorEventListener
-          editorRef={props.editorRef}
+          editorActorRef={props.editorActorRef}
           behaviors={props.behaviors}
           value={props.value}
           on={(event) => {
             if (event.type === 'mutation') {
-              props.editorRef.send(event)
+              props.editorActorRef.send(event)
             }
             if (event.type === 'selection') {
               setSelectionValue(event.selection)
             }
           }}
         />
-        <FocusListener editorRef={props.editorRef} />
+        <FocusListener editorActorRef={props.editorActorRef} />
         <BlockButtons />
         <InlineObjectButtons />
         <CommentButtons />
@@ -112,7 +121,7 @@ function Editor(props: {
 
 function EditorEventListener(props: {
   behaviors: Array<Behavior>
-  editorRef: EditorActorRef
+  editorActorRef: EditorActorRef
   on: (event: EditorEmittedEvent) => void
   value: Array<PortableTextBlock> | undefined
 }) {
@@ -133,14 +142,14 @@ function EditorEventListener(props: {
   }, [editor, props.value])
 
   useEffect(() => {
-    const subscription = props.editorRef.on('patches', (event) => {
+    const subscription = props.editorActorRef.on('patches', (event) => {
       editor.send(event)
     })
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [props.editorRef, editor])
+  }, [props.editorActorRef, editor])
 
   useEffect(() => {
     const subscription = editor.on('*', props.on)
@@ -148,23 +157,23 @@ function EditorEventListener(props: {
     return () => {
       subscription.unsubscribe()
     }
-  }, [props.editorRef, editor, props.on])
+  }, [props.editorActorRef, editor, props.on])
 
   return null
 }
 
-function FocusListener(props: {editorRef: EditorActorRef}) {
+function FocusListener(props: {editorActorRef: EditorActorRef}) {
   const editor = useEditor()
 
   useEffect(() => {
-    const subscription = props.editorRef.on('focus', () => {
+    const subscription = props.editorActorRef.on('focus', () => {
       editor.send({type: 'focus'})
     })
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [editor, props.editorRef])
+  }, [editor, props.editorActorRef])
 
   return null
 }

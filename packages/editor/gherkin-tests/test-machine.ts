@@ -9,7 +9,12 @@ import {
   setup,
   type ActorRefFrom,
 } from 'xstate'
-import type {EditorSelection, PortableTextEditor, RangeDecoration} from '../src'
+import type {
+  Editor,
+  EditorSelection,
+  PortableTextEditor,
+  RangeDecoration,
+} from '../src'
 import {coreBehaviors} from '../src/behaviors'
 import type {Behavior} from '../src/behaviors/behavior.types'
 
@@ -45,10 +50,12 @@ export type EditorActorRef = ActorRefFrom<typeof editorMachine>
 const editorMachine = setup({
   types: {
     context: {} as {
+      editorRef: React.RefObject<Editor | null>
       keyGenerator: () => string
       selection: EditorSelection
     },
     input: {} as {
+      editorRef: React.RefObject<Editor | null>
       keyGenerator: () => string
     },
     events: {} as EditorEvent,
@@ -78,6 +85,7 @@ const editorMachine = setup({
 }).createMachine({
   id: 'editor',
   context: ({input}) => ({
+    editorRef: input.editorRef,
     keyGenerator: input.keyGenerator,
     selection: null,
   }),
@@ -100,6 +108,7 @@ const editorMachine = setup({
 export type TestMachineEvent =
   | {
       type: 'add editor'
+      editorRef: React.RefObject<Editor | null>
     }
   | {
       type: 'editor.mutation'
@@ -150,6 +159,7 @@ export const testMachine = setup({
           ...context.editors,
           spawn('editor machine', {
             input: {
+              editorRef: event.editorRef,
               keyGenerator: createKeyGenerator(`${editorId}-k`),
             },
             id: editorId,

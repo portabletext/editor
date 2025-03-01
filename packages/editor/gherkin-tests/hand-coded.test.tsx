@@ -1,8 +1,10 @@
 import type {PortableTextBlock} from '@sanity/types'
 import {page, userEvent} from '@vitest/browser/context'
+import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {createActor} from 'xstate'
+import type {Editor} from '../src'
 import {Editors} from './editors'
 import {
   createEditorContext,
@@ -43,12 +45,14 @@ async function setUpTest(initialValue: Array<PortableTextBlock>) {
     },
   })
   testActor.start()
-  testActor.send({type: 'add editor'})
+  const editorRef = React.createRef<Editor>()
+  testActor.send({type: 'add editor', editorRef})
 
-  const editorARef = testActor.getSnapshot().context.editors[0]
-  const editorALocator = page.getByTestId(editorARef.id)
+  const editorActorRef = testActor.getSnapshot().context.editors[0]
+  const editorALocator = page.getByTestId(editorActorRef.id)
   const editorA = createEditorContext({
-    ref: editorARef,
+    ref: editorRef,
+    actorRef: editorActorRef,
     locator: editorALocator,
   })
 
@@ -70,20 +74,25 @@ async function setUpCollabTest(initialValue: Array<PortableTextBlock>) {
     },
   })
   testActor.start()
-  testActor.send({type: 'add editor'})
-  testActor.send({type: 'add editor'})
 
-  const editorARef = testActor.getSnapshot().context.editors[0]
-  const editorALocator = page.getByTestId(editorARef.id)
+  const editorARef = React.createRef<Editor>()
+  testActor.send({type: 'add editor', editorRef: editorARef})
+  const editorBRef = React.createRef<Editor>()
+  testActor.send({type: 'add editor', editorRef: editorBRef})
+
+  const editorAActorRef = testActor.getSnapshot().context.editors[0]
+  const editorALocator = page.getByTestId(editorAActorRef.id)
   const editorA = createEditorContext({
     ref: editorARef,
+    actorRef: editorAActorRef,
     locator: editorALocator,
   })
 
-  const editorBRef = testActor.getSnapshot().context.editors[1]
-  const editorBLocator = page.getByTestId(editorBRef.id)
+  const editorBActorRef = testActor.getSnapshot().context.editors[1]
+  const editorBLocator = page.getByTestId(editorBActorRef.id)
   const editorB = createEditorContext({
     ref: editorBRef,
+    actorRef: editorBActorRef,
     locator: editorBLocator,
   })
 
