@@ -188,6 +188,14 @@ export const stepDefinitions = [
       )
     },
   ),
+  When(
+    'a(n) {block-object} is inserted',
+    async (context: Context, blockObject: 'image') => {
+      await waitForNewValue(() =>
+        context.editorA.insertObjectButtonLocator[blockObject].click(),
+      )
+    },
+  ),
   Given(
     'a(n) {block-object} {key}',
     async (context: Context, blockObject: 'image', keyKey: string) => {
