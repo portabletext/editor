@@ -1,15 +1,49 @@
-import {createParameterType} from 'racejar'
+import {createParameterType, type ParameterType} from 'racejar'
 import {parseGherkinTextParameter} from './gherkin-step-helpers'
+
+export type Parameter = {
+  [K in keyof typeof parameterType]: (typeof parameterType)[K] extends ParameterType<
+    infer TParameterType
+  >
+    ? TParameterType
+    : never
+}
+
+export const parameterType = {
+  blockObject: createParameterType<'image'>({
+    name: 'block-object',
+    matcher: /"(image)"/,
+  }),
+  button: createParameterType<
+    | 'ArrowUp'
+    | 'ArrowDown'
+    | 'ArrowLeft'
+    | 'ArrowRight'
+    | 'Backspace'
+    | 'Delete'
+    | 'Enter'
+    | 'Escape'
+    | 'Shift+Enter'
+    | 'Space'
+  >({
+    name: 'button',
+    matcher:
+      /"(ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Backspace|Delete|Enter|Escape|Shift\+Enter|Space)"/,
+  }),
+  text: createParameterType<Array<string>>({
+    name: 'text',
+    matcher: /"([a-z-,#>\\n |\[\]😂😹:]*)"/u,
+    type: Array,
+    transform: parseGherkinTextParameter,
+  }),
+}
 
 export const parameterTypes = [
   createParameterType({
     name: 'annotation',
     matcher: /"(comment|link)"/,
   }),
-  createParameterType({
-    name: 'block-object',
-    matcher: /"(image)"/,
-  }),
+  parameterType.blockObject,
   createParameterType({
     name: 'index',
     matcher: /"(\d)"/,
@@ -20,11 +54,7 @@ export const parameterTypes = [
     name: 'inline-object',
     matcher: /"(stock-ticker)"/,
   }),
-  createParameterType({
-    name: 'button',
-    matcher:
-      /"(ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Backspace|Delete|Enter|Escape|Shift\+Enter|Space)"/,
-  }),
+  parameterType.button,
   createParameterType({
     name: 'key',
     matcher: /"([a-z]\d)"/,
@@ -49,10 +79,5 @@ export const parameterTypes = [
     name: 'style',
     matcher: /"(normal|blockquote|h\d)"/,
   }),
-  createParameterType({
-    name: 'text',
-    matcher: /"([a-z-,#>\\n |\[\]😂😹:]*)"/u,
-    type: Array,
-    transform: parseGherkinTextParameter,
-  }),
+  parameterType.text,
 ]

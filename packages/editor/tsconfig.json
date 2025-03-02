@@ -1,7 +1,13 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "./tsconfig.base.json",
-  "include": ["./src", "./e2e-tests", "./gherkin-tests", "./tests"],
+  "include": [
+    "./src",
+    "./e2e-tests",
+    "./gherkin-tests",
+    "./gherkin-tests-v2",
+    "./tests"
+  ],
   "compilerOptions": {
     "rootDir": ".",
     "outDir": "./lib",
