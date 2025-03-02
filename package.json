@@ -24,7 +24,10 @@
     "postinstall": "husky",
     "lint:fix": "turbo lint:fix",
     "test": "turbo test",
-    "test:watch": "turbo test:watch"
+    "test:watch": "turbo test:watch",
+    "test:chromium": "turbo test:chromium",
+    "test:firefox": "turbo test:firefox",
+    "test:webkit": "turbo test:webkit"
   },
   "lint-staged": {
     "*": [

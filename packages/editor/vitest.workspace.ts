@@ -10,7 +10,7 @@ export default defineWorkspace([
       }),
     ],
     test: {
-      name: 'browser',
+      name: 'browser.bak',
       include: [
         'gherkin-tests/**/*.test.ts',
         'gherkin-tests/**/*.test.tsx',
@@ -43,8 +43,42 @@ export default defineWorkspace([
       }),
     ],
     test: {
+      name: 'browser',
+      include: ['gherkin-tests-v2/**/*.test.ts'],
+      browser: {
+        enabled: true,
+        headless: true,
+        provider: 'playwright',
+        instances: [
+          {
+            browser: 'chromium',
+          },
+          {
+            browser: 'firefox',
+          },
+          {
+            browser: 'webkit',
+          },
+        ],
+        screenshotFailures: false,
+      },
+    },
+  },
+  {
+    plugins: [
+      react({
+        babel: {plugins: [['babel-plugin-react-compiler', {target: '18'}]]},
+      }),
+    ],
+    test: {
       name: 'unit',
-      exclude: ['node_modules', 'e2e-tests', 'gherkin-tests', 'tests'],
+      exclude: [
+        'node_modules',
+        'e2e-tests',
+        'gherkin-tests',
+        'gherkin-tests-v2',
+        'tests',
+      ],
       environment: 'jsdom',
       setupFiles: ['./vitest.setup.ts'],
     },

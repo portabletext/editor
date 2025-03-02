@@ -12,7 +12,7 @@ export default defineWorkspace([
   {
     plugins: [],
     test: {
-      name: 'browser (chromium)',
+      name: 'browser.bak (chromium)',
       exclude: ['example-playwright'],
     },
   },

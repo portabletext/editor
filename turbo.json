@@ -34,6 +34,18 @@
       "dependsOn": ["build"],
       "persistent": true,
       "cache": false
+    },
+    "test:chromium": {
+      "dependsOn": ["build"],
+      "outputs": [""]
+    },
+    "test:firefox": {
+      "dependsOn": ["build"],
+      "outputs": [""]
+    },
+    "test:webkit": {
+      "dependsOn": ["build"],
+      "outputs": [""]
     }
   }
 }
