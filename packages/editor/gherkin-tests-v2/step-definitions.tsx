@@ -65,6 +65,8 @@ export const stepDefinitions = [
       selection: () =>
         editorRef.current?.getSnapshot().context.selection ?? null,
     }
+
+    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
   }),
 
   Given('the text {string}', async (context: Context, text: string) => {
