@@ -8,6 +8,28 @@ import type {EditorSchema} from '../editor/define-schema'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {isTypedObject} from './asserters'
 
+export function parseBlocks({
+  context,
+  blocks,
+  options,
+}: {
+  context: Pick<EditorContext, 'keyGenerator' | 'schema'>
+  blocks: unknown
+  options: {
+    refreshKeys: boolean
+  }
+}): Array<PortableTextBlock> {
+  if (!Array.isArray(blocks)) {
+    return []
+  }
+
+  return blocks.flatMap((block) => {
+    const parsedBlock = parseBlock({context, block, options})
+
+    return parsedBlock ? [parsedBlock] : []
+  })
+}
+
 export function parseBlock({
   context,
   block,
