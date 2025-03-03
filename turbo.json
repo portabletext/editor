@@ -35,6 +35,10 @@
       "persistent": true,
       "cache": false
     },
+    "test:e2e:chromium": {
+      "dependsOn": ["build"],
+      "outputs": [""]
+    },
     "test:browser:chromium": {
       "dependsOn": ["build"],
       "outputs": [""]
