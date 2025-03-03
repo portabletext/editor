@@ -35,15 +35,15 @@
       "persistent": true,
       "cache": false
     },
-    "test:chromium": {
+    "test:browser:chromium": {
       "dependsOn": ["build"],
       "outputs": [""]
     },
-    "test:firefox": {
+    "test:browser:firefox": {
       "dependsOn": ["build"],
       "outputs": [""]
     },
-    "test:webkit": {
+    "test:browser:webkit": {
       "dependsOn": ["build"],
       "outputs": [""]
     }
