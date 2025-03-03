@@ -16,7 +16,7 @@ import {
   type EditorSelection,
   type PortableTextBlock,
 } from '../src'
-import {parseBlocks} from '../src/internal-utils/parse-blocks'
+import {parseBlock, parseBlocks} from '../src/internal-utils/parse-blocks'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {EditorRefPlugin} from '../src/plugins'
 import type {Parameter} from './gherkin-parameter-types'
@@ -116,18 +116,19 @@ export const stepDefinitions = [
   ),
 
   When(
-    'a(n) {block-object} is inserted {placement}',
-    (
-      context: Context,
-      blockObject: Parameter['blockObject'],
-      placement: Parameter['placement'],
-    ) => {
+    'a "block" is inserted {placement}',
+    (context: Context, placement: Parameter['placement'], block: string) => {
       context.editor.ref.current.send({
         type: 'insert.block',
-        block: {
-          _key: context.editor.ref.current.getSnapshot().context.keyGenerator(),
-          _type: blockObject,
-        },
+        block: parseBlock({
+          context: {
+            schema: context.editor.ref.current.getSnapshot().context.schema,
+            keyGenerator:
+              context.editor.ref.current.getSnapshot().context.keyGenerator,
+          },
+          block: JSON.parse(block),
+          options: {refreshKeys: false},
+        })!,
         placement,
       })
     },
