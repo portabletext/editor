@@ -18,14 +18,14 @@ import {
   type PortableTextBlock,
 } from '../src'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
-import {EditorRefPlugin, EventListenerPlugin} from '../src/plugins'
+import {EditorRefPlugin} from '../src/plugins'
 
 type Context = {
   editor: {
     ref: React.RefObject<Editor>
     locator: Locator
-    value?: Array<PortableTextBlock>
-    selection: EditorSelection
+    value: () => Array<PortableTextBlock>
+    selection: () => EditorSelection
   }
 }
 
@@ -51,16 +51,6 @@ export const stepDefinitions = [
           initialValue,
         }}
       >
-        <EventListenerPlugin
-          on={(event) => {
-            if (event.type === 'mutation') {
-              context.editor.value = event.value
-            }
-            if (event.type === 'selection') {
-              context.editor.selection = event.selection
-            }
-          }}
-        />
         <EditorRefPlugin ref={editorRef} />
         <PortableTextEditable />
       </EditorProvider>,
@@ -71,8 +61,9 @@ export const stepDefinitions = [
     context.editor = {
       ref: editorRef as React.RefObject<Editor>,
       locator,
-      value: initialValue,
-      selection: null,
+      value: () => editorRef.current?.getSnapshot().context.value ?? [],
+      selection: () =>
+        editorRef.current?.getSnapshot().context.selection ?? null,
     }
   }),
 
@@ -95,12 +86,12 @@ export const stepDefinitions = [
     'the caret is put before {string}',
     async (context: Context, text: string) => {
       await vi.waitFor(() => {
-        const selection = getSelectionBeforeText(context.editor.value, text)
+        const selection = getSelectionBeforeText(context.editor.value(), text)
         expect(selection).not.toBeNull()
 
         context.editor.ref.current.send({
           type: 'select',
-          selection: getSelectionBeforeText(context.editor.value, text),
+          selection: getSelectionBeforeText(context.editor.value(), text),
         })
       })
     },
@@ -110,12 +101,12 @@ export const stepDefinitions = [
     'the caret is put after {string}',
     async (context: Context, text: string) => {
       await vi.waitFor(() => {
-        const selection = getSelectionAfterText(context.editor.value, text)
+        const selection = getSelectionAfterText(context.editor.value(), text)
         expect(selection).not.toBeNull()
 
         context.editor.ref.current.send({
           type: 'select',
-          selection: getSelectionAfterText(context.editor.value, text),
+          selection: getSelectionAfterText(context.editor.value(), text),
         })
       })
     },
@@ -140,7 +131,7 @@ export const stepDefinitions = [
     async (context: Context, text: Parameter['text']) => {
       await vi.waitFor(() => {
         expect(
-          getValueText(context.editor.value),
+          getValueText(context.editor.value()),
           'Unexpected editor text',
         ).toEqual(text)
       })
