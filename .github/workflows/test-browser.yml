@@ -82,4 +82,4 @@ jobs:
         run: |
           node -v
           pnpm -v
-          pnpm test:${{ matrix.browser }}
+          pnpm test:browser:${{ matrix.browser }}
