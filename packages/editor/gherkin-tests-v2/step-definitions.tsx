@@ -116,7 +116,7 @@ export const stepDefinitions = [
   ),
 
   When(
-    'a "block" is inserted {placement}',
+    'a block is inserted {placement}',
     (context: Context, placement: Parameter['placement'], block: string) => {
       context.editor.ref.current.send({
         type: 'insert.block',
@@ -135,7 +135,7 @@ export const stepDefinitions = [
   ),
 
   When(
-    '"blocks" are inserted {placement}',
+    'blocks are inserted {placement}',
     (context: Context, placement: Parameter['placement'], blocks: string) => {
       context.editor.ref.current.send({
         type: 'insert.blocks',

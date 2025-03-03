@@ -4,7 +4,7 @@ Feature: Insert Blocks
     Given one editor
 
   Scenario Outline: Inserting block objects an empty editor
-    When "blocks" are inserted <placement>
+    When blocks are inserted <placement>
       ```
       [
         {
@@ -23,7 +23,7 @@ Feature: Insert Blocks
   Scenario Outline: Inserting blocks on a text block
     Given the text "foo"
     When the caret is put <position>
-    And "blocks" are inserted <placement>
+    And blocks are inserted <placement>
       ```
       [
         {
