@@ -34,7 +34,7 @@ export function Feature<
   parameterTypes,
 }: {
   featureText: string
-  hooks: Array<Hook<TContext>>
+  hooks?: Array<Hook<TContext>>
   stepDefinitions: Array<StepDefinition<TContext, any, any, any>>
   parameterTypes?: Array<ParameterType<unknown>>
 }) {
