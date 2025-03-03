@@ -4,7 +4,12 @@ Feature: Insert Block
     Given one editor
 
   Scenario Outline: Inserting block object on an empty editor
-    When an "image" is inserted <placement>
+    When a "block" is inserted <placement>
+      ```
+      {
+        "_type": "image"
+      }
+      ```
     Then the text is <text>
 
     Examples:
@@ -18,7 +23,12 @@ Feature: Insert Block
     When "Enter" is pressed
     And "bar" is typed
     And the caret is put <position>
-    And an "image" is inserted <placement>
+    And a "block" is inserted <placement>
+      ```
+      {
+        "_type": "image"
+      }
+      ```
     Then the text is <text>
 
     Examples:
