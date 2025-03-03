@@ -30,6 +30,10 @@ export const parameterType = {
     matcher:
       /"(ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Backspace|Delete|Enter|Escape|Shift\+Enter|Space)"/,
   }),
+  placement: createParameterType<'auto' | 'after' | 'before'>({
+    name: 'placement',
+    matcher: /"(auto|after|before)"/,
+  }),
   text: createParameterType<Array<string>>({
     name: 'text',
     matcher: /"([a-z-,#>\\n |\[\]]*)"/u,
@@ -41,5 +45,6 @@ export const parameterType = {
 export const parameterTypes = [
   parameterType.blockObject,
   parameterType.button,
+  parameterType.placement,
   parameterType.text,
 ]

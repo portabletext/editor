@@ -3,7 +3,6 @@ import {Given, Then, When} from 'racejar'
 import React from 'react'
 import {expect, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
-import type {Parameter} from '../gherkin-tests/gherkin-parameter-types'
 import {
   getSelectionAfterText,
   getSelectionBeforeText,
@@ -17,8 +16,10 @@ import {
   type EditorSelection,
   type PortableTextBlock,
 } from '../src'
+import {parseBlocks} from '../src/internal-utils/parse-blocks'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {EditorRefPlugin} from '../src/plugins'
+import type {Parameter} from './gherkin-parameter-types'
 
 type Context = {
   editor: {
@@ -124,6 +125,25 @@ export const stepDefinitions = [
           _type: blockObject,
         },
         placement: 'auto',
+      })
+    },
+  ),
+
+  When(
+    '"blocks" are inserted {placement}',
+    (context: Context, placement: Parameter['placement'], blocks: string) => {
+      context.editor.ref.current.send({
+        type: 'insert.blocks',
+        blocks: parseBlocks({
+          context: {
+            schema: context.editor.ref.current.getSnapshot().context.schema,
+            keyGenerator:
+              context.editor.ref.current.getSnapshot().context.keyGenerator,
+          },
+          blocks: JSON.parse(blocks),
+          options: {refreshKeys: false},
+        }),
+        placement,
       })
     },
   ),
