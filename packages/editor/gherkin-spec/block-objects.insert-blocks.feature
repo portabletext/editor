@@ -3,6 +3,23 @@ Feature: Insert Blocks
   Background:
     Given one editor
 
+  Scenario Outline: Inserting block objects an empty editor
+    When "blocks" are inserted <placement>
+      ```
+      [
+        {
+          "_type": "image"
+        }
+      ]
+      ```
+    Then the text is <text>
+
+    Examples:
+      | placement | text      |
+      | "before"  | "[image]" |
+      | "after"   | "[image]" |
+      | "auto"    | "[image]" |
+
   Scenario Outline: Inserting blocks on a text block
     Given the text "foo"
     When the caret is put <position>

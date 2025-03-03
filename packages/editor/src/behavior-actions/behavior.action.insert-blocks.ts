@@ -9,6 +9,21 @@ export const insertBlocksActionImplementation: BehaviorActionImplementation<
   const fragment = toSlateValue(action.blocks, {schemaTypes: context.schema})
 
   if (!action.editor.selection) {
+    if (action.placement === 'before') {
+      action.editor.insertFragment(fragment, {
+        at: Editor.start(action.editor, []),
+      })
+      return
+    }
+
+    if (action.placement === 'after') {
+      action.editor.insertFragment(fragment, {
+        at: Editor.end(action.editor, []),
+      })
+      return
+    }
+
+    action.editor.insertFragment(fragment)
     return
   }
 
