@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/portabletext/editor/compare/racejar-v1.2.0...racejar-v1.2.1) (2025-03-03)
+
+
+### Bug Fixes
+
+* make hooks optional in Playwright Feature ([b02b7fd](https://github.com/portabletext/editor/commit/b02b7fd86c1ef77a4928f8997244b18c16972e9c))
+
 ## [1.2.0](https://github.com/portabletext/editor/compare/racejar-v1.1.3...racejar-v1.2.0) (2025-02-10)
 
 

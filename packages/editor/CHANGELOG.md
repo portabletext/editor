@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.36.5](https://github.com/portabletext/editor/compare/editor-v1.36.4...editor-v1.36.5) (2025-03-03)
+
+
+### Bug Fixes
+
+* **deps:** update react compiler dependencies 🤖 ✨ ([#863](https://github.com/portabletext/editor/issues/863)) ([ecad51c](https://github.com/portabletext/editor/commit/ecad51c80ec5d2f79255e6a8f27d50e935bb6b3d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * racejar bumped to 1.2.1
+
 ## [1.36.4](https://github.com/portabletext/editor/compare/editor-v1.36.3...editor-v1.36.4) (2025-02-28)
 
 
