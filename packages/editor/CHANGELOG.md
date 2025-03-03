@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.36.6](https://github.com/portabletext/editor/compare/editor-v1.36.5...editor-v1.36.6) (2025-03-03)
+
+
+### Bug Fixes
+
+* **insert.blocks:** support and require placement of insertion ([d157f17](https://github.com/portabletext/editor/commit/d157f1744da59809e4eb25a4419fa550beba40d7))
+* **insert.blocks:** support insertion without a selection ([291365d](https://github.com/portabletext/editor/commit/291365d2de84b0b69816869781509bfd42e25cd2))
+
 ## [1.36.5](https://github.com/portabletext/editor/compare/editor-v1.36.4...editor-v1.36.5) (2025-03-03)
 
 
