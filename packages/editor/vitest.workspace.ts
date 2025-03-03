@@ -11,12 +11,7 @@ export default defineWorkspace([
     ],
     test: {
       name: 'browser.bak',
-      include: [
-        'gherkin-tests/**/*.test.ts',
-        'gherkin-tests/**/*.test.tsx',
-        'tests/**/*.test.ts',
-        'tests/**/*.test.tsx',
-      ],
+      include: ['gherkin-tests/**/*.test.ts', 'gherkin-tests/**/*.test.tsx'],
       browser: {
         enabled: true,
         headless: true,
@@ -44,7 +39,11 @@ export default defineWorkspace([
     ],
     test: {
       name: 'browser',
-      include: ['gherkin-tests-v2/**/*.test.ts'],
+      include: [
+        'gherkin-tests-v2/**/*.test.ts',
+        'tests/**/*.test.ts',
+        'tests/**/*.test.tsx',
+      ],
       browser: {
         enabled: true,
         headless: true,
