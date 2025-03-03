@@ -116,15 +116,19 @@ export const stepDefinitions = [
   ),
 
   When(
-    'a(n) {block-object} is inserted',
-    (context: Context, blockObject: Parameter['blockObject']) => {
+    'a(n) {block-object} is inserted {placement}',
+    (
+      context: Context,
+      blockObject: Parameter['blockObject'],
+      placement: Parameter['placement'],
+    ) => {
       context.editor.ref.current.send({
         type: 'insert.block',
         block: {
           _key: context.editor.ref.current.getSnapshot().context.keyGenerator(),
           _type: blockObject,
         },
-        placement: 'auto',
+        placement,
       })
     },
   ),
