@@ -9,11 +9,4 @@ export default defineWorkspace([
       environment: 'node',
     },
   },
-  {
-    plugins: [],
-    test: {
-      name: 'browser.bak (chromium)',
-      environment: 'node',
-    },
-  },
 ])
