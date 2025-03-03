@@ -141,6 +141,7 @@ const raiseInsertBlocks = defineBehavior({
       raise({
         type: 'insert.blocks',
         blocks: event.data,
+        placement: 'auto',
       }),
     ],
   ],

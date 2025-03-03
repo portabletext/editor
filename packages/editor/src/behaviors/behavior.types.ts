@@ -101,6 +101,7 @@ export type SyntheticBehaviorEvent =
   | {
       type: 'insert.blocks'
       blocks: Array<PortableTextBlock>
+      placement: 'auto' | 'after' | 'before'
     }
   | {
       type: 'insert.block object'

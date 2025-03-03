@@ -123,6 +123,7 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
         type: 'insert.blocks',
         blocks: action.data,
         editor: action.editor,
+        placement: 'auto',
       },
     })
   },
