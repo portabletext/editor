@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.36.7](https://github.com/portabletext/editor/compare/editor-v1.36.6...editor-v1.36.7) (2025-03-04)
+
+
+### Bug Fixes
+
+* **`delete` action:** delete without selecting beforehand ([b3ea0aa](https://github.com/portabletext/editor/commit/b3ea0aad19d242f0cf1598b28d33b7b9ab576fe8))
+* **behavior actions:** don't pass entire context to actions ([e82b23d](https://github.com/portabletext/editor/commit/e82b23dadd8ec823724323637ea3e50626cead88))
+* **deps:** update sanity monorepo to ^3.78.0 ([7bcaac8](https://github.com/portabletext/editor/commit/7bcaac8977d97567905fcf3f577f2c271472f09d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.12
+
 ## [1.36.6](https://github.com/portabletext/editor/compare/editor-v1.36.5...editor-v1.36.6) (2025-03-03)
 
 
