@@ -1,4 +1,3 @@
-import {deleteFragment, select} from 'slate'
 import {toSlateRange} from '../internal-utils/ranges'
 import type {BehaviorActionImplementation} from './behavior.actions'
 
@@ -13,6 +12,5 @@ export const deleteActionImplementation: BehaviorActionImplementation<
     )
   }
 
-  select(action.editor, range)
-  deleteFragment(action.editor)
+  action.editor.delete({at: range})
 }
