@@ -360,7 +360,10 @@ export const editorMachine = setup({
           withApplyingBehaviorActions(event.editor, () => {
             try {
               performAction({
-                context,
+                context: {
+                  keyGenerator: context.keyGenerator,
+                  schema: context.schema,
+                },
                 action: defaultAction,
               })
             } catch (error) {
@@ -440,7 +443,13 @@ export const editorMachine = setup({
                 }
 
                 try {
-                  performAction({context, action: internalAction})
+                  performAction({
+                    context: {
+                      keyGenerator: context.keyGenerator,
+                      schema: context.schema,
+                    },
+                    action: internalAction,
+                  })
                 } catch (error) {
                   console.error(
                     new Error(
@@ -483,7 +492,10 @@ export const editorMachine = setup({
           withApplyingBehaviorActions(event.editor, () => {
             try {
               performAction({
-                context,
+                context: {
+                  keyGenerator: context.keyGenerator,
+                  schema: context.schema,
+                },
                 action: defaultAction,
               })
             } catch (error) {
