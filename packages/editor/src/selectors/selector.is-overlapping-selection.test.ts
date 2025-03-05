@@ -140,4 +140,32 @@ describe(isOverlappingSelection.name, () => {
       ),
     ).toBe(true)
   })
+
+  test('before inline object', () => {
+    expect(
+      isOverlappingSelection({
+        anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 2},
+        focus: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 2},
+      })(
+        snapshot({
+          anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k4'}], offset: 0},
+          focus: {path: [{_key: 'k1'}, 'children', {_key: 'k4'}], offset: 0},
+        }),
+      ),
+    ).toBe(false)
+  })
+
+  test('after inline object', () => {
+    expect(
+      isOverlappingSelection({
+        anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 2},
+        focus: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 2},
+      })(
+        snapshot({
+          anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k4'}], offset: 0},
+          focus: {path: [{_key: 'k1'}, 'children', {_key: 'k4'}], offset: 0},
+        }),
+      ),
+    ).toBe(false)
+  })
 })
