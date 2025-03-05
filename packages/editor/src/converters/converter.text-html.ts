@@ -7,7 +7,10 @@ import {defineConverter} from './converter.types'
 export const converterTextHtml = defineConverter({
   mimeType: 'text/html',
   serialize: ({snapshot, event}) => {
-    if (!snapshot.context.selection) {
+    const selection =
+      snapshot.beta.internalDrag?.origin.selection ?? snapshot.context.selection
+
+    if (!selection) {
       return {
         type: 'serialization.failure',
         mimeType: 'text/html',
@@ -18,7 +21,7 @@ export const converterTextHtml = defineConverter({
 
     const blocks = sliceBlocks({
       blocks: snapshot.context.value,
-      selection: snapshot.context.selection,
+      selection,
     })
 
     const html = toHTML(blocks, {

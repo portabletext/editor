@@ -1,4 +1,3 @@
-import type {PortableTextBlock} from '@sanity/types'
 import {useSelector} from '@xstate/react'
 import {isEqual, noop} from 'lodash'
 import {
@@ -20,6 +19,7 @@ import {
 import {
   Editor,
   Path,
+  Element as SlateElement,
   Range as SlateRange,
   Transforms,
   type BaseRange,
@@ -36,17 +36,14 @@ import {
 } from 'slate-react'
 import {debugWithName} from '../internal-utils/debug'
 import {getEventPosition} from '../internal-utils/event-position'
+import {parseBlocks} from '../internal-utils/parse-blocks'
 import {
   moveRangeByOperation,
   toPortableTextRange,
   toSlateRange,
 } from '../internal-utils/ranges'
 import {normalizeSelection} from '../internal-utils/selection'
-import {
-  fromSlateValue,
-  isEqualToEmptyEditor,
-  toSlateValue,
-} from '../internal-utils/values'
+import {fromSlateValue, isEqualToEmptyEditor} from '../internal-utils/values'
 import type {
   EditorSelection,
   OnCopyFn,
@@ -141,7 +138,15 @@ export const PortableTextEditable = forwardRef<
     onBeforeInput,
     onPaste,
     onCopy,
+    onCut,
     onClick,
+    onDragStart,
+    onDrag,
+    onDragEnd,
+    onDragEnter,
+    onDragOver,
+    onDrop,
+    onDragLeave,
     rangeDecorations,
     renderAnnotation,
     renderBlock,
@@ -435,11 +440,30 @@ export const PortableTextEditable = forwardRef<
           event.preventDefault()
         }
       } else if (event.nativeEvent.clipboardData) {
+        // Prevent Slate from handling the event
+        event.stopPropagation()
+        event.preventDefault()
+
+        const position = getEventPosition({
+          snapshot: getEditorSnapshot({
+            editorActorSnapshot: editorActor.getSnapshot(),
+            slateEditorInstance: slateEditor,
+          }),
+          slateEditor,
+          event: event.nativeEvent,
+        })
+
+        if (!position) {
+          console.warn('Could not find position for copy event')
+          return
+        }
+
         editorActor.send({
           type: 'behavior event',
           behaviorEvent: {
             type: 'copy',
             data: event.nativeEvent.clipboardData,
+            position,
           },
           editor: slateEditor,
           nativeEvent: event,
@@ -447,6 +471,48 @@ export const PortableTextEditable = forwardRef<
       }
     },
     [onCopy, editorActor, slateEditor],
+  )
+
+  const handleCut = useCallback(
+    (event: ClipboardEvent<HTMLDivElement>) => {
+      if (onCut) {
+        const result = onCut(event)
+        // CutFn may return something to avoid doing default stuff
+        if (result !== undefined) {
+          event.preventDefault()
+        }
+      } else if (event.nativeEvent.clipboardData) {
+        // Prevent Slate from handling the event
+        event.stopPropagation()
+        event.preventDefault()
+
+        const position = getEventPosition({
+          snapshot: getEditorSnapshot({
+            editorActorSnapshot: editorActor.getSnapshot(),
+            slateEditorInstance: slateEditor,
+          }),
+          slateEditor,
+          event: event.nativeEvent,
+        })
+
+        if (!position) {
+          console.warn('Could not find position for cut event')
+          return
+        }
+
+        editorActor.send({
+          type: 'behavior event',
+          behaviorEvent: {
+            type: 'cut',
+            dataTransfer: event.nativeEvent.clipboardData,
+            position,
+          },
+          editor: slateEditor,
+          nativeEvent: event,
+        })
+      }
+    },
+    [onCut, editorActor, slateEditor],
   )
 
   // Handle incoming pasting events in the editor
@@ -474,13 +540,50 @@ export const PortableTextEditable = forwardRef<
             if (!result || !result.insert) {
               debug('No result from custom paste handler, pasting normally')
 
-              slateEditor.insertData(event.clipboardData)
-            } else if (result.insert) {
-              slateEditor.insertFragment(
-                toSlateValue(result.insert as PortableTextBlock[], {
-                  schemaTypes,
+              const position = getEventPosition({
+                snapshot: getEditorSnapshot({
+                  editorActorSnapshot: editorActor.getSnapshot(),
+                  slateEditorInstance: slateEditor,
                 }),
-              )
+                slateEditor,
+                event: event.nativeEvent,
+              })
+
+              if (!position) {
+                console.warn('Could not find position for paste event')
+                return
+              }
+
+              editorActor.send({
+                type: 'behavior event',
+                behaviorEvent: {
+                  type: 'paste',
+                  data: event.clipboardData,
+                  position,
+                },
+                editor: slateEditor,
+                nativeEvent: event,
+              })
+            } else if (result.insert) {
+              editorActor.send({
+                type: 'behavior event',
+                behaviorEvent: {
+                  type: 'insert.blocks',
+                  blocks: parseBlocks({
+                    context: {
+                      keyGenerator:
+                        editorActor.getSnapshot().context.keyGenerator,
+                      schema: editorActor.getSnapshot().context.schema,
+                    },
+                    blocks: result.insert,
+                    options: {
+                      refreshKeys: true,
+                    },
+                  }),
+                  placement: 'auto',
+                },
+                editor: slateEditor,
+              })
             } else {
               console.warn(
                 'Your onPaste function returned something unexpected:',
@@ -489,7 +592,7 @@ export const PortableTextEditable = forwardRef<
             }
           })
           .catch((error) => {
-            console.error(error)
+            console.warn(error)
 
             return error
           })
@@ -497,11 +600,30 @@ export const PortableTextEditable = forwardRef<
             editorActor.send({type: 'notify.done loading'})
           })
       } else if (event.nativeEvent.clipboardData) {
+        // Prevent Slate from handling the event
+        event.preventDefault()
+        event.stopPropagation()
+
+        const position = getEventPosition({
+          snapshot: getEditorSnapshot({
+            editorActorSnapshot: editorActor.getSnapshot(),
+            slateEditorInstance: slateEditor,
+          }),
+          slateEditor,
+          event: event.nativeEvent,
+        })
+
+        if (!position) {
+          console.warn('Could not find position for paste event')
+          return
+        }
+
         editorActor.send({
           type: 'behavior event',
           behaviorEvent: {
             type: 'paste',
             data: event.nativeEvent.clipboardData,
+            position,
           },
           editor: slateEditor,
           nativeEvent: event,
@@ -826,9 +948,240 @@ export const PortableTextEditable = forwardRef<
     }
   }, [slateEditor, editorActor])
 
+  const handleDragStart = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      onDragStart?.(event)
+
+      if (!event.isDefaultPrevented() && !event.isPropagationStopped()) {
+        const position = getEventPosition({
+          snapshot: getEditorSnapshot({
+            editorActorSnapshot: editorActor.getSnapshot(),
+            slateEditorInstance: slateEditor,
+          }),
+          slateEditor,
+          event: event.nativeEvent,
+        })
+
+        if (!position) {
+          console.warn('Could not find position for dragstart event')
+          return
+        }
+
+        if (ReactEditor.hasTarget(slateEditor, event.target)) {
+          const node = ReactEditor.toSlateNode(slateEditor, event.target)
+          const path = ReactEditor.findPath(slateEditor, node)
+          const voidMatch =
+            (SlateElement.isElement(node) &&
+              Editor.isVoid(slateEditor, node)) ||
+            Editor.void(slateEditor, {at: path, voids: true})
+
+          // If starting a drag on a void node, make sure it is selected
+          // so that it shows up in the selection's fragment.
+          if (voidMatch) {
+            const range = Editor.range(slateEditor, path)
+            Transforms.select(slateEditor, range)
+          }
+        }
+
+        editorActor.send({
+          type: 'dragstart',
+          origin: position,
+        })
+
+        editorActor.send({
+          type: 'behavior event',
+          behaviorEvent: {
+            type: 'drag.dragstart',
+            dataTransfer: event.dataTransfer,
+            position,
+          },
+          editor: slateEditor,
+        })
+
+        // Prevent Slate from handling the event
+        event.stopPropagation()
+      }
+    },
+    [onDragStart, editorActor, slateEditor],
+  )
+
+  const handleDrag = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      onDrag?.(event)
+
+      if (!event.isDefaultPrevented() && !event.isPropagationStopped()) {
+        editorActor.send({
+          type: 'behavior event',
+          behaviorEvent: {
+            type: 'drag.drag',
+            dataTransfer: event.dataTransfer,
+          },
+          editor: slateEditor,
+        })
+
+        // Prevent Slate from handling the event
+        event.stopPropagation()
+      }
+    },
+    [onDrag, editorActor, slateEditor],
+  )
+
+  const handleDragEnd = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      onDragEnd?.(event)
+
+      if (!event.isDefaultPrevented() && !event.isPropagationStopped()) {
+        editorActor.send({
+          type: 'behavior event',
+          behaviorEvent: {
+            type: 'drag.dragend',
+            dataTransfer: event.dataTransfer,
+          },
+          editor: slateEditor,
+        })
+
+        // Prevent Slate from handling the event
+        event.stopPropagation()
+      }
+    },
+    [onDragEnd, editorActor, slateEditor],
+  )
+
+  const handleDragEnter = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      onDragEnter?.(event)
+
+      if (!event.isDefaultPrevented() && !event.isPropagationStopped()) {
+        const position = getEventPosition({
+          snapshot: getEditorSnapshot({
+            editorActorSnapshot: editorActor.getSnapshot(),
+            slateEditorInstance: slateEditor,
+          }),
+          slateEditor,
+          event: event.nativeEvent,
+        })
+
+        if (!position) {
+          console.warn('Could not find position for dragenter event')
+          return
+        }
+
+        editorActor.send({
+          type: 'behavior event',
+          behaviorEvent: {
+            type: 'drag.dragenter',
+            dataTransfer: event.dataTransfer,
+            position,
+          },
+          editor: slateEditor,
+        })
+
+        // Prevent Slate from handling the event
+        event.stopPropagation()
+      }
+    },
+    [onDragEnter, editorActor, slateEditor],
+  )
+
+  const handleDragOver = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      onDragOver?.(event)
+
+      if (!event.isDefaultPrevented() && !event.isPropagationStopped()) {
+        const position = getEventPosition({
+          snapshot: getEditorSnapshot({
+            editorActorSnapshot: editorActor.getSnapshot(),
+            slateEditorInstance: slateEditor,
+          }),
+          slateEditor,
+          event: event.nativeEvent,
+        })
+
+        if (!position) {
+          console.warn('Could not find position for dragover event')
+          return
+        }
+
+        editorActor.send({
+          type: 'behavior event',
+          behaviorEvent: {
+            type: 'drag.dragover',
+            dataTransfer: event.dataTransfer,
+            position,
+          },
+          editor: slateEditor,
+          nativeEvent: event,
+        })
+
+        // Prevent Slate from handling the event
+        event.stopPropagation()
+      }
+    },
+    [onDragOver, editorActor, slateEditor],
+  )
+
+  const handleDrop = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      onDrop?.(event)
+
+      if (!event.isDefaultPrevented() && !event.isPropagationStopped()) {
+        const position = getEventPosition({
+          snapshot: getEditorSnapshot({
+            editorActorSnapshot: editorActor.getSnapshot(),
+            slateEditorInstance: slateEditor,
+          }),
+          slateEditor,
+          event: event.nativeEvent,
+        })
+
+        if (!position) {
+          console.warn('Could not find position for drop event')
+          return
+        }
+
+        // Find and select the range where the drop happened
+        const range = ReactEditor.findEventRange(slateEditor, event)
+        slateEditor.select(range)
+
+        editorActor.send({
+          type: 'behavior event',
+          behaviorEvent: {
+            type: 'drag.drop',
+            dataTransfer: event.dataTransfer,
+            position,
+          },
+          editor: slateEditor,
+        })
+
+        // Prevent Slate from handling the event
+        event.preventDefault()
+      }
+    },
+    [onDrop, editorActor, slateEditor],
+  )
+
+  const handleDragLeave = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      onDragLeave?.(event)
+
+      if (!event.isDefaultPrevented() && !event.isPropagationStopped()) {
+        editorActor.send({
+          type: 'behavior event',
+          behaviorEvent: {
+            type: 'drag.dragleave',
+            dataTransfer: event.dataTransfer,
+          },
+          editor: slateEditor,
+        })
+      }
+    },
+    [onDragLeave, editorActor, slateEditor],
+  )
+
   if (!portableTextEditor) {
     return null
   }
+
   return hasInvalidValue ? null : (
     <SlateEditable
       {...restProps}
@@ -837,15 +1190,16 @@ export const PortableTextEditable = forwardRef<
       decorate={decorate}
       onBlur={handleOnBlur}
       onCopy={handleCopy}
+      onCut={handleCut}
       onClick={handleClick}
       onDOMBeforeInput={handleOnBeforeInput}
-      onDragStart={(event) => {
-        props.onDragStart?.(event)
-
-        if (!event.isDefaultPrevented() && !event.isPropagationStopped()) {
-          editorActor.send({type: 'dragstart'})
-        }
-      }}
+      onDragStart={handleDragStart}
+      onDrag={handleDrag}
+      onDragEnd={handleDragEnd}
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+      onDragLeave={handleDragLeave}
       onFocus={handleOnFocus}
       onKeyDown={handleKeyDown}
       onKeyUp={handleKeyUp}

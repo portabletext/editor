@@ -1,5 +1,6 @@
 import type {PortableTextBlock} from '@sanity/types'
 import type {Converter} from '../converters/converter.types'
+import type {EventPosition} from '../internal-utils/event-position'
 import {toPortableTextRange} from '../internal-utils/ranges'
 import {fromSlateValue} from '../internal-utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
@@ -32,6 +33,11 @@ export type EditorSnapshot = {
    */
   beta: {
     hasTag: HasTag
+    internalDrag:
+      | {
+          origin: EventPosition
+        }
+      | undefined
   }
 }
 
@@ -42,6 +48,7 @@ export function createEditorSnapshot({
   readOnly,
   schema,
   hasTag,
+  internalDrag,
 }: {
   converters: Array<Converter>
   editor: PortableTextSlateEditor
@@ -49,6 +56,11 @@ export function createEditorSnapshot({
   readOnly: boolean
   schema: EditorSchema
   hasTag: HasTag
+  internalDrag:
+    | {
+        origin: EventPosition
+      }
+    | undefined
 }) {
   const value = fromSlateValue(
     editor.children,
@@ -74,6 +86,7 @@ export function createEditorSnapshot({
     context,
     beta: {
       hasTag,
+      internalDrag,
     },
   } satisfies EditorSnapshot
 }

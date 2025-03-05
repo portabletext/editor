@@ -100,7 +100,7 @@ test(converterTextPlain.serialize.name, () => {
       }),
       event: {
         type: 'serialize',
-        originEvent: 'unknown',
+        originEvent: 'copy',
       },
     }),
   ).toMatchObject({
@@ -124,7 +124,7 @@ test(converterTextPlain.serialize.name, () => {
       }),
       event: {
         type: 'serialize',
-        originEvent: 'unknown',
+        originEvent: 'copy',
       },
     }),
   ).toMatchObject({
@@ -148,7 +148,7 @@ test(converterTextPlain.serialize.name, () => {
       }),
       event: {
         type: 'serialize',
-        originEvent: 'unknown',
+        originEvent: 'copy',
       },
     }),
   ).toMatchObject({
@@ -178,7 +178,7 @@ test(converterTextPlain.serialize.name, () => {
       }),
       event: {
         type: 'serialize',
-        originEvent: 'unknown',
+        originEvent: 'copy',
       },
     }),
   ).toMatchObject({
@@ -202,7 +202,7 @@ test(converterTextPlain.serialize.name, () => {
       }),
       event: {
         type: 'serialize',
-        originEvent: 'unknown',
+        originEvent: 'copy',
       },
     }),
   ).toMatchObject({
@@ -232,7 +232,7 @@ test(converterTextPlain.serialize.name, () => {
       }),
       event: {
         type: 'serialize',
-        originEvent: 'unknown',
+        originEvent: 'copy',
       },
     }),
   ).toMatchObject({

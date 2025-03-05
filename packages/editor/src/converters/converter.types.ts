@@ -18,19 +18,19 @@ export function defineConverter<TMIMEType extends MIMEType>(
 export type ConverterEvent<TMIMEType extends MIMEType = MIMEType> =
   | {
       type: 'serialize'
-      originEvent: 'copy' | 'cut' | 'drag' | 'unknown'
+      originEvent: 'copy' | 'cut' | 'drag.dragstart'
     }
   | {
       type: 'serialization.failure'
       mimeType: TMIMEType
-      originEvent: 'copy' | 'cut' | 'drag' | 'unknown'
+      originEvent: 'copy' | 'cut' | 'drag.dragstart'
       reason: string
     }
   | {
       type: 'serialization.success'
       data: string
       mimeType: TMIMEType
-      originEvent: 'copy' | 'cut' | 'drag' | 'unknown'
+      originEvent: 'copy' | 'cut' | 'drag.dragstart'
     }
   | {
       type: 'deserialize'
