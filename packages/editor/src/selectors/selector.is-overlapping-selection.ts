@@ -112,6 +112,14 @@ export function isOverlappingSelection(
       originalSelectionEndPoint,
     )
 
+    if (endPointBeforeSelection && !endPointEqualToOriginalStartPoint) {
+      return false
+    }
+
+    if (startPointAfterSelection && !startPointEqualToOriginalEndPoint) {
+      return false
+    }
+
     if (
       !originalStartPointBeforeStartPoint &&
       originalStartPointAfterStartPoint &&
