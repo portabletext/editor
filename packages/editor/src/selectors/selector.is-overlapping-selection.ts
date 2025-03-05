@@ -1,4 +1,5 @@
 import type {EditorSelection} from '../types/editor'
+import {isEqualSelectionPoints} from '../utils'
 import type {EditorSelector} from './../editor/editor-selector'
 import {getSelectionEndPoint} from './selector.get-selection-end-point'
 import {getSelectionStartPoint} from './selector.get-selection-start-point'
@@ -31,18 +32,113 @@ export function isOverlappingSelection(
       },
     })
 
-    if (!selectionStartPoint || !selectionEndPoint) {
+    const originalSelectionStartPoint = getSelectionStartPoint(snapshot)
+    const originalSelectionEndPoint = getSelectionEndPoint(snapshot)
+
+    if (
+      !selectionStartPoint ||
+      !selectionEndPoint ||
+      !originalSelectionStartPoint ||
+      !originalSelectionEndPoint
+    ) {
       return false
     }
 
-    if (!isPointAfterSelection(selectionStartPoint)(snapshot)) {
-      return false
+    const startPointBeforeSelection =
+      isPointBeforeSelection(selectionStartPoint)(snapshot)
+    const startPointAfterSelection =
+      isPointAfterSelection(selectionStartPoint)(snapshot)
+    const endPointBeforeSelection =
+      isPointBeforeSelection(selectionEndPoint)(snapshot)
+    const endPointAfterSelection =
+      isPointAfterSelection(selectionEndPoint)(snapshot)
+
+    const originalStartPointBeforeStartPoint = isPointBeforeSelection(
+      originalSelectionStartPoint,
+    )({
+      ...snapshot,
+      context: {
+        ...snapshot.context,
+        selection: {
+          anchor: selectionStartPoint,
+          focus: selectionStartPoint,
+        },
+      },
+    })
+    const originalStartPointAfterStartPoint = isPointAfterSelection(
+      originalSelectionStartPoint,
+    )({
+      ...snapshot,
+      context: {
+        ...snapshot.context,
+        selection: {
+          anchor: selectionStartPoint,
+          focus: selectionStartPoint,
+        },
+      },
+    })
+
+    const originalEndPointBeforeEndPoint = isPointBeforeSelection(
+      originalSelectionEndPoint,
+    )({
+      ...snapshot,
+      context: {
+        ...snapshot.context,
+        selection: {
+          anchor: selectionEndPoint,
+          focus: selectionEndPoint,
+        },
+      },
+    })
+    const originalEndPointAfterEndPoint = isPointAfterSelection(
+      originalSelectionEndPoint,
+    )({
+      ...snapshot,
+      context: {
+        ...snapshot.context,
+        selection: {
+          anchor: selectionEndPoint,
+          focus: selectionEndPoint,
+        },
+      },
+    })
+
+    const endPointEqualToOriginalStartPoint = isEqualSelectionPoints(
+      selectionEndPoint,
+      originalSelectionStartPoint,
+    )
+    const startPointEqualToOriginalEndPoint = isEqualSelectionPoints(
+      selectionStartPoint,
+      originalSelectionEndPoint,
+    )
+
+    if (
+      !originalStartPointBeforeStartPoint &&
+      originalStartPointAfterStartPoint &&
+      !originalEndPointBeforeEndPoint &&
+      originalEndPointAfterEndPoint
+    ) {
+      return !endPointEqualToOriginalStartPoint
     }
 
-    if (!isPointBeforeSelection(selectionEndPoint)(snapshot)) {
-      return false
+    if (
+      originalStartPointBeforeStartPoint &&
+      !originalStartPointAfterStartPoint &&
+      originalEndPointBeforeEndPoint &&
+      !originalEndPointAfterEndPoint
+    ) {
+      return !startPointEqualToOriginalEndPoint
     }
 
-    return true
+    if (
+      !startPointAfterSelection ||
+      !startPointBeforeSelection ||
+      !endPointAfterSelection ||
+      !endPointBeforeSelection
+    ) {
+      return true
+    }
+
+    return false
   }
 }
