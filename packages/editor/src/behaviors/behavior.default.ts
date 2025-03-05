@@ -129,19 +129,7 @@ const raiseDeserializationSuccessOrFailure = defineBehavior({
       raise({
         ...deserializeEvent,
         dataTransfer: event.dataTransfer,
-      }),
-    ],
-  ],
-})
-
-const raiseInsertBlocks = defineBehavior({
-  on: 'deserialization.success',
-  actions: [
-    ({event}) => [
-      raise({
-        type: 'insert.blocks',
-        blocks: event.data,
-        placement: 'auto',
+        originEvent: event.originEvent,
       }),
     ],
   ],
@@ -155,7 +143,13 @@ const raiseSerializationSuccessOrFailure = defineBehavior({
     }
 
     const serializeEvents = snapshot.context.converters.map((converter) =>
-      converter.serialize({snapshot, event}),
+      converter.serialize({
+        snapshot,
+        event: {
+          ...event,
+          originEvent: event.originEvent.type,
+        },
+      }),
     )
 
     if (serializeEvents.length === 0) {
@@ -166,30 +160,246 @@ const raiseSerializationSuccessOrFailure = defineBehavior({
   },
   actions: [
     ({event}, serializeEvents) =>
-      serializeEvents.map((serializeEvent) =>
-        raise({
+      serializeEvents.map((serializeEvent) => {
+        return raise({
           ...serializeEvent,
+          originEvent: event.originEvent,
           dataTransfer: event.dataTransfer,
-        }),
-      ),
-  ],
-})
-
-const raiseDataTransferSet = defineBehavior({
-  on: 'serialization.success',
-  actions: [
-    ({event}) => [
-      raise({
-        type: 'data transfer.set',
-        data: event.data,
-        dataTransfer: event.dataTransfer,
-        mimeType: event.mimeType,
+        })
       }),
-    ],
   ],
 })
 
 export const defaultBehaviors = [
+  defineBehavior({
+    on: 'copy',
+    guard: ({snapshot}) => {
+      const focusSpan = selectors.getFocusSpan(snapshot)
+      const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
+
+      return focusSpan && selectionCollapsed
+    },
+    actions: [() => [{type: 'noop'}]],
+  }),
+  defineBehavior({
+    on: 'copy',
+    actions: [
+      ({event}) => [
+        raise({
+          type: 'serialize',
+          dataTransfer: event.data,
+          originEvent: event,
+        }),
+      ],
+    ],
+  }),
+  defineBehavior({
+    on: 'cut',
+    guard: ({snapshot}) => {
+      const focusSpan = selectors.getFocusSpan(snapshot)
+      const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
+
+      return focusSpan && selectionCollapsed
+    },
+    actions: [() => [{type: 'noop'}]],
+  }),
+  defineBehavior({
+    on: 'cut',
+    guard: ({snapshot}) => {
+      return snapshot.context.selection
+        ? {
+            selection: snapshot.context.selection,
+          }
+        : false
+    },
+    actions: [
+      ({event}, {selection}) => [
+        raise({
+          type: 'serialize',
+          dataTransfer: event.dataTransfer,
+          originEvent: event,
+        }),
+        raise({
+          type: 'delete',
+          selection,
+        }),
+      ],
+    ],
+  }),
+  defineBehavior({
+    on: 'drag.dragstart',
+    actions: [
+      ({event}) => [
+        raise({
+          type: 'serialize',
+          dataTransfer: event.dataTransfer,
+          originEvent: event,
+        }),
+      ],
+    ],
+  }),
+  defineBehavior({
+    on: 'serialization.success',
+    actions: [
+      ({event}) => [
+        raise({
+          type: 'data transfer.set',
+          data: event.data,
+          dataTransfer: event.dataTransfer,
+          mimeType: event.mimeType,
+        }),
+      ],
+    ],
+  }),
+  defineBehavior({
+    on: 'drag.drop',
+    guard: ({snapshot, event}) => {
+      const dragOrigin = snapshot.beta.internalDrag?.origin
+      const dropPosition = event.position.selection
+      const droppingOnDragOrigin = dragOrigin
+        ? selectors.isOverlappingSelection(dropPosition)({
+            ...snapshot,
+            context: {
+              ...snapshot.context,
+              selection: dragOrigin.selection,
+            },
+          })
+        : false
+      return droppingOnDragOrigin
+    },
+    actions: [() => [{type: 'noop'}]],
+  }),
+  defineBehavior({
+    on: 'drag.drop',
+    actions: [
+      ({event}) => [
+        raise({
+          type: 'deserialize',
+          dataTransfer: event.dataTransfer,
+          originEvent: event,
+        }),
+      ],
+    ],
+  }),
+  defineBehavior({
+    on: 'deserialization.success',
+    guard: ({snapshot, event}) => {
+      if (
+        event.originEvent.type !== 'drag.drop' ||
+        snapshot.beta.internalDrag === undefined
+      ) {
+        return false
+      }
+
+      const dragOrigin = snapshot.beta.internalDrag.origin
+      const dropPosition = event.originEvent.position.selection
+      const droppingOnDragOrigin = dragOrigin
+        ? selectors.isOverlappingSelection(dropPosition)({
+            ...snapshot,
+            context: {
+              ...snapshot.context,
+              selection: dragOrigin.selection,
+            },
+          })
+        : false
+
+      const draggingEntireBlocks = selectors.isSelectingEntireBlocks({
+        ...snapshot,
+        context: {
+          ...snapshot.context,
+          selection: dragOrigin.selection,
+        },
+      })
+
+      const draggedBlocks = selectors.getSelectedBlocks({
+        ...snapshot,
+        context: {
+          ...snapshot.context,
+          selection: dragOrigin.selection,
+        },
+      })
+
+      if (!droppingOnDragOrigin) {
+        return {draggingEntireBlocks, draggedBlocks, dragOrigin}
+      }
+
+      return false
+    },
+    actions: [
+      ({event}, {draggingEntireBlocks, draggedBlocks, dragOrigin}) => [
+        raise({
+          type: 'insert.blocks',
+          blocks: event.data,
+          placement: draggingEntireBlocks
+            ? event.originEvent.position.block === 'start'
+              ? 'before'
+              : event.originEvent.position.block === 'end'
+                ? 'after'
+                : 'auto'
+            : 'auto',
+        }),
+        ...(draggingEntireBlocks
+          ? draggedBlocks.map((block) =>
+              raise({
+                type: 'delete.block',
+                blockPath: block.path,
+              }),
+            )
+          : [
+              raise({
+                type: 'delete',
+                selection: dragOrigin.selection,
+              }),
+            ]),
+      ],
+    ],
+  }),
+  defineBehavior({
+    on: 'deserialization.success',
+    actions: [
+      ({event}) => [
+        raise({
+          type: 'insert.blocks',
+          blocks: event.data,
+          placement: 'auto',
+        }),
+      ],
+    ],
+  }),
+  defineBehavior({
+    on: 'paste',
+    guard: ({snapshot}) => {
+      return snapshot.context.selection &&
+        selectors.isSelectionExpanded(snapshot)
+        ? {selection: snapshot.context.selection}
+        : false
+    },
+    actions: [
+      ({event}, {selection}) => [
+        raise({
+          type: 'delete',
+          selection,
+        }),
+        raise({
+          type: 'deserialize',
+          dataTransfer: event.data,
+          originEvent: event,
+        }),
+      ],
+    ],
+  }),
+  defineBehavior({
+    on: 'paste',
+    actions: [
+      ({event}) => [
+        raise({
+          type: 'deserialize',
+          dataTransfer: event.data,
+          originEvent: event,
+        }),
+      ],
+    ],
+  }),
   toggleAnnotationOff,
   toggleAnnotationOn,
   toggleDecoratorOff,
@@ -199,8 +409,6 @@ export const defaultBehaviors = [
   toggleStyleOff,
   toggleStyleOn,
   raiseDeserializationSuccessOrFailure,
-  raiseInsertBlocks,
   raiseSerializationSuccessOrFailure,
-  raiseDataTransferSet,
   raiseInsertSoftBreak,
 ]

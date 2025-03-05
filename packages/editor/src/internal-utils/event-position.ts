@@ -72,7 +72,6 @@ function getEventPositionBlock({
   }
 
   const node = ReactEditor.toSlateNode(slateEditor, event.target)
-
   const element = ReactEditor.toDOMNode(slateEditor, node)
   const elementRect = element.getBoundingClientRect()
   const top = elementRect.top

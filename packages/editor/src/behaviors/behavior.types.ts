@@ -102,11 +102,11 @@ export type SyntheticBehaviorEvent =
   | {
       type: 'insert.blocks'
       blocks: Array<PortableTextBlock>
-      placement: 'auto' | 'after' | 'before'
+      placement: InsertPlacement
     }
   | {
       type: 'insert.block object'
-      placement: 'auto' | 'after' | 'before'
+      placement: InsertPlacement
       blockObject: {
         name: string
         value?: {[prop: string]: unknown}
@@ -147,7 +147,7 @@ export type SyntheticBehaviorEvent =
     }
   | {
       type: 'insert.text block'
-      placement: 'auto' | 'after' | 'before'
+      placement: InsertPlacement
       textBlock?: {
         children?: PortableTextTextBlock['children']
       }
@@ -204,13 +204,106 @@ export type SyntheticBehaviorEvent =
   | (PickFromUnion<
       ConverterEvent,
       'type',
-      | 'deserialization.failure'
-      | 'deserialization.success'
-      | 'serialization.failure'
-      | 'serialization.success'
-    > & {dataTransfer: DataTransfer})
+      'deserialization.failure' | 'deserialization.success'
+    > & {
+      dataTransfer: DataTransfer
+      originEvent: Omit<
+        PickFromUnion<NativeBehaviorEvent, 'type', 'drag.drop' | 'paste'>,
+        'dataTransfer'
+      >
+    })
+  | {
+      type: 'serialization.success'
+      mimeType: MIMEType
+      data: string
+      dataTransfer: DataTransfer
+      originEvent: Omit<
+        PickFromUnion<
+          NativeBehaviorEvent,
+          'type',
+          'copy' | 'cut' | 'drag.dragstart'
+        >,
+        'dataTransfer'
+      >
+    }
+  | {
+      type: 'serialization.failure'
+      mimeType: MIMEType
+      reason: string
+      dataTransfer: DataTransfer
+      originEvent: Omit<
+        PickFromUnion<
+          NativeBehaviorEvent,
+          'type',
+          'copy' | 'cut' | 'drag.dragstart'
+        >,
+        'dataTransfer'
+      >
+    }
 
 export type InsertPlacement = 'auto' | 'after' | 'before'
+
+type DragBehaviorEvent =
+  | {
+      type: 'drag.dragstart'
+      dataTransfer: DataTransfer
+      position: EventPosition
+    }
+  | {
+      type: 'drag.drag'
+      dataTransfer: DataTransfer
+    }
+  | {
+      type: 'drag.dragend'
+      dataTransfer: DataTransfer
+    }
+  | {
+      type: 'drag.dragenter'
+      dataTransfer: DataTransfer
+      position: EventPosition
+    }
+  | {
+      type: 'drag.dragover'
+      dataTransfer: DataTransfer
+      position: EventPosition
+    }
+  | {
+      type: 'drag.drop'
+      dataTransfer: DataTransfer
+      position: EventPosition
+    }
+  | {
+      type: 'drag.dragleave'
+      dataTransfer: DataTransfer
+    }
+
+export function isDragBehaviorEvent(
+  event: BehaviorEvent,
+): event is DragBehaviorEvent {
+  return event.type.startsWith('drag.')
+}
+
+export type DataBehaviorEvent =
+  | {
+      type: 'deserialize'
+      dataTransfer: DataTransfer
+      originEvent: Omit<
+        PickFromUnion<NativeBehaviorEvent, 'type', 'drag.drop' | 'paste'>,
+        'dataTransfer'
+      >
+    }
+  | {
+      type: 'serialize'
+      dataTransfer: DataTransfer
+      originEvent: Omit<
+        PickFromUnion<
+          NativeBehaviorEvent,
+          'type',
+          'copy' | 'cut' | 'drag.dragstart'
+        >,
+        'dataTransfer'
+      >
+    }
 
 export type MouseBehaviorEvent = {
   type: 'mouse.click'
@@ -230,10 +323,12 @@ export type NativeBehaviorEvent =
   | {
       type: 'copy'
       data: DataTransfer
+      position: EventPosition
     }
   | {
-      type: 'deserialize'
+      type: 'cut'
       dataTransfer: DataTransfer
+      position: EventPosition
     }
   | {
       type: 'key.down'
@@ -253,12 +348,9 @@ export type NativeBehaviorEvent =
   | {
       type: 'paste'
       data: DataTransfer
+      position: EventPosition
     }
-  | {
-      type: 'serialize'
-      originEvent: 'copy' | 'cut' | 'drag' | 'unknown'
-      dataTransfer: DataTransfer
-    }
+  | DragBehaviorEvent
 
 /**
  * @beta
@@ -284,7 +376,7 @@ export type BehaviorAction =
   | SyntheticBehaviorEvent
   | {
       type: 'raise'
-      event: SyntheticBehaviorEvent | CustomBehaviorEvent
+      event: DataBehaviorEvent | SyntheticBehaviorEvent | CustomBehaviorEvent
     }
   | {
       type: 'noop'
@@ -306,7 +398,7 @@ export type InternalBehaviorAction = OmitFromUnion<
  * @beta
  */
 export function raise(
-  event: SyntheticBehaviorEvent | CustomBehaviorEvent,
+  event: DataBehaviorEvent | SyntheticBehaviorEvent | CustomBehaviorEvent,
 ): PickFromUnion<BehaviorAction, 'type', 'raise'> {
   return {type: 'raise', event}
 }
@@ -316,9 +408,11 @@ export function raise(
  */
 export type BehaviorEvent =
   | SyntheticBehaviorEvent
+  | DataBehaviorEvent
   | NativeBehaviorEvent
   | CustomBehaviorEvent
   | {type: '*'}
+  | {type: 'drag.*'}
 
 /**
  * @beta
@@ -328,7 +422,9 @@ export type Behavior<
   TGuardResponse = true,
   TBehaviorEvent extends BehaviorEvent = TBehaviorEventType extends '*'
     ? BehaviorEvent
-    : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
+    : TBehaviorEventType extends 'drag.*'
+      ? DragBehaviorEvent
+      : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
 > = {
   /**
    * The internal editor event that triggers this behavior.
@@ -406,7 +502,9 @@ export function defineBehavior<
       ? CustomBehaviorEvent<TPayload, TType>
       : TBehaviorEventType extends '*'
         ? OmitFromUnion<BehaviorEvent, 'type', '*'>
-        : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>
+        : TBehaviorEventType extends `drag.*`
+          ? DragBehaviorEvent
+          : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>
   >,
 ): Behavior
 export function defineBehavior<
@@ -418,7 +516,9 @@ export function defineBehavior<
     ? CustomBehaviorEvent<TPayload, TType>
     : TBehaviorEventType extends '*'
       ? OmitFromUnion<BehaviorEvent, 'type', '*'>
-      : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
+      : TBehaviorEventType extends `drag.*`
+        ? DragBehaviorEvent
+        : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
 >(
   behavior: Behavior<TBehaviorEventType, TGuardResponse, TBehaviorEvent>,
 ): Behavior {
