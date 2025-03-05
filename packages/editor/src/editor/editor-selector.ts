@@ -80,6 +80,7 @@ export function getEditorSnapshot({
     },
     beta: {
       hasTag: (tag) => editorActorSnapshot.hasTag(tag),
+      internalDrag: editorActorSnapshot.context.internalDrag,
     },
   }
 }

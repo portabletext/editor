@@ -1,23 +1,9 @@
-import type {Editor, Element, Range} from 'slate'
+import type {Editor, Range} from 'slate'
 import type {EditorSelection} from '..'
 
 // Is the editor currently receiving remote changes that are being applied to the content?
 export const IS_PROCESSING_REMOTE_CHANGES: WeakMap<Editor, boolean> =
   new WeakMap()
-
-// Is the editor dragging something?
-export const IS_DRAGGING: WeakMap<Editor, boolean> = new WeakMap()
-// Is the editor dragging a element?
-export const IS_DRAGGING_BLOCK_ELEMENT: WeakMap<Editor, Element> = new WeakMap()
-
-// When dragging elements, this will be the target element
-export const IS_DRAGGING_ELEMENT_TARGET: WeakMap<Editor, Element> =
-  new WeakMap()
-// Target position for dragging over a block
-export const IS_DRAGGING_BLOCK_TARGET_POSITION: WeakMap<
-  Editor,
-  'top' | 'bottom'
-> = new WeakMap()
 
 export const KEY_TO_SLATE_ELEMENT: WeakMap<Editor, any | undefined> =
   new WeakMap()

@@ -19,6 +19,7 @@ export function createTestSnapshot(snapshot: {
     },
     beta: {
       hasTag: snapshot.beta?.hasTag ?? (() => false),
+      internalDrag: undefined,
     },
   }
 }

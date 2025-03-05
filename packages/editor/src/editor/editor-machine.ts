@@ -14,14 +14,17 @@ import {coreBehaviors} from '../behaviors/behavior.core'
 import {defaultBehaviors} from '../behaviors/behavior.default'
 import {
   isCustomBehaviorEvent,
+  isDragBehaviorEvent,
   isMouseBehaviorEvent,
   type Behavior,
   type CustomBehaviorEvent,
+  type DataBehaviorEvent,
   type InternalBehaviorAction,
   type NativeBehaviorEvent,
   type SyntheticBehaviorEvent,
 } from '../behaviors/behavior.types'
 import type {Converter} from '../converters/converter.types'
+import type {EventPosition} from '../internal-utils/event-position'
 import type {NamespaceEvent} from '../type-utils'
 import type {
   EditorSelection,
@@ -182,7 +185,10 @@ export type InternalEditorEvent =
     }
   | {
       type: 'behavior event'
-      behaviorEvent: SyntheticBehaviorEvent | NativeBehaviorEvent
+      behaviorEvent:
+        | DataBehaviorEvent
+        | SyntheticBehaviorEvent
+        | NativeBehaviorEvent
       editor: PortableTextSlateEditor
       defaultActionCallback?: () => void
       nativeEvent?: {preventDefault: () => void}
@@ -200,7 +206,7 @@ export type InternalEditorEvent =
   | NamespaceEvent<EditorEmittedEvent, 'notify'>
   | NamespaceEvent<UnsetEvent, 'notify'>
   | SyntheticBehaviorEvent
-  | {type: 'dragstart'}
+  | {type: 'dragstart'; origin: EventPosition; ghost?: HTMLElement}
   | {type: 'dragend'}
   | {type: 'drop'}
 
@@ -233,6 +239,10 @@ export const editorMachine = setup({
       maxBlocks: number | undefined
       selection: EditorSelection
       value: Array<PortableTextBlock> | undefined
+      internalDrag?: {
+        ghost?: HTMLElement
+        origin: EventPosition
+      }
     },
     events: {} as InternalEditorEvent,
     emitted: {} as InternalEditorEmittedEvent,
@@ -314,7 +324,9 @@ export const editorMachine = setup({
 
         const defaultAction =
           event.type === 'custom behavior event' ||
+          isDragBehaviorEvent(event.behaviorEvent) ||
           event.behaviorEvent.type === 'copy' ||
+          event.behaviorEvent.type === 'cut' ||
           event.behaviorEvent.type === 'deserialize' ||
           event.behaviorEvent.type === 'key.down' ||
           event.behaviorEvent.type === 'key.up' ||
@@ -334,10 +346,20 @@ export const editorMachine = setup({
         const eventBehaviors = [
           ...context.behaviors.values(),
           ...defaultBehaviors,
-        ].filter(
-          (behavior) =>
-            behavior.on === '*' || behavior.on === event.behaviorEvent.type,
-        )
+        ].filter((behavior) => {
+          if (behavior.on === '*') {
+            return true
+          }
+
+          if (isDragBehaviorEvent(event.behaviorEvent)) {
+            return (
+              behavior.on === 'drag.*' ||
+              behavior.on === event.behaviorEvent.type
+            )
+          }
+
+          return behavior.on === event.behaviorEvent.type
+        })
 
         if (eventBehaviors.length === 0) {
           if (defaultActionCallback) {
@@ -387,6 +409,7 @@ export const editorMachine = setup({
           readOnly: self.getSnapshot().matches({'edit mode': 'read only'}),
           schema: context.schema,
           hasTag: (tag) => self.getSnapshot().hasTag(tag),
+          internalDrag: context.internalDrag,
         })
 
         let behaviorOverwritten = false
@@ -671,10 +694,28 @@ export const editorMachine = setup({
           states: {
             'idle': {
               on: {
-                dragstart: {target: 'dragging internally'},
+                dragstart: {
+                  actions: [
+                    assign({
+                      internalDrag: ({event}) => ({
+                        ghost: event.ghost,
+                        origin: event.origin,
+                      }),
+                    }),
+                  ],
+                  target: 'dragging internally',
+                },
               },
             },
             'dragging internally': {
+              exit: [
+                ({context}) => {
+                  if (context.internalDrag?.ghost) {
+                    document.body.removeChild(context.internalDrag.ghost)
+                  }
+                },
+                assign({internalDrag: undefined}),
+              ],
               tags: ['dragging internally'],
               on: {
                 dragend: {target: 'idle'},
