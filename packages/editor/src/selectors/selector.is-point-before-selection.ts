@@ -14,7 +14,9 @@ export function isPointBeforeSelection(
       return false
     }
 
-    const selection = reverseSelection(snapshot.context.selection)
+    const selection = snapshot.context.selection.backward
+      ? reverseSelection(snapshot.context.selection)
+      : snapshot.context.selection
 
     const pointBlockKey = isKeySegment(point.path[0])
       ? point.path[0]._key
