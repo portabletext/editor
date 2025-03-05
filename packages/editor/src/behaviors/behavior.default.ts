@@ -1,6 +1,6 @@
 import * as selectors from '../selectors'
 import {raiseInsertSoftBreak} from './behavior.default.raise-soft-break'
-import {defineBehavior, raise} from './behavior.types'
+import {defineBehavior, raise, type InsertPlacement} from './behavior.types'
 
 const toggleAnnotationOff = defineBehavior({
   on: 'annotation.toggle',
@@ -129,6 +129,7 @@ const raiseDeserializationSuccessOrFailure = defineBehavior({
       raise({
         ...deserializeEvent,
         dataTransfer: event.dataTransfer,
+        originEvent: event.originEvent,
       }),
     ],
   ],
@@ -136,12 +137,33 @@ const raiseDeserializationSuccessOrFailure = defineBehavior({
 
 const raiseInsertBlocks = defineBehavior({
   on: 'deserialization.success',
+  guard: ({snapshot, event}) => {
+    const draggingEntireBlocks = snapshot.beta.internalDrag
+      ? selectors.isSelectingEntireBlocks({
+          ...snapshot,
+          context: {
+            ...snapshot.context,
+            selection: snapshot.beta.internalDrag.origin.selection,
+          },
+        })
+      : false
+
+    const placement: InsertPlacement = draggingEntireBlocks
+      ? event.originEvent.position.block === 'start'
+        ? 'before'
+        : event.originEvent.position.block === 'end'
+          ? 'after'
+          : 'auto'
+      : 'auto'
+
+    return {placement}
+  },
   actions: [
-    ({event}) => [
+    ({event}, {placement}) => [
       raise({
         type: 'insert.blocks',
         blocks: event.data,
-        placement: 'auto',
+        placement,
       }),
     ],
   ],
@@ -155,7 +177,13 @@ const raiseSerializationSuccessOrFailure = defineBehavior({
     }
 
     const serializeEvents = snapshot.context.converters.map((converter) =>
-      converter.serialize({snapshot, event}),
+      converter.serialize({
+        snapshot,
+        event: {
+          ...event,
+          originEvent: event.originEvent.type,
+        },
+      }),
     )
 
     if (serializeEvents.length === 0) {
@@ -166,12 +194,13 @@ const raiseSerializationSuccessOrFailure = defineBehavior({
   },
   actions: [
     ({event}, serializeEvents) =>
-      serializeEvents.map((serializeEvent) =>
-        raise({
+      serializeEvents.map((serializeEvent) => {
+        return raise({
           ...serializeEvent,
+          originEvent: event.originEvent,
           dataTransfer: event.dataTransfer,
-        }),
-      ),
+        })
+      }),
   ],
 })
 
@@ -190,6 +219,159 @@ const raiseDataTransferSet = defineBehavior({
 })
 
 export const defaultBehaviors = [
+  defineBehavior({
+    on: 'delete',
+    guard: ({snapshot, event}) => {
+      const selectingEntireBlocks = selectors.isSelectingEntireBlocks({
+        ...snapshot,
+        context: {
+          ...snapshot.context,
+          selection: event.selection,
+        },
+      })
+
+      if (!selectingEntireBlocks) {
+        return false
+      }
+
+      const selectedBlocks = selectors.getSelectedBlocks({
+        ...snapshot,
+        context: {
+          ...snapshot.context,
+          selection: event.selection,
+        },
+      })
+
+      return {selectedBlocks}
+    },
+    actions: [
+      (_, {selectedBlocks}) =>
+        selectedBlocks.map((selectedBlock) =>
+          raise({
+            type: 'delete.block',
+            blockPath: selectedBlock.path,
+          }),
+        ),
+    ],
+  }),
+  defineBehavior({
+    on: 'copy',
+    guard: ({snapshot}) => {
+      const focusSpan = selectors.getFocusSpan(snapshot)
+      const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
+
+      return focusSpan && selectionCollapsed
+    },
+    actions: [() => [{type: 'noop'}]],
+  }),
+  defineBehavior({
+    on: 'copy',
+    actions: [
+      ({event}) => [
+        raise({
+          type: 'serialize',
+          dataTransfer: event.data,
+          originEvent: event,
+        }),
+      ],
+    ],
+  }),
+  defineBehavior({
+    on: 'cut',
+    guard: ({snapshot}) => {
+      const focusSpan = selectors.getFocusSpan(snapshot)
+      const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
+
+      return focusSpan && selectionCollapsed
+    },
+    actions: [() => [{type: 'noop'}]],
+  }),
+  defineBehavior({
+    on: 'cut',
+    guard: ({snapshot}) => {
+      return snapshot.context.selection
+        ? {
+            selection: snapshot.context.selection,
+          }
+        : false
+    },
+    actions: [
+      ({event}, {selection}) => [
+        raise({
+          type: 'serialize',
+          dataTransfer: event.dataTransfer,
+          originEvent: event,
+        }),
+        raise({
+          type: 'delete',
+          selection,
+        }),
+      ],
+    ],
+  }),
+  defineBehavior({
+    on: 'drag.dragstart',
+    actions: [
+      ({event}) => [
+        raise({
+          type: 'serialize',
+          dataTransfer: event.dataTransfer,
+          originEvent: event,
+        }),
+      ],
+    ],
+  }),
+  defineBehavior({
+    on: 'drag.drop',
+    guard: ({snapshot, event}) => {
+      const dragOrigin = snapshot.beta.internalDrag?.origin
+      const dropPosition = event.position.selection
+      const droppingOnDragOrigin = dragOrigin
+        ? selectors.isOverlappingSelection(dropPosition)({
+            ...snapshot,
+            context: {
+              ...snapshot.context,
+              selection: dragOrigin.selection,
+            },
+          })
+        : false
+
+      return !droppingOnDragOrigin
+    },
+    actions: [
+      ({snapshot, event}) => [
+        raise({
+          type: 'deserialize',
+          dataTransfer: event.dataTransfer,
+          originEvent: event,
+        }),
+        raise({
+          type: 'select',
+          selection: event.position.selection,
+        }),
+        ...(snapshot.beta.internalDrag
+          ? [
+              raise({
+                type: 'delete',
+                selection: snapshot.beta.internalDrag.origin.selection,
+              }),
+            ]
+          : []),
+      ],
+    ],
+  }),
+  defineBehavior({
+    on: 'paste',
+    actions: [
+      ({event}) => [
+        raise({
+          type: 'deserialize',
+          dataTransfer: event.data,
+          originEvent: event,
+        }),
+      ],
+    ],
+  }),
   toggleAnnotationOff,
   toggleAnnotationOn,
   toggleDecoratorOff,

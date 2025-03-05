@@ -28,7 +28,7 @@ export const deleteTextActionImplementation: BehaviorActionImplementation<
   }
 
   const trimmedSelection = selectors.getTrimmedSelection({
-    beta: {hasTag: () => false},
+    beta: {hasTag: () => false, internalDrag: undefined},
     context: {
       converters: [],
       schema: context.schema,

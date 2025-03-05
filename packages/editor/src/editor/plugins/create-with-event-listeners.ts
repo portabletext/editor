@@ -65,10 +65,10 @@ export function createWithEventListeners(
       deleteBackward,
       deleteForward,
       insertBreak,
-      insertData,
+      // insertData,
       insertText,
       select,
-      setFragmentData,
+      // setFragmentData,
     } = editor
 
     editor.deleteBackward = (unit) => {
@@ -121,22 +121,25 @@ export function createWithEventListeners(
       return
     }
 
-    editor.insertData = (dataTransfer) => {
-      if (isApplyingBehaviorActions(editor)) {
-        insertData(dataTransfer)
-        return
-      }
+    // editor.insertData = (dataTransfer) => {
+    //   if (isApplyingBehaviorActions(editor)) {
+    //     insertData(dataTransfer)
+    //     return
+    //   }
 
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'deserialize',
-          dataTransfer,
-        },
-        editor,
-      })
-      return
-    }
+    //   editorActor.send({
+    //     type: 'behavior event',
+    //     behaviorEvent: {
+    //       type: 'deserialize',
+    //       dataTransfer,
+    //       originEvent: {
+    //         type: 'paste',
+    //       },
+    //     },
+    //     editor,
+    //   })
+    //   return
+    // }
 
     editor.insertSoftBreak = () => {
       if (isApplyingBehaviorActions(editor)) {
@@ -236,25 +239,25 @@ export function createWithEventListeners(
       return
     }
 
-    editor.setFragmentData = (dataTransfer, originEvent) => {
-      if (isApplyingBehaviorActions(editor)) {
-        setFragmentData(dataTransfer)
-        return
-      }
+    // editor.setFragmentData = (dataTransfer, originEvent) => {
+    //   if (isApplyingBehaviorActions(editor)) {
+    //     setFragmentData(dataTransfer)
+    //     return
+    //   }
 
-      dataTransfer.clearData()
+    //   dataTransfer.clearData()
 
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'serialize',
-          dataTransfer,
-          originEvent: originEvent ?? 'unknown',
-        },
-        editor,
-      })
-      return
-    }
+    //   editorActor.send({
+    //     type: 'behavior event',
+    //     behaviorEvent: {
+    //       type: 'serialize',
+    //       dataTransfer,
+    //       originEvent: originEvent ?? 'unknown',
+    //     },
+    //     editor,
+    //   })
+    //   return
+    // }
 
     editor.undo = () => {
       if (isApplyingBehaviorActions(editor)) {
