@@ -2,12 +2,13 @@ import {
   EditorProvider,
   PortableTextEditable,
   useEditor,
+  useEditorSelector,
   type BlockDecoratorRenderProps,
+  type BlockRenderProps,
   type BlockStyleRenderProps,
   type EditorEmittedEvent,
   type PortableTextBlock,
   type RenderAnnotationFunction,
-  type RenderBlockFunction,
   type RenderChildFunction,
   type RenderDecoratorFunction,
   type RenderListItemFunction,
@@ -34,6 +35,7 @@ import {Toolbar} from './components/toolbar'
 import {Tooltip} from './components/tooltip'
 import {EditorPatchesPreview} from './editor-patches-preview'
 import './editor.css'
+import {createStore} from '@xstate/store'
 import {EmojiPickerPlugin} from './emoji-picker'
 import type {EditorActorRef} from './playground-machine'
 import {PortableTextToolbar} from './portable-text-toolbar'
@@ -48,6 +50,18 @@ import {SelectionPreview} from './selection-preview'
 import {ValuePreview} from './value-preview'
 import {wait} from './wait'
 
+const featureFlags = createStore({
+  context: {
+    enableDragHandles: false,
+  },
+  on: {
+    toggleDragHandles: (context) => ({
+      ...context,
+      enableDragHandles: !context.enableDragHandles,
+    }),
+  },
+})
+
 export function Editor(props: {editorRef: EditorActorRef}) {
   const color = useSelector(props.editorRef, (s) => s.context.color)
   const value = useSelector(props.editorRef, (s) => s.context.value)
@@ -57,6 +71,10 @@ export function Editor(props: {editorRef: EditorActorRef}) {
   )
   const [loading, setLoading] = useState(false)
   const [readOnly, setReadOnly] = useState(false)
+  const enableDragHandles = useSelector(
+    featureFlags,
+    (s) => s.context.enableDragHandles,
+  )
   const [enableEmojiPickerPlugin, setEnableEmojiPickerPlugin] = useState(false)
 
   return (
@@ -108,7 +126,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
                 onError={console.error}
               >
                 <PortableTextEditable
-                  className="flex-1 p-2 border"
+                  className={`flex-1 p-2 ${enableDragHandles ? 'ps-5' : ''} border`}
                   style={{maxHeight: '50vh', overflowY: 'auto'}}
                   onPaste={(data) => {
                     const text = data.event.clipboardData.getData('text')
@@ -125,7 +143,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
                     }
                   }}
                   renderAnnotation={renderAnnotation}
-                  renderBlock={renderBlock}
+                  renderBlock={RenderBlock}
                   renderChild={renderChild}
                   renderDecorator={renderDecorator}
                   renderListItem={renderListItem}
@@ -195,6 +213,10 @@ function EditorPlaygroundToolbar(props: {
   const patchesReceived = useSelector(props.editorRef, (s) =>
     reverse(s.context.patchesReceived),
   )
+  const enableDragHandles = useSelector(
+    featureFlags,
+    (s) => s.context.enableDragHandles,
+  )
   const [enableMarkdownPlugin, setEnableMarkdownPlugin] = useState(false)
   const [enableOneLinePlugin, setEnableOneLinePLugin] = useState(false)
   const [enableCodeEditorPlugin, setEnableCodeEditorPlugin] = useState(false)
@@ -243,6 +265,16 @@ function EditorPlaygroundToolbar(props: {
             }}
           >
             Provoke duplicate keys
+          </Switch>
+        </Toolbar>
+        <Toolbar>
+          <Switch
+            isSelected={enableDragHandles}
+            onChange={() => {
+              featureFlags.trigger.toggleDragHandles()
+            }}
+          >
+            Drag handles (experimental)
           </Switch>
         </Toolbar>
         <Separator orientation="horizontal" />
@@ -526,9 +558,18 @@ const renderAnnotation: RenderAnnotationFunction = (props) => {
   return props.children
 }
 
-const renderBlock: RenderBlockFunction = (props) => {
+const RenderBlock = (props: BlockRenderProps) => {
+  const enableDragHandles = useSelector(
+    featureFlags,
+    (s) => s.context.enableDragHandles,
+  )
+  const editor = useEditor()
+  const readOnly = useEditorSelector(editor, (s) => s.context.readOnly)
+
+  let children = props.children
+
   if (props.schemaType.name === 'break') {
-    return (
+    children = (
       <Separator
         orientation="horizontal"
         className={`h-1 my-2${props.selected ? ' bg-blue-300 ' : ''}`}
@@ -539,7 +580,7 @@ const renderBlock: RenderBlockFunction = (props) => {
   const image = ImageSchema.safeParse(props).data
 
   if (image) {
-    return (
+    children = (
       <div
         className={`flex items-center gap-1 border-2 rounded px-1 text-sm my-2${props.selected ? ' border-blue-300' : ''}`}
       >
@@ -549,7 +590,21 @@ const renderBlock: RenderBlockFunction = (props) => {
     )
   }
 
-  return props.children
+  if (props.level === undefined && enableDragHandles) {
+    // Don't render drag handle on other levels right now since the styling is off
+    return (
+      <div className="me-1 relative hover:bg-red">
+        <div
+          contentEditable={false}
+          draggable={!readOnly}
+          className={`absolute top-0 -left-3 bottom-0 w-1.5 bg-slate-300 rounded cursor-grab`}
+        />
+        <div>{children}</div>
+      </div>
+    )
+  }
+
+  return children
 }
 
 const renderDecorator: RenderDecoratorFunction = (props) => {
