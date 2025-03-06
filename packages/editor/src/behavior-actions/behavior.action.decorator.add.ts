@@ -93,6 +93,7 @@ export const decoratorAddActionImplementation: BehaviorActionImplementation<
         activeDecorators: [],
         converters: [],
         keyGenerator: context.keyGenerator,
+        readOnly: false,
         schema: context.schema,
         selection: newSelection,
         value: newValue,

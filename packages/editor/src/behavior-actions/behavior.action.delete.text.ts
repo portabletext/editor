@@ -34,6 +34,7 @@ export const deleteTextActionImplementation: BehaviorActionImplementation<
       schema: context.schema,
       keyGenerator: context.keyGenerator,
       activeDecorators: [],
+      readOnly: false,
       value,
       selection,
     },

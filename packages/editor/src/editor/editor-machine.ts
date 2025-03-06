@@ -382,6 +382,7 @@ export const editorMachine = setup({
           converters: [...context.converters],
           editor: event.editor,
           keyGenerator: context.keyGenerator,
+          readOnly: self.getSnapshot().matches({'edit mode': 'read only'}),
           schema: context.schema,
           hasTag: (tag) => self.getSnapshot().hasTag(tag),
         })
