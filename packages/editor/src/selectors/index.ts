@@ -1,3 +1,4 @@
+export {isSelectingEntireBlocks} from './selector.is-selecting-entire-blocks'
 export {getActiveAnnotations} from './selector.get-active-annotations'
 export {getActiveListItem} from './selector.get-active-list-item'
 export {getActiveStyle} from './selector.get-active-style'
