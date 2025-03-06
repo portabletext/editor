@@ -47,7 +47,10 @@ export const stepDefinitions = [
     render(
       <EditorProvider
         initialConfig={{
-          schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
+          schemaDefinition: defineSchema({
+            blockObjects: [{name: 'image'}],
+            inlineObjects: [{name: 'stock-ticker'}],
+          }),
           keyGenerator,
           initialValue,
         }}

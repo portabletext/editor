@@ -1,5 +1,5 @@
 import {isEqual, uniq} from 'lodash'
-import {Editor, Transforms} from 'slate'
+import {Editor, Node, Path, Transforms} from 'slate'
 import {isEqualToEmptyEditor, toSlateValue} from '../internal-utils/values'
 import type {BehaviorActionImplementation} from './behavior.actions'
 
@@ -43,6 +43,33 @@ export const insertBlocksActionImplementation: BehaviorActionImplementation<
   if (action.placement === 'after' && focusPath) {
     const nextPath = [focusPath[0] + 1]
     Transforms.insertNodes(action.editor, fragment, {at: nextPath})
+
+    const [nextBlock, nextBlockPath] = Editor.node(
+      action.editor,
+      Path.next(focusPath),
+      {depth: 1},
+    )
+    const nextChild = Node.child(nextBlock, 0)
+    const firstChildIsInlineObject = !action.editor.isTextSpan(nextChild)
+
+    if (firstChildIsInlineObject) {
+      // If the first child in the next block is an inline object then we
+      // add an empty span right before it to a place to put the cursor.
+      // This is a Slate constraint that we have to adhere to.
+      Transforms.insertNodes(
+        action.editor,
+        {
+          _key: context.keyGenerator(),
+          _type: 'span',
+          text: '',
+          marks: [],
+        },
+        {
+          at: [nextBlockPath[0], 0],
+        },
+      )
+    }
+
     Transforms.select(action.editor, {
       anchor: {path: [nextPath[0], 0], offset: 0},
       focus: {path: [nextPath[0], 0], offset: 0},
@@ -53,6 +80,33 @@ export const insertBlocksActionImplementation: BehaviorActionImplementation<
   if (!action.editor.isTextBlock(focusBlock)) {
     const nextPath = [focusPath[0] + 1]
     Transforms.insertNodes(action.editor, fragment, {at: nextPath})
+
+    const [nextBlock, nextBlockPath] = Editor.node(
+      action.editor,
+      Path.next(focusPath),
+      {depth: 1},
+    )
+    const nextChild = Node.child(nextBlock, 0)
+    const firstChildIsInlineObject = !action.editor.isTextSpan(nextChild)
+
+    if (firstChildIsInlineObject) {
+      // If the first child in the next block is an inline object then we
+      // add an empty span right before it to a place to put the cursor.
+      // This is a Slate constraint that we have to adhere to.
+      Transforms.insertNodes(
+        action.editor,
+        {
+          _key: context.keyGenerator(),
+          _type: 'span',
+          text: '',
+          marks: [],
+        },
+        {
+          at: [nextBlockPath[0], 0],
+        },
+      )
+    }
+
     Transforms.select(action.editor, {
       anchor: {path: [nextPath[0], 0], offset: 0},
       focus: {path: [nextPath[0], 0], offset: 0},
