@@ -15,6 +15,7 @@ export type EditorContext = {
   activeDecorators: Array<string>
   converters: Array<Converter>
   keyGenerator: () => string
+  readOnly: boolean
   schema: EditorSchema
   selection: EditorSelection
   value: Array<PortableTextBlock>
@@ -38,12 +39,14 @@ export function createEditorSnapshot({
   converters,
   editor,
   keyGenerator,
+  readOnly,
   schema,
   hasTag,
 }: {
   converters: Array<Converter>
   editor: PortableTextSlateEditor
   keyGenerator: () => string
+  readOnly: boolean
   schema: EditorSchema
   hasTag: HasTag
 }) {
@@ -61,6 +64,7 @@ export function createEditorSnapshot({
     }),
     converters,
     keyGenerator,
+    readOnly,
     schema,
     selection,
     value,

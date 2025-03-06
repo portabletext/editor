@@ -13,6 +13,7 @@ export function createTestSnapshot(snapshot: {
         snapshot.context?.schema ?? compileSchemaDefinition(defineSchema({})),
       keyGenerator: snapshot.context?.keyGenerator ?? createTestKeyGenerator(),
       activeDecorators: snapshot.context?.activeDecorators ?? [],
+      readOnly: snapshot.context?.readOnly ?? false,
       value: snapshot.context?.value ?? [],
       selection: snapshot.context?.selection ?? null,
     },
