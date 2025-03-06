@@ -50,6 +50,17 @@ export const insertBlocksActionImplementation: BehaviorActionImplementation<
     return
   }
 
+  if (!action.editor.isTextBlock(focusBlock)) {
+    const nextPath = [focusPath[0] + 1]
+    Transforms.insertNodes(action.editor, fragment, {at: nextPath})
+    Transforms.select(action.editor, {
+      anchor: {path: [nextPath[0], 0], offset: 0},
+      focus: {path: [nextPath[0], 0], offset: 0},
+    })
+
+    return
+  }
+
   // Ensure that markDefs for any annotations inside this fragment are copied over to the focused text block.
   if (
     action.editor.isTextBlock(focusBlock) &&
