@@ -1,5 +1,34 @@
 # Changelog
 
+## [1.37.0](https://github.com/portabletext/editor/compare/editor-v1.36.6...editor-v1.37.0) (2025-03-06)
+
+
+### Features
+
+* add `readOnly` to `EditorContext` ([190bd0c](https://github.com/portabletext/editor/commit/190bd0cdd18137ba1e86a7cc5eb2119008581a75))
+* **selectors:** add `getFocusInlineObject` ([c7c5016](https://github.com/portabletext/editor/commit/c7c5016228b4073c196b6dfcbec197a80d21a915))
+* **selectors:** add `isSelectingEntireBlocks` ([08b9668](https://github.com/portabletext/editor/commit/08b966823ae2209379791cd39bcd35b15846e66d))
+
+
+### Bug Fixes
+
+* **`delete` action:** delete without selecting beforehand ([b3ea0aa](https://github.com/portabletext/editor/commit/b3ea0aad19d242f0cf1598b28d33b7b9ab576fe8))
+* **`insert.blocks`:** account for edge cases related to inline objects ([b4b5426](https://github.com/portabletext/editor/commit/b4b542620a37586547271f090558def28fc066e7))
+* **`insert.blocks`:** insert after block objects if placement is `auto` ([c91e8a1](https://github.com/portabletext/editor/commit/c91e8a1fa4a2f639dc2334df1a1e058addf32314))
+* **`isOverlappingSelection`:** account for more edge cases ([d051978](https://github.com/portabletext/editor/commit/d0519788e6e8669c1687dfe39cf9d32f75070efc))
+* **`isOverlappingSelection`:** account for more edge cases ([dc9adf8](https://github.com/portabletext/editor/commit/dc9adf8e51c174042600d46ecda19d8fa4d023a9))
+* **`isPointAfterSelection`:** don't reverse selection if not backward ([b69fbc7](https://github.com/portabletext/editor/commit/b69fbc763a2fa63c49605291a3e2ac4318a7a131))
+* **`isPointBeforeSelection`:** don't reverse selection if not backward ([0dd79a3](https://github.com/portabletext/editor/commit/0dd79a3731788729104811113a53623d47b8bf33))
+* **behavior actions:** don't pass entire context to actions ([e82b23d](https://github.com/portabletext/editor/commit/e82b23dadd8ec823724323637ea3e50626cead88))
+* **deps:** update sanity monorepo to ^3.78.0 ([7bcaac8](https://github.com/portabletext/editor/commit/7bcaac8977d97567905fcf3f577f2c271472f09d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.12
+
 ## [1.36.6](https://github.com/portabletext/editor/compare/editor-v1.36.5...editor-v1.36.6) (2025-03-03)
 
 
