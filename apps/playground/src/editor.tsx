@@ -2,6 +2,7 @@ import {
   EditorProvider,
   PortableTextEditable,
   useEditor,
+  useEditorSelector,
   type BlockDecoratorRenderProps,
   type BlockStyleRenderProps,
   type EditorEmittedEvent,
@@ -108,7 +109,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
                 onError={console.error}
               >
                 <PortableTextEditable
-                  className="flex-1 p-2 border"
+                  className="flex-1 p-2 ps-5 border"
                   style={{maxHeight: '50vh', overflowY: 'auto'}}
                   onPaste={(data) => {
                     const text = data.event.clipboardData.getData('text')
@@ -527,6 +528,9 @@ const renderAnnotation: RenderAnnotationFunction = (props) => {
 }
 
 const renderBlock: RenderBlockFunction = (props) => {
+  const editor = useEditor()
+  const readOnly = useEditorSelector(editor, (s) => s.context.readOnly)
+
   if (props.schemaType.name === 'break') {
     return (
       <Separator
@@ -549,7 +553,16 @@ const renderBlock: RenderBlockFunction = (props) => {
     )
   }
 
-  return props.children
+  return (
+    <div className="me-1 relative hover:bg-red">
+      <div
+        contentEditable={false}
+        draggable={!readOnly}
+        className={`absolute top-0 -left-3 bottom-0 w-1.5 bg-slate-300 rounded cursor-grab`}
+      />
+      <div>{props.children}</div>
+    </div>
+  )
 }
 
 const renderDecorator: RenderDecoratorFunction = (props) => {
