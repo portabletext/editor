@@ -49,6 +49,30 @@ Feature: Insert Blocks
       | text                         |
       | "[image]\|foo\|[image]\|bar" |
 
+  Scenario Outline: Inserting inline object
+    When a block is inserted "auto"
+      ```
+      {
+        "_type": "image"
+      }
+      ```
+    And blocks are inserted <placement>
+      ```
+      [
+        {
+          "_type": "block",
+          "children": [{"_type": "stock-ticker"}]
+        }
+      ]
+      ```
+    Then the text is <text>
+
+    Examples:
+      | placement | text                        |
+      | "before"  | ",[stock-ticker],\|[image]" |
+      | "after"   | "[image]\|,[stock-ticker]," |
+      | "auto"    | "[image]\|,[stock-ticker]," |
+
   Scenario Outline: Inserting blocks on a text block
     Given the text "foo"
     When the caret is put <position>
