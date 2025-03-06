@@ -164,6 +164,9 @@ importers:
       '@xstate/react':
         specifier: ^5.0.0
         version: 5.0.3(@types/react@19.0.10)(react@19.0.0)(xstate@5.19.2)
+      '@xstate/store':
+        specifier: ^3.2.1
+        version: 3.2.1(react@19.0.0)
       lucide-react:
         specifier: ^0.468.0
         version: 0.468.0(react@19.0.0)
@@ -233,7 +236,7 @@ importers:
         version: 19.0.0-beta-bafa41b-20250307(eslint@8.57.1)
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-d331ba04-20250307(eslint@8.57.1)
+        version: 0.0.0-experimental-0ca3deeb-20250311(eslint@8.57.1)
       postcss:
         specifier: ^8.4.49
         version: 8.5.3
@@ -291,7 +294,7 @@ importers:
         version: 19.0.0-beta-bafa41b-20250307(eslint@9.19.0(jiti@1.21.7))
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-d331ba04-20250307(eslint@9.19.0(jiti@1.21.7))
+        version: 0.0.0-experimental-0ca3deeb-20250311(eslint@9.19.0(jiti@1.21.7))
       eslint-plugin-react-refresh:
         specifier: ^0.4.14
         version: 0.4.18(eslint@9.19.0(jiti@1.21.7))
@@ -364,7 +367,7 @@ importers:
         version: 19.0.0-beta-bafa41b-20250307(eslint@9.19.0(jiti@1.21.7))
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-d331ba04-20250307(eslint@9.19.0(jiti@1.21.7))
+        version: 0.0.0-experimental-0ca3deeb-20250311(eslint@9.19.0(jiti@1.21.7))
       eslint-plugin-react-refresh:
         specifier: ^0.4.14
         version: 0.4.18(eslint@9.19.0(jiti@1.21.7))
@@ -531,7 +534,7 @@ importers:
         version: 19.0.0-beta-bafa41b-20250307(eslint@8.57.1)
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-d331ba04-20250307(eslint@8.57.1)
+        version: 0.0.0-experimental-0ca3deeb-20250311(eslint@8.57.1)
       jsdom:
         specifier: ^26.0.0
         version: 26.0.0
@@ -3284,6 +3287,17 @@ packages:
       xstate:
         optional: true
 
+  '@xstate/store@3.2.1':
+    resolution: {integrity: sha512-6+Dqfvw28SLgCNzDReye5F9/3NcXot9tZ7fUGQtr01kwXoQAUVO2A9Z24+fv3Q8cRlFq7d2PLGiHQ7WCat/9sQ==}
+    peerDependencies:
+      react: ^18.2.0 || ^19.0.0
+      solid-js: ^1.7.6
+    peerDependenciesMeta:
+      react:
+        optional: true
+      solid-js:
+        optional: true
+
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
     peerDependencies:
@@ -3888,8 +3902,8 @@ packages:
     peerDependencies:
       eslint: '>=7'
 
-  eslint-plugin-react-hooks@0.0.0-experimental-d331ba04-20250307:
-    resolution: {integrity: sha512-nCE8wVid8kurFLS0tfQCJ6JP+60+Ezv0ZbzG/uYe+/AX5A6m2CIan1iZ2sGK86ppcuy8YvnSwWrWLLJ1OtGqsQ==}
+  eslint-plugin-react-hooks@0.0.0-experimental-0ca3deeb-20250311:
+    resolution: {integrity: sha512-My0IzqZ3MZvbiCqzn/NSDCLnBlr0ugvmp2+r9hQvJzbuuI/R5nfhH1snQLUcIGbBxsJbrq5hony1k43zFRM8VA==}
     engines: {node: '>=18'}
     peerDependencies:
       eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0
@@ -10014,6 +10028,10 @@ snapshots:
     transitivePeerDependencies:
       - '@types/react'
 
+  '@xstate/store@3.2.1(react@19.0.0)':
+    optionalDependencies:
+      react: 19.0.0
+
   acorn-jsx@5.3.2(acorn@8.14.0):
     dependencies:
       acorn: 8.14.0
@@ -10731,11 +10749,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-react-hooks@0.0.0-experimental-d331ba04-20250307(eslint@8.57.1):
+  eslint-plugin-react-hooks@0.0.0-experimental-0ca3deeb-20250311(eslint@8.57.1):
     dependencies:
       eslint: 8.57.1
 
-  eslint-plugin-react-hooks@0.0.0-experimental-d331ba04-20250307(eslint@9.19.0(jiti@1.21.7)):
+  eslint-plugin-react-hooks@0.0.0-experimental-0ca3deeb-20250311(eslint@9.19.0(jiti@1.21.7)):
     dependencies:
       eslint: 9.19.0(jiti@1.21.7)
 
