@@ -18,7 +18,6 @@ import {
   historyRedoActionImplementation,
   historyUndoActionImplementation,
 } from '../editor/plugins/createWithUndoRedo'
-import {toSlatePath} from '../internal-utils/paths'
 import {toSlateRange} from '../internal-utils/ranges'
 import type {PickFromUnion} from '../type-utils'
 import {blockSetBehaviorActionImplementation} from './behavior.action.block.set'
@@ -42,6 +41,9 @@ import {
   removeListItemActionImplementation,
   toggleListItemActionImplementation,
 } from './behavior.action.list-item'
+import {moveBlockActionImplementation} from './behavior.action.move.block'
+import {moveBlockDownActionImplementation} from './behavior.action.move.block-down'
+import {moveBlockUpActionImplementation} from './behavior.action.move.block-up'
 import {
   addStyleActionImplementation,
   removeStyleActionImplementation,
@@ -145,41 +147,9 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'list item.add': addListItemActionImplementation,
   'list item.remove': removeListItemActionImplementation,
   'list item.toggle': toggleListItemActionImplementation,
-  'move.block': ({action}) => {
-    const at = [toSlatePath(action.at, action.editor)[0]]
-    const to = [toSlatePath(action.to, action.editor)[0]]
-
-    Transforms.moveNodes(action.editor, {
-      at,
-      to,
-      mode: 'highest',
-    })
-  },
-  'move.block down': ({action}) => {
-    const at = [toSlatePath(action.at, action.editor)[0]]
-    const to = [Path.next(at)[0]]
-
-    Transforms.moveNodes(action.editor, {
-      at,
-      to,
-      mode: 'highest',
-    })
-  },
-  'move.block up': ({action}) => {
-    const at = [toSlatePath(action.at, action.editor)[0]]
-
-    if (!Path.hasPrevious(at)) {
-      return
-    }
-
-    const to = [Path.previous(at)[0]]
-
-    Transforms.moveNodes(action.editor, {
-      at,
-      to,
-      mode: 'highest',
-    })
-  },
+  'move.block': moveBlockActionImplementation,
+  'move.block down': moveBlockDownActionImplementation,
+  'move.block up': moveBlockUpActionImplementation,
   'noop': () => {},
   'select': ({action}) => {
     const newSelection = toSlateRange(action.selection, action.editor)
