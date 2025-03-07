@@ -5,8 +5,11 @@ import type {
   PortableTextTextBlock,
 } from '@sanity/types'
 import {
+  useContext,
+  useEffect,
   useMemo,
   useRef,
+  useState,
   type FunctionComponent,
   type JSX,
   type ReactElement,
@@ -18,9 +21,12 @@ import {
   useSlateStatic,
   type RenderElementProps,
 } from 'slate-react'
+import {defineBehavior} from '../../behaviors'
 import {debugWithName} from '../../internal-utils/debug'
+import type {EventPositionBlock} from '../../internal-utils/event-position'
 import {fromSlateValue} from '../../internal-utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../../internal-utils/weakMaps'
+import * as selectors from '../../selectors'
 import type {
   BlockRenderProps,
   PortableTextMemberSchemaTypes,
@@ -29,10 +35,10 @@ import type {
   RenderListItemFunction,
   RenderStyleFunction,
 } from '../../types/editor'
+import {EditorActorContext} from '../editor-actor-context'
 import {DefaultBlockObject, DefaultInlineObject} from './DefaultObject'
 import {DropIndicator} from './drop-indicator'
 import {useDraggable} from './use-draggable'
-import {useDroppable} from './use-droppable'
 
 const debug = debugWithName('components:Element')
 const debugRenders = false
@@ -72,24 +78,135 @@ export const Element: FunctionComponent<ElementProps> = ({
   renderStyle,
   spellCheck,
 }) => {
-  const editor = useSlateStatic()
+  const editorActor = useContext(EditorActorContext)
+  const slateEditor = useSlateStatic()
   const selected = useSelected()
   const blockRef = useRef<HTMLDivElement | null>(null)
   const inlineBlockObjectRef = useRef(null)
   const focused =
-    (selected && editor.selection && Range.isCollapsed(editor.selection)) ||
+    (selected &&
+      slateEditor.selection &&
+      Range.isCollapsed(slateEditor.selection)) ||
     false
-  const droppable = useDroppable({element, blockRef, readOnly})
-  const draggable = useDraggable({element, blockRef, readOnly})
+  const [dragPositionBlock, setDragPositionBlock] =
+    useState<EventPositionBlock>()
+  const draggable = useDraggable({element, readOnly, blockRef})
+
+  useEffect(() => {
+    const behavior = defineBehavior({
+      on: 'drag.dragover',
+      guard: ({snapshot, event}) => {
+        const dropFocusBlock = selectors.getFocusBlock({
+          ...snapshot,
+          context: {
+            ...snapshot.context,
+            selection: event.position.selection,
+          },
+        })
+
+        if (!dropFocusBlock || dropFocusBlock.node._key !== element._key) {
+          return false
+        }
+
+        const dragOrigin = snapshot.beta.internalDrag?.origin
+
+        if (!dragOrigin) {
+          return false
+        }
+
+        const draggedBlocks = selectors.getSelectedBlocks({
+          ...snapshot,
+          context: {
+            ...snapshot.context,
+            selection: dragOrigin.selection,
+          },
+        })
+
+        if (
+          draggedBlocks.some(
+            (draggedBlock) => draggedBlock.node._key === element._key,
+          )
+        ) {
+          return false
+        }
+
+        const draggingEntireBlocks = selectors.isSelectingEntireBlocks({
+          ...snapshot,
+          context: {
+            ...snapshot.context,
+            selection: dragOrigin.selection,
+          },
+        })
+
+        return draggingEntireBlocks
+      },
+      actions: [
+        ({event}) => [
+          {
+            type: 'effect',
+            effect: () => {
+              setDragPositionBlock(event.position.block)
+            },
+          },
+          {
+            type: 'noop',
+          },
+        ],
+      ],
+    })
+
+    editorActor.send({
+      type: 'add behavior',
+      behavior,
+    })
+
+    return () => {
+      editorActor.send({
+        type: 'remove behavior',
+        behavior,
+      })
+    }
+  }, [editorActor, element._key])
+
+  useEffect(() => {
+    const behavior = defineBehavior({
+      on: 'drag.*',
+      guard: ({event}) => {
+        return event.type !== 'drag.dragover'
+      },
+      actions: [
+        () => [
+          {
+            type: 'effect',
+            effect: () => {
+              setDragPositionBlock(undefined)
+            },
+          },
+        ],
+      ],
+    })
+
+    editorActor.send({
+      type: 'add behavior',
+      behavior,
+    })
+
+    return () => {
+      editorActor.send({
+        type: 'remove behavior',
+        behavior,
+      })
+    }
+  }, [editorActor])
 
   const value = useMemo(
     () =>
       fromSlateValue(
         [element],
         schemaTypes.block.name,
-        KEY_TO_VALUE_ELEMENT.get(editor),
+        KEY_TO_VALUE_ELEMENT.get(slateEditor),
       )[0],
-    [editor, element, schemaTypes.block.name],
+    [slateEditor, element, schemaTypes.block.name],
   )
 
   let renderedBlock = children
@@ -107,9 +224,9 @@ export const Element: FunctionComponent<ElementProps> = ({
   }
 
   // Test for inline objects first
-  if (editor.isInline(element)) {
-    const path = ReactEditor.findPath(editor, element)
-    const [block] = Editor.node(editor, path, {depth: 1})
+  if (slateEditor.isInline(element)) {
+    const path = ReactEditor.findPath(slateEditor, element)
+    const [block] = Editor.node(slateEditor, path, {depth: 1})
     const schemaType = schemaTypes.inlineObjects.find(
       (_type) => _type.name === element._type,
     )
@@ -192,7 +309,7 @@ export const Element: FunctionComponent<ElementProps> = ({
       className += ` pt-list-item pt-list-item-${element.listItem} pt-list-item-level-${level || 1}`
     }
 
-    if (editor.isListBlock(value) && isListItem && element.listItem) {
+    if (slateEditor.isListBlock(value) && isListItem && element.listItem) {
       const listType = schemaTypes.lists.find(
         (item) => item.value === element.listItem,
       )
@@ -246,11 +363,10 @@ export const Element: FunctionComponent<ElementProps> = ({
         {...attributes}
         className={className}
         spellCheck={spellCheck}
-        {...droppable.droppableProps}
       >
-        {droppable.isDraggingOverTop ? <DropIndicator /> : null}
+        {dragPositionBlock === 'start' ? <DropIndicator /> : null}
         <div ref={blockRef}>{propsOrDefaultRendered}</div>
-        {droppable.isDraggingOverBottom ? <DropIndicator /> : null}
+        {dragPositionBlock === 'end' ? <DropIndicator /> : null}
       </div>
     )
   }
@@ -274,7 +390,7 @@ export const Element: FunctionComponent<ElementProps> = ({
   const block = fromSlateValue(
     [element],
     schemaTypes.block.name,
-    KEY_TO_VALUE_ELEMENT.get(editor),
+    KEY_TO_VALUE_ELEMENT.get(slateEditor),
   )[0]
 
   let renderedBlockFromProps: JSX.Element | undefined
@@ -309,10 +425,9 @@ export const Element: FunctionComponent<ElementProps> = ({
       key={element._key}
       {...attributes}
       className={className}
-      {...droppable.droppableProps}
       {...draggable.draggableProps}
     >
-      {droppable.isDraggingOverTop ? <DropIndicator /> : null}
+      {dragPositionBlock === 'start' ? <DropIndicator /> : null}
       {children}
       <div ref={blockRef} contentEditable={false}>
         {renderedBlockFromProps ? (
@@ -321,7 +436,7 @@ export const Element: FunctionComponent<ElementProps> = ({
           <DefaultBlockObject value={value} />
         )}
       </div>
-      {droppable.isDraggingOverBottom ? <DropIndicator /> : null}
+      {dragPositionBlock === 'end' ? <DropIndicator /> : null}
     </div>
   )
 }

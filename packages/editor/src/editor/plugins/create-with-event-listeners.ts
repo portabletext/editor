@@ -61,15 +61,8 @@ export function createWithEventListeners(
       }
     })
 
-    const {
-      deleteBackward,
-      deleteForward,
-      insertBreak,
-      insertData,
-      insertText,
-      select,
-      setFragmentData,
-    } = editor
+    const {deleteBackward, deleteForward, insertBreak, insertText, select} =
+      editor
 
     editor.deleteBackward = (unit) => {
       if (isApplyingBehaviorActions(editor)) {
@@ -121,20 +114,8 @@ export function createWithEventListeners(
       return
     }
 
-    editor.insertData = (dataTransfer) => {
-      if (isApplyingBehaviorActions(editor)) {
-        insertData(dataTransfer)
-        return
-      }
-
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'deserialize',
-          dataTransfer,
-        },
-        editor,
-      })
+    editor.insertData = () => {
+      console.warn('Unexpected call to .insertData(...)')
       return
     }
 
@@ -236,23 +217,8 @@ export function createWithEventListeners(
       return
     }
 
-    editor.setFragmentData = (dataTransfer, originEvent) => {
-      if (isApplyingBehaviorActions(editor)) {
-        setFragmentData(dataTransfer)
-        return
-      }
-
-      dataTransfer.clearData()
-
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'serialize',
-          dataTransfer,
-          originEvent: originEvent ?? 'unknown',
-        },
-        editor,
-      })
+    editor.setFragmentData = () => {
+      console.warn('Unexpected call to .setFragmentData(...)')
       return
     }
 

@@ -6,7 +6,10 @@ import {defineConverter} from './converter.types'
 export const converterTextPlain = defineConverter({
   mimeType: 'text/plain',
   serialize: ({snapshot, event}) => {
-    if (!snapshot.context.selection) {
+    const selection =
+      snapshot.beta.internalDrag?.origin.selection ?? snapshot.context.selection
+
+    if (!selection) {
       return {
         type: 'serialization.failure',
         mimeType: 'text/plain',
@@ -17,7 +20,7 @@ export const converterTextPlain = defineConverter({
 
     const blocks = sliceBlocks({
       blocks: snapshot.context.value,
-      selection: snapshot.context.selection,
+      selection,
     })
 
     const data = blocks
