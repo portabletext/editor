@@ -13,6 +13,8 @@ export const coreBehaviors = [
   coreDecoratorBehaviors.emShortcut,
   coreDecoratorBehaviors.underlineShortcut,
   coreDecoratorBehaviors.codeShortcut,
+  coreBlockObjectBehaviors.clickingAboveLonelyBlockObject,
+  coreBlockObjectBehaviors.clickingBelowLonelyBlockObject,
   coreBlockObjectBehaviors.arrowDownOnLonelyBlockObject,
   coreBlockObjectBehaviors.arrowUpOnLonelyBlockObject,
   coreBlockObjectBehaviors.breakingBlockObject,

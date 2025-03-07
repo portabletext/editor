@@ -44,6 +44,43 @@ const breakingBlockObject = defineBehavior({
   actions: [() => [raise({type: 'insert.text block', placement: 'after'})]],
 })
 
+const clickingAboveLonelyBlockObject = defineBehavior({
+  on: 'mouse.click',
+  guard: ({snapshot, event}) => {
+    const focusBlockObject = selectors.getFocusBlockObject(snapshot)
+    const previousBlock = selectors.getPreviousBlock(snapshot)
+
+    return (
+      event.position.isEditor &&
+      event.position.block === 'start' &&
+      focusBlockObject &&
+      !previousBlock
+    )
+  },
+  actions: [
+    () => [
+      raise({type: 'insert.text block', placement: 'before'}),
+      raise({type: 'select.previous block'}),
+    ],
+  ],
+})
+
+const clickingBelowLonelyBlockObject = defineBehavior({
+  on: 'mouse.click',
+  guard: ({snapshot, event}) => {
+    const focusBlockObject = selectors.getFocusBlockObject(snapshot)
+    const nextBlock = selectors.getNextBlock(snapshot)
+
+    return (
+      event.position.isEditor &&
+      event.position.block === 'end' &&
+      focusBlockObject &&
+      !nextBlock
+    )
+  },
+  actions: [() => [raise({type: 'insert.text block', placement: 'after'})]],
+})
+
 const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
   on: 'delete.backward',
   guard: ({snapshot}) => {
@@ -122,6 +159,8 @@ export const coreBlockObjectBehaviors = {
   arrowDownOnLonelyBlockObject,
   arrowUpOnLonelyBlockObject,
   breakingBlockObject,
+  clickingAboveLonelyBlockObject,
+  clickingBelowLonelyBlockObject,
   deletingEmptyTextBlockAfterBlockObject,
   deletingEmptyTextBlockBeforeBlockObject,
 }

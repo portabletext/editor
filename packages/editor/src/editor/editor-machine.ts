@@ -14,6 +14,7 @@ import {coreBehaviors} from '../behaviors/behavior.core'
 import {defaultBehaviors} from '../behaviors/behavior.default'
 import {
   isCustomBehaviorEvent,
+  isMouseBehaviorEvent,
   type Behavior,
   type CustomBehaviorEvent,
   type InternalBehaviorAction,
@@ -317,6 +318,7 @@ export const editorMachine = setup({
           event.behaviorEvent.type === 'deserialize' ||
           event.behaviorEvent.type === 'key.down' ||
           event.behaviorEvent.type === 'key.up' ||
+          isMouseBehaviorEvent(event.behaviorEvent) ||
           event.behaviorEvent.type === 'paste' ||
           event.behaviorEvent.type === 'serialize'
             ? undefined

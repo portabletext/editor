@@ -19,7 +19,6 @@ import {
 } from 'react'
 import {
   Editor,
-  Node,
   Path,
   Range as SlateRange,
   Transforms,
@@ -36,6 +35,7 @@ import {
   type RenderLeafProps,
 } from 'slate-react'
 import {debugWithName} from '../internal-utils/debug'
+import {getEventPosition} from '../internal-utils/event-position'
 import {
   moveRangeByOperation,
   toPortableTextRange,
@@ -62,10 +62,10 @@ import type {
   ScrollSelectionIntoViewFunction,
 } from '../types/editor'
 import type {HotkeyOptions} from '../types/options'
-import type {SlateTextBlock, VoidElement} from '../types/slate'
 import {Element} from './components/Element'
 import {Leaf} from './components/Leaf'
 import {EditorActorContext} from './editor-actor-context'
+import {getEditorSnapshot} from './editor-selector'
 import {usePortableTextEditor} from './hooks/usePortableTextEditor'
 import {createWithHotkeys} from './plugins/createWithHotKeys'
 import {PortableTextEditor} from './PortableTextEditor'
@@ -545,34 +545,35 @@ export const PortableTextEditable = forwardRef<
         onClick(event)
       }
 
-      const focusBlockPath = slateEditor.selection
-        ? slateEditor.selection.focus.path.slice(0, 1)
-        : undefined
-      const focusBlock = focusBlockPath
-        ? (Node.descendant(slateEditor, focusBlockPath) as
-            | SlateTextBlock
-            | VoidElement)
-        : undefined
-      const [_, lastNodePath] = Node.last(slateEditor, [])
-      const lastBlockPath = lastNodePath.slice(0, 1)
-      const lastNodeFocused = focusBlockPath
-        ? Path.equals(lastBlockPath, focusBlockPath)
-        : false
-      const lastBlockIsVoid = focusBlock
-        ? !slateEditor.isTextBlock(focusBlock)
-        : false
-      const collapsedSelection =
-        slateEditor.selection && SlateRange.isCollapsed(slateEditor.selection)
-
-      if (collapsedSelection && lastNodeFocused && lastBlockIsVoid) {
-        Transforms.insertNodes(
-          slateEditor,
-          slateEditor.pteCreateTextBlock({decorators: []}),
-        )
-        slateEditor.onChange()
+      if (event.isDefaultPrevented() || event.isPropagationStopped()) {
+        return
       }
+
+      const position = getEventPosition({
+        snapshot: getEditorSnapshot({
+          editorActorSnapshot: editorActor.getSnapshot(),
+          slateEditorInstance: slateEditor,
+        }),
+        slateEditor,
+        event: event.nativeEvent,
+      })
+
+      if (!position) {
+        console.warn('Could not find EventPosition for MouseEvent')
+        return
+      }
+
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'mouse.click',
+          position,
+        },
+        editor: slateEditor,
+        nativeEvent: event,
+      })
     },
-    [onClick, slateEditor],
+    [onClick, editorActor, slateEditor],
   )
 
   const handleOnBlur: FocusEventHandler<HTMLDivElement> = useCallback(

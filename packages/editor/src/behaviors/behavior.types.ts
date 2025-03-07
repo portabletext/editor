@@ -7,6 +7,7 @@ import type {TextUnit} from 'slate'
 import type {TextInsertTextOptions} from 'slate/dist/interfaces/transforms/text'
 import type {ConverterEvent} from '../converters/converter.types'
 import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
+import type {EventPosition} from '../internal-utils/event-position'
 import type {MIMEType} from '../internal-utils/mime-type'
 import type {OmitFromUnion, PickFromUnion} from '../type-utils'
 import type {BlockOffset} from '../types/block-offset'
@@ -206,6 +207,17 @@ export type SyntheticBehaviorEvent =
       | 'serialization.success'
     > & {dataTransfer: DataTransfer})
 
+export type MouseBehaviorEvent = {
+  type: 'mouse.click'
+  position: EventPosition
+}
+
+export function isMouseBehaviorEvent(
+  event: BehaviorEvent,
+): event is MouseBehaviorEvent {
+  return event.type.startsWith('mouse.')
+}
+
 /**
  * @beta
  */
@@ -232,6 +244,7 @@ export type NativeBehaviorEvent =
         'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
       >
     }
+  | MouseBehaviorEvent
   | {
       type: 'paste'
       data: DataTransfer
