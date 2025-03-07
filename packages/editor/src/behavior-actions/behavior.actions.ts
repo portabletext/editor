@@ -1,7 +1,4 @@
-import type {
-  InternalBehaviorAction,
-  SyntheticBehaviorEvent,
-} from '../behaviors/behavior.types'
+import type {InternalBehaviorAction} from '../behaviors/behavior.types'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {
   addAnnotationActionImplementation,
@@ -138,38 +135,6 @@ export function performAction({
   action: InternalBehaviorAction
 }) {
   switch (action.type) {
-    case 'noop': {
-      behaviorActionImplementations.noop({
-        context,
-        action,
-      })
-      break
-    }
-    case 'effect': {
-      behaviorActionImplementations.effect({
-        context,
-        action,
-      })
-      break
-    }
-    default: {
-      performDefaultAction({context, action})
-    }
-  }
-}
-
-function performDefaultAction({
-  context,
-  action,
-}: {
-  context: BehaviorActionImplementationContext
-  action: PickFromUnion<
-    InternalBehaviorAction,
-    'type',
-    SyntheticBehaviorEvent['type']
-  >
-}) {
-  switch (action.type) {
     case 'annotation.add': {
       behaviorActionImplementations['annotation.add']({
         context,
@@ -284,6 +249,13 @@ function performDefaultAction({
     }
     case 'deserialization.success': {
       behaviorActionImplementations['deserialization.success']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'effect': {
+      behaviorActionImplementations.effect({
         context,
         action,
       })
@@ -410,6 +382,13 @@ function performDefaultAction({
     }
     case 'move.block up': {
       behaviorActionImplementations['move.block up']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'noop': {
+      behaviorActionImplementations.noop({
         context,
         action,
       })
