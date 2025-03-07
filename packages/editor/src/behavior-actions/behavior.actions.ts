@@ -44,6 +44,7 @@ import {
 import {moveBlockActionImplementation} from './behavior.action.move.block'
 import {moveBlockDownActionImplementation} from './behavior.action.move.block-down'
 import {moveBlockUpActionImplementation} from './behavior.action.move.block-up'
+import {noopActionImplementation} from './behavior.action.noop'
 import {
   addStyleActionImplementation,
   removeStyleActionImplementation,
@@ -150,7 +151,7 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'move.block': moveBlockActionImplementation,
   'move.block down': moveBlockDownActionImplementation,
   'move.block up': moveBlockUpActionImplementation,
-  'noop': () => {},
+  'noop': noopActionImplementation,
   'select': ({action}) => {
     const newSelection = toSlateRange(action.selection, action.editor)
 
