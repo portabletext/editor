@@ -1,4 +1,4 @@
-import {deleteForward, insertText, Path, Transforms} from 'slate'
+import {deleteForward, insertText, Transforms} from 'slate'
 import {ReactEditor} from 'slate-react'
 import type {
   InternalBehaviorAction,
@@ -45,6 +45,9 @@ import {moveBlockActionImplementation} from './behavior.action.move.block'
 import {moveBlockDownActionImplementation} from './behavior.action.move.block-down'
 import {moveBlockUpActionImplementation} from './behavior.action.move.block-up'
 import {noopActionImplementation} from './behavior.action.noop'
+import {selectActionImplementation} from './behavior.action.select'
+import {selectNextBlockActionImplementation} from './behavior.action.select.next-block'
+import {selectPreviousBlockActionImplementation} from './behavior.action.select.previous-block'
 import {
   addStyleActionImplementation,
   removeStyleActionImplementation,
@@ -152,43 +155,9 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'move.block down': moveBlockDownActionImplementation,
   'move.block up': moveBlockUpActionImplementation,
   'noop': noopActionImplementation,
-  'select': ({action}) => {
-    const newSelection = toSlateRange(action.selection, action.editor)
-
-    if (newSelection) {
-      Transforms.select(action.editor, newSelection)
-    } else {
-      Transforms.deselect(action.editor)
-    }
-  },
-  'select.previous block': ({action}) => {
-    if (!action.editor.selection) {
-      console.error('Unable to select previous block without a selection')
-      return
-    }
-
-    const blockPath = action.editor.selection.focus.path.slice(0, 1)
-
-    if (!Path.hasPrevious(blockPath)) {
-      console.error("There's no previous block to select")
-      return
-    }
-
-    const previousBlockPath = Path.previous(blockPath)
-
-    Transforms.select(action.editor, previousBlockPath)
-  },
-  'select.next block': ({action}) => {
-    if (!action.editor.selection) {
-      console.error('Unable to select next block without a selection')
-      return
-    }
-
-    const blockPath = action.editor.selection.focus.path.slice(0, 1)
-    const nextBlockPath = [blockPath[0] + 1]
-
-    Transforms.select(action.editor, nextBlockPath)
-  },
+  'select': selectActionImplementation,
+  'select.previous block': selectPreviousBlockActionImplementation,
+  'select.next block': selectNextBlockActionImplementation,
   'serialization.failure': ({action}) => {
     console.warn(
       `Serialization of ${action.mimeType} failed with reason "${action.reason}"`,
