@@ -45,6 +45,9 @@ const breakingAtTheEndOfTextBlock = defineBehavior({
         },
         placement: 'after',
       }),
+      raise({
+        type: 'select.next block',
+      }),
     ],
   ],
 })

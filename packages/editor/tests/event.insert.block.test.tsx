@@ -133,7 +133,7 @@ describe('event.insert.block', () => {
           },
         ],
       },
-      placement: 'auto',
+      placement: 'after',
     })
 
     expect(editorRef.current?.getSnapshot().context.value).toEqual([

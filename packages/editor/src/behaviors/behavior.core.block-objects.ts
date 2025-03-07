@@ -13,7 +13,12 @@ const arrowDownOnLonelyBlockObject = defineBehavior({
 
     return isArrowDown && focusBlockObject && !nextBlock
   },
-  actions: [() => [raise({type: 'insert.text block', placement: 'after'})]],
+  actions: [
+    () => [
+      raise({type: 'insert.text block', placement: 'after'}),
+      raise({type: 'select.next block'}),
+    ],
+  ],
 })
 
 const arrowUpOnLonelyBlockObject = defineBehavior({
@@ -41,7 +46,12 @@ const breakingBlockObject = defineBehavior({
 
     return collapsedSelection && focusBlockObject !== undefined
   },
-  actions: [() => [raise({type: 'insert.text block', placement: 'after'})]],
+  actions: [
+    () => [
+      raise({type: 'insert.text block', placement: 'after'}),
+      raise({type: 'select.next block'}),
+    ],
+  ],
 })
 
 const clickingAboveLonelyBlockObject = defineBehavior({
@@ -78,7 +88,12 @@ const clickingBelowLonelyBlockObject = defineBehavior({
       !nextBlock
     )
   },
-  actions: [() => [raise({type: 'insert.text block', placement: 'after'})]],
+  actions: [
+    () => [
+      raise({type: 'insert.text block', placement: 'after'}),
+      raise({type: 'select.next block'}),
+    ],
+  ],
 })
 
 const deletingEmptyTextBlockAfterBlockObject = defineBehavior({

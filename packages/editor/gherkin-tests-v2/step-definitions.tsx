@@ -48,7 +48,7 @@ export const stepDefinitions = [
       <EditorProvider
         initialConfig={{
           schemaDefinition: defineSchema({
-            blockObjects: [{name: 'image'}],
+            blockObjects: [{name: 'image'}, {name: 'break'}],
             inlineObjects: [{name: 'stock-ticker'}],
           }),
           keyGenerator,
@@ -76,6 +76,25 @@ export const stepDefinitions = [
   Given('the text {string}', async (context: Context, text: string) => {
     await userEvent.type(context.editor.locator, text)
   }),
+
+  Given(
+    'a block {placement}',
+    (context: Context, placement: Parameter['placement'], block: string) => {
+      context.editor.ref.current.send({
+        type: 'insert.block',
+        block: parseBlock({
+          context: {
+            schema: context.editor.ref.current.getSnapshot().context.schema,
+            keyGenerator:
+              context.editor.ref.current.getSnapshot().context.keyGenerator,
+          },
+          block: JSON.parse(block),
+          options: {refreshKeys: false},
+        })!,
+        placement,
+      })
+    },
+  ),
 
   When('{string} is typed', async (context: Context, text: string) => {
     await userEvent.type(context.editor.locator, text)
