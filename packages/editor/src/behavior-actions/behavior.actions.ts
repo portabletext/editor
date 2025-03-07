@@ -1,4 +1,4 @@
-import {deleteForward, insertText, Transforms} from 'slate'
+import {deleteForward, insertText} from 'slate'
 import {ReactEditor} from 'slate-react'
 import type {
   InternalBehaviorAction,
@@ -18,13 +18,13 @@ import {
   historyRedoActionImplementation,
   historyUndoActionImplementation,
 } from '../editor/plugins/createWithUndoRedo'
-import {toSlateRange} from '../internal-utils/ranges'
 import type {PickFromUnion} from '../type-utils'
 import {blockSetBehaviorActionImplementation} from './behavior.action.block.set'
 import {blockUnsetBehaviorActionImplementation} from './behavior.action.block.unset'
 import {dataTransferSetActionImplementation} from './behavior.action.data-transfer-set'
 import {decoratorAddActionImplementation} from './behavior.action.decorator.add'
 import {deleteActionImplementation} from './behavior.action.delete'
+import {deleteBlockActionImplementation} from './behavior.action.delete.block'
 import {deleteTextActionImplementation} from './behavior.action.delete.text'
 import {insertBlocksActionImplementation} from './behavior.action.insert-blocks'
 import {
@@ -97,24 +97,7 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'delete.forward': ({action}) => {
     deleteForward(action.editor, action.unit)
   },
-  'delete.block': ({action}) => {
-    const range = toSlateRange(
-      {
-        anchor: {path: action.blockPath, offset: 0},
-        focus: {path: action.blockPath, offset: 0},
-      },
-      action.editor,
-    )
-
-    if (!range) {
-      console.error('Unable to find Slate range from selection points')
-      return
-    }
-
-    Transforms.removeNodes(action.editor, {
-      at: range,
-    })
-  },
+  'delete.block': deleteBlockActionImplementation,
   'delete.text': deleteTextActionImplementation,
   'deserialization.failure': ({action}) => {
     console.warn(
