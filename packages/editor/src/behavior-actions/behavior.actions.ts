@@ -1,5 +1,3 @@
-import {deleteForward, insertText} from 'slate'
-import {ReactEditor} from 'slate-react'
 import type {
   InternalBehaviorAction,
   SyntheticBehaviorEvent,
@@ -21,11 +19,18 @@ import {
 import type {PickFromUnion} from '../type-utils'
 import {blockSetBehaviorActionImplementation} from './behavior.action.block.set'
 import {blockUnsetBehaviorActionImplementation} from './behavior.action.block.unset'
+import {blurActionImplementation} from './behavior.action.blur'
 import {dataTransferSetActionImplementation} from './behavior.action.data-transfer-set'
 import {decoratorAddActionImplementation} from './behavior.action.decorator.add'
 import {deleteActionImplementation} from './behavior.action.delete'
+import {deleteBackwardActionImplementation} from './behavior.action.delete.backward'
 import {deleteBlockActionImplementation} from './behavior.action.delete.block'
+import {deleteForwardActionImplementation} from './behavior.action.delete.forward'
 import {deleteTextActionImplementation} from './behavior.action.delete.text'
+import {deserializationFailureActionImplementation} from './behavior.action.deserialization.failure'
+import {deserializationSuccessActionImplementation} from './behavior.action.deserialization.success'
+import {effectActionImplementation} from './behavior.action.effect'
+import {focusActionImplementation} from './behavior.action.focus'
 import {insertBlocksActionImplementation} from './behavior.action.insert-blocks'
 import {
   insertBreakActionImplementation,
@@ -35,6 +40,7 @@ import {insertInlineObjectActionImplementation} from './behavior.action.insert-i
 import {insertSpanActionImplementation} from './behavior.action.insert-span'
 import {insertBlockActionImplementation} from './behavior.action.insert.block'
 import {insertBlockObjectActionImplementation} from './behavior.action.insert.block-object'
+import {insertTextActionImplementation} from './behavior.action.insert.text'
 import {insertTextBlockActionImplementation} from './behavior.action.insert.text-block'
 import {
   addListItemActionImplementation,
@@ -48,6 +54,8 @@ import {noopActionImplementation} from './behavior.action.noop'
 import {selectActionImplementation} from './behavior.action.select'
 import {selectNextBlockActionImplementation} from './behavior.action.select.next-block'
 import {selectPreviousBlockActionImplementation} from './behavior.action.select.previous-block'
+import {serializationFailureActionImplementation} from './behavior.action.serialization.failure'
+import {serializationSuccessActionImplementation} from './behavior.action.serialization.success'
 import {
   addStyleActionImplementation,
   removeStyleActionImplementation,
@@ -80,41 +88,19 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'annotation.toggle': toggleAnnotationActionImplementation,
   'block.set': blockSetBehaviorActionImplementation,
   'block.unset': blockUnsetBehaviorActionImplementation,
-  'blur': ({action}) => {
-    ReactEditor.blur(action.editor)
-  },
+  'blur': blurActionImplementation,
   'data transfer.set': dataTransferSetActionImplementation,
   'decorator.add': decoratorAddActionImplementation,
   'decorator.remove': removeDecoratorActionImplementation,
   'decorator.toggle': toggleDecoratorActionImplementation,
-  'focus': ({action}) => {
-    ReactEditor.focus(action.editor)
-  },
+  'focus': focusActionImplementation,
   'delete': deleteActionImplementation,
-  'delete.backward': ({action}) => {
-    action.editor.deleteBackward(action.unit)
-  },
-  'delete.forward': ({action}) => {
-    deleteForward(action.editor, action.unit)
-  },
+  'delete.backward': deleteBackwardActionImplementation,
+  'delete.forward': deleteForwardActionImplementation,
   'delete.block': deleteBlockActionImplementation,
   'delete.text': deleteTextActionImplementation,
-  'deserialization.failure': ({action}) => {
-    console.warn(
-      `Deserialization of ${action.mimeType} failed with reason "${action.reason}"`,
-    )
-  },
-  'deserialization.success': ({context, action}) => {
-    insertBlocksActionImplementation({
-      context,
-      action: {
-        type: 'insert.blocks',
-        blocks: action.data,
-        editor: action.editor,
-        placement: 'auto',
-      },
-    })
-  },
+  'deserialization.failure': deserializationFailureActionImplementation,
+  'deserialization.success': deserializationSuccessActionImplementation,
   'history.redo': historyRedoActionImplementation,
   'history.undo': historyUndoActionImplementation,
   'insert.block': insertBlockActionImplementation,
@@ -124,13 +110,9 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'insert.inline object': insertInlineObjectActionImplementation,
   'insert.soft break': insertSoftBreakActionImplementation,
   'insert.span': insertSpanActionImplementation,
-  'insert.text': ({action}) => {
-    insertText(action.editor, action.text)
-  },
+  'insert.text': insertTextActionImplementation,
   'insert.text block': insertTextBlockActionImplementation,
-  'effect': ({action}) => {
-    action.effect()
-  },
+  'effect': effectActionImplementation,
   'list item.add': addListItemActionImplementation,
   'list item.remove': removeListItemActionImplementation,
   'list item.toggle': toggleListItemActionImplementation,
@@ -141,20 +123,8 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'select': selectActionImplementation,
   'select.previous block': selectPreviousBlockActionImplementation,
   'select.next block': selectNextBlockActionImplementation,
-  'serialization.failure': ({action}) => {
-    console.warn(
-      `Serialization of ${action.mimeType} failed with reason "${action.reason}"`,
-    )
-  },
-  'serialization.success': ({context, action}) => {
-    dataTransferSetActionImplementation({
-      context,
-      action: {
-        ...action,
-        type: 'data transfer.set',
-      },
-    })
-  },
+  'serialization.failure': serializationFailureActionImplementation,
+  'serialization.success': serializationSuccessActionImplementation,
   'style.toggle': toggleStyleActionImplementation,
   'style.add': addStyleActionImplementation,
   'style.remove': removeStyleActionImplementation,
