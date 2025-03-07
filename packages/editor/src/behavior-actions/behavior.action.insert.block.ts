@@ -74,15 +74,17 @@ function insertBlock({
     if (placement === 'after') {
       const nextPath = [focusBlockPath[0] + 1]
 
-      Transforms.insertNodes(editor, block, {at: nextPath})
-      Transforms.select(editor, {
-        anchor: {path: [nextPath[0], 0], offset: 0},
-        focus: {path: [nextPath[0], 0], offset: 0},
-      })
+      Transforms.insertNodes(editor, [block], {at: nextPath})
     } else if (placement === 'before') {
-      Transforms.insertNodes(editor, block, {at: focusBlockPath})
+      Transforms.insertNodes(editor, [block], {at: focusBlockPath})
     } else {
-      Editor.insertNode(editor, block)
+      if (editor.isTextBlock(focusBlock) && editor.isTextBlock(block)) {
+        const currentSelection = editor.selection
+        Transforms.insertFragment(editor, [block])
+        Transforms.select(editor, currentSelection)
+      } else {
+        Transforms.insertNodes(editor, [block])
+      }
 
       if (focusBlock && isEqualToEmptyEditor([focusBlock], schema)) {
         Transforms.removeNodes(editor, {at: focusBlockPath})
