@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.38.0](https://github.com/portabletext/editor/compare/editor-v1.37.0...editor-v1.38.0) (2025-03-10)
+
+
+### Features
+
+* **behaviors:** add `mouse.click` event ([c70f455](https://github.com/portabletext/editor/commit/c70f45542f24991c1df79ad2f6fadadb1c3eb1d4))
+
+
+### Bug Fixes
+
+* **deps:** update react compiler dependencies 🤖 ✨ ([c17f415](https://github.com/portabletext/editor/commit/c17f41510675a140d18b71f0ff30821ff2f5f6d6))
+* **deps:** update sanity monorepo to ^3.78.1 ([2902cf0](https://github.com/portabletext/editor/commit/2902cf06674a136d4145fc2fff108b581e6d0efa))
+* **insert.block:** don't manipulate the current selection ([521a019](https://github.com/portabletext/editor/commit/521a019b5ed5667cb3f6f89affa87e5d35da8bbf))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.13
+
 ## [1.37.0](https://github.com/portabletext/editor/compare/editor-v1.36.6...editor-v1.37.0) (2025-03-06)
 
 
