@@ -1,12 +1,23 @@
 import {isEqual, uniq} from 'lodash'
 import {Editor, Node, Path, Transforms} from 'slate'
+import {parseBlocks} from '../internal-utils/parse-blocks'
 import {isEqualToEmptyEditor, toSlateValue} from '../internal-utils/values'
 import type {BehaviorActionImplementation} from './behavior.actions'
 
 export const insertBlocksActionImplementation: BehaviorActionImplementation<
   'insert.blocks'
 > = ({context, action}) => {
-  const fragment = toSlateValue(action.blocks, {schemaTypes: context.schema})
+  const parsedBlocks = parseBlocks({
+    context,
+    blocks: action.blocks,
+    options: {refreshKeys: false},
+  })
+
+  if (parsedBlocks.length === 0) {
+    throw new Error(`Failed to parse blocks ${JSON.stringify(action.blocks)}`)
+  }
+
+  const fragment = toSlateValue(parsedBlocks, {schemaTypes: context.schema})
 
   if (!action.editor.selection) {
     if (action.placement === 'before') {
