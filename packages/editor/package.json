@@ -79,6 +79,7 @@
     "test": "vitest --run",
     "test:watch": "vitest",
     "test:e2e:chromium": "vitest --run --project \"browser.bak (chromium)\"",
+    "test:e2e:chromium:watch": "vitest --project \"browser.bak (chromium)\"",
     "test:browser": "vitest --run --project browser",
     "test:browser:watch": "vitest --project browser",
     "test:browser:chromium": "vitest --run --project \"browser (chromium)\"",
