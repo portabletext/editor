@@ -45,9 +45,6 @@ const breakingAtTheEndOfTextBlock = defineBehavior({
         },
         placement: 'after',
       }),
-      raise({
-        type: 'select.next block',
-      }),
     ],
   ],
 })
@@ -112,6 +109,7 @@ const breakingAtTheStartOfTextBlock = defineBehavior({
           style: snapshot.context.schema.styles[0]?.value,
         },
         placement: 'before',
+        select: 'none',
       }),
     ],
   ],

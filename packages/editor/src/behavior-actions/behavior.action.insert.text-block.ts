@@ -27,6 +27,7 @@ export const insertTextBlockActionImplementation: BehaviorActionImplementation<
       },
       editor: action.editor,
       placement: action.placement,
+      select: 'start',
     },
   })
 }

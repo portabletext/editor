@@ -13,12 +13,7 @@ const arrowDownOnLonelyBlockObject = defineBehavior({
 
     return isArrowDown && focusBlockObject && !nextBlock
   },
-  actions: [
-    () => [
-      raise({type: 'insert.text block', placement: 'after'}),
-      raise({type: 'select.next block'}),
-    ],
-  ],
+  actions: [() => [raise({type: 'insert.text block', placement: 'after'})]],
 })
 
 const arrowUpOnLonelyBlockObject = defineBehavior({
@@ -30,12 +25,7 @@ const arrowUpOnLonelyBlockObject = defineBehavior({
 
     return isArrowUp && focusBlockObject && !previousBlock
   },
-  actions: [
-    () => [
-      raise({type: 'insert.text block', placement: 'before'}),
-      raise({type: 'select.previous block'}),
-    ],
-  ],
+  actions: [() => [raise({type: 'insert.text block', placement: 'before'})]],
 })
 
 const breakingBlockObject = defineBehavior({
@@ -46,12 +36,7 @@ const breakingBlockObject = defineBehavior({
 
     return collapsedSelection && focusBlockObject !== undefined
   },
-  actions: [
-    () => [
-      raise({type: 'insert.text block', placement: 'after'}),
-      raise({type: 'select.next block'}),
-    ],
-  ],
+  actions: [() => [raise({type: 'insert.text block', placement: 'after'})]],
 })
 
 const clickingAboveLonelyBlockObject = defineBehavior({
@@ -67,12 +52,7 @@ const clickingAboveLonelyBlockObject = defineBehavior({
       !previousBlock
     )
   },
-  actions: [
-    () => [
-      raise({type: 'insert.text block', placement: 'before'}),
-      raise({type: 'select.previous block'}),
-    ],
-  ],
+  actions: [() => [raise({type: 'insert.text block', placement: 'before'})]],
 })
 
 const clickingBelowLonelyBlockObject = defineBehavior({
@@ -88,12 +68,7 @@ const clickingBelowLonelyBlockObject = defineBehavior({
       !nextBlock
     )
   },
-  actions: [
-    () => [
-      raise({type: 'insert.text block', placement: 'after'}),
-      raise({type: 'select.next block'}),
-    ],
-  ],
+  actions: [() => [raise({type: 'insert.text block', placement: 'after'})]],
 })
 
 const deletingEmptyTextBlockAfterBlockObject = defineBehavior({

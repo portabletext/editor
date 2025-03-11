@@ -6,6 +6,7 @@ import {render} from 'vitest-browser-react'
 import {
   getSelectionAfterText,
   getSelectionBeforeText,
+  getSelectionBlockKeys,
   getValueText,
 } from '../gherkin-tests/gherkin-step-helpers'
 import {
@@ -92,6 +93,32 @@ export const stepDefinitions = [
           options: {refreshKeys: false},
         })!,
         placement,
+        select: 'none',
+      })
+    },
+  ),
+
+  Given(
+    'a block at {placement} selected at the {select-position}',
+    (
+      context: Context,
+      placement: Parameter['placement'],
+      selectPosition: Parameter['selectPosition'],
+      block: string,
+    ) => {
+      context.editor.ref.current.send({
+        type: 'insert.block',
+        block: parseBlock({
+          context: {
+            schema: context.editor.ref.current.getSnapshot().context.schema,
+            keyGenerator:
+              context.editor.ref.current.getSnapshot().context.keyGenerator,
+          },
+          block: JSON.parse(block),
+          options: {refreshKeys: false},
+        })!,
+        placement,
+        select: selectPosition,
       })
     },
   ),
@@ -159,6 +186,27 @@ export const stepDefinitions = [
     },
   ),
 
+  Then('nothing is selected', async (context: Context) => {
+    await vi.waitFor(() => {
+      expect(context.editor.selection()).toBeNull()
+    })
+  }),
+
+  Then('block {string} is selected', async (context: Context, key: string) => {
+    const selectionBlockKeys = getSelectionBlockKeys(context.editor.selection())
+
+    await vi.waitFor(() => {
+      expect(
+        selectionBlockKeys?.anchor,
+        'Unexpected selection anchor block key',
+      ).toBe(key)
+      expect(
+        selectionBlockKeys?.focus,
+        'Unexpected selection focus block key',
+      ).toBe(key)
+    })
+  }),
+
   When(
     'a block is inserted {placement}',
     (context: Context, placement: Parameter['placement'], block: string) => {
@@ -174,6 +222,31 @@ export const stepDefinitions = [
           options: {refreshKeys: false},
         })!,
         placement,
+      })
+    },
+  ),
+
+  When(
+    'a block is inserted {placement} and selected at the {select-position}',
+    (
+      context: Context,
+      placement: Parameter['placement'],
+      selectPosition: Parameter['selectPosition'],
+      block: string,
+    ) => {
+      context.editor.ref.current.send({
+        type: 'insert.block',
+        block: parseBlock({
+          context: {
+            schema: context.editor.ref.current.getSnapshot().context.schema,
+            keyGenerator:
+              context.editor.ref.current.getSnapshot().context.keyGenerator,
+          },
+          block: JSON.parse(block),
+          options: {refreshKeys: false},
+        })!,
+        placement,
+        select: selectPosition,
       })
     },
   ),
