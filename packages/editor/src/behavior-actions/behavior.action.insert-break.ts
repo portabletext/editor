@@ -26,6 +26,7 @@ export const insertBreakActionImplementation: BehaviorActionImplementation<
     if (!selectionAcrossBlocks) {
       Transforms.splitNodes(editor, {
         at: editor.selection,
+        always: true,
       })
 
       const [nextBlock, nextBlockPath] = Editor.node(

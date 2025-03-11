@@ -122,6 +122,17 @@ export const stepDefinitions = [
     },
   ),
 
+  Then(
+    'the caret is before {string}',
+    async (context: Context, text: string) => {
+      await vi.waitFor(() => {
+        const selection = getSelectionBeforeText(context.editor.value(), text)
+        expect(selection).not.toBeNull()
+        expect(context.editor.selection()).toEqual(selection)
+      })
+    },
+  ),
+
   When(
     'the caret is put after {string}',
     async (context: Context, text: string) => {
@@ -133,6 +144,17 @@ export const stepDefinitions = [
           type: 'select',
           selection: getSelectionAfterText(context.editor.value(), text),
         })
+      })
+    },
+  ),
+
+  Then(
+    'the caret is after {string}',
+    async (context: Context, text: string) => {
+      await vi.waitFor(() => {
+        const selection = getSelectionAfterText(context.editor.value(), text)
+        expect(selection).not.toBeNull()
+        expect(context.editor.selection()).toEqual(selection)
       })
     },
   ),
