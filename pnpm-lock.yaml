@@ -24,8 +24,8 @@ importers:
         specifier: ^4.4.1
         version: 4.4.1(prettier@3.4.2)
       '@playwright/test':
-        specifier: ^1.50.1
-        version: 1.50.1
+        specifier: ^1.51.0
+        version: 1.51.0
       '@sanity/prettier-config':
         specifier: ^1.0.3
         version: 1.0.3(prettier@3.4.2)
@@ -163,7 +163,7 @@ importers:
         version: 3.0.6
       '@xstate/react':
         specifier: ^5.0.0
-        version: 5.0.2(@types/react@19.0.10)(react@19.0.0)(xstate@5.19.2)
+        version: 5.0.3(@types/react@19.0.10)(react@19.0.0)(xstate@5.19.2)
       lucide-react:
         specifier: ^0.468.0
         version: 0.468.0(react@19.0.0)
@@ -516,7 +516,7 @@ importers:
         version: 4.3.4(vite@6.2.0(@types/node@22.10.10)(jiti@1.21.7)(terser@5.37.0)(yaml@2.7.0))
       '@vitest/browser':
         specifier: ^3.0.7
-        version: 3.0.7(@types/node@22.10.10)(playwright@1.50.1)(typescript@5.7.3)(vite@6.2.0(@types/node@22.10.10)(jiti@1.21.7)(terser@5.37.0)(yaml@2.7.0))(vitest@3.0.7)
+        version: 3.0.7(@types/node@22.10.10)(playwright@1.51.0)(typescript@5.7.3)(vite@6.2.0(@types/node@22.10.10)(jiti@1.21.7)(terser@5.37.0)(yaml@2.7.0))(vitest@3.0.7)
       '@vitest/coverage-istanbul':
         specifier: ^3.0.7
         version: 3.0.7(vitest@3.0.7)
@@ -597,8 +597,8 @@ importers:
         specifier: ^29.7.0
         version: 29.7.0
       '@playwright/test':
-        specifier: ^1.50.1
-        version: 1.50.1
+        specifier: ^1.51.0
+        version: 1.51.0
       '@sanity/pkg-utils':
         specifier: ^7.0.4
         version: 7.0.4(@types/babel__core@7.20.5)(@types/node@22.10.10)(babel-plugin-react-compiler@19.0.0-beta-bafa41b-20250307)(debug@4.4.0)(typescript@5.7.3)
@@ -1882,8 +1882,8 @@ packages:
     resolution: {integrity: sha512-cq8o4cWH0ibXh9VGi5P20Tu9XF/0fFXl9EUinr9QfTM7a7p0oTA4iJRCQWppXR1Pg8dSM0UCItCkPwsk9qWWYA==}
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
 
-  '@playwright/test@1.50.1':
-    resolution: {integrity: sha512-Jii3aBg+CEDpgnuDxEp/h7BimHcUTDlpEtce89xEumlJ5ef2hqepZ+PWp1DDpYC/VO9fmWVI1IlEaoI5fK9FXQ==}
+  '@playwright/test@1.51.0':
+    resolution: {integrity: sha512-dJ0dMbZeHhI+wb77+ljx/FeC8VBP6j/rj9OAojO08JI80wTZy6vRk9KvHKiDCUh4iMpEiseMgqRBIeW+eKX6RA==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -3271,15 +3271,6 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
       xstate: ^5.18.2
-    peerDependenciesMeta:
-      xstate:
-        optional: true
-
-  '@xstate/react@5.0.2':
-    resolution: {integrity: sha512-x5GOrE0ZYjU2ba986u0CCp7SaPwzElSn1SW0mZ9MuBgsZ+BW7vTLVOvGmURynwojdso8d6nVbK3c2+MRVqGVgA==}
-    peerDependencies:
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0-0
-      xstate: ^5.19.2
     peerDependenciesMeta:
       xstate:
         optional: true
@@ -5334,13 +5325,13 @@ packages:
     resolution: {integrity: sha512-nDywThFk1i4BQK4twPQ6TA4RT8bDY96yeuCVBWL3ePARCiEKDRSrNGbFIgUJpLp+XeIR65v8ra7WuJOFUBtkMA==}
     engines: {node: '>=8'}
 
-  playwright-core@1.50.1:
-    resolution: {integrity: sha512-ra9fsNWayuYumt+NiM069M6OkcRb1FZSK8bgi66AtpFoWkg2+y0bJSNmkFrWhMbEBbVKC/EruAHH3g0zmtwGmQ==}
+  playwright-core@1.51.0:
+    resolution: {integrity: sha512-x47yPE3Zwhlil7wlNU/iktF7t2r/URR3VLbH6EknJd/04Qc/PSJ0EY3CMXipmglLG+zyRxW6HNo2EGbKLHPWMg==}
     engines: {node: '>=18'}
     hasBin: true
 
-  playwright@1.50.1:
-    resolution: {integrity: sha512-G8rwsOQJ63XG6BbKj2w5rHeavFjy5zynBA9zsJMMtBoe/Uf757oG12NXz6e6OirF7RCrTVAKFXbLmn1RbL7Qaw==}
+  playwright@1.51.0:
+    resolution: {integrity: sha512-442pTfGM0xxfCYxuBa/Pu6B2OqxqqaYq39JS8QDMGThUvIOCd6s0ANDog3uwA0cHavVlnTQzGCN7Id2YekDSXA==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -8014,9 +8005,9 @@ snapshots:
 
   '@pkgr/core@0.1.1': {}
 
-  '@playwright/test@1.50.1':
+  '@playwright/test@1.51.0':
     dependencies:
-      playwright: 1.50.1
+      playwright: 1.51.0
 
   '@pnpm/config.env-replace@1.1.0': {}
 
@@ -9905,7 +9896,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@vitest/browser@3.0.7(@types/node@22.10.10)(playwright@1.50.1)(typescript@5.7.3)(vite@6.2.0(@types/node@22.10.10)(jiti@1.21.7)(terser@5.37.0)(yaml@2.7.0))(vitest@3.0.7)':
+  '@vitest/browser@3.0.7(@types/node@22.10.10)(playwright@1.51.0)(typescript@5.7.3)(vite@6.2.0(@types/node@22.10.10)(jiti@1.21.7)(terser@5.37.0)(yaml@2.7.0))(vitest@3.0.7)':
     dependencies:
       '@testing-library/dom': 10.4.0
       '@testing-library/user-event': 14.6.1(@testing-library/dom@10.4.0)
@@ -9918,7 +9909,7 @@ snapshots:
       vitest: 3.0.7(@types/debug@4.1.12)(@types/node@22.10.10)(@vitest/browser@3.0.7)(jiti@1.21.7)(jsdom@26.0.0)(msw@2.7.3(@types/node@22.10.10)(typescript@5.7.3))(terser@5.37.0)(yaml@2.7.0)
       ws: 8.18.1
     optionalDependencies:
-      playwright: 1.50.1
+      playwright: 1.51.0
     transitivePeerDependencies:
       - '@types/node'
       - bufferutil
@@ -9958,7 +9949,7 @@ snapshots:
       tinyrainbow: 2.0.0
       vitest: 3.0.7(@types/debug@4.1.12)(@types/node@22.10.10)(@vitest/browser@3.0.7)(jiti@1.21.7)(jsdom@26.0.0)(msw@2.7.3(@types/node@22.10.10)(typescript@5.7.3))(terser@5.37.0)(yaml@2.7.0)
     optionalDependencies:
-      '@vitest/browser': 3.0.7(@types/node@22.10.10)(playwright@1.50.1)(typescript@5.7.3)(vite@6.2.0(@types/node@22.10.10)(jiti@1.21.7)(terser@5.37.0)(yaml@2.7.0))(vitest@3.0.7)
+      '@vitest/browser': 3.0.7(@types/node@22.10.10)(playwright@1.51.0)(typescript@5.7.3)(vite@6.2.0(@types/node@22.10.10)(jiti@1.21.7)(terser@5.37.0)(yaml@2.7.0))(vitest@3.0.7)
     transitivePeerDependencies:
       - supports-color
 
@@ -10004,16 +9995,6 @@ snapshots:
       tinyrainbow: 2.0.0
 
   '@xstate/react@4.1.3(@types/react@19.0.10)(react@19.0.0)(xstate@5.19.2)':
-    dependencies:
-      react: 19.0.0
-      use-isomorphic-layout-effect: 1.2.0(@types/react@19.0.10)(react@19.0.0)
-      use-sync-external-store: 1.4.0(react@19.0.0)
-    optionalDependencies:
-      xstate: 5.19.2
-    transitivePeerDependencies:
-      - '@types/react'
-
-  '@xstate/react@5.0.2(@types/react@19.0.10)(react@19.0.0)(xstate@5.19.2)':
     dependencies:
       react: 19.0.0
       use-isomorphic-layout-effect: 1.2.0(@types/react@19.0.10)(react@19.0.0)
@@ -12723,11 +12704,11 @@ snapshots:
     dependencies:
       find-up: 3.0.0
 
-  playwright-core@1.50.1: {}
+  playwright-core@1.51.0: {}
 
-  playwright@1.50.1:
+  playwright@1.51.0:
     dependencies:
-      playwright-core: 1.50.1
+      playwright-core: 1.51.0
     optionalDependencies:
       fsevents: 2.3.2
 
@@ -14026,7 +14007,7 @@ snapshots:
 
   vitest-browser-react@0.1.1(@types/react-dom@19.0.4(@types/react@19.0.10))(@types/react@19.0.10)(@vitest/browser@3.0.7)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(vitest@3.0.7):
     dependencies:
-      '@vitest/browser': 3.0.7(@types/node@22.10.10)(playwright@1.50.1)(typescript@5.7.3)(vite@6.2.0(@types/node@22.10.10)(jiti@1.21.7)(terser@5.37.0)(yaml@2.7.0))(vitest@3.0.7)
+      '@vitest/browser': 3.0.7(@types/node@22.10.10)(playwright@1.51.0)(typescript@5.7.3)(vite@6.2.0(@types/node@22.10.10)(jiti@1.21.7)(terser@5.37.0)(yaml@2.7.0))(vitest@3.0.7)
       react: 19.0.0
       react-dom: 19.0.0(react@19.0.0)
       vitest: 3.0.7(@types/debug@4.1.12)(@types/node@22.10.10)(@vitest/browser@3.0.7)(jiti@1.21.7)(jsdom@26.0.0)(msw@2.7.3(@types/node@22.10.10)(typescript@5.7.3))(terser@5.37.0)(yaml@2.7.0)
@@ -14059,7 +14040,7 @@ snapshots:
     optionalDependencies:
       '@types/debug': 4.1.12
       '@types/node': 22.10.10
-      '@vitest/browser': 3.0.7(@types/node@22.10.10)(playwright@1.50.1)(typescript@5.7.3)(vite@6.2.0(@types/node@22.10.10)(jiti@1.21.7)(terser@5.37.0)(yaml@2.7.0))(vitest@3.0.7)
+      '@vitest/browser': 3.0.7(@types/node@22.10.10)(playwright@1.51.0)(typescript@5.7.3)(vite@6.2.0(@types/node@22.10.10)(jiti@1.21.7)(terser@5.37.0)(yaml@2.7.0))(vitest@3.0.7)
       jsdom: 26.0.0
     transitivePeerDependencies:
       - jiti
