@@ -100,7 +100,7 @@
     "get-random-values-esm": "^1.0.2",
     "lodash": "^4.17.21",
     "lodash.startcase": "^4.4.0",
-    "react-compiler-runtime": "19.0.0-beta-bafa41b-20250307",
+    "react-compiler-runtime": "19.0.0-beta-e1e972c-20250221",
     "slate": "0.112.0",
     "slate-dom": "^0.112.2",
     "slate-react": "0.112.1",
