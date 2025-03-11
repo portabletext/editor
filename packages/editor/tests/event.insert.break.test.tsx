@@ -91,11 +91,11 @@ describe('event.insert.break', () => {
         style: 'normal',
       },
       {
-        _key: 'k6',
+        _key: 'k7',
         _type: 'block',
         children: [
           {
-            _key: 'k7',
+            _key: 'k6',
             _type: 'span',
             text: '',
             marks: [],
