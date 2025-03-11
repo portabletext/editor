@@ -1,7 +1,10 @@
-import {isEqual, uniq} from 'lodash'
-import {Editor, Node, Path, Transforms} from 'slate'
 import {parseBlocks} from '../internal-utils/parse-blocks'
-import {isEqualToEmptyEditor, toSlateValue} from '../internal-utils/values'
+import {getFocusBlock} from '../internal-utils/slate-utils'
+import {toSlateValue} from '../internal-utils/values'
+import {insertBreakActionImplementation} from './behavior.action.insert-break'
+import {insertBlock} from './behavior.action.insert.block'
+import {selectNextBlockActionImplementation} from './behavior.action.select.next-block'
+import {selectPreviousBlockActionImplementation} from './behavior.action.select.previous-block'
 import type {BehaviorActionImplementation} from './behavior.actions'
 
 export const insertBlocksActionImplementation: BehaviorActionImplementation<
@@ -19,150 +22,115 @@ export const insertBlocksActionImplementation: BehaviorActionImplementation<
 
   const fragment = toSlateValue(parsedBlocks, {schemaTypes: context.schema})
 
-  if (!action.editor.selection) {
-    if (action.placement === 'before') {
-      action.editor.insertFragment(fragment, {
-        at: Editor.start(action.editor, []),
-      })
-      return
-    }
-
-    if (action.placement === 'after') {
-      action.editor.insertFragment(fragment, {
-        at: Editor.end(action.editor, []),
-      })
-      return
-    }
-
-    action.editor.insertFragment(fragment)
-    return
-  }
-
-  const [focusBlock, focusPath] = Editor.node(
-    action.editor,
-    action.editor.selection,
-    {
-      depth: 1,
-    },
-  )
-
-  if (action.placement === 'before' && focusPath) {
-    Transforms.insertNodes(action.editor, fragment, {at: focusPath})
-    return
-  }
-
-  if (action.placement === 'after' && focusPath) {
-    const nextPath = [focusPath[0] + 1]
-    Transforms.insertNodes(action.editor, fragment, {at: nextPath})
-
-    const [nextBlock, nextBlockPath] = Editor.node(
-      action.editor,
-      Path.next(focusPath),
-      {depth: 1},
+  if (fragment.length === 0) {
+    throw new Error(
+      `Failed to convert blocks to Slate fragment ${JSON.stringify(
+        parsedBlocks,
+      )}`,
     )
-    const nextChild = Node.child(nextBlock, 0)
-    const firstChildIsInlineObject = !action.editor.isTextSpan(nextChild)
-
-    if (firstChildIsInlineObject) {
-      // If the first child in the next block is an inline object then we
-      // add an empty span right before it to a place to put the cursor.
-      // This is a Slate constraint that we have to adhere to.
-      Transforms.insertNodes(
-        action.editor,
-        {
-          _key: context.keyGenerator(),
-          _type: 'span',
-          text: '',
-          marks: [],
-        },
-        {
-          at: [nextBlockPath[0], 0],
-        },
-      )
-    }
-
-    Transforms.select(action.editor, {
-      anchor: {path: [nextPath[0], 0], offset: 0},
-      focus: {path: [nextPath[0], 0], offset: 0},
-    })
-    return
   }
 
-  if (!action.editor.isTextBlock(focusBlock)) {
-    const nextPath = [focusPath[0] + 1]
-    Transforms.insertNodes(action.editor, fragment, {at: nextPath})
+  const [focusBlock] = getFocusBlock({editor: action.editor})
 
-    const [nextBlock, nextBlockPath] = Editor.node(
-      action.editor,
-      Path.next(focusPath),
-      {depth: 1},
-    )
-    const nextChild = Node.child(nextBlock, 0)
-    const firstChildIsInlineObject = !action.editor.isTextSpan(nextChild)
+  if (action.placement === 'before') {
+    let index = 0
 
-    if (firstChildIsInlineObject) {
-      // If the first child in the next block is an inline object then we
-      // add an empty span right before it to a place to put the cursor.
-      // This is a Slate constraint that we have to adhere to.
-      Transforms.insertNodes(
-        action.editor,
-        {
-          _key: context.keyGenerator(),
-          _type: 'span',
-          text: '',
-          marks: [],
-        },
-        {
-          at: [nextBlockPath[0], 0],
-        },
-      )
+    for (const block of fragment) {
+      insertBlock({
+        block,
+        placement: index === 0 ? 'before' : 'after',
+        select: 'end',
+        editor: action.editor,
+        schema: context.schema,
+      })
+
+      index++
     }
-
-    Transforms.select(action.editor, {
-      anchor: {path: [nextPath[0], 0], offset: 0},
-      focus: {path: [nextPath[0], 0], offset: 0},
-    })
-
-    return
-  }
-
-  // Ensure that markDefs for any annotations inside this fragment are copied over to the focused text block.
-  if (
-    action.editor.isTextBlock(focusBlock) &&
-    action.editor.isTextBlock(fragment[0])
-  ) {
-    const {markDefs} = focusBlock
-    if (!isEqual(markDefs, fragment[0].markDefs)) {
-      Transforms.setNodes(
-        action.editor,
-        {
-          markDefs: uniq([
-            ...(fragment[0].markDefs || []),
-            ...(markDefs || []),
-          ]),
-        },
-        {at: focusPath, mode: 'lowest', voids: false},
-      )
+  } else if (action.placement === 'after') {
+    for (const block of fragment) {
+      insertBlock({
+        block,
+        placement: 'after',
+        select: 'end',
+        editor: action.editor,
+        schema: context.schema,
+      })
     }
-  }
-
-  const isPasteToEmptyEditor = isEqualToEmptyEditor(
-    action.editor.children,
-    context.schema,
-  )
-
-  if (isPasteToEmptyEditor) {
-    // Special case for pasting directly into an empty editor (a placeholder block).
-    // When pasting content starting with multiple empty blocks,
-    // `editor.insertFragment` can potentially duplicate the keys of
-    // the placeholder block because of operations that happen
-    // inside `editor.insertFragment` (involves an `insert_node` operation).
-    // However by splitting the placeholder block first in this situation we are good.
-    Transforms.splitNodes(action.editor, {at: [0, 0]})
-    action.editor.insertFragment(fragment)
-    Transforms.removeNodes(action.editor, {at: [0]})
   } else {
-    // All other inserts
-    action.editor.insertFragment(fragment)
+    if (focusBlock && action.editor.isTextBlock(focusBlock)) {
+      if (fragment.length === 1) {
+        insertBlock({
+          block: fragment[0],
+          placement: 'auto',
+          select: 'end',
+          editor: action.editor,
+          schema: context.schema,
+        })
+
+        return
+      }
+
+      let index = 0
+
+      for (const block of fragment) {
+        if (index === 0) {
+          insertBreakActionImplementation({
+            context,
+            action: {type: 'insert.break', editor: action.editor},
+          })
+          selectPreviousBlockActionImplementation({
+            context,
+            action: {
+              type: 'select.previous block',
+              editor: action.editor,
+              select: 'end',
+            },
+          })
+          insertBlock({
+            block,
+            placement: 'auto',
+            select: 'end',
+            editor: action.editor,
+            schema: context.schema,
+          })
+        } else if (index === fragment.length - 1) {
+          selectNextBlockActionImplementation({
+            context,
+            action: {
+              type: 'select.next block',
+              editor: action.editor,
+              select: 'start',
+            },
+          })
+          insertBlock({
+            block,
+            placement: 'auto',
+            select: 'end',
+            editor: action.editor,
+            schema: context.schema,
+          })
+        } else {
+          insertBlock({
+            block,
+            placement: 'after',
+            select: 'end',
+            editor: action.editor,
+            schema: context.schema,
+          })
+        }
+
+        index++
+      }
+    } else {
+      for (const block of fragment) {
+        insertBlock({
+          block,
+          placement: 'auto',
+          select: 'end',
+          editor: action.editor,
+          schema: context.schema,
+        })
+      }
+    }
   }
 }
