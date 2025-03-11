@@ -182,9 +182,11 @@ export type SyntheticBehaviorEvent =
     }
   | {
       type: 'select.previous block'
+      select?: 'start' | 'end'
     }
   | {
       type: 'select.next block'
+      select?: 'start' | 'end'
     }
   | {
       type: 'style.add'
