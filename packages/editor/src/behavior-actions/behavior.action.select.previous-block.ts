@@ -1,4 +1,4 @@
-import {Path} from 'slate'
+import {Editor, Path} from 'slate'
 import {toPortableTextRange} from '../internal-utils/ranges'
 import {selectActionImplementation} from './behavior.action.select'
 import type {BehaviorActionImplementation} from './behavior.actions'
@@ -18,17 +18,16 @@ export const selectPreviousBlockActionImplementation: BehaviorActionImplementati
     return
   }
 
+  const position =
+    action.select === 'end'
+      ? Editor.end(action.editor, Path.previous(blockPath))
+      : Editor.start(action.editor, Path.previous(blockPath))
+
   const newSelection = toPortableTextRange(
     action.editor.children,
     {
-      anchor: {
-        path: Path.previous(blockPath),
-        offset: 0,
-      },
-      focus: {
-        path: Path.previous(blockPath),
-        offset: 0,
-      },
+      anchor: position,
+      focus: position,
     },
     context.schema,
   )
