@@ -128,7 +128,8 @@ export type SyntheticBehaviorEvent =
   | {
       type: 'insert.block'
       block: PortableTextBlock
-      placement: 'auto' | 'after' | 'before'
+      placement: InsertPlacement
+      select?: 'start' | 'end' | 'none'
     }
   | {
       type: 'insert.span'
@@ -208,6 +209,8 @@ export type SyntheticBehaviorEvent =
       | 'serialization.failure'
       | 'serialization.success'
     > & {dataTransfer: DataTransfer})
+
+export type InsertPlacement = 'auto' | 'after' | 'before'
 
 export type MouseBehaviorEvent = {
   type: 'mouse.click'

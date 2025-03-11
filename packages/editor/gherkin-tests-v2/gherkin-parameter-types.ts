@@ -34,6 +34,10 @@ export const parameterType = {
     name: 'placement',
     matcher: /"(auto|after|before)"/,
   }),
+  selectPosition: createParameterType<'start' | 'end' | 'none'>({
+    name: 'select-position',
+    matcher: /"(start|end|none)"/,
+  }),
   text: createParameterType<Array<string>>({
     name: 'text',
     matcher: /"([a-z-,#>\\n |\[\]]*)"/u,
@@ -46,5 +50,6 @@ export const parameterTypes = [
   parameterType.blockObject,
   parameterType.button,
   parameterType.placement,
+  parameterType.selectPosition,
   parameterType.text,
 ]
