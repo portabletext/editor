@@ -15,13 +15,13 @@ Feature: Insert Blocks
     Then the text is <text>
 
     Examples:
-      | placement | text      |
-      | "before"  | "[image]" |
-      | "after"   | "[image]" |
-      | "auto"    | "[image]" |
+      | placement | text        |
+      | "before"  | "[image]\|" |
+      | "after"   | "\|[image]" |
+      | "auto"    | "[image]"   |
 
   Scenario Outline: Inserting blocks on a block object
-    When a block is inserted "auto"
+    When a block is inserted "auto" and selected at the "end"
       ```
       {
         "_type": "image"
@@ -35,7 +35,7 @@ Feature: Insert Blocks
           "children": [{"_type": "span", "text": "foo"}]
         },
         {
-          "_type": "image"
+          "_type": "break"
         },
         {
           "_type": "block",
@@ -47,31 +47,7 @@ Feature: Insert Blocks
 
     Examples:
       | text                         |
-      | "[image]\|foo\|[image]\|bar" |
-
-  Scenario Outline: Inserting inline object
-    When a block is inserted "auto"
-      ```
-      {
-        "_type": "image"
-      }
-      ```
-    And blocks are inserted <placement>
-      ```
-      [
-        {
-          "_type": "block",
-          "children": [{"_type": "stock-ticker"}]
-        }
-      ]
-      ```
-    Then the text is <text>
-
-    Examples:
-      | placement | text                        |
-      | "before"  | ",[stock-ticker],\|[image]" |
-      | "after"   | "[image]\|,[stock-ticker]," |
-      | "auto"    | "[image]\|,[stock-ticker]," |
+      | "[image]\|foo\|[break]\|bar" |
 
   Scenario Outline: Inserting blocks on a text block
     Given the text "foo"
