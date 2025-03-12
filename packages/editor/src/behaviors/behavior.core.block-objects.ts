@@ -7,7 +7,7 @@ import {defineBehavior, raise} from './behavior.types'
 const arrowDownOnLonelyBlockObject = defineBehavior({
   on: 'keyboard.keydown',
   guard: ({snapshot, event}) => {
-    const isArrowDown = isHotkey('ArrowDown', event.keyboardEvent)
+    const isArrowDown = isHotkey('ArrowDown', event.originEvent)
     const focusBlockObject = selectors.getFocusBlockObject(snapshot)
     const nextBlock = selectors.getNextBlock(snapshot)
 
@@ -19,7 +19,7 @@ const arrowDownOnLonelyBlockObject = defineBehavior({
 const arrowUpOnLonelyBlockObject = defineBehavior({
   on: 'keyboard.keydown',
   guard: ({snapshot, event}) => {
-    const isArrowUp = isHotkey('ArrowUp', event.keyboardEvent)
+    const isArrowUp = isHotkey('ArrowUp', event.originEvent)
     const focusBlockObject = selectors.getFocusBlockObject(snapshot)
     const previousBlock = selectors.getPreviousBlock(snapshot)
 

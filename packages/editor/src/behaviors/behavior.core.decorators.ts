@@ -5,7 +5,7 @@ export const coreDecoratorBehaviors = {
   strongShortcut: defineBehavior({
     on: 'keyboard.keydown',
     guard: ({snapshot, event}) =>
-      isHotkey('mod+b', event.keyboardEvent) &&
+      isHotkey('mod+b', event.originEvent) &&
       snapshot.context.schema.decorators.some(
         (decorator) => decorator.value === 'strong',
       ),
@@ -14,7 +14,7 @@ export const coreDecoratorBehaviors = {
   emShortcut: defineBehavior({
     on: 'keyboard.keydown',
     guard: ({snapshot, event}) =>
-      isHotkey('mod+i', event.keyboardEvent) &&
+      isHotkey('mod+i', event.originEvent) &&
       snapshot.context.schema.decorators.some(
         (decorator) => decorator.value === 'em',
       ),
@@ -23,7 +23,7 @@ export const coreDecoratorBehaviors = {
   underlineShortcut: defineBehavior({
     on: 'keyboard.keydown',
     guard: ({snapshot, event}) =>
-      isHotkey('mod+u', event.keyboardEvent) &&
+      isHotkey('mod+u', event.originEvent) &&
       snapshot.context.schema.decorators.some(
         (decorator) => decorator.value === 'underline',
       ),
@@ -34,7 +34,7 @@ export const coreDecoratorBehaviors = {
   codeShortcut: defineBehavior({
     on: 'keyboard.keydown',
     guard: ({snapshot, event}) =>
-      isHotkey("mod+'", event.keyboardEvent) &&
+      isHotkey("mod+'", event.originEvent) &&
       snapshot.context.schema.decorators.some(
         (decorator) => decorator.value === 'code',
       ),

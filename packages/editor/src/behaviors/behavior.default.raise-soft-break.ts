@@ -8,6 +8,6 @@ import {defineBehavior, raise} from './behavior.types'
  */
 export const raiseInsertSoftBreak = defineBehavior({
   on: 'keyboard.keydown',
-  guard: ({event}) => keyIs.lineBreak(event.keyboardEvent),
+  guard: ({event}) => keyIs.lineBreak(event.originEvent),
   actions: [() => [raise({type: 'insert.soft break'})]],
 })

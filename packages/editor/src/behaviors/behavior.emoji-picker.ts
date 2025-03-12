@@ -156,14 +156,14 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
           return false
         }
 
-        const isEscape = isHotkey('Escape', event.keyboardEvent)
+        const isEscape = isHotkey('Escape', event.originEvent)
 
         if (isEscape) {
           return {action: 'reset' as const}
         }
 
-        const isEnter = isHotkey('Enter', event.keyboardEvent)
-        const isTab = isHotkey('Tab', event.keyboardEvent)
+        const isEnter = isHotkey('Enter', event.originEvent)
+        const isTab = isHotkey('Tab', event.originEvent)
 
         if (isEnter || isTab) {
           const selectedIndex =
@@ -200,8 +200,8 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
           return false
         }
 
-        const isArrowDown = isHotkey('ArrowDown', event.keyboardEvent)
-        const isArrowUp = isHotkey('ArrowUp', event.keyboardEvent)
+        const isArrowDown = isHotkey('ArrowDown', event.originEvent)
+        const isArrowUp = isHotkey('ArrowUp', event.originEvent)
 
         if (isArrowDown && matches.length > 0) {
           return {action: 'navigate down' as const}

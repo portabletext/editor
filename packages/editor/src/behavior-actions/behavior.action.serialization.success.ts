@@ -7,8 +7,11 @@ export const serializationSuccessActionImplementation: BehaviorActionImplementat
   dataTransferSetActionImplementation({
     context,
     action: {
-      ...action,
       type: 'data transfer.set',
+      data: action.data,
+      dataTransfer: action.originEvent.originEvent.dataTransfer,
+      mimeType: action.mimeType,
+      editor: action.editor,
     },
   })
 }
