@@ -1,5 +1,37 @@
 # Changelog
 
+## [1.38.0](https://github.com/portabletext/editor/compare/editor-v1.37.0...editor-v1.38.0) (2025-03-12)
+
+
+### Features
+
+* **`insert.block`:** allow specifying selection of inserted block ([c074363](https://github.com/portabletext/editor/commit/c07436371e94115227ad5815a24557c666a32f16))
+* **behaviors:** add `mouse.click` event ([c70f455](https://github.com/portabletext/editor/commit/c70f45542f24991c1df79ad2f6fadadb1c3eb1d4))
+* first-class dnd ([14b61a7](https://github.com/portabletext/editor/commit/14b61a773b62e768fd5b03463315806685588f42))
+
+
+### Bug Fixes
+
+* **`insert.block`:** account for inserting block object on inline object ([6ec15bd](https://github.com/portabletext/editor/commit/6ec15bdd2d95a760db3e03385adf6943f8bb90b9))
+* **`insert.block`:** account for inserting text block on inline object ([b5c2432](https://github.com/portabletext/editor/commit/b5c2432db2c6909edb3b74017f95ac497eae279c))
+* **`insert.blocks`:** improve logic by using `insert.block` under the hood ([298b90c](https://github.com/portabletext/editor/commit/298b90c34413e07c889f7b7602694438fad8b07a))
+* **`insert.blocks`:** parse blocks before inserting ([5848ed0](https://github.com/portabletext/editor/commit/5848ed0c5d8430508a68bafb94276f96dae353e7))
+* **`insert.break`:** always split ([56892d0](https://github.com/portabletext/editor/commit/56892d0a68a01a63e29917d3569293de5ebb4020))
+* **deps:** downgrade `react-compiler-runtime` ([ffb7297](https://github.com/portabletext/editor/commit/ffb72979bce69c8e786fbad3aa288dbd44c40ca5))
+* **deps:** update react compiler dependencies 🤖 ✨ ([c17f415](https://github.com/portabletext/editor/commit/c17f41510675a140d18b71f0ff30821ff2f5f6d6))
+* **deps:** update sanity monorepo to ^3.78.1 ([2902cf0](https://github.com/portabletext/editor/commit/2902cf06674a136d4145fc2fff108b581e6d0efa))
+* **deps:** update sanity monorepo to ^3.79.0 ([f2a1768](https://github.com/portabletext/editor/commit/f2a1768c82af579f60126a8c5c4c5fc28dda929f))
+* **insert.block:** don't manipulate the current selection ([521a019](https://github.com/portabletext/editor/commit/521a019b5ed5667cb3f6f89affa87e5d35da8bbf))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.13
+  * devDependencies
+    * racejar bumped to 1.2.2
+
 ## [1.37.0](https://github.com/portabletext/editor/compare/editor-v1.36.6...editor-v1.37.0) (2025-03-06)
 
 
