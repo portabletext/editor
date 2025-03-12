@@ -2,7 +2,11 @@ import {Editor, Path, Point, Range, Transforms, type Descendant} from 'slate'
 import {DOMEditor} from 'slate-dom'
 import type {EditorSchema} from '../editor/define-schema'
 import {parseBlock} from '../internal-utils/parse-blocks'
-import {getFocusBlock, getLastBlock} from '../internal-utils/slate-utils'
+import {
+  getFocusBlock,
+  getFocusChild,
+  getLastBlock,
+} from '../internal-utils/slate-utils'
 import {isEqualToEmptyEditor, toSlateValue} from '../internal-utils/values'
 import type {PortableTextSlateEditor} from '../types/editor'
 import type {BehaviorActionImplementation} from './behavior.actions'
@@ -236,15 +240,31 @@ export function insertBlock({
             }
           } else {
             const currentSelection = editor.selection
+            const [focusChild] = getFocusChild({editor})
 
-            Transforms.insertFragment(editor, [block], {
-              at: currentSelection,
-            })
+            if (focusChild && editor.isTextSpan(focusChild)) {
+              Transforms.insertFragment(editor, [block], {
+                at: currentSelection,
+              })
 
-            if (select === 'start' || select === 'end') {
-              Transforms.select(editor, [focusBlockPath[0] + 1])
+              if (select === 'start' || select === 'end') {
+                Transforms.select(editor, [focusBlockPath[0] + 1])
+              } else {
+                Transforms.select(editor, currentSelection)
+              }
             } else {
+              const nextPath = [focusBlockPath[0] + 1]
+              Transforms.insertNodes(editor, [block], {
+                at: nextPath,
+                select: false,
+              })
               Transforms.select(editor, currentSelection)
+
+              if (select === 'start') {
+                Transforms.select(editor, Editor.start(editor, nextPath))
+              } else if (select === 'end') {
+                Transforms.select(editor, Editor.end(editor, nextPath))
+              }
             }
           }
         }

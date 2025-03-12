@@ -287,3 +287,25 @@ Feature: Insert Block
       | "before"  | ",[stock-ticker],\|[image]" |
       | "after"   | "[image]\|,[stock-ticker]," |
       | "auto"    | "[image]\|,[stock-ticker]," |
+
+  Scenario Outline: Inserting block object on inline object
+    When a block is inserted "auto"
+      ```
+      {
+        "_type": "block",
+        "children": [{"_type": "stock-ticker"}]
+      }
+      ```
+    And a block is inserted <placement>
+      ```
+      {
+        "_type": "image"
+      }
+      ```
+    Then the text is <text>
+
+    Examples:
+      | placement | text                        |
+      | "before"  | "[image]\|,[stock-ticker]," |
+      | "after"   | ",[stock-ticker],\|[image]" |
+      | "auto"    | ",[stock-ticker],\|[image]" |
