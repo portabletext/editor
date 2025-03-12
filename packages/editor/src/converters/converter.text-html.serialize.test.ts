@@ -110,7 +110,7 @@ describe(converterTextHtml.serialize.name, () => {
         }),
         event: {
           type: 'serialize',
-          originEvent: 'copy',
+          originEvent: 'clipboard.copy',
         },
       }),
     ).toMatchObject({
@@ -133,7 +133,7 @@ describe(converterTextHtml.serialize.name, () => {
         }),
         event: {
           type: 'serialize',
-          originEvent: 'copy',
+          originEvent: 'clipboard.copy',
         },
       }),
     ).toMatchObject({
@@ -164,7 +164,7 @@ describe(converterTextHtml.serialize.name, () => {
         }),
         event: {
           type: 'serialize',
-          originEvent: 'copy',
+          originEvent: 'clipboard.copy',
         },
       }),
     ).toMatchObject({
@@ -222,7 +222,7 @@ describe(converterTextHtml.serialize.name, () => {
         }),
         event: {
           type: 'serialize',
-          originEvent: 'copy',
+          originEvent: 'clipboard.copy',
         },
       }),
     ).toMatchObject({

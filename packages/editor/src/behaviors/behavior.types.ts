@@ -208,7 +208,11 @@ export type SyntheticBehaviorEvent =
     > & {
       dataTransfer: DataTransfer
       originEvent: Omit<
-        PickFromUnion<NativeBehaviorEvent, 'type', 'drag.drop' | 'paste'>,
+        PickFromUnion<
+          NativeBehaviorEvent,
+          'type',
+          'drag.drop' | 'clipboard.paste'
+        >,
         'dataTransfer'
       >
     })
@@ -221,7 +225,7 @@ export type SyntheticBehaviorEvent =
         PickFromUnion<
           NativeBehaviorEvent,
           'type',
-          'copy' | 'cut' | 'drag.dragstart'
+          'clipboard.copy' | 'clipboard.cut' | 'drag.dragstart'
         >,
         'dataTransfer'
       >
@@ -235,13 +239,36 @@ export type SyntheticBehaviorEvent =
         PickFromUnion<
           NativeBehaviorEvent,
           'type',
-          'copy' | 'cut' | 'drag.dragstart'
+          'clipboard.copy' | 'clipboard.cut' | 'drag.dragstart'
         >,
         'dataTransfer'
       >
     }
 
 export type InsertPlacement = 'auto' | 'after' | 'before'
+
+type ClipboardBehaviorEvent =
+  | {
+      type: 'clipboard.copy'
+      dataTransfer: DataTransfer
+      position: EventPosition
+    }
+  | {
+      type: 'clipboard.cut'
+      dataTransfer: DataTransfer
+      position: EventPosition
+    }
+  | {
+      type: 'clipboard.paste'
+      dataTransfer: DataTransfer
+      position: EventPosition
+    }
+
+export function isClipboardBehaviorEvent(
+  event: BehaviorEvent,
+): event is ClipboardBehaviorEvent {
+  return event.type.startsWith('clipboard.')
+}
 
 type DragBehaviorEvent =
   | {
@@ -288,7 +315,11 @@ export type DataBehaviorEvent =
       type: 'deserialize'
       dataTransfer: DataTransfer
       originEvent: Omit<
-        PickFromUnion<NativeBehaviorEvent, 'type', 'drag.drop' | 'paste'>,
+        PickFromUnion<
+          NativeBehaviorEvent,
+          'type',
+          'drag.drop' | 'clipboard.paste'
+        >,
         'dataTransfer'
       >
     }
@@ -299,7 +330,7 @@ export type DataBehaviorEvent =
         PickFromUnion<
           NativeBehaviorEvent,
           'type',
-          'copy' | 'cut' | 'drag.dragstart'
+          'clipboard.copy' | 'clipboard.cut' | 'drag.dragstart'
         >,
         'dataTransfer'
       >
@@ -320,16 +351,7 @@ export function isMouseBehaviorEvent(
  * @beta
  */
 export type NativeBehaviorEvent =
-  | {
-      type: 'copy'
-      data: DataTransfer
-      position: EventPosition
-    }
-  | {
-      type: 'cut'
-      dataTransfer: DataTransfer
-      position: EventPosition
-    }
+  | ClipboardBehaviorEvent
   | {
       type: 'key.down'
       keyboardEvent: Pick<
@@ -345,11 +367,6 @@ export type NativeBehaviorEvent =
       >
     }
   | MouseBehaviorEvent
-  | {
-      type: 'paste'
-      data: DataTransfer
-      position: EventPosition
-    }
   | DragBehaviorEvent
 
 /**
@@ -412,6 +429,7 @@ export type BehaviorEvent =
   | NativeBehaviorEvent
   | CustomBehaviorEvent
   | {type: '*'}
+  | {type: 'clipboard.*'}
   | {type: 'drag.*'}
 
 /**
@@ -422,9 +440,11 @@ export type Behavior<
   TGuardResponse = true,
   TBehaviorEvent extends BehaviorEvent = TBehaviorEventType extends '*'
     ? BehaviorEvent
-    : TBehaviorEventType extends 'drag.*'
-      ? DragBehaviorEvent
-      : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
+    : TBehaviorEventType extends 'clipboard.*'
+      ? ClipboardBehaviorEvent
+      : TBehaviorEventType extends 'drag.*'
+        ? DragBehaviorEvent
+        : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
 > = {
   /**
    * The internal editor event that triggers this behavior.
@@ -502,9 +522,11 @@ export function defineBehavior<
       ? CustomBehaviorEvent<TPayload, TType>
       : TBehaviorEventType extends '*'
         ? OmitFromUnion<BehaviorEvent, 'type', '*'>
-        : TBehaviorEventType extends `drag.*`
-          ? DragBehaviorEvent
-          : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>
+        : TBehaviorEventType extends `clipboard.*`
+          ? ClipboardBehaviorEvent
+          : TBehaviorEventType extends `drag.*`
+            ? DragBehaviorEvent
+            : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>
   >,
 ): Behavior
 export function defineBehavior<
@@ -516,9 +538,11 @@ export function defineBehavior<
     ? CustomBehaviorEvent<TPayload, TType>
     : TBehaviorEventType extends '*'
       ? OmitFromUnion<BehaviorEvent, 'type', '*'>
-      : TBehaviorEventType extends `drag.*`
-        ? DragBehaviorEvent
-        : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
+      : TBehaviorEventType extends `clipboard.*`
+        ? ClipboardBehaviorEvent
+        : TBehaviorEventType extends `drag.*`
+          ? DragBehaviorEvent
+          : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
 >(
   behavior: Behavior<TBehaviorEventType, TGuardResponse, TBehaviorEvent>,
 ): Behavior {
