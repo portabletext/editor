@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.38.1](https://github.com/portabletext/editor/compare/editor-v1.38.0...editor-v1.38.1) (2025-03-12)
+
+
+### Bug Fixes
+
+* don't spam console during drag ([9b5c0d8](https://github.com/portabletext/editor/commit/9b5c0d8177bb04380a984e18ef79ff82e5ec2e94))
+
 ## [1.38.0](https://github.com/portabletext/editor/compare/editor-v1.37.0...editor-v1.38.0) (2025-03-12)
 
 
