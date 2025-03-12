@@ -431,6 +431,7 @@ export type BehaviorEvent =
   | {type: '*'}
   | {type: 'clipboard.*'}
   | {type: 'drag.*'}
+  | {type: 'mouse.*'}
 
 /**
  * @beta
@@ -444,7 +445,9 @@ export type Behavior<
       ? ClipboardBehaviorEvent
       : TBehaviorEventType extends 'drag.*'
         ? DragBehaviorEvent
-        : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
+        : TBehaviorEventType extends 'mouse.*'
+          ? MouseBehaviorEvent
+          : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
 > = {
   /**
    * The internal editor event that triggers this behavior.
@@ -526,7 +529,9 @@ export function defineBehavior<
           ? ClipboardBehaviorEvent
           : TBehaviorEventType extends `drag.*`
             ? DragBehaviorEvent
-            : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>
+            : TBehaviorEventType extends 'mouse.*'
+              ? MouseBehaviorEvent
+              : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>
   >,
 ): Behavior
 export function defineBehavior<
@@ -542,7 +547,9 @@ export function defineBehavior<
         ? ClipboardBehaviorEvent
         : TBehaviorEventType extends `drag.*`
           ? DragBehaviorEvent
-          : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
+          : TBehaviorEventType extends 'mouse.*'
+            ? MouseBehaviorEvent
+            : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
 >(
   behavior: Behavior<TBehaviorEventType, TGuardResponse, TBehaviorEvent>,
 ): Behavior {
