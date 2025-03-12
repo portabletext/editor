@@ -309,3 +309,26 @@ Feature: Insert Block
       | "before"  | "[image]\|,[stock-ticker]," |
       | "after"   | ",[stock-ticker],\|[image]" |
       | "auto"    | ",[stock-ticker],\|[image]" |
+
+  Scenario Outline: Inserting text block on inline object
+    When a block is inserted "auto"
+      ```
+      {
+        "_type": "block",
+        "children": [{"_type": "stock-ticker"}]
+      }
+      ```
+    And a block is inserted <placement> and selected at the <select position>
+      ```
+      {
+        "_type": "block",
+        "children": [{"_type": "span", "text": "foo"}]
+      }
+      ```
+    Then the text is <text>
+
+    Examples:
+      | placement | select position | text                    |
+      | "before"  | "end"           | "foo\|,[stock-ticker]," |
+      | "after"   | "start"         | ",[stock-ticker],\|foo" |
+      | "auto"    | "start"         | ",[stock-ticker],foo"   |

@@ -177,11 +177,19 @@ export function insertBlock({
 
       const currentSelection = editor.selection
       const focusBlockStartPoint = Editor.start(editor, focusBlockPath)
-      const focusBlockEndPoint = Editor.end(editor, focusBlockPath)
 
       if (editor.isTextBlock(focusBlock) && editor.isTextBlock(block)) {
+        if (select === 'end') {
+          Transforms.insertFragment(editor, [block], {
+            voids: true,
+          })
+
+          return
+        }
+
         Transforms.insertFragment(editor, [block], {
           at: currentSelection,
+          voids: true,
         })
 
         if (select === 'start') {
@@ -189,10 +197,6 @@ export function insertBlock({
             Transforms.select(editor, Editor.start(editor, focusBlockPath))
           } else {
             Transforms.select(editor, currentSelection)
-          }
-        } else if (select === 'end') {
-          if (Point.equals(currentSelection.focus, focusBlockEndPoint)) {
-            Transforms.select(editor, Editor.end(editor, focusBlockPath))
           }
         } else {
           if (!Point.equals(currentSelection.anchor, focusBlockStartPoint)) {
