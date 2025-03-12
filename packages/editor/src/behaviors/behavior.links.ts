@@ -18,10 +18,10 @@ export type LinkBehaviorsConfig = {
  */
 export function createLinkBehaviors(config: LinkBehaviorsConfig) {
   const pasteLinkOnSelection = defineBehavior({
-    on: 'paste',
+    on: 'clipboard.paste',
     guard: ({snapshot, event}) => {
       const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
-      const text = event.data.getData('text/plain')
+      const text = event.dataTransfer.getData('text/plain')
       const url = looksLikeUrl(text) ? text : undefined
       const annotation =
         url !== undefined
@@ -44,7 +44,7 @@ export function createLinkBehaviors(config: LinkBehaviorsConfig) {
     ],
   })
   const pasteLinkAtCaret = defineBehavior({
-    on: 'paste',
+    on: 'clipboard.paste',
     guard: ({snapshot, event}) => {
       const focusSpan = selectors.getFocusSpan(snapshot)
       const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
@@ -53,7 +53,7 @@ export function createLinkBehaviors(config: LinkBehaviorsConfig) {
         return false
       }
 
-      const text = event.data.getData('text/plain')
+      const text = event.dataTransfer.getData('text/plain')
       const url = looksLikeUrl(text) ? text : undefined
       const annotation =
         url !== undefined

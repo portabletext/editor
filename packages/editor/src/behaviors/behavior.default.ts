@@ -172,7 +172,7 @@ const raiseSerializationSuccessOrFailure = defineBehavior({
 
 export const defaultBehaviors = [
   defineBehavior({
-    on: 'copy',
+    on: 'clipboard.copy',
     guard: ({snapshot}) => {
       const focusSpan = selectors.getFocusSpan(snapshot)
       const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
@@ -182,19 +182,19 @@ export const defaultBehaviors = [
     actions: [() => [{type: 'noop'}]],
   }),
   defineBehavior({
-    on: 'copy',
+    on: 'clipboard.copy',
     actions: [
       ({event}) => [
         raise({
           type: 'serialize',
-          dataTransfer: event.data,
+          dataTransfer: event.dataTransfer,
           originEvent: event,
         }),
       ],
     ],
   }),
   defineBehavior({
-    on: 'cut',
+    on: 'clipboard.cut',
     guard: ({snapshot}) => {
       const focusSpan = selectors.getFocusSpan(snapshot)
       const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
@@ -204,7 +204,7 @@ export const defaultBehaviors = [
     actions: [() => [{type: 'noop'}]],
   }),
   defineBehavior({
-    on: 'cut',
+    on: 'clipboard.cut',
     guard: ({snapshot}) => {
       return snapshot.context.selection
         ? {
@@ -367,7 +367,7 @@ export const defaultBehaviors = [
     ],
   }),
   defineBehavior({
-    on: 'paste',
+    on: 'clipboard.paste',
     guard: ({snapshot}) => {
       return snapshot.context.selection &&
         selectors.isSelectionExpanded(snapshot)
@@ -382,19 +382,19 @@ export const defaultBehaviors = [
         }),
         raise({
           type: 'deserialize',
-          dataTransfer: event.data,
+          dataTransfer: event.dataTransfer,
           originEvent: event,
         }),
       ],
     ],
   }),
   defineBehavior({
-    on: 'paste',
+    on: 'clipboard.paste',
     actions: [
       ({event}) => [
         raise({
           type: 'deserialize',
-          dataTransfer: event.data,
+          dataTransfer: event.dataTransfer,
           originEvent: event,
         }),
       ],

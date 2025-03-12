@@ -461,8 +461,8 @@ export const PortableTextEditable = forwardRef<
         editorActor.send({
           type: 'behavior event',
           behaviorEvent: {
-            type: 'copy',
-            data: event.nativeEvent.clipboardData,
+            type: 'clipboard.copy',
+            dataTransfer: event.nativeEvent.clipboardData,
             position,
           },
           editor: slateEditor,
@@ -503,7 +503,7 @@ export const PortableTextEditable = forwardRef<
         editorActor.send({
           type: 'behavior event',
           behaviorEvent: {
-            type: 'cut',
+            type: 'clipboard.cut',
             dataTransfer: event.nativeEvent.clipboardData,
             position,
           },
@@ -557,8 +557,8 @@ export const PortableTextEditable = forwardRef<
               editorActor.send({
                 type: 'behavior event',
                 behaviorEvent: {
-                  type: 'paste',
-                  data: event.clipboardData,
+                  type: 'clipboard.paste',
+                  dataTransfer: event.clipboardData,
                   position,
                 },
                 editor: slateEditor,
@@ -621,8 +621,8 @@ export const PortableTextEditable = forwardRef<
         editorActor.send({
           type: 'behavior event',
           behaviorEvent: {
-            type: 'paste',
-            data: event.nativeEvent.clipboardData,
+            type: 'clipboard.paste',
+            dataTransfer: event.nativeEvent.clipboardData,
             position,
           },
           editor: slateEditor,

@@ -13,6 +13,7 @@ import {performAction} from '../behavior-actions/behavior.actions'
 import {coreBehaviors} from '../behaviors/behavior.core'
 import {defaultBehaviors} from '../behaviors/behavior.default'
 import {
+  isClipboardBehaviorEvent,
   isCustomBehaviorEvent,
   isDragBehaviorEvent,
   isMouseBehaviorEvent,
@@ -324,14 +325,12 @@ export const editorMachine = setup({
 
         const defaultAction =
           event.type === 'custom behavior event' ||
+          isClipboardBehaviorEvent(event.behaviorEvent) ||
           isDragBehaviorEvent(event.behaviorEvent) ||
-          event.behaviorEvent.type === 'copy' ||
-          event.behaviorEvent.type === 'cut' ||
           event.behaviorEvent.type === 'deserialize' ||
           event.behaviorEvent.type === 'key.down' ||
           event.behaviorEvent.type === 'key.up' ||
           isMouseBehaviorEvent(event.behaviorEvent) ||
-          event.behaviorEvent.type === 'paste' ||
           event.behaviorEvent.type === 'serialize'
             ? undefined
             : ({
@@ -349,6 +348,13 @@ export const editorMachine = setup({
         ].filter((behavior) => {
           if (behavior.on === '*') {
             return true
+          }
+
+          if (isClipboardBehaviorEvent(event.behaviorEvent)) {
+            return (
+              behavior.on === 'clipboard.*' ||
+              behavior.on === event.behaviorEvent.type
+            )
           }
 
           if (isDragBehaviorEvent(event.behaviorEvent)) {
@@ -598,7 +604,7 @@ export const editorMachine = setup({
             'behavior event': {
               actions: 'handle behavior event',
               guard: ({event}) =>
-                event.behaviorEvent.type === 'copy' ||
+                event.behaviorEvent.type === 'clipboard.copy' ||
                 event.behaviorEvent.type === 'data transfer.set' ||
                 event.behaviorEvent.type === 'serialize' ||
                 event.behaviorEvent.type === 'serialization.failure' ||
