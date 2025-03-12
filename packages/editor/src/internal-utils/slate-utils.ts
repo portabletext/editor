@@ -1,4 +1,4 @@
-import {Editor, type Node, type Path} from 'slate'
+import {Editor, Node, type Path} from 'slate'
 import type {PortableTextSlateEditor} from '../types/editor'
 
 export function getFocusBlock({
@@ -18,6 +18,25 @@ export function getFocusBlock({
   ).at(0)
 
   return focusBlock ?? [undefined, undefined]
+}
+
+export function getFocusChild({
+  editor,
+}: {
+  editor: PortableTextSlateEditor
+}): [node: Node, path: Path] | [undefined, undefined] {
+  const [focusBlock, focusBlockPath] = getFocusBlock({editor})
+  const childIndex = editor.selection?.focus.path.at(1)
+
+  if (!focusBlock || !focusBlockPath || childIndex === undefined) {
+    return [undefined, undefined]
+  }
+
+  const focusChild = Node.child(focusBlock, childIndex)
+
+  return focusChild
+    ? [focusChild, [...focusBlockPath, childIndex]]
+    : [undefined, undefined]
 }
 
 export function getLastBlock({
