@@ -364,6 +364,13 @@ export const editorMachine = setup({
             )
           }
 
+          if (isMouseBehaviorEvent(event.behaviorEvent)) {
+            return (
+              behavior.on === 'mouse.*' ||
+              behavior.on === event.behaviorEvent.type
+            )
+          }
+
           return behavior.on === event.behaviorEvent.type
         })
 
