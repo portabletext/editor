@@ -21,7 +21,7 @@ export function createLinkBehaviors(config: LinkBehaviorsConfig) {
     on: 'clipboard.paste',
     guard: ({snapshot, event}) => {
       const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
-      const text = event.dataTransfer.getData('text/plain')
+      const text = event.originEvent.dataTransfer.getData('text/plain')
       const url = looksLikeUrl(text) ? text : undefined
       const annotation =
         url !== undefined
@@ -53,7 +53,7 @@ export function createLinkBehaviors(config: LinkBehaviorsConfig) {
         return false
       }
 
-      const text = event.dataTransfer.getData('text/plain')
+      const text = event.originEvent.dataTransfer.getData('text/plain')
       const url = looksLikeUrl(text) ? text : undefined
       const annotation =
         url !== undefined

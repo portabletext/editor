@@ -89,7 +89,9 @@ const raiseDeserializationSuccessOrFailure = defineBehavior({
   guard: ({snapshot, event}) => {
     const deserializeEvents = snapshot.context.converters.flatMap(
       (converter) => {
-        const data = event.dataTransfer.getData(converter.mimeType)
+        const data = event.originEvent.originEvent.dataTransfer.getData(
+          converter.mimeType,
+        )
 
         if (!data) {
           return []
@@ -128,7 +130,6 @@ const raiseDeserializationSuccessOrFailure = defineBehavior({
     ({event}, deserializeEvent) => [
       raise({
         ...deserializeEvent,
-        dataTransfer: event.dataTransfer,
         originEvent: event.originEvent,
       }),
     ],
@@ -164,7 +165,6 @@ const raiseSerializationSuccessOrFailure = defineBehavior({
         return raise({
           ...serializeEvent,
           originEvent: event.originEvent,
-          dataTransfer: event.dataTransfer,
         })
       }),
   ],
@@ -187,7 +187,6 @@ export const defaultBehaviors = [
       ({event}) => [
         raise({
           type: 'serialize',
-          dataTransfer: event.dataTransfer,
           originEvent: event,
         }),
       ],
@@ -216,7 +215,6 @@ export const defaultBehaviors = [
       ({event}, {selection}) => [
         raise({
           type: 'serialize',
-          dataTransfer: event.dataTransfer,
           originEvent: event,
         }),
         raise({
@@ -232,7 +230,6 @@ export const defaultBehaviors = [
       ({event}) => [
         raise({
           type: 'serialize',
-          dataTransfer: event.dataTransfer,
           originEvent: event,
         }),
       ],
@@ -245,7 +242,7 @@ export const defaultBehaviors = [
         raise({
           type: 'data transfer.set',
           data: event.data,
-          dataTransfer: event.dataTransfer,
+          dataTransfer: event.originEvent.originEvent.dataTransfer,
           mimeType: event.mimeType,
         }),
       ],
@@ -275,7 +272,6 @@ export const defaultBehaviors = [
       ({event}) => [
         raise({
           type: 'deserialize',
-          dataTransfer: event.dataTransfer,
           originEvent: event,
         }),
       ],
@@ -382,7 +378,6 @@ export const defaultBehaviors = [
         }),
         raise({
           type: 'deserialize',
-          dataTransfer: event.dataTransfer,
           originEvent: event,
         }),
       ],
@@ -394,7 +389,6 @@ export const defaultBehaviors = [
       ({event}) => [
         raise({
           type: 'deserialize',
-          dataTransfer: event.dataTransfer,
           originEvent: event,
         }),
       ],

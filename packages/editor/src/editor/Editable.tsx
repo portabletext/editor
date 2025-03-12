@@ -462,7 +462,9 @@ export const PortableTextEditable = forwardRef<
           type: 'behavior event',
           behaviorEvent: {
             type: 'clipboard.copy',
-            dataTransfer: event.nativeEvent.clipboardData,
+            originEvent: {
+              dataTransfer: event.nativeEvent.clipboardData,
+            },
             position,
           },
           editor: slateEditor,
@@ -504,7 +506,9 @@ export const PortableTextEditable = forwardRef<
           type: 'behavior event',
           behaviorEvent: {
             type: 'clipboard.cut',
-            dataTransfer: event.nativeEvent.clipboardData,
+            originEvent: {
+              dataTransfer: event.nativeEvent.clipboardData,
+            },
             position,
           },
           editor: slateEditor,
@@ -558,7 +562,9 @@ export const PortableTextEditable = forwardRef<
                 type: 'behavior event',
                 behaviorEvent: {
                   type: 'clipboard.paste',
-                  dataTransfer: event.clipboardData,
+                  originEvent: {
+                    dataTransfer: event.clipboardData,
+                  },
                   position,
                 },
                 editor: slateEditor,
@@ -622,7 +628,9 @@ export const PortableTextEditable = forwardRef<
           type: 'behavior event',
           behaviorEvent: {
             type: 'clipboard.paste',
-            dataTransfer: event.nativeEvent.clipboardData,
+            originEvent: {
+              dataTransfer: event.nativeEvent.clipboardData,
+            },
             position,
           },
           editor: slateEditor,
@@ -810,7 +818,7 @@ export const PortableTextEditable = forwardRef<
           type: 'behavior event',
           behaviorEvent: {
             type: 'keyboard.keydown',
-            keyboardEvent: {
+            originEvent: {
               key: event.key,
               code: event.code,
               altKey: event.altKey,
@@ -837,7 +845,7 @@ export const PortableTextEditable = forwardRef<
           type: 'behavior event',
           behaviorEvent: {
             type: 'keyboard.keyup',
-            keyboardEvent: {
+            originEvent: {
               key: event.key,
               code: event.code,
               altKey: event.altKey,
@@ -992,7 +1000,9 @@ export const PortableTextEditable = forwardRef<
           type: 'behavior event',
           behaviorEvent: {
             type: 'drag.dragstart',
-            dataTransfer: event.dataTransfer,
+            originEvent: {
+              dataTransfer: event.dataTransfer,
+            },
             position,
           },
           editor: slateEditor,
@@ -1014,7 +1024,9 @@ export const PortableTextEditable = forwardRef<
           type: 'behavior event',
           behaviorEvent: {
             type: 'drag.drag',
-            dataTransfer: event.dataTransfer,
+            originEvent: {
+              dataTransfer: event.dataTransfer,
+            },
           },
           editor: slateEditor,
         })
@@ -1035,7 +1047,9 @@ export const PortableTextEditable = forwardRef<
           type: 'behavior event',
           behaviorEvent: {
             type: 'drag.dragend',
-            dataTransfer: event.dataTransfer,
+            originEvent: {
+              dataTransfer: event.dataTransfer,
+            },
           },
           editor: slateEditor,
         })
@@ -1069,7 +1083,9 @@ export const PortableTextEditable = forwardRef<
           type: 'behavior event',
           behaviorEvent: {
             type: 'drag.dragenter',
-            dataTransfer: event.dataTransfer,
+            originEvent: {
+              dataTransfer: event.dataTransfer,
+            },
             position,
           },
           editor: slateEditor,
@@ -1104,7 +1120,9 @@ export const PortableTextEditable = forwardRef<
           type: 'behavior event',
           behaviorEvent: {
             type: 'drag.dragover',
-            dataTransfer: event.dataTransfer,
+            originEvent: {
+              dataTransfer: event.dataTransfer,
+            },
             position,
           },
           editor: slateEditor,
@@ -1145,7 +1163,9 @@ export const PortableTextEditable = forwardRef<
           type: 'behavior event',
           behaviorEvent: {
             type: 'drag.drop',
-            dataTransfer: event.dataTransfer,
+            originEvent: {
+              dataTransfer: event.dataTransfer,
+            },
             position,
           },
           editor: slateEditor,
@@ -1167,7 +1187,9 @@ export const PortableTextEditable = forwardRef<
           type: 'behavior event',
           behaviorEvent: {
             type: 'drag.dragleave',
-            dataTransfer: event.dataTransfer,
+            originEvent: {
+              dataTransfer: event.dataTransfer,
+            },
           },
           editor: slateEditor,
         })

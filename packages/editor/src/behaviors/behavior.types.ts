@@ -206,42 +206,30 @@ export type SyntheticBehaviorEvent =
       'type',
       'deserialization.failure' | 'deserialization.success'
     > & {
-      dataTransfer: DataTransfer
-      originEvent: Omit<
-        PickFromUnion<
-          NativeBehaviorEvent,
-          'type',
-          'drag.drop' | 'clipboard.paste'
-        >,
-        'dataTransfer'
+      originEvent: PickFromUnion<
+        NativeBehaviorEvent,
+        'type',
+        'drag.drop' | 'clipboard.paste'
       >
     })
   | {
       type: 'serialization.success'
       mimeType: MIMEType
       data: string
-      dataTransfer: DataTransfer
-      originEvent: Omit<
-        PickFromUnion<
-          NativeBehaviorEvent,
-          'type',
-          'clipboard.copy' | 'clipboard.cut' | 'drag.dragstart'
-        >,
-        'dataTransfer'
+      originEvent: PickFromUnion<
+        NativeBehaviorEvent,
+        'type',
+        'clipboard.copy' | 'clipboard.cut' | 'drag.dragstart'
       >
     }
   | {
       type: 'serialization.failure'
       mimeType: MIMEType
       reason: string
-      dataTransfer: DataTransfer
-      originEvent: Omit<
-        PickFromUnion<
-          NativeBehaviorEvent,
-          'type',
-          'clipboard.copy' | 'clipboard.cut' | 'drag.dragstart'
-        >,
-        'dataTransfer'
+      originEvent: PickFromUnion<
+        NativeBehaviorEvent,
+        'type',
+        'clipboard.copy' | 'clipboard.cut' | 'drag.dragstart'
       >
     }
 
@@ -250,17 +238,23 @@ export type InsertPlacement = 'auto' | 'after' | 'before'
 type ClipboardBehaviorEvent =
   | {
       type: 'clipboard.copy'
-      dataTransfer: DataTransfer
+      originEvent: {
+        dataTransfer: DataTransfer
+      }
       position: EventPosition
     }
   | {
       type: 'clipboard.cut'
-      dataTransfer: DataTransfer
+      originEvent: {
+        dataTransfer: DataTransfer
+      }
       position: EventPosition
     }
   | {
       type: 'clipboard.paste'
-      dataTransfer: DataTransfer
+      originEvent: {
+        dataTransfer: DataTransfer
+      }
       position: EventPosition
     }
 
@@ -273,35 +267,49 @@ export function isClipboardBehaviorEvent(
 type DragBehaviorEvent =
   | {
       type: 'drag.dragstart'
-      dataTransfer: DataTransfer
+      originEvent: {
+        dataTransfer: DataTransfer
+      }
       position: EventPosition
     }
   | {
       type: 'drag.drag'
-      dataTransfer: DataTransfer
+      originEvent: {
+        dataTransfer: DataTransfer
+      }
     }
   | {
       type: 'drag.dragend'
-      dataTransfer: DataTransfer
+      originEvent: {
+        dataTransfer: DataTransfer
+      }
     }
   | {
       type: 'drag.dragenter'
-      dataTransfer: DataTransfer
+      originEvent: {
+        dataTransfer: DataTransfer
+      }
       position: EventPosition
     }
   | {
       type: 'drag.dragover'
-      dataTransfer: DataTransfer
+      originEvent: {
+        dataTransfer: DataTransfer
+      }
       position: EventPosition
     }
   | {
       type: 'drag.drop'
-      dataTransfer: DataTransfer
+      originEvent: {
+        dataTransfer: DataTransfer
+      }
       position: EventPosition
     }
   | {
       type: 'drag.dragleave'
-      dataTransfer: DataTransfer
+      originEvent: {
+        dataTransfer: DataTransfer
+      }
     }
 
 export function isDragBehaviorEvent(
@@ -313,14 +321,14 @@ export function isDragBehaviorEvent(
 export type KeyboardBehaviorEvent =
   | {
       type: 'keyboard.keydown'
-      keyboardEvent: Pick<
+      originEvent: Pick<
         KeyboardEvent,
         'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
       >
     }
   | {
       type: 'keyboard.keyup'
-      keyboardEvent: Pick<
+      originEvent: Pick<
         KeyboardEvent,
         'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
       >
@@ -335,26 +343,18 @@ export function isKeyboardBehaviorEvent(
 export type DataBehaviorEvent =
   | {
       type: 'deserialize'
-      dataTransfer: DataTransfer
-      originEvent: Omit<
-        PickFromUnion<
-          NativeBehaviorEvent,
-          'type',
-          'drag.drop' | 'clipboard.paste'
-        >,
-        'dataTransfer'
+      originEvent: PickFromUnion<
+        NativeBehaviorEvent,
+        'type',
+        'drag.drop' | 'clipboard.paste'
       >
     }
   | {
       type: 'serialize'
-      dataTransfer: DataTransfer
-      originEvent: Omit<
-        PickFromUnion<
-          NativeBehaviorEvent,
-          'type',
-          'clipboard.copy' | 'clipboard.cut' | 'drag.dragstart'
-        >,
-        'dataTransfer'
+      originEvent: PickFromUnion<
+        NativeBehaviorEvent,
+        'type',
+        'clipboard.copy' | 'clipboard.cut' | 'drag.dragstart'
       >
     }
 

@@ -128,7 +128,7 @@ const escapeListenerCallback: CallbackLogicFunction<
   return input.editor.registerBehavior({
     behavior: defineBehavior({
       on: 'keyboard.keydown',
-      guard: ({event}) => event.keyboardEvent.key === 'Escape',
+      guard: ({event}) => event.originEvent.key === 'Escape',
       actions: [
         () => [
           {
@@ -155,7 +155,7 @@ const arrowListenerCallback: CallbackLogicFunction<
     input.editor.registerBehavior({
       behavior: defineBehavior({
         on: 'keyboard.keydown',
-        guard: ({event}) => event.keyboardEvent.key === 'ArrowDown',
+        guard: ({event}) => event.originEvent.key === 'ArrowDown',
         actions: [
           () => [
             {
@@ -174,7 +174,7 @@ const arrowListenerCallback: CallbackLogicFunction<
     input.editor.registerBehavior({
       behavior: defineBehavior({
         on: 'keyboard.keydown',
-        guard: ({event}) => event.keyboardEvent.key === 'ArrowUp',
+        guard: ({event}) => event.originEvent.key === 'ArrowUp',
         actions: [
           () => [
             {
@@ -272,8 +272,8 @@ const emojiInsertListener: CallbackLogicFunction<
         on: 'keyboard.keydown',
         guard: ({event}) => {
           if (
-            event.keyboardEvent.key !== 'Enter' &&
-            event.keyboardEvent.key !== 'Tab'
+            event.originEvent.key !== 'Enter' &&
+            event.originEvent.key !== 'Tab'
           ) {
             return false
           }
@@ -302,8 +302,7 @@ const emojiInsertListener: CallbackLogicFunction<
       behavior: defineBehavior({
         on: 'keyboard.keydown',
         guard: ({event}) =>
-          event.keyboardEvent.key === 'Enter' ||
-          event.keyboardEvent.key === 'Tab',
+          event.originEvent.key === 'Enter' || event.originEvent.key === 'Tab',
         actions: [
           () => [
             {

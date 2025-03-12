@@ -218,7 +218,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   const automaticHrOnPaste = defineBehavior({
     on: 'clipboard.paste',
     guard: ({snapshot, event}) => {
-      const text = event.dataTransfer.getData('text/plain')
+      const text = event.originEvent.dataTransfer.getData('text/plain')
       const hrRegExp = /^(---)$|(___)$|(\*\*\*)$/gm
       const hrCharacters = text.match(hrRegExp)?.[0]
       const hrObject = config.horizontalRuleObject?.(snapshot.context)

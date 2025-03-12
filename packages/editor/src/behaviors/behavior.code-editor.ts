@@ -20,7 +20,7 @@ export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
       guard: ({snapshot, event}) => {
         const isMoveUpShortcut = isHotkey(
           config.moveBlockUpShortcut,
-          event.keyboardEvent,
+          event.originEvent,
         )
         const firstBlock = selectors.getFirstBlock(snapshot)
         const selectedBlocks = selectors.getSelectedBlocks(snapshot)
@@ -46,7 +46,7 @@ export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
       guard: ({snapshot, event}) => {
         const isMoveDownShortcut = isHotkey(
           config.moveBlockDownShortcut,
-          event.keyboardEvent,
+          event.originEvent,
         )
         const lastBlock = selectors.getLastBlock(snapshot)
         const selectedBlocks = selectors.getSelectedBlocks(snapshot)
