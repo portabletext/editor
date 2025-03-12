@@ -3,7 +3,7 @@ import {defineBehavior, raise} from './behavior.types'
 
 export const coreDecoratorBehaviors = {
   strongShortcut: defineBehavior({
-    on: 'key.down',
+    on: 'keyboard.keydown',
     guard: ({snapshot, event}) =>
       isHotkey('mod+b', event.keyboardEvent) &&
       snapshot.context.schema.decorators.some(
@@ -12,7 +12,7 @@ export const coreDecoratorBehaviors = {
     actions: [() => [raise({type: 'decorator.toggle', decorator: 'strong'})]],
   }),
   emShortcut: defineBehavior({
-    on: 'key.down',
+    on: 'keyboard.keydown',
     guard: ({snapshot, event}) =>
       isHotkey('mod+i', event.keyboardEvent) &&
       snapshot.context.schema.decorators.some(
@@ -21,7 +21,7 @@ export const coreDecoratorBehaviors = {
     actions: [() => [raise({type: 'decorator.toggle', decorator: 'em'})]],
   }),
   underlineShortcut: defineBehavior({
-    on: 'key.down',
+    on: 'keyboard.keydown',
     guard: ({snapshot, event}) =>
       isHotkey('mod+u', event.keyboardEvent) &&
       snapshot.context.schema.decorators.some(
@@ -32,7 +32,7 @@ export const coreDecoratorBehaviors = {
     ],
   }),
   codeShortcut: defineBehavior({
-    on: 'key.down',
+    on: 'keyboard.keydown',
     guard: ({snapshot, event}) =>
       isHotkey("mod+'", event.keyboardEvent) &&
       snapshot.context.schema.decorators.some(

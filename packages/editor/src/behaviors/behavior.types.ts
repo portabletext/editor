@@ -310,6 +310,28 @@ export function isDragBehaviorEvent(
   return event.type.startsWith('drag.')
 }
 
+export type KeyboardBehaviorEvent =
+  | {
+      type: 'keyboard.keydown'
+      keyboardEvent: Pick<
+        KeyboardEvent,
+        'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
+      >
+    }
+  | {
+      type: 'keyboard.keyup'
+      keyboardEvent: Pick<
+        KeyboardEvent,
+        'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
+      >
+    }
+
+export function isKeyboardBehaviorEvent(
+  event: BehaviorEvent,
+): event is KeyboardBehaviorEvent {
+  return event.type.startsWith('keyboard.')
+}
+
 export type DataBehaviorEvent =
   | {
       type: 'deserialize'
@@ -352,20 +374,7 @@ export function isMouseBehaviorEvent(
  */
 export type NativeBehaviorEvent =
   | ClipboardBehaviorEvent
-  | {
-      type: 'key.down'
-      keyboardEvent: Pick<
-        KeyboardEvent,
-        'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
-      >
-    }
-  | {
-      type: 'key.up'
-      keyboardEvent: Pick<
-        KeyboardEvent,
-        'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
-      >
-    }
+  | KeyboardBehaviorEvent
   | MouseBehaviorEvent
   | DragBehaviorEvent
 
@@ -431,6 +440,7 @@ export type BehaviorEvent =
   | {type: '*'}
   | {type: 'clipboard.*'}
   | {type: 'drag.*'}
+  | {type: 'keyboard.*'}
   | {type: 'mouse.*'}
 
 /**
@@ -445,9 +455,11 @@ export type Behavior<
       ? ClipboardBehaviorEvent
       : TBehaviorEventType extends 'drag.*'
         ? DragBehaviorEvent
-        : TBehaviorEventType extends 'mouse.*'
-          ? MouseBehaviorEvent
-          : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
+        : TBehaviorEventType extends 'keyboard.*'
+          ? KeyboardBehaviorEvent
+          : TBehaviorEventType extends 'mouse.*'
+            ? MouseBehaviorEvent
+            : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
 > = {
   /**
    * The internal editor event that triggers this behavior.
@@ -529,9 +541,11 @@ export function defineBehavior<
           ? ClipboardBehaviorEvent
           : TBehaviorEventType extends `drag.*`
             ? DragBehaviorEvent
-            : TBehaviorEventType extends 'mouse.*'
-              ? MouseBehaviorEvent
-              : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>
+            : TBehaviorEventType extends 'keyboard.*'
+              ? KeyboardBehaviorEvent
+              : TBehaviorEventType extends 'mouse.*'
+                ? MouseBehaviorEvent
+                : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>
   >,
 ): Behavior
 export function defineBehavior<
@@ -547,9 +561,11 @@ export function defineBehavior<
         ? ClipboardBehaviorEvent
         : TBehaviorEventType extends `drag.*`
           ? DragBehaviorEvent
-          : TBehaviorEventType extends 'mouse.*'
-            ? MouseBehaviorEvent
-            : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
+          : TBehaviorEventType extends 'keyboard.*'
+            ? KeyboardBehaviorEvent
+            : TBehaviorEventType extends 'mouse.*'
+              ? MouseBehaviorEvent
+              : PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>,
 >(
   behavior: Behavior<TBehaviorEventType, TGuardResponse, TBehaviorEvent>,
 ): Behavior {

@@ -5,7 +5,7 @@ import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {defineBehavior, raise} from './behavior.types'
 
 const arrowDownOnLonelyBlockObject = defineBehavior({
-  on: 'key.down',
+  on: 'keyboard.keydown',
   guard: ({snapshot, event}) => {
     const isArrowDown = isHotkey('ArrowDown', event.keyboardEvent)
     const focusBlockObject = selectors.getFocusBlockObject(snapshot)
@@ -17,7 +17,7 @@ const arrowDownOnLonelyBlockObject = defineBehavior({
 })
 
 const arrowUpOnLonelyBlockObject = defineBehavior({
-  on: 'key.down',
+  on: 'keyboard.keydown',
   guard: ({snapshot, event}) => {
     const isArrowUp = isHotkey('ArrowUp', event.keyboardEvent)
     const focusBlockObject = selectors.getFocusBlockObject(snapshot)
