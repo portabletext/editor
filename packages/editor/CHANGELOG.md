@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.39.0](https://github.com/portabletext/editor/compare/editor-v1.38.1...editor-v1.39.0) (2025-03-12)
+
+
+### Features
+
+* **behaviors:** allow listening for `mouse.*` events ([3f81e0e](https://github.com/portabletext/editor/commit/3f81e0eefd05217b3481fa764dae3ec1494721c0))
+* **behaviors:** clipboard events are now consistent with other native events ([667f6d3](https://github.com/portabletext/editor/commit/667f6d3b367441851fcd994bac1287b33d2990a1))
+* **behaviors:** establish `originEvent` pattern on native events ([fd761e8](https://github.com/portabletext/editor/commit/fd761e8abde72daac9f0b067af3bcef75b80a3ac))
+* **behaviors:** keyboard events are now consistent with other native events ([c3603d1](https://github.com/portabletext/editor/commit/c3603d12a5cf67f76bee04f40192080860551b0a))
+
 ## [1.38.1](https://github.com/portabletext/editor/compare/editor-v1.38.0...editor-v1.38.1) (2025-03-12)
 
 
