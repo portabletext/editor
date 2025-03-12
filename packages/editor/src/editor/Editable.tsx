@@ -809,7 +809,7 @@ export const PortableTextEditable = forwardRef<
         editorActor.send({
           type: 'behavior event',
           behaviorEvent: {
-            type: 'key.down',
+            type: 'keyboard.keydown',
             keyboardEvent: {
               key: event.key,
               code: event.code,
@@ -836,7 +836,7 @@ export const PortableTextEditable = forwardRef<
         editorActor.send({
           type: 'behavior event',
           behaviorEvent: {
-            type: 'key.up',
+            type: 'keyboard.keyup',
             keyboardEvent: {
               key: event.key,
               code: event.code,

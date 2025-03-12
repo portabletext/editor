@@ -148,7 +148,7 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
       ],
     }),
     defineBehavior({
-      on: 'key.down',
+      on: 'keyboard.keydown',
       guard: ({snapshot, event}) => {
         const matches = emojiPickerActor.getSnapshot().context.matches
 

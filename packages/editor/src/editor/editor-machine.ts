@@ -16,6 +16,7 @@ import {
   isClipboardBehaviorEvent,
   isCustomBehaviorEvent,
   isDragBehaviorEvent,
+  isKeyboardBehaviorEvent,
   isMouseBehaviorEvent,
   type Behavior,
   type CustomBehaviorEvent,
@@ -327,9 +328,8 @@ export const editorMachine = setup({
           event.type === 'custom behavior event' ||
           isClipboardBehaviorEvent(event.behaviorEvent) ||
           isDragBehaviorEvent(event.behaviorEvent) ||
+          isKeyboardBehaviorEvent(event.behaviorEvent) ||
           event.behaviorEvent.type === 'deserialize' ||
-          event.behaviorEvent.type === 'key.down' ||
-          event.behaviorEvent.type === 'key.up' ||
           isMouseBehaviorEvent(event.behaviorEvent) ||
           event.behaviorEvent.type === 'serialize'
             ? undefined
@@ -360,6 +360,13 @@ export const editorMachine = setup({
           if (isDragBehaviorEvent(event.behaviorEvent)) {
             return (
               behavior.on === 'drag.*' ||
+              behavior.on === event.behaviorEvent.type
+            )
+          }
+
+          if (isKeyboardBehaviorEvent(event.behaviorEvent)) {
+            return (
+              behavior.on === 'keyboard.*' ||
               behavior.on === event.behaviorEvent.type
             )
           }

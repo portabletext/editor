@@ -102,7 +102,7 @@ const clearListOnEnter = defineBehavior({
 })
 
 const indentListOnTab = defineBehavior({
-  on: 'key.down',
+  on: 'keyboard.keydown',
   guard: ({snapshot, event}) => {
     const isTab = isHotkey('Tab', event.keyboardEvent)
 
@@ -147,7 +147,7 @@ const indentListOnTab = defineBehavior({
 })
 
 const unindentListOnShiftTab = defineBehavior({
-  on: 'key.down',
+  on: 'keyboard.keydown',
   guard: ({snapshot, event}) => {
     const isShiftTab = isHotkey('Shift+Tab', event.keyboardEvent)
 

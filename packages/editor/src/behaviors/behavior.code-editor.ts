@@ -16,7 +16,7 @@ export type CodeEditorBehaviorsConfig = {
 export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
   return [
     defineBehavior({
-      on: 'key.down',
+      on: 'keyboard.keydown',
       guard: ({snapshot, event}) => {
         const isMoveUpShortcut = isHotkey(
           config.moveBlockUpShortcut,
@@ -42,7 +42,7 @@ export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
       ],
     }),
     defineBehavior({
-      on: 'key.down',
+      on: 'keyboard.keydown',
       guard: ({snapshot, event}) => {
         const isMoveDownShortcut = isHotkey(
           config.moveBlockDownShortcut,
