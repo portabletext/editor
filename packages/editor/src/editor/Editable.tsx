@@ -1062,7 +1062,6 @@ export const PortableTextEditable = forwardRef<
         })
 
         if (!position) {
-          console.warn('Could not find position for dragenter event')
           return
         }
 
@@ -1098,7 +1097,6 @@ export const PortableTextEditable = forwardRef<
         })
 
         if (!position) {
-          console.warn('Could not find position for dragover event')
           return
         }
 
