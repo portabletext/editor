@@ -209,7 +209,11 @@ export type InternalEditorEvent =
   | NamespaceEvent<EditorEmittedEvent, 'notify'>
   | NamespaceEvent<UnsetEvent, 'notify'>
   | SyntheticBehaviorEvent
-  | {type: 'dragstart'; origin: EventPosition; ghost?: HTMLElement}
+  | {
+      type: 'dragstart'
+      origin: Pick<EventPosition, 'selection'>
+      ghost?: HTMLElement
+    }
   | {type: 'dragend'}
   | {type: 'drop'}
 
@@ -244,7 +248,7 @@ export const editorMachine = setup({
       value: Array<PortableTextBlock> | undefined
       internalDrag?: {
         ghost?: HTMLElement
-        origin: EventPosition
+        origin: Pick<EventPosition, 'selection'>
       }
     },
     events: {} as InternalEditorEvent,

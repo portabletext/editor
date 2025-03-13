@@ -35,7 +35,10 @@ import {
   type RenderLeafProps,
 } from 'slate-react'
 import {debugWithName} from '../internal-utils/debug'
-import {getEventPosition} from '../internal-utils/event-position'
+import {
+  getEventPosition,
+  getEventPositionSelection,
+} from '../internal-utils/event-position'
 import {parseBlocks} from '../internal-utils/parse-blocks'
 import {
   moveRangeByOperation,
@@ -444,14 +447,8 @@ export const PortableTextEditable = forwardRef<
         event.stopPropagation()
         event.preventDefault()
 
-        const position = getEventPosition({
-          snapshot: getEditorSnapshot({
-            editorActorSnapshot: editorActor.getSnapshot(),
-            slateEditorInstance: slateEditor,
-          }),
-          slateEditor,
-          event: event.nativeEvent,
-        })
+        const selection = editorActor.getSnapshot().context.selection
+        const position = selection ? {selection} : undefined
 
         if (!position) {
           console.warn('Could not find position for copy event')
@@ -488,14 +485,8 @@ export const PortableTextEditable = forwardRef<
         event.stopPropagation()
         event.preventDefault()
 
-        const position = getEventPosition({
-          snapshot: getEditorSnapshot({
-            editorActorSnapshot: editorActor.getSnapshot(),
-            slateEditorInstance: slateEditor,
-          }),
-          slateEditor,
-          event: event.nativeEvent,
-        })
+        const selection = editorActor.getSnapshot().context.selection
+        const position = selection ? {selection} : undefined
 
         if (!position) {
           console.warn('Could not find position for cut event')
@@ -544,14 +535,8 @@ export const PortableTextEditable = forwardRef<
             if (!result || !result.insert) {
               debug('No result from custom paste handler, pasting normally')
 
-              const position = getEventPosition({
-                snapshot: getEditorSnapshot({
-                  editorActorSnapshot: editorActor.getSnapshot(),
-                  slateEditorInstance: slateEditor,
-                }),
-                slateEditor,
-                event: event.nativeEvent,
-              })
+              const selection = editorActor.getSnapshot().context.selection
+              const position = selection ? {selection} : undefined
 
               if (!position) {
                 console.warn('Could not find position for paste event')
@@ -610,14 +595,8 @@ export const PortableTextEditable = forwardRef<
         event.preventDefault()
         event.stopPropagation()
 
-        const position = getEventPosition({
-          snapshot: getEditorSnapshot({
-            editorActorSnapshot: editorActor.getSnapshot(),
-            slateEditorInstance: slateEditor,
-          }),
-          slateEditor,
-          event: event.nativeEvent,
-        })
+        const selection = editorActor.getSnapshot().context.selection
+        const position = selection ? {selection} : undefined
 
         if (!position) {
           console.warn('Could not find position for paste event')
@@ -961,7 +940,7 @@ export const PortableTextEditable = forwardRef<
       onDragStart?.(event)
 
       if (!event.isDefaultPrevented() && !event.isPropagationStopped()) {
-        const position = getEventPosition({
+        const selection = getEventPositionSelection({
           snapshot: getEditorSnapshot({
             editorActorSnapshot: editorActor.getSnapshot(),
             slateEditorInstance: slateEditor,
@@ -969,6 +948,7 @@ export const PortableTextEditable = forwardRef<
           slateEditor,
           event: event.nativeEvent,
         })
+        const position = selection ? {selection} : undefined
 
         if (!position) {
           console.warn('Could not find position for dragstart event')
