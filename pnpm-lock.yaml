@@ -54,8 +54,8 @@ importers:
         specifier: ^0.14.1
         version: 0.14.1
       prettier-plugin-gherkin:
-        specifier: ^3.1.1
-        version: 3.1.1
+        specifier: ^3.1.2
+        version: 3.1.2
       pretty-quick:
         specifier: ^4.0.0
         version: 4.0.0(prettier@3.5.3)
@@ -5402,8 +5402,8 @@ packages:
     resolution: {integrity: sha512-RiBETaaP9veVstE4vUwSIcdATj6dKmXljouXc/DDNwBSPTp8FRkLGDSGFClKsAFeeg+13SB0Z1JZvbD76bigJw==}
     engines: {node: ^14.15.0 || >=16.0.0}
 
-  prettier-plugin-gherkin@3.1.1:
-    resolution: {integrity: sha512-cCfjqKMdR2a8jOf8yKg32iUfRq0Dfmx+K2qTMOD/ixJJq0Rp7QS8BaoABWC7CDGXbvOkVeWOvzhxWvYcEbjglw==}
+  prettier-plugin-gherkin@3.1.2:
+    resolution: {integrity: sha512-LgehRNKCAqZsoE/yblmqXYfMpEK2mhVWQKNj/TFzeLR+0rhFGHqq3RlYcYhPgzbr0n6w2Bv+0Gm1yxNdzkdacw==}
 
   prettier-plugin-packagejson@2.5.8:
     resolution: {integrity: sha512-BaGOF63I0IJZoudxpuQe17naV93BRtK8b3byWktkJReKEMX9CC4qdGUzThPDVO/AUhPzlqDiAXbp18U6X8wLKA==}
@@ -12784,7 +12784,7 @@ snapshots:
       prettier: 3.5.3
       sass-formatter: 0.7.9
 
-  prettier-plugin-gherkin@3.1.1:
+  prettier-plugin-gherkin@3.1.2:
     dependencies:
       '@cucumber/gherkin': 27.0.0
       '@cucumber/messages': 23.0.0
