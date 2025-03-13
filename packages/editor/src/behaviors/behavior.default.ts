@@ -316,20 +316,28 @@ export const defaultBehaviors = [
       })
 
       if (!droppingOnDragOrigin) {
-        return {draggingEntireBlocks, draggedBlocks, dragOrigin}
+        return {
+          draggingEntireBlocks,
+          draggedBlocks,
+          dragOrigin,
+          originEvent: event.originEvent,
+        }
       }
 
       return false
     },
     actions: [
-      ({event}, {draggingEntireBlocks, draggedBlocks, dragOrigin}) => [
+      (
+        {event},
+        {draggingEntireBlocks, draggedBlocks, dragOrigin, originEvent},
+      ) => [
         raise({
           type: 'insert.blocks',
           blocks: event.data,
           placement: draggingEntireBlocks
-            ? event.originEvent.position.block === 'start'
+            ? originEvent.position.block === 'start'
               ? 'before'
-              : event.originEvent.position.block === 'end'
+              : originEvent.position.block === 'end'
                 ? 'after'
                 : 'auto'
             : 'auto',
@@ -385,6 +393,17 @@ export const defaultBehaviors = [
   }),
   defineBehavior({
     on: 'clipboard.paste',
+    actions: [
+      ({event}) => [
+        raise({
+          type: 'deserialize',
+          originEvent: event,
+        }),
+      ],
+    ],
+  }),
+  defineBehavior({
+    on: 'input.*',
     actions: [
       ({event}) => [
         raise({

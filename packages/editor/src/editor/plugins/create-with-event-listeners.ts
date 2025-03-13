@@ -114,9 +114,24 @@ export function createWithEventListeners(
       return
     }
 
-    editor.insertData = () => {
-      console.warn('Unexpected call to .insertData(...)')
-      return
+    editor.insertData = (dataTransfer) => {
+      if (isApplyingBehaviorActions(editor)) {
+        throw new Error('Unexpected call to .insertData(...)')
+      }
+
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'deserialize',
+          originEvent: {
+            type: 'input.*',
+            originEvent: {
+              dataTransfer,
+            },
+          },
+        },
+        editor,
+      })
     }
 
     editor.insertSoftBreak = () => {
