@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.39.1](https://github.com/portabletext/editor/compare/editor-v1.39.0...editor-v1.39.1) (2025-03-13)
+
+
+### Bug Fixes
+
+* account for InputEvents holding DataTransfer objects ([5b4d718](https://github.com/portabletext/editor/commit/5b4d718cca84d5b171001ccbab9f8041058b4ed0))
+
 ## [1.39.0](https://github.com/portabletext/editor/compare/editor-v1.38.1...editor-v1.39.0) (2025-03-12)
 
 
