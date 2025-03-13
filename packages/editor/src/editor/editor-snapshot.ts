@@ -35,7 +35,7 @@ export type EditorSnapshot = {
     hasTag: HasTag
     internalDrag:
       | {
-          origin: EventPosition
+          origin: Pick<EventPosition, 'selection'>
         }
       | undefined
   }
@@ -58,7 +58,7 @@ export function createEditorSnapshot({
   hasTag: HasTag
   internalDrag:
     | {
-        origin: EventPosition
+        origin: Pick<EventPosition, 'selection'>
       }
     | undefined
 }) {

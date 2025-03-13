@@ -24,28 +24,13 @@ export function getEventPosition({
 }: {
   snapshot: EditorSnapshot
   slateEditor: PortableTextSlateEditor
-  event: DragEvent | ClipboardEvent | MouseEvent
+  event: DragEvent | MouseEvent
 }): EventPosition | undefined {
   if (!DOMEditor.hasTarget(slateEditor, event.target)) {
     return undefined
   }
 
   const node = DOMEditor.toSlateNode(slateEditor, event.target)
-
-  if (isClipboardEvent(event)) {
-    const selection = snapshot.context.selection
-
-    if (!selection) {
-      return undefined
-    }
-
-    return {
-      block: 'end',
-      isEditor: Editor.isEditor(node),
-      selection,
-    }
-  }
-
   const block = getEventPositionBlock({slateEditor, event})
   const selection = getEventPositionSelection({snapshot, slateEditor, event})
 
@@ -81,7 +66,7 @@ function getEventPositionBlock({
   return location < height / 2 ? 'start' : 'end'
 }
 
-function getEventPositionSelection({
+export function getEventPositionSelection({
   snapshot,
   slateEditor,
   event,
@@ -201,10 +186,4 @@ function getSlateRangeFromEvent(
   } catch {}
 
   return range
-}
-
-function isClipboardEvent(
-  event: DragEvent | ClipboardEvent | MouseEvent,
-): event is ClipboardEvent {
-  return event.type === 'copy' || event.type === 'cut' || event.type === 'paste'
 }

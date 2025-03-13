@@ -243,21 +243,21 @@ type ClipboardBehaviorEvent =
       originEvent: {
         dataTransfer: DataTransfer
       }
-      position: EventPosition
+      position: Pick<EventPosition, 'selection'>
     }
   | {
       type: 'clipboard.cut'
       originEvent: {
         dataTransfer: DataTransfer
       }
-      position: EventPosition
+      position: Pick<EventPosition, 'selection'>
     }
   | {
       type: 'clipboard.paste'
       originEvent: {
         dataTransfer: DataTransfer
       }
-      position: EventPosition
+      position: Pick<EventPosition, 'selection'>
     }
 
 export function isClipboardBehaviorEvent(
@@ -272,7 +272,7 @@ type DragBehaviorEvent =
       originEvent: {
         dataTransfer: DataTransfer
       }
-      position: EventPosition
+      position: Pick<EventPosition, 'selection'>
     }
   | {
       type: 'drag.drag'
