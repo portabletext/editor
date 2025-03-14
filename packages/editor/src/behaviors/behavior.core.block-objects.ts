@@ -42,6 +42,10 @@ const breakingBlockObject = defineBehavior({
 const clickingAboveLonelyBlockObject = defineBehavior({
   on: 'mouse.click',
   guard: ({snapshot, event}) => {
+    if (!selectors.isSelectionCollapsed(snapshot)) {
+      return false
+    }
+
     const focusBlockObject = selectors.getFocusBlockObject(snapshot)
     const previousBlock = selectors.getPreviousBlock(snapshot)
 
@@ -58,6 +62,10 @@ const clickingAboveLonelyBlockObject = defineBehavior({
 const clickingBelowLonelyBlockObject = defineBehavior({
   on: 'mouse.click',
   guard: ({snapshot, event}) => {
+    if (!selectors.isSelectionCollapsed(snapshot)) {
+      return false
+    }
+
     const focusBlockObject = selectors.getFocusBlockObject(snapshot)
     const nextBlock = selectors.getNextBlock(snapshot)
 
