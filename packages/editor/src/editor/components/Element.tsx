@@ -38,7 +38,6 @@ import type {
 import {EditorActorContext} from '../editor-actor-context'
 import {DefaultBlockObject, DefaultInlineObject} from './DefaultObject'
 import {DropIndicator} from './drop-indicator'
-import {useDraggable} from './use-draggable'
 
 const debug = debugWithName('components:Element')
 const debugRenders = false
@@ -90,7 +89,6 @@ export const Element: FunctionComponent<ElementProps> = ({
     false
   const [dragPositionBlock, setDragPositionBlock] =
     useState<EventPositionBlock>()
-  const draggable = useDraggable({element, readOnly, blockRef})
 
   useEffect(() => {
     const behavior = defineBehavior({
@@ -425,7 +423,7 @@ export const Element: FunctionComponent<ElementProps> = ({
       key={element._key}
       {...attributes}
       className={className}
-      {...draggable.draggableProps}
+      draggable={!readOnly}
     >
       {dragPositionBlock === 'start' ? <DropIndicator /> : null}
       {children}
