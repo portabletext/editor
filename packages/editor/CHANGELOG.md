@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.40.0](https://github.com/portabletext/editor/compare/editor-v1.39.1...editor-v1.40.0) (2025-03-14)
+
+
+### Features
+
+* support drag images no matter which block is dragged ([2d6dce8](https://github.com/portabletext/editor/commit/2d6dce8a6c63d626df39d5091d11496ede2b056a))
+* **utils:** add `isEqualSelections` ([3f31a1b](https://github.com/portabletext/editor/commit/3f31a1ba5df36be3967a87d0423f44dda1a1cfba))
+
+
+### Bug Fixes
+
+* only click-create empty text block above/below block object for collapsed selections ([20bb726](https://github.com/portabletext/editor/commit/20bb72605e3f8b15d20809a9aba507d8db34e568))
+* remove irrelevant EventPosition props on drag.startstart and clipboard.* events ([f30d7fe](https://github.com/portabletext/editor/commit/f30d7fe7ddfbd9006acffeb8110a7d260e2699a8))
+
 ## [1.39.1](https://github.com/portabletext/editor/compare/editor-v1.39.0...editor-v1.39.1) (2025-03-13)
 
 
