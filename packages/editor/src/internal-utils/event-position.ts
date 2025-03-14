@@ -1,11 +1,10 @@
-import {Editor, type BaseRange} from 'slate'
+import {Editor, type BaseRange, type Node} from 'slate'
 import {DOMEditor, isDOMNode} from 'slate-dom'
-import {ReactEditor} from 'slate-react'
-import type {EditorSelection, EditorSnapshot} from '..'
-import * as selectors from '../selectors'
+import type {EditorSchema, EditorSelection} from '..'
 import type {PortableTextSlateEditor} from '../types/editor'
 import * as utils from '../utils'
 import {toPortableTextRange} from './ranges'
+import {fromSlateValue} from './values'
 
 export type EventPosition = {
   block: 'start' | 'end'
@@ -18,46 +17,87 @@ export type EventPosition = {
 export type EventPositionBlock = EventPosition['block']
 
 export function getEventPosition({
-  snapshot,
+  schema,
   slateEditor,
   event,
 }: {
-  snapshot: EditorSnapshot
+  schema: EditorSchema
   slateEditor: PortableTextSlateEditor
   event: DragEvent | MouseEvent
 }): EventPosition | undefined {
-  if (!DOMEditor.hasTarget(slateEditor, event.target)) {
+  const node = getEventNode({slateEditor, event})
+
+  if (!node) {
     return undefined
   }
 
-  const node = DOMEditor.toSlateNode(slateEditor, event.target)
-  const block = getEventPositionBlock({slateEditor, event})
-  const selection = getEventPositionSelection({snapshot, slateEditor, event})
+  const positionBlock = getEventPositionBlock({node, slateEditor, event})
+  const selection = getEventSelection({
+    schema,
+    slateEditor,
+    event,
+  })
 
-  if (!block || !selection) {
+  if (positionBlock && !selection && !Editor.isEditor(node)) {
+    const block = fromSlateValue([node], schema.block.name)?.at(0)
+
+    if (!block) {
+      return undefined
+    }
+
+    return {
+      block: positionBlock,
+      isEditor: false,
+      selection: {
+        anchor: utils.getBlockStartPoint({
+          node: block,
+          path: [{_key: block._key}],
+        }),
+        focus: utils.getBlockEndPoint({
+          node: block,
+          path: [{_key: block._key}],
+        }),
+      },
+    }
+  }
+
+  if (!positionBlock || !selection) {
     return undefined
   }
 
   return {
-    block,
+    block: positionBlock,
     isEditor: Editor.isEditor(node),
     selection,
   }
 }
 
-function getEventPositionBlock({
+export function getEventNode({
   slateEditor,
   event,
 }: {
   slateEditor: PortableTextSlateEditor
   event: DragEvent | MouseEvent
-}): EventPositionBlock | undefined {
-  if (!ReactEditor.hasTarget(slateEditor, event.target)) {
+}) {
+  if (!DOMEditor.hasTarget(slateEditor, event.target)) {
     return undefined
   }
 
-  const node = ReactEditor.toSlateNode(slateEditor, event.target)
-  const element = ReactEditor.toDOMNode(slateEditor, node)
+  const node = DOMEditor.toSlateNode(slateEditor, event.target)
+
+  return node
+}
+
+function getEventPositionBlock({
+  node,
+  slateEditor,
+  event,
+}: {
+  node: Node
+  slateEditor: PortableTextSlateEditor
+  event: DragEvent | MouseEvent
+}): EventPositionBlock | undefined {
+  const element = DOMEditor.toDOMNode(slateEditor, node)
   const elementRect = element.getBoundingClientRect()
   const top = elementRect.top
   const height = elementRect.height
@@ -66,12 +106,12 @@ function getEventPositionBlock({
   return location < height / 2 ? 'start' : 'end'
 }
 
-export function getEventPositionSelection({
-  snapshot,
+export function getEventSelection({
+  schema,
   slateEditor,
   event,
 }: {
-  snapshot: EditorSnapshot
+  schema: EditorSchema
   slateEditor: PortableTextSlateEditor
   event: DragEvent | MouseEvent
 }): EditorSelection {
@@ -79,55 +119,11 @@ export function getEventPositionSelection({
 
   const selection = range
     ? toPortableTextRange(
-        snapshot.context.value,
+        fromSlateValue(slateEditor.children, schema.block.name),
         range,
-        snapshot.context.schema,
+        schema,
       )
     : null
-
-  if (!selection) {
-    return selection
-  }
-
-  const collapsedSelection = selectors.isSelectionCollapsed({
-    ...snapshot,
-    context: {
-      ...snapshot.context,
-      selection,
-    },
-  })
-  const focusTextBlock = selectors.getFocusTextBlock({
-    ...snapshot,
-    context: {
-      ...snapshot.context,
-      selection,
-    },
-  })
-  const focusSpan = selectors.getFocusSpan({
-    ...snapshot,
-    context: {
-      ...snapshot.context,
-      selection,
-    },
-  })
-
-  if (
-    event.type === 'dragstart' &&
-    collapsedSelection &&
-    focusTextBlock &&
-    focusSpan
-  ) {
-    // Looks like we are dragging an empty span. Let's drag the entire block
-    // instead
-
-    const blockStartPoint = utils.getBlockStartPoint(focusTextBlock)
-    const blockEndPoint = utils.getBlockEndPoint(focusTextBlock)
-
-    return {
-      anchor: blockStartPoint,
-      focus: blockEndPoint,
-    }
-  }
 
   return selection
 }

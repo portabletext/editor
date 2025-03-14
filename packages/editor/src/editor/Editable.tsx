@@ -19,7 +19,6 @@ import {
 import {
   Editor,
   Path,
-  Element as SlateElement,
   Range as SlateRange,
   Transforms,
   type BaseRange,
@@ -34,11 +33,10 @@ import {
   type RenderElementProps,
   type RenderLeafProps,
 } from 'slate-react'
+import {getCompoundClientRect} from '../internal-utils/compound-client-rect'
 import {debugWithName} from '../internal-utils/debug'
-import {
-  getEventPosition,
-  getEventPositionSelection,
-} from '../internal-utils/event-position'
+import {getDragSelection} from '../internal-utils/drag-selection'
+import {getEventPosition} from '../internal-utils/event-position'
 import {parseBlocks} from '../internal-utils/parse-blocks'
 import {
   moveRangeByOperation,
@@ -46,7 +44,9 @@ import {
   toSlateRange,
 } from '../internal-utils/ranges'
 import {normalizeSelection} from '../internal-utils/selection'
+import {getSelectionDomNodes} from '../internal-utils/selection-elements'
 import {fromSlateValue, isEqualToEmptyEditor} from '../internal-utils/values'
+import * as selectors from '../selectors'
 import type {
   EditorSelection,
   OnCopyFn,
@@ -659,10 +659,7 @@ export const PortableTextEditable = forwardRef<
       }
 
       const position = getEventPosition({
-        snapshot: getEditorSnapshot({
-          editorActorSnapshot: editorActor.getSnapshot(),
-          slateEditorInstance: slateEditor,
-        }),
+        schema: editorActor.getSnapshot().context.schema,
         slateEditor,
         event: event.nativeEvent,
       })
@@ -940,40 +937,105 @@ export const PortableTextEditable = forwardRef<
       onDragStart?.(event)
 
       if (!event.isDefaultPrevented() && !event.isPropagationStopped()) {
-        const selection = getEventPositionSelection({
-          snapshot: getEditorSnapshot({
-            editorActorSnapshot: editorActor.getSnapshot(),
-            slateEditorInstance: slateEditor,
-          }),
+        const position = getEventPosition({
+          schema: editorActor.getSnapshot().context.schema,
           slateEditor,
           event: event.nativeEvent,
         })
-        const position = selection ? {selection} : undefined
 
         if (!position) {
           console.warn('Could not find position for dragstart event')
           return
         }
 
-        if (ReactEditor.hasTarget(slateEditor, event.target)) {
-          const node = ReactEditor.toSlateNode(slateEditor, event.target)
-          const path = ReactEditor.findPath(slateEditor, node)
-          const voidMatch =
-            (SlateElement.isElement(node) &&
-              Editor.isVoid(slateEditor, node)) ||
-            Editor.void(slateEditor, {at: path, voids: true})
+        const snapshot = getEditorSnapshot({
+          editorActorSnapshot: editorActor.getSnapshot(),
+          slateEditorInstance: slateEditor,
+        })
+        const dragSelection = getDragSelection({
+          eventSelection: position.selection,
+          snapshot,
+        })
 
-          // If starting a drag on a void node, make sure it is selected
-          // so that it shows up in the selection's fragment.
-          if (voidMatch) {
-            const range = Editor.range(slateEditor, path)
-            Transforms.select(slateEditor, range)
+        const selectingEntireBlocks = selectors.isSelectingEntireBlocks({
+          ...snapshot,
+          context: {
+            ...snapshot.context,
+            selection: dragSelection,
+          },
+        })
+
+        let dragGhost: HTMLElement | undefined
+
+        // If the user is selecting entire blocks then we want to configure the dragged
+        // representation of those blocks
+        if (selectingEntireBlocks) {
+          dragGhost = document.createElement('div')
+
+          const draggedDomNodes = getSelectionDomNodes({
+            snapshot: {
+              ...snapshot,
+              context: {
+                ...snapshot.context,
+                selection: dragSelection,
+              },
+            },
+            slateEditor,
+          })
+
+          // Clone the DOM Nodes so they won't be visually clipped by scroll-containers etc.
+          const clonedBlockNodes = draggedDomNodes.blockNodes.map((node) =>
+            node.cloneNode(true),
+          )
+
+          for (const block of clonedBlockNodes) {
+            if (block instanceof HTMLElement) {
+              block.style.position = 'relative'
+            }
+            dragGhost.appendChild(block)
+          }
+
+          // A custom drag ghost element can be configured using this data attribute
+          const customGhost = dragGhost.querySelector(
+            '[data-pt-drag-ghost-element]',
+          )
+          if (customGhost) {
+            dragGhost.replaceChildren(customGhost)
+          }
+
+          // Setting the `data-dragged` attribute so the consumer can style the element while it’s dragged
+          dragGhost.setAttribute('data-dragged', '')
+
+          dragGhost.style.position = 'absolute'
+          dragGhost.style.left = '-99999px'
+          dragGhost.style.boxSizing = 'border-box'
+          document.body.appendChild(dragGhost)
+
+          if (customGhost) {
+            const customGhostRect = customGhost.getBoundingClientRect()
+            const x = event.clientX - customGhostRect.left
+            const y = event.clientY - customGhostRect.top
+            dragGhost.style.width = `${customGhostRect.width}px`
+            dragGhost.style.height = `${customGhostRect.height}px`
+            event.dataTransfer.setDragImage(dragGhost, x, y)
+          } else {
+            const blocksDomRect = getCompoundClientRect(
+              draggedDomNodes.blockNodes,
+            )
+            const x = event.clientX - blocksDomRect.left
+            const y = event.clientY - blocksDomRect.top
+            dragGhost.style.width = `${blocksDomRect.width}px`
+            dragGhost.style.height = `${blocksDomRect.height}px`
+            event.dataTransfer.setDragImage(dragGhost, x, y)
           }
         }
 
         editorActor.send({
           type: 'dragstart',
-          origin: position,
+          origin: {
+            selection: dragSelection,
+          },
+          ghost: dragGhost,
         })
 
         editorActor.send({
@@ -983,7 +1045,9 @@ export const PortableTextEditable = forwardRef<
             originEvent: {
               dataTransfer: event.dataTransfer,
             },
-            position,
+            position: {
+              selection: dragSelection,
+            },
           },
           editor: slateEditor,
         })
@@ -1047,10 +1111,7 @@ export const PortableTextEditable = forwardRef<
 
       if (!event.isDefaultPrevented() && !event.isPropagationStopped()) {
         const position = getEventPosition({
-          snapshot: getEditorSnapshot({
-            editorActorSnapshot: editorActor.getSnapshot(),
-            slateEditorInstance: slateEditor,
-          }),
+          schema: editorActor.getSnapshot().context.schema,
           slateEditor,
           event: event.nativeEvent,
         })
@@ -1084,10 +1145,7 @@ export const PortableTextEditable = forwardRef<
 
       if (!event.isDefaultPrevented() && !event.isPropagationStopped()) {
         const position = getEventPosition({
-          snapshot: getEditorSnapshot({
-            editorActorSnapshot: editorActor.getSnapshot(),
-            slateEditorInstance: slateEditor,
-          }),
+          schema: editorActor.getSnapshot().context.schema,
           slateEditor,
           event: event.nativeEvent,
         })
@@ -1122,10 +1180,7 @@ export const PortableTextEditable = forwardRef<
 
       if (!event.isDefaultPrevented() && !event.isPropagationStopped()) {
         const position = getEventPosition({
-          snapshot: getEditorSnapshot({
-            editorActorSnapshot: editorActor.getSnapshot(),
-            slateEditorInstance: slateEditor,
-          }),
+          schema: editorActor.getSnapshot().context.schema,
           slateEditor,
           event: event.nativeEvent,
         })
