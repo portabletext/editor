@@ -175,6 +175,42 @@ describe(getDragSelection.name, () => {
     })
   })
 
+  test('dragging one block object with an expanded selection elsewhere', () => {
+    expect(
+      getDragSelection({
+        eventSelection: {
+          anchor: {
+            path: imagePath,
+            offset: 0,
+          },
+          focus: {
+            path: imagePath,
+            offset: 0,
+          },
+        },
+        snapshot: snapshot({
+          anchor: {
+            path: fooPath,
+            offset: 1,
+          },
+          focus: {
+            path: fooPath,
+            offset: 2,
+          },
+        }),
+      }),
+    ).toEqual({
+      anchor: {
+        path: imagePath,
+        offset: 0,
+      },
+      focus: {
+        path: imagePath,
+        offset: 0,
+      },
+    })
+  })
+
   test('dragging a text block with an expanded selected', () => {
     expect(
       getDragSelection({

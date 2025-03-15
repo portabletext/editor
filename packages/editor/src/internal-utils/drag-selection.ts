@@ -43,7 +43,11 @@ export function getDragSelection({
     }
   }
 
-  if (snapshot.context.selection && selectors.isSelectionExpanded(snapshot)) {
+  if (
+    snapshot.context.selection &&
+    selectors.isSelectionExpanded(snapshot) &&
+    selectors.isOverlappingSelection(eventSelection)(snapshot)
+  ) {
     const selectionStartBlock = selectors.getSelectionStartBlock(snapshot)
     const selectionEndBlock = selectors.getSelectionEndBlock(snapshot)
 
