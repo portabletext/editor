@@ -331,17 +331,6 @@ export const defaultBehaviors = [
         {event},
         {draggingEntireBlocks, draggedBlocks, dragOrigin, originEvent},
       ) => [
-        raise({
-          type: 'insert.blocks',
-          blocks: event.data,
-          placement: draggingEntireBlocks
-            ? originEvent.position.block === 'start'
-              ? 'before'
-              : originEvent.position.block === 'end'
-                ? 'after'
-                : 'auto'
-            : 'auto',
-        }),
         ...(draggingEntireBlocks
           ? draggedBlocks.map((block) =>
               raise({
@@ -355,6 +344,17 @@ export const defaultBehaviors = [
                 selection: dragOrigin.selection,
               }),
             ]),
+        raise({
+          type: 'insert.blocks',
+          blocks: event.data,
+          placement: draggingEntireBlocks
+            ? originEvent.position.block === 'start'
+              ? 'before'
+              : originEvent.position.block === 'end'
+                ? 'after'
+                : 'auto'
+            : 'auto',
+        }),
       ],
     ],
   }),
