@@ -16,10 +16,25 @@ describe(getDragSelection.name, () => {
         _type: 'span',
         text: 'foo',
       },
+      {
+        _key: keyGenerator(),
+        _type: 'stock-ticker',
+      },
+      {
+        _key: keyGenerator(),
+        _type: 'span',
+        text: 'bar',
+      },
     ],
   }
   const fooPath = [{_key: foo._key}, 'children', {_key: foo.children[0]._key}]
-  const bar = {
+  const stockTickerPath = [
+    {_key: foo._key},
+    'children',
+    {_key: foo.children[1]._key},
+  ]
+  const barPath = [{_key: foo._key}, 'children', {_key: foo.children[2]._key}]
+  const baz = {
     _key: keyGenerator(),
     _type: 'block',
     children: [
@@ -44,7 +59,7 @@ describe(getDragSelection.name, () => {
           defineSchema({blockObjects: [{name: 'image'}]}),
         ),
         selection,
-        value: [foo, bar, image],
+        value: [foo, baz, image],
       },
     })
   }
@@ -70,7 +85,7 @@ describe(getDragSelection.name, () => {
         offset: 0,
       },
       focus: {
-        path: fooPath,
+        path: barPath,
         offset: 3,
       },
     })
@@ -133,7 +148,7 @@ describe(getDragSelection.name, () => {
         offset: 0,
       },
       focus: {
-        path: fooPath,
+        path: barPath,
         offset: 3,
       },
     })
@@ -279,6 +294,213 @@ describe(getDragSelection.name, () => {
       focus: {
         path: imagePath,
         offset: 0,
+      },
+    })
+  })
+
+  test('dragging inline object', () => {
+    expect(
+      getDragSelection({
+        eventSelection: {
+          anchor: {
+            path: stockTickerPath,
+            offset: 0,
+          },
+          focus: {
+            path: stockTickerPath,
+            offset: 0,
+          },
+        },
+        snapshot: snapshot(null),
+      }),
+    ).toEqual({
+      anchor: {
+        path: stockTickerPath,
+        offset: 0,
+      },
+      focus: {
+        path: stockTickerPath,
+        offset: 0,
+      },
+    })
+  })
+
+  test('dragging inline object already selected', () => {
+    expect(
+      getDragSelection({
+        eventSelection: {
+          anchor: {
+            path: stockTickerPath,
+            offset: 0,
+          },
+          focus: {
+            path: stockTickerPath,
+            offset: 0,
+          },
+        },
+        snapshot: snapshot({
+          anchor: {
+            path: stockTickerPath,
+            offset: 0,
+          },
+          focus: {
+            path: stockTickerPath,
+            offset: 0,
+          },
+        }),
+      }),
+    ).toEqual({
+      anchor: {
+        path: stockTickerPath,
+        offset: 0,
+      },
+      focus: {
+        path: stockTickerPath,
+        offset: 0,
+      },
+    })
+  })
+
+  test('dragging inline object with selection elsewhere', () => {
+    expect(
+      getDragSelection({
+        eventSelection: {
+          anchor: {
+            path: stockTickerPath,
+            offset: 0,
+          },
+          focus: {
+            path: stockTickerPath,
+            offset: 0,
+          },
+        },
+        snapshot: snapshot({
+          anchor: {
+            path: fooPath,
+            offset: 0,
+          },
+          focus: {
+            path: fooPath,
+            offset: 0,
+          },
+        }),
+      }),
+    ).toEqual({
+      anchor: {
+        path: stockTickerPath,
+        offset: 0,
+      },
+      focus: {
+        path: stockTickerPath,
+        offset: 0,
+      },
+    })
+  })
+
+  test('dragging inline object with expanded selection elsewhere', () => {
+    expect(
+      getDragSelection({
+        eventSelection: {
+          anchor: {
+            path: stockTickerPath,
+            offset: 0,
+          },
+          focus: {
+            path: stockTickerPath,
+            offset: 0,
+          },
+        },
+        snapshot: snapshot({
+          anchor: {
+            path: fooPath,
+            offset: 0,
+          },
+          focus: {
+            path: fooPath,
+            offset: 3,
+          },
+        }),
+      }),
+    ).toEqual({
+      anchor: {
+        path: stockTickerPath,
+        offset: 0,
+      },
+      focus: {
+        path: stockTickerPath,
+        offset: 0,
+      },
+    })
+  })
+
+  test('dragging inline object in an expanded selection', () => {
+    expect(
+      getDragSelection({
+        eventSelection: {
+          anchor: {
+            path: stockTickerPath,
+            offset: 0,
+          },
+          focus: {
+            path: stockTickerPath,
+            offset: 0,
+          },
+        },
+        snapshot: snapshot({
+          anchor: {
+            path: fooPath,
+            offset: 2,
+          },
+          focus: {
+            path: barPath,
+            offset: 2,
+          },
+        }),
+      }),
+    ).toEqual({
+      anchor: {
+        path: stockTickerPath,
+        offset: 0,
+      },
+      focus: {
+        path: stockTickerPath,
+        offset: 0,
+      },
+    })
+  })
+
+  test('dragging text block with inline object selected', () => {
+    expect(
+      getDragSelection({
+        eventSelection: {
+          anchor: {
+            path: fooPath,
+            offset: 0,
+          },
+          focus: {
+            path: fooPath,
+            offset: 0,
+          },
+        },
+        snapshot: snapshot({
+          anchor: {
+            path: stockTickerPath,
+            offset: 0,
+          },
+          focus: {
+            path: stockTickerPath,
+            offset: 0,
+          },
+        }),
+      }),
+    ).toEqual({
+      anchor: {
+        path: fooPath,
+        offset: 0,
+      },
+      focus: {
+        path: barPath,
+        offset: 3,
       },
     })
   })
