@@ -27,7 +27,7 @@ import type {
   PortableTextMemberSchemaTypes,
 } from '../types/editor'
 import {Synchronizer} from './components/Synchronizer'
-import {createEditor, type Editor} from './create-editor'
+import {createInternalEditor, type InternalEditor} from './create-editor'
 import {createEditorSchema} from './create-editor-schema'
 import {EditorActorContext} from './editor-actor-context'
 import type {EditorActor} from './editor-machine'
@@ -45,12 +45,12 @@ const debug = debugWithName('component:PortableTextEditor')
  * @deprecated Use `EditorProvider` instead
  */
 export type PortableTextEditorProps<
-  TEditor extends Editor | undefined = undefined,
+  TEditor extends InternalEditor | undefined = undefined,
 > = PropsWithChildren<
-  TEditor extends Editor
+  TEditor extends InternalEditor
     ? {
         /**
-         * @alpha
+         * @internal
          */
         editor: TEditor
       }
@@ -110,7 +110,7 @@ export type PortableTextEditorProps<
  * @deprecated Use `EditorProvider` instead
  */
 export class PortableTextEditor extends Component<
-  PortableTextEditorProps<Editor | undefined>
+  PortableTextEditorProps<InternalEditor | undefined>
 > {
   public static displayName = 'PortableTextEditor'
   /**
@@ -124,7 +124,7 @@ export class PortableTextEditor extends Component<
   /**
    * The editor instance
    */
-  private editor: Editor
+  private editor: InternalEditor
   /*
    * The editor API (currently implemented with Slate).
    */
@@ -134,9 +134,9 @@ export class PortableTextEditor extends Component<
     super(props)
 
     if (props.editor) {
-      this.editor = props.editor as Editor
+      this.editor = props.editor as InternalEditor
     } else {
-      this.editor = createEditor({
+      this.editor = createInternalEditor({
         keyGenerator: props.keyGenerator ?? defaultKeyGenerator,
         schema: props.schemaType,
         initialValue: props.value,
