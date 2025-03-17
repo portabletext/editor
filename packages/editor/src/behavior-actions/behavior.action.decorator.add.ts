@@ -134,6 +134,17 @@ export const decoratorAddActionImplementation: BehaviorActionImplementation<
       )
     }
   } else {
+    const selectedSpan = Array.from(
+      Editor.nodes(editor, {
+        at: selection,
+        match: (node) => editor.isTextSpan(node),
+      }),
+    )?.at(0)
+
+    if (!selectedSpan) {
+      return
+    }
+
     const [block, blockPath] = Editor.node(editor, selection, {
       depth: 1,
     })
