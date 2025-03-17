@@ -2,6 +2,7 @@ export {
   blockOffsetToSpanSelectionPoint,
   spanSelectionPointToBlockOffset,
 } from './util.block-offset'
+export {blockOffsetToBlockSelectionPoint} from './util.block-offset-to-block-selection-point'
 export {blockOffsetsToSelection} from './util.block-offsets-to-selection'
 export {childSelectionPointToBlockOffset} from './util.child-selection-point-to-block-offset'
 export {getBlockEndPoint} from './util.get-block-end-point'
