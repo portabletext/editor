@@ -78,6 +78,10 @@ export type Editor = {
   registerBehavior: (config: {behavior: Behavior}) => () => void
   send: (event: EditorEvent) => void
   on: ActorRef<Snapshot<unknown>, EventObject, EditorEmittedEvent>['on']
+  /**
+   * @internal
+   * Do not use this property. It is not part of the public API.
+   */
   _internal: {
     editable: EditableAPI
     editorActor: EditorActor
