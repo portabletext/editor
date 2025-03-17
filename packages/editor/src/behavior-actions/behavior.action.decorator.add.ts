@@ -49,13 +49,13 @@ export const decoratorAddActionImplementation: BehaviorActionImplementation<
 
   const editorSelection = toPortableTextRange(value, selection, context.schema)
   const anchorOffset = editorSelection
-    ? utils.spanSelectionPointToBlockOffset({
+    ? utils.selectionPointToBlockOffset({
         value,
         selectionPoint: editorSelection.anchor,
       })
     : undefined
   const focusOffset = editorSelection
-    ? utils.spanSelectionPointToBlockOffset({
+    ? utils.selectionPointToBlockOffset({
         value,
         selectionPoint: editorSelection.focus,
       })
