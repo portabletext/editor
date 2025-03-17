@@ -3,11 +3,11 @@ Feature: Decorators
 
   Background:
     Given one editor
-    And a global keymap
 
   Scenario Outline: Inserting text at the edge of a decorator
     Given the text <text>
-    And "strong" around <decorated>
+    When <decorated> is selected
+    And "strong" is toggled
     When the caret is put <position>
     And "new" is typed
     Then the text is <new text>
@@ -25,7 +25,7 @@ Feature: Decorators
     Given the text <text>
     And "em" around <decorated>
     When the caret is put <position>
-    And "strong" is toggled using the keyboard
+    And "strong" is toggled
     And "new" is typed
     Then the text is <new text>
     And "new" has marks <marks>
@@ -41,41 +41,45 @@ Feature: Decorators
 
   Scenario: Writing on top of a decorator
     Given the text "foo bar baz"
-    And "strong" around "bar"
+    When "bar" is selected
+    And "strong" is toggled
     When "removed" is typed
     Then the text is "foo ,removed, baz"
     And "removed" has marks "strong"
 
   Scenario: Toggling bold inside italic
     Given the text "foo bar baz"
-    And "em" around "foo bar baz"
-    When "bar" is marked with "strong"
+    When "foo bar baz" is selected
+    And "em" is toggled
+    And "bar" is selected
+    And "strong" is toggled
     Then the text is "foo ,bar, baz"
+    And "bar" has marks "em,strong"
     And "foo " has marks "em"
     And "bar" has marks "em,strong"
     And " baz" has marks "em"
     When "bar" is selected
-    And "strong" is toggled using the keyboard
+    And "strong" is toggled
     Then the text is "foo bar baz"
     And "foo bar baz" has marks "em"
 
   Scenario: Toggling bold inside italic as you write
-    Given an empty editor
-    When "em" is toggled using the keyboard
+    Given the text ""
+    When the caret is put after ""
+    And "em" is toggled
     And "foo " is typed
-    And "strong" is toggled using the keyboard
+    And "strong" is toggled
     And "bar" is typed
-    And "strong" is toggled using the keyboard
+    And "strong" is toggled
     And " baz" is typed
     Then the text is "foo ,bar, baz"
-    And "foo " has marks "em"
+    Then "foo " has marks "em"
     And "bar" has marks "em,strong"
     And " baz" has marks "em"
 
   Scenario: Toggling decorator mid-text and navigating left to clear it
-    Given an empty editor
-    When "foo" is typed
-    And "strong" is toggled using the keyboard
+    Given the text "foo"
+    When "strong" is toggled
     And "ArrowLeft" is pressed
     And "ArrowRight" is pressed
     And "bar" is typed
@@ -83,8 +87,9 @@ Feature: Decorators
     And "foobar" has no marks
 
   Scenario: Deleting marked text and writing again, marked
-    Given an empty editor
-    When "strong" is toggled using the keyboard
+    Given the text ""
+    When the caret is put after ""
+    When "strong" is toggled
     And "foo" is typed
     And "Backspace" is pressed 3 times
     And "bar" is typed
@@ -94,7 +99,8 @@ Feature: Decorators
     Given the text "foo"
     When "Enter" is pressed 2 times
     And "bar" is typed
-    And "foobar" is marked with "strong"
+    And "foobar" is selected
+    And "strong" is toggled
     And the caret is put after "foo"
     And "ArrowRight" is pressed
     And "bar" is typed
@@ -106,11 +112,11 @@ Feature: Decorators
     And "bar" is typed
     Then the text is "foo||bar"
     When "ooba" is selected
-    And "strong" is toggled using the keyboard
+    And "strong" is toggled
     Then the text is "f,oo||ba,r"
     And "oo" has marks "strong"
     And "ba" has marks "strong"
-    When "strong" is toggled using the keyboard
+    When "strong" is toggled
     Then the text is "foo||bar"
 
   Scenario Outline: Toggling bold on a cross-selection with the first line empty
@@ -118,11 +124,11 @@ Feature: Decorators
     When "ArrowUp" is pressed
     And "Enter" is pressed
     And everything is <selection>
-    And "strong" is toggled using the keyboard
+    And "strong" is toggled
     Then the text is "|foo"
     And "" has marks "strong"
     And "foo" has marks "strong"
-    When "strong" is toggled using the keyboard
+    When "strong" is toggled
     Then the text is "|foo"
     And "" has no marks
     And "foo" has no marks
@@ -136,11 +142,11 @@ Feature: Decorators
     Given the text "foo"
     When "Enter" is pressed
     And everything is <selection>
-    And "strong" is toggled using the keyboard
+    And "strong" is toggled
     Then the text is "foo|"
     And "foo" has marks "strong"
     And "" has marks "strong"
-    When "strong" is toggled using the keyboard
+    When "strong" is toggled
     Then the text is "foo|"
     And "foo" has no marks
     And "" has no marks
@@ -177,18 +183,17 @@ Feature: Decorators
       | before " baz" | "foo ,bar\| baz" | before " baz" |
 
   Scenario: Toggling decorators in empty block
-    Given an empty editor
+    Given the text ""
     When "foo" is typed
     And "Backspace" is pressed 3 times
-    And "strong" is toggled using the keyboard
-    And editors have settled
+    And "strong" is toggled
     Then the text is ""
     And "" has marks "strong"
 
   Scenario: Splitting empty decorated block
     Given the text "foo"
     When "Enter" is pressed
-    And "strong" is toggled using the keyboard
+    And "strong" is toggled
     And "Enter" is pressed
     And "ArrowUp" is pressed
     And "bar" is typed
@@ -207,8 +212,8 @@ Feature: Decorators
     And "foo" has marks "strong"
     And "bar" has marks "em"
     When "foo" is selected
-    And "em" is toggled using the keyboard
+    And "em" is toggled
     And "bar" is selected
-    And "strong" is toggled using the keyboard
+    And "strong" is toggled
     Then the text is "foobar"
     And "foobar" has marks "strong,em"

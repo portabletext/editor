@@ -12,15 +12,23 @@ import {
   type EditorSnapshot,
   type PortableTextBlock,
 } from '../src'
+import {getEditorSelection} from '../src/internal-utils/editor-selection'
 import {parseBlock, parseBlocks} from '../src/internal-utils/parse-blocks'
 import {getSelectionBlockKeys} from '../src/internal-utils/selection-block-keys'
 import {getTersePt} from '../src/internal-utils/terse-pt'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
+import {getTextMarks} from '../src/internal-utils/text-marks'
 import {
   getSelectionAfterText,
   getSelectionBeforeText,
+  getTextSelection,
 } from '../src/internal-utils/text-selection'
 import {EditorRefPlugin} from '../src/plugins'
+import {
+  reverseSelection,
+  selectionPointToBlockOffset,
+  spanSelectionPointToBlockOffset,
+} from '../src/utils'
 import type {Parameter} from './gherkin-parameter-types'
 
 type Context = {
@@ -51,6 +59,7 @@ export const stepDefinitions = [
       <EditorProvider
         initialConfig={{
           schemaDefinition: defineSchema({
+            decorators: [{name: 'em'}, {name: 'strong'}],
             blockObjects: [{name: 'image'}, {name: 'break'}],
             inlineObjects: [{name: 'stock-ticker'}],
           }),
@@ -78,7 +87,9 @@ export const stepDefinitions = [
   }),
 
   Given('the text {string}', async (context: Context, text: string) => {
-    await userEvent.type(context.editor.locator, text)
+    if (text.length > 0) {
+      await userEvent.type(context.editor.locator, text)
+    }
   }),
 
   Given(
@@ -130,13 +141,27 @@ export const stepDefinitions = [
     await userEvent.type(context.editor.locator, text)
   }),
 
+  /**
+   * Button steps
+   */
   When(
     '{button} is pressed',
     async (_: Context, button: Parameter['button']) => {
       await userEvent.keyboard(`{${button}}`)
     },
   ),
+  When(
+    '{button} is pressed {int} times',
+    async (_: Context, button: Parameter['button'], times: number) => {
+      for (let i = 0; i < times; i++) {
+        await userEvent.keyboard(`{${button}}`)
+      }
+    },
+  ),
 
+  /**
+   * Selection steps
+   */
   When(
     'the caret is put before {string}',
     async (context: Context, text: string) => {
@@ -151,7 +176,6 @@ export const stepDefinitions = [
       })
     },
   ),
-
   Then(
     'the caret is before {string}',
     async (context: Context, text: string) => {
@@ -162,7 +186,6 @@ export const stepDefinitions = [
       })
     },
   ),
-
   When(
     'the caret is put after {string}',
     async (context: Context, text: string) => {
@@ -177,7 +200,6 @@ export const stepDefinitions = [
       })
     },
   ),
-
   Then(
     'the caret is after {string}',
     async (context: Context, text: string) => {
@@ -188,13 +210,56 @@ export const stepDefinitions = [
       })
     },
   ),
-
   Then('nothing is selected', async (context: Context) => {
     await vi.waitFor(() => {
       expect(context.editor.selection()).toBeNull()
     })
   }),
+  When('everything is selected', (context: Context) => {
+    const editorSelection = getEditorSelection(context.editor.value())
 
+    context.editor.ref.current.send({
+      type: 'select',
+      selection: editorSelection,
+    })
+  }),
+  When('everything is selected backwards', (context: Context) => {
+    const editorSelection = reverseSelection(
+      getEditorSelection(context.editor.value()),
+    )
+
+    context.editor.ref.current.send({
+      type: 'select',
+      selection: editorSelection,
+    })
+  }),
+  When('{string} is selected', async (context: Context, text: string) => {
+    await vi.waitFor(() => {
+      const selection = getTextSelection(context.editor.value(), text)
+      expect(selection).not.toBeNull()
+
+      context.editor.ref.current.send({
+        type: 'select',
+        selection: selection,
+      })
+    })
+  }),
+  When(
+    '{string} is selected backwards',
+    async (context: Context, text: string) => {
+      await vi.waitFor(() => {
+        const selection = reverseSelection(
+          getTextSelection(context.editor.value(), text),
+        )
+        expect(selection).not.toBeNull()
+
+        context.editor.ref.current.send({
+          type: 'select',
+          selection: selection,
+        })
+      })
+    },
+  ),
   Then('block {string} is selected', async (context: Context, key: string) => {
     const selectionBlockKeys = getSelectionBlockKeys(context.editor.selection())
 
@@ -284,4 +349,106 @@ export const stepDefinitions = [
       })
     },
   ),
+
+  /**
+   * Decorator steps
+   */
+  Given(
+    '{decorator} around {string}',
+    async (
+      context: Context,
+      decorator: Parameter['decorator'],
+      text: string,
+    ) => {
+      await vi.waitFor(() => {
+        const selection = getTextSelection(context.editor.value(), text)
+        const anchorOffset = selection
+          ? selectionPointToBlockOffset({
+              value: context.editor.value(),
+              selectionPoint: selection.anchor,
+            })
+          : undefined
+        const focusOffset = selection
+          ? selectionPointToBlockOffset({
+              value: context.editor.value(),
+              selectionPoint: selection.focus,
+            })
+          : undefined
+        expect(anchorOffset).toBeDefined()
+        expect(focusOffset).toBeDefined()
+
+        context.editor.ref.current.send({
+          type: 'decorator.toggle',
+          decorator,
+          offsets: {
+            anchor: anchorOffset!,
+            focus: focusOffset!,
+          },
+        })
+      })
+    },
+  ),
+  When(
+    '{decorator} is toggled',
+    async (context: Context, decorator: Parameter['decorator']) => {
+      await vi.waitFor(() => {
+        context.editor.ref.current.send({
+          type: 'decorator.toggle',
+          decorator,
+        })
+      })
+    },
+  ),
+  When(
+    '{text} is marked with {decorator}',
+    async (
+      context: Context,
+      text: string,
+      decorator: Parameter['decorator'],
+    ) => {
+      await vi.waitFor(() => {
+        const selection = getTextSelection(context.editor.value(), text)
+        const anchorOffset = selection
+          ? spanSelectionPointToBlockOffset({
+              value: context.editor.value(),
+              selectionPoint: selection.anchor,
+            })
+          : undefined
+        const focusOffset = selection
+          ? spanSelectionPointToBlockOffset({
+              value: context.editor.value(),
+              selectionPoint: selection.focus,
+            })
+          : undefined
+
+        expect(anchorOffset).toBeDefined()
+        expect(focusOffset).toBeDefined()
+
+        context.editor.ref.current.send({
+          type: 'decorator.toggle',
+          decorator,
+          offsets: {
+            anchor: anchorOffset!,
+            focus: focusOffset!,
+          },
+        })
+      })
+    },
+  ),
+  Then(
+    '{string} has marks {marks}',
+    async (context: Context, text: string, marks: Parameter['marks']) => {
+      await vi.waitFor(() => {
+        const textMarks = getTextMarks(context.editor.value(), text)
+
+        expect(textMarks).toEqual(marks)
+      })
+    },
+  ),
+  Then('{string} has no marks', async (context: Context, text: string) => {
+    await vi.waitFor(() => {
+      const textMarks = getTextMarks(context.editor.value(), text)
+      expect(textMarks).toEqual([])
+    })
+  }),
 ]

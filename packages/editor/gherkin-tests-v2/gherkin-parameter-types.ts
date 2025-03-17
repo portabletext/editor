@@ -30,6 +30,16 @@ export const parameterType = {
     matcher:
       /"(ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Backspace|Delete|Enter|Escape|Shift\+Enter|Space)"/,
   }),
+  decorator: createParameterType<'em' | 'strong'>({
+    name: 'decorator',
+    matcher: /"(em|strong)"/,
+  }),
+  marks: createParameterType<Array<string>>({
+    name: 'marks',
+    matcher: /"((strong|em|[a-z]\d)(,(strong|em|[a-z]\d))*)"/,
+    type: Array,
+    transform: (input) => input.split(','),
+  }),
   placement: createParameterType<'auto' | 'after' | 'before'>({
     name: 'placement',
     matcher: /"(auto|after|before)"/,
@@ -49,6 +59,8 @@ export const parameterType = {
 export const parameterTypes = [
   parameterType.blockObject,
   parameterType.button,
+  parameterType.decorator,
+  parameterType.marks,
   parameterType.placement,
   parameterType.selectPosition,
   parameterType.text,
