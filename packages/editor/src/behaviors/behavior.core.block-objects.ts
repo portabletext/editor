@@ -8,10 +8,21 @@ const arrowDownOnLonelyBlockObject = defineBehavior({
   on: 'keyboard.keydown',
   guard: ({snapshot, event}) => {
     const isArrowDown = isHotkey('ArrowDown', event.originEvent)
+
+    if (!isArrowDown) {
+      return false
+    }
+
+    const collapsedSelection = selectors.isSelectionCollapsed(snapshot)
+
+    if (!collapsedSelection) {
+      return false
+    }
+
     const focusBlockObject = selectors.getFocusBlockObject(snapshot)
     const nextBlock = selectors.getNextBlock(snapshot)
 
-    return isArrowDown && focusBlockObject && !nextBlock
+    return focusBlockObject && !nextBlock
   },
   actions: [() => [raise({type: 'insert.text block', placement: 'after'})]],
 })
@@ -20,10 +31,21 @@ const arrowUpOnLonelyBlockObject = defineBehavior({
   on: 'keyboard.keydown',
   guard: ({snapshot, event}) => {
     const isArrowUp = isHotkey('ArrowUp', event.originEvent)
+
+    if (!isArrowUp) {
+      return false
+    }
+
+    const collapsedSelection = selectors.isSelectionCollapsed(snapshot)
+
+    if (!collapsedSelection) {
+      return false
+    }
+
     const focusBlockObject = selectors.getFocusBlockObject(snapshot)
     const previousBlock = selectors.getPreviousBlock(snapshot)
 
-    return isArrowUp && focusBlockObject && !previousBlock
+    return focusBlockObject && !previousBlock
   },
   actions: [() => [raise({type: 'insert.text block', placement: 'before'})]],
 })
