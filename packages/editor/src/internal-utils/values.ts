@@ -37,9 +37,6 @@ export function toSlateValue(
   if (value && Array.isArray(value)) {
     return value.map((block) => {
       const {_type, _key, ...rest} = block
-      const voidChildren = [
-        {_key: VOID_CHILD_KEY, _type: 'span', text: '', marks: []},
-      ]
       const isPortableText = block && block._type === schemaTypes.block.name
       if (isPortableText) {
         const textBlock = block as PortableTextTextBlock
@@ -61,7 +58,14 @@ export function toSlateValue(
               {
                 _type: cType,
                 _key: cKey,
-                children: voidChildren,
+                children: [
+                  {
+                    _key: VOID_CHILD_KEY,
+                    _type: 'span',
+                    text: '',
+                    marks: [],
+                  },
+                ],
                 value: cRest,
                 __inline: true,
               },
@@ -92,7 +96,14 @@ export function toSlateValue(
         {
           _type,
           _key,
-          children: voidChildren,
+          children: [
+            {
+              _key: VOID_CHILD_KEY,
+              _type: 'span',
+              text: '',
+              marks: [],
+            },
+          ],
           value: rest,
         },
         keyMap,
