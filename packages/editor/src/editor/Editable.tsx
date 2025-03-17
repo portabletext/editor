@@ -965,24 +965,20 @@ export const PortableTextEditable = forwardRef<
           },
         })
 
-        let dragGhost: HTMLElement | undefined
+        const dragGhost = document.createElement('div')
 
-        // If the user is selecting entire blocks then we want to configure the dragged
-        // representation of those blocks
-        if (selectingEntireBlocks) {
-          dragGhost = document.createElement('div')
-
-          const draggedDomNodes = getSelectionDomNodes({
-            snapshot: {
-              ...snapshot,
-              context: {
-                ...snapshot.context,
-                selection: dragSelection,
-              },
+        const draggedDomNodes = getSelectionDomNodes({
+          snapshot: {
+            ...snapshot,
+            context: {
+              ...snapshot.context,
+              selection: dragSelection,
             },
-            slateEditor,
-          })
+          },
+          slateEditor,
+        })
 
+        if (selectingEntireBlocks) {
           // Clone the DOM Nodes so they won't be visually clipped by scroll-containers etc.
           const clonedBlockNodes = draggedDomNodes.blockNodes.map((node) =>
             node.cloneNode(true),
@@ -1028,6 +1024,29 @@ export const PortableTextEditable = forwardRef<
             dragGhost.style.height = `${blocksDomRect.height}px`
             event.dataTransfer.setDragImage(dragGhost, x, y)
           }
+        } else {
+          const clonedChildNodes = draggedDomNodes.childNodes.map((node) =>
+            node.cloneNode(true),
+          )
+
+          for (const child of clonedChildNodes) {
+            dragGhost.appendChild(child)
+          }
+
+          dragGhost.style.position = 'absolute'
+          dragGhost.style.left = '-99999px'
+          dragGhost.style.boxSizing = 'border-box'
+          document.body.appendChild(dragGhost)
+
+          const childrenDomRect = getCompoundClientRect(
+            draggedDomNodes.childNodes,
+          )
+          const x = event.clientX - childrenDomRect.left
+          const y = event.clientY - childrenDomRect.top
+          dragGhost.style.width = `${childrenDomRect.width}px`
+          dragGhost.style.height = `${childrenDomRect.height}px`
+
+          event.dataTransfer.setDragImage(dragGhost, x, y)
         }
 
         editorActor.send({
