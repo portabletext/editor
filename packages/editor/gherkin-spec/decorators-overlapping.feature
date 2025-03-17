@@ -7,7 +7,7 @@ Feature: Overlapping Decorators
     Given the text "foobar"
     And "strong" around "bar"
     When "foob" is selected
-    And "strong" is toggled using the keyboard
+    And "strong" is toggled
     Then the text is "foobar"
     And "foobar" has marks "strong"
 
@@ -15,7 +15,7 @@ Feature: Overlapping Decorators
     Given the text "foobar"
     And "strong" around "bar"
     When "foob" is selected backwards
-    And "strong" is toggled using the keyboard
+    And "strong" is toggled
     Then the text is "foobar"
     And "foobar" has marks "strong"
 
@@ -23,7 +23,7 @@ Feature: Overlapping Decorators
     Given the text "foobar"
     And "strong" around "foo"
     When "obar" is selected
-    And "strong" is toggled using the keyboard
+    And "strong" is toggled
     Then the text is "foobar"
     And "foobar" has marks "strong"
 
@@ -31,6 +31,6 @@ Feature: Overlapping Decorators
     Given the text "foobar"
     And "strong" around "foo"
     When "obar" is selected backwards
-    And "strong" is toggled using the keyboard
+    And "strong" is toggled
     Then the text is "foobar"
     And "foobar" has marks "strong"
