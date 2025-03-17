@@ -78,10 +78,9 @@ export type Editor = {
   registerBehavior: (config: {behavior: Behavior}) => () => void
   send: (event: EditorEvent) => void
   on: ActorRef<Snapshot<unknown>, EventObject, EditorEmittedEvent>['on']
-  /**
-   * @internal
-   * Do not use this property. It is not part of the public API.
-   */
+}
+
+export type InternalEditor = Editor & {
   _internal: {
     editable: EditableAPI
     editorActor: EditorActor
@@ -89,21 +88,24 @@ export type Editor = {
   }
 }
 
-export function createEditor(config: EditorConfig): Editor {
+export function createInternalEditor(config: EditorConfig): InternalEditor {
   const editorActor = createActor(editorMachine, {
     input: editorConfigToMachineInput(config),
   })
   editorActor.start()
 
-  return createEditorFromActor(editorActor)
+  return createInternalEditorFromActor(editorActor)
 }
 
-export function useCreateEditor(config: EditorConfig): Editor {
+export function useCreateInternalEditor(config: EditorConfig): InternalEditor {
   const editorActor = useActorRef(editorMachine, {
     input: editorConfigToMachineInput(config),
   })
 
-  return useMemo(() => createEditorFromActor(editorActor), [editorActor])
+  return useMemo(
+    () => createInternalEditorFromActor(editorActor),
+    [editorActor],
+  )
 }
 
 function editorConfigToMachineInput(config: EditorConfig) {
@@ -124,7 +126,9 @@ function editorConfigToMachineInput(config: EditorConfig) {
   } as const
 }
 
-function createEditorFromActor(editorActor: EditorActor): Editor {
+function createInternalEditorFromActor(
+  editorActor: EditorActor,
+): InternalEditor {
   const slateEditor = createSlateEditor({editorActor})
   const editable = createEditableAPI(slateEditor.instance, editorActor)
 

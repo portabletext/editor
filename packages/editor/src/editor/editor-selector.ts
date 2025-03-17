@@ -1,6 +1,6 @@
 import {useSelector} from '@xstate/react'
 import type {PortableTextSlateEditor} from '../types/editor'
-import type {Editor} from './create-editor'
+import type {Editor, InternalEditor} from './create-editor'
 import type {EditorActor} from './editor-machine'
 import type {EditorSnapshot} from './editor-snapshot'
 import {getActiveDecorators} from './get-active-decorators'
@@ -45,11 +45,12 @@ export function useEditorSelector<TSelected>(
   compare: (a: TSelected, b: TSelected) => boolean = defaultCompare,
 ) {
   return useSelector(
-    editor._internal.editorActor,
+    (editor as InternalEditor)._internal.editorActor,
     (editorActorSnapshot) => {
       const snapshot = getEditorSnapshot({
         editorActorSnapshot,
-        slateEditorInstance: editor._internal.slateEditor.instance,
+        slateEditorInstance: (editor as InternalEditor)._internal.slateEditor
+          .instance,
       })
 
       return selector(snapshot)

@@ -1,7 +1,11 @@
 import React, {useMemo} from 'react'
 import {Slate} from 'slate-react'
 import {Synchronizer} from './components/Synchronizer'
-import {useCreateEditor, type Editor, type EditorConfig} from './create-editor'
+import {
+  useCreateInternalEditor,
+  type Editor,
+  type EditorConfig,
+} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
@@ -40,19 +44,19 @@ export type EditorProviderProps = {
  * @group Components
  */
 export function EditorProvider(props: EditorProviderProps) {
-  const editor = useCreateEditor(props.initialConfig)
-  const editorActor = editor._internal.editorActor
-  const slateEditor = editor._internal.slateEditor
+  const internalEditor = useCreateInternalEditor(props.initialConfig)
+  const editorActor = internalEditor._internal.editorActor
+  const slateEditor = internalEditor._internal.slateEditor
   const portableTextEditor = useMemo(
     () =>
       new PortableTextEditor({
-        editor,
+        editor: internalEditor,
       } as unknown as PortableTextEditorProps),
-    [editor],
+    [internalEditor],
   )
 
   return (
-    <EditorContext.Provider value={editor}>
+    <EditorContext.Provider value={internalEditor}>
       <RouteEventsToChanges
         editorActor={editorActor}
         onChange={(change) => {
