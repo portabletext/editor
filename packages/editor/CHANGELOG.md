@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.40.0](https://github.com/portabletext/editor/compare/editor-v1.39.1...editor-v1.40.0) (2025-03-17)
+
+
+### Features
+
+* support drag images no matter which block is dragged ([2d6dce8](https://github.com/portabletext/editor/commit/2d6dce8a6c63d626df39d5091d11496ede2b056a))
+* **utils:** add `blockOffsetToBlockSelectionPoint` ([3824bb2](https://github.com/portabletext/editor/commit/3824bb23ff378310385dcf62563ca30b185d06a4))
+* **utils:** add `blockOffsetToSelectionPoint` ([5576ac5](https://github.com/portabletext/editor/commit/5576ac5367d04dd4c53563b214b4baff0c49ed72))
+* **utils:** add `isEqualSelections` ([3f31a1b](https://github.com/portabletext/editor/commit/3f31a1ba5df36be3967a87d0423f44dda1a1cfba))
+* **utils:** add `selectionPointToBlockOffset` ([c64887e](https://github.com/portabletext/editor/commit/c64887e2dc2f87deec46bf511ab8e72301e8d147))
+
+
+### Bug Fixes
+
+* **`decorator.add`:** account for selections starting/ending on block object ([5eb2e1f](https://github.com/portabletext/editor/commit/5eb2e1f4d7d4dbeacc1b532355ec5ebf85528fce))
+* **default behaviors:** delete internal dropped blocks before inserting ([ccb05eb](https://github.com/portabletext/editor/commit/ccb05eb43d373145ca851c2c49456e8c848ada4e))
+* **deps:** update react compiler dependencies 🤖 ✨ ([#901](https://github.com/portabletext/editor/issues/901)) ([2701993](https://github.com/portabletext/editor/commit/27019937582b671b33feb2c551bdf2d5b57ba39f))
+* **dnd:** calculate the correct drag selection ([c3edab4](https://github.com/portabletext/editor/commit/c3edab4f7f69f093cdfbbf3bc72a7ab9bf96341b))
+* **dnd:** compute manual drag ghost when dragging inline objects ([2bcfb4e](https://github.com/portabletext/editor/commit/2bcfb4ee8d00c80e3a23643f29a1e7201a4afbca))
+* **dnd:** inline object drag selection edge case ([6e30b87](https://github.com/portabletext/editor/commit/6e30b8715bbab5ef73fc6c33a6e602a8174d6331))
+* hide _internal Editor prop ([6f6eddc](https://github.com/portabletext/editor/commit/6f6eddc7c83a74c2b7a5563afa110f8c396052ca))
+* only arrow-create empty text block above/below block object for collapsed selections ([a462f03](https://github.com/portabletext/editor/commit/a462f0374be7f170990d51d3d32dd1109c5e5262))
+* only click-create empty text block above/below block object for collapsed selections ([20bb726](https://github.com/portabletext/editor/commit/20bb72605e3f8b15d20809a9aba507d8db34e568))
+* only toggle decorator on collapsed selection if span is selected ([843bcb5](https://github.com/portabletext/editor/commit/843bcb5fc834e32eab0b73e856d3dcad047f8408))
+* remove irrelevant EventPosition props on drag.startstart and clipboard.* events ([f30d7fe](https://github.com/portabletext/editor/commit/f30d7fe7ddfbd9006acffeb8110a7d260e2699a8))
+* use unique objects for inline children when generating Slate value ([a30cc9e](https://github.com/portabletext/editor/commit/a30cc9ed476a8e24b0037ea9c822648049bbfcba))
+* **utils:** account for block objects in `blockOffsetsToSelection` ([912d2b7](https://github.com/portabletext/editor/commit/912d2b7ac42a611680d8c907ae224702a33e4e9c))
+
 ## [1.39.1](https://github.com/portabletext/editor/compare/editor-v1.39.0...editor-v1.39.1) (2025-03-13)
 
 
