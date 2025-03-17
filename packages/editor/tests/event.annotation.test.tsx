@@ -3,18 +3,18 @@ import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {
-  getSelectionBeforeText,
-  getTextMarks,
-  getTextSelection,
-  getValueText,
-} from '../gherkin-tests/gherkin-step-helpers'
-import {
   defineSchema,
   EditorProvider,
   PortableTextEditable,
   type Editor,
 } from '../src'
+import {getTersePt} from '../src/internal-utils/terse-pt'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
+import {getTextMarks} from '../src/internal-utils/text-marks'
+import {
+  getSelectionBeforeText,
+  getTextSelection,
+} from '../src/internal-utils/text-selection'
 import {EditorRefPlugin} from '../src/plugins'
 
 describe('event.annotation', () => {
@@ -79,9 +79,12 @@ describe('event.annotation', () => {
       },
     })
 
-    expect(
-      getValueText(editorRef.current?.getSnapshot().context.value),
-    ).toEqual(['Hello', ', ', 'world', '!'])
+    expect(getTersePt(editorRef.current?.getSnapshot().context.value)).toEqual([
+      'Hello',
+      ', ',
+      'world',
+      '!',
+    ])
     expect(
       getTextMarks(editorRef.current?.getSnapshot().context.value, 'Hello'),
     ).toEqual(['k5'])
@@ -104,9 +107,10 @@ describe('event.annotation', () => {
       },
     })
 
-    expect(
-      getValueText(editorRef.current?.getSnapshot().context.value),
-    ).toEqual(['Hello', ', world!'])
+    expect(getTersePt(editorRef.current?.getSnapshot().context.value)).toEqual([
+      'Hello',
+      ', world!',
+    ])
     expect(
       getTextMarks(editorRef.current?.getSnapshot().context.value, 'Hello'),
     ).toEqual(['k5'])

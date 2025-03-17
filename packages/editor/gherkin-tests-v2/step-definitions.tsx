@@ -4,21 +4,22 @@ import React from 'react'
 import {expect, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {
-  getSelectionAfterText,
-  getSelectionBeforeText,
-  getSelectionBlockKeys,
-  getValueText,
-} from '../gherkin-tests/gherkin-step-helpers'
-import {
   defineSchema,
   EditorProvider,
   PortableTextEditable,
   type Editor,
   type EditorSelection,
+  type EditorSnapshot,
   type PortableTextBlock,
 } from '../src'
 import {parseBlock, parseBlocks} from '../src/internal-utils/parse-blocks'
+import {getSelectionBlockKeys} from '../src/internal-utils/selection-block-keys'
+import {getTersePt} from '../src/internal-utils/terse-pt'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
+import {
+  getSelectionAfterText,
+  getSelectionBeforeText,
+} from '../src/internal-utils/text-selection'
 import {EditorRefPlugin} from '../src/plugins'
 import type {Parameter} from './gherkin-parameter-types'
 
@@ -28,6 +29,7 @@ type Context = {
     locator: Locator
     value: () => Array<PortableTextBlock>
     selection: () => EditorSelection
+    snapshot: () => EditorSnapshot
   }
 }
 
@@ -67,6 +69,7 @@ export const stepDefinitions = [
       ref: editorRef as React.RefObject<Editor>,
       locator,
       value: () => editorRef.current?.getSnapshot().context.value ?? [],
+      snapshot: () => editorRef.current!.getSnapshot(),
       selection: () =>
         editorRef.current?.getSnapshot().context.selection ?? null,
     }
@@ -275,7 +278,7 @@ export const stepDefinitions = [
     async (context: Context, text: Parameter['text']) => {
       await vi.waitFor(() => {
         expect(
-          getValueText(context.editor.value()),
+          getTersePt(context.editor.value()),
           'Unexpected editor text',
         ).toEqual(text)
       })

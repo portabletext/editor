@@ -1,12 +1,12 @@
 import * as React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
-import {getSelectionAfterText} from '../gherkin-tests/gherkin-step-helpers'
 import type {Editor} from '../src/editor/create-editor'
 import {defineSchema} from '../src/editor/define-schema'
 import {PortableTextEditable} from '../src/editor/Editable'
 import {EditorProvider} from '../src/editor/editor-provider'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
+import {getSelectionAfterText} from '../src/internal-utils/text-selection'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 
 const keyGenerator = createTestKeyGenerator()

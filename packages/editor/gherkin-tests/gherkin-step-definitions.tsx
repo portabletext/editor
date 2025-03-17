@@ -8,26 +8,28 @@ import {assert, expect, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {createActor} from 'xstate'
 import type {Editor, EditorSelection} from '../src'
-import {Editors} from './editors'
+import {getBlockKeys} from '../src/internal-utils/block-keys'
+import {getEditorSelection} from '../src/internal-utils/editor-selection'
 import {
-  getAnnotations,
-  getBlockKey,
-  getBlockKeys,
-  getEditorSelection,
   getInlineObjectSelection,
   getSelectionAfterInlineObject,
-  getSelectionAfterText,
   getSelectionBeforeInlineObject,
+} from '../src/internal-utils/inline-object-selection'
+import {getSelectionBlockKeys} from '../src/internal-utils/selection-block-keys'
+import {getSelectionFocusText} from '../src/internal-utils/selection-focus-text'
+import {getSelectionText} from '../src/internal-utils/selection-text'
+import {getTersePt} from '../src/internal-utils/terse-pt'
+import {getTextBlockKey} from '../src/internal-utils/text-block-key'
+import {getTextMarks} from '../src/internal-utils/text-marks'
+import {
+  getSelectionAfterText,
   getSelectionBeforeText,
-  getSelectionBlockKeys,
-  getSelectionFocusText,
-  getSelectionText,
-  getTextMarks,
   getTextSelection,
-  getValueText,
-  reverseTextSelection,
-  selectionIsCollapsed,
-} from './gherkin-step-helpers'
+} from '../src/internal-utils/text-selection'
+import {getValueAnnotations} from '../src/internal-utils/value-annotations'
+import {isSelectionCollapsed} from '../src/utils'
+import {reverseSelection} from '../src/utils/util.reverse-selection'
+import {Editors} from './editors'
 import {schema} from './schema'
 import {
   testMachine,
@@ -531,7 +533,7 @@ export const stepDefinitions = [
 
       context.editorA.actorRef.send({
         type: 'selection',
-        selection: reverseTextSelection(selection),
+        selection: reverseSelection(selection),
       })
     })
   }),
@@ -586,7 +588,7 @@ export const stepDefinitions = [
       await waitForNewSelection(context.editorA, async () => {
         await context.editorA.actorRef.send({
           type: 'selection',
-          selection: reverseTextSelection(getTextSelection(value, text)),
+          selection: reverseSelection(getTextSelection(value, text)),
         })
       })
     },
@@ -677,7 +679,7 @@ export const stepDefinitions = [
       const value = await getValue()
       const selection = await getSelection(context.editorA)
 
-      const collapsed = selectionIsCollapsed(selection)
+      const collapsed = isSelectionCollapsed(selection)
       const focusText = getSelectionFocusText(value, selection)
 
       expect(collapsed, 'Selection is not collapsed').toBe(true)
@@ -693,7 +695,7 @@ export const stepDefinitions = [
       const value = await getValue()
       const selection = await getSelection(context.editorA)
 
-      const collapsed = selectionIsCollapsed(selection)
+      const collapsed = isSelectionCollapsed(selection)
       const focusText = getSelectionFocusText(value, selection)
 
       expect(collapsed, 'Selection is not collapsed').toBe(true)
@@ -783,7 +785,7 @@ export const stepDefinitions = [
         await userEvent.type(context.editorA.locator, text)
       })
       const newValue = await getValue()
-      const newBlockKey = await getBlockKey(newValue, text)
+      const newBlockKey = await getTextBlockKey(newValue, text)
 
       context.keyMap.set(keyKey, newBlockKey)
     },
@@ -802,7 +804,7 @@ export const stepDefinitions = [
       const value = await getValue()
 
       expect(
-        getBlockKey(value, text[0]),
+        getTextBlockKey(value, text[0]),
         `"${text}" ("${text[0]}") is in an unexpected block`,
       ).toBe(context.keyMap.get(keyKey))
     },
@@ -876,13 +878,13 @@ async function toggleAnnotation(
 
 async function getNewAnnotations(step: () => Promise<unknown>) {
   const value = await getValue()
-  const annotationsBefore = getAnnotations(value)
+  const annotationsBefore = getValueAnnotations(value)
 
   await step()
 
   const newValue = await getValue()
 
-  return getAnnotations(newValue).filter(
+  return getValueAnnotations(newValue).filter(
     (annotation) => !annotationsBefore.includes(annotation),
   )
 }
@@ -1035,7 +1037,7 @@ export async function redo(editor: EditorContext) {
 export async function expectText(text: Array<string>) {
   await vi.waitFor(() =>
     getValue()
-      .then(getValueText)
+      .then(getTersePt)
       .then((actualText) => {
         expect(actualText, 'Unexpected editor text').toEqual(text)
       }),

@@ -1,5 +1,5 @@
 import {createParameterType, type ParameterType} from 'racejar'
-import {parseGherkinTextParameter} from '../gherkin-tests/gherkin-step-helpers'
+import {parseTersePt} from '../src/internal-utils/terse-pt'
 
 export type Parameter = {
   [K in keyof typeof parameterType]: (typeof parameterType)[K] extends ParameterType<
@@ -42,7 +42,7 @@ export const parameterType = {
     name: 'text',
     matcher: /"([a-z-,#>\\n |\[\]]*)"/u,
     type: Array,
-    transform: parseGherkinTextParameter,
+    transform: parseTersePt,
   }),
 }
 
