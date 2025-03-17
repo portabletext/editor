@@ -800,9 +800,8 @@ export const toggleDecoratorActionImplementation: BehaviorActionImplementation<
     decoratorAddActionImplementation({
       context,
       action: {
+        ...action,
         type: 'decorator.add',
-        editor: action.editor,
-        decorator: action.decorator,
       },
     })
   }

@@ -1,4 +1,5 @@
 import * as selectors from '../selectors'
+import {blockOffsetsToSelection} from '../utils'
 import {raiseInsertSoftBreak} from './behavior.default.raise-soft-break'
 import {defineBehavior, raise} from './behavior.types'
 
@@ -37,10 +38,33 @@ const toggleDecoratorOff = defineBehavior({
 
 const toggleDecoratorOn = defineBehavior({
   on: 'decorator.toggle',
-  guard: ({snapshot, event}) =>
-    !selectors.isActiveDecorator(event.decorator)(snapshot),
+  guard: ({snapshot, event}) => {
+    const manualSelection = event.offsets
+      ? blockOffsetsToSelection({
+          value: snapshot.context.value,
+          offsets: event.offsets,
+        })
+      : null
+
+    if (manualSelection) {
+      return !selectors.isActiveDecorator(event.decorator)({
+        ...snapshot,
+        context: {
+          ...snapshot.context,
+          selection: manualSelection,
+        },
+      })
+    }
+
+    return !selectors.isActiveDecorator(event.decorator)(snapshot)
+  },
   actions: [
-    ({event}) => [raise({type: 'decorator.add', decorator: event.decorator})],
+    ({event}) => [
+      raise({
+        ...event,
+        type: 'decorator.add',
+      }),
+    ],
   ],
 })
 

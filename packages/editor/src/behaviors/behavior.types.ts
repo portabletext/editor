@@ -68,6 +68,7 @@ export type SyntheticBehaviorEvent =
   | {
       type: 'decorator.toggle'
       decorator: string
+      offsets?: {anchor: BlockOffset; focus: BlockOffset}
     }
   | {
       type: 'delete'
