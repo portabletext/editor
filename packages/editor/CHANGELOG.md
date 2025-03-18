@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.40.1](https://github.com/portabletext/editor/compare/editor-v1.40.0...editor-v1.40.1) (2025-03-18)
+
+
+### Bug Fixes
+
+* allow dragging block objects in Firefox ([13f74e0](https://github.com/portabletext/editor/commit/13f74e03b59f5ea71e1ac529ccd80fb3fa19c754))
+* fail `application/x-portable-text` serialization if no blocks are selected ([a1de3ab](https://github.com/portabletext/editor/commit/a1de3abf7f83760ac0193196754d858226d81da0))
+* raise `input.*` instead of `deserialize` ([23b86e1](https://github.com/portabletext/editor/commit/23b86e13827ee5204e6acd84c8c22eee279d3cf0))
+* remove default `[Name]` serialization of objects ([6228c6c](https://github.com/portabletext/editor/commit/6228c6ccd5b9fb22a58553a35e8e60726976ee86))
+
 ## [1.40.0](https://github.com/portabletext/editor/compare/editor-v1.39.1...editor-v1.40.0) (2025-03-17)
 
 
