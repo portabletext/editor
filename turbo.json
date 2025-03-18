@@ -12,6 +12,10 @@
       "dependsOn": ["^build"],
       "outputLogs": "errors-only"
     },
+    "check:types:watch": {
+      "cache": false,
+      "persistent": true
+    },
     "clean": {
       "cache": false
     },
