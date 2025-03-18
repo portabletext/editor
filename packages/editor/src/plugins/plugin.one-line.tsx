@@ -92,13 +92,6 @@ const oneLineBehaviors = [
       (_, block) => [raise({type: 'insert.block', block, placement: 'auto'})],
     ],
   }),
-  /**
-   * Block objects do not fit in a one-line editor
-   */
-  defineBehavior({
-    on: 'insert.block object',
-    actions: [() => [{type: 'noop'}]],
-  }),
 ]
 
 /**

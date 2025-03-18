@@ -276,10 +276,10 @@ export function createEditableAPI(
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
-          type: 'insert.block object',
-          blockObject: {
-            name: type.name,
-            value,
+          type: 'insert.block',
+          block: {
+            _type: type.name,
+            ...(value ? value : {}),
           },
           placement: 'auto',
         },

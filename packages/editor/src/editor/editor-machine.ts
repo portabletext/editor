@@ -22,6 +22,7 @@ import {
   type Behavior,
   type CustomBehaviorEvent,
   type DataBehaviorEvent,
+  type ExternalBehaviorEvent,
   type InternalBehaviorAction,
   type NativeBehaviorEvent,
   type SyntheticBehaviorEvent,
@@ -203,6 +204,7 @@ export type InternalEditorEvent =
       nativeEvent?: {preventDefault: () => void}
     }
   | CustomBehaviorEvent
+  | ExternalBehaviorEvent
   | ExternalEditorEvent
   | MutationEvent
   | InternalPatchEvent
@@ -222,6 +224,7 @@ export type InternalEditorEvent =
  */
 export type InternalEditorEmittedEvent =
   | EditorEmittedEvent
+  | ExternalBehaviorEvent
   | InternalPatchEvent
   | PatchesEvent
   | UnsetEvent

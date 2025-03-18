@@ -46,6 +46,21 @@ export function createWithEventListeners(
             })
             break
 
+          case 'insert.block object':
+            editorActor.send({
+              type: 'behavior event',
+              behaviorEvent: {
+                type: 'insert.block',
+                block: {
+                  _type: event.blockObject.name,
+                  ...(event.blockObject.value ?? {}),
+                },
+                placement: event.placement,
+              },
+              editor,
+            })
+            break
+
           default:
             editorActor.send({
               type: 'behavior event',
