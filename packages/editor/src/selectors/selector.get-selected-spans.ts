@@ -50,7 +50,13 @@ export const getSelectedSpans: EditorSelector<
     ? endPoint.path[2]._key
     : undefined
 
+  let startBlockFound = false
+
   for (const block of snapshot.context.value) {
+    if (block._key === startBlockKey) {
+      startBlockFound = true
+    }
+
     if (!isPortableTextTextBlock(block)) {
       continue
     }
@@ -126,7 +132,7 @@ export const getSelectedSpans: EditorSelector<
       break
     }
 
-    if (selectedSpans.length > 0) {
+    if (startBlockFound) {
       for (const child of block.children) {
         if (!isPortableTextSpan(child)) {
           continue
