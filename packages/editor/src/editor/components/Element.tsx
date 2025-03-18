@@ -419,15 +419,10 @@ export const Element: FunctionComponent<ElementProps> = ({
   }
 
   return (
-    <div
-      key={element._key}
-      {...attributes}
-      className={className}
-      draggable={!readOnly}
-    >
+    <div key={element._key} {...attributes} className={className}>
       {dragPositionBlock === 'start' ? <DropIndicator /> : null}
       {children}
-      <div ref={blockRef} contentEditable={false}>
+      <div ref={blockRef} contentEditable={false} draggable={!readOnly}>
         {renderedBlockFromProps ? (
           renderedBlockFromProps
         ) : (
