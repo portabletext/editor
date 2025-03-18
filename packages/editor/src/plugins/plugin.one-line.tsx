@@ -33,58 +33,6 @@ const oneLineBehaviors = [
     actions: [() => [{type: 'noop'}]],
   }),
   /**
-   * Other cases of `insert.block` are allowed.
-   *
-   * If a text block is inserted and the focus block is fully selected, then
-   * the focus block can be replaced with the inserted block.
-   */
-  defineBehavior({
-    on: 'insert.block',
-    guard: ({snapshot, event}) => {
-      const focusTextBlock = selectors.getFocusTextBlock(snapshot)
-      const selectionStartPoint = selectors.getSelectionStartPoint(snapshot)
-      const selectionEndPoint = selectors.getSelectionEndPoint(snapshot)
-
-      if (
-        !focusTextBlock ||
-        !utils.isTextBlock(snapshot.context, event.block) ||
-        !selectionStartPoint ||
-        !selectionEndPoint
-      ) {
-        return false
-      }
-
-      const blockStartPoint = utils.getBlockStartPoint(focusTextBlock)
-      const blockEndPoint = utils.getBlockEndPoint(focusTextBlock)
-      const newFocus = utils.getBlockEndPoint({
-        node: event.block,
-        path: [{_key: event.block._key}],
-      })
-
-      if (
-        utils.isEqualSelectionPoints(blockStartPoint, selectionStartPoint) &&
-        utils.isEqualSelectionPoints(blockEndPoint, selectionEndPoint)
-      ) {
-        return {focusTextBlock, newFocus}
-      }
-
-      return false
-    },
-    actions: [
-      ({event}, {focusTextBlock, newFocus}) => [
-        {type: 'delete.block', blockPath: focusTextBlock.path},
-        {type: 'insert.block', block: event.block, placement: 'auto'},
-        {
-          type: 'select',
-          selection: {
-            anchor: newFocus,
-            focus: newFocus,
-          },
-        },
-      ],
-    ],
-  }),
-  /**
    * An ordinary `insert.block` is acceptable if it's a text block. In that
    * case it will get merged into the existing text block.
    */
@@ -92,62 +40,23 @@ const oneLineBehaviors = [
     on: 'insert.block',
     guard: ({snapshot, event}) => {
       const focusTextBlock = selectors.getFocusTextBlock(snapshot)
-      const selectionStartPoint = selectors.getSelectionStartPoint(snapshot)
-      const selectionEndPoint = selectors.getSelectionEndPoint(snapshot)
 
       if (
         !focusTextBlock ||
-        !utils.isTextBlock(snapshot.context, event.block) ||
-        !selectionStartPoint ||
-        !selectionEndPoint
+        !utils.isTextBlock(snapshot.context, event.block)
       ) {
         return false
       }
 
-      const blockBeforeStartPoint = utils.splitTextBlock({
-        context: snapshot.context,
-        block: focusTextBlock.node,
-        point: selectionStartPoint,
-      })?.before
-      const blockAfterEndPoint = utils.splitTextBlock({
-        context: snapshot.context,
-        block: focusTextBlock.node,
-        point: selectionEndPoint,
-      })?.after
-
-      if (!blockBeforeStartPoint || !blockAfterEndPoint) {
-        return false
-      }
-
-      const targetBlock = utils.mergeTextBlocks({
-        context: snapshot.context,
-        targetBlock: blockBeforeStartPoint,
-        incomingBlock: event.block,
-      })
-
-      const newFocus = utils.getBlockEndPoint({
-        node: targetBlock,
-        path: [{_key: targetBlock._key}],
-      })
-
-      const mergedBlock = utils.mergeTextBlocks({
-        context: snapshot.context,
-        targetBlock,
-        incomingBlock: blockAfterEndPoint,
-      })
-
-      return {focusTextBlock, mergedBlock, newFocus}
+      return true
     },
     actions: [
-      (_, {focusTextBlock, mergedBlock, newFocus}) => [
-        {type: 'delete.block', blockPath: focusTextBlock.path},
-        {type: 'insert.block', block: mergedBlock, placement: 'auto'},
+      ({event}) => [
         {
-          type: 'select',
-          selection: {
-            anchor: newFocus,
-            focus: newFocus,
-          },
+          type: 'insert.block',
+          block: event.block,
+          placement: 'auto',
+          select: 'end',
         },
       ],
     ],
@@ -166,12 +75,12 @@ const oneLineBehaviors = [
    */
   defineBehavior({
     on: 'insert.blocks',
-    guard: ({context, event}) => {
+    guard: ({snapshot, event}) => {
       return event.blocks
-        .filter((block) => utils.isTextBlock(context, block))
+        .filter((block) => utils.isTextBlock(snapshot.context, block))
         .reduce((targetBlock, incomingBlock) => {
           return utils.mergeTextBlocks({
-            context,
+            context: snapshot.context,
             targetBlock,
             incomingBlock,
           })
