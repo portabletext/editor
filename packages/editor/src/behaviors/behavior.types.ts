@@ -7,6 +7,7 @@ import type {EventPosition} from '../internal-utils/event-position'
 import type {MIMEType} from '../internal-utils/mime-type'
 import type {OmitFromUnion, PickFromUnion} from '../type-utils'
 import type {BlockOffset} from '../types/block-offset'
+import type {BlockWithOptionalKey} from '../types/block-with-optional-key'
 import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
 
 /**
@@ -124,7 +125,7 @@ export type SyntheticBehaviorEvent =
     }
   | {
       type: 'insert.block'
-      block: PortableTextBlock
+      block: BlockWithOptionalKey
       placement: InsertPlacement
       select?: 'start' | 'end' | 'none'
     }

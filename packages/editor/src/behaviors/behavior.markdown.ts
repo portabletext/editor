@@ -243,7 +243,6 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
               {
                 type: 'insert.block',
                 block: {
-                  _key: snapshot.context.keyGenerator(),
                   _type: snapshot.context.schema.block.name,
                   children: focusBlock.node.children,
                 },
