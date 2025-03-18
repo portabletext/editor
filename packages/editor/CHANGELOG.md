@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.40.2](https://github.com/portabletext/editor/compare/editor-v1.40.1...editor-v1.40.2) (2025-03-18)
+
+
+### Bug Fixes
+
+* edge case related to toggling decorators ([e5f1e67](https://github.com/portabletext/editor/commit/e5f1e6760423523b31fdb318743e3bc965916634))
+
 ## [1.40.1](https://github.com/portabletext/editor/compare/editor-v1.40.0...editor-v1.40.1) (2025-03-18)
 
 
