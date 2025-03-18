@@ -128,7 +128,7 @@ test(converterTextPlain.serialize.name, () => {
       },
     }),
   ).toMatchObject({
-    data: 'foobar\n\n[Object]\n\nbaz',
+    data: 'foobar\n\nbaz',
   })
 
   expect(
@@ -152,7 +152,7 @@ test(converterTextPlain.serialize.name, () => {
       },
     }),
   ).toMatchObject({
-    data: '[Object]',
+    data: '',
   })
 
   expect(
@@ -182,7 +182,7 @@ test(converterTextPlain.serialize.name, () => {
       },
     }),
   ).toMatchObject({
-    data: 'foobar\n\n[Image]\n\nbaz',
+    data: 'foobar\n\nbaz',
   })
 
   expect(
@@ -206,7 +206,7 @@ test(converterTextPlain.serialize.name, () => {
       },
     }),
   ).toMatchObject({
-    data: 'fizz[Object]buzz',
+    data: 'fizzbuzz',
   })
 
   expect(
@@ -236,6 +236,6 @@ test(converterTextPlain.serialize.name, () => {
       },
     }),
   ).toMatchObject({
-    data: 'fizz[Stock Ticker]buzz',
+    data: 'fizzbuzz',
   })
 })
