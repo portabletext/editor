@@ -190,26 +190,6 @@ const oneLineBehaviors = [
     on: 'insert.block object',
     actions: [() => [{type: 'noop'}]],
   }),
-  /**
-   * `insert.text block` is raised as an `insert.block` so it can be handled
-   * by the Behaviors above.
-   */
-  defineBehavior({
-    on: 'insert.text block',
-    actions: [
-      ({context, event}) => [
-        raise({
-          type: 'insert.block',
-          block: {
-            _key: context.keyGenerator(),
-            _type: context.schema.block.name,
-            children: event.textBlock?.children ?? [],
-          },
-          placement: event.placement,
-        }),
-      ],
-    ],
-  }),
 ]
 
 /**

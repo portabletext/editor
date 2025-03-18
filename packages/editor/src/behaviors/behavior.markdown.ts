@@ -237,12 +237,16 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           text: hrCharacters,
         },
       ],
-      (_, {hrObject, focusBlock}) =>
+      ({snapshot}, {hrObject, focusBlock}) =>
         isPortableTextTextBlock(focusBlock.node)
           ? [
               {
-                type: 'insert.text block',
-                textBlock: {children: focusBlock.node.children},
+                type: 'insert.block',
+                block: {
+                  _key: snapshot.context.keyGenerator(),
+                  _type: snapshot.context.schema.block.name,
+                  children: focusBlock.node.children,
+                },
                 placement: 'after',
               },
               {

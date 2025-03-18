@@ -1,8 +1,4 @@
-import type {
-  KeyedSegment,
-  PortableTextBlock,
-  PortableTextTextBlock,
-} from '@sanity/types'
+import type {KeyedSegment, PortableTextBlock} from '@sanity/types'
 import type {TextUnit} from 'slate'
 import type {TextInsertTextOptions} from 'slate/dist/interfaces/transforms/text'
 import type {ConverterEvent} from '../converters/converter.types'
@@ -145,13 +141,6 @@ export type SyntheticBehaviorEvent =
       type: 'insert.text'
       text: string
       options?: TextInsertTextOptions
-    }
-  | {
-      type: 'insert.text block'
-      placement: InsertPlacement
-      textBlock?: {
-        children?: PortableTextTextBlock['children']
-      }
     }
   | {
       type: 'list item.add'
