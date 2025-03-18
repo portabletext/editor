@@ -38,7 +38,6 @@ import {insertSpanActionImplementation} from './behavior.action.insert-span'
 import {insertBlockActionImplementation} from './behavior.action.insert.block'
 import {insertBlockObjectActionImplementation} from './behavior.action.insert.block-object'
 import {insertTextActionImplementation} from './behavior.action.insert.text'
-import {insertTextBlockActionImplementation} from './behavior.action.insert.text-block'
 import {
   addListItemActionImplementation,
   removeListItemActionImplementation,
@@ -108,7 +107,6 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'insert.soft break': insertSoftBreakActionImplementation,
   'insert.span': insertSpanActionImplementation,
   'insert.text': insertTextActionImplementation,
-  'insert.text block': insertTextBlockActionImplementation,
   'effect': effectActionImplementation,
   'list item.add': addListItemActionImplementation,
   'list item.remove': removeListItemActionImplementation,
@@ -333,13 +331,6 @@ export function performAction({
     }
     case 'insert.text': {
       behaviorActionImplementations['insert.text']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'insert.text block': {
-      behaviorActionImplementations['insert.text block']({
         context,
         action,
       })

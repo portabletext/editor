@@ -24,7 +24,18 @@ const arrowDownOnLonelyBlockObject = defineBehavior({
 
     return focusBlockObject && !nextBlock
   },
-  actions: [() => [raise({type: 'insert.text block', placement: 'after'})]],
+  actions: [
+    ({snapshot}) => [
+      raise({
+        type: 'insert.block',
+        block: {
+          _key: snapshot.context.keyGenerator(),
+          _type: snapshot.context.schema.block.name,
+        },
+        placement: 'after',
+      }),
+    ],
+  ],
 })
 
 const arrowUpOnLonelyBlockObject = defineBehavior({
@@ -47,7 +58,18 @@ const arrowUpOnLonelyBlockObject = defineBehavior({
 
     return focusBlockObject && !previousBlock
   },
-  actions: [() => [raise({type: 'insert.text block', placement: 'before'})]],
+  actions: [
+    ({snapshot}) => [
+      raise({
+        type: 'insert.block',
+        block: {
+          _key: snapshot.context.keyGenerator(),
+          _type: snapshot.context.schema.block.name,
+        },
+        placement: 'before',
+      }),
+    ],
+  ],
 })
 
 const breakingBlockObject = defineBehavior({
@@ -58,7 +80,18 @@ const breakingBlockObject = defineBehavior({
 
     return collapsedSelection && focusBlockObject !== undefined
   },
-  actions: [() => [raise({type: 'insert.text block', placement: 'after'})]],
+  actions: [
+    ({snapshot}) => [
+      raise({
+        type: 'insert.block',
+        block: {
+          _key: snapshot.context.keyGenerator(),
+          _type: snapshot.context.schema.block.name,
+        },
+        placement: 'after',
+      }),
+    ],
+  ],
 })
 
 const clickingAboveLonelyBlockObject = defineBehavior({
@@ -78,7 +111,18 @@ const clickingAboveLonelyBlockObject = defineBehavior({
       !previousBlock
     )
   },
-  actions: [() => [raise({type: 'insert.text block', placement: 'before'})]],
+  actions: [
+    ({snapshot}) => [
+      raise({
+        type: 'insert.block',
+        block: {
+          _key: snapshot.context.keyGenerator(),
+          _type: snapshot.context.schema.block.name,
+        },
+        placement: 'before',
+      }),
+    ],
+  ],
 })
 
 const clickingBelowLonelyBlockObject = defineBehavior({
@@ -98,7 +142,18 @@ const clickingBelowLonelyBlockObject = defineBehavior({
       !nextBlock
     )
   },
-  actions: [() => [raise({type: 'insert.text block', placement: 'after'})]],
+  actions: [
+    ({snapshot}) => [
+      raise({
+        type: 'insert.block',
+        block: {
+          _key: snapshot.context.keyGenerator(),
+          _type: snapshot.context.schema.block.name,
+        },
+        placement: 'after',
+      }),
+    ],
+  ],
 })
 
 const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
