@@ -175,7 +175,7 @@ const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
     (_, {focusTextBlock, previousBlock}) => [
       raise({
         type: 'delete.block',
-        blockPath: focusTextBlock.path,
+        at: focusTextBlock.path,
       }),
       raise({
         type: 'select',
@@ -212,7 +212,7 @@ const deletingEmptyTextBlockBeforeBlockObject = defineBehavior({
     (_, {focusTextBlock, nextBlock}) => [
       raise({
         type: 'delete.block',
-        blockPath: focusTextBlock.path,
+        at: focusTextBlock.path,
       }),
       raise({
         type: 'select',

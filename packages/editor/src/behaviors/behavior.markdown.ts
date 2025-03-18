@@ -259,7 +259,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
                 },
                 placement: 'after',
               },
-              {type: 'delete.block', blockPath: focusBlock.path},
+              {type: 'delete.block', at: focusBlock.path},
             ]
           : [
               {

@@ -7,8 +7,8 @@ export const deleteBlockActionImplementation: BehaviorActionImplementation<
 > = ({action}) => {
   const range = toSlateRange(
     {
-      anchor: {path: action.blockPath, offset: 0},
-      focus: {path: action.blockPath, offset: 0},
+      anchor: {path: action.at, offset: 0},
+      focus: {path: action.at, offset: 0},
     },
     action.editor,
   )

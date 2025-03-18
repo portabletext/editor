@@ -359,7 +359,7 @@ export const defaultBehaviors = [
           ? draggedBlocks.map((block) =>
               raise({
                 type: 'delete.block',
-                blockPath: block.path,
+                at: block.path,
               }),
             )
           : [
