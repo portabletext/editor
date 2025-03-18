@@ -24,8 +24,8 @@ importers:
         specifier: ^4.4.1
         version: 4.4.1(prettier@3.5.3)
       '@playwright/test':
-        specifier: ^1.51.0
-        version: 1.51.0
+        specifier: 1.49.0
+        version: 1.49.0
       '@sanity/prettier-config':
         specifier: ^1.0.3
         version: 1.0.3(prettier@3.5.3)
@@ -236,7 +236,7 @@ importers:
         version: 19.0.0-beta-3229e95-20250315(eslint@8.57.1)
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-5398b711-20250314(eslint@8.57.1)
+        version: 0.0.0-experimental-fbcda19a-20250317(eslint@8.57.1)
       postcss:
         specifier: ^8.4.49
         version: 8.5.3
@@ -294,7 +294,7 @@ importers:
         version: 19.0.0-beta-3229e95-20250315(eslint@9.19.0(jiti@1.21.7))
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-5398b711-20250314(eslint@9.19.0(jiti@1.21.7))
+        version: 0.0.0-experimental-fbcda19a-20250317(eslint@9.19.0(jiti@1.21.7))
       eslint-plugin-react-refresh:
         specifier: ^0.4.14
         version: 0.4.18(eslint@9.19.0(jiti@1.21.7))
@@ -367,7 +367,7 @@ importers:
         version: 19.0.0-beta-3229e95-20250315(eslint@9.19.0(jiti@1.21.7))
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-5398b711-20250314(eslint@9.19.0(jiti@1.21.7))
+        version: 0.0.0-experimental-fbcda19a-20250317(eslint@9.19.0(jiti@1.21.7))
       eslint-plugin-react-refresh:
         specifier: ^0.4.14
         version: 0.4.18(eslint@9.19.0(jiti@1.21.7))
@@ -534,7 +534,7 @@ importers:
         version: 19.0.0-beta-3229e95-20250315(eslint@8.57.1)
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-5398b711-20250314(eslint@8.57.1)
+        version: 0.0.0-experimental-fbcda19a-20250317(eslint@8.57.1)
       jsdom:
         specifier: ^26.0.0
         version: 26.0.0
@@ -1894,6 +1894,11 @@ packages:
   '@pkgr/core@0.1.1':
     resolution: {integrity: sha512-cq8o4cWH0ibXh9VGi5P20Tu9XF/0fFXl9EUinr9QfTM7a7p0oTA4iJRCQWppXR1Pg8dSM0UCItCkPwsk9qWWYA==}
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
+
+  '@playwright/test@1.49.0':
+    resolution: {integrity: sha512-DMulbwQURa8rNIQrf94+jPJQ4FmOVdpE5ZppRNvWVjvhC+6sOeo28r8MgIpQRYouXRtt/FCCXU7zn20jnHR4Qw==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   '@playwright/test@1.51.0':
     resolution: {integrity: sha512-dJ0dMbZeHhI+wb77+ljx/FeC8VBP6j/rj9OAojO08JI80wTZy6vRk9KvHKiDCUh4iMpEiseMgqRBIeW+eKX6RA==}
@@ -3959,8 +3964,8 @@ packages:
     peerDependencies:
       eslint: '>=7'
 
-  eslint-plugin-react-hooks@0.0.0-experimental-5398b711-20250314:
-    resolution: {integrity: sha512-Mt69Xo1l4prG7ug9wzP6od8wOET9HySuNO7f6Ah9CJWhEBcS/qsn0eo4GDiN5FB5rt7k3iaN8KTrT7QrBUOVqw==}
+  eslint-plugin-react-hooks@0.0.0-experimental-fbcda19a-20250317:
+    resolution: {integrity: sha512-ogJIz8Oc6GfJCMdzanx1piFQpvkdHL+kEjGRKIulZN/73bFBR3AQnwMlwfNkGWZL0PtheS4DIQjGW1Gvnn8/TA==}
     engines: {node: '>=18'}
     peerDependencies:
       eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0
@@ -5396,8 +5401,18 @@ packages:
     resolution: {integrity: sha512-nDywThFk1i4BQK4twPQ6TA4RT8bDY96yeuCVBWL3ePARCiEKDRSrNGbFIgUJpLp+XeIR65v8ra7WuJOFUBtkMA==}
     engines: {node: '>=8'}
 
+  playwright-core@1.49.0:
+    resolution: {integrity: sha512-R+3KKTQF3npy5GTiKH/T+kdhoJfJojjHESR1YEWhYuEKRVfVaxH3+4+GvXE5xyCngCxhxnykk0Vlah9v8fs3jA==}
+    engines: {node: '>=18'}
+    hasBin: true
+
   playwright-core@1.51.0:
     resolution: {integrity: sha512-x47yPE3Zwhlil7wlNU/iktF7t2r/URR3VLbH6EknJd/04Qc/PSJ0EY3CMXipmglLG+zyRxW6HNo2EGbKLHPWMg==}
+    engines: {node: '>=18'}
+    hasBin: true
+
+  playwright@1.49.0:
+    resolution: {integrity: sha512-eKpmys0UFDnfNb3vfsf8Vx2LEOtflgRebl0Im2eQQnYMA4Aqd+Zw8bEOB+7ZKvN76901mRnqdsiOGKxzVTbi7A==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -8090,6 +8105,10 @@ snapshots:
     optional: true
 
   '@pkgr/core@0.1.1': {}
+
+  '@playwright/test@1.49.0':
+    dependencies:
+      playwright: 1.49.0
 
   '@playwright/test@1.51.0':
     dependencies:
@@ -10833,7 +10852,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-react-hooks@0.0.0-experimental-5398b711-20250314(eslint@8.57.1):
+  eslint-plugin-react-hooks@0.0.0-experimental-fbcda19a-20250317(eslint@8.57.1):
     dependencies:
       '@babel/core': 7.26.10
       '@babel/parser': 7.26.10
@@ -10845,7 +10864,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-react-hooks@0.0.0-experimental-5398b711-20250314(eslint@9.19.0(jiti@1.21.7)):
+  eslint-plugin-react-hooks@0.0.0-experimental-fbcda19a-20250317(eslint@9.19.0(jiti@1.21.7)):
     dependencies:
       '@babel/core': 7.26.10
       '@babel/parser': 7.26.10
@@ -12822,7 +12841,15 @@ snapshots:
     dependencies:
       find-up: 3.0.0
 
+  playwright-core@1.49.0: {}
+
   playwright-core@1.51.0: {}
+
+  playwright@1.49.0:
+    dependencies:
+      playwright-core: 1.49.0
+    optionalDependencies:
+      fsevents: 2.3.2
 
   playwright@1.51.0:
     dependencies:

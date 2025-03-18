@@ -38,7 +38,7 @@
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@ianvs/prettier-plugin-sort-imports": "^4.4.1",
-    "@playwright/test": "^1.51.0",
+    "@playwright/test": "1.49.0",
     "@sanity/prettier-config": "^1.0.3",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
