@@ -25,28 +25,21 @@ export const converterTextPlain = defineConverter({
 
     const data = blocks
       .map((block) => {
-        if (isPortableTextTextBlock(block)) {
-          return block.children
-            .map((child) => {
-              if (child._type === snapshot.context.schema.span.name) {
-                return child.text
-              }
-
-              return `[${
-                snapshot.context.schema.inlineObjects.find(
-                  (inlineObjectType) => inlineObjectType.name === child._type,
-                )?.title ?? 'Object'
-              }]`
-            })
-            .join('')
+        if (!isPortableTextTextBlock(block)) {
+          return ''
         }
 
-        return `[${
-          snapshot.context.schema.blockObjects.find(
-            (blockObjectType) => blockObjectType.name === block._type,
-          )?.title ?? 'Object'
-        }]`
+        return block.children
+          .map((child) => {
+            if (child._type === snapshot.context.schema.span.name) {
+              return child.text
+            }
+
+            return ''
+          })
+          .join('')
       })
+      .filter((block) => block !== '')
       .join('\n\n')
 
     return {
