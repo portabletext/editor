@@ -22,6 +22,15 @@ export const converterPortableText = defineConverter({
       selection,
     })
 
+    if (blocks.length === 0) {
+      return {
+        type: 'serialization.failure',
+        mimeType: 'application/x-portable-text',
+        reason: 'No blocks serialized',
+        originEvent: event.originEvent,
+      }
+    }
+
     return {
       type: 'serialization.success',
       data: JSON.stringify(blocks),
