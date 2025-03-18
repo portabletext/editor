@@ -89,7 +89,7 @@ export type SyntheticBehaviorEvent =
     }
   | {
       type: 'delete.block'
-      blockPath: [KeyedSegment]
+      at: [KeyedSegment]
     }
   | {
       type: 'delete.forward'
