@@ -13,6 +13,18 @@ import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
 /**
  * @beta
  */
+export type ExternalBehaviorEvent = {
+  type: 'insert.block object'
+  placement: InsertPlacement
+  blockObject: {
+    name: string
+    value?: {[prop: string]: unknown}
+  }
+}
+
+/**
+ * @beta
+ */
 export type SyntheticBehaviorEvent =
   | {
       type: 'annotation.add'
@@ -101,14 +113,6 @@ export type SyntheticBehaviorEvent =
       type: 'insert.blocks'
       blocks: Array<PortableTextBlock>
       placement: InsertPlacement
-    }
-  | {
-      type: 'insert.block object'
-      placement: InsertPlacement
-      blockObject: {
-        name: string
-        value?: {[prop: string]: unknown}
-      }
     }
   | {
       type: 'insert.inline object'

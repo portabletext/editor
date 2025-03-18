@@ -204,9 +204,12 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       ],
       (_, {hrObject, hrBlockOffsets}) => [
         {
-          type: 'insert.block object',
+          type: 'insert.block',
           placement: 'before',
-          blockObject: hrObject,
+          block: {
+            _type: hrObject.name,
+            ...(hrObject.value ?? {}),
+          },
         },
         {
           type: 'delete.text',
@@ -249,16 +252,22 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
                 placement: 'after',
               },
               {
-                type: 'insert.block object',
-                blockObject: hrObject,
+                type: 'insert.block',
+                block: {
+                  _type: hrObject.name,
+                  ...(hrObject.value ?? {}),
+                },
                 placement: 'after',
               },
               {type: 'delete.block', blockPath: focusBlock.path},
             ]
           : [
               {
-                type: 'insert.block object',
-                blockObject: hrObject,
+                type: 'insert.block',
+                block: {
+                  _type: hrObject.name,
+                  ...(hrObject.value ?? {}),
+                },
                 placement: 'after',
               },
             ],
