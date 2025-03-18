@@ -215,4 +215,37 @@ describe(getSelectedSpans.name, () => {
       },
     ])
   })
+
+  test('selecting from block object to empty span', () => {
+    expect(
+      getSelectedSpans(
+        snapshot(
+          [
+            image,
+            baz,
+            {
+              _key: 'b4',
+              _type: 'block',
+              children: [{_key: 's4', _type: 'span', text: ''}],
+            },
+          ],
+          {
+            anchor: {
+              path: [{_key: 'b2'}],
+              offset: 0,
+            },
+            focus: {
+              path: [{_key: 'b4'}, 'children', {_key: 's4'}],
+              offset: 0,
+            },
+          },
+        ),
+      ),
+    ).toEqual([
+      {
+        node: {_key: 's3', _type: 'span', text: 'baz'},
+        path: [{_key: 'b3'}, 'children', {_key: 's3'}],
+      },
+    ])
+  })
 })

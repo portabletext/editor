@@ -217,3 +217,33 @@ Feature: Decorators
     And "strong" is toggled
     Then the text is "foobar"
     And "foobar" has marks "strong,em"
+
+  Scenario: Toggling decorator with leading block object and trailing empty text
+    Given a block "auto"
+      ```
+      {
+        "_type": "image"
+      }
+      ```
+    And a block "auto"
+      ```
+      {
+        "_type": "block",
+        "children": [{"_type": "span", "text": "foo"}]
+      }
+      ```
+
+    And a block "after"
+      ```
+      {
+        "_type": "block",
+        "children": [{"_type": "span", "text": ""}]
+      }
+      ```
+    When everything is selected
+    And "strong" is toggled
+    Then "foo" has marks "strong"
+    And "" has marks "strong"
+    When "strong" is toggled
+    Then "foo" has no marks
+    And "" has no marks
