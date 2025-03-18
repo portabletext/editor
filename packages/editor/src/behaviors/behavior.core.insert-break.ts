@@ -29,10 +29,8 @@ const breakingAtTheEndOfTextBlock = defineBehavior({
         type: 'insert.block',
         block: {
           _type: snapshot.context.schema.block.name,
-          _key: snapshot.context.keyGenerator(),
           children: [
             {
-              _key: snapshot.context.keyGenerator(),
               _type: snapshot.context.schema.span.name,
               text: '',
               marks: [],
@@ -94,11 +92,9 @@ const breakingAtTheStartOfTextBlock = defineBehavior({
       raise({
         type: 'insert.block',
         block: {
-          _key: snapshot.context.keyGenerator(),
           _type: snapshot.context.schema.block.name,
           children: [
             {
-              _key: snapshot.context.keyGenerator(),
               _type: snapshot.context.schema.span.name,
               marks: focusAnnotations.length === 0 ? focusDecorators : [],
               text: '',

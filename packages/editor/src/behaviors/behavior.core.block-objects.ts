@@ -29,7 +29,6 @@ const arrowDownOnLonelyBlockObject = defineBehavior({
       raise({
         type: 'insert.block',
         block: {
-          _key: snapshot.context.keyGenerator(),
           _type: snapshot.context.schema.block.name,
         },
         placement: 'after',
@@ -63,7 +62,6 @@ const arrowUpOnLonelyBlockObject = defineBehavior({
       raise({
         type: 'insert.block',
         block: {
-          _key: snapshot.context.keyGenerator(),
           _type: snapshot.context.schema.block.name,
         },
         placement: 'before',
@@ -85,7 +83,6 @@ const breakingBlockObject = defineBehavior({
       raise({
         type: 'insert.block',
         block: {
-          _key: snapshot.context.keyGenerator(),
           _type: snapshot.context.schema.block.name,
         },
         placement: 'after',
@@ -116,7 +113,6 @@ const clickingAboveLonelyBlockObject = defineBehavior({
       raise({
         type: 'insert.block',
         block: {
-          _key: snapshot.context.keyGenerator(),
           _type: snapshot.context.schema.block.name,
         },
         placement: 'before',
@@ -147,7 +143,6 @@ const clickingBelowLonelyBlockObject = defineBehavior({
       raise({
         type: 'insert.block',
         block: {
-          _key: snapshot.context.keyGenerator(),
           _type: snapshot.context.schema.block.name,
         },
         placement: 'after',
