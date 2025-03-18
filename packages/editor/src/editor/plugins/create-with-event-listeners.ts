@@ -122,12 +122,9 @@ export function createWithEventListeners(
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
-          type: 'deserialize',
+          type: 'input.*',
           originEvent: {
-            type: 'input.*',
-            originEvent: {
-              dataTransfer,
-            },
+            dataTransfer,
           },
         },
         editor,
