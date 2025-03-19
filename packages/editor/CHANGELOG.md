@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.40.3](https://github.com/portabletext/editor/compare/editor-v1.40.2...editor-v1.40.3) (2025-03-19)
+
+
+### Bug Fixes
+
+* **`delete.block`:** rename `blockPath` to `at` ([8fb9a76](https://github.com/portabletext/editor/commit/8fb9a7614e37e0698f7e0a7bb7734842c4c994ea))
+* **`insert.block`:** allow omitting the `_key` ([78df7e5](https://github.com/portabletext/editor/commit/78df7e51daabf8ffcbf49f9c81661a7caad2c629))
+* allow listening to all Behavior event namespaces ([b639fce](https://github.com/portabletext/editor/commit/b639fce78e393f84db8b994c58e9ddc03c73f749))
+* **deps:** update sanity monorepo to ^3.80.1 ([d12edbe](https://github.com/portabletext/editor/commit/d12edbe0d11516621934b20cf6b904b1e93db275))
+* remove `insert.text block` event and action ([75df505](https://github.com/portabletext/editor/commit/75df5059b5848715c053882861fed99e723f305a))
+* turn `insert.block object` into an `ExternalBehaviorEvent` ([28750ff](https://github.com/portabletext/editor/commit/28750ff52f369ed13f93d4bdce21f30c15509f81))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.14
+
 ## [1.40.2](https://github.com/portabletext/editor/compare/editor-v1.40.1...editor-v1.40.2) (2025-03-18)
 
 
