@@ -355,40 +355,37 @@ export const editorMachine = setup({
           ...context.behaviors.values(),
           ...defaultBehaviors,
         ].filter((behavior) => {
+          // Catches all events
           if (behavior.on === '*') {
             return true
           }
 
-          if (isClipboardBehaviorEvent(event.behaviorEvent)) {
-            return (
-              behavior.on === 'clipboard.*' ||
-              behavior.on === event.behaviorEvent.type
-            )
+          const [listenedNamespace] =
+            behavior.on.includes('*') && behavior.on.includes('.')
+              ? behavior.on.split('.')
+              : [undefined]
+          const [eventNamespace] = event.behaviorEvent.type.includes('.')
+            ? event.behaviorEvent.type.split('.')
+            : [undefined]
+
+          // Handles scenarios like a Behavior listening for `select.*` and the event
+          // `select.block` is fired.
+          if (
+            listenedNamespace !== undefined &&
+            eventNamespace !== undefined &&
+            listenedNamespace === eventNamespace
+          ) {
+            return true
           }
 
-          if (isDragBehaviorEvent(event.behaviorEvent)) {
-            return (
-              behavior.on === 'drag.*' ||
-              behavior.on === event.behaviorEvent.type
-            )
-          }
-
-          if (isInputBehaviorEvent(event.behaviorEvent)) {
-            return behavior.on === 'input.*'
-          }
-
-          if (isKeyboardBehaviorEvent(event.behaviorEvent)) {
-            return (
-              behavior.on === 'keyboard.*' ||
-              behavior.on === event.behaviorEvent.type
-            )
-          }
-
-          if (isMouseBehaviorEvent(event.behaviorEvent)) {
-            return (
-              behavior.on === 'mouse.*' ||
-              behavior.on === event.behaviorEvent.type
-            )
+          // Handles scenarios like a Behavior listening for `select.*` and the event
+          // `select` is fired.
+          if (
+            listenedNamespace !== undefined &&
+            eventNamespace === undefined &&
+            listenedNamespace === event.behaviorEvent.type
+          ) {
+            return true
           }
 
           return behavior.on === event.behaviorEvent.type
