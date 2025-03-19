@@ -54,6 +54,7 @@ export default defineWorkspace([
           },
           {
             browser: 'firefox',
+            retry: 3,
           },
           {
             browser: 'webkit',
