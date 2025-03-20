@@ -49,6 +49,32 @@ Feature: Insert Blocks
       | text                         |
       | "[image]\|foo\|[break]\|bar" |
 
+  Scenario: Inserting text blocks on a block object
+    When a block is inserted "auto" and selected at the "end"
+      ```
+      {
+        "_type": "image"
+      }
+      ```
+    And blocks are inserted "auto"
+      ```
+      [
+        {
+          "_type": "block",
+          "children": [{"_type": "span", "text": "foo"}]
+        },
+        {
+          "_type": "block",
+          "children": [{"_type": "span", "text": "bar"}]
+        }
+      ]
+      ```
+    Then the text is <text>
+
+    Examples:
+      | text                |
+      | "[image]\|foo\|bar" |
+
   Scenario Outline: Inserting blocks on a text block
     Given the text "foo"
     When the caret is put <position>
