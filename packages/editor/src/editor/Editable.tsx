@@ -936,144 +936,146 @@ export const PortableTextEditable = forwardRef<
     (event: React.DragEvent<HTMLDivElement>) => {
       onDragStart?.(event)
 
-      if (!event.isDefaultPrevented() && !event.isPropagationStopped()) {
-        const position = getEventPosition({
-          schema: editorActor.getSnapshot().context.schema,
-          slateEditor,
-          event: event.nativeEvent,
-        })
+      if (event.isDefaultPrevented() || event.isPropagationStopped()) {
+        return
+      }
 
-        if (!position) {
-          console.warn('Could not find position for dragstart event')
-          return
-        }
+      // Prevent Slate from handling the event
+      event.stopPropagation()
 
-        const snapshot = getEditorSnapshot({
-          editorActorSnapshot: editorActor.getSnapshot(),
-          slateEditorInstance: slateEditor,
-        })
-        const dragSelection = getDragSelection({
-          eventSelection: position.selection,
-          snapshot,
-        })
+      const position = getEventPosition({
+        schema: editorActor.getSnapshot().context.schema,
+        slateEditor,
+        event: event.nativeEvent,
+      })
 
-        const selectingEntireBlocks = selectors.isSelectingEntireBlocks({
+      if (!position) {
+        console.warn('Could not find position for dragstart event')
+        return
+      }
+
+      const snapshot = getEditorSnapshot({
+        editorActorSnapshot: editorActor.getSnapshot(),
+        slateEditorInstance: slateEditor,
+      })
+      const dragSelection = getDragSelection({
+        eventSelection: position.selection,
+        snapshot,
+      })
+
+      const selectingEntireBlocks = selectors.isSelectingEntireBlocks({
+        ...snapshot,
+        context: {
+          ...snapshot.context,
+          selection: dragSelection,
+        },
+      })
+
+      const dragGhost = document.createElement('div')
+
+      const draggedDomNodes = getSelectionDomNodes({
+        snapshot: {
           ...snapshot,
           context: {
             ...snapshot.context,
             selection: dragSelection,
           },
-        })
+        },
+        slateEditor,
+      })
 
-        const dragGhost = document.createElement('div')
+      if (selectingEntireBlocks) {
+        // Clone the DOM Nodes so they won't be visually clipped by scroll-containers etc.
+        const clonedBlockNodes = draggedDomNodes.blockNodes.map((node) =>
+          node.cloneNode(true),
+        )
 
-        const draggedDomNodes = getSelectionDomNodes({
-          snapshot: {
-            ...snapshot,
-            context: {
-              ...snapshot.context,
-              selection: dragSelection,
-            },
-          },
-          slateEditor,
-        })
-
-        if (selectingEntireBlocks) {
-          // Clone the DOM Nodes so they won't be visually clipped by scroll-containers etc.
-          const clonedBlockNodes = draggedDomNodes.blockNodes.map((node) =>
-            node.cloneNode(true),
-          )
-
-          for (const block of clonedBlockNodes) {
-            if (block instanceof HTMLElement) {
-              block.style.position = 'relative'
-            }
-            dragGhost.appendChild(block)
+        for (const block of clonedBlockNodes) {
+          if (block instanceof HTMLElement) {
+            block.style.position = 'relative'
           }
-
-          // A custom drag ghost element can be configured using this data attribute
-          const customGhost = dragGhost.querySelector(
-            '[data-pt-drag-ghost-element]',
-          )
-          if (customGhost) {
-            dragGhost.replaceChildren(customGhost)
-          }
-
-          // Setting the `data-dragged` attribute so the consumer can style the element while it’s dragged
-          dragGhost.setAttribute('data-dragged', '')
-
-          dragGhost.style.position = 'absolute'
-          dragGhost.style.left = '-99999px'
-          dragGhost.style.boxSizing = 'border-box'
-          document.body.appendChild(dragGhost)
-
-          if (customGhost) {
-            const customGhostRect = customGhost.getBoundingClientRect()
-            const x = event.clientX - customGhostRect.left
-            const y = event.clientY - customGhostRect.top
-            dragGhost.style.width = `${customGhostRect.width}px`
-            dragGhost.style.height = `${customGhostRect.height}px`
-            event.dataTransfer.setDragImage(dragGhost, x, y)
-          } else {
-            const blocksDomRect = getCompoundClientRect(
-              draggedDomNodes.blockNodes,
-            )
-            const x = event.clientX - blocksDomRect.left
-            const y = event.clientY - blocksDomRect.top
-            dragGhost.style.width = `${blocksDomRect.width}px`
-            dragGhost.style.height = `${blocksDomRect.height}px`
-            event.dataTransfer.setDragImage(dragGhost, x, y)
-          }
-        } else {
-          const clonedChildNodes = draggedDomNodes.childNodes.map((node) =>
-            node.cloneNode(true),
-          )
-
-          for (const child of clonedChildNodes) {
-            dragGhost.appendChild(child)
-          }
-
-          dragGhost.style.position = 'absolute'
-          dragGhost.style.left = '-99999px'
-          dragGhost.style.boxSizing = 'border-box'
-          document.body.appendChild(dragGhost)
-
-          const childrenDomRect = getCompoundClientRect(
-            draggedDomNodes.childNodes,
-          )
-          const x = event.clientX - childrenDomRect.left
-          const y = event.clientY - childrenDomRect.top
-          dragGhost.style.width = `${childrenDomRect.width}px`
-          dragGhost.style.height = `${childrenDomRect.height}px`
-
-          event.dataTransfer.setDragImage(dragGhost, x, y)
+          dragGhost.appendChild(block)
         }
 
-        editorActor.send({
-          type: 'dragstart',
-          origin: {
+        // A custom drag ghost element can be configured using this data attribute
+        const customGhost = dragGhost.querySelector(
+          '[data-pt-drag-ghost-element]',
+        )
+        if (customGhost) {
+          dragGhost.replaceChildren(customGhost)
+        }
+
+        // Setting the `data-dragged` attribute so the consumer can style the element while it’s dragged
+        dragGhost.setAttribute('data-dragged', '')
+
+        dragGhost.style.position = 'absolute'
+        dragGhost.style.left = '-99999px'
+        dragGhost.style.boxSizing = 'border-box'
+        document.body.appendChild(dragGhost)
+
+        if (customGhost) {
+          const customGhostRect = customGhost.getBoundingClientRect()
+          const x = event.clientX - customGhostRect.left
+          const y = event.clientY - customGhostRect.top
+          dragGhost.style.width = `${customGhostRect.width}px`
+          dragGhost.style.height = `${customGhostRect.height}px`
+          event.dataTransfer.setDragImage(dragGhost, x, y)
+        } else {
+          const blocksDomRect = getCompoundClientRect(
+            draggedDomNodes.blockNodes,
+          )
+          const x = event.clientX - blocksDomRect.left
+          const y = event.clientY - blocksDomRect.top
+          dragGhost.style.width = `${blocksDomRect.width}px`
+          dragGhost.style.height = `${blocksDomRect.height}px`
+          event.dataTransfer.setDragImage(dragGhost, x, y)
+        }
+      } else {
+        const clonedChildNodes = draggedDomNodes.childNodes.map((node) =>
+          node.cloneNode(true),
+        )
+
+        for (const child of clonedChildNodes) {
+          dragGhost.appendChild(child)
+        }
+
+        dragGhost.style.position = 'absolute'
+        dragGhost.style.left = '-99999px'
+        dragGhost.style.boxSizing = 'border-box'
+        document.body.appendChild(dragGhost)
+
+        const childrenDomRect = getCompoundClientRect(
+          draggedDomNodes.childNodes,
+        )
+        const x = event.clientX - childrenDomRect.left
+        const y = event.clientY - childrenDomRect.top
+        dragGhost.style.width = `${childrenDomRect.width}px`
+        dragGhost.style.height = `${childrenDomRect.height}px`
+
+        event.dataTransfer.setDragImage(dragGhost, x, y)
+      }
+
+      editorActor.send({
+        type: 'dragstart',
+        origin: {
+          selection: dragSelection,
+        },
+        ghost: dragGhost,
+      })
+
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'drag.dragstart',
+          originEvent: {
+            dataTransfer: event.dataTransfer,
+          },
+          position: {
             selection: dragSelection,
           },
-          ghost: dragGhost,
-        })
-
-        editorActor.send({
-          type: 'behavior event',
-          behaviorEvent: {
-            type: 'drag.dragstart',
-            originEvent: {
-              dataTransfer: event.dataTransfer,
-            },
-            position: {
-              selection: dragSelection,
-            },
-          },
-          editor: slateEditor,
-        })
-
-        // Prevent Slate from handling the event
-        event.stopPropagation()
-      }
+        },
+        editor: slateEditor,
+      })
     },
     [onDragStart, editorActor, slateEditor],
   )
@@ -1082,21 +1084,23 @@ export const PortableTextEditable = forwardRef<
     (event: React.DragEvent<HTMLDivElement>) => {
       onDrag?.(event)
 
-      if (!event.isDefaultPrevented() && !event.isPropagationStopped()) {
-        editorActor.send({
-          type: 'behavior event',
-          behaviorEvent: {
-            type: 'drag.drag',
-            originEvent: {
-              dataTransfer: event.dataTransfer,
-            },
-          },
-          editor: slateEditor,
-        })
-
-        // Prevent Slate from handling the event
-        event.stopPropagation()
+      if (event.isDefaultPrevented() || event.isPropagationStopped()) {
+        return
       }
+
+      // Prevent Slate from handling the event
+      event.stopPropagation()
+
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'drag.drag',
+          originEvent: {
+            dataTransfer: event.dataTransfer,
+          },
+        },
+        editor: slateEditor,
+      })
     },
     [onDrag, editorActor, slateEditor],
   )
@@ -1105,21 +1109,23 @@ export const PortableTextEditable = forwardRef<
     (event: React.DragEvent<HTMLDivElement>) => {
       onDragEnd?.(event)
 
-      if (!event.isDefaultPrevented() && !event.isPropagationStopped()) {
-        editorActor.send({
-          type: 'behavior event',
-          behaviorEvent: {
-            type: 'drag.dragend',
-            originEvent: {
-              dataTransfer: event.dataTransfer,
-            },
-          },
-          editor: slateEditor,
-        })
-
-        // Prevent Slate from handling the event
-        event.stopPropagation()
+      if (event.isDefaultPrevented() || event.isPropagationStopped()) {
+        return
       }
+
+      // Prevent Slate from handling the event
+      event.stopPropagation()
+
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'drag.dragend',
+          originEvent: {
+            dataTransfer: event.dataTransfer,
+          },
+        },
+        editor: slateEditor,
+      })
     },
     [onDragEnd, editorActor, slateEditor],
   )
@@ -1128,32 +1134,34 @@ export const PortableTextEditable = forwardRef<
     (event: React.DragEvent<HTMLDivElement>) => {
       onDragEnter?.(event)
 
-      if (!event.isDefaultPrevented() && !event.isPropagationStopped()) {
-        const position = getEventPosition({
-          schema: editorActor.getSnapshot().context.schema,
-          slateEditor,
-          event: event.nativeEvent,
-        })
-
-        if (!position) {
-          return
-        }
-
-        editorActor.send({
-          type: 'behavior event',
-          behaviorEvent: {
-            type: 'drag.dragenter',
-            originEvent: {
-              dataTransfer: event.dataTransfer,
-            },
-            position,
-          },
-          editor: slateEditor,
-        })
-
-        // Prevent Slate from handling the event
-        event.stopPropagation()
+      if (event.isDefaultPrevented() || event.isPropagationStopped()) {
+        return
       }
+
+      // Prevent Slate from handling the event
+      event.stopPropagation()
+
+      const position = getEventPosition({
+        schema: editorActor.getSnapshot().context.schema,
+        slateEditor,
+        event: event.nativeEvent,
+      })
+
+      if (!position) {
+        return
+      }
+
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'drag.dragenter',
+          originEvent: {
+            dataTransfer: event.dataTransfer,
+          },
+          position,
+        },
+        editor: slateEditor,
+      })
     },
     [onDragEnter, editorActor, slateEditor],
   )
@@ -1162,33 +1170,35 @@ export const PortableTextEditable = forwardRef<
     (event: React.DragEvent<HTMLDivElement>) => {
       onDragOver?.(event)
 
-      if (!event.isDefaultPrevented() && !event.isPropagationStopped()) {
-        const position = getEventPosition({
-          schema: editorActor.getSnapshot().context.schema,
-          slateEditor,
-          event: event.nativeEvent,
-        })
-
-        if (!position) {
-          return
-        }
-
-        editorActor.send({
-          type: 'behavior event',
-          behaviorEvent: {
-            type: 'drag.dragover',
-            originEvent: {
-              dataTransfer: event.dataTransfer,
-            },
-            position,
-          },
-          editor: slateEditor,
-          nativeEvent: event,
-        })
-
-        // Prevent Slate from handling the event
-        event.stopPropagation()
+      if (event.isDefaultPrevented() || event.isPropagationStopped()) {
+        return
       }
+
+      // Prevent Slate from handling the event
+      event.stopPropagation()
+
+      const position = getEventPosition({
+        schema: editorActor.getSnapshot().context.schema,
+        slateEditor,
+        event: event.nativeEvent,
+      })
+
+      if (!position) {
+        return
+      }
+
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'drag.dragover',
+          originEvent: {
+            dataTransfer: event.dataTransfer,
+          },
+          position,
+        },
+        editor: slateEditor,
+        nativeEvent: event,
+      })
     },
     [onDragOver, editorActor, slateEditor],
   )
@@ -1197,42 +1207,44 @@ export const PortableTextEditable = forwardRef<
     (event: React.DragEvent<HTMLDivElement>) => {
       onDrop?.(event)
 
-      if (!event.isDefaultPrevented() && !event.isPropagationStopped()) {
-        const position = getEventPosition({
-          schema: editorActor.getSnapshot().context.schema,
-          slateEditor,
-          event: event.nativeEvent,
-        })
-
-        if (!position) {
-          console.warn('Could not find position for drop event')
-          return
-        }
-
-        editorActor.send({
-          type: 'behavior event',
-          behaviorEvent: {
-            type: 'select',
-            selection: position.selection,
-          },
-          editor: slateEditor,
-        })
-
-        editorActor.send({
-          type: 'behavior event',
-          behaviorEvent: {
-            type: 'drag.drop',
-            originEvent: {
-              dataTransfer: event.dataTransfer,
-            },
-            position,
-          },
-          editor: slateEditor,
-        })
-
-        // Prevent Slate from handling the event
-        event.preventDefault()
+      if (event.isDefaultPrevented() || event.isPropagationStopped()) {
+        return
       }
+
+      // Prevent Slate from handling the event
+      event.preventDefault()
+
+      const position = getEventPosition({
+        schema: editorActor.getSnapshot().context.schema,
+        slateEditor,
+        event: event.nativeEvent,
+      })
+
+      if (!position) {
+        console.warn('Could not find position for drop event')
+        return
+      }
+
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'select',
+          selection: position.selection,
+        },
+        editor: slateEditor,
+      })
+
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'drag.drop',
+          originEvent: {
+            dataTransfer: event.dataTransfer,
+          },
+          position,
+        },
+        editor: slateEditor,
+      })
     },
     [onDrop, editorActor, slateEditor],
   )
@@ -1241,18 +1253,23 @@ export const PortableTextEditable = forwardRef<
     (event: React.DragEvent<HTMLDivElement>) => {
       onDragLeave?.(event)
 
-      if (!event.isDefaultPrevented() && !event.isPropagationStopped()) {
-        editorActor.send({
-          type: 'behavior event',
-          behaviorEvent: {
-            type: 'drag.dragleave',
-            originEvent: {
-              dataTransfer: event.dataTransfer,
-            },
-          },
-          editor: slateEditor,
-        })
+      if (event.isDefaultPrevented() || event.isPropagationStopped()) {
+        return
       }
+
+      // Prevent Slate from handling the event
+      event.stopPropagation()
+
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'drag.dragleave',
+          originEvent: {
+            dataTransfer: event.dataTransfer,
+          },
+        },
+        editor: slateEditor,
+      })
     },
     [onDragLeave, editorActor, slateEditor],
   )
