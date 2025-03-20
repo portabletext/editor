@@ -182,9 +182,11 @@ function getSlateRangeFromEvent(
     )
 
     if (position) {
-      domRange = window.document.createRange()
-      domRange.setStart(position.offsetNode, position.offset)
-      domRange.setEnd(position.offsetNode, position.offset)
+      try {
+        domRange = window.document.createRange()
+        domRange.setStart(position.offsetNode, position.offset)
+        domRange.setEnd(position.offsetNode, position.offset)
+      } catch {}
     }
   } else if (window.document.caretRangeFromPoint !== undefined) {
     // Use WebKit-proprietary fallback method
