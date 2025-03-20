@@ -41,20 +41,29 @@ export function getFocusChild({
     : [undefined, undefined]
 }
 
+export function getFirstBlock({
+  editor,
+}: {
+  editor: PortableTextSlateEditor
+}): [node: Node, path: Path] | [undefined, undefined] {
+  const firstPoint = Editor.start(editor, [])
+  const firstBlockPath = firstPoint.path.at(0)
+
+  return firstBlockPath !== undefined
+    ? (Editor.node(editor, [firstBlockPath]) ?? [undefined, undefined])
+    : [undefined, undefined]
+}
+
 export function getLastBlock({
   editor,
 }: {
   editor: PortableTextSlateEditor
 }): [node: Node, path: Path] | [undefined, undefined] {
-  const lastBlock = Array.from(
-    Editor.nodes(editor, {
-      match: (n) => !Editor.isEditor(n),
-      at: [],
-      reverse: true,
-    }),
-  ).at(0)
-
-  return lastBlock ?? [undefined, undefined]
+  const lastPoint = Editor.end(editor, [])
+  const lastBlockPath = lastPoint.path.at(0)
+  return lastBlockPath !== undefined
+    ? (Editor.node(editor, [lastBlockPath]) ?? [undefined, undefined])
+    : [undefined, undefined]
 }
 
 export function getNodeBlock({

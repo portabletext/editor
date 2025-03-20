@@ -4,7 +4,7 @@ import type {EditorSchema, EditorSelection} from '..'
 import type {PortableTextSlateEditor} from '../types/editor'
 import * as utils from '../utils'
 import {toPortableTextRange} from './ranges'
-import {getNodeBlock} from './slate-utils'
+import {getFirstBlock, getLastBlock, getNodeBlock} from './slate-utils'
 import {fromSlateValue} from './values'
 
 export type EventPosition = {
@@ -128,6 +128,32 @@ function getEventPositionBlock({
   slateEditor: PortableTextSlateEditor
   event: DragEvent | MouseEvent
 }): EventPositionBlock | undefined {
+  const [firstBlock] = getFirstBlock({editor: slateEditor})
+
+  if (!firstBlock) {
+    return undefined
+  }
+
+  const firstBlockElement = DOMEditor.toDOMNode(slateEditor, firstBlock)
+  const firstBlockRect = firstBlockElement.getBoundingClientRect()
+
+  if (event.pageY < firstBlockRect.top) {
+    return 'start'
+  }
+
+  const [lastBlock] = getLastBlock({editor: slateEditor})
+
+  if (!lastBlock) {
+    return undefined
+  }
+
+  const lastBlockElement = DOMEditor.toDOMNode(slateEditor, lastBlock)
+  const lastBlockRef = lastBlockElement.getBoundingClientRect()
+
+  if (event.pageY > lastBlockRef.bottom) {
+    return 'end'
+  }
+
   const element = DOMEditor.toDOMNode(slateEditor, node)
   const elementRect = element.getBoundingClientRect()
   const top = elementRect.top
