@@ -1,6 +1,7 @@
 export function DropIndicator() {
   return (
     <div
+      contentEditable={false}
       className="pt-drop-indicator"
       style={{
         position: 'absolute',
@@ -9,6 +10,8 @@ export function DropIndicator() {
         borderBottom: '1px solid currentColor',
         zIndex: 5,
       }}
-    />
+    >
+      <span />
+    </div>
   )
 }
