@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.40.4](https://github.com/portabletext/editor/compare/editor-v1.40.3...editor-v1.40.4) (2025-03-20)
+
+
+### Bug Fixes
+
+* **`insert.blocks`:** account for text blocks inserted on block object ([f4ff9b7](https://github.com/portabletext/editor/commit/f4ff9b777368941c395509d7ff30d1eec35f6bb7))
+* adjust `EventPosition` if event node and selection are mismatching ([3f8ec05](https://github.com/portabletext/editor/commit/3f8ec058ab5ba5588303062fce566c7bbd3aa205))
+* drag selection edge case ([259cc0a](https://github.com/portabletext/editor/commit/259cc0ae50dcb9784b3a8e434750767e534da52d))
+
 ## [1.40.3](https://github.com/portabletext/editor/compare/editor-v1.40.2...editor-v1.40.3) (2025-03-19)
 
 
