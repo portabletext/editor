@@ -4,6 +4,7 @@ import type {EditorSchema, EditorSelection} from '..'
 import type {PortableTextSlateEditor} from '../types/editor'
 import * as utils from '../utils'
 import {toPortableTextRange} from './ranges'
+import {getNodeBlock} from './slate-utils'
 import {fromSlateValue} from './values'
 
 export type EventPosition = {
@@ -31,6 +32,12 @@ export function getEventPosition({
     return undefined
   }
 
+  const block = getNodeBlock({
+    editor: slateEditor,
+    schema,
+    node,
+  })
+
   const positionBlock = getEventPositionBlock({node, slateEditor, event})
   const selection = getEventSelection({
     schema,
@@ -38,13 +45,7 @@ export function getEventPosition({
     event,
   })
 
-  if (positionBlock && !selection && !Editor.isEditor(node)) {
-    const block = fromSlateValue([node], schema.block.name)?.at(0)
-
-    if (!block) {
-      return undefined
-    }
-
+  if (block && positionBlock && !selection && !Editor.isEditor(node)) {
     return {
       block: positionBlock,
       isEditor: false,
@@ -63,6 +64,36 @@ export function getEventPosition({
 
   if (!positionBlock || !selection) {
     return undefined
+  }
+
+  const focusBlockPath = selection.focus.path.at(0)
+  const focusBlockKey = utils.isKeyedSegment(focusBlockPath)
+    ? focusBlockPath._key
+    : undefined
+
+  if (!focusBlockKey) {
+    return undefined
+  }
+
+  if (
+    utils.isSelectionCollapsed(selection) &&
+    block &&
+    focusBlockKey !== block._key
+  ) {
+    return {
+      block: positionBlock,
+      isEditor: false,
+      selection: {
+        anchor: utils.getBlockStartPoint({
+          node: block,
+          path: [{_key: block._key}],
+        }),
+        focus: utils.getBlockEndPoint({
+          node: block,
+          path: [{_key: block._key}],
+        }),
+      },
+    }
   }
 
   return {
