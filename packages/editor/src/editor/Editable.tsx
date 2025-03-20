@@ -1209,9 +1209,14 @@ export const PortableTextEditable = forwardRef<
           return
         }
 
-        // Find and select the range where the drop happened
-        const range = ReactEditor.findEventRange(slateEditor, event)
-        slateEditor.select(range)
+        editorActor.send({
+          type: 'behavior event',
+          behaviorEvent: {
+            type: 'select',
+            selection: position.selection,
+          },
+          editor: slateEditor,
+        })
 
         editorActor.send({
           type: 'behavior event',
