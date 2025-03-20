@@ -122,14 +122,18 @@ export const insertBlocksActionImplementation: BehaviorActionImplementation<
         index++
       }
     } else {
+      let index = 0
+
       for (const block of fragment) {
         insertBlock({
           block,
-          placement: 'auto',
+          placement: index === 0 ? 'auto' : 'after',
           select: 'end',
           editor: action.editor,
           schema: context.schema,
         })
+
+        index++
       }
     }
   }
