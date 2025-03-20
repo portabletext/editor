@@ -41,10 +41,11 @@ describe(getDragSelection.name, () => {
       {
         _key: keyGenerator(),
         _type: 'span',
-        text: 'bar',
+        text: 'baz',
       },
     ],
   }
+  const bazPath = [{_key: baz._key}, 'children', {_key: baz.children[0]._key}]
   const image = {
     _key: keyGenerator(),
     _type: 'image',
@@ -258,6 +259,78 @@ describe(getDragSelection.name, () => {
       focus: {
         path: imagePath,
         offset: 0,
+      },
+    })
+  })
+
+  test('dragging two text blocks with the top drag handle', () => {
+    expect(
+      getDragSelection({
+        eventSelection: {
+          anchor: {
+            path: fooPath,
+            offset: 0,
+          },
+          focus: {
+            path: fooPath,
+            offset: 0,
+          },
+        },
+        snapshot: snapshot({
+          anchor: {
+            path: fooPath,
+            offset: 1,
+          },
+          focus: {
+            path: bazPath,
+            offset: 3,
+          },
+        }),
+      }),
+    ).toEqual({
+      anchor: {
+        path: fooPath,
+        offset: 0,
+      },
+      focus: {
+        path: bazPath,
+        offset: 3,
+      },
+    })
+  })
+
+  test('dragging two text blocks with the bottom drag handle', () => {
+    expect(
+      getDragSelection({
+        eventSelection: {
+          anchor: {
+            path: bazPath,
+            offset: 0,
+          },
+          focus: {
+            path: bazPath,
+            offset: 0,
+          },
+        },
+        snapshot: snapshot({
+          anchor: {
+            path: fooPath,
+            offset: 1,
+          },
+          focus: {
+            path: bazPath,
+            offset: 3,
+          },
+        }),
+      }),
+    ).toEqual({
+      anchor: {
+        path: fooPath,
+        offset: 0,
+      },
+      focus: {
+        path: bazPath,
+        offset: 3,
       },
     })
   })
