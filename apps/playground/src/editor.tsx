@@ -598,7 +598,9 @@ const RenderBlock = (props: BlockRenderProps) => {
           contentEditable={false}
           draggable={!readOnly}
           className={`absolute top-0 -left-3 bottom-0 w-1.5 bg-slate-300 rounded cursor-grab`}
-        />
+        >
+          <span />
+        </div>
         <div>{children}</div>
       </div>
     )
