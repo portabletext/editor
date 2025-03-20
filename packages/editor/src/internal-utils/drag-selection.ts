@@ -48,16 +48,32 @@ export function getDragSelection({
   if (
     snapshot.context.selection &&
     selectors.isSelectionExpanded(snapshot) &&
-    selectors.isOverlappingSelection(eventSelection)(snapshot) &&
     selectedBlocks.length > 1
   ) {
     const selectionStartBlock = selectors.getSelectionStartBlock(snapshot)
     const selectionEndBlock = selectors.getSelectionEndBlock(snapshot)
 
-    if (selectionStartBlock && selectionEndBlock) {
+    if (!selectionStartBlock || !selectionEndBlock) {
+      return dragSelection
+    }
+
+    const selectionStartPoint = utils.getBlockStartPoint(selectionStartBlock)
+    const selectionEndPoint = utils.getBlockEndPoint(selectionEndBlock)
+
+    const eventSelectionInsideBlocks = selectors.isOverlappingSelection(
+      eventSelection,
+    )({
+      ...snapshot,
+      context: {
+        ...snapshot.context,
+        selection: {anchor: selectionStartPoint, focus: selectionEndPoint},
+      },
+    })
+
+    if (eventSelectionInsideBlocks) {
       dragSelection = {
-        anchor: utils.getBlockStartPoint(selectionStartBlock),
-        focus: utils.getBlockEndPoint(selectionEndBlock),
+        anchor: selectionStartPoint,
+        focus: selectionEndPoint,
       }
     }
   }
