@@ -21,9 +21,9 @@ import {
   isMouseBehaviorEvent,
   type Behavior,
   type CustomBehaviorEvent,
-  type DataBehaviorEvent,
-  type ExternalBehaviorEvent,
+  type ExternalSyntheticBehaviorEvent,
   type InternalBehaviorAction,
+  type InternalBehaviorEvent,
   type NativeBehaviorEvent,
   type SyntheticBehaviorEvent,
 } from '../behaviors/behavior.types'
@@ -190,7 +190,7 @@ export type InternalEditorEvent =
   | {
       type: 'behavior event'
       behaviorEvent:
-        | DataBehaviorEvent
+        | InternalBehaviorEvent
         | SyntheticBehaviorEvent
         | NativeBehaviorEvent
       editor: PortableTextSlateEditor
@@ -204,7 +204,7 @@ export type InternalEditorEvent =
       nativeEvent?: {preventDefault: () => void}
     }
   | CustomBehaviorEvent
-  | ExternalBehaviorEvent
+  | ExternalSyntheticBehaviorEvent
   | ExternalEditorEvent
   | MutationEvent
   | InternalPatchEvent
@@ -224,7 +224,7 @@ export type InternalEditorEvent =
  */
 export type InternalEditorEmittedEvent =
   | EditorEmittedEvent
-  | ExternalBehaviorEvent
+  | ExternalSyntheticBehaviorEvent
   | InternalPatchEvent
   | PatchesEvent
   | UnsetEvent

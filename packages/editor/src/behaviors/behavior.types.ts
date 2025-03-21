@@ -9,33 +9,38 @@ import type {BlockOffset} from '../types/block-offset'
 import type {BlockWithOptionalKey} from '../types/block-with-optional-key'
 import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
 
-export type BehaviorEventTypeNamespace =
-  | 'annotation'
-  | 'block'
-  | 'blur'
-  | 'clipboard'
-  | 'custom'
-  | 'data transfer'
-  | 'decorator'
-  | 'delete'
-  | 'deserialization'
-  | 'deserialize'
-  | 'drag'
-  | 'focus'
-  | 'history'
-  | 'input'
-  | 'insert'
-  | 'keyboard'
-  | 'list item'
-  | 'mouse'
-  | 'move'
-  | 'select'
-  | 'serialization'
-  | 'serialize'
-  | 'style'
+/**
+ * @beta
+ */
+export type BehaviorEvent =
+  | SyntheticBehaviorEvent
+  | InternalBehaviorEvent
+  | NativeBehaviorEvent
+  | CustomBehaviorEvent
 
-export type BehaviorEventType<
-  TNamespace extends BehaviorEventTypeNamespace,
+type BehaviorEventTypeNamespace =
+  | SyntheticBehaviorEventNamespace
+  | InternalBehaviorEventNamespace
+  | NativeBehaviorEventNamespace
+  | CustomBehaviorEventNamespace
+
+type SyntheticBehaviorEventType<
+  TNamespace extends SyntheticBehaviorEventNamespace,
+  TType extends string = '',
+> = TType extends '' ? `${TNamespace}` : `${TNamespace}.${TType}`
+
+type InternalBehaviorEventType<
+  TNamespace extends InternalBehaviorEventNamespace,
+  TType extends string = '',
+> = TType extends '' ? `${TNamespace}` : `${TNamespace}.${TType}`
+
+type NativeBehaviorEventType<
+  TNamespace extends NativeBehaviorEventNamespace,
+  TType extends string = '',
+> = TType extends '' ? `${TNamespace}` : `${TNamespace}.${TType}`
+
+type CustomBehaviorEventType<
+  TNamespace extends CustomBehaviorEventNamespace,
   TType extends string = '',
 > = TType extends '' ? `${TNamespace}` : `${TNamespace}.${TType}`
 
@@ -48,8 +53,8 @@ export type NamespacedBehaviorEventType<
 /**
  * @beta
  */
-export type ExternalBehaviorEvent = {
-  type: BehaviorEventType<'insert', 'block object'>
+export type ExternalSyntheticBehaviorEvent = {
+  type: SyntheticBehaviorEventType<'insert', 'block object'>
   placement: InsertPlacement
   blockObject: {
     name: string
@@ -57,119 +62,140 @@ export type ExternalBehaviorEvent = {
   }
 }
 
+/**************************************
+ * Synthetic events
+ **************************************/
+
+type SyntheticBehaviorEventNamespace =
+  | 'annotation'
+  | 'block'
+  | 'blur'
+  | 'data transfer'
+  | 'decorator'
+  | 'delete'
+  | 'deserialization'
+  | 'focus'
+  | 'history'
+  | 'insert'
+  | 'list item'
+  | 'move'
+  | 'select'
+  | 'serialization'
+  | 'style'
+
 /**
  * @beta
  */
 export type SyntheticBehaviorEvent =
   | {
-      type: BehaviorEventType<'annotation', 'add'>
+      type: SyntheticBehaviorEventType<'annotation', 'add'>
       annotation: {
         name: string
         value: {[prop: string]: unknown}
       }
     }
   | {
-      type: BehaviorEventType<'annotation', 'remove'>
+      type: SyntheticBehaviorEventType<'annotation', 'remove'>
       annotation: {
         name: string
       }
     }
   | {
-      type: BehaviorEventType<'annotation', 'toggle'>
+      type: SyntheticBehaviorEventType<'annotation', 'toggle'>
       annotation: {
         name: string
         value: {[prop: string]: unknown}
       }
     }
   | {
-      type: BehaviorEventType<'block', 'set'>
+      type: SyntheticBehaviorEventType<'block', 'set'>
       at: [KeyedSegment]
       props: Record<string, unknown>
     }
   | {
-      type: BehaviorEventType<'block', 'unset'>
+      type: SyntheticBehaviorEventType<'block', 'unset'>
       at: [KeyedSegment]
       props: Array<string>
     }
   | {
-      type: BehaviorEventType<'blur'>
+      type: SyntheticBehaviorEventType<'blur'>
     }
   | {
-      type: BehaviorEventType<'data transfer', 'set'>
+      type: SyntheticBehaviorEventType<'data transfer', 'set'>
       data: string
       dataTransfer: DataTransfer
       mimeType: MIMEType
     }
   | {
-      type: BehaviorEventType<'decorator', 'add'>
+      type: SyntheticBehaviorEventType<'decorator', 'add'>
       decorator: string
       offsets?: {anchor: BlockOffset; focus: BlockOffset}
     }
   | {
-      type: BehaviorEventType<'decorator', 'remove'>
+      type: SyntheticBehaviorEventType<'decorator', 'remove'>
       decorator: string
     }
   | {
-      type: BehaviorEventType<'decorator', 'toggle'>
+      type: SyntheticBehaviorEventType<'decorator', 'toggle'>
       decorator: string
       offsets?: {anchor: BlockOffset; focus: BlockOffset}
     }
   | {
-      type: BehaviorEventType<'delete'>
+      type: SyntheticBehaviorEventType<'delete'>
       selection: NonNullable<EditorSelection>
     }
   | {
-      type: BehaviorEventType<'delete', 'backward'>
+      type: SyntheticBehaviorEventType<'delete', 'backward'>
       unit: TextUnit
     }
   | {
-      type: BehaviorEventType<'delete', 'block'>
+      type: SyntheticBehaviorEventType<'delete', 'block'>
       at: [KeyedSegment]
     }
   | {
-      type: BehaviorEventType<'delete', 'forward'>
+      type: SyntheticBehaviorEventType<'delete', 'forward'>
       unit: TextUnit
     }
   | {
-      type: BehaviorEventType<'delete', 'text'>
+      type: SyntheticBehaviorEventType<'delete', 'text'>
       anchor: BlockOffset
       focus: BlockOffset
     }
   | {
-      type: BehaviorEventType<'focus'>
+      type: SyntheticBehaviorEventType<'focus'>
     }
   | {
-      type: BehaviorEventType<'history', 'redo'>
+      type: SyntheticBehaviorEventType<'history', 'redo'>
     }
   | {
-      type: BehaviorEventType<'history', 'undo'>
+      type: SyntheticBehaviorEventType<'history', 'undo'>
     }
   | {
-      type: BehaviorEventType<'insert', 'blocks'>
+      type: SyntheticBehaviorEventType<'insert', 'blocks'>
       blocks: Array<PortableTextBlock>
       placement: InsertPlacement
     }
   | {
-      type: BehaviorEventType<'insert', 'inline object'>
+      type: SyntheticBehaviorEventType<'insert', 'inline object'>
       inlineObject: {
         name: string
         value?: {[prop: string]: unknown}
       }
     }
   | {
-      type: BehaviorEventType<'insert', 'break'>
+      type: SyntheticBehaviorEventType<'insert', 'break'>
     }
   | {
-      type: BehaviorEventType<'insert', 'soft break'>
+      type: SyntheticBehaviorEventType<'insert', 'soft break'>
     }
   | {
-      type: BehaviorEventType<'insert', 'block'>
+      type: SyntheticBehaviorEventType<'insert', 'block'>
       block: BlockWithOptionalKey
       placement: InsertPlacement
       select?: 'start' | 'end' | 'none'
     }
   | {
-      type: BehaviorEventType<'insert', 'span'>
+      type: SyntheticBehaviorEventType<'insert', 'span'>
       text: string
       annotations?: Array<{
         name: string
@@ -178,61 +204,61 @@ export type SyntheticBehaviorEvent =
       decorators?: Array<string>
     }
   | {
-      type: BehaviorEventType<'insert', 'text'>
+      type: SyntheticBehaviorEventType<'insert', 'text'>
       text: string
       options?: TextInsertTextOptions
     }
   | {
-      type: BehaviorEventType<'list item', 'add'>
+      type: SyntheticBehaviorEventType<'list item', 'add'>
       listItem: string
     }
   | {
-      type: BehaviorEventType<'list item', 'remove'>
+      type: SyntheticBehaviorEventType<'list item', 'remove'>
       listItem: string
     }
   | {
-      type: BehaviorEventType<'list item', 'toggle'>
+      type: SyntheticBehaviorEventType<'list item', 'toggle'>
       listItem: string
     }
   | {
-      type: BehaviorEventType<'move', 'block'>
+      type: SyntheticBehaviorEventType<'move', 'block'>
       at: [KeyedSegment]
       to: [KeyedSegment]
     }
   | {
-      type: BehaviorEventType<'move', 'block down'>
+      type: SyntheticBehaviorEventType<'move', 'block down'>
       at: [KeyedSegment]
     }
   | {
-      type: BehaviorEventType<'move', 'block up'>
+      type: SyntheticBehaviorEventType<'move', 'block up'>
       at: [KeyedSegment]
     }
   | {
-      type: BehaviorEventType<'select'>
+      type: SyntheticBehaviorEventType<'select'>
       selection: EditorSelection
     }
   | {
-      type: BehaviorEventType<'select', 'previous block'>
+      type: SyntheticBehaviorEventType<'select', 'previous block'>
       select?: 'start' | 'end'
     }
   | {
-      type: BehaviorEventType<'select', 'next block'>
+      type: SyntheticBehaviorEventType<'select', 'next block'>
       select?: 'start' | 'end'
     }
   | {
-      type: BehaviorEventType<'style', 'add'>
+      type: SyntheticBehaviorEventType<'style', 'add'>
       style: string
     }
   | {
-      type: BehaviorEventType<'style', 'remove'>
+      type: SyntheticBehaviorEventType<'style', 'remove'>
       style: string
     }
   | {
-      type: BehaviorEventType<'style', 'toggle'>
+      type: SyntheticBehaviorEventType<'style', 'toggle'>
       style: string
     }
   | {
-      type: BehaviorEventType<'deserialization', 'success'>
+      type: SyntheticBehaviorEventType<'deserialization', 'success'>
       mimeType: MIMEType
       data: Array<PortableTextBlock>
       originEvent:
@@ -244,7 +270,7 @@ export type SyntheticBehaviorEvent =
         | InputBehaviorEvent
     }
   | {
-      type: BehaviorEventType<'deserialization', 'failure'>
+      type: SyntheticBehaviorEventType<'deserialization', 'failure'>
       mimeType: MIMEType
       reason: string
       originEvent:
@@ -256,7 +282,7 @@ export type SyntheticBehaviorEvent =
         | InputBehaviorEvent
     }
   | {
-      type: BehaviorEventType<'serialization', 'success'>
+      type: SyntheticBehaviorEventType<'serialization', 'success'>
       mimeType: MIMEType
       data: string
       originEvent: PickFromUnion<
@@ -266,7 +292,7 @@ export type SyntheticBehaviorEvent =
       >
     }
   | {
-      type: BehaviorEventType<'serialization', 'failure'>
+      type: SyntheticBehaviorEventType<'serialization', 'failure'>
       mimeType: MIMEType
       reason: string
       originEvent: PickFromUnion<
@@ -278,23 +304,44 @@ export type SyntheticBehaviorEvent =
 
 export type InsertPlacement = 'auto' | 'after' | 'before'
 
+/**************************************
+ * Native events
+ **************************************/
+
+type NativeBehaviorEventNamespace =
+  | 'clipboard'
+  | 'drag'
+  | 'input'
+  | 'keyboard'
+  | 'mouse'
+
+/**
+ * @beta
+ */
+export type NativeBehaviorEvent =
+  | ClipboardBehaviorEvent
+  | DragBehaviorEvent
+  | InputBehaviorEvent
+  | KeyboardBehaviorEvent
+  | MouseBehaviorEvent
+
 type ClipboardBehaviorEvent =
   | {
-      type: BehaviorEventType<'clipboard', 'copy'>
+      type: NativeBehaviorEventType<'clipboard', 'copy'>
       originEvent: {
         dataTransfer: DataTransfer
       }
       position: Pick<EventPosition, 'selection'>
     }
   | {
-      type: BehaviorEventType<'clipboard', 'cut'>
+      type: NativeBehaviorEventType<'clipboard', 'cut'>
       originEvent: {
         dataTransfer: DataTransfer
       }
       position: Pick<EventPosition, 'selection'>
     }
   | {
-      type: BehaviorEventType<'clipboard', 'paste'>
+      type: NativeBehaviorEventType<'clipboard', 'paste'>
       originEvent: {
         dataTransfer: DataTransfer
       }
@@ -309,47 +356,47 @@ export function isClipboardBehaviorEvent(
 
 type DragBehaviorEvent =
   | {
-      type: BehaviorEventType<'drag', 'dragstart'>
+      type: NativeBehaviorEventType<'drag', 'dragstart'>
       originEvent: {
         dataTransfer: DataTransfer
       }
       position: Pick<EventPosition, 'selection'>
     }
   | {
-      type: BehaviorEventType<'drag', 'drag'>
+      type: NativeBehaviorEventType<'drag', 'drag'>
       originEvent: {
         dataTransfer: DataTransfer
       }
     }
   | {
-      type: BehaviorEventType<'drag', 'dragend'>
+      type: NativeBehaviorEventType<'drag', 'dragend'>
       originEvent: {
         dataTransfer: DataTransfer
       }
     }
   | {
-      type: BehaviorEventType<'drag', 'dragenter'>
-      originEvent: {
-        dataTransfer: DataTransfer
-      }
-      position: EventPosition
-    }
-  | {
-      type: BehaviorEventType<'drag', 'dragover'>
+      type: NativeBehaviorEventType<'drag', 'dragenter'>
       originEvent: {
         dataTransfer: DataTransfer
       }
       position: EventPosition
     }
   | {
-      type: BehaviorEventType<'drag', 'drop'>
+      type: NativeBehaviorEventType<'drag', 'dragover'>
       originEvent: {
         dataTransfer: DataTransfer
       }
       position: EventPosition
     }
   | {
-      type: BehaviorEventType<'drag', 'dragleave'>
+      type: NativeBehaviorEventType<'drag', 'drop'>
+      originEvent: {
+        dataTransfer: DataTransfer
+      }
+      position: EventPosition
+    }
+  | {
+      type: NativeBehaviorEventType<'drag', 'dragleave'>
       originEvent: {
         dataTransfer: DataTransfer
       }
@@ -373,7 +420,7 @@ export function isDragBehaviorEvent(
  * - insertFromYank
  */
 export type InputBehaviorEvent = {
-  type: BehaviorEventType<'input', '*'>
+  type: NativeBehaviorEventType<'input', '*'>
   originEvent: {
     dataTransfer: DataTransfer
   }
@@ -387,14 +434,14 @@ export function isInputBehaviorEvent(
 
 export type KeyboardBehaviorEvent =
   | {
-      type: BehaviorEventType<'keyboard', 'keydown'>
+      type: NativeBehaviorEventType<'keyboard', 'keydown'>
       originEvent: Pick<
         KeyboardEvent,
         'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
       >
     }
   | {
-      type: BehaviorEventType<'keyboard', 'keyup'>
+      type: NativeBehaviorEventType<'keyboard', 'keyup'>
       originEvent: Pick<
         KeyboardEvent,
         'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
@@ -407,9 +454,9 @@ export function isKeyboardBehaviorEvent(
   return event.type.startsWith('keyboard.')
 }
 
-export type DataBehaviorEvent =
+export type InternalBehaviorEvent =
   | {
-      type: BehaviorEventType<'deserialize'>
+      type: InternalBehaviorEventType<'deserialize'>
       originEvent:
         | PickFromUnion<
             NativeBehaviorEvent,
@@ -419,7 +466,7 @@ export type DataBehaviorEvent =
         | InputBehaviorEvent
     }
   | {
-      type: BehaviorEventType<'serialize'>
+      type: InternalBehaviorEventType<'serialize'>
       originEvent: PickFromUnion<
         NativeBehaviorEvent,
         'type',
@@ -428,7 +475,7 @@ export type DataBehaviorEvent =
     }
 
 export type MouseBehaviorEvent = {
-  type: BehaviorEventType<'mouse', 'click'>
+  type: NativeBehaviorEventType<'mouse', 'click'>
   position: EventPosition
 }
 
@@ -438,15 +485,11 @@ export function isMouseBehaviorEvent(
   return event.type.startsWith('mouse.')
 }
 
-/**
- * @beta
- */
-export type NativeBehaviorEvent =
-  | ClipboardBehaviorEvent
-  | DragBehaviorEvent
-  | InputBehaviorEvent
-  | KeyboardBehaviorEvent
-  | MouseBehaviorEvent
+/**************************************
+ * Custom events
+ **************************************/
+
+type CustomBehaviorEventNamespace = 'custom'
 
 /**
  * @beta
@@ -454,10 +497,10 @@ export type NativeBehaviorEvent =
 export type CustomBehaviorEvent<
   TPayload extends Record<string, unknown> = Record<string, unknown>,
   TType extends string = string,
-  TInternalType extends BehaviorEventType<'custom', TType> = BehaviorEventType<
+  TInternalType extends CustomBehaviorEventType<
     'custom',
     TType
-  >,
+  > = CustomBehaviorEventType<'custom', TType>,
 > = {
   type: TInternalType
 } & TPayload
@@ -475,7 +518,10 @@ export type BehaviorAction =
   | SyntheticBehaviorEvent
   | {
       type: 'raise'
-      event: DataBehaviorEvent | SyntheticBehaviorEvent | CustomBehaviorEvent
+      event:
+        | InternalBehaviorEvent
+        | SyntheticBehaviorEvent
+        | CustomBehaviorEvent
     }
   | {
       type: 'noop'
@@ -484,6 +530,12 @@ export type BehaviorAction =
       type: 'effect'
       effect: () => void
     }
+
+/**************************************
+ * Internal events
+ **************************************/
+
+type InternalBehaviorEventNamespace = 'deserialize' | 'serialize'
 
 export type InternalBehaviorAction = OmitFromUnion<
   BehaviorAction,
@@ -497,19 +549,10 @@ export type InternalBehaviorAction = OmitFromUnion<
  * @beta
  */
 export function raise(
-  event: DataBehaviorEvent | SyntheticBehaviorEvent | CustomBehaviorEvent,
+  event: InternalBehaviorEvent | SyntheticBehaviorEvent | CustomBehaviorEvent,
 ): PickFromUnion<BehaviorAction, 'type', 'raise'> {
   return {type: 'raise', event}
 }
-
-/**
- * @beta
- */
-export type BehaviorEvent =
-  | SyntheticBehaviorEvent
-  | DataBehaviorEvent
-  | NativeBehaviorEvent
-  | CustomBehaviorEvent
 
 type ResolveBehaviorEvent<
   TBehaviorEventType extends
