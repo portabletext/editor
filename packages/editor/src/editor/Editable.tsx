@@ -63,6 +63,8 @@ import type {
   ScrollSelectionIntoViewFunction,
 } from '../types/editor'
 import type {HotkeyOptions} from '../types/options'
+import {isSelectionCollapsed} from '../utils'
+import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
 import {Element} from './components/Element'
 import {Leaf} from './components/Leaf'
 import {EditorActorContext} from './editor-actor-context'
@@ -1055,6 +1057,24 @@ export const PortableTextEditable = forwardRef<
 
         event.dataTransfer.setDragImage(dragGhost, x, y)
       }
+
+      // Select drag selection
+      // If the selection is expanded then we just select the end of the
+      // selection
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'select',
+          selection: isSelectionCollapsed(dragSelection)
+            ? dragSelection
+            : {
+                anchor: getSelectionEndPoint(dragSelection),
+                focus: getSelectionEndPoint(dragSelection),
+                backward: false,
+              },
+        },
+        editor: slateEditor,
+      })
 
       editorActor.send({
         type: 'dragstart',
