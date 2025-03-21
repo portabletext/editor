@@ -36,6 +36,7 @@ import {
 import {getCompoundClientRect} from '../internal-utils/compound-client-rect'
 import {debugWithName} from '../internal-utils/debug'
 import {getDragSelection} from '../internal-utils/drag-selection'
+import {draggingOnDragOrigin} from '../internal-utils/dragging-on-drag-origin'
 import {getEventPosition} from '../internal-utils/event-position'
 import {parseBlocks} from '../internal-utils/parse-blocks'
 import {
@@ -1091,6 +1092,26 @@ export const PortableTextEditable = forwardRef<
       // Prevent Slate from handling the event
       event.stopPropagation()
 
+      const position = getEventPosition({
+        schema: editorActor.getSnapshot().context.schema,
+        slateEditor,
+        event: event.nativeEvent,
+      })
+
+      if (!position) {
+        return
+      }
+
+      const snapshot = getEditorSnapshot({
+        editorActorSnapshot: editorActor.getSnapshot(),
+        slateEditorInstance: slateEditor,
+      })
+
+      if (draggingOnDragOrigin({snapshot, position})) {
+        event.preventDefault()
+        return
+      }
+
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
@@ -1151,6 +1172,16 @@ export const PortableTextEditable = forwardRef<
         return
       }
 
+      const snapshot = getEditorSnapshot({
+        editorActorSnapshot: editorActor.getSnapshot(),
+        slateEditorInstance: slateEditor,
+      })
+
+      if (draggingOnDragOrigin({snapshot, position})) {
+        event.preventDefault()
+        return
+      }
+
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
@@ -1184,6 +1215,16 @@ export const PortableTextEditable = forwardRef<
       })
 
       if (!position) {
+        return
+      }
+
+      const snapshot = getEditorSnapshot({
+        editorActorSnapshot: editorActor.getSnapshot(),
+        slateEditorInstance: slateEditor,
+      })
+
+      if (draggingOnDragOrigin({snapshot, position})) {
+        event.preventDefault()
         return
       }
 
@@ -1225,6 +1266,16 @@ export const PortableTextEditable = forwardRef<
         return
       }
 
+      const snapshot = getEditorSnapshot({
+        editorActorSnapshot: editorActor.getSnapshot(),
+        slateEditorInstance: slateEditor,
+      })
+
+      if (draggingOnDragOrigin({snapshot, position})) {
+        event.preventDefault()
+        return
+      }
+
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
@@ -1259,6 +1310,26 @@ export const PortableTextEditable = forwardRef<
 
       // Prevent Slate from handling the event
       event.stopPropagation()
+
+      const position = getEventPosition({
+        schema: editorActor.getSnapshot().context.schema,
+        slateEditor,
+        event: event.nativeEvent,
+      })
+
+      if (!position) {
+        return
+      }
+
+      const snapshot = getEditorSnapshot({
+        editorActorSnapshot: editorActor.getSnapshot(),
+        slateEditorInstance: slateEditor,
+      })
+
+      if (draggingOnDragOrigin({snapshot, position})) {
+        event.preventDefault()
+        return
+      }
 
       editorActor.send({
         type: 'behavior event',
