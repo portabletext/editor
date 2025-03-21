@@ -741,7 +741,17 @@ export const editorMachine = setup({
               exit: [
                 ({context}) => {
                   if (context.internalDrag?.ghost) {
-                    document.body.removeChild(context.internalDrag.ghost)
+                    try {
+                      context.internalDrag.ghost.parentNode?.removeChild(
+                        context.internalDrag.ghost,
+                      )
+                    } catch (error) {
+                      console.error(
+                        new Error(
+                          `Removing the internal drag ghost failed due to: ${error.message}`,
+                        ),
+                      )
+                    }
                   }
                 },
                 assign({internalDrag: undefined}),
