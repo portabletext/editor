@@ -79,7 +79,7 @@ export function getNodeBlock({
     return undefined
   }
 
-  if (isBlockElement(schema, node)) {
+  if (isBlockElement({editor, schema}, node)) {
     return elementToBlock({schema, element: node})
   }
 
@@ -88,7 +88,7 @@ export function getNodeBlock({
       mode: 'highest',
       at: [],
       match: (n) =>
-        isBlockElement(schema, n) &&
+        isBlockElement({editor, schema}, n) &&
         n.children.some((child) => child._key === node._key),
     }),
   )
@@ -113,9 +113,13 @@ function elementToBlock({
   return fromSlateValue([element], schema.block.name)?.at(0)
 }
 
-function isBlockElement(schema: EditorSchema, node: Node): node is Element {
+function isBlockElement(
+  {editor, schema}: {editor: PortableTextSlateEditor; schema: EditorSchema},
+  node: Node,
+): node is Element {
   return (
     Element.isElement(node) &&
+    !editor.isInline(node) &&
     (schema.block.name === node._type ||
       schema.blockObjects.some(
         (blockObject) => blockObject.name === node._type,
