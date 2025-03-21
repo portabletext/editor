@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.41.3](https://github.com/portabletext/editor/compare/editor-v1.41.2...editor-v1.41.3) (2025-03-21)
+
+
+### Bug Fixes
+
+* drag selection for inline object in expanded selection ([e0289be](https://github.com/portabletext/editor/commit/e0289be83cd4b51592dc14537c6d465812f67cb4))
+
 ## [1.41.2](https://github.com/portabletext/editor/compare/editor-v1.41.1...editor-v1.41.2) (2025-03-21)
 
 
