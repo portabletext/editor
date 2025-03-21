@@ -1122,16 +1122,6 @@ export const PortableTextEditable = forwardRef<
         return
       }
 
-      const snapshot = getEditorSnapshot({
-        editorActorSnapshot: editorActor.getSnapshot(),
-        slateEditorInstance: slateEditor,
-      })
-
-      if (draggingOnDragOrigin({snapshot, position})) {
-        event.preventDefault()
-        return
-      }
-
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
@@ -1192,16 +1182,6 @@ export const PortableTextEditable = forwardRef<
         return
       }
 
-      const snapshot = getEditorSnapshot({
-        editorActorSnapshot: editorActor.getSnapshot(),
-        slateEditorInstance: slateEditor,
-      })
-
-      if (draggingOnDragOrigin({snapshot, position})) {
-        event.preventDefault()
-        return
-      }
-
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
@@ -1245,7 +1225,6 @@ export const PortableTextEditable = forwardRef<
 
       if (draggingOnDragOrigin({snapshot, position})) {
         event.preventDefault()
-        return
       }
 
       editorActor.send({
@@ -1283,16 +1262,6 @@ export const PortableTextEditable = forwardRef<
 
       if (!position) {
         console.warn('Could not find position for drop event')
-        return
-      }
-
-      const snapshot = getEditorSnapshot({
-        editorActorSnapshot: editorActor.getSnapshot(),
-        slateEditorInstance: slateEditor,
-      })
-
-      if (draggingOnDragOrigin({snapshot, position})) {
-        event.preventDefault()
         return
       }
 
@@ -1338,16 +1307,6 @@ export const PortableTextEditable = forwardRef<
       })
 
       if (!position) {
-        return
-      }
-
-      const snapshot = getEditorSnapshot({
-        editorActorSnapshot: editorActor.getSnapshot(),
-        slateEditorInstance: slateEditor,
-      })
-
-      if (draggingOnDragOrigin({snapshot, position})) {
-        event.preventDefault()
         return
       }
 
