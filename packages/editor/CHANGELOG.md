@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.41.0](https://github.com/portabletext/editor/compare/editor-v1.40.4...editor-v1.41.0) (2025-03-21)
+
+
+### Features
+
+* **utils:** add `getSelection(Start|End)Point` ([cdb5045](https://github.com/portabletext/editor/commit/cdb504553390b2062933320856473640a7fee05f))
+
+
+### Bug Fixes
+
+* account for long editors when calculating `EventPositionBlock` ([bf7a0c8](https://github.com/portabletext/editor/commit/bf7a0c803e12db44c8413f0a99a0ad2c40b33dfb))
+* add back default `[Name]` serialization of objects when dragging ([92c9651](https://github.com/portabletext/editor/commit/92c9651f42fc3b5817b8e808a4438f53c377d124))
+* adjust selection when dragging starts ([50e74f7](https://github.com/portabletext/editor/commit/50e74f7b353c151f7e607363692cfaa007d99e35))
+* always prevent Slate from handling drag events ([60c717f](https://github.com/portabletext/editor/commit/60c717f3a7aa51d2b0d9e979fa12b51c990815af))
+* ensure Slate can find a position within drop indicators ([591c94e](https://github.com/portabletext/editor/commit/591c94e8365e10c30c978062adcfd425ee981951))
+* make `EventPosition`s more resilient ([4f63395](https://github.com/portabletext/editor/commit/4f63395ceea1f5c553c1199f624b38523e324310))
+* prevent cursor from moving if dragging over drag origin ([872ba8b](https://github.com/portabletext/editor/commit/872ba8ba2f77338a7189c11d2b6867b676ba05ea))
+* reuese `EventPosition` to mitigate potential `findEventRange` error ([2193276](https://github.com/portabletext/editor/commit/21932761ec9c92678f9423051c84390490b45116))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * racejar bumped to 1.2.3
+
 ## [1.40.4](https://github.com/portabletext/editor/compare/editor-v1.40.3...editor-v1.40.4) (2025-03-20)
 
 
