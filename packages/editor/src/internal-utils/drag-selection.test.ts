@@ -525,7 +525,7 @@ describe(getDragSelection.name, () => {
             offset: 2,
           },
           focus: {
-            path: barPath,
+            path: bazPath,
             offset: 2,
           },
         }),
