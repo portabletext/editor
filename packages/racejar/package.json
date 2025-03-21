@@ -51,14 +51,14 @@
     "@cucumber/gherkin": "^32.0.0",
     "@cucumber/messages": "^27.2.0",
     "@jest/globals": "^29.7.0",
-    "@playwright/test": "^1.51.0",
+    "@playwright/test": "^1.51.1",
     "@sanity/pkg-utils": "^7.1.1",
     "typescript": "5.8.2",
     "vitest": "^3.0.8"
   },
   "peerDependencies": {
     "@jest/globals": "^29.7.0",
-    "@playwright/test": "^1.51.0",
+    "@playwright/test": "^1.51.1",
     "vitest": "^3.0.8"
   }
 }

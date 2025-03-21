@@ -24,8 +24,8 @@ importers:
         specifier: ^4.4.1
         version: 4.4.1(prettier@3.5.3)
       '@playwright/test':
-        specifier: ^1.51.0
-        version: 1.51.0
+        specifier: ^1.51.1
+        version: 1.51.1
       '@sanity/prettier-config':
         specifier: ^1.0.3
         version: 1.0.3(prettier@3.5.3)
@@ -236,7 +236,7 @@ importers:
         version: 19.0.0-beta-3229e95-20250315(eslint@8.57.1)
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-c69a5fc5-20250318(eslint@8.57.1)
+        version: 0.0.0-experimental-a4f9bd58-20250319(eslint@8.57.1)
       postcss:
         specifier: ^8.4.49
         version: 8.5.3
@@ -294,7 +294,7 @@ importers:
         version: 19.0.0-beta-3229e95-20250315(eslint@9.19.0(jiti@1.21.7))
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-c69a5fc5-20250318(eslint@9.19.0(jiti@1.21.7))
+        version: 0.0.0-experimental-a4f9bd58-20250319(eslint@9.19.0(jiti@1.21.7))
       eslint-plugin-react-refresh:
         specifier: ^0.4.14
         version: 0.4.18(eslint@9.19.0(jiti@1.21.7))
@@ -367,7 +367,7 @@ importers:
         version: 19.0.0-beta-3229e95-20250315(eslint@9.19.0(jiti@1.21.7))
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-c69a5fc5-20250318(eslint@9.19.0(jiti@1.21.7))
+        version: 0.0.0-experimental-a4f9bd58-20250319(eslint@9.19.0(jiti@1.21.7))
       eslint-plugin-react-refresh:
         specifier: ^0.4.14
         version: 0.4.18(eslint@9.19.0(jiti@1.21.7))
@@ -519,7 +519,7 @@ importers:
         version: 4.3.4(vite@6.2.0(@types/node@22.10.10)(jiti@1.21.7)(terser@5.37.0)(yaml@2.7.0))
       '@vitest/browser':
         specifier: ^3.0.8
-        version: 3.0.8(@testing-library/dom@10.4.0)(@types/node@22.10.10)(playwright@1.51.0)(typescript@5.8.2)(vite@6.2.0(@types/node@22.10.10)(jiti@1.21.7)(terser@5.37.0)(yaml@2.7.0))(vitest@3.0.8)
+        version: 3.0.8(@testing-library/dom@10.4.0)(@types/node@22.10.10)(playwright@1.51.1)(typescript@5.8.2)(vite@6.2.0(@types/node@22.10.10)(jiti@1.21.7)(terser@5.37.0)(yaml@2.7.0))(vitest@3.0.8)
       '@vitest/coverage-istanbul':
         specifier: ^3.0.8
         version: 3.0.8(vitest@3.0.8)
@@ -534,7 +534,7 @@ importers:
         version: 19.0.0-beta-3229e95-20250315(eslint@8.57.1)
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-c69a5fc5-20250318(eslint@8.57.1)
+        version: 0.0.0-experimental-a4f9bd58-20250319(eslint@8.57.1)
       jsdom:
         specifier: ^26.0.0
         version: 26.0.0
@@ -600,8 +600,8 @@ importers:
         specifier: ^29.7.0
         version: 29.7.0
       '@playwright/test':
-        specifier: ^1.51.0
-        version: 1.51.0
+        specifier: ^1.51.1
+        version: 1.51.1
       '@sanity/pkg-utils':
         specifier: ^7.1.1
         version: 7.1.1(@types/babel__core@7.20.5)(@types/node@22.10.10)(babel-plugin-react-compiler@19.0.0-beta-3229e95-20250315)(debug@4.4.0)(typescript@5.8.2)
@@ -1891,8 +1891,8 @@ packages:
     resolution: {integrity: sha512-cq8o4cWH0ibXh9VGi5P20Tu9XF/0fFXl9EUinr9QfTM7a7p0oTA4iJRCQWppXR1Pg8dSM0UCItCkPwsk9qWWYA==}
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
 
-  '@playwright/test@1.51.0':
-    resolution: {integrity: sha512-dJ0dMbZeHhI+wb77+ljx/FeC8VBP6j/rj9OAojO08JI80wTZy6vRk9KvHKiDCUh4iMpEiseMgqRBIeW+eKX6RA==}
+  '@playwright/test@1.51.1':
+    resolution: {integrity: sha512-nM+kEaTSAoVlXmMPH10017vn3FSiFqr/bh4fKg9vmAdMfd9SDqRZNvPSiAHADc/itWak+qPvMPZQOPwCBW7k7Q==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -3955,8 +3955,8 @@ packages:
     peerDependencies:
       eslint: '>=7'
 
-  eslint-plugin-react-hooks@0.0.0-experimental-c69a5fc5-20250318:
-    resolution: {integrity: sha512-2CTcMA9CHEyrMj9E/hjdQMc4PjmKP1PJlTK0NX15iRKTZENdD2evqz1MieJHWBK+YmmbmdkOdvcVQdpBg1dPug==}
+  eslint-plugin-react-hooks@0.0.0-experimental-a4f9bd58-20250319:
+    resolution: {integrity: sha512-ElaBTxYmkyWwoohfI5kmzWYaJDUVc/9VEc2uToJjmQnbt6J0SpTdHKrvDLlAd3GftI8NmdIg05+Kyp6q/4+B2g==}
     engines: {node: '>=18'}
     peerDependencies:
       eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0
@@ -5384,13 +5384,13 @@ packages:
     resolution: {integrity: sha512-nDywThFk1i4BQK4twPQ6TA4RT8bDY96yeuCVBWL3ePARCiEKDRSrNGbFIgUJpLp+XeIR65v8ra7WuJOFUBtkMA==}
     engines: {node: '>=8'}
 
-  playwright-core@1.51.0:
-    resolution: {integrity: sha512-x47yPE3Zwhlil7wlNU/iktF7t2r/URR3VLbH6EknJd/04Qc/PSJ0EY3CMXipmglLG+zyRxW6HNo2EGbKLHPWMg==}
+  playwright-core@1.51.1:
+    resolution: {integrity: sha512-/crRMj8+j/Nq5s8QcvegseuyeZPxpQCZb6HNk3Sos3BlZyAknRjoyJPFWkpNn8v0+P3WiwqFF8P+zQo4eqiNuw==}
     engines: {node: '>=18'}
     hasBin: true
 
-  playwright@1.51.0:
-    resolution: {integrity: sha512-442pTfGM0xxfCYxuBa/Pu6B2OqxqqaYq39JS8QDMGThUvIOCd6s0ANDog3uwA0cHavVlnTQzGCN7Id2YekDSXA==}
+  playwright@1.51.1:
+    resolution: {integrity: sha512-kkx+MB2KQRkyxjYPc3a0wLZZoDczmppyGJIvQ43l+aZihkaVvmu/21kiyaHeHjiFxjxNNFnUncKmcGIyOojsaw==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -8075,9 +8075,9 @@ snapshots:
 
   '@pkgr/core@0.1.1': {}
 
-  '@playwright/test@1.51.0':
+  '@playwright/test@1.51.1':
     dependencies:
-      playwright: 1.51.0
+      playwright: 1.51.1
 
   '@pnpm/config.env-replace@1.1.0': {}
 
@@ -9977,7 +9977,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@vitest/browser@3.0.8(@testing-library/dom@10.4.0)(@types/node@22.10.10)(playwright@1.51.0)(typescript@5.8.2)(vite@6.2.0(@types/node@22.10.10)(jiti@1.21.7)(terser@5.37.0)(yaml@2.7.0))(vitest@3.0.8)':
+  '@vitest/browser@3.0.8(@testing-library/dom@10.4.0)(@types/node@22.10.10)(playwright@1.51.1)(typescript@5.8.2)(vite@6.2.0(@types/node@22.10.10)(jiti@1.21.7)(terser@5.37.0)(yaml@2.7.0))(vitest@3.0.8)':
     dependencies:
       '@testing-library/user-event': 14.6.1(@testing-library/dom@10.4.0)
       '@vitest/mocker': 3.0.8(msw@2.7.3(@types/node@22.10.10)(typescript@5.8.2))(vite@6.2.0(@types/node@22.10.10)(jiti@1.21.7)(terser@5.37.0)(yaml@2.7.0))
@@ -9989,7 +9989,7 @@ snapshots:
       vitest: 3.0.8(@types/debug@4.1.12)(@types/node@22.10.10)(@vitest/browser@3.0.8)(jiti@1.21.7)(jsdom@26.0.0)(msw@2.7.3(@types/node@22.10.10)(typescript@5.8.2))(terser@5.37.0)(yaml@2.7.0)
       ws: 8.18.1
     optionalDependencies:
-      playwright: 1.51.0
+      playwright: 1.51.1
     transitivePeerDependencies:
       - '@testing-library/dom'
       - '@types/node'
@@ -10030,7 +10030,7 @@ snapshots:
       tinyrainbow: 2.0.0
       vitest: 3.0.8(@types/debug@4.1.12)(@types/node@22.10.10)(@vitest/browser@3.0.8)(jiti@1.21.7)(jsdom@26.0.0)(msw@2.7.3(@types/node@22.10.10)(typescript@5.8.2))(terser@5.37.0)(yaml@2.7.0)
     optionalDependencies:
-      '@vitest/browser': 3.0.8(@testing-library/dom@10.4.0)(@types/node@22.10.10)(playwright@1.51.0)(typescript@5.8.2)(vite@6.2.0(@types/node@22.10.10)(jiti@1.21.7)(terser@5.37.0)(yaml@2.7.0))(vitest@3.0.8)
+      '@vitest/browser': 3.0.8(@testing-library/dom@10.4.0)(@types/node@22.10.10)(playwright@1.51.1)(typescript@5.8.2)(vite@6.2.0(@types/node@22.10.10)(jiti@1.21.7)(terser@5.37.0)(yaml@2.7.0))(vitest@3.0.8)
     transitivePeerDependencies:
       - supports-color
 
@@ -10816,7 +10816,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-react-hooks@0.0.0-experimental-c69a5fc5-20250318(eslint@8.57.1):
+  eslint-plugin-react-hooks@0.0.0-experimental-a4f9bd58-20250319(eslint@8.57.1):
     dependencies:
       '@babel/core': 7.26.10
       '@babel/parser': 7.26.10
@@ -10828,7 +10828,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-react-hooks@0.0.0-experimental-c69a5fc5-20250318(eslint@9.19.0(jiti@1.21.7)):
+  eslint-plugin-react-hooks@0.0.0-experimental-a4f9bd58-20250319(eslint@9.19.0(jiti@1.21.7)):
     dependencies:
       '@babel/core': 7.26.10
       '@babel/parser': 7.26.10
@@ -12798,11 +12798,11 @@ snapshots:
     dependencies:
       find-up: 3.0.0
 
-  playwright-core@1.51.0: {}
+  playwright-core@1.51.1: {}
 
-  playwright@1.51.0:
+  playwright@1.51.1:
     dependencies:
-      playwright-core: 1.51.0
+      playwright-core: 1.51.1
     optionalDependencies:
       fsevents: 2.3.2
 
@@ -14106,7 +14106,7 @@ snapshots:
 
   vitest-browser-react@0.1.1(@types/react-dom@19.0.4(@types/react@19.0.10))(@types/react@19.0.10)(@vitest/browser@3.0.8)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(vitest@3.0.8):
     dependencies:
-      '@vitest/browser': 3.0.8(@testing-library/dom@10.4.0)(@types/node@22.10.10)(playwright@1.51.0)(typescript@5.8.2)(vite@6.2.0(@types/node@22.10.10)(jiti@1.21.7)(terser@5.37.0)(yaml@2.7.0))(vitest@3.0.8)
+      '@vitest/browser': 3.0.8(@testing-library/dom@10.4.0)(@types/node@22.10.10)(playwright@1.51.1)(typescript@5.8.2)(vite@6.2.0(@types/node@22.10.10)(jiti@1.21.7)(terser@5.37.0)(yaml@2.7.0))(vitest@3.0.8)
       react: 19.0.0
       react-dom: 19.0.0(react@19.0.0)
       vitest: 3.0.8(@types/debug@4.1.12)(@types/node@22.10.10)(@vitest/browser@3.0.8)(jiti@1.21.7)(jsdom@26.0.0)(msw@2.7.3(@types/node@22.10.10)(typescript@5.8.2))(terser@5.37.0)(yaml@2.7.0)
@@ -14139,7 +14139,7 @@ snapshots:
     optionalDependencies:
       '@types/debug': 4.1.12
       '@types/node': 22.10.10
-      '@vitest/browser': 3.0.8(@testing-library/dom@10.4.0)(@types/node@22.10.10)(playwright@1.51.0)(typescript@5.8.2)(vite@6.2.0(@types/node@22.10.10)(jiti@1.21.7)(terser@5.37.0)(yaml@2.7.0))(vitest@3.0.8)
+      '@vitest/browser': 3.0.8(@testing-library/dom@10.4.0)(@types/node@22.10.10)(playwright@1.51.1)(typescript@5.8.2)(vite@6.2.0(@types/node@22.10.10)(jiti@1.21.7)(terser@5.37.0)(yaml@2.7.0))(vitest@3.0.8)
       jsdom: 26.0.0
     transitivePeerDependencies:
       - jiti
