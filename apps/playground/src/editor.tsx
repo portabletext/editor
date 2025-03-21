@@ -52,7 +52,7 @@ import {wait} from './wait'
 
 const featureFlags = createStore({
   context: {
-    enableDragHandles: false,
+    enableDragHandles: true,
   },
   on: {
     toggleDragHandles: (context) => ({
