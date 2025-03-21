@@ -3,6 +3,11 @@ import * as selectors from '../selectors'
 import * as utils from '../utils'
 import type {EventPosition} from './event-position'
 
+/**
+ * Given the current editor `snapshot` and an `eventSelection` representing
+ * where the drag event origins from, this function calculates the selection
+ * in the editor that should be dragged.
+ */
 export function getDragSelection({
   eventSelection,
   snapshot,
@@ -12,21 +17,7 @@ export function getDragSelection({
 }) {
   let dragSelection = eventSelection
 
-  const collapsedSelection = selectors.isSelectionCollapsed({
-    ...snapshot,
-    context: {
-      ...snapshot.context,
-      selection: eventSelection,
-    },
-  })
-  const focusTextBlock = selectors.getFocusTextBlock({
-    ...snapshot,
-    context: {
-      ...snapshot.context,
-      selection: eventSelection,
-    },
-  })
-  const focusSpan = selectors.getFocusSpan({
+  const draggedInlineObject = selectors.getFocusInlineObject({
     ...snapshot,
     context: {
       ...snapshot.context,
@@ -34,12 +25,38 @@ export function getDragSelection({
     },
   })
 
-  if (collapsedSelection && focusTextBlock && focusSpan) {
+  if (draggedInlineObject) {
+    return dragSelection
+  }
+
+  const draggingCollapsedSelection = selectors.isSelectionCollapsed({
+    ...snapshot,
+    context: {
+      ...snapshot.context,
+      selection: eventSelection,
+    },
+  })
+  const draggedTextBlock = selectors.getFocusTextBlock({
+    ...snapshot,
+    context: {
+      ...snapshot.context,
+      selection: eventSelection,
+    },
+  })
+  const draggedSpan = selectors.getFocusSpan({
+    ...snapshot,
+    context: {
+      ...snapshot.context,
+      selection: eventSelection,
+    },
+  })
+
+  if (draggingCollapsedSelection && draggedTextBlock && draggedSpan) {
     // Looks like we are dragging an empty span
     // Let's drag the entire block instead
     dragSelection = {
-      anchor: utils.getBlockStartPoint(focusTextBlock),
-      focus: utils.getBlockEndPoint(focusTextBlock),
+      anchor: utils.getBlockStartPoint(draggedTextBlock),
+      focus: utils.getBlockEndPoint(draggedTextBlock),
     }
   }
 
