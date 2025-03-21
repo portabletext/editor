@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.41.1](https://github.com/portabletext/editor/compare/editor-v1.41.0...editor-v1.41.1) (2025-03-21)
+
+
+### Bug Fixes
+
+* **drag events:** remove aggressive usage of `preventDefault` and early returns ([3f6c449](https://github.com/portabletext/editor/commit/3f6c4498c93bb8ded94202ecb765f7b954dc2f49))
+
 ## [1.41.0](https://github.com/portabletext/editor/compare/editor-v1.40.4...editor-v1.41.0) (2025-03-21)
 
 
