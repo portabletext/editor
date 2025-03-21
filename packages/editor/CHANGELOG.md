@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.41.2](https://github.com/portabletext/editor/compare/editor-v1.41.1...editor-v1.41.2) (2025-03-21)
+
+
+### Bug Fixes
+
+* **dnd:** edge case with inline objects and block objects sharing name ([6881a7c](https://github.com/portabletext/editor/commit/6881a7c93c7d8c326ae811f1c99c780c2ff33e1a))
+* mitigate potential error when removing drag ghost ([da324d8](https://github.com/portabletext/editor/commit/da324d8b22da55174f777e1935a804be3a979e19))
+
 ## [1.41.1](https://github.com/portabletext/editor/compare/editor-v1.41.0...editor-v1.41.1) (2025-03-21)
 
 
