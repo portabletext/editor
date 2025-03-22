@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.41.4](https://github.com/portabletext/editor/compare/editor-v1.41.3...editor-v1.41.4) (2025-03-22)
+
+
+### Bug Fixes
+
+* **dnd:** prevent `drag.dragover` default behavior using Behavior ([8e390bd](https://github.com/portabletext/editor/commit/8e390bd08c506ee7c931d919cfdd4d801421de5f))
+* **dnd:** remove unnecessary event prevention ([0df9c60](https://github.com/portabletext/editor/commit/0df9c603769fbd378e1026477a369aabf835e1b3))
+* **dnd:** select as part of default `drag.drop` Behavior ([27050ac](https://github.com/portabletext/editor/commit/27050ace8ef1474b6da7f153321944c7bc8b481d))
+
 ## [1.41.3](https://github.com/portabletext/editor/compare/editor-v1.41.2...editor-v1.41.3) (2025-03-21)
 
 
