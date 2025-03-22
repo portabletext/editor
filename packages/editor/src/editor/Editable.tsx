@@ -1267,15 +1267,6 @@ export const PortableTextEditable = forwardRef<
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
-          type: 'select',
-          selection: position.selection,
-        },
-        editor: slateEditor,
-      })
-
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
           type: 'drag.drop',
           originEvent: {
             dataTransfer: event.dataTransfer,

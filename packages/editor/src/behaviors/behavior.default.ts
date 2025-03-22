@@ -295,6 +295,10 @@ export const defaultBehaviors = [
     actions: [
       ({event}) => [
         raise({
+          type: 'select',
+          selection: event.position.selection,
+        }),
+        raise({
           type: 'deserialize',
           originEvent: event,
         }),
