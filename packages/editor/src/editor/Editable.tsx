@@ -943,9 +943,6 @@ export const PortableTextEditable = forwardRef<
         return
       }
 
-      // Prevent Slate from handling the event
-      event.stopPropagation()
-
       const position = getEventPosition({
         schema: editorActor.getSnapshot().context.schema,
         slateEditor,
@@ -1097,6 +1094,9 @@ export const PortableTextEditable = forwardRef<
         },
         editor: slateEditor,
       })
+
+      // Prevent Slate from handling the event
+      return true
     },
     [onDragStart, editorActor, slateEditor],
   )
@@ -1108,9 +1108,6 @@ export const PortableTextEditable = forwardRef<
       if (event.isDefaultPrevented() || event.isPropagationStopped()) {
         return
       }
-
-      // Prevent Slate from handling the event
-      event.stopPropagation()
 
       const position = getEventPosition({
         schema: editorActor.getSnapshot().context.schema,
@@ -1132,6 +1129,9 @@ export const PortableTextEditable = forwardRef<
         },
         editor: slateEditor,
       })
+
+      // Prevent Slate from handling the event
+      return true
     },
     [onDrag, editorActor, slateEditor],
   )
@@ -1144,9 +1144,6 @@ export const PortableTextEditable = forwardRef<
         return
       }
 
-      // Prevent Slate from handling the event
-      event.stopPropagation()
-
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
@@ -1157,6 +1154,9 @@ export const PortableTextEditable = forwardRef<
         },
         editor: slateEditor,
       })
+
+      // Prevent Slate from handling the event
+      return true
     },
     [onDragEnd, editorActor, slateEditor],
   )
@@ -1168,9 +1168,6 @@ export const PortableTextEditable = forwardRef<
       if (event.isDefaultPrevented() || event.isPropagationStopped()) {
         return
       }
-
-      // Prevent Slate from handling the event
-      event.stopPropagation()
 
       const position = getEventPosition({
         schema: editorActor.getSnapshot().context.schema,
@@ -1193,6 +1190,9 @@ export const PortableTextEditable = forwardRef<
         },
         editor: slateEditor,
       })
+
+      // Prevent Slate from handling the event
+      return true
     },
     [onDragEnter, editorActor, slateEditor],
   )
@@ -1204,9 +1204,6 @@ export const PortableTextEditable = forwardRef<
       if (event.isDefaultPrevented() || event.isPropagationStopped()) {
         return
       }
-
-      // Prevent Slate from handling the event
-      event.stopPropagation()
 
       const position = getEventPosition({
         schema: editorActor.getSnapshot().context.schema,
@@ -1224,6 +1221,8 @@ export const PortableTextEditable = forwardRef<
       })
 
       if (draggingOnDragOrigin({snapshot, position})) {
+        // We don't want to show the caret in the text when dragging over the drop
+        // origin
         event.preventDefault()
       }
 
@@ -1239,6 +1238,9 @@ export const PortableTextEditable = forwardRef<
         editor: slateEditor,
         nativeEvent: event,
       })
+
+      // Prevent Slate from handling the event
+      return true
     },
     [onDragOver, editorActor, slateEditor],
   )
@@ -1250,9 +1252,6 @@ export const PortableTextEditable = forwardRef<
       if (event.isDefaultPrevented() || event.isPropagationStopped()) {
         return
       }
-
-      // Prevent Slate from handling the event
-      event.preventDefault()
 
       const position = getEventPosition({
         schema: editorActor.getSnapshot().context.schema,
@@ -1284,7 +1283,11 @@ export const PortableTextEditable = forwardRef<
           position,
         },
         editor: slateEditor,
+        nativeEvent: event,
       })
+
+      // Prevent Slate from handling the event
+      return true
     },
     [onDrop, editorActor, slateEditor],
   )
@@ -1296,9 +1299,6 @@ export const PortableTextEditable = forwardRef<
       if (event.isDefaultPrevented() || event.isPropagationStopped()) {
         return
       }
-
-      // Prevent Slate from handling the event
-      event.stopPropagation()
 
       const position = getEventPosition({
         schema: editorActor.getSnapshot().context.schema,
@@ -1320,6 +1320,9 @@ export const PortableTextEditable = forwardRef<
         },
         editor: slateEditor,
       })
+
+      // Prevent Slate from handling the event
+      return true
     },
     [onDragLeave, editorActor, slateEditor],
   )
