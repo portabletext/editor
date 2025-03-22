@@ -36,7 +36,6 @@ import {
 import {getCompoundClientRect} from '../internal-utils/compound-client-rect'
 import {debugWithName} from '../internal-utils/debug'
 import {getDragSelection} from '../internal-utils/drag-selection'
-import {draggingOnDragOrigin} from '../internal-utils/dragging-on-drag-origin'
 import {getEventPosition} from '../internal-utils/event-position'
 import {parseBlocks} from '../internal-utils/parse-blocks'
 import {
@@ -1213,17 +1212,6 @@ export const PortableTextEditable = forwardRef<
 
       if (!position) {
         return
-      }
-
-      const snapshot = getEditorSnapshot({
-        editorActorSnapshot: editorActor.getSnapshot(),
-        slateEditorInstance: slateEditor,
-      })
-
-      if (draggingOnDragOrigin({snapshot, position})) {
-        // We don't want to show the caret in the text when dragging over the drop
-        // origin
-        event.preventDefault()
       }
 
       editorActor.send({
