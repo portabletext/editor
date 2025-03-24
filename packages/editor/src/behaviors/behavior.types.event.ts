@@ -1,6 +1,5 @@
 import type {KeyedSegment, PortableTextBlock} from '@sanity/types'
 import type {TextUnit} from 'slate'
-import type {TextInsertTextOptions} from 'slate/dist/interfaces/transforms/text'
 import type {EventPosition} from '../internal-utils/event-position'
 import type {MIMEType} from '../internal-utils/mime-type'
 import type {PickFromUnion} from '../type-utils'
@@ -190,7 +189,6 @@ export type SyntheticBehaviorEvent =
   | {
       type: SyntheticBehaviorEventType<'insert', 'text'>
       text: string
-      options?: TextInsertTextOptions
     }
   | {
       type: SyntheticBehaviorEventType<'list item', 'add'>
