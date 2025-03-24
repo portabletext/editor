@@ -179,7 +179,6 @@ export function createWithEventListeners(
         behaviorEvent: {
           type: 'insert.text',
           text,
-          options,
         },
         editor,
         defaultActionCallback: () => {
