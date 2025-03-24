@@ -2,7 +2,8 @@ import {isPortableTextTextBlock} from '@sanity/types'
 import {isHotkey} from '../internal-utils/is-hotkey'
 import * as selectors from '../selectors'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
-import {defineBehavior, raise} from './behavior.types'
+import {raise} from './behavior.types.action'
+import {defineBehavior} from './behavior.types.behavior'
 
 const arrowDownOnLonelyBlockObject = defineBehavior({
   on: 'keyboard.keydown',

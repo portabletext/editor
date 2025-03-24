@@ -1,7 +1,7 @@
 import type {EditorSchema} from '../editor/define-schema'
 import {looksLikeUrl} from '../internal-utils/looks-like-url'
 import * as selectors from '../selectors'
-import {defineBehavior} from './behavior.types'
+import {defineBehavior} from './behavior.types.behavior'
 
 /**
  * @beta

@@ -12,6 +12,8 @@ import {
 import {performAction} from '../behavior-actions/behavior.actions'
 import {coreBehaviors} from '../behaviors/behavior.core'
 import {defaultBehaviors} from '../behaviors/behavior.default'
+import type {InternalBehaviorAction} from '../behaviors/behavior.types.action'
+import type {Behavior} from '../behaviors/behavior.types.behavior'
 import {
   isClipboardBehaviorEvent,
   isCustomBehaviorEvent,
@@ -19,14 +21,12 @@ import {
   isInputBehaviorEvent,
   isKeyboardBehaviorEvent,
   isMouseBehaviorEvent,
-  type Behavior,
   type CustomBehaviorEvent,
   type ExternalSyntheticBehaviorEvent,
-  type InternalBehaviorAction,
   type InternalBehaviorEvent,
   type NativeBehaviorEvent,
   type SyntheticBehaviorEvent,
-} from '../behaviors/behavior.types'
+} from '../behaviors/behavior.types.event'
 import type {Converter} from '../converters/converter.types'
 import type {EventPosition} from '../internal-utils/event-position'
 import type {NamespaceEvent} from '../type-utils'

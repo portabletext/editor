@@ -1,5 +1,6 @@
 import * as selectors from '../selectors'
-import {defineBehavior, raise} from './behavior.types'
+import {raise} from './behavior.types.action'
+import {defineBehavior} from './behavior.types.behavior'
 
 const addAnnotationOnCollapsedSelection = defineBehavior({
   on: 'annotation.add',

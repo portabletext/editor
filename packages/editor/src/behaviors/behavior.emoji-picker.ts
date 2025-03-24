@@ -1,7 +1,7 @@
 import {assertEvent, assign, createActor, setup} from 'xstate'
 import {isHotkey} from '../internal-utils/is-hotkey'
 import * as selectors from '../selectors'
-import {defineBehavior} from './behavior.types'
+import {defineBehavior} from './behavior.types.behavior'
 
 const emojiCharRegEx = /^[a-zA-Z-_0-9]{1}$/
 const incompleteEmojiRegEx = /:([a-zA-Z-_0-9]+)$/

@@ -1,4 +1,4 @@
-import type {InternalBehaviorAction} from '../behaviors/behavior.types'
+import type {InternalBehaviorAction} from '../behaviors/behavior.types.action'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {
   addAnnotationActionImplementation,

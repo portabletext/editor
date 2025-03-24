@@ -1,7 +1,8 @@
 import * as selectors from '../selectors'
 import {blockOffsetsToSelection} from '../utils'
 import {raiseInsertSoftBreak} from './behavior.default.raise-soft-break'
-import {defineBehavior, raise} from './behavior.types'
+import {raise} from './behavior.types.action'
+import {defineBehavior} from './behavior.types.behavior'
 
 const toggleAnnotationOff = defineBehavior({
   on: 'annotation.toggle',

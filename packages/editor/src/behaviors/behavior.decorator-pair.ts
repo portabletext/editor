@@ -3,7 +3,7 @@ import {createPairRegex} from '../internal-utils/get-text-to-emphasize'
 import * as selectors from '../selectors'
 import type {BlockOffset} from '../types/block-offset'
 import * as utils from '../utils'
-import {defineBehavior} from './behavior.types'
+import {defineBehavior} from './behavior.types.behavior'
 
 export function createDecoratorPairBehavior(config: {
   decorator: ({schema}: {schema: EditorSchema}) => string | undefined
