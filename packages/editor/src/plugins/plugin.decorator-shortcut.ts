@@ -8,7 +8,7 @@ import {
   type CallbackLogicFunction,
 } from 'xstate'
 import {createDecoratorPairBehavior} from '../behaviors/behavior.decorator-pair'
-import {defineBehavior} from '../behaviors/behavior.types'
+import {defineBehavior} from '../behaviors/behavior.types.behavior'
 import type {Editor} from '../editor/create-editor'
 import type {EditorSchema} from '../editor/define-schema'
 import {useEditor} from '../editor/editor-provider'

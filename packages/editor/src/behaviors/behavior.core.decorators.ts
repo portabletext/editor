@@ -1,5 +1,6 @@
 import {isHotkey} from '../internal-utils/is-hotkey'
-import {defineBehavior, raise} from './behavior.types'
+import {raise} from './behavior.types.action'
+import {defineBehavior} from './behavior.types.behavior'
 
 export const coreDecoratorBehaviors = {
   strongShortcut: defineBehavior({

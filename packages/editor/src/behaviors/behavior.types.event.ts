@@ -1,13 +1,12 @@
 import type {KeyedSegment, PortableTextBlock} from '@sanity/types'
 import type {TextUnit} from 'slate'
 import type {TextInsertTextOptions} from 'slate/dist/interfaces/transforms/text'
-import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
 import type {EventPosition} from '../internal-utils/event-position'
 import type {MIMEType} from '../internal-utils/mime-type'
-import type {OmitFromUnion, PickFromUnion} from '../type-utils'
+import type {PickFromUnion} from '../type-utils'
 import type {BlockOffset} from '../types/block-offset'
 import type {BlockWithOptionalKey} from '../types/block-with-optional-key'
-import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
+import type {EditorSelection} from '../types/editor'
 
 /**
  * @beta
@@ -18,33 +17,13 @@ export type BehaviorEvent =
   | NativeBehaviorEvent
   | CustomBehaviorEvent
 
-type BehaviorEventTypeNamespace =
+export type BehaviorEventTypeNamespace =
   | SyntheticBehaviorEventNamespace
   | InternalBehaviorEventNamespace
   | NativeBehaviorEventNamespace
   | CustomBehaviorEventNamespace
 
-type SyntheticBehaviorEventType<
-  TNamespace extends SyntheticBehaviorEventNamespace,
-  TType extends string = '',
-> = TType extends '' ? `${TNamespace}` : `${TNamespace}.${TType}`
-
-type InternalBehaviorEventType<
-  TNamespace extends InternalBehaviorEventNamespace,
-  TType extends string = '',
-> = TType extends '' ? `${TNamespace}` : `${TNamespace}.${TType}`
-
-type NativeBehaviorEventType<
-  TNamespace extends NativeBehaviorEventNamespace,
-  TType extends string = '',
-> = TType extends '' ? `${TNamespace}` : `${TNamespace}.${TType}`
-
-type CustomBehaviorEventType<
-  TNamespace extends CustomBehaviorEventNamespace,
-  TType extends string = '',
-> = TType extends '' ? `${TNamespace}` : `${TNamespace}.${TType}`
-
-export type NamespacedBehaviorEventType<
+type NamespacedBehaviorEventType<
   TNamespace extends BehaviorEventTypeNamespace | '',
 > = TNamespace extends ''
   ? BehaviorEvent['type']
@@ -65,6 +44,11 @@ export type ExternalSyntheticBehaviorEvent = {
 /**************************************
  * Synthetic events
  **************************************/
+
+type SyntheticBehaviorEventType<
+  TNamespace extends SyntheticBehaviorEventNamespace,
+  TType extends string = '',
+> = TType extends '' ? `${TNamespace}` : `${TNamespace}.${TType}`
 
 type SyntheticBehaviorEventNamespace =
   | 'annotation'
@@ -304,6 +288,43 @@ export type SyntheticBehaviorEvent =
 
 export type InsertPlacement = 'auto' | 'after' | 'before'
 
+export function isKeyboardBehaviorEvent(
+  event: BehaviorEvent,
+): event is KeyboardBehaviorEvent {
+  return event.type.startsWith('keyboard.')
+}
+
+/**************************************
+ * Internal events
+ **************************************/
+
+type InternalBehaviorEventNamespace = 'deserialize' | 'serialize'
+
+type InternalBehaviorEventType<
+  TNamespace extends InternalBehaviorEventNamespace,
+  TType extends string = '',
+> = TType extends '' ? `${TNamespace}` : `${TNamespace}.${TType}`
+
+export type InternalBehaviorEvent =
+  | {
+      type: InternalBehaviorEventType<'deserialize'>
+      originEvent:
+        | PickFromUnion<
+            NativeBehaviorEvent,
+            'type',
+            'drag.drop' | 'clipboard.paste'
+          >
+        | InputBehaviorEvent
+    }
+  | {
+      type: InternalBehaviorEventType<'serialize'>
+      originEvent: PickFromUnion<
+        NativeBehaviorEvent,
+        'type',
+        'clipboard.copy' | 'clipboard.cut' | 'drag.dragstart'
+      >
+    }
+
 /**************************************
  * Native events
  **************************************/
@@ -314,6 +335,11 @@ type NativeBehaviorEventNamespace =
   | 'input'
   | 'keyboard'
   | 'mouse'
+
+type NativeBehaviorEventType<
+  TNamespace extends NativeBehaviorEventNamespace,
+  TType extends string = '',
+> = TType extends '' ? `${TNamespace}` : `${TNamespace}.${TType}`
 
 /**
  * @beta
@@ -448,32 +474,6 @@ export type KeyboardBehaviorEvent =
       >
     }
 
-export function isKeyboardBehaviorEvent(
-  event: BehaviorEvent,
-): event is KeyboardBehaviorEvent {
-  return event.type.startsWith('keyboard.')
-}
-
-export type InternalBehaviorEvent =
-  | {
-      type: InternalBehaviorEventType<'deserialize'>
-      originEvent:
-        | PickFromUnion<
-            NativeBehaviorEvent,
-            'type',
-            'drag.drop' | 'clipboard.paste'
-          >
-        | InputBehaviorEvent
-    }
-  | {
-      type: InternalBehaviorEventType<'serialize'>
-      originEvent: PickFromUnion<
-        NativeBehaviorEvent,
-        'type',
-        'clipboard.copy' | 'clipboard.cut' | 'drag.dragstart'
-      >
-    }
-
 export type MouseBehaviorEvent = {
   type: NativeBehaviorEventType<'mouse', 'click'>
   position: EventPosition
@@ -490,6 +490,11 @@ export function isMouseBehaviorEvent(
  **************************************/
 
 type CustomBehaviorEventNamespace = 'custom'
+
+type CustomBehaviorEventType<
+  TNamespace extends CustomBehaviorEventNamespace,
+  TType extends string = '',
+> = TType extends '' ? `${TNamespace}` : `${TNamespace}.${TType}`
 
 /**
  * @beta
@@ -511,50 +516,11 @@ export function isCustomBehaviorEvent(
   return event.type.startsWith('custom.')
 }
 
-/**
- * @beta
- */
-export type BehaviorAction =
-  | SyntheticBehaviorEvent
-  | {
-      type: 'raise'
-      event:
-        | InternalBehaviorEvent
-        | SyntheticBehaviorEvent
-        | CustomBehaviorEvent
-    }
-  | {
-      type: 'noop'
-    }
-  | {
-      type: 'effect'
-      effect: () => void
-    }
-
 /**************************************
- * Internal events
+ * Resolve behavior event
  **************************************/
 
-type InternalBehaviorEventNamespace = 'deserialize' | 'serialize'
-
-export type InternalBehaviorAction = OmitFromUnion<
-  BehaviorAction,
-  'type',
-  'raise'
-> & {
-  editor: PortableTextSlateEditor
-}
-
-/**
- * @beta
- */
-export function raise(
-  event: InternalBehaviorEvent | SyntheticBehaviorEvent | CustomBehaviorEvent,
-): PickFromUnion<BehaviorAction, 'type', 'raise'> {
-  return {type: 'raise', event}
-}
-
-type ResolveBehaviorEvent<
+export type ResolveBehaviorEvent<
   TBehaviorEventType extends
     | '*'
     | `${BehaviorEventTypeNamespace}.*`
@@ -575,112 +541,3 @@ type ResolveBehaviorEvent<
       : TBehaviorEventType extends BehaviorEvent['type']
         ? PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>
         : never
-
-/**
- * @beta
- */
-export type Behavior<
-  TBehaviorEventType extends
-    | '*'
-    | `${BehaviorEventTypeNamespace}.*`
-    | BehaviorEvent['type'] =
-    | '*'
-    | `${BehaviorEventTypeNamespace}.*`
-    | BehaviorEvent['type'],
-  TGuardResponse = true,
-  TBehaviorEvent extends
-    ResolveBehaviorEvent<TBehaviorEventType> = ResolveBehaviorEvent<TBehaviorEventType>,
-> = {
-  /**
-   * The internal editor event that triggers this behavior.
-   */
-  on: TBehaviorEventType
-  /**
-   * Predicate function that determines if the behavior should be executed.
-   * Returning a non-nullable value from the guard will pass the value to the
-   * actions and execute them.
-   */
-  guard?: BehaviorGuard<TBehaviorEvent, TGuardResponse>
-  /**
-   * Array of behavior action sets.
-   */
-  actions: Array<BehaviorActionSet<TBehaviorEvent, TGuardResponse>>
-}
-
-/**
- * @beta
- */
-export type BehaviorGuard<TBehaviorEvent, TGuardResponse> = (payload: {
-  /**
-   * @deprecated
-   * Use `snapshot` instead
-   */
-  context: EditorContext
-  snapshot: EditorSnapshot
-  event: TBehaviorEvent
-}) => TGuardResponse | false
-
-/**
- * @beta
- */
-export type BehaviorActionSet<TBehaviorEvent, TGuardResponse> = (
-  payload: {
-    /**
-     * @deprecated
-     * Use `snapshot` instead
-     */
-    context: EditorContext
-    snapshot: EditorSnapshot
-    event: TBehaviorEvent
-  },
-  guardResponse: TGuardResponse,
-) => Array<BehaviorAction>
-
-/**
- * @beta
- *
- * @example
- *
- * ```tsx
- * const noLowerCaseA = defineBehavior({
- *   on: 'insert.text',
- *   guard: ({event, context}) => event.text === 'a',
- *   actions: [({event, context}) => [{type: 'insert.text', text: 'A'}]],
- * })
- * ```
- *
- *
- *
- *
- *
- */
-export function defineBehavior<
-  TPayload extends Record<string, unknown>,
-  TBehaviorEventType extends
-    | '*'
-    | `${BehaviorEventTypeNamespace}.*`
-    | BehaviorEvent['type'] = CustomBehaviorEvent['type'],
-  TGuardResponse = true,
->(
-  behavior: Behavior<
-    TBehaviorEventType,
-    TGuardResponse,
-    ResolveBehaviorEvent<TBehaviorEventType, TPayload>
-  >,
-): Behavior
-export function defineBehavior<
-  TPayload extends never = never,
-  TBehaviorEventType extends
-    | '*'
-    | `${BehaviorEventTypeNamespace}.*`
-    | BehaviorEvent['type'] = BehaviorEvent['type'],
-  TGuardResponse = true,
-  TBehaviorEvent extends ResolveBehaviorEvent<
-    TBehaviorEventType,
-    TPayload
-  > = ResolveBehaviorEvent<TBehaviorEventType, TPayload>,
->(
-  behavior: Behavior<TBehaviorEventType, TGuardResponse, TBehaviorEvent>,
-): Behavior {
-  return behavior as unknown as Behavior
-}

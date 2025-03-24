@@ -16,7 +16,7 @@ import type {
   RangeDecoration,
 } from '../src'
 import {coreBehaviors} from '../src/behaviors'
-import type {Behavior} from '../src/behaviors/behavior.types'
+import type {Behavior} from '../src/behaviors/behavior.types.behavior'
 
 type MutationEvent = {
   type: 'mutation'

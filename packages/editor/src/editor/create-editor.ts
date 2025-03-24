@@ -11,12 +11,12 @@ import {
   type EventObject,
   type Snapshot,
 } from 'xstate'
+import type {Behavior} from '../behaviors/behavior.types.behavior'
 import type {
-  Behavior,
   CustomBehaviorEvent,
   ExternalSyntheticBehaviorEvent,
   SyntheticBehaviorEvent,
-} from '../behaviors/behavior.types'
+} from '../behaviors/behavior.types.event'
 import {coreConverters} from '../converters/converters.core'
 import {compileType} from '../internal-utils/schema'
 import type {EditableAPI} from '../types/editor'

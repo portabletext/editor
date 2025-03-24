@@ -1,5 +1,6 @@
 import {keyIs} from '../internal-utils/key-is'
-import {defineBehavior, raise} from './behavior.types'
+import {raise} from './behavior.types.action'
+import {defineBehavior} from './behavior.types.behavior'
 
 /**
  * On WebKit, Shift+Enter results in an `insertParagraph` input event rather

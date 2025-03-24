@@ -3,7 +3,7 @@ import type {EditorSchema} from '../editor/define-schema'
 import * as selectors from '../selectors'
 import {spanSelectionPointToBlockOffset} from '../utils/util.block-offset'
 import {getTextBlockText} from '../utils/util.get-text-block-text'
-import {defineBehavior} from './behavior.types'
+import {defineBehavior} from './behavior.types.behavior'
 
 /**
  * @beta
