@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.42.0](https://github.com/portabletext/editor/compare/editor-v1.41.4...editor-v1.42.0) (2025-03-24)
+
+
+### Features
+
+* **plugins:** export `CoreBehaviorsPlugin` ([40a3b6b](https://github.com/portabletext/editor/commit/40a3b6b24a93ac28507c2fa89f72226596a3d5f3))
+
+
+### Bug Fixes
+
+* remove internal `options` from `insert.text` event ([431c56c](https://github.com/portabletext/editor/commit/431c56c05abd547c5ba5f1a4cecd703f10c4f1a9))
+
 ## [1.41.4](https://github.com/portabletext/editor/compare/editor-v1.41.3...editor-v1.41.4) (2025-03-22)
 
 
