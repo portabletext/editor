@@ -1,3 +1,4 @@
+import {omit} from 'lodash'
 import type {InternalBehaviorAction} from '../behaviors/behavior.types.action'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {
@@ -13,6 +14,7 @@ import {
   historyRedoActionImplementation,
   historyUndoActionImplementation,
 } from '../editor/plugins/createWithUndoRedo'
+import {debugWithName} from '../internal-utils/debug'
 import type {PickFromUnion} from '../type-utils'
 import {blockSetBehaviorActionImplementation} from './behavior.action.block.set'
 import {blockUnsetBehaviorActionImplementation} from './behavior.action.block.unset'
@@ -56,6 +58,8 @@ import {
   removeStyleActionImplementation,
   toggleStyleActionImplementation,
 } from './behavior.action.style'
+
+const debug = debugWithName('behaviors:action')
 
 export type BehaviorActionImplementationContext = Pick<
   EditorContext,
@@ -130,6 +134,8 @@ export function performAction({
   context: BehaviorActionImplementationContext
   action: InternalBehaviorAction
 }) {
+  debug(JSON.stringify(omit(action, ['editor']), null, 2))
+
   switch (action.type) {
     case 'annotation.add': {
       behaviorActionImplementations['annotation.add']({
