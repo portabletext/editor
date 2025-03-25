@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.42.1](https://github.com/portabletext/editor/compare/editor-v1.42.0...editor-v1.42.1) (2025-03-25)
+
+
+### Bug Fixes
+
+* **performance:** bail out of empty action sets ([37f2cd6](https://github.com/portabletext/editor/commit/37f2cd69e1bd97c9eb1ffc31751231472acf7ca9))
+
 ## [1.42.0](https://github.com/portabletext/editor/compare/editor-v1.41.4...editor-v1.42.0) (2025-03-24)
 
 
