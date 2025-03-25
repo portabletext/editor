@@ -26,11 +26,20 @@ const CURRENT_BEHAVIOR_ACTION_SET: WeakMap<
 
 export function withApplyingBehaviorActionSet(editor: Editor, fn: () => void) {
   const current = CURRENT_BEHAVIOR_ACTION_SET.get(editor)
-  CURRENT_BEHAVIOR_ACTION_SET.set(editor, {
-    actionSetId: defaultKeyGenerator(),
-  })
+
+  if (current) {
+    withApplyingBehaviorActions(editor, fn)
+    return
+  }
+
+  CURRENT_BEHAVIOR_ACTION_SET.set(
+    editor,
+    current ?? {
+      actionSetId: defaultKeyGenerator(),
+    },
+  )
   withApplyingBehaviorActions(editor, fn)
-  CURRENT_BEHAVIOR_ACTION_SET.set(editor, current)
+  CURRENT_BEHAVIOR_ACTION_SET.set(editor, undefined)
 }
 
 export function getCurrentBehaviorActionSetId(editor: Editor) {
