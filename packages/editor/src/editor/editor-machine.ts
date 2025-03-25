@@ -9,23 +9,16 @@ import {
   setup,
   type ActorRefFrom,
 } from 'xstate'
-import {performAction} from '../behavior-actions/behavior.actions'
 import {coreBehaviors} from '../behaviors/behavior.core'
 import {defaultBehaviors} from '../behaviors/behavior.default'
-import type {InternalBehaviorAction} from '../behaviors/behavior.types.action'
+import {performEvent} from '../behaviors/behavior.perform-event'
 import type {Behavior} from '../behaviors/behavior.types.behavior'
-import {
-  isClipboardBehaviorEvent,
-  isCustomBehaviorEvent,
-  isDragBehaviorEvent,
-  isInputBehaviorEvent,
-  isKeyboardBehaviorEvent,
-  isMouseBehaviorEvent,
-  type CustomBehaviorEvent,
-  type ExternalSyntheticBehaviorEvent,
-  type InternalBehaviorEvent,
-  type NativeBehaviorEvent,
-  type SyntheticBehaviorEvent,
+import type {
+  CustomBehaviorEvent,
+  ExternalSyntheticBehaviorEvent,
+  InternalBehaviorEvent,
+  NativeBehaviorEvent,
+  SyntheticBehaviorEvent,
 } from '../behaviors/behavior.types.event'
 import type {Converter} from '../converters/converter.types'
 import type {EventPosition} from '../internal-utils/event-position'
@@ -37,10 +30,6 @@ import type {
 } from '../types/editor'
 import type {EditorSchema} from './define-schema'
 import {createEditorSnapshot} from './editor-snapshot'
-import {
-  withApplyingBehaviorActions,
-  withApplyingBehaviorActionSet,
-} from './with-applying-behavior-actions'
 
 export * from 'xstate/guards'
 
@@ -328,247 +317,32 @@ export const editorMachine = setup({
     'clear pending events': assign({
       pendingEvents: [],
     }),
-    'handle behavior event': enqueueActions(
-      ({context, event, enqueue, self}) => {
-        assertEvent(event, ['behavior event', 'custom behavior event'])
+    'handle behavior event': ({context, event, self}) => {
+      assertEvent(event, ['behavior event', 'custom behavior event'])
 
-        const defaultAction =
-          event.type === 'custom behavior event' ||
-          isClipboardBehaviorEvent(event.behaviorEvent) ||
-          isDragBehaviorEvent(event.behaviorEvent) ||
-          isInputBehaviorEvent(event.behaviorEvent) ||
-          isKeyboardBehaviorEvent(event.behaviorEvent) ||
-          isMouseBehaviorEvent(event.behaviorEvent) ||
-          event.behaviorEvent.type === 'deserialize' ||
-          event.behaviorEvent.type === 'serialize'
-            ? undefined
-            : ({
-                ...event.behaviorEvent,
-                editor: event.editor,
-              } satisfies InternalBehaviorAction)
-        const defaultActionCallback =
+      performEvent({
+        behaviors: [...context.behaviors.values(), ...defaultBehaviors],
+        event: event.behaviorEvent,
+        editor: event.editor,
+        keyGenerator: context.keyGenerator,
+        schema: context.schema,
+        getSnapshot: () =>
+          createEditorSnapshot({
+            converters: [...context.converters],
+            editor: event.editor,
+            keyGenerator: context.keyGenerator,
+            readOnly: self.getSnapshot().matches({'edit mode': 'read only'}),
+            schema: context.schema,
+            hasTag: (tag) => self.getSnapshot().hasTag(tag),
+            internalDrag: context.internalDrag,
+          }),
+        nativeEvent: event.nativeEvent,
+        defaultActionCallback:
           event.type === 'behavior event'
             ? event.defaultActionCallback
-            : undefined
-
-        const eventBehaviors = [
-          ...context.behaviors.values(),
-          ...defaultBehaviors,
-        ].filter((behavior) => {
-          // Catches all events
-          if (behavior.on === '*') {
-            return true
-          }
-
-          const [listenedNamespace] =
-            behavior.on.includes('*') && behavior.on.includes('.')
-              ? behavior.on.split('.')
-              : [undefined]
-          const [eventNamespace] = event.behaviorEvent.type.includes('.')
-            ? event.behaviorEvent.type.split('.')
-            : [undefined]
-
-          // Handles scenarios like a Behavior listening for `select.*` and the event
-          // `select.block` is fired.
-          if (
-            listenedNamespace !== undefined &&
-            eventNamespace !== undefined &&
-            listenedNamespace === eventNamespace
-          ) {
-            return true
-          }
-
-          // Handles scenarios like a Behavior listening for `select.*` and the event
-          // `select` is fired.
-          if (
-            listenedNamespace !== undefined &&
-            eventNamespace === undefined &&
-            listenedNamespace === event.behaviorEvent.type
-          ) {
-            return true
-          }
-
-          return behavior.on === event.behaviorEvent.type
-        })
-
-        if (eventBehaviors.length === 0) {
-          if (defaultActionCallback) {
-            withApplyingBehaviorActions(event.editor, () => {
-              try {
-                defaultActionCallback()
-              } catch (error) {
-                console.error(
-                  new Error(
-                    `Performing action "${event.behaviorEvent.type}" failed due to: ${error.message}`,
-                  ),
-                )
-              }
-            })
-            return
-          }
-
-          if (!defaultAction) {
-            return
-          }
-
-          withApplyingBehaviorActions(event.editor, () => {
-            try {
-              performAction({
-                context: {
-                  keyGenerator: context.keyGenerator,
-                  schema: context.schema,
-                },
-                action: defaultAction,
-              })
-            } catch (error) {
-              console.error(
-                new Error(
-                  `Performing action "${defaultAction.type}" as a result of "${event.behaviorEvent.type}" failed due to: ${error.message}`,
-                ),
-              )
-            }
-          })
-          event.editor.onChange()
-          return
-        }
-
-        const editorSnapshot = createEditorSnapshot({
-          converters: [...context.converters],
-          editor: event.editor,
-          keyGenerator: context.keyGenerator,
-          readOnly: self.getSnapshot().matches({'edit mode': 'read only'}),
-          schema: context.schema,
-          hasTag: (tag) => self.getSnapshot().hasTag(tag),
-          internalDrag: context.internalDrag,
-        })
-
-        let behaviorOverwritten = false
-
-        for (const eventBehavior of eventBehaviors) {
-          const shouldRun =
-            eventBehavior.guard === undefined ||
-            eventBehavior.guard({
-              context: editorSnapshot.context,
-              snapshot: editorSnapshot,
-              event: event.behaviorEvent,
-            })
-
-          if (!shouldRun) {
-            continue
-          }
-
-          const actionSets = eventBehavior.actions.map((actionSet) =>
-            actionSet(
-              {
-                context: editorSnapshot.context,
-                snapshot: editorSnapshot,
-                event: event.behaviorEvent,
-              },
-              shouldRun,
-            ),
-          )
-
-          for (const actionSet of actionSets) {
-            if (actionSet.length === 0) {
-              continue
-            }
-
-            behaviorOverwritten =
-              behaviorOverwritten ||
-              actionSet.some((action) => action.type !== 'effect')
-
-            withApplyingBehaviorActionSet(event.editor, () => {
-              for (const action of actionSet) {
-                if (action.type === 'raise') {
-                  if (isCustomBehaviorEvent(action.event)) {
-                    enqueue.raise({
-                      type: 'custom behavior event',
-                      behaviorEvent: action.event as CustomBehaviorEvent,
-                      editor: event.editor,
-                    })
-                  } else {
-                    enqueue.raise({
-                      type: 'behavior event',
-                      behaviorEvent: action.event,
-                      editor: event.editor,
-                    })
-                  }
-                  continue
-                }
-
-                const internalAction = {
-                  ...action,
-                  editor: event.editor,
-                }
-
-                try {
-                  performAction({
-                    context: {
-                      keyGenerator: context.keyGenerator,
-                      schema: context.schema,
-                    },
-                    action: internalAction,
-                  })
-                } catch (error) {
-                  console.error(
-                    new Error(
-                      `Performing action "${internalAction.type}" as a result of "${event.behaviorEvent.type}" failed due to: ${error.message}`,
-                    ),
-                  )
-                  break
-                }
-              }
-            })
-            event.editor.onChange()
-          }
-
-          if (behaviorOverwritten) {
-            event.nativeEvent?.preventDefault()
-            break
-          }
-        }
-
-        if (!behaviorOverwritten) {
-          if (defaultActionCallback) {
-            withApplyingBehaviorActions(event.editor, () => {
-              try {
-                defaultActionCallback()
-              } catch (error) {
-                console.error(
-                  new Error(
-                    `Performing "${event.behaviorEvent.type}" failed due to: ${error.message}`,
-                  ),
-                )
-              }
-            })
-            return
-          }
-
-          if (!defaultAction) {
-            return
-          }
-
-          withApplyingBehaviorActions(event.editor, () => {
-            try {
-              performAction({
-                context: {
-                  keyGenerator: context.keyGenerator,
-                  schema: context.schema,
-                },
-                action: defaultAction,
-              })
-            } catch (error) {
-              console.error(
-                new Error(
-                  `Performing action "${defaultAction.type}" as a result of "${event.behaviorEvent.type}" failed due to: ${error.message}`,
-                ),
-              )
-            }
-          })
-          event.editor.onChange()
-        }
-      },
-    ),
+            : undefined,
+      })
+    },
   },
 }).createMachine({
   id: 'editor',
