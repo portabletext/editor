@@ -43,6 +43,7 @@ export default defineWorkspace([
         'gherkin-tests-v2/**/*.test.ts',
         'tests/**/*.test.ts',
         'tests/**/*.test.tsx',
+        'src/plugins/*.test.tsx',
       ],
       browser: {
         enabled: true,
@@ -78,6 +79,7 @@ export default defineWorkspace([
         'gherkin-tests',
         'gherkin-tests-v2',
         'tests',
+        'src/plugins/*.test.tsx',
       ],
       environment: 'jsdom',
       setupFiles: ['./vitest.setup.ts'],
