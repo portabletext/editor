@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.43.0](https://github.com/portabletext/editor/compare/editor-v1.42.1...editor-v1.43.0) (2025-03-25)
+
+
+### Features
+
+* support sensible Shift+Paste Behavior by default ([38d28ba](https://github.com/portabletext/editor/commit/38d28ba331037a487d6840de542c5d9ebcd62659))
+
+
+### Bug Fixes
+
+* **`getActiveAnnotations`:** account for selection right before annotation ([9339969](https://github.com/portabletext/editor/commit/9339969888ee4d03e22feefdd1d35f2e802c35a7))
+* add debug logs for Behavior Actions ([66b8308](https://github.com/portabletext/editor/commit/66b83081f49144c5bbfcc55ca350a86a7df4c028))
+* **deps:** update sanity monorepo to ^3.81.0 ([ec993c4](https://github.com/portabletext/editor/commit/ec993c466cfed2db3b478098e91cc6fa3399338b))
+* make raised Behavior events recursive ([04fcbbb](https://github.com/portabletext/editor/commit/04fcbbbd1f2ca64da061bc8df324e75772c074a5))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.15
+
 ## [1.42.1](https://github.com/portabletext/editor/compare/editor-v1.42.0...editor-v1.42.1) (2025-03-25)
 
 
