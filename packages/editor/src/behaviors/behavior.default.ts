@@ -1,5 +1,6 @@
+import {isTextBlock} from '../internal-utils/parse-blocks'
 import * as selectors from '../selectors'
-import {blockOffsetsToSelection} from '../utils'
+import {blockOffsetsToSelection, getTextBlockText} from '../utils'
 import {raiseInsertSoftBreak} from './behavior.default.raise-soft-break'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
@@ -385,6 +386,71 @@ export const defaultBehaviors = [
             : 'auto',
         }),
       ],
+    ],
+  }),
+  /**
+   * If we are pasting text/plain into a text block then we can probably
+   * assume that the intended behavior is that the pasted text inherits
+   * formatting from the text it's pasted into.
+   */
+  defineBehavior({
+    on: 'deserialization.success',
+    guard: ({snapshot, event}) => {
+      const focusTextBlock = selectors.getFocusTextBlock(snapshot)
+
+      if (
+        focusTextBlock &&
+        event.mimeType === 'text/plain' &&
+        event.originEvent.type === 'clipboard.paste'
+      ) {
+        const activeDecorators = snapshot.context.activeDecorators
+        const activeAnnotations = selectors.getActiveAnnotations(snapshot)
+
+        return {
+          activeAnnotations,
+          activeDecorators,
+          textRuns: event.data.flatMap((block) =>
+            isTextBlock(snapshot.context.schema, block)
+              ? [getTextBlockText(block)]
+              : [],
+          ),
+        }
+      }
+
+      return false
+    },
+    actions: [
+      (_, {activeAnnotations, activeDecorators, textRuns}) =>
+        textRuns.flatMap((textRun, index) =>
+          index !== textRuns.length - 1
+            ? [
+                raise({
+                  type: 'insert.span',
+                  text: textRun,
+                  decorators: activeDecorators,
+                  annotations: activeAnnotations.map(
+                    ({_key, _type, ...value}) => ({
+                      name: _type,
+                      value,
+                    }),
+                  ),
+                }),
+                raise({type: 'insert.break'}),
+              ]
+            : [
+                raise({
+                  type: 'insert.span',
+                  text: textRun,
+                  decorators: activeDecorators,
+                  annotations: activeAnnotations.map(
+                    ({_key, _type, ...value}) => ({
+                      name: _type,
+                      value,
+                    }),
+                  ),
+                }),
+              ],
+        ),
     ],
   }),
   defineBehavior({
