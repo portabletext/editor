@@ -469,10 +469,13 @@ export const editorMachine = setup({
           )
 
           for (const actionSet of actionSets) {
+            if (actionSet.length === 0) {
+              continue
+            }
+
             behaviorOverwritten =
               behaviorOverwritten ||
-              (actionSet.length > 0 &&
-                actionSet.some((action) => action.type !== 'effect'))
+              actionSet.some((action) => action.type !== 'effect')
 
             withApplyingBehaviorActionSet(event.editor, () => {
               for (const action of actionSet) {
