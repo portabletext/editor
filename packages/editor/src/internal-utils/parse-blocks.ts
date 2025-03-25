@@ -212,6 +212,20 @@ function parseTextBlock({
   return parsedBlock
 }
 
+export function isSpan(
+  schema: EditorSchema,
+  child: PortableTextSpan | PortableTextObject,
+): child is PortableTextSpan {
+  return (
+    parseSpan({
+      span: child,
+      markDefKeyMap: new Map(),
+      context: {schema, keyGenerator: () => ''},
+      options: {refreshKeys: false},
+    }) !== undefined
+  )
+}
+
 export function parseSpan({
   span,
   context,
