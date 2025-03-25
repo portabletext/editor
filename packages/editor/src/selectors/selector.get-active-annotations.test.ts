@@ -105,9 +105,37 @@ test(getActiveAnnotations.name, () => {
         },
         focus: {
           path: [{_key: 'k0'}, 'children', {_key: 'k3'}],
+          offset: 0,
+        },
+      }),
+    ),
+  ).toEqual([])
+  expect(
+    getActiveAnnotations(
+      snapshot([block], {
+        anchor: {
+          path: [{_key: 'k0'}, 'children', {_key: 'k3'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'k0'}, 'children', {_key: 'k3'}],
           offset: 3,
         },
       }),
     ),
   ).toEqual([comment])
+  expect(
+    getActiveAnnotations(
+      snapshot([block], {
+        anchor: {
+          path: [{_key: 'k0'}, 'children', {_key: 'k3'}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: 'k0'}, 'children', {_key: 'k3'}],
+          offset: 3,
+        },
+      }),
+    ),
+  ).toEqual([])
 })
