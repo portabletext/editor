@@ -55,7 +55,7 @@ export const internalInsertBehaviors = [
               raise({
                 type: 'insert.block',
                 block: event.blocks[0],
-                placement: 'after',
+                placement: 'auto',
                 select: 'end',
               }),
             ]

@@ -451,4 +451,14 @@ export const stepDefinitions = [
       expect(textMarks).toEqual([])
     })
   }),
+
+  /**
+   * Clipboard steps
+   */
+  When('copy is performed', async () => {
+    await userEvent.copy()
+  }),
+  When('paste is performed', async () => {
+    await userEvent.paste()
+  }),
 ]
