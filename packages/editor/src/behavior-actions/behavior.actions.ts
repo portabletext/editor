@@ -19,15 +19,12 @@ import type {PickFromUnion} from '../type-utils'
 import {blockSetBehaviorActionImplementation} from './behavior.action.block.set'
 import {blockUnsetBehaviorActionImplementation} from './behavior.action.block.unset'
 import {blurActionImplementation} from './behavior.action.blur'
-import {dataTransferSetActionImplementation} from './behavior.action.data-transfer-set'
 import {decoratorAddActionImplementation} from './behavior.action.decorator.add'
 import {deleteActionImplementation} from './behavior.action.delete'
 import {deleteBackwardActionImplementation} from './behavior.action.delete.backward'
 import {deleteBlockActionImplementation} from './behavior.action.delete.block'
 import {deleteForwardActionImplementation} from './behavior.action.delete.forward'
 import {deleteTextActionImplementation} from './behavior.action.delete.text'
-import {deserializationFailureActionImplementation} from './behavior.action.deserialization.failure'
-import {deserializationSuccessActionImplementation} from './behavior.action.deserialization.success'
 import {effectActionImplementation} from './behavior.action.effect'
 import {focusActionImplementation} from './behavior.action.focus'
 import {insertBlocksActionImplementation} from './behavior.action.insert-blocks'
@@ -51,8 +48,6 @@ import {noopActionImplementation} from './behavior.action.noop'
 import {selectActionImplementation} from './behavior.action.select'
 import {selectNextBlockActionImplementation} from './behavior.action.select.next-block'
 import {selectPreviousBlockActionImplementation} from './behavior.action.select.previous-block'
-import {serializationFailureActionImplementation} from './behavior.action.serialization.failure'
-import {serializationSuccessActionImplementation} from './behavior.action.serialization.success'
 import {
   addStyleActionImplementation,
   removeStyleActionImplementation,
@@ -88,7 +83,6 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'block.set': blockSetBehaviorActionImplementation,
   'block.unset': blockUnsetBehaviorActionImplementation,
   'blur': blurActionImplementation,
-  'data transfer.set': dataTransferSetActionImplementation,
   'decorator.add': decoratorAddActionImplementation,
   'decorator.remove': removeDecoratorActionImplementation,
   'decorator.toggle': toggleDecoratorActionImplementation,
@@ -98,8 +92,6 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'delete.forward': deleteForwardActionImplementation,
   'delete.block': deleteBlockActionImplementation,
   'delete.text': deleteTextActionImplementation,
-  'deserialization.failure': deserializationFailureActionImplementation,
-  'deserialization.success': deserializationSuccessActionImplementation,
   'history.redo': historyRedoActionImplementation,
   'history.undo': historyUndoActionImplementation,
   'insert.block': insertBlockActionImplementation,
@@ -120,8 +112,6 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'select': selectActionImplementation,
   'select.previous block': selectPreviousBlockActionImplementation,
   'select.next block': selectNextBlockActionImplementation,
-  'serialization.failure': serializationFailureActionImplementation,
-  'serialization.success': serializationSuccessActionImplementation,
   'style.toggle': toggleStyleActionImplementation,
   'style.add': addStyleActionImplementation,
   'style.remove': removeStyleActionImplementation,
@@ -179,13 +169,6 @@ export function performAction({
       })
       break
     }
-    case 'data transfer.set': {
-      behaviorActionImplementations['data transfer.set']({
-        context,
-        action,
-      })
-      break
-    }
     case 'decorator.add': {
       behaviorActionImplementations['decorator.add']({
         context,
@@ -237,20 +220,6 @@ export function performAction({
     }
     case 'delete.text': {
       behaviorActionImplementations['delete.text']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'deserialization.failure': {
-      behaviorActionImplementations['deserialization.failure']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'deserialization.success': {
-      behaviorActionImplementations['deserialization.success']({
         context,
         action,
       })
@@ -398,20 +367,6 @@ export function performAction({
     }
     case 'select.next block': {
       behaviorActionImplementations['select.next block']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'serialization.failure': {
-      behaviorActionImplementations['serialization.failure']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'serialization.success': {
-      behaviorActionImplementations['serialization.success']({
         context,
         action,
       })

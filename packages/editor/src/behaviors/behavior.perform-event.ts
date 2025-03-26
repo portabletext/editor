@@ -14,6 +14,7 @@ import {
   isCustomBehaviorEvent,
   isDragBehaviorEvent,
   isInputBehaviorEvent,
+  isInternalBehaviorEvent,
   isKeyboardBehaviorEvent,
   isMouseBehaviorEvent,
 } from './behavior.types.event'
@@ -52,8 +53,7 @@ export function performEvent({
     isInputBehaviorEvent(event) ||
     isKeyboardBehaviorEvent(event) ||
     isMouseBehaviorEvent(event) ||
-    event.type === 'deserialize' ||
-    event.type === 'serialize'
+    isInternalBehaviorEvent(event)
       ? undefined
       : ({
           ...event,

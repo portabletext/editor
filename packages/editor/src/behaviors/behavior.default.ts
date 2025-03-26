@@ -265,12 +265,30 @@ export const defaultBehaviors = [
     on: 'serialization.success',
     actions: [
       ({event}) => [
-        raise({
-          type: 'data transfer.set',
-          data: event.data,
-          dataTransfer: event.originEvent.originEvent.dataTransfer,
-          mimeType: event.mimeType,
-        }),
+        {
+          type: 'effect',
+          effect: () => {
+            event.originEvent.originEvent.dataTransfer.setData(
+              event.mimeType,
+              event.data,
+            )
+          },
+        },
+      ],
+    ],
+  }),
+  defineBehavior({
+    on: 'serialization.failure',
+    actions: [
+      ({event}) => [
+        {
+          type: 'effect',
+          effect: () => {
+            console.warn(
+              `Serialization of ${event.mimeType} failed with reason "${event.reason}"`,
+            )
+          },
+        },
       ],
     ],
   }),
@@ -462,6 +480,21 @@ export const defaultBehaviors = [
           blocks: event.data,
           placement: 'auto',
         }),
+      ],
+    ],
+  }),
+  defineBehavior({
+    on: 'deserialization.failure',
+    actions: [
+      ({event}) => [
+        {
+          type: 'effect',
+          effect: () => {
+            console.warn(
+              `Deserialization of ${event.mimeType} failed with reason "${event.reason}"`,
+            )
+          },
+        },
       ],
     ],
   }),
