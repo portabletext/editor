@@ -10,16 +10,22 @@ import {debugWithName} from '../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../types/editor'
 import type {InternalBehaviorAction} from './behavior.types.action'
 import {
-  isClipboardBehaviorEvent,
   isCustomBehaviorEvent,
-  isDragBehaviorEvent,
-  isInputBehaviorEvent,
   isInternalBehaviorEvent,
-  isKeyboardBehaviorEvent,
-  isMouseBehaviorEvent,
+  isNativeBehaviorEvent,
 } from './behavior.types.event'
 
 const debug = debugWithName('behaviors:event')
+
+function eventCategory(event: BehaviorEvent) {
+  return isNativeBehaviorEvent(event)
+    ? 'native'
+    : isInternalBehaviorEvent(event)
+      ? 'internal'
+      : isCustomBehaviorEvent(event)
+        ? 'custom'
+        : 'synthetic'
+}
 
 export function performEvent({
   behaviors,
@@ -44,15 +50,11 @@ export function performEvent({
       }
     | undefined
 }) {
-  debug(JSON.stringify(event, null, 2))
+  debug(`(${eventCategory(event)})`, JSON.stringify(event, null, 2))
 
   const defaultAction =
     isCustomBehaviorEvent(event) ||
-    isClipboardBehaviorEvent(event) ||
-    isDragBehaviorEvent(event) ||
-    isInputBehaviorEvent(event) ||
-    isKeyboardBehaviorEvent(event) ||
-    isMouseBehaviorEvent(event) ||
+    isNativeBehaviorEvent(event) ||
     isInternalBehaviorEvent(event)
       ? undefined
       : ({
