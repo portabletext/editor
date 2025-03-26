@@ -2,7 +2,9 @@ import {isTextBlock} from '../internal-utils/parse-blocks'
 import * as selectors from '../selectors'
 import {blockOffsetsToSelection, getTextBlockText} from '../utils'
 import {raiseInsertSoftBreak} from './behavior.default.raise-soft-break'
+import {internalInsertBehaviors} from './behavior.internal.insert'
 import {internalListItemBehaviors} from './behavior.internal.list-item'
+import {internalSelectBehaviors} from './behavior.internal.select'
 import {internalStyleBehaviors} from './behavior.internal.style'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
@@ -503,8 +505,10 @@ export const defaultBehaviors = [
       ],
     ],
   }),
+  ...internalInsertBehaviors,
   ...internalListItemBehaviors,
   ...internalStyleBehaviors,
+  ...internalSelectBehaviors,
   toggleAnnotationOff,
   toggleAnnotationOn,
   toggleDecoratorOff,
