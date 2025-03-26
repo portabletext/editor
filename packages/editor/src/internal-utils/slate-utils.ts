@@ -126,6 +126,34 @@ function isBlockElement(
       ))
   )
 }
+
+export function isListItemActive({
+  editor,
+  listItem,
+}: {
+  editor: Editor
+  listItem: string
+}): boolean {
+  if (!editor.selection) {
+    return false
+  }
+
+  const selectedBlocks = [
+    ...Editor.nodes(editor, {
+      at: editor.selection,
+      match: (node) => editor.isTextBlock(node),
+    }),
+  ]
+
+  if (selectedBlocks.length > 0) {
+    return selectedBlocks.every(
+      ([node]) => editor.isListBlock(node) && node.listItem === listItem,
+    )
+  }
+
+  return false
+}
+
 export function isStyleActive({
   editor,
   style,

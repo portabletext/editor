@@ -36,11 +36,6 @@ import {insertInlineObjectActionImplementation} from './behavior.action.insert-i
 import {insertSpanActionImplementation} from './behavior.action.insert-span'
 import {insertBlockActionImplementation} from './behavior.action.insert.block'
 import {insertTextActionImplementation} from './behavior.action.insert.text'
-import {
-  addListItemActionImplementation,
-  removeListItemActionImplementation,
-  toggleListItemActionImplementation,
-} from './behavior.action.list-item'
 import {moveBlockActionImplementation} from './behavior.action.move.block'
 import {moveBlockDownActionImplementation} from './behavior.action.move.block-down'
 import {moveBlockUpActionImplementation} from './behavior.action.move.block-up'
@@ -97,9 +92,6 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'insert.span': insertSpanActionImplementation,
   'insert.text': insertTextActionImplementation,
   'effect': effectActionImplementation,
-  'list item.add': addListItemActionImplementation,
-  'list item.remove': removeListItemActionImplementation,
-  'list item.toggle': toggleListItemActionImplementation,
   'move.block': moveBlockActionImplementation,
   'move.block down': moveBlockDownActionImplementation,
   'move.block up': moveBlockUpActionImplementation,
@@ -289,27 +281,6 @@ export function performAction({
     }
     case 'insert.text': {
       behaviorActionImplementations['insert.text']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'list item.add': {
-      behaviorActionImplementations['list item.add']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'list item.remove': {
-      behaviorActionImplementations['list item.remove']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'list item.toggle': {
-      behaviorActionImplementations['list item.toggle']({
         context,
         action,
       })
