@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.43.1](https://github.com/portabletext/editor/compare/editor-v1.43.0...editor-v1.43.1) (2025-03-26)
+
+
+### Bug Fixes
+
+* speed up initial value sync ([984fbf9](https://github.com/portabletext/editor/commit/984fbf949870db16c0bbebf0db77b257e534bf61))
+
 ## [1.43.0](https://github.com/portabletext/editor/compare/editor-v1.42.1...editor-v1.43.0) (2025-03-25)
 
 
