@@ -3,13 +3,23 @@ Feature: Paste
   Background:
     Given one editor
 
-  Scenario Outline: Copying text block and pasting it on itself
+  Scenario Outline: Pasting text block into a text block
     Given the text "foo bar buz"
     And "strong" around "bar"
-    When "foo bar buz" is selected
-    And copy is performed
-    And <selection>
-    And paste is performed
+    When <selection>
+    And x-portable-text is pasted
+      ```
+      [
+        {
+          "_type": "block",
+          "children": [
+            {"_type": "span", "text": "foo "},
+            {"_type": "span", "text": "bar", "marks": ["strong"]},
+            {"_type": "span", "text": " buz"}
+          ]
+        }
+      ]
+      ```
     Then the text is <text>
 
     Examples:
