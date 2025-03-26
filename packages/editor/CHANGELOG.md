@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.44.0](https://github.com/portabletext/editor/compare/editor-v1.43.1...editor-v1.44.0) (2025-03-26)
+
+
+### Features
+
+* **selectors:** add `getSelectedTextBlocks` ([aa00d91](https://github.com/portabletext/editor/commit/aa00d91a22c179ddb3c34b370b320363fcf032df))
+
+
+### Bug Fixes
+
+* make all deserialize/serialize related events internal ([1b52cb2](https://github.com/portabletext/editor/commit/1b52cb2c43190fc02df49e078024a864dac57499))
+* pasting one text block on a text block ([2522381](https://github.com/portabletext/editor/commit/25223813aa6b515adf220d509940e12587b40498))
+* turn `insert.blocks`/`select.(next|previous) block` into external/internal events ([7b2a7e5](https://github.com/portabletext/editor/commit/7b2a7e5247f353360c2170ee4d16388a02e05667))
+* turn `list item.*` events into external/internal events ([bf36a8d](https://github.com/portabletext/editor/commit/bf36a8d3535e429f937d2a833d446da848e13b6c))
+* turn `style.*` events into external/internal events ([71a34db](https://github.com/portabletext/editor/commit/71a34db0a336f22082607418ea9f674b2a28bb3a))
+
 ## [1.43.1](https://github.com/portabletext/editor/compare/editor-v1.43.0...editor-v1.43.1) (2025-03-26)
 
 
