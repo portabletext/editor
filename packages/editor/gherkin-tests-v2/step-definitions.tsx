@@ -468,11 +468,26 @@ export const stepDefinitions = [
   /**
    * Clipboard steps
    */
-  When('copy is performed', async () => {
-    await userEvent.copy()
-  }),
-  When('paste is performed', async () => {
-    await userEvent.paste()
+  When('x-portable-text is pasted', (context: Context, blocks: string) => {
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData('application/x-portable-text', blocks)
+    dataTransfer.setData('application/json', blocks)
+
+    // This is a slight hack since Vitest doesn't allow us to populate the
+    // DataTransfer object as we paste
+    context.editor.actorRef.current.send({
+      type: 'behavior event',
+      behaviorEvent: {
+        type: 'clipboard.paste',
+        originEvent: {
+          dataTransfer,
+        },
+        position: {
+          selection: context.editor.snapshot().context.selection!,
+        },
+      },
+      editor: context.editor.slateRef.current,
+    })
   }),
   When(
     'data is pasted',
