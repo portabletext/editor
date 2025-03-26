@@ -346,9 +346,12 @@ export function isInternalBehaviorEvent(
   return (
     event.type === 'deserialize' ||
     event.type.startsWith('deserialization.') ||
+    event.type === 'insert.blocks' ||
     event.type.startsWith('list item.') ||
     event.type === 'serialize' ||
     event.type.startsWith('serialization.') ||
+    event.type === 'select.next block' ||
+    event.type === 'select.previous block' ||
     event.type.startsWith('style.')
   )
 }
@@ -368,6 +371,18 @@ type NativeBehaviorEventType<
   TNamespace extends NativeBehaviorEventNamespace,
   TType extends string = '',
 > = TType extends '' ? `${TNamespace}` : `${TNamespace}.${TType}`
+
+export function isNativeBehaviorEvent(
+  event: BehaviorEvent,
+): event is NativeBehaviorEvent {
+  return (
+    isClipboardBehaviorEvent(event) ||
+    isDragBehaviorEvent(event) ||
+    isInputBehaviorEvent(event) ||
+    isKeyboardBehaviorEvent(event) ||
+    isMouseBehaviorEvent(event)
+  )
+}
 
 /**
  * @beta
@@ -402,7 +417,7 @@ type ClipboardBehaviorEvent =
       position: Pick<EventPosition, 'selection'>
     }
 
-export function isClipboardBehaviorEvent(
+function isClipboardBehaviorEvent(
   event: BehaviorEvent,
 ): event is ClipboardBehaviorEvent {
   return event.type.startsWith('clipboard.')
@@ -456,9 +471,7 @@ type DragBehaviorEvent =
       }
     }
 
-export function isDragBehaviorEvent(
-  event: BehaviorEvent,
-): event is DragBehaviorEvent {
+function isDragBehaviorEvent(event: BehaviorEvent): event is DragBehaviorEvent {
   return event.type.startsWith('drag.')
 }
 
@@ -480,7 +493,7 @@ export type InputBehaviorEvent = {
   }
 }
 
-export function isInputBehaviorEvent(
+function isInputBehaviorEvent(
   event: BehaviorEvent,
 ): event is InputBehaviorEvent {
   return event.type.startsWith('input.')
@@ -507,7 +520,7 @@ export type MouseBehaviorEvent = {
   position: EventPosition
 }
 
-export function isMouseBehaviorEvent(
+function isMouseBehaviorEvent(
   event: BehaviorEvent,
 ): event is MouseBehaviorEvent {
   return event.type.startsWith('mouse.')
