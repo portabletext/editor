@@ -48,11 +48,6 @@ import {noopActionImplementation} from './behavior.action.noop'
 import {selectActionImplementation} from './behavior.action.select'
 import {selectNextBlockActionImplementation} from './behavior.action.select.next-block'
 import {selectPreviousBlockActionImplementation} from './behavior.action.select.previous-block'
-import {
-  addStyleActionImplementation,
-  removeStyleActionImplementation,
-  toggleStyleActionImplementation,
-} from './behavior.action.style'
 
 const debug = debugWithName('behaviors:action')
 
@@ -112,9 +107,6 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'select': selectActionImplementation,
   'select.previous block': selectPreviousBlockActionImplementation,
   'select.next block': selectNextBlockActionImplementation,
-  'style.toggle': toggleStyleActionImplementation,
-  'style.add': addStyleActionImplementation,
-  'style.remove': removeStyleActionImplementation,
 }
 
 export function performAction({
@@ -365,29 +357,8 @@ export function performAction({
       })
       break
     }
-    case 'select.next block': {
-      behaviorActionImplementations['select.next block']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'style.add': {
-      behaviorActionImplementations['style.add']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'style.remove': {
-      behaviorActionImplementations['style.remove']({
-        context,
-        action,
-      })
-      break
-    }
     default: {
-      behaviorActionImplementations['style.toggle']({
+      behaviorActionImplementations['select.next block']({
         context,
         action,
       })

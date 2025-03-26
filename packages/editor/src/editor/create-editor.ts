@@ -14,7 +14,7 @@ import {
 import type {Behavior} from '../behaviors/behavior.types.behavior'
 import type {
   CustomBehaviorEvent,
-  ExternalSyntheticBehaviorEvent,
+  ExternalBehaviorEvent,
   SyntheticBehaviorEvent,
 } from '../behaviors/behavior.types.event'
 import {coreConverters} from '../converters/converters.core'
@@ -65,7 +65,7 @@ export type EditorConfig = {
  */
 export type EditorEvent =
   | ExternalEditorEvent
-  | ExternalSyntheticBehaviorEvent
+  | ExternalBehaviorEvent
   | SyntheticBehaviorEvent
   | CustomBehaviorEvent
 

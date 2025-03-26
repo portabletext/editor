@@ -2,6 +2,7 @@ import {isTextBlock} from '../internal-utils/parse-blocks'
 import * as selectors from '../selectors'
 import {blockOffsetsToSelection, getTextBlockText} from '../utils'
 import {raiseInsertSoftBreak} from './behavior.default.raise-soft-break'
+import {internalStyleBehaviors} from './behavior.internal.style'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -96,18 +97,6 @@ const toggleListItemOn = defineBehavior({
       }),
     ],
   ],
-})
-
-const toggleStyleOff = defineBehavior({
-  on: 'style.toggle',
-  guard: ({snapshot, event}) => selectors.isActiveStyle(event.style)(snapshot),
-  actions: [({event}) => [raise({type: 'style.remove', style: event.style})]],
-})
-
-const toggleStyleOn = defineBehavior({
-  on: 'style.toggle',
-  guard: ({snapshot, event}) => !selectors.isActiveStyle(event.style)(snapshot),
-  actions: [({event}) => [raise({type: 'style.add', style: event.style})]],
 })
 
 const raiseDeserializationSuccessOrFailure = defineBehavior({
@@ -541,14 +530,13 @@ export const defaultBehaviors = [
       ],
     ],
   }),
+  ...internalStyleBehaviors,
   toggleAnnotationOff,
   toggleAnnotationOn,
   toggleDecoratorOff,
   toggleDecoratorOn,
   toggleListItemOff,
   toggleListItemOn,
-  toggleStyleOff,
-  toggleStyleOn,
   raiseDeserializationSuccessOrFailure,
   raiseSerializationSuccessOrFailure,
   raiseInsertSoftBreak,
