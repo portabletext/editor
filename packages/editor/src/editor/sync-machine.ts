@@ -526,7 +526,7 @@ async function* getBlocks({
 }) {
   let index = 0
   for await (const block of slateValue) {
-    if (streamBlocks) {
+    if (streamBlocks && index % 10 === 0) {
       await new Promise<void>((resolve) => setTimeout(resolve, 0))
     }
     yield [block, index] as const
