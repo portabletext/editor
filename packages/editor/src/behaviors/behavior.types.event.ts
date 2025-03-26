@@ -53,17 +53,14 @@ type SyntheticBehaviorEventNamespace =
   | 'annotation'
   | 'block'
   | 'blur'
-  | 'data transfer'
   | 'decorator'
   | 'delete'
-  | 'deserialization'
   | 'focus'
   | 'history'
   | 'insert'
   | 'list item'
   | 'move'
   | 'select'
-  | 'serialization'
   | 'style'
 
 /**
@@ -102,12 +99,6 @@ export type SyntheticBehaviorEvent =
     }
   | {
       type: SyntheticBehaviorEventType<'blur'>
-    }
-  | {
-      type: SyntheticBehaviorEventType<'data transfer', 'set'>
-      data: string
-      dataTransfer: DataTransfer
-      mimeType: MIMEType
     }
   | {
       type: SyntheticBehaviorEventType<'decorator', 'add'>
@@ -239,50 +230,6 @@ export type SyntheticBehaviorEvent =
       type: SyntheticBehaviorEventType<'style', 'toggle'>
       style: string
     }
-  | {
-      type: SyntheticBehaviorEventType<'deserialization', 'success'>
-      mimeType: MIMEType
-      data: Array<PortableTextBlock>
-      originEvent:
-        | PickFromUnion<
-            NativeBehaviorEvent,
-            'type',
-            'drag.drop' | 'clipboard.paste'
-          >
-        | InputBehaviorEvent
-    }
-  | {
-      type: SyntheticBehaviorEventType<'deserialization', 'failure'>
-      mimeType: MIMEType
-      reason: string
-      originEvent:
-        | PickFromUnion<
-            NativeBehaviorEvent,
-            'type',
-            'drag.drop' | 'clipboard.paste'
-          >
-        | InputBehaviorEvent
-    }
-  | {
-      type: SyntheticBehaviorEventType<'serialization', 'success'>
-      mimeType: MIMEType
-      data: string
-      originEvent: PickFromUnion<
-        NativeBehaviorEvent,
-        'type',
-        'clipboard.copy' | 'clipboard.cut' | 'drag.dragstart'
-      >
-    }
-  | {
-      type: SyntheticBehaviorEventType<'serialization', 'failure'>
-      mimeType: MIMEType
-      reason: string
-      originEvent: PickFromUnion<
-        NativeBehaviorEvent,
-        'type',
-        'clipboard.copy' | 'clipboard.cut' | 'drag.dragstart'
-      >
-    }
 
 export type InsertPlacement = 'auto' | 'after' | 'before'
 
@@ -296,7 +243,11 @@ export function isKeyboardBehaviorEvent(
  * Internal events
  **************************************/
 
-type InternalBehaviorEventNamespace = 'deserialize' | 'serialize'
+type InternalBehaviorEventNamespace =
+  | 'deserialize'
+  | 'deserialization'
+  | 'serialize'
+  | 'serialization'
 
 type InternalBehaviorEventType<
   TNamespace extends InternalBehaviorEventNamespace,
@@ -322,6 +273,61 @@ export type InternalBehaviorEvent =
         'clipboard.copy' | 'clipboard.cut' | 'drag.dragstart'
       >
     }
+  | {
+      type: InternalBehaviorEventType<'deserialization', 'success'>
+      mimeType: MIMEType
+      data: Array<PortableTextBlock>
+      originEvent:
+        | PickFromUnion<
+            NativeBehaviorEvent,
+            'type',
+            'drag.drop' | 'clipboard.paste'
+          >
+        | InputBehaviorEvent
+    }
+  | {
+      type: InternalBehaviorEventType<'deserialization', 'failure'>
+      mimeType: MIMEType
+      reason: string
+      originEvent:
+        | PickFromUnion<
+            NativeBehaviorEvent,
+            'type',
+            'drag.drop' | 'clipboard.paste'
+          >
+        | InputBehaviorEvent
+    }
+  | {
+      type: InternalBehaviorEventType<'serialization', 'success'>
+      mimeType: MIMEType
+      data: string
+      originEvent: PickFromUnion<
+        NativeBehaviorEvent,
+        'type',
+        'clipboard.copy' | 'clipboard.cut' | 'drag.dragstart'
+      >
+    }
+  | {
+      type: InternalBehaviorEventType<'serialization', 'failure'>
+      mimeType: MIMEType
+      reason: string
+      originEvent: PickFromUnion<
+        NativeBehaviorEvent,
+        'type',
+        'clipboard.copy' | 'clipboard.cut' | 'drag.dragstart'
+      >
+    }
+
+export function isInternalBehaviorEvent(
+  event: BehaviorEvent,
+): event is InternalBehaviorEvent {
+  return (
+    event.type === 'deserialize' ||
+    event.type.startsWith('deserialization.') ||
+    event.type === 'serialize' ||
+    event.type.startsWith('serialization.')
+  )
+}
 
 /**************************************
  * Native events

@@ -27,7 +27,6 @@ const noLowerCaseA = defineBehavior({
 
 ### Native event types
 
-- deserialize
 - clipboard.copy
 - clipboard.cut
 - clipboard.paste
@@ -41,7 +40,6 @@ const noLowerCaseA = defineBehavior({
 - keyboard.keydown
 - keyboard.keyup
 - mouse.click
-- serialize
 
 ### Synthetic event types
 
@@ -51,7 +49,6 @@ const noLowerCaseA = defineBehavior({
 - block.set
 - block.unset
 - blur
-- data transfer.set
 - decorator.add
 - decorator.remove
 - decorator.toggle
@@ -59,8 +56,6 @@ const noLowerCaseA = defineBehavior({
 - delete.block
 - delete.forward
 - delete.text
-- deserialization.failure
-- deserialization.success
 - focus
 - insert.block
 - insert.blocks
@@ -78,11 +73,18 @@ const noLowerCaseA = defineBehavior({
 - select
 - select.next block
 - select.previous block
-- serialization.failure
-- serialization.success
 - style.add
 - style.remove
 - style.toggle
+
+### Internal event types
+
+- deserialize
+- deserialization.failure
+- deserialization.success
+- serialize
+- serialization.failure
+- serialization.success
 
 ### Custom event types
 
@@ -98,7 +100,6 @@ Actions as part of synthetic events
 - block.set
 - block.unset
 - blur
-- data transfer.set
 - decorator.add
 - decorator.remove
 - decorator.toggle
@@ -106,8 +107,6 @@ Actions as part of synthetic events
 - delete.block
 - delete.forward
 - delete.text
-- deserialization.failure
-- deserialization.success
 - focus
 - insert.block
 - insert.blocks
@@ -125,8 +124,6 @@ Actions as part of synthetic events
 - select
 - select.next block
 - select.previous block
-- serialization.failure
-- serialization.success
 - style.add
 - style.remove
 - style.toggle
