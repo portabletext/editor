@@ -2,6 +2,7 @@ import {isTextBlock} from '../internal-utils/parse-blocks'
 import * as selectors from '../selectors'
 import {blockOffsetsToSelection, getTextBlockText} from '../utils'
 import {raiseInsertSoftBreak} from './behavior.default.raise-soft-break'
+import {internalListItemBehaviors} from './behavior.internal.list-item'
 import {internalStyleBehaviors} from './behavior.internal.style'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
@@ -66,34 +67,6 @@ const toggleDecoratorOn = defineBehavior({
       raise({
         ...event,
         type: 'decorator.add',
-      }),
-    ],
-  ],
-})
-
-const toggleListItemOff = defineBehavior({
-  on: 'list item.toggle',
-  guard: ({snapshot, event}) =>
-    selectors.isActiveListItem(event.listItem)(snapshot),
-  actions: [
-    ({event}) => [
-      raise({
-        type: 'list item.remove',
-        listItem: event.listItem,
-      }),
-    ],
-  ],
-})
-
-const toggleListItemOn = defineBehavior({
-  on: 'list item.toggle',
-  guard: ({snapshot, event}) =>
-    !selectors.isActiveListItem(event.listItem)(snapshot),
-  actions: [
-    ({event}) => [
-      raise({
-        type: 'list item.add',
-        listItem: event.listItem,
       }),
     ],
   ],
@@ -530,13 +503,12 @@ export const defaultBehaviors = [
       ],
     ],
   }),
+  ...internalListItemBehaviors,
   ...internalStyleBehaviors,
   toggleAnnotationOff,
   toggleAnnotationOn,
   toggleDecoratorOff,
   toggleDecoratorOn,
-  toggleListItemOff,
-  toggleListItemOn,
   raiseDeserializationSuccessOrFailure,
   raiseSerializationSuccessOrFailure,
   raiseInsertSoftBreak,

@@ -32,7 +32,7 @@ type NamespacedBehaviorEventType<
  * External events
  **************************************/
 
-type ExternalBehaviorEventNamespace = 'insert' | 'style'
+type ExternalBehaviorEventNamespace = 'insert'
 
 type ExternalBehaviorEventType<
   TNamespace extends ExternalBehaviorEventNamespace,
@@ -48,18 +48,16 @@ export type ExternalBehaviorEvent =
         value?: {[prop: string]: unknown}
       }
     }
-  | {
-      type: ExternalBehaviorEventType<'style', 'add'>
-      style: string
-    }
-  | {
-      type: ExternalBehaviorEventType<'style', 'remove'>
-      style: string
-    }
-  | {
-      type: ExternalBehaviorEventType<'style', 'toggle'>
-      style: string
-    }
+  | PickFromUnion<
+      InternalBehaviorEvent,
+      'type',
+      | 'list item.add'
+      | 'list item.remove'
+      | 'list item.toggle'
+      | 'style.add'
+      | 'style.remove'
+      | 'style.toggle'
+    >
 
 /**************************************
  * Synthetic events
@@ -79,7 +77,6 @@ type SyntheticBehaviorEventNamespace =
   | 'focus'
   | 'history'
   | 'insert'
-  | 'list item'
   | 'move'
   | 'select'
 
@@ -202,18 +199,6 @@ export type SyntheticBehaviorEvent =
       text: string
     }
   | {
-      type: SyntheticBehaviorEventType<'list item', 'add'>
-      listItem: string
-    }
-  | {
-      type: SyntheticBehaviorEventType<'list item', 'remove'>
-      listItem: string
-    }
-  | {
-      type: SyntheticBehaviorEventType<'list item', 'toggle'>
-      listItem: string
-    }
-  | {
       type: SyntheticBehaviorEventType<'move', 'block'>
       at: [KeyedSegment]
       to: [KeyedSegment]
@@ -254,8 +239,10 @@ export function isKeyboardBehaviorEvent(
 type InternalBehaviorEventNamespace =
   | 'deserialize'
   | 'deserialization'
+  | 'list item'
   | 'serialize'
   | 'serialization'
+  | 'style'
 
 type InternalBehaviorEventType<
   TNamespace extends InternalBehaviorEventNamespace,
@@ -325,11 +312,30 @@ export type InternalBehaviorEvent =
         'clipboard.copy' | 'clipboard.cut' | 'drag.dragstart'
       >
     }
-  | PickFromUnion<
-      ExternalBehaviorEvent,
-      'type',
-      'style.add' | 'style.remove' | 'style.toggle'
-    >
+  | {
+      type: InternalBehaviorEventType<'list item', 'add'>
+      listItem: string
+    }
+  | {
+      type: InternalBehaviorEventType<'list item', 'remove'>
+      listItem: string
+    }
+  | {
+      type: InternalBehaviorEventType<'list item', 'toggle'>
+      listItem: string
+    }
+  | {
+      type: InternalBehaviorEventType<'style', 'add'>
+      style: string
+    }
+  | {
+      type: InternalBehaviorEventType<'style', 'remove'>
+      style: string
+    }
+  | {
+      type: InternalBehaviorEventType<'style', 'toggle'>
+      style: string
+    }
 
 export function isInternalBehaviorEvent(
   event: BehaviorEvent,
@@ -337,8 +343,10 @@ export function isInternalBehaviorEvent(
   return (
     event.type === 'deserialize' ||
     event.type.startsWith('deserialization.') ||
+    event.type.startsWith('list item.') ||
     event.type === 'serialize' ||
-    event.type.startsWith('serialization.')
+    event.type.startsWith('serialization.') ||
+    event.type.startsWith('style.')
   )
 }
 

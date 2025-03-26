@@ -18,11 +18,10 @@ import {
 } from 'slate'
 import type {DOMNode} from 'slate-dom'
 import {ReactEditor} from 'slate-react'
-import {isListItemActive} from '../../behavior-actions/behavior.action.list-item'
 import type {BehaviorActionImplementation} from '../../behavior-actions/behavior.actions'
 import {debugWithName} from '../../internal-utils/debug'
 import {toPortableTextRange, toSlateRange} from '../../internal-utils/ranges'
-import {isStyleActive} from '../../internal-utils/slate-utils'
+import {isListItemActive, isStyleActive} from '../../internal-utils/slate-utils'
 import {fromSlateValue, toSlateValue} from '../../internal-utils/values'
 import {
   KEY_TO_VALUE_ELEMENT,
