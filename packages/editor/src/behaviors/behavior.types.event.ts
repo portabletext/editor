@@ -28,17 +28,38 @@ type NamespacedBehaviorEventType<
   ? BehaviorEvent['type']
   : Extract<BehaviorEvent['type'], TNamespace | `${TNamespace}.${string}`>
 
-/**
- * @beta
- */
-export type ExternalSyntheticBehaviorEvent = {
-  type: SyntheticBehaviorEventType<'insert', 'block object'>
-  placement: InsertPlacement
-  blockObject: {
-    name: string
-    value?: {[prop: string]: unknown}
-  }
-}
+/**************************************
+ * External events
+ **************************************/
+
+type ExternalBehaviorEventNamespace = 'insert' | 'style'
+
+type ExternalBehaviorEventType<
+  TNamespace extends ExternalBehaviorEventNamespace,
+  TType extends string = '',
+> = TType extends '' ? `${TNamespace}` : `${TNamespace}.${TType}`
+
+export type ExternalBehaviorEvent =
+  | {
+      type: ExternalBehaviorEventType<'insert', 'block object'>
+      placement: InsertPlacement
+      blockObject: {
+        name: string
+        value?: {[prop: string]: unknown}
+      }
+    }
+  | {
+      type: ExternalBehaviorEventType<'style', 'add'>
+      style: string
+    }
+  | {
+      type: ExternalBehaviorEventType<'style', 'remove'>
+      style: string
+    }
+  | {
+      type: ExternalBehaviorEventType<'style', 'toggle'>
+      style: string
+    }
 
 /**************************************
  * Synthetic events
@@ -61,7 +82,6 @@ type SyntheticBehaviorEventNamespace =
   | 'list item'
   | 'move'
   | 'select'
-  | 'style'
 
 /**
  * @beta
@@ -218,18 +238,6 @@ export type SyntheticBehaviorEvent =
       type: SyntheticBehaviorEventType<'select', 'next block'>
       select?: 'start' | 'end'
     }
-  | {
-      type: SyntheticBehaviorEventType<'style', 'add'>
-      style: string
-    }
-  | {
-      type: SyntheticBehaviorEventType<'style', 'remove'>
-      style: string
-    }
-  | {
-      type: SyntheticBehaviorEventType<'style', 'toggle'>
-      style: string
-    }
 
 export type InsertPlacement = 'auto' | 'after' | 'before'
 
@@ -317,6 +325,11 @@ export type InternalBehaviorEvent =
         'clipboard.copy' | 'clipboard.cut' | 'drag.dragstart'
       >
     }
+  | PickFromUnion<
+      ExternalBehaviorEvent,
+      'type',
+      'style.add' | 'style.remove' | 'style.toggle'
+    >
 
 export function isInternalBehaviorEvent(
   event: BehaviorEvent,

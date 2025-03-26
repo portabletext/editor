@@ -126,3 +126,27 @@ function isBlockElement(
       ))
   )
 }
+export function isStyleActive({
+  editor,
+  style,
+}: {
+  editor: Editor
+  style: string
+}): boolean {
+  if (!editor.selection) {
+    return false
+  }
+
+  const selectedBlocks = [
+    ...Editor.nodes(editor, {
+      at: editor.selection,
+      match: (node) => editor.isTextBlock(node),
+    }),
+  ]
+
+  if (selectedBlocks.length > 0) {
+    return selectedBlocks.every(([node]) => node.style === style)
+  }
+
+  return false
+}

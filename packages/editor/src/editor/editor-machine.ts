@@ -15,7 +15,7 @@ import {performEvent} from '../behaviors/behavior.perform-event'
 import type {Behavior} from '../behaviors/behavior.types.behavior'
 import type {
   CustomBehaviorEvent,
-  ExternalSyntheticBehaviorEvent,
+  ExternalBehaviorEvent,
   InternalBehaviorEvent,
   NativeBehaviorEvent,
   SyntheticBehaviorEvent,
@@ -193,7 +193,7 @@ export type InternalEditorEvent =
       nativeEvent?: {preventDefault: () => void}
     }
   | CustomBehaviorEvent
-  | ExternalSyntheticBehaviorEvent
+  | ExternalBehaviorEvent
   | ExternalEditorEvent
   | MutationEvent
   | InternalPatchEvent
@@ -213,7 +213,7 @@ export type InternalEditorEvent =
  */
 export type InternalEditorEmittedEvent =
   | EditorEmittedEvent
-  | ExternalSyntheticBehaviorEvent
+  | ExternalBehaviorEvent
   | InternalPatchEvent
   | PatchesEvent
   | UnsetEvent
