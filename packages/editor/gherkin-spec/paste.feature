@@ -18,3 +18,19 @@ Feature: Paste
       | the caret is put before "foo" | "foo ,bar, buzfoo ,bar, buz"   |
       | the caret is put after "ba"   | "foo ,ba,foo ,bar, buz,r, buz" |
       | "foo bar buz" is selected     | "foo ,bar, buz"                |
+
+  Scenario: Pasting text/plain into a text block
+    Given the text "foo bar buz"
+    And "strong" around "bar"
+    When the caret is put after "ba"
+    And data is pasted
+      | text/plain | new |
+    Then the text is "foo ,banewr, buz"
+
+  Scenario: Pasting text/html into a text block
+    Given the text "foo bar buz"
+    And "strong" around "bar"
+    When the caret is put after "ba"
+    And data is pasted
+      | text/html | <p>new</p> |
+    Then the text is "foo ,ba,new,r, buz"

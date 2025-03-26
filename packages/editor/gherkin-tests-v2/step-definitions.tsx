@@ -12,6 +12,7 @@ import {
   type EditorSnapshot,
   type PortableTextBlock,
 } from '../src'
+import type {EditorActor} from '../src/editor/editor-machine'
 import {getEditorSelection} from '../src/internal-utils/editor-selection'
 import {parseBlock, parseBlocks} from '../src/internal-utils/parse-blocks'
 import {getSelectionBlockKeys} from '../src/internal-utils/selection-block-keys'
@@ -24,6 +25,9 @@ import {
   getTextSelection,
 } from '../src/internal-utils/text-selection'
 import {EditorRefPlugin} from '../src/plugins'
+import {InternalEditorAfterRefPlugin} from '../src/plugins/plugin.internal.editor-actor-ref'
+import {InternalSlateEditorRefPlugin} from '../src/plugins/plugin.internal.slate-editor-ref'
+import type {PortableTextSlateEditor} from '../src/types/editor'
 import {
   reverseSelection,
   selectionPointToBlockOffset,
@@ -34,6 +38,8 @@ import type {Parameter} from './gherkin-parameter-types'
 type Context = {
   editor: {
     ref: React.RefObject<Editor>
+    actorRef: React.RefObject<EditorActor>
+    slateRef: React.RefObject<PortableTextSlateEditor>
     locator: Locator
     value: () => Array<PortableTextBlock>
     selection: () => EditorSelection
@@ -43,6 +49,8 @@ type Context = {
 
 export const stepDefinitions = [
   Given('one editor', async (context: Context) => {
+    const editorActorRef = React.createRef<EditorActor>()
+    const slateRef = React.createRef<PortableTextSlateEditor>()
     const editorRef = React.createRef<Editor>()
     const keyGenerator = createTestKeyGenerator('e0-')
     const initialValue = [
@@ -68,6 +76,9 @@ export const stepDefinitions = [
         }}
       >
         <EditorRefPlugin ref={editorRef} />
+
+        <InternalEditorAfterRefPlugin ref={editorActorRef} />
+        <InternalSlateEditorRefPlugin ref={slateRef} />
         <PortableTextEditable />
       </EditorProvider>,
     )
@@ -76,6 +87,8 @@ export const stepDefinitions = [
 
     context.editor = {
       ref: editorRef as React.RefObject<Editor>,
+      actorRef: editorActorRef as React.RefObject<EditorActor>,
+      slateRef: slateRef as React.RefObject<PortableTextSlateEditor>,
       locator,
       value: () => editorRef.current?.getSnapshot().context.value ?? [],
       snapshot: () => editorRef.current!.getSnapshot(),
@@ -461,4 +474,30 @@ export const stepDefinitions = [
   When('paste is performed', async () => {
     await userEvent.paste()
   }),
+  When(
+    'data is pasted',
+    (context: Context, dataTable: Array<[mime: string, data: string]>) => {
+      const dataTransfer = new DataTransfer()
+
+      for (const data of dataTable) {
+        dataTransfer.setData(data[0], data[1])
+      }
+
+      // This is a slight hack since Vitest doesn't allow us to populate the
+      // DataTransfer object as we paste
+      context.editor.actorRef.current.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'clipboard.paste',
+          originEvent: {
+            dataTransfer,
+          },
+          position: {
+            selection: context.editor.snapshot().context.selection!,
+          },
+        },
+        editor: context.editor.slateRef.current,
+      })
+    },
+  ),
 ]
