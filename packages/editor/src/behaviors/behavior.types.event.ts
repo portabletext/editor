@@ -51,6 +51,7 @@ export type ExternalBehaviorEvent =
   | PickFromUnion<
       InternalBehaviorEvent,
       'type',
+      | 'insert.blocks'
       | 'list item.add'
       | 'list item.remove'
       | 'list item.toggle'
@@ -162,11 +163,6 @@ export type SyntheticBehaviorEvent =
       type: SyntheticBehaviorEventType<'history', 'undo'>
     }
   | {
-      type: SyntheticBehaviorEventType<'insert', 'blocks'>
-      blocks: Array<PortableTextBlock>
-      placement: InsertPlacement
-    }
-  | {
       type: SyntheticBehaviorEventType<'insert', 'inline object'>
       inlineObject: {
         name: string
@@ -215,14 +211,6 @@ export type SyntheticBehaviorEvent =
       type: SyntheticBehaviorEventType<'select'>
       selection: EditorSelection
     }
-  | {
-      type: SyntheticBehaviorEventType<'select', 'previous block'>
-      select?: 'start' | 'end'
-    }
-  | {
-      type: SyntheticBehaviorEventType<'select', 'next block'>
-      select?: 'start' | 'end'
-    }
 
 export type InsertPlacement = 'auto' | 'after' | 'before'
 
@@ -240,6 +228,8 @@ type InternalBehaviorEventNamespace =
   | 'deserialize'
   | 'deserialization'
   | 'list item'
+  | 'insert'
+  | 'select'
   | 'serialize'
   | 'serialization'
   | 'style'
@@ -313,6 +303,11 @@ export type InternalBehaviorEvent =
       >
     }
   | {
+      type: InternalBehaviorEventType<'insert', 'blocks'>
+      blocks: Array<PortableTextBlock>
+      placement: InsertPlacement
+    }
+  | {
       type: InternalBehaviorEventType<'list item', 'add'>
       listItem: string
     }
@@ -323,6 +318,14 @@ export type InternalBehaviorEvent =
   | {
       type: InternalBehaviorEventType<'list item', 'toggle'>
       listItem: string
+    }
+  | {
+      type: InternalBehaviorEventType<'select', 'previous block'>
+      select?: 'start' | 'end'
+    }
+  | {
+      type: InternalBehaviorEventType<'select', 'next block'>
+      select?: 'start' | 'end'
     }
   | {
       type: InternalBehaviorEventType<'style', 'add'>

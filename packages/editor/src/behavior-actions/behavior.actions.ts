@@ -27,7 +27,6 @@ import {deleteForwardActionImplementation} from './behavior.action.delete.forwar
 import {deleteTextActionImplementation} from './behavior.action.delete.text'
 import {effectActionImplementation} from './behavior.action.effect'
 import {focusActionImplementation} from './behavior.action.focus'
-import {insertBlocksActionImplementation} from './behavior.action.insert-blocks'
 import {
   insertBreakActionImplementation,
   insertSoftBreakActionImplementation,
@@ -41,8 +40,6 @@ import {moveBlockDownActionImplementation} from './behavior.action.move.block-do
 import {moveBlockUpActionImplementation} from './behavior.action.move.block-up'
 import {noopActionImplementation} from './behavior.action.noop'
 import {selectActionImplementation} from './behavior.action.select'
-import {selectNextBlockActionImplementation} from './behavior.action.select.next-block'
-import {selectPreviousBlockActionImplementation} from './behavior.action.select.previous-block'
 
 const debug = debugWithName('behaviors:action')
 
@@ -85,7 +82,6 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'history.redo': historyRedoActionImplementation,
   'history.undo': historyUndoActionImplementation,
   'insert.block': insertBlockActionImplementation,
-  'insert.blocks': insertBlocksActionImplementation,
   'insert.break': insertBreakActionImplementation,
   'insert.inline object': insertInlineObjectActionImplementation,
   'insert.soft break': insertSoftBreakActionImplementation,
@@ -97,8 +93,6 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'move.block up': moveBlockUpActionImplementation,
   'noop': noopActionImplementation,
   'select': selectActionImplementation,
-  'select.previous block': selectPreviousBlockActionImplementation,
-  'select.next block': selectNextBlockActionImplementation,
 }
 
 export function performAction({
@@ -244,13 +238,6 @@ export function performAction({
       })
       break
     }
-    case 'insert.blocks': {
-      behaviorActionImplementations['insert.blocks']({
-        context,
-        action,
-      })
-      break
-    }
     case 'insert.inline object': {
       behaviorActionImplementations['insert.inline object']({
         context,
@@ -314,22 +301,8 @@ export function performAction({
       })
       break
     }
-    case 'select': {
-      behaviorActionImplementations.select({
-        context,
-        action,
-      })
-      break
-    }
-    case 'select.previous block': {
-      behaviorActionImplementations['select.previous block']({
-        context,
-        action,
-      })
-      break
-    }
     default: {
-      behaviorActionImplementations['select.next block']({
+      behaviorActionImplementations.select({
         context,
         action,
       })

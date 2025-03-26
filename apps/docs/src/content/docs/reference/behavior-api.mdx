@@ -58,7 +58,6 @@ const noLowerCaseA = defineBehavior({
 - delete.text
 - focus
 - insert.block
-- insert.blocks
 - insert.inline object
 - insert.break
 - insert.sort break
@@ -68,17 +67,18 @@ const noLowerCaseA = defineBehavior({
 - move.block down
 - move.block up
 - select
-- select.next block
-- select.previous block
 
 ### Internal event types
 
 - deserialize
 - deserialization.failure
 - deserialization.success
+- insert.blocks
 - list item.add
 - list item.remove
 - list item.toggle
+- select.next block
+- select.previous block
 - serialize
 - serialization.failure
 - serialization.success
@@ -109,7 +109,6 @@ Actions as part of synthetic events
 - delete.text
 - focus
 - insert.block
-- insert.blocks
 - insert.inline object
 - insert.break
 - insert.sort break
@@ -119,8 +118,6 @@ Actions as part of synthetic events
 - move.block down
 - move.block up
 - select
-- select.next block
-- select.previous block
 
 Additional actions
 
