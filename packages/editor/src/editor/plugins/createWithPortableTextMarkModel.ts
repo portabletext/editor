@@ -8,7 +8,6 @@ import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import type {PortableTextObject, PortableTextSpan} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {Editor, Element, Node, Path, Range, Text, Transforms} from 'slate'
-import {decoratorAddActionImplementation} from '../../behavior-actions/behavior.action.decorator.add'
 import type {BehaviorActionImplementation} from '../../behavior-actions/behavior.actions'
 import {debugWithName} from '../../internal-utils/debug'
 import {getNextSpan, getPreviousSpan} from '../../internal-utils/sibling-utils'
@@ -777,32 +776,4 @@ export function isDecoratorActive({
       ...(Editor.marks(editor) || {}),
     }.marks || []
   ).includes(decorator)
-}
-
-export const toggleDecoratorActionImplementation: BehaviorActionImplementation<
-  'decorator.toggle'
-> = ({context, action}) => {
-  const isActive = isDecoratorActive({
-    editor: action.editor,
-    decorator: action.decorator,
-  })
-
-  if (isActive) {
-    removeDecoratorActionImplementation({
-      context,
-      action: {
-        type: 'decorator.remove',
-        editor: action.editor,
-        decorator: action.decorator,
-      },
-    })
-  } else {
-    decoratorAddActionImplementation({
-      context,
-      action: {
-        ...action,
-        type: 'decorator.add',
-      },
-    })
-  }
 }

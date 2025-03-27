@@ -1,78 +1,15 @@
 import {isTextBlock} from '../internal-utils/parse-blocks'
 import * as selectors from '../selectors'
-import {blockOffsetsToSelection, getTextBlockText} from '../utils'
+import {getTextBlockText} from '../utils'
 import {raiseInsertSoftBreak} from './behavior.default.raise-soft-break'
+import {internalAnnotationBehaviors} from './behavior.internal.annotation'
+import {internalDecoratorBehaviors} from './behavior.internal.decorator'
 import {internalInsertBehaviors} from './behavior.internal.insert'
 import {internalListItemBehaviors} from './behavior.internal.list-item'
 import {internalSelectBehaviors} from './behavior.internal.select'
 import {internalStyleBehaviors} from './behavior.internal.style'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
-
-const toggleAnnotationOff = defineBehavior({
-  on: 'annotation.toggle',
-  guard: ({snapshot, event}) =>
-    selectors.isActiveAnnotation(event.annotation.name)(snapshot),
-  actions: [
-    ({event}) => [
-      raise({type: 'annotation.remove', annotation: event.annotation}),
-    ],
-  ],
-})
-
-const toggleAnnotationOn = defineBehavior({
-  on: 'annotation.toggle',
-  guard: ({snapshot, event}) =>
-    !selectors.isActiveAnnotation(event.annotation.name)(snapshot),
-  actions: [
-    ({event}) => [
-      raise({type: 'annotation.add', annotation: event.annotation}),
-    ],
-  ],
-})
-
-const toggleDecoratorOff = defineBehavior({
-  on: 'decorator.toggle',
-  guard: ({snapshot, event}) =>
-    selectors.isActiveDecorator(event.decorator)(snapshot),
-  actions: [
-    ({event}) => [
-      raise({type: 'decorator.remove', decorator: event.decorator}),
-    ],
-  ],
-})
-
-const toggleDecoratorOn = defineBehavior({
-  on: 'decorator.toggle',
-  guard: ({snapshot, event}) => {
-    const manualSelection = event.offsets
-      ? blockOffsetsToSelection({
-          value: snapshot.context.value,
-          offsets: event.offsets,
-        })
-      : null
-
-    if (manualSelection) {
-      return !selectors.isActiveDecorator(event.decorator)({
-        ...snapshot,
-        context: {
-          ...snapshot.context,
-          selection: manualSelection,
-        },
-      })
-    }
-
-    return !selectors.isActiveDecorator(event.decorator)(snapshot)
-  },
-  actions: [
-    ({event}) => [
-      raise({
-        ...event,
-        type: 'decorator.add',
-      }),
-    ],
-  ],
-})
 
 const raiseDeserializationSuccessOrFailure = defineBehavior({
   on: 'deserialize',
@@ -505,14 +442,12 @@ export const defaultBehaviors = [
       ],
     ],
   }),
+  ...internalAnnotationBehaviors,
+  ...internalDecoratorBehaviors,
   ...internalInsertBehaviors,
   ...internalListItemBehaviors,
   ...internalStyleBehaviors,
   ...internalSelectBehaviors,
-  toggleAnnotationOff,
-  toggleAnnotationOn,
-  toggleDecoratorOff,
-  toggleDecoratorOn,
   raiseDeserializationSuccessOrFailure,
   raiseSerializationSuccessOrFailure,
   raiseInsertSoftBreak,
