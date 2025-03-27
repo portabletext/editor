@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.44.1](https://github.com/portabletext/editor/compare/editor-v1.44.0...editor-v1.44.1) (2025-03-27)
+
+
+### Bug Fixes
+
+* turn `(annotation|decorator).toggle` into external/internal events ([02a42c2](https://github.com/portabletext/editor/commit/02a42c29debcd64ea8a7a468413ea13755513ac2))
+
 ## [1.44.0](https://github.com/portabletext/editor/compare/editor-v1.43.1...editor-v1.44.0) (2025-03-26)
 
 
