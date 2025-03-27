@@ -47,6 +47,19 @@ export function parseBlock({
   )
 }
 
+export function isBlockObject(
+  schema: EditorSchema,
+  block: unknown,
+): block is PortableTextObject {
+  return (
+    parseBlockObject({
+      blockObject: block,
+      context: {schema, keyGenerator: () => ''},
+      options: {refreshKeys: false},
+    }) !== undefined
+  )
+}
+
 function parseBlockObject({
   blockObject,
   context,

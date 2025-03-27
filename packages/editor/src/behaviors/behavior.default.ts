@@ -1,11 +1,12 @@
 import {isTextBlock} from '../internal-utils/parse-blocks'
 import * as selectors from '../selectors'
-import {blockOffsetsToSelection, getTextBlockText} from '../utils'
+import {blockOffsetsToSelection, getTextBlockText, sliceBlocks} from '../utils'
 import {raiseInsertSoftBreak} from './behavior.default.raise-soft-break'
 import {internalInsertBehaviors} from './behavior.internal.insert'
 import {internalListItemBehaviors} from './behavior.internal.list-item'
 import {internalSelectBehaviors} from './behavior.internal.select'
 import {internalStyleBehaviors} from './behavior.internal.style'
+import {resolveEvent} from './behavior.resolve-event'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -224,6 +225,28 @@ export const defaultBehaviors = [
         }),
       ],
     ],
+  }),
+  defineBehavior({
+    on: 'serialize',
+    guard: ({behaviors, snapshot, event}) => {
+      const blocks = sliceBlocks({
+        blocks: snapshot.context.value,
+        selection: snapshot.context.selection,
+      })
+
+      const actions = blocks.map((block) =>
+        resolveEvent({
+          behaviors,
+          event: {
+            type: `serialize.block.${block._type}`,
+            block,
+            originEvent: event.originEvent,
+          },
+          snapshot,
+        }),
+      )
+    },
+    actions: [],
   }),
   defineBehavior({
     on: 'serialization.success',
@@ -514,6 +537,6 @@ export const defaultBehaviors = [
   toggleDecoratorOff,
   toggleDecoratorOn,
   raiseDeserializationSuccessOrFailure,
-  raiseSerializationSuccessOrFailure,
+  // raiseSerializationSuccessOrFailure,
   raiseInsertSoftBreak,
 ]

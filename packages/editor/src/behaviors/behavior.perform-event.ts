@@ -148,6 +148,7 @@ export function performEvent({
     const shouldRun =
       eventBehavior.guard === undefined ||
       eventBehavior.guard({
+        behaviors: behaviors.filter((behavior) => behavior !== eventBehavior),
         context: editorSnapshot.context,
         snapshot: editorSnapshot,
         event,
@@ -160,6 +161,7 @@ export function performEvent({
     const actionSets = eventBehavior.actions.map((actionSet) =>
       actionSet(
         {
+          behaviors: behaviors.filter((behavior) => behavior !== eventBehavior),
           context: editorSnapshot.context,
           snapshot: editorSnapshot,
           event,
