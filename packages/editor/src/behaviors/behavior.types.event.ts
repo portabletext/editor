@@ -2,7 +2,7 @@ import type {KeyedSegment, PortableTextBlock} from '@sanity/types'
 import type {TextUnit} from 'slate'
 import type {EventPosition} from '../internal-utils/event-position'
 import type {MIMEType} from '../internal-utils/mime-type'
-import type {PickFromUnion} from '../type-utils'
+import type {PickFromUnion, StrictExtract} from '../type-utils'
 import type {BlockOffset} from '../types/block-offset'
 import type {BlockWithOptionalKey} from '../types/block-with-optional-key'
 import type {EditorSelection} from '../types/editor'
@@ -66,113 +66,129 @@ export type ExternalBehaviorEvent =
  * Synthetic events
  **************************************/
 
-type SyntheticBehaviorEventType<
-  TNamespace extends SyntheticBehaviorEventNamespace,
-  TType extends string = '',
-> = TType extends '' ? `${TNamespace}` : `${TNamespace}.${TType}`
+const syntheticBehaviorEventTypes = [
+  'annotation.add',
+  'annotation.remove',
+  'block.set',
+  'block.unset',
+  'blur',
+  'decorator.add',
+  'decorator.remove',
+  'delete',
+  'delete.backward',
+  'delete.block',
+  'delete.forward',
+  'delete.text',
+  'focus',
+  'history.redo',
+  'history.undo',
+  'insert.inline object',
+  'insert.break',
+  'insert.soft break',
+  'insert.block',
+  'insert.span',
+  'insert.text',
+  'move.block',
+  'move.block down',
+  'move.block up',
+  'select',
+] as const
+
+type SyntheticBehaviorEventType = (typeof syntheticBehaviorEventTypes)[number]
 
 type SyntheticBehaviorEventNamespace =
-  | 'annotation'
-  | 'block'
-  | 'blur'
-  | 'decorator'
-  | 'delete'
-  | 'focus'
-  | 'history'
-  | 'insert'
-  | 'move'
-  | 'select'
+  ExtractNamespace<SyntheticBehaviorEventType>
 
 /**
  * @beta
  */
 export type SyntheticBehaviorEvent =
   | {
-      type: SyntheticBehaviorEventType<'annotation', 'add'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'annotation.add'>
       annotation: {
         name: string
         value: {[prop: string]: unknown}
       }
     }
   | {
-      type: SyntheticBehaviorEventType<'annotation', 'remove'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'annotation.remove'>
       annotation: {
         name: string
       }
     }
   | {
-      type: SyntheticBehaviorEventType<'block', 'set'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'block.set'>
       at: [KeyedSegment]
       props: Record<string, unknown>
     }
   | {
-      type: SyntheticBehaviorEventType<'block', 'unset'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'block.unset'>
       at: [KeyedSegment]
       props: Array<string>
     }
   | {
-      type: SyntheticBehaviorEventType<'blur'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'blur'>
     }
   | {
-      type: SyntheticBehaviorEventType<'decorator', 'add'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'decorator.add'>
       decorator: string
       offsets?: {anchor: BlockOffset; focus: BlockOffset}
     }
   | {
-      type: SyntheticBehaviorEventType<'decorator', 'remove'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'decorator.remove'>
       decorator: string
     }
   | {
-      type: SyntheticBehaviorEventType<'delete'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'delete'>
       selection: NonNullable<EditorSelection>
     }
   | {
-      type: SyntheticBehaviorEventType<'delete', 'backward'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'delete.backward'>
       unit: TextUnit
     }
   | {
-      type: SyntheticBehaviorEventType<'delete', 'block'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'delete.block'>
       at: [KeyedSegment]
     }
   | {
-      type: SyntheticBehaviorEventType<'delete', 'forward'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'delete.forward'>
       unit: TextUnit
     }
   | {
-      type: SyntheticBehaviorEventType<'delete', 'text'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'delete.text'>
       anchor: BlockOffset
       focus: BlockOffset
     }
   | {
-      type: SyntheticBehaviorEventType<'focus'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'focus'>
     }
   | {
-      type: SyntheticBehaviorEventType<'history', 'redo'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'history.redo'>
     }
   | {
-      type: SyntheticBehaviorEventType<'history', 'undo'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'history.undo'>
     }
   | {
-      type: SyntheticBehaviorEventType<'insert', 'inline object'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'insert.inline object'>
       inlineObject: {
         name: string
         value?: {[prop: string]: unknown}
       }
     }
   | {
-      type: SyntheticBehaviorEventType<'insert', 'break'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'insert.break'>
     }
   | {
-      type: SyntheticBehaviorEventType<'insert', 'soft break'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'insert.soft break'>
     }
   | {
-      type: SyntheticBehaviorEventType<'insert', 'block'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'insert.block'>
       block: BlockWithOptionalKey
       placement: InsertPlacement
       select?: 'start' | 'end' | 'none'
     }
   | {
-      type: SyntheticBehaviorEventType<'insert', 'span'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'insert.span'>
       text: string
       annotations?: Array<{
         name: string
@@ -181,24 +197,24 @@ export type SyntheticBehaviorEvent =
       decorators?: Array<string>
     }
   | {
-      type: SyntheticBehaviorEventType<'insert', 'text'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'insert.text'>
       text: string
     }
   | {
-      type: SyntheticBehaviorEventType<'move', 'block'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'move.block'>
       at: [KeyedSegment]
       to: [KeyedSegment]
     }
   | {
-      type: SyntheticBehaviorEventType<'move', 'block down'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'move.block down'>
       at: [KeyedSegment]
     }
   | {
-      type: SyntheticBehaviorEventType<'move', 'block up'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'move.block up'>
       at: [KeyedSegment]
     }
   | {
-      type: SyntheticBehaviorEventType<'select'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'select'>
       selection: EditorSelection
     }
 
@@ -214,38 +230,46 @@ export function isKeyboardBehaviorEvent(
  * Abstract events
  **************************************/
 
-type AbstractBehaviorEventNamespace =
-  | 'annotation'
-  | 'decorator'
-  | 'deserialize'
-  | 'deserialization'
-  | 'list item'
-  | 'insert'
-  | 'select'
-  | 'serialize'
-  | 'serialization'
-  | 'style'
+const abstractBehaviorEventTypes = [
+  'annotation.toggle',
+  'decorator.toggle',
+  'deserialize',
+  'deserialization.success',
+  'deserialization.failure',
+  'insert.blocks',
+  'list item.add',
+  'list item.remove',
+  'list item.toggle',
+  'select.previous block',
+  'select.next block',
+  'serialize',
+  'serialization.success',
+  'serialization.failure',
+  'style.add',
+  'style.remove',
+  'style.toggle',
+] as const
 
-type AbstractBehaviorEventType<
-  TNamespace extends AbstractBehaviorEventNamespace,
-  TType extends string = '',
-> = TType extends '' ? `${TNamespace}` : `${TNamespace}.${TType}`
+type AbstractBehaviorEventType = (typeof abstractBehaviorEventTypes)[number]
+
+type AbstractBehaviorEventNamespace =
+  ExtractNamespace<AbstractBehaviorEventType>
 
 export type AbstractBehaviorEvent =
   | {
-      type: AbstractBehaviorEventType<'annotation', 'toggle'>
+      type: StrictExtract<AbstractBehaviorEventType, 'annotation.toggle'>
       annotation: {
         name: string
         value: {[prop: string]: unknown}
       }
     }
   | {
-      type: AbstractBehaviorEventType<'decorator', 'toggle'>
+      type: StrictExtract<AbstractBehaviorEventType, 'decorator.toggle'>
       decorator: string
       offsets?: {anchor: BlockOffset; focus: BlockOffset}
     }
   | {
-      type: AbstractBehaviorEventType<'deserialize'>
+      type: StrictExtract<AbstractBehaviorEventType, 'deserialize'>
       originEvent:
         | PickFromUnion<
             NativeBehaviorEvent,
@@ -255,7 +279,7 @@ export type AbstractBehaviorEvent =
         | InputBehaviorEvent
     }
   | {
-      type: AbstractBehaviorEventType<'serialize'>
+      type: StrictExtract<AbstractBehaviorEventType, 'serialize'>
       originEvent: PickFromUnion<
         NativeBehaviorEvent,
         'type',
@@ -263,7 +287,7 @@ export type AbstractBehaviorEvent =
       >
     }
   | {
-      type: AbstractBehaviorEventType<'deserialization', 'success'>
+      type: StrictExtract<AbstractBehaviorEventType, 'deserialization.success'>
       mimeType: MIMEType
       data: Array<PortableTextBlock>
       originEvent:
@@ -275,7 +299,7 @@ export type AbstractBehaviorEvent =
         | InputBehaviorEvent
     }
   | {
-      type: AbstractBehaviorEventType<'deserialization', 'failure'>
+      type: StrictExtract<AbstractBehaviorEventType, 'deserialization.failure'>
       mimeType: MIMEType
       reason: string
       originEvent:
@@ -287,7 +311,7 @@ export type AbstractBehaviorEvent =
         | InputBehaviorEvent
     }
   | {
-      type: AbstractBehaviorEventType<'serialization', 'success'>
+      type: StrictExtract<AbstractBehaviorEventType, 'serialization.success'>
       mimeType: MIMEType
       data: string
       originEvent: PickFromUnion<
@@ -297,7 +321,7 @@ export type AbstractBehaviorEvent =
       >
     }
   | {
-      type: AbstractBehaviorEventType<'serialization', 'failure'>
+      type: StrictExtract<AbstractBehaviorEventType, 'serialization.failure'>
       mimeType: MIMEType
       reason: string
       originEvent: PickFromUnion<
@@ -307,85 +331,78 @@ export type AbstractBehaviorEvent =
       >
     }
   | {
-      type: AbstractBehaviorEventType<'insert', 'blocks'>
+      type: StrictExtract<AbstractBehaviorEventType, 'insert.blocks'>
       blocks: Array<PortableTextBlock>
       placement: InsertPlacement
     }
   | {
-      type: AbstractBehaviorEventType<'list item', 'add'>
+      type: StrictExtract<AbstractBehaviorEventType, 'list item.add'>
       listItem: string
     }
   | {
-      type: AbstractBehaviorEventType<'list item', 'remove'>
+      type: StrictExtract<AbstractBehaviorEventType, 'list item.remove'>
       listItem: string
     }
   | {
-      type: AbstractBehaviorEventType<'list item', 'toggle'>
+      type: StrictExtract<AbstractBehaviorEventType, 'list item.toggle'>
       listItem: string
     }
   | {
-      type: AbstractBehaviorEventType<'select', 'previous block'>
+      type: StrictExtract<AbstractBehaviorEventType, 'select.previous block'>
       select?: 'start' | 'end'
     }
   | {
-      type: AbstractBehaviorEventType<'select', 'next block'>
+      type: StrictExtract<AbstractBehaviorEventType, 'select.next block'>
       select?: 'start' | 'end'
     }
   | {
-      type: AbstractBehaviorEventType<'style', 'add'>
+      type: StrictExtract<AbstractBehaviorEventType, 'style.add'>
       style: string
     }
   | {
-      type: AbstractBehaviorEventType<'style', 'remove'>
+      type: StrictExtract<AbstractBehaviorEventType, 'style.remove'>
       style: string
     }
   | {
-      type: AbstractBehaviorEventType<'style', 'toggle'>
+      type: StrictExtract<AbstractBehaviorEventType, 'style.toggle'>
       style: string
     }
 
 export function isAbstractBehaviorEvent(
   event: BehaviorEvent,
 ): event is AbstractBehaviorEvent {
-  return (
-    event.type === 'deserialize' ||
-    event.type.startsWith('deserialization.') ||
-    event.type === 'insert.blocks' ||
-    event.type.startsWith('list item.') ||
-    event.type === 'serialize' ||
-    event.type.startsWith('serialization.') ||
-    event.type === 'select.next block' ||
-    event.type === 'select.previous block' ||
-    event.type.startsWith('style.')
-  )
+  return (abstractBehaviorEventTypes as readonly string[]).includes(event.type)
 }
 
 /**************************************
  * Native events
  **************************************/
 
-type NativeBehaviorEventNamespace =
-  | 'clipboard'
-  | 'drag'
-  | 'input'
-  | 'keyboard'
-  | 'mouse'
+const nativeBehaviorEventTypes = [
+  'clipboard.copy',
+  'clipboard.cut',
+  'clipboard.paste',
+  'drag.dragstart',
+  'drag.drag',
+  'drag.dragend',
+  'drag.dragenter',
+  'drag.dragover',
+  'drag.dragleave',
+  'drag.drop',
+  'input.*',
+  'keyboard.keydown',
+  'keyboard.keyup',
+  'mouse.click',
+] as const
 
-type NativeBehaviorEventType<
-  TNamespace extends NativeBehaviorEventNamespace,
-  TType extends string = '',
-> = TType extends '' ? `${TNamespace}` : `${TNamespace}.${TType}`
+type NativeBehaviorEventType = (typeof nativeBehaviorEventTypes)[number]
+
+type NativeBehaviorEventNamespace = ExtractNamespace<NativeBehaviorEventType>
 
 export function isNativeBehaviorEvent(
   event: BehaviorEvent,
 ): event is NativeBehaviorEvent {
-  return (
-    isClipboardBehaviorEvent(event) ||
-    isDragBehaviorEvent(event) ||
-    isInputBehaviorEvent(event) ||
-    isKeyboardBehaviorEvent(event) ||
-    isMouseBehaviorEvent(event)
-  )
+  return (nativeBehaviorEventTypes as readonly string[]).includes(event.type)
 }
 
 /**
@@ -400,84 +417,74 @@ export type NativeBehaviorEvent =
 
 type ClipboardBehaviorEvent =
   | {
-      type: NativeBehaviorEventType<'clipboard', 'copy'>
+      type: StrictExtract<NativeBehaviorEventType, 'clipboard.copy'>
       originEvent: {
         dataTransfer: DataTransfer
       }
       position: Pick<EventPosition, 'selection'>
     }
   | {
-      type: NativeBehaviorEventType<'clipboard', 'cut'>
+      type: StrictExtract<NativeBehaviorEventType, 'clipboard.cut'>
       originEvent: {
         dataTransfer: DataTransfer
       }
       position: Pick<EventPosition, 'selection'>
     }
   | {
-      type: NativeBehaviorEventType<'clipboard', 'paste'>
+      type: StrictExtract<NativeBehaviorEventType, 'clipboard.paste'>
       originEvent: {
         dataTransfer: DataTransfer
       }
       position: Pick<EventPosition, 'selection'>
     }
-
-function isClipboardBehaviorEvent(
-  event: BehaviorEvent,
-): event is ClipboardBehaviorEvent {
-  return event.type.startsWith('clipboard.')
-}
 
 type DragBehaviorEvent =
   | {
-      type: NativeBehaviorEventType<'drag', 'dragstart'>
+      type: StrictExtract<NativeBehaviorEventType, 'drag.dragstart'>
       originEvent: {
         dataTransfer: DataTransfer
       }
       position: Pick<EventPosition, 'selection'>
     }
   | {
-      type: NativeBehaviorEventType<'drag', 'drag'>
+      type: StrictExtract<NativeBehaviorEventType, 'drag.drag'>
       originEvent: {
         dataTransfer: DataTransfer
       }
     }
   | {
-      type: NativeBehaviorEventType<'drag', 'dragend'>
+      type: StrictExtract<NativeBehaviorEventType, 'drag.dragend'>
       originEvent: {
         dataTransfer: DataTransfer
       }
     }
   | {
-      type: NativeBehaviorEventType<'drag', 'dragenter'>
+      type: StrictExtract<NativeBehaviorEventType, 'drag.dragenter'>
       originEvent: {
         dataTransfer: DataTransfer
       }
       position: EventPosition
     }
   | {
-      type: NativeBehaviorEventType<'drag', 'dragover'>
+      type: StrictExtract<NativeBehaviorEventType, 'drag.dragover'>
       originEvent: {
         dataTransfer: DataTransfer
       }
       position: EventPosition
     }
   | {
-      type: NativeBehaviorEventType<'drag', 'drop'>
+      type: StrictExtract<NativeBehaviorEventType, 'drag.drop'>
       originEvent: {
         dataTransfer: DataTransfer
       }
       position: EventPosition
     }
   | {
-      type: NativeBehaviorEventType<'drag', 'dragleave'>
+      type: StrictExtract<NativeBehaviorEventType, 'drag.dragleave'>
       originEvent: {
         dataTransfer: DataTransfer
       }
     }
-
-function isDragBehaviorEvent(event: BehaviorEvent): event is DragBehaviorEvent {
-  return event.type.startsWith('drag.')
-}
 
 /**
  * Used to represent native InputEvents that hold a DataTransfer object.
@@ -491,28 +498,22 @@ function isDragBehaviorEvent(event: BehaviorEvent): event is DragBehaviorEvent {
  * - insertFromYank
  */
 export type InputBehaviorEvent = {
-  type: NativeBehaviorEventType<'input', '*'>
+  type: StrictExtract<NativeBehaviorEventType, 'input.*'>
   originEvent: {
     dataTransfer: DataTransfer
   }
 }
 
-function isInputBehaviorEvent(
-  event: BehaviorEvent,
-): event is InputBehaviorEvent {
-  return event.type.startsWith('input.')
-}
-
 export type KeyboardBehaviorEvent =
   | {
-      type: NativeBehaviorEventType<'keyboard', 'keydown'>
+      type: StrictExtract<NativeBehaviorEventType, 'keyboard.keydown'>
       originEvent: Pick<
         KeyboardEvent,
         'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
       >
     }
   | {
-      type: NativeBehaviorEventType<'keyboard', 'keyup'>
+      type: StrictExtract<NativeBehaviorEventType, 'keyboard.keyup'>
       originEvent: Pick<
         KeyboardEvent,
         'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
@@ -520,14 +521,8 @@ export type KeyboardBehaviorEvent =
     }
 
 export type MouseBehaviorEvent = {
-  type: NativeBehaviorEventType<'mouse', 'click'>
+  type: StrictExtract<NativeBehaviorEventType, 'mouse.click'>
   position: EventPosition
-}
-
-function isMouseBehaviorEvent(
-  event: BehaviorEvent,
-): event is MouseBehaviorEvent {
-  return event.type.startsWith('mouse.')
 }
 
 /**************************************
@@ -586,3 +581,6 @@ export type ResolveBehaviorEvent<
       : TBehaviorEventType extends BehaviorEvent['type']
         ? PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>
         : never
+
+type ExtractNamespace<TType extends string> =
+  TType extends `${infer Namespace}.${string}` ? Namespace : TType
