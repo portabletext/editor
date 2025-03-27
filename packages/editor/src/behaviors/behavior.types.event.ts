@@ -51,6 +51,8 @@ export type ExternalBehaviorEvent =
   | PickFromUnion<
       InternalBehaviorEvent,
       'type',
+      | 'annotation.toggle'
+      | 'decorator.toggle'
       | 'insert.blocks'
       | 'list item.add'
       | 'list item.remove'
@@ -99,13 +101,6 @@ export type SyntheticBehaviorEvent =
       }
     }
   | {
-      type: SyntheticBehaviorEventType<'annotation', 'toggle'>
-      annotation: {
-        name: string
-        value: {[prop: string]: unknown}
-      }
-    }
-  | {
       type: SyntheticBehaviorEventType<'block', 'set'>
       at: [KeyedSegment]
       props: Record<string, unknown>
@@ -126,11 +121,6 @@ export type SyntheticBehaviorEvent =
   | {
       type: SyntheticBehaviorEventType<'decorator', 'remove'>
       decorator: string
-    }
-  | {
-      type: SyntheticBehaviorEventType<'decorator', 'toggle'>
-      decorator: string
-      offsets?: {anchor: BlockOffset; focus: BlockOffset}
     }
   | {
       type: SyntheticBehaviorEventType<'delete'>
@@ -225,6 +215,8 @@ export function isKeyboardBehaviorEvent(
  **************************************/
 
 type InternalBehaviorEventNamespace =
+  | 'annotation'
+  | 'decorator'
   | 'deserialize'
   | 'deserialization'
   | 'list item'
@@ -240,6 +232,18 @@ type InternalBehaviorEventType<
 > = TType extends '' ? `${TNamespace}` : `${TNamespace}.${TType}`
 
 export type InternalBehaviorEvent =
+  | {
+      type: InternalBehaviorEventType<'annotation', 'toggle'>
+      annotation: {
+        name: string
+        value: {[prop: string]: unknown}
+      }
+    }
+  | {
+      type: InternalBehaviorEventType<'decorator', 'toggle'>
+      decorator: string
+      offsets?: {anchor: BlockOffset; focus: BlockOffset}
+    }
   | {
       type: InternalBehaviorEventType<'deserialize'>
       originEvent:

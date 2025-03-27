@@ -4,12 +4,8 @@ import type {EditorContext} from '../editor/editor-snapshot'
 import {
   addAnnotationActionImplementation,
   removeAnnotationActionImplementation,
-  toggleAnnotationActionImplementation,
 } from '../editor/plugins/createWithEditableAPI'
-import {
-  removeDecoratorActionImplementation,
-  toggleDecoratorActionImplementation,
-} from '../editor/plugins/createWithPortableTextMarkModel'
+import {removeDecoratorActionImplementation} from '../editor/plugins/createWithPortableTextMarkModel'
 import {
   historyRedoActionImplementation,
   historyUndoActionImplementation,
@@ -66,13 +62,11 @@ type BehaviorActionImplementations = {
 const behaviorActionImplementations: BehaviorActionImplementations = {
   'annotation.add': addAnnotationActionImplementation,
   'annotation.remove': removeAnnotationActionImplementation,
-  'annotation.toggle': toggleAnnotationActionImplementation,
   'block.set': blockSetBehaviorActionImplementation,
   'block.unset': blockUnsetBehaviorActionImplementation,
   'blur': blurActionImplementation,
   'decorator.add': decoratorAddActionImplementation,
   'decorator.remove': removeDecoratorActionImplementation,
-  'decorator.toggle': toggleDecoratorActionImplementation,
   'focus': focusActionImplementation,
   'delete': deleteActionImplementation,
   'delete.backward': deleteBackwardActionImplementation,
@@ -119,13 +113,6 @@ export function performAction({
       })
       break
     }
-    case 'annotation.toggle': {
-      behaviorActionImplementations['annotation.toggle']({
-        context,
-        action,
-      })
-      break
-    }
     case 'block.set': {
       behaviorActionImplementations['block.set']({
         context,
@@ -156,13 +143,6 @@ export function performAction({
     }
     case 'decorator.remove': {
       behaviorActionImplementations['decorator.remove']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'decorator.toggle': {
-      behaviorActionImplementations['decorator.toggle']({
         context,
         action,
       })

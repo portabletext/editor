@@ -899,33 +899,3 @@ export const removeAnnotationActionImplementation: BehaviorActionImplementation<
     }
   }
 }
-
-export const toggleAnnotationActionImplementation: BehaviorActionImplementation<
-  'annotation.toggle',
-  AddedAnnotationPaths | undefined
-> = ({context, action}) => {
-  const isActive = isAnnotationActive({
-    editor: action.editor,
-    annotation: {name: action.annotation.name},
-  })
-
-  if (isActive) {
-    removeAnnotationActionImplementation({
-      context,
-      action: {
-        type: 'annotation.remove',
-        annotation: action.annotation,
-        editor: action.editor,
-      },
-    })
-  } else {
-    return addAnnotationActionImplementation({
-      context,
-      action: {
-        type: 'annotation.add',
-        annotation: action.annotation,
-        editor: action.editor,
-      },
-    })
-  }
-}
