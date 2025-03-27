@@ -23,17 +23,18 @@ export type Behavior<
     ResolveBehaviorEvent<TBehaviorEventType> = ResolveBehaviorEvent<TBehaviorEventType>,
 > = {
   /**
-   * The internal editor event that triggers this behavior.
+   * Editor Event that triggers this Behavior.
    */
   on: TBehaviorEventType
   /**
-   * Predicate function that determines if the behavior should be executed.
+   * Predicate function that determines if the Behavior should be executed.
    * Returning a non-nullable value from the guard will pass the value to the
    * actions and execute them.
    */
   guard?: BehaviorGuard<TBehaviorEvent, TGuardResponse>
   /**
-   * Array of behavior action sets.
+   * Array of Behavior Action sets.
+   * Each set represents a step in the history stack.
    */
   actions: Array<BehaviorActionSet<TBehaviorEvent, TGuardResponse>>
 }
