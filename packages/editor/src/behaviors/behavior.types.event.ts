@@ -12,13 +12,13 @@ import type {EditorSelection} from '../types/editor'
  */
 export type BehaviorEvent =
   | SyntheticBehaviorEvent
-  | InternalBehaviorEvent
+  | AbstractBehaviorEvent
   | NativeBehaviorEvent
   | CustomBehaviorEvent
 
 export type BehaviorEventTypeNamespace =
   | SyntheticBehaviorEventNamespace
-  | InternalBehaviorEventNamespace
+  | AbstractBehaviorEventNamespace
   | NativeBehaviorEventNamespace
   | CustomBehaviorEventNamespace
 
@@ -49,7 +49,7 @@ export type ExternalBehaviorEvent =
       }
     }
   | PickFromUnion<
-      InternalBehaviorEvent,
+      AbstractBehaviorEvent,
       'type',
       | 'annotation.toggle'
       | 'decorator.toggle'
@@ -211,10 +211,10 @@ export function isKeyboardBehaviorEvent(
 }
 
 /**************************************
- * Internal events
+ * Abstract events
  **************************************/
 
-type InternalBehaviorEventNamespace =
+type AbstractBehaviorEventNamespace =
   | 'annotation'
   | 'decorator'
   | 'deserialize'
@@ -226,26 +226,26 @@ type InternalBehaviorEventNamespace =
   | 'serialization'
   | 'style'
 
-type InternalBehaviorEventType<
-  TNamespace extends InternalBehaviorEventNamespace,
+type AbstractBehaviorEventType<
+  TNamespace extends AbstractBehaviorEventNamespace,
   TType extends string = '',
 > = TType extends '' ? `${TNamespace}` : `${TNamespace}.${TType}`
 
-export type InternalBehaviorEvent =
+export type AbstractBehaviorEvent =
   | {
-      type: InternalBehaviorEventType<'annotation', 'toggle'>
+      type: AbstractBehaviorEventType<'annotation', 'toggle'>
       annotation: {
         name: string
         value: {[prop: string]: unknown}
       }
     }
   | {
-      type: InternalBehaviorEventType<'decorator', 'toggle'>
+      type: AbstractBehaviorEventType<'decorator', 'toggle'>
       decorator: string
       offsets?: {anchor: BlockOffset; focus: BlockOffset}
     }
   | {
-      type: InternalBehaviorEventType<'deserialize'>
+      type: AbstractBehaviorEventType<'deserialize'>
       originEvent:
         | PickFromUnion<
             NativeBehaviorEvent,
@@ -255,7 +255,7 @@ export type InternalBehaviorEvent =
         | InputBehaviorEvent
     }
   | {
-      type: InternalBehaviorEventType<'serialize'>
+      type: AbstractBehaviorEventType<'serialize'>
       originEvent: PickFromUnion<
         NativeBehaviorEvent,
         'type',
@@ -263,7 +263,7 @@ export type InternalBehaviorEvent =
       >
     }
   | {
-      type: InternalBehaviorEventType<'deserialization', 'success'>
+      type: AbstractBehaviorEventType<'deserialization', 'success'>
       mimeType: MIMEType
       data: Array<PortableTextBlock>
       originEvent:
@@ -275,7 +275,7 @@ export type InternalBehaviorEvent =
         | InputBehaviorEvent
     }
   | {
-      type: InternalBehaviorEventType<'deserialization', 'failure'>
+      type: AbstractBehaviorEventType<'deserialization', 'failure'>
       mimeType: MIMEType
       reason: string
       originEvent:
@@ -287,7 +287,7 @@ export type InternalBehaviorEvent =
         | InputBehaviorEvent
     }
   | {
-      type: InternalBehaviorEventType<'serialization', 'success'>
+      type: AbstractBehaviorEventType<'serialization', 'success'>
       mimeType: MIMEType
       data: string
       originEvent: PickFromUnion<
@@ -297,7 +297,7 @@ export type InternalBehaviorEvent =
       >
     }
   | {
-      type: InternalBehaviorEventType<'serialization', 'failure'>
+      type: AbstractBehaviorEventType<'serialization', 'failure'>
       mimeType: MIMEType
       reason: string
       originEvent: PickFromUnion<
@@ -307,46 +307,46 @@ export type InternalBehaviorEvent =
       >
     }
   | {
-      type: InternalBehaviorEventType<'insert', 'blocks'>
+      type: AbstractBehaviorEventType<'insert', 'blocks'>
       blocks: Array<PortableTextBlock>
       placement: InsertPlacement
     }
   | {
-      type: InternalBehaviorEventType<'list item', 'add'>
+      type: AbstractBehaviorEventType<'list item', 'add'>
       listItem: string
     }
   | {
-      type: InternalBehaviorEventType<'list item', 'remove'>
+      type: AbstractBehaviorEventType<'list item', 'remove'>
       listItem: string
     }
   | {
-      type: InternalBehaviorEventType<'list item', 'toggle'>
+      type: AbstractBehaviorEventType<'list item', 'toggle'>
       listItem: string
     }
   | {
-      type: InternalBehaviorEventType<'select', 'previous block'>
+      type: AbstractBehaviorEventType<'select', 'previous block'>
       select?: 'start' | 'end'
     }
   | {
-      type: InternalBehaviorEventType<'select', 'next block'>
+      type: AbstractBehaviorEventType<'select', 'next block'>
       select?: 'start' | 'end'
     }
   | {
-      type: InternalBehaviorEventType<'style', 'add'>
+      type: AbstractBehaviorEventType<'style', 'add'>
       style: string
     }
   | {
-      type: InternalBehaviorEventType<'style', 'remove'>
+      type: AbstractBehaviorEventType<'style', 'remove'>
       style: string
     }
   | {
-      type: InternalBehaviorEventType<'style', 'toggle'>
+      type: AbstractBehaviorEventType<'style', 'toggle'>
       style: string
     }
 
-export function isInternalBehaviorEvent(
+export function isAbstractBehaviorEvent(
   event: BehaviorEvent,
-): event is InternalBehaviorEvent {
+): event is AbstractBehaviorEvent {
   return (
     event.type === 'deserialize' ||
     event.type.startsWith('deserialization.') ||

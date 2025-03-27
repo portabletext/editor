@@ -1,10 +1,10 @@
-import {getSelectedTextBlocks, isActiveListItem} from '../selectors'
+import {getSelectedTextBlocks, isActiveStyle} from '../selectors'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
-export const internalListItemBehaviors = [
+export const abstractStyleBehaviors = [
   defineBehavior({
-    on: 'list item.add',
+    on: 'style.add',
     guard: ({snapshot}) => {
       const selectedTextBlocks = getSelectedTextBlocks(snapshot)
 
@@ -17,15 +17,14 @@ export const internalListItemBehaviors = [
             type: 'block.set',
             at: block.path,
             props: {
-              level: 1,
-              listItem: event.listItem,
+              style: event.style,
             },
           }),
         ),
     ],
   }),
   defineBehavior({
-    on: 'list item.remove',
+    on: 'style.remove',
     guard: ({snapshot}) => {
       const selectedTextBlocks = getSelectedTextBlocks(snapshot)
 
@@ -37,25 +36,19 @@ export const internalListItemBehaviors = [
           raise({
             type: 'block.unset',
             at: block.path,
-            props: ['level', 'listItem'],
+            props: ['style'],
           }),
         ),
     ],
   }),
   defineBehavior({
-    on: 'list item.toggle',
-    guard: ({snapshot, event}) => isActiveListItem(event.listItem)(snapshot),
-    actions: [
-      ({event}) => [
-        raise({type: 'list item.remove', listItem: event.listItem}),
-      ],
-    ],
+    on: 'style.toggle',
+    guard: ({snapshot, event}) => isActiveStyle(event.style)(snapshot),
+    actions: [({event}) => [raise({type: 'style.remove', style: event.style})]],
   }),
   defineBehavior({
-    on: 'list item.toggle',
-    guard: ({snapshot, event}) => !isActiveListItem(event.listItem)(snapshot),
-    actions: [
-      ({event}) => [raise({type: 'list item.add', listItem: event.listItem})],
-    ],
+    on: 'style.toggle',
+    guard: ({snapshot, event}) => !isActiveStyle(event.style)(snapshot),
+    actions: [({event}) => [raise({type: 'style.add', style: event.style})]],
   }),
 ]

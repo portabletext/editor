@@ -2,8 +2,8 @@ import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
 import type {OmitFromUnion, PickFromUnion} from '../type-utils'
 import type {PortableTextSlateEditor} from '../types/editor'
 import type {
+  AbstractBehaviorEvent,
   CustomBehaviorEvent,
-  InternalBehaviorEvent,
   SyntheticBehaviorEvent,
 } from './behavior.types.event'
 
@@ -15,7 +15,7 @@ export type BehaviorAction =
   | {
       type: 'raise'
       event:
-        | InternalBehaviorEvent
+        | AbstractBehaviorEvent
         | SyntheticBehaviorEvent
         | CustomBehaviorEvent
     }
@@ -31,7 +31,7 @@ export type BehaviorAction =
  * @beta
  */
 export function raise(
-  event: InternalBehaviorEvent | SyntheticBehaviorEvent | CustomBehaviorEvent,
+  event: AbstractBehaviorEvent | SyntheticBehaviorEvent | CustomBehaviorEvent,
 ): PickFromUnion<BehaviorAction, 'type', 'raise'> {
   return {type: 'raise', event}
 }

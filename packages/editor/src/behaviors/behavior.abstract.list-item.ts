@@ -1,10 +1,10 @@
-import {getSelectedTextBlocks, isActiveStyle} from '../selectors'
+import {getSelectedTextBlocks, isActiveListItem} from '../selectors'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
-export const internalStyleBehaviors = [
+export const abstractListItemBehaviors = [
   defineBehavior({
-    on: 'style.add',
+    on: 'list item.add',
     guard: ({snapshot}) => {
       const selectedTextBlocks = getSelectedTextBlocks(snapshot)
 
@@ -17,14 +17,15 @@ export const internalStyleBehaviors = [
             type: 'block.set',
             at: block.path,
             props: {
-              style: event.style,
+              level: 1,
+              listItem: event.listItem,
             },
           }),
         ),
     ],
   }),
   defineBehavior({
-    on: 'style.remove',
+    on: 'list item.remove',
     guard: ({snapshot}) => {
       const selectedTextBlocks = getSelectedTextBlocks(snapshot)
 
@@ -36,19 +37,25 @@ export const internalStyleBehaviors = [
           raise({
             type: 'block.unset',
             at: block.path,
-            props: ['style'],
+            props: ['level', 'listItem'],
           }),
         ),
     ],
   }),
   defineBehavior({
-    on: 'style.toggle',
-    guard: ({snapshot, event}) => isActiveStyle(event.style)(snapshot),
-    actions: [({event}) => [raise({type: 'style.remove', style: event.style})]],
+    on: 'list item.toggle',
+    guard: ({snapshot, event}) => isActiveListItem(event.listItem)(snapshot),
+    actions: [
+      ({event}) => [
+        raise({type: 'list item.remove', listItem: event.listItem}),
+      ],
+    ],
   }),
   defineBehavior({
-    on: 'style.toggle',
-    guard: ({snapshot, event}) => !isActiveStyle(event.style)(snapshot),
-    actions: [({event}) => [raise({type: 'style.add', style: event.style})]],
+    on: 'list item.toggle',
+    guard: ({snapshot, event}) => !isActiveListItem(event.listItem)(snapshot),
+    actions: [
+      ({event}) => [raise({type: 'list item.add', listItem: event.listItem})],
+    ],
   }),
 ]
