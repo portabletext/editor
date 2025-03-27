@@ -3,7 +3,7 @@ import {blockOffsetsToSelection} from '../utils'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
-export const internalDecoratorBehaviors = [
+export const abstractDecoratorBehaviors = [
   defineBehavior({
     on: 'decorator.toggle',
     guard: ({snapshot, event}) => isActiveDecorator(event.decorator)(snapshot),

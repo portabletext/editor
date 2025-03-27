@@ -14,9 +14,9 @@ import {defaultBehaviors} from '../behaviors/behavior.default'
 import {performEvent} from '../behaviors/behavior.perform-event'
 import type {Behavior} from '../behaviors/behavior.types.behavior'
 import type {
+  AbstractBehaviorEvent,
   CustomBehaviorEvent,
   ExternalBehaviorEvent,
-  InternalBehaviorEvent,
   NativeBehaviorEvent,
   SyntheticBehaviorEvent,
 } from '../behaviors/behavior.types.event'
@@ -179,7 +179,7 @@ export type InternalEditorEvent =
   | {
       type: 'behavior event'
       behaviorEvent:
-        | InternalBehaviorEvent
+        | AbstractBehaviorEvent
         | SyntheticBehaviorEvent
         | NativeBehaviorEvent
       editor: PortableTextSlateEditor

@@ -1,13 +1,13 @@
 import {isTextBlock} from '../internal-utils/parse-blocks'
 import * as selectors from '../selectors'
 import {getTextBlockText} from '../utils'
+import {abstractAnnotationBehaviors} from './behavior.abstract.annotation'
+import {abstractDecoratorBehaviors} from './behavior.abstract.decorator'
+import {abstractInsertBehaviors} from './behavior.abstract.insert'
+import {abstractListItemBehaviors} from './behavior.abstract.list-item'
+import {abstractSelectBehaviors} from './behavior.abstract.select'
+import {abstractStyleBehaviors} from './behavior.abstract.style'
 import {raiseInsertSoftBreak} from './behavior.default.raise-soft-break'
-import {internalAnnotationBehaviors} from './behavior.internal.annotation'
-import {internalDecoratorBehaviors} from './behavior.internal.decorator'
-import {internalInsertBehaviors} from './behavior.internal.insert'
-import {internalListItemBehaviors} from './behavior.internal.list-item'
-import {internalSelectBehaviors} from './behavior.internal.select'
-import {internalStyleBehaviors} from './behavior.internal.style'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -442,12 +442,12 @@ export const defaultBehaviors = [
       ],
     ],
   }),
-  ...internalAnnotationBehaviors,
-  ...internalDecoratorBehaviors,
-  ...internalInsertBehaviors,
-  ...internalListItemBehaviors,
-  ...internalStyleBehaviors,
-  ...internalSelectBehaviors,
+  ...abstractAnnotationBehaviors,
+  ...abstractDecoratorBehaviors,
+  ...abstractInsertBehaviors,
+  ...abstractListItemBehaviors,
+  ...abstractStyleBehaviors,
+  ...abstractSelectBehaviors,
   raiseDeserializationSuccessOrFailure,
   raiseSerializationSuccessOrFailure,
   raiseInsertSoftBreak,

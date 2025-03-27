@@ -2,7 +2,7 @@ import {getFocusTextBlock} from '../selectors'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
-export const internalInsertBehaviors = [
+export const abstractInsertBehaviors = [
   defineBehavior({
     on: 'insert.blocks',
     guard: ({event}) => event.placement === 'before',

@@ -10,8 +10,8 @@ import {debugWithName} from '../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../types/editor'
 import type {InternalBehaviorAction} from './behavior.types.action'
 import {
+  isAbstractBehaviorEvent,
   isCustomBehaviorEvent,
-  isInternalBehaviorEvent,
   isNativeBehaviorEvent,
 } from './behavior.types.event'
 
@@ -20,8 +20,8 @@ const debug = debugWithName('behaviors:event')
 function eventCategory(event: BehaviorEvent) {
   return isNativeBehaviorEvent(event)
     ? 'native'
-    : isInternalBehaviorEvent(event)
-      ? 'internal'
+    : isAbstractBehaviorEvent(event)
+      ? 'abstract'
       : isCustomBehaviorEvent(event)
         ? 'custom'
         : 'synthetic'
@@ -55,7 +55,7 @@ export function performEvent({
   const defaultAction =
     isCustomBehaviorEvent(event) ||
     isNativeBehaviorEvent(event) ||
-    isInternalBehaviorEvent(event)
+    isAbstractBehaviorEvent(event)
       ? undefined
       : ({
           ...event,

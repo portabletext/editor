@@ -3,7 +3,7 @@ import {getBlockEndPoint, getBlockStartPoint} from '../utils'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
-export const internalSelectBehaviors = [
+export const abstractSelectBehaviors = [
   defineBehavior({
     on: 'select.previous block',
     guard: ({snapshot, event}) => {

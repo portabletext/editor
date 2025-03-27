@@ -2,7 +2,7 @@ import {isActiveAnnotation} from '../selectors'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
-export const internalAnnotationBehaviors = [
+export const abstractAnnotationBehaviors = [
   defineBehavior({
     on: 'annotation.toggle',
     guard: ({snapshot, event}) =>
