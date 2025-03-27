@@ -231,6 +231,7 @@ type InternalBehaviorEventNamespace =
   | 'insert'
   | 'select'
   | 'serialize'
+  | 'serialize.block'
   | 'serialization'
   | 'style'
 
@@ -238,6 +239,16 @@ type InternalBehaviorEventType<
   TNamespace extends InternalBehaviorEventNamespace,
   TType extends string = '',
 > = TType extends '' ? `${TNamespace}` : `${TNamespace}.${TType}`
+
+type InternalSerializeBlockEvent<TType extends string = string> = {
+  type: InternalBehaviorEventType<'serialize.block', TType>
+  block: PortableTextBlock
+  originEvent: PickFromUnion<
+    NativeBehaviorEvent,
+    'type',
+    'clipboard.copy' | 'clipboard.cut' | 'drag.dragstart'
+  >
+}
 
 export type InternalBehaviorEvent =
   | {
@@ -258,6 +269,7 @@ export type InternalBehaviorEvent =
         'clipboard.copy' | 'clipboard.cut' | 'drag.dragstart'
       >
     }
+  | InternalSerializeBlockEvent
   | {
       type: InternalBehaviorEventType<'deserialization', 'success'>
       mimeType: MIMEType
@@ -577,8 +589,13 @@ export type ResolveBehaviorEvent<
           NamespacedBehaviorEventType<TNamespace>
         >
       : never
-    : TBehaviorEventType extends `custom.${infer TType}`
-      ? CustomBehaviorEvent<TPayload, TType>
-      : TBehaviorEventType extends BehaviorEvent['type']
-        ? PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>
-        : never
+    : TBehaviorEventType extends `serialize.block.${infer TType}`
+      ? InternalSerializeBlockEvent<TType>
+      : TBehaviorEventType extends `custom.${infer TType}`
+        ? CustomBehaviorEvent<TPayload, TType>
+        : TBehaviorEventType extends BehaviorEvent['type']
+          ? PickFromUnion<BehaviorEvent, 'type', TBehaviorEventType>
+          : never
+
+type X = ResolveBehaviorEvent<'serialize.block.image'>
+//   ^?

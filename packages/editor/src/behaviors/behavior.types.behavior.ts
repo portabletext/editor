@@ -1,4 +1,4 @@
-import type {BehaviorActionSet} from './behavior.types.action'
+import type {BehaviorAction, BehaviorActionSet} from './behavior.types.action'
 import type {
   BehaviorEvent,
   BehaviorEventTypeNamespace,
@@ -21,6 +21,7 @@ export type Behavior<
   TGuardResponse = true,
   TBehaviorEvent extends
     ResolveBehaviorEvent<TBehaviorEventType> = ResolveBehaviorEvent<TBehaviorEventType>,
+  // TBehaviorAction extends BehaviorAction = BehaviorAction,
 > = {
   /**
    * The internal editor event that triggers this behavior.
