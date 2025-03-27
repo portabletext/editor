@@ -25,3 +25,5 @@ export type NamespaceEvent<TEvent, TNamespace extends string> = TEvent extends {
         : TEvent[K]
     }
   : never
+
+export type StrictExtract<T, U extends T> = U
