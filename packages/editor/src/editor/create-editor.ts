@@ -12,11 +12,7 @@ import {
   type Snapshot,
 } from 'xstate'
 import type {Behavior} from '../behaviors/behavior.types.behavior'
-import type {
-  CustomBehaviorEvent,
-  ExternalBehaviorEvent,
-  SyntheticBehaviorEvent,
-} from '../behaviors/behavior.types.event'
+import type {ExternalBehaviorEvent} from '../behaviors/behavior.types.event'
 import {coreConverters} from '../converters/converters.core'
 import {compileType} from '../internal-utils/schema'
 import type {EditableAPI} from '../types/editor'
@@ -63,11 +59,7 @@ export type EditorConfig = {
 /**
  * @public
  */
-export type EditorEvent =
-  | ExternalEditorEvent
-  | ExternalBehaviorEvent
-  | SyntheticBehaviorEvent
-  | CustomBehaviorEvent
+export type EditorEvent = ExternalEditorEvent | ExternalBehaviorEvent
 
 /**
  * @public
@@ -154,7 +146,41 @@ function createInternalEditorFromActor(
       }
     },
     send: (event) => {
-      editorActor.send(event)
+      switch (event.type) {
+        case 'add behavior':
+        case 'remove behavior':
+        case 'update behaviors':
+        case 'update key generator':
+        case 'update readOnly':
+        case 'patches':
+        case 'update value':
+        case 'update schema':
+        case 'update maxBlocks':
+          editorActor.send(event)
+          break
+
+        case 'insert.block object':
+          editorActor.send({
+            type: 'behavior event',
+            behaviorEvent: {
+              type: 'insert.block',
+              block: {
+                _type: event.blockObject.name,
+                ...(event.blockObject.value ?? {}),
+              },
+              placement: event.placement,
+            },
+            editor: slateEditor.instance,
+          })
+          break
+
+        default:
+          editorActor.send({
+            type: 'behavior event',
+            behaviorEvent: event,
+            editor: slateEditor.instance,
+          })
+      }
     },
     on: (event, listener) => {
       const subscription = editorActor.on(event, (event) => {

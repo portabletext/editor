@@ -7,74 +7,11 @@ import {KEY_TO_VALUE_ELEMENT} from '../../internal-utils/weakMaps'
 import type {EditorActor} from '../editor-machine'
 import {isApplyingBehaviorActions} from '../with-applying-behavior-actions'
 
-export function createWithEventListeners(
-  editorActor: EditorActor,
-  subscriptions: Array<() => () => void>,
-) {
+export function createWithEventListeners(editorActor: EditorActor) {
   return function withEventListeners(editor: Editor) {
     if (editorActor.getSnapshot().context.maxBlocks !== undefined) {
       return editor
     }
-
-    subscriptions.push(() => {
-      const subscription = editorActor.on('*', (event) => {
-        switch (event.type) {
-          // These events are not relevant for Behaviors
-          case 'blurred':
-          case 'done loading':
-          case 'editable':
-          case 'error':
-          case 'focused':
-          case 'invalid value':
-          case 'loading':
-          case 'mutation':
-          case 'patch':
-          case 'internal.patch':
-          case 'patches':
-          case 'read only':
-          case 'ready':
-          case 'selection':
-          case 'value changed':
-          case 'unset':
-            break
-
-          case 'custom.*':
-            editorActor.send({
-              type: 'custom behavior event',
-              behaviorEvent: event.event,
-              editor,
-            })
-            break
-
-          case 'insert.block object':
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {
-                type: 'insert.block',
-                block: {
-                  _type: event.blockObject.name,
-                  ...(event.blockObject.value ?? {}),
-                },
-                placement: event.placement,
-              },
-              editor,
-            })
-            break
-
-          default:
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: event,
-              editor,
-            })
-            break
-        }
-      })
-
-      return () => {
-        subscription.unsubscribe()
-      }
-    })
 
     const {deleteBackward, deleteForward, insertBreak, insertText, select} =
       editor
