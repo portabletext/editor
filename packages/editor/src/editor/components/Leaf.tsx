@@ -144,12 +144,12 @@ export const Leaf = (props: LeafProps) => {
       return undefined
     }
 
-    const onBlur = editorActor.on('blur', () => {
+    const onBlur = editorActor.on('blurred', () => {
       setFocused(false)
       setSelected(false)
     })
 
-    const onFocus = editorActor.on('focus', () => {
+    const onFocus = editorActor.on('focused', () => {
       const sel = PortableTextEditor.getSelection(portableTextEditor)
       if (
         sel &&

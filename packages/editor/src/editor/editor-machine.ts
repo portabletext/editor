@@ -13,13 +13,7 @@ import {coreBehaviors} from '../behaviors/behavior.core'
 import {defaultBehaviors} from '../behaviors/behavior.default'
 import {performEvent} from '../behaviors/behavior.perform-event'
 import type {Behavior} from '../behaviors/behavior.types.behavior'
-import type {
-  AbstractBehaviorEvent,
-  CustomBehaviorEvent,
-  ExternalBehaviorEvent,
-  NativeBehaviorEvent,
-  SyntheticBehaviorEvent,
-} from '../behaviors/behavior.types.event'
+import type {BehaviorEvent} from '../behaviors/behavior.types.event'
 import type {Converter} from '../converters/converter.types'
 import type {EventPosition} from '../internal-utils/event-position'
 import type {NamespaceEvent} from '../type-utils'
@@ -167,6 +161,7 @@ export type HasTag = ReturnType<EditorActor['getSnapshot']>['hasTag']
  * @internal
  */
 export type InternalEditorEvent =
+  | ExternalEditorEvent
   | {
       type: 'normalizing'
     }
@@ -178,28 +173,15 @@ export type InternalEditorEvent =
     }
   | {
       type: 'behavior event'
-      behaviorEvent:
-        | AbstractBehaviorEvent
-        | SyntheticBehaviorEvent
-        | NativeBehaviorEvent
+      behaviorEvent: BehaviorEvent
       editor: PortableTextSlateEditor
       defaultActionCallback?: () => void
       nativeEvent?: {preventDefault: () => void}
     }
-  | {
-      type: 'custom behavior event'
-      behaviorEvent: CustomBehaviorEvent
-      editor: PortableTextSlateEditor
-      nativeEvent?: {preventDefault: () => void}
-    }
-  | CustomBehaviorEvent
-  | ExternalBehaviorEvent
-  | ExternalEditorEvent
   | MutationEvent
   | InternalPatchEvent
   | NamespaceEvent<EditorEmittedEvent, 'notify'>
   | NamespaceEvent<UnsetEvent, 'notify'>
-  | SyntheticBehaviorEvent
   | {
       type: 'dragstart'
       origin: Pick<EventPosition, 'selection'>
@@ -213,15 +195,9 @@ export type InternalEditorEvent =
  */
 export type InternalEditorEmittedEvent =
   | EditorEmittedEvent
-  | ExternalBehaviorEvent
   | InternalPatchEvent
   | PatchesEvent
   | UnsetEvent
-  | {
-      type: 'custom.*'
-      event: CustomBehaviorEvent
-    }
-  | SyntheticBehaviorEvent
 
 /**
  * @internal
@@ -318,7 +294,7 @@ export const editorMachine = setup({
       pendingEvents: [],
     }),
     'handle behavior event': ({context, event, self}) => {
-      assertEvent(event, ['behavior event', 'custom behavior event'])
+      assertEvent(event, ['behavior event'])
 
       performEvent({
         behaviors: [...context.behaviors.values(), ...defaultBehaviors],
@@ -446,54 +422,6 @@ export const editorMachine = setup({
             },
             'behavior event': {
               actions: 'handle behavior event',
-            },
-            'custom behavior event': {
-              actions: 'handle behavior event',
-            },
-            'annotation.*': {
-              actions: emit(({event}) => event),
-            },
-            'block.*': {
-              actions: emit(({event}) => event),
-            },
-            'blur': {
-              actions: emit(({event}) => event),
-            },
-            'custom.*': {
-              actions: emit(({event}) => ({type: 'custom.*', event})),
-            },
-            'decorator.*': {
-              actions: emit(({event}) => event),
-            },
-            'delete.*': {
-              actions: emit(({event}) => event),
-            },
-            'focus': {
-              actions: emit(({event}) => event),
-            },
-            'history.*': {
-              actions: emit(({event}) => event),
-            },
-            'insert.*': {
-              actions: emit(({event}) => event),
-            },
-            'list item.*': {
-              actions: emit(({event}) => event),
-            },
-            'move.*': {
-              actions: emit(({event}) => event),
-            },
-            'select': {
-              actions: emit(({event}) => event),
-            },
-            'select.*': {
-              actions: emit(({event}) => event),
-            },
-            'style.*': {
-              actions: emit(({event}) => event),
-            },
-            'text block.*': {
-              actions: emit(({event}) => event),
             },
           },
           initial: 'idle',

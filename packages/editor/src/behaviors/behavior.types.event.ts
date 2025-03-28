@@ -61,6 +61,8 @@ export type ExternalBehaviorEvent =
       | 'style.remove'
       | 'style.toggle'
     >
+  | SyntheticBehaviorEvent
+  | CustomBehaviorEvent
 
 /**************************************
  * Synthetic events

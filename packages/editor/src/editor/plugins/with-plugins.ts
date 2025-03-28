@@ -69,10 +69,7 @@ export const withPlugins = <T extends Editor>(
     editorActor,
     schemaTypes,
   )
-  const withEventListeners = createWithEventListeners(
-    editorActor,
-    options.subscriptions,
-  )
+  const withEventListeners = createWithEventListeners(editorActor)
 
   // Ordering is important here, selection dealing last, data manipulation in the middle and core model stuff first.
   return withEventListeners(
