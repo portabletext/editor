@@ -12,14 +12,12 @@ export function getFocusBlock({
     return [undefined, undefined]
   }
 
-  const focusBlock = Array.from(
-    Editor.nodes(editor, {
-      at: editor.selection.focus.path.slice(0, 1),
-      match: (n) => !Editor.isEditor(n),
-    }),
-  ).at(0)
-
-  return focusBlock ?? [undefined, undefined]
+  return (
+    Editor.node(editor, editor.selection.focus.path.slice(0, 1)) ?? [
+      undefined,
+      undefined,
+    ]
+  )
 }
 
 export function getFocusChild({
