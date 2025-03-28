@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.44.2](https://github.com/portabletext/editor/compare/editor-v1.44.1...editor-v1.44.2) (2025-03-28)
+
+
+### Bug Fixes
+
+* better `Behavior` type docs ([8c08736](https://github.com/portabletext/editor/commit/8c08736ed21110c61dfb90ed0bd47299a6b41827))
+* **perf:** improve internal `getFocusBlock` ([9040fd8](https://github.com/portabletext/editor/commit/9040fd8c3be110a193e66eaabe77ea6a3e5056e4))
+* turn `move.block (down|up)` into abstract events ([684f68a](https://github.com/portabletext/editor/commit/684f68a9f1443c1755bc698254cd2ef980a6dfe8))
+
 ## [1.44.1](https://github.com/portabletext/editor/compare/editor-v1.44.0...editor-v1.44.1) (2025-03-27)
 
 
