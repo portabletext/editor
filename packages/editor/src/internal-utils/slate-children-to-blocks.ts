@@ -6,6 +6,8 @@ export function slateChildrenToBlocks(
   schema: EditorSchema,
   value: Array<Descendant>,
 ): Array<PortableTextBlock> {
+  return value.map((x) => x) as Array<PortableTextBlock>
+
   const blocks: Array<PortableTextBlock> = new Array(value.length)
 
   for (let blockIndex = 0; blockIndex < value.length; blockIndex++) {
