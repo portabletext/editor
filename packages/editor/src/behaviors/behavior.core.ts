@@ -1,14 +1,85 @@
+import {defaultKeyGenerator} from '../editor/key-generator'
+import {isHotkey} from '../internal-utils/is-hotkey'
+import {
+  getFirstBlock,
+  getLastBlock,
+  getNextBlock,
+  getPreviousBlock,
+} from '../selectors'
+import {getBlockEndPoint, getBlockStartPoint} from '../utils'
 import {coreAnnotationBehaviors} from './behavior.core.annotations'
 import {coreBlockObjectBehaviors} from './behavior.core.block-objects'
 import {coreDecoratorBehaviors} from './behavior.core.decorators'
 import {coreDndBehaviors} from './behavior.core.dnd'
 import {coreInsertBreakBehaviors} from './behavior.core.insert-break'
 import {coreListBehaviors} from './behavior.core.lists'
+import {raise} from './behavior.types.action'
+import {defineBehavior} from './behavior.types.behavior'
 
 /**
  * @beta
  */
 export const coreBehaviors = [
+  defineBehavior({
+    on: 'keyboard.keydown',
+    guard: ({snapshot, event}) => {
+      getPreviousBlock(snapshot)
+      getPreviousBlock(snapshot)
+      getPreviousBlock(snapshot)
+      getPreviousBlock(snapshot)
+      getPreviousBlock(snapshot)
+      getPreviousBlock(snapshot)
+      getPreviousBlock(snapshot)
+      getPreviousBlock(snapshot)
+      getPreviousBlock(snapshot)
+      getPreviousBlock(snapshot)
+      getPreviousBlock(snapshot)
+
+      if (isHotkey('ArrowDown', event.originEvent)) {
+        return {_key: defaultKeyGenerator()}
+      }
+
+      return false
+    },
+    actions: [
+      (_, {_key}) => [
+        raise({
+          type: 'insert.block',
+          placement: 'after',
+          select: 'end',
+          block: {
+            _key,
+            _type: 'block',
+            children: [{_type: 'span', text: _key}],
+          },
+        }),
+      ],
+    ],
+  }),
+  defineBehavior({
+    on: 'keyboard.keydown',
+    guard: ({snapshot, event}) => {
+      if (isHotkey('ArrowUp', event.originEvent)) {
+        return {_key: defaultKeyGenerator()}
+      }
+
+      return false
+    },
+    actions: [
+      (_, {_key}) => [
+        raise({
+          type: 'insert.block',
+          placement: 'before',
+          select: 'start',
+          block: {
+            _key,
+            _type: 'block',
+            children: [{_type: 'span', text: _key}],
+          },
+        }),
+      ],
+    ],
+  }),
   coreAnnotationBehaviors.addAnnotationOnCollapsedSelection,
   coreDecoratorBehaviors.strongShortcut,
   coreDecoratorBehaviors.emShortcut,
