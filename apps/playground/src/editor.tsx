@@ -389,9 +389,9 @@ function EditorPlaygroundToolbar(props: {
             Value
           </Switch>
         </Toolbar>
-        {showingValuePreview ? (
+        {/* {showingValuePreview ? (
           <ValuePreview editorId={props.editorRef.id} />
-        ) : null}
+        ) : null} */}
       </div>
       {enableMarkdownPlugin ? (
         <MarkdownPlugin

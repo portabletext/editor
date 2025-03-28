@@ -60,9 +60,9 @@ export function Editors(props: {playgroundRef: PlaygroundActorRef}) {
             ))}
           </div>
         </div>
-        {showPortableTextPreview ? (
+        {/* {showPortableTextPreview ? (
           <PortableTextPreview playgroundRef={props.playgroundRef} />
-        ) : null}
+        ) : null} */}
       </div>
     </div>
   )
