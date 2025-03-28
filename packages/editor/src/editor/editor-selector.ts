@@ -1,10 +1,10 @@
 import {useSelector} from '@xstate/react'
+import {slateChildrenToBlocks} from '../internal-utils/slate-children-to-blocks'
 import type {PortableTextSlateEditor} from '../types/editor'
 import type {Editor, InternalEditor} from './create-editor'
 import type {EditorActor} from './editor-machine'
 import type {EditorSnapshot} from './editor-snapshot'
 import {getActiveDecorators} from './get-active-decorators'
-import {getValue} from './get-value'
 
 function defaultCompare<T>(a: T, b: T) {
   return a === b
@@ -77,7 +77,10 @@ export function getEditorSnapshot({
       readOnly: editorActorSnapshot.matches({'edit mode': 'read only'}),
       schema: editorActorSnapshot.context.schema,
       selection: editorActorSnapshot.context.selection,
-      value: getValue({editorActorSnapshot, slateEditorInstance}),
+      value: slateChildrenToBlocks(
+        editorActorSnapshot.context.schema,
+        slateEditorInstance.children,
+      ),
     },
     beta: {
       hasTag: (tag) => editorActorSnapshot.hasTag(tag),
