@@ -1,5 +1,6 @@
 import {isHotkey} from '../internal-utils/is-hotkey'
 import * as selectors from '../selectors'
+import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
 /**
@@ -35,10 +36,12 @@ export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
       },
       actions: [
         (_, {paths}) =>
-          paths.map((at) => ({
-            type: 'move.block up',
-            at,
-          })),
+          paths.map((at) =>
+            raise({
+              type: 'move.block up',
+              at,
+            }),
+          ),
       ],
     }),
     defineBehavior({
@@ -62,10 +65,12 @@ export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
       },
       actions: [
         (_, {paths}) =>
-          paths.map((at) => ({
-            type: 'move.block down',
-            at,
-          })),
+          paths.map((at) =>
+            raise({
+              type: 'move.block down',
+              at,
+            }),
+          ),
       ],
     }),
   ]
