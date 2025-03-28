@@ -32,8 +32,6 @@ import {insertSpanActionImplementation} from './behavior.action.insert-span'
 import {insertBlockActionImplementation} from './behavior.action.insert.block'
 import {insertTextActionImplementation} from './behavior.action.insert.text'
 import {moveBlockActionImplementation} from './behavior.action.move.block'
-import {moveBlockDownActionImplementation} from './behavior.action.move.block-down'
-import {moveBlockUpActionImplementation} from './behavior.action.move.block-up'
 import {noopActionImplementation} from './behavior.action.noop'
 import {selectActionImplementation} from './behavior.action.select'
 
@@ -83,8 +81,6 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'insert.text': insertTextActionImplementation,
   'effect': effectActionImplementation,
   'move.block': moveBlockActionImplementation,
-  'move.block down': moveBlockDownActionImplementation,
-  'move.block up': moveBlockUpActionImplementation,
   'noop': noopActionImplementation,
   'select': selectActionImplementation,
 }
@@ -255,20 +251,6 @@ export function performAction({
     }
     case 'move.block': {
       behaviorActionImplementations['move.block']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'move.block down': {
-      behaviorActionImplementations['move.block down']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'move.block up': {
-      behaviorActionImplementations['move.block up']({
         context,
         action,
       })

@@ -91,8 +91,6 @@ const syntheticBehaviorEventTypes = [
   'insert.span',
   'insert.text',
   'move.block',
-  'move.block down',
-  'move.block up',
   'select',
 ] as const
 
@@ -208,14 +206,6 @@ export type SyntheticBehaviorEvent =
       to: [KeyedSegment]
     }
   | {
-      type: StrictExtract<SyntheticBehaviorEventType, 'move.block down'>
-      at: [KeyedSegment]
-    }
-  | {
-      type: StrictExtract<SyntheticBehaviorEventType, 'move.block up'>
-      at: [KeyedSegment]
-    }
-  | {
       type: StrictExtract<SyntheticBehaviorEventType, 'select'>
       selection: EditorSelection
     }
@@ -242,6 +232,8 @@ const abstractBehaviorEventTypes = [
   'list item.add',
   'list item.remove',
   'list item.toggle',
+  'move.block down',
+  'move.block up',
   'select.previous block',
   'select.next block',
   'serialize',
@@ -348,6 +340,14 @@ export type AbstractBehaviorEvent =
   | {
       type: StrictExtract<AbstractBehaviorEventType, 'list item.toggle'>
       listItem: string
+    }
+  | {
+      type: StrictExtract<AbstractBehaviorEventType, 'move.block down'>
+      at: [KeyedSegment]
+    }
+  | {
+      type: StrictExtract<AbstractBehaviorEventType, 'move.block up'>
+      at: [KeyedSegment]
     }
   | {
       type: StrictExtract<AbstractBehaviorEventType, 'select.previous block'>

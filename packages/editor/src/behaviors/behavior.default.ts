@@ -5,6 +5,7 @@ import {abstractAnnotationBehaviors} from './behavior.abstract.annotation'
 import {abstractDecoratorBehaviors} from './behavior.abstract.decorator'
 import {abstractInsertBehaviors} from './behavior.abstract.insert'
 import {abstractListItemBehaviors} from './behavior.abstract.list-item'
+import {abstractMoveBehaviors} from './behavior.abstract.move'
 import {abstractSelectBehaviors} from './behavior.abstract.select'
 import {abstractStyleBehaviors} from './behavior.abstract.style'
 import {raiseInsertSoftBreak} from './behavior.default.raise-soft-break'
@@ -446,6 +447,7 @@ export const defaultBehaviors = [
   ...abstractDecoratorBehaviors,
   ...abstractInsertBehaviors,
   ...abstractListItemBehaviors,
+  ...abstractMoveBehaviors,
   ...abstractStyleBehaviors,
   ...abstractSelectBehaviors,
   raiseDeserializationSuccessOrFailure,
