@@ -55,6 +55,6 @@
     "@sanity/pkg-utils": "^7.2.1",
     "@types/lodash": "^4.17.13",
     "typescript": "5.8.2",
-    "vitest": "^3.0.9"
+    "vitest": "^3.1.1"
   }
 }
