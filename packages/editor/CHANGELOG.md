@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.44.7](https://github.com/portabletext/editor/compare/editor-v1.44.6...editor-v1.44.7) (2025-04-01)
+
+
+### Bug Fixes
+
+* trigger rerender when range decorations change ([349eb51](https://github.com/portabletext/editor/commit/349eb515260da5b4bfce244c664728e6620385f3))
+
 ## [1.44.6](https://github.com/portabletext/editor/compare/editor-v1.44.5...editor-v1.44.6) (2025-04-01)
 
 
