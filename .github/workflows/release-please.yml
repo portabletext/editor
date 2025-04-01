@@ -18,6 +18,9 @@ permissions:
 
 jobs:
   release-please:
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
     permissions:
       contents: read # for checkout
       id-token: write # to enable use of OIDC for npm provenance
@@ -44,10 +47,8 @@ jobs:
         with:
           cache: pnpm
           node-version: lts/*
-      - name: install corepack
-        run: npm install -g corepack@latest
       - name: install deps & build
-        run: corepack enable && pnpm --version && pnpm install --ignore-scripts && pnpm build --filter=./packages/*
+        run: pnpm install --ignore-scripts && pnpm build --filter=./packages/*
         if: ${{ steps.release.outputs.releases_created || github.event.inputs.publish == 'true' }}
       - name: Set publishing config
         run: pnpm config set '//registry.npmjs.org/:_authToken' "${NODE_AUTH_TOKEN}"
