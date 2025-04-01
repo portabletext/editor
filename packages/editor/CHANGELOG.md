@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.44.4](https://github.com/portabletext/editor/compare/editor-v1.44.3...editor-v1.44.4) (2025-04-01)
+
+
+### Bug Fixes
+
+* try-catch unsafe code ([1ec9dff](https://github.com/portabletext/editor/commit/1ec9dff8b493f1fac3d0f403f95172446337ed46))
+
 ## [1.44.3](https://github.com/portabletext/editor/compare/editor-v1.44.2...editor-v1.44.3) (2025-04-01)
 
 
