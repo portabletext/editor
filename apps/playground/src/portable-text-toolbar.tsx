@@ -1,6 +1,11 @@
-import {useEditor, useEditorSelector} from '@portabletext/editor'
+import {
+  useEditor,
+  useEditorSelector,
+  type RangeDecoration,
+  type RangeDecorationOnMovedDetails,
+} from '@portabletext/editor'
 import * as selectors from '@portabletext/editor/selectors'
-import {SquareDashedMousePointerIcon} from 'lucide-react'
+import {SquareDashedMousePointerIcon, TextCursorIcon} from 'lucide-react'
 import {isValidElement} from 'react'
 import {Group, TooltipTrigger} from 'react-aria-components'
 import {isValidElementType} from 'react-is'
@@ -14,6 +19,8 @@ import type {SchemaDefinition} from './schema'
 
 export function PortableTextToolbar(props: {
   schemaDefinition: SchemaDefinition
+  onAddRangeDecoration: (rangeDecoration: RangeDecoration) => void
+  onRangeDecorationMoved: (details: RangeDecorationOnMovedDetails) => void
 }) {
   const editor = useEditor()
 
@@ -69,6 +76,14 @@ export function PortableTextToolbar(props: {
           <SquareDashedMousePointerIcon className="size-4" />
         </Button>
         <Tooltip>Focus</Tooltip>
+      </TooltipTrigger>
+      <Separator orientation="vertical" />
+      <TooltipTrigger>
+        <DecorateSelectionButton
+          onAddRangeDecoration={props.onAddRangeDecoration}
+          onRangeDecorationMoved={props.onRangeDecorationMoved}
+        />
+        <Tooltip>Add Range Decoration</Tooltip>
       </TooltipTrigger>
     </Toolbar>
   )
@@ -281,4 +296,37 @@ function Icon(props: {
   ) : (
     props.fallback
   )
+}
+
+function DecorateSelectionButton(props: {
+  onAddRangeDecoration: (rangeDecoration: RangeDecoration) => void
+  onRangeDecorationMoved: (details: RangeDecorationOnMovedDetails) => void
+}) {
+  const editor = useEditor()
+  const selection = useEditorSelector(editor, selectors.getSelection)
+
+  return (
+    <Button
+      aria-label="Decorate"
+      isDisabled={!selection}
+      variant="secondary"
+      size="sm"
+      onPress={() => {
+        props.onAddRangeDecoration({
+          component: RangeComponent,
+          selection,
+          onMoved: props.onRangeDecorationMoved,
+        })
+        editor.send({
+          type: 'focus',
+        })
+      }}
+    >
+      <TextCursorIcon className="size-4" />
+    </Button>
+  )
+}
+
+function RangeComponent(props: React.PropsWithChildren<unknown>) {
+  return <span className="bg-green-200">{props.children}</span>
 }
