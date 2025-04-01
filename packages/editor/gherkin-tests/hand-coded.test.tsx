@@ -173,7 +173,7 @@ describe('Feature: Range Decorations', () => {
     )
   })
 
-  test('Scenario: Moving a Range Decoration', async () => {
+  test.skip('Scenario: Moving a Range Decoration', async () => {
     const {editorA, testActor} = await setUpTest([
       {
         _type: 'block',

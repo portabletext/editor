@@ -52,6 +52,7 @@ export const rangeDecorationsMachine = setup({
       readOnly: boolean
       schema: EditorSchema
       slateEditor: PortableTextSlateEditor
+      updateCount: number
     },
     input: {} as {
       rangeDecorations: Array<RangeDecoration>
@@ -192,7 +193,14 @@ export const rangeDecorationsMachine = setup({
           if (newRange !== null) {
             rangeDecorationState.push({
               ...(newRange || slateRange),
-              rangeDecoration: decoratedRange.rangeDecoration,
+              rangeDecoration: {
+                ...decoratedRange.rangeDecoration,
+                selection: slateRangeToSelection({
+                  schema: context.schema,
+                  editor: context.slateEditor,
+                  range: newRange,
+                }),
+              },
             })
           }
         }
@@ -206,6 +214,11 @@ export const rangeDecorationsMachine = setup({
         return event.readOnly
       },
     }),
+    'increment update count': assign({
+      updateCount: ({context}) => {
+        return context.updateCount + 1
+      },
+    }),
   },
   actors: {
     'slate operation listener': fromCallback(slateOperationCallback),
@@ -215,7 +228,23 @@ export const rangeDecorationsMachine = setup({
     'has different decorations': ({context, event}) => {
       assertEvent(event, 'range decorations updated')
 
-      return !isEqual(context.pendingRangeDecorations, event.rangeDecorations)
+      const existingRangeDecorations = context.decoratedRanges.map(
+        (decoratedRange) => ({
+          anchor: decoratedRange.rangeDecoration.selection?.anchor,
+          focus: decoratedRange.rangeDecoration.selection?.focus,
+        }),
+      )
+
+      const newRangeDecorations = event.rangeDecorations.map(
+        (rangeDecoration) => ({
+          anchor: rangeDecoration.selection?.anchor,
+          focus: rangeDecoration.selection?.focus,
+        }),
+      )
+
+      const different = !isEqual(existingRangeDecorations, newRangeDecorations)
+
+      return different
     },
     'not read only': ({context}) => !context.readOnly,
   },
@@ -227,6 +256,7 @@ export const rangeDecorationsMachine = setup({
     decoratedRanges: [],
     schema: input.schema,
     slateEditor: input.slateEditor,
+    updateCount: 0,
   }),
   invoke: {
     src: 'slate operation listener',
@@ -256,10 +286,7 @@ export const rangeDecorationsMachine = setup({
         'range decorations updated': {
           target: '.idle',
           guard: 'has different decorations',
-          actions: [
-            'update range decorations',
-            'update pending range decorations',
-          ],
+          actions: ['update range decorations', 'increment update count'],
         },
       },
       states: {
