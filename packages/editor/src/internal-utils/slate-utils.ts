@@ -67,11 +67,15 @@ function getPointChild({
     return [undefined, undefined]
   }
 
-  const pointChild = Node.child(block, childIndex)
+  try {
+    const pointChild = Node.child(block, childIndex)
 
-  return pointChild
-    ? [pointChild, [...blockPath, childIndex]]
-    : [undefined, undefined]
+    return pointChild
+      ? [pointChild, [...blockPath, childIndex]]
+      : [undefined, undefined]
+  } catch {
+    return [undefined, undefined]
+  }
 }
 
 export function getFirstBlock({
