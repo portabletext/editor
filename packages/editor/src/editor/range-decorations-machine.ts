@@ -1,17 +1,25 @@
 import {isEqual} from 'lodash'
-import {Range, type BaseRange, type Operation} from 'slate'
+import {
+  Path,
+  Range,
+  type BaseRange,
+  type NodeEntry,
+  type Operation,
+} from 'slate'
 import {
   and,
   assertEvent,
   assign,
   fromCallback,
   setup,
+  type ActorRefFrom,
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
 import type {EditorSchema} from '..'
 import {moveRangeByOperation, toSlateRange} from '../internal-utils/ranges'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
+import {isEqualToEmptyEditor} from '../internal-utils/values'
 import type {PortableTextSlateEditor, RangeDecoration} from '../types/editor'
 
 const slateOperationCallback: CallbackLogicFunction<
@@ -273,3 +281,66 @@ export const rangeDecorationsMachine = setup({
     },
   },
 })
+
+export function createDecorate(
+  rangeDecorationActor: ActorRefFrom<typeof rangeDecorationsMachine>,
+) {
+  return function decorate([, path]: NodeEntry): Array<BaseRange> {
+    if (
+      isEqualToEmptyEditor(
+        rangeDecorationActor.getSnapshot().context.slateEditor.children,
+        rangeDecorationActor.getSnapshot().context.schema,
+      )
+    ) {
+      return [
+        {
+          anchor: {
+            path: [0, 0],
+            offset: 0,
+          },
+          focus: {
+            path: [0, 0],
+            offset: 0,
+          },
+          placeholder: true,
+        } as BaseRange,
+      ]
+    }
+
+    // Editor node has a path length of 0 (should never be decorated)
+    if (path.length === 0) {
+      return []
+    }
+
+    const result = rangeDecorationActor
+      .getSnapshot()
+      .context.decoratedRanges.filter((item) => {
+        // Special case in order to only return one decoration for collapsed ranges
+        if (Range.isCollapsed(item)) {
+          // Collapsed ranges should only be decorated if they are on a block child level (length 2)
+          if (path.length !== 2) {
+            return false
+          }
+
+          return (
+            Path.equals(item.focus.path, path) &&
+            Path.equals(item.anchor.path, path)
+          )
+        }
+
+        // Include decorations that either include or intersects with this path
+        return (
+          Range.intersection(item, {
+            anchor: {path, offset: 0},
+            focus: {path, offset: 0},
+          }) || Range.includes(item, path)
+        )
+      })
+
+    if (result.length > 0) {
+      return result
+    }
+
+    return []
+  }
+}
