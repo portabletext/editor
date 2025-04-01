@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.44.5](https://github.com/portabletext/editor/compare/editor-v1.44.4...editor-v1.44.5) (2025-04-01)
+
+
+### Bug Fixes
+
+* **perf:** only create `decorate` function once ([a8ea1b5](https://github.com/portabletext/editor/commit/a8ea1b535e20dd5d641297b74716152614242eab))
+
 ## [1.44.4](https://github.com/portabletext/editor/compare/editor-v1.44.3...editor-v1.44.4) (2025-04-01)
 
 
