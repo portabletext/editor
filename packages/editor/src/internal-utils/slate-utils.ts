@@ -1,6 +1,6 @@
-import {Editor, Element, Node, type Path} from 'slate'
+import {Editor, Element, Node, Range, type Path, type Point} from 'slate'
 import type {EditorSchema} from '../editor/define-schema'
-import type {PortableTextSlateEditor} from '../types/editor'
+import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
 import {fromSlateValue} from './values'
 
 export function getFocusBlock({
@@ -20,6 +20,20 @@ export function getFocusBlock({
   )
 }
 
+function getPointBlock({
+  editor,
+  point,
+}: {
+  editor: PortableTextSlateEditor
+  point: Point
+}): [node: Node, path: Path] | [undefined, undefined] {
+  const [block] = Editor.node(editor, point.path.slice(0, 1)) ?? [
+    undefined,
+    undefined,
+  ]
+  return block ? [block, point.path] : [undefined, undefined]
+}
+
 export function getFocusChild({
   editor,
 }: {
@@ -36,6 +50,27 @@ export function getFocusChild({
 
   return focusChild
     ? [focusChild, [...focusBlockPath, childIndex]]
+    : [undefined, undefined]
+}
+
+function getPointChild({
+  editor,
+  point,
+}: {
+  editor: PortableTextSlateEditor
+  point: Point
+}): [node: Node, path: Path] | [undefined, undefined] {
+  const [block, blockPath] = getPointBlock({editor, point})
+  const childIndex = point.path.at(1)
+
+  if (!block || !blockPath || childIndex === undefined) {
+    return [undefined, undefined]
+  }
+
+  const pointChild = Node.child(block, childIndex)
+
+  return pointChild
+    ? [pointChild, [...blockPath, childIndex]]
     : [undefined, undefined]
 }
 
@@ -175,4 +210,66 @@ export function isStyleActive({
   }
 
   return false
+}
+
+export function slateRangeToSelection({
+  schema,
+  editor,
+  range,
+}: {
+  schema: EditorSchema
+  editor: PortableTextSlateEditor
+  range: Range
+}): EditorSelection {
+  const [anchorBlock] = getPointBlock({
+    editor,
+    point: range.anchor,
+  })
+  const [focusBlock] = getPointBlock({
+    editor,
+    point: range.focus,
+  })
+
+  if (!anchorBlock || !focusBlock) {
+    return null
+  }
+
+  const [anchorChild] =
+    anchorBlock._type === schema.block.name
+      ? getPointChild({
+          editor,
+          point: range.anchor,
+        })
+      : [undefined, undefined]
+  const [focusChild] =
+    focusBlock._type === schema.block.name
+      ? getPointChild({
+          editor,
+          point: range.focus,
+        })
+      : [undefined, undefined]
+
+  const selection: EditorSelection = {
+    anchor: {
+      path: [{_key: anchorBlock._key}],
+      offset: range.anchor.offset,
+    },
+    focus: {
+      path: [{_key: focusBlock._key}],
+      offset: range.focus.offset,
+    },
+    backward: Range.isBackward(range),
+  }
+
+  if (anchorChild) {
+    selection.anchor.path.push('children')
+    selection.anchor.path.push({_key: anchorChild._key})
+  }
+
+  if (focusChild) {
+    selection.focus.path.push('children')
+    selection.focus.path.push({_key: focusChild._key})
+  }
+
+  return selection
 }
