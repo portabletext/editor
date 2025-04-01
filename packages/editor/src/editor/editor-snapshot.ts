@@ -1,8 +1,8 @@
 import type {PortableTextBlock} from '@sanity/types'
 import type {Converter} from '../converters/converter.types'
 import type {EventPosition} from '../internal-utils/event-position'
-import {toPortableTextRange} from '../internal-utils/ranges'
 import {slateChildrenToBlocks} from '../internal-utils/slate-children-to-blocks'
+import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
 import type {EditorSchema} from './define-schema'
 import type {HasTag} from './editor-machine'
@@ -62,7 +62,13 @@ export function createEditorSnapshot({
     | undefined
 }) {
   const value = slateChildrenToBlocks(schema, editor.children)
-  const selection = toPortableTextRange(value, editor.selection, schema)
+  const selection = editor.selection
+    ? slateRangeToSelection({
+        schema,
+        editor,
+        range: editor.selection,
+      })
+    : null
 
   const context = {
     activeDecorators: getActiveDecorators({

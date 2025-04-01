@@ -20,8 +20,12 @@ import type {DOMNode} from 'slate-dom'
 import {ReactEditor} from 'slate-react'
 import type {BehaviorActionImplementation} from '../../behavior-actions/behavior.actions'
 import {debugWithName} from '../../internal-utils/debug'
-import {toPortableTextRange, toSlateRange} from '../../internal-utils/ranges'
-import {isListItemActive, isStyleActive} from '../../internal-utils/slate-utils'
+import {toSlateRange} from '../../internal-utils/ranges'
+import {
+  isListItemActive,
+  isStyleActive,
+  slateRangeToSelection,
+} from '../../internal-utils/slate-utils'
 import {fromSlateValue, toSlateValue} from '../../internal-utils/values'
 import {
   KEY_TO_VALUE_ELEMENT,
@@ -187,17 +191,13 @@ export function createEditableAPI(
           editor,
         })
 
-        return (
-          toPortableTextRange(
-            fromSlateValue(
-              editor.children,
-              types.block.name,
-              KEY_TO_VALUE_ELEMENT.get(editor),
-            ),
-            editor.selection,
-            types,
-          )?.focus.path ?? []
-        )
+        return editor.selection
+          ? (slateRangeToSelection({
+              schema: editorActor.getSnapshot().context.schema,
+              editor,
+              range: editor.selection,
+            })?.focus.path ?? [])
+          : []
       }
 
       if (!editor.selection) {
@@ -256,17 +256,13 @@ export function createEditableAPI(
       })
       editor.onChange()
 
-      return (
-        toPortableTextRange(
-          fromSlateValue(
-            editor.children,
-            types.block.name,
-            KEY_TO_VALUE_ELEMENT.get(editor),
-          ),
-          editor.selection,
-          types,
-        )?.focus.path || []
-      )
+      return editor.selection
+        ? (slateRangeToSelection({
+            schema: editorActor.getSnapshot().context.schema,
+            editor,
+            range: editor.selection,
+          })?.focus.path ?? [])
+        : []
     },
     insertBlock: <TSchemaType extends {name: string}>(
       type: TSchemaType,
@@ -285,17 +281,13 @@ export function createEditableAPI(
         editor,
       })
 
-      return (
-        toPortableTextRange(
-          fromSlateValue(
-            editor.children,
-            types.block.name,
-            KEY_TO_VALUE_ELEMENT.get(editor),
-          ),
-          editor.selection,
-          types,
-        )?.focus.path ?? []
-      )
+      return editor.selection
+        ? (slateRangeToSelection({
+            schema: editorActor.getSnapshot().context.schema,
+            editor,
+            range: editor.selection,
+          })?.focus.path ?? [])
+        : []
     },
     hasBlockStyle: (style: string): boolean => {
       try {
@@ -511,15 +503,11 @@ export function createEditableAPI(
         if (existing) {
           return existing
         }
-        ptRange = toPortableTextRange(
-          fromSlateValue(
-            editor.children,
-            types.block.name,
-            KEY_TO_VALUE_ELEMENT.get(editor),
-          ),
-          editor.selection,
-          types,
-        )
+        ptRange = slateRangeToSelection({
+          schema: editorActor.getSnapshot().context.schema,
+          editor,
+          range: editor.selection,
+        })
         SLATE_TO_PORTABLE_TEXT_RANGE.set(editor.selection, ptRange)
       }
       return ptRange

@@ -1,9 +1,7 @@
 import {Editor} from 'slate'
 import {insertSoftBreakActionImplementation} from '../../behavior-actions/behavior.action.insert-break'
 import {performAction} from '../../behavior-actions/behavior.actions'
-import {toPortableTextRange} from '../../internal-utils/ranges'
-import {fromSlateValue} from '../../internal-utils/values'
-import {KEY_TO_VALUE_ELEMENT} from '../../internal-utils/weakMaps'
+import {slateRangeToSelection} from '../../internal-utils/slate-utils'
 import type {EditorActor} from '../editor-machine'
 import {isApplyingBehaviorActions} from '../with-applying-behavior-actions'
 
@@ -162,15 +160,11 @@ export function createWithEventListeners(editorActor: EditorActor) {
         type: 'behavior event',
         behaviorEvent: {
           type: 'select',
-          selection: toPortableTextRange(
-            fromSlateValue(
-              editor.children,
-              editorActor.getSnapshot().context.schema.block.name,
-              KEY_TO_VALUE_ELEMENT.get(editor),
-            ),
+          selection: slateRangeToSelection({
+            schema: editorActor.getSnapshot().context.schema,
+            editor,
             range,
-            editorActor.getSnapshot().context.schema,
-          ),
+          }),
         },
         editor,
         defaultActionCallback: () => {

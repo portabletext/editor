@@ -65,10 +65,8 @@ export const withPlugins = <T extends Editor>(
     editorActor,
     schemaTypes,
   })
-  const withPortableTextSelections = createWithPortableTextSelections(
-    editorActor,
-    schemaTypes,
-  )
+  const withPortableTextSelections =
+    createWithPortableTextSelections(editorActor)
   const withEventListeners = createWithEventListeners(editorActor)
 
   // Ordering is important here, selection dealing last, data manipulation in the middle and core model stuff first.

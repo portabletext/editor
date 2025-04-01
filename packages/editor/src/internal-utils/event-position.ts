@@ -3,9 +3,12 @@ import {DOMEditor, isDOMNode} from 'slate-dom'
 import type {EditorSchema, EditorSelection} from '..'
 import type {PortableTextSlateEditor} from '../types/editor'
 import * as utils from '../utils'
-import {toPortableTextRange} from './ranges'
-import {getFirstBlock, getLastBlock, getNodeBlock} from './slate-utils'
-import {fromSlateValue} from './values'
+import {
+  getFirstBlock,
+  getLastBlock,
+  getNodeBlock,
+  slateRangeToSelection,
+} from './slate-utils'
 
 export type EventPosition = {
   block: 'start' | 'end'
@@ -175,11 +178,11 @@ export function getEventSelection({
   const range = getSlateRangeFromEvent(slateEditor, event)
 
   const selection = range
-    ? toPortableTextRange(
-        fromSlateValue(slateEditor.children, schema.block.name),
-        range,
+    ? slateRangeToSelection({
         schema,
-      )
+        editor: slateEditor,
+        range,
+      })
     : null
 
   return selection

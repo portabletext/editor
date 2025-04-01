@@ -1,15 +1,8 @@
 import type {BaseRange} from 'slate'
 import {debugWithName} from '../../internal-utils/debug'
-import {
-  toPortableTextRange,
-  type ObjectWithKeyAndType,
-} from '../../internal-utils/ranges'
+import {slateRangeToSelection} from '../../internal-utils/slate-utils'
 import {SLATE_TO_PORTABLE_TEXT_RANGE} from '../../internal-utils/weakMaps'
-import type {
-  EditorSelection,
-  PortableTextMemberSchemaTypes,
-  PortableTextSlateEditor,
-} from '../../types/editor'
+import type {EditorSelection, PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 
 const debug = debugWithName('plugin:withPortableTextSelections')
@@ -18,7 +11,6 @@ const debugVerbose = debug.enabled && false
 // This plugin will make sure that we emit a PT selection whenever the editor has changed.
 export function createWithPortableTextSelections(
   editorActor: EditorActor,
-  types: PortableTextMemberSchemaTypes,
 ): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
   let prevSelection: BaseRange | null = null
   return function withPortableTextSelections(
@@ -26,14 +18,17 @@ export function createWithPortableTextSelections(
   ): PortableTextSlateEditor {
     const emitPortableTextSelection = () => {
       if (prevSelection !== editor.selection) {
-        let ptRange: EditorSelection = null
+        let ptRange: EditorSelection | null = null
         if (editor.selection) {
           const existing = SLATE_TO_PORTABLE_TEXT_RANGE.get(editor.selection)
           if (existing) {
             ptRange = existing
           } else {
-            const value = editor.children satisfies ObjectWithKeyAndType[]
-            ptRange = toPortableTextRange(value, editor.selection, types)
+            ptRange = slateRangeToSelection({
+              schema: editorActor.getSnapshot().context.schema,
+              editor,
+              range: editor.selection,
+            })
             SLATE_TO_PORTABLE_TEXT_RANGE.set(editor.selection, ptRange)
           }
         }

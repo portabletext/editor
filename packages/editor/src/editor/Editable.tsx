@@ -38,13 +38,10 @@ import {debugWithName} from '../internal-utils/debug'
 import {getDragSelection} from '../internal-utils/drag-selection'
 import {getEventPosition} from '../internal-utils/event-position'
 import {parseBlocks} from '../internal-utils/parse-blocks'
-import {
-  moveRangeByOperation,
-  toPortableTextRange,
-  toSlateRange,
-} from '../internal-utils/ranges'
+import {moveRangeByOperation, toSlateRange} from '../internal-utils/ranges'
 import {normalizeSelection} from '../internal-utils/selection'
 import {getSelectionDomNodes} from '../internal-utils/selection-elements'
+import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {fromSlateValue, isEqualToEmptyEditor} from '../internal-utils/values'
 import * as selectors from '../selectors'
 import type {
@@ -341,12 +338,13 @@ export const PortableTextEditable = forwardRef<
               (newRange && newRange !== slateRange) ||
               (newRange === null && slateRange)
             ) {
-              const value = PortableTextEditor.getValue(portableTextEditor)
-              const newRangeSelection = toPortableTextRange(
-                value,
-                newRange,
-                schemaTypes,
-              )
+              const newRangeSelection = newRange
+                ? slateRangeToSelection({
+                    schema: schemaTypes,
+                    editor: slateEditor,
+                    range: newRange,
+                  })
+                : null
               if (rangeDecorationItem.onMoved) {
                 rangeDecorationItem.onMoved({
                   newSelection: newRangeSelection,
@@ -379,7 +377,7 @@ export const PortableTextEditable = forwardRef<
         return rangeDecorationState
       })
     },
-    [portableTextEditor, rangeDecorations, schemaTypes, slateEditor],
+    [rangeDecorations, schemaTypes, slateEditor],
   )
 
   // Restore selection from props when the editor has been initialized properly with it's value
@@ -516,11 +514,13 @@ export const PortableTextEditable = forwardRef<
   const handlePaste = useCallback(
     (event: ClipboardEvent<HTMLDivElement>): Promise<void> | void => {
       const value = PortableTextEditor.getValue(portableTextEditor)
-      const ptRange = toPortableTextRange(
-        value,
-        slateEditor.selection,
-        schemaTypes,
-      )
+      const ptRange = slateEditor.selection
+        ? slateRangeToSelection({
+            schema: schemaTypes,
+            editor: slateEditor,
+            range: slateEditor.selection,
+          })
+        : null
       const path = ptRange?.focus.path || []
       const onPasteResult = onPaste?.({event, value, path, schemaTypes})
 
