@@ -8,6 +8,7 @@ import {
   type BlockStyleRenderProps,
   type EditorEmittedEvent,
   type PortableTextBlock,
+  type RangeDecoration,
   type RenderAnnotationFunction,
   type RenderChildFunction,
   type RenderDecoratorFunction,
@@ -21,6 +22,7 @@ import {
 } from '@portabletext/editor/behaviors'
 import {MarkdownPlugin, OneLinePlugin} from '@portabletext/editor/plugins'
 import {useSelector} from '@xstate/react'
+import {createStore} from '@xstate/store'
 import {CopyIcon, ImageIcon, TrashIcon} from 'lucide-react'
 import {useEffect, useState, type JSX} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
@@ -35,7 +37,6 @@ import {Toolbar} from './components/toolbar'
 import {Tooltip} from './components/tooltip'
 import {EditorPatchesPreview} from './editor-patches-preview'
 import './editor.css'
-import {createStore} from '@xstate/store'
 import {EmojiPickerPlugin} from './emoji-picker'
 import type {EditorActorRef} from './playground-machine'
 import {PortableTextToolbar} from './portable-text-toolbar'
@@ -62,7 +63,10 @@ const featureFlags = createStore({
   },
 })
 
-export function Editor(props: {editorRef: EditorActorRef}) {
+export function Editor(props: {
+  editorRef: EditorActorRef
+  rangeDecorations: RangeDecoration[]
+}) {
   const color = useSelector(props.editorRef, (s) => s.context.color)
   const value = useSelector(props.editorRef, (s) => s.context.value)
   const keyGenerator = useSelector(
@@ -117,7 +121,21 @@ export function Editor(props: {editorRef: EditorActorRef}) {
             }}
           />
           <div className="flex flex-col gap-2">
-            <PortableTextToolbar schemaDefinition={schemaDefinition} />
+            <PortableTextToolbar
+              schemaDefinition={schemaDefinition}
+              onAddRangeDecoration={(rangeDecoration) => {
+                props.editorRef.send({
+                  type: 'add range decoration',
+                  rangeDecoration,
+                })
+              }}
+              onRangeDecorationMoved={(details) => {
+                props.editorRef.send({
+                  type: 'move range decoration',
+                  details,
+                })
+              }}
+            />
             {enableEmojiPickerPlugin ? <EmojiPickerPlugin /> : null}
             <div className="flex gap-2 items-center">
               <ErrorBoundary
@@ -142,6 +160,7 @@ export function Editor(props: {editorRef: EditorActorRef}) {
                       }))
                     }
                   }}
+                  rangeDecorations={props.rangeDecorations}
                   renderAnnotation={renderAnnotation}
                   renderBlock={RenderBlock}
                   renderChild={renderChild}

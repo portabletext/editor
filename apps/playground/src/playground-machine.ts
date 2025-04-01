@@ -1,4 +1,10 @@
-import type {MutationChange, PortableTextBlock} from '@portabletext/editor'
+import type {
+  MutationChange,
+  PortableTextBlock,
+  RangeDecoration,
+  RangeDecorationOnMovedDetails,
+} from '@portabletext/editor'
+import {isSelectionCollapsed} from '@portabletext/editor/utils'
 import {applyAll, type Patch} from '@portabletext/patches'
 import {v4 as uuid} from 'uuid'
 import {
@@ -50,7 +56,9 @@ const editorMachine = setup({
       | {type: 'toggle value subscription'}
       | {type: 'toggle patches preview'}
       | {type: 'toggle selection preview'}
-      | {type: 'toggle value preview'},
+      | {type: 'toggle value preview'}
+      | {type: 'add range decoration'; rangeDecoration: RangeDecoration}
+      | {type: 'move range decoration'; details: RangeDecorationOnMovedDetails},
     emitted: {} as {
       type: 'patches'
       patches: MutationChange['patches']
@@ -119,6 +127,22 @@ const editorMachine = setup({
     },
     'clear stored patches': {
       actions: ['remove patches from context'],
+    },
+    'add range decoration': {
+      actions: [
+        sendParent(({event}) => ({
+          type: 'editor.add range decoration',
+          rangeDecoration: event.rangeDecoration,
+        })),
+      ],
+    },
+    'move range decoration': {
+      actions: [
+        sendParent(({event}) => ({
+          type: 'editor.move range decoration',
+          details: event.details,
+        })),
+      ],
     },
   },
   type: 'parallel',
@@ -207,6 +231,7 @@ export const playgroundMachine = setup({
       colorGenerator: ReturnType<typeof generateColor>
       editors: Array<EditorActorRef>
       value: Array<PortableTextBlock> | undefined
+      rangeDecorations: Array<RangeDecoration>
     },
     events: {} as
       | {type: 'add editor'}
@@ -215,7 +240,12 @@ export const playgroundMachine = setup({
           'type'
         >)
       | {type: 'editor.remove'; editorId: EditorActorRef['id']}
-      | {type: 'toggle value'},
+      | {type: 'toggle value'}
+      | {type: 'editor.add range decoration'; rangeDecoration: RangeDecoration}
+      | {
+          type: 'editor.move range decoration'
+          details: RangeDecorationOnMovedDetails
+        },
     input: {} as {
       editorIdGenerator: Generator<string, string>
       colorGenerator: ReturnType<typeof generateColor>
@@ -287,6 +317,49 @@ export const playgroundMachine = setup({
         return context.editors.filter((editor) => editor.id !== event.editorId)
       },
     }),
+    'add range decoration': assign({
+      rangeDecorations: ({context, event}) => {
+        assertEvent(event, 'editor.add range decoration')
+
+        return [
+          ...context.rangeDecorations,
+          {
+            ...event.rangeDecoration,
+            payload: {...event.rangeDecoration.payload, id: uuid()},
+          },
+        ]
+      },
+    }),
+    'move range decoration': assign({
+      rangeDecorations: ({context, event}) => {
+        assertEvent(event, 'editor.move range decoration')
+
+        return context.rangeDecorations.flatMap((rangeDecoration) => {
+          if (
+            rangeDecoration.payload?.id ===
+            event.details.rangeDecoration.payload?.id
+          ) {
+            if (
+              !event.details.newSelection ||
+              isSelectionCollapsed(event.details.newSelection)
+            ) {
+              return []
+            }
+
+            return [
+              {
+                selection: event.details.newSelection,
+                payload: rangeDecoration.payload,
+                onMoved: rangeDecoration.onMoved,
+                component: rangeDecoration.component,
+              },
+            ]
+          }
+
+          return [rangeDecoration]
+        })
+      },
+    }),
   },
   actors: {
     'editor machine': editorMachine,
@@ -296,7 +369,27 @@ export const playgroundMachine = setup({
   context: ({input}) => ({
     editorIdGenerator: input.editorIdGenerator,
     colorGenerator: input.colorGenerator,
-    value: undefined,
+    value: [
+      {
+        _key: 'b0',
+        _type: 'block',
+        children: [{_key: 'b0s0', _type: 'span', text: 'fizz buzz', marks: []}],
+
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _key: 'b1',
+        _type: 'block',
+        children: [
+          {_key: 'b1s0', _type: 'span', text: 'foo bar baz', marks: []},
+        ],
+
+        markDefs: [],
+        style: 'normal',
+      },
+    ],
+    rangeDecorations: [],
     editors: [],
   }),
   on: {
@@ -308,6 +401,12 @@ export const playgroundMachine = setup({
     },
     'editor.mutation': {
       actions: ['broadcast patches', 'update value', 'broadcast value'],
+    },
+    'editor.add range decoration': {
+      actions: ['add range decoration'],
+    },
+    'editor.move range decoration': {
+      actions: ['move range decoration'],
     },
   },
   entry: [raise({type: 'add editor'})],
