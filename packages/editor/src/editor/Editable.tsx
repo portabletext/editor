@@ -181,6 +181,7 @@ export const PortableTextEditable = forwardRef<
       rangeDecorations: rangeDecorations ?? [],
     },
   })
+  useSelector(rangeDecorationsActor, (s) => s.context.updateCount)
   const decorate = useMemo(
     () => createDecorate(rangeDecorationsActor),
     [rangeDecorationsActor],
