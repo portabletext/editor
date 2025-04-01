@@ -12,12 +12,16 @@ export function getFocusBlock({
     return [undefined, undefined]
   }
 
-  return (
-    Editor.node(editor, editor.selection.focus.path.slice(0, 1)) ?? [
-      undefined,
-      undefined,
-    ]
-  )
+  try {
+    return (
+      Editor.node(editor, editor.selection.focus.path.slice(0, 1)) ?? [
+        undefined,
+        undefined,
+      ]
+    )
+  } catch {
+    return [undefined, undefined]
+  }
 }
 
 function getPointBlock({
@@ -27,11 +31,15 @@ function getPointBlock({
   editor: PortableTextSlateEditor
   point: Point
 }): [node: Node, path: Path] | [undefined, undefined] {
-  const [block] = Editor.node(editor, point.path.slice(0, 1)) ?? [
-    undefined,
-    undefined,
-  ]
-  return block ? [block, point.path] : [undefined, undefined]
+  try {
+    const [block] = Editor.node(editor, point.path.slice(0, 1)) ?? [
+      undefined,
+      undefined,
+    ]
+    return block ? [block, point.path] : [undefined, undefined]
+  } catch {
+    return [undefined, undefined]
+  }
 }
 
 export function getFocusChild({
@@ -46,11 +54,15 @@ export function getFocusChild({
     return [undefined, undefined]
   }
 
-  const focusChild = Node.child(focusBlock, childIndex)
+  try {
+    const focusChild = Node.child(focusBlock, childIndex)
 
-  return focusChild
-    ? [focusChild, [...focusBlockPath, childIndex]]
-    : [undefined, undefined]
+    return focusChild
+      ? [focusChild, [...focusBlockPath, childIndex]]
+      : [undefined, undefined]
+  } catch {
+    return [undefined, undefined]
+  }
 }
 
 function getPointChild({
@@ -86,9 +98,13 @@ export function getFirstBlock({
   const firstPoint = Editor.start(editor, [])
   const firstBlockPath = firstPoint.path.at(0)
 
-  return firstBlockPath !== undefined
-    ? (Editor.node(editor, [firstBlockPath]) ?? [undefined, undefined])
-    : [undefined, undefined]
+  try {
+    return firstBlockPath !== undefined
+      ? (Editor.node(editor, [firstBlockPath]) ?? [undefined, undefined])
+      : [undefined, undefined]
+  } catch {
+    return [undefined, undefined]
+  }
 }
 
 export function getLastBlock({
@@ -98,9 +114,14 @@ export function getLastBlock({
 }): [node: Node, path: Path] | [undefined, undefined] {
   const lastPoint = Editor.end(editor, [])
   const lastBlockPath = lastPoint.path.at(0)
-  return lastBlockPath !== undefined
-    ? (Editor.node(editor, [lastBlockPath]) ?? [undefined, undefined])
-    : [undefined, undefined]
+
+  try {
+    return lastBlockPath !== undefined
+      ? (Editor.node(editor, [lastBlockPath]) ?? [undefined, undefined])
+      : [undefined, undefined]
+  } catch {
+    return [undefined, undefined]
+  }
 }
 
 export function getNodeBlock({
