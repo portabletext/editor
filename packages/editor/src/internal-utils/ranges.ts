@@ -1,45 +1,11 @@
-import {Point, Range, type BaseRange, type Editor, type Operation} from 'slate'
-import type {
-  EditorSelection,
-  EditorSelectionPoint,
-  PortableTextMemberSchemaTypes,
-} from '../types/editor'
-import {createKeyedPath, toSlatePath} from './paths'
+import {Point, type Editor, type Operation, type Range} from 'slate'
+import type {EditorSelection} from '../types/editor'
+import {toSlatePath} from './paths'
 
 export interface ObjectWithKeyAndType {
   _key: string
   _type: string
   children?: ObjectWithKeyAndType[]
-}
-
-export function toPortableTextRange(
-  value: ObjectWithKeyAndType[] | undefined,
-  range: BaseRange | Partial<BaseRange> | null,
-  types: PortableTextMemberSchemaTypes,
-): EditorSelection {
-  if (!range) {
-    return null
-  }
-  let anchor: EditorSelectionPoint | null = null
-  let focus: EditorSelectionPoint | null = null
-  const anchorPath = range.anchor && createKeyedPath(range.anchor, value, types)
-  if (anchorPath && range.anchor) {
-    anchor = {
-      path: anchorPath,
-      offset: range.anchor.offset,
-    }
-  }
-  const focusPath = range.focus && createKeyedPath(range.focus, value, types)
-  if (focusPath && range.focus) {
-    focus = {
-      path: focusPath,
-      offset: range.focus.offset,
-    }
-  }
-  const backward = Boolean(
-    Range.isRange(range) ? Range.isBackward(range) : undefined,
-  )
-  return anchor && focus ? {anchor, focus, backward} : null
 }
 
 export function toSlateRange(

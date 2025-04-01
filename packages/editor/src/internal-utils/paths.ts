@@ -1,42 +1,6 @@
 import {isKeySegment, type Path} from '@sanity/types'
 import {isEqual} from 'lodash'
-import {
-  Editor,
-  Element,
-  type Descendant,
-  type Point,
-  type Path as SlatePath,
-} from 'slate'
-import type {PortableTextMemberSchemaTypes} from '../types/editor'
-import type {ObjectWithKeyAndType} from './ranges'
-
-export function createKeyedPath(
-  point: Point,
-  value: ObjectWithKeyAndType[] | undefined,
-  types: PortableTextMemberSchemaTypes,
-): Path | null {
-  const blockPath = [point.path[0]]
-  if (!value) {
-    return null
-  }
-  const block = value[blockPath[0]]
-  if (!block) {
-    return null
-  }
-  const keyedBlockPath = [{_key: block._key}]
-  if (block._type !== types.block.name) {
-    return keyedBlockPath as Path
-  }
-  let keyedChildPath: Path | undefined
-  const childPath = point.path.slice(0, 2)
-  const child = Array.isArray(block.children) && block.children[childPath[1]]
-  if (child) {
-    keyedChildPath = ['children', {_key: child._key}]
-  }
-  return (
-    keyedChildPath ? [...keyedBlockPath, ...keyedChildPath] : keyedBlockPath
-  ) as Path
-}
+import {Editor, Element, type Descendant, type Path as SlatePath} from 'slate'
 
 export function toSlatePath(path: Path, editor: Editor): SlatePath {
   if (!editor) {

@@ -1,5 +1,6 @@
 import {Editor, Range, Text, Transforms} from 'slate'
-import {toPortableTextRange, toSlateRange} from '../internal-utils/ranges'
+import {toSlateRange} from '../internal-utils/ranges'
+import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {fromSlateValue} from '../internal-utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
 import * as selectors from '../selectors'
@@ -47,7 +48,11 @@ export const decoratorAddActionImplementation: BehaviorActionImplementation<
     return
   }
 
-  const editorSelection = toPortableTextRange(value, selection, context.schema)
+  const editorSelection = slateRangeToSelection({
+    schema: context.schema,
+    editor,
+    range: selection,
+  })
   const anchorOffset = editorSelection
     ? utils.selectionPointToBlockOffset({
         value,
