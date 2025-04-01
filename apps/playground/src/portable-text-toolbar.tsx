@@ -328,5 +328,9 @@ function DecorateSelectionButton(props: {
 }
 
 function RangeComponent(props: React.PropsWithChildren<unknown>) {
-  return <span className="bg-green-200">{props.children}</span>
+  return (
+    <span className="bg-green-200 border border-green-600">
+      {props.children}
+    </span>
+  )
 }
