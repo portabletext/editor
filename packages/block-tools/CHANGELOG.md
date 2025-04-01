@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.16](https://github.com/portabletext/editor/compare/block-tools-v1.1.15...block-tools-v1.1.16) (2025-04-01)
+
+
+### Bug Fixes
+
+* **deps:** update react monorepo ([18b6c3e](https://github.com/portabletext/editor/commit/18b6c3eaca5380705c435efe1b0aa74f9a3aff1d))
+
 ## [1.1.15](https://github.com/portabletext/editor/compare/block-tools-v1.1.14...block-tools-v1.1.15) (2025-03-25)
 
 

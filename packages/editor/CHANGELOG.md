@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.44.3](https://github.com/portabletext/editor/compare/editor-v1.44.2...editor-v1.44.3) (2025-04-01)
+
+
+### Bug Fixes
+
+* **deps:** update react monorepo ([18b6c3e](https://github.com/portabletext/editor/commit/18b6c3eaca5380705c435efe1b0aa74f9a3aff1d))
+* **perf:** avoid expensive `fromSlateValue` when calculating Slate Range ([c0905f8](https://github.com/portabletext/editor/commit/c0905f8a8de8b23711f4eaa623654b8be036b754))
+* try-catch unsafe code ([7d62f67](https://github.com/portabletext/editor/commit/7d62f671f23fe7612a6ee231ffc0017f5a48c24c))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.16
+
 ## [1.44.2](https://github.com/portabletext/editor/compare/editor-v1.44.1...editor-v1.44.2) (2025-03-28)
 
 
