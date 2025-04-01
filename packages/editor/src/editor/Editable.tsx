@@ -16,15 +16,7 @@ import {
   type MutableRefObject,
   type TextareaHTMLAttributes,
 } from 'react'
-import {
-  Editor,
-  Path,
-  Range as SlateRange,
-  Transforms,
-  type BaseRange,
-  type NodeEntry,
-  type Text,
-} from 'slate'
+import {Editor, Transforms, type Text} from 'slate'
 import {
   ReactEditor,
   Editable as SlateEditable,
@@ -41,7 +33,7 @@ import {toSlateRange} from '../internal-utils/ranges'
 import {normalizeSelection} from '../internal-utils/selection'
 import {getSelectionDomNodes} from '../internal-utils/selection-elements'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
-import {fromSlateValue, isEqualToEmptyEditor} from '../internal-utils/values'
+import {fromSlateValue} from '../internal-utils/values'
 import * as selectors from '../selectors'
 import type {
   EditorSelection,
@@ -67,7 +59,10 @@ import {getEditorSnapshot} from './editor-selector'
 import {usePortableTextEditor} from './hooks/usePortableTextEditor'
 import {createWithHotkeys} from './plugins/createWithHotKeys'
 import {PortableTextEditor} from './PortableTextEditor'
-import {rangeDecorationsMachine} from './range-decorations-machine'
+import {
+  createDecorate,
+  rangeDecorationsMachine,
+} from './range-decorations-machine'
 
 const debug = debugWithName('component:Editable')
 
@@ -186,6 +181,10 @@ export const PortableTextEditable = forwardRef<
       rangeDecorations: rangeDecorations ?? [],
     },
   })
+  const decorate = useMemo(
+    () => createDecorate(rangeDecorationsActor),
+    [rangeDecorationsActor],
+  )
 
   useEffect(() => {
     rangeDecorationsActor.send({
@@ -200,11 +199,6 @@ export const PortableTextEditable = forwardRef<
       rangeDecorations: rangeDecorations ?? [],
     })
   }, [rangeDecorationsActor, rangeDecorations])
-
-  const decoratedRanges = useSelector(
-    rangeDecorationsActor,
-    (s) => s.context.decoratedRanges,
-  )
 
   const blockTypeName = schemaTypes.block.name
 
@@ -783,61 +777,6 @@ export const PortableTextEditable = forwardRef<
       scrollSelectionIntoView(portableTextEditor, domRange)
     }
   }, [portableTextEditor, scrollSelectionIntoView])
-
-  const decorate: (entry: NodeEntry) => BaseRange[] = useCallback(
-    ([, path]) => {
-      if (isEqualToEmptyEditor(slateEditor.children, schemaTypes)) {
-        return [
-          {
-            anchor: {
-              path: [0, 0],
-              offset: 0,
-            },
-            focus: {
-              path: [0, 0],
-              offset: 0,
-            },
-            placeholder: true,
-          },
-        ]
-      }
-
-      // Editor node has a path length of 0 (should never be decorated)
-      if (path.length === 0) {
-        return []
-      }
-
-      const result = decoratedRanges.filter((item) => {
-        // Special case in order to only return one decoration for collapsed ranges
-        if (SlateRange.isCollapsed(item)) {
-          // Collapsed ranges should only be decorated if they are on a block child level (length 2)
-          if (path.length !== 2) {
-            return false
-          }
-
-          return (
-            Path.equals(item.focus.path, path) &&
-            Path.equals(item.anchor.path, path)
-          )
-        }
-
-        // Include decorations that either include or intersects with this path
-        return (
-          SlateRange.intersection(item, {
-            anchor: {path, offset: 0},
-            focus: {path, offset: 0},
-          }) || SlateRange.includes(item, path)
-        )
-      })
-
-      if (result.length > 0) {
-        return result
-      }
-
-      return []
-    },
-    [slateEditor, schemaTypes, decoratedRanges],
-  )
 
   // Set the forwarded ref to be the Slate editable DOM element
   // Also set the editable element in a state so that the MutationObserver
