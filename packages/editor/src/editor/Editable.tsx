@@ -1,5 +1,5 @@
-import {useSelector} from '@xstate/react'
-import {isEqual, noop} from 'lodash'
+import {useActorRef, useSelector} from '@xstate/react'
+import {noop} from 'lodash'
 import {
   forwardRef,
   useCallback,
@@ -23,7 +23,6 @@ import {
   Transforms,
   type BaseRange,
   type NodeEntry,
-  type Operation,
   type Text,
 } from 'slate'
 import {
@@ -38,7 +37,7 @@ import {debugWithName} from '../internal-utils/debug'
 import {getDragSelection} from '../internal-utils/drag-selection'
 import {getEventPosition} from '../internal-utils/event-position'
 import {parseBlocks} from '../internal-utils/parse-blocks'
-import {moveRangeByOperation, toSlateRange} from '../internal-utils/ranges'
+import {toSlateRange} from '../internal-utils/ranges'
 import {normalizeSelection} from '../internal-utils/selection'
 import {getSelectionDomNodes} from '../internal-utils/selection-elements'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
@@ -68,7 +67,7 @@ import {getEditorSnapshot} from './editor-selector'
 import {usePortableTextEditor} from './hooks/usePortableTextEditor'
 import {createWithHotkeys} from './plugins/createWithHotKeys'
 import {PortableTextEditor} from './PortableTextEditor'
-import {withSyncRangeDecorations} from './withSyncRangeDecorations'
+import {rangeDecorationsMachine} from './range-decorations-machine'
 
 const debug = debugWithName('component:Editable')
 
@@ -78,10 +77,6 @@ const PLACEHOLDER_STYLE: CSSProperties = {
   pointerEvents: 'none',
   left: 0,
   right: 0,
-}
-
-interface BaseRangeWithDecoration extends BaseRange {
-  rangeDecoration: RangeDecoration
 }
 
 /**
@@ -169,9 +164,6 @@ export const PortableTextEditable = forwardRef<
     null,
   )
   const [hasInvalidValue, setHasInvalidValue] = useState(false)
-  const [rangeDecorationState, setRangeDecorationsState] = useState<
-    BaseRangeWithDecoration[]
-  >([])
 
   // Forward ref to parent component
   useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(
@@ -179,14 +171,40 @@ export const PortableTextEditable = forwardRef<
     () => ref.current,
   )
 
-  const rangeDecorationsRef = useRef(rangeDecorations)
-
   const editorActor = useContext(EditorActorContext)
   const readOnly = useSelector(editorActor, (s) =>
     s.matches({'edit mode': 'read only'}),
   )
   const schemaTypes = useSelector(editorActor, (s) => s.context.schema)
   const slateEditor = useSlate()
+
+  const rangeDecorationsActor = useActorRef(rangeDecorationsMachine, {
+    input: {
+      readOnly,
+      slateEditor,
+      schema: schemaTypes,
+      rangeDecorations: rangeDecorations ?? [],
+    },
+  })
+
+  useEffect(() => {
+    rangeDecorationsActor.send({
+      type: 'update read only',
+      readOnly,
+    })
+  }, [rangeDecorationsActor, readOnly])
+
+  useEffect(() => {
+    rangeDecorationsActor.send({
+      type: 'range decorations updated',
+      rangeDecorations: rangeDecorations ?? [],
+    })
+  }, [rangeDecorationsActor, rangeDecorations])
+
+  const decoratedRanges = useSelector(
+    rangeDecorationsActor,
+    (s) => s.context.decoratedRanges,
+  )
 
   const blockTypeName = schemaTypes.block.name
 
@@ -312,83 +330,20 @@ export const PortableTextEditable = forwardRef<
     }
   }, [blockTypeName, editorActor, propsSelection, slateEditor])
 
-  const syncRangeDecorations = useCallback(
-    (operation?: Operation) => {
-      if (rangeDecorations && rangeDecorations.length > 0) {
-        const newSlateRanges: BaseRangeWithDecoration[] = []
-        rangeDecorations.forEach((rangeDecorationItem) => {
-          const slateRange = toSlateRange(
-            rangeDecorationItem.selection,
-            slateEditor,
-          )
-          if (!SlateRange.isRange(slateRange)) {
-            if (rangeDecorationItem.onMoved) {
-              rangeDecorationItem.onMoved({
-                newSelection: null,
-                rangeDecoration: rangeDecorationItem,
-                origin: 'local',
-              })
-            }
-            return
-          }
-          let newRange: BaseRange | null | undefined
-          if (operation) {
-            newRange = moveRangeByOperation(slateRange, operation)
-            if (
-              (newRange && newRange !== slateRange) ||
-              (newRange === null && slateRange)
-            ) {
-              const newRangeSelection = newRange
-                ? slateRangeToSelection({
-                    schema: schemaTypes,
-                    editor: slateEditor,
-                    range: newRange,
-                  })
-                : null
-              if (rangeDecorationItem.onMoved) {
-                rangeDecorationItem.onMoved({
-                  newSelection: newRangeSelection,
-                  rangeDecoration: rangeDecorationItem,
-                  origin: 'local',
-                })
-              }
-            }
-          }
-          // If the newRange is null, it means that the range is not valid anymore and should be removed
-          // If it's undefined, it means that the slateRange is still valid and should be kept
-          if (newRange !== null) {
-            newSlateRanges.push({
-              ...(newRange || slateRange),
-              rangeDecoration: rangeDecorationItem,
-            })
-          }
-        })
-        if (newSlateRanges.length > 0) {
-          setRangeDecorationsState(newSlateRanges)
-          return
-        }
-      }
-      setRangeDecorationsState((rangeDecorationState) => {
-        // If there's state then we want to reset
-        if (rangeDecorationState.length > 0) {
-          return []
-        }
-        // Otherwise we no-op, React will skip a state update if what we return has reference equality to the previous state
-        return rangeDecorationState
-      })
-    },
-    [rangeDecorations, schemaTypes, slateEditor],
-  )
-
   // Restore selection from props when the editor has been initialized properly with it's value
   useEffect(() => {
     const onReady = editorActor.on('ready', () => {
-      syncRangeDecorations()
+      rangeDecorationsActor.send({
+        type: 'ready',
+      })
+
       restoreSelectionFromProps()
     })
+
     const onInvalidValue = editorActor.on('invalid value', () => {
       setHasInvalidValue(true)
     })
+
     const onValueChanged = editorActor.on('value changed', () => {
       setHasInvalidValue(false)
     })
@@ -398,7 +353,7 @@ export const PortableTextEditable = forwardRef<
       onInvalidValue.unsubscribe()
       onValueChanged.unsubscribe()
     }
-  }, [editorActor, restoreSelectionFromProps, syncRangeDecorations])
+  }, [rangeDecorationsActor, editorActor, restoreSelectionFromProps])
 
   // Restore selection from props when it changes
   useEffect(() => {
@@ -406,32 +361,6 @@ export const PortableTextEditable = forwardRef<
       restoreSelectionFromProps()
     }
   }, [hasInvalidValue, propsSelection, restoreSelectionFromProps])
-
-  const [syncedRangeDecorations, setSyncedRangeDecorations] = useState(false)
-  useEffect(() => {
-    if (!syncedRangeDecorations) {
-      // We only want this to run once, on mount
-      setSyncedRangeDecorations(true)
-      syncRangeDecorations()
-    }
-  }, [syncRangeDecorations, syncedRangeDecorations])
-
-  useEffect(() => {
-    if (!isEqual(rangeDecorations, rangeDecorationsRef.current)) {
-      syncRangeDecorations()
-    }
-    rangeDecorationsRef.current = rangeDecorations
-  }, [rangeDecorations, syncRangeDecorations])
-
-  // Sync range decorations after an operation is applied
-  useEffect(() => {
-    const teardown = withSyncRangeDecorations({
-      editorActor,
-      slateEditor,
-      syncRangeDecorations,
-    })
-    return () => teardown()
-  }, [editorActor, slateEditor, syncRangeDecorations])
 
   // Handle from props onCopy function
   const handleCopy = useCallback(
@@ -872,22 +801,26 @@ export const PortableTextEditable = forwardRef<
           },
         ]
       }
+
       // Editor node has a path length of 0 (should never be decorated)
       if (path.length === 0) {
         return []
       }
-      const result = rangeDecorationState.filter((item) => {
+
+      const result = decoratedRanges.filter((item) => {
         // Special case in order to only return one decoration for collapsed ranges
         if (SlateRange.isCollapsed(item)) {
           // Collapsed ranges should only be decorated if they are on a block child level (length 2)
           if (path.length !== 2) {
             return false
           }
+
           return (
             Path.equals(item.focus.path, path) &&
             Path.equals(item.anchor.path, path)
           )
         }
+
         // Include decorations that either include or intersects with this path
         return (
           SlateRange.intersection(item, {
@@ -896,12 +829,14 @@ export const PortableTextEditable = forwardRef<
           }) || SlateRange.includes(item, path)
         )
       })
+
       if (result.length > 0) {
         return result
       }
+
       return []
     },
-    [slateEditor, schemaTypes, rangeDecorationState],
+    [slateEditor, schemaTypes, decoratedRanges],
   )
 
   // Set the forwarded ref to be the Slate editable DOM element

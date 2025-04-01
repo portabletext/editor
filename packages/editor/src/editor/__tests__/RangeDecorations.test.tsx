@@ -120,7 +120,33 @@ describe('RangeDecorations', () => {
     )
     await waitFor(() => {
       expect([rangeDecorationIteration, 'updated-with-different']).toEqual([
-        2,
+        3,
+        'updated-with-different',
+      ])
+    })
+
+    // Update the range decorations with a new offset again
+    rangeDecorations = [
+      {
+        component: RangeDecorationTestComponent,
+        selection: {
+          anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 0},
+          focus: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
+        },
+      },
+    ]
+    rerender(
+      <PortableTextEditorTester
+        onChange={onChange}
+        rangeDecorations={rangeDecorations}
+        ref={editorRef}
+        schemaType={schemaType}
+        value={value}
+      />,
+    )
+    await waitFor(() => {
+      expect([rangeDecorationIteration, 'updated-with-different']).toEqual([
+        4,
         'updated-with-different',
       ])
     })
