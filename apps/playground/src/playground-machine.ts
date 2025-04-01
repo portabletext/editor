@@ -4,7 +4,6 @@ import type {
   RangeDecoration,
   RangeDecorationOnMovedDetails,
 } from '@portabletext/editor'
-import {isSelectionCollapsed} from '@portabletext/editor/utils'
 import {applyAll, type Patch} from '@portabletext/patches'
 import {v4 as uuid} from 'uuid'
 import {
@@ -339,10 +338,7 @@ export const playgroundMachine = setup({
             rangeDecoration.payload?.id ===
             event.details.rangeDecoration.payload?.id
           ) {
-            if (
-              !event.details.newSelection ||
-              isSelectionCollapsed(event.details.newSelection)
-            ) {
+            if (!event.details.newSelection) {
               return []
             }
 
