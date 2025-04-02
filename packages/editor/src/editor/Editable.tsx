@@ -175,10 +175,11 @@ export const PortableTextEditable = forwardRef<
 
   const rangeDecorationsActor = useActorRef(rangeDecorationsMachine, {
     input: {
-      readOnly,
-      slateEditor,
-      schema: schemaTypes,
       rangeDecorations: rangeDecorations ?? [],
+      readOnly,
+      schema: schemaTypes,
+      slateEditor,
+      skipSetup: !editorActor.getSnapshot().matches({setup: 'setting up'}),
     },
   })
   useSelector(rangeDecorationsActor, (s) => s.context.updateCount)

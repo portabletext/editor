@@ -50,6 +50,7 @@ export const rangeDecorationsMachine = setup({
     context: {} as {
       decoratedRanges: Array<DecoratedRange>
       pendingRangeDecorations: Array<RangeDecoration>
+      skipSetup: boolean
       readOnly: boolean
       schema: EditorSchema
       slateEditor: PortableTextSlateEditor
@@ -59,6 +60,7 @@ export const rangeDecorationsMachine = setup({
       rangeDecorations: Array<RangeDecoration>
       readOnly: boolean
       schema: EditorSchema
+      skipSetup: boolean
       slateEditor: PortableTextSlateEditor
     },
     events: {} as
@@ -250,6 +252,7 @@ export const rangeDecorationsMachine = setup({
       return different
     },
     'not read only': ({context}) => !context.readOnly,
+    'should skip setup': ({context}) => context.skipSetup,
   },
 }).createMachine({
   id: 'range decorations',
@@ -257,6 +260,7 @@ export const rangeDecorationsMachine = setup({
     readOnly: input.readOnly,
     pendingRangeDecorations: input.rangeDecorations,
     decoratedRanges: [],
+    skipSetup: input.skipSetup,
     schema: input.schema,
     slateEditor: input.slateEditor,
     updateCount: 0,
@@ -270,9 +274,23 @@ export const rangeDecorationsMachine = setup({
       actions: ['assign readOnly'],
     },
   },
-  initial: 'idle',
+  initial: 'setting up',
   states: {
-    idle: {
+    'setting up': {
+      always: [
+        {
+          guard: and(['should skip setup', 'has pending range decorations']),
+          target: 'ready',
+          actions: [
+            'set up initial range decorations',
+            'increment update count',
+          ],
+        },
+        {
+          guard: 'should skip setup',
+          target: 'ready',
+        },
+      ],
       on: {
         'range decorations updated': {
           actions: ['update pending range decorations'],
@@ -292,7 +310,7 @@ export const rangeDecorationsMachine = setup({
         ],
       },
     },
-    ready: {
+    'ready': {
       initial: 'idle',
       on: {
         'range decorations updated': {
