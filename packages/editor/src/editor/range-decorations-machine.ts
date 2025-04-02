@@ -1,5 +1,6 @@
 import {isEqual} from 'lodash'
 import {
+  Element,
   Path,
   Range,
   type BaseRange,
@@ -323,7 +324,7 @@ export const rangeDecorationsMachine = setup({
 export function createDecorate(
   rangeDecorationActor: ActorRefFrom<typeof rangeDecorationsMachine>,
 ) {
-  return function decorate([, path]: NodeEntry): Array<BaseRange> {
+  return function decorate([node, path]: NodeEntry): Array<BaseRange> {
     if (
       isEqualToEmptyEditor(
         rangeDecorationActor.getSnapshot().context.slateEditor.children,
@@ -350,28 +351,37 @@ export function createDecorate(
       return []
     }
 
+    if (!Element.isElement(node) || node.children.length === 0) {
+      return []
+    }
+
+    const blockIndex = path.at(0)
+
+    if (blockIndex === undefined) {
+      return []
+    }
+
     return rangeDecorationActor
       .getSnapshot()
-      .context.decoratedRanges.filter((item) => {
+      .context.decoratedRanges.filter((decoratedRange) => {
         // Special case in order to only return one decoration for collapsed ranges
-        if (Range.isCollapsed(item)) {
+        if (Range.isCollapsed(decoratedRange)) {
           // Collapsed ranges should only be decorated if they are on a block child level (length 2)
-          if (path.length !== 2) {
-            return false
-          }
-
-          return (
-            Path.equals(item.focus.path, path) &&
-            Path.equals(item.anchor.path, path)
+          return node.children.some(
+            (_, childIndex) =>
+              Path.equals(decoratedRange.anchor.path, [
+                blockIndex,
+                childIndex,
+              ]) &&
+              Path.equals(decoratedRange.focus.path, [blockIndex, childIndex]),
           )
         }
 
-        // Include decorations that either include or intersects with this path
         return (
-          Range.intersection(item, {
+          Range.intersection(decoratedRange, {
             anchor: {path, offset: 0},
             focus: {path, offset: 0},
-          }) || Range.includes(item, path)
+          }) || Range.includes(decoratedRange, path)
         )
       })
   }
