@@ -138,12 +138,10 @@ describe('Feature: Range Decorations', () => {
           component: (props) => (
             <span data-testid="range-decoration">{props.children}</span>
           ),
-          onMoved: (movedProps) => {
-            const {newSelection, rangeDecoration} = movedProps
+          onMoved: (details) => {
             testActor.send({
               type: 'update range decoration selection',
-              selection: rangeDecoration.selection,
-              newSelection,
+              details,
             })
           },
           selection: {
@@ -173,7 +171,7 @@ describe('Feature: Range Decorations', () => {
     )
   })
 
-  test.skip('Scenario: Moving a Range Decoration', async () => {
+  test('Scenario: Moving a Range Decoration', async () => {
     const {editorA, testActor} = await setUpTest([
       {
         _type: 'block',
@@ -202,12 +200,10 @@ describe('Feature: Range Decorations', () => {
           component: (props) => (
             <span data-testid="range-decoration">{props.children}</span>
           ),
-          onMoved: (movedProps) => {
-            const {newSelection, rangeDecoration} = movedProps
+          onMoved: (details) => {
             testActor.send({
               type: 'update range decoration selection',
-              selection: rangeDecoration.selection,
-              newSelection,
+              details,
             })
           },
           selection: {
@@ -219,6 +215,9 @@ describe('Feature: Range Decorations', () => {
               path: [{_key: 'a'}, 'children', {_key: 'a1'}],
               offset: 11,
             },
+          },
+          payload: {
+            id: 'rd0',
           },
         },
       ],
@@ -282,12 +281,10 @@ describe('Feature: Range Decorations', () => {
           component: (props) => (
             <span data-testid="range-decoration">{props.children}</span>
           ),
-          onMoved: (movedProps) => {
-            const {newSelection, rangeDecoration} = movedProps
+          onMoved: (details) => {
             testActor.send({
               type: 'update range decoration selection',
-              selection: rangeDecoration.selection,
-              newSelection,
+              details,
             })
           },
           selection: {

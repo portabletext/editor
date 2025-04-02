@@ -14,6 +14,7 @@ import type {
   EditorSelection,
   PortableTextEditor,
   RangeDecoration,
+  RangeDecorationOnMovedDetails,
 } from '../src'
 import {coreBehaviors} from '../src/behaviors'
 import type {Behavior} from '../src/behaviors/behavior.types.behavior'
@@ -126,8 +127,7 @@ export type TestMachineEvent =
     }
   | {
       type: 'update range decoration selection'
-      selection: EditorSelection
-      newSelection: EditorSelection
+      details: RangeDecorationOnMovedDetails
     }
 
 export type TestActorRef = ActorRefFrom<typeof testMachine>
@@ -201,14 +201,27 @@ export const testMachine = setup({
     'assign range decoration selection': assign({
       rangeDecorations: ({context, event}) => {
         assertEvent(event, 'update range decoration selection')
-        return context.rangeDecorations?.map((decoration) => {
-          if (decoration.selection === event.selection) {
-            return {
-              ...decoration,
-              selection: event.newSelection,
+
+        return context.rangeDecorations?.flatMap((rangeDecoration) => {
+          if (
+            rangeDecoration.payload?.id ===
+            event.details.rangeDecoration.payload?.id
+          ) {
+            if (!event.details.newSelection) {
+              return []
             }
+
+            return [
+              {
+                selection: event.details.newSelection,
+                payload: rangeDecoration.payload,
+                onMoved: rangeDecoration.onMoved,
+                component: rangeDecoration.component,
+              },
+            ]
           }
-          return decoration
+
+          return [rangeDecoration]
         })
       },
     }),
