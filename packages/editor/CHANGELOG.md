@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.44.9](https://github.com/portabletext/editor/compare/editor-v1.44.8...editor-v1.44.9) (2025-04-02)
+
+
+### Bug Fixes
+
+* **behaviors:** allow sending all `AbstractBehaviorEvent`s ([1c65fcb](https://github.com/portabletext/editor/commit/1c65fcb3adfa68381118a00f234972d48de75f19))
+
 ## [1.44.8](https://github.com/portabletext/editor/compare/editor-v1.44.7...editor-v1.44.8) (2025-04-02)
 
 
