@@ -48,19 +48,7 @@ export type ExternalBehaviorEvent =
         value?: {[prop: string]: unknown}
       }
     }
-  | PickFromUnion<
-      AbstractBehaviorEvent,
-      'type',
-      | 'annotation.toggle'
-      | 'decorator.toggle'
-      | 'insert.blocks'
-      | 'list item.add'
-      | 'list item.remove'
-      | 'list item.toggle'
-      | 'style.add'
-      | 'style.remove'
-      | 'style.toggle'
-    >
+  | AbstractBehaviorEvent
   | SyntheticBehaviorEvent
   | CustomBehaviorEvent
 
