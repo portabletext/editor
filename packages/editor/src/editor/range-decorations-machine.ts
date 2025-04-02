@@ -224,6 +224,8 @@ export const rangeDecorationsMachine = setup({
     'slate operation listener': fromCallback(slateOperationCallback),
   },
   guards: {
+    'has pending range decorations': ({context}) =>
+      context.pendingRangeDecorations.length > 0,
     'has range decorations': ({context}) => context.decoratedRanges.length > 0,
     'has different decorations': ({context, event}) => {
       assertEvent(event, 'range decorations updated')
@@ -274,10 +276,19 @@ export const rangeDecorationsMachine = setup({
         'range decorations updated': {
           actions: ['update pending range decorations'],
         },
-        'ready': {
-          target: 'ready',
-          actions: ['set up initial range decorations'],
-        },
+        'ready': [
+          {
+            target: 'ready',
+            guard: 'has pending range decorations',
+            actions: [
+              'set up initial range decorations',
+              'increment update count',
+            ],
+          },
+          {
+            target: 'ready',
+          },
+        ],
       },
     },
     ready: {
