@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.44.8](https://github.com/portabletext/editor/compare/editor-v1.44.7...editor-v1.44.8) (2025-04-02)
+
+
+### Bug Fixes
+
+* make `decorate` more reliable ([ae24e3b](https://github.com/portabletext/editor/commit/ae24e3b742971443ac5975a17f7a2ac2ecd0e99b))
+* trigger rerender when initial range decorations are set up ([b576609](https://github.com/portabletext/editor/commit/b57660973b58b771799208dbbf681a3e2089fdb1))
+
 ## [1.44.7](https://github.com/portabletext/editor/compare/editor-v1.44.6...editor-v1.44.7) (2025-04-01)
 
 
