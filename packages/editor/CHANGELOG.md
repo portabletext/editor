@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.44.10](https://github.com/portabletext/editor/compare/editor-v1.44.9...editor-v1.44.10) (2025-04-02)
+
+
+### Bug Fixes
+
+* allow skipping range decoration setup ([5689d8a](https://github.com/portabletext/editor/commit/5689d8ab4f30ee09693bf6b7ed7e7fe38f5234a0))
+
 ## [1.44.9](https://github.com/portabletext/editor/compare/editor-v1.44.8...editor-v1.44.9) (2025-04-02)
 
 
