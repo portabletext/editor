@@ -339,7 +339,7 @@ export function createDecorate(
       return []
     }
 
-    const result = rangeDecorationActor
+    return rangeDecorationActor
       .getSnapshot()
       .context.decoratedRanges.filter((item) => {
         // Special case in order to only return one decoration for collapsed ranges
@@ -363,11 +363,5 @@ export function createDecorate(
           }) || Range.includes(item, path)
         )
       })
-
-    if (result.length > 0) {
-      return result
-    }
-
-    return []
   }
 }
