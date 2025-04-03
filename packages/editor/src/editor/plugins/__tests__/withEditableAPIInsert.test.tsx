@@ -113,7 +113,7 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
                 text: 'Block A',
               },
               {
-                _key: 'k3',
+                _key: 'k2',
                 _type: 'someObject',
                 color: 'red',
               },
@@ -157,7 +157,7 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
                 text: 'Block A',
               },
               {
-                _key: 'k3',
+                _key: 'k2',
                 _type: 'someObject',
                 color: 'red',
               },

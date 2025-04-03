@@ -2,7 +2,9 @@ import {Schema} from '@sanity/schema'
 import {defineField, defineType} from '@sanity/types'
 
 export const imageType = defineType({
-  name: 'image',
+  // Giving this another name than `image` to avoid that Schema compilation
+  // overwrites all fields of objects with the name `image`.
+  name: 'custom image',
   title: 'Image',
   type: 'object',
   fields: [
@@ -50,11 +52,16 @@ export const portableTextType = defineType({
             type: 'object',
             fields: [{type: 'string', name: 'text'}],
           },
+          {
+            name: 'link',
+            type: 'object',
+            fields: [{type: 'string', name: 'href'}],
+          },
         ],
       },
       of: [{type: 'stock-ticker'}],
     },
-    {type: 'image'},
+    {type: 'custom image'},
   ],
 })
 

@@ -20,7 +20,15 @@ describe('event.patches', () => {
         initialConfig={{
           keyGenerator,
           schemaDefinition: defineSchema({
-            blockObjects: [{name: 'url'}],
+            blockObjects: [
+              {
+                name: 'url',
+                fields: [
+                  {name: 'description', type: 'string'},
+                  {name: 'href', type: 'string'},
+                ],
+              },
+            ],
           }),
         }}
       >
@@ -91,7 +99,15 @@ describe('event.patches', () => {
         initialConfig={{
           keyGenerator,
           schemaDefinition: defineSchema({
-            blockObjects: [{name: 'url'}],
+            blockObjects: [
+              {
+                name: 'url',
+                fields: [
+                  {name: 'content', type: 'object'},
+                  {name: 'href', type: 'string'},
+                ],
+              },
+            ],
           }),
         }}
       >

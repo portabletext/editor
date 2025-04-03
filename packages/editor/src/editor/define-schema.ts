@@ -13,6 +13,11 @@ export type BaseDefinition = {
   title?: string
 }
 
+export type FieldDefinition = {
+  name: string
+  type: 'string' | 'number' | 'boolean' | 'array' | 'object'
+}
+
 /**
  * @public
  */
@@ -20,9 +25,15 @@ export type SchemaDefinition<
   TBaseDefinition extends BaseDefinition = BaseDefinition,
 > = {
   decorators?: ReadonlyArray<TBaseDefinition>
-  blockObjects?: ReadonlyArray<TBaseDefinition>
-  inlineObjects?: ReadonlyArray<TBaseDefinition>
-  annotations?: ReadonlyArray<TBaseDefinition>
+  blockObjects?: ReadonlyArray<
+    TBaseDefinition & {fields?: ReadonlyArray<FieldDefinition>}
+  >
+  inlineObjects?: ReadonlyArray<
+    TBaseDefinition & {fields?: ReadonlyArray<FieldDefinition>}
+  >
+  annotations?: ReadonlyArray<
+    TBaseDefinition & {fields?: ReadonlyArray<FieldDefinition>}
+  >
   lists?: ReadonlyArray<TBaseDefinition>
   styles?: ReadonlyArray<TBaseDefinition>
 }
@@ -94,7 +105,11 @@ export function compileSchemaDefinition<
             ? // This avoids the default title which is a title case of the object name
               defaultObjectTitles[blockObject.name]
             : blockObject.title,
-        fields: [],
+        fields:
+          blockObject.fields?.map((field) => ({
+            name: field.name,
+            type: field.type,
+          })) ?? [],
       }),
     ) ?? []
 
@@ -111,7 +126,11 @@ export function compileSchemaDefinition<
             ? // This avoids the default title which is a title case of the object name
               defaultObjectTitles[inlineObject.name]
             : inlineObject.title,
-        fields: [],
+        fields:
+          inlineObject.fields?.map((field) => ({
+            name: field.name,
+            type: field.type,
+          })) ?? [],
       }),
     ) ?? []
 
@@ -135,6 +154,11 @@ export function compileSchemaDefinition<
               name: annotation.name,
               type: 'object',
               title: annotation.title,
+              fields:
+                annotation.fields?.map((field) => ({
+                  name: field.name,
+                  type: field.type,
+                })) ?? [],
             })) ?? [],
         },
         lists:

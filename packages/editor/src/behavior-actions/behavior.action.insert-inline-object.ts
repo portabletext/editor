@@ -1,17 +1,24 @@
 import {Editor, Transforms, type Element} from 'slate'
+import {parseInlineObject} from '../internal-utils/parse-blocks'
 import {toSlateValue} from '../internal-utils/values'
 import type {BehaviorActionImplementation} from './behavior.actions'
 
 export const insertInlineObjectActionImplementation: BehaviorActionImplementation<
   'insert.inline object'
 > = ({context, action}) => {
-  if (
-    !context.schema.inlineObjects.some(
-      (inlineObject) => inlineObject.name === action.inlineObject.name,
+  const parsedInlineObject = parseInlineObject({
+    context,
+    inlineObject: {
+      _type: action.inlineObject.name,
+      ...(action.inlineObject.value ?? {}),
+    },
+    options: {refreshKeys: false},
+  })
+
+  if (!parsedInlineObject) {
+    throw new Error(
+      `Failed to parse inline object ${JSON.stringify(action.inlineObject)}`,
     )
-  ) {
-    console.error('Unable to insert unknown inline object')
-    return
   }
 
   if (!action.editor.selection) {
@@ -36,13 +43,7 @@ export const insertInlineObjectActionImplementation: BehaviorActionImplementatio
       {
         _type: context.schema.block.name,
         _key: context.keyGenerator(),
-        children: [
-          {
-            _type: action.inlineObject.name,
-            _key: context.keyGenerator(),
-            ...(action.inlineObject.value ?? {}),
-          },
-        ],
+        children: [parsedInlineObject],
       },
     ],
     {schemaTypes: context.schema},

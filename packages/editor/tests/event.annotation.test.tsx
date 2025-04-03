@@ -27,7 +27,9 @@ describe('event.annotation', () => {
           keyGenerator: createTestKeyGenerator(),
           schemaDefinition: defineSchema({
             decorators: [{name: 'strong'}],
-            annotations: [{name: 'link'}],
+            annotations: [
+              {name: 'link', fields: [{name: 'href', type: 'string'}]},
+            ],
           }),
         }}
       >

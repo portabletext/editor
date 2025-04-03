@@ -56,6 +56,11 @@ export const portableTextType = defineType({
             type: 'object',
             fields: [{type: 'string', name: 'text'}],
           },
+          {
+            name: 'link',
+            type: 'object',
+            fields: [{type: 'string', name: 'href'}],
+          },
         ],
       },
       of: [someObject, {type: 'stock-ticker'}],
