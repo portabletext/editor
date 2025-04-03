@@ -1,6 +1,7 @@
 import {Editor, type BaseRange, type Node} from 'slate'
 import {DOMEditor, isDOMNode} from 'slate-dom'
 import type {EditorSchema, EditorSelection} from '..'
+import type {EditorActor} from '../editor/editor-machine'
 import type {PortableTextSlateEditor} from '../types/editor'
 import * as utils from '../utils'
 import {
@@ -21,14 +22,18 @@ export type EventPosition = {
 export type EventPositionBlock = EventPosition['block']
 
 export function getEventPosition({
-  schema,
+  editorActor,
   slateEditor,
   event,
 }: {
-  schema: EditorSchema
+  editorActor: EditorActor
   slateEditor: PortableTextSlateEditor
   event: DragEvent | MouseEvent
 }): EventPosition | undefined {
+  if (editorActor.getSnapshot().matches({setup: 'setting up'})) {
+    return undefined
+  }
+
   const node = getEventNode({slateEditor, event})
 
   if (!node) {
@@ -37,13 +42,13 @@ export function getEventPosition({
 
   const block = getNodeBlock({
     editor: slateEditor,
-    schema,
+    schema: editorActor.getSnapshot().context.schema,
     node,
   })
 
   const positionBlock = getEventPositionBlock({node, slateEditor, event})
   const selection = getEventSelection({
-    schema,
+    schema: editorActor.getSnapshot().context.schema,
     slateEditor,
     event,
   })

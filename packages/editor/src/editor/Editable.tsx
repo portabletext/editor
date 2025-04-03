@@ -586,7 +586,7 @@ export const PortableTextEditable = forwardRef<
       }
 
       const position = getEventPosition({
-        schema: editorActor.getSnapshot().context.schema,
+        editorActor,
         slateEditor,
         event: event.nativeEvent,
       })
@@ -819,7 +819,7 @@ export const PortableTextEditable = forwardRef<
       }
 
       const position = getEventPosition({
-        schema: editorActor.getSnapshot().context.schema,
+        editorActor,
         slateEditor,
         event: event.nativeEvent,
       })
@@ -985,7 +985,7 @@ export const PortableTextEditable = forwardRef<
       }
 
       const position = getEventPosition({
-        schema: editorActor.getSnapshot().context.schema,
+        editorActor,
         slateEditor,
         event: event.nativeEvent,
       })
@@ -1045,7 +1045,7 @@ export const PortableTextEditable = forwardRef<
       }
 
       const position = getEventPosition({
-        schema: editorActor.getSnapshot().context.schema,
+        editorActor,
         slateEditor,
         event: event.nativeEvent,
       })
@@ -1081,7 +1081,7 @@ export const PortableTextEditable = forwardRef<
       }
 
       const position = getEventPosition({
-        schema: editorActor.getSnapshot().context.schema,
+        editorActor,
         slateEditor,
         event: event.nativeEvent,
       })
@@ -1118,7 +1118,7 @@ export const PortableTextEditable = forwardRef<
       }
 
       const position = getEventPosition({
-        schema: editorActor.getSnapshot().context.schema,
+        editorActor,
         slateEditor,
         event: event.nativeEvent,
       })
@@ -1156,7 +1156,7 @@ export const PortableTextEditable = forwardRef<
       }
 
       const position = getEventPosition({
-        schema: editorActor.getSnapshot().context.schema,
+        editorActor,
         slateEditor,
         event: event.nativeEvent,
       })
