@@ -29,7 +29,8 @@
     "test:e2e:chromium": "turbo test:e2e:chromium",
     "test:browser:chromium": "turbo test:browser:chromium",
     "test:browser:firefox": "turbo test:browser:firefox",
-    "test:browser:webkit": "turbo test:browser:webkit"
+    "test:browser:webkit": "turbo test:browser:webkit",
+    "test:unit": "turbo test:unit"
   },
   "lint-staged": {
     "*": [
