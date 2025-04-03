@@ -236,7 +236,7 @@ importers:
         version: 19.0.0-beta-e993439-20250328(eslint@8.57.1)
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-e5dd82a7-20250401(eslint@8.57.1)
+        version: 0.0.0-experimental-040f8286-20250402(eslint@8.57.1)
       postcss:
         specifier: ^8.4.49
         version: 8.5.3
@@ -294,7 +294,7 @@ importers:
         version: 19.0.0-beta-e993439-20250328(eslint@9.19.0(jiti@1.21.7))
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-e5dd82a7-20250401(eslint@9.19.0(jiti@1.21.7))
+        version: 0.0.0-experimental-040f8286-20250402(eslint@9.19.0(jiti@1.21.7))
       eslint-plugin-react-refresh:
         specifier: ^0.4.14
         version: 0.4.18(eslint@9.19.0(jiti@1.21.7))
@@ -367,7 +367,7 @@ importers:
         version: 19.0.0-beta-e993439-20250328(eslint@9.19.0(jiti@1.21.7))
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-e5dd82a7-20250401(eslint@9.19.0(jiti@1.21.7))
+        version: 0.0.0-experimental-040f8286-20250402(eslint@9.19.0(jiti@1.21.7))
       eslint-plugin-react-refresh:
         specifier: ^0.4.14
         version: 0.4.18(eslint@9.19.0(jiti@1.21.7))
@@ -534,7 +534,7 @@ importers:
         version: 19.0.0-beta-e993439-20250328(eslint@8.57.1)
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-e5dd82a7-20250401(eslint@8.57.1)
+        version: 0.0.0-experimental-040f8286-20250402(eslint@8.57.1)
       jsdom:
         specifier: ^26.0.0
         version: 26.0.0
@@ -3971,8 +3971,8 @@ packages:
     peerDependencies:
       eslint: '>=7'
 
-  eslint-plugin-react-hooks@0.0.0-experimental-e5dd82a7-20250401:
-    resolution: {integrity: sha512-opAG/8TTd13ewWTKQIVp8Kd06SHfKS7TSgksvGGc7NdAUkJFHyCRlI/xe+Tqz9sU9Dy8Tv6/zuq2Z8GASk9ZMg==}
+  eslint-plugin-react-hooks@0.0.0-experimental-040f8286-20250402:
+    resolution: {integrity: sha512-INbX2UE6GOlCjiudMKS5CX6SuX96eqgHU3vWxgg4bbkepf4MQ+GVsBPtuet0MCIZaHTHU05ddO+NjZDzgWj1/g==}
     engines: {node: '>=18'}
     peerDependencies:
       eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0
@@ -6263,10 +6263,6 @@ packages:
   type-fest@0.21.3:
     resolution: {integrity: sha512-t0rzBq87m3fVcduHDUFhKmyyX+9eo6WQjZvf51Ea/M0Q7+T374Jp1aUiyUl0GKxp8M/OETVHSDvmkyPgvX+X2w==}
     engines: {node: '>=10'}
-
-  type-fest@4.38.0:
-    resolution: {integrity: sha512-2dBz5D5ycHIoliLYLi0Q2V7KRaDlH0uWIvmk7TYlAg5slqwiPv1ezJdZm1QEM0xgk29oYWMCbIG7E6gHpvChlg==}
-    engines: {node: '>=16'}
 
   type-fest@4.39.0:
     resolution: {integrity: sha512-w2IGJU1tIgcrepg9ZJ82d8UmItNQtOFJG0HCUE3SzMokKkTsruVDALl2fAdiEzJlfduoU+VyXJWIIUZ+6jV+nw==}
@@ -10403,7 +10399,7 @@ snapshots:
       chalk: 5.4.1
       cli-boxes: 3.0.0
       string-width: 7.2.0
-      type-fest: 4.38.0
+      type-fest: 4.39.0
       widest-line: 5.0.0
       wrap-ansi: 9.0.0
 
@@ -10852,7 +10848,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-react-hooks@0.0.0-experimental-e5dd82a7-20250401(eslint@8.57.1):
+  eslint-plugin-react-hooks@0.0.0-experimental-040f8286-20250402(eslint@8.57.1):
     dependencies:
       '@babel/core': 7.26.10
       '@babel/parser': 7.27.0
@@ -10864,7 +10860,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-react-hooks@0.0.0-experimental-e5dd82a7-20250401(eslint@9.19.0(jiti@1.21.7)):
+  eslint-plugin-react-hooks@0.0.0-experimental-040f8286-20250402(eslint@9.19.0(jiti@1.21.7)):
     dependencies:
       '@babel/core': 7.26.10
       '@babel/parser': 7.27.0
@@ -13316,7 +13312,7 @@ snapshots:
 
   remeda@2.20.0:
     dependencies:
-      type-fest: 4.38.0
+      type-fest: 4.39.0
 
   require-directory@2.1.1:
     optional: true
@@ -13927,10 +13923,7 @@ snapshots:
   type-fest@0.21.3:
     optional: true
 
-  type-fest@4.38.0: {}
-
-  type-fest@4.39.0:
-    optional: true
+  type-fest@4.39.0: {}
 
   typedoc-plugin-markdown@4.4.1(typedoc@0.27.6(typescript@5.8.2)):
     dependencies:
