@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.44.12](https://github.com/portabletext/editor/compare/editor-v1.44.11...editor-v1.44.12) (2025-04-03)
+
+
+### Bug Fixes
+
+* allow `mouse.click` events when read-only ([dde2b41](https://github.com/portabletext/editor/commit/dde2b41b7eaa11dfe5cd7e5a76538e6a1442c928))
+* allow ordinary mouse events when no `EventPosition` is found ([54a9480](https://github.com/portabletext/editor/commit/54a9480ef822332065b872c828eca6824494ccc9))
+* **clipboard.copy:** read selection from Slate directly ([1551cfe](https://github.com/portabletext/editor/commit/1551cfe3e43e1ed4c137a57fd024f421549b6477))
+* don't calculate `EventPosition` while setting up ([c42ca62](https://github.com/portabletext/editor/commit/c42ca6288d8638d81e2dd4231e6bda7bd06f9d40))
+
 ## [1.44.11](https://github.com/portabletext/editor/compare/editor-v1.44.10...editor-v1.44.11) (2025-04-03)
 
 
