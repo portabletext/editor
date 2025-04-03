@@ -95,12 +95,31 @@ const breakingBlockObject = defineBehavior({
 const clickingAboveLonelyBlockObject = defineBehavior({
   on: 'mouse.click',
   guard: ({snapshot, event}) => {
-    if (!selectors.isSelectionCollapsed(snapshot)) {
+    if (snapshot.context.readOnly) {
       return false
     }
 
-    const focusBlockObject = selectors.getFocusBlockObject(snapshot)
-    const previousBlock = selectors.getPreviousBlock(snapshot)
+    if (
+      snapshot.context.selection &&
+      !selectors.isSelectionCollapsed(snapshot)
+    ) {
+      return false
+    }
+
+    const focusBlockObject = selectors.getFocusBlockObject({
+      ...snapshot,
+      context: {
+        ...snapshot.context,
+        selection: event.position.selection,
+      },
+    })
+    const previousBlock = selectors.getPreviousBlock({
+      ...snapshot,
+      context: {
+        ...snapshot.context,
+        selection: event.position.selection,
+      },
+    })
 
     return (
       event.position.isEditor &&
@@ -110,13 +129,18 @@ const clickingAboveLonelyBlockObject = defineBehavior({
     )
   },
   actions: [
-    ({snapshot}) => [
+    ({snapshot, event}) => [
+      raise({
+        type: 'select',
+        selection: event.position.selection,
+      }),
       raise({
         type: 'insert.block',
         block: {
           _type: snapshot.context.schema.block.name,
         },
         placement: 'before',
+        select: 'start',
       }),
     ],
   ],
@@ -125,12 +149,31 @@ const clickingAboveLonelyBlockObject = defineBehavior({
 const clickingBelowLonelyBlockObject = defineBehavior({
   on: 'mouse.click',
   guard: ({snapshot, event}) => {
-    if (!selectors.isSelectionCollapsed(snapshot)) {
+    if (snapshot.context.readOnly) {
       return false
     }
 
-    const focusBlockObject = selectors.getFocusBlockObject(snapshot)
-    const nextBlock = selectors.getNextBlock(snapshot)
+    if (
+      snapshot.context.selection &&
+      !selectors.isSelectionCollapsed(snapshot)
+    ) {
+      return false
+    }
+
+    const focusBlockObject = selectors.getFocusBlockObject({
+      ...snapshot,
+      context: {
+        ...snapshot.context,
+        selection: event.position.selection,
+      },
+    })
+    const nextBlock = selectors.getNextBlock({
+      ...snapshot,
+      context: {
+        ...snapshot.context,
+        selection: event.position.selection,
+      },
+    })
 
     return (
       event.position.isEditor &&
@@ -140,13 +183,18 @@ const clickingBelowLonelyBlockObject = defineBehavior({
     )
   },
   actions: [
-    ({snapshot}) => [
+    ({snapshot, event}) => [
+      raise({
+        type: 'select',
+        selection: event.position.selection,
+      }),
       raise({
         type: 'insert.block',
         block: {
           _type: snapshot.context.schema.block.name,
         },
         placement: 'after',
+        select: 'start',
       }),
     ],
   ],
