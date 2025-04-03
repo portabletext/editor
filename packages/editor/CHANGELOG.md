@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.44.11](https://github.com/portabletext/editor/compare/editor-v1.44.10...editor-v1.44.11) (2025-04-03)
+
+
+### Bug Fixes
+
+* **sync:** only delete text from non-empty spans ([77db64c](https://github.com/portabletext/editor/commit/77db64c3700f9b27e46b55b3a215ed5c8ceba93e))
+
 ## [1.44.10](https://github.com/portabletext/editor/compare/editor-v1.44.9...editor-v1.44.10) (2025-04-02)
 
 
