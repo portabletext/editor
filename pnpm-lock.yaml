@@ -130,7 +130,7 @@ importers:
         version: 0.8.1(@astrojs/starlight@0.32.5(astro@5.5.6(@types/node@22.14.0)(jiti@1.21.7)(rollup@4.39.0)(terser@5.39.0)(typescript@5.8.2)(yaml@2.7.1)))
       starlight-typedoc:
         specifier: ^0.18.0
-        version: 0.18.0(@astrojs/starlight@0.32.5(astro@5.5.6(@types/node@22.14.0)(jiti@1.21.7)(rollup@4.39.0)(terser@5.39.0)(typescript@5.8.2)(yaml@2.7.1)))(typedoc-plugin-markdown@4.6.1(typedoc@0.27.9(typescript@5.8.2)))(typedoc@0.27.9(typescript@5.8.2))
+        version: 0.18.0(@astrojs/starlight@0.32.5(astro@5.5.6(@types/node@22.14.0)(jiti@1.21.7)(rollup@4.39.0)(terser@5.39.0)(typescript@5.8.2)(yaml@2.7.1)))(typedoc-plugin-markdown@4.6.1(typedoc@0.28.1(typescript@5.8.2)))(typedoc@0.28.1(typescript@5.8.2))
       tailwind-merge:
         specifier: ^2.5.5
         version: 2.6.0
@@ -141,11 +141,11 @@ importers:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@3.4.17)
       typedoc:
-        specifier: ^0.27.4
-        version: 0.27.9(typescript@5.8.2)
+        specifier: ^0.28.0
+        version: 0.28.1(typescript@5.8.2)
       typedoc-plugin-markdown:
         specifier: ^4.3.2
-        version: 4.6.1(typedoc@0.27.9(typescript@5.8.2))
+        version: 4.6.1(typedoc@0.28.1(typescript@5.8.2))
 
   apps/playground:
     dependencies:
@@ -1404,8 +1404,8 @@ packages:
   '@formatjs/intl-localematcher@0.6.1':
     resolution: {integrity: sha512-ePEgLgVCqi2BBFnTMWPfIghu6FkbZnnBVhO2sSxvLfrdFw7wCHAHiDoM2h4NRgjbaY7+B7HgOLZGkK187pZTZg==}
 
-  '@gerrit0/mini-shiki@1.27.2':
-    resolution: {integrity: sha512-GeWyHz8ao2gBiUW4OJnQDxXQnFgZQwwQk05t/CVVgNBN7/rK8XZ7xY6YhLVv9tH3VppWWmr9DCl3MwemB/i+Og==}
+  '@gerrit0/mini-shiki@3.2.2':
+    resolution: {integrity: sha512-vaZNGhGLKMY14HbF53xxHNgFO9Wz+t5lTlGNpl2N9xFiKQ0I5oIe0vKjU9dh7Nb3Dw6lZ7wqUE0ri+zcdpnK+Q==}
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -6015,9 +6015,9 @@ packages:
     peerDependencies:
       typedoc: 0.28.x
 
-  typedoc@0.27.9:
-    resolution: {integrity: sha512-/z585740YHURLl9DN2jCWe6OW7zKYm6VoQ93H0sxZ1cwHQEQrUn5BJrEnkWhfzUdyO+BLGjnKUZ9iz9hKloFDw==}
-    engines: {node: '>= 18'}
+  typedoc@0.28.1:
+    resolution: {integrity: sha512-Mn2VPNMaxoe/hlBiLriG4U55oyAa3Xo+8HbtEwV7F5WEOPXqtxzGuMZhJYHaqFJpajeQ6ZDUC2c990NAtTbdgw==}
+    engines: {node: '>= 18', pnpm: '>= 10'}
     hasBin: true
     peerDependencies:
       typescript: 5.0.x || 5.1.x || 5.2.x || 5.3.x || 5.4.x || 5.5.x || 5.6.x || 5.7.x || 5.8.x
@@ -7323,10 +7323,12 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@gerrit0/mini-shiki@1.27.2':
+  '@gerrit0/mini-shiki@3.2.2':
     dependencies:
-      '@shikijs/engine-oniguruma': 1.29.2
-      '@shikijs/types': 1.29.2
+      '@shikijs/engine-oniguruma': 3.2.1
+      '@shikijs/langs': 3.2.1
+      '@shikijs/themes': 3.2.1
+      '@shikijs/types': 3.2.1
       '@shikijs/vscode-textmate': 10.0.2
 
   '@humanfs/core@0.19.1': {}
@@ -13210,12 +13212,12 @@ snapshots:
     dependencies:
       '@astrojs/starlight': 0.32.5(astro@5.5.6(@types/node@22.14.0)(jiti@1.21.7)(rollup@4.39.0)(terser@5.39.0)(typescript@5.8.2)(yaml@2.7.1))
 
-  starlight-typedoc@0.18.0(@astrojs/starlight@0.32.5(astro@5.5.6(@types/node@22.14.0)(jiti@1.21.7)(rollup@4.39.0)(terser@5.39.0)(typescript@5.8.2)(yaml@2.7.1)))(typedoc-plugin-markdown@4.6.1(typedoc@0.27.9(typescript@5.8.2)))(typedoc@0.27.9(typescript@5.8.2)):
+  starlight-typedoc@0.18.0(@astrojs/starlight@0.32.5(astro@5.5.6(@types/node@22.14.0)(jiti@1.21.7)(rollup@4.39.0)(terser@5.39.0)(typescript@5.8.2)(yaml@2.7.1)))(typedoc-plugin-markdown@4.6.1(typedoc@0.28.1(typescript@5.8.2)))(typedoc@0.28.1(typescript@5.8.2)):
     dependencies:
       '@astrojs/starlight': 0.32.5(astro@5.5.6(@types/node@22.14.0)(jiti@1.21.7)(rollup@4.39.0)(terser@5.39.0)(typescript@5.8.2)(yaml@2.7.1))
       github-slugger: 2.0.0
-      typedoc: 0.27.9(typescript@5.8.2)
-      typedoc-plugin-markdown: 4.6.1(typedoc@0.27.9(typescript@5.8.2))
+      typedoc: 0.28.1(typescript@5.8.2)
+      typedoc-plugin-markdown: 4.6.1(typedoc@0.28.1(typescript@5.8.2))
 
   std-env@3.8.1: {}
 
@@ -13491,13 +13493,13 @@ snapshots:
 
   type-fest@4.39.1: {}
 
-  typedoc-plugin-markdown@4.6.1(typedoc@0.27.9(typescript@5.8.2)):
+  typedoc-plugin-markdown@4.6.1(typedoc@0.28.1(typescript@5.8.2)):
     dependencies:
-      typedoc: 0.27.9(typescript@5.8.2)
+      typedoc: 0.28.1(typescript@5.8.2)
 
-  typedoc@0.27.9(typescript@5.8.2):
+  typedoc@0.28.1(typescript@5.8.2):
     dependencies:
-      '@gerrit0/mini-shiki': 1.27.2
+      '@gerrit0/mini-shiki': 3.2.2
       lunr: 2.3.9
       markdown-it: 14.1.0
       minimatch: 9.0.5
