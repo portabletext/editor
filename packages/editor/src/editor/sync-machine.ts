@@ -735,12 +735,14 @@ function _updateBlock(
               Text.isText(oldBlockChild) &&
               oldBlockChild._type === 'span'
             if (isSpanNode && isTextChanged) {
-              Transforms.delete(slateEditor, {
-                at: {
-                  focus: {path, offset: 0},
-                  anchor: {path, offset: oldBlockChild.text.length},
-                },
-              })
+              if (oldBlockChild.text.length > 0) {
+                Transforms.delete(slateEditor, {
+                  at: {
+                    focus: {path, offset: 0},
+                    anchor: {path, offset: oldBlockChild.text.length},
+                  },
+                })
+              }
               Transforms.insertText(slateEditor, currentBlockChild.text, {
                 at: path,
               })

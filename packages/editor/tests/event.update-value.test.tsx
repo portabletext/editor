@@ -205,17 +205,11 @@ describe('event.update value', () => {
     )
   })
 
-  test('should allow updating block text content without React key warnings', async () => {
+  test('Scenario: Updating the text of an empty span', async () => {
     const editorRef = React.createRef<Editor>()
-    const keyGenerator = createTestKeyGenerator() // Ensure keys are predictable if needed, though the bug uses static keys
-    const errorSpy = vi
-      .spyOn(console, 'error')
-      .mockImplementation((...args) => {
-        console.log({args})
-      }) // Spy on console.error to observe potential warnings
+    const keyGenerator = createTestKeyGenerator()
 
-    const schemaDefinition = defineSchema({})
-    const span = {_type: 'span', _key: 'span1', text: ''}
+    const span = {_type: 'span', _key: 'span1', text: '', marks: []}
     const emptyFirstLine = {
       _key: 'block1', // Static key
       _type: 'block',
@@ -230,7 +224,7 @@ describe('event.update value', () => {
     const lastLine = {
       _key: 'block2', // Static key
       _type: 'block',
-      children: [{_type: 'span', _key: 'span2', text: 'last line'}],
+      children: [{_type: 'span', _key: 'span2', text: 'last line', marks: []}],
       style: 'normal' as const,
       markDefs: [],
     }
@@ -239,8 +233,7 @@ describe('event.update value', () => {
       <EditorProvider
         initialConfig={{
           keyGenerator,
-          schemaDefinition,
-          initialValue: [],
+          schemaDefinition: defineSchema({}),
         }}
       >
         <EditorRefPlugin ref={editorRef} />
@@ -248,27 +241,28 @@ describe('event.update value', () => {
       </EditorProvider>,
     )
 
-    // Initial update (no warning expected yet)
     editorRef.current?.send({
       type: 'update value',
       value: [emptyFirstLine, lastLine],
     })
 
-    // Wait for the initial state update to settle
-    await new Promise((resolve) => setTimeout(resolve, 0))
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        emptyFirstLine,
+        lastLine,
+      ])
+    })
 
-    // Second update - this triggers the React key warning
     editorRef.current?.send({
       type: 'update value',
       value: [populatedFirstLine, lastLine],
     })
 
-    // Wait for the second update and potential error logging to occur
-    await new Promise((resolve) => setTimeout(resolve, 0))
-
-    expect(errorSpy).not.toHaveBeenCalledWith(
-      expect.stringContaining('Encountered two children with the same key'),
-      expect.any(String),
-    )
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        populatedFirstLine,
+        lastLine,
+      ])
+    })
   })
 })
