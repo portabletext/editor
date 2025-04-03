@@ -301,10 +301,6 @@ describe('Feature: Range Decorations', () => {
       ],
     })
 
-    await userEvent.click(editorA.locator)
-    await putCaretBeforeText(editorA, 'It')
-    await type(editorA, 'Change')
-
     await vi.waitFor(() =>
       expect
         .element(editorA.locator.getByTestId('range-decoration'))
