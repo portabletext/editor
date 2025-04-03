@@ -5,6 +5,7 @@ import {
   PortableTextEditorTester,
   schemaType,
 } from '../../__tests__/PortableTextEditorTester'
+import {createTestKeyGenerator} from '../../../internal-utils/test-key-generator'
 import {PortableTextEditor} from '../../PortableTextEditor'
 
 const initialValue = [
@@ -49,6 +50,7 @@ describe('plugin:withUndoRedo', () => {
     const onChange = vi.fn()
     render(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
         schemaType={schemaType}
@@ -107,6 +109,7 @@ describe('plugin:withUndoRedo', () => {
 
     render(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
         schemaType={schemaType}

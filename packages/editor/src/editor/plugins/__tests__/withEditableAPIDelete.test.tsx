@@ -5,6 +5,7 @@ import {
   PortableTextEditorTester,
   schemaType,
 } from '../../__tests__/PortableTextEditorTester'
+import {createTestKeyGenerator} from '../../../internal-utils/test-key-generator'
 import {PortableTextEditor} from '../../PortableTextEditor'
 
 const initialValue = [
@@ -53,6 +54,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
         ref={editorRef}
         schemaType={schemaType}
         value={initialValue}
+        keyGenerator={createTestKeyGenerator()}
       />,
     )
 
@@ -103,6 +105,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
     const onChange = vi.fn()
     render(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
         schemaType={schemaType}
@@ -137,11 +140,11 @@ describe('plugin:withEditableAPI: .delete()', () => {
           .toMatchInlineSnapshot(`
           [
             {
-              "_key": "1",
+              "_key": "k2",
               "_type": "myTestBlockType",
               "children": [
                 {
-                  "_key": "2",
+                  "_key": "k3",
                   "_type": "span",
                   "marks": [],
                   "text": "",
@@ -162,6 +165,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
 
     render(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
         schemaType={schemaType}
@@ -222,7 +226,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
                       "_type": "myTestBlockType",
                       "children": [
                         {
-                          "_key": "1",
+                          "_key": "k2",
                           "_type": "span",
                           "marks": [],
                           "text": "",
@@ -247,6 +251,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
         ref={editorRef}
         schemaType={schemaType}
         value={initialValue}
+        keyGenerator={createTestKeyGenerator()}
       />,
     )
 

@@ -6,6 +6,7 @@ import {
   schemaType,
 } from '../../editor/__tests__/PortableTextEditorTester'
 import {PortableTextEditor} from '../../editor/PortableTextEditor'
+import {createTestKeyGenerator} from '../test-key-generator'
 
 describe('values: normalization', () => {
   it("accepts incoming value with blocks without a style or markDefs prop, but doesn't leave them without them when editing them", async () => {
@@ -28,6 +29,7 @@ describe('values: normalization', () => {
     const onChange = vi.fn()
     render(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
         schemaType={schemaType}

@@ -1,6 +1,7 @@
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
+import {createTestKeyGenerator} from '../../internal-utils/test-key-generator'
 import {PortableTextEditor} from '../PortableTextEditor'
 import {PortableTextEditorTester, schemaType} from './PortableTextEditorTester'
 
@@ -43,6 +44,7 @@ describe('useSyncValue', () => {
     ]
     const {rerender} = render(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
         schemaType={schemaType}
@@ -62,6 +64,7 @@ describe('useSyncValue', () => {
 
     rerender(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
         schemaType={schemaType}
@@ -99,6 +102,7 @@ describe('useSyncValue', () => {
     ]
     const {rerender} = render(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
         schemaType={schemaType}
@@ -118,6 +122,7 @@ describe('useSyncValue', () => {
 
     rerender(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
         schemaType={schemaType}

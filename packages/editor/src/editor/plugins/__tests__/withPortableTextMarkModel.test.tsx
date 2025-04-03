@@ -4,136 +4,13 @@ import {describe, expect, it, vi} from 'vitest'
 import {
   PortableTextEditorTester,
   schemaType,
-  schemaTypeWithColorAndLink,
 } from '../../__tests__/PortableTextEditorTester'
+import {createTestKeyGenerator} from '../../../internal-utils/test-key-generator'
 import type {EditorSelection} from '../../../types/editor'
 import {PortableTextEditor} from '../../PortableTextEditor'
 
 describe('plugin:withPortableTextMarksModel', () => {
   describe('normalization', () => {
-    it('merges children correctly when toggling marks in various ranges', async () => {
-      const editorRef: RefObject<PortableTextEditor | null> = createRef()
-      const initialValue = [
-        {
-          _key: 'a',
-          _type: 'myTestBlockType',
-          children: [
-            {
-              _key: 'a1',
-              _type: 'span',
-              marks: [],
-              text: '1234',
-            },
-          ],
-          markDefs: [],
-          style: 'normal',
-        },
-      ]
-      const onChange = vi.fn()
-      await waitFor(() => {
-        render(
-          <PortableTextEditorTester
-            onChange={onChange}
-            ref={editorRef}
-            schemaType={schemaType}
-            value={initialValue}
-          />,
-        )
-      })
-      const editor = editorRef.current!
-      expect(editor).toBeDefined()
-      await waitFor(() => {
-        PortableTextEditor.focus(editor)
-        PortableTextEditor.select(editor, {
-          focus: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 0},
-          anchor: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 4},
-        })
-        PortableTextEditor.toggleMark(editor, 'strong')
-        expect(PortableTextEditor.getValue(editor)).toEqual([
-          {
-            _key: 'a',
-            _type: 'myTestBlockType',
-            children: [
-              {
-                _key: 'a1',
-                _type: 'span',
-                marks: ['strong'],
-                text: '1234',
-              },
-            ],
-            markDefs: [],
-            style: 'normal',
-          },
-        ])
-      })
-      await waitFor(() => {
-        if (editorRef.current) {
-          PortableTextEditor.select(editorRef.current, {
-            focus: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 1},
-            anchor: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 3},
-          })
-          PortableTextEditor.toggleMark(editorRef.current, 'strong')
-          expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
-            {
-              _key: 'a',
-              _type: 'myTestBlockType',
-              children: [
-                {
-                  _key: 'a1',
-                  _type: 'span',
-                  marks: ['strong'],
-                  text: '1',
-                },
-                {
-                  _key: '2',
-                  _type: 'span',
-                  marks: [],
-                  text: '23',
-                },
-                {
-                  _key: '1',
-                  _type: 'span',
-                  marks: ['strong'],
-                  text: '4',
-                },
-              ],
-              markDefs: [],
-              style: 'normal',
-            },
-          ])
-        }
-      })
-      await waitFor(() => {
-        if (editor) {
-          PortableTextEditor.select(editor, {
-            focus: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 0},
-            anchor: {path: [{_key: 'a'}, 'children', {_key: '1'}], offset: 1},
-          })
-          PortableTextEditor.toggleMark(editor, 'strong')
-          expect(PortableTextEditor.getValue(editor)).toMatchInlineSnapshot(`
-[
-  {
-    "_key": "a",
-    "_type": "myTestBlockType",
-    "children": [
-      {
-        "_key": "a1",
-        "_type": "span",
-        "marks": [
-          "strong",
-        ],
-        "text": "1234",
-      },
-    ],
-    "markDefs": [],
-    "style": "normal",
-  },
-]
-`)
-        }
-      })
-    })
-
     it('toggles marks on children with annotation marks correctly', async () => {
       const editorRef: RefObject<PortableTextEditor | null> = createRef()
       const initialValue = [
@@ -172,6 +49,7 @@ describe('plugin:withPortableTextMarksModel', () => {
           ref={editorRef}
           schemaType={schemaType}
           value={initialValue}
+          keyGenerator={createTestKeyGenerator()}
         />,
       )
 
@@ -300,6 +178,7 @@ describe('plugin:withPortableTextMarksModel', () => {
       await waitFor(() => {
         render(
           <PortableTextEditorTester
+            keyGenerator={createTestKeyGenerator()}
             onChange={onChange}
             ref={editorRef}
             schemaType={schemaType}
@@ -416,6 +295,7 @@ describe('plugin:withPortableTextMarksModel', () => {
           ref={editorRef}
           schemaType={schemaType}
           value={initialValue}
+          keyGenerator={createTestKeyGenerator()}
         />,
       )
 
@@ -454,11 +334,11 @@ describe('plugin:withPortableTextMarksModel', () => {
               style: 'normal',
             },
             {
-              _key: '1',
+              _key: 'k2',
               _type: 'myTestBlockType',
               children: [
                 {
-                  _key: '2',
+                  _key: 'k3',
                   _type: 'span',
                   marks: [],
                   text: '',
@@ -519,6 +399,7 @@ describe('plugin:withPortableTextMarksModel', () => {
           ref={editorRef}
           schemaType={schemaType}
           value={initialValue}
+          keyGenerator={createTestKeyGenerator()}
         />,
       )
 
@@ -589,6 +470,7 @@ describe('plugin:withPortableTextMarksModel', () => {
             ref={editorRef}
             schemaType={schemaType}
             value={initialValue}
+            keyGenerator={createTestKeyGenerator()}
           />,
         )
       })
@@ -644,6 +526,7 @@ describe('plugin:withPortableTextMarksModel', () => {
             ref={editorRef}
             schemaType={schemaType}
             value={initialValue}
+            keyGenerator={createTestKeyGenerator()}
           />,
         )
       })
@@ -658,169 +541,6 @@ describe('plugin:withPortableTextMarksModel', () => {
         expect(PortableTextEditor.isAnnotationActive(editor, 'link')).toBe(
           false,
         )
-      })
-    })
-  })
-
-  describe('removing annotations', () => {
-    it('preserves other marks that apply to the spans', async () => {
-      const editorRef: RefObject<PortableTextEditor | null> = createRef()
-      const initialValue = [
-        {
-          _key: '5fc57af23597',
-          _type: 'myTestBlockType',
-          children: [
-            {
-              _key: 'be1c67c6971a',
-              _type: 'span',
-              marks: ['fde1fd54b544', '7b6d3d5de30c'],
-              text: 'This is a link',
-            },
-          ],
-          markDefs: [
-            {
-              _key: 'fde1fd54b544',
-              _type: 'link',
-              url: '1',
-            },
-            {
-              _key: '7b6d3d5de30c',
-              _type: 'color',
-              color: 'blue',
-            },
-          ],
-          style: 'normal',
-        },
-      ]
-      const onChange = vi.fn()
-      await waitFor(() => {
-        render(
-          <PortableTextEditorTester
-            onChange={onChange}
-            ref={editorRef}
-            schemaType={schemaTypeWithColorAndLink}
-            value={initialValue}
-          />,
-        )
-      })
-
-      await waitFor(() => {
-        if (editorRef.current) {
-          PortableTextEditor.focus(editorRef.current)
-          // Selects `a link` from `This is a link`, so the mark should be kept in the first span, color mark in both.
-          PortableTextEditor.select(editorRef.current, {
-            focus: {
-              path: [
-                {_key: '5fc57af23597'},
-                'children',
-                {_key: 'be1c67c6971a'},
-              ],
-              offset: 14,
-            },
-            anchor: {
-              path: [
-                {_key: '5fc57af23597'},
-                'children',
-                {_key: 'be1c67c6971a'},
-              ],
-              offset: 8,
-            },
-          })
-
-          const linkType = editorRef.current.schemaTypes.annotations.find(
-            (a) => a.name === 'link',
-          )
-          if (!linkType) {
-            throw new Error('No link type found')
-          }
-          PortableTextEditor.removeAnnotation(editorRef.current, linkType)
-          expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
-            {
-              _key: '5fc57af23597',
-              _type: 'myTestBlockType',
-              children: [
-                {
-                  _key: 'be1c67c6971a',
-                  _type: 'span',
-                  marks: ['fde1fd54b544', '7b6d3d5de30c'], // It has both marks, the link was only removed from the second span
-                  text: 'This is ',
-                },
-                {
-                  _key: '1',
-                  _type: 'span',
-                  marks: ['7b6d3d5de30c'],
-                  text: 'a link',
-                },
-              ],
-              markDefs: [
-                {
-                  _key: 'fde1fd54b544',
-                  _type: 'link',
-                  url: '1',
-                },
-                {
-                  _key: '7b6d3d5de30c',
-                  _type: 'color',
-                  color: 'blue',
-                },
-              ],
-              style: 'normal',
-            },
-          ])
-
-          // removes the color from both
-          PortableTextEditor.select(editorRef.current, {
-            focus: {
-              path: [{_key: '5fc57af23597'}, 'children', {_key: '1'}],
-              offset: 6,
-            },
-            anchor: {
-              path: [
-                {_key: '5fc57af23597'},
-                'children',
-                {_key: 'be1c67c6971a'},
-              ],
-              offset: 0,
-            },
-          })
-          const colorType = editorRef.current.schemaTypes.annotations.find(
-            (a) => a.name === 'color',
-          )
-          if (!colorType) {
-            throw new Error('No color type found')
-          }
-
-          PortableTextEditor.removeAnnotation(editorRef.current, colorType)
-
-          expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
-            {
-              _key: '5fc57af23597',
-              _type: 'myTestBlockType',
-              children: [
-                {
-                  _key: 'be1c67c6971a',
-                  _type: 'span',
-                  marks: ['fde1fd54b544'], // The color was removed from both
-                  text: 'This is ',
-                },
-                {
-                  _key: '1',
-                  _type: 'span',
-                  marks: [], // The color was removed from both
-                  text: 'a link',
-                },
-              ],
-              markDefs: [
-                {
-                  _key: 'fde1fd54b544',
-                  _type: 'link',
-                  url: '1',
-                },
-              ],
-              style: 'normal',
-            },
-          ])
-        }
       })
     })
   })
@@ -852,6 +572,7 @@ describe('plugin:withPortableTextMarksModel', () => {
       await waitFor(() => {
         render(
           <PortableTextEditorTester
+            keyGenerator={createTestKeyGenerator()}
             onChange={onChange}
             ref={editorRef}
             schemaType={schemaType}

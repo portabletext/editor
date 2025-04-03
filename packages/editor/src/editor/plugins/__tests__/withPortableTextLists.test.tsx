@@ -5,6 +5,7 @@ import {
   PortableTextEditorTester,
   schemaType,
 } from '../../__tests__/PortableTextEditorTester'
+import {createTestKeyGenerator} from '../../../internal-utils/test-key-generator'
 import {PortableTextEditor} from '../../PortableTextEditor'
 
 describe('plugin:withPortableTextLists', () => {
@@ -46,6 +47,7 @@ describe('plugin:withPortableTextLists', () => {
     await waitFor(() => {
       render(
         <PortableTextEditorTester
+          keyGenerator={createTestKeyGenerator()}
           onChange={onChange}
           ref={editorRef}
           schemaType={schemaType}

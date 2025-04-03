@@ -3,6 +3,7 @@ import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
 import type {EditorSelection} from '../..'
+import {createTestKeyGenerator} from '../../internal-utils/test-key-generator'
 import {PortableTextEditor} from '../PortableTextEditor'
 import {PortableTextEditorTester, schemaType} from './PortableTextEditorTester'
 
@@ -21,6 +22,7 @@ describe('initialization', () => {
     const onChange = vi.fn()
     const {container} = render(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         renderPlaceholder={renderPlaceholder}
         ref={editorRef}
@@ -87,6 +89,7 @@ describe('initialization', () => {
     const editorRef = createRef<PortableTextEditor>()
     render(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         ref={editorRef}
         onChange={onChange}
         schemaType={schemaType}
@@ -118,6 +121,7 @@ describe('initialization', () => {
     const onChange = vi.fn()
     render(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
         selection={initialSelection}
@@ -162,6 +166,7 @@ describe('initialization', () => {
     const onChange = vi.fn()
     const {rerender} = render(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
         selection={initialSelection}
@@ -195,6 +200,7 @@ describe('initialization', () => {
     })
     rerender(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
         selection={newSelection}
@@ -221,6 +227,7 @@ describe('initialization', () => {
     const onChange = vi.fn()
     render(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
         selection={initialSelection}
@@ -266,6 +273,7 @@ describe('initialization', () => {
     await waitFor(() => {
       render(
         <PortableTextEditorTester
+          keyGenerator={createTestKeyGenerator()}
           onChange={onChange}
           ref={editorRef}
           selection={initialSelection}
@@ -298,6 +306,7 @@ describe('initialization', () => {
     const newOnChange = vi.fn()
     _rerender(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={newOnChange}
         ref={editorRef}
         selection={initialSelection}
@@ -350,6 +359,7 @@ describe('initialization', () => {
     const onChange = vi.fn()
     render(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
         selection={initialSelection}

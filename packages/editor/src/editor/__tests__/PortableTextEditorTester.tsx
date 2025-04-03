@@ -1,12 +1,6 @@
 import {Schema} from '@sanity/schema'
 import {defineArrayMember, defineField} from '@sanity/types'
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useMemo,
-  type ForwardedRef,
-} from 'react'
+import {forwardRef, useMemo, type ForwardedRef} from 'react'
 import {vi} from 'vitest'
 import {
   PortableTextEditable,
@@ -77,8 +71,6 @@ const schema = Schema.compile({
   types: [portableTextType, colorAndLink],
 })
 
-let key = 0
-
 export const PortableTextEditorTester = forwardRef(
   function PortableTextEditorTester(
     props: Partial<
@@ -90,23 +82,17 @@ export const PortableTextEditorTester = forwardRef(
       schemaType: PortableTextEditorProps['schemaType']
       selection?: PortableTextEditableProps['selection']
       value?: PortableTextEditorProps['value']
+      keyGenerator: PortableTextEditorProps['keyGenerator']
     },
     ref: ForwardedRef<PortableTextEditor>,
   ) {
-    useEffect(() => {
-      key = 0
-    }, [])
-    const _keyGenerator = useCallback(() => {
-      key++
-      return `${key}`
-    }, [])
     const onChange = useMemo(() => props.onChange || vi.fn(), [props.onChange])
     return (
       <PortableTextEditor
         schemaType={props.schemaType}
         onChange={onChange}
         value={props.value || undefined}
-        keyGenerator={_keyGenerator}
+        keyGenerator={props.keyGenerator}
         ref={ref}
       >
         <PortableTextEditable

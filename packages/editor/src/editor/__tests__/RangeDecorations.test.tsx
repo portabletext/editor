@@ -3,6 +3,7 @@ import {render, waitFor} from '@testing-library/react'
 import {createRef, type ReactNode, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
 import type {RangeDecoration} from '../..'
+import {createTestKeyGenerator} from '../../internal-utils/test-key-generator'
 import type {PortableTextEditor} from '../PortableTextEditor'
 import {PortableTextEditorTester, schemaType} from './PortableTextEditorTester'
 
@@ -38,6 +39,7 @@ describe('RangeDecorations', () => {
     const {rerender} = await waitFor(() =>
       render(
         <PortableTextEditorTester
+          keyGenerator={createTestKeyGenerator()}
           onChange={onChange}
           rangeDecorations={rangeDecorations}
           ref={editorRef}
@@ -64,6 +66,7 @@ describe('RangeDecorations', () => {
     // Re-render with the same range decorations
     rerender(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         rangeDecorations={rangeDecorations}
         ref={editorRef}
@@ -86,6 +89,7 @@ describe('RangeDecorations', () => {
     ]
     rerender(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         rangeDecorations={rangeDecorations}
         ref={editorRef}
@@ -111,6 +115,7 @@ describe('RangeDecorations', () => {
     ]
     rerender(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         rangeDecorations={rangeDecorations}
         ref={editorRef}
@@ -137,6 +142,7 @@ describe('RangeDecorations', () => {
     ]
     rerender(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         rangeDecorations={rangeDecorations}
         ref={editorRef}
