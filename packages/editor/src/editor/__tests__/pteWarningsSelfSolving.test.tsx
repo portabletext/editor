@@ -2,6 +2,7 @@ import type {PortableTextBlock} from '@sanity/types'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
+import {createTestKeyGenerator} from '../../internal-utils/test-key-generator'
 import {PortableTextEditor} from '../PortableTextEditor'
 import {PortableTextEditorTester, schemaType} from './PortableTextEditorTester'
 
@@ -27,6 +28,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
     const onChange = vi.fn()
     render(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
         schemaType={schemaType}
@@ -48,7 +50,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
             _type: 'myTestBlockType',
             children: [
               {
-                _key: '2',
+                _key: 'k3',
                 _type: 'span',
                 text: 'Hello with a new key',
                 marks: [],
@@ -83,6 +85,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
     const onChange = vi.fn()
     render(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
         schemaType={schemaType}
@@ -140,6 +143,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
     const onChange = vi.fn()
     render(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
         schemaType={schemaType}
@@ -162,7 +166,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
             _type: 'myTestBlockType',
             children: [
               {
-                _key: '2',
+                _key: 'k3',
                 _type: 'span',
                 text: '',
                 marks: [],
@@ -176,7 +180,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
             _type: 'myTestBlockType',
             children: [
               {
-                _key: '4',
+                _key: 'k5',
                 _type: 'span',
                 text: '',
                 marks: [],
@@ -212,6 +216,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
     const onChange = vi.fn()
     render(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
         schemaType={schemaType}
@@ -276,6 +281,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
     const onChange = vi.fn()
     render(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
         schemaType={schemaType}
@@ -319,6 +325,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
     const onChange = vi.fn()
     render(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
         schemaType={schemaType}
@@ -337,9 +344,9 @@ describe('when PTE would display warnings, instead it self solves', () => {
         PortableTextEditor.focus(editorRef.current)
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           {
-            _key: '3',
+            _key: 'k2',
             _type: 'myTestBlockType',
-            children: [{_key: '4', _type: 'span', marks: [], text: ''}],
+            children: [{_key: 'k3', _type: 'span', marks: [], text: ''}],
             markDefs: [],
             style: 'normal',
           },

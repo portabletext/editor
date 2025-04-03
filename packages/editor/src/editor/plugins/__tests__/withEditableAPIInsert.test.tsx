@@ -5,6 +5,7 @@ import {
   PortableTextEditorTester,
   schemaType,
 } from '../../__tests__/PortableTextEditorTester'
+import {createTestKeyGenerator} from '../../../internal-utils/test-key-generator'
 import {PortableTextEditor} from '../../PortableTextEditor'
 
 const initialValue = [
@@ -62,6 +63,7 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
 
     render(
       <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
         schemaType={schemaType}
@@ -111,12 +113,12 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
                 text: 'Block A',
               },
               {
-                _key: '2',
+                _key: 'k3',
                 _type: 'someObject',
                 color: 'red',
               },
               {
-                _key: '3',
+                _key: 'k4',
                 _type: 'span',
                 marks: [],
                 text: '',
@@ -155,12 +157,12 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
                 text: 'Block A',
               },
               {
-                _key: '2',
+                _key: 'k3',
                 _type: 'someObject',
                 color: 'red',
               },
               {
-                _key: '5',
+                _key: 'k6',
                 _type: 'span',
                 marks: [],
                 text: ' ',
@@ -172,8 +174,8 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
         ])
 
         expect(PortableTextEditor.getSelection(editorRef.current)).toEqual({
-          anchor: {path: [{_key: 'a'}, 'children', {_key: '5'}], offset: 1},
-          focus: {path: [{_key: 'a'}, 'children', {_key: '5'}], offset: 1},
+          anchor: {path: [{_key: 'a'}, 'children', {_key: 'k6'}], offset: 1},
+          focus: {path: [{_key: 'a'}, 'children', {_key: 'k6'}], offset: 1},
           backward: false,
         })
       }
@@ -208,6 +210,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
         schemaType={schemaType}
         value={emptyTextBlock}
         onChange={onChange}
+        keyGenerator={createTestKeyGenerator()}
       />,
     )
 
@@ -240,7 +243,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
     await waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
-          {_key: '1', _type: 'someObject', color: 'red'},
+          {_key: 'k2', _type: 'someObject', color: 'red'},
         ])
       }
     })
@@ -256,6 +259,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
         schemaType={schemaType}
         value={initialValue}
         onChange={onChange}
+        keyGenerator={createTestKeyGenerator()}
       />,
     )
 
@@ -292,7 +296,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           ...initialValue,
-          {_key: '1', _type: 'someObject', color: 'red'},
+          {_key: 'k2', _type: 'someObject', color: 'red'},
         ])
       }
     })
@@ -308,6 +312,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
         ref={editorRef}
         schemaType={schemaType}
         value={initialValue}
+        keyGenerator={createTestKeyGenerator()}
       />,
     )
 
@@ -345,7 +350,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
     await waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
-          {_key: '1', _type: 'someObject', color: 'red'},
+          {_key: 'k2', _type: 'someObject', color: 'red'},
           ...initialValue,
         ])
       }
@@ -366,6 +371,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
         schemaType={schemaType}
         value={value}
         onChange={onChange}
+        keyGenerator={createTestKeyGenerator()}
       />,
     )
 
@@ -402,7 +408,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           ...value,
-          {_key: '1', _type: 'someObject', color: 'yellow'},
+          {_key: 'k2', _type: 'someObject', color: 'yellow'},
         ])
       }
     })
@@ -422,6 +428,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
         schemaType={schemaType}
         value={value}
         onChange={onChange}
+        keyGenerator={createTestKeyGenerator()}
       />,
     )
 
@@ -455,7 +462,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           value[0],
-          {_key: '1', _type: 'someObject', color: 'yellow'},
+          {_key: 'k2', _type: 'someObject', color: 'yellow'},
           value[1],
         ])
       }
@@ -473,6 +480,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
         schemaType={schemaType}
         value={value}
         onChange={onChange}
+        keyGenerator={createTestKeyGenerator()}
       />,
     )
 
@@ -504,7 +512,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           value[0],
-          {_key: '1', _type: 'someObject', color: 'yellow'},
+          {_key: 'k2', _type: 'someObject', color: 'yellow'},
         ])
       }
     })
