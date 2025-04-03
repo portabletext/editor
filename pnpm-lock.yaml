@@ -129,8 +129,8 @@ importers:
         specifier: ^0.8.0
         version: 0.8.1(@astrojs/starlight@0.32.5(astro@5.5.6(@types/node@22.14.0)(jiti@1.21.7)(rollup@4.39.0)(terser@5.39.0)(typescript@5.8.2)(yaml@2.7.1)))
       starlight-typedoc:
-        specifier: ^0.18.0
-        version: 0.18.0(@astrojs/starlight@0.32.5(astro@5.5.6(@types/node@22.14.0)(jiti@1.21.7)(rollup@4.39.0)(terser@5.39.0)(typescript@5.8.2)(yaml@2.7.1)))(typedoc-plugin-markdown@4.6.1(typedoc@0.28.1(typescript@5.8.2)))(typedoc@0.28.1(typescript@5.8.2))
+        specifier: ^0.21.0
+        version: 0.21.0(@astrojs/starlight@0.32.5(astro@5.5.6(@types/node@22.14.0)(jiti@1.21.7)(rollup@4.39.0)(terser@5.39.0)(typescript@5.8.2)(yaml@2.7.1)))(typedoc-plugin-markdown@4.6.1(typedoc@0.28.1(typescript@5.8.2)))(typedoc@0.28.1(typescript@5.8.2))
       tailwind-merge:
         specifier: ^2.5.5
         version: 2.6.0
@@ -236,7 +236,7 @@ importers:
         version: 19.0.0-beta-e993439-20250328(eslint@8.57.1)
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-040f8286-20250402(eslint@8.57.1)
+        version: 0.0.0-experimental-b10cb4c0-20250403(eslint@8.57.1)
       postcss:
         specifier: ^8.4.49
         version: 8.5.3
@@ -294,7 +294,7 @@ importers:
         version: 19.0.0-beta-e993439-20250328(eslint@9.23.0(jiti@1.21.7))
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-040f8286-20250402(eslint@9.23.0(jiti@1.21.7))
+        version: 0.0.0-experimental-b10cb4c0-20250403(eslint@9.23.0(jiti@1.21.7))
       eslint-plugin-react-refresh:
         specifier: ^0.4.14
         version: 0.4.19(eslint@9.23.0(jiti@1.21.7))
@@ -367,7 +367,7 @@ importers:
         version: 19.0.0-beta-e993439-20250328(eslint@9.23.0(jiti@1.21.7))
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-040f8286-20250402(eslint@9.23.0(jiti@1.21.7))
+        version: 0.0.0-experimental-b10cb4c0-20250403(eslint@9.23.0(jiti@1.21.7))
       eslint-plugin-react-refresh:
         specifier: ^0.4.14
         version: 0.4.19(eslint@9.23.0(jiti@1.21.7))
@@ -534,7 +534,7 @@ importers:
         version: 19.0.0-beta-e993439-20250328(eslint@8.57.1)
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-040f8286-20250402(eslint@8.57.1)
+        version: 0.0.0-experimental-b10cb4c0-20250403(eslint@8.57.1)
       jsdom:
         specifier: ^26.0.0
         version: 26.0.0
@@ -3779,8 +3779,8 @@ packages:
     peerDependencies:
       eslint: '>=7'
 
-  eslint-plugin-react-hooks@0.0.0-experimental-040f8286-20250402:
-    resolution: {integrity: sha512-INbX2UE6GOlCjiudMKS5CX6SuX96eqgHU3vWxgg4bbkepf4MQ+GVsBPtuet0MCIZaHTHU05ddO+NjZDzgWj1/g==}
+  eslint-plugin-react-hooks@0.0.0-experimental-b10cb4c0-20250403:
+    resolution: {integrity: sha512-8Kk1DIb2MvBKpWqY+fz8vqQwqDHsvQZnPXEUeQ71x7DRRJgEQghGTXWIU/CjnxPFHr9U8JHppJj8/v4IqYhjFA==}
     engines: {node: '>=18'}
     peerDependencies:
       eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0
@@ -5721,13 +5721,13 @@ packages:
     peerDependencies:
       '@astrojs/starlight': '>=0.22.0'
 
-  starlight-typedoc@0.18.0:
-    resolution: {integrity: sha512-DdyoAkK20zmfiqKaDQgSF8wDFCKaxo/EzRvC3+4OJJgDtzjMZdBy1mY5JMJLw46UCvBs/tvGVjI1rIeovwd6lQ==}
+  starlight-typedoc@0.21.0:
+    resolution: {integrity: sha512-ADePbvN817lbCT289IZXIJQNkNN8YV44YbOy4A919P3itFZxh3ZS4bLns92F6Dex6vITTXuNLfwC9dFWl2GU7A==}
     engines: {node: '>=18.17.1'}
     peerDependencies:
-      '@astrojs/starlight': '>=0.30.0'
-      typedoc: '>=0.26.5'
-      typedoc-plugin-markdown: '>=4.1.1'
+      '@astrojs/starlight': '>=0.32.0'
+      typedoc: '>=0.28.0'
+      typedoc-plugin-markdown: '>=4.6.0'
 
   std-env@3.8.1:
     resolution: {integrity: sha512-vj5lIj3Mwf9D79hBkltk5qmkFI+biIKWS2IBxEyEU3AX1tUf7AoL8nSazCOiiqQsGKIq01SClsKEzweu34uwvA==}
@@ -10473,7 +10473,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-react-hooks@0.0.0-experimental-040f8286-20250402(eslint@8.57.1):
+  eslint-plugin-react-hooks@0.0.0-experimental-b10cb4c0-20250403(eslint@8.57.1):
     dependencies:
       '@babel/core': 7.26.10
       '@babel/parser': 7.27.0
@@ -10485,7 +10485,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-react-hooks@0.0.0-experimental-040f8286-20250402(eslint@9.23.0(jiti@1.21.7)):
+  eslint-plugin-react-hooks@0.0.0-experimental-b10cb4c0-20250403(eslint@9.23.0(jiti@1.21.7)):
     dependencies:
       '@babel/core': 7.26.10
       '@babel/parser': 7.27.0
@@ -13212,7 +13212,7 @@ snapshots:
     dependencies:
       '@astrojs/starlight': 0.32.5(astro@5.5.6(@types/node@22.14.0)(jiti@1.21.7)(rollup@4.39.0)(terser@5.39.0)(typescript@5.8.2)(yaml@2.7.1))
 
-  starlight-typedoc@0.18.0(@astrojs/starlight@0.32.5(astro@5.5.6(@types/node@22.14.0)(jiti@1.21.7)(rollup@4.39.0)(terser@5.39.0)(typescript@5.8.2)(yaml@2.7.1)))(typedoc-plugin-markdown@4.6.1(typedoc@0.28.1(typescript@5.8.2)))(typedoc@0.28.1(typescript@5.8.2)):
+  starlight-typedoc@0.21.0(@astrojs/starlight@0.32.5(astro@5.5.6(@types/node@22.14.0)(jiti@1.21.7)(rollup@4.39.0)(terser@5.39.0)(typescript@5.8.2)(yaml@2.7.1)))(typedoc-plugin-markdown@4.6.1(typedoc@0.28.1(typescript@5.8.2)))(typedoc@0.28.1(typescript@5.8.2)):
     dependencies:
       '@astrojs/starlight': 0.32.5(astro@5.5.6(@types/node@22.14.0)(jiti@1.21.7)(rollup@4.39.0)(terser@5.39.0)(typescript@5.8.2)(yaml@2.7.1))
       github-slugger: 2.0.0
