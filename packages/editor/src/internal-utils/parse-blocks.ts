@@ -1,8 +1,10 @@
 import type {
+  ObjectSchemaType,
   PortableTextBlock,
   PortableTextObject,
   PortableTextSpan,
   PortableTextTextBlock,
+  TypedObject,
 } from '@sanity/types'
 import type {EditorSchema} from '../editor/define-schema'
 import type {EditorContext} from '../editor/editor-snapshot'
@@ -60,22 +62,22 @@ function parseBlockObject({
     return undefined
   }
 
-  if (
-    blockObject._type === context.schema.block.name ||
-    blockObject._type === 'block' ||
-    !context.schema.blockObjects.some(({name}) => name === blockObject._type)
-  ) {
+  const schemaType = context.schema.blockObjects.find(
+    ({name}) => name === blockObject._type,
+  )
+
+  if (!schemaType) {
     return undefined
   }
 
-  return {
-    ...blockObject,
-    _key: options.refreshKeys
-      ? context.keyGenerator()
-      : typeof blockObject._key === 'string'
-        ? blockObject._key
-        : context.keyGenerator(),
-  }
+  return parseObject({
+    object: blockObject,
+    context: {
+      keyGenerator: context.keyGenerator,
+      schemaType,
+    },
+    options,
+  })
 }
 
 export function isTextBlock(
@@ -123,27 +125,36 @@ function parseTextBlock({
       return []
     }
 
-    if (typeof markDef._key !== 'string') {
+    const schemaType = context.schema.annotations.find(
+      ({name}) => name === markDef._type,
+    )
+
+    if (!schemaType) {
       return []
     }
 
-    if (
-      context.schema.annotations.some(
-        (annotation) => annotation.name === markDef._type,
-      )
-    ) {
-      const _key = options.refreshKeys ? context.keyGenerator() : markDef._key
-      markDefKeyMap.set(markDef._key, _key)
-
-      return [
-        {
-          ...markDef,
-          _key,
-        },
-      ]
+    if (typeof markDef._key !== 'string') {
+      // If the `markDef` doesn't have a `_key` then we don't know what spans
+      // it belongs to and therefore we have to discard it.
+      return []
     }
 
-    return []
+    const parsedAnnotation = parseObject({
+      object: markDef,
+      context: {
+        schemaType,
+        keyGenerator: context.keyGenerator,
+      },
+      options,
+    })
+
+    if (!parsedAnnotation) {
+      return []
+    }
+
+    markDefKeyMap.set(markDef._key, parsedAnnotation._key)
+
+    return [parsedAnnotation]
   })
 
   const unparsedChildren: Array<unknown> = Array.isArray(block.children)
@@ -283,7 +294,7 @@ export function parseSpan({
   }
 }
 
-function parseInlineObject({
+export function parseInlineObject({
   inlineObject,
   context,
   options,
@@ -296,22 +307,81 @@ function parseInlineObject({
     return undefined
   }
 
-  if (
-    inlineObject._type === context.schema.span.name ||
-    inlineObject._type === 'span' ||
-    // Respect the schema definition and don't parse inline objects that are not defined
-    !context.schema.inlineObjects.some(({name}) => name === inlineObject._type)
-  ) {
+  const schemaType = context.schema.inlineObjects.find(
+    ({name}) => name === inlineObject._type,
+  )
+
+  if (!schemaType) {
     return undefined
   }
 
+  return parseObject({
+    object: inlineObject,
+    context: {
+      keyGenerator: context.keyGenerator,
+      schemaType,
+    },
+    options,
+  })
+}
+
+export function parseAnnotation({
+  annotation,
+  context,
+  options,
+}: {
+  annotation: TypedObject
+  context: Pick<EditorContext, 'keyGenerator' | 'schema'>
+  options: {refreshKeys: boolean}
+}): PortableTextObject | undefined {
+  if (!isTypedObject(annotation)) {
+    return undefined
+  }
+
+  const schemaType = context.schema.annotations.find(
+    ({name}) => name === annotation._type,
+  )
+
+  if (!schemaType) {
+    return undefined
+  }
+
+  return parseObject({
+    object: annotation,
+    context: {
+      keyGenerator: context.keyGenerator,
+      schemaType,
+    },
+    options,
+  })
+}
+
+function parseObject({
+  object,
+  context,
+  options,
+}: {
+  object: TypedObject
+  context: Pick<EditorContext, 'keyGenerator'> & {schemaType: ObjectSchemaType}
+  options: {refreshKeys: boolean}
+}): PortableTextObject {
+  // Validates all props on the object and only takes those that match
+  // the name of a field
+  const values = context.schemaType.fields.reduce<Record<string, unknown>>(
+    (fieldValues, field) => {
+      fieldValues[field.name] = object[field.name]
+      return fieldValues
+    },
+    {},
+  )
+
   return {
-    // Spread the entire inline object to allow custom properties on it
-    ...inlineObject,
+    _type: context.schemaType.name,
     _key: options.refreshKeys
       ? context.keyGenerator()
-      : typeof inlineObject._key === 'string'
-        ? inlineObject._key
+      : typeof object._key === 'string'
+        ? object._key
         : context.keyGenerator(),
+    ...values,
   }
 }

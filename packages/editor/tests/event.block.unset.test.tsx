@@ -20,7 +20,9 @@ describe('event.block.unset', () => {
         initialConfig={{
           keyGenerator,
           schemaDefinition: defineSchema({
-            blockObjects: [{name: 'url'}],
+            blockObjects: [
+              {name: 'url', fields: [{name: 'href', type: 'string'}]},
+            ],
           }),
         }}
       >
@@ -76,7 +78,9 @@ describe('event.block.unset', () => {
         initialConfig={{
           keyGenerator,
           schemaDefinition: defineSchema({
-            blockObjects: [{name: 'url'}],
+            blockObjects: [
+              {name: 'url', fields: [{name: 'href', type: 'string'}]},
+            ],
           }),
         }}
       >
@@ -135,7 +139,9 @@ describe('event.block.unset', () => {
         initialConfig={{
           keyGenerator,
           schemaDefinition: defineSchema({
-            blockObjects: [{name: 'url'}],
+            blockObjects: [
+              {name: 'url', fields: [{name: 'href', type: 'string'}]},
+            ],
           }),
         }}
       >

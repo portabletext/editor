@@ -20,7 +20,15 @@ describe('event.block.set', () => {
         initialConfig={{
           keyGenerator,
           schemaDefinition: defineSchema({
-            blockObjects: [{name: 'url'}],
+            blockObjects: [
+              {
+                name: 'url',
+                fields: [
+                  {name: 'description', type: 'string'},
+                  {name: 'href', type: 'string'},
+                ],
+              },
+            ],
           }),
         }}
       >
@@ -80,7 +88,9 @@ describe('event.block.set', () => {
         initialConfig={{
           keyGenerator,
           schemaDefinition: defineSchema({
-            blockObjects: [{name: 'url'}],
+            blockObjects: [
+              {name: 'url', fields: [{name: 'href', type: 'string'}]},
+            ],
           }),
         }}
       >
@@ -141,7 +151,9 @@ describe('event.block.set', () => {
         initialConfig={{
           keyGenerator,
           schemaDefinition: defineSchema({
-            blockObjects: [{name: 'url'}],
+            blockObjects: [
+              {name: 'url', fields: [{name: 'href', type: 'string'}]},
+            ],
           }),
         }}
       >

@@ -2,7 +2,7 @@ import {defineSchema} from '@portabletext/editor'
 
 export const defaultSchema = defineSchema({
   decorators: [{name: 'strong'}, {name: 'em'}, {name: 'underline'}],
-  annotations: [{name: 'link'}],
+  annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
   styles: [
     {name: 'normal'},
     {name: 'h1'},
