@@ -597,20 +597,17 @@ export const PortableTextEditable = forwardRef<
         event: event.nativeEvent,
       })
 
-      if (!position) {
-        console.warn('Could not find EventPosition for MouseEvent')
-        return
+      if (position) {
+        editorActor.send({
+          type: 'behavior event',
+          behaviorEvent: {
+            type: 'mouse.click',
+            position,
+          },
+          editor: slateEditor,
+          nativeEvent: event,
+        })
       }
-
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'mouse.click',
-          position,
-        },
-        editor: slateEditor,
-        nativeEvent: event,
-      })
     },
     [onClick, editorActor, slateEditor],
   )
