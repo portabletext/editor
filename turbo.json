@@ -53,6 +53,10 @@
     "test:browser:webkit": {
       "dependsOn": ["^build"],
       "outputs": [""]
+    },
+    "test:unit": {
+      "dependsOn": ["^build"],
+      "outputs": [""]
     }
   }
 }
