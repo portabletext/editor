@@ -382,6 +382,7 @@ export const editorMachine = setup({
               actions: 'handle behavior event',
               guard: ({event}) =>
                 event.behaviorEvent.type === 'clipboard.copy' ||
+                event.behaviorEvent.type === 'mouse.click' ||
                 event.behaviorEvent.type === 'serialize' ||
                 event.behaviorEvent.type === 'serialization.failure' ||
                 event.behaviorEvent.type === 'serialization.success' ||
