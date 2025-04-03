@@ -372,7 +372,13 @@ export const PortableTextEditable = forwardRef<
         event.stopPropagation()
         event.preventDefault()
 
-        const selection = editorActor.getSnapshot().context.selection
+        const selection = slateEditor.selection
+          ? slateRangeToSelection({
+              schema: editorActor.getSnapshot().context.schema,
+              editor: slateEditor,
+              range: slateEditor.selection,
+            })
+          : undefined
         const position = selection ? {selection} : undefined
 
         if (!position) {
