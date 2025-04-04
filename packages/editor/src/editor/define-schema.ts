@@ -3,6 +3,7 @@ import {defineField, defineType, type ObjectSchemaType} from '@sanity/types'
 import startCase from 'lodash.startcase'
 import type {PortableTextMemberSchemaTypes} from '../types/editor'
 import {createEditorSchema} from './create-editor-schema'
+import {defaultKeyGenerator} from './key-generator'
 
 /**
  * @public
@@ -55,6 +56,24 @@ export function defineSchema<const TSchemaDefinition extends SchemaDefinition>(
   return definition
 }
 
+const temporaryImageName = `tmp-${defaultKeyGenerator()}-image`
+const temporaryUrlName = `tmp-${defaultKeyGenerator()}-url`
+
+const temporaryObjectNames: Record<string, string> = {
+  image: temporaryImageName,
+  url: temporaryUrlName,
+}
+
+const objectNames: Record<string, string> = {
+  [temporaryImageName]: 'image',
+  [temporaryUrlName]: 'url',
+}
+
+const defaultObjectTitles: Record<string, string> = {
+  image: 'Image',
+  url: 'URL',
+}
+
 /**
  * @public
  */
@@ -68,21 +87,30 @@ export function compileSchemaDefinition<
       defineType({
         type: 'object',
         // Very naive way to work around `SanitySchema.compile` adding default
-        // fields to objects with the name `image`
-        name: blockObject.name === 'image' ? 'tmp-image' : blockObject.name,
+        // fields to objects with certain names.
+        name: temporaryObjectNames[blockObject.name] ?? blockObject.name,
         title:
-          blockObject.name === 'image' && blockObject.title === undefined
-            ? 'Image'
+          blockObject.title === undefined
+            ? // This avoids the default title which is a title case of the object name
+              defaultObjectTitles[blockObject.name]
             : blockObject.title,
         fields: [],
       }),
     ) ?? []
+
   const inlineObjects =
     definition?.inlineObjects?.map((inlineObject) =>
       defineType({
         type: 'object',
-        name: inlineObject.name,
-        title: inlineObject.title,
+        // Very naive way to work around `SanitySchema.compile` adding default
+        // fields to objects with certain names.
+        name: temporaryObjectNames[inlineObject.name] ?? inlineObject.name,
+
+        title:
+          inlineObject.title === undefined
+            ? // This avoids the default title which is a title case of the object name
+              defaultObjectTitles[inlineObject.name]
+            : inlineObject.title,
         fields: [],
       }),
     ) ?? []
@@ -132,16 +160,24 @@ export function compileSchemaDefinition<
   return {
     ...pteSchema,
     blockObjects: pteSchema.blockObjects.map((blockObject) =>
-      blockObject.name === 'tmp-image'
+      objectNames[blockObject.name] !== undefined
         ? ({
             ...blockObject,
-            name: 'image',
+            name: objectNames[blockObject.name],
             type: {
               ...blockObject.type,
-              name: 'image',
+              name: objectNames[blockObject.name],
             },
           } as ObjectSchemaType)
         : blockObject,
+    ),
+    inlineObjects: pteSchema.inlineObjects.map((inlineObject) =>
+      objectNames[inlineObject.name] !== undefined
+        ? ({
+            ...inlineObject,
+            name: objectNames[inlineObject.name],
+          } as ObjectSchemaType)
+        : inlineObject,
     ),
   } satisfies EditorSchema
 }
