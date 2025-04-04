@@ -1,10 +1,11 @@
 import type {
-  MutationChange,
+  MutationEvent,
+  PatchesEvent,
   PortableTextBlock,
   RangeDecoration,
   RangeDecorationOnMovedDetails,
 } from '@portabletext/editor'
-import {applyAll, type Patch} from '@portabletext/patches'
+import type {Patch} from '@portabletext/patches'
 import {v4 as uuid} from 'uuid'
 import {
   assertEvent,
@@ -40,12 +41,8 @@ const editorMachine = setup({
       keyGenerator: () => string
     },
     events: {} as
-      | MutationChange
-      | {
-          type: 'patches'
-          patches: MutationChange['patches']
-          snapshot: MutationChange['snapshot']
-        }
+      | MutationEvent
+      | PatchesEvent
       | {type: 'value'; value?: Array<PortableTextBlock>}
       | {type: 'remove'}
       | {type: 'clear stored patches'}
@@ -58,11 +55,7 @@ const editorMachine = setup({
       | {type: 'toggle value preview'}
       | {type: 'add range decoration'; rangeDecoration: RangeDecoration}
       | {type: 'move range decoration'; details: RangeDecorationOnMovedDetails},
-    emitted: {} as {
-      type: 'patches'
-      patches: MutationChange['patches']
-      snapshot: MutationChange['snapshot']
-    },
+    emitted: {} as PatchesEvent,
     input: {} as {
       color: string
       value: Array<PortableTextBlock> | undefined
@@ -235,7 +228,7 @@ export const playgroundMachine = setup({
     events: {} as
       | {type: 'add editor'}
       | ({type: 'editor.mutation'; editorId: EditorActorRef['id']} & Omit<
-          MutationChange,
+          MutationEvent,
           'type'
         >)
       | {type: 'editor.remove'; editorId: EditorActorRef['id']}
@@ -265,17 +258,9 @@ export const playgroundMachine = setup({
       })
     },
     'update value': assign({
-      value: ({context, event}) => {
+      value: ({event}) => {
         assertEvent(event, 'editor.mutation')
-        let newValue = context.value
-
-        try {
-          newValue = applyAll(context.value, event.patches)
-        } catch (error) {
-          console.error(error)
-        }
-
-        return newValue
+        return event.value
       },
     }),
     'broadcast value': ({context}) => {
