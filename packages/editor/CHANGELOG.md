@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.44.13](https://github.com/portabletext/editor/compare/editor-v1.44.12...editor-v1.44.13) (2025-04-04)
+
+
+### Bug Fixes
+
+* **schema definition:** improve default fields workaround ([6b75a53](https://github.com/portabletext/editor/commit/6b75a537a9eb09a14a3d527b513675a21c0c9928))
+
 ## [1.44.12](https://github.com/portabletext/editor/compare/editor-v1.44.11...editor-v1.44.12) (2025-04-03)
 
 
