@@ -250,8 +250,8 @@ importers:
         specifier: ^3.4.17
         version: 3.4.17
       tailwindcss-react-aria-components:
-        specifier: ^1.2.0
-        version: 1.2.0(tailwindcss@3.4.17)
+        specifier: ^2.0.0
+        version: 2.0.0(tailwindcss@3.4.17)
       typescript:
         specifier: 5.8.2
         version: 5.8.2
@@ -5807,10 +5807,10 @@ packages:
     peerDependencies:
       tailwindcss: '>=3.0.0 || insiders'
 
-  tailwindcss-react-aria-components@1.2.0:
-    resolution: {integrity: sha512-ynlQIfAdoWAz0Og0dCe/d4QVE+L8Yuo6rtK9apdhehZZMoLC1GdwtnvLZyUyx+wHwnTjRuNtFPdN0DpPsPXJJg==}
+  tailwindcss-react-aria-components@2.0.0:
+    resolution: {integrity: sha512-l8YdpXX//qx0Mz2bW3YKLjboTQxR3zLrFhlHniAIn+mTwVM1yvT0Jp7Pn3eFrqi+qtOMmcJzXaF2rsKezSr0SQ==}
     peerDependencies:
-      tailwindcss: '*'
+      tailwindcss: ^4.0.0
 
   tailwindcss@3.4.17:
     resolution: {integrity: sha512-w33E2aCvSDP0tW9RZuNXadXlkHXqFzSkQew/aIa2i/Sj8fThxwovwlXHSPXTbAHwEIhBFXAedUhP2tueAKP8Og==}
@@ -13248,7 +13248,7 @@ snapshots:
     dependencies:
       tailwindcss: 3.4.17
 
-  tailwindcss-react-aria-components@1.2.0(tailwindcss@3.4.17):
+  tailwindcss-react-aria-components@2.0.0(tailwindcss@3.4.17):
     dependencies:
       tailwindcss: 3.4.17
 
