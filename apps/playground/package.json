@@ -21,7 +21,7 @@
     "@sanity/color": "^3.0.6",
     "@xstate/react": "^5.0.0",
     "@xstate/store": "^3.2.1",
-    "lucide-react": "^0.468.0",
+    "lucide-react": "^0.487.0",
     "prettier": "^3.3.2",
     "react": "^19.0.0",
     "react-aria-components": "^1.2.1",
