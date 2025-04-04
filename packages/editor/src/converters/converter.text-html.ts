@@ -1,6 +1,7 @@
 import {htmlToBlocks} from '@portabletext/block-tools'
 import {toHTML} from '@portabletext/to-html'
 import type {PortableTextBlock} from '@sanity/types'
+import {parseBlock} from '../internal-utils/parse-blocks'
 import {sliceBlocks} from '../utils'
 import {defineConverter} from './converter.types'
 
@@ -59,7 +60,18 @@ export const converterTextHtml = defineConverter({
       },
     ) as Array<PortableTextBlock>
 
-    if (blocks.length === 0) {
+    const parsedBlocks = blocks.flatMap((block) => {
+      const parsedBlock = parseBlock({
+        context: snapshot.context,
+        block,
+        options: {
+          refreshKeys: false,
+        },
+      })
+      return parsedBlock ? [parsedBlock] : []
+    })
+
+    if (parsedBlocks.length === 0) {
       return {
         type: 'deserialization.failure',
         mimeType: 'text/html',
@@ -69,7 +81,7 @@ export const converterTextHtml = defineConverter({
 
     return {
       type: 'deserialization.success',
-      data: blocks,
+      data: parsedBlocks,
       mimeType: 'text/html',
     }
   },
