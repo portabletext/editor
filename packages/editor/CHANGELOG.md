@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.44.14](https://github.com/portabletext/editor/compare/editor-v1.44.13...editor-v1.44.14) (2025-04-04)
+
+
+### Bug Fixes
+
+* parse blocks in `text/html`/`text/plain` converters ([354bef2](https://github.com/portabletext/editor/commit/354bef283ce11dea2efb44ff7b7cd91c94fcb4b2))
+
 ## [1.44.13](https://github.com/portabletext/editor/compare/editor-v1.44.12...editor-v1.44.13) (2025-04-04)
 
 
