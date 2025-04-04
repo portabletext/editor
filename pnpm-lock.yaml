@@ -406,7 +406,7 @@ importers:
         specifier: ^20.0.0
         version: 20.0.1
       '@types/lodash':
-        specifier: ^4.17.7
+        specifier: ^4.17.16
         version: 4.17.16
       '@types/react':
         specifier: ^19.1.0
@@ -497,7 +497,7 @@ importers:
         specifier: ^4.1.12
         version: 4.1.12
       '@types/lodash':
-        specifier: ^4.17.13
+        specifier: ^4.17.16
         version: 4.17.16
       '@types/lodash.startcase':
         specifier: ^4.4.9
@@ -576,7 +576,7 @@ importers:
         specifier: ^7.2.2
         version: 7.2.2(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.0.0-beta-e993439-20250328)(debug@4.4.0)(typescript@5.8.2)
       '@types/lodash':
-        specifier: ^4.17.13
+        specifier: ^4.17.16
         version: 4.17.16
       typescript:
         specifier: 5.8.2
