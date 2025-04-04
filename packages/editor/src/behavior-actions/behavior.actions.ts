@@ -1,10 +1,6 @@
 import {omit} from 'lodash'
 import type {InternalBehaviorAction} from '../behaviors/behavior.types.action'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {
-  addAnnotationActionImplementation,
-  removeAnnotationActionImplementation,
-} from '../editor/plugins/createWithEditableAPI'
 import {removeDecoratorActionImplementation} from '../editor/plugins/createWithPortableTextMarkModel'
 import {
   historyRedoActionImplementation,
@@ -12,6 +8,8 @@ import {
 } from '../editor/plugins/createWithUndoRedo'
 import {debugWithName} from '../internal-utils/debug'
 import type {PickFromUnion} from '../type-utils'
+import {addAnnotationActionImplementation} from './behavior.action.annotation.add'
+import {removeAnnotationActionImplementation} from './behavior.action.annotation.remove'
 import {blockSetBehaviorActionImplementation} from './behavior.action.block.set'
 import {blockUnsetBehaviorActionImplementation} from './behavior.action.block.unset'
 import {blurActionImplementation} from './behavior.action.blur'

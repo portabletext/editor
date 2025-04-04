@@ -15,6 +15,7 @@ import {
 import {Subject} from 'rxjs'
 import {Slate} from 'slate-react'
 import {useEffectEvent} from 'use-effect-event'
+import type {AddedAnnotationPaths} from '../behavior-actions/behavior.action.annotation.add'
 import {debugWithName} from '../internal-utils/debug'
 import {compileType} from '../internal-utils/schema'
 import type {
@@ -34,7 +35,6 @@ import type {EditorActor} from './editor-machine'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
 import {defaultKeyGenerator} from './key-generator'
-import type {AddedAnnotationPaths} from './plugins/createWithEditableAPI'
 
 const debug = debugWithName('component:PortableTextEditor')
 
