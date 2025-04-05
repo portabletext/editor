@@ -236,7 +236,7 @@ importers:
         version: 19.0.0-beta-e993439-20250328(eslint@8.57.1)
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-b10cb4c0-20250403(eslint@8.57.1)
+        version: 0.0.0-experimental-6a7650c7-20250405(eslint@8.57.1)
       postcss:
         specifier: ^8.4.49
         version: 8.5.3
@@ -294,7 +294,7 @@ importers:
         version: 19.0.0-beta-e993439-20250328(eslint@9.23.0(jiti@1.21.7))
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-b10cb4c0-20250403(eslint@9.23.0(jiti@1.21.7))
+        version: 0.0.0-experimental-6a7650c7-20250405(eslint@9.23.0(jiti@1.21.7))
       eslint-plugin-react-refresh:
         specifier: ^0.4.14
         version: 0.4.19(eslint@9.23.0(jiti@1.21.7))
@@ -367,7 +367,7 @@ importers:
         version: 19.0.0-beta-e993439-20250328(eslint@9.23.0(jiti@1.21.7))
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-b10cb4c0-20250403(eslint@9.23.0(jiti@1.21.7))
+        version: 0.0.0-experimental-6a7650c7-20250405(eslint@9.23.0(jiti@1.21.7))
       eslint-plugin-react-refresh:
         specifier: ^0.4.14
         version: 0.4.19(eslint@9.23.0(jiti@1.21.7))
@@ -534,7 +534,7 @@ importers:
         version: 19.0.0-beta-e993439-20250328(eslint@8.57.1)
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-b10cb4c0-20250403(eslint@8.57.1)
+        version: 0.0.0-experimental-6a7650c7-20250405(eslint@8.57.1)
       jsdom:
         specifier: ^26.0.0
         version: 26.0.0
@@ -591,8 +591,8 @@ importers:
         specifier: ^18.0.1
         version: 18.0.1
       '@cucumber/gherkin':
-        specifier: ^32.0.1
-        version: 32.0.1
+        specifier: ^32.1.0
+        version: 32.1.0
       '@cucumber/messages':
         specifier: ^27.2.0
         version: 27.2.0
@@ -1009,8 +1009,8 @@ packages:
   '@cucumber/gherkin@27.0.0':
     resolution: {integrity: sha512-j5rCsjqzRiC3iVTier3sa0kzyNbkcAmF7xr7jKnyO7qDeK3Z8Ye1P3KSVpeQRMY+KCDJ3WbTDdyxH0FwfA/fIw==}
 
-  '@cucumber/gherkin@32.0.1':
-    resolution: {integrity: sha512-499vT2CM8S3re7eenGgfrEnyV0M64mv/KvHvI9RzC1UC0cC0QMHPVntS1Rc25qmT78bJkEkm/rgvS8XhwRy2CQ==}
+  '@cucumber/gherkin@32.1.0':
+    resolution: {integrity: sha512-pvS2E2CeEzhmLZe30VMNRJ5q3EHAq3MrH8DeEkUMNnbt2aBviTLM9HEc3rZo/zp5aYtbyX2Lnn/uziuOb9Dumg==}
 
   '@cucumber/messages@22.0.0':
     resolution: {integrity: sha512-EuaUtYte9ilkxcKmfqGF9pJsHRUU0jwie5ukuZ/1NPTuHS1LxHPsGEODK17RPRbZHOFhqybNzG2rHAwThxEymg==}
@@ -3761,8 +3761,8 @@ packages:
     peerDependencies:
       eslint: '>=7'
 
-  eslint-plugin-react-hooks@0.0.0-experimental-b10cb4c0-20250403:
-    resolution: {integrity: sha512-8Kk1DIb2MvBKpWqY+fz8vqQwqDHsvQZnPXEUeQ71x7DRRJgEQghGTXWIU/CjnxPFHr9U8JHppJj8/v4IqYhjFA==}
+  eslint-plugin-react-hooks@0.0.0-experimental-6a7650c7-20250405:
+    resolution: {integrity: sha512-lSo5AI4UiGa7rd1AfIkf+KsKrtA4ruHGJNAv4THtCPhXMVZW+nkviXXwSIAFhHwAoHfVXR//cQ/IuVb8G90Hwg==}
     engines: {node: '>=18'}
     peerDependencies:
       eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0
@@ -6988,7 +6988,7 @@ snapshots:
     dependencies:
       '@cucumber/messages': 22.0.0
 
-  '@cucumber/gherkin@32.0.1':
+  '@cucumber/gherkin@32.1.0':
     dependencies:
       '@cucumber/messages': 27.2.0
 
@@ -10416,7 +10416,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-react-hooks@0.0.0-experimental-b10cb4c0-20250403(eslint@8.57.1):
+  eslint-plugin-react-hooks@0.0.0-experimental-6a7650c7-20250405(eslint@8.57.1):
     dependencies:
       '@babel/core': 7.26.10
       '@babel/parser': 7.27.0
@@ -10428,7 +10428,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-react-hooks@0.0.0-experimental-b10cb4c0-20250403(eslint@9.23.0(jiti@1.21.7)):
+  eslint-plugin-react-hooks@0.0.0-experimental-6a7650c7-20250405(eslint@9.23.0(jiti@1.21.7)):
     dependencies:
       '@babel/core': 7.26.10
       '@babel/parser': 7.27.0
