@@ -143,7 +143,9 @@ describe(converterPortableText.deserialize, () => {
       converterPortableText.deserialize({
         snapshot: createSnapshot(
           defineSchema({
-            blockObjects: [{name: 'image'}],
+            blockObjects: [
+              {name: 'image', fields: [{name: 'src', type: 'string'}]},
+            ],
           }),
         ),
         event: {
@@ -204,7 +206,12 @@ describe(converterPortableText.deserialize, () => {
       converterPortableText.deserialize({
         snapshot: createSnapshot(
           defineSchema({
-            inlineObjects: [{name: 'stock-ticker'}],
+            inlineObjects: [
+              {
+                name: 'stock-ticker',
+                fields: [{name: 'symbol', type: 'string'}],
+              },
+            ],
           }),
         ),
         event: {
@@ -523,7 +530,9 @@ describe(converterPortableText.deserialize, () => {
       converterPortableText.deserialize({
         snapshot: createSnapshot(
           defineSchema({
-            annotations: [{name: 'link'}],
+            annotations: [
+              {name: 'link', fields: [{name: 'href', type: 'string'}]},
+            ],
           }),
         ),
         event: {

@@ -152,7 +152,9 @@ describe(converterTextHtml.deserialize.name, () => {
       converterTextHtml.deserialize({
         snapshot: createSnapshot(
           defineSchema({
-            annotations: [{name: 'link'}],
+            annotations: [
+              {name: 'link', fields: [{name: 'href', type: 'string'}]},
+            ],
           }),
         ),
         event: {

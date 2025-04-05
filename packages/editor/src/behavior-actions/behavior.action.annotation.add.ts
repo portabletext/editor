@@ -1,5 +1,6 @@
 import type {Path} from '@sanity/types'
 import {Editor, Node, Range, Text, Transforms} from 'slate'
+import {parseAnnotation} from '../internal-utils/parse-blocks'
 import type {BehaviorActionImplementation} from './behavior.actions'
 
 /**
@@ -24,6 +25,21 @@ export const addAnnotationActionImplementation: BehaviorActionImplementation<
   'annotation.add',
   AddedAnnotationPaths | undefined
 > = ({context, action}) => {
+  const parsedAnnotation = parseAnnotation({
+    annotation: {
+      _type: action.annotation.name,
+      ...action.annotation.value,
+    },
+    context,
+    options: {refreshKeys: false},
+  })
+
+  if (!parsedAnnotation) {
+    throw new Error(
+      `Failed to parse annotation ${JSON.stringify(action.annotation)}`,
+    )
+  }
+
   const editor = action.editor
 
   if (!editor.selection || Range.isCollapsed(editor.selection)) {
@@ -41,6 +57,8 @@ export const addAnnotationActionImplementation: BehaviorActionImplementation<
     reverse: Range.isBackward(editor.selection),
   })
 
+  let blockIndex = 0
+
   for (const [block, blockPath] of selectedBlocks) {
     if (block.children.length === 0) {
       continue
@@ -50,11 +68,13 @@ export const addAnnotationActionImplementation: BehaviorActionImplementation<
       continue
     }
 
-    const annotationKey = context.keyGenerator()
+    // Make sure we don't generate more keys than needed
+    const annotationKey =
+      blockIndex === 0 ? parsedAnnotation._key : context.keyGenerator()
     const markDefs = block.markDefs ?? []
     const existingMarkDef = markDefs.find(
       (markDef) =>
-        markDef._type === action.annotation.name &&
+        markDef._type === parsedAnnotation._type &&
         markDef._key === annotationKey,
     )
 
@@ -65,9 +85,8 @@ export const addAnnotationActionImplementation: BehaviorActionImplementation<
           markDefs: [
             ...markDefs,
             {
-              _type: action.annotation.name,
+              ...parsedAnnotation,
               _key: annotationKey,
-              ...action.annotation.value,
             },
           ],
         },
@@ -100,7 +119,7 @@ export const addAnnotationActionImplementation: BehaviorActionImplementation<
       const existingSameTypeAnnotations = marks.filter((mark) =>
         markDefs.some(
           (markDef) =>
-            markDef._key === mark && markDef._type === action.annotation.name,
+            markDef._key === mark && markDef._type === parsedAnnotation._type,
         ),
       )
 
@@ -119,6 +138,8 @@ export const addAnnotationActionImplementation: BehaviorActionImplementation<
 
       spanPath = [{_key: block._key}, 'children', {_key: span._key}]
     }
+
+    blockIndex++
   }
 
   if (markDefPath && spanPath) {

@@ -290,20 +290,12 @@ function Toolbar() {
           : 'unset',
       }}
       onClick={() => {
-        if (
-          PortableTextEditor.isAnnotationActive(
-            editor,
-            editor.schemaTypes.annotations[0].name,
-          )
-        ) {
-          PortableTextEditor.removeAnnotation(
-            editor,
-            editor.schemaTypes.annotations[0],
-          )
+        if (PortableTextEditor.isAnnotationActive(editor, 'link')) {
+          PortableTextEditor.removeAnnotation(editor, {name: 'link'})
         } else {
           PortableTextEditor.addAnnotation(
             editor,
-            editor.schemaTypes.annotations[0],
+            {name: 'link'},
             {href: 'https://example.com'},
           )
         }
@@ -354,7 +346,7 @@ function Toolbar() {
         PortableTextEditor.insertBlock(
           editor,
           editor.schemaTypes.blockObjects[0],
-          {src: 'https://example.com/image.jpg'},
+          {url: 'https://example.com/image.jpg'},
         )
         PortableTextEditor.focus(editor)
       }}

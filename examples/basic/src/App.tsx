@@ -26,7 +26,7 @@ const schemaDefinition = defineSchema({
   // Decorators are simple marks that don't hold any data
   decorators: [{name: 'strong'}, {name: 'em'}, {name: 'underline'}],
   // Annotations are more complex marks that can hold data
-  annotations: [{name: 'link'}],
+  annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
   // Styles apply to entire text blocks
   // There's always a 'normal' style that can be considered the paragraph style
   styles: [
@@ -39,9 +39,11 @@ const schemaDefinition = defineSchema({
   // Lists apply to entire text blocks as well
   lists: [{name: 'bullet'}, {name: 'number'}],
   // Inline objects hold arbitrary data that can be inserted into the text
-  inlineObjects: [{name: 'stock-ticker'}],
+  inlineObjects: [
+    {name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]},
+  ],
   // Block objects hold arbitrary data that live side-by-side with text blocks
-  blockObjects: [{name: 'image'}],
+  blockObjects: [{name: 'image', fields: [{name: 'src', type: 'string'}]}],
 })
 
 function App() {

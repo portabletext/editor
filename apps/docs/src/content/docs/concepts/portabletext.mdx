@@ -21,7 +21,7 @@ A schema consists of styles, decorators, annotations, block objects, inline obje
 ```js
 {
   decorators: [{name: 'strong'}, {name: 'em'}, {name: 'underline'}],
-  annotations: [{name: 'link'}],
+  annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
   styles: [
     {name: 'normal'},
     {name: 'h1'},

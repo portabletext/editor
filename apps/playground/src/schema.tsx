@@ -56,6 +56,7 @@ export const schemaDefinition = defineSchema({
       title: 'Link',
       name: 'link',
       icon: LinkIcon,
+      fields: [{name: 'href', type: 'string'}],
     },
     {
       title: 'Comment',
@@ -127,6 +128,7 @@ export const schemaDefinition = defineSchema({
       title: 'Image',
       name: 'image',
       icon: ImageIcon,
+      fields: [{name: 'url', type: 'string'}],
     },
   ],
   inlineObjects: [
@@ -134,6 +136,7 @@ export const schemaDefinition = defineSchema({
       title: 'Stock ticker',
       name: 'stock-ticker',
       icon: ActivityIcon,
+      fields: [{name: 'symbol', type: 'string'}],
     },
   ],
 })
