@@ -1,5 +1,7 @@
+import type {ConverterEvent} from '../converters/converter.types'
 import {isTextBlock} from '../internal-utils/parse-blocks'
 import * as selectors from '../selectors'
+import type {PickFromUnion} from '../type-utils'
 import {getTextBlockText} from '../utils'
 import {abstractAnnotationBehaviors} from './behavior.abstract.annotation'
 import {abstractDecoratorBehaviors} from './behavior.abstract.decorator'
@@ -15,44 +17,44 @@ import {defineBehavior} from './behavior.types.behavior'
 const raiseDeserializationSuccessOrFailure = defineBehavior({
   on: 'deserialize',
   guard: ({snapshot, event}) => {
-    const deserializeEvents = snapshot.context.converters.flatMap(
-      (converter) => {
-        const data = event.originEvent.originEvent.dataTransfer.getData(
-          converter.mimeType,
-        )
+    let success:
+      | PickFromUnion<ConverterEvent, 'type', 'deserialization.success'>
+      | undefined
+    const failures: Array<
+      PickFromUnion<ConverterEvent, 'type', 'deserialization.failure'>
+    > = []
 
-        if (!data) {
-          return []
-        }
+    for (const converter of snapshot.context.converters) {
+      const data = event.originEvent.originEvent.dataTransfer.getData(
+        converter.mimeType,
+      )
 
-        return [
-          converter.deserialize({
-            snapshot,
-            event: {type: 'deserialize', data},
-          }),
-        ]
-      },
-    )
+      if (!data) {
+        continue
+      }
 
-    const firstSuccess = deserializeEvents.find(
-      (deserializeEvent) => deserializeEvent.type === 'deserialization.success',
-    )
+      const deserializeEvent = converter.deserialize({
+        snapshot,
+        event: {type: 'deserialize', data},
+      })
 
-    if (!firstSuccess) {
+      if (deserializeEvent.type === 'deserialization.success') {
+        success = deserializeEvent
+        break
+      } else {
+        failures.push(deserializeEvent)
+      }
+    }
+
+    if (!success) {
       return {
         type: 'deserialization.failure',
         mimeType: '*/*',
-        reason: deserializeEvents
-          .map((deserializeEvent) =>
-            deserializeEvent.type === 'deserialization.failure'
-              ? deserializeEvent.reason
-              : '',
-          )
-          .join(', '),
+        reason: failures.map((failure) => failure.reason).join(', '),
       } as const
     }
 
-    return firstSuccess
+    return success
   },
   actions: [
     ({event}, deserializeEvent) => [
