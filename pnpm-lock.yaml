@@ -238,7 +238,7 @@ importers:
         specifier: experimental
         version: 0.0.0-experimental-6a7650c7-20250405(eslint@8.57.1)
       postcss:
-        specifier: ^8.4.49
+        specifier: ^8.5.3
         version: 8.5.3
       tailwind-merge:
         specifier: ^3.1.0
