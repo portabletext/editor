@@ -57,7 +57,7 @@ importers:
         specifier: ^3.1.2
         version: 3.1.2
       pretty-quick:
-        specifier: ^4.0.0
+        specifier: ^4.1.1
         version: 4.1.1(prettier@3.5.3)
       turbo:
         specifier: ^2.4.4
