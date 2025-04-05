@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.44.15](https://github.com/portabletext/editor/compare/editor-v1.44.14...editor-v1.44.15) (2025-04-05)
+
+
+### Bug Fixes
+
+* **deserialize:** avoid running ignored Converters ([3f3d0f3](https://github.com/portabletext/editor/commit/3f3d0f324d41db8a1fbb948b090d19cdf70908d2))
+
 ## [1.44.14](https://github.com/portabletext/editor/compare/editor-v1.44.13...editor-v1.44.14) (2025-04-04)
 
 
