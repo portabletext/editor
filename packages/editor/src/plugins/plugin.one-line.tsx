@@ -24,6 +24,13 @@ const oneLineBehaviors = [
     actions: [() => [{type: 'noop'}]],
   }),
   /**
+   * `split.block`s as well.
+   */
+  defineBehavior({
+    on: 'split.block',
+    actions: [() => [{type: 'noop'}]],
+  }),
+  /**
    * `insert.block` `before` or `after` is not allowed in a one-line editor.
    */
   defineBehavior({

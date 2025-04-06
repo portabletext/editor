@@ -1,5 +1,5 @@
 import {Editor} from 'slate'
-import {insertSoftBreakActionImplementation} from '../../behavior-actions/behavior.action.insert-break'
+import {insertSoftBreakActionImplementation} from '../../behavior-actions/behavior.action.insert.sort-break'
 import {performAction} from '../../behavior-actions/behavior.actions'
 import {slateRangeToSelection} from '../../internal-utils/slate-utils'
 import type {EditorActor} from '../editor-machine'

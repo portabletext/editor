@@ -21,17 +21,15 @@ import {deleteForwardActionImplementation} from './behavior.action.delete.forwar
 import {deleteTextActionImplementation} from './behavior.action.delete.text'
 import {effectActionImplementation} from './behavior.action.effect'
 import {focusActionImplementation} from './behavior.action.focus'
-import {
-  insertBreakActionImplementation,
-  insertSoftBreakActionImplementation,
-} from './behavior.action.insert-break'
 import {insertInlineObjectActionImplementation} from './behavior.action.insert-inline-object'
 import {insertSpanActionImplementation} from './behavior.action.insert-span'
 import {insertBlockActionImplementation} from './behavior.action.insert.block'
+import {insertSoftBreakActionImplementation} from './behavior.action.insert.sort-break'
 import {insertTextActionImplementation} from './behavior.action.insert.text'
 import {moveBlockActionImplementation} from './behavior.action.move.block'
 import {noopActionImplementation} from './behavior.action.noop'
 import {selectActionImplementation} from './behavior.action.select'
+import {splitBlockActionImplementation} from './behavior.action.split.block'
 
 const debug = debugWithName('behaviors:action')
 
@@ -72,7 +70,6 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'history.redo': historyRedoActionImplementation,
   'history.undo': historyUndoActionImplementation,
   'insert.block': insertBlockActionImplementation,
-  'insert.break': insertBreakActionImplementation,
   'insert.inline object': insertInlineObjectActionImplementation,
   'insert.soft break': insertSoftBreakActionImplementation,
   'insert.span': insertSpanActionImplementation,
@@ -81,6 +78,7 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'move.block': moveBlockActionImplementation,
   'noop': noopActionImplementation,
   'select': selectActionImplementation,
+  'split.block': splitBlockActionImplementation,
 }
 
 export function performAction({
@@ -219,13 +217,6 @@ export function performAction({
       })
       break
     }
-    case 'insert.break': {
-      behaviorActionImplementations['insert.break']({
-        context,
-        action,
-      })
-      break
-    }
     case 'insert.soft break': {
       behaviorActionImplementations['insert.soft break']({
         context,
@@ -256,6 +247,13 @@ export function performAction({
     }
     case 'noop': {
       behaviorActionImplementations.noop({
+        context,
+        action,
+      })
+      break
+    }
+    case 'split.block': {
+      behaviorActionImplementations['split.block']({
         context,
         action,
       })
