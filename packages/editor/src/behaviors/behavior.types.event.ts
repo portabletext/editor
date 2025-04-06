@@ -73,13 +73,13 @@ const syntheticBehaviorEventTypes = [
   'history.redo',
   'history.undo',
   'insert.inline object',
-  'insert.break',
   'insert.soft break',
   'insert.block',
   'insert.span',
   'insert.text',
   'move.block',
   'select',
+  'split.block',
 ] as const
 
 type SyntheticBehaviorEventType = (typeof syntheticBehaviorEventTypes)[number]
@@ -164,9 +164,6 @@ export type SyntheticBehaviorEvent =
       }
     }
   | {
-      type: StrictExtract<SyntheticBehaviorEventType, 'insert.break'>
-    }
-  | {
       type: StrictExtract<SyntheticBehaviorEventType, 'insert.soft break'>
     }
   | {
@@ -197,6 +194,9 @@ export type SyntheticBehaviorEvent =
       type: StrictExtract<SyntheticBehaviorEventType, 'select'>
       selection: EditorSelection
     }
+  | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'split.block'>
+    }
 
 export type InsertPlacement = 'auto' | 'after' | 'before'
 
@@ -217,6 +217,7 @@ const abstractBehaviorEventTypes = [
   'deserialization.success',
   'deserialization.failure',
   'insert.blocks',
+  'insert.break',
   'list item.add',
   'list item.remove',
   'list item.toggle',
@@ -316,6 +317,9 @@ export type AbstractBehaviorEvent =
       type: StrictExtract<AbstractBehaviorEventType, 'insert.blocks'>
       blocks: Array<PortableTextBlock>
       placement: InsertPlacement
+    }
+  | {
+      type: StrictExtract<AbstractBehaviorEventType, 'insert.break'>
     }
   | {
       type: StrictExtract<AbstractBehaviorEventType, 'list item.add'>

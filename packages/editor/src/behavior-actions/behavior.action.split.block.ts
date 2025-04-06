@@ -1,10 +1,10 @@
 import {isEqual} from 'lodash'
-import {Editor, insertText, Node, Path, Transforms} from 'slate'
+import {Editor, Node, Path, Transforms} from 'slate'
 import type {SlateTextBlock, VoidElement} from '../types/slate'
 import type {BehaviorActionImplementation} from './behavior.actions'
 
-export const insertBreakActionImplementation: BehaviorActionImplementation<
-  'insert.break'
+export const splitBlockActionImplementation: BehaviorActionImplementation<
+  'split.block'
 > = ({context, action}) => {
   const keyGenerator = context.keyGenerator
   const schema = context.schema
@@ -143,10 +143,4 @@ export const insertBreakActionImplementation: BehaviorActionImplementation<
   }
 
   Transforms.splitNodes(editor, {always: true})
-}
-
-export const insertSoftBreakActionImplementation: BehaviorActionImplementation<
-  'insert.soft break'
-> = ({action}) => {
-  insertText(action.editor, '\n')
 }

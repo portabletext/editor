@@ -38,8 +38,8 @@ const initialValue = [
   },
 ]
 
-describe('event.insert.break', () => {
-  test('Scenario: Breaking mid-block before inline object', async () => {
+describe('event.split.block', () => {
+  test('Scenario: Splitting mid-block before inline object', async () => {
     const editorRef = React.createRef<Editor>()
 
     render(
@@ -72,7 +72,7 @@ describe('event.insert.break', () => {
     })
 
     editorRef.current?.send({
-      type: 'insert.break',
+      type: 'split.block',
     })
 
     expect(editorRef.current?.getSnapshot().context.value).toEqual([
