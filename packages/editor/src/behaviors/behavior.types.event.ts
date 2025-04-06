@@ -73,7 +73,6 @@ const syntheticBehaviorEventTypes = [
   'history.redo',
   'history.undo',
   'insert.inline object',
-  'insert.soft break',
   'insert.block',
   'insert.span',
   'insert.text',
@@ -164,9 +163,6 @@ export type SyntheticBehaviorEvent =
       }
     }
   | {
-      type: StrictExtract<SyntheticBehaviorEventType, 'insert.soft break'>
-    }
-  | {
       type: StrictExtract<SyntheticBehaviorEventType, 'insert.block'>
       block: BlockWithOptionalKey
       placement: InsertPlacement
@@ -218,6 +214,7 @@ const abstractBehaviorEventTypes = [
   'deserialization.failure',
   'insert.blocks',
   'insert.break',
+  'insert.soft break',
   'list item.add',
   'list item.remove',
   'list item.toggle',
@@ -320,6 +317,9 @@ export type AbstractBehaviorEvent =
     }
   | {
       type: StrictExtract<AbstractBehaviorEventType, 'insert.break'>
+    }
+  | {
+      type: StrictExtract<AbstractBehaviorEventType, 'insert.soft break'>
     }
   | {
       type: StrictExtract<AbstractBehaviorEventType, 'list item.add'>

@@ -119,4 +119,8 @@ export const abstractInsertBehaviors = [
     on: 'insert.break',
     actions: [() => [raise({type: 'split.block'})]],
   }),
+  defineBehavior({
+    on: 'insert.soft break',
+    actions: [() => [raise({type: 'insert.text', text: '\n'})]],
+  }),
 ]

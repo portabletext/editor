@@ -1,5 +1,5 @@
 import {Editor} from 'slate'
-import {insertSoftBreakActionImplementation} from '../../behavior-actions/behavior.action.insert.sort-break'
+import {insertTextActionImplementation} from '../../behavior-actions/behavior.action.insert.text'
 import {performAction} from '../../behavior-actions/behavior.actions'
 import {slateRangeToSelection} from '../../internal-utils/slate-utils'
 import type {EditorActor} from '../editor-machine'
@@ -83,12 +83,12 @@ export function createWithEventListeners(editorActor: EditorActor) {
 
     editor.insertSoftBreak = () => {
       if (isApplyingBehaviorActions(editor)) {
-        insertSoftBreakActionImplementation({
+        insertTextActionImplementation({
           context: {
             keyGenerator: editorActor.getSnapshot().context.keyGenerator,
             schema: editorActor.getSnapshot().context.schema,
           },
-          action: {type: 'insert.soft break', editor},
+          action: {type: 'insert.text', text: '\n', editor},
         })
         return
       }

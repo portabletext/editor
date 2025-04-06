@@ -24,7 +24,6 @@ import {focusActionImplementation} from './behavior.action.focus'
 import {insertInlineObjectActionImplementation} from './behavior.action.insert-inline-object'
 import {insertSpanActionImplementation} from './behavior.action.insert-span'
 import {insertBlockActionImplementation} from './behavior.action.insert.block'
-import {insertSoftBreakActionImplementation} from './behavior.action.insert.sort-break'
 import {insertTextActionImplementation} from './behavior.action.insert.text'
 import {moveBlockActionImplementation} from './behavior.action.move.block'
 import {noopActionImplementation} from './behavior.action.noop'
@@ -71,7 +70,6 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'history.undo': historyUndoActionImplementation,
   'insert.block': insertBlockActionImplementation,
   'insert.inline object': insertInlineObjectActionImplementation,
-  'insert.soft break': insertSoftBreakActionImplementation,
   'insert.span': insertSpanActionImplementation,
   'insert.text': insertTextActionImplementation,
   'effect': effectActionImplementation,
@@ -212,13 +210,6 @@ export function performAction({
     }
     case 'insert.inline object': {
       behaviorActionImplementations['insert.inline object']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'insert.soft break': {
-      behaviorActionImplementations['insert.soft break']({
         context,
         action,
       })
