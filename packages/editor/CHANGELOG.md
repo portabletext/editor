@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.44.16](https://github.com/portabletext/editor/compare/editor-v1.44.15...editor-v1.44.16) (2025-04-06)
+
+
+### Bug Fixes
+
+* turn `insert.break` into an abstract event ([40e89d6](https://github.com/portabletext/editor/commit/40e89d64ce3ab8a30f558aec6e955a3842301d30))
+* turn `insert.soft break` into an abstract event ([2b6e75d](https://github.com/portabletext/editor/commit/2b6e75d9063536038f07af932178d60afc78e35f))
+
 ## [1.44.15](https://github.com/portabletext/editor/compare/editor-v1.44.14...editor-v1.44.15) (2025-04-05)
 
 
