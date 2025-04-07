@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.45.1](https://github.com/portabletext/editor/compare/editor-v1.45.0...editor-v1.45.1) (2025-04-07)
+
+
+### Bug Fixes
+
+* **markdown behaviors:** fix hr paste regex ([e565043](https://github.com/portabletext/editor/commit/e5650436ccf935e5ee962c6ca336fda6e24190e7))
+
 ## [1.45.0](https://github.com/portabletext/editor/compare/editor-v1.44.16...editor-v1.45.0) (2025-04-07)
 
 
