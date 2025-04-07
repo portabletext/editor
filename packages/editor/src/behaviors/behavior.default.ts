@@ -149,7 +149,7 @@ export const defaultBehaviors = [
         }),
         raise({
           type: 'delete',
-          selection,
+          at: selection,
         }),
       ],
     ],
@@ -220,7 +220,7 @@ export const defaultBehaviors = [
       ({event}) => [
         raise({
           type: 'select',
-          selection: event.position.selection,
+          at: event.position.selection,
         }),
         raise({
           type: 'deserialize',
@@ -293,7 +293,7 @@ export const defaultBehaviors = [
           : [
               raise({
                 type: 'delete',
-                selection: dragOrigin.selection,
+                at: dragOrigin.selection,
               }),
             ]),
         raise({
@@ -414,7 +414,7 @@ export const defaultBehaviors = [
       ({event}, {selection}) => [
         raise({
           type: 'delete',
-          selection,
+          at: selection,
         }),
         raise({
           type: 'deserialize',

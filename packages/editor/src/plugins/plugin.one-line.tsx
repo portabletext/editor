@@ -14,7 +14,7 @@ const oneLineBehaviors = [
       snapshot.context.selection && selectors.isSelectionExpanded(snapshot)
         ? {selection: snapshot.context.selection}
         : false,
-    actions: [(_, {selection}) => [{type: 'delete', selection}]],
+    actions: [(_, {selection}) => [{type: 'delete', at: selection}]],
   }),
   /**
    * All other cases of `insert.break` should be aborted.

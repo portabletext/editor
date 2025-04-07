@@ -228,8 +228,7 @@ const emojiInsertListener: CallbackLogicFunction<
             },
             {
               type: 'delete.text',
-              anchor: event.anchor,
-              focus: event.focus,
+              at: {anchor: event.anchor, focus: event.focus},
             },
             {
               type: 'insert.text',

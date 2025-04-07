@@ -131,13 +131,15 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
           },
           {
             type: 'delete.text',
-            anchor: {
-              path: params.focusBlock.path,
-              offset: params.textBeforeLength - params.emojiStringLength,
-            },
-            focus: {
-              path: params.focusBlock.path,
-              offset: params.textBeforeLength,
+            at: {
+              anchor: {
+                path: params.focusBlock.path,
+                offset: params.textBeforeLength - params.emojiStringLength,
+              },
+              focus: {
+                path: params.focusBlock.path,
+                offset: params.textBeforeLength,
+              },
             },
           },
           {
@@ -225,13 +227,15 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
               },
               {
                 type: 'delete.text',
-                anchor: {
-                  path: params.focusBlock.path,
-                  offset: params.textBeforeLength - params.emojiStringLength,
-                },
-                focus: {
-                  path: params.focusBlock.path,
-                  offset: params.textBeforeLength,
+                at: {
+                  anchor: {
+                    path: params.focusBlock.path,
+                    offset: params.textBeforeLength - params.emojiStringLength,
+                  },
+                  focus: {
+                    path: params.focusBlock.path,
+                    offset: params.textBeforeLength,
+                  },
                 },
               },
               {

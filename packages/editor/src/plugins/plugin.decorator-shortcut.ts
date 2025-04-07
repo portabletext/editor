@@ -82,17 +82,17 @@ const selectionListenerCallback: CallbackLogicFunction<
     behavior: defineBehavior({
       on: 'select',
       guard: ({snapshot, event}) => {
-        if (!event.selection) {
+        if (!event.at) {
           return {blockOffsets: undefined}
         }
 
         const anchor = utils.spanSelectionPointToBlockOffset({
           value: snapshot.context.value,
-          selectionPoint: event.selection.anchor,
+          selectionPoint: event.at.anchor,
         })
         const focus = utils.spanSelectionPointToBlockOffset({
           value: snapshot.context.value,
-          selectionPoint: event.selection.focus,
+          selectionPoint: event.at.focus,
         })
 
         if (!anchor || !focus) {

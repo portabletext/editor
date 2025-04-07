@@ -16,10 +16,10 @@ export const abstractDecoratorBehaviors = [
   defineBehavior({
     on: 'decorator.toggle',
     guard: ({snapshot, event}) => {
-      const manualSelection = event.offsets
+      const manualSelection = event.at
         ? blockOffsetsToSelection({
             value: snapshot.context.value,
-            offsets: event.offsets,
+            offsets: event.at,
           })
         : null
 

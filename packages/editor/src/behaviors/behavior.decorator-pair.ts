@@ -165,7 +165,7 @@ export function createDecoratorPairBehavior(config: {
         {
           type: 'decorator.add',
           decorator,
-          offsets: {
+          at: {
             anchor: prefixOffsets.focus,
             focus: suffixOffsets.anchor,
           },
@@ -173,12 +173,12 @@ export function createDecoratorPairBehavior(config: {
         // Delete the suffix
         {
           type: 'delete.text',
-          ...suffixOffsets,
+          at: suffixOffsets,
         },
         // Delete the prefix
         {
           type: 'delete.text',
-          ...prefixOffsets,
+          at: prefixOffsets,
         },
         // Toggle the decorator off so the next inserted text isn't emphasized
         {

@@ -17,10 +17,7 @@ export const deleteTextActionImplementation: BehaviorActionImplementation<
 
   const selection = utils.blockOffsetsToSelection({
     value,
-    offsets: {
-      anchor: action.anchor,
-      focus: action.focus,
-    },
+    offsets: action.at,
   })
 
   if (!selection) {

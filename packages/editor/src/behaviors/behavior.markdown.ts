@@ -137,13 +137,15 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         },
         {
           type: 'delete.text',
-          anchor: {
-            path: focusTextBlock.path,
-            offset: 0,
-          },
-          focus: {
-            path: focusTextBlock.path,
-            offset: 2,
+          at: {
+            anchor: {
+              path: focusTextBlock.path,
+              offset: 0,
+            },
+            focus: {
+              path: focusTextBlock.path,
+              offset: 2,
+            },
           },
         },
       ],
@@ -213,7 +215,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         },
         {
           type: 'delete.text',
-          ...hrBlockOffsets,
+          at: hrBlockOffsets,
         },
       ],
     ],
@@ -348,13 +350,15 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         },
         {
           type: 'delete.text',
-          anchor: {
-            path: focusTextBlock.path,
-            offset: 0,
-          },
-          focus: {
-            path: focusTextBlock.path,
-            offset: level + 1,
+          at: {
+            anchor: {
+              path: focusTextBlock.path,
+              offset: 0,
+            },
+            focus: {
+              path: focusTextBlock.path,
+              offset: level + 1,
+            },
           },
         },
       ],
@@ -485,13 +489,15 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         },
         {
           type: 'delete.text',
-          anchor: {
-            path: focusTextBlock.path,
-            offset: 0,
-          },
-          focus: {
-            path: focusTextBlock.path,
-            offset: listItemLength + 1,
+          at: {
+            anchor: {
+              path: focusTextBlock.path,
+              offset: 0,
+            },
+            focus: {
+              path: focusTextBlock.path,
+              offset: listItemLength + 1,
+            },
           },
         },
       ],

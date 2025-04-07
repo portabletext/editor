@@ -940,7 +940,7 @@ export const PortableTextEditable = forwardRef<
         type: 'behavior event',
         behaviorEvent: {
           type: 'select',
-          selection: isSelectionCollapsed(dragSelection)
+          at: isSelectionCollapsed(dragSelection)
             ? dragSelection
             : {
                 anchor: getSelectionEndPoint(dragSelection),

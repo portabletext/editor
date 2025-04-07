@@ -160,7 +160,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
         type: 'behavior event',
         behaviorEvent: {
           type: 'select',
-          selection: slateRangeToSelection({
+          at: slateRangeToSelection({
             schema: editorActor.getSnapshot().context.schema,
             editor,
             range,

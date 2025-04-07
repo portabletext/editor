@@ -28,7 +28,7 @@ const addAnnotationOnCollapsedSelection = defineBehavior({
   },
   actions: [
     ({event}, {caretWordSelection}) => [
-      raise({type: 'select', selection: caretWordSelection}),
+      raise({type: 'select', at: caretWordSelection}),
       raise({type: 'annotation.add', annotation: event.annotation}),
     ],
   ],

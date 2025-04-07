@@ -184,7 +184,7 @@ export const stepDefinitions = [
 
         context.editor.ref.current.send({
           type: 'select',
-          selection: getSelectionBeforeText(context.editor.value(), text),
+          at: getSelectionBeforeText(context.editor.value(), text),
         })
       })
     },
@@ -208,7 +208,7 @@ export const stepDefinitions = [
 
         context.editor.ref.current.send({
           type: 'select',
-          selection: getSelectionAfterText(context.editor.value(), text),
+          at: getSelectionAfterText(context.editor.value(), text),
         })
       })
     },
@@ -233,7 +233,7 @@ export const stepDefinitions = [
 
     context.editor.ref.current.send({
       type: 'select',
-      selection: editorSelection,
+      at: editorSelection,
     })
   }),
   When('everything is selected backwards', (context: Context) => {
@@ -243,7 +243,7 @@ export const stepDefinitions = [
 
     context.editor.ref.current.send({
       type: 'select',
-      selection: editorSelection,
+      at: editorSelection,
     })
   }),
   When('{string} is selected', async (context: Context, text: string) => {
@@ -253,7 +253,7 @@ export const stepDefinitions = [
 
       context.editor.ref.current.send({
         type: 'select',
-        selection: selection,
+        at: selection,
       })
     })
   }),
@@ -268,7 +268,7 @@ export const stepDefinitions = [
 
         context.editor.ref.current.send({
           type: 'select',
-          selection: selection,
+          at: selection,
         })
       })
     },
@@ -393,7 +393,7 @@ export const stepDefinitions = [
         context.editor.ref.current.send({
           type: 'decorator.toggle',
           decorator,
-          offsets: {
+          at: {
             anchor: anchorOffset!,
             focus: focusOffset!,
           },
@@ -440,7 +440,7 @@ export const stepDefinitions = [
         context.editor.ref.current.send({
           type: 'decorator.toggle',
           decorator,
-          offsets: {
+          at: {
             anchor: anchorOffset!,
             focus: focusOffset!,
           },

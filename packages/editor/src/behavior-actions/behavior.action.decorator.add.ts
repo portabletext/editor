@@ -18,17 +18,17 @@ export const decoratorAddActionImplementation: BehaviorActionImplementation<
     KEY_TO_VALUE_ELEMENT.get(editor),
   )
 
-  const manualAnchor = action.offsets?.anchor
+  const manualAnchor = action.at?.anchor
     ? utils.blockOffsetToSpanSelectionPoint({
         value,
-        blockOffset: action.offsets.anchor,
+        blockOffset: action.at.anchor,
         direction: 'backward',
       })
     : undefined
-  const manualFocus = action.offsets?.focus
+  const manualFocus = action.at?.focus
     ? utils.blockOffsetToSpanSelectionPoint({
         value,
-        blockOffset: action.offsets.focus,
+        blockOffset: action.at.focus,
         direction: 'forward',
       })
     : undefined
