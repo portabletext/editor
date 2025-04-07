@@ -224,7 +224,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
     on: 'clipboard.paste',
     guard: ({snapshot, event}) => {
       const text = event.originEvent.dataTransfer.getData('text/plain')
-      const hrRegExp = /^(---)$|(___)$|(\*\*\*)$/gm
+      const hrRegExp = /^(---)$|(___)$|(\*\*\*)$/
       const hrCharacters = text.match(hrRegExp)?.[0]
       const hrObject = config.horizontalRuleObject?.(snapshot.context)
       const focusBlock = selectors.getFocusBlock(snapshot)
