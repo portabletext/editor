@@ -1,7 +1,7 @@
 import {assertEvent, assign, createActor, setup} from 'xstate'
 import {isHotkey} from '../internal-utils/is-hotkey'
 import * as selectors from '../selectors'
-import {raise} from './behavior.types.action'
+import {effect, execute, noop} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
 const emojiCharRegEx = /^[a-zA-Z-_0-9]{1}$/
@@ -118,19 +118,16 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
       },
       actions: [
         () => [
-          {
+          execute({
             type: 'insert.text',
             text: ':',
-          },
+          }),
         ],
         (_, params) => [
-          {
-            type: 'effect',
-            effect: () => {
-              emojiPickerActor.send({type: 'select'})
-            },
-          },
-          raise({
+          effect(() => {
+            emojiPickerActor.send({type: 'select'})
+          }),
+          execute({
             type: 'delete.text',
             at: {
               anchor: {
@@ -143,10 +140,10 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
               },
             },
           }),
-          {
+          execute({
             type: 'insert.text',
             text: params.emoji,
-          },
+          }),
         ],
       ],
     }),
@@ -220,13 +217,10 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
         (_, params) => {
           if (params.action === 'select') {
             return [
-              {
-                type: 'effect',
-                effect: () => {
-                  emojiPickerActor.send({type: 'select'})
-                },
-              },
-              raise({
+              effect(() => {
+                emojiPickerActor.send({type: 'select'})
+              }),
+              execute({
                 type: 'delete.text',
                 at: {
                   anchor: {
@@ -239,10 +233,10 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
                   },
                 },
               }),
-              {
+              execute({
                 type: 'insert.text',
                 text: params.emoji,
-              },
+              }),
             ]
           }
 
@@ -250,15 +244,10 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
             return [
               // If we are navigating then we want to hijack the key event and
               // turn it into a noop.
-              {
-                type: 'noop',
-              },
-              {
-                type: 'effect',
-                effect: () => {
-                  emojiPickerActor.send({type: 'navigate up'})
-                },
-              },
+              noop(),
+              effect(() => {
+                emojiPickerActor.send({type: 'navigate up'})
+              }),
             ]
           }
 
@@ -266,25 +255,17 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
             return [
               // If we are navigating then we want to hijack the key event and
               // turn it into a noop.
-              {
-                type: 'noop',
-              },
-              {
-                type: 'effect',
-                effect: () => {
-                  emojiPickerActor.send({type: 'navigate down'})
-                },
-              },
+              noop(),
+              effect(() => {
+                emojiPickerActor.send({type: 'navigate down'})
+              }),
             ]
           }
 
           return [
-            {
-              type: 'effect',
-              effect: () => {
-                emojiPickerActor.send({type: 'reset'})
-              },
-            },
+            effect(() => {
+              emojiPickerActor.send({type: 'reset'})
+            }),
           ]
         },
       ],

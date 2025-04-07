@@ -1,4 +1,4 @@
-import {defineBehavior, raise} from '../behaviors'
+import {defineBehavior, execute, raise} from '../behaviors'
 import * as selectors from '../selectors'
 import * as utils from '../utils'
 import {BehaviorPlugin} from './plugin.behavior'
@@ -14,7 +14,7 @@ const oneLineBehaviors = [
       snapshot.context.selection && selectors.isSelectionExpanded(snapshot)
         ? {selection: snapshot.context.selection}
         : false,
-    actions: [(_, {selection}) => [{type: 'delete', at: selection}]],
+    actions: [(_, {selection}) => [execute({type: 'delete', at: selection})]],
   }),
   /**
    * All other cases of `insert.break` should be aborted.
@@ -59,12 +59,12 @@ const oneLineBehaviors = [
     },
     actions: [
       ({event}) => [
-        {
+        execute({
           type: 'insert.block',
           block: event.block,
           placement: 'auto',
           select: 'end',
-        },
+        }),
       ],
     ],
   }),

@@ -14,7 +14,10 @@ export {
 } from './behavior.markdown'
 
 export {
+  execute,
+  noop,
   raise,
+  effect,
   type BehaviorAction,
   type BehaviorActionSet,
 } from './behavior.types.action'

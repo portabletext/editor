@@ -5,7 +5,13 @@ import {
   type EditorSelectionPoint,
   type EditorSnapshot,
 } from '@portabletext/editor'
-import {defineBehavior, raise} from '@portabletext/editor/behaviors'
+import {
+  defineBehavior,
+  effect,
+  execute,
+  noop,
+  raise,
+} from '@portabletext/editor/behaviors'
 import * as selectors from '@portabletext/editor/selectors'
 import * as utils from '@portabletext/editor/utils'
 import {useActorRef, useSelector} from '@xstate/react'
@@ -104,16 +110,13 @@ const colonListenerCallback: CallbackLogicFunction<
       },
       actions: [
         (_, {point, blockOffset}) => [
-          {
+          execute({
             type: 'insert.text',
             text: ':',
-          },
-          {
-            type: 'effect',
-            effect: () => {
-              sendBack({type: 'colon inserted', point, blockOffset})
-            },
-          },
+          }),
+          effect(() => {
+            sendBack({type: 'colon inserted', point, blockOffset})
+          }),
         ],
       ],
     }),
@@ -131,15 +134,10 @@ const escapeListenerCallback: CallbackLogicFunction<
       guard: ({event}) => event.originEvent.key === 'Escape',
       actions: [
         () => [
-          {
-            type: 'noop',
-          },
-          {
-            type: 'effect',
-            effect: () => {
-              sendBack({type: 'dismiss'})
-            },
-          },
+          noop(),
+          effect(() => {
+            sendBack({type: 'dismiss'})
+          }),
         ],
       ],
     }),
@@ -220,20 +218,17 @@ const emojiInsertListener: CallbackLogicFunction<
         on: 'custom.insert emoji',
         actions: [
           ({event}) => [
-            {
-              type: 'effect',
-              effect: () => {
-                sendBack({type: 'dismiss'})
-              },
-            },
-            raise({
+            effect(() => {
+              sendBack({type: 'dismiss'})
+            }),
+            execute({
               type: 'delete.text',
               at: {anchor: event.anchor, focus: event.focus},
             }),
-            {
+            execute({
               type: 'insert.text',
               text: event.emoji,
-            },
+            }),
           ],
         ],
       }),
@@ -354,16 +349,13 @@ const textChangeListener: CallbackLogicFunction<
             : false,
         actions: [
           ({event}, {focus}) => [
-            {
-              type: 'effect',
-              effect: () => {
-                sendBack({
-                  ...event,
-                  focus,
-                })
-              },
-            },
-            event,
+            effect(() => {
+              sendBack({
+                ...event,
+                focus,
+              })
+            }),
+            execute(event),
           ],
         ],
       }),
@@ -377,16 +369,13 @@ const textChangeListener: CallbackLogicFunction<
             : false,
         actions: [
           ({event}, {focus}) => [
-            {
-              type: 'effect',
-              effect: () => {
-                sendBack({
-                  type: 'delete.backward',
-                  focus,
-                })
-              },
-            },
-            event,
+            effect(() => {
+              sendBack({
+                type: 'delete.backward',
+                focus,
+              })
+            }),
+            execute(event),
           ],
         ],
       }),
@@ -400,16 +389,13 @@ const textChangeListener: CallbackLogicFunction<
             : false,
         actions: [
           ({event}, {focus}) => [
-            {
-              type: 'effect',
-              effect: () => {
-                sendBack({
-                  type: 'delete.forward',
-                  focus,
-                })
-              },
-            },
-            event,
+            effect(() => {
+              sendBack({
+                type: 'delete.forward',
+                focus,
+              })
+            }),
+            execute(event),
           ],
         ],
       }),

@@ -1,6 +1,7 @@
 import type {EditorSchema} from '../editor/define-schema'
 import {looksLikeUrl} from '../internal-utils/looks-like-url'
 import * as selectors from '../selectors'
+import {execute} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
 /**
@@ -36,10 +37,10 @@ export function createLinkBehaviors(config: LinkBehaviorsConfig) {
     },
     actions: [
       (_, {annotation}) => [
-        {
+        execute({
           type: 'annotation.add',
           annotation,
-        },
+        }),
       ],
     ],
   })
@@ -68,11 +69,11 @@ export function createLinkBehaviors(config: LinkBehaviorsConfig) {
     },
     actions: [
       (_, {annotation, url}) => [
-        {
+        execute({
           type: 'insert.span',
           text: url,
           annotations: [annotation],
-        },
+        }),
       ],
     ],
   })

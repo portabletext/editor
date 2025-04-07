@@ -8,6 +8,7 @@ import {
 } from '../editor/with-applying-behavior-actions'
 import {debugWithName} from '../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../types/editor'
+import {defaultBehaviors} from './behavior.default'
 import type {InternalBehaviorAction} from './behavior.types.action'
 import {
   isAbstractBehaviorEvent,
@@ -28,6 +29,7 @@ function eventCategory(event: BehaviorEvent) {
 }
 
 export function performEvent({
+  mode,
   behaviors,
   event,
   editor,
@@ -37,6 +39,7 @@ export function performEvent({
   nativeEvent,
   defaultActionCallback,
 }: {
+  mode: 'raise' | 'execute'
   behaviors: Array<Behavior>
   event: BehaviorEvent
   editor: PortableTextSlateEditor
@@ -62,7 +65,9 @@ export function performEvent({
           editor,
         } satisfies InternalBehaviorAction)
 
-  const eventBehaviors = behaviors.filter((behavior) => {
+  const eventBehaviors = (
+    mode === 'raise' ? [...behaviors, ...defaultBehaviors] : behaviors
+  ).filter((behavior) => {
     // Catches all events
     if (behavior.on === '*') {
       return true
@@ -179,7 +184,13 @@ export function performEvent({
         for (const action of actions) {
           if (action.type === 'raise') {
             performEvent({
-              behaviors,
+              mode,
+              behaviors:
+                mode === 'execute'
+                  ? isCustomBehaviorEvent(action.event)
+                    ? [...behaviors, ...defaultBehaviors]
+                    : defaultBehaviors
+                  : [...behaviors, ...defaultBehaviors],
               event: action.event,
               editor,
               keyGenerator,
@@ -188,6 +199,46 @@ export function performEvent({
               defaultActionCallback: undefined,
               nativeEvent: undefined,
             })
+
+            continue
+          }
+
+          if (action.type === 'execute') {
+            if (
+              isAbstractBehaviorEvent(action.event) ||
+              isCustomBehaviorEvent(action.event)
+            ) {
+              performEvent({
+                mode: 'execute',
+                behaviors: isCustomBehaviorEvent(action.event)
+                  ? [...behaviors, ...defaultBehaviors]
+                  : defaultBehaviors,
+                event: action.event,
+                editor,
+                keyGenerator,
+                schema,
+                getSnapshot,
+                defaultActionCallback: undefined,
+                nativeEvent: undefined,
+              })
+            } else {
+              try {
+                performAction({
+                  context: {
+                    keyGenerator,
+                    schema,
+                  },
+                  action: {...action.event, editor},
+                })
+              } catch (error) {
+                console.error(
+                  new Error(
+                    `Performing action "${action.event.type}" as a result of "${event.type}" failed due to: ${error.message}`,
+                  ),
+                )
+                break
+              }
+            }
 
             continue
           }

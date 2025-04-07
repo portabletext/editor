@@ -2,7 +2,7 @@ import {page, userEvent} from '@vitest/browser/context'
 import * as React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
-import {defineBehavior, raise} from '../src/behaviors'
+import {defineBehavior, execute, raise} from '../src/behaviors'
 import type {Editor} from '../src/editor/create-editor'
 import {defineSchema} from '../src/editor/define-schema'
 import {PortableTextEditable} from '../src/editor/Editable'
@@ -32,15 +32,15 @@ describe('event.history.undo', () => {
               guard: ({event}) => event.text === 'x',
               actions: [
                 // The 'x' is inserted in its own undo step
-                ({event}) => [event],
+                ({event}) => [execute(event)],
                 // And then deleted again and replaced with 'y*' in another undo step
                 () => [
-                  {type: 'delete.backward', unit: 'character'},
-                  {type: 'insert.text', text: 'y'},
-                  {type: 'insert.text', text: '*'},
+                  execute({type: 'delete.backward', unit: 'character'}),
+                  execute({type: 'insert.text', text: 'y'}),
+                  execute({type: 'insert.text', text: '*'}),
                 ],
                 // And finally 'z' gets its own undo step as well
-                () => [{type: 'insert.text', text: 'z'}],
+                () => [execute({type: 'insert.text', text: 'z'})],
               ],
             }),
           ]}
@@ -104,9 +104,9 @@ describe('event.history.undo', () => {
               guard: ({event}) => event.text === 'x',
               actions: [
                 // This gets its own undo step
-                () => [{type: 'insert.text', text: 'y'}],
+                () => [execute({type: 'insert.text', text: 'y'})],
                 // And this also gets its own undo step
-                () => [{type: 'insert.text', text: 'z'}],
+                () => [execute({type: 'insert.text', text: 'z'})],
               ],
             }),
             defineBehavior({
