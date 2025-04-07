@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.45.0](https://github.com/portabletext/editor/compare/editor-v1.44.16...editor-v1.45.0) (2025-04-07)
+
+
+### Features
+
+* introduce `fields` on schema types defined using `defineSchema` ([eb7a01c](https://github.com/portabletext/editor/commit/eb7a01c3ae26be92c947f6cb83b38f5057a67b35))
+
+
+### Bug Fixes
+
+* **behaviors:** align and use `at` to specify event location ([c6aa8eb](https://github.com/portabletext/editor/commit/c6aa8eb68f90286795c24e8f285dcf9076983373))
+
 ## [1.44.16](https://github.com/portabletext/editor/compare/editor-v1.44.15...editor-v1.44.16) (2025-04-06)
 
 
