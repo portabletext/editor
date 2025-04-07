@@ -18,7 +18,6 @@ import {deleteActionImplementation} from './behavior.action.delete'
 import {deleteBackwardActionImplementation} from './behavior.action.delete.backward'
 import {deleteBlockActionImplementation} from './behavior.action.delete.block'
 import {deleteForwardActionImplementation} from './behavior.action.delete.forward'
-import {deleteTextActionImplementation} from './behavior.action.delete.text'
 import {effectActionImplementation} from './behavior.action.effect'
 import {focusActionImplementation} from './behavior.action.focus'
 import {insertInlineObjectActionImplementation} from './behavior.action.insert-inline-object'
@@ -65,7 +64,6 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'delete.backward': deleteBackwardActionImplementation,
   'delete.forward': deleteForwardActionImplementation,
   'delete.block': deleteBlockActionImplementation,
-  'delete.text': deleteTextActionImplementation,
   'history.redo': historyRedoActionImplementation,
   'history.undo': historyUndoActionImplementation,
   'insert.block': insertBlockActionImplementation,
@@ -161,13 +159,6 @@ export function performAction({
     }
     case 'delete.forward': {
       behaviorActionImplementations['delete.forward']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'delete.text': {
-      behaviorActionImplementations['delete.text']({
         context,
         action,
       })

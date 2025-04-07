@@ -226,10 +226,10 @@ const emojiInsertListener: CallbackLogicFunction<
                 sendBack({type: 'dismiss'})
               },
             },
-            {
+            raise({
               type: 'delete.text',
               at: {anchor: event.anchor, focus: event.focus},
-            },
+            }),
             {
               type: 'insert.text',
               text: event.emoji,

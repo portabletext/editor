@@ -3,6 +3,7 @@ import type {EditorSchema} from '../editor/define-schema'
 import * as selectors from '../selectors'
 import {spanSelectionPointToBlockOffset} from '../utils/util.block-offset'
 import {getTextBlockText} from '../utils/util.get-text-block-text'
+import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
 /**
@@ -135,7 +136,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           props: {style},
           at: focusTextBlock.path,
         },
-        {
+        raise({
           type: 'delete.text',
           at: {
             anchor: {
@@ -147,7 +148,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
               offset: 2,
             },
           },
-        },
+        }),
       ],
     ],
   })
@@ -213,10 +214,10 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
             ...(hrObject.value ?? {}),
           },
         },
-        {
+        raise({
           type: 'delete.text',
           at: hrBlockOffsets,
-        },
+        }),
       ],
     ],
   })
@@ -348,7 +349,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           props: {style},
           at: focusTextBlock.path,
         },
-        {
+        raise({
           type: 'delete.text',
           at: {
             anchor: {
@@ -360,7 +361,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
               offset: level + 1,
             },
           },
-        },
+        }),
       ],
     ],
   })
@@ -487,7 +488,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           },
           at: focusTextBlock.path,
         },
-        {
+        raise({
           type: 'delete.text',
           at: {
             anchor: {
@@ -499,7 +500,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
               offset: listItemLength + 1,
             },
           },
-        },
+        }),
       ],
     ],
   })

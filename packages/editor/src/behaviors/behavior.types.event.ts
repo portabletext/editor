@@ -68,7 +68,6 @@ const syntheticBehaviorEventTypes = [
   'delete.backward',
   'delete.block',
   'delete.forward',
-  'delete.text',
   'focus',
   'history.redo',
   'history.undo',
@@ -145,13 +144,6 @@ export type SyntheticBehaviorEvent =
       unit: TextUnit
     }
   | {
-      type: StrictExtract<SyntheticBehaviorEventType, 'delete.text'>
-      at: {
-        anchor: BlockOffset
-        focus: BlockOffset
-      }
-    }
-  | {
       type: StrictExtract<SyntheticBehaviorEventType, 'focus'>
     }
   | {
@@ -214,6 +206,7 @@ export function isKeyboardBehaviorEvent(
 const abstractBehaviorEventTypes = [
   'annotation.toggle',
   'decorator.toggle',
+  'delete.text',
   'deserialize',
   'deserialization.success',
   'deserialization.failure',
@@ -252,6 +245,13 @@ export type AbstractBehaviorEvent =
       type: StrictExtract<AbstractBehaviorEventType, 'decorator.toggle'>
       decorator: string
       at?: {anchor: BlockOffset; focus: BlockOffset}
+    }
+  | {
+      type: StrictExtract<AbstractBehaviorEventType, 'delete.text'>
+      at: {
+        anchor: BlockOffset
+        focus: BlockOffset
+      }
     }
   | {
       type: StrictExtract<AbstractBehaviorEventType, 'deserialize'>
