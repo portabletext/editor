@@ -1,6 +1,7 @@
 import {assertEvent, assign, createActor, setup} from 'xstate'
 import {isHotkey} from '../internal-utils/is-hotkey'
 import * as selectors from '../selectors'
+import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
 const emojiCharRegEx = /^[a-zA-Z-_0-9]{1}$/
@@ -129,7 +130,7 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
               emojiPickerActor.send({type: 'select'})
             },
           },
-          {
+          raise({
             type: 'delete.text',
             at: {
               anchor: {
@@ -141,7 +142,7 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
                 offset: params.textBeforeLength,
               },
             },
-          },
+          }),
           {
             type: 'insert.text',
             text: params.emoji,
@@ -225,7 +226,7 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
                   emojiPickerActor.send({type: 'select'})
                 },
               },
-              {
+              raise({
                 type: 'delete.text',
                 at: {
                   anchor: {
@@ -237,7 +238,7 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
                     offset: params.textBeforeLength,
                   },
                 },
-              },
+              }),
               {
                 type: 'insert.text',
                 text: params.emoji,

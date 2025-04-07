@@ -5,6 +5,7 @@ import type {PickFromUnion} from '../type-utils'
 import {getTextBlockText} from '../utils'
 import {abstractAnnotationBehaviors} from './behavior.abstract.annotation'
 import {abstractDecoratorBehaviors} from './behavior.abstract.decorator'
+import {abstractDeleteBehaviors} from './behavior.abstract.delete'
 import {abstractInsertBehaviors} from './behavior.abstract.insert'
 import {abstractListItemBehaviors} from './behavior.abstract.list-item'
 import {abstractMoveBehaviors} from './behavior.abstract.move'
@@ -447,6 +448,7 @@ export const defaultBehaviors = [
   }),
   ...abstractAnnotationBehaviors,
   ...abstractDecoratorBehaviors,
+  ...abstractDeleteBehaviors,
   ...abstractInsertBehaviors,
   ...abstractListItemBehaviors,
   ...abstractMoveBehaviors,
