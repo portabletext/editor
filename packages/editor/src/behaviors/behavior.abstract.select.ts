@@ -29,7 +29,7 @@ export const abstractSelectBehaviors = [
       (_, {selection}) => [
         raise({
           type: 'select',
-          selection,
+          at: selection,
         }),
       ],
     ],
@@ -54,7 +54,7 @@ export const abstractSelectBehaviors = [
       (_, {selection}) => [
         raise({
           type: 'select',
-          selection,
+          at: selection,
         }),
       ],
     ],

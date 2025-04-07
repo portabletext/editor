@@ -45,7 +45,7 @@ describe('event.annotation', () => {
 
     editorRef.current?.send({
       type: 'select',
-      selection: getTextSelection(
+      at: getTextSelection(
         editorRef.current?.getSnapshot().context.value,
         'world',
       ),
@@ -63,7 +63,7 @@ describe('event.annotation', () => {
 
     editorRef.current?.send({
       type: 'select',
-      selection: getTextSelection(
+      at: getTextSelection(
         editorRef.current?.getSnapshot().context.value,
         'Hello',
       ),
@@ -94,7 +94,7 @@ describe('event.annotation', () => {
 
     editorRef.current?.send({
       type: 'select',
-      selection: getSelectionBeforeText(
+      at: getSelectionBeforeText(
         editorRef.current?.getSnapshot().context.value,
         'ld',
       ),

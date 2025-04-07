@@ -119,7 +119,10 @@ export type SyntheticBehaviorEvent =
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'decorator.add'>
       decorator: string
-      offsets?: {anchor: BlockOffset; focus: BlockOffset}
+      at?: {
+        anchor: BlockOffset
+        focus: BlockOffset
+      }
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'decorator.remove'>
@@ -127,7 +130,7 @@ export type SyntheticBehaviorEvent =
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'delete'>
-      selection: NonNullable<EditorSelection>
+      at: NonNullable<EditorSelection>
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'delete.backward'>
@@ -143,8 +146,10 @@ export type SyntheticBehaviorEvent =
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'delete.text'>
-      anchor: BlockOffset
-      focus: BlockOffset
+      at: {
+        anchor: BlockOffset
+        focus: BlockOffset
+      }
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'focus'>
@@ -188,7 +193,7 @@ export type SyntheticBehaviorEvent =
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'select'>
-      selection: EditorSelection
+      at: EditorSelection
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'split.block'>
@@ -246,7 +251,7 @@ export type AbstractBehaviorEvent =
   | {
       type: StrictExtract<AbstractBehaviorEventType, 'decorator.toggle'>
       decorator: string
-      offsets?: {anchor: BlockOffset; focus: BlockOffset}
+      at?: {anchor: BlockOffset; focus: BlockOffset}
     }
   | {
       type: StrictExtract<AbstractBehaviorEventType, 'deserialize'>

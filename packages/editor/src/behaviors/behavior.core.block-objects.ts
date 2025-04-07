@@ -132,7 +132,7 @@ const clickingAboveLonelyBlockObject = defineBehavior({
     ({snapshot, event}) => [
       raise({
         type: 'select',
-        selection: event.position.selection,
+        at: event.position.selection,
       }),
       raise({
         type: 'insert.block',
@@ -186,7 +186,7 @@ const clickingBelowLonelyBlockObject = defineBehavior({
     ({snapshot, event}) => [
       raise({
         type: 'select',
-        selection: event.position.selection,
+        at: event.position.selection,
       }),
       raise({
         type: 'insert.block',
@@ -228,7 +228,7 @@ const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
       }),
       raise({
         type: 'select',
-        selection: {
+        at: {
           anchor: {path: previousBlock.path, offset: 0},
           focus: {path: previousBlock.path, offset: 0},
         },
@@ -265,7 +265,7 @@ const deletingEmptyTextBlockBeforeBlockObject = defineBehavior({
       }),
       raise({
         type: 'select',
-        selection: {
+        at: {
           anchor: {path: nextBlock.path, offset: 0},
           focus: {path: nextBlock.path, offset: 0},
         },

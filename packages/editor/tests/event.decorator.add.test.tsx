@@ -83,7 +83,7 @@ describe('event.decorator.add', () => {
       editorRef.current?.send({
         type: 'decorator.add',
         decorator: 'strong',
-        offsets: {
+        at: {
           anchor: {
             path: [{_key: block._key}],
             offset: 0,
@@ -144,7 +144,7 @@ describe('event.decorator.add', () => {
 
       editorRef.current?.send({
         type: 'select',
-        selection: {
+        at: {
           anchor: {
             path: [{_key: block1._key}, 'children', {_key: foo._key}],
             offset: 3,
@@ -206,7 +206,7 @@ describe('event.decorator.add', () => {
       editorRef.current?.send({
         type: 'decorator.add',
         decorator: 'strong',
-        offsets: {
+        at: {
           anchor: {
             path: [{_key: block1._key}],
             offset: 3,
@@ -257,7 +257,7 @@ describe('event.decorator.add', () => {
       editorRef.current?.send({
         type: 'decorator.add',
         decorator: 'strong',
-        offsets: {
+        at: {
           anchor: {
             path: [{_key: block._key}],
             offset: 4,
