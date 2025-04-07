@@ -9,7 +9,7 @@ import {
   type Editor,
   type EditorSnapshot,
 } from '../src'
-import {defineBehavior} from '../src/behaviors'
+import {defineBehavior, execute} from '../src/behaviors'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {BehaviorPlugin, EditorRefPlugin} from '../src/plugins'
 
@@ -40,20 +40,20 @@ describe('EditorSnapshot', () => {
                   inspectSelection(snapshot.context.selection)
                   inspectValue(snapshot.context.value)
                   return [
-                    {
+                    execute({
                       type: 'insert.text',
                       text: 'b',
-                    },
+                    }),
                   ]
                 },
                 ({snapshot}) => {
                   inspectSelection(snapshot.context.selection)
                   inspectValue(snapshot.context.value)
                   return [
-                    {
+                    execute({
                       type: 'insert.text',
                       text: 'c',
-                    },
+                    }),
                   ]
                 },
               ],

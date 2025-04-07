@@ -3,7 +3,7 @@ import {createPairRegex} from '../internal-utils/get-text-to-emphasize'
 import * as selectors from '../selectors'
 import type {BlockOffset} from '../types/block-offset'
 import * as utils from '../utils'
-import {raise} from './behavior.types.action'
+import {effect, execute} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
 export function createDecoratorPairBehavior(config: {
@@ -160,43 +160,40 @@ export function createDecoratorPairBehavior(config: {
     },
     actions: [
       // Insert the text as usual in its own undo step
-      ({event}) => [event],
+      ({event}) => [execute(event)],
       (_, {prefixOffsets, suffixOffsets, decorator}) => [
         // Decorate the text between the prefix and suffix
-        {
+        execute({
           type: 'decorator.add',
           decorator,
           at: {
             anchor: prefixOffsets.focus,
             focus: suffixOffsets.anchor,
           },
-        },
+        }),
         // Delete the suffix
-        raise({
+        execute({
           type: 'delete.text',
           at: suffixOffsets,
         }),
         // Delete the prefix
-        raise({
+        execute({
           type: 'delete.text',
           at: prefixOffsets,
         }),
         // Toggle the decorator off so the next inserted text isn't emphasized
-        {
+        execute({
           type: 'decorator.remove',
           decorator,
-        },
-        {
-          type: 'effect',
-          effect: () => {
-            config.onDecorate({
-              ...suffixOffsets.anchor,
-              offset:
-                suffixOffsets.anchor.offset -
-                (prefixOffsets.focus.offset - prefixOffsets.anchor.offset),
-            })
-          },
-        },
+        }),
+        effect(() => {
+          config.onDecorate({
+            ...suffixOffsets.anchor,
+            offset:
+              suffixOffsets.anchor.offset -
+              (prefixOffsets.focus.offset - prefixOffsets.anchor.offset),
+          })
+        }),
       ],
     ],
   })

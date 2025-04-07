@@ -3,7 +3,7 @@ import type {EditorSchema} from '../editor/define-schema'
 import * as selectors from '../selectors'
 import {spanSelectionPointToBlockOffset} from '../utils/util.block-offset'
 import {getTextBlockText} from '../utils/util.get-text-block-text'
-import {raise} from './behavior.types.action'
+import {execute} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
 /**
@@ -120,23 +120,23 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
     },
     actions: [
       () => [
-        {
+        execute({
           type: 'insert.text',
           text: ' ',
-        },
+        }),
       ],
       (_, {focusTextBlock, style}) => [
-        {
+        execute({
           type: 'block.unset',
           props: ['listItem', 'level'],
           at: focusTextBlock.path,
-        },
-        {
+        }),
+        execute({
           type: 'block.set',
           props: {style},
           at: focusTextBlock.path,
-        },
-        raise({
+        }),
+        execute({
           type: 'delete.text',
           at: {
             anchor: {
@@ -200,21 +200,21 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
     },
     actions: [
       (_, {hrCharacter}) => [
-        {
+        execute({
           type: 'insert.text',
           text: hrCharacter,
-        },
+        }),
       ],
       (_, {hrObject, hrBlockOffsets}) => [
-        {
+        execute({
           type: 'insert.block',
           placement: 'before',
           block: {
             _type: hrObject.name,
             ...(hrObject.value ?? {}),
           },
-        },
-        raise({
+        }),
+        execute({
           type: 'delete.text',
           at: hrBlockOffsets,
         }),
@@ -238,41 +238,44 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
     },
     actions: [
       (_, {hrCharacters}) => [
-        {
+        execute({
           type: 'insert.text',
           text: hrCharacters,
-        },
+        }),
       ],
       ({snapshot}, {hrObject, focusBlock}) =>
         isPortableTextTextBlock(focusBlock.node)
           ? [
-              {
+              execute({
                 type: 'insert.block',
                 block: {
                   _type: snapshot.context.schema.block.name,
                   children: focusBlock.node.children,
                 },
                 placement: 'after',
-              },
-              {
+              }),
+              execute({
                 type: 'insert.block',
                 block: {
                   _type: hrObject.name,
                   ...(hrObject.value ?? {}),
                 },
                 placement: 'after',
-              },
-              {type: 'delete.block', at: focusBlock.path},
+              }),
+              execute({
+                type: 'delete.block',
+                at: focusBlock.path,
+              }),
             ]
           : [
-              {
+              execute({
                 type: 'insert.block',
                 block: {
                   _type: hrObject.name,
                   ...(hrObject.value ?? {}),
                 },
                 placement: 'after',
-              },
+              }),
             ],
     ],
   })
@@ -337,19 +340,19 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       return false
     },
     actions: [
-      ({event}) => [event],
+      ({event}) => [execute(event)],
       (_, {focusTextBlock, style, level}) => [
-        {
+        execute({
           type: 'block.unset',
           props: ['listItem', 'level'],
           at: focusTextBlock.path,
-        },
-        {
+        }),
+        execute({
           type: 'block.set',
           props: {style},
           at: focusTextBlock.path,
-        },
-        raise({
+        }),
+        execute({
           type: 'delete.text',
           at: {
             anchor: {
@@ -394,11 +397,11 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
     },
     actions: [
       (_, {defaultStyle, focusTextBlock}) => [
-        {
+        execute({
           type: 'block.set',
           props: {style: defaultStyle},
           at: focusTextBlock.path,
-        },
+        }),
       ],
     ],
   })
@@ -477,9 +480,9 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       return false
     },
     actions: [
-      ({event}) => [event],
+      ({event}) => [execute(event)],
       (_, {focusTextBlock, style, listItem, listItemLength}) => [
-        {
+        execute({
           type: 'block.set',
           props: {
             listItem,
@@ -487,8 +490,8 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
             style,
           },
           at: focusTextBlock.path,
-        },
-        raise({
+        }),
+        execute({
           type: 'delete.text',
           at: {
             anchor: {

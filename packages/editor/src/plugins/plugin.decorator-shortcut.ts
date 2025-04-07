@@ -8,6 +8,7 @@ import {
   type CallbackLogicFunction,
 } from 'xstate'
 import {createDecoratorPairBehavior} from '../behaviors/behavior.decorator-pair'
+import {effect, execute} from '../behaviors/behavior.types.action'
 import {defineBehavior} from '../behaviors/behavior.types.behavior'
 import type {Editor} from '../editor/create-editor'
 import type {EditorSchema} from '../editor/define-schema'
@@ -132,15 +133,12 @@ const deleteBackwardListenerCallback: CallbackLogicFunction<
       on: 'delete.backward',
       actions: [
         () => [
-          {
+          execute({
             type: 'history.undo',
-          },
-          {
-            type: 'effect',
-            effect: () => {
-              sendBack({type: 'delete.backward'})
-            },
-          },
+          }),
+          effect(() => {
+            sendBack({type: 'delete.backward'})
+          }),
         ],
       ],
     }),

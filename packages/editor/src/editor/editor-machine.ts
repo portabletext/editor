@@ -10,7 +10,6 @@ import {
   type ActorRefFrom,
 } from 'xstate'
 import {coreBehaviors} from '../behaviors/behavior.core'
-import {defaultBehaviors} from '../behaviors/behavior.default'
 import {performEvent} from '../behaviors/behavior.perform-event'
 import type {Behavior} from '../behaviors/behavior.types.behavior'
 import type {BehaviorEvent} from '../behaviors/behavior.types.event'
@@ -297,7 +296,8 @@ export const editorMachine = setup({
       assertEvent(event, ['behavior event'])
 
       performEvent({
-        behaviors: [...context.behaviors.values(), ...defaultBehaviors],
+        mode: 'raise',
+        behaviors: [...context.behaviors.values()],
         event: event.behaviorEvent,
         editor: event.editor,
         keyGenerator: context.keyGenerator,
