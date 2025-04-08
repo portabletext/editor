@@ -369,7 +369,12 @@ function parseObject({
   // the name of a field
   const values = context.schemaType.fields.reduce<Record<string, unknown>>(
     (fieldValues, field) => {
-      fieldValues[field.name] = object[field.name]
+      const fieldValue = object[field.name]
+
+      if (fieldValue !== undefined) {
+        fieldValues[field.name] = object[field.name]
+      }
+
       return fieldValues
     },
     {},
