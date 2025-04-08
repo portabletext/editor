@@ -21,7 +21,11 @@ Behaviors are defined with the `defineBehavior` helper. Here's an example event 
 defineBehavior({
   on: 'insert.text',
   guard: ({snapshot, event}) => event.text === 'a',
-  actions: [({snapshot, event}) => [{type: 'insert.text', text: 'A'}]],
+  actions: [
+    ({snapshot, event}) => [
+      {type: 'execute', event: {type: 'insert.text', text: 'A'}},
+    ],
+  ],
 })
 ```
 
@@ -35,10 +39,12 @@ Revisiting the three step process above:
 
 Whenever you enter text into the editor, activate a toolbar button, or anything else happens in the editor it sends an event.
 
-There are two categories of Behavior Events:
+There are four categories of Behavior Events:
 
 - Native Events: Events that come from the browser or device directly.
-- Synthetic Events: Abstracted events specific to the editor.
+- Abstract Events: Intermediate events that resolve to Synthetic Events.
+- Synthetic Events: Low-level editor-specific events.
+- Custom Events: Events that you create yourself.
 
 <LinkCard
   title="Behavior API reference"
@@ -49,7 +55,7 @@ There are two categories of Behavior Events:
 The Behavior API uses events to trigger actions by listening for a specific event.
 
 :::note
-Synthetic events have default actions that share their name. Only one behavior per event is allowed to alter the default action.
+All events except native events can be executed or raised from within behaviors, but only synthetic events are guaranteed to resolve into a state change.
 :::
 
 ## Guards
@@ -87,7 +93,7 @@ Guards are optional. This means it's possible to create an unconditional behavio
 ```js
 const softReturn = defineBehavior({
   on: 'insert.soft break',
-  actions: [() => [{type: 'insert.text', text: '\n'}]],
+  actions: [() => [execute({type: 'insert.text', text: '\n'})]],
 })
 ```
 
@@ -103,7 +109,7 @@ So far we've only seen examples that invoke a single action, but you can send mu
 
 ### Raise events within actions
 
-While some actions share names with events, it's important to remember that actions don't send events. To send an event with an action, use the `raise` action type or the `raise` helper. This is useful for chaining behaviors and default events.
+To send an event back into the editor, use the `raise` action type or the `raise` helper. This is useful for chaining behaviors and default events.
 
 ```tsx
 // Approach A: With the type set to 'raise'
