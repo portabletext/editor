@@ -372,7 +372,7 @@ function parseObject({
       const fieldValue = object[field.name]
 
       if (fieldValue !== undefined) {
-        fieldValues[field.name] = object[field.name]
+        fieldValues[field.name] = fieldValue
       }
 
       return fieldValues
