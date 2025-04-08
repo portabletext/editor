@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.45.3](https://github.com/portabletext/editor/compare/editor-v1.45.2...editor-v1.45.3) (2025-04-08)
+
+
+### Bug Fixes
+
+* avoid fields with `undefined` values on objects ([313b46e](https://github.com/portabletext/editor/commit/313b46e7c805aafbe2cb7d8117490a7c7df55a55))
+* **deps:** update sanity monorepo to ^3.83.0 ([0b67d87](https://github.com/portabletext/editor/commit/0b67d8780b680960c6bcf0f651ae9aa97e27c356))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.17
+
 ## [1.45.2](https://github.com/portabletext/editor/compare/editor-v1.45.1...editor-v1.45.2) (2025-04-08)
 
 
