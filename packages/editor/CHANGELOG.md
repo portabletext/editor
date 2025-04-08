@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.45.2](https://github.com/portabletext/editor/compare/editor-v1.45.1...editor-v1.45.2) (2025-04-08)
+
+
+### Bug Fixes
+
+* allow `insert.text` without a selection ([39d77e1](https://github.com/portabletext/editor/commit/39d77e16c56a04ca8ffae5c182df25731f7b4515))
+* turn `delete.text` into an abstract event ([992bbce](https://github.com/portabletext/editor/commit/992bbce514f087f4572ad1800186385d13248e55))
+
 ## [1.45.1](https://github.com/portabletext/editor/compare/editor-v1.45.0...editor-v1.45.1) (2025-04-07)
 
 
