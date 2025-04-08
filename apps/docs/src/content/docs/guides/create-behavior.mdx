@@ -31,15 +31,15 @@ Here's an example behavior:
 const noLowerCaseA = defineBehavior({
   on: 'insert.text',
   guard: ({event}) => event.text === 'a',
-  actions: [() => [{type: 'insert.text', text: 'A'}]],
+  actions: [() => [{type: 'execute', event: {type: 'insert.text', text: 'A'}}]],
 })
 ```
 
 Let's break it down:
 
-1. It listens for the `insert.text` event. You can use any [native or synthetic event](/reference/behavior-api#behavior-event-types) here.
+1. It listens for the `insert.text` event. You can use any [native, abstract, synthetic or custom event](/reference/behavior-api#behavior-event-types) here.
 2. The guard checks if the text that triggered this event is equal to a lowercase `a`. The guard is true and the behavior will perform the actions.
-3. It sends an `insert.text` action with with "A" instead of "a".
+3. It sends an `execute` action with an `insert.text` event to insert "A" instead of "a".
 
 <LinkCard
   title="Understanding Behaviors"
@@ -49,15 +49,16 @@ Let's break it down:
 
 ## Register the behavior
 
-In order to use the behavior, add it to the `EditorProvider`. If you want to avoid overwriting the default behaviors, import them and register them with your custom behavior.
+In order to use the behavior, add it to the `EditorProvider` using the `BehaviorPlugin`.
 
 ```tsx
-import {coreBehaviors, defineBehavior} from '@portabletext/editor/behaviors'
+import {defineBehavior} from '@portabletext/editor/behaviors'
+import {BehaviorPlugin} from '@portabletext/editor/plugins'
 
 const noLowerCaseA = defineBehavior({
     on: 'insert.text',
     guard: ({event}) => event.text === 'a',
-    actions: [() => [{type: 'insert.text', text: 'A'}]],
+    actions: [() => [{type: 'execute', event: {type: 'insert.text', text: 'A'}}]],
 })
 
 // ...
@@ -65,12 +66,9 @@ const noLowerCaseA = defineBehavior({
 <EditorProvider
     initialConfig={{
         schemaDefinition,
-        behaviors: [
-            ...coreBehaviors,
-            noLowerCaseA,
-        ]
     }}
 >
+    <BehaviorPlugin behaviors={[noLowerCaseA]} />
     {/* ... */}
 </EditorProvider>
 ```
