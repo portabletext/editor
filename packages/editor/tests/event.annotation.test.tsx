@@ -1,3 +1,4 @@
+import type {PortableTextTextBlock} from '@sanity/types'
 import {page, userEvent} from '@vitest/browser/context'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
@@ -116,5 +117,69 @@ describe('event.annotation', () => {
     expect(
       getTextMarks(editorRef.current?.getSnapshot().context.value, 'Hello'),
     ).toEqual(['k5'])
+  })
+
+  test('Scenario: Adding annotation without any initial fields', async () => {
+    const editorRef = React.createRef<Editor>()
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator: createTestKeyGenerator(),
+          schemaDefinition: defineSchema({
+            annotations: [
+              {name: 'link', fields: [{name: 'href', type: 'string'}]},
+            ],
+          }),
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <PortableTextEditable />
+      </EditorProvider>,
+    )
+
+    const locator = page.getByRole('textbox')
+
+    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+
+    await userEvent.click(locator)
+    await userEvent.fill(locator, 'Hello, world!')
+
+    editorRef.current?.send({
+      type: 'select',
+      at: getTextSelection(
+        editorRef.current?.getSnapshot().context.value,
+        'Hello, world!',
+      ),
+    })
+
+    editorRef.current?.send({
+      type: 'annotation.add',
+      annotation: {name: 'link', value: {}},
+    })
+
+    expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      {
+        _key: 'k0',
+        _type: 'block',
+        children: [
+          {_key: 'k1', _type: 'span', text: 'Hello, world!', marks: ['k2']},
+        ],
+        markDefs: [
+          {
+            _key: 'k2',
+            _type: 'link',
+          },
+        ],
+        style: 'normal',
+      },
+    ])
+
+    const markDef = (
+      editorRef.current?.getSnapshot().context
+        .value?.[0] as PortableTextTextBlock
+    )?.markDefs?.[0]
+
+    expect(Object.keys(markDef ?? {})).toEqual(['_type', '_key'])
   })
 })
