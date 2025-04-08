@@ -1,7 +1,8 @@
+import {Transforms} from 'slate'
 import type {BehaviorActionImplementation} from './behavior.actions'
 
 export const insertTextActionImplementation: BehaviorActionImplementation<
   'insert.text'
 > = ({action}) => {
-  action.editor.insertText(action.text)
+  Transforms.insertText(action.editor, action.text)
 }
