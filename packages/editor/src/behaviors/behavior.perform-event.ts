@@ -128,6 +128,7 @@ export function performEvent({
           },
           action: defaultAction,
         })
+        editor.onChange()
       } catch (error) {
         console.error(
           new Error(
@@ -136,11 +137,10 @@ export function performEvent({
         )
       }
     })
-    editor.onChange()
     return
   }
 
-  const editorSnapshot = getSnapshot()
+  const guardSnapshot = getSnapshot()
 
   let behaviorOverwritten = false
 
@@ -148,8 +148,8 @@ export function performEvent({
     const shouldRun =
       eventBehavior.guard === undefined ||
       eventBehavior.guard({
-        context: editorSnapshot.context,
-        snapshot: editorSnapshot,
+        context: guardSnapshot.context,
+        snapshot: guardSnapshot,
         event,
       })
 
@@ -157,28 +157,28 @@ export function performEvent({
       continue
     }
 
-    const actionSets = eventBehavior.actions.map((actionSet) =>
-      actionSet(
+    for (const actionSet of eventBehavior.actions) {
+      const actionsSnapshot = getSnapshot()
+
+      const actions = actionSet(
         {
-          context: editorSnapshot.context,
-          snapshot: editorSnapshot,
+          context: actionsSnapshot.context,
+          snapshot: actionsSnapshot,
           event,
         },
         shouldRun,
-      ),
-    )
+      )
 
-    for (const actionSet of actionSets) {
-      if (actionSet.length === 0) {
+      if (actions.length === 0) {
         continue
       }
 
       behaviorOverwritten =
         behaviorOverwritten ||
-        actionSet.some((action) => action.type !== 'effect')
+        actions.some((action) => action.type !== 'effect')
 
       withApplyingBehaviorActionSet(editor, () => {
-        for (const action of actionSet) {
+        for (const action of actions) {
           if (action.type === 'raise') {
             performEvent({
               behaviors,
@@ -216,8 +216,8 @@ export function performEvent({
             break
           }
         }
+        editor.onChange()
       })
-      editor.onChange()
     }
 
     if (behaviorOverwritten) {
@@ -255,6 +255,7 @@ export function performEvent({
           },
           action: defaultAction,
         })
+        editor.onChange()
       } catch (error) {
         console.error(
           new Error(
@@ -263,6 +264,5 @@ export function performEvent({
         )
       }
     })
-    editor.onChange()
   }
 }
