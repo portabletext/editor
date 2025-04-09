@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.45.4](https://github.com/portabletext/editor/compare/editor-v1.45.3...editor-v1.45.4) (2025-04-09)
+
+
+### Bug Fixes
+
+* **behaviors:** provide each action set with a new snapshot ([655634e](https://github.com/portabletext/editor/commit/655634e2f31d9b2f3dae87b8f26f05a7ffc88ef8))
+* **behaviors:** remove deprecated `context` ([b7445e9](https://github.com/portabletext/editor/commit/b7445e943109ffa702872ba7c73177b8eed99cc9))
+
 ## [1.45.3](https://github.com/portabletext/editor/compare/editor-v1.45.2...editor-v1.45.3) (2025-04-08)
 
 
