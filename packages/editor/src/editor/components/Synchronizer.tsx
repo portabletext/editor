@@ -25,7 +25,10 @@ export interface SynchronizerProps {
 export function Synchronizer(props: SynchronizerProps) {
   const {editorActor, slateEditor} = props
 
-  const value = useSelector(props.editorActor, (s) => s.context.value)
+  const incomingValue = useSelector(
+    props.editorActor,
+    (s) => s.context.incomingValue,
+  )
   const readOnly = useSelector(props.editorActor, (s) =>
     s.matches({'edit mode': 'read only'}),
   )
@@ -110,8 +113,8 @@ export function Synchronizer(props: SynchronizerProps) {
 
   useEffect(() => {
     debug('Value from props changed, syncing new value')
-    syncActorRef.send({type: 'update value', value})
-  }, [syncActorRef, value])
+    syncActorRef.send({type: 'update value', value: incomingValue})
+  }, [syncActorRef, incomingValue])
 
   // Subscribe to, and handle changes from the editor
   useEffect(() => {

@@ -213,7 +213,7 @@ export const editorMachine = setup({
       initialReadOnly: boolean
       maxBlocks: number | undefined
       selection: EditorSelection
-      value: Array<PortableTextBlock> | undefined
+      incomingValue: Array<PortableTextBlock> | undefined
       internalDrag?: {
         ghost?: HTMLElement
         origin: Pick<EventPosition, 'selection'>
@@ -228,7 +228,7 @@ export const editorMachine = setup({
       maxBlocks?: number
       readOnly?: boolean
       schema: EditorSchema
-      value?: Array<PortableTextBlock>
+      initialValue?: Array<PortableTextBlock>
     },
     tags: {} as 'dragging internally',
   },
@@ -331,7 +331,7 @@ export const editorMachine = setup({
     selection: null,
     initialReadOnly: input.readOnly ?? false,
     maxBlocks: input.maxBlocks,
-    value: input.value,
+    incomingValue: input.initialValue,
   }),
   on: {
     'notify.blurred': {
@@ -365,7 +365,9 @@ export const editorMachine = setup({
       actions: assign({keyGenerator: ({event}) => event.keyGenerator}),
     },
     'update schema': {actions: 'assign schema'},
-    'update value': {actions: assign({value: ({event}) => event.value})},
+    'update value': {
+      actions: assign({incomingValue: ({event}) => event.value}),
+    },
     'update maxBlocks': {
       actions: assign({maxBlocks: ({event}) => event.maxBlocks}),
     },
