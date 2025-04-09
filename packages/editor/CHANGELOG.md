@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.46.0](https://github.com/portabletext/editor/compare/editor-v1.45.4...editor-v1.46.0) (2025-04-09)
+
+
+### Features
+
+* **behaviors:** replace Synthetic Event Actions with `execute(...)` ([08300ec](https://github.com/portabletext/editor/commit/08300ec3d3104e8776e20e96b4895f9bcba65f5a))
+
 ## [1.45.4](https://github.com/portabletext/editor/compare/editor-v1.45.3...editor-v1.45.4) (2025-04-09)
 
 
