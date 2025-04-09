@@ -1,4 +1,4 @@
-import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
+import type {EditorSnapshot} from '../editor/editor-snapshot'
 import type {OmitFromUnion, PickFromUnion} from '../type-utils'
 import type {PortableTextSlateEditor} from '../types/editor'
 import type {
@@ -41,11 +41,6 @@ export function raise(
  */
 export type BehaviorActionSet<TBehaviorEvent, TGuardResponse> = (
   payload: {
-    /**
-     * @deprecated
-     * Use `snapshot` instead
-     */
-    context: EditorContext
     snapshot: EditorSnapshot
     event: TBehaviorEvent
   },

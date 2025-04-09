@@ -148,7 +148,6 @@ export function performEvent({
     const shouldRun =
       eventBehavior.guard === undefined ||
       eventBehavior.guard({
-        context: guardSnapshot.context,
         snapshot: guardSnapshot,
         event,
       })
@@ -162,7 +161,6 @@ export function performEvent({
 
       const actions = actionSet(
         {
-          context: actionsSnapshot.context,
           snapshot: actionsSnapshot,
           event,
         },
