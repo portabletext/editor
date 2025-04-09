@@ -116,7 +116,7 @@ function editorConfigToMachineInput(config: EditorConfig) {
             ? config.schema
             : compileType(config.schema),
         ),
-    value: config.initialValue,
+    initialValue: config.initialValue,
   } as const
 }
 
