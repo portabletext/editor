@@ -7,7 +7,7 @@ function snapshot(selection: EditorSelection) {
   return createTestSnapshot({
     context: {
       selection,
-      value: [
+      value: () => [
         {_type: 'image', _key: 'k0'},
         {
           _type: 'block',

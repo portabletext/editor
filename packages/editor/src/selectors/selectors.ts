@@ -25,7 +25,7 @@ export const getFocusBlock: EditorSelector<
     : undefined
 
   const node = key
-    ? snapshot.context.value.find((block) => block._key === key)
+    ? snapshot.context.value().find((block) => block._key === key)
     : undefined
 
   return node && key ? {node, path: [{_key: key}]} : undefined
@@ -122,7 +122,7 @@ export const getFocusSpan: EditorSelector<
 export const getFirstBlock: EditorSelector<
   {node: PortableTextBlock; path: [KeyedSegment]} | undefined
 > = (snapshot) => {
-  const node = snapshot.context.value[0]
+  const node = snapshot.context.value()[0]
 
   return node ? {node, path: [{_key: node._key}]} : undefined
 }
@@ -133,8 +133,8 @@ export const getFirstBlock: EditorSelector<
 export const getLastBlock: EditorSelector<
   {node: PortableTextBlock; path: [KeyedSegment]} | undefined
 > = (snapshot) => {
-  const node = snapshot.context.value[snapshot.context.value.length - 1]
-    ? snapshot.context.value[snapshot.context.value.length - 1]
+  const node = snapshot.context.value()[snapshot.context.value().length - 1]
+    ? snapshot.context.value()[snapshot.context.value().length - 1]
     : undefined
 
   return node ? {node, path: [{_key: node._key}]} : undefined
@@ -171,7 +171,7 @@ export const getSelectedBlocks: EditorSelector<
     return selectedBlocks
   }
 
-  for (const block of snapshot.context.value) {
+  for (const block of snapshot.context.value()) {
     if (block._key === startKey) {
       selectedBlocks.push({node: block, path: [{_key: block._key}]})
 
@@ -217,7 +217,7 @@ export const getSelectionStartBlock: EditorSelector<
       : undefined
 
   const node = key
-    ? snapshot.context.value.find((block) => block._key === key)
+    ? snapshot.context.value().find((block) => block._key === key)
     : undefined
 
   return node && key ? {node, path: [{_key: key}]} : undefined
@@ -246,7 +246,7 @@ export const getSelectionEndBlock: EditorSelector<
       : undefined
 
   const node = key
-    ? snapshot.context.value.find((block) => block._key === key)
+    ? snapshot.context.value().find((block) => block._key === key)
     : undefined
 
   return node && key ? {node, path: [{_key: key}]} : undefined
@@ -267,7 +267,7 @@ export const getPreviousBlock: EditorSelector<
 
   let foundSelectionStartBlock = false
 
-  for (const block of snapshot.context.value) {
+  for (const block of snapshot.context.value()) {
     if (block._key === selectionStartBlock.node._key) {
       foundSelectionStartBlock = true
       break
@@ -298,7 +298,7 @@ export const getNextBlock: EditorSelector<
 
   let foundSelectionEndBlock = false
 
-  for (const block of snapshot.context.value) {
+  for (const block of snapshot.context.value()) {
     if (block._key === selectionEndBlock.node._key) {
       foundSelectionEndBlock = true
       continue

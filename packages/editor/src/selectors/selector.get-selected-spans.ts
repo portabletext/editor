@@ -52,7 +52,7 @@ export const getSelectedSpans: EditorSelector<
 
   let startBlockFound = false
 
-  for (const block of snapshot.context.value) {
+  for (const block of snapshot.context.value()) {
     if (block._key === startBlockKey) {
       startBlockFound = true
     }

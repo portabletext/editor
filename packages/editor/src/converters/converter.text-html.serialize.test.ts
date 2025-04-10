@@ -81,7 +81,7 @@ function createSnapshot(schema: SchemaDefinition, selection: EditorSelection) {
       converters: coreConverters,
       schema: compileSchemaDefinition(schema),
       selection,
-      value: [decoratedParagraph, image, b2, paragraphWithInlineBlock],
+      value: () => [decoratedParagraph, image, b2, paragraphWithInlineBlock],
     },
   })
 }
@@ -178,7 +178,7 @@ describe(converterTextHtml.serialize.name, () => {
         snapshot: createTestSnapshot({
           context: {
             converters: coreConverters,
-            value: [
+            value: () => [
               {
                 _key: 'k0',
                 _type: 'block',

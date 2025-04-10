@@ -10,7 +10,7 @@ test(isActiveDecorator.name, () => {
   ) {
     return createTestSnapshot({
       context: {
-        value,
+        value: () => value,
         selection,
       },
     })

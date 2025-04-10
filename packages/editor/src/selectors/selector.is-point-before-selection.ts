@@ -38,7 +38,7 @@ export function isPointBeforeSelection(
 
     let before = false
 
-    for (const block of snapshot.context.value) {
+    for (const block of snapshot.context.value()) {
       if (block._key === pointBlockKey) {
         if (block._key !== startBlockKey) {
           before = true

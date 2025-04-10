@@ -15,7 +15,7 @@ export const getAnchorBlock: EditorSelector<
     : undefined
 
   const node = key
-    ? snapshot.context.value.find((block) => block._key === key)
+    ? snapshot.context.value().find((block) => block._key === key)
     : undefined
 
   return node && key ? {node, path: [{_key: key}]} : undefined

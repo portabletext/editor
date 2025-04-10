@@ -53,7 +53,7 @@ describe('Behavior API', () => {
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
       expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
+        getTersePt(editorRef.current?.getSnapshot().context.value()),
       ).toEqual(['a'])
     })
   })
@@ -102,7 +102,7 @@ describe('Behavior API', () => {
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
       expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
+        getTersePt(editorRef.current?.getSnapshot().context.value()),
       ).toEqual(['b'])
     })
   })
@@ -153,7 +153,7 @@ describe('Behavior API', () => {
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
       expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
+        getTersePt(editorRef.current?.getSnapshot().context.value()),
       ).toEqual(['b'])
     })
   })
@@ -190,7 +190,7 @@ describe('Behavior API', () => {
 
     await vi.waitFor(() => {
       expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
+        getTersePt(editorRef.current?.getSnapshot().context.value()),
       ).toEqual(['Hello, world!'])
     })
   })
@@ -229,7 +229,7 @@ describe('Behavior API', () => {
 
     await vi.waitFor(() => {
       expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
+        getTersePt(editorRef.current?.getSnapshot().context.value()),
       ).toEqual(['Hello, world!'])
     })
   })
@@ -279,7 +279,7 @@ describe('Behavior API', () => {
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
       expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
+        getTersePt(editorRef.current?.getSnapshot().context.value()),
       ).toEqual(['b'])
     })
   })
@@ -319,7 +319,7 @@ describe('Behavior API', () => {
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
       expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
+        getTersePt(editorRef.current?.getSnapshot().context.value()),
       ).toEqual(['b'])
     })
   })
@@ -359,7 +359,7 @@ describe('Behavior API', () => {
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
       expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
+        getTersePt(editorRef.current?.getSnapshot().context.value()),
       ).toEqual([''])
     })
   })

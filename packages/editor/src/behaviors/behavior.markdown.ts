@@ -88,7 +88,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
 
       const previousInlineObject = selectors.getPreviousInlineObject(snapshot)
       const blockOffset = spanSelectionPointToBlockOffset({
-        value: snapshot.context.value,
+        value: snapshot.context.value(),
         selectionPoint: {
           path: [
             {_key: focusTextBlock.node._key},
@@ -297,7 +297,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       }
 
       const blockOffset = spanSelectionPointToBlockOffset({
-        value: snapshot.context.value,
+        value: snapshot.context.value(),
         selectionPoint: {
           path: [
             {_key: focusTextBlock.node._key},
@@ -424,7 +424,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
 
       const previousInlineObject = selectors.getPreviousInlineObject(snapshot)
       const blockOffset = spanSelectionPointToBlockOffset({
-        value: snapshot.context.value,
+        value: snapshot.context.value(),
         selectionPoint: {
           path: [
             {_key: focusTextBlock.node._key},

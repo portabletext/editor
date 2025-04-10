@@ -35,7 +35,7 @@ export const getCaretWordSelection: EditorSelector<EditorSelection> = (
   const selectionStartPoint = getSelectionStartPoint(snapshot)
   const selectionStartOffset = selectionStartPoint
     ? spanSelectionPointToBlockOffset({
-        value: snapshot.context.value,
+        value: snapshot.context.value(),
         selectionPoint: selectionStartPoint,
       })
     : undefined
@@ -97,12 +97,12 @@ export const getCaretWordSelection: EditorSelector<EditorSelection> = (
     : selectionStartOffset
 
   const caretWordStartSelectionPoint = blockOffsetToSpanSelectionPoint({
-    value: snapshot.context.value,
+    value: snapshot.context.value(),
     blockOffset: caretWordStartOffset,
     direction: 'backward',
   })
   const caretWordEndSelectionPoint = blockOffsetToSpanSelectionPoint({
-    value: snapshot.context.value,
+    value: snapshot.context.value(),
     blockOffset: caretWordEndOffset,
     direction: 'forward',
   })

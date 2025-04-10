@@ -18,7 +18,7 @@ export type EditorContext = {
   readOnly: boolean
   schema: EditorSchema
   selection: EditorSelection
-  value: Array<PortableTextBlock>
+  value: () => Array<PortableTextBlock>
 }
 
 /**
@@ -61,7 +61,6 @@ export function createEditorSnapshot({
       }
     | undefined
 }) {
-  const value = slateChildrenToBlocks(schema, editor)
   const selection = editor.selection
     ? slateRangeToSelection({
         schema,
@@ -80,7 +79,7 @@ export function createEditorSnapshot({
     readOnly,
     schema,
     selection,
-    value,
+    value: () => slateChildrenToBlocks(schema, editor),
   } satisfies EditorContext
 
   return {

@@ -7,7 +7,7 @@ import {getActiveAnnotations} from './selector.get-active-annotations'
 function snapshot(value: Array<PortableTextBlock>, selection: EditorSelection) {
   return createTestSnapshot({
     context: {
-      value,
+      value: () => value,
       selection,
     },
   })

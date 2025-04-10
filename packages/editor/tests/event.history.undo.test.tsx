@@ -56,7 +56,7 @@ describe('event.history.undo', () => {
 
     await vi.waitFor(() => {
       expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
+        getTersePt(editorRef.current?.getSnapshot().context.value()),
       ).toEqual(['y*z'])
     })
 
@@ -64,7 +64,7 @@ describe('event.history.undo', () => {
 
     await vi.waitFor(() => {
       expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
+        getTersePt(editorRef.current?.getSnapshot().context.value()),
       ).toEqual(['y*'])
     })
 
@@ -72,7 +72,7 @@ describe('event.history.undo', () => {
 
     await vi.waitFor(() => {
       expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
+        getTersePt(editorRef.current?.getSnapshot().context.value()),
       ).toEqual(['x'])
     })
 
@@ -80,7 +80,7 @@ describe('event.history.undo', () => {
 
     await vi.waitFor(() => {
       expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
+        getTersePt(editorRef.current?.getSnapshot().context.value()),
       ).toEqual([''])
     })
   })
@@ -131,7 +131,7 @@ describe('event.history.undo', () => {
 
     await vi.waitFor(() => {
       expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
+        getTersePt(editorRef.current?.getSnapshot().context.value()),
       ).toEqual(['yz'])
     })
 
@@ -139,7 +139,7 @@ describe('event.history.undo', () => {
 
     await vi.waitFor(() => {
       expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
+        getTersePt(editorRef.current?.getSnapshot().context.value()),
       ).toEqual([''])
     })
   })
@@ -187,7 +187,7 @@ describe('event.history.undo', () => {
 
     await vi.waitFor(() => {
       expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
+        getTersePt(editorRef.current?.getSnapshot().context.value()),
       ).toEqual(['B', '|', 'c'])
     })
 
@@ -195,7 +195,7 @@ describe('event.history.undo', () => {
 
     await vi.waitFor(() => {
       expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
+        getTersePt(editorRef.current?.getSnapshot().context.value()),
       ).toEqual([''])
     })
   })

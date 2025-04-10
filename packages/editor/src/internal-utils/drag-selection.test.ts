@@ -60,7 +60,7 @@ describe(getDragSelection.name, () => {
           defineSchema({blockObjects: [{name: 'image'}]}),
         ),
         selection,
-        value: [foo, baz, image],
+        value: () => [foo, baz, image],
       },
     })
   }

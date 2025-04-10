@@ -77,7 +77,7 @@ function createSnapshot({
       converters: coreConverters,
       schema: compileSchemaDefinition(schema),
       selection,
-      value: [b1, b2, b3, b4],
+      value: () => [b1, b2, b3, b4],
     },
   })
 }

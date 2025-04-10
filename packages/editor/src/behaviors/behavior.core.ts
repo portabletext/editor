@@ -19,17 +19,17 @@ export const coreBehaviors = [
   defineBehavior({
     on: 'keyboard.keydown',
     guard: ({snapshot, event}) => {
-      getPreviousBlock(snapshot)
-      getPreviousBlock(snapshot)
-      getPreviousBlock(snapshot)
-      getPreviousBlock(snapshot)
-      getPreviousBlock(snapshot)
-      getPreviousBlock(snapshot)
-      getPreviousBlock(snapshot)
-      getPreviousBlock(snapshot)
-      getPreviousBlock(snapshot)
-      getPreviousBlock(snapshot)
-      getPreviousBlock(snapshot)
+      //   getPreviousBlock(snapshot)
+      //   getPreviousBlock(snapshot)
+      //   getPreviousBlock(snapshot)
+      //   getPreviousBlock(snapshot)
+      //   getPreviousBlock(snapshot)
+      //   getPreviousBlock(snapshot)
+      //   getPreviousBlock(snapshot)
+      //   getPreviousBlock(snapshot)
+      //   getPreviousBlock(snapshot)
+      //   getPreviousBlock(snapshot)
+      //   getPreviousBlock(snapshot)
 
       if (isHotkey('ArrowDown', event.originEvent)) {
         return {_key: defaultKeyGenerator()}

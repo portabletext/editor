@@ -44,7 +44,7 @@ describe(getSelectedSpans.name, () => {
   ) {
     return createTestSnapshot({
       context: {
-        value,
+        value: () => value,
         selection,
       },
     })

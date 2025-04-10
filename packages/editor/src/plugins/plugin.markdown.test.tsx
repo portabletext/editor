@@ -40,14 +40,14 @@ describe(MarkdownPlugin.name, () => {
 
     await vi.waitFor(() => {
       expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
+        getTersePt(editorRef.current?.getSnapshot().context.value()),
       ).toEqual(['Hello world!'])
     })
 
     await vi.waitFor(() => {
       expect(
         getTextMarks(
-          editorRef.current!.getSnapshot().context.value,
+          editorRef.current!.getSnapshot().context.value(),
           'Hello world!',
         ),
       ).toEqual(['strong'])
@@ -57,7 +57,7 @@ describe(MarkdownPlugin.name, () => {
 
     await vi.waitFor(() => {
       expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
+        getTersePt(editorRef.current?.getSnapshot().context.value()),
       ).toEqual(['**Hello world!**'])
     })
   })
