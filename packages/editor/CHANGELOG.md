@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.47.0](https://github.com/portabletext/editor/compare/editor-v1.46.0...editor-v1.47.0) (2025-04-10)
+
+
+### Features
+
+* **behaviors:** add `move.backward` and `move.forward` events ([0f77f47](https://github.com/portabletext/editor/commit/0f77f476a12edb05879512a3517110517736b2a3))
+
 ## [1.46.0](https://github.com/portabletext/editor/compare/editor-v1.45.4...editor-v1.46.0) (2025-04-09)
 
 
