@@ -19,7 +19,7 @@ export const getBlockTextBefore: EditorSelector<string> = (snapshot) => {
   const key = isKeyedSegment(point.path[0]) ? point.path[0]._key : undefined
 
   const block = key
-    ? snapshot.context.value.find((block) => block._key === key)
+    ? snapshot.context.value().find((block) => block._key === key)
     : undefined
 
   if (!block) {

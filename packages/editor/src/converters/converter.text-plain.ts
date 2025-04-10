@@ -20,7 +20,7 @@ export const converterTextPlain = defineConverter({
     }
 
     const blocks = sliceBlocks({
-      blocks: snapshot.context.value,
+      blocks: snapshot.context.value(),
       selection,
     })
 

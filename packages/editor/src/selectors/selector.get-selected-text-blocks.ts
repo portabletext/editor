@@ -36,7 +36,7 @@ export const getSelectedTextBlocks: EditorSelector<
     return selectedTextBlocks
   }
 
-  for (const block of snapshot.context.value) {
+  for (const block of snapshot.context.value()) {
     if (block._key === startKey) {
       if (isTextBlock(snapshot.context.schema, block)) {
         selectedTextBlocks.push({node: block, path: [{_key: block._key}]})

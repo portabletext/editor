@@ -76,7 +76,7 @@ test(getSelectionText.name, () => {
             inlineObjects: [{name: 'stock-ticker'}],
           }),
         ),
-        value,
+        value: () => value,
         selection,
       },
     })

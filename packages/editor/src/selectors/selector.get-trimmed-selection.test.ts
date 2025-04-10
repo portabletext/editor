@@ -25,20 +25,21 @@ function snapshot(
       keyGenerator,
       schema,
       selection,
-      value: value.flatMap((block) => {
-        const parsedBlock = parseBlock({
-          context: {
-            keyGenerator,
-            schema,
-          },
-          block,
-          options: {
-            refreshKeys: false,
-          },
-        })
+      value: () =>
+        value.flatMap((block) => {
+          const parsedBlock = parseBlock({
+            context: {
+              keyGenerator,
+              schema,
+            },
+            block,
+            options: {
+              refreshKeys: false,
+            },
+          })
 
-        return parsedBlock ? [parsedBlock] : []
-      }),
+          return parsedBlock ? [parsedBlock] : []
+        }),
     },
   })
 }

@@ -8,7 +8,7 @@ export const abstractDeleteBehaviors = [
     on: 'delete.text',
     guard: ({snapshot, event}) => {
       const selection = utils.blockOffsetsToSelection({
-        value: snapshot.context.value,
+        value: snapshot.context.value(),
         offsets: event.at,
       })
 
@@ -24,7 +24,7 @@ export const abstractDeleteBehaviors = [
           keyGenerator: snapshot.context.keyGenerator,
           activeDecorators: [],
           readOnly: false,
-          value: snapshot.context.value,
+          value: () => snapshot.context.value(),
           selection,
         },
       })

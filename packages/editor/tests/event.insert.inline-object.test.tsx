@@ -59,8 +59,9 @@ describe('event.insert.inline object', () => {
     expect(
       Object.keys(
         (
-          editorRef.current?.getSnapshot().context
-            .value?.[0] as PortableTextTextBlock
+          editorRef.current
+            ?.getSnapshot()
+            .context.value()?.[0] as PortableTextTextBlock
         ).children?.[1],
       ),
     ).toEqual(['_key', '_type'])

@@ -49,7 +49,7 @@ describe('event.annotation', () => {
     editorRef.current?.send({
       type: 'select',
       at: getTextSelection(
-        editorRef.current?.getSnapshot().context.value,
+        editorRef.current?.getSnapshot().context.value(),
         'world',
       ),
     })
@@ -67,7 +67,7 @@ describe('event.annotation', () => {
     editorRef.current?.send({
       type: 'select',
       at: getTextSelection(
-        editorRef.current?.getSnapshot().context.value,
+        editorRef.current?.getSnapshot().context.value(),
         'Hello',
       ),
     })
@@ -82,23 +82,20 @@ describe('event.annotation', () => {
       },
     })
 
-    expect(getTersePt(editorRef.current?.getSnapshot().context.value)).toEqual([
-      'Hello',
-      ', ',
-      'world',
-      '!',
-    ])
     expect(
-      getTextMarks(editorRef.current?.getSnapshot().context.value, 'Hello'),
+      getTersePt(editorRef.current?.getSnapshot().context.value()),
+    ).toEqual(['Hello', ', ', 'world', '!'])
+    expect(
+      getTextMarks(editorRef.current?.getSnapshot().context.value(), 'Hello'),
     ).toEqual(['k5'])
     expect(
-      getTextMarks(editorRef.current?.getSnapshot().context.value, 'world'),
+      getTextMarks(editorRef.current?.getSnapshot().context.value(), 'world'),
     ).toEqual(['k2'])
 
     editorRef.current?.send({
       type: 'select',
       at: getSelectionBeforeText(
-        editorRef.current?.getSnapshot().context.value,
+        editorRef.current?.getSnapshot().context.value(),
         'ld',
       ),
     })
@@ -110,12 +107,11 @@ describe('event.annotation', () => {
       },
     })
 
-    expect(getTersePt(editorRef.current?.getSnapshot().context.value)).toEqual([
-      'Hello',
-      ', world!',
-    ])
     expect(
-      getTextMarks(editorRef.current?.getSnapshot().context.value, 'Hello'),
+      getTersePt(editorRef.current?.getSnapshot().context.value()),
+    ).toEqual(['Hello', ', world!'])
+    expect(
+      getTextMarks(editorRef.current?.getSnapshot().context.value(), 'Hello'),
     ).toEqual(['k5'])
   })
 
@@ -148,7 +144,7 @@ describe('event.annotation', () => {
     editorRef.current?.send({
       type: 'select',
       at: getTextSelection(
-        editorRef.current?.getSnapshot().context.value,
+        editorRef.current?.getSnapshot().context.value(),
         'Hello, world!',
       ),
     })
@@ -158,7 +154,7 @@ describe('event.annotation', () => {
       annotation: {name: 'link', value: {}},
     })
 
-    expect(editorRef.current?.getSnapshot().context.value).toEqual([
+    expect(editorRef.current?.getSnapshot().context.value()).toEqual([
       {
         _key: 'k0',
         _type: 'block',
@@ -176,8 +172,9 @@ describe('event.annotation', () => {
     ])
 
     const markDef = (
-      editorRef.current?.getSnapshot().context
-        .value?.[0] as PortableTextTextBlock
+      editorRef.current
+        ?.getSnapshot()
+        .context.value()?.[0] as PortableTextTextBlock
     )?.markDefs?.[0]
 
     expect(Object.keys(markDef ?? {})).toEqual(['_type', '_key'])

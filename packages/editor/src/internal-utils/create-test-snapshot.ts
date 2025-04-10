@@ -14,7 +14,7 @@ export function createTestSnapshot(snapshot: {
       keyGenerator: snapshot.context?.keyGenerator ?? createTestKeyGenerator(),
       activeDecorators: snapshot.context?.activeDecorators ?? [],
       readOnly: snapshot.context?.readOnly ?? false,
-      value: snapshot.context?.value ?? [],
+      value: snapshot.context?.value ?? (() => []),
       selection: snapshot.context?.selection ?? null,
     },
     beta: {

@@ -1,3 +1,4 @@
+import type {PortableTextBlock} from '@sanity/types'
 import {page, userEvent} from '@vitest/browser/context'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
@@ -18,8 +19,7 @@ describe('EditorSnapshot', () => {
     const editorRef = React.createRef<Editor>()
     const inspectSelection =
       vi.fn<(selection: EditorSnapshot['context']['selection']) => void>()
-    const inspectValue =
-      vi.fn<(value: EditorSnapshot['context']['value']) => void>()
+    const inspectValue = vi.fn<(value: Array<PortableTextBlock>) => void>()
 
     render(
       <EditorProvider
@@ -38,7 +38,7 @@ describe('EditorSnapshot', () => {
               actions: [
                 ({snapshot}) => {
                   inspectSelection(snapshot.context.selection)
-                  inspectValue(snapshot.context.value)
+                  inspectValue(snapshot.context.value())
                   return [
                     execute({
                       type: 'insert.text',
@@ -48,7 +48,7 @@ describe('EditorSnapshot', () => {
                 },
                 ({snapshot}) => {
                   inspectSelection(snapshot.context.selection)
-                  inspectValue(snapshot.context.value)
+                  inspectValue(snapshot.context.value())
                   return [
                     execute({
                       type: 'insert.text',

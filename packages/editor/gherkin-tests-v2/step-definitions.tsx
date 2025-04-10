@@ -90,7 +90,7 @@ export const stepDefinitions = [
       actorRef: editorActorRef as React.RefObject<EditorActor>,
       slateRef: slateRef as React.RefObject<PortableTextSlateEditor>,
       locator,
-      value: () => editorRef.current?.getSnapshot().context.value ?? [],
+      value: () => editorRef.current!.getSnapshot().context.value() ?? [],
       snapshot: () => editorRef.current!.getSnapshot(),
       selection: () =>
         editorRef.current?.getSnapshot().context.selection ?? null,

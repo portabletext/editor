@@ -66,7 +66,7 @@ describe('event.split.block', () => {
     editorRef.current?.send({
       type: 'select',
       at: getSelectionAfterText(
-        editorRef.current.getSnapshot().context.value,
+        editorRef.current.getSnapshot().context.value(),
         'foo',
       ),
     })

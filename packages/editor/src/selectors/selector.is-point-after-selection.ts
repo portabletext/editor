@@ -38,7 +38,7 @@ export function isPointAfterSelection(
 
     let after = false
 
-    for (const block of snapshot.context.value) {
+    for (const block of snapshot.context.value()) {
       if (block._key === endBlockKey) {
         if (block._key !== pointBlockKey) {
           after = true

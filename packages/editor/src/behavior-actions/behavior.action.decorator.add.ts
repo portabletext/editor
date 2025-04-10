@@ -101,7 +101,7 @@ export const decoratorAddActionImplementation: BehaviorActionImplementation<
         readOnly: false,
         schema: context.schema,
         selection: newSelection,
-        value: newValue,
+        value: () => newValue,
       },
     })
 

@@ -7,5 +7,5 @@ import type {EditorSelector} from '../editor/editor-selector'
 export const getValue: EditorSelector<Array<PortableTextBlock>> = (
   snapshot,
 ) => {
-  return snapshot.context.value
+  return snapshot.context.value()
 }

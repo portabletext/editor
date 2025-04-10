@@ -125,7 +125,7 @@ describe('event.block.unset', () => {
         },
       ])
       expect(
-        editorRef.current?.getSnapshot().context.value[0]._key,
+        editorRef.current?.getSnapshot().context.value()[0]._key,
       ).not.toEqual(urlBlockKey)
     })
   })
@@ -248,7 +248,7 @@ describe('event.block.unset', () => {
           _type: 'block',
         },
       ])
-      expect(editorRef.current?.getSnapshot().context.value[0].listItem).toBe(
+      expect(editorRef.current?.getSnapshot().context.value()[0].listItem).toBe(
         undefined,
       )
     })
