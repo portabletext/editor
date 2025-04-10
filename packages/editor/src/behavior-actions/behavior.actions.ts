@@ -24,7 +24,9 @@ import {insertInlineObjectActionImplementation} from './behavior.action.insert-i
 import {insertSpanActionImplementation} from './behavior.action.insert-span'
 import {insertBlockActionImplementation} from './behavior.action.insert.block'
 import {insertTextActionImplementation} from './behavior.action.insert.text'
+import {moveBackwardActionImplementation} from './behavior.action.move.backward'
 import {moveBlockActionImplementation} from './behavior.action.move.block'
+import {moveForwardActionImplementation} from './behavior.action.move.forward'
 import {noopActionImplementation} from './behavior.action.noop'
 import {selectActionImplementation} from './behavior.action.select'
 import {splitBlockActionImplementation} from './behavior.action.split.block'
@@ -71,7 +73,9 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'insert.span': insertSpanActionImplementation,
   'insert.text': insertTextActionImplementation,
   'effect': effectActionImplementation,
+  'move.backward': moveBackwardActionImplementation,
   'move.block': moveBlockActionImplementation,
+  'move.forward': moveForwardActionImplementation,
   'noop': noopActionImplementation,
   'select': selectActionImplementation,
   'split.block': splitBlockActionImplementation,
@@ -220,8 +224,22 @@ export function performAction({
       })
       break
     }
+    case 'move.backward': {
+      behaviorActionImplementations['move.backward']({
+        context,
+        action,
+      })
+      break
+    }
     case 'move.block': {
       behaviorActionImplementations['move.block']({
+        context,
+        action,
+      })
+      break
+    }
+    case 'move.forward': {
+      behaviorActionImplementations['move.forward']({
         context,
         action,
       })

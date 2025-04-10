@@ -75,7 +75,9 @@ const syntheticBehaviorEventTypes = [
   'insert.block',
   'insert.span',
   'insert.text',
+  'move.backward',
   'move.block',
+  'move.forward',
   'select',
   'split.block',
 ] as const
@@ -179,9 +181,17 @@ export type SyntheticBehaviorEvent =
       text: string
     }
   | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'move.backward'>
+      distance: number
+    }
+  | {
       type: StrictExtract<SyntheticBehaviorEventType, 'move.block'>
       at: [KeyedSegment]
       to: [KeyedSegment]
+    }
+  | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'move.forward'>
+      distance: number
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'select'>
