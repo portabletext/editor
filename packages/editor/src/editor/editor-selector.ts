@@ -79,7 +79,7 @@ export function getEditorSnapshot({
       selection: editorActorSnapshot.context.selection,
       value: slateChildrenToBlocks(
         editorActorSnapshot.context.schema,
-        slateEditorInstance.children,
+        slateEditorInstance,
       ),
     },
     beta: {

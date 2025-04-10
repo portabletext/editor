@@ -1,11 +1,19 @@
 import type {PortableTextBlock} from '@sanity/types'
-import type {Descendant} from 'slate'
 import type {EditorSchema} from '../editor/define-schema'
+import {PortableTextSlateEditor} from '../types/editor'
+
+let lastChangeCount: number | undefined
+let lastBlocks: Array<PortableTextBlock> | undefined
 
 export function slateChildrenToBlocks(
   schema: EditorSchema,
-  value: Array<Descendant>,
+  editor: PortableTextSlateEditor,
 ): Array<PortableTextBlock> {
+  if (lastChangeCount === editor.changeCount && lastBlocks) {
+    return lastBlocks
+  }
+
+  const value = editor.children
   const blocks: Array<PortableTextBlock> = new Array(value.length)
 
   for (let blockIndex = 0; blockIndex < value.length; blockIndex++) {
@@ -44,6 +52,9 @@ export function slateChildrenToBlocks(
       children: processedChildren,
     }
   }
+
+  lastChangeCount = editor.changeCount
+  lastBlocks = blocks
 
   return blocks
 }

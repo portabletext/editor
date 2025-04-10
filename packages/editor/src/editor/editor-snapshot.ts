@@ -61,7 +61,7 @@ export function createEditorSnapshot({
       }
     | undefined
 }) {
-  const value = slateChildrenToBlocks(schema, editor.children)
+  const value = slateChildrenToBlocks(schema, editor)
   const selection = editor.selection
     ? slateRangeToSelection({
         schema,

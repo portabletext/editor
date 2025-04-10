@@ -40,6 +40,8 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
     subscriptions,
   })
 
+  instance.changeCount = 0
+
   KEY_TO_VALUE_ELEMENT.set(instance, {})
   KEY_TO_SLATE_ELEMENT.set(instance, {})
 
