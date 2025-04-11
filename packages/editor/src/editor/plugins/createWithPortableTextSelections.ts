@@ -3,6 +3,7 @@ import {debugWithName} from '../../internal-utils/debug'
 import {slateRangeToSelection} from '../../internal-utils/slate-utils'
 import {SLATE_TO_PORTABLE_TEXT_RANGE} from '../../internal-utils/weakMaps'
 import type {EditorSelection, PortableTextSlateEditor} from '../../types/editor'
+import {applyOpToPT} from '../apply-op-to-pt'
 import type {EditorActor} from '../editor-machine'
 
 const debug = debugWithName('plugin:withPortableTextSelections')
@@ -48,7 +49,18 @@ export function createWithPortableTextSelections(
       prevSelection = editor.selection
     }
 
-    const {onChange} = editor
+    const {apply, onChange} = editor
+
+    editor.apply = (operation) => {
+      const newValue = applyOpToPT({children: editor.value}, operation).children
+
+      // console.log(newValue)
+
+      editor.value = newValue
+
+      apply(operation)
+    }
+
     editor.onChange = () => {
       onChange()
       if (!editorActor.getSnapshot().matches({setup: 'setting up'})) {

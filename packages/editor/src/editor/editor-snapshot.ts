@@ -61,7 +61,7 @@ export function createEditorSnapshot({
       }
     | undefined
 }) {
-  const value = slateChildrenToBlocks(schema, editor.children)
+  // const value = slateChildrenToBlocks(schema, editor.children)
   const selection = editor.selection
     ? slateRangeToSelection({
         schema,
@@ -80,7 +80,7 @@ export function createEditorSnapshot({
     readOnly,
     schema,
     selection,
-    value,
+    value: editor.value,
   } satisfies EditorContext
 
   return {

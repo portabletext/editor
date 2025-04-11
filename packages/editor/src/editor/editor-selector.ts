@@ -77,10 +77,11 @@ export function getEditorSnapshot({
       readOnly: editorActorSnapshot.matches({'edit mode': 'read only'}),
       schema: editorActorSnapshot.context.schema,
       selection: editorActorSnapshot.context.selection,
-      value: slateChildrenToBlocks(
-        editorActorSnapshot.context.schema,
-        slateEditorInstance.children,
-      ),
+      value: slateEditorInstance.value,
+      // slateChildrenToBlocks(
+      //   editorActorSnapshot.context.schema,
+      //   slateEditorInstance.children,
+      // ),
     },
     beta: {
       hasTag: (tag) => editorActorSnapshot.hasTag(tag),
