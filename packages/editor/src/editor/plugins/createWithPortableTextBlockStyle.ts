@@ -1,18 +1,14 @@
 import {Editor, Path, Text as SlateText, Transforms} from 'slate'
 import {debugWithName} from '../../internal-utils/debug'
-import type {
-  PortableTextMemberSchemaTypes,
-  PortableTextSlateEditor,
-} from '../../types/editor'
+import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 
 const debug = debugWithName('plugin:withPortableTextBlockStyle')
 
 export function createWithPortableTextBlockStyle(
   editorActor: EditorActor,
-  types: PortableTextMemberSchemaTypes,
 ): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
-  const defaultStyle = types.styles[0].value
+  const defaultStyle = editorActor.getSnapshot().context.schema.styles[0].name
   return function withPortableTextBlockStyle(
     editor: PortableTextSlateEditor,
   ): PortableTextSlateEditor {

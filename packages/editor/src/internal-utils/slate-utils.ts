@@ -1,5 +1,5 @@
 import {Editor, Element, Node, Range, type Path, type Point} from 'slate'
-import type {EditorSchema} from '../editor/define-schema'
+import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
 import {fromSlateValue} from './values'
 

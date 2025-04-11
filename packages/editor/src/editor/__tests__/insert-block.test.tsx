@@ -12,9 +12,9 @@ const schema = Schema.compile({
     {
       name: 'portable-text',
       type: 'array',
-      of: [{type: 'block'}, {type: 'image'}],
+      of: [{type: 'block'}, {type: 'custom image'}],
     },
-    {name: 'image', type: 'object'},
+    {name: 'custom image', type: 'object'},
   ],
 }).get('portable-text')
 
@@ -71,7 +71,7 @@ describe(PortableTextEditor.insertBlock.name, () => {
     await waitFor(() => {
       if (editorRef.current) {
         const imageBlockType = editorRef.current.schemaTypes.blockObjects.find(
-          (object) => object.name === 'image',
+          (object) => object.name === 'custom image',
         )!
         PortableTextEditor.insertBlock(editorRef.current, imageBlockType)
       }
@@ -81,7 +81,7 @@ describe(PortableTextEditor.insertBlock.name, () => {
     await waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
-          {_key: 'bb', _type: 'image'},
+          {_key: 'bb', _type: 'custom image'},
         ])
       }
     })
@@ -140,7 +140,7 @@ describe(PortableTextEditor.insertBlock.name, () => {
     await waitFor(() => {
       if (editorRef.current) {
         const imageBlockType = editorRef.current.schemaTypes.blockObjects.find(
-          (object) => object.name === 'image',
+          (object) => object.name === 'custom image',
         )!
         PortableTextEditor.insertBlock(editorRef.current, imageBlockType)
       }
@@ -151,7 +151,7 @@ describe(PortableTextEditor.insertBlock.name, () => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           nonEmptyTextBlock,
-          {_key: 'bb', _type: 'image'},
+          {_key: 'bb', _type: 'custom image'},
         ])
       }
     })
@@ -174,7 +174,7 @@ describe(PortableTextEditor.insertBlock.name, () => {
     }
     const imageBlock: PortableTextBlock = {
       _key: 'bb',
-      _type: 'image',
+      _type: 'custom image',
     }
     const initialValue: Array<PortableTextBlock> = [emptyTextBlock, imageBlock]
     const onChange: (change: EditorChange) => void = vi.fn()
@@ -226,7 +226,7 @@ describe(PortableTextEditor.insertBlock.name, () => {
     await waitFor(() => {
       if (editorRef.current) {
         const imageBlockType = editorRef.current.schemaTypes.blockObjects.find(
-          (object) => object.name === 'image',
+          (object) => object.name === 'custom image',
         )!
         PortableTextEditor.insertBlock(editorRef.current, imageBlockType)
       }
@@ -236,8 +236,8 @@ describe(PortableTextEditor.insertBlock.name, () => {
     await waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
-          {_key: 'bc', _type: 'image'},
-          {_key: 'bb', _type: 'image'},
+          {_key: 'bc', _type: 'custom image'},
+          {_key: 'bb', _type: 'custom image'},
         ])
       }
     })

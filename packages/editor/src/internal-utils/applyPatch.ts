@@ -30,10 +30,8 @@ import {
   type Node,
   type Path as SlatePath,
 } from 'slate'
-import type {
-  PortableTextMemberSchemaTypes,
-  PortableTextSlateEditor,
-} from '../types/editor'
+import type {EditorSchema} from '../editor/editor-schema'
+import type {PortableTextSlateEditor} from '../types/editor'
 import {debugWithName} from './debug'
 import {toSlateValue} from './values'
 import {KEY_TO_SLATE_ELEMENT} from './weakMaps'
@@ -45,7 +43,7 @@ const debugVerbose = debug.enabled && true
  * Creates a function that can apply a patch onto a PortableTextSlateEditor.
  */
 export function createApplyPatch(
-  schemaTypes: PortableTextMemberSchemaTypes,
+  schema: EditorSchema,
 ): (editor: PortableTextSlateEditor, patch: Patch) => boolean {
   return (editor: PortableTextSlateEditor, patch: Patch): boolean => {
     let changed = false
@@ -61,7 +59,7 @@ export function createApplyPatch(
     try {
       switch (patch.type) {
         case 'insert':
-          changed = insertPatch(editor, patch, schemaTypes)
+          changed = insertPatch(editor, patch, schema)
           break
         case 'unset':
           changed = unsetPatch(editor, patch)
@@ -148,7 +146,7 @@ export function diffMatchPatch(
 function insertPatch(
   editor: PortableTextSlateEditor,
   patch: InsertPatch,
-  schemaTypes: PortableTextMemberSchemaTypes,
+  schema: EditorSchema,
 ) {
   const {
     block: targetBlock,
@@ -169,7 +167,7 @@ function insertPatch(
     const {items, position} = patch
     const blocksToInsert = toSlateValue(
       items as PortableTextBlock[],
-      {schemaTypes},
+      {schemaTypes: schema},
       KEY_TO_SLATE_ELEMENT.get(editor),
     ) as Descendant[]
     const targetBlockIndex = targetBlockPath[0]
@@ -191,7 +189,7 @@ function insertPatch(
     targetBlock &&
     toSlateValue(
       [{...targetBlock, children: items as PortableTextChild[]}],
-      {schemaTypes},
+      {schemaTypes: schema},
       KEY_TO_SLATE_ELEMENT.get(editor),
     )
   const targetChildIndex = targetChildPath[1]

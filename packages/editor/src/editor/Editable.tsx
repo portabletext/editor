@@ -232,12 +232,12 @@ export const PortableTextEditable = forwardRef<
         renderChild={renderChild}
         renderListItem={renderListItem}
         renderStyle={renderStyle}
-        schemaTypes={schemaTypes}
+        schemaTypes={portableTextEditor.schemaTypes}
         spellCheck={spellCheck}
       />
     ),
     [
-      schemaTypes,
+      portableTextEditor,
       spellCheck,
       readOnly,
       renderBlock,
@@ -258,7 +258,7 @@ export const PortableTextEditable = forwardRef<
           <Leaf
             {...lProps}
             editorActor={editorActor}
-            schemaTypes={schemaTypes}
+            schemaTypes={portableTextEditor.schemaTypes}
             renderAnnotation={renderAnnotation}
             renderChild={renderChild}
             renderDecorator={renderDecorator}
@@ -289,12 +289,12 @@ export const PortableTextEditable = forwardRef<
     },
     [
       editorActor,
+      portableTextEditor.schemaTypes,
       readOnly,
       renderAnnotation,
       renderChild,
       renderDecorator,
       renderPlaceholder,
-      schemaTypes,
     ],
   )
 
@@ -453,7 +453,12 @@ export const PortableTextEditable = forwardRef<
           })
         : null
       const path = ptRange?.focus.path || []
-      const onPasteResult = onPaste?.({event, value, path, schemaTypes})
+      const onPasteResult = onPaste?.({
+        event,
+        value,
+        path,
+        schemaTypes: portableTextEditor.schemaTypes,
+      })
 
       if (onPasteResult || !slateEditor.selection) {
         event.preventDefault()

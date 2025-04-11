@@ -1,9 +1,7 @@
 import {Schema} from '@sanity/schema'
 import {defineField, defineType} from '@sanity/types'
 
-export const imageType = defineType({
-  // Giving this another name than `image` to avoid that Schema compilation
-  // overwrites all fields of objects with the name `image`.
+const imageType = defineType({
   name: 'custom image',
   title: 'Image',
   type: 'object',
@@ -11,7 +9,6 @@ export const imageType = defineType({
     defineField({
       name: 'url',
       type: 'string',
-      validation: (Rule) => Rule.required(),
     }),
   ],
 })
@@ -23,12 +20,11 @@ const stockTickerType = defineType({
     defineField({
       name: 'symbol',
       type: 'string',
-      validation: (Rule) => Rule.required(),
     }),
   ],
 })
 
-export const portableTextType = defineType({
+const portableTextType = defineType({
   type: 'array',
   name: 'body',
   of: [

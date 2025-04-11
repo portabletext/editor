@@ -1,4 +1,4 @@
-import type {EditorSchema} from '../editor/define-schema'
+import type {EditorSchema} from '../editor/editor-schema'
 import {createPairRegex} from '../internal-utils/get-text-to-emphasize'
 import * as selectors from '../selectors'
 import type {BlockOffset} from '../types/block-offset'

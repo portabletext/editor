@@ -1,9 +1,10 @@
 import {describe, expect, it} from 'vitest'
 import {schemaType} from '../../editor/__tests__/PortableTextEditorTester'
-import {createEditorSchema} from '../../editor/create-editor-schema'
+import {legacySchemaToEditorSchema} from '../../editor/editor-schema'
+import {createLegacySchema} from '../../editor/legacy-schema'
 import {fromSlateValue, toSlateValue} from '../values'
 
-const schemaTypes = createEditorSchema(schemaType)
+const schemaTypes = legacySchemaToEditorSchema(createLegacySchema(schemaType))
 
 describe('toSlateValue', () => {
   it('checks undefined', () => {

@@ -1,17 +1,17 @@
 import {describe, expect, test} from 'vitest'
 import {
   compileSchemaDefinition,
+  compileSchemaDefinitionToLegacySchema,
   defineSchema,
   type SchemaDefinition,
-} from '../editor/define-schema'
+} from '../editor/editor-schema'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
-import {converterTextHtml} from './converter.text-html'
-import {coreConverters} from './converters.core'
+import {createConverterTextHtml} from './converter.text-html'
 
 function createSnapshot(schema: SchemaDefinition) {
   return createTestSnapshot({
     context: {
-      converters: coreConverters,
+      converters: [],
       schema: compileSchemaDefinition(schema),
     },
   })
@@ -25,8 +25,12 @@ const unorderedList = '<ul><li>foo</li><li>bar</li></ul>'
 const orderedList = '<ol><li>foo</li><li>bar</li></ol>'
 const nestedList = '<ol><li>foo<ul><li>bar</li></ul></li></ol>'
 
-describe(converterTextHtml.deserialize.name, () => {
+describe(createConverterTextHtml.name, () => {
   test('paragraph with unknown decorators', () => {
+    const converterTextHtml = createConverterTextHtml(
+      compileSchemaDefinitionToLegacySchema(defineSchema({})),
+    )
+
     expect(
       converterTextHtml.deserialize({
         snapshot: createSnapshot(defineSchema({})),
@@ -56,6 +60,14 @@ describe(converterTextHtml.deserialize.name, () => {
   })
 
   test('paragraph with known decorators', () => {
+    const converterTextHtml = createConverterTextHtml(
+      compileSchemaDefinitionToLegacySchema(
+        defineSchema({
+          decorators: [{name: 'strong'}, {name: 'em'}, {name: 'code'}],
+        }),
+      ),
+    )
+
     expect(
       converterTextHtml.deserialize({
         snapshot: createSnapshot(
@@ -101,6 +113,13 @@ describe(converterTextHtml.deserialize.name, () => {
   })
 
   test('image', () => {
+    const converterTextHtml = createConverterTextHtml(
+      compileSchemaDefinitionToLegacySchema(
+        defineSchema({
+          blockObjects: [{name: 'image'}],
+        }),
+      ),
+    )
     expect(
       converterTextHtml.deserialize({
         snapshot: createSnapshot(
@@ -119,6 +138,10 @@ describe(converterTextHtml.deserialize.name, () => {
   })
 
   test('paragraph with unknown link', () => {
+    const converterTextHtml = createConverterTextHtml(
+      compileSchemaDefinitionToLegacySchema(defineSchema({})),
+    )
+
     expect(
       converterTextHtml.deserialize({
         snapshot: createSnapshot(defineSchema({})),
@@ -148,6 +171,16 @@ describe(converterTextHtml.deserialize.name, () => {
   })
 
   test('paragraph with known link', () => {
+    const converterTextHtml = createConverterTextHtml(
+      compileSchemaDefinitionToLegacySchema(
+        defineSchema({
+          annotations: [
+            {name: 'link', fields: [{name: 'href', type: 'string'}]},
+          ],
+        }),
+      ),
+    )
+
     expect(
       converterTextHtml.deserialize({
         snapshot: createSnapshot(
@@ -195,6 +228,14 @@ describe(converterTextHtml.deserialize.name, () => {
   })
 
   test('unordered list', () => {
+    const converterTextHtml = createConverterTextHtml(
+      compileSchemaDefinitionToLegacySchema(
+        defineSchema({
+          lists: [{name: 'bullet'}],
+        }),
+      ),
+    )
+
     expect(
       converterTextHtml.deserialize({
         snapshot: createSnapshot(
@@ -246,6 +287,14 @@ describe(converterTextHtml.deserialize.name, () => {
   })
 
   test('ordered list', () => {
+    const converterTextHtml = createConverterTextHtml(
+      compileSchemaDefinitionToLegacySchema(
+        defineSchema({
+          lists: [{name: 'number'}],
+        }),
+      ),
+    )
+
     expect(
       converterTextHtml.deserialize({
         snapshot: createSnapshot(
@@ -297,6 +346,14 @@ describe(converterTextHtml.deserialize.name, () => {
   })
 
   test('nested list', () => {
+    const converterTextHtml = createConverterTextHtml(
+      compileSchemaDefinitionToLegacySchema(
+        defineSchema({
+          lists: [{name: 'bullet'}, {name: 'number'}],
+        }),
+      ),
+    )
+
     expect(
       converterTextHtml.deserialize({
         snapshot: createSnapshot(

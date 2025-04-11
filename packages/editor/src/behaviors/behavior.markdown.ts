@@ -1,5 +1,5 @@
 import {isPortableTextTextBlock} from '@sanity/types'
-import type {EditorSchema} from '../editor/define-schema'
+import type {EditorSchema} from '../editor/editor-schema'
 import * as selectors from '../selectors'
 import {spanSelectionPointToBlockOffset} from '../utils/util.block-offset'
 import {getTextBlockText} from '../utils/util.get-text-block-text'

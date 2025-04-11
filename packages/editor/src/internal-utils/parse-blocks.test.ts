@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'vitest'
-import {compileSchemaDefinition, defineSchema} from '../editor/define-schema'
+import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
 import {parseBlock, parseSpan} from './parse-blocks'
 import {createTestKeyGenerator} from './test-key-generator'
 

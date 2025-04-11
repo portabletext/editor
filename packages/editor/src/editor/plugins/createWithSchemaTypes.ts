@@ -8,10 +8,7 @@ import {
 } from '@sanity/types'
 import {Transforms, type Element} from 'slate'
 import {debugWithName} from '../../internal-utils/debug'
-import type {
-  PortableTextMemberSchemaTypes,
-  PortableTextSlateEditor,
-} from '../../types/editor'
+import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 
 const debug = debugWithName('plugin:withSchemaTypes')
@@ -21,40 +18,47 @@ const debug = debugWithName('plugin:withSchemaTypes')
  */
 export function createWithSchemaTypes({
   editorActor,
-  schemaTypes,
 }: {
   editorActor: EditorActor
-  schemaTypes: PortableTextMemberSchemaTypes
 }) {
   return function withSchemaTypes(
     editor: PortableTextSlateEditor,
   ): PortableTextSlateEditor {
     editor.isTextBlock = (value: unknown): value is PortableTextTextBlock => {
       return (
-        isPortableTextTextBlock(value) && value._type === schemaTypes.block.name
+        isPortableTextTextBlock(value) &&
+        value._type === editorActor.getSnapshot().context.schema.block.name
       )
     }
     editor.isTextSpan = (value: unknown): value is PortableTextSpan => {
-      return isPortableTextSpan(value) && value._type === schemaTypes.span.name
+      return (
+        isPortableTextSpan(value) &&
+        value._type === editorActor.getSnapshot().context.schema.span.name
+      )
     }
     editor.isListBlock = (value: unknown): value is PortableTextListBlock => {
       return (
-        isPortableTextListBlock(value) && value._type === schemaTypes.block.name
+        isPortableTextListBlock(value) &&
+        value._type === editorActor.getSnapshot().context.schema.block.name
       )
     }
     editor.isVoid = (element: Element): boolean => {
       return (
-        schemaTypes.block.name !== element._type &&
-        (schemaTypes.blockObjects
-          .map((obj) => obj.name)
+        editorActor.getSnapshot().context.schema.block.name !== element._type &&
+        (editorActor
+          .getSnapshot()
+          .context.schema.blockObjects.map((obj) => obj.name)
           .includes(element._type) ||
-          schemaTypes.inlineObjects
-            .map((obj) => obj.name)
+          editorActor
+            .getSnapshot()
+            .context.schema.inlineObjects.map((obj) => obj.name)
             .includes(element._type))
       )
     }
     editor.isInline = (element: Element): boolean => {
-      const inlineSchemaTypes = schemaTypes.inlineObjects.map((obj) => obj.name)
+      const inlineSchemaTypes = editorActor
+        .getSnapshot()
+        .context.schema.inlineObjects.map((obj) => obj.name)
       return (
         inlineSchemaTypes.includes(element._type) &&
         '__inline' in element &&
@@ -76,7 +80,11 @@ export function createWithSchemaTypes({
         editorActor.send({type: 'normalizing'})
         Transforms.setNodes(
           editor,
-          {...span, _type: schemaTypes.span.name, _key: key},
+          {
+            ...span,
+            _type: editorActor.getSnapshot().context.schema.span.name,
+            _key: key,
+          },
           {at: path},
         )
         editorActor.send({type: 'done normalizing'})

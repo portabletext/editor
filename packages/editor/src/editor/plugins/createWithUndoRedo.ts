@@ -10,7 +10,7 @@ import {
   DIFF_INSERT,
   parsePatch,
 } from '@sanity/diff-match-patch'
-import type {ObjectSchemaType, PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock} from '@sanity/types'
 import {flatten, isEqual} from 'lodash'
 import {
   Editor,
@@ -58,7 +58,6 @@ const isSaving = (editor: Editor): boolean | undefined => {
 
 export interface Options {
   editorActor: EditorActor
-  blockSchemaType: ObjectSchemaType
   subscriptions: Array<() => () => void>
 }
 
@@ -72,12 +71,12 @@ const getRemotePatches = (editor: Editor) => {
 export function createWithUndoRedo(
   options: Options,
 ): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
-  const {editorActor, blockSchemaType} = options
+  const {editorActor} = options
 
   return (editor: PortableTextSlateEditor) => {
     let previousSnapshot: PortableTextBlock[] | undefined = fromSlateValue(
       editor.children,
-      blockSchemaType.name,
+      editorActor.getSnapshot().context.schema.block.name,
     )
     const remotePatches = getRemotePatches(editor)
     let previousBehaviorActionSetId = getCurrentBehaviorActionSetId(editor)

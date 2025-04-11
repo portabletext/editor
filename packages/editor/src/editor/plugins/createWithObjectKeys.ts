@@ -1,20 +1,14 @@
 import {Editor, Element, Node, Transforms} from 'slate'
 import {isChangingRemotely} from '../../internal-utils/withChanges'
 import {isRedoing, isUndoing} from '../../internal-utils/withUndoRedo'
-import type {
-  PortableTextMemberSchemaTypes,
-  PortableTextSlateEditor,
-} from '../../types/editor'
+import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 
 /**
  * This plugin makes sure that every new node in the editor get a new _key prop when created
  *
  */
-export function createWithObjectKeys(
-  editorActor: EditorActor,
-  schemaTypes: PortableTextMemberSchemaTypes,
-) {
+export function createWithObjectKeys(editorActor: EditorActor) {
   return function withKeys(
     editor: PortableTextSlateEditor,
   ): PortableTextSlateEditor {
@@ -89,7 +83,10 @@ export function createWithObjectKeys(
 
     editor.normalizeNode = (entry) => {
       const [node, path] = entry
-      if (Element.isElement(node) && node._type === schemaTypes.block.name) {
+      if (
+        Element.isElement(node) &&
+        node._type === editorActor.getSnapshot().context.schema.block.name
+      ) {
         // Set key on block itself
         if (!node._key) {
           editorActor.send({type: 'normalizing'})

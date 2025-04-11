@@ -6,8 +6,8 @@ import {
   PortableTextEditable,
   useEditorSelector,
   type HotkeyOptions,
-  type PortableTextEditor,
   type RangeDecoration,
+  type SchemaDefinition,
 } from '../src'
 import type {Behavior} from '../src/behaviors'
 import type {EditorEmittedEvent} from '../src/editor/editor-machine'
@@ -25,7 +25,10 @@ export function Editors(props: {testRef: TestActorRef}) {
     props.testRef,
     (state) => state.context.behaviors,
   )
-  const schema = useSelector(props.testRef, (state) => state.context.schema)
+  const schemaDefinition = useSelector(
+    props.testRef,
+    (state) => state.context.schemaDefinition,
+  )
   const rangeDecorations = useSelector(
     props.testRef,
     (state) => state.context.rangeDecorations,
@@ -40,7 +43,7 @@ export function Editors(props: {testRef: TestActorRef}) {
           key={editorActorRef.id}
           editorActorRef={editorActorRef}
           rangeDecorations={rangeDecorations}
-          schema={schema}
+          schemaDefinition={schemaDefinition}
           value={value}
         />
       ))}
@@ -60,7 +63,7 @@ function Editor(props: {
   editorActorRef: EditorActorRef
   behaviors: Array<Behavior>
   rangeDecorations?: Array<RangeDecoration>
-  schema: React.ComponentProps<typeof PortableTextEditor>['schemaType']
+  schemaDefinition: SchemaDefinition
   value: Array<PortableTextBlock> | undefined
 }) {
   const editorRef = useSelector(
@@ -83,7 +86,7 @@ function Editor(props: {
         initialConfig={{
           behaviors: props.behaviors,
           keyGenerator,
-          schema: props.schema,
+          schemaDefinition: props.schemaDefinition,
         }}
       >
         <EditorRefPlugin ref={editorRef} />
@@ -375,13 +378,13 @@ function StyleButtons() {
     <>
       {styles.map((style) => (
         <button
-          key={style.value}
-          data-testid={`button-toggle-style-${style.value}`}
+          key={style.name}
+          data-testid={`button-toggle-style-${style.name}`}
           type="button"
           onClick={() => {
             editor.send({
               type: 'style.toggle',
-              style: style.value,
+              style: style.name,
             })
             editor.send({type: 'focus'})
           }}

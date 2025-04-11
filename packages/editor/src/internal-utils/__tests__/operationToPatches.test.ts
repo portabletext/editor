@@ -4,24 +4,26 @@ import {beforeEach, describe, expect, it} from 'vitest'
 import {createActor} from 'xstate'
 import {coreBehaviors} from '../../behaviors/behavior.core'
 import {schemaType} from '../../editor/__tests__/PortableTextEditorTester'
-import {createEditorSchema} from '../../editor/create-editor-schema'
 import {editorMachine} from '../../editor/editor-machine'
+import {legacySchemaToEditorSchema} from '../../editor/editor-schema'
 import {defaultKeyGenerator} from '../../editor/key-generator'
+import {createLegacySchema} from '../../editor/legacy-schema'
 import {withPlugins} from '../../editor/plugins/with-plugins'
 import {createOperationToPatches} from '../operationToPatches'
 
-const schemaTypes = createEditorSchema(schemaType)
+const schemaTypes = legacySchemaToEditorSchema(createLegacySchema(schemaType))
+const editorActor = createActor(editorMachine, {
+  input: {
+    behaviors: coreBehaviors,
+    schema: schemaTypes,
+    keyGenerator: defaultKeyGenerator,
+  },
+})
 
-const operationToPatches = createOperationToPatches(schemaTypes)
+const operationToPatches = createOperationToPatches(editorActor)
 
 const editor = withPlugins(createEditor(), {
-  editorActor: createActor(editorMachine, {
-    input: {
-      behaviors: coreBehaviors,
-      schema: schemaTypes,
-      keyGenerator: defaultKeyGenerator,
-    },
-  }),
+  editorActor,
   subscriptions: [],
 })
 

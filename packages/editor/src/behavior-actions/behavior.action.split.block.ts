@@ -88,7 +88,7 @@ export const splitBlockActionImplementation: BehaviorActionImplementation<
           // previous block
           for (const mark of marks) {
             if (
-              schema.decorators.some((decorator) => decorator.value === mark)
+              schema.decorators.some((decorator) => decorator.name === mark)
             ) {
               continue
             }

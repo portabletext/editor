@@ -11,8 +11,8 @@ export {
   defineSchema,
   type BaseDefinition,
   type SchemaDefinition,
-} from './editor/define-schema'
-export type {EditorSchema} from './editor/define-schema'
+} from './editor/editor-schema'
+export type {EditorSchema} from './editor/editor-schema'
 export {PortableTextEditable} from './editor/Editable'
 export type {PortableTextEditableProps} from './editor/Editable'
 export type {

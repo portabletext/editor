@@ -1,11 +1,16 @@
+import type {PortableTextMemberSchemaTypes} from '../types/editor'
 import {converterJson} from './converter.json'
 import {converterPortableText} from './converter.portable-text'
-import {converterTextHtml} from './converter.text-html'
-import {converterTextPlain} from './converter.text-plain'
+import {createConverterTextHtml} from './converter.text-html'
+import {createConverterTextPlain} from './converter.text-plain'
 
-export const coreConverters = [
-  converterJson,
-  converterPortableText,
-  converterTextHtml,
-  converterTextPlain,
-]
+export function createCoreConverters(
+  legacySchema: PortableTextMemberSchemaTypes,
+) {
+  return [
+    converterJson,
+    converterPortableText,
+    createConverterTextHtml(legacySchema),
+    createConverterTextPlain(legacySchema),
+  ]
+}

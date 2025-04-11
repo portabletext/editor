@@ -30,7 +30,7 @@ import {getValueAnnotations} from '../src/internal-utils/value-annotations'
 import {isSelectionCollapsed} from '../src/utils'
 import {reverseSelection} from '../src/utils/util.reverse-selection'
 import {Editors} from './editors'
-import {schema} from './schema'
+import {schemaDefinition} from './schema'
 import {
   testMachine,
   type EditorActorRef,
@@ -98,7 +98,7 @@ export const stepDefinitions = [
   Given('one editor', async (context: Context) => {
     const testActor = createActor(testMachine, {
       input: {
-        schema,
+        schemaDefinition,
         value: undefined,
       },
     })
@@ -125,7 +125,7 @@ export const stepDefinitions = [
   Given('two editors', async (context: Context) => {
     const testActor = createActor(testMachine, {
       input: {
-        schema,
+        schemaDefinition,
         value: undefined,
       },
     })

@@ -1,6 +1,6 @@
 import type {PortableTextBlock} from '@sanity/types'
 import type {Descendant} from 'slate'
-import type {EditorSchema} from '../editor/define-schema'
+import type {EditorSchema} from '../editor/editor-schema'
 
 export function slateChildrenToBlocks(
   schema: EditorSchema,

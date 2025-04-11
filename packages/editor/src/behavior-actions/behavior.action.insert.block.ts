@@ -1,6 +1,6 @@
 import {Editor, Path, Point, Range, Transforms, type Descendant} from 'slate'
 import {DOMEditor} from 'slate-dom'
-import type {EditorSchema} from '../editor/define-schema'
+import type {EditorSchema} from '../editor/editor-schema'
 import {parseBlock} from '../internal-utils/parse-blocks'
 import {
   getFocusBlock,

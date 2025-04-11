@@ -29,12 +29,13 @@ import type {
 } from '../types/editor'
 import {Synchronizer} from './components/Synchronizer'
 import {createInternalEditor, type InternalEditor} from './create-editor'
-import {createEditorSchema} from './create-editor-schema'
 import {EditorActorContext} from './editor-actor-context'
 import type {EditorActor} from './editor-machine'
+import {legacySchemaToEditorSchema} from './editor-schema'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
 import {defaultKeyGenerator} from './key-generator'
+import {createLegacySchema} from './legacy-schema'
 
 const debug = debugWithName('component:PortableTextEditor')
 
@@ -148,8 +149,7 @@ export class PortableTextEditor extends Component<
       })
     }
 
-    this.schemaTypes =
-      this.editor._internal.editorActor.getSnapshot().context.schema
+    this.schemaTypes = this.editor._internal.legacySchema
     this.editable = this.editor._internal.editable
   }
 
@@ -160,7 +160,7 @@ export class PortableTextEditor extends Component<
       !prevProps.editor &&
       this.props.schemaType !== prevProps.schemaType
     ) {
-      this.schemaTypes = createEditorSchema(
+      this.schemaTypes = createLegacySchema(
         this.props.schemaType.hasOwnProperty('jsonType')
           ? this.props.schemaType
           : compileType(this.props.schemaType),
@@ -168,7 +168,7 @@ export class PortableTextEditor extends Component<
 
       this.editor._internal.editorActor.send({
         type: 'update schema',
-        schema: this.schemaTypes,
+        schema: legacySchemaToEditorSchema(this.schemaTypes),
       })
     }
 

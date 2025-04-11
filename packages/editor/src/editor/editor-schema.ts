@@ -2,8 +2,8 @@ import {Schema as SanitySchema} from '@sanity/schema'
 import {defineField, defineType, type ObjectSchemaType} from '@sanity/types'
 import startCase from 'lodash.startcase'
 import type {PortableTextMemberSchemaTypes} from '../types/editor'
-import {createEditorSchema} from './create-editor-schema'
 import {defaultKeyGenerator} from './key-generator'
+import {createLegacySchema} from './legacy-schema'
 
 /**
  * @public
@@ -88,11 +88,120 @@ const defaultObjectTitles: Record<string, string> = {
 /**
  * @public
  */
-export type EditorSchema = PortableTextMemberSchemaTypes
+export type EditorSchema = {
+  annotations: ReadonlyArray<
+    BaseDefinition & {
+      fields: ReadonlyArray<{name: string; type: string}>
+    }
+  >
+  block: {
+    name: string
+  }
+  blockObjects: ReadonlyArray<
+    BaseDefinition & {
+      fields: ReadonlyArray<{name: string; type: string}>
+    }
+  >
+  decorators: ReadonlyArray<
+    BaseDefinition & {
+      /**
+       * @deprecated
+       * Use `name` instead
+       */
+      value: string
+    }
+  >
+  inlineObjects: ReadonlyArray<
+    BaseDefinition & {
+      fields: ReadonlyArray<{name: string; type: string}>
+    }
+  >
+  span: {
+    name: string
+  }
+  styles: ReadonlyArray<
+    BaseDefinition & {
+      /**
+       * @deprecated
+       * Use `name` instead
+       */
+      value: string
+    }
+  >
+  lists: ReadonlyArray<
+    BaseDefinition & {
+      /**
+       * @deprecated
+       * Use `name` instead
+       */
+      value: string
+    }
+  >
+}
+
+export function legacySchemaToEditorSchema(
+  schema: PortableTextMemberSchemaTypes,
+): EditorSchema {
+  return {
+    annotations: schema.annotations.map((annotation) => ({
+      name: annotation.name,
+      fields: annotation.fields.map((field) => ({
+        name: field.name,
+        type: field.type.jsonType,
+      })),
+      title: annotation.title,
+    })),
+    block: {
+      name: schema.block.name,
+    },
+    blockObjects: schema.blockObjects.map((blockObject) => ({
+      name: blockObject.name,
+      fields: blockObject.fields.map((field) => ({
+        name: field.name,
+        type: field.type.jsonType,
+      })),
+      title: blockObject.title,
+    })),
+    decorators: schema.decorators.map((decorator) => ({
+      name: decorator.value,
+      title: decorator.title,
+      value: decorator.value,
+    })),
+    inlineObjects: schema.inlineObjects.map((inlineObject) => ({
+      name: inlineObject.name,
+      fields: inlineObject.fields.map((field) => ({
+        name: field.name,
+        type: field.type.jsonType,
+      })),
+      title: inlineObject.title,
+    })),
+    span: {
+      name: schema.span.name,
+    },
+    styles: schema.styles.map((style) => ({
+      name: style.value,
+      title: style.title,
+      value: style.value,
+    })),
+    lists: schema.lists.map((list) => ({
+      name: list.value,
+      title: list.title,
+      value: list.value,
+    })),
+  }
+}
 
 export function compileSchemaDefinition<
   TSchemaDefinition extends SchemaDefinition,
->(definition?: TSchemaDefinition) {
+>(definition: TSchemaDefinition): EditorSchema {
+  return legacySchemaToEditorSchema(
+    compileSchemaDefinitionToLegacySchema(definition),
+  )
+}
+
+export function compileSchemaDefinitionToLegacySchema<
+  TSchemaDefinition extends SchemaDefinition,
+>(definition?: TSchemaDefinition): PortableTextMemberSchemaTypes {
   const blockObjects =
     definition?.blockObjects?.map((blockObject) =>
       defineType({
@@ -179,7 +288,7 @@ export function compileSchemaDefinition<
     types: [portableTextSchema, ...blockObjects, ...inlineObjects],
   }).get('portable-text')
 
-  const pteSchema = createEditorSchema(schema)
+  const pteSchema = createLegacySchema(schema)
 
   return {
     ...pteSchema,
@@ -203,5 +312,5 @@ export function compileSchemaDefinition<
           } as ObjectSchemaType)
         : inlineObject,
     ),
-  } satisfies EditorSchema
+  } satisfies PortableTextMemberSchemaTypes
 }

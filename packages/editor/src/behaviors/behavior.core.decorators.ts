@@ -8,7 +8,7 @@ export const coreDecoratorBehaviors = {
     guard: ({snapshot, event}) =>
       isHotkey('mod+b', event.originEvent) &&
       snapshot.context.schema.decorators.some(
-        (decorator) => decorator.value === 'strong',
+        (decorator) => decorator.name === 'strong',
       ),
     actions: [() => [raise({type: 'decorator.toggle', decorator: 'strong'})]],
   }),
@@ -17,7 +17,7 @@ export const coreDecoratorBehaviors = {
     guard: ({snapshot, event}) =>
       isHotkey('mod+i', event.originEvent) &&
       snapshot.context.schema.decorators.some(
-        (decorator) => decorator.value === 'em',
+        (decorator) => decorator.name === 'em',
       ),
     actions: [() => [raise({type: 'decorator.toggle', decorator: 'em'})]],
   }),
@@ -26,7 +26,7 @@ export const coreDecoratorBehaviors = {
     guard: ({snapshot, event}) =>
       isHotkey('mod+u', event.originEvent) &&
       snapshot.context.schema.decorators.some(
-        (decorator) => decorator.value === 'underline',
+        (decorator) => decorator.name === 'underline',
       ),
     actions: [
       () => [raise({type: 'decorator.toggle', decorator: 'underline'})],
@@ -37,7 +37,7 @@ export const coreDecoratorBehaviors = {
     guard: ({snapshot, event}) =>
       isHotkey("mod+'", event.originEvent) &&
       snapshot.context.schema.decorators.some(
-        (decorator) => decorator.value === 'code',
+        (decorator) => decorator.name === 'code',
       ),
     actions: [() => [raise({type: 'decorator.toggle', decorator: 'code'})]],
   }),
