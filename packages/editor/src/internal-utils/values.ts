@@ -7,7 +7,7 @@ import type {
 } from '@sanity/types'
 import {isEqual} from 'lodash'
 import {Element, Text, type Descendant, type Node} from 'slate'
-import type {PortableTextMemberSchemaTypes} from '../types/editor'
+import type {EditorSchema} from '../editor/editor-schema'
 
 export const EMPTY_MARKDEFS: PortableTextObject[] = []
 
@@ -31,7 +31,7 @@ function keepObjectEquality(
 
 export function toSlateValue(
   value: PortableTextBlock[] | undefined,
-  {schemaTypes}: {schemaTypes: PortableTextMemberSchemaTypes},
+  {schemaTypes}: {schemaTypes: EditorSchema},
   keyMap: Record<string, any> = {},
 ): Descendant[] {
   if (value && Array.isArray(value)) {
@@ -88,7 +88,7 @@ export function toSlateValue(
         }
         // TODO: remove this when we have a better way to handle missing style
         if (hasMissingStyle) {
-          rest.style = schemaTypes.styles[0].value
+          rest.style = schemaTypes.styles[0].name
         }
         return keepObjectEquality({_type, _key, ...rest, children}, keyMap)
       }
@@ -167,7 +167,7 @@ export function fromSlateValue(
 
 export function isEqualToEmptyEditor(
   children: Descendant[] | PortableTextBlock[],
-  schemaTypes: PortableTextMemberSchemaTypes,
+  schemaTypes: EditorSchema,
 ): boolean {
   return (
     children === undefined ||
@@ -178,7 +178,7 @@ export function isEqualToEmptyEditor(
       Element.isElement(children[0]) &&
       children[0]._type === schemaTypes.block.name &&
       'style' in children[0] &&
-      children[0].style === schemaTypes.styles[0].value &&
+      children[0].style === schemaTypes.styles[0].name &&
       !('listItem' in children[0]) &&
       Array.isArray(children[0].children) &&
       children[0].children.length === 1 &&

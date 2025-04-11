@@ -1,14 +1,15 @@
 import type {PortableTextBlock, PortableTextTextBlock} from '@sanity/types'
 import {expect, test} from 'vitest'
 import type {EditorSelection} from '..'
+import {schemaType} from '../editor/__tests__/PortableTextEditorTester'
 import {
   compileSchemaDefinition,
   defineSchema,
   type SchemaDefinition,
-} from '../editor/define-schema'
+} from '../editor/editor-schema'
+import {createLegacySchema} from '../editor/legacy-schema'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
-import {converterTextPlain} from './converter.text-plain'
-import {coreConverters} from './converters.core'
+import {createConverterTextPlain} from './converter.text-plain'
 
 const b1: PortableTextTextBlock = {
   _type: 'block',
@@ -74,13 +75,17 @@ function createSnapshot({
 }) {
   return createTestSnapshot({
     context: {
-      converters: coreConverters,
+      converters: [],
       schema: compileSchemaDefinition(schema),
       selection,
       value: [b1, b2, b3, b4],
     },
   })
 }
+
+const converterTextPlain = createConverterTextPlain(
+  createLegacySchema(schemaType),
+)
 
 test(converterTextPlain.serialize.name, () => {
   expect(

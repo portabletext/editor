@@ -17,11 +17,11 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
-import type {EditorSchema} from '..'
 import {moveRangeByOperation, toSlateRange} from '../internal-utils/ranges'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {isEqualToEmptyEditor} from '../internal-utils/values'
 import type {PortableTextSlateEditor, RangeDecoration} from '../types/editor'
+import type {EditorSchema} from './editor-schema'
 
 const slateOperationCallback: CallbackLogicFunction<
   AnyEventObject,

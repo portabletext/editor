@@ -13,21 +13,26 @@ import {
 } from 'xstate'
 import type {Behavior} from '../behaviors/behavior.types.behavior'
 import type {ExternalBehaviorEvent} from '../behaviors/behavior.types.event'
-import {coreConverters} from '../converters/converters.core'
+import {createCoreConverters} from '../converters/converters.core'
 import {compileType} from '../internal-utils/schema'
-import type {EditableAPI} from '../types/editor'
-import {createEditorSchema} from './create-editor-schema'
+import type {EditableAPI, PortableTextMemberSchemaTypes} from '../types/editor'
 import {createSlateEditor, type SlateEditor} from './create-slate-editor'
-import {compileSchemaDefinition, type SchemaDefinition} from './define-schema'
 import {
   editorMachine,
   type EditorActor,
   type EditorEmittedEvent,
   type ExternalEditorEvent,
 } from './editor-machine'
+import {
+  compileSchemaDefinitionToLegacySchema,
+  legacySchemaToEditorSchema,
+  type SchemaDefinition,
+} from './editor-schema'
+import type {EditorSchema} from './editor-schema'
 import {getEditorSnapshot} from './editor-selector'
 import type {EditorSnapshot} from './editor-snapshot'
 import {defaultKeyGenerator} from './key-generator'
+import {createLegacySchema} from './legacy-schema'
 import {createEditableAPI} from './plugins/createWithEditableAPI'
 
 /**
@@ -79,49 +84,76 @@ export type InternalEditor = Editor & {
     editable: EditableAPI
     editorActor: EditorActor
     slateEditor: SlateEditor
+    legacySchema: PortableTextMemberSchemaTypes
   }
 }
 
 export function createInternalEditor(config: EditorConfig): InternalEditor {
+  const legacySchema = config.schemaDefinition
+    ? compileSchemaDefinitionToLegacySchema(config.schemaDefinition)
+    : createLegacySchema(
+        config.schema.hasOwnProperty('jsonType')
+          ? config.schema
+          : compileType(config.schema),
+      )
+  const editorSchema = legacySchemaToEditorSchema(legacySchema)
+
   const editorActor = createActor(editorMachine, {
-    input: editorConfigToMachineInput(config),
+    input: editorConfigToMachineInput({
+      ...config,
+      schema: editorSchema,
+      legacySchema,
+    }),
   })
   editorActor.start()
 
-  return createInternalEditorFromActor(editorActor)
+  return createInternalEditorFromActor(editorActor, legacySchema)
 }
 
 export function useCreateInternalEditor(config: EditorConfig): InternalEditor {
+  const legacySchema = config.schemaDefinition
+    ? compileSchemaDefinitionToLegacySchema(config.schemaDefinition)
+    : createLegacySchema(
+        config.schema.hasOwnProperty('jsonType')
+          ? config.schema
+          : compileType(config.schema),
+      )
+  const editorSchema = legacySchemaToEditorSchema(legacySchema)
+
   const editorActor = useActorRef(editorMachine, {
-    input: editorConfigToMachineInput(config),
+    input: editorConfigToMachineInput({
+      ...config,
+      schema: editorSchema,
+      legacySchema,
+    }),
   })
 
   return useMemo(
-    () => createInternalEditorFromActor(editorActor),
-    [editorActor],
+    () => createInternalEditorFromActor(editorActor, legacySchema),
+    [editorActor, legacySchema],
   )
 }
 
-function editorConfigToMachineInput(config: EditorConfig) {
+function editorConfigToMachineInput(
+  config: Omit<EditorConfig, 'schema'> & {
+    schema: EditorSchema
+    legacySchema: PortableTextMemberSchemaTypes
+  },
+) {
   return {
     behaviors: config.behaviors,
-    converters: coreConverters,
+    converters: createCoreConverters(config.legacySchema),
     keyGenerator: config.keyGenerator ?? defaultKeyGenerator,
     maxBlocks: config.maxBlocks,
     readOnly: config.readOnly,
-    schema: config.schemaDefinition
-      ? compileSchemaDefinition(config.schemaDefinition)
-      : createEditorSchema(
-          config.schema.hasOwnProperty('jsonType')
-            ? config.schema
-            : compileType(config.schema),
-        ),
+    schema: config.schema,
     initialValue: config.initialValue,
   } as const
 }
 
 function createInternalEditorFromActor(
   editorActor: EditorActor,
+  legacySchema: PortableTextMemberSchemaTypes,
 ): InternalEditor {
   const slateEditor = createSlateEditor({editorActor})
   const editable = createEditableAPI(slateEditor.instance, editorActor)
@@ -208,6 +240,7 @@ function createInternalEditorFromActor(
     _internal: {
       editable,
       editorActor,
+      legacySchema,
       slateEditor,
     },
   }

@@ -6,10 +6,8 @@ import {
   type PortableTextTextBlock,
 } from '@sanity/types'
 import {flatten, isPlainObject, uniq} from 'lodash'
-import type {
-  InvalidValueResolution,
-  PortableTextMemberSchemaTypes,
-} from '../types/editor'
+import type {EditorSchema} from '../editor/editor-schema'
+import type {InvalidValueResolution} from '../types/editor'
 
 export interface Validation {
   valid: boolean
@@ -19,7 +17,7 @@ export interface Validation {
 
 export function validateValue(
   value: PortableTextBlock[] | undefined,
-  types: PortableTextMemberSchemaTypes,
+  types: EditorSchema,
   keyGenerator: () => string,
 ): Validation {
   let resolution: InvalidValueResolution | null = null
@@ -270,7 +268,7 @@ export function validateValue(
 
         // Test that every annotation mark used has a definition
         const annotationMarks = allUsedMarks.filter(
-          (mark) => !types.decorators.map((dec) => dec.value).includes(mark),
+          (mark) => !types.decorators.map((dec) => dec.name).includes(mark),
         )
         const orphanedMarks = annotationMarks.filter(
           (mark) =>

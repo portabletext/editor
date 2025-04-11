@@ -3,12 +3,12 @@ import {describe, expect, test} from 'vitest'
 import type {EditorSelection} from '..'
 import {
   compileSchemaDefinition,
+  compileSchemaDefinitionToLegacySchema,
   defineSchema,
   type SchemaDefinition,
-} from '../editor/define-schema'
+} from '../editor/editor-schema'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
-import {converterTextHtml} from './converter.text-html'
-import {coreConverters} from './converters.core'
+import {createConverterTextHtml} from './converter.text-html'
 
 const decoratedParagraph: PortableTextTextBlock = {
   _key: 'k0',
@@ -78,13 +78,17 @@ const paragraphWithInlineBlock: PortableTextTextBlock = {
 function createSnapshot(schema: SchemaDefinition, selection: EditorSelection) {
   return createTestSnapshot({
     context: {
-      converters: coreConverters,
+      converters: [],
       schema: compileSchemaDefinition(schema),
       selection,
       value: [decoratedParagraph, image, b2, paragraphWithInlineBlock],
     },
   })
 }
+
+const converterTextHtml = createConverterTextHtml(
+  compileSchemaDefinitionToLegacySchema(defineSchema({})),
+)
 
 describe(converterTextHtml.serialize.name, () => {
   test('paragraph with decorators', () => {
@@ -177,7 +181,7 @@ describe(converterTextHtml.serialize.name, () => {
       converterTextHtml.serialize({
         snapshot: createTestSnapshot({
           context: {
-            converters: coreConverters,
+            converters: [],
             value: [
               {
                 _key: 'k0',

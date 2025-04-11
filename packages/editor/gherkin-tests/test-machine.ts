@@ -1,6 +1,5 @@
 import {applyAll, type Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@sanity/types'
-import type {ComponentProps} from 'react'
 import {
   assertEvent,
   assign,
@@ -12,9 +11,9 @@ import {
 import type {
   Editor,
   EditorSelection,
-  PortableTextEditor,
   RangeDecoration,
   RangeDecorationOnMovedDetails,
+  SchemaDefinition,
 } from '../src'
 import {coreBehaviors} from '../src/behaviors'
 import type {Behavior} from '../src/behaviors/behavior.types.behavior'
@@ -139,13 +138,13 @@ export const testMachine = setup({
       editorIdGenerator: () => string
       editors: Array<EditorActorRef>
       rangeDecorations?: Array<RangeDecoration>
-      schema: ComponentProps<typeof PortableTextEditor>['schemaType']
+      schemaDefinition: SchemaDefinition
       value: Array<PortableTextBlock> | undefined
     },
     input: {} as {
       behaviors?: Array<Behavior>
       rangeDecorations?: Array<RangeDecoration>
-      schema: ComponentProps<typeof PortableTextEditor>['schemaType']
+      schemaDefinition: SchemaDefinition
       value: Array<PortableTextBlock> | undefined
     },
     events: {} as TestMachineEvent,
@@ -236,7 +235,7 @@ export const testMachine = setup({
     editorIdGenerator: createKeyGenerator('e'),
     editors: [],
     rangeDecorations: input.rangeDecorations,
-    schema: input.schema,
+    schemaDefinition: input.schemaDefinition,
     value: input.value,
   }),
   on: {

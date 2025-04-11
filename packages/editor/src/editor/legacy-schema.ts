@@ -6,11 +6,11 @@ import type {
   SchemaType,
   SpanSchemaType,
 } from '@sanity/types'
-import type {EditorSchema} from './define-schema'
+import type {PortableTextMemberSchemaTypes} from '../types/editor'
 
-export function createEditorSchema(
+export function createLegacySchema(
   portableTextType: ArraySchemaType<PortableTextBlock>,
-): EditorSchema {
+): PortableTextMemberSchemaTypes {
   if (!portableTextType) {
     throw new Error("Parameter 'portabletextType' missing (required)")
   }

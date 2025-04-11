@@ -3,8 +3,8 @@ import {
   createMarkdownBehaviors,
   type MarkdownBehaviorsConfig,
 } from '../behaviors/behavior.markdown'
-import type {EditorSchema} from '../editor/define-schema'
 import {useEditor} from '../editor/editor-provider'
+import type {EditorSchema} from '../editor/editor-schema'
 import {DecoratorShortcutPlugin} from './plugin.decorator-shortcut'
 
 /**

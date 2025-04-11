@@ -1,6 +1,6 @@
 import type {Behavior, BehaviorEvent} from '.'
 import {performAction} from '../behavior-actions/behavior.actions'
-import type {EditorSchema} from '../editor/define-schema'
+import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
 import {
   withApplyingBehaviorActions,

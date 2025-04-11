@@ -15,7 +15,7 @@ import {
   type,
   undo,
 } from './gherkin-step-definitions'
-import {schema} from './schema'
+import {schemaDefinition} from './schema'
 import {testMachine} from './test-machine'
 
 function createInitialValue(text: string): Array<PortableTextBlock> {
@@ -40,7 +40,7 @@ function createInitialValue(text: string): Array<PortableTextBlock> {
 async function setUpTest(initialValue: Array<PortableTextBlock>) {
   const testActor = createActor(testMachine, {
     input: {
-      schema,
+      schemaDefinition,
       value: initialValue,
     },
   })
@@ -69,7 +69,7 @@ async function setUpTest(initialValue: Array<PortableTextBlock>) {
 async function setUpCollabTest(initialValue: Array<PortableTextBlock>) {
   const testActor = createActor(testMachine, {
     input: {
-      schema,
+      schemaDefinition,
       value: initialValue,
     },
   })

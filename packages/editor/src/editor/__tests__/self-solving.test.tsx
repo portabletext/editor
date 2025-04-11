@@ -13,9 +13,9 @@ const schema = Schema.compile({
     {
       name: 'portable-text',
       type: 'array',
-      of: [{type: 'block'}, {type: 'image'}],
+      of: [{type: 'block'}, {type: 'custom image'}],
     },
-    {name: 'image', type: 'object'},
+    {name: 'custom image', type: 'object'},
   ],
 }).get('portable-text')
 type OnChange = ComponentProps<typeof PortableTextEditor>['onChange']

@@ -4,8 +4,8 @@ import type {EventPosition} from '../internal-utils/event-position'
 import {slateChildrenToBlocks} from '../internal-utils/slate-children-to-blocks'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
-import type {EditorSchema} from './define-schema'
 import type {HasTag} from './editor-machine'
+import type {EditorSchema} from './editor-schema'
 import {getActiveDecorators} from './get-active-decorators'
 
 /**

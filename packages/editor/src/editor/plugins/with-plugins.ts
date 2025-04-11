@@ -31,39 +31,29 @@ export const withPlugins = <T extends Editor>(
 ): PortableTextSlateEditor => {
   const e = editor as T & PortableTextSlateEditor
   const {editorActor} = options
-  const schemaTypes = editorActor.getSnapshot().context.schema
-  const operationToPatches = createOperationToPatches(schemaTypes)
-  const withObjectKeys = createWithObjectKeys(editorActor, schemaTypes)
+  const operationToPatches = createOperationToPatches(editorActor)
+  const withObjectKeys = createWithObjectKeys(editorActor)
   const withSchemaTypes = createWithSchemaTypes({
     editorActor,
-    schemaTypes,
   })
   const withPatches = createWithPatches({
     editorActor,
     patchFunctions: operationToPatches,
-    schemaTypes,
     subscriptions: options.subscriptions,
   })
   const withMaxBlocks = createWithMaxBlocks(editorActor)
   const withUndoRedo = createWithUndoRedo({
     editorActor,
-    blockSchemaType: schemaTypes.block,
     subscriptions: options.subscriptions,
   })
-  const withPortableTextMarkModel = createWithPortableTextMarkModel(
-    editorActor,
-    schemaTypes,
-  )
-  const withPortableTextBlockStyle = createWithPortableTextBlockStyle(
-    editorActor,
-    schemaTypes,
-  )
+  const withPortableTextMarkModel = createWithPortableTextMarkModel(editorActor)
+  const withPortableTextBlockStyle =
+    createWithPortableTextBlockStyle(editorActor)
 
   const withPlaceholderBlock = createWithPlaceholderBlock(editorActor)
 
   const withUtils = createWithUtils({
     editorActor,
-    schemaTypes,
   })
   const withPortableTextSelections =
     createWithPortableTextSelections(editorActor)

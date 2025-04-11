@@ -21,7 +21,7 @@ import type {
   InvalidValueResolution,
   PortableTextSlateEditor,
 } from '../types/editor'
-import type {EditorSchema} from './define-schema'
+import type {EditorSchema} from './editor-schema'
 import {createEditorSnapshot} from './editor-snapshot'
 
 export * from 'xstate/guards'

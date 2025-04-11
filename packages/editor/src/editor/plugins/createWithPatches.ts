@@ -25,10 +25,7 @@ import {
   PATCHING,
   withoutPatching,
 } from '../../internal-utils/withoutPatching'
-import type {
-  PortableTextMemberSchemaTypes,
-  PortableTextSlateEditor,
-} from '../../types/editor'
+import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 import {getCurrentActionId} from '../with-applying-behavior-actions'
 import {withoutSaving} from './createWithUndoRedo'
@@ -82,21 +79,19 @@ export interface PatchFunctions {
 interface Options {
   editorActor: EditorActor
   patchFunctions: PatchFunctions
-  schemaTypes: PortableTextMemberSchemaTypes
   subscriptions: Array<() => () => void>
 }
 
 export function createWithPatches({
   editorActor,
   patchFunctions,
-  schemaTypes,
   subscriptions,
 }: Options): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
   // The previous editor children are needed to figure out the _key of deleted nodes
   // The editor.children would no longer contain that information if the node is already deleted.
   let previousChildren: Descendant[]
 
-  const applyPatch = createApplyPatch(schemaTypes)
+  const applyPatch = createApplyPatch(editorActor.getSnapshot().context.schema)
 
   return function withPatches(editor: PortableTextSlateEditor) {
     IS_PROCESSING_REMOTE_CHANGES.set(editor, false)
@@ -156,12 +151,18 @@ export function createWithPatches({
       // Update previous children here before we apply
       previousChildren = editor.children
 
-      const editorWasEmpty = isEqualToEmptyEditor(previousChildren, schemaTypes)
+      const editorWasEmpty = isEqualToEmptyEditor(
+        previousChildren,
+        editorActor.getSnapshot().context.schema,
+      )
 
       // Apply the operation
       apply(operation)
 
-      const editorIsEmpty = isEqualToEmptyEditor(editor.children, schemaTypes)
+      const editorIsEmpty = isEqualToEmptyEditor(
+        editor.children,
+        editorActor.getSnapshot().context.schema,
+      )
 
       if (!isPatching(editor)) {
         if (debugVerbose && debug.enabled)
@@ -275,7 +276,7 @@ export function createWithPatches({
           type: 'notify.unset',
           previousValue: fromSlateValue(
             previousChildren,
-            schemaTypes.block.name,
+            editorActor.getSnapshot().context.schema.block.name,
             KEY_TO_VALUE_ELEMENT.get(editor),
           ),
         })
@@ -295,7 +296,7 @@ export function createWithPatches({
             actionId: getCurrentActionId(editor),
             value: fromSlateValue(
               editor.children,
-              schemaTypes.block.name,
+              editorActor.getSnapshot().context.schema.block.name,
               KEY_TO_VALUE_ELEMENT.get(editor),
             ),
           })

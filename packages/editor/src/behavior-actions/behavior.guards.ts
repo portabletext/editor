@@ -4,7 +4,7 @@ import {
   type PortableTextListBlock,
   type PortableTextTextBlock,
 } from '@sanity/types'
-import type {EditorSchema} from '../editor/define-schema'
+import type {EditorSchema} from '../editor/editor-schema'
 
 /**
  * @alpha

@@ -40,7 +40,7 @@ const breakingAtTheEndOfTextBlock = defineBehavior({
           markDefs: [],
           listItem: focusListItem,
           level: focusLevel,
-          style: snapshot.context.schema.styles[0]?.value,
+          style: snapshot.context.schema.styles[0]?.name,
         },
         placement: 'after',
       }),
@@ -63,14 +63,14 @@ const breakingAtTheStartOfTextBlock = defineBehavior({
     const focusDecorators = focusSpan?.node.marks?.filter(
       (mark) =>
         snapshot.context.schema.decorators.some(
-          (decorator) => decorator.value === mark,
+          (decorator) => decorator.name === mark,
         ) ?? [],
     )
     const focusAnnotations =
       focusSpan?.node.marks?.filter(
         (mark) =>
           !snapshot.context.schema.decorators.some(
-            (decorator) => decorator.value === mark,
+            (decorator) => decorator.name === mark,
           ),
       ) ?? []
     const focusListItem = focusTextBlock.node.listItem
@@ -103,7 +103,7 @@ const breakingAtTheStartOfTextBlock = defineBehavior({
           ],
           listItem: focusListItem,
           level: focusLevel,
-          style: snapshot.context.schema.styles[0]?.value,
+          style: snapshot.context.schema.styles[0]?.name,
         },
         placement: 'before',
         select: 'none',

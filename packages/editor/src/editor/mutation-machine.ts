@@ -14,7 +14,7 @@ import {
   type AnyEventObject,
 } from 'xstate'
 import type {PortableTextSlateEditor} from '../types/editor'
-import type {EditorSchema} from './define-schema'
+import type {EditorSchema} from './editor-schema'
 
 /**
  * Makes sure editor mutation events are debounced

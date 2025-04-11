@@ -21,20 +21,18 @@ import {
   type SetNodeOperation,
   type SplitNodeOperation,
 } from 'slate'
+import type {EditorActor} from '../editor/editor-machine'
 import type {PatchFunctions} from '../editor/plugins/createWithPatches'
-import type {
-  PortableTextMemberSchemaTypes,
-  PortableTextSlateEditor,
-} from '../types/editor'
+import type {PortableTextSlateEditor} from '../types/editor'
 import {debugWithName} from './debug'
 import {fromSlateValue} from './values'
 
 const debug = debugWithName('operationToPatches')
 
 export function createOperationToPatches(
-  types: PortableTextMemberSchemaTypes,
+  editorActor: EditorActor,
 ): PatchFunctions {
-  const textBlockName = types.block.name
+  const textBlockName = editorActor.getSnapshot().context.schema.block.name
   function insertTextPatch(
     editor: PortableTextSlateEditor,
     operation: InsertTextOperation,

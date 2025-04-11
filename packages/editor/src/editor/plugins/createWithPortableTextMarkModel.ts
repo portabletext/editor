@@ -13,21 +13,19 @@ import {debugWithName} from '../../internal-utils/debug'
 import {getNextSpan, getPreviousSpan} from '../../internal-utils/sibling-utils'
 import {isChangingRemotely} from '../../internal-utils/withChanges'
 import {isRedoing, isUndoing} from '../../internal-utils/withUndoRedo'
-import type {
-  PortableTextMemberSchemaTypes,
-  PortableTextSlateEditor,
-} from '../../types/editor'
+import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 
 const debug = debugWithName('plugin:withPortableTextMarkModel')
 
 export function createWithPortableTextMarkModel(
   editorActor: EditorActor,
-  types: PortableTextMemberSchemaTypes,
 ): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
   return function withPortableTextMarkModel(editor: PortableTextSlateEditor) {
     const {apply, normalizeNode} = editor
-    const decorators = types.decorators.map((t) => t.value)
+    const decorators = editorActor
+      .getSnapshot()
+      .context.schema.decorators.map((t) => t.name)
 
     // Extend Slate's default normalization. Merge spans with same set of .marks when doing merge_node operations, and clean up markDefs / marks
     editor.normalizeNode = (nodeEntry) => {
@@ -89,7 +87,9 @@ export function createWithPortableTextMarkModel(
       if (editor.isTextSpan(node)) {
         const blockPath = Path.parent(path)
         const [block] = Editor.node(editor, blockPath)
-        const decorators = types.decorators.map((decorator) => decorator.value)
+        const decorators = editorActor
+          .getSnapshot()
+          .context.schema.decorators.map((decorator) => decorator.name)
         const annotations = node.marks?.filter(
           (mark) => !decorators.includes(mark),
         )
@@ -113,7 +113,9 @@ export function createWithPortableTextMarkModel(
        * Remove orphaned annotations from child spans of block nodes
        */
       if (editor.isTextBlock(node)) {
-        const decorators = types.decorators.map((decorator) => decorator.value)
+        const decorators = editorActor
+          .getSnapshot()
+          .context.schema.decorators.map((decorator) => decorator.name)
 
         for (const [child, childPath] of Node.children(editor, path)) {
           if (editor.isTextSpan(child)) {
@@ -152,9 +154,9 @@ export function createWithPortableTextMarkModel(
         const [block] = Editor.node(editor, blockPath)
 
         if (editor.isTextBlock(block)) {
-          const decorators = types.decorators.map(
-            (decorator) => decorator.value,
-          )
+          const decorators = editorActor
+            .getSnapshot()
+            .context.schema.decorators.map((decorator) => decorator.name)
           const marks = node.marks ?? []
           const orphanedAnnotations = marks.filter((mark) => {
             return (
@@ -627,7 +629,8 @@ export function createWithPortableTextMarkModel(
         op.type === 'merge_node' &&
         op.path.length === 1 &&
         'markDefs' in op.properties &&
-        op.properties._type === types.block.name &&
+        op.properties._type ===
+          editorActor.getSnapshot().context.schema.block.name &&
         Array.isArray(op.properties.markDefs) &&
         op.properties.markDefs.length > 0 &&
         op.path[0] - 1 >= 0

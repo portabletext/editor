@@ -10,8 +10,9 @@ import {
 } from '../../index'
 
 const imageType = defineField({
-  type: 'image',
-  name: 'blockImage',
+  name: 'custom image',
+  type: 'object',
+  fields: [],
 })
 
 const someObject = defineField({
@@ -68,7 +69,7 @@ const colorAndLink = defineArrayMember({
 
 const schema = Schema.compile({
   name: 'test',
-  types: [portableTextType, colorAndLink],
+  types: [portableTextType, colorAndLink, imageType],
 })
 
 export const PortableTextEditorTester = forwardRef(

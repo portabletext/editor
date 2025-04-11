@@ -3,15 +3,14 @@ import {
   compileSchemaDefinition,
   defineSchema,
   type SchemaDefinition,
-} from '../editor/define-schema'
+} from '../editor/editor-schema'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {converterPortableText} from './converter.portable-text'
-import {coreConverters} from './converters.core'
 
 function createSnapshot(schema: SchemaDefinition) {
   return createTestSnapshot({
     context: {
-      converters: coreConverters,
+      converters: [],
       schema: compileSchemaDefinition(schema),
     },
   })

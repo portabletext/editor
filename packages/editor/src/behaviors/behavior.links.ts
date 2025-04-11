@@ -1,4 +1,4 @@
-import type {EditorSchema} from '../editor/define-schema'
+import type {EditorSchema} from '../editor/editor-schema'
 import {looksLikeUrl} from '../internal-utils/looks-like-url'
 import * as selectors from '../selectors'
 import {execute} from './behavior.types.action'

@@ -44,7 +44,7 @@ export function Synchronizer(props: SynchronizerProps) {
   })
   const mutationActorRef = useActorRef(mutationMachine, {
     input: {
-      schema: editorActor.getSnapshot().context.schema,
+      schema: props.editorActor.getSnapshot().context.schema,
       slateEditor,
     },
   })

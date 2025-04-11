@@ -1,12 +1,11 @@
 import type {
-  ObjectSchemaType,
   PortableTextBlock,
   PortableTextObject,
   PortableTextSpan,
   PortableTextTextBlock,
   TypedObject,
 } from '@sanity/types'
-import type {EditorSchema} from '../editor/define-schema'
+import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {isTypedObject} from './asserters'
 
@@ -192,9 +191,9 @@ function parseTextBlock({
    */
   if (
     typeof parsedBlock.style !== 'string' ||
-    !context.schema.styles.find((style) => style.value === block.style)
+    !context.schema.styles.find((style) => style.name === block.style)
   ) {
-    const defaultStyle = context.schema.styles.at(0)?.value
+    const defaultStyle = context.schema.styles.at(0)?.name
 
     if (defaultStyle !== undefined) {
       parsedBlock.style = defaultStyle
@@ -208,7 +207,7 @@ function parseTextBlock({
    */
   if (
     typeof parsedBlock.listItem !== 'string' ||
-    !context.schema.lists.find((list) => list.value === block.listItem)
+    !context.schema.lists.find((list) => list.name === block.listItem)
   ) {
     delete parsedBlock.listItem
   }
@@ -272,7 +271,7 @@ export function parseSpan({
     }
 
     if (
-      context.schema.decorators.some((decorator) => decorator.value === mark)
+      context.schema.decorators.some((decorator) => decorator.name === mark)
     ) {
       return [mark]
     }
@@ -362,7 +361,9 @@ function parseObject({
   options,
 }: {
   object: TypedObject
-  context: Pick<EditorContext, 'keyGenerator'> & {schemaType: ObjectSchemaType}
+  context: Pick<EditorContext, 'keyGenerator'> & {
+    schemaType: EditorSchema['blockObjects'][0]
+  }
   options: {refreshKeys: boolean}
 }): PortableTextObject {
   // Validates all props on the object and only takes those that match
