@@ -116,9 +116,6 @@ export function createWithEventListeners(editorActor: EditorActor) {
           text,
         },
         editor,
-        defaultActionCallback: () => {
-          insertText(text, options)
-        },
       })
       return
     }
@@ -167,9 +164,6 @@ export function createWithEventListeners(editorActor: EditorActor) {
           }),
         },
         editor,
-        defaultActionCallback: () => {
-          select(location)
-        },
       })
       return
     }

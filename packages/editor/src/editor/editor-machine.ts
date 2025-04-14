@@ -174,7 +174,6 @@ export type InternalEditorEvent =
       type: 'behavior event'
       behaviorEvent: BehaviorEvent
       editor: PortableTextSlateEditor
-      defaultActionCallback?: () => void
       nativeEvent?: {preventDefault: () => void}
     }
   | MutationEvent
@@ -313,10 +312,6 @@ export const editorMachine = setup({
             internalDrag: context.internalDrag,
           }),
         nativeEvent: event.nativeEvent,
-        defaultActionCallback:
-          event.type === 'behavior event'
-            ? event.defaultActionCallback
-            : undefined,
       })
     },
   },
