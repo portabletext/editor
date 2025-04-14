@@ -1,6 +1,8 @@
 import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@sanity/types'
 import type {FocusEvent} from 'react'
+import {Transforms} from 'slate'
+import {ReactEditor} from 'slate-react'
 import {
   assertEvent,
   assign,
@@ -162,6 +164,14 @@ export type HasTag = ReturnType<EditorActor['getSnapshot']>['hasTag']
 export type InternalEditorEvent =
   | ExternalEditorEvent
   | {
+      type: 'blur'
+      editor: PortableTextSlateEditor
+    }
+  | {
+      type: 'focus'
+      editor: PortableTextSlateEditor
+    }
+  | {
       type: 'normalizing'
     }
   | {
@@ -216,6 +226,7 @@ export const editorMachine = setup({
         ghost?: HTMLElement
         origin: Pick<EventPosition, 'selection'>
       }
+      slateEditor?: PortableTextSlateEditor
     },
     events: {} as InternalEditorEvent,
     emitted: {} as InternalEditorEmittedEvent,
@@ -291,6 +302,31 @@ export const editorMachine = setup({
     'clear pending events': assign({
       pendingEvents: [],
     }),
+    'handle blur': ({event}) => {
+      assertEvent(event, 'blur')
+
+      try {
+        ReactEditor.blur(event.editor)
+      } catch (error) {
+        console.error(new Error(`Failed to blur editor: ${error.message}`))
+      }
+    },
+    'handle focus': ({context}) => {
+      if (!context.slateEditor) {
+        console.error('No Slate editor found to focus')
+        return
+      }
+
+      try {
+        const currentSelection = context.slateEditor.selection
+        ReactEditor.focus(context.slateEditor)
+        if (currentSelection) {
+          Transforms.select(context.slateEditor, currentSelection)
+        }
+      } catch (error) {
+        console.error(new Error(`Failed to focus editor: ${error.message}`))
+      }
+    },
     'handle behavior event': ({context, event, self}) => {
       assertEvent(event, ['behavior event'])
 
@@ -313,6 +349,15 @@ export const editorMachine = setup({
           }),
         nativeEvent: event.nativeEvent,
       })
+    },
+  },
+  guards: {
+    'slate is busy': ({context}) => {
+      if (!context.slateEditor) {
+        return false
+      }
+
+      return context.slateEditor.operations.length > 0
     },
   },
 }).createMachine({
@@ -421,6 +466,13 @@ export const editorMachine = setup({
             'behavior event': {
               actions: 'handle behavior event',
             },
+            'blur': {
+              actions: 'handle blur',
+            },
+            'focus': {
+              target: '.focusing',
+              actions: [assign({slateEditor: ({event}) => event.editor})],
+            },
           },
           initial: 'idle',
           states: {
@@ -436,6 +488,30 @@ export const editorMachine = setup({
                     }),
                   ],
                   target: 'dragging internally',
+                },
+              },
+            },
+            'focusing': {
+              initial: 'checking if busy',
+              states: {
+                'checking if busy': {
+                  always: [
+                    {
+                      guard: 'slate is busy',
+                      target: 'busy',
+                    },
+                    {
+                      target: '#editor.edit mode.editable.idle',
+                      actions: ['handle focus'],
+                    },
+                  ],
+                },
+                'busy': {
+                  after: {
+                    10: {
+                      target: 'checking if busy',
+                    },
+                  },
                 },
               },
             },

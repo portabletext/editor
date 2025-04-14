@@ -191,6 +191,20 @@ function createInternalEditorFromActor(
           editorActor.send(event)
           break
 
+        case 'blur':
+          editorActor.send({
+            type: 'blur',
+            editor: slateEditor.instance,
+          })
+          break
+
+        case 'focus':
+          editorActor.send({
+            type: 'focus',
+            editor: slateEditor.instance,
+          })
+          break
+
         case 'insert.block object':
           editorActor.send({
             type: 'behavior event',

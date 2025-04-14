@@ -12,14 +12,12 @@ import {addAnnotationActionImplementation} from './behavior.action.annotation.ad
 import {removeAnnotationActionImplementation} from './behavior.action.annotation.remove'
 import {blockSetBehaviorActionImplementation} from './behavior.action.block.set'
 import {blockUnsetBehaviorActionImplementation} from './behavior.action.block.unset'
-import {blurActionImplementation} from './behavior.action.blur'
 import {decoratorAddActionImplementation} from './behavior.action.decorator.add'
 import {deleteActionImplementation} from './behavior.action.delete'
 import {deleteBackwardActionImplementation} from './behavior.action.delete.backward'
 import {deleteBlockActionImplementation} from './behavior.action.delete.block'
 import {deleteForwardActionImplementation} from './behavior.action.delete.forward'
 import {effectActionImplementation} from './behavior.action.effect'
-import {focusActionImplementation} from './behavior.action.focus'
 import {insertInlineObjectActionImplementation} from './behavior.action.insert-inline-object'
 import {insertSpanActionImplementation} from './behavior.action.insert-span'
 import {insertBlockActionImplementation} from './behavior.action.insert.block'
@@ -58,10 +56,8 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'annotation.remove': removeAnnotationActionImplementation,
   'block.set': blockSetBehaviorActionImplementation,
   'block.unset': blockUnsetBehaviorActionImplementation,
-  'blur': blurActionImplementation,
   'decorator.add': decoratorAddActionImplementation,
   'decorator.remove': removeDecoratorActionImplementation,
-  'focus': focusActionImplementation,
   'delete': deleteActionImplementation,
   'delete.backward': deleteBackwardActionImplementation,
   'delete.forward': deleteForwardActionImplementation,
@@ -119,13 +115,6 @@ export function performAction({
       })
       break
     }
-    case 'blur': {
-      behaviorActionImplementations.blur({
-        context,
-        action,
-      })
-      break
-    }
     case 'decorator.add': {
       behaviorActionImplementations['decorator.add']({
         context,
@@ -170,13 +159,6 @@ export function performAction({
     }
     case 'effect': {
       behaviorActionImplementations.effect({
-        context,
-        action,
-      })
-      break
-    }
-    case 'focus': {
-      behaviorActionImplementations.focus({
         context,
         action,
       })
