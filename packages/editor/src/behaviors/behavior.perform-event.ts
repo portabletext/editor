@@ -116,7 +116,6 @@ export function performEvent({
           },
           action: defaultAction,
         })
-        editor.onChange()
       } catch (error) {
         console.error(
           new Error(
@@ -125,6 +124,9 @@ export function performEvent({
         )
       }
     })
+
+    editor.onChange()
+
     return
   }
 
@@ -203,22 +205,36 @@ export function performEvent({
                 nativeEvent: undefined,
               })
             } else {
-              try {
-                performAction({
-                  context: {
-                    keyGenerator,
-                    schema,
-                  },
-                  action: {...action.event, editor},
-                })
-              } catch (error) {
-                console.error(
-                  new Error(
-                    `Performing action "${action.event.type}" as a result of "${event.type}" failed due to: ${error.message}`,
-                  ),
-                )
+              const internalAction = {
+                ...action.event,
+                editor,
+              }
+              let actionFailed = false
+
+              withApplyingBehaviorActions(editor, () => {
+                try {
+                  performAction({
+                    context: {
+                      keyGenerator,
+                      schema,
+                    },
+                    action: internalAction,
+                  })
+                } catch (error) {
+                  console.error(
+                    new Error(
+                      `Performing action "${action.event.type}" as a result of "${event.type}" failed due to: ${error.message}`,
+                    ),
+                  )
+                  actionFailed = true
+                }
+              })
+
+              if (actionFailed) {
                 break
               }
+
+              editor.onChange()
             }
 
             continue
@@ -228,25 +244,33 @@ export function performEvent({
             ...action,
             editor,
           }
+          let actionFailed = false
 
-          try {
-            performAction({
-              context: {
-                keyGenerator,
-                schema,
-              },
-              action: internalAction,
-            })
-          } catch (error) {
-            console.error(
-              new Error(
-                `Performing action "${internalAction.type}" as a result of "${event.type}" failed due to: ${error.message}`,
-              ),
-            )
+          withApplyingBehaviorActions(editor, () => {
+            try {
+              performAction({
+                context: {
+                  keyGenerator,
+                  schema,
+                },
+                action: internalAction,
+              })
+            } catch (error) {
+              console.error(
+                new Error(
+                  `Performing action "${internalAction.type}" as a result of "${event.type}" failed due to: ${error.message}`,
+                ),
+              )
+              actionFailed = true
+            }
+          })
+
+          if (actionFailed) {
             break
           }
+
+          editor.onChange()
         }
-        editor.onChange()
       })
     }
 
@@ -270,7 +294,6 @@ export function performEvent({
           },
           action: defaultAction,
         })
-        editor.onChange()
       } catch (error) {
         console.error(
           new Error(
@@ -279,5 +302,6 @@ export function performEvent({
         )
       }
     })
+    editor.onChange()
   }
 }
