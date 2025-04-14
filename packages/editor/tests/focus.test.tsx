@@ -44,13 +44,7 @@ describe('focus', () => {
     expect(onEvent).toHaveBeenNthCalledWith(1, {
       type: 'ready',
     })
-    expect(onEvent).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({
-        type: 'focused',
-      }),
-    )
-    expect(onEvent).toHaveBeenNthCalledWith(3, {
+    expect(onEvent).toHaveBeenNthCalledWith(2, {
       type: 'selection',
       selection: {
         anchor: {
@@ -64,6 +58,12 @@ describe('focus', () => {
         backward: false,
       },
     })
+    expect(onEvent).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({
+        type: 'focused',
+      }),
+    )
 
     await userEvent.click(toolbarLocator)
 
