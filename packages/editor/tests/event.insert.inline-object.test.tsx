@@ -3,7 +3,7 @@ import {page, userEvent} from '@vitest/browser/context'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
-import type {Editor} from '../src/editor/create-editor'
+import type {Editor} from '../src'
 import {PortableTextEditable} from '../src/editor/Editable'
 import {EditorProvider} from '../src/editor/editor-provider'
 import {defineSchema} from '../src/editor/editor-schema'
@@ -64,5 +64,123 @@ describe('event.insert.inline object', () => {
         ).children?.[1],
       ),
     ).toEqual(['_key', '_type'])
+  })
+
+  test('Scenario: Inserting and focusing inline object', async () => {
+    const editorRef = React.createRef<Editor>()
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator: createTestKeyGenerator(),
+          schemaDefinition: defineSchema({
+            inlineObjects: [
+              {
+                name: 'stock ticker',
+                fields: [{type: 'string', name: 'symbol'}],
+              },
+            ],
+          }),
+        }}
+      >
+        <button
+          data-testid="insert-stock-ticker"
+          type="button"
+          onClick={() => {
+            editorRef.current?.send({
+              type: 'insert.inline object',
+              inlineObject: {
+                name: 'stock ticker',
+                value: {
+                  symbol: 'AAPL',
+                },
+              },
+            })
+            editorRef.current?.send({
+              type: 'focus',
+            })
+          }}
+        >
+          Insert stock ticker
+        </button>
+        <EditorRefPlugin ref={editorRef} />
+        <PortableTextEditable />
+      </EditorProvider>,
+    )
+
+    const locator = page.getByRole('textbox')
+    const insertStockTickerButton = page.getByTestId('insert-stock-ticker')
+    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await vi.waitFor(() =>
+      expect.element(insertStockTickerButton).toBeInTheDocument(),
+    )
+
+    await userEvent.click(locator)
+    await userEvent.click(insertStockTickerButton)
+
+    // Focusing in Slate is async, so we need to make sure it has settled
+    // before we assert the selection
+    await new Promise((resolve) => setTimeout(resolve, 250))
+
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [
+            {_key: 'k1', _type: 'span', text: '', marks: []},
+            {_key: 'k2', _type: 'stock ticker', symbol: 'AAPL'},
+            {_key: 'k4', _type: 'span', text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: 'k0'}, 'children', {_key: 'k2'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'k0'}, 'children', {_key: 'k2'}],
+          offset: 0,
+        },
+        backward: false,
+      })
+    })
+
+    await userEvent.keyboard('{ArrowRight}')
+    await userEvent.type(locator, 'foo')
+
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [
+            {_key: 'k1', _type: 'span', text: '', marks: []},
+            {_key: 'k2', _type: 'stock ticker', symbol: 'AAPL'},
+            {_key: 'k4', _type: 'span', text: 'foo', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: 'k0'}, 'children', {_key: 'k4'}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: 'k0'}, 'children', {_key: 'k4'}],
+          offset: 3,
+        },
+        backward: false,
+      })
+    })
   })
 })
