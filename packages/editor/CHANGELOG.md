@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.47.5](https://github.com/portabletext/editor/compare/editor-v1.47.4...editor-v1.47.5) (2025-04-14)
+
+
+### Bug Fixes
+
+* **revert:** add back initial focus selection ([1fa3262](https://github.com/portabletext/editor/commit/1fa3262490df9eb057353377b879cbe1832b21c9))
+
 ## [1.47.4](https://github.com/portabletext/editor/compare/editor-v1.47.3...editor-v1.47.4) (2025-04-14)
 
 
