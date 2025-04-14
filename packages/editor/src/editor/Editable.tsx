@@ -16,7 +16,7 @@ import {
   type MutableRefObject,
   type TextareaHTMLAttributes,
 } from 'react'
-import {Editor, Transforms, type Text} from 'slate'
+import {Transforms, type Text} from 'slate'
 import {
   ReactEditor,
   Editable as SlateEditable,
@@ -51,7 +51,7 @@ import type {
   ScrollSelectionIntoViewFunction,
 } from '../types/editor'
 import type {HotkeyOptions} from '../types/options'
-import {isSelectionCollapsed} from '../utils'
+import {isEqualSelections, isSelectionCollapsed} from '../utils'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
 import {Element} from './components/Element'
 import {Leaf} from './components/Leaf'
@@ -59,7 +59,6 @@ import {EditorActorContext} from './editor-actor-context'
 import {getEditorSnapshot} from './editor-selector'
 import {usePortableTextEditor} from './hooks/usePortableTextEditor'
 import {createWithHotkeys} from './plugins/createWithHotKeys'
-import {PortableTextEditor} from './PortableTextEditor'
 import {
   createDecorate,
   rangeDecorationsMachine,
@@ -571,24 +570,38 @@ export const PortableTextEditable = forwardRef<
         onFocus(event)
       }
       if (!event.isDefaultPrevented()) {
-        const selection = PortableTextEditor.getSelection(portableTextEditor)
-        // Create an editor selection if it does'nt exist
-        if (selection === null) {
-          Transforms.select(slateEditor, Editor.start(slateEditor, []))
-          slateEditor.onChange()
-        }
+        const selectionBefore = slateEditor.selection
+          ? slateRangeToSelection({
+              schema: editorActor.getSnapshot().context.schema,
+              editor: slateEditor,
+              range: slateEditor.selection,
+            })
+          : null
+
         editorActor.send({type: 'notify.focused', event})
-        const newSelection = PortableTextEditor.getSelection(portableTextEditor)
-        // If the selection is the same, emit it explicitly here as there is no actual onChange event triggered.
-        if (selection === newSelection) {
+
+        const selectionAfter = slateEditor.selection
+          ? slateRangeToSelection({
+              schema: editorActor.getSnapshot().context.schema,
+              editor: slateEditor,
+              range: slateEditor.selection,
+            })
+          : null
+
+        if (
+          selectionBefore &&
+          selectionAfter &&
+          isEqualSelections(selectionBefore, selectionAfter)
+        ) {
+          // If the selection is the same, emit it explicitly here as there is no actual onChange event triggered.
           editorActor.send({
             type: 'notify.selection',
-            selection,
+            selection: selectionBefore,
           })
         }
       }
     },
-    [editorActor, onFocus, portableTextEditor, slateEditor],
+    [editorActor, onFocus, slateEditor],
   )
 
   const handleClick = useCallback(
