@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.47.4](https://github.com/portabletext/editor/compare/editor-v1.47.3...editor-v1.47.4) (2025-04-14)
+
+
+### Bug Fixes
+
+* **behaviors:** make all default actions go through `performAction` ([da9ede4](https://github.com/portabletext/editor/commit/da9ede4eabb75eee8d4086aba20cfbdfafce8c3e))
+* don't call `onChange` during normalization ([b9721bd](https://github.com/portabletext/editor/commit/b9721bd62ace47ae7a8944a47bb17dcd18fa5781))
+* handle `blur`/`focus` events outside Behaviors ([f7ee633](https://github.com/portabletext/editor/commit/f7ee633b43eb097fa74759a7f0c923512be8dd01))
+
 ## [1.47.3](https://github.com/portabletext/editor/compare/editor-v1.47.2...editor-v1.47.3) (2025-04-14)
 
 
