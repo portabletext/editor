@@ -37,7 +37,6 @@ export function performEvent({
   schema,
   getSnapshot,
   nativeEvent,
-  defaultActionCallback,
 }: {
   mode: 'raise' | 'execute'
   behaviors: Array<Behavior>
@@ -46,7 +45,6 @@ export function performEvent({
   keyGenerator: () => string
   schema: EditorSchema
   getSnapshot: () => EditorSnapshot
-  defaultActionCallback: (() => void) | undefined
   nativeEvent:
     | {
         preventDefault: () => void
@@ -105,21 +103,6 @@ export function performEvent({
   })
 
   if (eventBehaviors.length === 0) {
-    if (defaultActionCallback) {
-      withApplyingBehaviorActions(editor, () => {
-        try {
-          defaultActionCallback()
-        } catch (error) {
-          console.error(
-            new Error(
-              `Performing action "${event.type}" failed due to: ${error.message}`,
-            ),
-          )
-        }
-      })
-      return
-    }
-
     if (!defaultAction) {
       return
     }
@@ -196,7 +179,6 @@ export function performEvent({
               keyGenerator,
               schema,
               getSnapshot,
-              defaultActionCallback: undefined,
               nativeEvent: undefined,
             })
 
@@ -218,7 +200,6 @@ export function performEvent({
                 keyGenerator,
                 schema,
                 getSnapshot,
-                defaultActionCallback: undefined,
                 nativeEvent: undefined,
               })
             } else {
@@ -276,21 +257,6 @@ export function performEvent({
   }
 
   if (!behaviorOverwritten) {
-    if (defaultActionCallback) {
-      withApplyingBehaviorActions(editor, () => {
-        try {
-          defaultActionCallback()
-        } catch (error) {
-          console.error(
-            new Error(
-              `Performing "${event.type}" failed due to: ${error.message}`,
-            ),
-          )
-        }
-      })
-      return
-    }
-
     if (!defaultAction) {
       return
     }
