@@ -51,7 +51,7 @@ import type {
   ScrollSelectionIntoViewFunction,
 } from '../types/editor'
 import type {HotkeyOptions} from '../types/options'
-import {isEqualSelections, isSelectionCollapsed} from '../utils'
+import {isSelectionCollapsed} from '../utils'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
 import {Element} from './components/Element'
 import {Leaf} from './components/Leaf'
@@ -570,17 +570,9 @@ export const PortableTextEditable = forwardRef<
         onFocus(event)
       }
       if (!event.isDefaultPrevented()) {
-        const selectionBefore = slateEditor.selection
-          ? slateRangeToSelection({
-              schema: editorActor.getSnapshot().context.schema,
-              editor: slateEditor,
-              range: slateEditor.selection,
-            })
-          : null
-
         editorActor.send({type: 'notify.focused', event})
 
-        const selectionAfter = slateEditor.selection
+        const selection = slateEditor.selection
           ? slateRangeToSelection({
               schema: editorActor.getSnapshot().context.schema,
               editor: slateEditor,
@@ -588,15 +580,10 @@ export const PortableTextEditable = forwardRef<
             })
           : null
 
-        if (
-          selectionBefore &&
-          selectionAfter &&
-          isEqualSelections(selectionBefore, selectionAfter)
-        ) {
-          // If the selection is the same, emit it explicitly here as there is no actual onChange event triggered.
+        if (selection) {
           editorActor.send({
             type: 'notify.selection',
-            selection: selectionBefore,
+            selection,
           })
         }
       }
