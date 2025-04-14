@@ -28,7 +28,7 @@ export function withApplyingBehaviorActionSet(editor: Editor, fn: () => void) {
   const current = CURRENT_BEHAVIOR_ACTION_SET.get(editor)
 
   if (current) {
-    withApplyingBehaviorActions(editor, fn)
+    fn()
     return
   }
 
@@ -38,7 +38,7 @@ export function withApplyingBehaviorActionSet(editor: Editor, fn: () => void) {
       actionSetId: defaultKeyGenerator(),
     },
   )
-  withApplyingBehaviorActions(editor, fn)
+  fn()
   CURRENT_BEHAVIOR_ACTION_SET.set(editor, undefined)
 }
 
