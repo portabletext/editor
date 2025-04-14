@@ -170,14 +170,13 @@ export const PortableTextEditable = forwardRef<
   const readOnly = useSelector(editorActor, (s) =>
     s.matches({'edit mode': 'read only'}),
   )
-  const schemaTypes = useSelector(editorActor, (s) => s.context.schema)
   const slateEditor = useSlate()
 
   const rangeDecorationsActor = useActorRef(rangeDecorationsMachine, {
     input: {
       rangeDecorations: rangeDecorations ?? [],
       readOnly,
-      schema: schemaTypes,
+      schema: editorActor.getSnapshot().context.schema,
       slateEditor,
       skipSetup: !editorActor.getSnapshot().matches({setup: 'setting up'}),
     },
@@ -201,8 +200,6 @@ export const PortableTextEditable = forwardRef<
       rangeDecorations: rangeDecorations ?? [],
     })
   }, [rangeDecorationsActor, rangeDecorations])
-
-  const blockTypeName = schemaTypes.block.name
 
   // Output a minimal React editor inside Editable when in readOnly mode.
   // NOTE: make sure all the plugins used here can be safely run over again at any point.
@@ -289,7 +286,7 @@ export const PortableTextEditable = forwardRef<
     },
     [
       editorActor,
-      portableTextEditor.schemaTypes,
+      portableTextEditor,
       readOnly,
       renderAnnotation,
       renderChild,
@@ -303,7 +300,10 @@ export const PortableTextEditable = forwardRef<
       debug(`Selection from props ${JSON.stringify(propsSelection)}`)
       const normalizedSelection = normalizeSelection(
         propsSelection,
-        fromSlateValue(slateEditor.children, blockTypeName),
+        fromSlateValue(
+          slateEditor.children,
+          editorActor.getSnapshot().context.schema.block.name,
+        ),
       )
       if (normalizedSelection !== null) {
         debug(
@@ -324,7 +324,7 @@ export const PortableTextEditable = forwardRef<
         }
       }
     }
-  }, [blockTypeName, editorActor, propsSelection, slateEditor])
+  }, [editorActor, propsSelection, slateEditor])
 
   // Restore selection from props when the editor has been initialized properly with it's value
   useEffect(() => {
@@ -447,7 +447,7 @@ export const PortableTextEditable = forwardRef<
       const value = PortableTextEditor.getValue(portableTextEditor)
       const ptRange = slateEditor.selection
         ? slateRangeToSelection({
-            schema: schemaTypes,
+            schema: editorActor.getSnapshot().context.schema,
             editor: slateEditor,
             range: slateEditor.selection,
           })
@@ -557,7 +557,7 @@ export const PortableTextEditable = forwardRef<
 
       debug('No result from custom paste handler, pasting normally')
     },
-    [editorActor, onPaste, portableTextEditor, schemaTypes, slateEditor],
+    [editorActor, onPaste, portableTextEditor, slateEditor],
   )
 
   const handleOnFocus: FocusEventHandler<HTMLDivElement> = useCallback(
