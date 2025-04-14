@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.47.2](https://github.com/portabletext/editor/compare/editor-v1.47.1...editor-v1.47.2) (2025-04-14)
+
+
+### Bug Fixes
+
+* **editable:** simplify schema access ([60bc14f](https://github.com/portabletext/editor/commit/60bc14fec2afbe372b4eac36f78f915f25fd5579))
+
 ## [1.47.1](https://github.com/portabletext/editor/compare/editor-v1.47.0...editor-v1.47.1) (2025-04-11)
 
 
