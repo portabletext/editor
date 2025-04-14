@@ -34,6 +34,7 @@ import {normalizeSelection} from '../internal-utils/selection'
 import {getSelectionDomNodes} from '../internal-utils/selection-elements'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {fromSlateValue} from '../internal-utils/values'
+import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
 import * as selectors from '../selectors'
 import type {
   EditorSelection,
@@ -444,7 +445,11 @@ export const PortableTextEditable = forwardRef<
   // Handle incoming pasting events in the editor
   const handlePaste = useCallback(
     (event: ClipboardEvent<HTMLDivElement>): Promise<void> | void => {
-      const value = PortableTextEditor.getValue(portableTextEditor)
+      const value = fromSlateValue(
+        slateEditor.children,
+        editorActor.getSnapshot().context.schema.block.name,
+        KEY_TO_VALUE_ELEMENT.get(slateEditor),
+      )
       const ptRange = slateEditor.selection
         ? slateRangeToSelection({
             schema: editorActor.getSnapshot().context.schema,
