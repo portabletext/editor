@@ -62,6 +62,7 @@ export const schemaDefinition = defineSchema({
       title: 'Comment',
       name: 'comment',
       icon: MessageSquareTextIcon,
+      fields: [{name: 'text', type: 'string'}],
     },
   ],
   lists: [
