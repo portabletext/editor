@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.47.3](https://github.com/portabletext/editor/compare/editor-v1.47.2...editor-v1.47.3) (2025-04-14)
+
+
+### Bug Fixes
+
+* emit selection *after* focus ([94f1563](https://github.com/portabletext/editor/commit/94f156332569796932528487c013bc1b01b8875c))
+
 ## [1.47.2](https://github.com/portabletext/editor/compare/editor-v1.47.1...editor-v1.47.2) (2025-04-14)
 
 
