@@ -32,7 +32,7 @@ type NamespacedBehaviorEventType<
  * External events
  **************************************/
 
-type ExternalBehaviorEventNamespace = 'insert'
+type ExternalBehaviorEventNamespace = 'blur' | 'focus' | 'insert'
 
 type ExternalBehaviorEventType<
   TNamespace extends ExternalBehaviorEventNamespace,
@@ -40,6 +40,12 @@ type ExternalBehaviorEventType<
 > = TType extends '' ? `${TNamespace}` : `${TNamespace}.${TType}`
 
 export type ExternalBehaviorEvent =
+  | {
+      type: ExternalBehaviorEventType<'blur'>
+    }
+  | {
+      type: ExternalBehaviorEventType<'focus'>
+    }
   | {
       type: ExternalBehaviorEventType<'insert', 'block object'>
       placement: InsertPlacement
@@ -61,14 +67,12 @@ const syntheticBehaviorEventTypes = [
   'annotation.remove',
   'block.set',
   'block.unset',
-  'blur',
   'decorator.add',
   'decorator.remove',
   'delete',
   'delete.backward',
   'delete.block',
   'delete.forward',
-  'focus',
   'history.redo',
   'history.undo',
   'insert.inline object',
@@ -115,9 +119,6 @@ export type SyntheticBehaviorEvent =
       props: Array<string>
     }
   | {
-      type: StrictExtract<SyntheticBehaviorEventType, 'blur'>
-    }
-  | {
       type: StrictExtract<SyntheticBehaviorEventType, 'decorator.add'>
       decorator: string
       at?: {
@@ -144,9 +145,6 @@ export type SyntheticBehaviorEvent =
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'delete.forward'>
       unit: TextUnit
-    }
-  | {
-      type: StrictExtract<SyntheticBehaviorEventType, 'focus'>
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'history.redo'>
