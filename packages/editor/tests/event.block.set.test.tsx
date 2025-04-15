@@ -265,7 +265,7 @@ describe('event.block.set', () => {
     })
   })
 
-  test('Scenario: adding custom block property', async () => {
+  test("Scenario: Text blocks don't accept custom props", async () => {
     const editorRef = React.createRef<Editor>()
     const keyGenerator = createTestKeyGenerator()
 
@@ -315,13 +315,13 @@ describe('event.block.set', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(
-        editorRef.current?.getSnapshot().context.value,
-      ).toMatchObject([
+      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
         {
           _key: textBlockKey,
           _type: 'block',
-          foo: 'bar',
+          children: [{_key: 'k3', _type: 'span', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
         },
       ])
     })
