@@ -169,8 +169,7 @@ function parseTextBlock({
     .filter((child) => child !== undefined)
 
   const parsedBlock: PortableTextTextBlock = {
-    // Spread the entire block to allow custom properties on it
-    ...block,
+    _type: context.schema.block.name,
     _key,
     children:
       children.length > 0
@@ -186,37 +185,30 @@ function parseTextBlock({
     markDefs,
   }
 
-  /**
-   * Reset text block .style if it's somehow set to an invalid type
-   */
   if (
-    typeof parsedBlock.style !== 'string' ||
-    !context.schema.styles.find((style) => style.name === block.style)
+    typeof block.style === 'string' &&
+    context.schema.styles.find((style) => style.name === block.style)
   ) {
+    parsedBlock.style = block.style
+  } else {
     const defaultStyle = context.schema.styles.at(0)?.name
 
     if (defaultStyle !== undefined) {
       parsedBlock.style = defaultStyle
     } else {
-      delete parsedBlock.style
+      console.error('Expected default style')
     }
   }
 
-  /**
-   * Reset text block .listItem if it's somehow set to an invalid type
-   */
   if (
-    typeof parsedBlock.listItem !== 'string' ||
-    !context.schema.lists.find((list) => list.name === block.listItem)
+    typeof block.listItem === 'string' &&
+    context.schema.lists.find((list) => list.name === block.listItem)
   ) {
-    delete parsedBlock.listItem
+    parsedBlock.listItem = block.listItem
   }
 
-  /**
-   * Reset text block .level if it's somehow set to an invalid type
-   */
-  if (typeof parsedBlock.level !== 'number') {
-    delete parsedBlock.level
+  if (typeof block.level === 'number') {
+    parsedBlock.level = block.level
   }
 
   return parsedBlock
