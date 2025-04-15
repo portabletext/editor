@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.47.6](https://github.com/portabletext/editor/compare/editor-v1.47.5...editor-v1.47.6) (2025-04-15)
+
+
+### Bug Fixes
+
+* **block parsing:** strip unknown fields from spans ([4c05295](https://github.com/portabletext/editor/commit/4c052950d6648621499d1711e80957d59c5e4033))
+* **block parsing:** strip unknown fields from text blocks ([1c5daa8](https://github.com/portabletext/editor/commit/1c5daa823d36e7a4a6a7606c3ea5130e1cccd2c2))
+
 ## [1.47.5](https://github.com/portabletext/editor/compare/editor-v1.47.4...editor-v1.47.5) (2025-04-14)
 
 
