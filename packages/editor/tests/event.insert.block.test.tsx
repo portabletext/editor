@@ -237,4 +237,69 @@ describe('event.insert.block', () => {
       },
     ])
   })
+
+  test('Scenario: Stripping unknown span props', () => {
+    const editorRef = React.createRef<Editor>()
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator: createTestKeyGenerator(),
+          schemaDefinition: defineSchema({}),
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <PortableTextEditable />
+      </EditorProvider>,
+    )
+
+    editorRef.current?.send({
+      type: 'insert.block',
+      block: {
+        _type: 'block',
+        children: [
+          {
+            _type: 'span',
+            text: 'foo',
+            foo: 'bar', // <-- unknown prop
+            baz: {
+              fizz: 'buzz',
+            }, // <-- unknown prop
+          },
+        ],
+      },
+      placement: 'after',
+    })
+
+    expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      {
+        _key: 'k0',
+        _type: 'block',
+        children: [
+          {
+            _key: 'k1',
+            _type: 'span',
+            text: '',
+            marks: [],
+          },
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _key: 'k2',
+        _type: 'block',
+        children: [
+          {
+            _key: 'k3',
+            _type: 'span',
+            text: 'foo',
+            marks: [],
+          },
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+  })
 })

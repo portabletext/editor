@@ -272,8 +272,6 @@ export function parseSpan({
   })
 
   return {
-    // Spread the entire span to allow custom properties on it
-    ...span,
     _type: 'span',
     _key: options.refreshKeys
       ? context.keyGenerator()

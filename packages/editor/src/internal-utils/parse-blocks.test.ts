@@ -379,7 +379,6 @@ describe(parseSpan.name, () => {
       _type: 'span',
       text: '',
       marks: [],
-      foo: 'bar',
     })
   })
 
