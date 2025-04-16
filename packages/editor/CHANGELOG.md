@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.47.8](https://github.com/portabletext/editor/compare/editor-v1.47.7...editor-v1.47.8) (2025-04-16)
+
+
+### Bug Fixes
+
+* avoid potentially splitting placeholder ([2a27d1b](https://github.com/portabletext/editor/commit/2a27d1ba4109b893edb6addc6a7d147621a8c8b4))
+
 ## [1.47.7](https://github.com/portabletext/editor/compare/editor-v1.47.6...editor-v1.47.7) (2025-04-16)
 
 
