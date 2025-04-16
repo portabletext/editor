@@ -1,12 +1,15 @@
+import {useActorRef} from '@xstate/react'
 import React, {useMemo} from 'react'
 import {Slate} from 'slate-react'
 import {Synchronizer} from './components/Synchronizer'
 import {
-  useCreateInternalEditor,
+  createInternalEditor,
+  editorConfigToMachineInput,
   type Editor,
   type EditorConfig,
 } from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
+import {editorMachine} from './editor-machine'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
 import {
@@ -44,9 +47,13 @@ export type EditorProviderProps = {
  * @group Components
  */
 export function EditorProvider(props: EditorProviderProps) {
-  const internalEditor = useCreateInternalEditor(props.initialConfig)
-  const editorActor = internalEditor._internal.editorActor
-  const slateEditor = internalEditor._internal.slateEditor
+  const editorActor = useActorRef(editorMachine, {
+    input: editorConfigToMachineInput(props.initialConfig),
+  })
+  const internalEditor = useMemo(
+    () => createInternalEditor(editorActor),
+    [editorActor],
+  )
   const portableTextEditor = useMemo(
     () =>
       new PortableTextEditor({
@@ -65,12 +72,12 @@ export function EditorProvider(props: EditorProviderProps) {
       />
       <Synchronizer
         editorActor={editorActor}
-        slateEditor={slateEditor.instance}
+        slateEditor={internalEditor._internal.slateEditor.instance}
       />
       <EditorActorContext.Provider value={editorActor}>
         <Slate
-          editor={slateEditor.instance}
-          initialValue={slateEditor.initialValue}
+          editor={internalEditor._internal.slateEditor.instance}
+          initialValue={internalEditor._internal.slateEditor.initialValue}
         >
           <PortableTextEditorContext.Provider value={portableTextEditor}>
             <PortableTextEditorSelectionProvider editorActor={editorActor}>

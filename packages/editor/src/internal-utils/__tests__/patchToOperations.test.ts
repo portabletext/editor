@@ -12,7 +12,8 @@ import {withPlugins} from '../../editor/plugins/with-plugins'
 import {createApplyPatch} from '../applyPatch'
 import {VOID_CHILD_KEY} from '../values'
 
-const schemaTypes = legacySchemaToEditorSchema(createLegacySchema(schemaType))
+const legacySchema = createLegacySchema(schemaType)
+const schemaTypes = legacySchemaToEditorSchema(legacySchema)
 
 const patchToOperations = createApplyPatch(schemaTypes)
 
@@ -22,6 +23,7 @@ const editor = withPlugins(createEditor(), {
       behaviors: coreBehaviors,
       schema: schemaTypes,
       keyGenerator: defaultKeyGenerator,
+      getLegacySchema: () => legacySchema,
     },
   }),
   subscriptions: [],

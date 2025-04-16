@@ -21,6 +21,7 @@ import type {NamespaceEvent} from '../type-utils'
 import type {
   EditorSelection,
   InvalidValueResolution,
+  PortableTextMemberSchemaTypes,
   PortableTextSlateEditor,
 } from '../types/editor'
 import type {EditorSchema} from './editor-schema'
@@ -215,6 +216,7 @@ export const editorMachine = setup({
     context: {} as {
       behaviors: Set<Behavior>
       converters: Set<Converter>
+      getLegacySchema: () => PortableTextMemberSchemaTypes
       keyGenerator: () => string
       pendingEvents: Array<InternalPatchEvent | MutationEvent>
       schema: EditorSchema
@@ -233,6 +235,7 @@ export const editorMachine = setup({
     input: {} as {
       behaviors?: Array<Behavior>
       converters?: Array<Converter>
+      getLegacySchema: () => PortableTextMemberSchemaTypes
       keyGenerator: () => string
       maxBlocks?: number
       readOnly?: boolean
@@ -365,6 +368,7 @@ export const editorMachine = setup({
   context: ({input}) => ({
     behaviors: new Set([...(input.behaviors ?? coreBehaviors)]),
     converters: new Set(input.converters ?? []),
+    getLegacySchema: input.getLegacySchema,
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
     schema: input.schema,
