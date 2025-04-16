@@ -15,7 +15,9 @@ import {
 import {Subject} from 'rxjs'
 import {Slate} from 'slate-react'
 import {useEffectEvent} from 'use-effect-event'
+import {createActor} from 'xstate'
 import type {AddedAnnotationPaths} from '../behavior-actions/behavior.action.annotation.add'
+import {createCoreConverters} from '../converters/converters.core'
 import {debugWithName} from '../internal-utils/debug'
 import {compileType} from '../internal-utils/schema'
 import type {
@@ -30,7 +32,7 @@ import type {
 import {Synchronizer} from './components/Synchronizer'
 import {createInternalEditor, type InternalEditor} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
-import type {EditorActor} from './editor-machine'
+import {editorMachine, type EditorActor} from './editor-machine'
 import {legacySchemaToEditorSchema} from './editor-schema'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
@@ -136,20 +138,36 @@ export class PortableTextEditor extends Component<
 
     if (props.editor) {
       this.editor = props.editor as InternalEditor
+      this.schemaTypes = this.editor._internal.editorActor
+        .getSnapshot()
+        .context.getLegacySchema()
     } else {
-      this.editor = createInternalEditor({
-        keyGenerator: props.keyGenerator ?? defaultKeyGenerator,
-        schema: props.schemaType,
-        initialValue: props.value,
-        maxBlocks:
-          props.maxBlocks === undefined
-            ? undefined
-            : Number.parseInt(props.maxBlocks.toString(), 10),
-        readOnly: props.readOnly,
+      const legacySchema = createLegacySchema(
+        props.schemaType.hasOwnProperty('jsonType')
+          ? props.schemaType
+          : compileType(props.schemaType),
+      )
+      const schema = legacySchemaToEditorSchema(legacySchema)
+      const editorActor = createActor(editorMachine, {
+        input: {
+          converters: createCoreConverters(legacySchema),
+          getLegacySchema: () => legacySchema,
+          initialValue: props.value,
+          keyGenerator: props.keyGenerator ?? defaultKeyGenerator,
+          maxBlocks:
+            props.maxBlocks === undefined
+              ? undefined
+              : Number.parseInt(props.maxBlocks.toString(), 10),
+          readOnly: props.readOnly,
+          schema,
+        },
       })
+      editorActor.start()
+
+      this.editor = createInternalEditor(editorActor)
+      this.schemaTypes = legacySchema
     }
 
-    this.schemaTypes = this.editor._internal.legacySchema
     this.editable = this.editor._internal.editable
   }
 

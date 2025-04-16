@@ -11,12 +11,14 @@ import {createLegacySchema} from '../../editor/legacy-schema'
 import {withPlugins} from '../../editor/plugins/with-plugins'
 import {createOperationToPatches} from '../operationToPatches'
 
-const schemaTypes = legacySchemaToEditorSchema(createLegacySchema(schemaType))
+const legacySchema = createLegacySchema(schemaType)
+const schemaTypes = legacySchemaToEditorSchema(legacySchema)
 const editorActor = createActor(editorMachine, {
   input: {
     behaviors: coreBehaviors,
     schema: schemaTypes,
     keyGenerator: defaultKeyGenerator,
+    getLegacySchema: () => legacySchema,
   },
 })
 
