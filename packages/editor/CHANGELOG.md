@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.47.7](https://github.com/portabletext/editor/compare/editor-v1.47.6...editor-v1.47.7) (2025-04-16)
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^3.85.1 ([2aa02fc](https://github.com/portabletext/editor/commit/2aa02fc54643839815964d14bdb76b599d9a4315))
+* simplify and memo `internalEditor` setup ([fdb0a82](https://github.com/portabletext/editor/commit/fdb0a8238354e833a7508666958787f0d4bea827))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.19
+
 ## [1.47.6](https://github.com/portabletext/editor/compare/editor-v1.47.5...editor-v1.47.6) (2025-04-15)
 
 
