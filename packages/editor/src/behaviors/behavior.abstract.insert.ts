@@ -1,4 +1,5 @@
 import {getFocusTextBlock} from '../selectors'
+import {isEmptyTextBlock} from '../utils'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -46,10 +47,10 @@ export const abstractInsertBehaviors = [
         return false
       }
 
-      return true
+      return {focusTextBlock}
     },
     actions: [
-      ({event}) =>
+      ({event}, {focusTextBlock}) =>
         event.blocks.length === 1
           ? [
               raise({
@@ -59,28 +60,24 @@ export const abstractInsertBehaviors = [
                 select: 'end',
               }),
             ]
-          : event.blocks.flatMap((block, index) =>
-              index === 0
-                ? [
-                    raise({
-                      type: 'split.block',
-                    }),
-                    raise({
-                      type: 'select.previous block',
-                      select: 'end',
-                    }),
-                    raise({
-                      type: 'insert.block',
-                      block,
-                      placement: 'auto',
-                      select: 'end',
-                    }),
-                  ]
-                : index === event.blocks.length - 1
+          : isEmptyTextBlock(focusTextBlock.node)
+            ? event.blocks.map((block, index) =>
+                raise({
+                  type: 'insert.block',
+                  block,
+                  placement: index === 0 ? 'auto' : 'after',
+                  select: 'end',
+                }),
+              )
+            : event.blocks.flatMap((block, index) =>
+                index === 0
                   ? [
                       raise({
-                        type: 'select.next block',
-                        select: 'start',
+                        type: 'split.block',
+                      }),
+                      raise({
+                        type: 'select.previous block',
+                        select: 'end',
                       }),
                       raise({
                         type: 'insert.block',
@@ -89,15 +86,28 @@ export const abstractInsertBehaviors = [
                         select: 'end',
                       }),
                     ]
-                  : [
-                      raise({
-                        type: 'insert.block',
-                        block,
-                        placement: 'after',
-                        select: 'end',
-                      }),
-                    ],
-            ),
+                  : index === event.blocks.length - 1
+                    ? [
+                        raise({
+                          type: 'select.next block',
+                          select: 'start',
+                        }),
+                        raise({
+                          type: 'insert.block',
+                          block,
+                          placement: 'auto',
+                          select: 'end',
+                        }),
+                      ]
+                    : [
+                        raise({
+                          type: 'insert.block',
+                          block,
+                          placement: 'after',
+                          select: 'end',
+                        }),
+                      ],
+              ),
     ],
   }),
   defineBehavior({
