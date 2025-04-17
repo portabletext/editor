@@ -236,7 +236,7 @@ importers:
         version: 19.0.0-beta-e993439-20250328(eslint@8.57.1)
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-b04254fd-20250415(eslint@8.57.1)
+        version: 0.0.0-experimental-4a36d3ea-20250416(eslint@8.57.1)
       postcss:
         specifier: ^8.5.3
         version: 8.5.3
@@ -294,7 +294,7 @@ importers:
         version: 19.0.0-beta-e993439-20250328(eslint@9.23.0(jiti@1.21.7))
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-b04254fd-20250415(eslint@9.23.0(jiti@1.21.7))
+        version: 0.0.0-experimental-4a36d3ea-20250416(eslint@9.23.0(jiti@1.21.7))
       eslint-plugin-react-refresh:
         specifier: ^0.4.14
         version: 0.4.19(eslint@9.23.0(jiti@1.21.7))
@@ -367,7 +367,7 @@ importers:
         version: 19.0.0-beta-e993439-20250328(eslint@9.23.0(jiti@1.21.7))
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-b04254fd-20250415(eslint@9.23.0(jiti@1.21.7))
+        version: 0.0.0-experimental-4a36d3ea-20250416(eslint@9.23.0(jiti@1.21.7))
       eslint-plugin-react-refresh:
         specifier: ^0.4.14
         version: 0.4.19(eslint@9.23.0(jiti@1.21.7))
@@ -534,7 +534,7 @@ importers:
         version: 19.0.0-beta-e993439-20250328(eslint@8.57.1)
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-b04254fd-20250415(eslint@8.57.1)
+        version: 0.0.0-experimental-4a36d3ea-20250416(eslint@8.57.1)
       jsdom:
         specifier: ^26.0.0
         version: 26.0.0
@@ -3761,8 +3761,8 @@ packages:
     peerDependencies:
       eslint: '>=7'
 
-  eslint-plugin-react-hooks@0.0.0-experimental-b04254fd-20250415:
-    resolution: {integrity: sha512-0oz3cE3jvl10nhiAVA1QvZRyc6gtnbq2m4IN6j0ofNQgp+L2qPNYqad6GIwT8Q0bYitO6dJb7Z3YrgkrklXahQ==}
+  eslint-plugin-react-hooks@0.0.0-experimental-4a36d3ea-20250416:
+    resolution: {integrity: sha512-ewOAm+pTCKJTMTYIlzxH2FiNbNHfxVMmde2iwz6uH6VHC2LrUUkGDx4RfoUX4+efK0G7sFTKlFhb2hbKaqDo6g==}
     engines: {node: '>=18'}
     peerDependencies:
       eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0
@@ -10421,7 +10421,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-react-hooks@0.0.0-experimental-b04254fd-20250415(eslint@8.57.1):
+  eslint-plugin-react-hooks@0.0.0-experimental-4a36d3ea-20250416(eslint@8.57.1):
     dependencies:
       '@babel/core': 7.26.10
       '@babel/parser': 7.27.0
@@ -10433,7 +10433,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-react-hooks@0.0.0-experimental-b04254fd-20250415(eslint@9.23.0(jiti@1.21.7)):
+  eslint-plugin-react-hooks@0.0.0-experimental-4a36d3ea-20250416(eslint@9.23.0(jiti@1.21.7)):
     dependencies:
       '@babel/core': 7.26.10
       '@babel/parser': 7.27.0
