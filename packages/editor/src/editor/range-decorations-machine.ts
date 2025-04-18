@@ -9,7 +9,6 @@ import {
 } from 'slate'
 import {
   and,
-  assertEvent,
   assign,
   fromCallback,
   setup,
@@ -82,16 +81,16 @@ export const rangeDecorationsMachine = setup({
   },
   actions: {
     'update pending range decorations': assign({
-      pendingRangeDecorations: ({event}) => {
-        assertEvent(event, 'range decorations updated')
+      pendingRangeDecorations: ({context, event}) => {
+        if (event.type !== 'range decorations updated') {
+          return context.pendingRangeDecorations
+        }
 
         return event.rangeDecorations
       },
     }),
     'set up initial range decorations': assign({
-      decoratedRanges: ({context, event}) => {
-        assertEvent(event, 'ready')
-
+      decoratedRanges: ({context}) => {
         const rangeDecorationState: Array<DecoratedRange> = []
 
         for (const rangeDecoration of context.pendingRangeDecorations) {
@@ -120,7 +119,9 @@ export const rangeDecorationsMachine = setup({
     }),
     'update range decorations': assign({
       decoratedRanges: ({context, event}) => {
-        assertEvent(event, 'range decorations updated')
+        if (event.type !== 'range decorations updated') {
+          return context.decoratedRanges
+        }
 
         const rangeDecorationState: Array<DecoratedRange> = []
 
@@ -150,7 +151,9 @@ export const rangeDecorationsMachine = setup({
     }),
     'move range decorations': assign({
       decoratedRanges: ({context, event}) => {
-        assertEvent(event, 'slate operation')
+        if (event.type !== 'slate operation') {
+          return context.decoratedRanges
+        }
 
         const rangeDecorationState: Array<DecoratedRange> = []
 
@@ -212,8 +215,11 @@ export const rangeDecorationsMachine = setup({
       },
     }),
     'assign readOnly': assign({
-      readOnly: ({event}) => {
-        assertEvent(event, 'update read only')
+      readOnly: ({context, event}) => {
+        if (event.type !== 'update read only') {
+          return context.readOnly
+        }
+
         return event.readOnly
       },
     }),
@@ -231,7 +237,9 @@ export const rangeDecorationsMachine = setup({
       context.pendingRangeDecorations.length > 0,
     'has range decorations': ({context}) => context.decoratedRanges.length > 0,
     'has different decorations': ({context, event}) => {
-      assertEvent(event, 'range decorations updated')
+      if (event.type !== 'range decorations updated') {
+        return false
+      }
 
       const existingRangeDecorations = context.decoratedRanges.map(
         (decoratedRange) => ({
