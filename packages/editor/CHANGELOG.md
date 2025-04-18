@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.47.9](https://github.com/portabletext/editor/compare/editor-v1.47.8...editor-v1.47.9) (2025-04-18)
+
+
+### Bug Fixes
+
+* mitigate range decoration runtime errors ([432a792](https://github.com/portabletext/editor/commit/432a792e2fcdfa9cd5ce47799a923a3bf60e9983))
+
 ## [1.47.8](https://github.com/portabletext/editor/compare/editor-v1.47.7...editor-v1.47.8) (2025-04-16)
 
 
