@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.47.10](https://github.com/portabletext/editor/compare/editor-v1.47.9...editor-v1.47.10) (2025-04-19)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * racejar bumped to 1.2.4
+
 ## [1.47.9](https://github.com/portabletext/editor/compare/editor-v1.47.8...editor-v1.47.9) (2025-04-18)
 
 
