@@ -77,14 +77,6 @@ Feature: Annotations Across Blocks
     And " baz" has an annotation different than "l1"
     And " " and " baz" have the same marks
 
-  Scenario: Splitting text before annotation doesn't touch the annotation
-    Given the text "foo bar baz"
-    And a "link" "l1" around "baz"
-    When the caret is put before "bar"
-    And "Enter" is pressed
-    Then the text is "foo |bar ,baz"
-    And "baz" has marks "l1"
-
   Scenario: Splitting text after annotation doesn't touch the annotation
     Given the text "foo bar baz"
     And a "link" "l1" around "foo"

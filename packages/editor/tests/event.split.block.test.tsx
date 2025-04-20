@@ -5,41 +5,14 @@ import type {Editor} from '../src/editor/create-editor'
 import {PortableTextEditable} from '../src/editor/Editable'
 import {EditorProvider} from '../src/editor/editor-provider'
 import {defineSchema} from '../src/editor/editor-schema'
+import {getTersePt} from '../src/internal-utils/terse-pt'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {getSelectionAfterText} from '../src/internal-utils/text-selection'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 
-const keyGenerator = createTestKeyGenerator()
-const initialValue = [
-  {
-    _key: keyGenerator(),
-    _type: 'block',
-    children: [
-      {
-        _key: keyGenerator(),
-        _type: 'span',
-        text: 'foo',
-        marks: [],
-      },
-      {
-        _key: keyGenerator(),
-        _type: 'stock-ticker',
-        value: 'AAPL',
-      },
-      {
-        _key: keyGenerator(),
-        _type: 'span',
-        text: '',
-        marks: [],
-      },
-    ],
-    markDefs: [],
-    style: 'normal',
-  },
-]
-
 describe('event.split.block', () => {
   test('Scenario: Splitting mid-block before inline object', async () => {
+    const keyGenerator = createTestKeyGenerator()
     const editorRef = React.createRef<Editor>()
 
     render(
@@ -49,7 +22,33 @@ describe('event.split.block', () => {
           schemaDefinition: defineSchema({
             inlineObjects: [{name: 'stock-ticker'}],
           }),
-          initialValue,
+          initialValue: [
+            {
+              _key: keyGenerator(),
+              _type: 'block',
+              children: [
+                {
+                  _key: keyGenerator(),
+                  _type: 'span',
+                  text: 'foo',
+                  marks: [],
+                },
+                {
+                  _key: keyGenerator(),
+                  _type: 'stock-ticker',
+                  value: 'AAPL',
+                },
+                {
+                  _key: keyGenerator(),
+                  _type: 'span',
+                  text: '',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
         }}
       >
         <EditorRefPlugin ref={editorRef} />
@@ -58,9 +57,63 @@ describe('event.split.block', () => {
     )
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual(
-        initialValue,
-      )
+      return expect(
+        getTersePt(editorRef.current?.getSnapshot().context.value),
+      ).toEqual(['foo', '[stock-ticker]', ''])
+    })
+
+    editorRef.current?.send({
+      type: 'select',
+      at: getSelectionAfterText(
+        editorRef.current.getSnapshot().context.value,
+        'foo',
+      ),
+    })
+
+    editorRef.current?.send({
+      type: 'split.block',
+    })
+
+    expect(getTersePt(editorRef.current?.getSnapshot().context.value)).toEqual([
+      'foo',
+      '|',
+      '',
+      '[stock-ticker]',
+      '',
+    ])
+  })
+
+  test('Scenario: Splitting text block with custom properties', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const editorRef = React.createRef<Editor>()
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator,
+          schemaDefinition: defineSchema({}),
+          initialValue: [
+            {
+              _key: keyGenerator(),
+              _type: 'block',
+              children: [
+                {_key: keyGenerator(), _type: 'span', text: 'foo bar baz'},
+              ],
+              _foo: 'bar',
+              baz: 42,
+            },
+          ],
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <PortableTextEditable />
+      </EditorProvider>,
+    )
+
+    await vi.waitFor(() => {
+      return expect(
+        getTersePt(editorRef.current?.getSnapshot().context.value),
+      ).toEqual(['foo bar baz'])
     })
 
     editorRef.current?.send({
@@ -79,39 +132,16 @@ describe('event.split.block', () => {
       {
         _key: 'k0',
         _type: 'block',
-        children: [
-          {
-            _key: 'k1',
-            _type: 'span',
-            text: 'foo',
-            marks: [],
-          },
-        ],
+        children: [{_key: 'k1', _type: 'span', text: 'foo', marks: []}],
         markDefs: [],
         style: 'normal',
+        _foo: 'bar',
+        baz: 42,
       },
       {
-        _key: 'k7',
+        _key: 'k4',
         _type: 'block',
-        children: [
-          {
-            _key: 'k6',
-            _type: 'span',
-            text: '',
-            marks: [],
-          },
-          {
-            _key: 'k2',
-            _type: 'stock-ticker',
-            value: 'AAPL',
-          },
-          {
-            _key: 'k3',
-            _type: 'span',
-            text: '',
-            marks: [],
-          },
-        ],
+        children: [{_key: 'k5', _type: 'span', text: ' bar baz', marks: []}],
         markDefs: [],
         style: 'normal',
       },

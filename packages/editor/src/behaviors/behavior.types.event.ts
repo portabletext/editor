@@ -83,7 +83,6 @@ const syntheticBehaviorEventTypes = [
   'move.block',
   'move.forward',
   'select',
-  'split.block',
 ] as const
 
 type SyntheticBehaviorEventType = (typeof syntheticBehaviorEventTypes)[number]
@@ -195,9 +194,6 @@ export type SyntheticBehaviorEvent =
       type: StrictExtract<SyntheticBehaviorEventType, 'select'>
       at: EditorSelection
     }
-  | {
-      type: StrictExtract<SyntheticBehaviorEventType, 'split.block'>
-    }
 
 export type InsertPlacement = 'auto' | 'after' | 'before'
 
@@ -231,6 +227,7 @@ const abstractBehaviorEventTypes = [
   'serialize',
   'serialization.success',
   'serialization.failure',
+  'split.block',
   'style.add',
   'style.remove',
   'style.toggle',
@@ -361,6 +358,9 @@ export type AbstractBehaviorEvent =
   | {
       type: StrictExtract<AbstractBehaviorEventType, 'select.next block'>
       select?: 'start' | 'end'
+    }
+  | {
+      type: StrictExtract<AbstractBehaviorEventType, 'split.block'>
     }
   | {
       type: StrictExtract<AbstractBehaviorEventType, 'style.add'>

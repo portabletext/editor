@@ -27,7 +27,6 @@ import {moveBlockActionImplementation} from './behavior.action.move.block'
 import {moveForwardActionImplementation} from './behavior.action.move.forward'
 import {noopActionImplementation} from './behavior.action.noop'
 import {selectActionImplementation} from './behavior.action.select'
-import {splitBlockActionImplementation} from './behavior.action.split.block'
 
 const debug = debugWithName('behaviors:action')
 
@@ -74,7 +73,6 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'move.forward': moveForwardActionImplementation,
   'noop': noopActionImplementation,
   'select': selectActionImplementation,
-  'split.block': splitBlockActionImplementation,
 }
 
 export function performAction({
@@ -229,13 +227,6 @@ export function performAction({
     }
     case 'noop': {
       behaviorActionImplementations.noop({
-        context,
-        action,
-      })
-      break
-    }
-    case 'split.block': {
-      behaviorActionImplementations['split.block']({
         context,
         action,
       })
