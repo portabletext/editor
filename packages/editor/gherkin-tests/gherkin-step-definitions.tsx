@@ -1039,7 +1039,7 @@ export async function expectText(text: Array<string>) {
     getValue()
       .then(getTersePt)
       .then((actualText) => {
-        expect(actualText, 'Unexpected editor text').toEqual(text)
+        expect(actualText ?? [''], 'Unexpected editor text').toEqual(text)
       }),
   )
 }

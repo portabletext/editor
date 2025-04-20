@@ -158,7 +158,7 @@ Feature: Splitting Blocks
 
     Examples:
       | selection | new text |
-      | "foobar"  | "\|"     |
+      | "foobar"  | ""       |
       | "ooba"    | "f\|r"   |
 
   Scenario: Pressing Enter when selecting multiple block objects
