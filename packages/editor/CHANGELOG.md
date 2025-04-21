@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.47.11](https://github.com/portabletext/editor/compare/editor-v1.47.10...editor-v1.47.11) (2025-04-21)
+
+
+### Bug Fixes
+
+* **behaviors:** turn `split.block` into an Abstract Event ([0b83080](https://github.com/portabletext/editor/commit/0b83080cc69f24c8ea15a54f6acefae83aa0ec99))
+
 ## [1.47.10](https://github.com/portabletext/editor/compare/editor-v1.47.9...editor-v1.47.10) (2025-04-19)
 
 
