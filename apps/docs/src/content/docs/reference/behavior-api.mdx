@@ -91,39 +91,45 @@ const noLowerCaseA = defineBehavior({
 
 ## Behavior Actions
 
-Actions as part of synthetic events
-
-- annotation.add
-- annotation.remove
-- annotation.toggle
-- block.set
-- block.unset
-- blur
-- decorator.add
-- decorator.remove
-- decorator.toggle
-- delete.backward
-- delete.block
-- delete.forward
-- focus
-- insert.block
-- insert.inline object
-- insert.span
-- insert.text
-- move.block
-- move.block down
-- move.block up
-- select
-
-Additional actions
-
+- [execute](#execute)
+- [raise](#raise)
 - noop
 - effect
-- [raise](#raise)
 
-### `raise`
+### `execute`
 
-The `raise` action type is used to trigger synthetic events.
+The `execute` action type is used to execute events to resolution.
+
+Properties:
+
+- type: `execute`
+- event: Native event object
+
+```tsx
+const executedUppercaseA = defineBehavior({
+  on: 'insert.text',
+  guard: ({snapshot, event}) => event.text === 'a',
+  actions: [
+    ({snapshot, event}) => [
+      {type: 'execute', event: {type: 'insert.text', text: 'A'}},
+    ],
+  ],
+})
+```
+
+When an event is executed, no other Behavior will be triggered.
+
+The `execute` action also has a handy shorthand function:
+
+```tsx
+const executedUppercaseA = defineBehavior({
+  on: 'insert.text',
+  guard: ({snapshot, event}) => event.text === 'a',
+  actions: [({snapshot, event}) => [execute({type: 'insert.text', text: 'A'})]],
+})
+```
+
+The `raise` action type is used to sends events back into the editor.
 
 Properties:
 
@@ -142,7 +148,7 @@ const raisedUppercaseA = defineBehavior({
 })
 ```
 
-The `raise` action also has a handy shorthand function. It accepts a behavior event object.
+The `raise` action also has a handy shorthand function:
 
 ```tsx
 const raisedUppercaseA = defineBehavior({
