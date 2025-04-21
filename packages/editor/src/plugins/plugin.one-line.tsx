@@ -24,10 +24,10 @@ const oneLineBehaviors = [
     actions: [() => [{type: 'noop'}]],
   }),
   /**
-   * `split.block`s as well.
+   * `split`s as well.
    */
   defineBehavior({
-    on: 'split.block',
+    on: 'split',
     actions: [() => [{type: 'noop'}]],
   }),
   /**

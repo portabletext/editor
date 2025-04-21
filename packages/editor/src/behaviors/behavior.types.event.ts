@@ -227,7 +227,7 @@ const abstractBehaviorEventTypes = [
   'serialize',
   'serialization.success',
   'serialization.failure',
-  'split.block',
+  'split',
   'style.add',
   'style.remove',
   'style.toggle',
@@ -360,7 +360,7 @@ export type AbstractBehaviorEvent =
       select?: 'start' | 'end'
     }
   | {
-      type: StrictExtract<AbstractBehaviorEventType, 'split.block'>
+      type: StrictExtract<AbstractBehaviorEventType, 'split'>
     }
   | {
       type: StrictExtract<AbstractBehaviorEventType, 'style.add'>

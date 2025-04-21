@@ -10,7 +10,7 @@ import {defineBehavior} from './behavior.types.behavior'
 
 export const abstractSplitBehaviors = [
   defineBehavior({
-    on: 'split.block',
+    on: 'split',
     guard: ({snapshot}) => {
       if (!snapshot.context.selection) {
         return false
@@ -53,7 +53,7 @@ export const abstractSplitBehaviors = [
     ],
   }),
   defineBehavior({
-    on: 'split.block',
+    on: 'split',
     guard: ({snapshot}) => {
       if (!snapshot.context.selection) {
         return false

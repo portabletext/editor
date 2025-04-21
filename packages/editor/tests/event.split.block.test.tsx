@@ -10,7 +10,7 @@ import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {getSelectionAfterText} from '../src/internal-utils/text-selection'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 
-describe('event.split.block', () => {
+describe('event.split', () => {
   test('Scenario: Splitting mid-block before inline object', async () => {
     const keyGenerator = createTestKeyGenerator()
     const editorRef = React.createRef<Editor>()
@@ -71,7 +71,7 @@ describe('event.split.block', () => {
     })
 
     editorRef.current?.send({
-      type: 'split.block',
+      type: 'split',
     })
 
     expect(getTersePt(editorRef.current?.getSnapshot().context.value)).toEqual([
@@ -125,7 +125,7 @@ describe('event.split.block', () => {
     })
 
     editorRef.current?.send({
-      type: 'split.block',
+      type: 'split',
     })
 
     expect(editorRef.current?.getSnapshot().context.value).toEqual([
