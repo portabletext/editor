@@ -4,12 +4,33 @@ import {getBlockPath} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {getBlockKeyFromSelectionPoint} from '../selection/selection-point'
 import type {BehaviorOperationImplementation} from './behavior.operations'
+import { isTextBlock } from '../internal-utils/parse-blocks'
 
 export const deleteOperationImplementation: BehaviorOperationImplementation<
   'delete'
 > = ({context, operation}) => {
   const anchorBlockKey = getBlockKeyFromSelectionPoint(operation.at.anchor)
   const focusBlockKey = getBlockKeyFromSelectionPoint(operation.at.focus)
+  const endBlockKey = operation.at.backward ? anchorBlockKey : focusBlockKey
+  const endOffset = operation.at.backward
+    ? operation.at.focus.offset
+    : operation.at.anchor.offset
+
+  if (!endBlockKey) {
+    throw new Error('Failed to get end block key')
+  }
+
+  const endBlockIndex = operation.editor.blockIndexMap.get(endBlockKey)
+
+  if (endBlockIndex === undefined) {
+    throw new Error('Failed to get end block index')
+  }
+
+  const endBlock = operation.editor.value.at(endBlockIndex)
+
+  if (!endBlock) {
+    throw new Error('Failed to get end block')
+  }
 
   const anchorBlockPath =
     anchorBlockKey !== undefined
@@ -59,9 +80,12 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
     )
   }
 
+  const hanging = isTextBlock(context, endBlock) && endOffset === 0
+
   operation.editor.delete({
     at: range,
     reverse: operation.direction === 'backward',
     unit: operation.unit,
+    hanging,
   })
 }

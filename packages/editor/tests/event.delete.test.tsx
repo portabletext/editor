@@ -168,4 +168,185 @@ describe('event.delete', () => {
       ).toEqual([''])
     })
   })
+
+  test('Scenario: Deleting selection hanging around a block object', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const editorRef = React.createRef<Editor>()
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            blockObjects: [{name: 'image'}],
+          }),
+          initialValue: [
+            {
+              _key: 'k0',
+              _type: 'block',
+              children: [{_key: 'k1', _type: 'span', text: 'foo'}],
+            },
+            {
+              _key: 'k2',
+              _type: 'image',
+            },
+            {
+              _key: 'k3',
+              _type: 'block',
+              children: [{_key: 'k4', _type: 'span', text: 'bar'}],
+            },
+          ],
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+      </EditorProvider>,
+    )
+
+    await vi.waitFor(() => {
+      expect(
+        getTersePt(editorRef.current?.getSnapshot().context.value),
+      ).toEqual(['foo', '{image}', 'bar'])
+    })
+
+    editorRef.current?.send({
+      type: 'delete',
+      at: {
+        anchor: {
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'k3'}, 'children', {_key: 'k4'}],
+          offset: 0,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(
+        getTersePt(editorRef.current?.getSnapshot().context.value),
+      ).toEqual(['bar'])
+    })
+  })
+
+  test('Scenario: Deleting selection hanging around a block object #2', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const editorRef = React.createRef<Editor>()
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            blockObjects: [{name: 'image'}],
+          }),
+          initialValue: [
+            {
+              _key: 'k0',
+              _type: 'block',
+              children: [{_key: 'k1', _type: 'span', text: 'foo'}],
+            },
+            {
+              _key: 'k2',
+              _type: 'image',
+            },
+            {
+              _key: 'k3',
+              _type: 'block',
+              children: [{_key: 'k4', _type: 'span', text: 'bar'}],
+            },
+          ],
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+      </EditorProvider>,
+    )
+
+    await vi.waitFor(() => {
+      expect(
+        getTersePt(editorRef.current?.getSnapshot().context.value),
+      ).toEqual(['foo', '{image}', 'bar'])
+    })
+
+    editorRef.current?.send({
+      type: 'delete',
+      at: {
+        anchor: {
+          path: [{_key: 'k3'}, 'children', {_key: 'k4'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+          offset: 0,
+        },
+        backward: true,
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(
+        getTersePt(editorRef.current?.getSnapshot().context.value),
+      ).toEqual(['bar'])
+    })
+  })
+
+  test('Scenario: Deleting selection hanging around a block object #3', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const editorRef = React.createRef<Editor>()
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            blockObjects: [{name: 'image'}],
+          }),
+          initialValue: [
+            {
+              _key: 'k0',
+              _type: 'block',
+              children: [{_key: 'k1', _type: 'span', text: 'foo'}],
+            },
+            {
+              _key: 'k2',
+              _type: 'image',
+            },
+            {
+              _key: 'k3',
+              _type: 'block',
+              children: [{_key: 'k4', _type: 'span', text: 'bar'}],
+            },
+          ],
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+      </EditorProvider>,
+    )
+
+    await vi.waitFor(() => {
+      expect(
+        getTersePt(editorRef.current?.getSnapshot().context.value),
+      ).toEqual(['foo', '{image}', 'bar'])
+    })
+
+    editorRef.current?.send({
+      type: 'delete',
+      at: {
+        anchor: {
+          path: [{_key: 'k3'}, 'children', {_key: 'k4'}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+          offset: 3,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(
+        getTersePt(editorRef.current?.getSnapshot().context.value),
+      ).toEqual(['foo'])
+    })
+  })
 })
