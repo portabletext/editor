@@ -73,7 +73,7 @@ export const abstractInsertBehaviors = [
                 index === 0
                   ? [
                       raise({
-                        type: 'split.block',
+                        type: 'split',
                       }),
                       raise({
                         type: 'select.previous block',
@@ -127,7 +127,7 @@ export const abstractInsertBehaviors = [
   }),
   defineBehavior({
     on: 'insert.break',
-    actions: [() => [raise({type: 'split.block'})]],
+    actions: [() => [raise({type: 'split'})]],
   }),
   defineBehavior({
     on: 'insert.soft break',
