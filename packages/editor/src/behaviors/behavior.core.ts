@@ -29,4 +29,5 @@ export const coreBehaviors = [
   coreListBehaviors.unindentListOnShiftTab,
   coreInsertBreakBehaviors.breakingAtTheEndOfTextBlock,
   coreInsertBreakBehaviors.breakingAtTheStartOfTextBlock,
+  coreInsertBreakBehaviors.breakingEntireDocument,
 ]
