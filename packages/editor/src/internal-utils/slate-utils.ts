@@ -3,6 +3,27 @@ import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
 import {fromSlateValue} from './values'
 
+export function getAnchorBlock({
+  editor,
+}: {
+  editor: PortableTextSlateEditor
+}): [node: Node, path: Path] | [undefined, undefined] {
+  if (!editor.selection) {
+    return [undefined, undefined]
+  }
+
+  try {
+    return (
+      Editor.node(editor, editor.selection.anchor.path.slice(0, 1)) ?? [
+        undefined,
+        undefined,
+      ]
+    )
+  } catch {
+    return [undefined, undefined]
+  }
+}
+
 export function getFocusBlock({
   editor,
 }: {
@@ -24,6 +45,34 @@ export function getFocusBlock({
   }
 }
 
+export function getSelectionStartBlock({
+  editor,
+}: {
+  editor: PortableTextSlateEditor
+}): [node: Node, path: Path] | [undefined, undefined] {
+  if (!editor.selection) {
+    return [undefined, undefined]
+  }
+
+  const selectionStartPoint = Range.start(editor.selection)
+
+  return getPointBlock({editor, point: selectionStartPoint})
+}
+
+export function getSelectionEndBlock({
+  editor,
+}: {
+  editor: PortableTextSlateEditor
+}): [node: Node, path: Path] | [undefined, undefined] {
+  if (!editor.selection) {
+    return [undefined, undefined]
+  }
+
+  const selectionEndPoint = Range.end(editor.selection)
+
+  return getPointBlock({editor, point: selectionEndPoint})
+}
+
 function getPointBlock({
   editor,
   point,
@@ -36,7 +85,7 @@ function getPointBlock({
       undefined,
       undefined,
     ]
-    return block ? [block, point.path] : [undefined, undefined]
+    return block ? [block, point.path.slice(0, 1)] : [undefined, undefined]
   } catch {
     return [undefined, undefined]
   }
