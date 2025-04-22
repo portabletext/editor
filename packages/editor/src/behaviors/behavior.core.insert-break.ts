@@ -1,4 +1,5 @@
 import * as selectors from '../selectors'
+import * as utils from '../utils'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -112,7 +113,54 @@ const breakingAtTheStartOfTextBlock = defineBehavior({
   ],
 })
 
+const breakingEntireDocument = defineBehavior({
+  on: 'insert.break',
+  guard: ({snapshot}) => {
+    if (!snapshot.context.selection) {
+      return false
+    }
+
+    if (!selectors.isSelectionExpanded(snapshot)) {
+      return false
+    }
+
+    const firstBlock = selectors.getFirstBlock(snapshot)
+    const lastBlock = selectors.getLastBlock(snapshot)
+
+    if (!firstBlock || !lastBlock) {
+      return false
+    }
+
+    const firstBlockStartPoint = utils.getBlockStartPoint(firstBlock)
+    const selectionStartPoint = utils.getSelectionStartPoint(
+      snapshot.context.selection,
+    )
+    const lastBlockEndPoint = utils.getBlockEndPoint(lastBlock)
+    const selectionEndPoint = utils.getSelectionEndPoint(
+      snapshot.context.selection,
+    )
+
+    if (
+      utils.isEqualSelectionPoints(firstBlockStartPoint, selectionStartPoint) &&
+      utils.isEqualSelectionPoints(lastBlockEndPoint, selectionEndPoint)
+    ) {
+      return {selection: snapshot.context.selection}
+    }
+
+    return false
+  },
+  actions: [
+    (_, {selection}) => [
+      raise({
+        type: 'delete',
+        at: selection,
+      }),
+    ],
+  ],
+})
+
 export const coreInsertBreakBehaviors = {
   breakingAtTheEndOfTextBlock,
   breakingAtTheStartOfTextBlock,
+  breakingEntireDocument,
 }

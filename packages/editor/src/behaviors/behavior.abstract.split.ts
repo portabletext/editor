@@ -1,57 +1,13 @@
 import {isTextBlock, parseBlock} from '../internal-utils/parse-blocks'
 import * as selectors from '../selectors'
-import {getSelectionStartPoint, isEqualSelectionPoints} from '../utils'
+import {getSelectionStartPoint} from '../utils'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
-import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
 import {sliceBlocks} from '../utils/util.slice-blocks'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
 export const abstractSplitBehaviors = [
-  defineBehavior({
-    on: 'split',
-    guard: ({snapshot}) => {
-      if (!snapshot.context.selection) {
-        return false
-      }
-
-      if (!selectors.isSelectionExpanded(snapshot)) {
-        return false
-      }
-
-      const firstBlock = selectors.getFirstBlock(snapshot)
-      const lastBlock = selectors.getLastBlock(snapshot)
-
-      if (!firstBlock || !lastBlock) {
-        return false
-      }
-
-      const firstBlockStartPoint = getBlockStartPoint(firstBlock)
-      const selectionStartPoint = getSelectionStartPoint(
-        snapshot.context.selection,
-      )
-      const lastBlockEndPoint = getBlockEndPoint(lastBlock)
-      const selectionEndPoint = getSelectionEndPoint(snapshot.context.selection)
-
-      if (
-        isEqualSelectionPoints(firstBlockStartPoint, selectionStartPoint) &&
-        isEqualSelectionPoints(lastBlockEndPoint, selectionEndPoint)
-      ) {
-        return {selection: snapshot.context.selection}
-      }
-
-      return false
-    },
-    actions: [
-      (_, {selection}) => [
-        raise({
-          type: 'delete',
-          at: selection,
-        }),
-      ],
-    ],
-  }),
   defineBehavior({
     on: 'split',
     guard: ({snapshot}) => {
