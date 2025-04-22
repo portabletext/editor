@@ -36,6 +36,113 @@ Feature: Insert Block
       | "after"   | "\|[image]" |
       | "auto"    | "[image]"   |
 
+  Scenario Outline: Inserting and selecting block object on text selection
+    Given the text "foo"
+    When <selection> is selected
+    And a block is inserted <placement> and selected at the <position>
+      ```
+      {
+        "_key": "k-i",
+        "_type": "image"
+      }
+      ```
+    Then the text is <text>
+    And block "k-i" is selected
+
+    Examples:
+      | selection | placement | position | text           |
+      | "foo"     | "auto"    | "start"  | "[image]"      |
+      | "f"       | "auto"    | "start"  | "[image]\|oo"  |
+      | "oo"      | "auto"    | "start"  | "f\|[image]"   |
+      | "foo"     | "auto"    | "end"    | "[image]"      |
+      | "f"       | "auto"    | "end"    | "[image]\|oo"  |
+      | "oo"      | "auto"    | "end"    | "f\|[image]"   |
+      | "foo"     | "before"  | "start"  | "[image]\|foo" |
+      | "f"       | "before"  | "start"  | "[image]\|foo" |
+      | "oo"      | "before"  | "start"  | "[image]\|foo" |
+      | "foo"     | "before"  | "end"    | "[image]\|foo" |
+      | "f"       | "before"  | "end"    | "[image]\|foo" |
+      | "oo"      | "before"  | "end"    | "[image]\|foo" |
+      | "foo"     | "after"   | "start"  | "foo\|[image]" |
+      | "f"       | "after"   | "start"  | "foo\|[image]" |
+      | "oo"      | "after"   | "start"  | "foo\|[image]" |
+      | "foo"     | "after"   | "end"    | "foo\|[image]" |
+      | "f"       | "after"   | "end"    | "foo\|[image]" |
+      | "oo"      | "after"   | "end"    | "foo\|[image]" |
+
+  Scenario Outline: Inserting block object on text selection without selecting it
+    Given the text "foo"
+    When <selection> is selected
+    And a block is inserted <placement> and selected at the "none"
+      ```
+      {
+        "_type": "image"
+      }
+      ```
+    And "bar" is typed
+    Then the text is <text>
+
+    Examples:
+      | selection | placement | text             |
+      | "f"       | "auto"    | "[image]\|baroo" |
+      | "oo"      | "auto"    | "fbar\|[image]"  |
+      | "foo"     | "auto"    | "[image]"        |
+      | "f"       | "before"  | "[image]\|baroo" |
+      | "oo"      | "before"  | "[image]\|fbar"  |
+      | "foo"     | "before"  | "[image]\|bar"   |
+      | "f"       | "after"   | "baroo\|[image]" |
+      | "oo"      | "after"   | "fbar\|[image]"  |
+      | "foo"     | "after"   | "bar\|[image]"   |
+
+  Scenario Outline: Inserting and selecting block object on cross-block selection
+    Given the text "foo"
+    When "Enter" is pressed
+    And "bar" is typed
+    And <selection> is selected
+    And a block is inserted <placement> and selected at the <position>
+      ```
+      {
+        "_key": "k-i",
+        "_type": "image"
+      }
+      ```
+    Then the text is <text>
+    And block "k-i" is selected
+
+    Examples:
+      | selection | placement | position | text                |
+      | "foob"    | "auto"    | "start"  | "[image]\|ar"       |
+      | "obar"    | "auto"    | "start"  | "fo\|[image]"       |
+      | "foob"    | "auto"    | "end"    | "[image]\|ar"       |
+      | "foob"    | "before"  | "start"  | "[image]\|foo\|bar" |
+      | "obar"    | "before"  | "start"  | "[image]\|foo\|bar" |
+      | "foob"    | "before"  | "end"    | "[image]\|foo\|bar" |
+      | "obar"    | "before"  | "end"    | "[image]\|foo\|bar" |
+      | "foob"    | "after"   | "start"  | "foo\|bar\|[image]" |
+      | "obar"    | "after"   | "start"  | "foo\|bar\|[image]" |
+      | "foob"    | "after"   | "end"    | "foo\|bar\|[image]" |
+      | "obar"    | "after"   | "end"    | "foo\|bar\|[image]" |
+
+  Scenario Outline: Inserting a block object on a cross-block selection without selecting it
+    Given the text "foo"
+    When "Enter" is pressed
+    And "bar" is typed
+    And <selection> is selected
+    And a block is inserted <placement> and selected at the "none"
+      ```
+      {
+        "_type": "image"
+      }
+      ```
+    And "baz" is typed
+    Then the text is <text>
+
+    Examples:
+      | selection | placement | text             |
+      | "foob"    | "auto"    | "[image]\|bazar" |
+      | "obar"    | "auto"    | "fobaz\|[image]" |
+      | "foobar"  | "auto"    | "[image]"        |
+
   Scenario Outline: Inserting text block on an empty editor
     When a block is inserted <placement> and selected at the "none"
       ```
@@ -148,6 +255,39 @@ Feature: Insert Block
       | "auto"    | "start"  | "[image]\|[break]\|foo" |
       | "auto"    | "end"    | "[image]\|[break]\|foo" |
       | "auto"    | "none"   | "[image]\|[break]"      |
+
+  Scenario Outline: Inserting block object on block objects
+    Given a block "auto"
+      ```
+      {
+        "_type": "image"
+      }
+      ```
+    And a block at "auto" selected at the "start"
+      ```
+      {
+        "_type": "image"
+      }
+      ```
+    When everything is selected
+    When a block is inserted <placement> and selected at the <position>
+      ```
+      {
+        "_type": "break"
+      }
+      ```
+    And "Enter" is pressed
+    And "foo" is typed
+    Then the text is <text>
+
+    Examples:
+      | placement | position | text                             |
+      | "before"  | "start"  | "[break]\|foo\|[image]\|[image]" |
+      | "before"  | "end"    | "[break]\|foo\|[image]\|[image]" |
+      | "before"  | "none"   | "[break]\|foo"                   |
+      | "after"   | "start"  | "[image]\|[image]\|[break]\|foo" |
+      | "after"   | "end"    | "[image]\|[image]\|[break]\|foo" |
+      | "after"   | "none"   | "foo\|[break]"                   |
 
   Scenario Outline: Inserting block object on text block
     Given the text "foo"
@@ -265,6 +405,76 @@ Feature: Insert Block
       | after "f"    | "auto"    | "start"         | "fbazbaroo"   |
       | after "f"    | "auto"    | "end"           | "fbarbazoo"   |
       | after "f"    | "auto"    | "none"          | "fbazbaroo"   |
+
+  Scenario Outline: Inserting text block on text selection
+    Given the text "foo"
+    When <selection> is selected
+    And a block is inserted <placement> and selected at the <position>
+      ```
+      {
+        "_type": "block",
+        "children": [{"_type": "span", "text": "bar"}]
+      }
+      ```
+    And "baz" is typed
+    Then the text is <text>
+
+    Examples:
+      | selection | placement | position | text          |
+      | "foo"     | "before"  | "start"  | "bazbar\|foo" |
+      | "f"       | "before"  | "start"  | "bazbar\|foo" |
+      | "oo"      | "before"  | "start"  | "bazbar\|foo" |
+      | "foo"     | "before"  | "end"    | "barbaz\|foo" |
+      | "f"       | "before"  | "end"    | "barbaz\|foo" |
+      | "oo"      | "before"  | "end"    | "barbaz\|foo" |
+      | "foo"     | "after"   | "start"  | "foo\|bazbar" |
+      | "f"       | "after"   | "start"  | "foo\|bazbar" |
+      | "oo"      | "after"   | "start"  | "foo\|bazbar" |
+      | "foo"     | "after"   | "end"    | "foo\|barbaz" |
+      | "f"       | "after"   | "end"    | "foo\|barbaz" |
+      | "oo"      | "after"   | "end"    | "foo\|barbaz" |
+      | "foo"     | "auto"    | "start"  | "bazbar"      |
+      | "f"       | "auto"    | "start"  | "bazbaroo"    |
+      | "oo"      | "auto"    | "start"  | "fbazbar"     |
+      | "foo"     | "auto"    | "end"    | "barbaz"      |
+      | "f"       | "auto"    | "end"    | "barbazoo"    |
+      | "oo"      | "auto"    | "end"    | "fbarbaz"     |
+
+  Scenario Outline: Inserting text block on cross-block text selection
+    Given the text "foo"
+    When "Enter" is pressed
+    And "bar" is typed
+    And <selection> is selected
+    And a block is inserted <placement> and selected at the <position>
+      ```
+      {
+        "_type": "block",
+        "children": [{"_type": "span", "text": "baz"}]
+      }
+      ```
+    And "new" is typed
+    Then the text is <text>
+
+    Examples:
+      | selection | placement | position | text               |
+      | "foob"    | "before"  | "start"  | "newbaz\|foo\|bar" |
+      | "obar"    | "before"  | "start"  | "newbaz\|foo\|bar" |
+      | "foob"    | "before"  | "end"    | "baznew\|foo\|bar" |
+      | "obar"    | "before"  | "end"    | "baznew\|foo\|bar" |
+      | "foob"    | "before"  | "none"   | "baz\|newar"       |
+      | "obar"    | "before"  | "none"   | "baz\|fonew"       |
+      | "foob"    | "after"   | "start"  | "foo\|bar\|newbaz" |
+      | "obar"    | "after"   | "start"  | "foo\|bar\|newbaz" |
+      | "foob"    | "after"   | "end"    | "foo\|bar\|baznew" |
+      | "obar"    | "after"   | "end"    | "foo\|bar\|baznew" |
+      | "foob"    | "after"   | "none"   | "newar\|baz"       |
+      | "obar"    | "after"   | "none"   | "fonew\|baz"       |
+      | "foob"    | "auto"    | "start"  | "newbazar"         |
+      | "obar"    | "auto"    | "start"  | "fonewbaz"         |
+      | "foob"    | "auto"    | "end"    | "baznewar"         |
+      | "obar"    | "auto"    | "end"    | "fobaznew"         |
+      | "foob"    | "auto"    | "none"   | "newbazar"         |
+      | "obar"    | "auto"    | "none"   | "fonewbaz"         |
 
   Scenario Outline: Inserting inline object on block object
     When a block is inserted "auto"

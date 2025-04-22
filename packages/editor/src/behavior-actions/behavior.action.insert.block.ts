@@ -6,6 +6,8 @@ import {
   getFocusBlock,
   getFocusChild,
   getLastBlock,
+  getSelectionEndBlock,
+  getSelectionStartBlock,
 } from '../internal-utils/slate-utils'
 import {isEqualToEmptyEditor, toSlateValue} from '../internal-utils/values'
 import type {PortableTextSlateEditor} from '../types/editor'
@@ -54,9 +56,16 @@ export function insertBlock({
   editor: PortableTextSlateEditor
   schema: EditorSchema
 }) {
-  const [focusBlock, focusBlockPath] = getFocusBlock({editor})
+  const [startBlock, startBlockPath] = getSelectionStartBlock({editor})
+  const [endBlock, endBlockPath] = getSelectionEndBlock({editor})
 
-  if (!editor.selection || !focusBlock || !focusBlockPath) {
+  if (
+    !editor.selection ||
+    !startBlock ||
+    !startBlockPath ||
+    !endBlock ||
+    !endBlockPath
+  ) {
     if (select !== 'none') {
       DOMEditor.focus(editor)
     }
@@ -137,35 +146,34 @@ export function insertBlock({
   } else {
     if (placement === 'before') {
       const currentSelection = editor.selection
+      const selectionStartPoint = Range.start(currentSelection)
 
       Transforms.insertNodes(editor, [block], {
-        at: focusBlockPath,
+        at: [selectionStartPoint.path[0]],
         select: false,
       })
 
-      const adjustedSelection = Range.transform(currentSelection, {
-        type: 'move_node',
-        path: focusBlockPath,
-        newPath: [focusBlockPath[0] + 1],
-      })
-
-      if (adjustedSelection) {
-        Transforms.select(editor, adjustedSelection)
-      } else {
-        Transforms.select(editor, currentSelection)
-      }
-
       if (select === 'start') {
-        Transforms.select(editor, Editor.start(editor, focusBlockPath))
+        Transforms.select(
+          editor,
+          Editor.start(editor, [selectionStartPoint.path[0]]),
+        )
       } else if (select === 'end') {
-        Transforms.select(editor, Editor.end(editor, focusBlockPath))
+        Transforms.select(
+          editor,
+          Editor.end(editor, [selectionStartPoint.path[0]]),
+        )
       }
     } else if (placement === 'after') {
-      const nextPath = [focusBlockPath[0] + 1]
-
       const currentSelection = editor.selection
-      Transforms.insertNodes(editor, [block], {at: nextPath, select: false})
-      Transforms.select(editor, currentSelection)
+      const selectionEndPoint = Range.end(currentSelection)
+
+      const nextPath = [selectionEndPoint.path[0] + 1]
+
+      Transforms.insertNodes(editor, [block], {
+        at: nextPath,
+        select: false,
+      })
 
       if (select === 'start') {
         Transforms.select(editor, Editor.start(editor, nextPath))
@@ -176,9 +184,42 @@ export function insertBlock({
       // placement === 'auto'
 
       const currentSelection = editor.selection
-      const focusBlockStartPoint = Editor.start(editor, focusBlockPath)
+      const endBlockEndPoint = Editor.start(editor, endBlockPath)
 
-      if (editor.isTextBlock(focusBlock) && editor.isTextBlock(block)) {
+      if (Range.isExpanded(currentSelection) && !editor.isTextBlock(block)) {
+        Transforms.delete(editor, {at: currentSelection})
+
+        const newSelection = editor.selection
+
+        const [focusBlock, focusBlockPath] = getFocusBlock({editor})
+
+        Transforms.insertNodes(editor, [block], {
+          voids: true,
+        })
+
+        const adjustedSelection =
+          newSelection.anchor.offset === 0
+            ? Range.transform(newSelection, {
+                type: 'insert_node',
+                node: block,
+                path: [newSelection.anchor.path[0]],
+              })
+            : newSelection
+
+        if (select === 'none' && adjustedSelection) {
+          Transforms.select(editor, adjustedSelection)
+        }
+
+        if (focusBlock && isEqualToEmptyEditor([focusBlock], schema)) {
+          Transforms.removeNodes(editor, {at: focusBlockPath})
+        }
+
+        return
+      }
+
+      if (editor.isTextBlock(endBlock) && editor.isTextBlock(block)) {
+        const selectionStartPoint = Range.start(currentSelection)
+
         if (select === 'end') {
           Transforms.insertFragment(editor, [block], {
             voids: true,
@@ -193,21 +234,17 @@ export function insertBlock({
         })
 
         if (select === 'start') {
-          if (Point.equals(currentSelection.anchor, focusBlockStartPoint)) {
-            Transforms.select(editor, Editor.start(editor, focusBlockPath))
-          } else {
-            Transforms.select(editor, currentSelection)
-          }
+          Transforms.select(editor, selectionStartPoint)
         } else {
-          if (!Point.equals(currentSelection.anchor, focusBlockStartPoint)) {
-            Transforms.select(editor, currentSelection)
+          if (!Point.equals(selectionStartPoint, endBlockEndPoint)) {
+            Transforms.select(editor, selectionStartPoint)
           }
         }
       } else {
-        if (!editor.isTextBlock(focusBlock)) {
+        if (!editor.isTextBlock(endBlock)) {
           Transforms.insertNodes(editor, [block], {select: false})
 
-          const nextPath = [focusBlockPath[0] + 1]
+          const nextPath = [endBlockPath[0] + 1]
 
           if (select === 'start') {
             Transforms.select(editor, Editor.start(editor, nextPath))
@@ -215,24 +252,32 @@ export function insertBlock({
             Transforms.select(editor, Editor.end(editor, nextPath))
           }
         } else {
-          const focusBlockStartPoint = Editor.start(editor, focusBlockPath)
-          const focusBlockEndPoint = Editor.end(editor, focusBlockPath)
+          const endBlockStartPoint = Editor.start(editor, endBlockPath)
+          const endBlockEndPoint = Editor.end(editor, endBlockPath)
+          const selectionStartPoint = Range.start(currentSelection)
+          const selectionEndPoint = Range.end(currentSelection)
 
-          if (Point.equals(currentSelection.anchor, focusBlockStartPoint)) {
+          if (
+            Range.isCollapsed(currentSelection) &&
+            Point.equals(selectionStartPoint, endBlockStartPoint)
+          ) {
             Transforms.insertNodes(editor, [block], {
-              at: focusBlockPath,
+              at: endBlockPath,
               select: false,
             })
 
             if (select === 'start' || select === 'end') {
-              Transforms.select(editor, Editor.start(editor, focusBlockPath))
+              Transforms.select(editor, Editor.start(editor, endBlockPath))
             }
 
-            if (isEqualToEmptyEditor([focusBlock], schema)) {
-              Transforms.removeNodes(editor, {at: Path.next(focusBlockPath)})
+            if (isEqualToEmptyEditor([endBlock], schema)) {
+              Transforms.removeNodes(editor, {at: Path.next(endBlockPath)})
             }
-          } else if (Point.equals(currentSelection.focus, focusBlockEndPoint)) {
-            const nextPath = [focusBlockPath[0] + 1]
+          } else if (
+            Range.isCollapsed(currentSelection) &&
+            Point.equals(selectionEndPoint, endBlockEndPoint)
+          ) {
+            const nextPath = [endBlockPath[0] + 1]
 
             Transforms.insertNodes(editor, [block], {
               at: nextPath,
@@ -241,6 +286,52 @@ export function insertBlock({
 
             if (select === 'start' || select === 'end') {
               Transforms.select(editor, Editor.start(editor, nextPath))
+            }
+          } else if (
+            Range.isExpanded(currentSelection) &&
+            Point.equals(selectionStartPoint, endBlockStartPoint) &&
+            Point.equals(selectionEndPoint, endBlockEndPoint)
+          ) {
+            Transforms.insertFragment(editor, [block], {
+              at: currentSelection,
+            })
+
+            if (select === 'start') {
+              Transforms.select(editor, Editor.start(editor, endBlockPath))
+            } else if (select === 'end') {
+              Transforms.select(editor, Editor.end(editor, endBlockPath))
+            }
+          } else if (
+            Range.isExpanded(currentSelection) &&
+            Point.equals(selectionStartPoint, endBlockStartPoint)
+          ) {
+            Transforms.insertFragment(editor, [block], {
+              at: currentSelection,
+            })
+
+            if (select === 'start') {
+              Transforms.select(editor, Editor.start(editor, endBlockPath))
+            } else if (select === 'end') {
+              Transforms.select(editor, Editor.end(editor, endBlockPath))
+            }
+          } else if (
+            Range.isExpanded(currentSelection) &&
+            Point.equals(selectionEndPoint, endBlockEndPoint)
+          ) {
+            Transforms.insertFragment(editor, [block], {
+              at: currentSelection,
+            })
+
+            if (select === 'start') {
+              Transforms.select(
+                editor,
+                Editor.start(editor, Path.next(endBlockPath)),
+              )
+            } else if (select === 'end') {
+              Transforms.select(
+                editor,
+                Editor.end(editor, Path.next(endBlockPath)),
+              )
             }
           } else {
             const currentSelection = editor.selection
@@ -252,12 +343,12 @@ export function insertBlock({
               })
 
               if (select === 'start' || select === 'end') {
-                Transforms.select(editor, [focusBlockPath[0] + 1])
+                Transforms.select(editor, [endBlockPath[0] + 1])
               } else {
                 Transforms.select(editor, currentSelection)
               }
             } else {
-              const nextPath = [focusBlockPath[0] + 1]
+              const nextPath = [endBlockPath[0] + 1]
               Transforms.insertNodes(editor, [block], {
                 at: nextPath,
                 select: false,
