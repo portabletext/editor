@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.47.12](https://github.com/portabletext/editor/compare/editor-v1.47.11...editor-v1.47.12) (2025-04-22)
+
+
+### Bug Fixes
+
+* **`insert.block`:** issues with inserting on expanded selection ([890e30c](https://github.com/portabletext/editor/commit/890e30c7df83c2b7ea1b249f3bbea709ee820702))
+* **behaviors:** define 'breaking entire content' as a Core Behavior ([8be9b52](https://github.com/portabletext/editor/commit/8be9b52127b02d864ea0744f39f35a74948ffd3b))
+* **behaviors:** rename `split.block` to `split` ([8668142](https://github.com/portabletext/editor/commit/86681420c48be88a65175820b40d4bb16006aaa4))
+* ensure corrent selection when breaking entire-block selection ([cc45d25](https://github.com/portabletext/editor/commit/cc45d258fb8834681c4c0436ca5857bff01d9c50))
+* **one-line plugin:** remove unneeded `split` Behavior ([28102f2](https://github.com/portabletext/editor/commit/28102f2f0e7e0b88e69390f9d926e858cc70ee90))
+
 ## [1.47.11](https://github.com/portabletext/editor/compare/editor-v1.47.10...editor-v1.47.11) (2025-04-21)
 
 
