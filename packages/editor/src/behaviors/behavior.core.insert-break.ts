@@ -159,8 +159,73 @@ const breakingEntireDocument = defineBehavior({
   ],
 })
 
+const breakingEntireBlocks = defineBehavior({
+  on: 'insert.break',
+  guard: ({snapshot}) => {
+    if (!snapshot.context.selection) {
+      return false
+    }
+
+    if (!selectors.isSelectionExpanded(snapshot)) {
+      return false
+    }
+
+    const selectedBlocks = selectors.getSelectedBlocks(snapshot)
+    const selectionStartBlock = selectors.getSelectionStartBlock(snapshot)
+    const selectionEndBlock = selectors.getSelectionEndBlock(snapshot)
+
+    if (!selectionStartBlock || !selectionEndBlock) {
+      return false
+    }
+
+    const startBlockStartPoint = utils.getBlockStartPoint(selectionStartBlock)
+    const selectionStartPoint = utils.getSelectionStartPoint(
+      snapshot.context.selection,
+    )
+    const endBlockEndPoint = utils.getBlockEndPoint(selectionEndBlock)
+    const selectionEndPoint = utils.getSelectionEndPoint(
+      snapshot.context.selection,
+    )
+
+    if (
+      utils.isEqualSelectionPoints(selectionStartPoint, startBlockStartPoint) &&
+      utils.isEqualSelectionPoints(selectionEndPoint, endBlockEndPoint)
+    ) {
+      return {selectedBlocks}
+    }
+
+    return false
+  },
+  actions: [
+    ({snapshot}, {selectedBlocks}) => [
+      raise({
+        type: 'insert.block',
+        block: {
+          _type: snapshot.context.schema.block.name,
+          children: [
+            {
+              _type: snapshot.context.schema.span.name,
+              text: '',
+              marks: [],
+            },
+          ],
+        },
+        placement: 'before',
+        select: 'start',
+      }),
+      ...selectedBlocks.map((block) =>
+        raise({
+          type: 'delete.block',
+          at: block.path,
+        }),
+      ),
+    ],
+  ],
+})
+
 export const coreInsertBreakBehaviors = {
   breakingAtTheEndOfTextBlock,
   breakingAtTheStartOfTextBlock,
   breakingEntireDocument,
+  breakingEntireBlocks,
 }

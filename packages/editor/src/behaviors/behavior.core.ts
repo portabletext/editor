@@ -30,4 +30,5 @@ export const coreBehaviors = [
   coreInsertBreakBehaviors.breakingAtTheEndOfTextBlock,
   coreInsertBreakBehaviors.breakingAtTheStartOfTextBlock,
   coreInsertBreakBehaviors.breakingEntireDocument,
+  coreInsertBreakBehaviors.breakingEntireBlocks,
 ]
