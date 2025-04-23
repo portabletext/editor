@@ -321,7 +321,7 @@ importers:
         version: link:../../packages/patches
       '@sanity/schema':
         specifier: ^3.63.0
-        version: 3.86.0(@types/react@19.1.2)(debug@4.4.0)
+        version: 3.86.1(@types/react@19.1.2)(debug@4.4.0)
       '@xstate/react':
         specifier: ^4.1.3
         version: 4.1.3(@types/react@19.1.2)(react@19.1.0)(xstate@5.19.2)
@@ -346,7 +346,7 @@ importers:
         version: 9.23.0
       '@sanity/types':
         specifier: ^3.63.0
-        version: 3.86.0(@types/react@19.1.2)(debug@4.4.0)
+        version: 3.86.1(@types/react@19.1.2)(debug@4.4.0)
       '@types/react':
         specifier: ^19.1.2
         version: 19.1.2
@@ -397,11 +397,11 @@ importers:
         specifier: ^7.2.2
         version: 7.2.2(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.0.0-beta-e993439-20250328)(debug@4.4.0)(typescript@5.8.3)
       '@sanity/schema':
-        specifier: ^3.86.0
-        version: 3.86.0(@types/react@19.1.2)(debug@4.4.0)
+        specifier: ^3.86.1
+        version: 3.86.1(@types/react@19.1.2)(debug@4.4.0)
       '@sanity/types':
-        specifier: ^3.86.0
-        version: 3.86.0(@types/react@19.1.2)(debug@4.4.0)
+        specifier: ^3.86.1
+        version: 3.86.1(@types/react@19.1.2)(debug@4.4.0)
       '@types/jsdom':
         specifier: ^20.0.0
         version: 20.0.1
@@ -482,11 +482,11 @@ importers:
         specifier: ^7.2.2
         version: 7.2.2(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.0.0-beta-e993439-20250328)(debug@4.4.0)(typescript@5.8.3)
       '@sanity/schema':
-        specifier: ^3.86.0
-        version: 3.86.0(@types/react@19.1.2)(debug@4.4.0)
+        specifier: ^3.86.1
+        version: 3.86.1(@types/react@19.1.2)(debug@4.4.0)
       '@sanity/types':
-        specifier: ^3.86.0
-        version: 3.86.0(@types/react@19.1.2)(debug@4.4.0)
+        specifier: ^3.86.1
+        version: 3.86.1(@types/react@19.1.2)(debug@4.4.0)
       '@testing-library/jest-dom':
         specifier: ^6.6.3
         version: 6.6.3
@@ -2779,11 +2779,11 @@ packages:
     peerDependencies:
       prettier: ^3.2.5
 
-  '@sanity/schema@3.86.0':
-    resolution: {integrity: sha512-XJRJyjOi3C2q6okQKJZtMuo+cPBv0N8g0dDogU1UtvccicA6Bmx4yYzU1WdXizKJ4JIQu82ApkwD5Jecf8ssxA==}
+  '@sanity/schema@3.86.1':
+    resolution: {integrity: sha512-wztg6dmx4zS/lHEMnJ4q7GXOQrWTDR/ejLI2QHvpo1+6pfT/pOo8r3KSdhF9MHWlr/q3bUFmAu7dkUmABuv1rw==}
 
-  '@sanity/types@3.86.0':
-    resolution: {integrity: sha512-tiAg0lGX0CfJDzZWI4F4BnoZ0QHmAL4cPIItmxCPFC0l2MpsDh53aWlPMixUWz7uN9SNU2/9C0CgGvaJEtocoQ==}
+  '@sanity/types@3.86.1':
+    resolution: {integrity: sha512-dUOOfmYzubbNvp3Ph5euunuboJVILP1PELQleosWYVEqQkp+AKs03P0q6isjSq5rMJnxht3A0EsLCIwwORqUug==}
     peerDependencies:
       '@types/react': ^19.1.2
 
@@ -9155,10 +9155,10 @@ snapshots:
       prettier: 3.5.3
       prettier-plugin-packagejson: 2.5.10(prettier@3.5.3)
 
-  '@sanity/schema@3.86.0(@types/react@19.1.2)(debug@4.4.0)':
+  '@sanity/schema@3.86.1(@types/react@19.1.2)(debug@4.4.0)':
     dependencies:
       '@sanity/generate-help-url': 3.0.0
-      '@sanity/types': 3.86.0(@types/react@19.1.2)(debug@4.4.0)
+      '@sanity/types': 3.86.1(@types/react@19.1.2)(debug@4.4.0)
       arrify: 2.0.1
       groq-js: 1.16.1
       humanize-list: 1.0.1
@@ -9170,7 +9170,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@sanity/types@3.86.0(@types/react@19.1.2)(debug@4.4.0)':
+  '@sanity/types@3.86.1(@types/react@19.1.2)(debug@4.4.0)':
     dependencies:
       '@sanity/client': 6.29.0(debug@4.4.0)
       '@types/react': 19.1.2
