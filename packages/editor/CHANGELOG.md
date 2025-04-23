@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.47.13](https://github.com/portabletext/editor/compare/editor-v1.47.12...editor-v1.47.13) (2025-04-23)
+
+
+### Bug Fixes
+
+* **behaviors:** disallow `execute` of Custom Events ([3d35d28](https://github.com/portabletext/editor/commit/3d35d282d623140b87b1ea220aedcd562c1aadc0))
+* **behaviors:** hide the concept of Abstract Events ([a2035de](https://github.com/portabletext/editor/commit/a2035de5ba861370c3a419a4e357b6a5a47788d2))
+* **deps:** update sanity monorepo to ^3.86.0 ([8c0c285](https://github.com/portabletext/editor/commit/8c0c28559f3ca634c8a4b94d88b42789dd831ac7))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.20
+
 ## [1.47.12](https://github.com/portabletext/editor/compare/editor-v1.47.11...editor-v1.47.12) (2025-04-22)
 
 
