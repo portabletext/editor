@@ -188,15 +188,10 @@ export function performEvent({
           }
 
           if (action.type === 'execute') {
-            if (
-              isAbstractBehaviorEvent(action.event) ||
-              isCustomBehaviorEvent(action.event)
-            ) {
+            if (isAbstractBehaviorEvent(action.event)) {
               performEvent({
                 mode: 'execute',
-                behaviors: isCustomBehaviorEvent(action.event)
-                  ? [...behaviors, ...defaultBehaviors]
-                  : defaultBehaviors,
+                behaviors: defaultBehaviors,
                 event: action.event,
                 editor,
                 keyGenerator,
