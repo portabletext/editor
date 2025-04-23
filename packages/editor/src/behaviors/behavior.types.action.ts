@@ -1,8 +1,8 @@
 import type {EditorSnapshot} from '../editor/editor-snapshot'
-import type {PickFromUnion} from '../type-utils'
+import type {OmitFromUnion, PickFromUnion} from '../type-utils'
 import type {PortableTextSlateEditor} from '../types/editor'
 import type {
-  AbstractBehaviorEvent,
+  AbstractBehaviorEventType,
   CustomBehaviorEvent,
   SyntheticBehaviorEvent,
 } from './behavior.types.event'
@@ -13,14 +13,11 @@ import type {
 export type BehaviorAction =
   | {
       type: 'execute'
-      event: AbstractBehaviorEvent | SyntheticBehaviorEvent
+      event: SyntheticBehaviorEvent
     }
   | {
       type: 'raise'
-      event:
-        | AbstractBehaviorEvent
-        | SyntheticBehaviorEvent
-        | CustomBehaviorEvent
+      event: SyntheticBehaviorEvent | CustomBehaviorEvent
     }
   | {
       type: 'noop'
@@ -34,7 +31,7 @@ export type BehaviorAction =
  * @beta
  */
 export function execute(
-  event: AbstractBehaviorEvent | SyntheticBehaviorEvent,
+  event: SyntheticBehaviorEvent,
 ): PickFromUnion<BehaviorAction, 'type', 'execute'> {
   return {type: 'execute', event}
 }
@@ -43,7 +40,7 @@ export function execute(
  * @beta
  */
 export function raise(
-  event: AbstractBehaviorEvent | SyntheticBehaviorEvent | CustomBehaviorEvent,
+  event: SyntheticBehaviorEvent | CustomBehaviorEvent,
 ): PickFromUnion<BehaviorAction, 'type', 'raise'> {
   return {type: 'raise', event}
 }
@@ -76,7 +73,7 @@ export type BehaviorActionSet<TBehaviorEvent, TGuardResponse> = (
 ) => Array<BehaviorAction>
 
 export type InternalBehaviorAction = (
-  | SyntheticBehaviorEvent
+  | OmitFromUnion<SyntheticBehaviorEvent, 'type', AbstractBehaviorEventType>
   | {type: 'noop'}
   | {type: 'effect'; effect: () => void}
 ) & {

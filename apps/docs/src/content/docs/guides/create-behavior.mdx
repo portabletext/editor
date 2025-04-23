@@ -37,7 +37,7 @@ const noLowerCaseA = defineBehavior({
 
 Let's break it down:
 
-1. It listens for the `insert.text` event. You can use any [native, abstract, synthetic or custom event](/reference/behavior-api#behavior-event-types) here.
+1. It listens for the `insert.text` event. You can use any [native, synthetic or custom event](/reference/behavior-api#behavior-event-types) here.
 2. The guard checks if the text that triggered this event is equal to a lowercase `a`. The guard is true and the behavior will perform the actions.
 3. It sends an `execute` action with an `insert.text` event to insert "A" instead of "a".
 

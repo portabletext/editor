@@ -12,13 +12,11 @@ import type {EditorSelection} from '../types/editor'
  */
 export type BehaviorEvent =
   | SyntheticBehaviorEvent
-  | AbstractBehaviorEvent
   | NativeBehaviorEvent
   | CustomBehaviorEvent
 
 export type BehaviorEventTypeNamespace =
   | SyntheticBehaviorEventNamespace
-  | AbstractBehaviorEventNamespace
   | NativeBehaviorEventNamespace
   | CustomBehaviorEventNamespace
 
@@ -54,7 +52,6 @@ export type ExternalBehaviorEvent =
         value?: {[prop: string]: unknown}
       }
     }
-  | AbstractBehaviorEvent
   | SyntheticBehaviorEvent
   | CustomBehaviorEvent
 
@@ -85,7 +82,9 @@ const syntheticBehaviorEventTypes = [
   'select',
 ] as const
 
-type SyntheticBehaviorEventType = (typeof syntheticBehaviorEventTypes)[number]
+type SyntheticBehaviorEventType =
+  | (typeof syntheticBehaviorEventTypes)[number]
+  | (typeof abstractBehaviorEventTypes)[number]
 
 type SyntheticBehaviorEventNamespace =
   ExtractNamespace<SyntheticBehaviorEventType>
@@ -194,6 +193,7 @@ export type SyntheticBehaviorEvent =
       type: StrictExtract<SyntheticBehaviorEventType, 'select'>
       at: EditorSelection
     }
+  | AbstractBehaviorEvent
 
 export type InsertPlacement = 'auto' | 'after' | 'before'
 
@@ -233,33 +233,31 @@ const abstractBehaviorEventTypes = [
   'style.toggle',
 ] as const
 
-type AbstractBehaviorEventType = (typeof abstractBehaviorEventTypes)[number]
+export type AbstractBehaviorEventType =
+  (typeof abstractBehaviorEventTypes)[number]
 
-type AbstractBehaviorEventNamespace =
-  ExtractNamespace<AbstractBehaviorEventType>
-
-export type AbstractBehaviorEvent =
+type AbstractBehaviorEvent =
   | {
-      type: StrictExtract<AbstractBehaviorEventType, 'annotation.toggle'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'annotation.toggle'>
       annotation: {
         name: string
         value: {[prop: string]: unknown}
       }
     }
   | {
-      type: StrictExtract<AbstractBehaviorEventType, 'decorator.toggle'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'decorator.toggle'>
       decorator: string
       at?: {anchor: BlockOffset; focus: BlockOffset}
     }
   | {
-      type: StrictExtract<AbstractBehaviorEventType, 'delete.text'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'delete.text'>
       at: {
         anchor: BlockOffset
         focus: BlockOffset
       }
     }
   | {
-      type: StrictExtract<AbstractBehaviorEventType, 'deserialize'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'deserialize'>
       originEvent:
         | PickFromUnion<
             NativeBehaviorEvent,
@@ -269,7 +267,7 @@ export type AbstractBehaviorEvent =
         | InputBehaviorEvent
     }
   | {
-      type: StrictExtract<AbstractBehaviorEventType, 'serialize'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'serialize'>
       originEvent: PickFromUnion<
         NativeBehaviorEvent,
         'type',
@@ -277,7 +275,7 @@ export type AbstractBehaviorEvent =
       >
     }
   | {
-      type: StrictExtract<AbstractBehaviorEventType, 'deserialization.success'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'deserialization.success'>
       mimeType: MIMEType
       data: Array<PortableTextBlock>
       originEvent:
@@ -289,7 +287,7 @@ export type AbstractBehaviorEvent =
         | InputBehaviorEvent
     }
   | {
-      type: StrictExtract<AbstractBehaviorEventType, 'deserialization.failure'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'deserialization.failure'>
       mimeType: MIMEType
       reason: string
       originEvent:
@@ -301,7 +299,7 @@ export type AbstractBehaviorEvent =
         | InputBehaviorEvent
     }
   | {
-      type: StrictExtract<AbstractBehaviorEventType, 'serialization.success'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'serialization.success'>
       mimeType: MIMEType
       data: string
       originEvent: PickFromUnion<
@@ -311,7 +309,7 @@ export type AbstractBehaviorEvent =
       >
     }
   | {
-      type: StrictExtract<AbstractBehaviorEventType, 'serialization.failure'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'serialization.failure'>
       mimeType: MIMEType
       reason: string
       originEvent: PickFromUnion<
@@ -321,57 +319,57 @@ export type AbstractBehaviorEvent =
       >
     }
   | {
-      type: StrictExtract<AbstractBehaviorEventType, 'insert.blocks'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'insert.blocks'>
       blocks: Array<PortableTextBlock>
       placement: InsertPlacement
     }
   | {
-      type: StrictExtract<AbstractBehaviorEventType, 'insert.break'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'insert.break'>
     }
   | {
-      type: StrictExtract<AbstractBehaviorEventType, 'insert.soft break'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'insert.soft break'>
     }
   | {
-      type: StrictExtract<AbstractBehaviorEventType, 'list item.add'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'list item.add'>
       listItem: string
     }
   | {
-      type: StrictExtract<AbstractBehaviorEventType, 'list item.remove'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'list item.remove'>
       listItem: string
     }
   | {
-      type: StrictExtract<AbstractBehaviorEventType, 'list item.toggle'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'list item.toggle'>
       listItem: string
     }
   | {
-      type: StrictExtract<AbstractBehaviorEventType, 'move.block down'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'move.block down'>
       at: [KeyedSegment]
     }
   | {
-      type: StrictExtract<AbstractBehaviorEventType, 'move.block up'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'move.block up'>
       at: [KeyedSegment]
     }
   | {
-      type: StrictExtract<AbstractBehaviorEventType, 'select.previous block'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'select.previous block'>
       select?: 'start' | 'end'
     }
   | {
-      type: StrictExtract<AbstractBehaviorEventType, 'select.next block'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'select.next block'>
       select?: 'start' | 'end'
     }
   | {
-      type: StrictExtract<AbstractBehaviorEventType, 'split'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'split'>
     }
   | {
-      type: StrictExtract<AbstractBehaviorEventType, 'style.add'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'style.add'>
       style: string
     }
   | {
-      type: StrictExtract<AbstractBehaviorEventType, 'style.remove'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'style.remove'>
       style: string
     }
   | {
-      type: StrictExtract<AbstractBehaviorEventType, 'style.toggle'>
+      type: StrictExtract<SyntheticBehaviorEventType, 'style.toggle'>
       style: string
     }
 
