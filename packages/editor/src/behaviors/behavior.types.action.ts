@@ -13,10 +13,7 @@ import type {
 export type BehaviorAction =
   | {
       type: 'execute'
-      event:
-        | AbstractBehaviorEvent
-        | SyntheticBehaviorEvent
-        | CustomBehaviorEvent
+      event: AbstractBehaviorEvent | SyntheticBehaviorEvent
     }
   | {
       type: 'raise'
@@ -37,7 +34,7 @@ export type BehaviorAction =
  * @beta
  */
 export function execute(
-  event: AbstractBehaviorEvent | SyntheticBehaviorEvent | CustomBehaviorEvent,
+  event: AbstractBehaviorEvent | SyntheticBehaviorEvent,
 ): PickFromUnion<BehaviorAction, 'type', 'execute'> {
   return {type: 'execute', event}
 }

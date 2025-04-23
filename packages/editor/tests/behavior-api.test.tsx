@@ -58,7 +58,7 @@ describe('Behavior API', () => {
     })
   })
 
-  test('Scenario: Executing custom events', async () => {
+  test('Scenario: Raising one custom event as the result of raising another', async () => {
     const editorRef = React.createRef<Editor>()
 
     render(
@@ -75,61 +75,12 @@ describe('Behavior API', () => {
             defineBehavior({
               on: 'insert.text',
               guard: ({event}) => event.text === 'a',
-              // As an exception, you can execute custom events and this *will*
-              // trigger any Behavior that listens for this event
-              actions: [() => [execute({type: 'custom.raise b'})]],
-            }),
-            defineBehavior({
-              on: 'custom.raise b',
-              // But any `raise` further down the chain will be suppressed to
-              // an execution.
-              actions: [() => [raise({type: 'insert.text', text: 'b'})]],
-            }),
-            defineBehavior({
-              on: 'insert.text',
-              // Not called
-              guard: ({event}) => event.text === 'b',
-              actions: [() => [execute({type: 'insert.text', text: 'c'})]],
-            }),
-          ]}
-        />
-      </EditorProvider>,
-    )
-
-    const locator = page.getByRole('textbox')
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
-
-    await userEvent.type(locator, 'a')
-    await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['b'])
-    })
-  })
-
-  test('Scenario: Raising one custom event as the result of executing another', async () => {
-    const editorRef = React.createRef<Editor>()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
-        <BehaviorPlugin
-          behaviors={[
-            defineBehavior({
-              on: 'insert.text',
-              guard: ({event}) => event.text === 'a',
-              // Executing `custom.a`
-              actions: [() => [execute({type: 'custom.a'})]],
+              // Raising `custom.a`
+              actions: [() => [raise({type: 'custom.a'})]],
             }),
             defineBehavior({
               on: 'custom.a',
-              // Suppresses this into an `execute`
+              // Raises `custom.b`
               actions: [() => [raise({type: 'custom.b'})]],
             }),
             defineBehavior({
