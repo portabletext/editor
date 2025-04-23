@@ -5,10 +5,10 @@ import {Synchronizer} from './components/Synchronizer'
 import {
   createInternalEditor,
   editorConfigToMachineInput,
-  type Editor,
   type EditorConfig,
 } from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
+import {EditorContext} from './editor-context'
 import {editorMachine} from './editor-machine'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
@@ -17,8 +17,6 @@ import {
   RouteEventsToChanges,
   type PortableTextEditorProps,
 } from './PortableTextEditor'
-
-const EditorContext = React.createContext<Editor | undefined>(undefined)
 
 /**
  * @public
