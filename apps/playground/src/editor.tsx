@@ -39,6 +39,8 @@ import {EditorPatchesPreview} from './editor-patches-preview'
 import './editor.css'
 import {EmojiPickerPlugin} from './emoji-picker'
 import type {EditorActorRef} from './playground-machine'
+import {ImageDeserializerPlugin} from './plugin.image-deserializer'
+import {TextFileDeserializerPlugin} from './plugin.text-file-deserializer'
 import {PortableTextToolbar} from './portable-text-toolbar'
 import {
   CommentAnnotationSchema,
@@ -54,11 +56,21 @@ import {wait} from './wait'
 const featureFlags = createStore({
   context: {
     enableDragHandles: true,
+    imageDeserializerPlugin: true,
+    textFileDeserializerPlugin: true,
   },
   on: {
     toggleDragHandles: (context) => ({
       ...context,
       enableDragHandles: !context.enableDragHandles,
+    }),
+    toggleImageDeserializerPlugin: (context) => ({
+      ...context,
+      imageDeserializerPlugin: !context.imageDeserializerPlugin,
+    }),
+    toggleTextFileDeserializerPlugin: (context) => ({
+      ...context,
+      textFileDeserializerPlugin: !context.textFileDeserializerPlugin,
     }),
   },
 })
@@ -78,6 +90,14 @@ export function Editor(props: {
   const enableDragHandles = useSelector(
     featureFlags,
     (s) => s.context.enableDragHandles,
+  )
+  const enableImageDeserializerPlugin = useSelector(
+    featureFlags,
+    (s) => s.context.imageDeserializerPlugin,
+  )
+  const enableTextFileDeserializerPlugin = useSelector(
+    featureFlags,
+    (s) => s.context.textFileDeserializerPlugin,
   )
   const [enableEmojiPickerPlugin, setEnableEmojiPickerPlugin] = useState(false)
 
@@ -137,6 +157,10 @@ export function Editor(props: {
               }}
             />
             {enableEmojiPickerPlugin ? <EmojiPickerPlugin /> : null}
+            {enableImageDeserializerPlugin ? <ImageDeserializerPlugin /> : null}
+            {enableTextFileDeserializerPlugin ? (
+              <TextFileDeserializerPlugin />
+            ) : null}
             <div className="flex gap-2 items-center">
               <ErrorBoundary
                 fallbackProps={{area: 'PortableTextEditable'}}
@@ -240,6 +264,14 @@ function EditorPlaygroundToolbar(props: {
   const [enableOneLinePlugin, setEnableOneLinePLugin] = useState(false)
   const [enableCodeEditorPlugin, setEnableCodeEditorPlugin] = useState(false)
   const [enableLinkPlugin, setEnableLinkPlugin] = useState(false)
+  const enableImageDeserializerPlugin = useSelector(
+    featureFlags,
+    (s) => s.context.imageDeserializerPlugin,
+  )
+  const enableTextFileDeserializerPlugin = useSelector(
+    featureFlags,
+    (s) => s.context.textFileDeserializerPlugin,
+  )
 
   return (
     <>
@@ -350,6 +382,27 @@ function EditorPlaygroundToolbar(props: {
         <Separator orientation="horizontal" />
         <Toolbar>
           <Switch
+            isSelected={enableImageDeserializerPlugin}
+            onChange={() => {
+              featureFlags.trigger.toggleImageDeserializerPlugin()
+            }}
+          >
+            Image deserializer plugin
+          </Switch>
+        </Toolbar>
+        <Toolbar>
+          <Switch
+            isSelected={enableTextFileDeserializerPlugin}
+            onChange={() => {
+              featureFlags.trigger.toggleTextFileDeserializerPlugin()
+            }}
+          >
+            Text file deserializer plugin
+          </Switch>
+        </Toolbar>
+        <Separator orientation="horizontal" />
+        <Toolbar>
+          <Switch
             isSelected={showingPatchesPreview}
             onChange={() => {
               props.editorRef.send({type: 'toggle patches preview'})
@@ -412,6 +465,8 @@ function EditorPlaygroundToolbar(props: {
           <ValuePreview editorId={props.editorRef.id} />
         ) : null}
       </div>
+      {enableTextFileDeserializerPlugin ? <TextFileDeserializerPlugin /> : null}
+      {enableImageDeserializerPlugin ? <ImageDeserializerPlugin /> : null}
       {enableMarkdownPlugin ? (
         <MarkdownPlugin
           config={{
