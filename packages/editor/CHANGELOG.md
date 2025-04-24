@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.47.14](https://github.com/portabletext/editor/compare/editor-v1.47.13...editor-v1.47.14) (2025-04-24)
+
+
+### Bug Fixes
+
+* **`insert.blocks`:** allow omission of block `_key`s ([8f7c2cb](https://github.com/portabletext/editor/commit/8f7c2cb5646a5abbcee6ab8769a6908a93af1da4))
+* **deps:** update sanity monorepo to ^3.86.1 ([7161552](https://github.com/portabletext/editor/commit/7161552c1d9b9d274dc884d93553fb069ba0f3f5))
+* hide the concept of "abstract" events from debug logs ([9a46656](https://github.com/portabletext/editor/commit/9a4665616923876a9f59645aeb7e9816950f0201))
+* log if synthetic or custom events were raised or executed ([d32bdad](https://github.com/portabletext/editor/commit/d32bdada0f9a67b20b91f7096c8af5b20cc1ff9e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.21
+
 ## [1.47.13](https://github.com/portabletext/editor/compare/editor-v1.47.12...editor-v1.47.13) (2025-04-23)
 
 
