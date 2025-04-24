@@ -51,7 +51,10 @@ export function performEvent({
       }
     | undefined
 }) {
-  debug(`(${eventCategory(event)})`, JSON.stringify(event, null, 2))
+  debug(
+    `(${!isNativeBehaviorEvent(event) ? `${mode}:` : ''}${eventCategory(event)})`,
+    JSON.stringify(event, null, 2),
+  )
 
   const defaultAction =
     isCustomBehaviorEvent(event) ||
