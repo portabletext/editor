@@ -320,7 +320,7 @@ type AbstractBehaviorEvent =
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'insert.blocks'>
-      blocks: Array<PortableTextBlock>
+      blocks: Array<BlockWithOptionalKey>
       placement: InsertPlacement
     }
   | {
