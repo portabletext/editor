@@ -22,7 +22,7 @@ function eventCategory(event: BehaviorEvent) {
   return isNativeBehaviorEvent(event)
     ? 'native'
     : isAbstractBehaviorEvent(event)
-      ? 'abstract'
+      ? 'synthetic'
       : isCustomBehaviorEvent(event)
         ? 'custom'
         : 'synthetic'
