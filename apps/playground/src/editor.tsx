@@ -23,7 +23,7 @@ import {
 import {MarkdownPlugin, OneLinePlugin} from '@portabletext/editor/plugins'
 import {useSelector} from '@xstate/react'
 import {createStore} from '@xstate/store'
-import {CopyIcon, ImageIcon, TrashIcon} from 'lucide-react'
+import {CopyIcon, TrashIcon} from 'lucide-react'
 import {useEffect, useState, type JSX} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
 import {reverse} from 'remeda'
@@ -603,8 +603,7 @@ const RenderBlock = (props: BlockRenderProps) => {
       <div
         className={`flex items-center gap-1 border-2 rounded px-1 text-sm my-2${props.selected ? ' border-blue-300' : ''}`}
       >
-        <ImageIcon className="size-4" />
-        {image.value.url}
+        <img src={image.value.url} alt={image.value.alt ?? ''} />
       </div>
     )
   }

@@ -129,7 +129,10 @@ export const schemaDefinition = defineSchema({
       title: 'Image',
       name: 'image',
       icon: ImageIcon,
-      fields: [{name: 'url', type: 'string'}],
+      fields: [
+        {name: 'url', type: 'string'},
+        {name: 'alt', type: 'string'},
+      ],
     },
   ],
   inlineObjects: [
@@ -150,6 +153,7 @@ export const ImageSchema = z.object({
   }),
   value: z.object({
     url: z.string(),
+    alt: z.string().optional(),
   }),
 })
 
