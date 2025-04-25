@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.47.15](https://github.com/portabletext/editor/compare/editor-v1.47.14...editor-v1.47.15) (2025-04-25)
+
+
+### Bug Fixes
+
+* provide `Editor` from a global Context ([15f8c42](https://github.com/portabletext/editor/commit/15f8c4281d8eb70ce3e2e21dd878950c5a637dd2))
+
 ## [1.47.14](https://github.com/portabletext/editor/compare/editor-v1.47.13...editor-v1.47.14) (2025-04-24)
 
 
