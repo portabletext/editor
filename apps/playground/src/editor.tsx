@@ -91,14 +91,6 @@ export function Editor(props: {
     featureFlags,
     (s) => s.context.enableDragHandles,
   )
-  const enableImageDeserializerPlugin = useSelector(
-    featureFlags,
-    (s) => s.context.imageDeserializerPlugin,
-  )
-  const enableTextFileDeserializerPlugin = useSelector(
-    featureFlags,
-    (s) => s.context.textFileDeserializerPlugin,
-  )
   const [enableEmojiPickerPlugin, setEnableEmojiPickerPlugin] = useState(false)
 
   return (
@@ -157,10 +149,6 @@ export function Editor(props: {
               }}
             />
             {enableEmojiPickerPlugin ? <EmojiPickerPlugin /> : null}
-            {enableImageDeserializerPlugin ? <ImageDeserializerPlugin /> : null}
-            {enableTextFileDeserializerPlugin ? (
-              <TextFileDeserializerPlugin />
-            ) : null}
             <div className="flex gap-2 items-center">
               <ErrorBoundary
                 fallbackProps={{area: 'PortableTextEditable'}}
