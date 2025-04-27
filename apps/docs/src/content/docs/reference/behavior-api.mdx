@@ -89,8 +89,8 @@ const noLowerCaseA = defineBehavior({
 ## Behavior Actions
 
 - [execute](#execute)
+- [forward](#forward)
 - [raise](#raise)
-- noop
 - effect
 
 ### `execute`
@@ -125,6 +125,37 @@ const executedUppercaseA = defineBehavior({
   actions: [({snapshot, event}) => [execute({type: 'insert.text', text: 'A'})]],
 })
 ```
+
+### `forward`
+
+The `forward` action type is used to forward events to the next Behavior.
+
+Properties:
+
+- type: `forward`
+- event: Behavior event object
+
+```tsx
+const forwardedUppercaseA = defineBehavior({
+  on: 'insert.text',
+  guard: ({snapshot, event}) => event.text === 'a',
+  actions: [({snapshot, event}) => [{type: 'forward', event: {type: 'insert.text', text: 'A'}})]],
+})
+```
+
+When an event is forwarded, the next Behavior will be triggered.
+
+The `forward` action also has a handy shorthand function:
+
+```tsx
+const forwardedUppercaseA = defineBehavior({
+  on: 'insert.text',
+  guard: ({snapshot, event}) => event.text === 'a',
+  actions: [({snapshot, event}) => [forward({type: 'insert.text', text: 'A'})]],
+})
+```
+
+### `raise`
 
 The `raise` action type is used to sends events back into the editor.
 

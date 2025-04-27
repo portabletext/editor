@@ -1,7 +1,7 @@
 import {assertEvent, assign, createActor, setup} from 'xstate'
 import {isHotkey} from '../internal-utils/is-hotkey'
 import * as selectors from '../selectors'
-import {effect, execute, noop} from './behavior.types.action'
+import {effect, execute, forward} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
 const emojiCharRegEx = /^[a-zA-Z-_0-9]{1}$/
@@ -66,7 +66,7 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
         return {emojis}
       },
       actions: [
-        (_, params) => [
+        ({event}, params) => [
           {
             type: 'effect',
             effect: () => {
@@ -76,6 +76,7 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
               })
             },
           },
+          forward(event),
         ],
       ],
     }),
@@ -242,9 +243,7 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
 
           if (params.action === 'navigate up') {
             return [
-              // If we are navigating then we want to hijack the key event and
-              // turn it into a noop.
-              noop(),
+              // If we are navigating then we want to hijack the key event
               effect(() => {
                 emojiPickerActor.send({type: 'navigate up'})
               }),
@@ -253,9 +252,7 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
 
           if (params.action === 'navigate down') {
             return [
-              // If we are navigating then we want to hijack the key event and
-              // turn it into a noop.
-              noop(),
+              // If we are navigating then we want to hijack the key event
               effect(() => {
                 emojiPickerActor.send({type: 'navigate down'})
               }),
@@ -298,7 +295,7 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
         return {emojis}
       },
       actions: [
-        (_, params) => [
+        ({event}, params) => [
           {
             type: 'effect',
             effect: () => {
@@ -308,6 +305,7 @@ export function createEmojiPickerBehaviors<TEmojiMatch>(
               })
             },
           },
+          forward(event),
         ],
       ],
     }),

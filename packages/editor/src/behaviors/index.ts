@@ -15,7 +15,7 @@ export {
 
 export {
   execute,
-  noop,
+  forward,
   raise,
   effect,
   type BehaviorAction,

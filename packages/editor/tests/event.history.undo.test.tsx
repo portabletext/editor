@@ -2,7 +2,7 @@ import {page, userEvent} from '@vitest/browser/context'
 import * as React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
-import {defineBehavior, execute, raise} from '../src/behaviors'
+import {defineBehavior, execute, forward, raise} from '../src/behaviors'
 import type {Editor} from '../src/editor/create-editor'
 import {PortableTextEditable} from '../src/editor/Editable'
 import {EditorProvider} from '../src/editor/editor-provider'
@@ -113,8 +113,8 @@ describe('event.history.undo', () => {
               on: 'insert.text',
               guard: ({event}) => event.text === 'a',
               actions: [
-                // But when 'x' is raised, the Behavior above is called
-                // recursively and the actions are merged into a single undo step
+                // Since this Behavior doesn't do any `execute` actions,
+                // it will not squash the undo stack
                 () => [raise({type: 'insert.text', text: 'x'})],
               ],
             }),
@@ -140,7 +140,7 @@ describe('event.history.undo', () => {
     await vi.waitFor(() => {
       expect(
         getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual([''])
+      ).toEqual(['y'])
     })
   })
 
@@ -197,6 +197,61 @@ describe('event.history.undo', () => {
       expect(
         getTersePt(editorRef.current?.getSnapshot().context.value),
       ).toEqual([''])
+    })
+  })
+
+  test('Scenario: A lonely `forward` action does not squash the recursive undo stack', async () => {
+    const editorRef = React.createRef<Editor>()
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator: createTestKeyGenerator(),
+          schemaDefinition: defineSchema({}),
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <PortableTextEditable />
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'a',
+              actions: [({event}) => [forward(event)]],
+            }),
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'a',
+              actions: [
+                // 'A' is inserted in its own undo step
+                () => [execute({type: 'insert.text', text: 'A'})],
+                // 'B' is inserted in its own undo step
+                () => [execute({type: 'insert.text', text: 'B'})],
+              ],
+            }),
+          ]}
+        />
+      </EditorProvider>,
+    )
+
+    const locator = page.getByRole('textbox')
+
+    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+
+    await userEvent.type(locator, 'a')
+
+    await vi.waitFor(() => {
+      expect(
+        getTersePt(editorRef.current?.getSnapshot().context.value),
+      ).toEqual(['AB'])
+    })
+
+    editorRef.current?.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(
+        getTersePt(editorRef.current?.getSnapshot().context.value),
+      ).toEqual(['A'])
     })
   })
 })

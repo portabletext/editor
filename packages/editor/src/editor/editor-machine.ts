@@ -336,6 +336,7 @@ export const editorMachine = setup({
       performEvent({
         mode: 'raise',
         behaviors: [...context.behaviors.values()],
+        remainingEventBehaviors: [...context.behaviors.values()],
         event: event.behaviorEvent,
         editor: event.editor,
         keyGenerator: context.keyGenerator,

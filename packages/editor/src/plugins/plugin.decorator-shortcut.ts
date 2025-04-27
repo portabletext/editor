@@ -8,7 +8,7 @@ import {
   type CallbackLogicFunction,
 } from 'xstate'
 import {createDecoratorPairBehavior} from '../behaviors/behavior.decorator-pair'
-import {effect, execute} from '../behaviors/behavior.types.action'
+import {effect, execute, forward} from '../behaviors/behavior.types.action'
 import {defineBehavior} from '../behaviors/behavior.types.behavior'
 import type {Editor} from '../editor/create-editor'
 import {useEditor} from '../editor/editor-provider'
@@ -108,13 +108,14 @@ const selectionListenerCallback: CallbackLogicFunction<
         }
       },
       actions: [
-        (_, {blockOffsets}) => [
+        ({event}, {blockOffsets}) => [
           {
             type: 'effect',
             effect: () => {
               sendBack({type: 'selection', blockOffsets})
             },
           },
+          forward(event),
         ],
       ],
     }),

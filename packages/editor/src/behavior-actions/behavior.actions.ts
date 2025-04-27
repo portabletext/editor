@@ -25,7 +25,6 @@ import {insertTextActionImplementation} from './behavior.action.insert.text'
 import {moveBackwardActionImplementation} from './behavior.action.move.backward'
 import {moveBlockActionImplementation} from './behavior.action.move.block'
 import {moveForwardActionImplementation} from './behavior.action.move.forward'
-import {noopActionImplementation} from './behavior.action.noop'
 import {selectActionImplementation} from './behavior.action.select'
 
 const debug = debugWithName('behaviors:action')
@@ -71,7 +70,6 @@ const behaviorActionImplementations: BehaviorActionImplementations = {
   'move.backward': moveBackwardActionImplementation,
   'move.block': moveBlockActionImplementation,
   'move.forward': moveForwardActionImplementation,
-  'noop': noopActionImplementation,
   'select': selectActionImplementation,
 }
 
@@ -220,13 +218,6 @@ export function performAction({
     }
     case 'move.forward': {
       behaviorActionImplementations['move.forward']({
-        context,
-        action,
-      })
-      break
-    }
-    case 'noop': {
-      behaviorActionImplementations.noop({
         context,
         action,
       })

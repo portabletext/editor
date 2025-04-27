@@ -21,7 +21,7 @@ import {
   useSlateStatic,
   type RenderElementProps,
 } from 'slate-react'
-import {defineBehavior} from '../../behaviors'
+import {defineBehavior, forward} from '../../behaviors'
 import {debugWithName} from '../../internal-utils/debug'
 import type {EventPositionBlock} from '../../internal-utils/event-position'
 import {fromSlateValue} from '../../internal-utils/values'
@@ -146,9 +146,6 @@ export const Element: FunctionComponent<ElementProps> = ({
               setDragPositionBlock(event.position.block)
             },
           },
-          {
-            type: 'noop',
-          },
         ],
       ],
     })
@@ -173,13 +170,14 @@ export const Element: FunctionComponent<ElementProps> = ({
         return event.type !== 'drag.dragover'
       },
       actions: [
-        () => [
+        ({event}) => [
           {
             type: 'effect',
             effect: () => {
               setDragPositionBlock(undefined)
             },
           },
+          forward(event),
         ],
       ],
     })

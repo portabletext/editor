@@ -31,6 +31,7 @@ function eventCategory(event: BehaviorEvent) {
 export function performEvent({
   mode,
   behaviors,
+  remainingEventBehaviors,
   event,
   editor,
   keyGenerator,
@@ -38,8 +39,9 @@ export function performEvent({
   getSnapshot,
   nativeEvent,
 }: {
-  mode: 'raise' | 'execute'
+  mode: 'raise' | 'execute' | 'forward'
   behaviors: Array<Behavior>
+  remainingEventBehaviors: Array<Behavior>
   event: BehaviorEvent
   editor: PortableTextSlateEditor
   keyGenerator: () => string
@@ -51,10 +53,7 @@ export function performEvent({
       }
     | undefined
 }) {
-  debug(
-    `(${!isNativeBehaviorEvent(event) ? `${mode}:` : ''}${eventCategory(event)})`,
-    JSON.stringify(event, null, 2),
-  )
+  debug(`(${mode}:${eventCategory(event)})`, JSON.stringify(event, null, 2))
 
   const defaultAction =
     isCustomBehaviorEvent(event) ||
@@ -66,9 +65,10 @@ export function performEvent({
           editor,
         } satisfies InternalBehaviorAction)
 
-  const eventBehaviors = (
-    mode === 'raise' ? [...behaviors, ...defaultBehaviors] : behaviors
-  ).filter((behavior) => {
+  const eventBehaviors = [
+    ...remainingEventBehaviors,
+    ...defaultBehaviors,
+  ].filter((behavior) => {
     // Catches all events
     if (behavior.on === '*') {
       return true
@@ -135,9 +135,13 @@ export function performEvent({
 
   const guardSnapshot = getSnapshot()
 
-  let behaviorOverwritten = false
+  let nativeEventPrevented = false
+  let defaultBehaviorOverwritten = false
+  let eventBehaviorIndex = -1
 
   for (const eventBehavior of eventBehaviors) {
+    eventBehaviorIndex++
+
     const shouldRun =
       eventBehavior.guard === undefined ||
       eventBehavior.guard({
@@ -148,6 +152,10 @@ export function performEvent({
     if (!shouldRun) {
       continue
     }
+
+    // This Behavior now "owns" the event and we can consider the default
+    // action prevented
+    defaultBehaviorOverwritten = true
 
     for (const actionSet of eventBehavior.actions) {
       const actionsSnapshot = getSnapshot()
@@ -164,37 +172,73 @@ export function performEvent({
         continue
       }
 
-      behaviorOverwritten =
-        behaviorOverwritten ||
-        actions.some((action) => action.type !== 'effect')
+      if (actions.some((action) => action.type === 'execute')) {
+        // This Behavior now "owns" the event and we can consider the native
+        // event prevented
+        nativeEventPrevented = true
 
-      withUndoStep(editor, () => {
-        for (const action of actions) {
-          if (action.type === 'raise') {
-            performEvent({
-              mode,
-              behaviors:
-                mode === 'execute'
-                  ? isCustomBehaviorEvent(action.event)
-                    ? [...behaviors, ...defaultBehaviors]
-                    : defaultBehaviors
-                  : [...behaviors, ...defaultBehaviors],
-              event: action.event,
-              editor,
-              keyGenerator,
-              schema,
-              getSnapshot,
-              nativeEvent: undefined,
-            })
+        // Since at least one action is about to `execute` changes in the editor,
+        // we set up a new undo step.
+        // All actions performed recursively from now will be squashed into this
+        // undo step
+        withUndoStep(editor, () => {
+          for (const action of actions) {
+            if (action.type === 'effect') {
+              performAction({
+                context: {
+                  keyGenerator,
+                  schema,
+                },
+                action: {
+                  ...action,
+                  editor,
+                },
+              })
 
-            continue
-          }
+              continue
+            }
 
-          if (action.type === 'execute') {
+            if (action.type === 'forward') {
+              const remainingEventBehaviors = eventBehaviors.slice(
+                eventBehaviorIndex + 1,
+              )
+
+              performEvent({
+                mode: 'forward',
+                behaviors,
+                remainingEventBehaviors: remainingEventBehaviors,
+                event: action.event,
+                editor,
+                keyGenerator,
+                schema,
+                getSnapshot,
+                nativeEvent,
+              })
+
+              continue
+            }
+
+            if (action.type === 'raise') {
+              performEvent({
+                mode: 'raise',
+                behaviors,
+                remainingEventBehaviors: behaviors,
+                event: action.event,
+                editor,
+                keyGenerator,
+                schema,
+                getSnapshot,
+                nativeEvent,
+              })
+
+              continue
+            }
+
             if (isAbstractBehaviorEvent(action.event)) {
               performEvent({
                 mode: 'execute',
-                behaviors: defaultBehaviors,
+                behaviors,
+                remainingEventBehaviors: behaviors,
                 event: action.event,
                 editor,
                 keyGenerator,
@@ -234,62 +278,82 @@ export function performEvent({
 
               editor.onChange()
             }
-
-            continue
           }
+        })
 
-          const internalAction = {
-            ...action,
-            editor,
-          }
-          let actionFailed = false
+        continue
+      }
 
-          withApplyingBehaviorActions(editor, () => {
-            try {
-              performAction({
-                context: {
-                  keyGenerator,
-                  schema,
-                },
-                action: internalAction,
-              })
-            } catch (error) {
-              console.error(
-                new Error(
-                  `Performing action "${internalAction.type}" as a result of "${event.type}" failed due to: ${error.message}`,
-                ),
-              )
-              actionFailed = true
-            }
+      for (const action of actions) {
+        if (action.type === 'effect') {
+          performAction({
+            context: {
+              keyGenerator,
+              schema,
+            },
+            action: {
+              ...action,
+              editor,
+            },
           })
 
-          if (actionFailed) {
-            break
-          }
-
-          editor.onChange()
+          continue
         }
-      })
+
+        if (action.type === 'forward') {
+          const remainingEventBehaviors = eventBehaviors.slice(
+            eventBehaviorIndex + 1,
+          )
+
+          performEvent({
+            mode: 'forward',
+            behaviors,
+            remainingEventBehaviors: remainingEventBehaviors,
+            event: action.event,
+            editor,
+            keyGenerator,
+            schema,
+            getSnapshot,
+            nativeEvent,
+          })
+
+          continue
+        }
+
+        if (action.type === 'raise') {
+          nativeEventPrevented = true
+
+          performEvent({
+            mode: 'raise',
+            behaviors,
+            remainingEventBehaviors: behaviors,
+            event: action.event,
+            editor,
+            keyGenerator,
+            schema,
+            getSnapshot,
+            nativeEvent,
+          })
+
+          continue
+        }
+
+        if (action.type === 'execute') {
+          console.error('Unexpected action type: `execute`')
+        }
+      }
     }
 
-    if (behaviorOverwritten) {
-      nativeEvent?.preventDefault()
-      break
-    }
+    break
   }
 
-  if (!behaviorOverwritten) {
-    if (!defaultAction) {
-      return
-    }
+  if (!defaultBehaviorOverwritten && defaultAction) {
+    nativeEvent?.preventDefault()
 
     withApplyingBehaviorActions(editor, () => {
       try {
         performAction({
-          context: {
-            keyGenerator,
-            schema,
-          },
+          context: {keyGenerator, schema},
           action: defaultAction,
         })
       } catch (error) {
@@ -300,6 +364,9 @@ export function performEvent({
         )
       }
     })
+
     editor.onChange()
+  } else if (nativeEventPrevented) {
+    nativeEvent?.preventDefault()
   }
 }

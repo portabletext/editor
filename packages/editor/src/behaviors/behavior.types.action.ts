@@ -4,6 +4,7 @@ import type {PortableTextSlateEditor} from '../types/editor'
 import type {
   AbstractBehaviorEventType,
   CustomBehaviorEvent,
+  NativeBehaviorEvent,
   SyntheticBehaviorEvent,
 } from './behavior.types.event'
 
@@ -16,11 +17,12 @@ export type BehaviorAction =
       event: SyntheticBehaviorEvent
     }
   | {
-      type: 'raise'
-      event: SyntheticBehaviorEvent | CustomBehaviorEvent
+      type: 'forward'
+      event: NativeBehaviorEvent | SyntheticBehaviorEvent | CustomBehaviorEvent
     }
   | {
-      type: 'noop'
+      type: 'raise'
+      event: SyntheticBehaviorEvent | CustomBehaviorEvent
     }
   | {
       type: 'effect'
@@ -34,6 +36,15 @@ export function execute(
   event: SyntheticBehaviorEvent,
 ): PickFromUnion<BehaviorAction, 'type', 'execute'> {
   return {type: 'execute', event}
+}
+
+/**
+ * @beta
+ */
+export function forward(
+  event: NativeBehaviorEvent | SyntheticBehaviorEvent | CustomBehaviorEvent,
+): PickFromUnion<BehaviorAction, 'type', 'forward'> {
+  return {type: 'forward', event}
 }
 
 /**
@@ -57,13 +68,6 @@ export function effect(
 /**
  * @beta
  */
-export function noop(): PickFromUnion<BehaviorAction, 'type', 'noop'> {
-  return {type: 'noop'}
-}
-
-/**
- * @beta
- */
 export type BehaviorActionSet<TBehaviorEvent, TGuardResponse> = (
   payload: {
     snapshot: EditorSnapshot
@@ -74,7 +78,6 @@ export type BehaviorActionSet<TBehaviorEvent, TGuardResponse> = (
 
 export type InternalBehaviorAction = (
   | OmitFromUnion<SyntheticBehaviorEvent, 'type', AbstractBehaviorEventType>
-  | {type: 'noop'}
   | {type: 'effect'; effect: () => void}
 ) & {
   editor: PortableTextSlateEditor
