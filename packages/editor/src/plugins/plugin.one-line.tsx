@@ -21,7 +21,7 @@ const oneLineBehaviors = [
    */
   defineBehavior({
     on: 'insert.break',
-    actions: [() => [{type: 'noop'}]],
+    actions: [],
   }),
   /**
    * `insert.block` `before` or `after` is not allowed in a one-line editor.
@@ -30,7 +30,7 @@ const oneLineBehaviors = [
     on: 'insert.block',
     guard: ({event}) =>
       event.placement === 'before' || event.placement === 'after',
-    actions: [() => [{type: 'noop'}]],
+    actions: [],
   }),
   /**
    * An ordinary `insert.block` is acceptable if it's a text block. In that
@@ -67,7 +67,7 @@ const oneLineBehaviors = [
    */
   defineBehavior({
     on: 'insert.block',
-    actions: [() => [{type: 'noop'}]],
+    actions: [],
   }),
   /**
    * If multiple blocks are inserted, then the non-text blocks are filtered out

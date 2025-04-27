@@ -46,7 +46,7 @@ Read more about using behaviors and building your own with these guides:
 
 ## Log inserted text
 
-Send and `effect` type action along with an `effect` to perform side effects.
+Send and `effect` type action along with a `forward` action to perform side effects without altering the chain of events.
 
 ```js
 const logInsertText = defineBehavior({
@@ -59,12 +59,16 @@ const logInsertText = defineBehavior({
           console.log(event)
         },
       },
+      {
+        type: 'forward',
+        event,
+      },
     ],
   ],
 })
 ```
 
-The `effect` action also has a shorthand function:
+The `effect` and `forward` actions also have shorthand functions:
 
 ```tsx
 const logInsertText = defineBehavior({
@@ -74,6 +78,7 @@ const logInsertText = defineBehavior({
       effect(() => {
         console.log(event)
       }),
+      forward(event),
     ],
   ],
 })

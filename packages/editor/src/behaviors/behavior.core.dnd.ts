@@ -22,6 +22,6 @@ export const coreDndBehaviors = [
 
       return draggingOverDragOrigin
     },
-    actions: [() => [{type: 'noop'}]],
+    actions: [],
   }),
 ]

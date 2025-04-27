@@ -9,7 +9,6 @@ import {
   defineBehavior,
   effect,
   execute,
-  noop,
   raise,
 } from '@portabletext/editor/behaviors'
 import * as selectors from '@portabletext/editor/selectors'
@@ -134,7 +133,6 @@ const escapeListenerCallback: CallbackLogicFunction<
       guard: ({event}) => event.originEvent.key === 'Escape',
       actions: [
         () => [
-          noop(),
           effect(() => {
             sendBack({type: 'dismiss'})
           }),
@@ -157,9 +155,6 @@ const arrowListenerCallback: CallbackLogicFunction<
         actions: [
           () => [
             {
-              type: 'noop',
-            },
-            {
               type: 'effect',
               effect: () => {
                 sendBack({type: 'navigate down'})
@@ -175,9 +170,6 @@ const arrowListenerCallback: CallbackLogicFunction<
         guard: ({event}) => event.originEvent.key === 'ArrowUp',
         actions: [
           () => [
-            {
-              type: 'noop',
-            },
             {
               type: 'effect',
               effect: () => {
@@ -299,9 +291,6 @@ const emojiInsertListener: CallbackLogicFunction<
           event.originEvent.key === 'Enter' || event.originEvent.key === 'Tab',
         actions: [
           () => [
-            {
-              type: 'noop',
-            },
             {
               type: 'effect',
               effect: () => {

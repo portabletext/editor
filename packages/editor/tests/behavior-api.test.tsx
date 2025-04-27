@@ -8,7 +8,7 @@ import {
   PortableTextEditable,
   type Editor,
 } from '../src'
-import {defineBehavior, effect, execute, noop, raise} from '../src/behaviors'
+import {defineBehavior, effect, execute, forward, raise} from '../src/behaviors'
 import {getTersePt} from '../src/internal-utils/terse-pt'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {BehaviorPlugin} from '../src/plugins'
@@ -185,7 +185,201 @@ describe('Behavior API', () => {
     })
   })
 
-  test("Scenario: Empty action sets don't affect the chain of events", async () => {
+  test('Scenario: `effect` can be combined with `forward` to not alter the chain of events', async () => {
+    const editorRef = React.createRef<Editor>()
+
+    const sideEffectA = vi.fn()
+    const sideEffectB = vi.fn()
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator: createTestKeyGenerator(),
+          schemaDefinition: defineSchema({}),
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <PortableTextEditable />
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'a',
+              actions: [
+                ({event}) => [
+                  // A side effect is performed
+                  effect(sideEffectA),
+                  // And the event is forwarded
+                  forward(event),
+                ],
+              ],
+            }),
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'b',
+              actions: [
+                () => [
+                  // A side effect is performed without forwarding the event
+                  effect(sideEffectB),
+                ],
+              ],
+            }),
+          ]}
+        />
+      </EditorProvider>,
+    )
+
+    const locator = page.getByRole('textbox')
+    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+
+    await userEvent.type(locator, 'a')
+    await vi.waitFor(() => {
+      expect(
+        getTersePt(editorRef.current?.getSnapshot().context.value),
+      ).toEqual(['a'])
+    })
+
+    expect(sideEffectA).toHaveBeenCalled()
+    expect(sideEffectB).not.toHaveBeenCalled()
+
+    await userEvent.type(locator, 'b')
+    await userEvent.type(locator, 'c')
+
+    await vi.waitFor(() => {
+      expect(
+        getTersePt(editorRef.current?.getSnapshot().context.value),
+      ).toEqual(['ac'])
+    })
+
+    expect(sideEffectB).toHaveBeenCalled()
+  })
+
+  test('Scenario: Empty action sets stop event propagation', async () => {
+    const editorRef = React.createRef<Editor>()
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator: createTestKeyGenerator(),
+          schemaDefinition: defineSchema({}),
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <PortableTextEditable />
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'a',
+              // Typing 'a' is swallowed
+              actions: [],
+            }),
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'a',
+              actions: [() => [execute({type: 'insert.text', text: 'b'})]],
+            }),
+          ]}
+        />
+      </EditorProvider>,
+    )
+
+    const locator = page.getByRole('textbox')
+    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+
+    await userEvent.type(locator, 'a')
+    await userEvent.type(locator, 'b')
+
+    await vi.waitFor(() => {
+      expect(
+        getTersePt(editorRef.current?.getSnapshot().context.value),
+      ).toEqual(['b'])
+    })
+  })
+
+  test('Scenario: `forward` forwards an event to succeeding Behaviors', async () => {
+    const editorRef = React.createRef<Editor>()
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator: createTestKeyGenerator(),
+          schemaDefinition: defineSchema({}),
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <PortableTextEditable />
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'a',
+              actions: [({event}) => [effect(() => {}), forward(event)]],
+            }),
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'a',
+              actions: [() => [execute({type: 'insert.text', text: 'b'})]],
+            }),
+          ]}
+        />
+      </EditorProvider>,
+    )
+
+    const locator = page.getByRole('textbox')
+    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+
+    await userEvent.type(locator, 'a')
+    await vi.waitFor(() => {
+      expect(
+        getTersePt(editorRef.current?.getSnapshot().context.value),
+      ).toEqual(['b'])
+    })
+  })
+
+  test('Scenario: `forward`ing twice', async () => {
+    const editorRef = React.createRef<Editor>()
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator: createTestKeyGenerator(),
+          schemaDefinition: defineSchema({}),
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <PortableTextEditable />
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'a',
+              actions: [
+                ({event}) => [effect(() => {}), forward(event), forward(event)],
+              ],
+            }),
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'a',
+              actions: [() => [execute({type: 'insert.text', text: 'b'})]],
+            }),
+          ]}
+        />
+      </EditorProvider>,
+    )
+
+    const locator = page.getByRole('textbox')
+    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+
+    await userEvent.type(locator, 'a')
+    await vi.waitFor(() => {
+      expect(
+        getTersePt(editorRef.current?.getSnapshot().context.value),
+      ).toEqual(['bb'])
+    })
+  })
+
+  test('Scenario: Empty actions cancel the chain of events', async () => {
     const editorRef = React.createRef<Editor>()
 
     render(
@@ -207,16 +401,6 @@ describe('Behavior API', () => {
             defineBehavior({
               on: 'insert.text',
               guard: ({event}) => event.text === 'a',
-              actions: [() => []],
-            }),
-            defineBehavior({
-              on: 'insert.text',
-              guard: ({event}) => event.text === 'a',
-              actions: [() => [], () => []],
-            }),
-            defineBehavior({
-              on: 'insert.text',
-              guard: ({event}) => event.text === 'a',
               actions: [() => [execute({type: 'insert.text', text: 'b'})]],
             }),
           ]}
@@ -228,14 +412,15 @@ describe('Behavior API', () => {
     await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
 
     await userEvent.type(locator, 'a')
+    await userEvent.type(locator, 'c')
     await vi.waitFor(() => {
       expect(
         getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['b'])
+      ).toEqual(['c'])
     })
   })
 
-  test("Scenario: Effect-only actions don't affect the chain of events", async () => {
+  test('Scenario: A lonely `forward` action does not alter the default action', async () => {
     const editorRef = React.createRef<Editor>()
 
     render(
@@ -251,13 +436,7 @@ describe('Behavior API', () => {
           behaviors={[
             defineBehavior({
               on: 'insert.text',
-              guard: ({event}) => event.text === 'a',
-              actions: [() => [effect(() => {})]],
-            }),
-            defineBehavior({
-              on: 'insert.text',
-              guard: ({event}) => event.text === 'a',
-              actions: [() => [execute({type: 'insert.text', text: 'b'})]],
+              actions: [({event}) => [forward(event)]],
             }),
           ]}
         />
@@ -271,11 +450,11 @@ describe('Behavior API', () => {
     await vi.waitFor(() => {
       expect(
         getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['b'])
+      ).toEqual(['a'])
     })
   })
 
-  test('Scenario: Noop actions cancel the chain of events', async () => {
+  test('Scenario: `forward`ing a native event does not cancel it', async () => {
     const editorRef = React.createRef<Editor>()
 
     render(
@@ -290,14 +469,8 @@ describe('Behavior API', () => {
         <BehaviorPlugin
           behaviors={[
             defineBehavior({
-              on: 'insert.text',
-              guard: ({event}) => event.text === 'a',
-              actions: [() => [noop()]],
-            }),
-            defineBehavior({
-              on: 'insert.text',
-              guard: ({event}) => event.text === 'a',
-              actions: [() => [execute({type: 'insert.text', text: 'b'})]],
+              on: 'keyboard.keydown',
+              actions: [({event}) => [forward(event)]],
             }),
           ]}
         />
@@ -311,7 +484,7 @@ describe('Behavior API', () => {
     await vi.waitFor(() => {
       expect(
         getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual([''])
+      ).toEqual(['a'])
     })
   })
 })

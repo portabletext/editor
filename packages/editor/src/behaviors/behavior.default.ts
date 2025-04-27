@@ -111,7 +111,7 @@ export const defaultBehaviors = [
 
       return focusSpan && selectionCollapsed
     },
-    actions: [() => [{type: 'noop'}]],
+    actions: [],
   }),
   defineBehavior({
     on: 'clipboard.copy',
@@ -132,7 +132,7 @@ export const defaultBehaviors = [
 
       return focusSpan && selectionCollapsed
     },
-    actions: [() => [{type: 'noop'}]],
+    actions: [],
   }),
   defineBehavior({
     on: 'clipboard.cut',
@@ -214,7 +214,7 @@ export const defaultBehaviors = [
         : false
       return droppingOnDragOrigin
     },
-    actions: [() => [{type: 'noop'}]],
+    actions: [],
   }),
   defineBehavior({
     on: 'drag.drop',

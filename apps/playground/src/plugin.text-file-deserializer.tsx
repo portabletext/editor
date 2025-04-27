@@ -1,10 +1,5 @@
 import {useEditor} from '@portabletext/editor'
-import {
-  defineBehavior,
-  effect,
-  noop,
-  raise,
-} from '@portabletext/editor/behaviors'
+import {defineBehavior, effect, forward} from '@portabletext/editor/behaviors'
 import {useEffect} from 'react'
 import {readFiles} from './read-files'
 
@@ -23,31 +18,18 @@ export function TextFileDeserializerPlugin() {
             const textFiles = files.filter((file) =>
               file.type.startsWith('text/'),
             )
-            const otherFiles = files.filter(
-              (file) => !file.type.startsWith('text/'),
-            )
 
             if (textFiles.length > 0) {
-              return {textFiles, otherFiles}
+              return {textFiles}
             }
 
             return false
           },
           actions: [
-            ({event}, {textFiles, otherFiles}) => [
-              // Clear text/* files from the DataTransfer object
-              effect(() => {
-                const dataTransfer = new DataTransfer()
+            ({event}, {textFiles}) => [
+              // Forward the event so other Behaviors can respond to it
+              forward(event),
 
-                for (const file of otherFiles) {
-                  dataTransfer.items.add(file)
-                }
-
-                event.originEvent.originEvent.dataTransfer = dataTransfer
-              }),
-              // Raise the deserialize event again with the updated
-              // DataTransfer object so other Behaviors can respond to it
-              raise({type: 'deserialize', originEvent: event.originEvent}),
               // Read the text files and send the `deserialize` event again
               // with `text/plain` data
               effect(async () => {
@@ -80,7 +62,6 @@ export function TextFileDeserializerPlugin() {
                   })
                 }
               }),
-              noop(),
             ],
           ],
         }),

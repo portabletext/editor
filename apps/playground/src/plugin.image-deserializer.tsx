@@ -2,7 +2,7 @@ import {useEditor} from '@portabletext/editor'
 import {
   defineBehavior,
   effect,
-  noop,
+  forward,
   raise,
 } from '@portabletext/editor/behaviors'
 import {useEffect} from 'react'
@@ -41,32 +41,17 @@ export function ImageDeserializerPlugin() {
             const imageFiles = files.filter((file) =>
               file.type.startsWith('image/'),
             )
-            const otherFiles = files.filter(
-              (file) => !file.type.startsWith('image/'),
-            )
 
             if (imageFiles.length > 0) {
-              return {imageFiles, otherFiles}
+              return {imageFiles}
             }
 
             return false
           },
           actions: [
-            ({event}, {imageFiles, otherFiles}) => [
-              // Clear image/* files from the DataTransfer object
-              effect(() => {
-                const dataTransfer = new DataTransfer()
-
-                for (const file of otherFiles) {
-                  dataTransfer.items.add(file)
-                }
-
-                event.originEvent.originEvent.dataTransfer = dataTransfer
-              }),
-
-              // Raise the deserialize event again with the updated
-              // DataTransfer object so other Behaviors can respond to it
-              raise({type: 'deserialize', originEvent: event.originEvent}),
+            ({event}, {imageFiles}) => [
+              // Forward the event so other Behaviors can respond to it
+              forward(event),
 
               // This is async so it has to be an effect
               effect(async () => {
@@ -86,7 +71,6 @@ export function ImageDeserializerPlugin() {
                   images,
                 })
               }),
-              noop(),
             ],
           ],
         }),
