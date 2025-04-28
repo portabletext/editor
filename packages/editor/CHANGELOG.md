@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.48.2](https://github.com/portabletext/editor/compare/editor-v1.48.1...editor-v1.48.2) (2025-04-28)
+
+
+### Bug Fixes
+
+* **behaviors:** prevent native events in all cases except `forward` ([642f75b](https://github.com/portabletext/editor/commit/642f75b2f93d4f50b3336a3f5bc4754bbd34bb54))
+
 ## [1.48.1](https://github.com/portabletext/editor/compare/editor-v1.48.0...editor-v1.48.1) (2025-04-28)
 
 
