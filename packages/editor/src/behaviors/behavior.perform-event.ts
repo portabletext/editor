@@ -173,10 +173,6 @@ export function performEvent({
       }
 
       if (actions.some((action) => action.type === 'execute')) {
-        // This Behavior now "owns" the event and we can consider the native
-        // event prevented
-        nativeEventPrevented = true
-
         // Since at least one action is about to `execute` changes in the editor,
         // we set up a new undo step.
         // All actions performed recursively from now will be squashed into this
@@ -184,6 +180,8 @@ export function performEvent({
         withUndoStep(editor, () => {
           for (const action of actions) {
             if (action.type === 'effect') {
+              nativeEventPrevented = true
+
               performAction({
                 context: {
                   keyGenerator,
@@ -219,6 +217,8 @@ export function performEvent({
             }
 
             if (action.type === 'raise') {
+              nativeEventPrevented = true
+
               performEvent({
                 mode: 'raise',
                 behaviors,
@@ -235,6 +235,8 @@ export function performEvent({
             }
 
             if (isAbstractBehaviorEvent(action.event)) {
+              nativeEventPrevented = true
+
               performEvent({
                 mode: 'execute',
                 behaviors,
@@ -286,6 +288,8 @@ export function performEvent({
 
       for (const action of actions) {
         if (action.type === 'effect') {
+          nativeEventPrevented = true
+
           performAction({
             context: {
               keyGenerator,
