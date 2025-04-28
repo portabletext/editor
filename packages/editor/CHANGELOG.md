@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.48.0](https://github.com/portabletext/editor/compare/editor-v1.47.15...editor-v1.48.0) (2025-04-28)
+
+
+### Features
+
+* **behaviors:** simplify event propagation by introducing `forward(event)` ([10d37ba](https://github.com/portabletext/editor/commit/10d37ba3e54c845a718232087f22940e9f2e1444))
+
 ## [1.47.15](https://github.com/portabletext/editor/compare/editor-v1.47.14...editor-v1.47.15) (2025-04-25)
 
 
