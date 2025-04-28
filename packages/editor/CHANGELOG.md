@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.48.1](https://github.com/portabletext/editor/compare/editor-v1.48.0...editor-v1.48.1) (2025-04-28)
+
+
+### Bug Fixes
+
+* **one-line plugin:** avoid reducing empty array ([22111cb](https://github.com/portabletext/editor/commit/22111cbc4762ccfaab7c2fea236ea559531d9cf5))
+
 ## [1.48.0](https://github.com/portabletext/editor/compare/editor-v1.47.15...editor-v1.48.0) (2025-04-28)
 
 
