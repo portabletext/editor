@@ -76,21 +76,35 @@ const oneLineBehaviors = [
   defineBehavior({
     on: 'insert.blocks',
     guard: ({snapshot, event}) => {
-      return event.blocks
-        .filter((block) => utils.isTextBlock(snapshot.context, block))
-        .reduce((targetBlock, incomingBlock) => {
-          return utils.mergeTextBlocks({
-            context: snapshot.context,
-            targetBlock,
-            incomingBlock,
-          })
+      const textBlocks = event.blocks.filter((block) =>
+        utils.isTextBlock(snapshot.context, block),
+      )
+
+      if (textBlocks.length === 0) {
+        return false
+      }
+
+      return textBlocks.reduce((targetBlock, incomingBlock) => {
+        return utils.mergeTextBlocks({
+          context: snapshot.context,
+          targetBlock,
+          incomingBlock,
         })
+      })
     },
     actions: [
       // `insert.block` is raised so the Behavior above can handle the
       // insertion
       (_, block) => [raise({type: 'insert.block', block, placement: 'auto'})],
     ],
+  }),
+  /**
+   * Fallback Behavior to avoid `insert.blocks` in case the Behavior above
+   * ends up with a falsy guard.
+   */
+  defineBehavior({
+    on: 'insert.blocks',
+    actions: [],
   }),
 ]
 
