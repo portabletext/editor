@@ -34,7 +34,7 @@ import {
 } from '../../internal-utils/withUndoRedo'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
-import {getCurrentBehaviorActionSetId} from '../with-applying-behavior-actions'
+import {getCurrentUndoStepId} from '../with-applying-behavior-actions'
 
 const debug = debugWithName('plugin:withUndoRedo')
 const debugVerbose = debug.enabled && false
@@ -79,7 +79,7 @@ export function createWithUndoRedo(
       editorActor.getSnapshot().context.schema.block.name,
     )
     const remotePatches = getRemotePatches(editor)
-    let previousBehaviorActionSetId = getCurrentBehaviorActionSetId(editor)
+    let previousUndoStepId = getCurrentUndoStepId(editor)
 
     options.subscriptions.push(() => {
       debug('Subscribing to patches')
@@ -149,15 +149,13 @@ export function createWithUndoRedo(
       const overwrite = shouldOverwrite(op, lastOp)
       const save = isSaving(editor)
 
-      const currentBehaviorActionSetId = getCurrentBehaviorActionSetId(editor)
+      const currentUndoStepId = getCurrentUndoStepId(editor)
 
       let merge =
-        currentBehaviorActionSetId !== undefined &&
-        previousBehaviorActionSetId === undefined
+        currentUndoStepId !== undefined && previousUndoStepId === undefined
           ? false
-          : currentBehaviorActionSetId !== undefined &&
-              previousBehaviorActionSetId !== undefined
-            ? currentBehaviorActionSetId === previousBehaviorActionSetId
+          : currentUndoStepId !== undefined && previousUndoStepId !== undefined
+            ? currentUndoStepId === previousUndoStepId
             : true
 
       if (save) {
@@ -165,8 +163,7 @@ export function createWithUndoRedo(
           merge = false
         } else if (operations.length === 0) {
           merge =
-            currentBehaviorActionSetId === undefined &&
-            previousBehaviorActionSetId === undefined
+            currentUndoStepId === undefined && previousUndoStepId === undefined
               ? shouldMerge(op, lastOp) || overwrite
               : merge
         }
@@ -196,7 +193,7 @@ export function createWithUndoRedo(
         }
       }
 
-      previousBehaviorActionSetId = currentBehaviorActionSetId
+      previousUndoStepId = currentUndoStepId
 
       apply(op)
     }

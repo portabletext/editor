@@ -4,7 +4,7 @@ import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
 import {
   withApplyingBehaviorActions,
-  withApplyingBehaviorActionSet,
+  withUndoStep,
 } from '../editor/with-applying-behavior-actions'
 import {debugWithName} from '../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../types/editor'
@@ -168,7 +168,7 @@ export function performEvent({
         behaviorOverwritten ||
         actions.some((action) => action.type !== 'effect')
 
-      withApplyingBehaviorActionSet(editor, () => {
+      withUndoStep(editor, () => {
         for (const action of actions) {
           if (action.type === 'raise') {
             performEvent({

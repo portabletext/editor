@@ -19,29 +19,27 @@ export function isApplyingBehaviorActions(editor: Editor) {
 
 ////////
 
-const CURRENT_BEHAVIOR_ACTION_SET: WeakMap<
-  Editor,
-  {actionSetId: string} | undefined
-> = new WeakMap()
+const CURRENT_UNDO_STEP: WeakMap<Editor, {undoStepId: string} | undefined> =
+  new WeakMap()
 
-export function withApplyingBehaviorActionSet(editor: Editor, fn: () => void) {
-  const current = CURRENT_BEHAVIOR_ACTION_SET.get(editor)
+export function withUndoStep(editor: Editor, fn: () => void) {
+  const current = CURRENT_UNDO_STEP.get(editor)
 
   if (current) {
     fn()
     return
   }
 
-  CURRENT_BEHAVIOR_ACTION_SET.set(
+  CURRENT_UNDO_STEP.set(
     editor,
     current ?? {
-      actionSetId: defaultKeyGenerator(),
+      undoStepId: defaultKeyGenerator(),
     },
   )
   fn()
-  CURRENT_BEHAVIOR_ACTION_SET.set(editor, undefined)
+  CURRENT_UNDO_STEP.set(editor, undefined)
 }
 
-export function getCurrentBehaviorActionSetId(editor: Editor) {
-  return CURRENT_BEHAVIOR_ACTION_SET.get(editor)?.actionSetId
+export function getCurrentUndoStepId(editor: Editor) {
+  return CURRENT_UNDO_STEP.get(editor)?.undoStepId
 }
