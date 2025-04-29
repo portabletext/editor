@@ -23,6 +23,10 @@ export default defineConfig({
         __dirname,
         '../../packages/patches/src',
       ),
+      'portabletext-plugin-one-line-behaviors': path.resolve(
+        __dirname,
+        '../../plugins/one-line-behaviors/src',
+      ),
     },
   },
 })

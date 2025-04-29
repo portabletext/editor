@@ -1,0 +1,60 @@
+{
+  "name": "portabletext-plugin-one-line-behaviors",
+  "private": true,
+  "version": "1.0.0",
+  "description": "One-line behaviors for the Portable Text Editor",
+  "keywords": [
+    "portabletext",
+    "one-line",
+    "behavior",
+    "portabletext-plugin"
+  ],
+  "homepage": "https://portabletext.org",
+  "bugs": {
+    "url": "https://github.com/portabletext/editor/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/portabletext/editor.git",
+    "directory": "plugins/one-line-behaviors"
+  },
+  "license": "MIT",
+  "author": "Sanity.io <hello@sanity.io>",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "src",
+    "dist"
+  ],
+  "scripts": {
+    "build": "pkg-utils build --strict --check --clean",
+    "check:lint": "biome lint .",
+    "check:types": "tsc",
+    "check:types:watch": "tsc --watch",
+    "clean": "del .turbo && del lib && del node_modules",
+    "dev": "pkg-utils watch",
+    "lint:fix": "biome lint --write .",
+    "prepublishOnly": "turbo run build"
+  },
+  "devDependencies": {
+    "@sanity/pkg-utils": "^7.2.2",
+    "@types/react": "^19.1.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@portabletext/editor": "workspace:^",
+    "react": "^19.1.0"
+  }
+}

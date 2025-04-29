@@ -20,10 +20,11 @@ import {
   createCodeEditorBehaviors,
   createLinkBehaviors,
 } from '@portabletext/editor/behaviors'
-import {MarkdownPlugin, OneLinePlugin} from '@portabletext/editor/plugins'
+import {MarkdownPlugin} from '@portabletext/editor/plugins'
 import {useSelector} from '@xstate/react'
 import {createStore} from '@xstate/store'
 import {CopyIcon, TrashIcon} from 'lucide-react'
+import {OneLineBehaviorsPlugin} from 'portabletext-plugin-one-line-behaviors'
 import {useEffect, useState, type JSX} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
 import {reverse} from 'remeda'
@@ -491,7 +492,7 @@ function EditorPlaygroundToolbar(props: {
           }}
         />
       ) : null}
-      {enableOneLinePlugin ? <OneLinePlugin /> : null}
+      {enableOneLinePlugin ? <OneLineBehaviorsPlugin /> : null}
       {enableCodeEditorPlugin ? <CodeEditorPlugin /> : null}
       {enableLinkPlugin ? <LinkPlugin /> : null}
     </>

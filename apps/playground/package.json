@@ -22,6 +22,7 @@
     "@xstate/react": "^5.0.0",
     "@xstate/store": "^3.2.1",
     "lucide-react": "^0.487.0",
+    "portabletext-plugin-one-line-behaviors": "workspace:^",
     "prettier": "^3.3.2",
     "react": "^19.0.0",
     "react-aria-components": "^1.2.1",
