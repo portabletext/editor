@@ -236,7 +236,7 @@ importers:
         version: 19.0.0-beta-e993439-20250328(eslint@8.57.1)
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-5dc00d6b-20250428(eslint@8.57.1)
+        version: 0.0.0-experimental-0038c501-20250429(eslint@8.57.1)
       postcss:
         specifier: ^8.5.3
         version: 8.5.3
@@ -294,7 +294,7 @@ importers:
         version: 19.0.0-beta-e993439-20250328(eslint@9.23.0(jiti@1.21.7))
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-5dc00d6b-20250428(eslint@9.23.0(jiti@1.21.7))
+        version: 0.0.0-experimental-0038c501-20250429(eslint@9.23.0(jiti@1.21.7))
       eslint-plugin-react-refresh:
         specifier: ^0.4.14
         version: 0.4.19(eslint@9.23.0(jiti@1.21.7))
@@ -367,7 +367,7 @@ importers:
         version: 19.0.0-beta-e993439-20250328(eslint@9.23.0(jiti@1.21.7))
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-5dc00d6b-20250428(eslint@9.23.0(jiti@1.21.7))
+        version: 0.0.0-experimental-0038c501-20250429(eslint@9.23.0(jiti@1.21.7))
       eslint-plugin-react-refresh:
         specifier: ^0.4.14
         version: 0.4.19(eslint@9.23.0(jiti@1.21.7))
@@ -460,11 +460,11 @@ importers:
         specifier: 0.112.0
         version: 0.112.0
       slate-dom:
-        specifier: ^0.112.2
-        version: 0.112.2(slate@0.112.0)
+        specifier: ^0.114.0
+        version: 0.114.0(slate@0.112.0)
       slate-react:
         specifier: 0.112.1
-        version: 0.112.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(slate-dom@0.112.2(slate@0.112.0))(slate@0.112.0)
+        version: 0.112.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(slate-dom@0.114.0(slate@0.112.0))(slate@0.112.0)
       use-effect-event:
         specifier: ^1.0.2
         version: 1.0.2(react@19.1.0)
@@ -534,7 +534,7 @@ importers:
         version: 19.0.0-beta-e993439-20250328(eslint@8.57.1)
       eslint-plugin-react-hooks:
         specifier: experimental
-        version: 0.0.0-experimental-5dc00d6b-20250428(eslint@8.57.1)
+        version: 0.0.0-experimental-0038c501-20250429(eslint@8.57.1)
       jsdom:
         specifier: ^26.0.0
         version: 26.0.0
@@ -3761,8 +3761,8 @@ packages:
     peerDependencies:
       eslint: '>=7'
 
-  eslint-plugin-react-hooks@0.0.0-experimental-5dc00d6b-20250428:
-    resolution: {integrity: sha512-t8ivhZA2aAJT/Lg0RoMMjHR8LEGT/BTCl1B6tuqNGNr+2+G+bExzGeGL8TutvSljeeZK1H3Ven9d1DW0f5Wtxw==}
+  eslint-plugin-react-hooks@0.0.0-experimental-0038c501-20250429:
+    resolution: {integrity: sha512-hRhaXbI9A/FnKeIKWFseiQCgxFUEFp9Cfn2sjbgTvq1Mtls+tYspRhOZ+Z8PO9LXgHRqXwe8hx8kd4N8bSehEw==}
     engines: {node: '>=18'}
     peerDependencies:
       eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0
@@ -5616,8 +5616,8 @@ packages:
     resolution: {integrity: sha512-ZA6oR3T/pEyuqwMgAKT0/hAv8oAXckzbkmR0UkUosQ+Mc4RxGoJkRmwHgHufaenlyAgE1Mxgpdcrf75y6XcnDg==}
     engines: {node: '>=14.16'}
 
-  slate-dom@0.112.2:
-    resolution: {integrity: sha512-cozITMlpcBxrov854reM6+TooiHiqpfM/nZPrnjpN1wSiDsAQmYbWUyftC+jlwcpFj80vywfDHzlG6hXIc5h6A==}
+  slate-dom@0.114.0:
+    resolution: {integrity: sha512-3LWIfiDPNQSY+SCPsvMTErCkx2gXTViLoWISisw6uM+unwiOkEF9ZmpHp88/SSmcq6k3P4aIquehUNeNUlkdiA==}
     peerDependencies:
       slate: '>=0.99.0'
 
@@ -10421,7 +10421,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-react-hooks@0.0.0-experimental-5dc00d6b-20250428(eslint@8.57.1):
+  eslint-plugin-react-hooks@0.0.0-experimental-0038c501-20250429(eslint@8.57.1):
     dependencies:
       '@babel/core': 7.26.10
       '@babel/parser': 7.27.0
@@ -10433,7 +10433,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-react-hooks@0.0.0-experimental-5dc00d6b-20250428(eslint@9.23.0(jiti@1.21.7)):
+  eslint-plugin-react-hooks@0.0.0-experimental-0038c501-20250429(eslint@9.23.0(jiti@1.21.7)):
     dependencies:
       '@babel/core': 7.26.10
       '@babel/parser': 7.27.0
@@ -13042,7 +13042,7 @@ snapshots:
 
   slash@5.1.0: {}
 
-  slate-dom@0.112.2(slate@0.112.0):
+  slate-dom@0.114.0(slate@0.112.0):
     dependencies:
       '@juggle/resize-observer': 3.4.0
       direction: 1.0.4
@@ -13053,7 +13053,7 @@ snapshots:
       slate: 0.112.0
       tiny-invariant: 1.3.1
 
-  slate-react@0.112.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(slate-dom@0.112.2(slate@0.112.0))(slate@0.112.0):
+  slate-react@0.112.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(slate-dom@0.114.0(slate@0.112.0))(slate@0.112.0):
     dependencies:
       '@juggle/resize-observer': 3.4.0
       direction: 1.0.4
@@ -13064,7 +13064,7 @@ snapshots:
       react-dom: 19.1.0(react@19.1.0)
       scroll-into-view-if-needed: 3.1.0
       slate: 0.112.0
-      slate-dom: 0.112.2(slate@0.112.0)
+      slate-dom: 0.114.0(slate@0.112.0)
       tiny-invariant: 1.3.1
 
   slate@0.112.0:
