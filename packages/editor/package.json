@@ -101,9 +101,9 @@
     "lodash": "^4.17.21",
     "lodash.startcase": "^4.4.0",
     "react-compiler-runtime": "19.0.0-beta-e993439-20250328",
-    "slate": "0.112.0",
+    "slate": "0.114.0",
     "slate-dom": "^0.114.0",
-    "slate-react": "0.112.1",
+    "slate-react": "0.114.0",
     "use-effect-event": "^1.0.2",
     "xstate": "^5.19.2"
   },
