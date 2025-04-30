@@ -64,8 +64,15 @@
       "groupName": "cucumber"
     },
     {
-      "matchPackageNames": ["react-compiler-runtime"],
-      "followTag": "beta"
+      "matchPackageNames": [
+        "react-compiler-runtime",
+        "babel-plugin-react-compiler"
+      ],
+      "followTag": "rc"
+    },
+    {
+      "matchPackageNames": ["eslint-plugin-react-hooks"],
+      "followTag": "experimental"
     }
   ]
 }
