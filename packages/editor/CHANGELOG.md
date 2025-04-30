@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.48.5](https://github.com/portabletext/editor/compare/editor-v1.48.4...editor-v1.48.5) (2025-04-30)
+
+
+### Bug Fixes
+
+* **behaviors:** prevent native events on `execute` ([90dc13b](https://github.com/portabletext/editor/commit/90dc13bdcd67ebd325d3c978b0c7ac11509f845f))
+
 ## [1.48.4](https://github.com/portabletext/editor/compare/editor-v1.48.3...editor-v1.48.4) (2025-04-30)
 
 
