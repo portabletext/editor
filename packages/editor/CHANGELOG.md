@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.48.4](https://github.com/portabletext/editor/compare/editor-v1.48.3...editor-v1.48.4) (2025-04-30)
+
+
+### Bug Fixes
+
+* **deps:** upgrade to react compiler RC ([#1112](https://github.com/portabletext/editor/issues/1112)) ([3229149](https://github.com/portabletext/editor/commit/3229149fd065ba2d8e3591b44dd584282424bd39))
+
 ## [1.48.3](https://github.com/portabletext/editor/compare/editor-v1.48.2...editor-v1.48.3) (2025-04-30)
 
 
