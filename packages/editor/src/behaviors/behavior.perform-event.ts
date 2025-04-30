@@ -249,6 +249,8 @@ export function performEvent({
                 nativeEvent: undefined,
               })
             } else {
+              nativeEventPrevented = true
+
               const internalAction = {
                 ...action.event,
                 editor,
