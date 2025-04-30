@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.48.3](https://github.com/portabletext/editor/compare/editor-v1.48.2...editor-v1.48.3) (2025-04-30)
+
+
+### Bug Fixes
+
+* **deps:** update dependency slate-dom to ^0.114.0 ([0126134](https://github.com/portabletext/editor/commit/012613406b34ca9cd869a116e858722e1423e573))
+* **deps:** update sanity monorepo to ^3.87.0 ([facf2cf](https://github.com/portabletext/editor/commit/facf2cf6a0451788f4d5be7cbcc40ce4e7fe5a00))
+* **deps:** Update slate to v0.114.0 ([7676255](https://github.com/portabletext/editor/commit/7676255cfbc838354945753e3c54d757afe77cf0))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.22
+
 ## [1.48.2](https://github.com/portabletext/editor/compare/editor-v1.48.1...editor-v1.48.2) (2025-04-28)
 
 
