@@ -9,11 +9,11 @@ import {
 import {debugWithName} from '../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../types/editor'
 import {defaultBehaviors} from './behavior.default'
-import type {InternalBehaviorAction} from './behavior.types.action'
 import {
   isAbstractBehaviorEvent,
   isCustomBehaviorEvent,
   isNativeBehaviorEvent,
+  isSyntheticBehaviorEvent,
 } from './behavior.types.event'
 
 const debug = debugWithName('behaviors:event')
@@ -55,16 +55,6 @@ export function performEvent({
 }) {
   debug(`(${mode}:${eventCategory(event)})`, JSON.stringify(event, null, 2))
 
-  const defaultAction =
-    isCustomBehaviorEvent(event) ||
-    isNativeBehaviorEvent(event) ||
-    isAbstractBehaviorEvent(event)
-      ? undefined
-      : ({
-          ...event,
-          editor,
-        } satisfies InternalBehaviorAction)
-
   const eventBehaviors = [
     ...remainingEventBehaviors,
     ...defaultBehaviors,
@@ -105,24 +95,30 @@ export function performEvent({
     return behavior.on === event.type
   })
 
-  if (eventBehaviors.length === 0) {
-    if (!defaultAction) {
-      return
-    }
+  if (eventBehaviors.length === 0 && isSyntheticBehaviorEvent(event)) {
+    nativeEvent?.preventDefault()
 
     withApplyingBehaviorActions(editor, () => {
       try {
+        debug(
+          `(execute:${eventCategory(event)})`,
+          JSON.stringify(event, null, 2),
+        )
+
         performAction({
           context: {
             keyGenerator,
             schema,
           },
-          action: defaultAction,
+          action: {
+            ...event,
+            editor,
+          },
         })
       } catch (error) {
         console.error(
           new Error(
-            `Performing action "${defaultAction.type}" as a result of "${event.type}" failed due to: ${error.message}`,
+            `Executing "${event.type}" failed due to: ${error.message}`,
           ),
         )
       }
@@ -234,54 +230,21 @@ export function performEvent({
               continue
             }
 
-            if (isAbstractBehaviorEvent(action.event)) {
-              nativeEventPrevented = true
+            nativeEventPrevented = true
 
-              performEvent({
-                mode: 'execute',
-                behaviors,
-                remainingEventBehaviors: behaviors,
-                event: action.event,
-                editor,
-                keyGenerator,
-                schema,
-                getSnapshot,
-                nativeEvent: undefined,
-              })
-            } else {
-              nativeEventPrevented = true
-
-              const internalAction = {
-                ...action.event,
-                editor,
-              }
-              let actionFailed = false
-
-              withApplyingBehaviorActions(editor, () => {
-                try {
-                  performAction({
-                    context: {
-                      keyGenerator,
-                      schema,
-                    },
-                    action: internalAction,
-                  })
-                } catch (error) {
-                  console.error(
-                    new Error(
-                      `Performing action "${action.event.type}" as a result of "${event.type}" failed due to: ${error.message}`,
-                    ),
-                  )
-                  actionFailed = true
-                }
-              })
-
-              if (actionFailed) {
-                break
-              }
-
-              editor.onChange()
-            }
+            performEvent({
+              mode: 'execute',
+              behaviors,
+              remainingEventBehaviors: isAbstractBehaviorEvent(action.event)
+                ? behaviors
+                : [],
+              event: action.event,
+              editor,
+              keyGenerator,
+              schema,
+              getSnapshot,
+              nativeEvent: undefined,
+            })
           }
         })
 
@@ -353,19 +316,27 @@ export function performEvent({
     break
   }
 
-  if (!defaultBehaviorOverwritten && defaultAction) {
+  if (!defaultBehaviorOverwritten && isSyntheticBehaviorEvent(event)) {
     nativeEvent?.preventDefault()
 
     withApplyingBehaviorActions(editor, () => {
       try {
+        debug(
+          `(execute:${eventCategory(event)})`,
+          JSON.stringify(event, null, 2),
+        )
+
         performAction({
           context: {keyGenerator, schema},
-          action: defaultAction,
+          action: {
+            ...event,
+            editor,
+          },
         })
       } catch (error) {
         console.error(
           new Error(
-            `Performing action "${defaultAction.type}" as a result of "${event.type}" failed due to: ${error.message}`,
+            `Executing "${event.type}" failed due to: ${error.message}`,
           ),
         )
       }
