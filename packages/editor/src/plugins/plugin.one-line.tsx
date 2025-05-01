@@ -115,6 +115,8 @@ const oneLineBehaviors = [
  *
  * Place it with as high priority as possible to make sure other plugins don't
  * overwrite `insert.*` events before this plugin gets a chance to do so.
+ *
+ * @deprecated Install the plugin from `@portabletext/plugin-one-line`
  */
 export function OneLinePlugin() {
   return <BehaviorPlugin behaviors={oneLineBehaviors} />
