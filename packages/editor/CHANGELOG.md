@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.48.8](https://github.com/portabletext/editor/compare/editor-v1.48.7...editor-v1.48.8) (2025-05-01)
+
+
+### Bug Fixes
+
+* remove runtime dependency on `@sanity/types` ([86ccc25](https://github.com/portabletext/editor/commit/86ccc25dd9c6b7ec4cab6e99444b35a4bb024491))
+
 ## [1.48.7](https://github.com/portabletext/editor/compare/editor-v1.48.6...editor-v1.48.7) (2025-05-01)
 
 
