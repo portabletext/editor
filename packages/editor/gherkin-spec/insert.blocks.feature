@@ -107,3 +107,23 @@ Feature: Insert Blocks
       | after "foo"  | "before"  | "bar\|[image]\|baz\|foo" |
       | after "foo"  | "after"   | "foo\|bar\|[image]\|baz" |
       | after "foo"  | "auto"    | "foobar\|[image]\|baz"   |
+
+  Scenario: Pasting text blocks between two text blocks
+    Given the text "foo"
+    When "Enter" is pressed
+    And "bar" is typed
+    And the caret is put after "foo"
+    And blocks are inserted "auto"
+      ```
+      [
+        {
+          "_type": "block",
+          "children": [{"_type": "span", "text": "foo"}]
+        },
+        {
+          "_type": "block",
+          "children": [{"_type": "span", "text": "bar"}]
+        }
+      ]
+      ```
+    Then the text is "foofoo|bar|bar"
