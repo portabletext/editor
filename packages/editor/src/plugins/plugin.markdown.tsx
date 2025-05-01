@@ -68,6 +68,8 @@ export type MarkdownPluginConfig = MarkdownBehaviorsConfig & {
  *  )
  * }
  * ```
+ *
+ * @deprecated Install the plugin from `@portabletext/plugin-markdown-shortcuts`
  */
 export function MarkdownPlugin(props: {config: MarkdownPluginConfig}) {
   const editor = useEditor()

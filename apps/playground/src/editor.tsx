@@ -20,7 +20,8 @@ import {
   createCodeEditorBehaviors,
   createLinkBehaviors,
 } from '@portabletext/editor/behaviors'
-import {MarkdownPlugin, OneLinePlugin} from '@portabletext/editor/plugins'
+import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
+import {OneLinePlugin} from '@portabletext/plugin-one-line'
 import {useSelector} from '@xstate/react'
 import {createStore} from '@xstate/store'
 import {CopyIcon, TrashIcon} from 'lucide-react'
@@ -456,39 +457,42 @@ function EditorPlaygroundToolbar(props: {
       {enableTextFileDeserializerPlugin ? <TextFileDeserializerPlugin /> : null}
       {enableImageDeserializerPlugin ? <ImageDeserializerPlugin /> : null}
       {enableMarkdownPlugin ? (
-        <MarkdownPlugin
-          config={{
-            boldDecorator: ({schema}) =>
-              schema.decorators.find(
-                (decorator) => decorator.value === 'strong',
-              )?.value,
-            codeDecorator: ({schema}) =>
-              schema.decorators.find((decorator) => decorator.value === 'code')
-                ?.value,
-            italicDecorator: ({schema}) =>
-              schema.decorators.find((decorator) => decorator.value === 'em')
-                ?.value,
-            strikeThroughDecorator: ({schema}) =>
-              schema.decorators.find(
-                (decorator) => decorator.value === 'strike-through',
-              )?.value,
-            horizontalRuleObject: ({schema}) => {
-              const name = schema.blockObjects.find(
-                (object) => object.name === 'break',
-              )?.name
-              return name ? {name} : undefined
-            },
-            defaultStyle: ({schema}) => schema.styles[0].value,
-            headingStyle: ({schema, level}) =>
-              schema.styles.find((style) => style.value === `h${level}`)?.value,
-            blockquoteStyle: ({schema}) =>
-              schema.styles.find((style) => style.value === 'blockquote')
-                ?.value,
-            unorderedListStyle: ({schema}) =>
-              schema.lists.find((list) => list.value === 'bullet')?.value,
-            orderedListStyle: ({schema}) =>
-              schema.lists.find((list) => list.value === 'number')?.value,
+        <MarkdownShortcutsPlugin
+          boldDecorator={({schema}) =>
+            schema.decorators.find((decorator) => decorator.name === 'strong')
+              ?.name
+          }
+          codeDecorator={({schema}) =>
+            schema.decorators.find((decorator) => decorator.name === 'code')
+              ?.name
+          }
+          italicDecorator={({schema}) =>
+            schema.decorators.find((decorator) => decorator.name === 'em')?.name
+          }
+          strikeThroughDecorator={({schema}) =>
+            schema.decorators.find(
+              (decorator) => decorator.name === 'strike-through',
+            )?.name
+          }
+          horizontalRuleObject={({schema}) => {
+            const name = schema.blockObjects.find(
+              (object) => object.name === 'break',
+            )?.name
+            return name ? {name} : undefined
           }}
+          defaultStyle={({schema}) => schema.styles[0].value}
+          headingStyle={({schema, level}) =>
+            schema.styles.find((style) => style.name === `h${level}`)?.name
+          }
+          blockquoteStyle={({schema}) =>
+            schema.styles.find((style) => style.name === 'blockquote')?.name
+          }
+          unorderedList={({schema}) =>
+            schema.lists.find((list) => list.name === 'bullet')?.name
+          }
+          orderedList={({schema}) =>
+            schema.lists.find((list) => list.name === 'number')?.name
+          }
         />
       ) : null}
       {enableOneLinePlugin ? <OneLinePlugin /> : null}

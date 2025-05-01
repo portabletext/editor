@@ -18,6 +18,7 @@ import * as utils from '../utils'
 
 /**
  * @beta
+ * @deprecated Install the plugin from `@portabletext/plugin-character-pair-decorator`
  */
 export function DecoratorShortcutPlugin(config: {
   decorator: ({schema}: {schema: EditorSchema}) => string | undefined

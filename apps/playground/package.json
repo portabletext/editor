@@ -18,6 +18,8 @@
     "@portabletext/block-tools": "workspace:^",
     "@portabletext/editor": "workspace:^",
     "@portabletext/patches": "workspace:^",
+    "@portabletext/plugin-markdown-shortcuts": "^1.0.0",
+    "@portabletext/plugin-one-line": "^1.0.3",
     "@sanity/color": "^3.0.6",
     "@xstate/react": "^5.0.0",
     "@xstate/store": "^3.2.1",
