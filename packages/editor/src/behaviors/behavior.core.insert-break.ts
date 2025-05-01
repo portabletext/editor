@@ -131,11 +131,17 @@ const breakingEntireDocument = defineBehavior({
       return false
     }
 
-    const firstBlockStartPoint = utils.getBlockStartPoint(firstBlock)
+    const firstBlockStartPoint = utils.getBlockStartPoint({
+      context: snapshot.context,
+      block: firstBlock,
+    })
     const selectionStartPoint = utils.getSelectionStartPoint(
       snapshot.context.selection,
     )
-    const lastBlockEndPoint = utils.getBlockEndPoint(lastBlock)
+    const lastBlockEndPoint = utils.getBlockEndPoint({
+      context: snapshot.context,
+      block: lastBlock,
+    })
     const selectionEndPoint = utils.getSelectionEndPoint(
       snapshot.context.selection,
     )
@@ -178,11 +184,17 @@ const breakingEntireBlocks = defineBehavior({
       return false
     }
 
-    const startBlockStartPoint = utils.getBlockStartPoint(selectionStartBlock)
+    const startBlockStartPoint = utils.getBlockStartPoint({
+      context: snapshot.context,
+      block: selectionStartBlock,
+    })
     const selectionStartPoint = utils.getSelectionStartPoint(
       snapshot.context.selection,
     )
-    const endBlockEndPoint = utils.getBlockEndPoint(selectionEndBlock)
+    const endBlockEndPoint = utils.getBlockEndPoint({
+      context: snapshot.context,
+      block: selectionEndBlock,
+    })
     const selectionEndPoint = utils.getSelectionEndPoint(
       snapshot.context.selection,
     )

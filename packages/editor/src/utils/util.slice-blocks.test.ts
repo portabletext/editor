@@ -1,5 +1,6 @@
 import type {PortableTextBlock, PortableTextTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
+import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
 import {sliceBlocks} from './util.slice-blocks'
 
 const b1: PortableTextTextBlock = {
@@ -57,28 +58,48 @@ const b4: PortableTextTextBlock = {
   ],
 }
 
+const schema = compileSchemaDefinition(defineSchema({}))
 const blocks: Array<PortableTextBlock> = [b1, b2, b3, b4]
 
 describe(sliceBlocks.name, () => {
   test('sensible defaults', () => {
-    expect(sliceBlocks({blocks: [], selection: null})).toEqual([])
-    expect(sliceBlocks({blocks, selection: null})).toEqual([])
+    expect(
+      sliceBlocks({
+        context: {
+          schema,
+          selection: null,
+        },
+        blocks: [],
+      }),
+    ).toEqual([])
+    expect(
+      sliceBlocks({
+        context: {
+          schema,
+          selection: null,
+        },
+        blocks,
+      }),
+    ).toEqual([])
   })
 
   test('slicing a single block', () => {
     expect(
       sliceBlocks({
-        blocks,
-        selection: {
-          anchor: {
-            path: [{_key: b1._key}, 'children', {_key: b1.children[0]._key}],
-            offset: 0,
-          },
-          focus: {
-            path: [{_key: b1._key}, 'children', {_key: b1.children[0]._key}],
-            offset: 3,
+        context: {
+          schema,
+          selection: {
+            anchor: {
+              path: [{_key: b1._key}, 'children', {_key: b1.children[0]._key}],
+              offset: 0,
+            },
+            focus: {
+              path: [{_key: b1._key}, 'children', {_key: b1.children[0]._key}],
+              offset: 3,
+            },
           },
         },
+        blocks,
       }),
     ).toEqual([
       {
@@ -91,17 +112,20 @@ describe(sliceBlocks.name, () => {
   test('slicing a single span', () => {
     expect(
       sliceBlocks({
-        blocks,
-        selection: {
-          anchor: {
-            path: [{_key: b1._key}, 'children', {_key: b1.children[0]._key}],
-            offset: 1,
-          },
-          focus: {
-            path: [{_key: b1._key}, 'children', {_key: b1.children[0]._key}],
-            offset: 2,
+        context: {
+          schema,
+          selection: {
+            anchor: {
+              path: [{_key: b1._key}, 'children', {_key: b1.children[0]._key}],
+              offset: 1,
+            },
+            focus: {
+              path: [{_key: b1._key}, 'children', {_key: b1.children[0]._key}],
+              offset: 2,
+            },
           },
         },
+        blocks,
       }),
     ).toEqual([
       {
@@ -119,17 +143,20 @@ describe(sliceBlocks.name, () => {
   test('starting and ending selection on a block object', () => {
     expect(
       sliceBlocks({
-        blocks,
-        selection: {
-          anchor: {
-            path: [{_key: b2._key}],
-            offset: 0,
-          },
-          focus: {
-            path: [{_key: b2._key}],
-            offset: 0,
+        context: {
+          schema,
+          selection: {
+            anchor: {
+              path: [{_key: b2._key}],
+              offset: 0,
+            },
+            focus: {
+              path: [{_key: b2._key}],
+              offset: 0,
+            },
           },
         },
+        blocks,
       }),
     ).toEqual([b2])
   })
@@ -137,17 +164,20 @@ describe(sliceBlocks.name, () => {
   test('starting selection on a block object', () => {
     expect(
       sliceBlocks({
-        blocks,
-        selection: {
-          anchor: {
-            path: [{_key: b2._key}],
-            offset: 0,
-          },
-          focus: {
-            path: [{_key: b3._key}, 'children', {_key: b3.children[0]._key}],
-            offset: 3,
+        context: {
+          schema,
+          selection: {
+            anchor: {
+              path: [{_key: b2._key}],
+              offset: 0,
+            },
+            focus: {
+              path: [{_key: b3._key}, 'children', {_key: b3.children[0]._key}],
+              offset: 3,
+            },
           },
         },
+        blocks,
       }),
     ).toEqual([b2, b3])
   })
@@ -155,17 +185,20 @@ describe(sliceBlocks.name, () => {
   test('ending selection on a block object', () => {
     expect(
       sliceBlocks({
-        blocks,
-        selection: {
-          anchor: {
-            path: [{_key: b1._key}, 'children', {_key: b1.children[0]._key}],
-            offset: 3,
-          },
-          focus: {
-            path: [{_key: b2._key}],
-            offset: 0,
+        context: {
+          schema,
+          selection: {
+            anchor: {
+              path: [{_key: b1._key}, 'children', {_key: b1.children[0]._key}],
+              offset: 3,
+            },
+            focus: {
+              path: [{_key: b2._key}],
+              offset: 0,
+            },
           },
         },
+        blocks,
       }),
     ).toEqual([
       {
@@ -185,17 +218,20 @@ describe(sliceBlocks.name, () => {
   test('slicing across block object', () => {
     expect(
       sliceBlocks({
-        blocks,
-        selection: {
-          anchor: {
-            path: [{_key: b1._key}, 'children', {_key: b1.children[0]._key}],
-            offset: 0,
-          },
-          focus: {
-            path: [{_key: b3._key}, 'children', {_key: b3.children[0]._key}],
-            offset: 3,
+        context: {
+          schema,
+          selection: {
+            anchor: {
+              path: [{_key: b1._key}, 'children', {_key: b1.children[0]._key}],
+              offset: 0,
+            },
+            focus: {
+              path: [{_key: b3._key}, 'children', {_key: b3.children[0]._key}],
+              offset: 3,
+            },
           },
         },
+        blocks,
       }),
     ).toEqual([b1, b2, b3])
   })
@@ -203,17 +239,20 @@ describe(sliceBlocks.name, () => {
   test('starting and ending mid-span', () => {
     expect(
       sliceBlocks({
-        blocks,
-        selection: {
-          anchor: {
-            path: [{_key: b3._key}, 'children', {_key: b3.children[0]._key}],
-            offset: 2,
-          },
-          focus: {
-            path: [{_key: b4._key}, 'children', {_key: b4.children[0]._key}],
-            offset: 1,
+        context: {
+          schema,
+          selection: {
+            anchor: {
+              path: [{_key: b3._key}, 'children', {_key: b3.children[0]._key}],
+              offset: 2,
+            },
+            focus: {
+              path: [{_key: b4._key}, 'children', {_key: b4.children[0]._key}],
+              offset: 1,
+            },
           },
         },
+        blocks,
       }),
     ).toEqual([
       {
@@ -240,17 +279,20 @@ describe(sliceBlocks.name, () => {
   test('starting mid-span and ending end-span', () => {
     expect(
       sliceBlocks({
-        blocks,
-        selection: {
-          anchor: {
-            path: [{_key: b3._key}, 'children', {_key: b3.children[0]._key}],
-            offset: 2,
-          },
-          focus: {
-            path: [{_key: b4._key}, 'children', {_key: b4.children[0]._key}],
-            offset: 4,
+        context: {
+          schema,
+          selection: {
+            anchor: {
+              path: [{_key: b3._key}, 'children', {_key: b3.children[0]._key}],
+              offset: 2,
+            },
+            focus: {
+              path: [{_key: b4._key}, 'children', {_key: b4.children[0]._key}],
+              offset: 4,
+            },
           },
         },
+        blocks,
       }),
     ).toEqual([
       {
@@ -276,17 +318,20 @@ describe(sliceBlocks.name, () => {
   test('starting on inline object', () => {
     expect(
       sliceBlocks({
-        blocks,
-        selection: {
-          anchor: {
-            path: [{_key: b4._key}, 'children', {_key: b4.children[1]._key}],
-            offset: 0,
-          },
-          focus: {
-            path: [{_key: b4._key}, 'children', {_key: b4.children[2]._key}],
-            offset: 4,
+        context: {
+          schema,
+          selection: {
+            anchor: {
+              path: [{_key: b4._key}, 'children', {_key: b4.children[1]._key}],
+              offset: 0,
+            },
+            focus: {
+              path: [{_key: b4._key}, 'children', {_key: b4.children[2]._key}],
+              offset: 4,
+            },
           },
         },
+        blocks,
       }),
     ).toEqual([
       {
@@ -299,17 +344,20 @@ describe(sliceBlocks.name, () => {
   test('ending on inline object', () => {
     expect(
       sliceBlocks({
-        blocks,
-        selection: {
-          anchor: {
-            path: [{_key: b4._key}, 'children', {_key: b4.children[0]._key}],
-            offset: 0,
-          },
-          focus: {
-            path: [{_key: b4._key}, 'children', {_key: b4.children[1]._key}],
-            offset: 0,
+        context: {
+          schema,
+          selection: {
+            anchor: {
+              path: [{_key: b4._key}, 'children', {_key: b4.children[0]._key}],
+              offset: 0,
+            },
+            focus: {
+              path: [{_key: b4._key}, 'children', {_key: b4.children[1]._key}],
+              offset: 0,
+            },
           },
         },
+        blocks,
       }),
     ).toEqual([
       {
@@ -322,17 +370,20 @@ describe(sliceBlocks.name, () => {
   test('starting and ending on inline object', () => {
     expect(
       sliceBlocks({
-        blocks,
-        selection: {
-          anchor: {
-            path: [{_key: b4._key}, 'children', {_key: b4.children[1]._key}],
-            offset: 0,
-          },
-          focus: {
-            path: [{_key: b4._key}, 'children', {_key: b4.children[1]._key}],
-            offset: 0,
+        context: {
+          schema,
+          selection: {
+            anchor: {
+              path: [{_key: b4._key}, 'children', {_key: b4.children[1]._key}],
+              offset: 0,
+            },
+            focus: {
+              path: [{_key: b4._key}, 'children', {_key: b4.children[1]._key}],
+              offset: 0,
+            },
           },
         },
+        blocks,
       }),
     ).toEqual([
       {
@@ -345,6 +396,19 @@ describe(sliceBlocks.name, () => {
   test('slicing text block with custom props', () => {
     expect(
       sliceBlocks({
+        context: {
+          schema,
+          selection: {
+            anchor: {
+              path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+              offset: 7,
+            },
+            focus: {
+              path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+              offset: 12,
+            },
+          },
+        },
         blocks: [
           {
             _key: 'b0',
@@ -353,16 +417,6 @@ describe(sliceBlocks.name, () => {
             _map: {},
           },
         ],
-        selection: {
-          anchor: {
-            path: [{_key: 'b0'}, 'children', {_key: 's0'}],
-            offset: 7,
-          },
-          focus: {
-            path: [{_key: 'b0'}, 'children', {_key: 's0'}],
-            offset: 12,
-          },
-        },
       }),
     ).toEqual([
       {
@@ -377,6 +431,19 @@ describe(sliceBlocks.name, () => {
   test('slicing span with custom props', () => {
     expect(
       sliceBlocks({
+        context: {
+          schema,
+          selection: {
+            anchor: {
+              path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+              offset: 7,
+            },
+            focus: {
+              path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+              offset: 12,
+            },
+          },
+        },
         blocks: [
           {
             _key: 'b0',
@@ -386,16 +453,6 @@ describe(sliceBlocks.name, () => {
             ],
           },
         ],
-        selection: {
-          anchor: {
-            path: [{_key: 'b0'}, 'children', {_key: 's0'}],
-            offset: 7,
-          },
-          focus: {
-            path: [{_key: 'b0'}, 'children', {_key: 's0'}],
-            offset: 12,
-          },
-        },
       }),
     ).toEqual([
       {

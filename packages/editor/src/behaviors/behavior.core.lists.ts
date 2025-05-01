@@ -1,5 +1,5 @@
-import {createGuards} from '../behavior-actions/behavior.guards'
 import {isHotkey} from '../internal-utils/is-hotkey'
+import {isListBlock} from '../internal-utils/parse-blocks'
 import * as selectors from '../selectors'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {raise} from './behavior.types.action'
@@ -84,7 +84,7 @@ const clearListOnEnter = defineBehavior({
     if (
       !selectionCollapsed ||
       !focusListBlock ||
-      !isEmptyTextBlock(focusListBlock.node)
+      !isEmptyTextBlock(snapshot.context, focusListBlock.node)
     ) {
       return false
     }
@@ -112,9 +112,8 @@ const indentListOnTab = defineBehavior({
     }
 
     const selectedBlocks = selectors.getSelectedBlocks(snapshot)
-    const guards = createGuards(snapshot.context)
     const selectedListBlocks = selectedBlocks.flatMap((block) =>
-      guards.isListBlock(block.node)
+      isListBlock(snapshot.context, block.node)
         ? [
             {
               node: block.node,
@@ -157,9 +156,8 @@ const unindentListOnShiftTab = defineBehavior({
     }
 
     const selectedBlocks = selectors.getSelectedBlocks(snapshot)
-    const guards = createGuards(snapshot.context)
     const selectedListBlocks = selectedBlocks.flatMap((block) =>
-      guards.isListBlock(block.node)
+      isListBlock(snapshot.context, block.node)
         ? [
             {
               node: block.node,

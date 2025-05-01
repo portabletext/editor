@@ -1,4 +1,3 @@
-import {isPortableTextTextBlock} from '@sanity/types'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
@@ -6,7 +5,9 @@ import {
   PortableTextEditorTester,
   schemaType,
 } from '../../__tests__/PortableTextEditorTester'
+import {isTextBlock} from '../../../internal-utils/parse-blocks'
 import {createTestKeyGenerator} from '../../../internal-utils/test-key-generator'
+import {legacySchemaToEditorSchema} from '../../editor-schema'
 import {PortableTextEditor} from '../../PortableTextEditor'
 
 const initialValue = [
@@ -86,7 +87,14 @@ describe('plugin:withEditableAPI: .getFragment()', () => {
         const fragment = PortableTextEditor.getFragment(editorRef.current)
         expect(
           fragment &&
-            isPortableTextTextBlock(fragment[0]) &&
+            isTextBlock(
+              {
+                schema: legacySchemaToEditorSchema(
+                  editorRef.current.schemaTypes,
+                ),
+              },
+              fragment[0],
+            ) &&
             fragment[0]?.children[0]?.text,
         ).toBe('A')
       }

@@ -1,5 +1,5 @@
-import {isPortableTextTextBlock} from '@sanity/types'
 import {isHotkey} from '../internal-utils/is-hotkey'
+import {isTextBlock} from '../internal-utils/parse-blocks'
 import * as selectors from '../selectors'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {raise} from './behavior.types.action'
@@ -212,8 +212,8 @@ const deletingEmptyTextBlockAfterBlockObject = defineBehavior({
     }
 
     if (
-      isEmptyTextBlock(focusTextBlock.node) &&
-      !isPortableTextTextBlock(previousBlock.node)
+      isEmptyTextBlock(snapshot.context, focusTextBlock.node) &&
+      !isTextBlock(snapshot.context, previousBlock.node)
     ) {
       return {focusTextBlock, previousBlock}
     }
@@ -249,8 +249,8 @@ const deletingEmptyTextBlockBeforeBlockObject = defineBehavior({
     }
 
     if (
-      isEmptyTextBlock(focusTextBlock.node) &&
-      !isPortableTextTextBlock(nextBlock.node)
+      isEmptyTextBlock(snapshot.context, focusTextBlock.node) &&
+      !isTextBlock(snapshot.context, nextBlock.node)
     ) {
       return {focusTextBlock, nextBlock}
     }

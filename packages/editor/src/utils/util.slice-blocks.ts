@@ -1,24 +1,21 @@
-import {
-  isKeySegment,
-  isPortableTextSpan,
-  isPortableTextTextBlock,
-  type PortableTextBlock,
-} from '@sanity/types'
-import type {EditorSelection} from '..'
+import type {PortableTextBlock} from '@sanity/types'
+import type {EditorContext} from '..'
+import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
+import {isKeyedSegment} from './util.is-keyed-segment'
 
 /**
  * @public
  */
 export function sliceBlocks({
+  context,
   blocks,
-  selection,
 }: {
+  context: Pick<EditorContext, 'schema' | 'selection'>
   blocks: Array<PortableTextBlock>
-  selection: EditorSelection
 }): Array<PortableTextBlock> {
   const slice: Array<PortableTextBlock> = []
 
-  if (!selection) {
+  if (!context.selection) {
     return slice
   }
 
@@ -26,19 +23,23 @@ export function sliceBlocks({
   const middleBlocks: PortableTextBlock[] = []
   let endBlock: PortableTextBlock | undefined
 
-  const startPoint = selection.backward ? selection.focus : selection.anchor
-  const endPoint = selection.backward ? selection.anchor : selection.focus
+  const startPoint = context.selection.backward
+    ? context.selection.focus
+    : context.selection.anchor
+  const endPoint = context.selection.backward
+    ? context.selection.anchor
+    : context.selection.focus
 
-  const startBlockKey = isKeySegment(startPoint.path[0])
+  const startBlockKey = isKeyedSegment(startPoint.path[0])
     ? startPoint.path[0]._key
     : undefined
-  const endBlockKey = isKeySegment(endPoint.path[0])
+  const endBlockKey = isKeyedSegment(endPoint.path[0])
     ? endPoint.path[0]._key
     : undefined
-  const startChildKey = isKeySegment(startPoint.path[2])
+  const startChildKey = isKeyedSegment(startPoint.path[2])
     ? startPoint.path[2]._key
     : undefined
-  const endChildKey = isKeySegment(endPoint.path[2])
+  const endChildKey = isKeyedSegment(endPoint.path[2])
     ? endPoint.path[2]._key
     : undefined
 
@@ -47,7 +48,7 @@ export function sliceBlocks({
   }
 
   for (const block of blocks) {
-    if (!isPortableTextTextBlock(block)) {
+    if (!isTextBlock(context, block)) {
       if (block._key === startBlockKey && block._key === endBlockKey) {
         startBlock = block
         break
@@ -55,7 +56,7 @@ export function sliceBlocks({
     }
 
     if (block._key === startBlockKey) {
-      if (!isPortableTextTextBlock(block)) {
+      if (!isTextBlock(context, block)) {
         startBlock = block
         continue
       }
@@ -63,7 +64,7 @@ export function sliceBlocks({
       if (startChildKey) {
         for (const child of block.children) {
           if (child._key === startChildKey) {
-            if (isPortableTextSpan(child)) {
+            if (isSpan(context, child)) {
               const text =
                 child._key === endChildKey
                   ? child.text.slice(startPoint.offset, endPoint.offset)
@@ -91,11 +92,11 @@ export function sliceBlocks({
             continue
           }
 
-          if (startBlock && isPortableTextTextBlock(startBlock)) {
+          if (startBlock && isTextBlock(context, startBlock)) {
             if (
               endChildKey &&
               child._key === endChildKey &&
-              isPortableTextSpan(child)
+              isSpan(context, child)
             ) {
               startBlock.children.push({
                 ...child,
@@ -130,7 +131,7 @@ export function sliceBlocks({
     }
 
     if (block._key === endBlockKey) {
-      if (!isPortableTextTextBlock(block)) {
+      if (!isTextBlock(context, block)) {
         endBlock = block
         break
       }
@@ -142,8 +143,8 @@ export function sliceBlocks({
         }
 
         for (const child of block.children) {
-          if (endBlock && isPortableTextTextBlock(endBlock)) {
-            if (child._key === endChildKey && isPortableTextSpan(child)) {
+          if (endBlock && isTextBlock(context, endBlock)) {
+            if (child._key === endChildKey && isSpan(context, child)) {
               endBlock.children.push({
                 ...child,
                 text: child.text.slice(0, endPoint.offset),

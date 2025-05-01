@@ -9,7 +9,7 @@ export const getSelectedSlice: EditorSelector<Array<PortableTextBlock>> = (
   snapshot,
 ) => {
   return sliceBlocks({
+    context: snapshot.context,
     blocks: snapshot.context.value,
-    selection: snapshot.context.selection,
   })
 }

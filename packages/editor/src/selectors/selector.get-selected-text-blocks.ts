@@ -38,7 +38,7 @@ export const getSelectedTextBlocks: EditorSelector<
 
   for (const block of snapshot.context.value) {
     if (block._key === startKey) {
-      if (isTextBlock(snapshot.context.schema, block)) {
+      if (isTextBlock(snapshot.context, block)) {
         selectedTextBlocks.push({node: block, path: [{_key: block._key}]})
       }
 
@@ -49,7 +49,7 @@ export const getSelectedTextBlocks: EditorSelector<
     }
 
     if (block._key === endKey) {
-      if (isTextBlock(snapshot.context.schema, block)) {
+      if (isTextBlock(snapshot.context, block)) {
         selectedTextBlocks.push({node: block, path: [{_key: block._key}]})
       }
 
@@ -57,7 +57,7 @@ export const getSelectedTextBlocks: EditorSelector<
     }
 
     if (selectedTextBlocks.length > 0) {
-      if (isTextBlock(snapshot.context.schema, block)) {
+      if (isTextBlock(snapshot.context, block)) {
         selectedTextBlocks.push({node: block, path: [{_key: block._key}]})
       }
     }

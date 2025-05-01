@@ -15,8 +15,14 @@ export const abstractSelectBehaviors = [
 
       const point =
         event.select === 'end'
-          ? getBlockEndPoint(previousBlock)
-          : getBlockStartPoint(previousBlock)
+          ? getBlockEndPoint({
+              context: snapshot.context,
+              block: previousBlock,
+            })
+          : getBlockStartPoint({
+              context: snapshot.context,
+              block: previousBlock,
+            })
 
       return {
         selection: {
@@ -45,8 +51,14 @@ export const abstractSelectBehaviors = [
 
       const point =
         event.select === 'end'
-          ? getBlockEndPoint(nextBlock)
-          : getBlockStartPoint(nextBlock)
+          ? getBlockEndPoint({
+              context: snapshot.context,
+              block: nextBlock,
+            })
+          : getBlockStartPoint({
+              context: snapshot.context,
+              block: nextBlock,
+            })
 
       return {selection: {anchor: point, focus: point}}
     },

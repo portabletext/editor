@@ -55,8 +55,14 @@ export function getDragSelection({
     // Looks like we are dragging an empty span
     // Let's drag the entire block instead
     dragSelection = {
-      anchor: utils.getBlockStartPoint(draggedTextBlock),
-      focus: utils.getBlockEndPoint(draggedTextBlock),
+      anchor: utils.getBlockStartPoint({
+        context: snapshot.context,
+        block: draggedTextBlock,
+      }),
+      focus: utils.getBlockEndPoint({
+        context: snapshot.context,
+        block: draggedTextBlock,
+      }),
     }
   }
 
@@ -74,8 +80,14 @@ export function getDragSelection({
       return dragSelection
     }
 
-    const selectionStartPoint = utils.getBlockStartPoint(selectionStartBlock)
-    const selectionEndPoint = utils.getBlockEndPoint(selectionEndBlock)
+    const selectionStartPoint = utils.getBlockStartPoint({
+      context: snapshot.context,
+      block: selectionStartBlock,
+    })
+    const selectionEndPoint = utils.getBlockEndPoint({
+      context: snapshot.context,
+      block: selectionEndBlock,
+    })
 
     const eventSelectionInsideBlocks = selectors.isOverlappingSelection(
       eventSelection,

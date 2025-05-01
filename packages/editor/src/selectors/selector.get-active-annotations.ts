@@ -1,5 +1,6 @@
-import {isPortableTextTextBlock, type PortableTextObject} from '@sanity/types'
+import type {PortableTextObject} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
+import {isTextBlock} from '../internal-utils/parse-blocks'
 import {getSelectedSpans} from './selector.get-selected-spans'
 import {isSelectionCollapsed} from './selector.is-selection-collapsed'
 import {getFocusSpan, getSelectedBlocks} from './selectors'
@@ -34,7 +35,9 @@ export const getActiveAnnotations: EditorSelector<Array<PortableTextObject>> = (
   }
 
   const selectionMarkDefs = selectedBlocks.flatMap((block) =>
-    isPortableTextTextBlock(block.node) ? (block.node.markDefs ?? []) : [],
+    isTextBlock(snapshot.context, block.node)
+      ? (block.node.markDefs ?? [])
+      : [],
   )
 
   return selectionMarkDefs.filter((markDef) =>

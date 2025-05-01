@@ -50,7 +50,7 @@ export const abstractInsertBehaviors = [
       return {focusTextBlock}
     },
     actions: [
-      ({event}, {focusTextBlock}) =>
+      ({snapshot, event}, {focusTextBlock}) =>
         event.blocks.length === 1
           ? [
               raise({
@@ -60,7 +60,7 @@ export const abstractInsertBehaviors = [
                 select: 'end',
               }),
             ]
-          : isEmptyTextBlock(focusTextBlock.node)
+          : isEmptyTextBlock(snapshot.context, focusTextBlock.node)
             ? event.blocks.map((block, index) =>
                 raise({
                   type: 'insert.block',

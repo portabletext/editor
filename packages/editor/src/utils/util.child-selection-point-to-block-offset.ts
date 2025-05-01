@@ -1,8 +1,5 @@
-import {
-  isPortableTextSpan,
-  isPortableTextTextBlock,
-  type PortableTextBlock,
-} from '@sanity/types'
+import type {EditorContext} from '../editor/editor-snapshot'
+import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
 import type {BlockOffset} from '../types/block-offset'
 import type {EditorSelectionPoint} from '../types/editor'
 import {isKeyedSegment} from './util.is-keyed-segment'
@@ -11,10 +8,10 @@ import {isKeyedSegment} from './util.is-keyed-segment'
  * @public
  */
 export function childSelectionPointToBlockOffset({
-  value,
+  context,
   selectionPoint,
 }: {
-  value: Array<PortableTextBlock>
+  context: Pick<EditorContext, 'schema' | 'value'>
   selectionPoint: EditorSelectionPoint
 }): BlockOffset | undefined {
   let offset = 0
@@ -30,12 +27,12 @@ export function childSelectionPointToBlockOffset({
     return undefined
   }
 
-  for (const block of value) {
+  for (const block of context.value) {
     if (block._key !== blockKey) {
       continue
     }
 
-    if (!isPortableTextTextBlock(block)) {
+    if (!isTextBlock(context, block)) {
       continue
     }
 
@@ -47,7 +44,7 @@ export function childSelectionPointToBlockOffset({
         }
       }
 
-      if (isPortableTextSpan(child)) {
+      if (isSpan(context, child)) {
         offset += child.text.length
       }
     }

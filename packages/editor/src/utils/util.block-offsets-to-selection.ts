@@ -1,5 +1,5 @@
-import type {PortableTextBlock} from '@sanity/types'
 import type {EditorSelection} from '..'
+import type {EditorContext} from '../editor/editor-snapshot'
 import type {BlockOffset} from '../types/block-offset'
 import {blockOffsetToSelectionPoint} from './util.block-offset-to-selection-point'
 
@@ -7,21 +7,21 @@ import {blockOffsetToSelectionPoint} from './util.block-offset-to-selection-poin
  * @public
  */
 export function blockOffsetsToSelection({
-  value,
+  context,
   offsets,
   backward,
 }: {
-  value: Array<PortableTextBlock>
+  context: Pick<EditorContext, 'schema' | 'value'>
   offsets: {anchor: BlockOffset; focus: BlockOffset}
   backward?: boolean
 }): EditorSelection {
   const anchor = blockOffsetToSelectionPoint({
-    value,
+    context,
     blockOffset: offsets.anchor,
     direction: backward ? 'backward' : 'forward',
   })
   const focus = blockOffsetToSelectionPoint({
-    value,
+    context,
     blockOffset: offsets.focus,
     direction: backward ? 'forward' : 'backward',
   })

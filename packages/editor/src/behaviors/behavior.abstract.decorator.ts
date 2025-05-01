@@ -18,7 +18,7 @@ export const abstractDecoratorBehaviors = [
     guard: ({snapshot, event}) => {
       const manualSelection = event.at
         ? blockOffsetsToSelection({
-            value: snapshot.context.value,
+            context: snapshot.context,
             offsets: event.at,
           })
         : null

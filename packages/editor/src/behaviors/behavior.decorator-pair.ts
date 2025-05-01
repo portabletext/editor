@@ -37,7 +37,10 @@ export function createDecoratorPairBehavior(config: {
       const selectionStartPoint = selectors.getSelectionStartPoint(snapshot)
       const selectionStartOffset = selectionStartPoint
         ? utils.spanSelectionPointToBlockOffset({
-            value: snapshot.context.value,
+            context: {
+              schema: snapshot.context.schema,
+              value: snapshot.context.value,
+            },
             selectionPoint: selectionStartPoint,
           })
         : undefined
@@ -90,7 +93,7 @@ export function createDecoratorPairBehavior(config: {
       // there is an inline object inside it
       if (prefixOffsets.focus.offset - prefixOffsets.anchor.offset > 1) {
         const prefixSelection = utils.blockOffsetsToSelection({
-          value: snapshot.context.value,
+          context: snapshot.context,
           offsets: prefixOffsets,
         })
         const inlineObjectBeforePrefixFocus = selectors.getPreviousInlineObject(
@@ -110,7 +113,10 @@ export function createDecoratorPairBehavior(config: {
         const inlineObjectBeforePrefixFocusOffset =
           inlineObjectBeforePrefixFocus
             ? utils.childSelectionPointToBlockOffset({
-                value: snapshot.context.value,
+                context: {
+                  schema: snapshot.context.schema,
+                  value: snapshot.context.value,
+                },
                 selectionPoint: {
                   path: inlineObjectBeforePrefixFocus.path,
                   offset: 0,
@@ -135,7 +141,10 @@ export function createDecoratorPairBehavior(config: {
         const previousInlineObject = selectors.getPreviousInlineObject(snapshot)
         const previousInlineObjectOffset = previousInlineObject
           ? utils.childSelectionPointToBlockOffset({
-              value: snapshot.context.value,
+              context: {
+                schema: snapshot.context.schema,
+                value: snapshot.context.value,
+              },
               selectionPoint: {
                 path: previousInlineObject.path,
                 offset: 0,

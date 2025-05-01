@@ -59,12 +59,18 @@ export function getEventPosition({
       isEditor: false,
       selection: {
         anchor: utils.getBlockStartPoint({
-          node: block,
-          path: [{_key: block._key}],
+          context: editorActor.getSnapshot().context,
+          block: {
+            node: block,
+            path: [{_key: block._key}],
+          },
         }),
         focus: utils.getBlockEndPoint({
-          node: block,
-          path: [{_key: block._key}],
+          context: editorActor.getSnapshot().context,
+          block: {
+            node: block,
+            path: [{_key: block._key}],
+          },
         }),
       },
     }
@@ -93,12 +99,18 @@ export function getEventPosition({
       isEditor: false,
       selection: {
         anchor: utils.getBlockStartPoint({
-          node: block,
-          path: [{_key: block._key}],
+          context: editorActor.getSnapshot().context,
+          block: {
+            node: block,
+            path: [{_key: block._key}],
+          },
         }),
         focus: utils.getBlockEndPoint({
-          node: block,
-          path: [{_key: block._key}],
+          context: editorActor.getSnapshot().context,
+          block: {
+            node: block,
+            path: [{_key: block._key}],
+          },
         }),
       },
     }

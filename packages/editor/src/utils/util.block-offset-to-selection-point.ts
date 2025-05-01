@@ -1,4 +1,4 @@
-import type {PortableTextBlock} from '@sanity/types'
+import type {EditorContext} from '../editor/editor-snapshot'
 import type {BlockOffset} from '../types/block-offset'
 import type {EditorSelectionPoint} from '../types/editor'
 import {blockOffsetToSpanSelectionPoint} from './util.block-offset'
@@ -8,23 +8,23 @@ import {blockOffsetToBlockSelectionPoint} from './util.block-offset-to-block-sel
  * @public
  */
 export function blockOffsetToSelectionPoint({
-  value,
+  context,
   blockOffset,
   direction,
 }: {
-  value: Array<PortableTextBlock>
+  context: Pick<EditorContext, 'schema' | 'value'>
   blockOffset: BlockOffset
   direction: 'forward' | 'backward'
 }): EditorSelectionPoint | undefined {
   const spanSelectionPoint = blockOffsetToSpanSelectionPoint({
-    value,
+    context,
     blockOffset,
     direction,
   })
 
   if (!spanSelectionPoint) {
     return blockOffsetToBlockSelectionPoint({
-      value,
+      context,
       blockOffset,
     })
   }

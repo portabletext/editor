@@ -26,8 +26,8 @@ export function createConverterTextHtml(
       }
 
       const blocks = sliceBlocks({
+        context: snapshot.context,
         blocks: snapshot.context.value,
-        selection,
       })
 
       const html = toHTML(blocks, {

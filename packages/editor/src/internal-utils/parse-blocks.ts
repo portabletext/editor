@@ -1,5 +1,6 @@
 import type {
   PortableTextBlock,
+  PortableTextListBlock,
   PortableTextObject,
   PortableTextSpan,
   PortableTextTextBlock,
@@ -79,14 +80,25 @@ function parseBlockObject({
   })
 }
 
+export function isListBlock(
+  context: Pick<EditorContext, 'schema'>,
+  block: unknown,
+): block is PortableTextListBlock {
+  return (
+    isTextBlock(context, block) &&
+    block.level !== undefined &&
+    block.listItem !== undefined
+  )
+}
+
 export function isTextBlock(
-  schema: EditorSchema,
+  context: Pick<EditorContext, 'schema'>,
   block: unknown,
 ): block is PortableTextTextBlock {
   return (
     parseTextBlock({
       block,
-      context: {schema, keyGenerator: () => ''},
+      context: {schema: context.schema, keyGenerator: () => ''},
       options: {refreshKeys: false},
     }) !== undefined
   )
@@ -215,14 +227,14 @@ function parseTextBlock({
 }
 
 export function isSpan(
-  schema: EditorSchema,
-  child: PortableTextSpan | PortableTextObject,
+  context: Pick<EditorContext, 'schema'>,
+  child: unknown,
 ): child is PortableTextSpan {
   return (
     parseSpan({
       span: child,
       markDefKeyMap: new Map(),
-      context: {schema, keyGenerator: () => ''},
+      context: {schema: context.schema, keyGenerator: () => ''},
       options: {refreshKeys: false},
     }) !== undefined
   )

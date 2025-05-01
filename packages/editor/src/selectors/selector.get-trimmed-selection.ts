@@ -1,9 +1,6 @@
-import {
-  isPortableTextSpan,
-  isPortableTextTextBlock,
-  type PortableTextSpan,
-} from '@sanity/types'
+import type {PortableTextSpan} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
+import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import {isEmptyTextBlock, isKeyedSegment} from '../utils'
 import {getSelectionEndPoint} from './selector.get-selection-end-point'
@@ -58,7 +55,10 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = (
     if (block._key === startBlockKey) {
       startBlockFound = true
 
-      if (isPortableTextTextBlock(block) && isEmptyTextBlock(block)) {
+      if (
+        isTextBlock(snapshot.context, block) &&
+        isEmptyTextBlock(snapshot.context, block)
+      ) {
         continue
       }
     }
@@ -67,17 +67,20 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = (
       continue
     }
 
-    if (!isPortableTextTextBlock(block)) {
+    if (!isTextBlock(snapshot.context, block)) {
       continue
     }
 
-    if (block._key === endBlockKey && isEmptyTextBlock(block)) {
+    if (
+      block._key === endBlockKey &&
+      isEmptyTextBlock(snapshot.context, block)
+    ) {
       break
     }
 
     for (const child of block.children) {
       if (child._key === endChildKey) {
-        if (!isPortableTextSpan(child) || endPoint.offset === 0) {
+        if (!isSpan(snapshot.context, child) || endPoint.offset === 0) {
           adjustedEndPoint = previousPotentialEndpoint
             ? {
                 path: [
@@ -96,10 +99,10 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = (
 
       if (trimStartPoint) {
         const lonelySpan =
-          isPortableTextSpan(child) && block.children.length === 1
+          isSpan(snapshot.context, child) && block.children.length === 1
 
         if (
-          (isPortableTextSpan(child) && child.text.length > 0) ||
+          (isSpan(snapshot.context, child) && child.text.length > 0) ||
           lonelySpan
         ) {
           adjustedStartPoint = {
@@ -114,7 +117,7 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = (
       }
 
       if (child._key === startChildKey) {
-        if (!isPortableTextSpan(child)) {
+        if (!isSpan(snapshot.context, child)) {
           trimStartPoint = true
           continue
         }
@@ -130,7 +133,7 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = (
       }
 
       previousPotentialEndpoint =
-        isPortableTextSpan(child) && child.text.length > 0
+        isSpan(snapshot.context, child) && child.text.length > 0
           ? {blockKey: block._key, span: child}
           : previousPotentialEndpoint
     }
@@ -168,7 +171,10 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = (
       },
     })
 
-    if (focusTextBlock && !isEmptyTextBlock(focusTextBlock.node)) {
+    if (
+      focusTextBlock &&
+      !isEmptyTextBlock(snapshot.context, focusTextBlock.node)
+    ) {
       return null
     }
   }

@@ -20,14 +20,20 @@ export const decoratorAddActionImplementation: BehaviorActionImplementation<
 
   const manualAnchor = action.at?.anchor
     ? utils.blockOffsetToSpanSelectionPoint({
-        value,
+        context: {
+          ...context,
+          value,
+        },
         blockOffset: action.at.anchor,
         direction: 'backward',
       })
     : undefined
   const manualFocus = action.at?.focus
     ? utils.blockOffsetToSpanSelectionPoint({
-        value,
+        context: {
+          ...context,
+          value,
+        },
         blockOffset: action.at.focus,
         direction: 'forward',
       })
@@ -55,13 +61,19 @@ export const decoratorAddActionImplementation: BehaviorActionImplementation<
   })
   const anchorOffset = editorSelection
     ? utils.selectionPointToBlockOffset({
-        value,
+        context: {
+          ...context,
+          value,
+        },
         selectionPoint: editorSelection.anchor,
       })
     : undefined
   const focusOffset = editorSelection
     ? utils.selectionPointToBlockOffset({
-        value,
+        context: {
+          ...context,
+          value,
+        },
         selectionPoint: editorSelection.focus,
       })
     : undefined
@@ -87,7 +99,10 @@ export const decoratorAddActionImplementation: BehaviorActionImplementation<
     // We need to find the new selection from the original offsets because the
     // split operation might have changed the value.
     const newSelection = utils.blockOffsetsToSelection({
-      value: newValue,
+      context: {
+        ...context,
+        value: newValue,
+      },
       offsets: {anchor: anchorOffset, focus: focusOffset},
       backward: editorSelection?.backward,
     })

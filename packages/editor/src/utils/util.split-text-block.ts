@@ -25,24 +25,30 @@ export function splitTextBlock({
   }
 
   const before = sliceBlocks({
-    blocks: [block],
-    selection: {
-      anchor: {
-        path: [{_key: block._key}, 'children', {_key: firstChild._key}],
-        offset: 0,
+    context: {
+      schema: context.schema,
+      selection: {
+        anchor: {
+          path: [{_key: block._key}, 'children', {_key: firstChild._key}],
+          offset: 0,
+        },
+        focus: point,
       },
-      focus: point,
     },
+    blocks: [block],
   }).at(0)
   const after = sliceBlocks({
-    blocks: [block],
-    selection: {
-      anchor: point,
-      focus: {
-        path: [{_key: block._key}, 'children', {_key: lastChild._key}],
-        offset: isSpan(context, lastChild) ? lastChild.text.length : 0,
+    context: {
+      schema: context.schema,
+      selection: {
+        anchor: point,
+        focus: {
+          path: [{_key: block._key}, 'children', {_key: lastChild._key}],
+          offset: isSpan(context, lastChild) ? lastChild.text.length : 0,
+        },
       },
     },
+    blocks: [block],
   }).at(0)
 
   if (!before || !after) {

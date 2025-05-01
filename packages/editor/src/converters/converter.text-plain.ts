@@ -1,6 +1,6 @@
 import {htmlToBlocks} from '@portabletext/block-tools'
-import {isPortableTextTextBlock, type PortableTextBlock} from '@sanity/types'
-import {parseBlock} from '../internal-utils/parse-blocks'
+import type {PortableTextBlock} from '@sanity/types'
+import {isTextBlock, parseBlock} from '../internal-utils/parse-blocks'
 import type {PortableTextMemberSchemaTypes} from '../types/editor'
 import {sliceBlocks} from '../utils'
 import {defineConverter} from './converter.types'
@@ -25,13 +25,13 @@ export function createConverterTextPlain(
       }
 
       const blocks = sliceBlocks({
+        context: snapshot.context,
         blocks: snapshot.context.value,
-        selection,
       })
 
       const data = blocks
         .map((block) => {
-          if (isPortableTextTextBlock(block)) {
+          if (isTextBlock(snapshot.context, block)) {
             return block.children
               .map((child) => {
                 if (child._type === snapshot.context.schema.span.name) {

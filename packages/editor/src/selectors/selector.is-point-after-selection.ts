@@ -1,6 +1,7 @@
-import {isKeySegment, isPortableTextTextBlock} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
+import {isTextBlock} from '../internal-utils/parse-blocks'
 import type {EditorSelectionPoint} from '../types/editor'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {reverseSelection} from '../utils/util.reverse-selection'
 
 /**
@@ -18,17 +19,17 @@ export function isPointAfterSelection(
       ? reverseSelection(snapshot.context.selection)
       : snapshot.context.selection
 
-    const pointBlockKey = isKeySegment(point.path[0])
+    const pointBlockKey = isKeyedSegment(point.path[0])
       ? point.path[0]._key
       : undefined
-    const pointChildKey = isKeySegment(point.path[2])
+    const pointChildKey = isKeyedSegment(point.path[2])
       ? point.path[2]._key
       : undefined
 
-    const endBlockKey = isKeySegment(selection.focus.path[0])
+    const endBlockKey = isKeyedSegment(selection.focus.path[0])
       ? selection.focus.path[0]._key
       : undefined
-    const endChildKey = isKeySegment(selection.focus.path[2])
+    const endChildKey = isKeyedSegment(selection.focus.path[2])
       ? selection.focus.path[2]._key
       : undefined
 
@@ -47,7 +48,7 @@ export function isPointAfterSelection(
 
         // Both the point and the selection end in this block
 
-        if (!isPortableTextTextBlock(block)) {
+        if (!isTextBlock(snapshot.context, block)) {
           break
         }
 

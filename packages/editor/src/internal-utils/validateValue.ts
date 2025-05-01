@@ -1,13 +1,13 @@
 import {insert, set, setIfMissing, unset} from '@portabletext/patches'
-import {
-  isPortableTextTextBlock,
-  type PortableTextBlock,
-  type PortableTextSpan,
-  type PortableTextTextBlock,
+import type {
+  PortableTextBlock,
+  PortableTextSpan,
+  PortableTextTextBlock,
 } from '@sanity/types'
 import {flatten, isPlainObject, uniq} from 'lodash'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {InvalidValueResolution} from '../types/editor'
+import {isTextBlock} from './parse-blocks'
 
 export interface Validation {
   valid: boolean
@@ -118,7 +118,7 @@ export function validateValue(
         // If the block has no `_type`, but aside from that is a valid Portable Text block
         if (
           !blk._type &&
-          isPortableTextTextBlock({...blk, _type: types.block.name})
+          isTextBlock({schema: types}, {...blk, _type: types.block.name})
         ) {
           resolution = {
             patches: [
