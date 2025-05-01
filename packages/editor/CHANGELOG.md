@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.48.9](https://github.com/portabletext/editor/compare/editor-v1.48.8...editor-v1.48.9) (2025-05-01)
+
+
+### Bug Fixes
+
+* **deps:** add @sanity/types to peerDependencies ([036eb77](https://github.com/portabletext/editor/commit/036eb777f9d3ac1fe1c8f8c29c61c4ed5899ea5b))
+
 ## [1.48.8](https://github.com/portabletext/editor/compare/editor-v1.48.7...editor-v1.48.8) (2025-05-01)
 
 
