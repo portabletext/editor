@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.48.7](https://github.com/portabletext/editor/compare/editor-v1.48.6...editor-v1.48.7) (2025-05-01)
+
+
+### Bug Fixes
+
+* **`delete`:** don't delete when having a collapsed span selection ([62cf59b](https://github.com/portabletext/editor/commit/62cf59bc5c4a3a2084e3affec72f87307966deb4))
+* deprecate `DecoratorShortcutPlugin`/`MarkdownPlugin`/`OneLinePlugin` ([fad538f](https://github.com/portabletext/editor/commit/fad538fb6c7adaeb3876bb698e36f8a7c447c083))
+
 ## [1.48.6](https://github.com/portabletext/editor/compare/editor-v1.48.5...editor-v1.48.6) (2025-05-01)
 
 
