@@ -1,11 +1,7 @@
-import {
-  isKeySegment,
-  isPortableTextSpan,
-  isPortableTextTextBlock,
-  type KeyedSegment,
-  type PortableTextSpan,
-} from '@sanity/types'
+import type {KeyedSegment, PortableTextSpan} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
+import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
+import {isKeyedSegment} from '../utils'
 
 /**
  * @public
@@ -32,10 +28,10 @@ export const getSelectedSpans: EditorSelector<
     ? snapshot.context.selection.anchor
     : snapshot.context.selection.focus
 
-  const startBlockKey = isKeySegment(startPoint.path[0])
+  const startBlockKey = isKeyedSegment(startPoint.path[0])
     ? startPoint.path[0]._key
     : undefined
-  const endBlockKey = isKeySegment(endPoint.path[0])
+  const endBlockKey = isKeyedSegment(endPoint.path[0])
     ? endPoint.path[0]._key
     : undefined
 
@@ -43,10 +39,10 @@ export const getSelectedSpans: EditorSelector<
     return selectedSpans
   }
 
-  const startSpanKey = isKeySegment(startPoint.path[2])
+  const startSpanKey = isKeyedSegment(startPoint.path[2])
     ? startPoint.path[2]._key
     : undefined
-  const endSpanKey = isKeySegment(endPoint.path[2])
+  const endSpanKey = isKeyedSegment(endPoint.path[2])
     ? endPoint.path[2]._key
     : undefined
 
@@ -57,13 +53,13 @@ export const getSelectedSpans: EditorSelector<
       startBlockFound = true
     }
 
-    if (!isPortableTextTextBlock(block)) {
+    if (!isTextBlock(snapshot.context, block)) {
       continue
     }
 
     if (block._key === startBlockKey) {
       for (const child of block.children) {
-        if (!isPortableTextSpan(child)) {
+        if (!isSpan(snapshot.context, child)) {
           continue
         }
 
@@ -109,7 +105,7 @@ export const getSelectedSpans: EditorSelector<
 
     if (block._key === endBlockKey) {
       for (const child of block.children) {
-        if (!isPortableTextSpan(child)) {
+        if (!isSpan(snapshot.context, child)) {
           continue
         }
 
@@ -134,7 +130,7 @@ export const getSelectedSpans: EditorSelector<
 
     if (startBlockFound) {
       for (const child of block.children) {
-        if (!isPortableTextSpan(child)) {
+        if (!isSpan(snapshot.context, child)) {
           continue
         }
 

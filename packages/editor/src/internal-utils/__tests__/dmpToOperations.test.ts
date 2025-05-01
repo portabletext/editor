@@ -1,17 +1,16 @@
 import type {DiffMatchPatch} from '@portabletext/patches'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
-import {
-  isPortableTextSpan,
-  isPortableTextTextBlock,
-  type Path,
-  type PortableTextBlock,
-  type PortableTextSpan,
-  type PortableTextTextBlock,
+import type {
+  Path,
+  PortableTextBlock,
+  PortableTextSpan,
+  PortableTextTextBlock,
 } from '@sanity/types'
 import type {Descendant, Operation} from 'slate'
 import {describe, expect, test} from 'vitest'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import {diffMatchPatch} from '../applyPatch'
+import {isTypedObject} from '../asserters'
 
 describe('operationToPatches: diffMatchPatch', () => {
   test.todo('skips patches for blocks that cannot be found locally')
@@ -152,13 +151,11 @@ function getMockEditor(options: MockEditorOptions): Pick<
 
   function getText(blockKey?: string) {
     return children
-      .filter((child): child is PortableTextTextBlock =>
-        isPortableTextTextBlock(child),
-      )
+      .filter(isTextBlock)
       .filter((child) => (blockKey ? child._key === blockKey : true))
       .flatMap((block) =>
         block.children
-          .filter((span) => isPortableTextSpan(span))
+          .filter((span) => isSpan(span))
           .map((span) => span.text)
           .join(''),
       )
@@ -166,7 +163,11 @@ function getMockEditor(options: MockEditorOptions): Pick<
   }
 
   function isTextBlock(value: unknown): value is PortableTextTextBlock {
-    return isPortableTextTextBlock(value)
+    return isTypedObject(value) && value._type === 'block'
+  }
+
+  function isSpan(value: unknown): value is PortableTextSpan {
+    return isTypedObject(value) && value._type === 'span'
   }
 
   function apply(operation: Operation): void {

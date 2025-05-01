@@ -18,8 +18,8 @@ export const converterPortableText = defineConverter({
     }
 
     const blocks = sliceBlocks({
+      context: snapshot.context,
       blocks: snapshot.context.value,
-      selection,
     })
 
     if (blocks.length === 0) {

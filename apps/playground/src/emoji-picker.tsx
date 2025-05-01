@@ -96,7 +96,7 @@ const colonListenerCallback: CallbackLogicFunction<
         }
 
         const blockOffset = utils.spanSelectionPointToBlockOffset({
-          value: snapshot.context.value,
+          context: snapshot.context,
           selectionPoint: snapshot.context.selection.focus,
         })
 
@@ -467,7 +467,7 @@ const emojiPickerMachine = setup({
         }
 
         const keywordFocusPoint = utils.blockOffsetToSpanSelectionPoint({
-          value: event.snapshot.context.value,
+          context: event.snapshot.context,
           blockOffset: context.keywordFocus,
           direction: 'forward',
         })
@@ -584,7 +584,7 @@ const emojiPickerMachine = setup({
       }
 
       const keywordFocusPoint = utils.blockOffsetToSpanSelectionPoint({
-        value: event.snapshot.context.value,
+        context: event.snapshot.context,
         blockOffset: context.keywordFocus,
         direction: 'forward',
       })

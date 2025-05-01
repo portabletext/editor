@@ -1,5 +1,5 @@
-import {isPortableTextTextBlock} from '@sanity/types'
 import type {EditorSchema} from '../editor/editor-schema'
+import {isTextBlock} from '../internal-utils/parse-blocks'
 import * as selectors from '../selectors'
 import {spanSelectionPointToBlockOffset} from '../utils/util.block-offset'
 import {getTextBlockText} from '../utils/util.get-text-block-text'
@@ -88,7 +88,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
 
       const previousInlineObject = selectors.getPreviousInlineObject(snapshot)
       const blockOffset = spanSelectionPointToBlockOffset({
-        value: snapshot.context.value,
+        context: snapshot.context,
         selectionPoint: {
           path: [
             {_key: focusTextBlock.node._key},
@@ -244,7 +244,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         }),
       ],
       ({snapshot}, {hrObject, focusBlock}) =>
-        isPortableTextTextBlock(focusBlock.node)
+        isTextBlock(snapshot.context, focusBlock.node)
           ? [
               execute({
                 type: 'insert.block',
@@ -297,7 +297,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       }
 
       const blockOffset = spanSelectionPointToBlockOffset({
-        value: snapshot.context.value,
+        context: snapshot.context,
         selectionPoint: {
           path: [
             {_key: focusTextBlock.node._key},
@@ -424,7 +424,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
 
       const previousInlineObject = selectors.getPreviousInlineObject(snapshot)
       const blockOffset = spanSelectionPointToBlockOffset({
-        value: snapshot.context.value,
+        context: snapshot.context,
         selectionPoint: {
           path: [
             {_key: focusTextBlock.node._key},

@@ -89,11 +89,11 @@ const selectionListenerCallback: CallbackLogicFunction<
         }
 
         const anchor = utils.spanSelectionPointToBlockOffset({
-          value: snapshot.context.value,
+          context: snapshot.context,
           selectionPoint: event.at.anchor,
         })
         const focus = utils.spanSelectionPointToBlockOffset({
-          value: snapshot.context.value,
+          context: snapshot.context,
           selectionPoint: event.at.focus,
         })
 

@@ -40,7 +40,7 @@ export const blockUnsetBehaviorActionImplementation: BehaviorActionImplementatio
     throw new Error(`Unable to parse block at ${JSON.stringify(action.at)}`)
   }
 
-  if (isTextBlock(context.schema, parsedBlock)) {
+  if (isTextBlock(context, parsedBlock)) {
     const propsToRemove = action.props.filter((prop) => prop !== '_type')
 
     const updatedTextBlock = parseBlock({

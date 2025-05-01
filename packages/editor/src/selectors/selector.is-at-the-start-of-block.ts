@@ -15,7 +15,10 @@ export function isAtTheStartOfBlock(block: {
       return false
     }
 
-    const blockStartPoint = utils.getBlockStartPoint(block)
+    const blockStartPoint = utils.getBlockStartPoint({
+      context: snapshot.context,
+      block,
+    })
 
     return utils.isEqualSelectionPoints(
       snapshot.context.selection.focus,

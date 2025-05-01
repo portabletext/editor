@@ -24,8 +24,14 @@ export const isSelectingEntireBlocks: EditorSelector<boolean> = (snapshot) => {
     return false
   }
 
-  const startBlockStartPoint = utils.getBlockStartPoint(startBlock)
-  const endBlockEndPoint = utils.getBlockEndPoint(endBlock)
+  const startBlockStartPoint = utils.getBlockStartPoint({
+    context: snapshot.context,
+    block: startBlock,
+  })
+  const endBlockEndPoint = utils.getBlockEndPoint({
+    context: snapshot.context,
+    block: endBlock,
+  })
 
   return (
     utils.isEqualSelectionPoints(startBlockStartPoint, startPoint) &&

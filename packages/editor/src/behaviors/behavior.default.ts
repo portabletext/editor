@@ -334,7 +334,7 @@ export const defaultBehaviors = [
           activeAnnotations,
           activeDecorators,
           textRuns: event.data.flatMap((block) =>
-            isTextBlock(snapshot.context.schema, block)
+            isTextBlock(snapshot.context, block)
               ? [getTextBlockText(block)]
               : [],
           ),

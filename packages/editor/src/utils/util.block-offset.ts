@@ -1,9 +1,6 @@
-import {
-  isPortableTextSpan,
-  isPortableTextTextBlock,
-  type KeyedSegment,
-  type PortableTextBlock,
-} from '@sanity/types'
+import type {KeyedSegment} from '@sanity/types'
+import type {EditorContext} from '../editor/editor-snapshot'
+import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
 import type {BlockOffset} from '../types/block-offset'
 import type {EditorSelectionPoint} from '../types/editor'
 import {isKeyedSegment} from './util.is-keyed-segment'
@@ -12,11 +9,11 @@ import {isKeyedSegment} from './util.is-keyed-segment'
  * @public
  */
 export function blockOffsetToSpanSelectionPoint({
-  value,
+  context,
   blockOffset,
   direction,
 }: {
-  value: Array<PortableTextBlock>
+  context: Pick<EditorContext, 'schema' | 'value'>
   blockOffset: BlockOffset
   direction: 'forward' | 'backward'
 }) {
@@ -26,18 +23,18 @@ export function blockOffsetToSpanSelectionPoint({
     | undefined
   let skippedInlineObject = false
 
-  for (const block of value) {
+  for (const block of context.value) {
     if (block._key !== blockOffset.path[0]._key) {
       continue
     }
 
-    if (!isPortableTextTextBlock(block)) {
+    if (!isTextBlock(context, block)) {
       continue
     }
 
     for (const child of block.children) {
       if (direction === 'forward') {
-        if (!isPortableTextSpan(child)) {
+        if (!isSpan(context, child)) {
           continue
         }
 
@@ -54,7 +51,7 @@ export function blockOffsetToSpanSelectionPoint({
         continue
       }
 
-      if (!isPortableTextSpan(child)) {
+      if (!isSpan(context, child)) {
         skippedInlineObject = true
         continue
       }
@@ -96,10 +93,10 @@ export function blockOffsetToSpanSelectionPoint({
  * @public
  */
 export function spanSelectionPointToBlockOffset({
-  value,
+  context,
   selectionPoint,
 }: {
-  value: Array<PortableTextBlock>
+  context: Pick<EditorContext, 'schema' | 'value'>
   selectionPoint: EditorSelectionPoint
 }): BlockOffset | undefined {
   let offset = 0
@@ -115,17 +112,17 @@ export function spanSelectionPointToBlockOffset({
     return undefined
   }
 
-  for (const block of value) {
+  for (const block of context.value) {
     if (block._key !== blockKey) {
       continue
     }
 
-    if (!isPortableTextTextBlock(block)) {
+    if (!isTextBlock(context, block)) {
       continue
     }
 
     for (const child of block.children) {
-      if (!isPortableTextSpan(child)) {
+      if (!isSpan(context, child)) {
         continue
       }
 

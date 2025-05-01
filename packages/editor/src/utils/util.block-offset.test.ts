@@ -1,6 +1,9 @@
 import type {PortableTextBlock} from '@sanity/types'
 import {expect, test} from 'vitest'
+import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
 import {blockOffsetToSpanSelectionPoint} from './util.block-offset'
+
+const schema = compileSchemaDefinition(defineSchema({}))
 
 test(blockOffsetToSpanSelectionPoint.name, () => {
   const value: Array<PortableTextBlock> = [
@@ -67,17 +70,20 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
 
   expect(
     blockOffsetToSpanSelectionPoint({
-      value: [
-        {
-          _key: 'b0',
-          _type: 'block',
-          children: [
-            {_key: 's0', _type: 'span', text: 'b'},
-            {_key: 's1', _type: 'span', text: 'a'},
-            {_key: 's2', _type: 'span', text: 'r'},
-          ],
-        },
-      ],
+      context: {
+        schema,
+        value: [
+          {
+            _key: 'b0',
+            _type: 'block',
+            children: [
+              {_key: 's0', _type: 'span', text: 'b'},
+              {_key: 's1', _type: 'span', text: 'a'},
+              {_key: 's2', _type: 'span', text: 'r'},
+            ],
+          },
+        ],
+      },
       blockOffset: {
         path: [{_key: 'b0'}],
         offset: 3,
@@ -90,17 +96,20 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
   })
   expect(
     blockOffsetToSpanSelectionPoint({
-      value: [
-        {
-          _key: 'b0',
-          _type: 'block',
-          children: [
-            {_key: 's0', _type: 'span', text: 'b'},
-            {_key: 's1', _type: 'span', text: 'a'},
-            {_key: 's2', _type: 'span', text: 'r'},
-          ],
-        },
-      ],
+      context: {
+        schema,
+        value: [
+          {
+            _key: 'b0',
+            _type: 'block',
+            children: [
+              {_key: 's0', _type: 'span', text: 'b'},
+              {_key: 's1', _type: 'span', text: 'a'},
+              {_key: 's2', _type: 'span', text: 'r'},
+            ],
+          },
+        ],
+      },
       blockOffset: {
         path: [{_key: 'b0'}],
         offset: 0,
@@ -113,17 +122,20 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
   })
   expect(
     blockOffsetToSpanSelectionPoint({
-      value: [
-        {
-          _key: 'b0',
-          _type: 'block',
-          children: [
-            {_key: 's0', _type: 'span', text: 'b'},
-            {_key: 's1', _type: 'span', text: 'a'},
-            {_key: 's2', _type: 'span', text: 'r'},
-          ],
-        },
-      ],
+      context: {
+        schema,
+        value: [
+          {
+            _key: 'b0',
+            _type: 'block',
+            children: [
+              {_key: 's0', _type: 'span', text: 'b'},
+              {_key: 's1', _type: 'span', text: 'a'},
+              {_key: 's2', _type: 'span', text: 'r'},
+            ],
+          },
+        ],
+      },
       blockOffset: {
         path: [{_key: 'b0'}],
         offset: 0,
@@ -136,17 +148,20 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
   })
   expect(
     blockOffsetToSpanSelectionPoint({
-      value: [
-        {
-          _key: 'b0',
-          _type: 'block',
-          children: [
-            {_key: 's0', _type: 'span', text: 'b'},
-            {_key: 's1', _type: 'span', text: 'a'},
-            {_key: 's2', _type: 'span', text: 'r'},
-          ],
-        },
-      ],
+      context: {
+        schema,
+        value: [
+          {
+            _key: 'b0',
+            _type: 'block',
+            children: [
+              {_key: 's0', _type: 'span', text: 'b'},
+              {_key: 's1', _type: 'span', text: 'a'},
+              {_key: 's2', _type: 'span', text: 'r'},
+            ],
+          },
+        ],
+      },
       blockOffset: {
         path: [{_key: 'b0'}],
         offset: 3,
@@ -159,7 +174,10 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
   })
   expect(
     blockOffsetToSpanSelectionPoint({
-      value,
+      context: {
+        schema,
+        value,
+      },
       blockOffset: {
         path: [{_key: 'b1'}],
         offset: 0,
@@ -169,7 +187,10 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
   ).toBeUndefined()
   expect(
     blockOffsetToSpanSelectionPoint({
-      value,
+      context: {
+        schema,
+        value,
+      },
       blockOffset: {
         path: [{_key: 'b2'}],
         offset: 9,
@@ -182,7 +203,10 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
   })
   expect(
     blockOffsetToSpanSelectionPoint({
-      value,
+      context: {
+        schema,
+        value,
+      },
       blockOffset: {
         path: [{_key: 'b3'}],
         offset: 9,
@@ -195,7 +219,10 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
   })
   expect(
     blockOffsetToSpanSelectionPoint({
-      value,
+      context: {
+        schema,
+        value,
+      },
       blockOffset: {
         path: [{_key: 'b3'}],
         offset: 10,
@@ -208,19 +235,22 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
   })
   expect(
     blockOffsetToSpanSelectionPoint({
-      value: [
-        {
-          _key: 'b0',
-          _type: 'block',
-          children: [
-            {_key: 's0', _type: 'span', text: ''},
-            {_key: 's1', _type: 'stock-ticker'},
-            {_key: 's2', _type: 'span', text: 'foo'},
-            {_key: 's3', _type: 'stock-ticker'},
-            {_key: 's4', _type: 'span', text: ''},
-          ],
-        },
-      ],
+      context: {
+        schema,
+        value: [
+          {
+            _key: 'b0',
+            _type: 'block',
+            children: [
+              {_key: 's0', _type: 'span', text: ''},
+              {_key: 's1', _type: 'stock-ticker'},
+              {_key: 's2', _type: 'span', text: 'foo'},
+              {_key: 's3', _type: 'stock-ticker'},
+              {_key: 's4', _type: 'span', text: ''},
+            ],
+          },
+        ],
+      },
       blockOffset: {
         path: [{_key: 'b0'}],
         offset: 0,
@@ -233,19 +263,22 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
   })
   expect(
     blockOffsetToSpanSelectionPoint({
-      value: [
-        {
-          _key: 'b0',
-          _type: 'block',
-          children: [
-            {_key: 's0', _type: 'span', text: ''},
-            {_key: 's1', _type: 'stock-ticker'},
-            {_key: 's2', _type: 'span', text: 'foo'},
-            {_key: 's3', _type: 'stock-ticker'},
-            {_key: 's4', _type: 'span', text: ''},
-          ],
-        },
-      ],
+      context: {
+        schema,
+        value: [
+          {
+            _key: 'b0',
+            _type: 'block',
+            children: [
+              {_key: 's0', _type: 'span', text: ''},
+              {_key: 's1', _type: 'stock-ticker'},
+              {_key: 's2', _type: 'span', text: 'foo'},
+              {_key: 's3', _type: 'stock-ticker'},
+              {_key: 's4', _type: 'span', text: ''},
+            ],
+          },
+        ],
+      },
       blockOffset: {
         path: [{_key: 'b0'}],
         offset: 1,
@@ -258,19 +291,22 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
   })
   expect(
     blockOffsetToSpanSelectionPoint({
-      value: [
-        {
-          _key: 'b0',
-          _type: 'block',
-          children: [
-            {_key: 's0', _type: 'span', text: ''},
-            {_key: 's1', _type: 'stock-ticker'},
-            {_key: 's2', _type: 'span', text: 'foo'},
-            {_key: 's3', _type: 'stock-ticker'},
-            {_key: 's4', _type: 'span', text: ''},
-          ],
-        },
-      ],
+      context: {
+        schema,
+        value: [
+          {
+            _key: 'b0',
+            _type: 'block',
+            children: [
+              {_key: 's0', _type: 'span', text: ''},
+              {_key: 's1', _type: 'stock-ticker'},
+              {_key: 's2', _type: 'span', text: 'foo'},
+              {_key: 's3', _type: 'stock-ticker'},
+              {_key: 's4', _type: 'span', text: ''},
+            ],
+          },
+        ],
+      },
       blockOffset: {
         path: [{_key: 'b0'}],
         offset: 0,
@@ -283,19 +319,22 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
   })
   expect(
     blockOffsetToSpanSelectionPoint({
-      value: [
-        {
-          _key: 'b0',
-          _type: 'block',
-          children: [
-            {_key: 's0', _type: 'span', text: ''},
-            {_key: 's1', _type: 'stock-ticker'},
-            {_key: 's2', _type: 'span', text: 'foo'},
-            {_key: 's3', _type: 'stock-ticker'},
-            {_key: 's4', _type: 'span', text: ''},
-          ],
-        },
-      ],
+      context: {
+        schema,
+        value: [
+          {
+            _key: 'b0',
+            _type: 'block',
+            children: [
+              {_key: 's0', _type: 'span', text: ''},
+              {_key: 's1', _type: 'stock-ticker'},
+              {_key: 's2', _type: 'span', text: 'foo'},
+              {_key: 's3', _type: 'stock-ticker'},
+              {_key: 's4', _type: 'span', text: ''},
+            ],
+          },
+        ],
+      },
       blockOffset: {
         path: [{_key: 'b0'}],
         offset: 1,
@@ -308,19 +347,22 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
   })
   expect(
     blockOffsetToSpanSelectionPoint({
-      value: [
-        {
-          _key: 'b0',
-          _type: 'block',
-          children: [
-            {_key: 's0', _type: 'span', text: ''},
-            {_key: 's1', _type: 'stock-ticker'},
-            {_key: 's2', _type: 'span', text: 'foo'},
-            {_key: 's3', _type: 'stock-ticker'},
-            {_key: 's4', _type: 'span', text: ''},
-          ],
-        },
-      ],
+      context: {
+        schema,
+        value: [
+          {
+            _key: 'b0',
+            _type: 'block',
+            children: [
+              {_key: 's0', _type: 'span', text: ''},
+              {_key: 's1', _type: 'stock-ticker'},
+              {_key: 's2', _type: 'span', text: 'foo'},
+              {_key: 's3', _type: 'stock-ticker'},
+              {_key: 's4', _type: 'span', text: ''},
+            ],
+          },
+        ],
+      },
       blockOffset: {
         path: [{_key: 'b0'}],
         offset: 3,
@@ -333,19 +375,22 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
   })
   expect(
     blockOffsetToSpanSelectionPoint({
-      value: [
-        {
-          _key: 'b0',
-          _type: 'block',
-          children: [
-            {_key: 's0', _type: 'span', text: ''},
-            {_key: 's1', _type: 'stock-ticker'},
-            {_key: 's2', _type: 'span', text: 'foo'},
-            {_key: 's3', _type: 'stock-ticker'},
-            {_key: 's4', _type: 'span', text: ''},
-          ],
-        },
-      ],
+      context: {
+        schema,
+        value: [
+          {
+            _key: 'b0',
+            _type: 'block',
+            children: [
+              {_key: 's0', _type: 'span', text: ''},
+              {_key: 's1', _type: 'stock-ticker'},
+              {_key: 's2', _type: 'span', text: 'foo'},
+              {_key: 's3', _type: 'stock-ticker'},
+              {_key: 's4', _type: 'span', text: ''},
+            ],
+          },
+        ],
+      },
       blockOffset: {
         path: [{_key: 'b0'}],
         offset: 2,
@@ -358,19 +403,22 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
   })
   expect(
     blockOffsetToSpanSelectionPoint({
-      value: [
-        {
-          _key: 'b0',
-          _type: 'block',
-          children: [
-            {_key: 's0', _type: 'span', text: ''},
-            {_key: 's1', _type: 'stock-ticker'},
-            {_key: 's2', _type: 'span', text: 'foo'},
-            {_key: 's3', _type: 'stock-ticker'},
-            {_key: 's4', _type: 'span', text: ''},
-          ],
-        },
-      ],
+      context: {
+        schema,
+        value: [
+          {
+            _key: 'b0',
+            _type: 'block',
+            children: [
+              {_key: 's0', _type: 'span', text: ''},
+              {_key: 's1', _type: 'stock-ticker'},
+              {_key: 's2', _type: 'span', text: 'foo'},
+              {_key: 's3', _type: 'stock-ticker'},
+              {_key: 's4', _type: 'span', text: ''},
+            ],
+          },
+        ],
+      },
       blockOffset: {
         path: [{_key: 'b0'}],
         offset: 3,
@@ -383,19 +431,22 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
   })
   expect(
     blockOffsetToSpanSelectionPoint({
-      value: [
-        {
-          _key: 'b0',
-          _type: 'block',
-          children: [
-            {_key: 's0', _type: 'span', text: ''},
-            {_key: 's1', _type: 'stock-ticker'},
-            {_key: 's2', _type: 'span', text: 'foo'},
-            {_key: 's3', _type: 'stock-ticker'},
-            {_key: 's4', _type: 'span', text: ''},
-          ],
-        },
-      ],
+      context: {
+        schema,
+        value: [
+          {
+            _key: 'b0',
+            _type: 'block',
+            children: [
+              {_key: 's0', _type: 'span', text: ''},
+              {_key: 's1', _type: 'stock-ticker'},
+              {_key: 's2', _type: 'span', text: 'foo'},
+              {_key: 's3', _type: 'stock-ticker'},
+              {_key: 's4', _type: 'span', text: ''},
+            ],
+          },
+        ],
+      },
       blockOffset: {
         path: [{_key: 'b0'}],
         offset: 2,
@@ -408,7 +459,10 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
   })
   expect(
     blockOffsetToSpanSelectionPoint({
-      value,
+      context: {
+        schema,
+        value,
+      },
       blockOffset: {
         path: [{_key: 'b3'}],
         offset: 10,
@@ -421,7 +475,10 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
   })
   expect(
     blockOffsetToSpanSelectionPoint({
-      value,
+      context: {
+        schema,
+        value,
+      },
       blockOffset: {
         path: [{_key: 'b3'}],
         offset: 11,
@@ -434,7 +491,10 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
   })
   expect(
     blockOffsetToSpanSelectionPoint({
-      value,
+      context: {
+        schema,
+        value,
+      },
       blockOffset: {
         path: [{_key: 'b4'}],
         offset: 0,
@@ -444,7 +504,10 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
   ).toBeUndefined()
   expect(
     blockOffsetToSpanSelectionPoint({
-      value,
+      context: {
+        schema,
+        value,
+      },
       blockOffset: {
         path: [{_key: 'b4'}],
         offset: 1,

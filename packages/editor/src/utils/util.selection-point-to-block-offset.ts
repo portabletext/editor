@@ -1,4 +1,4 @@
-import type {PortableTextBlock} from '@sanity/types'
+import type {EditorContext} from '../editor/editor-snapshot'
 import type {BlockOffset} from '../types/block-offset'
 import type {EditorSelectionPoint} from '../types/editor'
 import {childSelectionPointToBlockOffset} from './util.child-selection-point-to-block-offset'
@@ -8,10 +8,10 @@ import {isKeyedSegment} from './util.is-keyed-segment'
  * @public
  */
 export function selectionPointToBlockOffset({
-  value,
+  context,
   selectionPoint,
 }: {
-  value: Array<PortableTextBlock>
+  context: Pick<EditorContext, 'schema' | 'value'>
   selectionPoint: EditorSelectionPoint
 }): BlockOffset | undefined {
   if (
@@ -25,7 +25,7 @@ export function selectionPointToBlockOffset({
   }
 
   return childSelectionPointToBlockOffset({
-    value,
+    context,
     selectionPoint,
   })
 }

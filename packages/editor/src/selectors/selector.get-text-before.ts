@@ -27,8 +27,11 @@ export const getBlockTextBefore: EditorSelector<string> = (snapshot) => {
   }
 
   const startOfBlock = getBlockStartPoint({
-    node: block,
-    path: [{_key: block._key}],
+    context: snapshot.context,
+    block: {
+      node: block,
+      path: [{_key: block._key}],
+    },
   })
 
   return getSelectionText({

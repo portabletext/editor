@@ -1,13 +1,15 @@
-import {
-  isPortableTextListBlock,
-  isPortableTextSpan,
-  isPortableTextTextBlock,
-  type PortableTextListBlock,
-  type PortableTextSpan,
-  type PortableTextTextBlock,
+import type {
+  PortableTextListBlock,
+  PortableTextSpan,
+  PortableTextTextBlock,
 } from '@sanity/types'
 import {Transforms, type Element} from 'slate'
 import {debugWithName} from '../../internal-utils/debug'
+import {
+  isListBlock,
+  isSpan,
+  isTextBlock,
+} from '../../internal-utils/parse-blocks'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 
@@ -25,22 +27,13 @@ export function createWithSchemaTypes({
     editor: PortableTextSlateEditor,
   ): PortableTextSlateEditor {
     editor.isTextBlock = (value: unknown): value is PortableTextTextBlock => {
-      return (
-        isPortableTextTextBlock(value) &&
-        value._type === editorActor.getSnapshot().context.schema.block.name
-      )
+      return isTextBlock(editorActor.getSnapshot().context, value)
     }
     editor.isTextSpan = (value: unknown): value is PortableTextSpan => {
-      return (
-        isPortableTextSpan(value) &&
-        value._type === editorActor.getSnapshot().context.schema.span.name
-      )
+      return isSpan(editorActor.getSnapshot().context, value)
     }
     editor.isListBlock = (value: unknown): value is PortableTextListBlock => {
-      return (
-        isPortableTextListBlock(value) &&
-        value._type === editorActor.getSnapshot().context.schema.block.name
-      )
+      return isListBlock(editorActor.getSnapshot().context, value)
     }
     editor.isVoid = (element: Element): boolean => {
       return (

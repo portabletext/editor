@@ -377,13 +377,19 @@ export const stepDefinitions = [
         const selection = getTextSelection(context.editor.value(), text)
         const anchorOffset = selection
           ? selectionPointToBlockOffset({
-              value: context.editor.value(),
+              context: {
+                schema: context.editor.ref.current.getSnapshot().context.schema,
+                value: context.editor.value(),
+              },
               selectionPoint: selection.anchor,
             })
           : undefined
         const focusOffset = selection
           ? selectionPointToBlockOffset({
-              value: context.editor.value(),
+              context: {
+                schema: context.editor.ref.current.getSnapshot().context.schema,
+                value: context.editor.value(),
+              },
               selectionPoint: selection.focus,
             })
           : undefined
@@ -423,13 +429,19 @@ export const stepDefinitions = [
         const selection = getTextSelection(context.editor.value(), text)
         const anchorOffset = selection
           ? spanSelectionPointToBlockOffset({
-              value: context.editor.value(),
+              context: {
+                schema: context.editor.ref.current.getSnapshot().context.schema,
+                value: context.editor.value(),
+              },
               selectionPoint: selection.anchor,
             })
           : undefined
         const focusOffset = selection
           ? spanSelectionPointToBlockOffset({
-              value: context.editor.value(),
+              context: {
+                schema: context.editor.ref.current.getSnapshot().context.schema,
+                value: context.editor.value(),
+              },
               selectionPoint: selection.focus,
             })
           : undefined

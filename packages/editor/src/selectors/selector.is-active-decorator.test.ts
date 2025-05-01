@@ -21,7 +21,7 @@ test(isActiveDecorator.name, () => {
       snapshot(
         [
           {
-            _type: '_block',
+            _type: 'block',
             _key: 'b1',
             children: [
               {
@@ -57,7 +57,7 @@ test(isActiveDecorator.name, () => {
       snapshot(
         [
           {
-            _type: '_block',
+            _type: 'block',
             _key: 'b1',
             children: [
               {
@@ -94,7 +94,7 @@ test(isActiveDecorator.name, () => {
         [
           {_key: 'b0', _type: 'image'},
           {
-            _type: '_block',
+            _type: 'block',
             _key: 'b1',
             children: [
               {

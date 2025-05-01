@@ -140,7 +140,6 @@
   },
   "peerDependencies": {
     "@sanity/schema": "^3.87.0",
-    "@sanity/types": "^3.87.0",
     "react": "^16.9 || ^17 || ^18 || ^19",
     "rxjs": "^7.8.2"
   },

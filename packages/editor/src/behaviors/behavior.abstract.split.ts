@@ -32,24 +32,27 @@ export const abstractSplitBehaviors = [
       })
 
       if (focusTextBlock) {
-        const blockEndPoint = getBlockEndPoint(focusTextBlock)
+        const blockEndPoint = getBlockEndPoint({
+          context: snapshot.context,
+          block: focusTextBlock,
+        })
         const newTextBlockSelection = {
           anchor: selectionEndPoint,
           focus: blockEndPoint,
         }
         const newTextBlock = parseBlock({
           block: sliceBlocks({
+            context: {
+              ...snapshot.context,
+              selection: newTextBlockSelection,
+            },
             blocks: [focusTextBlock.node],
-            selection: newTextBlockSelection,
           }).at(0),
           context: snapshot.context,
           options: {refreshKeys: true},
         })
 
-        if (
-          !newTextBlock ||
-          !isTextBlock(snapshot.context.schema, newTextBlock)
-        ) {
+        if (!newTextBlock || !isTextBlock(snapshot.context, newTextBlock)) {
           return false
         }
 

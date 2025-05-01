@@ -15,7 +15,10 @@ export function isAtTheEndOfBlock(block: {
       return false
     }
 
-    const blockEndPoint = utils.getBlockEndPoint(block)
+    const blockEndPoint = utils.getBlockEndPoint({
+      context: snapshot.context,
+      block,
+    })
 
     return utils.isEqualSelectionPoints(
       snapshot.context.selection.focus,
