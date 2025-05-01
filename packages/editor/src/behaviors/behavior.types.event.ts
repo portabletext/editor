@@ -2,7 +2,7 @@ import type {KeyedSegment, PortableTextBlock} from '@sanity/types'
 import type {TextUnit} from 'slate'
 import type {EventPosition} from '../internal-utils/event-position'
 import type {MIMEType} from '../internal-utils/mime-type'
-import type {PickFromUnion, StrictExtract} from '../type-utils'
+import type {OmitFromUnion, PickFromUnion, StrictExtract} from '../type-utils'
 import type {BlockOffset} from '../types/block-offset'
 import type {BlockWithOptionalKey} from '../types/block-with-optional-key'
 import type {EditorSelection} from '../types/editor'
@@ -197,10 +197,18 @@ export type SyntheticBehaviorEvent =
 
 export type InsertPlacement = 'auto' | 'after' | 'before'
 
-export function isKeyboardBehaviorEvent(
+export function isSyntheticBehaviorEvent(
   event: BehaviorEvent,
-): event is KeyboardBehaviorEvent {
-  return event.type.startsWith('keyboard.')
+): event is OmitFromUnion<
+  SyntheticBehaviorEvent,
+  'type',
+  AbstractBehaviorEventType
+> {
+  return (
+    !isCustomBehaviorEvent(event) &&
+    !isNativeBehaviorEvent(event) &&
+    !isAbstractBehaviorEvent(event)
+  )
 }
 
 /**************************************

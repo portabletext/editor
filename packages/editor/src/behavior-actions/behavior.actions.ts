@@ -1,4 +1,3 @@
-import {omit} from 'lodash'
 import type {InternalBehaviorAction} from '../behaviors/behavior.types.action'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {removeDecoratorActionImplementation} from '../editor/plugins/createWithPortableTextMarkModel'
@@ -6,7 +5,6 @@ import {
   historyRedoActionImplementation,
   historyUndoActionImplementation,
 } from '../editor/plugins/createWithUndoRedo'
-import {debugWithName} from '../internal-utils/debug'
 import type {PickFromUnion} from '../type-utils'
 import {addAnnotationActionImplementation} from './behavior.action.annotation.add'
 import {removeAnnotationActionImplementation} from './behavior.action.annotation.remove'
@@ -26,8 +24,6 @@ import {moveBackwardActionImplementation} from './behavior.action.move.backward'
 import {moveBlockActionImplementation} from './behavior.action.move.block'
 import {moveForwardActionImplementation} from './behavior.action.move.forward'
 import {selectActionImplementation} from './behavior.action.select'
-
-const debug = debugWithName('behaviors:action')
 
 export type BehaviorActionImplementationContext = Pick<
   EditorContext,
@@ -80,8 +76,6 @@ export function performAction({
   context: BehaviorActionImplementationContext
   action: InternalBehaviorAction
 }) {
-  debug(JSON.stringify(omit(action, ['editor']), null, 2))
-
   switch (action.type) {
     case 'annotation.add': {
       behaviorActionImplementations['annotation.add']({
