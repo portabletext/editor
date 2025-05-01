@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.48.6](https://github.com/portabletext/editor/compare/editor-v1.48.5...editor-v1.48.6) (2025-05-01)
+
+
+### Bug Fixes
+
+* **behaviors:** simplify event logs ([7b342e7](https://github.com/portabletext/editor/commit/7b342e7a804e3d0b4751016730fb8611d9118ef3))
+* **deps:** update dependency slate-react to v0.114.2 ([62c7186](https://github.com/portabletext/editor/commit/62c7186a0f3cc7c1cf526718c2535b7b88f5a8ee))
+
 ## [1.48.5](https://github.com/portabletext/editor/compare/editor-v1.48.4...editor-v1.48.5) (2025-04-30)
 
 
