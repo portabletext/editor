@@ -179,7 +179,10 @@ export type InternalEditorEvent =
       type: 'done normalizing'
     }
   | {
-      type: 'done syncing initial value'
+      type: 'done syncing value'
+    }
+  | {
+      type: 'syncing value'
     }
   | {
       type: 'behavior event'
@@ -219,6 +222,7 @@ export const editorMachine = setup({
       getLegacySchema: () => PortableTextMemberSchemaTypes
       keyGenerator: () => string
       pendingEvents: Array<InternalPatchEvent | MutationEvent>
+      pendingIncomingPatchesEvents: Array<PatchesEvent>
       schema: EditorSchema
       initialReadOnly: boolean
       maxBlocks: number | undefined
@@ -305,6 +309,21 @@ export const editorMachine = setup({
     'clear pending events': assign({
       pendingEvents: [],
     }),
+    'defer incoming patches': assign({
+      pendingIncomingPatchesEvents: ({context, event}) => {
+        return event.type === 'patches'
+          ? [...context.pendingIncomingPatchesEvents, event]
+          : context.pendingIncomingPatchesEvents
+      },
+    }),
+    'emit pending incoming patches': enqueueActions(({context, enqueue}) => {
+      for (const event of context.pendingIncomingPatchesEvents) {
+        enqueue.emit(event)
+      }
+    }),
+    'clear pending incoming patches': assign({
+      pendingIncomingPatchesEvents: [],
+    }),
     'handle blur': ({event}) => {
       assertEvent(event, 'blur')
 
@@ -372,6 +391,7 @@ export const editorMachine = setup({
     getLegacySchema: input.getLegacySchema,
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
+    pendingIncomingPatchesEvents: [],
     schema: input.schema,
     selection: null,
     initialReadOnly: input.readOnly ?? false,
@@ -404,7 +424,6 @@ export const editorMachine = setup({
 
     'add behavior': {actions: 'add behavior to context'},
     'remove behavior': {actions: 'remove behavior from context'},
-    'patches': {actions: emit(({event}) => event)},
     'update behaviors': {actions: 'assign behaviors'},
     'update key generator': {
       actions: assign({keyGenerator: ({event}) => event.keyGenerator}),
@@ -439,7 +458,7 @@ export const editorMachine = setup({
           states: {
             'determine initial edit mode': {
               on: {
-                'done syncing initial value': [
+                'done syncing value': [
                   {
                     target: '#editor.edit mode.read only.read only',
                     guard: ({context}) => context.initialReadOnly,
@@ -553,7 +572,11 @@ export const editorMachine = setup({
       initial: 'setting up',
       states: {
         'setting up': {
-          exit: ['emit ready'],
+          exit: [
+            'emit ready',
+            'emit pending incoming patches',
+            'clear pending incoming patches',
+          ],
           on: {
             'internal.patch': {
               actions: 'defer event',
@@ -561,52 +584,94 @@ export const editorMachine = setup({
             'mutation': {
               actions: 'defer event',
             },
-            'done syncing initial value': {
-              target: 'pristine',
+            'done syncing value': {
+              target: 'set up',
+            },
+            'patches': {
+              actions: ['defer incoming patches'],
             },
           },
         },
-        'pristine': {
-          initial: 'idle',
+        'set up': {
+          type: 'parallel',
           states: {
-            idle: {
-              on: {
-                'normalizing': {
-                  target: 'normalizing',
+            'value sync': {
+              initial: 'idle',
+              states: {
+                'idle': {
+                  on: {
+                    'patches': {
+                      actions: [emit(({event}) => event)],
+                    },
+                    'syncing value': {
+                      target: 'syncing value',
+                    },
+                  },
                 },
-                'internal.patch': {
-                  actions: 'defer event',
-                  target: '#editor.setup.dirty',
-                },
-                'mutation': {
-                  actions: 'defer event',
-                  target: '#editor.setup.dirty',
+                'syncing value': {
+                  exit: [
+                    'emit pending incoming patches',
+                    'clear pending incoming patches',
+                  ],
+                  on: {
+                    'patches': {
+                      actions: ['defer incoming patches'],
+                    },
+                    'done syncing value': {
+                      target: 'idle',
+                    },
+                  },
                 },
               },
             },
-            normalizing: {
-              on: {
-                'done normalizing': {
-                  target: 'idle',
+            'writing': {
+              initial: 'pristine',
+              states: {
+                pristine: {
+                  initial: 'idle',
+                  states: {
+                    idle: {
+                      on: {
+                        'normalizing': {
+                          target: 'normalizing',
+                        },
+                        'internal.patch': {
+                          actions: 'defer event',
+                          target: '#editor.setup.set up.writing.dirty',
+                        },
+                        'mutation': {
+                          actions: 'defer event',
+                          target: '#editor.setup.set up.writing.dirty',
+                        },
+                      },
+                    },
+                    normalizing: {
+                      on: {
+                        'done normalizing': {
+                          target: 'idle',
+                        },
+                        'internal.patch': {
+                          actions: 'defer event',
+                        },
+                        'mutation': {
+                          actions: 'defer event',
+                        },
+                      },
+                    },
+                  },
                 },
-                'internal.patch': {
-                  actions: 'defer event',
-                },
-                'mutation': {
-                  actions: 'defer event',
+                dirty: {
+                  entry: ['emit pending events', 'clear pending events'],
+                  on: {
+                    'internal.patch': {
+                      actions: 'emit patch event',
+                    },
+                    'mutation': {
+                      actions: 'emit mutation event',
+                    },
+                  },
                 },
               },
-            },
-          },
-        },
-        'dirty': {
-          entry: ['emit pending events', 'clear pending events'],
-          on: {
-            'internal.patch': {
-              actions: 'emit patch event',
-            },
-            'mutation': {
-              actions: 'emit mutation event',
             },
           },
         },
