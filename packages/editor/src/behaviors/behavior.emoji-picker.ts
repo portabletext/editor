@@ -8,9 +8,6 @@ const emojiCharRegEx = /^[a-zA-Z-_0-9]{1}$/
 const incompleteEmojiRegEx = /:([a-zA-Z-_0-9]+)$/
 const emojiRegEx = /:([a-zA-Z-_0-9]+):$/
 
-/**
- * @beta
- */
 export type EmojiPickerBehaviorsConfig<TEmojiMatch> = {
   /**
    * Match emojis by keyword.
@@ -24,9 +21,6 @@ export type EmojiPickerBehaviorsConfig<TEmojiMatch> = {
   parseMatch: ({match}: {match: TEmojiMatch}) => string | undefined
 }
 
-/**
- * @beta
- */
 export function createEmojiPickerBehaviors<TEmojiMatch>(
   config: EmojiPickerBehaviorsConfig<TEmojiMatch>,
 ) {

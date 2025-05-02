@@ -1,19 +1,4 @@
 export {
-  createCodeEditorBehaviors,
-  type CodeEditorBehaviorsConfig,
-} from './behavior.code-editor'
-export {coreBehaviors} from './behavior.core'
-export {
-  createEmojiPickerBehaviors,
-  type EmojiPickerBehaviorsConfig,
-} from './behavior.emoji-picker'
-export {createLinkBehaviors, type LinkBehaviorsConfig} from './behavior.links'
-export {
-  createMarkdownBehaviors,
-  type MarkdownBehaviorsConfig,
-} from './behavior.markdown'
-
-export {
   execute,
   forward,
   raise,

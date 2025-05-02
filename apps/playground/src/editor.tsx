@@ -16,10 +16,6 @@ import {
   type RenderPlaceholderFunction,
   type RenderStyleFunction,
 } from '@portabletext/editor'
-import {
-  createCodeEditorBehaviors,
-  createLinkBehaviors,
-} from '@portabletext/editor/behaviors'
 import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 import {OneLinePlugin} from '@portabletext/plugin-one-line'
 import {useSelector} from '@xstate/react'
@@ -38,6 +34,8 @@ import {Toolbar} from './components/toolbar'
 import {Tooltip} from './components/tooltip'
 import {EditorPatchesPreview} from './editor-patches-preview'
 import './editor.css'
+import {createCodeEditorBehaviors} from './behavior.code-editor'
+import {createLinkBehaviors} from './behavior.links'
 import {EmojiPickerPlugin} from './emoji-picker'
 import type {EditorActorRef} from './playground-machine'
 import {ImageDeserializerPlugin} from './plugin.image-deserializer'

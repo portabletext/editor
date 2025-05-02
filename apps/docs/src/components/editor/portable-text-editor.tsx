@@ -4,13 +4,7 @@ import {
   type PortableTextBlock,
   type SchemaDefinition,
 } from '@portabletext/editor'
-import {coreBehaviors, defineBehavior} from '@portabletext/editor/behaviors'
 import {EventListenerPlugin} from '@portabletext/editor/plugins'
-import {
-  getFocusSpan,
-  getFocusTextBlock,
-  isSelectionCollapsed,
-} from '@portabletext/editor/selectors'
 import {applyAll} from '@portabletext/patches'
 import {PortableText} from '@portabletext/react'
 import {useState} from 'react'
@@ -36,40 +30,6 @@ export function PortableTextEditor({customSchema}: PortableTextEditorProps) {
       <EditorProvider
         initialConfig={{
           schemaDefinition,
-          behaviors: [
-            ...coreBehaviors,
-            defineBehavior({
-              on: 'paste',
-              guard: ({snapshot, event}) => {
-                // Check if the inserted text is a known emoji shortcode
-                const text = event.data.getData('text/plain')
-                const isEmojiShortcode = text === ':)'
-
-                // Only proceed if it's an emoji shortcode and the selection is collapsed
-                if (!isEmojiShortcode || !isSelectionCollapsed(snapshot)) {
-                  return false
-                }
-
-                const focusTextBlock = getFocusTextBlock(snapshot)
-                const focusSpan = getFocusSpan(snapshot)
-
-                if (!focusTextBlock || !focusSpan) {
-                  return false
-                }
-
-                return {focusTextBlock, focusSpan}
-              },
-              actions: [
-                (_, {focusTextBlock}) => [
-                  {
-                    type: 'insert.text',
-                    at: focusTextBlock.path,
-                    text: '😊', // Replace with actual emoji
-                  },
-                ],
-              ],
-            }),
-          ],
         }}
       >
         <EventListenerPlugin

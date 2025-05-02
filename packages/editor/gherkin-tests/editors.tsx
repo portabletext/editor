@@ -12,7 +12,7 @@ import {
 import type {Behavior} from '../src/behaviors'
 import type {EditorEmittedEvent} from '../src/editor/editor-machine'
 import {EditorProvider, useEditor} from '../src/editor/editor-provider'
-import {EditorRefPlugin} from '../src/plugins'
+import {BehaviorPlugin, EditorRefPlugin} from '../src/plugins'
 import * as selectors from '../src/selectors'
 import type {EditorActorRef, TestActorRef} from './test-machine'
 
@@ -84,15 +84,14 @@ function Editor(props: {
     <div data-testid={props.editorActorRef.id}>
       <EditorProvider
         initialConfig={{
-          behaviors: props.behaviors,
           keyGenerator,
           schemaDefinition: props.schemaDefinition,
         }}
       >
+        <BehaviorPlugin behaviors={props.behaviors} />
         <EditorRefPlugin ref={editorRef} />
         <EditorEventListener
           editorActorRef={props.editorActorRef}
-          behaviors={props.behaviors}
           value={props.value}
           on={(event) => {
             if (event.type === 'mutation') {
@@ -123,19 +122,11 @@ function Editor(props: {
 }
 
 function EditorEventListener(props: {
-  behaviors: Array<Behavior>
   editorActorRef: EditorActorRef
   on: (event: EditorEmittedEvent) => void
   value: Array<PortableTextBlock> | undefined
 }) {
   const editor = useEditor()
-
-  useEffect(() => {
-    editor.send({
-      type: 'update behaviors',
-      behaviors: props.behaviors,
-    })
-  }, [editor, props.behaviors])
 
   useEffect(() => {
     editor.send({
