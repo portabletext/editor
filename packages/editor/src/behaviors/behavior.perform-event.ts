@@ -1,4 +1,3 @@
-import type {Behavior, BehaviorEvent} from '.'
 import {performAction} from '../behavior-actions/behavior.actions'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
@@ -9,11 +8,14 @@ import {
 import {debugWithName} from '../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../types/editor'
 import {defaultBehaviors} from './behavior.default'
+import type {BehaviorAction} from './behavior.types.action'
+import type {Behavior} from './behavior.types.behavior'
 import {
   isAbstractBehaviorEvent,
   isCustomBehaviorEvent,
   isNativeBehaviorEvent,
   isSyntheticBehaviorEvent,
+  type BehaviorEvent,
 } from './behavior.types.event'
 
 const debug = debugWithName('behaviors:event')
@@ -166,13 +168,23 @@ export function performEvent({
     for (const actionSet of eventBehavior.actions) {
       const actionsSnapshot = getSnapshot()
 
-      const actions = actionSet(
-        {
-          snapshot: actionsSnapshot,
-          event,
-        },
-        shouldRun,
-      )
+      let actions: Array<BehaviorAction> = []
+
+      try {
+        actions = actionSet(
+          {
+            snapshot: actionsSnapshot,
+            event,
+          },
+          shouldRun,
+        )
+      } catch (error) {
+        console.error(
+          new Error(
+            `Evaluating actions for "${event.type}" failed due to: ${error.message}`,
+          ),
+        )
+      }
 
       if (actions.length === 0) {
         continue
@@ -188,16 +200,15 @@ export function performEvent({
             if (action.type === 'effect') {
               nativeEventPrevented = true
 
-              performAction({
-                context: {
-                  keyGenerator,
-                  schema,
-                },
-                action: {
-                  ...action,
-                  editor,
-                },
-              })
+              try {
+                action.effect()
+              } catch (error) {
+                console.error(
+                  new Error(
+                    `Executing effect as a result of "${event.type}" failed due to: ${error.message}`,
+                  ),
+                )
+              }
 
               continue
             }
@@ -265,16 +276,15 @@ export function performEvent({
         if (action.type === 'effect') {
           nativeEventPrevented = true
 
-          performAction({
-            context: {
-              keyGenerator,
-              schema,
-            },
-            action: {
-              ...action,
-              editor,
-            },
-          })
+          try {
+            action.effect()
+          } catch (error) {
+            console.error(
+              new Error(
+                `Executing effect as a result of "${event.type}" failed due to: ${error.message}`,
+              ),
+            )
+          }
 
           continue
         }
