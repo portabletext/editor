@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.48.11](https://github.com/portabletext/editor/compare/editor-v1.48.10...editor-v1.48.11) (2025-05-02)
+
+
+### Bug Fixes
+
+* **behaviors:** remove `behaviors` array and unsupported behaviors ([f051dbd](https://github.com/portabletext/editor/commit/f051dbd19f8832bda940d42f80c7c97d5f9e15b6))
+
 ## [1.48.10](https://github.com/portabletext/editor/compare/editor-v1.48.9...editor-v1.48.10) (2025-05-02)
 
 
