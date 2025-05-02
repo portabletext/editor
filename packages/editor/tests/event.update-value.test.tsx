@@ -6,8 +6,10 @@ import {
   EditorProvider,
   PortableTextEditable,
   type Editor,
+  type EditorEmittedEvent,
 } from '../src'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
+import {EventListenerPlugin} from '../src/plugins'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 
 describe('event.update value', () => {
@@ -262,6 +264,66 @@ describe('event.update value', () => {
       expect(editorRef.current?.getSnapshot().context.value).toEqual([
         populatedFirstLine,
         lastLine,
+      ])
+    })
+  })
+
+  test("Scenario: Updating before 'ready'", async () => {
+    const editorRef = React.createRef<Editor>()
+    const keyGenerator = createTestKeyGenerator()
+    const onEvent = vi.fn<() => EditorEmittedEvent>()
+    const listBlock = {
+      _key: keyGenerator(),
+      _type: 'block',
+      children: [
+        {
+          _key: keyGenerator(),
+          _type: 'span',
+          text: 'foo',
+          marks: [],
+        },
+      ],
+      level: 1,
+      listItem: 'bullet',
+      markDefs: [],
+      style: 'normal',
+    }
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            lists: [{name: 'bullet'}],
+            styles: [{name: 'normal'}, {name: 'h1'}],
+          }),
+          initialValue: [
+            {
+              _key: keyGenerator(),
+              _type: 'block',
+              children: [{_key: keyGenerator(), _type: 'span', text: 'a'}],
+            },
+          ],
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <EventListenerPlugin on={onEvent} />
+        <PortableTextEditable />
+      </EditorProvider>,
+    )
+
+    editorRef.current?.send({
+      type: 'update value',
+      value: [listBlock],
+    })
+
+    await vi.waitFor(() => {
+      expect(onEvent).toHaveBeenCalledWith({type: 'ready'})
+    })
+
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        listBlock,
       ])
     })
   })
