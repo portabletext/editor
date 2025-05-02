@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.48.12](https://github.com/portabletext/editor/compare/editor-v1.48.11...editor-v1.48.12) (2025-05-02)
+
+
+### Bug Fixes
+
+* guard against `guard` errors ([8056054](https://github.com/portabletext/editor/commit/80560549ca5e0f38b584d7bdc637dc723c1d9264))
+
 ## [1.48.11](https://github.com/portabletext/editor/compare/editor-v1.48.10...editor-v1.48.11) (2025-05-02)
 
 
