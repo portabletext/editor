@@ -33,7 +33,6 @@ export type EditorConfig = {
   /**
    * @beta
    */
-  behaviors?: Array<Behavior>
   keyGenerator?: () => string
   /**
    * @deprecated Will be removed in the next major version
@@ -98,7 +97,6 @@ export function editorConfigToMachineInput(config: EditorConfig) {
   const {legacySchema, schema} = compileSchemasFromEditorConfig(config)
 
   return {
-    behaviors: config.behaviors,
     converters: createCoreConverters(legacySchema),
     getLegacySchema: () => legacySchema,
     keyGenerator: config.keyGenerator ?? defaultKeyGenerator,
@@ -136,7 +134,6 @@ export function createInternalEditor(editorActor: EditorActor): InternalEditor {
       switch (event.type) {
         case 'add behavior':
         case 'remove behavior':
-        case 'update behaviors':
         case 'update key generator':
         case 'update readOnly':
         case 'patches':

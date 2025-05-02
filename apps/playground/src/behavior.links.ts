@@ -1,12 +1,8 @@
-import type {EditorSchema} from '../editor/editor-schema'
-import {looksLikeUrl} from '../internal-utils/looks-like-url'
-import * as selectors from '../selectors'
-import {execute} from './behavior.types.action'
-import {defineBehavior} from './behavior.types.behavior'
+import type {EditorSchema} from '@portabletext/editor'
+import {defineBehavior, execute} from '@portabletext/editor/behaviors'
+import * as selectors from '@portabletext/editor/selectors'
+import {looksLikeUrl} from './looks-like-url'
 
-/**
- * @beta
- */
 export type LinkBehaviorsConfig = {
   linkAnnotation?: (context: {
     schema: EditorSchema
@@ -14,9 +10,6 @@ export type LinkBehaviorsConfig = {
   }) => {name: string; value: {[prop: string]: unknown}} | undefined
 }
 
-/**
- * @beta
- */
 export function createLinkBehaviors(config: LinkBehaviorsConfig) {
   const pasteLinkOnSelection = defineBehavior({
     on: 'clipboard.paste',

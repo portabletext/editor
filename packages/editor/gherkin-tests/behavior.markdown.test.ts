@@ -1,7 +1,7 @@
 import {Given} from 'racejar'
 import {Feature} from 'racejar/vitest'
 import behaviorMarkdownFeature from '../gherkin-spec/behavior.markdown.feature?raw'
-import {coreBehaviors, createMarkdownBehaviors} from '../src/behaviors'
+import {createMarkdownBehaviors} from '../src/behaviors/behavior.markdown'
 import {parameterTypes} from './gherkin-parameter-types'
 import {stepDefinitions, type Context} from './gherkin-step-definitions'
 
@@ -11,7 +11,6 @@ const givenMarkdownBehaviors = Given(
     context.testRef.send({
       type: 'update behaviors',
       behaviors: [
-        ...coreBehaviors,
         ...createMarkdownBehaviors({
           defaultStyle: ({schema}) => schema.styles[0]?.name,
           headingStyle: ({schema, level}) =>

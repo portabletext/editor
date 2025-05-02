@@ -1,4 +1,4 @@
-import {coreBehaviors} from '../behaviors'
+import {coreBehaviors} from '../behaviors/behavior.core'
 import {BehaviorPlugin} from './plugin.behavior'
 
 /**

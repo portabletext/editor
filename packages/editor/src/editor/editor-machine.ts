@@ -72,10 +72,6 @@ export type ExternalEditorEvent =
       schema: EditorSchema
     }
   | {
-      type: 'update behaviors'
-      behaviors: Array<Behavior>
-    }
-  | {
       type: 'update key generator'
       keyGenerator: () => string
     }
@@ -237,7 +233,6 @@ export const editorMachine = setup({
     events: {} as InternalEditorEvent,
     emitted: {} as InternalEditorEmittedEvent,
     input: {} as {
-      behaviors?: Array<Behavior>
       converters?: Array<Converter>
       getLegacySchema: () => PortableTextMemberSchemaTypes
       keyGenerator: () => string
@@ -263,12 +258,6 @@ export const editorMachine = setup({
         context.behaviors.delete(event.behavior)
 
         return new Set([...context.behaviors])
-      },
-    }),
-    'assign behaviors': assign({
-      behaviors: ({event}) => {
-        assertEvent(event, 'update behaviors')
-        return new Set([...event.behaviors])
       },
     }),
     'assign schema': assign({
@@ -386,7 +375,7 @@ export const editorMachine = setup({
 }).createMachine({
   id: 'editor',
   context: ({input}) => ({
-    behaviors: new Set([...(input.behaviors ?? coreBehaviors)]),
+    behaviors: new Set([...coreBehaviors]),
     converters: new Set(input.converters ?? []),
     getLegacySchema: input.getLegacySchema,
     keyGenerator: input.keyGenerator,
@@ -424,7 +413,6 @@ export const editorMachine = setup({
 
     'add behavior': {actions: 'add behavior to context'},
     'remove behavior': {actions: 'remove behavior from context'},
-    'update behaviors': {actions: 'assign behaviors'},
     'update key generator': {
       actions: assign({keyGenerator: ({event}) => event.keyGenerator}),
     },

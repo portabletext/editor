@@ -2,7 +2,6 @@ import type {PortableTextTextBlock} from '@sanity/types'
 import {createEditor, type Descendant} from 'slate'
 import {beforeEach, describe, expect, it} from 'vitest'
 import {createActor} from 'xstate'
-import {coreBehaviors} from '../../behaviors/behavior.core'
 import {schemaType} from '../../editor/__tests__/PortableTextEditorTester'
 import {editorMachine} from '../../editor/editor-machine'
 import {legacySchemaToEditorSchema} from '../../editor/editor-schema'
@@ -15,7 +14,6 @@ const legacySchema = createLegacySchema(schemaType)
 const schemaTypes = legacySchemaToEditorSchema(legacySchema)
 const editorActor = createActor(editorMachine, {
   input: {
-    behaviors: coreBehaviors,
     schema: schemaTypes,
     keyGenerator: defaultKeyGenerator,
     getLegacySchema: () => legacySchema,

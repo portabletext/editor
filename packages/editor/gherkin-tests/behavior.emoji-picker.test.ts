@@ -1,7 +1,7 @@
 import {Given} from 'racejar'
 import {Feature} from 'racejar/vitest'
 import emojiPickerFeature from '../gherkin-spec/behavior.emoji-picker.feature?raw'
-import {coreBehaviors, createEmojiPickerBehaviors} from '../src/behaviors'
+import {createEmojiPickerBehaviors} from '../src/behaviors/behavior.emoji-picker'
 import {parameterTypes} from './gherkin-parameter-types'
 import {stepDefinitions, type Context} from './gherkin-step-definitions'
 
@@ -11,7 +11,6 @@ const givenEmojiPickerBehaviors = Given(
     context.testRef.send({
       type: 'update behaviors',
       behaviors: [
-        ...coreBehaviors,
         ...createEmojiPickerBehaviors<string>({
           matchEmojis: ({keyword}) => {
             const foundEmojis: Array<string> = []

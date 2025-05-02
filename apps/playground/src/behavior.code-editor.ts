@@ -1,19 +1,12 @@
-import {isHotkey} from '../internal-utils/is-hotkey'
-import * as selectors from '../selectors'
-import {raise} from './behavior.types.action'
-import {defineBehavior} from './behavior.types.behavior'
+import {defineBehavior, raise} from '@portabletext/editor/behaviors'
+import * as selectors from '@portabletext/editor/selectors'
+import {isHotkey} from './is-hotkey'
 
-/**
- * @beta
- */
 export type CodeEditorBehaviorsConfig = {
   moveBlockUpShortcut: string
   moveBlockDownShortcut: string
 }
 
-/**
- * @beta
- */
 export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
   return [
     defineBehavior({

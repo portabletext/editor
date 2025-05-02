@@ -15,7 +15,6 @@ import type {
   RangeDecorationOnMovedDetails,
   SchemaDefinition,
 } from '../src'
-import {coreBehaviors} from '../src/behaviors'
 import type {Behavior} from '../src/behaviors/behavior.types.behavior'
 
 type MutationEvent = {
@@ -231,7 +230,7 @@ export const testMachine = setup({
 }).createMachine({
   id: 'test',
   context: ({input}) => ({
-    behaviors: input.behaviors ?? coreBehaviors,
+    behaviors: input.behaviors ?? [],
     editorIdGenerator: createKeyGenerator('e'),
     editors: [],
     rangeDecorations: input.rangeDecorations,
