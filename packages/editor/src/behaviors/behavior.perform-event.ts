@@ -138,12 +138,22 @@ export function performEvent({
   for (const eventBehavior of eventBehaviors) {
     eventBehaviorIndex++
 
-    const shouldRun =
-      eventBehavior.guard === undefined ||
-      eventBehavior.guard({
-        snapshot: guardSnapshot,
-        event,
-      })
+    let shouldRun = false
+
+    try {
+      shouldRun =
+        eventBehavior.guard === undefined ||
+        eventBehavior.guard({
+          snapshot: guardSnapshot,
+          event,
+        })
+    } catch (error) {
+      console.error(
+        new Error(
+          `Evaluating guard for "${event.type}" failed due to: ${error.message}`,
+        ),
+      )
+    }
 
     if (!shouldRun) {
       continue
