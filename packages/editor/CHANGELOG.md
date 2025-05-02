@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.48.10](https://github.com/portabletext/editor/compare/editor-v1.48.9...editor-v1.48.10) (2025-05-02)
+
+
+### Bug Fixes
+
+* defer incoming patches if the editor is syncing ([99fcece](https://github.com/portabletext/editor/commit/99fcecec32c5822ff8d1cba1d01476500ddf98d6))
+
 ## [1.48.9](https://github.com/portabletext/editor/compare/editor-v1.48.8...editor-v1.48.9) (2025-05-01)
 
 
