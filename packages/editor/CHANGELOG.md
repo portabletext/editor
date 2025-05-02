@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.48.13](https://github.com/portabletext/editor/compare/editor-v1.48.12...editor-v1.48.13) (2025-05-02)
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^3.87.1 ([65bdc36](https://github.com/portabletext/editor/commit/65bdc36b80ce4e582ba0f838acd6baf5c78554d8))
+* guard against more errors while performing events ([88d3823](https://github.com/portabletext/editor/commit/88d38238639f274e5b63a744bf61c69a2bfa5eec))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.23
+
 ## [1.48.12](https://github.com/portabletext/editor/compare/editor-v1.48.11...editor-v1.48.12) (2025-05-02)
 
 
