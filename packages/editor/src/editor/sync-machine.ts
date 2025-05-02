@@ -126,7 +126,8 @@ export const syncMachine = setup({
           'type',
           'invalid value' | 'patch' | 'value changed'
         >
-      | {type: 'done syncing initial value'},
+      | {type: 'done syncing value'}
+      | {type: 'syncing value'},
   },
   actions: {
     'assign initial value synced': assign({
@@ -153,8 +154,11 @@ export const syncMachine = setup({
         return event.value
       },
     }),
-    'emit done syncing initial value': emit({
-      type: 'done syncing initial value',
+    'emit done syncing value': emit({
+      type: 'done syncing value',
+    }),
+    'emit syncing value': emit({
+      type: 'syncing value',
     }),
   },
   guards: {
@@ -230,7 +234,7 @@ export const syncMachine = setup({
         },
         'done syncing initial value': {
           entry: [
-            'emit done syncing initial value',
+            'emit done syncing value',
             () => {
               debug('entry: done syncing initial value')
             },
@@ -313,11 +317,13 @@ export const syncMachine = setup({
             () => {
               debug('entry: syncing->syncing')
             },
+            'emit syncing value',
           ],
           exit: [
             () => {
               debug('exit: syncing->syncing')
             },
+            'emit done syncing value',
           ],
           always: {
             guard: 'pending value equals previous value',
