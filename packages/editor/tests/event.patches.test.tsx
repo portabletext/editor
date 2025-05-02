@@ -6,11 +6,188 @@ import {
   EditorProvider,
   PortableTextEditable,
   type Editor,
+  type EditorEmittedEvent,
 } from '../src'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
-import {EditorRefPlugin} from '../src/plugins'
+import {EditorRefPlugin, EventListenerPlugin} from '../src/plugins'
 
 describe('event.patches', () => {
+  test('Scenario: Patching while syncing initial value', async () => {
+    const editorRef = React.createRef<Editor>()
+    const keyGenerator = createTestKeyGenerator()
+    const onEvent = vi.fn<() => EditorEmittedEvent>()
+    const listBlock = {
+      _key: keyGenerator(),
+      _type: 'block',
+      children: [
+        {
+          _key: keyGenerator(),
+          _type: 'span',
+          text: 'foo',
+          marks: [],
+        },
+      ],
+      level: 1,
+      listItem: 'bullet',
+      markDefs: [],
+      style: 'normal',
+    }
+    const headingBlock = {
+      _type: 'block',
+      _key: keyGenerator(),
+      children: [
+        {
+          _type: 'span',
+          _key: keyGenerator(),
+          text: 'foo',
+          marks: [],
+        },
+      ],
+      markDefs: [],
+      style: 'h1',
+    }
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            lists: [{name: 'bullet'}],
+            styles: [{name: 'normal'}, {name: 'h1'}],
+          }),
+          initialValue: [listBlock],
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <EventListenerPlugin on={onEvent} />
+        <PortableTextEditable />
+      </EditorProvider>,
+    )
+
+    editorRef.current?.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'setIfMissing',
+          path: [],
+          value: [],
+          origin: 'remote',
+        },
+        {
+          type: 'insert',
+          position: 'before',
+          path: [
+            {
+              _key: listBlock._key,
+            },
+          ],
+          items: [headingBlock],
+          origin: 'remote',
+        },
+      ],
+      snapshot: [headingBlock, listBlock],
+    })
+
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        headingBlock,
+        listBlock,
+      ])
+    })
+  })
+
+  test('Scenario: Patching while syncing incoming value', async () => {
+    const editorRef = React.createRef<Editor>()
+    const keyGenerator = createTestKeyGenerator()
+    const onEvent = vi.fn<() => EditorEmittedEvent>()
+    const listBlock = {
+      _key: keyGenerator(),
+      _type: 'block',
+      children: [
+        {
+          _key: keyGenerator(),
+          _type: 'span',
+          text: 'foo',
+          marks: [],
+        },
+      ],
+      level: 1,
+      listItem: 'bullet',
+      markDefs: [],
+      style: 'normal',
+    }
+    const headingBlock = {
+      _type: 'block',
+      _key: keyGenerator(),
+      children: [
+        {
+          _type: 'span',
+          _key: keyGenerator(),
+          text: 'foo',
+          marks: [],
+        },
+      ],
+      markDefs: [],
+      style: 'h1',
+    }
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            lists: [{name: 'bullet'}],
+            styles: [{name: 'normal'}, {name: 'h1'}],
+          }),
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <EventListenerPlugin on={onEvent} />
+        <PortableTextEditable />
+      </EditorProvider>,
+    )
+
+    editorRef.current?.send({
+      type: 'update value',
+      value: [listBlock],
+    })
+
+    await vi.waitFor(() => {
+      expect(onEvent).toHaveBeenCalledWith({type: 'ready'})
+    })
+
+    editorRef.current?.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'setIfMissing',
+          path: [],
+          value: [],
+          origin: 'remote',
+        },
+        {
+          type: 'insert',
+          position: 'before',
+          path: [
+            {
+              _key: listBlock._key,
+            },
+          ],
+          items: [headingBlock],
+          origin: 'remote',
+        },
+      ],
+      snapshot: [headingBlock, listBlock],
+    })
+
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        headingBlock,
+        listBlock,
+      ])
+    })
+  })
+
   test('`set` block object properties', async () => {
     const editorRef = React.createRef<Editor>()
     const keyGenerator = createTestKeyGenerator()
