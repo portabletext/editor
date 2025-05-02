@@ -76,9 +76,10 @@ export type BehaviorActionSet<TBehaviorEvent, TGuardResponse> = (
   guardResponse: TGuardResponse,
 ) => Array<BehaviorAction>
 
-export type InternalBehaviorAction = (
-  | OmitFromUnion<SyntheticBehaviorEvent, 'type', AbstractBehaviorEventType>
-  | {type: 'effect'; effect: () => void}
-) & {
+export type InternalBehaviorAction = OmitFromUnion<
+  SyntheticBehaviorEvent,
+  'type',
+  AbstractBehaviorEventType
+> & {
   editor: PortableTextSlateEditor
 }

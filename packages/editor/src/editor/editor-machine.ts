@@ -341,26 +341,34 @@ export const editorMachine = setup({
     'handle behavior event': ({context, event, self}) => {
       assertEvent(event, ['behavior event'])
 
-      performEvent({
-        mode: 'raise',
-        behaviors: [...context.behaviors.values()],
-        remainingEventBehaviors: [...context.behaviors.values()],
-        event: event.behaviorEvent,
-        editor: event.editor,
-        keyGenerator: context.keyGenerator,
-        schema: context.schema,
-        getSnapshot: () =>
-          createEditorSnapshot({
-            converters: [...context.converters],
-            editor: event.editor,
-            keyGenerator: context.keyGenerator,
-            readOnly: self.getSnapshot().matches({'edit mode': 'read only'}),
-            schema: context.schema,
-            hasTag: (tag) => self.getSnapshot().hasTag(tag),
-            internalDrag: context.internalDrag,
-          }),
-        nativeEvent: event.nativeEvent,
-      })
+      try {
+        performEvent({
+          mode: 'raise',
+          behaviors: [...context.behaviors.values()],
+          remainingEventBehaviors: [...context.behaviors.values()],
+          event: event.behaviorEvent,
+          editor: event.editor,
+          keyGenerator: context.keyGenerator,
+          schema: context.schema,
+          getSnapshot: () =>
+            createEditorSnapshot({
+              converters: [...context.converters],
+              editor: event.editor,
+              keyGenerator: context.keyGenerator,
+              readOnly: self.getSnapshot().matches({'edit mode': 'read only'}),
+              schema: context.schema,
+              hasTag: (tag) => self.getSnapshot().hasTag(tag),
+              internalDrag: context.internalDrag,
+            }),
+          nativeEvent: event.nativeEvent,
+        })
+      } catch (error) {
+        console.error(
+          new Error(
+            `Raising "${event.behaviorEvent.type}" failed due to: ${error.message}`,
+          ),
+        )
+      }
     },
   },
   guards: {
