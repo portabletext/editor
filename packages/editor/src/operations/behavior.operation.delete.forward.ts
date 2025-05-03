@@ -1,7 +1,8 @@
+import {deleteForward} from 'slate'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const deleteForwardOperationImplementation: BehaviorOperationImplementation<
   'delete.forward'
 > = ({operation}) => {
-  operation.editor.deleteForward(operation.unit)
+  deleteForward(operation.editor, operation.unit)
 }
