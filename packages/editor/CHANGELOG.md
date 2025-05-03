@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.48.14](https://github.com/portabletext/editor/compare/editor-v1.48.13...editor-v1.48.14) (2025-05-03)
+
+
+### Bug Fixes
+
+* add try...catch around patching ([6d0c35e](https://github.com/portabletext/editor/commit/6d0c35e05d9197f5fbfb04405c6bff6cccd007b9))
+* **behaviors:** give Core Behaviors lowest priority ([869f7e0](https://github.com/portabletext/editor/commit/869f7e0e2f7eec5db6ac6f4ed86914e7b9cbb241))
+* **behaviors:** remove `CoreBehaviorsPlugin` export ([38a5887](https://github.com/portabletext/editor/commit/38a58872ed6b3745a83cc5d86e1b60b90caa772a))
+* handle try...catch for all Operations ([4ff4d39](https://github.com/portabletext/editor/commit/4ff4d39236f465055a78074ee5c70c89c89e1320))
+
 ## [1.48.13](https://github.com/portabletext/editor/compare/editor-v1.48.12...editor-v1.48.13) (2025-05-02)
 
 
