@@ -7,7 +7,7 @@ import {
 } from '../editor/with-applying-behavior-actions'
 import {debugWithName} from '../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../types/editor'
-import {defaultBehaviors} from './behavior.default'
+import {abstractBehaviors} from './behavior.abstract'
 import type {BehaviorAction} from './behavior.types.action'
 import type {Behavior} from './behavior.types.behavior'
 import {
@@ -59,7 +59,7 @@ export function performEvent({
 
   const eventBehaviors = [
     ...remainingEventBehaviors,
-    ...defaultBehaviors,
+    ...abstractBehaviors,
   ].filter((behavior) => {
     // Catches all events
     if (behavior.on === '*') {
