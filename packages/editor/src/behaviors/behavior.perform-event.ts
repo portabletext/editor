@@ -1,9 +1,7 @@
 import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
-import {
-  withApplyingBehaviorOperations,
-  withUndoStep,
-} from '../editor/with-applying-behavior-operations'
+import {withApplyingBehaviorOperations} from '../editor/with-applying-behavior-operations'
+import {withUndoStep} from '../editor/with-undo-step'
 import {debugWithName} from '../internal-utils/debug'
 import {performOperation} from '../operations/behavior.operations'
 import type {PortableTextSlateEditor} from '../types/editor'
