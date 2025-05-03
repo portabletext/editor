@@ -99,29 +99,18 @@ export function performEvent({
     nativeEvent?.preventDefault()
 
     withApplyingBehaviorOperations(editor, () => {
-      try {
-        debug(
-          `(execute:${eventCategory(event)})`,
-          JSON.stringify(event, null, 2),
-        )
+      debug(`(execute:${eventCategory(event)})`, JSON.stringify(event, null, 2))
 
-        performOperation({
-          context: {
-            keyGenerator,
-            schema,
-          },
-          operation: {
-            ...event,
-            editor,
-          },
-        })
-      } catch (error) {
-        console.error(
-          new Error(
-            `Executing "${event.type}" failed due to: ${error.message}`,
-          ),
-        )
-      }
+      performOperation({
+        context: {
+          keyGenerator,
+          schema,
+        },
+        operation: {
+          ...event,
+          editor,
+        },
+      })
     })
 
     editor.onChange()
@@ -338,26 +327,15 @@ export function performEvent({
     nativeEvent?.preventDefault()
 
     withApplyingBehaviorOperations(editor, () => {
-      try {
-        debug(
-          `(execute:${eventCategory(event)})`,
-          JSON.stringify(event, null, 2),
-        )
+      debug(`(execute:${eventCategory(event)})`, JSON.stringify(event, null, 2))
 
-        performOperation({
-          context: {keyGenerator, schema},
-          operation: {
-            ...event,
-            editor,
-          },
-        })
-      } catch (error) {
-        console.error(
-          new Error(
-            `Executing "${event.type}" failed due to: ${error.message}`,
-          ),
-        )
-      }
+      performOperation({
+        context: {keyGenerator, schema},
+        operation: {
+          ...event,
+          editor,
+        },
+      })
     })
 
     editor.onChange()
