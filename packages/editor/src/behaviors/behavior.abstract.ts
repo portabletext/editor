@@ -7,12 +7,12 @@ import {abstractAnnotationBehaviors} from './behavior.abstract.annotation'
 import {abstractDecoratorBehaviors} from './behavior.abstract.decorator'
 import {abstractDeleteBehaviors} from './behavior.abstract.delete'
 import {abstractInsertBehaviors} from './behavior.abstract.insert'
+import {abstractKeyboardBehaviors} from './behavior.abstract.keyboard'
 import {abstractListItemBehaviors} from './behavior.abstract.list-item'
 import {abstractMoveBehaviors} from './behavior.abstract.move'
 import {abstractSelectBehaviors} from './behavior.abstract.select'
 import {abstractSplitBehaviors} from './behavior.abstract.split'
 import {abstractStyleBehaviors} from './behavior.abstract.style'
-import {raiseInsertSoftBreak} from './behavior.default.raise-soft-break'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -102,7 +102,7 @@ const raiseSerializationSuccessOrFailure = defineBehavior({
   ],
 })
 
-export const defaultBehaviors = [
+export const abstractBehaviors = [
   defineBehavior({
     on: 'clipboard.copy',
     guard: ({snapshot}) => {
@@ -451,6 +451,7 @@ export const defaultBehaviors = [
   ...abstractDecoratorBehaviors,
   ...abstractDeleteBehaviors,
   ...abstractInsertBehaviors,
+  ...abstractKeyboardBehaviors,
   ...abstractListItemBehaviors,
   ...abstractMoveBehaviors,
   ...abstractStyleBehaviors,
@@ -458,5 +459,4 @@ export const defaultBehaviors = [
   ...abstractSplitBehaviors,
   raiseDeserializationSuccessOrFailure,
   raiseSerializationSuccessOrFailure,
-  raiseInsertSoftBreak,
 ]
