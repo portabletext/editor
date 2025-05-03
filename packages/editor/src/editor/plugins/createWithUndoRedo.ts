@@ -34,7 +34,7 @@ import {
 import type {BehaviorOperationImplementation} from '../../operations/behavior.operations'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
-import {getCurrentUndoStepId} from '../with-applying-behavior-operations'
+import {getCurrentUndoStepId} from '../with-undo-step'
 
 const debug = debugWithName('plugin:withUndoRedo')
 const debugVerbose = debug.enabled && false
