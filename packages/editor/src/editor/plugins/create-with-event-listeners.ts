@@ -11,12 +11,11 @@ export function createWithEventListeners(editorActor: EditorActor) {
       return editor
     }
 
-    const {deleteBackward, deleteForward, insertBreak, insertText, select} =
-      editor
+    const {insertText, select} = editor
 
     editor.deleteBackward = (unit) => {
       if (isApplyingBehaviorOperations(editor)) {
-        deleteBackward(unit)
+        console.error('Unexpected call to .deleteBackward(...)')
         return
       }
 
@@ -33,7 +32,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
 
     editor.deleteForward = (unit) => {
       if (isApplyingBehaviorOperations(editor)) {
-        deleteForward(unit)
+        console.error('Unexpected call to .deleteForward(...)')
         return
       }
 
@@ -50,7 +49,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
 
     editor.insertBreak = () => {
       if (isApplyingBehaviorOperations(editor)) {
-        insertBreak()
+        console.error('Unexpected call to .insertBreak(...)')
         return
       }
 
@@ -66,7 +65,8 @@ export function createWithEventListeners(editorActor: EditorActor) {
 
     editor.insertData = (dataTransfer) => {
       if (isApplyingBehaviorOperations(editor)) {
-        throw new Error('Unexpected call to .insertData(...)')
+        console.error('Unexpected call to .insertData(...)')
+        return
       }
 
       editorActor.send({
@@ -169,7 +169,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.setFragmentData = () => {
-      console.warn('Unexpected call to .setFragmentData(...)')
+      console.error('Unexpected call to .setFragmentData(...)')
       return
     }
 
