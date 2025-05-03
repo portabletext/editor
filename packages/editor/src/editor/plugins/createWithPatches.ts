@@ -108,15 +108,23 @@ export function createWithPatches({
       const patches = bufferedPatches
       bufferedPatches = []
       let changed = false
+
       withRemoteChanges(editor, () => {
         Editor.withoutNormalizing(editor, () => {
           withoutPatching(editor, () => {
             withoutSaving(editor, () => {
-              patches.forEach((patch) => {
+              for (const patch of patches) {
                 if (debug.enabled)
                   debug(`Handling remote patch ${JSON.stringify(patch)}`)
-                changed = applyPatch(editor, patch)
-              })
+
+                try {
+                  changed = applyPatch(editor, patch)
+                } catch (error) {
+                  console.error(
+                    `Applying patch ${JSON.stringify(patch)} failed due to: ${error.message}`,
+                  )
+                }
+              }
             })
           })
         })
