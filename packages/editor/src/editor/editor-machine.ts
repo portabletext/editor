@@ -344,8 +344,11 @@ export const editorMachine = setup({
       try {
         performEvent({
           mode: 'raise',
-          behaviors: [...context.behaviors.values()],
-          remainingEventBehaviors: [...context.behaviors.values()],
+          behaviors: [...context.behaviors.values(), ...coreBehaviors],
+          remainingEventBehaviors: [
+            ...context.behaviors.values(),
+            ...coreBehaviors,
+          ],
           event: event.behaviorEvent,
           editor: event.editor,
           keyGenerator: context.keyGenerator,
@@ -383,7 +386,7 @@ export const editorMachine = setup({
 }).createMachine({
   id: 'editor',
   context: ({input}) => ({
-    behaviors: new Set([...coreBehaviors]),
+    behaviors: new Set([]),
     converters: new Set(input.converters ?? []),
     getLegacySchema: input.getLegacySchema,
     keyGenerator: input.keyGenerator,
