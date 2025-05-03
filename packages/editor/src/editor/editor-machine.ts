@@ -140,7 +140,7 @@ type PatchEvent = {
 }
 
 type InternalPatchEvent = NamespaceEvent<PatchEvent, 'internal'> & {
-  actionId?: string
+  operationId?: string
   value: Array<PortableTextBlock>
 }
 

@@ -27,7 +27,7 @@ import {
 } from '../../internal-utils/withoutPatching'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
-import {getCurrentActionId} from '../with-applying-behavior-actions'
+import {getCurrentOperationId} from '../with-applying-behavior-operations'
 import {withoutSaving} from './createWithUndoRedo'
 
 const debug = debugWithName('plugin:withPatches')
@@ -301,7 +301,7 @@ export function createWithPatches({
           editorActor.send({
             type: 'internal.patch',
             patch: {...patch, origin: 'local'},
-            actionId: getCurrentActionId(editor),
+            operationId: getCurrentOperationId(editor),
             value: fromSlateValue(
               editor.children,
               editorActor.getSnapshot().context.schema.block.name,

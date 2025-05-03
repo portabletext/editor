@@ -20,7 +20,6 @@ import {
   type Descendant,
   type SelectionOperation,
 } from 'slate'
-import type {BehaviorActionImplementation} from '../../behavior-actions/behavior.actions'
 import {debugWithName} from '../../internal-utils/debug'
 import {fromSlateValue} from '../../internal-utils/values'
 import {isChangingRemotely} from '../../internal-utils/withChanges'
@@ -32,9 +31,10 @@ import {
   withRedoing,
   withUndoing,
 } from '../../internal-utils/withUndoRedo'
+import type {BehaviorOperationImplementation} from '../../operations/behavior.operations'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
-import {getCurrentUndoStepId} from '../with-applying-behavior-actions'
+import {getCurrentUndoStepId} from '../with-applying-behavior-operations'
 
 const debug = debugWithName('plugin:withUndoRedo')
 const debugVerbose = debug.enabled && false
@@ -203,10 +203,10 @@ export function createWithUndoRedo(
   }
 }
 
-export const historyUndoActionImplementation: BehaviorActionImplementation<
+export const historyUndoOperationImplementation: BehaviorOperationImplementation<
   'history.undo'
-> = ({action}) => {
-  const editor = action.editor
+> = ({operation}) => {
+  const editor = operation.editor
   const {undos} = editor.history
   const remotePatches = getRemotePatches(editor)
 
@@ -261,10 +261,10 @@ export const historyUndoActionImplementation: BehaviorActionImplementation<
   }
 }
 
-export const historyRedoActionImplementation: BehaviorActionImplementation<
+export const historyRedoOperationImplementation: BehaviorOperationImplementation<
   'history.redo'
-> = ({action}) => {
-  const editor = action.editor
+> = ({operation}) => {
+  const editor = operation.editor
   const {redos} = editor.history
   const remotePatches = getRemotePatches(editor)
 

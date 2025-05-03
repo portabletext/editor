@@ -1,20 +1,20 @@
 import {Editor} from 'slate'
 import {defaultKeyGenerator} from './key-generator'
 
-const CURRENT_ACTION_ID: WeakMap<Editor, string | undefined> = new WeakMap()
+const CURRENT_OPERATION_ID: WeakMap<Editor, string | undefined> = new WeakMap()
 
-export function withApplyingBehaviorActions(editor: Editor, fn: () => void) {
-  CURRENT_ACTION_ID.set(editor, defaultKeyGenerator())
+export function withApplyingBehaviorOperations(editor: Editor, fn: () => void) {
+  CURRENT_OPERATION_ID.set(editor, defaultKeyGenerator())
   Editor.withoutNormalizing(editor, fn)
-  CURRENT_ACTION_ID.set(editor, undefined)
+  CURRENT_OPERATION_ID.set(editor, undefined)
 }
 
-export function getCurrentActionId(editor: Editor) {
-  return CURRENT_ACTION_ID.get(editor)
+export function getCurrentOperationId(editor: Editor) {
+  return CURRENT_OPERATION_ID.get(editor)
 }
 
-export function isApplyingBehaviorActions(editor: Editor) {
-  return getCurrentActionId(editor) !== undefined
+export function isApplyingBehaviorOperations(editor: Editor) {
+  return getCurrentOperationId(editor) !== undefined
 }
 
 ////////

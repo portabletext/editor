@@ -8,11 +8,11 @@ import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import type {PortableTextObject, PortableTextSpan} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {Editor, Element, Node, Path, Range, Text, Transforms} from 'slate'
-import type {BehaviorActionImplementation} from '../../behavior-actions/behavior.actions'
 import {debugWithName} from '../../internal-utils/debug'
 import {getNextSpan, getPreviousSpan} from '../../internal-utils/sibling-utils'
 import {isChangingRemotely} from '../../internal-utils/withChanges'
 import {isRedoing, isUndoing} from '../../internal-utils/withUndoRedo'
+import type {BehaviorOperationImplementation} from '../../operations/behavior.operations'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 
@@ -660,11 +660,11 @@ export function createWithPortableTextMarkModel(
   }
 }
 
-export const removeDecoratorActionImplementation: BehaviorActionImplementation<
+export const removeDecoratorOperationImplementation: BehaviorOperationImplementation<
   'decorator.remove'
-> = ({action}) => {
-  const editor = action.editor
-  const mark = action.decorator
+> = ({operation}) => {
+  const editor = operation.editor
+  const mark = operation.decorator
   const {selection} = editor
 
   if (selection) {
