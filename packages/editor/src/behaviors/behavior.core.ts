@@ -5,9 +5,6 @@ import {coreDndBehaviors} from './behavior.core.dnd'
 import {coreInsertBreakBehaviors} from './behavior.core.insert-break'
 import {coreListBehaviors} from './behavior.core.lists'
 
-/**
- * @beta
- */
 export const coreBehaviors = [
   coreAnnotationBehaviors.addAnnotationOnCollapsedSelection,
   coreDecoratorBehaviors.strongShortcut,
