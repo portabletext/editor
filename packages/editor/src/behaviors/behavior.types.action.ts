@@ -1,8 +1,6 @@
 import type {EditorSnapshot} from '../editor/editor-snapshot'
-import type {OmitFromUnion, PickFromUnion} from '../type-utils'
-import type {PortableTextSlateEditor} from '../types/editor'
+import type {PickFromUnion} from '../type-utils'
 import type {
-  AbstractBehaviorEventType,
   CustomBehaviorEvent,
   NativeBehaviorEvent,
   SyntheticBehaviorEvent,
@@ -75,11 +73,3 @@ export type BehaviorActionSet<TBehaviorEvent, TGuardResponse> = (
   },
   guardResponse: TGuardResponse,
 ) => Array<BehaviorAction>
-
-export type InternalBehaviorAction = OmitFromUnion<
-  SyntheticBehaviorEvent,
-  'type',
-  AbstractBehaviorEventType
-> & {
-  editor: PortableTextSlateEditor
-}

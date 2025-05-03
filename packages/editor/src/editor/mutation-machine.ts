@@ -23,7 +23,7 @@ export const mutationMachine = setup({
   types: {
     context: {} as {
       pendingMutations: Array<{
-        actionId?: string
+        operationId?: string
         value: Array<PortableTextBlock> | undefined
         patches: Array<Patch>
       }>
@@ -34,7 +34,7 @@ export const mutationMachine = setup({
       | {
           type: 'patch'
           patch: Patch
-          actionId?: string
+          operationId?: string
           value: Array<PortableTextBlock>
         }
       | {
@@ -78,7 +78,7 @@ export const mutationMachine = setup({
         if (context.pendingMutations.length === 0) {
           return [
             {
-              actionId: event.actionId,
+              operationId: event.operationId,
               value: event.value,
               patches: [event.patch],
             },
@@ -87,17 +87,17 @@ export const mutationMachine = setup({
 
         const lastBulk = context.pendingMutations.at(-1)
 
-        if (lastBulk && lastBulk.actionId === event.actionId) {
+        if (lastBulk && lastBulk.operationId === event.operationId) {
           return context.pendingMutations.slice(0, -1).concat({
             value: event.value,
-            actionId: lastBulk.actionId,
+            operationId: lastBulk.operationId,
             patches: [...lastBulk.patches, event.patch],
           })
         }
 
         return context.pendingMutations.concat({
           value: event.value,
-          actionId: event.actionId,
+          operationId: event.operationId,
           patches: [event.patch],
         })
       },

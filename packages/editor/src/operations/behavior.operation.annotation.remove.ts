@@ -1,11 +1,11 @@
 import type {PortableTextSpan} from '@sanity/types'
 import {Editor, Node, Path, Range, Transforms} from 'slate'
-import type {BehaviorActionImplementation} from './behavior.actions'
+import type {BehaviorOperationImplementation} from './behavior.operations'
 
-export const removeAnnotationActionImplementation: BehaviorActionImplementation<
+export const removeAnnotationOperationImplementation: BehaviorOperationImplementation<
   'annotation.remove'
-> = ({action}) => {
-  const editor = action.editor
+> = ({operation}) => {
+  const editor = operation.editor
 
   if (!editor.selection) {
     return
@@ -22,7 +22,7 @@ export const removeAnnotationActionImplementation: BehaviorActionImplementation<
 
     const markDefs = block.markDefs ?? []
     const potentialAnnotations = markDefs.filter(
-      (markDef) => markDef._type === action.annotation.name,
+      (markDef) => markDef._type === operation.annotation.name,
     )
 
     const [selectedChild, selectedChildPath] = Editor.node(
@@ -132,7 +132,7 @@ export const removeAnnotationActionImplementation: BehaviorActionImplementation<
         const marks = child.marks ?? []
         const marksWithoutAnnotation = marks.filter((mark) => {
           const markDef = markDefs.find((markDef) => markDef._key === mark)
-          return markDef?._type !== action.annotation.name
+          return markDef?._type !== operation.annotation.name
         })
 
         if (marksWithoutAnnotation.length !== marks.length) {

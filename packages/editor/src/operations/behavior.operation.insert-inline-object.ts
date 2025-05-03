@@ -1,35 +1,35 @@
 import {Editor, Transforms, type Element} from 'slate'
 import {parseInlineObject} from '../internal-utils/parse-blocks'
 import {toSlateValue} from '../internal-utils/values'
-import type {BehaviorActionImplementation} from './behavior.actions'
+import type {BehaviorOperationImplementation} from './behavior.operations'
 
-export const insertInlineObjectActionImplementation: BehaviorActionImplementation<
+export const insertInlineObjectOperationImplementation: BehaviorOperationImplementation<
   'insert.inline object'
-> = ({context, action}) => {
+> = ({context, operation}) => {
   const parsedInlineObject = parseInlineObject({
     context,
     inlineObject: {
-      _type: action.inlineObject.name,
-      ...(action.inlineObject.value ?? {}),
+      _type: operation.inlineObject.name,
+      ...(operation.inlineObject.value ?? {}),
     },
     options: {refreshKeys: false},
   })
 
   if (!parsedInlineObject) {
     throw new Error(
-      `Failed to parse inline object ${JSON.stringify(action.inlineObject)}`,
+      `Failed to parse inline object ${JSON.stringify(operation.inlineObject)}`,
     )
   }
 
-  if (!action.editor.selection) {
+  if (!operation.editor.selection) {
     console.error('Unable to insert inline object without selection')
     return
   }
 
   const [focusTextBlock] = Array.from(
-    Editor.nodes(action.editor, {
-      at: action.editor.selection.focus.path,
-      match: (node) => action.editor.isTextBlock(node),
+    Editor.nodes(operation.editor, {
+      at: operation.editor.selection.focus.path,
+      match: (node) => operation.editor.isTextBlock(node),
     }),
   ).at(0) ?? [undefined, undefined]
 
@@ -55,5 +55,5 @@ export const insertInlineObjectActionImplementation: BehaviorActionImplementatio
     return
   }
 
-  Transforms.insertNodes(action.editor, child)
+  Transforms.insertNodes(operation.editor, child)
 }

@@ -16,10 +16,10 @@ import {Subject} from 'rxjs'
 import {Slate} from 'slate-react'
 import {useEffectEvent} from 'use-effect-event'
 import {createActor} from 'xstate'
-import type {AddedAnnotationPaths} from '../behavior-actions/behavior.action.annotation.add'
 import {createCoreConverters} from '../converters/converters.core'
 import {debugWithName} from '../internal-utils/debug'
 import {compileType} from '../internal-utils/schema'
+import type {AddedAnnotationPaths} from '../operations/behavior.operation.annotation.add'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,

@@ -4,7 +4,7 @@ export type {
   PortableTextChild,
   PortableTextSpan,
 } from '@sanity/types'
-export type {AddedAnnotationPaths} from './behavior-actions/behavior.action.annotation.add'
+export type {AddedAnnotationPaths} from './operations/behavior.operation.annotation.add'
 export {EditorEventListener} from './editor-event-listener'
 export type {Editor, EditorConfig, EditorEvent} from './editor/create-editor'
 export {

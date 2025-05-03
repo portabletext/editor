@@ -11,19 +11,19 @@ import {
 } from '../internal-utils/slate-utils'
 import {isEqualToEmptyEditor, toSlateValue} from '../internal-utils/values'
 import type {PortableTextSlateEditor} from '../types/editor'
-import type {BehaviorActionImplementation} from './behavior.actions'
+import type {BehaviorOperationImplementation} from './behavior.operations'
 
-export const insertBlockActionImplementation: BehaviorActionImplementation<
+export const insertBlockOperationImplementation: BehaviorOperationImplementation<
   'insert.block'
-> = ({context, action}) => {
+> = ({context, operation}) => {
   const parsedBlock = parseBlock({
-    block: action.block,
+    block: operation.block,
     context,
     options: {refreshKeys: false},
   })
 
   if (!parsedBlock) {
-    throw new Error(`Failed to parse block ${JSON.stringify(action.block)}`)
+    throw new Error(`Failed to parse block ${JSON.stringify(operation.block)}`)
   }
 
   const fragment = toSlateValue([parsedBlock], {schemaTypes: context.schema})[0]
@@ -36,9 +36,9 @@ export const insertBlockActionImplementation: BehaviorActionImplementation<
 
   insertBlock({
     block: fragment,
-    placement: action.placement,
-    select: action.select ?? 'start',
-    editor: action.editor,
+    placement: operation.placement,
+    select: operation.select ?? 'start',
+    editor: operation.editor,
     schema: context.schema,
   })
 }

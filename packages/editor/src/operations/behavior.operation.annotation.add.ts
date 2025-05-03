@@ -1,7 +1,7 @@
 import type {Path} from '@sanity/types'
 import {Editor, Node, Range, Text, Transforms} from 'slate'
 import {parseAnnotation} from '../internal-utils/parse-blocks'
-import type {BehaviorActionImplementation} from './behavior.actions'
+import type {BehaviorOperationImplementation} from './behavior.operations'
 
 /**
  * @public
@@ -21,14 +21,14 @@ export type AddedAnnotationPaths = {
   spanPath: Path
 }
 
-export const addAnnotationActionImplementation: BehaviorActionImplementation<
+export const addAnnotationOperationImplementation: BehaviorOperationImplementation<
   'annotation.add',
   AddedAnnotationPaths | undefined
-> = ({context, action}) => {
+> = ({context, operation}) => {
   const parsedAnnotation = parseAnnotation({
     annotation: {
-      _type: action.annotation.name,
-      ...action.annotation.value,
+      _type: operation.annotation.name,
+      ...operation.annotation.value,
     },
     context,
     options: {refreshKeys: false},
@@ -36,11 +36,11 @@ export const addAnnotationActionImplementation: BehaviorActionImplementation<
 
   if (!parsedAnnotation) {
     throw new Error(
-      `Failed to parse annotation ${JSON.stringify(action.annotation)}`,
+      `Failed to parse annotation ${JSON.stringify(operation.annotation)}`,
     )
   }
 
-  const editor = action.editor
+  const editor = operation.editor
 
   if (!editor.selection || Range.isCollapsed(editor.selection)) {
     return

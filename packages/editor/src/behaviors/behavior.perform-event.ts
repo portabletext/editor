@@ -1,11 +1,11 @@
-import {performAction} from '../behavior-actions/behavior.actions'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
 import {
-  withApplyingBehaviorActions,
+  withApplyingBehaviorOperations,
   withUndoStep,
-} from '../editor/with-applying-behavior-actions'
+} from '../editor/with-applying-behavior-operations'
 import {debugWithName} from '../internal-utils/debug'
+import {performOperation} from '../operations/behavior.operations'
 import type {PortableTextSlateEditor} from '../types/editor'
 import {abstractBehaviors} from './behavior.abstract'
 import type {BehaviorAction} from './behavior.types.action'
@@ -100,19 +100,19 @@ export function performEvent({
   if (eventBehaviors.length === 0 && isSyntheticBehaviorEvent(event)) {
     nativeEvent?.preventDefault()
 
-    withApplyingBehaviorActions(editor, () => {
+    withApplyingBehaviorOperations(editor, () => {
       try {
         debug(
           `(execute:${eventCategory(event)})`,
           JSON.stringify(event, null, 2),
         )
 
-        performAction({
+        performOperation({
           context: {
             keyGenerator,
             schema,
           },
-          action: {
+          operation: {
             ...event,
             editor,
           },
@@ -339,16 +339,16 @@ export function performEvent({
   if (!defaultBehaviorOverwritten && isSyntheticBehaviorEvent(event)) {
     nativeEvent?.preventDefault()
 
-    withApplyingBehaviorActions(editor, () => {
+    withApplyingBehaviorOperations(editor, () => {
       try {
         debug(
           `(execute:${eventCategory(event)})`,
           JSON.stringify(event, null, 2),
         )
 
-        performAction({
+        performOperation({
           context: {keyGenerator, schema},
-          action: {
+          operation: {
             ...event,
             editor,
           },

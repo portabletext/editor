@@ -16,7 +16,6 @@ import {
 } from 'slate'
 import type {DOMNode} from 'slate-dom'
 import {ReactEditor} from 'slate-react'
-import {addAnnotationActionImplementation} from '../../behavior-actions/behavior.action.annotation.add'
 import {debugWithName} from '../../internal-utils/debug'
 import {toSlateRange} from '../../internal-utils/ranges'
 import {
@@ -29,6 +28,7 @@ import {
   KEY_TO_VALUE_ELEMENT,
   SLATE_TO_PORTABLE_TEXT_RANGE,
 } from '../../internal-utils/weakMaps'
+import {addAnnotationOperationImplementation} from '../../operations/behavior.operation.annotation.add'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
@@ -400,12 +400,12 @@ export function createEditableAPI(
       let paths: ReturnType<EditableAPI['addAnnotation']> = undefined
 
       Editor.withoutNormalizing(editor, () => {
-        paths = addAnnotationActionImplementation({
+        paths = addAnnotationOperationImplementation({
           context: {
             keyGenerator: editorActor.getSnapshot().context.keyGenerator,
             schema: types,
           },
-          action: {
+          operation: {
             type: 'annotation.add',
             annotation: {name: type.name, value: value ?? {}},
             editor,

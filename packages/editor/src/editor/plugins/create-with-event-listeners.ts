@@ -1,9 +1,9 @@
 import {Editor} from 'slate'
-import {insertTextActionImplementation} from '../../behavior-actions/behavior.action.insert.text'
-import {performAction} from '../../behavior-actions/behavior.actions'
 import {slateRangeToSelection} from '../../internal-utils/slate-utils'
+import {insertTextOperationImplementation} from '../../operations/behavior.operation.insert.text'
+import {performOperation} from '../../operations/behavior.operations'
 import type {EditorActor} from '../editor-machine'
-import {isApplyingBehaviorActions} from '../with-applying-behavior-actions'
+import {isApplyingBehaviorOperations} from '../with-applying-behavior-operations'
 
 export function createWithEventListeners(editorActor: EditorActor) {
   return function withEventListeners(editor: Editor) {
@@ -15,7 +15,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
       editor
 
     editor.deleteBackward = (unit) => {
-      if (isApplyingBehaviorActions(editor)) {
+      if (isApplyingBehaviorOperations(editor)) {
         deleteBackward(unit)
         return
       }
@@ -32,7 +32,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.deleteForward = (unit) => {
-      if (isApplyingBehaviorActions(editor)) {
+      if (isApplyingBehaviorOperations(editor)) {
         deleteForward(unit)
         return
       }
@@ -49,7 +49,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.insertBreak = () => {
-      if (isApplyingBehaviorActions(editor)) {
+      if (isApplyingBehaviorOperations(editor)) {
         insertBreak()
         return
       }
@@ -65,7 +65,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.insertData = (dataTransfer) => {
-      if (isApplyingBehaviorActions(editor)) {
+      if (isApplyingBehaviorOperations(editor)) {
         throw new Error('Unexpected call to .insertData(...)')
       }
 
@@ -82,13 +82,13 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.insertSoftBreak = () => {
-      if (isApplyingBehaviorActions(editor)) {
-        insertTextActionImplementation({
+      if (isApplyingBehaviorOperations(editor)) {
+        insertTextOperationImplementation({
           context: {
             keyGenerator: editorActor.getSnapshot().context.keyGenerator,
             schema: editorActor.getSnapshot().context.schema,
           },
-          action: {type: 'insert.text', text: '\n', editor},
+          operation: {type: 'insert.text', text: '\n', editor},
         })
         return
       }
@@ -104,7 +104,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.insertText = (text, options) => {
-      if (isApplyingBehaviorActions(editor)) {
+      if (isApplyingBehaviorOperations(editor)) {
         insertText(text, options)
         return
       }
@@ -121,13 +121,13 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.redo = () => {
-      if (isApplyingBehaviorActions(editor)) {
-        performAction({
+      if (isApplyingBehaviorOperations(editor)) {
+        performOperation({
           context: {
             keyGenerator: editorActor.getSnapshot().context.keyGenerator,
             schema: editorActor.getSnapshot().context.schema,
           },
-          action: {
+          operation: {
             type: 'history.redo',
             editor,
           },
@@ -146,7 +146,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.select = (location) => {
-      if (isApplyingBehaviorActions(editor)) {
+      if (isApplyingBehaviorOperations(editor)) {
         select(location)
         return
       }
@@ -174,13 +174,13 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.undo = () => {
-      if (isApplyingBehaviorActions(editor)) {
-        performAction({
+      if (isApplyingBehaviorOperations(editor)) {
+        performOperation({
           context: {
             keyGenerator: editorActor.getSnapshot().context.keyGenerator,
             schema: editorActor.getSnapshot().context.schema,
           },
-          action: {
+          operation: {
             type: 'history.undo',
             editor,
           },

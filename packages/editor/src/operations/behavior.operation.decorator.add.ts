@@ -5,36 +5,36 @@ import {fromSlateValue} from '../internal-utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
 import * as selectors from '../selectors'
 import * as utils from '../utils'
-import type {BehaviorActionImplementation} from './behavior.actions'
+import type {BehaviorOperationImplementation} from './behavior.operations'
 
-export const decoratorAddActionImplementation: BehaviorActionImplementation<
+export const decoratorAddOperationImplementation: BehaviorOperationImplementation<
   'decorator.add'
-> = ({context, action}) => {
-  const editor = action.editor
-  const mark = action.decorator
+> = ({context, operation}) => {
+  const editor = operation.editor
+  const mark = operation.decorator
   const value = fromSlateValue(
     editor.children,
     context.schema.block.name,
     KEY_TO_VALUE_ELEMENT.get(editor),
   )
 
-  const manualAnchor = action.at?.anchor
+  const manualAnchor = operation.at?.anchor
     ? utils.blockOffsetToSpanSelectionPoint({
         context: {
           ...context,
           value,
         },
-        blockOffset: action.at.anchor,
+        blockOffset: operation.at.anchor,
         direction: 'backward',
       })
     : undefined
-  const manualFocus = action.at?.focus
+  const manualFocus = operation.at?.focus
     ? utils.blockOffsetToSpanSelectionPoint({
         context: {
           ...context,
           value,
         },
-        blockOffset: action.at.focus,
+        blockOffset: operation.at.focus,
         direction: 'forward',
       })
     : undefined
@@ -47,7 +47,7 @@ export const decoratorAddActionImplementation: BehaviorActionImplementation<
       : undefined
 
   const selection = manualSelection
-    ? (toSlateRange(manualSelection, action.editor) ?? editor.selection)
+    ? (toSlateRange(manualSelection, operation.editor) ?? editor.selection)
     : editor.selection
 
   if (!selection) {
