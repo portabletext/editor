@@ -52,6 +52,9 @@ describe('initialization', () => {
   >
     <div
       class="pt-block pt-text-block pt-text-block-style-normal"
+      data-block-key="k0"
+      data-block-name="myTestBlockType"
+      data-block-type="text"
       data-slate-node="element"
     >
       <div>
@@ -65,6 +68,9 @@ describe('initialization', () => {
             Jot something down here
           </span>
           <span
+            data-child-key="k1"
+            data-child-name="span"
+            data-child-type="span"
             data-slate-leaf="true"
           >
             <span

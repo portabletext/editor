@@ -66,6 +66,9 @@ export function RenderInlineObject(props: {
         ref={inlineObjectRef}
         key={props.element._key}
         style={{display: 'inline-block'}}
+        data-child-key={props.inlineObject._key}
+        data-child-name={props.inlineObject._type}
+        data-child-type="object"
       >
         {props.renderChild && block && legacySchemaType ? (
           props.renderChild({

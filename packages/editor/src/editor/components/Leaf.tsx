@@ -318,7 +318,14 @@ export const Leaf = (props: LeafProps) => {
   ])
   return useMemo(
     () => (
-      <span key={leaf._key} {...attributes} ref={spanRef}>
+      <span
+        key={leaf._key}
+        {...attributes}
+        ref={spanRef}
+        data-child-key={leaf._key}
+        data-child-name={leaf._type}
+        data-child-type="span"
+      >
         {content}
       </span>
     ),

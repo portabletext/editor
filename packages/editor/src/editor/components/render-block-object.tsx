@@ -56,6 +56,9 @@ export function RenderBlockObject(props: {
       key={props.element._key}
       {...props.attributes}
       className="pt-block pt-object-block"
+      data-block-key={props.element._key}
+      data-block-name={props.element._type}
+      data-block-type="object"
     >
       {dragPositionBlock === 'start' ? <DropIndicator /> : null}
       {props.children}
