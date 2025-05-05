@@ -11,12 +11,13 @@ import {
   setup,
   type ActorRefFrom,
 } from 'xstate'
-import {coreBehaviors} from '../behaviors/behavior.core'
+import type {BehaviorConfig} from '../behaviors/behavior.config'
+import {coreBehaviorsConfig} from '../behaviors/behavior.core'
 import {performEvent} from '../behaviors/behavior.perform-event'
-import type {Behavior} from '../behaviors/behavior.types.behavior'
 import type {BehaviorEvent} from '../behaviors/behavior.types.event'
 import type {Converter} from '../converters/converter.types'
 import type {EventPosition} from '../internal-utils/event-position'
+import {sortByPriority} from '../priority/priority.sort'
 import type {NamespaceEvent} from '../type-utils'
 import type {
   EditorSelection,
@@ -55,14 +56,6 @@ export type MutationEvent = {
  * @public
  */
 export type ExternalEditorEvent =
-  | {
-      type: 'add behavior'
-      behavior: Behavior
-    }
-  | {
-      type: 'remove behavior'
-      behavior: Behavior
-    }
   | {
       type: 'update readOnly'
       readOnly: boolean
@@ -161,6 +154,14 @@ export type HasTag = ReturnType<EditorActor['getSnapshot']>['hasTag']
 export type InternalEditorEvent =
   | ExternalEditorEvent
   | {
+      type: 'add behavior'
+      behaviorConfig: BehaviorConfig
+    }
+  | {
+      type: 'remove behavior'
+      behaviorConfig: BehaviorConfig
+    }
+  | {
       type: 'blur'
       editor: PortableTextSlateEditor
     }
@@ -213,7 +214,7 @@ export type InternalEditorEmittedEvent =
 export const editorMachine = setup({
   types: {
     context: {} as {
-      behaviors: Set<Behavior>
+      behaviors: Set<BehaviorConfig>
       converters: Set<Converter>
       getLegacySchema: () => PortableTextMemberSchemaTypes
       keyGenerator: () => string
@@ -248,14 +249,14 @@ export const editorMachine = setup({
       behaviors: ({context, event}) => {
         assertEvent(event, 'add behavior')
 
-        return new Set([...context.behaviors, event.behavior])
+        return new Set([...context.behaviors, event.behaviorConfig])
       },
     }),
     'remove behavior from context': assign({
       behaviors: ({context, event}) => {
         assertEvent(event, 'remove behavior')
 
-        context.behaviors.delete(event.behavior)
+        context.behaviors.delete(event.behaviorConfig)
 
         return new Set([...context.behaviors])
       },
@@ -342,13 +343,15 @@ export const editorMachine = setup({
       assertEvent(event, ['behavior event'])
 
       try {
+        const behaviors = sortByPriority([
+          ...context.behaviors.values(),
+          ...coreBehaviorsConfig,
+        ]).map((config) => config.behavior)
+
         performEvent({
           mode: 'raise',
-          behaviors: [...context.behaviors.values(), ...coreBehaviors],
-          remainingEventBehaviors: [
-            ...context.behaviors.values(),
-            ...coreBehaviors,
-          ],
+          behaviors,
+          remainingEventBehaviors: behaviors,
           event: event.behaviorEvent,
           editor: event.editor,
           keyGenerator: context.keyGenerator,

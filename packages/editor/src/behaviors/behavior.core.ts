@@ -1,3 +1,4 @@
+import {corePriority} from '../priority/priority.core'
 import {coreAnnotationBehaviors} from './behavior.core.annotations'
 import {coreBlockObjectBehaviors} from './behavior.core.block-objects'
 import {coreDecoratorBehaviors} from './behavior.core.decorators'
@@ -5,7 +6,7 @@ import {coreDndBehaviors} from './behavior.core.dnd'
 import {coreInsertBreakBehaviors} from './behavior.core.insert-break'
 import {coreListBehaviors} from './behavior.core.lists'
 
-export const coreBehaviors = [
+export const coreBehaviorsConfig = [
   coreAnnotationBehaviors.addAnnotationOnCollapsedSelection,
   coreDecoratorBehaviors.strongShortcut,
   coreDecoratorBehaviors.emShortcut,
@@ -28,4 +29,7 @@ export const coreBehaviors = [
   coreInsertBreakBehaviors.breakingAtTheStartOfTextBlock,
   coreInsertBreakBehaviors.breakingEntireDocument,
   coreInsertBreakBehaviors.breakingEntireBlocks,
-]
+].map((behavior) => ({
+  behavior,
+  priority: corePriority,
+}))
