@@ -53,8 +53,8 @@ import type {
 import type {HotkeyOptions} from '../types/options'
 import {isSelectionCollapsed} from '../utils'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
-import {Element} from './components/Element'
 import {Leaf} from './components/Leaf'
+import {RenderElement} from './components/render-element'
 import {EditorActorContext} from './editor-actor-context'
 import {getEditorSnapshot} from './editor-selector'
 import {usePortableTextEditor} from './hooks/usePortableTextEditor'
@@ -223,19 +223,17 @@ export const PortableTextEditable = forwardRef<
 
   const renderElement = useCallback(
     (eProps: RenderElementProps) => (
-      <Element
+      <RenderElement
         {...eProps}
         readOnly={readOnly}
         renderBlock={renderBlock}
         renderChild={renderChild}
         renderListItem={renderListItem}
         renderStyle={renderStyle}
-        schemaTypes={portableTextEditor.schemaTypes}
         spellCheck={spellCheck}
       />
     ),
     [
-      portableTextEditor,
       spellCheck,
       readOnly,
       renderBlock,
