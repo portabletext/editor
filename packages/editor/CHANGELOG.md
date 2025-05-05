@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.49.0](https://github.com/portabletext/editor/compare/editor-v1.48.15...editor-v1.49.0) (2025-05-05)
+
+
+### Features
+
+* add helpful data attributes to rendered elements ([f4cae07](https://github.com/portabletext/editor/commit/f4cae070ed97ec3495aab7c3f704367821faeedf))
+
+
+### Bug Fixes
+
+* **converters:** use correct selection when serializing drag payloads ([b1dfd39](https://github.com/portabletext/editor/commit/b1dfd39ce083a19064fd8426d283a432e14d8323))
+
 ## [1.48.15](https://github.com/portabletext/editor/compare/editor-v1.48.14...editor-v1.48.15) (2025-05-05)
 
 
