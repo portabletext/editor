@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.48.15](https://github.com/portabletext/editor/compare/editor-v1.48.14...editor-v1.48.15) (2025-05-05)
+
+
+### Bug Fixes
+
+* **behaviors:** make sure Core Behaviors always have lowest priority ([62b7742](https://github.com/portabletext/editor/commit/62b7742c71abc93401715489e6fffb8cf071a210))
+
 ## [1.48.14](https://github.com/portabletext/editor/compare/editor-v1.48.13...editor-v1.48.14) (2025-05-03)
 
 
