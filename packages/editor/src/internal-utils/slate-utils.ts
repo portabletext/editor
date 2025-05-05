@@ -73,7 +73,7 @@ export function getSelectionEndBlock({
   return getPointBlock({editor, point: selectionEndPoint})
 }
 
-function getPointBlock({
+export function getPointBlock({
   editor,
   point,
 }: {
