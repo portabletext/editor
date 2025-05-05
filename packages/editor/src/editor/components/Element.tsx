@@ -26,6 +26,8 @@ import {debugWithName} from '../../internal-utils/debug'
 import type {EventPositionBlock} from '../../internal-utils/event-position'
 import {fromSlateValue} from '../../internal-utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../../internal-utils/weakMaps'
+import {corePriority} from '../../priority/priority.core'
+import {createEditorPriority} from '../../priority/priority.types'
 import * as selectors from '../../selectors'
 import type {
   BlockRenderProps,
@@ -150,15 +152,27 @@ export const Element: FunctionComponent<ElementProps> = ({
       ],
     })
 
+    const priority = createEditorPriority({
+      reference: {
+        priority: corePriority,
+        importance: 'lower',
+      },
+    })
+
+    const behaviorConfig = {
+      behavior,
+      priority,
+    }
+
     editorActor.send({
       type: 'add behavior',
-      behavior,
+      behaviorConfig,
     })
 
     return () => {
       editorActor.send({
         type: 'remove behavior',
-        behavior,
+        behaviorConfig,
       })
     }
   }, [editorActor, element._key])
@@ -182,15 +196,27 @@ export const Element: FunctionComponent<ElementProps> = ({
       ],
     })
 
+    const priority = createEditorPriority({
+      reference: {
+        priority: corePriority,
+        importance: 'lower',
+      },
+    })
+
+    const behaviorConfig = {
+      behavior,
+      priority,
+    }
+
     editorActor.send({
       type: 'add behavior',
-      behavior,
+      behaviorConfig,
     })
 
     return () => {
       editorActor.send({
         type: 'remove behavior',
-        behavior,
+        behaviorConfig,
       })
     }
   }, [editorActor])

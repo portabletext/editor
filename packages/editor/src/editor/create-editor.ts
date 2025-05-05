@@ -8,6 +8,8 @@ import type {Behavior} from '../behaviors/behavior.types.behavior'
 import type {ExternalBehaviorEvent} from '../behaviors/behavior.types.event'
 import {createCoreConverters} from '../converters/converters.core'
 import {compileType} from '../internal-utils/schema'
+import {corePriority} from '../priority/priority.core'
+import {createEditorPriority} from '../priority/priority.types'
 import type {EditableAPI} from '../types/editor'
 import {createSlateEditor, type SlateEditor} from './create-slate-editor'
 import type {
@@ -117,23 +119,33 @@ export function createInternalEditor(editorActor: EditorActor): InternalEditor {
         editorActorSnapshot: editorActor.getSnapshot(),
         slateEditorInstance: slateEditor.instance,
       }),
-    registerBehavior: (config) => {
+    registerBehavior: (behaviorConfig) => {
+      const priority = createEditorPriority({
+        name: 'custom',
+        reference: {
+          priority: corePriority,
+          importance: 'higher',
+        },
+      })
+      const behaviorConfigWithPriority = {
+        ...behaviorConfig,
+        priority,
+      }
+
       editorActor.send({
         type: 'add behavior',
-        behavior: config.behavior,
+        behaviorConfig: behaviorConfigWithPriority,
       })
 
       return () => {
         editorActor.send({
           type: 'remove behavior',
-          behavior: config.behavior,
+          behaviorConfig: behaviorConfigWithPriority,
         })
       }
     },
     send: (event) => {
       switch (event.type) {
-        case 'add behavior':
-        case 'remove behavior':
         case 'update key generator':
         case 'update readOnly':
         case 'patches':
