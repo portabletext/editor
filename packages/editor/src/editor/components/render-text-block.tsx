@@ -120,6 +120,9 @@ export function RenderTextBlock(props: {
           : []),
       ].join(' ')}
       spellCheck={props.spellCheck}
+      data-block-key={props.textBlock._key}
+      data-block-name={props.textBlock._type}
+      data-block-type="text"
     >
       {dragPositionBlock === 'start' ? <DropIndicator /> : null}
       <div ref={blockRef}>
