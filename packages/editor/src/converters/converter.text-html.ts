@@ -26,7 +26,10 @@ export function createConverterTextHtml(
       }
 
       const blocks = sliceBlocks({
-        context: snapshot.context,
+        context: {
+          selection,
+          schema: snapshot.context.schema,
+        },
         blocks: snapshot.context.value,
       })
 
