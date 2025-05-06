@@ -55,6 +55,7 @@ describe('initialization', () => {
       data-block-key="k0"
       data-block-name="myTestBlockType"
       data-block-type="text"
+      data-level="1"
       data-slate-node="element"
     >
       <div>

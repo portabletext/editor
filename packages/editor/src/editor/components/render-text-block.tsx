@@ -4,12 +4,14 @@ import {useContext, useRef, useState, type ReactElement} from 'react'
 import {Range, type Element as SlateElement} from 'slate'
 import {useSelected, useSlateStatic, type RenderElementProps} from 'slate-react'
 import type {EventPositionBlock} from '../../internal-utils/event-position'
+import {getListState} from '../../selectors/selector.get-list-state'
 import type {
   RenderBlockFunction,
   RenderListItemFunction,
   RenderStyleFunction,
 } from '../../types/editor'
 import {EditorActorContext} from '../editor-actor-context'
+import {createEditorSnapshot} from '../editor-snapshot'
 import {DropIndicator} from './drop-indicator'
 import {useCoreBlockElementBehaviors} from './use-core-block-element-behaviors'
 
@@ -32,6 +34,25 @@ export function RenderTextBlock(props: {
   const selected = useSelected()
 
   const editorActor = useContext(EditorActorContext)
+  const listState = useSelector(
+    editorActor,
+    (s) => {
+      const editorSnapshot = createEditorSnapshot({
+        converters: [...s.context.converters],
+        editor: slateEditor,
+        keyGenerator: s.context.keyGenerator,
+        readOnly: s.matches({'edit mode': 'read only'}),
+        schema: s.context.schema,
+        hasTag: (tag) => s.hasTag(tag),
+        internalDrag: s.context.internalDrag,
+      })
+
+      return getListState({path: [{_key: props.textBlock._key}]})(
+        editorSnapshot,
+      )
+    },
+    (a, b) => a?.index === b?.index,
+  )
 
   useCoreBlockElementBehaviors({
     key: props.element._key,
@@ -122,6 +143,17 @@ export function RenderTextBlock(props: {
       data-block-key={props.textBlock._key}
       data-block-name={props.textBlock._type}
       data-block-type="text"
+      data-level={props.textBlock.level ?? 1}
+      {...(props.textBlock.listItem
+        ? {
+            'data-list-item': props.textBlock.listItem,
+          }
+        : {})}
+      {...(listState
+        ? {
+            'data-list-index': listState.index,
+          }
+        : {})}
     >
       {dragPositionBlock === 'start' ? <DropIndicator /> : null}
       <div ref={blockRef}>
