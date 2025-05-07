@@ -246,14 +246,17 @@ export const PortableTextEditable = forwardRef<
 
   const renderLeaf = useCallback(
     (
-      lProps: RenderLeafProps & {
+      leafProps: RenderLeafProps & {
         leaf: Text & {placeholder?: boolean; rangeDecoration?: RangeDecoration}
       },
     ) => {
-      if (lProps.leaf._type === 'span') {
+      if (
+        leafProps.leaf._type ===
+        editorActor.getSnapshot().context.schema.span.name
+      ) {
         let rendered = (
           <RenderSpan
-            {...lProps}
+            {...leafProps}
             schemaTypes={portableTextEditor.schemaTypes}
             renderAnnotation={renderAnnotation}
             renderChild={renderChild}
@@ -261,10 +264,11 @@ export const PortableTextEditable = forwardRef<
             readOnly={readOnly}
           />
         )
+
         if (
           renderPlaceholder &&
-          lProps.leaf.placeholder &&
-          lProps.text.text === ''
+          leafProps.leaf.placeholder &&
+          leafProps.text.text === ''
         ) {
           return (
             <>
@@ -275,15 +279,20 @@ export const PortableTextEditable = forwardRef<
             </>
           )
         }
-        const decoration = lProps.leaf.rangeDecoration
+
+        const decoration = leafProps.leaf.rangeDecoration
+
         if (decoration) {
           rendered = decoration.component({children: rendered})
         }
+
         return rendered
       }
-      return lProps.children
+
+      return leafProps.children
     },
     [
+      editorActor,
       portableTextEditor,
       readOnly,
       renderAnnotation,
