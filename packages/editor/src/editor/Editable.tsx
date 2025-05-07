@@ -53,8 +53,8 @@ import type {
 import type {HotkeyOptions} from '../types/options'
 import {isSelectionCollapsed} from '../utils'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
-import {Leaf} from './components/Leaf'
 import {RenderElement} from './components/render-element'
+import {RenderLeaf} from './components/render-leaf'
 import {RenderText, type RenderTextProps} from './components/render-text'
 import {EditorActorContext} from './editor-actor-context'
 import {getEditorSnapshot} from './editor-selector'
@@ -252,7 +252,7 @@ export const PortableTextEditable = forwardRef<
     ) => {
       if (lProps.leaf._type === 'span') {
         let rendered = (
-          <Leaf
+          <RenderLeaf
             {...lProps}
             schemaTypes={portableTextEditor.schemaTypes}
             renderAnnotation={renderAnnotation}

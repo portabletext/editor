@@ -50,7 +50,7 @@ export interface LeafProps extends RenderLeafProps {
  * Renders Portable Text span nodes in Slate
  * @internal
  */
-export const Leaf = (props: LeafProps) => {
+export function RenderLeaf(props: LeafProps) {
   const {
     attributes,
     children,
@@ -326,5 +326,3 @@ export const Leaf = (props: LeafProps) => {
     [leaf, attributes, content],
   )
 }
-
-Leaf.displayName = 'Leaf'
