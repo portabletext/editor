@@ -55,6 +55,7 @@ import {isSelectionCollapsed} from '../utils'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
 import {Leaf} from './components/Leaf'
 import {RenderElement} from './components/render-element'
+import {RenderText, RenderTextProps} from './components/render-text'
 import {EditorActorContext} from './editor-actor-context'
 import {getEditorSnapshot} from './editor-selector'
 import {usePortableTextEditor} from './hooks/usePortableTextEditor'
@@ -292,6 +293,11 @@ export const PortableTextEditable = forwardRef<
       renderDecorator,
       renderPlaceholder,
     ],
+  )
+
+  const renderText = useCallback(
+    (props: RenderTextProps) => <RenderText {...props} />,
+    [],
   )
 
   const restoreSelectionFromProps = useCallback(() => {
@@ -1225,6 +1231,7 @@ export const PortableTextEditable = forwardRef<
       renderPlaceholder={undefined}
       renderElement={renderElement}
       renderLeaf={renderLeaf}
+      renderText={renderText}
       scrollSelectionIntoView={scrollSelectionIntoViewToSlate}
     />
   )
