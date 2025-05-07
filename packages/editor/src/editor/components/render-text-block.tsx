@@ -103,7 +103,6 @@ export function RenderTextBlock(props: {
 
   return (
     <div
-      key={props.element._key}
       {...props.attributes}
       className={[
         'pt-block',

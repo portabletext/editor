@@ -53,7 +53,6 @@ export function RenderBlockObject(props: {
 
   return (
     <div
-      key={props.element._key}
       {...props.attributes}
       className="pt-block pt-object-block"
       data-block-key={props.element._key}
