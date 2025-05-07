@@ -480,6 +480,7 @@ export const PortableTextEditable = forwardRef<
                     blocks: result.insert,
                     options: {
                       refreshKeys: true,
+                      validateFields: true,
                     },
                   }),
                   placement: 'auto',

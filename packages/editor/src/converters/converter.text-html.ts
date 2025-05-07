@@ -70,6 +70,7 @@ export function createConverterTextHtml(
           block,
           options: {
             refreshKeys: false,
+            validateFields: true,
           },
         })
         return parsedBlock ? [parsedBlock] : []

@@ -31,7 +31,7 @@ export const addAnnotationOperationImplementation: BehaviorOperationImplementati
       ...operation.annotation.value,
     },
     context,
-    options: {refreshKeys: false},
+    options: {refreshKeys: false, validateFields: true},
   })
 
   if (!parsedAnnotation) {

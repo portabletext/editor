@@ -12,7 +12,7 @@ export const insertInlineObjectOperationImplementation: BehaviorOperationImpleme
       _type: operation.inlineObject.name,
       ...(operation.inlineObject.value ?? {}),
     },
-    options: {refreshKeys: false},
+    options: {refreshKeys: false, validateFields: true},
   })
 
   if (!parsedInlineObject) {

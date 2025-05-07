@@ -49,7 +49,7 @@ export const abstractSplitBehaviors = [
             blocks: [focusTextBlock.node],
           }).at(0),
           context: snapshot.context,
-          options: {refreshKeys: true},
+          options: {refreshKeys: true, validateFields: true},
         })
 
         if (!newTextBlock || !isTextBlock(snapshot.context, newTextBlock)) {
@@ -84,7 +84,7 @@ export const abstractSplitBehaviors = [
             children: [],
           },
           context: snapshot.context,
-          options: {refreshKeys: true},
+          options: {refreshKeys: true, validateFields: true},
         })
 
         if (!newTextBlock) {
