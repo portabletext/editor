@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.49.1](https://github.com/portabletext/editor/compare/editor-v1.49.0...editor-v1.49.1) (2025-05-07)
+
+
+### Bug Fixes
+
+* avoid hardcoded `'span'` type ([85c081f](https://github.com/portabletext/editor/commit/85c081f85c0d552ff7b84d0d357b662b643ad989))
+* **deps:** update sanity monorepo to ^3.88.0 ([e0dc666](https://github.com/portabletext/editor/commit/e0dc666cc5a7ae851dc7ea1ad242ba6aebbff97b))
+* move relevant inline object DOM props up ([4d836ad](https://github.com/portabletext/editor/commit/4d836ad3e0591302ebc57beec5068e4265da1a22))
+* move span data attributes to the correct DOM node ([5ce6303](https://github.com/portabletext/editor/commit/5ce6303268d6810085664e5748f87f491f956a8c))
+* remove manual `key` on leafs and elements ([7b592cd](https://github.com/portabletext/editor/commit/7b592cd3ab407a486fd41364cb146cd9d43d876e))
+* remove unneeded `data-testid` ([ab1afb2](https://github.com/portabletext/editor/commit/ab1afb2db812dfd983a3cbc3fee87775c20fe3fc))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.24
+
 ## [1.49.0](https://github.com/portabletext/editor/compare/editor-v1.48.15...editor-v1.49.0) (2025-05-05)
 
 
