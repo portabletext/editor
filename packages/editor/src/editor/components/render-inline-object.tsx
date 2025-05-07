@@ -64,7 +64,6 @@ export function RenderInlineObject(props: {
         className="pt-inline-object"
         data-testid="pt-inline-object"
         ref={inlineObjectRef}
-        key={props.element._key}
         style={{display: 'inline-block'}}
         data-child-key={props.inlineObject._key}
         data-child-name={props.inlineObject._type}

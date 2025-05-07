@@ -1,3 +1,4 @@
+import {useSelector} from '@xstate/react'
 import {isEqual, uniq} from 'lodash'
 import {
   startTransition,
@@ -18,7 +19,6 @@ import type {
 import {EditorActorContext} from '../editor-actor-context'
 import {usePortableTextEditor} from '../hooks/usePortableTextEditor'
 import {PortableTextEditor} from '../PortableTextEditor'
-import { useSelector } from '@xstate/react'
 
 export interface RenderSpanProps extends RenderLeafProps {
   children: ReactElement<any>
@@ -253,7 +253,7 @@ export function RenderSpan(props: RenderSpanProps) {
   }
 
   return (
-    <span key={props.leaf._key} {...props.attributes} ref={spanRef}>
+    <span {...props.attributes} ref={spanRef}>
       {children}
     </span>
   )
