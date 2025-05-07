@@ -1,8 +1,3 @@
-import type {
-  Path,
-  PortableTextObject,
-  PortableTextTextBlock,
-} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {
   startTransition,
@@ -14,13 +9,8 @@ import {
   useState,
   type ReactElement,
 } from 'react'
-import {Text} from 'slate'
-import {useSelected, type RenderLeafProps} from 'slate-react'
-import {debugWithName} from '../../internal-utils/debug'
+import {useSelected, useSlateStatic, type RenderLeafProps} from 'slate-react'
 import type {
-  BlockAnnotationRenderProps,
-  BlockChildRenderProps,
-  BlockDecoratorRenderProps,
   PortableTextMemberSchemaTypes,
   RenderAnnotationFunction,
   RenderChildFunction,
@@ -29,10 +19,6 @@ import type {
 import {EditorActorContext} from '../editor-actor-context'
 import {usePortableTextEditor} from '../hooks/usePortableTextEditor'
 import {PortableTextEditor} from '../PortableTextEditor'
-
-const debug = debugWithName('components:Leaf')
-
-const EMPTY_MARKS: string[] = []
 
 export interface LeafProps extends RenderLeafProps {
   children: ReactElement<any>
@@ -44,60 +30,61 @@ export interface LeafProps extends RenderLeafProps {
 }
 
 export function RenderLeaf(props: LeafProps) {
-  const {
-    attributes,
-    children,
-    leaf,
-    schemaTypes: legacySchemaTypes,
-    renderChild,
-    renderDecorator,
-    renderAnnotation,
-  } = props
+  const slateEditor = useSlateStatic()
+  const legacySchemaTypes = props.schemaTypes
   const editorActor = useContext(EditorActorContext)
   const spanRef = useRef<HTMLElement>(null)
   const portableTextEditor = usePortableTextEditor()
   const blockSelected = useSelected()
   const [focused, setFocused] = useState(false)
   const [selected, setSelected] = useState(false)
-  const block = children.props.parent as PortableTextTextBlock | undefined
-  const path: Path = useMemo(
-    () => (block ? [{_key: block?._key}, 'children', {_key: leaf._key}] : []),
-    [block, leaf._key],
+
+  const parent = props.children.props.parent
+  const block = parent && slateEditor.isTextBlock(parent) ? parent : undefined
+
+  const path = useMemo(
+    () =>
+      block
+        ? [{_key: block._key}, 'children', {_key: props.leaf._key}]
+        : undefined,
+    [block, props.leaf._key],
   )
-  const marks: string[] = useMemo(() => {
-    const decoratorSchemaTypes = editorActor
-      .getSnapshot()
-      .context.schema.decorators.map((decorator) => decorator.name)
 
-    return uniq(
-      (leaf.marks ?? EMPTY_MARKS).filter((mark) =>
-        decoratorSchemaTypes.includes(mark),
-      ),
-    )
-  }, [editorActor, leaf.marks])
-  const annotationMarks = Array.isArray(leaf.marks) ? leaf.marks : EMPTY_MARKS
-  const annotations = useMemo(() => {
-    const decoratorSchemaTypes = editorActor
-      .getSnapshot()
-      .context.schema.decorators.map((decorator) => decorator.name)
+  const decoratorSchemaTypes = editorActor
+    .getSnapshot()
+    .context.schema.decorators.map((decorator) => decorator.name)
 
-    return annotationMarks
-      .map(
-        (mark) =>
-          !decoratorSchemaTypes.includes(mark) &&
-          block?.markDefs?.find((def) => def._key === mark),
-      )
-      .filter(Boolean) as PortableTextObject[]
-  }, [annotationMarks, block, editorActor])
+  const decorators = uniq(
+    (props.leaf.marks ?? []).filter((mark) =>
+      decoratorSchemaTypes.includes(mark),
+    ),
+  )
 
-  const shouldTrackSelectionAndFocus = annotations.length > 0 && blockSelected
+  const annotationMarkDefs = (props.leaf.marks ?? []).flatMap((mark) => {
+    if (decoratorSchemaTypes.includes(mark)) {
+      return []
+    }
+
+    const markDef = block?.markDefs?.find((markDef) => markDef._key === mark)
+
+    if (markDef) {
+      return [markDef]
+    }
+
+    return []
+  })
+
+  const shouldTrackSelectionAndFocus =
+    annotationMarkDefs.length > 0 && blockSelected
 
   useEffect(() => {
     if (!shouldTrackSelectionAndFocus) {
       setFocused(false)
       return
     }
+
     const sel = PortableTextEditor.getSelection(portableTextEditor)
+
     if (
       sel &&
       isEqual(sel.focus.path, path) &&
@@ -114,14 +101,17 @@ export function RenderLeaf(props: LeafProps) {
     if (!shouldTrackSelectionAndFocus) {
       return
     }
-    debug('Setting selection and focus from range')
+
     const winSelection = window.getSelection()
+
     if (!winSelection) {
       setSelected(false)
       return
     }
+
     if (winSelection && winSelection.rangeCount > 0) {
       const range = winSelection.getRangeAt(0)
+
       if (spanRef.current && range.intersectsNode(spanRef.current)) {
         setSelected(true)
       } else {
@@ -144,6 +134,7 @@ export function RenderLeaf(props: LeafProps) {
 
     const onFocus = editorActor.on('focused', () => {
       const sel = PortableTextEditor.getSelection(portableTextEditor)
+
       if (
         sel &&
         isEqual(sel.focus.path, path) &&
@@ -151,6 +142,7 @@ export function RenderLeaf(props: LeafProps) {
       ) {
         setFocused(true)
       }
+
       setSelectedFromRange()
     })
 
@@ -182,140 +174,86 @@ export function RenderLeaf(props: LeafProps) {
 
   useEffect(() => setSelectedFromRange(), [setSelectedFromRange])
 
-  const content = useMemo(() => {
-    let returnedChildren = children
-    // Render text nodes
-    if (Text.isText(leaf) && leaf._type === legacySchemaTypes.span.name) {
-      marks.forEach((mark) => {
-        const legacyDecoratorSchemaType = legacySchemaTypes.decorators.find(
-          (dec) => dec.value === mark,
-        )
-        if (legacyDecoratorSchemaType && renderDecorator) {
-          const _props: Omit<BlockDecoratorRenderProps, 'type'> =
-            Object.defineProperty(
-              {
-                children: returnedChildren,
-                editorElementRef: spanRef,
-                focused,
-                path,
-                selected,
-                schemaType: legacyDecoratorSchemaType,
-                value: mark,
-              },
-              'type',
-              {
-                enumerable: false,
-                get() {
-                  console.warn(
-                    "Property 'type' is deprecated, use 'schemaType' instead.",
-                  )
-                  return legacyDecoratorSchemaType
-                },
-              },
-            )
-          returnedChildren = renderDecorator(
-            _props as BlockDecoratorRenderProps,
-          )
-        }
+  let children = props.children
+
+  /**
+   * Support `renderDecorator` render function for each Decorator
+   */
+  for (const mark of decorators) {
+    const legacyDecoratorSchemaType = legacySchemaTypes.decorators.find(
+      (dec) => dec.value === mark,
+    )
+
+    if (path && legacyDecoratorSchemaType && props.renderDecorator) {
+      children = props.renderDecorator({
+        children: children,
+        editorElementRef: spanRef,
+        focused,
+        path,
+        selected,
+        schemaType: legacyDecoratorSchemaType,
+        value: mark,
+        type: legacyDecoratorSchemaType,
       })
+    }
+  }
 
-      if (block && annotations.length > 0) {
-        annotations.forEach((annotation) => {
-          const legacyAnnotationSchemaType = legacySchemaTypes.annotations.find(
-            (t) => t.name === annotation._type,
-          )
-          if (legacyAnnotationSchemaType) {
-            if (renderAnnotation) {
-              const _props: Omit<BlockAnnotationRenderProps, 'type'> =
-                Object.defineProperty(
-                  {
-                    block,
-                    children: returnedChildren,
-                    editorElementRef: spanRef,
-                    focused,
-                    path,
-                    selected,
-                    schemaType: legacyAnnotationSchemaType,
-                    value: annotation,
-                  },
-                  'type',
-                  {
-                    enumerable: false,
-                    get() {
-                      console.warn(
-                        "Property 'type' is deprecated, use 'schemaType' instead.",
-                      )
-                      return legacyAnnotationSchemaType
-                    },
-                  },
-                )
-
-              returnedChildren = (
-                <span ref={spanRef}>
-                  {renderAnnotation(_props as BlockAnnotationRenderProps)}
-                </span>
-              )
-            } else {
-              returnedChildren = <span ref={spanRef}>{returnedChildren}</span>
-            }
-          }
-        })
-      }
-      if (block && renderChild) {
-        const child = block.children.find((_child) => _child._key === leaf._key) // Ensure object equality
-        if (child) {
-          const defaultRendered = <>{returnedChildren}</>
-          const _props: Omit<BlockChildRenderProps, 'type'> =
-            Object.defineProperty(
-              {
-                annotations,
-                children: defaultRendered,
-                editorElementRef: spanRef,
-                focused,
-                path,
-                schemaType: legacySchemaTypes.span,
-                selected,
-                value: child,
-              },
-              'type',
-              {
-                enumerable: false,
-                get() {
-                  console.warn(
-                    "Property 'type' is deprecated, use 'schemaType' instead.",
-                  )
-                  return legacySchemaTypes.span
-                },
-              },
-            )
-          returnedChildren = renderChild(_props as BlockChildRenderProps)
-        }
+  /**
+   * Support `renderAnnotation` render function for each Annotation
+   */
+  for (const annotationMarkDef of annotationMarkDefs) {
+    const legacyAnnotationSchemaType = legacySchemaTypes.annotations.find(
+      (t) => t.name === annotationMarkDef._type,
+    )
+    if (legacyAnnotationSchemaType) {
+      if (block && path && props.renderAnnotation) {
+        children = (
+          <span ref={spanRef}>
+            {props.renderAnnotation({
+              block,
+              children: children,
+              editorElementRef: spanRef,
+              focused,
+              path,
+              selected,
+              schemaType: legacyAnnotationSchemaType,
+              value: annotationMarkDef,
+              type: legacyAnnotationSchemaType,
+            })}
+          </span>
+        )
+      } else {
+        children = <span ref={spanRef}>{children}</span>
       }
     }
-    return returnedChildren
-  }, [
-    annotations,
-    block,
-    children,
-    focused,
-    leaf,
-    marks,
-    path,
-    renderAnnotation,
-    renderChild,
-    renderDecorator,
-    legacySchemaTypes.annotations,
-    legacySchemaTypes.decorators,
-    legacySchemaTypes.span,
-    selected,
-  ])
+  }
 
-  return useMemo(
-    () => (
-      <span key={leaf._key} {...attributes} ref={spanRef}>
-        {content}
-      </span>
-    ),
-    [leaf, attributes, content],
+  /**
+   * Support `renderChild` render function for the Span itself
+   */
+  if (block && path && props.renderChild) {
+    const child = block.children.find(
+      (_child) => _child._key === props.leaf._key,
+    ) // Ensure object equality
+
+    if (child) {
+      children = props.renderChild({
+        annotations: annotationMarkDefs,
+        children: children,
+        editorElementRef: spanRef,
+        focused,
+        path,
+        schemaType: legacySchemaTypes.span,
+        selected,
+        value: child,
+        type: legacySchemaTypes.span,
+      })
+    }
+  }
+
+  return (
+    <span key={props.leaf._key} {...props.attributes} ref={spanRef}>
+      {children}
+    </span>
   )
 }
