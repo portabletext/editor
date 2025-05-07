@@ -62,7 +62,7 @@ export const converterPortableText = defineConverter({
            * dropped portable text as is.
            */
           refreshKeys: !snapshot.beta.hasTag?.('dragging internally'),
-          validateFields: true,
+          validateFields: false,
         },
       })
       return parsedBlock ? [parsedBlock] : []
