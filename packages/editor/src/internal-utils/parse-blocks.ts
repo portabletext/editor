@@ -19,6 +19,7 @@ export function parseBlocks({
   blocks: unknown
   options: {
     refreshKeys: boolean
+    validateFields: boolean
   }
 }): Array<PortableTextBlock> {
   if (!Array.isArray(blocks)) {
@@ -41,6 +42,7 @@ export function parseBlock({
   block: unknown
   options: {
     refreshKeys: boolean
+    validateFields: boolean
   }
 }): PortableTextBlock | undefined {
   return (
@@ -56,7 +58,7 @@ export function parseBlockObject({
 }: {
   blockObject: unknown
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>
-  options: {refreshKeys: boolean}
+  options: {refreshKeys: boolean; validateFields: boolean}
 }): PortableTextObject | undefined {
   if (!isTypedObject(blockObject)) {
     return undefined
@@ -99,7 +101,7 @@ export function isTextBlock(
     parseTextBlock({
       block,
       context: {schema: context.schema, keyGenerator: () => ''},
-      options: {refreshKeys: false},
+      options: {refreshKeys: false, validateFields: false},
     }) !== undefined
   )
 }
@@ -111,10 +113,26 @@ export function parseTextBlock({
 }: {
   block: unknown
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>
-  options: {refreshKeys: boolean}
+  options: {refreshKeys: boolean; validateFields: boolean}
 }): PortableTextTextBlock | undefined {
   if (!isTypedObject(block)) {
     return undefined
+  }
+
+  const customFields: Record<string, unknown> = {}
+
+  for (const key of Object.keys(block)) {
+    if (
+      key !== '_type' &&
+      key !== '_key' &&
+      key !== 'children' &&
+      key !== 'markDefs' &&
+      key !== 'style' &&
+      key !== 'listItem' &&
+      key !== 'level'
+    ) {
+      customFields[key] = block[key]
+    }
   }
 
   if (block._type !== context.schema.block.name) {
@@ -195,6 +213,7 @@ export function parseTextBlock({
             },
           ],
     markDefs,
+    ...(options.validateFields ? {} : customFields),
   }
 
   if (
@@ -235,7 +254,7 @@ export function isSpan(
       span: child,
       markDefKeyMap: new Map(),
       context: {schema: context.schema, keyGenerator: () => ''},
-      options: {refreshKeys: false},
+      options: {refreshKeys: false, validateFields: false},
     }) !== undefined
   )
 }
@@ -249,10 +268,23 @@ export function parseSpan({
   span: unknown
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>
   markDefKeyMap: Map<string, string>
-  options: {refreshKeys: boolean}
+  options: {refreshKeys: boolean; validateFields: boolean}
 }): PortableTextSpan | undefined {
   if (!isTypedObject(span)) {
     return undefined
+  }
+
+  const customFields: Record<string, unknown> = {}
+
+  for (const key of Object.keys(span)) {
+    if (
+      key !== '_type' &&
+      key !== '_key' &&
+      key !== 'text' &&
+      key !== 'marks'
+    ) {
+      customFields[key] = span[key]
+    }
   }
 
   // In reality, the span schema name is always 'span', but we only the check here anyway
@@ -292,6 +324,7 @@ export function parseSpan({
         : context.keyGenerator(),
     text: typeof span.text === 'string' ? span.text : '',
     marks,
+    ...(options.validateFields ? {} : customFields),
   }
 }
 
@@ -302,7 +335,7 @@ export function parseInlineObject({
 }: {
   inlineObject: unknown
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>
-  options: {refreshKeys: boolean}
+  options: {refreshKeys: boolean; validateFields: boolean}
 }): PortableTextObject | undefined {
   if (!isTypedObject(inlineObject)) {
     return undefined
@@ -333,7 +366,7 @@ export function parseAnnotation({
 }: {
   annotation: TypedObject
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>
-  options: {refreshKeys: boolean}
+  options: {refreshKeys: boolean; validateFields: boolean}
 }): PortableTextObject | undefined {
   if (!isTypedObject(annotation)) {
     return undefined
@@ -366,22 +399,26 @@ function parseObject({
   context: Pick<EditorContext, 'keyGenerator'> & {
     schemaType: EditorSchema['blockObjects'][0]
   }
-  options: {refreshKeys: boolean}
+  options: {refreshKeys: boolean; validateFields: boolean}
 }): PortableTextObject {
+  const {_type, _key, ...customFields} = object
+
   // Validates all props on the object and only takes those that match
   // the name of a field
-  const values = context.schemaType.fields.reduce<Record<string, unknown>>(
-    (fieldValues, field) => {
-      const fieldValue = object[field.name]
+  const values = options.validateFields
+    ? context.schemaType.fields.reduce<Record<string, unknown>>(
+        (fieldValues, field) => {
+          const fieldValue = object[field.name]
 
-      if (fieldValue !== undefined) {
-        fieldValues[field.name] = fieldValue
-      }
+          if (fieldValue !== undefined) {
+            fieldValues[field.name] = fieldValue
+          }
 
-      return fieldValues
-    },
-    {},
-  )
+          return fieldValues
+        },
+        {},
+      )
+    : customFields
 
   return {
     _type: context.schemaType.name,

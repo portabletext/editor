@@ -18,7 +18,7 @@ export function mergeTextBlocks({
   const parsedIncomingBlock = parseBlock({
     context,
     block: incomingBlock,
-    options: {refreshKeys: true},
+    options: {refreshKeys: true, validateFields: true},
   })
 
   if (!parsedIncomingBlock || !isTextBlock(context, parsedIncomingBlock)) {

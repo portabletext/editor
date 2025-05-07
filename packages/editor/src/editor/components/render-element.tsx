@@ -40,7 +40,7 @@ export function RenderElement(props: {
         keyGenerator: () => '',
         schema,
       },
-      options: {refreshKeys: false},
+      options: {refreshKeys: false, validateFields: false},
       inlineObject: {
         _key: props.element._key,
         _type: props.element._type,
@@ -79,7 +79,7 @@ export function RenderElement(props: {
       keyGenerator: () => '',
       schema,
     },
-    options: {refreshKeys: false},
+    options: {refreshKeys: false, validateFields: false},
     block: props.element,
   })
 
@@ -105,7 +105,7 @@ export function RenderElement(props: {
       keyGenerator: () => '',
       schema,
     },
-    options: {refreshKeys: false},
+    options: {refreshKeys: false, validateFields: false},
     blockObject: {
       _key: props.element._key,
       _type: props.element._type,

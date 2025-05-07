@@ -93,6 +93,7 @@ export function createConverterTextPlain(
           block,
           options: {
             refreshKeys: false,
+            validateFields: true,
           },
         })
         return parsedBlock ? [parsedBlock] : []

@@ -34,6 +34,7 @@ function snapshot(
           block,
           options: {
             refreshKeys: false,
+            validateFields: false,
           },
         })
 
