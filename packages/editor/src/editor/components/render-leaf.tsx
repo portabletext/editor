@@ -34,9 +34,6 @@ const debug = debugWithName('components:Leaf')
 
 const EMPTY_MARKS: string[] = []
 
-/**
- * @internal
- */
 export interface LeafProps extends RenderLeafProps {
   children: ReactElement<any>
   schemaTypes: PortableTextMemberSchemaTypes
@@ -46,10 +43,6 @@ export interface LeafProps extends RenderLeafProps {
   readOnly: boolean
 }
 
-/**
- * Renders Portable Text span nodes in Slate
- * @internal
- */
 export function RenderLeaf(props: LeafProps) {
   const {
     attributes,
