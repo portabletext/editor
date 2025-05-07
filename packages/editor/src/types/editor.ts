@@ -29,6 +29,7 @@ import type {DOMNode} from 'slate-dom'
 import type {ReactEditor} from 'slate-react'
 import type {PortableTextEditableProps} from '../editor/Editable'
 import type {PortableTextEditor} from '../editor/PortableTextEditor'
+import type {BlockPath} from './paths'
 
 /** @beta */
 export interface EditableAPIDeleteOptions {
@@ -373,7 +374,7 @@ export interface BlockRenderProps {
   focused: boolean
   level?: number
   listItem?: string
-  path: Path
+  path: BlockPath
   selected: boolean
   style?: string
   schemaType: ObjectSchemaType
