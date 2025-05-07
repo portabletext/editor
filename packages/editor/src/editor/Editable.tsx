@@ -257,7 +257,6 @@ export const PortableTextEditable = forwardRef<
         let rendered = (
           <RenderSpan
             {...leafProps}
-            schemaTypes={portableTextEditor.schemaTypes}
             renderAnnotation={renderAnnotation}
             renderChild={renderChild}
             renderDecorator={renderDecorator}
@@ -293,7 +292,6 @@ export const PortableTextEditable = forwardRef<
     },
     [
       editorActor,
-      portableTextEditor,
       readOnly,
       renderAnnotation,
       renderChild,

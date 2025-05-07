@@ -11,7 +11,6 @@ import {
 } from 'react'
 import {useSelected, useSlateStatic, type RenderLeafProps} from 'slate-react'
 import type {
-  PortableTextMemberSchemaTypes,
   RenderAnnotationFunction,
   RenderChildFunction,
   RenderDecoratorFunction,
@@ -19,10 +18,10 @@ import type {
 import {EditorActorContext} from '../editor-actor-context'
 import {usePortableTextEditor} from '../hooks/usePortableTextEditor'
 import {PortableTextEditor} from '../PortableTextEditor'
+import { useSelector } from '@xstate/react'
 
 export interface RenderSpanProps extends RenderLeafProps {
   children: ReactElement<any>
-  schemaTypes: PortableTextMemberSchemaTypes
   renderAnnotation?: RenderAnnotationFunction
   renderChild?: RenderChildFunction
   renderDecorator?: RenderDecoratorFunction
@@ -31,8 +30,10 @@ export interface RenderSpanProps extends RenderLeafProps {
 
 export function RenderSpan(props: RenderSpanProps) {
   const slateEditor = useSlateStatic()
-  const legacySchemaTypes = props.schemaTypes
   const editorActor = useContext(EditorActorContext)
+  const legacySchema = useSelector(editorActor, (s) =>
+    s.context.getLegacySchema(),
+  )
   const spanRef = useRef<HTMLElement>(null)
   const portableTextEditor = usePortableTextEditor()
   const blockSelected = useSelected()
@@ -180,7 +181,7 @@ export function RenderSpan(props: RenderSpanProps) {
    * Support `renderDecorator` render function for each Decorator
    */
   for (const mark of decorators) {
-    const legacyDecoratorSchemaType = legacySchemaTypes.decorators.find(
+    const legacyDecoratorSchemaType = legacySchema.decorators.find(
       (dec) => dec.value === mark,
     )
 
@@ -202,7 +203,7 @@ export function RenderSpan(props: RenderSpanProps) {
    * Support `renderAnnotation` render function for each Annotation
    */
   for (const annotationMarkDef of annotationMarkDefs) {
-    const legacyAnnotationSchemaType = legacySchemaTypes.annotations.find(
+    const legacyAnnotationSchemaType = legacySchema.annotations.find(
       (t) => t.name === annotationMarkDef._type,
     )
     if (legacyAnnotationSchemaType) {
@@ -243,10 +244,10 @@ export function RenderSpan(props: RenderSpanProps) {
         editorElementRef: spanRef,
         focused,
         path,
-        schemaType: legacySchemaTypes.span,
+        schemaType: legacySchema.span,
         selected,
         value: child,
-        type: legacySchemaTypes.span,
+        type: legacySchema.span,
       })
     }
   }
