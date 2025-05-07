@@ -55,7 +55,7 @@ import {isSelectionCollapsed} from '../utils'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
 import {Leaf} from './components/Leaf'
 import {RenderElement} from './components/render-element'
-import {RenderText, RenderTextProps} from './components/render-text'
+import {RenderText, type RenderTextProps} from './components/render-text'
 import {EditorActorContext} from './editor-actor-context'
 import {getEditorSnapshot} from './editor-selector'
 import {usePortableTextEditor} from './hooks/usePortableTextEditor'
@@ -254,7 +254,6 @@ export const PortableTextEditable = forwardRef<
         let rendered = (
           <Leaf
             {...lProps}
-            editorActor={editorActor}
             schemaTypes={portableTextEditor.schemaTypes}
             renderAnnotation={renderAnnotation}
             renderChild={renderChild}
@@ -285,7 +284,6 @@ export const PortableTextEditable = forwardRef<
       return lProps.children
     },
     [
-      editorActor,
       portableTextEditor,
       readOnly,
       renderAnnotation,

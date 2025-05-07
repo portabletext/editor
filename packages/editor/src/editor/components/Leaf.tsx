@@ -7,6 +7,7 @@ import {isEqual, uniq} from 'lodash'
 import {
   startTransition,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -25,7 +26,7 @@ import type {
   RenderChildFunction,
   RenderDecoratorFunction,
 } from '../../types/editor'
-import type {EditorActor} from '../editor-machine'
+import {EditorActorContext} from '../editor-actor-context'
 import {usePortableTextEditor} from '../hooks/usePortableTextEditor'
 import {PortableTextEditor} from '../PortableTextEditor'
 
@@ -37,7 +38,6 @@ const EMPTY_MARKS: string[] = []
  * @internal
  */
 export interface LeafProps extends RenderLeafProps {
-  editorActor: EditorActor
   children: ReactElement<any>
   schemaTypes: PortableTextMemberSchemaTypes
   renderAnnotation?: RenderAnnotationFunction
@@ -52,15 +52,15 @@ export interface LeafProps extends RenderLeafProps {
  */
 export const Leaf = (props: LeafProps) => {
   const {
-    editorActor,
     attributes,
     children,
     leaf,
-    schemaTypes,
+    schemaTypes: legacySchemaTypes,
     renderChild,
     renderDecorator,
     renderAnnotation,
   } = props
+  const editorActor = useContext(EditorActorContext)
   const spanRef = useRef<HTMLElement>(null)
   const portableTextEditor = usePortableTextEditor()
   const blockSelected = useSelected()
@@ -71,31 +71,31 @@ export const Leaf = (props: LeafProps) => {
     () => (block ? [{_key: block?._key}, 'children', {_key: leaf._key}] : []),
     [block, leaf._key],
   )
-  const decoratorValues = useMemo(
-    () => schemaTypes.decorators.map((dec) => dec.value),
-    [schemaTypes.decorators],
-  )
-  const marks: string[] = useMemo(
-    () =>
-      uniq(
-        (leaf.marks || EMPTY_MARKS).filter((mark) =>
-          decoratorValues.includes(mark),
-        ),
+  const marks: string[] = useMemo(() => {
+    const decoratorSchemaTypes = editorActor
+      .getSnapshot()
+      .context.schema.decorators.map((decorator) => decorator.name)
+
+    return uniq(
+      (leaf.marks ?? EMPTY_MARKS).filter((mark) =>
+        decoratorSchemaTypes.includes(mark),
       ),
-    [decoratorValues, leaf.marks],
-  )
+    )
+  }, [editorActor, leaf.marks])
   const annotationMarks = Array.isArray(leaf.marks) ? leaf.marks : EMPTY_MARKS
-  const annotations = useMemo(
-    () =>
-      annotationMarks
-        .map(
-          (mark) =>
-            !decoratorValues.includes(mark) &&
-            block?.markDefs?.find((def) => def._key === mark),
-        )
-        .filter(Boolean) as PortableTextObject[],
-    [annotationMarks, block, decoratorValues],
-  )
+  const annotations = useMemo(() => {
+    const decoratorSchemaTypes = editorActor
+      .getSnapshot()
+      .context.schema.decorators.map((decorator) => decorator.name)
+
+    return annotationMarks
+      .map(
+        (mark) =>
+          !decoratorSchemaTypes.includes(mark) &&
+          block?.markDefs?.find((def) => def._key === mark),
+      )
+      .filter(Boolean) as PortableTextObject[]
+  }, [annotationMarks, block, editorActor])
 
   const shouldTrackSelectionAndFocus = annotations.length > 0 && blockSelected
 
@@ -192,12 +192,12 @@ export const Leaf = (props: LeafProps) => {
   const content = useMemo(() => {
     let returnedChildren = children
     // Render text nodes
-    if (Text.isText(leaf) && leaf._type === schemaTypes.span.name) {
+    if (Text.isText(leaf) && leaf._type === legacySchemaTypes.span.name) {
       marks.forEach((mark) => {
-        const schemaType = schemaTypes.decorators.find(
+        const legacyDecoratorSchemaType = legacySchemaTypes.decorators.find(
           (dec) => dec.value === mark,
         )
-        if (schemaType && renderDecorator) {
+        if (legacyDecoratorSchemaType && renderDecorator) {
           const _props: Omit<BlockDecoratorRenderProps, 'type'> =
             Object.defineProperty(
               {
@@ -206,7 +206,7 @@ export const Leaf = (props: LeafProps) => {
                 focused,
                 path,
                 selected,
-                schemaType,
+                schemaType: legacyDecoratorSchemaType,
                 value: mark,
               },
               'type',
@@ -216,7 +216,7 @@ export const Leaf = (props: LeafProps) => {
                   console.warn(
                     "Property 'type' is deprecated, use 'schemaType' instead.",
                   )
-                  return schemaType
+                  return legacyDecoratorSchemaType
                 },
               },
             )
@@ -228,10 +228,10 @@ export const Leaf = (props: LeafProps) => {
 
       if (block && annotations.length > 0) {
         annotations.forEach((annotation) => {
-          const schemaType = schemaTypes.annotations.find(
+          const legacyAnnotationSchemaType = legacySchemaTypes.annotations.find(
             (t) => t.name === annotation._type,
           )
-          if (schemaType) {
+          if (legacyAnnotationSchemaType) {
             if (renderAnnotation) {
               const _props: Omit<BlockAnnotationRenderProps, 'type'> =
                 Object.defineProperty(
@@ -242,7 +242,7 @@ export const Leaf = (props: LeafProps) => {
                     focused,
                     path,
                     selected,
-                    schemaType,
+                    schemaType: legacyAnnotationSchemaType,
                     value: annotation,
                   },
                   'type',
@@ -252,7 +252,7 @@ export const Leaf = (props: LeafProps) => {
                       console.warn(
                         "Property 'type' is deprecated, use 'schemaType' instead.",
                       )
-                      return schemaType
+                      return legacyAnnotationSchemaType
                     },
                   },
                 )
@@ -280,7 +280,7 @@ export const Leaf = (props: LeafProps) => {
                 editorElementRef: spanRef,
                 focused,
                 path,
-                schemaType: schemaTypes.span,
+                schemaType: legacySchemaTypes.span,
                 selected,
                 value: child,
               },
@@ -291,7 +291,7 @@ export const Leaf = (props: LeafProps) => {
                   console.warn(
                     "Property 'type' is deprecated, use 'schemaType' instead.",
                   )
-                  return schemaTypes.span
+                  return legacySchemaTypes.span
                 },
               },
             )
@@ -311,11 +311,12 @@ export const Leaf = (props: LeafProps) => {
     renderAnnotation,
     renderChild,
     renderDecorator,
-    schemaTypes.annotations,
-    schemaTypes.decorators,
-    schemaTypes.span,
+    legacySchemaTypes.annotations,
+    legacySchemaTypes.decorators,
+    legacySchemaTypes.span,
     selected,
   ])
+
   return useMemo(
     () => (
       <span key={leaf._key} {...attributes} ref={spanRef}>
