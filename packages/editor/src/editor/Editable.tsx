@@ -10,7 +10,6 @@ import {
   useRef,
   useState,
   type ClipboardEvent,
-  type CSSProperties,
   type FocusEventHandler,
   type KeyboardEvent,
   type MutableRefObject,
@@ -54,7 +53,7 @@ import type {HotkeyOptions} from '../types/options'
 import {isSelectionCollapsed} from '../utils'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
 import {RenderElement} from './components/render-element'
-import {RenderSpan} from './components/render-span'
+import {RenderLeaf} from './components/render-leaf'
 import {RenderText, type RenderTextProps} from './components/render-text'
 import {EditorActorContext} from './editor-actor-context'
 import {getEditorSnapshot} from './editor-selector'
@@ -67,14 +66,6 @@ import {
 } from './range-decorations-machine'
 
 const debug = debugWithName('component:Editable')
-
-const PLACEHOLDER_STYLE: CSSProperties = {
-  position: 'absolute',
-  userSelect: 'none',
-  pointerEvents: 'none',
-  left: 0,
-  right: 0,
-}
 
 /**
  * @public
@@ -249,49 +240,17 @@ export const PortableTextEditable = forwardRef<
       leafProps: RenderLeafProps & {
         leaf: Text & {placeholder?: boolean; rangeDecoration?: RangeDecoration}
       },
-    ) => {
-      if (
-        leafProps.leaf._type ===
-        editorActor.getSnapshot().context.schema.span.name
-      ) {
-        let rendered = (
-          <RenderSpan
-            {...leafProps}
-            renderAnnotation={renderAnnotation}
-            renderChild={renderChild}
-            renderDecorator={renderDecorator}
-            readOnly={readOnly}
-          />
-        )
-
-        if (
-          renderPlaceholder &&
-          leafProps.leaf.placeholder &&
-          leafProps.text.text === ''
-        ) {
-          return (
-            <>
-              <span style={PLACEHOLDER_STYLE} contentEditable={false}>
-                {renderPlaceholder()}
-              </span>
-              {rendered}
-            </>
-          )
-        }
-
-        const decoration = leafProps.leaf.rangeDecoration
-
-        if (decoration) {
-          rendered = decoration.component({children: rendered})
-        }
-
-        return rendered
-      }
-
-      return leafProps.children
-    },
+    ) => (
+      <RenderLeaf
+        {...leafProps}
+        readOnly={readOnly}
+        renderAnnotation={renderAnnotation}
+        renderChild={renderChild}
+        renderDecorator={renderDecorator}
+        renderPlaceholder={renderPlaceholder}
+      />
+    ),
     [
-      editorActor,
       readOnly,
       renderAnnotation,
       renderChild,

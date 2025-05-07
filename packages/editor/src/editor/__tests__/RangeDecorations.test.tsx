@@ -125,7 +125,7 @@ describe('RangeDecorations', () => {
     )
     await waitFor(() => {
       expect([rangeDecorationIteration, 'updated-with-different']).toEqual([
-        3,
+        2,
         'updated-with-different',
       ])
     })
@@ -152,7 +152,7 @@ describe('RangeDecorations', () => {
     )
     await waitFor(() => {
       expect([rangeDecorationIteration, 'updated-with-different']).toEqual([
-        4,
+        3,
         'updated-with-different',
       ])
     })
