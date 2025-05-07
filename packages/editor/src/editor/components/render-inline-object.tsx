@@ -62,7 +62,6 @@ export function RenderInlineObject(props: {
       <span
         draggable={!props.readOnly}
         className="pt-inline-object"
-        data-testid="pt-inline-object"
         ref={inlineObjectRef}
         style={{display: 'inline-block'}}
         data-child-key={props.inlineObject._key}
