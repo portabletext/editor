@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.49.2](https://github.com/portabletext/editor/compare/editor-v1.49.1...editor-v1.49.2) (2025-05-07)
+
+
+### Bug Fixes
+
+* don't validate fields in render callbacks ([4b3b6d5](https://github.com/portabletext/editor/commit/4b3b6d58a0ba7d003862ccd85643e9bf6f8d6174))
+* don't validate fields when dragging internally ([37113bf](https://github.com/portabletext/editor/commit/37113bfd07cba8463e721ea0dbfdc1575a0bb41a))
+
 ## [1.49.1](https://github.com/portabletext/editor/compare/editor-v1.49.0...editor-v1.49.1) (2025-05-07)
 
 
