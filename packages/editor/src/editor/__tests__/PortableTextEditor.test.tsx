@@ -59,6 +59,9 @@ describe('initialization', () => {
     >
       <div>
         <span
+          data-child-key="k1"
+          data-child-name="span"
+          data-child-type="span"
           data-slate-node="text"
         >
           <span
@@ -68,9 +71,6 @@ describe('initialization', () => {
             Jot something down here
           </span>
           <span
-            data-child-key="k1"
-            data-child-name="span"
-            data-child-type="span"
             data-slate-leaf="true"
           >
             <span
