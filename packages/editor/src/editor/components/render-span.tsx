@@ -20,7 +20,7 @@ import {EditorActorContext} from '../editor-actor-context'
 import {usePortableTextEditor} from '../hooks/usePortableTextEditor'
 import {PortableTextEditor} from '../PortableTextEditor'
 
-export interface LeafProps extends RenderLeafProps {
+export interface RenderSpanProps extends RenderLeafProps {
   children: ReactElement<any>
   schemaTypes: PortableTextMemberSchemaTypes
   renderAnnotation?: RenderAnnotationFunction
@@ -29,7 +29,7 @@ export interface LeafProps extends RenderLeafProps {
   readOnly: boolean
 }
 
-export function RenderLeaf(props: LeafProps) {
+export function RenderSpan(props: RenderSpanProps) {
   const slateEditor = useSlateStatic()
   const legacySchemaTypes = props.schemaTypes
   const editorActor = useContext(EditorActorContext)
