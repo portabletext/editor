@@ -4,6 +4,7 @@ import type {PortableTextSlateEditor} from '../types/editor'
 import type {InternalEditor} from './create-editor'
 import type {EditorActor} from './editor-machine'
 import type {EditorSnapshot} from './editor-snapshot'
+import {getActiveAnnotations} from './get-active-annotations'
 import {getActiveDecorators} from './get-active-decorators'
 
 function defaultCompare<T>(a: T, b: T) {
@@ -69,6 +70,10 @@ export function getEditorSnapshot({
   return {
     context: {
       converters: [...editorActorSnapshot.context.converters],
+      activeAnnotations: getActiveAnnotations({
+        editor: slateEditorInstance,
+        schema: editorActorSnapshot.context.schema,
+      }),
       activeDecorators: getActiveDecorators({
         schema: editorActorSnapshot.context.schema,
         slateEditorInstance,

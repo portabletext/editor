@@ -11,7 +11,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
       return editor
     }
 
-    const {insertText, select} = editor
+    const {select} = editor
 
     editor.deleteBackward = (unit) => {
       if (isApplyingBehaviorOperations(editor)) {
@@ -103,9 +103,15 @@ export function createWithEventListeners(editorActor: EditorActor) {
       return
     }
 
-    editor.insertText = (text, options) => {
+    editor.insertText = (text) => {
       if (isApplyingBehaviorOperations(editor)) {
-        insertText(text, options)
+        insertTextOperationImplementation({
+          context: {
+            keyGenerator: editorActor.getSnapshot().context.keyGenerator,
+            schema: editorActor.getSnapshot().context.schema,
+          },
+          operation: {type: 'insert.text', text, editor},
+        })
         return
       }
 
