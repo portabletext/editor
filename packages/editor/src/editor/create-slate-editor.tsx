@@ -53,6 +53,7 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
     instance,
     initialValue,
   }
+  slateEditor.instance.decoratorState = {}
 
   slateEditors.set(config.editorActor, slateEditor)
 

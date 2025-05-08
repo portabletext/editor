@@ -36,7 +36,7 @@ import type {
   PortableTextSlateEditor,
 } from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
-import {isDecoratorActive} from './createWithPortableTextMarkModel'
+import {getEditorSnapshot} from '../editor-selector'
 
 const debug = debugWithName('API:editable')
 
@@ -90,21 +90,23 @@ export function createEditableAPI(
       })
     },
     isMarkActive: (mark: string): boolean => {
-      // Try/catch this, as Slate may error because the selection is currently wrong
-      // TODO: catch only relevant error from Slate
-      try {
-        return isDecoratorActive({editor, decorator: mark})
-      } catch (err) {
-        console.warn(err)
-        return false
-      }
+      const snapshot = getEditorSnapshot({
+        editorActorSnapshot: editorActor.getSnapshot(),
+        slateEditorInstance: editor,
+      })
+
+      return snapshot.context.activeDecorators.includes(mark)
     },
     marks: (): string[] => {
-      return (
-        {
-          ...(Editor.marks(editor) || {}),
-        }.marks || []
-      )
+      const snapshot = getEditorSnapshot({
+        editorActorSnapshot: editorActor.getSnapshot(),
+        slateEditorInstance: editor,
+      })
+
+      return [
+        ...snapshot.context.activeAnnotations,
+        ...snapshot.context.activeDecorators,
+      ]
     },
     undo: (): void => {
       editorActor.send({

@@ -16,6 +16,7 @@ import {isRedoing, isUndoing} from '../../internal-utils/withUndoRedo'
 import type {BehaviorOperationImplementation} from '../../operations/behavior.operations'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
+import {getEditorSnapshot} from '../editor-selector'
 
 const debug = debugWithName('plugin:withPortableTextMarkModel')
 
@@ -263,10 +264,7 @@ export function createWithPortableTextMarkModel(
       }
 
       if (op.type === 'set_selection') {
-        const marks = Editor.marks(editor)
-
         if (
-          marks &&
           op.properties &&
           op.newProperties &&
           op.properties.anchor &&
@@ -317,12 +315,10 @@ export function createWithPortableTextMarkModel(
               op.properties.focus.offset === 0 &&
               newFocusSpan.text.length === op.newProperties.focus.offset
 
-            // If the editor has marks and we are not visually moving the
-            // selection then we just abort. Otherwise the marks would be
-            // cleared and we can't use them for the possible subsequent insert
-            // operation.
-            if (movedToNextSpan || movedToPreviousSpan) {
-              return
+            // We only want to clear the decorator state if the caret is visually
+            // moving
+            if (!movedToNextSpan && !movedToPreviousSpan) {
+              editor.decoratorState = {}
             }
           }
         }
@@ -489,17 +485,16 @@ export function createWithPortableTextMarkModel(
               !previousSpanHasSameAnnotation &&
               !nextSpanHasSameAnnotation
             ) {
-              const marksWithoutAnnotationMarks: string[] = (
-                {
-                  ...(Editor.marks(editor) || {}),
-                }.marks || []
-              ).filter((mark) => decorators.includes(mark))
+              const snapshot = getEditorSnapshot({
+                editorActorSnapshot: editorActor.getSnapshot(),
+                slateEditorInstance: editor,
+              })
 
               Editor.withoutNormalizing(editor, () => {
                 apply(op)
                 Transforms.setNodes(
                   editor,
-                  {marks: marksWithoutAnnotationMarks},
+                  {marks: snapshot.context.activeDecorators},
                   {at: op.path},
                 )
               })
@@ -616,15 +611,7 @@ export const removeDecoratorOperationImplementation: BehaviorOperationImplementa
           },
         )
       } else {
-        const existingMarks: string[] =
-          {
-            ...(Editor.marks(editor) || {}),
-          }.marks || []
-        const marks = {
-          ...(Editor.marks(editor) || {}),
-          marks: existingMarks.filter((eMark) => eMark !== mark),
-        } as Text
-        editor.marks = {marks: marks.marks, _type: 'span'} as Text
+        editor.decoratorState[mark] = false
       }
     }
 
@@ -634,38 +621,4 @@ export const removeDecoratorOperationImplementation: BehaviorOperationImplementa
       editor.selection = {...selection}
     }
   }
-}
-
-export function isDecoratorActive({
-  editor,
-  decorator,
-}: {
-  editor: PortableTextSlateEditor
-  decorator: string
-}) {
-  if (!editor.selection) {
-    return false
-  }
-
-  const selectedTextNodes = Array.from(
-    Editor.nodes(editor, {match: Text.isText, at: editor.selection}),
-  )
-
-  if (selectedTextNodes.length === 0) {
-    return false
-  }
-
-  if (Range.isExpanded(editor.selection)) {
-    return selectedTextNodes.every((n) => {
-      const [node] = n
-
-      return node.marks?.includes(decorator)
-    })
-  }
-
-  return (
-    {
-      ...(Editor.marks(editor) || {}),
-    }.marks || []
-  ).includes(decorator)
 }

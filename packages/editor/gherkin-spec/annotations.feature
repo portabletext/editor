@@ -88,7 +88,7 @@ Feature: Annotations
     And "strong" around "bar"
     When "boo" is selected
     And "link" is toggled
-    And the caret is put before "baa"
+    And the caret is put before "aa"
     And "link" is toggled
     Then the text is "foo ,bar, baz ,boo baa"
     And "foo " has marks "l1"
@@ -102,7 +102,7 @@ Feature: Annotations
     And "strong" around "boo"
     When "bar" is selected
     And "link" is toggled
-    And the caret is put before "foo"
+    And the caret is put before "oo "
     And "link" is toggled
     Then the text is "foo bar, baz ,boo, baa"
     And "foo bar" has no marks
@@ -118,10 +118,10 @@ Feature: Annotations
     Then "foo bar baz" has no marks
 
     Examples:
-      | position     |
-      | before "foo" |
-      | after "o b"  |
-      | after "baz"  |
+      | position    |
+      | before "oo" |
+      | after "o b" |
+      | after "ba"  |
 
   Scenario: Writing on top of annotation
     Given the text "foo bar baz"
