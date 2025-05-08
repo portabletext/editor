@@ -5,7 +5,7 @@ Feature: Annotations Across Blocks
     And a global keymap
 
   Scenario: Adding annotation across blocks
-    Given an empty editor
+    Given the text ""
     When "foo" is typed
     And "Enter" is pressed
     And "bar" is typed
@@ -15,7 +15,7 @@ Feature: Annotations Across Blocks
     And "bar" has marks "l2"
 
   Scenario: Adding annotation across blocks (backwards selection)
-    Given an empty editor
+    Given the text ""
     When "foo" is typed
     And "Enter" is pressed
     And "bar" is typed
@@ -26,7 +26,12 @@ Feature: Annotations Across Blocks
 
   Scenario: Adding annotation across an image
     Given the text "foo"
-    And an "image"
+    And a block at "after" selected at the "start"
+      ```
+      {
+        "_type": "image"
+      }
+      ```
     When "Enter" is pressed
     And "bar" is typed
     And "foobar" is selected
@@ -37,7 +42,12 @@ Feature: Annotations Across Blocks
 
   Scenario: Adding annotation across an image (backwards selection)
     Given the text "foo"
-    And an "image"
+    And a block at "after" selected at the "start"
+      ```
+      {
+        "_type": "image"
+      }
+      ```
     When "Enter" is pressed
     And "bar" is typed
     And "foobar" is selected backwards
@@ -133,8 +143,10 @@ Feature: Annotations Across Blocks
     Given the text "foo"
     When "Enter" is pressed
     And "bar" is typed
-    And "foo" is marked with a "link" "l1"
-    And "bar" is marked with a "link" "l2"
+    And "foo" is selected
+    And "link" "l1" is toggled
+    And "bar" is selected
+    And "link" "l2" is toggled
     And the caret is put before "bar"
     And "Backspace" is pressed
     Then the text is "foo,bar"

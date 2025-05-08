@@ -29,12 +29,14 @@ Feature: Annotations Edge Cases
     And "foo baz" has no marks
 
   Scenario: Deleting across annotated blocks
-    Given an empty editor
+    Given the text ""
     When "foo" is typed
     And "Enter" is pressed
     And "bar" is typed
-    When "foo" is marked with a "link" "l1"
-    And "bar" is marked with a "link" "l2"
+    And "foo" is selected
+    And "link" "l1" is toggled
+    And "bar" is selected
+    And "link" "l2" is toggled
     And "ooba" is selected
     And "Backspace" is pressed
     Then the text is "f,r"

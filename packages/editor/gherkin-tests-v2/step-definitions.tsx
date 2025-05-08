@@ -110,6 +110,11 @@ export const stepDefinitions = [
 
   Given('the editor is focused', async (context: Context) => {
     await userEvent.click(context.editor.locator)
+
+    await vi.waitFor(() => {
+      const selection = context.editor.selection()
+      expect(selection).not.toBeNull()
+    })
   }),
 
   Given('the text {string}', async (context: Context, text: string) => {
@@ -472,7 +477,7 @@ export const stepDefinitions = [
       }
 
       keyKeys.forEach((keyKey, index) => {
-        context.keyMap?.set(newAnnotationKeys[index], keyKey)
+        context.keyMap?.set(keyKey, newAnnotationKeys[index])
       })
     },
   ),
@@ -525,8 +530,17 @@ export const stepDefinitions = [
       }
 
       keyKeys.forEach((keyKey, index) => {
-        context.keyMap?.set(newAnnotationKeys[index], keyKey)
+        context.keyMap?.set(keyKey, newAnnotationKeys[index])
       })
+    },
+  ),
+  Then(
+    '{string} has an annotation different than {key}',
+    (context: Context, text: string, key: string) => {
+      const marks = getTextMarks(context.editor.value(), text)
+      const expectedMarks = [context.keyMap?.get(key) ?? key]
+
+      expect(marks).not.toEqual(expectedMarks)
     },
   ),
 
@@ -636,11 +650,11 @@ export const stepDefinitions = [
     async (context: Context, text: string, marks: Parameter['marks']) => {
       await vi.waitFor(() => {
         const actualMarks = getTextMarks(context.editor.value(), text) ?? []
-        const textMarks = actualMarks.map(
+        const expectedMarks = marks.map(
           (mark) => context.keyMap?.get(mark) ?? mark,
         )
 
-        expect(textMarks).toEqual(marks)
+        expect(actualMarks).toEqual(expectedMarks)
       })
     },
   ),
@@ -650,6 +664,18 @@ export const stepDefinitions = [
       expect(textMarks).toEqual([])
     })
   }),
+  Then(
+    '{string} and {string} have the same marks',
+    (context: Context, textA: string, textB: string) => {
+      const marksA = getTextMarks(context.editor.value(), textA)
+      const marksB = getTextMarks(context.editor.value(), textB)
+
+      expect(
+        marksA,
+        `Expected "${textA}" and "${textB}" to have the same marks`,
+      ).toEqual(marksB)
+    },
+  ),
 
   /**
    * Clipboard steps
