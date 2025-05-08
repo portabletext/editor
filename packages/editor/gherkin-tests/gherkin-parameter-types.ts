@@ -10,6 +10,10 @@ export type Parameter = {
 }
 
 export const parameterType = {
+  annotation: createParameterType<'comment' | 'link'>({
+    name: 'annotation',
+    matcher: /"(comment|link)"/,
+  }),
   blockObject: createParameterType<'image'>({
     name: 'block-object',
     matcher: /"(image)"/,
@@ -39,10 +43,7 @@ export const parameterType = {
 }
 
 export const parameterTypes = [
-  createParameterType({
-    name: 'annotation',
-    matcher: /"(comment|link)"/,
-  }),
+  parameterType.annotation,
   parameterType.blockObject,
   createParameterType({
     name: 'index',

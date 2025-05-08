@@ -10,6 +10,10 @@ export type Parameter = {
 }
 
 export const parameterType = {
+  annotation: createParameterType<'comment' | 'link'>({
+    name: 'annotation',
+    matcher: /"(comment|link)"/,
+  }),
   blockObject: createParameterType<'image'>({
     name: 'block-object',
     matcher: /"(image)"/,
@@ -34,6 +38,16 @@ export const parameterType = {
     name: 'decorator',
     matcher: /"(em|strong)"/,
   }),
+  inlineObject: createParameterType<'stock-ticker'>({
+    name: 'inline-object',
+    matcher: /"(stock-ticker)"/,
+  }),
+  keyKeys: createParameterType({
+    name: 'keyKeys',
+    matcher: /"(([a-z]\d)(,([a-z]\d))*)"/,
+    type: Array,
+    transform: (input) => input.split(','),
+  }),
   marks: createParameterType<Array<string>>({
     name: 'marks',
     matcher: /"((strong|em|[a-z]\d)(,(strong|em|[a-z]\d))*)"/,
@@ -57,9 +71,12 @@ export const parameterType = {
 }
 
 export const parameterTypes = [
+  parameterType.annotation,
   parameterType.blockObject,
   parameterType.button,
   parameterType.decorator,
+  parameterType.inlineObject,
+  parameterType.keyKeys,
   parameterType.marks,
   parameterType.placement,
   parameterType.selectPosition,

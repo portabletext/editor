@@ -1,7 +1,7 @@
 import {page, userEvent, type Locator} from '@vitest/browser/context'
 import {Given, Then, When} from 'racejar'
 import React from 'react'
-import {expect, vi} from 'vitest'
+import {assert, expect, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {
   defineSchema,
@@ -14,8 +14,10 @@ import {
 } from '../src'
 import type {EditorActor} from '../src/editor/editor-machine'
 import {getEditorSelection} from '../src/internal-utils/editor-selection'
+import {getSelectionAfterInlineObject} from '../src/internal-utils/inline-object-selection'
 import {parseBlock, parseBlocks} from '../src/internal-utils/parse-blocks'
 import {getSelectionBlockKeys} from '../src/internal-utils/selection-block-keys'
+import {getSelectionText} from '../src/internal-utils/selection-text'
 import {getTersePt} from '../src/internal-utils/terse-pt'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {getTextMarks} from '../src/internal-utils/text-marks'
@@ -24,6 +26,7 @@ import {
   getSelectionBeforeText,
   getTextSelection,
 } from '../src/internal-utils/text-selection'
+import {getValueAnnotations} from '../src/internal-utils/value-annotations'
 import {EditorRefPlugin} from '../src/plugins'
 import {InternalEditorAfterRefPlugin} from '../src/plugins/plugin.internal.editor-actor-ref'
 import {InternalSlateEditorRefPlugin} from '../src/plugins/plugin.internal.slate-editor-ref'
@@ -45,6 +48,7 @@ type Context = {
     selection: () => EditorSelection
     snapshot: () => EditorSnapshot
   }
+  keyMap?: Map<string, string>
 }
 
 export const stepDefinitions = [
@@ -67,6 +71,7 @@ export const stepDefinitions = [
       <EditorProvider
         initialConfig={{
           schemaDefinition: defineSchema({
+            annotations: [{name: 'comment'}, {name: 'link'}],
             decorators: [{name: 'em'}, {name: 'strong'}],
             blockObjects: [{name: 'image'}, {name: 'break'}],
             inlineObjects: [{name: 'stock-ticker'}],
@@ -99,12 +104,23 @@ export const stepDefinitions = [
     await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
   }),
 
+  Given('a global keymap', (context: Context) => {
+    context.keyMap = new Map()
+  }),
+
+  Given('the editor is focused', async (context: Context) => {
+    await userEvent.click(context.editor.locator)
+  }),
+
   Given('the text {string}', async (context: Context, text: string) => {
     if (text.length > 0) {
       await userEvent.type(context.editor.locator, text)
     }
   }),
 
+  /**
+   * Block steps
+   */
   Given(
     'a block {placement}',
     (context: Context, placement: Parameter['placement'], block: string) => {
@@ -124,7 +140,6 @@ export const stepDefinitions = [
       })
     },
   ),
-
   Given(
     'a block at {placement} selected at the {select-position}',
     (
@@ -150,6 +165,25 @@ export const stepDefinitions = [
     },
   ),
 
+  /**
+   * Inline object steps
+   */
+  Given(
+    'a(n) {inline-object}',
+    (context: Context, inlineObject: Parameter['inlineObject']) => {
+      context.editor.ref.current.send({
+        type: 'insert.inline object',
+        inlineObject: {
+          name: inlineObject,
+          value: {},
+        },
+      })
+    },
+  ),
+
+  /**
+   * Text steps
+   */
   When('{string} is typed', async (context: Context, text: string) => {
     await userEvent.type(context.editor.locator, text)
   }),
@@ -201,8 +235,23 @@ export const stepDefinitions = [
   ),
   When(
     'the caret is put after {string}',
-    async (context: Context, text: string) => {
+    async (context: Context, text: string | '[stock-ticker]') => {
       await vi.waitFor(() => {
+        if (text === '[stock-ticker]') {
+          const selection = getSelectionAfterInlineObject(
+            context.editor.value(),
+            text.replace('[', '').replace(']', ''),
+          )
+          expect(selection).not.toBeNull()
+
+          context.editor.ref.current.send({
+            type: 'select',
+            at: selection,
+          })
+
+          return
+        }
+
         const selection = getSelectionAfterText(context.editor.value(), text)
         expect(selection).not.toBeNull()
 
@@ -287,6 +336,14 @@ export const stepDefinitions = [
       ).toBe(key)
     })
   }),
+  Then('{text} is selected', (context: Context, text: Array<string>) => {
+    const value = context.editor.value()
+    const selection = context.editor.selection()
+
+    expect(getSelectionText(value, selection), 'Unexpected selection').toEqual(
+      text,
+    )
+  }),
 
   When(
     'a block is inserted {placement}',
@@ -359,6 +416,116 @@ export const stepDefinitions = [
           getTersePt(context.editor.value()),
           'Unexpected editor text',
         ).toEqual(text)
+      })
+    },
+  ),
+
+  /**
+   * Annotation steps
+   */
+  Given(
+    'a(n) {annotation} {keyKeys} around {string}',
+    async (
+      context: Context,
+      annotation: Parameter['annotation'],
+      keyKeys: Array<string>,
+      text: string,
+    ) => {
+      await vi.waitFor(() => {
+        const value = context.editor.value()
+        const selection = getTextSelection(value, text)
+        expect(selection).not.toBeNull()
+
+        context.editor.ref.current.send({
+          type: 'select',
+          at: selection,
+        })
+      })
+
+      const value = context.editor.value()
+      const priorAnnotationKeys = getValueAnnotations(value)
+
+      context.editor.ref.current.send({
+        type: 'annotation.toggle',
+        annotation: {
+          name: annotation,
+          value: {},
+        },
+      })
+
+      let newAnnotationKeys: Array<string> = []
+
+      await vi.waitFor(() => {
+        const newValue = context.editor.value()
+
+        expect(priorAnnotationKeys).not.toEqual(getValueAnnotations(newValue))
+
+        newAnnotationKeys = getValueAnnotations(newValue).filter(
+          (newAnnotationKey) => !priorAnnotationKeys.includes(newAnnotationKey),
+        )
+      })
+
+      if (newAnnotationKeys.length !== keyKeys.length) {
+        assert.fail(
+          `Expected ${keyKeys.length} new annotation keys, but got ${newAnnotationKeys.length}`,
+        )
+      }
+
+      keyKeys.forEach((keyKey, index) => {
+        context.keyMap?.set(newAnnotationKeys[index], keyKey)
+      })
+    },
+  ),
+  When(
+    '{annotation} is toggled',
+    (context: Context, annotation: Parameter['annotation']) => {
+      context.editor.ref.current.send({
+        type: 'annotation.toggle',
+        annotation: {
+          name: annotation,
+          value: {},
+        },
+      })
+    },
+  ),
+  When(
+    '{annotation} {keyKeys} is toggled',
+    async (
+      context: Context,
+      annotation: Parameter['annotation'],
+      keyKeys: Array<string>,
+    ) => {
+      const value = context.editor.value()
+      const priorAnnotationKeys = getValueAnnotations(value)
+
+      context.editor.ref.current.send({
+        type: 'annotation.toggle',
+        annotation: {
+          name: annotation,
+          value: {},
+        },
+      })
+
+      let newAnnotationKeys: Array<string> = []
+
+      await vi.waitFor(() => {
+        const newValue = context.editor.value()
+
+        expect(priorAnnotationKeys).not.toEqual(getValueAnnotations(newValue))
+
+        newAnnotationKeys = getValueAnnotations(newValue).filter(
+          (newAnnotationKey) => !priorAnnotationKeys.includes(newAnnotationKey),
+        )
+      })
+
+      if (newAnnotationKeys.length !== keyKeys.length) {
+        assert.fail(
+          `Expected ${keyKeys.length} new annotation keys, but got ${newAnnotationKeys.length}`,
+        )
+      }
+
+      keyKeys.forEach((keyKey, index) => {
+        context.keyMap?.set(newAnnotationKeys[index], keyKey)
       })
     },
   ),
@@ -460,11 +627,18 @@ export const stepDefinitions = [
       })
     },
   ),
+
+  /**
+   * Mark steps
+   */
   Then(
     '{string} has marks {marks}',
     async (context: Context, text: string, marks: Parameter['marks']) => {
       await vi.waitFor(() => {
-        const textMarks = getTextMarks(context.editor.value(), text)
+        const actualMarks = getTextMarks(context.editor.value(), text) ?? []
+        const textMarks = actualMarks.map(
+          (mark) => context.keyMap?.get(mark) ?? mark,
+        )
 
         expect(textMarks).toEqual(marks)
       })
