@@ -3,11 +3,12 @@ import {page, userEvent} from '@vitest/browser/context'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
-import type {Editor} from '../src'
+import type {Editor, EditorEmittedEvent} from '../src'
 import {PortableTextEditable} from '../src/editor/Editable'
 import {EditorProvider} from '../src/editor/editor-provider'
 import {defineSchema} from '../src/editor/editor-schema'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
+import {EventListenerPlugin} from '../src/plugins'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 
 describe('event.insert.inline object', () => {
@@ -68,6 +69,7 @@ describe('event.insert.inline object', () => {
 
   test('Scenario: Inserting and focusing inline object', async () => {
     const editorRef = React.createRef<Editor>()
+    const focusEvents: Array<EditorEmittedEvent> = []
 
     render(
       <EditorProvider
@@ -103,6 +105,13 @@ describe('event.insert.inline object', () => {
         >
           Insert stock ticker
         </button>
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'focused') {
+              focusEvents.push(event)
+            }
+          }}
+        />
         <EditorRefPlugin ref={editorRef} />
         <PortableTextEditable />
       </EditorProvider>,
@@ -116,11 +125,18 @@ describe('event.insert.inline object', () => {
     )
 
     await userEvent.click(locator)
+
+    // Focusing in Slate is async, so we need to make sure it has settled
+    await vi.waitFor(() => {
+      expect(focusEvents).toHaveLength(1)
+    })
+
     await userEvent.click(insertStockTickerButton)
 
     // Focusing in Slate is async, so we need to make sure it has settled
-    // before we assert the selection
-    await new Promise((resolve) => setTimeout(resolve, 250))
+    await vi.waitFor(() => {
+      expect(focusEvents).toHaveLength(2)
+    })
 
     await vi.waitFor(() => {
       expect(editorRef.current?.getSnapshot().context.value).toEqual([
