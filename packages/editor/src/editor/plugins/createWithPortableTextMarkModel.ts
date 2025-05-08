@@ -9,6 +9,7 @@ import type {PortableTextObject, PortableTextSpan} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {Editor, Element, Node, Path, Range, Text, Transforms} from 'slate'
 import {debugWithName} from '../../internal-utils/debug'
+import {getMarkState} from '../../internal-utils/mark-state'
 import {getNextSpan, getPreviousSpan} from '../../internal-utils/sibling-utils'
 import {isChangingRemotely} from '../../internal-utils/withChanges'
 import {isRedoing, isUndoing} from '../../internal-utils/withUndoRedo'
@@ -416,141 +417,29 @@ export function createWithPortableTextMarkModel(
       }
 
       if (op.type === 'insert_text') {
-        const {selection} = editor
-        const collapsedSelection = selection
-          ? Range.isCollapsed(selection)
-          : false
+        const markState = getMarkState({
+          editor,
+          schema: editorActor.getSnapshot().context.schema,
+        })
 
-        if (selection && collapsedSelection) {
-          const [_block, blockPath] = Editor.node(editor, selection, {
-            depth: 1,
-          })
-
-          const [span, spanPath] =
-            Array.from(
-              Editor.nodes(editor, {
-                mode: 'lowest',
-                at: selection.focus,
-                match: (n) => editor.isTextSpan(n),
-                voids: false,
-              }),
-            )[0] ?? ([undefined, undefined] as const)
-
-          const marks = span.marks ?? []
-          const marksWithoutAnnotations = marks.filter((mark) =>
-            decorators.includes(mark),
-          )
-          const spanHasAnnotations =
-            marks.length > marksWithoutAnnotations.length
-
-          const spanIsEmpty = span.text.length === 0
-
-          const atTheBeginningOfSpan = selection.anchor.offset === 0
-          const atTheEndOfSpan = selection.anchor.offset === span.text.length
-
-          const previousSpan = getPreviousSpan({editor, blockPath, spanPath})
-          const nextSpan = getNextSpan({editor, blockPath, spanPath})
-          const nextSpanAnnotations =
-            nextSpan?.marks?.filter((mark) => !decorators.includes(mark)) ?? []
-          const spanAnnotations = marks.filter(
-            (mark) => !decorators.includes(mark),
-          )
-
-          const previousSpanHasAnnotations = previousSpan
-            ? previousSpan.marks?.some((mark) => !decorators.includes(mark))
-            : false
-          const previousSpanHasSameAnnotations = previousSpan
-            ? previousSpan.marks
-                ?.filter((mark) => !decorators.includes(mark))
-                .every((mark) => marks.includes(mark))
-            : false
-          const previousSpanHasSameAnnotation = previousSpan
-            ? previousSpan.marks?.some(
-                (mark) => !decorators.includes(mark) && marks.includes(mark),
-              )
-            : false
-
-          const previousSpanHasSameMarks = previousSpan
-            ? previousSpan.marks?.every((mark) => marks.includes(mark))
-            : false
-          const nextSpanSharesSomeAnnotations = spanAnnotations.some((mark) =>
-            nextSpanAnnotations?.includes(mark),
-          )
-
-          if (spanHasAnnotations && !spanIsEmpty) {
-            if (atTheBeginningOfSpan) {
-              if (previousSpanHasSameMarks) {
-                Transforms.insertNodes(editor, {
-                  _type: 'span',
-                  _key: editorActor.getSnapshot().context.keyGenerator(),
-                  text: op.text,
-                  marks: previousSpan?.marks ?? [],
-                })
-                return
-              } else if (previousSpanHasSameAnnotations) {
-                Transforms.insertNodes(editor, {
-                  _type: 'span',
-                  _key: editorActor.getSnapshot().context.keyGenerator(),
-                  text: op.text,
-                  marks: previousSpan?.marks ?? [],
-                })
-                return
-              } else if (previousSpanHasSameAnnotation) {
-                apply(op)
-                return
-              } else if (!previousSpan) {
-                Transforms.insertNodes(editor, {
-                  _type: 'span',
-                  _key: editorActor.getSnapshot().context.keyGenerator(),
-                  text: op.text,
-                  marks: [],
-                })
-                return
-              }
-            }
-
-            if (atTheEndOfSpan) {
-              if (
-                (nextSpan &&
-                  nextSpanSharesSomeAnnotations &&
-                  nextSpanAnnotations.length < spanAnnotations.length) ||
-                !nextSpanSharesSomeAnnotations
-              ) {
-                Transforms.insertNodes(editor, {
-                  _type: 'span',
-                  _key: editorActor.getSnapshot().context.keyGenerator(),
-                  text: op.text,
-                  marks: nextSpan?.marks ?? [],
-                })
-                return
-              }
-
-              if (!nextSpan) {
-                Transforms.insertNodes(editor, {
-                  _type: 'span',
-                  _key: editorActor.getSnapshot().context.keyGenerator(),
-                  text: op.text,
-                  marks: [],
-                })
-                return
-              }
-            }
-          }
-
-          if (atTheBeginningOfSpan && !spanIsEmpty && !!previousSpan) {
-            Transforms.insertNodes(editor, {
-              _type: 'span',
-              _key: editorActor.getSnapshot().context.keyGenerator(),
-              text: op.text,
-              marks: previousSpanHasAnnotations
-                ? []
-                : (previousSpan.marks ?? []).filter((mark) =>
-                    decorators.includes(mark),
-                  ),
-            })
-            return
-          }
+        if (!markState) {
+          apply(op)
+          return
         }
+
+        if (markState.state === 'unchanged') {
+          apply(op)
+          return
+        }
+
+        Transforms.insertNodes(editor, {
+          _type: 'span',
+          _key: editorActor.getSnapshot().context.keyGenerator(),
+          text: op.text,
+          marks: markState.marks,
+        })
+
+        return
       }
 
       if (op.type === 'remove_text') {
