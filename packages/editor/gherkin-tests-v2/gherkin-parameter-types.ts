@@ -42,7 +42,11 @@ export const parameterType = {
     name: 'inline-object',
     matcher: /"(stock-ticker)"/,
   }),
-  keyKeys: createParameterType({
+  key: createParameterType<'key'>({
+    name: 'key',
+    matcher: /"([a-z]\d)"/,
+  }),
+  keyKeys: createParameterType<Array<string>>({
     name: 'keyKeys',
     matcher: /"(([a-z]\d)(,([a-z]\d))*)"/,
     type: Array,
@@ -76,6 +80,7 @@ export const parameterTypes = [
   parameterType.button,
   parameterType.decorator,
   parameterType.inlineObject,
+  parameterType.key,
   parameterType.keyKeys,
   parameterType.marks,
   parameterType.placement,

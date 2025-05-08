@@ -80,7 +80,7 @@ Feature: Annotations Overlapping Decorators
   Scenario: Annotation and decorator on the same text
     Given the text "foo bar baz"
     When "bar" is selected
-    And "strong" is toggled using the keyboard
+    And "strong" is toggled
     And "link" "l1" is toggled
     Then the text is "foo ,bar, baz"
     And "bar" has marks "strong,l1"
@@ -89,7 +89,7 @@ Feature: Annotations Overlapping Decorators
     Given the text "foo bar baz"
     And a "link" "l1" around "foo bar baz"
     When "bar" is selected
-    And "strong" is toggled using the keyboard
+    And "strong" is toggled
     Then the text is "foo ,bar, baz"
     And "foo " has marks "l1"
     And "bar" has marks "l1,strong"
