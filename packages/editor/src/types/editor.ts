@@ -125,6 +125,7 @@ export interface PortableTextSlateEditor extends ReactEditor {
   isTextSpan: (value: unknown) => value is PortableTextSpan
   isListBlock: (value: unknown) => value is PortableTextListBlock
   value: Array<PortableTextBlock>
+  decoratorState: Record<string, boolean | undefined>
 
   /**
    * Use hotkeys

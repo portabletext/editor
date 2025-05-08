@@ -34,6 +34,7 @@ export const getActiveAnnotations: EditorSelector<Array<PortableTextObject>> = (
     }
   }
 
+  const activeAnnotations = snapshot.context.activeAnnotations
   const selectionMarkDefs = selectedBlocks.flatMap((block) =>
     isTextBlock(snapshot.context, block.node)
       ? (block.node.markDefs ?? [])
@@ -41,6 +42,6 @@ export const getActiveAnnotations: EditorSelector<Array<PortableTextObject>> = (
   )
 
   return selectionMarkDefs.filter((markDef) =>
-    selectedSpans.some((span) => span.node.marks?.includes(markDef._key)),
+    activeAnnotations.includes(markDef._key),
   )
 }
