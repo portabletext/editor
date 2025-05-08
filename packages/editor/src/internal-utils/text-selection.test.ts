@@ -6,6 +6,17 @@ import {
 } from './text-selection'
 
 test(getTextSelection.name, () => {
+  const simpleBlock = {
+    _key: 'b1',
+    _type: 'block',
+    children: [{_key: 's1', _type: 'span', text: 'foo'}],
+  }
+
+  expect(getTextSelection([simpleBlock], 'foo')).toEqual({
+    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
+    focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+  })
+
   const joinedBlock = {
     _key: 'b1',
     _type: 'block',

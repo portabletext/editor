@@ -154,14 +154,13 @@ Feature: Annotations
       | "foo"         | "foo"     | before "foo"  | "new,foo"          |
       | "foo"         | "foo"     | after "foo"   | "foo,new"          |
 
-  # This scenario uses some workaround steps to insert text after an inline
-  # object. This is due to a bug related to wrong caret positioning after
-  # inserting an inline object.
   Scenario Outline: Inserting text after inline object, before annotation
-    Given a "stock-ticker"
-    When "ArrowRight" is pressed 2 times
+    Given the editor is focused
+    And a "stock-ticker"
+    When "ArrowRight" is pressed
     And "bar" is typed
-    And "bar" is marked with a "link" "l1"
+    And "bar" is selected
+    And "link" "l1" is toggled
     And the caret is put <position>
     And "foo " is typed
     Then the text is ",[stock-ticker],foo ,bar"
@@ -175,7 +174,7 @@ Feature: Annotations
     Given the text <text>
     And a "link" "l1" around <annotated>
     When the caret is put <position>
-    And "strong" is toggled using the keyboard
+    And "strong" is toggled
     And "new" is typed
     Then the text is <new text>
     And "new" has marks "strong"
