@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.49.4](https://github.com/portabletext/editor/compare/editor-v1.49.3...editor-v1.49.4) (2025-05-09)
+
+
+### Bug Fixes
+
+* **value sync:** only await when needed ([6f8c753](https://github.com/portabletext/editor/commit/6f8c753d9015b83285fdf7235918c48de1ba2018))
+
 ## [1.49.3](https://github.com/portabletext/editor/compare/editor-v1.49.2...editor-v1.49.3) (2025-05-09)
 
 
