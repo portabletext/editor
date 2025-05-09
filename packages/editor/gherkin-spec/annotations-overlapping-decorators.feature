@@ -29,6 +29,29 @@ Feature: Annotations Overlapping Decorators
       | "foo bar baz" | "bar"         | "foo bar baz" | after "bar"   | "foo ,bar,new baz" |
       | "foo bar baz" | "bar"         | "foo bar baz" | before " baz" | "foo ,bar,new baz" |
 
+  Scenario Outline: Toggling decorator at the edge of a decorated annotation
+    Given the text <text>
+    And a "link" "l1" around <annotated>
+    And "strong" around <decorated>
+    When the caret is put <position>
+    # This one is tricky since it requires the editor to know up-front that
+    # typing at the current position shouldn't produce bold text (since the
+    # strong decorator is contained within the adjoining annotation).
+    #
+    # Therefore, toggling strong should turn on the decorator (not off) to go
+    # against the default behavior and produce bold text.
+    And "strong" is toggled
+    And "new" is typed
+    Then the text is <new text>
+    And "new" has marks <marks>
+
+    Examples:
+      | text          | annotated | decorated | position      | new text            | marks    |
+      | "foo bar baz" | "bar"     | "bar"     | after "foo "  | "foo ,new,bar, baz" | "strong" |
+      | "foo bar baz" | "bar"     | "bar"     | before "bar"  | "foo ,new,bar, baz" | "strong" |
+      | "foo bar baz" | "bar"     | "bar"     | after "bar"   | "foo ,bar,new, baz" | "strong" |
+      | "foo bar baz" | "bar"     | "bar"     | before " baz" | "foo ,bar,new, baz" | "strong" |
+
   Scenario Outline: Writing on top of a decorated annotation
     Given the text "foo bar baz"
     And a "link" "l1" around <annotated>

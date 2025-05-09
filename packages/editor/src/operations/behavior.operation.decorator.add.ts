@@ -110,6 +110,7 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
     const trimmedSelection = selectors.getTrimmedSelection({
       beta: {hasTag: () => false, internalDrag: undefined},
       context: {
+        activeAnnotations: [],
         activeDecorators: [],
         converters: [],
         keyGenerator: context.keyGenerator,
@@ -196,15 +197,7 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
         },
       )
     } else {
-      const existingMarks: string[] =
-        {
-          ...(Editor.marks(editor) || {}),
-        }.marks || []
-      const marks = {
-        ...(Editor.marks(editor) || {}),
-        marks: [...existingMarks, mark],
-      }
-      editor.marks = marks as Text
+      editor.decoratorState[mark] = true
     }
   }
 

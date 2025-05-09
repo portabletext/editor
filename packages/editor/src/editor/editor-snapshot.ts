@@ -6,12 +6,14 @@ import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
 import type {HasTag} from './editor-machine'
 import type {EditorSchema} from './editor-schema'
+import {getActiveAnnotations} from './get-active-annotations'
 import {getActiveDecorators} from './get-active-decorators'
 
 /**
  * @public
  */
 export type EditorContext = {
+  activeAnnotations: Array<string>
   activeDecorators: Array<string>
   converters: Array<Converter>
   keyGenerator: () => string
@@ -71,6 +73,10 @@ export function createEditorSnapshot({
     : null
 
   const context = {
+    activeAnnotations: getActiveAnnotations({
+      editor,
+      schema,
+    }),
     activeDecorators: getActiveDecorators({
       schema,
       slateEditorInstance: editor,

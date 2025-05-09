@@ -22,6 +22,7 @@ export const abstractDeleteBehaviors = [
           converters: [],
           schema: snapshot.context.schema,
           keyGenerator: snapshot.context.keyGenerator,
+          activeAnnotations: [],
           activeDecorators: [],
           readOnly: false,
           value: snapshot.context.value,

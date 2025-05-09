@@ -1,3 +1,4 @@
+import type {PortableTextSpan} from '@sanity/types'
 import {Editor, Element, Node, Range, type Path, type Point} from 'slate'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
@@ -42,6 +43,49 @@ export function getFocusBlock({
     )
   } catch {
     return [undefined, undefined]
+  }
+}
+
+export function getFocusSpan({
+  editor,
+}: {
+  editor: PortableTextSlateEditor
+}): [node: PortableTextSpan, path: Path] | [undefined, undefined] {
+  if (!editor.selection) {
+    return [undefined, undefined]
+  }
+
+  try {
+    const [node, path] = Editor.node(editor, editor.selection.focus.path)
+
+    if (editor.isTextSpan(node)) {
+      return [node, path]
+    }
+  } catch {
+    return [undefined, undefined]
+  }
+
+  return [undefined, undefined]
+}
+
+export function getSelectedSpans({
+  editor,
+}: {
+  editor: PortableTextSlateEditor
+}): Array<[node: PortableTextSpan, path: Path]> {
+  if (!editor.selection) {
+    return []
+  }
+
+  try {
+    return Array.from(
+      Editor.nodes(editor, {
+        at: editor.selection,
+        match: (node) => editor.isTextSpan(node),
+      }),
+    )
+  } catch {
+    return []
   }
 }
 

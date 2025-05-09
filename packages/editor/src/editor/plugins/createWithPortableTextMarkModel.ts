@@ -9,12 +9,14 @@ import type {PortableTextObject, PortableTextSpan} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {Editor, Element, Node, Path, Range, Text, Transforms} from 'slate'
 import {debugWithName} from '../../internal-utils/debug'
+import {getMarkState} from '../../internal-utils/mark-state'
 import {getNextSpan, getPreviousSpan} from '../../internal-utils/sibling-utils'
 import {isChangingRemotely} from '../../internal-utils/withChanges'
 import {isRedoing, isUndoing} from '../../internal-utils/withUndoRedo'
 import type {BehaviorOperationImplementation} from '../../operations/behavior.operations'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
+import {getEditorSnapshot} from '../editor-selector'
 
 const debug = debugWithName('plugin:withPortableTextMarkModel')
 
@@ -262,10 +264,7 @@ export function createWithPortableTextMarkModel(
       }
 
       if (op.type === 'set_selection') {
-        const marks = Editor.marks(editor)
-
         if (
-          marks &&
           op.properties &&
           op.newProperties &&
           op.properties.anchor &&
@@ -316,12 +315,10 @@ export function createWithPortableTextMarkModel(
               op.properties.focus.offset === 0 &&
               newFocusSpan.text.length === op.newProperties.focus.offset
 
-            // If the editor has marks and we are not visually moving the
-            // selection then we just abort. Otherwise the marks would be
-            // cleared and we can't use them for the possible subsequent insert
-            // operation.
-            if (movedToNextSpan || movedToPreviousSpan) {
-              return
+            // We only want to clear the decorator state if the caret is visually
+            // moving
+            if (!movedToNextSpan && !movedToPreviousSpan) {
+              editor.decoratorState = {}
             }
           }
         }
@@ -416,141 +413,29 @@ export function createWithPortableTextMarkModel(
       }
 
       if (op.type === 'insert_text') {
-        const {selection} = editor
-        const collapsedSelection = selection
-          ? Range.isCollapsed(selection)
-          : false
+        const markState = getMarkState({
+          editor,
+          schema: editorActor.getSnapshot().context.schema,
+        })
 
-        if (selection && collapsedSelection) {
-          const [_block, blockPath] = Editor.node(editor, selection, {
-            depth: 1,
-          })
-
-          const [span, spanPath] =
-            Array.from(
-              Editor.nodes(editor, {
-                mode: 'lowest',
-                at: selection.focus,
-                match: (n) => editor.isTextSpan(n),
-                voids: false,
-              }),
-            )[0] ?? ([undefined, undefined] as const)
-
-          const marks = span.marks ?? []
-          const marksWithoutAnnotations = marks.filter((mark) =>
-            decorators.includes(mark),
-          )
-          const spanHasAnnotations =
-            marks.length > marksWithoutAnnotations.length
-
-          const spanIsEmpty = span.text.length === 0
-
-          const atTheBeginningOfSpan = selection.anchor.offset === 0
-          const atTheEndOfSpan = selection.anchor.offset === span.text.length
-
-          const previousSpan = getPreviousSpan({editor, blockPath, spanPath})
-          const nextSpan = getNextSpan({editor, blockPath, spanPath})
-          const nextSpanAnnotations =
-            nextSpan?.marks?.filter((mark) => !decorators.includes(mark)) ?? []
-          const spanAnnotations = marks.filter(
-            (mark) => !decorators.includes(mark),
-          )
-
-          const previousSpanHasAnnotations = previousSpan
-            ? previousSpan.marks?.some((mark) => !decorators.includes(mark))
-            : false
-          const previousSpanHasSameAnnotations = previousSpan
-            ? previousSpan.marks
-                ?.filter((mark) => !decorators.includes(mark))
-                .every((mark) => marks.includes(mark))
-            : false
-          const previousSpanHasSameAnnotation = previousSpan
-            ? previousSpan.marks?.some(
-                (mark) => !decorators.includes(mark) && marks.includes(mark),
-              )
-            : false
-
-          const previousSpanHasSameMarks = previousSpan
-            ? previousSpan.marks?.every((mark) => marks.includes(mark))
-            : false
-          const nextSpanSharesSomeAnnotations = spanAnnotations.some((mark) =>
-            nextSpanAnnotations?.includes(mark),
-          )
-
-          if (spanHasAnnotations && !spanIsEmpty) {
-            if (atTheBeginningOfSpan) {
-              if (previousSpanHasSameMarks) {
-                Transforms.insertNodes(editor, {
-                  _type: 'span',
-                  _key: editorActor.getSnapshot().context.keyGenerator(),
-                  text: op.text,
-                  marks: previousSpan?.marks ?? [],
-                })
-                return
-              } else if (previousSpanHasSameAnnotations) {
-                Transforms.insertNodes(editor, {
-                  _type: 'span',
-                  _key: editorActor.getSnapshot().context.keyGenerator(),
-                  text: op.text,
-                  marks: previousSpan?.marks ?? [],
-                })
-                return
-              } else if (previousSpanHasSameAnnotation) {
-                apply(op)
-                return
-              } else if (!previousSpan) {
-                Transforms.insertNodes(editor, {
-                  _type: 'span',
-                  _key: editorActor.getSnapshot().context.keyGenerator(),
-                  text: op.text,
-                  marks: [],
-                })
-                return
-              }
-            }
-
-            if (atTheEndOfSpan) {
-              if (
-                (nextSpan &&
-                  nextSpanSharesSomeAnnotations &&
-                  nextSpanAnnotations.length < spanAnnotations.length) ||
-                !nextSpanSharesSomeAnnotations
-              ) {
-                Transforms.insertNodes(editor, {
-                  _type: 'span',
-                  _key: editorActor.getSnapshot().context.keyGenerator(),
-                  text: op.text,
-                  marks: nextSpan?.marks ?? [],
-                })
-                return
-              }
-
-              if (!nextSpan) {
-                Transforms.insertNodes(editor, {
-                  _type: 'span',
-                  _key: editorActor.getSnapshot().context.keyGenerator(),
-                  text: op.text,
-                  marks: [],
-                })
-                return
-              }
-            }
-          }
-
-          if (atTheBeginningOfSpan && !spanIsEmpty && !!previousSpan) {
-            Transforms.insertNodes(editor, {
-              _type: 'span',
-              _key: editorActor.getSnapshot().context.keyGenerator(),
-              text: op.text,
-              marks: previousSpanHasAnnotations
-                ? []
-                : (previousSpan.marks ?? []).filter((mark) =>
-                    decorators.includes(mark),
-                  ),
-            })
-            return
-          }
+        if (!markState) {
+          apply(op)
+          return
         }
+
+        if (markState.state === 'unchanged') {
+          apply(op)
+          return
+        }
+
+        Transforms.insertNodes(editor, {
+          _type: 'span',
+          _key: editorActor.getSnapshot().context.keyGenerator(),
+          text: op.text,
+          marks: markState.marks,
+        })
+
+        return
       }
 
       if (op.type === 'remove_text') {
@@ -600,17 +485,16 @@ export function createWithPortableTextMarkModel(
               !previousSpanHasSameAnnotation &&
               !nextSpanHasSameAnnotation
             ) {
-              const marksWithoutAnnotationMarks: string[] = (
-                {
-                  ...(Editor.marks(editor) || {}),
-                }.marks || []
-              ).filter((mark) => decorators.includes(mark))
+              const snapshot = getEditorSnapshot({
+                editorActorSnapshot: editorActor.getSnapshot(),
+                slateEditorInstance: editor,
+              })
 
               Editor.withoutNormalizing(editor, () => {
                 apply(op)
                 Transforms.setNodes(
                   editor,
-                  {marks: marksWithoutAnnotationMarks},
+                  {marks: snapshot.context.activeDecorators},
                   {at: op.path},
                 )
               })
@@ -727,15 +611,7 @@ export const removeDecoratorOperationImplementation: BehaviorOperationImplementa
           },
         )
       } else {
-        const existingMarks: string[] =
-          {
-            ...(Editor.marks(editor) || {}),
-          }.marks || []
-        const marks = {
-          ...(Editor.marks(editor) || {}),
-          marks: existingMarks.filter((eMark) => eMark !== mark),
-        } as Text
-        editor.marks = {marks: marks.marks, _type: 'span'} as Text
+        editor.decoratorState[mark] = false
       }
     }
 
@@ -745,38 +621,4 @@ export const removeDecoratorOperationImplementation: BehaviorOperationImplementa
       editor.selection = {...selection}
     }
   }
-}
-
-export function isDecoratorActive({
-  editor,
-  decorator,
-}: {
-  editor: PortableTextSlateEditor
-  decorator: string
-}) {
-  if (!editor.selection) {
-    return false
-  }
-
-  const selectedTextNodes = Array.from(
-    Editor.nodes(editor, {match: Text.isText, at: editor.selection}),
-  )
-
-  if (selectedTextNodes.length === 0) {
-    return false
-  }
-
-  if (Range.isExpanded(editor.selection)) {
-    return selectedTextNodes.every((n) => {
-      const [node] = n
-
-      return node.marks?.includes(decorator)
-    })
-  }
-
-  return (
-    {
-      ...(Editor.marks(editor) || {}),
-    }.marks || []
-  ).includes(decorator)
 }
