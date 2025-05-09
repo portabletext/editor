@@ -1,6 +1,6 @@
 import {useEffect} from 'react'
 import type {Behavior} from '../behaviors'
-import {useEditor} from '../editor/editor-provider'
+import {useEditor} from '../editor/use-editor'
 
 /**
  * @beta

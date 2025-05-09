@@ -1,6 +1,6 @@
 import React from 'react'
 import type {Editor} from '../editor/create-editor'
-import {useEditor} from '../editor/editor-provider'
+import {useEditor} from '../editor/use-editor'
 
 /**
  * @beta
