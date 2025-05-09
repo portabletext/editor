@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.49.3](https://github.com/portabletext/editor/compare/editor-v1.49.2...editor-v1.49.3) (2025-05-09)
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^3.88.2 ([ef30039](https://github.com/portabletext/editor/commit/ef3003905679a12d34135ece7ec119bbb59946ca))
+* **types:** move `Editor` and friends to separate file ([9cc17a7](https://github.com/portabletext/editor/commit/9cc17a713b2e025a7007e4becb6284ed8ab3091b))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.25
+
 ## [1.49.2](https://github.com/portabletext/editor/compare/editor-v1.49.1...editor-v1.49.2) (2025-05-07)
 
 
