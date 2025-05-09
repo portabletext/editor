@@ -211,176 +211,133 @@ export const syncMachine = setup({
       actions: ['assign readOnly'],
     },
   },
-  type: 'parallel',
+  initial: 'idle',
   states: {
-    'setting up': {
-      initial: 'syncing initial value',
-      states: {
-        'syncing initial value': {
-          entry: [
-            () => {
-              debug('entry: syncing initial value')
-            },
-          ],
-          exit: [
-            () => {
-              debug('exit: syncing initial value')
-            },
-          ],
-          always: {
-            guard: 'initial value synced',
-            target: 'done syncing initial value',
+    idle: {
+      entry: [
+        () => {
+          debug('entry: syncing->idle')
+        },
+      ],
+      exit: [
+        () => {
+          debug('exit: syncing->idle')
+        },
+      ],
+      on: {
+        'update value': [
+          {
+            guard: 'is busy',
+            target: 'busy',
+            actions: ['assign pending value'],
           },
-        },
-        'done syncing initial value': {
-          entry: [
-            'emit done syncing value',
-            () => {
-              debug('entry: done syncing initial value')
-            },
-          ],
-          exit: [
-            () => {
-              debug('exit: done syncing initial value')
-            },
-          ],
-          type: 'final',
-        },
+          {
+            target: 'syncing',
+            actions: ['assign pending value'],
+          },
+        ],
       },
     },
-    'syncing': {
-      initial: 'idle',
-      states: {
-        idle: {
-          entry: [
-            () => {
-              debug('entry: syncing->idle')
-            },
-          ],
-          exit: [
-            () => {
-              debug('exit: syncing->idle')
-            },
-          ],
-          on: {
-            'update value': [
-              {
-                guard: 'is busy',
-                target: 'busy',
-                actions: ['assign pending value'],
-              },
-              {
-                target: 'syncing',
-                actions: ['assign pending value'],
-              },
-            ],
-          },
+    busy: {
+      entry: [
+        () => {
+          debug('entry: syncing->busy')
         },
-        busy: {
-          entry: [
-            () => {
-              debug('entry: syncing->busy')
-            },
-          ],
-          exit: [
-            () => {
-              debug('exit: syncing->busy')
-            },
-          ],
-          after: {
-            1000: [
-              {
-                guard: 'is busy',
-                target: '.',
-                reenter: true,
-                actions: [
-                  () => {
-                    debug('reenter: syncing->busy')
-                  },
-                ],
-              },
-              {
-                target: 'syncing',
-              },
-            ],
-          },
-          on: {
-            'update value': [
-              {
-                actions: ['assign pending value'],
-              },
-            ],
-          },
+      ],
+      exit: [
+        () => {
+          debug('exit: syncing->busy')
         },
-        syncing: {
-          entry: [
-            () => {
-              debug('entry: syncing->syncing')
+      ],
+      after: {
+        1000: [
+          {
+            guard: 'is busy',
+            target: '.',
+            reenter: true,
+            actions: [
+              () => {
+                debug('reenter: syncing->busy')
+              },
+            ],
+          },
+          {
+            target: 'syncing',
+          },
+        ],
+      },
+      on: {
+        'update value': [
+          {
+            actions: ['assign pending value'],
+          },
+        ],
+      },
+    },
+    syncing: {
+      entry: [
+        () => {
+          debug('entry: syncing->syncing')
+        },
+        'emit syncing value',
+      ],
+      exit: [
+        () => {
+          debug('exit: syncing->syncing')
+        },
+        'emit done syncing value',
+      ],
+      always: {
+        guard: 'pending value equals previous value',
+        target: 'idle',
+        actions: ['clear pending value', 'assign initial value synced'],
+      },
+      invoke: {
+        src: 'sync value',
+        id: 'sync value',
+        input: ({context}) => {
+          return {
+            context: {
+              keyGenerator: context.keyGenerator,
+              previousValue: context.previousValue,
+              readOnly: context.readOnly,
+              schema: context.schema,
             },
-            'emit syncing value',
-          ],
-          exit: [
-            () => {
-              debug('exit: syncing->syncing')
-            },
-            'emit done syncing value',
-          ],
-          always: {
-            guard: 'pending value equals previous value',
+            slateEditor: context.slateEditor,
+            streamBlocks: !context.initialValueSynced,
+            value: context.pendingValue,
+          }
+        },
+      },
+      on: {
+        'update value': {
+          actions: ['assign pending value'],
+        },
+        'patch': {
+          actions: [emit(({event}) => event)],
+        },
+        'invalid value': {
+          actions: [emit(({event}) => event)],
+        },
+        'value changed': {
+          actions: [emit(({event}) => event)],
+        },
+        'done syncing': [
+          {
+            guard: 'value changed while syncing',
+            actions: ['assign previous value', 'assign initial value synced'],
+            target: 'syncing',
+            reenter: true,
+          },
+          {
             target: 'idle',
-            actions: ['clear pending value', 'assign initial value synced'],
-          },
-          invoke: {
-            src: 'sync value',
-            id: 'sync value',
-            input: ({context}) => {
-              return {
-                context: {
-                  keyGenerator: context.keyGenerator,
-                  previousValue: context.previousValue,
-                  readOnly: context.readOnly,
-                  schema: context.schema,
-                },
-                slateEditor: context.slateEditor,
-                streamBlocks: !context.initialValueSynced,
-                value: context.pendingValue,
-              }
-            },
-          },
-          on: {
-            'update value': {
-              actions: ['assign pending value'],
-            },
-            'patch': {
-              actions: [emit(({event}) => event)],
-            },
-            'invalid value': {
-              actions: [emit(({event}) => event)],
-            },
-            'value changed': {
-              actions: [emit(({event}) => event)],
-            },
-            'done syncing': [
-              {
-                guard: 'value changed while syncing',
-                actions: [
-                  'assign previous value',
-                  'assign initial value synced',
-                ],
-                target: 'syncing',
-                reenter: true,
-              },
-              {
-                target: 'idle',
-                actions: [
-                  'clear pending value',
-                  'assign previous value',
-                  'assign initial value synced',
-                ],
-              },
+            actions: [
+              'clear pending value',
+              'assign previous value',
+              'assign initial value synced',
             ],
           },
-        },
+        ],
       },
     },
   },
