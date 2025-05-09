@@ -1,75 +1,19 @@
-import type {
-  ArrayDefinition,
-  ArraySchemaType,
-  PortableTextBlock,
-} from '@sanity/types'
-import type {ActorRef, EventObject, Snapshot} from 'xstate'
-import type {Behavior} from '../behaviors/behavior.types.behavior'
-import type {ExternalBehaviorEvent} from '../behaviors/behavior.types.event'
 import {createCoreConverters} from '../converters/converters.core'
+import type {Editor, EditorConfig} from '../editor'
 import {compileType} from '../internal-utils/schema'
 import {corePriority} from '../priority/priority.core'
 import {createEditorPriority} from '../priority/priority.types'
 import type {EditableAPI} from '../types/editor'
 import {createSlateEditor, type SlateEditor} from './create-slate-editor'
-import type {
-  EditorActor,
-  EditorEmittedEvent,
-  ExternalEditorEvent,
-} from './editor-machine'
+import type {EditorActor} from './editor-machine'
 import {
   compileSchemaDefinitionToLegacySchema,
   legacySchemaToEditorSchema,
-  type SchemaDefinition,
 } from './editor-schema'
 import {getEditorSnapshot} from './editor-selector'
-import type {EditorSnapshot} from './editor-snapshot'
 import {defaultKeyGenerator} from './key-generator'
 import {createLegacySchema} from './legacy-schema'
 import {createEditableAPI} from './plugins/createWithEditableAPI'
-
-/**
- * @public
- */
-export type EditorConfig = {
-  /**
-   * @beta
-   */
-  keyGenerator?: () => string
-  /**
-   * @deprecated Will be removed in the next major version
-   */
-  maxBlocks?: number
-  readOnly?: boolean
-  initialValue?: Array<PortableTextBlock>
-} & (
-  | {
-      schemaDefinition: SchemaDefinition
-      schema?: undefined
-    }
-  | {
-      schemaDefinition?: undefined
-      schema: ArraySchemaType<PortableTextBlock> | ArrayDefinition
-    }
-)
-
-/**
- * @public
- */
-export type EditorEvent = ExternalEditorEvent | ExternalBehaviorEvent
-
-/**
- * @public
- */
-export type Editor = {
-  getSnapshot: () => EditorSnapshot
-  /**
-   * @beta
-   */
-  registerBehavior: (config: {behavior: Behavior}) => () => void
-  send: (event: EditorEvent) => void
-  on: ActorRef<Snapshot<unknown>, EventObject, EditorEmittedEvent>['on']
-}
 
 export type InternalEditor = Editor & {
   _internal: {
