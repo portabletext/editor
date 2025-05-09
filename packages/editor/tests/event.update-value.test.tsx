@@ -327,4 +327,73 @@ describe('event.update value', () => {
       ])
     })
   })
+
+  test('Scenario: Adding blocks before existing block', async () => {
+    const editorRef = React.createRef<Editor>()
+    const keyGenerator = createTestKeyGenerator()
+    const onEvent = vi.fn<() => EditorEmittedEvent>()
+
+    const h2 = {
+      _key: keyGenerator(),
+      _type: 'block',
+      children: [{_key: keyGenerator(), _type: 'span', text: 'h2', marks: []}],
+      style: 'h2',
+      markDefs: [],
+    }
+    const h1 = {
+      _key: keyGenerator(),
+      _type: 'block',
+      children: [{_key: keyGenerator(), _type: 'span', text: 'h1', marks: []}],
+      style: 'h1',
+      markDefs: [],
+    }
+    const paragraph = {
+      _key: keyGenerator(),
+      _type: 'block',
+      children: [
+        {_key: keyGenerator(), _type: 'span', text: 'paragraph', marks: []},
+      ],
+      style: 'normal',
+      markDefs: [],
+    }
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator,
+          schemaDefinition: defineSchema({}),
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <EventListenerPlugin on={onEvent} />
+        <PortableTextEditable />
+      </EditorProvider>,
+    )
+
+    await vi.waitFor(() => {
+      expect(onEvent).toHaveBeenCalledWith({type: 'ready'})
+    })
+
+    editorRef.current?.send({
+      type: 'update value',
+      value: [h2],
+    })
+
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([h2])
+    })
+
+    editorRef.current?.send({
+      type: 'update value',
+      value: [h1, paragraph, h2],
+    })
+
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        h1,
+        paragraph,
+        h2,
+      ])
+    })
+  })
 })
