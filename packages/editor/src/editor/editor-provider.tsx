@@ -1,5 +1,6 @@
 import {useActorRef} from '@xstate/react'
-import React, {useMemo} from 'react'
+import type React from 'react'
+import {useMemo} from 'react'
 import {Slate} from 'slate-react'
 import {Synchronizer} from './components/Synchronizer'
 import {
@@ -86,29 +87,4 @@ export function EditorProvider(props: EditorProviderProps) {
       </EditorActorContext.Provider>
     </EditorContext.Provider>
   )
-}
-
-/**
- * @public
- * Get the current editor context from the `EditorProvider`.
- * Must be used inside the `EditorProvider` component.
- * @returns The current editor object.
- * @example
- * ```tsx
- * import { useEditor } from '@portabletext/editor'
- *
- * function MyComponent() {
- *  const editor = useEditor()
- * }
- * ```
- * @group Hooks
- */
-export function useEditor() {
-  const editor = React.useContext(EditorContext)
-
-  if (!editor) {
-    throw new Error('No Editor set. Use EditorProvider to set one.')
-  }
-
-  return editor
 }

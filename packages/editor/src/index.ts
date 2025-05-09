@@ -4,15 +4,8 @@ export type {
   PortableTextChild,
   PortableTextSpan,
 } from '@sanity/types'
-export type {AddedAnnotationPaths} from './operations/behavior.operation.annotation.add'
 export {EditorEventListener} from './editor-event-listener'
 export type {Editor, EditorConfig, EditorEvent} from './editor/create-editor'
-export {
-  defineSchema,
-  type BaseDefinition,
-  type SchemaDefinition,
-} from './editor/editor-schema'
-export type {EditorSchema} from './editor/editor-schema'
 export {PortableTextEditable} from './editor/Editable'
 export type {PortableTextEditableProps} from './editor/Editable'
 export type {
@@ -22,9 +15,14 @@ export type {
 } from './editor/editor-machine'
 export {
   EditorProvider,
-  useEditor,
   type EditorProviderProps,
 } from './editor/editor-provider'
+export {
+  defineSchema,
+  type BaseDefinition,
+  type SchemaDefinition,
+} from './editor/editor-schema'
+export type {EditorSchema} from './editor/editor-schema'
 export {useEditorSelector, type EditorSelector} from './editor/editor-selector'
 export type {EditorContext, EditorSnapshot} from './editor/editor-snapshot'
 export {usePortableTextEditor} from './editor/hooks/usePortableTextEditor'
@@ -32,6 +30,8 @@ export {usePortableTextEditorSelection} from './editor/hooks/usePortableTextEdit
 export {defaultKeyGenerator as keyGenerator} from './editor/key-generator'
 export {PortableTextEditor} from './editor/PortableTextEditor'
 export type {PortableTextEditorProps} from './editor/PortableTextEditor'
+export {useEditor} from './editor/use-editor'
+export type {AddedAnnotationPaths} from './operations/behavior.operation.annotation.add'
 export type {BlockOffset} from './types/block-offset'
 export type {
   BlockAnnotationRenderProps,

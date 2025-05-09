@@ -1,7 +1,7 @@
 import {useEffect} from 'react'
 import {useEffectEvent} from 'use-effect-event'
 import type {EditorEmittedEvent} from '../editor/editor-machine'
-import {useEditor} from '../editor/editor-provider'
+import {useEditor} from '../editor/use-editor'
 
 /**
  * @public

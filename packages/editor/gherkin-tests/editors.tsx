@@ -4,6 +4,7 @@ import * as React from 'react'
 import {useEffect} from 'react'
 import {
   PortableTextEditable,
+  useEditor,
   useEditorSelector,
   type HotkeyOptions,
   type RangeDecoration,
@@ -11,7 +12,7 @@ import {
 } from '../src'
 import type {Behavior} from '../src/behaviors'
 import type {EditorEmittedEvent} from '../src/editor/editor-machine'
-import {EditorProvider, useEditor} from '../src/editor/editor-provider'
+import {EditorProvider} from '../src/editor/editor-provider'
 import {BehaviorPlugin, EditorRefPlugin} from '../src/plugins'
 import * as selectors from '../src/selectors'
 import type {EditorActorRef, TestActorRef} from './test-machine'
