@@ -444,48 +444,69 @@ async function updateValue({
       schemaTypes: context.schema,
     })
 
-    await new Promise<void>((resolve) => {
+    if (streamBlocks) {
+      await new Promise<void>((resolve) => {
+        Editor.withoutNormalizing(slateEditor, () => {
+          withRemoteChanges(slateEditor, () => {
+            withoutPatching(slateEditor, async () => {
+              isChanged = removeExtraBlocks({
+                slateEditor,
+                slateValueFromProps,
+              })
+
+              for await (const [
+                currentBlock,
+                currentBlockIndex,
+              ] of getStreamedBlocks({
+                slateValue: slateValueFromProps,
+              })) {
+                const {blockChanged, blockValid} = syncBlock({
+                  context,
+                  sendBack,
+                  block: currentBlock,
+                  index: currentBlockIndex,
+                  slateEditor,
+                  value,
+                })
+
+                isChanged = blockChanged || isChanged
+                isValid = isValid && blockValid
+              }
+
+              resolve()
+            })
+          })
+        })
+      })
+    } else {
       Editor.withoutNormalizing(slateEditor, () => {
         withRemoteChanges(slateEditor, () => {
-          withoutPatching(slateEditor, async () => {
-            const childrenLength = slateEditor.children.length
+          withoutPatching(slateEditor, () => {
+            isChanged = removeExtraBlocks({
+              slateEditor,
+              slateValueFromProps,
+            })
 
-            // Remove blocks that have become superfluous
-            if (slateValueFromProps.length < childrenLength) {
-              for (
-                let i = childrenLength - 1;
-                i > slateValueFromProps.length - 1;
-                i--
-              ) {
-                Transforms.removeNodes(slateEditor, {
-                  at: [i],
-                })
-              }
-              isChanged = true
-            }
+            let index = 0
 
-            for await (const [currentBlock, currentBlockIndex] of getBlocks({
-              slateValue: slateValueFromProps,
-              streamBlocks,
-            })) {
-              // Go through all of the blocks and see if they need to be updated
+            for (const currentBlock of slateValueFromProps) {
               const {blockChanged, blockValid} = syncBlock({
                 context,
                 sendBack,
                 block: currentBlock,
-                index: currentBlockIndex,
+                index,
                 slateEditor,
                 value,
               })
+
               isChanged = blockChanged || isChanged
               isValid = isValid && blockValid
+              index++
             }
-
-            resolve()
           })
         })
       })
-    })
+    }
   }
 
   if (!isValid) {
@@ -523,16 +544,36 @@ async function updateValue({
   sendBack({type: 'done syncing', value})
 }
 
-async function* getBlocks({
+function removeExtraBlocks({
+  slateEditor,
+  slateValueFromProps,
+}: {
+  slateEditor: PortableTextSlateEditor
+  slateValueFromProps: Array<Descendant>
+}) {
+  let isChanged = false
+  const childrenLength = slateEditor.children.length
+
+  // Remove blocks that have become superfluous
+  if (slateValueFromProps.length < childrenLength) {
+    for (let i = childrenLength - 1; i > slateValueFromProps.length - 1; i--) {
+      Transforms.removeNodes(slateEditor, {
+        at: [i],
+      })
+    }
+    isChanged = true
+  }
+  return isChanged
+}
+
+async function* getStreamedBlocks({
   slateValue,
-  streamBlocks,
 }: {
   slateValue: Array<Descendant>
-  streamBlocks: boolean
 }) {
   let index = 0
   for await (const block of slateValue) {
-    if (streamBlocks && index % 10 === 0) {
+    if (index % 10 === 0) {
       await new Promise<void>((resolve) => setTimeout(resolve, 0))
     }
     yield [block, index] as const
