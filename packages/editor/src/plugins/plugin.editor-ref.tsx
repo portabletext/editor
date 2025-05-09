@@ -1,5 +1,5 @@
 import React from 'react'
-import type {Editor} from '../editor/create-editor'
+import type {Editor} from '../editor'
 import {useEditor} from '../editor/use-editor'
 
 /**

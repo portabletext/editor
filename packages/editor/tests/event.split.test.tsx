@@ -1,7 +1,7 @@
 import * as React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
-import type {Editor} from '../src/editor/create-editor'
+import type {Editor} from '../src/editor'
 import {PortableTextEditable} from '../src/editor/Editable'
 import {EditorProvider} from '../src/editor/editor-provider'
 import {defineSchema} from '../src/editor/editor-schema'

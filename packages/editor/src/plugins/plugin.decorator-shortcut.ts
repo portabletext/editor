@@ -10,7 +10,7 @@ import {
 import {createDecoratorPairBehavior} from '../behaviors/behavior.decorator-pair'
 import {effect, execute, forward} from '../behaviors/behavior.types.action'
 import {defineBehavior} from '../behaviors/behavior.types.behavior'
-import type {Editor} from '../editor/create-editor'
+import type {Editor} from '../editor'
 import type {EditorSchema} from '../editor/editor-schema'
 import {useEditor} from '../editor/use-editor'
 import type {BlockOffset} from '../types/block-offset'

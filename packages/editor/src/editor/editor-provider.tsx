@@ -2,12 +2,9 @@ import {useActorRef} from '@xstate/react'
 import type React from 'react'
 import {useMemo} from 'react'
 import {Slate} from 'slate-react'
+import type {EditorConfig} from '../editor'
 import {Synchronizer} from './components/Synchronizer'
-import {
-  createInternalEditor,
-  editorConfigToMachineInput,
-  type EditorConfig,
-} from './create-editor'
+import {createInternalEditor, editorConfigToMachineInput} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
 import {EditorContext} from './editor-context'
 import {editorMachine} from './editor-machine'
