@@ -427,32 +427,36 @@ async function updateValue({
       await new Promise<void>((resolve) => {
         Editor.withoutNormalizing(slateEditor, () => {
           withRemoteChanges(slateEditor, () => {
-            withoutPatching(slateEditor, async () => {
+            withoutPatching(slateEditor, () => {
               isChanged = removeExtraBlocks({
                 slateEditor,
                 slateValueFromProps,
               })
 
-              for await (const [
-                currentBlock,
-                currentBlockIndex,
-              ] of getStreamedBlocks({
-                slateValue: slateValueFromProps,
-              })) {
-                const {blockChanged, blockValid} = syncBlock({
-                  context,
-                  sendBack,
-                  block: currentBlock,
-                  index: currentBlockIndex,
-                  slateEditor,
-                  value,
-                })
+              const processBlocks = async () => {
+                for await (const [
+                  currentBlock,
+                  currentBlockIndex,
+                ] of getStreamedBlocks({
+                  slateValue: slateValueFromProps,
+                })) {
+                  const {blockChanged, blockValid} = syncBlock({
+                    context,
+                    sendBack,
+                    block: currentBlock,
+                    index: currentBlockIndex,
+                    slateEditor,
+                    value,
+                  })
 
-                isChanged = blockChanged || isChanged
-                isValid = isValid && blockValid
+                  isChanged = blockChanged || isChanged
+                  isValid = isValid && blockValid
+                }
+
+                resolve()
               }
 
-              resolve()
+              processBlocks()
             })
           })
         })
