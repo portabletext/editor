@@ -200,7 +200,6 @@ export const PortableTextEditable = forwardRef<
   useMemo(() => {
     // React/UI-specific plugins
     if (readOnly) {
-      debug('Editable is in read only mode')
       return slateEditor
     }
     const withHotKeys = createWithHotkeys(
@@ -209,7 +208,6 @@ export const PortableTextEditable = forwardRef<
       hotkeys,
     )
 
-    debug('Editable is in edit mode')
     return withHotKeys(slateEditor)
   }, [editorActor, hotkeys, portableTextEditor, readOnly, slateEditor])
 
