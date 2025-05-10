@@ -3,10 +3,12 @@ import type {PortableTextBlock} from '@sanity/types'
 import {isEqual} from 'lodash'
 import {Editor, Text, Transforms, type Descendant, type Node} from 'slate'
 import {
+  and,
   assertEvent,
   assign,
   emit,
   fromCallback,
+  not,
   setup,
   type AnyEventObject,
   type CallbackLogicFunction,
@@ -173,6 +175,11 @@ export const syncMachine = setup({
 
       return isBusy
     },
+    'is new value': ({context, event}) => {
+      return (
+        event.type === 'update value' && context.previousValue !== event.value
+      )
+    },
     'value changed while syncing': ({context, event}) => {
       assertEvent(event, 'done syncing')
       return context.pendingValue !== event.value
@@ -227,13 +234,31 @@ export const syncMachine = setup({
       on: {
         'update value': [
           {
-            guard: 'is busy',
+            guard: and(['is busy', 'is new value']),
             target: 'busy',
             actions: ['assign pending value'],
           },
           {
+            guard: 'is new value',
             target: 'syncing',
             actions: ['assign pending value'],
+          },
+          {
+            guard: not('initial value synced'),
+            actions: [
+              () => {
+                debug('no new value – setting initial value as synced')
+              },
+              'assign initial value synced',
+              'emit done syncing value',
+            ],
+          },
+          {
+            actions: [
+              () => {
+                debug('no new value and initial value already synced')
+              },
+            ],
           },
         ],
       },
@@ -269,6 +294,7 @@ export const syncMachine = setup({
       on: {
         'update value': [
           {
+            guard: 'is new value',
             actions: ['assign pending value'],
           },
         ],
@@ -287,11 +313,6 @@ export const syncMachine = setup({
         },
         'emit done syncing value',
       ],
-      always: {
-        guard: 'pending value equals previous value',
-        target: 'idle',
-        actions: ['clear pending value', 'assign initial value synced'],
-      },
       invoke: {
         src: 'sync value',
         id: 'sync value',
@@ -311,6 +332,7 @@ export const syncMachine = setup({
       },
       on: {
         'update value': {
+          guard: 'is new value',
           actions: ['assign pending value'],
         },
         'patch': {
