@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.49.6](https://github.com/portabletext/editor/compare/editor-v1.49.5...editor-v1.49.6) (2025-05-10)
+
+
+### Bug Fixes
+
+* **value sync:** mitigate race condition ([b04e70e](https://github.com/portabletext/editor/commit/b04e70e4e6c9f24a07d95c9ca7803e89c263a36d))
+
 ## [1.49.5](https://github.com/portabletext/editor/compare/editor-v1.49.4...editor-v1.49.5) (2025-05-10)
 
 
