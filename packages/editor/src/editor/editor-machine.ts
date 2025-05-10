@@ -16,6 +16,7 @@ import {coreBehaviorsConfig} from '../behaviors/behavior.core'
 import {performEvent} from '../behaviors/behavior.perform-event'
 import type {BehaviorEvent} from '../behaviors/behavior.types.event'
 import type {Converter} from '../converters/converter.types'
+import {debugWithName} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
 import type {NamespaceEvent} from '../type-utils'
@@ -29,6 +30,8 @@ import type {EditorSchema} from './editor-schema'
 import {createEditorSnapshot} from './editor-snapshot'
 
 export * from 'xstate/guards'
+
+const debug = debugWithName('editor machine')
 
 /**
  * @public
@@ -459,6 +462,20 @@ export const editorMachine = setup({
           },
           states: {
             'determine initial edit mode': {
+              entry: [
+                () => {
+                  debug(
+                    'entry: edit mode->read only->determine initial edit mode',
+                  )
+                },
+              ],
+              exit: [
+                () => {
+                  debug(
+                    'exit: edit mode->read only->determine initial edit mode',
+                  )
+                },
+              ],
               on: {
                 'done syncing value': [
                   {
@@ -472,6 +489,16 @@ export const editorMachine = setup({
               },
             },
             'read only': {
+              entry: [
+                () => {
+                  debug('entry: edit mode->read only->read only')
+                },
+              ],
+              exit: [
+                () => {
+                  debug('exit: edit mode->read only->read only')
+                },
+              ],
               on: {
                 'update readOnly': {
                   guard: ({event}) => !event.readOnly,
@@ -503,6 +530,16 @@ export const editorMachine = setup({
           initial: 'idle',
           states: {
             'idle': {
+              entry: [
+                () => {
+                  debug('entry: edit mode->editable->idle')
+                },
+              ],
+              exit: [
+                () => {
+                  debug('exit: edit mode->editable-idle')
+                },
+              ],
               on: {
                 dragstart: {
                   actions: [
@@ -521,6 +558,20 @@ export const editorMachine = setup({
               initial: 'checking if busy',
               states: {
                 'checking if busy': {
+                  entry: [
+                    () => {
+                      debug(
+                        'entry: edit mode->editable->focusing->checking if busy',
+                      )
+                    },
+                  ],
+                  exit: [
+                    () => {
+                      debug(
+                        'exit: edit mode->editable->focusing->checking if busy',
+                      )
+                    },
+                  ],
                   always: [
                     {
                       guard: 'slate is busy',
@@ -533,6 +584,16 @@ export const editorMachine = setup({
                   ],
                 },
                 'busy': {
+                  entry: [
+                    () => {
+                      debug('entry: edit mode->editable->focusing-busy')
+                    },
+                  ],
+                  exit: [
+                    () => {
+                      debug('exit: edit mode->editable->focusing->busy')
+                    },
+                  ],
                   after: {
                     10: {
                       target: 'checking if busy',
@@ -542,7 +603,15 @@ export const editorMachine = setup({
               },
             },
             'dragging internally': {
+              entry: [
+                () => {
+                  debug('entry: edit mode->editable->dragging internally')
+                },
+              ],
               exit: [
+                () => {
+                  debug('exit: edit mode->editable->dragging internally')
+                },
                 ({context}) => {
                   if (context.internalDrag?.ghost) {
                     try {
@@ -574,7 +643,15 @@ export const editorMachine = setup({
       initial: 'setting up',
       states: {
         'setting up': {
+          entry: [
+            () => {
+              debug('entry: setup->setting up')
+            },
+          ],
           exit: [
+            () => {
+              debug('exit: setup->setting up')
+            },
             'emit ready',
             'emit pending incoming patches',
             'clear pending incoming patches',
@@ -601,6 +678,16 @@ export const editorMachine = setup({
               initial: 'idle',
               states: {
                 'idle': {
+                  entry: [
+                    () => {
+                      debug('entry: setup->set up->value sync->idle')
+                    },
+                  ],
+                  exit: [
+                    () => {
+                      debug('exit: setup->set up->value sync->idle')
+                    },
+                  ],
                   on: {
                     'patches': {
                       actions: [emit(({event}) => event)],
@@ -611,7 +698,15 @@ export const editorMachine = setup({
                   },
                 },
                 'syncing value': {
+                  entry: [
+                    () => {
+                      debug('entry: setup->set up->value sync->syncing value')
+                    },
+                  ],
                   exit: [
+                    () => {
+                      debug('exit: setup->set up->value sync->syncing value')
+                    },
                     'emit pending incoming patches',
                     'clear pending incoming patches',
                   ],
@@ -633,6 +728,16 @@ export const editorMachine = setup({
                   initial: 'idle',
                   states: {
                     idle: {
+                      entry: [
+                        () => {
+                          debug('entry: setup->set up->writing->pristine->idle')
+                        },
+                      ],
+                      exit: [
+                        () => {
+                          debug('exit: setup->set up->writing->pristine->idle')
+                        },
+                      ],
                       on: {
                         'normalizing': {
                           target: 'normalizing',
@@ -648,6 +753,20 @@ export const editorMachine = setup({
                       },
                     },
                     normalizing: {
+                      entry: [
+                        () => {
+                          debug(
+                            'entry: setup->set up->writing->pristine->normalizing',
+                          )
+                        },
+                      ],
+                      exit: [
+                        () => {
+                          debug(
+                            'exit: setup->set up->writing->pristine->normalizing',
+                          )
+                        },
+                      ],
                       on: {
                         'done normalizing': {
                           target: 'idle',
@@ -663,7 +782,18 @@ export const editorMachine = setup({
                   },
                 },
                 dirty: {
-                  entry: ['emit pending events', 'clear pending events'],
+                  entry: [
+                    () => {
+                      debug('entry: setup->set up->writing->dirty')
+                    },
+                    'emit pending events',
+                    'clear pending events',
+                  ],
+                  exit: [
+                    () => {
+                      debug('exit: setup->set up->writing->dirty')
+                    },
+                  ],
                   on: {
                     'internal.patch': {
                       actions: 'emit patch event',
