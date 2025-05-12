@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.49.7](https://github.com/portabletext/editor/compare/editor-v1.49.6...editor-v1.49.7) (2025-05-12)
+
+
+### Bug Fixes
+
+* **value sync:** mitigate rerenders causing double-sync ([22af396](https://github.com/portabletext/editor/commit/22af396baeaad07d06e3db05a0eb38e90efc12ae))
+
 ## [1.49.6](https://github.com/portabletext/editor/compare/editor-v1.49.5...editor-v1.49.6) (2025-05-10)
 
 
