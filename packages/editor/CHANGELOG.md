@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.49.8](https://github.com/portabletext/editor/compare/editor-v1.49.7...editor-v1.49.8) (2025-05-12)
+
+
+### Bug Fixes
+
+* remove `Synchronizer` ([44719c8](https://github.com/portabletext/editor/commit/44719c82a7546272f7dc8a3d5e728558387ba6dc))
+
 ## [1.49.7](https://github.com/portabletext/editor/compare/editor-v1.49.6...editor-v1.49.7) (2025-05-12)
 
 
