@@ -98,7 +98,9 @@ export function getTextSelection(
   }
 
   if (!anchor || !focus) {
-    throw new Error(`Unable to find selection for text "${text}"`)
+    throw new Error(
+      `Unable to find selection for text "${text}" in value "${JSON.stringify(value)}"`,
+    )
   }
 
   return {

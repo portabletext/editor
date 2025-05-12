@@ -3,7 +3,6 @@ import type React from 'react'
 import {useMemo} from 'react'
 import {Slate} from 'slate-react'
 import type {EditorConfig} from '../editor'
-import {Synchronizer} from './components/Synchronizer'
 import {createInternalEditor, editorConfigToMachineInput} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
 import {EditorContext} from './editor-context'
@@ -12,9 +11,9 @@ import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
 import {
   PortableTextEditor,
-  RouteEventsToChanges,
   type PortableTextEditorProps,
 } from './PortableTextEditor'
+import {RouteEventsToChanges} from './route-events-to-changes'
 
 /**
  * @public
@@ -65,10 +64,6 @@ export function EditorProvider(props: EditorProviderProps) {
         onChange={(change) => {
           portableTextEditor.change$.next(change)
         }}
-      />
-      <Synchronizer
-        editorActor={editorActor}
-        slateEditor={internalEditor._internal.slateEditor.instance}
       />
       <EditorActorContext.Provider value={editorActor}>
         <Slate

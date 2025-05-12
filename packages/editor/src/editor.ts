@@ -41,7 +41,13 @@ export type EditorConfig = {
 /**
  * @public
  */
-export type EditorEvent = ExternalEditorEvent | ExternalBehaviorEvent
+export type EditorEvent =
+  | ExternalEditorEvent
+  | ExternalBehaviorEvent
+  | {
+      type: 'update value'
+      value: Array<PortableTextBlock> | undefined
+    }
 
 /**
  * @public
