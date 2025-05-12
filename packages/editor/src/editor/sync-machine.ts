@@ -383,6 +383,7 @@ async function updateValue({
   streamBlocks: boolean
   value: PortableTextBlock[] | undefined
 }) {
+  let doneSyncing = false
   let isChanged = false
   let isValid = true
 
@@ -394,6 +395,10 @@ async function updateValue({
     Editor.withoutNormalizing(slateEditor, () => {
       withoutSaving(slateEditor, () => {
         withoutPatching(slateEditor, () => {
+          if (doneSyncing) {
+            return
+          }
+
           if (hadSelection) {
             Transforms.deselect(slateEditor)
           }
@@ -428,6 +433,11 @@ async function updateValue({
         Editor.withoutNormalizing(slateEditor, () => {
           withRemoteChanges(slateEditor, () => {
             withoutPatching(slateEditor, () => {
+              if (doneSyncing) {
+                resolve()
+                return
+              }
+
               isChanged = removeExtraBlocks({
                 slateEditor,
                 slateValueFromProps,
@@ -465,6 +475,10 @@ async function updateValue({
       Editor.withoutNormalizing(slateEditor, () => {
         withRemoteChanges(slateEditor, () => {
           withoutPatching(slateEditor, () => {
+            if (doneSyncing) {
+              return
+            }
+
             isChanged = removeExtraBlocks({
               slateEditor,
               slateValueFromProps,
@@ -494,6 +508,7 @@ async function updateValue({
 
   if (!isValid) {
     debug('Invalid value, returning')
+    doneSyncing = true
     sendBack({type: 'done syncing', value})
     return
   }
@@ -509,6 +524,7 @@ async function updateValue({
         resolution: null,
         value,
       })
+      doneSyncing = true
       sendBack({type: 'done syncing', value})
       return
     }
@@ -524,6 +540,7 @@ async function updateValue({
     debug('Server value and editor value is equal, no need to sync.')
   }
 
+  doneSyncing = true
   sendBack({type: 'done syncing', value})
 }
 
