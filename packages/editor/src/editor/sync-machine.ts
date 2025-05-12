@@ -9,6 +9,7 @@ import {
   emit,
   fromCallback,
   not,
+  raise,
   setup,
   type AnyEventObject,
   type CallbackLogicFunction,
@@ -91,6 +92,7 @@ const syncValueLogic = fromCallback(syncValueCallback)
 export const syncMachine = setup({
   types: {
     context: {} as {
+      initialValue: Array<PortableTextBlock> | undefined
       initialValueSynced: boolean
       isProcessingLocalChanges: boolean
       keyGenerator: () => string
@@ -101,6 +103,7 @@ export const syncMachine = setup({
       previousValue: Array<PortableTextBlock> | undefined
     },
     input: {} as {
+      initialValue: Array<PortableTextBlock> | undefined
       keyGenerator: () => string
       schema: EditorSchema
       readOnly: boolean
@@ -175,6 +178,16 @@ export const syncMachine = setup({
 
       return isBusy
     },
+    'is empty value': ({event}) => {
+      return event.type === 'update value' && event.value === undefined
+    },
+    'is empty array': ({event}) => {
+      return (
+        event.type === 'update value' &&
+        Array.isArray(event.value) &&
+        event.value.length === 0
+      )
+    },
     'is new value': ({context, event}) => {
       return (
         event.type === 'update value' && context.previousValue !== event.value
@@ -194,6 +207,7 @@ export const syncMachine = setup({
 }).createMachine({
   id: 'sync',
   context: ({input}) => ({
+    initialValue: input.initialValue,
     initialValueSynced: false,
     isProcessingLocalChanges: false,
     keyGenerator: input.keyGenerator,
@@ -203,6 +217,11 @@ export const syncMachine = setup({
     pendingValue: undefined,
     previousValue: undefined,
   }),
+  entry: [
+    raise(({context}) => {
+      return {type: 'update value', value: context.initialValue}
+    }),
+  ],
   on: {
     'has pending patches': {
       actions: assign({
@@ -233,6 +252,18 @@ export const syncMachine = setup({
       ],
       on: {
         'update value': [
+          {
+            guard: and(['is empty value', not('initial value synced')]),
+            actions: ['assign initial value synced', 'emit done syncing value'],
+          },
+          {
+            guard: and(['is empty array', not('initial value synced')]),
+            actions: [
+              'assign initial value synced',
+              emit({type: 'value changed', value: []}),
+              'emit done syncing value',
+            ],
+          },
           {
             guard: and(['is busy', 'is new value']),
             target: 'busy',

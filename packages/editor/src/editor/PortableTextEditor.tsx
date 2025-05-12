@@ -14,7 +14,6 @@ import {
 } from 'react'
 import {Subject} from 'rxjs'
 import {Slate} from 'slate-react'
-import {useEffectEvent} from 'use-effect-event'
 import {createActor} from 'xstate'
 import {createCoreConverters} from '../converters/converters.core'
 import {debugWithName} from '../internal-utils/debug'
@@ -29,7 +28,6 @@ import type {
   PatchObservable,
   PortableTextMemberSchemaTypes,
 } from '../types/editor'
-import {Synchronizer} from './components/Synchronizer'
 import {createInternalEditor, type InternalEditor} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
 import {editorMachine, type EditorActor} from './editor-machine'
@@ -38,6 +36,7 @@ import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
 import {defaultKeyGenerator} from './key-generator'
 import {createLegacySchema} from './legacy-schema'
+import {eventToChange} from './route-events-to-changes'
 
 const debug = debugWithName('component:PortableTextEditor')
 
@@ -164,6 +163,16 @@ export class PortableTextEditor extends Component<
       })
       editorActor.start()
 
+      editorActor.on('*', (event) => {
+        const change = eventToChange(event)
+
+        if (change) {
+          props.onChange(change)
+
+          this.change$.next(change)
+        }
+      })
+
       this.editor = createInternalEditor(editorActor)
       this.schemaTypes = legacySchema
     }
@@ -209,7 +218,7 @@ export class PortableTextEditor extends Component<
       }
 
       if (this.props.value !== prevProps.value) {
-        this.editor._internal.editorActor.send({
+        this.editor.send({
           type: 'update value',
           value: this.props.value,
         })
@@ -244,23 +253,6 @@ export class PortableTextEditor extends Component<
             patches$={legacyPatches}
           />
         ) : null}
-        <RouteEventsToChanges
-          editorActor={this.editor._internal.editorActor}
-          onChange={(change) => {
-            if (!this.props.editor) {
-              this.props.onChange(change)
-            }
-            /**
-             * For backwards compatibility, we relay all changes to the
-             * `change$` Subject as well.
-             */
-            this.change$.next(change)
-          }}
-        />
-        <Synchronizer
-          editorActor={this.editor._internal.editorActor}
-          slateEditor={this.editor._internal.slateEditor.instance}
-        />
         <EditorActorContext.Provider value={this.editor._internal.editorActor}>
           <Slate
             editor={this.editor._internal.slateEditor.instance}
@@ -772,87 +764,6 @@ function RoutePatchesObservableToEditorActor(props: {
       subscription.unsubscribe()
     }
   }, [props.editorActor, props.patches$])
-
-  return null
-}
-
-export function RouteEventsToChanges(props: {
-  editorActor: EditorActor
-  onChange: (change: EditorChange) => void
-}) {
-  // We want to ensure that _when_ `props.onChange` is called, it uses the current value.
-  // But we don't want to have the `useEffect` run setup + teardown + setup every time the prop might change, as that's unnecessary.
-  // So we use our own polyfill that lets us use an upcoming React hook that solves this exact problem.
-  // https://19.react.dev/learn/separating-events-from-effects#declaring-an-effect-event
-  const handleChange = useEffectEvent((change: EditorChange) =>
-    props.onChange(change),
-  )
-
-  useEffect(() => {
-    debug('Subscribing to editor changes')
-    const sub = props.editorActor.on('*', (event) => {
-      switch (event.type) {
-        case 'blurred': {
-          handleChange({type: 'blur', event: event.event})
-          break
-        }
-        case 'patch':
-          handleChange(event)
-          break
-        case 'loading': {
-          handleChange({type: 'loading', isLoading: true})
-          break
-        }
-        case 'done loading': {
-          handleChange({type: 'loading', isLoading: false})
-          break
-        }
-        case 'focused': {
-          handleChange({type: 'focus', event: event.event})
-          break
-        }
-        case 'value changed': {
-          handleChange({type: 'value', value: event.value})
-          break
-        }
-        case 'invalid value': {
-          handleChange({
-            type: 'invalidValue',
-            resolution: event.resolution,
-            value: event.value,
-          })
-          break
-        }
-        case 'error': {
-          handleChange({
-            ...event,
-            level: 'warning',
-          })
-          break
-        }
-        case 'mutation': {
-          handleChange(event)
-          break
-        }
-        case 'ready': {
-          handleChange(event)
-          break
-        }
-        case 'selection': {
-          handleChange(event)
-          break
-        }
-        case 'unset': {
-          handleChange(event)
-          break
-        }
-      }
-    })
-    return () => {
-      debug('Unsubscribing to changes')
-      sub.unsubscribe()
-    }
-  }, [props.editorActor])
 
   return null
 }

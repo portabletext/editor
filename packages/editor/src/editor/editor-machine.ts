@@ -72,10 +72,6 @@ export type ExternalEditorEvent =
       keyGenerator: () => string
     }
   | {
-      type: 'update value'
-      value: Array<PortableTextBlock> | undefined
-    }
-  | {
       type: 'update maxBlocks'
       maxBlocks: number | undefined
     }
@@ -227,7 +223,7 @@ export const editorMachine = setup({
       initialReadOnly: boolean
       maxBlocks: number | undefined
       selection: EditorSelection
-      incomingValue: Array<PortableTextBlock> | undefined
+      initialValue: Array<PortableTextBlock> | undefined
       internalDrag?: {
         ghost?: HTMLElement
         origin: Pick<EventPosition, 'selection'>
@@ -402,7 +398,7 @@ export const editorMachine = setup({
     selection: null,
     initialReadOnly: input.readOnly ?? false,
     maxBlocks: input.maxBlocks,
-    incomingValue: input.initialValue,
+    initialValue: input.initialValue,
   }),
   on: {
     'notify.blurred': {
@@ -434,9 +430,6 @@ export const editorMachine = setup({
       actions: assign({keyGenerator: ({event}) => event.keyGenerator}),
     },
     'update schema': {actions: 'assign schema'},
-    'update value': {
-      actions: assign({incomingValue: ({event}) => event.value}),
-    },
     'update maxBlocks': {
       actions: assign({maxBlocks: ({event}) => event.maxBlocks}),
     },
