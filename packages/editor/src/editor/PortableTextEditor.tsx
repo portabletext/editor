@@ -184,10 +184,6 @@ export class PortableTextEditor extends Component<
 
       this.actors = actors
 
-      actors.editorActor.start()
-      actors.mutationActor.start()
-      actors.syncActor.start()
-
       this.editor = editor
       this.schemaTypes = actors.editorActor
         .getSnapshot()
@@ -195,6 +191,16 @@ export class PortableTextEditor extends Component<
     }
 
     this.editable = this.editor._internal.editable
+  }
+
+  componentDidMount(): void {
+    if (!this.actors) {
+      return
+    }
+
+    this.actors.editorActor.start()
+    this.actors.mutationActor.start()
+    this.actors.syncActor.start()
   }
 
   componentDidUpdate(prevProps: PortableTextEditorProps) {
