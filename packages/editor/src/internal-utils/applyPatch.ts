@@ -33,7 +33,7 @@ import {
 import type {EditorSchema} from '../editor/editor-schema'
 import type {PortableTextSlateEditor} from '../types/editor'
 import {debugWithName} from './debug'
-import {toSlateValue} from './values'
+import {isEqualToEmptyEditor, toSlateValue} from './values'
 import {KEY_TO_SLATE_ELEMENT} from './weakMaps'
 
 const debug = debugWithName('applyPatches')
@@ -173,9 +173,20 @@ function insertPatch(
     const targetBlockIndex = targetBlockPath[0]
     const normalizedIdx =
       position === 'after' ? targetBlockIndex + 1 : targetBlockIndex
+
     debug(`Inserting blocks at path [${normalizedIdx}]`)
     debugState(editor, 'before')
+
+    const editorWasEmptyBefore = isEqualToEmptyEditor(editor.children, schema)
+
     Transforms.insertNodes(editor, blocksToInsert, {at: [normalizedIdx]})
+
+    if (editorWasEmptyBefore) {
+      Transforms.removeNodes(editor, {
+        at: [position === 'after' ? targetBlockIndex + 1 : targetBlockIndex],
+      })
+    }
+
     debugState(editor, 'after')
     return true
   }
