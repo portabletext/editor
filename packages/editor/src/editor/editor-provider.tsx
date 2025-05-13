@@ -2,6 +2,7 @@ import type React from 'react'
 import {useEffect} from 'react'
 import {Slate} from 'slate-react'
 import type {EditorConfig} from '../editor'
+import {stopActor} from '../internal-utils/stop-actor'
 import useConstant from '../internal-utils/use-constant'
 import {createInternalEditor} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
@@ -65,6 +66,10 @@ export function EditorProvider(props: EditorProviderProps) {
       for (const unsubscribe of unsubscribers) {
         unsubscribe()
       }
+
+      stopActor(internalEditor.actors.editorActor)
+      stopActor(internalEditor.actors.mutationActor)
+      stopActor(internalEditor.actors.syncActor)
     }
   }, [internalEditor])
 

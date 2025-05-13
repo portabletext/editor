@@ -1,4 +1,4 @@
-import {createActor, type ActorRefFrom} from 'xstate'
+import {createActor} from 'xstate'
 import {createCoreConverters} from '../converters/converters.core'
 import type {Editor, EditorConfig} from '../editor'
 import {debugWithName} from '../internal-utils/debug'
@@ -18,9 +18,9 @@ import {
 import {getEditorSnapshot} from './editor-selector'
 import {defaultKeyGenerator} from './key-generator'
 import {createLegacySchema} from './legacy-schema'
-import {mutationMachine} from './mutation-machine'
+import {mutationMachine, type MutationActor} from './mutation-machine'
 import {createEditableAPI} from './plugins/createWithEditableAPI'
-import {syncMachine} from './sync-machine'
+import {syncMachine, type SyncActor} from './sync-machine'
 
 const debug = debugWithName('setup')
 
@@ -65,8 +65,8 @@ export function editorConfigToMachineInput(config: EditorConfig) {
 export function createInternalEditor(config: EditorConfig): {
   actors: {
     editorActor: EditorActor
-    mutationActor: ActorRefFrom<typeof mutationMachine>
-    syncActor: ActorRefFrom<typeof syncMachine>
+    mutationActor: MutationActor
+    syncActor: SyncActor
   }
   editor: InternalEditor
   subscriptions: Array<() => () => void>
@@ -213,8 +213,8 @@ function createActors(config: {
   slateEditor: PortableTextSlateEditor
   subscriptions: Array<() => () => void>
 }): {
-  syncActor: ActorRefFrom<typeof syncMachine>
-  mutationActor: ActorRefFrom<typeof mutationMachine>
+  syncActor: SyncActor
+  mutationActor: MutationActor
 } {
   debug('Creating new Actors')
 

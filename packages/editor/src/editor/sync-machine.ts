@@ -14,6 +14,7 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
+import type {ActorRefFrom} from 'xstate'
 import {debugWithName} from '../internal-utils/debug'
 import {validateValue} from '../internal-utils/validateValue'
 import {toSlateValue, VOID_CHILD_KEY} from '../internal-utils/values'
@@ -76,6 +77,8 @@ const syncValueCallback: CallbackLogicFunction<
 }
 
 const syncValueLogic = fromCallback(syncValueCallback)
+
+export type SyncActor = ActorRefFrom<typeof syncMachine>
 
 /**
  * Sync value with the editor state
