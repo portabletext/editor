@@ -24,10 +24,10 @@ import type {
 } from '@sanity/types'
 import {
   Element,
+  Node,
   Text,
   Transforms,
   type Descendant,
-  type Node,
   type Path as SlatePath,
 } from 'slate'
 import type {EditorSchema} from '../editor/editor-schema'
@@ -319,9 +319,15 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
     debugState(editor, 'before')
     const previousSelection = editor.selection
     Transforms.deselect(editor)
-    editor.children.forEach((_child, i) => {
-      Transforms.removeNodes(editor, {at: [i]})
+
+    const children = Node.children(editor, [], {
+      reverse: true,
     })
+
+    for (const [_, path] of children) {
+      Transforms.removeNodes(editor, {at: path})
+    }
+
     Transforms.insertNodes(editor, editor.pteCreateTextBlock({decorators: []}))
     if (previousSelection) {
       Transforms.select(editor, {
