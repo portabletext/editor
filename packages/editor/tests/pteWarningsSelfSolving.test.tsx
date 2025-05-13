@@ -38,6 +38,7 @@ describe('when PTE would display warnings, instead it self solves', () => {
         value={initialValue}
       />,
     )
+
     await vi.waitFor(() => {
       expect(onChange).toHaveBeenCalledWith({
         type: 'value',
@@ -46,6 +47,8 @@ describe('when PTE would display warnings, instead it self solves', () => {
       expect(onChange).toHaveBeenCalledWith({type: 'ready'})
     })
     await vi.waitFor(() => {
+      expect(editorRef.current).not.toBeNull()
+
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           {
