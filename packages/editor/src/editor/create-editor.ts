@@ -297,12 +297,14 @@ function createActors(config: {
 
   config.subscriptions.push(() => {
     const subscription = config.editorActor.on('*', (event) => {
-      if (event.type === 'read only') {
+      if (
+        config.editorActor.getSnapshot().matches({'edit mode': 'read only'})
+      ) {
         syncActor.send({type: 'update readOnly', readOnly: true})
-      }
-      if (event.type === 'editable') {
+      } else {
         syncActor.send({type: 'update readOnly', readOnly: false})
       }
+
       if (event.type === 'internal.patch') {
         mutationActor.send({...event, type: 'patch'})
       }
