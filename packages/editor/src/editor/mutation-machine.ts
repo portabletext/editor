@@ -13,8 +13,11 @@ import {
   stateIn,
   type AnyEventObject,
 } from 'xstate'
+import type {ActorRefFrom} from 'xstate'
 import type {PortableTextSlateEditor} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
+
+export type MutationActor = ActorRefFrom<typeof mutationMachine>
 
 /**
  * Makes sure editor mutation events are debounced

@@ -16,6 +16,7 @@ import {Subject} from 'rxjs'
 import {Slate} from 'slate-react'
 import {debugWithName} from '../internal-utils/debug'
 import {compileType} from '../internal-utils/schema'
+import {stopActor} from '../internal-utils/stop-actor'
 import type {AddedAnnotationPaths} from '../operations/behavior.operation.annotation.add'
 import type {
   EditableAPI,
@@ -33,7 +34,9 @@ import {legacySchemaToEditorSchema} from './editor-schema'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
 import {createLegacySchema} from './legacy-schema'
+import type {MutationActor} from './mutation-machine'
 import {eventToChange} from './route-events-to-changes'
+import type {SyncActor} from './sync-machine'
 
 const debug = debugWithName('component:PortableTextEditor')
 
@@ -129,6 +132,12 @@ export class PortableTextEditor extends Component<
    */
   private editable: EditableAPI
 
+  private actors?: {
+    editorActor: EditorActor
+    mutationActor: MutationActor
+    syncActor: SyncActor
+  }
+
   private unsubscribers: Array<() => void> = []
 
   constructor(props: PortableTextEditorProps) {
@@ -172,6 +181,8 @@ export class PortableTextEditor extends Component<
       for (const subscription of subscriptions) {
         this.unsubscribers.push(subscription())
       }
+
+      this.actors = actors
 
       actors.editorActor.start()
       actors.mutationActor.start()
@@ -242,6 +253,12 @@ export class PortableTextEditor extends Component<
   componentWillUnmount(): void {
     for (const unsubscribe of this.unsubscribers) {
       unsubscribe()
+    }
+
+    if (this.actors) {
+      stopActor(this.actors.editorActor)
+      stopActor(this.actors.mutationActor)
+      stopActor(this.actors.syncActor)
     }
   }
 
