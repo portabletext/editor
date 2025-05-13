@@ -1169,6 +1169,7 @@ export const PortableTextEditable = forwardRef<
   return hasInvalidValue ? null : (
     <SlateEditable
       {...restProps}
+      data-read-only={readOnly}
       autoFocus={false}
       className={restProps.className || 'pt-editable'}
       decorate={decorate}

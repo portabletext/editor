@@ -43,6 +43,7 @@ describe('initialization', () => {
     autocorrect="false"
     class="pt-editable"
     contenteditable="true"
+    data-read-only="false"
     data-slate-editor="true"
     data-slate-node="value"
     role="textbox"
