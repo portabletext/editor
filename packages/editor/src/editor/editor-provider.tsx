@@ -1,12 +1,11 @@
-import {useActorRef} from '@xstate/react'
 import type React from 'react'
-import {useMemo} from 'react'
+import {useEffect} from 'react'
 import {Slate} from 'slate-react'
 import type {EditorConfig} from '../editor'
-import {createInternalEditor, editorConfigToMachineInput} from './create-editor'
+import useConstant from '../internal-utils/use-constant'
+import {createInternalEditor} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
 import {EditorContext} from './editor-context'
-import {editorMachine} from './editor-machine'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
 import {
@@ -42,36 +41,52 @@ export type EditorProviderProps = {
  * @group Components
  */
 export function EditorProvider(props: EditorProviderProps) {
-  const editorActor = useActorRef(editorMachine, {
-    input: editorConfigToMachineInput(props.initialConfig),
+  const {internalEditor, portableTextEditor} = useConstant(() => {
+    const internalEditor = createInternalEditor(props.initialConfig)
+    const portableTextEditor = new PortableTextEditor({
+      editor: internalEditor.editor,
+    } as unknown as PortableTextEditorProps)
+
+    return {internalEditor, portableTextEditor}
   })
-  const internalEditor = useMemo(
-    () => createInternalEditor(editorActor),
-    [editorActor],
-  )
-  const portableTextEditor = useMemo(
-    () =>
-      new PortableTextEditor({
-        editor: internalEditor,
-      } as unknown as PortableTextEditorProps),
-    [internalEditor],
-  )
+
+  useEffect(() => {
+    const unsubscribers: Array<() => void> = []
+
+    for (const subscription of internalEditor.subscriptions) {
+      unsubscribers.push(subscription())
+    }
+
+    internalEditor.actors.editorActor.start()
+    internalEditor.actors.mutationActor.start()
+    internalEditor.actors.syncActor.start()
+
+    return () => {
+      for (const unsubscribe of unsubscribers) {
+        unsubscribe()
+      }
+    }
+  }, [internalEditor])
 
   return (
-    <EditorContext.Provider value={internalEditor}>
+    <EditorContext.Provider value={internalEditor.editor}>
       <RouteEventsToChanges
-        editorActor={editorActor}
+        editorActor={internalEditor.actors.editorActor}
         onChange={(change) => {
           portableTextEditor.change$.next(change)
         }}
       />
-      <EditorActorContext.Provider value={editorActor}>
+      <EditorActorContext.Provider value={internalEditor.actors.editorActor}>
         <Slate
-          editor={internalEditor._internal.slateEditor.instance}
-          initialValue={internalEditor._internal.slateEditor.initialValue}
+          editor={internalEditor.editor._internal.slateEditor.instance}
+          initialValue={
+            internalEditor.editor._internal.slateEditor.initialValue
+          }
         >
           <PortableTextEditorContext.Provider value={portableTextEditor}>
-            <PortableTextEditorSelectionProvider editorActor={editorActor}>
+            <PortableTextEditorSelectionProvider
+              editorActor={internalEditor.actors.editorActor}
+            >
               {props.children}
             </PortableTextEditorSelectionProvider>
           </PortableTextEditorContext.Provider>

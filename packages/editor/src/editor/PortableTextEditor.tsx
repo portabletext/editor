@@ -14,8 +14,6 @@ import {
 } from 'react'
 import {Subject} from 'rxjs'
 import {Slate} from 'slate-react'
-import {createActor} from 'xstate'
-import {createCoreConverters} from '../converters/converters.core'
 import {debugWithName} from '../internal-utils/debug'
 import {compileType} from '../internal-utils/schema'
 import type {AddedAnnotationPaths} from '../operations/behavior.operation.annotation.add'
@@ -30,11 +28,10 @@ import type {
 } from '../types/editor'
 import {createInternalEditor, type InternalEditor} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
-import {editorMachine, type EditorActor} from './editor-machine'
+import type {EditorActor} from './editor-machine'
 import {legacySchemaToEditorSchema} from './editor-schema'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
-import {defaultKeyGenerator} from './key-generator'
 import {createLegacySchema} from './legacy-schema'
 import {eventToChange} from './route-events-to-changes'
 
@@ -132,6 +129,8 @@ export class PortableTextEditor extends Component<
    */
   private editable: EditableAPI
 
+  private unsubscribers: Array<() => void> = []
+
   constructor(props: PortableTextEditorProps) {
     super(props)
 
@@ -141,40 +140,47 @@ export class PortableTextEditor extends Component<
         .getSnapshot()
         .context.getLegacySchema()
     } else {
-      const legacySchema = createLegacySchema(
-        props.schemaType.hasOwnProperty('jsonType')
-          ? props.schemaType
-          : compileType(props.schemaType),
+      const {actors, editor, subscriptions} = createInternalEditor({
+        initialValue: props.value,
+        keyGenerator: props.keyGenerator,
+        maxBlocks:
+          props.maxBlocks === undefined
+            ? undefined
+            : Number.parseInt(props.maxBlocks.toString(), 10),
+        readOnly: props.readOnly,
+        schema: props.schemaType,
+      })
+
+      this.unsubscribers.push(
+        (() => {
+          const subscription = actors.editorActor.on('*', (event) => {
+            const change = eventToChange(event)
+
+            if (change) {
+              props.onChange(change)
+
+              this.change$.next(change)
+            }
+          })
+
+          return () => {
+            subscription.unsubscribe()
+          }
+        })(),
       )
-      const schema = legacySchemaToEditorSchema(legacySchema)
-      const editorActor = createActor(editorMachine, {
-        input: {
-          converters: createCoreConverters(legacySchema),
-          getLegacySchema: () => legacySchema,
-          initialValue: props.value,
-          keyGenerator: props.keyGenerator ?? defaultKeyGenerator,
-          maxBlocks:
-            props.maxBlocks === undefined
-              ? undefined
-              : Number.parseInt(props.maxBlocks.toString(), 10),
-          readOnly: props.readOnly,
-          schema,
-        },
-      })
-      editorActor.start()
 
-      editorActor.on('*', (event) => {
-        const change = eventToChange(event)
+      for (const subscription of subscriptions) {
+        this.unsubscribers.push(subscription())
+      }
 
-        if (change) {
-          props.onChange(change)
+      actors.editorActor.start()
+      actors.mutationActor.start()
+      actors.syncActor.start()
 
-          this.change$.next(change)
-        }
-      })
-
-      this.editor = createInternalEditor(editorActor)
-      this.schemaTypes = legacySchema
+      this.editor = editor
+      this.schemaTypes = actors.editorActor
+        .getSnapshot()
+        .context.getLegacySchema()
     }
 
     this.editable = this.editor._internal.editable
@@ -230,6 +236,12 @@ export class PortableTextEditor extends Component<
       ) {
         this.props.editorRef.current = this
       }
+    }
+  }
+
+  componentWillUnmount(): void {
+    for (const unsubscribe of this.unsubscribers) {
+      unsubscribe()
     }
   }
 
