@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.49.9](https://github.com/portabletext/editor/compare/editor-v1.49.8...editor-v1.49.9) (2025-05-13)
+
+
+### Bug Fixes
+
+* **`PortableTextEditor`:** start Actors on mount ([081f49a](https://github.com/portabletext/editor/commit/081f49a837556a64574a62ec1853c5c3e71d5b04))
+* add `data-read-only` on `PortableTextEditable` ([65435b9](https://github.com/portabletext/editor/commit/65435b9434c8b6f5256ccb064d22696beaf38365))
+* **patching:** avoid duplicate block on initial block insertion ([647d5e7](https://github.com/portabletext/editor/commit/647d5e7e44ab2191d26c8e5dda305ac669ae8ee7))
+* **patching:** mitigate error when `unset`ing the editor ([0591e61](https://github.com/portabletext/editor/commit/0591e6118923dff87fce1aa7df8af271ca256df9))
+* properly update sync actor's read-only state ([d07ce86](https://github.com/portabletext/editor/commit/d07ce864f5272b211cd03559c247f2737f1a3df3))
+* simplify setup and handle event unsubscriptions ([dff811c](https://github.com/portabletext/editor/commit/dff811ca5414aaeb65e4d088f8d1ec719dd7012d))
+* stop actors when unmounting ([fbc6930](https://github.com/portabletext/editor/commit/fbc6930222ad4724b767fbe87c8d6766cdd4b86c))
+
 ## [1.49.8](https://github.com/portabletext/editor/compare/editor-v1.49.7...editor-v1.49.8) (2025-05-12)
 
 
