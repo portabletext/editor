@@ -10,6 +10,7 @@ import {createEditorPriority} from '../priority/priority.types'
 import type {EditableAPI, PortableTextSlateEditor} from '../types/editor'
 import {createSlateEditor, type SlateEditor} from './create-slate-editor'
 import type {EditorActor} from './editor-machine'
+import {editorMachine} from './editor-machine'
 import {
   compileSchemaDefinitionToLegacySchema,
   legacySchemaToEditorSchema,
@@ -21,7 +22,7 @@ import {mutationMachine} from './mutation-machine'
 import {createEditableAPI} from './plugins/createWithEditableAPI'
 import {syncMachine} from './sync-machine'
 
-const debug = debugWithName('createInternalEditor')
+const debug = debugWithName('setup')
 
 export type InternalEditor = Editor & {
   _internal: {
@@ -61,18 +62,30 @@ export function editorConfigToMachineInput(config: EditorConfig) {
   } as const
 }
 
-export function createInternalEditor(editorActor: EditorActor): InternalEditor {
-  const slateEditor = createSlateEditor({editorActor})
+export function createInternalEditor(config: EditorConfig): {
+  actors: {
+    editorActor: EditorActor
+    mutationActor: ActorRefFrom<typeof mutationMachine>
+    syncActor: ActorRefFrom<typeof syncMachine>
+  }
+  editor: InternalEditor
+  subscriptions: Array<() => () => void>
+} {
+  debug('Creating new Editor instance')
+
+  const subscriptions: Array<() => () => void> = []
+  const editorActor = createActor(editorMachine, {
+    input: editorConfigToMachineInput(config),
+  })
+  const slateEditor = createSlateEditor({editorActor, subscriptions})
   const editable = createEditableAPI(slateEditor.instance, editorActor)
   const {mutationActor, syncActor} = createActors({
     editorActor,
     slateEditor: slateEditor.instance,
+    subscriptions,
   })
 
-  mutationActor.start()
-  syncActor.start()
-
-  return {
+  const editor = {
     getSnapshot: () =>
       getEditorSnapshot({
         editorActorSnapshot: editorActor.getSnapshot(),
@@ -182,32 +195,28 @@ export function createInternalEditor(editorActor: EditorActor): InternalEditor {
       editorActor,
       slateEditor,
     },
+  } satisfies InternalEditor
+
+  return {
+    actors: {
+      editorActor,
+      mutationActor,
+      syncActor,
+    },
+    editor,
+    subscriptions,
   }
 }
-
-const actors = new WeakMap<
-  EditorActor,
-  {
-    syncActor: ActorRefFrom<typeof syncMachine>
-    mutationActor: ActorRefFrom<typeof mutationMachine>
-  }
->()
 
 function createActors(config: {
   editorActor: EditorActor
   slateEditor: PortableTextSlateEditor
+  subscriptions: Array<() => () => void>
 }): {
   syncActor: ActorRefFrom<typeof syncMachine>
   mutationActor: ActorRefFrom<typeof mutationMachine>
 } {
-  const existingActor = actors.get(config.editorActor)
-
-  if (existingActor) {
-    debug('Reusing existing actors')
-    return existingActor
-  }
-
-  debug('Creating new actors')
+  debug('Creating new Actors')
 
   const mutationActor = createActor(mutationMachine, {
     input: {
@@ -228,67 +237,80 @@ function createActors(config: {
     },
   })
 
-  mutationActor.on('*', (event) => {
-    if (event.type === 'has pending patches') {
-      syncActor.send({type: 'has pending patches'})
-    }
-    if (event.type === 'mutation') {
-      syncActor.send({type: 'mutation'})
-      config.editorActor.send({
-        type: 'mutation',
-        patches: event.patches,
-        snapshot: event.snapshot,
-        value: event.snapshot,
-      })
+  config.subscriptions.push(() => {
+    const subscription = mutationActor.on('*', (event) => {
+      if (event.type === 'has pending patches') {
+        syncActor.send({type: 'has pending patches'})
+      }
+      if (event.type === 'mutation') {
+        syncActor.send({type: 'mutation'})
+        config.editorActor.send({
+          type: 'mutation',
+          patches: event.patches,
+          snapshot: event.snapshot,
+          value: event.snapshot,
+        })
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
     }
   })
 
-  syncActor.on('*', (event) => {
-    switch (event.type) {
-      case 'invalid value':
-        config.editorActor.send({
-          ...event,
-          type: 'notify.invalid value',
-        })
-        break
-      case 'value changed':
-        config.editorActor.send({
-          ...event,
-          type: 'notify.value changed',
-        })
-        break
-      case 'patch':
-        config.editorActor.send({
-          ...event,
-          type: 'internal.patch',
-          value: fromSlateValue(
-            config.slateEditor.children,
-            config.editorActor.getSnapshot().context.schema.block.name,
-            KEY_TO_VALUE_ELEMENT.get(config.slateEditor),
-          ),
-        })
-        break
+  config.subscriptions.push(() => {
+    const subscription = syncActor.on('*', (event) => {
+      switch (event.type) {
+        case 'invalid value':
+          config.editorActor.send({
+            ...event,
+            type: 'notify.invalid value',
+          })
+          break
+        case 'value changed':
+          config.editorActor.send({
+            ...event,
+            type: 'notify.value changed',
+          })
+          break
+        case 'patch':
+          config.editorActor.send({
+            ...event,
+            type: 'internal.patch',
+            value: fromSlateValue(
+              config.slateEditor.children,
+              config.editorActor.getSnapshot().context.schema.block.name,
+              KEY_TO_VALUE_ELEMENT.get(config.slateEditor),
+            ),
+          })
+          break
 
-      default:
-        config.editorActor.send(event)
+        default:
+          config.editorActor.send(event)
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
     }
   })
 
-  config.editorActor.on('*', (event) => {
-    if (event.type === 'read only') {
-      syncActor.send({type: 'update readOnly', readOnly: true})
-    }
-    if (event.type === 'editable') {
-      syncActor.send({type: 'update readOnly', readOnly: false})
-    }
-    if (event.type === 'internal.patch') {
-      mutationActor.send({...event, type: 'patch'})
-    }
-  })
+  config.subscriptions.push(() => {
+    const subscription = config.editorActor.on('*', (event) => {
+      if (event.type === 'read only') {
+        syncActor.send({type: 'update readOnly', readOnly: true})
+      }
+      if (event.type === 'editable') {
+        syncActor.send({type: 'update readOnly', readOnly: false})
+      }
+      if (event.type === 'internal.patch') {
+        mutationActor.send({...event, type: 'patch'})
+      }
+    })
 
-  actors.set(config.editorActor, {
-    syncActor,
-    mutationActor,
+    return () => {
+      subscription.unsubscribe()
+    }
   })
 
   return {

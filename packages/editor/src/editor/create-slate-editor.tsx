@@ -9,10 +9,11 @@ import type {PortableTextSlateEditor} from '../types/editor'
 import type {EditorActor} from './editor-machine'
 import {withPlugins} from './plugins/with-plugins'
 
-const debug = debugWithName('component:PortableTextEditor:SlateContainer')
+const debug = debugWithName('setup')
 
 type SlateEditorConfig = {
   editorActor: EditorActor
+  subscriptions: Array<() => () => void>
 }
 
 export type SlateEditor = {
@@ -20,32 +21,16 @@ export type SlateEditor = {
   initialValue: Array<Descendant>
 }
 
-const slateEditors = new WeakMap<EditorActor, SlateEditor>()
-
 export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
-  const existingSlateEditor = slateEditors.get(config.editorActor)
-
-  if (existingSlateEditor) {
-    debug('Reusing existing Slate editor instance', config.editorActor.id)
-    return existingSlateEditor
-  }
-
-  debug('Creating new Slate editor instance', config.editorActor.id)
-
-  const unsubscriptions: Array<() => void> = []
-  const subscriptions: Array<() => () => void> = []
+  debug('Creating new Slate editor instance')
 
   const instance = withPlugins(withReact(createEditor()), {
     editorActor: config.editorActor,
-    subscriptions,
+    subscriptions: config.subscriptions,
   })
 
   KEY_TO_VALUE_ELEMENT.set(instance, {})
   KEY_TO_SLATE_ELEMENT.set(instance, {})
-
-  for (const subscription of subscriptions) {
-    unsubscriptions.push(subscription())
-  }
 
   const initialValue = [instance.pteCreateTextBlock({decorators: []})]
 
@@ -53,8 +38,6 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
     instance,
     initialValue,
   }
-
-  slateEditors.set(config.editorActor, slateEditor)
 
   return slateEditor
 }
