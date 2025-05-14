@@ -296,15 +296,21 @@ function createActors(config: {
   })
 
   config.subscriptions.push(() => {
-    const subscription = config.editorActor.on('*', (event) => {
-      if (
-        config.editorActor.getSnapshot().matches({'edit mode': 'read only'})
-      ) {
+    const subscription = config.editorActor.subscribe((snapshot) => {
+      if (snapshot.matches({'edit mode': 'read only'})) {
         syncActor.send({type: 'update readOnly', readOnly: true})
       } else {
         syncActor.send({type: 'update readOnly', readOnly: false})
       }
+    })
 
+    return () => {
+      subscription.unsubscribe()
+    }
+  })
+
+  config.subscriptions.push(() => {
+    const subscription = config.editorActor.on('*', (event) => {
       if (event.type === 'internal.patch') {
         mutationActor.send({...event, type: 'patch'})
       }
