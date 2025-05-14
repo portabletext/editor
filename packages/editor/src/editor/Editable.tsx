@@ -284,8 +284,8 @@ export const PortableTextEditable = forwardRef<
           // Output selection here in those cases where the editor selection was the same, and there are no set_selection operations made.
           // The selection is usually automatically emitted to change$ by the withPortableTextSelections plugin whenever there is a set_selection operation applied.
           if (!slateEditor.operations.some((o) => o.type === 'set_selection')) {
-            relayActor.send({
-              type: 'selection',
+            editorActor.send({
+              type: 'update selection',
               selection: normalizedSelection,
             })
           }
@@ -293,7 +293,7 @@ export const PortableTextEditable = forwardRef<
         }
       }
     }
-  }, [editorActor, propsSelection, relayActor, slateEditor])
+  }, [editorActor, propsSelection, slateEditor])
 
   // Restore selection from props when the editor has been initialized properly with it's value
   useEffect(() => {
@@ -550,14 +550,14 @@ export const PortableTextEditable = forwardRef<
         const newSelection = PortableTextEditor.getSelection(portableTextEditor)
         // If the selection is the same, emit it explicitly here as there is no actual onChange event triggered.
         if (selection === newSelection) {
-          relayActor.send({
-            type: 'selection',
+          editorActor.send({
+            type: 'update selection',
             selection,
           })
         }
       }
     },
-    [onFocus, slateEditor, portableTextEditor, relayActor],
+    [editorActor, onFocus, slateEditor, portableTextEditor, relayActor],
   )
 
   const handleClick = useCallback(

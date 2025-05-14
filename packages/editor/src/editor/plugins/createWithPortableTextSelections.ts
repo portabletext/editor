@@ -4,7 +4,6 @@ import {slateRangeToSelection} from '../../internal-utils/slate-utils'
 import {SLATE_TO_PORTABLE_TEXT_RANGE} from '../../internal-utils/weakMaps'
 import type {EditorSelection, PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
-import type {RelayActor} from '../relay-machine'
 
 const debug = debugWithName('plugin:withPortableTextSelections')
 const debugVerbose = debug.enabled && false
@@ -12,7 +11,6 @@ const debugVerbose = debug.enabled && false
 // This plugin will make sure that we emit a PT selection whenever the editor has changed.
 export function createWithPortableTextSelections(
   editorActor: EditorActor,
-  relayActor: RelayActor,
 ): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
   let prevSelection: BaseRange | null = null
   return function withPortableTextSelections(
@@ -42,9 +40,9 @@ export function createWithPortableTextSelections(
           )
         }
         if (ptRange) {
-          relayActor.send({type: 'selection', selection: ptRange})
+          editorActor.send({type: 'update selection', selection: ptRange})
         } else {
-          relayActor.send({type: 'selection', selection: null})
+          editorActor.send({type: 'update selection', selection: null})
         }
       }
       prevSelection = editor.selection

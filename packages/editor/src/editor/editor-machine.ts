@@ -319,7 +319,10 @@ export const editorMachine = setup({
       actions: assign({maxBlocks: ({event}) => event.maxBlocks}),
     },
     'update selection': {
-      actions: [assign({selection: ({event}) => event.selection})],
+      actions: [
+        assign({selection: ({event}) => event.selection}),
+        emit(({event}) => ({...event, type: 'selection'})),
+      ],
     },
   },
   type: 'parallel',
