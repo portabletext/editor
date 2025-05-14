@@ -114,7 +114,7 @@ export const syncMachine = setup({
     },
     events: {} as
       | {
-          type: 'has pending patches'
+          type: 'has pending mutations'
         }
       | {
           type: 'mutation'
@@ -226,7 +226,7 @@ export const syncMachine = setup({
     }),
   ],
   on: {
-    'has pending patches': {
+    'has pending mutations': {
       actions: assign({
         isProcessingLocalChanges: true,
       }),
