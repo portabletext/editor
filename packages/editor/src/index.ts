@@ -4,15 +4,11 @@ export type {
   PortableTextChild,
   PortableTextSpan,
 } from '@sanity/types'
-export {EditorEventListener} from './editor-event-listener'
 export type {Editor, EditorConfig, EditorEvent} from './editor'
+export {EditorEventListener} from './editor-event-listener'
 export {PortableTextEditable} from './editor/Editable'
 export type {PortableTextEditableProps} from './editor/Editable'
-export type {
-  EditorEmittedEvent,
-  MutationEvent,
-  PatchesEvent,
-} from './editor/editor-machine'
+export type {PatchesEvent} from './editor/editor-machine'
 export {
   EditorProvider,
   type EditorProviderProps,
@@ -30,6 +26,7 @@ export {usePortableTextEditorSelection} from './editor/hooks/usePortableTextEdit
 export {defaultKeyGenerator as keyGenerator} from './editor/key-generator'
 export {PortableTextEditor} from './editor/PortableTextEditor'
 export type {PortableTextEditorProps} from './editor/PortableTextEditor'
+export type {EditorEmittedEvent, MutationEvent} from './editor/relay-machine'
 export {useEditor} from './editor/use-editor'
 export type {AddedAnnotationPaths} from './operations/behavior.operation.annotation.add'
 export type {BlockOffset} from './types/block-offset'

@@ -27,6 +27,7 @@ import {
 } from '../../internal-utils/withoutPatching'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
+import type {RelayActor} from '../relay-machine'
 import {getCurrentOperationId} from '../with-applying-behavior-operations'
 import {withoutSaving} from './createWithUndoRedo'
 
@@ -78,12 +79,14 @@ export interface PatchFunctions {
 
 interface Options {
   editorActor: EditorActor
+  relayActor: RelayActor
   patchFunctions: PatchFunctions
   subscriptions: Array<() => () => void>
 }
 
 export function createWithPatches({
   editorActor,
+  relayActor,
   patchFunctions,
   subscriptions,
 }: Options): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
@@ -280,8 +283,8 @@ export function createWithPatches({
         )
       ) {
         patches = [...patches, unset([])]
-        editorActor.send({
-          type: 'notify.unset',
+        relayActor.send({
+          type: 'unset',
           previousValue: fromSlateValue(
             previousChildren,
             editorActor.getSnapshot().context.schema.block.name,

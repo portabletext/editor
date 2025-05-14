@@ -2,6 +2,7 @@ import type {BaseOperation, Editor, Node, NodeEntry} from 'slate'
 import {createOperationToPatches} from '../../internal-utils/operationToPatches'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
+import type {RelayActor} from '../relay-machine'
 import {createWithEventListeners} from './create-with-event-listeners'
 import {createWithMaxBlocks} from './createWithMaxBlocks'
 import {createWithObjectKeys} from './createWithObjectKeys'
@@ -22,6 +23,7 @@ export interface OriginalEditorFunctions {
 
 type PluginsOptions = {
   editorActor: EditorActor
+  relayActor: RelayActor
   subscriptions: Array<() => () => void>
 }
 
@@ -30,7 +32,7 @@ export const withPlugins = <T extends Editor>(
   options: PluginsOptions,
 ): PortableTextSlateEditor => {
   const e = editor as T & PortableTextSlateEditor
-  const {editorActor} = options
+  const {editorActor, relayActor} = options
   const operationToPatches = createOperationToPatches(editorActor)
   const withObjectKeys = createWithObjectKeys(editorActor)
   const withSchemaTypes = createWithSchemaTypes({
@@ -38,6 +40,7 @@ export const withPlugins = <T extends Editor>(
   })
   const withPatches = createWithPatches({
     editorActor,
+    relayActor,
     patchFunctions: operationToPatches,
     subscriptions: options.subscriptions,
   })
@@ -55,8 +58,10 @@ export const withPlugins = <T extends Editor>(
   const withUtils = createWithUtils({
     editorActor,
   })
-  const withPortableTextSelections =
-    createWithPortableTextSelections(editorActor)
+  const withPortableTextSelections = createWithPortableTextSelections(
+    editorActor,
+    relayActor,
+  )
   const withEventListeners = createWithEventListeners(editorActor)
 
   // Ordering is important here, selection dealing last, data manipulation in the middle and core model stuff first.

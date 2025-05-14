@@ -35,6 +35,8 @@ import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
 import {createLegacySchema} from './legacy-schema'
 import type {MutationActor} from './mutation-machine'
+import {RelayActorContext} from './relay-actor-context'
+import type {RelayActor} from './relay-machine'
 import {eventToChange} from './route-events-to-changes'
 import type {SyncActor} from './sync-machine'
 
@@ -135,6 +137,7 @@ export class PortableTextEditor extends Component<
   private actors?: {
     editorActor: EditorActor
     mutationActor: MutationActor
+    relayActor: RelayActor
     syncActor: SyncActor
   }
 
@@ -162,7 +165,7 @@ export class PortableTextEditor extends Component<
 
       this.unsubscribers.push(
         (() => {
-          const subscription = actors.editorActor.on('*', (event) => {
+          const subscription = actors.relayActor.on('*', (event) => {
             const change = eventToChange(event)
 
             if (change) {
@@ -200,6 +203,7 @@ export class PortableTextEditor extends Component<
 
     this.actors.editorActor.start()
     this.actors.mutationActor.start()
+    this.actors.relayActor.start()
     this.actors.syncActor.start()
   }
 
@@ -264,6 +268,7 @@ export class PortableTextEditor extends Component<
     if (this.actors) {
       stopActor(this.actors.editorActor)
       stopActor(this.actors.mutationActor)
+      stopActor(this.actors.relayActor)
       stopActor(this.actors.syncActor)
     }
   }
@@ -289,18 +294,20 @@ export class PortableTextEditor extends Component<
           />
         ) : null}
         <EditorActorContext.Provider value={this.editor._internal.editorActor}>
-          <Slate
-            editor={this.editor._internal.slateEditor.instance}
-            initialValue={this.editor._internal.slateEditor.initialValue}
-          >
-            <PortableTextEditorContext.Provider value={this}>
-              <PortableTextEditorSelectionProvider
-                editorActor={this.editor._internal.editorActor}
-              >
-                {this.props.children}
-              </PortableTextEditorSelectionProvider>
-            </PortableTextEditorContext.Provider>
-          </Slate>
+          <RelayActorContext.Provider value={this.actors!.relayActor}>
+            <Slate
+              editor={this.editor._internal.slateEditor.instance}
+              initialValue={this.editor._internal.slateEditor.initialValue}
+            >
+              <PortableTextEditorContext.Provider value={this}>
+                <PortableTextEditorSelectionProvider
+                  editorActor={this.editor._internal.editorActor}
+                >
+                  {this.props.children}
+                </PortableTextEditorSelectionProvider>
+              </PortableTextEditorContext.Provider>
+            </Slate>
+          </RelayActorContext.Provider>
         </EditorActorContext.Provider>
       </>
     )

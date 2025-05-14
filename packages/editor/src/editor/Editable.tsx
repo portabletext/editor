@@ -64,6 +64,7 @@ import {
   createDecorate,
   rangeDecorationsMachine,
 } from './range-decorations-machine'
+import {RelayActorContext} from './relay-actor-context'
 
 const debug = debugWithName('component:Editable')
 
@@ -160,6 +161,7 @@ export const PortableTextEditable = forwardRef<
   )
 
   const editorActor = useContext(EditorActorContext)
+  const relayActor = useContext(RelayActorContext)
   const readOnly = useSelector(editorActor, (s) =>
     s.matches({'edit mode': 'read only'}),
   )
@@ -282,8 +284,8 @@ export const PortableTextEditable = forwardRef<
           // Output selection here in those cases where the editor selection was the same, and there are no set_selection operations made.
           // The selection is usually automatically emitted to change$ by the withPortableTextSelections plugin whenever there is a set_selection operation applied.
           if (!slateEditor.operations.some((o) => o.type === 'set_selection')) {
-            editorActor.send({
-              type: 'notify.selection',
+            relayActor.send({
+              type: 'selection',
               selection: normalizedSelection,
             })
           }
@@ -291,7 +293,7 @@ export const PortableTextEditable = forwardRef<
         }
       }
     }
-  }, [editorActor, propsSelection, slateEditor])
+  }, [editorActor, propsSelection, relayActor, slateEditor])
 
   // Restore selection from props when the editor has been initialized properly with it's value
   useEffect(() => {
@@ -435,7 +437,7 @@ export const PortableTextEditable = forwardRef<
         event.preventDefault()
 
         // Resolve it as promise (can be either async promise or sync return value)
-        editorActor.send({type: 'notify.loading'})
+        relayActor.send({type: 'loading'})
 
         Promise.resolve(onPasteResult)
           .then((result) => {
@@ -498,7 +500,7 @@ export const PortableTextEditable = forwardRef<
             return error
           })
           .finally(() => {
-            editorActor.send({type: 'notify.done loading'})
+            relayActor.send({type: 'done loading'})
           })
       } else if (event.nativeEvent.clipboardData) {
         // Prevent Slate from handling the event
@@ -529,7 +531,7 @@ export const PortableTextEditable = forwardRef<
 
       debug('No result from custom paste handler, pasting normally')
     },
-    [editorActor, onPaste, portableTextEditor, slateEditor],
+    [editorActor, onPaste, portableTextEditor, relayActor, slateEditor],
   )
 
   const handleOnFocus: FocusEventHandler<HTMLDivElement> = useCallback(
@@ -544,18 +546,18 @@ export const PortableTextEditable = forwardRef<
           Transforms.select(slateEditor, Editor.start(slateEditor, []))
           slateEditor.onChange()
         }
-        editorActor.send({type: 'notify.focused', event})
+        relayActor.send({type: 'focused', event})
         const newSelection = PortableTextEditor.getSelection(portableTextEditor)
         // If the selection is the same, emit it explicitly here as there is no actual onChange event triggered.
         if (selection === newSelection) {
-          editorActor.send({
-            type: 'notify.selection',
+          relayActor.send({
+            type: 'selection',
             selection,
           })
         }
       }
     },
-    [editorActor, onFocus, slateEditor, portableTextEditor],
+    [onFocus, slateEditor, portableTextEditor, relayActor],
   )
 
   const handleClick = useCallback(
@@ -595,10 +597,10 @@ export const PortableTextEditable = forwardRef<
         onBlur(event)
       }
       if (!event.isPropagationStopped()) {
-        editorActor.send({type: 'notify.blurred', event})
+        relayActor.send({type: 'blurred', event})
       }
     },
-    [editorActor, onBlur],
+    [relayActor, onBlur],
   )
 
   const handleOnBeforeInput = useCallback(

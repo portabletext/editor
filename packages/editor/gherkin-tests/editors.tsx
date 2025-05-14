@@ -11,8 +11,8 @@ import {
   type SchemaDefinition,
 } from '../src'
 import type {Behavior} from '../src/behaviors'
-import type {EditorEmittedEvent} from '../src/editor/editor-machine'
 import {EditorProvider} from '../src/editor/editor-provider'
+import type {EditorEmittedEvent} from '../src/editor/relay-machine'
 import {BehaviorPlugin, EditorRefPlugin} from '../src/plugins'
 import * as selectors from '../src/selectors'
 import type {EditorActorRef, TestActorRef} from './test-machine'
