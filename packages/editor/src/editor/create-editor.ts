@@ -272,21 +272,6 @@ function createActors(config: {
   })
 
   config.subscriptions.push(() => {
-    const subscription = config.relayActor.on('*', (event) => {
-      if (event.type === 'selection') {
-        config.editorActor.send({
-          type: 'update selection',
-          selection: event.selection,
-        })
-      }
-    })
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  })
-
-  config.subscriptions.push(() => {
     const subscription = syncActor.on('*', (event) => {
       switch (event.type) {
         case 'invalid value':
@@ -340,6 +325,7 @@ function createActors(config: {
         case 'mutation':
         case 'ready':
         case 'read only':
+        case 'selection':
           config.relayActor.send(event)
           break
         case 'internal.patch':
