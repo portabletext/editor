@@ -19,13 +19,20 @@ Feature({
       Scenario: Greeting a person
         Given the person "Herman"
         When greeting the person
-        Then the greeting is "Hello Herman"`,
+        Then the greeting is "Hello Herman"
+
+      Scenario: Greeting another person
+        Given the person "Pauline"
+        When greeting the person
+        Then the greeting is "Hello Pauline"`,
   hooks: [
     Before((context: Context) => {
       context.greetingPrefix = 'Hello'
     }),
     After((context: Context) => {
-      expect(context.greeting).toBe('Hello Herman')
+      expect(context.greeting).toBe(
+        `${context.greetingPrefix} ${context.person}`,
+      )
     }),
   ],
   stepDefinitions: [

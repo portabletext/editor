@@ -19,9 +19,9 @@ export type CompiledFeature<TStepContext extends Record<string, any> = object> =
       name: string
       tag?: 'only' | 'skip'
       steps: Array<(stepContext?: TStepContext) => Promise<void> | void>
-      beforeHooks: Array<(stepContext?: TStepContext) => Promise<void> | void>
-      afterHooks: Array<(stepContext?: TStepContext) => Promise<void> | void>
     }>
+    beforeHooks: Array<(stepContext?: TStepContext) => Promise<void> | void>
+    afterHooks: Array<(stepContext?: TStepContext) => Promise<void> | void>
   }
 
 /**
@@ -89,10 +89,12 @@ export function compileFeature<
     throw new Error('Feature cannot have both @skip and @only tags')
   }
 
+  let context = {} as TContext
+
   const scenarios = pickles.map((pickle) => {
     const skippedPickle = pickle.tags.some((tag) => tag.name === '@skip')
     const onlyPickle = pickle.tags.some((tag) => tag.name === '@only')
-    const context = {} as TContext
+    context = {} as TContext
 
     const steps = pickle.steps.map((step) => {
       const matchingSteps = stepImplementations
@@ -153,18 +155,6 @@ export function compileFeature<
             ? ('only' as const)
             : undefined,
       steps,
-      beforeHooks: (hooks ?? [])
-        .filter((hook) => hook.type === 'Before')
-        .map(
-          (hook) => (stepContext: TStepContext | undefined) =>
-            hook.callback(Object.assign(context, stepContext)),
-        ),
-      afterHooks: (hooks ?? [])
-        .filter((hook) => hook.type === 'After')
-        .map(
-          (hook) => (stepContext: TStepContext | undefined) =>
-            hook.callback(Object.assign(context, stepContext)),
-        ),
     }
   })
 
@@ -172,5 +162,17 @@ export function compileFeature<
     tag: skippedFeature ? 'skip' : onlyFeature ? 'only' : undefined,
     name: gherkinDocument.feature.name,
     scenarios,
+    beforeHooks: (hooks ?? [])
+      .filter((hook) => hook.type === 'Before')
+      .map(
+        (hook) => (stepContext: TStepContext | undefined) =>
+          hook.callback(Object.assign(context, stepContext)),
+      ),
+    afterHooks: (hooks ?? [])
+      .filter((hook) => hook.type === 'After')
+      .map(
+        (hook) => (stepContext: TStepContext | undefined) =>
+          hook.callback(Object.assign(context, stepContext)),
+      ),
   }
 }
