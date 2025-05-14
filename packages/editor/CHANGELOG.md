@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.49.12](https://github.com/portabletext/editor/compare/editor-v1.49.11...editor-v1.49.12) (2025-05-14)
+
+
+### Bug Fixes
+
+* deprecate unused `error` event ([0cc55b7](https://github.com/portabletext/editor/commit/0cc55b71592b4ffd3a0e898443c9f6498d895114))
+
 ## [1.49.11](https://github.com/portabletext/editor/compare/editor-v1.49.10...editor-v1.49.11) (2025-05-14)
 
 
