@@ -1,6 +1,7 @@
 import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@sanity/types'
 import {Editor} from 'slate'
+import type {ActorRefFrom} from 'xstate'
 import {
   and,
   assertEvent,
@@ -13,10 +14,10 @@ import {
   stateIn,
   type AnyEventObject,
 } from 'xstate'
-import type {ActorRefFrom} from 'xstate'
 import {debugWithName} from '../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
+import type {PatchEvent} from './relay-machine'
 
 const debug = debugWithName('mutation-machine')
 
@@ -33,6 +34,7 @@ export const mutationMachine = setup({
         value: Array<PortableTextBlock> | undefined
         patches: Array<Patch>
       }>
+      pendingPatchEvents: Array<PatchEvent>
       readOnly: boolean
       schema: EditorSchema
       slateEditor: PortableTextSlateEditor
@@ -61,20 +63,26 @@ export const mutationMachine = setup({
     },
     emitted: {} as
       | {
-          type: 'has pending patches'
+          type: 'has pending mutations'
         }
       | {
           type: 'mutation'
           patches: Array<Patch>
           snapshot: Array<PortableTextBlock> | undefined
-        },
+        }
+      | PatchEvent,
   },
   actions: {
     'assign readOnly': assign({
       readOnly: ({context, event}) =>
         event.type === 'update readOnly' ? event.readOnly : context.readOnly,
     }),
-    'emit has pending patches': emit({type: 'has pending patches'}),
+    'emit patch': enqueueActions(({event, enqueue}) => {
+      if (event.type === 'patch') {
+        enqueue.emit({type: 'patch', patch: event.patch})
+      }
+    }),
+    'emit has pending mutations': emit({type: 'has pending mutations'}),
     'emit mutations': enqueueActions(({context, enqueue}) => {
       for (const bulk of context.pendingMutations) {
         enqueue.emit({
@@ -87,7 +95,7 @@ export const mutationMachine = setup({
     'clear pending mutations': assign({
       pendingMutations: [],
     }),
-    'defer patch': assign({
+    'defer mutation': assign({
       pendingMutations: ({context, event}) => {
         assertEvent(event, 'patch')
 
@@ -117,6 +125,20 @@ export const mutationMachine = setup({
           patches: [event.patch],
         })
       },
+    }),
+    'clear pending patch events': assign({
+      pendingPatchEvents: [],
+    }),
+    'defer patch': assign({
+      pendingPatchEvents: ({context, event}) =>
+        event.type === 'patch'
+          ? [...context.pendingPatchEvents, event]
+          : context.pendingPatchEvents,
+    }),
+    'emit pending patch events': enqueueActions(({context, enqueue}) => {
+      for (const event of context.pendingPatchEvents) {
+        enqueue.emit(event)
+      }
     }),
   },
   actors: {
@@ -157,6 +179,7 @@ export const mutationMachine = setup({
   id: 'mutation',
   context: ({input}) => ({
     pendingMutations: [],
+    pendingPatchEvents: [],
     readOnly: input.readOnly,
     schema: input.schema,
     slateEditor: input.slateEditor,
@@ -236,7 +259,11 @@ export const mutationMachine = setup({
           ],
           on: {
             patch: {
-              actions: ['defer patch', 'emit has pending patches'],
+              actions: [
+                'emit patch',
+                'defer mutation',
+                'emit has pending mutations',
+              ],
               target: 'emitting mutations',
             },
           },
@@ -272,7 +299,7 @@ export const mutationMachine = setup({
           on: {
             patch: {
               target: 'emitting mutations',
-              actions: ['defer patch'],
+              actions: ['emit patch', 'defer mutation'],
               reenter: true,
             },
           },
@@ -292,11 +319,15 @@ export const mutationMachine = setup({
             {
               guard: not('is read-only'),
               target: 'emitting mutations',
+              actions: [
+                'emit pending patch events',
+                'clear pending patch events',
+              ],
             },
           ],
           on: {
             patch: {
-              actions: ['defer patch'],
+              actions: ['defer patch', 'defer mutation'],
             },
           },
         },

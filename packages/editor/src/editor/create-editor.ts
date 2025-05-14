@@ -249,8 +249,8 @@ function createActors(config: {
 
   config.subscriptions.push(() => {
     const subscription = mutationActor.on('*', (event) => {
-      if (event.type === 'has pending patches') {
-        syncActor.send({type: 'has pending patches'})
+      if (event.type === 'has pending mutations') {
+        syncActor.send({type: 'has pending mutations'})
       }
       if (event.type === 'mutation') {
         syncActor.send({type: 'mutation'})
@@ -260,6 +260,9 @@ function createActors(config: {
           snapshot: event.snapshot,
           value: event.snapshot,
         })
+      }
+      if (event.type === 'patch') {
+        config.relayActor.send(event)
       }
     })
 
@@ -340,7 +343,6 @@ function createActors(config: {
           config.relayActor.send(event)
           break
         case 'internal.patch':
-          config.relayActor.send({type: 'patch', patch: event.patch})
           mutationActor.send({...event, type: 'patch'})
           break
       }
