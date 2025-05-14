@@ -1,9 +1,7 @@
 Feature: Markdown Behaviors
 
   Background:
-    Given one editor
-    And markdown behaviors
-    And a global keymap
+    Given a global keymap
 
   Scenario: Automatic blockquote
     Given the text ">"
@@ -88,7 +86,6 @@ Feature: Markdown Behaviors
   Scenario Outline: Clear style on Backspace
     Given the text "foo"
     When <style> is toggled
-    And the caret is put before "foo"
     And "Backspace" is pressed 4 times
     Then block "0" has style "normal"
 

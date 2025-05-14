@@ -41,6 +41,7 @@ export default defineWorkspace([
       name: 'browser',
       include: [
         'gherkin-tests-v2/**/*.test.ts',
+        'gherkin-tests-v2/**/*.test.tsx',
         'tests/**/*.test.ts',
         'tests/**/*.test.tsx',
         'src/plugins/*.test.tsx',

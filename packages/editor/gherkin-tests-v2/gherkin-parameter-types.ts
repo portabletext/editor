@@ -38,6 +38,12 @@ export const parameterType = {
     name: 'decorator',
     matcher: /"(em|strong)"/,
   }),
+  index: createParameterType({
+    name: 'index',
+    matcher: /"(\d)"/,
+    type: Number,
+    transform: (input) => Number.parseInt(input, 10),
+  }),
   inlineObject: createParameterType<'stock-ticker'>({
     name: 'inline-object',
     matcher: /"(stock-ticker)"/,
@@ -66,6 +72,10 @@ export const parameterType = {
     name: 'select-position',
     matcher: /"(start|end|none)"/,
   }),
+  style: createParameterType({
+    name: 'style',
+    matcher: /"(normal|blockquote|h\d)"/,
+  }),
   text: createParameterType<Array<string>>({
     name: 'text',
     matcher: /"([a-z-,#>\\n |\[\]]*)"/u,
@@ -79,11 +89,13 @@ export const parameterTypes = [
   parameterType.blockObject,
   parameterType.button,
   parameterType.decorator,
+  parameterType.index,
   parameterType.inlineObject,
   parameterType.key,
   parameterType.keyKeys,
   parameterType.marks,
   parameterType.placement,
   parameterType.selectPosition,
+  parameterType.style,
   parameterType.text,
 ]
