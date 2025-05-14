@@ -20,7 +20,7 @@
     "@portabletext/block-tools": "workspace:^",
     "@portabletext/editor": "workspace:^",
     "@portabletext/patches": "workspace:^",
-    "@portabletext/plugin-markdown-shortcuts": "^1.0.4",
+    "@portabletext/plugin-markdown-shortcuts": "^1.0.6",
     "@portabletext/plugin-one-line": "^1.0.9",
     "@sanity/color": "^3.0.6",
     "@xstate/react": "^5.0.0",
