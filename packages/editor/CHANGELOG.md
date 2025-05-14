@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.49.13](https://github.com/portabletext/editor/compare/editor-v1.49.12...editor-v1.49.13) (2025-05-14)
+
+
+### Bug Fixes
+
+* mitigate double `selection` event ([a6711ce](https://github.com/portabletext/editor/commit/a6711cedfb2ea52ffdaafeb3bf617d8409145f0e))
+
 ## [1.49.12](https://github.com/portabletext/editor/compare/editor-v1.49.11...editor-v1.49.12) (2025-05-14)
 
 
