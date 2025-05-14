@@ -54,14 +54,6 @@ export type ExternalEditorEvent =
       readOnly: boolean
     }
   | {
-      type: 'update schema'
-      schema: EditorSchema
-    }
-  | {
-      type: 'update key generator'
-      keyGenerator: () => string
-    }
-  | {
       type: 'update maxBlocks'
       maxBlocks: number | undefined
     }
@@ -190,12 +182,6 @@ export const editorMachine = setup({
         context.behaviors.delete(event.behaviorConfig)
 
         return new Set([...context.behaviors])
-      },
-    }),
-    'assign schema': assign({
-      schema: ({event}) => {
-        assertEvent(event, 'update schema')
-        return event.schema
       },
     }),
     'emit patch event': enqueueActions(({event, enqueue}) => {
@@ -329,10 +315,6 @@ export const editorMachine = setup({
   on: {
     'add behavior': {actions: 'add behavior to context'},
     'remove behavior': {actions: 'remove behavior from context'},
-    'update key generator': {
-      actions: assign({keyGenerator: ({event}) => event.keyGenerator}),
-    },
-    'update schema': {actions: 'assign schema'},
     'update maxBlocks': {
       actions: assign({maxBlocks: ({event}) => event.maxBlocks}),
     },
