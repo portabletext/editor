@@ -100,10 +100,8 @@ export function createInternalEditor(config: EditorConfig): {
           syncActor.send(event)
           break
 
-        case 'update key generator':
         case 'update readOnly':
         case 'patches':
-        case 'update schema':
         case 'update maxBlocks':
           editorActor.send(event)
           break

@@ -15,7 +15,6 @@ import {
 import {Subject} from 'rxjs'
 import {Slate} from 'slate-react'
 import {debugWithName} from '../internal-utils/debug'
-import {compileType} from '../internal-utils/schema'
 import {stopActor} from '../internal-utils/stop-actor'
 import type {AddedAnnotationPaths} from '../operations/behavior.operation.annotation.add'
 import type {
@@ -30,10 +29,8 @@ import type {
 import {createInternalEditor, type InternalEditor} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
 import type {EditorActor} from './editor-machine'
-import {legacySchemaToEditorSchema} from './editor-schema'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
-import {createLegacySchema} from './legacy-schema'
 import type {MutationActor} from './mutation-machine'
 import {RelayActorContext} from './relay-actor-context'
 import type {RelayActor} from './relay-machine'
@@ -214,16 +211,7 @@ export class PortableTextEditor extends Component<
       !prevProps.editor &&
       this.props.schemaType !== prevProps.schemaType
     ) {
-      this.schemaTypes = createLegacySchema(
-        this.props.schemaType.hasOwnProperty('jsonType')
-          ? this.props.schemaType
-          : compileType(this.props.schemaType),
-      )
-
-      this.editor._internal.editorActor.send({
-        type: 'update schema',
-        schema: legacySchemaToEditorSchema(this.schemaTypes),
-      })
+      console.warn('Updating schema type is no longer supported')
     }
 
     if (!this.props.editor && !prevProps.editor) {

@@ -221,10 +221,6 @@ function EditorPlaygroundToolbar(props: {
   enableEmojiPickerPlugin: boolean
   setEnableEmojiPickerPlugin: (enable: boolean) => void
 }) {
-  const editor = useEditor()
-  const provokeDuplicateKeys = useSelector(props.editorRef, (s) =>
-    s.matches({'key generator': 'duplicate'}),
-  )
   const showingPatchesPreview = useSelector(props.editorRef, (s) =>
     s.matches({'patches preview': 'shown'}),
   )
@@ -281,28 +277,6 @@ function EditorPlaygroundToolbar(props: {
             }}
           >
             Value subscription
-          </Switch>
-        </Toolbar>
-        <Toolbar>
-          <Switch
-            isSelected={provokeDuplicateKeys}
-            onChange={(isSelected) => {
-              props.editorRef.send({type: 'toggle key generator'})
-              if (isSelected) {
-                editor.send({
-                  type: 'update key generator',
-                  keyGenerator: () => 'key',
-                })
-              } else {
-                editor.send({
-                  type: 'update key generator',
-                  keyGenerator:
-                    props.editorRef.getSnapshot().context.keyGenerator,
-                })
-              }
-            }}
-          >
-            Provoke duplicate keys
           </Switch>
         </Toolbar>
         <Toolbar>
