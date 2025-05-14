@@ -227,6 +227,9 @@ function createActors(config: {
 
   const mutationActor = createActor(mutationMachine, {
     input: {
+      readOnly: config.editorActor
+        .getSnapshot()
+        .matches({'edit mode': 'read only'}),
       schema: config.editorActor.getSnapshot().context.schema,
       slateEditor: config.slateEditor,
     },
@@ -314,8 +317,10 @@ function createActors(config: {
   config.subscriptions.push(() => {
     const subscription = config.editorActor.subscribe((snapshot) => {
       if (snapshot.matches({'edit mode': 'read only'})) {
+        mutationActor.send({type: 'update readOnly', readOnly: true})
         syncActor.send({type: 'update readOnly', readOnly: true})
       } else {
+        mutationActor.send({type: 'update readOnly', readOnly: false})
         syncActor.send({type: 'update readOnly', readOnly: false})
       }
     })

@@ -14,8 +14,11 @@ import {
   type AnyEventObject,
 } from 'xstate'
 import type {ActorRefFrom} from 'xstate'
+import {debugWithName} from '../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
+
+const debug = debugWithName('mutation-machine')
 
 export type MutationActor = ActorRefFrom<typeof mutationMachine>
 
@@ -30,6 +33,7 @@ export const mutationMachine = setup({
         value: Array<PortableTextBlock> | undefined
         patches: Array<Patch>
       }>
+      readOnly: boolean
       schema: EditorSchema
       slateEditor: PortableTextSlateEditor
     },
@@ -45,8 +49,13 @@ export const mutationMachine = setup({
         }
       | {
           type: 'not typing'
+        }
+      | {
+          type: 'update readOnly'
+          readOnly: boolean
         },
     input: {} as {
+      readOnly: boolean
       schema: EditorSchema
       slateEditor: PortableTextSlateEditor
     },
@@ -61,6 +70,10 @@ export const mutationMachine = setup({
         },
   },
   actions: {
+    'assign readOnly': assign({
+      readOnly: ({context, event}) =>
+        event.type === 'update readOnly' ? event.readOnly : context.readOnly,
+    }),
     'emit has pending patches': emit({type: 'has pending patches'}),
     'emit mutations': enqueueActions(({context, enqueue}) => {
       for (const bulk of context.pendingMutations) {
@@ -129,6 +142,7 @@ export const mutationMachine = setup({
     }),
   },
   guards: {
+    'is read-only': ({context}) => context.readOnly,
     'is typing': stateIn({typing: 'typing'}),
     'no pending mutations': ({context}) =>
       context.pendingMutations.length === 0,
@@ -143,9 +157,15 @@ export const mutationMachine = setup({
   id: 'mutation',
   context: ({input}) => ({
     pendingMutations: [],
+    readOnly: input.readOnly,
     schema: input.schema,
     slateEditor: input.slateEditor,
   }),
+  on: {
+    'update readOnly': {
+      actions: ['assign readOnly'],
+    },
+  },
   type: 'parallel',
   states: {
     typing: {
@@ -156,6 +176,16 @@ export const mutationMachine = setup({
       },
       states: {
         idle: {
+          entry: [
+            () => {
+              debug('entry: typing->idle')
+            },
+          ],
+          exit: [
+            () => {
+              debug('exit: typing->idle')
+            },
+          ],
           on: {
             typing: {
               target: 'typing',
@@ -163,6 +193,16 @@ export const mutationMachine = setup({
           },
         },
         typing: {
+          entry: [
+            () => {
+              debug('entry: typing->typing')
+            },
+          ],
+          exit: [
+            () => {
+              debug('exit: typing->typing')
+            },
+          ],
           after: {
             'type debounce': {
               target: 'idle',
@@ -184,6 +224,16 @@ export const mutationMachine = setup({
       initial: 'idle',
       states: {
         'idle': {
+          entry: [
+            () => {
+              debug('entry: mutations->idle')
+            },
+          ],
+          exit: [
+            () => {
+              debug('exit: mutations->idle')
+            },
+          ],
           on: {
             patch: {
               actions: ['defer patch', 'emit has pending patches'],
@@ -192,8 +242,22 @@ export const mutationMachine = setup({
           },
         },
         'emitting mutations': {
+          entry: [
+            () => {
+              debug('entry: mutations->emitting mutations')
+            },
+          ],
+          exit: [
+            () => {
+              debug('exit: mutations->emitting mutations')
+            },
+          ],
           after: {
             'mutation debounce': [
+              {
+                guard: 'is read-only',
+                target: 'read-only',
+              },
               {
                 guard: and([not('is typing'), 'slate is normalizing']),
                 target: 'idle',
@@ -210,6 +274,29 @@ export const mutationMachine = setup({
               target: 'emitting mutations',
               actions: ['defer patch'],
               reenter: true,
+            },
+          },
+        },
+        'read-only': {
+          entry: [
+            () => {
+              debug('entry: mutations->read-only')
+            },
+          ],
+          exit: [
+            () => {
+              debug('exit: mutations->read-only')
+            },
+          ],
+          always: [
+            {
+              guard: not('is read-only'),
+              target: 'emitting mutations',
+            },
+          ],
+          on: {
+            patch: {
+              actions: ['defer patch'],
             },
           },
         },
