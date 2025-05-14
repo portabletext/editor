@@ -8,11 +8,13 @@ import {
 import type {PortableTextSlateEditor} from '../types/editor'
 import type {EditorActor} from './editor-machine'
 import {withPlugins} from './plugins/with-plugins'
+import type {RelayActor} from './relay-machine'
 
 const debug = debugWithName('setup')
 
 type SlateEditorConfig = {
   editorActor: EditorActor
+  relayActor: RelayActor
   subscriptions: Array<() => () => void>
 }
 
@@ -26,6 +28,7 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
 
   const instance = withPlugins(withReact(createEditor()), {
     editorActor: config.editorActor,
+    relayActor: config.relayActor,
     subscriptions: config.subscriptions,
   })
 

@@ -1,10 +1,10 @@
 import {useEffect} from 'react'
 import {useEffectEvent} from 'use-effect-event'
 import type {EditorChange} from '../types/editor'
-import type {EditorActor, InternalEditorEmittedEvent} from './editor-machine'
+import type {InternalEditorEmittedEvent, RelayActor} from './relay-machine'
 
 export function RouteEventsToChanges(props: {
-  editorActor: EditorActor
+  relayActor: RelayActor
   onChange: (change: EditorChange) => void
 }) {
   // We want to ensure that _when_ `props.onChange` is called, it uses the current value.
@@ -16,7 +16,7 @@ export function RouteEventsToChanges(props: {
   )
 
   useEffect(() => {
-    const sub = props.editorActor.on('*', (event) => {
+    const sub = props.relayActor.on('*', (event) => {
       const change = eventToChange(event)
 
       if (change) {
@@ -26,7 +26,7 @@ export function RouteEventsToChanges(props: {
     return () => {
       sub.unsubscribe()
     }
-  }, [props.editorActor])
+  }, [props.relayActor])
 
   return null
 }
@@ -57,12 +57,6 @@ export function eventToChange(
         type: 'invalidValue',
         resolution: event.resolution,
         value: event.value,
-      }
-    }
-    case 'error': {
-      return {
-        ...event,
-        level: 'warning',
       }
     }
     case 'mutation': {

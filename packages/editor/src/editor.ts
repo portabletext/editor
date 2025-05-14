@@ -6,12 +6,10 @@ import type {
 import type {ActorRef, EventObject, Snapshot} from 'xstate'
 import type {Behavior} from './behaviors/behavior.types.behavior'
 import type {ExternalBehaviorEvent} from './behaviors/behavior.types.event'
-import type {
-  EditorEmittedEvent,
-  ExternalEditorEvent,
-} from './editor/editor-machine'
+import type {ExternalEditorEvent} from './editor/editor-machine'
 import type {SchemaDefinition} from './editor/editor-schema'
 import type {EditorSnapshot} from './editor/editor-snapshot'
+import type {EditorEmittedEvent} from './editor/relay-machine'
 
 /**
  * @public

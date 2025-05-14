@@ -1,6 +1,5 @@
 import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@sanity/types'
-import type {FocusEvent} from 'react'
 import {Transforms} from 'slate'
 import {ReactEditor} from 'slate-react'
 import {
@@ -19,15 +18,19 @@ import type {Converter} from '../converters/converter.types'
 import {debugWithName} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
-import type {NamespaceEvent} from '../type-utils'
+import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
 import type {
   EditorSelection,
-  InvalidValueResolution,
   PortableTextMemberSchemaTypes,
   PortableTextSlateEditor,
 } from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import {createEditorSnapshot} from './editor-snapshot'
+import type {
+  EditorEmittedEvent,
+  MutationEvent,
+  PatchEvent,
+} from './relay-machine'
 
 export * from 'xstate/guards'
 
@@ -40,19 +43,6 @@ export type PatchesEvent = {
   type: 'patches'
   patches: Array<Patch>
   snapshot: Array<PortableTextBlock> | undefined
-}
-
-/**
- * @public
- */
-export type MutationEvent = {
-  type: 'mutation'
-  patches: Array<Patch>
-  /**
-   * @deprecated Use `value` instead
-   */
-  snapshot: Array<PortableTextBlock> | undefined
-  value: Array<PortableTextBlock> | undefined
 }
 
 /**
@@ -77,68 +67,9 @@ export type ExternalEditorEvent =
     }
   | PatchesEvent
 
-/**
- * @public
- */
-export type EditorEmittedEvent =
-  | {
-      type: 'blurred'
-      event: FocusEvent<HTMLDivElement, Element>
-    }
-  | {
-      type: 'done loading'
-    }
-  | {
-      type: 'editable'
-    }
-  | {
-      type: 'error'
-      name: string
-      description: string
-      data: unknown
-    }
-  | {
-      type: 'focused'
-      event: FocusEvent<HTMLDivElement, Element>
-    }
-  | {
-      type: 'invalid value'
-      resolution: InvalidValueResolution | null
-      value: Array<PortableTextBlock> | undefined
-    }
-  | {
-      type: 'loading'
-    }
-  | MutationEvent
-  | PatchEvent
-  | {
-      type: 'read only'
-    }
-  | {
-      type: 'ready'
-    }
-  | {
-      type: 'selection'
-      selection: EditorSelection
-    }
-  | {
-      type: 'value changed'
-      value: Array<PortableTextBlock> | undefined
-    }
-
-type PatchEvent = {
-  type: 'patch'
-  patch: Patch
-}
-
 type InternalPatchEvent = NamespaceEvent<PatchEvent, 'internal'> & {
   operationId?: string
   value: Array<PortableTextBlock>
-}
-
-type UnsetEvent = {
-  type: 'unset'
-  previousValue: Array<PortableTextBlock>
 }
 
 /**
@@ -172,6 +103,10 @@ export type InternalEditorEvent =
       type: 'normalizing'
     }
   | {
+      type: 'update selection'
+      selection: EditorSelection
+    }
+  | {
       type: 'done normalizing'
     }
   | {
@@ -188,8 +123,6 @@ export type InternalEditorEvent =
     }
   | MutationEvent
   | InternalPatchEvent
-  | NamespaceEvent<EditorEmittedEvent, 'notify'>
-  | NamespaceEvent<UnsetEvent, 'notify'>
   | {
       type: 'dragstart'
       origin: Pick<EventPosition, 'selection'>
@@ -202,10 +135,9 @@ export type InternalEditorEvent =
  * @internal
  */
 export type InternalEditorEmittedEvent =
-  | EditorEmittedEvent
+  | OmitFromUnion<EditorEmittedEvent, 'type', 'patch'>
   | InternalPatchEvent
   | PatchesEvent
-  | UnsetEvent
 
 /**
  * @internal
@@ -270,7 +202,6 @@ export const editorMachine = setup({
       assertEvent(event, 'internal.patch')
 
       enqueue.emit(event)
-      enqueue.emit({type: 'patch', patch: event.patch})
     }),
     'emit mutation event': emit(({event}) => {
       assertEvent(event, 'mutation')
@@ -286,12 +217,7 @@ export const editorMachine = setup({
     }),
     'emit pending events': enqueueActions(({context, enqueue}) => {
       for (const event of context.pendingEvents) {
-        if (event.type === 'internal.patch') {
-          enqueue.emit(event)
-          enqueue.emit({type: 'patch', patch: event.patch})
-        } else {
-          enqueue.emit(event)
-        }
+        enqueue.emit(event)
       }
     }),
     'emit ready': emit({type: 'ready'}),
@@ -401,29 +327,6 @@ export const editorMachine = setup({
     initialValue: input.initialValue,
   }),
   on: {
-    'notify.blurred': {
-      actions: emit(({event}) => ({...event, type: 'blurred'})),
-    },
-    'notify.done loading': {actions: emit({type: 'done loading'})},
-    'notify.error': {actions: emit(({event}) => ({...event, type: 'error'}))},
-    'notify.invalid value': {
-      actions: emit(({event}) => ({...event, type: 'invalid value'})),
-    },
-    'notify.focused': {
-      actions: emit(({event}) => ({...event, type: 'focused'})),
-    },
-    'notify.selection': {
-      actions: [
-        assign({selection: ({event}) => event.selection}),
-        emit(({event}) => ({...event, type: 'selection'})),
-      ],
-    },
-    'notify.unset': {actions: emit(({event}) => ({...event, type: 'unset'}))},
-    'notify.loading': {actions: emit({type: 'loading'})},
-    'notify.value changed': {
-      actions: emit(({event}) => ({...event, type: 'value changed'})),
-    },
-
     'add behavior': {actions: 'add behavior to context'},
     'remove behavior': {actions: 'remove behavior from context'},
     'update key generator': {
@@ -432,6 +335,9 @@ export const editorMachine = setup({
     'update schema': {actions: 'assign schema'},
     'update maxBlocks': {
       actions: assign({maxBlocks: ({event}) => event.maxBlocks}),
+    },
+    'update selection': {
+      actions: [assign({selection: ({event}) => event.selection})],
     },
   },
   type: 'parallel',

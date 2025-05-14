@@ -13,6 +13,7 @@ import {
   PortableTextEditor,
   type PortableTextEditorProps,
 } from './PortableTextEditor'
+import {RelayActorContext} from './relay-actor-context'
 import {RouteEventsToChanges} from './route-events-to-changes'
 
 /**
@@ -60,6 +61,7 @@ export function EditorProvider(props: EditorProviderProps) {
 
     internalEditor.actors.editorActor.start()
     internalEditor.actors.mutationActor.start()
+    internalEditor.actors.relayActor.start()
     internalEditor.actors.syncActor.start()
 
     return () => {
@@ -69,6 +71,7 @@ export function EditorProvider(props: EditorProviderProps) {
 
       stopActor(internalEditor.actors.editorActor)
       stopActor(internalEditor.actors.mutationActor)
+      stopActor(internalEditor.actors.relayActor)
       stopActor(internalEditor.actors.syncActor)
     }
   }, [internalEditor])
@@ -76,26 +79,28 @@ export function EditorProvider(props: EditorProviderProps) {
   return (
     <EditorContext.Provider value={internalEditor.editor}>
       <RouteEventsToChanges
-        editorActor={internalEditor.actors.editorActor}
+        relayActor={internalEditor.actors.relayActor}
         onChange={(change) => {
           portableTextEditor.change$.next(change)
         }}
       />
       <EditorActorContext.Provider value={internalEditor.actors.editorActor}>
-        <Slate
-          editor={internalEditor.editor._internal.slateEditor.instance}
-          initialValue={
-            internalEditor.editor._internal.slateEditor.initialValue
-          }
-        >
-          <PortableTextEditorContext.Provider value={portableTextEditor}>
-            <PortableTextEditorSelectionProvider
-              editorActor={internalEditor.actors.editorActor}
-            >
-              {props.children}
-            </PortableTextEditorSelectionProvider>
-          </PortableTextEditorContext.Provider>
-        </Slate>
+        <RelayActorContext.Provider value={internalEditor.actors.relayActor}>
+          <Slate
+            editor={internalEditor.editor._internal.slateEditor.instance}
+            initialValue={
+              internalEditor.editor._internal.slateEditor.initialValue
+            }
+          >
+            <PortableTextEditorContext.Provider value={portableTextEditor}>
+              <PortableTextEditorSelectionProvider
+                editorActor={internalEditor.actors.editorActor}
+              >
+                {props.children}
+              </PortableTextEditorSelectionProvider>
+            </PortableTextEditorContext.Provider>
+          </Slate>
+        </RelayActorContext.Provider>
       </EditorActorContext.Provider>
     </EditorContext.Provider>
   )

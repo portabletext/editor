@@ -20,6 +20,7 @@ import {defaultKeyGenerator} from './key-generator'
 import {createLegacySchema} from './legacy-schema'
 import {mutationMachine, type MutationActor} from './mutation-machine'
 import {createEditableAPI} from './plugins/createWithEditableAPI'
+import {relayMachine, type RelayActor} from './relay-machine'
 import {syncMachine, type SyncActor} from './sync-machine'
 
 const debug = debugWithName('setup')
@@ -36,6 +37,7 @@ export function createInternalEditor(config: EditorConfig): {
   actors: {
     editorActor: EditorActor
     mutationActor: MutationActor
+    relayActor: RelayActor
     syncActor: SyncActor
   }
   editor: InternalEditor
@@ -47,10 +49,16 @@ export function createInternalEditor(config: EditorConfig): {
   const editorActor = createActor(editorMachine, {
     input: editorConfigToMachineInput(config),
   })
-  const slateEditor = createSlateEditor({editorActor, subscriptions})
+  const relayActor = createActor(relayMachine)
+  const slateEditor = createSlateEditor({
+    editorActor,
+    relayActor,
+    subscriptions,
+  })
   const editable = createEditableAPI(slateEditor.instance, editorActor)
   const {mutationActor, syncActor} = createActors({
     editorActor,
+    relayActor,
     slateEditor: slateEditor.instance,
     subscriptions,
   })
@@ -138,12 +146,11 @@ export function createInternalEditor(config: EditorConfig): {
       }
     },
     on: (event, listener) => {
-      const subscription = editorActor.on(event, (event) => {
+      const subscription = relayActor.on(event, (event) => {
         switch (event.type) {
           case 'blurred':
           case 'done loading':
           case 'editable':
-          case 'error':
           case 'focused':
           case 'invalid value':
           case 'loading':
@@ -171,6 +178,7 @@ export function createInternalEditor(config: EditorConfig): {
     actors: {
       editorActor,
       mutationActor,
+      relayActor,
       syncActor,
     },
     editor,
@@ -210,11 +218,12 @@ function compileSchemasFromEditorConfig(config: EditorConfig) {
 
 function createActors(config: {
   editorActor: EditorActor
+  relayActor: RelayActor
   slateEditor: PortableTextSlateEditor
   subscriptions: Array<() => () => void>
 }): {
-  syncActor: SyncActor
   mutationActor: MutationActor
+  syncActor: SyncActor
 } {
   debug('Creating new Actors')
 
@@ -259,19 +268,28 @@ function createActors(config: {
   })
 
   config.subscriptions.push(() => {
+    const subscription = config.relayActor.on('*', (event) => {
+      if (event.type === 'selection') {
+        config.editorActor.send({
+          type: 'update selection',
+          selection: event.selection,
+        })
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  })
+
+  config.subscriptions.push(() => {
     const subscription = syncActor.on('*', (event) => {
       switch (event.type) {
         case 'invalid value':
-          config.editorActor.send({
-            ...event,
-            type: 'notify.invalid value',
-          })
+          config.relayActor.send(event)
           break
         case 'value changed':
-          config.editorActor.send({
-            ...event,
-            type: 'notify.value changed',
-          })
+          config.relayActor.send(event)
           break
         case 'patch':
           config.editorActor.send({
@@ -311,8 +329,17 @@ function createActors(config: {
 
   config.subscriptions.push(() => {
     const subscription = config.editorActor.on('*', (event) => {
-      if (event.type === 'internal.patch') {
-        mutationActor.send({...event, type: 'patch'})
+      switch (event.type) {
+        case 'editable':
+        case 'mutation':
+        case 'ready':
+        case 'read only':
+          config.relayActor.send(event)
+          break
+        case 'internal.patch':
+          config.relayActor.send({type: 'patch', patch: event.patch})
+          mutationActor.send({...event, type: 'patch'})
+          break
       }
     })
 
@@ -322,7 +349,7 @@ function createActors(config: {
   })
 
   return {
-    syncActor,
     mutationActor,
+    syncActor,
   }
 }

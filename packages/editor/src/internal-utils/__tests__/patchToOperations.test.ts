@@ -8,6 +8,7 @@ import {legacySchemaToEditorSchema} from '../../editor/editor-schema'
 import {defaultKeyGenerator} from '../../editor/key-generator'
 import {createLegacySchema} from '../../editor/legacy-schema'
 import {withPlugins} from '../../editor/plugins/with-plugins'
+import {relayMachine} from '../../editor/relay-machine'
 import {createApplyPatch} from '../applyPatch'
 import {VOID_CHILD_KEY} from '../values'
 
@@ -24,6 +25,7 @@ const editor = withPlugins(createEditor(), {
       getLegacySchema: () => legacySchema,
     },
   }),
+  relayActor: createActor(relayMachine),
   subscriptions: [],
 })
 
