@@ -60,6 +60,11 @@
       "groupName": "xstate"
     },
     {
+      "description": "Group @portabletext/plugin-* packages",
+      "matchPackageNames": ["@portabletext/plugin-*"],
+      "groupName": "portabletext-plugins"
+    },
+    {
       "description": "Group Cucumber packages",
       "matchPackageNames": ["/cucumber/"],
       "groupName": "cucumber"
