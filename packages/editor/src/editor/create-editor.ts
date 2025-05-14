@@ -32,36 +32,6 @@ export type InternalEditor = Editor & {
   }
 }
 
-function compileSchemasFromEditorConfig(config: EditorConfig) {
-  const legacySchema = config.schemaDefinition
-    ? compileSchemaDefinitionToLegacySchema(config.schemaDefinition)
-    : createLegacySchema(
-        config.schema.hasOwnProperty('jsonType')
-          ? config.schema
-          : compileType(config.schema),
-      )
-  const schema = legacySchemaToEditorSchema(legacySchema)
-
-  return {
-    legacySchema,
-    schema,
-  }
-}
-
-export function editorConfigToMachineInput(config: EditorConfig) {
-  const {legacySchema, schema} = compileSchemasFromEditorConfig(config)
-
-  return {
-    converters: createCoreConverters(legacySchema),
-    getLegacySchema: () => legacySchema,
-    keyGenerator: config.keyGenerator ?? defaultKeyGenerator,
-    maxBlocks: config.maxBlocks,
-    readOnly: config.readOnly,
-    schema,
-    initialValue: config.initialValue,
-  } as const
-}
-
 export function createInternalEditor(config: EditorConfig): {
   actors: {
     editorActor: EditorActor
@@ -205,6 +175,36 @@ export function createInternalEditor(config: EditorConfig): {
     },
     editor,
     subscriptions,
+  }
+}
+
+function editorConfigToMachineInput(config: EditorConfig) {
+  const {legacySchema, schema} = compileSchemasFromEditorConfig(config)
+
+  return {
+    converters: createCoreConverters(legacySchema),
+    getLegacySchema: () => legacySchema,
+    keyGenerator: config.keyGenerator ?? defaultKeyGenerator,
+    maxBlocks: config.maxBlocks,
+    readOnly: config.readOnly,
+    schema,
+    initialValue: config.initialValue,
+  } as const
+}
+
+function compileSchemasFromEditorConfig(config: EditorConfig) {
+  const legacySchema = config.schemaDefinition
+    ? compileSchemaDefinitionToLegacySchema(config.schemaDefinition)
+    : createLegacySchema(
+        config.schema.hasOwnProperty('jsonType')
+          ? config.schema
+          : compileType(config.schema),
+      )
+  const schema = legacySchemaToEditorSchema(legacySchema)
+
+  return {
+    legacySchema,
+    schema,
   }
 }
 
