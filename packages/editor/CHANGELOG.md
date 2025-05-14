@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.49.10](https://github.com/portabletext/editor/compare/editor-v1.49.9...editor-v1.49.10) (2025-05-14)
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^3.88.3 ([966a18e](https://github.com/portabletext/editor/commit/966a18edd164ac26fd3465dc1c4c16994e7bbc17))
+* **patching:** account for initial setup patches from another editor ([2b76964](https://github.com/portabletext/editor/commit/2b76964504b93870ac6d78213871f1f268b3f499))
+* **value sync:** make read-only detection more reliable ([b1ff292](https://github.com/portabletext/editor/commit/b1ff2924bd2c5308b6670c0bd0036d05258af8db))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.26
+  * devDependencies
+    * racejar bumped to 1.2.5
+
 ## [1.49.9](https://github.com/portabletext/editor/compare/editor-v1.49.8...editor-v1.49.9) (2025-05-13)
 
 

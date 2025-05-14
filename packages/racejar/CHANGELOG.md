@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.5](https://github.com/portabletext/editor/compare/racejar-v1.2.4...racejar-v1.2.5) (2025-05-14)
+
+
+### Bug Fixes
+
+* scope hooks to each Feature ([1f153ae](https://github.com/portabletext/editor/commit/1f153ae19b2509663a32a1a26838b4ece53226ff))
+
 ## [1.2.4](https://github.com/portabletext/editor/compare/racejar-v1.2.3...racejar-v1.2.4) (2025-04-19)
 
 
