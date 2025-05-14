@@ -181,9 +181,13 @@ function insertPatch(
 
     Transforms.insertNodes(editor, blocksToInsert, {at: [normalizedIdx]})
 
-    if (editorWasEmptyBefore) {
+    if (
+      editorWasEmptyBefore &&
+      typeof patch.path[0] === 'number' &&
+      patch.path[0] === 0
+    ) {
       Transforms.removeNodes(editor, {
-        at: [position === 'after' ? targetBlockIndex + 1 : targetBlockIndex],
+        at: [position === 'before' ? targetBlockIndex + 1 : targetBlockIndex],
       })
     }
 
