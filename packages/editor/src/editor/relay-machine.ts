@@ -18,6 +18,7 @@ export type EditorEmittedEvent =
   | {
       type: 'editable'
     }
+  | ErrorEvent
   | {
       type: 'focused'
       event: FocusEvent<HTMLDivElement, Element>
@@ -46,6 +47,16 @@ export type EditorEmittedEvent =
       type: 'value changed'
       value: Array<PortableTextBlock> | undefined
     }
+
+/**
+ * @deprecated The event is no longer emitted
+ */
+type ErrorEvent = {
+  type: 'error'
+  name: string
+  description: string
+  data: unknown
+}
 
 export type InternalEditorEmittedEvent = EditorEmittedEvent | UnsetEvent
 
