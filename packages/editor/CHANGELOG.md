@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.49.11](https://github.com/portabletext/editor/compare/editor-v1.49.10...editor-v1.49.11) (2025-05-14)
+
+
+### Bug Fixes
+
+* defer `mutation` events when read-only ([f3f4b56](https://github.com/portabletext/editor/commit/f3f4b56a5f66a02c7824d923a96ea1fbf5330910))
+* deprecate `EditorChange`s that are no longer emitted ([66d7cde](https://github.com/portabletext/editor/commit/66d7cde62085358f236120aac5a7431faf6e5359))
+* remove unused `update schema` and `update key generator` events ([64b4f23](https://github.com/portabletext/editor/commit/64b4f232b8b3f020e8472a8d5022298c99f4fbde))
+
 ## [1.49.10](https://github.com/portabletext/editor/compare/editor-v1.49.9...editor-v1.49.10) (2025-05-14)
 
 
