@@ -222,7 +222,9 @@ export type ReadyChange = {
 
 /**
  * The editor produced an error
- * @beta */
+ * @beta
+ * @deprecated The change is no longer emitted
+ * */
 export type ErrorChange = {
   type: 'error'
   name: string // short computer readable name
@@ -266,7 +268,9 @@ export type InvalidValue = {
 
 /**
  * The editor performed a undo history step
- * @beta */
+ * @beta
+ * @deprecated The change is no longer emitted
+ *  */
 export type UndoChange = {
   type: 'undo'
   patches: Patch[]
@@ -275,7 +279,9 @@ export type UndoChange = {
 
 /**
  * The editor performed redo history step
- * @beta */
+ * @beta
+ * @deprecated The change is no longer emitted
+ *  */
 export type RedoChange = {
   type: 'redo'
   patches: Patch[]
@@ -285,7 +291,9 @@ export type RedoChange = {
 /**
  * The editor was either connected or disconnected to the network
  * To show out of sync warnings etc when in collaborative mode.
- * @beta */
+ * @beta
+ * @deprecated The change is no longer emitted
+ *  */
 export type ConnectionChange = {
   type: 'connection'
   value: 'online' | 'offline'
