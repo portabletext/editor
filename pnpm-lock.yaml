@@ -162,8 +162,8 @@ importers:
         specifier: ^1.0.4
         version: 1.0.4(@portabletext/editor@packages+editor)(@types/react@19.1.3)(react@19.1.0)
       '@portabletext/plugin-one-line':
-        specifier: ^1.0.7
-        version: 1.0.7(@portabletext/editor@packages+editor)(react@19.1.0)
+        specifier: ^1.0.9
+        version: 1.0.9(@portabletext/editor@packages+editor)(react@19.1.0)
       '@sanity/color':
         specifier: ^3.0.6
         version: 3.0.6
@@ -1729,8 +1729,8 @@ packages:
       '@portabletext/editor': workspace:*
       react: ^19.1.0
 
-  '@portabletext/plugin-one-line@1.0.7':
-    resolution: {integrity: sha512-lT9xm/yIN3O0BoTCx8yNjiDiZ3yjq98xs7ybLHYM7SYWGpbEFgzpboOXOIFqyU0bVTOmiDeF1duAUM2rK5Vjfw==}
+  '@portabletext/plugin-one-line@1.0.9':
+    resolution: {integrity: sha512-Bbel0dYuAAdtKgT52OMEoPfesajGxJuV2JoyuUox3vzjE6vMw22Omd9eGJ8+R89QAYFwwbD61dh1msry0ll95w==}
     peerDependencies:
       '@portabletext/editor': workspace:*
       react: ^19.1.0
@@ -7745,7 +7745,7 @@ snapshots:
     transitivePeerDependencies:
       - '@types/react'
 
-  '@portabletext/plugin-one-line@1.0.7(@portabletext/editor@packages+editor)(react@19.1.0)':
+  '@portabletext/plugin-one-line@1.0.9(@portabletext/editor@packages+editor)(react@19.1.0)':
     dependencies:
       '@portabletext/editor': link:packages/editor
       react: 19.1.0
