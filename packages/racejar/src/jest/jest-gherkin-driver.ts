@@ -33,14 +33,15 @@ export function Feature<TContext extends Record<string, any> = object>({
         : describe
 
   describeFn(feature.name, () => {
-    for (const scenario of feature.scenarios) {
-      for (const before of scenario.beforeHooks) {
-        beforeEach(before)
-      }
+    for (const before of feature.beforeHooks) {
+      beforeEach(before)
+    }
 
-      for (const after of scenario.afterHooks) {
-        afterEach(after)
-      }
+    for (const after of feature.afterHooks) {
+      afterEach(after)
+    }
+
+    for (const scenario of feature.scenarios) {
       const testFn =
         scenario.tag === 'only'
           ? test.only
@@ -49,9 +50,6 @@ export function Feature<TContext extends Record<string, any> = object>({
             : test
 
       testFn(scenario.name, async () => {
-        for (const before of scenario.beforeHooks) {
-          await before()
-        }
         for (const step of scenario.steps) {
           await step()
         }
