@@ -1,25 +1,17 @@
-import {page, userEvent, type Locator} from '@vitest/browser/context'
+import {page, userEvent} from '@vitest/browser/context'
 import {Given, Then, When} from 'racejar'
-import React from 'react'
 import {assert, expect, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
-import {
-  defineSchema,
-  EditorProvider,
-  PortableTextEditable,
-  type Editor,
-  type EditorSelection,
-  type EditorSnapshot,
-  type PortableTextBlock,
-} from '../src'
-import type {EditorActor} from '../src/editor/editor-machine'
 import {getEditorSelection} from '../src/internal-utils/editor-selection'
 import {getSelectionAfterInlineObject} from '../src/internal-utils/inline-object-selection'
-import {parseBlock, parseBlocks} from '../src/internal-utils/parse-blocks'
+import {
+  isTextBlock,
+  parseBlock,
+  parseBlocks,
+} from '../src/internal-utils/parse-blocks'
 import {getSelectionBlockKeys} from '../src/internal-utils/selection-block-keys'
 import {getSelectionText} from '../src/internal-utils/selection-text'
 import {getTersePt} from '../src/internal-utils/terse-pt'
-import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {getTextMarks} from '../src/internal-utils/text-marks'
 import {
   getSelectionAfterText,
@@ -27,81 +19,22 @@ import {
   getTextSelection,
 } from '../src/internal-utils/text-selection'
 import {getValueAnnotations} from '../src/internal-utils/value-annotations'
-import {EditorRefPlugin} from '../src/plugins'
-import {InternalEditorAfterRefPlugin} from '../src/plugins/plugin.internal.editor-actor-ref'
-import {InternalSlateEditorRefPlugin} from '../src/plugins/plugin.internal.slate-editor-ref'
-import type {PortableTextSlateEditor} from '../src/types/editor'
 import {
   reverseSelection,
   selectionPointToBlockOffset,
   spanSelectionPointToBlockOffset,
 } from '../src/utils'
 import type {Parameter} from './gherkin-parameter-types'
-
-type Context = {
-  editor: {
-    ref: React.RefObject<Editor>
-    actorRef: React.RefObject<EditorActor>
-    slateRef: React.RefObject<PortableTextSlateEditor>
-    locator: Locator
-    value: () => Array<PortableTextBlock>
-    selection: () => EditorSelection
-    snapshot: () => EditorSnapshot
-  }
-  keyMap?: Map<string, string>
-}
+import {RenderEditor} from './render-editor'
+import type {Context} from './step-context'
 
 export const stepDefinitions = [
   Given('one editor', async (context: Context) => {
-    const editorActorRef = React.createRef<EditorActor>()
-    const slateRef = React.createRef<PortableTextSlateEditor>()
-    const editorRef = React.createRef<Editor>()
-    const keyGenerator = createTestKeyGenerator('e0-')
-    const initialValue = [
-      {
-        _key: keyGenerator(),
-        _type: 'block',
-        children: [{_key: keyGenerator(), _type: 'span', text: '', marks: []}],
-        markDefs: [],
-        style: 'normal',
-      },
-    ]
+    render(<RenderEditor page={page} context={context} />)
 
-    render(
-      <EditorProvider
-        initialConfig={{
-          schemaDefinition: defineSchema({
-            annotations: [{name: 'comment'}, {name: 'link'}],
-            decorators: [{name: 'em'}, {name: 'strong'}],
-            blockObjects: [{name: 'image'}, {name: 'break'}],
-            inlineObjects: [{name: 'stock-ticker'}],
-          }),
-          keyGenerator,
-          initialValue,
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-
-        <InternalEditorAfterRefPlugin ref={editorActorRef} />
-        <InternalSlateEditorRefPlugin ref={slateRef} />
-        <PortableTextEditable />
-      </EditorProvider>,
+    await vi.waitFor(() =>
+      expect.element(context.editor.locator).toBeInTheDocument(),
     )
-
-    const locator = page.getByRole('textbox')
-
-    context.editor = {
-      ref: editorRef as React.RefObject<Editor>,
-      actorRef: editorActorRef as React.RefObject<EditorActor>,
-      slateRef: slateRef as React.RefObject<PortableTextSlateEditor>,
-      locator,
-      value: () => editorRef.current?.getSnapshot().context.value ?? [],
-      snapshot: () => editorRef.current!.getSnapshot(),
-      selection: () =>
-        editorRef.current?.getSnapshot().context.selection ?? null,
-    }
-
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
   }),
 
   Given('a global keymap', (context: Context) => {
@@ -674,6 +607,33 @@ export const stepDefinitions = [
         marksA,
         `Expected "${textA}" and "${textB}" to have the same marks`,
       ).toEqual(marksB)
+    },
+  ),
+
+  /**
+   * Style steps
+   */
+  When('{style} is toggled', (context: Context, style: Parameter['style']) => {
+    context.editor.ref.current.send({type: 'style.toggle', style})
+  }),
+  Then(
+    'block {index} has style {style}',
+    async (
+      context: Context,
+      index: Parameter['index'],
+      style: Parameter['style'],
+    ) => {
+      await vi.waitFor(() => {
+        const value = context.editor.value()
+        const block = value.at(index)
+        const schema = context.editor.snapshot().context.schema
+
+        if (!isTextBlock({schema}, block)) {
+          assert.fail(`Unable to find text block at index ${index}`)
+        }
+
+        expect(block.style, `Unexpected marks for block ${index}`).toBe(style)
+      })
     },
   ),
 
