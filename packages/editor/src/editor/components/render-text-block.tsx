@@ -122,6 +122,21 @@ export function RenderTextBlock(props: {
       data-block-key={props.textBlock._key}
       data-block-name={props.textBlock._type}
       data-block-type="text"
+      {...(props.textBlock.listItem !== undefined
+        ? {
+            'data-list-item': props.textBlock.listItem,
+          }
+        : {})}
+      {...(props.textBlock.level !== undefined
+        ? {
+            'data-level': props.textBlock.level,
+          }
+        : {})}
+      {...(props.textBlock.style !== undefined
+        ? {
+            'data-style': props.textBlock.style,
+          }
+        : {})}
     >
       {dragPositionBlock === 'start' ? <DropIndicator /> : null}
       <div ref={blockRef}>
