@@ -57,6 +57,7 @@ describe('initialization', () => {
       data-block-name="myTestBlockType"
       data-block-type="text"
       data-slate-node="element"
+      data-style="normal"
     >
       <div>
         <span
