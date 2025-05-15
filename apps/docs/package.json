@@ -17,7 +17,7 @@
     "@astrojs/tailwind": "^6.0.0",
     "@portabletext/editor": "workspace:^",
     "@portabletext/patches": "workspace:^",
-    "@portabletext/react": "^3.2.0",
+    "@portabletext/react": "^3.2.1",
     "@radix-ui/react-separator": "^1.1.0",
     "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-tooltip": "^1.1.4",
