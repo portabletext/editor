@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.50.0](https://github.com/portabletext/editor/compare/editor-v1.49.13...editor-v1.50.0) (2025-05-15)
+
+
+### Features
+
+* add `data-(level|list-item|style)` on text blocks ([43d6ef1](https://github.com/portabletext/editor/commit/43d6ef15e5c73415cb21211421b4ea1a5052f4ae))
+* **selectors:** add `getListState` ([dae0438](https://github.com/portabletext/editor/commit/dae0438112b9748bda2d9152ecf88749c8fc766a))
+
+
+### Bug Fixes
+
+* improve `BlockRenderProps.path` type ([98d5a5c](https://github.com/portabletext/editor/commit/98d5a5c0438b2de34f59da396edbb2f590a73046))
+
 ## [1.49.13](https://github.com/portabletext/editor/compare/editor-v1.49.12...editor-v1.49.13) (2025-05-14)
 
 
