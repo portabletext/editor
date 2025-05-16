@@ -220,6 +220,26 @@ export function insertBlock({
       if (editor.isTextBlock(endBlock) && editor.isTextBlock(block)) {
         const selectionStartPoint = Range.start(currentSelection)
 
+        if (isEqualToEmptyEditor([endBlock], schema)) {
+          const currentSelection = editor.selection
+
+          Transforms.insertNodes(editor, [block], {
+            at: endBlockPath,
+            select: false,
+          })
+          Transforms.removeNodes(editor, {at: Path.next(endBlockPath)})
+
+          if (select === 'start') {
+            Transforms.select(editor, selectionStartPoint)
+          } else if (select === 'end') {
+            Transforms.select(editor, Editor.end(editor, endBlockPath))
+          } else {
+            Transforms.select(editor, currentSelection)
+          }
+
+          return
+        }
+
         if (select === 'end') {
           Transforms.insertFragment(editor, [block], {
             voids: true,
