@@ -42,9 +42,6 @@ const debug = debugWithName('editor machine')
 export type PatchesEvent = {
   type: 'patches'
   patches: Array<Patch>
-  /**
-   * @deprecated Unused by the editor
-   */
   snapshot: Array<PortableTextBlock> | undefined
 }
 
