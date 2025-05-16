@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.50.2](https://github.com/portabletext/editor/compare/editor-v1.50.1...editor-v1.50.2) (2025-05-16)
+
+
+### Bug Fixes
+
+* remove premature deprecation ([d77cd42](https://github.com/portabletext/editor/commit/d77cd42d0ce20a99868e36396653f0e474bd2d32))
+
 ## [1.50.1](https://github.com/portabletext/editor/compare/editor-v1.50.0...editor-v1.50.1) (2025-05-16)
 
 
