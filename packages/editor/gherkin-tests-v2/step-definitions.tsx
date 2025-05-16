@@ -42,7 +42,9 @@ export const stepDefinitions = [
   }),
 
   Given('the editor is focused', async (context: Context) => {
-    await userEvent.click(context.editor.locator)
+    context.editor.ref.current.send({
+      type: 'focus',
+    })
 
     await vi.waitFor(() => {
       const selection = context.editor.selection()
