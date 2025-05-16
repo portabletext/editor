@@ -12,63 +12,77 @@ import {
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {EditorRefPlugin, EventListenerPlugin} from '../src/plugins'
 
+function getEditors() {
+  const editorARef = React.createRef<Editor>()
+  const editorBRef = React.createRef<Editor>()
+  const editorAKeyGenerator = createTestKeyGenerator('ea-')
+  const editorBKeyGenerator = createTestKeyGenerator('eb-')
+  const onEditorAEvent = vi.fn<(event: EditorEmittedEvent) => void>()
+  const onEditorBEvent = vi.fn<(event: EditorEmittedEvent) => void>()
+
+  const editors = (
+    <>
+      <EditorProvider
+        initialConfig={{
+          keyGenerator: editorAKeyGenerator,
+          schemaDefinition: defineSchema({}),
+        }}
+      >
+        <EditorRefPlugin ref={editorARef} />
+        <EventListenerPlugin
+          on={(event) => {
+            onEditorAEvent(event)
+
+            if (event.type === 'patch') {
+              editorBRef.current?.send({
+                type: 'patches',
+                patches: [{...event.patch, origin: 'remote'}],
+                snapshot: editorARef.current?.getSnapshot().context.value,
+              })
+            }
+          }}
+        />
+        <PortableTextEditable data-testid="editor-a" />
+      </EditorProvider>
+      <EditorProvider
+        initialConfig={{
+          keyGenerator: editorBKeyGenerator,
+          schemaDefinition: defineSchema({}),
+        }}
+      >
+        <EditorRefPlugin ref={editorBRef} />
+        <EventListenerPlugin
+          on={(event) => {
+            onEditorBEvent(event)
+
+            if (event.type === 'patch') {
+              editorARef.current?.send({
+                type: 'patches',
+                patches: [{...event.patch, origin: 'remote'}],
+                snapshot: editorBRef.current?.getSnapshot().context.value,
+              })
+            }
+          }}
+        />
+        <PortableTextEditable data-testid="editor-b" />
+      </EditorProvider>
+    </>
+  )
+
+  return {
+    editorARef,
+    editorBRef,
+    onEditorAEvent,
+    onEditorBEvent,
+    editors,
+  }
+}
+
 describe('event.patches', () => {
   test('Scenario: Consuming initial diffMatchPatch', async () => {
-    const editorARef = React.createRef<Editor>()
-    const editorBRef = React.createRef<Editor>()
-    const editorAKeyGenerator = createTestKeyGenerator('ea-')
-    const editorBKeyGenerator = createTestKeyGenerator('eb-')
-    const onEditorAEvent = vi.fn<(event: EditorEmittedEvent) => void>()
-    const onEditorBEvent = vi.fn<(event: EditorEmittedEvent) => void>()
+    const {editorARef, editorBRef, onEditorAEvent, editors} = getEditors()
 
-    render(
-      <>
-        <EditorProvider
-          initialConfig={{
-            keyGenerator: editorAKeyGenerator,
-            schemaDefinition: defineSchema({}),
-          }}
-        >
-          <EditorRefPlugin ref={editorARef} />
-          <EventListenerPlugin
-            on={(event) => {
-              onEditorAEvent(event)
-
-              if (event.type === 'patch') {
-                editorBRef.current?.send({
-                  type: 'patches',
-                  patches: [{...event.patch, origin: 'remote'}],
-                  snapshot: editorARef.current?.getSnapshot().context.value,
-                })
-              }
-            }}
-          />
-          <PortableTextEditable data-testid="editor-a" />
-        </EditorProvider>
-        <EditorProvider
-          initialConfig={{
-            keyGenerator: editorBKeyGenerator,
-            schemaDefinition: defineSchema({}),
-          }}
-        >
-          <EditorRefPlugin ref={editorBRef} />
-          <EventListenerPlugin
-            on={(event) => {
-              onEditorBEvent(event)
-
-              if (event.type === 'patch') {
-                editorARef.current?.send({
-                  type: 'patches',
-                  patches: [{...event.patch, origin: 'remote'}],
-                  snapshot: editorBRef.current?.getSnapshot().context.value,
-                })
-              }
-            }}
-          />
-          <PortableTextEditable data-testid="editor-b" />
-        </EditorProvider>
-      </>,
-    )
+    render(editors)
 
     const editorALocator = page.getByTestId('editor-a')
     const editorBLocator = page.getByTestId('editor-b')
@@ -142,61 +156,9 @@ describe('event.patches', () => {
   })
 
   test('Scenario: Consuming initial insert patch', async () => {
-    const editorARef = React.createRef<Editor>()
-    const editorBRef = React.createRef<Editor>()
-    const editorAKeyGenerator = createTestKeyGenerator('ea-')
-    const editorBKeyGenerator = createTestKeyGenerator('eb-')
-    const onEditorAEvent = vi.fn<(event: EditorEmittedEvent) => void>()
-    const onEditorBEvent = vi.fn<(event: EditorEmittedEvent) => void>()
+    const {editorARef, editorBRef, onEditorAEvent, editors} = getEditors()
 
-    render(
-      <>
-        <EditorProvider
-          initialConfig={{
-            keyGenerator: editorAKeyGenerator,
-            schemaDefinition: defineSchema({}),
-          }}
-        >
-          <EditorRefPlugin ref={editorARef} />
-          <EventListenerPlugin
-            on={(event) => {
-              onEditorAEvent(event)
-
-              if (event.type === 'patch') {
-                editorBRef.current?.send({
-                  type: 'patches',
-                  patches: [{...event.patch, origin: 'remote'}],
-                  snapshot: editorARef.current?.getSnapshot().context.value,
-                })
-              }
-            }}
-          />
-          <PortableTextEditable data-testid="editor-a" />
-        </EditorProvider>
-        <EditorProvider
-          initialConfig={{
-            keyGenerator: editorBKeyGenerator,
-            schemaDefinition: defineSchema({}),
-          }}
-        >
-          <EditorRefPlugin ref={editorBRef} />
-          <EventListenerPlugin
-            on={(event) => {
-              onEditorBEvent(event)
-
-              if (event.type === 'patch') {
-                editorARef.current?.send({
-                  type: 'patches',
-                  patches: [{...event.patch, origin: 'remote'}],
-                  snapshot: editorBRef.current?.getSnapshot().context.value,
-                })
-              }
-            }}
-          />
-          <PortableTextEditable data-testid="editor-b" />
-        </EditorProvider>
-      </>,
-    )
+    render(editors)
 
     const editorALocator = page.getByTestId('editor-a')
     const editorBLocator = page.getByTestId('editor-b')
@@ -233,6 +195,106 @@ describe('event.patches', () => {
               style: 'normal',
               markDefs: [],
               children: [{_type: 'span', _key: 'ea-k1', text: '', marks: []}],
+            },
+          ],
+        },
+      })
+      expect(onEditorAEvent).toHaveBeenCalledWith({
+        type: 'patch',
+        patch: {
+          type: 'insert',
+          origin: 'local',
+          path: [{_key: 'ea-k0'}],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'ea-k2',
+              children: [{_type: 'span', _key: 'ea-k3', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      })
+    })
+
+    await vi.waitFor(() => {
+      expect(editorARef.current?.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'ea-k0',
+          children: [{_type: 'span', _key: 'ea-k1', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'ea-k2',
+          children: [{_type: 'span', _key: 'ea-k3', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(editorBRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'ea-k0',
+          children: [{_type: 'span', _key: 'ea-k1', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'ea-k2',
+          children: [{_type: 'span', _key: 'ea-k3', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Splitting initial block', async () => {
+    const {editorARef, editorBRef, onEditorAEvent, editors} = getEditors()
+
+    render(editors)
+
+    const editorALocator = page.getByTestId('editor-a')
+    const editorBLocator = page.getByTestId('editor-b')
+
+    await vi.waitFor(async () => {
+      await expect.element(editorALocator).toBeInTheDocument()
+      await expect.element(editorBLocator).toBeInTheDocument()
+    })
+
+    await userEvent.click(editorALocator)
+    await userEvent.keyboard('{Enter}')
+
+    await vi.waitFor(() => {
+      expect(onEditorAEvent).toHaveBeenCalledWith({
+        type: 'patch',
+        patch: {
+          type: 'setIfMissing',
+          origin: 'local',
+          path: [],
+          value: [],
+        },
+      })
+      expect(onEditorAEvent).toHaveBeenCalledWith({
+        type: 'patch',
+        patch: {
+          type: 'insert',
+          origin: 'local',
+          path: [0],
+          position: 'before',
+          items: [
+            {
+              _type: 'block',
+              _key: 'ea-k0',
+              children: [{_type: 'span', _key: 'ea-k1', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
             },
           ],
         },
