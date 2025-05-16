@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.50.1](https://github.com/portabletext/editor/compare/editor-v1.50.0...editor-v1.50.1) (2025-05-16)
+
+
+### Bug Fixes
+
+* **`insert.blocks`:** issue with inserting into empty editor ([164f2ff](https://github.com/portabletext/editor/commit/164f2ffb1833946253c8190c495e46e78c512f89))
+* deprecate `snapshop` on `pacthes` event ([063bdd5](https://github.com/portabletext/editor/commit/063bdd54d5d0f9560c3e2a1afbf6b954b351e02f))
+
 ## [1.50.0](https://github.com/portabletext/editor/compare/editor-v1.49.13...editor-v1.50.0) (2025-05-15)
 
 
