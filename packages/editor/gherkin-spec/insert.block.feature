@@ -183,6 +183,30 @@ Feature: Insert Block
       | "auto"    | "end"    | "foobar"   |
       | "auto"    | "none"   | "barfoo"   |
 
+  Scenario Outline: Inserting and selecting text block on an empty selected editor
+    Given the editor is focused
+    When a block is inserted <placement> and selected at the <position>
+      ```
+      {
+        "_type": "block",
+        "children": [{"_type": "span", "text": "foo"}]
+      }
+      ```
+    And "bar" is typed
+    Then the text is <text>
+
+    Examples:
+      | placement | position | text       |
+      | "before"  | "start"  | "barfoo\|" |
+      | "before"  | "end"    | "foobar\|" |
+      | "before"  | "none"   | "foo\|bar" |
+      | "after"   | "start"  | "\|barfoo" |
+      | "after"   | "end"    | "\|foobar" |
+      | "after"   | "none"   | "bar\|foo" |
+      | "auto"    | "start"  | "barfoo"   |
+      | "auto"    | "end"    | "foobar"   |
+      | "auto"    | "none"   | "barfoo"   |
+
   Scenario Outline: Inserting block object on block object
     Given a block at "auto" selected at the <block selection>
       ```
