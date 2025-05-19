@@ -13,6 +13,9 @@ export type EditorEmittedEvent =
       event: FocusEvent<HTMLDivElement, Element>
     }
   | {
+      /**
+       * @deprecated
+       */
       type: 'done loading'
     }
   | {
@@ -29,6 +32,9 @@ export type EditorEmittedEvent =
       value: Array<PortableTextBlock> | undefined
     }
   | {
+      /**
+       * @deprecated
+       */
       type: 'loading'
     }
   | MutationEvent
