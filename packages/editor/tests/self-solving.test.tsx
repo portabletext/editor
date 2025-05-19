@@ -1,24 +1,18 @@
 import type {JSONValue, Patch} from '@portabletext/patches'
-import {Schema} from '@sanity/schema'
 import type {PortableTextBlock, PortableTextSpan} from '@sanity/types'
-import {render, waitFor} from '@testing-library/react'
-import {createRef, type ComponentProps, type RefObject} from 'react'
+import {createRef} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {getTextSelection} from '../../internal-utils/text-selection'
-import {PortableTextEditable} from '../Editable'
-import {PortableTextEditor} from '../PortableTextEditor'
-
-const schema = Schema.compile({
-  types: [
-    {
-      name: 'portable-text',
-      type: 'array',
-      of: [{type: 'block'}, {type: 'custom image'}],
-    },
-    {name: 'custom image', type: 'object'},
-  ],
-}).get('portable-text')
-type OnChange = ComponentProps<typeof PortableTextEditor>['onChange']
+import {render} from 'vitest-browser-react'
+import {
+  defineSchema,
+  EditorProvider,
+  type Editor,
+  type EditorEmittedEvent,
+} from '../src'
+import {PortableTextEditable} from '../src/editor/Editable'
+import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
+import {getTextSelection} from '../src/internal-utils/text-selection'
+import {EditorRefPlugin, EventListenerPlugin} from '../src/plugins'
 
 function block(
   props?: Partial<Omit<PortableTextBlock, '_type'>>,
@@ -40,8 +34,6 @@ function span(
 
 describe('Feature: Self-solving', () => {
   it('Scenario: Missing .markDefs and .marks are added after the editor is made dirty', async () => {
-    const editorRef: RefObject<PortableTextEditor | null> = createRef()
-    const onChange = vi.fn<OnChange>()
     const initialValue = [
       block({
         _key: 'b1',
@@ -84,68 +76,86 @@ describe('Feature: Self-solving', () => {
       origin: 'local',
     }
 
+    const keyGenerator = createTestKeyGenerator()
+    const editorRef = createRef<Editor>()
+    const events: Array<EditorEmittedEvent> = []
+
     render(
-      <PortableTextEditor
-        ref={editorRef}
-        schemaType={schema}
-        value={initialValue}
-        onChange={onChange}
+      <EditorProvider
+        initialConfig={{
+          initialValue,
+          keyGenerator,
+          schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+        }}
       >
+        <EditorRefPlugin ref={editorRef} />
+        <EventListenerPlugin
+          on={(event) => {
+            events.push(event)
+          }}
+        />
         <PortableTextEditable />
-      </PortableTextEditor>,
+      </EditorProvider>,
     )
 
-    await waitFor(() => {
-      if (editorRef.current) {
-        expect(onChange).toHaveBeenNthCalledWith(1, {
-          type: 'value',
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _key: 'b1',
+          _type: 'block',
+          children: [
+            {
+              _key: 's1',
+              _type: 'span',
+              marks: [],
+              text: 'foo',
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editorRef.current?.send({
+      type: 'select',
+      at: getTextSelection(initialValue, 'foo'),
+    })
+    editorRef.current?.send({
+      type: 'decorator.toggle',
+      decorator: 'strong',
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'value changed',
           value: initialValue,
-        })
-        expect(onChange).toHaveBeenNthCalledWith(2, {
+        },
+        {
           type: 'ready',
-        })
-      }
-    })
-
-    await waitFor(() => {
-      if (editorRef.current) {
-        PortableTextEditor.select(
-          editorRef.current,
-          getTextSelection(initialValue, 'foo'),
-        )
-        PortableTextEditor.toggleMark(editorRef.current, 'strong')
-      }
-    })
-
-    await waitFor(() => {
-      if (editorRef.current) {
-        expect(onChange).toHaveBeenNthCalledWith(3, {
+        },
+        {
           type: 'selection',
-          selection: {
-            ...getTextSelection(initialValue, 'foo'),
-            backward: false,
-          },
-        })
-        expect(onChange).toHaveBeenNthCalledWith(4, {
+          selection: getTextSelection(initialValue, 'foo'),
+        },
+        {
           type: 'patch',
           patch: spanPatch,
-        })
-        expect(onChange).toHaveBeenNthCalledWith(5, {
+        },
+        {
           type: 'patch',
           patch: blockPatch,
-        })
-        expect(onChange).toHaveBeenNthCalledWith(6, {
+        },
+        {
           type: 'patch',
           patch: strongPatch,
-        })
-        expect(onChange).toHaveBeenNthCalledWith(7, {
+        },
+        {
           type: 'selection',
-          selection: {
-            ...getTextSelection(initialValue, 'foo'),
-            backward: false,
-          },
-        })
-        expect(onChange).toHaveBeenNthCalledWith(8, {
+          selection: getTextSelection(initialValue, 'foo'),
+        },
+        {
           type: 'mutation',
           patches: [spanPatch, blockPatch],
           snapshot: [
@@ -176,8 +186,8 @@ describe('Feature: Self-solving', () => {
               markDefs: [],
             }),
           ],
-        })
-        expect(onChange).toHaveBeenNthCalledWith(9, {
+        },
+        {
           type: 'mutation',
           patches: [strongPatch],
           snapshot: [
@@ -208,8 +218,8 @@ describe('Feature: Self-solving', () => {
               markDefs: [],
             }),
           ],
-        })
-      }
+        },
+      ])
     })
   })
 })
