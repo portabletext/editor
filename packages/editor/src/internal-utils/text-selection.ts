@@ -106,6 +106,7 @@ export function getTextSelection(
   return {
     anchor,
     focus,
+    backward: false,
   }
 }
 
