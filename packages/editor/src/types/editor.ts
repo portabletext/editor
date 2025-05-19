@@ -191,7 +191,10 @@ export type FocusChange = {
   event: FocusEvent<HTMLDivElement, Element>
 }
 
-/** @beta */
+/**
+ * @beta
+ * @deprecated Use `'patch'` changes instead
+ */
 export type UnsetChange = {
   type: 'unset'
   previousValue: PortableTextBlock[]
