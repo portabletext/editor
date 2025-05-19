@@ -168,11 +168,11 @@ importers:
         specifier: ^3.0.6
         version: 3.0.6
       '@xstate/react':
-        specifier: ^5.0.0
-        version: 5.0.3(@types/react@19.1.3)(react@19.1.0)(xstate@5.19.2)
+        specifier: ^5.0.4
+        version: 5.0.4(@types/react@19.1.3)(react@19.1.0)(xstate@5.19.3)
       '@xstate/store':
-        specifier: ^3.2.1
-        version: 3.4.2(react@19.1.0)
+        specifier: ^3.6.2
+        version: 3.6.2(react@19.1.0)
       lucide-react:
         specifier: ^0.487.0
         version: 0.487.0(react@19.1.0)
@@ -201,8 +201,8 @@ importers:
         specifier: ^11.0.0
         version: 11.1.0
       xstate:
-        specifier: ^5.18.2
-        version: 5.19.2
+        specifier: ^5.19.3
+        version: 5.19.3
       zod:
         specifier: ^3.23.8
         version: 3.24.2
@@ -327,7 +327,7 @@ importers:
         version: 3.88.3(@types/react@19.1.3)(debug@4.4.0)
       '@xstate/react':
         specifier: ^4.1.3
-        version: 4.1.3(@types/react@19.1.3)(react@19.1.0)(xstate@5.19.2)
+        version: 4.1.3(@types/react@19.1.3)(react@19.1.0)(xstate@5.19.3)
       react:
         specifier: ^19.0.0
         version: 19.1.0
@@ -342,7 +342,7 @@ importers:
         version: 7.8.2
       xstate:
         specifier: ^5.18.2
-        version: 5.19.2
+        version: 5.19.3
     devDependencies:
       '@eslint/js':
         specifier: ^9.13.0
@@ -439,8 +439,8 @@ importers:
         specifier: ^2.0.14
         version: 2.0.14
       '@xstate/react':
-        specifier: ^5.0.3
-        version: 5.0.3(@types/react@19.1.3)(react@19.1.0)(xstate@5.19.2)
+        specifier: ^5.0.4
+        version: 5.0.4(@types/react@19.1.3)(react@19.1.0)(xstate@5.19.3)
       debug:
         specifier: ^4.4.0
         version: 4.4.0
@@ -469,8 +469,8 @@ importers:
         specifier: ^1.0.2
         version: 1.0.2(react@19.1.0)
       xstate:
-        specifier: ^5.19.2
-        version: 5.19.2
+        specifier: ^5.19.3
+        version: 5.19.3
     devDependencies:
       '@portabletext/toolkit':
         specifier: ^2.0.17
@@ -3189,17 +3189,17 @@ packages:
       xstate:
         optional: true
 
-  '@xstate/react@5.0.3':
-    resolution: {integrity: sha512-Zdnn0VTPcVdoaAiW0OX6Nkvdoe7SNGjfaZqM61NKhjt2aNULqiicmDu2tOd1ChzlRWYDxGTdbzVqqVyMLpoHJw==}
+  '@xstate/react@5.0.4':
+    resolution: {integrity: sha512-VZTG0p2dYGDZvV7zuU7mwnhu158h9KFhXCCpkd/p9l54EjUo8OZ6w7lsezpF51rVSqejazFsnZ0HDFzj/eG2Xg==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-      xstate: ^5.19.2
+      xstate: ^5.19.3
     peerDependenciesMeta:
       xstate:
         optional: true
 
-  '@xstate/store@3.4.2':
-    resolution: {integrity: sha512-a1KQ4QCNFmKXnmf/bY/ys/sPzjTVLXFtuNIClyHSygtAP2ZFbK86Wk03QfT1TCuK/7jQ+NC85FyBW6LIJnXN/w==}
+  '@xstate/store@3.6.2':
+    resolution: {integrity: sha512-jsaQC+zluanhqWr/Y3KGxfM4tTbfQCGRQ6AxF+hTAZ+YwVRExk7T2ovHzgok1D1w/r4lV/uUrn7zSt2k3vMyNA==}
     peerDependencies:
       react: ^18.2.0 || ^19.0.0
       solid-js: ^1.7.6
@@ -6468,8 +6468,8 @@ packages:
   xmlchars@2.2.0:
     resolution: {integrity: sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw==}
 
-  xstate@5.19.2:
-    resolution: {integrity: sha512-B8fL2aP0ogn5aviAXFzI5oZseAMqN00fg/TeDa3ZtatyDcViYLIfuQl4y8qmHCiKZgGEzmnTyNtNQL9oeJE2gw==}
+  xstate@5.19.3:
+    resolution: {integrity: sha512-q6sqD7LuontFVxQoGB7D6NkQRDLzs87qzQhUKvI0osKKK8xxktZBT7uwfisjh7Yi5VB2cN9NOpCSxJNpUPQCeg==}
 
   xtend@4.0.2:
     resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==}
@@ -7730,10 +7730,10 @@ snapshots:
   '@portabletext/plugin-character-pair-decorator@1.0.8(@portabletext/editor@packages+editor)(@types/react@19.1.3)(react@19.1.0)':
     dependencies:
       '@portabletext/editor': link:packages/editor
-      '@xstate/react': 5.0.3(@types/react@19.1.3)(react@19.1.0)(xstate@5.19.2)
+      '@xstate/react': 5.0.4(@types/react@19.1.3)(react@19.1.0)(xstate@5.19.3)
       react: 19.1.0
       remeda: 2.21.3
-      xstate: 5.19.2
+      xstate: 5.19.3
     transitivePeerDependencies:
       - '@types/react'
 
@@ -9781,27 +9781,27 @@ snapshots:
       loupe: 3.1.3
       tinyrainbow: 2.0.0
 
-  '@xstate/react@4.1.3(@types/react@19.1.3)(react@19.1.0)(xstate@5.19.2)':
+  '@xstate/react@4.1.3(@types/react@19.1.3)(react@19.1.0)(xstate@5.19.3)':
     dependencies:
       react: 19.1.0
       use-isomorphic-layout-effect: 1.2.0(@types/react@19.1.3)(react@19.1.0)
       use-sync-external-store: 1.5.0(react@19.1.0)
     optionalDependencies:
-      xstate: 5.19.2
+      xstate: 5.19.3
     transitivePeerDependencies:
       - '@types/react'
 
-  '@xstate/react@5.0.3(@types/react@19.1.3)(react@19.1.0)(xstate@5.19.2)':
+  '@xstate/react@5.0.4(@types/react@19.1.3)(react@19.1.0)(xstate@5.19.3)':
     dependencies:
       react: 19.1.0
       use-isomorphic-layout-effect: 1.2.0(@types/react@19.1.3)(react@19.1.0)
       use-sync-external-store: 1.5.0(react@19.1.0)
     optionalDependencies:
-      xstate: 5.19.2
+      xstate: 5.19.3
     transitivePeerDependencies:
       - '@types/react'
 
-  '@xstate/store@3.4.2(react@19.1.0)':
+  '@xstate/store@3.6.2(react@19.1.0)':
     optionalDependencies:
       react: 19.1.0
 
@@ -13821,7 +13821,7 @@ snapshots:
 
   xmlchars@2.2.0: {}
 
-  xstate@5.19.2: {}
+  xstate@5.19.3: {}
 
   xtend@4.0.2: {}
 
