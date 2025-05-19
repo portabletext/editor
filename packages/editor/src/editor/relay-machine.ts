@@ -79,6 +79,9 @@ export type PatchEvent = {
 }
 
 export type UnsetEvent = {
+  /**
+   * @deprecated Use `'patch'` events instead
+   */
   type: 'unset'
   previousValue: Array<PortableTextBlock>
 }
