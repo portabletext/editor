@@ -211,7 +211,9 @@ export type BlurChange = {
 /**
  * The editor is currently loading something
  * Could be used to show a spinner etc.
- * @beta */
+ * @beta
+ * @deprecated
+ */
 export type LoadingChange = {
   type: 'loading'
   isLoading: boolean
