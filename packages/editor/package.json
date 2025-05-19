@@ -95,7 +95,7 @@
     "@portabletext/block-tools": "workspace:*",
     "@portabletext/patches": "workspace:*",
     "@portabletext/to-html": "^2.0.14",
-    "@xstate/react": "^5.0.3",
+    "@xstate/react": "^5.0.4",
     "debug": "^4.4.0",
     "get-random-values-esm": "^1.0.2",
     "lodash": "^4.17.21",
@@ -105,7 +105,7 @@
     "slate-dom": "^0.114.0",
     "slate-react": "0.114.2",
     "use-effect-event": "^1.0.2",
-    "xstate": "^5.19.2"
+    "xstate": "^5.19.3"
   },
   "devDependencies": {
     "@portabletext/toolkit": "^2.0.17",
