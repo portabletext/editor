@@ -11,7 +11,7 @@ import {
   removeTextPatch,
   setNodePatch,
   splitNodePatch,
-} from '../../internal-utils/operationToPatches'
+} from '../../internal-utils/operation-to-patches'
 import {fromSlateValue, isEqualToEmptyEditor} from '../../internal-utils/values'
 import {
   IS_PROCESSING_REMOTE_CHANGES,

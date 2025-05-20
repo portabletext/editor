@@ -2,13 +2,13 @@ import type {PortableTextTextBlock} from '@sanity/types'
 import {createEditor, type Descendant} from 'slate'
 import {beforeEach, describe, expect, it} from 'vitest'
 import {createActor} from 'xstate'
-import {schemaType} from '../../editor/__tests__/PortableTextEditorTester'
-import {editorMachine} from '../../editor/editor-machine'
-import {legacySchemaToEditorSchema} from '../../editor/editor-schema'
-import {defaultKeyGenerator} from '../../editor/key-generator'
-import {createLegacySchema} from '../../editor/legacy-schema'
-import {withPlugins} from '../../editor/plugins/with-plugins'
-import {relayMachine} from '../../editor/relay-machine'
+import {schemaType} from '../editor/__tests__/PortableTextEditorTester'
+import {editorMachine} from '../editor/editor-machine'
+import {legacySchemaToEditorSchema} from '../editor/editor-schema'
+import {defaultKeyGenerator} from '../editor/key-generator'
+import {createLegacySchema} from '../editor/legacy-schema'
+import {withPlugins} from '../editor/plugins/with-plugins'
+import {relayMachine} from '../editor/relay-machine'
 import {
   insertNodePatch,
   insertTextPatch,
@@ -16,7 +16,7 @@ import {
   removeNodePatch,
   removeTextPatch,
   splitNodePatch,
-} from '../operationToPatches'
+} from './operation-to-patches'
 
 const legacySchema = createLegacySchema(schemaType)
 const schemaTypes = legacySchemaToEditorSchema(legacySchema)
