@@ -1,6 +1,5 @@
 import {useSelector} from '@xstate/react'
 import type {Editor} from '../editor'
-import {slateChildrenToBlocks} from '../internal-utils/slate-children-to-blocks'
 import type {PortableTextSlateEditor} from '../types/editor'
 import type {InternalEditor} from './create-editor'
 import type {EditorActor} from './editor-machine'
@@ -78,10 +77,7 @@ export function getEditorSnapshot({
       readOnly: editorActorSnapshot.matches({'edit mode': 'read only'}),
       schema: editorActorSnapshot.context.schema,
       selection: editorActorSnapshot.context.selection,
-      value: slateChildrenToBlocks(
-        editorActorSnapshot.context.schema,
-        slateEditorInstance.children,
-      ),
+      value: slateEditorInstance.value,
     },
     beta: {
       hasTag: (tag) => editorActorSnapshot.hasTag(tag),

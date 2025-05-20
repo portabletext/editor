@@ -1,6 +1,8 @@
 import {createEditor, type Descendant} from 'slate'
 import {withReact} from 'slate-react'
+import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debugWithName} from '../internal-utils/debug'
+import {toSlateValue} from '../internal-utils/values'
 import {
   KEY_TO_SLATE_ELEMENT,
   KEY_TO_VALUE_ELEMENT,
@@ -35,7 +37,13 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
   KEY_TO_VALUE_ELEMENT.set(instance, {})
   KEY_TO_SLATE_ELEMENT.set(instance, {})
 
-  const initialValue = [instance.pteCreateTextBlock({decorators: []})]
+  instance.value = [
+    createPlaceholderBlock(config.editorActor.getSnapshot().context),
+  ]
+
+  const initialValue = toSlateValue(instance.value, {
+    schemaTypes: config.editorActor.getSnapshot().context.schema,
+  })
 
   const slateEditor: SlateEditor = {
     instance,
