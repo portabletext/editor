@@ -98,6 +98,7 @@
     "@xstate/react": "^5.0.4",
     "debug": "^4.4.1",
     "get-random-values-esm": "^1.0.2",
+    "immer": "^10.1.1",
     "lodash": "^4.17.21",
     "lodash.startcase": "^4.4.0",
     "react-compiler-runtime": "19.1.0-rc.1",

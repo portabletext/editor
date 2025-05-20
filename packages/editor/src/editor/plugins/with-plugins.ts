@@ -13,6 +13,7 @@ import {createWithPortableTextSelections} from './createWithPortableTextSelectio
 import {createWithSchemaTypes} from './createWithSchemaTypes'
 import {createWithUndoRedo} from './createWithUndoRedo'
 import {createWithUtils} from './createWithUtils'
+import {pluginUpdateValue} from './slate-plugin.update-value'
 
 export interface OriginalEditorFunctions {
   apply: (operation: BaseOperation) => void
@@ -68,7 +69,13 @@ export const withPlugins = <T extends Editor>(
             withPlaceholderBlock(
               withUtils(
                 withMaxBlocks(
-                  withUndoRedo(withPatches(withPortableTextSelections(e))),
+                  withUndoRedo(
+                    withPatches(
+                      withPortableTextSelections(
+                        pluginUpdateValue(editorActor.getSnapshot().context, e),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
