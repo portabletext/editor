@@ -66,7 +66,7 @@ describe('operationToPatches', () => {
     expect(
       splitNodePatch(
         schemaTypes,
-        editor,
+        editor.children,
         {
           type: 'split_node',
           path: [0, 0],
@@ -120,7 +120,7 @@ describe('operationToPatches', () => {
     expect(
       insertNodePatch(
         schemaTypes,
-        editor,
+        editor.children,
         {
           type: 'insert_node',
           path: [0],
@@ -162,7 +162,7 @@ describe('operationToPatches', () => {
     expect(
       insertNodePatch(
         schemaTypes,
-        editor,
+        editor.children,
         {
           type: 'insert_node',
           path: [0],
@@ -205,7 +205,7 @@ describe('operationToPatches', () => {
     expect(
       insertNodePatch(
         schemaTypes,
-        editor,
+        editor.children,
         {
           type: 'insert_node',
           path: [0, 3],
@@ -251,7 +251,8 @@ describe('operationToPatches', () => {
     editor.onChange()
     expect(
       insertTextPatch(
-        editor,
+        editorActor.getSnapshot().context.schema,
+        editor.children,
         {
           type: 'insert_text',
           path: [0, 2],
@@ -287,7 +288,8 @@ describe('operationToPatches', () => {
     ;(before[0] as PortableTextTextBlock).children[2].text = '1'
     expect(
       removeTextPatch(
-        editor,
+        editorActor.getSnapshot().context.schema,
+        editor.children,
         {
           type: 'remove_text',
           path: [0, 2],
@@ -322,7 +324,8 @@ describe('operationToPatches', () => {
   it('produces correct remove child patch', () => {
     expect(
       removeNodePatch(
-        editor,
+        editorActor.getSnapshot().context.schema,
+        createDefaultValue(),
         {
           type: 'remove_node',
           path: [0, 1],
@@ -334,7 +337,6 @@ describe('operationToPatches', () => {
             children: [{_type: 'span', _key: 'bogus', text: '', marks: []}],
           },
         },
-        createDefaultValue(),
       ),
     ).toMatchInlineSnapshot(`
       [
@@ -357,15 +359,11 @@ describe('operationToPatches', () => {
   it('produce correct remove block patch', () => {
     const val = createDefaultValue()
     expect(
-      removeNodePatch(
-        editor,
-        {
-          type: 'remove_node',
-          path: [0],
-          node: val[0],
-        },
-        val,
-      ),
+      removeNodePatch(editorActor.getSnapshot().context.schema, val, {
+        type: 'remove_node',
+        path: [0],
+        node: val[0],
+      }),
     ).toMatchInlineSnapshot(`
       [
         {
@@ -395,7 +393,7 @@ describe('operationToPatches', () => {
     expect(
       mergeNodePatch(
         schemaTypes,
-        editor,
+        editor.children,
         {
           type: 'merge_node',
           path: [0, 3],

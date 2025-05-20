@@ -21,24 +21,25 @@ import {
   type SetNodeOperation,
   type SplitNodeOperation,
 } from 'slate'
-import {EditorSchema} from '../editor/editor-schema'
-import type {PortableTextSlateEditor} from '../types/editor'
+import type {EditorSchema} from '../editor/editor-schema'
+import {isSpan, isTextBlock} from './parse-blocks'
 import {fromSlateValue} from './values'
 
 export function insertTextPatch(
-  editor: PortableTextSlateEditor,
+  schema: EditorSchema,
+  children: Descendant[],
   operation: InsertTextOperation,
   beforeValue: Descendant[],
 ): Array<Patch> {
   const block =
-    editor.isTextBlock(editor.children[operation.path[0]]) &&
-    editor.children[operation.path[0]]
+    isTextBlock({schema}, children[operation.path[0]]) &&
+    children[operation.path[0]]
   if (!block) {
     throw new Error('Could not find block')
   }
   const textChild =
-    editor.isTextBlock(block) &&
-    editor.isTextSpan(block.children[operation.path[1]]) &&
+    isTextBlock({schema}, block) &&
+    isSpan({schema}, block.children[operation.path[1]]) &&
     (block.children[operation.path[1]] as PortableTextSpan)
   if (!textChild) {
     throw new Error('Could not find child')
@@ -51,25 +52,26 @@ export function insertTextPatch(
   ]
   const prevBlock = beforeValue[operation.path[0]]
   const prevChild =
-    editor.isTextBlock(prevBlock) && prevBlock.children[operation.path[1]]
-  const prevText = editor.isTextSpan(prevChild) ? prevChild.text : ''
+    isTextBlock({schema}, prevBlock) && prevBlock.children[operation.path[1]]
+  const prevText = isSpan({schema}, prevChild) ? prevChild.text : ''
   const patch = diffMatchPatch(prevText, textChild.text, path)
   return patch.value.length ? [patch] : []
 }
 
 export function removeTextPatch(
-  editor: PortableTextSlateEditor,
+  schema: EditorSchema,
+  children: Descendant[],
   operation: RemoveTextOperation,
   beforeValue: Descendant[],
 ): Array<Patch> {
-  const block = editor && editor.children[operation.path[0]]
+  const block = children[operation.path[0]]
   if (!block) {
     throw new Error('Could not find block')
   }
   const child =
-    (editor.isTextBlock(block) && block.children[operation.path[1]]) ||
+    (isTextBlock({schema}, block) && block.children[operation.path[1]]) ||
     undefined
-  const textChild: PortableTextSpan | undefined = editor.isTextSpan(child)
+  const textChild: PortableTextSpan | undefined = isSpan({schema}, child)
     ? child
     : undefined
   if (child && !textChild) {
@@ -86,24 +88,25 @@ export function removeTextPatch(
   ]
   const beforeBlock = beforeValue[operation.path[0]]
   const prevTextChild =
-    editor.isTextBlock(beforeBlock) && beforeBlock.children[operation.path[1]]
-  const prevText = editor.isTextSpan(prevTextChild) && prevTextChild.text
+    isTextBlock({schema}, beforeBlock) &&
+    beforeBlock.children[operation.path[1]]
+  const prevText = isSpan({schema}, prevTextChild) && prevTextChild.text
   const patch = diffMatchPatch(prevText || '', textChild.text, path)
   return patch.value ? [patch] : []
 }
 
 export function setNodePatch(
   schema: EditorSchema,
-  editor: PortableTextSlateEditor,
+  children: Descendant[],
   operation: SetNodeOperation,
 ): Array<Patch> {
   if (operation.path.length === 1) {
-    const block = editor.children[operation.path[0]]
+    const block = children[operation.path[0]]
     if (typeof block._key !== 'string') {
       throw new Error('Expected block to have a _key')
     }
     const setNode = omitBy(
-      {...editor.children[operation.path[0]], ...operation.newProperties},
+      {...children[operation.path[0]], ...operation.newProperties},
       isUndefined,
     ) as unknown as Descendant
     return [
@@ -112,8 +115,8 @@ export function setNodePatch(
       ]),
     ]
   } else if (operation.path.length === 2) {
-    const block = editor.children[operation.path[0]]
-    if (editor.isTextBlock(block)) {
+    const block = children[operation.path[0]]
+    if (isTextBlock({schema}, block)) {
       const child = block.children[operation.path[1]]
       if (child) {
         const blockKey = block._key
@@ -158,12 +161,11 @@ export function setNodePatch(
 
 export function insertNodePatch(
   schema: EditorSchema,
-  editor: PortableTextSlateEditor,
+  children: Descendant[],
   operation: InsertNodeOperation,
   beforeValue: Descendant[],
 ): Array<Patch> {
   const block = beforeValue[operation.path[0]]
-  const isTextBlock = editor.isTextBlock(block)
   if (operation.path.length === 1) {
     const position = operation.path[0] === 0 ? 'before' : 'after'
     const beforeBlock = beforeValue[operation.path[0] - 1]
@@ -191,9 +193,9 @@ export function insertNodePatch(
       ),
     ]
   } else if (
-    isTextBlock &&
+    isTextBlock({schema}, block) &&
     operation.path.length === 2 &&
-    editor.children[operation.path[0]]
+    children[operation.path[0]]
   ) {
     const position =
       block.children.length === 0 || !block.children[operation.path[1] - 1]
@@ -230,13 +232,13 @@ export function insertNodePatch(
 
 export function splitNodePatch(
   schema: EditorSchema,
-  editor: PortableTextSlateEditor,
+  children: Descendant[],
   operation: SplitNodeOperation,
   beforeValue: Descendant[],
 ): Array<Patch> {
   const patches: Patch[] = []
-  const splitBlock = editor.children[operation.path[0]]
-  if (!editor.isTextBlock(splitBlock)) {
+  const splitBlock = children[operation.path[0]]
+  if (!isTextBlock({schema}, splitBlock)) {
     throw new Error(
       `Block with path ${JSON.stringify(
         operation.path[0],
@@ -245,9 +247,9 @@ export function splitNodePatch(
   }
   if (operation.path.length === 1) {
     const oldBlock = beforeValue[operation.path[0]]
-    if (editor.isTextBlock(oldBlock)) {
+    if (isTextBlock({schema}, oldBlock)) {
       const targetValue = fromSlateValue(
-        [editor.children[operation.path[0] + 1]],
+        [children[operation.path[0] + 1]],
         schema.block.name,
       )[0]
       if (targetValue) {
@@ -263,7 +265,7 @@ export function splitNodePatch(
   }
   if (operation.path.length === 2) {
     const splitSpan = splitBlock.children[operation.path[1]]
-    if (editor.isTextSpan(splitSpan)) {
+    if (isSpan({schema}, splitSpan)) {
       const targetSpans = (
         fromSlateValue(
           [
@@ -301,9 +303,9 @@ export function splitNodePatch(
 }
 
 export function removeNodePatch(
-  editor: PortableTextSlateEditor,
-  operation: RemoveNodeOperation,
+  schema: EditorSchema,
   beforeValue: Descendant[],
+  operation: RemoveNodeOperation,
 ): Array<Patch> {
   const block = beforeValue[operation.path[0]]
   if (operation.path.length === 1) {
@@ -312,7 +314,7 @@ export function removeNodePatch(
       return [unset([{_key: block._key}])]
     }
     throw new Error('Block not found')
-  } else if (editor.isTextBlock(block) && operation.path.length === 2) {
+  } else if (isTextBlock({schema}, block) && operation.path.length === 2) {
     const spanToRemove = block.children[operation.path[1]]
 
     if (spanToRemove) {
@@ -340,19 +342,19 @@ export function removeNodePatch(
 
 export function mergeNodePatch(
   schema: EditorSchema,
-  editor: PortableTextSlateEditor,
+  children: Descendant[],
   operation: MergeNodeOperation,
   beforeValue: Descendant[],
 ): Array<Patch> {
   const patches: Patch[] = []
 
   const block = beforeValue[operation.path[0]]
-  const updatedBlock = editor.children[operation.path[0]]
+  const updatedBlock = children[operation.path[0]]
 
   if (operation.path.length === 1) {
     if (block?._key) {
       const newBlock = fromSlateValue(
-        [editor.children[operation.path[0] - 1]],
+        [children[operation.path[0] - 1]],
         schema.block.name,
       )[0]
       patches.push(set(newBlock, [{_key: newBlock._key}]))
@@ -361,18 +363,18 @@ export function mergeNodePatch(
       throw new Error('Target key not found!')
     }
   } else if (
-    editor.isTextBlock(block) &&
-    editor.isTextBlock(updatedBlock) &&
+    isTextBlock({schema}, block) &&
+    isTextBlock({schema}, updatedBlock) &&
     operation.path.length === 2
   ) {
     const updatedSpan =
       updatedBlock.children[operation.path[1] - 1] &&
-      editor.isTextSpan(updatedBlock.children[operation.path[1] - 1])
+      isSpan({schema}, updatedBlock.children[operation.path[1] - 1])
         ? updatedBlock.children[operation.path[1] - 1]
         : undefined
     const removedSpan =
       block.children[operation.path[1]] &&
-      editor.isTextSpan(block.children[operation.path[1]])
+      isSpan({schema}, block.children[operation.path[1]])
         ? block.children[operation.path[1]]
         : undefined
 
@@ -420,9 +422,8 @@ export function mergeNodePatch(
 
 export function moveNodePatch(
   schema: EditorSchema,
-  editor: PortableTextSlateEditor,
-  operation: MoveNodeOperation,
   beforeValue: Descendant[],
+  operation: MoveNodeOperation,
 ): Array<Patch> {
   const patches: Patch[] = []
   const block = beforeValue[operation.path[0]]
@@ -443,8 +444,8 @@ export function moveNodePatch(
     )
   } else if (
     operation.path.length === 2 &&
-    editor.isTextBlock(block) &&
-    editor.isTextBlock(targetBlock)
+    isTextBlock({schema}, block) &&
+    isTextBlock({schema}, targetBlock)
   ) {
     const child = block.children[operation.path[1]]
     const targetChild = targetBlock.children[operation.newPath[1]]
