@@ -42,5 +42,7 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
     initialValue,
   }
 
+  instance.syncing = false
+
   return slateEditor
 }

@@ -12,7 +12,11 @@ describe(parseBlock.name, () => {
           keyGenerator: createTestKeyGenerator(),
           schema: compileSchemaDefinition(defineSchema({})),
         },
-        options: {refreshKeys: false, validateFields: true},
+        options: {
+          addDefaultFields: true,
+          refreshKeys: false,
+          validateFields: true,
+        },
       }),
     ).toBe(undefined)
   })
@@ -25,7 +29,11 @@ describe(parseBlock.name, () => {
           keyGenerator: createTestKeyGenerator(),
           schema: compileSchemaDefinition(defineSchema({})),
         },
-        options: {refreshKeys: false, validateFields: true},
+        options: {
+          addDefaultFields: true,
+          refreshKeys: false,
+          validateFields: true,
+        },
       }),
     ).toBe(undefined)
   })
@@ -39,7 +47,11 @@ describe(parseBlock.name, () => {
             keyGenerator: createTestKeyGenerator(),
             schema: compileSchemaDefinition(defineSchema({})),
           },
-          options: {refreshKeys: false, validateFields: true},
+          options: {
+            addDefaultFields: true,
+            refreshKeys: false,
+            validateFields: true,
+          },
         }),
       ).toBe(undefined)
     })
@@ -54,7 +66,11 @@ describe(parseBlock.name, () => {
               defineSchema({blockObjects: [{name: 'image'}]}),
             ),
           },
-          options: {refreshKeys: false, validateFields: true},
+          options: {
+            addDefaultFields: true,
+            refreshKeys: false,
+            validateFields: true,
+          },
         }),
       ).toBe(undefined)
     })
@@ -69,7 +85,11 @@ describe(parseBlock.name, () => {
               defineSchema({blockObjects: [{name: 'image'}]}),
             ),
           },
-          options: {refreshKeys: false, validateFields: true},
+          options: {
+            addDefaultFields: true,
+            refreshKeys: false,
+            validateFields: true,
+          },
         }),
       ).toEqual({
         _key: 'k0',
@@ -87,7 +107,11 @@ describe(parseBlock.name, () => {
             keyGenerator: createTestKeyGenerator(),
             schema: compileSchemaDefinition(defineSchema({})),
           },
-          options: {refreshKeys: false, validateFields: true},
+          options: {
+            addDefaultFields: true,
+            refreshKeys: false,
+            validateFields: true,
+          },
         }),
       ).toEqual({
         _key: 'k0',
@@ -114,7 +138,11 @@ describe(parseBlock.name, () => {
             keyGenerator: createTestKeyGenerator(),
             schema: {...schema, block: {...schema.block, name: 'text'}},
           },
-          options: {refreshKeys: false, validateFields: true},
+          options: {
+            addDefaultFields: true,
+            refreshKeys: false,
+            validateFields: true,
+          },
         }),
       ).toEqual({
         _key: 'k0',
@@ -149,7 +177,11 @@ describe(parseBlock.name, () => {
             keyGenerator: createTestKeyGenerator(),
             schema: compileSchemaDefinition(defineSchema({})),
           },
-          options: {refreshKeys: false, validateFields: true},
+          options: {
+            addDefaultFields: true,
+            refreshKeys: false,
+            validateFields: true,
+          },
         }),
       ).toBe(undefined)
     })
@@ -188,7 +220,11 @@ describe(parseBlock.name, () => {
               }),
             ),
           },
-          options: {refreshKeys: false, validateFields: true},
+          options: {
+            addDefaultFields: true,
+            refreshKeys: false,
+            validateFields: true,
+          },
         }),
       ).toEqual({
         _key: 'k0',
@@ -238,7 +274,11 @@ describe(parseBlock.name, () => {
               defineSchema({lists: [{name: 'bullet'}]}),
             ),
           },
-          options: {refreshKeys: false, validateFields: true},
+          options: {
+            addDefaultFields: true,
+            refreshKeys: false,
+            validateFields: true,
+          },
         }),
       ).toEqual({
         _key: 'k0',
@@ -267,7 +307,11 @@ describe(parseBlock.name, () => {
               defineSchema({lists: [{name: 'bullet'}]}),
             ),
           },
-          options: {refreshKeys: false, validateFields: true},
+          options: {
+            addDefaultFields: true,
+            refreshKeys: false,
+            validateFields: true,
+          },
         }),
       ).toEqual({
         _key: 'k0',
@@ -297,7 +341,11 @@ describe(parseSpan.name, () => {
           schema: compileSchemaDefinition(defineSchema({})),
         },
         markDefKeyMap: new Map(),
-        options: {refreshKeys: false, validateFields: true},
+        options: {
+          addDefaultFields: true,
+          refreshKeys: false,
+          validateFields: true,
+        },
       }),
     ).toBe(undefined)
   })
@@ -311,7 +359,11 @@ describe(parseSpan.name, () => {
           schema: compileSchemaDefinition(defineSchema({})),
         },
         markDefKeyMap: new Map(),
-        options: {refreshKeys: false, validateFields: true},
+        options: {
+          addDefaultFields: true,
+          refreshKeys: false,
+          validateFields: true,
+        },
       }),
     ).toBe(undefined)
   })
@@ -325,7 +377,11 @@ describe(parseSpan.name, () => {
           schema: compileSchemaDefinition(defineSchema({})),
         },
         markDefKeyMap: new Map(),
-        options: {refreshKeys: false, validateFields: true},
+        options: {
+          addDefaultFields: true,
+          refreshKeys: false,
+          validateFields: true,
+        },
       }),
     ).toBe(undefined)
   })
@@ -339,7 +395,11 @@ describe(parseSpan.name, () => {
           schema: compileSchemaDefinition(defineSchema({})),
         },
         markDefKeyMap: new Map(),
-        options: {refreshKeys: false, validateFields: true},
+        options: {
+          addDefaultFields: true,
+          refreshKeys: false,
+          validateFields: true,
+        },
       }),
     ).toBe(undefined)
   })
@@ -353,7 +413,11 @@ describe(parseSpan.name, () => {
           schema: compileSchemaDefinition(defineSchema({})),
         },
         markDefKeyMap: new Map(),
-        options: {refreshKeys: false, validateFields: true},
+        options: {
+          addDefaultFields: true,
+          refreshKeys: false,
+          validateFields: true,
+        },
       }),
     ).toEqual({
       _key: 'k0',
@@ -372,7 +436,11 @@ describe(parseSpan.name, () => {
           schema: compileSchemaDefinition(defineSchema({})),
         },
         markDefKeyMap: new Map(),
-        options: {refreshKeys: false, validateFields: true},
+        options: {
+          addDefaultFields: true,
+          refreshKeys: false,
+          validateFields: true,
+        },
       }),
     ).toEqual({
       _key: 'k0',
@@ -394,7 +462,11 @@ describe(parseSpan.name, () => {
           schema: compileSchemaDefinition(defineSchema({})),
         },
         markDefKeyMap: new Map(),
-        options: {refreshKeys: false, validateFields: true},
+        options: {
+          addDefaultFields: true,
+          refreshKeys: false,
+          validateFields: true,
+        },
       }),
     ).toEqual({
       _key: 'k0',
@@ -418,7 +490,11 @@ describe(parseSpan.name, () => {
           ),
         },
         markDefKeyMap: new Map(),
-        options: {refreshKeys: false, validateFields: true},
+        options: {
+          addDefaultFields: true,
+          refreshKeys: false,
+          validateFields: true,
+        },
       }),
     ).toEqual({
       _key: 'k0',
@@ -442,7 +518,11 @@ describe(parseSpan.name, () => {
           ),
         },
         markDefKeyMap: new Map(),
-        options: {refreshKeys: false, validateFields: true},
+        options: {
+          addDefaultFields: true,
+          refreshKeys: false,
+          validateFields: true,
+        },
       }),
     ).toEqual({
       _key: 'k0',

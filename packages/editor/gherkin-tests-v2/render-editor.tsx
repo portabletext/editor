@@ -7,7 +7,7 @@ import {EditorProvider} from '../src/editor/editor-provider'
 import {defineSchema} from '../src/editor/editor-schema'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
-import {InternalEditorAfterRefPlugin} from '../src/plugins/plugin.internal.editor-actor-ref'
+import {InternalEditorActorRefPlugin} from '../src/plugins/plugin.internal.editor-actor-ref'
 import {InternalSlateEditorRefPlugin} from '../src/plugins/plugin.internal.slate-editor-ref'
 import type {PortableTextSlateEditor} from '../src/types/editor'
 import type {Context} from './step-context'
@@ -68,7 +68,7 @@ export function RenderEditor(
     >
       <EditorRefPlugin ref={editorRef} />
       {props.children}
-      <InternalEditorAfterRefPlugin ref={editorActorRef} />
+      <InternalEditorActorRefPlugin ref={editorActorRef} />
       <InternalSlateEditorRefPlugin ref={slateRef} />
       <PortableTextEditable />
     </EditorProvider>

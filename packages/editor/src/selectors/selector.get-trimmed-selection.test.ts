@@ -33,6 +33,7 @@ function snapshot(
           },
           block,
           options: {
+            addDefaultFields: true,
             refreshKeys: false,
             validateFields: false,
           },

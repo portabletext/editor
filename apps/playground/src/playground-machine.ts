@@ -350,7 +350,21 @@ export const playgroundMachine = setup({
   context: ({input}) => ({
     editorIdGenerator: input.editorIdGenerator,
     colorGenerator: input.colorGenerator,
-    value: undefined,
+    value: [
+      {
+        _key: 'b0',
+        _type: 'block',
+        markDefs: [],
+        // children: [
+        //   {
+        //     _type: 'span',
+        //     _key: 's0',
+        //     text: '',
+        //   },
+        // ],
+        style: 'normal',
+      },
+    ],
     rangeDecorations: [],
     editors: [],
   }),

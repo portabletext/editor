@@ -479,6 +479,7 @@ export const PortableTextEditable = forwardRef<
                     },
                     blocks: result.insert,
                     options: {
+                      addDefaultFields: true,
                       refreshKeys: true,
                       validateFields: true,
                     },

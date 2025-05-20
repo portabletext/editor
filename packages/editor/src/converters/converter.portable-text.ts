@@ -57,6 +57,7 @@ export const converterPortableText = defineConverter({
         context: snapshot.context,
         block,
         options: {
+          addDefaultFields: true,
           /**
            * If we are dragging internally then we would like to keep the
            * dropped portable text as is.

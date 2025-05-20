@@ -148,6 +148,8 @@ export interface PortableTextSlateEditor extends ReactEditor {
    * Redo
    */
   redo: () => void
+
+  syncing: boolean
 }
 
 /**

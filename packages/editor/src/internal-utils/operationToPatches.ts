@@ -106,19 +106,37 @@ export function createOperationToPatches(
   function setNodePatch(
     editor: PortableTextSlateEditor,
     operation: SetNodeOperation,
+    beforeValue: Descendant[],
   ) {
     if (operation.path.length === 1) {
-      const block = editor.children[operation.path[0]]
+      const block = beforeValue[operation.path[0]]
+
       if (typeof block._key !== 'string') {
         throw new Error('Expected block to have a _key')
       }
-      const setNode = omitBy(
-        {...editor.children[operation.path[0]], ...operation.newProperties},
-        isUndefined,
-      ) as unknown as Descendant
-      return [
-        set(fromSlateValue([setNode], textBlockName)[0], [{_key: block._key}]),
-      ]
+
+      const patches: Patch[] = []
+
+      for (const prop in operation.properties) {
+        if (!(prop in operation.newProperties)) {
+          patches.push(unset([{_key: block._key}, prop]))
+        }
+      }
+
+      for (const [prop, value] of Object.entries(operation.newProperties)) {
+        patches.push(set(value, [{_key: block._key}, prop]))
+      }
+
+      return patches
+
+      // const setNode = omitBy(
+      //   {...block, ...operation.newProperties},
+      //   isUndefined,
+      // ) as unknown as Descendant
+      // debugger
+      // return [
+      //   set(fromSlateValue([setNode], textBlockName)[0], [{_key: block._key}]),
+      // ]
     } else if (operation.path.length === 2) {
       const block = editor.children[operation.path[0]]
       if (editor.isTextBlock(block)) {

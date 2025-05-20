@@ -79,7 +79,11 @@ export function RenderElement(props: {
       keyGenerator: () => '',
       schema,
     },
-    options: {refreshKeys: false, validateFields: false},
+    options: {
+      addDefaultFields: true,
+      refreshKeys: false,
+      validateFields: false,
+    },
     block: props.element,
   })
 

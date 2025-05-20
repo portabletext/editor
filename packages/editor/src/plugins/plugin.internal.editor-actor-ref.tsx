@@ -2,7 +2,7 @@ import React, {useContext} from 'react'
 import {EditorActorContext} from '../editor/editor-actor-context'
 import type {EditorActor} from '../editor/editor-machine'
 
-export const InternalEditorAfterRefPlugin =
+export const InternalEditorActorRefPlugin =
   React.forwardRef<EditorActor | null>((_, ref) => {
     const editorActor = useContext(EditorActorContext)
 
@@ -12,4 +12,4 @@ export const InternalEditorAfterRefPlugin =
 
     return null
   })
-InternalEditorAfterRefPlugin.displayName = 'InternalEditorAfterRefPlugin'
+InternalEditorActorRefPlugin.displayName = 'InternalEditorActorRefPlugin'

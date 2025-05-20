@@ -2,6 +2,7 @@ import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@sanity/types'
 import {isEqual} from 'lodash'
 import {Editor, Text, Transforms, type Descendant, type Node} from 'slate'
+import type {ActorRefFrom} from 'xstate'
 import {
   and,
   assertEvent,
@@ -14,20 +15,16 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
-import type {ActorRefFrom} from 'xstate'
+import {blockToSlateElement} from '../internal-utils/block-to-slate-element'
 import {debugWithName} from '../internal-utils/debug'
-import {validateValue} from '../internal-utils/validateValue'
-import {toSlateValue, VOID_CHILD_KEY} from '../internal-utils/values'
+import {VOID_CHILD_KEY} from '../internal-utils/values'
 import {
   isChangingRemotely,
   withRemoteChanges,
 } from '../internal-utils/withChanges'
 import {withoutPatching} from '../internal-utils/withoutPatching'
 import type {PickFromUnion} from '../type-utils'
-import type {
-  InvalidValueResolution,
-  PortableTextSlateEditor,
-} from '../types/editor'
+import type {PortableTextSlateEditor} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import {withoutSaving} from './plugins/createWithUndoRedo'
 
@@ -37,11 +34,6 @@ type SyncValueEvent =
   | {
       type: 'patch'
       patch: Patch
-    }
-  | {
-      type: 'invalid value'
-      resolution: InvalidValueResolution | null
-      value: Array<PortableTextBlock> | undefined
     }
   | {
       type: 'value changed'
@@ -67,6 +59,12 @@ const syncValueCallback: CallbackLogicFunction<
     value: Array<PortableTextBlock> | undefined
   }
 > = ({sendBack, input}) => {
+  // console.log('syncValueCallback', input.slateEditor.syncing)
+  // if (input.slateEditor.syncing) {
+  //   debug('Skipping sync because it is already syncing')
+  //   return
+  // }
+
   updateValue({
     context: input.context,
     sendBack,
@@ -129,11 +127,7 @@ export const syncMachine = setup({
         }
       | SyncValueEvent,
     emitted: {} as
-      | PickFromUnion<
-          SyncValueEvent,
-          'type',
-          'invalid value' | 'patch' | 'value changed'
-        >
+      | PickFromUnion<SyncValueEvent, 'type', 'patch' | 'value changed'>
       | {type: 'done syncing value'}
       | {type: 'syncing value'},
   },
@@ -340,12 +334,18 @@ export const syncMachine = setup({
           debug('entry: syncing->syncing')
         },
         'emit syncing value',
+        ({context}) => {
+          // context.slateEditor.syncing = true
+        },
       ],
       exit: [
         () => {
           debug('exit: syncing->syncing')
         },
         'emit done syncing value',
+        ({context}) => {
+          // context.slateEditor.syncing = false
+        },
       ],
       invoke: {
         src: 'sync value',
@@ -370,9 +370,6 @@ export const syncMachine = setup({
           actions: ['assign pending value'],
         },
         'patch': {
-          actions: [emit(({event}) => event)],
-        },
-        'invalid value': {
           actions: [emit(({event}) => event)],
         },
         'value changed': {
@@ -419,132 +416,114 @@ async function updateValue({
 }) {
   let doneSyncing = false
   let isChanged = false
-  let isValid = true
 
   const hadSelection = !!slateEditor.selection
 
   // If empty value, remove everything in the editor and insert a placeholder block
   if (!value || value.length === 0) {
     debug('Value is empty')
-    Editor.withoutNormalizing(slateEditor, () => {
-      withoutSaving(slateEditor, () => {
-        withoutPatching(slateEditor, () => {
-          if (doneSyncing) {
-            return
-          }
+    // Editor.withoutNormalizing(slateEditor, () => {
+    withRemoteChanges(slateEditor, () => {
+      if (doneSyncing) {
+        return
+      }
 
-          if (hadSelection) {
-            Transforms.deselect(slateEditor)
-          }
-          const childrenLength = slateEditor.children.length
+      if (hadSelection) {
+        Transforms.deselect(slateEditor)
+      }
+
+      const childrenLength = slateEditor.children.length
+
+      withoutPatching(slateEditor, () => {
+        Editor.withoutNormalizing(slateEditor, () => {
           slateEditor.children.forEach((_, index) => {
             Transforms.removeNodes(slateEditor, {
               at: [childrenLength - 1 - index],
             })
           })
+
           Transforms.insertNodes(
             slateEditor,
             slateEditor.pteCreateTextBlock({decorators: []}),
             {at: [0]},
           )
-          // Add a new selection in the top of the document
-          if (hadSelection) {
-            Transforms.select(slateEditor, [0, 0])
-          }
         })
       })
+
+      if (hadSelection) {
+        Transforms.select(slateEditor, [0, 0])
+      }
     })
+    // })
     isChanged = true
   }
+
   // Remove, replace or add nodes according to what is changed.
   if (value && value.length > 0) {
-    const slateValueFromProps = toSlateValue(value, {
-      schemaTypes: context.schema,
-    })
-
     if (streamBlocks) {
       await new Promise<void>((resolve) => {
-        Editor.withoutNormalizing(slateEditor, () => {
-          withRemoteChanges(slateEditor, () => {
-            withoutPatching(slateEditor, () => {
-              if (doneSyncing) {
-                resolve()
-                return
-              }
-
-              isChanged = removeExtraBlocks({
-                slateEditor,
-                slateValueFromProps,
-              })
-
-              const processBlocks = async () => {
-                for await (const [
-                  currentBlock,
-                  currentBlockIndex,
-                ] of getStreamedBlocks({
-                  slateValue: slateValueFromProps,
-                })) {
-                  const {blockChanged, blockValid} = syncBlock({
-                    context,
-                    sendBack,
-                    block: currentBlock,
-                    index: currentBlockIndex,
-                    slateEditor,
-                    value,
-                  })
-
-                  isChanged = blockChanged || isChanged
-                  isValid = isValid && blockValid
-                }
-
-                resolve()
-              }
-
-              processBlocks()
-            })
-          })
-        })
-      })
-    } else {
-      Editor.withoutNormalizing(slateEditor, () => {
         withRemoteChanges(slateEditor, () => {
-          withoutPatching(slateEditor, () => {
-            if (doneSyncing) {
-              return
-            }
+          if (doneSyncing) {
+            resolve()
+            return
+          }
 
-            isChanged = removeExtraBlocks({
-              slateEditor,
-              slateValueFromProps,
-            })
+          isChanged = removeExtraBlocks({
+            slateEditor,
+            value,
+          })
 
-            let index = 0
-
-            for (const currentBlock of slateValueFromProps) {
-              const {blockChanged, blockValid} = syncBlock({
+          const processBlocks = async () => {
+            for await (const [
+              currentBlock,
+              currentBlockIndex,
+            ] of getStreamedBlocks({
+              value,
+            })) {
+              const {blockChanged} = syncBlock({
                 context,
                 sendBack,
                 block: currentBlock,
-                index,
+                index: currentBlockIndex,
                 slateEditor,
-                value,
               })
 
               isChanged = blockChanged || isChanged
-              isValid = isValid && blockValid
-              index++
             }
-          })
+
+            resolve()
+          }
+
+          processBlocks()
         })
       })
-    }
-  }
+    } else {
+      withRemoteChanges(slateEditor, () => {
+        if (doneSyncing) {
+          return
+        }
 
-  if (!isValid) {
-    debug('Invalid value, returning')
-    doneSyncing = true
-    sendBack({type: 'done syncing', value})
-    return
+        isChanged = removeExtraBlocks({
+          slateEditor,
+          value,
+        })
+
+        let index = 0
+
+        for (const currentBlock of value) {
+          const {blockChanged} = syncBlock({
+            context,
+            sendBack,
+            block: currentBlock,
+            index,
+            slateEditor,
+          })
+
+          isChanged = blockChanged || isChanged
+          index++
+        }
+      })
+    }
   }
 
   if (isChanged) {
@@ -553,11 +532,6 @@ async function updateValue({
       slateEditor.onChange()
     } catch (err) {
       console.error(err)
-      sendBack({
-        type: 'invalid value',
-        resolution: null,
-        value,
-      })
       doneSyncing = true
       sendBack({type: 'done syncing', value})
       return
@@ -580,33 +554,33 @@ async function updateValue({
 
 function removeExtraBlocks({
   slateEditor,
-  slateValueFromProps,
+  value,
 }: {
   slateEditor: PortableTextSlateEditor
-  slateValueFromProps: Array<Descendant>
+  value: Array<PortableTextBlock>
 }) {
   let isChanged = false
   const childrenLength = slateEditor.children.length
 
-  // Remove blocks that have become superfluous
-  if (slateValueFromProps.length < childrenLength) {
-    for (let i = childrenLength - 1; i > slateValueFromProps.length - 1; i--) {
-      Transforms.removeNodes(slateEditor, {
-        at: [i],
-      })
-    }
-    isChanged = true
-  }
+  withoutPatching(slateEditor, () => {
+    Editor.withoutNormalizing(slateEditor, () => {
+      // Remove blocks that have become superfluous
+      if (value.length < childrenLength) {
+        for (let i = childrenLength - 1; i > value.length - 1; i--) {
+          Transforms.removeNodes(slateEditor, {
+            at: [i],
+          })
+        }
+        isChanged = true
+      }
+    })
+  })
   return isChanged
 }
 
-async function* getStreamedBlocks({
-  slateValue,
-}: {
-  slateValue: Array<Descendant>
-}) {
+async function* getStreamedBlocks({value}: {value: Array<PortableTextBlock>}) {
   let index = 0
-  for await (const block of slateValue) {
+  for await (const block of value) {
     if (index % 10 === 0) {
       await new Promise<void>((resolve) => setTimeout(resolve, 0))
     }
@@ -617,11 +591,9 @@ async function* getStreamedBlocks({
 
 function syncBlock({
   context,
-  sendBack,
   block,
   index,
   slateEditor,
-  value,
 }: {
   context: {
     keyGenerator: () => string
@@ -630,105 +602,44 @@ function syncBlock({
     schema: EditorSchema
   }
   sendBack: (event: SyncValueEvent) => void
-  block: Descendant
+  block: PortableTextBlock
   index: number
   slateEditor: PortableTextSlateEditor
-  value: Array<PortableTextBlock>
 }) {
+  const slateElement = blockToSlateElement({context, block})
+
+  if (!slateElement) {
+    console.error('Failed to convert block to Slate element', block)
+    return {blockChanged: false}
+  }
+
   let blockChanged = false
-  let blockValid = true
-  const currentBlock = block
   const currentBlockIndex = index
   const oldBlock = slateEditor.children[currentBlockIndex]
-  const hasChanges = oldBlock && !isEqual(currentBlock, oldBlock)
+  const hasChanges = oldBlock && !isEqual(slateElement, oldBlock)
 
-  Editor.withoutNormalizing(slateEditor, () => {
-    withRemoteChanges(slateEditor, () => {
-      withoutPatching(slateEditor, () => {
-        if (hasChanges && blockValid) {
-          const validationValue = [value[currentBlockIndex]]
-          const validation = validateValue(
-            validationValue,
-            context.schema,
-            context.keyGenerator,
-          )
-          // Resolve validations that can be resolved automatically, without involving the user (but only if the value was changed)
-          if (
-            !validation.valid &&
-            validation.resolution?.autoResolve &&
-            validation.resolution?.patches.length > 0
-          ) {
-            // Only apply auto resolution if the value has been populated before and is different from the last one.
-            if (
-              !context.readOnly &&
-              context.previousValue &&
-              context.previousValue !== value
-            ) {
-              // Give a console warning about the fact that it did an auto resolution
-              console.warn(
-                `${validation.resolution.action} for block with _key '${validationValue[0]._key}'. ${validation.resolution?.description}`,
-              )
-              validation.resolution.patches.forEach((patch) => {
-                sendBack({type: 'patch', patch})
-              })
-            }
-          }
-          if (validation.valid || validation.resolution?.autoResolve) {
-            if (oldBlock._key === currentBlock._key) {
-              if (debug.enabled) debug('Updating block', oldBlock, currentBlock)
-              _updateBlock(
-                slateEditor,
-                currentBlock,
-                oldBlock,
-                currentBlockIndex,
-              )
-            } else {
-              if (debug.enabled)
-                debug('Replacing block', oldBlock, currentBlock)
-              _replaceBlock(slateEditor, currentBlock, currentBlockIndex)
-            }
-            blockChanged = true
-          } else {
-            sendBack({
-              type: 'invalid value',
-              resolution: validation.resolution,
-              value,
-            })
-            blockValid = false
-          }
-        }
+  withRemoteChanges(slateEditor, () => {
+    withoutPatching(slateEditor, () => {
+      if (!oldBlock) {
+        Transforms.insertNodes(slateEditor, slateElement, {
+          at: [currentBlockIndex],
+        })
+      }
 
-        if (!oldBlock && blockValid) {
-          const validationValue = [value[currentBlockIndex]]
-          const validation = validateValue(
-            validationValue,
-            context.schema,
-            context.keyGenerator,
-          )
-          if (debug.enabled)
-            debug(
-              'Validating and inserting new block in the end of the value',
-              currentBlock,
-            )
-          if (validation.valid || validation.resolution?.autoResolve) {
-            Transforms.insertNodes(slateEditor, currentBlock, {
-              at: [currentBlockIndex],
-            })
-          } else {
-            debug('Invalid', validation)
-            sendBack({
-              type: 'invalid value',
-              resolution: validation.resolution,
-              value,
-            })
-            blockValid = false
-          }
+      if (hasChanges) {
+        if (oldBlock._key === slateElement._key) {
+          if (debug.enabled) debug('Updating block', oldBlock, slateElement)
+          _updateBlock(slateEditor, slateElement, oldBlock, currentBlockIndex)
+        } else {
+          if (debug.enabled) debug('Replacing block', oldBlock, slateElement)
+          _replaceBlock(slateEditor, slateElement, currentBlockIndex)
         }
-      })
+        blockChanged = true
+      }
     })
   })
 
-  return {blockChanged, blockValid}
+  return {blockChanged}
 }
 
 /**
@@ -745,12 +656,19 @@ function _replaceBlock(
   const currentSelection = slateEditor.selection
   const selectionFocusOnBlock =
     currentSelection && currentSelection.focus.path[0] === currentBlockIndex
+
   if (selectionFocusOnBlock) {
     Transforms.deselect(slateEditor)
   }
+
   Transforms.removeNodes(slateEditor, {at: [currentBlockIndex]})
-  Transforms.insertNodes(slateEditor, currentBlock, {at: [currentBlockIndex]})
+
+  Transforms.insertNodes(slateEditor, currentBlock, {
+    at: [currentBlockIndex],
+  })
+
   slateEditor.onChange()
+
   if (selectionFocusOnBlock) {
     Transforms.select(slateEditor, currentSelection)
   }

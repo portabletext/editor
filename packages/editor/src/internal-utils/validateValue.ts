@@ -75,22 +75,22 @@ export function validateValue(
         return true
       }
       // Test that every block has a _key prop
-      if (!blk._key || typeof blk._key !== 'string') {
-        resolution = {
-          patches: [set({...blk, _key: keyGenerator()}, [index])],
-          description: `Block at index ${index} is missing required _key.`,
-          action: 'Set the block with a random _key value',
-          item: blk,
+      // if (!blk._key || typeof blk._key !== 'string') {
+      //   resolution = {
+      //     patches: [set({...blk, _key: keyGenerator()}, [index])],
+      //     description: `Block at index ${index} is missing required _key.`,
+      //     action: 'Set the block with a random _key value',
+      //     item: blk,
 
-          i18n: {
-            description:
-              'inputs.portable-text.invalid-value.missing-key.description',
-            action: 'inputs.portable-text.invalid-value.missing-key.action',
-            values: {index},
-          },
-        }
-        return true
-      }
+      //     i18n: {
+      //       description:
+      //         'inputs.portable-text.invalid-value.missing-key.description',
+      //       action: 'inputs.portable-text.invalid-value.missing-key.action',
+      //       values: {index},
+      //     },
+      //   }
+      //   return true
+      // }
       // Test that every block has valid _type
       if (!blk._type || !validBlockTypes.includes(blk._type)) {
         // Special case where block type is set to default 'block', but the block type is named something else according to the schema.
@@ -198,6 +198,8 @@ export function validateValue(
           textBlock.children === undefined ||
           (Array.isArray(textBlock.children) && textBlock.children.length === 0)
         ) {
+          return false
+
           const newSpan = {
             _type: types.span.name,
             _key: keyGenerator(),

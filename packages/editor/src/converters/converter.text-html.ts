@@ -69,6 +69,7 @@ export function createConverterTextHtml(
           context: snapshot.context,
           block,
           options: {
+            addDefaultFields: true,
             refreshKeys: false,
             validateFields: true,
           },

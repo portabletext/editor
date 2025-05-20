@@ -11,6 +11,7 @@ import {
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {EventListenerPlugin} from '../src/plugins'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
+import {PickFromUnion} from '../src/type-utils'
 
 describe('event.update value', () => {
   test('Scenario: Clearing placeholder value', async () => {
@@ -72,6 +73,9 @@ describe('event.update value', () => {
 
   test('Scenario: Updating and then clearing placeholder value', async () => {
     const editorRef = React.createRef<Editor>()
+    const valueChangedEvents: Array<
+      PickFromUnion<EditorEmittedEvent, 'type', 'value changed'>
+    > = []
 
     render(
       <EditorProvider
@@ -81,6 +85,13 @@ describe('event.update value', () => {
         }}
       >
         <EditorRefPlugin ref={editorRef} />
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'value changed') {
+              valueChangedEvents.push(event)
+            }
+          }}
+        />
         <PortableTextEditable />
       </EditorProvider>,
     )

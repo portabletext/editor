@@ -274,9 +274,6 @@ function createActors(config: {
   config.subscriptions.push(() => {
     const subscription = syncActor.on('*', (event) => {
       switch (event.type) {
-        case 'invalid value':
-          config.relayActor.send(event)
-          break
         case 'value changed':
           config.relayActor.send(event)
           break

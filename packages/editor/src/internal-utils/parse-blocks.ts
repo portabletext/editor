@@ -18,6 +18,7 @@ export function parseBlocks({
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>
   blocks: unknown
   options: {
+    addDefaultFields: boolean
     refreshKeys: boolean
     validateFields: boolean
   }
@@ -41,6 +42,7 @@ export function parseBlock({
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>
   block: unknown
   options: {
+    addDefaultFields: boolean
     refreshKeys: boolean
     validateFields: boolean
   }
@@ -101,7 +103,11 @@ export function isTextBlock(
     parseTextBlock({
       block,
       context: {schema: context.schema, keyGenerator: () => ''},
-      options: {refreshKeys: false, validateFields: false},
+      options: {
+        addDefaultFields: true,
+        refreshKeys: false,
+        validateFields: false,
+      },
     }) !== undefined
   )
 }
@@ -113,7 +119,11 @@ export function parseTextBlock({
 }: {
   block: unknown
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>
-  options: {refreshKeys: boolean; validateFields: boolean}
+  options: {
+    addDefaultFields: boolean
+    refreshKeys: boolean
+    validateFields: boolean
+  }
 }): PortableTextTextBlock | undefined {
   if (!isTypedObject(block)) {
     return undefined
@@ -216,6 +226,10 @@ export function parseTextBlock({
     ...(options.validateFields ? {} : customFields),
   }
 
+  if (!options.addDefaultFields && !Array.isArray(block.markDefs)) {
+    delete parsedBlock.markDefs
+  }
+
   if (
     typeof block.style === 'string' &&
     context.schema.styles.find((style) => style.name === block.style)
@@ -225,7 +239,11 @@ export function parseTextBlock({
     const defaultStyle = context.schema.styles.at(0)?.name
 
     if (defaultStyle !== undefined) {
-      parsedBlock.style = defaultStyle
+      if (options.addDefaultFields) {
+        parsedBlock.style = defaultStyle
+      } else {
+        delete parsedBlock.style
+      }
     } else {
       console.error('Expected default style')
     }
@@ -242,6 +260,19 @@ export function parseTextBlock({
     parsedBlock.level = block.level
   }
 
+  if (!options.validateFields) {
+    if (typeof block.style === 'string' && block.style !== parsedBlock.style) {
+      parsedBlock.style = block.style
+    }
+
+    if (
+      typeof block.listItem === 'string' &&
+      block.listItem !== parsedBlock.listItem
+    ) {
+      parsedBlock.listItem = block.listItem
+    }
+  }
+
   return parsedBlock
 }
 
@@ -254,7 +285,11 @@ export function isSpan(
       span: child,
       markDefKeyMap: new Map(),
       context: {schema: context.schema, keyGenerator: () => ''},
-      options: {refreshKeys: false, validateFields: false},
+      options: {
+        addDefaultFields: true,
+        refreshKeys: false,
+        validateFields: false,
+      },
     }) !== undefined
   )
 }
@@ -268,7 +303,11 @@ export function parseSpan({
   span: unknown
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>
   markDefKeyMap: Map<string, string>
-  options: {refreshKeys: boolean; validateFields: boolean}
+  options: {
+    addDefaultFields: boolean
+    refreshKeys: boolean
+    validateFields: boolean
+  }
 }): PortableTextSpan | undefined {
   if (!isTypedObject(span)) {
     return undefined
@@ -323,7 +362,7 @@ export function parseSpan({
         ? span._key
         : context.keyGenerator(),
     text: typeof span.text === 'string' ? span.text : '',
-    marks,
+    ...(!options.addDefaultFields && !Array.isArray(span.marks) ? {} : {marks}),
     ...(options.validateFields ? {} : customFields),
   }
 }
