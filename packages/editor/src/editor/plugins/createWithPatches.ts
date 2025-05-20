@@ -1,19 +1,17 @@
 import {insert, setIfMissing, unset, type Patch} from '@portabletext/patches'
-import {
-  Editor,
-  type Descendant,
-  type InsertNodeOperation,
-  type InsertTextOperation,
-  type MergeNodeOperation,
-  type MoveNodeOperation,
-  type Operation,
-  type RemoveNodeOperation,
-  type RemoveTextOperation,
-  type SetNodeOperation,
-  type SplitNodeOperation,
-} from 'slate'
+import {Editor, type Descendant, type Operation} from 'slate'
 import {createApplyPatch} from '../../internal-utils/applyPatch'
 import {debugWithName} from '../../internal-utils/debug'
+import {
+  insertNodePatch,
+  insertTextPatch,
+  mergeNodePatch,
+  moveNodePatch,
+  removeNodePatch,
+  removeTextPatch,
+  setNodePatch,
+  splitNodePatch,
+} from '../../internal-utils/operationToPatches'
 import {fromSlateValue, isEqualToEmptyEditor} from '../../internal-utils/values'
 import {
   IS_PROCESSING_REMOTE_CHANGES,
@@ -34,60 +32,15 @@ import {withoutSaving} from './createWithUndoRedo'
 const debug = debugWithName('plugin:withPatches')
 const debugVerbose = false
 
-export interface PatchFunctions {
-  insertNodePatch: (
-    editor: PortableTextSlateEditor,
-    operation: InsertNodeOperation,
-    previousChildren: Descendant[],
-  ) => Patch[]
-  insertTextPatch: (
-    editor: PortableTextSlateEditor,
-    operation: InsertTextOperation,
-    previousChildren: Descendant[],
-  ) => Patch[]
-  mergeNodePatch: (
-    editor: PortableTextSlateEditor,
-    operation: MergeNodeOperation,
-    previousChildren: Descendant[],
-  ) => Patch[]
-  moveNodePatch: (
-    editor: PortableTextSlateEditor,
-    operation: MoveNodeOperation,
-    previousChildren: Descendant[],
-  ) => Patch[]
-  removeNodePatch: (
-    editor: PortableTextSlateEditor,
-    operation: RemoveNodeOperation,
-    previousChildren: Descendant[],
-  ) => Patch[]
-  removeTextPatch: (
-    editor: PortableTextSlateEditor,
-    operation: RemoveTextOperation,
-    previousChildren: Descendant[],
-  ) => Patch[]
-  setNodePatch: (
-    editor: PortableTextSlateEditor,
-    operation: SetNodeOperation,
-    previousChildren: Descendant[],
-  ) => Patch[]
-  splitNodePatch: (
-    editor: PortableTextSlateEditor,
-    operation: SplitNodeOperation,
-    previousChildren: Descendant[],
-  ) => Patch[]
-}
-
 interface Options {
   editorActor: EditorActor
   relayActor: RelayActor
-  patchFunctions: PatchFunctions
   subscriptions: Array<() => () => void>
 }
 
 export function createWithPatches({
   editorActor,
   relayActor,
-  patchFunctions,
   subscriptions,
 }: Options): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
   // The previous editor children are needed to figure out the _key of deleted nodes
@@ -197,37 +150,26 @@ export function createWithPatches({
         case 'insert_text':
           patches = [
             ...patches,
-            ...patchFunctions.insertTextPatch(
-              editor,
-              operation,
-              previousChildren,
-            ),
+            ...insertTextPatch(editor, operation, previousChildren),
           ]
           break
         case 'remove_text':
           patches = [
             ...patches,
-            ...patchFunctions.removeTextPatch(
-              editor,
-              operation,
-              previousChildren,
-            ),
+            ...removeTextPatch(editor, operation, previousChildren),
           ]
           break
         case 'remove_node':
           patches = [
             ...patches,
-            ...patchFunctions.removeNodePatch(
-              editor,
-              operation,
-              previousChildren,
-            ),
+            ...removeNodePatch(editor, operation, previousChildren),
           ]
           break
         case 'split_node':
           patches = [
             ...patches,
-            ...patchFunctions.splitNodePatch(
+            ...splitNodePatch(
+              editorActor.getSnapshot().context.schema,
               editor,
               operation,
               previousChildren,
@@ -237,7 +179,8 @@ export function createWithPatches({
         case 'insert_node':
           patches = [
             ...patches,
-            ...patchFunctions.insertNodePatch(
+            ...insertNodePatch(
+              editorActor.getSnapshot().context.schema,
               editor,
               operation,
               previousChildren,
@@ -247,13 +190,18 @@ export function createWithPatches({
         case 'set_node':
           patches = [
             ...patches,
-            ...patchFunctions.setNodePatch(editor, operation, previousChildren),
+            ...setNodePatch(
+              editorActor.getSnapshot().context.schema,
+              editor,
+              operation,
+            ),
           ]
           break
         case 'merge_node':
           patches = [
             ...patches,
-            ...patchFunctions.mergeNodePatch(
+            ...mergeNodePatch(
+              editorActor.getSnapshot().context.schema,
               editor,
               operation,
               previousChildren,
@@ -263,7 +211,8 @@ export function createWithPatches({
         case 'move_node':
           patches = [
             ...patches,
-            ...patchFunctions.moveNodePatch(
+            ...moveNodePatch(
+              editorActor.getSnapshot().context.schema,
               editor,
               operation,
               previousChildren,

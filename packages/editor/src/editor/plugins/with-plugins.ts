@@ -1,5 +1,4 @@
 import type {BaseOperation, Editor, Node, NodeEntry} from 'slate'
-import {createOperationToPatches} from '../../internal-utils/operationToPatches'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 import type {RelayActor} from '../relay-machine'
@@ -33,7 +32,6 @@ export const withPlugins = <T extends Editor>(
 ): PortableTextSlateEditor => {
   const e = editor as T & PortableTextSlateEditor
   const {editorActor, relayActor} = options
-  const operationToPatches = createOperationToPatches(editorActor)
   const withObjectKeys = createWithObjectKeys(editorActor)
   const withSchemaTypes = createWithSchemaTypes({
     editorActor,
@@ -41,7 +39,6 @@ export const withPlugins = <T extends Editor>(
   const withPatches = createWithPatches({
     editorActor,
     relayActor,
-    patchFunctions: operationToPatches,
     subscriptions: options.subscriptions,
   })
   const withMaxBlocks = createWithMaxBlocks(editorActor)

@@ -9,7 +9,14 @@ import {defaultKeyGenerator} from '../../editor/key-generator'
 import {createLegacySchema} from '../../editor/legacy-schema'
 import {withPlugins} from '../../editor/plugins/with-plugins'
 import {relayMachine} from '../../editor/relay-machine'
-import {createOperationToPatches} from '../operationToPatches'
+import {
+  insertNodePatch,
+  insertTextPatch,
+  mergeNodePatch,
+  removeNodePatch,
+  removeTextPatch,
+  splitNodePatch,
+} from '../operationToPatches'
 
 const legacySchema = createLegacySchema(schemaType)
 const schemaTypes = legacySchemaToEditorSchema(legacySchema)
@@ -21,7 +28,6 @@ const editorActor = createActor(editorMachine, {
   },
 })
 const relayActor = createActor(relayMachine)
-const operationToPatches = createOperationToPatches(editorActor)
 
 const editor = withPlugins(createEditor(), {
   editorActor,
@@ -58,7 +64,8 @@ describe('operationToPatches', () => {
 
   it('translates void items correctly when splitting spans', () => {
     expect(
-      operationToPatches.splitNodePatch(
+      splitNodePatch(
+        schemaTypes,
         editor,
         {
           type: 'split_node',
@@ -111,7 +118,8 @@ describe('operationToPatches', () => {
 
   it('produce correct insert block patch', () => {
     expect(
-      operationToPatches.insertNodePatch(
+      insertNodePatch(
+        schemaTypes,
         editor,
         {
           type: 'insert_node',
@@ -152,7 +160,8 @@ describe('operationToPatches', () => {
     editor.children = []
     editor.onChange()
     expect(
-      operationToPatches.insertNodePatch(
+      insertNodePatch(
+        schemaTypes,
         editor,
         {
           type: 'insert_node',
@@ -194,7 +203,8 @@ describe('operationToPatches', () => {
 
   it('produce correct insert child patch', () => {
     expect(
-      operationToPatches.insertNodePatch(
+      insertNodePatch(
+        schemaTypes,
         editor,
         {
           type: 'insert_node',
@@ -240,7 +250,7 @@ describe('operationToPatches', () => {
     ;(editor.children[0] as PortableTextTextBlock).children[2].text = '1'
     editor.onChange()
     expect(
-      operationToPatches.insertTextPatch(
+      insertTextPatch(
         editor,
         {
           type: 'insert_text',
@@ -248,7 +258,6 @@ describe('operationToPatches', () => {
           text: '1',
           offset: 0,
         },
-
         createDefaultValue(),
       ),
     ).toMatchInlineSnapshot(`
@@ -277,7 +286,7 @@ describe('operationToPatches', () => {
     const before = createDefaultValue()
     ;(before[0] as PortableTextTextBlock).children[2].text = '1'
     expect(
-      operationToPatches.removeTextPatch(
+      removeTextPatch(
         editor,
         {
           type: 'remove_text',
@@ -312,7 +321,7 @@ describe('operationToPatches', () => {
 
   it('produces correct remove child patch', () => {
     expect(
-      operationToPatches.removeNodePatch(
+      removeNodePatch(
         editor,
         {
           type: 'remove_node',
@@ -325,7 +334,6 @@ describe('operationToPatches', () => {
             children: [{_type: 'span', _key: 'bogus', text: '', marks: []}],
           },
         },
-
         createDefaultValue(),
       ),
     ).toMatchInlineSnapshot(`
@@ -349,14 +357,13 @@ describe('operationToPatches', () => {
   it('produce correct remove block patch', () => {
     const val = createDefaultValue()
     expect(
-      operationToPatches.removeNodePatch(
+      removeNodePatch(
         editor,
         {
           type: 'remove_node',
           path: [0],
           node: val[0],
         },
-
         val,
       ),
     ).toMatchInlineSnapshot(`
@@ -386,7 +393,8 @@ describe('operationToPatches', () => {
     block.children[2].text = '1234'
     editor.onChange()
     expect(
-      operationToPatches.mergeNodePatch(
+      mergeNodePatch(
+        schemaTypes,
         editor,
         {
           type: 'merge_node',
@@ -394,7 +402,6 @@ describe('operationToPatches', () => {
           position: 2,
           properties: {text: '1234'},
         },
-
         val,
       ),
     ).toMatchInlineSnapshot(`
