@@ -150,19 +150,33 @@ export function createWithPatches({
         case 'insert_text':
           patches = [
             ...patches,
-            ...insertTextPatch(editor, operation, previousChildren),
+            ...insertTextPatch(
+              editorActor.getSnapshot().context.schema,
+              editor.children,
+              operation,
+              previousChildren,
+            ),
           ]
           break
         case 'remove_text':
           patches = [
             ...patches,
-            ...removeTextPatch(editor, operation, previousChildren),
+            ...removeTextPatch(
+              editorActor.getSnapshot().context.schema,
+              editor.children,
+              operation,
+              previousChildren,
+            ),
           ]
           break
         case 'remove_node':
           patches = [
             ...patches,
-            ...removeNodePatch(editor, operation, previousChildren),
+            ...removeNodePatch(
+              editorActor.getSnapshot().context.schema,
+              previousChildren,
+              operation,
+            ),
           ]
           break
         case 'split_node':
@@ -170,7 +184,7 @@ export function createWithPatches({
             ...patches,
             ...splitNodePatch(
               editorActor.getSnapshot().context.schema,
-              editor,
+              editor.children,
               operation,
               previousChildren,
             ),
@@ -181,7 +195,7 @@ export function createWithPatches({
             ...patches,
             ...insertNodePatch(
               editorActor.getSnapshot().context.schema,
-              editor,
+              editor.children,
               operation,
               previousChildren,
             ),
@@ -192,7 +206,7 @@ export function createWithPatches({
             ...patches,
             ...setNodePatch(
               editorActor.getSnapshot().context.schema,
-              editor,
+              editor.children,
               operation,
             ),
           ]
@@ -202,7 +216,7 @@ export function createWithPatches({
             ...patches,
             ...mergeNodePatch(
               editorActor.getSnapshot().context.schema,
-              editor,
+              editor.children,
               operation,
               previousChildren,
             ),
@@ -213,9 +227,8 @@ export function createWithPatches({
             ...patches,
             ...moveNodePatch(
               editorActor.getSnapshot().context.schema,
-              editor,
-              operation,
               previousChildren,
+              operation,
             ),
           ]
           break
