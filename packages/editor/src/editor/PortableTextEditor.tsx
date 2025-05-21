@@ -138,6 +138,7 @@ export class PortableTextEditor extends Component<
     syncActor: SyncActor
   }
 
+  private subscriptions: Array<() => () => void> = []
   private unsubscribers: Array<() => void> = []
 
   constructor(props: PortableTextEditorProps) {
@@ -160,28 +161,7 @@ export class PortableTextEditor extends Component<
         schema: props.schemaType,
       })
 
-      this.unsubscribers.push(
-        (() => {
-          const subscription = actors.relayActor.on('*', (event) => {
-            const change = eventToChange(event)
-
-            if (change) {
-              props.onChange(change)
-
-              this.change$.next(change)
-            }
-          })
-
-          return () => {
-            subscription.unsubscribe()
-          }
-        })(),
-      )
-
-      for (const subscription of subscriptions) {
-        this.unsubscribers.push(subscription())
-      }
-
+      this.subscriptions = subscriptions
       this.actors = actors
 
       this.editor = editor
@@ -197,6 +177,26 @@ export class PortableTextEditor extends Component<
     if (!this.actors) {
       return
     }
+
+    for (const subscription of this.subscriptions) {
+      this.unsubscribers.push(subscription())
+    }
+
+    const relayActorSubscription = this.actors.relayActor.on('*', (event) => {
+      const change = eventToChange(event)
+
+      if (!change) {
+        return
+      }
+
+      if (!this.props.editor) {
+        this.props.onChange(change)
+      }
+
+      this.change$.next(change)
+    })
+
+    this.unsubscribers.push(relayActorSubscription.unsubscribe)
 
     this.actors.editorActor.start()
     this.actors.mutationActor.start()
