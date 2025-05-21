@@ -4,7 +4,7 @@ import type {PortableTextSlateEditor} from '../types/editor'
 import {getNextSpan, getPreviousSpan} from './sibling-utils'
 import {getFocusBlock, getFocusSpan, getSelectedSpans} from './slate-utils'
 
-type MarkState = {
+export type MarkState = {
   state: 'changed' | 'unchanged'
   marks: Array<string>
 }

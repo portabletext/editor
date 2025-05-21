@@ -1,19 +1,13 @@
-import {getMarkState} from '../internal-utils/mark-state'
-import type {PortableTextSlateEditor} from '../types/editor'
+import type {MarkState} from '../internal-utils/mark-state'
 import type {EditorSchema} from './editor-schema'
 
 export function getActiveAnnotations({
-  editor,
+  markState,
   schema,
 }: {
-  editor: PortableTextSlateEditor
+  markState: MarkState | undefined
   schema: EditorSchema
 }) {
-  const markState = getMarkState({
-    editor,
-    schema,
-  })
-
   return (markState?.marks ?? []).filter(
     (mark) =>
       !schema.decorators.map((decorator) => decorator.name).includes(mark),

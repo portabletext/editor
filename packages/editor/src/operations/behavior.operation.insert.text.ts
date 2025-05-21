@@ -8,13 +8,19 @@ import type {BehaviorOperationImplementation} from './behavior.operations'
 export const insertTextOperationImplementation: BehaviorOperationImplementation<
   'insert.text'
 > = ({context, operation}) => {
-  const activeDecorators = getActiveDecorators({
+  const markState = getMarkState({
+    editor: operation.editor,
     schema: context.schema,
-    slateEditorInstance: operation.editor,
+  })
+
+  const activeDecorators = getActiveDecorators({
+    decoratorState: operation.editor.decoratorState,
+    markState,
+    schema: context.schema,
   })
   const activeAnnotations = getActiveAnnotations({
+    markState,
     schema: context.schema,
-    editor: operation.editor,
   })
 
   const [focusSpan] = getFocusSpan({
@@ -25,11 +31,6 @@ export const insertTextOperationImplementation: BehaviorOperationImplementation<
     Transforms.insertText(operation.editor, operation.text)
     return
   }
-
-  const markState = getMarkState({
-    editor: operation.editor,
-    schema: context.schema,
-  })
 
   if (markState && markState.state === 'unchanged') {
     const markStateDecorators = (markState.marks ?? []).filter((mark) =>
