@@ -1,13 +1,13 @@
 import {useActorRef, useSelector} from '@xstate/react'
 import {useEffect} from 'react'
 import {Spinner} from './components/spinner'
-import {higlightMachine} from './highlight-json-machine'
+import {highlightMachine} from './highlight-json-machine'
 import type {PlaygroundActorRef} from './playground-machine'
 
 export function PortableTextPreview(props: {
   playgroundRef: PlaygroundActorRef
 }) {
-  const highlightRef = useActorRef(higlightMachine, {
+  const highlightRef = useActorRef(highlightMachine, {
     input: {
       code: JSON.stringify(
         props.playgroundRef.getSnapshot().context.value ?? null,
