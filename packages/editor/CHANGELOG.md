@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.50.5](https://github.com/portabletext/editor/compare/editor-v1.50.4...editor-v1.50.5) (2025-05-21)
+
+
+### Bug Fixes
+
+* mark `activeAnnotations` and `activeDecorators` as `[@beta](https://github.com/beta)` ([aadcf36](https://github.com/portabletext/editor/commit/aadcf366437afee05c98aed48e53cc2a5db38b22))
+* **perf:** calculate `MarkState` once per snapshot ([77aff48](https://github.com/portabletext/editor/commit/77aff4844605d312df3b8e9130abaacd12af152c))
+* **perf:** calculate `MarkState` once Slate Operation ([4de7395](https://github.com/portabletext/editor/commit/4de7395ab8a83679630c69fad1996b68ee3e418b))
+* scenario with toggling same decorator at the edge of annotation ([33b8938](https://github.com/portabletext/editor/commit/33b893824d4ce3b4ef3b3d9c920ae3fc7a74f134))
+
 ## [1.50.4](https://github.com/portabletext/editor/compare/editor-v1.50.3...editor-v1.50.4) (2025-05-21)
 
 
