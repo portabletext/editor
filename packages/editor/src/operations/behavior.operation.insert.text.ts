@@ -1,25 +1,19 @@
 import {Transforms} from 'slate'
 import {getActiveAnnotations} from '../editor/get-active-annotations'
 import {getActiveDecorators} from '../editor/get-active-decorators'
-import {getMarkState} from '../internal-utils/mark-state'
 import {getFocusSpan} from '../internal-utils/slate-utils'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const insertTextOperationImplementation: BehaviorOperationImplementation<
   'insert.text'
 > = ({context, operation}) => {
-  const markState = getMarkState({
-    editor: operation.editor,
-    schema: context.schema,
-  })
-
   const activeDecorators = getActiveDecorators({
     decoratorState: operation.editor.decoratorState,
-    markState,
+    markState: operation.editor.markState,
     schema: context.schema,
   })
   const activeAnnotations = getActiveAnnotations({
-    markState,
+    markState: operation.editor.markState,
     schema: context.schema,
   })
 
@@ -32,11 +26,15 @@ export const insertTextOperationImplementation: BehaviorOperationImplementation<
     return
   }
 
-  if (markState && markState.state === 'unchanged') {
-    const markStateDecorators = (markState.marks ?? []).filter((mark) =>
-      context.schema.decorators
-        .map((decorator) => decorator.name)
-        .includes(mark),
+  if (
+    operation.editor.markState &&
+    operation.editor.markState.state === 'unchanged'
+  ) {
+    const markStateDecorators = (operation.editor.markState.marks ?? []).filter(
+      (mark) =>
+        context.schema.decorators
+          .map((decorator) => decorator.name)
+          .includes(mark),
     )
 
     if (
