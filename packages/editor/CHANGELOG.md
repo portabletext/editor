@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.50.4](https://github.com/portabletext/editor/compare/editor-v1.50.3...editor-v1.50.4) (2025-05-21)
+
+
+### Bug Fixes
+
+* `PortableTextEditor.onChange` emission ([161c990](https://github.com/portabletext/editor/commit/161c990463378aa6a462a4763de22879c35235ee))
+* **perf:** avoid on-the-fly Slate-&gt;Portable Text conversions for `snapshot`s ([ec89f03](https://github.com/portabletext/editor/commit/ec89f033979502c94c785d022b9886f131fd0621))
+
 ## [1.50.3](https://github.com/portabletext/editor/compare/editor-v1.50.2...editor-v1.50.3) (2025-05-21)
 
 
