@@ -1,6 +1,7 @@
 import type {PortableTextBlock} from '@sanity/types'
 import type {Converter} from '../converters/converter.types'
 import type {EventPosition} from '../internal-utils/event-position'
+import {getMarkState} from '../internal-utils/mark-state'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
 import type {HasTag} from './editor-machine'
@@ -70,14 +71,20 @@ export function createEditorSnapshot({
       })
     : null
 
+  const markState = getMarkState({
+    editor,
+    schema,
+  })
+
   const context = {
     activeAnnotations: getActiveAnnotations({
-      editor,
+      markState,
       schema,
     }),
     activeDecorators: getActiveDecorators({
+      decoratorState: editor.decoratorState,
+      markState,
       schema,
-      slateEditorInstance: editor,
     }),
     converters,
     keyGenerator,

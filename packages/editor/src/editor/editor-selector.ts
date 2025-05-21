@@ -1,5 +1,6 @@
 import {useSelector} from '@xstate/react'
 import type {Editor} from '../editor'
+import {getMarkState} from '../internal-utils/mark-state'
 import type {PortableTextSlateEditor} from '../types/editor'
 import type {InternalEditor} from './create-editor'
 import type {EditorActor} from './editor-machine'
@@ -67,16 +68,22 @@ export function getEditorSnapshot({
   editorActorSnapshot: ReturnType<EditorActor['getSnapshot']>
   slateEditorInstance: PortableTextSlateEditor
 }): EditorSnapshot {
+  const markState = getMarkState({
+    editor: slateEditorInstance,
+    schema: editorActorSnapshot.context.schema,
+  })
+
   return {
     context: {
       converters: [...editorActorSnapshot.context.converters],
       activeAnnotations: getActiveAnnotations({
-        editor: slateEditorInstance,
+        markState,
         schema: editorActorSnapshot.context.schema,
       }),
       activeDecorators: getActiveDecorators({
+        decoratorState: slateEditorInstance.decoratorState,
+        markState,
         schema: editorActorSnapshot.context.schema,
-        slateEditorInstance,
       }),
       keyGenerator: editorActorSnapshot.context.keyGenerator,
       readOnly: editorActorSnapshot.matches({'edit mode': 'read only'}),
