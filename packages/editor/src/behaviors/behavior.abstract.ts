@@ -327,7 +327,7 @@ export const abstractBehaviors = [
         event.mimeType === 'text/plain' &&
         event.originEvent.type === 'clipboard.paste'
       ) {
-        const activeDecorators = snapshot.context.activeDecorators
+        const activeDecorators = snapshot.beta.activeDecorators
         const activeAnnotations = selectors.getActiveAnnotations(snapshot)
 
         return {

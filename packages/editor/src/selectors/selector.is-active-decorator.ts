@@ -16,6 +16,6 @@ export function isActiveDecorator(decorator: string): EditorSelector<boolean> {
       )
     }
 
-    return snapshot.context.activeDecorators.includes(decorator)
+    return snapshot.beta.activeDecorators.includes(decorator)
   }
 }

@@ -17,13 +17,16 @@ export const abstractDeleteBehaviors = [
       }
 
       const trimmedSelection = selectors.getTrimmedSelection({
-        beta: {hasTag: () => false, internalDrag: undefined},
+        beta: {
+          activeAnnotations: [],
+          activeDecorators: [],
+          hasTag: () => false,
+          internalDrag: undefined,
+        },
         context: {
           converters: [],
           schema: snapshot.context.schema,
           keyGenerator: snapshot.context.keyGenerator,
-          activeAnnotations: [],
-          activeDecorators: [],
           readOnly: false,
           value: snapshot.context.value,
           selection,

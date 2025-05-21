@@ -70,6 +70,13 @@ export function getEditorSnapshot({
   return {
     context: {
       converters: [...editorActorSnapshot.context.converters],
+      keyGenerator: editorActorSnapshot.context.keyGenerator,
+      readOnly: editorActorSnapshot.matches({'edit mode': 'read only'}),
+      schema: editorActorSnapshot.context.schema,
+      selection: editorActorSnapshot.context.selection,
+      value: slateEditorInstance.value,
+    },
+    beta: {
       activeAnnotations: getActiveAnnotations({
         markState: slateEditorInstance.markState,
         schema: editorActorSnapshot.context.schema,
@@ -79,13 +86,6 @@ export function getEditorSnapshot({
         markState: slateEditorInstance.markState,
         schema: editorActorSnapshot.context.schema,
       }),
-      keyGenerator: editorActorSnapshot.context.keyGenerator,
-      readOnly: editorActorSnapshot.matches({'edit mode': 'read only'}),
-      schema: editorActorSnapshot.context.schema,
-      selection: editorActorSnapshot.context.selection,
-      value: slateEditorInstance.value,
-    },
-    beta: {
       hasTag: (tag) => editorActorSnapshot.hasTag(tag),
       internalDrag: editorActorSnapshot.context.internalDrag,
     },

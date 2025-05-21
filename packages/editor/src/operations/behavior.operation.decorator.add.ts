@@ -108,10 +108,13 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
     })
 
     const trimmedSelection = selectors.getTrimmedSelection({
-      beta: {hasTag: () => false, internalDrag: undefined},
-      context: {
+      beta: {
         activeAnnotations: [],
         activeDecorators: [],
+        hasTag: () => false,
+        internalDrag: undefined,
+      },
+      context: {
         converters: [],
         keyGenerator: context.keyGenerator,
         readOnly: false,

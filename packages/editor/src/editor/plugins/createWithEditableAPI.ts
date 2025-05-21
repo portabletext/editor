@@ -95,7 +95,7 @@ export function createEditableAPI(
         slateEditorInstance: editor,
       })
 
-      return snapshot.context.activeDecorators.includes(mark)
+      return snapshot.beta.activeDecorators.includes(mark)
     },
     marks: (): string[] => {
       const snapshot = getEditorSnapshot({
@@ -104,8 +104,8 @@ export function createEditableAPI(
       })
 
       return [
-        ...snapshot.context.activeAnnotations,
-        ...snapshot.context.activeDecorators,
+        ...snapshot.beta.activeAnnotations,
+        ...snapshot.beta.activeDecorators,
       ]
     },
     undo: (): void => {

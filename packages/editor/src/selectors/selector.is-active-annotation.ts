@@ -18,7 +18,7 @@ export function isActiveAnnotation(
     const activeMarkDefs = selectionMarkDefs.filter(
       (markDef) =>
         markDef._type === annotation &&
-        snapshot.context.activeAnnotations.includes(markDef._key),
+        snapshot.beta.activeAnnotations.includes(markDef._key),
     )
 
     return activeMarkDefs.length > 0
