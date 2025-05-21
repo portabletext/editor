@@ -9,7 +9,6 @@ import type {PortableTextObject, PortableTextSpan} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {Editor, Element, Node, Path, Range, Text, Transforms} from 'slate'
 import {debugWithName} from '../../internal-utils/debug'
-import {getMarkState} from '../../internal-utils/mark-state'
 import {getNextSpan, getPreviousSpan} from '../../internal-utils/sibling-utils'
 import {isChangingRemotely} from '../../internal-utils/withChanges'
 import {isRedoing, isUndoing} from '../../internal-utils/withUndoRedo'
@@ -413,17 +412,12 @@ export function createWithPortableTextMarkModel(
       }
 
       if (op.type === 'insert_text') {
-        const markState = getMarkState({
-          editor,
-          schema: editorActor.getSnapshot().context.schema,
-        })
-
-        if (!markState) {
+        if (!editor.markState) {
           apply(op)
           return
         }
 
-        if (markState.state === 'unchanged') {
+        if (editor.markState.state === 'unchanged') {
           apply(op)
           return
         }
@@ -432,7 +426,7 @@ export function createWithPortableTextMarkModel(
           _type: 'span',
           _key: editorActor.getSnapshot().context.keyGenerator(),
           text: op.text,
-          marks: markState.marks,
+          marks: editor.markState.marks,
         })
 
         return
