@@ -20,10 +20,11 @@ const highlightLogic = fromPromise<string, {code: string}>(({input}) =>
   formatJson(input.code).then(highlightJson),
 )
 
-export const higlightMachine = setup({
+export const highlightMachine = setup({
   types: {
     context: {} as {
       code: string
+      pendingCode?: string
       highlightedCode?: string
     },
     events: {} as {type: 'update code'; code: string},
@@ -39,16 +40,31 @@ export const higlightMachine = setup({
   },
 }).createMachine({
   id: 'highlight',
-  context: ({input}) => ({code: input.code}),
+  context: ({input}) => ({
+    code: input.code,
+    pendingCode: input.code,
+  }),
   initial: 'highlighting code',
-  on: {
-    'update code': {
-      actions: 'assign code to context',
-      target: '.highlighting code',
-    },
-  },
   states: {
-    'idle': {},
+    'idle': {
+      on: {
+        'update code': {
+          actions: assign({pendingCode: ({event}) => event.code}),
+          target: '.',
+          reenter: true,
+        },
+      },
+      after: {
+        250: {
+          guard: ({context}) => context.pendingCode !== undefined,
+          target: 'highlighting code',
+          actions: assign({
+            code: ({context}) => context.pendingCode ?? '',
+            pendingCode: undefined,
+          }),
+        },
+      },
+    },
     'highlighting code': {
       invoke: {
         src: 'highlight code',
@@ -60,6 +76,11 @@ export const higlightMachine = setup({
         onError: {
           target: 'idle',
           actions: [({event}) => console.error(event.error)],
+        },
+      },
+      on: {
+        'update code': {
+          actions: assign({pendingCode: ({event}) => event.code}),
         },
       },
     },

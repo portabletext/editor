@@ -2,11 +2,11 @@ import {useEditor, useEditorSelector} from '@portabletext/editor'
 import {useActorRef, useSelector} from '@xstate/react'
 import {useEffect} from 'react'
 import {Spinner} from './components/spinner'
-import {higlightMachine} from './highlight-json-machine'
+import {highlightMachine} from './highlight-json-machine'
 import type {EditorActorRef} from './playground-machine'
 
 export function SelectionPreview(props: {editorId: EditorActorRef['id']}) {
-  const highlightSelectionActor = useActorRef(higlightMachine, {
+  const highlightSelectionActor = useActorRef(highlightMachine, {
     input: {code: ''},
   })
   const editor = useEditor()
