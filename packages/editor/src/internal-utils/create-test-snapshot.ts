@@ -12,13 +12,13 @@ export function createTestSnapshot(snapshot: {
       schema:
         snapshot.context?.schema ?? compileSchemaDefinition(defineSchema({})),
       keyGenerator: snapshot.context?.keyGenerator ?? createTestKeyGenerator(),
-      activeAnnotations: snapshot.context?.activeAnnotations ?? [],
-      activeDecorators: snapshot.context?.activeDecorators ?? [],
       readOnly: snapshot.context?.readOnly ?? false,
       value: snapshot.context?.value ?? [],
       selection: snapshot.context?.selection ?? null,
     },
     beta: {
+      activeAnnotations: snapshot.beta?.activeAnnotations ?? [],
+      activeDecorators: snapshot.beta?.activeDecorators ?? [],
       hasTag: snapshot.beta?.hasTag ?? (() => false),
       internalDrag: undefined,
     },

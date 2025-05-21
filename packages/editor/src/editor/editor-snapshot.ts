@@ -12,8 +12,6 @@ import {getActiveDecorators} from './get-active-decorators'
  * @public
  */
 export type EditorContext = {
-  activeAnnotations: Array<string>
-  activeDecorators: Array<string>
   converters: Array<Converter>
   keyGenerator: () => string
   readOnly: boolean
@@ -32,6 +30,8 @@ export type EditorSnapshot = {
    * Do not rely on this externally
    */
   beta: {
+    activeAnnotations: Array<string>
+    activeDecorators: Array<string>
     hasTag: HasTag
     internalDrag:
       | {
@@ -71,15 +71,6 @@ export function createEditorSnapshot({
     : null
 
   const context = {
-    activeAnnotations: getActiveAnnotations({
-      markState: editor.markState,
-      schema,
-    }),
-    activeDecorators: getActiveDecorators({
-      decoratorState: editor.decoratorState,
-      markState: editor.markState,
-      schema,
-    }),
     converters,
     keyGenerator,
     readOnly,
@@ -91,6 +82,15 @@ export function createEditorSnapshot({
   return {
     context,
     beta: {
+      activeAnnotations: getActiveAnnotations({
+        markState: editor.markState,
+        schema,
+      }),
+      activeDecorators: getActiveDecorators({
+        decoratorState: editor.decoratorState,
+        markState: editor.markState,
+        schema,
+      }),
       hasTag,
       internalDrag,
     },

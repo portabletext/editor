@@ -488,7 +488,7 @@ export function createWithPortableTextMarkModel(
                 apply(op)
                 Transforms.setNodes(
                   editor,
-                  {marks: snapshot.context.activeDecorators},
+                  {marks: snapshot.beta.activeDecorators},
                   {at: op.path},
                 )
               })
