@@ -10,6 +10,76 @@ import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 
 describe('event.patch', () => {
+  test('diffMatchPatch resulting in insert_text and remove_text', async () => {
+    const editorRef = React.createRef<Editor>()
+    const keyGenerator = createTestKeyGenerator()
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator,
+          schemaDefinition: defineSchema({}),
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <PortableTextEditable />
+      </EditorProvider>,
+    )
+
+    const editorLocator = page.getByRole('textbox')
+    await vi.waitFor(() => expect.element(editorLocator).toBeInTheDocument())
+
+    editorRef.current?.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'diffMatchPatch',
+          origin: 'remote',
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+          value: '@@ -0,0 +1 @@\n+e\n',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'e', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editorRef.current?.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'diffMatchPatch',
+          origin: 'remote',
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+          value: '@@ -1 +0,0 @@\n-e\n',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
   test('Scenario: Inserting two text blocks where the first one is empty', async () => {
     const editorRef = React.createRef<Editor>()
     const keyGenerator = createTestKeyGenerator()
