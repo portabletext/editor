@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.50.3](https://github.com/portabletext/editor/compare/editor-v1.50.2...editor-v1.50.3) (2025-05-21)
+
+
+### Bug Fixes
+
+* deprecate loading events ([f44d692](https://github.com/portabletext/editor/commit/f44d692f45f9a53421c19382b96d72ccd9c13826))
+* deprecate old `unset` change ([94354b7](https://github.com/portabletext/editor/commit/94354b78d5c07041510c83a8ade89aab29838ee2))
+* **deps:** update dependency debug to ^4.4.1 ([106f220](https://github.com/portabletext/editor/commit/106f2201ac86fc069838fd77f1d8a7f05e526331))
+* **deps:** update sanity monorepo to ^3.89.0 ([23d9cb8](https://github.com/portabletext/editor/commit/23d9cb80d99705c055e8746e1b4fd438ed414640))
+* **deps:** Update xstate ([966ee5c](https://github.com/portabletext/editor/commit/966ee5cc64bd689070048617f2f9b7d281306cc4))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.27
+
 ## [1.50.2](https://github.com/portabletext/editor/compare/editor-v1.50.1...editor-v1.50.2) (2025-05-16)
 
 
