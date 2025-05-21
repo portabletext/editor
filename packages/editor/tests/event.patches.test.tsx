@@ -698,4 +698,88 @@ describe('event.patches', () => {
       ])
     })
   })
+
+  // TODO: We should revisit this and allow `set` inside text blocks
+  test('Scenario: `set`ing inside text block is a noop', async () => {
+    const editorRef = React.createRef<Editor>()
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const markDefKey = keyGenerator()
+    const imageKey = keyGenerator()
+    const initialValue = [
+      {
+        _key: blockKey,
+        _type: 'block',
+        children: [
+          {
+            _key: fooKey,
+            _type: 'span',
+            text: 'foo ',
+            marks: [markDefKey],
+          },
+        ],
+        markDefs: [
+          {
+            _key: markDefKey,
+            _type: 'link',
+          },
+        ],
+        style: 'normal',
+      },
+      {
+        _key: imageKey,
+        _type: 'image',
+      },
+    ]
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator,
+          initialValue,
+          schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <PortableTextEditable />
+      </EditorProvider>,
+    )
+
+    await vi.waitFor(() => {
+      return expect(editorRef.current?.getSnapshot().context.value).toEqual(
+        initialValue,
+      )
+    })
+
+    editorRef.current?.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: blockKey}, 'markDefs', {_key: markDefKey}],
+          value: {href: 'https://www.sanity.io'},
+        },
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: imageKey}, 'alt'],
+          value: 'An image',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        initialValue[0],
+        {
+          _key: imageKey,
+          _type: 'image',
+          alt: 'An image',
+        },
+      ])
+    })
+  })
 })
