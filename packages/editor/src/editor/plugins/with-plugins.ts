@@ -13,6 +13,7 @@ import {createWithPortableTextSelections} from './createWithPortableTextSelectio
 import {createWithSchemaTypes} from './createWithSchemaTypes'
 import {createWithUndoRedo} from './createWithUndoRedo'
 import {createWithUtils} from './createWithUtils'
+import {pluginUpdateMarkState} from './slate-plugin.update-mark-state'
 import {pluginUpdateValue} from './slate-plugin.update-value'
 
 export interface OriginalEditorFunctions {
@@ -72,7 +73,13 @@ export const withPlugins = <T extends Editor>(
                   withUndoRedo(
                     withPatches(
                       withPortableTextSelections(
-                        pluginUpdateValue(editorActor.getSnapshot().context, e),
+                        pluginUpdateValue(
+                          editorActor.getSnapshot().context,
+                          pluginUpdateMarkState(
+                            editorActor.getSnapshot().context,
+                            e,
+                          ),
+                        ),
                       ),
                     ),
                   ),
