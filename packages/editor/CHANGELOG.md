@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.50.6](https://github.com/portabletext/editor/compare/editor-v1.50.5...editor-v1.50.6) (2025-05-22)
+
+
+### Bug Fixes
+
+* **`insert.block`:** issue with inserting into empty editor ([2289dfd](https://github.com/portabletext/editor/commit/2289dfdd9bc1985be19e35990e1365a43a4441e4))
+
 ## [1.50.5](https://github.com/portabletext/editor/compare/editor-v1.50.4...editor-v1.50.5) (2025-05-21)
 
 
