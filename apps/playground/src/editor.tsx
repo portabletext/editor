@@ -16,7 +16,6 @@ import {
   type RenderPlaceholderFunction,
   type RenderStyleFunction,
 } from '@portabletext/editor'
-import * as selectors from '@portabletext/editor/selectors'
 import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 import {OneLinePlugin} from '@portabletext/plugin-one-line'
 import {useSelector} from '@xstate/react'
@@ -25,6 +24,8 @@ import {CopyIcon, TrashIcon} from 'lucide-react'
 import {useEffect, useState, type JSX} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
 import {reverse} from 'remeda'
+import {createCodeEditorBehaviors} from './behavior.code-editor'
+import {createLinkBehaviors} from './behavior.links'
 import {Button} from './components/button'
 import {ErrorBoundary} from './components/error-boundary'
 import {ErrorScreen} from './components/error-screen'
@@ -35,8 +36,6 @@ import {Toolbar} from './components/toolbar'
 import {Tooltip} from './components/tooltip'
 import {EditorPatchesPreview} from './editor-patches-preview'
 import './editor.css'
-import {createCodeEditorBehaviors} from './behavior.code-editor'
-import {createLinkBehaviors} from './behavior.links'
 import {EmojiPickerPlugin} from './emoji-picker'
 import type {EditorActorRef} from './playground-machine'
 import {ImageDeserializerPlugin} from './plugin.image-deserializer'
@@ -604,10 +603,6 @@ const RenderBlock = (props: BlockRenderProps) => {
   )
   const editor = useEditor()
   const readOnly = useEditorSelector(editor, (s) => s.context.readOnly)
-  const listState = useEditorSelector(
-    editor,
-    selectors.getListState({path: props.path}),
-  )
 
   let children = props.children
 
@@ -648,17 +643,7 @@ const RenderBlock = (props: BlockRenderProps) => {
     )
   }
 
-  return (
-    <div
-      {...(listState
-        ? {
-            'data-list-index': listState.index,
-          }
-        : {})}
-    >
-      {children}
-    </div>
-  )
+  return <div>{children}</div>
 }
 
 const renderDecorator: RenderDecoratorFunction = (props) => {
