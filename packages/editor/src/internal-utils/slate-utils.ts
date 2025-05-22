@@ -188,6 +188,10 @@ export function getFirstBlock({
 }: {
   editor: PortableTextSlateEditor
 }): [node: Node, path: Path] | [undefined, undefined] {
+  if (editor.children.length === 0) {
+    return [undefined, undefined]
+  }
+
   const firstPoint = Editor.start(editor, [])
   const firstBlockPath = firstPoint.path.at(0)
 
@@ -205,6 +209,10 @@ export function getLastBlock({
 }: {
   editor: PortableTextSlateEditor
 }): [node: Node, path: Path] | [undefined, undefined] {
+  if (editor.children.length === 0) {
+    return [undefined, undefined]
+  }
+
   const lastPoint = Editor.end(editor, [])
   const lastBlockPath = lastPoint.path.at(0)
 

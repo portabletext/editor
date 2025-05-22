@@ -1,12 +1,16 @@
 import * as React from 'react'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
+import {defineBehavior, execute} from '../src/behaviors'
+import type {InsertPlacement} from '../src/behaviors/behavior.types.event'
 import type {Editor} from '../src/editor'
 import {PortableTextEditable} from '../src/editor/Editable'
 import {EditorProvider} from '../src/editor/editor-provider'
 import {defineSchema} from '../src/editor/editor-schema'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
+import {BehaviorPlugin} from '../src/plugins'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
+import {getFocusBlock} from '../src/selectors'
 
 describe('event.insert.block', () => {
   test('Scenario: Inserting block with custom _key', () => {
@@ -301,5 +305,167 @@ describe('event.insert.block', () => {
         style: 'normal',
       },
     ])
+  })
+
+  test('Scenario: Inserting block in an empty editor', async () => {
+    const editorRef = React.createRef<Editor>()
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator: createTestKeyGenerator(),
+          schemaDefinition: defineSchema({}),
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.block',
+              guard: ({event}) => {
+                event.block
+                return true
+              },
+              actions: [],
+            }),
+            defineBehavior<{placement: InsertPlacement; text: string}>({
+              on: 'custom.insert',
+              actions: [
+                ({snapshot, event}) => {
+                  const focusBlock = getFocusBlock(snapshot)
+
+                  if (!focusBlock) {
+                    return []
+                  }
+
+                  return [
+                    // This produces an intermediate state where the editor is
+                    // empty
+                    execute({
+                      type: 'delete.block',
+                      at: focusBlock.path,
+                    }),
+                    execute({
+                      type: 'insert.block',
+                      block: {
+                        _key: snapshot.context.keyGenerator(),
+                        _type: snapshot.context.schema.block.name,
+                        children: [
+                          {
+                            _key: snapshot.context.keyGenerator(),
+                            _type: 'span',
+                            text: event.text,
+                          },
+                        ],
+                      },
+                      placement: event.placement,
+                      select: 'end',
+                    }),
+                  ]
+                },
+              ],
+            }),
+          ]}
+        />
+        <PortableTextEditable />
+      </EditorProvider>,
+    )
+
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [
+            {
+              _key: 'k1',
+              _type: 'span',
+              marks: [],
+              text: '',
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editorRef.current?.send({type: 'focus'})
+    editorRef.current?.send({
+      type: 'custom.insert',
+      placement: 'after',
+      text: 'foo',
+    })
+
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k2',
+          _type: 'block',
+          children: [
+            {
+              _key: 'k3',
+              _type: 'span',
+              marks: [],
+              text: 'foo',
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editorRef.current?.send({type: 'focus'})
+    editorRef.current?.send({
+      type: 'custom.insert',
+      placement: 'before',
+      text: 'bar',
+    })
+
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k4',
+          _type: 'block',
+          children: [
+            {
+              _key: 'k5',
+              _type: 'span',
+              marks: [],
+              text: 'bar',
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editorRef.current?.send({type: 'focus'})
+    editorRef.current?.send({
+      type: 'custom.insert',
+      placement: 'auto',
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k6',
+          _type: 'block',
+          children: [
+            {
+              _key: 'k7',
+              _type: 'span',
+              marks: [],
+              text: 'baz',
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
   })
 })
