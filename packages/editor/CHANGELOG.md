@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.50.7](https://github.com/portabletext/editor/compare/editor-v1.50.6...editor-v1.50.7) (2025-05-23)
+
+
+### Bug Fixes
+
+* **`event.patches`:** improve `set`ing and `unset`ing child properties ([ebe0275](https://github.com/portabletext/editor/commit/ebe027552dc173bdf44b548396cc79cd0437f275))
+
 ## [1.50.6](https://github.com/portabletext/editor/compare/editor-v1.50.5...editor-v1.50.6) (2025-05-22)
 
 
