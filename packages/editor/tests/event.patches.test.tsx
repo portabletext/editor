@@ -1,4 +1,5 @@
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
+import type {PortableTextBlock} from '@sanity/types'
 import {page, userEvent} from '@vitest/browser/context'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
@@ -13,6 +14,38 @@ import {
 import type {SchemaDefinition} from '../src/editor/editor-schema'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {EditorRefPlugin, EventListenerPlugin} from '../src/plugins'
+
+async function getEditor(
+  options: {
+    initialValue?: Array<PortableTextBlock>
+    keyGenerator?: () => string
+    schemaDefinition?: SchemaDefinition
+  } = {},
+) {
+  const editorRef = React.createRef<Editor>()
+  const onEvent = vi.fn<() => EditorEmittedEvent>()
+  const keyGenerator = options.keyGenerator ?? createTestKeyGenerator()
+
+  render(
+    <EditorProvider
+      initialConfig={{
+        keyGenerator,
+        schemaDefinition: options.schemaDefinition ?? defineSchema({}),
+        initialValue: options.initialValue,
+      }}
+    >
+      <EditorRefPlugin ref={editorRef} />
+      <EventListenerPlugin on={onEvent} />
+      <PortableTextEditable />
+    </EditorProvider>,
+  )
+
+  const locator = page.getByRole('textbox')
+
+  await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+
+  return {editorRef, keyGenerator, locator, onEvent}
+}
 
 async function getEditors({
   schemaDefinition,
@@ -352,9 +385,7 @@ describe('event.patches', () => {
   })
 
   test('Scenario: Patching while syncing initial value', async () => {
-    const editorRef = React.createRef<Editor>()
     const keyGenerator = createTestKeyGenerator()
-    const onEvent = vi.fn<() => EditorEmittedEvent>()
     const listBlock = {
       _key: keyGenerator(),
       _type: 'block',
@@ -386,22 +417,14 @@ describe('event.patches', () => {
       style: 'h1',
     }
 
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator,
-          schemaDefinition: defineSchema({
-            lists: [{name: 'bullet'}],
-            styles: [{name: 'normal'}, {name: 'h1'}],
-          }),
-          initialValue: [listBlock],
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <EventListenerPlugin on={onEvent} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
+    const {editorRef} = await getEditor({
+      initialValue: [listBlock],
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        lists: [{name: 'bullet'}],
+        styles: [{name: 'normal'}, {name: 'h1'}],
+      }),
+    })
 
     editorRef.current?.send({
       type: 'patches',
@@ -436,9 +459,15 @@ describe('event.patches', () => {
   })
 
   test('Scenario: Patching while syncing incoming value', async () => {
-    const editorRef = React.createRef<Editor>()
     const keyGenerator = createTestKeyGenerator()
-    const onEvent = vi.fn<() => EditorEmittedEvent>()
+    const {editorRef, onEvent} = await getEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        lists: [{name: 'bullet'}],
+        styles: [{name: 'normal'}, {name: 'h1'}],
+      }),
+    })
+
     const listBlock = {
       _key: keyGenerator(),
       _type: 'block',
@@ -469,22 +498,6 @@ describe('event.patches', () => {
       markDefs: [],
       style: 'h1',
     }
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator,
-          schemaDefinition: defineSchema({
-            lists: [{name: 'bullet'}],
-            styles: [{name: 'normal'}, {name: 'h1'}],
-          }),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <EventListenerPlugin on={onEvent} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
 
     editorRef.current?.send({
       type: 'update value',
@@ -528,30 +541,19 @@ describe('event.patches', () => {
   })
 
   test('`set` block object properties', async () => {
-    const editorRef = React.createRef<Editor>()
-    const keyGenerator = createTestKeyGenerator()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator,
-          schemaDefinition: defineSchema({
-            blockObjects: [
-              {
-                name: 'url',
-                fields: [
-                  {name: 'description', type: 'string'},
-                  {name: 'href', type: 'string'},
-                ],
-              },
+    const {editorRef} = await getEditor({
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'url',
+            fields: [
+              {name: 'description', type: 'string'},
+              {name: 'href', type: 'string'},
             ],
-          }),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
+          },
+        ],
+      }),
+    })
 
     editorRef.current?.send({
       type: 'insert.block object',
@@ -607,30 +609,19 @@ describe('event.patches', () => {
   })
 
   test('`set` nested block object properties', async () => {
-    const editorRef = React.createRef<Editor>()
-    const keyGenerator = createTestKeyGenerator()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator,
-          schemaDefinition: defineSchema({
-            blockObjects: [
-              {
-                name: 'url',
-                fields: [
-                  {name: 'content', type: 'object'},
-                  {name: 'href', type: 'string'},
-                ],
-              },
+    const {editorRef} = await getEditor({
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'url',
+            fields: [
+              {name: 'content', type: 'object'},
+              {name: 'href', type: 'string'},
             ],
-          }),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
+          },
+        ],
+      }),
+    })
 
     editorRef.current?.send({
       type: 'insert.block object',
@@ -734,7 +725,6 @@ describe('event.patches', () => {
 
   // TODO: We should revisit this and allow `set` inside text blocks
   test('Scenario: `set`ing inside text block is a noop', async () => {
-    const editorRef = React.createRef<Editor>()
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const fooKey = keyGenerator()
@@ -766,18 +756,11 @@ describe('event.patches', () => {
       },
     ]
 
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator,
-          initialValue,
-          schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
+    const {editorRef} = await getEditor({
+      keyGenerator,
+      initialValue,
+      schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
+    })
 
     await vi.waitFor(() => {
       return expect(editorRef.current?.getSnapshot().context.value).toEqual(
@@ -855,23 +838,9 @@ describe('event.patches', () => {
     }
 
     test('Scenario: Adding and removing text to an empty editor', async () => {
-      const editorRef = React.createRef<Editor>()
-      const keyGenerator = createTestKeyGenerator()
-
-      render(
-        <EditorProvider
-          initialConfig={{
-            keyGenerator,
-            schemaDefinition: defineSchema({}),
-          }}
-        >
-          <EditorRefPlugin ref={editorRef} />
-          <PortableTextEditable />
-        </EditorProvider>,
-      )
-
-      const editorLocator = page.getByRole('textbox')
-      await vi.waitFor(() => expect.element(editorLocator).toBeInTheDocument())
+      const {editorRef} = await getEditor({
+        schemaDefinition: defineSchema({}),
+      })
 
       editorRef.current?.send({
         type: 'patches',
