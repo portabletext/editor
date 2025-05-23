@@ -211,34 +211,90 @@ function setPatch(editor: PortableTextSlateEditor, patch: SetPatch) {
 
   // If this is targeting a text block child
   if (isTextBlock && child) {
-    if (Text.isText(value) && Text.isText(child.node)) {
-      const newText = child.node.text
-      const oldText = value.text
-      if (oldText !== newText) {
-        editor.apply({
-          type: 'remove_text',
-          path: [block.index, child.index],
-          offset: 0,
-          text: newText,
-        })
-        editor.apply({
-          type: 'insert_text',
-          path: [block.index, child.index],
-          offset: 0,
-          text: value.text,
-        })
-        // call OnChange here to emit the new selection
-        // the user's selection might be interfering with
-        editor.onChange()
+    if (Text.isText(child.node)) {
+      if (Text.isText(value)) {
+        const oldText = child.node.text
+        const newText = value.text
+        if (oldText !== newText) {
+          editor.apply({
+            type: 'remove_text',
+            path: [block.index, child.index],
+            offset: 0,
+            text: oldText,
+          })
+          editor.apply({
+            type: 'insert_text',
+            path: [block.index, child.index],
+            offset: 0,
+            text: newText,
+          })
+          // call OnChange here to emit the new selection
+          // the user's selection might be interfering with
+          editor.onChange()
+        }
+      } else {
+        // Setting non-text span property
+
+        const propPath = patch.path.slice(3)
+        const propEntry = propPath.at(0)
+        const reservedProps = ['_key', '_type', 'text']
+
+        if (propEntry === undefined) {
+          return false
+        }
+
+        if (
+          typeof propEntry === 'string' &&
+          reservedProps.includes(propEntry)
+        ) {
+          return false
+        }
+
+        const newNode = applyAll(child.node, [
+          {
+            ...patch,
+            path: propPath,
+          },
+        ])
+
+        Transforms.setNodes(editor, newNode, {at: [block.index, child.index]})
       }
     } else {
-      editor.apply({
-        type: 'set_node',
-        path: [block.index, child.index],
-        properties: {},
-        newProperties: value as Partial<Node>,
-      })
+      // Setting inline object property
+
+      const propPath = patch.path.slice(3)
+      const reservedProps = ['_key', '_type', 'children', '__inline']
+      const propEntry = propPath.at(0)
+
+      if (propEntry === undefined) {
+        return false
+      }
+
+      if (typeof propEntry === 'string' && reservedProps.includes(propEntry)) {
+        return false
+      }
+
+      // If the child is an inline object, we need to apply the patch to the
+      // `value` property object.
+      const value =
+        'value' in child.node && typeof child.node.value === 'object'
+          ? child.node.value
+          : {}
+
+      const newValue = applyAll(value, [
+        {
+          ...patch,
+          path: patch.path.slice(3),
+        },
+      ])
+
+      Transforms.setNodes(
+        editor,
+        {...child.node, value: newValue},
+        {at: [block.index, child.index]},
+      )
     }
+
     return true
   } else if (Element.isElement(block.node) && patch.path.length === 1) {
     const {children, ...nextRest} = value as unknown as PortableTextBlock
@@ -322,35 +378,131 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
     editor.onChange()
     return true
   }
+
   const block = findBlock(editor.children, patch.path)
+
+  if (!block) {
+    return false
+  }
 
   // Single blocks
   if (patch.path.length === 1) {
-    if (!block) {
-      return false
-    }
-
     Transforms.removeNodes(editor, {at: [block.index]})
 
     return true
   }
 
-  // Unset on text block children
-  if (
-    block &&
-    editor.isTextBlock(block.node) &&
-    patch.path[1] === 'children' &&
-    patch.path.length === 3
-  ) {
-    const child = findBlockChild(block, patch.path)
+  const child = findBlockChild(block, patch.path)
 
-    if (!child) {
+  // Unset on text block children
+  if (editor.isTextBlock(block.node) && child) {
+    if (patch.path[1] === 'children' && patch.path.length === 3) {
+      Transforms.removeNodes(editor, {at: [block.index, child.index]})
+
+      return true
+    }
+  }
+
+  if (child && !Text.isText(child.node)) {
+    // Unsetting inline object property
+
+    const propPath = patch.path.slice(3)
+    const propEntry = propPath.at(0)
+    const reservedProps = ['_key', '_type', 'children', '__inline']
+
+    if (propEntry === undefined) {
       return false
     }
 
-    Transforms.removeNodes(editor, {at: [block.index, child.index]})
+    if (typeof propEntry === 'string' && reservedProps.includes(propEntry)) {
+      // All custom properties are stored on the `value` property object.
+      // If you try to unset any of the other top-level properties it's a
+      // no-op.
+      return false
+    }
+
+    const value =
+      'value' in child.node && typeof child.node.value === 'object'
+        ? child.node.value
+        : {}
+
+    const newValue = applyAll(value, [
+      {
+        ...patch,
+        path: patch.path.slice(3),
+      },
+    ])
+
+    Transforms.setNodes(
+      editor,
+      {...child.node, value: newValue},
+      {at: [block.index, child.index]},
+    )
 
     return true
+  }
+
+  if (child && Text.isText(child.node)) {
+    const propPath = patch.path.slice(3)
+    const propEntry = propPath.at(0)
+    const reservedProps = ['_key', '_type']
+
+    if (propEntry === undefined) {
+      return false
+    }
+
+    if (typeof propEntry === 'string' && reservedProps.includes(propEntry)) {
+      return false
+    }
+
+    if (typeof propEntry === 'string' && propEntry === 'text') {
+      editor.apply({
+        type: 'remove_text',
+        path: [block.index, child.index],
+        offset: 0,
+        text: child.node.text,
+      })
+
+      return true
+    }
+
+    const newNode = applyAll(child.node, [
+      {
+        ...patch,
+        path: propPath,
+      },
+    ])
+
+    const removedProperties = Object.keys(child.node).filter(
+      (property) => newNode[property] === undefined,
+    )
+
+    Transforms.unsetNodes(editor, removedProperties, {
+      at: [block.index, child.index],
+    })
+
+    return true
+  }
+
+  if (!child) {
+    if ('value' in block.node) {
+      const newVal = applyAll(block.node.value, [
+        {
+          ...patch,
+          path: patch.path.slice(1),
+        },
+      ])
+
+      Transforms.setNodes(
+        editor,
+        {...block.node, value: newVal},
+        {at: [block.index]},
+      )
+
+      return true
+    }
+
+    return false
   }
 
   return false
