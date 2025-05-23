@@ -1,4 +1,4 @@
-import type {EditorSelection} from '../types/editor'
+import {EditorSelection, isBackward} from '../types/selection'
 
 /**
  * @public
@@ -10,17 +10,8 @@ export function reverseSelection<
     return selection
   }
 
-  if (selection.backward) {
-    return {
-      anchor: selection.focus,
-      focus: selection.anchor,
-      backward: false,
-    } as TEditorSelection
-  }
-
   return {
     anchor: selection.focus,
     focus: selection.anchor,
-    backward: true,
   } as TEditorSelection
 }

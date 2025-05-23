@@ -3,18 +3,22 @@ import {parseBlock} from '../internal-utils/parse-blocks'
 import {toSlateRange} from '../internal-utils/ranges'
 import {fromSlateValue, toSlateValue} from '../internal-utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
+import {isKeyedPath} from '../types/paths'
+import {isKeyedSegment} from '../utils'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const blockSetOperationImplementation: BehaviorOperationImplementation<
   'block.set'
 > = ({context, operation}) => {
-  const location = toSlateRange(
-    {
-      anchor: {path: operation.at, offset: 0},
-      focus: {path: operation.at, offset: 0},
-    },
-    operation.editor,
-  )
+  const location = isKeyedPath(operation.at)
+    ? undefined
+    : toSlateRange(
+        {
+          anchor: {path: operation.at, offset: 0},
+          focus: {path: operation.at, offset: 0},
+        },
+        operation.editor,
+      )
 
   if (!location) {
     throw new Error(

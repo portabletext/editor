@@ -1,5 +1,5 @@
 import {Point, type Editor, type Operation, type Range} from 'slate'
-import type {EditorSelection} from '../types/editor'
+import {EditorSelection} from '../types/selection'
 import {toSlatePath} from './paths'
 
 export interface ObjectWithKeyAndType {

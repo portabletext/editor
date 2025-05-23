@@ -1,8 +1,12 @@
 import type {PortableTextSpan} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
-import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
-import {isEmptyTextBlock, isKeyedSegment} from '../utils'
+import {
+  EditorSelection,
+  EditorSelectionPoint,
+  isBackward,
+} from '../types/selection'
+import {isEmptyTextBlock} from '../utils'
 import {getSelectionEndPoint} from './selector.get-selection-end-point'
 import {getSelectionStartPoint} from './selector.get-selection-start-point'
 import {isSelectionCollapsed} from './selector.is-selection-collapsed'
@@ -25,20 +29,25 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = (
     return snapshot.context.selection
   }
 
-  const startBlockKey = isKeyedSegment(startPoint.path[0])
-    ? startPoint.path[0]._key
-    : null
-  const startChildKey = isKeyedSegment(startPoint.path[2])
-    ? startPoint.path[2]._key
-    : null
-  const endBlockKey = isKeyedSegment(endPoint.path[0])
-    ? endPoint.path[0]._key
-    : null
-  const endChildKey = isKeyedSegment(endPoint.path[2])
-    ? endPoint.path[2]._key
-    : null
+  const startBlock =
+    startPoint.path[0] !== undefined
+      ? snapshot.context.value.at(startPoint.path[0])
+      : undefined
+  const startChildKey =
+    startPoint.path[1] !== undefined &&
+    isTextBlock(snapshot.context, startBlock)
+      ? startBlock?.children.at(startPoint.path[1])?._key
+      : undefined
+  const endBlock =
+    endPoint.path[0] !== undefined
+      ? snapshot.context.value.at(endPoint.path[0])
+      : undefined
+  const endChildKey =
+    endPoint.path[1] !== undefined && isTextBlock(snapshot.context, endBlock)
+      ? endBlock?.children.at(endPoint.path[1])?._key
+      : undefined
 
-  if (!startBlockKey || !endBlockKey) {
+  if (!startBlock || !endBlock) {
     return snapshot.context.selection
   }
 
@@ -47,12 +56,14 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = (
   let trimStartPoint = false
   let adjustedEndPoint: EditorSelectionPoint | undefined
   let trimEndPoint = false
-  let previousPotentialEndpoint:
-    | {blockKey: string; span: PortableTextSpan}
-    | undefined
+  let previousPotentialEndpoint: EditorSelectionPoint | undefined
+
+  let blockIndex = 0
 
   for (const block of snapshot.context.value) {
-    if (block._key === startBlockKey) {
+    blockIndex++
+
+    if (block._key === startBlock._key) {
       startBlockFound = true
 
       if (
@@ -72,24 +83,21 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = (
     }
 
     if (
-      block._key === endBlockKey &&
+      block._key === endBlock._key &&
       isEmptyTextBlock(snapshot.context, block)
     ) {
       break
     }
 
+    let childIndex = 0
+
     for (const child of block.children) {
+      childIndex++
+
       if (child._key === endChildKey) {
         if (!isSpan(snapshot.context, child) || endPoint.offset === 0) {
           adjustedEndPoint = previousPotentialEndpoint
-            ? {
-                path: [
-                  {_key: previousPotentialEndpoint.blockKey},
-                  'children',
-                  {_key: previousPotentialEndpoint.span._key},
-                ],
-                offset: previousPotentialEndpoint.span.text.length,
-              }
+            ? previousPotentialEndpoint
             : undefined
 
           trimEndPoint = true
@@ -106,10 +114,13 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = (
           lonelySpan
         ) {
           adjustedStartPoint = {
-            path: [{_key: block._key}, 'children', {_key: child._key}],
+            path: [blockIndex, childIndex],
             offset: 0,
           }
-          previousPotentialEndpoint = {blockKey: block._key, span: child}
+          previousPotentialEndpoint = {
+            path: [blockIndex, childIndex],
+            offset: child.text.length,
+          }
           trimStartPoint = false
         }
 
@@ -126,7 +137,10 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = (
           trimStartPoint = true
           previousPotentialEndpoint =
             child.text.length > 0
-              ? {blockKey: block._key, span: child}
+              ? {
+                  path: [blockIndex, childIndex],
+                  offset: child.text.length,
+                }
               : previousPotentialEndpoint
           continue
         }
@@ -134,16 +148,19 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = (
 
       previousPotentialEndpoint =
         isSpan(snapshot.context, child) && child.text.length > 0
-          ? {blockKey: block._key, span: child}
+          ? {
+              path: [blockIndex, childIndex],
+              offset: child.text.length,
+            }
           : previousPotentialEndpoint
     }
 
-    if (block._key === endBlockKey) {
+    if (block._key === endBlock._key) {
       break
     }
   }
 
-  const trimmedSelection = snapshot.context.selection.backward
+  const trimmedSelection = isBackward(snapshot.context.selection)
     ? {
         anchor: trimEndPoint && adjustedEndPoint ? adjustedEndPoint : endPoint,
         focus: adjustedStartPoint ?? startPoint,

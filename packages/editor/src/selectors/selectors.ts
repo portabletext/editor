@@ -1,5 +1,4 @@
 import type {
-  KeyedSegment,
   PortableTextBlock,
   PortableTextListBlock,
   PortableTextObject,
@@ -8,32 +7,33 @@ import type {
 } from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import {isListBlock, isSpan, isTextBlock} from '../internal-utils/parse-blocks'
-import {isKeyedSegment} from '../utils/util.is-keyed-segment'
+import {isBackward} from '../types/selection'
 
 /**
  * @public
  */
 export const getFocusBlock: EditorSelector<
-  {node: PortableTextBlock; path: [KeyedSegment]} | undefined
+  {node: PortableTextBlock; path: [number]} | undefined
 > = (snapshot) => {
-  const key = snapshot.context.selection
-    ? isKeyedSegment(snapshot.context.selection.focus.path[0])
-      ? snapshot.context.selection.focus.path[0]._key
-      : undefined
+  const blockIndex = snapshot.context.selection
+    ? snapshot.context.selection.focus.path[0]
     : undefined
 
-  const node = key
-    ? snapshot.context.value.find((block) => block._key === key)
-    : undefined
+  const node =
+    blockIndex !== undefined ? snapshot.context.value.at(blockIndex) : undefined
 
-  return node && key ? {node, path: [{_key: key}]} : undefined
+  if (node && blockIndex !== undefined) {
+    return {node, path: [blockIndex]}
+  }
+
+  return undefined
 }
 
 /**
  * @public
  */
 export const getFocusListBlock: EditorSelector<
-  {node: PortableTextListBlock; path: [KeyedSegment]} | undefined
+  {node: PortableTextListBlock; path: [number]} | undefined
 > = (snapshot) => {
   const focusTextBlock = getFocusTextBlock(snapshot)
 
@@ -46,7 +46,7 @@ export const getFocusListBlock: EditorSelector<
  * @public
  */
 export const getFocusTextBlock: EditorSelector<
-  {node: PortableTextTextBlock; path: [KeyedSegment]} | undefined
+  {node: PortableTextTextBlock; path: [number]} | undefined
 > = (snapshot) => {
   const focusBlock = getFocusBlock(snapshot)
 
@@ -59,7 +59,7 @@ export const getFocusTextBlock: EditorSelector<
  * @public
  */
 export const getFocusBlockObject: EditorSelector<
-  {node: PortableTextObject; path: [KeyedSegment]} | undefined
+  {node: PortableTextObject; path: [number]} | undefined
 > = (snapshot) => {
   const focusBlock = getFocusBlock(snapshot)
 
@@ -74,7 +74,7 @@ export const getFocusBlockObject: EditorSelector<
 export const getFocusChild: EditorSelector<
   | {
       node: PortableTextObject | PortableTextSpan
-      path: [KeyedSegment, 'children', KeyedSegment]
+      path: [number, number]
     }
   | undefined
 > = (snapshot) => {
@@ -84,27 +84,29 @@ export const getFocusChild: EditorSelector<
     return undefined
   }
 
-  const key = snapshot.context.selection
-    ? isKeyedSegment(snapshot.context.selection.focus.path[2])
-      ? snapshot.context.selection.focus.path[2]._key
+  const childIndex = snapshot.context.selection
+    ? snapshot.context.selection.focus.path[1] !== undefined
+      ? snapshot.context.selection.focus.path[1]
       : undefined
     : undefined
 
-  const node = key
-    ? focusBlock.node.children.find((span) => span._key === key)
-    : undefined
+  const node =
+    childIndex !== undefined
+      ? focusBlock.node.children.at(childIndex)
+      : undefined
 
-  return node && key
-    ? {node, path: [...focusBlock.path, 'children', {_key: key}]}
-    : undefined
+  if (node && childIndex !== undefined) {
+    return {node, path: [...focusBlock.path, childIndex]}
+  }
+
+  return undefined
 }
 
 /**
  * @public
  */
 export const getFocusSpan: EditorSelector<
-  | {node: PortableTextSpan; path: [KeyedSegment, 'children', KeyedSegment]}
-  | undefined
+  {node: PortableTextSpan; path: [number, number]} | undefined
 > = (snapshot) => {
   const focusChild = getFocusChild(snapshot)
 
@@ -117,60 +119,65 @@ export const getFocusSpan: EditorSelector<
  * @public
  */
 export const getFirstBlock: EditorSelector<
-  {node: PortableTextBlock; path: [KeyedSegment]} | undefined
+  {node: PortableTextBlock; path: [number]} | undefined
 > = (snapshot) => {
   const node = snapshot.context.value[0]
 
-  return node ? {node, path: [{_key: node._key}]} : undefined
+  return node ? {node, path: [0]} : undefined
 }
 
 /**
  * @public
  */
 export const getLastBlock: EditorSelector<
-  {node: PortableTextBlock; path: [KeyedSegment]} | undefined
+  {node: PortableTextBlock; path: [number]} | undefined
 > = (snapshot) => {
   const node = snapshot.context.value[snapshot.context.value.length - 1]
-    ? snapshot.context.value[snapshot.context.value.length - 1]
-    : undefined
 
-  return node ? {node, path: [{_key: node._key}]} : undefined
+  return node ? {node, path: [snapshot.context.value.length - 1]} : undefined
 }
 
 /**
  * @public
  */
 export const getSelectedBlocks: EditorSelector<
-  Array<{node: PortableTextBlock; path: [KeyedSegment]}>
+  Array<{node: PortableTextBlock; path: [number]}>
 > = (snapshot) => {
   if (!snapshot.context.selection) {
     return []
   }
 
-  const selectedBlocks: Array<{node: PortableTextBlock; path: [KeyedSegment]}> =
-    []
-  const startKey = snapshot.context.selection.backward
-    ? isKeyedSegment(snapshot.context.selection.focus.path[0])
-      ? snapshot.context.selection.focus.path[0]._key
+  const selectedBlocks: Array<{node: PortableTextBlock; path: [number]}> = []
+  const startKey = isBackward(snapshot.context.selection)
+    ? snapshot.context.selection.focus.path[0] !== undefined
+      ? snapshot.context.value.at(snapshot.context.selection.focus.path[0])
+          ?._key
       : undefined
-    : isKeyedSegment(snapshot.context.selection.anchor.path[0])
-      ? snapshot.context.selection.anchor.path[0]._key
+    : snapshot.context.selection.anchor.path[0] !== undefined
+      ? snapshot.context.value.at(snapshot.context.selection.anchor.path[0])
+          ?._key
       : undefined
-  const endKey = snapshot.context.selection.backward
-    ? isKeyedSegment(snapshot.context.selection.anchor.path[0])
-      ? snapshot.context.selection.anchor.path[0]._key
+  const endKey = isBackward(snapshot.context.selection)
+    ? snapshot.context.selection.anchor.path[0] !== undefined
+      ? snapshot.context.value.at(snapshot.context.selection.anchor.path[0])
+          ?._key
       : undefined
-    : isKeyedSegment(snapshot.context.selection.focus.path[0])
-      ? snapshot.context.selection.focus.path[0]._key
+    : snapshot.context.selection.focus.path[0] !== undefined
+      ? snapshot.context.value.at(snapshot.context.selection.focus.path[0])
+          ?._key
       : undefined
 
   if (!startKey || !endKey) {
     return selectedBlocks
   }
 
+  let index = -1
+
   for (const block of snapshot.context.value) {
+    index++
+
     if (block._key === startKey) {
-      selectedBlocks.push({node: block, path: [{_key: block._key}]})
+      selectedBlocks.push({node: block, path: [index]})
 
       if (startKey === endKey) {
         break
@@ -179,12 +186,12 @@ export const getSelectedBlocks: EditorSelector<
     }
 
     if (block._key === endKey) {
-      selectedBlocks.push({node: block, path: [{_key: block._key}]})
+      selectedBlocks.push({node: block, path: [index]})
       break
     }
 
     if (selectedBlocks.length > 0) {
-      selectedBlocks.push({node: block, path: [{_key: block._key}]})
+      selectedBlocks.push({node: block, path: [index]})
     }
   }
 
@@ -197,7 +204,7 @@ export const getSelectedBlocks: EditorSelector<
 export const getSelectionStartBlock: EditorSelector<
   | {
       node: PortableTextBlock
-      path: [KeyedSegment]
+      path: [number]
     }
   | undefined
 > = (snapshot) => {
@@ -205,19 +212,15 @@ export const getSelectionStartBlock: EditorSelector<
     return undefined
   }
 
-  const key = snapshot.context.selection.backward
-    ? isKeyedSegment(snapshot.context.selection.focus.path[0])
-      ? snapshot.context.selection.focus.path[0]._key
-      : undefined
-    : isKeyedSegment(snapshot.context.selection.anchor.path[0])
-      ? snapshot.context.selection.anchor.path[0]._key
-      : undefined
+  const startPoint = isBackward(snapshot.context.selection)
+    ? snapshot.context.selection.focus
+    : snapshot.context.selection.anchor
 
-  const node = key
-    ? snapshot.context.value.find((block) => block._key === key)
+  const block = startPoint
+    ? snapshot.context.value.at(startPoint.path[0])
     : undefined
 
-  return node && key ? {node, path: [{_key: key}]} : undefined
+  return block ? {node: block, path: [startPoint.path[0]]} : undefined
 }
 
 /**
@@ -226,7 +229,7 @@ export const getSelectionStartBlock: EditorSelector<
 export const getSelectionEndBlock: EditorSelector<
   | {
       node: PortableTextBlock
-      path: [KeyedSegment]
+      path: [number]
     }
   | undefined
 > = (snapshot) => {
@@ -234,47 +237,35 @@ export const getSelectionEndBlock: EditorSelector<
     return undefined
   }
 
-  const key = snapshot.context.selection.backward
-    ? isKeyedSegment(snapshot.context.selection.anchor.path[0])
-      ? snapshot.context.selection.anchor.path[0]._key
-      : undefined
-    : isKeyedSegment(snapshot.context.selection.focus.path[0])
-      ? snapshot.context.selection.focus.path[0]._key
-      : undefined
+  const endPoint = isBackward(snapshot.context.selection)
+    ? snapshot.context.selection.anchor
+    : snapshot.context.selection.focus
 
-  const node = key
-    ? snapshot.context.value.find((block) => block._key === key)
+  const block = endPoint
+    ? snapshot.context.value.at(endPoint.path[0])
     : undefined
 
-  return node && key ? {node, path: [{_key: key}]} : undefined
+  return block ? {node: block, path: [endPoint.path[0]]} : undefined
 }
 
 /**
  * @public
  */
 export const getPreviousBlock: EditorSelector<
-  {node: PortableTextBlock; path: [KeyedSegment]} | undefined
+  {node: PortableTextBlock; path: [number]} | undefined
 > = (snapshot) => {
-  let previousBlock: {node: PortableTextBlock; path: [KeyedSegment]} | undefined
-  const selectionStartBlock = getSelectionStartBlock(snapshot)
-
-  if (!selectionStartBlock) {
+  if (!snapshot.context.selection) {
     return undefined
   }
 
-  let foundSelectionStartBlock = false
+  const startPoint = isBackward(snapshot.context.selection)
+    ? snapshot.context.selection.focus
+    : snapshot.context.selection.anchor
 
-  for (const block of snapshot.context.value) {
-    if (block._key === selectionStartBlock.node._key) {
-      foundSelectionStartBlock = true
-      break
-    }
+  const previousBlock = snapshot.context.value.at(startPoint.path[0] - 1)
 
-    previousBlock = {node: block, path: [{_key: block._key}]}
-  }
-
-  if (foundSelectionStartBlock && previousBlock) {
-    return previousBlock
+  if (previousBlock) {
+    return {node: previousBlock, path: [startPoint.path[0] - 1]}
   }
 
   return undefined
@@ -284,31 +275,20 @@ export const getPreviousBlock: EditorSelector<
  * @public
  */
 export const getNextBlock: EditorSelector<
-  {node: PortableTextBlock; path: [KeyedSegment]} | undefined
+  {node: PortableTextBlock; path: [number]} | undefined
 > = (snapshot) => {
-  let nextBlock: {node: PortableTextBlock; path: [KeyedSegment]} | undefined
-  const selectionEndBlock = getSelectionEndBlock(snapshot)
-
-  if (!selectionEndBlock) {
+  if (!snapshot.context.selection) {
     return undefined
   }
 
-  let foundSelectionEndBlock = false
+  const endPoint = isBackward(snapshot.context.selection)
+    ? snapshot.context.selection.anchor
+    : snapshot.context.selection.focus
 
-  for (const block of snapshot.context.value) {
-    if (block._key === selectionEndBlock.node._key) {
-      foundSelectionEndBlock = true
-      continue
-    }
+  const nextBlock = snapshot.context.value.at(endPoint.path[0] + 1)
 
-    if (foundSelectionEndBlock) {
-      nextBlock = {node: block, path: [{_key: block._key}]}
-      break
-    }
-  }
-
-  if (foundSelectionEndBlock && nextBlock) {
-    return nextBlock
+  if (nextBlock) {
+    return {node: nextBlock, path: [endPoint.path[0] + 1]}
   }
 
   return undefined

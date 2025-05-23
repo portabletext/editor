@@ -1,8 +1,4 @@
-import {
-  isKeySegment,
-  type KeyedSegment,
-  type PortableTextObject,
-} from '@sanity/types'
+import {type PortableTextObject} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import {isSpan} from '../utils'
 import {getSelectionStartPoint} from './selector.get-selection-start-point'
@@ -14,29 +10,47 @@ import {getFocusTextBlock} from './selectors'
 export const getPreviousInlineObject: EditorSelector<
   | {
       node: PortableTextObject
-      path: [KeyedSegment, 'children', KeyedSegment]
+      path: [number, number]
     }
   | undefined
 > = (snapshot) => {
-  const focusTextBlock = getFocusTextBlock(snapshot)
   const selectionStartPoint = getSelectionStartPoint(snapshot)
-  const selectionStartPointChildKey =
-    selectionStartPoint && isKeySegment(selectionStartPoint.path[2])
-      ? selectionStartPoint.path[2]._key
-      : undefined
 
-  if (!focusTextBlock || !selectionStartPointChildKey) {
+  if (!selectionStartPoint) {
     return undefined
   }
+
+  const focusTextBlock = getFocusTextBlock({
+    ...snapshot,
+    context: {
+      ...snapshot.context,
+      selection: {
+        anchor: selectionStartPoint,
+        focus: selectionStartPoint,
+      },
+    },
+  })
+
+  if (!focusTextBlock) {
+    return undefined
+  }
+
+  const selectionStartPointChildKey =
+    selectionStartPoint.path[1] !== undefined
+      ? focusTextBlock.node.children.at(selectionStartPoint.path[1])?._key
+      : undefined
 
   let inlineObject:
     | {
         node: PortableTextObject
-        path: [KeyedSegment, 'children', KeyedSegment]
+        path: [number, number]
       }
     | undefined
 
+  let childIndex = -1
   for (const child of focusTextBlock.node.children) {
+    childIndex++
+
     if (child._key === selectionStartPointChildKey) {
       break
     }
@@ -44,7 +58,7 @@ export const getPreviousInlineObject: EditorSelector<
     if (!isSpan(snapshot.context, child)) {
       inlineObject = {
         node: child,
-        path: [...focusTextBlock.path, 'children', {_key: child._key}],
+        path: [...focusTextBlock.path, childIndex],
       }
     }
   }

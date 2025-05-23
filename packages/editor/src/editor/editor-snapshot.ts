@@ -1,8 +1,8 @@
 import type {PortableTextBlock} from '@sanity/types'
 import type {Converter} from '../converters/converter.types'
 import type {EventPosition} from '../internal-utils/event-position'
-import {slateRangeToSelection} from '../internal-utils/slate-utils'
-import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
+import type {PortableTextSlateEditor} from '../types/editor'
+import {EditorSelection} from '../types/selection'
 import type {HasTag} from './editor-machine'
 import type {EditorSchema} from './editor-schema'
 import {getActiveAnnotations} from './get-active-annotations'
@@ -16,7 +16,7 @@ export type EditorContext = {
   keyGenerator: () => string
   readOnly: boolean
   schema: EditorSchema
-  selection: EditorSelection
+  selection: EditorSelection | null
   value: Array<PortableTextBlock>
 }
 
@@ -62,20 +62,12 @@ export function createEditorSnapshot({
       }
     | undefined
 }) {
-  const selection = editor.selection
-    ? slateRangeToSelection({
-        schema,
-        editor,
-        range: editor.selection,
-      })
-    : null
-
   const context = {
     converters,
     keyGenerator,
     readOnly,
     schema,
-    selection,
+    selection: editor.selection,
     value: editor.value,
   } satisfies EditorContext
 

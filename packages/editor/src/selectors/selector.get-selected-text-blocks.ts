@@ -1,6 +1,7 @@
 import type {KeyedSegment, PortableTextTextBlock} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import {isTextBlock} from '../internal-utils/parse-blocks'
+import {isBackward} from '../types/selection'
 import {isKeyedSegment} from '../utils'
 
 /**
@@ -17,19 +18,21 @@ export const getSelectedTextBlocks: EditorSelector<
     node: PortableTextTextBlock
     path: [KeyedSegment]
   }> = []
-  const startKey = snapshot.context.selection.backward
-    ? isKeyedSegment(snapshot.context.selection.focus.path[0])
-      ? snapshot.context.selection.focus.path[0]._key
+
+  const startPoint = isBackward(snapshot.context.selection)
+    ? snapshot.context.selection.focus
+    : snapshot.context.selection.anchor
+  const endPoint = isBackward(snapshot.context.selection)
+    ? snapshot.context.selection.anchor
+    : snapshot.context.selection.focus
+
+  const startKey =
+    startPoint.path[0] !== undefined
+      ? snapshot.context.value.at(startPoint.path[0])?._key
       : undefined
-    : isKeyedSegment(snapshot.context.selection.anchor.path[0])
-      ? snapshot.context.selection.anchor.path[0]._key
-      : undefined
-  const endKey = snapshot.context.selection.backward
-    ? isKeyedSegment(snapshot.context.selection.anchor.path[0])
-      ? snapshot.context.selection.anchor.path[0]._key
-      : undefined
-    : isKeyedSegment(snapshot.context.selection.focus.path[0])
-      ? snapshot.context.selection.focus.path[0]._key
+  const endKey =
+    endPoint.path[0] !== undefined
+      ? snapshot.context.value.at(endPoint.path[0])?._key
       : undefined
 
   if (!startKey || !endKey) {

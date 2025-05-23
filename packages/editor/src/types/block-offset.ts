@@ -1,9 +1,9 @@
-import type {KeyedSegment} from '@sanity/types'
+import type {BlockPath} from './paths'
 
 /**
  * @beta
  */
 export type BlockOffset = {
-  path: [KeyedSegment]
+  path: BlockPath
   offset: number
 }

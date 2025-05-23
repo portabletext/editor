@@ -6,6 +6,7 @@ import type {OmitFromUnion, PickFromUnion, StrictExtract} from '../type-utils'
 import type {BlockOffset} from '../types/block-offset'
 import type {BlockWithOptionalKey} from '../types/block-with-optional-key'
 import type {EditorSelection} from '../types/editor'
+import {BlockPath} from '../types/paths'
 
 /**
  * @beta
@@ -108,12 +109,12 @@ export type SyntheticBehaviorEvent =
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'block.set'>
-      at: [KeyedSegment]
+      at: BlockPath
       props: Record<string, unknown>
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'block.unset'>
-      at: [KeyedSegment]
+      at: BlockPath
       props: Array<string>
     }
   | {
@@ -138,7 +139,7 @@ export type SyntheticBehaviorEvent =
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'delete.block'>
-      at: [KeyedSegment]
+      at: BlockPath
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'delete.forward'>
@@ -182,8 +183,8 @@ export type SyntheticBehaviorEvent =
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'move.block'>
-      at: [KeyedSegment]
-      to: [KeyedSegment]
+      at: BlockPath
+      to: BlockPath
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'move.forward'>
@@ -351,11 +352,11 @@ type AbstractBehaviorEvent =
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'move.block down'>
-      at: [KeyedSegment]
+      at: BlockPath
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'move.block up'>
-      at: [KeyedSegment]
+      at: BlockPath
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'select.previous block'>

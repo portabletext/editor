@@ -1,8 +1,8 @@
 import type {PortableTextBlock} from '@sanity/types'
 import {expect, test} from 'vitest'
-import type {EditorSelection} from '..'
 import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
+import {EditorSelection} from '../types/selection'
 import {getSelectionText} from './selector.get-selection-text'
 
 const brokenBlock = {
@@ -124,8 +124,8 @@ test(getSelectionText.name, () => {
           },
         ],
         {
-          anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
-          focus: {path: [{_key: 'k0'}, 'children', {_key: 'k3'}], offset: 0},
+          anchor: {path: [0, 0], offset: 0},
+          focus: {path: [0, 2], offset: 0},
         },
       ),
     ),
@@ -142,12 +142,12 @@ test(getSelectionText.name, () => {
         ],
         {
           anchor: {
-            path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+            path: [0, 0],
             offset: 0,
           },
           focus: {
-            path: [{_key: 'b0'}, 'children', {_key: 's0'}],
-            offset: 3,
+            path: [0, 0],
+            offset: 0,
           },
         },
       ),
@@ -165,11 +165,11 @@ test(getSelectionText.name, () => {
         ],
         {
           anchor: {
-            path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+            path: [0, 0],
             offset: 3,
           },
           focus: {
-            path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+            path: [0, 0],
             offset: 7,
           },
         },
@@ -180,11 +180,11 @@ test(getSelectionText.name, () => {
     getSelectionText(
       snapshot([brokenBlock], {
         anchor: {
-          path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+          path: [0, 0],
           offset: 0,
         },
         focus: {
-          path: [{_key: 'b0'}, 'children', {_key: 's5'}],
+          path: [0, 5],
           offset: 0,
         },
       }),
@@ -194,11 +194,11 @@ test(getSelectionText.name, () => {
     getSelectionText(
       snapshot([brokenBlock], {
         anchor: {
-          path: [{_key: 'b0'}, 'children', {_key: 's1'}],
+          path: [0, 1],
           offset: 0,
         },
         focus: {
-          path: [{_key: 'b0'}, 'children', {_key: 's5'}],
+          path: [0, 5],
           offset: 0,
         },
       }),
@@ -208,11 +208,11 @@ test(getSelectionText.name, () => {
     getSelectionText(
       snapshot([brokenBlock], {
         anchor: {
-          path: [{_key: 'b0'}, 'children', {_key: 's2'}],
+          path: [0, 2],
           offset: 0,
         },
         focus: {
-          path: [{_key: 'b0'}, 'children', {_key: 's5'}],
+          path: [0, 5],
           offset: 0,
         },
       }),
@@ -222,11 +222,11 @@ test(getSelectionText.name, () => {
     getSelectionText(
       snapshot([brokenBlock], {
         anchor: {
-          path: [{_key: 'b0'}, 'children', {_key: 's2'}],
+          path: [0, 2],
           offset: 1,
         },
         focus: {
-          path: [{_key: 'b0'}, 'children', {_key: 's5'}],
+          path: [0, 5],
           offset: 0,
         },
       }),
@@ -236,11 +236,11 @@ test(getSelectionText.name, () => {
     getSelectionText(
       snapshot([brokenBlock], {
         anchor: {
-          path: [{_key: 'b0'}, 'children', {_key: 's3'}],
+          path: [0, 3],
           offset: 0,
         },
         focus: {
-          path: [{_key: 'b0'}, 'children', {_key: 's5'}],
+          path: [0, 5],
           offset: 0,
         },
       }),
@@ -250,11 +250,11 @@ test(getSelectionText.name, () => {
     getSelectionText(
       snapshot([brokenBlock], {
         anchor: {
-          path: [{_key: 'b0'}, 'children', {_key: 's3'}],
+          path: [0, 3],
           offset: 1,
         },
         focus: {
-          path: [{_key: 'b0'}, 'children', {_key: 's5'}],
+          path: [0, 5],
           offset: 0,
         },
       }),
@@ -264,11 +264,11 @@ test(getSelectionText.name, () => {
     getSelectionText(
       snapshot([brokenBlock], {
         anchor: {
-          path: [{_key: 'b0'}, 'children', {_key: 's4'}],
+          path: [0, 4],
           offset: 0,
         },
         focus: {
-          path: [{_key: 'b0'}, 'children', {_key: 's5'}],
+          path: [0, 5],
           offset: 0,
         },
       }),
@@ -278,11 +278,11 @@ test(getSelectionText.name, () => {
     getSelectionText(
       snapshot([brokenBlock], {
         anchor: {
-          path: [{_key: 'b0'}, 'children', {_key: 's5'}],
+          path: [0, 5],
           offset: 0,
         },
         focus: {
-          path: [{_key: 'b0'}, 'children', {_key: 's5'}],
+          path: [0, 5],
           offset: 0,
         },
       }),
@@ -292,11 +292,11 @@ test(getSelectionText.name, () => {
     getSelectionText(
       snapshot([brokenBlock], {
         anchor: {
-          path: [{_key: 'b0'}, 'children', {_key: 's6'}],
+          path: [0, 6],
           offset: 0,
         },
         focus: {
-          path: [{_key: 'b0'}, 'children', {_key: 's5'}],
+          path: [0, 5],
           offset: 0,
         },
       }),
@@ -306,11 +306,11 @@ test(getSelectionText.name, () => {
     getSelectionText(
       snapshot([brokenBlock, bazBlock], {
         anchor: {
-          path: [{_key: 'b0'}, 'children', {_key: 's3'}],
+          path: [0, 3],
           offset: 0,
         },
         focus: {
-          path: [{_key: 'b1'}, 'children', {_key: 's7'}],
+          path: [1, 0],
           offset: 2,
         },
       }),
@@ -320,11 +320,11 @@ test(getSelectionText.name, () => {
     getSelectionText(
       snapshot([brokenBlock, bazBlock], {
         anchor: {
-          path: [{_key: 'b0'}, 'children', {_key: 's3'}],
+          path: [0, 3],
           offset: 0,
         },
         focus: {
-          path: [{_key: 'b1'}, 'children', {_key: 's7'}],
+          path: [1, 0],
           offset: 0,
         },
       }),
@@ -334,11 +334,11 @@ test(getSelectionText.name, () => {
     getSelectionText(
       snapshot([brokenBlock, imageBlock, bazBlock], {
         anchor: {
-          path: [{_key: imageBlock._key}],
+          path: [0],
           offset: 0,
         },
         focus: {
-          path: [{_key: 'b1'}, 'children', {_key: 's7'}],
+          path: [2, 0],
           offset: 0,
         },
       }),
@@ -348,11 +348,11 @@ test(getSelectionText.name, () => {
     getSelectionText(
       snapshot([brokenBlock, imageBlock, bazBlock], {
         anchor: {
-          path: [{_key: imageBlock._key}],
+          path: [1],
           offset: 0,
         },
         focus: {
-          path: [{_key: 'b1'}, 'children', {_key: 's7'}],
+          path: [2, 0],
           offset: 1,
         },
       }),
@@ -391,27 +391,11 @@ test(getSelectionText.name, () => {
         ],
         {
           anchor: {
-            path: [
-              {
-                _key: 'e0-k8',
-              },
-              'children',
-              {
-                _key: 'e0-k7',
-              },
-            ],
+            path: [0, 0],
             offset: 0,
           },
           focus: {
-            path: [
-              {
-                _key: 'e0-k8',
-              },
-              'children',
-              {
-                _key: 'e0-k10',
-              },
-            ],
+            path: [0, 2],
             offset: 1,
           },
         },

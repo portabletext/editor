@@ -1,7 +1,7 @@
 import type {PortableTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
-import type {EditorSelection} from '..'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
+import {EditorSelection} from '../types/selection'
 import {getSelectedSpans} from './selector.get-selected-spans'
 
 const fooBar = {
@@ -55,11 +55,11 @@ describe(getSelectedSpans.name, () => {
       getSelectedSpans(
         snapshot([fooBar, image, baz], {
           anchor: {
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            path: [0, 0],
             offset: 0,
           },
           focus: {
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            path: [0, 0],
             offset: 3,
           },
         }),
@@ -67,7 +67,7 @@ describe(getSelectedSpans.name, () => {
     ).toEqual([
       {
         node: {_type: 'span', _key: 's1', text: 'foo', marks: ['strong']},
-        path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        path: [0, 0],
       },
     ])
   })
@@ -77,11 +77,11 @@ describe(getSelectedSpans.name, () => {
       getSelectedSpans(
         snapshot([fooBar], {
           anchor: {
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            path: [0, 0],
             offset: 0,
           },
           focus: {
-            path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+            path: [0, 1],
             offset: 0,
           },
         }),
@@ -89,7 +89,7 @@ describe(getSelectedSpans.name, () => {
     ).toEqual([
       {
         node: {_type: 'span', _key: 's1', text: 'foo', marks: ['strong']},
-        path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        path: [0, 0],
       },
     ])
   })
@@ -99,11 +99,11 @@ describe(getSelectedSpans.name, () => {
       getSelectedSpans(
         snapshot([fooBar], {
           anchor: {
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            path: [0, 0],
             offset: 2,
           },
           focus: {
-            path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+            path: [0, 1],
             offset: 3,
           },
         }),
@@ -111,11 +111,11 @@ describe(getSelectedSpans.name, () => {
     ).toEqual([
       {
         node: {_type: 'span', _key: 's1', text: 'foo', marks: ['strong']},
-        path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        path: [0, 0],
       },
       {
         node: {_type: 'span', _key: 's2', text: 'bar'},
-        path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+        path: [0, 1],
       },
     ])
   })
@@ -125,11 +125,11 @@ describe(getSelectedSpans.name, () => {
       getSelectedSpans(
         snapshot([fooBar], {
           anchor: {
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            path: [0, 0],
             offset: 3,
           },
           focus: {
-            path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+            path: [0, 1],
             offset: 3,
           },
         }),
@@ -137,7 +137,7 @@ describe(getSelectedSpans.name, () => {
     ).toEqual([
       {
         node: {_type: 'span', _key: 's2', text: 'bar'},
-        path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+        path: [0, 1],
       },
     ])
   })
@@ -147,11 +147,11 @@ describe(getSelectedSpans.name, () => {
       getSelectedSpans(
         snapshot([fooBar, baz], {
           anchor: {
-            path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+            path: [0, 1],
             offset: 0,
           },
           focus: {
-            path: [{_key: 'b3'}, 'children', {_key: 's3'}],
+            path: [1, 0],
             offset: 0,
           },
         }),
@@ -159,7 +159,7 @@ describe(getSelectedSpans.name, () => {
     ).toEqual([
       {
         node: {_type: 'span', _key: 's2', text: 'bar'},
-        path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+        path: [0, 1],
       },
     ])
   })
@@ -169,11 +169,11 @@ describe(getSelectedSpans.name, () => {
       getSelectedSpans(
         snapshot([fooBar, image, baz], {
           anchor: {
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            path: [0, 0],
             offset: 2,
           },
           focus: {
-            path: [{_key: 'b3'}, 'children', {_key: 's3'}],
+            path: [2, 0],
             offset: 2,
           },
         }),
@@ -181,15 +181,15 @@ describe(getSelectedSpans.name, () => {
     ).toEqual([
       {
         node: {_type: 'span', _key: 's1', text: 'foo', marks: ['strong']},
-        path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        path: [0, 0],
       },
       {
         node: {_type: 'span', _key: 's2', text: 'bar'},
-        path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+        path: [0, 1],
       },
       {
         node: {_type: 'span', _key: 's3', text: 'baz'},
-        path: [{_key: 'b3'}, 'children', {_key: 's3'}],
+        path: [2, 0],
       },
     ])
   })
@@ -199,11 +199,11 @@ describe(getSelectedSpans.name, () => {
       getSelectedSpans(
         snapshot([fooBar, baz], {
           anchor: {
-            path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+            path: [0, 1],
             offset: 3,
           },
           focus: {
-            path: [{_key: 'b3'}, 'children', {_key: 's3'}],
+            path: [1, 0],
             offset: 3,
           },
         }),
@@ -211,7 +211,7 @@ describe(getSelectedSpans.name, () => {
     ).toEqual([
       {
         node: {_type: 'span', _key: 's3', text: 'baz'},
-        path: [{_key: 'b3'}, 'children', {_key: 's3'}],
+        path: [1, 0],
       },
     ])
   })
@@ -231,11 +231,11 @@ describe(getSelectedSpans.name, () => {
           ],
           {
             anchor: {
-              path: [{_key: 'b2'}],
+              path: [0],
               offset: 0,
             },
             focus: {
-              path: [{_key: 'b4'}, 'children', {_key: 's4'}],
+              path: [2, 0],
               offset: 0,
             },
           },
@@ -244,7 +244,7 @@ describe(getSelectedSpans.name, () => {
     ).toEqual([
       {
         node: {_key: 's3', _type: 'span', text: 'baz'},
-        path: [{_key: 'b3'}, 'children', {_key: 's3'}],
+        path: [1, 0],
       },
     ])
   })

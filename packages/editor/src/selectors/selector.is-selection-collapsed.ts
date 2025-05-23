@@ -1,4 +1,5 @@
 import type {EditorSelector} from '../editor/editor-selector'
+import {isCollapsed} from '../types/selection'
 
 /**
  * @public
@@ -8,10 +9,5 @@ export const isSelectionCollapsed: EditorSelector<boolean> = (snapshot) => {
     return false
   }
 
-  return (
-    JSON.stringify(snapshot.context.selection.anchor.path) ===
-      JSON.stringify(snapshot.context.selection.focus.path) &&
-    snapshot.context.selection?.anchor.offset ===
-      snapshot.context.selection?.focus.offset
-  )
+  return isCollapsed(snapshot.context.selection)
 }

@@ -1,7 +1,7 @@
 import type {PortableTextBlock} from '@sanity/types'
 import type {EditorContext} from '..'
 import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
-import {isKeyedSegment} from './util.is-keyed-segment'
+import {isBackward} from '../types/selection'
 
 /**
  * @public
@@ -19,29 +19,36 @@ export function sliceBlocks({
     return slice
   }
 
-  let startBlock: PortableTextBlock | undefined
   const middleBlocks: PortableTextBlock[] = []
-  let endBlock: PortableTextBlock | undefined
 
-  const startPoint = context.selection.backward
+  const startPoint = isBackward(context.selection)
     ? context.selection.focus
     : context.selection.anchor
-  const endPoint = context.selection.backward
+  const endPoint = isBackward(context.selection)
     ? context.selection.anchor
     : context.selection.focus
 
-  const startBlockKey = isKeyedSegment(startPoint.path[0])
-    ? startPoint.path[0]._key
-    : undefined
-  const endBlockKey = isKeyedSegment(endPoint.path[0])
-    ? endPoint.path[0]._key
-    : undefined
-  const startChildKey = isKeyedSegment(startPoint.path[2])
-    ? startPoint.path[2]._key
-    : undefined
-  const endChildKey = isKeyedSegment(endPoint.path[2])
-    ? endPoint.path[2]._key
-    : undefined
+  if (!startPoint || !endPoint) {
+    return slice
+  }
+
+  let startBlock =
+    startPoint.path[0] !== undefined ? blocks.at(startPoint.path[0]) : undefined
+  const startChildKey =
+    startPoint.path[1] !== undefined && isTextBlock(context, startBlock)
+      ? startBlock?.children.at(startPoint.path[1])?._key
+      : undefined
+  const startBlockKey = startBlock?._key
+  startBlock = undefined
+
+  let endBlock =
+    endPoint.path[0] !== undefined ? blocks.at(endPoint.path[0]) : undefined
+  const endChildKey =
+    endPoint.path[1] !== undefined && isTextBlock(context, endBlock)
+      ? endBlock?.children.at(endPoint.path[1])?._key
+      : undefined
+  const endBlockKey = endBlock?._key
+  endBlock = undefined
 
   if (!startBlockKey || !endBlockKey) {
     return slice

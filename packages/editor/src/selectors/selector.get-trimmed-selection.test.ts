@@ -632,26 +632,24 @@ describe(getTrimmedSelection.name, () => {
       getTrimmedSelection(
         snapshot([block1, block2], {
           anchor: {
-            path: [{_key: block2._key}, 'children', {_key: bar._key}],
+            path: [1, 0],
             offset: 3,
           },
           focus: {
-            path: [{_key: block1._key}, 'children', {_key: foo._key}],
+            path: [0, 0],
             offset: 3,
           },
-          backward: true,
         }),
       ),
     ).toEqual({
       anchor: {
-        path: [{_key: block2._key}, 'children', {_key: bar._key}],
+        path: [1, 0],
         offset: 3,
       },
       focus: {
-        path: [{_key: block2._key}, 'children', {_key: bar._key}],
+        path: [1, 0],
         offset: 0,
       },
-      backward: true,
     })
   })
 })

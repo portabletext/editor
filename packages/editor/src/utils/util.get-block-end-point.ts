@@ -1,7 +1,7 @@
-import type {KeyedSegment, PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock} from '@sanity/types'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
-import type {EditorSelectionPoint} from '../types/editor'
+import {EditorSelectionPoint} from '../types/selection'
 
 /**
  * @public
@@ -13,7 +13,7 @@ export function getBlockEndPoint({
   context: Pick<EditorContext, 'schema'>
   block: {
     node: PortableTextBlock
-    path: [KeyedSegment]
+    path: [number]
   }
 }): EditorSelectionPoint {
   if (isTextBlock(context, block.node)) {
@@ -21,7 +21,7 @@ export function getBlockEndPoint({
 
     if (lastChild) {
       return {
-        path: [...block.path, 'children', {_key: lastChild._key}],
+        path: [...block.path, block.node.children.length - 1],
         offset: isSpan(context, lastChild) ? lastChild.text.length : 0,
       }
     }
