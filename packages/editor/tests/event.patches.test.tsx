@@ -540,6 +540,48 @@ describe('event.patches', () => {
     })
   })
 
+  test('Scenario: `set` initial block object property', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const imageKey = keyGenerator()
+    const {editorRef} = await getEditor({
+      initialValue: [
+        {
+          _key: imageKey,
+          _type: 'image',
+        },
+      ],
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+    })
+
+    editorRef.current?.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: imageKey}, 'src'],
+          value: 'https://www.sanity.io/logo.png',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _key: imageKey,
+          _type: 'image',
+          src: 'https://www.sanity.io/logo.png',
+        },
+      ])
+    })
+  })
+
   test('`set` block object properties', async () => {
     const {editorRef} = await getEditor({
       schemaDefinition: defineSchema({
