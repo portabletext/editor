@@ -540,6 +540,227 @@ describe('event.patches', () => {
     })
   })
 
+  test('Scenario: Merging spans', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const aKey = keyGenerator()
+    const cKey = keyGenerator()
+    const bKey = keyGenerator()
+
+    const {editorRef} = await getEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: aKey, text: 'a', marks: ['strong']},
+            {_type: 'span', _key: bKey, text: 'b', marks: []},
+            {_type: 'span', _key: cKey, text: 'c', marks: ['strong']},
+          ],
+        },
+      ],
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+      }),
+    })
+
+    editorRef.current?.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: blockKey}, 'children', {_key: bKey}, 'marks'],
+          value: ['strong'],
+        },
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: blockKey}, 'children', {_key: aKey}, 'text'],
+          value: 'ab',
+        },
+        {
+          type: 'unset',
+          origin: 'remote',
+          path: [{_key: blockKey}, 'children', {_key: bKey}],
+        },
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: blockKey}, 'children', {_key: aKey}, 'text'],
+          value: 'abc',
+        },
+        {
+          type: 'unset',
+          origin: 'remote',
+          path: [{_key: blockKey}, 'children', {_key: cKey}],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: aKey, text: 'abc', marks: ['strong']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: `set` span properties', async () => {
+    const {editorRef} = await getEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+      ],
+    })
+
+    editorRef.current?.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+          value: 'bar',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editorRef.current?.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}, '_map'],
+          value: {},
+        },
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}, '_map', 'foo'],
+          value: 'bar',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k1',
+              text: 'bar',
+              marks: [],
+              _map: {foo: 'bar'},
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: `unset` span properties', async () => {
+    const {editorRef} = await getEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k1',
+              text: 'foo',
+              marks: [],
+              _map: {foo: 'bar'},
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    editorRef.current?.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'unset',
+          origin: 'remote',
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}, '_map'],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editorRef.current?.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'unset',
+          origin: 'remote',
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
   test('Scenario: `set` initial block object property', async () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
@@ -728,6 +949,82 @@ describe('event.patches', () => {
     })
   })
 
+  test('Scenario: `unset` block object properties', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const imageKey = keyGenerator()
+    const {editorRef} = await getEditor({
+      initialValue: [
+        {
+          _key: imageKey,
+          _type: 'image',
+          src: 'https://www.sanity.io/logo.png',
+          _map: {foo: 'bar'},
+        },
+      ],
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+    })
+
+    editorRef.current?.send({
+      type: 'patches',
+      patches: [{type: 'unset', origin: 'remote', path: [{_key: 'k0'}, 'src']}],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _key: imageKey,
+          _type: 'image',
+          _map: {foo: 'bar'},
+        },
+      ])
+    })
+
+    editorRef.current?.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'unset',
+          origin: 'remote',
+          path: [{_key: imageKey}, '_map', 'foo'],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _key: imageKey,
+          _type: 'image',
+          _map: {},
+        },
+      ])
+    })
+
+    editorRef.current?.send({
+      type: 'patches',
+      patches: [
+        {type: 'unset', origin: 'remote', path: [{_key: imageKey}, '_map']},
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _key: imageKey,
+          _type: 'image',
+        },
+      ])
+    })
+  })
+
   test('Scenario: Inserting inline object', async () => {
     const {editorARef, editorBRef} = await getEditors({
       schemaDefinition: defineSchema({
@@ -762,6 +1059,358 @@ describe('event.patches', () => {
     await vi.waitFor(() => {
       expect(editorARef.current?.getSnapshot().context.value).toEqual(value)
       expect(editorBRef.current?.getSnapshot().context.value).toEqual(value)
+    })
+  })
+
+  test('Scenario: `set` inline object properties', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const span1Key = keyGenerator()
+    const stockTickerKey = keyGenerator()
+    const span2Key = keyGenerator()
+    const {editorRef} = await getEditor({
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_type: 'span', _key: span1Key, text: '', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey},
+            {_type: 'span', _key: span2Key, text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]},
+        ],
+      }),
+    })
+
+    editorRef.current?.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [
+            {_key: blockKey},
+            'children',
+            {_key: stockTickerKey},
+            'symbol',
+          ],
+          value: 'AAPL',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_type: 'span', _key: span1Key, text: '', marks: []},
+            {
+              _type: 'stock-ticker',
+              _key: stockTickerKey,
+              symbol: 'AAPL',
+            },
+            {_type: 'span', _key: span2Key, text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editorRef.current?.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: blockKey}, 'children', {_key: stockTickerKey}, '_map'],
+          value: {},
+        },
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [
+            {_key: blockKey},
+            'children',
+            {_key: stockTickerKey},
+            '_map',
+            'foo',
+          ],
+          value: 'bar',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_type: 'span', _key: span1Key, text: '', marks: []},
+            {
+              _type: 'stock-ticker',
+              _key: stockTickerKey,
+              symbol: 'AAPL',
+              _map: {foo: 'bar'},
+            },
+            {_type: 'span', _key: span2Key, text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: `set` special inline object properties is a noop', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const span1Key = keyGenerator()
+    const stockTickerKey = keyGenerator()
+    const span2Key = keyGenerator()
+
+    const {editorRef} = await getEditor({
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_type: 'span', _key: span1Key, text: '', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey},
+            {_type: 'span', _key: span2Key, text: '', marks: []},
+          ],
+        },
+      ],
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]},
+        ],
+      }),
+    })
+
+    editorRef.current?.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: blockKey}, 'children', {_key: stockTickerKey}, '_key'],
+          value: 'new key',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_type: 'span', _key: span1Key, text: '', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey},
+            {_type: 'span', _key: span2Key, text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editorRef.current?.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: blockKey}, 'children', {_key: stockTickerKey}, '_type'],
+          value: 'new type',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_type: 'span', _key: span1Key, text: '', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey},
+            {_type: 'span', _key: span2Key, text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: `unset` inline object properties', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const span1Key = keyGenerator()
+    const stockTickerKey = keyGenerator()
+    const span2Key = keyGenerator()
+    const {editorRef} = await getEditor({
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_type: 'span', _key: span1Key, text: '', marks: []},
+            {
+              _type: 'stock-ticker',
+              _key: stockTickerKey,
+              symbol: 'AAPL',
+              _map: {foo: 'bar'},
+            },
+            {_type: 'span', _key: span2Key, text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]},
+        ],
+      }),
+    })
+
+    editorRef.current?.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'unset',
+          origin: 'remote',
+          path: [
+            {_key: blockKey},
+            'children',
+            {_key: stockTickerKey},
+            'symbol',
+          ],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_type: 'span', _key: span1Key, text: '', marks: []},
+            {
+              _type: 'stock-ticker',
+              _key: stockTickerKey,
+              _map: {foo: 'bar'},
+            },
+            {_type: 'span', _key: span2Key, text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: `unset` reserved inline object properties', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const span1Key = keyGenerator()
+    const stockTickerKey = keyGenerator()
+    const span2Key = keyGenerator()
+    const {editorRef} = await getEditor({
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_type: 'span', _key: span1Key, text: '', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey},
+            {_type: 'span', _key: span2Key, text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]},
+        ],
+      }),
+    })
+
+    editorRef.current?.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'unset',
+          origin: 'remote',
+          path: [{_key: blockKey}, 'children', {_key: stockTickerKey}, '_key'],
+        },
+        {
+          type: 'unset',
+          origin: 'remote',
+          path: [{_key: blockKey}, 'children', {_key: stockTickerKey}, '_type'],
+        },
+        {
+          type: 'unset',
+          origin: 'remote',
+          path: [
+            {_key: blockKey},
+            'children',
+            {_key: stockTickerKey},
+            'children',
+          ],
+        },
+        {
+          type: 'unset',
+          origin: 'remote',
+          path: [
+            {_key: blockKey},
+            'children',
+            {_key: stockTickerKey},
+            '__inline',
+          ],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_type: 'span', _key: span1Key, text: '', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey},
+            {_type: 'span', _key: span2Key, text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
     })
   })
 
