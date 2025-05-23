@@ -10,10 +10,15 @@ import {
   type Editor,
   type EditorEmittedEvent,
 } from '../src'
+import type {SchemaDefinition} from '../src/editor/editor-schema'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {EditorRefPlugin, EventListenerPlugin} from '../src/plugins'
 
-function getEditors() {
+async function getEditors({
+  schemaDefinition,
+}: {
+  schemaDefinition?: SchemaDefinition
+} = {}) {
   const editorARef = React.createRef<Editor>()
   const editorBRef = React.createRef<Editor>()
   const editorAKeyGenerator = createTestKeyGenerator('ea-')
@@ -26,7 +31,7 @@ function getEditors() {
       <EditorProvider
         initialConfig={{
           keyGenerator: editorAKeyGenerator,
-          schemaDefinition: defineSchema({}),
+          schemaDefinition: schemaDefinition ?? defineSchema({}),
         }}
       >
         <EditorRefPlugin ref={editorARef} />
@@ -34,11 +39,14 @@ function getEditors() {
           on={(event) => {
             onEditorAEvent(event)
 
-            if (event.type === 'patch') {
+            if (event.type === 'mutation') {
               editorBRef.current?.send({
                 type: 'patches',
-                patches: [{...event.patch, origin: 'remote'}],
-                snapshot: editorARef.current?.getSnapshot().context.value,
+                patches: event.patches.map((patch) => ({
+                  ...patch,
+                  origin: 'remote',
+                })),
+                snapshot: editorBRef.current?.getSnapshot().context.value,
               })
             }
           }}
@@ -48,7 +56,7 @@ function getEditors() {
       <EditorProvider
         initialConfig={{
           keyGenerator: editorBKeyGenerator,
-          schemaDefinition: defineSchema({}),
+          schemaDefinition: schemaDefinition ?? defineSchema({}),
         }}
       >
         <EditorRefPlugin ref={editorBRef} />
@@ -56,11 +64,14 @@ function getEditors() {
           on={(event) => {
             onEditorBEvent(event)
 
-            if (event.type === 'patch') {
+            if (event.type === 'mutation') {
               editorARef.current?.send({
                 type: 'patches',
-                patches: [{...event.patch, origin: 'remote'}],
-                snapshot: editorBRef.current?.getSnapshot().context.value,
+                patches: event.patches.map((patch) => ({
+                  ...patch,
+                  origin: 'remote',
+                })),
+                snapshot: editorARef.current?.getSnapshot().context.value,
               })
             }
           }}
@@ -70,7 +81,19 @@ function getEditors() {
     </>
   )
 
+  render(editors)
+
+  const editorALocator = page.getByTestId('editor-a')
+  const editorBLocator = page.getByTestId('editor-b')
+
+  await vi.waitFor(async () => {
+    await expect.element(editorALocator).toBeInTheDocument()
+    await expect.element(editorBLocator).toBeInTheDocument()
+  })
+
   return {
+    editorALocator,
+    editorBLocator,
     editorARef,
     editorBRef,
     onEditorAEvent,
@@ -81,17 +104,8 @@ function getEditors() {
 
 describe('event.patches', () => {
   test('Scenario: Consuming initial diffMatchPatch', async () => {
-    const {editorARef, editorBRef, onEditorAEvent, editors} = getEditors()
-
-    render(editors)
-
-    const editorALocator = page.getByTestId('editor-a')
-    const editorBLocator = page.getByTestId('editor-b')
-
-    await vi.waitFor(async () => {
-      await expect.element(editorALocator).toBeInTheDocument()
-      await expect.element(editorBLocator).toBeInTheDocument()
-    })
+    const {editorARef, editorBRef, onEditorAEvent, editorALocator} =
+      await getEditors()
 
     await userEvent.type(editorALocator, 'f')
 
@@ -157,17 +171,7 @@ describe('event.patches', () => {
   })
 
   test('Scenario: Consuming initial insert patch', async () => {
-    const {editorARef, editorBRef, onEditorAEvent, editors} = getEditors()
-
-    render(editors)
-
-    const editorALocator = page.getByTestId('editor-a')
-    const editorBLocator = page.getByTestId('editor-b')
-
-    await vi.waitFor(async () => {
-      await expect.element(editorALocator).toBeInTheDocument()
-      await expect.element(editorBLocator).toBeInTheDocument()
-    })
+    const {editorARef, editorBRef, onEditorAEvent} = await getEditors()
 
     editorARef.current?.send({type: 'focus'})
     await userEvent.keyboard('{Enter}')
@@ -257,17 +261,8 @@ describe('event.patches', () => {
   })
 
   test('Scenario: Splitting initial block', async () => {
-    const {editorARef, editorBRef, onEditorAEvent, editors} = getEditors()
-
-    render(editors)
-
-    const editorALocator = page.getByTestId('editor-a')
-    const editorBLocator = page.getByTestId('editor-b')
-
-    await vi.waitFor(async () => {
-      await expect.element(editorALocator).toBeInTheDocument()
-      await expect.element(editorBLocator).toBeInTheDocument()
-    })
+    const {editorARef, editorBRef, onEditorAEvent, editorALocator} =
+      await getEditors()
 
     await userEvent.click(editorALocator)
     await userEvent.keyboard('{Enter}')
@@ -697,6 +692,43 @@ describe('event.patches', () => {
           },
         },
       ])
+    })
+  })
+
+  test('Scenario: Inserting inline object', async () => {
+    const {editorARef, editorBRef} = await getEditors({
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]},
+        ],
+      }),
+    })
+
+    editorARef.current?.send({type: 'focus'})
+    editorARef.current?.send({
+      type: 'insert.inline object',
+      inlineObject: {
+        name: 'stock-ticker',
+      },
+    })
+
+    const value = [
+      {
+        _key: 'ea-k0',
+        _type: 'block',
+        children: [
+          {_type: 'span', _key: 'ea-k1', text: '', marks: []},
+          {_type: 'stock-ticker', _key: 'ea-k2'},
+          {_type: 'span', _key: 'ea-k4', text: '', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    await vi.waitFor(() => {
+      expect(editorARef.current?.getSnapshot().context.value).toEqual(value)
+      expect(editorBRef.current?.getSnapshot().context.value).toEqual(value)
     })
   })
 
