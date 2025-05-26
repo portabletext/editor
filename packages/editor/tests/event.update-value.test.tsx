@@ -447,4 +447,75 @@ describe('event.update value', () => {
       ])
     })
   })
+
+  test('Scenario: Clearing lonely text block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editorRef} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {
+              _type: 'span',
+              _key: spanKey,
+              text: 'foo',
+              marks: [],
+            },
+          ],
+          style: 'h1',
+          markDefs: [],
+        },
+      ],
+      schemaDefinition: defineSchema({
+        styles: [{name: 'h1'}],
+      }),
+    })
+
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {
+              _type: 'span',
+              _key: spanKey,
+              text: 'foo',
+              marks: [],
+            },
+          ],
+          style: 'h1',
+          markDefs: [],
+        },
+      ])
+    })
+
+    editorRef.current?.send({
+      type: 'update value',
+      value: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k4',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k5',
+              text: '',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
 })
