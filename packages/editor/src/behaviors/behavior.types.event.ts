@@ -1,5 +1,4 @@
 import type {KeyedSegment, PortableTextBlock} from '@sanity/types'
-import type {TextUnit} from 'slate'
 import type {EventPosition} from '../internal-utils/event-position'
 import type {MIMEType} from '../internal-utils/mime-type'
 import type {OmitFromUnion, PickFromUnion, StrictExtract} from '../type-utils'
@@ -133,11 +132,11 @@ export type SyntheticBehaviorEvent =
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'delete.backward'>
-      unit: TextUnit
+      unit: 'character' | 'word' | 'line' | 'block'
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'delete.forward'>
-      unit: TextUnit
+      unit: 'character' | 'word' | 'line' | 'block'
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'history.redo'>
