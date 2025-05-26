@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.50.7](https://github.com/portabletext/editor/compare/editor-v1.50.6...editor-v1.50.7) (2025-05-26)
+
+
+### Bug Fixes
+
+* **`event.patches`:** improve `set`ing and `unset`ing child properties ([ebe0275](https://github.com/portabletext/editor/commit/ebe027552dc173bdf44b548396cc79cd0437f275))
+* **`update value`:** avoid double placeholder when clearing lonely block object ([ecf0d9d](https://github.com/portabletext/editor/commit/ecf0d9dc9ab105cbf61b825a9495fcfa0a51f424))
+* **`util.isSelectionCollapsed`:** compare paths correctly ([e3c3000](https://github.com/portabletext/editor/commit/e3c30007d4b09f9ca197bd5a36ec0c211da8650f))
+* **behaviors:** remove Slate `TextUnit` type dependency ([a8f36d2](https://github.com/portabletext/editor/commit/a8f36d291a65ba82359b48576925085a5af6d5cc))
+* **behaviors:** turn `delete.(backward|forward)` into an Abstract Events ([7ab5af4](https://github.com/portabletext/editor/commit/7ab5af40240d8651114e1373b3bc02e633ce37c5))
+* **behaviors:** turn `delete.block` into an Abstract Event ([84abff3](https://github.com/portabletext/editor/commit/84abff30f7d48241cfec473be729d29369c2092b))
+
 ## [1.50.6](https://github.com/portabletext/editor/compare/editor-v1.50.5...editor-v1.50.6) (2025-05-22)
 
 
