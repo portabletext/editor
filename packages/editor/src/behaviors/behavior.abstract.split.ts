@@ -1,6 +1,6 @@
 import {isTextBlock, parseBlock} from '../internal-utils/parse-blocks'
 import * as selectors from '../selectors'
-import {getSelectionStartPoint} from '../utils'
+import {getSelectionStartPoint, isSelectionCollapsed} from '../utils'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
 import {sliceBlocks} from '../utils/util.slice-blocks'
@@ -104,18 +104,28 @@ export const abstractSplitBehaviors = [
       return false
     },
     actions: [
-      (_, {newTextBlock, selection}) => [
-        raise({
-          type: 'delete',
-          at: selection,
-        }),
-        raise({
-          type: 'insert.block',
-          block: newTextBlock,
-          placement: 'after',
-          select: 'start',
-        }),
-      ],
+      (_, {newTextBlock, selection}) =>
+        isSelectionCollapsed(selection)
+          ? [
+              raise({
+                type: 'insert.block',
+                block: newTextBlock,
+                placement: 'after',
+                select: 'start',
+              }),
+            ]
+          : [
+              raise({
+                type: 'delete',
+                at: selection,
+              }),
+              raise({
+                type: 'insert.block',
+                block: newTextBlock,
+                placement: 'after',
+                select: 'start',
+              }),
+            ],
     ],
   }),
 ]

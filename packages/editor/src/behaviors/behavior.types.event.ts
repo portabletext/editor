@@ -66,8 +66,6 @@ const syntheticBehaviorEventTypes = [
   'decorator.add',
   'decorator.remove',
   'delete',
-  'delete.backward',
-  'delete.forward',
   'history.redo',
   'history.undo',
   'insert.inline object',
@@ -129,14 +127,14 @@ export type SyntheticBehaviorEvent =
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'delete'>
       at: NonNullable<EditorSelection>
-    }
-  | {
-      type: StrictExtract<SyntheticBehaviorEventType, 'delete.backward'>
-      unit: 'character' | 'word' | 'line' | 'block'
-    }
-  | {
-      type: StrictExtract<SyntheticBehaviorEventType, 'delete.forward'>
-      unit: 'character' | 'word' | 'line' | 'block'
+      /**
+       * Defaults to forward deletion.
+       */
+      direction?: 'backward' | 'forward'
+      /**
+       * Defaults to character deletion.
+       */
+      unit?: 'character' | 'word' | 'line' | 'block'
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'history.redo'>
@@ -212,7 +210,9 @@ export function isSyntheticBehaviorEvent(
 const abstractBehaviorEventTypes = [
   'annotation.toggle',
   'decorator.toggle',
+  'delete.backward',
   'delete.block',
+  'delete.forward',
   'delete.text',
   'deserialize',
   'deserialization.success',
@@ -253,8 +253,16 @@ type AbstractBehaviorEvent =
       at?: {anchor: BlockOffset; focus: BlockOffset}
     }
   | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'delete.backward'>
+      unit: 'character' | 'word' | 'line' | 'block'
+    }
+  | {
       type: StrictExtract<SyntheticBehaviorEventType, 'delete.block'>
       at: [KeyedSegment]
+    }
+  | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'delete.forward'>
+      unit: 'character' | 'word' | 'line' | 'block'
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'delete.text'>

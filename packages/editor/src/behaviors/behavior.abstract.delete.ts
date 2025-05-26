@@ -5,6 +5,46 @@ import {defineBehavior} from './behavior.types.behavior'
 
 export const abstractDeleteBehaviors = [
   defineBehavior({
+    on: 'delete.backward',
+    guard: ({snapshot}) => {
+      if (!snapshot.context.selection) {
+        return false
+      }
+
+      return {selection: snapshot.context.selection}
+    },
+    actions: [
+      ({event}, {selection}) => [
+        raise({
+          type: 'delete',
+          direction: 'backward',
+          unit: event.unit,
+          at: selection,
+        }),
+      ],
+    ],
+  }),
+  defineBehavior({
+    on: 'delete.forward',
+    guard: ({snapshot}) => {
+      if (!snapshot.context.selection) {
+        return false
+      }
+
+      return {selection: snapshot.context.selection}
+    },
+    actions: [
+      ({event}, {selection}) => [
+        raise({
+          type: 'delete',
+          direction: 'forward',
+          unit: event.unit,
+          at: selection,
+        }),
+      ],
+    ],
+  }),
+  defineBehavior({
     on: 'delete.block',
     actions: [
       ({event}) => [
