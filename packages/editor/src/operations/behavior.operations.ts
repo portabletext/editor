@@ -16,8 +16,6 @@ import {blockSetOperationImplementation} from './behavior.operation.block.set'
 import {blockUnsetOperationImplementation} from './behavior.operation.block.unset'
 import {decoratorAddOperationImplementation} from './behavior.operation.decorator.add'
 import {deleteOperationImplementation} from './behavior.operation.delete'
-import {deleteBackwardOperationImplementation} from './behavior.operation.delete.backward'
-import {deleteForwardOperationImplementation} from './behavior.operation.delete.forward'
 import {insertInlineObjectOperationImplementation} from './behavior.operation.insert-inline-object'
 import {insertSpanOperationImplementation} from './behavior.operation.insert-span'
 import {insertBlockOperationImplementation} from './behavior.operation.insert.block'
@@ -63,8 +61,6 @@ const behaviorOperationImplementations: BehaviorOperationImplementations = {
   'decorator.add': decoratorAddOperationImplementation,
   'decorator.remove': removeDecoratorOperationImplementation,
   'delete': deleteOperationImplementation,
-  'delete.backward': deleteBackwardOperationImplementation,
-  'delete.forward': deleteForwardOperationImplementation,
   'history.redo': historyRedoOperationImplementation,
   'history.undo': historyUndoOperationImplementation,
   'insert.block': insertBlockOperationImplementation,
@@ -130,20 +126,6 @@ export function performOperation({
       }
       case 'delete': {
         behaviorOperationImplementations.delete({
-          context,
-          operation: operation,
-        })
-        break
-      }
-      case 'delete.backward': {
-        behaviorOperationImplementations['delete.backward']({
-          context,
-          operation: operation,
-        })
-        break
-      }
-      case 'delete.forward': {
-        behaviorOperationImplementations['delete.forward']({
           context,
           operation: operation,
         })
