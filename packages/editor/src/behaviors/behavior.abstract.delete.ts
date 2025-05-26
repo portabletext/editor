@@ -5,6 +5,26 @@ import {defineBehavior} from './behavior.types.behavior'
 
 export const abstractDeleteBehaviors = [
   defineBehavior({
+    on: 'delete.block',
+    actions: [
+      ({event}) => [
+        raise({
+          type: 'delete',
+          at: {
+            anchor: {
+              path: event.at,
+              offset: 0,
+            },
+            focus: {
+              path: event.at,
+              offset: 0,
+            },
+          },
+        }),
+      ],
+    ],
+  }),
+  defineBehavior({
     on: 'delete.text',
     guard: ({snapshot, event}) => {
       const selection = utils.blockOffsetsToSelection({

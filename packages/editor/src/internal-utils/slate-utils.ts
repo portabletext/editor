@@ -4,6 +4,29 @@ import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
 import {fromSlateValue} from './values'
 
+export function getBlockPath({
+  editor,
+  _key,
+}: {
+  editor: PortableTextSlateEditor
+  _key: string
+}): [number] | undefined {
+  const [, blockPath] = Array.from(
+    Editor.nodes(editor, {
+      at: [],
+      match: (n) => n._key === _key,
+    }),
+  ).at(0) ?? [undefined, undefined]
+
+  const blockIndex = blockPath?.at(0)
+
+  if (blockIndex === undefined) {
+    return undefined
+  }
+
+  return [blockIndex]
+}
+
 export function getAnchorBlock({
   editor,
 }: {

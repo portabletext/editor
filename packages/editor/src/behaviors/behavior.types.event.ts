@@ -68,7 +68,6 @@ const syntheticBehaviorEventTypes = [
   'decorator.remove',
   'delete',
   'delete.backward',
-  'delete.block',
   'delete.forward',
   'history.redo',
   'history.undo',
@@ -135,10 +134,6 @@ export type SyntheticBehaviorEvent =
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'delete.backward'>
       unit: TextUnit
-    }
-  | {
-      type: StrictExtract<SyntheticBehaviorEventType, 'delete.block'>
-      at: [KeyedSegment]
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'delete.forward'>
@@ -218,6 +213,7 @@ export function isSyntheticBehaviorEvent(
 const abstractBehaviorEventTypes = [
   'annotation.toggle',
   'decorator.toggle',
+  'delete.block',
   'delete.text',
   'deserialize',
   'deserialization.success',
@@ -256,6 +252,10 @@ type AbstractBehaviorEvent =
       type: StrictExtract<SyntheticBehaviorEventType, 'decorator.toggle'>
       decorator: string
       at?: {anchor: BlockOffset; focus: BlockOffset}
+    }
+  | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'delete.block'>
+      at: [KeyedSegment]
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'delete.text'>
