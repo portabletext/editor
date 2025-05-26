@@ -591,8 +591,8 @@ importers:
         specifier: ^18.0.1
         version: 18.0.1
       '@cucumber/gherkin':
-        specifier: ^32.1.0
-        version: 32.1.0
+        specifier: ^32.1.2
+        version: 32.1.2
       '@cucumber/messages':
         specifier: ^27.2.0
         version: 27.2.0
@@ -1002,8 +1002,8 @@ packages:
   '@cucumber/gherkin@27.0.0':
     resolution: {integrity: sha512-j5rCsjqzRiC3iVTier3sa0kzyNbkcAmF7xr7jKnyO7qDeK3Z8Ye1P3KSVpeQRMY+KCDJ3WbTDdyxH0FwfA/fIw==}
 
-  '@cucumber/gherkin@32.1.0':
-    resolution: {integrity: sha512-pvS2E2CeEzhmLZe30VMNRJ5q3EHAq3MrH8DeEkUMNnbt2aBviTLM9HEc3rZo/zp5aYtbyX2Lnn/uziuOb9Dumg==}
+  '@cucumber/gherkin@32.1.2':
+    resolution: {integrity: sha512-hj1DcaiIpXJg+mo58zpQyP8c6YsUY/NIOK8oWg1XxbXAWkuYNWr9kkM+i8Xxg1yT6YEzn1loLBG6GjL6SPYOZQ==}
 
   '@cucumber/messages@22.0.0':
     resolution: {integrity: sha512-EuaUtYte9ilkxcKmfqGF9pJsHRUU0jwie5ukuZ/1NPTuHS1LxHPsGEODK17RPRbZHOFhqybNzG2rHAwThxEymg==}
@@ -7022,7 +7022,7 @@ snapshots:
     dependencies:
       '@cucumber/messages': 22.0.0
 
-  '@cucumber/gherkin@32.1.0':
+  '@cucumber/gherkin@32.1.2':
     dependencies:
       '@cucumber/messages': 27.2.0
 
