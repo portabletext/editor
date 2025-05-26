@@ -428,29 +428,35 @@ async function updateValue({
     debug('Value is empty')
     Editor.withoutNormalizing(slateEditor, () => {
       withoutSaving(slateEditor, () => {
-        withoutPatching(slateEditor, () => {
-          if (doneSyncing) {
-            return
-          }
+        withRemoteChanges(slateEditor, () => {
+          withoutPatching(slateEditor, () => {
+            if (doneSyncing) {
+              return
+            }
 
-          if (hadSelection) {
-            Transforms.deselect(slateEditor)
-          }
-          const childrenLength = slateEditor.children.length
-          slateEditor.children.forEach((_, index) => {
-            Transforms.removeNodes(slateEditor, {
-              at: [childrenLength - 1 - index],
+            if (hadSelection) {
+              Transforms.deselect(slateEditor)
+            }
+
+            const childrenLength = slateEditor.children.length
+
+            slateEditor.children.forEach((_, index) => {
+              Transforms.removeNodes(slateEditor, {
+                at: [childrenLength - 1 - index],
+              })
             })
+
+            Transforms.insertNodes(
+              slateEditor,
+              slateEditor.pteCreateTextBlock({decorators: []}),
+              {at: [0]},
+            )
+
+            // Add a new selection in the top of the document
+            if (hadSelection) {
+              Transforms.select(slateEditor, [0, 0])
+            }
           })
-          Transforms.insertNodes(
-            slateEditor,
-            slateEditor.pteCreateTextBlock({decorators: []}),
-            {at: [0]},
-          )
-          // Add a new selection in the top of the document
-          if (hadSelection) {
-            Transforms.select(slateEditor, [0, 0])
-          }
         })
       })
     })

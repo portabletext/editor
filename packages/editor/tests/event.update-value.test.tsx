@@ -8,6 +8,7 @@ import {
   type Editor,
   type EditorEmittedEvent,
 } from '../src'
+import {createTestEditor} from '../src/internal-utils/test-editor'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {EventListenerPlugin} from '../src/plugins'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
@@ -393,6 +394,56 @@ describe('event.update value', () => {
         h1,
         paragraph,
         h2,
+      ])
+    })
+  })
+
+  test('Scenario: Clearing lonely block object', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const imageKey = keyGenerator()
+    const {editorRef} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'image',
+          _key: imageKey,
+        },
+      ],
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'image'}],
+      }),
+    })
+
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _type: 'image',
+          _key: imageKey,
+        },
+      ])
+    })
+
+    editorRef.current?.send({
+      type: 'update value',
+      value: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k3',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k4',
+              text: '',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
       ])
     })
   })
