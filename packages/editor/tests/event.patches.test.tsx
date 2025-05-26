@@ -1,5 +1,4 @@
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
-import type {PortableTextBlock} from '@sanity/types'
 import {page, userEvent} from '@vitest/browser/context'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
@@ -12,40 +11,9 @@ import {
   type EditorEmittedEvent,
 } from '../src'
 import type {SchemaDefinition} from '../src/editor/editor-schema'
+import {createTestEditor} from '../src/internal-utils/test-editor'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {EditorRefPlugin, EventListenerPlugin} from '../src/plugins'
-
-async function getEditor(
-  options: {
-    initialValue?: Array<PortableTextBlock>
-    keyGenerator?: () => string
-    schemaDefinition?: SchemaDefinition
-  } = {},
-) {
-  const editorRef = React.createRef<Editor>()
-  const onEvent = vi.fn<() => EditorEmittedEvent>()
-  const keyGenerator = options.keyGenerator ?? createTestKeyGenerator()
-
-  render(
-    <EditorProvider
-      initialConfig={{
-        keyGenerator,
-        schemaDefinition: options.schemaDefinition ?? defineSchema({}),
-        initialValue: options.initialValue,
-      }}
-    >
-      <EditorRefPlugin ref={editorRef} />
-      <EventListenerPlugin on={onEvent} />
-      <PortableTextEditable />
-    </EditorProvider>,
-  )
-
-  const locator = page.getByRole('textbox')
-
-  await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
-
-  return {editorRef, keyGenerator, locator, onEvent}
-}
 
 async function getEditors({
   schemaDefinition,
@@ -417,7 +385,7 @@ describe('event.patches', () => {
       style: 'h1',
     }
 
-    const {editorRef} = await getEditor({
+    const {editorRef} = await createTestEditor({
       initialValue: [listBlock],
       keyGenerator,
       schemaDefinition: defineSchema({
@@ -460,7 +428,7 @@ describe('event.patches', () => {
 
   test('Scenario: Patching while syncing incoming value', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const {editorRef, onEvent} = await getEditor({
+    const {editorRef, onEvent} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
         lists: [{name: 'bullet'}],
@@ -547,7 +515,7 @@ describe('event.patches', () => {
     const cKey = keyGenerator()
     const bKey = keyGenerator()
 
-    const {editorRef} = await getEditor({
+    const {editorRef} = await createTestEditor({
       initialValue: [
         {
           _type: 'block',
@@ -616,7 +584,7 @@ describe('event.patches', () => {
   })
 
   test('Scenario: `set` span properties', async () => {
-    const {editorRef} = await getEditor({
+    const {editorRef} = await createTestEditor({
       initialValue: [
         {
           _type: 'block',
@@ -692,7 +660,7 @@ describe('event.patches', () => {
   })
 
   test('Scenario: `unset` span properties', async () => {
-    const {editorRef} = await getEditor({
+    const {editorRef} = await createTestEditor({
       initialValue: [
         {
           _type: 'block',
@@ -764,7 +732,7 @@ describe('event.patches', () => {
   test('Scenario: `set` initial block object property', async () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
-    const {editorRef} = await getEditor({
+    const {editorRef} = await createTestEditor({
       initialValue: [
         {
           _key: imageKey,
@@ -804,7 +772,7 @@ describe('event.patches', () => {
   })
 
   test('`set` block object properties', async () => {
-    const {editorRef} = await getEditor({
+    const {editorRef} = await createTestEditor({
       schemaDefinition: defineSchema({
         blockObjects: [
           {
@@ -872,7 +840,7 @@ describe('event.patches', () => {
   })
 
   test('`set` nested block object properties', async () => {
-    const {editorRef} = await getEditor({
+    const {editorRef} = await createTestEditor({
       schemaDefinition: defineSchema({
         blockObjects: [
           {
@@ -952,7 +920,7 @@ describe('event.patches', () => {
   test('Scenario: `unset` block object properties', async () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
-    const {editorRef} = await getEditor({
+    const {editorRef} = await createTestEditor({
       initialValue: [
         {
           _key: imageKey,
@@ -1068,7 +1036,7 @@ describe('event.patches', () => {
     const span1Key = keyGenerator()
     const stockTickerKey = keyGenerator()
     const span2Key = keyGenerator()
-    const {editorRef} = await getEditor({
+    const {editorRef} = await createTestEditor({
       initialValue: [
         {
           _key: blockKey,
@@ -1182,7 +1150,7 @@ describe('event.patches', () => {
     const stockTickerKey = keyGenerator()
     const span2Key = keyGenerator()
 
-    const {editorRef} = await getEditor({
+    const {editorRef} = await createTestEditor({
       initialValue: [
         {
           _key: blockKey,
@@ -1267,7 +1235,7 @@ describe('event.patches', () => {
     const span1Key = keyGenerator()
     const stockTickerKey = keyGenerator()
     const span2Key = keyGenerator()
-    const {editorRef} = await getEditor({
+    const {editorRef} = await createTestEditor({
       initialValue: [
         {
           _key: blockKey,
@@ -1338,7 +1306,7 @@ describe('event.patches', () => {
     const span1Key = keyGenerator()
     const stockTickerKey = keyGenerator()
     const span2Key = keyGenerator()
-    const {editorRef} = await getEditor({
+    const {editorRef} = await createTestEditor({
       initialValue: [
         {
           _key: blockKey,
@@ -1447,7 +1415,7 @@ describe('event.patches', () => {
       },
     ]
 
-    const {editorRef} = await getEditor({
+    const {editorRef} = await createTestEditor({
       keyGenerator,
       initialValue,
       schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
@@ -1529,7 +1497,7 @@ describe('event.patches', () => {
     }
 
     test('Scenario: Adding and removing text to an empty editor', async () => {
-      const {editorRef} = await getEditor({
+      const {editorRef} = await createTestEditor({
         schemaDefinition: defineSchema({}),
       })
 
