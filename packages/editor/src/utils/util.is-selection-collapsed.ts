@@ -9,7 +9,8 @@ export function isSelectionCollapsed(selection: EditorSelection) {
   }
 
   return (
-    selection.anchor.path.join() === selection.focus.path.join() &&
+    JSON.stringify(selection.anchor.path) ===
+      JSON.stringify(selection.focus.path) &&
     selection.anchor.offset === selection.focus.offset
   )
 }
