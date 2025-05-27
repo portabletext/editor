@@ -472,9 +472,10 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
         path: propPath,
       },
     ])
+    const newKeys = Object.keys(newNode)
 
     const removedProperties = Object.keys(child.node).filter(
-      (property) => newNode[property] === undefined,
+      (property) => !newKeys.includes(property),
     )
 
     Transforms.unsetNodes(editor, removedProperties, {
