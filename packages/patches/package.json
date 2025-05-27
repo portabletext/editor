@@ -39,6 +39,7 @@
     "build": "pkg-utils build --strict --check --clean",
     "check:lint": "biome lint .",
     "check:types": "tsc --noEmit --pretty",
+    "check:types:watch": "tsc --noEmit --pretty --watch",
     "clean": "del .turbo && del dist && del node_modules",
     "dev": "pkg-utils watch",
     "lint:fix": "biome lint --write .",
