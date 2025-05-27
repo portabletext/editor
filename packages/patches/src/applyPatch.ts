@@ -1,35 +1,35 @@
-import {isObject, isString} from 'lodash'
-import applyArrayPatch from './array'
-import applyObjectPatch from './object'
-import applyPrimitivePatch from './primitive'
-import applyStringPatch from './string'
+import {applyPatchToArray} from './array'
+import {applyPatchToNumber} from './number'
+import {applyPatchToObject} from './object'
+import {applyPatchToUnknown} from './primitive'
+import {applyPatchToString} from './string'
+import type {JSONValue, Patch} from './types'
 
 /** @beta */
-export function applyAll(value: any, patches: any[]) {
-  return patches.reduce(_apply, value)
+export function applyAll<TValue>(value: TValue, patches: Array<Patch>): TValue {
+  return patches.reduce(applyPatch, value) as TValue
 }
 
-function applyPatch(
-  value: string,
-  patch: {type: string; path: any[]; value: any},
-) {
+export default function applyPatch(value: unknown, patch: Patch) {
   if (Array.isArray(value)) {
-    return applyArrayPatch(value, patch as any)
+    return applyPatchToArray(value, patch)
   }
-  if (isString(value)) {
-    return applyStringPatch(value, patch)
+
+  if (typeof value === 'string') {
+    return applyPatchToString(value, patch)
   }
+
   if (isObject(value)) {
-    return applyObjectPatch(value, patch)
+    return applyPatchToObject(value, patch)
   }
-  return applyPrimitivePatch(value, patch)
+
+  if (typeof value === 'number') {
+    return applyPatchToNumber(value, patch)
+  }
+
+  return applyPatchToUnknown(value, patch)
 }
 
-export default function _apply(
-  value: string,
-  patch: {type: string; path: any[]; value: any},
-) {
-  const res = applyPatch(value, patch)
-  // console.log('applyPatch(%o, %o) : %o (noop? %o)', value, patch, res, value === res)
-  return res
+function isObject(value: unknown): value is {[key: string]: JSONValue} {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }

@@ -1,19 +1,7 @@
 import {findIndex} from 'lodash'
 import applyPatch from './applyPatch'
 import insert from './arrayInsert'
-import type {PathSegment} from './types'
-
-const hasOwn = Object.prototype.hasOwnProperty.call.bind(
-  Object.prototype.hasOwnProperty,
-)
-
-function move(arr: any[], from: number, to: any) {
-  const nextValue = arr.slice()
-  const val = nextValue[from]
-  nextValue.splice(from, 1)
-  nextValue.splice(to, 0, val)
-  return nextValue
-}
+import type {JSONValue, Patch, PathSegment} from './types'
 
 function findTargetIndex(array: any[], pathSegment: PathSegment) {
   if (typeof pathSegment === 'number') {
@@ -23,10 +11,10 @@ function findTargetIndex(array: any[], pathSegment: PathSegment) {
   return index === -1 ? false : index
 }
 
-export default function apply(
-  value: any,
-  patch: {type: any; path: any; value: any; position: any; items: any},
-) {
+export function applyPatchToArray(
+  value: Array<JSONValue>,
+  patch: Patch,
+): Array<JSONValue> | undefined {
   const nextValue = value.slice() // make a copy for internal mutation
 
   if (patch.path.length === 0) {
@@ -35,28 +23,22 @@ export default function apply(
       if (!Array.isArray(patch.value)) {
         throw new Error('Cannot set value of an array to a non-array')
       }
+
       return value === undefined ? patch.value : value
-    } else if (patch.type === 'set') {
+    }
+
+    if (patch.type === 'set') {
       if (!Array.isArray(patch.value)) {
         throw new Error('Cannot set value of an array to a non-array')
       }
+
       return patch.value
-    } else if (patch.type === 'unset') {
-      return undefined
-    } else if (patch.type === 'move') {
-      if (
-        !patch.value ||
-        !hasOwn(patch.value, 'from') ||
-        !hasOwn(patch.value, 'to')
-      ) {
-        throw new Error(
-          `Invalid value of 'move' patch. Expected a value with "from" and "to" indexes, instead got: ${JSON.stringify(
-            patch.value,
-          )}`,
-        )
-      }
-      return move(nextValue, patch.value.from, patch.value.to)
     }
+
+    if (patch.type === 'unset') {
+      return undefined
+    }
+
     throw new Error(`Invalid array operation: ${patch.type}`)
   }
 
@@ -88,6 +70,7 @@ export default function apply(
   nextValue[index] = applyPatch(nextValue[index], {
     ...patch,
     path: tail,
-  })
+  }) as JSONValue
+
   return nextValue
 }
