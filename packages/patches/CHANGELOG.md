@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.4](https://github.com/portabletext/editor/compare/patches-v1.1.3...patches-v1.1.4) (2025-05-29)
+
+
+### Bug Fixes
+
+* improve internal and external types ([e490f29](https://github.com/portabletext/editor/commit/e490f295df95f4f90456dd59f4908e7c8daac598))
+
 ## [1.1.3](https://github.com/portabletext/editor/compare/patches-v1.1.2...patches-v1.1.3) (2025-02-11)
 
 

@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.50.8](https://github.com/portabletext/editor/compare/editor-v1.50.7...editor-v1.50.8) (2025-05-29)
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^3.90.0 ([2c4f256](https://github.com/portabletext/editor/commit/2c4f25688fa18f84f1d8f50fc05ee343c1432ff2))
+* improve internal and external types ([e490f29](https://github.com/portabletext/editor/commit/e490f295df95f4f90456dd59f4908e7c8daac598))
+* **selectors:** simplify `getListState` as `getListIndex` ([e0d81bd](https://github.com/portabletext/editor/commit/e0d81bd80197912a02bbd8aef42814e58639e538))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.28
+    * @portabletext/patches bumped to 1.1.4
+
 ## [1.50.7](https://github.com/portabletext/editor/compare/editor-v1.50.6...editor-v1.50.7) (2025-05-26)
 
 
