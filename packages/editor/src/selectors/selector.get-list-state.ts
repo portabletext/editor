@@ -6,22 +6,14 @@ import {getFocusTextBlock, getPreviousBlock} from './selectors'
 
 /**
  * @beta
- * Represents the List state of a block.
- */
-export type ListState = {
-  index: number
-}
-
-/**
- * @beta
- * Given the `path` of a block, this selector will return the `ListState` of
+ * Given the `path` of a block, this selector will return the "list index" of
  * the block.
  */
-export function getListState({
+export function getListIndex({
   path,
 }: {
   path: BlockPath
-}): EditorSelector<ListState | undefined> {
+}): EditorSelector<number | undefined> {
   return (snapshot) => {
     const selection = {
       anchor: {
@@ -65,39 +57,29 @@ export function getListState({
     })
 
     if (!previousListItem) {
-      return {
-        index: 1,
-      }
+      return 1
     }
 
     if (previousListItem.node.listItem !== focusTextBlock.node.listItem) {
-      return {
-        index: 1,
-      }
+      return 1
     }
 
     if (
       previousListItem.node.level !== undefined &&
       previousListItem.node.level < focusTextBlock.node.level
     ) {
-      return {
-        index: 1,
-      }
+      return 1
     }
 
-    const previousListItemListState = getListState({
+    const previousListItemListState = getListIndex({
       path: previousListItem.path,
     })(snapshot)
 
     if (previousListItemListState === undefined) {
-      return {
-        index: 1,
-      }
+      return 1
     }
 
-    return {
-      index: previousListItemListState.index + 1,
-    }
+    return previousListItemListState + 1
   }
 }
 

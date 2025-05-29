@@ -604,9 +604,9 @@ const RenderBlock = (props: BlockRenderProps) => {
   )
   const editor = useEditor()
   const readOnly = useEditorSelector(editor, (s) => s.context.readOnly)
-  const listState = useEditorSelector(
+  const listIndex = useEditorSelector(
     editor,
-    selectors.getListState({path: props.path}),
+    selectors.getListIndex({path: props.path}),
   )
 
   let children = props.children
@@ -650,9 +650,9 @@ const RenderBlock = (props: BlockRenderProps) => {
 
   return (
     <div
-      {...(listState
+      {...(listIndex !== undefined
         ? {
-            'data-list-index': listState.index,
+            'data-list-index': listIndex,
           }
         : {})}
     >
