@@ -41,6 +41,9 @@ export const mutationMachine = setup({
     },
     events: {} as
       | {
+          type: 'mutation delay passed'
+        }
+      | {
           type: 'patch'
           patch: Patch
           operationId?: string
@@ -162,17 +165,26 @@ export const mutationMachine = setup({
         input.slateEditor.apply = originalApply
       }
     }),
+    'mutation debouncer': fromCallback(({sendBack}) => {
+      const interval = setInterval(
+        () => {
+          sendBack({type: 'mutation delay passed'})
+        },
+        process.env.NODE_ENV === 'test' ? 250 : 0,
+      )
+
+      return () => {
+        clearInterval(interval)
+      }
+    }),
   },
   guards: {
     'is read-only': ({context}) => context.readOnly,
     'is typing': stateIn({typing: 'typing'}),
-    'no pending mutations': ({context}) =>
-      context.pendingMutations.length === 0,
     'slate is normalizing': ({context}) =>
       Editor.isNormalizing(context.slateEditor),
   },
   delays: {
-    'mutation debounce': process.env.NODE_ENV === 'test' ? 250 : 0,
     'type debounce': process.env.NODE_ENV === 'test' ? 0 : 250,
   },
 }).createMachine({
@@ -207,6 +219,7 @@ export const mutationMachine = setup({
           exit: [
             () => {
               debug('exit: typing->idle')
+              debug('entry: typing->typing')
             },
           ],
           on: {
@@ -216,19 +229,14 @@ export const mutationMachine = setup({
           },
         },
         typing: {
-          entry: [
-            () => {
-              debug('entry: typing->typing')
-            },
-          ],
-          exit: [
-            () => {
-              debug('exit: typing->typing')
-            },
-          ],
           after: {
             'type debounce': {
               target: 'idle',
+              actions: [
+                () => {
+                  debug('exit: typing->typing')
+                },
+              ],
             },
           },
           on: {
@@ -258,77 +266,58 @@ export const mutationMachine = setup({
             },
           ],
           on: {
-            patch: {
-              actions: [
-                'emit patch',
-                'defer mutation',
-                'emit has pending mutations',
-              ],
-              target: 'emitting mutations',
-            },
-          },
-        },
-        'emitting mutations': {
-          entry: [
-            () => {
-              debug('entry: mutations->emitting mutations')
-            },
-          ],
-          exit: [
-            () => {
-              debug('exit: mutations->emitting mutations')
-            },
-          ],
-          after: {
-            'mutation debounce': [
+            patch: [
               {
                 guard: 'is read-only',
-                target: 'read-only',
+                actions: ['defer patch', 'defer mutation'],
+                target: 'has pending mutations',
               },
               {
-                guard: and([not('is typing'), 'slate is normalizing']),
-                target: 'idle',
-                actions: ['emit mutations', 'clear pending mutations'],
-              },
-              {
-                target: 'emitting mutations',
-                reenter: true,
+                actions: ['emit patch', 'defer mutation'],
+                target: 'has pending mutations',
               },
             ],
           },
-          on: {
-            patch: {
-              target: 'emitting mutations',
-              actions: ['emit patch', 'defer mutation'],
-              reenter: true,
-            },
-          },
         },
-        'read-only': {
+        'has pending mutations': {
           entry: [
             () => {
-              debug('entry: mutations->read-only')
+              debug('entry: mutations->has pending mutations')
             },
+            'emit has pending mutations',
           ],
           exit: [
             () => {
-              debug('exit: mutations->read-only')
+              debug('exit: mutations->has pending mutations')
             },
           ],
-          always: [
-            {
-              guard: not('is read-only'),
-              target: 'emitting mutations',
+          invoke: {
+            src: 'mutation debouncer',
+          },
+          on: {
+            'mutation delay passed': {
+              guard: and([
+                not('is read-only'),
+                not('is typing'),
+                'slate is normalizing',
+              ]),
+              target: 'idle',
               actions: [
                 'emit pending patch events',
                 'clear pending patch events',
+                'emit mutations',
+                'clear pending mutations',
               ],
             },
-          ],
-          on: {
-            patch: {
-              actions: ['defer patch', 'defer mutation'],
-            },
+            'patch': [
+              {
+                guard: 'is read-only',
+                actions: ['defer patch', 'defer mutation'],
+              },
+              {
+                actions: ['emit patch', 'defer mutation'],
+              },
+            ],
           },
         },
       },
