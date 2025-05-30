@@ -5,8 +5,6 @@ Feature: Inline Objects
     Given one editor
     And a global keymap
 
-  # Currently fails
-  @skip
   Scenario: Writing after inserting an inline object
     Given the text "foo"
     And a "stock-ticker"
