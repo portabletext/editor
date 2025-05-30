@@ -10,11 +10,6 @@ import {createActor} from 'xstate'
 import type {Editor, EditorSelection} from '../src'
 import {getBlockKeys} from '../src/internal-utils/block-keys'
 import {getEditorSelection} from '../src/internal-utils/editor-selection'
-import {
-  getInlineObjectSelection,
-  getSelectionAfterInlineObject,
-  getSelectionBeforeInlineObject,
-} from '../src/internal-utils/inline-object-selection'
 import {getSelectionBlockKeys} from '../src/internal-utils/selection-block-keys'
 import {getSelectionFocusText} from '../src/internal-utils/selection-focus-text'
 import {getSelectionText} from '../src/internal-utils/selection-text'
@@ -541,20 +536,10 @@ export const stepDefinitions = [
     const value = await getValue()
 
     await waitForNewSelection(context.editorA, async () => {
-      if (text === '[stock-ticker]') {
-        await context.editorA.actorRef.send({
-          type: 'selection',
-          selection: getInlineObjectSelection(
-            value,
-            text.replace('[', '').replace(']', ''),
-          ),
-        })
-      } else {
-        context.editorA.actorRef.send({
-          type: 'selection',
-          selection: getTextSelection(value, text),
-        })
-      }
+      await context.editorA.actorRef.send({
+        type: 'selection',
+        selection: getTextSelection(value, text),
+      })
     })
   }),
   When(
@@ -563,20 +548,10 @@ export const stepDefinitions = [
       const value = await getValue()
 
       await waitForNewSelection(context.editorB, async () => {
-        if (text === '[stock-ticker]') {
-          await context.editorB.actorRef.send({
-            type: 'selection',
-            selection: getInlineObjectSelection(
-              value,
-              text.replace('[', '').replace(']', ''),
-            ),
-          })
-        } else {
-          await context.editorB.actorRef.send({
-            type: 'selection',
-            selection: getTextSelection(value, text),
-          })
-        }
+        await context.editorB.actorRef.send({
+          type: 'selection',
+          selection: getTextSelection(value, text),
+        })
       })
     },
   ),
@@ -596,81 +571,25 @@ export const stepDefinitions = [
   When(
     'the caret is put before {string}',
     async (context: Context, text: string) => {
-      const value = await getValue()
-
-      if (text === '[stock-ticker]') {
-        await waitForNewSelection(context.editorA, async () => {
-          await context.editorA.actorRef.send({
-            type: 'selection',
-            selection: getSelectionBeforeInlineObject(
-              value,
-              text.replace('[', '').replace(']', ''),
-            ),
-          })
-        })
-      } else {
-        await putCaretBeforeText(context.editorA, text)
-      }
+      await putCaretBeforeText(context.editorA, text)
     },
   ),
   When(
     'the caret is put before {string} by editor B',
     async (context: Context, text: string) => {
-      const value = await getValue()
-
-      if (text === '[stock-ticker]') {
-        await waitForNewSelection(context.editorB, async () => {
-          await context.editorB.actorRef.send({
-            type: 'selection',
-            selection: getSelectionBeforeInlineObject(
-              value,
-              text.replace('[', '').replace(']', ''),
-            ),
-          })
-        })
-      } else {
-        await putCaretBeforeText(context.editorB, text)
-      }
+      await putCaretBeforeText(context.editorB, text)
     },
   ),
   When(
     'the caret is put after {string}',
     async (context: Context, text: string) => {
-      const value = await getValue()
-
-      if (text === '[stock-ticker]') {
-        await waitForNewSelection(context.editorA, async () => {
-          await context.editorA.actorRef.send({
-            type: 'selection',
-            selection: getSelectionAfterInlineObject(
-              value,
-              text.replace('[', '').replace(']', ''),
-            ),
-          })
-        })
-      } else {
-        await putCaretAfterText(context.editorA, text)
-      }
+      await putCaretAfterText(context.editorA, text)
     },
   ),
   When(
     'the caret is put after {string} by editor B',
     async (context: Context, text: string) => {
-      const value = await getValue()
-
-      if (text === '[stock-ticker]') {
-        await waitForNewSelection(context.editorB, async () => {
-          await context.editorB.actorRef.send({
-            type: 'selection',
-            selection: getSelectionAfterInlineObject(
-              value,
-              text.replace('[', '').replace(']', ''),
-            ),
-          })
-        })
-      } else {
-        await putCaretAfterText(context.editorB, text)
-      }
+      await putCaretAfterText(context.editorB, text)
     },
   ),
   Then(

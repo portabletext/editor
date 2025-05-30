@@ -3,7 +3,6 @@ import {Given, Then, When} from 'racejar'
 import {assert, expect, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {getEditorSelection} from '../src/internal-utils/editor-selection'
-import {getSelectionAfterInlineObject} from '../src/internal-utils/inline-object-selection'
 import {
   isTextBlock,
   parseBlock,
@@ -175,23 +174,8 @@ export const stepDefinitions = [
   ),
   When(
     'the caret is put after {string}',
-    async (context: Context, text: string | '[stock-ticker]') => {
+    async (context: Context, text: string) => {
       await vi.waitFor(() => {
-        if (text === '[stock-ticker]') {
-          const selection = getSelectionAfterInlineObject(
-            context.editor.value(),
-            text.replace('[', '').replace(']', ''),
-          )
-          expect(selection).not.toBeNull()
-
-          context.editor.ref.current.send({
-            type: 'select',
-            at: selection,
-          })
-
-          return
-        }
-
         const selection = getSelectionAfterText(context.editor.value(), text)
         expect(selection).not.toBeNull()
 

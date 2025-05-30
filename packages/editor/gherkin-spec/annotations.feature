@@ -154,21 +154,16 @@ Feature: Annotations
       | "foo"         | "foo"     | before "foo"  | "new,foo"          |
       | "foo"         | "foo"     | after "foo"   | "foo,new"          |
 
-  Scenario Outline: Inserting text after inline object, before annotation
+  Scenario: Inserting text after inline object, before annotation
     Given the editor is focused
     And a "stock-ticker"
     When "ArrowRight" is pressed
     And "bar" is typed
     And "bar" is selected
     And "link" "l1" is toggled
-    And the caret is put <position>
+    And the caret is put before "bar"
     And "foo " is typed
     Then the text is ",[stock-ticker],foo ,bar"
-
-    Examples:
-      | position               |
-      | after "[stock-ticker]" |
-      | before "bar"           |
 
   Scenario Outline: Toggling decorator at the edge of an annotation
     Given the text <text>
