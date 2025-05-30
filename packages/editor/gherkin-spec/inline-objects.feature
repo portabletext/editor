@@ -12,32 +12,22 @@ Feature: Inline Objects
     When "bar" is typed
     Then the text is "foo,[stock-ticker],bar"
 
-  Scenario: Navigating around a inline object
-    Given the text "foo"
-    And a "stock-ticker"
-    When the caret is put after "[stock-ticker]"
-    And "bar" is typed
-    Then the text is "foo,[stock-ticker],bar"
-
   Scenario: Pressing Delete before an inline object
     Given the text "foo"
     And a "stock-ticker"
-    When the caret is put before "[stock-ticker]"
-    And "Delete" is pressed
+    When "Delete" is pressed
     Then the text is "foo"
 
   Scenario: Pressing Backspace after an inline object
     Given the text "foo"
     And a "stock-ticker"
-    When the caret is put after "[stock-ticker]"
-    And "Backspace" is pressed
+    When "Backspace" is pressed
     Then the text is "foo"
 
   Scenario Outline: Deleting an inline object
     Given the text "foo"
     And a "stock-ticker"
-    When "[stock-ticker]" is selected
-    And <key> is pressed
+    When <key> is pressed
     And "bar" is typed
     Then the text is "foobar"
 
@@ -49,7 +39,7 @@ Feature: Inline Objects
   Scenario: Adding a decorator across an inline object
     Given the text "foo"
     And a "stock-ticker"
-    When the caret is put after "[stock-ticker]"
+    When "ArrowRight" is pressed
     And "bar" is typed
     And "foobar" is selected
     And "strong" is toggled using the keyboard
@@ -60,7 +50,7 @@ Feature: Inline Objects
   Scenario: Adding an annotation across an inline object
     Given the text "foo"
     And a "stock-ticker"
-    When the caret is put after "[stock-ticker]"
+    When "ArrowRight" is pressed
     And "bar" is typed
     And "foobar" is selected
     And "link" "l1" is toggled
@@ -71,7 +61,7 @@ Feature: Inline Objects
   Scenario: Removing an annotation across an inline block
     Given the text "foo"
     And a "stock-ticker"
-    When the caret is put after "[stock-ticker]"
+    When "ArrowRight" is pressed
     And "bar" is typed
     And "foobar" is selected
     And "link" is toggled
