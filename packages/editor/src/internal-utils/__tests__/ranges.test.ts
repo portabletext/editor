@@ -1,6 +1,6 @@
 import type {InsertTextOperation, Range} from 'slate'
 import {describe, expect, it} from 'vitest'
-import {moveRangeByOperation} from '../ranges'
+import {moveRangeByOperation} from '../../editor/keyed-selection'
 
 describe('moveRangeByOperation', () => {
   it('should move range when inserting text in front of it', () => {

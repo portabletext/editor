@@ -1,6 +1,6 @@
 import type {PortableTextBlock} from '@sanity/types'
 import type {EditorSchema, EditorSelection} from '..'
-import {getKeyedSelection} from '../editor/indexed-selection'
+import {getKeyedSelection} from '../editor/keyed-selection'
 import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
 import {isKeyedSegment} from './util.is-keyed-segment'
 

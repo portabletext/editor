@@ -1,8 +1,8 @@
 import {Editor} from 'slate'
 import {DOMEditor} from 'slate-dom'
 import type {EditorSnapshot} from '..'
+import {keyedSelectionToSlateRange} from '../editor/keyed-selection'
 import type {PortableTextSlateEditor} from '../types/editor'
-import {keyedSelectionToSlateRange} from './ranges'
 
 export type SelectionDomNodes = {
   blockNodes: Array<Node>

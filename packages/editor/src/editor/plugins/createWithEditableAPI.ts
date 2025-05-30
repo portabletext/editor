@@ -17,7 +17,6 @@ import {
 import type {DOMNode} from 'slate-dom'
 import {ReactEditor} from 'slate-react'
 import {debugWithName} from '../../internal-utils/debug'
-import {keyedSelectionToSlateRange} from '../../internal-utils/ranges'
 import {
   isListItemActive,
   isStyleActive,
@@ -37,11 +36,8 @@ import type {
 } from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 import {getEditorSnapshot} from '../editor-selector'
-import {
-  getIndexedSelection,
-  indexedSelectionToSlateRange,
-  slateRangeToIndexedSelection,
-} from '../indexed-selection'
+import {slateRangeToIndexedSelection} from '../indexed-selection'
+import {getKeyedSelection, keyedSelectionToSlateRange} from '../keyed-selection'
 
 const debug = debugWithName('API:editable')
 
@@ -432,17 +428,16 @@ export function createEditableAPI(
       selection: EditorSelection,
       options?: EditableAPIDeleteOptions,
     ): void => {
-      const indexedSelection = getIndexedSelection(
+      const keyedSelection = getKeyedSelection(
         editorActor.getSnapshot().context.schema,
         editor.value,
         selection,
       )
 
-      if (indexedSelection) {
-        const range = indexedSelectionToSlateRange(
+      if (keyedSelection) {
+        const range = keyedSelectionToSlateRange(
           editorActor.getSnapshot().context.schema,
-          editor.value,
-          indexedSelection,
+          keyedSelection,
           editor,
         )
         const hasRange =

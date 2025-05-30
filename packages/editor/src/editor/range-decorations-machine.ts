@@ -16,10 +16,6 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
-import {
-  keyedSelectionToSlateRange,
-  moveRangeByOperation,
-} from '../internal-utils/ranges'
 import {isEqualToEmptyEditor} from '../internal-utils/values'
 import type {PortableTextSlateEditor, RangeDecoration} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
@@ -28,6 +24,10 @@ import {
   indexedSelectionToSlateRange,
   slateRangeToIndexedSelection,
 } from './indexed-selection'
+import {
+  keyedSelectionToSlateRange,
+  moveRangeByOperation,
+} from './keyed-selection'
 
 const slateOperationCallback: CallbackLogicFunction<
   AnyEventObject,

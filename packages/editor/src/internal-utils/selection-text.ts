@@ -1,7 +1,7 @@
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import type {PortableTextBlock} from '@sanity/types'
 import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
-import {getKeyedSelection} from '../editor/indexed-selection'
+import {getKeyedSelection} from '../editor/keyed-selection'
 import type {EditorSelection} from '../types/editor'
 import {isKeyedSegment} from '../utils'
 import {reverseSelection} from '../utils/util.reverse-selection'

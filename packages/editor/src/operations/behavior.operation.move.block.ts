@@ -1,5 +1,5 @@
 import {Transforms} from 'slate'
-import {toSlatePath} from '../internal-utils/paths'
+import {keyedPathToSlatePath} from '../editor/keyed-path'
 import {isIndexedBlockPath} from '../types/paths'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
@@ -8,10 +8,10 @@ export const moveBlockOperationImplementation: BehaviorOperationImplementation<
 > = ({operation}) => {
   const at = isIndexedBlockPath(operation.at)
     ? operation.at
-    : [toSlatePath(operation.at, operation.editor)[0]]
+    : [keyedPathToSlatePath(operation.at, operation.editor)[0]]
   const to = isIndexedBlockPath(operation.to)
     ? operation.to
-    : [toSlatePath(operation.to, operation.editor)[0]]
+    : [keyedPathToSlatePath(operation.to, operation.editor)[0]]
 
   Transforms.moveNodes(operation.editor, {
     at,

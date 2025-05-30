@@ -6,8 +6,6 @@ import {createRef, type ComponentProps, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
 import {getTextSelection} from '../../internal-utils/text-selection'
 import {PortableTextEditable} from '../Editable'
-import {compileSchemaDefinition, defineSchema} from '../editor-schema'
-import {getKeyedSelection} from '../indexed-selection'
 import {PortableTextEditor} from '../PortableTextEditor'
 
 const schema = Schema.compile({
@@ -113,11 +111,7 @@ describe('Feature: Self-solving', () => {
       if (editorRef.current) {
         PortableTextEditor.select(
           editorRef.current,
-          getKeyedSelection(
-            compileSchemaDefinition(defineSchema({})),
-            initialValue,
-            getTextSelection(initialValue, 'foo'),
-          ),
+          getTextSelection(initialValue, 'foo'),
         )
         PortableTextEditor.toggleMark(editorRef.current, 'strong')
       }

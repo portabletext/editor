@@ -2,13 +2,11 @@ import type {PortableTextBlock, PortableTextSpan} from '@sanity/types'
 import type {EditorSelection} from '..'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorSelector} from '../editor/editor-selector'
+import {getIndexedSelection} from '../editor/indexed-selection'
 import {
-  getIndexedSelection,
   getKeyedSelection,
-} from '../editor/indexed-selection'
-import type {
-  KeyedEditorSelection,
-  KeyedEditorSelectionPoint,
+  type KeyedEditorSelection,
+  type KeyedEditorSelectionPoint,
 } from '../editor/keyed-selection'
 import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
 import {isEmptyTextBlock, isKeyedSegment} from '../utils'

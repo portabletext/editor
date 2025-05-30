@@ -1,7 +1,6 @@
 import type {KeyedSegment, PortableTextBlock} from '@sanity/types'
 import type {Range} from 'slate'
 import {isTextBlock} from '../internal-utils/parse-blocks'
-import {keyedSelectionToSlateRange} from '../internal-utils/ranges'
 import {getPointBlock, getPointChild} from '../internal-utils/slate-utils'
 import type {
   EditorSelection,
@@ -10,9 +9,10 @@ import type {
 } from '../types/editor'
 import {isKeyedSegment} from '../utils'
 import type {EditorSchema} from './editor-schema'
-import type {
-  KeyedEditorSelection,
-  KeyedEditorSelectionPoint,
+import {
+  getKeyedSelection,
+  keyedSelectionToSlateRange,
+  type KeyedEditorSelectionPoint,
 } from './keyed-selection'
 
 /**
@@ -66,22 +66,6 @@ export function getIndexedSelection(
   }
 
   return selection
-}
-
-export function getKeyedSelection(
-  schema: EditorSchema,
-  value: Array<PortableTextBlock>,
-  selection: EditorSelection | IndexedEditorSelection,
-): KeyedEditorSelection {
-  if (!isIndexedSelection(selection)) {
-    return selection
-  }
-
-  return indexedSelectionToKeyedSelection({
-    schema,
-    value,
-    indexedSelection: selection,
-  })
 }
 
 export function isIndexedSelectionPoint(
@@ -384,75 +368,6 @@ function selectionToIndexedSelection({
   }
 
   return indexedSelection
-}
-
-/**
- * Turn an `IndexedEditorSelection` into a `KeyedEditorSelection`
- */
-function indexedSelectionToKeyedSelection({
-  schema,
-  value,
-  indexedSelection,
-}: {
-  schema: EditorSchema
-  value: Array<PortableTextBlock>
-  indexedSelection: IndexedEditorSelection
-}): KeyedEditorSelection {
-  if (!indexedSelection) {
-    return null
-  }
-
-  const anchorBlockIndex = indexedSelection.anchor.path.at(0)
-  const anchorBlock =
-    anchorBlockIndex !== undefined ? value.at(anchorBlockIndex) : undefined
-
-  if (!anchorBlock) {
-    return null
-  }
-
-  const focusBlockIndex = indexedSelection.focus.path.at(0)
-  const focusBlock =
-    focusBlockIndex !== undefined ? value.at(focusBlockIndex) : undefined
-
-  if (!focusBlock) {
-    return null
-  }
-
-  const selection: EditorSelection = {
-    anchor: {
-      path: [{_key: anchorBlock._key}],
-      offset: indexedSelection.anchor.offset,
-    },
-    focus: {
-      path: [{_key: focusBlock._key}],
-      offset: indexedSelection.focus.offset,
-    },
-    backward: isBackward(indexedSelection),
-  }
-
-  const anchorChildIndex = indexedSelection.anchor.path.at(1)
-  const anchorChild =
-    anchorChildIndex !== undefined && isTextBlock({schema}, anchorBlock)
-      ? anchorBlock?.children.at(anchorChildIndex)
-      : undefined
-
-  if (anchorChild) {
-    selection.anchor.path.push('children')
-    selection.anchor.path.push({_key: anchorChild._key})
-  }
-
-  const focusChildIndex = indexedSelection.focus.path.at(1)
-  const focusChild =
-    focusChildIndex !== undefined && isTextBlock({schema}, focusBlock)
-      ? focusBlock?.children.at(focusChildIndex)
-      : undefined
-
-  if (focusChild) {
-    selection.focus.path.push('children')
-    selection.focus.path.push({_key: focusChild._key})
-  }
-
-  return selection
 }
 
 export function slateRangeToIndexedSelection({

@@ -1,8 +1,10 @@
 import {omit} from 'lodash'
 import {Editor, Transforms} from 'slate'
-import {getKeyedSelection} from '../editor/indexed-selection'
+import {
+  getKeyedSelection,
+  keyedSelectionToSlateRange,
+} from '../editor/keyed-selection'
 import {isTextBlock, parseBlock} from '../internal-utils/parse-blocks'
-import {keyedSelectionToSlateRange} from '../internal-utils/ranges'
 import {fromSlateValue} from '../internal-utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
 import type {BehaviorOperationImplementation} from './behavior.operations'

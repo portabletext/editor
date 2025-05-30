@@ -2,7 +2,12 @@ import {isKeySegment, type Path} from '@sanity/types'
 import {isEqual} from 'lodash'
 import {Editor, Element, type Descendant, type Path as SlatePath} from 'slate'
 
-export function toSlatePath(path: Path, editor: Editor): SlatePath {
+export type KeyedPath = Path
+
+export function keyedPathToSlatePath(
+  path: KeyedPath,
+  editor: Editor,
+): SlatePath {
   if (!editor) {
     return []
   }

@@ -1,9 +1,9 @@
 import {Transforms, type Range} from 'slate'
+import {isIndexedSelection} from '../editor/indexed-selection'
 import {
   getKeyedSelection,
-  isIndexedSelection,
-} from '../editor/indexed-selection'
-import {keyedSelectionToSlateRange} from '../internal-utils/ranges'
+  keyedSelectionToSlateRange,
+} from '../editor/keyed-selection'
 import {getBlockPath} from '../internal-utils/slate-utils'
 import {fromSlateValue} from '../internal-utils/values'
 import {isKeyedSegment} from '../utils'
