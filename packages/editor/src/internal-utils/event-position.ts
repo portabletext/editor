@@ -59,11 +59,17 @@ export function getEventPosition({
       isEditor: false,
       selection: {
         anchor: utils.getBlockStartPoint({
-          context: editorActor.getSnapshot().context,
+          context: {
+            schema: editorActor.getSnapshot().context.schema,
+            value: slateEditor.value,
+          },
           block,
         }),
         focus: utils.getBlockEndPoint({
-          context: editorActor.getSnapshot().context,
+          context: {
+            schema: editorActor.getSnapshot().context.schema,
+            value: slateEditor.value,
+          },
           block,
         }),
       },
@@ -93,11 +99,17 @@ export function getEventPosition({
       isEditor: false,
       selection: {
         anchor: utils.getBlockStartPoint({
-          context: editorActor.getSnapshot().context,
+          context: {
+            schema: editorActor.getSnapshot().context.schema,
+            value: slateEditor.value,
+          },
           block,
         }),
         focus: utils.getBlockEndPoint({
-          context: editorActor.getSnapshot().context,
+          context: {
+            schema: editorActor.getSnapshot().context.schema,
+            value: slateEditor.value,
+          },
           block,
         }),
       },
