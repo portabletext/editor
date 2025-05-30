@@ -1,9 +1,8 @@
-import type {KeyedSegment} from '@sanity/types'
+import type {EditorSelectionPoint} from '..'
 import type {EditorContext} from '../editor/editor-snapshot'
+import {getIndexedSelectionPoint} from '../editor/indexed-selection'
 import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
 import type {BlockOffset} from '../types/block-offset'
-import type {EditorSelectionPoint} from '../types/editor'
-import {isKeyedSegment} from './util.is-keyed-segment'
 
 /**
  * @public
@@ -16,14 +15,16 @@ export function blockOffsetToSpanSelectionPoint({
   context: Pick<EditorContext, 'schema' | 'value'>
   blockOffset: BlockOffset
   direction: 'forward' | 'backward'
-}) {
+}): EditorSelectionPoint | undefined {
   let offsetLeft = blockOffset.offset
-  let selectionPoint:
-    | {path: [KeyedSegment, 'children', KeyedSegment]; offset: number}
-    | undefined
+  let selectionPoint: {path: [number, number]; offset: number} | undefined
   let skippedInlineObject = false
 
+  let blockIndex = -1
+
   for (const block of context.value) {
+    blockIndex++
+
     if (block._key !== blockOffset.path[0]._key) {
       continue
     }
@@ -32,7 +33,11 @@ export function blockOffsetToSpanSelectionPoint({
       continue
     }
 
+    let childIndex = -1
+
     for (const child of block.children) {
+      childIndex++
+
       if (direction === 'forward') {
         if (!isSpan(context, child)) {
           continue
@@ -40,7 +45,7 @@ export function blockOffsetToSpanSelectionPoint({
 
         if (offsetLeft <= child.text.length) {
           selectionPoint = {
-            path: [...blockOffset.path, 'children', {_key: child._key}],
+            path: [blockIndex, childIndex],
             offset: offsetLeft,
           }
           break
@@ -59,7 +64,7 @@ export function blockOffsetToSpanSelectionPoint({
       if (offsetLeft === 0 && selectionPoint && !skippedInlineObject) {
         if (skippedInlineObject) {
           selectionPoint = {
-            path: [...blockOffset.path, 'children', {_key: child._key}],
+            path: [blockIndex, childIndex],
             offset: 0,
           }
         }
@@ -73,7 +78,7 @@ export function blockOffsetToSpanSelectionPoint({
 
       if (offsetLeft <= child.text.length) {
         selectionPoint = {
-          path: [...blockOffset.path, 'children', {_key: child._key}],
+          path: [blockIndex, childIndex],
           offset: offsetLeft,
         }
 
@@ -101,39 +106,45 @@ export function spanSelectionPointToBlockOffset({
 }): BlockOffset | undefined {
   let offset = 0
 
-  const blockKey = isKeyedSegment(selectionPoint.path[0])
-    ? selectionPoint.path[0]._key
-    : undefined
-  const spanKey = isKeyedSegment(selectionPoint.path[2])
-    ? selectionPoint.path[2]._key
-    : undefined
+  const indexedSelectionPoint = getIndexedSelectionPoint(
+    context.schema,
+    context.value,
+    selectionPoint,
+  )
 
-  if (!blockKey || !spanKey) {
+  if (!indexedSelectionPoint) {
     return undefined
   }
 
-  for (const block of context.value) {
-    if (block._key !== blockKey) {
+  const blockIndex = indexedSelectionPoint.path.at(0)
+  const childIndex = indexedSelectionPoint.path.at(1)
+
+  if (blockIndex === undefined || childIndex === undefined) {
+    return undefined
+  }
+
+  const block = context.value.at(blockIndex)
+
+  if (!isTextBlock(context, block)) {
+    return undefined
+  }
+
+  let childCursor = -1
+
+  for (const child of block.children) {
+    childCursor++
+
+    if (!isSpan(context, child)) {
       continue
     }
 
-    if (!isTextBlock(context, block)) {
-      continue
+    if (childCursor === childIndex) {
+      return {
+        path: [{_key: block._key}],
+        offset: offset + selectionPoint.offset,
+      }
     }
 
-    for (const child of block.children) {
-      if (!isSpan(context, child)) {
-        continue
-      }
-
-      if (child._key === spanKey) {
-        return {
-          path: [{_key: block._key}],
-          offset: offset + selectionPoint.offset,
-        }
-      }
-
-      offset += child.text.length
-    }
+    offset += child.text.length
   }
 }

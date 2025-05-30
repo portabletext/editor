@@ -156,14 +156,13 @@ describe('event.insert.inline object', () => {
     await vi.waitFor(() => {
       expect(editorRef.current?.getSnapshot().context.selection).toEqual({
         anchor: {
-          path: [{_key: 'k0'}, 'children', {_key: 'k2'}],
+          path: [0, 1],
           offset: 0,
         },
         focus: {
-          path: [{_key: 'k0'}, 'children', {_key: 'k2'}],
+          path: [0, 1],
           offset: 0,
         },
-        backward: false,
       })
     })
 
@@ -188,14 +187,13 @@ describe('event.insert.inline object', () => {
     await vi.waitFor(() => {
       expect(editorRef.current?.getSnapshot().context.selection).toEqual({
         anchor: {
-          path: [{_key: 'k0'}, 'children', {_key: 'k4'}],
+          path: [0, 2],
           offset: 3,
         },
         focus: {
-          path: [{_key: 'k0'}, 'children', {_key: 'k4'}],
+          path: [0, 2],
           offset: 3,
         },
-        backward: false,
       })
     })
   })

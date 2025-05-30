@@ -28,6 +28,14 @@ import type {Descendant, Operation as SlateOperation} from 'slate'
 import type {DOMNode} from 'slate-dom'
 import type {ReactEditor} from 'slate-react'
 import type {PortableTextEditableProps} from '../editor/Editable'
+import type {
+  IndexedEditorSelection,
+  IndexedEditorSelectionPoint,
+} from '../editor/indexed-selection'
+import type {
+  KeyedEditorSelection,
+  KeyedEditorSelectionPoint,
+} from '../editor/keyed-selection'
 import type {PortableTextEditor} from '../editor/PortableTextEditor'
 import type {MarkState} from '../internal-utils/mark-state'
 import type {BlockPath} from './paths'
@@ -106,13 +114,14 @@ interface History {
 }
 
 /** @public */
-export type EditorSelectionPoint = {path: Path; offset: number}
+export type EditorSelectionPoint =
+  | IndexedEditorSelectionPoint
+  | KeyedEditorSelectionPoint
 /** @public */
-export type EditorSelection = {
-  anchor: EditorSelectionPoint
-  focus: EditorSelectionPoint
-  backward?: boolean
-} | null
+export type EditorSelection =
+  | KeyedEditorSelection
+  | IndexedEditorSelection
+  | null
 
 export interface PortableTextSlateEditor extends ReactEditor {
   _key: 'editor'

@@ -1,5 +1,6 @@
 import type {EditorSelectionPoint} from '..'
 import type {EditorSelector} from '../editor/editor-selector'
+import {getIndexedSelection, isBackward} from '../editor/indexed-selection'
 
 /**
  * @public
@@ -11,7 +12,17 @@ export const getSelectionStartPoint: EditorSelector<
     return undefined
   }
 
-  return snapshot.context.selection.backward
-    ? snapshot.context.selection.focus
-    : snapshot.context.selection.anchor
+  const indexedSelection = getIndexedSelection(
+    snapshot.context.schema,
+    snapshot.context.value,
+    snapshot.context.selection,
+  )
+
+  if (!indexedSelection) {
+    return undefined
+  }
+
+  return isBackward(indexedSelection)
+    ? indexedSelection.focus
+    : indexedSelection.anchor
 }

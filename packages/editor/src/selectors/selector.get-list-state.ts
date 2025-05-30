@@ -1,8 +1,8 @@
 import type {PortableTextTextBlock} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import {isTextBlock} from '../internal-utils/parse-blocks'
-import type {BlockPath} from '../types/paths'
-import {getFocusTextBlock, getPreviousBlock} from './selectors'
+import {getKeyedBlockPath, type BlockPath} from '../types/paths'
+import {getPreviousBlock} from './selectors'
 
 /**
  * @beta
@@ -15,44 +15,43 @@ export function getListIndex({
   path: BlockPath
 }): EditorSelector<number | undefined> {
   return (snapshot) => {
-    const selection = {
-      anchor: {
-        path,
-        offset: 0,
-      },
-      focus: {
-        path,
-        offset: 0,
-      },
-    }
+    const keyedPath = getKeyedBlockPath(snapshot.context.value, path)
 
-    const focusTextBlock = getFocusTextBlock({
-      ...snapshot,
-      context: {
-        ...snapshot.context,
-        selection,
-      },
-    })
-
-    if (!focusTextBlock) {
+    if (!keyedPath) {
       return undefined
     }
 
-    if (
-      focusTextBlock.node.listItem === undefined ||
-      focusTextBlock.node.level === undefined
-    ) {
+    const blockIndex = snapshot.context.value.findIndex(
+      (block) => block._key === keyedPath[0]._key,
+    )
+
+    const block = snapshot.context.value[blockIndex]
+
+    if (blockIndex === -1 || !isTextBlock(snapshot.context, block)) {
+      return undefined
+    }
+
+    if (block.listItem === undefined || block.level === undefined) {
       return undefined
     }
 
     const previousListItem = getPreviousListItem({
-      listItem: focusTextBlock.node.listItem,
-      level: focusTextBlock.node.level,
+      listItem: block.listItem,
+      level: block.level,
     })({
       ...snapshot,
       context: {
         ...snapshot.context,
-        selection,
+        selection: {
+          anchor: {
+            path: [blockIndex],
+            offset: 0,
+          },
+          focus: {
+            path: [blockIndex],
+            offset: 0,
+          },
+        },
       },
     })
 
@@ -60,13 +59,13 @@ export function getListIndex({
       return 1
     }
 
-    if (previousListItem.node.listItem !== focusTextBlock.node.listItem) {
+    if (previousListItem.node.listItem !== block.listItem) {
       return 1
     }
 
     if (
       previousListItem.node.level !== undefined &&
-      previousListItem.node.level < focusTextBlock.node.level
+      previousListItem.node.level < block.level
     ) {
       return 1
     }
@@ -143,11 +142,11 @@ function getPreviousListItem({
         ...snapshot.context,
         selection: {
           anchor: {
-            path: previousBlock.path,
+            path: [previousBlock.index],
             offset: 0,
           },
           focus: {
-            path: previousBlock.path,
+            path: [previousBlock.index],
             offset: 0,
           },
         },

@@ -94,11 +94,11 @@ test(converterTextPlain.serialize.name, () => {
         schema: defineSchema({}),
         selection: {
           anchor: {
-            path: [{_key: b3._key}, 'children', {_key: b3.children[0]._key}],
+            path: [2, 0],
             offset: 0,
           },
           focus: {
-            path: [{_key: b4._key}, 'children', {_key: b4.children[0]._key}],
+            path: [3, 0],
             offset: 4,
           },
         },
@@ -118,11 +118,11 @@ test(converterTextPlain.serialize.name, () => {
         schema: defineSchema({}),
         selection: {
           anchor: {
-            path: [{_key: b1._key}, 'children', {_key: b1.children[0]._key}],
+            path: [0, 0],
             offset: 0,
           },
           focus: {
-            path: [{_key: b3._key}, 'children', {_key: b3.children[0]._key}],
+            path: [2, 0],
             offset: 3,
           },
         },
@@ -142,11 +142,11 @@ test(converterTextPlain.serialize.name, () => {
         schema: defineSchema({}),
         selection: {
           anchor: {
-            path: [{_key: b2._key}],
+            path: [1],
             offset: 0,
           },
           focus: {
-            path: [{_key: b2._key}],
+            path: [1],
             offset: 0,
           },
         },
@@ -172,11 +172,11 @@ test(converterTextPlain.serialize.name, () => {
         }),
         selection: {
           anchor: {
-            path: [{_key: b1._key}, 'children', {_key: b1.children[0]._key}],
+            path: [0, 0],
             offset: 0,
           },
           focus: {
-            path: [{_key: b3._key}, 'children', {_key: b3.children[0]._key}],
+            path: [2, 0],
             offset: 3,
           },
         },
@@ -196,11 +196,11 @@ test(converterTextPlain.serialize.name, () => {
         schema: defineSchema({}),
         selection: {
           anchor: {
-            path: [{_key: b4._key}, 'children', {_key: b4.children[0]._key}],
+            path: [3, 0],
             offset: 0,
           },
           focus: {
-            path: [{_key: b4._key}, 'children', {_key: b4.children[2]._key}],
+            path: [3, 2],
             offset: 4,
           },
         },
@@ -226,11 +226,11 @@ test(converterTextPlain.serialize.name, () => {
         }),
         selection: {
           anchor: {
-            path: [{_key: b4._key}, 'children', {_key: b4.children[0]._key}],
+            path: [3, 0],
             offset: 0,
           },
           focus: {
-            path: [{_key: b4._key}, 'children', {_key: b4.children[2]._key}],
+            path: [3, 2],
             offset: 4,
           },
         },

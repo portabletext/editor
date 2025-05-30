@@ -6,6 +6,7 @@ import type {EditorActor} from './editor-machine'
 import type {EditorSnapshot} from './editor-snapshot'
 import {getActiveAnnotations} from './get-active-annotations'
 import {getActiveDecorators} from './get-active-decorators'
+import {slateRangeToIndexedSelection} from './indexed-selection'
 
 function defaultCompare<T>(a: T, b: T) {
   return a === b
@@ -73,7 +74,13 @@ export function getEditorSnapshot({
       keyGenerator: editorActorSnapshot.context.keyGenerator,
       readOnly: editorActorSnapshot.matches({'edit mode': 'read only'}),
       schema: editorActorSnapshot.context.schema,
-      selection: editorActorSnapshot.context.selection,
+      selection: slateEditorInstance.selection
+        ? slateRangeToIndexedSelection({
+            schema: editorActorSnapshot.context.schema,
+            editor: slateEditorInstance,
+            range: slateEditorInstance.selection,
+          })
+        : null,
       value: slateEditorInstance.value,
     },
     beta: {

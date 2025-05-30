@@ -1,26 +1,17 @@
 import type {EditorSelector} from '../editor/editor-selector'
+import * as selectors from '../selectors'
 import * as utils from '../utils'
-import {getSelectionEndBlock, getSelectionStartBlock} from './selectors'
 
 /**
  * @public
  */
 export const isSelectingEntireBlocks: EditorSelector<boolean> = (snapshot) => {
-  if (!snapshot.context.selection) {
-    return false
-  }
+  const startPoint = selectors.getSelectionStartPoint(snapshot)
+  const startBlock = selectors.getSelectionStartBlock(snapshot)
+  const endPoint = selectors.getSelectionEndPoint(snapshot)
+  const endBlock = selectors.getSelectionEndBlock(snapshot)
 
-  const startPoint = snapshot.context.selection.backward
-    ? snapshot.context.selection.focus
-    : snapshot.context.selection.anchor
-  const endPoint = snapshot.context.selection.backward
-    ? snapshot.context.selection.anchor
-    : snapshot.context.selection.focus
-
-  const startBlock = getSelectionStartBlock(snapshot)
-  const endBlock = getSelectionEndBlock(snapshot)
-
-  if (!startBlock || !endBlock) {
+  if (!startPoint || !startBlock || !endPoint || !endBlock) {
     return false
   }
 
@@ -28,6 +19,7 @@ export const isSelectingEntireBlocks: EditorSelector<boolean> = (snapshot) => {
     context: snapshot.context,
     block: startBlock,
   })
+
   const endBlockEndPoint = utils.getBlockEndPoint({
     context: snapshot.context,
     block: endBlock,

@@ -1,12 +1,12 @@
 import type {PortableTextBlock} from '@sanity/types'
 import type {Converter} from '../converters/converter.types'
 import type {EventPosition} from '../internal-utils/event-position'
-import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
 import type {HasTag} from './editor-machine'
 import type {EditorSchema} from './editor-schema'
 import {getActiveAnnotations} from './get-active-annotations'
 import {getActiveDecorators} from './get-active-decorators'
+import {slateRangeToIndexedSelection} from './indexed-selection'
 
 /**
  * @public
@@ -63,7 +63,7 @@ export function createEditorSnapshot({
     | undefined
 }) {
   const selection = editor.selection
-    ? slateRangeToSelection({
+    ? slateRangeToIndexedSelection({
         schema,
         editor,
         range: editor.selection,

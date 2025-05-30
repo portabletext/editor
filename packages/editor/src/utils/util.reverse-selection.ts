@@ -1,3 +1,4 @@
+import {isIndexedSelection} from '../editor/indexed-selection'
 import type {EditorSelection} from '../types/editor'
 
 /**
@@ -8,6 +9,13 @@ export function reverseSelection<
 >(selection: TEditorSelection): TEditorSelection {
   if (!selection) {
     return selection
+  }
+
+  if (isIndexedSelection(selection)) {
+    return {
+      anchor: selection.focus,
+      focus: selection.anchor,
+    } as TEditorSelection
   }
 
   if (selection.backward) {

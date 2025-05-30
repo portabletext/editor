@@ -2,14 +2,10 @@ import {Editor, type BaseRange, type Node} from 'slate'
 import {DOMEditor, isDOMNode} from 'slate-dom'
 import type {EditorSchema, EditorSelection} from '..'
 import type {EditorActor} from '../editor/editor-machine'
+import {slateRangeToIndexedSelection} from '../editor/indexed-selection'
 import type {PortableTextSlateEditor} from '../types/editor'
 import * as utils from '../utils'
-import {
-  getFirstBlock,
-  getLastBlock,
-  getNodeBlock,
-  slateRangeToSelection,
-} from './slate-utils'
+import {getFirstBlock, getLastBlock, getNodeBlock} from './slate-utils'
 
 export type EventPosition = {
   block: 'start' | 'end'
@@ -60,17 +56,11 @@ export function getEventPosition({
       selection: {
         anchor: utils.getBlockStartPoint({
           context: editorActor.getSnapshot().context,
-          block: {
-            node: block,
-            path: [{_key: block._key}],
-          },
+          block,
         }),
         focus: utils.getBlockEndPoint({
           context: editorActor.getSnapshot().context,
-          block: {
-            node: block,
-            path: [{_key: block._key}],
-          },
+          block,
         }),
       },
     }
@@ -80,19 +70,12 @@ export function getEventPosition({
     return undefined
   }
 
-  const focusBlockPath = selection.focus.path.at(0)
-  const focusBlockKey = utils.isKeyedSegment(focusBlockPath)
-    ? focusBlockPath._key
-    : undefined
-
-  if (!focusBlockKey) {
-    return undefined
-  }
+  const focusBlockIndex = selection.focus.path.at(0)
 
   if (
     utils.isSelectionCollapsed(selection) &&
     block &&
-    focusBlockKey !== block._key
+    focusBlockIndex === block.path.at(0)
   ) {
     return {
       block: positionBlock,
@@ -100,17 +83,11 @@ export function getEventPosition({
       selection: {
         anchor: utils.getBlockStartPoint({
           context: editorActor.getSnapshot().context,
-          block: {
-            node: block,
-            path: [{_key: block._key}],
-          },
+          block,
         }),
         focus: utils.getBlockEndPoint({
           context: editorActor.getSnapshot().context,
-          block: {
-            node: block,
-            path: [{_key: block._key}],
-          },
+          block,
         }),
       },
     }
@@ -195,7 +172,7 @@ export function getEventSelection({
   const range = getSlateRangeFromEvent(slateEditor, event)
 
   const selection = range
-    ? slateRangeToSelection({
+    ? slateRangeToIndexedSelection({
         schema,
         editor: slateEditor,
         range,
