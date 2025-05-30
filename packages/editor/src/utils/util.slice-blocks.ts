@@ -1,5 +1,6 @@
 import type {PortableTextBlock} from '@sanity/types'
-import type {EditorContext} from '..'
+import type {EditorSchema, EditorSelection} from '..'
+import {getKeyedSelection} from '../editor/indexed-selection'
 import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
 import {isKeyedSegment} from './util.is-keyed-segment'
 
@@ -10,12 +11,16 @@ export function sliceBlocks({
   context,
   blocks,
 }: {
-  context: Pick<EditorContext, 'schema' | 'selection'>
+  context: {
+    schema: EditorSchema
+    selection: EditorSelection
+  }
   blocks: Array<PortableTextBlock>
 }): Array<PortableTextBlock> {
   const slice: Array<PortableTextBlock> = []
+  const selection = getKeyedSelection(context.schema, blocks, context.selection)
 
-  if (!context.selection) {
+  if (!selection) {
     return slice
   }
 
@@ -23,12 +28,8 @@ export function sliceBlocks({
   const middleBlocks: PortableTextBlock[] = []
   let endBlock: PortableTextBlock | undefined
 
-  const startPoint = context.selection.backward
-    ? context.selection.focus
-    : context.selection.anchor
-  const endPoint = context.selection.backward
-    ? context.selection.anchor
-    : context.selection.focus
+  const startPoint = selection.backward ? selection.focus : selection.anchor
+  const endPoint = selection.backward ? selection.anchor : selection.focus
 
   const startBlockKey = isKeyedSegment(startPoint.path[0])
     ? startPoint.path[0]._key

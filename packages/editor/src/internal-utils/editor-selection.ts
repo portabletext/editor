@@ -1,10 +1,15 @@
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import type {PortableTextBlock} from '@sanity/types'
-import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
+import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
+import {
+  getIndexedSelection,
+  type IndexedEditorSelection,
+} from '../editor/indexed-selection'
+import type {EditorSelectionPoint} from '../types/editor'
 
 export function getEditorSelection(
   blocks: Array<PortableTextBlock> | undefined,
-): EditorSelection {
+): IndexedEditorSelection {
   if (!blocks) {
     throw new Error('No value found')
   }
@@ -53,8 +58,12 @@ export function getEditorSelection(
     throw new Error('No selection found')
   }
 
-  return {
-    anchor,
-    focus,
-  }
+  return getIndexedSelection(
+    compileSchemaDefinition(defineSchema({})),
+    blocks,
+    {
+      anchor,
+      focus,
+    },
+  )
 }

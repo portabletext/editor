@@ -13,8 +13,8 @@ test(getTextSelection.name, () => {
   }
 
   expect(getTextSelection([simpleBlock], 'foo')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+    anchor: {path: [0, 0], offset: 0},
+    focus: {path: [0, 0], offset: 3},
   })
 
   const joinedBlock = {
@@ -24,20 +24,20 @@ test(getTextSelection.name, () => {
   }
 
   expect(getTextSelection([joinedBlock], 'foo ')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 4},
+    anchor: {path: [0, 0], offset: 0},
+    focus: {path: [0, 0], offset: 4},
   })
   expect(getTextSelection([joinedBlock], 'o')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
+    anchor: {path: [0, 0], offset: 1},
+    focus: {path: [0, 0], offset: 2},
   })
   expect(getTextSelection([joinedBlock], 'bar')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 4},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 7},
+    anchor: {path: [0, 0], offset: 4},
+    focus: {path: [0, 0], offset: 7},
   })
   expect(getTextSelection([joinedBlock], ' baz')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 7},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 11},
+    anchor: {path: [0, 0], offset: 7},
+    focus: {path: [0, 0], offset: 11},
   })
 
   const noSpaceBlock = {
@@ -50,8 +50,8 @@ test(getTextSelection.name, () => {
   }
 
   expect(getTextSelection([noSpaceBlock], 'obar')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 3},
+    anchor: {path: [0, 0], offset: 2},
+    focus: {path: [0, 1], offset: 3},
   })
 
   const emptyLineBlock = {
@@ -65,8 +65,8 @@ test(getTextSelection.name, () => {
   }
 
   expect(getTextSelection([emptyLineBlock], 'foobar')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 3},
+    anchor: {path: [0, 0], offset: 0},
+    focus: {path: [0, 2], offset: 3},
   })
 
   const splitBlock = {
@@ -80,24 +80,24 @@ test(getTextSelection.name, () => {
   }
 
   expect(getTextSelection([splitBlock], 'foo')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+    anchor: {path: [0, 0], offset: 0},
+    focus: {path: [0, 0], offset: 3},
   })
   expect(getTextSelection([splitBlock], 'bar')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 0},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 3},
+    anchor: {path: [0, 1], offset: 0},
+    focus: {path: [0, 1], offset: 3},
   })
   expect(getTextSelection([splitBlock], 'baz')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 1},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 4},
+    anchor: {path: [0, 2], offset: 1},
+    focus: {path: [0, 2], offset: 4},
   })
   expect(getTextSelection([splitBlock], 'foo bar baz')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 4},
+    anchor: {path: [0, 0], offset: 0},
+    focus: {path: [0, 2], offset: 4},
   })
   expect(getTextSelection([splitBlock], 'o bar b')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 2},
+    anchor: {path: [0, 0], offset: 2},
+    focus: {path: [0, 2], offset: 2},
   })
 
   const twoBlocks = [
@@ -114,8 +114,8 @@ test(getTextSelection.name, () => {
   ]
 
   expect(getTextSelection(twoBlocks, 'ooba')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
-    focus: {path: [{_key: 'b2'}, 'children', {_key: 's2'}], offset: 2},
+    anchor: {path: [0, 0], offset: 1},
+    focus: {path: [1, 0], offset: 2},
   })
 })
 
@@ -131,29 +131,24 @@ test(getSelectionBeforeText.name, () => {
   }
 
   expect(getSelectionBeforeText([splitBlock], 'foo ')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
-    backward: false,
+    anchor: {path: [0, 0], offset: 0},
+    focus: {path: [0, 0], offset: 0},
   })
   expect(getSelectionBeforeText([splitBlock], 'f')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
-    backward: false,
+    anchor: {path: [0, 0], offset: 0},
+    focus: {path: [0, 0], offset: 0},
   })
   expect(getSelectionBeforeText([splitBlock], 'o')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
-    backward: false,
+    anchor: {path: [0, 0], offset: 1},
+    focus: {path: [0, 0], offset: 1},
   })
   expect(getSelectionBeforeText([splitBlock], 'bar')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 0},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 0},
-    backward: false,
+    anchor: {path: [0, 1], offset: 0},
+    focus: {path: [0, 1], offset: 0},
   })
   expect(getSelectionBeforeText([splitBlock], ' baz')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 0},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 0},
-    backward: false,
+    anchor: {path: [0, 2], offset: 0},
+    focus: {path: [0, 2], offset: 0},
   })
 })
 
@@ -169,18 +164,15 @@ test(getSelectionAfterText.name, () => {
   }
 
   expect(getSelectionAfterText([splitBlock], 'foo ')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 4},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 4},
-    backward: false,
+    anchor: {path: [0, 0], offset: 4},
+    focus: {path: [0, 0], offset: 4},
   })
   expect(getSelectionAfterText([splitBlock], 'bar')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 3},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 3},
-    backward: false,
+    anchor: {path: [0, 1], offset: 3},
+    focus: {path: [0, 1], offset: 3},
   })
   expect(getSelectionAfterText([splitBlock], ' baz')).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 4},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 4},
-    backward: false,
+    anchor: {path: [0, 2], offset: 4},
+    focus: {path: [0, 2], offset: 4},
   })
 })

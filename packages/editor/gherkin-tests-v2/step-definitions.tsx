@@ -299,7 +299,10 @@ export const stepDefinitions = [
     },
   ),
   Then('block {string} is selected', async (context: Context, key: string) => {
-    const selectionBlockKeys = getSelectionBlockKeys(context.editor.selection())
+    const selectionBlockKeys = getSelectionBlockKeys(
+      context.editor.value(),
+      context.editor.snapshot().context.selection,
+    )
 
     await vi.waitFor(() => {
       expect(

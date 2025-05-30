@@ -1,10 +1,10 @@
 import type {PortableTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
+import type {EditorSelection} from '..'
 import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {parseBlock} from '../internal-utils/parse-blocks'
 import {createTestKeyGenerator} from '../internal-utils/test-key-generator'
-import type {EditorSelection} from '../types/editor'
 import {getTrimmedSelection} from './selector.get-trimmed-selection'
 
 const keyGenerator = createTestKeyGenerator()
@@ -95,22 +95,22 @@ describe(getTrimmedSelection.name, () => {
       getTrimmedSelection(
         snapshot([block], {
           anchor: {
-            path: [{_key: block._key}, 'children', {_key: bar._key}],
+            path: [0, 1],
             offset: 0,
           },
           focus: {
-            path: [{_key: block._key}, 'children', {_key: bar._key}],
+            path: [0, 1],
             offset: 3,
           },
         }),
       ),
     ).toEqual({
       anchor: {
-        path: [{_key: block._key}, 'children', {_key: bar._key}],
+        path: [0, 1],
         offset: 0,
       },
       focus: {
-        path: [{_key: block._key}, 'children', {_key: bar._key}],
+        path: [0, 1],
         offset: 3,
       },
     })
@@ -119,22 +119,22 @@ describe(getTrimmedSelection.name, () => {
       getTrimmedSelection(
         snapshot([block], {
           anchor: {
-            path: [{_key: block._key}, 'children', {_key: foo._key}],
+            path: [0, 0],
             offset: 2,
           },
           focus: {
-            path: [{_key: block._key}, 'children', {_key: baz._key}],
+            path: [0, 2],
             offset: 2,
           },
         }),
       ),
     ).toEqual({
       anchor: {
-        path: [{_key: block._key}, 'children', {_key: foo._key}],
+        path: [0, 0],
         offset: 2,
       },
       focus: {
-        path: [{_key: block._key}, 'children', {_key: baz._key}],
+        path: [0, 2],
         offset: 2,
       },
     })
@@ -150,22 +150,22 @@ describe(getTrimmedSelection.name, () => {
       getTrimmedSelection(
         snapshot([block], {
           anchor: {
-            path: [{_key: block._key}, 'children', {_key: foo._key}],
+            path: [0, 0],
             offset: 3,
           },
           focus: {
-            path: [{_key: block._key}, 'children', {_key: baz._key}],
+            path: [0, 2],
             offset: 0,
           },
         }),
       ),
     ).toEqual({
       anchor: {
-        path: [{_key: block._key}, 'children', {_key: bar._key}],
+        path: [0, 1],
         offset: 0,
       },
       focus: {
-        path: [{_key: block._key}, 'children', {_key: bar._key}],
+        path: [0, 1],
         offset: 3,
       },
     })
@@ -180,22 +180,22 @@ describe(getTrimmedSelection.name, () => {
       getTrimmedSelection(
         snapshot([block], {
           anchor: {
-            path: [{_key: block._key}, 'children', {_key: aapl._key}],
+            path: [0, 0],
             offset: 0,
           },
           focus: {
-            path: [{_key: block._key}, 'children', {_key: foo._key}],
+            path: [0, 1],
             offset: 3,
           },
         }),
       ),
     ).toEqual({
       anchor: {
-        path: [{_key: block._key}, 'children', {_key: foo._key}],
+        path: [0, 1],
         offset: 0,
       },
       focus: {
-        path: [{_key: block._key}, 'children', {_key: foo._key}],
+        path: [0, 1],
         offset: 3,
       },
     })
@@ -210,22 +210,22 @@ describe(getTrimmedSelection.name, () => {
       getTrimmedSelection(
         snapshot([block], {
           anchor: {
-            path: [{_key: block._key}, 'children', {_key: foo._key}],
+            path: [0, 0],
             offset: 0,
           },
           focus: {
-            path: [{_key: block._key}, 'children', {_key: aapl._key}],
+            path: [0, 1],
             offset: 0,
           },
         }),
       ),
     ).toEqual({
       anchor: {
-        path: [{_key: block._key}, 'children', {_key: foo._key}],
+        path: [0, 0],
         offset: 0,
       },
       focus: {
-        path: [{_key: block._key}, 'children', {_key: foo._key}],
+        path: [0, 0],
         offset: 3,
       },
     })
@@ -243,22 +243,22 @@ describe(getTrimmedSelection.name, () => {
       getTrimmedSelection(
         snapshot([block], {
           anchor: {
-            path: [{_key: block._key}, 'children', {_key: empty1._key}],
+            path: [0, 0],
             offset: 0,
           },
           focus: {
-            path: [{_key: block._key}, 'children', {_key: empty2._key}],
+            path: [0, 4],
             offset: 0,
           },
         }),
       ),
     ).toEqual({
       anchor: {
-        path: [{_key: block._key}, 'children', {_key: foo._key}],
+        path: [0, 2],
         offset: 0,
       },
       focus: {
-        path: [{_key: block._key}, 'children', {_key: foo._key}],
+        path: [0, 2],
         offset: 3,
       },
     })
@@ -278,22 +278,22 @@ describe(getTrimmedSelection.name, () => {
       getTrimmedSelection(
         snapshot([block1, block2], {
           anchor: {
-            path: [{_key: block1._key}, 'children', {_key: foo._key}],
+            path: [0, 0],
             offset: 3,
           },
           focus: {
-            path: [{_key: block2._key}, 'children', {_key: bar._key}],
+            path: [1, 2],
             offset: 3,
           },
         }),
       ),
     ).toEqual({
       anchor: {
-        path: [{_key: block2._key}, 'children', {_key: bar._key}],
+        path: [1, 2],
         offset: 0,
       },
       focus: {
-        path: [{_key: block2._key}, 'children', {_key: bar._key}],
+        path: [1, 2],
         offset: 3,
       },
     })
@@ -313,22 +313,22 @@ describe(getTrimmedSelection.name, () => {
       getTrimmedSelection(
         snapshot([block1, block2], {
           anchor: {
-            path: [{_key: block1._key}, 'children', {_key: foo._key}],
+            path: [0, 0],
             offset: 0,
           },
           focus: {
-            path: [{_key: block2._key}, 'children', {_key: bar._key}],
+            path: [1, 2],
             offset: 0,
           },
         }),
       ),
     ).toEqual({
       anchor: {
-        path: [{_key: block1._key}, 'children', {_key: foo._key}],
+        path: [0, 0],
         offset: 0,
       },
       focus: {
-        path: [{_key: block1._key}, 'children', {_key: foo._key}],
+        path: [0, 0],
         offset: 3,
       },
     })
@@ -344,22 +344,22 @@ describe(getTrimmedSelection.name, () => {
       getTrimmedSelection(
         snapshot([block1, block2], {
           anchor: {
-            path: [{_key: block1._key}, 'children', {_key: empty._key}],
+            path: [0, 0],
             offset: 0,
           },
           focus: {
-            path: [{_key: block2._key}, 'children', {_key: foo._key}],
+            path: [1, 0],
             offset: 3,
           },
         }),
       ),
     ).toEqual({
       anchor: {
-        path: [{_key: block1._key}, 'children', {_key: empty._key}],
+        path: [0, 0],
         offset: 0,
       },
       focus: {
-        path: [{_key: block2._key}, 'children', {_key: foo._key}],
+        path: [1, 0],
         offset: 3,
       },
     })
@@ -375,22 +375,22 @@ describe(getTrimmedSelection.name, () => {
       getTrimmedSelection(
         snapshot([block1, block2], {
           anchor: {
-            path: [{_key: block1._key}, 'children', {_key: foo._key}],
+            path: [0, 0],
             offset: 0,
           },
           focus: {
-            path: [{_key: block2._key}, 'children', {_key: empty._key}],
+            path: [1, 0],
             offset: 0,
           },
         }),
       ),
     ).toEqual({
       anchor: {
-        path: [{_key: block1._key}, 'children', {_key: foo._key}],
+        path: [0, 0],
         offset: 0,
       },
       focus: {
-        path: [{_key: block2._key}, 'children', {_key: empty._key}],
+        path: [1, 0],
         offset: 0,
       },
     })
@@ -410,22 +410,22 @@ describe(getTrimmedSelection.name, () => {
       getTrimmedSelection(
         snapshot([image1, block, image2], {
           anchor: {
-            path: [{_key: image1._key}],
+            path: [0],
             offset: 0,
           },
           focus: {
-            path: [{_key: block._key}, 'children', {_key: empty2._key}],
+            path: [1, 4],
             offset: 0,
           },
         }),
       ),
     ).toEqual({
       anchor: {
-        path: [{_key: image1._key}],
+        path: [0],
         offset: 0,
       },
       focus: {
-        path: [{_key: block._key}, 'children', {_key: foo._key}],
+        path: [1, 2],
         offset: 3,
       },
     })
@@ -445,22 +445,22 @@ describe(getTrimmedSelection.name, () => {
       getTrimmedSelection(
         snapshot([image1, block, image2], {
           anchor: {
-            path: [{_key: block._key}, 'children', {_key: empty1._key}],
+            path: [1, 0],
             offset: 0,
           },
           focus: {
-            path: [{_key: image2._key}],
+            path: [2],
             offset: 0,
           },
         }),
       ),
     ).toEqual({
       anchor: {
-        path: [{_key: block._key}, 'children', {_key: foo._key}],
+        path: [1, 2],
         offset: 0,
       },
       focus: {
-        path: [{_key: image2._key}],
+        path: [2],
         offset: 0,
       },
     })
@@ -480,22 +480,22 @@ describe(getTrimmedSelection.name, () => {
       getTrimmedSelection(
         snapshot([image1, block, image2], {
           anchor: {
-            path: [{_key: image1._key}],
+            path: [0],
             offset: 0,
           },
           focus: {
-            path: [{_key: image2._key}],
+            path: [2],
             offset: 0,
           },
         }),
       ),
     ).toEqual({
       anchor: {
-        path: [{_key: image1._key}],
+        path: [0],
         offset: 0,
       },
       focus: {
-        path: [{_key: image2._key}],
+        path: [2],
         offset: 0,
       },
     })
@@ -541,11 +541,11 @@ describe(getTrimmedSelection.name, () => {
           ],
           {
             anchor: {
-              path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+              path: [0, 0],
               offset: 3,
             },
             focus: {
-              path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+              path: [1, 0],
               offset: 0,
             },
           },
@@ -566,22 +566,22 @@ describe(getTrimmedSelection.name, () => {
       getTrimmedSelection(
         snapshot([block1, block2, block3], {
           anchor: {
-            path: [{_key: block1._key}, 'children', {_key: foo._key}],
+            path: [0, 0],
             offset: 3,
           },
           focus: {
-            path: [{_key: block3._key}, 'children', {_key: bar._key}],
+            path: [2, 0],
             offset: 0,
           },
         }),
       ),
     ).toEqual({
       anchor: {
-        path: [{_key: block2._key}, 'children', {_key: empty._key}],
+        path: [1, 0],
         offset: 0,
       },
       focus: {
-        path: [{_key: block2._key}, 'children', {_key: empty._key}],
+        path: [1, 0],
         offset: 0,
       },
     })
@@ -599,26 +599,24 @@ describe(getTrimmedSelection.name, () => {
       getTrimmedSelection(
         snapshot([block1, block2, block3], {
           anchor: {
-            path: [{_key: block3._key}, 'children', {_key: bar._key}],
+            path: [2, 0],
             offset: 0,
           },
           focus: {
-            path: [{_key: block1._key}, 'children', {_key: foo._key}],
+            path: [0, 0],
             offset: 3,
           },
-          backward: true,
         }),
       ),
     ).toEqual({
       anchor: {
-        path: [{_key: block2._key}, 'children', {_key: empty._key}],
+        path: [1, 0],
         offset: 0,
       },
       focus: {
-        path: [{_key: block2._key}, 'children', {_key: empty._key}],
+        path: [1, 0],
         offset: 0,
       },
-      backward: true,
     })
   })
 
@@ -632,26 +630,24 @@ describe(getTrimmedSelection.name, () => {
       getTrimmedSelection(
         snapshot([block1, block2], {
           anchor: {
-            path: [{_key: block2._key}, 'children', {_key: bar._key}],
+            path: [1, 0],
             offset: 3,
           },
           focus: {
-            path: [{_key: block1._key}, 'children', {_key: foo._key}],
+            path: [0, 0],
             offset: 3,
           },
-          backward: true,
         }),
       ),
     ).toEqual({
       anchor: {
-        path: [{_key: block2._key}, 'children', {_key: bar._key}],
+        path: [1, 0],
         offset: 3,
       },
       focus: {
-        path: [{_key: block2._key}, 'children', {_key: bar._key}],
+        path: [1, 0],
         offset: 0,
       },
-      backward: true,
     })
   })
 })

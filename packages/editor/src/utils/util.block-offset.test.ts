@@ -91,7 +91,7 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
       direction: 'backward',
     }),
   ).toEqual({
-    path: [{_key: 'b0'}, 'children', {_key: 's2'}],
+    path: [0, 2],
     offset: 1,
   })
   expect(
@@ -117,7 +117,7 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
       direction: 'backward',
     }),
   ).toEqual({
-    path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+    path: [0, 0],
     offset: 0,
   })
   expect(
@@ -143,7 +143,7 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
       direction: 'forward',
     }),
   ).toEqual({
-    path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+    path: [0, 0],
     offset: 0,
   })
   expect(
@@ -169,7 +169,7 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
       direction: 'forward',
     }),
   ).toEqual({
-    path: [{_key: 'b0'}, 'children', {_key: 's2'}],
+    path: [0, 2],
     offset: 1,
   })
   expect(
@@ -198,7 +198,7 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
       direction: 'forward',
     }),
   ).toEqual({
-    path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+    path: [1, 1],
     offset: 2,
   })
   expect(
@@ -214,7 +214,7 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
       direction: 'forward',
     }),
   ).toEqual({
-    path: [{_key: 'b3'}, 'children', {_key: 's3'}],
+    path: [2, 0],
     offset: 9,
   })
   expect(
@@ -230,7 +230,7 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
       direction: 'forward',
     }),
   ).toEqual({
-    path: [{_key: 'b3'}, 'children', {_key: 's3'}],
+    path: [2, 0],
     offset: 10,
   })
   expect(
@@ -258,7 +258,7 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
       direction: 'forward',
     }),
   ).toEqual({
-    path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+    path: [0, 0],
     offset: 0,
   })
   expect(
@@ -286,7 +286,7 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
       direction: 'forward',
     }),
   ).toEqual({
-    path: [{_key: 'b0'}, 'children', {_key: 's2'}],
+    path: [0, 2],
     offset: 1,
   })
   expect(
@@ -314,7 +314,7 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
       direction: 'backward',
     }),
   ).toEqual({
-    path: [{_key: 'b0'}, 'children', {_key: 's2'}],
+    path: [0, 2],
     offset: 0,
   })
   expect(
@@ -342,7 +342,7 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
       direction: 'backward',
     }),
   ).toEqual({
-    path: [{_key: 'b0'}, 'children', {_key: 's2'}],
+    path: [0, 2],
     offset: 1,
   })
   expect(
@@ -370,7 +370,7 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
       direction: 'forward',
     }),
   ).toEqual({
-    path: [{_key: 'b0'}, 'children', {_key: 's2'}],
+    path: [0, 2],
     offset: 3,
   })
   expect(
@@ -398,7 +398,7 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
       direction: 'forward',
     }),
   ).toEqual({
-    path: [{_key: 'b0'}, 'children', {_key: 's2'}],
+    path: [0, 2],
     offset: 2,
   })
   expect(
@@ -426,7 +426,7 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
       direction: 'backward',
     }),
   ).toEqual({
-    path: [{_key: 'b0'}, 'children', {_key: 's4'}],
+    path: [0, 4],
     offset: 0,
   })
   expect(
@@ -454,7 +454,7 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
       direction: 'backward',
     }),
   ).toEqual({
-    path: [{_key: 'b0'}, 'children', {_key: 's2'}],
+    path: [0, 2],
     offset: 2,
   })
   expect(
@@ -470,7 +470,7 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
       direction: 'backward',
     }),
   ).toEqual({
-    path: [{_key: 'b3'}, 'children', {_key: 's5'}],
+    path: [2, 2],
     offset: 0,
   })
   expect(
@@ -486,7 +486,7 @@ test(blockOffsetToSpanSelectionPoint.name, () => {
       direction: 'forward',
     }),
   ).toEqual({
-    path: [{_key: 'b3'}, 'children', {_key: 's5'}],
+    path: [2, 2],
     offset: 1,
   })
   expect(

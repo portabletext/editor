@@ -1,25 +1,36 @@
 import {describe, expect, test} from 'vitest'
+import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
+import {
+  getIndexedSelection,
+  type IndexedEditorSelection,
+} from '../editor/indexed-selection'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
-import type {EditorSelection} from '../types/editor'
 import {isOverlappingSelection} from './selector.is-overlapping-selection'
 
-function snapshot(selection: EditorSelection) {
+function snapshot(editorSelection: IndexedEditorSelection) {
+  const value = [
+    {_type: 'image', _key: 'k0'},
+    {
+      _type: 'block',
+      _key: 'k1',
+      children: [
+        {_type: 'span', _key: 'k3', text: 'foo'},
+        {_type: 'stock-ticker', _key: 'k4'},
+        {_type: 'span', _key: 'k5', text: 'bar'},
+      ],
+    },
+    {_type: 'image', _key: 'k2'},
+  ]
+  const selection = getIndexedSelection(
+    compileSchemaDefinition(defineSchema({})),
+    [],
+    editorSelection,
+  )
+
   return createTestSnapshot({
     context: {
       selection,
-      value: [
-        {_type: 'image', _key: 'k0'},
-        {
-          _type: 'block',
-          _key: 'k1',
-          children: [
-            {_type: 'span', _key: 'k3', text: 'foo'},
-            {_type: 'stock-ticker', _key: 'k4'},
-            {_type: 'span', _key: 'k5', text: 'bar'},
-          ],
-        },
-        {_type: 'image', _key: 'k2'},
-      ],
+      value,
     },
   })
 }
@@ -32,12 +43,12 @@ describe(isOverlappingSelection.name, () => {
   test('fully selected block object', () => {
     expect(
       isOverlappingSelection({
-        anchor: {path: [{_key: 'k0'}], offset: 0},
-        focus: {path: [{_key: 'k0'}], offset: 0},
+        anchor: {path: [0], offset: 0},
+        focus: {path: [0], offset: 0},
       })(
         snapshot({
-          anchor: {path: [{_key: 'k0'}], offset: 0},
-          focus: {path: [{_key: 'k0'}], offset: 0},
+          anchor: {path: [0], offset: 0},
+          focus: {path: [0], offset: 0},
         }),
       ),
     ).toBe(true)
@@ -46,12 +57,12 @@ describe(isOverlappingSelection.name, () => {
   test('block object inside selection', () => {
     expect(
       isOverlappingSelection({
-        anchor: {path: [{_key: 'k0'}], offset: 0},
-        focus: {path: [{_key: 'k0'}], offset: 0},
+        anchor: {path: [0], offset: 0},
+        focus: {path: [0], offset: 0},
       })(
         snapshot({
-          anchor: {path: [{_key: 'k0'}], offset: 0},
-          focus: {path: [{_key: 'k2'}], offset: 0},
+          anchor: {path: [0], offset: 0},
+          focus: {path: [2], offset: 0},
         }),
       ),
     ).toBe(true)
@@ -60,12 +71,12 @@ describe(isOverlappingSelection.name, () => {
   test('fully selected inline object', () => {
     expect(
       isOverlappingSelection({
-        anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k4'}], offset: 0},
-        focus: {path: [{_key: 'k1'}, 'children', {_key: 'k4'}], offset: 0},
+        anchor: {path: [1, 1], offset: 0},
+        focus: {path: [1, 1], offset: 0},
       })(
         snapshot({
-          anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k4'}], offset: 0},
-          focus: {path: [{_key: 'k1'}, 'children', {_key: 'k4'}], offset: 0},
+          anchor: {path: [1, 1], offset: 0},
+          focus: {path: [1, 1], offset: 0},
         }),
       ),
     ).toBe(true)
@@ -74,12 +85,12 @@ describe(isOverlappingSelection.name, () => {
   test('inline object inside selection', () => {
     expect(
       isOverlappingSelection({
-        anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k4'}], offset: 0},
-        focus: {path: [{_key: 'k1'}, 'children', {_key: 'k4'}], offset: 0},
+        anchor: {path: [1, 1], offset: 0},
+        focus: {path: [1, 1], offset: 0},
       })(
         snapshot({
-          anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 2},
-          focus: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 1},
+          anchor: {path: [1, 0], offset: 2},
+          focus: {path: [1, 2], offset: 1},
         }),
       ),
     ).toBe(true)
@@ -88,12 +99,12 @@ describe(isOverlappingSelection.name, () => {
   test('selection right before', () => {
     expect(
       isOverlappingSelection({
-        anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 0},
-        focus: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 2},
+        anchor: {path: [1, 0], offset: 0},
+        focus: {path: [1, 0], offset: 2},
       })(
         snapshot({
-          anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 2},
-          focus: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 1},
+          anchor: {path: [1, 0], offset: 2},
+          focus: {path: [1, 2], offset: 1},
         }),
       ),
     ).toBe(false)
@@ -102,12 +113,12 @@ describe(isOverlappingSelection.name, () => {
   test('selection overlapping from the start', () => {
     expect(
       isOverlappingSelection({
-        anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 0},
-        focus: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 3},
+        anchor: {path: [1, 0], offset: 0},
+        focus: {path: [1, 0], offset: 3},
       })(
         snapshot({
-          anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 2},
-          focus: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 1},
+          anchor: {path: [1, 0], offset: 2},
+          focus: {path: [1, 2], offset: 1},
         }),
       ),
     ).toBe(true)
@@ -116,12 +127,12 @@ describe(isOverlappingSelection.name, () => {
   test('selection right after', () => {
     expect(
       isOverlappingSelection({
-        anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 1},
-        focus: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 2},
+        anchor: {path: [1, 2], offset: 1},
+        focus: {path: [1, 2], offset: 2},
       })(
         snapshot({
-          anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 2},
-          focus: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 1},
+          anchor: {path: [1, 0], offset: 2},
+          focus: {path: [1, 2], offset: 1},
         }),
       ),
     ).toBe(false)
@@ -130,12 +141,12 @@ describe(isOverlappingSelection.name, () => {
   test('selection overlapping from the end', () => {
     expect(
       isOverlappingSelection({
-        anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 0},
-        focus: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 2},
+        anchor: {path: [1, 2], offset: 0},
+        focus: {path: [1, 2], offset: 2},
       })(
         snapshot({
-          anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 2},
-          focus: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 1},
+          anchor: {path: [1, 0], offset: 2},
+          focus: {path: [1, 2], offset: 1},
         }),
       ),
     ).toBe(true)
@@ -144,12 +155,12 @@ describe(isOverlappingSelection.name, () => {
   test('before inline object', () => {
     expect(
       isOverlappingSelection({
-        anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 2},
-        focus: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 2},
+        anchor: {path: [1, 0], offset: 2},
+        focus: {path: [1, 0], offset: 2},
       })(
         snapshot({
-          anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k4'}], offset: 0},
-          focus: {path: [{_key: 'k1'}, 'children', {_key: 'k4'}], offset: 0},
+          anchor: {path: [1, 1], offset: 0},
+          focus: {path: [1, 1], offset: 0},
         }),
       ),
     ).toBe(false)
@@ -158,12 +169,12 @@ describe(isOverlappingSelection.name, () => {
   test('after inline object', () => {
     expect(
       isOverlappingSelection({
-        anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 2},
-        focus: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 2},
+        anchor: {path: [1, 2], offset: 2},
+        focus: {path: [1, 2], offset: 2},
       })(
         snapshot({
-          anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k4'}], offset: 0},
-          focus: {path: [{_key: 'k1'}, 'children', {_key: 'k4'}], offset: 0},
+          anchor: {path: [1, 1], offset: 0},
+          focus: {path: [1, 1], offset: 0},
         }),
       ),
     ).toBe(false)

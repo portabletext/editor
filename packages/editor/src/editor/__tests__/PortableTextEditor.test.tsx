@@ -122,9 +122,8 @@ describe('initialization', () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const initialValue = [helloBlock]
     const initialSelection: EditorSelection = {
-      anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
-      focus: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
-      backward: false,
+      anchor: {path: [0, 0], offset: 2},
+      focus: {path: [0, 0], offset: 2},
     }
     const onChange = vi.fn()
     render(
@@ -162,14 +161,12 @@ describe('initialization', () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const initialValue = [helloBlock]
     const initialSelection: EditorSelection = {
-      anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 0},
-      focus: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 0},
-      backward: false,
+      anchor: {path: [0, 0], offset: 0},
+      focus: {path: [0, 0], offset: 0},
     }
     const newSelection: EditorSelection = {
-      anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 0},
-      focus: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 3},
-      backward: false,
+      anchor: {path: [0, 0], offset: 0},
+      focus: {path: [0, 0], offset: 3},
     }
     const onChange = vi.fn()
     const {rerender} = render(

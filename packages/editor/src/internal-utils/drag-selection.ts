@@ -43,6 +43,9 @@ export function getDragSelection({
       selection: eventSelection,
     },
   })
+  const draggedTextBlockIndex = draggedTextBlock
+    ? eventSelection.focus.path.at(0)
+    : undefined
   const draggedSpan = selectors.getFocusSpan({
     ...snapshot,
     context: {
@@ -51,7 +54,12 @@ export function getDragSelection({
     },
   })
 
-  if (draggingCollapsedSelection && draggedTextBlock && draggedSpan) {
+  if (
+    draggingCollapsedSelection &&
+    draggedTextBlock &&
+    draggedSpan &&
+    draggedTextBlockIndex !== undefined
+  ) {
     // Looks like we are dragging an empty span
     // Let's drag the entire block instead
     dragSelection = {
@@ -73,10 +81,24 @@ export function getDragSelection({
     selectors.isSelectionExpanded(snapshot) &&
     selectedBlocks.length > 1
   ) {
-    const selectionStartBlock = selectors.getSelectionStartBlock(snapshot)
-    const selectionEndBlock = selectors.getSelectionEndBlock(snapshot)
+    const startPoint = utils.getSelectionStartPoint(snapshot.context.selection)
+    const endPoint = utils.getSelectionEndPoint(snapshot.context.selection)
 
-    if (!selectionStartBlock || !selectionEndBlock) {
+    if (!startPoint || !endPoint) {
+      return dragSelection
+    }
+
+    const selectionStartBlock = selectors.getSelectionStartBlock(snapshot)
+    const startBlockIndex = startPoint.path.at(0)
+    const selectionEndBlock = selectors.getSelectionEndBlock(snapshot)
+    const endBlockIndex = endPoint.path.at(0)
+
+    if (
+      !selectionStartBlock ||
+      startBlockIndex === undefined ||
+      !selectionEndBlock ||
+      endBlockIndex === undefined
+    ) {
       return dragSelection
     }
 

@@ -1,12 +1,18 @@
-import type {PortableTextSpan} from '@sanity/types'
+import type {PortableTextBlock, PortableTextSpan} from '@sanity/types'
+import type {EditorSelection} from '..'
+import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorSelector} from '../editor/editor-selector'
+import {
+  getIndexedSelection,
+  getKeyedSelection,
+} from '../editor/indexed-selection'
+import type {
+  KeyedEditorSelection,
+  KeyedEditorSelectionPoint,
+} from '../editor/keyed-selection'
 import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
-import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import {isEmptyTextBlock, isKeyedSegment} from '../utils'
-import {getSelectionEndPoint} from './selector.get-selection-end-point'
-import {getSelectionStartPoint} from './selector.get-selection-start-point'
-import {isSelectionCollapsed} from './selector.is-selection-collapsed'
-import {getFocusTextBlock} from './selectors'
+import {isSelectionCollapsed} from '../utils/util.is-selection-collapsed'
 
 /**
  * @public
@@ -14,15 +20,43 @@ import {getFocusTextBlock} from './selectors'
 export const getTrimmedSelection: EditorSelector<EditorSelection> = (
   snapshot,
 ) => {
-  if (!snapshot.context.selection) {
-    return snapshot.context.selection
+  const keyedSelection = getKeyedSelection(
+    snapshot.context.schema,
+    snapshot.context.value,
+    snapshot.context.selection,
+  )
+
+  const trimmedKeyedSelection = trimKeyedSelection({
+    schema: snapshot.context.schema,
+    selection: keyedSelection,
+    value: snapshot.context.value,
+  })
+
+  return getIndexedSelection(
+    snapshot.context.schema,
+    snapshot.context.value,
+    trimmedKeyedSelection,
+  )
+}
+
+function trimKeyedSelection({
+  schema,
+  selection,
+  value,
+}: {
+  schema: EditorSchema
+  selection: KeyedEditorSelection
+  value: PortableTextBlock[]
+}) {
+  if (!selection) {
+    return selection
   }
 
-  const startPoint = getSelectionStartPoint(snapshot)
-  const endPoint = getSelectionEndPoint(snapshot)
+  const startPoint = selection.backward ? selection.focus : selection.anchor
+  const endPoint = selection.backward ? selection.anchor : selection.focus
 
   if (!startPoint || !endPoint) {
-    return snapshot.context.selection
+    return selection
   }
 
   const startBlockKey = isKeyedSegment(startPoint.path[0])
@@ -39,26 +73,23 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = (
     : null
 
   if (!startBlockKey || !endBlockKey) {
-    return snapshot.context.selection
+    return selection
   }
 
   let startBlockFound = false
-  let adjustedStartPoint: EditorSelectionPoint | undefined
+  let adjustedStartPoint: KeyedEditorSelectionPoint | undefined
   let trimStartPoint = false
-  let adjustedEndPoint: EditorSelectionPoint | undefined
+  let adjustedEndPoint: KeyedEditorSelectionPoint | undefined
   let trimEndPoint = false
   let previousPotentialEndpoint:
     | {blockKey: string; span: PortableTextSpan}
     | undefined
 
-  for (const block of snapshot.context.value) {
+  for (const block of value) {
     if (block._key === startBlockKey) {
       startBlockFound = true
 
-      if (
-        isTextBlock(snapshot.context, block) &&
-        isEmptyTextBlock(snapshot.context, block)
-      ) {
+      if (isTextBlock({schema}, block) && isEmptyTextBlock({schema}, block)) {
         continue
       }
     }
@@ -67,20 +98,17 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = (
       continue
     }
 
-    if (!isTextBlock(snapshot.context, block)) {
+    if (!isTextBlock({schema}, block)) {
       continue
     }
 
-    if (
-      block._key === endBlockKey &&
-      isEmptyTextBlock(snapshot.context, block)
-    ) {
+    if (block._key === endBlockKey && isEmptyTextBlock({schema}, block)) {
       break
     }
 
     for (const child of block.children) {
       if (child._key === endChildKey) {
-        if (!isSpan(snapshot.context, child) || endPoint.offset === 0) {
+        if (!isSpan({schema}, child) || endPoint.offset === 0) {
           adjustedEndPoint = previousPotentialEndpoint
             ? {
                 path: [
@@ -99,12 +127,9 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = (
 
       if (trimStartPoint) {
         const lonelySpan =
-          isSpan(snapshot.context, child) && block.children.length === 1
+          isSpan({schema}, child) && block.children.length === 1
 
-        if (
-          (isSpan(snapshot.context, child) && child.text.length > 0) ||
-          lonelySpan
-        ) {
+        if ((isSpan({schema}, child) && child.text.length > 0) || lonelySpan) {
           adjustedStartPoint = {
             path: [{_key: block._key}, 'children', {_key: child._key}],
             offset: 0,
@@ -117,7 +142,7 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = (
       }
 
       if (child._key === startChildKey) {
-        if (!isSpan(snapshot.context, child)) {
+        if (!isSpan({schema}, child)) {
           trimStartPoint = true
           continue
         }
@@ -133,7 +158,7 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = (
       }
 
       previousPotentialEndpoint =
-        isSpan(snapshot.context, child) && child.text.length > 0
+        isSpan({schema}, child) && child.text.length > 0
           ? {blockKey: block._key, span: child}
           : previousPotentialEndpoint
     }
@@ -143,7 +168,7 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = (
     }
   }
 
-  const trimmedSelection = snapshot.context.selection.backward
+  const trimmedSelection = selection.backward
     ? {
         anchor: trimEndPoint && adjustedEndPoint ? adjustedEndPoint : endPoint,
         focus: adjustedStartPoint ?? startPoint,
@@ -154,27 +179,20 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = (
         focus: trimEndPoint && adjustedEndPoint ? adjustedEndPoint : endPoint,
       }
 
-  if (
-    isSelectionCollapsed({
-      ...snapshot,
-      context: {
-        ...snapshot.context,
-        selection: trimmedSelection,
-      },
-    })
-  ) {
-    const focusTextBlock = getFocusTextBlock({
-      ...snapshot,
-      context: {
-        ...snapshot.context,
-        selection: trimmedSelection,
-      },
-    })
+  if (isSelectionCollapsed(trimmedSelection)) {
+    const focusBlockKey = isKeyedSegment(trimmedSelection.focus.path[0])
+      ? trimmedSelection.focus.path[0]._key
+      : null
 
-    if (
-      focusTextBlock &&
-      !isEmptyTextBlock(snapshot.context, focusTextBlock.node)
-    ) {
+    if (!focusBlockKey) {
+      return null
+    }
+
+    const focusTextBlock = value.find(
+      (block) => block._key === focusBlockKey && isTextBlock({schema}, block),
+    )
+
+    if (focusTextBlock && !isEmptyTextBlock({schema}, focusTextBlock)) {
       return null
     }
   }

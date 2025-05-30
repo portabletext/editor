@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'vitest'
 import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
-import type {EditorSelection} from '../types/editor'
+import type {IndexedEditorSelection} from '../editor/indexed-selection'
 import {createTestSnapshot} from './create-test-snapshot'
 import {getDragSelection} from './drag-selection'
 import {createTestKeyGenerator} from './test-key-generator'
@@ -27,13 +27,9 @@ describe(getDragSelection.name, () => {
       },
     ],
   }
-  const fooPath = [{_key: foo._key}, 'children', {_key: foo.children[0]._key}]
-  const stockTickerPath = [
-    {_key: foo._key},
-    'children',
-    {_key: foo.children[1]._key},
-  ]
-  const barPath = [{_key: foo._key}, 'children', {_key: foo.children[2]._key}]
+  const fooPath = [0, 0]
+  const stockTickerPath = [0, 1]
+  const barPath = [0, 2]
   const baz = {
     _key: keyGenerator(),
     _type: 'block',
@@ -45,22 +41,25 @@ describe(getDragSelection.name, () => {
       },
     ],
   }
-  const bazPath = [{_key: baz._key}, 'children', {_key: baz.children[0]._key}]
+  const bazPath = [1, 0]
   const image = {
     _key: keyGenerator(),
     _type: 'image',
   }
-  const imagePath = [{_key: image._key}]
+  const imagePath = [2]
 
-  function snapshot(selection: EditorSelection) {
+  function snapshot(selection: IndexedEditorSelection) {
+    const schema = compileSchemaDefinition(
+      defineSchema({blockObjects: [{name: 'image'}]}),
+    )
+    const value = [foo, baz, image]
+
     return createTestSnapshot({
       context: {
         keyGenerator,
-        schema: compileSchemaDefinition(
-          defineSchema({blockObjects: [{name: 'image'}]}),
-        ),
+        schema,
         selection,
-        value: [foo, baz, image],
+        value,
       },
     })
   }
@@ -227,7 +226,7 @@ describe(getDragSelection.name, () => {
     })
   })
 
-  test('dragging a text block with an expanded selected', () => {
+  test('dragging a text block with an expanded selection', () => {
     expect(
       getDragSelection({
         eventSelection: {

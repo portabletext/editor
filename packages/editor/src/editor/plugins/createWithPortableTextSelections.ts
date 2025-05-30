@@ -1,9 +1,9 @@
 import type {BaseRange} from 'slate'
 import {debugWithName} from '../../internal-utils/debug'
-import {slateRangeToSelection} from '../../internal-utils/slate-utils'
 import {SLATE_TO_PORTABLE_TEXT_RANGE} from '../../internal-utils/weakMaps'
 import type {EditorSelection, PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
+import {slateRangeToIndexedSelection} from '../indexed-selection'
 
 const debug = debugWithName('plugin:withPortableTextSelections')
 const debugVerbose = debug.enabled && false
@@ -18,13 +18,13 @@ export function createWithPortableTextSelections(
   ): PortableTextSlateEditor {
     const emitPortableTextSelection = () => {
       if (prevSelection !== editor.selection) {
-        let ptRange: EditorSelection | null = null
+        let ptRange: EditorSelection = null
         if (editor.selection) {
           const existing = SLATE_TO_PORTABLE_TEXT_RANGE.get(editor.selection)
           if (existing) {
             ptRange = existing
           } else {
-            ptRange = slateRangeToSelection({
+            ptRange = slateRangeToIndexedSelection({
               schema: editorActor.getSnapshot().context.schema,
               editor,
               range: editor.selection,
@@ -40,9 +40,15 @@ export function createWithPortableTextSelections(
           )
         }
         if (ptRange) {
-          editorActor.send({type: 'update selection', selection: ptRange})
+          editorActor.send({
+            type: 'update selection',
+            selection: ptRange,
+          })
         } else {
-          editorActor.send({type: 'update selection', selection: null})
+          editorActor.send({
+            type: 'update selection',
+            selection: null,
+          })
         }
       }
       prevSelection = editor.selection

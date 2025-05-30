@@ -1,11 +1,26 @@
 import {Transforms} from 'slate'
-import {toSlateRange} from '../internal-utils/ranges'
+import {
+  getIndexedSelection,
+  indexedSelectionToSlateRange,
+} from '../editor/indexed-selection'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const selectOperationImplementation: BehaviorOperationImplementation<
   'select'
-> = ({operation}) => {
-  const newSelection = toSlateRange(operation.at, operation.editor)
+> = ({context, operation}) => {
+  const indexedSelection = getIndexedSelection(
+    context.schema,
+    operation.editor.value,
+    operation.at,
+  )
+  const newSelection = indexedSelection
+    ? indexedSelectionToSlateRange(
+        context.schema,
+        operation.editor.value,
+        indexedSelection,
+        operation.editor,
+      )
+    : null
 
   if (newSelection) {
     Transforms.select(operation.editor, newSelection)

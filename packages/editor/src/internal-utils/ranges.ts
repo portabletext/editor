@@ -1,4 +1,6 @@
 import {Point, type Editor, type Operation, type Range} from 'slate'
+import type {EditorSchema} from '../editor/editor-schema'
+import {getKeyedSelection} from '../editor/indexed-selection'
 import type {EditorSelection} from '../types/editor'
 import {toSlatePath} from './paths'
 
@@ -8,25 +10,32 @@ export interface ObjectWithKeyAndType {
   children?: ObjectWithKeyAndType[]
 }
 
-export function toSlateRange(
+export function keyedSelectionToSlateRange(
+  schema: EditorSchema,
   selection: EditorSelection,
   editor: Editor,
 ): Range | null {
-  if (!selection || !editor) {
+  const keyedSelection = getKeyedSelection(schema, editor.value, selection)
+
+  if (!keyedSelection) {
     return null
   }
+
   const anchor = {
-    path: toSlatePath(selection.anchor.path, editor),
-    offset: selection.anchor.offset,
+    path: toSlatePath(keyedSelection.anchor.path, editor),
+    offset: keyedSelection.anchor.offset,
   }
   const focus = {
-    path: toSlatePath(selection.focus.path, editor),
-    offset: selection.focus.offset,
+    path: toSlatePath(keyedSelection.focus.path, editor),
+    offset: keyedSelection.focus.offset,
   }
+
   if (focus.path.length === 0 || anchor.path.length === 0) {
     return null
   }
+
   const range = anchor && focus ? {anchor, focus} : null
+
   return range
 }
 

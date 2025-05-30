@@ -1,6 +1,9 @@
 import {Editor, Range, Text, Transforms} from 'slate'
-import {toSlateRange} from '../internal-utils/ranges'
-import {slateRangeToSelection} from '../internal-utils/slate-utils'
+import {
+  getIndexedSelection,
+  indexedSelectionToSlateRange,
+  slateRangeToIndexedSelection,
+} from '../editor/indexed-selection'
 import {fromSlateValue} from '../internal-utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
 import * as selectors from '../selectors'
@@ -47,14 +50,19 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
       : undefined
 
   const selection = manualSelection
-    ? (toSlateRange(manualSelection, operation.editor) ?? editor.selection)
+    ? (indexedSelectionToSlateRange(
+        context.schema,
+        value,
+        getIndexedSelection(context.schema, value, manualSelection),
+        operation.editor,
+      ) ?? editor.selection)
     : editor.selection
 
   if (!selection) {
     return
   }
 
-  const editorSelection = slateRangeToSelection({
+  const editorSelection = slateRangeToIndexedSelection({
     schema: context.schema,
     editor,
     range: selection,
@@ -104,7 +112,6 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
         value: newValue,
       },
       offsets: {anchor: anchorOffset, focus: focusOffset},
-      backward: editorSelection?.backward,
     })
 
     const trimmedSelection = selectors.getTrimmedSelection({
@@ -128,7 +135,12 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
       throw new Error('Unable to find trimmed selection')
     }
 
-    const newRange = toSlateRange(trimmedSelection, editor)
+    const newRange = indexedSelectionToSlateRange(
+      context.schema,
+      newValue,
+      getIndexedSelection(context.schema, newValue, trimmedSelection),
+      editor,
+    )
 
     if (!newRange) {
       throw new Error('Unable to find new selection')

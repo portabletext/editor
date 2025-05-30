@@ -1,7 +1,8 @@
-import type {PortableTextSpan} from '@sanity/types'
+import type {PortableTextBlock, PortableTextSpan} from '@sanity/types'
 import {Editor, Element, Node, Range, type Path, type Point} from 'slate'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
+import type {KeyedBlockPath} from '../types/paths'
 import {fromSlateValue} from './values'
 
 export function getBlockPath({
@@ -181,7 +182,7 @@ export function getFocusChild({
   }
 }
 
-function getPointChild({
+export function getPointChild({
   editor,
   point,
 }: {
@@ -256,16 +257,40 @@ export function getNodeBlock({
   editor: PortableTextSlateEditor
   schema: EditorSchema
   node: Node
-}) {
+}):
+  | {
+      node: PortableTextBlock
+      path: KeyedBlockPath
+      index: number
+    }
+  | undefined {
   if (Editor.isEditor(node)) {
     return undefined
   }
 
   if (isBlockElement({editor, schema}, node)) {
-    return elementToBlock({schema, element: node})
+    const blockNode = elementToBlock({schema, element: node})
+
+    if (!blockNode) {
+      return undefined
+    }
+
+    const blockIndex = editor.children.findIndex(
+      (child) => child._key === blockNode._key,
+    )
+
+    if (blockIndex === -1) {
+      return undefined
+    }
+
+    return {
+      node: blockNode,
+      path: [{_key: blockNode._key}],
+      index: blockIndex,
+    }
   }
 
-  const parent = Array.from(
+  const [parent, parentPath] = Array.from(
     Editor.nodes(editor, {
       mode: 'highest',
       at: [],
@@ -273,16 +298,33 @@ export function getNodeBlock({
         isBlockElement({editor, schema}, n) &&
         n.children.some((child) => child._key === node._key),
     }),
-  )
-    .at(0)
-    ?.at(0)
+  ).at(0) ?? [undefined, undefined]
 
-  return Element.isElement(parent)
-    ? elementToBlock({
-        schema,
-        element: parent,
-      })
-    : undefined
+  if (!parent || !parentPath) {
+    return undefined
+  }
+
+  if (!Element.isElement(parent)) {
+    return undefined
+  }
+
+  const block = elementToBlock({schema, element: parent})
+
+  if (!block) {
+    return undefined
+  }
+
+  const blockIndex = parentPath.at(0)
+
+  if (blockIndex === undefined) {
+    return undefined
+  }
+
+  return {
+    node: block,
+    path: [{_key: block._key}],
+    index: blockIndex,
+  }
 }
 
 function elementToBlock({

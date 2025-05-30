@@ -1,4 +1,5 @@
 import type {EditorSelection, EditorSelectionPoint} from '..'
+import {isBackward, isIndexedSelection} from '../editor/indexed-selection'
 
 /**
  * @public
@@ -14,7 +15,13 @@ export function getSelectionEndPoint<
     return null as TEditorSelectionPoint
   }
 
+  if (!isIndexedSelection(selection)) {
+    return (
+      selection.backward ? selection.anchor : selection.focus
+    ) as TEditorSelectionPoint
+  }
+
   return (
-    selection.backward ? selection.anchor : selection.focus
+    isBackward(selection) ? selection.anchor : selection.focus
   ) as TEditorSelectionPoint
 }

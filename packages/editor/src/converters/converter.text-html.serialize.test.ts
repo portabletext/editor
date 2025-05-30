@@ -1,6 +1,5 @@
 import type {PortableTextBlock, PortableTextTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
-import type {EditorSelection} from '..'
 import {
   compileSchemaDefinition,
   compileSchemaDefinitionToLegacySchema,
@@ -8,6 +7,7 @@ import {
   type SchemaDefinition,
 } from '../editor/editor-schema'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
+import type {EditorSelection} from '../types/editor'
 import {createConverterTextHtml} from './converter.text-html'
 
 const decoratedParagraph: PortableTextTextBlock = {
@@ -96,19 +96,11 @@ describe(converterTextHtml.serialize.name, () => {
       converterTextHtml.serialize({
         snapshot: createSnapshot(defineSchema({}), {
           anchor: {
-            path: [
-              {_key: decoratedParagraph._key},
-              'children',
-              {_key: decoratedParagraph.children[0]._key},
-            ],
+            path: [0, 0],
             offset: 0,
           },
           focus: {
-            path: [
-              {_key: decoratedParagraph._key},
-              'children',
-              {_key: decoratedParagraph.children[2]._key},
-            ],
+            path: [0, 2],
             offset: 4,
           },
         }),
@@ -127,11 +119,11 @@ describe(converterTextHtml.serialize.name, () => {
       converterTextHtml.serialize({
         snapshot: createSnapshot(defineSchema({}), {
           anchor: {
-            path: [{_key: image._key}],
+            path: [1],
             offset: 0,
           },
           focus: {
-            path: [{_key: image._key}],
+            path: [1],
             offset: 0,
           },
         }),
@@ -150,19 +142,11 @@ describe(converterTextHtml.serialize.name, () => {
       converterTextHtml.serialize({
         snapshot: createSnapshot(defineSchema({}), {
           anchor: {
-            path: [
-              {_key: paragraphWithInlineBlock._key},
-              'children',
-              {_key: paragraphWithInlineBlock.children[0]._key},
-            ],
+            path: [3, 0],
             offset: 0,
           },
           focus: {
-            path: [
-              {_key: paragraphWithInlineBlock._key},
-              'children',
-              {_key: paragraphWithInlineBlock.children[2]._key},
-            ],
+            path: [3, 2],
             offset: 4,
           },
         }),
@@ -214,11 +198,11 @@ describe(converterTextHtml.serialize.name, () => {
             ],
             selection: {
               anchor: {
-                path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+                path: [0, 0],
                 offset: 0,
               },
               focus: {
-                path: [{_key: 'k2'}, 'children', {_key: 'k3'}],
+                path: [1, 0],
                 offset: 3,
               },
             },

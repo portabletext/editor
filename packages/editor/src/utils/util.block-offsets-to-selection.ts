@@ -1,4 +1,4 @@
-import type {EditorSelection} from '..'
+import {EditorSelection} from '..'
 import type {EditorContext} from '../editor/editor-snapshot'
 import type {BlockOffset} from '../types/block-offset'
 import {blockOffsetToSelectionPoint} from './util.block-offset-to-selection-point'
@@ -33,6 +33,5 @@ export function blockOffsetsToSelection({
   return {
     anchor,
     focus,
-    backward,
   }
 }

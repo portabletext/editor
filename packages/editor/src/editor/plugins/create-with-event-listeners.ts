@@ -1,8 +1,8 @@
 import {Editor} from 'slate'
-import {slateRangeToSelection} from '../../internal-utils/slate-utils'
 import {insertTextOperationImplementation} from '../../operations/behavior.operation.insert.text'
 import {performOperation} from '../../operations/behavior.operations'
 import type {EditorActor} from '../editor-machine'
+import {slateRangeToIndexedSelection} from '../indexed-selection'
 import {isApplyingBehaviorOperations} from '../with-applying-behavior-operations'
 
 export function createWithEventListeners(editorActor: EditorActor) {
@@ -28,7 +28,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
 
       const range = Editor.range(editor, at)
 
-      const selection = slateRangeToSelection({
+      const selection = slateRangeToIndexedSelection({
         schema: editorActor.getSnapshot().context.schema,
         editor,
         range,
@@ -203,7 +203,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
         type: 'behavior event',
         behaviorEvent: {
           type: 'select',
-          at: slateRangeToSelection({
+          at: slateRangeToIndexedSelection({
             schema: editorActor.getSnapshot().context.schema,
             editor,
             range,

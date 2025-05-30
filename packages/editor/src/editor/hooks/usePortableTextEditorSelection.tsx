@@ -5,8 +5,8 @@ import {
   useEffect,
   useState,
 } from 'react'
+import type {EditorSelection} from '../..'
 import {debugWithName} from '../../internal-utils/debug'
-import type {EditorSelection} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 
 /**

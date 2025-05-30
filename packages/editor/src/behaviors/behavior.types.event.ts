@@ -5,6 +5,7 @@ import type {OmitFromUnion, PickFromUnion, StrictExtract} from '../type-utils'
 import type {BlockOffset} from '../types/block-offset'
 import type {BlockWithOptionalKey} from '../types/block-with-optional-key'
 import type {EditorSelection} from '../types/editor'
+import type {BlockPath} from '../types/paths'
 
 /**
  * @beta
@@ -104,7 +105,7 @@ export type SyntheticBehaviorEvent =
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'block.set'>
-      at: [KeyedSegment]
+      at: BlockPath
       props: Record<string, unknown>
     }
   | {

@@ -6,6 +6,8 @@ import {createRef, type ComponentProps, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
 import {getTextSelection} from '../../internal-utils/text-selection'
 import {PortableTextEditable} from '../Editable'
+import {compileSchemaDefinition, defineSchema} from '../editor-schema'
+import {getKeyedSelection} from '../indexed-selection'
 import {PortableTextEditor} from '../PortableTextEditor'
 
 const schema = Schema.compile({
@@ -111,7 +113,11 @@ describe('Feature: Self-solving', () => {
       if (editorRef.current) {
         PortableTextEditor.select(
           editorRef.current,
-          getTextSelection(initialValue, 'foo'),
+          getKeyedSelection(
+            compileSchemaDefinition(defineSchema({})),
+            initialValue,
+            getTextSelection(initialValue, 'foo'),
+          ),
         )
         PortableTextEditor.toggleMark(editorRef.current, 'strong')
       }
@@ -121,10 +127,7 @@ describe('Feature: Self-solving', () => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenNthCalledWith(3, {
           type: 'selection',
-          selection: {
-            ...getTextSelection(initialValue, 'foo'),
-            backward: false,
-          },
+          selection: getTextSelection(initialValue, 'foo'),
         })
         expect(onChange).toHaveBeenNthCalledWith(4, {
           type: 'patch',
@@ -140,10 +143,7 @@ describe('Feature: Self-solving', () => {
         })
         expect(onChange).toHaveBeenNthCalledWith(7, {
           type: 'selection',
-          selection: {
-            ...getTextSelection(initialValue, 'foo'),
-            backward: false,
-          },
+          selection: getTextSelection(initialValue, 'foo'),
         })
         expect(onChange).toHaveBeenNthCalledWith(8, {
           type: 'mutation',

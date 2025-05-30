@@ -16,8 +16,8 @@ test(getSelectionText.name, () => {
 
   expect(
     getSelectionText([splitBlock], {
-      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-7'}], offset: 0},
-      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-7'}], offset: 3},
+      anchor: {path: [0, 1], offset: 0},
+      focus: {path: [0, 1], offset: 3},
     }),
   ).toEqual(['bar'])
 })

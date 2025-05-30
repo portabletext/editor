@@ -1,7 +1,7 @@
 import type {KeyedSegment, PortableTextBlock} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import * as utils from '../utils'
-import {isSelectionCollapsed} from './selector.is-selection-collapsed'
+import {getSelectionEndPoint} from './selector.get-selection-end-point'
 
 /**
  * @public
@@ -9,9 +9,12 @@ import {isSelectionCollapsed} from './selector.is-selection-collapsed'
 export function isAtTheEndOfBlock(block: {
   node: PortableTextBlock
   path: [KeyedSegment]
+  index: number
 }): EditorSelector<boolean> {
   return (snapshot) => {
-    if (!snapshot.context.selection || !isSelectionCollapsed(snapshot)) {
+    const endPoint = getSelectionEndPoint(snapshot)
+
+    if (!endPoint) {
       return false
     }
 
@@ -20,9 +23,6 @@ export function isAtTheEndOfBlock(block: {
       block,
     })
 
-    return utils.isEqualSelectionPoints(
-      snapshot.context.selection.focus,
-      blockEndPoint,
-    )
+    return utils.isEqualSelectionPoints(endPoint, blockEndPoint)
   }
 }

@@ -217,7 +217,10 @@ describe(PortableTextEditor.insertBlock.name, () => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({
           type: 'selection',
-          selection: initialSelection,
+          selection: {
+            anchor: {path: [0, 0], offset: 0},
+            focus: {path: [0, 0], offset: 0},
+          },
         })
       }
     })

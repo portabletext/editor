@@ -1,9 +1,6 @@
 import {isTextBlock, parseBlock} from '../internal-utils/parse-blocks'
 import * as selectors from '../selectors'
-import {getSelectionStartPoint, isSelectionCollapsed} from '../utils'
-import {getBlockEndPoint} from '../utils/util.get-block-end-point'
-import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
-import {sliceBlocks} from '../utils/util.slice-blocks'
+import * as utils from '../utils'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -15,10 +12,12 @@ export const abstractSplitBehaviors = [
         return false
       }
 
-      const selectionStartPoint = getSelectionStartPoint(
+      const selectionStartPoint = utils.getSelectionStartPoint(
         snapshot.context.selection,
       )
-      const selectionEndPoint = getSelectionEndPoint(snapshot.context.selection)
+      const selectionEndPoint = utils.getSelectionEndPoint(
+        snapshot.context.selection,
+      )
 
       const focusTextBlock = selectors.getFocusTextBlock({
         ...snapshot,
@@ -32,7 +31,7 @@ export const abstractSplitBehaviors = [
       })
 
       if (focusTextBlock) {
-        const blockEndPoint = getBlockEndPoint({
+        const blockEndPoint = utils.getBlockEndPoint({
           context: snapshot.context,
           block: focusTextBlock,
         })
@@ -40,14 +39,16 @@ export const abstractSplitBehaviors = [
           anchor: selectionEndPoint,
           focus: blockEndPoint,
         }
+        const slice = utils.sliceBlocks({
+          context: {
+            ...snapshot.context,
+            selection: newTextBlockSelection,
+          },
+          blocks: snapshot.context.value,
+        })
+
         const newTextBlock = parseBlock({
-          block: sliceBlocks({
-            context: {
-              ...snapshot.context,
-              selection: newTextBlockSelection,
-            },
-            blocks: [focusTextBlock.node],
-          }).at(0),
+          block: slice.at(0),
           context: snapshot.context,
           options: {refreshKeys: true, validateFields: true},
         })
@@ -105,7 +106,7 @@ export const abstractSplitBehaviors = [
     },
     actions: [
       (_, {newTextBlock, selection}) =>
-        isSelectionCollapsed(selection)
+        utils.isSelectionCollapsed(selection)
           ? [
               raise({
                 type: 'insert.block',

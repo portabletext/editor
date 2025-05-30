@@ -71,36 +71,16 @@ describe('plugin:withPortableTextSelections', () => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
         PortableTextEditor.select(editorRef.current, initialSelection)
-        expect(PortableTextEditor.getSelection(editorRef.current))
-          .toMatchInlineSnapshot(`
-          {
-            "anchor": {
-              "offset": 9,
-              "path": [
-                {
-                  "_key": "b",
-                },
-                "children",
-                {
-                  "_key": "b1",
-                },
-              ],
-            },
-            "backward": true,
-            "focus": {
-              "offset": 7,
-              "path": [
-                {
-                  "_key": "a",
-                },
-                "children",
-                {
-                  "_key": "a1",
-                },
-              ],
-            },
-          }
-        `)
+        expect(PortableTextEditor.getSelection(editorRef.current)).toEqual({
+          anchor: {
+            offset: 9,
+            path: [1, 0],
+          },
+          focus: {
+            offset: 7,
+            path: [0, 0],
+          },
+        })
       }
     })
   })

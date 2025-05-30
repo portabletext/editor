@@ -26,15 +26,15 @@ test(getEditorSelection.name, () => {
   }
 
   expect(getEditorSelection([image, splitBlock])).toEqual({
-    anchor: {path: [{_key: 'i1'}], offset: 0},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 4},
+    anchor: {path: [0], offset: 0},
+    focus: {path: [1, 2], offset: 4},
   })
   expect(getEditorSelection([splitBlock, image])).toEqual({
-    anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
-    focus: {path: [{_key: 'i1'}], offset: 0},
+    anchor: {path: [0, 0], offset: 0},
+    focus: {path: [1], offset: 0},
   })
   expect(getEditorSelection([blockWithStockTicker, splitBlock])).toEqual({
-    anchor: {path: [{_key: 'b2'}, 'children', {_key: 's1'}], offset: 0},
-    focus: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 4},
+    anchor: {path: [0, 0], offset: 0},
+    focus: {path: [1, 2], offset: 4},
   })
 })

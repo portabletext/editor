@@ -1,77 +1,80 @@
-import type {Path, PortableTextBlock} from '@sanity/types'
-import {isEqual} from 'lodash'
-import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
+import type {PortableTextBlock} from '@sanity/types'
+import type {EditorSelection} from '..'
+import type {EditorSchema} from '../editor/editor-schema'
+import {
+  getIndexedSelection,
+  type IndexedEditorSelection,
+  type IndexedEditorSelectionPoint,
+} from '../editor/indexed-selection'
+import {isSpan, isTextBlock} from './parse-blocks'
 
-export function normalizePoint(
-  point: EditorSelectionPoint,
+function normalizePoint(
+  schema: EditorSchema,
+  point: IndexedEditorSelectionPoint,
   value: PortableTextBlock[],
-): EditorSelectionPoint | null {
-  if (!point || !value) {
+): IndexedEditorSelectionPoint | null {
+  const blockIndex = point.path.at(0)
+
+  if (blockIndex === undefined) {
     return null
   }
-  const newPath: Path = []
-  let newOffset: number = point.offset || 0
-  const blockKey =
-    typeof point.path[0] === 'object' &&
-    '_key' in point.path[0] &&
-    point.path[0]._key
-  const childKey =
-    typeof point.path[2] === 'object' &&
-    '_key' in point.path[2] &&
-    point.path[2]._key
-  const block: PortableTextBlock | undefined = value.find(
-    (blk) => blk._key === blockKey,
-  )
-  if (block) {
-    newPath.push({_key: block._key})
-  } else {
+
+  const block = value.at(blockIndex)
+
+  if (!block) {
     return null
   }
-  if (block && point.path[1] === 'children') {
-    if (
-      !block.children ||
-      (Array.isArray(block.children) && block.children.length === 0)
-    ) {
-      return null
-    }
-    const child =
-      Array.isArray(block.children) &&
-      block.children.find((cld) => cld._key === childKey)
-    if (child) {
-      newPath.push('children')
-      newPath.push({_key: child._key})
-      newOffset =
-        child.text && child.text.length >= point.offset
-          ? point.offset
-          : (child.text && child.text.length) || 0
-    } else {
-      return null
+
+  if (!isTextBlock({schema}, block)) {
+    return {
+      path: [blockIndex],
+      offset: 0,
     }
   }
-  return {path: newPath, offset: newOffset}
+
+  const childIndex = point.path.at(1)
+
+  const child =
+    childIndex !== undefined ? block.children.at(childIndex) : undefined
+
+  if (childIndex === undefined || !child || !isSpan({schema}, child)) {
+    return {
+      path: [blockIndex],
+      offset: 0,
+    }
+  }
+
+  return {
+    path: [blockIndex, childIndex],
+    offset:
+      child.text.length >= point.offset ? point.offset : child.text.length,
+  }
 }
 
 export function normalizeSelection(
+  schema: EditorSchema,
   selection: EditorSelection,
   value: PortableTextBlock[] | undefined,
-): EditorSelection | null {
-  if (!selection || !value || value.length === 0) {
+): IndexedEditorSelection | null {
+  if (!value || value.length === 0) {
     return null
   }
-  let newAnchor: EditorSelectionPoint | null = null
-  let newFocus: EditorSelectionPoint | null = null
-  const {anchor, focus} = selection
-  if (
-    anchor &&
-    value.find((blk) => isEqual({_key: blk._key}, anchor.path[0]))
-  ) {
-    newAnchor = normalizePoint(anchor, value)
+
+  const indexedSelection = getIndexedSelection(schema, value, selection)
+
+  if (!indexedSelection) {
+    return null
   }
-  if (focus && value.find((blk) => isEqual({_key: blk._key}, focus.path[0]))) {
-    newFocus = normalizePoint(focus, value)
+
+  const anchor = normalizePoint(schema, indexedSelection.anchor, value)
+  const focus = normalizePoint(schema, indexedSelection.focus, value)
+
+  if (anchor && focus) {
+    return {
+      anchor,
+      focus,
+    }
   }
-  if (newAnchor && newFocus) {
-    return {anchor: newAnchor, focus: newFocus, backward: selection.backward}
-  }
+
   return null
 }

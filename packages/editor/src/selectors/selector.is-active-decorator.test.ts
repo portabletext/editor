@@ -1,12 +1,13 @@
 import {expect, test} from 'vitest'
-import type {EditorSelection, PortableTextBlock} from '..'
+import type {PortableTextBlock} from '..'
+import type {IndexedEditorSelection} from '../editor/indexed-selection'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {isActiveDecorator} from './selector.is-active-decorator'
 
 test(isActiveDecorator.name, () => {
   function snapshot(
     value: Array<PortableTextBlock>,
-    selection: EditorSelection,
+    selection: IndexedEditorSelection,
   ) {
     return createTestSnapshot({
       context: {
@@ -40,11 +41,11 @@ test(isActiveDecorator.name, () => {
         ],
         {
           anchor: {
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            path: [0, 0],
             offset: 0,
           },
           focus: {
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            path: [0, 0],
             offset: 3,
           },
         },
@@ -76,11 +77,11 @@ test(isActiveDecorator.name, () => {
         ],
         {
           anchor: {
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            path: [0, 0],
             offset: 2,
           },
           focus: {
-            path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+            path: [0, 1],
             offset: 3,
           },
         },
@@ -121,11 +122,11 @@ test(isActiveDecorator.name, () => {
         ],
         {
           anchor: {
-            path: [{_key: 'b0'}],
+            path: [0],
             offset: 0,
           },
           focus: {
-            path: [{_key: 'b2'}, 'children', {_key: 's3'}],
+            path: [2, 0],
             offset: 0,
           },
         },
