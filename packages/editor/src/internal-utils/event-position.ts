@@ -2,10 +2,14 @@ import {Editor, type BaseRange, type Node} from 'slate'
 import {DOMEditor, isDOMNode} from 'slate-dom'
 import type {EditorSchema, EditorSelection} from '..'
 import type {EditorActor} from '../editor/editor-machine'
-import {slateRangeToIndexedSelection} from '../editor/indexed-selection'
 import type {PortableTextSlateEditor} from '../types/editor'
 import * as utils from '../utils'
-import {getFirstBlock, getLastBlock, getNodeBlock} from './slate-utils'
+import {
+  getFirstBlock,
+  getLastBlock,
+  getNodeBlock,
+  slateRangeToSelection,
+} from './slate-utils'
 
 export type EventPosition = {
   block: 'start' | 'end'
@@ -70,12 +74,19 @@ export function getEventPosition({
     return undefined
   }
 
-  const focusBlockIndex = selection.focus.path.at(0)
+  const focusBlockPath = selection.focus.path.at(0)
+  const focusBlockKey = utils.isKeyedSegment(focusBlockPath)
+    ? focusBlockPath._key
+    : undefined
+
+  if (!focusBlockKey) {
+    return undefined
+  }
 
   if (
     utils.isSelectionCollapsed(selection) &&
     block &&
-    focusBlockIndex === block.path.at(0)
+    focusBlockKey !== block.node._key
   ) {
     return {
       block: positionBlock,
@@ -172,7 +183,7 @@ export function getEventSelection({
   const range = getSlateRangeFromEvent(slateEditor, event)
 
   const selection = range
-    ? slateRangeToIndexedSelection({
+    ? slateRangeToSelection({
         schema,
         editor: slateEditor,
         range,
