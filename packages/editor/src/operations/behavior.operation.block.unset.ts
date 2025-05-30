@@ -1,7 +1,8 @@
 import {omit} from 'lodash'
 import {Editor, Transforms} from 'slate'
+import {getKeyedSelection} from '../editor/indexed-selection'
 import {isTextBlock, parseBlock} from '../internal-utils/parse-blocks'
-import {toSlateRange} from '../internal-utils/ranges'
+import {keyedSelectionToSlateRange} from '../internal-utils/ranges'
 import {fromSlateValue} from '../internal-utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
 import type {BehaviorOperationImplementation} from './behavior.operations'
@@ -9,11 +10,18 @@ import type {BehaviorOperationImplementation} from './behavior.operations'
 export const blockUnsetOperationImplementation: BehaviorOperationImplementation<
   'block.unset'
 > = ({context, operation}) => {
-  const location = toSlateRange(
+  const keyedSelection = getKeyedSelection(
+    context.schema,
+    operation.editor.value,
     {
       anchor: {path: operation.at, offset: 0},
       focus: {path: operation.at, offset: 0},
     },
+  )
+
+  const location = keyedSelectionToSlateRange(
+    context.schema,
+    keyedSelection,
     operation.editor,
   )
 

@@ -1,8 +1,8 @@
+import type {EditorSelectionPoint} from '..'
 import type {EditorContext} from '../editor/editor-snapshot'
+import {getIndexedSelectionPoint} from '../editor/indexed-selection'
 import type {BlockOffset} from '../types/block-offset'
-import type {EditorSelectionPoint} from '../types/editor'
 import {childSelectionPointToBlockOffset} from './util.child-selection-point-to-block-offset'
-import {isKeyedSegment} from './util.is-keyed-segment'
 
 /**
  * @public
@@ -14,12 +14,28 @@ export function selectionPointToBlockOffset({
   context: Pick<EditorContext, 'schema' | 'value'>
   selectionPoint: EditorSelectionPoint
 }): BlockOffset | undefined {
-  if (
-    selectionPoint.path.length === 1 &&
-    isKeyedSegment(selectionPoint.path[0])
-  ) {
+  const indexedSelectionPoint = getIndexedSelectionPoint(
+    context.schema,
+    context.value,
+    selectionPoint,
+  )
+
+  if (!indexedSelectionPoint) {
+    return undefined
+  }
+
+  const blockIndex = indexedSelectionPoint.path.at(0)
+
+  if (indexedSelectionPoint.path.length === 1 && blockIndex !== undefined) {
+    const block =
+      blockIndex !== undefined ? context.value.at(blockIndex) : undefined
+
+    if (!block) {
+      return undefined
+    }
+
     return {
-      path: [{_key: selectionPoint.path[0]._key}],
+      path: [{_key: block._key}],
       offset: selectionPoint.offset,
     }
   }

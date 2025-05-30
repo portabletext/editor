@@ -70,14 +70,13 @@ describe('EditorSnapshot', () => {
 
     expect(inspectSelection).toHaveBeenNthCalledWith(1, {
       anchor: {
-        path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+        path: [0, 0],
         offset: 0,
       },
       focus: {
-        path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+        path: [0, 0],
         offset: 0,
       },
-      backward: false,
     })
     expect(inspectValue).toHaveBeenNthCalledWith(1, [
       {
@@ -91,14 +90,13 @@ describe('EditorSnapshot', () => {
 
     expect(inspectSelection).toHaveBeenNthCalledWith(2, {
       anchor: {
-        path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+        path: [0, 0],
         offset: 1,
       },
       focus: {
-        path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+        path: [0, 0],
         offset: 1,
       },
-      backward: false,
     })
     expect(inspectValue).toHaveBeenNthCalledWith(2, [
       {

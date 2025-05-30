@@ -1,5 +1,7 @@
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import type {PortableTextBlock} from '@sanity/types'
+import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
+import {getKeyedSelection} from '../editor/indexed-selection'
 import type {EditorSelection} from '../types/editor'
 import {isKeyedSegment} from '../utils'
 import {reverseSelection} from '../utils/util.reverse-selection'
@@ -8,13 +10,23 @@ export function getSelectionText(
   value: Array<PortableTextBlock> | undefined,
   selection: EditorSelection,
 ) {
-  if (!value || !selection) {
+  if (!value) {
     return undefined
   }
 
-  const forwardSelection = selection.backward
-    ? reverseSelection(selection)
-    : selection
+  const keyedSelection = getKeyedSelection(
+    compileSchemaDefinition(defineSchema({})),
+    value,
+    selection,
+  )
+
+  if (!keyedSelection) {
+    return undefined
+  }
+
+  const forwardSelection = keyedSelection.backward
+    ? reverseSelection(keyedSelection)
+    : keyedSelection
 
   if (!forwardSelection) {
     return undefined

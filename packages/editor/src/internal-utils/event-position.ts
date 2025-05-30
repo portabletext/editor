@@ -60,17 +60,11 @@ export function getEventPosition({
       selection: {
         anchor: utils.getBlockStartPoint({
           context: editorActor.getSnapshot().context,
-          block: {
-            node: block,
-            path: [{_key: block._key}],
-          },
+          block,
         }),
         focus: utils.getBlockEndPoint({
           context: editorActor.getSnapshot().context,
-          block: {
-            node: block,
-            path: [{_key: block._key}],
-          },
+          block,
         }),
       },
     }
@@ -92,7 +86,7 @@ export function getEventPosition({
   if (
     utils.isSelectionCollapsed(selection) &&
     block &&
-    focusBlockKey !== block._key
+    focusBlockKey !== block.node._key
   ) {
     return {
       block: positionBlock,
@@ -100,17 +94,11 @@ export function getEventPosition({
       selection: {
         anchor: utils.getBlockStartPoint({
           context: editorActor.getSnapshot().context,
-          block: {
-            node: block,
-            path: [{_key: block._key}],
-          },
+          block,
         }),
         focus: utils.getBlockEndPoint({
           context: editorActor.getSnapshot().context,
-          block: {
-            node: block,
-            path: [{_key: block._key}],
-          },
+          block,
         }),
       },
     }

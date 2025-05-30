@@ -1,37 +1,23 @@
 import type {EditorSelector} from '../editor/editor-selector'
-import {getBlockStartPoint} from '../utils/util.get-block-start-point'
-import {isKeyedSegment} from '../utils/util.is-keyed-segment'
-import {reverseSelection} from '../utils/util.reverse-selection'
+import * as utils from '../utils'
+import {getSelectionStartPoint} from './selector.get-selection-start-point'
 import {getSelectionText} from './selector.get-selection-text'
+import {getSelectionStartBlock} from './selectors'
 
 /**
  * @public
  */
 export const getBlockTextBefore: EditorSelector<string> = (snapshot) => {
-  if (!snapshot.context.selection) {
+  const startBlock = getSelectionStartBlock(snapshot)
+  const startPoint = getSelectionStartPoint(snapshot)
+
+  if (!startBlock || !startPoint) {
     return ''
   }
 
-  const selection = snapshot.context.selection.backward
-    ? reverseSelection(snapshot.context.selection)
-    : snapshot.context.selection
-  const point = selection.anchor
-  const key = isKeyedSegment(point.path[0]) ? point.path[0]._key : undefined
-
-  const block = key
-    ? snapshot.context.value.find((block) => block._key === key)
-    : undefined
-
-  if (!block) {
-    return ''
-  }
-
-  const startOfBlock = getBlockStartPoint({
+  const startOfBlock = utils.getBlockStartPoint({
     context: snapshot.context,
-    block: {
-      node: block,
-      path: [{_key: block._key}],
-    },
+    block: startBlock,
   })
 
   return getSelectionText({
@@ -40,7 +26,7 @@ export const getBlockTextBefore: EditorSelector<string> = (snapshot) => {
       ...snapshot.context,
       selection: {
         anchor: startOfBlock,
-        focus: point,
+        focus: startPoint,
       },
     },
   })

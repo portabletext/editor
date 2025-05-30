@@ -1,20 +1,32 @@
+import type {PortableTextBlock} from '@sanity/types'
+import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
+import {getKeyedSelection} from '../editor/indexed-selection'
 import type {EditorSelection} from '../types/editor'
 import {isKeyedSegment} from '../utils'
 
-export function getSelectionBlockKeys(selection: EditorSelection) {
-  if (!selection) {
+export function getSelectionBlockKeys(
+  value: Array<PortableTextBlock>,
+  selection: EditorSelection,
+) {
+  const keyedSelection = getKeyedSelection(
+    compileSchemaDefinition(defineSchema({})),
+    value,
+    selection,
+  )
+
+  if (!keyedSelection) {
     return undefined
   }
 
   if (
-    !isKeyedSegment(selection.anchor.path[0]) ||
-    !isKeyedSegment(selection.focus.path[0])
+    !isKeyedSegment(keyedSelection.anchor.path[0]) ||
+    !isKeyedSegment(keyedSelection.focus.path[0])
   ) {
     return undefined
   }
 
   return {
-    anchor: selection.anchor.path[0]._key,
-    focus: selection.focus.path[0]._key,
+    anchor: keyedSelection.anchor.path[0]._key,
+    focus: keyedSelection.focus.path[0]._key,
   }
 }

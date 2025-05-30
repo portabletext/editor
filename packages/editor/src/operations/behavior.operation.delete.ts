@@ -1,22 +1,51 @@
-import {Transforms} from 'slate'
-import {toSlateRange} from '../internal-utils/ranges'
+import {Transforms, type Range} from 'slate'
+import {
+  getKeyedSelection,
+  isIndexedSelection,
+} from '../editor/indexed-selection'
+import {keyedSelectionToSlateRange} from '../internal-utils/ranges'
 import {getBlockPath} from '../internal-utils/slate-utils'
+import {fromSlateValue} from '../internal-utils/values'
 import {isKeyedSegment} from '../utils'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const deleteOperationImplementation: BehaviorOperationImplementation<
   'delete'
-> = ({operation}) => {
-  const anchorBlockPath = isKeyedSegment(operation.at.anchor.path[0])
+> = ({context, operation}) => {
+  let anchorBlockKey: string | undefined
+  let focusBlockKey: string | undefined
+
+  if (isIndexedSelection(operation.at)) {
+    const anchorBlockIndex = operation.at.anchor.path.at(0)
+    anchorBlockKey =
+      anchorBlockIndex !== undefined
+        ? operation.editor.children.at(anchorBlockIndex)?._key
+        : undefined
+
+    const focusBlockIndex = operation.at.focus.path.at(0)
+    focusBlockKey =
+      focusBlockIndex !== undefined
+        ? operation.editor.children.at(focusBlockIndex)?._key
+        : undefined
+  } else {
+    anchorBlockKey = isKeyedSegment(operation.at.anchor.path[0])
+      ? operation.at.anchor.path[0]._key
+      : undefined
+    focusBlockKey = isKeyedSegment(operation.at.focus.path[0])
+      ? operation.at.focus.path[0]._key
+      : undefined
+  }
+
+  const anchorBlockPath = anchorBlockKey
     ? getBlockPath({
         editor: operation.editor,
-        _key: operation.at.anchor.path[0]._key,
+        _key: anchorBlockKey,
       })
     : undefined
-  const focusBlockPath = isKeyedSegment(operation.at.focus.path[0])
+  const focusBlockPath = focusBlockKey
     ? getBlockPath({
         editor: operation.editor,
-        _key: operation.at.focus.path[0]._key,
+        _key: focusBlockKey,
       })
     : undefined
 
@@ -34,7 +63,32 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
     return
   }
 
-  const range = toSlateRange(operation.at, operation.editor)
+  let range: Range | null = null
+
+  if (isIndexedSelection(operation.at)) {
+    const value = fromSlateValue(
+      operation.editor.children,
+      context.schema.block.name,
+    )
+
+    const editorSelection = getKeyedSelection(
+      context.schema,
+      value,
+      operation.at,
+    )
+
+    range = keyedSelectionToSlateRange(
+      context.schema,
+      editorSelection,
+      operation.editor,
+    )
+  } else {
+    range = keyedSelectionToSlateRange(
+      context.schema,
+      operation.at,
+      operation.editor,
+    )
+  }
 
   if (!range) {
     throw new Error(

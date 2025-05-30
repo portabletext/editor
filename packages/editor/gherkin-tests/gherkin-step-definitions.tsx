@@ -22,8 +22,7 @@ import {
   getTextSelection,
 } from '../src/internal-utils/text-selection'
 import {getValueAnnotations} from '../src/internal-utils/value-annotations'
-import {isSelectionCollapsed} from '../src/utils'
-import {reverseSelection} from '../src/utils/util.reverse-selection'
+import {isSelectionCollapsed, reverseSelection} from '../src/utils'
 import {Editors} from './editors'
 import {schemaDefinition} from './schema'
 import {
@@ -633,8 +632,10 @@ export const stepDefinitions = [
     )
   }),
   Then('block {key} is selected', async (context: Context, keyKey: string) => {
+    const value = (await getValue()) ?? []
+
     await getSelection(context.editorA).then((selection) => {
-      const selectionBlockKeys = getSelectionBlockKeys(selection)
+      const selectionBlockKeys = getSelectionBlockKeys(value, selection)
 
       expect(
         selectionBlockKeys?.anchor,

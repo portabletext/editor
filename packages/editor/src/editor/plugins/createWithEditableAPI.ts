@@ -17,7 +17,7 @@ import {
 import type {DOMNode} from 'slate-dom'
 import {ReactEditor} from 'slate-react'
 import {debugWithName} from '../../internal-utils/debug'
-import {toSlateRange} from '../../internal-utils/ranges'
+import {keyedSelectionToSlateRange} from '../../internal-utils/ranges'
 import {
   isListItemActive,
   isStyleActive,
@@ -37,6 +37,11 @@ import type {
 } from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 import {getEditorSnapshot} from '../editor-selector'
+import {
+  getIndexedSelection,
+  indexedSelectionToSlateRange,
+  slateRangeToIndexedSelection,
+} from '../indexed-selection'
 
 const debug = debugWithName('API:editable')
 
@@ -127,7 +132,11 @@ export function createEditableAPI(
       })
     },
     select: (selection: EditorSelection): void => {
-      const slateSelection = toSlateRange(selection, editor)
+      const slateSelection = keyedSelectionToSlateRange(
+        editorActor.getSnapshot().context.schema,
+        selection,
+        editor,
+      )
       if (slateSelection) {
         Transforms.select(editor, slateSelection)
       } else {
@@ -308,7 +317,8 @@ export function createEditableAPI(
       PortableTextBlock | PortableTextChild | undefined,
       Path | undefined,
     ] => {
-      const slatePath = toSlateRange(
+      const slatePath = keyedSelectionToSlateRange(
+        editorActor.getSnapshot().context.schema,
         {focus: {path, offset: 0}, anchor: {path, offset: 0}},
         editor,
       )
@@ -422,8 +432,19 @@ export function createEditableAPI(
       selection: EditorSelection,
       options?: EditableAPIDeleteOptions,
     ): void => {
-      if (selection) {
-        const range = toSlateRange(selection, editor)
+      const indexedSelection = getIndexedSelection(
+        editorActor.getSnapshot().context.schema,
+        editor.value,
+        selection,
+      )
+
+      if (indexedSelection) {
+        const range = indexedSelectionToSlateRange(
+          editorActor.getSnapshot().context.schema,
+          editor.value,
+          indexedSelection,
+          editor,
+        )
         const hasRange =
           range && range.anchor.path.length > 0 && range.focus.path.length > 0
         if (!hasRange) {
@@ -490,14 +511,14 @@ export function createEditableAPI(
         editor,
       })
     },
-    getSelection: (): EditorSelection | null => {
+    getSelection: (): EditorSelection => {
       let ptRange: EditorSelection = null
       if (editor.selection) {
         const existing = SLATE_TO_PORTABLE_TEXT_RANGE.get(editor.selection)
         if (existing) {
           return existing
         }
-        ptRange = slateRangeToSelection({
+        ptRange = slateRangeToIndexedSelection({
           schema: editorActor.getSnapshot().context.schema,
           editor,
           range: editor.selection,
@@ -531,8 +552,16 @@ export function createEditableAPI(
       selectionB: EditorSelection,
     ) => {
       // Convert the selections to Slate ranges
-      const rangeA = toSlateRange(selectionA, editor)
-      const rangeB = toSlateRange(selectionB, editor)
+      const rangeA = keyedSelectionToSlateRange(
+        editorActor.getSnapshot().context.schema,
+        selectionA,
+        editor,
+      )
+      const rangeB = keyedSelectionToSlateRange(
+        editorActor.getSnapshot().context.schema,
+        selectionB,
+        editor,
+      )
 
       // Make sure the ranges are valid
       const isValidRanges = Range.isRange(rangeA) && Range.isRange(rangeB)

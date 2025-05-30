@@ -1,13 +1,16 @@
 import type {PortableTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
-import type {EditorSelection} from '..'
+import type {IndexedEditorSelection} from '../editor/indexed-selection'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {createTestKeyGenerator} from '../internal-utils/test-key-generator'
 import {getCaretWordSelection} from './selector.get-caret-word-selection'
 
 const keyGenerator = createTestKeyGenerator()
 
-function snapshot(value: Array<PortableTextBlock>, selection: EditorSelection) {
+function snapshot(
+  value: Array<PortableTextBlock>,
+  selection: IndexedEditorSelection,
+) {
   return createTestSnapshot({
     context: {
       value,
@@ -37,11 +40,11 @@ describe(getCaretWordSelection.name, () => {
           ],
           {
             anchor: {
-              path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+              path: [0, 0],
               offset: 0,
             },
             focus: {
-              path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+              path: [0, 0],
               offset: 0,
             },
           },
@@ -69,11 +72,11 @@ describe(getCaretWordSelection.name, () => {
           ],
           {
             anchor: {
-              path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+              path: [0, 0],
               offset: 0,
             },
             focus: {
-              path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+              path: [0, 0],
               offset: 0,
             },
           },
@@ -111,11 +114,11 @@ describe(getCaretWordSelection.name, () => {
           ],
           {
             anchor: {
-              path: [{_key: 'k0'}, 'children', {_key: 'k2'}],
+              path: [0, 1],
               offset: 0,
             },
             focus: {
-              path: [{_key: 'k0'}, 'children', {_key: 'k2'}],
+              path: [0, 1],
               offset: 0,
             },
           },
@@ -153,11 +156,11 @@ describe(getCaretWordSelection.name, () => {
           ],
           {
             anchor: {
-              path: [{_key: 'k0'}, 'children', {_key: 'k2'}],
+              path: [0, 1],
               offset: 0,
             },
             focus: {
-              path: [{_key: 'k0'}, 'children', {_key: 'k2'}],
+              path: [0, 1],
               offset: 0,
             },
           },
@@ -165,11 +168,11 @@ describe(getCaretWordSelection.name, () => {
       ),
     ).toEqual({
       anchor: {
-        path: [{_key: 'k0'}, 'children', {_key: 'k2'}],
+        path: [0, 1],
         offset: 0,
       },
       focus: {
-        path: [{_key: 'k0'}, 'children', {_key: 'k2'}],
+        path: [0, 1],
         offset: 3,
       },
     })
@@ -194,11 +197,11 @@ describe(getCaretWordSelection.name, () => {
           ],
           {
             anchor: {
-              path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+              path: [0, 0],
               offset: 5,
             },
             focus: {
-              path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+              path: [0, 0],
               offset: 5,
             },
           },
@@ -206,11 +209,11 @@ describe(getCaretWordSelection.name, () => {
       ),
     ).toEqual({
       anchor: {
-        path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+        path: [0, 0],
         offset: 4,
       },
       focus: {
-        path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+        path: [0, 0],
         offset: 7,
       },
     })
@@ -260,11 +263,11 @@ describe(getCaretWordSelection.name, () => {
           ],
           {
             anchor: {
-              path: [{_key: 'k0'}, 'children', {_key: 'k3'}],
+              path: [0, 2],
               offset: 0,
             },
             focus: {
-              path: [{_key: 'k0'}, 'children', {_key: 'k3'}],
+              path: [0, 2],
               offset: 0,
             },
           },
@@ -272,11 +275,11 @@ describe(getCaretWordSelection.name, () => {
       ),
     ).toEqual({
       anchor: {
-        path: [{_key: 'k0'}, 'children', {_key: 'k2'}],
+        path: [0, 1],
         offset: 3,
       },
       focus: {
-        path: [{_key: 'k0'}, 'children', {_key: 'k4'}],
+        path: [0, 3],
         offset: 1,
       },
     })

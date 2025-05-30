@@ -1,8 +1,8 @@
+import type {EditorSelectionPoint} from '..'
 import type {EditorContext} from '../editor/editor-snapshot'
+import {getIndexedSelectionPoint} from '../editor/indexed-selection'
 import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
 import type {BlockOffset} from '../types/block-offset'
-import type {EditorSelectionPoint} from '../types/editor'
-import {isKeyedSegment} from './util.is-keyed-segment'
 
 /**
  * @public
@@ -16,37 +16,50 @@ export function childSelectionPointToBlockOffset({
 }): BlockOffset | undefined {
   let offset = 0
 
-  const blockKey = isKeyedSegment(selectionPoint.path[0])
-    ? selectionPoint.path[0]._key
-    : undefined
-  const childKey = isKeyedSegment(selectionPoint.path[2])
-    ? selectionPoint.path[2]._key
-    : undefined
+  const indexedSelectionPoint = getIndexedSelectionPoint(
+    context.schema,
+    context.value,
+    selectionPoint,
+  )
 
-  if (!blockKey || !childKey) {
+  if (!indexedSelectionPoint) {
     return undefined
   }
 
-  for (const block of context.value) {
-    if (block._key !== blockKey) {
-      continue
+  const blockIndex = indexedSelectionPoint.path.at(0)
+  const childIndex = indexedSelectionPoint.path.at(1)
+
+  if (blockIndex === undefined || childIndex === undefined) {
+    return undefined
+  }
+
+  const block = context.value.at(blockIndex)
+
+  if (!block) {
+    return undefined
+  }
+
+  if (!isTextBlock(context, block)) {
+    return {
+      path: [{_key: block._key}],
+      offset: indexedSelectionPoint.offset,
+    }
+  }
+
+  let childCursor = -1
+
+  for (const child of block.children) {
+    childCursor++
+
+    if (childCursor === childIndex) {
+      return {
+        path: [{_key: block._key}],
+        offset: offset + indexedSelectionPoint.offset,
+      }
     }
 
-    if (!isTextBlock(context, block)) {
-      continue
-    }
-
-    for (const child of block.children) {
-      if (child._key === childKey) {
-        return {
-          path: [{_key: block._key}],
-          offset: offset + selectionPoint.offset,
-        }
-      }
-
-      if (isSpan(context, child)) {
-        offset += child.text.length
-      }
+    if (isSpan(context, child)) {
+      offset += child.text.length
     }
   }
 }

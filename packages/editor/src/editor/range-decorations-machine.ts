@@ -16,11 +16,18 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
-import {moveRangeByOperation, toSlateRange} from '../internal-utils/ranges'
-import {slateRangeToSelection} from '../internal-utils/slate-utils'
+import {
+  keyedSelectionToSlateRange,
+  moveRangeByOperation,
+} from '../internal-utils/ranges'
 import {isEqualToEmptyEditor} from '../internal-utils/values'
 import type {PortableTextSlateEditor, RangeDecoration} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
+import {
+  getIndexedSelection,
+  indexedSelectionToSlateRange,
+  slateRangeToIndexedSelection,
+} from './indexed-selection'
 
 const slateOperationCallback: CallbackLogicFunction<
   AnyEventObject,
@@ -94,8 +101,14 @@ export const rangeDecorationsMachine = setup({
         const rangeDecorationState: Array<DecoratedRange> = []
 
         for (const rangeDecoration of context.pendingRangeDecorations) {
-          const slateRange = toSlateRange(
-            rangeDecoration.selection,
+          const slateRange = indexedSelectionToSlateRange(
+            context.schema,
+            context.slateEditor.value,
+            getIndexedSelection(
+              context.schema,
+              context.slateEditor.value,
+              rangeDecoration.selection,
+            ),
             context.slateEditor,
           )
 
@@ -126,7 +139,8 @@ export const rangeDecorationsMachine = setup({
         const rangeDecorationState: Array<DecoratedRange> = []
 
         for (const rangeDecoration of event.rangeDecorations) {
-          const slateRange = toSlateRange(
+          const slateRange = keyedSelectionToSlateRange(
+            context.schema,
             rangeDecoration.selection,
             context.slateEditor,
           )
@@ -158,7 +172,8 @@ export const rangeDecorationsMachine = setup({
         const rangeDecorationState: Array<DecoratedRange> = []
 
         for (const decoratedRange of context.decoratedRanges) {
-          const slateRange = toSlateRange(
+          const slateRange = keyedSelectionToSlateRange(
+            context.schema,
             decoratedRange.rangeDecoration.selection,
             context.slateEditor,
           )
@@ -180,7 +195,7 @@ export const rangeDecorationsMachine = setup({
             (newRange === null && slateRange)
           ) {
             const newRangeSelection = newRange
-              ? slateRangeToSelection({
+              ? slateRangeToIndexedSelection({
                   schema: context.schema,
                   editor: context.slateEditor,
                   range: newRange,
@@ -201,7 +216,7 @@ export const rangeDecorationsMachine = setup({
               ...(newRange || slateRange),
               rangeDecoration: {
                 ...decoratedRange.rangeDecoration,
-                selection: slateRangeToSelection({
+                selection: slateRangeToIndexedSelection({
                   schema: context.schema,
                   editor: context.slateEditor,
                   range: newRange,

@@ -1,4 +1,5 @@
-import type {EditorSelection} from '../types/editor'
+import type {EditorSelection} from '..'
+import {isBackward, isIndexedSelection} from '../editor/indexed-selection'
 
 export function collapseSelection(
   selection: EditorSelection,
@@ -6,6 +7,30 @@ export function collapseSelection(
 ): EditorSelection {
   if (!selection) {
     return selection
+  }
+
+  if (isIndexedSelection(selection)) {
+    if (direction === 'start') {
+      return isBackward(selection)
+        ? {
+            anchor: selection.focus,
+            focus: selection.focus,
+          }
+        : {
+            anchor: selection.anchor,
+            focus: selection.anchor,
+          }
+    }
+
+    return isBackward(selection)
+      ? {
+          anchor: selection.anchor,
+          focus: selection.anchor,
+        }
+      : {
+          anchor: selection.focus,
+          focus: selection.focus,
+        }
   }
 
   if (direction === 'start') {

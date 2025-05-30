@@ -44,14 +44,13 @@ describe('event.patch', () => {
     await vi.waitFor(() => {
       expect(editorRef.current?.getSnapshot().context.selection).toEqual({
         anchor: {
-          path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+          path: [0, 0],
           offset: 0,
         },
         focus: {
-          path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+          path: [0, 0],
           offset: 0,
         },
-        backward: false,
       })
     })
 
