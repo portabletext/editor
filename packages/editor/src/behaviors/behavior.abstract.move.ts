@@ -6,25 +6,17 @@ export const abstractMoveBehaviors = [
   defineBehavior({
     on: 'move.block up',
     guard: ({snapshot, event}) => {
-      const blockIndex = snapshot.context.value.findIndex(
-        (block) => block._key === event.at[0]._key,
-      )
-
-      if (blockIndex === -1) {
-        return false
-      }
-
       const previousBlock = getPreviousBlock({
         ...snapshot,
         context: {
           ...snapshot.context,
           selection: {
             anchor: {
-              path: [blockIndex],
+              path: event.at,
               offset: 0,
             },
             focus: {
-              path: [blockIndex],
+              path: event.at,
               offset: 0,
             },
           },
@@ -50,24 +42,17 @@ export const abstractMoveBehaviors = [
   defineBehavior({
     on: 'move.block down',
     guard: ({snapshot, event}) => {
-      const blockIndex = snapshot.context.value.findIndex(
-        (block) => block._key === event.at[0]._key,
-      )
-      if (blockIndex === -1) {
-        return false
-      }
-
       const nextBlock = getNextBlock({
         ...snapshot,
         context: {
           ...snapshot.context,
           selection: {
             anchor: {
-              path: [blockIndex],
+              path: event.at,
               offset: 0,
             },
             focus: {
-              path: [blockIndex],
+              path: event.at,
               offset: 0,
             },
           },

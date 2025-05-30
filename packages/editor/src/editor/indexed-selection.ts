@@ -160,12 +160,6 @@ export function getKeyedSelectionPoint(
   }
 }
 
-export function isKeyedBlockLocator(
-  path: [KeyedSegment] | [number],
-): path is [KeyedSegment] {
-  return isKeyedSegment(path.at(0))
-}
-
 export function isBackward(selection: IndexedEditorSelection): boolean {
   if (!selection) {
     return false

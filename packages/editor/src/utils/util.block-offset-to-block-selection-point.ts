@@ -1,6 +1,7 @@
 import type {EditorContext} from '../editor/editor-snapshot'
 import type {BlockOffset} from '../types/block-offset'
-import {EditorSelectionPoint} from '../types/editor'
+import type {EditorSelectionPoint} from '../types/editor'
+import {isIndexedBlockPath} from '../types/paths'
 
 /**
  * @public
@@ -12,6 +13,13 @@ export function blockOffsetToBlockSelectionPoint({
   context: Pick<EditorContext, 'value'>
   blockOffset: BlockOffset
 }): EditorSelectionPoint | undefined {
+  if (isIndexedBlockPath(blockOffset.path)) {
+    return {
+      path: blockOffset.path,
+      offset: blockOffset.offset,
+    }
+  }
+
   let selectionPoint: EditorSelectionPoint | undefined
 
   let blockIndex = -1

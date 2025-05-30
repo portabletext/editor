@@ -1,4 +1,4 @@
-import type {KeyedSegment, PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock} from '@sanity/types'
 import type {EventPosition} from '../internal-utils/event-position'
 import type {MIMEType} from '../internal-utils/mime-type'
 import type {OmitFromUnion, PickFromUnion, StrictExtract} from '../type-utils'
@@ -110,7 +110,7 @@ export type SyntheticBehaviorEvent =
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'block.unset'>
-      at: [KeyedSegment]
+      at: BlockPath
       props: Array<string>
     }
   | {
@@ -175,8 +175,8 @@ export type SyntheticBehaviorEvent =
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'move.block'>
-      at: [KeyedSegment]
-      to: [KeyedSegment]
+      at: BlockPath
+      to: BlockPath
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'move.forward'>
@@ -259,7 +259,7 @@ type AbstractBehaviorEvent =
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'delete.block'>
-      at: [KeyedSegment]
+      at: BlockPath
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'delete.forward'>
@@ -359,11 +359,11 @@ type AbstractBehaviorEvent =
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'move.block down'>
-      at: [KeyedSegment]
+      at: BlockPath
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'move.block up'>
-      at: [KeyedSegment]
+      at: BlockPath
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'select.previous block'>

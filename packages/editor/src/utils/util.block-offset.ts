@@ -3,6 +3,7 @@ import type {EditorContext} from '../editor/editor-snapshot'
 import {getIndexedSelectionPoint} from '../editor/indexed-selection'
 import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
 import type {BlockOffset} from '../types/block-offset'
+import {isKeyedBlockPath} from '../types/paths'
 
 /**
  * @public
@@ -25,8 +26,14 @@ export function blockOffsetToSpanSelectionPoint({
   for (const block of context.value) {
     blockIndex++
 
-    if (block._key !== blockOffset.path[0]._key) {
-      continue
+    if (isKeyedBlockPath(blockOffset.path)) {
+      if (block._key !== blockOffset.path[0]._key) {
+        continue
+      }
+    } else {
+      if (blockIndex !== blockOffset.path[0]) {
+        continue
+      }
     }
 
     if (!isTextBlock(context, block)) {
@@ -140,7 +147,7 @@ export function spanSelectionPointToBlockOffset({
 
     if (childCursor === childIndex) {
       return {
-        path: [{_key: block._key}],
+        path: [blockIndex],
         offset: offset + selectionPoint.offset,
       }
     }
