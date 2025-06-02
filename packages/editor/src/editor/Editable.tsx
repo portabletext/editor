@@ -53,12 +53,10 @@ import {RenderElement} from './components/render-element'
 import {RenderLeaf} from './components/render-leaf'
 import {RenderText, type RenderTextProps} from './components/render-text'
 import {EditorActorContext} from './editor-actor-context'
-import {
-  getIndexedSelection,
-  indexedSelectionToSlateRange,
-  slateRangeToIndexedSelection,
-} from './editor-selection'
+import {getIndexedSelection} from './editor-selection'
 import type {EditorSelection} from './editor-selection'
+import {slateRangeToIndexedSelection} from './editor-selection-from-slate-range'
+import {editorSelectionToSlateRange} from './editor-selection-to-slate-range'
 import {getEditorSnapshot} from './editor-selector'
 import {usePortableTextEditor} from './hooks/usePortableTextEditor'
 import {createWithHotkeys} from './plugins/createWithHotKeys'
@@ -279,9 +277,8 @@ export const PortableTextEditable = forwardRef<
         debug(
           `Normalized selection from props ${JSON.stringify(normalizedSelection)}`,
         )
-        const slateRange = indexedSelectionToSlateRange(
+        const slateRange = editorSelectionToSlateRange(
           editorActor.getSnapshot().context.schema,
-          slateEditor.value,
           normalizedSelection,
           slateEditor,
         )

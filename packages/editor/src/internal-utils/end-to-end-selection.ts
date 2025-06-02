@@ -1,15 +1,15 @@
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import type {PortableTextBlock} from '@sanity/types'
 import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
-import {
-  getIndexedSelection,
-  type IndexedEditorSelection,
+import type {
+  EditorSelection,
+  EditorSelectionPoint,
 } from '../editor/editor-selection'
-import type {EditorSelectionPoint} from '../editor/editor-selection'
+import {getIndexedSelection} from '../editor/editor-selection'
 
 export function getEndToEndSelection(
   blocks: Array<PortableTextBlock> | undefined,
-): IndexedEditorSelection {
+): EditorSelection {
   if (!blocks) {
     throw new Error('No value found')
   }

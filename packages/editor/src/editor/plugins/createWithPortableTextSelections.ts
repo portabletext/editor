@@ -3,10 +3,8 @@ import {debugWithName} from '../../internal-utils/debug'
 import {SLATE_TO_PORTABLE_TEXT_RANGE} from '../../internal-utils/weakMaps'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
-import {
-  slateRangeToIndexedSelection,
-  type EditorSelection,
-} from '../editor-selection'
+import type {EditorSelection} from '../editor-selection'
+import {slateRangeToIndexedSelection} from '../editor-selection-from-slate-range'
 
 const debug = debugWithName('plugin:withPortableTextSelections')
 const debugVerbose = debug.enabled && false

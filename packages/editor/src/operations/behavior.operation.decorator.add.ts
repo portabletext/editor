@@ -1,9 +1,7 @@
 import {Editor, Range, Text, Transforms} from 'slate'
-import {
-  getIndexedSelection,
-  indexedSelectionToSlateRange,
-  slateRangeToIndexedSelection,
-} from '../editor/editor-selection'
+import {getIndexedSelection} from '../editor/editor-selection'
+import {slateRangeToIndexedSelection} from '../editor/editor-selection-from-slate-range'
+import {editorSelectionToSlateRange} from '../editor/editor-selection-to-slate-range'
 import {fromSlateValue} from '../internal-utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
 import * as selectors from '../selectors'
@@ -43,20 +41,13 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
     : undefined
   const manualSelection =
     manualAnchor && manualFocus
-      ? {
+      ? getIndexedSelection(context.schema, value, {
           anchor: manualAnchor,
           focus: manualFocus,
-        }
+        })
       : undefined
 
-  const selection = manualSelection
-    ? (indexedSelectionToSlateRange(
-        context.schema,
-        value,
-        getIndexedSelection(context.schema, value, manualSelection),
-        operation.editor,
-      ) ?? editor.selection)
-    : editor.selection
+  const selection = manualSelection ?? editor.selection
 
   if (!selection) {
     return
@@ -135,9 +126,8 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
       throw new Error('Unable to find trimmed selection')
     }
 
-    const newRange = indexedSelectionToSlateRange(
+    const newRange = editorSelectionToSlateRange(
       context.schema,
-      newValue,
       getIndexedSelection(context.schema, newValue, trimmedSelection),
       editor,
     )

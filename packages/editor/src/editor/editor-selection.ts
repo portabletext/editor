@@ -1,11 +1,7 @@
 import type {PortableTextBlock} from '@sanity/types'
-import type {Range} from 'slate'
-import {getPointBlock, getPointChild} from '../internal-utils/slate-utils'
-import type {PortableTextSlateEditor} from '../types/editor'
 import type {IndexedPath, KeyedPath} from '../types/paths'
 import {isKeyedSegment, isTextBlock} from '../utils'
 import type {EditorSchema} from './editor-schema'
-import {keyedPathToSlatePath} from './keyed-path'
 
 /**
  * @public
@@ -33,7 +29,7 @@ export type IndexedEditorSelection = {
   anchor: IndexedEditorSelectionPoint
   focus: IndexedEditorSelectionPoint
   backward?: undefined
-} | null
+}
 
 /**
  * @beta
@@ -47,7 +43,7 @@ export function getIndexedSelection(
   schema: EditorSchema,
   value: Array<PortableTextBlock>,
   selection: EditorSelection,
-): IndexedEditorSelection {
+): IndexedEditorSelection | null {
   if (!isIndexedSelection(selection)) {
     return selectionToIndexedSelection({
       schema,
@@ -256,7 +252,7 @@ function selectionToIndexedSelection({
   schema: EditorSchema
   value: Array<PortableTextBlock>
   selection: EditorSelection
-}): IndexedEditorSelection {
+}): IndexedEditorSelection | null {
   if (!selection) {
     return null
   }
@@ -346,86 +342,6 @@ function selectionToIndexedSelection({
   }
 
   return indexedSelection
-}
-
-export function slateRangeToIndexedSelection({
-  schema,
-  editor,
-  range,
-}: {
-  schema: EditorSchema
-  editor: PortableTextSlateEditor
-  range: Range
-}): IndexedEditorSelection {
-  const [anchorBlock, anchorBlockPath] = getPointBlock({
-    editor,
-    point: range.anchor,
-  })
-  const anchorBlockIndex = anchorBlockPath?.at(0)
-  const [focusBlock, focusBlockPath] = getPointBlock({
-    editor,
-    point: range.focus,
-  })
-  const focusBlockIndex = focusBlockPath?.at(0)
-
-  if (
-    !anchorBlock ||
-    anchorBlockIndex === undefined ||
-    !focusBlock ||
-    focusBlockIndex === undefined
-  ) {
-    return null
-  }
-
-  const [, anchorChildPath] =
-    anchorBlock._type === schema.block.name
-      ? getPointChild({
-          editor,
-          point: range.anchor,
-        })
-      : [undefined, undefined]
-  const anchorChildIndex = anchorChildPath?.at(1)
-
-  const [, focusChildPath] =
-    focusBlock._type === schema.block.name
-      ? getPointChild({
-          editor,
-          point: range.focus,
-        })
-      : [undefined, undefined]
-  const focusChildIndex = focusChildPath?.at(1)
-
-  const selection: IndexedEditorSelection = {
-    anchor: {
-      path: [anchorBlockIndex],
-      offset: range.anchor.offset,
-    },
-    focus: {
-      path: [focusBlockIndex],
-      offset: range.focus.offset,
-    },
-  }
-
-  if (anchorChildIndex !== undefined) {
-    selection.anchor.path.push(anchorChildIndex)
-  }
-
-  if (focusChildIndex !== undefined) {
-    selection.focus.path.push(focusChildIndex)
-  }
-
-  return selection
-}
-
-export function indexedSelectionToSlateRange(
-  schema: EditorSchema,
-  value: Array<PortableTextBlock>,
-  selection: IndexedEditorSelection,
-  editor: PortableTextSlateEditor,
-): IndexedEditorSelection {
-  const editorSelection = getKeyedSelection(schema, value, selection)
-
-  return keyedSelectionToSlateRange(schema, editorSelection, editor)
 }
 
 /**********
@@ -598,33 +514,4 @@ function selectionToKeyedSelection({
   }
 
   return keyedSelection
-}
-
-export function keyedSelectionToSlateRange(
-  schema: EditorSchema,
-  selection: KeyedEditorSelection,
-  editor: PortableTextSlateEditor,
-): Range | null {
-  const keyedSelection = getKeyedSelection(schema, editor.value, selection)
-
-  if (!keyedSelection) {
-    return null
-  }
-
-  const anchor = {
-    path: keyedPathToSlatePath(keyedSelection.anchor.path, editor),
-    offset: keyedSelection.anchor.offset,
-  }
-  const focus = {
-    path: keyedPathToSlatePath(keyedSelection.focus.path, editor),
-    offset: keyedSelection.focus.offset,
-  }
-
-  if (focus.path.length === 0 || anchor.path.length === 0) {
-    return null
-  }
-
-  const range = anchor && focus ? {anchor, focus} : null
-
-  return range
 }

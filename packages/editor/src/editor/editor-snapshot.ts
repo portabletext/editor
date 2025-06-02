@@ -1,14 +1,14 @@
 import type {PortableTextBlock} from '@sanity/types'
 import type {Converter} from '../converters/converter.types'
 import type {EventPosition} from '../internal-utils/event-position'
-import {slateRangeToKeyedSelection} from '../internal-utils/slate-utils'
 import type {PortableTextSlateEditor} from '../types/editor'
 import type {HasTag} from './editor-machine'
 import type {EditorSchema} from './editor-schema'
+import type {EditorSelection} from './editor-selection'
 import {
   slateRangeToIndexedSelection,
-  type EditorSelection,
-} from './editor-selection'
+  slateRangeToKeyedSelection,
+} from './editor-selection-from-slate-range'
 import {getActiveAnnotations} from './get-active-annotations'
 import {getActiveDecorators} from './get-active-decorators'
 

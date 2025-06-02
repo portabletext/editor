@@ -1,10 +1,12 @@
 import {useSelector} from '@xstate/react'
 import type {Editor} from '../editor'
-import {slateRangeToKeyedSelection} from '../internal-utils/slate-utils'
 import type {PortableTextSlateEditor} from '../types/editor'
 import type {InternalEditor} from './create-editor'
 import type {EditorActor} from './editor-machine'
-import {slateRangeToIndexedSelection} from './editor-selection'
+import {
+  slateRangeToIndexedSelection,
+  slateRangeToKeyedSelection,
+} from './editor-selection-from-slate-range'
 import type {EditorSnapshot} from './editor-snapshot'
 import {getActiveAnnotations} from './get-active-annotations'
 import {getActiveDecorators} from './get-active-decorators'

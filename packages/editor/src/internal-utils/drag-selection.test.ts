@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'vitest'
 import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
-import type {IndexedEditorSelection} from '../editor/editor-selection'
+import type {EditorSelection} from '../editor/editor-selection'
 import {createTestSnapshot} from './create-test-snapshot'
 import {getDragSelection} from './drag-selection'
 import {createTestKeyGenerator} from './test-key-generator'
@@ -48,7 +48,7 @@ describe(getDragSelection.name, () => {
   }
   const imagePath = [2]
 
-  function snapshot(selection: IndexedEditorSelection) {
+  function snapshot(selection: EditorSelection) {
     const schema = compileSchemaDefinition(
       defineSchema({blockObjects: [{name: 'image'}]}),
     )

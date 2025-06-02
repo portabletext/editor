@@ -1,9 +1,6 @@
 import {Transforms, type Range} from 'slate'
-import {
-  getKeyedSelection,
-  isIndexedSelection,
-  keyedSelectionToSlateRange,
-} from '../editor/editor-selection'
+import {getKeyedSelection, isIndexedSelection} from '../editor/editor-selection'
+import {editorSelectionToSlateRange} from '../editor/editor-selection-to-slate-range'
 import {getBlockPath} from '../internal-utils/slate-utils'
 import {fromSlateValue} from '../internal-utils/values'
 import {isKeyedSegment} from '../utils'
@@ -77,13 +74,13 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
       operation.at,
     )
 
-    range = keyedSelectionToSlateRange(
+    range = editorSelectionToSlateRange(
       context.schema,
       editorSelection,
       operation.editor,
     )
   } else {
-    range = keyedSelectionToSlateRange(
+    range = editorSelectionToSlateRange(
       context.schema,
       operation.at,
       operation.editor,

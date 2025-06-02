@@ -1,7 +1,7 @@
 import {Editor} from 'slate'
 import {DOMEditor} from 'slate-dom'
 import type {EditorSnapshot} from '..'
-import {keyedSelectionToSlateRange} from '../editor/editor-selection'
+import {editorSelectionToSlateRange} from '../editor/editor-selection-to-slate-range'
 import type {PortableTextSlateEditor} from '../types/editor'
 
 export type SelectionDomNodes = {
@@ -23,7 +23,7 @@ export function getSelectionDomNodes({
     }
   }
 
-  const range = keyedSelectionToSlateRange(
+  const range = editorSelectionToSlateRange(
     snapshot.context.schema,
     snapshot.context.selection,
     slateEditor,

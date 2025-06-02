@@ -3,14 +3,10 @@ import {DOMEditor, isDOMNode} from 'slate-dom'
 import type {EditorActor} from '../editor/editor-machine'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorSelection} from '../editor/editor-selection'
+import {slateRangeToKeyedSelection} from '../editor/editor-selection-from-slate-range'
 import type {PortableTextSlateEditor} from '../types/editor'
 import * as utils from '../utils'
-import {
-  getFirstBlock,
-  getLastBlock,
-  getNodeBlock,
-  slateRangeToKeyedSelection,
-} from './slate-utils'
+import {getFirstBlock, getLastBlock, getNodeBlock} from './slate-utils'
 
 export type EventPosition = {
   block: 'start' | 'end'

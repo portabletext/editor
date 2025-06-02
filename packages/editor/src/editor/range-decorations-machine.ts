@@ -19,12 +19,9 @@ import {
 import {isEqualToEmptyEditor} from '../internal-utils/values'
 import type {PortableTextSlateEditor, RangeDecoration} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
-import {
-  getIndexedSelection,
-  indexedSelectionToSlateRange,
-  keyedSelectionToSlateRange,
-  slateRangeToIndexedSelection,
-} from './editor-selection'
+import {getIndexedSelection} from './editor-selection'
+import {slateRangeToIndexedSelection} from './editor-selection-from-slate-range'
+import {editorSelectionToSlateRange} from './editor-selection-to-slate-range'
 import {moveRangeByOperation} from './move-range'
 
 const slateOperationCallback: CallbackLogicFunction<
@@ -99,9 +96,8 @@ export const rangeDecorationsMachine = setup({
         const rangeDecorationState: Array<DecoratedRange> = []
 
         for (const rangeDecoration of context.pendingRangeDecorations) {
-          const slateRange = indexedSelectionToSlateRange(
+          const slateRange = editorSelectionToSlateRange(
             context.schema,
-            context.slateEditor.value,
             getIndexedSelection(
               context.schema,
               context.slateEditor.value,
@@ -137,7 +133,7 @@ export const rangeDecorationsMachine = setup({
         const rangeDecorationState: Array<DecoratedRange> = []
 
         for (const rangeDecoration of event.rangeDecorations) {
-          const slateRange = keyedSelectionToSlateRange(
+          const slateRange = editorSelectionToSlateRange(
             context.schema,
             rangeDecoration.selection,
             context.slateEditor,
@@ -170,7 +166,7 @@ export const rangeDecorationsMachine = setup({
         const rangeDecorationState: Array<DecoratedRange> = []
 
         for (const decoratedRange of context.decoratedRanges) {
-          const slateRange = keyedSelectionToSlateRange(
+          const slateRange = editorSelectionToSlateRange(
             context.schema,
             decoratedRange.rangeDecoration.selection,
             context.slateEditor,

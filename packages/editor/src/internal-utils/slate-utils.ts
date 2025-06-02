@@ -1,10 +1,6 @@
 import type {PortableTextBlock, PortableTextSpan} from '@sanity/types'
 import {Editor, Element, Node, Range, type Path, type Point} from 'slate'
 import type {EditorSchema} from '../editor/editor-schema'
-import type {
-  EditorSelection,
-  KeyedEditorSelection,
-} from '../editor/editor-selection'
 import type {PortableTextSlateEditor} from '../types/editor'
 import type {KeyedBlockPath} from '../types/paths'
 import {fromSlateValue} from './values'
@@ -405,66 +401,4 @@ export function isStyleActive({
   }
 
   return false
-}
-
-export function slateRangeToKeyedSelection({
-  schema,
-  editor,
-  range,
-}: {
-  schema: EditorSchema
-  editor: PortableTextSlateEditor
-  range: Range
-}): KeyedEditorSelection {
-  const [anchorBlock] = getPointBlock({
-    editor,
-    point: range.anchor,
-  })
-  const [focusBlock] = getPointBlock({
-    editor,
-    point: range.focus,
-  })
-
-  if (!anchorBlock || !focusBlock) {
-    return null
-  }
-
-  const [anchorChild] =
-    anchorBlock._type === schema.block.name
-      ? getPointChild({
-          editor,
-          point: range.anchor,
-        })
-      : [undefined, undefined]
-  const [focusChild] =
-    focusBlock._type === schema.block.name
-      ? getPointChild({
-          editor,
-          point: range.focus,
-        })
-      : [undefined, undefined]
-
-  const selection: EditorSelection = {
-    anchor: {
-      path: [{_key: anchorBlock._key}],
-      offset: range.anchor.offset,
-    },
-    focus: {
-      path: [{_key: focusBlock._key}],
-      offset: range.focus.offset,
-    },
-    backward: Range.isBackward(range),
-  }
-
-  if (anchorChild) {
-    selection.anchor.path.push('children')
-    selection.anchor.path.push({_key: anchorChild._key})
-  }
-
-  if (focusChild) {
-    selection.focus.path.push('children')
-    selection.focus.path.push({_key: focusChild._key})
-  }
-
-  return selection
 }

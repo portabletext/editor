@@ -17,11 +17,7 @@ import {
 import type {DOMNode} from 'slate-dom'
 import {ReactEditor} from 'slate-react'
 import {debugWithName} from '../../internal-utils/debug'
-import {
-  isListItemActive,
-  isStyleActive,
-  slateRangeToKeyedSelection,
-} from '../../internal-utils/slate-utils'
+import {isListItemActive, isStyleActive} from '../../internal-utils/slate-utils'
 import {fromSlateValue, toSlateValue} from '../../internal-utils/values'
 import {
   KEY_TO_VALUE_ELEMENT,
@@ -34,12 +30,12 @@ import type {
   PortableTextSlateEditor,
 } from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
+import {getKeyedSelection, type EditorSelection} from '../editor-selection'
 import {
-  getKeyedSelection,
-  keyedSelectionToSlateRange,
   slateRangeToIndexedSelection,
-  type EditorSelection,
-} from '../editor-selection'
+  slateRangeToKeyedSelection,
+} from '../editor-selection-from-slate-range'
+import {editorSelectionToSlateRange} from '../editor-selection-to-slate-range'
 import {getEditorSnapshot} from '../editor-selector'
 
 const debug = debugWithName('API:editable')
@@ -131,7 +127,7 @@ export function createEditableAPI(
       })
     },
     select: (selection: EditorSelection): void => {
-      const slateSelection = keyedSelectionToSlateRange(
+      const slateSelection = editorSelectionToSlateRange(
         editorActor.getSnapshot().context.schema,
         selection,
         editor,
@@ -316,7 +312,7 @@ export function createEditableAPI(
       PortableTextBlock | PortableTextChild | undefined,
       Path | undefined,
     ] => {
-      const slatePath = keyedSelectionToSlateRange(
+      const slatePath = editorSelectionToSlateRange(
         editorActor.getSnapshot().context.schema,
         {focus: {path, offset: 0}, anchor: {path, offset: 0}},
         editor,
@@ -438,7 +434,7 @@ export function createEditableAPI(
       )
 
       if (keyedSelection) {
-        const range = keyedSelectionToSlateRange(
+        const range = editorSelectionToSlateRange(
           editorActor.getSnapshot().context.schema,
           keyedSelection,
           editor,
@@ -566,12 +562,12 @@ export function createEditableAPI(
       selectionB: EditorSelection,
     ) => {
       // Convert the selections to Slate ranges
-      const rangeA = keyedSelectionToSlateRange(
+      const rangeA = editorSelectionToSlateRange(
         editorActor.getSnapshot().context.schema,
         selectionA,
         editor,
       )
-      const rangeB = keyedSelectionToSlateRange(
+      const rangeB = editorSelectionToSlateRange(
         editorActor.getSnapshot().context.schema,
         selectionB,
         editor,
