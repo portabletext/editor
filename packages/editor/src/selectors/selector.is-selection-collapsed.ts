@@ -1,4 +1,7 @@
-import {getIndexedSelection, isCollapsed} from '../editor/editor-selection'
+import {
+  getIndexedSelection,
+  isIndexedSelectionCollapsed,
+} from '../editor/editor-selection'
 import type {EditorSelector} from '../editor/editor-selector'
 
 /**
@@ -19,5 +22,5 @@ export const isSelectionCollapsed: EditorSelector<boolean> = (snapshot) => {
     return false
   }
 
-  return isCollapsed(indexedSelection)
+  return isIndexedSelectionCollapsed(indexedSelection)
 }

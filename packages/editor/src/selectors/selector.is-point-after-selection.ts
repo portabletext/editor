@@ -1,7 +1,7 @@
 import type {EditorSelectionPoint} from '../editor/editor-selection'
 import {
   getIndexedSelectionPoint,
-  isPointAfter,
+  isIndexedPointAfter,
 } from '../editor/editor-selection'
 import type {EditorSelector} from '../editor/editor-selector'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
@@ -37,6 +37,6 @@ export function isPointAfterSelection(
       return false
     }
 
-    return isPointAfter(indexedPoint, endPoint)
+    return isIndexedPointAfter(indexedPoint, endPoint)
   }
 }

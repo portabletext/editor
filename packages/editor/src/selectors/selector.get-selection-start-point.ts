@@ -1,6 +1,6 @@
 import {
   getIndexedSelection,
-  isBackward,
+  isIndexedSelectionBackward,
   type EditorSelectionPoint,
 } from '../editor/editor-selection'
 import type {EditorSelector} from '../editor/editor-selector'
@@ -25,7 +25,7 @@ export const getSelectionStartPoint: EditorSelector<
     return undefined
   }
 
-  return isBackward(indexedSelection)
+  return isIndexedSelectionBackward(indexedSelection)
     ? indexedSelection.focus
     : indexedSelection.anchor
 }

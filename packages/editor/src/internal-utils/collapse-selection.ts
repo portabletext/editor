@@ -1,6 +1,6 @@
 import {
-  isBackward,
   isIndexedSelection,
+  isIndexedSelectionBackward,
   type EditorSelection,
 } from '../editor/editor-selection'
 
@@ -14,7 +14,7 @@ export function collapseSelection(
 
   if (isIndexedSelection(selection)) {
     if (direction === 'start') {
-      return isBackward(selection)
+      return isIndexedSelectionBackward(selection)
         ? {
             anchor: selection.focus,
             focus: selection.focus,
@@ -25,7 +25,7 @@ export function collapseSelection(
           }
     }
 
-    return isBackward(selection)
+    return isIndexedSelectionBackward(selection)
       ? {
           anchor: selection.anchor,
           focus: selection.anchor,

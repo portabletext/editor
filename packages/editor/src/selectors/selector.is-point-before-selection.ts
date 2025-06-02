@@ -1,6 +1,6 @@
 import {
   getIndexedSelectionPoint,
-  isPointBefore,
+  isIndexedPointBefore,
 } from '../editor/editor-selection'
 import type {EditorSelectionPoint} from '../editor/editor-selection'
 import type {EditorSelector} from '../editor/editor-selector'
@@ -37,6 +37,6 @@ export function isPointBeforeSelection(
       return false
     }
 
-    return isPointBefore(indexedPoint, startPoint)
+    return isIndexedPointBefore(indexedPoint, startPoint)
   }
 }

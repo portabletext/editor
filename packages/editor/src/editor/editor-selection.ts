@@ -1,4 +1,4 @@
-import type {KeyedSegment, PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock} from '@sanity/types'
 import type {Range} from 'slate'
 import {getPointBlock, getPointChild} from '../internal-utils/slate-utils'
 import type {PortableTextSlateEditor} from '../types/editor'
@@ -7,13 +7,17 @@ import {isKeyedSegment, isTextBlock} from '../utils'
 import type {EditorSchema} from './editor-schema'
 import {keyedPathToSlatePath} from './keyed-path'
 
-/** @public */
+/**
+ * @public
+ */
 export type EditorSelection =
   | KeyedEditorSelection
   | IndexedEditorSelection
   | null
 
-/** @public */
+/**
+ * @public
+ */
 export type EditorSelectionPoint =
   | IndexedEditorSelectionPoint
   | KeyedEditorSelectionPoint
@@ -39,6 +43,22 @@ export type IndexedEditorSelectionPoint = {
   offset: number
 }
 
+export function getIndexedSelection(
+  schema: EditorSchema,
+  value: Array<PortableTextBlock>,
+  selection: EditorSelection,
+): IndexedEditorSelection {
+  if (!isIndexedSelection(selection)) {
+    return selectionToIndexedSelection({
+      schema,
+      value,
+      selection,
+    })
+  }
+
+  return selection
+}
+
 export function isIndexedSelection(
   selection: EditorSelection,
 ): selection is IndexedEditorSelection {
@@ -55,28 +75,6 @@ export function isIndexedSelection(
     focusBlockPath !== undefined &&
     typeof focusBlockPath === 'number'
   )
-}
-
-export function getIndexedSelection(
-  schema: EditorSchema,
-  value: Array<PortableTextBlock>,
-  selection: EditorSelection | IndexedEditorSelection,
-): IndexedEditorSelection {
-  if (!isIndexedSelection(selection)) {
-    return selectionToIndexedSelection({
-      schema,
-      value,
-      selection,
-    })
-  }
-
-  return selection
-}
-
-export function isIndexedSelectionPoint(
-  point: EditorSelectionPoint,
-): point is IndexedEditorSelectionPoint {
-  return typeof point.path.at(0) === 'number'
 }
 
 export function getIndexedSelectionPoint(
@@ -104,24 +102,27 @@ export function getIndexedSelectionPoint(
   return indexedSelection.anchor
 }
 
-export function isIndexedBlockLocator(
-  path: [KeyedSegment] | [number],
-): path is [number] {
-  return typeof path.at(0) === 'number'
+export function isIndexedSelectionPoint(
+  point: EditorSelectionPoint,
+): point is IndexedEditorSelectionPoint {
+  return typeof point.path.at(0) === 'number'
 }
 
-export function isBackward(selection: IndexedEditorSelection): boolean {
+export function isIndexedSelectionBackward(
+  selection: IndexedEditorSelection,
+): boolean {
   if (!selection) {
     return false
   }
 
-  return isPointAfter(selection.anchor, selection.focus)
+  return isIndexedPointAfter(selection.anchor, selection.focus)
 }
 
 /**
- * Check if one point is after another point
+ * Check if one indexed selection point is after another indexed selection
+ * point
  */
-export function isPointAfter(
+export function isIndexedPointAfter(
   point: IndexedEditorSelectionPoint,
   another: IndexedEditorSelectionPoint,
 ): boolean {
@@ -129,9 +130,10 @@ export function isPointAfter(
 }
 
 /**
- * Check if one point is before another point
+ * Check if one indexed selection point is before another indexed selection
+ * point
  */
-export function isPointBefore(
+export function isIndexedPointBefore(
   point: IndexedEditorSelectionPoint,
   another: IndexedEditorSelectionPoint,
 ): boolean {
@@ -139,9 +141,9 @@ export function isPointBefore(
 }
 
 /**
- * Check if two points are equal
+ * Check if two indexed selection points are equal
  */
-export function pointEquals(
+function pointEquals(
   point: IndexedEditorSelectionPoint,
   another: IndexedEditorSelectionPoint,
 ): boolean {
@@ -156,17 +158,25 @@ export function selectionIncludesSelection(
     return false
   }
 
-  const startA = isBackward(selectionA) ? selectionA.focus : selectionA.anchor
-  const endA = isBackward(selectionA) ? selectionA.anchor : selectionA.focus
+  const startA = isIndexedSelectionBackward(selectionA)
+    ? selectionA.focus
+    : selectionA.anchor
+  const endA = isIndexedSelectionBackward(selectionA)
+    ? selectionA.anchor
+    : selectionA.focus
 
-  const startB = isBackward(selectionB) ? selectionB.focus : selectionB.anchor
-  const endB = isBackward(selectionB) ? selectionB.anchor : selectionB.focus
+  const startB = isIndexedSelectionBackward(selectionB)
+    ? selectionB.focus
+    : selectionB.anchor
+  const endB = isIndexedSelectionBackward(selectionB)
+    ? selectionB.anchor
+    : selectionB.focus
 
-  if (isPointBefore(endB, startA)) {
+  if (isIndexedPointBefore(endB, startA)) {
     return false
   }
 
-  if (isPointAfter(startB, endA)) {
+  if (isIndexedPointAfter(startB, endA)) {
     return false
   }
 
@@ -221,7 +231,9 @@ function comparePaths(
   return 'equal'
 }
 
-export function isCollapsed(selection: IndexedEditorSelection): boolean {
+export function isIndexedSelectionCollapsed(
+  selection: IndexedEditorSelection,
+): boolean {
   if (!selection) {
     return false
   }
@@ -230,7 +242,7 @@ export function isCollapsed(selection: IndexedEditorSelection): boolean {
 }
 
 export function isExpanded(selection: IndexedEditorSelection): boolean {
-  return !isCollapsed(selection)
+  return !isIndexedSelectionCollapsed(selection)
 }
 
 /**
@@ -557,7 +569,7 @@ function selectionToKeyedSelection({
       path: [{_key: focusBlock._key}],
       offset: indexedFocus.offset,
     },
-    backward: isBackward({
+    backward: isIndexedSelectionBackward({
       anchor: indexedAnchor,
       focus: indexedFocus,
     }),

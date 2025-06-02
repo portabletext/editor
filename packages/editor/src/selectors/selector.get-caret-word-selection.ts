@@ -1,5 +1,8 @@
 import type {EditorSelection} from '../editor/editor-selection'
-import {getIndexedSelection, isBackward} from '../editor/editor-selection'
+import {
+  getIndexedSelection,
+  isIndexedSelectionBackward,
+} from '../editor/editor-selection'
 import type {EditorSelector} from '../editor/editor-selector'
 import type {BlockOffset} from '../types/block-offset'
 import * as utils from '../utils'
@@ -37,7 +40,7 @@ export const getCaretWordSelection: EditorSelector<EditorSelection> = (
   }
 
   const focusTextBlock = getFocusTextBlock(snapshot)
-  const selectionStartPoint = isBackward(indexedSelection)
+  const selectionStartPoint = isIndexedSelectionBackward(indexedSelection)
     ? indexedSelection.focus
     : indexedSelection.anchor
   const selectionStartOffset = selectionStartPoint
