@@ -24,6 +24,10 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = (
     snapshot.context.selection,
   )
 
+  if (!keyedSelection) {
+    return null
+  }
+
   const trimmedKeyedSelection = trimKeyedSelection({
     schema: snapshot.context.schema,
     selection: keyedSelection,

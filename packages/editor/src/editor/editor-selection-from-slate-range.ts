@@ -120,7 +120,7 @@ function slateRangeToKeyedSelection({
   schema: EditorSchema
   editor: PortableTextSlateEditor
   range: Range
-}): KeyedEditorSelection {
+}): KeyedEditorSelection | null {
   const [anchorBlock] = getPointBlock({
     editor,
     point: range.anchor,

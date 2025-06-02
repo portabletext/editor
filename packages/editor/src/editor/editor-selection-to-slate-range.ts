@@ -13,9 +13,13 @@ export function editorSelectionToSlateRange(
   selection: EditorSelection,
   editor: PortableTextSlateEditor,
 ): Range | null {
-  const editorSelection = getKeyedSelection(schema, editor.value, selection)
+  const keyedSelection = getKeyedSelection(schema, editor.value, selection)
 
-  return keyedSelectionToSlateRange(schema, editorSelection, editor)
+  if (!keyedSelection) {
+    return null
+  }
+
+  return keyedSelectionToSlateRange(schema, keyedSelection, editor)
 }
 
 function keyedSelectionToSlateRange(

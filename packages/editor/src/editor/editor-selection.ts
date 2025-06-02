@@ -352,7 +352,7 @@ export type KeyedEditorSelection = {
   anchor: KeyedEditorSelectionPoint
   focus: KeyedEditorSelectionPoint
   backward?: boolean
-} | null
+}
 
 export type KeyedEditorSelectionPoint = {
   path: KeyedPath
@@ -363,7 +363,7 @@ export function getKeyedSelection(
   schema: EditorSchema,
   value: Array<PortableTextBlock>,
   selection: EditorSelection,
-): KeyedEditorSelection {
+): KeyedEditorSelection | null {
   if (isKeyedSelection(selection)) {
     return selection
   }
@@ -444,7 +444,7 @@ function selectionToKeyedSelection({
   schema: EditorSchema
   value: Array<PortableTextBlock>
   selection: EditorSelection
-}): KeyedEditorSelection {
+}): KeyedEditorSelection | null {
   if (!selection) {
     return null
   }
