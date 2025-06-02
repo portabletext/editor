@@ -390,40 +390,31 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
   })
 
   test('undoing out-of-order', async () => {
-    const firstParagraph =
-      '速ヒマヤレ誌相ルなあね日諸せ変評ホ真攻同潔ク作先た員勝どそ際接レゅ自17浅ッ実情スヤ籍認ス重力務鳥の。8平はートご多乗12青國暮整ル通国うれけこ能新ロコラハ元横ミ休探ミソ梓批ざょにね薬展むい本隣ば禁抗ワアミ部真えくト提知週むすほ。査ル人形ルおじつ政謙減セヲモ読見れレぞえ録精てざ定第ぐゆとス務接産ヤ写馬エモス聞氏サヘマ有午ごね客岡ヘロ修彩枝雨父のけリド。'
-    const secondParagraph =
-      '住ゅなぜ日16語約セヤチ任政崎ソオユ枠体ぞン古91一専泉給12関モリレネ解透ぴゃラぼ転地す球北ドざう記番重投ぼづ。期ゃ更緒リだすし夫内オ代他られくド潤刊本クヘフ伊一ウムニヘ感週け出入ば勇起ょ関図ぜ覧説めわぶ室訪おがト強車傾町コ本喰杜椿榎ほれた。暮る生的更芸窓どさはむ近問ラ入必ラニス療心コウ怒応りめけひ載総ア北吾ヌイヘ主最ニ余記エツヤ州5念稼め化浮ヌリ済毎養ぜぼ。'
+    const firstParagraph = '速ド。'
+    const secondParagraph = '住ぼ。'
     const {editorA, editorB} = await setUpCollabTest(
       createInitialValue(`${firstParagraph}\n\n${secondParagraph}`),
     )
 
     await userEvent.click(editorA.locator)
     await putCaretBeforeText(editorA, '速')
-    await type(editorA, 'Paragraph 1: ')
+    await type(editorA, 'P1>')
 
     await userEvent.click(editorB.locator)
     await putCaretAfterText(editorB, 'ド。')
-    await type(editorB, ' (end of paragraph 1)')
+    await type(editorB, '/P1')
 
     await userEvent.click(editorA.locator)
     await putCaretAfterText(editorA, 'ぼ。')
-    await type(editorA, '. EOL.')
+    await type(editorA, '/P2')
+
+    await expectText([`P1>${firstParagraph}/P1\n\n${secondParagraph}/P2`])
 
     await undo(editorA)
     await undo(editorA)
 
-    await undo(editorA)
-    await undo(editorA)
-    await undo(editorA)
+    await expectText([`${firstParagraph}/P1\n\n${secondParagraph}`])
 
-    await expectText([
-      `${firstParagraph} (end of paragraph 1)\n\n${secondParagraph}`,
-    ])
-
-    await undo(editorB)
-    await undo(editorB)
-    await undo(editorB)
     await undo(editorB)
 
     await expectText([`${firstParagraph}\n\n${secondParagraph}`])
