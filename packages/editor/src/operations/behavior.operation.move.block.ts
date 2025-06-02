@@ -1,21 +1,51 @@
 import {Transforms} from 'slate'
-import {keyedPathToSlatePath} from '../editor/keyed-path'
-import {isIndexedBlockPath} from '../types/paths'
+import {editorSelectionToSlateRange} from '../editor/editor-selection-to-slate-range'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const moveBlockOperationImplementation: BehaviorOperationImplementation<
   'move.block'
-> = ({operation}) => {
-  const at = isIndexedBlockPath(operation.at)
-    ? operation.at
-    : [keyedPathToSlatePath(operation.at, operation.editor)[0]]
-  const to = isIndexedBlockPath(operation.to)
-    ? operation.to
-    : [keyedPathToSlatePath(operation.to, operation.editor)[0]]
+> = ({context, operation}) => {
+  const sourceBlockIndex = editorSelectionToSlateRange(
+    context.schema,
+    {
+      anchor: {
+        path: operation.at,
+        offset: 0,
+      },
+      focus: {
+        path: operation.at,
+        offset: 0,
+      },
+    },
+    operation.editor,
+  )?.focus.path?.at(0)
+
+  if (sourceBlockIndex === undefined) {
+    throw new Error(`Unable to convert ${operation.at} to a Slate Range`)
+  }
+
+  const targetBlockIndex = editorSelectionToSlateRange(
+    context.schema,
+    {
+      anchor: {
+        path: operation.to,
+        offset: 0,
+      },
+      focus: {
+        path: operation.to,
+        offset: 0,
+      },
+    },
+    operation.editor,
+  )?.focus.path?.at(0)
+
+  if (targetBlockIndex === undefined) {
+    throw new Error(`Unable to convert ${operation.to} to a Slate Range`)
+  }
 
   Transforms.moveNodes(operation.editor, {
-    at,
-    to,
+    at: [sourceBlockIndex],
+    to: [targetBlockIndex],
     mode: 'highest',
   })
 }
