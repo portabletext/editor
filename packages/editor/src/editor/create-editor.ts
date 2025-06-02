@@ -15,7 +15,7 @@ import {
   compileSchemaDefinitionToLegacySchema,
   legacySchemaToEditorSchema,
 } from './editor-schema'
-import {getKeyedSelection} from './editor-selection'
+import {getEditorSelection} from './editor-selection'
 import {getEditorSnapshot} from './editor-selector'
 import {defaultKeyGenerator} from './key-generator'
 import {createLegacySchema} from './legacy-schema'
@@ -324,20 +324,15 @@ function createActors(config: {
     const subscription = config.editorActor.on('*', (event) => {
       switch (event.type) {
         case 'selection':
-          if (
-            config.editorActor.getSnapshot().context.selectionType === 'indexed'
-          ) {
-            config.relayActor.send(event)
-          } else {
-            config.relayActor.send({
-              type: 'selection',
-              selection: getKeyedSelection(
-                config.editorActor.getSnapshot().context.schema,
-                config.slateEditor.value,
-                event.selection,
-              ),
-            })
-          }
+          config.relayActor.send({
+            type: 'selection',
+            selection: getEditorSelection({
+              type: config.editorActor.getSnapshot().context.selectionType,
+              schema: config.editorActor.getSnapshot().context.schema,
+              value: config.slateEditor.value,
+              selection: event.selection,
+            }),
+          })
           break
         case 'editable':
         case 'mutation':

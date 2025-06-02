@@ -3,7 +3,6 @@ import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorSelection} from '../editor/editor-selection'
 import {
   getEditorSelection,
-  getKeyedSelection,
   type KeyedEditorSelection,
   type KeyedEditorSelectionPoint,
 } from '../editor/editor-selection'
@@ -18,11 +17,12 @@ import {isSelectionCollapsed} from '../utils/util.is-selection-collapsed'
 export const getTrimmedSelection: EditorSelector<EditorSelection> = (
   snapshot,
 ) => {
-  const keyedSelection = getKeyedSelection(
-    snapshot.context.schema,
-    snapshot.context.value,
-    snapshot.context.selection,
-  )
+  const keyedSelection = getEditorSelection({
+    type: 'keyed',
+    schema: snapshot.context.schema,
+    value: snapshot.context.value,
+    selection: snapshot.context.selection,
+  })
 
   if (!keyedSelection) {
     return null

@@ -1,8 +1,7 @@
-import {Transforms, type Range} from 'slate'
-import {getKeyedSelection, isIndexedSelection} from '../editor/editor-selection'
+import {Transforms} from 'slate'
+import {isIndexedSelection} from '../editor/editor-selection'
 import {editorSelectionToSlateRange} from '../editor/editor-selection-to-slate-range'
 import {getBlockPath} from '../internal-utils/slate-utils'
-import {fromSlateValue} from '../internal-utils/values'
 import {isKeyedSegment} from '../utils'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
@@ -60,32 +59,11 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
     return
   }
 
-  let range: Range | null = null
-
-  if (isIndexedSelection(operation.at)) {
-    const value = fromSlateValue(
-      operation.editor.children,
-      context.schema.block.name,
-    )
-
-    const editorSelection = getKeyedSelection(
-      context.schema,
-      value,
-      operation.at,
-    )
-
-    range = editorSelectionToSlateRange(
-      context.schema,
-      editorSelection,
-      operation.editor,
-    )
-  } else {
-    range = editorSelectionToSlateRange(
-      context.schema,
-      operation.at,
-      operation.editor,
-    )
-  }
+  const range = editorSelectionToSlateRange(
+    context.schema,
+    operation.at,
+    operation.editor,
+  )
 
   if (!range) {
     throw new Error(

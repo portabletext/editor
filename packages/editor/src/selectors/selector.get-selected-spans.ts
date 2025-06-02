@@ -1,5 +1,5 @@
 import type {KeyedSegment, PortableTextSpan} from '@sanity/types'
-import {getKeyedSelection} from '../editor/editor-selection'
+import {getEditorSelection} from '../editor/editor-selection'
 import type {EditorSelector} from '../editor/editor-selector'
 import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
 import {isKeyedSegment} from '../utils'
@@ -22,11 +22,12 @@ export const getSelectedSpans: EditorSelector<
     path: [KeyedSegment, 'children', KeyedSegment]
   }> = []
 
-  const editorSelection = getKeyedSelection(
-    snapshot.context.schema,
-    snapshot.context.value,
-    snapshot.context.selection,
-  )
+  const editorSelection = getEditorSelection({
+    type: 'keyed',
+    schema: snapshot.context.schema,
+    value: snapshot.context.value,
+    selection: snapshot.context.selection,
+  })
 
   if (!editorSelection) {
     return selectedSpans

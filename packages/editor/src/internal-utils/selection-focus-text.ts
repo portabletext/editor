@@ -1,7 +1,7 @@
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import type {PortableTextBlock} from '@sanity/types'
 import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
-import {getKeyedSelection} from '../editor/editor-selection'
+import {getEditorSelection} from '../editor/editor-selection'
 import type {EditorSelection} from '../editor/editor-selection'
 import {isKeyedSegment} from '../utils'
 
@@ -13,11 +13,12 @@ export function getSelectionFocusText(
     return undefined
   }
 
-  const keyedSelection = getKeyedSelection(
-    compileSchemaDefinition(defineSchema({})),
+  const keyedSelection = getEditorSelection({
+    type: 'keyed',
+    schema: compileSchemaDefinition(defineSchema({})),
     value,
     selection,
-  )
+  })
 
   if (!keyedSelection) {
     return undefined

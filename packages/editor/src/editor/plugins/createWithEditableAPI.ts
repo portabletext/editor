@@ -30,7 +30,7 @@ import type {
   PortableTextSlateEditor,
 } from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
-import {getKeyedSelection, type EditorSelection} from '../editor-selection'
+import {getEditorSelection, type EditorSelection} from '../editor-selection'
 import {slateRangeToEditorSelection} from '../editor-selection-from-slate-range'
 import {editorSelectionToSlateRange} from '../editor-selection-to-slate-range'
 import {getEditorSnapshot} from '../editor-selector'
@@ -427,70 +427,62 @@ export function createEditableAPI(
       selection: EditorSelection,
       options?: EditableAPIDeleteOptions,
     ): void => {
-      const keyedSelection = getKeyedSelection(
+      const range = editorSelectionToSlateRange(
         editorActor.getSnapshot().context.schema,
-        editor.value,
         selection,
+        editor,
       )
-
-      if (keyedSelection) {
-        const range = editorSelectionToSlateRange(
-          editorActor.getSnapshot().context.schema,
-          keyedSelection,
-          editor,
-        )
-        const hasRange =
-          range && range.anchor.path.length > 0 && range.focus.path.length > 0
-        if (!hasRange) {
-          throw new Error('Invalid range')
-        }
-        if (range) {
-          if (!options?.mode || options?.mode === 'selected') {
-            debug(`Deleting content in selection`)
-            Transforms.delete(editor, {
-              at: range,
-              hanging: true,
-              voids: true,
-            })
-            editor.onChange()
-            return
-          }
-          if (options?.mode === 'blocks') {
-            debug(`Deleting blocks touched by selection`)
-            Transforms.removeNodes(editor, {
-              at: range,
-              voids: true,
-              match: (node) => {
-                return (
-                  editor.isTextBlock(node) ||
-                  (!editor.isTextBlock(node) && SlateElement.isElement(node))
-                )
-              },
-            })
-          }
-          if (options?.mode === 'children') {
-            debug(`Deleting children touched by selection`)
-            Transforms.removeNodes(editor, {
-              at: range,
-              voids: true,
-              match: (node) => {
-                return (
-                  node._type === types.span.name || // Text children
-                  (!editor.isTextBlock(node) && SlateElement.isElement(node)) // inline blocks
-                )
-              },
-            })
-          }
-          // If the editor was emptied, insert a placeholder block
-          // directly into the editor's children. We don't want to do this
-          // through a Transform (because that would trigger a change event
-          // that would insert the placeholder into the actual value
-          // which should remain empty)
-          if (editor.children.length === 0) {
-            editor.children = [editor.pteCreateTextBlock({decorators: []})]
-          }
+      const hasRange =
+        range && range.anchor.path.length > 0 && range.focus.path.length > 0
+      if (!hasRange) {
+        throw new Error('Invalid range')
+      }
+      if (range) {
+        if (!options?.mode || options?.mode === 'selected') {
+          debug(`Deleting content in selection`)
+          Transforms.delete(editor, {
+            at: range,
+            hanging: true,
+            voids: true,
+          })
           editor.onChange()
+          return
         }
+        if (options?.mode === 'blocks') {
+          debug(`Deleting blocks touched by selection`)
+          Transforms.removeNodes(editor, {
+            at: range,
+            voids: true,
+            match: (node) => {
+              return (
+                editor.isTextBlock(node) ||
+                (!editor.isTextBlock(node) && SlateElement.isElement(node))
+              )
+            },
+          })
+        }
+        if (options?.mode === 'children') {
+          debug(`Deleting children touched by selection`)
+          Transforms.removeNodes(editor, {
+            at: range,
+            voids: true,
+            match: (node) => {
+              return (
+                node._type === types.span.name || // Text children
+                (!editor.isTextBlock(node) && SlateElement.isElement(node)) // inline blocks
+              )
+            },
+          })
+        }
+        // If the editor was emptied, insert a placeholder block
+        // directly into the editor's children. We don't want to do this
+        // through a Transform (because that would trigger a change event
+        // that would insert the placeholder into the actual value
+        // which should remain empty)
+        if (editor.children.length === 0) {
+          editor.children = [editor.pteCreateTextBlock({decorators: []})]
+        }
+        editor.onChange()
       }
     },
     removeAnnotation: <TSchemaType extends {name: string}>(
@@ -510,14 +502,12 @@ export function createEditableAPI(
       if (editor.selection) {
         const existing = SLATE_TO_PORTABLE_TEXT_RANGE.get(editor.selection)
         if (existing) {
-          if (editorActor.getSnapshot().context.selectionType === 'indexed') {
-            return existing
-          }
-          return getKeyedSelection(
-            editorActor.getSnapshot().context.schema,
-            editor.value,
-            existing,
-          )
+          return getEditorSelection({
+            type: editorActor.getSnapshot().context.selectionType,
+            schema: editorActor.getSnapshot().context.schema,
+            value: editor.value,
+            selection: existing,
+          })
         }
         ptRange = slateRangeToEditorSelection({
           type: 'indexed',
@@ -528,15 +518,12 @@ export function createEditableAPI(
         SLATE_TO_PORTABLE_TEXT_RANGE.set(editor.selection, ptRange)
       }
 
-      if (editorActor.getSnapshot().context.selectionType === 'indexed') {
-        return ptRange
-      }
-
-      return getKeyedSelection(
-        editorActor.getSnapshot().context.schema,
-        editor.value,
-        ptRange,
-      )
+      return getEditorSelection({
+        type: editorActor.getSnapshot().context.selectionType,
+        schema: editorActor.getSnapshot().context.schema,
+        value: editor.value,
+        selection: ptRange,
+      })
     },
     getValue: () => {
       return fromSlateValue(

@@ -1,5 +1,4 @@
 import {Editor, Transforms, type Element as SlateElement} from 'slate'
-import {getKeyedSelection} from '../editor/editor-selection'
 import {editorSelectionToSlateRange} from '../editor/editor-selection-to-slate-range'
 import {parseBlock} from '../internal-utils/parse-blocks'
 import {fromSlateValue, toSlateValue} from '../internal-utils/values'
@@ -9,18 +8,12 @@ import type {BehaviorOperationImplementation} from './behavior.operations'
 export const blockSetOperationImplementation: BehaviorOperationImplementation<
   'block.set'
 > = ({context, operation}) => {
-  const keyedSelection = getKeyedSelection(
+  const location = editorSelectionToSlateRange(
     context.schema,
-    operation.editor.value,
     {
       anchor: {path: operation.at, offset: 0},
       focus: {path: operation.at, offset: 0},
     },
-  )
-
-  const location = editorSelectionToSlateRange(
-    context.schema,
-    keyedSelection,
     operation.editor,
   )
 

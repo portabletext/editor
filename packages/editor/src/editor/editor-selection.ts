@@ -382,7 +382,7 @@ export type KeyedEditorSelectionPoint = {
   offset: number
 }
 
-export function getKeyedSelection(
+function getKeyedSelection(
   schema: EditorSchema,
   value: Array<PortableTextBlock>,
   selection: EditorSelection,

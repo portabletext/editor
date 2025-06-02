@@ -1,7 +1,9 @@
 import type {PortableTextBlock} from '@sanity/types'
 import type {EditorSchema} from '../editor/editor-schema'
-import type {EditorSelection} from '../editor/editor-selection'
-import {getKeyedSelection} from '../editor/editor-selection'
+import {
+  getEditorSelection,
+  type EditorSelection,
+} from '../editor/editor-selection'
 import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
 import {isKeyedSegment} from './util.is-keyed-segment'
 
@@ -19,7 +21,12 @@ export function sliceBlocks({
   blocks: Array<PortableTextBlock>
 }): Array<PortableTextBlock> {
   const slice: Array<PortableTextBlock> = []
-  const selection = getKeyedSelection(context.schema, blocks, context.selection)
+  const selection = getEditorSelection({
+    type: 'keyed',
+    schema: context.schema,
+    value: blocks,
+    selection: context.selection,
+  })
 
   if (!selection) {
     return slice

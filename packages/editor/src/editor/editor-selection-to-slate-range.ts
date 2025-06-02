@@ -2,7 +2,7 @@ import type {Range} from 'slate'
 import type {PortableTextSlateEditor} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import {
-  getKeyedSelection,
+  getEditorSelection,
   type EditorSelection,
   type KeyedEditorSelection,
 } from './editor-selection'
@@ -13,7 +13,12 @@ export function editorSelectionToSlateRange(
   selection: EditorSelection,
   editor: PortableTextSlateEditor,
 ): Range | null {
-  const keyedSelection = getKeyedSelection(schema, editor.value, selection)
+  const keyedSelection = getEditorSelection({
+    type: 'keyed',
+    schema,
+    value: editor.value,
+    selection,
+  })
 
   if (!keyedSelection) {
     return null
@@ -27,7 +32,12 @@ function keyedSelectionToSlateRange(
   selection: KeyedEditorSelection,
   editor: PortableTextSlateEditor,
 ): Range | null {
-  const keyedSelection = getKeyedSelection(schema, editor.value, selection)
+  const keyedSelection = getEditorSelection({
+    type: 'keyed',
+    schema,
+    value: editor.value,
+    selection,
+  })
 
   if (!keyedSelection) {
     return null
