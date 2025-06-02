@@ -1,5 +1,5 @@
+import {getIndexedSelection, isCollapsed} from '../editor/editor-selection'
 import type {EditorSelector} from '../editor/editor-selector'
-import {getIndexedSelection, isCollapsed} from '../editor/indexed-selection'
 
 /**
  * @public

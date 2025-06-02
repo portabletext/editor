@@ -27,14 +27,13 @@ import {getCompoundClientRect} from '../internal-utils/compound-client-rect'
 import {debugWithName} from '../internal-utils/debug'
 import {getDragSelection} from '../internal-utils/drag-selection'
 import {getEventPosition} from '../internal-utils/event-position'
+import {normalizeSelection} from '../internal-utils/normalize-selection'
 import {parseBlocks} from '../internal-utils/parse-blocks'
-import {normalizeSelection} from '../internal-utils/selection'
 import {getSelectionDomNodes} from '../internal-utils/selection-elements'
 import {fromSlateValue} from '../internal-utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
 import * as selectors from '../selectors'
 import type {
-  EditorSelection,
   OnCopyFn,
   OnPasteFn,
   RangeDecoration,
@@ -54,13 +53,14 @@ import {RenderElement} from './components/render-element'
 import {RenderLeaf} from './components/render-leaf'
 import {RenderText, type RenderTextProps} from './components/render-text'
 import {EditorActorContext} from './editor-actor-context'
-import {getEditorSnapshot} from './editor-selector'
-import {usePortableTextEditor} from './hooks/usePortableTextEditor'
 import {
   getIndexedSelection,
   indexedSelectionToSlateRange,
   slateRangeToIndexedSelection,
-} from './indexed-selection'
+} from './editor-selection'
+import type {EditorSelection} from './editor-selection'
+import {getEditorSnapshot} from './editor-selector'
+import {usePortableTextEditor} from './hooks/usePortableTextEditor'
 import {createWithHotkeys} from './plugins/createWithHotKeys'
 import {PortableTextEditor} from './PortableTextEditor'
 import {

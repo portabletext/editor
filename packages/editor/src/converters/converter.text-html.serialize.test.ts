@@ -6,8 +6,8 @@ import {
   defineSchema,
   type SchemaDefinition,
 } from '../editor/editor-schema'
+import type {EditorSelection} from '../editor/editor-selection'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
-import type {EditorSelection} from '../types/editor'
 import {createConverterTextHtml} from './converter.text-html'
 
 const decoratedParagraph: PortableTextTextBlock = {

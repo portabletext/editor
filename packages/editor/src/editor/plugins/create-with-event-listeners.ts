@@ -2,7 +2,7 @@ import {Editor} from 'slate'
 import {insertTextOperationImplementation} from '../../operations/behavior.operation.insert.text'
 import {performOperation} from '../../operations/behavior.operations'
 import type {EditorActor} from '../editor-machine'
-import {slateRangeToIndexedSelection} from '../indexed-selection'
+import {slateRangeToIndexedSelection} from '../editor-selection'
 import {isApplyingBehaviorOperations} from '../with-applying-behavior-operations'
 
 export function createWithEventListeners(editorActor: EditorActor) {

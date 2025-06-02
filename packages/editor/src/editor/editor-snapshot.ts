@@ -5,10 +5,12 @@ import {slateRangeToKeyedSelection} from '../internal-utils/slate-utils'
 import type {PortableTextSlateEditor} from '../types/editor'
 import type {HasTag} from './editor-machine'
 import type {EditorSchema} from './editor-schema'
-import {ExternalEditorSelection} from './external-selection'
+import {
+  slateRangeToIndexedSelection,
+  type EditorSelection,
+} from './editor-selection'
 import {getActiveAnnotations} from './get-active-annotations'
 import {getActiveDecorators} from './get-active-decorators'
-import {slateRangeToIndexedSelection} from './indexed-selection'
 
 /**
  * @public
@@ -18,7 +20,7 @@ export type EditorContext = {
   keyGenerator: () => string
   readOnly: boolean
   schema: EditorSchema
-  selection: ExternalEditorSelection
+  selection: EditorSelection
   value: Array<PortableTextBlock>
 }
 

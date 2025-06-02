@@ -1,5 +1,9 @@
-import {isBackward, isIndexedSelection} from '../editor/indexed-selection'
-import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
+import {
+  isBackward,
+  isIndexedSelection,
+  type EditorSelection,
+  type EditorSelectionPoint,
+} from '../editor/editor-selection'
 
 /**
  * @public

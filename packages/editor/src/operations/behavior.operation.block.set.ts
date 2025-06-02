@@ -2,7 +2,7 @@ import {Editor, Transforms, type Element as SlateElement} from 'slate'
 import {
   getKeyedSelection,
   keyedSelectionToSlateRange,
-} from '../editor/keyed-selection'
+} from '../editor/editor-selection'
 import {parseBlock} from '../internal-utils/parse-blocks'
 import {fromSlateValue, toSlateValue} from '../internal-utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'

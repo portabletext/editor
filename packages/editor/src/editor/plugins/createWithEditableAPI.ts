@@ -31,14 +31,16 @@ import {addAnnotationOperationImplementation} from '../../operations/behavior.op
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
-  EditorSelection,
   PortableTextSlateEditor,
 } from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
+import {
+  getKeyedSelection,
+  keyedSelectionToSlateRange,
+  slateRangeToIndexedSelection,
+  type EditorSelection,
+} from '../editor-selection'
 import {getEditorSnapshot} from '../editor-selector'
-import {ExternalEditorSelection} from '../external-selection'
-import {slateRangeToIndexedSelection} from '../indexed-selection'
-import {getKeyedSelection, keyedSelectionToSlateRange} from '../keyed-selection'
 
 const debug = debugWithName('API:editable')
 

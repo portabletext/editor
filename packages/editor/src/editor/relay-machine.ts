@@ -2,8 +2,8 @@ import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@sanity/types'
 import type {FocusEvent} from 'react'
 import {emit, setup, type ActorRefFrom} from 'xstate'
-import type {EditorSelection, InvalidValueResolution} from '../types/editor'
-import {ExternalEditorSelection} from './external-selection'
+import type {InvalidValueResolution} from '../types/editor'
+import type {EditorSelection} from './editor-selection'
 
 /**
  * @public
@@ -48,7 +48,7 @@ export type EditorEmittedEvent =
     }
   | {
       type: 'selection'
-      selection: ExternalEditorSelection
+      selection: EditorSelection
     }
   | {
       type: 'value changed'

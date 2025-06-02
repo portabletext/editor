@@ -1,6 +1,6 @@
-import type {EditorSelectionPoint} from '..'
+import type {EditorSelectionPoint} from '../editor/editor-selection'
+import {getIndexedSelectionPoint} from '../editor/editor-selection'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {getIndexedSelectionPoint} from '../editor/indexed-selection'
 import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
 import type {BlockOffset} from '../types/block-offset'
 import {isKeyedBlockPath} from '../types/paths'

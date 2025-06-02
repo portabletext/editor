@@ -1,6 +1,6 @@
-import type {EditorSelectionPoint} from '..'
+import type {EditorSelectionPoint} from '../editor/editor-selection'
+import {getIndexedSelectionPoint} from '../editor/editor-selection'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {getIndexedSelectionPoint} from '../editor/indexed-selection'
 import type {BlockOffset} from '../types/block-offset'
 import {childSelectionPointToBlockOffset} from './util.child-selection-point-to-block-offset'
 

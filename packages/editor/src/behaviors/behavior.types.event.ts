@@ -1,10 +1,10 @@
 import type {PortableTextBlock} from '@sanity/types'
+import type {EditorSelection} from '../editor/editor-selection'
 import type {EventPosition} from '../internal-utils/event-position'
 import type {MIMEType} from '../internal-utils/mime-type'
 import type {OmitFromUnion, PickFromUnion, StrictExtract} from '../type-utils'
 import type {BlockOffset} from '../types/block-offset'
 import type {BlockWithOptionalKey} from '../types/block-with-optional-key'
-import type {EditorSelection} from '../types/editor'
 import type {BlockPath} from '../types/paths'
 
 /**

@@ -1,4 +1,4 @@
-import type {EditorSelection} from '..'
+import type {EditorSelection} from '../editor/editor-selection'
 import type {EditorSelector} from '../editor/editor-selector'
 
 /**

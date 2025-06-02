@@ -10,12 +10,12 @@ import {
 } from 'xstate'
 import type {
   Editor,
-  EditorSelection,
   RangeDecoration,
   RangeDecorationOnMovedDetails,
   SchemaDefinition,
 } from '../src'
 import type {Behavior} from '../src/behaviors/behavior.types.behavior'
+import type {EditorSelection} from '../src/editor/editor-selection'
 
 type MutationEvent = {
   type: 'mutation'

@@ -1,4 +1,4 @@
-import type {EditorSelection} from '../types/editor'
+import type {EditorSelection} from '../editor/editor-selection'
 import {isEqualSelectionPoints} from './util.is-equal-selection-points'
 
 /**

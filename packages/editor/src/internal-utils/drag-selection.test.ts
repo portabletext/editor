@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'vitest'
 import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
-import type {IndexedEditorSelection} from '../editor/indexed-selection'
+import type {IndexedEditorSelection} from '../editor/editor-selection'
 import {createTestSnapshot} from './create-test-snapshot'
 import {getDragSelection} from './drag-selection'
 import {createTestKeyGenerator} from './test-key-generator'

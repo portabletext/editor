@@ -22,13 +22,13 @@ import type {
   EditableAPIDeleteOptions,
   EditorChange,
   EditorChanges,
-  EditorSelection,
   PatchObservable,
   PortableTextMemberSchemaTypes,
 } from '../types/editor'
 import {createInternalEditor, type InternalEditor} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
 import type {EditorActor} from './editor-machine'
+import type {EditorSelection} from './editor-selection'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
 import type {MutationActor} from './mutation-machine'

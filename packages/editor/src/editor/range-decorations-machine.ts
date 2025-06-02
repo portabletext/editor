@@ -22,12 +22,10 @@ import type {EditorSchema} from './editor-schema'
 import {
   getIndexedSelection,
   indexedSelectionToSlateRange,
-  slateRangeToIndexedSelection,
-} from './indexed-selection'
-import {
   keyedSelectionToSlateRange,
-  moveRangeByOperation,
-} from './keyed-selection'
+  slateRangeToIndexedSelection,
+} from './editor-selection'
+import {moveRangeByOperation} from './move-range'
 
 const slateOperationCallback: CallbackLogicFunction<
   AnyEventObject,

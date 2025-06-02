@@ -1,8 +1,8 @@
 import {
   getIndexedSelection,
   selectionIncludesSelection,
-} from '../editor/indexed-selection'
-import type {EditorSelection} from '../types/editor'
+} from '../editor/editor-selection'
+import type {EditorSelection} from '../editor/editor-selection'
 import type {EditorSelector} from './../editor/editor-selector'
 
 /**

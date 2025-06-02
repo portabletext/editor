@@ -1,12 +1,12 @@
 import type {PortableTextBlock, PortableTextTextBlock} from '@sanity/types'
 import {expect, test} from 'vitest'
-import type {EditorSelection} from '..'
 import {schemaType} from '../editor/__tests__/PortableTextEditorTester'
 import {
   compileSchemaDefinition,
   defineSchema,
   type SchemaDefinition,
 } from '../editor/editor-schema'
+import type {EditorSelection} from '../editor/editor-selection'
 import {createLegacySchema} from '../editor/legacy-schema'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {createConverterTextPlain} from './converter.text-plain'

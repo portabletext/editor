@@ -1,5 +1,7 @@
-import {isIndexedSelection} from '../editor/indexed-selection'
-import type {EditorSelection} from '../types/editor'
+import {
+  isIndexedSelection,
+  type EditorSelection,
+} from '../editor/editor-selection'
 
 /**
  * @public

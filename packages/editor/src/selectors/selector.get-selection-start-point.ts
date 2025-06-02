@@ -1,6 +1,9 @@
-import type {EditorSelectionPoint} from '..'
+import {
+  getIndexedSelection,
+  isBackward,
+  type EditorSelectionPoint,
+} from '../editor/editor-selection'
 import type {EditorSelector} from '../editor/editor-selector'
-import {getIndexedSelection, isBackward} from '../editor/indexed-selection'
 
 /**
  * @public

@@ -1,5 +1,9 @@
-import type {KeyedSegment, PortableTextBlock} from '@sanity/types'
+import type {KeyedSegment, Path, PortableTextBlock} from '@sanity/types'
 import {isKeyedSegment} from '../utils'
+
+export type IndexedPath = Array<number>
+
+export type KeyedPath = Path
 
 export type BlockPath = IndexedBlockPath | KeyedBlockPath
 

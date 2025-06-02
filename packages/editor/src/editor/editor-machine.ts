@@ -20,11 +20,11 @@ import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
 import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
 import type {
-  EditorSelection,
   PortableTextMemberSchemaTypes,
   PortableTextSlateEditor,
 } from '../types/editor'
 import type {EditorSchema} from './editor-schema'
+import type {EditorSelection} from './editor-selection'
 import {createEditorSnapshot} from './editor-snapshot'
 import type {
   EditorEmittedEvent,

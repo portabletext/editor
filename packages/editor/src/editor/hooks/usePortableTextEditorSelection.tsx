@@ -5,9 +5,9 @@ import {
   useEffect,
   useState,
 } from 'react'
-import type {EditorSelection} from '../..'
 import {debugWithName} from '../../internal-utils/debug'
 import type {EditorActor} from '../editor-machine'
+import type {EditorSelection} from '../editor-selection'
 
 /**
  * A React context for sharing the editor selection.

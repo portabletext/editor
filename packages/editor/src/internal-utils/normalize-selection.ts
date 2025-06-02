@@ -1,12 +1,40 @@
 import type {PortableTextBlock} from '@sanity/types'
-import type {EditorSelection} from '..'
 import type {EditorSchema} from '../editor/editor-schema'
 import {
   getIndexedSelection,
+  type EditorSelection,
   type IndexedEditorSelection,
   type IndexedEditorSelectionPoint,
-} from '../editor/indexed-selection'
+} from '../editor/editor-selection'
 import {isSpan, isTextBlock} from './parse-blocks'
+
+export function normalizeSelection(
+  schema: EditorSchema,
+  selection: EditorSelection,
+  value: PortableTextBlock[] | undefined,
+): IndexedEditorSelection | null {
+  if (!value || value.length === 0) {
+    return null
+  }
+
+  const indexedSelection = getIndexedSelection(schema, value, selection)
+
+  if (!indexedSelection) {
+    return null
+  }
+
+  const anchor = normalizePoint(schema, indexedSelection.anchor, value)
+  const focus = normalizePoint(schema, indexedSelection.focus, value)
+
+  if (anchor && focus) {
+    return {
+      anchor,
+      focus,
+    }
+  }
+
+  return null
+}
 
 function normalizePoint(
   schema: EditorSchema,
@@ -49,32 +77,4 @@ function normalizePoint(
     offset:
       child.text.length >= point.offset ? point.offset : child.text.length,
   }
-}
-
-export function normalizeSelection(
-  schema: EditorSchema,
-  selection: EditorSelection,
-  value: PortableTextBlock[] | undefined,
-): IndexedEditorSelection | null {
-  if (!value || value.length === 0) {
-    return null
-  }
-
-  const indexedSelection = getIndexedSelection(schema, value, selection)
-
-  if (!indexedSelection) {
-    return null
-  }
-
-  const anchor = normalizePoint(schema, indexedSelection.anchor, value)
-  const focus = normalizePoint(schema, indexedSelection.focus, value)
-
-  if (anchor && focus) {
-    return {
-      anchor,
-      focus,
-    }
-  }
-
-  return null
 }

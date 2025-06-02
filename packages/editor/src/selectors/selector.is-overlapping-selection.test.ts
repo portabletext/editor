@@ -3,7 +3,7 @@ import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
 import {
   getIndexedSelection,
   type IndexedEditorSelection,
-} from '../editor/indexed-selection'
+} from '../editor/editor-selection'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {isOverlappingSelection} from './selector.is-overlapping-selection'
 

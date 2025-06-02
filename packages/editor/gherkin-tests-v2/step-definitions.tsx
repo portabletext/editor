@@ -2,7 +2,7 @@ import {page, userEvent} from '@vitest/browser/context'
 import {Given, Then, When} from 'racejar'
 import {assert, expect, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
-import {getEditorSelection} from '../src/internal-utils/editor-selection'
+import {getEndToEndSelection} from '../src/internal-utils/end-to-end-selection'
 import {
   isTextBlock,
   parseBlock,
@@ -254,7 +254,7 @@ export const stepDefinitions = [
     })
   }),
   When('everything is selected', (context: Context) => {
-    const editorSelection = getEditorSelection(context.editor.value())
+    const editorSelection = getEndToEndSelection(context.editor.value())
 
     context.editor.ref.current.send({
       type: 'select',
@@ -263,7 +263,7 @@ export const stepDefinitions = [
   }),
   When('everything is selected backwards', (context: Context) => {
     const editorSelection = reverseSelection(
-      getEditorSelection(context.editor.value()),
+      getEndToEndSelection(context.editor.value()),
     )
 
     context.editor.ref.current.send({

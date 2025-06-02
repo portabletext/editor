@@ -1,8 +1,11 @@
 import type {PortableTextBlock, PortableTextSpan} from '@sanity/types'
 import {Editor, Element, Node, Range, type Path, type Point} from 'slate'
 import type {EditorSchema} from '../editor/editor-schema'
-import {KeyedEditorSelection} from '../editor/keyed-selection'
-import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
+import type {
+  EditorSelection,
+  KeyedEditorSelection,
+} from '../editor/editor-selection'
+import type {PortableTextSlateEditor} from '../types/editor'
 import type {KeyedBlockPath} from '../types/paths'
 import {fromSlateValue} from './values'
 

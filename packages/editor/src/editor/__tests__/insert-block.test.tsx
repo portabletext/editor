@@ -3,8 +3,9 @@ import type {PortableTextBlock} from '@sanity/types'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, test, vi} from 'vitest'
-import type {EditorChange, EditorSelection} from '../../types/editor'
+import type {EditorChange} from '../../types/editor'
 import {PortableTextEditable} from '../Editable'
+import type {EditorSelection} from '../editor-selection'
 import {PortableTextEditor} from '../PortableTextEditor'
 
 const schema = Schema.compile({

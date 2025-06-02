@@ -15,9 +15,9 @@ import {
   compileSchemaDefinitionToLegacySchema,
   legacySchemaToEditorSchema,
 } from './editor-schema'
+import {getKeyedSelection} from './editor-selection'
 import {getEditorSnapshot} from './editor-selector'
 import {defaultKeyGenerator} from './key-generator'
-import {getKeyedSelection} from './keyed-selection'
 import {createLegacySchema} from './legacy-schema'
 import {mutationMachine, type MutationActor} from './mutation-machine'
 import {createEditableAPI} from './plugins/createWithEditableAPI'

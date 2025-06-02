@@ -3,7 +3,7 @@ import {Editor, Transforms} from 'slate'
 import {
   getKeyedSelection,
   keyedSelectionToSlateRange,
-} from '../editor/keyed-selection'
+} from '../editor/editor-selection'
 import {isTextBlock, parseBlock} from '../internal-utils/parse-blocks'
 import {fromSlateValue} from '../internal-utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'

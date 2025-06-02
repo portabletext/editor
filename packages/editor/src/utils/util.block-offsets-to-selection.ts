@@ -1,4 +1,4 @@
-import type {EditorSelection} from '..'
+import type {EditorSelection} from '../editor/editor-selection'
 import type {EditorContext} from '../editor/editor-snapshot'
 import type {BlockOffset} from '../types/block-offset'
 import {blockOffsetToSelectionPoint} from './util.block-offset-to-selection-point'

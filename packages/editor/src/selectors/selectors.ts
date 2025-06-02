@@ -5,11 +5,11 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@sanity/types'
-import type {EditorSelector} from '../editor/editor-selector'
 import {
   getIndexedSelection,
   getIndexedSelectionPoint,
-} from '../editor/indexed-selection'
+} from '../editor/editor-selection'
+import type {EditorSelector} from '../editor/editor-selector'
 import {isListBlock, isSpan, isTextBlock} from '../internal-utils/parse-blocks'
 import type {KeyedBlockPath, KeyedChildPath} from '../types/paths'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'

@@ -1,9 +1,9 @@
-import type {EditorSelector} from '../editor/editor-selector'
 import {
   getIndexedSelectionPoint,
   isPointBefore,
-} from '../editor/indexed-selection'
-import type {EditorSelectionPoint} from '../types/editor'
+} from '../editor/editor-selection'
+import type {EditorSelectionPoint} from '../editor/editor-selection'
+import type {EditorSelector} from '../editor/editor-selector'
 import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
 
 /**

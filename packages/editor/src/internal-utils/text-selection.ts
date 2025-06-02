@@ -1,8 +1,11 @@
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import type {PortableTextBlock} from '@sanity/types'
 import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
-import {getIndexedSelection} from '../editor/indexed-selection'
-import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
+import {
+  getIndexedSelection,
+  type EditorSelection,
+  type EditorSelectionPoint,
+} from '../editor/editor-selection'
 import {collapseSelection} from './collapse-selection'
 import {splitString} from './split-string'
 import {stringOverlap} from './string-overlap'

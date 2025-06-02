@@ -3,7 +3,7 @@ import {
   getIndexedSelection,
   indexedSelectionToSlateRange,
   slateRangeToIndexedSelection,
-} from '../editor/indexed-selection'
+} from '../editor/editor-selection'
 import {fromSlateValue} from '../internal-utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
 import * as selectors from '../selectors'

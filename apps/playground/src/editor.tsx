@@ -116,7 +116,6 @@ export function Editor(props: {
             editorRef={props.editorRef}
             value={value}
             on={(event) => {
-              console.log('event', event)
               if (event.type === 'mutation') {
                 props.editorRef.send(event)
               }

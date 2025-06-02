@@ -1,5 +1,8 @@
-import type {EditorSelection} from '..'
-import {isBackward, isIndexedSelection} from '../editor/indexed-selection'
+import {
+  isBackward,
+  isIndexedSelection,
+  type EditorSelection,
+} from '../editor/editor-selection'
 
 export function collapseSelection(
   selection: EditorSelection,

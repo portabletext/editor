@@ -1,7 +1,7 @@
 import type {PortableTextBlock} from '@sanity/types'
 import {expect, test} from 'vitest'
 import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
-import type {IndexedEditorSelection} from '../editor/indexed-selection'
+import type {IndexedEditorSelection} from '../editor/editor-selection'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {getSelectionText} from './selector.get-selection-text'
 

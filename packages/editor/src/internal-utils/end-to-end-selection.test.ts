@@ -1,7 +1,7 @@
 import {expect, test} from 'vitest'
-import {getEditorSelection} from './editor-selection'
+import {getEndToEndSelection} from './end-to-end-selection'
 
-test(getEditorSelection.name, () => {
+test(getEndToEndSelection.name, () => {
   const image = {
     _type: 'image',
     _key: 'i1',
@@ -25,15 +25,15 @@ test(getEditorSelection.name, () => {
     ],
   }
 
-  expect(getEditorSelection([image, splitBlock])).toEqual({
+  expect(getEndToEndSelection([image, splitBlock])).toEqual({
     anchor: {path: [0], offset: 0},
     focus: {path: [1, 2], offset: 4},
   })
-  expect(getEditorSelection([splitBlock, image])).toEqual({
+  expect(getEndToEndSelection([splitBlock, image])).toEqual({
     anchor: {path: [0, 0], offset: 0},
     focus: {path: [1], offset: 0},
   })
-  expect(getEditorSelection([blockWithStockTicker, splitBlock])).toEqual({
+  expect(getEndToEndSelection([blockWithStockTicker, splitBlock])).toEqual({
     anchor: {path: [0, 0], offset: 0},
     focus: {path: [1, 2], offset: 4},
   })

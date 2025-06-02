@@ -1,6 +1,6 @@
 import type {PortableTextBlock} from '@sanity/types'
+import {getIndexedSelectionPoint} from '../editor/editor-selection'
 import type {EditorSelector} from '../editor/editor-selector'
-import {getIndexedSelectionPoint} from '../editor/indexed-selection'
 import type {KeyedBlockPath} from '../types/paths'
 import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
 

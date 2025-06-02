@@ -2,7 +2,7 @@ import {Transforms} from 'slate'
 import {
   getIndexedSelection,
   indexedSelectionToSlateRange,
-} from '../editor/indexed-selection'
+} from '../editor/editor-selection'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const selectOperationImplementation: BehaviorOperationImplementation<

@@ -1,6 +1,6 @@
+import type {EditorSelectionPoint} from '../editor/editor-selection'
 import type {EditorContext} from '../editor/editor-snapshot'
 import type {BlockOffset} from '../types/block-offset'
-import type {EditorSelectionPoint} from '../types/editor'
 import {isIndexedBlockPath} from '../types/paths'
 
 /**

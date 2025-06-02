@@ -6,7 +6,7 @@ import {
   schemaType,
 } from '../../__tests__/PortableTextEditorTester'
 import {createTestKeyGenerator} from '../../../internal-utils/test-key-generator'
-import type {EditorSelection} from '../../../types/editor'
+import type {EditorSelection} from '../../editor-selection'
 import {PortableTextEditor} from '../../PortableTextEditor'
 
 describe('plugin:withPortableTextMarksModel', () => {

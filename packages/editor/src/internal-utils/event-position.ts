@@ -1,7 +1,8 @@
 import {Editor, type BaseRange, type Node} from 'slate'
 import {DOMEditor, isDOMNode} from 'slate-dom'
-import type {EditorSchema, EditorSelection} from '..'
 import type {EditorActor} from '../editor/editor-machine'
+import type {EditorSchema} from '../editor/editor-schema'
+import type {EditorSelection} from '../editor/editor-selection'
 import type {PortableTextSlateEditor} from '../types/editor'
 import * as utils from '../utils'
 import {

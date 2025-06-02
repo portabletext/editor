@@ -1,9 +1,12 @@
 import type {BaseRange} from 'slate'
 import {debugWithName} from '../../internal-utils/debug'
 import {SLATE_TO_PORTABLE_TEXT_RANGE} from '../../internal-utils/weakMaps'
-import type {EditorSelection, PortableTextSlateEditor} from '../../types/editor'
+import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
-import {slateRangeToIndexedSelection} from '../indexed-selection'
+import {
+  slateRangeToIndexedSelection,
+  type EditorSelection,
+} from '../editor-selection'
 
 const debug = debugWithName('plugin:withPortableTextSelections')
 const debugVerbose = debug.enabled && false

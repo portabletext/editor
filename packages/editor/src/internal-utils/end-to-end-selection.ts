@@ -4,10 +4,10 @@ import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
 import {
   getIndexedSelection,
   type IndexedEditorSelection,
-} from '../editor/indexed-selection'
-import type {EditorSelectionPoint} from '../types/editor'
+} from '../editor/editor-selection'
+import type {EditorSelectionPoint} from '../editor/editor-selection'
 
-export function getEditorSelection(
+export function getEndToEndSelection(
   blocks: Array<PortableTextBlock> | undefined,
 ): IndexedEditorSelection {
   if (!blocks) {

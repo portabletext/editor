@@ -1,6 +1,6 @@
 import type {PortableTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
-import type {IndexedEditorSelection} from '../editor/indexed-selection'
+import type {IndexedEditorSelection} from '../editor/editor-selection'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {getSelectedSpans} from './selector.get-selected-spans'
 

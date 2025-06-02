@@ -4,10 +4,10 @@ import {slateRangeToKeyedSelection} from '../internal-utils/slate-utils'
 import type {PortableTextSlateEditor} from '../types/editor'
 import type {InternalEditor} from './create-editor'
 import type {EditorActor} from './editor-machine'
+import {slateRangeToIndexedSelection} from './editor-selection'
 import type {EditorSnapshot} from './editor-snapshot'
 import {getActiveAnnotations} from './get-active-annotations'
 import {getActiveDecorators} from './get-active-decorators'
-import {slateRangeToIndexedSelection} from './indexed-selection'
 
 function defaultCompare<T>(a: T, b: T) {
   return a === b

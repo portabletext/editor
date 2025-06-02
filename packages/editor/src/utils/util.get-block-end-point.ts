@@ -1,5 +1,5 @@
 import type {PortableTextBlock} from '@sanity/types'
-import type {EditorSelectionPoint} from '..'
+import type {EditorSelectionPoint} from '../editor/editor-selection'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
 import {isIndexedBlockPath, type BlockPath} from '../types/paths'

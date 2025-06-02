@@ -1,6 +1,6 @@
+import type {PortableTextBlock} from '@sanity/types'
 import {expect, test} from 'vitest'
-import type {PortableTextBlock} from '..'
-import type {IndexedEditorSelection} from '../editor/indexed-selection'
+import type {IndexedEditorSelection} from '../editor/editor-selection'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {isActiveDecorator} from './selector.is-active-decorator'
 

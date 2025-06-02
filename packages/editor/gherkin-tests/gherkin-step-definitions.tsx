@@ -7,9 +7,10 @@ import React from 'react'
 import {assert, expect, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {createActor} from 'xstate'
-import type {Editor, EditorSelection} from '../src'
+import type {Editor} from '../src'
+import type {EditorSelection} from '../src/editor/editor-selection'
 import {getBlockKeys} from '../src/internal-utils/block-keys'
-import {getEditorSelection} from '../src/internal-utils/editor-selection'
+import {getEndToEndSelection} from '../src/internal-utils/end-to-end-selection'
 import {getSelectionBlockKeys} from '../src/internal-utils/selection-block-keys'
 import {getSelectionFocusText} from '../src/internal-utils/selection-focus-text'
 import {getSelectionText} from '../src/internal-utils/selection-text'
@@ -512,7 +513,7 @@ export const stepDefinitions = [
   When('everything is selected', async (context: Context) => {
     await waitForNewSelection(context.editorA, async () => {
       const value = await getValue()
-      const selection = await getEditorSelection(value)
+      const selection = await getEndToEndSelection(value)
 
       context.editorA.actorRef.send({
         type: 'selection',
@@ -523,7 +524,7 @@ export const stepDefinitions = [
   When('everything is selected backwards', async (context: Context) => {
     await waitForNewSelection(context.editorA, async () => {
       const value = await getValue()
-      const selection = await getEditorSelection(value)
+      const selection = await getEndToEndSelection(value)
 
       context.editorA.actorRef.send({
         type: 'selection',

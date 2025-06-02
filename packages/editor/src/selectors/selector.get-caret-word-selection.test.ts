@@ -1,6 +1,6 @@
 import type {PortableTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
-import type {IndexedEditorSelection} from '../editor/indexed-selection'
+import type {IndexedEditorSelection} from '../editor/editor-selection'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {createTestKeyGenerator} from '../internal-utils/test-key-generator'
 import {getCaretWordSelection} from './selector.get-caret-word-selection'

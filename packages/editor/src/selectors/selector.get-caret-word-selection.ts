@@ -1,6 +1,6 @@
-import type {EditorSelection} from '..'
+import type {EditorSelection} from '../editor/editor-selection'
+import {getIndexedSelection, isBackward} from '../editor/editor-selection'
 import type {EditorSelector} from '../editor/editor-selector'
-import {getIndexedSelection, isBackward} from '../editor/indexed-selection'
 import type {BlockOffset} from '../types/block-offset'
 import * as utils from '../utils'
 import {

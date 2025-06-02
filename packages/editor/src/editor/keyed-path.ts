@@ -1,12 +1,12 @@
-import {isKeySegment, type Path} from '@sanity/types'
+import {isKeySegment} from '@sanity/types'
 import {isEqual} from 'lodash'
 import {Editor, Element, type Descendant, type Path as SlatePath} from 'slate'
-
-export type KeyedPath = Path
+import type {PortableTextSlateEditor} from '../types/editor'
+import type {KeyedPath} from '../types/paths'
 
 export function keyedPathToSlatePath(
   path: KeyedPath,
-  editor: Editor,
+  editor: PortableTextSlateEditor,
 ): SlatePath {
   if (!editor) {
     return []

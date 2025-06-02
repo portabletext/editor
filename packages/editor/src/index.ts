@@ -31,6 +31,10 @@ export {useEditor} from './editor/use-editor'
 export type {AddedAnnotationPaths} from './operations/behavior.operation.annotation.add'
 export type {BlockOffset} from './types/block-offset'
 export type {
+  EditorSelection,
+  EditorSelectionPoint,
+} from './editor/editor-selection'
+export type {
   BlockAnnotationRenderProps,
   BlockChildRenderProps,
   BlockDecoratorRenderProps,
@@ -43,8 +47,6 @@ export type {
   EditableAPIDeleteOptions,
   EditorChange,
   EditorChanges,
-  EditorSelection,
-  EditorSelectionPoint,
   ErrorChange,
   FocusChange,
   InvalidValue,
