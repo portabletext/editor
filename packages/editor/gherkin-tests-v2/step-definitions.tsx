@@ -133,14 +133,14 @@ export const stepDefinitions = [
   When(
     '{button} is pressed',
     async (_: Context, button: Parameter['button']) => {
-      await userEvent.keyboard(`{${button}}`)
+      await userEvent.keyboard(button)
     },
   ),
   When(
     '{button} is pressed {int} times',
     async (_: Context, button: Parameter['button'], times: number) => {
       for (let i = 0; i < times; i++) {
-        await userEvent.keyboard(`{${button}}`)
+        await userEvent.keyboard(button)
       }
     },
   ),

@@ -18,21 +18,10 @@ export const parameterType = {
     name: 'block-object',
     matcher: /"(image)"/,
   }),
-  button: createParameterType<
-    | 'ArrowUp'
-    | 'ArrowDown'
-    | 'ArrowLeft'
-    | 'ArrowRight'
-    | 'Backspace'
-    | 'Delete'
-    | 'Enter'
-    | 'Escape'
-    | 'Shift+Enter'
-    | 'Space'
-  >({
+  button: createParameterType<string>({
     name: 'button',
-    matcher:
-      /"(ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Backspace|Delete|Enter|Escape|Shift\+Enter|Space)"/,
+    matcher: /"(([A-Z]|[a-z]|{|}|>|\/|\+)+)"/,
+    type: String,
   }),
   decorator: createParameterType<'em' | 'strong'>({
     name: 'decorator',

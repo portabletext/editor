@@ -80,8 +80,8 @@ Feature: Decorators
   Scenario: Toggling decorator mid-text and navigating left to clear it
     Given the text "foo"
     When "strong" is toggled
-    And "ArrowLeft" is pressed
-    And "ArrowRight" is pressed
+    And "{ArrowLeft}" is pressed
+    And "{ArrowRight}" is pressed
     And "bar" is typed
     Then the text is "foobar"
     And "foobar" has no marks
@@ -91,24 +91,24 @@ Feature: Decorators
     When the caret is put after ""
     When "strong" is toggled
     And "foo" is typed
-    And "Backspace" is pressed 3 times
+    And "{Backspace}" is pressed 3 times
     And "bar" is typed
     Then "bar" has marks "strong"
 
   Scenario: Adding bold across an empty block and typing in the same
     Given the text "foo"
-    When "Enter" is pressed 2 times
+    When "{Enter}" is pressed 2 times
     And "bar" is typed
     And "foobar" is selected
     And "strong" is toggled
     And the caret is put after "foo"
-    And "ArrowRight" is pressed
+    And "{ArrowRight}" is pressed
     And "bar" is typed
     Then "bar" has marks "strong"
 
   Scenario: Toggling bold across an empty block
     Given the text "foo"
-    When "Enter" is pressed 2 times
+    When "{Enter}" is pressed 2 times
     And "bar" is typed
     Then the text is "foo||bar"
     When "ooba" is selected
@@ -121,8 +121,8 @@ Feature: Decorators
 
   Scenario Outline: Toggling bold on a cross-selection with the first line empty
     Given the text "foo"
-    When "ArrowUp" is pressed
-    And "Enter" is pressed
+    When "{ArrowUp}" is pressed
+    And "{Enter}" is pressed
     And everything is <selection>
     And "strong" is toggled
     Then the text is "|foo"
@@ -140,7 +140,7 @@ Feature: Decorators
 
   Scenario Outline: Toggling bold on a cross-selection with the last line empty
     Given the text "foo"
-    When "Enter" is pressed
+    When "{Enter}" is pressed
     And everything is <selection>
     And "strong" is toggled
     Then the text is "foo|"
@@ -160,8 +160,8 @@ Feature: Decorators
     Given the text "foo"
     And "strong" around "foo"
     When the caret is put before "foo"
-    And "Enter" is pressed
-    And "ArrowUp" is pressed
+    And "{Enter}" is pressed
+    And "{ArrowUp}" is pressed
     And "bar" is typed
     Then the text is "bar|foo"
     And "bar" has marks "strong"
@@ -171,7 +171,7 @@ Feature: Decorators
     Given the text "foo bar baz"
     And "strong" around "bar"
     When the caret is put <position>
-    And "Enter" is pressed
+    And "{Enter}" is pressed
     Then the text is <new text>
     And the caret is <new position>
 
@@ -185,19 +185,19 @@ Feature: Decorators
   Scenario: Toggling decorators in empty block
     Given the text ""
     When "foo" is typed
-    And "Backspace" is pressed 3 times
+    And "{Backspace}" is pressed 3 times
     And "strong" is toggled
     Then the text is ""
     And "" has marks "strong"
 
   Scenario: Splitting empty decorated block
     Given the text "foo"
-    When "Enter" is pressed
+    When "{Enter}" is pressed
     And "strong" is toggled
-    And "Enter" is pressed
-    And "ArrowUp" is pressed
+    And "{Enter}" is pressed
+    And "{ArrowUp}" is pressed
     And "bar" is typed
-    And "ArrowDown" is pressed
+    And "{ArrowDown}" is pressed
     And "baz" is typed
     Then the text is "foo|bar|baz"
     And "foo" has no marks

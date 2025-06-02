@@ -21,7 +21,7 @@ Feature: Insert Block
 
   Scenario Outline: Inserting block object on an empty text block
     Given the text "f"
-    When "Backspace" is pressed
+    When "{Backspace}" is pressed
     And a block is inserted <placement>
       ```
       {
@@ -96,7 +96,7 @@ Feature: Insert Block
 
   Scenario Outline: Inserting and selecting block object on cross-block selection
     Given the text "foo"
-    When "Enter" is pressed
+    When "{Enter}" is pressed
     And "bar" is typed
     And <selection> is selected
     And a block is inserted <placement> and selected at the <position>
@@ -125,7 +125,7 @@ Feature: Insert Block
 
   Scenario Outline: Inserting a block object on a cross-block selection without selecting it
     Given the text "foo"
-    When "Enter" is pressed
+    When "{Enter}" is pressed
     And "bar" is typed
     And <selection> is selected
     And a block is inserted <placement> and selected at the "none"
@@ -264,7 +264,7 @@ Feature: Insert Block
         "_type": "break"
       }
       ```
-    And "Enter" is pressed
+    And "{Enter}" is pressed
     And "foo" is typed
     Then the text is <text>
 
@@ -300,7 +300,7 @@ Feature: Insert Block
         "_type": "break"
       }
       ```
-    And "Enter" is pressed
+    And "{Enter}" is pressed
     And "foo" is typed
     Then the text is <text>
 
@@ -315,7 +315,7 @@ Feature: Insert Block
 
   Scenario Outline: Inserting block object on text block
     Given the text "foo"
-    When "Enter" is pressed
+    When "{Enter}" is pressed
     And "bar" is typed
     And the caret is put <position>
     And a block is inserted <placement> and selected at the "none"
@@ -466,7 +466,7 @@ Feature: Insert Block
 
   Scenario Outline: Inserting text block on cross-block text selection
     Given the text "foo"
-    When "Enter" is pressed
+    When "{Enter}" is pressed
     And "bar" is typed
     And <selection> is selected
     And a block is inserted <placement> and selected at the <position>

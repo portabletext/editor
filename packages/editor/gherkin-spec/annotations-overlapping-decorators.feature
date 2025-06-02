@@ -71,8 +71,8 @@ Feature: Annotations Overlapping Decorators
     And a "link" "l1" around "bar"
     And "strong" around "bar"
     When the caret is put before "bar"
-    And "Enter" is pressed
-    And "ArrowUp" is pressed
+    And "{Enter}" is pressed
+    And "{ArrowUp}" is pressed
     And "foo" is typed
     Then the text is "foo|bar"
     And the caret is after "foo"
@@ -83,7 +83,7 @@ Feature: Annotations Overlapping Decorators
     And a "link" "l1" around "bar"
     And "strong" around "bar"
     When the caret is put after "bar"
-    And "Enter" is pressed
+    And "{Enter}" is pressed
     And "baz" is typed
     Then the text is "bar|baz"
     And the caret is after "baz"
@@ -94,7 +94,7 @@ Feature: Annotations Overlapping Decorators
     And a "link" "l1" around "bar"
     And "strong" around "bar"
     When the caret is put after "bar"
-    And "Enter" is pressed
+    And "{Enter}" is pressed
     And "baz" is typed
     Then the text is "foo,bar|baz"
     And the caret is after "baz"
