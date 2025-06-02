@@ -8,7 +8,42 @@ import type {
   KeyedEditorSelection,
 } from './editor-selection'
 
-export function slateRangeToIndexedSelection({
+export function slateRangeToEditorSelection<
+  TType extends 'indexed' | 'keyed',
+  TEditorSelection extends TType extends 'indexed'
+    ? IndexedEditorSelection | null
+    : KeyedEditorSelection,
+>({
+  type,
+  schema,
+  editor,
+  range,
+}: {
+  type: TType
+  schema: EditorSchema
+  editor: PortableTextSlateEditor
+  range: Range | null
+}): TEditorSelection {
+  if (!range) {
+    return null as TEditorSelection
+  }
+
+  if (type === 'keyed') {
+    return slateRangeToKeyedSelection({
+      schema,
+      editor,
+      range,
+    }) as TEditorSelection
+  }
+
+  return slateRangeToIndexedSelection({
+    schema,
+    editor,
+    range,
+  }) as TEditorSelection
+}
+
+function slateRangeToIndexedSelection({
   schema,
   editor,
   range,

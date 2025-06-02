@@ -32,7 +32,7 @@ import type {
 import type {EditorActor} from '../editor-machine'
 import {getKeyedSelection, type EditorSelection} from '../editor-selection'
 import {
-  slateRangeToIndexedSelection,
+  slateRangeToEditorSelection,
   slateRangeToKeyedSelection,
 } from '../editor-selection-from-slate-range'
 import {editorSelectionToSlateRange} from '../editor-selection-to-slate-range'
@@ -510,7 +510,7 @@ export function createEditableAPI(
       if (editor.selection) {
         const existing = SLATE_TO_PORTABLE_TEXT_RANGE.get(editor.selection)
         if (existing) {
-          if (editorActor.getSnapshot().context.indexedSelection) {
+          if (editorActor.getSnapshot().context.selectionType === 'indexed') {
             return existing
           }
           return getKeyedSelection(
@@ -519,7 +519,8 @@ export function createEditableAPI(
             existing,
           )
         }
-        ptRange = slateRangeToIndexedSelection({
+        ptRange = slateRangeToEditorSelection({
+          type: 'indexed',
           schema: editorActor.getSnapshot().context.schema,
           editor,
           range: editor.selection,
@@ -527,7 +528,7 @@ export function createEditableAPI(
         SLATE_TO_PORTABLE_TEXT_RANGE.set(editor.selection, ptRange)
       }
 
-      if (editorActor.getSnapshot().context.indexedSelection) {
+      if (editorActor.getSnapshot().context.selectionType === 'indexed') {
         return ptRange
       }
 

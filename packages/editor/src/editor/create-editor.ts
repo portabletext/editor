@@ -324,7 +324,9 @@ function createActors(config: {
     const subscription = config.editorActor.on('*', (event) => {
       switch (event.type) {
         case 'selection':
-          if (config.editorActor.getSnapshot().context.indexedSelection) {
+          if (
+            config.editorActor.getSnapshot().context.selectionType === 'indexed'
+          ) {
             config.relayActor.send(event)
           } else {
             config.relayActor.send({

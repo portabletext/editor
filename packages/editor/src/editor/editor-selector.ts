@@ -3,10 +3,7 @@ import type {Editor} from '../editor'
 import type {PortableTextSlateEditor} from '../types/editor'
 import type {InternalEditor} from './create-editor'
 import type {EditorActor} from './editor-machine'
-import {
-  slateRangeToIndexedSelection,
-  slateRangeToKeyedSelection,
-} from './editor-selection-from-slate-range'
+import {slateRangeToEditorSelection} from './editor-selection-from-slate-range'
 import type {EditorSnapshot} from './editor-snapshot'
 import {getActiveAnnotations} from './get-active-annotations'
 import {getActiveDecorators} from './get-active-decorators'
@@ -77,19 +74,12 @@ export function getEditorSnapshot({
       keyGenerator: editorActorSnapshot.context.keyGenerator,
       readOnly: editorActorSnapshot.matches({'edit mode': 'read only'}),
       schema: editorActorSnapshot.context.schema,
-      selection: slateEditorInstance.selection
-        ? editorActorSnapshot.context.indexedSelection
-          ? slateRangeToIndexedSelection({
-              schema: editorActorSnapshot.context.schema,
-              editor: slateEditorInstance,
-              range: slateEditorInstance.selection,
-            })
-          : slateRangeToKeyedSelection({
-              schema: editorActorSnapshot.context.schema,
-              editor: slateEditorInstance,
-              range: slateEditorInstance.selection,
-            })
-        : null,
+      selection: slateRangeToEditorSelection({
+        type: editorActorSnapshot.context.selectionType,
+        schema: editorActorSnapshot.context.schema,
+        editor: slateEditorInstance,
+        range: slateEditorInstance.selection,
+      }),
       value: slateEditorInstance.value,
     },
     beta: {

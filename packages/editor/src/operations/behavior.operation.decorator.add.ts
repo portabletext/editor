@@ -1,6 +1,6 @@
 import {Editor, Range, Text, Transforms} from 'slate'
 import {getIndexedSelection} from '../editor/editor-selection'
-import {slateRangeToIndexedSelection} from '../editor/editor-selection-from-slate-range'
+import {slateRangeToEditorSelection} from '../editor/editor-selection-from-slate-range'
 import {editorSelectionToSlateRange} from '../editor/editor-selection-to-slate-range'
 import {fromSlateValue} from '../internal-utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
@@ -53,7 +53,8 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
     return
   }
 
-  const editorSelection = slateRangeToIndexedSelection({
+  const editorSelection = slateRangeToEditorSelection({
+    type: 'indexed',
     schema: context.schema,
     editor,
     range: selection,

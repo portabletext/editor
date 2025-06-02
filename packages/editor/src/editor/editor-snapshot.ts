@@ -5,10 +5,7 @@ import type {PortableTextSlateEditor} from '../types/editor'
 import type {HasTag} from './editor-machine'
 import type {EditorSchema} from './editor-schema'
 import type {EditorSelection} from './editor-selection'
-import {
-  slateRangeToIndexedSelection,
-  slateRangeToKeyedSelection,
-} from './editor-selection-from-slate-range'
+import {slateRangeToEditorSelection} from './editor-selection-from-slate-range'
 import {getActiveAnnotations} from './get-active-annotations'
 import {getActiveDecorators} from './get-active-decorators'
 
@@ -52,7 +49,7 @@ export function createEditorSnapshot({
   readOnly,
   schema,
   hasTag,
-  indexedSelection,
+  selectionType,
   internalDrag,
 }: {
   converters: Array<Converter>
@@ -60,30 +57,25 @@ export function createEditorSnapshot({
   keyGenerator: () => string
   readOnly: boolean
   schema: EditorSchema
+  selectionType: 'indexed' | 'keyed'
   hasTag: HasTag
-  indexedSelection: boolean
   internalDrag:
     | {
         origin: Pick<EventPosition, 'selection'>
       }
     | undefined
 }) {
-  const selection = editor.selection
-    ? indexedSelection
-      ? slateRangeToIndexedSelection({schema, editor, range: editor.selection})
-      : slateRangeToKeyedSelection({
-          schema,
-          editor,
-          range: editor.selection,
-        })
-    : null
-
   const context = {
     converters,
     keyGenerator,
     readOnly,
     schema,
-    selection,
+    selection: slateRangeToEditorSelection({
+      type: selectionType,
+      schema,
+      editor,
+      range: editor.selection,
+    }),
     value: editor.value,
   } satisfies EditorContext
 

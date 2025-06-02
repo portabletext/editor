@@ -20,7 +20,7 @@ import {isEqualToEmptyEditor} from '../internal-utils/values'
 import type {PortableTextSlateEditor, RangeDecoration} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import {getIndexedSelection} from './editor-selection'
-import {slateRangeToIndexedSelection} from './editor-selection-from-slate-range'
+import {slateRangeToEditorSelection} from './editor-selection-from-slate-range'
 import {editorSelectionToSlateRange} from './editor-selection-to-slate-range'
 import {moveRangeByOperation} from './move-range'
 
@@ -54,6 +54,7 @@ export const rangeDecorationsMachine = setup({
       skipSetup: boolean
       readOnly: boolean
       schema: EditorSchema
+      selectionType: 'indexed' | 'keyed'
       slateEditor: PortableTextSlateEditor
       updateCount: number
     },
@@ -61,6 +62,7 @@ export const rangeDecorationsMachine = setup({
       rangeDecorations: Array<RangeDecoration>
       readOnly: boolean
       schema: EditorSchema
+      selectionType: 'indexed' | 'keyed'
       skipSetup: boolean
       slateEditor: PortableTextSlateEditor
     },
@@ -189,7 +191,8 @@ export const rangeDecorationsMachine = setup({
             (newRange === null && slateRange)
           ) {
             const newRangeSelection = newRange
-              ? slateRangeToIndexedSelection({
+              ? slateRangeToEditorSelection({
+                  type: context.selectionType,
                   schema: context.schema,
                   editor: context.slateEditor,
                   range: newRange,
@@ -210,7 +213,8 @@ export const rangeDecorationsMachine = setup({
               ...(newRange || slateRange),
               rangeDecoration: {
                 ...decoratedRange.rangeDecoration,
-                selection: slateRangeToIndexedSelection({
+                selection: slateRangeToEditorSelection({
+                  type: context.selectionType,
                   schema: context.schema,
                   editor: context.slateEditor,
                   range: newRange,
@@ -279,6 +283,7 @@ export const rangeDecorationsMachine = setup({
     decoratedRanges: [],
     skipSetup: input.skipSetup,
     schema: input.schema,
+    selectionType: input.selectionType,
     slateEditor: input.slateEditor,
     updateCount: 0,
   }),

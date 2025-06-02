@@ -4,7 +4,7 @@ import {SLATE_TO_PORTABLE_TEXT_RANGE} from '../../internal-utils/weakMaps'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 import type {EditorSelection} from '../editor-selection'
-import {slateRangeToIndexedSelection} from '../editor-selection-from-slate-range'
+import {slateRangeToEditorSelection} from '../editor-selection-from-slate-range'
 
 const debug = debugWithName('plugin:withPortableTextSelections')
 const debugVerbose = debug.enabled && false
@@ -25,7 +25,8 @@ export function createWithPortableTextSelections(
           if (existing) {
             ptRange = existing
           } else {
-            ptRange = slateRangeToIndexedSelection({
+            ptRange = slateRangeToEditorSelection({
+              type: 'indexed',
               schema: editorActor.getSnapshot().context.schema,
               editor,
               range: editor.selection,

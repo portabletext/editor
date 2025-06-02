@@ -55,7 +55,7 @@ import {RenderText, type RenderTextProps} from './components/render-text'
 import {EditorActorContext} from './editor-actor-context'
 import {getIndexedSelection} from './editor-selection'
 import type {EditorSelection} from './editor-selection'
-import {slateRangeToIndexedSelection} from './editor-selection-from-slate-range'
+import {slateRangeToEditorSelection} from './editor-selection-from-slate-range'
 import {editorSelectionToSlateRange} from './editor-selection-to-slate-range'
 import {getEditorSnapshot} from './editor-selector'
 import {usePortableTextEditor} from './hooks/usePortableTextEditor'
@@ -173,6 +173,7 @@ export const PortableTextEditable = forwardRef<
       rangeDecorations: rangeDecorations ?? [],
       readOnly,
       schema: editorActor.getSnapshot().context.schema,
+      selectionType: editorActor.getSnapshot().context.selectionType,
       slateEditor,
       skipSetup: !editorActor.getSnapshot().matches({setup: 'setting up'}),
     },
@@ -344,13 +345,12 @@ export const PortableTextEditable = forwardRef<
         event.stopPropagation()
         event.preventDefault()
 
-        const selection = slateEditor.selection
-          ? slateRangeToIndexedSelection({
-              schema: editorActor.getSnapshot().context.schema,
-              editor: slateEditor,
-              range: slateEditor.selection,
-            })
-          : undefined
+        const selection = slateRangeToEditorSelection({
+          type: 'indexed',
+          schema: editorActor.getSnapshot().context.schema,
+          editor: slateEditor,
+          range: slateEditor.selection,
+        })
         const position = selection ? {selection} : undefined
 
         if (!position) {
@@ -425,13 +425,12 @@ export const PortableTextEditable = forwardRef<
         editorActor.getSnapshot().context.schema.block.name,
         KEY_TO_VALUE_ELEMENT.get(slateEditor),
       )
-      const ptRange = slateEditor.selection
-        ? slateRangeToIndexedSelection({
-            schema: editorActor.getSnapshot().context.schema,
-            editor: slateEditor,
-            range: slateEditor.selection,
-          })
-        : null
+      const ptRange = slateRangeToEditorSelection({
+        type: editorActor.getSnapshot().context.selectionType,
+        schema: editorActor.getSnapshot().context.schema,
+        editor: slateEditor,
+        range: slateEditor.selection,
+      })
       const path = ptRange?.focus.path || []
       const onPasteResult = onPaste?.({
         event,
