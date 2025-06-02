@@ -23,6 +23,7 @@ describe('focus', () => {
       <>
         <EditorProvider
           initialConfig={{
+            indexedSelection: true,
             keyGenerator,
             schemaDefinition: defineSchema({}),
           }}

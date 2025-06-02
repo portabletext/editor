@@ -128,6 +128,7 @@ describe('initialization', () => {
     const onChange = vi.fn()
     render(
       <PortableTextEditorTester
+        indexedSelection={true}
         keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
@@ -171,6 +172,7 @@ describe('initialization', () => {
     const onChange = vi.fn()
     const {rerender} = render(
       <PortableTextEditorTester
+        indexedSelection={true}
         keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}

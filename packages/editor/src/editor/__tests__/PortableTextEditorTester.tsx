@@ -77,6 +77,7 @@ export const PortableTextEditorTester = forwardRef(
     props: Partial<
       Omit<PortableTextEditorProps, 'type' | 'onChange' | 'value'>
     > & {
+      indexedSelection?: PortableTextEditorProps['indexedSelection']
       onChange?: PortableTextEditorProps['onChange']
       rangeDecorations?: PortableTextEditableProps['rangeDecorations']
       renderPlaceholder?: PortableTextEditableProps['renderPlaceholder']
@@ -91,6 +92,7 @@ export const PortableTextEditorTester = forwardRef(
     return (
       <PortableTextEditor
         schemaType={props.schemaType}
+        indexedSelection={props.indexedSelection}
         onChange={onChange}
         value={props.value || undefined}
         keyGenerator={props.keyGenerator}

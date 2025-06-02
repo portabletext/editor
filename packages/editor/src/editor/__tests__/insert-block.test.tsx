@@ -40,6 +40,7 @@ describe(PortableTextEditor.insertBlock.name, () => {
     render(
       <PortableTextEditor
         ref={editorRef}
+        indexedSelection={true}
         schemaType={schema}
         value={initialValue}
         keyGenerator={() => 'bb'}
@@ -109,6 +110,7 @@ describe(PortableTextEditor.insertBlock.name, () => {
     render(
       <PortableTextEditor
         ref={editorRef}
+        indexedSelection={true}
         schemaType={schema}
         value={initialValue}
         keyGenerator={() => 'bb'}
@@ -182,6 +184,7 @@ describe(PortableTextEditor.insertBlock.name, () => {
     render(
       <PortableTextEditor
         ref={editorRef}
+        indexedSelection={true}
         schemaType={schema}
         value={initialValue}
         keyGenerator={() => 'bc'}

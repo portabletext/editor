@@ -20,7 +20,7 @@ import {debugWithName} from '../../internal-utils/debug'
 import {
   isListItemActive,
   isStyleActive,
-  slateRangeToSelection,
+  slateRangeToKeyedSelection,
 } from '../../internal-utils/slate-utils'
 import {fromSlateValue, toSlateValue} from '../../internal-utils/values'
 import {
@@ -36,6 +36,7 @@ import type {
 } from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 import {getEditorSnapshot} from '../editor-selector'
+import {ExternalEditorSelection} from '../external-selection'
 import {slateRangeToIndexedSelection} from '../indexed-selection'
 import {getKeyedSelection, keyedSelectionToSlateRange} from '../keyed-selection'
 
@@ -191,7 +192,7 @@ export function createEditableAPI(
         })
 
         return editor.selection
-          ? (slateRangeToSelection({
+          ? (slateRangeToKeyedSelection({
               schema: editorActor.getSnapshot().context.schema,
               editor,
               range: editor.selection,
@@ -256,7 +257,7 @@ export function createEditableAPI(
       editor.onChange()
 
       return editor.selection
-        ? (slateRangeToSelection({
+        ? (slateRangeToKeyedSelection({
             schema: editorActor.getSnapshot().context.schema,
             editor,
             range: editor.selection,
@@ -281,7 +282,7 @@ export function createEditableAPI(
       })
 
       return editor.selection
-        ? (slateRangeToSelection({
+        ? (slateRangeToKeyedSelection({
             schema: editorActor.getSnapshot().context.schema,
             editor,
             range: editor.selection,
@@ -511,7 +512,14 @@ export function createEditableAPI(
       if (editor.selection) {
         const existing = SLATE_TO_PORTABLE_TEXT_RANGE.get(editor.selection)
         if (existing) {
-          return existing
+          if (editorActor.getSnapshot().context.indexedSelection) {
+            return existing
+          }
+          return getKeyedSelection(
+            editorActor.getSnapshot().context.schema,
+            editor.value,
+            existing,
+          )
         }
         ptRange = slateRangeToIndexedSelection({
           schema: editorActor.getSnapshot().context.schema,
@@ -520,7 +528,16 @@ export function createEditableAPI(
         })
         SLATE_TO_PORTABLE_TEXT_RANGE.set(editor.selection, ptRange)
       }
-      return ptRange
+
+      if (editorActor.getSnapshot().context.indexedSelection) {
+        return ptRange
+      }
+
+      return getKeyedSelection(
+        editorActor.getSnapshot().context.schema,
+        editor.value,
+        ptRange,
+      )
     },
     getValue: () => {
       return fromSlateValue(

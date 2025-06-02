@@ -1,13 +1,10 @@
 import type {PortableTextBlock} from '@sanity/types'
 import {Point, type Operation, type Range} from 'slate'
 import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {isTextBlock} from '../utils/util.is-text-block'
 import type {EditorSchema} from './editor-schema'
-import {
-  isBackward,
-  isIndexedSelection,
-  type IndexedEditorSelection,
-} from './indexed-selection'
+import {isBackward, type IndexedEditorSelection} from './indexed-selection'
 import {keyedPathToSlatePath, type KeyedPath} from './keyed-path'
 
 export type KeyedEditorSelection = {
@@ -21,12 +18,25 @@ export type KeyedEditorSelectionPoint = {
   offset: number
 }
 
+export function isKeyedSelection(
+  selection: EditorSelection,
+): selection is KeyedEditorSelection {
+  if (!selection) {
+    return false
+  }
+
+  const anchorBlockPath = selection.anchor.path.at(0)
+  const focusBlockPath = selection.focus.path.at(0)
+
+  return isKeyedSegment(anchorBlockPath) && isKeyedSegment(focusBlockPath)
+}
+
 export function getKeyedSelection(
   schema: EditorSchema,
   value: Array<PortableTextBlock>,
   selection: EditorSelection,
 ): KeyedEditorSelection {
-  if (!isIndexedSelection(selection)) {
+  if (isKeyedSelection(selection)) {
     return selection
   }
 

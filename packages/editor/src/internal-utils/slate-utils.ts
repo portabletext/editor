@@ -1,6 +1,7 @@
 import type {PortableTextBlock, PortableTextSpan} from '@sanity/types'
 import {Editor, Element, Node, Range, type Path, type Point} from 'slate'
 import type {EditorSchema} from '../editor/editor-schema'
+import {KeyedEditorSelection} from '../editor/keyed-selection'
 import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
 import type {KeyedBlockPath} from '../types/paths'
 import {fromSlateValue} from './values'
@@ -403,7 +404,7 @@ export function isStyleActive({
   return false
 }
 
-export function slateRangeToSelection({
+export function slateRangeToKeyedSelection({
   schema,
   editor,
   range,
@@ -411,7 +412,7 @@ export function slateRangeToSelection({
   schema: EditorSchema
   editor: PortableTextSlateEditor
   range: Range
-}): EditorSelection {
+}): KeyedEditorSelection {
   const [anchorBlock] = getPointBlock({
     editor,
     point: range.anchor,

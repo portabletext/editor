@@ -63,6 +63,7 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
 
     render(
       <PortableTextEditorTester
+        indexedSelection={true}
         keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}

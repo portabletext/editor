@@ -8,7 +8,7 @@ import {
   getFirstBlock,
   getLastBlock,
   getNodeBlock,
-  slateRangeToSelection,
+  slateRangeToKeyedSelection,
 } from './slate-utils'
 
 export type EventPosition = {
@@ -195,7 +195,7 @@ export function getEventSelection({
   const range = getSlateRangeFromEvent(slateEditor, event)
 
   const selection = range
-    ? slateRangeToSelection({
+    ? slateRangeToKeyedSelection({
         schema,
         editor: slateEditor,
         range,

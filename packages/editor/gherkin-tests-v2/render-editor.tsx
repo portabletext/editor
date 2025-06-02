@@ -45,6 +45,7 @@ export function RenderEditor(
   return (
     <EditorProvider
       initialConfig={{
+        indexedSelection: true,
         schemaDefinition: defineSchema({
           annotations: [{name: 'comment'}, {name: 'link'}],
           decorators: [{name: 'em'}, {name: 'strong'}],

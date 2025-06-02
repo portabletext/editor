@@ -25,6 +25,7 @@ export type EditorConfig = {
   maxBlocks?: number
   readOnly?: boolean
   initialValue?: Array<PortableTextBlock>
+  indexedSelection?: boolean
 } & (
   | {
       schemaDefinition: SchemaDefinition

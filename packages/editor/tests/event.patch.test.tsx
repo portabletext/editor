@@ -18,6 +18,7 @@ describe('event.patch', () => {
     render(
       <EditorProvider
         initialConfig={{
+          indexedSelection: true,
           keyGenerator,
           schemaDefinition: defineSchema({
             styles: [{name: 'normal'}, {name: 'h1'}],

@@ -1,9 +1,11 @@
 import type {PortableTextBlock} from '@sanity/types'
 import type {Converter} from '../converters/converter.types'
 import type {EventPosition} from '../internal-utils/event-position'
-import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
+import {slateRangeToKeyedSelection} from '../internal-utils/slate-utils'
+import type {PortableTextSlateEditor} from '../types/editor'
 import type {HasTag} from './editor-machine'
 import type {EditorSchema} from './editor-schema'
+import {ExternalEditorSelection} from './external-selection'
 import {getActiveAnnotations} from './get-active-annotations'
 import {getActiveDecorators} from './get-active-decorators'
 import {slateRangeToIndexedSelection} from './indexed-selection'
@@ -16,7 +18,7 @@ export type EditorContext = {
   keyGenerator: () => string
   readOnly: boolean
   schema: EditorSchema
-  selection: EditorSelection
+  selection: ExternalEditorSelection
   value: Array<PortableTextBlock>
 }
 
@@ -48,6 +50,7 @@ export function createEditorSnapshot({
   readOnly,
   schema,
   hasTag,
+  indexedSelection,
   internalDrag,
 }: {
   converters: Array<Converter>
@@ -56,6 +59,7 @@ export function createEditorSnapshot({
   readOnly: boolean
   schema: EditorSchema
   hasTag: HasTag
+  indexedSelection: boolean
   internalDrag:
     | {
         origin: Pick<EventPosition, 'selection'>
@@ -63,11 +67,13 @@ export function createEditorSnapshot({
     | undefined
 }) {
   const selection = editor.selection
-    ? slateRangeToIndexedSelection({
-        schema,
-        editor,
-        range: editor.selection,
-      })
+    ? indexedSelection
+      ? slateRangeToIndexedSelection({schema, editor, range: editor.selection})
+      : slateRangeToKeyedSelection({
+          schema,
+          editor,
+          range: editor.selection,
+        })
     : null
 
   const context = {

@@ -83,7 +83,7 @@ describe('event.split', () => {
     ])
   })
 
-  test('Scenario: Splitting text block with custom properties', async () => {
+  test.only('Scenario: Splitting text block with custom properties', async () => {
     const keyGenerator = createTestKeyGenerator()
     const editorRef = React.createRef<Editor>()
 

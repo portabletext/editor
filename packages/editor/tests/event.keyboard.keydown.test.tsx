@@ -23,6 +23,7 @@ describe('event.keyboard.keydown', () => {
     render(
       <EditorProvider
         initialConfig={{
+          indexedSelection: true,
           keyGenerator,
           schemaDefinition: defineSchema({}),
           initialValue: [

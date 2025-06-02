@@ -19,6 +19,7 @@ describe('event.insert.inline object', () => {
       <EditorProvider
         initialConfig={{
           keyGenerator: createTestKeyGenerator(),
+          indexedSelection: true,
           schemaDefinition: defineSchema({
             inlineObjects: [
               {
@@ -75,6 +76,7 @@ describe('event.insert.inline object', () => {
       <EditorProvider
         initialConfig={{
           keyGenerator: createTestKeyGenerator(),
+          indexedSelection: true,
           schemaDefinition: defineSchema({
             inlineObjects: [
               {

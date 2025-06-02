@@ -24,6 +24,7 @@ describe('EditorSnapshot', () => {
     render(
       <EditorProvider
         initialConfig={{
+          indexedSelection: true,
           keyGenerator: createTestKeyGenerator(),
           schemaDefinition: defineSchema({}),
         }}

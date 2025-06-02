@@ -147,6 +147,7 @@ export const editorMachine = setup({
       initialReadOnly: boolean
       maxBlocks: number | undefined
       selection: EditorSelection
+      indexedSelection: boolean
       initialValue: Array<PortableTextBlock> | undefined
       internalDrag?: {
         ghost?: HTMLElement
@@ -159,6 +160,7 @@ export const editorMachine = setup({
     input: {} as {
       converters?: Array<Converter>
       getLegacySchema: () => PortableTextMemberSchemaTypes
+      indexedSelection?: boolean
       keyGenerator: () => string
       maxBlocks?: number
       readOnly?: boolean
@@ -272,6 +274,7 @@ export const editorMachine = setup({
               converters: [...context.converters],
               editor: event.editor,
               keyGenerator: context.keyGenerator,
+              indexedSelection: context.indexedSelection,
               readOnly: self.getSnapshot().matches({'edit mode': 'read only'}),
               schema: context.schema,
               hasTag: (tag) => self.getSnapshot().hasTag(tag),
@@ -308,6 +311,7 @@ export const editorMachine = setup({
     pendingIncomingPatchesEvents: [],
     schema: input.schema,
     selection: null,
+    indexedSelection: input.indexedSelection ?? false,
     initialReadOnly: input.readOnly ?? false,
     maxBlocks: input.maxBlocks,
     initialValue: input.initialValue,

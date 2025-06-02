@@ -59,6 +59,11 @@ export type PortableTextEditorProps<
         editor?: undefined
 
         /**
+         * Whether to use indexed selection or keyed selection
+         */
+        indexedSelection?: boolean
+
+        /**
          * Function that gets called when the editor changes the value
          */
         onChange: (change: EditorChange) => void
@@ -159,6 +164,7 @@ export class PortableTextEditor extends Component<
             : Number.parseInt(props.maxBlocks.toString(), 10),
         readOnly: props.readOnly,
         schema: props.schemaType,
+        indexedSelection: props.indexedSelection,
       })
 
       this.subscriptions = subscriptions

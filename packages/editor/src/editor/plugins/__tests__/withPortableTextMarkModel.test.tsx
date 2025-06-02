@@ -50,6 +50,7 @@ describe('plugin:withPortableTextMarksModel', () => {
           schemaType={schemaType}
           value={initialValue}
           keyGenerator={createTestKeyGenerator()}
+          indexedSelection={true}
         />,
       )
 
@@ -183,6 +184,7 @@ describe('plugin:withPortableTextMarksModel', () => {
             ref={editorRef}
             schemaType={schemaType}
             value={initialValue}
+            indexedSelection={true}
           />,
         )
       })
@@ -290,6 +292,7 @@ describe('plugin:withPortableTextMarksModel', () => {
           schemaType={schemaType}
           value={initialValue}
           keyGenerator={createTestKeyGenerator()}
+          indexedSelection={true}
         />,
       )
 
@@ -422,14 +425,13 @@ describe('plugin:withPortableTextMarksModel', () => {
           const nextSelectionObject = PortableTextEditor.getSelection(
             editorRef.current,
           )
+
           expect(currentSelectionObject).toEqual(nextSelectionObject)
           expect(currentSelectionObject === nextSelectionObject).toBe(false)
-          expect(onChange).toHaveBeenCalledWith(
-            expect.objectContaining({
-              type: 'selection',
-              selection: nextSelectionObject,
-            }),
-          )
+          expect(onChange).toHaveBeenCalledWith({
+            type: 'selection',
+            selection: nextSelectionObject,
+          })
         }
       })
     })
@@ -467,6 +469,7 @@ describe('plugin:withPortableTextMarksModel', () => {
             schemaType={schemaType}
             value={initialValue}
             keyGenerator={createTestKeyGenerator()}
+            indexedSelection={true}
           />,
         )
       })
@@ -523,6 +526,7 @@ describe('plugin:withPortableTextMarksModel', () => {
             schemaType={schemaType}
             value={initialValue}
             keyGenerator={createTestKeyGenerator()}
+            indexedSelection={true}
           />,
         )
       })

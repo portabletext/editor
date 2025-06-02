@@ -45,6 +45,7 @@ describe('plugin:withPortableTextSelections', () => {
     const onChange = vi.fn()
     render(
       <PortableTextEditorTester
+        indexedSelection={true}
         keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}

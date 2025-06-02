@@ -17,6 +17,7 @@ import {
 } from './editor-schema'
 import {getEditorSnapshot} from './editor-selector'
 import {defaultKeyGenerator} from './key-generator'
+import {getKeyedSelection} from './keyed-selection'
 import {createLegacySchema} from './legacy-schema'
 import {mutationMachine, type MutationActor} from './mutation-machine'
 import {createEditableAPI} from './plugins/createWithEditableAPI'
@@ -195,6 +196,7 @@ function editorConfigToMachineInput(config: EditorConfig) {
     readOnly: config.readOnly,
     schema,
     initialValue: config.initialValue,
+    indexedSelection: config.indexedSelection ?? false,
   } as const
 }
 
@@ -321,11 +323,24 @@ function createActors(config: {
   config.subscriptions.push(() => {
     const subscription = config.editorActor.on('*', (event) => {
       switch (event.type) {
+        case 'selection':
+          if (config.editorActor.getSnapshot().context.indexedSelection) {
+            config.relayActor.send(event)
+          } else {
+            config.relayActor.send({
+              type: 'selection',
+              selection: getKeyedSelection(
+                config.editorActor.getSnapshot().context.schema,
+                config.slateEditor.value,
+                event.selection,
+              ),
+            })
+          }
+          break
         case 'editable':
         case 'mutation':
         case 'ready':
         case 'read only':
-        case 'selection':
           config.relayActor.send(event)
           break
         case 'internal.patch':

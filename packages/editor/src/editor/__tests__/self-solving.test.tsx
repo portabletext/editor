@@ -87,6 +87,7 @@ describe('Feature: Self-solving', () => {
     render(
       <PortableTextEditor
         ref={editorRef}
+        indexedSelection={true}
         schemaType={schema}
         value={initialValue}
         onChange={onChange}
