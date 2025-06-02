@@ -1,7 +1,7 @@
 import type {PortableTextBlock} from '@sanity/types'
 import type {EditorSchema} from '../editor/editor-schema'
 import {
-  getIndexedSelection,
+  getEditorSelection,
   type EditorSelection,
   type IndexedEditorSelection,
   type IndexedEditorSelectionPoint,
@@ -17,7 +17,12 @@ export function normalizeSelection(
     return null
   }
 
-  const indexedSelection = getIndexedSelection(schema, value, selection)
+  const indexedSelection = getEditorSelection({
+    type: 'indexed',
+    schema,
+    value,
+    selection,
+  })
 
   if (!indexedSelection) {
     return null

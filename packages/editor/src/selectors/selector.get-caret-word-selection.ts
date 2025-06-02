@@ -1,6 +1,6 @@
 import type {EditorSelection} from '../editor/editor-selection'
 import {
-  getIndexedSelection,
+  getEditorSelection,
   isIndexedSelectionBackward,
 } from '../editor/editor-selection'
 import type {EditorSelector} from '../editor/editor-selector'
@@ -25,11 +25,12 @@ import {getFocusTextBlock} from './selectors'
 export const getCaretWordSelection: EditorSelector<EditorSelection> = (
   snapshot,
 ) => {
-  const indexedSelection = getIndexedSelection(
-    snapshot.context.schema,
-    snapshot.context.value,
-    snapshot.context.selection,
-  )
+  const indexedSelection = getEditorSelection({
+    type: 'indexed',
+    schema: snapshot.context.schema,
+    value: snapshot.context.value,
+    selection: snapshot.context.selection,
+  })
 
   if (!indexedSelection) {
     return null

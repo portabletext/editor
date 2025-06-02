@@ -2,7 +2,7 @@ import type {PortableTextBlock, PortableTextSpan} from '@sanity/types'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorSelection} from '../editor/editor-selection'
 import {
-  getIndexedSelection,
+  getEditorSelection,
   getKeyedSelection,
   type KeyedEditorSelection,
   type KeyedEditorSelectionPoint,
@@ -34,11 +34,12 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = (
     value: snapshot.context.value,
   })
 
-  return getIndexedSelection(
-    snapshot.context.schema,
-    snapshot.context.value,
-    trimmedKeyedSelection,
-  )
+  return getEditorSelection({
+    type: 'indexed',
+    schema: snapshot.context.schema,
+    value: snapshot.context.value,
+    selection: trimmedKeyedSelection,
+  })
 }
 
 function trimKeyedSelection({

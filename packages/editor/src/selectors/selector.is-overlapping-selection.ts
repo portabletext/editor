@@ -1,5 +1,5 @@
 import {
-  getIndexedSelection,
+  getEditorSelection,
   selectionIncludesSelection,
 } from '../editor/editor-selection'
 import type {EditorSelection} from '../editor/editor-selection'
@@ -12,17 +12,19 @@ export function isOverlappingSelection(
   selection: EditorSelection,
 ): EditorSelector<boolean> {
   return (snapshot) => {
-    const indexedSelection = getIndexedSelection(
-      snapshot.context.schema,
-      snapshot.context.value,
-      snapshot.context.selection,
-    )
+    const indexedSelection = getEditorSelection({
+      type: 'indexed',
+      schema: snapshot.context.schema,
+      value: snapshot.context.value,
+      selection: snapshot.context.selection,
+    })
 
-    const incomingIndexedSelection = getIndexedSelection(
-      snapshot.context.schema,
-      snapshot.context.value,
+    const incomingIndexedSelection = getEditorSelection({
+      type: 'indexed',
+      schema: snapshot.context.schema,
+      value: snapshot.context.value,
       selection,
-    )
+    })
 
     if (!indexedSelection || !incomingIndexedSelection) {
       return false

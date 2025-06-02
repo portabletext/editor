@@ -2,7 +2,7 @@ import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import type {PortableTextBlock} from '@sanity/types'
 import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
 import {
-  getIndexedSelection,
+  getEditorSelection,
   type EditorSelection,
   type EditorSelectionPoint,
 } from '../editor/editor-selection'
@@ -108,9 +108,14 @@ export function getTextSelection(
     )
   }
 
-  return getIndexedSelection(compileSchemaDefinition(defineSchema({})), value, {
-    anchor,
-    focus,
+  return getEditorSelection({
+    type: 'indexed',
+    schema: compileSchemaDefinition(defineSchema({})),
+    value,
+    selection: {
+      anchor,
+      focus,
+    },
   })
 }
 

@@ -5,7 +5,7 @@ import type {
   EditorSelection,
   EditorSelectionPoint,
 } from '../editor/editor-selection'
-import {getIndexedSelection} from '../editor/editor-selection'
+import {getEditorSelection} from '../editor/editor-selection'
 
 export function getEndToEndSelection(
   blocks: Array<PortableTextBlock> | undefined,
@@ -58,12 +58,13 @@ export function getEndToEndSelection(
     throw new Error('No selection found')
   }
 
-  return getIndexedSelection(
-    compileSchemaDefinition(defineSchema({})),
-    blocks,
-    {
+  return getEditorSelection({
+    type: 'indexed',
+    schema: compileSchemaDefinition(defineSchema({})),
+    value: blocks,
+    selection: {
       anchor,
       focus,
     },
-  )
+  })
 }

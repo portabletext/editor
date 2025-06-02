@@ -1,5 +1,5 @@
 import {
-  getIndexedSelection,
+  getEditorSelection,
   isIndexedSelectionCollapsed,
 } from '../editor/editor-selection'
 import type {EditorSelector} from '../editor/editor-selector'
@@ -12,11 +12,12 @@ export const isSelectionCollapsed: EditorSelector<boolean> = (snapshot) => {
     return false
   }
 
-  const indexedSelection = getIndexedSelection(
-    snapshot.context.schema,
-    snapshot.context.value,
-    snapshot.context.selection,
-  )
+  const indexedSelection = getEditorSelection({
+    type: 'indexed',
+    schema: snapshot.context.schema,
+    value: snapshot.context.value,
+    selection: snapshot.context.selection,
+  })
 
   if (!indexedSelection) {
     return false

@@ -53,8 +53,7 @@ import {RenderElement} from './components/render-element'
 import {RenderLeaf} from './components/render-leaf'
 import {RenderText, type RenderTextProps} from './components/render-text'
 import {EditorActorContext} from './editor-actor-context'
-import {getIndexedSelection} from './editor-selection'
-import type {EditorSelection} from './editor-selection'
+import {getEditorSelection, type EditorSelection} from './editor-selection'
 import {slateRangeToEditorSelection} from './editor-selection-from-slate-range'
 import {editorSelectionToSlateRange} from './editor-selection-to-slate-range'
 import {getEditorSnapshot} from './editor-selector'
@@ -388,11 +387,12 @@ export const PortableTextEditable = forwardRef<
         event.stopPropagation()
         event.preventDefault()
 
-        const selection = getIndexedSelection(
-          editorActor.getSnapshot().context.schema,
-          slateEditor.value,
-          editorActor.getSnapshot().context.selection,
-        )
+        const selection = getEditorSelection({
+          type: editorActor.getSnapshot().context.selectionType,
+          schema: editorActor.getSnapshot().context.schema,
+          value: slateEditor.value,
+          selection: slateEditor.selection,
+        })
         const position = selection ? {selection} : undefined
 
         if (!position) {
@@ -452,11 +452,12 @@ export const PortableTextEditable = forwardRef<
             if (!result || !result.insert) {
               debug('No result from custom paste handler, pasting normally')
 
-              const selection = getIndexedSelection(
-                editorActor.getSnapshot().context.schema,
-                slateEditor.value,
-                editorActor.getSnapshot().context.selection,
-              )
+              const selection = getEditorSelection({
+                type: editorActor.getSnapshot().context.selectionType,
+                schema: editorActor.getSnapshot().context.schema,
+                value: slateEditor.value,
+                selection: slateEditor.selection,
+              })
               const position = selection ? {selection} : undefined
 
               if (!position) {
@@ -517,11 +518,12 @@ export const PortableTextEditable = forwardRef<
         event.preventDefault()
         event.stopPropagation()
 
-        const selection = getIndexedSelection(
-          editorActor.getSnapshot().context.schema,
-          slateEditor.value,
-          editorActor.getSnapshot().context.selection,
-        )
+        const selection = getEditorSelection({
+          type: editorActor.getSnapshot().context.selectionType,
+          schema: editorActor.getSnapshot().context.schema,
+          value: slateEditor.value,
+          selection: slateEditor.selection,
+        })
         const position = selection ? {selection} : undefined
 
         if (!position) {

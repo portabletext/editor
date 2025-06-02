@@ -1,5 +1,5 @@
 import {
-  getIndexedSelection,
+  getEditorSelection,
   isIndexedSelectionBackward,
   type EditorSelectionPoint,
 } from '../editor/editor-selection'
@@ -15,11 +15,12 @@ export const getSelectionEndPoint: EditorSelector<
     return undefined
   }
 
-  const indexedSelection = getIndexedSelection(
-    snapshot.context.schema,
-    snapshot.context.value,
-    snapshot.context.selection,
-  )
+  const indexedSelection = getEditorSelection({
+    type: 'indexed',
+    schema: snapshot.context.schema,
+    value: snapshot.context.value,
+    selection: snapshot.context.selection,
+  })
 
   if (!indexedSelection) {
     return undefined

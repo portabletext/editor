@@ -1,5 +1,5 @@
 import {Editor, Range, Text, Transforms} from 'slate'
-import {getIndexedSelection} from '../editor/editor-selection'
+import {getEditorSelection} from '../editor/editor-selection'
 import {slateRangeToEditorSelection} from '../editor/editor-selection-from-slate-range'
 import {editorSelectionToSlateRange} from '../editor/editor-selection-to-slate-range'
 import {fromSlateValue} from '../internal-utils/values'
@@ -41,9 +41,14 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
     : undefined
   const manualSelection =
     manualAnchor && manualFocus
-      ? getIndexedSelection(context.schema, value, {
-          anchor: manualAnchor,
-          focus: manualFocus,
+      ? getEditorSelection({
+          type: 'indexed',
+          schema: context.schema,
+          value,
+          selection: {
+            anchor: manualAnchor,
+            focus: manualFocus,
+          },
         })
       : undefined
 
@@ -129,7 +134,12 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
 
     const newRange = editorSelectionToSlateRange(
       context.schema,
-      getIndexedSelection(context.schema, newValue, trimmedSelection),
+      getEditorSelection({
+        type: 'indexed',
+        schema: context.schema,
+        value: newValue,
+        selection: trimmedSelection,
+      }),
       editor,
     )
 

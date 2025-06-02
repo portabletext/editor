@@ -19,7 +19,7 @@ import {
 import {isEqualToEmptyEditor} from '../internal-utils/values'
 import type {PortableTextSlateEditor, RangeDecoration} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
-import {getIndexedSelection} from './editor-selection'
+import {getEditorSelection} from './editor-selection'
 import {slateRangeToEditorSelection} from './editor-selection-from-slate-range'
 import {editorSelectionToSlateRange} from './editor-selection-to-slate-range'
 import {moveRangeByOperation} from './move-range'
@@ -100,11 +100,12 @@ export const rangeDecorationsMachine = setup({
         for (const rangeDecoration of context.pendingRangeDecorations) {
           const slateRange = editorSelectionToSlateRange(
             context.schema,
-            getIndexedSelection(
-              context.schema,
-              context.slateEditor.value,
-              rangeDecoration.selection,
-            ),
+            getEditorSelection({
+              type: 'indexed',
+              schema: context.schema,
+              value: context.slateEditor.value,
+              selection: rangeDecoration.selection,
+            }),
             context.slateEditor,
           )
 

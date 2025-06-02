@@ -1,13 +1,9 @@
 import {describe, expect, test} from 'vitest'
-import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
-import {
-  getIndexedSelection,
-  type EditorSelection,
-} from '../editor/editor-selection'
+import type {EditorSelection} from '../editor/editor-selection'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {isOverlappingSelection} from './selector.is-overlapping-selection'
 
-function snapshot(editorSelection: EditorSelection) {
+function snapshot(selection: EditorSelection) {
   const value = [
     {_type: 'image', _key: 'k0'},
     {
@@ -21,11 +17,6 @@ function snapshot(editorSelection: EditorSelection) {
     },
     {_type: 'image', _key: 'k2'},
   ]
-  const selection = getIndexedSelection(
-    compileSchemaDefinition(defineSchema({})),
-    [],
-    editorSelection,
-  )
 
   return createTestSnapshot({
     context: {

@@ -6,7 +6,7 @@ import type {
   PortableTextTextBlock,
 } from '@sanity/types'
 import {
-  getIndexedSelection,
+  getEditorSelection,
   getIndexedSelectionPoint,
 } from '../editor/editor-selection'
 import type {EditorSelector} from '../editor/editor-selector'
@@ -21,11 +21,12 @@ import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
 export const getFocusBlock: EditorSelector<
   {node: PortableTextBlock; path: KeyedBlockPath; index: number} | undefined
 > = (snapshot) => {
-  const indexedSelection = getIndexedSelection(
-    snapshot.context.schema,
-    snapshot.context.value,
-    snapshot.context.selection,
-  )
+  const indexedSelection = getEditorSelection({
+    type: 'indexed',
+    schema: snapshot.context.schema,
+    value: snapshot.context.value,
+    selection: snapshot.context.selection,
+  })
 
   if (!indexedSelection) {
     return undefined
@@ -91,11 +92,12 @@ export const getFocusChild: EditorSelector<
     }
   | undefined
 > = (snapshot) => {
-  const indexedSelection = getIndexedSelection(
-    snapshot.context.schema,
-    snapshot.context.value,
-    snapshot.context.selection,
-  )
+  const indexedSelection = getEditorSelection({
+    type: 'indexed',
+    schema: snapshot.context.schema,
+    value: snapshot.context.value,
+    selection: snapshot.context.selection,
+  })
 
   if (!indexedSelection) {
     return undefined
@@ -183,11 +185,12 @@ export const getLastBlock: EditorSelector<
 export const getSelectedBlocks: EditorSelector<
   Array<{node: PortableTextBlock; path: KeyedBlockPath}>
 > = (snapshot) => {
-  const indexedSelection = getIndexedSelection(
-    snapshot.context.schema,
-    snapshot.context.value,
-    snapshot.context.selection,
-  )
+  const indexedSelection = getEditorSelection({
+    type: 'indexed',
+    schema: snapshot.context.schema,
+    value: snapshot.context.value,
+    selection: snapshot.context.selection,
+  })
 
   if (!indexedSelection) {
     return []

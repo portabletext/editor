@@ -18,6 +18,29 @@ export type EditorSelectionPoint =
   | IndexedEditorSelectionPoint
   | KeyedEditorSelectionPoint
 
+export function getEditorSelection<
+  TType extends 'indexed' | 'keyed',
+  TEditorSelection extends TType extends 'indexed'
+    ? IndexedEditorSelection | null
+    : KeyedEditorSelection,
+>({
+  type,
+  schema,
+  value,
+  selection,
+}: {
+  type: TType
+  schema: EditorSchema
+  value: Array<PortableTextBlock>
+  selection: EditorSelection
+}): TEditorSelection {
+  if (type === 'indexed') {
+    return getIndexedSelection(schema, value, selection) as TEditorSelection
+  }
+
+  return getKeyedSelection(schema, value, selection) as TEditorSelection
+}
+
 /**********
  * Indexed Selection
  **********/
@@ -39,7 +62,7 @@ export type IndexedEditorSelectionPoint = {
   offset: number
 }
 
-export function getIndexedSelection(
+function getIndexedSelection(
   schema: EditorSchema,
   value: Array<PortableTextBlock>,
   selection: EditorSelection,
