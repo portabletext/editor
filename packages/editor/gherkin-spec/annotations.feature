@@ -157,7 +157,7 @@ Feature: Annotations
   Scenario: Inserting text after inline object, before annotation
     Given the editor is focused
     And a "stock-ticker"
-    When "ArrowRight" is pressed
+    When "{ArrowRight}" is pressed
     And "bar" is typed
     And "bar" is selected
     And "link" "l1" is toggled

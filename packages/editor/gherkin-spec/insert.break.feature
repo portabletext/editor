@@ -6,7 +6,7 @@ Feature: Insert Break
   Scenario Outline: Breaking text block
     Given the text "foo"
     When the caret is put <position>
-    And "Enter" is pressed
+    And "{Enter}" is pressed
     And "bar" is typed
     Then the text is <text>
     And the caret is <new position>
@@ -39,5 +39,5 @@ Feature: Insert Break
       }
       ```
     When everything is selected
-    And "Enter" is pressed
+    And "{Enter}" is pressed
     Then the text is ""

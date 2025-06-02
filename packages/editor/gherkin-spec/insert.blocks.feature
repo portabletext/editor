@@ -110,7 +110,7 @@ Feature: Insert Blocks
 
   Scenario: Pasting text blocks between two text blocks
     Given the text "foo"
-    When "Enter" is pressed
+    When "{Enter}" is pressed
     And "bar" is typed
     And the caret is put after "foo"
     And blocks are inserted "auto"

@@ -5,27 +5,27 @@ Feature: Markdown Behaviors
 
   Scenario: Automatic blockquote
     Given the text ">"
-    When "Space" is pressed
+    When "{Space}" is pressed
     Then block "0" has style "blockquote"
     And the text is ""
 
   Scenario: Automatic blockquote not toggled by space in the beginning
     Given the text ">"
     When the caret is put before ">"
-    When "Space" is pressed
+    When "{Space}" is pressed
     Then block "0" has style "normal"
     And the text is " >"
 
   Scenario: Automatic blockquote in non-empty block
     Given the text ">foo"
     When the caret is put before "f"
-    And "Space" is pressed
+    And "{Space}" is pressed
     Then block "0" has style "blockquote"
     And the text is "foo"
 
   Scenario Outline: Automatic headings
     Given the text <text>
-    When "Space" is pressed
+    When "{Space}" is pressed
     Then block "0" has style <new style>
     And the text is <new text>
 
@@ -42,7 +42,7 @@ Feature: Markdown Behaviors
   Scenario Outline: Automatic headings not toggled by space in the beginning
     Given the text <text>
     When the caret is put <position>
-    When "Space" is pressed
+    When "{Space}" is pressed
     Then block "0" has style "normal"
     And the text is <new text>
 
@@ -55,8 +55,8 @@ Feature: Markdown Behaviors
   Scenario Outline: Automatic headings not toggled by space mid-heading
     Given the text <text>
     When the caret is put <position>
-    When "ArrowRight" is pressed
-    When "Space" is pressed
+    When "{ArrowRight}" is pressed
+    When "{Space}" is pressed
     Then block "0" has style "normal"
     And the text is <new text>
 
@@ -68,7 +68,7 @@ Feature: Markdown Behaviors
   Scenario Outline: Automatic headings in non-empty block
     Given the text <text>
     When the caret is put <position>
-    And "Space" is pressed
+    And "{Space}" is pressed
     Then block "0" has style <new style>
     And the text is <new text>
 
@@ -86,7 +86,7 @@ Feature: Markdown Behaviors
   Scenario Outline: Clear style on Backspace
     Given the text "foo"
     When <style> is toggled
-    And "Backspace" is pressed 4 times
+    And "{Backspace}" is pressed 4 times
     Then block "0" has style "normal"
 
     Examples:
@@ -101,7 +101,7 @@ Feature: Markdown Behaviors
   Scenario Outline: Clear style on Backspace in empty block
     Given the text "foo"
     When <style> is toggled
-    And "Backspace" is pressed 4 times
+    And "{Backspace}" is pressed 4 times
     # We have to type something to produce a value
     And "bar" is typed
     Then block "0" has style "normal"
