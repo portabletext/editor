@@ -3,7 +3,7 @@ import {DOMEditor, isDOMNode} from 'slate-dom'
 import type {EditorActor} from '../editor/editor-machine'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorSelection} from '../editor/editor-selection'
-import {slateRangeToKeyedSelection} from '../editor/editor-selection-from-slate-range'
+import {slateRangeToEditorSelection} from '../editor/editor-selection-from-slate-range'
 import type {PortableTextSlateEditor} from '../types/editor'
 import * as utils from '../utils'
 import {getFirstBlock, getLastBlock, getNodeBlock} from './slate-utils'
@@ -192,7 +192,8 @@ export function getEventSelection({
   const range = getSlateRangeFromEvent(slateEditor, event)
 
   const selection = range
-    ? slateRangeToKeyedSelection({
+    ? slateRangeToEditorSelection({
+        type: 'keyed',
         schema,
         editor: slateEditor,
         range,

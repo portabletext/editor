@@ -31,10 +31,7 @@ import type {
 } from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 import {getKeyedSelection, type EditorSelection} from '../editor-selection'
-import {
-  slateRangeToEditorSelection,
-  slateRangeToKeyedSelection,
-} from '../editor-selection-from-slate-range'
+import {slateRangeToEditorSelection} from '../editor-selection-from-slate-range'
 import {editorSelectionToSlateRange} from '../editor-selection-to-slate-range'
 import {getEditorSnapshot} from '../editor-selector'
 
@@ -189,13 +186,14 @@ export function createEditableAPI(
           editor,
         })
 
-        return editor.selection
-          ? (slateRangeToKeyedSelection({
-              schema: editorActor.getSnapshot().context.schema,
-              editor,
-              range: editor.selection,
-            })?.focus.path ?? [])
-          : []
+        return (
+          slateRangeToEditorSelection({
+            type: editorActor.getSnapshot().context.selectionType,
+            schema: editorActor.getSnapshot().context.schema,
+            editor,
+            range: editor.selection,
+          })?.focus.path ?? []
+        )
       }
 
       if (!editor.selection) {
@@ -254,13 +252,14 @@ export function createEditableAPI(
       })
       editor.onChange()
 
-      return editor.selection
-        ? (slateRangeToKeyedSelection({
-            schema: editorActor.getSnapshot().context.schema,
-            editor,
-            range: editor.selection,
-          })?.focus.path ?? [])
-        : []
+      return (
+        slateRangeToEditorSelection({
+          type: editorActor.getSnapshot().context.selectionType,
+          schema: editorActor.getSnapshot().context.schema,
+          editor,
+          range: editor.selection,
+        })?.focus.path ?? []
+      )
     },
     insertBlock: <TSchemaType extends {name: string}>(
       type: TSchemaType,
@@ -279,13 +278,14 @@ export function createEditableAPI(
         editor,
       })
 
-      return editor.selection
-        ? (slateRangeToKeyedSelection({
-            schema: editorActor.getSnapshot().context.schema,
-            editor,
-            range: editor.selection,
-          })?.focus.path ?? [])
-        : []
+      return (
+        slateRangeToEditorSelection({
+          type: editorActor.getSnapshot().context.selectionType,
+          schema: editorActor.getSnapshot().context.schema,
+          editor,
+          range: editor.selection,
+        })?.focus.path ?? []
+      )
     },
     hasBlockStyle: (style: string): boolean => {
       try {

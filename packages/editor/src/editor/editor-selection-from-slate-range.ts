@@ -112,7 +112,7 @@ function slateRangeToIndexedSelection({
   return selection
 }
 
-export function slateRangeToKeyedSelection({
+function slateRangeToKeyedSelection({
   schema,
   editor,
   range,
