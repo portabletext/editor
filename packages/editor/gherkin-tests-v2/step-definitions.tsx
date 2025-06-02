@@ -11,6 +11,7 @@ import {
 import {getSelectionBlockKeys} from '../src/internal-utils/selection-block-keys'
 import {getSelectionText} from '../src/internal-utils/selection-text'
 import {getTersePt} from '../src/internal-utils/terse-pt'
+import {getTextBlockKey} from '../src/internal-utils/text-block-key'
 import {getTextMarks} from '../src/internal-utils/text-marks'
 import {
   getSelectionAfterText,
@@ -60,6 +61,24 @@ export const stepDefinitions = [
   /**
    * Block steps
    */
+  Given(
+    'blocks {placement}',
+    (context: Context, placement: Parameter['placement'], blocks: string) => {
+      context.editor.ref.current.send({
+        type: 'insert.blocks',
+        blocks: parseBlocks({
+          context: {
+            schema: context.editor.ref.current.getSnapshot().context.schema,
+            keyGenerator:
+              context.editor.ref.current.getSnapshot().context.keyGenerator,
+          },
+          blocks: JSON.parse(blocks),
+          options: {refreshKeys: false, validateFields: true},
+        }),
+        placement,
+      })
+    },
+  ),
   Given(
     'a block {placement}',
     (context: Context, placement: Parameter['placement'], block: string) => {
@@ -123,9 +142,42 @@ export const stepDefinitions = [
   /**
    * Text steps
    */
+  Given(
+    'the text {string} in block {key}',
+    (context: Context, text: string, key: string) => {
+      context.editor.ref.current.send({
+        type: 'insert.block',
+        block: {
+          _key: key,
+          _type: 'block',
+          children: [{_type: 'span', text, marks: []}],
+        },
+        placement: 'auto',
+        select: 'end',
+      })
+    },
+  ),
   When('{string} is typed', async (context: Context, text: string) => {
     await userEvent.type(context.editor.locator, text)
   }),
+  Then(
+    '{text} is in block {key}',
+    (context: Context, text: Array<string>, key: string) => {
+      const value = context.editor.value()
+
+      const string = text.at(0)
+
+      if (string === undefined) {
+        assert.fail('Expected at least one text string')
+      }
+
+      if (text.length > 1) {
+        assert.fail('Expected at most one text string')
+      }
+
+      expect(getTextBlockKey(value, string)).toBe(key)
+    },
+  ),
 
   /**
    * Button steps
