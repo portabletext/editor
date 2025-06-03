@@ -23,7 +23,7 @@
     "@portabletext/plugin-markdown-shortcuts": "^1.0.8",
     "@portabletext/plugin-one-line": "^1.0.11",
     "@sanity/color": "^3.0.6",
-    "@xstate/react": "^5.0.4",
+    "@xstate/react": "^5.0.5",
     "@xstate/store": "^3.6.2",
     "lucide-react": "^0.487.0",
     "prettier": "^3.5.3",
@@ -34,7 +34,7 @@
     "remeda": "^2.2.2",
     "shiki": "^3.0.0",
     "uuid": "^11.0.0",
-    "xstate": "^5.19.3",
+    "xstate": "^5.19.4",
     "zod": "^3.23.8"
   },
   "devDependencies": {
