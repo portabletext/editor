@@ -358,6 +358,10 @@ export function insertBlock({
             const [focusChild] = getFocusChild({editor})
 
             if (focusChild && editor.isTextSpan(focusChild)) {
+              Transforms.splitNodes(editor, {
+                at: currentSelection,
+              })
+
               Transforms.insertFragment(editor, [block], {
                 at: currentSelection,
               })
