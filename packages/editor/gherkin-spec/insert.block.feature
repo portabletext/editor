@@ -324,20 +324,20 @@ Feature: Insert Block
         "_type": "image"
       }
       ```
+    And "baz" is typed
     Then the text is <text>
-    And the caret is <position>
 
     Examples:
-      | position     | placement | text                  |
-      | before "foo" | "before"  | "[image]\|foo\|bar"   |
-      | after "f"    | "before"  | "[image]\|foo\|bar"   |
-      | after "foo"  | "before"  | "[image]\|foo\|bar"   |
-      | before "foo" | "after"   | "foo\|[image]\|bar"   |
-      | after "f"    | "after"   | "foo\|[image]\|bar"   |
-      | after "foo"  | "after"   | "foo\|[image]\|bar"   |
-      | before "foo" | "auto"    | "[image]\|foo\|bar"   |
-      | after "f"    | "auto"    | "f\|[image]\|oo\|bar" |
-      | after "foo"  | "auto"    | "foo\|[image]\|bar"   |
+      | position     | placement | text                     |
+      | before "foo" | "before"  | "[image]\|bazfoo\|bar"   |
+      | after "f"    | "before"  | "[image]\|fbazoo\|bar"   |
+      | after "foo"  | "before"  | "[image]\|foobaz\|bar"   |
+      | before "foo" | "after"   | "bazfoo\|[image]\|bar"   |
+      | after "f"    | "after"   | "fbazoo\|[image]\|bar"   |
+      | after "foo"  | "after"   | "foobaz\|[image]\|bar"   |
+      | before "foo" | "auto"    | "[image]\|bazfoo\|bar"   |
+      | after "f"    | "auto"    | "fbaz\|[image]\|oo\|bar" |
+      | after "foo"  | "auto"    | "foobaz\|[image]\|bar"   |
 
   Scenario Outline: Inserting text block on block object
     Given a block "auto"
