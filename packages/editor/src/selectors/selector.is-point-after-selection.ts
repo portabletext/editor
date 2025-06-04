@@ -1,8 +1,11 @@
 import type {EditorSelector} from '../editor/editor-selector'
 import {isTextBlock} from '../internal-utils/parse-blocks'
+import {
+  getBlockKeyFromSelectionPoint,
+  getChildKeyFromSelectionPoint,
+} from '../selection/selection-point'
 import type {EditorSelectionPoint} from '../types/editor'
-import {isKeyedSegment} from '../utils/util.is-keyed-segment'
-import {reverseSelection} from '../utils/util.reverse-selection'
+import {getSelectionEndPoint} from '../utils'
 
 /**
  * @public
@@ -15,23 +18,12 @@ export function isPointAfterSelection(
       return false
     }
 
-    const selection = snapshot.context.selection.backward
-      ? reverseSelection(snapshot.context.selection)
-      : snapshot.context.selection
+    const endPoint = getSelectionEndPoint(snapshot.context.selection)
+    const endBlockKey = getBlockKeyFromSelectionPoint(endPoint)
+    const endChildKey = getChildKeyFromSelectionPoint(endPoint)
 
-    const pointBlockKey = isKeyedSegment(point.path[0])
-      ? point.path[0]._key
-      : undefined
-    const pointChildKey = isKeyedSegment(point.path[2])
-      ? point.path[2]._key
-      : undefined
-
-    const endBlockKey = isKeyedSegment(selection.focus.path[0])
-      ? selection.focus.path[0]._key
-      : undefined
-    const endChildKey = isKeyedSegment(selection.focus.path[2])
-      ? selection.focus.path[2]._key
-      : undefined
+    const pointBlockKey = getBlockKeyFromSelectionPoint(point)
+    const pointChildKey = getChildKeyFromSelectionPoint(point)
 
     if (!pointBlockKey || !endBlockKey) {
       return false
@@ -65,7 +57,7 @@ export function isPointAfterSelection(
 
             // Both the point and the selection end in this child
 
-            after = point.offset > selection.focus.offset
+            after = point.offset > endPoint.offset
             break
           }
 

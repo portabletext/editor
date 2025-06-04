@@ -1,8 +1,11 @@
 import type {EditorSelector} from '../editor/editor-selector'
 import {isTextBlock} from '../internal-utils/parse-blocks'
+import {
+  getBlockKeyFromSelectionPoint,
+  getChildKeyFromSelectionPoint,
+} from '../selection/selection-point'
 import type {EditorSelectionPoint} from '../types/editor'
-import {isKeyedSegment} from '../utils/util.is-keyed-segment'
-import {reverseSelection} from '../utils/util.reverse-selection'
+import {getSelectionStartPoint} from '../utils'
 
 /**
  * @public
@@ -15,23 +18,12 @@ export function isPointBeforeSelection(
       return false
     }
 
-    const selection = snapshot.context.selection.backward
-      ? reverseSelection(snapshot.context.selection)
-      : snapshot.context.selection
+    const startPoint = getSelectionStartPoint(snapshot.context.selection)
+    const startBlockKey = getBlockKeyFromSelectionPoint(startPoint)
+    const startChildKey = getChildKeyFromSelectionPoint(startPoint)
 
-    const pointBlockKey = isKeyedSegment(point.path[0])
-      ? point.path[0]._key
-      : undefined
-    const pointChildKey = isKeyedSegment(point.path[2])
-      ? point.path[2]._key
-      : undefined
-
-    const startBlockKey = isKeyedSegment(selection.anchor.path[0])
-      ? selection.anchor.path[0]._key
-      : undefined
-    const startChildKey = isKeyedSegment(selection.anchor.path[2])
-      ? selection.anchor.path[2]._key
-      : undefined
+    const pointBlockKey = getBlockKeyFromSelectionPoint(point)
+    const pointChildKey = getChildKeyFromSelectionPoint(point)
 
     if (!pointBlockKey || !startBlockKey) {
       return false
@@ -65,7 +57,7 @@ export function isPointBeforeSelection(
 
             // Both the point and the selection start in this child
 
-            before = point.offset < selection.anchor.offset
+            before = point.offset < startPoint.offset
             break
           }
 

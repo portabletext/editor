@@ -1,7 +1,8 @@
 import type {KeyedSegment, PortableTextTextBlock} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import {isTextBlock} from '../internal-utils/parse-blocks'
-import {isKeyedSegment} from '../utils'
+import {getBlockKeyFromSelectionPoint} from '../selection/selection-point'
+import {getSelectionEndPoint, getSelectionStartPoint} from '../utils'
 
 /**
  * @public
@@ -17,38 +18,29 @@ export const getSelectedTextBlocks: EditorSelector<
     node: PortableTextTextBlock
     path: [KeyedSegment]
   }> = []
-  const startKey = snapshot.context.selection.backward
-    ? isKeyedSegment(snapshot.context.selection.focus.path[0])
-      ? snapshot.context.selection.focus.path[0]._key
-      : undefined
-    : isKeyedSegment(snapshot.context.selection.anchor.path[0])
-      ? snapshot.context.selection.anchor.path[0]._key
-      : undefined
-  const endKey = snapshot.context.selection.backward
-    ? isKeyedSegment(snapshot.context.selection.anchor.path[0])
-      ? snapshot.context.selection.anchor.path[0]._key
-      : undefined
-    : isKeyedSegment(snapshot.context.selection.focus.path[0])
-      ? snapshot.context.selection.focus.path[0]._key
-      : undefined
 
-  if (!startKey || !endKey) {
+  const startPoint = getSelectionStartPoint(snapshot.context.selection)
+  const endPoint = getSelectionEndPoint(snapshot.context.selection)
+  const startBlockKey = getBlockKeyFromSelectionPoint(startPoint)
+  const endBlockKey = getBlockKeyFromSelectionPoint(endPoint)
+
+  if (!startBlockKey || !endBlockKey) {
     return selectedTextBlocks
   }
 
   for (const block of snapshot.context.value) {
-    if (block._key === startKey) {
+    if (block._key === startBlockKey) {
       if (isTextBlock(snapshot.context, block)) {
         selectedTextBlocks.push({node: block, path: [{_key: block._key}]})
       }
 
-      if (startKey === endKey) {
+      if (startBlockKey === endBlockKey) {
         break
       }
       continue
     }
 
-    if (block._key === endKey) {
+    if (block._key === endBlockKey) {
       if (isTextBlock(snapshot.context, block)) {
         selectedTextBlocks.push({node: block, path: [{_key: block._key}]})
       }

@@ -1,10 +1,16 @@
 import type {PortableTextSpan} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
+import {
+  getBlockKeyFromSelectionPoint,
+  getChildKeyFromSelectionPoint,
+} from '../selection/selection-point'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
-import {isEmptyTextBlock, isKeyedSegment} from '../utils'
-import {getSelectionEndPoint} from './selector.get-selection-end-point'
-import {getSelectionStartPoint} from './selector.get-selection-start-point'
+import {
+  getSelectionEndPoint,
+  getSelectionStartPoint,
+  isEmptyTextBlock,
+} from '../utils'
 import {isSelectionCollapsed} from './selector.is-selection-collapsed'
 import {getFocusTextBlock} from './selectors'
 
@@ -18,25 +24,13 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = (
     return snapshot.context.selection
   }
 
-  const startPoint = getSelectionStartPoint(snapshot)
-  const endPoint = getSelectionEndPoint(snapshot)
+  const startPoint = getSelectionStartPoint(snapshot.context.selection)
+  const endPoint = getSelectionEndPoint(snapshot.context.selection)
 
-  if (!startPoint || !endPoint) {
-    return snapshot.context.selection
-  }
-
-  const startBlockKey = isKeyedSegment(startPoint.path[0])
-    ? startPoint.path[0]._key
-    : null
-  const startChildKey = isKeyedSegment(startPoint.path[2])
-    ? startPoint.path[2]._key
-    : null
-  const endBlockKey = isKeyedSegment(endPoint.path[0])
-    ? endPoint.path[0]._key
-    : null
-  const endChildKey = isKeyedSegment(endPoint.path[2])
-    ? endPoint.path[2]._key
-    : null
+  const startBlockKey = getBlockKeyFromSelectionPoint(startPoint)
+  const startChildKey = getChildKeyFromSelectionPoint(startPoint)
+  const endBlockKey = getBlockKeyFromSelectionPoint(endPoint)
+  const endChildKey = getChildKeyFromSelectionPoint(endPoint)
 
   if (!startBlockKey || !endBlockKey) {
     return snapshot.context.selection

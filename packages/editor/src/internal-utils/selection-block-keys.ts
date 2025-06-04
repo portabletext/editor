@@ -1,20 +1,20 @@
+import {getBlockKeyFromSelectionPoint} from '../selection/selection-point'
 import type {EditorSelection} from '../types/editor'
-import {isKeyedSegment} from '../utils'
 
 export function getSelectionBlockKeys(selection: EditorSelection) {
   if (!selection) {
     return undefined
   }
 
-  if (
-    !isKeyedSegment(selection.anchor.path[0]) ||
-    !isKeyedSegment(selection.focus.path[0])
-  ) {
+  const anchorBlockKey = getBlockKeyFromSelectionPoint(selection.anchor)
+  const focusBlockKey = getBlockKeyFromSelectionPoint(selection.focus)
+
+  if (anchorBlockKey === undefined || focusBlockKey === undefined) {
     return undefined
   }
 
   return {
-    anchor: selection.anchor.path[0]._key,
-    focus: selection.focus.path[0]._key,
+    anchor: anchorBlockKey,
+    focus: focusBlockKey,
   }
 }

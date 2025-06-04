@@ -1,8 +1,12 @@
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import type {PortableTextBlock} from '@sanity/types'
+import {
+  getBlockKeyFromSelectionPoint,
+  getChildKeyFromSelectionPoint,
+} from '../selection/selection-point'
 import type {EditorSelection} from '../types/editor'
-import {isKeyedSegment} from '../utils'
-import {reverseSelection} from '../utils/util.reverse-selection'
+import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
+import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
 
 export function getSelectionText(
   value: Array<PortableTextBlock> | undefined,
@@ -12,22 +16,22 @@ export function getSelectionText(
     return undefined
   }
 
-  const forwardSelection = selection.backward
-    ? reverseSelection(selection)
-    : selection
+  const startPoint = getSelectionStartPoint(selection)
+  const endPoint = getSelectionEndPoint(selection)
 
-  if (!forwardSelection) {
+  if (startPoint === undefined || endPoint === undefined) {
     return undefined
   }
+
+  const startBlockKey = getBlockKeyFromSelectionPoint(startPoint)
+  const startChildKey = getChildKeyFromSelectionPoint(startPoint)
+  const endBlockKey = getBlockKeyFromSelectionPoint(endPoint)
+  const endChildKey = getChildKeyFromSelectionPoint(endPoint)
 
   const text: Array<string> = []
 
   for (const block of value) {
-    if (
-      text.length === 0 &&
-      isKeyedSegment(forwardSelection.anchor.path[0]) &&
-      block._key !== forwardSelection.anchor.path[0]._key
-    ) {
+    if (text.length === 0 && startBlockKey !== block._key) {
       continue
     }
 
@@ -38,34 +42,18 @@ export function getSelectionText(
     if (isPortableTextBlock(block)) {
       for (const child of block.children) {
         if (isPortableTextSpan(child)) {
-          if (
-            isKeyedSegment(forwardSelection.anchor.path[2]) &&
-            child._key === forwardSelection.anchor.path[2]._key &&
-            isKeyedSegment(forwardSelection.focus.path[2]) &&
-            child._key === forwardSelection.focus.path[2]._key
-          ) {
-            text.push(
-              child.text.slice(
-                forwardSelection.anchor.offset,
-                forwardSelection.focus.offset,
-              ),
-            )
+          if (startChildKey === child._key && endChildKey === child._key) {
+            text.push(child.text.slice(startPoint.offset, endPoint.offset))
             break
           }
 
-          if (
-            isKeyedSegment(forwardSelection.anchor.path[2]) &&
-            child._key === forwardSelection.anchor.path[2]._key
-          ) {
-            text.push(child.text.slice(forwardSelection.anchor.offset))
+          if (startChildKey === child._key) {
+            text.push(child.text.slice(startPoint.offset))
             continue
           }
 
-          if (
-            isKeyedSegment(forwardSelection.focus.path[2]) &&
-            child._key === forwardSelection.focus.path[2]._key
-          ) {
-            text.push(child.text.slice(0, forwardSelection.focus.offset))
+          if (endChildKey === child._key) {
+            text.push(child.text.slice(0, endPoint.offset))
             break
           }
 
@@ -78,10 +66,7 @@ export function getSelectionText(
       text.push(`[${block._type}]`)
     }
 
-    if (
-      isKeyedSegment(forwardSelection.focus.path[0]) &&
-      block._key === forwardSelection.focus.path[0]._key
-    ) {
+    if (endBlockKey === block._key) {
       break
     }
   }

@@ -1,24 +1,29 @@
 import {Transforms} from 'slate'
 import {toSlateRange} from '../internal-utils/ranges'
 import {getBlockPath} from '../internal-utils/slate-utils'
-import {isKeyedSegment} from '../utils'
+import {getBlockKeyFromSelectionPoint} from '../selection/selection-point'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const deleteOperationImplementation: BehaviorOperationImplementation<
   'delete'
 > = ({operation}) => {
-  const anchorBlockPath = isKeyedSegment(operation.at.anchor.path[0])
-    ? getBlockPath({
-        editor: operation.editor,
-        _key: operation.at.anchor.path[0]._key,
-      })
-    : undefined
-  const focusBlockPath = isKeyedSegment(operation.at.focus.path[0])
-    ? getBlockPath({
-        editor: operation.editor,
-        _key: operation.at.focus.path[0]._key,
-      })
-    : undefined
+  const anchorBlockKey = getBlockKeyFromSelectionPoint(operation.at.anchor)
+  const focusBlockKey = getBlockKeyFromSelectionPoint(operation.at.focus)
+
+  const anchorBlockPath =
+    anchorBlockKey !== undefined
+      ? getBlockPath({
+          editor: operation.editor,
+          _key: anchorBlockKey,
+        })
+      : undefined
+  const focusBlockPath =
+    focusBlockKey !== undefined
+      ? getBlockPath({
+          editor: operation.editor,
+          _key: focusBlockKey,
+        })
+      : undefined
 
   if (
     operation.at.anchor.path.length === 1 &&
