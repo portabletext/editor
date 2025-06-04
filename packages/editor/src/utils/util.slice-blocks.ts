@@ -1,7 +1,11 @@
 import type {PortableTextBlock} from '@sanity/types'
 import type {EditorContext} from '..'
 import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
-import {isKeyedSegment} from './util.is-keyed-segment'
+import {
+  getBlockKeyFromSelectionPoint,
+  getChildKeyFromSelectionPoint,
+} from '../selection/selection-point'
+import {getSelectionEndPoint, getSelectionStartPoint} from '../utils'
 
 /**
  * @public
@@ -23,25 +27,12 @@ export function sliceBlocks({
   const middleBlocks: PortableTextBlock[] = []
   let endBlock: PortableTextBlock | undefined
 
-  const startPoint = context.selection.backward
-    ? context.selection.focus
-    : context.selection.anchor
-  const endPoint = context.selection.backward
-    ? context.selection.anchor
-    : context.selection.focus
-
-  const startBlockKey = isKeyedSegment(startPoint.path[0])
-    ? startPoint.path[0]._key
-    : undefined
-  const endBlockKey = isKeyedSegment(endPoint.path[0])
-    ? endPoint.path[0]._key
-    : undefined
-  const startChildKey = isKeyedSegment(startPoint.path[2])
-    ? startPoint.path[2]._key
-    : undefined
-  const endChildKey = isKeyedSegment(endPoint.path[2])
-    ? endPoint.path[2]._key
-    : undefined
+  const startPoint = getSelectionStartPoint(context.selection)
+  const endPoint = getSelectionEndPoint(context.selection)
+  const startBlockKey = getBlockKeyFromSelectionPoint(startPoint)
+  const startChildKey = getChildKeyFromSelectionPoint(startPoint)
+  const endBlockKey = getBlockKeyFromSelectionPoint(endPoint)
+  const endChildKey = getChildKeyFromSelectionPoint(endPoint)
 
   if (!startBlockKey || !endBlockKey) {
     return slice

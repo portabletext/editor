@@ -1,7 +1,7 @@
 import type {KeyedSegment} from '@portabletext/patches'
 import type {PortableTextObject, PortableTextSpan} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
-import {isKeyedSegment} from '../utils'
+import {getChildKeyFromSelectionPoint} from '../selection/selection-point'
 import {getAnchorTextBlock} from './selector.get-anchor-text-block'
 
 /**
@@ -14,17 +14,17 @@ export const getAnchorChild: EditorSelector<
     }
   | undefined
 > = (snapshot) => {
+  if (!snapshot.context.selection) {
+    return undefined
+  }
+
   const anchorBlock = getAnchorTextBlock(snapshot)
 
   if (!anchorBlock) {
     return undefined
   }
 
-  const key = snapshot.context.selection
-    ? isKeyedSegment(snapshot.context.selection.anchor.path[2])
-      ? snapshot.context.selection.anchor.path[2]._key
-      : undefined
-    : undefined
+  const key = getChildKeyFromSelectionPoint(snapshot.context.selection.anchor)
 
   const node = key
     ? anchorBlock.node.children.find((span) => span._key === key)

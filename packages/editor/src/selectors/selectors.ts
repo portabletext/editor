@@ -8,7 +8,11 @@ import type {
 } from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import {isListBlock, isSpan, isTextBlock} from '../internal-utils/parse-blocks'
-import {isKeyedSegment} from '../utils/util.is-keyed-segment'
+import {
+  getBlockKeyFromSelectionPoint,
+  getChildKeyFromSelectionPoint,
+} from '../selection/selection-point'
+import {getSelectionEndPoint, getSelectionStartPoint} from '../utils'
 
 /**
  * @public
@@ -16,11 +20,11 @@ import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 export const getFocusBlock: EditorSelector<
   {node: PortableTextBlock; path: [KeyedSegment]} | undefined
 > = (snapshot) => {
-  const key = snapshot.context.selection
-    ? isKeyedSegment(snapshot.context.selection.focus.path[0])
-      ? snapshot.context.selection.focus.path[0]._key
-      : undefined
-    : undefined
+  if (!snapshot.context.selection) {
+    return undefined
+  }
+
+  const key = getBlockKeyFromSelectionPoint(snapshot.context.selection.focus)
 
   const node = key
     ? snapshot.context.value.find((block) => block._key === key)
@@ -78,17 +82,17 @@ export const getFocusChild: EditorSelector<
     }
   | undefined
 > = (snapshot) => {
+  if (!snapshot.context.selection) {
+    return undefined
+  }
+
   const focusBlock = getFocusTextBlock(snapshot)
 
   if (!focusBlock) {
     return undefined
   }
 
-  const key = snapshot.context.selection
-    ? isKeyedSegment(snapshot.context.selection.focus.path[2])
-      ? snapshot.context.selection.focus.path[2]._key
-      : undefined
-    : undefined
+  const key = getChildKeyFromSelectionPoint(snapshot.context.selection.focus)
 
   const node = key
     ? focusBlock.node.children.find((span) => span._key === key)
@@ -149,20 +153,10 @@ export const getSelectedBlocks: EditorSelector<
 
   const selectedBlocks: Array<{node: PortableTextBlock; path: [KeyedSegment]}> =
     []
-  const startKey = snapshot.context.selection.backward
-    ? isKeyedSegment(snapshot.context.selection.focus.path[0])
-      ? snapshot.context.selection.focus.path[0]._key
-      : undefined
-    : isKeyedSegment(snapshot.context.selection.anchor.path[0])
-      ? snapshot.context.selection.anchor.path[0]._key
-      : undefined
-  const endKey = snapshot.context.selection.backward
-    ? isKeyedSegment(snapshot.context.selection.anchor.path[0])
-      ? snapshot.context.selection.anchor.path[0]._key
-      : undefined
-    : isKeyedSegment(snapshot.context.selection.focus.path[0])
-      ? snapshot.context.selection.focus.path[0]._key
-      : undefined
+  const startPoint = getSelectionStartPoint(snapshot.context.selection)
+  const endPoint = getSelectionEndPoint(snapshot.context.selection)
+  const startKey = getBlockKeyFromSelectionPoint(startPoint)
+  const endKey = getBlockKeyFromSelectionPoint(endPoint)
 
   if (!startKey || !endKey) {
     return selectedBlocks
@@ -205,13 +199,8 @@ export const getSelectionStartBlock: EditorSelector<
     return undefined
   }
 
-  const key = snapshot.context.selection.backward
-    ? isKeyedSegment(snapshot.context.selection.focus.path[0])
-      ? snapshot.context.selection.focus.path[0]._key
-      : undefined
-    : isKeyedSegment(snapshot.context.selection.anchor.path[0])
-      ? snapshot.context.selection.anchor.path[0]._key
-      : undefined
+  const startPoint = getSelectionStartPoint(snapshot.context.selection)
+  const key = getBlockKeyFromSelectionPoint(startPoint)
 
   const node = key
     ? snapshot.context.value.find((block) => block._key === key)
@@ -234,13 +223,8 @@ export const getSelectionEndBlock: EditorSelector<
     return undefined
   }
 
-  const key = snapshot.context.selection.backward
-    ? isKeyedSegment(snapshot.context.selection.anchor.path[0])
-      ? snapshot.context.selection.anchor.path[0]._key
-      : undefined
-    : isKeyedSegment(snapshot.context.selection.focus.path[0])
-      ? snapshot.context.selection.focus.path[0]._key
-      : undefined
+  const endPoint = getSelectionEndPoint(snapshot.context.selection)
+  const key = getBlockKeyFromSelectionPoint(endPoint)
 
   const node = key
     ? snapshot.context.value.find((block) => block._key === key)

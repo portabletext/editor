@@ -1,9 +1,12 @@
 import type {KeyedSegment} from '@sanity/types'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
+import {
+  getBlockKeyFromSelectionPoint,
+  getChildKeyFromSelectionPoint,
+} from '../selection/selection-point'
 import type {BlockOffset} from '../types/block-offset'
 import type {EditorSelectionPoint} from '../types/editor'
-import {isKeyedSegment} from './util.is-keyed-segment'
 
 /**
  * @public
@@ -101,12 +104,8 @@ export function spanSelectionPointToBlockOffset({
 }): BlockOffset | undefined {
   let offset = 0
 
-  const blockKey = isKeyedSegment(selectionPoint.path[0])
-    ? selectionPoint.path[0]._key
-    : undefined
-  const spanKey = isKeyedSegment(selectionPoint.path[2])
-    ? selectionPoint.path[2]._key
-    : undefined
+  const blockKey = getBlockKeyFromSelectionPoint(selectionPoint)
+  const spanKey = getChildKeyFromSelectionPoint(selectionPoint)
 
   if (!blockKey || !spanKey) {
     return undefined

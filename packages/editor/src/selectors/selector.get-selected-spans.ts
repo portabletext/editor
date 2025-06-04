@@ -1,7 +1,12 @@
 import type {KeyedSegment, PortableTextSpan} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
-import {isKeyedSegment} from '../utils'
+import {
+  getBlockKeyFromSelectionPoint,
+  getChildKeyFromSelectionPoint,
+} from '../selection/selection-point'
+import {getSelectionEndPoint} from './selector.get-selection-end-point'
+import {getSelectionStartPoint} from './selector.get-selection-start-point'
 
 /**
  * @public
@@ -21,30 +26,22 @@ export const getSelectedSpans: EditorSelector<
     path: [KeyedSegment, 'children', KeyedSegment]
   }> = []
 
-  const startPoint = snapshot.context.selection.backward
-    ? snapshot.context.selection.focus
-    : snapshot.context.selection.anchor
-  const endPoint = snapshot.context.selection.backward
-    ? snapshot.context.selection.anchor
-    : snapshot.context.selection.focus
+  const startPoint = getSelectionStartPoint(snapshot)
+  const endPoint = getSelectionEndPoint(snapshot)
 
-  const startBlockKey = isKeyedSegment(startPoint.path[0])
-    ? startPoint.path[0]._key
-    : undefined
-  const endBlockKey = isKeyedSegment(endPoint.path[0])
-    ? endPoint.path[0]._key
-    : undefined
+  if (!startPoint || !endPoint) {
+    return selectedSpans
+  }
+
+  const startBlockKey = getBlockKeyFromSelectionPoint(startPoint)
+  const endBlockKey = getBlockKeyFromSelectionPoint(endPoint)
 
   if (!startBlockKey || !endBlockKey) {
     return selectedSpans
   }
 
-  const startSpanKey = isKeyedSegment(startPoint.path[2])
-    ? startPoint.path[2]._key
-    : undefined
-  const endSpanKey = isKeyedSegment(endPoint.path[2])
-    ? endPoint.path[2]._key
-    : undefined
+  const startSpanKey = getChildKeyFromSelectionPoint(startPoint)
+  const endSpanKey = getChildKeyFromSelectionPoint(endPoint)
 
   let startBlockFound = false
 

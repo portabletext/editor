@@ -1,7 +1,10 @@
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import type {PortableTextBlock} from '@sanity/types'
+import {
+  getBlockKeyFromSelectionPoint,
+  getChildKeyFromSelectionPoint,
+} from '../selection/selection-point'
 import type {EditorSelection} from '../types/editor'
-import {isKeyedSegment} from '../utils'
 
 export function getSelectionFocusText(
   value: Array<PortableTextBlock> | undefined,
@@ -11,20 +14,21 @@ export function getSelectionFocusText(
     return undefined
   }
 
+  const focusBlockKey = getBlockKeyFromSelectionPoint(selection.focus)
+  const focusChildKey = getChildKeyFromSelectionPoint(selection.focus)
+
+  if (focusBlockKey === undefined || focusChildKey === undefined) {
+    return undefined
+  }
+
   let text: string | undefined
 
   for (const block of value) {
     if (isPortableTextBlock(block)) {
-      if (
-        isKeyedSegment(selection.focus.path[0]) &&
-        block._key === selection.focus.path[0]._key
-      ) {
+      if (block._key === focusBlockKey) {
         for (const child of block.children) {
           if (isPortableTextSpan(child)) {
-            if (
-              isKeyedSegment(selection.focus.path[2]) &&
-              child._key === selection.focus.path[2]._key
-            ) {
+            if (child._key === focusChildKey) {
               text = child.text
               break
             }

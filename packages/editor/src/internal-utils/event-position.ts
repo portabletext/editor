@@ -2,6 +2,7 @@ import {Editor, type BaseRange, type Node} from 'slate'
 import {DOMEditor, isDOMNode} from 'slate-dom'
 import type {EditorSchema, EditorSelection} from '..'
 import type {EditorActor} from '../editor/editor-machine'
+import {getBlockKeyFromSelectionPoint} from '../selection/selection-point'
 import type {PortableTextSlateEditor} from '../types/editor'
 import * as utils from '../utils'
 import {
@@ -80,12 +81,9 @@ export function getEventPosition({
     return undefined
   }
 
-  const focusBlockPath = selection.focus.path.at(0)
-  const focusBlockKey = utils.isKeyedSegment(focusBlockPath)
-    ? focusBlockPath._key
-    : undefined
+  const focusBlockKey = getBlockKeyFromSelectionPoint(selection.focus)
 
-  if (!focusBlockKey) {
+  if (focusBlockKey === undefined) {
     return undefined
   }
 
