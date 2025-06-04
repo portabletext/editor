@@ -469,8 +469,8 @@ importers:
         specifier: 0.114.2
         version: 0.114.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(slate-dom@0.114.0(slate@0.115.1))(slate@0.115.1)
       use-effect-event:
-        specifier: ^1.0.2
-        version: 1.0.2(react@19.1.0)
+        specifier: ^2.0.0
+        version: 2.0.0(react@19.1.0)
       xstate:
         specifier: ^5.19.4
         version: 5.19.4
@@ -6211,8 +6211,8 @@ packages:
   uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
 
-  use-effect-event@1.0.2:
-    resolution: {integrity: sha512-9c8AAmtQja4LwJXI0EQPhQCip6dmrcSe0FMcTUZBeGh/XTCOLgw3Qbt0JdUT8Rcrm/ZH+Web7MIcMdqgQKdXJg==}
+  use-effect-event@2.0.0:
+    resolution: {integrity: sha512-CIRGe/RUfngbmivpY5F7rc0m7q0VYzqtQOcKJ19FPEeyf7tS44Zk+9tcDicP+z+d32+E2r+Zs7+20MHXa8JBUA==}
     peerDependencies:
       react: ^18.3 || ^19.0.0-0
 
@@ -13619,7 +13619,7 @@ snapshots:
     dependencies:
       punycode: 2.3.1
 
-  use-effect-event@1.0.2(react@19.1.0):
+  use-effect-event@2.0.0(react@19.1.0):
     dependencies:
       react: 19.1.0
 
