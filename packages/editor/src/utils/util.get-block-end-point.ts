@@ -2,7 +2,7 @@ import type {PortableTextBlock} from '@sanity/types'
 import type {EditorSelectionPoint} from '../editor/editor-selection'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
-import {isIndexedBlockPath, type BlockPath} from '../types/paths'
+import {type BlockPath} from '../types/paths'
 
 /**
  * @public
@@ -17,13 +17,28 @@ export function getBlockEndPoint({
     path: BlockPath
   }
 }): EditorSelectionPoint {
-  const blockPath = block.path
-  const blockIndex = isIndexedBlockPath(blockPath)
-    ? blockPath.at(0)
-    : context.value.findIndex((b) => b._key === blockPath[0]._key)
+  const blockPathSegment = block.path.at(0)
 
-  if (blockIndex === undefined) {
-    throw new Error('Unable to find block index when getting block end point')
+  if (blockPathSegment === undefined) {
+    throw new Error('Block path is empty')
+  }
+
+  if (typeof blockPathSegment === 'number') {
+    if (isTextBlock(context, block.node)) {
+      const lastChild = block.node.children[block.node.children.length - 1]
+
+      if (lastChild) {
+        return {
+          path: [blockPathSegment, block.node.children.length - 1],
+          offset: isSpan(context, lastChild) ? lastChild.text.length : 0,
+        }
+      }
+    }
+
+    return {
+      path: [blockPathSegment],
+      offset: 0,
+    }
   }
 
   if (isTextBlock(context, block.node)) {
@@ -31,14 +46,14 @@ export function getBlockEndPoint({
 
     if (lastChild) {
       return {
-        path: [blockIndex, block.node.children.length - 1],
+        path: [...block.path, 'children', {_key: lastChild._key}],
         offset: isSpan(context, lastChild) ? lastChild.text.length : 0,
       }
     }
   }
 
   return {
-    path: [blockIndex],
+    path: block.path,
     offset: 0,
   }
 }

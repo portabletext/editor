@@ -52,6 +52,7 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
     focusBlockPath &&
     anchorBlockPath[0] === focusBlockPath[0]
   ) {
+    debugger
     Transforms.removeNodes(operation.editor, {
       at: [anchorBlockPath[0]],
     })

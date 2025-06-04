@@ -67,10 +67,7 @@ export const getCaretWordSelection: EditorSelector<EditorSelection> = (
       selection: {
         anchor: previousInlineObject
           ? {
-              path: [
-                previousInlineObject.blockIndex,
-                previousInlineObject.index,
-              ],
+              path: previousInlineObject.path,
               offset: 0,
             }
           : blockStartPoint,
@@ -93,7 +90,7 @@ export const getCaretWordSelection: EditorSelector<EditorSelection> = (
         anchor: selectionStartPoint,
         focus: nextInlineObject
           ? {
-              path: [nextInlineObject.blockIndex, nextInlineObject.index],
+              path: nextInlineObject.path,
               offset: 0,
             }
           : blockEndPoint,

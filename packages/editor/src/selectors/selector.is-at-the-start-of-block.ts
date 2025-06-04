@@ -1,5 +1,6 @@
-import type {KeyedSegment, PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
+import {BlockPath} from '../types/paths'
 import * as utils from '../utils'
 import {getSelectionStartPoint} from './selector.get-selection-start-point'
 
@@ -8,8 +9,7 @@ import {getSelectionStartPoint} from './selector.get-selection-start-point'
  */
 export function isAtTheStartOfBlock(block: {
   node: PortableTextBlock
-  path: [KeyedSegment]
-  index: number
+  path: BlockPath
 }): EditorSelector<boolean> {
   return (snapshot) => {
     const startPoint = getSelectionStartPoint(snapshot)

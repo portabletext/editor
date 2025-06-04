@@ -2,7 +2,7 @@ import type {PortableTextBlock} from '@sanity/types'
 import type {EditorSelectionPoint} from '../editor/editor-selection'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {isTextBlock} from '../internal-utils/parse-blocks'
-import {isIndexedBlockPath, type BlockPath} from '../types/paths'
+import {type BlockPath} from '../types/paths'
 
 /**
  * @public
@@ -17,24 +17,35 @@ export function getBlockStartPoint({
     path: BlockPath
   }
 }): EditorSelectionPoint {
-  const blockPath = block.path
-  const blockIndex = isIndexedBlockPath(blockPath)
-    ? blockPath.at(0)
-    : context.value.findIndex((b) => b._key === blockPath[0]._key)
+  const blockPathSegment = block.path.at(0)
 
-  if (blockIndex === undefined) {
-    throw new Error('Unable to find block index when getting block start point')
+  if (blockPathSegment === undefined) {
+    throw new Error('Block path is empty')
+  }
+
+  if (typeof blockPathSegment === 'number') {
+    if (isTextBlock(context, block.node)) {
+      return {
+        path: [blockPathSegment, 0],
+        offset: 0,
+      }
+    }
+
+    return {
+      path: [blockPathSegment],
+      offset: 0,
+    }
   }
 
   if (isTextBlock(context, block.node)) {
     return {
-      path: [blockIndex, 0],
+      path: [...block.path, 'children', {_key: block.node.children[0]._key}],
       offset: 0,
     }
   }
 
   return {
-    path: [blockIndex],
+    path: block.path,
     offset: 0,
   }
 }

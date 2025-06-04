@@ -1,3 +1,4 @@
+import {isIndexedSelection} from '../editor/editor-selection'
 import * as selectors from '../selectors'
 import * as utils from '../utils'
 import {raise} from './behavior.types.action'
@@ -133,14 +134,24 @@ const breakingEntireDocument = defineBehavior({
 
     const firstBlockStartPoint = utils.getBlockStartPoint({
       context: snapshot.context,
-      block: firstBlock,
+      block: {
+        node: firstBlock.node,
+        path: isIndexedSelection(snapshot.context.selection)
+          ? [0]
+          : [{_key: firstBlock.node._key}],
+      },
     })
     const selectionStartPoint = utils.getSelectionStartPoint(
       snapshot.context.selection,
     )
     const lastBlockEndPoint = utils.getBlockEndPoint({
       context: snapshot.context,
-      block: lastBlock,
+      block: {
+        node: lastBlock.node,
+        path: isIndexedSelection(snapshot.context.selection)
+          ? [snapshot.context.value.length - 1]
+          : [{_key: lastBlock.node._key}],
+      },
     })
     const selectionEndPoint = utils.getSelectionEndPoint(
       snapshot.context.selection,
@@ -210,27 +221,27 @@ const breakingEntireBlocks = defineBehavior({
   },
   actions: [
     ({snapshot}, {selectedBlocks}) => [
-      raise({
-        type: 'insert.block',
-        block: {
-          _type: snapshot.context.schema.block.name,
-          children: [
-            {
-              _type: snapshot.context.schema.span.name,
-              text: '',
-              marks: [],
-            },
-          ],
-        },
-        placement: 'before',
-        select: 'start',
-      }),
-      ...selectedBlocks.map((block) =>
+      ...selectedBlocks.reverse().map((block) =>
         raise({
           type: 'delete.block',
           at: block.path,
         }),
       ),
+      // raise({
+      //   type: 'insert.block',
+      //   block: {
+      //     _type: snapshot.context.schema.block.name,
+      //     children: [
+      //       {
+      //         _type: snapshot.context.schema.span.name,
+      //         text: '',
+      //         marks: [],
+      //       },
+      //     ],
+      //   },
+      //   placement: 'before',
+      //   select: 'start',
+      // }),
     ],
   ],
 })

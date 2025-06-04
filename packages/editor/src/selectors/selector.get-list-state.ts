@@ -91,7 +91,7 @@ function getPreviousListItem({
 }): EditorSelector<
   | {
       node: PortableTextTextBlock
-      path: [{_key: string}]
+      path: BlockPath
     }
   | undefined
 > {
@@ -142,11 +142,11 @@ function getPreviousListItem({
         ...snapshot.context,
         selection: {
           anchor: {
-            path: [previousBlock.index],
+            path: previousBlock.path,
             offset: 0,
           },
           focus: {
-            path: [previousBlock.index],
+            path: previousBlock.path,
             offset: 0,
           },
         },

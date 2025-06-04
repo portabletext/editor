@@ -1,5 +1,6 @@
 import type {KeyedSegment, PortableTextBlock} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
+import {BlockPath} from '../types/paths'
 import * as utils from '../utils'
 import {getSelectionEndPoint} from './selector.get-selection-end-point'
 
@@ -8,8 +9,7 @@ import {getSelectionEndPoint} from './selector.get-selection-end-point'
  */
 export function isAtTheEndOfBlock(block: {
   node: PortableTextBlock
-  path: [KeyedSegment]
-  index: number
+  path: BlockPath
 }): EditorSelector<boolean> {
   return (snapshot) => {
     const endPoint = getSelectionEndPoint(snapshot)

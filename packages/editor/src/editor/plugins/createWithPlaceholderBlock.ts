@@ -5,6 +5,7 @@ import {isRedoing, isUndoing} from '../../internal-utils/withUndoRedo'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {SlateTextBlock, VoidElement} from '../../types/slate'
 import type {EditorActor} from '../editor-machine'
+import {isApplyingBehaviorOperations} from '../with-applying-behavior-operations'
 
 const debug = debugWithName('plugin:withPlaceholderBlock')
 
@@ -51,6 +52,7 @@ export function createWithPlaceholderBlock(
           const nextPath = Path.next(op.path)
           // Is removing the first block which is a void (not a text block), add a new empty text block in it, if there is no other element in the next path
           if (!editor.children[nextPath[0]]) {
+            debugger
             debug('Adding placeholder block')
             Editor.insertNode(
               editor,
