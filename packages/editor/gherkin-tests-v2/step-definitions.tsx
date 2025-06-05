@@ -383,6 +383,30 @@ export const stepDefinitions = [
       })
     },
   ),
+  When(
+    '{text} is inserted at {placement} and selected at the {select-position}',
+    (
+      context: Context,
+      text: Parameter['text'],
+      placement: Parameter['placement'],
+      selectPosition: Parameter['selectPosition'],
+    ) => {
+      const blocks = parseTersePt(
+        {
+          keyGenerator: context.editor.snapshot().context.keyGenerator,
+          schema: context.editor.snapshot().context.schema,
+        },
+        text,
+      )
+
+      context.editor.ref.current.send({
+        type: 'insert.blocks',
+        blocks,
+        placement,
+        select: selectPosition,
+      })
+    },
+  ),
 
   Then(
     'the text is {text}',

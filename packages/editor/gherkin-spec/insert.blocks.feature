@@ -14,12 +14,7 @@ Feature: Insert Blocks
       | "auto"    | "[image]"   |
 
   Scenario Outline: Inserting blocks on a block object
-    When a block is inserted "auto" and selected at the "end"
-      ```
-      {
-        "_type": "image"
-      }
-      ```
+    When "[image]" is inserted at "auto" and selected at the "end"
     And "foo|[break]|bar" is inserted at "auto"
     Then the text is <text>
 
@@ -28,12 +23,7 @@ Feature: Insert Blocks
       | "[image]\|foo\|[break]\|bar" |
 
   Scenario: Inserting text blocks on a block object
-    When a block is inserted "auto" and selected at the "end"
-      ```
-      {
-        "_type": "image"
-      }
-      ```
+    When "[image]" is inserted at "auto" and selected at the "end"
     And "foo|bar" is inserted at "auto"
     Then the text is <text>
 
