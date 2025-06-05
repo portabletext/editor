@@ -438,6 +438,8 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     await putCaretAfterText(editorB, '🌌. ')
     await type(editorB, middle)
 
+    await expectText([`${beginning}${middle}${end.slice(0, -1)}`])
+
     await undo(editorA)
 
     await expectText([`${beginning}${middle}${end}`])
@@ -462,6 +464,8 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     await putCaretBeforeText(editorB, 'In')
     await pressButton(editorB, 'Shift+Enter', 2)
 
+    await expectText([`${newPrefix}\n\n${initialText.slice(0, -1)}`])
+
     await undo(editorA)
 
     await expectText([`${newPrefix}\n\n${initialText}`])
@@ -474,7 +478,7 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     )
 
     await userEvent.click(editorA.locator)
-    await putCaretAfterText(editorA, '1')
+    await putCaretAfterText(editorA, 'じでした。')
     await pressButton(editorA, 'Backspace', 1)
 
     const newPrefix = 'new prefix'
@@ -486,6 +490,8 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     await userEvent.click(editorB.locator)
     await putCaretBeforeText(editorB, '彼は、')
     await pressButton(editorB, 'Shift+Enter', 2)
+
+    await expectText([`${newPrefix}\n\n${initialText.slice(0, -1)}`])
 
     await undo(editorA)
 
