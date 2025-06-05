@@ -65,8 +65,8 @@ export const parameterType = {
     name: 'style',
     matcher: /"(normal|blockquote|h\d)"/,
   }),
-  text: createParameterType<Array<string>>({
-    name: 'text',
+  tersePt: createParameterType<Array<string>>({
+    name: 'terse-pt',
     matcher: /"([a-z-,#>:\\n \d|\[\]]*)"/u,
     type: Array,
     transform: parseTersePtString,
@@ -86,5 +86,5 @@ export const parameterTypes = [
   parameterType.placement,
   parameterType.selectPosition,
   parameterType.style,
-  parameterType.text,
+  parameterType.tersePt,
 ]
