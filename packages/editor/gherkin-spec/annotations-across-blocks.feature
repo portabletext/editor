@@ -25,13 +25,7 @@ Feature: Annotations Across Blocks
     And "bar" has marks "l2"
 
   Scenario: Adding annotation across an image
-    Given the text "foo"
-    And a block at "after" selected at the "start"
-      ```
-      {
-        "_type": "image"
-      }
-      ```
+    Given the text "foo|[image]"
     When "{Enter}" is pressed
     And "bar" is typed
     And "foobar" is selected
@@ -41,13 +35,7 @@ Feature: Annotations Across Blocks
     And "foo|[image]|bar" is selected
 
   Scenario: Adding annotation across an image (backwards selection)
-    Given the text "foo"
-    And a block at "after" selected at the "start"
-      ```
-      {
-        "_type": "image"
-      }
-      ```
+    Given the text "foo|[image]"
     When "{Enter}" is pressed
     And "bar" is typed
     And "foobar" is selected backwards

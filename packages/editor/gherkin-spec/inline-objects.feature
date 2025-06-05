@@ -6,28 +6,29 @@ Feature: Inline Objects
     And a global keymap
 
   Scenario: Writing after inserting an inline object
-    Given the text "foo"
-    And a "stock-ticker"
-    When "{ArrowRight}" is pressed
-    When "bar" is typed
+    Given the text ""
+    When "foo" is typed
+    And a "stock-ticker" is inserted
+    And "{ArrowRight}" is pressed
+    And "bar" is typed
     Then the text is "foo,[stock-ticker],bar"
 
   Scenario: Pressing Delete before an inline object
-    Given the text "foo"
-    And a "stock-ticker"
-    When "{Delete}" is pressed
+    Given the text "foo,[stock-ticker],"
+    When the caret is put after "foo"
+    And "{Delete}" is pressed
     Then the text is "foo"
 
   Scenario: Pressing Backspace after an inline object
-    Given the text "foo"
-    And a "stock-ticker"
+    Given the text "foo,[stock-ticker],"
     When "{Backspace}" is pressed
-    Then the text is "foo"
+    Then the caret is after "foo"
 
   Scenario Outline: Deleting an inline object
-    Given the text "foo"
-    And a "stock-ticker"
-    When <key> is pressed
+    Given the text ""
+    When "foo" is typed
+    And a "stock-ticker" is inserted
+    And <key> is pressed
     And "bar" is typed
     Then the text is "foobar"
 
@@ -37,9 +38,10 @@ Feature: Inline Objects
       | "{Delete}"    |
 
   Scenario: Adding a decorator across an inline object
-    Given the text "foo"
-    And a "stock-ticker"
-    When "{ArrowRight}" is pressed
+    Given the text ""
+    When "foo" is typed
+    And a "stock-ticker" is inserted
+    And "{ArrowRight}" is pressed
     And "bar" is typed
     And "foobar" is selected
     And "strong" is toggled
@@ -48,9 +50,10 @@ Feature: Inline Objects
     And "bar" has marks "strong"
 
   Scenario: Adding an annotation across an inline object
-    Given the text "foo"
-    And a "stock-ticker"
-    When "{ArrowRight}" is pressed
+    Given the text ""
+    When "foo" is typed
+    And a "stock-ticker" is inserted
+    And "{ArrowRight}" is pressed
     And "bar" is typed
     And "foobar" is selected
     And "link" "l1" is toggled
@@ -59,9 +62,10 @@ Feature: Inline Objects
     And "bar" has marks "l1"
 
   Scenario: Removing an annotation across an inline block
-    Given the text "foo"
-    And a "stock-ticker"
-    When "{ArrowRight}" is pressed
+    Given the text ""
+    When "foo" is typed
+    And a "stock-ticker" is inserted
+    And "{ArrowRight}" is pressed
     And "bar" is typed
     And "foobar" is selected
     And "link" is toggled
