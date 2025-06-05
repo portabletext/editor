@@ -127,3 +127,30 @@ Feature: Insert Blocks
       ]
       ```
     Then the text is "foofoo|bar|bar"
+
+  Scenario: Inserting indented numbered list in empty text block
+    Given the text ""
+    When blocks are inserted "auto"
+      ```
+      [
+        {
+          "_type": "block",
+          "children": [{"_type": "span", "text": "foo"}],
+          "level": 1,
+          "listItem": "number"
+        },
+        {
+          "_type": "block",
+          "children": [{"_type": "span", "text": "bar"}],
+          "level": 2,
+          "listItem": "number"
+        },
+        {
+          "_type": "block",
+          "children": [{"_type": "span", "text": "baz"}],
+          "level": 3,
+          "listItem": "number"
+        }
+      ]
+      ```
+    Then the text is ">#:,foo|>>#:,bar|>>>#:,baz"
