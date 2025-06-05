@@ -337,6 +337,7 @@ type AbstractBehaviorEvent =
       type: StrictExtract<SyntheticBehaviorEventType, 'insert.blocks'>
       blocks: Array<BlockWithOptionalKey>
       placement: InsertPlacement
+      select?: 'start' | 'end' | 'none'
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'insert.break'>

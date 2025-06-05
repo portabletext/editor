@@ -14,7 +14,7 @@ export const abstractInsertBehaviors = [
             type: 'insert.block',
             block,
             placement: index === 0 ? 'before' : 'after',
-            select: 'end',
+            select: event.select ?? 'end',
           }),
         ),
     ],
@@ -29,7 +29,7 @@ export const abstractInsertBehaviors = [
             type: 'insert.block',
             block,
             placement: 'after',
-            select: 'end',
+            select: event.select ?? 'end',
           }),
         ),
     ],
@@ -57,7 +57,7 @@ export const abstractInsertBehaviors = [
                 type: 'insert.block',
                 block: event.blocks[0],
                 placement: 'auto',
-                select: 'end',
+                select: event.select ?? 'end',
               }),
             ]
           : isEmptyTextBlock(snapshot.context, focusTextBlock.node)
@@ -66,7 +66,7 @@ export const abstractInsertBehaviors = [
                   type: 'insert.block',
                   block,
                   placement: index === 0 ? 'auto' : 'after',
-                  select: 'end',
+                  select: event.select ?? 'end',
                 }),
               )
             : event.blocks.flatMap((block, index) =>
@@ -83,7 +83,7 @@ export const abstractInsertBehaviors = [
                         type: 'insert.block',
                         block,
                         placement: 'auto',
-                        select: 'end',
+                        select: event.select ?? 'end',
                       }),
                     ]
                   : index === event.blocks.length - 1
@@ -96,7 +96,7 @@ export const abstractInsertBehaviors = [
                           type: 'insert.block',
                           block,
                           placement: 'auto',
-                          select: 'end',
+                          select: event.select ?? 'end',
                         }),
                       ]
                     : [
@@ -104,7 +104,7 @@ export const abstractInsertBehaviors = [
                           type: 'insert.block',
                           block,
                           placement: 'after',
-                          select: 'end',
+                          select: event.select ?? 'end',
                         }),
                       ],
               ),
@@ -120,7 +120,7 @@ export const abstractInsertBehaviors = [
             type: 'insert.block',
             block,
             placement: index === 0 ? 'auto' : 'after',
-            select: 'end',
+            select: event.select ?? 'end',
           }),
         ),
     ],
