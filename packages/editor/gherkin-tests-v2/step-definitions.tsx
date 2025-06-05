@@ -3,8 +3,7 @@ import {Given, Then, When} from 'racejar'
 import {assert, expect, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {getEditorSelection} from '../src/internal-utils/editor-selection'
-import {parseBlock, parseBlocks} from '../src/internal-utils/parse-blocks'
-import {getSelectionBlockKeys} from '../src/internal-utils/selection-block-keys'
+import {parseBlocks} from '../src/internal-utils/parse-blocks'
 import {getSelectionText} from '../src/internal-utils/selection-text'
 import {getTersePt, parseTersePt} from '../src/internal-utils/terse-pt'
 import {getTextBlockKey} from '../src/internal-utils/text-block-key'
@@ -86,49 +85,6 @@ export const stepDefinitions = [
           options: {refreshKeys: false, validateFields: true},
         }),
         placement,
-      })
-    },
-  ),
-  Given(
-    'a block {placement}',
-    (context: Context, placement: Parameter['placement'], block: string) => {
-      context.editor.ref.current.send({
-        type: 'insert.block',
-        block: parseBlock({
-          context: {
-            schema: context.editor.ref.current.getSnapshot().context.schema,
-            keyGenerator:
-              context.editor.ref.current.getSnapshot().context.keyGenerator,
-          },
-          block: JSON.parse(block),
-          options: {refreshKeys: false, validateFields: true},
-        })!,
-        placement,
-        select: 'none',
-      })
-    },
-  ),
-  Given(
-    'a block at {placement} selected at the {select-position}',
-    (
-      context: Context,
-      placement: Parameter['placement'],
-      selectPosition: Parameter['selectPosition'],
-      block: string,
-    ) => {
-      context.editor.ref.current.send({
-        type: 'insert.block',
-        block: parseBlock({
-          context: {
-            schema: context.editor.ref.current.getSnapshot().context.schema,
-            keyGenerator:
-              context.editor.ref.current.getSnapshot().context.keyGenerator,
-          },
-          block: JSON.parse(block),
-          options: {refreshKeys: false, validateFields: true},
-        })!,
-        placement,
-        select: selectPosition,
       })
     },
   ),
@@ -310,20 +266,6 @@ export const stepDefinitions = [
       })
     },
   ),
-  Then('block {string} is selected', async (context: Context, key: string) => {
-    const selectionBlockKeys = getSelectionBlockKeys(context.editor.selection())
-
-    await vi.waitFor(() => {
-      expect(
-        selectionBlockKeys?.anchor,
-        'Unexpected selection anchor block key',
-      ).toBe(key)
-      expect(
-        selectionBlockKeys?.focus,
-        'Unexpected selection focus block key',
-      ).toBe(key)
-    })
-  }),
   Then('{terse-pt} is selected', (context: Context, text: Array<string>) => {
     const value = context.editor.value()
     const selection = context.editor.selection()
@@ -332,50 +274,6 @@ export const stepDefinitions = [
       text,
     )
   }),
-
-  When(
-    'a block is inserted {placement}',
-    (context: Context, placement: Parameter['placement'], block: string) => {
-      context.editor.ref.current.send({
-        type: 'insert.block',
-        block: parseBlock({
-          context: {
-            schema: context.editor.ref.current.getSnapshot().context.schema,
-            keyGenerator:
-              context.editor.ref.current.getSnapshot().context.keyGenerator,
-          },
-          block: JSON.parse(block),
-          options: {refreshKeys: false, validateFields: true},
-        })!,
-        placement,
-      })
-    },
-  ),
-
-  When(
-    'a block is inserted {placement} and selected at the {select-position}',
-    (
-      context: Context,
-      placement: Parameter['placement'],
-      selectPosition: Parameter['selectPosition'],
-      block: string,
-    ) => {
-      context.editor.ref.current.send({
-        type: 'insert.block',
-        block: parseBlock({
-          context: {
-            schema: context.editor.ref.current.getSnapshot().context.schema,
-            keyGenerator:
-              context.editor.ref.current.getSnapshot().context.keyGenerator,
-          },
-          block: JSON.parse(block),
-          options: {refreshKeys: false, validateFields: true},
-        })!,
-        placement,
-        select: selectPosition,
-      })
-    },
-  ),
 
   When(
     '{terse-pt} is inserted at {placement}',

@@ -219,27 +219,7 @@ Feature: Decorators
     And "foobar" has marks "strong,em"
 
   Scenario: Toggling decorator with leading block object and trailing empty text
-    Given a block "auto"
-      ```
-      {
-        "_type": "image"
-      }
-      ```
-    And a block "auto"
-      ```
-      {
-        "_type": "block",
-        "children": [{"_type": "span", "text": "foo"}]
-      }
-      ```
-
-    And a block "after"
-      ```
-      {
-        "_type": "block",
-        "children": [{"_type": "span", "text": ""}]
-      }
-      ```
+    Given the text "[image]|foo|"
     When everything is selected
     And "strong" is toggled
     Then "foo" has marks "strong"

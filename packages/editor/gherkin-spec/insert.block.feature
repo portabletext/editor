@@ -50,15 +50,9 @@ Feature: Insert Block
   Scenario Outline: Inserting and selecting block object on text selection
     Given the text "foo"
     When <selection> is selected
-    And a block is inserted <placement> and selected at the <position>
-      ```
-      {
-        "_key": "k-i",
-        "_type": "image"
-      }
-      ```
+    And "[image]" is inserted at <placement> and selected at the <position>
     Then the text is <text>
-    And block "k-i" is selected
+    And "[image]" is selected
 
     Examples:
       | selection | placement | position | text           |
@@ -105,15 +99,9 @@ Feature: Insert Block
     When "{Enter}" is pressed
     And "bar" is typed
     And <selection> is selected
-    And a block is inserted <placement> and selected at the <position>
-      ```
-      {
-        "_key": "k-i",
-        "_type": "image"
-      }
-      ```
+    And "[image]" is inserted at <placement> and selected at the <position>
     Then the text is <text>
-    And block "k-i" is selected
+    And "[image]" is selected
 
     Examples:
       | selection | placement | position | text                |
@@ -191,57 +179,40 @@ Feature: Insert Block
       | "auto"    | "none"   | "barfoo"   |
 
   Scenario Outline: Inserting block object on block object
-    Given a block at "auto" selected at the <block selection>
-      ```
-      {
-        "_key": "k-i",
-        "_type": "image"
-      }
-      ```
-    When a block is inserted <new block placement> and selected at the <new block selection>
-      ```
-      {
-        "_key": "k-b",
-        "_type": "break"
-      }
-      ```
+    When "[image]" is inserted at "auto" and selected at the <block selection>
+    And "[break]" is inserted at <new block placement> and selected at the <new block selection>
     Then the text is <text>
-    Then <selection> is selected
+    And <selection> is selected
 
     Examples:
-      | block selection | new block placement | new block selection | text               | selection   |
-      | "start"         | "before"            | "start"             | "[break]\|[image]" | block "k-b" |
+      | block selection | new block placement | new block selection | text               | selection |
+      | "start"         | "before"            | "start"             | "[break]\|[image]" | "[break]" |
       # | "start"         | "after"             | "start"             | "[image]\|[break]" | block "k-b" |
       # | "start"         | "auto"              | "start"             | "[image]\|[break]" | block "k-b" |
-      | "start"         | "before"            | "end"               | "[break]\|[image]" | block "k-b" |
+      | "start"         | "before"            | "end"               | "[break]\|[image]" | "[break]" |
       # | "start"         | "after"             | "end"               | "[image]\|[break]" | block "k-b" |
       # | "start"         | "auto"              | "end"               | "[image]\|[break]" | block "k-b" |
-      | "start"         | "before"            | "none"              | "[break]\|[image]" | block "k-i" |
+      | "start"         | "before"            | "none"              | "[break]\|[image]" | "[image]" |
       # | "start"         | "after"             | "none"              | "[image]\|[break]" | block "k-i" |
       # | "start"         | "auto"              | "none"              | "[image]\|[break]" | block "k-i" |
       # | "start"         | "after"             | "start"             | "[image]\|[break]" | block "k-b" |
       # | "start"         | "auto"              | "start"             | "[image]\|[break]" | block "k-b" |
-      | "end"           | "before"            | "start"             | "[break]\|[image]" | block "k-b" |
-      | "end"           | "before"            | "end"               | "[break]\|[image]" | block "k-b" |
-      | "end"           | "before"            | "none"              | "[break]\|[image]" | block "k-i" |
-      | "none"          | "before"            | "start"             | "[break]\|[image]" | block "k-b" |
-      | "none"          | "after"             | "start"             | "[image]\|[break]" | block "k-b" |
-      | "none"          | "auto"              | "start"             | "[image]\|[break]" | block "k-b" |
-      | "none"          | "before"            | "end"               | "[break]\|[image]" | block "k-b" |
-      | "none"          | "after"             | "end"               | "[image]\|[break]" | block "k-b" |
-      | "none"          | "auto"              | "end"               | "[image]\|[break]" | block "k-b" |
-      | "none"          | "before"            | "none"              | "[break]\|[image]" | nothing     |
-      | "none"          | "after"             | "none"              | "[image]\|[break]" | nothing     |
-      | "none"          | "auto"              | "none"              | "[image]\|[break]" | nothing     |
+      | "end"           | "before"            | "start"             | "[break]\|[image]" | "[break]" |
+      | "end"           | "before"            | "end"               | "[break]\|[image]" | "[break]" |
+      | "end"           | "before"            | "none"              | "[break]\|[image]" | "[image]" |
+      | "none"          | "before"            | "start"             | "[break]\|[image]" | "[break]" |
+      | "none"          | "after"             | "start"             | "[image]\|[break]" | "[break]" |
+      | "none"          | "auto"              | "start"             | "[image]\|[break]" | "[break]" |
+      | "none"          | "before"            | "end"               | "[break]\|[image]" | "[break]" |
+      | "none"          | "after"             | "end"               | "[image]\|[break]" | "[break]" |
+      | "none"          | "auto"              | "end"               | "[image]\|[break]" | "[break]" |
+      | "none"          | "before"            | "none"              | "[break]\|[image]" | nothing   |
+      | "none"          | "after"             | "none"              | "[image]\|[break]" | nothing   |
+      | "none"          | "auto"              | "none"              | "[image]\|[break]" | nothing   |
 
   Scenario Outline: Inserting and selecting block object on block object
-    Given a block "auto"
-      ```
-      {
-        "_type": "image"
-      }
-      ```
-    When "[break]" is inserted at <placement> and selected at the <position>
+    When "[image]" is inserted at "auto" and selected at the "none"
+    And "[break]" is inserted at <placement> and selected at the <position>
     And "{Enter}" is pressed
     And "foo" is typed
     Then the text is <text>
@@ -259,18 +230,7 @@ Feature: Insert Block
       | "auto"    | "none"   | "[image]\|[break]"      |
 
   Scenario Outline: Inserting block object on block objects
-    Given a block "auto"
-      ```
-      {
-        "_type": "image"
-      }
-      ```
-    And a block at "auto" selected at the "start"
-      ```
-      {
-        "_type": "image"
-      }
-      ```
+    Given the text "[image]|[image]"
     When everything is selected
     When "[break]" is inserted at <placement> and selected at the <position>
     And "{Enter}" is pressed
@@ -308,12 +268,7 @@ Feature: Insert Block
       | after "foo"  | "auto"    | "foobaz\|[image]\|bar"   |
 
   Scenario Outline: Inserting text block on block object
-    Given a block "auto"
-      ```
-      {
-        "_type": "image"
-      }
-      ```
+    When "[image]" is inserted at "auto" and selected at the "none"
     When "foo" is inserted at <placement> and selected at the "none"
     Then the text is <text>
     And nothing is selected

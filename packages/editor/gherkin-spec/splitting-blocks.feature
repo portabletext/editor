@@ -119,24 +119,9 @@ Feature: Splitting Blocks
     Then the text is "h1:foo\n"
 
   Scenario: Splitting decorated styled block at the beginning
-    Given a block at "auto" selected at the "start"
-      ```
-      {
-        "_type": "block",
-        "children": [
-          {
-            "_type": "span",
-            "text": "foo",
-            "marks": ["strong"]
-          },
-          {
-            "_type": "span",
-            "text": " bar baz"
-          }
-        ],
-        "style": "h1"
-      }
-      ```
+    Given the text "h1:foo bar baz"
+    And "strong" around "foo"
+    When the caret is put before "foo"
     When "{Enter}" is pressed
     And "new" is typed
     Then the text is "|h1:newfoo, bar baz"
