@@ -1,6 +1,23 @@
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import type {PortableTextBlock} from '@sanity/types'
 
+type TersePtConfig = {
+  style: (name?: string) => string
+  listItem: (name?: string) => string
+  level: (level?: number) => string
+}
+
+const defaultConfig: TersePtConfig = {
+  style: (name) =>
+    name === undefined || name === 'normal'
+      ? ''
+      : name === 'blockquote'
+        ? 'q'
+        : `${name}`,
+  listItem: (name) => (name === undefined ? '' : name === 'number' ? '#' : '-'),
+  level: (level) => (level === undefined ? '' : '>'.repeat(level)),
+}
+
 export function getTersePt(value: Array<PortableTextBlock> | undefined) {
   if (!value) {
     return undefined
@@ -13,6 +30,12 @@ export function getTersePt(value: Array<PortableTextBlock> | undefined) {
       blocks.push('|')
     }
     if (isPortableTextBlock(block)) {
+      const blockPrefix = `${defaultConfig.level(block.level)}${defaultConfig.listItem(block.listItem)}${defaultConfig.style(block.style)}`
+
+      if (blockPrefix) {
+        blocks.push(`${blockPrefix}:`)
+      }
+
       for (const child of block.children) {
         if (isPortableTextSpan(child)) {
           blocks.push(child.text)

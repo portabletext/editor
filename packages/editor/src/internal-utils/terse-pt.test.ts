@@ -1,5 +1,8 @@
 import {expect, test} from 'vitest'
+import {createTestKeyGenerator} from '../internal-utils/test-key-generator'
 import {getTersePt, parseTersePt} from './terse-pt'
+
+const keyGenerator = createTestKeyGenerator()
 
 test(getTersePt.name, () => {
   const fooBlock = {
@@ -37,6 +40,49 @@ test(getTersePt.name, () => {
     '|',
     'foo\nbar',
   ])
+
+  expect(
+    getTersePt([
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        children: [{_key: keyGenerator(), _type: 'span', text: 'foo'}],
+      },
+    ]),
+  ).toEqual(['foo'])
+  expect(
+    getTersePt([
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        children: [{_key: keyGenerator(), _type: 'span', text: 'foo'}],
+        listItem: 'number',
+      },
+    ]),
+  ).toEqual(['#:', 'foo'])
+  expect(
+    getTersePt([
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        children: [{_key: keyGenerator(), _type: 'span', text: 'foo'}],
+        listItem: 'number',
+        style: 'h3',
+      },
+    ]),
+  ).toEqual(['#h3:', 'foo'])
+  expect(
+    getTersePt([
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        children: [{_key: keyGenerator(), _type: 'span', text: 'foo'}],
+        level: 2,
+        listItem: 'number',
+        style: 'h3',
+      },
+    ]),
+  ).toEqual(['>>#h3:', 'foo'])
 })
 
 test(parseTersePt.name, () => {
@@ -57,4 +103,5 @@ test(parseTersePt.name, () => {
   ])
   expect(parseTersePt('|')).toEqual(['', '|', ''])
   expect(parseTersePt('||')).toEqual(['', '|', '', '|', ''])
+  expect(parseTersePt('>>#h3:,foo')).toEqual(['>>#h3:', 'foo'])
 })

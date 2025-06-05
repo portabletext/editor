@@ -654,26 +654,6 @@ export const stepDefinitions = [
   When('{style} is toggled', (context: Context, style: Parameter['style']) => {
     context.editor.ref.current.send({type: 'style.toggle', style})
   }),
-  Then(
-    'block {index} has style {style}',
-    async (
-      context: Context,
-      index: Parameter['index'],
-      style: Parameter['style'],
-    ) => {
-      await vi.waitFor(() => {
-        const value = context.editor.value()
-        const block = value.at(index)
-        const schema = context.editor.snapshot().context.schema
-
-        if (!isTextBlock({schema}, block)) {
-          assert.fail(`Unable to find text block at index ${index}`)
-        }
-
-        expect(block.style, `Unexpected marks for block ${index}`).toBe(style)
-      })
-    },
-  ),
 
   /**
    * Clipboard steps

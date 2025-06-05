@@ -67,7 +67,7 @@ export const parameterType = {
   }),
   text: createParameterType<Array<string>>({
     name: 'text',
-    matcher: /"([a-z-,#>\\n |\[\]]*)"/u,
+    matcher: /"([a-z-,#>:\\n \d|\[\]]*)"/u,
     type: Array,
     transform: parseTersePt,
   }),
