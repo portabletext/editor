@@ -6,7 +6,7 @@ Feature: Markdown Behaviors
   Scenario: Automatic blockquote
     Given the text ">"
     When "{Space}" is pressed
-    Then the text is "q:,"
+    Then the text is "q:"
 
   Scenario: Automatic blockquote not toggled by space in the beginning
     Given the text ">"
@@ -18,7 +18,7 @@ Feature: Markdown Behaviors
     Given the text ">foo"
     When the caret is put before "f"
     And "{Space}" is pressed
-    Then the text is "q:,foo"
+    Then the text is "q:foo"
 
   Scenario Outline: Automatic headings
     Given the text <text>
@@ -27,12 +27,12 @@ Feature: Markdown Behaviors
 
     Examples:
       | text      | new text   |
-      | "#"       | "h1:,"     |
-      | "##"      | "h2:,"     |
-      | "###"     | "h3:,"     |
-      | "####"    | "h4:,"     |
-      | "#####"   | "h5:,"     |
-      | "######"  | "h6:,"     |
+      | "#"       | "h1:"      |
+      | "##"      | "h2:"      |
+      | "###"     | "h3:"      |
+      | "####"    | "h4:"      |
+      | "#####"   | "h5:"      |
+      | "######"  | "h6:"      |
       | "#######" | "####### " |
 
   Scenario Outline: Automatic headings not toggled by space in the beginning
@@ -68,12 +68,12 @@ Feature: Markdown Behaviors
     Examples:
       | text         | position     | new text      |
       | "foo"        | before "foo" | " foo"        |
-      | "#foo"       | before "foo" | "h1:,foo"     |
-      | "##foo"      | before "foo" | "h2:,foo"     |
-      | "###foo"     | before "foo" | "h3:,foo"     |
-      | "####foo"    | before "foo" | "h4:,foo"     |
-      | "#####foo"   | before "foo" | "h5:,foo"     |
-      | "######foo"  | before "foo" | "h6:,foo"     |
+      | "#foo"       | before "foo" | "h1:foo"      |
+      | "##foo"      | before "foo" | "h2:foo"      |
+      | "###foo"     | before "foo" | "h3:foo"      |
+      | "####foo"    | before "foo" | "h4:foo"      |
+      | "#####foo"   | before "foo" | "h5:foo"      |
+      | "######foo"  | before "foo" | "h6:foo"      |
       | "#######foo" | before "foo" | "####### foo" |
 
   Scenario Outline: Clear style on Backspace

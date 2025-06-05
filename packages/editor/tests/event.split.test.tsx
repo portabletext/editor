@@ -59,7 +59,7 @@ describe('event.split', () => {
     await vi.waitFor(() => {
       return expect(
         getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['foo', '[stock-ticker]', ''])
+      ).toEqual(['foo,[stock-ticker],'])
     })
 
     editorRef.current?.send({
@@ -76,10 +76,7 @@ describe('event.split', () => {
 
     expect(getTersePt(editorRef.current?.getSnapshot().context.value)).toEqual([
       'foo',
-      '|',
-      '',
-      '[stock-ticker]',
-      '',
+      ',[stock-ticker],',
     ])
   })
 

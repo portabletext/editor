@@ -26,20 +26,14 @@ test(getTersePt.name, () => {
     children: [{_key: 's4', _type: 'span', text: 'foo\nbar'}],
   }
 
-  expect(getTersePt([fooBlock, barBlock])).toEqual(['foo', '|', 'bar'])
-  expect(getTersePt([emptyBlock, barBlock])).toEqual(['', '|', 'bar'])
+  expect(getTersePt([fooBlock, barBlock])).toEqual(['foo', 'bar'])
+  expect(getTersePt([emptyBlock, barBlock])).toEqual(['', 'bar'])
   expect(getTersePt([fooBlock, emptyBlock, barBlock])).toEqual([
     'foo',
-    '|',
     '',
-    '|',
     'bar',
   ])
-  expect(getTersePt([fooBlock, softReturnBlock])).toEqual([
-    'foo',
-    '|',
-    'foo\nbar',
-  ])
+  expect(getTersePt([fooBlock, softReturnBlock])).toEqual(['foo', 'foo\nbar'])
 
   expect(
     getTersePt([
@@ -59,7 +53,7 @@ test(getTersePt.name, () => {
         listItem: 'number',
       },
     ]),
-  ).toEqual(['#:', 'foo'])
+  ).toEqual(['#:foo'])
   expect(
     getTersePt([
       {
@@ -70,7 +64,7 @@ test(getTersePt.name, () => {
         style: 'h3',
       },
     ]),
-  ).toEqual(['#h3:', 'foo'])
+  ).toEqual(['#h3:foo'])
   expect(
     getTersePt([
       {
@@ -82,26 +76,18 @@ test(getTersePt.name, () => {
         style: 'h3',
       },
     ]),
-  ).toEqual(['>>#h3:', 'foo'])
+  ).toEqual(['>>#h3:foo'])
 })
 
 test(parseTersePt.name, () => {
   expect(parseTersePt('foo')).toEqual(['foo'])
-  expect(parseTersePt('foo,bar')).toEqual(['foo', 'bar'])
-  expect(parseTersePt('foo,bar|baz')).toEqual(['foo', 'bar', '|', 'baz'])
-  expect(parseTersePt('|foo')).toEqual(['', '|', 'foo'])
-  expect(parseTersePt('foo|')).toEqual(['foo', '|', ''])
-  expect(parseTersePt('foo|bar\nbaz')).toEqual(['foo', '|', 'bar\nbaz'])
-  expect(parseTersePt('f,oo||ba,r')).toEqual([
-    'f',
-    'oo',
-    '|',
-    '',
-    '|',
-    'ba',
-    'r',
-  ])
-  expect(parseTersePt('|')).toEqual(['', '|', ''])
-  expect(parseTersePt('||')).toEqual(['', '|', '', '|', ''])
-  expect(parseTersePt('>>#h3:,foo')).toEqual(['>>#h3:', 'foo'])
+  expect(parseTersePt('foo,bar')).toEqual(['foo,bar'])
+  expect(parseTersePt('foo,bar|baz')).toEqual(['foo,bar', 'baz'])
+  expect(parseTersePt('|foo')).toEqual(['', 'foo'])
+  expect(parseTersePt('foo|')).toEqual(['foo', ''])
+  expect(parseTersePt('foo|bar\nbaz')).toEqual(['foo', 'bar\nbaz'])
+  expect(parseTersePt('f,oo||ba,r')).toEqual(['f,oo', '', 'ba,r'])
+  expect(parseTersePt('|')).toEqual(['', ''])
+  expect(parseTersePt('||')).toEqual(['', '', ''])
+  expect(parseTersePt('>>#h3:foo')).toEqual(['>>#h3:foo'])
 })

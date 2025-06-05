@@ -146,7 +146,7 @@ describe('event.keyboard.keydown', () => {
     await vi.waitFor(() => {
       expect(
         getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['foo', '|', 'newbar', '|', 'baz'])
+      ).toEqual(['foo', 'newbar', 'baz'])
     })
   })
 })

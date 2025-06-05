@@ -188,7 +188,7 @@ describe('event.history.undo', () => {
     await vi.waitFor(() => {
       expect(
         getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['B', '|', 'c'])
+      ).toEqual(['B', 'c'])
     })
 
     editorRef.current?.send({type: 'history.undo'})

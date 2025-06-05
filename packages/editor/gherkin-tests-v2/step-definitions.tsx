@@ -3,11 +3,7 @@ import {Given, Then, When} from 'racejar'
 import {assert, expect, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {getEditorSelection} from '../src/internal-utils/editor-selection'
-import {
-  isTextBlock,
-  parseBlock,
-  parseBlocks,
-} from '../src/internal-utils/parse-blocks'
+import {parseBlock, parseBlocks} from '../src/internal-utils/parse-blocks'
 import {getSelectionBlockKeys} from '../src/internal-utils/selection-block-keys'
 import {getSelectionText} from '../src/internal-utils/selection-text'
 import {getTersePt} from '../src/internal-utils/terse-pt'

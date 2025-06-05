@@ -153,4 +153,4 @@ Feature: Insert Blocks
         }
       ]
       ```
-    Then the text is ">#:,foo|>>#:,bar|>>>#:,baz"
+    Then the text is ">#:foo|>>#:bar|>>>#:baz"

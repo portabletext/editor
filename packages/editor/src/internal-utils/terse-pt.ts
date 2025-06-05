@@ -18,42 +18,45 @@ const defaultConfig: TersePtConfig = {
   level: (level) => (level === undefined ? '' : '>'.repeat(level)),
 }
 
-export function getTersePt(value: Array<PortableTextBlock> | undefined) {
+export function getTersePt(
+  value: Array<PortableTextBlock> | undefined,
+): Array<string> {
   if (!value) {
-    return undefined
+    return []
   }
 
   const blocks: Array<string> = []
 
   for (const block of value) {
-    if (blocks.length > 0) {
-      blocks.push('|')
-    }
+    let terseBlock = ''
+
     if (isPortableTextBlock(block)) {
       const blockPrefix = `${defaultConfig.level(block.level)}${defaultConfig.listItem(block.listItem)}${defaultConfig.style(block.style)}`
 
       if (blockPrefix) {
-        blocks.push(`${blockPrefix}:`)
+        terseBlock = `${blockPrefix}:`
       }
 
+      let index = -1
       for (const child of block.children) {
+        index++
+
         if (isPortableTextSpan(child)) {
-          blocks.push(child.text)
+          terseBlock = `${terseBlock}${index > 0 ? ',' : ''}${child.text}`
         } else {
-          blocks.push(`[${child._type}]`)
+          terseBlock = `${terseBlock}${index > 0 ? ',' : ''}[${child._type}]`
         }
       }
     } else {
-      blocks.push(`[${block._type}]`)
+      terseBlock = `[${block._type}]`
     }
+
+    blocks.push(terseBlock)
   }
 
   return blocks
 }
 
 export function parseTersePt(text: string) {
-  return text
-    .replace(/\|/g, ',|,')
-    .split(',')
-    .map((span) => span.replace(/\\n/g, '\n'))
+  return text.split('|').map((span) => span.replace(/\\n/g, '\n'))
 }
