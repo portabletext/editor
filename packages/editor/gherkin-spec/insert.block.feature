@@ -3,8 +3,8 @@ Feature: Insert Block
   Background:
     Given one editor
 
-  Scenario Outline: Inserting block object on an empty editor
-    When a block is inserted <placement> and selected at the <position>
+  Scenario Outline: Inserting block object on an empty editor without selecting it
+    When a block is inserted <placement> and selected at the "none"
       ```
       {
         "_type": "image"
@@ -14,27 +14,53 @@ Feature: Insert Block
     And nothing is selected
 
     Examples:
-      | placement | position | text        |
-      | "before"  | "none"   | "[image]\|" |
-      | "after"   | "none"   | "\|[image]" |
-      | "auto"    | "none"   | "[image]"   |
+      | placement | text        |
+      | "before"  | "[image]\|" |
+      | "after"   | "\|[image]" |
+      | "auto"    | "[image]"   |
 
-  Scenario Outline: Inserting block object on an empty text block
-    Given the text "f"
-    When "{Backspace}" is pressed
-    And a block is inserted <placement>
+  Scenario Outline: Inserting block object on an empty editor and selecting it
+    When a block is inserted <placement> and selected at the <position>
       ```
       {
         "_type": "image"
       }
       ```
+    And "bar" is typed
     Then the text is <text>
 
     Examples:
-      | placement | text        |
-      | "before"  | "[image]\|" |
-      | "after"   | "\|[image]" |
-      | "auto"    | "[image]"   |
+      | placement | position | text        |
+      | "before"  | "start"  | "[image]\|" |
+      | "after"   | "start"  | "\|[image]" |
+      | "auto"    | "start"  | "[image]"   |
+      | "before"  | "end"    | "[image]\|" |
+      | "after"   | "end"    | "\|[image]" |
+      | "auto"    | "end"    | "[image]"   |
+
+  Scenario Outline: Inserting block object on an empty text block
+    Given the text "f"
+    When "{Backspace}" is pressed
+    And a block is inserted <placement> and selected at the <position>
+      ```
+      {
+        "_type": "image"
+      }
+      ```
+    And "bar" is typed
+    Then the text is <text>
+
+    Examples:
+      | placement | position | text           |
+      | "before"  | "none"   | "[image]\|bar" |
+      | "after"   | "none"   | "bar\|[image]" |
+      | "auto"    | "none"   | "[image]"      |
+      | "before"  | "start"  | "[image]\|"    |
+      | "after"   | "start"  | "\|[image]"    |
+      | "auto"    | "start"  | "[image]"      |
+      | "before"  | "end"    | "[image]\|"    |
+      | "after"   | "end"    | "\|[image]"    |
+      | "auto"    | "end"    | "[image]"      |
 
   Scenario Outline: Inserting and selecting block object on text selection
     Given the text "foo"

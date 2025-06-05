@@ -82,7 +82,7 @@ export function insertBlock({
       }
     } else if (placement === 'after') {
       const nextPath = lastBlockPath ? [lastBlockPath[0] + 1] : [0]
-      Transforms.insertNodes(editor, [block], {at: nextPath, select: false})
+      Transforms.insertNodes(editor, [block], {at: nextPath})
 
       if (select === 'start') {
         Transforms.select(editor, Editor.start(editor, nextPath))
