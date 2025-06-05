@@ -57,6 +57,6 @@ export function getTersePt(
   return blocks
 }
 
-export function parseTersePt(text: string) {
+export function parseTersePtString(text: string) {
   return text.split('|').map((span) => span.replace(/\\n/g, '\n'))
 }

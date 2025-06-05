@@ -1,5 +1,5 @@
 import {createParameterType, type ParameterType} from 'racejar'
-import {parseTersePt} from '../src/internal-utils/terse-pt'
+import {parseTersePtString} from '../src/internal-utils/terse-pt'
 
 export type Parameter = {
   [K in keyof typeof parameterType]: (typeof parameterType)[K] extends ParameterType<
@@ -38,7 +38,7 @@ export const parameterType = {
     name: 'text',
     matcher: /"([a-z-,#>\\n |\[\]😂😹:]*)"/u,
     type: Array,
-    transform: parseTersePt,
+    transform: parseTersePtString,
   }),
 }
 
