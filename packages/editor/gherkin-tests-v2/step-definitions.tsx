@@ -157,7 +157,7 @@ export const stepDefinitions = [
     await userEvent.type(context.editor.locator, text)
   }),
   Then(
-    '{text} is in block {key}',
+    '{terse-pt} is in block {key}',
     (context: Context, text: Array<string>, key: string) => {
       const value = context.editor.value()
 
@@ -308,7 +308,7 @@ export const stepDefinitions = [
       ).toBe(key)
     })
   }),
-  Then('{text} is selected', (context: Context, text: Array<string>) => {
+  Then('{terse-pt} is selected', (context: Context, text: Array<string>) => {
     const value = context.editor.value()
     const selection = context.editor.selection()
 
@@ -362,10 +362,10 @@ export const stepDefinitions = [
   ),
 
   When(
-    '{text} is inserted at {placement}',
+    '{terse-pt} is inserted at {placement}',
     (
       context: Context,
-      text: Parameter['text'],
+      tersePt: Parameter['tersePt'],
       placement: Parameter['placement'],
     ) => {
       const blocks = parseTersePt(
@@ -373,7 +373,7 @@ export const stepDefinitions = [
           keyGenerator: context.editor.snapshot().context.keyGenerator,
           schema: context.editor.snapshot().context.schema,
         },
-        text,
+        tersePt,
       )
 
       context.editor.ref.current.send({
@@ -384,10 +384,10 @@ export const stepDefinitions = [
     },
   ),
   When(
-    '{text} is inserted at {placement} and selected at the {select-position}',
+    '{terse-pt} is inserted at {placement} and selected at the {select-position}',
     (
       context: Context,
-      text: Parameter['text'],
+      tersePt: Parameter['tersePt'],
       placement: Parameter['placement'],
       selectPosition: Parameter['selectPosition'],
     ) => {
@@ -396,7 +396,7 @@ export const stepDefinitions = [
           keyGenerator: context.editor.snapshot().context.keyGenerator,
           schema: context.editor.snapshot().context.schema,
         },
-        text,
+        tersePt,
       )
 
       context.editor.ref.current.send({
@@ -409,13 +409,13 @@ export const stepDefinitions = [
   ),
 
   Then(
-    'the text is {text}',
-    async (context: Context, text: Parameter['text']) => {
+    'the text is {terse-pt}',
+    async (context: Context, tersePt: Parameter['tersePt']) => {
       await vi.waitFor(() => {
         expect(
           getTersePt(context.editor.value()),
           'Unexpected editor text',
-        ).toEqual(text)
+        ).toEqual(tersePt)
       })
     },
   ),
@@ -595,7 +595,7 @@ export const stepDefinitions = [
     },
   ),
   When(
-    '{text} is marked with {decorator}',
+    '{string} is marked with {decorator}',
     async (
       context: Context,
       text: string,
