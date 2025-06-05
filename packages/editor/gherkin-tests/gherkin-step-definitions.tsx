@@ -658,19 +658,6 @@ export const stepDefinitions = [
       )
     },
   ),
-  Then(
-    'block {index} has style {style}',
-    async (_context: Context, index: number, style: 'h1' | 'normal') => {
-      const value = await getValue()
-      const block = value ? value[index] : undefined
-
-      if (!block || !isPortableTextBlock(block)) {
-        assert.fail(`Unable to find text block at index ${index}`)
-      }
-
-      expect(block.style, `Unexpected marks for block ${index}`).toBe(style)
-    },
-  ),
 
   /**
    * Typing steps
