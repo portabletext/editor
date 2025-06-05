@@ -4,14 +4,7 @@ Feature: Insert Blocks
     Given one editor
 
   Scenario Outline: Inserting block objects an empty editor
-    When blocks are inserted <placement>
-      ```
-      [
-        {
-          "_type": "image"
-        }
-      ]
-      ```
+    When "[image]" is inserted at <placement>
     Then the text is <text>
 
     Examples:
@@ -27,22 +20,7 @@ Feature: Insert Blocks
         "_type": "image"
       }
       ```
-    And blocks are inserted "auto"
-      ```
-      [
-        {
-          "_type": "block",
-          "children": [{"_type": "span", "text": "foo"}]
-        },
-        {
-          "_type": "break"
-        },
-        {
-          "_type": "block",
-          "children": [{"_type": "span", "text": "bar"}]
-        }
-      ]
-      ```
+    And "foo|[break]|bar" is inserted at "auto"
     Then the text is <text>
 
     Examples:
@@ -56,19 +34,7 @@ Feature: Insert Blocks
         "_type": "image"
       }
       ```
-    And blocks are inserted "auto"
-      ```
-      [
-        {
-          "_type": "block",
-          "children": [{"_type": "span", "text": "foo"}]
-        },
-        {
-          "_type": "block",
-          "children": [{"_type": "span", "text": "bar"}]
-        }
-      ]
-      ```
+    And "foo|bar" is inserted at "auto"
     Then the text is <text>
 
     Examples:
@@ -78,22 +44,7 @@ Feature: Insert Blocks
   Scenario Outline: Inserting blocks on a text block
     Given the text "foo"
     When the caret is put <position>
-    And blocks are inserted <placement>
-      ```
-      [
-        {
-          "_type": "block",
-          "children": [{"_type": "span", "text": "bar"}]
-        },
-        {
-          "_type": "image"
-        },
-        {
-          "_type": "block",
-          "children": [{"_type": "span", "text": "baz"}]
-        }
-      ]
-      ```
+    And "bar|[image]|baz" is inserted at <placement>
     Then the text is <text>
 
     Examples:
@@ -113,44 +64,10 @@ Feature: Insert Blocks
     When "{Enter}" is pressed
     And "bar" is typed
     And the caret is put after "foo"
-    And blocks are inserted "auto"
-      ```
-      [
-        {
-          "_type": "block",
-          "children": [{"_type": "span", "text": "foo"}]
-        },
-        {
-          "_type": "block",
-          "children": [{"_type": "span", "text": "bar"}]
-        }
-      ]
-      ```
-    Then the text is "foofoo|bar|bar"
+    And "fizz|buzz" is inserted at "auto"
+    Then the text is "foofizz|buzz|bar"
 
   Scenario: Inserting indented numbered list in empty text block
     Given the text ""
-    When blocks are inserted "auto"
-      ```
-      [
-        {
-          "_type": "block",
-          "children": [{"_type": "span", "text": "foo"}],
-          "level": 1,
-          "listItem": "number"
-        },
-        {
-          "_type": "block",
-          "children": [{"_type": "span", "text": "bar"}],
-          "level": 2,
-          "listItem": "number"
-        },
-        {
-          "_type": "block",
-          "children": [{"_type": "span", "text": "baz"}],
-          "level": 3,
-          "listItem": "number"
-        }
-      ]
-      ```
+    When ">#:foo|>>#:bar|>>>#:baz" is inserted at "auto"
     Then the text is ">#:foo|>>#:bar|>>>#:baz"

@@ -6,7 +6,7 @@ import {getEditorSelection} from '../src/internal-utils/editor-selection'
 import {parseBlock, parseBlocks} from '../src/internal-utils/parse-blocks'
 import {getSelectionBlockKeys} from '../src/internal-utils/selection-block-keys'
 import {getSelectionText} from '../src/internal-utils/selection-text'
-import {getTersePt} from '../src/internal-utils/terse-pt'
+import {getTersePt, parseTersePt} from '../src/internal-utils/terse-pt'
 import {getTextBlockKey} from '../src/internal-utils/text-block-key'
 import {getTextMarks} from '../src/internal-utils/text-marks'
 import {
@@ -362,19 +362,23 @@ export const stepDefinitions = [
   ),
 
   When(
-    'blocks are inserted {placement}',
-    (context: Context, placement: Parameter['placement'], blocks: string) => {
+    '{text} is inserted at {placement}',
+    (
+      context: Context,
+      text: Parameter['text'],
+      placement: Parameter['placement'],
+    ) => {
+      const blocks = parseTersePt(
+        {
+          keyGenerator: context.editor.snapshot().context.keyGenerator,
+          schema: context.editor.snapshot().context.schema,
+        },
+        text,
+      )
+
       context.editor.ref.current.send({
         type: 'insert.blocks',
-        blocks: parseBlocks({
-          context: {
-            schema: context.editor.ref.current.getSnapshot().context.schema,
-            keyGenerator:
-              context.editor.ref.current.getSnapshot().context.keyGenerator,
-          },
-          blocks: JSON.parse(blocks),
-          options: {refreshKeys: false, validateFields: true},
-        }),
+        blocks,
         placement,
       })
     },
