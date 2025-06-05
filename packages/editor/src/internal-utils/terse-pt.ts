@@ -1,5 +1,6 @@
 import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
-import type {PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock, PortableTextTextBlock} from '@sanity/types'
+import type {EditorContext} from '../editor/editor-snapshot'
 
 type TersePtConfig = {
   style: (name?: string) => string
@@ -52,6 +53,97 @@ export function getTersePt(
     }
 
     blocks.push(terseBlock)
+  }
+
+  return blocks
+}
+
+export function parseTersePt(
+  context: Pick<EditorContext, 'keyGenerator' | 'schema'>,
+  tersePt: Array<string>,
+): Array<PortableTextBlock> {
+  const blocks: Array<PortableTextBlock> = []
+
+  for (const terseBlock of tersePt) {
+    if (terseBlock.startsWith('[')) {
+      blocks.push({
+        _type: terseBlock.slice(1, -1),
+        _key: context.keyGenerator(),
+      })
+
+      continue
+    }
+
+    const block: PortableTextTextBlock = {
+      _key: context.keyGenerator(),
+      _type: context.schema.block.name,
+      children: [],
+    }
+
+    if (terseBlock.includes(':')) {
+      const [prefix, content] = terseBlock.split(':')
+
+      const listItem = prefix.includes('#')
+        ? 'number'
+        : prefix.includes('-')
+          ? 'bullet'
+          : undefined
+
+      if (listItem !== undefined) {
+        block.listItem = listItem
+      }
+
+      const level = prefix.split('').filter((part) => part === '>').length
+
+      if (level > 0) {
+        block.level = level
+      }
+
+      const style = prefix
+        .split('')
+        .filter((part) => !['#', '-', '>'].includes(part))
+        .join('')
+
+      if (style) {
+        block.style = style
+      }
+
+      const textRuns = content.split(',')
+
+      for (const textRun of textRuns) {
+        if (textRun.startsWith('[')) {
+          block.children.push({
+            _key: context.keyGenerator(),
+            _type: textRun.slice(1, -1),
+          })
+        } else {
+          block.children.push({
+            _key: context.keyGenerator(),
+            _type: context.schema.span.name,
+            text: textRun,
+          })
+        }
+      }
+    } else {
+      const textRuns = terseBlock.split(',')
+
+      for (const textRun of textRuns) {
+        if (textRun.startsWith('[')) {
+          block.children.push({
+            _key: context.keyGenerator(),
+            _type: textRun.slice(1, -1),
+          })
+        } else {
+          block.children.push({
+            _key: context.keyGenerator(),
+            _type: context.schema.span.name,
+            text: textRun,
+          })
+        }
+      }
+    }
+
+    blocks.push(block)
   }
 
   return blocks

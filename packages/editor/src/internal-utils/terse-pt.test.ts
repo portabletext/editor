@@ -1,6 +1,7 @@
 import {expect, test} from 'vitest'
+import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
 import {createTestKeyGenerator} from '../internal-utils/test-key-generator'
-import {getTersePt, parseTersePtString} from './terse-pt'
+import {getTersePt, parseTersePt, parseTersePtString} from './terse-pt'
 
 const keyGenerator = createTestKeyGenerator()
 
@@ -90,4 +91,52 @@ test(parseTersePtString.name, () => {
   expect(parseTersePtString('|')).toEqual(['', ''])
   expect(parseTersePtString('||')).toEqual(['', '', ''])
   expect(parseTersePtString('>>#h3:foo')).toEqual(['>>#h3:foo'])
+})
+
+test(parseTersePt.name, () => {
+  expect(
+    parseTersePt(
+      {
+        schema: compileSchemaDefinition(defineSchema({})),
+        keyGenerator: createTestKeyGenerator(),
+      },
+      parseTersePtString('[image]|foo|>>#h4:bar|-:baz,fizz|,[stock-ticker],'),
+    ),
+  ).toEqual([
+    {
+      _key: 'k0',
+      _type: 'image',
+    },
+    {
+      _key: 'k1',
+      _type: 'block',
+      children: [{_key: 'k2', _type: 'span', text: 'foo'}],
+    },
+    {
+      _key: 'k3',
+      _type: 'block',
+      children: [{_key: 'k4', _type: 'span', text: 'bar'}],
+      level: 2,
+      listItem: 'number',
+      style: 'h4',
+    },
+    {
+      _key: 'k5',
+      _type: 'block',
+      children: [
+        {_key: 'k6', _type: 'span', text: 'baz'},
+        {_key: 'k7', _type: 'span', text: 'fizz'},
+      ],
+      listItem: 'bullet',
+    },
+    {
+      _key: 'k8',
+      _type: 'block',
+      children: [
+        {_key: 'k9', _type: 'span', text: ''},
+        {_key: 'k10', _type: 'stock-ticker'},
+        {_key: 'k11', _type: 'span', text: ''},
+      ],
+    },
+  ])
 })
