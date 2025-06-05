@@ -4,12 +4,7 @@ Feature: Insert Block
     Given one editor
 
   Scenario Outline: Inserting block object on an empty editor without selecting it
-    When a block is inserted <placement> and selected at the "none"
-      ```
-      {
-        "_type": "image"
-      }
-      ```
+    When "[image]" is inserted at <placement> and selected at the "none"
     Then the text is <text>
     And nothing is selected
 
@@ -20,12 +15,7 @@ Feature: Insert Block
       | "auto"    | "[image]"   |
 
   Scenario Outline: Inserting block object on an empty editor and selecting it
-    When a block is inserted <placement> and selected at the <position>
-      ```
-      {
-        "_type": "image"
-      }
-      ```
+    When "[image]" is inserted at <placement> and selected at the <position>
     And "bar" is typed
     Then the text is <text>
 
@@ -41,12 +31,7 @@ Feature: Insert Block
   Scenario Outline: Inserting block object on an empty text block
     Given the text "f"
     When "{Backspace}" is pressed
-    And a block is inserted <placement> and selected at the <position>
-      ```
-      {
-        "_type": "image"
-      }
-      ```
+    And "[image]" is inserted at <placement> and selected at the <position>
     And "bar" is typed
     Then the text is <text>
 
@@ -99,12 +84,7 @@ Feature: Insert Block
   Scenario Outline: Inserting block object on text selection without selecting it
     Given the text "foo"
     When <selection> is selected
-    And a block is inserted <placement> and selected at the "none"
-      ```
-      {
-        "_type": "image"
-      }
-      ```
+    And "[image]" is inserted at <placement> and selected at the "none"
     And "bar" is typed
     Then the text is <text>
 
@@ -154,12 +134,7 @@ Feature: Insert Block
     When "{Enter}" is pressed
     And "bar" is typed
     And <selection> is selected
-    And a block is inserted <placement> and selected at the "none"
-      ```
-      {
-        "_type": "image"
-      }
-      ```
+    And "[image]" is inserted at <placement> and selected at the "none"
     And "baz" is typed
     Then the text is <text>
 
@@ -170,13 +145,7 @@ Feature: Insert Block
       | "foobar"  | "auto"    | "[image]"        |
 
   Scenario Outline: Inserting text block on an empty editor
-    When a block is inserted <placement> and selected at the "none"
-      ```
-      {
-        "_type": "block",
-        "children": [{"_type": "span", "text": "foo"}]
-      }
-      ```
+    When "foo" is inserted at <placement> and selected at the "none"
     Then the text is <text>
     And nothing is selected
 
@@ -187,13 +156,7 @@ Feature: Insert Block
       | "auto"    | "foo"   |
 
   Scenario Outline: Inserting and selecting text block on an empty editor
-    When a block is inserted <placement> and selected at the <position>
-      ```
-      {
-        "_type": "block",
-        "children": [{"_type": "span", "text": "foo"}]
-      }
-      ```
+    When "foo" is inserted at <placement> and selected at the <position>
     And "bar" is typed
     Then the text is <text>
 
@@ -211,13 +174,7 @@ Feature: Insert Block
 
   Scenario Outline: Inserting and selecting text block on an empty selected editor
     Given the editor is focused
-    When a block is inserted <placement> and selected at the <position>
-      ```
-      {
-        "_type": "block",
-        "children": [{"_type": "span", "text": "foo"}]
-      }
-      ```
+    When "foo" is inserted at <placement> and selected at the <position>
     And "bar" is typed
     Then the text is <text>
 
@@ -284,12 +241,7 @@ Feature: Insert Block
         "_type": "image"
       }
       ```
-    When a block is inserted <placement> and selected at the <position>
-      ```
-      {
-        "_type": "break"
-      }
-      ```
+    When "[break]" is inserted at <placement> and selected at the <position>
     And "{Enter}" is pressed
     And "foo" is typed
     Then the text is <text>
@@ -320,12 +272,7 @@ Feature: Insert Block
       }
       ```
     When everything is selected
-    When a block is inserted <placement> and selected at the <position>
-      ```
-      {
-        "_type": "break"
-      }
-      ```
+    When "[break]" is inserted at <placement> and selected at the <position>
     And "{Enter}" is pressed
     And "foo" is typed
     Then the text is <text>
@@ -344,12 +291,7 @@ Feature: Insert Block
     When "{Enter}" is pressed
     And "bar" is typed
     And the caret is put <position>
-    And a block is inserted <placement> and selected at the "none"
-      ```
-      {
-        "_type": "image"
-      }
-      ```
+    And "[image]" is inserted at <placement> and selected at the "none"
     And "baz" is typed
     Then the text is <text>
 
@@ -372,13 +314,7 @@ Feature: Insert Block
         "_type": "image"
       }
       ```
-    When a block is inserted <placement> and selected at the "none"
-      ```
-      {
-        "_type": "block",
-        "children": [{"_type": "span", "text": "foo"}]
-      }
-      ```
+    When "foo" is inserted at <placement> and selected at the "none"
     Then the text is <text>
     And nothing is selected
 
@@ -391,13 +327,7 @@ Feature: Insert Block
   Scenario Outline: Inserting text block on text block
     Given the text "foo"
     When the caret is put <position>
-    And a block is inserted <placement> and selected at the "none"
-      ```
-      {
-        "_type": "block",
-        "children": [{"_type": "span", "text": "bar"}]
-      }
-      ```
+    And "bar" is inserted at <placement> and selected at the "none"
     Then the text is <text>
     And the caret is <position>
 
@@ -416,13 +346,7 @@ Feature: Insert Block
   Scenario Outline: Inserting and selecting text block on text block
     Given the text "foo"
     When the caret is put <position>
-    And a block is inserted <placement> and selected at the <select-position>
-      ```
-      {
-        "_type": "block",
-        "children": [{"_type": "span", "text": "bar"}]
-      }
-      ```
+    And "bar" is inserted at <placement> and selected at the <select-position>
     And "baz" is typed
     Then the text is <text>
 
@@ -459,13 +383,7 @@ Feature: Insert Block
   Scenario Outline: Inserting text block on text selection
     Given the text "foo"
     When <selection> is selected
-    And a block is inserted <placement> and selected at the <position>
-      ```
-      {
-        "_type": "block",
-        "children": [{"_type": "span", "text": "bar"}]
-      }
-      ```
+    And "bar" is inserted at <placement> and selected at the <position>
     And "baz" is typed
     Then the text is <text>
 
@@ -495,13 +413,7 @@ Feature: Insert Block
     When "{Enter}" is pressed
     And "bar" is typed
     And <selection> is selected
-    And a block is inserted <placement> and selected at the <position>
-      ```
-      {
-        "_type": "block",
-        "children": [{"_type": "span", "text": "baz"}]
-      }
-      ```
+    And "baz" is inserted at <placement> and selected at the <position>
     And "new" is typed
     Then the text is <text>
 
@@ -527,19 +439,8 @@ Feature: Insert Block
       | "obar"    | "auto"    | "none"   | "fonewbaz"         |
 
   Scenario Outline: Inserting inline object on block object
-    When a block is inserted "auto"
-      ```
-      {
-        "_type": "image"
-      }
-      ```
-    And a block is inserted <placement>
-      ```
-      {
-        "_type": "block",
-        "children": [{"_type": "stock-ticker"}]
-      }
-      ```
+    When "[image]" is inserted at "auto"
+    And ",[stock-ticker]," is inserted at <placement>
     Then the text is <text>
 
     Examples:
@@ -549,19 +450,8 @@ Feature: Insert Block
       | "auto"    | "[image]\|,[stock-ticker]," |
 
   Scenario Outline: Inserting block object on inline object
-    When a block is inserted "auto"
-      ```
-      {
-        "_type": "block",
-        "children": [{"_type": "stock-ticker"}]
-      }
-      ```
-    And a block is inserted <placement>
-      ```
-      {
-        "_type": "image"
-      }
-      ```
+    When ",[stock-ticker]," is inserted at "auto"
+    And "[image]" is inserted at <placement>
     Then the text is <text>
 
     Examples:
@@ -571,20 +461,8 @@ Feature: Insert Block
       | "auto"    | ",[stock-ticker],\|[image]" |
 
   Scenario Outline: Inserting text block on inline object
-    When a block is inserted "auto"
-      ```
-      {
-        "_type": "block",
-        "children": [{"_type": "stock-ticker"}]
-      }
-      ```
-    And a block is inserted <placement> and selected at the <select position>
-      ```
-      {
-        "_type": "block",
-        "children": [{"_type": "span", "text": "foo"}]
-      }
-      ```
+    When ",[stock-ticker]," is inserted at "auto"
+    And "foo" is inserted at <placement> and selected at the <select position>
     Then the text is <text>
 
     Examples:
