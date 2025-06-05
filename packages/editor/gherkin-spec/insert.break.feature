@@ -18,26 +18,7 @@ Feature: Insert Break
       | after "f"    | "f\|baroo" | after "bar"  |
 
   Scenario: Pressing Enter when selecting the entire content
-    Given a block "auto"
-      ```
-      {
-        "_type": "block",
-        "children": [{"_type": "span", "text": "foo"}]
-      }
-      ```
-    And a block "after"
-      ```
-      {
-        "_type": "image"
-      }
-      ```
-    And a block at "after" selected at the "end"
-      ```
-      {
-        "_type": "block",
-        "children": [{"_type": "span", "text": "bar"}]
-      }
-      ```
+    Given the text "foo|[image]|bar"
     When everything is selected
     And "{Enter}" is pressed
     Then the text is ""
