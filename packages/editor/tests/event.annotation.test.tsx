@@ -83,10 +83,7 @@ describe('event.annotation', () => {
     })
 
     expect(getTersePt(editorRef.current?.getSnapshot().context.value)).toEqual([
-      'Hello',
-      ', ',
-      'world',
-      '!',
+      'Hello,, ,world,!',
     ])
     expect(
       getTextMarks(editorRef.current?.getSnapshot().context.value, 'Hello'),
@@ -111,8 +108,7 @@ describe('event.annotation', () => {
     })
 
     expect(getTersePt(editorRef.current?.getSnapshot().context.value)).toEqual([
-      'Hello',
-      ', world!',
+      'Hello,, world!',
     ])
     expect(
       getTextMarks(editorRef.current?.getSnapshot().context.value, 'Hello'),

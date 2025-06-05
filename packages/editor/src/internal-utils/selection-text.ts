@@ -35,10 +35,6 @@ export function getSelectionText(
       continue
     }
 
-    if (text.length > 0) {
-      text.push('|')
-    }
-
     if (isPortableTextBlock(block)) {
       for (const child of block.children) {
         if (isPortableTextSpan(child)) {

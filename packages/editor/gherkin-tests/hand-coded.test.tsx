@@ -241,7 +241,6 @@ describe('Feature: Range Decorations', () => {
 
     await expectText([
       '123 Hello there world',
-      '|',
       "It's a beautiful day on planet earth",
     ])
 

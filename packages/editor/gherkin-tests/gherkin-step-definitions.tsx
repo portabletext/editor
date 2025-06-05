@@ -1,4 +1,3 @@
-import {isPortableTextBlock} from '@portabletext/toolkit'
 import type {PortableTextBlock} from '@sanity/types'
 import {page, userEvent, type Locator} from '@vitest/browser/context'
 import {isEqual} from 'lodash'

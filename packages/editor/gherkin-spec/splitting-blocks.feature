@@ -81,21 +81,21 @@ Feature: Splitting Blocks
     When "h1" is toggled
     And the caret is put before "foo"
     And "{Enter}" is pressed
-    Then the text is "|h1:,foo"
+    Then the text is "|h1:foo"
 
   Scenario: Splitting styled block in the middle
     Given the text "foo" in block "b1"
     When "h1" is toggled
     And the caret is put after "fo"
     And "{Enter}" is pressed
-    Then the text is "h1:,fo|h1:,o"
+    Then the text is "h1:fo|h1:o"
     And "fo" is in block "b1"
 
   Scenario: Splitting styled block at the end
     Given the text "foo" in block "b1"
     When "h1" is toggled
     And "{Enter}" is pressed
-    Then the text is "h1:,foo|"
+    Then the text is "h1:foo|"
     And "foo" is in block "b1"
 
   Scenario: Soft-splitting styled block at the beginning
@@ -103,20 +103,20 @@ Feature: Splitting Blocks
     When "h1" is toggled
     And the caret is put before "foo"
     And "{Shift>}{Enter}{/Shift}" is pressed
-    Then the text is "h1:,\nfoo"
+    Then the text is "h1:\nfoo"
 
   Scenario: Soft-splitting styled block in the middle
     Given the text "foo"
     When "h1" is toggled
     And the caret is put after "fo"
     And "{Shift>}{Enter}{/Shift}" is pressed
-    Then the text is "h1:,fo\no"
+    Then the text is "h1:fo\no"
 
   Scenario: Soft-splitting styled block at the end
     Given the text "foo"
     When "h1" is toggled
     And "{Shift>}{Enter}{/Shift}" is pressed
-    Then the text is "h1:,foo\n"
+    Then the text is "h1:foo\n"
 
   Scenario: Splitting decorated styled block at the beginning
     Given a block at "auto" selected at the "start"
@@ -139,7 +139,7 @@ Feature: Splitting Blocks
       ```
     When "{Enter}" is pressed
     And "new" is typed
-    Then the text is "|h1:,newfoo, bar baz"
+    Then the text is "|h1:newfoo, bar baz"
     And "newfoo" has marks "strong"
 
   Scenario Outline: Splitting decorated styled block in the middle
@@ -152,14 +152,14 @@ Feature: Splitting Blocks
     Then the text is <new text>
 
     Examples:
-      | decorated | position      | new text                    |
-      | "foo"     | after "foo"   | "h1:,foo\|h1:,new bar baz"  |
-      | "bar"     | after "foo "  | "h1:,foo \|h1:,newbar, baz" |
-      | "bar"     | before "bar"  | "h1:,foo \|h1:,newbar, baz" |
-      | "bar"     | after "bar"   | "h1:,foo ,bar\|h1:,new baz" |
-      | "bar"     | before " baz" | "h1:,foo ,bar\|h1:,new baz" |
-      | "baz"     | before "baz"  | "h1:,foo bar \|h1:,newbaz"  |
-      | "baz"     | after "bar "  | "h1:,foo bar \|h1:,newbaz"  |
+      | decorated | position      | new text                  |
+      | "foo"     | after "foo"   | "h1:foo\|h1:new bar baz"  |
+      | "bar"     | after "foo "  | "h1:foo \|h1:newbar, baz" |
+      | "bar"     | before "bar"  | "h1:foo \|h1:newbar, baz" |
+      | "bar"     | after "bar"   | "h1:foo ,bar\|h1:new baz" |
+      | "bar"     | before " baz" | "h1:foo ,bar\|h1:new baz" |
+      | "baz"     | before "baz"  | "h1:foo bar \|h1:newbaz"  |
+      | "baz"     | after "bar "  | "h1:foo bar \|h1:newbaz"  |
 
   Scenario: Splitting decorated styled block at the end
     Given the text "foo bar baz"
@@ -168,7 +168,7 @@ Feature: Splitting Blocks
     And the caret is put after "baz"
     And "{Enter}" is pressed
     And "new" is typed
-    Then the text is "h1:,foo bar ,baz|new"
+    Then the text is "h1:foo bar ,baz|new"
     And "new" has no marks
 
   Scenario Outline: Splitting block with an expanded selection
