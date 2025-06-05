@@ -48,11 +48,25 @@ export const stepDefinitions = [
     })
   }),
 
-  Given('the text {string}', async (context: Context, text: string) => {
-    if (text.length > 0) {
-      await userEvent.type(context.editor.locator, text)
-    }
-  }),
+  Given(
+    'the text {terse-pt}',
+    (context: Context, tersePt: Parameter['tersePt']) => {
+      const blocks = parseTersePt(
+        {
+          keyGenerator: context.editor.snapshot().context.keyGenerator,
+          schema: context.editor.snapshot().context.schema,
+        },
+        tersePt,
+      )
+
+      context.editor.ref.current.send({
+        type: 'insert.blocks',
+        blocks,
+        placement: 'auto',
+        select: 'end',
+      })
+    },
+  ),
 
   /**
    * Block steps
@@ -122,8 +136,8 @@ export const stepDefinitions = [
   /**
    * Inline object steps
    */
-  Given(
-    'a(n) {inline-object}',
+  When(
+    'a(n) {inline-object} is inserted',
     (context: Context, inlineObject: Parameter['inlineObject']) => {
       context.editor.ref.current.send({
         type: 'insert.inline object',
@@ -240,6 +254,8 @@ export const stepDefinitions = [
       await vi.waitFor(() => {
         const selection = getSelectionAfterText(context.editor.value(), text)
         expect(selection).not.toBeNull()
+        // console.log('context.editor.selection()', context.editor.selection())
+        // console.log('selection', selection)
         expect(context.editor.selection()).toEqual(selection)
       })
     },
