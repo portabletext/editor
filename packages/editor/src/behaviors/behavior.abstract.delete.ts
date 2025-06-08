@@ -80,7 +80,6 @@ export const abstractDeleteBehaviors = [
         beta: {
           activeAnnotations: [],
           activeDecorators: [],
-          hasTag: () => false,
           internalDrag: undefined,
         },
         context: {
