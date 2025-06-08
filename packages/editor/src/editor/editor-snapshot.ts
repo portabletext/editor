@@ -3,7 +3,6 @@ import type {Converter} from '../converters/converter.types'
 import type {EventPosition} from '../internal-utils/event-position'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
-import type {HasTag} from './editor-machine'
 import type {EditorSchema} from './editor-schema'
 import {getActiveAnnotations} from './get-active-annotations'
 import {getActiveDecorators} from './get-active-decorators'
@@ -32,7 +31,6 @@ export type EditorSnapshot = {
   beta: {
     activeAnnotations: Array<string>
     activeDecorators: Array<string>
-    hasTag: HasTag
     internalDrag:
       | {
           origin: Pick<EventPosition, 'selection'>
@@ -47,7 +45,6 @@ export function createEditorSnapshot({
   keyGenerator,
   readOnly,
   schema,
-  hasTag,
   internalDrag,
 }: {
   converters: Array<Converter>
@@ -55,7 +52,6 @@ export function createEditorSnapshot({
   keyGenerator: () => string
   readOnly: boolean
   schema: EditorSchema
-  hasTag: HasTag
   internalDrag:
     | {
         origin: Pick<EventPosition, 'selection'>
@@ -91,7 +87,6 @@ export function createEditorSnapshot({
         markState: editor.markState,
         schema,
       }),
-      hasTag,
       internalDrag,
     },
   } satisfies EditorSnapshot

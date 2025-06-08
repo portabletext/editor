@@ -41,7 +41,7 @@ export function createConverterTextPlain(
                   return child.text
                 }
 
-                return snapshot.beta.hasTag('dragging internally')
+                return snapshot.beta.internalDrag
                   ? `[${
                       snapshot.context.schema.inlineObjects.find(
                         (inlineObjectType) =>
@@ -53,7 +53,7 @@ export function createConverterTextPlain(
               .join('')
           }
 
-          return snapshot.beta.hasTag('dragging internally')
+          return snapshot.beta.internalDrag
             ? `[${
                 snapshot.context.schema.blockObjects.find(
                   (blockObjectType) => blockObjectType.name === block._type,

@@ -86,7 +86,6 @@ export function getEditorSnapshot({
         markState: slateEditorInstance.markState,
         schema: editorActorSnapshot.context.schema,
       }),
-      hasTag: (tag) => editorActorSnapshot.hasTag(tag),
       internalDrag: editorActorSnapshot.context.internalDrag,
     },
   }

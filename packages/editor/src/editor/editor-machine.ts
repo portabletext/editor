@@ -68,7 +68,6 @@ type InternalPatchEvent = NamespaceEvent<PatchEvent, 'internal'> & {
  * @internal
  */
 export type EditorActor = ActorRefFrom<typeof editorMachine>
-export type HasTag = ReturnType<EditorActor['getSnapshot']>['hasTag']
 
 /**
  * @internal
@@ -274,7 +273,6 @@ export const editorMachine = setup({
               keyGenerator: context.keyGenerator,
               readOnly: self.getSnapshot().matches({'edit mode': 'read only'}),
               schema: context.schema,
-              hasTag: (tag) => self.getSnapshot().hasTag(tag),
               internalDrag: context.internalDrag,
             }),
           nativeEvent: event.nativeEvent,
