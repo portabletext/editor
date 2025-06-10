@@ -111,7 +111,6 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
       beta: {
         activeAnnotations: [],
         activeDecorators: [],
-        internalDrag: undefined,
       },
       context: {
         converters: [],

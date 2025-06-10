@@ -12,9 +12,7 @@ export function createConverterTextHtml(
   return defineConverter({
     mimeType: 'text/html',
     serialize: ({snapshot, event}) => {
-      const selection =
-        snapshot.beta.internalDrag?.origin.selection ??
-        snapshot.context.selection
+      const selection = snapshot.context.selection
 
       if (!selection) {
         return {

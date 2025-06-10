@@ -11,9 +11,7 @@ export function createConverterTextPlain(
   return defineConverter({
     mimeType: 'text/plain',
     serialize: ({snapshot, event}) => {
-      const selection =
-        snapshot.beta.internalDrag?.origin.selection ??
-        snapshot.context.selection
+      const selection = snapshot.context.selection
 
       if (!selection) {
         return {
@@ -41,7 +39,7 @@ export function createConverterTextPlain(
                   return child.text
                 }
 
-                return snapshot.beta.internalDrag
+                return event.originEvent === 'drag.dragstart'
                   ? `[${
                       snapshot.context.schema.inlineObjects.find(
                         (inlineObjectType) =>
@@ -53,7 +51,7 @@ export function createConverterTextPlain(
               .join('')
           }
 
-          return snapshot.beta.internalDrag
+          return event.originEvent === 'drag.dragstart'
             ? `[${
                 snapshot.context.schema.blockObjects.find(
                   (blockObjectType) => blockObjectType.name === block._type,

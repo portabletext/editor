@@ -3,6 +3,7 @@ import type {EditorSnapshot} from '../editor/editor-snapshot'
 import {withApplyingBehaviorOperations} from '../editor/with-applying-behavior-operations'
 import {withUndoStep} from '../editor/with-undo-step'
 import {debugWithName} from '../internal-utils/debug'
+import {createEditorDom} from '../internal-utils/selection-elements'
 import {performOperation} from '../operations/behavior.operations'
 import type {PortableTextSlateEditor} from '../types/editor'
 import {abstractBehaviors} from './behavior.abstract'
@@ -38,6 +39,7 @@ export function performEvent({
   schema,
   getSnapshot,
   nativeEvent,
+  sendBack,
 }: {
   mode: 'raise' | 'execute' | 'forward'
   behaviors: Array<Behavior>
@@ -52,6 +54,7 @@ export function performEvent({
         preventDefault: () => void
       }
     | undefined
+  sendBack: (event: {type: 'set drag ghost'; ghost: HTMLElement}) => void
 }) {
   debug(`(${mode}:${eventCategory(event)})`, JSON.stringify(event, null, 2))
 
@@ -135,6 +138,7 @@ export function performEvent({
         eventBehavior.guard({
           snapshot: guardSnapshot,
           event,
+          dom: createEditorDom(sendBack, editor),
         })
     } catch (error) {
       console.error(
@@ -162,6 +166,7 @@ export function performEvent({
           {
             snapshot: actionsSnapshot,
             event,
+            dom: createEditorDom(sendBack, editor),
           },
           shouldRun,
         )
@@ -215,6 +220,7 @@ export function performEvent({
                 schema,
                 getSnapshot,
                 nativeEvent,
+                sendBack,
               })
 
               continue
@@ -233,6 +239,7 @@ export function performEvent({
                 schema,
                 getSnapshot,
                 nativeEvent,
+                sendBack,
               })
 
               continue
@@ -252,6 +259,7 @@ export function performEvent({
               schema,
               getSnapshot,
               nativeEvent: undefined,
+              sendBack,
             })
           }
         })
@@ -291,6 +299,7 @@ export function performEvent({
             schema,
             getSnapshot,
             nativeEvent,
+            sendBack,
           })
 
           continue
@@ -309,6 +318,7 @@ export function performEvent({
             schema,
             getSnapshot,
             nativeEvent,
+            sendBack,
           })
 
           continue
