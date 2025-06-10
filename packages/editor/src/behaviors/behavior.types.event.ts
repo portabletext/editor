@@ -463,6 +463,8 @@ type DragBehaviorEvent =
   | {
       type: StrictExtract<NativeBehaviorEventType, 'drag.dragstart'>
       originEvent: {
+        clientX: number
+        clientY: number
         dataTransfer: DataTransfer
       }
       position: Pick<EventPosition, 'selection'>
@@ -491,6 +493,7 @@ type DragBehaviorEvent =
       originEvent: {
         dataTransfer: DataTransfer
       }
+      dragOrigin?: Pick<EventPosition, 'selection'>
       position: EventPosition
     }
   | {
@@ -498,6 +501,7 @@ type DragBehaviorEvent =
       originEvent: {
         dataTransfer: DataTransfer
       }
+      dragOrigin?: Pick<EventPosition, 'selection'>
       position: EventPosition
     }
   | {

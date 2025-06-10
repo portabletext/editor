@@ -115,9 +115,13 @@ export type InternalEditorEvent =
   | MutationEvent
   | InternalPatchEvent
   | {
+      type: 'set drag ghost'
+      ghost: HTMLElement
+    }
+  | {
       type: 'dragstart'
-      origin: Pick<EventPosition, 'selection'>
       ghost?: HTMLElement
+      origin: Pick<EventPosition, 'selection'>
     }
   | {type: 'dragend'}
   | {type: 'drop'}
@@ -148,9 +152,9 @@ export const editorMachine = setup({
       selection: EditorSelection
       initialValue: Array<PortableTextBlock> | undefined
       internalDrag?: {
-        ghost?: HTMLElement
         origin: Pick<EventPosition, 'selection'>
       }
+      dragGhost?: HTMLElement
       slateEditor?: PortableTextSlateEditor
     },
     events: {} as InternalEditorEvent,
@@ -273,9 +277,9 @@ export const editorMachine = setup({
               keyGenerator: context.keyGenerator,
               readOnly: self.getSnapshot().matches({'edit mode': 'read only'}),
               schema: context.schema,
-              internalDrag: context.internalDrag,
             }),
           nativeEvent: event.nativeEvent,
+          sendBack: (event) => self.send(event),
         })
       } catch (error) {
         console.error(
@@ -321,6 +325,9 @@ export const editorMachine = setup({
         assign({selection: ({event}) => event.selection}),
         emit(({event}) => ({...event, type: 'selection'})),
       ],
+    },
+    'set drag ghost': {
+      actions: assign({dragGhost: ({event}) => event.ghost}),
     },
   },
   type: 'parallel',
@@ -427,7 +434,6 @@ export const editorMachine = setup({
                   actions: [
                     assign({
                       internalDrag: ({event}) => ({
-                        ghost: event.ghost,
                         origin: event.origin,
                       }),
                     }),
@@ -495,20 +501,21 @@ export const editorMachine = setup({
                   debug('exit: edit mode->editable->dragging internally')
                 },
                 ({context}) => {
-                  if (context.internalDrag?.ghost) {
+                  if (context.dragGhost) {
                     try {
-                      context.internalDrag.ghost.parentNode?.removeChild(
-                        context.internalDrag.ghost,
+                      context.dragGhost.parentNode?.removeChild(
+                        context.dragGhost,
                       )
                     } catch (error) {
                       console.error(
                         new Error(
-                          `Removing the internal drag ghost failed due to: ${error.message}`,
+                          `Removing the drag ghost failed due to: ${error.message}`,
                         ),
                       )
                     }
                   }
                 },
+                assign({dragGhost: undefined}),
                 assign({internalDrag: undefined}),
               ],
               tags: ['dragging internally'],

@@ -19,7 +19,6 @@ export function createTestSnapshot(snapshot: {
     beta: {
       activeAnnotations: snapshot.beta?.activeAnnotations ?? [],
       activeDecorators: snapshot.beta?.activeDecorators ?? [],
-      internalDrag: undefined,
     },
   }
 }

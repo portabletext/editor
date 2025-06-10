@@ -23,18 +23,14 @@ import {
   type RenderElementProps,
   type RenderLeafProps,
 } from 'slate-react'
-import {getCompoundClientRect} from '../internal-utils/compound-client-rect'
 import {debugWithName} from '../internal-utils/debug'
-import {getDragSelection} from '../internal-utils/drag-selection'
 import {getEventPosition} from '../internal-utils/event-position'
 import {parseBlocks} from '../internal-utils/parse-blocks'
 import {toSlateRange} from '../internal-utils/ranges'
 import {normalizeSelection} from '../internal-utils/selection'
-import {getSelectionDomNodes} from '../internal-utils/selection-elements'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {fromSlateValue} from '../internal-utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
-import * as selectors from '../selectors'
 import type {
   EditorSelection,
   OnCopyFn,
@@ -50,13 +46,10 @@ import type {
   ScrollSelectionIntoViewFunction,
 } from '../types/editor'
 import type {HotkeyOptions} from '../types/options'
-import {isSelectionCollapsed} from '../utils'
-import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
 import {RenderElement} from './components/render-element'
 import {RenderLeaf} from './components/render-leaf'
 import {RenderText, type RenderTextProps} from './components/render-text'
 import {EditorActorContext} from './editor-actor-context'
-import {getEditorSnapshot} from './editor-selector'
 import {usePortableTextEditor} from './hooks/usePortableTextEditor'
 import {createWithHotkeys} from './plugins/createWithHotKeys'
 import {PortableTextEditor} from './PortableTextEditor'
@@ -811,131 +804,9 @@ export const PortableTextEditable = forwardRef<
         return
       }
 
-      const snapshot = getEditorSnapshot({
-        editorActorSnapshot: editorActor.getSnapshot(),
-        slateEditorInstance: slateEditor,
-      })
-      const dragSelection = getDragSelection({
-        eventSelection: position.selection,
-        snapshot,
-      })
-
-      const selectingEntireBlocks = selectors.isSelectingEntireBlocks({
-        ...snapshot,
-        context: {
-          ...snapshot.context,
-          selection: dragSelection,
-        },
-      })
-
-      const dragGhost = document.createElement('div')
-
-      const draggedDomNodes = getSelectionDomNodes({
-        snapshot: {
-          ...snapshot,
-          context: {
-            ...snapshot.context,
-            selection: dragSelection,
-          },
-        },
-        slateEditor,
-      })
-
-      if (selectingEntireBlocks) {
-        // Clone the DOM Nodes so they won't be visually clipped by scroll-containers etc.
-        const clonedBlockNodes = draggedDomNodes.blockNodes.map((node) =>
-          node.cloneNode(true),
-        )
-
-        for (const block of clonedBlockNodes) {
-          if (block instanceof HTMLElement) {
-            block.style.position = 'relative'
-          }
-          dragGhost.appendChild(block)
-        }
-
-        // A custom drag ghost element can be configured using this data attribute
-        const customGhost = dragGhost.querySelector(
-          '[data-pt-drag-ghost-element]',
-        )
-        if (customGhost) {
-          dragGhost.replaceChildren(customGhost)
-        }
-
-        // Setting the `data-dragged` attribute so the consumer can style the element while it’s dragged
-        dragGhost.setAttribute('data-dragged', '')
-
-        dragGhost.style.position = 'absolute'
-        dragGhost.style.left = '-99999px'
-        dragGhost.style.boxSizing = 'border-box'
-        document.body.appendChild(dragGhost)
-
-        if (customGhost) {
-          const customGhostRect = customGhost.getBoundingClientRect()
-          const x = event.clientX - customGhostRect.left
-          const y = event.clientY - customGhostRect.top
-          dragGhost.style.width = `${customGhostRect.width}px`
-          dragGhost.style.height = `${customGhostRect.height}px`
-          event.dataTransfer.setDragImage(dragGhost, x, y)
-        } else {
-          const blocksDomRect = getCompoundClientRect(
-            draggedDomNodes.blockNodes,
-          )
-          const x = event.clientX - blocksDomRect.left
-          const y = event.clientY - blocksDomRect.top
-          dragGhost.style.width = `${blocksDomRect.width}px`
-          dragGhost.style.height = `${blocksDomRect.height}px`
-          event.dataTransfer.setDragImage(dragGhost, x, y)
-        }
-      } else {
-        const clonedChildNodes = draggedDomNodes.childNodes.map((node) =>
-          node.cloneNode(true),
-        )
-
-        for (const child of clonedChildNodes) {
-          dragGhost.appendChild(child)
-        }
-
-        dragGhost.style.position = 'absolute'
-        dragGhost.style.left = '-99999px'
-        dragGhost.style.boxSizing = 'border-box'
-        document.body.appendChild(dragGhost)
-
-        const childrenDomRect = getCompoundClientRect(
-          draggedDomNodes.childNodes,
-        )
-        const x = event.clientX - childrenDomRect.left
-        const y = event.clientY - childrenDomRect.top
-        dragGhost.style.width = `${childrenDomRect.width}px`
-        dragGhost.style.height = `${childrenDomRect.height}px`
-
-        event.dataTransfer.setDragImage(dragGhost, x, y)
-      }
-
-      // Select drag selection
-      // If the selection is expanded then we just select the end of the
-      // selection
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'select',
-          at: isSelectionCollapsed(dragSelection)
-            ? dragSelection
-            : {
-                anchor: getSelectionEndPoint(dragSelection),
-                focus: getSelectionEndPoint(dragSelection),
-                backward: false,
-              },
-        },
-        editor: slateEditor,
-      })
-
       editorActor.send({
         type: 'dragstart',
-        origin: {
-          selection: dragSelection,
-        },
-        ghost: dragGhost,
+        origin: position,
       })
 
       editorActor.send({
@@ -943,11 +814,11 @@ export const PortableTextEditable = forwardRef<
         behaviorEvent: {
           type: 'drag.dragstart',
           originEvent: {
+            clientX: event.clientX,
+            clientY: event.clientY,
             dataTransfer: event.dataTransfer,
           },
-          position: {
-            selection: dragSelection,
-          },
+          position,
         },
         editor: slateEditor,
       })
@@ -1079,6 +950,7 @@ export const PortableTextEditable = forwardRef<
           originEvent: {
             dataTransfer: event.dataTransfer,
           },
+          dragOrigin: editorActor.getSnapshot().context.internalDrag?.origin,
           position,
         },
         editor: slateEditor,
@@ -1117,6 +989,7 @@ export const PortableTextEditable = forwardRef<
           originEvent: {
             dataTransfer: event.dataTransfer,
           },
+          dragOrigin: editorActor.getSnapshot().context.internalDrag?.origin,
           position,
         },
         editor: slateEditor,

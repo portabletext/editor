@@ -1,6 +1,5 @@
 import type {PortableTextBlock} from '@sanity/types'
 import type {Converter} from '../converters/converter.types'
-import type {EventPosition} from '../internal-utils/event-position'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
@@ -31,11 +30,6 @@ export type EditorSnapshot = {
   beta: {
     activeAnnotations: Array<string>
     activeDecorators: Array<string>
-    internalDrag:
-      | {
-          origin: Pick<EventPosition, 'selection'>
-        }
-      | undefined
   }
 }
 
@@ -45,18 +39,12 @@ export function createEditorSnapshot({
   keyGenerator,
   readOnly,
   schema,
-  internalDrag,
 }: {
   converters: Array<Converter>
   editor: PortableTextSlateEditor
   keyGenerator: () => string
   readOnly: boolean
   schema: EditorSchema
-  internalDrag:
-    | {
-        origin: Pick<EventPosition, 'selection'>
-      }
-    | undefined
 }) {
   const selection = editor.selection
     ? slateRangeToSelection({
@@ -87,7 +75,6 @@ export function createEditorSnapshot({
         markState: editor.markState,
         schema,
       }),
-      internalDrag,
     },
   } satisfies EditorSnapshot
 }

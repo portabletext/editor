@@ -1,4 +1,5 @@
 import type {EditorSnapshot} from '../editor/editor-snapshot'
+import type {EditorDom} from '../internal-utils/selection-elements'
 import type {PickFromUnion} from '../type-utils'
 import type {
   CustomBehaviorEvent,
@@ -70,6 +71,7 @@ export type BehaviorActionSet<TBehaviorEvent, TGuardResponse> = (
   payload: {
     snapshot: EditorSnapshot
     event: TBehaviorEvent
+    dom: EditorDom
   },
   guardResponse: TGuardResponse,
 ) => Array<BehaviorAction>

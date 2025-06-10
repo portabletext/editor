@@ -5,8 +5,7 @@ import {defineConverter} from './converter.types'
 export const converterPortableText = defineConverter({
   mimeType: 'application/x-portable-text',
   serialize: ({snapshot, event}) => {
-    const selection =
-      snapshot.beta.internalDrag?.origin.selection ?? snapshot.context.selection
+    const selection = snapshot.context.selection
 
     if (!selection) {
       return {
@@ -57,11 +56,7 @@ export const converterPortableText = defineConverter({
         context: snapshot.context,
         block,
         options: {
-          /**
-           * If we are dragging internally then we would like to keep the
-           * dropped portable text as is.
-           */
-          refreshKeys: !snapshot.beta.internalDrag,
+          refreshKeys: true,
           validateFields: false,
         },
       })

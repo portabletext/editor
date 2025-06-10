@@ -1,3 +1,4 @@
+import {getDragSelection} from '../internal-utils/drag-selection'
 import type {EventPositionBlock} from '../internal-utils/event-position'
 import {corePriority} from '../priority/priority.core'
 import {createEditorPriority} from '../priority/priority.types'
@@ -31,17 +32,22 @@ export function createCoreBlockElementBehaviorsConfig({
             return false
           }
 
-          const dragOrigin = snapshot.beta.internalDrag?.origin
+          const dragOrigin = event.dragOrigin
 
           if (!dragOrigin) {
             return false
           }
 
+          const dragSelection = getDragSelection({
+            eventSelection: dragOrigin.selection,
+            snapshot,
+          })
+
           const draggedBlocks = selectors.getSelectedBlocks({
             ...snapshot,
             context: {
               ...snapshot.context,
-              selection: dragOrigin.selection,
+              selection: dragSelection,
             },
           })
 
@@ -55,7 +61,7 @@ export function createCoreBlockElementBehaviorsConfig({
             ...snapshot,
             context: {
               ...snapshot.context,
-              selection: dragOrigin.selection,
+              selection: dragSelection,
             },
           })
 
