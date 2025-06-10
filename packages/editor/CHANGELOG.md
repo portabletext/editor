@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.52.0](https://github.com/portabletext/editor/compare/editor-v1.51.0...editor-v1.52.0) (2025-06-10)
+
+
+### Features
+
+* **behaviors:** improve dnd configurability and add new `dom` API ([2731c3f](https://github.com/portabletext/editor/commit/2731c3f45108d103d13e2f1b5b4189d1a62d92a0))
+
 ## [1.51.0](https://github.com/portabletext/editor/compare/editor-v1.50.8...editor-v1.51.0) (2025-06-10)
 
 
