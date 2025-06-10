@@ -35,79 +35,93 @@ export function getEventPosition({
     return undefined
   }
 
-  const node = getEventNode({slateEditor, event})
+  const eventNode = getEventNode({slateEditor, event})
 
-  if (!node) {
+  if (!eventNode) {
     return undefined
   }
 
-  const block = getNodeBlock({
+  const eventBlock = getNodeBlock({
     editor: slateEditor,
     schema: editorActor.getSnapshot().context.schema,
-    node,
+    node: eventNode,
   })
-
-  const positionBlock = getEventPositionBlock({node, slateEditor, event})
-  const selection = getEventSelection({
+  const eventPositionBlock = getEventPositionBlock({
+    node: eventNode,
+    slateEditor,
+    event,
+  })
+  const eventSelection = getEventSelection({
     schema: editorActor.getSnapshot().context.schema,
     slateEditor,
     event,
   })
 
-  if (block && positionBlock && !selection && !Editor.isEditor(node)) {
+  if (
+    eventBlock &&
+    eventPositionBlock &&
+    !eventSelection &&
+    !Editor.isEditor(eventNode)
+  ) {
+    // If we for some reason can't find the event selection, then we default to
+    // selecting the entire block that the event originates from.
     return {
-      block: positionBlock,
+      block: eventPositionBlock,
       isEditor: false,
       selection: {
         anchor: utils.getBlockStartPoint({
           context: editorActor.getSnapshot().context,
           block: {
-            node: block,
-            path: [{_key: block._key}],
+            node: eventBlock,
+            path: [{_key: eventBlock._key}],
           },
         }),
         focus: utils.getBlockEndPoint({
           context: editorActor.getSnapshot().context,
           block: {
-            node: block,
-            path: [{_key: block._key}],
+            node: eventBlock,
+            path: [{_key: eventBlock._key}],
           },
         }),
       },
     }
   }
 
-  if (!positionBlock || !selection) {
+  if (!eventPositionBlock || !eventSelection) {
     return undefined
   }
 
-  const focusBlockKey = getBlockKeyFromSelectionPoint(selection.focus)
+  const eventSelectionFocusBlockKey = getBlockKeyFromSelectionPoint(
+    eventSelection.focus,
+  )
 
-  if (focusBlockKey === undefined) {
+  if (eventSelectionFocusBlockKey === undefined) {
     return undefined
   }
 
   if (
-    utils.isSelectionCollapsed(selection) &&
-    block &&
-    focusBlockKey !== block._key
+    utils.isSelectionCollapsed(eventSelection) &&
+    eventBlock &&
+    eventSelectionFocusBlockKey !== eventBlock._key
   ) {
+    // If the event block and event selection somehow don't match, then the
+    // event block takes precedence.
     return {
-      block: positionBlock,
+      block: eventPositionBlock,
       isEditor: false,
       selection: {
         anchor: utils.getBlockStartPoint({
           context: editorActor.getSnapshot().context,
           block: {
-            node: block,
-            path: [{_key: block._key}],
+            node: eventBlock,
+            path: [{_key: eventBlock._key}],
           },
         }),
         focus: utils.getBlockEndPoint({
           context: editorActor.getSnapshot().context,
           block: {
-            node: block,
-            path: [{_key: block._key}],
+            node: eventBlock,
+            path: [{_key: eventBlock._key}],
           },
         }),
       },
@@ -115,9 +129,9 @@ export function getEventPosition({
   }
 
   return {
-    block: positionBlock,
-    isEditor: Editor.isEditor(node),
-    selection,
+    block: eventPositionBlock,
+    isEditor: Editor.isEditor(eventNode),
+    selection: eventSelection,
   }
 }
 
