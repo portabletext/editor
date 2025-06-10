@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.51.0](https://github.com/portabletext/editor/compare/editor-v1.50.8...editor-v1.51.0) (2025-06-10)
+
+
+### Features
+
+* **`insert.blocks`:** support `select` option ([c9d5735](https://github.com/portabletext/editor/commit/c9d5735a42d60e1a541f231e3c3fa7b474cd6fb7))
+
+
+### Bug Fixes
+
+* **`insert.block`:** issue with splitting text blocks after Slate upgrade ([2ef05b1](https://github.com/portabletext/editor/commit/2ef05b17a7025edb21f8c99bd2ac10f39349b33e))
+* **deps:** update dependency slate to v0.115.1 ([5357d15](https://github.com/portabletext/editor/commit/5357d154f5148bd859357c82ee74a60d56785988))
+* **deps:** update dependency use-effect-event to v2 ([#1222](https://github.com/portabletext/editor/issues/1222)) ([63e4551](https://github.com/portabletext/editor/commit/63e4551a8575ece56b8be41de28812abd1a70b0b))
+* **deps:** update sanity monorepo to ^3.91.0 ([87993d6](https://github.com/portabletext/editor/commit/87993d620967cc6dba5e75e284fd7393652a3733))
+* **deps:** Update xstate ([7a6875e](https://github.com/portabletext/editor/commit/7a6875ebe8cb9880b775eff3a2148196709ecf84))
+* remove `EditorSnapshot.beta.hasTag` ([440f110](https://github.com/portabletext/editor/commit/440f110ae516714fa50d8259bedd1298dac78769))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.29
+
 ## [1.50.8](https://github.com/portabletext/editor/compare/editor-v1.50.7...editor-v1.50.8) (2025-05-29)
 
 
