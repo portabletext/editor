@@ -3,7 +3,7 @@ import type {
   PortableTextSpan,
   PortableTextTextBlock,
 } from '@sanity/types'
-import {Transforms, type Element} from 'slate'
+import {Editor, Transforms, type Element} from 'slate'
 import {debugWithName} from '../../internal-utils/debug'
 import {
   isListBlock,
@@ -27,15 +27,31 @@ export function createWithSchemaTypes({
     editor: PortableTextSlateEditor,
   ): PortableTextSlateEditor {
     editor.isTextBlock = (value: unknown): value is PortableTextTextBlock => {
+      if (Editor.isEditor(value)) {
+        return false
+      }
+
       return isTextBlock(editorActor.getSnapshot().context, value)
     }
     editor.isTextSpan = (value: unknown): value is PortableTextSpan => {
+      if (Editor.isEditor(value)) {
+        return false
+      }
+
       return isSpan(editorActor.getSnapshot().context, value)
     }
     editor.isListBlock = (value: unknown): value is PortableTextListBlock => {
+      if (Editor.isEditor(value)) {
+        return false
+      }
+
       return isListBlock(editorActor.getSnapshot().context, value)
     }
     editor.isVoid = (element: Element): boolean => {
+      if (Editor.isEditor(element)) {
+        return false
+      }
+
       return (
         editorActor.getSnapshot().context.schema.block.name !== element._type &&
         (editorActor
@@ -49,6 +65,10 @@ export function createWithSchemaTypes({
       )
     }
     editor.isInline = (element: Element): boolean => {
+      if (Editor.isEditor(element)) {
+        return false
+      }
+
       const inlineSchemaTypes = editorActor
         .getSnapshot()
         .context.schema.inlineObjects.map((obj) => obj.name)
