@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.52.2](https://github.com/portabletext/editor/compare/editor-v1.52.1...editor-v1.52.2) (2025-06-11)
+
+
+### Bug Fixes
+
+* **`delete.block`:** guard against an empty editor state ([a29b164](https://github.com/portabletext/editor/commit/a29b1641d721c6dad44ecbd7979fde7163fcbb99))
+* remove unneeded normalization logic ([1f54f07](https://github.com/portabletext/editor/commit/1f54f077471d0c78eb4f5c7af1f7cf9b0c789273))
+
 ## [1.52.1](https://github.com/portabletext/editor/compare/editor-v1.52.0...editor-v1.52.1) (2025-06-11)
 
 
