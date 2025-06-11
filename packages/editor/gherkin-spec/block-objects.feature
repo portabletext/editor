@@ -70,8 +70,10 @@ Feature: Block Objects
       | "{Delete}"    |
 
   Scenario Outline: Deleting an image with text above
-    Given the text "foo|[image]"
-    When <button> is pressed
+    Given the text "foo|[image]|b"
+    When the caret is put after "b"
+    And "{Backspace}" is pressed 2 times
+    And <button> is pressed
     And "bar" is typed
     Then the text is "foobar"
 
