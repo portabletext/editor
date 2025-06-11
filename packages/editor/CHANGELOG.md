@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.52.1](https://github.com/portabletext/editor/compare/editor-v1.52.0...editor-v1.52.1) (2025-06-11)
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^3.92.0 ([8aebf95](https://github.com/portabletext/editor/commit/8aebf95a4dfe6afa16708a56586c39fc7a934029))
+* **perf:** bypass parsing of editor node ([e3b1e17](https://github.com/portabletext/editor/commit/e3b1e17fd0ac74cff4ff330b58c9c61d5f7615a8))
+* **perf:** don't parse during render ([f4e0934](https://github.com/portabletext/editor/commit/f4e09349938fcd85d7b757d83a40ae7c38e59056))
+* **perf:** limit type guard parsing ([1da47f8](https://github.com/portabletext/editor/commit/1da47f8c366fb69774a5671f87bbbe28ee8dadb2))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.30
+
 ## [1.52.0](https://github.com/portabletext/editor/compare/editor-v1.51.0...editor-v1.52.0) (2025-06-10)
 
 
