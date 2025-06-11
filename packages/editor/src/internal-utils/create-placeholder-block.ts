@@ -1,3 +1,4 @@
+import type {PortableTextSpan} from '@sanity/types'
 import type {EditorContext} from '../editor/editor-snapshot'
 
 export function createPlaceholderBlock(
@@ -14,7 +15,7 @@ export function createPlaceholderBlock(
         _key: context.keyGenerator(),
         text: '',
         marks: [],
-      },
+      } as PortableTextSpan,
     ],
   }
 }

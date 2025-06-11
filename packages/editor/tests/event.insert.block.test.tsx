@@ -320,14 +320,6 @@ describe('event.insert.block', () => {
         <EditorRefPlugin ref={editorRef} />
         <BehaviorPlugin
           behaviors={[
-            defineBehavior({
-              on: 'insert.block',
-              guard: ({event}) => {
-                event.block
-                return true
-              },
-              actions: [],
-            }),
             defineBehavior<{placement: InsertPlacement; text: string}>({
               on: 'custom.insert',
               actions: [
@@ -339,8 +331,6 @@ describe('event.insert.block', () => {
                   }
 
                   return [
-                    // This produces an intermediate state where the editor is
-                    // empty
                     execute({
                       type: 'delete.block',
                       at: focusBlock.path,
@@ -393,7 +383,7 @@ describe('event.insert.block', () => {
     editorRef.current?.send({type: 'focus'})
     editorRef.current?.send({
       type: 'custom.insert',
-      placement: 'after',
+      placement: 'auto',
       text: 'foo',
     })
 
@@ -419,18 +409,18 @@ describe('event.insert.block', () => {
     editorRef.current?.send({type: 'focus'})
     editorRef.current?.send({
       type: 'custom.insert',
-      placement: 'before',
+      placement: 'auto',
       text: 'bar',
     })
 
     await vi.waitFor(() => {
       expect(editorRef.current?.getSnapshot().context.value).toEqual([
         {
-          _key: 'k4',
+          _key: 'k6',
           _type: 'block',
           children: [
             {
-              _key: 'k5',
+              _key: 'k7',
               _type: 'span',
               marks: [],
               text: 'bar',
@@ -452,11 +442,11 @@ describe('event.insert.block', () => {
     await vi.waitFor(() => {
       expect(editorRef.current?.getSnapshot().context.value).toEqual([
         {
-          _key: 'k6',
+          _key: 'k10',
           _type: 'block',
           children: [
             {
-              _key: 'k7',
+              _key: 'k11',
               _type: 'span',
               marks: [],
               text: 'baz',
