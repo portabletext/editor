@@ -97,13 +97,19 @@ export function isTextBlock(
   context: Pick<EditorContext, 'schema'>,
   block: unknown,
 ): block is PortableTextTextBlock {
-  return (
-    parseTextBlock({
-      block,
-      context: {schema: context.schema, keyGenerator: () => ''},
-      options: {refreshKeys: false, validateFields: false},
-    }) !== undefined
-  )
+  if (!isTypedObject(block)) {
+    return false
+  }
+
+  if (block._type !== context.schema.block.name) {
+    return false
+  }
+
+  if (!Array.isArray(block.children)) {
+    return false
+  }
+
+  return true
 }
 
 export function parseTextBlock({
@@ -249,14 +255,19 @@ export function isSpan(
   context: Pick<EditorContext, 'schema'>,
   child: unknown,
 ): child is PortableTextSpan {
-  return (
-    parseSpan({
-      span: child,
-      markDefKeyMap: new Map(),
-      context: {schema: context.schema, keyGenerator: () => ''},
-      options: {refreshKeys: false, validateFields: false},
-    }) !== undefined
-  )
+  if (!isTypedObject(child)) {
+    return false
+  }
+
+  if (child._type !== context.schema.span.name) {
+    return false
+  }
+
+  if (typeof child.text !== 'string') {
+    return false
+  }
+
+  return true
 }
 
 export function parseSpan({
