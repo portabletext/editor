@@ -17,7 +17,7 @@ describe('focus', () => {
   test('Scenario: Focusing on an empty editor', async () => {
     const keyGenerator = createTestKeyGenerator()
     const editorRef = React.createRef<Editor>()
-    const onEvent = vi.fn<() => EditorEmittedEvent>()
+    const events: Array<EditorEmittedEvent> = []
 
     render(
       <>
@@ -30,7 +30,11 @@ describe('focus', () => {
           <div data-testid="toolbar">Toolbar</div>
           <EditorRefPlugin ref={editorRef} />
           <PortableTextEditable />
-          <EventListenerPlugin on={onEvent} />
+          <EventListenerPlugin
+            on={(event) => {
+              events.push(event)
+            }}
+          />
         </EditorProvider>
       </>,
     )
@@ -39,63 +43,184 @@ describe('focus', () => {
     const toolbarLocator = page.getByTestId('toolbar')
     await vi.waitFor(() => expect.element(editorLocator).toBeInTheDocument())
     await vi.waitFor(() => expect.element(toolbarLocator).toBeInTheDocument())
+
     await userEvent.click(editorLocator)
 
-    expect(onEvent).toHaveBeenNthCalledWith(1, {
-      type: 'ready',
-    })
-    expect(onEvent).toHaveBeenNthCalledWith(2, {
-      type: 'selection',
-      selection: {
-        anchor: {
-          path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
-          offset: 0,
-        },
-        focus: {
-          path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
-          offset: 0,
-        },
-        backward: false,
+    const initialEvents = [
+      {
+        type: 'ready',
       },
-    })
-    expect(onEvent).toHaveBeenNthCalledWith(
-      3,
       expect.objectContaining({
         type: 'focused',
       }),
-    )
+      {
+        type: 'selection',
+        selection: {
+          anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+          focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+          backward: false,
+        },
+      },
+    ]
+
+    expect(events).toEqual(initialEvents)
 
     await userEvent.click(toolbarLocator)
 
-    expect(onEvent).toHaveBeenNthCalledWith(
-      4,
+    expect(events).toEqual([
+      ...initialEvents,
       expect.objectContaining({
         type: 'blurred',
       }),
-    )
+    ])
 
     await userEvent.click(editorLocator)
 
-    expect(onEvent).toHaveBeenNthCalledWith(
-      5,
-      expect.objectContaining({type: 'focused'}),
-    )
-    expect(onEvent).toHaveBeenNthCalledWith(
-      6,
+    expect(events).toEqual([
+      ...initialEvents,
       expect.objectContaining({
+        type: 'blurred',
+      }),
+      expect.objectContaining({type: 'focused'}),
+      {
+        type: 'selection',
+        selection: {
+          anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+          focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+          backward: false,
+        },
+      },
+    ])
+  })
+
+  test('Scenario: Focusing on a non-empty editor', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const editorRef = React.createRef<Editor>()
+    const events: Array<EditorEmittedEvent> = []
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: fooBlockKey,
+        children: [
+          {
+            _type: 'span',
+            _key: fooSpanKey,
+            text: 'foo',
+            marks: [],
+          },
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: barBlockKey,
+        children: [
+          {
+            _type: 'span',
+            _key: barSpanKey,
+            text: 'b',
+            marks: [],
+          },
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+
+    render(
+      <>
+        <EditorProvider
+          initialConfig={{
+            keyGenerator,
+            schemaDefinition: defineSchema({}),
+            initialValue,
+          }}
+        >
+          <div data-testid="toolbar">Toolbar</div>
+          <EditorRefPlugin ref={editorRef} />
+          <PortableTextEditable />
+          <EventListenerPlugin
+            on={(event) => {
+              events.push(event)
+            }}
+          />
+        </EditorProvider>
+      </>,
+    )
+
+    const editorLocator = page.getByRole('textbox')
+    const barSpanLocator = editorLocator.getByText('b')
+    const toolbarLocator = page.getByTestId('toolbar')
+    await vi.waitFor(() => expect.element(barSpanLocator).toBeInTheDocument())
+    await vi.waitFor(() => expect.element(toolbarLocator).toBeInTheDocument())
+
+    await userEvent.click(barSpanLocator)
+
+    const initialEvents = [
+      {
+        type: 'value changed',
+        value: initialValue,
+      },
+      {
+        type: 'ready',
+      },
+      expect.objectContaining({
+        type: 'focused',
+      }),
+      {
         type: 'selection',
         selection: {
           anchor: {
-            path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+            path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
             offset: 0,
           },
           focus: {
-            path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+            path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
             offset: 0,
           },
           backward: false,
         },
+      },
+    ]
+
+    expect(events).toEqual(initialEvents)
+
+    await userEvent.click(toolbarLocator)
+
+    expect(events).toEqual([
+      ...initialEvents,
+      expect.objectContaining({
+        type: 'blurred',
       }),
-    )
+    ])
+
+    await userEvent.click(editorLocator)
+
+    expect(events).toEqual([
+      ...initialEvents,
+      expect.objectContaining({
+        type: 'blurred',
+      }),
+      expect.objectContaining({type: 'focused'}),
+      {
+        type: 'selection',
+        selection: {
+          anchor: {
+            path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
+            offset: 0,
+          },
+          backward: false,
+        },
+      },
+    ])
   })
 })
