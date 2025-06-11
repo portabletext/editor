@@ -15,7 +15,7 @@ import {
   type MutableRefObject,
   type TextareaHTMLAttributes,
 } from 'react'
-import {Editor, Transforms, type Text} from 'slate'
+import {Transforms, type Text} from 'slate'
 import {
   ReactEditor,
   Editable as SlateEditable,
@@ -52,7 +52,6 @@ import {RenderText, type RenderTextProps} from './components/render-text'
 import {EditorActorContext} from './editor-actor-context'
 import {usePortableTextEditor} from './hooks/usePortableTextEditor'
 import {createWithHotkeys} from './plugins/createWithHotKeys'
-import {PortableTextEditor} from './PortableTextEditor'
 import {
   createDecorate,
   rangeDecorationsMachine,
@@ -532,17 +531,19 @@ export const PortableTextEditable = forwardRef<
       if (onFocus) {
         onFocus(event)
       }
+
       if (!event.isDefaultPrevented()) {
-        const selection = PortableTextEditor.getSelection(portableTextEditor)
-        // Create an editor selection if it does'nt exist
-        if (selection === null) {
-          Transforms.select(slateEditor, Editor.start(slateEditor, []))
-          slateEditor.onChange()
-        }
         relayActor.send({type: 'focused', event})
-        const newSelection = PortableTextEditor.getSelection(portableTextEditor)
-        // If the selection is the same, emit it explicitly here as there is no actual onChange event triggered.
-        if (selection === newSelection) {
+
+        const selection = slateEditor.selection
+          ? slateRangeToSelection({
+              schema: editorActor.getSnapshot().context.schema,
+              editor: slateEditor,
+              range: slateEditor.selection,
+            })
+          : null
+
+        if (selection) {
           editorActor.send({
             type: 'update selection',
             selection,
@@ -550,7 +551,7 @@ export const PortableTextEditable = forwardRef<
         }
       }
     },
-    [editorActor, onFocus, slateEditor, portableTextEditor, relayActor],
+    [editorActor, onFocus, slateEditor, relayActor],
   )
 
   const handleClick = useCallback(
