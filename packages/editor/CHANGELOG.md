@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.52.3](https://github.com/portabletext/editor/compare/editor-v1.52.2...editor-v1.52.3) (2025-06-11)
+
+
+### Bug Fixes
+
+* avoid moving selection to the top after initial focus ([431c0cf](https://github.com/portabletext/editor/commit/431c0cf01a5347ba02f93a636bb1d0f527489f0f))
+
 ## [1.52.2](https://github.com/portabletext/editor/compare/editor-v1.52.1...editor-v1.52.2) (2025-06-11)
 
 
