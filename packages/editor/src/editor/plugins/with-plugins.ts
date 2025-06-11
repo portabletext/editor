@@ -7,7 +7,6 @@ import {createWithMaxBlocks} from './createWithMaxBlocks'
 import {createWithObjectKeys} from './createWithObjectKeys'
 import {createWithPatches} from './createWithPatches'
 import {createWithPlaceholderBlock} from './createWithPlaceholderBlock'
-import {createWithPortableTextBlockStyle} from './createWithPortableTextBlockStyle'
 import {createWithPortableTextMarkModel} from './createWithPortableTextMarkModel'
 import {createWithPortableTextSelections} from './createWithPortableTextSelections'
 import {createWithSchemaTypes} from './createWithSchemaTypes'
@@ -49,8 +48,6 @@ export const withPlugins = <T extends Editor>(
     subscriptions: options.subscriptions,
   })
   const withPortableTextMarkModel = createWithPortableTextMarkModel(editorActor)
-  const withPortableTextBlockStyle =
-    createWithPortableTextBlockStyle(editorActor)
 
   const withPlaceholderBlock = createWithPlaceholderBlock(editorActor)
 
@@ -66,19 +63,17 @@ export const withPlugins = <T extends Editor>(
     withSchemaTypes(
       withObjectKeys(
         withPortableTextMarkModel(
-          withPortableTextBlockStyle(
-            withPlaceholderBlock(
-              withUtils(
-                withMaxBlocks(
-                  withUndoRedo(
-                    withPatches(
-                      withPortableTextSelections(
-                        pluginUpdateValue(
+          withPlaceholderBlock(
+            withUtils(
+              withMaxBlocks(
+                withUndoRedo(
+                  withPatches(
+                    withPortableTextSelections(
+                      pluginUpdateValue(
+                        editorActor.getSnapshot().context,
+                        pluginUpdateMarkState(
                           editorActor.getSnapshot().context,
-                          pluginUpdateMarkState(
-                            editorActor.getSnapshot().context,
-                            e,
-                          ),
+                          e,
                         ),
                       ),
                     ),
