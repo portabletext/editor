@@ -83,8 +83,9 @@ Feature: Block Objects
       | "{Delete}"    |
 
   Scenario Outline: Deleting an image with text below
-    Given the text "[image]|foo"
-    When "{ArrowUp}" is pressed
+    Given the text "b|[image]|foo"
+    When the caret is put before "b"
+    And "{Delete}" is pressed 2 times
     And <button> is pressed
     And "bar" is typed
     Then the text is "barfoo"
