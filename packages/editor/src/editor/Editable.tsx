@@ -53,10 +53,7 @@ import {EditorActorContext} from './editor-actor-context'
 import {usePortableTextEditor} from './hooks/usePortableTextEditor'
 import {createWithHotkeys} from './plugins/createWithHotKeys'
 import {PortableTextEditor} from './PortableTextEditor'
-import {
-  createDecorate,
-  rangeDecorationsMachine,
-} from './range-decorations-machine'
+import {rangeDecorationsMachine} from './range-decorations-machine'
 import {RelayActorContext} from './relay-actor-context'
 
 const debug = debugWithName('component:Editable')
@@ -169,10 +166,9 @@ export const PortableTextEditable = forwardRef<
       skipSetup: !editorActor.getSnapshot().matches({setup: 'setting up'}),
     },
   })
-  useSelector(rangeDecorationsActor, (s) => s.context.updateCount)
-  const decorate = useMemo(
-    () => createDecorate(rangeDecorationsActor),
-    [rangeDecorationsActor],
+  const decorate = useSelector(
+    rangeDecorationsActor,
+    (s) => s.context.decorate?.fn,
   )
 
   useEffect(() => {

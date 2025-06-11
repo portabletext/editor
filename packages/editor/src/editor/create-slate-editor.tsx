@@ -37,6 +37,7 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
   KEY_TO_VALUE_ELEMENT.set(instance, {})
   KEY_TO_SLATE_ELEMENT.set(instance, {})
 
+  instance.decoratedRanges = []
   instance.decoratorState = {}
   instance.markState = undefined
   instance.value = [

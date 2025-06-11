@@ -12,7 +12,6 @@ import {
   assign,
   fromCallback,
   setup,
-  type ActorRefFrom,
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
@@ -42,18 +41,17 @@ const slateOperationCallback: CallbackLogicFunction<
   }
 }
 
-type DecoratedRange = BaseRange & {rangeDecoration: RangeDecoration}
+export type DecoratedRange = BaseRange & {rangeDecoration: RangeDecoration}
 
 export const rangeDecorationsMachine = setup({
   types: {
     context: {} as {
-      decoratedRanges: Array<DecoratedRange>
       pendingRangeDecorations: Array<RangeDecoration>
       skipSetup: boolean
       readOnly: boolean
       schema: EditorSchema
       slateEditor: PortableTextSlateEditor
-      updateCount: number
+      decorate: {fn: (nodeEntry: NodeEntry) => Array<BaseRange>}
     },
     input: {} as {
       rangeDecorations: Array<RangeDecoration>
@@ -89,131 +87,126 @@ export const rangeDecorationsMachine = setup({
         return event.rangeDecorations
       },
     }),
-    'set up initial range decorations': assign({
-      decoratedRanges: ({context}) => {
-        const rangeDecorationState: Array<DecoratedRange> = []
+    'set up initial range decorations': ({context}) => {
+      const rangeDecorationState: Array<DecoratedRange> = []
 
-        for (const rangeDecoration of context.pendingRangeDecorations) {
-          const slateRange = toSlateRange(
-            rangeDecoration.selection,
-            context.slateEditor,
-          )
+      for (const rangeDecoration of context.pendingRangeDecorations) {
+        const slateRange = toSlateRange(
+          rangeDecoration.selection,
+          context.slateEditor,
+        )
 
-          if (!Range.isRange(slateRange)) {
-            rangeDecoration.onMoved?.({
-              newSelection: null,
-              rangeDecoration,
-              origin: 'local',
-            })
-            continue
-          }
-
-          rangeDecorationState.push({
+        if (!Range.isRange(slateRange)) {
+          rangeDecoration.onMoved?.({
+            newSelection: null,
             rangeDecoration,
-            ...slateRange,
+            origin: 'local',
+          })
+          continue
+        }
+
+        rangeDecorationState.push({
+          rangeDecoration,
+          ...slateRange,
+        })
+      }
+
+      context.slateEditor.decoratedRanges = rangeDecorationState
+    },
+    'update range decorations': ({context, event}) => {
+      if (event.type !== 'range decorations updated') {
+        return
+      }
+
+      const rangeDecorationState: Array<DecoratedRange> = []
+
+      for (const rangeDecoration of event.rangeDecorations) {
+        const slateRange = toSlateRange(
+          rangeDecoration.selection,
+          context.slateEditor,
+        )
+
+        if (!Range.isRange(slateRange)) {
+          rangeDecoration.onMoved?.({
+            newSelection: null,
+            rangeDecoration,
+            origin: 'local',
+          })
+          continue
+        }
+
+        rangeDecorationState.push({
+          rangeDecoration,
+          ...slateRange,
+        })
+      }
+
+      context.slateEditor.decoratedRanges = rangeDecorationState
+    },
+
+    'move range decorations': ({context, event}) => {
+      if (event.type !== 'slate operation') {
+        return
+      }
+
+      const rangeDecorationState: Array<DecoratedRange> = []
+
+      for (const decoratedRange of context.slateEditor.decoratedRanges) {
+        const slateRange = toSlateRange(
+          decoratedRange.rangeDecoration.selection,
+          context.slateEditor,
+        )
+
+        if (!Range.isRange(slateRange)) {
+          decoratedRange.rangeDecoration.onMoved?.({
+            newSelection: null,
+            rangeDecoration: decoratedRange.rangeDecoration,
+            origin: 'local',
+          })
+          continue
+        }
+
+        let newRange: BaseRange | null | undefined
+
+        newRange = moveRangeByOperation(slateRange, event.operation)
+        if (
+          (newRange && newRange !== slateRange) ||
+          (newRange === null && slateRange)
+        ) {
+          const newRangeSelection = newRange
+            ? slateRangeToSelection({
+                schema: context.schema,
+                editor: context.slateEditor,
+                range: newRange,
+              })
+            : null
+
+          decoratedRange.rangeDecoration.onMoved?.({
+            newSelection: newRangeSelection,
+            rangeDecoration: decoratedRange.rangeDecoration,
+            origin: 'local',
           })
         }
 
-        return rangeDecorationState
-      },
-    }),
-    'update range decorations': assign({
-      decoratedRanges: ({context, event}) => {
-        if (event.type !== 'range decorations updated') {
-          return context.decoratedRanges
-        }
-
-        const rangeDecorationState: Array<DecoratedRange> = []
-
-        for (const rangeDecoration of event.rangeDecorations) {
-          const slateRange = toSlateRange(
-            rangeDecoration.selection,
-            context.slateEditor,
-          )
-
-          if (!Range.isRange(slateRange)) {
-            rangeDecoration.onMoved?.({
-              newSelection: null,
-              rangeDecoration,
-              origin: 'local',
-            })
-            continue
-          }
-
+        // If the newRange is null, it means that the range is not valid anymore and should be removed
+        // If it's undefined, it means that the slateRange is still valid and should be kept
+        if (newRange !== null) {
           rangeDecorationState.push({
-            rangeDecoration,
-            ...slateRange,
+            ...(newRange || slateRange),
+            rangeDecoration: {
+              ...decoratedRange.rangeDecoration,
+              selection: slateRangeToSelection({
+                schema: context.schema,
+                editor: context.slateEditor,
+                range: newRange,
+              }),
+            },
           })
         }
+      }
 
-        return rangeDecorationState
-      },
-    }),
-    'move range decorations': assign({
-      decoratedRanges: ({context, event}) => {
-        if (event.type !== 'slate operation') {
-          return context.decoratedRanges
-        }
-
-        const rangeDecorationState: Array<DecoratedRange> = []
-
-        for (const decoratedRange of context.decoratedRanges) {
-          const slateRange = toSlateRange(
-            decoratedRange.rangeDecoration.selection,
-            context.slateEditor,
-          )
-
-          if (!Range.isRange(slateRange)) {
-            decoratedRange.rangeDecoration.onMoved?.({
-              newSelection: null,
-              rangeDecoration: decoratedRange.rangeDecoration,
-              origin: 'local',
-            })
-            continue
-          }
-
-          let newRange: BaseRange | null | undefined
-
-          newRange = moveRangeByOperation(slateRange, event.operation)
-          if (
-            (newRange && newRange !== slateRange) ||
-            (newRange === null && slateRange)
-          ) {
-            const newRangeSelection = newRange
-              ? slateRangeToSelection({
-                  schema: context.schema,
-                  editor: context.slateEditor,
-                  range: newRange,
-                })
-              : null
-
-            decoratedRange.rangeDecoration.onMoved?.({
-              newSelection: newRangeSelection,
-              rangeDecoration: decoratedRange.rangeDecoration,
-              origin: 'local',
-            })
-          }
-
-          // If the newRange is null, it means that the range is not valid anymore and should be removed
-          // If it's undefined, it means that the slateRange is still valid and should be kept
-          if (newRange !== null) {
-            rangeDecorationState.push({
-              ...(newRange || slateRange),
-              rangeDecoration: {
-                ...decoratedRange.rangeDecoration,
-                selection: slateRangeToSelection({
-                  schema: context.schema,
-                  editor: context.slateEditor,
-                  range: newRange,
-                }),
-              },
-            })
-          }
-        }
-
-        return rangeDecorationState
-      },
-    }),
+      context.slateEditor.decoratedRanges = rangeDecorationState
+    },
     'assign readOnly': assign({
       readOnly: ({context, event}) => {
         if (event.type !== 'update read only') {
@@ -223,9 +216,11 @@ export const rangeDecorationsMachine = setup({
         return event.readOnly
       },
     }),
-    'increment update count': assign({
-      updateCount: ({context}) => {
-        return context.updateCount + 1
+    'update decorate': assign({
+      decorate: ({context}) => {
+        return {
+          fn: createDecorate(context.schema, context.slateEditor),
+        }
       },
     }),
   },
@@ -235,13 +230,14 @@ export const rangeDecorationsMachine = setup({
   guards: {
     'has pending range decorations': ({context}) =>
       context.pendingRangeDecorations.length > 0,
-    'has range decorations': ({context}) => context.decoratedRanges.length > 0,
+    'has range decorations': ({context}) =>
+      context.slateEditor.decoratedRanges.length > 0,
     'has different decorations': ({context, event}) => {
       if (event.type !== 'range decorations updated') {
         return false
       }
 
-      const existingRangeDecorations = context.decoratedRanges.map(
+      const existingRangeDecorations = context.slateEditor.decoratedRanges.map(
         (decoratedRange) => ({
           anchor: decoratedRange.rangeDecoration.selection?.anchor,
           focus: decoratedRange.rangeDecoration.selection?.focus,
@@ -271,7 +267,7 @@ export const rangeDecorationsMachine = setup({
     skipSetup: input.skipSetup,
     schema: input.schema,
     slateEditor: input.slateEditor,
-    updateCount: 0,
+    decorate: {fn: createDecorate(input.schema, input.slateEditor)},
   }),
   invoke: {
     src: 'slate operation listener',
@@ -289,10 +285,7 @@ export const rangeDecorationsMachine = setup({
         {
           guard: and(['should skip setup', 'has pending range decorations']),
           target: 'ready',
-          actions: [
-            'set up initial range decorations',
-            'increment update count',
-          ],
+          actions: ['set up initial range decorations', 'update decorate'],
         },
         {
           guard: 'should skip setup',
@@ -307,10 +300,7 @@ export const rangeDecorationsMachine = setup({
           {
             target: 'ready',
             guard: 'has pending range decorations',
-            actions: [
-              'set up initial range decorations',
-              'increment update count',
-            ],
+            actions: ['set up initial range decorations', 'update decorate'],
           },
           {
             target: 'ready',
@@ -324,7 +314,7 @@ export const rangeDecorationsMachine = setup({
         'range decorations updated': {
           target: '.idle',
           guard: 'has different decorations',
-          actions: ['update range decorations', 'increment update count'],
+          actions: ['update range decorations', 'update decorate'],
         },
       },
       states: {
@@ -347,16 +337,12 @@ export const rangeDecorationsMachine = setup({
   },
 })
 
-export function createDecorate(
-  rangeDecorationActor: ActorRefFrom<typeof rangeDecorationsMachine>,
+function createDecorate(
+  schema: EditorSchema,
+  slateEditor: PortableTextSlateEditor,
 ) {
   return function decorate([node, path]: NodeEntry): Array<BaseRange> {
-    if (
-      isEqualToEmptyEditor(
-        rangeDecorationActor.getSnapshot().context.slateEditor.children,
-        rangeDecorationActor.getSnapshot().context.schema,
-      )
-    ) {
+    if (isEqualToEmptyEditor(slateEditor.children, schema)) {
       return [
         {
           anchor: {
@@ -387,28 +373,23 @@ export function createDecorate(
       return []
     }
 
-    return rangeDecorationActor
-      .getSnapshot()
-      .context.decoratedRanges.filter((decoratedRange) => {
-        // Special case in order to only return one decoration for collapsed ranges
-        if (Range.isCollapsed(decoratedRange)) {
-          // Collapsed ranges should only be decorated if they are on a block child level (length 2)
-          return node.children.some(
-            (_, childIndex) =>
-              Path.equals(decoratedRange.anchor.path, [
-                blockIndex,
-                childIndex,
-              ]) &&
-              Path.equals(decoratedRange.focus.path, [blockIndex, childIndex]),
-          )
-        }
-
-        return (
-          Range.intersection(decoratedRange, {
-            anchor: {path, offset: 0},
-            focus: {path, offset: 0},
-          }) || Range.includes(decoratedRange, path)
+    return slateEditor.decoratedRanges.filter((decoratedRange) => {
+      // Special case in order to only return one decoration for collapsed ranges
+      if (Range.isCollapsed(decoratedRange)) {
+        // Collapsed ranges should only be decorated if they are on a block child level (length 2)
+        return node.children.some(
+          (_, childIndex) =>
+            Path.equals(decoratedRange.anchor.path, [blockIndex, childIndex]) &&
+            Path.equals(decoratedRange.focus.path, [blockIndex, childIndex]),
         )
-      })
+      }
+
+      return (
+        Range.intersection(decoratedRange, {
+          anchor: {path, offset: 0},
+          focus: {path, offset: 0},
+        }) || Range.includes(decoratedRange, path)
+      )
+    })
   }
 }
