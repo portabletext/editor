@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.52.4](https://github.com/portabletext/editor/compare/editor-v1.52.3...editor-v1.52.4) (2025-06-11)
+
+
+### Bug Fixes
+
+* Revert "fix(deps): update dependency use-effect-event to v2" ([519f10c](https://github.com/portabletext/editor/commit/519f10c59720e7d561f95a4195540a07d54ef0a9))
+
 ## [1.52.3](https://github.com/portabletext/editor/compare/editor-v1.52.2...editor-v1.52.3) (2025-06-11)
 
 
