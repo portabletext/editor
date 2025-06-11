@@ -50,6 +50,11 @@
       "schedule": ["every weekday"]
     },
     {
+      "description": "Group Slate packages",
+      "matchPackageNames": ["/slate/"],
+      "groupName": "slate"
+    },
+    {
       "description": "Group Tailwind packages",
       "matchPackageNames": ["/tailwind/"],
       "groupName": "tailwind"
