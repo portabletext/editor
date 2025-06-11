@@ -1,9 +1,8 @@
-import {Editor, Path} from 'slate'
+import {Editor} from 'slate'
 import {debugWithName} from '../../internal-utils/debug'
 import {isChangingRemotely} from '../../internal-utils/withChanges'
 import {isRedoing, isUndoing} from '../../internal-utils/withUndoRedo'
 import type {PortableTextSlateEditor} from '../../types/editor'
-import type {SlateTextBlock, VoidElement} from '../../types/slate'
 import type {EditorActor} from '../editor-machine'
 
 const debug = debugWithName('plugin:withPlaceholderBlock')
@@ -45,22 +44,23 @@ export function createWithPlaceholderBlock(
       }
 
       if (op.type === 'remove_node') {
-        const node = op.node as SlateTextBlock | VoidElement
-        if (op.path[0] === 0 && Editor.isVoid(editor, node)) {
-          // Check next path, if it exists, do nothing
-          const nextPath = Path.next(op.path)
-          // Is removing the first block which is a void (not a text block), add a new empty text block in it, if there is no other element in the next path
-          if (!editor.children[nextPath[0]]) {
-            debug('Adding placeholder block')
-            Editor.insertNode(
-              editor,
-              editor.pteCreateTextBlock({decorators: []}),
-            )
-          }
+        const blockIndex = op.path.at(0)
+        const isLonelyBlock =
+          op.path.length === 1 &&
+          blockIndex === 0 &&
+          editor.children.length === 1
+        const isBlockObject =
+          op.node._type !== editorActor.getSnapshot().context.schema.block.name
+
+        if (isLonelyBlock && isBlockObject) {
+          debug('Adding placeholder block')
+          Editor.insertNode(editor, editor.pteCreateTextBlock({decorators: []}))
         }
       }
+
       apply(op)
     }
+
     return editor
   }
 }
