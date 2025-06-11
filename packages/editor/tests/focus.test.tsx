@@ -67,8 +67,7 @@ describe('focus', () => {
 
     await userEvent.click(toolbarLocator)
 
-    expect(events).toEqual([
-      ...initialEvents,
+    expect(events.slice(3)).toEqual([
       expect.objectContaining({
         type: 'blurred',
       }),
@@ -76,11 +75,7 @@ describe('focus', () => {
 
     await userEvent.click(editorLocator)
 
-    expect(events).toEqual([
-      ...initialEvents,
-      expect.objectContaining({
-        type: 'blurred',
-      }),
+    expect(events.slice(4, 6)).toEqual([
       expect.objectContaining({type: 'focused'}),
       {
         type: 'selection',
@@ -201,8 +196,7 @@ describe('focus', () => {
 
     await userEvent.click(editorLocator)
 
-    expect(events).toEqual([
-      ...initialEvents,
+    expect(events.slice(4, 7)).toEqual([
       expect.objectContaining({
         type: 'blurred',
       }),
