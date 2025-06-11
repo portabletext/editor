@@ -44,7 +44,7 @@ describe('event.delete.block', () => {
     })
   })
 
-  test('Scenario: Deleting lonely text block', async () => {
+  test('Scenario: Deleting lonely text block creates a placeholder block', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -86,7 +86,15 @@ describe('event.delete.block', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([])
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k4',
+          children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
     })
   })
 })

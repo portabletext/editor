@@ -1,4 +1,5 @@
 import {Transforms} from 'slate'
+import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {toSlateRange} from '../internal-utils/ranges'
 import {getBlockPath} from '../internal-utils/slate-utils'
 import {getBlockKeyFromSelectionPoint} from '../selection/selection-point'
@@ -6,7 +7,7 @@ import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const deleteOperationImplementation: BehaviorOperationImplementation<
   'delete'
-> = ({operation}) => {
+> = ({context, operation}) => {
   const anchorBlockKey = getBlockKeyFromSelectionPoint(operation.at.anchor)
   const focusBlockKey = getBlockKeyFromSelectionPoint(operation.at.focus)
 
@@ -35,6 +36,10 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
     Transforms.removeNodes(operation.editor, {
       at: [anchorBlockPath[0]],
     })
+
+    if (operation.editor.children.length === 0) {
+      Transforms.insertNodes(operation.editor, createPlaceholderBlock(context))
+    }
 
     return
   }
