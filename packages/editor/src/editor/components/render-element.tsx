@@ -2,11 +2,7 @@ import {useSelector} from '@xstate/react'
 import {useContext, type ReactElement} from 'react'
 import type {Element as SlateElement} from 'slate'
 import type {RenderElementProps} from 'slate-react'
-import {
-  parseBlockObject,
-  parseInlineObject,
-  parseTextBlock,
-} from '../../internal-utils/parse-blocks'
+import {isTextBlock} from '../../internal-utils/parse-blocks'
 import type {
   RenderBlockFunction,
   RenderChildFunction,
@@ -35,22 +31,19 @@ export function RenderElement(props: {
     '__inline' in props.element && props.element.__inline === true
 
   if (isInline) {
-    const inlineObject = parseInlineObject({
-      context: {
-        keyGenerator: () => '',
-        schema,
-      },
-      options: {refreshKeys: false, validateFields: false},
-      inlineObject: {
-        _key: props.element._key,
-        _type: props.element._type,
-        ...('value' in props.element && typeof props.element.value === 'object'
-          ? props.element.value
-          : {}),
-      },
-    })
+    const inlineObject = {
+      _key: props.element._key,
+      _type: props.element._type,
+      ...('value' in props.element && typeof props.element.value === 'object'
+        ? props.element.value
+        : {}),
+    }
 
-    if (!inlineObject) {
+    if (
+      !schema.inlineObjects.find(
+        (inlineObject) => inlineObject.name === props.element._type,
+      )
+    ) {
       console.error(
         `Unable to find Inline Object "${props.element._type}" in Schema`,
       )
@@ -74,16 +67,7 @@ export function RenderElement(props: {
     )
   }
 
-  const textBlock = parseTextBlock({
-    context: {
-      keyGenerator: () => '',
-      schema,
-    },
-    options: {refreshKeys: false, validateFields: false},
-    block: props.element,
-  })
-
-  if (textBlock) {
+  if (isTextBlock({schema}, props.element)) {
     return (
       <RenderTextBlock
         attributes={props.attributes}
@@ -93,29 +77,26 @@ export function RenderElement(props: {
         renderListItem={props.renderListItem}
         renderStyle={props.renderStyle}
         spellCheck={props.spellCheck}
-        textBlock={textBlock}
+        textBlock={props.element}
       >
         {props.children}
       </RenderTextBlock>
     )
   }
 
-  const blockObject = parseBlockObject({
-    context: {
-      keyGenerator: () => '',
-      schema,
-    },
-    options: {refreshKeys: false, validateFields: false},
-    blockObject: {
-      _key: props.element._key,
-      _type: props.element._type,
-      ...('value' in props.element && typeof props.element.value === 'object'
-        ? props.element.value
-        : {}),
-    },
-  })
+  const blockObject = {
+    _key: props.element._key,
+    _type: props.element._type,
+    ...('value' in props.element && typeof props.element.value === 'object'
+      ? props.element.value
+      : {}),
+  }
 
-  if (!blockObject) {
+  if (
+    !schema.blockObjects.find(
+      (blockObject) => blockObject.name === props.element._type,
+    )
+  ) {
     console.error(
       `Unable to find Block Object "${props.element._type}" in Schema`,
     )
