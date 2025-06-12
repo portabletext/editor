@@ -8,11 +8,11 @@ import {createWithObjectKeys} from './createWithObjectKeys'
 import {createWithPatches} from './createWithPatches'
 import {createWithPlaceholderBlock} from './createWithPlaceholderBlock'
 import {createWithPortableTextMarkModel} from './createWithPortableTextMarkModel'
-import {createWithPortableTextSelections} from './createWithPortableTextSelections'
 import {createWithSchemaTypes} from './createWithSchemaTypes'
 import {createWithUndoRedo} from './createWithUndoRedo'
 import {createWithUtils} from './createWithUtils'
 import {pluginUpdateMarkState} from './slate-plugin.update-mark-state'
+import {pluginUpdateSelection} from './slate-plugin.update-selection'
 import {pluginUpdateValue} from './slate-plugin.update-value'
 
 export interface OriginalEditorFunctions {
@@ -54,8 +54,6 @@ export const withPlugins = <T extends Editor>(
   const withUtils = createWithUtils({
     editorActor,
   })
-  const withPortableTextSelections =
-    createWithPortableTextSelections(editorActor)
   const withEventListeners = createWithEventListeners(editorActor)
 
   // Ordering is important here, selection dealing last, data manipulation in the middle and core model stuff first.
@@ -68,15 +66,16 @@ export const withPlugins = <T extends Editor>(
               withMaxBlocks(
                 withUndoRedo(
                   withPatches(
-                    withPortableTextSelections(
-                      pluginUpdateValue(
+                    pluginUpdateSelection({
+                      editorActor,
+                      editor: pluginUpdateValue(
                         editorActor.getSnapshot().context,
                         pluginUpdateMarkState(
                           editorActor.getSnapshot().context,
                           e,
                         ),
                       ),
-                    ),
+                    }),
                   ),
                 ),
               ),
