@@ -114,7 +114,6 @@
     "@sanity/pkg-utils": "^7.2.4",
     "@sanity/schema": "^3.92.0",
     "@sanity/types": "^3.92.0",
-    "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@types/debug": "^4.1.12",
     "@types/lodash": "^4.17.16",
