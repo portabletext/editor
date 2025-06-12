@@ -120,10 +120,8 @@ Feature: Decorators
     Then the text is "foo||bar"
 
   Scenario Outline: Toggling bold on a cross-selection with the first line empty
-    Given the text "foo"
-    When "{ArrowUp}" is pressed
-    And "{Enter}" is pressed
-    And everything is <selection>
+    Given the text "|foo"
+    When everything is <selection>
     And "strong" is toggled
     Then the text is "|foo"
     And "" has marks "strong"
@@ -139,9 +137,8 @@ Feature: Decorators
       | selected backwards |
 
   Scenario Outline: Toggling bold on a cross-selection with the last line empty
-    Given the text "foo"
-    When "{Enter}" is pressed
-    And everything is <selection>
+    Given the text "foo|"
+    When everything is <selection>
     And "strong" is toggled
     Then the text is "foo|"
     And "foo" has marks "strong"
