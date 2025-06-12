@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.52.7](https://github.com/portabletext/editor/compare/editor-v1.52.6...editor-v1.52.7) (2025-06-12)
+
+
+### Bug Fixes
+
+* manually select empty editor on initial focus ([e311a43](https://github.com/portabletext/editor/commit/e311a43bbf8f5dd556c90ce8cfab6363d99e9d1f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * racejar bumped to 1.2.6
+
 ## [1.52.6](https://github.com/portabletext/editor/compare/editor-v1.52.5...editor-v1.52.6) (2025-06-12)
 
 
