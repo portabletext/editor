@@ -122,7 +122,7 @@
     "@types/react-dom": "^19.1.5",
     "@typescript-eslint/eslint-plugin": "^8.33.0",
     "@typescript-eslint/parser": "^8.33.0",
-    "@vitejs/plugin-react": "^4.4.1",
+    "@vitejs/plugin-react": "^4.5.2",
     "@vitest/browser": "^3.2.3",
     "@vitest/coverage-istanbul": "^3.2.3",
     "babel-plugin-react-compiler": "19.1.0-rc.1",
