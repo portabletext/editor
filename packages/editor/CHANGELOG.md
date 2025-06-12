@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.52.5](https://github.com/portabletext/editor/compare/editor-v1.52.4...editor-v1.52.5) (2025-06-12)
+
+
+### Bug Fixes
+
+* always emit `selection` event after `focused` event ([73331c9](https://github.com/portabletext/editor/commit/73331c90119f324a62e83b7632833babd84c221c))
+
 ## [1.52.4](https://github.com/portabletext/editor/compare/editor-v1.52.3...editor-v1.52.4) (2025-06-11)
 
 
