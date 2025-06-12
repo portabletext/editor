@@ -1,10 +1,9 @@
-import {
-  isPortableTextSpan,
-  type Path,
-  type PortableTextBlock,
-  type PortableTextChild,
-  type PortableTextObject,
-  type PortableTextTextBlock,
+import type {
+  Path,
+  PortableTextBlock,
+  PortableTextChild,
+  PortableTextObject,
+  PortableTextTextBlock,
 } from '@sanity/types'
 import {
   Editor,
@@ -29,6 +28,7 @@ import {
   SLATE_TO_PORTABLE_TEXT_RANGE,
 } from '../../internal-utils/weakMaps'
 import {addAnnotationOperationImplementation} from '../../operations/behavior.operation.annotation.add'
+import {isActiveAnnotation} from '../../selectors'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
@@ -396,7 +396,12 @@ export function createEditableAPI(
     isAnnotationActive: (
       annotationType: PortableTextObject['_type'],
     ): boolean => {
-      return isAnnotationActive({editor, annotation: {name: annotationType}})
+      const snapshot = getEditorSnapshot({
+        editorActorSnapshot: editorActor.getSnapshot(),
+        slateEditorInstance: editor,
+      })
+
+      return isActiveAnnotation(annotationType)(snapshot)
     },
     addAnnotation: (type, value) => {
       let paths: ReturnType<EditableAPI['addAnnotation']> = undefined
@@ -545,60 +550,4 @@ export function createEditableAPI(
   }
 
   return editableApi
-}
-
-function isAnnotationActive({
-  editor,
-  annotation,
-}: {
-  editor: PortableTextSlateEditor
-  annotation: {
-    name: string
-  }
-}) {
-  if (!editor.selection || editor.selection.focus.path.length < 2) {
-    return false
-  }
-
-  try {
-    const spans = [
-      ...Editor.nodes(editor, {
-        at: editor.selection,
-        match: (node) => Text.isText(node),
-      }),
-    ]
-
-    if (spans.length === 0) {
-      return false
-    }
-
-    if (
-      spans.some(
-        ([span]) =>
-          !isPortableTextSpan(span) || !span.marks || span.marks?.length === 0,
-      )
-    )
-      return false
-
-    const selectionMarkDefs = spans.reduce((accMarkDefs, [, path]) => {
-      const [block] = Editor.node(editor, path, {depth: 1})
-      if (editor.isTextBlock(block) && block.markDefs) {
-        return [...accMarkDefs, ...block.markDefs]
-      }
-      return accMarkDefs
-    }, [] as PortableTextObject[])
-
-    return spans.every(([span]) => {
-      if (!isPortableTextSpan(span)) return false
-
-      const spanMarkDefs = span.marks?.map(
-        (markKey) =>
-          selectionMarkDefs.find((def) => def?._key === markKey)?._type,
-      )
-
-      return spanMarkDefs?.includes(annotation.name)
-    })
-  } catch {
-    return false
-  }
 }
