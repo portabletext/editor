@@ -66,16 +66,16 @@ export const withPlugins = <T extends Editor>(
               withMaxBlocks(
                 withUndoRedo(
                   withPatches(
-                    pluginUpdateSelection({
-                      editorActor,
-                      editor: pluginUpdateValue(
+                    pluginUpdateValue(
+                      editorActor.getSnapshot().context,
+                      pluginUpdateMarkState(
                         editorActor.getSnapshot().context,
-                        pluginUpdateMarkState(
-                          editorActor.getSnapshot().context,
-                          e,
-                        ),
+                        pluginUpdateSelection({
+                          editorActor,
+                          editor: e,
+                        }),
                       ),
-                    }),
+                    ),
                   ),
                 ),
               ),
