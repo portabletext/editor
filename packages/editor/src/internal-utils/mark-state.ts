@@ -1,8 +1,9 @@
 import {Range} from 'slate'
 import type {EditorSchema} from '../editor/editor-schema'
+import {getSelectedSpans} from '../selectors'
 import type {PortableTextSlateEditor} from '../types/editor'
 import {getNextSpan, getPreviousSpan} from './sibling-utils'
-import {getFocusBlock, getFocusSpan, getSelectedSpans} from './slate-utils'
+import {getFocusBlock, getFocusSpan, slateRangeToSelection} from './slate-utils'
 
 export type MarkState = {
   state: 'changed' | 'unchanged'
@@ -36,18 +37,39 @@ export function getMarkState({
   }
 
   if (Range.isExpanded(editor.selection)) {
-    const selectedSpans = getSelectedSpans({editor})
+    const selection = editor.selection
+      ? slateRangeToSelection({
+          schema,
+          editor,
+          range: editor.selection,
+        })
+      : null
+
+    const selectedSpans = getSelectedSpans({
+      context: {
+        value: editor.value,
+        selection,
+        schema,
+        converters: [],
+        keyGenerator: () => '',
+        readOnly: false,
+      },
+      beta: {
+        activeAnnotations: [],
+        activeDecorators: [],
+      },
+    })
 
     let index = 0
     let marks: Array<string> = []
 
-    for (const [span] of selectedSpans) {
+    for (const span of selectedSpans) {
       if (index === 0) {
-        marks = span.marks ?? []
+        marks = span.node.marks ?? []
       } else {
         if (
-          span.marks?.length === 0 ||
-          (span.marks ?? [])?.some((mark) => !marks.includes(mark))
+          span.node.marks?.length === 0 ||
+          (span.node.marks ?? [])?.some((mark) => !marks.includes(mark))
         ) {
           marks = []
         }
