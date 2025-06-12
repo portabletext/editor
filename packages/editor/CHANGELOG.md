@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.52.6](https://github.com/portabletext/editor/compare/editor-v1.52.5...editor-v1.52.6) (2025-06-12)
+
+
+### Bug Fixes
+
+* emit selection last ([e59d4bc](https://github.com/portabletext/editor/commit/e59d4bc2aaac5f3e39bff084dfa80a1974da2ffa))
+* improve `PortableTextEditor.isAnnotationActive` using Selector ([ce1a08f](https://github.com/portabletext/editor/commit/ce1a08f1e8d6116a29fdae6b3f491cd9193ecc8a))
+* improve `PortableTextEditor.isMarkActive` for expanded selection ([85d1595](https://github.com/portabletext/editor/commit/85d159539f251ac89807af3cc46799d9a7497d5f))
+
 ## [1.52.5](https://github.com/portabletext/editor/compare/editor-v1.52.4...editor-v1.52.5) (2025-06-12)
 
 
