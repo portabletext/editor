@@ -15,7 +15,7 @@ import {
   type MutableRefObject,
   type TextareaHTMLAttributes,
 } from 'react'
-import {Transforms, type Text} from 'slate'
+import {Editor, Transforms, type Text} from 'slate'
 import {
   ReactEditor,
   Editable as SlateEditable,
@@ -29,7 +29,7 @@ import {parseBlocks} from '../internal-utils/parse-blocks'
 import {toSlateRange} from '../internal-utils/ranges'
 import {normalizeSelection} from '../internal-utils/selection'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
-import {fromSlateValue} from '../internal-utils/values'
+import {fromSlateValue, isEqualToEmptyEditor} from '../internal-utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
 import type {
   EditorSelection,
@@ -534,9 +534,20 @@ export const PortableTextEditable = forwardRef<
 
       if (!event.isDefaultPrevented()) {
         relayActor.send({type: 'focused', event})
+
+        if (
+          !slateEditor.selection &&
+          isEqualToEmptyEditor(
+            slateEditor.children,
+            editorActor.getSnapshot().context.schema,
+          )
+        ) {
+          Transforms.select(slateEditor, Editor.start(slateEditor, []))
+          slateEditor.onChange()
+        }
       }
     },
-    [onFocus, relayActor],
+    [editorActor, onFocus, relayActor, slateEditor],
   )
 
   const handleClick = useCallback(
