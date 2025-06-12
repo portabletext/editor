@@ -534,24 +534,9 @@ export const PortableTextEditable = forwardRef<
 
       if (!event.isDefaultPrevented()) {
         relayActor.send({type: 'focused', event})
-
-        const selection = slateEditor.selection
-          ? slateRangeToSelection({
-              schema: editorActor.getSnapshot().context.schema,
-              editor: slateEditor,
-              range: slateEditor.selection,
-            })
-          : null
-
-        if (selection) {
-          editorActor.send({
-            type: 'update selection',
-            selection,
-          })
-        }
       }
     },
-    [editorActor, onFocus, slateEditor, relayActor],
+    [onFocus, relayActor],
   )
 
   const handleClick = useCallback(

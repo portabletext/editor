@@ -1,4 +1,3 @@
-import type {BaseRange} from 'slate'
 import {debugWithName} from '../../internal-utils/debug'
 import {slateRangeToSelection} from '../../internal-utils/slate-utils'
 import {SLATE_TO_PORTABLE_TEXT_RANGE} from '../../internal-utils/weakMaps'
@@ -12,40 +11,39 @@ const debugVerbose = debug.enabled && false
 export function createWithPortableTextSelections(
   editorActor: EditorActor,
 ): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
-  let prevSelection: BaseRange | null = null
   return function withPortableTextSelections(
     editor: PortableTextSlateEditor,
   ): PortableTextSlateEditor {
     const emitPortableTextSelection = () => {
-      if (prevSelection !== editor.selection) {
-        let ptRange: EditorSelection | null = null
-        if (editor.selection) {
-          const existing = SLATE_TO_PORTABLE_TEXT_RANGE.get(editor.selection)
-          if (existing) {
-            ptRange = existing
-          } else {
-            ptRange = slateRangeToSelection({
-              schema: editorActor.getSnapshot().context.schema,
-              editor,
-              range: editor.selection,
-            })
-            SLATE_TO_PORTABLE_TEXT_RANGE.set(editor.selection, ptRange)
-          }
-        }
-        if (debugVerbose) {
-          debug(
-            `Emitting selection ${JSON.stringify(ptRange || null)} (${JSON.stringify(
-              editor.selection,
-            )})`,
-          )
-        }
-        if (ptRange) {
-          editorActor.send({type: 'update selection', selection: ptRange})
+      let ptRange: EditorSelection | null = null
+
+      if (editor.selection) {
+        const existing = SLATE_TO_PORTABLE_TEXT_RANGE.get(editor.selection)
+        if (existing) {
+          ptRange = existing
         } else {
-          editorActor.send({type: 'update selection', selection: null})
+          ptRange = slateRangeToSelection({
+            schema: editorActor.getSnapshot().context.schema,
+            editor,
+            range: editor.selection,
+          })
+          SLATE_TO_PORTABLE_TEXT_RANGE.set(editor.selection, ptRange)
         }
       }
-      prevSelection = editor.selection
+
+      if (debugVerbose) {
+        debug(
+          `Emitting selection ${JSON.stringify(ptRange || null)} (${JSON.stringify(
+            editor.selection,
+          )})`,
+        )
+      }
+
+      if (ptRange) {
+        editorActor.send({type: 'update selection', selection: ptRange})
+      } else {
+        editorActor.send({type: 'update selection', selection: null})
+      }
     }
 
     const {onChange} = editor

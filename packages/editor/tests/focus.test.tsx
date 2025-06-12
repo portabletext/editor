@@ -63,7 +63,9 @@ describe('focus', () => {
       },
     ]
 
-    expect(events).toEqual(initialEvents)
+    await vi.waitFor(() => {
+      expect(events).toEqual(initialEvents)
+    })
 
     await userEvent.click(toolbarLocator)
 
@@ -75,17 +77,19 @@ describe('focus', () => {
 
     await userEvent.click(editorLocator)
 
-    expect(events.slice(4, 6)).toEqual([
-      expect.objectContaining({type: 'focused'}),
-      {
-        type: 'selection',
-        selection: {
-          anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
-          focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
-          backward: false,
+    await vi.waitFor(() => {
+      expect(events.slice(4)).toEqual([
+        expect.objectContaining({type: 'focused'}),
+        {
+          type: 'selection',
+          selection: {
+            anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+            focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+            backward: false,
+          },
         },
-      },
-    ])
+      ])
+    })
   })
 
   test('Scenario: Focusing on a non-empty editor', async () => {
@@ -183,38 +187,40 @@ describe('focus', () => {
       },
     ]
 
-    expect(events).toEqual(initialEvents)
+    await vi.waitFor(() => {
+      expect(events).toEqual(initialEvents)
+    })
 
     await userEvent.click(toolbarLocator)
 
-    expect(events).toEqual([
-      ...initialEvents,
-      expect.objectContaining({
-        type: 'blurred',
-      }),
-    ])
+    await vi.waitFor(() => {
+      expect(events.slice(4)).toEqual([
+        expect.objectContaining({
+          type: 'blurred',
+        }),
+      ])
+    })
 
-    await userEvent.click(editorLocator)
+    await userEvent.click(barSpanLocator)
 
-    expect(events.slice(4, 7)).toEqual([
-      expect.objectContaining({
-        type: 'blurred',
-      }),
-      expect.objectContaining({type: 'focused'}),
-      {
-        type: 'selection',
-        selection: {
-          anchor: {
-            path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
-            offset: 0,
+    await vi.waitFor(() => {
+      expect(events.slice(5)).toEqual([
+        expect.objectContaining({type: 'focused'}),
+        {
+          type: 'selection',
+          selection: {
+            anchor: {
+              path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
+              offset: 0,
+            },
+            focus: {
+              path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
+              offset: 0,
+            },
+            backward: false,
           },
-          focus: {
-            path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
-            offset: 0,
-          },
-          backward: false,
         },
-      },
-    ])
+      ])
+    })
   })
 })
