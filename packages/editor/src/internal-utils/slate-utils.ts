@@ -91,27 +91,6 @@ export function getFocusSpan({
   return [undefined, undefined]
 }
 
-export function getSelectedSpans({
-  editor,
-}: {
-  editor: PortableTextSlateEditor
-}): Array<[node: PortableTextSpan, path: Path]> {
-  if (!editor.selection) {
-    return []
-  }
-
-  try {
-    return Array.from(
-      Editor.nodes(editor, {
-        at: editor.selection,
-        match: (node) => editor.isTextSpan(node),
-      }),
-    )
-  } catch {
-    return []
-  }
-}
-
 export function getSelectionStartBlock({
   editor,
 }: {
