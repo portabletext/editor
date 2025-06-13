@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.53.0](https://github.com/portabletext/editor/compare/editor-v1.52.8...editor-v1.53.0) (2025-06-13)
+
+
+### Features
+
+* allow splitting text block with an inline object selected ([203ecf7](https://github.com/portabletext/editor/commit/203ecf78f6c5710129c7f9b552856a7e7d03215d))
+
+
+### Bug Fixes
+
+* **`split`:** avoid extra newline when splitting expanded selection starting on block object ([807d48a](https://github.com/portabletext/editor/commit/807d48ada21afcd6c61f27ad6981a4df3ee1aee0))
+* **`split`:** remove built-in opinions on splitting objects ([4a5128f](https://github.com/portabletext/editor/commit/4a5128f465c31697b89db353462a45ad0a050753))
+* raise `insert.break` when hitting Enter on inline object ([41d7f78](https://github.com/portabletext/editor/commit/41d7f7802e558afd829733a4dcce37b81487269e))
+
 ## [1.52.8](https://github.com/portabletext/editor/compare/editor-v1.52.7...editor-v1.52.8) (2025-06-13)
 
 
