@@ -154,7 +154,7 @@ export function RenderTextBlock(props: {
               type: legacyBlockSchemaType,
               value: props.textBlock,
             })
-          : props.children}
+          : children}
       </div>
       {dragPositionBlock === 'end' ? <DropIndicator /> : null}
     </div>
