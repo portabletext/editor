@@ -1,4 +1,5 @@
 export const keyIs = {
+  break: (event) => event.key === 'Enter' && !event.shiftKey,
   lineBreak: (event) => event.key === 'Enter' && event.shiftKey,
 } satisfies Record<string, KeyboardEventPredicate>
 

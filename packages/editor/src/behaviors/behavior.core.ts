@@ -29,6 +29,7 @@ export const coreBehaviorsConfig = [
   coreInsertBreakBehaviors.breakingAtTheStartOfTextBlock,
   coreInsertBreakBehaviors.breakingEntireDocument,
   coreInsertBreakBehaviors.breakingEntireBlocks,
+  coreInsertBreakBehaviors.breakingInlineObject,
 ].map((behavior) => ({
   behavior,
   priority: corePriority,
