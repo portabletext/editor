@@ -8,6 +8,28 @@ import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
 export const abstractSplitBehaviors = [
+  /**
+   * You can't split an inline object.
+   */
+  defineBehavior({
+    on: 'split',
+    guard: ({snapshot}) =>
+      selectors.isSelectionCollapsed(snapshot) &&
+      selectors.getFocusInlineObject(snapshot),
+    actions: [],
+  }),
+
+  /**
+   * You can't split a block object.
+   */
+  defineBehavior({
+    on: 'split',
+    guard: ({snapshot}) =>
+      selectors.isSelectionCollapsed(snapshot) &&
+      selectors.getFocusBlockObject(snapshot),
+    actions: [],
+  }),
+
   defineBehavior({
     on: 'split',
     guard: ({snapshot}) => {
@@ -58,7 +80,6 @@ export const abstractSplitBehaviors = [
 
         return {
           newTextBlock,
-          newTextBlockSelection,
           selection: {
             anchor: selectionStartPoint,
             focus: blockEndPoint,
@@ -81,7 +102,6 @@ export const abstractSplitBehaviors = [
         const newTextBlock = parseBlock({
           block: {
             _type: snapshot.context.schema.block.name,
-            children: [],
           },
           context: snapshot.context,
           options: {refreshKeys: true, validateFields: true},
@@ -93,10 +113,6 @@ export const abstractSplitBehaviors = [
 
         return {
           newTextBlock,
-          newTextBlockSelection: {
-            anchor: selectionEndPoint,
-            focus: selectionEndPoint,
-          },
           selection: snapshot.context.selection,
         }
       }
