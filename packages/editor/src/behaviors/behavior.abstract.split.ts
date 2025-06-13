@@ -1,4 +1,4 @@
-import {parseBlock} from '../internal-utils/parse-blocks'
+import {isTextBlock, parseBlock} from '../internal-utils/parse-blocks'
 import * as selectors from '../selectors'
 import * as utils from '../utils'
 import {raise} from './behavior.types.action'
@@ -25,6 +25,34 @@ export const abstractSplitBehaviors = [
       selectors.isSelectionCollapsed(snapshot) &&
       selectors.getFocusBlockObject(snapshot),
     actions: [],
+  }),
+
+  defineBehavior({
+    on: 'split',
+    guard: ({snapshot}) => {
+      const selection = snapshot.context.selection
+
+      if (!selection || utils.isSelectionCollapsed(selection)) {
+        return false
+      }
+
+      const selectionStartBlock = selectors.getSelectionStartBlock(snapshot)
+      const selectionEndBlock = selectors.getSelectionEndBlock(snapshot)
+
+      if (!selectionStartBlock || !selectionEndBlock) {
+        return false
+      }
+
+      if (
+        !isTextBlock(snapshot.context, selectionStartBlock.node) &&
+        isTextBlock(snapshot.context, selectionEndBlock.node)
+      ) {
+        return {selection}
+      }
+
+      return false
+    },
+    actions: [(_, {selection}) => [raise({type: 'delete', at: selection})]],
   }),
 
   defineBehavior({
