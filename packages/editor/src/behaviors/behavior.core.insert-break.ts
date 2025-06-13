@@ -235,9 +235,23 @@ const breakingEntireBlocks = defineBehavior({
   ],
 })
 
+const breakingInlineObject = defineBehavior({
+  on: 'insert.break',
+  guard: ({snapshot}) => {
+    const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
+    const focusInlineObject = selectors.getFocusInlineObject(snapshot)
+
+    return selectionCollapsed && focusInlineObject
+  },
+  actions: [
+    () => [raise({type: 'move.forward', distance: 1}), raise({type: 'split'})],
+  ],
+})
+
 export const coreInsertBreakBehaviors = {
   breakingAtTheEndOfTextBlock,
   breakingAtTheStartOfTextBlock,
   breakingEntireDocument,
   breakingEntireBlocks,
+  breakingInlineObject,
 }

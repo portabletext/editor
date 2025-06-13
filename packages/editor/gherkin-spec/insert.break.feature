@@ -22,3 +22,17 @@ Feature: Insert Break
     When everything is selected
     And "{Enter}" is pressed
     Then the text is ""
+
+  Scenario: Pressing Enter on an inline object
+    Given the text "foo,[stock-ticker],"
+    When the caret is put after "foo"
+    And "{ArrowRight}" is pressed
+    And "{Enter}" is pressed
+    Then the text is "foo,[stock-ticker],|"
+
+  Scenario: Pressing Enter on a block object
+    Given the text "foo|[image]"
+    When the caret is put after "foo"
+    And "{ArrowRight}" is pressed
+    And "{Enter}" is pressed
+    Then the text is "foo|[image]|"
