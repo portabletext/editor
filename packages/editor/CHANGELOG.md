@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.52.8](https://github.com/portabletext/editor/compare/editor-v1.52.7...editor-v1.52.8) (2025-06-13)
+
+
+### Bug Fixes
+
+* allow `renderListItem`/`renderStyle` without `renderBlock` ([7faa49c](https://github.com/portabletext/editor/commit/7faa49cb3923802e668c5b2c38ed4e4cc2d056a9))
+
 ## [1.52.7](https://github.com/portabletext/editor/compare/editor-v1.52.6...editor-v1.52.7) (2025-06-12)
 
 
