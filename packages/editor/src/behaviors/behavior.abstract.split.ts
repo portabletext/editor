@@ -1,9 +1,6 @@
-import {isTextBlock, parseBlock} from '../internal-utils/parse-blocks'
+import {parseBlock} from '../internal-utils/parse-blocks'
 import * as selectors from '../selectors'
-import {getSelectionStartPoint, isSelectionCollapsed} from '../utils'
-import {getBlockEndPoint} from '../utils/util.get-block-end-point'
-import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
-import {sliceBlocks} from '../utils/util.slice-blocks'
+import * as utils from '../utils'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -33,95 +30,75 @@ export const abstractSplitBehaviors = [
   defineBehavior({
     on: 'split',
     guard: ({snapshot}) => {
-      if (!snapshot.context.selection) {
+      const selection = snapshot.context.selection
+
+      if (!selection || utils.isSelectionCollapsed(selection)) {
         return false
       }
 
-      const selectionStartPoint = getSelectionStartPoint(
-        snapshot.context.selection,
-      )
-      const selectionEndPoint = getSelectionEndPoint(snapshot.context.selection)
+      return {selection}
+    },
+    actions: [
+      (_, {selection}) => [
+        raise({type: 'delete', at: selection}),
+        raise({type: 'split'}),
+      ],
+    ],
+  }),
 
-      const focusTextBlock = selectors.getFocusTextBlock({
-        ...snapshot,
-        context: {
-          ...snapshot.context,
-          selection: {
-            anchor: selectionStartPoint,
-            focus: selectionEndPoint,
-          },
-        },
+  defineBehavior({
+    on: 'split',
+    guard: ({snapshot}) => {
+      const selection = snapshot.context.selection
+
+      if (!selection || !utils.isSelectionCollapsed(selection)) {
+        return false
+      }
+
+      const selectionStartPoint = utils.getSelectionStartPoint(selection)
+
+      const focusTextBlock = selectors.getFocusTextBlock(snapshot)
+
+      if (!focusTextBlock) {
+        return false
+      }
+
+      const blockEndPoint = utils.getBlockEndPoint({
+        context: snapshot.context,
+        block: focusTextBlock,
       })
 
-      if (focusTextBlock) {
-        const blockEndPoint = getBlockEndPoint({
-          context: snapshot.context,
-          block: focusTextBlock,
-        })
-        const newTextBlockSelection = {
-          anchor: selectionEndPoint,
-          focus: blockEndPoint,
-        }
-        const newTextBlock = parseBlock({
-          block: sliceBlocks({
+      const newTextBlockSelection = {
+        anchor: selectionStartPoint,
+        focus: blockEndPoint,
+      }
+
+      const newTextBlock = parseBlock({
+        block: utils
+          .sliceBlocks({
             context: {
               ...snapshot.context,
               selection: newTextBlockSelection,
             },
             blocks: [focusTextBlock.node],
-          }).at(0),
-          context: snapshot.context,
-          options: {refreshKeys: true, validateFields: true},
-        })
-
-        if (!newTextBlock || !isTextBlock(snapshot.context, newTextBlock)) {
-          return false
-        }
-
-        return {
-          newTextBlock,
-          selection: {
-            anchor: selectionStartPoint,
-            focus: blockEndPoint,
-          },
-        }
-      }
-
-      const focusBlockObject = selectors.getFocusBlockObject({
-        ...snapshot,
-        context: {
-          ...snapshot.context,
-          selection: {
-            anchor: selectionStartPoint,
-            focus: selectionEndPoint,
-          },
-        },
+          })
+          .at(0),
+        context: snapshot.context,
+        options: {refreshKeys: true, validateFields: true},
       })
 
-      if (focusBlockObject) {
-        const newTextBlock = parseBlock({
-          block: {
-            _type: snapshot.context.schema.block.name,
-          },
-          context: snapshot.context,
-          options: {refreshKeys: true, validateFields: true},
-        })
-
-        if (!newTextBlock) {
-          return false
-        }
-
-        return {
-          newTextBlock,
-          selection: snapshot.context.selection,
-        }
+      if (!newTextBlock) {
+        return false
       }
 
-      return false
+      return {
+        newTextBlock,
+        newTextBlockSelection,
+      }
     },
     actions: [
-      (_, {newTextBlock, selection}) =>
-        isSelectionCollapsed(selection)
+      (_, {newTextBlock, newTextBlockSelection}) =>
+        utils.isSelectionCollapsed(newTextBlockSelection)
           ? [
               raise({
                 type: 'insert.block',
@@ -131,10 +108,7 @@ export const abstractSplitBehaviors = [
               }),
             ]
           : [
-              raise({
-                type: 'delete',
-                at: selection,
-              }),
+              raise({type: 'delete', at: newTextBlockSelection}),
               raise({
                 type: 'insert.block',
                 block: newTextBlock,
