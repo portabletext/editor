@@ -7,6 +7,7 @@ import type {Editor} from '../src/editor'
 import {PortableTextEditable} from '../src/editor/Editable'
 import {EditorProvider} from '../src/editor/editor-provider'
 import {defineSchema} from '../src/editor/editor-schema'
+import {getTersePt} from '../src/internal-utils/terse-pt'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {BehaviorPlugin} from '../src/plugins'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
@@ -456,6 +457,44 @@ describe('event.insert.block', () => {
           style: 'normal',
         },
       ])
+    })
+  })
+
+  test('Scenario: Inserting block with lonely inline object', async () => {
+    const editorRef = React.createRef<Editor>()
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator: createTestKeyGenerator(),
+          schemaDefinition: defineSchema({
+            inlineObjects: [
+              {
+                name: 'stock-ticker',
+                fields: [{name: 'symbol', type: 'string'}],
+              },
+            ],
+          }),
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <PortableTextEditable />
+      </EditorProvider>,
+    )
+
+    editorRef.current?.send({
+      type: 'insert.block',
+      block: {
+        _type: 'block',
+        children: [{_type: 'stock-ticker', symbol: 'AAPL'}],
+      },
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(
+        getTersePt(editorRef.current?.getSnapshot().context.value),
+      ).toEqual([',[stock-ticker],'])
     })
   })
 })
