@@ -50,10 +50,8 @@ Feature: Insert Blocks
       | after "foo"  | "auto"    | "foobar\|[image]\|baz"   |
 
   Scenario: Pasting text blocks between two text blocks
-    Given the text "foo"
-    When "{Enter}" is pressed
-    And "bar" is typed
-    And the caret is put after "foo"
+    Given the text "foo|bar"
+    When the caret is put after "foo"
     And "fizz|buzz" is inserted at "auto"
     Then the text is "foofizz|buzz|bar"
 
