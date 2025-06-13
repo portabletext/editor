@@ -484,11 +484,15 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     await putCaretAfterText(editorA, 'じでした。')
     await pressButton(editorA, 'Backspace', 1)
 
+    await expectText([`${initialText.slice(0, -1)}`])
+
     const newPrefix = 'new prefix'
 
     await userEvent.click(editorB.locator)
     await putCaretBeforeText(editorB, '彼は、')
     await type(editorB, newPrefix)
+
+    await expectText([`${newPrefix}${initialText.slice(0, -1)}`])
 
     await userEvent.click(editorB.locator)
     await putCaretBeforeText(editorB, '彼は、')
