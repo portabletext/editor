@@ -313,4 +313,188 @@ describe('event.split', () => {
       ).toEqual(['[image]', 'bar'])
     })
   })
+
+  test('Scenario: Splitting with an expanded selection starting on a block object', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const editorRef = React.createRef<Editor>()
+    const blockKey = keyGenerator()
+    const barKey = keyGenerator()
+    const imageKey = keyGenerator()
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            blockObjects: [{name: 'image'}],
+          }),
+          initialValue: [
+            {
+              _key: keyGenerator(),
+              _type: 'block',
+              children: [{_key: keyGenerator(), _type: 'span', text: 'foo'}],
+            },
+            {
+              _key: imageKey,
+              _type: 'image',
+            },
+            {
+              _key: blockKey,
+              _type: 'block',
+              children: [{_key: barKey, _type: 'span', text: 'bar'}],
+            },
+          ],
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <PortableTextEditable />
+      </EditorProvider>,
+    )
+
+    await vi.waitFor(() => {
+      return expect(
+        getTersePt(editorRef.current?.getSnapshot().context.value),
+      ).toEqual(['foo', '[image]', 'bar'])
+    })
+
+    const locator = page.getByRole('textbox')
+    await userEvent.click(locator)
+
+    editorRef.current?.send({
+      type: 'select',
+      at: {
+        anchor: {
+          offset: 0,
+          path: [{_key: imageKey}],
+        },
+        focus: {
+          offset: 1,
+          path: [{_key: blockKey}, 'children', {_key: barKey}],
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      return expect(editorRef.current?.getSnapshot().context.selection).toEqual(
+        {
+          anchor: {
+            offset: 0,
+            path: [{_key: imageKey}],
+          },
+          focus: {
+            offset: 1,
+            path: [{_key: blockKey}, 'children', {_key: barKey}],
+          },
+          backward: false,
+        },
+      )
+    })
+
+    editorRef.current?.send({type: 'split'})
+
+    await vi.waitFor(() => {
+      expect(
+        getTersePt(editorRef.current?.getSnapshot().context.value),
+      ).toEqual(['foo', 'ar'])
+    })
+
+    await userEvent.type(locator, 'baz')
+
+    expect(getTersePt(editorRef.current?.getSnapshot().context.value)).toEqual([
+      'foo',
+      'bazar',
+    ])
+  })
+
+  test('Scenario: Splitting with an expanded selection ending on a block object', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const editorRef = React.createRef<Editor>()
+    const blockKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const imageKey = keyGenerator()
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            blockObjects: [{name: 'image'}],
+          }),
+          initialValue: [
+            {
+              _key: blockKey,
+              _type: 'block',
+              children: [{_key: fooKey, _type: 'span', text: 'foo'}],
+            },
+            {
+              _key: imageKey,
+              _type: 'image',
+            },
+            {
+              _key: keyGenerator(),
+              _type: 'block',
+              children: [{_key: keyGenerator(), _type: 'span', text: 'bar'}],
+            },
+          ],
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <PortableTextEditable />
+      </EditorProvider>,
+    )
+
+    await vi.waitFor(() => {
+      return expect(
+        getTersePt(editorRef.current?.getSnapshot().context.value),
+      ).toEqual(['foo', '[image]', 'bar'])
+    })
+
+    const locator = page.getByRole('textbox')
+    await userEvent.click(locator)
+
+    editorRef.current?.send({
+      type: 'select',
+      at: {
+        anchor: {
+          offset: 1,
+          path: [{_key: blockKey}, 'children', {_key: fooKey}],
+        },
+        focus: {
+          offset: 0,
+          path: [{_key: imageKey}],
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      return expect(editorRef.current?.getSnapshot().context.selection).toEqual(
+        {
+          anchor: {
+            offset: 1,
+            path: [{_key: blockKey}, 'children', {_key: fooKey}],
+          },
+          focus: {
+            offset: 0,
+            path: [{_key: imageKey}],
+          },
+          backward: false,
+        },
+      )
+    })
+
+    editorRef.current?.send({type: 'split'})
+
+    await vi.waitFor(() => {
+      expect(
+        getTersePt(editorRef.current?.getSnapshot().context.value),
+      ).toEqual(['f', 'bar'])
+    })
+
+    await userEvent.type(locator, 'baz')
+
+    expect(getTersePt(editorRef.current?.getSnapshot().context.value)).toEqual([
+      'f',
+      'bazbar',
+    ])
+  })
 })
