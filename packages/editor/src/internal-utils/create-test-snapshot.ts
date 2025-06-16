@@ -4,7 +4,7 @@ import {createTestKeyGenerator} from './test-key-generator'
 
 export function createTestSnapshot(snapshot: {
   context?: Partial<EditorSnapshot['context']>
-  beta?: Partial<EditorSnapshot['beta']>
+  decoratorState?: Partial<EditorSnapshot['decoratorState']>
 }): EditorSnapshot {
   const context = {
     converters: snapshot.context?.converters ?? [],
@@ -24,9 +24,6 @@ export function createTestSnapshot(snapshot: {
   return {
     blockIndexMap,
     context,
-    beta: {
-      activeAnnotations: snapshot.beta?.activeAnnotations ?? [],
-      activeDecorators: snapshot.beta?.activeDecorators ?? [],
-    },
+    decoratorState: snapshot?.decoratorState ?? {},
   }
 }

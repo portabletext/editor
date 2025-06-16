@@ -1,21 +1,39 @@
 import {Transforms} from 'slate'
-import {getActiveAnnotations} from '../editor/get-active-annotations'
-import {getActiveDecorators} from '../editor/get-active-decorators'
-import {getFocusSpan} from '../internal-utils/slate-utils'
+import type {EditorSnapshot} from '../editor/editor-snapshot'
+import {
+  getFocusSpan,
+  slateRangeToSelection,
+} from '../internal-utils/slate-utils'
+import {getActiveAnnotationsMarks} from '../selectors/selector.get-active-annotation-marks'
+import {getActiveDecorators} from '../selectors/selector.get-active-decorators'
+import {getMarkState} from '../selectors/selector.get-mark-state'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const insertTextOperationImplementation: BehaviorOperationImplementation<
   'insert.text'
 > = ({context, operation}) => {
-  const activeDecorators = getActiveDecorators({
+  const snapshot: EditorSnapshot = {
+    blockIndexMap: operation.editor.blockIndexMap,
+    context: {
+      value: operation.editor.value,
+      selection: operation.editor.selection
+        ? slateRangeToSelection({
+            schema: context.schema,
+            editor: operation.editor,
+            range: operation.editor.selection,
+          })
+        : null,
+      schema: context.schema,
+      keyGenerator: context.keyGenerator,
+      converters: [],
+      readOnly: false,
+    },
     decoratorState: operation.editor.decoratorState,
-    markState: operation.editor.markState,
-    schema: context.schema,
-  })
-  const activeAnnotations = getActiveAnnotations({
-    markState: operation.editor.markState,
-    schema: context.schema,
-  })
+  }
+
+  const markState = getMarkState(snapshot)
+  const activeDecorators = getActiveDecorators(snapshot)
+  const activeAnnotations = getActiveAnnotationsMarks(snapshot)
 
   const [focusSpan] = getFocusSpan({
     editor: operation.editor,
@@ -26,15 +44,11 @@ export const insertTextOperationImplementation: BehaviorOperationImplementation<
     return
   }
 
-  if (
-    operation.editor.markState &&
-    operation.editor.markState.state === 'unchanged'
-  ) {
-    const markStateDecorators = (operation.editor.markState.marks ?? []).filter(
-      (mark) =>
-        context.schema.decorators
-          .map((decorator) => decorator.name)
-          .includes(mark),
+  if (markState && markState.state === 'unchanged') {
+    const markStateDecorators = (markState.marks ?? []).filter((mark) =>
+      context.schema.decorators
+        .map((decorator) => decorator.name)
+        .includes(mark),
     )
 
     if (

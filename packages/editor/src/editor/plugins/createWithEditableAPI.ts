@@ -29,6 +29,8 @@ import {
 } from '../../internal-utils/weakMaps'
 import {addAnnotationOperationImplementation} from '../../operations/behavior.operation.annotation.add'
 import {isActiveAnnotation} from '../../selectors'
+import {getActiveAnnotationsMarks} from '../../selectors/selector.get-active-annotation-marks'
+import {getActiveDecorators} from '../../selectors/selector.get-active-decorators'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
@@ -95,7 +97,9 @@ export function createEditableAPI(
         slateEditorInstance: editor,
       })
 
-      return snapshot.beta.activeDecorators.includes(mark)
+      const activeDecorators = getActiveDecorators(snapshot)
+
+      return activeDecorators.includes(mark)
     },
     marks: (): string[] => {
       const snapshot = getEditorSnapshot({
@@ -103,10 +107,10 @@ export function createEditableAPI(
         slateEditorInstance: editor,
       })
 
-      return [
-        ...snapshot.beta.activeAnnotations,
-        ...snapshot.beta.activeDecorators,
-      ]
+      const activeAnnotations = getActiveAnnotationsMarks(snapshot)
+      const activeDecorators = getActiveDecorators(snapshot)
+
+      return [...activeAnnotations, ...activeDecorators]
     },
     undo: (): void => {
       editorActor.send({
