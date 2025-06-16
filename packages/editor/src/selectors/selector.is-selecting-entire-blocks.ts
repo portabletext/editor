@@ -1,6 +1,7 @@
 import type {EditorSelector} from '../editor/editor-selector'
 import * as utils from '../utils'
-import {getSelectionEndBlock, getSelectionStartBlock} from './selectors'
+import {getSelectionEndBlock} from './selector.get-selection-end-block'
+import {getSelectionStartBlock} from './selector.get-selection-start-block'
 
 /**
  * @public

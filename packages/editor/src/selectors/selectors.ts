@@ -13,6 +13,8 @@ import {
   getChildKeyFromSelectionPoint,
 } from '../selection/selection-point'
 import {getSelectionEndPoint, getSelectionStartPoint} from '../utils'
+import {getSelectionEndBlock} from './selector.get-selection-end-block'
+import {getSelectionStartBlock} from './selector.get-selection-start-block'
 
 /**
  * @public
@@ -183,54 +185,6 @@ export const getSelectedBlocks: EditorSelector<
   }
 
   return selectedBlocks
-}
-
-/**
- * @public
- */
-export const getSelectionStartBlock: EditorSelector<
-  | {
-      node: PortableTextBlock
-      path: [KeyedSegment]
-    }
-  | undefined
-> = (snapshot) => {
-  if (!snapshot.context.selection) {
-    return undefined
-  }
-
-  const startPoint = getSelectionStartPoint(snapshot.context.selection)
-  const key = getBlockKeyFromSelectionPoint(startPoint)
-
-  const node = key
-    ? snapshot.context.value.find((block) => block._key === key)
-    : undefined
-
-  return node && key ? {node, path: [{_key: key}]} : undefined
-}
-
-/**
- * @public
- */
-export const getSelectionEndBlock: EditorSelector<
-  | {
-      node: PortableTextBlock
-      path: [KeyedSegment]
-    }
-  | undefined
-> = (snapshot) => {
-  if (!snapshot.context.selection) {
-    return undefined
-  }
-
-  const endPoint = getSelectionEndPoint(snapshot.context.selection)
-  const key = getBlockKeyFromSelectionPoint(endPoint)
-
-  const node = key
-    ? snapshot.context.value.find((block) => block._key === key)
-    : undefined
-
-  return node && key ? {node, path: [{_key: key}]} : undefined
 }
 
 /**

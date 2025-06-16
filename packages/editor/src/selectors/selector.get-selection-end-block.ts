@@ -4,6 +4,9 @@ import type {BlockPath} from '../types/paths'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
 import {getFocusBlock} from './selectors'
 
+/**
+ * @public
+ */
 export const getSelectionEndBlock: EditorSelector<
   | {
       node: PortableTextBlock
