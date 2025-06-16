@@ -1,0 +1,23 @@
+import type {PortableTextBlock} from '@sanity/types'
+import type {EditorSelector} from '../editor/editor-selector'
+import {getBlockKeyFromSelectionPoint} from '../selection/selection-point'
+import type {BlockPath} from '../types/paths'
+
+/**
+ * @public
+ */
+export const getFocusBlock: EditorSelector<
+  {node: PortableTextBlock; path: BlockPath} | undefined
+> = (snapshot) => {
+  if (!snapshot.context.selection) {
+    return undefined
+  }
+
+  const key = getBlockKeyFromSelectionPoint(snapshot.context.selection.focus)
+
+  const node = key
+    ? snapshot.context.value.find((block) => block._key === key)
+    : undefined
+
+  return node && key ? {node, path: [{_key: key}]} : undefined
+}

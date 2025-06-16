@@ -5,8 +5,8 @@ import {
 } from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import {isSpan} from '../utils'
+import {getFocusTextBlock} from './selector.get-focus-text-block'
 import {getSelectionStartPoint} from './selector.get-selection-start-point'
-import {getFocusTextBlock} from './selectors'
 
 /**
  * @public

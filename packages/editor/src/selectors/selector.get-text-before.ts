@@ -1,8 +1,8 @@
 import type {EditorSelector} from '../editor/editor-selector'
 import {getSelectionStartPoint} from '../utils'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
+import {getFocusBlock} from './selector.get-focus-block'
 import {getSelectionText} from './selector.get-selection-text'
-import {getFocusBlock} from './selectors'
 
 /**
  * @public

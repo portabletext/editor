@@ -11,8 +11,8 @@ import {
   getSelectionStartPoint,
   isEmptyTextBlock,
 } from '../utils'
+import {getFocusTextBlock} from './selector.get-focus-text-block'
 import {isSelectionCollapsed} from './selector.is-selection-collapsed'
-import {getFocusTextBlock} from './selectors'
 
 /**
  * @public

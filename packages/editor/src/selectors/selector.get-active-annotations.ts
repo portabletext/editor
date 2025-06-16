@@ -1,9 +1,10 @@
 import type {PortableTextObject} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import {isTextBlock} from '../internal-utils/parse-blocks'
+import {getFocusSpan} from './selector.get-focus-span'
+import {getSelectedBlocks} from './selector.get-selected-blocks'
 import {getSelectedSpans} from './selector.get-selected-spans'
 import {isSelectionCollapsed} from './selector.is-selection-collapsed'
-import {getFocusSpan, getSelectedBlocks} from './selectors'
 
 /**
  * @public
