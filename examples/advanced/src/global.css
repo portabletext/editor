@@ -1,0 +1,331 @@
+@layer theme, components, base, utilities;
+
+/* @plugin "tailwindcss-animate"; */
+
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --height-navbar: var(--navbar-height);
+  --height-footer: var(--footer-height);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --color-logo: var(--logo);
+
+  --color-accent: var(--accent);
+  --color-accent-light-10: oklch(from var(--accent) calc(l + 0.1) c h);
+  --color-accent-light-40: oklch(from var(--accent) calc(l + 0.4) c h);
+  --color-accent-chroma-5: oklch(from var(--accent) l calc(c + 0.05) h);
+  --color-accent-chroma-10: oklch(from var(--accent) l calc(c + 0.1) h);
+  --color-accent-hue-10: oklch(from var(--accent) l c calc(h + 0.1));
+
+  --color-background: var(--background);
+  --color-background-dark-1: oklch(from var(--background) calc(l - 0.01) c h);
+  --color-background-dark-2: oklch(from var(--background) calc(l - 0.02) c h);
+  --color-background-dark-3: oklch(from var(--background) calc(l - 0.03) c h);
+  --color-background-dark-5: oklch(from var(--background) calc(l - 0.05) c h);
+  --color-background-dark-10: oklch(from var(--background) calc(l - 0.1) c h);
+  --color-background-dark-15: oklch(from var(--background) calc(l - 0.15) c h);
+  --color-background-light-1: oklch(from var(--background) calc(l + 0.01) c h);
+  --color-background-light-2: oklch(from var(--background) calc(l + 0.02) c h);
+  --color-background-light-3: oklch(from var(--background) calc(l + 0.03) c h);
+  --color-background-light-4: oklch(from var(--background) calc(l + 0.04) c h);
+  --color-background-light-5: oklch(from var(--background) calc(l + 0.05) c h);
+  --color-background-light-8: oklch(from var(--background) calc(l + 0.08) c h);
+  --color-background-light-10: oklch(from var(--background) calc(l + 0.1) c h);
+  --color-background-light-15: oklch(from var(--background) calc(l + 0.15) c h);
+  --color-background-light-50: oklch(from var(--background) calc(l + 0.5) c h);
+
+  --color-foreground: var(--foreground);
+  --color-foreground-dark-10: oklch(from var(--foreground) calc(l - 0.1) c h);
+  --color-foreground-dark-20: oklch(from var(--foreground) calc(l - 0.2) c h);
+  --color-foreground-dark-30: oklch(from var(--foreground) calc(l - 0.3) c h);
+  --color-foreground-light-5: oklch(from var(--foreground) calc(l + 0.05) c h);
+  --color-foreground-light-40: oklch(from var(--foreground) calc(l + 0.4) c h);
+  --color-foreground-light-50: oklch(from var(--foreground) calc(l + 0.5) c h);
+  --color-foreground-light-70: oklch(from var(--foreground) calc(l + 0.7) c h);
+  --color-foreground-light-80: oklch(from var(--foreground) calc(l + 0.8) c h);
+
+  --color-link: var(--link);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: oklch(from var(--foreground) calc(l - 0.05) c h);
+  --color-muted-foreground: oklch(from var(--foreground) calc(l - 0.15) c h);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-accent-foreground: var(--accent-foreground);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+}
+
+/*
+  The default border color has changed to `currentColor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+}
+
+@utility link {
+  @apply text-link underline hover:brightness-125;
+}
+
+@layer base {
+  :root {
+    --background: oklch(100% 0 0);
+    --foreground: oklch(3.9% 0 0);
+    --logo: oklch(78.7% 0.18 218.3);
+    --accent: oklch(78.7% 0.18 218.3);
+    --link: oklch(78.7% 0.3 200.3);
+    --primary: oklch(9% 0 0);
+    --primary-foreground: oklch(98% 0 0);
+    --card: oklch(100% 0 0);
+    --card-foreground: oklch(3.9% 0 0);
+    --popover: oklch(100% 0 0);
+    --popover-foreground: oklch(3.9% 0 0);
+    --secondary: oklch(96.3% 0 0);
+    --secondary-foreground: oklch(9% 0 0);
+    --destructive: oklch(60% 0.254 0.5);
+    --destructive-foreground: oklch(98% 0 0);
+    --border: oklch(90% 0 0);
+    --input: oklch(90% 0 0);
+    --ring: oklch(3.9% 0 0);
+    --chart-1: oklch(0.667 0.198 0.5);
+    --chart-2: oklch(0.567 0.121 0.5);
+    --chart-3: oklch(0.249 0.05 0.5);
+    --chart-4: oklch(0.822 0.185 0.5);
+    --chart-5: oklch(0.713 0.257 0.5);
+    --radius: 0.5rem;
+    --navbar-height: 3rem;
+    --footer-height: 4rem;
+  }
+
+  .dark {
+    --background: oklch(21.76% 0.0247 244.59);
+    --foreground: oklch(100% 0 0);
+    --card: oklch(3.9% 0 0);
+    --card-foreground: oklch(98% 0 0);
+    --popover: oklch(3.9% 0 0);
+    --popover-foreground: oklch(98% 0 0);
+    --primary: oklch(98% 0 0);
+    --primary-foreground: oklch(9% 0 0);
+    --secondary: oklch(24.1% 0 0);
+    --secondary-foreground: oklch(98% 0 0);
+    --muted: oklch(24.1% 0 0);
+    --muted-foreground: oklch(67.3% 0 0);
+    --destructive: oklch(37.3% 0.172 0.5);
+    --destructive-foreground: oklch(98% 0 0);
+    --border: oklch(24.1% 0 0);
+    --input: oklch(24.1% 0 0);
+    --ring: oklch(84% 0 0);
+    --chart-1: oklch(0.574 0.287 0.5);
+    --chart-2: oklch(0.567 0.173 0.5);
+    --chart-3: oklch(0.705 0.257 0.5);
+    --chart-4: oklch(0.592 0.314 0.5);
+    --chart-5: oklch(0.62 0.301 0.5);
+  }
+
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter Variable', sans-serif;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+    margin: 0;
+  }
+}
+
+/* CSS for React Router View Transitions */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes slide-from-right {
+  from {
+    transform: translateX(500px);
+  }
+}
+
+@keyframes slide-to-left {
+  to {
+    transform: translateX(-500px);
+  }
+}
+
+.content {
+  view-transition-name: content;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+::view-transition-old(content) {
+  animation:
+    500ms cubic-bezier(0.4, 0, 1, 1) both fade-out,
+    500ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-left;
+}
+
+::view-transition-new(content) {
+  animation:
+    500ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in,
+    500ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-right;
+}
+
+/* End CSS for React Router View Transitions */
+
+/* sonner styles */
+:where([data-sonner-toaster][dir='ltr'] button[data-close-button]) {
+  --toast-close-button-start: auto;
+  --toast-close-button-end: 0;
+  --toast-close-button-transform: translate(35%, -35%);
+}
+
+:where([data-sonner-toaster][dir='rtl'] button[data-close-button]) {
+  --toast-close-button-start: 0;
+  --toast-close-button-end: auto;
+  --toast-close-button-transform: translate(-35%, -35%);
+}
+
+.dark button[data-close-button]:not(#\9) {
+  background: transparent;
+}
+
+.pdf-viewer {
+  overflow: hidden; /* Hides overflow */
+}
+
+.pdf-viewer .thumbnail {
+  display: none; /* Hides thumbnail section */
+}
+
+input[data-com-onepassword-filled] {
+  background-clip: text;
+}
+
+.portable-text {
+  p {
+    @apply mb-3;
+  }
+  ul {
+    list-style: circle;
+  }
+  h1 {
+    @apply text-2xl mb-3;
+  }
+  h2 {
+    @apply text-xl mb-3;
+  }
+  h3 {
+    @apply text-lg mb-3;
+  }
+  img {
+    @apply my-3;
+  }
+  a {
+    @apply text-accent hover:text-accent-light-10;
+  }
+
+  blockquote:not(.editor) {
+    @apply italic border-l-4 border-l-background-dark-5 dark:border-l-accent/5 bg-background-dark-3 dark:bg-accent/10 py-3 px-5 mt-3;
+    quotes: '\201C' '\201D' '\2018' '\2019';
+  }
+}
+
+:root {
+  --sidebar: hsl(0 0% 98%);
+  --sidebar-foreground: hsl(240 5.3% 26.1%);
+  --sidebar-primary: hsl(240 5.9% 10%);
+  --sidebar-primary-foreground: hsl(0 0% 98%);
+  --sidebar-accent: hsl(240 4.8% 95.9%);
+  --sidebar-accent-foreground: hsl(240 5.9% 10%);
+  --sidebar-border: hsl(220 13% 91%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+.dark {
+  --sidebar: hsl(240 5.9% 10%);
+  --sidebar-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-primary: hsl(224.3 76.3% 48%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(240 3.7% 15.9%);
+  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-border: hsl(240 3.7% 15.9%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
