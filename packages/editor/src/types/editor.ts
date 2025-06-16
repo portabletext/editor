@@ -30,7 +30,6 @@ import type {ReactEditor} from 'slate-react'
 import type {PortableTextEditableProps} from '../editor/Editable'
 import type {PortableTextEditor} from '../editor/PortableTextEditor'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
-import type {MarkState} from '../internal-utils/mark-state'
 import type {BlockPath} from './paths'
 
 /** @beta */
@@ -129,7 +128,6 @@ export interface PortableTextSlateEditor extends ReactEditor {
   value: Array<PortableTextBlock>
   decoratedRanges: Array<DecoratedRange>
   decoratorState: Record<string, boolean | undefined>
-  markState: MarkState | undefined
   blockIndexMap: Map<string, number>
   listIndexMap: Map<string, number>
 

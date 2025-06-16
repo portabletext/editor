@@ -1,9 +1,8 @@
-import {Range} from 'slate'
-import type {EditorSchema} from '../editor/editor-schema'
-import {getSelectedSpans} from '../selectors'
-import type {PortableTextSlateEditor} from '../types/editor'
-import {getNextSpan, getPreviousSpan} from './sibling-utils'
-import {getFocusBlock, getFocusSpan, slateRangeToSelection} from './slate-utils'
+import type {EditorSelector} from '../editor/editor-selector'
+import {getFocusSpan, getFocusTextBlock, getSelectedSpans} from '../selectors'
+import {isSelectionExpanded} from '../utils/util.is-selection-expanded'
+import {getNextSpan} from './selector.get-next-span'
+import {getPreviousSpan} from './selector.get-previous-span'
 
 export type MarkState = {
   state: 'changed' | 'unchanged'
@@ -14,52 +13,22 @@ export type MarkState = {
  * Given that text is inserted at the current position, what marks should
  * be applied?
  */
-export function getMarkState({
-  schema,
-  editor,
-}: {
-  schema: EditorSchema
-  editor: PortableTextSlateEditor
-}): MarkState | undefined {
-  if (!editor.selection) {
+export const getMarkState: EditorSelector<MarkState | undefined> = (
+  snapshot,
+) => {
+  if (!snapshot.context.selection) {
     return undefined
   }
 
-  const [block, blockPath] = getFocusBlock({
-    editor,
-  })
-  const [span, spanPath] = getFocusSpan({
-    editor,
-  })
+  const focusTextBlock = getFocusTextBlock(snapshot)
+  const focusSpan = getFocusSpan(snapshot)
 
-  if (!block || !editor.isTextBlock(block) || !span) {
+  if (!focusTextBlock || !focusSpan) {
     return undefined
   }
 
-  if (Range.isExpanded(editor.selection)) {
-    const selection = editor.selection
-      ? slateRangeToSelection({
-          schema,
-          editor,
-          range: editor.selection,
-        })
-      : null
-
-    const selectedSpans = getSelectedSpans({
-      blockIndexMap: editor.blockIndexMap,
-      context: {
-        value: editor.value,
-        selection,
-        schema,
-        converters: [],
-        keyGenerator: () => '',
-        readOnly: false,
-      },
-      beta: {
-        activeAnnotations: [],
-        activeDecorators: [],
-      },
-    })
+  if (isSelectionExpanded(snapshot.context.selection)) {
+    const selectedSpans = getSelectedSpans(snapshot)
 
     let index = 0
     let marks: Array<string> = []
@@ -85,41 +54,44 @@ export function getMarkState({
     }
   }
 
-  const decorators = schema.decorators.map((decorator) => decorator.name)
-  const marks = span.marks ?? []
+  const decorators = snapshot.context.schema.decorators.map(
+    (decorator) => decorator.name,
+  )
+  const marks = focusSpan.node.marks ?? []
   const marksWithoutAnnotations = marks.filter((mark) =>
     decorators.includes(mark),
   )
 
   const spanHasAnnotations = marks.length > marksWithoutAnnotations.length
 
-  const spanIsEmpty = span.text.length === 0
+  const spanIsEmpty = focusSpan.node.text.length === 0
 
-  const atTheBeginningOfSpan = editor.selection.anchor.offset === 0
-  const atTheEndOfSpan = editor.selection.anchor.offset === span.text.length
+  const atTheBeginningOfSpan = snapshot.context.selection.anchor.offset === 0
+  const atTheEndOfSpan =
+    snapshot.context.selection.anchor.offset === focusSpan.node.text.length
 
-  const previousSpan = getPreviousSpan({editor, blockPath, spanPath})
-  const nextSpan = getNextSpan({editor, blockPath, spanPath})
+  const previousSpan = getPreviousSpan(snapshot)
+  const nextSpan = getNextSpan(snapshot)
   const nextSpanAnnotations =
-    nextSpan?.marks?.filter((mark) => !decorators.includes(mark)) ?? []
+    nextSpan?.node?.marks?.filter((mark) => !decorators.includes(mark)) ?? []
   const spanAnnotations = marks.filter((mark) => !decorators.includes(mark))
 
   const previousSpanHasAnnotations = previousSpan
-    ? previousSpan.marks?.some((mark) => !decorators.includes(mark))
+    ? previousSpan.node.marks?.some((mark) => !decorators.includes(mark))
     : false
   const previousSpanHasSameAnnotations = previousSpan
-    ? previousSpan.marks
+    ? previousSpan.node.marks
         ?.filter((mark) => !decorators.includes(mark))
         .every((mark) => marks.includes(mark))
     : false
   const previousSpanHasSameAnnotation = previousSpan
-    ? previousSpan.marks?.some(
+    ? previousSpan.node.marks?.some(
         (mark) => !decorators.includes(mark) && marks.includes(mark),
       )
     : false
 
   const previousSpanHasSameMarks = previousSpan
-    ? previousSpan.marks?.every((mark) => marks.includes(mark))
+    ? previousSpan.node.marks?.every((mark) => marks.includes(mark))
     : false
   const nextSpanSharesSomeAnnotations = spanAnnotations.some((mark) =>
     nextSpanAnnotations?.includes(mark),
@@ -130,17 +102,17 @@ export function getMarkState({
       if (previousSpanHasSameMarks) {
         return {
           state: 'changed',
-          marks: previousSpan?.marks ?? [],
+          marks: previousSpan?.node.marks ?? [],
         }
       } else if (previousSpanHasSameAnnotations) {
         return {
           state: 'changed',
-          marks: previousSpan?.marks ?? [],
+          marks: previousSpan?.node.marks ?? [],
         }
       } else if (previousSpanHasSameAnnotation) {
         return {
           state: 'unchanged',
-          marks: span.marks ?? [],
+          marks: focusSpan.node.marks ?? [],
         }
       } else if (!previousSpan) {
         return {
@@ -159,7 +131,7 @@ export function getMarkState({
       ) {
         return {
           state: 'changed',
-          marks: nextSpan?.marks ?? [],
+          marks: nextSpan?.node.marks ?? [],
         }
       }
 
@@ -181,7 +153,7 @@ export function getMarkState({
     } else {
       return {
         state: 'changed',
-        marks: (previousSpan?.marks ?? []).filter((mark) =>
+        marks: (previousSpan?.node.marks ?? []).filter((mark) =>
           decorators.includes(mark),
         ),
       }
@@ -190,6 +162,6 @@ export function getMarkState({
 
   return {
     state: 'unchanged',
-    marks: span.marks ?? [],
+    marks: focusSpan.node.marks ?? [],
   }
 }
