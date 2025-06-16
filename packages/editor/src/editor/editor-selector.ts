@@ -4,8 +4,6 @@ import type {PortableTextSlateEditor} from '../types/editor'
 import type {InternalEditor} from './create-editor'
 import type {EditorActor} from './editor-machine'
 import type {EditorSnapshot} from './editor-snapshot'
-import {getActiveAnnotations} from './get-active-annotations'
-import {getActiveDecorators} from './get-active-decorators'
 
 function defaultCompare<T>(a: T, b: T) {
   return a === b
@@ -77,16 +75,6 @@ export function getEditorSnapshot({
       selection: editorActorSnapshot.context.selection,
       value: slateEditorInstance.value,
     },
-    beta: {
-      activeAnnotations: getActiveAnnotations({
-        markState: slateEditorInstance.markState,
-        schema: editorActorSnapshot.context.schema,
-      }),
-      activeDecorators: getActiveDecorators({
-        decoratorState: slateEditorInstance.decoratorState,
-        markState: slateEditorInstance.markState,
-        schema: editorActorSnapshot.context.schema,
-      }),
-    },
+    decoratorState: slateEditorInstance.decoratorState,
   }
 }
