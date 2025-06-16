@@ -1,5 +1,6 @@
 import type {KeyedSegment, PortableTextBlock} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
+import {getBlockIndex} from '../internal-selectors/internal-selector.get-block-index'
 import {getBlockKeyFromSelectionPoint} from '../selection/selection-point'
 
 /**
@@ -14,9 +15,17 @@ export const getAnchorBlock: EditorSelector<
 
   const key = getBlockKeyFromSelectionPoint(snapshot.context.selection.anchor)
 
-  const node = key
-    ? snapshot.context.value.find((block) => block._key === key)
-    : undefined
+  if (!key) {
+    return undefined
+  }
 
-  return node && key ? {node, path: [{_key: key}]} : undefined
+  const index = getBlockIndex(key)(snapshot)
+
+  if (index === undefined) {
+    return undefined
+  }
+
+  const node = snapshot.context.value.at(index)
+
+  return node ? {node, path: [{_key: key}]} : undefined
 }
