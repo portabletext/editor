@@ -2,7 +2,13 @@ import type {PortableTextTextBlock} from '@sanity/types'
 import {useSelector} from '@xstate/react'
 import {useContext, useRef, useState, type ReactElement} from 'react'
 import {Range, type Element as SlateElement} from 'slate'
-import {useSelected, useSlateStatic, type RenderElementProps} from 'slate-react'
+import {
+  NODE_TO_INDEX,
+  useSelected,
+  useSlateStatic,
+  type RenderElementProps,
+} from 'slate-react'
+import {setBlockIndex} from '../../internal-selectors/internal-selector.get-block-index'
 import type {EventPositionBlock} from '../../internal-utils/event-position'
 import type {
   RenderBlockFunction,
@@ -24,6 +30,16 @@ export function RenderTextBlock(props: {
   spellCheck?: boolean
   textBlock: PortableTextTextBlock
 }) {
+  const index = NODE_TO_INDEX.get(props.element)
+
+  if (index !== undefined) {
+    setBlockIndex(props.textBlock._key, index)
+  } else {
+    console.error(
+      `Unable to find index of Text Block with _key "${props.textBlock._key}"`,
+    )
+  }
+
   const [dragPositionBlock, setDragPositionBlock] =
     useState<EventPositionBlock>()
   const blockRef = useRef<HTMLDivElement>(null)
