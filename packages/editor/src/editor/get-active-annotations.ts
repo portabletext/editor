@@ -1,13 +1,10 @@
-import type {MarkState} from '../internal-utils/mark-state'
-import type {EditorSchema} from './editor-schema'
+import {getMarkState} from '../selectors/selector.get-mark-state'
+import type {EditorSnapshot} from './editor-snapshot'
 
-export function getActiveAnnotations({
-  markState,
-  schema,
-}: {
-  markState: MarkState | undefined
-  schema: EditorSchema
-}) {
+export function getActiveAnnotations(snapshot: EditorSnapshot) {
+  const schema = snapshot.context.schema
+  const markState = getMarkState(snapshot)
+
   return (markState?.marks ?? []).filter(
     (mark) =>
       !schema.decorators.map((decorator) => decorator.name).includes(mark),

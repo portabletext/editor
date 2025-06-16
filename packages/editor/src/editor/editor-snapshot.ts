@@ -3,8 +3,6 @@ import type {Converter} from '../converters/converter.types'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
 import type {EditorSchema} from './editor-schema'
-import {getActiveAnnotations} from './get-active-annotations'
-import {getActiveDecorators} from './get-active-decorators'
 
 /**
  * @public
@@ -16,6 +14,11 @@ export type EditorContext = {
   schema: EditorSchema
   selection: EditorSelection
   value: Array<PortableTextBlock>
+  /**
+   * @beta
+   * Subject to change
+   */
+  decoratorState: Record<string, boolean | undefined>
 }
 
 /**
@@ -23,14 +26,6 @@ export type EditorContext = {
  */
 export type EditorSnapshot = {
   context: EditorContext
-  /**
-   * @beta
-   * Do not rely on this externally
-   */
-  beta: {
-    activeAnnotations: Array<string>
-    activeDecorators: Array<string>
-  }
 }
 
 export function createEditorSnapshot({
@@ -61,20 +56,10 @@ export function createEditorSnapshot({
     schema,
     selection,
     value: editor.value,
+    decoratorState: editor.decoratorState,
   } satisfies EditorContext
 
   return {
     context,
-    beta: {
-      activeAnnotations: getActiveAnnotations({
-        markState: editor.markState,
-        schema,
-      }),
-      activeDecorators: getActiveDecorators({
-        decoratorState: editor.decoratorState,
-        markState: editor.markState,
-        schema,
-      }),
-    },
   } satisfies EditorSnapshot
 }

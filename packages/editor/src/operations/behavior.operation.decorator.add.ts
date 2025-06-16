@@ -108,10 +108,6 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
     })
 
     const trimmedSelection = selectors.getTrimmedSelection({
-      beta: {
-        activeAnnotations: [],
-        activeDecorators: [],
-      },
       context: {
         converters: [],
         keyGenerator: context.keyGenerator,
@@ -119,6 +115,7 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
         schema: context.schema,
         selection: newSelection,
         value: newValue,
+        decoratorState: editor.decoratorState,
       },
     })
 
