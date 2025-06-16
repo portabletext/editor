@@ -1,6 +1,6 @@
 import type {EditorSelector} from '../editor/editor-selector'
 import {isTextBlock} from '../internal-utils/parse-blocks'
-import {getSelectedBlocks} from './selectors'
+import {getSelectedBlocks} from './selector.get-selected-blocks'
 
 /**
  * @public

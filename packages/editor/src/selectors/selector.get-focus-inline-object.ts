@@ -4,7 +4,7 @@ import {
   type PortableTextObject,
 } from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
-import {getFocusChild} from './selectors'
+import {getFocusChild} from './selector.get-focus-child'
 
 /**
  * @public

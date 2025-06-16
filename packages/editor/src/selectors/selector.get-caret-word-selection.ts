@@ -7,13 +7,13 @@ import {
   getBlockStartPoint,
   spanSelectionPointToBlockOffset,
 } from '../utils'
+import {getFocusTextBlock} from './selector.get-focus-text-block'
 import {getNextInlineObject} from './selector.get-next-inline-object'
 import {getPreviousInlineObject} from './selector.get-previous-inline-object'
 import {getSelectionStartPoint} from './selector.get-selection-start-point'
 import {getSelectionText} from './selector.get-selection-text'
 import {isSelectionCollapsed} from './selector.is-selection-collapsed'
 import {isSelectionExpanded} from './selector.is-selection-expanded'
-import {getFocusTextBlock} from './selectors'
 
 /**
  * @public

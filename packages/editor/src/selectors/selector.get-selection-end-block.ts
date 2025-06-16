@@ -2,7 +2,7 @@ import type {PortableTextBlock} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import type {BlockPath} from '../types/paths'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
-import {getFocusBlock} from './selectors'
+import {getFocusBlock} from './selector.get-focus-block'
 
 /**
  * @public
