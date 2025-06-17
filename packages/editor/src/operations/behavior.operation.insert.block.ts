@@ -377,6 +377,7 @@ export function insertBlock({
                 at: nextPath,
                 select: false,
               })
+
               Transforms.select(editor, currentSelection)
 
               if (select === 'start') {

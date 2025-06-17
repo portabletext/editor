@@ -1,5 +1,6 @@
 import type {PortableTextBlock} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
+import {getBlockIndex} from '../internal-selectors/internal-selector.get-block-index'
 import type {BlockPath} from '../types/paths'
 import {getSelectionEndBlock} from './selector.get-selection-end-block'
 
@@ -9,30 +10,19 @@ import {getSelectionEndBlock} from './selector.get-selection-end-block'
 export const getNextBlock: EditorSelector<
   {node: PortableTextBlock; path: BlockPath} | undefined
 > = (snapshot) => {
-  let nextBlock: {node: PortableTextBlock; path: BlockPath} | undefined
   const selectionEndBlock = getSelectionEndBlock(snapshot)
 
   if (!selectionEndBlock) {
     return undefined
   }
 
-  let foundSelectionEndBlock = false
+  const index = getBlockIndex(selectionEndBlock.node._key)(snapshot)
 
-  for (const block of snapshot.context.value) {
-    if (block._key === selectionEndBlock.node._key) {
-      foundSelectionEndBlock = true
-      continue
-    }
-
-    if (foundSelectionEndBlock) {
-      nextBlock = {node: block, path: [{_key: block._key}]}
-      break
-    }
+  if (index === undefined || index === snapshot.context.value.length - 1) {
+    return undefined
   }
 
-  if (foundSelectionEndBlock && nextBlock) {
-    return nextBlock
-  }
+  const node = snapshot.context.value.at(index + 1)
 
-  return undefined
+  return node ? {node, path: [{_key: node._key}]} : undefined
 }

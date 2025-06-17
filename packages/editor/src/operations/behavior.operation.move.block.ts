@@ -1,4 +1,5 @@
 import {Transforms} from 'slate'
+import {resetBlockIndexCache} from '../internal-selectors/internal-selector.get-block-index'
 import {toSlatePath} from '../internal-utils/paths'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
@@ -7,6 +8,8 @@ export const moveBlockOperationImplementation: BehaviorOperationImplementation<
 > = ({operation}) => {
   const at = [toSlatePath(operation.at, operation.editor)[0]]
   const to = [toSlatePath(operation.to, operation.editor)[0]]
+
+  resetBlockIndexCache()
 
   Transforms.moveNodes(operation.editor, {
     at,
