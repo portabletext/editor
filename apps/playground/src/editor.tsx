@@ -54,7 +54,6 @@ import {
 } from './schema'
 import {SelectionPreview} from './selection-preview'
 import {ValuePreview} from './value-preview'
-import {wait} from './wait'
 
 const featureFlags = createStore({
   context: {
@@ -164,20 +163,6 @@ export function Editor(props: {
                     container({variant: 'default'}),
                     `h-75 overflow-auto flex-1 ${enableDragHandles ? 'ps-5' : ''}`,
                   )}
-                  onPaste={(data) => {
-                    const text = data.event.clipboardData.getData('text')
-                    if (text === 'heading') {
-                      return wait(2000).then(() => ({
-                        insert: [
-                          {
-                            _type: 'block',
-                            children: [{_type: 'span', text: 'heading'}],
-                            style: 'h1',
-                          },
-                        ],
-                      }))
-                    }
-                  }}
                   rangeDecorations={props.rangeDecorations}
                   renderAnnotation={renderAnnotation}
                   renderBlock={RenderBlock}
