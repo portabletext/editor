@@ -2,9 +2,6 @@ import type React from 'react'
 import {
   Popover as AriaPopover,
   composeRenderProps,
-  OverlayArrow,
-  PopoverContext,
-  useSlottedContext,
   type PopoverProps as AriaPopoverProps,
 } from 'react-aria-components'
 import {tv} from 'tailwind-variants'
@@ -26,37 +23,15 @@ const styles = tv({
   },
 })
 
-export function Popover({
-  children,
-  showArrow,
-  className,
-  ...props
-}: PopoverProps) {
-  const popoverContext = useSlottedContext(PopoverContext)!
-  const isSubmenu = popoverContext?.trigger === 'SubmenuTrigger'
-  let offset = showArrow ? 12 : 8
-  offset = isSubmenu ? offset - 6 : offset
+export function Popover({children, className, ...props}: PopoverProps) {
   return (
     <AriaPopover
-      offset={offset}
+      offset={8}
       {...props}
       className={composeRenderProps(className, (className, renderProps) =>
         styles({...renderProps, className}),
       )}
     >
-      {showArrow && (
-        <OverlayArrow className="group">
-          <svg
-            width={12}
-            height={12}
-            viewBox="0 0 12 12"
-            className="block fill-white forced-colors:fill-[Canvas] stroke-1 stroke-black/10 forced-colors:stroke-[ButtonBorder] group-placement-bottom:rotate-180 group-placement-left:-rotate-90 group-placement-right:rotate-90"
-          >
-            <title>Popover Arrow</title>
-            <path d="M0 0 L6 6 L12 0" />
-          </svg>
-        </OverlayArrow>
-      )}
       {children}
     </AriaPopover>
   )
