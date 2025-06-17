@@ -10,6 +10,7 @@ import {
   type ValidationResult,
 } from 'react-aria-components'
 import {tv} from 'tailwind-variants'
+import {button} from './button'
 import {Description, FieldError, Label} from './field'
 import {
   DropdownItem,
@@ -17,16 +18,22 @@ import {
   type DropdownSectionProps,
 } from './list-box'
 import {Popover} from './popover'
-import {composeTailwindRenderProps, focusRing} from './utils'
+import {composeTailwindRenderProps} from './utils'
 
 const styles = tv({
-  extend: focusRing,
-  base: 'flex items-center text-start gap-4 w-full cursor-default border border-black/10 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)] rounded-lg pl-1.5 pr-1 py-1 min-w-[150px] transition bg-gray-50',
+  extend: button,
+  defaultVariants: {
+    variant: 'secondary',
+    size: 'sm',
+  },
+})
+
+const chevronStyles = tv({
+  base: 'w-4 h-4',
   variants: {
     isDisabled: {
-      false:
-        'text-gray-800 hover:bg-gray-100 pressed:bg-gray-200 group-invalid:border-red-600 forced-colors:group-invalid:border-[Mark]',
-      true: 'text-gray-200 forced-colors:text-[GrayText] forced-colors:border-[GrayText]',
+      false: 'text-gray-600',
+      true: 'text-gray-200',
     },
   },
 })
@@ -61,7 +68,7 @@ export function Select<T extends object>({
         <SelectValue className="flex-1 text-xs placeholder-shown:italic" />
         <ChevronDown
           aria-hidden
-          className="w-4 h-4 text-gray-600 forced-colors:text-[ButtonText] group-disabled:text-gray-200 forced-colors:group-disabled:text-[GrayText]"
+          className={chevronStyles({isDisabled: props.isDisabled})}
         />
       </Button>
       {description && <Description>{description}</Description>}

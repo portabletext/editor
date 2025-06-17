@@ -23,6 +23,10 @@ export function PortableTextToolbar(props: {
   onRangeDecorationMoved: (details: RangeDecorationOnMovedDetails) => void
 }) {
   const editor = useEditor()
+  const readOnly = useEditorSelector(
+    editor,
+    (snapshot) => snapshot.context.readOnly,
+  )
 
   return (
     <Toolbar aria-label="Text formatting">
@@ -69,6 +73,7 @@ export function PortableTextToolbar(props: {
           aria-label="Focus"
           variant="secondary"
           size="sm"
+          isDisabled={readOnly}
           onPress={() => {
             editor.send({type: 'focus'})
           }}
@@ -92,26 +97,34 @@ export function PortableTextToolbar(props: {
 function StyleSelector(props: {schemaDefinition: SchemaDefinition}) {
   const editor = useEditor()
   const activeStyle = useEditorSelector(editor, selectors.getActiveStyle)
+  const disabled = useEditorSelector(
+    editor,
+    (snapshot) => snapshot.context.readOnly,
+  )
 
   return (
-    <Select
-      placeholder="Select style"
-      aria-label="Style"
-      selectedKey={activeStyle ?? null}
-      onSelectionChange={(style) => {
-        if (typeof style === 'string') {
-          editor.send({type: 'style.toggle', style})
-          editor.send({type: 'focus'})
-        }
-      }}
-    >
-      {props.schemaDefinition.styles.map((style) => (
-        <SelectItem key={style.name} id={style.name} textValue={style.title}>
-          <Icon icon={style.icon} fallback={null} />
-          {style.title}
-        </SelectItem>
-      ))}
-    </Select>
+    <TooltipTrigger>
+      <Select
+        isDisabled={disabled}
+        placeholder="Select style"
+        aria-label="Style"
+        selectedKey={activeStyle ?? null}
+        onSelectionChange={(style) => {
+          if (typeof style === 'string') {
+            editor.send({type: 'style.toggle', style})
+            editor.send({type: 'focus'})
+          }
+        }}
+      >
+        {props.schemaDefinition.styles.map((style) => (
+          <SelectItem key={style.name} id={style.name} textValue={style.title}>
+            <Icon icon={style.icon} fallback={null} />
+            {style.title}
+          </SelectItem>
+        ))}
+      </Select>
+      <Tooltip>Select style</Tooltip>
+    </TooltipTrigger>
   )
 }
 
@@ -119,6 +132,10 @@ function AnnotationToolbarButton(props: {
   annotation: SchemaDefinition['annotations'][number]
 }) {
   const editor = useEditor()
+  const disabled = useEditorSelector(
+    editor,
+    (snapshot) => snapshot.context.readOnly,
+  )
   const active = useEditorSelector(
     editor,
     selectors.isActiveAnnotation(props.annotation.name),
@@ -129,6 +146,7 @@ function AnnotationToolbarButton(props: {
       <ToggleButton
         aria-label={props.annotation.title}
         size="sm"
+        isDisabled={disabled}
         isSelected={active}
         onPress={() => {
           if (active) {
@@ -170,6 +188,10 @@ function DecoratorToolbarButton(props: {
   decorator: SchemaDefinition['decorators'][number]
 }) {
   const editor = useEditor()
+  const disabled = useEditorSelector(
+    editor,
+    (snapshot) => snapshot.context.readOnly,
+  )
   const active = useEditorSelector(
     editor,
     selectors.isActiveDecorator(props.decorator.name),
@@ -180,6 +202,7 @@ function DecoratorToolbarButton(props: {
       <ToggleButton
         aria-label={props.decorator.title}
         size="sm"
+        isDisabled={disabled}
         isSelected={active}
         onPress={() => {
           editor.send({
@@ -198,6 +221,10 @@ function DecoratorToolbarButton(props: {
 
 function ListToolbarButton(props: {list: SchemaDefinition['lists'][number]}) {
   const editor = useEditor()
+  const disabled = useEditorSelector(
+    editor,
+    (snapshot) => snapshot.context.readOnly,
+  )
   const active = useEditorSelector(
     editor,
     selectors.isActiveListItem(props.list.name),
@@ -208,6 +235,7 @@ function ListToolbarButton(props: {list: SchemaDefinition['lists'][number]}) {
       <ToggleButton
         aria-label={props.list.title}
         size="sm"
+        isDisabled={disabled}
         isSelected={active}
         onPress={() => {
           editor.send({
@@ -228,28 +256,36 @@ function InlineObjectButton(props: {
   inlineObject: SchemaDefinition['inlineObjects'][number]
 }) {
   const editor = useEditor()
+  const disabled = useEditorSelector(
+    editor,
+    (snapshot) => snapshot.context.readOnly,
+  )
 
   return (
-    <Button
-      variant="secondary"
-      size="sm"
-      onPress={() => {
-        editor.send({
-          type: 'insert.inline object',
-          inlineObject: {
-            name: props.inlineObject.name,
-            value:
-              props.inlineObject.name === 'stock-ticker'
-                ? {symbol: 'NVDA'}
-                : {},
-          },
-        })
-        editor.send({type: 'focus'})
-      }}
-    >
-      <Icon icon={props.inlineObject.icon} fallback={null} />
-      {props.inlineObject.title}
-    </Button>
+    <TooltipTrigger>
+      <Button
+        variant="secondary"
+        size="sm"
+        isDisabled={disabled}
+        onPress={() => {
+          editor.send({
+            type: 'insert.inline object',
+            inlineObject: {
+              name: props.inlineObject.name,
+              value:
+                props.inlineObject.name === 'stock-ticker'
+                  ? {symbol: 'NVDA'}
+                  : {},
+            },
+          })
+          editor.send({type: 'focus'})
+        }}
+      >
+        <Icon icon={props.inlineObject.icon} fallback={null} />
+        {props.inlineObject.title}
+      </Button>
+      <Tooltip>Insert {props.inlineObject.title}</Tooltip>
+    </TooltipTrigger>
   )
 }
 
@@ -257,32 +293,40 @@ function BlockObjectButton(props: {
   blockObject: SchemaDefinition['blockObjects'][number]
 }) {
   const editor = useEditor()
+  const disabled = useEditorSelector(
+    editor,
+    (snapshot) => snapshot.context.readOnly,
+  )
 
   return (
-    <Button
-      variant="secondary"
-      size="sm"
-      onPress={() => {
-        editor.send({
-          type: 'insert.block object',
-          placement: 'auto',
-          blockObject: {
-            name: props.blockObject.name,
-            value:
-              props.blockObject.name === 'image'
-                ? {
-                    url: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4OTggMjQwIj48cG9seWdvbiBwb2ludHM9IjM5Mi4xOSA3OC40NSAzOTIuMTMgMTAwLjc1IDM3Mi4xOSA4OS4yNCAzNzEuOSAxODkuMjEgMzU4LjkxIDE4MS43MSAzNTkuMTkgODEuNzQgMzM5LjM1IDcwLjI4IDMzOS40MiA0Ny45OCAzOTIuMTkgNzguNDUiLz48cG9seWdvbiBwb2ludHM9IjQ0Mi42NyAxMDcuNTkgNDQyLjYxIDEyOS45IDQxMy4yOSAxMTIuOTcgNDEzLjIyIDEzOS42NSA0MzkuODEgMTU1IDQzOS43NSAxNzYuNzIgNDEzLjE2IDE2MS4zNyA0MTMuMDcgMTkwLjQ0IDQ0Mi4zOSAyMDcuMzYgNDQyLjMyIDIyOS44NyA0MDAuMzEgMjA1LjYxIDQwMC42NiA4My4zNCA0NDIuNjcgMTA3LjU5Ii8+PHBvbHlnb24gcG9pbnRzPSI1MDMuNCA3OS4yMiA0ODMuODYgMTUwLjE0IDUwNC43MiAyMDAuOTQgNDkwLjczIDIwOS4wMSA0NzYuNjQgMTc0LjY1IDQ2Mi44OCAyMjUuMSA0NDkuMTkgMjMzIDQ2OS42OSAxNTguNzIgNDQ5LjgyIDExMC4xNSA0NjMuODkgMTAyLjAzIDQ3Ni44MSAxMzQuMjYgNDg5LjgxIDg3LjA2IDUwMy40IDc5LjIyIi8+PHBvbHlnb24gcG9pbnRzPSI1NTcuNzUgNDcuODMgNTU3LjgyIDcwLjE0IDUzOC42IDgxLjI0IDUzOC44OCAxODEuMjIgNTI2LjM2IDE4OC40NCA1MjYuMDggODguNDYgNTA2Ljk1IDk5LjUxIDUwNi44OSA3Ny4yIDU1Ny43NSA0Ny44MyIvPjxwYXRoIGQ9Ik00MTkuMzcsMjcuMTJoMHMuMTktMzEuODIsMjcuODMtMTUuODMsMjcuNjUsNDcuODYsMjcuNjUsNDcuODZsLTkuMjItNS4zM3MwLTIxLjI4LTE4LjQzLTMxLjkyLTE4LjQzLDEwLjY0LTE4LjQzLDEwLjY0WiIvPjwvc3ZnPgo=',
-                    alt: 'Portable Text logo',
-                  }
-                : {},
-          },
-        })
-        editor.send({type: 'focus'})
-      }}
-    >
-      <Icon icon={props.blockObject.icon} fallback={null} />
-      {props.blockObject.title}
-    </Button>
+    <TooltipTrigger>
+      <Button
+        variant="secondary"
+        size="sm"
+        isDisabled={disabled}
+        onPress={() => {
+          editor.send({
+            type: 'insert.block object',
+            placement: 'auto',
+            blockObject: {
+              name: props.blockObject.name,
+              value:
+                props.blockObject.name === 'image'
+                  ? {
+                      url: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4OTggMjQwIj48cG9seWdvbiBwb2ludHM9IjM5Mi4xOSA3OC40NSAzOTIuMTMgMTAwLjc1IDM3Mi4xOSA4OS4yNCAzNzEuOSAxODkuMjEgMzU4LjkxIDE4MS43MSAzNTkuMTkgODEuNzQgMzM5LjM1IDcwLjI4IDMzOS40MiA0Ny45OCAzOTIuMTkgNzguNDUiLz48cG9seWdvbiBwb2ludHM9IjQ0Mi42NyAxMDcuNTkgNDQyLjYxIDEyOS45IDQxMy4yOSAxMTIuOTcgNDEzLjIyIDEzOS42NSA0MzkuODEgMTU1IDQzOS43NSAxNzYuNzIgNDEzLjE2IDE2MS4zNyA0MTMuMDcgMTkwLjQ0IDQ0Mi4zOSAyMDcuMzYgNDQyLjMyIDIyOS44NyA0MDAuMzEgMjA1LjYxIDQwMC42NiA4My4zNCA0NDIuNjcgMTA3LjU5Ii8+PHBvbHlnb24gcG9pbnRzPSI1MDMuNCA3OS4yMiA0ODMuODYgMTUwLjE0IDUwNC43MiAyMDAuOTQgNDkwLjczIDIwOS4wMSA0NzYuNjQgMTc0LjY1IDQ2Mi44OCAyMjUuMSA0NDkuMTkgMjMzIDQ2OS42OSAxNTguNzIgNDQ5LjgyIDExMC4xNSA0NjMuODkgMTAyLjAzIDQ3Ni44MSAxMzQuMjYgNDg5LjgxIDg3LjA2IDUwMy40IDc5LjIyIi8+PHBvbHlnb24gcG9pbnRzPSI1NTcuNzUgNDcuODMgNTU3LjgyIDcwLjE0IDUzOC42IDgxLjI0IDUzOC44OCAxODEuMjIgNTI2LjM2IDE4OC40NCA1MjYuMDggODguNDYgNTA2Ljk1IDk5LjUxIDUwNi44OSA3Ny4yIDU1Ny43NSA0Ny44MyIvPjxwYXRoIGQ9Ik00MTkuMzcsMjcuMTJoMHMuMTktMzEuODIsMjcuODMtMTUuODMsMjcuNjUsNDcuODYsMjcuNjUsNDcuODZsLTkuMjItNS4zM3MwLTIxLjI4LTE4LjQzLTMxLjkyLTE4LjQzLDEwLjY0LTE4LjQzLDEwLjY0WiIvPjwvc3ZnPgo=',
+                      alt: 'Portable Text logo',
+                    }
+                  : {},
+            },
+          })
+          editor.send({type: 'focus'})
+        }}
+      >
+        <Icon icon={props.blockObject.icon} fallback={null} />
+        {props.blockObject.title}
+      </Button>
+      <Tooltip>Insert {props.blockObject.title}</Tooltip>
+    </TooltipTrigger>
   )
 }
 
@@ -306,12 +350,16 @@ function DecorateSelectionButton(props: {
   onRangeDecorationMoved: (details: RangeDecorationOnMovedDetails) => void
 }) {
   const editor = useEditor()
+  const disabled = useEditorSelector(
+    editor,
+    (snapshot) => snapshot.context.readOnly,
+  )
   const selection = useEditorSelector(editor, selectors.getSelection)
 
   return (
     <Button
       aria-label="Decorate"
-      isDisabled={!selection}
+      isDisabled={!selection || disabled}
       variant="secondary"
       size="sm"
       onPress={() => {
