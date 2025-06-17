@@ -1,5 +1,6 @@
 import {omit} from 'remeda'
 import {tv} from 'tailwind-variants'
+import {Container} from './components/container'
 import type {EditorActorRef} from './playground-machine'
 
 type EditorPatch = ReturnType<
@@ -21,24 +22,30 @@ const patchVariants = tv({
 
 export function EditorPatchesPreview(props: {patches: Array<EditorPatch>}) {
   if (props.patches.length === 0) {
-    return <pre>null</pre>
+    return (
+      <Container>
+        <pre>null</pre>
+      </Container>
+    )
   }
 
   return (
-    <pre>
-      {props.patches.map((patch) => (
-        <code
-          key={patch.id}
-          className={patchVariants({
-            age: patch.new ? 'new' : 'old',
-            origin: patch.origin === 'remote' ? 'remote' : 'local',
-          })}
-        >
-          {patch.origin === 'remote' ? '↓' : '↑'}{' '}
-          {JSON.stringify(omit(patch, ['id', 'origin', 'new']))}
-          {'\n'}
-        </code>
-      ))}
-    </pre>
+    <Container>
+      <pre>
+        {props.patches.map((patch) => (
+          <code
+            key={patch.id}
+            className={patchVariants({
+              age: patch.new ? 'new' : 'old',
+              origin: patch.origin === 'remote' ? 'remote' : 'local',
+            })}
+          >
+            {patch.origin === 'remote' ? '↓' : '↑'}{' '}
+            {JSON.stringify(omit(patch, ['id', 'origin', 'new']))}
+            {'\n'}
+          </code>
+        ))}
+      </pre>
+    </Container>
   )
 }

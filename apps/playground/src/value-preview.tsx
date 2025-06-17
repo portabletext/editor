@@ -1,13 +1,14 @@
 import {useEditor, useEditorSelector} from '@portabletext/editor'
 import {useActorRef, useSelector} from '@xstate/react'
 import {useEffect} from 'react'
+import {Container} from './components/container'
 import {Spinner} from './components/spinner'
 import {highlightMachine} from './highlight-json-machine'
 import type {EditorActorRef} from './playground-machine'
 
 export function ValuePreview(props: {editorId: EditorActorRef['id']}) {
   const highlightActor = useActorRef(highlightMachine, {
-    input: {code: ''},
+    input: {code: '', variant: 'default'},
   })
   const editor = useEditor()
   const value = useEditorSelector(editor, (snapshot) => snapshot.context.value)
@@ -25,12 +26,15 @@ export function ValuePreview(props: {editorId: EditorActorRef['id']}) {
   )
 
   return (
-    <div data-testid={`${props.editorId}-value`}>
+    <Container variant="ghost" data-testid={`${props.editorId}-value`}>
       {highlightedValue ? (
-        <div dangerouslySetInnerHTML={{__html: highlightedValue}} />
+        <div
+          className="[&>pre]:max-h-56"
+          dangerouslySetInnerHTML={{__html: highlightedValue}}
+        />
       ) : (
         <Spinner />
       )}
-    </div>
+    </Container>
   )
 }
