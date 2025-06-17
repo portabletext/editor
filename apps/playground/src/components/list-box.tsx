@@ -14,8 +14,8 @@ export const dropdownItemStyles = tv({
   base: 'group flex items-center gap-4 cursor-default select-none py-1 pl-2 pr-0.5 rounded-lg outline outline-0 text-xs forced-color-adjust-none',
   variants: {
     isDisabled: {
-      false: 'text-gray-900 dark:text-zinc-100',
-      true: 'text-gray-300 dark:text-zinc-600 forced-colors:text-[GrayText]',
+      false: 'text-gray-900',
+      true: 'text-gray-300 forced-colors:text-[GrayText]',
     },
     isFocused: {
       true: 'bg-blue-600 text-white forced-colors:bg-[Highlight] forced-colors:text-[HighlightText]',
@@ -25,7 +25,7 @@ export const dropdownItemStyles = tv({
     {
       isFocused: false,
       isOpen: true,
-      className: 'bg-gray-100 dark:bg-zinc-700/60',
+      className: 'bg-gray-100',
     },
   ],
 })
@@ -63,7 +63,7 @@ export function DropdownSection<T extends object>(
 ) {
   return (
     <Section className="first:-mt-[5px] after:content-[''] after:block after:h-[5px]">
-      <Header className="text-sm font-semibold text-gray-500 dark:text-zinc-300 px-4 py-1 truncate sticky -top-[5px] -mt-px -mx-1 z-10 bg-gray-100/60 dark:bg-zinc-700/60 backdrop-blur-md supports-[-moz-appearance:none]:bg-gray-100 border-y dark:border-y-zinc-700 [&+*]:mt-1">
+      <Header className="text-sm font-semibold text-gray-500 px-4 py-1 truncate sticky -top-[5px] -mt-px -mx-1 z-10 bg-gray-100/60 backdrop-blur-md supports-[-moz-appearance:none]:bg-gray-100 border-y [&+*]:mt-1">
         {props.title}
       </Header>
       <Collection items={props.items}>{props.children}</Collection>
