@@ -1,12 +1,12 @@
-import type {
-  MutationEvent,
-  PatchesEvent,
-  PortableTextBlock,
-  RangeDecoration,
-  RangeDecorationOnMovedDetails,
+import {
+  keyGenerator,
+  type MutationEvent,
+  type PatchesEvent,
+  type PortableTextBlock,
+  type RangeDecoration,
+  type RangeDecorationOnMovedDetails,
 } from '@portabletext/editor'
 import type {Patch} from '@portabletext/patches'
-import {v4 as uuid} from 'uuid'
 import {
   assertEvent,
   assign,
@@ -68,7 +68,11 @@ const editorMachine = setup({
         assertEvent(event, 'patches')
         return [
           ...context.patchesReceived.map((patch) => ({...patch, new: false})),
-          ...event.patches.map((patch) => ({...patch, new: true, id: uuid()})),
+          ...event.patches.map((patch) => ({
+            ...patch,
+            new: true,
+            id: keyGenerator(),
+          })),
         ]
       },
     }),
@@ -309,7 +313,7 @@ export const playgroundMachine = setup({
           ...context.rangeDecorations,
           {
             ...event.rangeDecoration,
-            payload: {...event.rangeDecoration.payload, id: uuid()},
+            payload: {...event.rangeDecoration.payload, id: keyGenerator()},
           },
         ]
       },
