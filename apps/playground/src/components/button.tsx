@@ -8,19 +8,17 @@ import {focusRing} from './utils'
 
 export interface ButtonProps extends RACButtonProps {
   size?: 'sm'
-  variant?: 'primary' | 'secondary' | 'destructive' | 'icon'
+  variant?: 'primary' | 'secondary' | 'destructive'
 }
 
-const button = tv({
+export const button = tv({
   extend: focusRing,
   base: 'inline-flex items-center gap-2 px-5 py-2 text-sm text-center transition rounded-lg border border-black/10 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)] cursor-default',
   variants: {
     variant: {
-      primary: 'bg-blue-600 hover:bg-blue-700 pressed:bg-blue-800 text-white',
-      secondary:
-        'bg-gray-100 hover:bg-gray-200 pressed:bg-gray-300 text-gray-800',
-      destructive: 'bg-red-700 hover:bg-red-800 pressed:bg-red-900 text-white',
-      icon: 'border-0 p-1 flex items-center justify-center text-gray-600 hover:bg-black/[5%] pressed:bg-black/10 disabled:bg-transparent',
+      primary: 'bg-blue-600 pressed:bg-blue-800 text-white',
+      secondary: 'bg-gray-100 pressed:bg-gray-300 text-gray-800',
+      destructive: 'bg-red-700 pressed:bg-red-900 text-white',
     },
     isDisabled: {
       true: 'bg-gray-100 text-gray-300 border-black/5',
@@ -32,6 +30,23 @@ const button = tv({
   defaultVariants: {
     variant: 'primary',
   },
+  compoundVariants: [
+    {
+      variant: 'primary',
+      isDisabled: false,
+      class: 'hover:bg-blue-700',
+    },
+    {
+      variant: 'secondary',
+      isDisabled: false,
+      class: 'hover:bg-gray-200',
+    },
+    {
+      variant: 'destructive',
+      isDisabled: false,
+      class: 'hover:bg-red-800',
+    },
+  ],
 })
 
 export function Button(props: ButtonProps) {
