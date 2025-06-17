@@ -176,9 +176,19 @@ export function Editor(props: {
               {loading ? <Spinner /> : null}
             </div>
             <div className="flex gap-2 items-center justify-between">
-              <span className="text-sm text-gray-500">
-                {props.editorRef.id}
-              </span>
+              <TooltipTrigger>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onPress={() => {
+                    props.editorRef.send({type: 'remove'})
+                  }}
+                >
+                  <TrashIcon className="size-3" />
+                  {props.editorRef.id}
+                </Button>
+                <Tooltip>Remove editor</Tooltip>
+              </TooltipTrigger>
               <ToggleReadOnly readOnly={readOnly} />
             </div>
           </div>
