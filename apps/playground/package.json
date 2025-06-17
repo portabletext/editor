@@ -32,7 +32,6 @@
     "react-is": "^19.1.0",
     "remeda": "^2.23.0",
     "shiki": "^3.6.0",
-    "uuid": "^11.0.0",
     "xstate": "^5.19.4",
     "zod": "^3.25.67"
   },
@@ -40,7 +39,6 @@
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@types/react-is": "^19.0.0",
-    "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.34.0",
     "@typescript-eslint/parser": "^8.34.0",
     "@vitejs/plugin-react": "^4.5.2",

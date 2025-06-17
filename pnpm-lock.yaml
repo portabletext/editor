@@ -194,9 +194,6 @@ importers:
       shiki:
         specifier: ^3.6.0
         version: 3.6.0
-      uuid:
-        specifier: ^11.0.0
-        version: 11.1.0
       xstate:
         specifier: ^5.19.4
         version: 5.19.4
@@ -213,9 +210,6 @@ importers:
       '@types/react-is':
         specifier: ^19.0.0
         version: 19.0.0
-      '@types/uuid':
-        specifier: ^10.0.0
-        version: 10.0.0
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.34.0
         version: 8.34.0(@typescript-eslint/parser@8.34.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)(typescript@5.8.3)
