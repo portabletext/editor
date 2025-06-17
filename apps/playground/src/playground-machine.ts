@@ -18,7 +18,6 @@ import {
   stopChild,
   type ActorRefFrom,
 } from 'xstate'
-import type {generateColor} from './generate-color'
 import {createKeyGenerator} from './key-generator'
 
 const copyToTextClipboardActor = fromPromise(
@@ -35,7 +34,6 @@ export type EditorActorRef = ActorRefFrom<typeof editorMachine>
 const editorMachine = setup({
   types: {
     context: {} as {
-      color: string
       value: Array<PortableTextBlock> | undefined
       patchesReceived: Array<Patch & {new: boolean; id: string}>
       keyGenerator: () => string
@@ -57,7 +55,6 @@ const editorMachine = setup({
       | {type: 'move range decoration'; details: RangeDecorationOnMovedDetails},
     emitted: {} as PatchesEvent,
     input: {} as {
-      color: string
       value: Array<PortableTextBlock> | undefined
       keyGenerator: () => string
     },
@@ -90,7 +87,6 @@ const editorMachine = setup({
 }).createMachine({
   id: 'editor',
   context: ({input}) => ({
-    color: input.color,
     value: input.value,
     patchesReceived: [],
     keyGenerator: input.keyGenerator,
@@ -224,7 +220,6 @@ export const playgroundMachine = setup({
   types: {
     context: {} as {
       editorIdGenerator: Generator<string, string>
-      colorGenerator: ReturnType<typeof generateColor>
       editors: Array<EditorActorRef>
       value: Array<PortableTextBlock> | undefined
       rangeDecorations: Array<RangeDecoration>
@@ -244,7 +239,6 @@ export const playgroundMachine = setup({
         },
     input: {} as {
       editorIdGenerator: Generator<string, string>
-      colorGenerator: ReturnType<typeof generateColor>
     },
   },
   actions: {
@@ -286,11 +280,10 @@ export const playgroundMachine = setup({
           ...context.editors,
           spawn('editor machine', {
             input: {
-              color: context.colorGenerator.next().value,
               value: context.value,
               keyGenerator: createKeyGenerator(`e${editorId}-k`),
             },
-            id: `editor-${editorId}`,
+            id: `e${editorId}`,
           }),
         ]
       },
@@ -353,7 +346,6 @@ export const playgroundMachine = setup({
   id: 'playground',
   context: ({input}) => ({
     editorIdGenerator: input.editorIdGenerator,
-    colorGenerator: input.colorGenerator,
     value: undefined,
     rangeDecorations: [],
     editors: [],

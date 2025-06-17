@@ -1,5 +1,6 @@
 import {useActorRef, useSelector} from '@xstate/react'
 import {useEffect} from 'react'
+import {Container} from './components/container'
 import {Spinner} from './components/spinner'
 import {highlightMachine} from './highlight-json-machine'
 import type {PlaygroundActorRef} from './playground-machine'
@@ -12,6 +13,7 @@ export function PortableTextPreview(props: {
       code: JSON.stringify(
         props.playgroundRef.getSnapshot().context.value ?? null,
       ),
+      variant: 'ghost',
     },
   })
   const highlightedPortableText = useSelector(
@@ -31,7 +33,8 @@ export function PortableTextPreview(props: {
   return (
     <>
       {highlightedPortableText ? (
-        <div
+        <Container
+          variant="ghost"
           className="[&>pre]:max-h-none"
           dangerouslySetInnerHTML={{__html: highlightedPortableText}}
         />

@@ -25,7 +25,11 @@ import {CopyIcon, TrashIcon} from 'lucide-react'
 import {useEffect, useState, type JSX} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
 import {reverse} from 'remeda'
+import {twMerge} from 'tailwind-merge'
+import {createCodeEditorBehaviors} from './behavior.code-editor'
+import {createLinkBehaviors} from './behavior.links'
 import {Button} from './components/button'
+import {container, Container} from './components/container'
 import {ErrorBoundary} from './components/error-boundary'
 import {ErrorScreen} from './components/error-screen'
 import {Separator} from './components/separator'
@@ -35,8 +39,7 @@ import {Toolbar} from './components/toolbar'
 import {Tooltip} from './components/tooltip'
 import {EditorPatchesPreview} from './editor-patches-preview'
 import './editor.css'
-import {createCodeEditorBehaviors} from './behavior.code-editor'
-import {createLinkBehaviors} from './behavior.links'
+import {tv} from 'tailwind-variants'
 import {EmojiPickerPlugin} from './emoji-picker'
 import type {EditorActorRef} from './playground-machine'
 import {ImageDeserializerPlugin} from './plugin.image-deserializer'
@@ -79,7 +82,6 @@ export function Editor(props: {
   editorRef: EditorActorRef
   rangeDecorations: RangeDecoration[]
 }) {
-  const color = useSelector(props.editorRef, (s) => s.context.color)
   const value = useSelector(props.editorRef, (s) => s.context.value)
   const keyGenerator = useSelector(
     props.editorRef,
@@ -96,7 +98,7 @@ export function Editor(props: {
   return (
     <div
       data-testid={props.editorRef.id}
-      className="grid gap-2 items-start grid-cols-1 md:grid-cols-2 border p-2 shadow-sm"
+      className="grid gap-2 items-start grid-cols-1 md:grid-cols-2"
     >
       <ErrorBoundary
         fallbackProps={{area: 'PortableTextEditor'}}
@@ -133,21 +135,23 @@ export function Editor(props: {
             }}
           />
           <div className="flex flex-col gap-2">
-            <PortableTextToolbar
-              schemaDefinition={schemaDefinition}
-              onAddRangeDecoration={(rangeDecoration) => {
-                props.editorRef.send({
-                  type: 'add range decoration',
-                  rangeDecoration,
-                })
-              }}
-              onRangeDecorationMoved={(details) => {
-                props.editorRef.send({
-                  type: 'move range decoration',
-                  details,
-                })
-              }}
-            />
+            <Container>
+              <PortableTextToolbar
+                schemaDefinition={schemaDefinition}
+                onAddRangeDecoration={(rangeDecoration) => {
+                  props.editorRef.send({
+                    type: 'add range decoration',
+                    rangeDecoration,
+                  })
+                }}
+                onRangeDecorationMoved={(details) => {
+                  props.editorRef.send({
+                    type: 'move range decoration',
+                    details,
+                  })
+                }}
+              />
+            </Container>
             {enableEmojiPickerPlugin ? <EmojiPickerPlugin /> : null}
             <div className="flex gap-2 items-center">
               <ErrorBoundary
@@ -156,8 +160,10 @@ export function Editor(props: {
                 onError={console.error}
               >
                 <PortableTextEditable
-                  className={`flex-1 p-2 ${enableDragHandles ? 'ps-5' : ''} border`}
-                  style={{minHeight: '20vh', overflowY: 'auto'}}
+                  className={twMerge(
+                    container({variant: 'default'}),
+                    `h-75 overflow-auto flex-1 ${enableDragHandles ? 'ps-5' : ''}`,
+                  )}
                   onPaste={(data) => {
                     const text = data.event.clipboardData.getData('text')
                     if (text === 'heading') {
@@ -184,25 +190,10 @@ export function Editor(props: {
               </ErrorBoundary>
               {loading ? <Spinner /> : null}
             </div>
-            <div className="flex gap-2 items-center">
-              <span
-                style={{backgroundColor: color}}
-                className="py-0.5 border px-2 rounded-full text-xs shrink-0 self-start font-mono"
-              >
-                ID: <strong>{props.editorRef.id}</strong>
+            <div className="flex gap-2 items-center justify-between">
+              <span className="text-sm text-gray-500">
+                {props.editorRef.id}
               </span>
-              <TooltipTrigger>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onPress={() => {
-                    props.editorRef.send({type: 'remove'})
-                  }}
-                >
-                  <TrashIcon className="w-3 h-3" />
-                </Button>
-                <Tooltip>Remove editor</Tooltip>
-              </TooltipTrigger>
               <ToggleReadOnly readOnly={readOnly} />
             </div>
           </div>
@@ -259,7 +250,7 @@ function EditorPlaygroundToolbar(props: {
 
   return (
     <>
-      <div className="flex flex-col gap-2">
+      <Container className="flex flex-col gap-2">
         <Toolbar>
           <Switch
             isSelected={patchSubscriptionActive}
@@ -426,7 +417,7 @@ function EditorPlaygroundToolbar(props: {
         {showingValuePreview ? (
           <ValuePreview editorId={props.editorRef.id} />
         ) : null}
-      </div>
+      </Container>
       {enableTextFileDeserializerPlugin ? <TextFileDeserializerPlugin /> : null}
       {enableImageDeserializerPlugin ? <ImageDeserializerPlugin /> : null}
       {enableMarkdownPlugin ? (
@@ -597,6 +588,24 @@ const renderAnnotation: RenderAnnotationFunction = (props) => {
   return props.children
 }
 
+const breakStyle = tv({
+  base: 'h-1 my-1',
+  variants: {
+    selected: {
+      true: 'bg-blue-300',
+    },
+  },
+})
+
+const imageStyle = tv({
+  base: 'flex my-1 items-center gap-1 border-2 border-gray-300 rounded px-1 text-sm',
+  variants: {
+    selected: {
+      true: 'border-blue-300',
+    },
+  },
+})
+
 const RenderBlock = (props: BlockRenderProps) => {
   const enableDragHandles = useSelector(
     featureFlags,
@@ -615,7 +624,7 @@ const RenderBlock = (props: BlockRenderProps) => {
     children = (
       <Separator
         orientation="horizontal"
-        className={`h-1 my-2${props.selected ? ' bg-blue-300 ' : ''}`}
+        className={breakStyle({selected: props.selected})}
       />
     )
   }
@@ -624,9 +633,7 @@ const RenderBlock = (props: BlockRenderProps) => {
 
   if (image) {
     children = (
-      <div
-        className={`flex items-center gap-1 border-2 rounded px-1 text-sm my-2${props.selected ? ' border-blue-300' : ''}`}
-      >
+      <div className={imageStyle({selected: props.selected})}>
         <img src={image.value.url} alt={image.value.alt ?? ''} />
       </div>
     )
@@ -665,14 +672,21 @@ const renderDecorator: RenderDecoratorFunction = (props) => {
   return (decoratorMap.get(props.value) ?? ((props) => props.children))(props)
 }
 
+const stockTickerStyle = tv({
+  base: 'border-2 border-gray-300 rounded px-1 font-mono text-sm',
+  variants: {
+    selected: {
+      true: 'border-blue-300',
+    },
+  },
+})
+
 const renderChild: RenderChildFunction = (props) => {
   const stockTicker = StockTickerSchema.safeParse(props).data
 
   if (stockTicker) {
     return (
-      <span
-        className={`border-2 rounded px-1 font-mono text-sm${props.selected ? ' border-blue-300' : ''}`}
-      >
+      <span className={stockTickerStyle({selected: props.selected})}>
         {stockTicker.value.symbol}
       </span>
     )
@@ -716,35 +730,35 @@ const decoratorMap: Map<
 
 const styleMap: Map<string, (props: BlockStyleRenderProps) => JSX.Element> =
   new Map([
-    ['normal', (props) => <p className="mb-1">{props.children}</p>],
+    ['normal', (props) => <p className="my-1">{props.children}</p>],
     [
       'h1',
-      (props) => <h1 className="mb-1 font-bold text-5xl">{props.children}</h1>,
+      (props) => <h1 className="my-1 font-bold text-5xl">{props.children}</h1>,
     ],
     [
       'h2',
-      (props) => <h2 className="mb-1 font-bold text-4xl">{props.children}</h2>,
+      (props) => <h2 className="my-1 font-bold text-4xl">{props.children}</h2>,
     ],
     [
       'h3',
-      (props) => <h3 className="mb-1 font-bold text-3xl">{props.children}</h3>,
+      (props) => <h3 className="my-1 font-bold text-3xl">{props.children}</h3>,
     ],
     [
       'h4',
-      (props) => <h4 className="mb-1 font-bold text-2xl">{props.children}</h4>,
+      (props) => <h4 className="my-1 font-bold text-2xl">{props.children}</h4>,
     ],
     [
       'h5',
-      (props) => <h5 className="mb-1 font-bold text-xl">{props.children}</h5>,
+      (props) => <h5 className="my-1 font-bold text-xl">{props.children}</h5>,
     ],
     [
       'h6',
-      (props) => <h6 className="mb-1 font-bold text-lg">{props.children}</h6>,
+      (props) => <h6 className="my-1 font-bold text-lg">{props.children}</h6>,
     ],
     [
       'blockquote',
       (props) => (
-        <blockquote className="mb-1 pl-2 py-1 border-slate-300 border-l-4">
+        <blockquote className="my-1 pl-2 py-1 border-slate-300 border-l-4">
           {props.children}
         </blockquote>
       ),

@@ -58,7 +58,7 @@ export function Editors(props: {playgroundRef: PlaygroundActorRef}) {
         className={`grid gap-4 items-start grid-cols-1 ${showPortableTextPreview ? 'md:grid-cols-3' : ''}`}
       >
         <div className="flex flex-col gap-2 md:gap-4 md:col-span-2">
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-6">
             {editors.map((editor) => (
               <Editor
                 key={editor.id}

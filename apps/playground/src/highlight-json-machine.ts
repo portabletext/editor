@@ -12,12 +12,22 @@ function formatJson(json: string) {
   })
 }
 
-function highlightJson(json: string) {
-  return codeToHtml(json, {lang: 'json', theme: 'github-light'})
+function highlightJson(json: string, variant: 'default' | 'ghost') {
+  return codeToHtml(json, {
+    lang: 'json',
+    theme: 'github-light',
+    colorReplacements: {
+      '#fff':
+        variant === 'default' ? 'var(--color-white)' : 'var(--color-gray-50)',
+    },
+  })
 }
 
-const highlightLogic = fromPromise<string, {code: string}>(({input}) =>
-  formatJson(input.code).then(highlightJson),
+const highlightLogic = fromPromise<
+  string,
+  {code: string; variant: 'default' | 'ghost'}
+>(({input}) =>
+  formatJson(input.code).then((json) => highlightJson(json, input.variant)),
 )
 
 export const highlightMachine = setup({
@@ -26,9 +36,10 @@ export const highlightMachine = setup({
       code: string
       pendingCode?: string
       highlightedCode?: string
+      variant: 'default' | 'ghost'
     },
     events: {} as {type: 'update code'; code: string},
-    input: {} as {code: string},
+    input: {} as {code: string; variant: 'default' | 'ghost'},
   },
   actions: {
     'assign code to context': assign({
@@ -43,6 +54,7 @@ export const highlightMachine = setup({
   context: ({input}) => ({
     code: input.code,
     pendingCode: input.code,
+    variant: input.variant,
   }),
   initial: 'highlighting code',
   states: {
@@ -68,7 +80,7 @@ export const highlightMachine = setup({
     'highlighting code': {
       invoke: {
         src: 'highlight code',
-        input: ({context}) => ({code: context.code}),
+        input: ({context}) => ({code: context.code, variant: context.variant}),
         onDone: {
           target: 'idle',
           actions: [assign({highlightedCode: ({event}) => event.output})],
