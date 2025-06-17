@@ -5,11 +5,21 @@ import {
   type RangeDecorationOnMovedDetails,
 } from '@portabletext/editor'
 import * as selectors from '@portabletext/editor/selectors'
-import {SquareDashedMousePointerIcon, TextCursorIcon} from 'lucide-react'
+import {SquareDashedMousePointerIcon, TextCursorIcon, XIcon} from 'lucide-react'
 import {isValidElement} from 'react'
-import {Group, TooltipTrigger} from 'react-aria-components'
+import {
+  Dialog,
+  DialogTrigger,
+  Group,
+  Heading,
+  Modal,
+  TextField,
+  TooltipTrigger,
+} from 'react-aria-components'
 import {isValidElementType} from 'react-is'
 import {Button} from './components/button'
+import {Container} from './components/container'
+import {Input, Label} from './components/field'
 import {Select, SelectItem} from './components/select'
 import {Separator} from './components/separator'
 import {ToggleButton} from './components/toggle-button'
@@ -55,15 +65,20 @@ export function PortableTextToolbar(props: {
       <Separator orientation="vertical" />
       <Group aria-label="Block objects" className="contents">
         {props.schemaDefinition.blockObjects.map((blockObject) => (
-          <BlockObjectButton key={blockObject.name} blockObject={blockObject} />
+          <InsertObjectButton
+            key={blockObject.name}
+            definition={blockObject}
+            type="block"
+          />
         ))}
       </Group>
       <Separator orientation="vertical" />
       <Group aria-label="Inline objects" className="contents">
         {props.schemaDefinition.inlineObjects.map((inlineObject) => (
-          <InlineObjectButton
+          <InsertObjectButton
             key={inlineObject.name}
-            inlineObject={inlineObject}
+            definition={inlineObject}
+            type="inline"
           />
         ))}
       </Group>
@@ -252,9 +267,17 @@ function ListToolbarButton(props: {list: SchemaDefinition['lists'][number]}) {
   )
 }
 
-function InlineObjectButton(props: {
-  inlineObject: SchemaDefinition['inlineObjects'][number]
-}) {
+function InsertObjectButton(
+  props:
+    | {
+        type: 'block'
+        definition: SchemaDefinition['blockObjects'][number]
+      }
+    | {
+        type: 'inline'
+        definition: SchemaDefinition['inlineObjects'][number]
+      },
+) {
   const editor = useEditor()
   const disabled = useEditorSelector(
     editor,
@@ -262,71 +285,143 @@ function InlineObjectButton(props: {
   )
 
   return (
-    <TooltipTrigger>
-      <Button
-        variant="secondary"
-        size="sm"
-        isDisabled={disabled}
-        onPress={() => {
-          editor.send({
-            type: 'insert.inline object',
-            inlineObject: {
-              name: props.inlineObject.name,
-              value:
-                props.inlineObject.name === 'stock-ticker'
-                  ? {symbol: 'NVDA'}
-                  : {},
-            },
-          })
-          editor.send({type: 'focus'})
-        }}
-      >
-        <Icon icon={props.inlineObject.icon} fallback={null} />
-        {props.inlineObject.title}
-      </Button>
-      <Tooltip>Insert {props.inlineObject.title}</Tooltip>
-    </TooltipTrigger>
+    <DialogTrigger>
+      <TooltipTrigger>
+        <Button variant="secondary" size="sm" isDisabled={disabled}>
+          <Icon icon={props.definition.icon} fallback={null} />
+          {props.definition.title}
+        </Button>
+        <Tooltip>Insert {props.definition.title}</Tooltip>
+      </TooltipTrigger>
+
+      <Modal className="bg-black/9 fixed left-0 top-0 w-screen h-[var(--visual-viewport-height)] flex items-center justify-center">
+        <Dialog>
+          {({close}) => (
+            <Container>
+              <div className="flex items-center justify-between gap-2">
+                <Heading slot="title">Insert {props.definition.title}</Heading>
+                <TooltipTrigger>
+                  <Button variant="secondary" size="sm" onPress={close}>
+                    <XIcon className="size-4" />
+                  </Button>
+                  <Tooltip>Close</Tooltip>
+                </TooltipTrigger>
+              </div>
+              <ObjectForm
+                {...props}
+                onSubmit={({values, placement}) => {
+                  if (props.type === 'inline') {
+                    editor.send({
+                      type: 'insert.inline object',
+                      inlineObject: {
+                        name: props.definition.name,
+                        value: values,
+                      },
+                    })
+                  } else {
+                    editor.send({
+                      type: 'insert.block object',
+                      placement: placement ?? 'auto',
+                      blockObject: {
+                        name: props.definition.name,
+                        value: values,
+                      },
+                    })
+                  }
+                  editor.send({type: 'focus'})
+                  close()
+                }}
+              />
+            </Container>
+          )}
+        </Dialog>
+      </Modal>
+    </DialogTrigger>
   )
 }
 
-function BlockObjectButton(props: {
-  blockObject: SchemaDefinition['blockObjects'][number]
-}) {
-  const editor = useEditor()
-  const disabled = useEditorSelector(
-    editor,
-    (snapshot) => snapshot.context.readOnly,
-  )
+function ObjectForm(
+  props: (
+    | {
+        type: 'block'
+        definition: SchemaDefinition['blockObjects'][number]
+      }
+    | {
+        type: 'inline'
+        definition: SchemaDefinition['inlineObjects'][number]
+      }
+  ) & {
+    onSubmit: ({
+      values,
+      placement,
+    }: {
+      values: {[key: string]: string | number}
+      placement?: 'auto' | 'before' | 'after'
+    }) => void
+  },
+) {
+  const defaultValues: {[key: string]: string | number} =
+    'defaultValues' in props.definition ? props.definition.defaultValues : {}
+
+  const fields = props.definition.fields.map((field, index) => {
+    const defaultValue = defaultValues[field.name] as string
+
+    return (
+      <TextField
+        key={field.name}
+        autoFocus={index === 0}
+        className="flex flex-col gap-1"
+        defaultValue={defaultValue}
+      >
+        <Label>{'title' in field ? field.title : field.name}</Label>
+        <Input name={field.name} />
+      </TextField>
+    )
+  })
 
   return (
-    <TooltipTrigger>
-      <Button
-        variant="secondary"
-        size="sm"
-        isDisabled={disabled}
-        onPress={() => {
-          editor.send({
-            type: 'insert.block object',
-            placement: 'auto',
-            blockObject: {
-              name: props.blockObject.name,
-              value:
-                props.blockObject.name === 'image'
-                  ? {
-                      url: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4OTggMjQwIj48cG9seWdvbiBwb2ludHM9IjM5Mi4xOSA3OC40NSAzOTIuMTMgMTAwLjc1IDM3Mi4xOSA4OS4yNCAzNzEuOSAxODkuMjEgMzU4LjkxIDE4MS43MSAzNTkuMTkgODEuNzQgMzM5LjM1IDcwLjI4IDMzOS40MiA0Ny45OCAzOTIuMTkgNzguNDUiLz48cG9seWdvbiBwb2ludHM9IjQ0Mi42NyAxMDcuNTkgNDQyLjYxIDEyOS45IDQxMy4yOSAxMTIuOTcgNDEzLjIyIDEzOS42NSA0MzkuODEgMTU1IDQzOS43NSAxNzYuNzIgNDEzLjE2IDE2MS4zNyA0MTMuMDcgMTkwLjQ0IDQ0Mi4zOSAyMDcuMzYgNDQyLjMyIDIyOS44NyA0MDAuMzEgMjA1LjYxIDQwMC42NiA4My4zNCA0NDIuNjcgMTA3LjU5Ii8+PHBvbHlnb24gcG9pbnRzPSI1MDMuNCA3OS4yMiA0ODMuODYgMTUwLjE0IDUwNC43MiAyMDAuOTQgNDkwLjczIDIwOS4wMSA0NzYuNjQgMTc0LjY1IDQ2Mi44OCAyMjUuMSA0NDkuMTkgMjMzIDQ2OS42OSAxNTguNzIgNDQ5LjgyIDExMC4xNSA0NjMuODkgMTAyLjAzIDQ3Ni44MSAxMzQuMjYgNDg5LjgxIDg3LjA2IDUwMy40IDc5LjIyIi8+PHBvbHlnb24gcG9pbnRzPSI1NTcuNzUgNDcuODMgNTU3LjgyIDcwLjE0IDUzOC42IDgxLjI0IDUzOC44OCAxODEuMjIgNTI2LjM2IDE4OC40NCA1MjYuMDggODguNDYgNTA2Ljk1IDk5LjUxIDUwNi44OSA3Ny4yIDU1Ny43NSA0Ny44MyIvPjxwYXRoIGQ9Ik00MTkuMzcsMjcuMTJoMHMuMTktMzEuODIsMjcuODMtMTUuODMsMjcuNjUsNDcuODYsMjcuNjUsNDcuODZsLTkuMjItNS4zM3MwLTIxLjI4LTE4LjQzLTMxLjkyLTE4LjQzLDEwLjY0LTE4LjQzLDEwLjY0WiIvPjwvc3ZnPgo=',
-                      alt: 'Portable Text logo',
-                    }
-                  : {},
-            },
-          })
-          editor.send({type: 'focus'})
-        }}
-      >
-        <Icon icon={props.blockObject.icon} fallback={null} />
-        {props.blockObject.title}
+    <form
+      className="flex flex-col gap-2"
+      onSubmit={(e) => {
+        e.preventDefault()
+
+        const formData = new FormData(e.target as HTMLFormElement)
+        const formDataValues = Object.fromEntries(formData) as {
+          [key: string]: string | number
+        }
+        const {placement, ...values} = formDataValues
+
+        props.onSubmit({
+          values,
+          placement: placement as 'auto' | 'before' | 'after' | undefined,
+        })
+      }}
+    >
+      {fields}
+      {props.type === 'block' ? (
+        <TextField>
+          <Label>Placement</Label>
+          <Select
+            name="placement"
+            aria-label="Placement"
+            defaultSelectedKey="auto"
+          >
+            <SelectItem id="auto" textValue="auto">
+              Auto
+            </SelectItem>
+            <SelectItem id="before" textValue="before">
+              Before
+            </SelectItem>
+            <SelectItem id="after" textValue="after">
+              After
+            </SelectItem>
+          </Select>
+        </TextField>
+      ) : null}
+      <Button className="self-end" type="submit" size="sm">
+        Insert
       </Button>
-      <Tooltip>Insert {props.blockObject.title}</Tooltip>
-    </TooltipTrigger>
+    </form>
   )
 }
 
