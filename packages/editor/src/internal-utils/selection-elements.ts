@@ -51,17 +51,21 @@ function getBlockNodes(
     return []
   }
 
-  const blockEntries = Array.from(
-    Editor.nodes(slateEditor, {
-      at: range,
-      mode: 'highest',
-      match: (n) => !Editor.isEditor(n),
-    }),
-  )
+  try {
+    const blockEntries = Array.from(
+      Editor.nodes(slateEditor, {
+        at: range,
+        mode: 'highest',
+        match: (n) => !Editor.isEditor(n),
+      }),
+    )
 
-  return blockEntries.map(([blockNode]) =>
-    DOMEditor.toDOMNode(slateEditor, blockNode),
-  )
+    return blockEntries.map(([blockNode]) =>
+      DOMEditor.toDOMNode(slateEditor, blockNode),
+    )
+  } catch {
+    return []
+  }
 }
 
 function getChildNodes(
@@ -78,17 +82,21 @@ function getChildNodes(
     return []
   }
 
-  const childEntries = Array.from(
-    Editor.nodes(slateEditor, {
-      at: range,
-      mode: 'lowest',
-      match: (n) => !Editor.isEditor(n),
-    }),
-  )
+  try {
+    const childEntries = Array.from(
+      Editor.nodes(slateEditor, {
+        at: range,
+        mode: 'lowest',
+        match: (n) => !Editor.isEditor(n),
+      }),
+    )
 
-  return childEntries.map(([childNode]) =>
-    DOMEditor.toDOMNode(slateEditor, childNode),
-  )
+    return childEntries.map(([childNode]) =>
+      DOMEditor.toDOMNode(slateEditor, childNode),
+    )
+  } catch {
+    return []
+  }
 }
 
 export type SelectionDomNodes = {
