@@ -9,6 +9,7 @@ import {corePriority} from '../priority/priority.core'
 import {createEditorPriority} from '../priority/priority.types'
 import type {EditableAPI, PortableTextSlateEditor} from '../types/editor'
 import {createSlateEditor, type SlateEditor} from './create-slate-editor'
+import {createEditorDom} from './editor-dom'
 import type {EditorActor} from './editor-machine'
 import {editorMachine} from './editor-machine'
 import {
@@ -64,6 +65,10 @@ export function createInternalEditor(config: EditorConfig): {
   })
 
   const editor = {
+    dom: createEditorDom(
+      (event) => editorActor.send(event),
+      slateEditor.instance,
+    ),
     getSnapshot: () =>
       getEditorSnapshot({
         editorActorSnapshot: editorActor.getSnapshot(),
