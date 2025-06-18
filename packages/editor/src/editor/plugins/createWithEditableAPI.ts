@@ -37,6 +37,8 @@ import type {
 } from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 import {getEditorSnapshot} from '../editor-selector'
+import {getActiveAnnotations} from '../get-active-annotations'
+import {getActiveDecorators} from '../get-active-decorators'
 
 const debug = debugWithName('API:editable')
 
@@ -95,7 +97,9 @@ export function createEditableAPI(
         slateEditorInstance: editor,
       })
 
-      return snapshot.beta.activeDecorators.includes(mark)
+      const activeDecorators = getActiveDecorators(snapshot)
+
+      return activeDecorators.includes(mark)
     },
     marks: (): string[] => {
       const snapshot = getEditorSnapshot({
@@ -103,10 +107,10 @@ export function createEditableAPI(
         slateEditorInstance: editor,
       })
 
-      return [
-        ...snapshot.beta.activeAnnotations,
-        ...snapshot.beta.activeDecorators,
-      ]
+      const activeAnnotations = getActiveAnnotations(snapshot)
+      const activeDecorators = getActiveDecorators(snapshot)
+
+      return [...activeAnnotations, ...activeDecorators]
     },
     undo: (): void => {
       editorActor.send({

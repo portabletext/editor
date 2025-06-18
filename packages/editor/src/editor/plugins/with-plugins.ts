@@ -11,7 +11,6 @@ import {createWithPortableTextMarkModel} from './createWithPortableTextMarkModel
 import {createWithSchemaTypes} from './createWithSchemaTypes'
 import {createWithUndoRedo} from './createWithUndoRedo'
 import {createWithUtils} from './createWithUtils'
-import {pluginUpdateMarkState} from './slate-plugin.update-mark-state'
 import {pluginUpdateSelection} from './slate-plugin.update-selection'
 import {pluginUpdateValue} from './slate-plugin.update-value'
 
@@ -68,13 +67,10 @@ export const withPlugins = <T extends Editor>(
                   withPatches(
                     pluginUpdateValue(
                       editorActor.getSnapshot().context,
-                      pluginUpdateMarkState(
-                        editorActor.getSnapshot().context,
-                        pluginUpdateSelection({
-                          editorActor,
-                          editor: e,
-                        }),
-                      ),
+                      pluginUpdateSelection({
+                        editorActor,
+                        editor: e,
+                      }),
                     ),
                   ),
                 ),

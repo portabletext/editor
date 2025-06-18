@@ -77,10 +77,6 @@ export const abstractDeleteBehaviors = [
       }
 
       const trimmedSelection = selectors.getTrimmedSelection({
-        beta: {
-          activeAnnotations: [],
-          activeDecorators: [],
-        },
         context: {
           converters: [],
           schema: snapshot.context.schema,
@@ -88,6 +84,7 @@ export const abstractDeleteBehaviors = [
           readOnly: false,
           value: snapshot.context.value,
           selection,
+          decoratorState: snapshot.context.decoratorState,
         },
       })
 
