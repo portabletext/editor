@@ -1,8 +1,8 @@
 import {
-  RangeDecoration,
-  RangeDecorationOnMovedDetails,
   useEditor,
   useEditorSelector,
+  type RangeDecoration,
+  type RangeDecorationOnMovedDetails,
 } from '@portabletext/editor'
 import * as selectors from '@portabletext/editor/selectors'
 import {TextCursorIcon} from 'lucide-react'
