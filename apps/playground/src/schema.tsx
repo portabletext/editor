@@ -57,12 +57,18 @@ export const schemaDefinition = defineSchema({
       name: 'link',
       icon: LinkIcon,
       fields: [{name: 'href', type: 'string'}],
+      defaultValues: {
+        href: 'https://example.com',
+      },
     },
     {
       title: 'Comment',
       name: 'comment',
       icon: MessageSquareTextIcon,
       fields: [{name: 'text', type: 'string'}],
+      defaultValues: {
+        text: 'Consider rewriting this',
+      },
     },
   ],
   lists: [
