@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.53.1](https://github.com/portabletext/editor/compare/editor-v1.53.0...editor-v1.53.1) (2025-06-18)
+
+
+### Bug Fixes
+
+* **deps:** update react compiler dependencies 🤖 ✨ ([#1141](https://github.com/portabletext/editor/issues/1141)) ([44c085c](https://github.com/portabletext/editor/commit/44c085cc014ed1db6dba85da959790c0badf6eb0))
+* **deps:** update sanity monorepo to ^3.93.0 ([c2b2785](https://github.com/portabletext/editor/commit/c2b2785c964d54a011677f3e75de35353b577f04))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.31
+
 ## [1.53.0](https://github.com/portabletext/editor/compare/editor-v1.52.8...editor-v1.53.0) (2025-06-13)
 
 
