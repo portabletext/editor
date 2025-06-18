@@ -379,8 +379,8 @@ importers:
         version: 4.17.21
     devDependencies:
       '@sanity/pkg-utils':
-        specifier: ^7.2.6
-        version: 7.2.6(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(debug@4.4.1)(typescript@5.8.3)
+        specifier: ^7.2.7
+        version: 7.2.7(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(debug@4.4.1)(typescript@5.8.3)
       '@sanity/schema':
         specifier: ^3.93.0
         version: 3.93.0(@types/react@19.1.8)(debug@4.4.1)
@@ -467,8 +467,8 @@ importers:
         specifier: ^3.2.0
         version: 3.2.0
       '@sanity/pkg-utils':
-        specifier: ^7.2.6
-        version: 7.2.6(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(debug@4.4.1)(typescript@5.8.3)
+        specifier: ^7.2.7
+        version: 7.2.7(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(debug@4.4.1)(typescript@5.8.3)
       '@sanity/schema':
         specifier: ^3.93.0
         version: 3.93.0(@types/react@19.1.8)(debug@4.4.1)
@@ -555,8 +555,8 @@ importers:
         version: 4.17.21
     devDependencies:
       '@sanity/pkg-utils':
-        specifier: ^7.2.6
-        version: 7.2.6(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(debug@4.4.1)(typescript@5.8.3)
+        specifier: ^7.2.7
+        version: 7.2.7(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(debug@4.4.1)(typescript@5.8.3)
       '@types/lodash':
         specifier: ^4.17.16
         version: 4.17.16
@@ -585,8 +585,8 @@ importers:
         specifier: ^1.53.0
         version: 1.53.0
       '@sanity/pkg-utils':
-        specifier: ^7.2.6
-        version: 7.2.6(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(debug@4.4.1)(typescript@5.8.3)
+        specifier: ^7.2.7
+        version: 7.2.7(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(debug@4.4.1)(typescript@5.8.3)
       typescript:
         specifier: 5.8.3
         version: 5.8.3
@@ -2579,8 +2579,8 @@ packages:
       rollup:
         optional: true
 
-  '@rollup/plugin-commonjs@28.0.5':
-    resolution: {integrity: sha512-lytLp2JgAMwqJY6ve3OSROXr2XuEYHjnsQN3hmnxC+w11dI91LuUw4Yc1kk2FqKXeMG8psoFejFgK+znoij0cg==}
+  '@rollup/plugin-commonjs@28.0.6':
+    resolution: {integrity: sha512-XSQB1K7FUU5QP+3lOQmVCE3I0FcbbNvmNT4VJSj93iUjayaARrTQeoRdiYQoftAJBLrR9t2agwAd3ekaTgHNlw==}
     engines: {node: '>=16.0.0 || 14 >= 14.17'}
     peerDependencies:
       rollup: ^2.68.0||^3.0.0||^4.0.0
@@ -2776,8 +2776,8 @@ packages:
   '@sanity/generate-help-url@3.0.0':
     resolution: {integrity: sha512-wtMYcV5GIDIhVyF/jjmdwq1GdlK07dRL40XMns73VbrFI7FteRltxv48bhYVZPcLkRXb0SHjpDS/icj9/yzbVA==}
 
-  '@sanity/pkg-utils@7.2.6':
-    resolution: {integrity: sha512-9ZiRbjeYWgPenI2E709foCOpx0dZL/ffHrs82951cR1iZk83gsS4/ypd6FQ/9s8HcFzNAlaT855TIxIi8kfEJw==}
+  '@sanity/pkg-utils@7.2.7':
+    resolution: {integrity: sha512-rFfA1/JrDzYmpodRVNYp5mRuTEqy28Gxc4pqcAqiL5aPGZE3DjRFbgrPp1KBXUuNy/+YhFwxgDuU/HsQvo217w==}
     engines: {node: '>=18.17.0'}
     hasBin: true
     peerDependencies:
@@ -6657,20 +6657,11 @@ packages:
       typescript: ^4.9.4 || ^5.0.2
       zod: ^3
 
-  zod-validation-error@3.5.0:
-    resolution: {integrity: sha512-IWK6O51sRkq0YsnYD2oLDuK2BNsIjYUlR0+1YSd4JyBzm6/892IWroUnLc7oW4FU+b0f6948BHi6H8MDcqpOGw==}
-    engines: {node: '>=18.0.0'}
-    peerDependencies:
-      zod: ^3.25.0
-
   zod-validation-error@3.5.2:
     resolution: {integrity: sha512-mdi7YOLtram5dzJ5aDtm1AG9+mxRma1iaMrZdYIpFO7epdKBUwLHIxTF8CPDeCQ828zAXYtizrKlEJAtzgfgrw==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       zod: ^3.25.0
-
-  zod@3.25.64:
-    resolution: {integrity: sha512-hbP9FpSZf7pkS7hRVUrOjhwKJNyampPgtXKc3AN6DsWtoHsg2Sb4SQaS4Tcay380zSwd2VPo9G9180emBACp5g==}
 
   zod@3.25.67:
     resolution: {integrity: sha512-idA2YXwpCdqUSKRCACDE6ItZD9TZzy3OZMtpfLoh6oPR47lipysRrJfjzMqFxQ3uJuUPyUeWe1r9vLH33xO/Qw==}
@@ -9169,7 +9160,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@rollup/plugin-commonjs@28.0.5(rollup@4.43.0)':
+  '@rollup/plugin-commonjs@28.0.6(rollup@4.43.0)':
     dependencies:
       '@rollup/pluginutils': 5.1.4(rollup@4.43.0)
       commondir: 1.0.1
@@ -9340,7 +9331,7 @@ snapshots:
 
   '@sanity/generate-help-url@3.0.0': {}
 
-  '@sanity/pkg-utils@7.2.6(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(debug@4.4.1)(typescript@5.8.3)':
+  '@sanity/pkg-utils@7.2.7(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(debug@4.4.1)(typescript@5.8.3)':
     dependencies:
       '@babel/core': 7.27.4
       '@babel/preset-typescript': 7.27.1(@babel/core@7.27.4)
@@ -9350,7 +9341,7 @@ snapshots:
       '@optimize-lodash/rollup-plugin': 5.0.2(rollup@4.43.0)
       '@rollup/plugin-alias': 5.1.1(rollup@4.43.0)
       '@rollup/plugin-babel': 6.0.4(@babel/core@7.27.4)(@types/babel__core@7.20.5)(rollup@4.43.0)
-      '@rollup/plugin-commonjs': 28.0.5(rollup@4.43.0)
+      '@rollup/plugin-commonjs': 28.0.6(rollup@4.43.0)
       '@rollup/plugin-json': 6.1.0(rollup@4.43.0)
       '@rollup/plugin-node-resolve': 16.0.1(rollup@4.43.0)
       '@rollup/plugin-replace': 6.0.2(rollup@4.43.0)
@@ -9381,8 +9372,8 @@ snapshots:
       treeify: 1.1.0
       typescript: 5.8.3
       uuid: 11.1.0
-      zod: 3.25.64
-      zod-validation-error: 3.5.0(zod@3.25.64)
+      zod: 3.25.67
+      zod-validation-error: 3.5.2(zod@3.25.67)
     optionalDependencies:
       babel-plugin-react-compiler: 19.1.0-rc.2
     transitivePeerDependencies:
@@ -14132,15 +14123,9 @@ snapshots:
       typescript: 5.8.3
       zod: 3.25.67
 
-  zod-validation-error@3.5.0(zod@3.25.64):
-    dependencies:
-      zod: 3.25.64
-
   zod-validation-error@3.5.2(zod@3.25.67):
     dependencies:
       zod: 3.25.67
-
-  zod@3.25.64: {}
 
   zod@3.25.67: {}
 
