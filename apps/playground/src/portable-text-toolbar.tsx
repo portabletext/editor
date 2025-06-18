@@ -2,7 +2,7 @@ import {
   type RangeDecoration,
   type RangeDecorationOnMovedDetails,
 } from '@portabletext/editor'
-import {Group} from 'react-aria-components'
+import {Group} from './components/group'
 import {Separator} from './components/separator'
 import {Toolbar} from './components/toolbar'
 import type {SchemaDefinition} from './schema'
@@ -24,13 +24,13 @@ export function PortableTextToolbar(props: {
     <Toolbar aria-label="Editor toolbar">
       <StyleButton definitions={props.schemaDefinition.styles} />
       <Separator orientation="vertical" />
-      <Group aria-label="Decorators" className="contents">
+      <Group aria-label="Decorators">
         {props.schemaDefinition.decorators?.map((decorator) => (
           <DecoratorButton key={decorator.name} definition={decorator} />
         ))}
       </Group>
       <Separator orientation="vertical" />
-      <Group aria-label="Annotations" className="contents">
+      <Group aria-label="Annotations">
         {props.schemaDefinition.annotations.map((annotation) => (
           <AnnotationButton
             key={annotation.name}
@@ -41,13 +41,13 @@ export function PortableTextToolbar(props: {
         ))}
       </Group>
       <Separator orientation="vertical" />
-      <Group aria-label="Lists" className="contents">
+      <Group aria-label="Lists">
         {props.schemaDefinition.lists.map((list) => (
           <ListItemButton key={list.name} definition={list} />
         ))}
       </Group>
       <Separator orientation="vertical" />
-      <Group aria-label="Block Objects" className="contents">
+      <Group aria-label="Block Objects">
         {props.schemaDefinition.blockObjects.map((blockObject) => (
           <InsertBlockObjectButton
             key={blockObject.name}
@@ -58,7 +58,7 @@ export function PortableTextToolbar(props: {
         ))}
       </Group>
       <Separator orientation="vertical" />
-      <Group aria-label="Inline Objects" className="contents">
+      <Group aria-label="Inline Objects">
         {props.schemaDefinition.inlineObjects.map((inlineObject) => (
           <InsertInlineObjectButton
             key={inlineObject.name}
@@ -69,14 +69,14 @@ export function PortableTextToolbar(props: {
         ))}
       </Group>
       <Separator orientation="vertical" />
-      <Group aria-label="Extra" className="contents">
+      <Group aria-label="Extra">
         <RangeDecorationButton
           onAddRangeDecoration={props.onAddRangeDecoration}
           onRangeDecorationMoved={props.onRangeDecorationMoved}
         />
       </Group>
       <Separator orientation="vertical" />
-      <Group aria-label="Debugging" className="contents">
+      <Group aria-label="Debugging">
         <FocusButton />
       </Group>
     </Toolbar>
