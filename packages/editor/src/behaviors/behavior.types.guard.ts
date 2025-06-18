@@ -1,5 +1,5 @@
+import type {EditorDom} from '../editor/editor-dom'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
-import type {EditorDom} from '../internal-utils/selection-elements'
 
 /**
  * @beta
