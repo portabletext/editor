@@ -23,6 +23,9 @@ export const button = tv({
     isDisabled: {
       true: 'bg-gray-100 text-gray-300 border-black/5',
     },
+    isSelected: {
+      true: '',
+    },
     size: {
       sm: 'text-xs px-2 py-1',
     },
@@ -45,6 +48,11 @@ export const button = tv({
       variant: 'destructive',
       isDisabled: false,
       class: 'hover:bg-red-800',
+    },
+    {
+      variant: 'secondary',
+      isSelected: true,
+      class: 'bg-gray-700 hover:bg-gray-800 pressed:bg-gray-900 text-white',
     },
   ],
 })
