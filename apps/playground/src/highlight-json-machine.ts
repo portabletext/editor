@@ -9,6 +9,7 @@ function formatJson(json: string) {
   return prettier.format(json, {
     parser: 'json',
     plugins: [prettierPluginBabel, prettierPluginEstree, prettierPluginHtml],
+    printWidth: 60,
   })
 }
 
