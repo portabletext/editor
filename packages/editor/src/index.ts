@@ -2,6 +2,7 @@ export type {Patch} from '@portabletext/patches'
 export type {
   PortableTextBlock,
   PortableTextChild,
+  PortableTextObject,
   PortableTextSpan,
 } from '@sanity/types'
 export type {Editor, EditorConfig, EditorEvent} from './editor'
