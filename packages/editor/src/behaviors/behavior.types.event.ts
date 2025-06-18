@@ -5,6 +5,7 @@ import type {OmitFromUnion, PickFromUnion, StrictExtract} from '../type-utils'
 import type {BlockOffset} from '../types/block-offset'
 import type {BlockWithOptionalKey} from '../types/block-with-optional-key'
 import type {EditorSelection} from '../types/editor'
+import type {AnnotationPath} from '../types/paths'
 
 /**
  * @beta
@@ -208,6 +209,7 @@ export function isSyntheticBehaviorEvent(
  **************************************/
 
 const abstractBehaviorEventTypes = [
+  'annotation.set',
   'annotation.toggle',
   'decorator.toggle',
   'delete.backward',
@@ -240,6 +242,11 @@ export type AbstractBehaviorEventType =
   (typeof abstractBehaviorEventTypes)[number]
 
 type AbstractBehaviorEvent =
+  | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'annotation.set'>
+      at: AnnotationPath
+      props: Record<string, unknown>
+    }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'annotation.toggle'>
       annotation: {
