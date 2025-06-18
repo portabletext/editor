@@ -53,6 +53,7 @@ import {
   StockTickerSchema,
 } from './schema'
 import {SelectionPreview} from './selection-preview'
+import {RangeDecorationButton} from './toolbar/range-decoration-button'
 import {ValuePreview} from './value-preview'
 
 const featureFlags = createStore({
@@ -135,21 +136,22 @@ export function Editor(props: {
           />
           <div className="flex flex-col gap-2">
             <Container>
-              <PortableTextToolbar
-                schemaDefinition={schemaDefinition}
-                onAddRangeDecoration={(rangeDecoration) => {
-                  props.editorRef.send({
-                    type: 'add range decoration',
-                    rangeDecoration,
-                  })
-                }}
-                onRangeDecorationMoved={(details) => {
-                  props.editorRef.send({
-                    type: 'move range decoration',
-                    details,
-                  })
-                }}
-              />
+              <PortableTextToolbar schemaDefinition={schemaDefinition}>
+                <RangeDecorationButton
+                  onAddRangeDecoration={(rangeDecoration) => {
+                    props.editorRef.send({
+                      type: 'add range decoration',
+                      rangeDecoration,
+                    })
+                  }}
+                  onRangeDecorationMoved={(details) => {
+                    props.editorRef.send({
+                      type: 'move range decoration',
+                      details,
+                    })
+                  }}
+                />
+              </PortableTextToolbar>
             </Container>
             {enableEmojiPickerPlugin ? <EmojiPickerPlugin /> : null}
             <div className="flex gap-2 items-center">

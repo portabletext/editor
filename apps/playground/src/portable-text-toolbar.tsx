@@ -1,7 +1,3 @@
-import {
-  type RangeDecoration,
-  type RangeDecorationOnMovedDetails,
-} from '@portabletext/editor'
 import {Group} from './components/group'
 import {Separator} from './components/separator'
 import {Toolbar} from './components/toolbar'
@@ -12,13 +8,11 @@ import {FocusButton} from './toolbar/focus-button'
 import {InsertBlockObjectButton} from './toolbar/insert-block-object-button'
 import {InsertInlineObjectButton} from './toolbar/insert-inline-object-button'
 import {ListItemButton} from './toolbar/list-item-button'
-import {RangeDecorationButton} from './toolbar/range-decoration-button'
 import {StyleButton} from './toolbar/style-button'
 
 export function PortableTextToolbar(props: {
   schemaDefinition: SchemaDefinition
-  onAddRangeDecoration: (rangeDecoration: RangeDecoration) => void
-  onRangeDecorationMoved: (details: RangeDecorationOnMovedDetails) => void
+  children?: React.ReactNode
 }) {
   return (
     <Toolbar aria-label="Editor toolbar">
@@ -69,16 +63,11 @@ export function PortableTextToolbar(props: {
         ))}
       </Group>
       <Separator orientation="vertical" />
-      <Group aria-label="Extra">
-        <RangeDecorationButton
-          onAddRangeDecoration={props.onAddRangeDecoration}
-          onRangeDecorationMoved={props.onRangeDecorationMoved}
-        />
-      </Group>
-      <Separator orientation="vertical" />
       <Group aria-label="Debugging">
         <FocusButton />
       </Group>
+      <Separator orientation="vertical" />
+      <Group aria-label="Extra">{props.children}</Group>
     </Toolbar>
   )
 }
