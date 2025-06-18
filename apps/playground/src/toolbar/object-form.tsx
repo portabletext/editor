@@ -8,10 +8,10 @@ export function ObjectForm(
   props: {
     fields: ReadonlyArray<{
       name: string
-      type: 'string' | 'number'
+      type: string
       title?: string
     }>
-    defaultValues: Record<string, string | number>
+    defaultValues: {[key: string]: unknown}
     submitLabel: string
   } & {
     onSubmit: ({values}: {values: Record<string, string | number>}) => void

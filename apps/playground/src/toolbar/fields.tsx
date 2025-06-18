@@ -5,9 +5,9 @@ export function Fields(props: {
   fields: ReadonlyArray<{
     name: string
     title?: string
-    type: 'string' | 'number'
+    type: string
   }>
-  defaultValues: Record<string, string | number>
+  defaultValues: {[key: string]: unknown}
 }) {
   const fields = props.fields.map((field, index) => {
     if (field.type === 'string') {

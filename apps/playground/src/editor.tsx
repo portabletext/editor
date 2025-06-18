@@ -53,6 +53,7 @@ import {
   StockTickerSchema,
 } from './schema'
 import {SelectionPreview} from './selection-preview'
+import {AnnotationPopover} from './toolbar/annotation-popover'
 import {RangeDecorationButton} from './toolbar/range-decoration-button'
 import {ValuePreview} from './value-preview'
 
@@ -152,6 +153,7 @@ export function Editor(props: {
                   }}
                 />
               </PortableTextToolbar>
+              <AnnotationPopover />
             </Container>
             {enableEmojiPickerPlugin ? <EmojiPickerPlugin /> : null}
             <div className="flex gap-2 items-center">
