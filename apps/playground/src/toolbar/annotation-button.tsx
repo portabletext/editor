@@ -44,6 +44,7 @@ export function AnnotationButton(props: {
               name: props.definition.name,
             },
           })
+          editor.send({type: 'focus'})
         }}
       >
         <Icon icon={props.definition.icon} fallback={null} />
