@@ -543,9 +543,6 @@ export const PortableTextEditable = forwardRef<
           )
         ) {
           Transforms.select(slateEditor, Editor.start(slateEditor, []))
-        }
-
-        if (slateEditor.selection) {
           slateEditor.onChange()
         }
       }
