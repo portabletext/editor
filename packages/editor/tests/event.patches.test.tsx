@@ -592,6 +592,9 @@ describe('event.patches', () => {
           children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
         },
       ],
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+      }),
     })
 
     editorRef.current?.send({
@@ -649,6 +652,39 @@ describe('event.patches', () => {
               _key: 'k1',
               text: 'bar',
               marks: [],
+              _map: {foo: 'bar'},
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editorRef.current?.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'marks'],
+          value: ['strong'],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k1',
+              text: 'bar',
+              marks: ['strong'],
               _map: {foo: 'bar'},
             },
           ],
