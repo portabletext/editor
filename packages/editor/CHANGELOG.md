@@ -1,5 +1,34 @@
 # Changelog
 
+## [1.54.0](https://github.com/portabletext/editor/compare/editor-v1.53.1...editor-v1.54.0) (2025-06-19)
+
+
+### Features
+
+* add `annotation.set` event ([2f2e2e0](https://github.com/portabletext/editor/commit/2f2e2e029d6a7f9e93c675a7a4fbf73713b77624))
+* add `child.set` event matching the behavior of `block.set` ([63f4fc8](https://github.com/portabletext/editor/commit/63f4fc8276ba8aa4826e2e0ee091e020cf5fd092))
+* add `child.unset` event matching `block.unset` ([d727fe4](https://github.com/portabletext/editor/commit/d727fe43b1ec92b74d65cb9d1c4c83b4d59463fb))
+* expose `editor.dom` utilities ([bf9b847](https://github.com/portabletext/editor/commit/bf9b8476ef02235215bfb97ec91f28fd3b08bca6))
+
+
+### Bug Fixes
+
+* **`dom`:** catch thrown errors ([7322f51](https://github.com/portabletext/editor/commit/7322f51b94966488ce8a9118de914e93b855d4eb))
+* avoid Slate-&gt;PT transformation on each patch ([bbc9d51](https://github.com/portabletext/editor/commit/bbc9d518627272c7dca2cc65647be8410f82b431))
+* **behaviors:** allow `forward` in combination with `effect` ([81f2612](https://github.com/portabletext/editor/commit/81f2612f52224cc3df9aabbdcdd44776d5b7368e))
+* **perf:** avoid unnecessary calls to `onChange()` ([afd9e0a](https://github.com/portabletext/editor/commit/afd9e0a14378eec2d7fc8e59d02e47867907aef5))
+* remove selection provider ([ad94d17](https://github.com/portabletext/editor/commit/ad94d17be387bd2252aef2453f2a3283ec7d8195))
+* **types:** export `BlockPath` ([40e4889](https://github.com/portabletext/editor/commit/40e488907fae38e1893f9b84c9898e5621f24797))
+* **types:** export `ChildPath` ([e260458](https://github.com/portabletext/editor/commit/e260458982fab5a30f58006a0d42e65e9fbec6da))
+* **types:** export `PortableTextObject` ([a545084](https://github.com/portabletext/editor/commit/a545084fed87b4c6f09149d230d33e41b6f6c4e1))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * racejar bumped to 1.2.7
+
 ## [1.53.1](https://github.com/portabletext/editor/compare/editor-v1.53.0...editor-v1.53.1) (2025-06-18)
 
 
