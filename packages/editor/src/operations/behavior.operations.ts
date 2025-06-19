@@ -14,6 +14,7 @@ import {addAnnotationOperationImplementation} from './behavior.operation.annotat
 import {removeAnnotationOperationImplementation} from './behavior.operation.annotation.remove'
 import {blockSetOperationImplementation} from './behavior.operation.block.set'
 import {blockUnsetOperationImplementation} from './behavior.operation.block.unset'
+import {childSetOperationImplementation} from './behavior.operation.child.set'
 import {decoratorAddOperationImplementation} from './behavior.operation.decorator.add'
 import {deleteOperationImplementation} from './behavior.operation.delete'
 import {insertInlineObjectOperationImplementation} from './behavior.operation.insert-inline-object'
@@ -58,6 +59,7 @@ const behaviorOperationImplementations: BehaviorOperationImplementations = {
   'annotation.remove': removeAnnotationOperationImplementation,
   'block.set': blockSetOperationImplementation,
   'block.unset': blockUnsetOperationImplementation,
+  'child.set': childSetOperationImplementation,
   'decorator.add': decoratorAddOperationImplementation,
   'decorator.remove': removeDecoratorOperationImplementation,
   'delete': deleteOperationImplementation,
@@ -105,6 +107,13 @@ export function performOperation({
       }
       case 'block.unset': {
         behaviorOperationImplementations['block.unset']({
+          context,
+          operation: operation,
+        })
+        break
+      }
+      case 'child.set': {
+        behaviorOperationImplementations['child.set']({
           context,
           operation: operation,
         })

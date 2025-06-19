@@ -1,3 +1,4 @@
+import {isSpan} from '../internal-utils/parse-blocks'
 import * as selectors from '../selectors'
 import * as utils from '../utils'
 import {raise} from './behavior.types.action'
@@ -63,6 +64,60 @@ export const abstractDeleteBehaviors = [
         }),
       ],
     ],
+  }),
+  defineBehavior({
+    on: 'delete.child',
+    guard: ({snapshot, event}) => {
+      const focusChild = selectors.getFocusChild({
+        ...snapshot,
+        context: {
+          ...snapshot.context,
+          selection: {
+            anchor: {
+              path: event.at,
+              offset: 0,
+            },
+            focus: {
+              path: event.at,
+              offset: 0,
+            },
+          },
+        },
+      })
+
+      if (!focusChild) {
+        return false
+      }
+
+      if (isSpan(snapshot.context, focusChild.node)) {
+        return {
+          selection: {
+            anchor: {
+              path: event.at,
+              offset: 0,
+            },
+            focus: {
+              path: event.at,
+              offset: focusChild.node.text.length,
+            },
+          },
+        }
+      }
+
+      return {
+        selection: {
+          anchor: {
+            path: event.at,
+            offset: 0,
+          },
+          focus: {
+            path: event.at,
+            offset: 0,
+          },
+        },
+      }
+    },
+    actions: [(_, {selection}) => [raise({type: 'delete', at: selection})]],
   }),
   defineBehavior({
     on: 'delete.text',

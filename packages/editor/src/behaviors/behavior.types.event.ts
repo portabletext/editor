@@ -5,7 +5,7 @@ import type {OmitFromUnion, PickFromUnion, StrictExtract} from '../type-utils'
 import type {BlockOffset} from '../types/block-offset'
 import type {BlockWithOptionalKey} from '../types/block-with-optional-key'
 import type {EditorSelection} from '../types/editor'
-import type {AnnotationPath, BlockPath} from '../types/paths'
+import type {AnnotationPath, BlockPath, ChildPath} from '../types/paths'
 
 /**
  * @beta
@@ -64,6 +64,7 @@ const syntheticBehaviorEventTypes = [
   'annotation.remove',
   'block.set',
   'block.unset',
+  'child.set',
   'decorator.add',
   'decorator.remove',
   'delete',
@@ -112,6 +113,11 @@ export type SyntheticBehaviorEvent =
       type: StrictExtract<SyntheticBehaviorEventType, 'block.unset'>
       at: BlockPath
       props: Array<string>
+    }
+  | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'child.set'>
+      at: ChildPath
+      props: {[prop: string]: unknown}
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'decorator.add'>
@@ -214,6 +220,7 @@ const abstractBehaviorEventTypes = [
   'decorator.toggle',
   'delete.backward',
   'delete.block',
+  'delete.child',
   'delete.forward',
   'delete.text',
   'deserialize',
@@ -266,6 +273,10 @@ type AbstractBehaviorEvent =
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'delete.block'>
       at: BlockPath
+    }
+  | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'delete.child'>
+      at: ChildPath
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'delete.forward'>
