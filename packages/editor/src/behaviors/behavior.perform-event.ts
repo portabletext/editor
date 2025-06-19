@@ -180,6 +180,11 @@ export function performEvent({
         continue
       }
 
+      nativeEventPrevented =
+        actions.some(
+          (action) => action.type === 'raise' || action.type === 'execute',
+        ) || !actions.some((action) => action.type === 'forward')
+
       if (actions.some((action) => action.type === 'execute')) {
         // Since at least one action is about to `execute` changes in the editor,
         // we set up a new undo step.
@@ -188,8 +193,6 @@ export function performEvent({
         withUndoStep(editor, () => {
           for (const action of actions) {
             if (action.type === 'effect') {
-              nativeEventPrevented = true
-
               try {
                 action.effect()
               } catch (error) {
@@ -225,8 +228,6 @@ export function performEvent({
             }
 
             if (action.type === 'raise') {
-              nativeEventPrevented = true
-
               performEvent({
                 mode: 'raise',
                 behaviors,
@@ -242,8 +243,6 @@ export function performEvent({
 
               continue
             }
-
-            nativeEventPrevented = true
 
             performEvent({
               mode: 'execute',
@@ -267,8 +266,6 @@ export function performEvent({
 
       for (const action of actions) {
         if (action.type === 'effect') {
-          nativeEventPrevented = true
-
           try {
             action.effect()
           } catch (error) {
@@ -304,8 +301,6 @@ export function performEvent({
         }
 
         if (action.type === 'raise') {
-          nativeEventPrevented = true
-
           performEvent({
             mode: 'raise',
             behaviors,
