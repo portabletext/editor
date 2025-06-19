@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.54.1](https://github.com/portabletext/editor/compare/editor-v1.54.0...editor-v1.54.1) (2025-06-19)
+
+
+### Bug Fixes
+
+* Revert "fix(perf): avoid unnecessary calls to `onChange()`" ([df64b80](https://github.com/portabletext/editor/commit/df64b80ee62defbe7c3c2a659d424aea78d79b8d))
+
 ## [1.54.0](https://github.com/portabletext/editor/compare/editor-v1.53.1...editor-v1.54.0) (2025-06-19)
 
 
