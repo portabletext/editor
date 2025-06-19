@@ -116,8 +116,6 @@ export function performEvent({
       })
     })
 
-    editor.onChange()
-
     return
   }
 
@@ -347,8 +345,6 @@ export function performEvent({
         },
       })
     })
-
-    editor.onChange()
   } else if (nativeEventPrevented) {
     nativeEvent?.preventDefault()
   }
