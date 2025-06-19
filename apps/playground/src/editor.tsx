@@ -55,6 +55,7 @@ import {
 import {SelectionPreview} from './selection-preview'
 import {AnnotationPopover} from './toolbar/annotation-popover'
 import {BlockObjectPopover} from './toolbar/block-object-popover'
+import {InlineObjectPopover} from './toolbar/inline-object-popover'
 import {RangeDecorationButton} from './toolbar/range-decoration-button'
 import {ValuePreview} from './value-preview'
 
@@ -156,6 +157,7 @@ export function Editor(props: {
               </PortableTextToolbar>
               <AnnotationPopover />
               <BlockObjectPopover />
+              <InlineObjectPopover />
             </Container>
             {enableEmojiPickerPlugin ? <EmojiPickerPlugin /> : null}
             <div className="flex gap-2 items-center">
