@@ -248,4 +248,100 @@ describe(getSelectedSpans.name, () => {
       },
     ])
   })
+
+  test('selecting broken-up annotation', () => {
+    expect(
+      getSelectedSpans(
+        createTestSnapshot({
+          context: {
+            value: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [
+                  {
+                    _type: 'span',
+                    _key: 'b0-s0',
+                    marks: [],
+                    text: 'foo ',
+                  },
+                  {
+                    _type: 'span',
+                    _key: 'b0-s1',
+                    marks: ['b0-a0'],
+                    text: 'b',
+                  },
+                  {
+                    _type: 'span',
+                    _key: 'e0-k3',
+                    marks: ['b0-a0', 'strong'],
+                    text: 'a',
+                  },
+                  {
+                    _type: 'span',
+                    _key: 'e0-k2',
+                    marks: ['b0-a0'],
+                    text: 'r',
+                  },
+                  {
+                    _type: 'span',
+                    _key: 'b0-s2',
+                    marks: [],
+                    text: ' baz',
+                  },
+                ],
+                markDefs: [
+                  {
+                    _type: 'link',
+                    _key: 'b0-a0',
+                    href: 'https://example.com',
+                  },
+                ],
+                style: 'normal',
+              },
+            ],
+            selection: {
+              anchor: {
+                path: [{_key: 'b0'}, 'children', {_key: 'b0-s1'}],
+                offset: 0,
+              },
+              focus: {
+                path: [{_key: 'b0'}, 'children', {_key: 'e0-k2'}],
+                offset: 1,
+              },
+              backward: false,
+            },
+          },
+        }),
+      ),
+    ).toEqual([
+      {
+        node: {
+          _type: 'span',
+          _key: 'b0-s1',
+          marks: ['b0-a0'],
+          text: 'b',
+        },
+        path: [{_key: 'b0'}, 'children', {_key: 'b0-s1'}],
+      },
+      {
+        node: {
+          _type: 'span',
+          _key: 'e0-k3',
+          marks: ['b0-a0', 'strong'],
+          text: 'a',
+        },
+        path: [{_key: 'b0'}, 'children', {_key: 'e0-k3'}],
+      },
+      {
+        node: {
+          _type: 'span',
+          _key: 'e0-k2',
+          marks: ['b0-a0'],
+          text: 'r',
+        },
+        path: [{_key: 'b0'}, 'children', {_key: 'e0-k2'}],
+      },
+    ])
+  })
 })
