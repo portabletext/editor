@@ -1,5 +1,6 @@
-import type {KeyedSegment, PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
+import type {BlockPath} from '../types/paths'
 import * as utils from '../utils'
 import {isSelectionCollapsed} from './selector.is-selection-collapsed'
 
@@ -8,7 +9,7 @@ import {isSelectionCollapsed} from './selector.is-selection-collapsed'
  */
 export function isAtTheEndOfBlock(block: {
   node: PortableTextBlock
-  path: [KeyedSegment]
+  path: BlockPath
 }): EditorSelector<boolean> {
   return (snapshot) => {
     if (!snapshot.context.selection || !isSelectionCollapsed(snapshot)) {

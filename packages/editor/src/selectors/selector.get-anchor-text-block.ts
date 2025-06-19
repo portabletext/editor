@@ -1,13 +1,14 @@
-import type {KeyedSegment, PortableTextTextBlock} from '@sanity/types'
+import type {PortableTextTextBlock} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import {isTextBlock} from '../internal-utils/parse-blocks'
+import type {BlockPath} from '../types/paths'
 import {getAnchorBlock} from './selector.get-anchor-block'
 
 /**
  * @public
  */
 export const getAnchorTextBlock: EditorSelector<
-  {node: PortableTextTextBlock; path: [KeyedSegment]} | undefined
+  {node: PortableTextTextBlock; path: BlockPath} | undefined
 > = (snapshot) => {
   const anchorBlock = getAnchorBlock(snapshot)
 

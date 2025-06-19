@@ -1,4 +1,4 @@
-import type {KeyedSegment, PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import {getBlockKeyFromSelectionPoint} from '../selection/selection-point'
 import type {BlockPath} from '../types/paths'
@@ -15,8 +15,7 @@ export const getSelectedBlocks: EditorSelector<
     return []
   }
 
-  const selectedBlocks: Array<{node: PortableTextBlock; path: [KeyedSegment]}> =
-    []
+  const selectedBlocks: Array<{node: PortableTextBlock; path: BlockPath}> = []
   const startPoint = getSelectionStartPoint(snapshot.context.selection)
   const endPoint = getSelectionEndPoint(snapshot.context.selection)
   const startKey = getBlockKeyFromSelectionPoint(startPoint)

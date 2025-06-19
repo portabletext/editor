@@ -1,4 +1,4 @@
-import type {KeyedSegment, PortableTextBlock} from '@sanity/types'
+import type {PortableTextBlock} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import type {BlockPath} from '../types/paths'
 import {getSelectionStartBlock} from './selector.get-selection-start-block'
@@ -9,7 +9,7 @@ import {getSelectionStartBlock} from './selector.get-selection-start-block'
 export const getPreviousBlock: EditorSelector<
   {node: PortableTextBlock; path: BlockPath} | undefined
 > = (snapshot) => {
-  let previousBlock: {node: PortableTextBlock; path: [KeyedSegment]} | undefined
+  let previousBlock: {node: PortableTextBlock; path: BlockPath} | undefined
   const selectionStartBlock = getSelectionStartBlock(snapshot)
 
   if (!selectionStartBlock) {
