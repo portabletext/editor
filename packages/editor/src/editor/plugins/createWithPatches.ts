@@ -267,11 +267,7 @@ export function createWithPatches({
             type: 'internal.patch',
             patch: {...patch, origin: 'local'},
             operationId: getCurrentOperationId(editor),
-            value: fromSlateValue(
-              editor.children,
-              editorActor.getSnapshot().context.schema.block.name,
-              KEY_TO_VALUE_ELEMENT.get(editor),
-            ),
+            value: editor.value,
           })
         }
       }
