@@ -185,6 +185,77 @@ describe('Behavior API', () => {
     })
   })
 
+  test('Scenario: `forward`ing all events', async () => {
+    const editorRef = React.createRef<Editor>()
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator: createTestKeyGenerator(),
+          schemaDefinition: defineSchema({}),
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <PortableTextEditable />
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: '*',
+              actions: [({event}) => [forward(event)]],
+            }),
+          ]}
+        />
+      </EditorProvider>,
+    )
+
+    const locator = page.getByRole('textbox')
+    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+
+    await userEvent.type(locator, 'a')
+    await vi.waitFor(() => {
+      expect(
+        getTersePt(editorRef.current?.getSnapshot().context.value),
+      ).toEqual(['a'])
+    })
+  })
+
+  test('Scenario: `forward`ing all events combined with an `effect`', async () => {
+    const editorRef = React.createRef<Editor>()
+    const sideEffect = vi.fn()
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator: createTestKeyGenerator(),
+          schemaDefinition: defineSchema({}),
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <PortableTextEditable />
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: '*',
+              actions: [({event}) => [effect(sideEffect), forward(event)]],
+            }),
+          ]}
+        />
+      </EditorProvider>,
+    )
+
+    const locator = page.getByRole('textbox')
+    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+
+    await userEvent.type(locator, 'a')
+    await vi.waitFor(() => {
+      expect(
+        getTersePt(editorRef.current?.getSnapshot().context.value),
+      ).toEqual(['a'])
+    })
+
+    expect(sideEffect).toHaveBeenCalled()
+  })
+
   test('Scenario: `effect` can be combined with `forward` to not alter the chain of events', async () => {
     const editorRef = React.createRef<Editor>()
 
