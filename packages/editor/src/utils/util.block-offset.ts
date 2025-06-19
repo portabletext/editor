@@ -1,4 +1,3 @@
-import type {KeyedSegment} from '@sanity/types'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
 import {
@@ -7,6 +6,7 @@ import {
 } from '../selection/selection-point'
 import type {BlockOffset} from '../types/block-offset'
 import type {EditorSelectionPoint} from '../types/editor'
+import type {ChildPath} from '../types/paths'
 
 /**
  * @public
@@ -21,9 +21,7 @@ export function blockOffsetToSpanSelectionPoint({
   direction: 'forward' | 'backward'
 }) {
   let offsetLeft = blockOffset.offset
-  let selectionPoint:
-    | {path: [KeyedSegment, 'children', KeyedSegment]; offset: number}
-    | undefined
+  let selectionPoint: {path: ChildPath; offset: number} | undefined
   let skippedInlineObject = false
 
   for (const block of context.value) {
