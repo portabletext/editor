@@ -30,7 +30,6 @@ import {createInternalEditor, type InternalEditor} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
 import type {EditorActor} from './editor-machine'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
-import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
 import type {MutationActor} from './mutation-machine'
 import {RelayActorContext} from './relay-actor-context'
 import type {RelayActor} from './relay-machine'
@@ -288,11 +287,7 @@ export class PortableTextEditor extends Component<
               initialValue={this.editor._internal.slateEditor.initialValue}
             >
               <PortableTextEditorContext.Provider value={this}>
-                <PortableTextEditorSelectionProvider
-                  editorActor={this.editor._internal.editorActor}
-                >
-                  {this.props.children}
-                </PortableTextEditorSelectionProvider>
+                {this.props.children}
               </PortableTextEditorContext.Provider>
             </Slate>
           </RelayActorContext.Provider>

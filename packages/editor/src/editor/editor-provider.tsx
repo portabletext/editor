@@ -8,7 +8,6 @@ import {createInternalEditor} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
 import {EditorContext} from './editor-context'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
-import {PortableTextEditorSelectionProvider} from './hooks/usePortableTextEditorSelection'
 import {
   PortableTextEditor,
   type PortableTextEditorProps,
@@ -93,11 +92,7 @@ export function EditorProvider(props: EditorProviderProps) {
             }
           >
             <PortableTextEditorContext.Provider value={portableTextEditor}>
-              <PortableTextEditorSelectionProvider
-                editorActor={internalEditor.actors.editorActor}
-              >
-                {props.children}
-              </PortableTextEditorSelectionProvider>
+              {props.children}
             </PortableTextEditorContext.Provider>
           </Slate>
         </RelayActorContext.Provider>
