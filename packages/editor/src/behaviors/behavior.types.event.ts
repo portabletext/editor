@@ -65,6 +65,7 @@ const syntheticBehaviorEventTypes = [
   'block.set',
   'block.unset',
   'child.set',
+  'child.unset',
   'decorator.add',
   'decorator.remove',
   'delete',
@@ -118,6 +119,11 @@ export type SyntheticBehaviorEvent =
       type: StrictExtract<SyntheticBehaviorEventType, 'child.set'>
       at: ChildPath
       props: {[prop: string]: unknown}
+    }
+  | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'child.unset'>
+      at: ChildPath
+      props: Array<string>
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'decorator.add'>
