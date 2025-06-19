@@ -1,17 +1,13 @@
-import {
-  isPortableTextSpan,
-  type KeyedSegment,
-  type PortableTextObject,
-} from '@sanity/types'
+import {isPortableTextSpan, type PortableTextObject} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
+import type {ChildPath} from '../types/paths'
 import {getFocusChild} from './selector.get-focus-child'
 
 /**
  * @public
  */
 export const getFocusInlineObject: EditorSelector<
-  | {node: PortableTextObject; path: [KeyedSegment, 'children', KeyedSegment]}
-  | undefined
+  {node: PortableTextObject; path: ChildPath} | undefined
 > = (snapshot) => {
   const focusChild = getFocusChild(snapshot)
 

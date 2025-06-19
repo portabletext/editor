@@ -1,10 +1,11 @@
-import type {KeyedSegment, PortableTextSpan} from '@sanity/types'
+import type {PortableTextSpan} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
 import {
   getBlockKeyFromSelectionPoint,
   getChildKeyFromSelectionPoint,
 } from '../selection/selection-point'
+import type {ChildPath} from '../types/paths'
 import {getSelectionEndPoint} from './selector.get-selection-end-point'
 import {getSelectionStartPoint} from './selector.get-selection-start-point'
 
@@ -14,7 +15,7 @@ import {getSelectionStartPoint} from './selector.get-selection-start-point'
 export const getSelectedSpans: EditorSelector<
   Array<{
     node: PortableTextSpan
-    path: [KeyedSegment, 'children', KeyedSegment]
+    path: ChildPath
   }>
 > = (snapshot) => {
   if (!snapshot.context.selection) {
@@ -23,7 +24,7 @@ export const getSelectedSpans: EditorSelector<
 
   const selectedSpans: Array<{
     node: PortableTextSpan
-    path: [KeyedSegment, 'children', KeyedSegment]
+    path: ChildPath
   }> = []
 
   const startPoint = getSelectionStartPoint(snapshot)

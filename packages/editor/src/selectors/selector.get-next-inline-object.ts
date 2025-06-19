@@ -1,9 +1,6 @@
-import {
-  isKeySegment,
-  type KeyedSegment,
-  type PortableTextObject,
-} from '@sanity/types'
+import {isKeySegment, type PortableTextObject} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
+import type {ChildPath} from '../types/paths'
 import {isSpan} from '../utils'
 import {getFocusTextBlock} from './selector.get-focus-text-block'
 import {getSelectionEndPoint} from './selector.get-selection-end-point'
@@ -14,7 +11,7 @@ import {getSelectionEndPoint} from './selector.get-selection-end-point'
 export const getNextInlineObject: EditorSelector<
   | {
       node: PortableTextObject
-      path: [KeyedSegment, 'children', KeyedSegment]
+      path: ChildPath
     }
   | undefined
 > = (snapshot) => {
@@ -33,7 +30,7 @@ export const getNextInlineObject: EditorSelector<
   let inlineObject:
     | {
         node: PortableTextObject
-        path: [KeyedSegment, 'children', KeyedSegment]
+        path: ChildPath
       }
     | undefined
 

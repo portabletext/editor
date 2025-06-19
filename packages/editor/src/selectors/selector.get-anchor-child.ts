@@ -1,7 +1,7 @@
-import type {KeyedSegment} from '@portabletext/patches'
 import type {PortableTextObject, PortableTextSpan} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import {getChildKeyFromSelectionPoint} from '../selection/selection-point'
+import type {ChildPath} from '../types/paths'
 import {getAnchorTextBlock} from './selector.get-anchor-text-block'
 
 /**
@@ -10,7 +10,7 @@ import {getAnchorTextBlock} from './selector.get-anchor-text-block'
 export const getAnchorChild: EditorSelector<
   | {
       node: PortableTextObject | PortableTextSpan
-      path: [KeyedSegment, 'children', KeyedSegment]
+      path: ChildPath
     }
   | undefined
 > = (snapshot) => {

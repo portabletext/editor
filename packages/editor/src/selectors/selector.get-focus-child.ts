@@ -1,10 +1,7 @@
-import type {
-  KeyedSegment,
-  PortableTextObject,
-  PortableTextSpan,
-} from '@sanity/types'
+import type {PortableTextObject, PortableTextSpan} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import {getChildKeyFromSelectionPoint} from '../selection/selection-point'
+import type {ChildPath} from '../types/paths'
 import {getFocusTextBlock} from './selector.get-focus-text-block'
 
 /**
@@ -13,7 +10,7 @@ import {getFocusTextBlock} from './selector.get-focus-text-block'
 export const getFocusChild: EditorSelector<
   | {
       node: PortableTextObject | PortableTextSpan
-      path: [KeyedSegment, 'children', KeyedSegment]
+      path: ChildPath
     }
   | undefined
 > = (snapshot) => {
