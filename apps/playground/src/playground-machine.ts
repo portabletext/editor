@@ -354,7 +354,7 @@ export const playgroundMachine = setup({
   id: 'playground',
   context: ({input}) => ({
     editorIdGenerator: input.editorIdGenerator,
-    value: undefined,
+    value: [],
     rangeDecorations: [],
     editors: [],
   }),
