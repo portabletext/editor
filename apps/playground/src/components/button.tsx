@@ -8,7 +8,7 @@ import {focusRing} from './utils'
 
 export interface ButtonProps extends RACButtonProps {
   size?: 'sm'
-  variant?: 'primary' | 'secondary' | 'destructive'
+  variant?: 'primary' | 'secondary' | 'destructive' | 'ghost'
 }
 
 export const button = tv({
@@ -16,6 +16,7 @@ export const button = tv({
   base: 'inline-flex items-center gap-2 px-5 py-2 text-sm text-center transition rounded-lg border border-black/10 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)] cursor-default',
   variants: {
     variant: {
+      ghost: 'border-none',
       primary: 'bg-blue-600 pressed:bg-blue-800 text-white',
       secondary: 'bg-gray-100 pressed:bg-gray-300 text-gray-800',
       destructive: 'bg-red-700 pressed:bg-red-900 text-white',
@@ -53,6 +54,11 @@ export const button = tv({
       variant: 'secondary',
       isSelected: true,
       class: 'bg-gray-700 hover:bg-gray-800 pressed:bg-gray-900 text-white',
+    },
+    {
+      variant: 'ghost',
+      size: 'sm',
+      class: 'p-0',
     },
   ],
 })
