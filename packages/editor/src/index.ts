@@ -17,6 +17,7 @@ export {
 export {
   defineSchema,
   type BaseDefinition,
+  type FieldDefinition,
   type SchemaDefinition,
 } from './editor/editor-schema'
 export type {EditorSchema} from './editor/editor-schema'

@@ -13,6 +13,9 @@ export type BaseDefinition = {
   title?: string
 }
 
+/**
+ * @public
+ */
 export type FieldDefinition = {
   name: string
   type: 'string' | 'number' | 'boolean' | 'array' | 'object'
