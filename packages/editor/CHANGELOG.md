@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.54.2](https://github.com/portabletext/editor/compare/editor-v1.54.1...editor-v1.54.2) (2025-06-20)
+
+
+### Bug Fixes
+
+* **`renderBlock`:** avoid stale `focused` state ([a9dbda4](https://github.com/portabletext/editor/commit/a9dbda4900260d8b22a35fb6cb3056956bad0a9e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/patches bumped to 1.1.5
+
 ## [1.54.1](https://github.com/portabletext/editor/compare/editor-v1.54.0...editor-v1.54.1) (2025-06-19)
 
 
