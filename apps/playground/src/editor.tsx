@@ -22,6 +22,7 @@ import {OneLinePlugin} from '@portabletext/plugin-one-line'
 import {useSelector} from '@xstate/react'
 import {createStore} from '@xstate/store'
 import {
+  BugIcon,
   CopyIcon,
   LinkIcon,
   PencilIcon,
@@ -31,20 +32,10 @@ import {
 import {useEffect, useState, type JSX} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
 import {reverse} from 'remeda'
-import {twMerge} from 'tailwind-merge'
 import {tv} from 'tailwind-variants'
 import {createCodeEditorBehaviors} from './behavior.code-editor'
 import {createLinkBehaviors} from './behavior.links'
 import {EditorPatchesPreview} from './editor-patches-preview'
-import {Button} from './primitives/button'
-import {container, Container} from './primitives/container'
-import {ErrorBoundary} from './primitives/error-boundary'
-import {ErrorScreen} from './primitives/error-screen'
-import {Separator} from './primitives/separator'
-import {Spinner} from './primitives/spinner'
-import {Switch} from './primitives/switch'
-import {Toolbar} from './primitives/toolbar'
-import {Tooltip} from './primitives/tooltip'
 import './editor.css'
 import {EmojiPickerPlugin} from './emoji-picker'
 import type {EditorActorRef} from './playground-machine'
@@ -57,6 +48,15 @@ import {
 } from './playground-schema-definition'
 import {ImageDeserializerPlugin} from './plugin.image-deserializer'
 import {TextFileDeserializerPlugin} from './plugin.text-file-deserializer'
+import {Button} from './primitives/button'
+import {Container} from './primitives/container'
+import {ErrorBoundary} from './primitives/error-boundary'
+import {ErrorScreen} from './primitives/error-screen'
+import {Separator} from './primitives/separator'
+import {Spinner} from './primitives/spinner'
+import {Switch} from './primitives/switch'
+import {Toolbar} from './primitives/toolbar'
+import {Tooltip} from './primitives/tooltip'
 import {RangeDecorationButton} from './range-decoration-button'
 import {SelectionPreview} from './selection-preview'
 import {PortableTextToolbar} from './toolbar/portable-text-toolbar'
@@ -64,7 +64,7 @@ import {ValuePreview} from './value-preview'
 
 const featureFlags = createStore({
   context: {
-    enableDragHandles: true,
+    enableDragHandles: false,
     imageDeserializerPlugin: true,
     textFileDeserializerPlugin: true,
   },
@@ -84,6 +84,16 @@ const featureFlags = createStore({
   },
 })
 
+const editorStyle = tv({
+  base: 'grid gap-2 items-start',
+  variants: {
+    debugModeEnabled: {
+      true: 'grid-cols-1 md:grid-cols-2',
+      false: '',
+    },
+  },
+})
+
 export function Editor(props: {
   editorRef: EditorActorRef
   rangeDecorations: RangeDecoration[]
@@ -92,6 +102,9 @@ export function Editor(props: {
   const keyGenerator = useSelector(
     props.editorRef,
     (s) => s.context.keyGenerator,
+  )
+  const debugModeEnabled = useSelector(props.editorRef, (s) =>
+    s.matches({'debug mode': 'shown'}),
   )
   const [loading, setLoading] = useState(false)
   const [readOnly, setReadOnly] = useState(false)
@@ -104,7 +117,7 @@ export function Editor(props: {
   return (
     <div
       data-testid={props.editorRef.id}
-      className="grid gap-2 items-start grid-cols-1 md:grid-cols-2"
+      className={editorStyle({debugModeEnabled})}
     >
       <ErrorBoundary
         fallbackProps={{area: 'PortableTextEditor'}}
@@ -140,27 +153,35 @@ export function Editor(props: {
               }
             }}
           />
-          <div className="flex flex-col gap-2">
-            <Container>
-              <PortableTextToolbar
-                schemaDefinition={playgroundSchemaDefinition}
-              >
-                <RangeDecorationButton
-                  onAddRangeDecoration={(rangeDecoration) => {
-                    props.editorRef.send({
-                      type: 'add range decoration',
-                      rangeDecoration,
-                    })
+          <Container className="flex flex-col gap-4 overflow-clip">
+            <PortableTextToolbar schemaDefinition={playgroundSchemaDefinition}>
+              <RangeDecorationButton
+                onAddRangeDecoration={(rangeDecoration) => {
+                  props.editorRef.send({
+                    type: 'add range decoration',
+                    rangeDecoration,
+                  })
+                }}
+                onRangeDecorationMoved={(details) => {
+                  props.editorRef.send({
+                    type: 'move range decoration',
+                    details,
+                  })
+                }}
+              />
+              <Separator orientation="vertical" />
+              <TooltipTrigger>
+                <Switch
+                  isSelected={debugModeEnabled}
+                  onChange={() => {
+                    props.editorRef.send({type: 'toggle debug mode'})
                   }}
-                  onRangeDecorationMoved={(details) => {
-                    props.editorRef.send({
-                      type: 'move range decoration',
-                      details,
-                    })
-                  }}
-                />
-              </PortableTextToolbar>
-            </Container>
+                >
+                  <BugIcon className="size-4" />
+                </Switch>
+                <Tooltip>Toggle debug mode</Tooltip>
+              </TooltipTrigger>
+            </PortableTextToolbar>
             {enableEmojiPickerPlugin ? <EmojiPickerPlugin /> : null}
             <div className="flex gap-2 items-center">
               <ErrorBoundary
@@ -169,10 +190,7 @@ export function Editor(props: {
                 onError={console.error}
               >
                 <PortableTextEditable
-                  className={twMerge(
-                    container({variant: 'default'}),
-                    `h-75 overflow-auto flex-1 ${enableDragHandles ? 'ps-5' : ''}`,
-                  )}
+                  className={`rounded-b-md outline-none px-2 h-75 -mx-2 -mb-2 overflow-auto flex-1 ${enableDragHandles ? 'ps-5' : ''}`}
                   rangeDecorations={props.rangeDecorations}
                   renderAnnotation={renderAnnotation}
                   renderBlock={RenderBlock}
@@ -185,28 +203,15 @@ export function Editor(props: {
               </ErrorBoundary>
               {loading ? <Spinner /> : null}
             </div>
-            <div className="flex gap-2 items-center justify-between">
-              <TooltipTrigger>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onPress={() => {
-                    props.editorRef.send({type: 'remove'})
-                  }}
-                >
-                  <TrashIcon className="size-3" />
-                  {props.editorRef.id}
-                </Button>
-                <Tooltip>Remove editor</Tooltip>
-              </TooltipTrigger>
-              <ToggleReadOnly readOnly={readOnly} />
-            </div>
-          </div>
-          <EditorPlaygroundToolbar
-            editorRef={props.editorRef}
-            enableEmojiPickerPlugin={enableEmojiPickerPlugin}
-            setEnableEmojiPickerPlugin={setEnableEmojiPickerPlugin}
-          />
+          </Container>
+          {debugModeEnabled ? (
+            <EditorPlaygroundToolbar
+              editorRef={props.editorRef}
+              enableEmojiPickerPlugin={enableEmojiPickerPlugin}
+              setEnableEmojiPickerPlugin={setEnableEmojiPickerPlugin}
+              readOnly={readOnly}
+            />
+          ) : null}
         </EditorProvider>
       </ErrorBoundary>
     </div>
@@ -217,6 +222,7 @@ function EditorPlaygroundToolbar(props: {
   editorRef: EditorActorRef
   enableEmojiPickerPlugin: boolean
   setEnableEmojiPickerPlugin: (enable: boolean) => void
+  readOnly: boolean
 }) {
   const showingPatchesPreview = useSelector(props.editorRef, (s) =>
     s.matches({'patches preview': 'shown'}),
@@ -422,6 +428,23 @@ function EditorPlaygroundToolbar(props: {
         {showingValuePreview ? (
           <ValuePreview editorId={props.editorRef.id} />
         ) : null}
+        <Separator orientation="horizontal" />
+        <div className="flex gap-2 items-center justify-between">
+          <TooltipTrigger>
+            <Button
+              variant="destructive"
+              size="sm"
+              onPress={() => {
+                props.editorRef.send({type: 'remove'})
+              }}
+            >
+              <TrashIcon className="size-3" />
+              {props.editorRef.id}
+            </Button>
+            <Tooltip>Remove editor</Tooltip>
+          </TooltipTrigger>
+          <ToggleReadOnly readOnly={props.readOnly} />
+        </div>
       </Container>
       {enableTextFileDeserializerPlugin ? <TextFileDeserializerPlugin /> : null}
       {enableImageDeserializerPlugin ? <ImageDeserializerPlugin /> : null}
