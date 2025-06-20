@@ -190,7 +190,7 @@ export function Editor(props: {
                 onError={console.error}
               >
                 <PortableTextEditable
-                  className={`rounded-b-md outline-none px-2 h-75 -mx-2 -mb-2 overflow-auto flex-1 ${enableDragHandles ? 'ps-5' : ''}`}
+                  className={`rounded-b-md outline-none data-[read-only=true]:opacity-50 px-2 h-75 -mx-2 -mb-2 overflow-auto flex-1 ${enableDragHandles ? 'ps-5' : ''}`}
                   rangeDecorations={props.rangeDecorations}
                   renderAnnotation={renderAnnotation}
                   renderBlock={RenderBlock}
