@@ -1,5 +1,5 @@
 import {TextField as RACTextField} from 'react-aria-components'
-import {Input, Label} from '../components/field'
+import {Input, Label} from './field'
 
 export function TextField(props: {
   name: string

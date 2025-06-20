@@ -26,8 +26,8 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
-import {Button} from './components/button'
 import {matchEmojis, type EmojiMatch} from './emoji-search'
+import {Button} from './primitives/button'
 
 type EmojiPickerContext = {
   editor: Editor

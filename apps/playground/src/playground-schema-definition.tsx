@@ -22,8 +22,7 @@ import {
   UnderlineIcon,
 } from 'lucide-react'
 import {z} from 'zod'
-
-export type PlaygroundSchemaDefinition = typeof playgroundSchemaDefinition
+import type {ToolbarSchemaDefinition} from './toolbar/toolbar-schema-definition'
 
 /**
  * Extended schema definition with icons, field titles and default values.
@@ -165,7 +164,7 @@ export const playgroundSchemaDefinition = defineSchema({
       },
     },
   ],
-})
+}) satisfies ToolbarSchemaDefinition
 
 export const ImageSchema = z.object({
   schemaType: z.object({

@@ -1,14 +1,14 @@
 import {useEditor, useEditorSelector} from '@portabletext/editor'
 import {TooltipTrigger} from 'react-aria-components'
-import {Button} from '../components/button'
-import {Tooltip} from '../components/tooltip'
-import type {PlaygroundSchemaDefinition} from '../playground-schema-definition'
-import {BlockObjectForm} from './block-object-form'
-import {Icon} from './icon'
-import {InsertDialog} from './insert-dialog'
+import {Button} from '../primitives/button'
+import {Dialog} from '../primitives/dialog'
+import {Icon} from '../primitives/icon'
+import {Tooltip} from '../primitives/tooltip'
+import {InsertBlockObjectForm} from './form.insert-block-object'
+import type {ToolbarBlockObjectDefinition} from './toolbar-schema-definition'
 
-export function InsertBlockObjectButton(props: {
-  definition: PlaygroundSchemaDefinition['blockObjects'][number]
+export function BlockObjectButton(props: {
+  definition: ToolbarBlockObjectDefinition
 }) {
   const editor = useEditor()
   const disabled = useEditorSelector(
@@ -17,8 +17,8 @@ export function InsertBlockObjectButton(props: {
   )
 
   return (
-    <InsertDialog
-      title={props.definition.title}
+    <Dialog
+      title={props.definition.title ?? props.definition.name}
       icon={props.definition.icon}
       trigger={
         <TooltipTrigger>
@@ -31,7 +31,7 @@ export function InsertBlockObjectButton(props: {
       }
     >
       {({close}) => (
-        <BlockObjectForm
+        <InsertBlockObjectForm
           fields={props.definition.fields}
           defaultValues={props.definition.defaultValues}
           onSubmit={({values, placement}) => {
@@ -48,6 +48,6 @@ export function InsertBlockObjectButton(props: {
           }}
         />
       )}
-    </InsertDialog>
+    </Dialog>
   )
 }

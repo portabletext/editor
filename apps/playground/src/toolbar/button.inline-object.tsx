@@ -1,14 +1,14 @@
 import {useEditor, useEditorSelector} from '@portabletext/editor'
 import {TooltipTrigger} from 'react-aria-components'
-import {Button} from '../components/button'
-import {Tooltip} from '../components/tooltip'
-import type {PlaygroundSchemaDefinition} from '../playground-schema-definition'
-import {Icon} from './icon'
-import {InsertDialog} from './insert-dialog'
-import {ObjectForm} from './object-form'
+import {Button} from '../primitives/button'
+import {Dialog} from '../primitives/dialog'
+import {Icon} from '../primitives/icon'
+import {Tooltip} from '../primitives/tooltip'
+import {ObjectForm} from './form.object-form'
+import type {ToolbarInlineObjectDefinition} from './toolbar-schema-definition'
 
-export function InsertInlineObjectButton(props: {
-  definition: PlaygroundSchemaDefinition['inlineObjects'][number]
+export function InlineObjectButton(props: {
+  definition: ToolbarInlineObjectDefinition
 }) {
   const editor = useEditor()
   const disabled = useEditorSelector(
@@ -17,8 +17,8 @@ export function InsertInlineObjectButton(props: {
   )
 
   return (
-    <InsertDialog
-      title={props.definition.title}
+    <Dialog
+      title={props.definition.title ?? props.definition.name}
       icon={props.definition.icon}
       trigger={
         <TooltipTrigger>
@@ -50,6 +50,6 @@ export function InsertInlineObjectButton(props: {
           }}
         />
       )}
-    </InsertDialog>
+    </Dialog>
   )
 }

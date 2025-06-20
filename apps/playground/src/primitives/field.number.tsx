@@ -1,5 +1,5 @@
-import {NumberField as RANumberField} from 'react-aria-components'
-import {Input, Label} from '../components/field'
+import {NumberField as RACNumberField} from 'react-aria-components'
+import {Input, Label} from './field'
 
 export function NumberField(props: {
   name: string
@@ -8,7 +8,7 @@ export function NumberField(props: {
   defaultValue?: number
 }) {
   return (
-    <RANumberField
+    <RACNumberField
       key={props.name}
       autoFocus={props.autoFocus}
       className="flex flex-col gap-1"
@@ -16,6 +16,6 @@ export function NumberField(props: {
     >
       <Label>{props.label ?? props.name}</Label>
       <Input name={props.name} />
-    </RANumberField>
+    </RACNumberField>
   )
 }

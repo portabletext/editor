@@ -1,5 +1,5 @@
-import {NumberField} from './number-field'
-import {TextField} from './text-field'
+import {NumberField} from './field.number'
+import {TextField} from './field.text'
 
 export function Fields(props: {
   fields: ReadonlyArray<{
@@ -7,11 +7,11 @@ export function Fields(props: {
     title?: string
     type: string
   }>
-  defaultValues: {[key: string]: unknown}
+  defaultValues?: {[key: string]: unknown}
 }) {
   const fields = props.fields.map((field, index) => {
     if (field.type === 'string') {
-      const defaultValue = props.defaultValues[field.name]
+      const defaultValue = props.defaultValues?.[field.name]
 
       return (
         <TextField
@@ -27,7 +27,7 @@ export function Fields(props: {
     }
 
     if (field.type === 'number') {
-      const defaultValue = props.defaultValues[field.name]
+      const defaultValue = props.defaultValues?.[field.name]
 
       return (
         <NumberField

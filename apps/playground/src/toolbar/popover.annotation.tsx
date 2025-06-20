@@ -7,18 +7,17 @@ import * as selectors from '@portabletext/editor/selectors'
 import {PencilIcon, TrashIcon} from 'lucide-react'
 import React, {useEffect, useState, type RefObject} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
-import {Button} from '../components/button'
-import {Popover} from '../components/popover'
-import {Separator} from '../components/separator'
-import {Tooltip} from '../components/tooltip'
-import {
-  playgroundSchemaDefinition,
-  type PlaygroundSchemaDefinition,
-} from '../playground-schema-definition'
-import {InsertDialog} from './insert-dialog'
-import {ObjectForm} from './object-form'
+import {Button} from '../primitives/button'
+import {Dialog} from '../primitives/dialog'
+import {Popover} from '../primitives/popover'
+import {Separator} from '../primitives/separator'
+import {Tooltip} from '../primitives/tooltip'
+import {ObjectForm} from './form.object-form'
+import type {ToolbarAnnotationDefinition} from './toolbar-schema-definition'
 
-export function AnnotationPopover() {
+export function AnnotationPopover(props: {
+  definitions: ReadonlyArray<ToolbarAnnotationDefinition>
+}) {
   const editor = useEditor()
   const [state, setState] = useState<
     | {
@@ -28,7 +27,7 @@ export function AnnotationPopover() {
         type: 'visible'
         annotations: Array<{
           value: PortableTextObject
-          definition: PlaygroundSchemaDefinition['annotations'][number]
+          definition: ToolbarAnnotationDefinition
           at: AnnotationPath
         }>
         triggerRef: RefObject<Element | null>
@@ -60,7 +59,7 @@ export function AnnotationPopover() {
       setState({
         type: 'visible',
         annotations: activeAnnotations.flatMap((annotation) => {
-          const definition = playgroundSchemaDefinition.annotations.find(
+          const definition = props.definitions.find(
             (definition) => definition.name === annotation._type,
           )
 
@@ -81,7 +80,7 @@ export function AnnotationPopover() {
         triggerRef,
       })
     }).unsubscribe
-  }, [editor])
+  }, [editor, props.definitions])
 
   if (state.type === 'idle') {
     return null
@@ -107,8 +106,8 @@ export function AnnotationPopover() {
             <span className="text-sm font-medium">
               {annotation.definition.title}
             </span>
-            <InsertDialog
-              title={annotation.definition.title}
+            <Dialog
+              title={annotation.definition.title ?? annotation.definition.name}
               icon={annotation.definition.icon}
               onOpenChange={(isOpen) => {
                 if (!isOpen) {
@@ -146,7 +145,7 @@ export function AnnotationPopover() {
                   }}
                 />
               )}
-            </InsertDialog>
+            </Dialog>
             <TooltipTrigger>
               <Button
                 aria-label="Remove"

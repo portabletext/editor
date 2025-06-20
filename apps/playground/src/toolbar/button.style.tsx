@@ -1,16 +1,13 @@
 import {useEditor, useEditorSelector} from '@portabletext/editor'
 import * as selectors from '@portabletext/editor/selectors'
 import {TooltipTrigger} from 'react-aria-components'
-import {Select, SelectItem} from '../components/select'
-import {Tooltip} from '../components/tooltip'
-import {Icon} from './icon'
+import {Icon} from '../primitives/icon'
+import {Select, SelectItem} from '../primitives/select'
+import {Tooltip} from '../primitives/tooltip'
+import type {ToolbarStyleDefinition} from './toolbar-schema-definition'
 
 export function StyleButton(props: {
-  definitions: ReadonlyArray<{
-    name: string
-    title?: string
-    icon?: React.ComponentType
-  }>
+  definitions: ReadonlyArray<ToolbarStyleDefinition>
 }) {
   const editor = useEditor()
   const activeStyle = useEditorSelector(editor, selectors.getActiveStyle)

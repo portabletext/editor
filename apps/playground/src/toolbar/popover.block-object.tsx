@@ -1,23 +1,22 @@
 import {
   useEditor,
-  type ChildPath,
+  type BlockPath,
   type PortableTextObject,
 } from '@portabletext/editor'
 import * as selectors from '@portabletext/editor/selectors'
 import {PencilIcon, TrashIcon} from 'lucide-react'
 import React, {useEffect, useState, type RefObject} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
-import {Button} from '../components/button'
-import {Popover} from '../components/popover'
-import {Tooltip} from '../components/tooltip'
-import {
-  playgroundSchemaDefinition,
-  type PlaygroundSchemaDefinition,
-} from '../playground-schema-definition'
-import {InsertDialog} from './insert-dialog'
-import {ObjectForm} from './object-form'
+import {Button} from '../primitives/button'
+import {Dialog} from '../primitives/dialog'
+import {Popover} from '../primitives/popover'
+import {Tooltip} from '../primitives/tooltip'
+import {ObjectForm} from './form.object-form'
+import type {ToolbarBlockObjectDefinition} from './toolbar-schema-definition'
 
-export function InlineObjectPopover() {
+export function BlockObjectPopover(props: {
+  definitions: ReadonlyArray<ToolbarBlockObjectDefinition>
+}) {
   const editor = useEditor()
   const [state, setState] = useState<
     | {
@@ -27,8 +26,8 @@ export function InlineObjectPopover() {
         type: 'visible'
         object: {
           value: PortableTextObject
-          definition: PlaygroundSchemaDefinition['inlineObjects'][number]
-          at: ChildPath
+          definition: ToolbarBlockObjectDefinition
+          at: BlockPath
         }
         triggerRef: RefObject<Element | null>
       }
@@ -43,15 +42,15 @@ export function InlineObjectPopover() {
         return
       }
 
-      const focusInlineObject = selectors.getFocusInlineObject(snapshot)
+      const focusBlockObject = selectors.getFocusBlockObject(snapshot)
 
-      if (!focusInlineObject) {
+      if (!focusBlockObject) {
         setState({type: 'idle'})
         return
       }
 
-      const definition = playgroundSchemaDefinition.inlineObjects.find(
-        (definition) => definition.name === focusInlineObject.node._type,
+      const definition = props.definitions.find(
+        (definition) => definition.name === focusBlockObject.node._type,
       )
 
       if (!definition) {
@@ -59,7 +58,7 @@ export function InlineObjectPopover() {
         return
       }
 
-      const selectedNodes = editor.dom.getChildNodes(snapshot)
+      const selectedNodes = editor.dom.getBlockNodes(snapshot)
       const firstSelectedNode = selectedNodes.at(0)
 
       if (!firstSelectedNode || !(firstSelectedNode instanceof Element)) {
@@ -73,14 +72,14 @@ export function InlineObjectPopover() {
       setState({
         type: 'visible',
         object: {
-          value: focusInlineObject.node,
+          value: focusBlockObject.node,
           definition,
-          at: focusInlineObject.path,
+          at: focusBlockObject.path,
         },
         triggerRef,
       })
     }).unsubscribe
-  }, [editor])
+  }, [editor, props.definitions])
 
   if (state.type === 'idle') {
     return null
@@ -89,7 +88,8 @@ export function InlineObjectPopover() {
   return (
     <Popover
       isNonModal
-      className="flex gap-2"
+      placement="right"
+      className="flex flex-col gap-2"
       triggerRef={state.triggerRef}
       isOpen={true}
       onOpenChange={(isOpen) => {
@@ -100,8 +100,8 @@ export function InlineObjectPopover() {
       }}
     >
       {state.object.definition.fields.length > 0 ? (
-        <InsertDialog
-          title={state.object.definition.title}
+        <Dialog
+          title={state.object.definition.title ?? state.object.definition.name}
           icon={state.object.definition.icon}
           onOpenChange={(isOpen) => {
             if (!isOpen) {
@@ -125,7 +125,7 @@ export function InlineObjectPopover() {
               defaultValues={state.object.value}
               onSubmit={({values}) => {
                 editor.send({
-                  type: 'child.set',
+                  type: 'block.set',
                   at: state.object.at,
                   props: values,
                 })
@@ -134,7 +134,7 @@ export function InlineObjectPopover() {
               }}
             />
           )}
-        </InsertDialog>
+        </Dialog>
       ) : null}
       <TooltipTrigger>
         <Button
@@ -143,7 +143,7 @@ export function InlineObjectPopover() {
           size="sm"
           onPress={() => {
             editor.send({
-              type: 'delete.child',
+              type: 'delete.block',
               at: state.object.at,
             })
             editor.send({type: 'focus'})
