@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.5](https://github.com/portabletext/editor/compare/patches-v1.1.4...patches-v1.1.5) (2025-06-20)
+
+
+### Bug Fixes
+
+* account for nullable path head ([a773337](https://github.com/portabletext/editor/commit/a77333732533eba3199d43432a085b84a2f47f27))
+
 ## [1.1.4](https://github.com/portabletext/editor/compare/patches-v1.1.3...patches-v1.1.4) (2025-05-29)
 
 
