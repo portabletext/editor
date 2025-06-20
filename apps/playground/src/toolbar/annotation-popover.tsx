@@ -1,7 +1,6 @@
 import {
   useEditor,
   type AnnotationPath,
-  type EditorSchema,
   type PortableTextObject,
 } from '@portabletext/editor'
 import * as selectors from '@portabletext/editor/selectors'
@@ -12,6 +11,10 @@ import {Button} from '../components/button'
 import {Popover} from '../components/popover'
 import {Separator} from '../components/separator'
 import {Tooltip} from '../components/tooltip'
+import {
+  playgroundSchemaDefinition,
+  type PlaygroundSchemaDefinition,
+} from '../playground-schema-definition'
 import {InsertDialog} from './insert-dialog'
 import {ObjectForm} from './object-form'
 
@@ -25,7 +28,7 @@ export function AnnotationPopover() {
         type: 'visible'
         annotations: Array<{
           value: PortableTextObject
-          definition: EditorSchema['annotations'][number]
+          definition: PlaygroundSchemaDefinition['annotations'][number]
           at: AnnotationPath
         }>
         triggerRef: RefObject<Element | null>
@@ -56,17 +59,25 @@ export function AnnotationPopover() {
 
       setState({
         type: 'visible',
-        annotations: activeAnnotations.map((annotation) => ({
-          value: annotation,
-          definition: snapshot.context.schema.annotations.find(
+        annotations: activeAnnotations.flatMap((annotation) => {
+          const definition = playgroundSchemaDefinition.annotations.find(
             (definition) => definition.name === annotation._type,
-          ) ?? {name: annotation._type, fields: []},
-          at: [
-            {_key: focusBlock.node._key},
-            'markDefs',
-            {_key: annotation._key},
-          ],
-        })),
+          )
+
+          if (!definition) {
+            return []
+          }
+
+          return {
+            value: annotation,
+            definition,
+            at: [
+              {_key: focusBlock.node._key},
+              'markDefs',
+              {_key: annotation._key},
+            ],
+          }
+        }),
         triggerRef,
       })
     }).unsubscribe
@@ -94,10 +105,11 @@ export function AnnotationPopover() {
           {index > 0 ? <Separator orientation="horizontal" /> : null}
           <div className="flex gap-2 items-center justify-end">
             <span className="text-sm font-medium">
-              {annotation.definition.title ?? annotation.definition.name}
+              {annotation.definition.title}
             </span>
             <InsertDialog
-              title={annotation.definition.title ?? annotation.definition.name}
+              title={annotation.definition.title}
+              icon={annotation.definition.icon}
               onOpenChange={(isOpen) => {
                 if (!isOpen) {
                   setState({type: 'idle'})

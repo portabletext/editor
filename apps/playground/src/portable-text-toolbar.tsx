@@ -1,7 +1,7 @@
 import {Group} from './components/group'
 import {Separator} from './components/separator'
 import {Toolbar} from './components/toolbar'
-import type {SchemaDefinition} from './schema'
+import type {PlaygroundSchemaDefinition} from './playground-schema-definition'
 import {AnnotationButton} from './toolbar/annotation-button'
 import {DecoratorButton} from './toolbar/decorator-button'
 import {FocusButton} from './toolbar/focus-button'
@@ -11,7 +11,7 @@ import {ListItemButton} from './toolbar/list-item-button'
 import {StyleButton} from './toolbar/style-button'
 
 export function PortableTextToolbar(props: {
-  schemaDefinition: SchemaDefinition
+  schemaDefinition: PlaygroundSchemaDefinition
   children?: React.ReactNode
 }) {
   return (
@@ -26,12 +26,7 @@ export function PortableTextToolbar(props: {
       <Separator orientation="vertical" />
       <Group aria-label="Annotations">
         {props.schemaDefinition.annotations.map((annotation) => (
-          <AnnotationButton
-            key={annotation.name}
-            definition={annotation}
-            fields={annotation.fields}
-            defaultValues={annotation.defaultValues}
-          />
+          <AnnotationButton key={annotation.name} definition={annotation} />
         ))}
       </Group>
       <Separator orientation="vertical" />
@@ -46,8 +41,6 @@ export function PortableTextToolbar(props: {
           <InsertBlockObjectButton
             key={blockObject.name}
             definition={blockObject}
-            fields={blockObject.fields}
-            defaultValues={blockObject.defaultValues}
           />
         ))}
       </Group>
@@ -57,8 +50,6 @@ export function PortableTextToolbar(props: {
           <InsertInlineObjectButton
             key={inlineObject.name}
             definition={inlineObject}
-            fields={inlineObject.fields}
-            defaultValues={inlineObject.defaultValues}
           />
         ))}
       </Group>

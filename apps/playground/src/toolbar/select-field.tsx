@@ -12,7 +12,7 @@ export function SelectField(props: {
   }>
 }) {
   return (
-    <>
+    <div className="flex flex-col gap-1">
       <Label>{props.label}</Label>
       <Select
         name={props.name}
@@ -25,6 +25,6 @@ export function SelectField(props: {
           </SelectItem>
         ))}
       </Select>
-    </>
+    </div>
   )
 }

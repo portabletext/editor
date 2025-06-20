@@ -23,7 +23,14 @@ import {
 } from 'lucide-react'
 import {z} from 'zod'
 
-export const schemaDefinition = defineSchema({
+export type PlaygroundSchemaDefinition = typeof playgroundSchemaDefinition
+
+/**
+ * Extended schema definition with icons, field titles and default values.
+ * This makes it easier to use the schema definition in the playground to
+ * render the toolbar, forms and other UI components.
+ */
+export const playgroundSchemaDefinition = defineSchema({
   decorators: [
     {
       title: 'Strong',
@@ -56,7 +63,7 @@ export const schemaDefinition = defineSchema({
       title: 'Link',
       name: 'link',
       icon: LinkIcon,
-      fields: [{name: 'href', type: 'string'}],
+      fields: [{name: 'href', title: 'HREF', type: 'string'}],
       defaultValues: {
         href: 'https://example.com',
       },
@@ -65,7 +72,7 @@ export const schemaDefinition = defineSchema({
       title: 'Comment',
       name: 'comment',
       icon: MessageSquareTextIcon,
-      fields: [{name: 'text', type: 'string'}],
+      fields: [{name: 'text', title: 'Text', type: 'string'}],
       defaultValues: {
         text: 'Consider rewriting this',
       },
@@ -138,8 +145,8 @@ export const schemaDefinition = defineSchema({
       name: 'image',
       icon: ImageIcon,
       fields: [
-        {name: 'url', type: 'string'},
-        {name: 'alt', type: 'string'},
+        {name: 'url', title: 'URL', type: 'string'},
+        {name: 'alt', title: 'Alt text', type: 'string'},
       ],
       defaultValues: {
         url: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4OTggMjQwIj48cG9seWdvbiBwb2ludHM9IjM5Mi4xOSA3OC40NSAzOTIuMTMgMTAwLjc1IDM3Mi4xOSA4OS4yNCAzNzEuOSAxODkuMjEgMzU4LjkxIDE4MS43MSAzNTkuMTkgODEuNzQgMzM5LjM1IDcwLjI4IDMzOS40MiA0Ny45OCAzOTIuMTkgNzguNDUiLz48cG9seWdvbiBwb2ludHM9IjQ0Mi42NyAxMDcuNTkgNDQyLjYxIDEyOS45IDQxMy4yOSAxMTIuOTcgNDEzLjIyIDEzOS42NSA0MzkuODEgMTU1IDQzOS43NSAxNzYuNzIgNDEzLjE2IDE2MS4zNyA0MTMuMDcgMTkwLjQ0IDQ0Mi4zOSAyMDcuMzYgNDQyLjMyIDIyOS44NyA0MDAuMzEgMjA1LjYxIDQwMC42NiA4My4zNCA0NDIuNjcgMTA3LjU5Ii8+PHBvbHlnb24gcG9pbnRzPSI1MDMuNCA3OS4yMiA0ODMuODYgMTUwLjE0IDUwNC43MiAyMDAuOTQgNDkwLjczIDIwOS4wMSA0NzYuNjQgMTc0LjY1IDQ2Mi44OCAyMjUuMSA0NDkuMTkgMjMzIDQ2OS42OSAxNTguNzIgNDQ5LjgyIDExMC4xNSA0NjMuODkgMTAyLjAzIDQ3Ni44MSAxMzQuMjYgNDg5LjgxIDg3LjA2IDUwMy40IDc5LjIyIi8+PHBvbHlnb24gcG9pbnRzPSI1NTcuNzUgNDcuODMgNTU3LjgyIDcwLjE0IDUzOC42IDgxLjI0IDUzOC44OCAxODEuMjIgNTI2LjM2IDE4OC40NCA1MjYuMDggODguNDYgNTA2Ljk1IDk5LjUxIDUwNi44OSA3Ny4yIDU1Ny43NSA0Ny44MyIvPjxwYXRoIGQ9Ik00MTkuMzcsMjcuMTJoMHMuMTktMzEuODIsMjcuODMtMTUuODMsMjcuNjUsNDcuODYsMjcuNjUsNDcuODZsLTkuMjItNS4zM3MwLTIxLjI4LTE4LjQzLTMxLjkyLTE4LjQzLDEwLjY0LTE4LjQzLDEwLjY0WiIvPjwvc3ZnPgo=',
@@ -159,8 +166,6 @@ export const schemaDefinition = defineSchema({
     },
   ],
 })
-
-export type SchemaDefinition = typeof schemaDefinition
 
 export const ImageSchema = z.object({
   schemaType: z.object({
