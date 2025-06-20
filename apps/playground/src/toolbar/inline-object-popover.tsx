@@ -1,7 +1,6 @@
 import {
   useEditor,
   type ChildPath,
-  type EditorSchema,
   type PortableTextObject,
 } from '@portabletext/editor'
 import * as selectors from '@portabletext/editor/selectors'
@@ -11,6 +10,10 @@ import {TooltipTrigger} from 'react-aria-components'
 import {Button} from '../components/button'
 import {Popover} from '../components/popover'
 import {Tooltip} from '../components/tooltip'
+import {
+  playgroundSchemaDefinition,
+  type PlaygroundSchemaDefinition,
+} from '../playground-schema-definition'
 import {InsertDialog} from './insert-dialog'
 import {ObjectForm} from './object-form'
 
@@ -24,7 +27,7 @@ export function InlineObjectPopover() {
         type: 'visible'
         object: {
           value: PortableTextObject
-          definition: EditorSchema['inlineObjects'][number]
+          definition: PlaygroundSchemaDefinition['inlineObjects'][number]
           at: ChildPath
         }
         triggerRef: RefObject<Element | null>
@@ -47,7 +50,7 @@ export function InlineObjectPopover() {
         return
       }
 
-      const definition = snapshot.context.schema.inlineObjects.find(
+      const definition = playgroundSchemaDefinition.inlineObjects.find(
         (definition) => definition.name === focusInlineObject.node._type,
       )
 
@@ -98,7 +101,8 @@ export function InlineObjectPopover() {
     >
       {state.object.definition.fields.length > 0 ? (
         <InsertDialog
-          title={state.object.definition.title ?? state.object.definition.name}
+          title={state.object.definition.title}
+          icon={state.object.definition.icon}
           onOpenChange={(isOpen) => {
             if (!isOpen) {
               setState({type: 'idle'})

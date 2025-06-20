@@ -48,16 +48,16 @@ import './editor.css'
 import {tv} from 'tailwind-variants'
 import {EmojiPickerPlugin} from './emoji-picker'
 import type {EditorActorRef} from './playground-machine'
-import {ImageDeserializerPlugin} from './plugin.image-deserializer'
-import {TextFileDeserializerPlugin} from './plugin.text-file-deserializer'
-import {PortableTextToolbar} from './portable-text-toolbar'
 import {
   CommentAnnotationSchema,
   ImageSchema,
   LinkAnnotationSchema,
-  schemaDefinition,
+  playgroundSchemaDefinition,
   StockTickerSchema,
-} from './schema'
+} from './playground-schema-definition'
+import {ImageDeserializerPlugin} from './plugin.image-deserializer'
+import {TextFileDeserializerPlugin} from './plugin.text-file-deserializer'
+import {PortableTextToolbar} from './portable-text-toolbar'
 import {SelectionPreview} from './selection-preview'
 import {AnnotationPopover} from './toolbar/annotation-popover'
 import {BlockObjectPopover} from './toolbar/block-object-popover'
@@ -119,7 +119,7 @@ export function Editor(props: {
             initialValue: value,
             keyGenerator,
             readOnly,
-            schemaDefinition,
+            schemaDefinition: playgroundSchemaDefinition,
           }}
         >
           <EditorEventListener
@@ -145,7 +145,9 @@ export function Editor(props: {
           />
           <div className="flex flex-col gap-2">
             <Container>
-              <PortableTextToolbar schemaDefinition={schemaDefinition}>
+              <PortableTextToolbar
+                schemaDefinition={playgroundSchemaDefinition}
+              >
                 <RangeDecorationButton
                   onAddRangeDecoration={(rangeDecoration) => {
                     props.editorRef.send({

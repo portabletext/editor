@@ -9,7 +9,7 @@ export function ObjectForm(
     fields: ReadonlyArray<{
       name: string
       type: string
-      title?: string
+      title: string | undefined
     }>
     defaultValues: {[key: string]: unknown}
     submitLabel: string
@@ -19,7 +19,7 @@ export function ObjectForm(
 ) {
   return (
     <form
-      className="flex flex-col gap-2"
+      className="flex flex-col gap-4"
       onSubmit={(e) => {
         e.preventDefault()
 
