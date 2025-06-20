@@ -14,10 +14,10 @@ import type {StepDefinition} from './step-definitions'
 export type CompiledFeature<TStepContext extends Record<string, any> = object> =
   {
     name: string
-    tag?: 'only' | 'skip'
+    tag: 'only' | 'skip' | undefined
     scenarios: Array<{
       name: string
-      tag?: 'only' | 'skip'
+      tag: 'only' | 'skip' | undefined
       steps: Array<(stepContext?: TStepContext) => Promise<void> | void>
     }>
     beforeHooks: Array<(stepContext?: TStepContext) => Promise<void> | void>

@@ -40,9 +40,9 @@ export function Feature<
 }) {
   const feature = compileFeature({
     featureText,
-    hooks,
+    hooks: hooks ?? [],
     stepDefinitions,
-    parameterTypes,
+    parameterTypes: parameterTypes ?? [],
   })
 
   const describeFn =

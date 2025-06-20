@@ -27,7 +27,7 @@ Feature({
     When(
       'greeting the person with:',
       (context: Context, greeting: string[][]) => {
-        context.greeting = greet(context.person, greeting[0][0])
+        context.greeting = greet(context.person, greeting.at(0)?.at(0) ?? '')
       },
     ),
     Then('the greeting is {string}', (context: Context, greeting: string) => {
