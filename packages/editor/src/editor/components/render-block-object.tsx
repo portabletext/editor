@@ -2,7 +2,11 @@ import type {PortableTextObject} from '@sanity/types'
 import {useSelector} from '@xstate/react'
 import {useContext, useRef, useState, type ReactElement} from 'react'
 import {Range, type Element as SlateElement} from 'slate'
-import {useSelected, useSlateStatic, type RenderElementProps} from 'slate-react'
+import {
+  useSelected,
+  useSlateSelector,
+  type RenderElementProps,
+} from 'slate-react'
 import type {EventPositionBlock} from '../../internal-utils/event-position'
 import type {RenderBlockFunction} from '../../types/editor'
 import {EditorActorContext} from '../editor-actor-context'
@@ -22,8 +26,13 @@ export function RenderBlockObject(props: {
     useState<EventPositionBlock>()
   const blockObjectRef = useRef<HTMLDivElement>(null)
 
-  const slateEditor = useSlateStatic()
   const selected = useSelected()
+  const focused = useSlateSelector(
+    (editor) =>
+      selected &&
+      editor.selection !== null &&
+      Range.isCollapsed(editor.selection),
+  )
 
   const editorActor = useContext(EditorActorContext)
 
@@ -45,11 +54,6 @@ export function RenderBlockObject(props: {
       `Block object type ${props.element._type} not found in Schema`,
     )
   }
-
-  const focused =
-    selected &&
-    slateEditor.selection !== null &&
-    Range.isCollapsed(slateEditor.selection)
 
   return (
     <div
