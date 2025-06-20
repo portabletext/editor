@@ -89,7 +89,7 @@ const editorStyle = tv({
   variants: {
     debugModeEnabled: {
       true: 'grid-cols-1 md:grid-cols-2',
-      false: '',
+      false: 'grid-cols-1',
     },
   },
 })
