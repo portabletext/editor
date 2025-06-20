@@ -1,16 +1,16 @@
 import {useEditor, useEditorSelector} from '@portabletext/editor'
 import * as selectors from '@portabletext/editor/selectors'
 import {TooltipTrigger} from 'react-aria-components'
-import {Button} from '../components/button'
-import {ToggleButton} from '../components/toggle-button'
-import {Tooltip} from '../components/tooltip'
-import type {PlaygroundSchemaDefinition} from '../playground-schema-definition'
-import {Icon} from './icon'
-import {InsertDialog} from './insert-dialog'
-import {ObjectForm} from './object-form'
+import {Button} from '../primitives/button'
+import {Dialog} from '../primitives/dialog'
+import {Icon} from '../primitives/icon'
+import {ToggleButton} from '../primitives/toggle-button'
+import {Tooltip} from '../primitives/tooltip'
+import {ObjectForm} from './form.object-form'
+import type {ToolbarAnnotationDefinition} from './toolbar-schema-definition'
 
 export function AnnotationButton(props: {
-  definition: PlaygroundSchemaDefinition['annotations'][number]
+  definition: ToolbarAnnotationDefinition
 }) {
   const editor = useEditor()
   const disabled = useEditorSelector(
@@ -44,8 +44,8 @@ export function AnnotationButton(props: {
   }
 
   return (
-    <InsertDialog
-      title={props.definition.title}
+    <Dialog
+      title={props.definition.title ?? props.definition.name}
       icon={props.definition.icon}
       trigger={
         <TooltipTrigger>
@@ -74,6 +74,6 @@ export function AnnotationButton(props: {
           }}
         />
       )}
-    </InsertDialog>
+    </Dialog>
   )
 }

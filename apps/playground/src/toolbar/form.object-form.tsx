@@ -1,6 +1,6 @@
 import {z} from 'zod/v4'
-import {Button} from '../components/button'
-import {Fields} from './fields'
+import {Button} from '../primitives/button'
+import {Fields} from '../primitives/fields'
 
 const FormDataSchema = z.record(z.string(), z.string().or(z.number()))
 
@@ -9,9 +9,9 @@ export function ObjectForm(
     fields: ReadonlyArray<{
       name: string
       type: string
-      title: string | undefined
+      title?: string
     }>
-    defaultValues: {[key: string]: unknown}
+    defaultValues?: {[key: string]: unknown}
     submitLabel: string
   } & {
     onSubmit: ({values}: {values: Record<string, string | number>}) => void

@@ -1,18 +1,18 @@
 import {XIcon} from 'lucide-react'
 import {
-  Dialog,
   DialogTrigger,
   Heading,
   Modal,
   ModalOverlay,
+  Dialog as RACDialog,
   TooltipTrigger,
 } from 'react-aria-components'
-import {Button} from '../components/button'
-import {Container} from '../components/container'
-import {Tooltip} from '../components/tooltip'
+import {Button} from './button'
+import {Container} from './container'
 import {Icon} from './icon'
+import {Tooltip} from './tooltip'
 
-export function InsertDialog(props: {
+export function Dialog(props: {
   title: string
   icon: React.ComponentType
   trigger: React.ReactNode
@@ -24,7 +24,7 @@ export function InsertDialog(props: {
       {props.trigger}
       <ModalOverlay className="bg-black/9 z-100000 left-0 top-0 fixed w-screen h-[var(--visual-viewport-height)] flex items-center justify-center">
         <Modal>
-          <Dialog className="w-80 max-w-screen">
+          <RACDialog className="w-80 max-w-screen">
             {({close}) => (
               <Container className="flex flex-col gap-2">
                 <div className="flex items-center justify-between gap-2">
@@ -45,7 +45,7 @@ export function InsertDialog(props: {
                 {props.children({close})}
               </Container>
             )}
-          </Dialog>
+          </RACDialog>
         </Modal>
       </ModalOverlay>
     </DialogTrigger>

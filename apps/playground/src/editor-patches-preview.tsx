@@ -1,7 +1,7 @@
 import {omit} from 'remeda'
 import {tv} from 'tailwind-variants'
-import {Container} from './components/container'
 import type {EditorActorRef} from './playground-machine'
+import {Container} from './primitives/container'
 
 type EditorPatch = ReturnType<
   EditorActorRef['getSnapshot']

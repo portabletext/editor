@@ -1,7 +1,7 @@
 import {z} from 'zod/v4'
-import {Button} from '../components/button'
-import {Fields} from './fields'
-import {SelectField} from './select-field'
+import {Button} from '../primitives/button'
+import {SelectField} from '../primitives/field.select'
+import {Fields} from '../primitives/fields'
 
 const FormDataSchema = z
   .object({
@@ -9,14 +9,14 @@ const FormDataSchema = z
   })
   .catchall(z.string().or(z.number()))
 
-export function BlockObjectForm(
+export function InsertBlockObjectForm(
   props: {
     fields: ReadonlyArray<{
       name: string
-      type: 'string' | 'number'
+      type: string
       title?: string
     }>
-    defaultValues: Record<string, string | number>
+    defaultValues?: Record<string, unknown>
   } & {
     onSubmit: ({
       values,

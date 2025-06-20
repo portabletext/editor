@@ -1,16 +1,13 @@
 import {useEditor, useEditorSelector} from '@portabletext/editor'
 import * as selectors from '@portabletext/editor/selectors'
 import {TooltipTrigger} from 'react-aria-components'
-import {ToggleButton} from '../components/toggle-button'
-import {Tooltip} from '../components/tooltip'
-import {Icon} from './icon'
+import {Icon} from '../primitives/icon'
+import {ToggleButton} from '../primitives/toggle-button'
+import {Tooltip} from '../primitives/tooltip'
+import type {ToolbarDecoratorDefinition} from './toolbar-schema-definition'
 
-export function ListItemButton(props: {
-  definition: {
-    name: string
-    title?: string
-    icon?: React.ComponentType
-  }
+export function DecoratorButton(props: {
+  definition: ToolbarDecoratorDefinition
 }) {
   const editor = useEditor()
   const disabled = useEditorSelector(
@@ -19,7 +16,7 @@ export function ListItemButton(props: {
   )
   const active = useEditorSelector(
     editor,
-    selectors.isActiveListItem(props.definition.name),
+    selectors.isActiveDecorator(props.definition.name),
   )
 
   return (
@@ -31,8 +28,8 @@ export function ListItemButton(props: {
         isSelected={active}
         onPress={() => {
           editor.send({
-            type: 'list item.toggle',
-            listItem: props.definition.name,
+            type: 'decorator.toggle',
+            decorator: props.definition.name,
           })
           editor.send({type: 'focus'})
         }}

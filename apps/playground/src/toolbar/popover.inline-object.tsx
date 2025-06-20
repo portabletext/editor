@@ -1,23 +1,22 @@
 import {
   useEditor,
-  type BlockPath,
+  type ChildPath,
   type PortableTextObject,
 } from '@portabletext/editor'
 import * as selectors from '@portabletext/editor/selectors'
 import {PencilIcon, TrashIcon} from 'lucide-react'
 import React, {useEffect, useState, type RefObject} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
-import {Button} from '../components/button'
-import {Popover} from '../components/popover'
-import {Tooltip} from '../components/tooltip'
-import {
-  playgroundSchemaDefinition,
-  type PlaygroundSchemaDefinition,
-} from '../playground-schema-definition'
-import {InsertDialog} from './insert-dialog'
-import {ObjectForm} from './object-form'
+import {Button} from '../primitives/button'
+import {Dialog} from '../primitives/dialog'
+import {Popover} from '../primitives/popover'
+import {Tooltip} from '../primitives/tooltip'
+import {ObjectForm} from './form.object-form'
+import type {ToolbarInlineObjectDefinition} from './toolbar-schema-definition'
 
-export function BlockObjectPopover() {
+export function InlineObjectPopover(props: {
+  definitions: ReadonlyArray<ToolbarInlineObjectDefinition>
+}) {
   const editor = useEditor()
   const [state, setState] = useState<
     | {
@@ -27,8 +26,8 @@ export function BlockObjectPopover() {
         type: 'visible'
         object: {
           value: PortableTextObject
-          definition: PlaygroundSchemaDefinition['blockObjects'][number]
-          at: BlockPath
+          definition: ToolbarInlineObjectDefinition
+          at: ChildPath
         }
         triggerRef: RefObject<Element | null>
       }
@@ -43,15 +42,15 @@ export function BlockObjectPopover() {
         return
       }
 
-      const focusBlockObject = selectors.getFocusBlockObject(snapshot)
+      const focusInlineObject = selectors.getFocusInlineObject(snapshot)
 
-      if (!focusBlockObject) {
+      if (!focusInlineObject) {
         setState({type: 'idle'})
         return
       }
 
-      const definition = playgroundSchemaDefinition.blockObjects.find(
-        (definition) => definition.name === focusBlockObject.node._type,
+      const definition = props.definitions.find(
+        (definition) => definition.name === focusInlineObject.node._type,
       )
 
       if (!definition) {
@@ -59,7 +58,7 @@ export function BlockObjectPopover() {
         return
       }
 
-      const selectedNodes = editor.dom.getBlockNodes(snapshot)
+      const selectedNodes = editor.dom.getChildNodes(snapshot)
       const firstSelectedNode = selectedNodes.at(0)
 
       if (!firstSelectedNode || !(firstSelectedNode instanceof Element)) {
@@ -73,14 +72,14 @@ export function BlockObjectPopover() {
       setState({
         type: 'visible',
         object: {
-          value: focusBlockObject.node,
+          value: focusInlineObject.node,
           definition,
-          at: focusBlockObject.path,
+          at: focusInlineObject.path,
         },
         triggerRef,
       })
     }).unsubscribe
-  }, [editor])
+  }, [editor, props.definitions])
 
   if (state.type === 'idle') {
     return null
@@ -89,8 +88,7 @@ export function BlockObjectPopover() {
   return (
     <Popover
       isNonModal
-      placement="right"
-      className="flex flex-col gap-2"
+      className="flex gap-2"
       triggerRef={state.triggerRef}
       isOpen={true}
       onOpenChange={(isOpen) => {
@@ -101,8 +99,8 @@ export function BlockObjectPopover() {
       }}
     >
       {state.object.definition.fields.length > 0 ? (
-        <InsertDialog
-          title={state.object.definition.title}
+        <Dialog
+          title={state.object.definition.title ?? state.object.definition.name}
           icon={state.object.definition.icon}
           onOpenChange={(isOpen) => {
             if (!isOpen) {
@@ -126,7 +124,7 @@ export function BlockObjectPopover() {
               defaultValues={state.object.value}
               onSubmit={({values}) => {
                 editor.send({
-                  type: 'block.set',
+                  type: 'child.set',
                   at: state.object.at,
                   props: values,
                 })
@@ -135,7 +133,7 @@ export function BlockObjectPopover() {
               }}
             />
           )}
-        </InsertDialog>
+        </Dialog>
       ) : null}
       <TooltipTrigger>
         <Button
@@ -144,7 +142,7 @@ export function BlockObjectPopover() {
           size="sm"
           onPress={() => {
             editor.send({
-              type: 'delete.block',
+              type: 'delete.child',
               at: state.object.at,
             })
             editor.send({type: 'focus'})

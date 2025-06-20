@@ -1,8 +1,8 @@
 import {useEditor, useEditorSelector} from '@portabletext/editor'
 import {SquareDashedMousePointerIcon} from 'lucide-react'
 import {TooltipTrigger} from 'react-aria-components'
-import {Button} from '../components/button'
-import {Tooltip} from '../components/tooltip'
+import {Button} from '../primitives/button'
+import {Tooltip} from '../primitives/tooltip'
 
 export function FocusButton() {
   const editor = useEditor()

@@ -32,20 +32,20 @@ import {useEffect, useState, type JSX} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
 import {reverse} from 'remeda'
 import {twMerge} from 'tailwind-merge'
+import {tv} from 'tailwind-variants'
 import {createCodeEditorBehaviors} from './behavior.code-editor'
 import {createLinkBehaviors} from './behavior.links'
-import {Button} from './components/button'
-import {container, Container} from './components/container'
-import {ErrorBoundary} from './components/error-boundary'
-import {ErrorScreen} from './components/error-screen'
-import {Separator} from './components/separator'
-import {Spinner} from './components/spinner'
-import {Switch} from './components/switch'
-import {Toolbar} from './components/toolbar'
-import {Tooltip} from './components/tooltip'
 import {EditorPatchesPreview} from './editor-patches-preview'
+import {Button} from './primitives/button'
+import {container, Container} from './primitives/container'
+import {ErrorBoundary} from './primitives/error-boundary'
+import {ErrorScreen} from './primitives/error-screen'
+import {Separator} from './primitives/separator'
+import {Spinner} from './primitives/spinner'
+import {Switch} from './primitives/switch'
+import {Toolbar} from './primitives/toolbar'
+import {Tooltip} from './primitives/tooltip'
 import './editor.css'
-import {tv} from 'tailwind-variants'
 import {EmojiPickerPlugin} from './emoji-picker'
 import type {EditorActorRef} from './playground-machine'
 import {
@@ -57,12 +57,9 @@ import {
 } from './playground-schema-definition'
 import {ImageDeserializerPlugin} from './plugin.image-deserializer'
 import {TextFileDeserializerPlugin} from './plugin.text-file-deserializer'
-import {PortableTextToolbar} from './portable-text-toolbar'
+import {RangeDecorationButton} from './range-decoration-button'
 import {SelectionPreview} from './selection-preview'
-import {AnnotationPopover} from './toolbar/annotation-popover'
-import {BlockObjectPopover} from './toolbar/block-object-popover'
-import {InlineObjectPopover} from './toolbar/inline-object-popover'
-import {RangeDecorationButton} from './toolbar/range-decoration-button'
+import {PortableTextToolbar} from './toolbar/portable-text-toolbar'
 import {ValuePreview} from './value-preview'
 
 const featureFlags = createStore({
@@ -163,9 +160,6 @@ export function Editor(props: {
                   }}
                 />
               </PortableTextToolbar>
-              <AnnotationPopover />
-              <BlockObjectPopover />
-              <InlineObjectPopover />
             </Container>
             {enableEmojiPickerPlugin ? <EmojiPickerPlugin /> : null}
             <div className="flex gap-2 items-center">

@@ -1,10 +1,10 @@
 import {useEditor, useEditorSelector} from '@portabletext/editor'
 import {useActorRef, useSelector} from '@xstate/react'
 import {useEffect} from 'react'
-import {Container} from './components/container'
-import {Spinner} from './components/spinner'
 import {highlightMachine} from './highlight-json-machine'
 import type {EditorActorRef} from './playground-machine'
+import {Container} from './primitives/container'
+import {Spinner} from './primitives/spinner'
 
 export function ValuePreview(props: {editorId: EditorActorRef['id']}) {
   const highlightActor = useActorRef(highlightMachine, {

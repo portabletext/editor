@@ -1,5 +1,5 @@
-import {Label} from '../components/field'
-import {Select, SelectItem} from '../components/select'
+import {Label} from './field'
+import {Select, SelectItem} from './select'
 
 export function SelectField(props: {
   name: string

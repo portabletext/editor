@@ -7,8 +7,8 @@ import {
 import * as selectors from '@portabletext/editor/selectors'
 import {TextCursorIcon} from 'lucide-react'
 import {TooltipTrigger} from 'react-aria-components'
-import {Button} from '../components/button'
-import {Tooltip} from '../components/tooltip'
+import {Button} from './primitives/button'
+import {Tooltip} from './primitives/tooltip'
 
 export function RangeDecorationButton(props: {
   onAddRangeDecoration: (rangeDecoration: RangeDecoration) => void
