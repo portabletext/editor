@@ -9,27 +9,21 @@ import {getSelectionStartBlock} from './selector.get-selection-start-block'
 export const getPreviousBlock: EditorSelector<
   {node: PortableTextBlock; path: BlockPath} | undefined
 > = (snapshot) => {
-  let previousBlock: {node: PortableTextBlock; path: BlockPath} | undefined
   const selectionStartBlock = getSelectionStartBlock(snapshot)
 
   if (!selectionStartBlock) {
     return undefined
   }
 
-  let foundSelectionStartBlock = false
+  const index = snapshot.blockIndexMap.get(selectionStartBlock.node._key)
 
-  for (const block of snapshot.context.value) {
-    if (block._key === selectionStartBlock.node._key) {
-      foundSelectionStartBlock = true
-      break
-    }
-
-    previousBlock = {node: block, path: [{_key: block._key}]}
+  if (index === undefined || index === 0) {
+    return undefined
   }
 
-  if (foundSelectionStartBlock && previousBlock) {
-    return previousBlock
-  }
+  const previousBlock = snapshot.context.value.at(index - 1)
 
-  return undefined
+  return previousBlock
+    ? {node: previousBlock, path: [{_key: previousBlock._key}]}
+    : undefined
 }

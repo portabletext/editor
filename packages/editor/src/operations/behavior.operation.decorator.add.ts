@@ -108,6 +108,7 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
     })
 
     const trimmedSelection = selectors.getTrimmedSelection({
+      blockIndexMap: editor.blockIndexMap,
       beta: {
         activeAnnotations: [],
         activeDecorators: [],

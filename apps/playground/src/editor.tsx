@@ -651,6 +651,7 @@ const RenderBlock = (props: BlockRenderProps) => {
     editor,
     selectors.getListIndex({path: props.path}),
   )
+  // const listIndex = undefined
 
   let children = props.children
 

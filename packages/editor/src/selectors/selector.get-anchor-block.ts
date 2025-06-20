@@ -14,10 +14,9 @@ export const getAnchorBlock: EditorSelector<
   }
 
   const key = getBlockKeyFromSelectionPoint(snapshot.context.selection.anchor)
-
-  const node = key
-    ? snapshot.context.value.find((block) => block._key === key)
-    : undefined
+  const index = key ? snapshot.blockIndexMap.get(key) : undefined
+  const node =
+    index !== undefined ? snapshot.context.value.at(index) : undefined
 
   return node && key ? {node, path: [{_key: key}]} : undefined
 }

@@ -46,6 +46,7 @@ export function getMarkState({
       : null
 
     const selectedSpans = getSelectedSpans({
+      blockIndexMap: editor.blockIndexMap,
       context: {
         value: editor.value,
         selection,

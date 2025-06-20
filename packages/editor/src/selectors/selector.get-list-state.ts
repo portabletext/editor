@@ -84,6 +84,8 @@ export function getListIndex({
   }
 }
 
+let index = 0
+
 function getPreviousListItem({
   listItem,
   level,
@@ -97,6 +99,9 @@ function getPreviousListItem({
     }
   | undefined
 > {
+  console.log(index)
+  index++
+
   return (snapshot) => {
     const previousBlock = getPreviousBlock({
       ...snapshot,
