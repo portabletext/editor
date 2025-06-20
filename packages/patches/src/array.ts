@@ -3,7 +3,7 @@ import applyPatch from './applyPatch'
 import insert from './arrayInsert'
 import type {JSONValue, Patch, PathSegment} from './types'
 
-function findTargetIndex(array: any[], pathSegment: PathSegment) {
+function findTargetIndex(array: any[], pathSegment: PathSegment | undefined) {
   if (typeof pathSegment === 'number') {
     return pathSegment
   }
