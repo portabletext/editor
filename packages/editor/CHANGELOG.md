@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.54.3](https://github.com/portabletext/editor/compare/editor-v1.54.2...editor-v1.54.3) (2025-06-20)
+
+
+### Bug Fixes
+
+* **types:** export `FieldDefinition` ([59abb33](https://github.com/portabletext/editor/commit/59abb33499e433f8649d344b3e436bcaaf9f4781))
+
 ## [1.54.2](https://github.com/portabletext/editor/compare/editor-v1.54.1...editor-v1.54.2) (2025-06-20)
 
 
