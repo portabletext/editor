@@ -45,6 +45,7 @@ const editorMachine = setup({
       | {type: 'remove'}
       | {type: 'clear stored patches'}
       | {type: 'copy patches'}
+      | {type: 'toggle debug mode'}
       | {type: 'toggle key generator'}
       | {type: 'toggle patch subscription'}
       | {type: 'toggle value subscription'}
@@ -139,6 +140,13 @@ const editorMachine = setup({
   },
   type: 'parallel',
   states: {
+    'debug mode': {
+      initial: 'hidden',
+      states: {
+        hidden: {on: {'toggle debug mode': {target: 'shown'}}},
+        shown: {on: {'toggle debug mode': {target: 'hidden'}}},
+      },
+    },
     'patches preview': {
       initial: 'hidden',
       states: {
