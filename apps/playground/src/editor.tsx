@@ -21,7 +21,13 @@ import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 import {OneLinePlugin} from '@portabletext/plugin-one-line'
 import {useSelector} from '@xstate/react'
 import {createStore} from '@xstate/store'
-import {CopyIcon, TrashIcon} from 'lucide-react'
+import {
+  CopyIcon,
+  LinkIcon,
+  PencilIcon,
+  SeparatorHorizontalIcon,
+  TrashIcon,
+} from 'lucide-react'
 import {useEffect, useState, type JSX} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
 import {reverse} from 'remeda'
@@ -592,19 +598,25 @@ const renderAnnotation: RenderAnnotationFunction = (props) => {
 }
 
 const breakStyle = tv({
-  base: 'h-1 my-1',
+  base: 'my-1 p-1 flex items-center justify-center gap-1 border-2 border-gray-300 rounded',
   variants: {
     selected: {
-      true: 'bg-blue-300',
+      true: 'border-blue-300',
+    },
+    focused: {
+      true: 'bg-blue-50',
     },
   },
 })
 
 const imageStyle = tv({
-  base: 'flex my-1 items-center gap-1 border-2 border-gray-300 rounded px-1 text-sm',
+  base: 'grid grid-cols-[auto_1fr] my-1 items-start gap-1 border-2 border-gray-300 rounded text-sm',
   variants: {
     selected: {
       true: 'border-blue-300',
+    },
+    focused: {
+      true: 'bg-blue-50',
     },
   },
 })
@@ -625,10 +637,14 @@ const RenderBlock = (props: BlockRenderProps) => {
 
   if (props.schemaType.name === 'break') {
     children = (
-      <Separator
-        orientation="horizontal"
-        className={breakStyle({selected: props.selected})}
-      />
+      <div
+        className={breakStyle({
+          selected: props.selected,
+          focused: props.focused,
+        })}
+      >
+        <SeparatorHorizontalIcon className="size-4" />
+      </div>
     )
   }
 
@@ -636,8 +652,38 @@ const RenderBlock = (props: BlockRenderProps) => {
 
   if (image) {
     children = (
-      <div className={imageStyle({selected: props.selected})}>
-        <img src={image.value.url} alt={image.value.alt ?? ''} />
+      <div
+        className={imageStyle({
+          selected: props.selected,
+          focused: props.focused,
+        })}
+      >
+        <div className="bg-gray-200 size-20 overflow-clip flex items-center justify-center">
+          <img
+            className="object-scale-down max-w-full"
+            src={image.value.url}
+            alt={image.value.alt ?? ''}
+          />
+        </div>
+        <div className="flex flex-col gap-1 p-1 overflow-hidden">
+          <div className="flex items-center gap-1">
+            <TooltipTrigger>
+              <Button variant="ghost" size="sm">
+                <LinkIcon className="size-3 shrink-0" />
+              </Button>
+              <Tooltip className="max-w-120">
+                <span className="wrap-anywhere">{image.value.url}</span>
+              </Tooltip>
+            </TooltipTrigger>
+            <span className="text-ellipsis overflow-hidden whitespace-nowrap">
+              {image.value.url}
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            <PencilIcon className="size-3 shrink-0" />
+            <span className="text-xs text-slate-500">{image.value.alt}</span>
+          </div>
+        </div>
       </div>
     )
   }
