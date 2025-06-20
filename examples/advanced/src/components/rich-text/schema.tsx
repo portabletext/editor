@@ -42,10 +42,11 @@ export const schemaDefinition = defineSchema({
         {name: 'url', type: 'string'},
       ],
     },
-    {name: 'image', fields: [{name: 'src', type: 'string'}]},
     {
-      name: 'video',
+      name: 'media',
       fields: [
+        {name: 'id', type: 'string'},
+        {name: 'name', type: 'string'},
         {name: 'src', type: 'string'},
         {name: 'mediaType', type: 'string'},
       ],

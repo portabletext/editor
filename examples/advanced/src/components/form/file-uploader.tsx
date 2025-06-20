@@ -7,11 +7,13 @@ import {toast} from 'sonner'
 
 interface EditorUploaderProps extends React.ComponentProps<'div'> {
   onFileUpload: (files: IMediaContent[]) => void
+
   placeholder?: string
   trigger: React.JSX.Element
 }
 export const FileUploader: React.FC<EditorUploaderProps> = ({
   onFileUpload,
+
   className,
   trigger,
 }) => {
@@ -43,7 +45,8 @@ export const FileUploader: React.FC<EditorUploaderProps> = ({
         (file, index) =>
           ({
             id: file.name + new Date().getTime(),
-            data: resultArr[index] as string,
+            name: file.name,
+            src: resultArr[index] as string,
             mediaType: file.type,
           }) as IMediaContent,
       )
@@ -61,10 +64,12 @@ export const FileUploader: React.FC<EditorUploaderProps> = ({
     maxFiles: 10,
     noKeyboard: true,
     noDrag: true,
-    maxSize: 5000000, //TODO: USE CUSTOM VALIDATOR FOR SIZES
+    maxSize: 5000000,
     accept: {
-      'image/*': ['.png', '.jpg', '.jpeg'],
+      'image/jpeg': ['.jpeg', '.jpg'],
+      'image/png': ['.png'],
       'video/*': ['.mp4', '.mov', '.avi', '.mkv', '.webm'],
+      'application/pdf': ['.pdf'],
     },
   })
 

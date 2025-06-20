@@ -2,7 +2,8 @@ import z from 'zod'
 
 export interface IMediaContent {
   id: string
-  data: string | null
+  name?: string
+  src: string | undefined
   mediaType: IMediaContentMediaType
 }
 
@@ -16,7 +17,8 @@ export const IMediaContentMediaTypeSchema = z.union([
   z.literal('video/avi'),
   z.literal('video/mkv'),
   z.literal('video/webm'),
-  z.null(),
+  z.literal('video/quicktime'),
+  z.literal('application/pdf'),
 ])
 
 export type IMediaContentMediaType = z.infer<

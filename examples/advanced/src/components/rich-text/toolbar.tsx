@@ -124,23 +124,18 @@ const AttachFileButton = () => {
         }
         editor.send({type: 'focus'})
         for (const file of files) {
-          if (file.mediaType?.includes('video')) {
-            editor.send({
-              type: 'insert.inline object',
-              inlineObject: {
-                name: 'video',
-                value: {src: file.data, mediaType: file.mediaType},
+          editor.send({
+            type: 'insert.inline object',
+            inlineObject: {
+              name: 'media',
+              value: {
+                id: file.id,
+                name: file.name,
+                src: file.src,
+                mediaType: file.mediaType,
               },
-            })
-          } else if (file.mediaType?.includes('image')) {
-            editor.send({
-              type: 'insert.inline object',
-              inlineObject: {
-                name: 'image',
-                value: {src: file.data},
-              },
-            })
-          }
+            },
+          })
         }
       }}
     />
