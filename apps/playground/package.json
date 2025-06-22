@@ -22,7 +22,7 @@
     "@portabletext/patches": "workspace:^",
     "@portabletext/plugin-markdown-shortcuts": "^1.0.11",
     "@portabletext/plugin-one-line": "^1.0.14",
-    "@xstate/react": "^5.0.5",
+    "@xstate/react": "^6.0.0",
     "@xstate/store": "^3.7.0",
     "lucide-react": "^0.487.0",
     "react": "^19.1.0",
