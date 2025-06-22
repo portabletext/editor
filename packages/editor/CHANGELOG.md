@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.54.5](https://github.com/portabletext/editor/compare/editor-v1.54.4...editor-v1.54.5) (2025-06-22)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @xstate/react to v6 ([8969fe1](https://github.com/portabletext/editor/commit/8969fe16600e338b631618d9d37205fe6aa40c75))
+* **deps:** Update xstate ([93f7203](https://github.com/portabletext/editor/commit/93f7203285b7d8211901a744aa4a454c286578f8))
+
 ## [1.54.4](https://github.com/portabletext/editor/compare/editor-v1.54.3...editor-v1.54.4) (2025-06-22)
 
 
