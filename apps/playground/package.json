@@ -23,7 +23,7 @@
     "@portabletext/plugin-markdown-shortcuts": "^1.0.11",
     "@portabletext/plugin-one-line": "^1.0.14",
     "@xstate/react": "^5.0.5",
-    "@xstate/store": "^3.6.2",
+    "@xstate/store": "^3.7.0",
     "lucide-react": "^0.487.0",
     "react": "^19.1.0",
     "react-aria-components": "^1.10.1",
@@ -31,7 +31,7 @@
     "react-is": "^19.1.0",
     "remeda": "^2.23.0",
     "shiki": "^3.6.0",
-    "xstate": "^5.19.4",
+    "xstate": "^5.20.0",
     "zod": "^3.25.67"
   },
   "devDependencies": {
