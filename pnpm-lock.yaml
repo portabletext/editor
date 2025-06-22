@@ -165,8 +165,8 @@ importers:
         specifier: ^1.0.14
         version: 1.0.14(@portabletext/editor@packages+editor)(react@19.1.0)
       '@xstate/react':
-        specifier: ^5.0.5
-        version: 5.0.5(@types/react@19.1.8)(react@19.1.0)(xstate@5.20.0)
+        specifier: ^6.0.0
+        version: 6.0.0(@types/react@19.1.8)(react@19.1.0)(xstate@5.20.0)
       '@xstate/store':
         specifier: ^3.7.0
         version: 3.7.0(react@19.1.0)
@@ -424,8 +424,8 @@ importers:
         specifier: ^2.0.14
         version: 2.0.14
       '@xstate/react':
-        specifier: ^5.0.5
-        version: 5.0.5(@types/react@19.1.8)(react@19.1.0)(xstate@5.20.0)
+        specifier: ^6.0.0
+        version: 6.0.0(@types/react@19.1.8)(react@19.1.0)(xstate@5.20.0)
       debug:
         specifier: ^4.4.1
         version: 4.4.1
@@ -3379,6 +3379,15 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       xstate: ^5.19.4
+    peerDependenciesMeta:
+      xstate:
+        optional: true
+
+  '@xstate/react@6.0.0':
+    resolution: {integrity: sha512-xXlLpFJxqLhhmecAXclBECgk+B4zYSrDTl8hTfPZBogkn82OHKbm9zJxox3Z/YXoOhAQhKFTRLMYGdlbhc6T9A==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      xstate: ^5.20.0
     peerDependenciesMeta:
       xstate:
         optional: true
@@ -10227,6 +10236,16 @@ snapshots:
       - '@types/react'
 
   '@xstate/react@5.0.5(@types/react@19.1.8)(react@19.1.0)(xstate@5.20.0)':
+    dependencies:
+      react: 19.1.0
+      use-isomorphic-layout-effect: 1.2.0(@types/react@19.1.8)(react@19.1.0)
+      use-sync-external-store: 1.5.0(react@19.1.0)
+    optionalDependencies:
+      xstate: 5.20.0
+    transitivePeerDependencies:
+      - '@types/react'
+
+  '@xstate/react@6.0.0(@types/react@19.1.8)(react@19.1.0)(xstate@5.20.0)':
     dependencies:
       react: 19.1.0
       use-isomorphic-layout-effect: 1.2.0(@types/react@19.1.8)(react@19.1.0)
