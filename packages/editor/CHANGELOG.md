@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.54.4](https://github.com/portabletext/editor/compare/editor-v1.54.3...editor-v1.54.4) (2025-06-22)
+
+
+### Bug Fixes
+
+* **deps:** Update slate ([9199786](https://github.com/portabletext/editor/commit/91997862559f67831e48fda22447d3e63778a372))
+* make Range Decorations work again after Slate upgrade ([272aa63](https://github.com/portabletext/editor/commit/272aa636fa5a7b907674b825b4b16feb8736f060))
+
 ## [1.54.3](https://github.com/portabletext/editor/compare/editor-v1.54.2...editor-v1.54.3) (2025-06-20)
 
 
