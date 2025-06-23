@@ -51,6 +51,10 @@ export function RenderTextBlock(props: {
     s.context.getLegacySchema(),
   )
 
+  const listIndex = useSlateSelector((editor) =>
+    editor.listIndexMap.get(props.textBlock._key),
+  )
+
   let children = props.children
 
   const legacyBlockSchemaType = legacySchema.block
@@ -139,6 +143,11 @@ export function RenderTextBlock(props: {
       {...(props.textBlock.style !== undefined
         ? {
             'data-style': props.textBlock.style,
+          }
+        : {})}
+      {...(listIndex !== undefined
+        ? {
+            'data-list-index': listIndex,
           }
         : {})}
     >

@@ -1,5 +1,6 @@
 import {createEditor, type Descendant} from 'slate'
 import {withReact} from 'slate-react'
+import {buildListIndexMap} from '../internal-utils/build-list-index-map'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debugWithName} from '../internal-utils/debug'
 import {toSlateValue} from '../internal-utils/values'
@@ -46,6 +47,10 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
   )
   instance.value = [placeholderBlock]
   instance.blockIndexMap = new Map([[placeholderBlock._key, 0]])
+  instance.listIndexMap = buildListIndexMap(
+    config.editorActor.getSnapshot().context,
+    instance.value,
+  )
 
   const initialValue = toSlateValue(instance.value, {
     schemaTypes: config.editorActor.getSnapshot().context.schema,
