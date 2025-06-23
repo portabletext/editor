@@ -35,34 +35,34 @@
  * Then, the counter for each level is manually set to 1 whenever a list item
  * with index 1 is encountered.
  */
-[data-level='1']:has([data-list-index='1']) {
+[data-level='1'][data-list-index='1'] {
   counter-set: level-1 1;
 }
-[data-level='2']:has([data-list-index='1']) {
+[data-level='2'][data-list-index='1'] {
   counter-set: level-2 1;
 }
-[data-level='3']:has([data-list-index='1']) {
+[data-level='3'][data-list-index='1'] {
   counter-set: level-3 1;
 }
-[data-level='4']:has([data-list-index='1']) {
+[data-level='4'][data-list-index='1'] {
   counter-set: level-4 1;
 }
-[data-level='5']:has([data-list-index='1']) {
+[data-level='5'][data-list-index='1'] {
   counter-set: level-5 1;
 }
-[data-level='6']:has([data-list-index='1']) {
+[data-level='6'][data-list-index='1'] {
   counter-set: level-6 1;
 }
-[data-level='7']:has([data-list-index='1']) {
+[data-level='7'][data-list-index='1'] {
   counter-set: level-7 1;
 }
-[data-level='8']:has([data-list-index='1']) {
+[data-level='8'][data-list-index='1'] {
   counter-set: level-8 1;
 }
-[data-level='9']:has([data-list-index='1']) {
+[data-level='9'][data-list-index='1'] {
   counter-set: level-9 1;
 }
-[data-level='10']:has([data-list-index='1']) {
+[data-level='10'][data-list-index='1'] {
   counter-set: level-10 1;
 }
 
@@ -70,34 +70,34 @@
  * Thereafter, the count for each list level is incremented for each index
  * greater than 1.
  */
-[data-level='1']:not(:has([data-list-index='1'])) {
+[data-level='1']:not([data-list-index='1']) {
   counter-increment: level-1;
 }
-[data-level='2']:not(:has([data-list-index='1'])) {
+[data-level='2']:not([data-list-index='1']) {
   counter-increment: level-2;
 }
-[data-level='3']:not(:has([data-list-index='1'])) {
+[data-level='3']:not([data-list-index='1']) {
   counter-increment: level-3;
 }
-[data-level='4']:not(:has([data-list-index='1'])) {
+[data-level='4']:not([data-list-index='1']) {
   counter-increment: level-4;
 }
-[data-level='5']:not(:has([data-list-index='1'])) {
+[data-level='5']:not([data-list-index='1']) {
   counter-increment: level-5;
 }
-[data-level='6']:not(:has([data-list-index='1'])) {
+[data-level='6']:not([data-list-index='1']) {
   counter-increment: level-6;
 }
-[data-level='7']:not(:has([data-list-index='1'])) {
+[data-level='7']:not([data-list-index='1']) {
   counter-increment: level-7;
 }
-[data-level='8']:not(:has([data-list-index='1'])) {
+[data-level='8']:not([data-list-index='1']) {
   counter-increment: level-8;
 }
-[data-level='9']:not(:has([data-list-index='1'])) {
+[data-level='9']:not([data-list-index='1']) {
   counter-increment: level-9;
 }
-[data-level='10']:not(:has([data-list-index='1'])) {
+[data-level='10']:not([data-list-index='1']) {
   counter-increment: level-10;
 }
 
