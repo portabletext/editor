@@ -16,7 +16,6 @@ import {
   type RenderPlaceholderFunction,
   type RenderStyleFunction,
 } from '@portabletext/editor'
-import * as selectors from '@portabletext/editor/selectors'
 import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 import {OneLinePlugin} from '@portabletext/plugin-one-line'
 import {useSelector} from '@xstate/react'
@@ -647,10 +646,6 @@ const RenderBlock = (props: BlockRenderProps) => {
   )
   const editor = useEditor()
   const readOnly = useEditorSelector(editor, (s) => s.context.readOnly)
-  const listIndex = useEditorSelector(
-    editor,
-    selectors.getListIndex({path: props.path}),
-  )
 
   let children = props.children
 
@@ -723,17 +718,7 @@ const RenderBlock = (props: BlockRenderProps) => {
     )
   }
 
-  return (
-    <div
-      {...(listIndex !== undefined
-        ? {
-            'data-list-index': listIndex,
-          }
-        : {})}
-    >
-      {children}
-    </div>
-  )
+  return children
 }
 
 const renderDecorator: RenderDecoratorFunction = (props) => {
