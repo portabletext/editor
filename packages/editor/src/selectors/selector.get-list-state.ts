@@ -5,6 +5,7 @@ import {getFocusTextBlock} from './selector.get-focus-text-block'
 
 /**
  * @beta
+ * @deprecated Use the precomputed `data-list-index` on text blocks instead.
  * Given the `path` of a block, this selector will return the "list index" of
  * the block.
  */
