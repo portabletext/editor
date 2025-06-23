@@ -2,10 +2,14 @@ import type {PortableTextBlock} from '@sanity/types'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {isTextBlock} from './parse-blocks'
 
-export function buildListIndexMap(
+export function buildIndexMaps(
   context: Pick<EditorContext, 'schema'>,
   value: Array<PortableTextBlock>,
-): Map<string, number> {
+): {
+  blockIndexMap: Map<string, number>
+  listIndexMap: Map<string, number>
+} {
+  const blockIndexMap = new Map<string, number>()
   const listIndexMap = new Map<string, number>()
   const levelIndexMap = new Map<number, number>()
   let previousListItem:
@@ -17,6 +21,12 @@ export function buildListIndexMap(
 
   for (let blockIndex = 0; blockIndex < value.length; blockIndex++) {
     const block = value.at(blockIndex)
+
+    if (block === undefined) {
+      continue
+    }
+
+    blockIndexMap.set(block._key, blockIndex)
 
     if (!isTextBlock(context, block)) {
       levelIndexMap.clear()
@@ -83,5 +93,5 @@ export function buildListIndexMap(
     }
   }
 
-  return listIndexMap
+  return {blockIndexMap, listIndexMap}
 }

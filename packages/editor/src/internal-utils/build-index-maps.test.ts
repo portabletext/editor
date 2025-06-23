@@ -2,7 +2,7 @@ import type {PortableTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
 import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
 import {defaultKeyGenerator} from '../editor/key-generator'
-import {buildListIndexMap} from './build-list-index-map'
+import {buildIndexMaps} from './build-index-maps'
 
 function blockObject(_key: string, name: string) {
   return {
@@ -43,118 +43,157 @@ const schema = compileSchemaDefinition(
   }),
 )
 
-describe(buildListIndexMap.name, () => {
+describe(buildIndexMaps.name, () => {
   test('empty', () => {
-    expect(buildListIndexMap({schema}, [])).toEqual(new Map())
+    expect(buildIndexMaps({schema}, [])).toEqual({
+      blockIndexMap: new Map(),
+      listIndexMap: new Map(),
+    })
   })
 
   test('single list item', () => {
     expect(
-      buildListIndexMap({schema}, [
+      buildIndexMaps({schema}, [
         textBlock('k0', {listItem: 'number', level: 1}),
       ]),
-    ).toEqual(new Map([['k0', 1]]))
+    ).toEqual({
+      blockIndexMap: new Map([['k0', 0]]),
+      listIndexMap: new Map([['k0', 1]]),
+    })
   })
 
   test('single indented list item', () => {
     expect(
-      buildListIndexMap({schema}, [
+      buildIndexMaps({schema}, [
         textBlock('k0', {listItem: 'number', level: 2}),
       ]),
-    ).toEqual(new Map([['k0', 1]]))
+    ).toEqual({
+      blockIndexMap: new Map([['k0', 0]]),
+      listIndexMap: new Map([['k0', 1]]),
+    })
   })
 
   test('two lists broken up by a paragraph', () => {
     expect(
-      buildListIndexMap({schema}, [
+      buildIndexMaps({schema}, [
         textBlock('k0', {listItem: 'number', level: 1}),
         textBlock('k1', {listItem: 'number', level: 1}),
         textBlock('k2', {}),
         textBlock('k3', {listItem: 'number', level: 1}),
         textBlock('k4', {listItem: 'number', level: 1}),
       ]),
-    ).toEqual(
-      new Map([
+    ).toEqual({
+      blockIndexMap: new Map([
+        ['k0', 0],
+        ['k1', 1],
+        ['k2', 2],
+        ['k3', 3],
+        ['k4', 4],
+      ]),
+      listIndexMap: new Map([
         ['k0', 1],
         ['k1', 2],
         ['k3', 1],
         ['k4', 2],
       ]),
-    )
+    })
   })
 
   test('two lists broken up by an image', () => {
     expect(
-      buildListIndexMap({schema}, [
+      buildIndexMaps({schema}, [
         textBlock('k0', {listItem: 'number', level: 1}),
         textBlock('k1', {listItem: 'number', level: 1}),
         blockObject('k2', 'image'),
         textBlock('k3', {listItem: 'number', level: 1}),
         textBlock('k4', {listItem: 'number', level: 1}),
       ]),
-    ).toEqual(
-      new Map([
+    ).toEqual({
+      blockIndexMap: new Map([
+        ['k0', 0],
+        ['k1', 1],
+        ['k2', 2],
+        ['k3', 3],
+        ['k4', 4],
+      ]),
+      listIndexMap: new Map([
         ['k0', 1],
         ['k1', 2],
         ['k3', 1],
         ['k4', 2],
       ]),
-    )
+    })
   })
 
   test('numbered lists broken up by a bulleted list', () => {
     expect(
-      buildListIndexMap({schema}, [
+      buildIndexMaps({schema}, [
         textBlock('k0', {listItem: 'number', level: 1}),
         textBlock('k1', {listItem: 'bullet', level: 1}),
         textBlock('k2', {listItem: 'number', level: 1}),
       ]),
-    ).toEqual(
-      new Map([
+    ).toEqual({
+      blockIndexMap: new Map([
+        ['k0', 0],
+        ['k1', 1],
+        ['k2', 2],
+      ]),
+      listIndexMap: new Map([
         ['k0', 1],
         ['k1', 1],
         ['k2', 1],
       ]),
-    )
+    })
   })
 
   test('simple indented list', () => {
     expect(
-      buildListIndexMap({schema}, [
+      buildIndexMaps({schema}, [
         textBlock('k0', {listItem: 'number', level: 1}),
         textBlock('k1', {listItem: 'number', level: 2}),
         textBlock('k2', {listItem: 'number', level: 2}),
         textBlock('k3', {listItem: 'number', level: 1}),
       ]),
-    ).toEqual(
-      new Map([
+    ).toEqual({
+      blockIndexMap: new Map([
+        ['k0', 0],
+        ['k1', 1],
+        ['k2', 2],
+        ['k3', 3],
+      ]),
+      listIndexMap: new Map([
         ['k0', 1],
         ['k1', 1],
         ['k2', 2],
         ['k3', 2],
       ]),
-    )
+    })
   })
 
   test('reverse indented list', () => {
     expect(
-      buildListIndexMap({schema}, [
+      buildIndexMaps({schema}, [
         textBlock('k0', {listItem: 'number', level: 2}),
         textBlock('k1', {listItem: 'number', level: 1}),
         textBlock('k2', {listItem: 'number', level: 2}),
       ]),
-    ).toEqual(
-      new Map([
+    ).toEqual({
+      blockIndexMap: new Map([
+        ['k0', 0],
+        ['k1', 1],
+        ['k2', 2],
+      ]),
+      listIndexMap: new Map([
         ['k0', 1],
         ['k1', 1],
         ['k2', 1],
       ]),
-    )
+    })
   })
 
   test('complex list', () => {
     expect(
-      buildListIndexMap({schema}, [
+      buildIndexMaps({schema}, [
         textBlock('k0', {listItem: 'number', level: 1}),
         textBlock('k1', {listItem: 'number', level: 3}),
         textBlock('k2', {listItem: 'number', level: 2}),
@@ -165,8 +204,19 @@ describe(buildListIndexMap.name, () => {
         textBlock('k7', {listItem: 'number', level: 3}),
         textBlock('k8', {listItem: 'number', level: 1}),
       ]),
-    ).toEqual(
-      new Map([
+    ).toEqual({
+      blockIndexMap: new Map([
+        ['k0', 0],
+        ['k1', 1],
+        ['k2', 2],
+        ['k3', 3],
+        ['k4', 4],
+        ['k5', 5],
+        ['k6', 6],
+        ['k7', 7],
+        ['k8', 8],
+      ]),
+      listIndexMap: new Map([
         ['k0', 1],
         ['k1', 1],
         ['k2', 1],
@@ -177,6 +227,6 @@ describe(buildListIndexMap.name, () => {
         ['k7', 2],
         ['k8', 3],
       ]),
-    )
+    })
   })
 })
