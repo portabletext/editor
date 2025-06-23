@@ -102,13 +102,14 @@ export const abstractSplitBehaviors = [
       }
 
       const newTextBlock = parseBlock({
-        block: utils
-          .sliceBlocks({
+        block: selectors
+          .getSelectedValue({
+            ...snapshot,
             context: {
               ...snapshot.context,
               selection: newTextBlockSelection,
+              value: [focusTextBlock.node],
             },
-            blocks: [focusTextBlock.node],
           })
           .at(0),
         context: snapshot.context,

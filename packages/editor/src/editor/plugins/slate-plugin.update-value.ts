@@ -20,6 +20,11 @@ export function pluginUpdateValue(
       operation,
     )
 
+    editor.blockIndexMap.clear()
+    editor.value.forEach((block, index) => {
+      editor.blockIndexMap.set(block._key, index)
+    })
+
     apply(operation)
   }
 

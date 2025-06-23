@@ -1,9 +1,7 @@
-import type {PortableTextTextBlock} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import {isTextBlock} from '../internal-utils/parse-blocks'
 import type {BlockPath} from '../types/paths'
 import {getFocusTextBlock} from './selector.get-focus-text-block'
-import {getPreviousBlock} from './selector.get-previous-block'
 
 /**
  * @beta
@@ -46,113 +44,52 @@ export function getListIndex({
       return undefined
     }
 
-    const previousListItem = getPreviousListItem({
-      listItem: focusTextBlock.node.listItem,
-      level: focusTextBlock.node.level,
-    })({
-      ...snapshot,
-      context: {
-        ...snapshot.context,
-        selection,
-      },
-    })
+    const targetListItem = focusTextBlock.node.listItem
+    const targetLevel = focusTextBlock.node.level
+    const targetKey = focusTextBlock.node._key
 
-    if (!previousListItem) {
-      return 1
-    }
+    // Find the target block's index
+    const targetIndex = snapshot.blockIndexMap.get(targetKey)
 
-    if (previousListItem.node.listItem !== focusTextBlock.node.listItem) {
-      return 1
-    }
-
-    if (
-      previousListItem.node.level !== undefined &&
-      previousListItem.node.level < focusTextBlock.node.level
-    ) {
-      return 1
-    }
-
-    const previousListItemListState = getListIndex({
-      path: previousListItem.path,
-    })(snapshot)
-
-    if (previousListItemListState === undefined) {
-      return 1
-    }
-
-    return previousListItemListState + 1
-  }
-}
-
-function getPreviousListItem({
-  listItem,
-  level,
-}: {
-  listItem: string
-  level: number
-}): EditorSelector<
-  | {
-      node: PortableTextTextBlock
-      path: [{_key: string}]
-    }
-  | undefined
-> {
-  return (snapshot) => {
-    const previousBlock = getPreviousBlock({
-      ...snapshot,
-      context: {
-        ...snapshot.context,
-      },
-    })
-
-    if (!previousBlock) {
+    if (targetIndex === undefined) {
       return undefined
     }
 
-    if (!isTextBlock(snapshot.context, previousBlock.node)) {
-      return undefined
-    }
+    // Walk backwards from the target block and count consecutive list items
+    // of the same type and level
+    let listIndex = 1 // Start at 1 for the target block itself
 
-    if (
-      previousBlock.node.listItem === undefined ||
-      previousBlock.node.level === undefined
-    ) {
-      return undefined
-    }
+    for (let i = targetIndex - 1; i >= 0; i--) {
+      const block = snapshot.context.value[i]
 
-    if (previousBlock.node.listItem !== listItem) {
-      return undefined
-    }
-
-    if (previousBlock.node.level === level) {
-      return {
-        node: previousBlock.node,
-        path: previousBlock.path,
+      if (!isTextBlock(snapshot.context, block)) {
+        // Non-text block breaks the sequence
+        break
       }
+
+      if (block.listItem === undefined || block.level === undefined) {
+        // Non-list item breaks the sequence
+        break
+      }
+
+      if (block.listItem !== targetListItem) {
+        // Different list type breaks the sequence
+        break
+      }
+
+      if (block.level < targetLevel) {
+        // Lower level breaks the sequence
+        break
+      }
+
+      if (block.level === targetLevel) {
+        // Same level - continue counting
+        listIndex++
+      }
+
+      // Higher level items don't affect the count for the target level
     }
 
-    if (previousBlock.node.level < level) {
-      return undefined
-    }
-
-    return getPreviousListItem({
-      listItem,
-      level,
-    })({
-      ...snapshot,
-      context: {
-        ...snapshot.context,
-        selection: {
-          anchor: {
-            path: previousBlock.path,
-            offset: 0,
-          },
-          focus: {
-            path: previousBlock.path,
-            offset: 0,
-          },
-        },
-      },
-    })
+    return listIndex
   }
 }

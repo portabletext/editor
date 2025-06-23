@@ -1,8 +1,8 @@
 import {htmlToBlocks} from '@portabletext/block-tools'
 import type {PortableTextBlock} from '@sanity/types'
 import {isTextBlock, parseBlock} from '../internal-utils/parse-blocks'
+import * as selectors from '../selectors'
 import type {PortableTextMemberSchemaTypes} from '../types/editor'
-import {sliceBlocks} from '../utils'
 import {defineConverter} from './converter.types'
 
 export function createConverterTextPlain(
@@ -22,13 +22,7 @@ export function createConverterTextPlain(
         }
       }
 
-      const blocks = sliceBlocks({
-        context: {
-          selection,
-          schema: snapshot.context.schema,
-        },
-        blocks: snapshot.context.value,
-      })
+      const blocks = selectors.getSelectedValue(snapshot)
 
       const data = blocks
         .map((block) => {

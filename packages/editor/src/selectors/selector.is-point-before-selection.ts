@@ -29,49 +29,69 @@ export function isPointBeforeSelection(
       return false
     }
 
-    let before = false
+    const startBlockIndex = snapshot.blockIndexMap.get(startBlockKey)
+    const pointBlockIndex = snapshot.blockIndexMap.get(pointBlockKey)
 
-    for (const block of snapshot.context.value) {
-      if (block._key === pointBlockKey) {
-        if (block._key !== startBlockKey) {
-          before = true
-          break
-        }
+    if (startBlockIndex === undefined || pointBlockIndex === undefined) {
+      return false
+    }
 
-        // Both the point and the selection start in this block
+    if (pointBlockIndex < startBlockIndex) {
+      // The point block is before the start block.
+      return true
+    }
 
-        if (!isTextBlock(snapshot.context, block)) {
-          break
-        }
+    if (pointBlockIndex > startBlockIndex) {
+      // The point block is after the start block.
+      return false
+    }
 
-        if (!pointChildKey || !startChildKey) {
-          break
-        }
+    // The point block is the same as the start block.
+    const pointBlock = snapshot.context.value.at(pointBlockIndex)
 
-        for (const child of block.children) {
-          if (child._key === pointChildKey) {
-            if (child._key !== startChildKey) {
-              before = true
-              break
-            }
+    if (!pointBlock) {
+      // The point block is not in the value.
+      return false
+    }
 
-            // Both the point and the selection start in this child
+    if (!isTextBlock(snapshot.context, pointBlock)) {
+      // The point block is not a text block.
+      // Since the point block is the same as the start block, the point is not
+      // before the selection.
+      return false
+    }
 
-            before = point.offset < startPoint.offset
-            break
-          }
+    let pointChildIndex: number | undefined
+    let startChildIndex: number | undefined
 
-          if (child._key === startChildKey) {
-            break
-          }
-        }
+    let childIndex = -1
+
+    // The point block is the same as the start block, so we need to find the
+    // child indices and compare them.
+    for (const child of pointBlock.children) {
+      childIndex++
+
+      if (child._key === pointChildKey && child._key === startChildKey) {
+        return point.offset < startPoint.offset
       }
 
-      if (block._key === startBlockKey) {
+      if (child._key === pointChildKey) {
+        pointChildIndex = childIndex
+      }
+
+      if (child._key === startChildKey) {
+        startChildIndex = childIndex
+      }
+
+      if (pointChildIndex !== undefined && startChildIndex !== undefined) {
         break
       }
     }
 
-    return before
+    if (pointChildIndex === undefined || startChildIndex === undefined) {
+      return false
+    }
+
+    return pointChildIndex < startChildIndex
   }
 }

@@ -1,14 +1,14 @@
 import type {EditorSelector} from '../editor/editor-selector'
 import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
-import {getSelectedSlice} from './selector.get-selected-slice'
+import {getSelectedValue} from './selector.get-selected-value'
 
 /**
  * @public
  */
 export const getSelectionText: EditorSelector<string> = (snapshot) => {
-  const selectedSlice = getSelectedSlice(snapshot)
+  const selectedValue = getSelectedValue(snapshot)
 
-  return selectedSlice.reduce((text, block) => {
+  return selectedValue.reduce((text, block) => {
     if (!isTextBlock(snapshot.context, block)) {
       return text
     }

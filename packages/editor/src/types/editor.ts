@@ -130,6 +130,7 @@ export interface PortableTextSlateEditor extends ReactEditor {
   decoratedRanges: Array<DecoratedRange>
   decoratorState: Record<string, boolean | undefined>
   markState: MarkState | undefined
+  blockIndexMap: Map<string, number>
 
   /**
    * Use hotkeys

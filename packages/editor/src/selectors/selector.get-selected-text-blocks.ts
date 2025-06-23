@@ -29,7 +29,19 @@ export const getSelectedTextBlocks: EditorSelector<
     return selectedTextBlocks
   }
 
-  for (const block of snapshot.context.value) {
+  const startBlockIndex = snapshot.blockIndexMap.get(startBlockKey)
+  const endBlockIndex = snapshot.blockIndexMap.get(endBlockKey)
+
+  if (startBlockIndex === undefined || endBlockIndex === undefined) {
+    return selectedTextBlocks
+  }
+
+  const slicedValue = snapshot.context.value.slice(
+    startBlockIndex,
+    endBlockIndex + 1,
+  )
+
+  for (const block of slicedValue) {
     if (block._key === startBlockKey) {
       if (isTextBlock(snapshot.context, block)) {
         selectedTextBlocks.push({node: block, path: [{_key: block._key}]})
