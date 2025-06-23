@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.55.0](https://github.com/portabletext/editor/compare/editor-v1.54.5...editor-v1.55.0) (2025-06-23)
+
+
+### Features
+
+* add `data-list-index` on text blocks ([9cb651d](https://github.com/portabletext/editor/commit/9cb651d4e66fb8137fc67f549fb5deb820a11533))
+
+
+### Bug Fixes
+
+* deprecate `getListIndex` ([6c2e678](https://github.com/portabletext/editor/commit/6c2e678c17b43dff989f067087d4ccf2db8be20b))
+* **perf:** add `EditorSnapshot.blockIndexMap` for faster look-ups ([496c0d8](https://github.com/portabletext/editor/commit/496c0d857748f3558930c6c1b5be8c946b22510d))
+* **perf:** calculate block indeces and list indices in one pass ([762304d](https://github.com/portabletext/editor/commit/762304d473729cad2363ff91746145bf6c3050bf))
+
 ## [1.54.5](https://github.com/portabletext/editor/compare/editor-v1.54.4...editor-v1.54.5) (2025-06-22)
 
 
