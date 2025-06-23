@@ -36,17 +36,28 @@ export const getSelectedSpans: EditorSelector<
 
   const startBlockKey = getBlockKeyFromSelectionPoint(startPoint)
   const endBlockKey = getBlockKeyFromSelectionPoint(endPoint)
+  const startSpanKey = getChildKeyFromSelectionPoint(startPoint)
+  const endSpanKey = getChildKeyFromSelectionPoint(endPoint)
 
   if (!startBlockKey || !endBlockKey) {
     return selectedSpans
   }
 
-  const startSpanKey = getChildKeyFromSelectionPoint(startPoint)
-  const endSpanKey = getChildKeyFromSelectionPoint(endPoint)
+  const startBlockIndex = snapshot.blockIndexMap.get(startBlockKey)
+  const endBlockIndex = snapshot.blockIndexMap.get(endBlockKey)
+
+  if (startBlockIndex === undefined || endBlockIndex === undefined) {
+    return selectedSpans
+  }
+
+  const slicedValue = snapshot.context.value.slice(
+    startBlockIndex,
+    endBlockIndex + 1,
+  )
 
   let startBlockFound = false
 
-  for (const block of snapshot.context.value) {
+  for (const block of slicedValue) {
     if (block._key === startBlockKey) {
       startBlockFound = true
     }

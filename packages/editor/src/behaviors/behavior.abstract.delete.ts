@@ -132,15 +132,9 @@ export const abstractDeleteBehaviors = [
       }
 
       const trimmedSelection = selectors.getTrimmedSelection({
-        beta: {
-          activeAnnotations: [],
-          activeDecorators: [],
-        },
+        ...snapshot,
         context: {
-          converters: [],
-          schema: snapshot.context.schema,
-          keyGenerator: snapshot.context.keyGenerator,
-          readOnly: false,
+          ...snapshot.context,
           value: snapshot.context.value,
           selection,
         },

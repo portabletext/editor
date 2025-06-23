@@ -1,5 +1,5 @@
 import {parseBlock} from '../internal-utils/parse-blocks'
-import {sliceBlocks} from '../utils'
+import * as selectors from '../selectors'
 import {defineConverter} from './converter.types'
 
 export const converterPortableText = defineConverter({
@@ -16,13 +16,7 @@ export const converterPortableText = defineConverter({
       }
     }
 
-    const blocks = sliceBlocks({
-      context: {
-        selection,
-        schema: snapshot.context.schema,
-      },
-      blocks: snapshot.context.value,
-    })
+    const blocks = selectors.getSelectedValue(snapshot)
 
     if (blocks.length === 0) {
       return {

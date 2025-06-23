@@ -29,49 +29,69 @@ export function isPointAfterSelection(
       return false
     }
 
-    let after = false
+    const pointBlockIndex = snapshot.blockIndexMap.get(pointBlockKey)
+    const endBlockIndex = snapshot.blockIndexMap.get(endBlockKey)
 
-    for (const block of snapshot.context.value) {
-      if (block._key === endBlockKey) {
-        if (block._key !== pointBlockKey) {
-          after = true
-          break
-        }
+    if (pointBlockIndex === undefined || endBlockIndex === undefined) {
+      return false
+    }
 
-        // Both the point and the selection end in this block
+    if (pointBlockIndex > endBlockIndex) {
+      // The point block is after the end block.
+      return true
+    }
 
-        if (!isTextBlock(snapshot.context, block)) {
-          break
-        }
+    if (pointBlockIndex < endBlockIndex) {
+      // The point block is before the end block.
+      return false
+    }
 
-        if (!pointChildKey || !endChildKey) {
-          break
-        }
+    // The point block is the same as the end block.
+    const pointBlock = snapshot.context.value.at(pointBlockIndex)
 
-        for (const child of block.children) {
-          if (child._key === endChildKey) {
-            if (child._key !== pointChildKey) {
-              after = true
-              break
-            }
+    if (!pointBlock) {
+      // The point block is not in the value.
+      return false
+    }
 
-            // Both the point and the selection end in this child
+    if (!isTextBlock(snapshot.context, pointBlock)) {
+      // The point block is not a text block.
+      // Since the point block is the same as the end block, the point is not
+      // after the selection.
+      return false
+    }
 
-            after = point.offset > endPoint.offset
-            break
-          }
+    let pointChildIndex: number | undefined
+    let endChildIndex: number | undefined
 
-          if (child._key === pointChildKey) {
-            break
-          }
-        }
+    let childIndex = -1
+
+    // The point block is the same as the end block, so we need to find the
+    // child indices and compare them.
+    for (const child of pointBlock.children) {
+      childIndex++
+
+      if (child._key === pointChildKey && child._key === endChildKey) {
+        return point.offset > endPoint.offset
       }
 
-      if (block._key === pointBlockKey) {
+      if (child._key === pointChildKey) {
+        pointChildIndex = childIndex
+      }
+
+      if (child._key === endChildKey) {
+        endChildIndex = childIndex
+      }
+
+      if (pointChildIndex !== undefined && endChildIndex !== undefined) {
         break
       }
     }
 
-    return after
+    if (pointChildIndex === undefined || endChildIndex === undefined) {
+      return false
+    }
+
+    return pointChildIndex > endChildIndex
   }
 }

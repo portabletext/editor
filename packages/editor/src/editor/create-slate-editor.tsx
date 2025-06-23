@@ -40,9 +40,12 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
   instance.decoratedRanges = []
   instance.decoratorState = {}
   instance.markState = undefined
-  instance.value = [
-    createPlaceholderBlock(config.editorActor.getSnapshot().context),
-  ]
+
+  const placeholderBlock = createPlaceholderBlock(
+    config.editorActor.getSnapshot().context,
+  )
+  instance.value = [placeholderBlock]
+  instance.blockIndexMap = new Map([[placeholderBlock._key, 0]])
 
   const initialValue = toSlateValue(instance.value, {
     schemaTypes: config.editorActor.getSnapshot().context.schema,

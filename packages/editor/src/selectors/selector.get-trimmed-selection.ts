@@ -36,6 +36,18 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = (
     return snapshot.context.selection
   }
 
+  const startBlockIndex = snapshot.blockIndexMap.get(startBlockKey)
+  const endBlockIndex = snapshot.blockIndexMap.get(endBlockKey)
+
+  if (startBlockIndex === undefined || endBlockIndex === undefined) {
+    return snapshot.context.selection
+  }
+
+  const slicedValue = snapshot.context.value.slice(
+    startBlockIndex,
+    endBlockIndex + 1,
+  )
+
   let startBlockFound = false
   let adjustedStartPoint: EditorSelectionPoint | undefined
   let trimStartPoint = false
@@ -45,7 +57,7 @@ export const getTrimmedSelection: EditorSelector<EditorSelection> = (
     | {blockKey: string; span: PortableTextSpan}
     | undefined
 
-  for (const block of snapshot.context.value) {
+  for (const block of slicedValue) {
     if (block._key === startBlockKey) {
       startBlockFound = true
 

@@ -68,6 +68,7 @@ export function getEditorSnapshot({
   slateEditorInstance: PortableTextSlateEditor
 }): EditorSnapshot {
   return {
+    blockIndexMap: slateEditorInstance.blockIndexMap,
     context: {
       converters: [...editorActorSnapshot.context.converters],
       keyGenerator: editorActorSnapshot.context.keyGenerator,

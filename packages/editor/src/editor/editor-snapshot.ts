@@ -31,6 +31,7 @@ export type EditorSnapshot = {
     activeAnnotations: Array<string>
     activeDecorators: Array<string>
   }
+  blockIndexMap: Map<string, number>
 }
 
 export function createEditorSnapshot({
@@ -64,6 +65,7 @@ export function createEditorSnapshot({
   } satisfies EditorContext
 
   return {
+    blockIndexMap: editor.blockIndexMap,
     context,
     beta: {
       activeAnnotations: getActiveAnnotations({
