@@ -1,5 +1,5 @@
 import {applyOperationToPortableText} from '../../internal-utils/apply-operation-to-portable-text'
-import {buildListIndexMap} from '../../internal-utils/build-list-index-map'
+import {buildIndexMaps} from '../../internal-utils/build-index-maps'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorContext} from '../editor-snapshot'
 
@@ -21,11 +21,9 @@ export function pluginUpdateValue(
       operation,
     )
 
-    editor.blockIndexMap.clear()
-    editor.value.forEach((block, index) => {
-      editor.blockIndexMap.set(block._key, index)
-    })
-    editor.listIndexMap = buildListIndexMap(context, editor.value)
+    const {blockIndexMap, listIndexMap} = buildIndexMaps(context, editor.value)
+    editor.blockIndexMap = blockIndexMap
+    editor.listIndexMap = listIndexMap
 
     apply(operation)
   }
