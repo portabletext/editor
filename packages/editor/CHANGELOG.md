@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.55.3](https://github.com/portabletext/editor/compare/editor-v1.55.2...editor-v1.55.3) (2025-06-24)
+
+
+### Bug Fixes
+
+* **behaviors:** allow `execute` of abstract events ([9934881](https://github.com/portabletext/editor/commit/9934881e6ad4b33c06eb646b37120539d88c8f15))
+
 ## [1.55.2](https://github.com/portabletext/editor/compare/editor-v1.55.1...editor-v1.55.2) (2025-06-24)
 
 
