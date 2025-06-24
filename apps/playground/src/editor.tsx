@@ -19,24 +19,18 @@ import {
 import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 import {OneLinePlugin} from '@portabletext/plugin-one-line'
 import {useSelector} from '@xstate/react'
-import {createStore} from '@xstate/store'
 import {
   BugIcon,
-  CopyIcon,
   LinkIcon,
   PencilIcon,
   SeparatorHorizontalIcon,
-  TrashIcon,
 } from 'lucide-react'
-import {useEffect, useState, type JSX} from 'react'
+import {useContext, useEffect, useState, type JSX} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
-import {reverse} from 'remeda'
 import {tv} from 'tailwind-variants'
-import {createCodeEditorBehaviors} from './behavior.code-editor'
-import {createLinkBehaviors} from './behavior.links'
-import {EditorPatchesPreview} from './editor-patches-preview'
+import {DebugMenu} from './debug-menu'
 import './editor.css'
-import {EmojiPickerPlugin} from './emoji-picker'
+import {FeatureFlagsContext} from './feature-flags'
 import type {EditorActorRef} from './playground-machine'
 import {
   CommentAnnotationSchema,
@@ -45,8 +39,12 @@ import {
   playgroundSchemaDefinition,
   StockTickerSchema,
 } from './playground-schema-definition'
-import {ImageDeserializerPlugin} from './plugin.image-deserializer'
-import {TextFileDeserializerPlugin} from './plugin.text-file-deserializer'
+import {CodeEditorPlugin} from './plugins/plugin.code-editor'
+import {EmojiPickerPlugin} from './plugins/plugin.emoji-picker'
+import {ImageDeserializerPlugin} from './plugins/plugin.image-deserializer'
+import {LinkPlugin} from './plugins/plugin.link'
+import {markdownShortcutsPluginProps} from './plugins/plugin.markdown'
+import {TextFileDeserializerPlugin} from './plugins/plugin.text-file-deserializer'
 import {Button} from './primitives/button'
 import {Container} from './primitives/container'
 import {ErrorBoundary} from './primitives/error-boundary'
@@ -54,34 +52,9 @@ import {ErrorScreen} from './primitives/error-screen'
 import {Separator} from './primitives/separator'
 import {Spinner} from './primitives/spinner'
 import {Switch} from './primitives/switch'
-import {Toolbar} from './primitives/toolbar'
 import {Tooltip} from './primitives/tooltip'
 import {RangeDecorationButton} from './range-decoration-button'
-import {SelectionPreview} from './selection-preview'
 import {PortableTextToolbar} from './toolbar/portable-text-toolbar'
-import {ValuePreview} from './value-preview'
-
-const featureFlags = createStore({
-  context: {
-    enableDragHandles: false,
-    imageDeserializerPlugin: true,
-    textFileDeserializerPlugin: true,
-  },
-  on: {
-    toggleDragHandles: (context) => ({
-      ...context,
-      enableDragHandles: !context.enableDragHandles,
-    }),
-    toggleImageDeserializerPlugin: (context) => ({
-      ...context,
-      imageDeserializerPlugin: !context.imageDeserializerPlugin,
-    }),
-    toggleTextFileDeserializerPlugin: (context) => ({
-      ...context,
-      textFileDeserializerPlugin: !context.textFileDeserializerPlugin,
-    }),
-  },
-})
 
 const editorStyle = tv({
   base: 'grid gap-2 items-start',
@@ -107,11 +80,10 @@ export function Editor(props: {
   )
   const [loading, setLoading] = useState(false)
   const [readOnly, setReadOnly] = useState(false)
-  const enableDragHandles = useSelector(
-    featureFlags,
-    (s) => s.context.enableDragHandles,
+  const featureFlags = useSelector(
+    props.editorRef,
+    (s) => s.context.featureFlags,
   )
-  const [enableEmojiPickerPlugin, setEnableEmojiPickerPlugin] = useState(false)
 
   return (
     <div
@@ -181,366 +153,49 @@ export function Editor(props: {
                 <Tooltip>Toggle debug mode</Tooltip>
               </TooltipTrigger>
             </PortableTextToolbar>
-            {enableEmojiPickerPlugin ? <EmojiPickerPlugin /> : null}
+            {featureFlags.emojiPickerPlugin ? <EmojiPickerPlugin /> : null}
+            {featureFlags.codeEditorPlugin ? <CodeEditorPlugin /> : null}
+            {featureFlags.linkPlugin ? <LinkPlugin /> : null}
+            {featureFlags.imageDeserializerPlugin ? (
+              <ImageDeserializerPlugin />
+            ) : null}
+            {featureFlags.textFileDeserializerPlugin ? (
+              <TextFileDeserializerPlugin />
+            ) : null}
+            {featureFlags.markdownPlugin ? (
+              <MarkdownShortcutsPlugin {...markdownShortcutsPluginProps} />
+            ) : null}
+            {featureFlags.oneLinePlugin ? <OneLinePlugin /> : null}
             <div className="flex gap-2 items-center">
               <ErrorBoundary
                 fallbackProps={{area: 'PortableTextEditable'}}
                 fallback={ErrorScreen}
                 onError={console.error}
               >
-                <PortableTextEditable
-                  className={`rounded-b-md outline-none data-[read-only=true]:opacity-50 px-2 h-75 -mx-2 -mb-2 overflow-auto flex-1 ${enableDragHandles ? 'ps-5' : ''}`}
-                  rangeDecorations={props.rangeDecorations}
-                  renderAnnotation={renderAnnotation}
-                  renderBlock={RenderBlock}
-                  renderChild={renderChild}
-                  renderDecorator={renderDecorator}
-                  renderListItem={renderListItem}
-                  renderPlaceholder={renderPlaceholder}
-                  renderStyle={renderStyle}
-                />
+                <FeatureFlagsContext.Provider value={featureFlags}>
+                  <PortableTextEditable
+                    className={`rounded-b-md outline-none data-[read-only=true]:opacity-50 px-2 h-75 -mx-2 -mb-2 overflow-auto flex-1 ${featureFlags.dragHandles ? 'ps-5' : ''}`}
+                    rangeDecorations={props.rangeDecorations}
+                    renderAnnotation={renderAnnotation}
+                    renderBlock={RenderBlock}
+                    renderChild={renderChild}
+                    renderDecorator={renderDecorator}
+                    renderListItem={renderListItem}
+                    renderPlaceholder={renderPlaceholder}
+                    renderStyle={renderStyle}
+                  />
+                </FeatureFlagsContext.Provider>
               </ErrorBoundary>
               {loading ? <Spinner /> : null}
             </div>
           </Container>
           {debugModeEnabled ? (
-            <EditorPlaygroundToolbar
-              editorRef={props.editorRef}
-              enableEmojiPickerPlugin={enableEmojiPickerPlugin}
-              setEnableEmojiPickerPlugin={setEnableEmojiPickerPlugin}
-              readOnly={readOnly}
-            />
+            <DebugMenu editorRef={props.editorRef} readOnly={readOnly} />
           ) : null}
         </EditorProvider>
       </ErrorBoundary>
     </div>
   )
-}
-
-function EditorPlaygroundToolbar(props: {
-  editorRef: EditorActorRef
-  enableEmojiPickerPlugin: boolean
-  setEnableEmojiPickerPlugin: (enable: boolean) => void
-  readOnly: boolean
-}) {
-  const showingPatchesPreview = useSelector(props.editorRef, (s) =>
-    s.matches({'patches preview': 'shown'}),
-  )
-  const showingSelectionPreivew = useSelector(props.editorRef, (s) =>
-    s.matches({'selection preview': 'shown'}),
-  )
-  const showingValuePreview = useSelector(props.editorRef, (s) =>
-    s.matches({'value preview': 'shown'}),
-  )
-  const patchSubscriptionActive = useSelector(props.editorRef, (s) =>
-    s.matches({'patch subscription': 'active'}),
-  )
-  const valueSubscriptionActive = useSelector(props.editorRef, (s) =>
-    s.matches({'value subscription': 'active'}),
-  )
-  const patchesReceived = useSelector(props.editorRef, (s) =>
-    reverse(s.context.patchesReceived),
-  )
-  const enableDragHandles = useSelector(
-    featureFlags,
-    (s) => s.context.enableDragHandles,
-  )
-  const [enableMarkdownPlugin, setEnableMarkdownPlugin] = useState(false)
-  const [enableOneLinePlugin, setEnableOneLinePLugin] = useState(false)
-  const [enableCodeEditorPlugin, setEnableCodeEditorPlugin] = useState(false)
-  const [enableLinkPlugin, setEnableLinkPlugin] = useState(false)
-  const enableImageDeserializerPlugin = useSelector(
-    featureFlags,
-    (s) => s.context.imageDeserializerPlugin,
-  )
-  const enableTextFileDeserializerPlugin = useSelector(
-    featureFlags,
-    (s) => s.context.textFileDeserializerPlugin,
-  )
-
-  return (
-    <>
-      <Container className="flex flex-col gap-2">
-        <Toolbar>
-          <Switch
-            isSelected={patchSubscriptionActive}
-            onChange={() => {
-              props.editorRef.send({type: 'toggle patch subscription'})
-            }}
-          >
-            Patch subscription
-          </Switch>
-        </Toolbar>
-        <Toolbar>
-          <Switch
-            isSelected={valueSubscriptionActive}
-            onChange={() => {
-              props.editorRef.send({type: 'toggle value subscription'})
-            }}
-          >
-            Value subscription
-          </Switch>
-        </Toolbar>
-        <Toolbar>
-          <Switch
-            isSelected={enableDragHandles}
-            onChange={() => {
-              featureFlags.trigger.toggleDragHandles()
-            }}
-          >
-            Drag handles (experimental)
-          </Switch>
-        </Toolbar>
-        <Separator orientation="horizontal" />
-        <Toolbar>
-          <Switch
-            isSelected={enableMarkdownPlugin}
-            onChange={() => {
-              setEnableMarkdownPlugin(!enableMarkdownPlugin)
-            }}
-          >
-            Markdown plugin
-          </Switch>
-        </Toolbar>
-        <Toolbar>
-          <Switch
-            isSelected={enableOneLinePlugin}
-            onChange={() => {
-              setEnableOneLinePLugin(!enableOneLinePlugin)
-            }}
-          >
-            One-line plugin
-          </Switch>
-        </Toolbar>
-        <Toolbar>
-          <Switch
-            isSelected={props.enableEmojiPickerPlugin}
-            onChange={(isSelected) => {
-              props.setEnableEmojiPickerPlugin(isSelected)
-            }}
-          >
-            Emoji picker plugin
-          </Switch>
-        </Toolbar>
-        <Toolbar>
-          <Switch
-            isSelected={enableCodeEditorPlugin}
-            onChange={() => {
-              setEnableCodeEditorPlugin(!enableCodeEditorPlugin)
-            }}
-          >
-            Code editor plugin
-          </Switch>
-        </Toolbar>
-        <Toolbar>
-          <Switch
-            isSelected={enableLinkPlugin}
-            onChange={() => {
-              setEnableLinkPlugin(!enableLinkPlugin)
-            }}
-          >
-            Link plugin
-          </Switch>
-        </Toolbar>
-        <Separator orientation="horizontal" />
-        <Toolbar>
-          <Switch
-            isSelected={enableImageDeserializerPlugin}
-            onChange={() => {
-              featureFlags.trigger.toggleImageDeserializerPlugin()
-            }}
-          >
-            Image deserializer plugin
-          </Switch>
-        </Toolbar>
-        <Toolbar>
-          <Switch
-            isSelected={enableTextFileDeserializerPlugin}
-            onChange={() => {
-              featureFlags.trigger.toggleTextFileDeserializerPlugin()
-            }}
-          >
-            Text file deserializer plugin
-          </Switch>
-        </Toolbar>
-        <Separator orientation="horizontal" />
-        <Toolbar>
-          <Switch
-            isSelected={showingPatchesPreview}
-            onChange={() => {
-              props.editorRef.send({type: 'toggle patches preview'})
-            }}
-          >
-            Patches
-          </Switch>
-          <TooltipTrigger>
-            <Button
-              size="sm"
-              variant="destructive"
-              onPress={() => {
-                props.editorRef.send({type: 'clear stored patches'})
-              }}
-            >
-              <TrashIcon className="size-3" />
-            </Button>
-            <Tooltip>Clear patches</Tooltip>
-          </TooltipTrigger>
-          <TooltipTrigger>
-            <Button
-              size="sm"
-              variant="secondary"
-              onPress={() => {
-                props.editorRef.send({type: 'copy patches'})
-              }}
-            >
-              <CopyIcon className="size-3" />
-            </Button>
-            <Tooltip>Copy</Tooltip>
-          </TooltipTrigger>
-        </Toolbar>
-        {showingPatchesPreview ? (
-          <EditorPatchesPreview patches={patchesReceived} />
-        ) : null}
-        <Toolbar>
-          <Switch
-            isSelected={showingSelectionPreivew}
-            onChange={() => {
-              props.editorRef.send({type: 'toggle selection preview'})
-            }}
-          >
-            Selection
-          </Switch>
-        </Toolbar>
-        {showingSelectionPreivew ? (
-          <SelectionPreview editorId={props.editorRef.id} />
-        ) : null}
-        <Toolbar>
-          <Switch
-            isSelected={showingValuePreview}
-            onChange={() => {
-              props.editorRef.send({type: 'toggle value preview'})
-            }}
-          >
-            Value
-          </Switch>
-        </Toolbar>
-        {showingValuePreview ? (
-          <ValuePreview editorId={props.editorRef.id} />
-        ) : null}
-        <Separator orientation="horizontal" />
-        <div className="flex gap-2 items-center justify-between">
-          <TooltipTrigger>
-            <Button
-              variant="destructive"
-              size="sm"
-              onPress={() => {
-                props.editorRef.send({type: 'remove'})
-              }}
-            >
-              <TrashIcon className="size-3" />
-              {props.editorRef.id}
-            </Button>
-            <Tooltip>Remove editor</Tooltip>
-          </TooltipTrigger>
-          <ToggleReadOnly readOnly={props.readOnly} />
-        </div>
-      </Container>
-      {enableTextFileDeserializerPlugin ? <TextFileDeserializerPlugin /> : null}
-      {enableImageDeserializerPlugin ? <ImageDeserializerPlugin /> : null}
-      {enableMarkdownPlugin ? (
-        <MarkdownShortcutsPlugin
-          boldDecorator={({schema}) =>
-            schema.decorators.find((decorator) => decorator.name === 'strong')
-              ?.name
-          }
-          codeDecorator={({schema}) =>
-            schema.decorators.find((decorator) => decorator.name === 'code')
-              ?.name
-          }
-          italicDecorator={({schema}) =>
-            schema.decorators.find((decorator) => decorator.name === 'em')?.name
-          }
-          strikeThroughDecorator={({schema}) =>
-            schema.decorators.find(
-              (decorator) => decorator.name === 'strike-through',
-            )?.name
-          }
-          horizontalRuleObject={({schema}) => {
-            const name = schema.blockObjects.find(
-              (object) => object.name === 'break',
-            )?.name
-            return name ? {name} : undefined
-          }}
-          defaultStyle={({schema}) => schema.styles[0].value}
-          headingStyle={({schema, level}) =>
-            schema.styles.find((style) => style.name === `h${level}`)?.name
-          }
-          blockquoteStyle={({schema}) =>
-            schema.styles.find((style) => style.name === 'blockquote')?.name
-          }
-          unorderedList={({schema}) =>
-            schema.lists.find((list) => list.name === 'bullet')?.name
-          }
-          orderedList={({schema}) =>
-            schema.lists.find((list) => list.name === 'number')?.name
-          }
-        />
-      ) : null}
-      {enableOneLinePlugin ? <OneLinePlugin /> : null}
-      {enableCodeEditorPlugin ? <CodeEditorPlugin /> : null}
-      {enableLinkPlugin ? <LinkPlugin /> : null}
-    </>
-  )
-}
-
-function CodeEditorPlugin() {
-  const editor = useEditor()
-
-  useEffect(() => {
-    const behaviors = createCodeEditorBehaviors({
-      moveBlockUpShortcut: 'Alt+ArrowUp',
-      moveBlockDownShortcut: 'Alt+ArrowDown',
-    })
-
-    const unregisterBehaviors = behaviors.map((behavior) =>
-      editor.registerBehavior({behavior}),
-    )
-
-    return () => {
-      for (const unregisterBehavior of unregisterBehaviors) {
-        unregisterBehavior()
-      }
-    }
-  }, [editor])
-
-  return null
-}
-
-function LinkPlugin() {
-  const editor = useEditor()
-
-  useEffect(() => {
-    const behaviors = createLinkBehaviors({
-      linkAnnotation: ({schema, url}) => {
-        const name = schema.annotations.find(
-          (annotation) => annotation.name === 'link',
-        )?.name
-        return name ? {name, value: {href: url}} : undefined
-      },
-    })
-
-    const unregisterBehaviors = behaviors.map((behavior) =>
-      editor.registerBehavior({behavior}),
-    )
-
-    return () => {
-      for (const unregisterBehavior of unregisterBehaviors) {
-        unregisterBehavior()
-      }
-    }
-  }, [editor])
-
-  return null
 }
 
 function EditorEventListener(props: {
@@ -588,21 +243,6 @@ function EditorEventListener(props: {
   return null
 }
 
-function ToggleReadOnly(props: {readOnly: boolean}) {
-  const editor = useEditor()
-
-  return (
-    <Switch
-      isSelected={props.readOnly}
-      onChange={() => {
-        editor.send({type: 'update readOnly', readOnly: !props.readOnly})
-      }}
-    >
-      <code>readOnly</code>
-    </Switch>
-  )
-}
-
 const renderAnnotation: RenderAnnotationFunction = (props) => {
   if (CommentAnnotationSchema.safeParse(props).success) {
     return <span className="bg-yellow-300">{props.children}</span>
@@ -640,10 +280,7 @@ const imageStyle = tv({
 })
 
 const RenderBlock = (props: BlockRenderProps) => {
-  const enableDragHandles = useSelector(
-    featureFlags,
-    (s) => s.context.enableDragHandles,
-  )
+  const enableDragHandles = useContext(FeatureFlagsContext).dragHandles
   const editor = useEditor()
   const readOnly = useEditorSelector(editor, (s) => s.context.readOnly)
 
