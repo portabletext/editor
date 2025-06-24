@@ -167,9 +167,6 @@ importers:
       '@xstate/react':
         specifier: ^6.0.0
         version: 6.0.0(@types/react@19.1.8)(react@19.1.0)(xstate@5.20.0)
-      '@xstate/store':
-        specifier: ^3.7.0
-        version: 3.7.0(react@19.1.0)
       lucide-react:
         specifier: ^0.487.0
         version: 0.487.0(react@19.1.0)
@@ -3390,17 +3387,6 @@ packages:
       xstate: ^5.20.0
     peerDependenciesMeta:
       xstate:
-        optional: true
-
-  '@xstate/store@3.7.0':
-    resolution: {integrity: sha512-A7yiHXDSBWtxxSZZoixhqdtHFIwJ3G1BLZHcCQUUqg4bypcJHaGAbE/tsTGdMv9WDc/V7OBn4jxXj0ZspCyu2w==}
-    peerDependencies:
-      react: ^18.2.0 || ^19.0.0
-      solid-js: ^1.7.6
-    peerDependenciesMeta:
-      react:
-        optional: true
-      solid-js:
         optional: true
 
   acorn-jsx@5.3.2:
@@ -10254,10 +10240,6 @@ snapshots:
       xstate: 5.20.0
     transitivePeerDependencies:
       - '@types/react'
-
-  '@xstate/store@3.7.0(react@19.1.0)':
-    optionalDependencies:
-      react: 19.1.0
 
   acorn-jsx@5.3.2(acorn@8.14.1):
     dependencies:

@@ -18,6 +18,7 @@ import {
   stopChild,
   type ActorRefFrom,
 } from 'xstate'
+import {defaultFeatureFlags, type FeatureFlags} from './feature-flags'
 import {createKeyGenerator} from './key-generator'
 
 const copyToTextClipboardActor = fromPromise(
@@ -37,6 +38,7 @@ const editorMachine = setup({
       value: Array<PortableTextBlock> | undefined
       patchesReceived: Array<Patch & {new: boolean; id: string}>
       keyGenerator: () => string
+      featureFlags: FeatureFlags
     },
     events: {} as
       | MutationEvent
@@ -52,6 +54,7 @@ const editorMachine = setup({
       | {type: 'toggle patches preview'}
       | {type: 'toggle selection preview'}
       | {type: 'toggle value preview'}
+      | {type: 'toggle feature flag'; flag: keyof FeatureFlags}
       | {type: 'add range decoration'; rangeDecoration: RangeDecoration}
       | {type: 'move range decoration'; details: RangeDecorationOnMovedDetails},
     emitted: {} as PatchesEvent,
@@ -92,6 +95,7 @@ const editorMachine = setup({
     patchesReceived: [],
     keyGenerator: input.keyGenerator,
     readOnly: false,
+    featureFlags: defaultFeatureFlags,
   }),
   on: {
     'mutation': {
@@ -136,6 +140,14 @@ const editorMachine = setup({
           details: event.details,
         })),
       ],
+    },
+    'toggle feature flag': {
+      actions: assign({
+        featureFlags: ({context, event}) => ({
+          ...context.featureFlags,
+          [event.flag]: !context.featureFlags[event.flag],
+        }),
+      }),
     },
   },
   type: 'parallel',
