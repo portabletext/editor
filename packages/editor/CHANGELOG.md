@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.55.2](https://github.com/portabletext/editor/compare/editor-v1.55.1...editor-v1.55.2) (2025-06-24)
+
+
+### Bug Fixes
+
+* **perf:** reuse index map instances ([50c74e6](https://github.com/portabletext/editor/commit/50c74e6ade221cfaef69a63d901ff2175910d477))
+* **perf:** speed up Slate path conversion ([0c70f91](https://github.com/portabletext/editor/commit/0c70f9134287ed4645152abc85ae84bb5c1ed70b))
+
 ## [1.55.1](https://github.com/portabletext/editor/compare/editor-v1.55.0...editor-v1.55.1) (2025-06-24)
 
 
