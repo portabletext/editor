@@ -21,9 +21,16 @@ export function pluginUpdateValue(
       operation,
     )
 
-    const {blockIndexMap, listIndexMap} = buildIndexMaps(context, editor.value)
-    editor.blockIndexMap = blockIndexMap
-    editor.listIndexMap = listIndexMap
+    buildIndexMaps(
+      {
+        schema: context.schema,
+        value: editor.value,
+      },
+      {
+        blockIndexMap: editor.blockIndexMap,
+        listIndexMap: editor.listIndexMap,
+      },
+    )
 
     apply(operation)
   }

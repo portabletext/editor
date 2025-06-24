@@ -46,14 +46,19 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
     config.editorActor.getSnapshot().context,
   )
   instance.value = [placeholderBlock]
+  instance.blockIndexMap = new Map<string, number>()
+  instance.listIndexMap = new Map<string, number>()
 
-  const {blockIndexMap, listIndexMap} = buildIndexMaps(
-    config.editorActor.getSnapshot().context,
-    instance.value,
+  buildIndexMaps(
+    {
+      schema: config.editorActor.getSnapshot().context.schema,
+      value: instance.value,
+    },
+    {
+      blockIndexMap: instance.blockIndexMap,
+      listIndexMap: instance.listIndexMap,
+    },
   )
-
-  instance.blockIndexMap = blockIndexMap
-  instance.listIndexMap = listIndexMap
 
   const initialValue = toSlateValue(instance.value, {
     schemaTypes: config.editorActor.getSnapshot().context.schema,
