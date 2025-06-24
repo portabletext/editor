@@ -249,9 +249,7 @@ export function performEvent({
             performEvent({
               mode: 'execute',
               behaviors,
-              remainingEventBehaviors: isAbstractBehaviorEvent(action.event)
-                ? behaviors
-                : [],
+              remainingEventBehaviors: [],
               event: action.event,
               editor,
               keyGenerator,
