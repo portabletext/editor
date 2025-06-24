@@ -51,6 +51,6 @@
     "tailwindcss-react-aria-components": "^2.0.0",
     "typescript": "5.8.3",
     "vite": "^6.2.5",
-    "vitest": "^3.2.3"
+    "vitest": "^3.2.4"
   }
 }
