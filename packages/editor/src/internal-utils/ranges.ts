@@ -15,6 +15,7 @@ export function toSlateRange(
   if (!selection || !editor) {
     return null
   }
+
   const anchor = {
     path: toSlatePath(selection.anchor.path, editor),
     offset: selection.anchor.offset,
@@ -23,10 +24,13 @@ export function toSlateRange(
     path: toSlatePath(selection.focus.path, editor),
     offset: selection.focus.offset,
   }
+
   if (focus.path.length === 0 || anchor.path.length === 0) {
     return null
   }
+
   const range = anchor && focus ? {anchor, focus} : null
+
   return range
 }
 

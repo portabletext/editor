@@ -1,39 +1,62 @@
-import {isKeySegment, type Path} from '@sanity/types'
-import {isEqual} from 'lodash'
-import {Editor, Element, type Descendant, type Path as SlatePath} from 'slate'
+import {Element, type Editor, type Path} from 'slate'
+import type {EditorSelectionPoint} from '..'
+import {
+  getBlockKeyFromSelectionPoint,
+  getChildKeyFromSelectionPoint,
+} from '../selection/selection-point'
 
-export function toSlatePath(path: Path, editor: Editor): SlatePath {
-  if (!editor) {
+export function toSlatePath(
+  path: EditorSelectionPoint['path'],
+  editor: Editor,
+): Path {
+  const blockKey = getBlockKeyFromSelectionPoint({
+    path,
+    offset: 0,
+  })
+
+  if (!blockKey) {
     return []
   }
-  const [block, blockPath] = Array.from(
-    Editor.nodes(editor, {
-      at: [],
-      match: (n) =>
-        isKeySegment(path[0]) && (n as Descendant)._key === path[0]._key,
-    }),
-  )[0] || [undefined, undefined]
+
+  const blockIndex = editor.blockIndexMap.get(blockKey)
+
+  if (blockIndex === undefined) {
+    return []
+  }
+
+  const block = editor.children.at(blockIndex)
 
   if (!block || !Element.isElement(block)) {
     return []
   }
 
   if (editor.isVoid(block)) {
-    return [blockPath[0], 0]
+    return [blockIndex, 0]
   }
 
-  const childPath = [path[2]]
-  const childIndex = block.children.findIndex((child) =>
-    isEqual([{_key: child._key}], childPath),
-  )
+  const childKey = getChildKeyFromSelectionPoint({
+    path,
+    offset: 0,
+  })
 
-  if (childIndex >= 0 && block.children[childIndex]) {
-    const child = block.children[childIndex]
-    if (Element.isElement(child) && editor.isVoid(child)) {
-      return blockPath.concat(childIndex).concat(0)
+  if (!childKey) {
+    return [blockIndex, 0]
+  }
+
+  let childPath: Array<number> = []
+  let childIndex = -1
+
+  for (const child of block.children) {
+    childIndex++
+    if (child._key === childKey) {
+      if (Element.isElement(child) && editor.isVoid(child)) {
+        childPath = [childIndex, 0]
+      } else {
+        childPath = [childIndex]
+      }
+      break
     }
-    return blockPath.concat(childIndex)
   }
 
-  return [blockPath[0], 0]
+  return [blockIndex].concat(childPath)
 }
