@@ -159,11 +159,11 @@ importers:
         specifier: workspace:*
         version: link:../../packages/patches
       '@portabletext/plugin-markdown-shortcuts':
-        specifier: ^1.0.11
-        version: 1.0.11(@portabletext/editor@packages+editor)(@types/react@19.1.8)(react@19.1.0)
+        specifier: ^1.0.12
+        version: 1.0.12(@portabletext/editor@packages+editor)(@types/react@19.1.8)(react@19.1.0)
       '@portabletext/plugin-one-line':
-        specifier: ^1.0.14
-        version: 1.0.14(@portabletext/editor@packages+editor)(react@19.1.0)
+        specifier: ^1.0.15
+        version: 1.0.15(@portabletext/editor@packages+editor)(react@19.1.0)
       '@xstate/react':
         specifier: ^6.0.0
         version: 6.0.0(@types/react@19.1.8)(react@19.1.0)(xstate@5.20.0)
@@ -1735,20 +1735,20 @@ packages:
   '@polka/url@1.0.0-next.28':
     resolution: {integrity: sha512-8LduaNlMZGwdZ6qWrKlfa+2M4gahzFkprZiAt2TF8uS0qQgBizKXpXURqvTJ4WtmupWxaLqjRb2UCTe72mu+Aw==}
 
-  '@portabletext/plugin-character-pair-decorator@1.0.12':
-    resolution: {integrity: sha512-1vr6Hgi8vYACXtTK5xTsTi/eD0IkE8GVway9+myXzBokC3sUWs+DD1aLp+9TcV2x0pUB3MSZZaAF7/1VQlFXpg==}
+  '@portabletext/plugin-character-pair-decorator@1.0.13':
+    resolution: {integrity: sha512-Ms36qQTBYd3yjCCKwfXCgxSnsFddugLAjptckn89TqsNlxfxXLijBCNEXGa+2cXG7G1ugkauS8RtD1kKidKqEg==}
     peerDependencies:
       '@portabletext/editor': workspace:*
       react: ^19.1.0
 
-  '@portabletext/plugin-markdown-shortcuts@1.0.11':
-    resolution: {integrity: sha512-caDqPs9CzzvV76T7zHzPjav0J7lglsyC423hSfFZk1Xgu8Bxdxkk2cOutcIcKqs4rjkHkZjN0V2iNzl/wd2ZQg==}
+  '@portabletext/plugin-markdown-shortcuts@1.0.12':
+    resolution: {integrity: sha512-pNvJgvrYX0gM/aCWqbDcap1ti14cAfMOfjfY4sPOdMbNxmRgZM7G8sYsMQ1b+9g06qFabSWqOuZmQFUOxUBvEA==}
     peerDependencies:
       '@portabletext/editor': workspace:*
       react: ^19.1.0
 
-  '@portabletext/plugin-one-line@1.0.14':
-    resolution: {integrity: sha512-ECkhQSAcdRhpdyVzxK71HtUmipeAmckS+uSbcwdXT38xCakBhV02zz6nzBLi+fq2Yoo+AFN1ysdj2OGYw4mlpg==}
+  '@portabletext/plugin-one-line@1.0.15':
+    resolution: {integrity: sha512-CwyPMk+BweNqjSqtRj3i/k1flU3MzNjFPdYCyXmPhhOTDoKk2mTmUQ5Qqvu4LCa70orm78bJVAeAMnEiGop3Og==}
     peerDependencies:
       '@portabletext/editor': workspace:*
       react: ^19.1.0
@@ -8036,7 +8036,7 @@ snapshots:
 
   '@polka/url@1.0.0-next.28': {}
 
-  '@portabletext/plugin-character-pair-decorator@1.0.12(@portabletext/editor@packages+editor)(@types/react@19.1.8)(react@19.1.0)':
+  '@portabletext/plugin-character-pair-decorator@1.0.13(@portabletext/editor@packages+editor)(@types/react@19.1.8)(react@19.1.0)':
     dependencies:
       '@portabletext/editor': link:packages/editor
       '@xstate/react': 5.0.5(@types/react@19.1.8)(react@19.1.0)(xstate@5.20.0)
@@ -8046,15 +8046,15 @@ snapshots:
     transitivePeerDependencies:
       - '@types/react'
 
-  '@portabletext/plugin-markdown-shortcuts@1.0.11(@portabletext/editor@packages+editor)(@types/react@19.1.8)(react@19.1.0)':
+  '@portabletext/plugin-markdown-shortcuts@1.0.12(@portabletext/editor@packages+editor)(@types/react@19.1.8)(react@19.1.0)':
     dependencies:
       '@portabletext/editor': link:packages/editor
-      '@portabletext/plugin-character-pair-decorator': 1.0.12(@portabletext/editor@packages+editor)(@types/react@19.1.8)(react@19.1.0)
+      '@portabletext/plugin-character-pair-decorator': 1.0.13(@portabletext/editor@packages+editor)(@types/react@19.1.8)(react@19.1.0)
       react: 19.1.0
     transitivePeerDependencies:
       - '@types/react'
 
-  '@portabletext/plugin-one-line@1.0.14(@portabletext/editor@packages+editor)(react@19.1.0)':
+  '@portabletext/plugin-one-line@1.0.15(@portabletext/editor@packages+editor)(react@19.1.0)':
     dependencies:
       '@portabletext/editor': link:packages/editor
       react: 19.1.0
