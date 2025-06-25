@@ -2,8 +2,7 @@ import type {PortableTextTextBlock} from '@sanity/types'
 import type {EditorSelectionPoint} from '..'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {isSpan} from './util.is-span'
-import {isTextBlock} from './util.is-text-block'
-import {sliceBlocks} from './util.slice-blocks'
+import {sliceTextBlock} from './util.slice-text-block'
 
 /**
  * @beta
@@ -24,7 +23,7 @@ export function splitTextBlock({
     return undefined
   }
 
-  const before = sliceBlocks({
+  const before = sliceTextBlock({
     context: {
       schema: context.schema,
       selection: {
@@ -35,9 +34,9 @@ export function splitTextBlock({
         focus: point,
       },
     },
-    blocks: [block],
-  }).at(0)
-  const after = sliceBlocks({
+    block,
+  })
+  const after = sliceTextBlock({
     context: {
       schema: context.schema,
       selection: {
@@ -48,16 +47,8 @@ export function splitTextBlock({
         },
       },
     },
-    blocks: [block],
-  }).at(0)
-
-  if (!before || !after) {
-    return undefined
-  }
-
-  if (!isTextBlock(context, before) || !isTextBlock(context, after)) {
-    return undefined
-  }
+    block,
+  })
 
   return {before, after}
 }

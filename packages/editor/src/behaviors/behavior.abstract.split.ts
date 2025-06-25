@@ -1,6 +1,7 @@
 import {isTextBlock, parseBlock} from '../internal-utils/parse-blocks'
 import * as selectors from '../selectors'
 import * as utils from '../utils'
+import {sliceTextBlock} from '../utils/util.slice-text-block'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -102,15 +103,13 @@ export const abstractSplitBehaviors = [
       }
 
       const newTextBlock = parseBlock({
-        block: selectors
-          .getSelectedValue({
-            ...snapshot,
-            context: {
-              ...snapshot.context,
-              selection: newTextBlockSelection,
-            },
-          })
-          .at(0),
+        block: sliceTextBlock({
+          context: {
+            ...snapshot.context,
+            selection: newTextBlockSelection,
+          },
+          block: focusTextBlock.node,
+        }),
         context: snapshot.context,
         options: {refreshKeys: true, validateFields: true},
       })
