@@ -14,20 +14,26 @@ export {
   EditorProvider,
   type EditorProviderProps,
 } from './editor/editor-provider'
-export {
-  type AnnotationSchemaType,
-  type BlockObjectSchemaType,
-  type DecoratorSchemaType,
-  type EditorSchema,
-  type InlineObjectSchemaType,
-  type ListSchemaType,
-  type StyleSchemaType,
+export type {
+  AnnotationSchemaType,
+  BlockObjectSchemaType,
+  DecoratorSchemaType,
+  EditorSchema,
+  InlineObjectSchemaType,
+  ListSchemaType,
+  StyleSchemaType,
 } from './editor/editor-schema'
 export {
   defineSchema,
+  type AnnotationDefinition,
   type BaseDefinition,
+  type BlockObjectDefinition,
+  type DecoratorDefinition,
   type FieldDefinition,
+  type InlineObjectDefinition,
+  type ListDefinition,
   type SchemaDefinition,
+  type StyleDefinition,
 } from './editor/editor-schema-definition'
 export {useEditorSelector, type EditorSelector} from './editor/editor-selector'
 export type {EditorContext, EditorSnapshot} from './editor/editor-snapshot'
