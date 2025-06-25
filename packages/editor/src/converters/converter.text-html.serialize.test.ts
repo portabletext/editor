@@ -4,9 +4,9 @@ import type {EditorSelection} from '..'
 import {
   compileSchemaDefinition,
   compileSchemaDefinitionToLegacySchema,
-  defineSchema,
-  type SchemaDefinition,
 } from '../editor/editor-schema'
+import {defineSchema} from '../editor/editor-schema-definition'
+import type {SchemaDefinition} from '../editor/editor-schema-definition'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {createConverterTextHtml} from './converter.text-html'
 

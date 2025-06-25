@@ -1,7 +1,8 @@
 import type {PortableTextBlock} from '@sanity/types'
 import {expect, test} from 'vitest'
 import type {EditorSelection} from '..'
-import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
+import {compileSchemaDefinition} from '../editor/editor-schema'
+import {defineSchema} from '../editor/editor-schema-definition'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {getSelectionText} from './selector.get-selection-text'
 

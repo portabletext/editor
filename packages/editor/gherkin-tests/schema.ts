@@ -1,4 +1,4 @@
-import {defineSchema} from '../src/editor/editor-schema'
+import {defineSchema} from '../src/editor/editor-schema-definition'
 
 export const schemaDefinition = defineSchema({
   annotations: [

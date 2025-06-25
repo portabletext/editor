@@ -6,7 +6,10 @@ import {render} from 'vitest-browser-react'
 import type {Editor} from '../editor'
 import {PortableTextEditable} from '../editor/Editable'
 import {EditorProvider} from '../editor/editor-provider'
-import {defineSchema, type SchemaDefinition} from '../editor/editor-schema'
+import {
+  defineSchema,
+  type SchemaDefinition,
+} from '../editor/editor-schema-definition'
 import type {EditorEmittedEvent} from '../editor/relay-machine'
 import {EditorRefPlugin} from '../plugins/plugin.editor-ref'
 import {EventListenerPlugin} from '../plugins/plugin.event-listener'

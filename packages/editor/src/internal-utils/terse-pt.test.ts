@@ -1,5 +1,6 @@
 import {expect, test} from 'vitest'
-import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
+import {compileSchemaDefinition} from '../editor/editor-schema'
+import {defineSchema} from '../editor/editor-schema-definition'
 import {createTestKeyGenerator} from '../internal-utils/test-key-generator'
 import {getTersePt, parseTersePt, parseTersePtString} from './terse-pt'
 

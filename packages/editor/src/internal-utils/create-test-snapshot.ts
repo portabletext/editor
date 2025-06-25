@@ -1,5 +1,6 @@
 import type {EditorSnapshot} from '..'
-import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
+import {compileSchemaDefinition} from '../editor/editor-schema'
+import {defineSchema} from '../editor/editor-schema-definition'
 import {createTestKeyGenerator} from './test-key-generator'
 
 export function createTestSnapshot(snapshot: {

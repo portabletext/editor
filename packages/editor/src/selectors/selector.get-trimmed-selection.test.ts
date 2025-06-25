@@ -1,6 +1,7 @@
 import type {PortableTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
-import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
+import {compileSchemaDefinition} from '../editor/editor-schema'
+import {defineSchema} from '../editor/editor-schema-definition'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {parseBlock} from '../internal-utils/parse-blocks'
 import {createTestKeyGenerator} from '../internal-utils/test-key-generator'

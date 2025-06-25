@@ -10,7 +10,7 @@ import {
   type Editor,
   type EditorEmittedEvent,
 } from '../src'
-import type {SchemaDefinition} from '../src/editor/editor-schema'
+import type {SchemaDefinition} from '../src/editor/editor-schema-definition'
 import {createTestEditor} from '../src/internal-utils/test-editor'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {EditorRefPlugin, EventListenerPlugin} from '../src/plugins'
