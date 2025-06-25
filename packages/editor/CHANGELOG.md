@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.55.4](https://github.com/portabletext/editor/compare/editor-v1.55.3...editor-v1.55.4) (2025-06-25)
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^3.94.2 ([cf34861](https://github.com/portabletext/editor/commit/cf3486130db235ba01cb77e8a42ecbaedf76e8ea))
+* **regression:** allow splitting all text blocks in the middle ([bd65785](https://github.com/portabletext/editor/commit/bd6578507aa5e0ec1869366010ff9c9594a1deea))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.32
+  * devDependencies
+    * racejar bumped to 1.2.9
+
 ## [1.55.3](https://github.com/portabletext/editor/compare/editor-v1.55.2...editor-v1.55.3) (2025-06-24)
 
 
