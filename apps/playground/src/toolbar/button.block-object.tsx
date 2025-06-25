@@ -1,5 +1,5 @@
-import {useEditor, useEditorSelector} from '@portabletext/editor'
 import {TooltipTrigger} from 'react-aria-components'
+import {useBlockObjectButton} from '../plugins/toolbar/use-block-object-button'
 import {Button} from '../primitives/button'
 import {Dialog} from '../primitives/dialog'
 import {Icon} from '../primitives/icon'
@@ -10,11 +10,7 @@ import type {ToolbarBlockObjectDefinition} from './toolbar-schema-definition'
 export function BlockObjectButton(props: {
   definition: ToolbarBlockObjectDefinition
 }) {
-  const editor = useEditor()
-  const disabled = useEditorSelector(
-    editor,
-    (snapshot) => snapshot.context.readOnly,
-  )
+  const {disabled, onInsert} = useBlockObjectButton(props)
 
   return (
     <Dialog
@@ -34,16 +30,8 @@ export function BlockObjectButton(props: {
         <InsertBlockObjectForm
           fields={props.definition.fields}
           defaultValues={props.definition.defaultValues}
-          onSubmit={({values, placement}) => {
-            editor.send({
-              type: 'insert.block object',
-              blockObject: {
-                name: props.definition.name,
-                value: values,
-              },
-              placement: placement ?? 'auto',
-            })
-            editor.send({type: 'focus'})
+          onSubmit={({value, placement}) => {
+            onInsert({value, placement})
             close()
           }}
         />

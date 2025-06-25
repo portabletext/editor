@@ -30,8 +30,8 @@ export function EditorPatchesPreview(props: {patches: Array<EditorPatch>}) {
   }
 
   return (
-    <Container>
-      <pre>
+    <Container variant="ghost">
+      <pre className="max-h-56 overflow-y-auto">
         {props.patches.map((patch) => (
           <code
             key={patch.id}

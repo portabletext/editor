@@ -1,6 +1,5 @@
-import {useEditor, useEditorSelector} from '@portabletext/editor'
-import * as selectors from '@portabletext/editor/selectors'
 import {TooltipTrigger} from 'react-aria-components'
+import {useAnnotationButton} from '../plugins/toolbar/use-annotation-button'
 import {Button} from '../primitives/button'
 import {Dialog} from '../primitives/dialog'
 import {Icon} from '../primitives/icon'
@@ -12,15 +11,7 @@ import type {ToolbarAnnotationDefinition} from './toolbar-schema-definition'
 export function AnnotationButton(props: {
   definition: ToolbarAnnotationDefinition
 }) {
-  const editor = useEditor()
-  const disabled = useEditorSelector(
-    editor,
-    (snapshot) => snapshot.context.readOnly,
-  )
-  const active = useEditorSelector(
-    editor,
-    selectors.isActiveAnnotation(props.definition.name),
-  )
+  const {disabled, active, onAdd, onRemove} = useAnnotationButton(props)
 
   if (active) {
     return (
@@ -28,15 +19,7 @@ export function AnnotationButton(props: {
         size="sm"
         isSelected={true}
         isDisabled={disabled}
-        onPress={() => {
-          editor.send({
-            type: 'annotation.remove',
-            annotation: {
-              name: props.definition.name,
-            },
-          })
-          editor.send({type: 'focus'})
-        }}
+        onPress={onRemove}
       >
         <Icon icon={props.definition.icon} fallback={null} />
       </ToggleButton>
@@ -61,15 +44,8 @@ export function AnnotationButton(props: {
           submitLabel="Add"
           fields={props.definition.fields}
           defaultValues={props.definition.defaultValues}
-          onSubmit={({values}) => {
-            editor.send({
-              type: 'annotation.add',
-              annotation: {
-                name: props.definition.name,
-                value: values,
-              },
-            })
-            editor.send({type: 'focus'})
+          onSubmit={({value}) => {
+            onAdd({value})
             close()
           }}
         />

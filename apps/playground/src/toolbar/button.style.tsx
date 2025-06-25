@@ -1,6 +1,5 @@
-import {useEditor, useEditorSelector} from '@portabletext/editor'
-import * as selectors from '@portabletext/editor/selectors'
 import {TooltipTrigger} from 'react-aria-components'
+import {useStyleSelector} from '../plugins/toolbar/use-style-selector'
 import {Icon} from '../primitives/icon'
 import {Select, SelectItem} from '../primitives/select'
 import {Tooltip} from '../primitives/tooltip'
@@ -9,12 +8,7 @@ import type {ToolbarStyleDefinition} from './toolbar-schema-definition'
 export function StyleButton(props: {
   definitions: ReadonlyArray<ToolbarStyleDefinition>
 }) {
-  const editor = useEditor()
-  const activeStyle = useEditorSelector(editor, selectors.getActiveStyle)
-  const disabled = useEditorSelector(
-    editor,
-    (snapshot) => snapshot.context.readOnly,
-  )
+  const {activeStyle, disabled, onToggle} = useStyleSelector()
 
   return (
     <TooltipTrigger>
@@ -25,8 +19,7 @@ export function StyleButton(props: {
         selectedKey={activeStyle ?? null}
         onSelectionChange={(style) => {
           if (typeof style === 'string') {
-            editor.send({type: 'style.toggle', style})
-            editor.send({type: 'focus'})
+            onToggle(style)
           }
         }}
       >
