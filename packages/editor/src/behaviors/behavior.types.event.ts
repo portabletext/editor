@@ -200,6 +200,9 @@ export type SyntheticBehaviorEvent =
     }
   | AbstractBehaviorEvent
 
+/**
+ * @beta
+ */
 export type InsertPlacement = 'auto' | 'after' | 'before'
 
 export function isSyntheticBehaviorEvent(
