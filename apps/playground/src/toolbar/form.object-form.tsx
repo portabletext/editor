@@ -2,7 +2,7 @@ import {z} from 'zod/v4'
 import {Button} from '../primitives/button'
 import {Fields} from '../primitives/fields'
 
-const FormDataSchema = z.record(z.string(), z.string().or(z.number()))
+const FormDataSchema = z.record(z.string(), z.unknown())
 
 export function ObjectForm(
   props: {
@@ -14,7 +14,7 @@ export function ObjectForm(
     defaultValues?: {[key: string]: unknown}
     submitLabel: string
   } & {
-    onSubmit: ({values}: {values: Record<string, string | number>}) => void
+    onSubmit: ({value}: {value: {[key: string]: unknown}}) => void
   },
 ) {
   return (
@@ -25,10 +25,10 @@ export function ObjectForm(
 
         const formData = new FormData(e.target as HTMLFormElement)
         const formDataValues = Object.fromEntries(formData)
-        const values = FormDataSchema.parse(formDataValues)
+        const value = FormDataSchema.parse(formDataValues)
 
         props.onSubmit({
-          values,
+          value,
         })
       }}
     >

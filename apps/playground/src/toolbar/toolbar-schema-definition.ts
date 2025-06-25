@@ -1,15 +1,12 @@
-import type {FieldDefinition, SchemaDefinition} from '@portabletext/editor'
-
-type DecoratorDefinition = NonNullable<SchemaDefinition['decorators']>[number]
-type AnnotationDefinition = NonNullable<SchemaDefinition['annotations']>[number]
-type ListItemDefinition = NonNullable<SchemaDefinition['lists']>[number]
-type BlockObjectDefinition = NonNullable<
-  SchemaDefinition['blockObjects']
->[number]
-type InlineObjectDefinition = NonNullable<
-  SchemaDefinition['inlineObjects']
->[number]
-type StyleDefinition = NonNullable<SchemaDefinition['styles']>[number]
+import type {
+  AnnotationDefinition,
+  BlockObjectDefinition,
+  DecoratorDefinition,
+  FieldDefinition,
+  InlineObjectDefinition,
+  ListDefinition,
+  StyleDefinition,
+} from '@portabletext/editor'
 
 export type ToolbarDecoratorDefinition = DecoratorDefinition & {
   icon: React.ComponentType
@@ -19,7 +16,7 @@ export type ToolbarAnnotationDefinition = AnnotationDefinition & {
   fields: ReadonlyArray<FieldDefinition & {title: string}>
   defaultValues?: Record<string, unknown>
 }
-export type ToolbarListItemDefinition = ListItemDefinition & {
+export type ToolbarListDefinition = ListDefinition & {
   icon: React.ComponentType
 }
 export type ToolbarBlockObjectDefinition = BlockObjectDefinition & {
@@ -39,7 +36,7 @@ export type ToolbarStyleDefinition = StyleDefinition & {
 export type ToolbarSchemaDefinition = {
   decorators: ReadonlyArray<ToolbarDecoratorDefinition>
   annotations: ReadonlyArray<ToolbarAnnotationDefinition>
-  lists: ReadonlyArray<ToolbarListItemDefinition>
+  lists: ReadonlyArray<ToolbarListDefinition>
   blockObjects: ReadonlyArray<ToolbarBlockObjectDefinition>
   inlineObjects: ReadonlyArray<ToolbarInlineObjectDefinition>
   styles: ReadonlyArray<ToolbarStyleDefinition>

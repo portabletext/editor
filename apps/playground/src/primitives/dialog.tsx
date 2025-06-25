@@ -14,7 +14,7 @@ import {Tooltip} from './tooltip'
 
 export function Dialog(props: {
   title: string
-  icon: React.ComponentType
+  icon?: React.ComponentType
   trigger: React.ReactNode
   children: (props: {close: () => void}) => React.ReactNode
   onOpenChange?: (isOpen: boolean) => void

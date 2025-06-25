@@ -1,14 +1,12 @@
 import {TooltipTrigger} from 'react-aria-components'
-import {useDecoratorButton} from '../plugins/toolbar/use-decorator-button'
+import {useListButton} from '../plugins/toolbar/use-list-button'
 import {Icon} from '../primitives/icon'
 import {ToggleButton} from '../primitives/toggle-button'
 import {Tooltip} from '../primitives/tooltip'
-import type {ToolbarDecoratorDefinition} from './toolbar-schema-definition'
+import type {ToolbarListDefinition} from './toolbar-schema-definition'
 
-export function DecoratorButton(props: {
-  definition: ToolbarDecoratorDefinition
-}) {
-  const {disabled, active, onToggle} = useDecoratorButton(props)
+export function ListButton(props: {definition: ToolbarListDefinition}) {
+  const {disabled, active, onToggle} = useListButton(props)
 
   return (
     <TooltipTrigger>

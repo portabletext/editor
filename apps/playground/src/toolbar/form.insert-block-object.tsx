@@ -7,7 +7,7 @@ const FormDataSchema = z
   .object({
     placement: z.enum(['auto', 'before', 'after']),
   })
-  .catchall(z.string().or(z.number()))
+  .catchall(z.unknown())
 
 export function InsertBlockObjectForm(
   props: {
@@ -19,10 +19,10 @@ export function InsertBlockObjectForm(
     defaultValues?: Record<string, unknown>
   } & {
     onSubmit: ({
-      values,
+      value,
       placement,
     }: {
-      values: Record<string, string | number>
+      value: {[key: string]: unknown}
       placement?: 'auto' | 'before' | 'after'
     }) => void
   },
@@ -35,10 +35,10 @@ export function InsertBlockObjectForm(
 
         const formData = new FormData(e.target as HTMLFormElement)
         const formDataValues = Object.fromEntries(formData)
-        const {placement, ...values} = FormDataSchema.parse(formDataValues)
+        const {placement, ...value} = FormDataSchema.parse(formDataValues)
 
         props.onSubmit({
-          values,
+          value,
           placement,
         })
       }}

@@ -6,7 +6,7 @@ import {BlockObjectButton} from './button.block-object'
 import {DecoratorButton} from './button.decorator'
 import {FocusButton} from './button.focus'
 import {InlineObjectButton} from './button.inline-object'
-import {ListItemButton} from './button.list-item'
+import {ListButton} from './button.list'
 import {StyleButton} from './button.style'
 import {AnnotationPopover} from './popover.annotation'
 import {BlockObjectPopover} from './popover.block-object'
@@ -36,7 +36,7 @@ export function PortableTextToolbar(props: {
         <Separator orientation="vertical" />
         <Group aria-label="Lists">
           {props.schemaDefinition.lists.map((list) => (
-            <ListItemButton key={list.name} definition={list} />
+            <ListButton key={list.name} definition={list} />
           ))}
         </Group>
         <Separator orientation="vertical" />

@@ -1,5 +1,5 @@
-import {useEditor, useEditorSelector} from '@portabletext/editor'
 import {TooltipTrigger} from 'react-aria-components'
+import {useInlineObjectButton} from '../plugins/toolbar/use-inline-object-button'
 import {Button} from '../primitives/button'
 import {Dialog} from '../primitives/dialog'
 import {Icon} from '../primitives/icon'
@@ -10,11 +10,7 @@ import type {ToolbarInlineObjectDefinition} from './toolbar-schema-definition'
 export function InlineObjectButton(props: {
   definition: ToolbarInlineObjectDefinition
 }) {
-  const editor = useEditor()
-  const disabled = useEditorSelector(
-    editor,
-    (snapshot) => snapshot.context.readOnly,
-  )
+  const {disabled, onInsert} = useInlineObjectButton(props)
 
   return (
     <Dialog
@@ -37,15 +33,8 @@ export function InlineObjectButton(props: {
           submitLabel="Insert"
           fields={props.definition.fields}
           defaultValues={props.definition.defaultValues}
-          onSubmit={({values}) => {
-            editor.send({
-              type: 'insert.inline object',
-              inlineObject: {
-                name: props.definition.name,
-                value: values,
-              },
-            })
-            editor.send({type: 'focus'})
+          onSubmit={({value}) => {
+            onInsert({value})
             close()
           }}
         />

@@ -1,12 +1,6 @@
-import {
-  useEditor,
-  type ChildPath,
-  type PortableTextObject,
-} from '@portabletext/editor'
-import * as selectors from '@portabletext/editor/selectors'
 import {PencilIcon, TrashIcon} from 'lucide-react'
-import React, {useEffect, useState, type RefObject} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
+import {useInlineObjectPopover} from '../plugins/toolbar/use-inline-object-popover'
 import {Button} from '../primitives/button'
 import {Dialog} from '../primitives/dialog'
 import {Popover} from '../primitives/popover'
@@ -17,69 +11,7 @@ import type {ToolbarInlineObjectDefinition} from './toolbar-schema-definition'
 export function InlineObjectPopover(props: {
   definitions: ReadonlyArray<ToolbarInlineObjectDefinition>
 }) {
-  const editor = useEditor()
-  const [state, setState] = useState<
-    | {
-        type: 'idle'
-      }
-    | {
-        type: 'visible'
-        object: {
-          value: PortableTextObject
-          definition: ToolbarInlineObjectDefinition
-          at: ChildPath
-        }
-        triggerRef: RefObject<Element | null>
-      }
-  >({type: 'idle'})
-
-  useEffect(() => {
-    return editor.on('selection', () => {
-      const snapshot = editor.getSnapshot()
-
-      if (!selectors.isSelectionCollapsed(snapshot)) {
-        setState({type: 'idle'})
-        return
-      }
-
-      const focusInlineObject = selectors.getFocusInlineObject(snapshot)
-
-      if (!focusInlineObject) {
-        setState({type: 'idle'})
-        return
-      }
-
-      const definition = props.definitions.find(
-        (definition) => definition.name === focusInlineObject.node._type,
-      )
-
-      if (!definition) {
-        setState({type: 'idle'})
-        return
-      }
-
-      const selectedNodes = editor.dom.getChildNodes(snapshot)
-      const firstSelectedNode = selectedNodes.at(0)
-
-      if (!firstSelectedNode || !(firstSelectedNode instanceof Element)) {
-        setState({type: 'idle'})
-        return
-      }
-
-      const triggerRef = React.createRef<Element>()
-      triggerRef.current = firstSelectedNode
-
-      setState({
-        type: 'visible',
-        object: {
-          value: focusInlineObject.node,
-          definition,
-          at: focusInlineObject.path,
-        },
-        triggerRef,
-      })
-    }).unsubscribe
-  }, [editor, props.definitions])
+  const {state, onRemove, onEdit, onClose} = useInlineObjectPopover()
 
   if (state.type === 'idle') {
     return null
@@ -89,23 +21,25 @@ export function InlineObjectPopover(props: {
     <Popover
       isNonModal
       className="flex gap-2"
-      triggerRef={state.triggerRef}
+      triggerRef={state.elementRef}
       isOpen={true}
       onOpenChange={(isOpen) => {
         if (!isOpen) {
-          setState({type: 'idle'})
-          editor.send({type: 'focus'})
+          onClose()
         }
       }}
     >
-      {state.object.definition.fields.length > 0 ? (
+      {state.object.schemaType.fields.length > 0 ? (
         <Dialog
-          title={state.object.definition.title ?? state.object.definition.name}
-          icon={state.object.definition.icon}
+          title={state.object.schemaType.title ?? state.object.schemaType.name}
+          icon={
+            props.definitions.find(
+              (definition) => definition.name === state.object.schemaType.name,
+            )?.icon
+          }
           onOpenChange={(isOpen) => {
             if (!isOpen) {
-              setState({type: 'idle'})
-              editor.send({type: 'focus'})
+              onClose()
             }
           }}
           trigger={
@@ -120,15 +54,10 @@ export function InlineObjectPopover(props: {
           {({close}) => (
             <ObjectForm
               submitLabel="Save"
-              fields={state.object.definition.fields}
+              fields={state.object.schemaType.fields}
               defaultValues={state.object.value}
-              onSubmit={({values}) => {
-                editor.send({
-                  type: 'child.set',
-                  at: state.object.at,
-                  props: values,
-                })
-                editor.send({type: 'focus'})
+              onSubmit={({value}) => {
+                onEdit({props: value})
                 close()
               }}
             />
@@ -140,13 +69,7 @@ export function InlineObjectPopover(props: {
           aria-label="Remove"
           variant="destructive"
           size="sm"
-          onPress={() => {
-            editor.send({
-              type: 'delete.child',
-              at: state.object.at,
-            })
-            editor.send({type: 'focus'})
-          }}
+          onPress={onRemove}
         >
           <TrashIcon className="size-3" />
         </Button>
