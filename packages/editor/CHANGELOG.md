@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.55.5](https://github.com/portabletext/editor/compare/editor-v1.55.4...editor-v1.55.5) (2025-06-25)
+
+
+### Bug Fixes
+
+* **perf:** use dedicated function for slicing text blocks ([c165c8a](https://github.com/portabletext/editor/commit/c165c8adc32adecd21c2846d95e2f4aeb6205af7))
+
 ## [1.55.4](https://github.com/portabletext/editor/compare/editor-v1.55.3...editor-v1.55.4) (2025-06-25)
 
 
