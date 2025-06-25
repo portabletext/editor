@@ -17,21 +17,63 @@ export type FieldDefinition = {
 /**
  * @public
  */
+export type DecoratorDefinition<
+  TBaseDefinition extends BaseDefinition = BaseDefinition,
+> = TBaseDefinition
+
+/**
+ * @public
+ */
+export type AnnotationDefinition<
+  TBaseDefinition extends BaseDefinition = BaseDefinition,
+> = TBaseDefinition & {
+  fields?: ReadonlyArray<FieldDefinition>
+}
+
+/**
+ * @public
+ */
+export type BlockObjectDefinition<
+  TBaseDefinition extends BaseDefinition = BaseDefinition,
+> = TBaseDefinition & {
+  fields?: ReadonlyArray<FieldDefinition>
+}
+
+/**
+ * @public
+ */
+export type InlineObjectDefinition<
+  TBaseDefinition extends BaseDefinition = BaseDefinition,
+> = TBaseDefinition & {
+  fields?: ReadonlyArray<FieldDefinition>
+}
+
+/**
+ * @public
+ */
+export type ListDefinition<
+  TBaseDefinition extends BaseDefinition = BaseDefinition,
+> = TBaseDefinition
+
+/**
+ * @public
+ */
+export type StyleDefinition<
+  TBaseDefinition extends BaseDefinition = BaseDefinition,
+> = TBaseDefinition
+
+/**
+ * @public
+ */
 export type SchemaDefinition<
   TBaseDefinition extends BaseDefinition = BaseDefinition,
 > = {
-  decorators?: ReadonlyArray<TBaseDefinition>
-  blockObjects?: ReadonlyArray<
-    TBaseDefinition & {fields?: ReadonlyArray<FieldDefinition>}
-  >
-  inlineObjects?: ReadonlyArray<
-    TBaseDefinition & {fields?: ReadonlyArray<FieldDefinition>}
-  >
-  annotations?: ReadonlyArray<
-    TBaseDefinition & {fields?: ReadonlyArray<FieldDefinition>}
-  >
-  lists?: ReadonlyArray<TBaseDefinition>
-  styles?: ReadonlyArray<TBaseDefinition>
+  decorators?: ReadonlyArray<DecoratorDefinition<TBaseDefinition>>
+  blockObjects?: ReadonlyArray<BlockObjectDefinition<TBaseDefinition>>
+  inlineObjects?: ReadonlyArray<InlineObjectDefinition<TBaseDefinition>>
+  annotations?: ReadonlyArray<AnnotationDefinition<TBaseDefinition>>
+  lists?: ReadonlyArray<ListDefinition<TBaseDefinition>>
+  styles?: ReadonlyArray<StyleDefinition<TBaseDefinition>>
 }
 
 /**
