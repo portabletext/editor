@@ -110,14 +110,14 @@ export type EditorSchema = {
  * @public
  */
 export type AnnotationSchemaType = BaseDefinition & {
-  fields: ReadonlyArray<{name: string; type: string}>
+  fields: ReadonlyArray<FieldDefinition>
 }
 
 /**
  * @public
  */
 export type BlockObjectSchemaType = BaseDefinition & {
-  fields: ReadonlyArray<{name: string; type: string}>
+  fields: ReadonlyArray<FieldDefinition>
 }
 
 /**
@@ -135,7 +135,7 @@ export type DecoratorSchemaType = BaseDefinition & {
  * @public
  */
 export type InlineObjectSchemaType = BaseDefinition & {
-  fields: ReadonlyArray<{name: string; type: string}>
+  fields: ReadonlyArray<FieldDefinition>
 }
 
 /**
