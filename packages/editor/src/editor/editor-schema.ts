@@ -92,54 +92,72 @@ const defaultObjectTitles: Record<string, string> = {
  * @public
  */
 export type EditorSchema = {
-  annotations: ReadonlyArray<
-    BaseDefinition & {
-      fields: ReadonlyArray<{name: string; type: string}>
-    }
-  >
+  annotations: ReadonlyArray<AnnotationSchemaType>
   block: {
     name: string
   }
-  blockObjects: ReadonlyArray<
-    BaseDefinition & {
-      fields: ReadonlyArray<{name: string; type: string}>
-    }
-  >
-  decorators: ReadonlyArray<
-    BaseDefinition & {
-      /**
-       * @deprecated
-       * Use `name` instead
-       */
-      value: string
-    }
-  >
-  inlineObjects: ReadonlyArray<
-    BaseDefinition & {
-      fields: ReadonlyArray<{name: string; type: string}>
-    }
-  >
+  blockObjects: ReadonlyArray<BlockObjectSchemaType>
+  decorators: ReadonlyArray<DecoratorSchemaType>
+  inlineObjects: ReadonlyArray<InlineObjectSchemaType>
   span: {
     name: string
   }
-  styles: ReadonlyArray<
-    BaseDefinition & {
-      /**
-       * @deprecated
-       * Use `name` instead
-       */
-      value: string
-    }
-  >
-  lists: ReadonlyArray<
-    BaseDefinition & {
-      /**
-       * @deprecated
-       * Use `name` instead
-       */
-      value: string
-    }
-  >
+  styles: ReadonlyArray<StyleSchemaType>
+  lists: ReadonlyArray<ListSchemaType>
+}
+
+/**
+ * @public
+ */
+export type AnnotationSchemaType = BaseDefinition & {
+  fields: ReadonlyArray<{name: string; type: string}>
+}
+
+/**
+ * @public
+ */
+export type BlockObjectSchemaType = BaseDefinition & {
+  fields: ReadonlyArray<{name: string; type: string}>
+}
+
+/**
+ * @public
+ */
+export type DecoratorSchemaType = BaseDefinition & {
+  /**
+   * @deprecated
+   * Use `name` instead
+   */
+  value: string
+}
+
+/**
+ * @public
+ */
+export type InlineObjectSchemaType = BaseDefinition & {
+  fields: ReadonlyArray<{name: string; type: string}>
+}
+
+/**
+ * @public
+ */
+export type ListSchemaType = BaseDefinition & {
+  /**
+   * @deprecated
+   * Use `name` instead
+   */
+  value: string
+}
+
+/**
+ * @public
+ */
+export type StyleSchemaType = BaseDefinition & {
+  /**
+   * @deprecated
+   * Use `name` instead
+   */
+  value: string
 }
 
 export function legacySchemaToEditorSchema(
