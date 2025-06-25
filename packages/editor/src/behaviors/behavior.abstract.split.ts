@@ -108,7 +108,6 @@ export const abstractSplitBehaviors = [
             context: {
               ...snapshot.context,
               selection: newTextBlockSelection,
-              value: [focusTextBlock.node],
             },
           })
           .at(0),
