@@ -1,6 +1,7 @@
 import type {PortableTextBlock, PortableTextTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
-import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
+import {compileSchemaDefinition} from '../editor/editor-schema'
+import {defineSchema} from '../editor/editor-schema-definition'
 import {sliceBlocks} from './util.slice-blocks'
 
 const b1: PortableTextTextBlock = {

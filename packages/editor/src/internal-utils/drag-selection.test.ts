@@ -1,5 +1,6 @@
 import {describe, expect, test} from 'vitest'
-import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
+import {compileSchemaDefinition} from '../editor/editor-schema'
+import {defineSchema} from '../editor/editor-schema-definition'
 import type {EditorSelection} from '../types/editor'
 import {createTestSnapshot} from './create-test-snapshot'
 import {getDragSelection} from './drag-selection'

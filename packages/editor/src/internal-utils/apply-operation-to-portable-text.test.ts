@@ -1,5 +1,6 @@
 import {describe, expect, test} from 'vitest'
-import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
+import {compileSchemaDefinition} from '../editor/editor-schema'
+import {defineSchema} from '../editor/editor-schema-definition'
 import {applyOperationToPortableText} from './apply-operation-to-portable-text'
 import {createTestKeyGenerator} from './test-key-generator'
 

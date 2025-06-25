@@ -1,6 +1,7 @@
 import type {PortableTextBlock} from '@sanity/types'
 import {expect, test} from 'vitest'
-import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
+import {compileSchemaDefinition} from '../editor/editor-schema'
+import {defineSchema} from '../editor/editor-schema-definition'
 import {blockOffsetToSpanSelectionPoint} from './util.block-offset'
 
 const schema = compileSchemaDefinition(defineSchema({}))

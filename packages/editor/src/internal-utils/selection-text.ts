@@ -1,5 +1,6 @@
 import type {PortableTextBlock} from '@sanity/types'
-import {compileSchemaDefinition, defineSchema} from '../editor/editor-schema'
+import {compileSchemaDefinition} from '../editor/editor-schema'
+import {defineSchema} from '../editor/editor-schema-definition'
 import type {EditorSelection} from '../types/editor'
 import {sliceBlocks} from '../utils/util.slice-blocks'
 import {getTersePt} from './terse-pt'

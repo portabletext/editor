@@ -15,18 +15,20 @@ export {
   type EditorProviderProps,
 } from './editor/editor-provider'
 export {
-  defineSchema,
   type AnnotationSchemaType,
-  type BaseDefinition,
   type BlockObjectSchemaType,
   type DecoratorSchemaType,
-  type FieldDefinition,
+  type EditorSchema,
   type InlineObjectSchemaType,
   type ListSchemaType,
-  type SchemaDefinition,
   type StyleSchemaType,
 } from './editor/editor-schema'
-export type {EditorSchema} from './editor/editor-schema'
+export {
+  defineSchema,
+  type BaseDefinition,
+  type FieldDefinition,
+  type SchemaDefinition,
+} from './editor/editor-schema-definition'
 export {useEditorSelector, type EditorSelector} from './editor/editor-selector'
 export type {EditorContext, EditorSnapshot} from './editor/editor-snapshot'
 export {usePortableTextEditor} from './editor/hooks/usePortableTextEditor'
