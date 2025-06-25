@@ -17,6 +17,20 @@ Feature: Insert Break
       | after "foo"  | "foo\|bar" | after "bar"  |
       | after "f"    | "f\|baroo" | after "bar"  |
 
+  Scenario Outline: Breaking second text block
+    Given the text "foo|bar"
+    When the caret is put <position>
+    And "{Enter}" is pressed
+    And "baz" is typed
+    Then the text is <text>
+    And the caret is <new position>
+
+    Examples:
+      | position     | text            | new position |
+      | before "bar" | "foo\|\|bazbar" | before "bar" |
+      | after "bar"  | "foo\|bar\|baz" | after "baz"  |
+      | after "b"    | "foo\|b\|bazar" | after "baz"  |
+
   Scenario: Pressing Enter when selecting the entire content
     Given the text "foo|[image]|bar"
     When everything is selected
