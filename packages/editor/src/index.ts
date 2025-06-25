@@ -16,9 +16,15 @@ export {
 } from './editor/editor-provider'
 export {
   defineSchema,
+  type AnnotationSchemaType,
   type BaseDefinition,
+  type BlockObjectSchemaType,
+  type DecoratorSchemaType,
   type FieldDefinition,
+  type InlineObjectSchemaType,
+  type ListSchemaType,
   type SchemaDefinition,
+  type StyleSchemaType,
 } from './editor/editor-schema'
 export type {EditorSchema} from './editor/editor-schema'
 export {useEditorSelector, type EditorSelector} from './editor/editor-selector'
