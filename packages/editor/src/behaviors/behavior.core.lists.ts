@@ -1,5 +1,5 @@
-import {isHotkey} from '../internal-utils/is-hotkey'
 import {isListBlock} from '../internal-utils/parse-blocks'
+import {defaultKeyboardShortcuts} from '../keyboard-shortcuts/default-keyboard-shortcuts'
 import * as selectors from '../selectors'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {raise} from './behavior.types.action'
@@ -105,7 +105,7 @@ const clearListOnEnter = defineBehavior({
 const indentListOnTab = defineBehavior({
   on: 'keyboard.keydown',
   guard: ({snapshot, event}) => {
-    const isTab = isHotkey('Tab', event.originEvent)
+    const isTab = defaultKeyboardShortcuts.tab.guard(event.originEvent)
 
     if (!isTab) {
       return false
@@ -149,7 +149,9 @@ const indentListOnTab = defineBehavior({
 const unindentListOnShiftTab = defineBehavior({
   on: 'keyboard.keydown',
   guard: ({snapshot, event}) => {
-    const isShiftTab = isHotkey('Shift+Tab', event.originEvent)
+    const isShiftTab = defaultKeyboardShortcuts.shiftTab.guard(
+      event.originEvent,
+    )
 
     if (!isShiftTab) {
       return false

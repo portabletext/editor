@@ -1,5 +1,5 @@
-import {isHotkey} from '../internal-utils/is-hotkey'
 import {isTextBlock} from '../internal-utils/parse-blocks'
+import {defaultKeyboardShortcuts} from '../keyboard-shortcuts/default-keyboard-shortcuts'
 import * as selectors from '../selectors'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {raise} from './behavior.types.action'
@@ -8,7 +8,9 @@ import {defineBehavior} from './behavior.types.behavior'
 const arrowDownOnLonelyBlockObject = defineBehavior({
   on: 'keyboard.keydown',
   guard: ({snapshot, event}) => {
-    const isArrowDown = isHotkey('ArrowDown', event.originEvent)
+    const isArrowDown = defaultKeyboardShortcuts.arrowDown.guard(
+      event.originEvent,
+    )
 
     if (!isArrowDown) {
       return false
@@ -41,7 +43,7 @@ const arrowDownOnLonelyBlockObject = defineBehavior({
 const arrowUpOnLonelyBlockObject = defineBehavior({
   on: 'keyboard.keydown',
   guard: ({snapshot, event}) => {
-    const isArrowUp = isHotkey('ArrowUp', event.originEvent)
+    const isArrowUp = defaultKeyboardShortcuts.arrowUp.guard(event.originEvent)
 
     if (!isArrowUp) {
       return false

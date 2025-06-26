@@ -1,4 +1,4 @@
-import {isHotkey} from '../internal-utils/is-hotkey'
+import {defaultKeyboardShortcuts} from '../keyboard-shortcuts/default-keyboard-shortcuts'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -6,7 +6,7 @@ export const coreDecoratorBehaviors = {
   strongShortcut: defineBehavior({
     on: 'keyboard.keydown',
     guard: ({snapshot, event}) =>
-      isHotkey('mod+b', event.originEvent) &&
+      defaultKeyboardShortcuts.decorators.strong.guard(event.originEvent) &&
       snapshot.context.schema.decorators.some(
         (decorator) => decorator.name === 'strong',
       ),
@@ -15,7 +15,7 @@ export const coreDecoratorBehaviors = {
   emShortcut: defineBehavior({
     on: 'keyboard.keydown',
     guard: ({snapshot, event}) =>
-      isHotkey('mod+i', event.originEvent) &&
+      defaultKeyboardShortcuts.decorators.em.guard(event.originEvent) &&
       snapshot.context.schema.decorators.some(
         (decorator) => decorator.name === 'em',
       ),
@@ -24,7 +24,7 @@ export const coreDecoratorBehaviors = {
   underlineShortcut: defineBehavior({
     on: 'keyboard.keydown',
     guard: ({snapshot, event}) =>
-      isHotkey('mod+u', event.originEvent) &&
+      defaultKeyboardShortcuts.decorators.underline.guard(event.originEvent) &&
       snapshot.context.schema.decorators.some(
         (decorator) => decorator.name === 'underline',
       ),
@@ -35,7 +35,7 @@ export const coreDecoratorBehaviors = {
   codeShortcut: defineBehavior({
     on: 'keyboard.keydown',
     guard: ({snapshot, event}) =>
-      isHotkey("mod+'", event.originEvent) &&
+      defaultKeyboardShortcuts.decorators.code.guard(event.originEvent) &&
       snapshot.context.schema.decorators.some(
         (decorator) => decorator.name === 'code',
       ),

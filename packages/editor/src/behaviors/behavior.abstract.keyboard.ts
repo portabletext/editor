@@ -1,13 +1,17 @@
-import {keyIs} from '../internal-utils/key-is'
+import {defaultKeyboardShortcuts} from '../keyboard-shortcuts/default-keyboard-shortcuts'
 import * as selectors from '../selectors'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
 export const abstractKeyboardBehaviors = [
+  /**
+   * Allow raising an `insert.break` event when pressing Enter on an inline
+   * object.
+   */
   defineBehavior({
     on: 'keyboard.keydown',
     guard: ({snapshot, event}) =>
-      keyIs.break(event.originEvent) &&
+      defaultKeyboardShortcuts.break.guard(event.originEvent) &&
       selectors.isSelectionCollapsed(snapshot) &&
       selectors.getFocusInlineObject(snapshot),
     actions: [() => [raise({type: 'insert.break'})]],
@@ -20,7 +24,8 @@ export const abstractKeyboardBehaviors = [
    */
   defineBehavior({
     on: 'keyboard.keydown',
-    guard: ({event}) => keyIs.lineBreak(event.originEvent),
+    guard: ({event}) =>
+      defaultKeyboardShortcuts.lineBreak.guard(event.originEvent),
     actions: [() => [raise({type: 'insert.soft break'})]],
   }),
 ]
