@@ -128,6 +128,58 @@ export const defaultKeyboardShortcuts = {
       },
     }),
   },
+  history: {
+    undo: createKeyboardShortcut({
+      default: {
+        guard: (event) =>
+          isKeyboardShortcut(event, 'z', {
+            altKey: false,
+            ctrlKey: true,
+            metaKey: false,
+            shiftKey: false,
+          }),
+        keys: ['Ctrl', 'Z'],
+      },
+      apple: {
+        guard: (event) =>
+          isKeyboardShortcut(event, 'z', {
+            altKey: false,
+            ctrlKey: false,
+            metaKey: true,
+            shiftKey: false,
+          }),
+        keys: ['⌘', 'Z'],
+      },
+    }),
+    redo: createKeyboardShortcut({
+      default: {
+        guard: (event) =>
+          isKeyboardShortcut(event, 'y', {
+            ctrlKey: true,
+            metaKey: false,
+            shiftKey: false,
+            altKey: false,
+          }) ||
+          isKeyboardShortcut(event, 'z', {
+            ctrlKey: true,
+            metaKey: false,
+            shiftKey: true,
+            altKey: false,
+          }),
+        keys: ['Ctrl', 'Y'],
+      },
+      apple: {
+        guard: (event) =>
+          isKeyboardShortcut(event, 'z', {
+            ctrlKey: false,
+            metaKey: true,
+            shiftKey: true,
+            altKey: false,
+          }),
+        keys: ['⌘', 'Shift', 'Z'],
+      },
+    }),
+  },
   tab: createKeyboardShortcut({
     default: {
       guard: (event) =>
