@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.55.6](https://github.com/portabletext/editor/compare/editor-v1.55.5...editor-v1.55.6) (2025-06-26)
+
+
+### Bug Fixes
+
+* **types:** export `InsertPlacement` ([e1745f4](https://github.com/portabletext/editor/commit/e1745f45cea567be279b141fb8dae2f402362425))
+* **types:** export individual schema definitions ([5bc33ca](https://github.com/portabletext/editor/commit/5bc33caacd85b3d3494bcceb759fa50d5c4b244b))
+* **types:** export individual schema types ([6cd4741](https://github.com/portabletext/editor/commit/6cd47417d54e4b0da2f6f9168eab02d850faa624))
+* **types:** narrow schema field types ([ee21558](https://github.com/portabletext/editor/commit/ee21558d201ce882c27c1ccedc394e2a709536ff))
+
 ## [1.55.5](https://github.com/portabletext/editor/compare/editor-v1.55.4...editor-v1.55.5) (2025-06-25)
 
 
