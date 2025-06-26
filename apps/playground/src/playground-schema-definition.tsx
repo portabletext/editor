@@ -22,6 +22,8 @@ import {
   UnderlineIcon,
 } from 'lucide-react'
 import {z} from 'zod'
+import {isHotkey} from './plugins/is-hotkey'
+import {createKeyboardShortcut} from './toolbar/keyboard-shortcut'
 import type {ToolbarSchemaDefinition} from './toolbar/toolbar-schema-definition'
 
 /**
@@ -35,26 +37,76 @@ export const playgroundSchemaDefinition = defineSchema({
       title: 'Strong',
       name: 'strong',
       icon: BoldIcon,
+      shortcut: createKeyboardShortcut({
+        default: {
+          guard: (event) => isHotkey('mod+b', event),
+          keys: ['Ctrl', 'B'],
+        },
+        apple: {
+          guard: (event) => isHotkey('mod+b', event),
+          keys: ['⌘', 'B'],
+        },
+      }),
     },
     {
       title: 'Emphasis',
       name: 'em',
       icon: ItalicIcon,
+      shortcut: createKeyboardShortcut({
+        default: {
+          guard: (event) => isHotkey('mod+i', event),
+          keys: ['Ctrl', 'I'],
+        },
+        apple: {
+          guard: (event) => isHotkey('mod+i', event),
+          keys: ['⌘', 'I'],
+        },
+      }),
     },
     {
       title: 'Code',
       name: 'code',
       icon: CodeIcon,
+      shortcut: createKeyboardShortcut({
+        default: {
+          guard: (event) => isHotkey("mod+'", event),
+          keys: ['Ctrl', "'"],
+        },
+        apple: {
+          guard: (event) => isHotkey("mod+'", event),
+          keys: ['⌘', "'"],
+        },
+      }),
     },
     {
       title: 'Underline',
       name: 'underline',
       icon: UnderlineIcon,
+      shortcut: createKeyboardShortcut({
+        default: {
+          guard: (event) => isHotkey('mod+u', event),
+          keys: ['Ctrl', 'U'],
+        },
+        apple: {
+          guard: (event) => isHotkey('mod+u', event),
+          keys: ['⌘', 'U'],
+        },
+      }),
     },
     {
       title: 'Strike',
       name: 'strike-through',
       icon: StrikethroughIcon,
+      shortcut: createKeyboardShortcut({
+        default: {
+          guard: (event) => isHotkey('mod+shift+x', event),
+          keys: ['Ctrl', 'Shift', 'X'],
+        },
+        apple: {
+          guard: (event) => isHotkey('mod+shift+x', event),
+          keys: ['⌘', 'Shift', 'X'],
+        },
+      }),
     },
   ],
   annotations: [

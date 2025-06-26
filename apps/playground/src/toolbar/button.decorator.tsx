@@ -1,8 +1,7 @@
-import {TooltipTrigger} from 'react-aria-components'
 import {useDecoratorButton} from '../plugins/toolbar/use-decorator-button'
 import {Icon} from '../primitives/icon'
 import {ToggleButton} from '../primitives/toggle-button'
-import {Tooltip} from '../primitives/tooltip'
+import {ButtonTooltip} from './button-tooltip'
 import type {ToolbarDecoratorDefinition} from './toolbar-schema-definition'
 
 export function DecoratorButton(props: {
@@ -11,7 +10,10 @@ export function DecoratorButton(props: {
   const {disabled, active, onToggle} = useDecoratorButton(props)
 
   return (
-    <TooltipTrigger>
+    <ButtonTooltip
+      label={props.definition.title ?? props.definition.name}
+      shortcut={props.definition.shortcut?.keys}
+    >
       <ToggleButton
         aria-label={props.definition.title ?? props.definition.name}
         size="sm"
@@ -24,7 +26,6 @@ export function DecoratorButton(props: {
           fallback={props.definition.title ?? props.definition.name}
         />
       </ToggleButton>
-      <Tooltip>{props.definition.title}</Tooltip>
-    </TooltipTrigger>
+    </ButtonTooltip>
   )
 }
