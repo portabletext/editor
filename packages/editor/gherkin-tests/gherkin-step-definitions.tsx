@@ -21,6 +21,7 @@ import {
   getTextSelection,
 } from '../src/internal-utils/text-selection'
 import {getValueAnnotations} from '../src/internal-utils/value-annotations'
+import {IS_APPLE} from '../src/keyboard-shortcuts/keyboard-shortcuts'
 import {isSelectionCollapsed} from '../src/utils'
 import {reverseSelection} from '../src/utils/util.reverse-selection'
 import {Editors} from './editors'
@@ -926,7 +927,9 @@ export async function type(editor: EditorContext, text: string) {
 export async function undo(editor: EditorContext) {
   await waitForNewValue(async () => {
     editor.actorRef.send({type: 'focus'})
-    await userEvent.keyboard(`{${getMetaKey()}>}z{/${getMetaKey()}}`)
+    await userEvent.keyboard(
+      IS_APPLE ? '{Meta>}z{/Meta}' : '{Control>}z{/Control}',
+    )
   })
 }
 
@@ -934,7 +937,7 @@ export async function redo(editor: EditorContext) {
   await waitForNewValue(async () => {
     editor.actorRef.send({type: 'focus'})
     await userEvent.keyboard(
-      `{Shift>}{${getMetaKey()}>}z{/${getMetaKey()}}{/Shift}`,
+      IS_APPLE ? '{Shift>}{Meta>}z{/Meta}{/Shift}' : '{Control>}y{/Control}',
     )
   })
 }

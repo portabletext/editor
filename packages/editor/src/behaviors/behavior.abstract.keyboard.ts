@@ -28,4 +28,24 @@ export const abstractKeyboardBehaviors = [
       defaultKeyboardShortcuts.lineBreak.guard(event.originEvent),
     actions: [() => [raise({type: 'insert.soft break'})]],
   }),
+
+  /**
+   * Manual handling of undo shortcuts.
+   */
+  defineBehavior({
+    on: 'keyboard.keydown',
+    guard: ({event}) =>
+      defaultKeyboardShortcuts.history.undo.guard(event.originEvent),
+    actions: [() => [raise({type: 'history.undo'})]],
+  }),
+
+  /**
+   * Manual handling of redo shortcuts.
+   */
+  defineBehavior({
+    on: 'keyboard.keydown',
+    guard: ({event}) =>
+      defaultKeyboardShortcuts.history.redo.guard(event.originEvent),
+    actions: [() => [raise({type: 'history.redo'})]],
+  }),
 ]
