@@ -5,6 +5,7 @@ import {AnnotationButton} from './button.annotation'
 import {BlockObjectButton} from './button.block-object'
 import {DecoratorButton} from './button.decorator'
 import {FocusButton} from './button.focus'
+import {HistoryButtons} from './button.history'
 import {InlineObjectButton} from './button.inline-object'
 import {ListButton} from './button.list'
 import {StyleButton} from './button.style'
@@ -20,6 +21,8 @@ export function PortableTextToolbar(props: {
   return (
     <>
       <Toolbar aria-label="Editor toolbar">
+        <HistoryButtons />
+        <Separator orientation="vertical" />
         <StyleButton definitions={props.schemaDefinition.styles} />
         <Separator orientation="vertical" />
         <Group aria-label="Decorators">
