@@ -14,7 +14,7 @@ export type EditorEmittedEvent =
     }
   | {
       /**
-       * @deprecated
+       * @deprecated Will be removed in the next major version
        */
       type: 'done loading'
     }
@@ -33,7 +33,7 @@ export type EditorEmittedEvent =
     }
   | {
       /**
-       * @deprecated
+       * @deprecated Will be removed in the next major version
        */
       type: 'loading'
     }
