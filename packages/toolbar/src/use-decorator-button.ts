@@ -3,7 +3,7 @@ import {
   useEditorSelector,
   type DecoratorDefinition,
 } from '@portabletext/editor'
-import {defineBehavior, raise} from '@portabletext/editor/behaviors'
+import {defineBehavior, forward, raise} from '@portabletext/editor/behaviors'
 import * as selectors from '@portabletext/editor/selectors'
 import {useCallback, useEffect} from 'react'
 import type {KeyboardShortcut} from './keyboard-shortcut'
@@ -12,7 +12,10 @@ import type {KeyboardShortcut} from './keyboard-shortcut'
  * @beta
  */
 export function useDecoratorButton(props: {
-  definition: DecoratorDefinition & {shortcut?: KeyboardShortcut}
+  definition: DecoratorDefinition & {
+    shortcut?: KeyboardShortcut
+    mutuallyExclusive?: ReadonlyArray<DecoratorDefinition['name']>
+  }
 }) {
   const editor = useEditor()
   const disabled = useEditorSelector(
@@ -53,6 +56,32 @@ export function useDecoratorButton(props: {
       }),
     })
   }, [editor, props.definition.name, props.definition.shortcut])
+
+  useEffect(() => {
+    const mutuallyExclusive = props.definition.mutuallyExclusive
+
+    if (!mutuallyExclusive) {
+      return
+    }
+
+    return editor.registerBehavior({
+      behavior: defineBehavior({
+        on: 'decorator.add',
+        guard: ({event}) => event.decorator === props.definition.name,
+        actions: [
+          ({event}) => [
+            forward(event),
+            ...mutuallyExclusive.map((decorator) =>
+              raise({
+                type: 'decorator.remove',
+                decorator,
+              }),
+            ),
+          ],
+        ],
+      }),
+    })
+  }, [editor, props.definition.name, props.definition.mutuallyExclusive])
 
   return {disabled, active, onToggle}
 }

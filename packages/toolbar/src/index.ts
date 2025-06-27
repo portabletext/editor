@@ -1,16 +1,16 @@
+export {isKeyboardShortcut} from './is-keyboard-shortcut'
+export {
+  createKeyboardShortcut,
+  IS_APPLE,
+  type KeyboardShortcut,
+} from './keyboard-shortcut'
 export * from './use-annotation-button'
-export * from './use-decorator-button'
 export * from './use-annotation-popover'
 export * from './use-block-object-button'
 export * from './use-block-object-popover'
+export * from './use-decorator-button'
 export * from './use-history-buttons'
 export * from './use-inline-object-button'
 export * from './use-inline-object-popover'
 export * from './use-list-button'
 export * from './use-style-selector'
-export {isKeyboardShortcut} from './is-keyboard-shortcut'
-export {
-  type KeyboardShortcut,
-  IS_APPLE,
-  createKeyboardShortcut,
-} from './keyboard-shortcut'
