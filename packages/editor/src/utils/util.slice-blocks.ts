@@ -5,7 +5,8 @@ import {
   getBlockKeyFromSelectionPoint,
   getChildKeyFromSelectionPoint,
 } from '../selection/selection-point'
-import {getSelectionEndPoint, getSelectionStartPoint} from '../utils'
+import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
+import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
 
 /**
  * @public

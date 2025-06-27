@@ -3,10 +3,10 @@ import type {BlockOffset} from '../types/block-offset'
 import type {EditorSelection} from '../types/editor'
 import {
   blockOffsetToSpanSelectionPoint,
-  getBlockEndPoint,
-  getBlockStartPoint,
   spanSelectionPointToBlockOffset,
-} from '../utils'
+} from '../utils/util.block-offset'
+import {getBlockEndPoint} from '../utils/util.get-block-end-point'
+import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {getFocusTextBlock} from './selector.get-focus-text-block'
 import {getNextInlineObject} from './selector.get-next-inline-object'
 import {getPreviousInlineObject} from './selector.get-previous-inline-object'

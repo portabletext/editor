@@ -1,5 +1,5 @@
 import type {EditorSelectionPoint} from '../types/editor'
-import {isKeyedSegment} from '../utils'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 
 export function getBlockKeyFromSelectionPoint(point: EditorSelectionPoint) {
   const blockPathSegment = point.path.at(0)
