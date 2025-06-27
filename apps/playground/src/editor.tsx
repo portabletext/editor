@@ -416,6 +416,8 @@ const decoratorMap: Map<
       <span style={{textDecorationLine: 'line-through'}}>{props.children}</span>
     ),
   ],
+  ['subscript', (props) => <sub>{props.children}</sub>],
+  ['superscript', (props) => <sup>{props.children}</sup>],
 ])
 
 const styleMap: Map<string, (props: BlockStyleRenderProps) => JSX.Element> =

@@ -19,6 +19,8 @@ import {
   PilcrowIcon,
   SeparatorHorizontalIcon,
   StrikethroughIcon,
+  SubscriptIcon,
+  SuperscriptIcon,
   TextQuoteIcon,
   UnderlineIcon,
 } from 'lucide-react'
@@ -107,6 +109,18 @@ export const playgroundSchemaDefinition = defineSchema({
           keys: ['⌘', 'Shift', 'X'],
         },
       }),
+    },
+    {
+      title: 'Subscript',
+      name: 'subscript',
+      icon: SubscriptIcon,
+      mutuallyExclusive: ['superscript'],
+    },
+    {
+      title: 'Superscript',
+      name: 'superscript',
+      icon: SuperscriptIcon,
+      mutuallyExclusive: ['subscript'],
     },
   ],
   annotations: [
