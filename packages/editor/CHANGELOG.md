@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.55.8](https://github.com/portabletext/editor/compare/editor-v1.55.7...editor-v1.55.8) (2025-06-27)
+
+
+### Bug Fixes
+
+* **perf:** skip building index maps on text operations ([222f854](https://github.com/portabletext/editor/commit/222f854a2e85720f8e91d60debe98c889476501f))
+
 ## [1.55.7](https://github.com/portabletext/editor/compare/editor-v1.55.6...editor-v1.55.7) (2025-06-27)
 
 
