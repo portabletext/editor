@@ -1,5 +1,5 @@
+import {useBlockObjectButton} from '@portabletext/toolbar'
 import {TooltipTrigger} from 'react-aria-components'
-import {useBlockObjectButton} from '../plugins/toolbar/use-block-object-button'
 import {Button} from '../primitives/button'
 import {Dialog} from '../primitives/dialog'
 import {Icon} from '../primitives/icon'

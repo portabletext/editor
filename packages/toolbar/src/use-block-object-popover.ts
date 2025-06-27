@@ -9,6 +9,9 @@ import * as selectors from '@portabletext/editor/selectors'
 import {useCallback, useEffect, useState, type RefObject} from 'react'
 import * as React from 'react'
 
+/**
+ * @beta
+ */
 export function useBlockObjectPopover() {
   const editor = useEditor()
   const schemaTypes = useEditorSelector(

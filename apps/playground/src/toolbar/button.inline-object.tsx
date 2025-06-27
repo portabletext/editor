@@ -1,5 +1,5 @@
+import {useInlineObjectButton} from '@portabletext/toolbar'
 import {TooltipTrigger} from 'react-aria-components'
-import {useInlineObjectButton} from '../plugins/toolbar/use-inline-object-button'
 import {Button} from '../primitives/button'
 import {Dialog} from '../primitives/dialog'
 import {Icon} from '../primitives/icon'

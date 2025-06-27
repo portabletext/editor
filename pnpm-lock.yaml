@@ -164,6 +164,9 @@ importers:
       '@portabletext/plugin-one-line':
         specifier: ^1.0.15
         version: 1.0.15(@portabletext/editor@packages+editor)(react@19.1.0)
+      '@portabletext/toolbar':
+        specifier: workspace:*
+        version: link:../../packages/toolbar
       '@xstate/react':
         specifier: ^6.0.0
         version: 6.0.0(@types/react@19.1.8)(react@19.1.0)(xstate@5.20.0)
@@ -590,6 +593,22 @@ importers:
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@22.14.0)(@vitest/browser@3.2.4)(jiti@2.4.2)(jsdom@26.0.0)(lightningcss@1.30.1)(terser@5.39.0)(yaml@2.7.1)
+
+  packages/toolbar:
+    dependencies:
+      '@portabletext/editor':
+        specifier: workspace:*
+        version: link:../editor
+    devDependencies:
+      '@sanity/pkg-utils':
+        specifier: ^7.8.8
+        version: 7.8.8(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(debug@4.4.1)(typescript@5.8.3)
+      '@types/react':
+        specifier: ^19.1.8
+        version: 19.1.8
+      react:
+        specifier: ^19.1.0
+        version: 19.1.0
 
 packages:
 

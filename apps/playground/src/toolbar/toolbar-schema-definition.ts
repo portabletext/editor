@@ -7,7 +7,7 @@ import type {
   ListDefinition,
   StyleDefinition,
 } from '@portabletext/editor'
-import type {KeyboardShortcut} from './keyboard-shortcut'
+import type {KeyboardShortcut} from '@portabletext/toolbar'
 
 export type ToolbarDecoratorDefinition = DecoratorDefinition & {
   icon: React.ComponentType

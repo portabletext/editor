@@ -25,6 +25,10 @@ export default defineConfig({
         __dirname,
         '../../packages/patches/src',
       ),
+      '@portabletext/toolbar': path.resolve(
+        __dirname,
+        '../../packages/toolbar/src',
+      ),
     },
   },
 })

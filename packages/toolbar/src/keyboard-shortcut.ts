@@ -27,6 +27,9 @@ export type KeyboardShortcutDefinition<
   }
 }
 
+/**
+ * @beta
+ */
 export type KeyboardShortcut<
   TKeyboardEvent extends Pick<
     KeyboardEvent,
@@ -40,10 +43,16 @@ export type KeyboardShortcut<
   keys: ReadonlyArray<string>
 }
 
+/**
+ * @beta
+ */
 export const IS_APPLE =
   typeof window !== 'undefined' &&
   /Mac|iPod|iPhone|iPad/.test(window.navigator.userAgent)
 
+/**
+ * @beta
+ */
 export function createKeyboardShortcut<
   TKeyboardEvent extends Pick<
     KeyboardEvent,

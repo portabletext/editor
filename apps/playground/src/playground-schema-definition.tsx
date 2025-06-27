@@ -1,4 +1,5 @@
 import {defineSchema} from '@portabletext/editor'
+import {createKeyboardShortcut} from '@portabletext/toolbar'
 import {
   ActivityIcon,
   BoldIcon,
@@ -23,7 +24,6 @@ import {
 } from 'lucide-react'
 import {z} from 'zod'
 import {isHotkey} from './plugins/is-hotkey'
-import {createKeyboardShortcut} from './toolbar/keyboard-shortcut'
 import type {ToolbarSchemaDefinition} from './toolbar/toolbar-schema-definition'
 
 /**

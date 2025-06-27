@@ -1,5 +1,5 @@
+import {useListButton} from '@portabletext/toolbar'
 import {TooltipTrigger} from 'react-aria-components'
-import {useListButton} from '../plugins/toolbar/use-list-button'
 import {Icon} from '../primitives/icon'
 import {ToggleButton} from '../primitives/toggle-button'
 import {Tooltip} from '../primitives/tooltip'

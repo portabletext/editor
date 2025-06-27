@@ -5,6 +5,9 @@ type AllowedModifiers = {
   altKey?: boolean
 }
 
+/**
+ * @beta
+ */
 export function isKeyboardShortcut<
   TKeyboardEvent extends Pick<
     KeyboardEvent,

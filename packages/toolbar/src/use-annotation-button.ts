@@ -6,6 +6,9 @@ import {
 import * as selectors from '@portabletext/editor/selectors'
 import {useCallback} from 'react'
 
+/**
+ * @beta
+ */
 export function useAnnotationButton(props: {definition: AnnotationDefinition}) {
   const editor = useEditor()
   const disabled = useEditorSelector(
