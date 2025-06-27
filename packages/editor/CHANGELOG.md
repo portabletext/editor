@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.55.7](https://github.com/portabletext/editor/compare/editor-v1.55.6...editor-v1.55.7) (2025-06-27)
+
+
+### Bug Fixes
+
+* add deprecation messages ([c33bf65](https://github.com/portabletext/editor/commit/c33bf65a251229244fa8dedc3c673ed69f1e6d67))
+* **deps:** update sanity monorepo to ^3.95.0 ([a1605c6](https://github.com/portabletext/editor/commit/a1605c6a4c7a5c51e210881b1a76892b0c0ff24b))
+* **deps:** Update slate to v0.117.2 ([3344c7c](https://github.com/portabletext/editor/commit/3344c7cfc2a722e67ba588029364489c02ec13d1))
+* manually handle undo/redo keyboard shortcuts ([07502fa](https://github.com/portabletext/editor/commit/07502faf462eb5cbf109a6db2e75d56b5e16289c))
+* remove circular dependencies ([939f569](https://github.com/portabletext/editor/commit/939f569a3d39b44198f70be61158784d512792c6))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.33
+
 ## [1.55.6](https://github.com/portabletext/editor/compare/editor-v1.55.5...editor-v1.55.6) (2025-06-26)
 
 
