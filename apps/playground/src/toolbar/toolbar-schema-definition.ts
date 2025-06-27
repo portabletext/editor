@@ -12,6 +12,7 @@ import type {KeyboardShortcut} from '@portabletext/toolbar'
 export type ToolbarDecoratorDefinition = DecoratorDefinition & {
   icon: React.ComponentType
   shortcut?: KeyboardShortcut
+  mutuallyExclusive?: ReadonlyArray<DecoratorDefinition['name']>
 }
 export type ToolbarAnnotationDefinition = AnnotationDefinition & {
   icon: React.ComponentType
