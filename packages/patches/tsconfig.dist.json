@@ -1,6 +1,7 @@
 {
   "extends": "./tsconfig.settings",
   "compilerOptions": {
+    "noCheck": true,
     "rootDir": "src"
   },
   "include": ["src/**/*.ts"],
