@@ -21,6 +21,13 @@ export function pluginUpdateValue(
       operation,
     )
 
+    if (operation.type === 'insert_text' || operation.type === 'remove_text') {
+      // Inserting and removing text has no effect on index maps so there is
+      // no need to rebuild those.
+      apply(operation)
+      return
+    }
+
     buildIndexMaps(
       {
         schema: context.schema,
