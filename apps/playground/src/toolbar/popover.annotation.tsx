@@ -1,7 +1,7 @@
+import {useAnnotationPopover} from '@portabletext/toolbar'
 import {PencilIcon, TrashIcon} from 'lucide-react'
 import React from 'react'
 import {TooltipTrigger} from 'react-aria-components'
-import {useAnnotationPopover} from '../plugins/toolbar/use-annotation-popover'
 import {Button} from '../primitives/button'
 import {Dialog} from '../primitives/dialog'
 import {Popover} from '../primitives/popover'

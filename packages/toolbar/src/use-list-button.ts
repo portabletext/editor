@@ -6,6 +6,9 @@ import {
 import * as selectors from '@portabletext/editor/selectors'
 import {useCallback} from 'react'
 
+/**
+ * @beta
+ */
 export function useListButton(props: {definition: ListDefinition}) {
   const editor = useEditor()
   const disabled = useEditorSelector(

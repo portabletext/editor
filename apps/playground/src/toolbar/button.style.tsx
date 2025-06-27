@@ -1,5 +1,5 @@
+import {useStyleSelector} from '@portabletext/toolbar'
 import {TooltipTrigger} from 'react-aria-components'
-import {useStyleSelector} from '../plugins/toolbar/use-style-selector'
 import {Icon} from '../primitives/icon'
 import {Select, SelectItem} from '../primitives/select'
 import {Tooltip} from '../primitives/tooltip'

@@ -1,12 +1,16 @@
 import {
   useEditor,
   useEditorSelector,
-  type InlineObjectDefinition,
+  type BlockObjectDefinition,
 } from '@portabletext/editor'
+import type {InsertPlacement} from '@portabletext/editor/behaviors'
 import {useCallback} from 'react'
 
-export function useInlineObjectButton(props: {
-  definition: InlineObjectDefinition
+/**
+ * @beta
+ */
+export function useBlockObjectButton(props: {
+  definition: BlockObjectDefinition
 }) {
   const editor = useEditor()
   const disabled = useEditorSelector(
@@ -14,13 +18,20 @@ export function useInlineObjectButton(props: {
     (snapshot) => snapshot.context.readOnly,
   )
   const onInsert = useCallback(
-    ({value}: {value: {[key: string]: unknown}}) => {
+    ({
+      value,
+      placement,
+    }: {
+      value: {[key: string]: unknown}
+      placement: InsertPlacement | undefined
+    }) => {
       editor.send({
-        type: 'insert.inline object',
-        inlineObject: {
+        type: 'insert.block object',
+        blockObject: {
           name: props.definition.name,
           value,
         },
+        placement: placement ?? 'auto',
       })
       editor.send({type: 'focus'})
     },

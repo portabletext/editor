@@ -6,6 +6,9 @@ import {
 import * as selectors from '@portabletext/editor/selectors'
 import {useCallback} from 'react'
 
+/**
+ * @beta
+ */
 export function useStyleSelector() {
   const editor = useEditor()
   const activeStyle = useEditorSelector(editor, selectors.getActiveStyle)

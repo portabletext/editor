@@ -1,9 +1,8 @@
+import {IS_APPLE, useHistoryButtons} from '@portabletext/toolbar'
 import {Redo2Icon, Undo2Icon} from 'lucide-react'
-import {useHistoryButtons} from '../plugins/toolbar/use-history-buttons'
 import {Button} from '../primitives/button'
 import {Group} from '../primitives/group'
 import {ButtonTooltip} from './button-tooltip'
-import {IS_APPLE} from './keyboard-shortcut'
 
 export function HistoryButtons() {
   const {disabled, onUndo, onRedo} = useHistoryButtons()

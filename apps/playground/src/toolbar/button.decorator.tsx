@@ -1,4 +1,4 @@
-import {useDecoratorButton} from '../plugins/toolbar/use-decorator-button'
+import {useDecoratorButton} from '@portabletext/toolbar'
 import {Icon} from '../primitives/icon'
 import {ToggleButton} from '../primitives/toggle-button'
 import {ButtonTooltip} from './button-tooltip'

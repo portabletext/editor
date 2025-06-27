@@ -6,8 +6,11 @@ import {
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 import * as selectors from '@portabletext/editor/selectors'
 import {useCallback, useEffect} from 'react'
-import type {KeyboardShortcut} from '../../toolbar/keyboard-shortcut'
+import type {KeyboardShortcut} from './keyboard-shortcut'
 
+/**
+ * @beta
+ */
 export function useDecoratorButton(props: {
   definition: DecoratorDefinition & {shortcut?: KeyboardShortcut}
 }) {

@@ -1,5 +1,5 @@
+import {useAnnotationButton} from '@portabletext/toolbar'
 import {TooltipTrigger} from 'react-aria-components'
-import {useAnnotationButton} from '../plugins/toolbar/use-annotation-button'
 import {Button} from '../primitives/button'
 import {Dialog} from '../primitives/dialog'
 import {Icon} from '../primitives/icon'

@@ -1,6 +1,6 @@
+import {useInlineObjectPopover} from '@portabletext/toolbar'
 import {PencilIcon, TrashIcon} from 'lucide-react'
 import {TooltipTrigger} from 'react-aria-components'
-import {useInlineObjectPopover} from '../plugins/toolbar/use-inline-object-popover'
 import {Button} from '../primitives/button'
 import {Dialog} from '../primitives/dialog'
 import {Popover} from '../primitives/popover'

@@ -1,0 +1,61 @@
+{
+  "name": "@portabletext/toolbar",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Utilities for building a toolbar for the Portable Text Editor",
+  "keywords": [
+    "portabletext",
+    "toolbar"
+  ],
+  "homepage": "https://portabletext.org",
+  "bugs": {
+    "url": "https://github.com/portabletext/editor/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/portabletext/editor.git",
+    "directory": "packages/toolbar"
+  },
+  "license": "MIT",
+  "author": "Sanity.io <hello@sanity.io>",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "src",
+    "dist"
+  ],
+  "scripts": {
+    "build": "pkg-utils build --strict --check --clean",
+    "check:lint": "biome lint .",
+    "check:react-compiler": "eslint --cache --no-inline-config --no-eslintrc --ignore-pattern '**/__tests__/**' --ext .cjs,.mjs,.js,.jsx,.ts,.tsx --parser @typescript-eslint/parser --plugin react-compiler --plugin react-hooks --rule 'react-compiler/react-compiler: [warn]' --rule 'react-hooks/rules-of-hooks: [error]' --rule 'react-hooks/exhaustive-deps: [error]' src",
+    "check:types": "tsc",
+    "check:types:watch": "tsc --watch",
+    "clean": "del .turbo && del dist && del node_modules",
+    "dev": "pkg-utils watch",
+    "lint:fix": "biome lint --write .",
+    "prepublishOnly": "turbo run build"
+  },
+  "devDependencies": {
+    "@sanity/pkg-utils": "^7.8.8",
+    "@types/react": "^19.1.2",
+    "react": "^19.1.0"
+  },
+  "peerDependencies": {
+    "react": "^19.1.0"
+  },
+  "dependencies": {
+    "@portabletext/editor": "workspace:*"
+  }
+}

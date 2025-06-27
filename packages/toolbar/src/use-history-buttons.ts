@@ -1,6 +1,9 @@
 import {useEditor, useEditorSelector} from '@portabletext/editor'
 import {useCallback} from 'react'
 
+/**
+ * @beta
+ */
 export function useHistoryButtons() {
   const editor = useEditor()
   const disabled = useEditorSelector(
