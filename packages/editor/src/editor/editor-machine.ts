@@ -141,6 +141,7 @@ export const editorMachine = setup({
   types: {
     context: {} as {
       behaviors: Set<BehaviorConfig>
+      behaviorsSorted: boolean
       converters: Set<Converter>
       getLegacySchema: () => PortableTextMemberSchemaTypes
       keyGenerator: () => string
@@ -177,6 +178,7 @@ export const editorMachine = setup({
 
         return new Set([...context.behaviors, event.behaviorConfig])
       },
+      behaviorsSorted: false,
     }),
     'remove behavior from context': assign({
       behaviors: ({context, event}) => {
@@ -257,10 +259,9 @@ export const editorMachine = setup({
       assertEvent(event, ['behavior event'])
 
       try {
-        const behaviors = sortByPriority([
-          ...context.behaviors.values(),
-          ...coreBehaviorsConfig,
-        ]).map((config) => config.behavior)
+        const behaviors = [...context.behaviors.values()].map(
+          (config) => config.behavior,
+        )
 
         performEvent({
           mode: 'raise',
@@ -289,6 +290,13 @@ export const editorMachine = setup({
         )
       }
     },
+    'sort behaviors': assign({
+      behaviors: ({context}) =>
+        !context.behaviorsSorted
+          ? new Set(sortByPriority([...context.behaviors.values()]))
+          : context.behaviors,
+      behaviorsSorted: true,
+    }),
   },
   guards: {
     'slate is busy': ({context}) => {
@@ -302,7 +310,8 @@ export const editorMachine = setup({
 }).createMachine({
   id: 'editor',
   context: ({input}) => ({
-    behaviors: new Set([]),
+    behaviors: new Set(coreBehaviorsConfig),
+    behaviorsSorted: false,
     converters: new Set(input.converters ?? []),
     getLegacySchema: input.getLegacySchema,
     keyGenerator: input.keyGenerator,
@@ -339,7 +348,7 @@ export const editorMachine = setup({
           initial: 'determine initial edit mode',
           on: {
             'behavior event': {
-              actions: 'handle behavior event',
+              actions: ['sort behaviors', 'handle behavior event'],
               guard: ({event}) =>
                 event.behaviorEvent.type === 'clipboard.copy' ||
                 event.behaviorEvent.type === 'mouse.click' ||
@@ -406,7 +415,7 @@ export const editorMachine = setup({
               actions: ['emit read only'],
             },
             'behavior event': {
-              actions: 'handle behavior event',
+              actions: ['sort behaviors', 'handle behavior event'],
             },
             'blur': {
               actions: 'handle blur',
