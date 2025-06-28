@@ -1,7 +1,12 @@
 import {useRef, type ReactElement} from 'react'
 import {Range, type Element as SlateElement} from 'slate'
 import {DOMEditor} from 'slate-dom'
-import {useSelected, useSlateStatic, type RenderElementProps} from 'slate-react'
+import {
+  useSelected,
+  useSlateSelector,
+  useSlateStatic,
+  type RenderElementProps,
+} from 'slate-react'
 import {getPointBlock} from '../../internal-utils/slate-utils'
 import type {
   PortableTextMemberSchemaTypes,
@@ -22,6 +27,12 @@ export function RenderInlineObject(props: {
   const inlineObjectRef = useRef<HTMLElement>(null)
   const slateEditor = useSlateStatic()
   const selected = useSelected()
+  const focused = useSlateSelector(
+    (editor) =>
+      selected &&
+      editor.selection !== null &&
+      Range.isCollapsed(editor.selection),
+  )
 
   const legacySchemaType = props.legacySchema.inlineObjects.find(
     (inlineObject) => inlineObject.name === props.element._type,
@@ -33,10 +44,6 @@ export function RenderInlineObject(props: {
     )
   }
 
-  const focused =
-    selected &&
-    slateEditor.selection !== null &&
-    Range.isCollapsed(slateEditor.selection)
   const path = DOMEditor.findPath(slateEditor, props.element)
   const [block] = getPointBlock({
     editor: slateEditor,
