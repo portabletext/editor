@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.55.9](https://github.com/portabletext/editor/compare/editor-v1.55.8...editor-v1.55.9) (2025-06-28)
+
+
+### Bug Fixes
+
+* **`renderInlineObject`:** avoid stale `focused` state ([ebce50b](https://github.com/portabletext/editor/commit/ebce50b58def31a04c320bb24f9f3e03ac29c3f9))
+* **perf:** check if rendered element is text block before other element types ([16188bb](https://github.com/portabletext/editor/commit/16188bbbe77acbb1adf4cf3d28162198548ff6ec))
+* **perf:** only sort Behaviors if the set changes ([169290c](https://github.com/portabletext/editor/commit/169290ca2f2a7de803c5eb3724ace123e4784ec9))
+
 ## [1.55.8](https://github.com/portabletext/editor/compare/editor-v1.55.7...editor-v1.55.8) (2025-06-27)
 
 
