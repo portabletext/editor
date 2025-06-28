@@ -1,7 +1,7 @@
 import {useSelector} from '@xstate/react'
 import {useContext, type ReactElement} from 'react'
 import type {Element as SlateElement} from 'slate'
-import type {RenderElementProps} from 'slate-react'
+import {useSlateSelector, type RenderElementProps} from 'slate-react'
 import {isTextBlock} from '../../internal-utils/parse-blocks'
 import type {
   RenderBlockFunction,
@@ -29,8 +29,14 @@ export function RenderElement(props: {
   const legacySchema = useSelector(editorActor, (s) =>
     s.context.getLegacySchema(),
   )
+  const textBlock = useSlateSelector((editor) => {
+    const index = editor.blockIndexMap.get(props.element._key)
+    const block = index !== undefined ? editor.value.at(index) : undefined
 
-  if (isTextBlock({schema}, props.element)) {
+    return isTextBlock({schema}, block) ? block : undefined
+  })
+
+  if (textBlock) {
     return (
       <RenderTextBlock
         attributes={props.attributes}
@@ -41,7 +47,7 @@ export function RenderElement(props: {
         renderListItem={props.renderListItem}
         renderStyle={props.renderStyle}
         spellCheck={props.spellCheck}
-        textBlock={props.element}
+        textBlock={textBlock}
       >
         {props.children}
       </RenderTextBlock>
