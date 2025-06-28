@@ -1,6 +1,5 @@
 import type {PortableTextTextBlock} from '@sanity/types'
-import {useSelector} from '@xstate/react'
-import {useContext, useRef, useState, type ReactElement} from 'react'
+import {useRef, useState, type ReactElement} from 'react'
 import {Range, type Element as SlateElement} from 'slate'
 import {
   useSelected,
@@ -9,11 +8,11 @@ import {
 } from 'slate-react'
 import type {EventPositionBlock} from '../../internal-utils/event-position'
 import type {
+  PortableTextMemberSchemaTypes,
   RenderBlockFunction,
   RenderListItemFunction,
   RenderStyleFunction,
 } from '../../types/editor'
-import {EditorActorContext} from '../editor-actor-context'
 import {DropIndicator} from './drop-indicator'
 import {useCoreBlockElementBehaviors} from './use-core-block-element-behaviors'
 
@@ -21,6 +20,7 @@ export function RenderTextBlock(props: {
   attributes: RenderElementProps['attributes']
   children: ReactElement
   element: SlateElement
+  legacySchema: PortableTextMemberSchemaTypes
   readOnly: boolean
   renderBlock?: RenderBlockFunction
   renderListItem?: RenderListItemFunction
@@ -40,16 +40,10 @@ export function RenderTextBlock(props: {
       Range.isCollapsed(editor.selection),
   )
 
-  const editorActor = useContext(EditorActorContext)
-
   useCoreBlockElementBehaviors({
     key: props.element._key,
     onSetDragPositionBlock: setDragPositionBlock,
   })
-
-  const legacySchema = useSelector(editorActor, (s) =>
-    s.context.getLegacySchema(),
-  )
 
   const listIndex = useSlateSelector((editor) =>
     editor.listIndexMap.get(props.textBlock._key),
@@ -57,12 +51,10 @@ export function RenderTextBlock(props: {
 
   let children = props.children
 
-  const legacyBlockSchemaType = legacySchema.block
-
   if (props.renderStyle && props.textBlock.style) {
     const legacyStyleSchemaType =
       props.textBlock.style !== undefined
-        ? legacySchema.styles.find(
+        ? props.legacySchema.styles.find(
             (style) => style.value === props.textBlock.style,
           )
         : undefined
@@ -86,7 +78,7 @@ export function RenderTextBlock(props: {
   }
 
   if (props.renderListItem && props.textBlock.listItem) {
-    const legacyListItemSchemaType = legacySchema.lists.find(
+    const legacyListItemSchemaType = props.legacySchema.lists.find(
       (list) => list.value === props.textBlock.listItem,
     )
 
@@ -162,9 +154,9 @@ export function RenderTextBlock(props: {
               listItem: props.textBlock.listItem,
               path: [{_key: props.textBlock._key}],
               selected,
-              schemaType: legacyBlockSchemaType,
+              schemaType: props.legacySchema.block,
               style: props.textBlock.style,
-              type: legacyBlockSchemaType,
+              type: props.legacySchema.block,
               value: props.textBlock,
             })
           : children}
