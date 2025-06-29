@@ -1,6 +1,7 @@
 import type {ConverterEvent} from '../converters/converter.types'
 import {isTextBlock} from '../internal-utils/parse-blocks'
 import * as selectors from '../selectors'
+import {getActiveDecorators} from '../selectors/selector.get-active-decorators'
 import type {PickFromUnion} from '../type-utils'
 import {getTextBlockText} from '../utils'
 import {abstractAnnotationBehaviors} from './behavior.abstract.annotation'
@@ -214,7 +215,7 @@ export const abstractBehaviors = [
         event.mimeType === 'text/plain' &&
         event.originEvent.type === 'clipboard.paste'
       ) {
-        const activeDecorators = snapshot.beta.activeDecorators
+        const activeDecorators = getActiveDecorators(snapshot)
         const activeAnnotations = selectors.getActiveAnnotations(snapshot)
 
         return {

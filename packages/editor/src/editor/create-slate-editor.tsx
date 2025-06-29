@@ -40,7 +40,6 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
 
   instance.decoratedRanges = []
   instance.decoratorState = {}
-  instance.markState = undefined
 
   const placeholderBlock = createPlaceholderBlock(
     config.editorActor.getSnapshot().context,

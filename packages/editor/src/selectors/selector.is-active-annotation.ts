@@ -1,5 +1,6 @@
 import type {EditorSelector} from '../editor/editor-selector'
 import {isTextBlock} from '../internal-utils/parse-blocks'
+import {getActiveAnnotationsMarks} from './selector.get-active-annotation-marks'
 import {getSelectedBlocks} from './selector.get-selected-blocks'
 
 /**
@@ -15,10 +16,11 @@ export function isActiveAnnotation(
         ? (block.node.markDefs ?? [])
         : [],
     )
+    const activeAnnotations = getActiveAnnotationsMarks(snapshot)
     const activeMarkDefs = selectionMarkDefs.filter(
       (markDef) =>
         markDef._type === annotation &&
-        snapshot.beta.activeAnnotations.includes(markDef._key),
+        activeAnnotations.includes(markDef._key),
     )
 
     return activeMarkDefs.length > 0

@@ -13,6 +13,8 @@ import {getNextSpan, getPreviousSpan} from '../../internal-utils/sibling-utils'
 import {isChangingRemotely} from '../../internal-utils/withChanges'
 import {isRedoing, isUndoing} from '../../internal-utils/withUndoRedo'
 import type {BehaviorOperationImplementation} from '../../operations/behavior.operations'
+import {getActiveDecorators} from '../../selectors/selector.get-active-decorators'
+import {getMarkState} from '../../selectors/selector.get-mark-state'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 import {getEditorSnapshot} from '../editor-selector'
@@ -412,12 +414,19 @@ export function createWithPortableTextMarkModel(
       }
 
       if (op.type === 'insert_text') {
-        if (!editor.markState) {
+        const snapshot = getEditorSnapshot({
+          editorActorSnapshot: editorActor.getSnapshot(),
+          slateEditorInstance: editor,
+        })
+
+        const markState = getMarkState(snapshot)
+
+        if (!markState) {
           apply(op)
           return
         }
 
-        if (editor.markState.state === 'unchanged') {
+        if (markState.state === 'unchanged') {
           apply(op)
           return
         }
@@ -426,7 +435,7 @@ export function createWithPortableTextMarkModel(
           _type: 'span',
           _key: editorActor.getSnapshot().context.keyGenerator(),
           text: op.text,
-          marks: editor.markState.marks,
+          marks: markState.marks,
         })
 
         return
@@ -488,7 +497,7 @@ export function createWithPortableTextMarkModel(
                 apply(op)
                 Transforms.setNodes(
                   editor,
-                  {marks: snapshot.beta.activeDecorators},
+                  {marks: getActiveDecorators(snapshot)},
                   {at: op.path},
                 )
               })

@@ -109,10 +109,6 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
 
     const trimmedSelection = selectors.getTrimmedSelection({
       blockIndexMap: editor.blockIndexMap,
-      beta: {
-        activeAnnotations: [],
-        activeDecorators: [],
-      },
       context: {
         converters: [],
         keyGenerator: context.keyGenerator,
@@ -121,6 +117,7 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
         selection: newSelection,
         value: newValue,
       },
+      decoratorState: editor.decoratorState,
     })
 
     if (!trimmedSelection) {
