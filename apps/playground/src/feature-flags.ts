@@ -1,6 +1,17 @@
 import {createContext} from 'react'
 
-export type FeatureFlags = {
+export type PlaygroundFeatureFlags = {
+  toolbar: boolean
+}
+
+export const defaultPlaygroundFeatureFlags: PlaygroundFeatureFlags = {
+  toolbar: true,
+}
+
+export const PlaygroundFeatureFlagsContext =
+  createContext<PlaygroundFeatureFlags>(defaultPlaygroundFeatureFlags)
+
+export type EditorFeatureFlags = {
   dragHandles: boolean
   imageDeserializerPlugin: boolean
   textFileDeserializerPlugin: boolean
@@ -11,7 +22,7 @@ export type FeatureFlags = {
   markdownPlugin: boolean
 }
 
-export const defaultFeatureFlags: FeatureFlags = {
+export const defaultEditorFeatureFlags: EditorFeatureFlags = {
   dragHandles: false,
   imageDeserializerPlugin: false,
   textFileDeserializerPlugin: false,
@@ -22,5 +33,6 @@ export const defaultFeatureFlags: FeatureFlags = {
   markdownPlugin: false,
 }
 
-export const FeatureFlagsContext =
-  createContext<FeatureFlags>(defaultFeatureFlags)
+export const EditorFeatureFlagsContext = createContext<EditorFeatureFlags>(
+  defaultEditorFeatureFlags,
+)
