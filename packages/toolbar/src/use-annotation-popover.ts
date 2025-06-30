@@ -40,7 +40,7 @@ export function useAnnotationPopover() {
       const focusBlock = selectors.getFocusBlock(snapshot)
 
       if (activeAnnotations.length === 0 || !focusBlock) {
-        setState({type: 'idle'})
+        setState((state) => (state.type === 'visible' ? {type: 'idle'} : state))
         return
       }
 
@@ -48,7 +48,7 @@ export function useAnnotationPopover() {
       const firstSelectedChild = selectedChildren.at(0)
 
       if (!firstSelectedChild || !(firstSelectedChild instanceof Element)) {
-        setState({type: 'idle'})
+        setState((state) => (state.type === 'visible' ? {type: 'idle'} : state))
         return
       }
 

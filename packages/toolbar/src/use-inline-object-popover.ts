@@ -39,14 +39,14 @@ export function useInlineObjectPopover() {
       const snapshot = editor.getSnapshot()
 
       if (!selectors.isSelectionCollapsed(snapshot)) {
-        setState({type: 'idle'})
+        setState((state) => (state.type === 'visible' ? {type: 'idle'} : state))
         return
       }
 
       const focusInlineObject = selectors.getFocusInlineObject(snapshot)
 
       if (!focusInlineObject) {
-        setState({type: 'idle'})
+        setState((state) => (state.type === 'visible' ? {type: 'idle'} : state))
         return
       }
 
@@ -55,7 +55,7 @@ export function useInlineObjectPopover() {
       )
 
       if (!schemaType) {
-        setState({type: 'idle'})
+        setState((state) => (state.type === 'visible' ? {type: 'idle'} : state))
         return
       }
 
@@ -63,7 +63,7 @@ export function useInlineObjectPopover() {
       const firstSelectedNode = selectedNodes.at(0)
 
       if (!firstSelectedNode || !(firstSelectedNode instanceof Element)) {
-        setState({type: 'idle'})
+        setState((state) => (state.type === 'visible' ? {type: 'idle'} : state))
         return
       }
 
