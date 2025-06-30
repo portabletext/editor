@@ -4,8 +4,8 @@ import {
   type RangeDecoration,
   type RangeDecorationOnMovedDetails,
 } from '@portabletext/editor'
-import * as selectors from '@portabletext/editor/selectors'
 import {TextCursorIcon} from 'lucide-react'
+import {useCallback} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
 import {Button} from './primitives/button'
 import {Tooltip} from './primitives/tooltip'
@@ -17,27 +17,27 @@ export function RangeDecorationButton(props: {
   const editor = useEditor()
   const disabled = useEditorSelector(
     editor,
-    (snapshot) => snapshot.context.readOnly,
+    (snapshot) => snapshot.context.readOnly || !snapshot.context.selection,
   )
-  const selection = useEditorSelector(editor, selectors.getSelection)
+  const onPress = useCallback(() => {
+    props.onAddRangeDecoration({
+      component: RangeComponent,
+      selection: editor.getSnapshot().context.selection,
+      onMoved: props.onRangeDecorationMoved,
+    })
+    editor.send({
+      type: 'focus',
+    })
+  }, [editor, props])
 
   return (
     <TooltipTrigger>
       <Button
         aria-label="Decorate"
-        isDisabled={!selection || disabled}
+        isDisabled={disabled}
         variant="secondary"
         size="sm"
-        onPress={() => {
-          props.onAddRangeDecoration({
-            component: RangeComponent,
-            selection,
-            onMoved: props.onRangeDecorationMoved,
-          })
-          editor.send({
-            type: 'focus',
-          })
-        }}
+        onPress={onPress}
       >
         <TextCursorIcon className="size-4" />
       </Button>
