@@ -1,3 +1,4 @@
+import type {PortableTextObject} from '@sanity/types'
 import {useRef, useState, type ReactElement} from 'react'
 import {Range, type Element as SlateElement} from 'slate'
 import {
@@ -17,6 +18,7 @@ import {useCoreBlockElementBehaviors} from './use-core-block-element-behaviors'
 
 export function RenderBlockObject(props: {
   attributes: RenderElementProps['attributes']
+  blockObject: PortableTextObject | undefined
   children: ReactElement
   element: SlateElement
   legacySchema: PortableTextMemberSchemaTypes
@@ -41,7 +43,7 @@ export function RenderBlockObject(props: {
   })
 
   const legacySchemaType = props.legacySchema.blockObjects.find(
-    (blockObject) => blockObject.name === props.element._type,
+    (schemaType) => schemaType.name === props.element._type,
   )
 
   if (!legacySchemaType) {
@@ -50,12 +52,9 @@ export function RenderBlockObject(props: {
     )
   }
 
-  const blockObject = {
+  const blockObject = props.blockObject ?? {
     _key: props.element._key,
     _type: props.element._type,
-    ...('value' in props.element && typeof props.element.value === 'object'
-      ? props.element.value
-      : {}),
   }
 
   return (
