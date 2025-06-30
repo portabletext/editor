@@ -38,14 +38,14 @@ export function useBlockObjectPopover() {
       const snapshot = editor.getSnapshot()
 
       if (!selectors.isSelectionCollapsed(snapshot)) {
-        setState({type: 'idle'})
+        setState((state) => (state.type === 'visible' ? {type: 'idle'} : state))
         return
       }
 
       const focusBlockObject = selectors.getFocusBlockObject(snapshot)
 
       if (!focusBlockObject) {
-        setState({type: 'idle'})
+        setState((state) => (state.type === 'visible' ? {type: 'idle'} : state))
         return
       }
 
@@ -54,7 +54,7 @@ export function useBlockObjectPopover() {
       )
 
       if (!schemaType) {
-        setState({type: 'idle'})
+        setState((state) => (state.type === 'visible' ? {type: 'idle'} : state))
         return
       }
 
@@ -62,7 +62,7 @@ export function useBlockObjectPopover() {
       const firstSelectedNode = selectedNodes.at(0)
 
       if (!firstSelectedNode || !(firstSelectedNode instanceof Element)) {
-        setState({type: 'idle'})
+        setState((state) => (state.type === 'visible' ? {type: 'idle'} : state))
         return
       }
 
