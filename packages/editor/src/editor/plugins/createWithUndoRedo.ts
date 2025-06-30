@@ -151,12 +151,7 @@ export function createWithUndoRedo(
 
       const currentUndoStepId = getCurrentUndoStepId(editor)
 
-      let merge =
-        currentUndoStepId !== undefined && previousUndoStepId === undefined
-          ? false
-          : currentUndoStepId !== undefined && previousUndoStepId !== undefined
-            ? currentUndoStepId === previousUndoStepId
-            : true
+      let merge = currentUndoStepId === previousUndoStepId
 
       if (save) {
         if (!step) {
