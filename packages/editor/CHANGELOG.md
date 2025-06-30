@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.55.11](https://github.com/portabletext/editor/compare/editor-v1.55.10...editor-v1.55.11) (2025-06-30)
+
+
+### Bug Fixes
+
+* **`renderBlock`:** pass parsed text block value ([b136238](https://github.com/portabletext/editor/commit/b136238de34588278687c8dca46d0f6138d1b4ed))
+
 ## [1.55.10](https://github.com/portabletext/editor/compare/editor-v1.55.9...editor-v1.55.10) (2025-06-30)
 
 
