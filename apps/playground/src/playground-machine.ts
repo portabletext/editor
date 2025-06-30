@@ -18,7 +18,12 @@ import {
   stopChild,
   type ActorRefFrom,
 } from 'xstate'
-import {defaultFeatureFlags, type FeatureFlags} from './feature-flags'
+import {
+  defaultEditorFeatureFlags,
+  defaultPlaygroundFeatureFlags,
+  type EditorFeatureFlags,
+  type PlaygroundFeatureFlags,
+} from './feature-flags'
 import {createKeyGenerator} from './key-generator'
 
 const copyToTextClipboardActor = fromPromise(
@@ -38,7 +43,7 @@ const editorMachine = setup({
       value: Array<PortableTextBlock> | undefined
       patchesReceived: Array<Patch & {new: boolean; id: string}>
       keyGenerator: () => string
-      featureFlags: FeatureFlags
+      featureFlags: EditorFeatureFlags
     },
     events: {} as
       | MutationEvent
@@ -54,7 +59,7 @@ const editorMachine = setup({
       | {type: 'toggle patches preview'}
       | {type: 'toggle selection preview'}
       | {type: 'toggle value preview'}
-      | {type: 'toggle feature flag'; flag: keyof FeatureFlags}
+      | {type: 'toggle feature flag'; flag: keyof EditorFeatureFlags}
       | {type: 'add range decoration'; rangeDecoration: RangeDecoration}
       | {type: 'move range decoration'; details: RangeDecorationOnMovedDetails},
     emitted: {} as PatchesEvent,
@@ -95,7 +100,7 @@ const editorMachine = setup({
     patchesReceived: [],
     keyGenerator: input.keyGenerator,
     readOnly: false,
-    featureFlags: defaultFeatureFlags,
+    featureFlags: defaultEditorFeatureFlags,
   }),
   on: {
     'mutation': {
@@ -241,6 +246,7 @@ export const playgroundMachine = setup({
     context: {} as {
       editorIdGenerator: Generator<string, string>
       editors: Array<EditorActorRef>
+      featureFlags: PlaygroundFeatureFlags
       value: Array<PortableTextBlock> | undefined
       rangeDecorations: Array<RangeDecoration>
     },
@@ -256,6 +262,10 @@ export const playgroundMachine = setup({
       | {
           type: 'editor.move range decoration'
           details: RangeDecorationOnMovedDetails
+        }
+      | {
+          type: 'toggle feature flag'
+          flag: keyof PlaygroundFeatureFlags
         },
     input: {} as {
       editorIdGenerator: Generator<string, string>
@@ -366,6 +376,7 @@ export const playgroundMachine = setup({
   id: 'playground',
   context: ({input}) => ({
     editorIdGenerator: input.editorIdGenerator,
+    featureFlags: defaultPlaygroundFeatureFlags,
     value: [],
     rangeDecorations: [],
     editors: [],
@@ -385,6 +396,14 @@ export const playgroundMachine = setup({
     },
     'editor.move range decoration': {
       actions: ['move range decoration'],
+    },
+    'toggle feature flag': {
+      actions: assign({
+        featureFlags: ({context, event}) => ({
+          ...context.featureFlags,
+          [event.flag]: !context.featureFlags[event.flag],
+        }),
+      }),
     },
   },
   entry: [raise({type: 'add editor'})],

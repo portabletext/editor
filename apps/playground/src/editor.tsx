@@ -30,7 +30,10 @@ import {TooltipTrigger} from 'react-aria-components'
 import {tv} from 'tailwind-variants'
 import {DebugMenu} from './debug-menu'
 import './editor.css'
-import {FeatureFlagsContext} from './feature-flags'
+import {
+  EditorFeatureFlagsContext,
+  PlaygroundFeatureFlagsContext,
+} from './feature-flags'
 import type {EditorActorRef} from './playground-machine'
 import {
   CommentAnnotationSchema,
@@ -80,6 +83,7 @@ export function Editor(props: {
   )
   const [loading, setLoading] = useState(false)
   const [readOnly, setReadOnly] = useState(false)
+  const playgroundFeatureFlags = useContext(PlaygroundFeatureFlagsContext)
   const featureFlags = useSelector(
     props.editorRef,
     (s) => s.context.featureFlags,
@@ -125,34 +129,38 @@ export function Editor(props: {
             }}
           />
           <Container className="flex flex-col gap-4 overflow-clip">
-            <PortableTextToolbar schemaDefinition={playgroundSchemaDefinition}>
-              <RangeDecorationButton
-                onAddRangeDecoration={(rangeDecoration) => {
-                  props.editorRef.send({
-                    type: 'add range decoration',
-                    rangeDecoration,
-                  })
-                }}
-                onRangeDecorationMoved={(details) => {
-                  props.editorRef.send({
-                    type: 'move range decoration',
-                    details,
-                  })
-                }}
-              />
-              <Separator orientation="vertical" />
-              <TooltipTrigger>
-                <Switch
-                  isSelected={debugModeEnabled}
-                  onChange={() => {
-                    props.editorRef.send({type: 'toggle debug mode'})
+            {playgroundFeatureFlags.toolbar ? (
+              <PortableTextToolbar
+                schemaDefinition={playgroundSchemaDefinition}
+              >
+                <RangeDecorationButton
+                  onAddRangeDecoration={(rangeDecoration) => {
+                    props.editorRef.send({
+                      type: 'add range decoration',
+                      rangeDecoration,
+                    })
                   }}
-                >
-                  <BugIcon className="size-4" />
-                </Switch>
-                <Tooltip>Toggle debug mode</Tooltip>
-              </TooltipTrigger>
-            </PortableTextToolbar>
+                  onRangeDecorationMoved={(details) => {
+                    props.editorRef.send({
+                      type: 'move range decoration',
+                      details,
+                    })
+                  }}
+                />
+                <Separator orientation="vertical" />
+                <TooltipTrigger>
+                  <Switch
+                    isSelected={debugModeEnabled}
+                    onChange={() => {
+                      props.editorRef.send({type: 'toggle debug mode'})
+                    }}
+                  >
+                    <BugIcon className="size-4" />
+                  </Switch>
+                  <Tooltip>Toggle debug mode</Tooltip>
+                </TooltipTrigger>
+              </PortableTextToolbar>
+            ) : null}
             {featureFlags.emojiPickerPlugin ? <EmojiPickerPlugin /> : null}
             {featureFlags.codeEditorPlugin ? <CodeEditorPlugin /> : null}
             {featureFlags.linkPlugin ? <LinkPlugin /> : null}
@@ -172,7 +180,7 @@ export function Editor(props: {
                 fallback={ErrorScreen}
                 onError={console.error}
               >
-                <FeatureFlagsContext.Provider value={featureFlags}>
+                <EditorFeatureFlagsContext.Provider value={featureFlags}>
                   <PortableTextEditable
                     className={`rounded-b-md outline-none data-[read-only=true]:opacity-50 px-2 h-75 -mx-2 -mb-2 overflow-auto flex-1 ${featureFlags.dragHandles ? 'ps-5' : ''}`}
                     rangeDecorations={props.rangeDecorations}
@@ -184,7 +192,7 @@ export function Editor(props: {
                     renderPlaceholder={renderPlaceholder}
                     renderStyle={renderStyle}
                   />
-                </FeatureFlagsContext.Provider>
+                </EditorFeatureFlagsContext.Provider>
               </ErrorBoundary>
               {loading ? <Spinner /> : null}
             </div>
@@ -280,7 +288,7 @@ const imageStyle = tv({
 })
 
 const RenderBlock = (props: BlockRenderProps) => {
-  const enableDragHandles = useContext(FeatureFlagsContext).dragHandles
+  const enableDragHandles = useContext(EditorFeatureFlagsContext).dragHandles
   const editor = useEditor()
   const readOnly = useEditorSelector(editor, (s) => s.context.readOnly)
 
