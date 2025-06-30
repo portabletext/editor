@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.55.10](https://github.com/portabletext/editor/compare/editor-v1.55.9...editor-v1.55.10) (2025-06-30)
+
+
+### Bug Fixes
+
+* **deps:** update dependency slate-react to v0.117.3 ([9b3d1b5](https://github.com/portabletext/editor/commit/9b3d1b5c2a406b597c0059b7c6b14fa9ea55251a))
+* **history:** don't merge steps with different IDs ([7ead8a0](https://github.com/portabletext/editor/commit/7ead8a05c1e38ce7d826174f29f8c307dc736ccb))
+
 ## [1.55.9](https://github.com/portabletext/editor/compare/editor-v1.55.8...editor-v1.55.9) (2025-06-28)
 
 
