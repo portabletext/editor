@@ -1,207 +1,168 @@
-import {isKeyboardShortcut} from './is-keyboard-shortcut'
-import {createKeyboardShortcut} from './keyboard-shortcuts'
+import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 
 export const defaultKeyboardShortcuts = {
   arrowDown: createKeyboardShortcut({
     default: {
-      guard: (event) =>
-        isKeyboardShortcut(event, 'ArrowDown', {
-          ctrlKey: false,
-          metaKey: false,
-          shiftKey: false,
-          altKey: false,
-        }),
-      keys: ['ArrowDown'],
+      key: 'ArrowDown',
+      alt: false,
+      ctrl: false,
+      meta: false,
+      shift: false,
     },
   }),
   arrowUp: createKeyboardShortcut({
     default: {
-      guard: (event) =>
-        isKeyboardShortcut(event, 'ArrowUp', {
-          ctrlKey: false,
-          metaKey: false,
-          shiftKey: false,
-          altKey: false,
-        }),
-      keys: ['ArrowUp'],
+      key: 'ArrowUp',
+      alt: false,
+      ctrl: false,
+      meta: false,
+      shift: false,
     },
   }),
   break: createKeyboardShortcut({
     default: {
-      guard: (event) => isKeyboardShortcut(event, 'Enter', {shiftKey: false}),
-      keys: ['Enter'],
+      key: 'Enter',
+      shift: false,
     },
   }),
   lineBreak: createKeyboardShortcut({
     default: {
-      guard: (event) => isKeyboardShortcut(event, 'Enter', {shiftKey: true}),
-      keys: ['Shift', 'Enter'],
+      key: 'Enter',
+      shift: true,
     },
   }),
   decorators: {
     strong: createKeyboardShortcut({
       default: {
-        guard: (event) =>
-          isKeyboardShortcut(event, 'b', {
-            altKey: false,
-            ctrlKey: true,
-            metaKey: false,
-            shiftKey: false,
-          }),
-        keys: ['Ctrl', 'B'],
+        key: 'B',
+        alt: false,
+        ctrl: true,
+        meta: false,
+        shift: false,
       },
       apple: {
-        guard: (event) =>
-          isKeyboardShortcut(event, 'b', {
-            altKey: false,
-            ctrlKey: false,
-            metaKey: true,
-            shiftKey: false,
-          }),
-        keys: ['⌘', 'B'],
+        key: 'B',
+        alt: false,
+        ctrl: false,
+        meta: true,
+        shift: false,
       },
     }),
     em: createKeyboardShortcut({
       default: {
-        guard: (event) =>
-          isKeyboardShortcut(event, 'i', {
-            altKey: false,
-            ctrlKey: true,
-            metaKey: false,
-            shiftKey: false,
-          }),
-        keys: ['Ctrl', 'I'],
+        key: 'I',
+        alt: false,
+        ctrl: true,
+        meta: false,
+        shift: false,
       },
       apple: {
-        guard: (event) =>
-          isKeyboardShortcut(event, 'i', {
-            altKey: false,
-            ctrlKey: false,
-            metaKey: true,
-            shiftKey: false,
-          }),
-        keys: ['⌘', 'I'],
+        key: 'I',
+        alt: false,
+        ctrl: false,
+        meta: true,
+        shift: false,
       },
     }),
     underline: createKeyboardShortcut({
       default: {
-        guard: (event) =>
-          isKeyboardShortcut(event, 'u', {
-            altKey: false,
-            ctrlKey: true,
-            metaKey: false,
-            shiftKey: false,
-          }),
-        keys: ['Ctrl', 'U'],
+        key: 'U',
+        alt: false,
+        ctrl: true,
+        meta: false,
+        shift: false,
       },
       apple: {
-        guard: (event) =>
-          isKeyboardShortcut(event, 'u', {
-            altKey: false,
-            ctrlKey: false,
-            metaKey: true,
-            shiftKey: false,
-          }),
-        keys: ['⌘', 'U'],
+        key: 'U',
+        alt: false,
+        ctrl: false,
+        meta: true,
+        shift: false,
       },
     }),
     code: createKeyboardShortcut({
       default: {
-        guard: (event) =>
-          isKeyboardShortcut(event, "'", {
-            altKey: false,
-            ctrlKey: true,
-            metaKey: false,
-            shiftKey: false,
-          }),
-        keys: ['Ctrl', "'"],
+        key: "'",
+        alt: false,
+        ctrl: true,
+        meta: false,
+        shift: false,
       },
       apple: {
-        guard: (event) =>
-          isKeyboardShortcut(event, "'", {
-            altKey: false,
-            ctrlKey: false,
-            metaKey: true,
-            shiftKey: false,
-          }),
-        keys: ['⌘', "'"],
+        key: "'",
+        alt: false,
+        ctrl: false,
+        meta: true,
+        shift: false,
       },
     }),
   },
   history: {
     undo: createKeyboardShortcut({
       default: {
-        guard: (event) =>
-          isKeyboardShortcut(event, 'z', {
-            altKey: false,
-            ctrlKey: true,
-            metaKey: false,
-            shiftKey: false,
-          }),
-        keys: ['Ctrl', 'Z'],
+        key: 'Z',
+        alt: false,
+        ctrl: true,
+        meta: false,
+        shift: false,
       },
       apple: {
-        guard: (event) =>
-          isKeyboardShortcut(event, 'z', {
-            altKey: false,
-            ctrlKey: false,
-            metaKey: true,
-            shiftKey: false,
-          }),
-        keys: ['⌘', 'Z'],
+        key: 'Z',
+        alt: false,
+        ctrl: false,
+        meta: true,
+        shift: false,
       },
     }),
     redo: createKeyboardShortcut({
       default: {
-        guard: (event) =>
-          isKeyboardShortcut(event, 'y', {
-            ctrlKey: true,
-            metaKey: false,
-            shiftKey: false,
-            altKey: false,
-          }) ||
-          isKeyboardShortcut(event, 'z', {
-            ctrlKey: true,
-            metaKey: false,
-            shiftKey: true,
-            altKey: false,
-          }),
-        keys: ['Ctrl', 'Y'],
+        key: 'Y',
+        alt: false,
+        ctrl: true,
+        meta: false,
+        shift: false,
       },
       apple: {
-        guard: (event) =>
-          isKeyboardShortcut(event, 'z', {
-            ctrlKey: false,
-            metaKey: true,
-            shiftKey: true,
-            altKey: false,
-          }),
-        keys: ['⌘', 'Shift', 'Z'],
+        key: 'Z',
+        alt: false,
+        ctrl: false,
+        meta: true,
+        shift: true,
+      },
+    }),
+    redoAlternative: createKeyboardShortcut({
+      default: {
+        key: 'Z',
+        alt: false,
+        ctrl: true,
+        meta: false,
+        shift: true,
+      },
+      apple: {
+        key: 'Z',
+        alt: false,
+        ctrl: false,
+        meta: true,
+        shift: true,
       },
     }),
   },
   tab: createKeyboardShortcut({
     default: {
-      guard: (event) =>
-        isKeyboardShortcut(event, 'Tab', {
-          ctrlKey: false,
-          metaKey: false,
-          shiftKey: false,
-          altKey: false,
-        }),
-      keys: ['Tab'],
+      key: 'Tab',
+      alt: false,
+      ctrl: false,
+      meta: false,
+      shift: false,
     },
   }),
   shiftTab: createKeyboardShortcut({
     default: {
-      guard: (event) =>
-        isKeyboardShortcut(event, 'Tab', {
-          ctrlKey: false,
-          metaKey: false,
-          shiftKey: true,
-          altKey: false,
-        }),
-      keys: ['Shift', 'Tab'],
+      key: 'Tab',
+      alt: false,
+      ctrl: false,
+      meta: false,
+      shift: true,
     },
   }),
 }

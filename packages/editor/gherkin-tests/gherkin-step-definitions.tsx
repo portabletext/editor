@@ -9,6 +9,7 @@ import {createActor} from 'xstate'
 import type {Editor, EditorSelection} from '../src'
 import {getBlockKeys} from '../src/internal-utils/block-keys'
 import {getEditorSelection} from '../src/internal-utils/editor-selection'
+import {IS_MAC} from '../src/internal-utils/is-hotkey'
 import {getSelectionBlockKeys} from '../src/internal-utils/selection-block-keys'
 import {getSelectionFocusText} from '../src/internal-utils/selection-focus-text'
 import {getSelectionText} from '../src/internal-utils/selection-text'
@@ -21,7 +22,6 @@ import {
   getTextSelection,
 } from '../src/internal-utils/text-selection'
 import {getValueAnnotations} from '../src/internal-utils/value-annotations'
-import {IS_APPLE} from '../src/keyboard-shortcuts/keyboard-shortcuts'
 import {isSelectionCollapsed} from '../src/utils'
 import {reverseSelection} from '../src/utils/util.reverse-selection'
 import {Editors} from './editors'
@@ -928,7 +928,7 @@ export async function undo(editor: EditorContext) {
   await waitForNewValue(async () => {
     editor.actorRef.send({type: 'focus'})
     await userEvent.keyboard(
-      IS_APPLE ? '{Meta>}z{/Meta}' : '{Control>}z{/Control}',
+      IS_MAC ? '{Meta>}z{/Meta}' : '{Control>}z{/Control}',
     )
   })
 }
@@ -937,7 +937,7 @@ export async function redo(editor: EditorContext) {
   await waitForNewValue(async () => {
     editor.actorRef.send({type: 'focus'})
     await userEvent.keyboard(
-      IS_APPLE ? '{Shift>}{Meta>}z{/Meta}{/Shift}' : '{Control>}y{/Control}',
+      IS_MAC ? '{Shift>}{Meta>}z{/Meta}{/Shift}' : '{Control>}y{/Control}',
     )
   })
 }
