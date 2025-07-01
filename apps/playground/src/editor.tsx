@@ -20,6 +20,7 @@ import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 import {OneLinePlugin} from '@portabletext/plugin-one-line'
 import {useSelector} from '@xstate/react'
 import {
+  ActivityIcon,
   BugIcon,
   LinkIcon,
   PencilIcon,
@@ -371,10 +372,13 @@ const renderDecorator: RenderDecoratorFunction = (props) => {
 }
 
 const stockTickerStyle = tv({
-  base: 'border-2 border-gray-300 rounded px-1 font-mono text-sm',
+  base: 'inline-flex items-center gap-1 border-2 border-gray-300 rounded px-1 font-mono text-xs',
   variants: {
     selected: {
       true: 'border-blue-300',
+    },
+    focused: {
+      true: 'bg-blue-50',
     },
   },
 })
@@ -384,7 +388,13 @@ const renderChild: RenderChildFunction = (props) => {
 
   if (stockTicker) {
     return (
-      <span className={stockTickerStyle({selected: props.selected})}>
+      <span
+        className={stockTickerStyle({
+          selected: props.selected,
+          focused: props.focused,
+        })}
+      >
+        <ActivityIcon className="size-3 shrink-0" />
         {stockTicker.value.symbol}
       </span>
     )
