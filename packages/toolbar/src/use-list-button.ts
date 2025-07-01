@@ -1,15 +1,12 @@
-import {
-  useEditor,
-  useEditorSelector,
-  type ListDefinition,
-} from '@portabletext/editor'
+import {useEditor, useEditorSelector} from '@portabletext/editor'
 import * as selectors from '@portabletext/editor/selectors'
 import {useCallback} from 'react'
+import type {ToolbarListDefinition} from './toolbar-schema-definition'
 
 /**
  * @beta
  */
-export function useListButton(props: {definition: ListDefinition}) {
+export function useListButton(props: {definition: ToolbarListDefinition}) {
   const editor = useEditor()
   const disabled = useEditorSelector(
     editor,

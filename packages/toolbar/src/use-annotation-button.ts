@@ -1,15 +1,14 @@
-import {
-  useEditor,
-  useEditorSelector,
-  type AnnotationDefinition,
-} from '@portabletext/editor'
+import {useEditor, useEditorSelector} from '@portabletext/editor'
 import * as selectors from '@portabletext/editor/selectors'
 import {useCallback} from 'react'
+import type {ToolbarAnnotationDefinition} from './toolbar-schema-definition'
 
 /**
  * @beta
  */
-export function useAnnotationButton(props: {definition: AnnotationDefinition}) {
+export function useAnnotationButton(props: {
+  definition: ToolbarAnnotationDefinition
+}) {
   const editor = useEditor()
   const disabled = useEditorSelector(
     editor,

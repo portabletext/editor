@@ -1,15 +1,12 @@
-import {
-  useEditor,
-  useEditorSelector,
-  type InlineObjectDefinition,
-} from '@portabletext/editor'
+import {useEditor, useEditorSelector} from '@portabletext/editor'
 import {useCallback} from 'react'
+import type {ToolbarInlineObjectDefinition} from './toolbar-schema-definition'
 
 /**
  * @beta
  */
 export function useInlineObjectButton(props: {
-  definition: InlineObjectDefinition
+  definition: ToolbarInlineObjectDefinition
 }) {
   const editor = useEditor()
   const disabled = useEditorSelector(

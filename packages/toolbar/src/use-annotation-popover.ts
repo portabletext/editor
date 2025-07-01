@@ -1,23 +1,20 @@
 import {
   useEditor,
-  useEditorSelector,
   type AnnotationPath,
-  type AnnotationSchemaType,
   type PortableTextObject,
 } from '@portabletext/editor'
 import * as selectors from '@portabletext/editor/selectors'
-import {useCallback, useEffect, useState, type RefObject} from 'react'
 import * as React from 'react'
+import {useCallback, useEffect, useState, type RefObject} from 'react'
+import type {ToolbarAnnotationDefinition} from './toolbar-schema-definition'
 
 /**
  * @beta
  */
-export function useAnnotationPopover() {
+export function useAnnotationPopover(props: {
+  definitions: ReadonlyArray<ToolbarAnnotationDefinition>
+}) {
   const editor = useEditor()
-  const schemaTypes = useEditorSelector(
-    editor,
-    (s) => s.context.schema.annotations,
-  )
   const [state, setState] = useState<
     | {
         type: 'idle'
@@ -26,7 +23,7 @@ export function useAnnotationPopover() {
         type: 'visible'
         annotations: Array<{
           value: PortableTextObject
-          schemaType: AnnotationSchemaType
+          definition: ToolbarAnnotationDefinition
           at: AnnotationPath
         }>
         elementRef: RefObject<Element | null>
@@ -58,17 +55,17 @@ export function useAnnotationPopover() {
       setState({
         type: 'visible',
         annotations: activeAnnotations.flatMap((annotation) => {
-          const schemaType = schemaTypes.find(
-            (schemaType) => schemaType.name === annotation._type,
+          const definition = props.definitions.find(
+            (definition) => definition.name === annotation._type,
           )
 
-          if (!schemaType) {
+          if (!definition) {
             return []
           }
 
           return {
             value: annotation,
-            schemaType,
+            definition,
             at: [
               {_key: focusBlock.node._key},
               'markDefs',
@@ -79,15 +76,15 @@ export function useAnnotationPopover() {
         elementRef,
       })
     }).unsubscribe
-  }, [editor, schemaTypes])
+  }, [editor, props.definitions])
 
   const onRemove = useCallback(
-    (annotation: {schemaType: AnnotationSchemaType}) => {
+    (annotation: {definition: ToolbarAnnotationDefinition}) => {
       if (state.type === 'visible') {
         editor.send({
           type: 'annotation.remove',
           annotation: {
-            name: annotation.schemaType.name,
+            name: annotation.definition.name,
           },
         })
         editor.send({type: 'focus'})
@@ -97,11 +94,7 @@ export function useAnnotationPopover() {
   )
 
   const onEdit = useCallback(
-    (annotation: {
-      at: AnnotationPath
-      schemaType: AnnotationSchemaType
-      props: {[key: string]: unknown}
-    }) => {
+    (annotation: {at: AnnotationPath; props: {[key: string]: unknown}}) => {
       if (state.type === 'visible') {
         editor.send({
           type: 'annotation.set',

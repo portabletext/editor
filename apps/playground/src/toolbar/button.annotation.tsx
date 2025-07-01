@@ -1,4 +1,5 @@
 import {useAnnotationButton} from '@portabletext/toolbar'
+import type {ToolbarAnnotationDefinition} from '@portabletext/toolbar'
 import {TooltipTrigger} from 'react-aria-components'
 import {Button} from '../primitives/button'
 import {Dialog} from '../primitives/dialog'
@@ -6,7 +7,6 @@ import {Icon} from '../primitives/icon'
 import {ToggleButton} from '../primitives/toggle-button'
 import {Tooltip} from '../primitives/tooltip'
 import {ObjectForm} from './form.object-form'
-import type {ToolbarAnnotationDefinition} from './toolbar-schema-definition'
 
 export function AnnotationButton(props: {
   definition: ToolbarAnnotationDefinition

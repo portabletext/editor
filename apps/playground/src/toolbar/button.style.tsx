@@ -1,9 +1,9 @@
 import {useStyleSelector} from '@portabletext/toolbar'
+import type {ToolbarStyleDefinition} from '@portabletext/toolbar'
 import {TooltipTrigger} from 'react-aria-components'
 import {Icon} from '../primitives/icon'
 import {Select, SelectItem} from '../primitives/select'
 import {Tooltip} from '../primitives/tooltip'
-import type {ToolbarStyleDefinition} from './toolbar-schema-definition'
 
 export function StyleButton(props: {
   definitions: ReadonlyArray<ToolbarStyleDefinition>

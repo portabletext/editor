@@ -1,11 +1,11 @@
 import {useBlockObjectButton} from '@portabletext/toolbar'
+import type {ToolbarBlockObjectDefinition} from '@portabletext/toolbar'
 import {TooltipTrigger} from 'react-aria-components'
 import {Button} from '../primitives/button'
 import {Dialog} from '../primitives/dialog'
 import {Icon} from '../primitives/icon'
 import {Tooltip} from '../primitives/tooltip'
 import {InsertBlockObjectForm} from './form.insert-block-object'
-import type {ToolbarBlockObjectDefinition} from './toolbar-schema-definition'
 
 export function BlockObjectButton(props: {
   definition: ToolbarBlockObjectDefinition

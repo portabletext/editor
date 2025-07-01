@@ -1,11 +1,10 @@
-import {useEditor, type DecoratorDefinition} from '@portabletext/editor'
+import {useEditor} from '@portabletext/editor'
 import {defineBehavior, forward, raise} from '@portabletext/editor/behaviors'
 import {useEffect} from 'react'
+import type {ToolbarDecoratorDefinition} from './toolbar-schema-definition'
 
 export function useMutuallyExclusiveDecorator(props: {
-  definition: Pick<DecoratorDefinition, 'name'> & {
-    mutuallyExclusive?: ReadonlyArray<DecoratorDefinition['name']>
-  }
+  definition: ToolbarDecoratorDefinition
 }) {
   const editor = useEditor()
 

@@ -1,10 +1,11 @@
+import type {KeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 import React from 'react'
 import {TooltipTrigger} from 'react-aria-components'
 import {Tooltip} from '../primitives/tooltip'
 
 export function ButtonTooltip(props: {
   label: string
-  shortcut?: ReadonlyArray<string>
+  shortcutKeys?: KeyboardShortcut['keys']
   children: React.ReactNode
 }) {
   return (
@@ -12,8 +13,8 @@ export function ButtonTooltip(props: {
       {props.children}
       <Tooltip className="flex items-center gap-3">
         {props.label}
-        {props.shortcut ? (
-          <RenderKeyboardShortcut shortcut={props.shortcut} />
+        {props.shortcutKeys ? (
+          <RenderKeyboardShortcut shortcut={props.shortcutKeys} />
         ) : null}
       </Tooltip>
     </TooltipTrigger>

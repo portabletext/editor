@@ -1,3 +1,4 @@
+export * from './toolbar-schema-definition'
 export * from './use-annotation-button'
 export * from './use-annotation-popover'
 export * from './use-block-object-button'

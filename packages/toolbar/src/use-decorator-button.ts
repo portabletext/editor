@@ -1,11 +1,7 @@
-import {
-  useEditor,
-  useEditorSelector,
-  type DecoratorDefinition,
-} from '@portabletext/editor'
+import {useEditor, useEditorSelector} from '@portabletext/editor'
 import * as selectors from '@portabletext/editor/selectors'
-import type {KeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 import {useCallback} from 'react'
+import type {ToolbarDecoratorDefinition} from './toolbar-schema-definition'
 import {useDecoratorKeyboardShortcut} from './use-decorator-keyboard-shortcut'
 import {useMutuallyExclusiveDecorator} from './use-mutually-exclusive-decorator'
 
@@ -13,10 +9,7 @@ import {useMutuallyExclusiveDecorator} from './use-mutually-exclusive-decorator'
  * @beta
  */
 export function useDecoratorButton(props: {
-  definition: DecoratorDefinition & {
-    shortcut?: KeyboardShortcut
-    mutuallyExclusive?: ReadonlyArray<DecoratorDefinition['name']>
-  }
+  definition: ToolbarDecoratorDefinition
 }) {
   const editor = useEditor()
   const disabled = useEditorSelector(

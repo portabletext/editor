@@ -45,7 +45,7 @@ export function HistoryButtons() {
 
   return (
     <Group aria-label="History">
-      <ButtonTooltip label="Undo" shortcut={historyShortcuts.undo.keys}>
+      <ButtonTooltip label="Undo" shortcutKeys={historyShortcuts.undo.keys}>
         <Button
           variant="secondary"
           size="sm"
@@ -55,7 +55,7 @@ export function HistoryButtons() {
           <Undo2Icon className="size-4" />
         </Button>
       </ButtonTooltip>
-      <ButtonTooltip label="Redo" shortcut={historyShortcuts.redo.keys}>
+      <ButtonTooltip label="Redo" shortcutKeys={historyShortcuts.redo.keys}>
         <Button
           variant="secondary"
           size="sm"
