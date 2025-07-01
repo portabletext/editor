@@ -1,23 +1,20 @@
 import {
   useEditor,
-  useEditorSelector,
   type ChildPath,
-  type InlineObjectSchemaType,
   type PortableTextObject,
 } from '@portabletext/editor'
 import * as selectors from '@portabletext/editor/selectors'
-import {useCallback, useEffect, useState, type RefObject} from 'react'
 import * as React from 'react'
+import {useCallback, useEffect, useState, type RefObject} from 'react'
+import type {ToolbarInlineObjectDefinition} from './toolbar-schema-definition'
 
 /**
  * @beta
  */
-export function useInlineObjectPopover() {
+export function useInlineObjectPopover(props: {
+  definitions: ReadonlyArray<ToolbarInlineObjectDefinition>
+}) {
   const editor = useEditor()
-  const schemaTypes = useEditorSelector(
-    editor,
-    (s) => s.context.schema.inlineObjects,
-  )
 
   const [state, setState] = useState<
     | {
@@ -27,7 +24,7 @@ export function useInlineObjectPopover() {
         type: 'visible'
         object: {
           value: PortableTextObject
-          schemaType: InlineObjectSchemaType
+          definition: ToolbarInlineObjectDefinition
           at: ChildPath
         }
         elementRef: RefObject<Element | null>
@@ -50,11 +47,11 @@ export function useInlineObjectPopover() {
         return
       }
 
-      const schemaType = schemaTypes.find(
+      const definition = props.definitions.find(
         (schemaType) => schemaType.name === focusInlineObject.node._type,
       )
 
-      if (!schemaType) {
+      if (!definition) {
         setState((state) => (state.type === 'visible' ? {type: 'idle'} : state))
         return
       }
@@ -74,13 +71,13 @@ export function useInlineObjectPopover() {
         type: 'visible',
         object: {
           value: focusInlineObject.node,
-          schemaType,
+          definition,
           at: focusInlineObject.path,
         },
         elementRef,
       })
     }).unsubscribe
-  }, [editor, schemaTypes])
+  }, [editor, props.definitions])
 
   const onRemove = useCallback(() => {
     if (state.type === 'visible') {

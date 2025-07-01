@@ -1,4 +1,5 @@
 import {useInlineObjectPopover} from '@portabletext/toolbar'
+import type {ToolbarInlineObjectDefinition} from '@portabletext/toolbar'
 import {PencilIcon, TrashIcon} from 'lucide-react'
 import {TooltipTrigger} from 'react-aria-components'
 import {Button} from '../primitives/button'
@@ -6,12 +7,11 @@ import {Dialog} from '../primitives/dialog'
 import {Popover} from '../primitives/popover'
 import {Tooltip} from '../primitives/tooltip'
 import {ObjectForm} from './form.object-form'
-import type {ToolbarInlineObjectDefinition} from './toolbar-schema-definition'
 
 export function InlineObjectPopover(props: {
   definitions: ReadonlyArray<ToolbarInlineObjectDefinition>
 }) {
-  const {state, onRemove, onEdit, onClose} = useInlineObjectPopover()
+  const {state, onRemove, onEdit, onClose} = useInlineObjectPopover(props)
 
   if (state.type === 'idle') {
     return null
@@ -29,14 +29,10 @@ export function InlineObjectPopover(props: {
         }
       }}
     >
-      {state.object.schemaType.fields.length > 0 ? (
+      {state.object.definition.fields.length > 0 ? (
         <Dialog
-          title={state.object.schemaType.title ?? state.object.schemaType.name}
-          icon={
-            props.definitions.find(
-              (definition) => definition.name === state.object.schemaType.name,
-            )?.icon
-          }
+          title={state.object.definition.title ?? state.object.definition.name}
+          icon={state.object.definition.icon}
           onOpenChange={(isOpen) => {
             if (!isOpen) {
               onClose()
@@ -54,7 +50,7 @@ export function InlineObjectPopover(props: {
           {({close}) => (
             <ObjectForm
               submitLabel="Save"
-              fields={state.object.schemaType.fields}
+              fields={state.object.definition.fields}
               defaultValues={state.object.value}
               onSubmit={({value}) => {
                 onEdit({props: value})

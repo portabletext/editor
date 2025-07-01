@@ -1,4 +1,5 @@
 import {useAnnotationPopover} from '@portabletext/toolbar'
+import type {ToolbarAnnotationDefinition} from '@portabletext/toolbar'
 import {PencilIcon, TrashIcon} from 'lucide-react'
 import React from 'react'
 import {TooltipTrigger} from 'react-aria-components'
@@ -8,12 +9,11 @@ import {Popover} from '../primitives/popover'
 import {Separator} from '../primitives/separator'
 import {Tooltip} from '../primitives/tooltip'
 import {ObjectForm} from './form.object-form'
-import type {ToolbarAnnotationDefinition} from './toolbar-schema-definition'
 
 export function AnnotationPopover(props: {
   definitions: ReadonlyArray<ToolbarAnnotationDefinition>
 }) {
-  const {state, onRemove, onEdit, onClose} = useAnnotationPopover()
+  const {state, onRemove, onEdit, onClose} = useAnnotationPopover(props)
 
   if (state.type === 'idle') {
     return null
@@ -36,16 +36,11 @@ export function AnnotationPopover(props: {
           {index > 0 ? <Separator orientation="horizontal" /> : null}
           <div className="flex gap-2 items-center justify-end">
             <span className="text-sm font-medium">
-              {annotation.schemaType.title}
+              {annotation.definition.title}
             </span>
             <Dialog
-              title={annotation.schemaType.title ?? annotation.schemaType.name}
-              icon={
-                props.definitions.find(
-                  (definition) =>
-                    definition.name === annotation.schemaType.name,
-                )?.icon
-              }
+              title={annotation.definition.title ?? annotation.definition.name}
+              icon={annotation.definition.icon}
               onOpenChange={(isOpen) => {
                 if (!isOpen) {
                   onClose()
@@ -68,12 +63,11 @@ export function AnnotationPopover(props: {
               {({close}) => (
                 <ObjectForm
                   submitLabel="Save"
-                  fields={annotation.schemaType.fields}
+                  fields={annotation.definition.fields}
                   defaultValues={annotation.value}
                   onSubmit={({value}) => {
                     onEdit({
                       at: annotation.at,
-                      schemaType: annotation.schemaType,
                       props: value,
                     })
                     close()
@@ -87,7 +81,7 @@ export function AnnotationPopover(props: {
                 variant="destructive"
                 size="sm"
                 onPress={() => {
-                  onRemove({schemaType: annotation.schemaType})
+                  onRemove({definition: annotation.definition})
                 }}
               >
                 <TrashIcon className="size-3" />

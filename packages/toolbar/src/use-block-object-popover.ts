@@ -1,23 +1,20 @@
 import {
   useEditor,
-  useEditorSelector,
-  type BlockObjectSchemaType,
   type BlockPath,
   type PortableTextObject,
 } from '@portabletext/editor'
 import * as selectors from '@portabletext/editor/selectors'
-import {useCallback, useEffect, useState, type RefObject} from 'react'
 import * as React from 'react'
+import {useCallback, useEffect, useState, type RefObject} from 'react'
+import type {ToolbarBlockObjectDefinition} from './toolbar-schema-definition'
 
 /**
  * @beta
  */
-export function useBlockObjectPopover() {
+export function useBlockObjectPopover(props: {
+  definitions: ReadonlyArray<ToolbarBlockObjectDefinition>
+}) {
   const editor = useEditor()
-  const schemaTypes = useEditorSelector(
-    editor,
-    (s) => s.context.schema.blockObjects,
-  )
   const [state, setState] = useState<
     | {
         type: 'idle'
@@ -26,7 +23,7 @@ export function useBlockObjectPopover() {
         type: 'visible'
         object: {
           value: PortableTextObject
-          schemaType: BlockObjectSchemaType
+          definition: ToolbarBlockObjectDefinition
           at: BlockPath
         }
         elementRef: RefObject<Element | null>
@@ -49,11 +46,11 @@ export function useBlockObjectPopover() {
         return
       }
 
-      const schemaType = schemaTypes.find(
-        (schemaType) => schemaType.name === focusBlockObject.node._type,
+      const definition = props.definitions.find(
+        (definition) => definition.name === focusBlockObject.node._type,
       )
 
-      if (!schemaType) {
+      if (!definition) {
         setState((state) => (state.type === 'visible' ? {type: 'idle'} : state))
         return
       }
@@ -73,13 +70,13 @@ export function useBlockObjectPopover() {
         type: 'visible',
         object: {
           value: focusBlockObject.node,
-          schemaType,
+          definition,
           at: focusBlockObject.path,
         },
         elementRef,
       })
     }).unsubscribe
-  }, [editor, schemaTypes])
+  }, [editor, props.definitions])
 
   const onRemove = useCallback(() => {
     if (state.type === 'visible') {

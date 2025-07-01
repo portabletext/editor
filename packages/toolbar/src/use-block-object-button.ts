@@ -1,16 +1,13 @@
-import {
-  useEditor,
-  useEditorSelector,
-  type BlockObjectDefinition,
-} from '@portabletext/editor'
+import {useEditor, useEditorSelector} from '@portabletext/editor'
 import type {InsertPlacement} from '@portabletext/editor/behaviors'
 import {useCallback} from 'react'
+import type {ToolbarBlockObjectDefinition} from './toolbar-schema-definition'
 
 /**
  * @beta
  */
 export function useBlockObjectButton(props: {
-  definition: BlockObjectDefinition
+  definition: ToolbarBlockObjectDefinition
 }) {
   const editor = useEditor()
   const disabled = useEditorSelector(

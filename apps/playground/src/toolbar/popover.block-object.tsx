@@ -1,4 +1,5 @@
 import {useBlockObjectPopover} from '@portabletext/toolbar'
+import type {ToolbarBlockObjectDefinition} from '@portabletext/toolbar'
 import {PencilIcon, TrashIcon} from 'lucide-react'
 import {TooltipTrigger} from 'react-aria-components'
 import {Button} from '../primitives/button'
@@ -6,12 +7,11 @@ import {Dialog} from '../primitives/dialog'
 import {Popover} from '../primitives/popover'
 import {Tooltip} from '../primitives/tooltip'
 import {ObjectForm} from './form.object-form'
-import type {ToolbarBlockObjectDefinition} from './toolbar-schema-definition'
 
 export function BlockObjectPopover(props: {
   definitions: ReadonlyArray<ToolbarBlockObjectDefinition>
 }) {
-  const {state, onRemove, onEdit, onClose} = useBlockObjectPopover()
+  const {state, onRemove, onEdit, onClose} = useBlockObjectPopover(props)
 
   if (state.type === 'idle') {
     return null
@@ -30,14 +30,10 @@ export function BlockObjectPopover(props: {
         }
       }}
     >
-      {state.object.schemaType.fields.length > 0 ? (
+      {state.object.definition.fields.length > 0 ? (
         <Dialog
-          title={state.object.schemaType.title ?? state.object.schemaType.name}
-          icon={
-            props.definitions.find(
-              (definition) => definition.name === state.object.schemaType.name,
-            )?.icon
-          }
+          title={state.object.definition.title ?? state.object.definition.name}
+          icon={state.object.definition.icon}
           onOpenChange={(isOpen) => {
             if (!isOpen) {
               onClose()
@@ -55,7 +51,7 @@ export function BlockObjectPopover(props: {
           {({close}) => (
             <ObjectForm
               submitLabel="Save"
-              fields={state.object.schemaType.fields}
+              fields={state.object.definition.fields}
               defaultValues={state.object.value}
               onSubmit={({value}) => {
                 onEdit({props: value})

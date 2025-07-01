@@ -1,16 +1,14 @@
-import {useEditor, type DecoratorDefinition} from '@portabletext/editor'
+import {useEditor} from '@portabletext/editor'
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
-import type {KeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 import {useEffect} from 'react'
+import type {ToolbarDecoratorDefinition} from './toolbar-schema-definition'
 
 /**
  * @beta
  * Registers a keyboard shortcut for a decorator.
  */
 export function useDecoratorKeyboardShortcut(props: {
-  definition: Pick<DecoratorDefinition, 'name'> & {
-    shortcut?: KeyboardShortcut
-  }
+  definition: ToolbarDecoratorDefinition
 }) {
   const editor = useEditor()
 

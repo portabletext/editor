@@ -1,11 +1,11 @@
 import {useInlineObjectButton} from '@portabletext/toolbar'
+import type {ToolbarInlineObjectDefinition} from '@portabletext/toolbar'
 import {TooltipTrigger} from 'react-aria-components'
 import {Button} from '../primitives/button'
 import {Dialog} from '../primitives/dialog'
 import {Icon} from '../primitives/icon'
 import {Tooltip} from '../primitives/tooltip'
 import {ObjectForm} from './form.object-form'
-import type {ToolbarInlineObjectDefinition} from './toolbar-schema-definition'
 
 export function InlineObjectButton(props: {
   definition: ToolbarInlineObjectDefinition

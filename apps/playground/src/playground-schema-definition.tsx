@@ -1,5 +1,5 @@
-import {defineSchema} from '@portabletext/editor'
 import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
+import {defineToolbarSchema} from '@portabletext/toolbar'
 import {
   ActivityIcon,
   BoldIcon,
@@ -25,14 +25,8 @@ import {
   UnderlineIcon,
 } from 'lucide-react'
 import {z} from 'zod'
-import type {ToolbarSchemaDefinition} from './toolbar/toolbar-schema-definition'
 
-/**
- * Extended schema definition with icons, field titles and default values.
- * This makes it easier to use the schema definition in the playground to
- * render the toolbar, forms and other UI components.
- */
-export const playgroundSchemaDefinition = defineSchema({
+export const playgroundSchemaDefinition = defineToolbarSchema({
   decorators: [
     {
       title: 'Strong',
@@ -259,7 +253,7 @@ export const playgroundSchemaDefinition = defineSchema({
       },
     },
   ],
-}) satisfies ToolbarSchemaDefinition
+})
 
 export const ImageSchema = z.object({
   schemaType: z.object({

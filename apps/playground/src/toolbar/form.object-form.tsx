@@ -1,3 +1,4 @@
+import type {ToolbarBlockObjectDefinition} from '@portabletext/toolbar'
 import {z} from 'zod/v4'
 import {Button} from '../primitives/button'
 import {Fields} from '../primitives/fields'
@@ -5,13 +6,7 @@ import {Fields} from '../primitives/fields'
 const FormDataSchema = z.record(z.string(), z.unknown())
 
 export function ObjectForm(
-  props: {
-    fields: ReadonlyArray<{
-      name: string
-      type: string
-      title?: string
-    }>
-    defaultValues?: {[key: string]: unknown}
+  props: Pick<ToolbarBlockObjectDefinition, 'fields' | 'defaultValues'> & {
     submitLabel: string
   } & {
     onSubmit: ({value}: {value: {[key: string]: unknown}}) => void
