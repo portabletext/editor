@@ -111,7 +111,7 @@
   "devDependencies": {
     "@portabletext/toolkit": "^2.0.17",
     "@sanity/diff-match-patch": "^3.2.0",
-    "@sanity/pkg-utils": "^7.8.8",
+    "@sanity/pkg-utils": "^7.9.0",
     "@sanity/schema": "^3.95.0",
     "@sanity/types": "^3.95.0",
     "@testing-library/react": "^16.3.0",
