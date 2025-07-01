@@ -6,8 +6,8 @@
   "scripts": {
     "build": "tsc -b && vite build",
     "check:lint": "biome lint .",
-    "check:types": "tsc --noEmit --pretty",
-    "check:types:watch": "tsc --watch",
+    "check:types": "tsc --noEmit --pretty --project tsconfig.app.json",
+    "check:types:watch": "tsc --watch --project tsconfig.app.json",
     "check:react-compiler": "eslint --cache --no-inline-config --no-eslintrc --ext .cjs,.mjs,.js,.jsx,.ts,.tsx --parser @typescript-eslint/parser --plugin react-hooks --rule 'react-hooks/react-compiler: [error]' --rule 'react-hooks/rules-of-hooks: [error]' --rule 'react-hooks/exhaustive-deps: [error]' src",
     "clean": "del .turbo && del dist && del node_modules",
     "dev": "vite",
