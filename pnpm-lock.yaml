@@ -9677,7 +9677,7 @@ snapshots:
       esbuild: 0.25.5
       esbuild-register: 3.6.0(esbuild@0.25.5)
       find-config: 1.0.0
-      get-latest-version: 5.1.0
+      get-latest-version: 5.1.0(debug@4.4.1)
       git-url-parse: 16.1.0
       globby: 11.1.0
       jsonc-parser: 3.3.1
@@ -11367,8 +11367,6 @@ snapshots:
 
   flattie@1.1.1: {}
 
-  follow-redirects@1.15.9: {}
-
   follow-redirects@1.15.9(debug@4.4.1):
     optionalDependencies:
       debug: 4.4.1
@@ -11420,17 +11418,6 @@ snapshots:
       hasown: 2.0.2
       math-intrinsics: 1.1.0
 
-  get-it@8.6.9:
-    dependencies:
-      '@types/follow-redirects': 1.14.4
-      decompress-response: 7.0.0
-      follow-redirects: 1.15.9
-      is-retry-allowed: 2.2.0
-      through2: 4.0.2
-      tunnel-agent: 0.6.0
-    transitivePeerDependencies:
-      - debug
-
   get-it@8.6.9(debug@4.4.1):
     dependencies:
       '@types/follow-redirects': 1.14.4
@@ -11439,15 +11426,6 @@ snapshots:
       is-retry-allowed: 2.2.0
       through2: 4.0.2
       tunnel-agent: 0.6.0
-    transitivePeerDependencies:
-      - debug
-
-  get-latest-version@5.1.0:
-    dependencies:
-      get-it: 8.6.9
-      registry-auth-token: 5.1.0
-      registry-url: 5.1.0
-      semver: 7.7.2
     transitivePeerDependencies:
       - debug
 
