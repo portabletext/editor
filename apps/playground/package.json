@@ -19,6 +19,7 @@
   "dependencies": {
     "@portabletext/block-tools": "workspace:^",
     "@portabletext/editor": "workspace:^",
+    "@portabletext/keyboard-shortcuts": "workspace:*",
     "@portabletext/patches": "workspace:^",
     "@portabletext/plugin-markdown-shortcuts": "^1.0.12",
     "@portabletext/plugin-one-line": "^1.0.15",

@@ -1,5 +1,5 @@
 import {defineSchema} from '@portabletext/editor'
-import {createKeyboardShortcut} from '@portabletext/toolbar'
+import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 import {
   ActivityIcon,
   BoldIcon,
@@ -25,7 +25,6 @@ import {
   UnderlineIcon,
 } from 'lucide-react'
 import {z} from 'zod'
-import {isHotkey} from './plugins/is-hotkey'
 import type {ToolbarSchemaDefinition} from './toolbar/toolbar-schema-definition'
 
 /**
@@ -41,12 +40,18 @@ export const playgroundSchemaDefinition = defineSchema({
       icon: BoldIcon,
       shortcut: createKeyboardShortcut({
         default: {
-          guard: (event) => isHotkey('mod+b', event),
-          keys: ['Ctrl', 'B'],
+          key: 'B',
+          alt: false,
+          ctrl: true,
+          meta: false,
+          shift: false,
         },
         apple: {
-          guard: (event) => isHotkey('mod+b', event),
-          keys: ['⌘', 'B'],
+          key: 'B',
+          alt: false,
+          ctrl: false,
+          meta: true,
+          shift: false,
         },
       }),
     },
@@ -56,12 +61,18 @@ export const playgroundSchemaDefinition = defineSchema({
       icon: ItalicIcon,
       shortcut: createKeyboardShortcut({
         default: {
-          guard: (event) => isHotkey('mod+i', event),
-          keys: ['Ctrl', 'I'],
+          key: 'I',
+          alt: false,
+          ctrl: true,
+          meta: false,
+          shift: false,
         },
         apple: {
-          guard: (event) => isHotkey('mod+i', event),
-          keys: ['⌘', 'I'],
+          key: 'I',
+          alt: false,
+          ctrl: false,
+          meta: true,
+          shift: false,
         },
       }),
     },
@@ -71,12 +82,18 @@ export const playgroundSchemaDefinition = defineSchema({
       icon: CodeIcon,
       shortcut: createKeyboardShortcut({
         default: {
-          guard: (event) => isHotkey("mod+'", event),
-          keys: ['Ctrl', "'"],
+          key: "'",
+          alt: false,
+          ctrl: true,
+          meta: false,
+          shift: false,
         },
         apple: {
-          guard: (event) => isHotkey("mod+'", event),
-          keys: ['⌘', "'"],
+          key: "'",
+          alt: false,
+          ctrl: false,
+          meta: true,
+          shift: false,
         },
       }),
     },
@@ -86,12 +103,18 @@ export const playgroundSchemaDefinition = defineSchema({
       icon: UnderlineIcon,
       shortcut: createKeyboardShortcut({
         default: {
-          guard: (event) => isHotkey('mod+u', event),
-          keys: ['Ctrl', 'U'],
+          key: 'U',
+          alt: false,
+          ctrl: true,
+          meta: false,
+          shift: false,
         },
         apple: {
-          guard: (event) => isHotkey('mod+u', event),
-          keys: ['⌘', 'U'],
+          key: 'U',
+          alt: false,
+          ctrl: false,
+          meta: true,
+          shift: false,
         },
       }),
     },
@@ -101,12 +124,18 @@ export const playgroundSchemaDefinition = defineSchema({
       icon: StrikethroughIcon,
       shortcut: createKeyboardShortcut({
         default: {
-          guard: (event) => isHotkey('mod+shift+x', event),
-          keys: ['Ctrl', 'Shift', 'X'],
+          key: 'X',
+          alt: false,
+          ctrl: true,
+          meta: false,
+          shift: true,
         },
         apple: {
-          guard: (event) => isHotkey('mod+shift+x', event),
-          keys: ['⌘', 'Shift', 'X'],
+          key: 'X',
+          alt: false,
+          ctrl: false,
+          meta: true,
+          shift: true,
         },
       }),
     },

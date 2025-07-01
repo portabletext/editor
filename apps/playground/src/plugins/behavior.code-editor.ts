@@ -1,10 +1,10 @@
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 import * as selectors from '@portabletext/editor/selectors'
-import {isHotkey} from './is-hotkey'
+import type {KeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 
 export type CodeEditorBehaviorsConfig = {
-  moveBlockUpShortcut: string
-  moveBlockDownShortcut: string
+  moveBlockUpShortcut: KeyboardShortcut
+  moveBlockDownShortcut: KeyboardShortcut
 }
 
 export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
@@ -12,8 +12,7 @@ export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
     defineBehavior({
       on: 'keyboard.keydown',
       guard: ({snapshot, event}) => {
-        const isMoveUpShortcut = isHotkey(
-          config.moveBlockUpShortcut,
+        const isMoveUpShortcut = config.moveBlockUpShortcut.guard(
           event.originEvent,
         )
         const firstBlock = selectors.getFirstBlock(snapshot)
@@ -40,8 +39,7 @@ export function createCodeEditorBehaviors(config: CodeEditorBehaviorsConfig) {
     defineBehavior({
       on: 'keyboard.keydown',
       guard: ({snapshot, event}) => {
-        const isMoveDownShortcut = isHotkey(
-          config.moveBlockDownShortcut,
+        const isMoveDownShortcut = config.moveBlockDownShortcut.guard(
           event.originEvent,
         )
         const lastBlock = selectors.getLastBlock(snapshot)
