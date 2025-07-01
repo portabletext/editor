@@ -1,4 +1,5 @@
 import {useEditor} from '@portabletext/editor'
+import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 import {useEffect} from 'react'
 import {createCodeEditorBehaviors} from './behavior.code-editor'
 
@@ -7,8 +8,24 @@ export function CodeEditorPlugin() {
 
   useEffect(() => {
     const behaviors = createCodeEditorBehaviors({
-      moveBlockUpShortcut: 'Alt+ArrowUp',
-      moveBlockDownShortcut: 'Alt+ArrowDown',
+      moveBlockUpShortcut: createKeyboardShortcut({
+        default: {
+          key: 'ArrowUp',
+          alt: true,
+          ctrl: false,
+          meta: false,
+          shift: false,
+        },
+      }),
+      moveBlockDownShortcut: createKeyboardShortcut({
+        default: {
+          key: 'ArrowDown',
+          alt: true,
+          ctrl: false,
+          meta: false,
+          shift: false,
+        },
+      }),
     })
 
     const unregisterBehaviors = behaviors.map((behavior) =>

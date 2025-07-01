@@ -3,10 +3,11 @@ import {
   useEditorSelector,
   type DecoratorDefinition,
 } from '@portabletext/editor'
-import {defineBehavior, forward, raise} from '@portabletext/editor/behaviors'
 import * as selectors from '@portabletext/editor/selectors'
-import {useCallback, useEffect} from 'react'
-import type {KeyboardShortcut} from './keyboard-shortcut'
+import type {KeyboardShortcut} from '@portabletext/keyboard-shortcuts'
+import {useCallback} from 'react'
+import {useDecoratorKeyboardShortcut} from './use-decorator-keyboard-shortcut'
+import {useMutuallyExclusiveDecorator} from './use-mutually-exclusive-decorator'
 
 /**
  * @beta
@@ -34,54 +35,8 @@ export function useDecoratorButton(props: {
     editor.send({type: 'focus'})
   }, [editor, props.definition.name])
 
-  useEffect(() => {
-    const shortcut = props.definition.shortcut
-
-    if (!shortcut) {
-      return
-    }
-
-    return editor.registerBehavior({
-      behavior: defineBehavior({
-        on: 'keyboard.keydown',
-        guard: ({event}) => shortcut.guard(event.originEvent),
-        actions: [
-          () => [
-            raise({
-              type: 'decorator.toggle',
-              decorator: props.definition.name,
-            }),
-          ],
-        ],
-      }),
-    })
-  }, [editor, props.definition.name, props.definition.shortcut])
-
-  useEffect(() => {
-    const mutuallyExclusive = props.definition.mutuallyExclusive
-
-    if (!mutuallyExclusive) {
-      return
-    }
-
-    return editor.registerBehavior({
-      behavior: defineBehavior({
-        on: 'decorator.add',
-        guard: ({event}) => event.decorator === props.definition.name,
-        actions: [
-          ({event}) => [
-            forward(event),
-            ...mutuallyExclusive.map((decorator) =>
-              raise({
-                type: 'decorator.remove',
-                decorator,
-              }),
-            ),
-          ],
-        ],
-      }),
-    })
-  }, [editor, props.definition.name, props.definition.mutuallyExclusive])
+  useDecoratorKeyboardShortcut(props)
+  useMutuallyExclusiveDecorator(props)
 
   return {disabled, active, onToggle}
 }
