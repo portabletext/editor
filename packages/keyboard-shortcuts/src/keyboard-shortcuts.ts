@@ -137,7 +137,7 @@ export function createKeyboardShortcut<
       keys: [
         ...(appleDefinition.meta ? ['⌘'] : []),
         ...(appleDefinition.ctrl ? ['Ctrl'] : []),
-        ...(appleDefinition.alt ? ['Alt'] : []),
+        ...(appleDefinition.alt ? ['Opt'] : []),
         ...(appleDefinition.shift ? ['Shift'] : []),
         appleDefinition.key,
       ],
