@@ -36,7 +36,6 @@ export function PortableTextToolbar(props: {
                 <DecoratorButton key={decorator.name} definition={decorator} />
               ))}
             </Group>
-            <Separator orientation="vertical" />
           </>
         ) : null}
         {props.schemaDefinition.annotations ? (
@@ -50,7 +49,6 @@ export function PortableTextToolbar(props: {
                 />
               ))}
             </Group>
-            <Separator orientation="vertical" />
           </>
         ) : null}
         {props.schemaDefinition.lists ? (
@@ -61,7 +59,6 @@ export function PortableTextToolbar(props: {
                 <ListButton key={list.name} definition={list} />
               ))}
             </Group>
-            <Separator orientation="vertical" />
           </>
         ) : null}
         {props.schemaDefinition.blockObjects ? (
@@ -75,7 +72,6 @@ export function PortableTextToolbar(props: {
                 />
               ))}
             </Group>
-            <Separator orientation="vertical" />
           </>
         ) : null}
         {props.schemaDefinition.inlineObjects ? (
@@ -89,7 +85,6 @@ export function PortableTextToolbar(props: {
                 />
               ))}
             </Group>
-            <Separator orientation="vertical" />
           </>
         ) : null}
         <Group aria-label="Debugging">
