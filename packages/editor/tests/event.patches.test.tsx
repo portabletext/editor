@@ -11,6 +11,7 @@ import {
   type EditorEmittedEvent,
 } from '../src'
 import type {SchemaDefinition} from '../src/editor/editor-schema-definition'
+import {getTersePt} from '../src/internal-utils/terse-pt'
 import {createTestEditor} from '../src/internal-utils/test-editor'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {EditorRefPlugin, EventListenerPlugin} from '../src/plugins'
@@ -1491,6 +1492,63 @@ describe('event.patches', () => {
           alt: 'An image',
         },
       ])
+    })
+  })
+
+  test('Scenario: `unset`ing last text block and `insert`ing a new one', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const {editorRef, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, ' bar')
+
+    await vi.waitFor(() => {
+      expect(
+        getTersePt(editorRef.current?.getSnapshot().context.value),
+      ).toEqual(['foo bar'])
+    })
+
+    editorRef.current?.send({
+      type: 'patches',
+      patches: [
+        {type: 'unset', origin: 'remote', path: [{_key: blockKey}]},
+        {
+          type: 'insert',
+          origin: 'remote',
+          path: [0],
+          position: 'before',
+          items: [
+            {
+              _type: 'block',
+              _key: keyGenerator(),
+              children: [
+                {_type: 'span', _key: keyGenerator(), text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(
+        getTersePt(editorRef.current?.getSnapshot().context.value),
+      ).toEqual(['baz'])
     })
   })
 
