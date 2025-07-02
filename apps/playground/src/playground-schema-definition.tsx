@@ -175,6 +175,26 @@ export const playgroundSchemaDefinition = defineToolbarSchema({
       defaultValues: {
         href: 'https://example.com',
       },
+      shortcut: createKeyboardShortcut({
+        default: [
+          {
+            key: 'K',
+            alt: false,
+            ctrl: true,
+            meta: false,
+            shift: false,
+          },
+        ],
+        apple: [
+          {
+            key: 'K',
+            alt: false,
+            ctrl: false,
+            meta: true,
+            shift: false,
+          },
+        ],
+      }),
     },
     {
       title: 'Comment',

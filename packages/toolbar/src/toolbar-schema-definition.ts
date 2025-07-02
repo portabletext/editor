@@ -49,6 +49,7 @@ export type ToolbarAnnotationDefinition = AnnotationDefinition & {
   icon: React.ComponentType
   fields: ReadonlyArray<FieldDefinition & {title: string}>
   defaultValues?: Record<string, unknown>
+  shortcut?: KeyboardShortcut
 }
 
 /**

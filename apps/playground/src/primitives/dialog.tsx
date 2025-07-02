@@ -15,12 +15,13 @@ import {Tooltip} from './tooltip'
 export function Dialog(props: {
   title: string
   icon?: React.ComponentType
+  isOpen?: boolean
   trigger: React.ReactNode
   children: (props: {close: () => void}) => React.ReactNode
   onOpenChange?: (isOpen: boolean) => void
 }) {
   return (
-    <DialogTrigger onOpenChange={props.onOpenChange}>
+    <DialogTrigger onOpenChange={props.onOpenChange} isOpen={props.isOpen}>
       {props.trigger}
       <ModalOverlay className="bg-black/9 z-100000 left-0 top-0 fixed w-screen h-[var(--visual-viewport-height)] flex items-center justify-center">
         <Modal>

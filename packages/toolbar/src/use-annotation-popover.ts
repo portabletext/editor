@@ -31,7 +31,7 @@ export function useAnnotationPopover(props: {
   >({type: 'idle'})
 
   useEffect(() => {
-    return editor.on('selection', () => {
+    return editor.on('*', () => {
       const snapshot = editor.getSnapshot()
       const activeAnnotations = selectors.getActiveAnnotations(snapshot)
       const focusBlock = selectors.getFocusBlock(snapshot)
