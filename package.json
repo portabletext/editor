@@ -34,7 +34,8 @@
     "test:browser:chromium": "turbo test:browser:chromium",
     "test:browser:firefox": "turbo test:browser:firefox",
     "test:browser:webkit": "turbo test:browser:webkit",
-    "test:unit": "turbo test:unit"
+    "test:unit": "turbo test:unit",
+    "test:unit:watch": "turbo test:unit:watch"
   },
   "lint-staged": {
     "*": [
