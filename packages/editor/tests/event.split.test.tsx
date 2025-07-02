@@ -61,7 +61,7 @@ describe('event.split', () => {
     await vi.waitFor(() => {
       return expect(
         getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['foo,[stock-ticker],'])
+      ).toEqual(['foo,{stock-ticker},'])
     })
 
     editorRef.current?.send({
@@ -78,7 +78,7 @@ describe('event.split', () => {
 
     expect(getTersePt(editorRef.current?.getSnapshot().context.value)).toEqual([
       'foo',
-      ',[stock-ticker],',
+      ',{stock-ticker},',
     ])
   })
 
@@ -196,7 +196,7 @@ describe('event.split', () => {
     await vi.waitFor(() => {
       return expect(
         getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['foo,[stock-ticker],'])
+      ).toEqual(['foo,{stock-ticker},'])
     })
 
     const locator = page.getByRole('textbox')
@@ -239,7 +239,7 @@ describe('event.split', () => {
     await userEvent.type(locator, 'bar')
 
     expect(getTersePt(editorRef.current?.getSnapshot().context.value)).toEqual([
-      'foo,[stock-ticker],bar',
+      'foo,{stock-ticker},bar',
     ])
   })
 
@@ -276,7 +276,7 @@ describe('event.split', () => {
     await vi.waitFor(() => {
       return expect(
         getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['[image]', 'bar'])
+      ).toEqual(['{image}', 'bar'])
     })
 
     const locator = page.getByRole('textbox')
@@ -302,7 +302,7 @@ describe('event.split', () => {
           editorRef.current?.getSnapshot().context.value,
           editorRef.current?.getSnapshot().context.selection!,
         ),
-      ).toEqual(['[image]'])
+      ).toEqual(['{image}'])
     })
 
     editorRef.current?.send({type: 'split'})
@@ -310,7 +310,7 @@ describe('event.split', () => {
     await vi.waitFor(() => {
       expect(
         getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['[image]', 'bar'])
+      ).toEqual(['{image}', 'bar'])
     })
   })
 
@@ -354,7 +354,7 @@ describe('event.split', () => {
     await vi.waitFor(() => {
       return expect(
         getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['foo', '[image]', 'bar'])
+      ).toEqual(['foo', '{image}', 'bar'])
     })
 
     const locator = page.getByRole('textbox')
@@ -446,7 +446,7 @@ describe('event.split', () => {
     await vi.waitFor(() => {
       return expect(
         getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['foo', '[image]', 'bar'])
+      ).toEqual(['foo', '{image}', 'bar'])
     })
 
     const locator = page.getByRole('textbox')

@@ -216,7 +216,7 @@ Feature: Decorators
     And "foobar" has marks "strong,em"
 
   Scenario: Toggling decorator with leading block object and trailing empty text
-    Given the text "[image]|foo|"
+    Given the text "{image}|foo|"
     When everything is selected
     And "strong" is toggled
     Then "foo" has marks "strong"

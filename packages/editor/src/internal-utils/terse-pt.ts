@@ -45,11 +45,11 @@ export function getTersePt(
         if (isPortableTextSpan(child)) {
           terseBlock = `${terseBlock}${index > 0 ? ',' : ''}${child.text}`
         } else {
-          terseBlock = `${terseBlock}${index > 0 ? ',' : ''}[${child._type}]`
+          terseBlock = `${terseBlock}${index > 0 ? ',' : ''}{${child._type}}`
         }
       }
     } else {
-      terseBlock = `[${block._type}]`
+      terseBlock = `{${block._type}}`
     }
 
     blocks.push(terseBlock)
@@ -65,7 +65,7 @@ export function parseTersePt(
   const blocks: Array<PortableTextBlock> = []
 
   for (const terseBlock of tersePt) {
-    if (terseBlock.startsWith('[')) {
+    if (terseBlock.startsWith('{')) {
       blocks.push({
         _type: terseBlock.slice(1, -1),
         _key: context.keyGenerator(),
@@ -111,7 +111,7 @@ export function parseTersePt(
       const textRuns = content.split(',')
 
       for (const textRun of textRuns) {
-        if (textRun.startsWith('[')) {
+        if (textRun.startsWith('{')) {
           block.children.push({
             _key: context.keyGenerator(),
             _type: textRun.slice(1, -1),
@@ -128,7 +128,7 @@ export function parseTersePt(
       const textRuns = terseBlock.split(',')
 
       for (const textRun of textRuns) {
-        if (textRun.startsWith('[')) {
+        if (textRun.startsWith('{')) {
           block.children.push({
             _key: context.keyGenerator(),
             _type: textRun.slice(1, -1),

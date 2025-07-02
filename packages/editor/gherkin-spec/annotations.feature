@@ -163,7 +163,7 @@ Feature: Annotations
     And "link" "l1" is toggled
     And the caret is put before "bar"
     And "foo " is typed
-    Then the text is ",[stock-ticker],foo ,bar"
+    Then the text is ",{stock-ticker},foo ,bar"
 
   Scenario Outline: Toggling decorator at the edge of an annotation
     Given the text <text>

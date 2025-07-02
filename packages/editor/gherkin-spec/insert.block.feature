@@ -4,133 +4,133 @@ Feature: Insert Block
     Given one editor
 
   Scenario Outline: Inserting block object on an empty editor without selecting it
-    When "[image]" is inserted at <placement> and selected at the "none"
+    When "{image}" is inserted at <placement> and selected at the "none"
     Then the text is <text>
     And nothing is selected
 
     Examples:
       | placement | text        |
-      | "before"  | "[image]\|" |
-      | "after"   | "\|[image]" |
-      | "auto"    | "[image]"   |
+      | "before"  | "{image}\|" |
+      | "after"   | "\|{image}" |
+      | "auto"    | "{image}"   |
 
   Scenario Outline: Inserting block object on an empty editor and selecting it
-    When "[image]" is inserted at <placement> and selected at the <position>
+    When "{image}" is inserted at <placement> and selected at the <position>
     And "bar" is typed
     Then the text is <text>
 
     Examples:
       | placement | position | text        |
-      | "before"  | "start"  | "[image]\|" |
-      | "after"   | "start"  | "\|[image]" |
-      | "auto"    | "start"  | "[image]"   |
-      | "before"  | "end"    | "[image]\|" |
-      | "after"   | "end"    | "\|[image]" |
-      | "auto"    | "end"    | "[image]"   |
+      | "before"  | "start"  | "{image}\|" |
+      | "after"   | "start"  | "\|{image}" |
+      | "auto"    | "start"  | "{image}"   |
+      | "before"  | "end"    | "{image}\|" |
+      | "after"   | "end"    | "\|{image}" |
+      | "auto"    | "end"    | "{image}"   |
 
   Scenario Outline: Inserting block object on an empty text block
     Given the text "f"
     When "{Backspace}" is pressed
-    And "[image]" is inserted at <placement> and selected at the <position>
+    And "{image}" is inserted at <placement> and selected at the <position>
     And "bar" is typed
     Then the text is <text>
 
     Examples:
       | placement | position | text           |
-      | "before"  | "none"   | "[image]\|bar" |
-      | "after"   | "none"   | "bar\|[image]" |
-      | "auto"    | "none"   | "[image]"      |
-      | "before"  | "start"  | "[image]\|"    |
-      | "after"   | "start"  | "\|[image]"    |
-      | "auto"    | "start"  | "[image]"      |
-      | "before"  | "end"    | "[image]\|"    |
-      | "after"   | "end"    | "\|[image]"    |
-      | "auto"    | "end"    | "[image]"      |
+      | "before"  | "none"   | "{image}\|bar" |
+      | "after"   | "none"   | "bar\|{image}" |
+      | "auto"    | "none"   | "{image}"      |
+      | "before"  | "start"  | "{image}\|"    |
+      | "after"   | "start"  | "\|{image}"    |
+      | "auto"    | "start"  | "{image}"      |
+      | "before"  | "end"    | "{image}\|"    |
+      | "after"   | "end"    | "\|{image}"    |
+      | "auto"    | "end"    | "{image}"      |
 
   Scenario Outline: Inserting and selecting block object on text selection
     Given the text "foo"
     When <selection> is selected
-    And "[image]" is inserted at <placement> and selected at the <position>
+    And "{image}" is inserted at <placement> and selected at the <position>
     Then the text is <text>
-    And "[image]" is selected
+    And "{image}" is selected
 
     Examples:
       | selection | placement | position | text           |
-      | "foo"     | "auto"    | "start"  | "[image]"      |
-      | "f"       | "auto"    | "start"  | "[image]\|oo"  |
-      | "oo"      | "auto"    | "start"  | "f\|[image]"   |
-      | "foo"     | "auto"    | "end"    | "[image]"      |
-      | "f"       | "auto"    | "end"    | "[image]\|oo"  |
-      | "oo"      | "auto"    | "end"    | "f\|[image]"   |
-      | "foo"     | "before"  | "start"  | "[image]\|foo" |
-      | "f"       | "before"  | "start"  | "[image]\|foo" |
-      | "oo"      | "before"  | "start"  | "[image]\|foo" |
-      | "foo"     | "before"  | "end"    | "[image]\|foo" |
-      | "f"       | "before"  | "end"    | "[image]\|foo" |
-      | "oo"      | "before"  | "end"    | "[image]\|foo" |
-      | "foo"     | "after"   | "start"  | "foo\|[image]" |
-      | "f"       | "after"   | "start"  | "foo\|[image]" |
-      | "oo"      | "after"   | "start"  | "foo\|[image]" |
-      | "foo"     | "after"   | "end"    | "foo\|[image]" |
-      | "f"       | "after"   | "end"    | "foo\|[image]" |
-      | "oo"      | "after"   | "end"    | "foo\|[image]" |
+      | "foo"     | "auto"    | "start"  | "{image}"      |
+      | "f"       | "auto"    | "start"  | "{image}\|oo"  |
+      | "oo"      | "auto"    | "start"  | "f\|{image}"   |
+      | "foo"     | "auto"    | "end"    | "{image}"      |
+      | "f"       | "auto"    | "end"    | "{image}\|oo"  |
+      | "oo"      | "auto"    | "end"    | "f\|{image}"   |
+      | "foo"     | "before"  | "start"  | "{image}\|foo" |
+      | "f"       | "before"  | "start"  | "{image}\|foo" |
+      | "oo"      | "before"  | "start"  | "{image}\|foo" |
+      | "foo"     | "before"  | "end"    | "{image}\|foo" |
+      | "f"       | "before"  | "end"    | "{image}\|foo" |
+      | "oo"      | "before"  | "end"    | "{image}\|foo" |
+      | "foo"     | "after"   | "start"  | "foo\|{image}" |
+      | "f"       | "after"   | "start"  | "foo\|{image}" |
+      | "oo"      | "after"   | "start"  | "foo\|{image}" |
+      | "foo"     | "after"   | "end"    | "foo\|{image}" |
+      | "f"       | "after"   | "end"    | "foo\|{image}" |
+      | "oo"      | "after"   | "end"    | "foo\|{image}" |
 
   Scenario Outline: Inserting block object on text selection without selecting it
     Given the text "foo"
     When <selection> is selected
-    And "[image]" is inserted at <placement> and selected at the "none"
+    And "{image}" is inserted at <placement> and selected at the "none"
     And "bar" is typed
     Then the text is <text>
 
     Examples:
       | selection | placement | text             |
-      | "f"       | "auto"    | "[image]\|baroo" |
-      | "oo"      | "auto"    | "fbar\|[image]"  |
-      | "foo"     | "auto"    | "[image]"        |
-      | "f"       | "before"  | "[image]\|baroo" |
-      | "oo"      | "before"  | "[image]\|fbar"  |
-      | "foo"     | "before"  | "[image]\|bar"   |
-      | "f"       | "after"   | "baroo\|[image]" |
-      | "oo"      | "after"   | "fbar\|[image]"  |
-      | "foo"     | "after"   | "bar\|[image]"   |
+      | "f"       | "auto"    | "{image}\|baroo" |
+      | "oo"      | "auto"    | "fbar\|{image}"  |
+      | "foo"     | "auto"    | "{image}"        |
+      | "f"       | "before"  | "{image}\|baroo" |
+      | "oo"      | "before"  | "{image}\|fbar"  |
+      | "foo"     | "before"  | "{image}\|bar"   |
+      | "f"       | "after"   | "baroo\|{image}" |
+      | "oo"      | "after"   | "fbar\|{image}"  |
+      | "foo"     | "after"   | "bar\|{image}"   |
 
   Scenario Outline: Inserting and selecting block object on cross-block selection
     Given the text "foo"
     When "{Enter}" is pressed
     And "bar" is typed
     And <selection> is selected
-    And "[image]" is inserted at <placement> and selected at the <position>
+    And "{image}" is inserted at <placement> and selected at the <position>
     Then the text is <text>
-    And "[image]" is selected
+    And "{image}" is selected
 
     Examples:
       | selection | placement | position | text                |
-      | "foob"    | "auto"    | "start"  | "[image]\|ar"       |
-      | "obar"    | "auto"    | "start"  | "fo\|[image]"       |
-      | "foob"    | "auto"    | "end"    | "[image]\|ar"       |
-      | "foob"    | "before"  | "start"  | "[image]\|foo\|bar" |
-      | "obar"    | "before"  | "start"  | "[image]\|foo\|bar" |
-      | "foob"    | "before"  | "end"    | "[image]\|foo\|bar" |
-      | "obar"    | "before"  | "end"    | "[image]\|foo\|bar" |
-      | "foob"    | "after"   | "start"  | "foo\|bar\|[image]" |
-      | "obar"    | "after"   | "start"  | "foo\|bar\|[image]" |
-      | "foob"    | "after"   | "end"    | "foo\|bar\|[image]" |
-      | "obar"    | "after"   | "end"    | "foo\|bar\|[image]" |
+      | "foob"    | "auto"    | "start"  | "{image}\|ar"       |
+      | "obar"    | "auto"    | "start"  | "fo\|{image}"       |
+      | "foob"    | "auto"    | "end"    | "{image}\|ar"       |
+      | "foob"    | "before"  | "start"  | "{image}\|foo\|bar" |
+      | "obar"    | "before"  | "start"  | "{image}\|foo\|bar" |
+      | "foob"    | "before"  | "end"    | "{image}\|foo\|bar" |
+      | "obar"    | "before"  | "end"    | "{image}\|foo\|bar" |
+      | "foob"    | "after"   | "start"  | "foo\|bar\|{image}" |
+      | "obar"    | "after"   | "start"  | "foo\|bar\|{image}" |
+      | "foob"    | "after"   | "end"    | "foo\|bar\|{image}" |
+      | "obar"    | "after"   | "end"    | "foo\|bar\|{image}" |
 
   Scenario Outline: Inserting a block object on a cross-block selection without selecting it
     Given the text "foo"
     When "{Enter}" is pressed
     And "bar" is typed
     And <selection> is selected
-    And "[image]" is inserted at <placement> and selected at the "none"
+    And "{image}" is inserted at <placement> and selected at the "none"
     And "baz" is typed
     Then the text is <text>
 
     Examples:
       | selection | placement | text             |
-      | "foob"    | "auto"    | "[image]\|bazar" |
-      | "obar"    | "auto"    | "fobaz\|[image]" |
-      | "foobar"  | "auto"    | "[image]"        |
+      | "foob"    | "auto"    | "{image}\|bazar" |
+      | "obar"    | "auto"    | "fobaz\|{image}" |
+      | "foobar"  | "auto"    | "{image}"        |
 
   Scenario Outline: Inserting text block on an empty editor
     When "foo" is inserted at <placement> and selected at the "none"
@@ -179,105 +179,105 @@ Feature: Insert Block
       | "auto"    | "none"   | "barfoo"   |
 
   Scenario Outline: Inserting block object on block object
-    When "[image]" is inserted at "auto" and selected at the <block selection>
-    And "[break]" is inserted at <new block placement> and selected at the <new block selection>
+    When "{image}" is inserted at "auto" and selected at the <block selection>
+    And "{break}" is inserted at <new block placement> and selected at the <new block selection>
     Then the text is <text>
     And <selection> is selected
 
     Examples:
       | block selection | new block placement | new block selection | text               | selection |
-      | "start"         | "before"            | "start"             | "[break]\|[image]" | "[break]" |
-      # | "start"         | "after"             | "start"             | "[image]\|[break]" | block "k-b" |
-      # | "start"         | "auto"              | "start"             | "[image]\|[break]" | block "k-b" |
-      | "start"         | "before"            | "end"               | "[break]\|[image]" | "[break]" |
-      # | "start"         | "after"             | "end"               | "[image]\|[break]" | block "k-b" |
-      # | "start"         | "auto"              | "end"               | "[image]\|[break]" | block "k-b" |
-      | "start"         | "before"            | "none"              | "[break]\|[image]" | "[image]" |
-      # | "start"         | "after"             | "none"              | "[image]\|[break]" | block "k-i" |
-      # | "start"         | "auto"              | "none"              | "[image]\|[break]" | block "k-i" |
-      # | "start"         | "after"             | "start"             | "[image]\|[break]" | block "k-b" |
-      # | "start"         | "auto"              | "start"             | "[image]\|[break]" | block "k-b" |
-      | "end"           | "before"            | "start"             | "[break]\|[image]" | "[break]" |
-      | "end"           | "before"            | "end"               | "[break]\|[image]" | "[break]" |
-      | "end"           | "before"            | "none"              | "[break]\|[image]" | "[image]" |
-      | "none"          | "before"            | "start"             | "[break]\|[image]" | "[break]" |
-      | "none"          | "after"             | "start"             | "[image]\|[break]" | "[break]" |
-      | "none"          | "auto"              | "start"             | "[image]\|[break]" | "[break]" |
-      | "none"          | "before"            | "end"               | "[break]\|[image]" | "[break]" |
-      | "none"          | "after"             | "end"               | "[image]\|[break]" | "[break]" |
-      | "none"          | "auto"              | "end"               | "[image]\|[break]" | "[break]" |
-      | "none"          | "before"            | "none"              | "[break]\|[image]" | nothing   |
-      | "none"          | "after"             | "none"              | "[image]\|[break]" | nothing   |
-      | "none"          | "auto"              | "none"              | "[image]\|[break]" | nothing   |
+      | "start"         | "before"            | "start"             | "{break}\|{image}" | "{break}" |
+      # | "start"         | "after"             | "start"             | "{image}\|{break}" | block "k-b" |
+      # | "start"         | "auto"              | "start"             | "{image}\|{break}" | block "k-b" |
+      | "start"         | "before"            | "end"               | "{break}\|{image}" | "{break}" |
+      # | "start"         | "after"             | "end"               | "{image}\|{break}" | block "k-b" |
+      # | "start"         | "auto"              | "end"               | "{image}\|{break}" | block "k-b" |
+      | "start"         | "before"            | "none"              | "{break}\|{image}" | "{image}" |
+      # | "start"         | "after"             | "none"              | "{image}\|{break}" | block "k-i" |
+      # | "start"         | "auto"              | "none"              | "{image}\|{break}" | block "k-i" |
+      # | "start"         | "after"             | "start"             | "{image}\|{break}" | block "k-b" |
+      # | "start"         | "auto"              | "start"             | "{image}\|{break}" | block "k-b" |
+      | "end"           | "before"            | "start"             | "{break}\|{image}" | "{break}" |
+      | "end"           | "before"            | "end"               | "{break}\|{image}" | "{break}" |
+      | "end"           | "before"            | "none"              | "{break}\|{image}" | "{image}" |
+      | "none"          | "before"            | "start"             | "{break}\|{image}" | "{break}" |
+      | "none"          | "after"             | "start"             | "{image}\|{break}" | "{break}" |
+      | "none"          | "auto"              | "start"             | "{image}\|{break}" | "{break}" |
+      | "none"          | "before"            | "end"               | "{break}\|{image}" | "{break}" |
+      | "none"          | "after"             | "end"               | "{image}\|{break}" | "{break}" |
+      | "none"          | "auto"              | "end"               | "{image}\|{break}" | "{break}" |
+      | "none"          | "before"            | "none"              | "{break}\|{image}" | nothing   |
+      | "none"          | "after"             | "none"              | "{image}\|{break}" | nothing   |
+      | "none"          | "auto"              | "none"              | "{image}\|{break}" | nothing   |
 
   Scenario Outline: Inserting and selecting block object on block object
-    When "[image]" is inserted at "auto" and selected at the "none"
-    And "[break]" is inserted at <placement> and selected at the <position>
+    When "{image}" is inserted at "auto" and selected at the "none"
+    And "{break}" is inserted at <placement> and selected at the <position>
     And "{Enter}" is pressed
     And "foo" is typed
     Then the text is <text>
 
     Examples:
       | placement | position | text                    |
-      | "before"  | "start"  | "[break]\|foo\|[image]" |
-      | "before"  | "end"    | "[break]\|foo\|[image]" |
-      | "before"  | "none"   | "[break]\|[image]"      |
-      | "after"   | "start"  | "[image]\|[break]\|foo" |
-      | "after"   | "end"    | "[image]\|[break]\|foo" |
-      | "after"   | "none"   | "[image]\|[break]"      |
-      | "auto"    | "start"  | "[image]\|[break]\|foo" |
-      | "auto"    | "end"    | "[image]\|[break]\|foo" |
-      | "auto"    | "none"   | "[image]\|[break]"      |
+      | "before"  | "start"  | "{break}\|foo\|{image}" |
+      | "before"  | "end"    | "{break}\|foo\|{image}" |
+      | "before"  | "none"   | "{break}\|{image}"      |
+      | "after"   | "start"  | "{image}\|{break}\|foo" |
+      | "after"   | "end"    | "{image}\|{break}\|foo" |
+      | "after"   | "none"   | "{image}\|{break}"      |
+      | "auto"    | "start"  | "{image}\|{break}\|foo" |
+      | "auto"    | "end"    | "{image}\|{break}\|foo" |
+      | "auto"    | "none"   | "{image}\|{break}"      |
 
   Scenario Outline: Inserting block object on block objects
-    Given the text "[image]|[image]"
+    Given the text "{image}|{image}"
     When everything is selected
-    When "[break]" is inserted at <placement> and selected at the <position>
+    When "{break}" is inserted at <placement> and selected at the <position>
     And "{Enter}" is pressed
     And "foo" is typed
     Then the text is <text>
 
     Examples:
       | placement | position | text                             |
-      | "before"  | "start"  | "[break]\|foo\|[image]\|[image]" |
-      | "before"  | "end"    | "[break]\|foo\|[image]\|[image]" |
-      | "before"  | "none"   | "[break]\|foo"                   |
-      | "after"   | "start"  | "[image]\|[image]\|[break]\|foo" |
-      | "after"   | "end"    | "[image]\|[image]\|[break]\|foo" |
-      | "after"   | "none"   | "foo\|[break]"                   |
+      | "before"  | "start"  | "{break}\|foo\|{image}\|{image}" |
+      | "before"  | "end"    | "{break}\|foo\|{image}\|{image}" |
+      | "before"  | "none"   | "{break}\|foo"                   |
+      | "after"   | "start"  | "{image}\|{image}\|{break}\|foo" |
+      | "after"   | "end"    | "{image}\|{image}\|{break}\|foo" |
+      | "after"   | "none"   | "foo\|{break}"                   |
 
   Scenario Outline: Inserting block object on text block
     Given the text "foo"
     When "{Enter}" is pressed
     And "bar" is typed
     And the caret is put <position>
-    And "[image]" is inserted at <placement> and selected at the "none"
+    And "{image}" is inserted at <placement> and selected at the "none"
     And "baz" is typed
     Then the text is <text>
 
     Examples:
       | position     | placement | text                     |
-      | before "foo" | "before"  | "[image]\|bazfoo\|bar"   |
-      | after "f"    | "before"  | "[image]\|fbazoo\|bar"   |
-      | after "foo"  | "before"  | "[image]\|foobaz\|bar"   |
-      | before "foo" | "after"   | "bazfoo\|[image]\|bar"   |
-      | after "f"    | "after"   | "fbazoo\|[image]\|bar"   |
-      | after "foo"  | "after"   | "foobaz\|[image]\|bar"   |
-      | before "foo" | "auto"    | "[image]\|bazfoo\|bar"   |
-      | after "f"    | "auto"    | "fbaz\|[image]\|oo\|bar" |
-      | after "foo"  | "auto"    | "foobaz\|[image]\|bar"   |
+      | before "foo" | "before"  | "{image}\|bazfoo\|bar"   |
+      | after "f"    | "before"  | "{image}\|fbazoo\|bar"   |
+      | after "foo"  | "before"  | "{image}\|foobaz\|bar"   |
+      | before "foo" | "after"   | "bazfoo\|{image}\|bar"   |
+      | after "f"    | "after"   | "fbazoo\|{image}\|bar"   |
+      | after "foo"  | "after"   | "foobaz\|{image}\|bar"   |
+      | before "foo" | "auto"    | "{image}\|bazfoo\|bar"   |
+      | after "f"    | "auto"    | "fbaz\|{image}\|oo\|bar" |
+      | after "foo"  | "auto"    | "foobaz\|{image}\|bar"   |
 
   Scenario Outline: Inserting text block on block object
-    When "[image]" is inserted at "auto" and selected at the "none"
+    When "{image}" is inserted at "auto" and selected at the "none"
     When "foo" is inserted at <placement> and selected at the "none"
     Then the text is <text>
     And nothing is selected
 
     Examples:
       | placement | text           |
-      | "before"  | "foo\|[image]" |
-      | "after"   | "[image]\|foo" |
-      | "auto"    | "[image]\|foo" |
+      | "before"  | "foo\|{image}" |
+      | "after"   | "{image}\|foo" |
+      | "auto"    | "{image}\|foo" |
 
   Scenario Outline: Inserting text block on text block
     Given the text "foo"
@@ -394,34 +394,34 @@ Feature: Insert Block
       | "obar"    | "auto"    | "none"   | "fonewbaz"         |
 
   Scenario Outline: Inserting inline object on block object
-    When "[image]" is inserted at "auto"
-    And ",[stock-ticker]," is inserted at <placement>
+    When "{image}" is inserted at "auto"
+    And ",{stock-ticker}," is inserted at <placement>
     Then the text is <text>
 
     Examples:
       | placement | text                        |
-      | "before"  | ",[stock-ticker],\|[image]" |
-      | "after"   | "[image]\|,[stock-ticker]," |
-      | "auto"    | "[image]\|,[stock-ticker]," |
+      | "before"  | ",{stock-ticker},\|{image}" |
+      | "after"   | "{image}\|,{stock-ticker}," |
+      | "auto"    | "{image}\|,{stock-ticker}," |
 
   Scenario Outline: Inserting block object on inline object
-    When ",[stock-ticker]," is inserted at "auto"
-    And "[image]" is inserted at <placement>
+    When ",{stock-ticker}," is inserted at "auto"
+    And "{image}" is inserted at <placement>
     Then the text is <text>
 
     Examples:
       | placement | text                        |
-      | "before"  | "[image]\|,[stock-ticker]," |
-      | "after"   | ",[stock-ticker],\|[image]" |
-      | "auto"    | ",[stock-ticker],\|[image]" |
+      | "before"  | "{image}\|,{stock-ticker}," |
+      | "after"   | ",{stock-ticker},\|{image}" |
+      | "auto"    | ",{stock-ticker},\|{image}" |
 
   Scenario Outline: Inserting text block on inline object
-    When ",[stock-ticker]," is inserted at "auto"
+    When ",{stock-ticker}," is inserted at "auto"
     And "foo" is inserted at <placement> and selected at the <select position>
     Then the text is <text>
 
     Examples:
       | placement | select position | text                    |
-      | "before"  | "end"           | "foo\|,[stock-ticker]," |
-      | "after"   | "start"         | ",[stock-ticker],\|foo" |
-      | "auto"    | "start"         | ",[stock-ticker],foo"   |
+      | "before"  | "end"           | "foo\|,{stock-ticker}," |
+      | "after"   | "start"         | ",{stock-ticker},\|foo" |
+      | "auto"    | "start"         | ",{stock-ticker},foo"   |

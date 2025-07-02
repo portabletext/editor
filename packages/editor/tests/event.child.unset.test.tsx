@@ -133,7 +133,7 @@ describe('event.child.unset', () => {
     await vi.waitFor(() => {
       expect(
         getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual([',[image],'])
+      ).toEqual([',{image},'])
     })
 
     editorRef.current?.send({
