@@ -57,6 +57,11 @@
     "test:unit": {
       "dependsOn": ["^build"],
       "outputs": [""]
+    },
+    "test:unit:watch": {
+      "dependsOn": ["^build"],
+      "persistent": true,
+      "cache": false
     }
   }
 }
