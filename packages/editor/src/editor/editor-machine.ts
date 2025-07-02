@@ -189,10 +189,9 @@ export const editorMachine = setup({
         return new Set([...context.behaviors])
       },
     }),
-    'emit patch event': enqueueActions(({event, enqueue}) => {
+    'emit patch event': emit(({event}) => {
       assertEvent(event, 'internal.patch')
-
-      enqueue.emit(event)
+      return event
     }),
     'emit mutation event': emit(({event}) => {
       assertEvent(event, 'mutation')
