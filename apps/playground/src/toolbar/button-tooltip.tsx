@@ -1,7 +1,8 @@
 import type {KeyboardShortcut} from '@portabletext/keyboard-shortcuts'
-import React from 'react'
+import type React from 'react'
 import {TooltipTrigger} from 'react-aria-components'
 import {Tooltip} from '../primitives/tooltip'
+import {KeyboardShortcutPreview} from './keyboard-shortcut-preview'
 
 export function ButtonTooltip(props: {
   label: string
@@ -14,24 +15,9 @@ export function ButtonTooltip(props: {
       <Tooltip className="flex items-center gap-3">
         {props.label}
         {props.shortcutKeys ? (
-          <RenderKeyboardShortcut shortcut={props.shortcutKeys} />
+          <KeyboardShortcutPreview shortcut={props.shortcutKeys} />
         ) : null}
       </Tooltip>
     </TooltipTrigger>
-  )
-}
-
-function RenderKeyboardShortcut(props: {shortcut: ReadonlyArray<string>}) {
-  return (
-    <span className="inline-flex gap-1 font-mono text-sm">
-      {props.shortcut.map((key, index) => (
-        <React.Fragment key={key}>
-          {index > 0 ? (
-            <span className="inline-block opacity-50">+</span>
-          ) : null}
-          <kbd className="inline-block">{key}</kbd>
-        </React.Fragment>
-      ))}
-    </span>
   )
 }

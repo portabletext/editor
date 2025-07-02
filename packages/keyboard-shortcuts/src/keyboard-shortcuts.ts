@@ -1,4 +1,7 @@
-import {isKeyboardShortcut} from './is-keyboard-shortcut'
+import {
+  isKeyboardShortcut,
+  type KeyboardEventDefinition,
+} from './is-keyboard-shortcut'
 
 /**
  * @beta
@@ -10,20 +13,20 @@ import {isKeyboardShortcut} from './is-keyboard-shortcut'
  * @example
  * ```typescript
  * const boldShortcut: KeyboardShortcutDefinition = {
- *   default: {
+ *   default: [{
  *     key: 'B',
  *     alt: false,
  *     ctrl: true,
  *     meta: false,
  *     shift: false,
- *   },
- *   apple: {
+ *   }],
+ *   apple: [{
  *     key: 'B',
  *     alt: false,
  *     ctrl: false,
  *     meta: true,
  *     shift: false,
- *   },
+ *   }],
  * }
  * ```
  */
@@ -31,23 +34,11 @@ export type KeyboardShortcutDefinition = {
   /**
    * Default shortcut for non-Apple platforms (Windows, Linux).
    */
-  default: {
-    key: KeyboardEvent['key']
-    alt?: KeyboardEvent['altKey']
-    ctrl?: KeyboardEvent['ctrlKey']
-    meta?: KeyboardEvent['metaKey']
-    shift?: KeyboardEvent['shiftKey']
-  }
+  default: ReadonlyArray<KeyboardEventDefinition>
   /**
    * Shortcut for Apple platforms (macOS).
    */
-  apple?: {
-    key: KeyboardEvent['key']
-    alt?: KeyboardEvent['altKey']
-    ctrl?: KeyboardEvent['ctrlKey']
-    meta?: KeyboardEvent['metaKey']
-    shift?: KeyboardEvent['shiftKey']
-  }
+  apple?: ReadonlyArray<KeyboardEventDefinition>
 }
 
 /**
@@ -62,10 +53,10 @@ export type KeyboardShortcutDefinition = {
 export type KeyboardShortcut<
   TKeyboardEvent extends Pick<
     KeyboardEvent,
-    'key' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
+    'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
   > = Pick<
     KeyboardEvent,
-    'key' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
+    'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
   >,
 > = {
   /**
@@ -92,30 +83,30 @@ const IS_APPLE =
  * @example
  * ```typescript
  * const shortcut = createKeyboardShortcut({
- *   default: {
+ *   default: [{
  *     key: 'B',
  *     alt: false,
  *     ctrl: true,
  *     meta: false,
  *     shift: false,
- *   },
- *   apple: {
+ *   }],
+ *   apple: [{
  *     key: 'B',
  *     alt: false,
  *     ctrl: false,
  *     meta: true,
  *     shift: false,
- *   },
+ *   }],
  * })
  * ```
  */
 export function createKeyboardShortcut<
   TKeyboardEvent extends Pick<
     KeyboardEvent,
-    'key' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
+    'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
   > = Pick<
     KeyboardEvent,
-    'key' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
+    'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
   >,
 >(
   definition: KeyboardShortcutDefinition,
@@ -125,39 +116,44 @@ export function createKeyboardShortcut<
 ): KeyboardShortcut<TKeyboardEvent> {
   if (options?.isApple ?? IS_APPLE) {
     const appleDefinition = definition.apple ?? definition.default
+    const firstDefinition = appleDefinition.at(0)
 
     return {
       guard: (event) =>
-        isKeyboardShortcut(event, appleDefinition.key, {
-          alt: appleDefinition.alt,
-          ctrl: appleDefinition.ctrl,
-          meta: appleDefinition.meta,
-          shift: appleDefinition.shift,
-        }),
+        appleDefinition.some((definition) =>
+          isKeyboardShortcut(definition, event),
+        ),
       keys: [
-        ...(appleDefinition.meta ? ['⌘'] : []),
-        ...(appleDefinition.ctrl ? ['Ctrl'] : []),
-        ...(appleDefinition.alt ? ['Opt'] : []),
-        ...(appleDefinition.shift ? ['Shift'] : []),
-        appleDefinition.key,
+        ...(firstDefinition?.meta ? ['⌘'] : []),
+        ...(firstDefinition?.ctrl ? ['Ctrl'] : []),
+        ...(firstDefinition?.alt ? ['Option'] : []),
+        ...(firstDefinition?.shift ? ['Shift'] : []),
+        ...(firstDefinition?.key !== undefined
+          ? [firstDefinition.key]
+          : firstDefinition?.code !== undefined
+            ? [firstDefinition.code]
+            : []),
       ],
     }
   }
 
+  const firstDefinition = definition.default.at(0)
+
   return {
     guard: (event) =>
-      isKeyboardShortcut(event, definition.default.key, {
-        alt: definition.default.alt,
-        ctrl: definition.default.ctrl,
-        meta: definition.default.meta,
-        shift: definition.default.shift,
-      }),
+      definition.default.some((definition) =>
+        isKeyboardShortcut(definition, event),
+      ),
     keys: [
-      ...(definition.default.meta ? ['Meta'] : []),
-      ...(definition.default.ctrl ? ['Ctrl'] : []),
-      ...(definition.default.alt ? ['Alt'] : []),
-      ...(definition.default.shift ? ['Shift'] : []),
-      definition.default.key,
+      ...(firstDefinition?.meta ? ['Meta'] : []),
+      ...(firstDefinition?.ctrl ? ['Ctrl'] : []),
+      ...(firstDefinition?.alt ? ['Alt'] : []),
+      ...(firstDefinition?.shift ? ['Shift'] : []),
+      ...(firstDefinition?.key !== undefined
+        ? [firstDefinition.key]
+        : firstDefinition?.code !== undefined
+          ? [firstDefinition.code]
+          : []),
     ],
   }
 }

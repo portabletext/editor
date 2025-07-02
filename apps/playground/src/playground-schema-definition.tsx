@@ -33,20 +33,24 @@ export const playgroundSchemaDefinition = defineToolbarSchema({
       name: 'strong',
       icon: BoldIcon,
       shortcut: createKeyboardShortcut({
-        default: {
-          key: 'B',
-          alt: false,
-          ctrl: true,
-          meta: false,
-          shift: false,
-        },
-        apple: {
-          key: 'B',
-          alt: false,
-          ctrl: false,
-          meta: true,
-          shift: false,
-        },
+        default: [
+          {
+            key: 'B',
+            alt: false,
+            ctrl: true,
+            meta: false,
+            shift: false,
+          },
+        ],
+        apple: [
+          {
+            key: 'B',
+            alt: false,
+            ctrl: false,
+            meta: true,
+            shift: false,
+          },
+        ],
       }),
     },
     {
@@ -54,20 +58,24 @@ export const playgroundSchemaDefinition = defineToolbarSchema({
       name: 'em',
       icon: ItalicIcon,
       shortcut: createKeyboardShortcut({
-        default: {
-          key: 'I',
-          alt: false,
-          ctrl: true,
-          meta: false,
-          shift: false,
-        },
-        apple: {
-          key: 'I',
-          alt: false,
-          ctrl: false,
-          meta: true,
-          shift: false,
-        },
+        default: [
+          {
+            key: 'I',
+            alt: false,
+            ctrl: true,
+            meta: false,
+            shift: false,
+          },
+        ],
+        apple: [
+          {
+            key: 'I',
+            alt: false,
+            ctrl: false,
+            meta: true,
+            shift: false,
+          },
+        ],
       }),
     },
     {
@@ -75,20 +83,24 @@ export const playgroundSchemaDefinition = defineToolbarSchema({
       name: 'code',
       icon: CodeIcon,
       shortcut: createKeyboardShortcut({
-        default: {
-          key: "'",
-          alt: false,
-          ctrl: true,
-          meta: false,
-          shift: false,
-        },
-        apple: {
-          key: "'",
-          alt: false,
-          ctrl: false,
-          meta: true,
-          shift: false,
-        },
+        default: [
+          {
+            key: "'",
+            alt: false,
+            ctrl: true,
+            meta: false,
+            shift: false,
+          },
+        ],
+        apple: [
+          {
+            key: "'",
+            alt: false,
+            ctrl: false,
+            meta: true,
+            shift: false,
+          },
+        ],
       }),
     },
     {
@@ -96,20 +108,24 @@ export const playgroundSchemaDefinition = defineToolbarSchema({
       name: 'underline',
       icon: UnderlineIcon,
       shortcut: createKeyboardShortcut({
-        default: {
-          key: 'U',
-          alt: false,
-          ctrl: true,
-          meta: false,
-          shift: false,
-        },
-        apple: {
-          key: 'U',
-          alt: false,
-          ctrl: false,
-          meta: true,
-          shift: false,
-        },
+        default: [
+          {
+            key: 'U',
+            alt: false,
+            ctrl: true,
+            meta: false,
+            shift: false,
+          },
+        ],
+        apple: [
+          {
+            key: 'U',
+            alt: false,
+            ctrl: false,
+            meta: true,
+            shift: false,
+          },
+        ],
       }),
     },
     {
@@ -117,20 +133,24 @@ export const playgroundSchemaDefinition = defineToolbarSchema({
       name: 'strike-through',
       icon: StrikethroughIcon,
       shortcut: createKeyboardShortcut({
-        default: {
-          key: 'X',
-          alt: false,
-          ctrl: true,
-          meta: false,
-          shift: true,
-        },
-        apple: {
-          key: 'X',
-          alt: false,
-          ctrl: false,
-          meta: true,
-          shift: true,
-        },
+        default: [
+          {
+            key: 'X',
+            alt: false,
+            ctrl: true,
+            meta: false,
+            shift: true,
+          },
+        ],
+        apple: [
+          {
+            key: 'X',
+            alt: false,
+            ctrl: false,
+            meta: true,
+            shift: true,
+          },
+        ],
       }),
     },
     {
@@ -183,41 +203,318 @@ export const playgroundSchemaDefinition = defineToolbarSchema({
       title: 'Normal',
       name: 'normal',
       icon: PilcrowIcon,
+      shortcut: createKeyboardShortcut({
+        default: [
+          {
+            key: '0',
+            code: 'Digit0',
+            alt: true,
+            ctrl: true,
+            meta: false,
+            shift: false,
+          },
+          {
+            key: '0',
+            code: 'Numpad0',
+            alt: true,
+            ctrl: true,
+            meta: false,
+            shift: false,
+          },
+        ],
+        apple: [
+          {
+            key: '0',
+            code: 'Digit0',
+            alt: true,
+            ctrl: false,
+            meta: true,
+            shift: false,
+          },
+          {
+            key: '0',
+            code: 'Numpad0',
+            alt: true,
+            ctrl: false,
+            meta: true,
+            shift: false,
+          },
+        ],
+      }),
     },
     {
       title: 'Heading 1',
       name: 'h1',
       icon: Heading1Icon,
+      shortcut: createKeyboardShortcut({
+        default: [
+          {
+            key: '1',
+            code: 'Digit1',
+            alt: true,
+            ctrl: true,
+            meta: false,
+            shift: false,
+          },
+          {
+            key: '1',
+            code: 'Numpad1',
+            alt: true,
+            ctrl: true,
+            meta: false,
+            shift: false,
+          },
+        ],
+        apple: [
+          {
+            key: '1',
+            code: 'Digit1',
+            alt: true,
+            ctrl: false,
+            meta: true,
+            shift: false,
+          },
+          {
+            key: '1',
+            code: 'Numpad1',
+            alt: true,
+            ctrl: false,
+            meta: true,
+            shift: false,
+          },
+        ],
+      }),
     },
     {
       title: 'Heading 2',
       name: 'h2',
       icon: Heading2Icon,
+      shortcut: createKeyboardShortcut({
+        default: [
+          {
+            key: '2',
+            code: 'Digit2',
+            alt: true,
+            ctrl: true,
+            meta: false,
+            shift: false,
+          },
+          {
+            key: '2',
+            code: 'Numpad2',
+            alt: true,
+            ctrl: true,
+            meta: false,
+            shift: false,
+          },
+        ],
+        apple: [
+          {
+            key: '2',
+            code: 'Digit2',
+            alt: true,
+            ctrl: false,
+            meta: true,
+            shift: false,
+          },
+          {
+            key: '2',
+            code: 'Numpad2',
+            alt: true,
+            ctrl: false,
+            meta: true,
+            shift: false,
+          },
+        ],
+      }),
     },
     {
       title: 'Heading 3',
       name: 'h3',
       icon: Heading3Icon,
+      shortcut: createKeyboardShortcut({
+        default: [
+          {
+            key: '3',
+            code: 'Digit3',
+            alt: true,
+            ctrl: true,
+            meta: false,
+            shift: false,
+          },
+          {
+            key: '3',
+            code: 'Numpad3',
+            alt: true,
+            ctrl: true,
+            meta: false,
+            shift: false,
+          },
+        ],
+        apple: [
+          {
+            key: '3',
+            code: 'Digit3',
+            alt: true,
+            ctrl: false,
+            meta: true,
+            shift: false,
+          },
+          {
+            key: '3',
+            code: 'Numpad3',
+            alt: true,
+            ctrl: false,
+            meta: true,
+            shift: false,
+          },
+        ],
+      }),
     },
     {
       title: 'Heading 4',
       name: 'h4',
       icon: Heading4Icon,
+      shortcut: createKeyboardShortcut({
+        default: [
+          {
+            key: '4',
+            code: 'Digit4',
+            alt: true,
+            ctrl: true,
+            meta: false,
+            shift: false,
+          },
+          {
+            key: '4',
+            code: 'Numpad4',
+            alt: true,
+            ctrl: true,
+            meta: false,
+            shift: false,
+          },
+        ],
+        apple: [
+          {
+            key: '4',
+            code: 'Digit4',
+            alt: true,
+            ctrl: false,
+            meta: true,
+            shift: false,
+          },
+          {
+            key: '4',
+            code: 'Numpad4',
+            alt: true,
+            ctrl: false,
+            meta: true,
+            shift: false,
+          },
+        ],
+      }),
     },
     {
       title: 'Heading 5',
       name: 'h5',
       icon: Heading5Icon,
+      shortcut: createKeyboardShortcut({
+        default: [
+          {
+            key: '5',
+            code: 'Digit5',
+            alt: true,
+            ctrl: true,
+            meta: false,
+            shift: false,
+          },
+          {
+            key: '5',
+            code: 'Numpad5',
+            alt: true,
+            ctrl: true,
+            meta: false,
+            shift: false,
+          },
+        ],
+        apple: [
+          {
+            key: '5',
+            code: 'Digit5',
+            alt: true,
+            ctrl: false,
+            meta: true,
+            shift: false,
+          },
+          {
+            key: '5',
+            code: 'Numpad5',
+            alt: true,
+            ctrl: false,
+            meta: true,
+            shift: false,
+          },
+        ],
+      }),
     },
     {
       title: 'Heading 6',
       name: 'h6',
       icon: Heading6Icon,
+      shortcut: createKeyboardShortcut({
+        default: [
+          {
+            key: '6',
+            code: 'Digit6',
+            alt: true,
+            ctrl: true,
+            meta: false,
+            shift: false,
+          },
+          {
+            key: '6',
+            code: 'Numpad6',
+            alt: true,
+            ctrl: true,
+            meta: false,
+            shift: false,
+          },
+        ],
+        apple: [
+          {
+            key: '6',
+            code: 'Digit6',
+            alt: true,
+            ctrl: false,
+            meta: true,
+            shift: false,
+          },
+          {
+            key: '6',
+            code: 'Numpad6',
+            alt: true,
+            ctrl: false,
+            meta: true,
+            shift: false,
+          },
+        ],
+      }),
     },
     {
       title: 'Quote',
       name: 'blockquote',
       icon: TextQuoteIcon,
+      shortcut: createKeyboardShortcut({
+        default: [
+          {
+            key: 'Q',
+            alt: false,
+            ctrl: true,
+            meta: false,
+            shift: true,
+          },
+        ],
+      }),
     },
   ],
   blockObjects: [

@@ -65,7 +65,9 @@ export function Select<T extends object>({
     >
       {label && <Label>{label}</Label>}
       <Button className={styles}>
-        <SelectValue className="flex-1 text-xs placeholder-shown:italic" />
+        <SelectValue className="flex-1 text-xs placeholder-shown:italic">
+          {(props) => props.selectedText ?? props.defaultChildren}
+        </SelectValue>
         <ChevronDown
           aria-hidden
           className={chevronStyles({isDisabled: props.isDisabled})}

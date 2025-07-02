@@ -9,22 +9,26 @@ export function CodeEditorPlugin() {
   useEffect(() => {
     const behaviors = createCodeEditorBehaviors({
       moveBlockUpShortcut: createKeyboardShortcut({
-        default: {
-          key: 'ArrowUp',
-          alt: true,
-          ctrl: false,
-          meta: false,
-          shift: false,
-        },
+        default: [
+          {
+            key: 'ArrowUp',
+            alt: true,
+            ctrl: false,
+            meta: false,
+            shift: false,
+          },
+        ],
       }),
       moveBlockDownShortcut: createKeyboardShortcut({
-        default: {
-          key: 'ArrowDown',
-          alt: true,
-          ctrl: false,
-          meta: false,
-          shift: false,
-        },
+        default: [
+          {
+            key: 'ArrowDown',
+            alt: true,
+            ctrl: false,
+            meta: false,
+            shift: false,
+          },
+        ],
       }),
     })
 

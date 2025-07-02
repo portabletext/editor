@@ -5,13 +5,15 @@ describe(createKeyboardShortcut.name, () => {
   test('No Apple definition on a non-Apple platform', () => {
     const shortcut = createKeyboardShortcut(
       {
-        default: {
-          key: 'B',
-          alt: false,
-          ctrl: true,
-          meta: false,
-          shift: false,
-        },
+        default: [
+          {
+            key: 'B',
+            alt: false,
+            ctrl: true,
+            meta: false,
+            shift: false,
+          },
+        ],
       },
       {
         isApple: false,
@@ -22,6 +24,7 @@ describe(createKeyboardShortcut.name, () => {
     expect(
       shortcut.guard({
         key: 'B',
+        code: 'KeyB',
         altKey: false,
         ctrlKey: true,
         metaKey: false,
@@ -31,6 +34,7 @@ describe(createKeyboardShortcut.name, () => {
     expect(
       shortcut.guard({
         key: 'B',
+        code: 'KeyB',
         altKey: false,
         ctrlKey: false,
         metaKey: true,
@@ -42,13 +46,15 @@ describe(createKeyboardShortcut.name, () => {
   test('No Apple definition on an Apple platform', () => {
     const shortcut = createKeyboardShortcut(
       {
-        default: {
-          key: 'B',
-          alt: false,
-          ctrl: true,
-          meta: false,
-          shift: false,
-        },
+        default: [
+          {
+            key: 'B',
+            alt: false,
+            ctrl: true,
+            meta: false,
+            shift: false,
+          },
+        ],
       },
       {
         isApple: true,
@@ -59,6 +65,7 @@ describe(createKeyboardShortcut.name, () => {
     expect(
       shortcut.guard({
         key: 'B',
+        code: 'KeyB',
         altKey: false,
         ctrlKey: true,
         metaKey: false,
@@ -68,6 +75,7 @@ describe(createKeyboardShortcut.name, () => {
     expect(
       shortcut.guard({
         key: 'B',
+        code: 'KeyB',
         altKey: false,
         ctrlKey: false,
         metaKey: true,
@@ -79,20 +87,24 @@ describe(createKeyboardShortcut.name, () => {
   test('Apple definition on an Apple platform', () => {
     const shortcut = createKeyboardShortcut(
       {
-        default: {
-          key: 'B',
-          alt: false,
-          ctrl: true,
-          meta: false,
-          shift: false,
-        },
-        apple: {
-          key: 'B',
-          alt: false,
-          ctrl: false,
-          meta: true,
-          shift: false,
-        },
+        default: [
+          {
+            key: 'B',
+            alt: false,
+            ctrl: true,
+            meta: false,
+            shift: false,
+          },
+        ],
+        apple: [
+          {
+            key: 'B',
+            alt: false,
+            ctrl: false,
+            meta: true,
+            shift: false,
+          },
+        ],
       },
       {
         isApple: true,
@@ -103,6 +115,7 @@ describe(createKeyboardShortcut.name, () => {
     expect(
       shortcut.guard({
         key: 'B',
+        code: 'KeyB',
         altKey: false,
         ctrlKey: false,
         metaKey: true,
@@ -112,6 +125,7 @@ describe(createKeyboardShortcut.name, () => {
     expect(
       shortcut.guard({
         key: 'B',
+        code: 'KeyB',
         altKey: false,
         ctrlKey: true,
         metaKey: false,
@@ -123,20 +137,24 @@ describe(createKeyboardShortcut.name, () => {
   test('Apple definition on a non-Apple platform', () => {
     const shortcut = createKeyboardShortcut(
       {
-        default: {
-          key: 'B',
-          alt: false,
-          ctrl: true,
-          meta: false,
-          shift: false,
-        },
-        apple: {
-          key: 'B',
-          alt: false,
-          ctrl: false,
-          meta: true,
-          shift: false,
-        },
+        default: [
+          {
+            key: 'B',
+            alt: false,
+            ctrl: true,
+            meta: false,
+            shift: false,
+          },
+        ],
+        apple: [
+          {
+            key: 'B',
+            alt: false,
+            ctrl: false,
+            meta: true,
+            shift: false,
+          },
+        ],
       },
       {
         isApple: false,
@@ -147,6 +165,7 @@ describe(createKeyboardShortcut.name, () => {
     expect(
       shortcut.guard({
         key: 'B',
+        code: 'KeyB',
         altKey: false,
         ctrlKey: true,
         metaKey: false,
@@ -156,6 +175,7 @@ describe(createKeyboardShortcut.name, () => {
     expect(
       shortcut.guard({
         key: 'B',
+        code: 'KeyB',
         altKey: false,
         ctrlKey: false,
         metaKey: true,
