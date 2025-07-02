@@ -6,19 +6,25 @@ test(isKeyboardShortcut.name, () => {
     isKeyboardShortcut(
       {
         key: 'Enter',
+        shift: false,
+      },
+      {
+        key: 'Enter',
         code: 'Enter',
         metaKey: false,
         ctrlKey: false,
         altKey: false,
         shiftKey: false,
       },
-      'Enter',
-      {shift: false},
     ),
   ).toBe(true)
 
   expect(
     isKeyboardShortcut(
+      {
+        key: 'Enter',
+        shift: false,
+      },
       {
         key: 'Enter',
         code: 'Enter',
@@ -27,8 +33,6 @@ test(isKeyboardShortcut.name, () => {
         altKey: false,
         shiftKey: true,
       },
-      'Enter',
-      {shift: false},
     ),
   ).toBe(false)
 
@@ -36,19 +40,8 @@ test(isKeyboardShortcut.name, () => {
     isKeyboardShortcut(
       {
         key: 'Enter',
-        code: 'Enter',
-        metaKey: false,
-        ctrlKey: false,
-        altKey: false,
-        shiftKey: true,
+        shift: true,
       },
-      'Enter',
-      {shift: true},
-    ),
-  ).toBe(true)
-
-  expect(
-    isKeyboardShortcut(
       {
         key: 'Enter',
         code: 'Enter',
@@ -57,12 +50,32 @@ test(isKeyboardShortcut.name, () => {
         altKey: false,
         shiftKey: true,
       },
-      'Enter',
     ),
   ).toBe(true)
 
   expect(
     isKeyboardShortcut(
+      {
+        key: 'Enter',
+      },
+      {
+        key: 'Enter',
+        code: 'Enter',
+        metaKey: false,
+        ctrlKey: false,
+        altKey: false,
+        shiftKey: true,
+      },
+    ),
+  ).toBe(true)
+
+  expect(
+    isKeyboardShortcut(
+      {
+        key: 'B',
+        ctrl: true,
+        meta: false,
+      },
       {
         key: 'b',
         code: 'KeyB',
@@ -71,13 +84,16 @@ test(isKeyboardShortcut.name, () => {
         altKey: false,
         shiftKey: false,
       },
-      'B',
-      {ctrl: true, meta: false},
     ),
   ).toBe(true)
 
   expect(
     isKeyboardShortcut(
+      {
+        key: 'B',
+        ctrl: false,
+        meta: true,
+      },
       {
         key: 'b',
         code: 'KeyB',
@@ -86,8 +102,6 @@ test(isKeyboardShortcut.name, () => {
         altKey: false,
         shiftKey: false,
       },
-      'B',
-      {ctrl: false, meta: true},
     ),
   ).toBe(false)
 })

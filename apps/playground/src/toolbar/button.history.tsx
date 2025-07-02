@@ -7,36 +7,44 @@ import {ButtonTooltip} from './button-tooltip'
 
 const historyShortcuts = {
   undo: createKeyboardShortcut({
-    default: {
-      key: 'Z',
-      alt: false,
-      ctrl: true,
-      meta: false,
-      shift: false,
-    },
-    apple: {
-      key: 'Z',
-      alt: false,
-      ctrl: false,
-      meta: true,
-      shift: false,
-    },
+    default: [
+      {
+        key: 'Z',
+        alt: false,
+        ctrl: true,
+        meta: false,
+        shift: false,
+      },
+    ],
+    apple: [
+      {
+        key: 'Z',
+        alt: false,
+        ctrl: false,
+        meta: true,
+        shift: false,
+      },
+    ],
   }),
   redo: createKeyboardShortcut({
-    default: {
-      key: 'Y',
-      alt: false,
-      ctrl: true,
-      meta: false,
-      shift: false,
-    },
-    apple: {
-      key: 'Z',
-      alt: false,
-      ctrl: false,
-      meta: true,
-      shift: true,
-    },
+    default: [
+      {
+        key: 'Y',
+        alt: false,
+        ctrl: true,
+        meta: false,
+        shift: false,
+      },
+    ],
+    apple: [
+      {
+        key: 'Z',
+        alt: false,
+        ctrl: false,
+        meta: true,
+        shift: true,
+      },
+    ],
   }),
 }
 

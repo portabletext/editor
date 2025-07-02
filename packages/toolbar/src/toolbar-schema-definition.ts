@@ -81,4 +81,5 @@ export type ToolbarInlineObjectDefinition = InlineObjectDefinition & {
  */
 export type ToolbarStyleDefinition = StyleDefinition & {
   icon: React.ComponentType
+  shortcut?: KeyboardShortcut
 }

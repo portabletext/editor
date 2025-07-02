@@ -1,28 +1,56 @@
-type AllowedModifiers = {
-  ctrl?: boolean | undefined
-  meta?: boolean | undefined
-  shift?: boolean | undefined
-  alt?: boolean | undefined
+export type KeyboardEventDefinition = (
+  | {key: KeyboardEvent['key']; code: KeyboardEvent['code']}
+  | {key: KeyboardEvent['key']; code?: undefined}
+  | {key?: undefined; code: KeyboardEvent['code']}
+) & {
+  alt?: KeyboardEvent['altKey']
+  ctrl?: KeyboardEvent['ctrlKey']
+  meta?: KeyboardEvent['metaKey']
+  shift?: KeyboardEvent['shiftKey']
 }
 
+/**
+ * Checks if a keyboard event matches a keyboard shortcut definition.
+ */
 export function isKeyboardShortcut<
   TKeyboardEvent extends Pick<
     KeyboardEvent,
-    'key' | 'shiftKey' | 'altKey' | 'ctrlKey' | 'metaKey'
+    'key' | 'code' | 'shiftKey' | 'altKey' | 'ctrlKey' | 'metaKey'
   > = Pick<
     KeyboardEvent,
-    'key' | 'shiftKey' | 'altKey' | 'ctrlKey' | 'metaKey'
+    'key' | 'code' | 'shiftKey' | 'altKey' | 'ctrlKey' | 'metaKey'
   >,
->(event: TKeyboardEvent, key: string, allowedModifiers: AllowedModifiers = {}) {
+>(definition: KeyboardEventDefinition, event: TKeyboardEvent) {
+  if (!isCorrectModifiers(definition, event)) {
+    return false
+  }
+
+  if (
+    definition.code !== undefined &&
+    definition.code.toLowerCase() === event.code.toLowerCase()
+  ) {
+    return true
+  }
+
   return (
-    event.key.toLowerCase() === key.toLowerCase() &&
-    (allowedModifiers.ctrl === event.ctrlKey ||
-      allowedModifiers.ctrl === undefined) &&
-    (allowedModifiers.meta === event.metaKey ||
-      allowedModifiers.meta === undefined) &&
-    (allowedModifiers.shift === event.shiftKey ||
-      allowedModifiers.shift === undefined) &&
-    (allowedModifiers.alt === event.altKey ||
-      allowedModifiers.alt === undefined)
+    definition.key !== undefined &&
+    definition.key.toLowerCase() === event.key.toLowerCase()
+  )
+}
+
+function isCorrectModifiers<
+  TKeyboardEvent extends Pick<
+    KeyboardEvent,
+    'key' | 'code' | 'shiftKey' | 'altKey' | 'ctrlKey' | 'metaKey'
+  > = Pick<
+    KeyboardEvent,
+    'key' | 'code' | 'shiftKey' | 'altKey' | 'ctrlKey' | 'metaKey'
+  >,
+>(definition: KeyboardEventDefinition, event: TKeyboardEvent) {
+  return (
+    (definition.ctrl === event.ctrlKey || definition.ctrl === undefined) &&
+    (definition.meta === event.metaKey || definition.meta === undefined) &&
+    (definition.shift === event.shiftKey || definition.shift === undefined) &&
+    (definition.alt === event.altKey || definition.alt === undefined)
   )
 }
