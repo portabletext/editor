@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.55.12](https://github.com/portabletext/editor/compare/editor-v1.55.11...editor-v1.55.12) (2025-07-02)
+
+
+### Bug Fixes
+
+* **`patches`:** make sure you can `unset` the last block by path ([b030c70](https://github.com/portabletext/editor/commit/b030c70d3161f31c9a0f0ffe96326190cc0d9682))
+* **deps:** update sanity monorepo to ^3.96.0 ([c0d7527](https://github.com/portabletext/editor/commit/c0d7527f1e4aef1c3e999d1e3286ac60ca4037a5))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.34
+
 ## [1.55.11](https://github.com/portabletext/editor/compare/editor-v1.55.10...editor-v1.55.11) (2025-06-30)
 
 
