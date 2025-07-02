@@ -80,10 +80,9 @@ export const mutationMachine = setup({
       readOnly: ({context, event}) =>
         event.type === 'update readOnly' ? event.readOnly : context.readOnly,
     }),
-    'emit patch': enqueueActions(({event, enqueue}) => {
-      if (event.type === 'patch') {
-        enqueue.emit({type: 'patch', patch: event.patch})
-      }
+    'emit patch': emit(({event}) => {
+      assertEvent(event, 'patch')
+      return {type: 'patch' as const, patch: event.patch}
     }),
     'emit has pending mutations': emit({type: 'has pending mutations'}),
     'emit mutations': enqueueActions(({context, enqueue}) => {
