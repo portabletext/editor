@@ -32,29 +32,29 @@ Feature: Insert Break
       | after "b"    | "foo\|b\|bazar" | after "baz"  |
 
   Scenario: Breaking before inline object
-    Given the text "foo,[stock-ticker],bar"
+    Given the text "foo,{stock-ticker},bar"
     When the caret is put after "foo"
     And "{Enter}" is pressed
     And "baz" is typed
-    Then the text is "foo|baz,[stock-ticker],bar"
+    Then the text is "foo|baz,{stock-ticker},bar"
     And the caret is after "baz"
 
   Scenario: Pressing Enter when selecting the entire content
-    Given the text "foo|[image]|bar"
+    Given the text "foo|{image}|bar"
     When everything is selected
     And "{Enter}" is pressed
     Then the text is ""
 
   Scenario: Pressing Enter on an inline object
-    Given the text "foo,[stock-ticker],"
+    Given the text "foo,{stock-ticker},"
     When the caret is put after "foo"
     And "{ArrowRight}" is pressed
     And "{Enter}" is pressed
-    Then the text is "foo,[stock-ticker],|"
+    Then the text is "foo,{stock-ticker},|"
 
   Scenario: Pressing Enter on a block object
-    Given the text "foo|[image]"
+    Given the text "foo|{image}"
     When the caret is put after "foo"
     And "{ArrowRight}" is pressed
     And "{Enter}" is pressed
-    Then the text is "foo|[image]|"
+    Then the text is "foo|{image}|"

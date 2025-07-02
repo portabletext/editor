@@ -494,7 +494,7 @@ describe('event.insert.block', () => {
     await vi.waitFor(() => {
       expect(
         getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual([',[stock-ticker],'])
+      ).toEqual([',{stock-ticker},'])
     })
   })
 })

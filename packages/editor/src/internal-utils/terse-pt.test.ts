@@ -101,7 +101,7 @@ test(parseTersePt.name, () => {
         schema: compileSchemaDefinition(defineSchema({})),
         keyGenerator: createTestKeyGenerator(),
       },
-      parseTersePtString('[image]|foo|>>#h4:bar|-:baz,fizz|,[stock-ticker],'),
+      parseTersePtString('{image}|foo|>>#h4:bar|-:baz,fizz|,{stock-ticker},'),
     ),
   ).toEqual([
     {

@@ -6,60 +6,60 @@ Feature: Block Objects
     And a global keymap
 
   Scenario: Pressing ArrowUp on a lonely image
-    Given the text "[image]"
+    Given the text "{image}"
     When "{ArrowUp}" is pressed
-    Then the text is "|[image]"
+    Then the text is "|{image}"
 
   Scenario: Pressing ArrowDown on a lonely image
-    Given the text "[image]"
+    Given the text "{image}"
     When "{ArrowDown}" is pressed
-    Then the text is "[image]|"
+    Then the text is "{image}|"
 
   Scenario: Pressing ArrowDown on image at the bottom
-    Given the text "foo|[image]"
+    Given the text "foo|{image}"
     When "{ArrowDown}" is pressed
-    Then the text is "foo|[image]|"
+    Then the text is "foo|{image}|"
 
   Scenario: ArrowRight before an image selects it
-    Given the text "foo|[image]"
+    Given the text "foo|{image}"
     When the caret is put after "foo"
     And "{ArrowRight}" is pressed
-    Then "[image]" is selected
+    Then "{image}" is selected
 
   Scenario: ArrowLeft after an image selects it
-    Given the text "[image]|bar"
+    Given the text "{image}|bar"
     When the caret is put before "bar"
     And "{ArrowLeft}" is pressed
-    Then "[image]" is selected
+    Then "{image}" is selected
 
   Scenario: Pressing Delete before an image
-    Given the text "foo|[image]|bar"
+    Given the text "foo|{image}|bar"
     When the caret is put after "foo"
     And "{Delete}" is pressed
     Then the text is "foo|bar"
 
   Scenario: Pressing Delete in an empty paragraph before an image
-    Given the text "foo|[image]|bar"
+    Given the text "foo|{image}|bar"
     When the caret is put before "foo"
     And "{Delete}" is pressed 4 times
     And "{Enter}" is pressed
-    Then the text is "[image]||bar"
+    Then the text is "{image}||bar"
 
   Scenario: Pressing Backspace after an image
-    Given the text "foo|[image]|bar"
+    Given the text "foo|{image}|bar"
     When the caret is put before "bar"
     And "{Backspace}" is pressed
     Then the text is "foo|bar"
 
   Scenario: Pressing Backspace in an empty paragraph after an image
-    Given the text "foo|[image]"
+    Given the text "foo|{image}"
     When "{Enter}" is pressed
     And "{Backspace}" is pressed
-    Then the text is "foo|[image]"
-    And "[image]" is selected
+    Then the text is "foo|{image}"
+    And "{image}" is selected
 
   Scenario Outline: Deleting a lonely image
-    Given the text "[image]"
+    Given the text "{image}"
     When <button> is pressed
     And "foo" is typed
     Then the text is "foo"
@@ -70,7 +70,7 @@ Feature: Block Objects
       | "{Delete}"    |
 
   Scenario Outline: Deleting an image with text above
-    Given the text "foo|[image]|b"
+    Given the text "foo|{image}|b"
     When the caret is put after "b"
     And "{Backspace}" is pressed 2 times
     And <button> is pressed
@@ -83,7 +83,7 @@ Feature: Block Objects
       | "{Delete}"    |
 
   Scenario Outline: Deleting an image with text below
-    Given the text "b|[image]|foo"
+    Given the text "b|{image}|foo"
     When the caret is put before "b"
     And "{Delete}" is pressed 2 times
     And <button> is pressed

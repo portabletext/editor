@@ -77,7 +77,7 @@ describe('event.child.set', () => {
     await vi.waitFor(() => {
       return expect(
         getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual([',[image],'])
+      ).toEqual([',{image},'])
     })
 
     const newImageKey = keyGenerator()
