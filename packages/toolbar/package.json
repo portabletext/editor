@@ -63,6 +63,8 @@
   "dependencies": {
     "@portabletext/editor": "workspace:*",
     "@portabletext/keyboard-shortcuts": "workspace:*",
-    "react-compiler-runtime": "19.1.0-rc.2"
+    "@xstate/react": "^6.0.0",
+    "react-compiler-runtime": "19.1.0-rc.2",
+    "xstate": "^5.20.0"
   }
 }
