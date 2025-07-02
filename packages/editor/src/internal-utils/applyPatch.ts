@@ -387,6 +387,30 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
 
   // Single blocks
   if (patch.path.length === 1) {
+    if (editor.children.length === 1) {
+      // `unset`ing the last block should be treated similar to `unset`ing the
+      // entire editor value
+      const previousSelection = editor.selection
+
+      Transforms.deselect(editor)
+      Transforms.removeNodes(editor, {at: [block.index]})
+      Transforms.insertNodes(
+        editor,
+        editor.pteCreateTextBlock({decorators: []}),
+      )
+
+      if (previousSelection) {
+        Transforms.select(editor, {
+          anchor: {path: [0, 0], offset: 0},
+          focus: {path: [0, 0], offset: 0},
+        })
+      }
+
+      editor.onChange()
+
+      return true
+    }
+
     Transforms.removeNodes(editor, {at: [block.index]})
 
     return true
