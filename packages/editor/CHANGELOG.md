@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.55.14](https://github.com/portabletext/editor/compare/editor-v1.55.13...editor-v1.55.14) (2025-07-03)
+
+
+### Bug Fixes
+
+* correctly assert active marks on expanded selections ([5a2a093](https://github.com/portabletext/editor/commit/5a2a093d5f2536bda3919f34b5e65b7734b0851a))
+* move experimental `decoratorState` to `EditorSnapshot` ([674b61f](https://github.com/portabletext/editor/commit/674b61f313d1afb4f66a4da5ecb9e4a8d8508087))
+
 ## [1.55.13](https://github.com/portabletext/editor/compare/editor-v1.55.12...editor-v1.55.13) (2025-07-03)
 
 
