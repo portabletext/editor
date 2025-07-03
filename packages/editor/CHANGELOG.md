@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.55.13](https://github.com/portabletext/editor/compare/editor-v1.55.12...editor-v1.55.13) (2025-07-03)
+
+
+### Bug Fixes
+
+* avoid imperative emit in XState which causes warnings ([9bc4ac0](https://github.com/portabletext/editor/commit/9bc4ac018058268863105ef2e9bd7b3b04dff399))
+
 ## [1.55.12](https://github.com/portabletext/editor/compare/editor-v1.55.11...editor-v1.55.12) (2025-07-02)
 
 
