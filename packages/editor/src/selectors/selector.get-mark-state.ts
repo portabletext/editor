@@ -37,12 +37,14 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
       if (index === 0) {
         marks = span.node.marks ?? []
       } else {
-        if (
-          span.node.marks?.length === 0 ||
-          (span.node.marks ?? [])?.some((mark) => !marks.includes(mark))
-        ) {
+        if (span.node.marks?.length === 0) {
           marks = []
+          continue
         }
+
+        marks = marks.filter((mark) =>
+          (span.node.marks ?? []).some((spanMark) => spanMark === mark),
+        )
       }
 
       index++
