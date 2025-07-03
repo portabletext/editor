@@ -192,10 +192,75 @@ const unindentListOnShiftTab = defineBehavior({
   ],
 })
 
+const adjustListLevelOnInsert = defineBehavior({
+  on: 'insert.blocks',
+  guard: ({snapshot, event}) => {
+    const focusTextBlock = selectors.getFocusTextBlock(snapshot)
+
+    if (!focusTextBlock) {
+      return false
+    }
+
+    // Check if the focus block is a list item
+    if (!isListBlock(snapshot.context, focusTextBlock.node)) {
+      return false
+    }
+
+    // Check if any blocks being inserted are list items
+    const listBlocks = event.blocks.filter((block) =>
+      isListBlock(snapshot.context, block),
+    )
+
+    if (listBlocks.length === 0) {
+      return false
+    }
+
+    // Find the minimum level among the list blocks being inserted
+    const minInsertedLevel = Math.min(...listBlocks.map((block) => block.level))
+
+    // Calculate the level difference needed
+    const levelDifference = focusTextBlock.node.level - minInsertedLevel
+
+    // Check if any adjustment is needed
+    if (levelDifference === 0) {
+      return false
+    }
+
+    return {
+      focusTextBlock,
+      levelDifference,
+      targetLevel: focusTextBlock.node.level,
+      blocks: event.blocks,
+      context: snapshot.context,
+    }
+  },
+  actions: [
+    (_, {levelDifference, targetLevel, blocks, context}) => [
+      raise({
+        type: 'insert.blocks',
+        blocks: blocks.map((block) =>
+          isListBlock(context, block)
+            ? {
+                ...block,
+                level: Math.min(
+                  MAX_LIST_LEVEL,
+                  Math.max(1, block.level + levelDifference),
+                ),
+              }
+            : block,
+        ),
+        placement: 'auto',
+        select: 'end',
+      }),
+    ],
+  ],
+})
+
 export const coreListBehaviors = {
   clearListOnBackspace,
   unindentListOnBackspace,
   clearListOnEnter,
   indentListOnTab,
   unindentListOnShiftTab,
+  adjustListLevelOnInsert,
 }

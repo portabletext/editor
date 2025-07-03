@@ -25,6 +25,7 @@ export const coreBehaviorsConfig = [
   coreListBehaviors.clearListOnEnter,
   coreListBehaviors.indentListOnTab,
   coreListBehaviors.unindentListOnShiftTab,
+  coreListBehaviors.adjustListLevelOnInsert,
   coreInsertBreakBehaviors.breakingAtTheEndOfTextBlock,
   coreInsertBreakBehaviors.breakingAtTheStartOfTextBlock,
   coreInsertBreakBehaviors.breakingEntireDocument,
