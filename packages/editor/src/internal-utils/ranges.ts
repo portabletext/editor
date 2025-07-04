@@ -1,5 +1,6 @@
 import {Point, type Operation, type Range} from 'slate'
 import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
+import {isSpan} from './parse-blocks'
 import {toSlatePath} from './paths'
 
 export function toSlateRange(
@@ -11,22 +12,43 @@ export function toSlateRange(
     return null
   }
 
-  const anchor = {
-    path: toSlatePath(snapshot, snapshot.context.selection.anchor.path),
-    offset: snapshot.context.selection.anchor.offset,
-  }
-  const focus = {
-    path: toSlatePath(snapshot, snapshot.context.selection.focus.path),
-    offset: snapshot.context.selection.focus.offset,
-  }
+  const anchorPath = toSlatePath(
+    snapshot,
+    snapshot.context.selection.anchor.path,
+  )
+  const focusPath = toSlatePath(snapshot, snapshot.context.selection.focus.path)
 
-  if (focus.path.length === 0 || anchor.path.length === 0) {
+  if (anchorPath.path.length === 0 || focusPath.path.length === 0) {
     return null
   }
 
-  const range = anchor && focus ? {anchor, focus} : null
+  const anchorOffset = anchorPath.child
+    ? isSpan(snapshot.context, anchorPath.child)
+      ? Math.min(
+          anchorPath.child.text.length,
+          snapshot.context.selection.anchor.offset,
+        )
+      : 0
+    : 0
+  const focusOffset = focusPath.child
+    ? isSpan(snapshot.context, focusPath.child)
+      ? Math.min(
+          focusPath.child.text.length,
+          snapshot.context.selection.focus.offset,
+        )
+      : 0
+    : 0
 
-  return range
+  return {
+    anchor: {
+      path: anchorPath.path,
+      offset: anchorOffset,
+    },
+    focus: {
+      path: focusPath.path,
+      offset: focusOffset,
+    },
+  }
 }
 
 export function moveRangeByOperation(
