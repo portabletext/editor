@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.55.15](https://github.com/portabletext/editor/compare/editor-v1.55.14...editor-v1.55.15) (2025-07-04)
+
+
+### Bug Fixes
+
+* **`drag.drop`:** select drop position before deleting drag origin ([d4e6dc4](https://github.com/portabletext/editor/commit/d4e6dc485b68c0d43e48bde4074fdf02d38c39d5))
+* make internal `EditorSelection`-&gt;Slate Range logic more robust ([ad294e8](https://github.com/portabletext/editor/commit/ad294e8c4c96f05fc0a8c35032a4a36292f9263f))
+
 ## [1.55.14](https://github.com/portabletext/editor/compare/editor-v1.55.13...editor-v1.55.14) (2025-07-03)
 
 
