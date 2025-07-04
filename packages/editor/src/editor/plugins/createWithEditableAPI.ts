@@ -15,6 +15,8 @@ import {
 } from 'slate'
 import type {DOMNode} from 'slate-dom'
 import {ReactEditor} from 'slate-react'
+import {buildIndexMaps} from '../../internal-utils/build-index-maps'
+import {createPlaceholderBlock} from '../../internal-utils/create-placeholder-block'
 import {debugWithName} from '../../internal-utils/debug'
 import {toSlateRange} from '../../internal-utils/ranges'
 import {
@@ -502,8 +504,24 @@ export function createEditableAPI(
           // that would insert the placeholder into the actual value
           // which should remain empty)
           if (editor.children.length === 0) {
-            editor.children = [editor.pteCreateTextBlock({decorators: []})]
+            const placeholderBlock = createPlaceholderBlock(
+              editorActor.getSnapshot().context,
+            )
+            editor.children = [placeholderBlock]
+            editor.value = [placeholderBlock]
+
+            buildIndexMaps(
+              {
+                schema: editorActor.getSnapshot().context.schema,
+                value: editor.value,
+              },
+              {
+                blockIndexMap: editor.blockIndexMap,
+                listIndexMap: editor.listIndexMap,
+              },
+            )
           }
+
           editor.onChange()
         }
       }
