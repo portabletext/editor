@@ -15,7 +15,7 @@ export const moveBlockOperationImplementation: BehaviorOperationImplementation<
         blockIndexMap: operation.editor.blockIndexMap,
       },
       operation.at,
-    )[0],
+    ).path[0],
   ]
   const to = [
     toSlatePath(
@@ -27,7 +27,7 @@ export const moveBlockOperationImplementation: BehaviorOperationImplementation<
         blockIndexMap: operation.editor.blockIndexMap,
       },
       operation.to,
-    )[0],
+    ).path[0],
   ]
 
   Transforms.moveNodes(operation.editor, {
