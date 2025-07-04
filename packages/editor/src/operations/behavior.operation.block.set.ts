@@ -8,13 +8,17 @@ import type {BehaviorOperationImplementation} from './behavior.operations'
 export const blockSetOperationImplementation: BehaviorOperationImplementation<
   'block.set'
 > = ({context, operation}) => {
-  const location = toSlateRange(
-    {
-      anchor: {path: operation.at, offset: 0},
-      focus: {path: operation.at, offset: 0},
+  const location = toSlateRange({
+    context: {
+      schema: context.schema,
+      value: operation.editor.value,
+      selection: {
+        anchor: {path: operation.at, offset: 0},
+        focus: {path: operation.at, offset: 0},
+      },
     },
-    operation.editor,
-  )
+    blockIndexMap: operation.editor.blockIndexMap,
+  })
 
   if (!location) {
     throw new Error(

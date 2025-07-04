@@ -266,7 +266,14 @@ export const PortableTextEditable = forwardRef<
         debug(
           `Normalized selection from props ${JSON.stringify(normalizedSelection)}`,
         )
-        const slateRange = toSlateRange(normalizedSelection, slateEditor)
+        const slateRange = toSlateRange({
+          context: {
+            schema: editorActor.getSnapshot().context.schema,
+            value: slateEditor.value,
+            selection: normalizedSelection,
+          },
+          blockIndexMap: slateEditor.blockIndexMap,
+        })
         if (slateRange) {
           Transforms.select(slateEditor, slateRange)
           // Output selection here in those cases where the editor selection was the same, and there are no set_selection operations made.

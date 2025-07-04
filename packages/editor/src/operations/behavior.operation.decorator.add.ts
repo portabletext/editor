@@ -47,7 +47,14 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
       : undefined
 
   const selection = manualSelection
-    ? (toSlateRange(manualSelection, operation.editor) ?? editor.selection)
+    ? (toSlateRange({
+        context: {
+          schema: context.schema,
+          value: operation.editor.value,
+          selection: manualSelection,
+        },
+        blockIndexMap: operation.editor.blockIndexMap,
+      }) ?? editor.selection)
     : editor.selection
 
   if (!selection) {
@@ -124,7 +131,14 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
       throw new Error('Unable to find trimmed selection')
     }
 
-    const newRange = toSlateRange(trimmedSelection, editor)
+    const newRange = toSlateRange({
+      context: {
+        schema: context.schema,
+        value: operation.editor.value,
+        selection: trimmedSelection,
+      },
+      blockIndexMap: operation.editor.blockIndexMap,
+    })
 
     if (!newRange) {
       throw new Error('Unable to find new selection')

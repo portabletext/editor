@@ -44,7 +44,14 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
     return
   }
 
-  const range = toSlateRange(operation.at, operation.editor)
+  const range = toSlateRange({
+    context: {
+      schema: context.schema,
+      value: operation.editor.value,
+      selection: operation.at,
+    },
+    blockIndexMap: operation.editor.blockIndexMap,
+  })
 
   if (!range) {
     throw new Error(

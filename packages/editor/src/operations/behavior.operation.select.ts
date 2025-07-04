@@ -4,8 +4,15 @@ import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const selectOperationImplementation: BehaviorOperationImplementation<
   'select'
-> = ({operation}) => {
-  const newSelection = toSlateRange(operation.at, operation.editor)
+> = ({context, operation}) => {
+  const newSelection = toSlateRange({
+    context: {
+      schema: context.schema,
+      value: operation.editor.value,
+      selection: operation.at,
+    },
+    blockIndexMap: operation.editor.blockIndexMap,
+  })
 
   if (newSelection) {
     Transforms.select(operation.editor, newSelection)

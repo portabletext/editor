@@ -91,10 +91,14 @@ export const rangeDecorationsMachine = setup({
       const rangeDecorationState: Array<DecoratedRange> = []
 
       for (const rangeDecoration of context.pendingRangeDecorations) {
-        const slateRange = toSlateRange(
-          rangeDecoration.selection,
-          context.slateEditor,
-        )
+        const slateRange = toSlateRange({
+          context: {
+            schema: context.schema,
+            value: context.slateEditor.value,
+            selection: rangeDecoration.selection,
+          },
+          blockIndexMap: context.slateEditor.blockIndexMap,
+        })
 
         if (!Range.isRange(slateRange)) {
           rangeDecoration.onMoved?.({
@@ -121,10 +125,14 @@ export const rangeDecorationsMachine = setup({
       const rangeDecorationState: Array<DecoratedRange> = []
 
       for (const rangeDecoration of event.rangeDecorations) {
-        const slateRange = toSlateRange(
-          rangeDecoration.selection,
-          context.slateEditor,
-        )
+        const slateRange = toSlateRange({
+          context: {
+            schema: context.schema,
+            value: context.slateEditor.value,
+            selection: rangeDecoration.selection,
+          },
+          blockIndexMap: context.slateEditor.blockIndexMap,
+        })
 
         if (!Range.isRange(slateRange)) {
           rangeDecoration.onMoved?.({
@@ -152,10 +160,14 @@ export const rangeDecorationsMachine = setup({
       const rangeDecorationState: Array<DecoratedRange> = []
 
       for (const decoratedRange of context.slateEditor.decoratedRanges) {
-        const slateRange = toSlateRange(
-          decoratedRange.rangeDecoration.selection,
-          context.slateEditor,
-        )
+        const slateRange = toSlateRange({
+          context: {
+            schema: context.schema,
+            value: context.slateEditor.value,
+            selection: decoratedRange.rangeDecoration.selection,
+          },
+          blockIndexMap: context.slateEditor.blockIndexMap,
+        })
 
         if (!Range.isRange(slateRange)) {
           decoratedRange.rangeDecoration.onMoved?.({
