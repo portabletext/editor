@@ -1,13 +1,16 @@
-import {Element, type Editor, type Path} from 'slate'
-import type {EditorSelectionPoint} from '..'
+import type {Path} from 'slate'
+import type {EditorContext, EditorSelectionPoint, EditorSnapshot} from '..'
 import {
   getBlockKeyFromSelectionPoint,
   getChildKeyFromSelectionPoint,
 } from '../selection/selection-point'
+import {isSpan, isTextBlock} from './parse-blocks'
 
 export function toSlatePath(
+  snapshot: {
+    context: Pick<EditorContext, 'schema' | 'value'>
+  } & Pick<EditorSnapshot, 'blockIndexMap'>,
   path: EditorSelectionPoint['path'],
-  editor: Editor,
 ): Path {
   const blockKey = getBlockKeyFromSelectionPoint({
     path,
@@ -18,19 +21,19 @@ export function toSlatePath(
     return []
   }
 
-  const blockIndex = editor.blockIndexMap.get(blockKey)
+  const blockIndex = snapshot.blockIndexMap.get(blockKey)
 
   if (blockIndex === undefined) {
     return []
   }
 
-  const block = editor.children.at(blockIndex)
+  const block = snapshot.context.value.at(blockIndex)
 
-  if (!block || !Element.isElement(block)) {
+  if (!block) {
     return []
   }
 
-  if (editor.isVoid(block)) {
+  if (!isTextBlock(snapshot.context, block)) {
     return [blockIndex, 0]
   }
 
@@ -49,10 +52,10 @@ export function toSlatePath(
   for (const child of block.children) {
     childIndex++
     if (child._key === childKey) {
-      if (Element.isElement(child) && editor.isVoid(child)) {
-        childPath = [childIndex, 0]
-      } else {
+      if (isSpan(snapshot.context, child)) {
         childPath = [childIndex]
+      } else {
+        childPath = [childIndex, 0]
       }
       break
     }

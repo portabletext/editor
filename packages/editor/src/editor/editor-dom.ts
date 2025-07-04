@@ -45,7 +45,7 @@ function getBlockNodes(
     return []
   }
 
-  const range = toSlateRange(snapshot.context.selection, slateEditor)
+  const range = toSlateRange(snapshot)
 
   if (!range) {
     return []
@@ -76,7 +76,7 @@ function getChildNodes(
     return []
   }
 
-  const range = toSlateRange(snapshot.context.selection, slateEditor)
+  const range = toSlateRange(snapshot)
 
   if (!range) {
     return []
@@ -118,7 +118,7 @@ export function getSelectionDomNodes({
     }
   }
 
-  const range = toSlateRange(snapshot.context.selection, slateEditor)
+  const range = toSlateRange(snapshot)
 
   if (!range) {
     return {

@@ -1,28 +1,23 @@
-import {Point, type Editor, type Operation, type Range} from 'slate'
-import type {EditorSelection} from '../types/editor'
+import {Point, type Operation, type Range} from 'slate'
+import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
 import {toSlatePath} from './paths'
 
-export interface ObjectWithKeyAndType {
-  _key: string
-  _type: string
-  children?: ObjectWithKeyAndType[]
-}
-
 export function toSlateRange(
-  selection: EditorSelection,
-  editor: Editor,
+  snapshot: {
+    context: Pick<EditorContext, 'schema' | 'value' | 'selection'>
+  } & Pick<EditorSnapshot, 'blockIndexMap'>,
 ): Range | null {
-  if (!selection || !editor) {
+  if (!snapshot.context.selection) {
     return null
   }
 
   const anchor = {
-    path: toSlatePath(selection.anchor.path, editor),
-    offset: selection.anchor.offset,
+    path: toSlatePath(snapshot, snapshot.context.selection.anchor.path),
+    offset: snapshot.context.selection.anchor.offset,
   }
   const focus = {
-    path: toSlatePath(selection.focus.path, editor),
-    offset: selection.focus.offset,
+    path: toSlatePath(snapshot, snapshot.context.selection.focus.path),
+    offset: snapshot.context.selection.focus.offset,
   }
 
   if (focus.path.length === 0 || anchor.path.length === 0) {

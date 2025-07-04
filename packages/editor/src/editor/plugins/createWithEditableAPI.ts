@@ -131,12 +131,21 @@ export function createEditableAPI(
       })
     },
     select: (selection: EditorSelection): void => {
-      const slateSelection = toSlateRange(selection, editor)
+      const slateSelection = toSlateRange({
+        context: {
+          schema: editorActor.getSnapshot().context.schema,
+          value: editor.value,
+          selection,
+        },
+        blockIndexMap: editor.blockIndexMap,
+      })
+
       if (slateSelection) {
         Transforms.select(editor, slateSelection)
       } else {
         Transforms.deselect(editor)
       }
+
       editor.onChange()
     },
     focusBlock: (): PortableTextBlock | undefined => {
@@ -312,10 +321,15 @@ export function createEditableAPI(
       PortableTextBlock | PortableTextChild | undefined,
       Path | undefined,
     ] => {
-      const slatePath = toSlateRange(
-        {focus: {path, offset: 0}, anchor: {path, offset: 0}},
-        editor,
-      )
+      const slatePath = toSlateRange({
+        context: {
+          schema: editorActor.getSnapshot().context.schema,
+          value: editor.value,
+          selection: {focus: {path, offset: 0}, anchor: {path, offset: 0}},
+        },
+        blockIndexMap: editor.blockIndexMap,
+      })
+
       if (slatePath) {
         const [block, blockPath] = Editor.node(
           editor,
@@ -432,7 +446,14 @@ export function createEditableAPI(
       options?: EditableAPIDeleteOptions,
     ): void => {
       if (selection) {
-        const range = toSlateRange(selection, editor)
+        const range = toSlateRange({
+          context: {
+            schema: editorActor.getSnapshot().context.schema,
+            value: editor.value,
+            selection,
+          },
+          blockIndexMap: editor.blockIndexMap,
+        })
         const hasRange =
           range && range.anchor.path.length > 0 && range.focus.path.length > 0
         if (!hasRange) {
@@ -540,8 +561,22 @@ export function createEditableAPI(
       selectionB: EditorSelection,
     ) => {
       // Convert the selections to Slate ranges
-      const rangeA = toSlateRange(selectionA, editor)
-      const rangeB = toSlateRange(selectionB, editor)
+      const rangeA = toSlateRange({
+        context: {
+          schema: editorActor.getSnapshot().context.schema,
+          value: editor.value,
+          selection: selectionA,
+        },
+        blockIndexMap: editor.blockIndexMap,
+      })
+      const rangeB = toSlateRange({
+        context: {
+          schema: editorActor.getSnapshot().context.schema,
+          value: editor.value,
+          selection: selectionB,
+        },
+        blockIndexMap: editor.blockIndexMap,
+      })
 
       // Make sure the ranges are valid
       const isValidRanges = Range.isRange(rangeA) && Range.isRange(rangeB)

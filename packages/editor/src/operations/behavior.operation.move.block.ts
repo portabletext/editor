@@ -4,9 +4,31 @@ import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const moveBlockOperationImplementation: BehaviorOperationImplementation<
   'move.block'
-> = ({operation}) => {
-  const at = [toSlatePath(operation.at, operation.editor)[0]]
-  const to = [toSlatePath(operation.to, operation.editor)[0]]
+> = ({context, operation}) => {
+  const at = [
+    toSlatePath(
+      {
+        context: {
+          schema: context.schema,
+          value: operation.editor.value,
+        },
+        blockIndexMap: operation.editor.blockIndexMap,
+      },
+      operation.at,
+    )[0],
+  ]
+  const to = [
+    toSlatePath(
+      {
+        context: {
+          schema: context.schema,
+          value: operation.editor.value,
+        },
+        blockIndexMap: operation.editor.blockIndexMap,
+      },
+      operation.to,
+    )[0],
+  ]
 
   Transforms.moveNodes(operation.editor, {
     at,
