@@ -22,3 +22,35 @@ Feature: Lists
     When the caret is put before "bar"
     And "{Shift>}{Tab}{/Shift}" is pressed
     Then the text is ">#:foo|>#:bar"
+
+  # The inserted list items have lower level than the list item they are
+  # inserted on, and are adjusted to match the new level.
+  Scenario: Inserting list on list item
+    Given the text ">>#:"
+    When the caret is put after ""
+    And ">#:foo|>#:bar|>#:baz" is inserted at "auto"
+    Then the text is ">>#:foo|>>#:bar|>>#:baz"
+
+  Scenario: Inserting indented list on list item
+    Given the text ">>#:"
+    When the caret is put after ""
+    And ">#:foo|>>#:bar|>>>#:baz" is inserted at "auto"
+    Then the text is ">>#:foo|>>>#:bar|>>>>#:baz"
+
+  Scenario: Inserting different list type on list item
+    Given the text ">>#:"
+    When the caret is put after ""
+    And ">-:foo|>-:bar|>-:baz" is inserted at "auto"
+    Then the text is ">>-:foo|>>-:bar|>>-:baz"
+
+  Scenario: Inserting mixed blocks starting with a list item
+    Given the text ">>-:"
+    When the caret is put after ""
+    And ">#:foo|{image}|>>#:baz" is inserted at "auto"
+    Then the text is ">>#:foo|{image}|>>>#:baz"
+
+  Scenario: Inserting mixed blocks not starting with a list item
+    Given the text ">>-:"
+    When the caret is put after ""
+    And "foo|>#:bar|>>#:baz" is inserted at "auto"
+    Then the text is ">>-:foo|>>#:bar|>>>#:baz"
