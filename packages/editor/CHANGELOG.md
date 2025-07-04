@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.55.16](https://github.com/portabletext/editor/compare/editor-v1.55.15...editor-v1.55.16) (2025-07-04)
+
+
+### Bug Fixes
+
+* **`PortableTextEditor.delete`:** issue with deleting the last block ([8f02185](https://github.com/portabletext/editor/commit/8f02185e21eab7d5ac26048bc4ce6cb0c5869c2d))
+
 ## [1.55.15](https://github.com/portabletext/editor/compare/editor-v1.55.14...editor-v1.55.15) (2025-07-04)
 
 
