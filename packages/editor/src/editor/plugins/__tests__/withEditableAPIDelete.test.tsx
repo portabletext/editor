@@ -136,25 +136,22 @@ describe('plugin:withEditableAPI: .delete()', () => {
     await waitFor(() => {
       if (editorRef.current) {
         // New keys here confirms that a placeholder block has been created
-        expect(PortableTextEditor.getValue(editorRef.current))
-          .toMatchInlineSnapshot(`
-          [
-            {
-              "_key": "k2",
-              "_type": "myTestBlockType",
-              "children": [
-                {
-                  "_key": "k3",
-                  "_type": "span",
-                  "marks": [],
-                  "text": "",
-                },
-              ],
-              "markDefs": [],
-              "style": "normal",
-            },
-          ]
-        `)
+        expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
+          {
+            _key: 'k2',
+            _type: 'myTestBlockType',
+            children: [
+              {
+                _key: 'k3',
+                _type: 'span',
+                marks: [],
+                text: '',
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
       }
     })
   })
