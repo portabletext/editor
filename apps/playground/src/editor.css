@@ -8,12 +8,13 @@
 }
 
 [data-list-item] {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1.5rem 1fr;
   gap: 0.5rem;
 }
 [data-list-item]::before {
   text-align: right;
-  width: 1.5rem;
+  grid-column: 1;
 }
 
 [data-list-item='number'] {
