@@ -11,6 +11,7 @@ import {
 } from '../internal-utils/slate-utils'
 import {isEqualToEmptyEditor, toSlateValue} from '../internal-utils/values'
 import type {PortableTextSlateEditor} from '../types/editor'
+import {isEmptyTextBlock} from '../utils'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const insertBlockOperationImplementation: BehaviorOperationImplementation<
@@ -300,7 +301,7 @@ export function insertBlock({
               Transforms.select(editor, Editor.start(editor, endBlockPath))
             }
 
-            if (isEqualToEmptyEditor([endBlock], schema)) {
+            if (isEmptyTextBlock({schema}, endBlock)) {
               Transforms.removeNodes(editor, {at: Path.next(endBlockPath)})
             }
           } else if (
