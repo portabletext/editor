@@ -79,6 +79,16 @@ test(getTersePt.name, () => {
       },
     ]),
   ).toEqual(['>>#h3:foo'])
+  expect(
+    getTersePt([
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        children: [{_key: keyGenerator(), _type: 'span', text: 'foo'}],
+        style: 'h3',
+      },
+    ]),
+  ).toEqual(['h3:foo'])
 })
 
 test(parseTersePtString.name, () => {
