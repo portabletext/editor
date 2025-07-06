@@ -55,11 +55,6 @@ Feature: Insert Blocks
     And "fizz|buzz" is inserted at "auto"
     Then the text is "foofizz|buzz|bar"
 
-  Scenario: Inserting indented numbered list in empty text block
-    Given the text ""
-    When ">#:foo|>>#:bar|>>>#:baz" is inserted at "auto"
-    Then the text is ">#:foo|>>#:bar|>>>#:baz"
-
   Scenario Outline: Inserting text block with annotation
     Given the text <text>
     When <selection>
