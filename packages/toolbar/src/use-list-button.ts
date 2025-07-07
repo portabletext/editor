@@ -1,12 +1,12 @@
 import {useEditor, useEditorSelector} from '@portabletext/editor'
 import * as selectors from '@portabletext/editor/selectors'
 import {useCallback} from 'react'
-import type {ToolbarListDefinition} from './toolbar-schema-definition'
+import type {ToolbarListSchemaType} from './use-toolbar-schema'
 
 /**
  * @beta
  */
-export function useListButton(props: {definition: ToolbarListDefinition}) {
+export function useListButton(props: {schemaType: ToolbarListSchemaType}) {
   const editor = useEditor()
   const disabled = useEditorSelector(
     editor,
@@ -14,15 +14,15 @@ export function useListButton(props: {definition: ToolbarListDefinition}) {
   )
   const active = useEditorSelector(
     editor,
-    selectors.isActiveListItem(props.definition.name),
+    selectors.isActiveListItem(props.schemaType.name),
   )
   const onToggle = useCallback(() => {
     editor.send({
       type: 'list item.toggle',
-      listItem: props.definition.name,
+      listItem: props.schemaType.name,
     })
     editor.send({type: 'focus'})
-  }, [editor, props.definition.name])
+  }, [editor, props.schemaType.name])
 
   return {disabled, active, onToggle}
 }

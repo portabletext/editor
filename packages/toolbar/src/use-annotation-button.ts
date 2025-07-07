@@ -8,17 +8,17 @@ import {
   type AnyEventObject,
   type SnapshotFrom,
 } from 'xstate'
-import type {ToolbarAnnotationDefinition} from './toolbar-schema-definition'
+import type {ToolbarAnnotationSchemaType} from './use-toolbar-schema'
 
 const activeListener = fromCallback<
   AnyEventObject,
-  {editor: Editor; definition: ToolbarAnnotationDefinition},
+  {editor: Editor; schemaType: ToolbarAnnotationSchemaType},
   {type: 'set active'} | {type: 'set inactive'}
 >(({input, sendBack}) => {
   return input.editor.on('*', () => {
     const snapshot = input.editor.getSnapshot()
 
-    if (selectors.isActiveAnnotation(input.definition.name)(snapshot)) {
+    if (selectors.isActiveAnnotation(input.schemaType.name)(snapshot)) {
       sendBack({type: 'set active'})
     } else {
       sendBack({type: 'set inactive'})
@@ -28,7 +28,7 @@ const activeListener = fromCallback<
 
 const disableListener = fromCallback<
   AnyEventObject,
-  {editor: Editor; definition: ToolbarAnnotationDefinition},
+  {editor: Editor; schemaType: ToolbarAnnotationSchemaType},
   {type: 'enable'} | {type: 'disable'}
 >(({input, sendBack}) => {
   return input.editor.on('*', () => {
@@ -42,10 +42,10 @@ const disableListener = fromCallback<
 
 const keyboardShortcutRemove = fromCallback<
   AnyEventObject,
-  {editor: Editor; definition: ToolbarAnnotationDefinition},
+  {editor: Editor; schemaType: ToolbarAnnotationSchemaType},
   {type: 'remove'}
 >(({input}) => {
-  const shortcut = input.definition.shortcut
+  const shortcut = input.schemaType.shortcut
 
   if (!shortcut) {
     return
@@ -60,7 +60,7 @@ const keyboardShortcutRemove = fromCallback<
           raise({
             type: 'annotation.remove',
             annotation: {
-              name: input.definition.name,
+              name: input.schemaType.name,
             },
           }),
           effect(() => {
@@ -74,10 +74,10 @@ const keyboardShortcutRemove = fromCallback<
 
 const keyboardShortcutShowInsertDialog = fromCallback<
   AnyEventObject,
-  {editor: Editor; definition: ToolbarAnnotationDefinition},
+  {editor: Editor; schemaType: ToolbarAnnotationSchemaType},
   {type: 'annotation.insert dialog.show'}
 >(({input, sendBack}) => {
-  const shortcut = input.definition.shortcut
+  const shortcut = input.schemaType.shortcut
 
   if (!shortcut) {
     return
@@ -116,11 +116,11 @@ const annotationButtonMachine = setup({
   types: {
     context: {} as {
       editor: Editor
-      definition: ToolbarAnnotationDefinition
+      schemaType: ToolbarAnnotationSchemaType
     },
     input: {} as {
       editor: Editor
-      definition: ToolbarAnnotationDefinition
+      schemaType: ToolbarAnnotationSchemaType
     },
     events: {} as
       | AnnotationButtonEvent
@@ -138,7 +138,7 @@ const annotationButtonMachine = setup({
       context.editor.send({
         type: 'annotation.add',
         annotation: {
-          name: context.definition.name,
+          name: context.schemaType.name,
           value: event.annotation.value,
         },
       })
@@ -148,7 +148,7 @@ const annotationButtonMachine = setup({
       context.editor.send({
         type: 'annotation.remove',
         annotation: {
-          name: context.definition.name,
+          name: context.schemaType.name,
         },
       })
       context.editor.send({type: 'focus'})
@@ -164,21 +164,21 @@ const annotationButtonMachine = setup({
   id: 'annotation button',
   context: ({input}) => ({
     editor: input.editor,
-    definition: input.definition,
+    schemaType: input.schemaType,
   }),
   invoke: [
     {
       src: 'active listener',
       input: ({context}) => ({
         editor: context.editor,
-        definition: context.definition,
+        schemaType: context.schemaType,
       }),
     },
     {
       src: 'disable listener',
       input: ({context}) => ({
         editor: context.editor,
-        definition: context.definition,
+        schemaType: context.schemaType,
       }),
     },
   ],
@@ -231,7 +231,7 @@ const annotationButtonMachine = setup({
                 src: 'keyboard shortcut.show insert dialog',
                 input: ({context}) => ({
                   editor: context.editor,
-                  definition: context.definition,
+                  schemaType: context.schemaType,
                 }),
               },
               on: {
@@ -254,7 +254,7 @@ const annotationButtonMachine = setup({
             src: 'keyboard shortcut.remove',
             input: ({context}) => ({
               editor: context.editor,
-              definition: context.definition,
+              schemaType: context.schemaType,
             }),
           },
           on: {
@@ -286,13 +286,13 @@ export type AnnotationButton = {
  * @beta
  */
 export function useAnnotationButton(props: {
-  definition: ToolbarAnnotationDefinition
+  schemaType: ToolbarAnnotationSchemaType
 }): AnnotationButton {
   const editor = useEditor()
   const [snapshot, send] = useActor(annotationButtonMachine, {
     input: {
       editor,
-      definition: props.definition,
+      schemaType: props.schemaType,
     },
   })
 

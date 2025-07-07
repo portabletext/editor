@@ -1,4 +1,4 @@
-import type {ToolbarAnnotationDefinition} from '@portabletext/toolbar'
+import type {ToolbarAnnotationSchemaType} from '@portabletext/toolbar'
 import {useAnnotationButton} from '@portabletext/toolbar'
 import {Button} from '../primitives/button'
 import {Dialog} from '../primitives/dialog'
@@ -8,7 +8,7 @@ import {ButtonTooltip} from './button-tooltip'
 import {ObjectForm} from './form.object-form'
 
 export function AnnotationButton(props: {
-  definition: ToolbarAnnotationDefinition
+  schemaType: ToolbarAnnotationSchemaType
 }) {
   const {snapshot, send} = useAnnotationButton(props)
 
@@ -18,8 +18,8 @@ export function AnnotationButton(props: {
   ) {
     return (
       <ButtonTooltip
-        label={`Remove ${props.definition.title ?? props.definition.name}`}
-        shortcutKeys={props.definition.shortcut?.keys}
+        label={`Remove ${props.schemaType.title ?? props.schemaType.name}`}
+        shortcutKeys={props.schemaType.shortcut?.keys}
       >
         <ToggleButton
           size="sm"
@@ -29,7 +29,10 @@ export function AnnotationButton(props: {
             send({type: 'annotation.remove'})
           }}
         >
-          <Icon icon={props.definition.icon} fallback={null} />
+          <Icon
+            icon={props.schemaType.icon}
+            fallback={props.schemaType.title ?? props.schemaType.name}
+          />
         </ToggleButton>
       </ButtonTooltip>
     )
@@ -43,12 +46,12 @@ export function AnnotationButton(props: {
           send({type: 'annotation.insert dialog.dismiss'})
         }
       }}
-      title={props.definition.title ?? props.definition.name}
-      icon={props.definition.icon}
+      title={props.schemaType.title ?? props.schemaType.name}
+      icon={props.schemaType.icon}
       trigger={
         <ButtonTooltip
-          label={`Add ${props.definition.title ?? props.definition.name}`}
-          shortcutKeys={props.definition.shortcut?.keys}
+          label={`Add ${props.schemaType.title ?? props.schemaType.name}`}
+          shortcutKeys={props.schemaType.shortcut?.keys}
         >
           <Button
             variant="secondary"
@@ -58,7 +61,10 @@ export function AnnotationButton(props: {
               send({type: 'annotation.insert dialog.show'})
             }}
           >
-            <Icon icon={props.definition.icon} fallback={null} />
+            <Icon
+              icon={props.schemaType.icon}
+              fallback={props.schemaType.title ?? props.schemaType.name}
+            />
           </Button>
         </ButtonTooltip>
       }
@@ -66,8 +72,8 @@ export function AnnotationButton(props: {
       {({close}) => (
         <ObjectForm
           submitLabel="Add"
-          fields={props.definition.fields}
-          defaultValues={props.definition.defaultValues}
+          fields={props.schemaType.fields}
+          defaultValues={props.schemaType.defaultValues}
           onSubmit={({value}) => {
             send({type: 'annotation.add', annotation: {value}})
             close()

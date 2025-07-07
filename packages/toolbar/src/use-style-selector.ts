@@ -5,14 +5,14 @@ import {
 } from '@portabletext/editor'
 import * as selectors from '@portabletext/editor/selectors'
 import {useCallback} from 'react'
-import type {ToolbarStyleDefinition} from './toolbar-schema-definition'
 import {useStyleKeyboardShortcuts} from './use-style-keyboard-shortcuts'
+import type {ToolbarStyleSchemaType} from './use-toolbar-schema'
 
 /**
  * @beta
  */
 export function useStyleSelector(props: {
-  definitions: ReadonlyArray<ToolbarStyleDefinition>
+  schemaTypes: ReadonlyArray<ToolbarStyleSchemaType>
 }) {
   const editor = useEditor()
   const activeStyle = useEditorSelector(editor, selectors.getActiveStyle)

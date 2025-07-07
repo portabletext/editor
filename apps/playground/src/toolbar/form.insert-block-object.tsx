@@ -1,4 +1,4 @@
-import type {ToolbarBlockObjectDefinition} from '@portabletext/toolbar'
+import type {ToolbarBlockObjectSchemaType} from '@portabletext/toolbar'
 import {z} from 'zod/v4'
 import {Button} from '../primitives/button'
 import {SelectField} from '../primitives/field.select'
@@ -11,7 +11,7 @@ const FormDataSchema = z
   .catchall(z.unknown())
 
 export function InsertBlockObjectForm(
-  props: Pick<ToolbarBlockObjectDefinition, 'fields' | 'defaultValues'> & {
+  props: Pick<ToolbarBlockObjectSchemaType, 'fields' | 'defaultValues'> & {
     onSubmit: ({
       value,
       placement,

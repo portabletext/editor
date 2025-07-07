@@ -1,15 +1,15 @@
 import {useEditor} from '@portabletext/editor'
 import {defineBehavior, forward, raise} from '@portabletext/editor/behaviors'
 import {useEffect} from 'react'
-import type {ToolbarDecoratorDefinition} from './toolbar-schema-definition'
+import type {ToolbarDecoratorSchemaType} from './use-toolbar-schema'
 
 export function useMutuallyExclusiveDecorator(props: {
-  definition: ToolbarDecoratorDefinition
+  schemaType: ToolbarDecoratorSchemaType
 }) {
   const editor = useEditor()
 
   useEffect(() => {
-    const mutuallyExclusive = props.definition.mutuallyExclusive
+    const mutuallyExclusive = props.schemaType.mutuallyExclusive
 
     if (!mutuallyExclusive) {
       return
@@ -18,7 +18,7 @@ export function useMutuallyExclusiveDecorator(props: {
     return editor.registerBehavior({
       behavior: defineBehavior({
         on: 'decorator.add',
-        guard: ({event}) => event.decorator === props.definition.name,
+        guard: ({event}) => event.decorator === props.schemaType.name,
         actions: [
           ({event}) => [
             forward(event),
@@ -32,5 +32,5 @@ export function useMutuallyExclusiveDecorator(props: {
         ],
       }),
     })
-  }, [editor, props.definition.name, props.definition.mutuallyExclusive])
+  }, [editor, props.schemaType.name, props.schemaType.mutuallyExclusive])
 }
