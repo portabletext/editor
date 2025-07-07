@@ -1,13 +1,4 @@
-export type KeyboardEventDefinition = (
-  | {key: KeyboardEvent['key']; code: KeyboardEvent['code']}
-  | {key: KeyboardEvent['key']; code?: undefined}
-  | {key?: undefined; code: KeyboardEvent['code']}
-) & {
-  alt?: KeyboardEvent['altKey']
-  ctrl?: KeyboardEvent['ctrlKey']
-  meta?: KeyboardEvent['metaKey']
-  shift?: KeyboardEvent['shiftKey']
-}
+import type {KeyboardEventDefinition} from './keyboard-event-definition'
 
 /**
  * Checks if a keyboard event matches a keyboard shortcut definition.
