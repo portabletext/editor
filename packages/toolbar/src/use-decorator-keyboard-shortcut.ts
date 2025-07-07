@@ -1,19 +1,19 @@
 import {useEditor} from '@portabletext/editor'
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 import {useEffect} from 'react'
-import type {ToolbarDecoratorDefinition} from './toolbar-schema-definition'
+import type {ToolbarDecoratorSchemaType} from './use-toolbar-schema'
 
 /**
  * @beta
  * Registers a keyboard shortcut for a decorator.
  */
 export function useDecoratorKeyboardShortcut(props: {
-  definition: ToolbarDecoratorDefinition
+  schemaType: ToolbarDecoratorSchemaType
 }) {
   const editor = useEditor()
 
   useEffect(() => {
-    const shortcut = props.definition.shortcut
+    const shortcut = props.schemaType.shortcut
 
     if (!shortcut) {
       return
@@ -27,11 +27,11 @@ export function useDecoratorKeyboardShortcut(props: {
           () => [
             raise({
               type: 'decorator.toggle',
-              decorator: props.definition.name,
+              decorator: props.schemaType.name,
             }),
           ],
         ],
       }),
     })
-  }, [editor, props.definition.name, props.definition.shortcut])
+  }, [editor, props.schemaType.name, props.schemaType.shortcut])
 }

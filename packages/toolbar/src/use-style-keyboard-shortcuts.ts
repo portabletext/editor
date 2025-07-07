@@ -1,20 +1,20 @@
 import {useEditor} from '@portabletext/editor'
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 import {useEffect} from 'react'
-import type {ToolbarStyleDefinition} from './toolbar-schema-definition'
+import type {ToolbarStyleSchemaType} from './use-toolbar-schema'
 
 /**
  * @beta
- * Registers keyboard shortcuts for a set of style definitions.
+ * Registers keyboard shortcuts for a set of style schema types.
  */
 export function useStyleKeyboardShortcuts(props: {
-  definitions: ReadonlyArray<ToolbarStyleDefinition>
+  schemaTypes: ReadonlyArray<ToolbarStyleSchemaType>
 }) {
   const editor = useEditor()
 
   useEffect(() => {
-    const unregisterBehaviors = props.definitions.flatMap((definition) => {
-      const shortcut = definition.shortcut
+    const unregisterBehaviors = props.schemaTypes.flatMap((schemaType) => {
+      const shortcut = schemaType.shortcut
 
       if (!shortcut) {
         return []
@@ -26,7 +26,7 @@ export function useStyleKeyboardShortcuts(props: {
             on: 'keyboard.keydown',
             guard: ({event}) => shortcut.guard(event.originEvent),
             actions: [
-              () => [raise({type: 'style.toggle', style: definition.name})],
+              () => [raise({type: 'style.toggle', style: schemaType.name})],
             ],
           }),
         }),
@@ -38,5 +38,5 @@ export function useStyleKeyboardShortcuts(props: {
         unregisterBehavior()
       }
     }
-  }, [editor, props.definitions])
+  }, [editor, props.schemaTypes])
 }

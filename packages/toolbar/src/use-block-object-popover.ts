@@ -6,13 +6,13 @@ import {
 import * as selectors from '@portabletext/editor/selectors'
 import * as React from 'react'
 import {useCallback, useEffect, useState, type RefObject} from 'react'
-import type {ToolbarBlockObjectDefinition} from './toolbar-schema-definition'
+import type {ToolbarBlockObjectSchemaType} from './use-toolbar-schema'
 
 /**
  * @beta
  */
 export function useBlockObjectPopover(props: {
-  definitions: ReadonlyArray<ToolbarBlockObjectDefinition>
+  schemaTypes: ReadonlyArray<ToolbarBlockObjectSchemaType>
 }) {
   const editor = useEditor()
   const [state, setState] = useState<
@@ -23,7 +23,7 @@ export function useBlockObjectPopover(props: {
         type: 'visible'
         object: {
           value: PortableTextObject
-          definition: ToolbarBlockObjectDefinition
+          schemaType: ToolbarBlockObjectSchemaType
           at: BlockPath
         }
         elementRef: RefObject<Element | null>
@@ -46,11 +46,11 @@ export function useBlockObjectPopover(props: {
         return
       }
 
-      const definition = props.definitions.find(
-        (definition) => definition.name === focusBlockObject.node._type,
+      const schemaType = props.schemaTypes.find(
+        (schemaType) => schemaType.name === focusBlockObject.node._type,
       )
 
-      if (!definition) {
+      if (!schemaType) {
         setState((state) => (state.type === 'visible' ? {type: 'idle'} : state))
         return
       }
@@ -70,13 +70,13 @@ export function useBlockObjectPopover(props: {
         type: 'visible',
         object: {
           value: focusBlockObject.node,
-          definition,
+          schemaType,
           at: focusBlockObject.path,
         },
         elementRef,
       })
     }).unsubscribe
-  }, [editor, props.definitions])
+  }, [editor, props.schemaTypes])
 
   const onRemove = useCallback(() => {
     if (state.type === 'visible') {

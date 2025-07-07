@@ -131,9 +131,7 @@ export function Editor(props: {
           />
           <Container className="flex flex-col gap-4 overflow-clip">
             {playgroundFeatureFlags.toolbar ? (
-              <PortableTextToolbar
-                schemaDefinition={playgroundSchemaDefinition}
-              >
+              <PortableTextToolbar>
                 <RangeDecorationButton
                   onAddRangeDecoration={(rangeDecoration) => {
                     props.editorRef.send({

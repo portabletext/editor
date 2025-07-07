@@ -6,13 +6,13 @@ import {
 import * as selectors from '@portabletext/editor/selectors'
 import * as React from 'react'
 import {useCallback, useEffect, useState, type RefObject} from 'react'
-import type {ToolbarInlineObjectDefinition} from './toolbar-schema-definition'
+import type {ToolbarInlineObjectSchemaType} from './use-toolbar-schema'
 
 /**
  * @beta
  */
 export function useInlineObjectPopover(props: {
-  definitions: ReadonlyArray<ToolbarInlineObjectDefinition>
+  schemaTypes: ReadonlyArray<ToolbarInlineObjectSchemaType>
 }) {
   const editor = useEditor()
 
@@ -24,7 +24,7 @@ export function useInlineObjectPopover(props: {
         type: 'visible'
         object: {
           value: PortableTextObject
-          definition: ToolbarInlineObjectDefinition
+          schemaType: ToolbarInlineObjectSchemaType
           at: ChildPath
         }
         elementRef: RefObject<Element | null>
@@ -47,11 +47,11 @@ export function useInlineObjectPopover(props: {
         return
       }
 
-      const definition = props.definitions.find(
+      const schemaType = props.schemaTypes.find(
         (schemaType) => schemaType.name === focusInlineObject.node._type,
       )
 
-      if (!definition) {
+      if (!schemaType) {
         setState((state) => (state.type === 'visible' ? {type: 'idle'} : state))
         return
       }
@@ -71,13 +71,13 @@ export function useInlineObjectPopover(props: {
         type: 'visible',
         object: {
           value: focusInlineObject.node,
-          definition,
+          schemaType,
           at: focusInlineObject.path,
         },
         elementRef,
       })
     }).unsubscribe
-  }, [editor, props.definitions])
+  }, [editor, props.schemaTypes])
 
   const onRemove = useCallback(() => {
     if (state.type === 'visible') {

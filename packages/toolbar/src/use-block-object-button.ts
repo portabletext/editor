@@ -1,13 +1,13 @@
 import {useEditor, useEditorSelector} from '@portabletext/editor'
 import type {InsertPlacement} from '@portabletext/editor/behaviors'
 import {useCallback} from 'react'
-import type {ToolbarBlockObjectDefinition} from './toolbar-schema-definition'
+import type {ToolbarBlockObjectSchemaType} from './use-toolbar-schema'
 
 /**
  * @beta
  */
 export function useBlockObjectButton(props: {
-  definition: ToolbarBlockObjectDefinition
+  schemaType: ToolbarBlockObjectSchemaType
 }) {
   const editor = useEditor()
   const disabled = useEditorSelector(
@@ -25,14 +25,14 @@ export function useBlockObjectButton(props: {
       editor.send({
         type: 'insert.block object',
         blockObject: {
-          name: props.definition.name,
+          name: props.schemaType.name,
           value,
         },
         placement: placement ?? 'auto',
       })
       editor.send({type: 'focus'})
     },
-    [editor, props.definition.name],
+    [editor, props.schemaType.name],
   )
 
   return {disabled, onInsert}

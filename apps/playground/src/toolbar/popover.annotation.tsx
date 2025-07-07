@@ -1,5 +1,5 @@
 import {useAnnotationPopover} from '@portabletext/toolbar'
-import type {ToolbarAnnotationDefinition} from '@portabletext/toolbar'
+import type {ToolbarAnnotationSchemaType} from '@portabletext/toolbar'
 import {PencilIcon, TrashIcon} from 'lucide-react'
 import React from 'react'
 import {TooltipTrigger} from 'react-aria-components'
@@ -11,7 +11,7 @@ import {Tooltip} from '../primitives/tooltip'
 import {ObjectForm} from './form.object-form'
 
 export function AnnotationPopover(props: {
-  definitions: ReadonlyArray<ToolbarAnnotationDefinition>
+  schemaTypes: ReadonlyArray<ToolbarAnnotationSchemaType>
 }) {
   const {state, onRemove, onEdit, onClose} = useAnnotationPopover(props)
 
@@ -36,11 +36,11 @@ export function AnnotationPopover(props: {
           {index > 0 ? <Separator orientation="horizontal" /> : null}
           <div className="flex gap-2 items-center justify-end">
             <span className="text-sm font-medium">
-              {annotation.definition.title}
+              {annotation.schemaType.title}
             </span>
             <Dialog
-              title={annotation.definition.title ?? annotation.definition.name}
-              icon={annotation.definition.icon}
+              title={annotation.schemaType.title ?? annotation.schemaType.name}
+              icon={annotation.schemaType.icon}
               onOpenChange={(isOpen) => {
                 if (!isOpen) {
                   onClose()
@@ -63,7 +63,7 @@ export function AnnotationPopover(props: {
               {({close}) => (
                 <ObjectForm
                   submitLabel="Save"
-                  fields={annotation.definition.fields}
+                  fields={annotation.schemaType.fields}
                   defaultValues={annotation.value}
                   onSubmit={({value}) => {
                     onEdit({
@@ -81,7 +81,7 @@ export function AnnotationPopover(props: {
                 variant="destructive"
                 size="sm"
                 onPress={() => {
-                  onRemove({definition: annotation.definition})
+                  onRemove({schemaType: annotation.schemaType})
                 }}
               >
                 <TrashIcon className="size-3" />

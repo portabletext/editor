@@ -1,4 +1,4 @@
-import type {ToolbarStyleDefinition} from '@portabletext/toolbar'
+import type {ToolbarStyleSchemaType} from '@portabletext/toolbar'
 import {useStyleSelector} from '@portabletext/toolbar'
 import {TooltipTrigger} from 'react-aria-components'
 import {Icon} from '../primitives/icon'
@@ -7,7 +7,7 @@ import {Tooltip} from '../primitives/tooltip'
 import {KeyboardShortcutPreview} from './keyboard-shortcut-preview'
 
 export function StyleButton(props: {
-  definitions: ReadonlyArray<ToolbarStyleDefinition>
+  schemaTypes: ReadonlyArray<ToolbarStyleSchemaType>
 }) {
   const {activeStyle, disabled, onToggle} = useStyleSelector(props)
 
@@ -24,17 +24,17 @@ export function StyleButton(props: {
           }
         }}
       >
-        {props.definitions.map((definition) => (
+        {props.schemaTypes.map((schemaType) => (
           <SelectItem
-            key={definition.name}
-            id={definition.name}
-            textValue={definition.title}
+            key={schemaType.name}
+            id={schemaType.name}
+            textValue={schemaType.title}
           >
-            <Icon icon={definition.icon} fallback={null} />
-            {definition.title}
-            {definition.shortcut ? (
+            <Icon icon={schemaType.icon} fallback={null} />
+            {schemaType.title}
+            {schemaType.shortcut ? (
               <KeyboardShortcutPreview
-                shortcut={definition.shortcut.keys}
+                shortcut={schemaType.shortcut.keys}
                 size="small"
               />
             ) : null}

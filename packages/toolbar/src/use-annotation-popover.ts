@@ -6,13 +6,13 @@ import {
 import * as selectors from '@portabletext/editor/selectors'
 import * as React from 'react'
 import {useCallback, useEffect, useState, type RefObject} from 'react'
-import type {ToolbarAnnotationDefinition} from './toolbar-schema-definition'
+import type {ToolbarAnnotationSchemaType} from './use-toolbar-schema'
 
 /**
  * @beta
  */
 export function useAnnotationPopover(props: {
-  definitions: ReadonlyArray<ToolbarAnnotationDefinition>
+  schemaTypes: ReadonlyArray<ToolbarAnnotationSchemaType>
 }) {
   const editor = useEditor()
   const [state, setState] = useState<
@@ -23,7 +23,7 @@ export function useAnnotationPopover(props: {
         type: 'visible'
         annotations: Array<{
           value: PortableTextObject
-          definition: ToolbarAnnotationDefinition
+          schemaType: ToolbarAnnotationSchemaType
           at: AnnotationPath
         }>
         elementRef: RefObject<Element | null>
@@ -55,17 +55,17 @@ export function useAnnotationPopover(props: {
       setState({
         type: 'visible',
         annotations: activeAnnotations.flatMap((annotation) => {
-          const definition = props.definitions.find(
-            (definition) => definition.name === annotation._type,
+          const schemaType = props.schemaTypes.find(
+            (schemaType) => schemaType.name === annotation._type,
           )
 
-          if (!definition) {
+          if (!schemaType) {
             return []
           }
 
           return {
             value: annotation,
-            definition,
+            schemaType,
             at: [
               {_key: focusBlock.node._key},
               'markDefs',
@@ -76,15 +76,15 @@ export function useAnnotationPopover(props: {
         elementRef,
       })
     }).unsubscribe
-  }, [editor, props.definitions])
+  }, [editor, props.schemaTypes])
 
   const onRemove = useCallback(
-    (annotation: {definition: ToolbarAnnotationDefinition}) => {
+    (annotation: {schemaType: ToolbarAnnotationSchemaType}) => {
       if (state.type === 'visible') {
         editor.send({
           type: 'annotation.remove',
           annotation: {
-            name: annotation.definition.name,
+            name: annotation.schemaType.name,
           },
         })
         editor.send({type: 'focus'})

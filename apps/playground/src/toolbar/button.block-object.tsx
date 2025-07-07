@@ -1,5 +1,5 @@
 import {useBlockObjectButton} from '@portabletext/toolbar'
-import type {ToolbarBlockObjectDefinition} from '@portabletext/toolbar'
+import type {ToolbarBlockObjectSchemaType} from '@portabletext/toolbar'
 import {TooltipTrigger} from 'react-aria-components'
 import {Button} from '../primitives/button'
 import {Dialog} from '../primitives/dialog'
@@ -8,28 +8,28 @@ import {Tooltip} from '../primitives/tooltip'
 import {InsertBlockObjectForm} from './form.insert-block-object'
 
 export function BlockObjectButton(props: {
-  definition: ToolbarBlockObjectDefinition
+  schemaType: ToolbarBlockObjectSchemaType
 }) {
   const {disabled, onInsert} = useBlockObjectButton(props)
 
   return (
     <Dialog
-      title={props.definition.title ?? props.definition.name}
-      icon={props.definition.icon}
+      title={props.schemaType.title ?? props.schemaType.name}
+      icon={props.schemaType.icon}
       trigger={
         <TooltipTrigger>
           <Button variant="secondary" size="sm" isDisabled={disabled}>
-            <Icon icon={props.definition.icon} fallback={null} />
-            {props.definition.title}
+            <Icon icon={props.schemaType.icon} fallback={null} />
+            {props.schemaType.title}
           </Button>
-          <Tooltip>Insert {props.definition.title}</Tooltip>
+          <Tooltip>Insert {props.schemaType.title}</Tooltip>
         </TooltipTrigger>
       }
     >
       {({close}) => (
         <InsertBlockObjectForm
-          fields={props.definition.fields}
-          defaultValues={props.definition.defaultValues}
+          fields={props.schemaType.fields}
+          defaultValues={props.schemaType.defaultValues}
           onSubmit={({value, placement}) => {
             onInsert({value, placement})
             close()
