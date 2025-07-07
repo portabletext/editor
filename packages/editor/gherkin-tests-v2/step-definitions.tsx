@@ -321,6 +321,30 @@ export const stepDefinitions = [
       })
     },
   ),
+  When(
+    'blocks are inserted at {placement} and selected at the {select-position}',
+    (
+      context: Context,
+      placement: Parameter['placement'],
+      selectPosition: Parameter['selectPosition'],
+      blocks: string,
+    ) => {
+      context.editor.ref.current.send({
+        type: 'insert.blocks',
+        blocks: parseBlocks({
+          context: {
+            schema: context.editor.ref.current.getSnapshot().context.schema,
+            keyGenerator:
+              context.editor.ref.current.getSnapshot().context.keyGenerator,
+          },
+          blocks: JSON.parse(blocks),
+          options: {refreshKeys: false, validateFields: true},
+        }),
+        placement,
+        select: selectPosition,
+      })
+    },
+  ),
 
   Then(
     'the text is {terse-pt}',
