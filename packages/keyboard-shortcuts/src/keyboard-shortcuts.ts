@@ -1,14 +1,14 @@
-import {
-  isKeyboardShortcut,
-  type KeyboardEventDefinition,
-} from './is-keyboard-shortcut'
+import {IS_APPLE} from './is-apple'
+import {isKeyboardShortcut} from './is-keyboard-shortcut'
+import type {KeyboardEventDefinition} from './keyboard-event-definition'
 
 /**
  * @beta
- * Definition of an editor keyboard shortcut with platform-specific key mappings.
+ * Definition of a keyboard shortcut with platform-specific keyboard event
+ * definitions.
  *
- * The `key` represents a https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key
- * and is treated as case-insensitive.
+ * `default` keyboard event definitions are required while the `apple`
+ * keyboard event definitions are optional.
  *
  * @example
  * ```typescript
@@ -31,24 +31,17 @@ import {
  * ```
  */
 export type KeyboardShortcutDefinition = {
-  /**
-   * Default shortcut for non-Apple platforms (Windows, Linux).
-   */
   default: ReadonlyArray<KeyboardEventDefinition>
-  /**
-   * Shortcut for Apple platforms (macOS).
-   */
   apple?: ReadonlyArray<KeyboardEventDefinition>
 }
 
 /**
  * @beta
- * A resolved keyboard shortcut for the current platform.
- *
- * This type represents a shortcut that has been processed by `createKeyboardShortcut()`
- * to select the appropriate platform-specific key combination. The `guard` function
- * determines if the shortcut applies to the current `KeyboardEvent`, while `keys`
- * contains the display-friendly key combination for the current platform.
+ * A resolved keyboard shortcut for the current platform that has been
+ * processed by `createKeyboardShortcut(...)` to select the appropriate
+ * platform-specific key combination. The `guard` function determines if the
+ * shortcut applies to the current `KeyboardEvent`, while `keys` contains the
+ * display-friendly key combination for the current platform.
  */
 export type KeyboardShortcut<
   TKeyboardEvent extends Pick<
@@ -59,26 +52,16 @@ export type KeyboardShortcut<
     'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
   >,
 > = {
-  /**
-   * Function that determines if the shortcut should be triggered for a given
-   * keyboard event.
-   */
   guard: (event: TKeyboardEvent) => boolean
-  /**
-   * Platform-specific key combination for display purposes (resolved for the
-   * current platform).
-   */
   keys: ReadonlyArray<string>
 }
 
-const IS_APPLE =
-  typeof window !== 'undefined' &&
-  /Mac|iPod|iPhone|iPad/.test(window.navigator.userAgent)
-
 /**
  * @beta
- * Utility function for creating a `KeyboardShortcut` from a
- * `KeyboardShortcutDefinition`.
+ * Creates a `KeyboardShortcut` from a `KeyboardShortcutDefinition`.
+ *
+ * `default` keyboard event definitions are required while the `apple`
+ * keyboard event definitions are optional.
  *
  * @example
  * ```typescript
@@ -108,13 +91,8 @@ export function createKeyboardShortcut<
     KeyboardEvent,
     'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
   >,
->(
-  definition: KeyboardShortcutDefinition,
-  options?: {
-    isApple?: boolean
-  },
-): KeyboardShortcut<TKeyboardEvent> {
-  if (options?.isApple ?? IS_APPLE) {
+>(definition: KeyboardShortcutDefinition): KeyboardShortcut<TKeyboardEvent> {
+  if (IS_APPLE) {
     const appleDefinition = definition.apple ?? definition.default
     const firstDefinition = appleDefinition.at(0)
 
