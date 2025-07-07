@@ -9,8 +9,7 @@ export type BaseDefinition = {
 /**
  * @public
  */
-export type FieldDefinition = {
-  name: string
+export type FieldDefinition = BaseDefinition & {
   type: 'string' | 'number' | 'boolean' | 'array' | 'object'
 }
 
