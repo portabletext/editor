@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.56.0](https://github.com/portabletext/editor/compare/editor-v1.55.16...editor-v1.56.0) (2025-07-07)
+
+
+### Features
+
+* improve Core List Behaviors ([3db1772](https://github.com/portabletext/editor/commit/3db1772a83e1d616ab6412d8a9508c40e8b9cb14))
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^3.97.1 ([e8627eb](https://github.com/portabletext/editor/commit/e8627ebbaf8b097414aec0282a8c22f883f8e2ff))
+* preserve annotations when inserting text block into text block ([ecf104f](https://github.com/portabletext/editor/commit/ecf104f5daa2b9dade183c837b439c95776cd9b8))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.35
+
 ## [1.55.16](https://github.com/portabletext/editor/compare/editor-v1.55.15...editor-v1.55.16) (2025-07-04)
 
 
