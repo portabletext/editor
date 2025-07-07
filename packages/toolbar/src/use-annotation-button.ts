@@ -2,12 +2,8 @@ import {useEditor, type Editor} from '@portabletext/editor'
 import {defineBehavior, effect, raise} from '@portabletext/editor/behaviors'
 import * as selectors from '@portabletext/editor/selectors'
 import {useActor} from '@xstate/react'
-import {
-  fromCallback,
-  setup,
-  type AnyEventObject,
-  type SnapshotFrom,
-} from 'xstate'
+import {fromCallback, setup, type AnyEventObject} from 'xstate'
+import {disableListener, type DisableListenerEvent} from './disable-listener'
 import type {ToolbarAnnotationSchemaType} from './use-toolbar-schema'
 
 const activeListener = fromCallback<
@@ -26,24 +22,9 @@ const activeListener = fromCallback<
   }).unsubscribe
 })
 
-const disableListener = fromCallback<
-  AnyEventObject,
-  {editor: Editor; schemaType: ToolbarAnnotationSchemaType},
-  {type: 'enable'} | {type: 'disable'}
->(({input, sendBack}) => {
-  return input.editor.on('*', () => {
-    if (input.editor.getSnapshot().context.readOnly) {
-      sendBack({type: 'disable'})
-    } else {
-      sendBack({type: 'enable'})
-    }
-  }).unsubscribe
-})
-
 const keyboardShortcutRemove = fromCallback<
   AnyEventObject,
-  {editor: Editor; schemaType: ToolbarAnnotationSchemaType},
-  {type: 'remove'}
+  {editor: Editor; schemaType: ToolbarAnnotationSchemaType}
 >(({input}) => {
   const shortcut = input.schemaType.shortcut
 
@@ -75,7 +56,7 @@ const keyboardShortcutRemove = fromCallback<
 const keyboardShortcutShowInsertDialog = fromCallback<
   AnyEventObject,
   {editor: Editor; schemaType: ToolbarAnnotationSchemaType},
-  {type: 'annotation.insert dialog.show'}
+  {type: 'open dialog'}
 >(({input, sendBack}) => {
   const shortcut = input.schemaType.shortcut
 
@@ -90,27 +71,13 @@ const keyboardShortcutShowInsertDialog = fromCallback<
       actions: [
         () => [
           effect(() => {
-            sendBack({type: 'annotation.insert dialog.show'})
+            sendBack({type: 'open dialog'})
           }),
         ],
       ],
     }),
   })
 })
-
-/**
- * @beta
- */
-export type AnnotationButtonEvent =
-  | {type: 'annotation.insert dialog.dismiss'}
-  | {type: 'annotation.insert dialog.show'}
-  | {
-      type: 'annotation.add'
-      annotation: {
-        value: Record<string, unknown>
-      }
-    }
-  | {type: 'annotation.remove'}
 
 const annotationButtonMachine = setup({
   types: {
@@ -124,14 +91,13 @@ const annotationButtonMachine = setup({
     },
     events: {} as
       | AnnotationButtonEvent
-      | {type: 'enable'}
-      | {type: 'disable'}
+      | DisableListenerEvent
       | {type: 'set active'}
       | {type: 'set inactive'},
   },
   actions: {
     'add annotation': ({context, event}) => {
-      if (event.type !== 'annotation.add') {
+      if (event.type !== 'add') {
         return
       }
 
@@ -221,7 +187,7 @@ const annotationButtonMachine = setup({
             'set active': {
               target: '#annotation button.enabled.active',
             },
-            'annotation.add': {
+            'add': {
               actions: 'add annotation',
             },
           },
@@ -235,14 +201,14 @@ const annotationButtonMachine = setup({
                 }),
               },
               on: {
-                'annotation.insert dialog.show': {
-                  target: 'showing insert dialog',
+                'open dialog': {
+                  target: 'showing dialog',
                 },
               },
             },
-            'showing insert dialog': {
+            'showing dialog': {
               on: {
-                'annotation.insert dialog.dismiss': {
+                'close dialog': {
                   target: 'idle',
                 },
               },
@@ -264,7 +230,7 @@ const annotationButtonMachine = setup({
             'disable': {
               target: '#annotation button.disabled.active',
             },
-            'annotation.remove': {
+            'remove': {
               actions: 'remove annotation',
             },
           },
@@ -277,13 +243,44 @@ const annotationButtonMachine = setup({
 /**
  * @beta
  */
+export type AnnotationButtonEvent =
+  | {type: 'close dialog'}
+  | {type: 'open dialog'}
+  | {
+      type: 'add'
+      annotation: {
+        value: Record<string, unknown>
+      }
+    }
+  | {type: 'remove'}
+
+/**
+ * @beta
+ */
 export type AnnotationButton = {
-  snapshot: SnapshotFrom<typeof annotationButtonMachine>
+  snapshot: {
+    matches: (
+      state:
+        | 'disabled'
+        | 'enabled'
+        | {disabled: 'inactive'}
+        | {disabled: 'active'}
+        | {enabled: 'inactive'}
+        | {enabled: {inactive: 'idle'}}
+        | {enabled: {inactive: 'showing dialog'}}
+        | {enabled: 'active'},
+    ) => boolean
+  }
   send: (event: AnnotationButtonEvent) => void
 }
 
 /**
  * @beta
+ * Manages the state, keyboard shortcut and available events for an annotation
+ * button.
+ *
+ * Note: This hook assumes that the button triggers a dialog for inputting
+ * the annotation value.
  */
 export function useAnnotationButton(props: {
   schemaType: ToolbarAnnotationSchemaType
@@ -296,5 +293,10 @@ export function useAnnotationButton(props: {
     },
   })
 
-  return {snapshot, send}
+  return {
+    snapshot: {
+      matches: (state) => snapshot.matches(state),
+    },
+    send,
+  }
 }

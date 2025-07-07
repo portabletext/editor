@@ -1,117 +1,285 @@
 import {
   useEditor,
   type ChildPath,
+  type Editor,
   type PortableTextObject,
 } from '@portabletext/editor'
 import * as selectors from '@portabletext/editor/selectors'
+import {useActor} from '@xstate/react'
 import * as React from 'react'
-import {useCallback, useEffect, useState, type RefObject} from 'react'
+import type {RefObject} from 'react'
+import {assign, fromCallback, setup, type AnyEventObject} from 'xstate'
+import {disableListener, type DisableListenerEvent} from './disable-listener'
 import type {ToolbarInlineObjectSchemaType} from './use-toolbar-schema'
 
-/**
- * @beta
- */
-export function useInlineObjectPopover(props: {
-  schemaTypes: ReadonlyArray<ToolbarInlineObjectSchemaType>
-}) {
-  const editor = useEditor()
+type ActiveContext = {
+  inlineObjects: Array<{
+    value: PortableTextObject
+    schemaType: ToolbarInlineObjectSchemaType
+    at: ChildPath
+  }>
+  elementRef: RefObject<Element | null>
+}
 
-  const [state, setState] = useState<
-    | {
-        type: 'idle'
-      }
-    | {
-        type: 'visible'
-        object: {
-          value: PortableTextObject
-          schemaType: ToolbarInlineObjectSchemaType
-          at: ChildPath
-        }
-        elementRef: RefObject<Element | null>
-      }
-  >({type: 'idle'})
+type ActiveListenerEvent =
+  | ({
+      type: 'set active'
+    } & ActiveContext)
+  | {
+      type: 'set inactive'
+    }
 
-  useEffect(() => {
-    return editor.on('selection', () => {
-      const snapshot = editor.getSnapshot()
+const activeListener = fromCallback<
+  AnyEventObject,
+  {editor: Editor; schemaTypes: ReadonlyArray<ToolbarInlineObjectSchemaType>},
+  ActiveListenerEvent
+>(({input, sendBack}) => {
+  return input.editor.on('selection', () => {
+    const snapshot = input.editor.getSnapshot()
 
-      if (!selectors.isSelectionCollapsed(snapshot)) {
-        setState((state) => (state.type === 'visible' ? {type: 'idle'} : state))
-        return
-      }
+    if (!selectors.isSelectionCollapsed(snapshot)) {
+      sendBack({type: 'set inactive'})
+      return
+    }
 
-      const focusInlineObject = selectors.getFocusInlineObject(snapshot)
+    const focusInlineObject = selectors.getFocusInlineObject(snapshot)
 
-      if (!focusInlineObject) {
-        setState((state) => (state.type === 'visible' ? {type: 'idle'} : state))
-        return
-      }
+    if (!focusInlineObject) {
+      sendBack({type: 'set inactive'})
+      return
+    }
 
-      const schemaType = props.schemaTypes.find(
-        (schemaType) => schemaType.name === focusInlineObject.node._type,
-      )
+    const schemaType = input.schemaTypes.find(
+      (schemaType) => schemaType.name === focusInlineObject.node._type,
+    )
 
-      if (!schemaType) {
-        setState((state) => (state.type === 'visible' ? {type: 'idle'} : state))
-        return
-      }
+    if (!schemaType) {
+      sendBack({type: 'set inactive'})
+      return
+    }
 
-      const selectedNodes = editor.dom.getChildNodes(snapshot)
-      const firstSelectedNode = selectedNodes.at(0)
+    const selectedNodes = input.editor.dom.getChildNodes(snapshot)
+    const firstSelectedNode = selectedNodes.at(0)
 
-      if (!firstSelectedNode || !(firstSelectedNode instanceof Element)) {
-        setState((state) => (state.type === 'visible' ? {type: 'idle'} : state))
-        return
-      }
+    if (!firstSelectedNode || !(firstSelectedNode instanceof Element)) {
+      sendBack({type: 'set inactive'})
+      return
+    }
 
-      const elementRef = React.createRef<Element>()
-      elementRef.current = firstSelectedNode
+    const elementRef = React.createRef<Element>()
+    elementRef.current = firstSelectedNode
 
-      setState({
-        type: 'visible',
-        object: {
+    sendBack({
+      type: 'set active',
+      inlineObjects: [
+        {
           value: focusInlineObject.node,
           schemaType,
           at: focusInlineObject.path,
         },
-        elementRef,
-      })
-    }).unsubscribe
-  }, [editor, props.schemaTypes])
+      ],
+      elementRef,
+    })
+  }).unsubscribe
+})
 
-  const onRemove = useCallback(() => {
-    if (state.type === 'visible') {
-      editor.send({
-        type: 'delete.child',
-        at: state.object.at,
-      })
-      editor.send({type: 'focus'})
-    }
-  }, [editor, state])
-
-  const onEdit = useCallback(
-    ({props}: {props: {[key: string]: unknown}}) => {
-      if (state.type === 'visible') {
-        editor.send({
-          type: 'child.set',
-          at: state.object.at,
-          props,
-        })
-        editor.send({type: 'focus'})
-      }
+const inlineObjectPopoverMachine = setup({
+  types: {
+    context: {} as {
+      editor: Editor
+      schemaTypes: ReadonlyArray<ToolbarInlineObjectSchemaType>
+    } & ActiveContext,
+    input: {} as {
+      editor: Editor
+      schemaTypes: ReadonlyArray<ToolbarInlineObjectSchemaType>
     },
-    [editor, state],
-  )
+    events: {} as
+      | DisableListenerEvent
+      | ActiveListenerEvent
+      | InlineObjectPopoverEvent,
+  },
+  actions: {
+    reset: assign({
+      inlineObjects: [],
+      elementRef: React.createRef<Element>(),
+    }),
+  },
+  actors: {
+    'disable listener': disableListener,
+    'active listener': activeListener,
+  },
+}).createMachine({
+  id: 'inline object popover',
+  context: ({input}) => ({
+    editor: input.editor,
+    schemaTypes: input.schemaTypes,
+    inlineObjects: [],
+    elementRef: React.createRef<Element>(),
+  }),
+  invoke: [
+    {src: 'disable listener', input: ({context}) => ({editor: context.editor})},
+    {
+      src: 'active listener',
+      input: ({context}) => ({
+        editor: context.editor,
+        schemaTypes: context.schemaTypes,
+      }),
+    },
+  ],
+  initial: 'disabled',
+  states: {
+    disabled: {
+      initial: 'inactive',
+      states: {
+        inactive: {
+          entry: ['reset'],
+          on: {
+            'set active': {
+              actions: assign({
+                inlineObjects: ({event}) => event.inlineObjects,
+                elementRef: ({event}) => event.elementRef,
+              }),
+              target: 'active',
+            },
+            'enable': {
+              target: '#inline object popover.enabled.inactive',
+            },
+          },
+        },
+        active: {
+          on: {
+            'set inactive': {
+              target: 'inactive',
+            },
+            'enable': {
+              target: '#inline object popover.enabled.active',
+            },
+          },
+        },
+      },
+    },
+    enabled: {
+      initial: 'inactive',
+      states: {
+        inactive: {
+          entry: ['reset'],
+          on: {
+            'set active': {
+              target: 'active',
+              actions: assign({
+                inlineObjects: ({event}) => event.inlineObjects,
+                elementRef: ({event}) => event.elementRef,
+              }),
+            },
+            'disable': {
+              target: '#inline object popover.disabled.inactive',
+            },
+          },
+        },
+        active: {
+          on: {
+            'set inactive': {
+              target: 'inactive',
+            },
+            'disable': {
+              target: '#inline object popover.disabled.active',
+            },
+            'set active': {
+              actions: assign({
+                inlineObjects: ({event}) => event.inlineObjects,
+                elementRef: ({event}) => event.elementRef,
+              }),
+            },
+            'edit': {
+              actions: ({context, event}) => {
+                context.editor.send({
+                  type: 'child.set',
+                  at: event.at,
+                  props: event.props,
+                })
+                context.editor.send({type: 'focus'})
+              },
+            },
+            'remove': {
+              actions: ({context, event}) => {
+                context.editor.send({
+                  type: 'delete.child',
+                  at: event.at,
+                })
+                context.editor.send({type: 'focus'})
+              },
+            },
+            'close': {
+              actions: ({context}) => {
+                context.editor.send({type: 'focus'})
+              },
+              target: 'inactive',
+            },
+          },
+        },
+      },
+    },
+  },
+})
 
-  const onClose = useCallback(() => {
-    setState({type: 'idle'})
-    editor.send({type: 'focus'})
-  }, [editor, setState])
+/**
+ * @beta
+ */
+export type InlineObjectPopoverEvent =
+  | {
+      type: 'remove'
+      at: ChildPath
+    }
+  | {
+      type: 'edit'
+      at: ChildPath
+      props: {[key: string]: unknown}
+    }
+  | {
+      type: 'close'
+    }
+
+/**
+ * @beta
+ */
+export type InlineObjectPopover = {
+  snapshot: {
+    context: ActiveContext
+    matches: (
+      state:
+        | 'disabled'
+        | 'enabled'
+        | {
+            enabled: 'inactive' | 'active'
+          },
+    ) => boolean
+  }
+  send: (event: InlineObjectPopoverEvent) => void
+}
+
+/**
+ * @beta
+ * Manages the state and available events for an inline object popover.
+ */
+export function useInlineObjectPopover(props: {
+  schemaTypes: ReadonlyArray<ToolbarInlineObjectSchemaType>
+}): InlineObjectPopover {
+  const editor = useEditor()
+  const [actorSnapshot, send] = useActor(inlineObjectPopoverMachine, {
+    input: {
+      editor,
+      schemaTypes: props.schemaTypes,
+    },
+  })
 
   return {
-    state,
-    onRemove,
-    onEdit,
-    onClose,
+    snapshot: {
+      context: {
+        inlineObjects: actorSnapshot.context.inlineObjects,
+        elementRef: actorSnapshot.context.elementRef,
+      },
+      matches: (state) => actorSnapshot.matches(state),
+    },
+    send,
   }
 }

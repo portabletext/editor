@@ -1,5 +1,5 @@
-import {useInlineObjectPopover} from '@portabletext/toolbar'
 import type {ToolbarInlineObjectSchemaType} from '@portabletext/toolbar'
+import {useInlineObjectPopover} from '@portabletext/toolbar'
 import {PencilIcon, TrashIcon} from 'lucide-react'
 import {TooltipTrigger} from 'react-aria-components'
 import {Button} from '../primitives/button'
@@ -11,9 +11,18 @@ import {ObjectForm} from './form.object-form'
 export function InlineObjectPopover(props: {
   schemaTypes: ReadonlyArray<ToolbarInlineObjectSchemaType>
 }) {
-  const {state, onRemove, onEdit, onClose} = useInlineObjectPopover(props)
+  const inlineObjectPopover = useInlineObjectPopover(props)
 
-  if (state.type === 'idle') {
+  if (
+    inlineObjectPopover.snapshot.matches('disabled') ||
+    inlineObjectPopover.snapshot.matches({enabled: 'inactive'})
+  ) {
+    return null
+  }
+
+  const inlineObject = inlineObjectPopover.snapshot.context.inlineObjects.at(0)
+
+  if (!inlineObject) {
     return null
   }
 
@@ -21,21 +30,21 @@ export function InlineObjectPopover(props: {
     <Popover
       isNonModal
       className="flex gap-2"
-      triggerRef={state.elementRef}
+      triggerRef={inlineObjectPopover.snapshot.context.elementRef}
       isOpen={true}
       onOpenChange={(isOpen) => {
         if (!isOpen) {
-          onClose()
+          inlineObjectPopover.send({type: 'close'})
         }
       }}
     >
-      {state.object.schemaType.fields.length > 0 ? (
+      {inlineObject.schemaType.fields.length > 0 ? (
         <Dialog
-          title={state.object.schemaType.title ?? state.object.schemaType.name}
-          icon={state.object.schemaType.icon}
+          title={inlineObject.schemaType.title ?? inlineObject.schemaType.name}
+          icon={inlineObject.schemaType.icon}
           onOpenChange={(isOpen) => {
             if (!isOpen) {
-              onClose()
+              inlineObjectPopover.send({type: 'close'})
             }
           }}
           trigger={
@@ -50,10 +59,14 @@ export function InlineObjectPopover(props: {
           {({close}) => (
             <ObjectForm
               submitLabel="Save"
-              fields={state.object.schemaType.fields}
-              defaultValues={state.object.value}
+              fields={inlineObject.schemaType.fields}
+              defaultValues={inlineObject.value}
               onSubmit={({value}) => {
-                onEdit({props: value})
+                inlineObjectPopover.send({
+                  type: 'edit',
+                  at: inlineObject.at,
+                  props: value,
+                })
                 close()
               }}
             />
@@ -65,7 +78,9 @@ export function InlineObjectPopover(props: {
           aria-label="Remove"
           variant="destructive"
           size="sm"
-          onPress={onRemove}
+          onPress={() => {
+            inlineObjectPopover.send({type: 'remove', at: inlineObject.at})
+          }}
         >
           <TrashIcon className="size-3" />
         </Button>

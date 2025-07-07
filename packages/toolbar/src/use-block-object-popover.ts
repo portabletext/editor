@@ -1,116 +1,285 @@
 import {
   useEditor,
   type BlockPath,
+  type Editor,
   type PortableTextObject,
 } from '@portabletext/editor'
 import * as selectors from '@portabletext/editor/selectors'
+import {useActor} from '@xstate/react'
 import * as React from 'react'
-import {useCallback, useEffect, useState, type RefObject} from 'react'
+import type {RefObject} from 'react'
+import {assign, fromCallback, setup, type AnyEventObject} from 'xstate'
+import {disableListener, type DisableListenerEvent} from './disable-listener'
 import type {ToolbarBlockObjectSchemaType} from './use-toolbar-schema'
 
-/**
- * @beta
- */
-export function useBlockObjectPopover(props: {
-  schemaTypes: ReadonlyArray<ToolbarBlockObjectSchemaType>
-}) {
-  const editor = useEditor()
-  const [state, setState] = useState<
-    | {
-        type: 'idle'
-      }
-    | {
-        type: 'visible'
-        object: {
-          value: PortableTextObject
-          schemaType: ToolbarBlockObjectSchemaType
-          at: BlockPath
-        }
-        elementRef: RefObject<Element | null>
-      }
-  >({type: 'idle'})
+type ActiveContext = {
+  blockObjects: Array<{
+    value: PortableTextObject
+    schemaType: ToolbarBlockObjectSchemaType
+    at: BlockPath
+  }>
+  elementRef: RefObject<Element | null>
+}
 
-  useEffect(() => {
-    return editor.on('selection', () => {
-      const snapshot = editor.getSnapshot()
+type ActiveListenerEvent =
+  | ({
+      type: 'set active'
+    } & ActiveContext)
+  | {
+      type: 'set inactive'
+    }
 
-      if (!selectors.isSelectionCollapsed(snapshot)) {
-        setState((state) => (state.type === 'visible' ? {type: 'idle'} : state))
-        return
-      }
+const activeListener = fromCallback<
+  AnyEventObject,
+  {editor: Editor; schemaTypes: ReadonlyArray<ToolbarBlockObjectSchemaType>},
+  ActiveListenerEvent
+>(({input, sendBack}) => {
+  return input.editor.on('selection', () => {
+    const snapshot = input.editor.getSnapshot()
 
-      const focusBlockObject = selectors.getFocusBlockObject(snapshot)
+    if (!selectors.isSelectionCollapsed(snapshot)) {
+      sendBack({type: 'set inactive'})
+      return
+    }
 
-      if (!focusBlockObject) {
-        setState((state) => (state.type === 'visible' ? {type: 'idle'} : state))
-        return
-      }
+    const focusBlockObject = selectors.getFocusBlockObject(snapshot)
 
-      const schemaType = props.schemaTypes.find(
-        (schemaType) => schemaType.name === focusBlockObject.node._type,
-      )
+    if (!focusBlockObject) {
+      sendBack({type: 'set inactive'})
+      return
+    }
 
-      if (!schemaType) {
-        setState((state) => (state.type === 'visible' ? {type: 'idle'} : state))
-        return
-      }
+    const schemaType = input.schemaTypes.find(
+      (schemaType) => schemaType.name === focusBlockObject.node._type,
+    )
 
-      const selectedNodes = editor.dom.getBlockNodes(snapshot)
-      const firstSelectedNode = selectedNodes.at(0)
+    if (!schemaType) {
+      sendBack({type: 'set inactive'})
+      return
+    }
 
-      if (!firstSelectedNode || !(firstSelectedNode instanceof Element)) {
-        setState((state) => (state.type === 'visible' ? {type: 'idle'} : state))
-        return
-      }
+    const selectedNodes = input.editor.dom.getBlockNodes(snapshot)
+    const firstSelectedNode = selectedNodes.at(0)
 
-      const elementRef = React.createRef<Element>()
-      elementRef.current = firstSelectedNode
+    if (!firstSelectedNode || !(firstSelectedNode instanceof Element)) {
+      sendBack({type: 'set inactive'})
+      return
+    }
 
-      setState({
-        type: 'visible',
-        object: {
+    const elementRef = React.createRef<Element>()
+    elementRef.current = firstSelectedNode
+
+    sendBack({
+      type: 'set active',
+      blockObjects: [
+        {
           value: focusBlockObject.node,
           schemaType,
           at: focusBlockObject.path,
         },
-        elementRef,
-      })
-    }).unsubscribe
-  }, [editor, props.schemaTypes])
+      ],
+      elementRef,
+    })
+  }).unsubscribe
+})
 
-  const onRemove = useCallback(() => {
-    if (state.type === 'visible') {
-      editor.send({
-        type: 'delete.block',
-        at: state.object.at,
-      })
-      editor.send({type: 'focus'})
-    }
-  }, [editor, state])
-
-  const onEdit = useCallback(
-    ({props}: {props: {[key: string]: unknown}}) => {
-      if (state.type === 'visible') {
-        editor.send({
-          type: 'block.set',
-          at: state.object.at,
-          props,
-        })
-        editor.send({type: 'focus'})
-      }
+const blockObjectPopoverMachine = setup({
+  types: {
+    context: {} as {
+      editor: Editor
+      schemaTypes: ReadonlyArray<ToolbarBlockObjectSchemaType>
+    } & ActiveContext,
+    input: {} as {
+      editor: Editor
+      schemaTypes: ReadonlyArray<ToolbarBlockObjectSchemaType>
     },
-    [editor, state],
-  )
+    events: {} as
+      | DisableListenerEvent
+      | ActiveListenerEvent
+      | BlockObjectPopoverEvent,
+  },
+  actions: {
+    reset: assign({
+      blockObjects: [],
+      elementRef: React.createRef<Element>(),
+    }),
+  },
+  actors: {
+    'disable listener': disableListener,
+    'active listener': activeListener,
+  },
+}).createMachine({
+  id: 'block object popover',
+  context: ({input}) => ({
+    editor: input.editor,
+    schemaTypes: input.schemaTypes,
+    blockObjects: [],
+    elementRef: React.createRef<Element>(),
+  }),
+  invoke: [
+    {src: 'disable listener', input: ({context}) => ({editor: context.editor})},
+    {
+      src: 'active listener',
+      input: ({context}) => ({
+        editor: context.editor,
+        schemaTypes: context.schemaTypes,
+      }),
+    },
+  ],
+  initial: 'disabled',
+  states: {
+    disabled: {
+      initial: 'inactive',
+      states: {
+        inactive: {
+          entry: ['reset'],
+          on: {
+            'set active': {
+              actions: assign({
+                blockObjects: ({event}) => event.blockObjects,
+                elementRef: ({event}) => event.elementRef,
+              }),
+              target: 'active',
+            },
+            'enable': {
+              target: '#block object popover.enabled.inactive',
+            },
+          },
+        },
+        active: {
+          on: {
+            'set inactive': {
+              target: 'inactive',
+            },
+            'enable': {
+              target: '#block object popover.enabled.active',
+            },
+          },
+        },
+      },
+    },
+    enabled: {
+      initial: 'inactive',
+      states: {
+        inactive: {
+          entry: ['reset'],
+          on: {
+            'set active': {
+              target: 'active',
+              actions: assign({
+                blockObjects: ({event}) => event.blockObjects,
+                elementRef: ({event}) => event.elementRef,
+              }),
+            },
+            'disable': {
+              target: '#block object popover.disabled.inactive',
+            },
+          },
+        },
+        active: {
+          on: {
+            'set inactive': {
+              target: 'inactive',
+            },
+            'disable': {
+              target: '#block object popover.disabled.active',
+            },
+            'set active': {
+              actions: assign({
+                blockObjects: ({event}) => event.blockObjects,
+                elementRef: ({event}) => event.elementRef,
+              }),
+            },
+            'edit': {
+              actions: ({context, event}) => {
+                context.editor.send({
+                  type: 'block.set',
+                  at: event.at,
+                  props: event.props,
+                })
+                context.editor.send({type: 'focus'})
+              },
+            },
+            'remove': {
+              actions: ({context, event}) => {
+                context.editor.send({
+                  type: 'delete.block',
+                  at: event.at,
+                })
+                context.editor.send({type: 'focus'})
+              },
+            },
+            'close': {
+              actions: ({context}) => {
+                context.editor.send({type: 'focus'})
+              },
+              target: 'inactive',
+            },
+          },
+        },
+      },
+    },
+  },
+})
 
-  const onClose = useCallback(() => {
-    setState({type: 'idle'})
-    editor.send({type: 'focus'})
-  }, [editor, setState])
+/**
+ * @beta
+ */
+export type BlockObjectPopoverEvent =
+  | {
+      type: 'remove'
+      at: BlockPath
+    }
+  | {
+      type: 'edit'
+      at: BlockPath
+      props: {[key: string]: unknown}
+    }
+  | {
+      type: 'close'
+    }
+
+/**
+ * @beta
+ */
+export type BlockObjectPopover = {
+  snapshot: {
+    context: ActiveContext
+    matches: (
+      state:
+        | 'disabled'
+        | 'enabled'
+        | {
+            enabled: 'inactive' | 'active'
+          },
+    ) => boolean
+  }
+  send: (event: BlockObjectPopoverEvent) => void
+}
+
+/**
+ * @beta
+ * Manages the state and available events for a block object popover.
+ */
+export function useBlockObjectPopover(props: {
+  schemaTypes: ReadonlyArray<ToolbarBlockObjectSchemaType>
+}): BlockObjectPopover {
+  const editor = useEditor()
+  const [actorSnapshot, send] = useActor(blockObjectPopoverMachine, {
+    input: {
+      editor,
+      schemaTypes: props.schemaTypes,
+    },
+  })
 
   return {
-    state,
-    onRemove,
-    onEdit,
-    onClose,
+    snapshot: {
+      context: {
+        blockObjects: actorSnapshot.context.blockObjects,
+        elementRef: actorSnapshot.context.elementRef,
+      },
+      matches: (state) => actorSnapshot.matches(state),
+    },
+    send,
   }
 }

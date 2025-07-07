@@ -143,6 +143,7 @@ export type ToolbarListSchemaType = ListSchemaType & {
 export type ToolbarBlockObjectSchemaType = BlockObjectSchemaType & {
   icon?: React.ComponentType
   defaultValues?: Record<string, unknown>
+  shortcut?: KeyboardShortcut
 }
 
 /**
@@ -151,6 +152,7 @@ export type ToolbarBlockObjectSchemaType = BlockObjectSchemaType & {
 export type ToolbarInlineObjectSchemaType = InlineObjectSchemaType & {
   icon?: React.ComponentType
   defaultValues?: Record<string, unknown>
+  shortcut?: KeyboardShortcut
 }
 
 /**

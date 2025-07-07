@@ -9,18 +9,18 @@ import {KeyboardShortcutPreview} from './keyboard-shortcut-preview'
 export function StyleButton(props: {
   schemaTypes: ReadonlyArray<ToolbarStyleSchemaType>
 }) {
-  const {activeStyle, disabled, onToggle} = useStyleSelector(props)
+  const styleSelector = useStyleSelector(props)
 
   return (
     <TooltipTrigger>
       <Select
-        isDisabled={disabled}
+        isDisabled={styleSelector.snapshot.matches('disabled')}
         placeholder="Select style"
         aria-label="Style"
-        selectedKey={activeStyle ?? null}
+        selectedKey={styleSelector.snapshot.context.activeStyle ?? null}
         onSelectionChange={(style) => {
           if (typeof style === 'string') {
-            onToggle(style)
+            styleSelector.send({type: 'toggle', style})
           }
         }}
       >

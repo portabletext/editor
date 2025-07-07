@@ -13,9 +13,12 @@ import {ObjectForm} from './form.object-form'
 export function AnnotationPopover(props: {
   schemaTypes: ReadonlyArray<ToolbarAnnotationSchemaType>
 }) {
-  const {state, onRemove, onEdit, onClose} = useAnnotationPopover(props)
+  const annotationPopover = useAnnotationPopover(props)
 
-  if (state.type === 'idle') {
+  if (
+    annotationPopover.snapshot.matches('disabled') ||
+    annotationPopover.snapshot.matches({enabled: 'inactive'})
+  ) {
     return null
   }
 
@@ -23,74 +26,82 @@ export function AnnotationPopover(props: {
     <Popover
       isNonModal
       className="flex flex-col gap-2"
-      triggerRef={state.elementRef}
+      triggerRef={annotationPopover.snapshot.context.elementRef}
       isOpen={true}
       onOpenChange={(isOpen) => {
         if (!isOpen) {
-          onClose()
+          annotationPopover.send({type: 'close'})
         }
       }}
     >
-      {state.annotations.map((annotation, index) => (
-        <React.Fragment key={annotation.value._key}>
-          {index > 0 ? <Separator orientation="horizontal" /> : null}
-          <div className="flex gap-2 items-center justify-end">
-            <span className="text-sm font-medium">
-              {annotation.schemaType.title}
-            </span>
-            <Dialog
-              title={annotation.schemaType.title ?? annotation.schemaType.name}
-              icon={annotation.schemaType.icon}
-              onOpenChange={(isOpen) => {
-                if (!isOpen) {
-                  onClose()
+      {annotationPopover.snapshot.context.annotations.map(
+        (annotation, index) => (
+          <React.Fragment key={annotation.value._key}>
+            {index > 0 ? <Separator orientation="horizontal" /> : null}
+            <div className="flex gap-2 items-center justify-end">
+              <span className="text-sm font-medium">
+                {annotation.schemaType.title}
+              </span>
+              <Dialog
+                title={
+                  annotation.schemaType.title ?? annotation.schemaType.name
                 }
-              }}
-              trigger={
-                <TooltipTrigger>
-                  <Button
-                    aria-label="Edit"
-                    variant="secondary"
-                    size="sm"
-                    onPress={() => {}}
-                  >
-                    <PencilIcon className="size-3" />
-                  </Button>
-                  <Tooltip>Edit</Tooltip>
-                </TooltipTrigger>
-              }
-            >
-              {({close}) => (
-                <ObjectForm
-                  submitLabel="Save"
-                  fields={annotation.schemaType.fields}
-                  defaultValues={annotation.value}
-                  onSubmit={({value}) => {
-                    onEdit({
-                      at: annotation.at,
-                      props: value,
-                    })
-                    close()
-                  }}
-                />
-              )}
-            </Dialog>
-            <TooltipTrigger>
-              <Button
-                aria-label="Remove"
-                variant="destructive"
-                size="sm"
-                onPress={() => {
-                  onRemove({schemaType: annotation.schemaType})
+                icon={annotation.schemaType.icon}
+                onOpenChange={(isOpen) => {
+                  if (!isOpen) {
+                    annotationPopover.send({type: 'close'})
+                  }
                 }}
+                trigger={
+                  <TooltipTrigger>
+                    <Button
+                      aria-label="Edit"
+                      variant="secondary"
+                      size="sm"
+                      onPress={() => {}}
+                    >
+                      <PencilIcon className="size-3" />
+                    </Button>
+                    <Tooltip>Edit</Tooltip>
+                  </TooltipTrigger>
+                }
               >
-                <TrashIcon className="size-3" />
-              </Button>
-              <Tooltip>Remove</Tooltip>
-            </TooltipTrigger>
-          </div>
-        </React.Fragment>
-      ))}
+                {({close}) => (
+                  <ObjectForm
+                    submitLabel="Save"
+                    fields={annotation.schemaType.fields}
+                    defaultValues={annotation.value}
+                    onSubmit={({value}) => {
+                      annotationPopover.send({
+                        type: 'edit',
+                        at: annotation.at,
+                        props: value,
+                      })
+                      close()
+                    }}
+                  />
+                )}
+              </Dialog>
+              <TooltipTrigger>
+                <Button
+                  aria-label="Remove"
+                  variant="destructive"
+                  size="sm"
+                  onPress={() => {
+                    annotationPopover.send({
+                      type: 'remove',
+                      schemaType: annotation.schemaType,
+                    })
+                  }}
+                >
+                  <TrashIcon className="size-3" />
+                </Button>
+                <Tooltip>Remove</Tooltip>
+              </TooltipTrigger>
+            </div>
+          </React.Fragment>
+        ),
+      )}
     </Popover>
   )
 }
