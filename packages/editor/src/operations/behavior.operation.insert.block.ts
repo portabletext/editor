@@ -240,6 +240,16 @@ export function insertBlock({
           return
         }
 
+        Transforms.setNodes(
+          editor,
+          {
+            markDefs: [...(endBlock.markDefs ?? []), ...(block.markDefs ?? [])],
+          },
+          {
+            at: endBlockPath,
+          },
+        )
+
         if (select === 'end') {
           Transforms.insertFragment(editor, [block], {
             voids: true,

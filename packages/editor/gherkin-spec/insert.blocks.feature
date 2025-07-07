@@ -59,3 +59,47 @@ Feature: Insert Blocks
     Given the text ""
     When ">#:foo|>>#:bar|>>>#:baz" is inserted at "auto"
     Then the text is ">#:foo|>>#:bar|>>>#:baz"
+
+  Scenario Outline: Inserting text block with annotation
+    Given the text <text>
+    When <selection>
+    And blocks are inserted at "auto" and selected at the <select-position>
+      ```
+      [
+        {
+          "_type": "block",
+          "children": [
+            {
+              "_type": "span",
+              "text": "foo "
+            },
+            {
+              "_type": "span",
+              "text": "bar",
+              "marks": ["m0"]
+            },
+            {
+              "_type": "span",
+              "text": " baz"
+            }
+          ],
+          "markDefs": [
+            {
+              "_key": "m0",
+              "_type": "link",
+              "href": "https://example.com"
+            }
+          ]
+        }
+      ]
+      ```
+    Then the text is <new text>
+
+    Examples:
+      | text             | selection                 | select-position | new text               |
+      | ""               | the caret is put after "" | "start"         | "foo ,bar, baz"        |
+      | ""               | the caret is put after "" | "end"           | "foo ,bar, baz"        |
+      | "existing"       | "is" is selected          | "start"         | "exfoo ,bar, bazting"  |
+      | "existing"       | "is" is selected          | "end"           | "exfoo ,bar, bazting"  |
+      | "existing\|text" | "ingte" is selected       | "start"         | "existfoo ,bar, bazxt" |
+      | "existing\|text" | "ingte" is selected       | "end"           | "existfoo ,bar, bazxt" |
