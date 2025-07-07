@@ -6,16 +6,18 @@ import {ToggleButton} from '../primitives/toggle-button'
 import {Tooltip} from '../primitives/tooltip'
 
 export function ListButton(props: {schemaType: ToolbarListSchemaType}) {
-  const {disabled, active, onToggle} = useListButton(props)
+  const listButton = useListButton(props)
 
   return (
     <TooltipTrigger>
       <ToggleButton
         aria-label={props.schemaType.title ?? props.schemaType.name}
         size="sm"
-        isDisabled={disabled}
-        isSelected={active}
-        onPress={onToggle}
+        isDisabled={listButton.snapshot.matches('disabled')}
+        isSelected={listButton.snapshot.matches({enabled: 'active'})}
+        onPress={() => {
+          listButton.send({type: 'toggle'})
+        }}
       >
         <Icon
           icon={props.schemaType.icon}

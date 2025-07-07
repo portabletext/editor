@@ -10,11 +10,11 @@ import {ObjectForm} from './form.object-form'
 export function AnnotationButton(props: {
   schemaType: ToolbarAnnotationSchemaType
 }) {
-  const {snapshot, send} = useAnnotationButton(props)
+  const annotationButton = useAnnotationButton(props)
 
   if (
-    snapshot.matches({disabled: 'active'}) ||
-    snapshot.matches({enabled: 'active'})
+    annotationButton.snapshot.matches({disabled: 'active'}) ||
+    annotationButton.snapshot.matches({enabled: 'active'})
   ) {
     return (
       <ButtonTooltip
@@ -24,9 +24,9 @@ export function AnnotationButton(props: {
         <ToggleButton
           size="sm"
           isSelected={true}
-          isDisabled={snapshot.matches('disabled')}
+          isDisabled={annotationButton.snapshot.matches('disabled')}
           onPress={() => {
-            send({type: 'annotation.remove'})
+            annotationButton.send({type: 'remove'})
           }}
         >
           <Icon
@@ -40,10 +40,12 @@ export function AnnotationButton(props: {
 
   return (
     <Dialog
-      isOpen={snapshot.matches({enabled: {inactive: 'showing insert dialog'}})}
+      isOpen={annotationButton.snapshot.matches({
+        enabled: {inactive: 'showing dialog'},
+      })}
       onOpenChange={(isOpen) => {
         if (!isOpen) {
-          send({type: 'annotation.insert dialog.dismiss'})
+          annotationButton.send({type: 'close dialog'})
         }
       }}
       title={props.schemaType.title ?? props.schemaType.name}
@@ -56,9 +58,9 @@ export function AnnotationButton(props: {
           <Button
             variant="secondary"
             size="sm"
-            isDisabled={snapshot.matches('disabled')}
+            isDisabled={annotationButton.snapshot.matches('disabled')}
             onPress={() => {
-              send({type: 'annotation.insert dialog.show'})
+              annotationButton.send({type: 'open dialog'})
             }}
           >
             <Icon
@@ -75,7 +77,7 @@ export function AnnotationButton(props: {
           fields={props.schemaType.fields}
           defaultValues={props.schemaType.defaultValues}
           onSubmit={({value}) => {
-            send({type: 'annotation.add', annotation: {value}})
+            annotationButton.send({type: 'add', annotation: {value}})
             close()
           }}
         />

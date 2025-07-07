@@ -7,7 +7,7 @@ import {ButtonTooltip} from './button-tooltip'
 export function DecoratorButton(props: {
   schemaType: ToolbarDecoratorSchemaType
 }) {
-  const {disabled, active, onToggle} = useDecoratorButton(props)
+  const decoratorButton = useDecoratorButton(props)
 
   return (
     <ButtonTooltip
@@ -17,9 +17,14 @@ export function DecoratorButton(props: {
       <ToggleButton
         aria-label={props.schemaType.title ?? props.schemaType.name}
         size="sm"
-        isDisabled={disabled}
-        isSelected={active}
-        onPress={onToggle}
+        isDisabled={decoratorButton.snapshot.matches('disabled')}
+        isSelected={
+          decoratorButton.snapshot.matches({disabled: 'active'}) ||
+          decoratorButton.snapshot.matches({enabled: 'active'})
+        }
+        onPress={() => {
+          decoratorButton.send({type: 'toggle'})
+        }}
       >
         <Icon
           icon={props.schemaType.icon}

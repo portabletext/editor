@@ -11,9 +11,18 @@ import {ObjectForm} from './form.object-form'
 export function BlockObjectPopover(props: {
   schemaTypes: ReadonlyArray<ToolbarBlockObjectSchemaType>
 }) {
-  const {state, onRemove, onEdit, onClose} = useBlockObjectPopover(props)
+  const blockObjectPopover = useBlockObjectPopover(props)
 
-  if (state.type === 'idle') {
+  if (
+    blockObjectPopover.snapshot.matches('disabled') ||
+    blockObjectPopover.snapshot.matches({enabled: 'inactive'})
+  ) {
+    return null
+  }
+
+  const blockObject = blockObjectPopover.snapshot.context.blockObjects.at(0)
+
+  if (!blockObject) {
     return null
   }
 
@@ -22,21 +31,21 @@ export function BlockObjectPopover(props: {
       isNonModal
       placement="right"
       className="flex flex-col gap-2"
-      triggerRef={state.elementRef}
+      triggerRef={blockObjectPopover.snapshot.context.elementRef}
       isOpen={true}
       onOpenChange={(isOpen) => {
         if (!isOpen) {
-          onClose()
+          blockObjectPopover.send({type: 'close'})
         }
       }}
     >
-      {state.object.schemaType.fields.length > 0 ? (
+      {blockObject.schemaType.fields.length > 0 ? (
         <Dialog
-          title={state.object.schemaType.title ?? state.object.schemaType.name}
-          icon={state.object.schemaType.icon}
+          title={blockObject.schemaType.title ?? blockObject.schemaType.name}
+          icon={blockObject.schemaType.icon}
           onOpenChange={(isOpen) => {
             if (!isOpen) {
-              onClose()
+              blockObjectPopover.send({type: 'close'})
             }
           }}
           trigger={
@@ -51,10 +60,14 @@ export function BlockObjectPopover(props: {
           {({close}) => (
             <ObjectForm
               submitLabel="Save"
-              fields={state.object.schemaType.fields}
-              defaultValues={state.object.value}
+              fields={blockObject.schemaType.fields}
+              defaultValues={blockObject.value}
               onSubmit={({value}) => {
-                onEdit({props: value})
+                blockObjectPopover.send({
+                  type: 'edit',
+                  at: blockObject.at,
+                  props: value,
+                })
                 close()
               }}
             />
@@ -66,7 +79,9 @@ export function BlockObjectPopover(props: {
           aria-label="Remove"
           variant="destructive"
           size="sm"
-          onPress={onRemove}
+          onPress={() => {
+            blockObjectPopover.send({type: 'remove', at: blockObject.at})
+          }}
         >
           <TrashIcon className="size-3" />
         </Button>

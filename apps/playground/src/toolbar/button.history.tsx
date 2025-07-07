@@ -49,7 +49,7 @@ const historyShortcuts = {
 }
 
 export function HistoryButtons() {
-  const {disabled, onUndo, onRedo} = useHistoryButtons()
+  const {snapshot, send} = useHistoryButtons()
 
   return (
     <Group aria-label="History">
@@ -57,8 +57,10 @@ export function HistoryButtons() {
         <Button
           variant="secondary"
           size="sm"
-          isDisabled={disabled}
-          onPress={onUndo}
+          isDisabled={snapshot.matches('disabled')}
+          onPress={() => {
+            send({type: 'history.undo'})
+          }}
         >
           <Undo2Icon className="size-4" />
         </Button>
@@ -67,8 +69,10 @@ export function HistoryButtons() {
         <Button
           variant="secondary"
           size="sm"
-          isDisabled={disabled}
-          onPress={onRedo}
+          isDisabled={snapshot.matches('disabled')}
+          onPress={() => {
+            send({type: 'history.redo'})
+          }}
         >
           <Redo2Icon className="size-4" />
         </Button>

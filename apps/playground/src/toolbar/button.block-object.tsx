@@ -10,15 +10,27 @@ import {InsertBlockObjectForm} from './form.insert-block-object'
 export function BlockObjectButton(props: {
   schemaType: ToolbarBlockObjectSchemaType
 }) {
-  const {disabled, onInsert} = useBlockObjectButton(props)
+  const {snapshot, send} = useBlockObjectButton(props)
 
   return (
     <Dialog
       title={props.schemaType.title ?? props.schemaType.name}
       icon={props.schemaType.icon}
+      isOpen={snapshot.matches({enabled: 'showing dialog'})}
+      onOpenChange={(isOpen) => {
+        if (isOpen) {
+          send({type: 'open dialog'})
+        } else {
+          send({type: 'close dialog'})
+        }
+      }}
       trigger={
         <TooltipTrigger>
-          <Button variant="secondary" size="sm" isDisabled={disabled}>
+          <Button
+            variant="secondary"
+            size="sm"
+            isDisabled={snapshot.matches('disabled')}
+          >
             <Icon icon={props.schemaType.icon} fallback={null} />
             {props.schemaType.title}
           </Button>
@@ -31,7 +43,7 @@ export function BlockObjectButton(props: {
           fields={props.schemaType.fields}
           defaultValues={props.schemaType.defaultValues}
           onSubmit={({value, placement}) => {
-            onInsert({value, placement})
+            send({type: 'insert', value, placement})
             close()
           }}
         />
