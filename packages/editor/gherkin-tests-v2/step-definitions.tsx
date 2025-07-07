@@ -210,8 +210,6 @@ export const stepDefinitions = [
       await vi.waitFor(() => {
         const selection = getSelectionAfterText(context.editor.value(), text)
         expect(selection).not.toBeNull()
-        // console.log('context.editor.selection()', context.editor.selection())
-        // console.log('selection', selection)
         expect(context.editor.selection()).toEqual(selection)
       })
     },
