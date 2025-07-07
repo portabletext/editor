@@ -109,6 +109,7 @@ export function legacySchemaToEditorSchema(
       fields: annotation.fields.map((field) => ({
         name: field.name,
         type: field.type.jsonType,
+        title: field.type.title,
       })),
       title: annotation.title,
     })),
@@ -120,6 +121,7 @@ export function legacySchemaToEditorSchema(
       fields: blockObject.fields.map((field) => ({
         name: field.name,
         type: field.type.jsonType,
+        title: field.type.title,
       })),
       title: blockObject.title,
     })),
@@ -133,6 +135,7 @@ export function legacySchemaToEditorSchema(
       fields: inlineObject.fields.map((field) => ({
         name: field.name,
         type: field.type.jsonType,
+        title: field.type.title,
       })),
       title: inlineObject.title,
     })),
@@ -179,6 +182,7 @@ export function compileSchemaDefinitionToLegacySchema<
           blockObject.fields?.map((field) => ({
             name: field.name,
             type: field.type,
+            title: field.title ?? startCase(field.name),
           })) ?? [],
       }),
     ) ?? []
@@ -200,6 +204,7 @@ export function compileSchemaDefinitionToLegacySchema<
           inlineObject.fields?.map((field) => ({
             name: field.name,
             type: field.type,
+            title: field.title ?? startCase(field.name),
           })) ?? [],
       }),
     ) ?? []
@@ -227,6 +232,7 @@ export function compileSchemaDefinitionToLegacySchema<
               fields:
                 annotation.fields?.map((field) => ({
                   name: field.name,
+                  title: field.title ?? startCase(field.name),
                   type: field.type,
                 })) ?? [],
             })) ?? [],
