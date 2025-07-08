@@ -60,7 +60,7 @@
     "@typescript-eslint/parser": "^8.35.0",
     "babel-plugin-react-compiler": "19.1.0-rc.2",
     "eslint": "8.57.1",
-    "eslint-plugin-react-hooks": "0.0.0-experimental-cee7939b-20250625",
+    "eslint-plugin-react-hooks": "0.0.0-experimental-97cdd5d3-20250710",
     "react": "^19.1.0"
   },
   "peerDependencies": {
