@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.0.1](https://github.com/portabletext/editor/compare/toolbar-v1.0.0...toolbar-v1.0.1) (2025-07-08)
+
+
+### Bug Fixes
+
+* **deps:** update dependency xstate to ^5.20.1 ([81533cd](https://github.com/portabletext/editor/commit/81533cd131126967230a57f7c4bc3c4611c5aec5))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/editor bumped to 1.57.1
+
 ## 1.0.0 (2025-07-08)
 
 
