@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.57.0](https://github.com/portabletext/editor/compare/editor-v1.56.0...editor-v1.57.0) (2025-07-08)
+
+
+### Features
+
+* **`EditorSchema`:** support field titles ([6446f72](https://github.com/portabletext/editor/commit/6446f72343f0902113a2d1109a325184497d90ea))
+* introduce `@portabletext/toolbar` and `@portabletext/keyboard-shortcuts` ([f263bae](https://github.com/portabletext/editor/commit/f263bae16a659b52a18bb8e0ec8b600e30756330))
+
 ## [1.56.0](https://github.com/portabletext/editor/compare/editor-v1.55.16...editor-v1.56.0) (2025-07-07)
 
 
