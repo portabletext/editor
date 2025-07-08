@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.57.2](https://github.com/portabletext/editor/compare/editor-v1.57.1...editor-v1.57.2) (2025-07-08)
+
+
+### Bug Fixes
+
+* **deps:** allow studio v4 in peer dep ranges ([#1414](https://github.com/portabletext/editor/issues/1414)) ([00b9512](https://github.com/portabletext/editor/commit/00b9512b554420f1f0c8577cda8f6f206326549f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.37
+
 ## [1.57.1](https://github.com/portabletext/editor/compare/editor-v1.57.0...editor-v1.57.1) (2025-07-08)
 
 

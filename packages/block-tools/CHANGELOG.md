@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.37](https://github.com/portabletext/editor/compare/block-tools-v1.1.36...block-tools-v1.1.37) (2025-07-08)
+
+
+### Bug Fixes
+
+* **deps:** allow studio v4 in peer dep ranges ([#1414](https://github.com/portabletext/editor/issues/1414)) ([00b9512](https://github.com/portabletext/editor/commit/00b9512b554420f1f0c8577cda8f6f206326549f))
+
 ## [1.1.36](https://github.com/portabletext/editor/compare/block-tools-v1.1.35...block-tools-v1.1.36) (2025-07-08)
 
 
