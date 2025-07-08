@@ -7,7 +7,9 @@
   "packages": {
     "packages/block-tools": {},
     "packages/editor": {},
+    "packages/keyboard-shortcuts": {},
     "packages/patches": {},
-    "packages/racejar": {}
+    "packages/racejar": {},
+    "packages/toolbar": {}
   }
 }
