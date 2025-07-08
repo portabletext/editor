@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.57.1](https://github.com/portabletext/editor/compare/editor-v1.57.0...editor-v1.57.1) (2025-07-08)
+
+
+### Bug Fixes
+
+* **deps:** update dependency xstate to ^5.20.1 ([81533cd](https://github.com/portabletext/editor/commit/81533cd131126967230a57f7c4bc3c4611c5aec5))
+* **deps:** update sanity monorepo to ^3.98.0 ([6d57e9b](https://github.com/portabletext/editor/commit/6d57e9b83830e7e45b93ae77466afe53e8a06ef0))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.36
+  * devDependencies
+    * racejar bumped to 1.2.10
+
 ## [1.57.0](https://github.com/portabletext/editor/compare/editor-v1.56.0...editor-v1.57.0) (2025-07-08)
 
 

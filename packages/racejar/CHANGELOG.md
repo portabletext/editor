@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.10](https://github.com/portabletext/editor/compare/racejar-v1.2.9...racejar-v1.2.10) (2025-07-08)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @jest/globals to ^30.0.4 ([38ff9dd](https://github.com/portabletext/editor/commit/38ff9dda2d7c5db3a11f1009e072ddab4d9c3d5c))
+* **deps:** update dependency @playwright/test to ^1.53.2 ([237384f](https://github.com/portabletext/editor/commit/237384f4e1b184253a3566147aa5d84d33b26a98))
+
 ## [1.2.9](https://github.com/portabletext/editor/compare/racejar-v1.2.8...racejar-v1.2.9) (2025-06-25)
 
 
