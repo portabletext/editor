@@ -51,7 +51,7 @@
     "test:unit:watch": "vitest --project unit"
   },
   "devDependencies": {
-    "@sanity/pkg-utils": "^7.9.0",
+    "@sanity/pkg-utils": "^7.9.2",
     "@types/react": "^19.1.2",
     "@typescript-eslint/eslint-plugin": "^8.35.0",
     "@typescript-eslint/parser": "^8.35.0",
