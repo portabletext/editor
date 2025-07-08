@@ -1,8 +1,7 @@
 {
   "name": "@portabletext/keyboard-shortcuts",
   "version": "0.0.0",
-  "private": true,
-  "description": "Simple keyboard shortcuts",
+  "description": "Create platform-aware keyboard shortcuts with automatic detection of Apple vs non-Apple platforms",
   "keywords": [
     "portabletext",
     "keyboard-shortcuts"

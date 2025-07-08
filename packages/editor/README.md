@@ -372,3 +372,22 @@ In order to provide a robust and consistent end-user experience, the editor is b
 4. `cd` into the `sanity` package and run `pnpm link <relative path to the **editor** package in this repo>`
 
 Now, you should be able to run `pnpm dev:test-studio` in the `sanity` repo to test Studio with a locally running Portable Text Editor.
+
+## Other Libraries
+
+This monorepo also contains additional libraries that can be used with the Portable Text Editor:
+
+### `@portabletext/keyboard-shortcuts`
+
+> A TypeScript library for creating platform-aware keyboard shortcuts with automatic detection of Apple vs non-Apple platforms.
+
+- 💻 [./packages/keyboard-shortcuts](./packages/keyboard-shortcuts/)
+- 📦 [@portabletext/keyboard-shortcuts](https://www.npmjs.com/package/@portabletext/keyboard-shortcuts)
+
+### `@portabletext/toolbar`
+
+> Powered by [Behaviors](https://www.portabletext.org/concepts/behavior/) and [State Machines](https://stately.ai/docs/xstate), `@portabletext/toolbar` is a collection of robust React hooks for building toolbars and related UI components
+> for the Portable Text editor.
+
+- 💻 [./packages/toolbar](./packages/toolbar/)
+- 📦 [@portabletext/toolbar](https://www.npmjs.com/package/@portabletext/toolbar)
