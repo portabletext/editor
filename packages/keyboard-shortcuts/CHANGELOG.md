@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/portabletext/editor/compare/keyboard-shortcuts-v1.0.0...keyboard-shortcuts-v1.1.0) (2025-07-09)
+
+
+### Features
+
+* export common `undo`/`redo` shortcuts ([f4115df](https://github.com/portabletext/editor/commit/f4115df8374e1d99066739483d5c5b6ab93f2b82))
+
+
+### Bug Fixes
+
+* **deps:** remove unneeded React deps ([a557e60](https://github.com/portabletext/editor/commit/a557e6006ccde8a2a3fb162ca970600abf11792a))
+
 ## 1.0.0 (2025-07-08)
 
 
