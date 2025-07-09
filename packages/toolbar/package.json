@@ -46,6 +46,12 @@
     "lint:fix": "biome lint --write .",
     "prepublishOnly": "turbo run build"
   },
+  "dependencies": {
+    "@portabletext/keyboard-shortcuts": "workspace:*",
+    "@xstate/react": "^6.0.0",
+    "react-compiler-runtime": "19.1.0-rc.2",
+    "xstate": "^5.20.1"
+  },
   "devDependencies": {
     "@portabletext/editor": "workspace:*",
     "@sanity/pkg-utils": "^7.9.2",
@@ -60,11 +66,5 @@
   "peerDependencies": {
     "@portabletext/editor": "workspace:*",
     "react": "^19.1.0"
-  },
-  "dependencies": {
-    "@portabletext/keyboard-shortcuts": "workspace:*",
-    "@xstate/react": "^6.0.0",
-    "react-compiler-runtime": "19.1.0-rc.2",
-    "xstate": "^5.20.1"
   }
 }

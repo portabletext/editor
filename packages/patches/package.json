@@ -44,9 +44,9 @@
     "dev": "pkg-utils watch",
     "lint:fix": "biome lint --write .",
     "test": "vitest --run",
-    "test:watch": "vitest",
     "test:unit": "vitest --run --project unit",
-    "test:unit:watch": "vitest --project unit"
+    "test:unit:watch": "vitest --project unit",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@sanity/diff-match-patch": "^3.2.0",
