@@ -7,9 +7,9 @@
     "build:editor": "turbo build --filter=@portabletext/editor...",
     "build:example-basic": "turbo build --filter=example-basic...",
     "build:example-legacy": "turbo build --filter=example-legacy...",
+    "build:keyboard-shortcuts": "turbo build --filter=@portabletext/keyboard-shortcuts...",
     "build:patches": "turbo build --filter=@portabletext/patches...",
     "build:playground": "turbo build --filter=playground...",
-    "build:keyboard-shortcuts": "turbo build --filter=@portabletext/keyboard-shortcuts...",
     "build:toolbar": "turbo build --filter=@portabletext/toolbar...",
     "check:format": "prettier . --check",
     "check:lint": "turbo check:lint",
@@ -17,25 +17,25 @@
     "check:types:watch": "turbo check:types:watch",
     "clean": "turbo clean && del .turbo && del node_modules",
     "dev": "turbo dev",
+    "dev:docs": "turbo dev --filter=docs",
     "dev:editor": "turbo dev --filter=@portabletext/editor...",
-    "dev:playground": "turbo dev --filter=playground",
     "dev:example-basic": "turbo dev --filter=example-basic",
     "dev:example-legacy": "turbo dev --filter=example-legacy",
-    "dev:docs": "turbo dev --filter=docs",
     "dev:keyboard-shortcuts": "turbo dev --filter=@portabletext/keyboard-shortcuts...",
+    "dev:playground": "turbo dev --filter=playground",
     "dev:toolbar": "turbo dev --filter=@portabletext/toolbar...",
     "format": "prettier --cache --write .",
     "format:staged": "pretty-quick --staged",
     "postinstall": "husky",
     "lint:fix": "turbo lint:fix",
     "test": "turbo test",
-    "test:watch": "turbo test:watch",
-    "test:e2e:chromium": "turbo test:e2e:chromium",
     "test:browser:chromium": "turbo test:browser:chromium",
     "test:browser:firefox": "turbo test:browser:firefox",
     "test:browser:webkit": "turbo test:browser:webkit",
+    "test:e2e:chromium": "turbo test:e2e:chromium",
     "test:unit": "turbo test:unit",
-    "test:unit:watch": "turbo test:unit:watch"
+    "test:unit:watch": "turbo test:unit:watch",
+    "test:watch": "turbo test:watch"
   },
   "lint-staged": {
     "*": [
@@ -70,13 +70,13 @@
       ]
     },
     "overrides": {
+      "@astrojs/mdx": "^4.0.0",
       "@portabletext/block-tools": "workspace:*",
       "@portabletext/editor": "workspace:*",
       "@portabletext/patches": "workspace:*",
       "@types/react": "$@types/react",
       "@types/react-dom": "$@types/react-dom",
-      "@types/react-is": "$@types/react-is",
-      "@astrojs/mdx": "^4.0.0"
+      "@types/react-is": "$@types/react-is"
     }
   }
 }
