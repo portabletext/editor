@@ -81,7 +81,9 @@ describe('renderBlock', () => {
     )
 
     const locator = page.getByRole('textbox')
+    const barSpanLocator = locator.getByText('b')
     await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await vi.waitFor(() => expect.element(barSpanLocator).toBeInTheDocument())
 
     expect(renderBlockValues).toEqual([
       {
@@ -102,13 +104,13 @@ describe('renderBlock', () => {
       ...initialValue,
     ])
 
-    await userEvent.click(locator)
+    await userEvent.click(barSpanLocator)
 
     await vi.waitFor(() =>
       expect(renderBlockValues.slice(3)).toEqual([barBlock]),
     )
 
-    await userEvent.type(locator, 'b')
+    await userEvent.type(locator, '1')
 
     await vi.waitFor(() =>
       expect(renderBlockValues.slice(4)).toEqual([
@@ -117,14 +119,14 @@ describe('renderBlock', () => {
           children: [
             {
               ...barBlock.children[0],
-              text: 'barb',
+              text: 'b1ar',
             },
           ],
         },
       ]),
     )
 
-    await userEvent.type(locator, 'a')
+    await userEvent.type(locator, '2')
 
     await vi.waitFor(() =>
       expect(renderBlockValues.slice(5)).toEqual([
@@ -133,14 +135,14 @@ describe('renderBlock', () => {
           children: [
             {
               ...barBlock.children[0],
-              text: 'barba',
+              text: 'b12ar',
             },
           ],
         },
       ]),
     )
 
-    await userEvent.type(locator, 'z')
+    await userEvent.type(locator, '3')
 
     await vi.waitFor(() =>
       expect(renderBlockValues.slice(6)).toEqual([
@@ -149,7 +151,7 @@ describe('renderBlock', () => {
           children: [
             {
               ...barBlock.children[0],
-              text: 'barbaz',
+              text: 'b123ar',
             },
           ],
         },
