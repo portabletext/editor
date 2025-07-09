@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.0.3](https://github.com/portabletext/editor/compare/toolbar-v1.0.2...toolbar-v1.0.3) (2025-07-09)
+
+
+### Bug Fixes
+
+* **deps:** move `@portabletext/editor` to peer deps ([86b2890](https://github.com/portabletext/editor/commit/86b28907f6f11af11f8ef86e23bc13bc27c9c699))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/keyboard-shortcuts bumped to 1.1.0
+  * devDependencies
+    * @portabletext/editor bumped to 1.57.3
+  * peerDependencies
+    * @portabletext/editor bumped to 1.57.3
+
 ## [1.0.2](https://github.com/portabletext/editor/compare/toolbar-v1.0.1...toolbar-v1.0.2) (2025-07-08)
 
 

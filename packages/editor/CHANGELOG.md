@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.57.3](https://github.com/portabletext/editor/compare/editor-v1.57.2...editor-v1.57.3) (2025-07-09)
+
+
+### Bug Fixes
+
+* use `@portabletext/keyboard-shortcuts` ([54d55e8](https://github.com/portabletext/editor/commit/54d55e81c4f517cc7eb7e9212dc92305904f0935))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/keyboard-shortcuts bumped to 1.1.0
+
 ## [1.57.2](https://github.com/portabletext/editor/compare/editor-v1.57.1...editor-v1.57.2) (2025-07-08)
 
 
