@@ -93,6 +93,7 @@
   },
   "dependencies": {
     "@portabletext/block-tools": "workspace:*",
+    "@portabletext/keyboard-shortcuts": "workspace:*",
     "@portabletext/patches": "workspace:*",
     "@portabletext/to-html": "^2.0.14",
     "@xstate/react": "^6.0.0",
