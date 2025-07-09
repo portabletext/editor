@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.0.2](https://github.com/portabletext/editor/compare/toolbar-v1.0.1...toolbar-v1.0.2) (2025-07-08)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/editor bumped to 1.57.2
+
 ## [1.0.1](https://github.com/portabletext/editor/compare/toolbar-v1.0.0...toolbar-v1.0.1) (2025-07-08)
 
 
