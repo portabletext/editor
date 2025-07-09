@@ -1,8 +1,10 @@
 import type {EditorSelector} from '../editor/editor-selector'
-import {getFocusSpan, getFocusTextBlock, getSelectedSpans} from '../selectors'
 import {isSelectionExpanded} from '../utils/util.is-selection-expanded'
+import {getFocusSpan} from './selector.get-focus-span'
+import {getFocusTextBlock} from './selector.get-focus-text-block'
 import {getNextSpan} from './selector.get-next-span'
 import {getPreviousSpan} from './selector.get-previous-span'
+import {getSelectedSpans} from './selector.get-selected-spans'
 
 export type MarkState = {
   state: 'changed' | 'unchanged'
