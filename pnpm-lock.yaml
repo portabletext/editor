@@ -26,6 +26,9 @@ importers:
       '@playwright/test':
         specifier: ^1.53.2
         version: 1.53.2
+      '@prettier/plugin-oxc':
+        specifier: ^0.0.4
+        version: 0.0.4
       '@sanity/prettier-config':
         specifier: ^2.0.0
         version: 2.0.0(prettier@3.6.2)
