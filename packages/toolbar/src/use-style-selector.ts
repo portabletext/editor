@@ -68,6 +68,7 @@ const styleSelectorMachine = setup({
   ],
   on: {
     'set active style': {
+      guard: ({context, event}) => context.activeStyle !== event.style,
       actions: assign({
         activeStyle: ({event}) => event.style,
       }),
