@@ -47,6 +47,7 @@
     "prepublishOnly": "turbo run build"
   },
   "devDependencies": {
+    "@portabletext/editor": "workspace:*",
     "@sanity/pkg-utils": "^7.9.2",
     "@types/react": "^19.1.2",
     "@typescript-eslint/eslint-plugin": "^8.35.0",
@@ -57,10 +58,10 @@
     "react": "^19.1.0"
   },
   "peerDependencies": {
+    "@portabletext/editor": "workspace:*",
     "react": "^19.1.0"
   },
   "dependencies": {
-    "@portabletext/editor": "workspace:*",
     "@portabletext/keyboard-shortcuts": "workspace:*",
     "@xstate/react": "^6.0.0",
     "react-compiler-runtime": "19.1.0-rc.2",

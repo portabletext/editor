@@ -611,9 +611,6 @@ importers:
 
   packages/toolbar:
     dependencies:
-      '@portabletext/editor':
-        specifier: workspace:*
-        version: link:../editor
       '@portabletext/keyboard-shortcuts':
         specifier: workspace:*
         version: link:../keyboard-shortcuts
@@ -627,6 +624,9 @@ importers:
         specifier: ^5.20.1
         version: 5.20.1
     devDependencies:
+      '@portabletext/editor':
+        specifier: workspace:*
+        version: link:../editor
       '@sanity/pkg-utils':
         specifier: ^7.9.2
         version: 7.9.2(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(typescript@5.8.3)
