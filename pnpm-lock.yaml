@@ -420,6 +420,9 @@ importers:
       '@portabletext/block-tools':
         specifier: workspace:*
         version: link:../block-tools
+      '@portabletext/keyboard-shortcuts':
+        specifier: workspace:*
+        version: link:../keyboard-shortcuts
       '@portabletext/patches':
         specifier: workspace:*
         version: link:../patches
@@ -552,7 +555,7 @@ importers:
     devDependencies:
       '@sanity/pkg-utils':
         specifier: ^7.9.2
-        version: 7.9.2(@types/babel__core@7.20.5)(@types/node@22.14.0)(typescript@5.8.3)
+        version: 7.9.2(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(typescript@5.8.3)
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@22.14.0)(@vitest/browser@3.2.4)(jiti@2.4.2)(jsdom@26.0.0)(lightningcss@1.30.1)(terser@5.39.0)(yaml@2.7.1)
@@ -9661,7 +9664,7 @@ snapshots:
       esbuild: 0.25.6
       esbuild-register: 3.6.0(esbuild@0.25.6)
       find-config: 1.0.0
-      get-latest-version: 5.1.0
+      get-latest-version: 5.1.0(debug@4.4.1)
       git-url-parse: 16.1.0
       globby: 11.1.0
       jsonc-parser: 3.3.1
@@ -9685,60 +9688,6 @@ snapshots:
       zod-validation-error: 3.5.2(zod@3.25.75)
     optionalDependencies:
       babel-plugin-react-compiler: 19.1.0-rc.2
-    transitivePeerDependencies:
-      - '@types/babel__core'
-      - '@types/node'
-      - '@typescript/native-preview'
-      - debug
-      - oxc-resolver
-      - supports-color
-      - vue-tsc
-
-  '@sanity/pkg-utils@7.9.2(@types/babel__core@7.20.5)(@types/node@22.14.0)(typescript@5.8.3)':
-    dependencies:
-      '@babel/core': 7.28.0
-      '@babel/preset-typescript': 7.27.1(@babel/core@7.28.0)
-      '@babel/types': 7.28.0
-      '@microsoft/api-extractor': 7.52.8(@types/node@22.14.0)
-      '@microsoft/tsdoc-config': 0.17.1
-      '@optimize-lodash/rollup-plugin': 5.0.2(rollup@4.44.2)
-      '@rollup/plugin-alias': 5.1.1(rollup@4.44.2)
-      '@rollup/plugin-babel': 6.0.4(@babel/core@7.28.0)(@types/babel__core@7.20.5)(rollup@4.44.2)
-      '@rollup/plugin-commonjs': 28.0.6(rollup@4.44.2)
-      '@rollup/plugin-json': 6.1.0(rollup@4.44.2)
-      '@rollup/plugin-node-resolve': 16.0.1(rollup@4.44.2)
-      '@rollup/plugin-replace': 6.0.2(rollup@4.44.2)
-      '@rollup/plugin-terser': 0.4.4(rollup@4.44.2)
-      '@sanity/browserslist-config': 1.0.5
-      browserslist: 4.25.1
-      cac: 6.7.14
-      chalk: 4.1.2
-      chokidar: 4.0.3
-      esbuild: 0.25.6
-      esbuild-register: 3.6.0(esbuild@0.25.6)
-      find-config: 1.0.0
-      get-latest-version: 5.1.0
-      git-url-parse: 16.1.0
-      globby: 11.1.0
-      jsonc-parser: 3.3.1
-      mkdirp: 3.0.1
-      outdent: 0.8.0
-      pkg-up: 3.1.0
-      prettier: 3.6.2
-      pretty-bytes: 5.6.0
-      prompts: 2.4.2
-      recast: 0.23.11
-      rimraf: 4.4.1
-      rolldown: 1.0.0-beta.24
-      rolldown-plugin-dts: 0.13.13(rolldown@1.0.0-beta.24)(typescript@5.8.3)
-      rollup: 4.44.2
-      rollup-plugin-esbuild: 6.2.1(esbuild@0.25.6)(rollup@4.44.2)
-      rxjs: 7.8.2
-      treeify: 1.1.0
-      typescript: 5.8.3
-      uuid: 11.1.0
-      zod: 3.25.75
-      zod-validation-error: 3.5.2(zod@3.25.75)
     transitivePeerDependencies:
       - '@types/babel__core'
       - '@types/node'
@@ -11406,8 +11355,6 @@ snapshots:
 
   flattie@1.1.1: {}
 
-  follow-redirects@1.15.9: {}
-
   follow-redirects@1.15.9(debug@4.4.1):
     optionalDependencies:
       debug: 4.4.1
@@ -11459,17 +11406,6 @@ snapshots:
       hasown: 2.0.2
       math-intrinsics: 1.1.0
 
-  get-it@8.6.9:
-    dependencies:
-      '@types/follow-redirects': 1.14.4
-      decompress-response: 7.0.0
-      follow-redirects: 1.15.9
-      is-retry-allowed: 2.2.0
-      through2: 4.0.2
-      tunnel-agent: 0.6.0
-    transitivePeerDependencies:
-      - debug
-
   get-it@8.6.9(debug@4.4.1):
     dependencies:
       '@types/follow-redirects': 1.14.4
@@ -11478,15 +11414,6 @@ snapshots:
       is-retry-allowed: 2.2.0
       through2: 4.0.2
       tunnel-agent: 0.6.0
-    transitivePeerDependencies:
-      - debug
-
-  get-latest-version@5.1.0:
-    dependencies:
-      get-it: 8.6.9
-      registry-auth-token: 5.1.0
-      registry-url: 5.1.0
-      semver: 7.7.2
     transitivePeerDependencies:
       - debug
 
