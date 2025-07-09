@@ -1,14 +1,14 @@
 {
   "name": "example-legacy",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
-    "clean": "del .turbo && del dist && del node_modules",
-    "dev": "vite",
     "build": "tsc -b && vite build",
     "check:lint": "eslint .",
     "check:types": "tsc",
+    "clean": "del .turbo && del dist && del node_modules",
+    "dev": "vite",
     "preview": "vite preview"
   },
   "dependencies": {

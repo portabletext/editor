@@ -1,14 +1,14 @@
 {
   "name": "docs",
-  "type": "module",
   "version": "0.0.1",
+  "type": "module",
   "scripts": {
+    "astro": "astro",
+    "build": "astro build",
     "clean": "del .astro && del .turbo && del dist && del node_modules",
     "dev": "astro dev",
-    "start": "astro dev",
-    "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "start": "astro dev"
   },
   "dependencies": {
     "@astrojs/react": "^4.0.0",

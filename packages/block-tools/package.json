@@ -44,9 +44,9 @@
     "lint:fix": "biome lint --write .",
     "prepublishOnly": "turbo run build",
     "test": "vitest --run",
-    "test:watch": "vitest",
     "test:unit": "vitest --run --project unit",
-    "test:unit:watch": "vitest --project unit"
+    "test:unit:watch": "vitest --project unit",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "get-random-values-esm": "1.0.2",
