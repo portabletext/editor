@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.4](https://github.com/portabletext/editor/compare/toolbar-v1.0.3...toolbar-v1.0.4) (2025-07-09)
+
+
+### Bug Fixes
+
+* **perf:** avoid unnecessary rerenders of `useStyleSelector` ([f36b10c](https://github.com/portabletext/editor/commit/f36b10c6db6142d6ef7ed9a3900896f3ddbacf3f))
+
 ## [1.0.3](https://github.com/portabletext/editor/compare/toolbar-v1.0.2...toolbar-v1.0.3) (2025-07-09)
 
 
