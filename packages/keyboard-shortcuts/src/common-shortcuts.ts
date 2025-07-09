@@ -452,3 +452,58 @@ export const blockquote = createKeyboardShortcut({
     },
   ],
 })
+
+/**
+ * @beta
+ */
+export const undo = createKeyboardShortcut({
+  default: [
+    {
+      key: 'Z',
+      alt: false,
+      ctrl: true,
+      meta: false,
+      shift: false,
+    },
+  ],
+  apple: [
+    {
+      key: 'Z',
+      alt: false,
+      ctrl: false,
+      meta: true,
+      shift: false,
+    },
+  ],
+})
+
+/**
+ * @beta
+ */
+export const redo = createKeyboardShortcut({
+  default: [
+    {
+      key: 'Y',
+      alt: false,
+      ctrl: true,
+      meta: false,
+      shift: false,
+    },
+    {
+      key: 'Z',
+      alt: false,
+      ctrl: true,
+      meta: false,
+      shift: true,
+    },
+  ],
+  apple: [
+    {
+      key: 'Z',
+      alt: false,
+      ctrl: false,
+      meta: true,
+      shift: true,
+    },
+  ],
+})
