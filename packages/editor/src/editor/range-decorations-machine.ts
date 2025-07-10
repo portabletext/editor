@@ -15,8 +15,9 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
-import {moveRangeByOperation, toSlateRange} from '../internal-utils/ranges'
+import {moveRangeByOperation} from '../internal-utils/move-range-by-operation'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
+import {toSlateRange} from '../internal-utils/to-slate-range'
 import {isEqualToEmptyEditor} from '../internal-utils/values'
 import type {PortableTextSlateEditor, RangeDecoration} from '../types/editor'
 import type {EditorSchema} from './editor-schema'

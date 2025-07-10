@@ -1,7 +1,7 @@
 import {omit} from 'lodash'
 import {Editor, Transforms} from 'slate'
 import {isTextBlock, parseBlock} from '../internal-utils/parse-blocks'
-import {toSlateRange} from '../internal-utils/ranges'
+import {toSlateRange} from '../internal-utils/to-slate-range'
 import {fromSlateValue} from '../internal-utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
 import type {BehaviorOperationImplementation} from './behavior.operations'

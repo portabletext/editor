@@ -1,5 +1,5 @@
 import {Editor, Element, Transforms} from 'slate'
-import {toSlateRange} from '../internal-utils/ranges'
+import {toSlateRange} from '../internal-utils/to-slate-range'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const childSetOperationImplementation: BehaviorOperationImplementation<

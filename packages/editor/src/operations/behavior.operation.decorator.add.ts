@@ -1,6 +1,6 @@
 import {Editor, Range, Text, Transforms} from 'slate'
-import {toSlateRange} from '../internal-utils/ranges'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
+import {toSlateRange} from '../internal-utils/to-slate-range'
 import {fromSlateValue} from '../internal-utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
 import * as selectors from '../selectors'
