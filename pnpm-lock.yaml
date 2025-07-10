@@ -199,7 +199,7 @@ importers:
         version: 5.20.1
       zod:
         specifier: ^3.25.67
-        version: 3.25.75
+        version: 3.25.76
     devDependencies:
       '@tailwindcss/vite':
         specifier: ^4.1.10
@@ -382,8 +382,8 @@ importers:
         version: 4.17.21
     devDependencies:
       '@sanity/pkg-utils':
-        specifier: ^7.9.2
-        version: 7.9.2(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(typescript@5.8.3)
+        specifier: ^7.9.3
+        version: 7.9.3(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(typescript@5.8.3)
       '@sanity/schema':
         specifier: ^3.98.1
         version: 3.98.1(@types/react@19.1.8)(debug@4.4.1)
@@ -473,8 +473,8 @@ importers:
         specifier: ^3.2.0
         version: 3.2.0
       '@sanity/pkg-utils':
-        specifier: ^7.9.2
-        version: 7.9.2(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(debug@4.4.1)(typescript@5.8.3)
+        specifier: ^7.9.3
+        version: 7.9.3(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(debug@4.4.1)(typescript@5.8.3)
       '@sanity/schema':
         specifier: ^3.98.1
         version: 3.98.1(@types/react@19.1.8)(debug@4.4.1)
@@ -554,8 +554,8 @@ importers:
   packages/keyboard-shortcuts:
     devDependencies:
       '@sanity/pkg-utils':
-        specifier: ^7.9.2
-        version: 7.9.2(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(typescript@5.8.3)
+        specifier: ^7.9.3
+        version: 7.9.3(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(typescript@5.8.3)
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@22.14.0)(@vitest/browser@3.2.4)(jiti@2.4.2)(jsdom@26.0.0)(lightningcss@1.30.1)(terser@5.39.0)(yaml@2.7.1)
@@ -570,8 +570,8 @@ importers:
         version: 4.17.21
     devDependencies:
       '@sanity/pkg-utils':
-        specifier: ^7.9.2
-        version: 7.9.2(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(typescript@5.8.3)
+        specifier: ^7.9.3
+        version: 7.9.3(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(typescript@5.8.3)
       '@types/lodash':
         specifier: ^4.17.16
         version: 4.17.16
@@ -600,8 +600,8 @@ importers:
         specifier: ^1.53.2
         version: 1.53.2
       '@sanity/pkg-utils':
-        specifier: ^7.9.2
-        version: 7.9.2(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(typescript@5.8.3)
+        specifier: ^7.9.3
+        version: 7.9.3(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(typescript@5.8.3)
       typescript:
         specifier: 5.8.3
         version: 5.8.3
@@ -628,8 +628,8 @@ importers:
         specifier: workspace:*
         version: link:../editor
       '@sanity/pkg-utils':
-        specifier: ^7.9.2
-        version: 7.9.2(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(typescript@5.8.3)
+        specifier: ^7.9.3
+        version: 7.9.3(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(typescript@5.8.3)
       '@types/react':
         specifier: ^19.1.8
         version: 19.1.8
@@ -2921,8 +2921,8 @@ packages:
   '@sanity/media-library-types@1.0.0':
     resolution: {integrity: sha512-RwBou7SybMbHkSeCn+3L/hbaFP77at3BesP67o8D8RrFiOgHX/h4ibw4yEauC1s09U9BE1MPq9K7ji+0XU57GA==}
 
-  '@sanity/pkg-utils@7.9.2':
-    resolution: {integrity: sha512-yBk9br60Tkr9nzt3YVSuZPv2j0xTJrP0e7RdbxgaZpjQfedyZfFgReyCY+1+cA/3TGvk8zN+Xfc+CRDl5dJpRA==}
+  '@sanity/pkg-utils@7.9.3':
+    resolution: {integrity: sha512-RIfvtVUqq82W6ZEn5bALRJb4iIu57qPaDxlfXfLLZhih4/U537/Azt9WBLqj5DGlAom86uDO5vIce1/u8IR7tg==}
     engines: {node: '>=18.17.0'}
     hasBin: true
     peerDependencies:
@@ -6891,8 +6891,8 @@ packages:
     peerDependencies:
       zod: ^3.25.0
 
-  zod@3.25.75:
-    resolution: {integrity: sha512-OhpzAmVzabPOL6C3A3gpAifqr9MqihV/Msx3gor2b2kviCgcb+HM9SEOpMWwwNp9MRunWnhtAKUoo0AHhjyPPg==}
+  zod@3.25.76:
+    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
@@ -6994,7 +6994,7 @@ snapshots:
     dependencies:
       sitemap: 8.0.0
       stream-replace-string: 2.0.0
-      zod: 3.25.75
+      zod: 3.25.76
 
   '@astrojs/starlight-tailwind@3.0.1(@astrojs/starlight@0.32.5(astro@5.5.6(@types/node@22.14.0)(jiti@2.4.2)(lightningcss@1.30.1)(rollup@4.44.2)(terser@5.39.0)(typescript@5.8.3)(yaml@2.7.1)))(@astrojs/tailwind@6.0.2(astro@5.5.6(@types/node@22.14.0)(jiti@2.4.2)(lightningcss@1.30.1)(rollup@4.44.2)(terser@5.39.0)(typescript@5.8.3)(yaml@2.7.1))(tailwindcss@3.4.17))(tailwindcss@3.4.17)':
     dependencies:
@@ -9625,7 +9625,7 @@ snapshots:
 
   '@sanity/media-library-types@1.0.0': {}
 
-  '@sanity/pkg-utils@7.9.2(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(debug@4.4.1)(typescript@5.8.3)':
+  '@sanity/pkg-utils@7.9.3(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(debug@4.4.1)(typescript@5.8.3)':
     dependencies:
       '@babel/core': 7.28.0
       '@babel/preset-typescript': 7.27.1(@babel/core@7.28.0)
@@ -9668,8 +9668,8 @@ snapshots:
       treeify: 1.1.0
       typescript: 5.8.3
       uuid: 11.1.0
-      zod: 3.25.75
-      zod-validation-error: 3.5.2(zod@3.25.75)
+      zod: 3.25.76
+      zod-validation-error: 3.5.2(zod@3.25.76)
     optionalDependencies:
       babel-plugin-react-compiler: 19.1.0-rc.2
     transitivePeerDependencies:
@@ -9681,7 +9681,7 @@ snapshots:
       - supports-color
       - vue-tsc
 
-  '@sanity/pkg-utils@7.9.2(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(typescript@5.8.3)':
+  '@sanity/pkg-utils@7.9.3(@types/babel__core@7.20.5)(@types/node@22.14.0)(babel-plugin-react-compiler@19.1.0-rc.2)(typescript@5.8.3)':
     dependencies:
       '@babel/core': 7.28.0
       '@babel/preset-typescript': 7.27.1(@babel/core@7.28.0)
@@ -9724,8 +9724,8 @@ snapshots:
       treeify: 1.1.0
       typescript: 5.8.3
       uuid: 11.1.0
-      zod: 3.25.75
-      zod-validation-error: 3.5.2(zod@3.25.75)
+      zod: 3.25.76
+      zod-validation-error: 3.5.2(zod@3.25.76)
     optionalDependencies:
       babel-plugin-react-compiler: 19.1.0-rc.2
     transitivePeerDependencies:
@@ -10591,9 +10591,9 @@ snapshots:
       xxhash-wasm: 1.1.0
       yargs-parser: 21.1.1
       yocto-spinner: 0.2.1
-      zod: 3.25.75
-      zod-to-json-schema: 3.24.5(zod@3.25.75)
-      zod-to-ts: 1.2.0(typescript@5.8.3)(zod@3.25.75)
+      zod: 3.25.76
+      zod-to-json-schema: 3.24.5(zod@3.25.76)
+      zod-to-ts: 1.2.0(typescript@5.8.3)(zod@3.25.76)
     optionalDependencies:
       sharp: 0.33.5
     transitivePeerDependencies:
@@ -11117,8 +11117,8 @@ snapshots:
       '@babel/plugin-transform-private-methods': 7.27.1(@babel/core@7.28.0)
       eslint: 9.23.0(jiti@2.4.2)
       hermes-parser: 0.25.1
-      zod: 3.25.75
-      zod-validation-error: 3.5.2(zod@3.25.75)
+      zod: 3.25.76
+      zod-validation-error: 3.5.2(zod@3.25.76)
     transitivePeerDependencies:
       - supports-color
 
@@ -11129,8 +11129,8 @@ snapshots:
       '@babel/plugin-transform-private-methods': 7.27.1(@babel/core@7.28.0)
       eslint: 8.57.1
       hermes-parser: 0.25.1
-      zod: 3.25.75
-      zod-validation-error: 3.5.2(zod@3.25.75)
+      zod: 3.25.76
+      zod-validation-error: 3.5.2(zod@3.25.76)
     transitivePeerDependencies:
       - supports-color
 
@@ -14555,19 +14555,19 @@ snapshots:
 
   yoctocolors@2.1.1: {}
 
-  zod-to-json-schema@3.24.5(zod@3.25.75):
+  zod-to-json-schema@3.24.5(zod@3.25.76):
     dependencies:
-      zod: 3.25.75
+      zod: 3.25.76
 
-  zod-to-ts@1.2.0(typescript@5.8.3)(zod@3.25.75):
+  zod-to-ts@1.2.0(typescript@5.8.3)(zod@3.25.76):
     dependencies:
       typescript: 5.8.3
-      zod: 3.25.75
+      zod: 3.25.76
 
-  zod-validation-error@3.5.2(zod@3.25.75):
+  zod-validation-error@3.5.2(zod@3.25.76):
     dependencies:
-      zod: 3.25.75
+      zod: 3.25.76
 
-  zod@3.25.75: {}
+  zod@3.25.76: {}
 
   zwitch@2.0.4: {}
