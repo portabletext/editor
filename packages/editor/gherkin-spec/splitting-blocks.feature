@@ -5,21 +5,21 @@ Feature: Splitting Blocks
     And a global keymap
 
   Scenario: Splitting block at the beginning
-    Given the text "foo" in block "b1"
+    Given a block "b1" with text "foo"
     When the caret is put before "foo"
     And "{Enter}" is pressed
     Then the text is "|foo"
     And "foo" is in block "b1"
 
   Scenario: Splitting block in the middle
-    Given the text "foo" in block "b1"
+    Given a block "b1" with text "foo"
     When the caret is put after "fo"
     And "{Enter}" is pressed
     Then the text is "fo|o"
     And "fo" is in block "b1"
 
   Scenario: Splitting block at the end
-    Given the text "foo" in block "b1"
+    Given a block "b1" with text "foo"
     When "{Enter}" is pressed
     Then the text is "foo|"
     And "foo" is in block "b1"
@@ -57,34 +57,34 @@ Feature: Splitting Blocks
     And "" is in block "b2"
 
   Scenario: Soft-splitting block at the beginning
-    Given the text "foo" in block "b1"
+    Given a block "b1" with text "foo"
     When the caret is put before "foo"
     And "{Shift>}{Enter}{/Shift}" is pressed
     Then the text is "\nfoo"
     And "\nfoo" is in block "b1"
 
   Scenario: Soft-splitting block in the middle
-    Given the text "foo" in block "b1"
+    Given a block "b1" with text "foo"
     When the caret is put after "fo"
     And "{Shift>}{Enter}{/Shift}" is pressed
     Then the text is "fo\no"
     And "fo\no" is in block "b1"
 
   Scenario: Soft-splitting block at the end
-    Given the text "foo" in block "b1"
+    Given a block "b1" with text "foo"
     When "{Shift>}{Enter}{/Shift}" is pressed
     Then the text is "foo\n"
     And "foo\n" is in block "b1"
 
   Scenario: Splitting styled block at the beginning
-    Given the text "foo" in block "b1"
+    Given a block "b1" with text "foo"
     When "h1" is toggled
     And the caret is put before "foo"
     And "{Enter}" is pressed
     Then the text is "|h1:foo"
 
   Scenario: Splitting styled block in the middle
-    Given the text "foo" in block "b1"
+    Given a block "b1" with text "foo"
     When "h1" is toggled
     And the caret is put after "fo"
     And "{Enter}" is pressed
@@ -92,7 +92,7 @@ Feature: Splitting Blocks
     And "fo" is in block "b1"
 
   Scenario: Splitting styled block at the end
-    Given the text "foo" in block "b1"
+    Given a block "b1" with text "foo"
     When "h1" is toggled
     And "{Enter}" is pressed
     Then the text is "h1:foo|"
@@ -157,8 +157,8 @@ Feature: Splitting Blocks
     And "new" has no marks
 
   Scenario Outline: Splitting block with an expanded selection
-    Given the text "foo" in block "b1"
-    And the text "bar" in block "b2"
+    Given a block "b1" with text "foo"
+    And a block "b2" with text "bar"
     When <selection> is selected
     And "{Enter}" is pressed
     Then the text is <new text>

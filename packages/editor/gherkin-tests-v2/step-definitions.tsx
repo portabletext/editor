@@ -109,8 +109,8 @@ export const stepDefinitions = [
    * Text steps
    */
   Given(
-    'the text {string} in block {key}',
-    (context: Context, text: string, key: string) => {
+    'a block {key} with text {text}',
+    (context: Context, key: string, text: Parameter['text']) => {
       context.editor.ref.current.send({
         type: 'insert.block',
         block: {
