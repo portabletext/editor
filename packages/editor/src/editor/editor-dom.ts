@@ -2,7 +2,7 @@ import {Editor} from 'slate'
 import {DOMEditor} from 'slate-dom'
 import type {EditorSnapshot} from '..'
 import type {BehaviorEvent} from '../behaviors'
-import {toSlateRange} from '../internal-utils/ranges'
+import {toSlateRange} from '../internal-utils/to-slate-range'
 import type {PickFromUnion} from '../type-utils'
 import type {PortableTextSlateEditor} from '../types/editor'
 

@@ -18,12 +18,12 @@ import {ReactEditor} from 'slate-react'
 import {buildIndexMaps} from '../../internal-utils/build-index-maps'
 import {createPlaceholderBlock} from '../../internal-utils/create-placeholder-block'
 import {debugWithName} from '../../internal-utils/debug'
-import {toSlateRange} from '../../internal-utils/ranges'
 import {
   isListItemActive,
   isStyleActive,
   slateRangeToSelection,
 } from '../../internal-utils/slate-utils'
+import {toSlateRange} from '../../internal-utils/to-slate-range'
 import {fromSlateValue, toSlateValue} from '../../internal-utils/values'
 import {
   KEY_TO_VALUE_ELEMENT,

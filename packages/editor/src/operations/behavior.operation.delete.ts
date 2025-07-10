@@ -1,7 +1,7 @@
 import {Transforms} from 'slate'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
-import {toSlateRange} from '../internal-utils/ranges'
 import {getBlockPath} from '../internal-utils/slate-utils'
+import {toSlateRange} from '../internal-utils/to-slate-range'
 import {getBlockKeyFromSelectionPoint} from '../selection/selection-point'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 

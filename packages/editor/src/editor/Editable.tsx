@@ -26,9 +26,9 @@ import {
 import {debugWithName} from '../internal-utils/debug'
 import {getEventPosition} from '../internal-utils/event-position'
 import {parseBlocks} from '../internal-utils/parse-blocks'
-import {toSlateRange} from '../internal-utils/ranges'
 import {normalizeSelection} from '../internal-utils/selection'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
+import {toSlateRange} from '../internal-utils/to-slate-range'
 import {fromSlateValue, isEqualToEmptyEditor} from '../internal-utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
 import type {

@@ -1,8 +1,8 @@
 import {describe, expect, test} from 'vitest'
 import {compileSchemaDefinition} from '../editor/editor-schema'
 import {defineSchema} from '../editor/editor-schema-definition'
-import {toSlateRange} from './ranges'
 import {createTestKeyGenerator} from './test-key-generator'
+import {toSlateRange} from './to-slate-range'
 
 describe(toSlateRange.name, () => {
   const schema = compileSchemaDefinition(
@@ -13,6 +13,106 @@ describe(toSlateRange.name, () => {
       ],
     }),
   )
+
+  test('Scenario: Ambiguous offset inside text block', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+
+    const range = toSlateRange({
+      context: {
+        schema,
+        value: [
+          {
+            _key: blockKey,
+            _type: 'block',
+            children: [
+              {
+                _key: keyGenerator(),
+                _type: 'span',
+                text: 'foo',
+              },
+              {
+                _key: keyGenerator(),
+                _type: 'stock-ticker',
+              },
+              {
+                _key: keyGenerator(),
+                _type: 'span',
+                text: 'bar',
+              },
+            ],
+          },
+        ],
+        selection: {
+          anchor: {
+            path: [{_key: blockKey}],
+            // Could point to either before or after the inline object
+            offset: 3,
+          },
+          focus: {
+            path: [{_key: blockKey}],
+            // Could point to either before or after the inline object
+            offset: 3,
+          },
+        },
+      },
+      blockIndexMap: new Map([[blockKey, 0]]),
+    })
+
+    expect(range).toEqual({
+      anchor: {path: [0, 2], offset: 0},
+      focus: {path: [0, 2], offset: 0},
+    })
+  })
+
+  test('Scenario: Offset right before inline object', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+
+    const range = toSlateRange({
+      context: {
+        schema,
+        value: [
+          {
+            _key: blockKey,
+            _type: 'block',
+            children: [
+              {
+                _key: keyGenerator(),
+                _type: 'span',
+                text: "'",
+              },
+              {
+                _key: keyGenerator(),
+                _type: 'stock-ticker',
+              },
+              {
+                _key: keyGenerator(),
+                _type: 'span',
+                text: "foo'",
+              },
+            ],
+          },
+        ],
+        selection: {
+          anchor: {
+            path: [{_key: blockKey}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: blockKey}],
+            offset: 1,
+          },
+        },
+      },
+      blockIndexMap: new Map([[blockKey, 0]]),
+    })
+
+    expect(range).toEqual({
+      anchor: {path: [0, 0], offset: 0},
+      focus: {path: [0, 0], offset: 1},
+    })
+  })
 
   test("Scenario: Block object offset that doesn't exist", () => {
     const keyGenerator = createTestKeyGenerator()

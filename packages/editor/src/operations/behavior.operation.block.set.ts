@@ -1,6 +1,6 @@
 import {Editor, Transforms, type Element as SlateElement} from 'slate'
 import {parseBlock} from '../internal-utils/parse-blocks'
-import {toSlateRange} from '../internal-utils/ranges'
+import {toSlateRange} from '../internal-utils/to-slate-range'
 import {fromSlateValue, toSlateValue} from '../internal-utils/values'
 import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
 import type {BehaviorOperationImplementation} from './behavior.operations'
