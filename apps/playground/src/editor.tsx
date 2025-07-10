@@ -31,6 +31,7 @@ import {TooltipTrigger} from 'react-aria-components'
 import {tv} from 'tailwind-variants'
 import {DebugMenu} from './debug-menu'
 import './editor.css'
+import {SmartQuotesPlugin} from '@portabletext/editor/plugins'
 import {
   EditorFeatureFlagsContext,
   PlaygroundFeatureFlagsContext,
@@ -173,6 +174,7 @@ export function Editor(props: {
               <MarkdownShortcutsPlugin {...markdownShortcutsPluginProps} />
             ) : null}
             {featureFlags.oneLinePlugin ? <OneLinePlugin /> : null}
+            <SmartQuotesPlugin />
             <div className="flex gap-2 items-center">
               <ErrorBoundary
                 fallbackProps={{area: 'PortableTextEditable'}}
