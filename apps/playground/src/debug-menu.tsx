@@ -142,6 +142,19 @@ export function DebugMenu(props: {
           Link plugin
         </Switch>
       </Toolbar>
+      <Toolbar>
+        <Switch
+          isSelected={featureFlags.smartQuotesPlugin}
+          onChange={() => {
+            props.editorRef.send({
+              type: 'toggle feature flag',
+              flag: 'smartQuotesPlugin',
+            })
+          }}
+        >
+          Smart quotes plugin
+        </Switch>
+      </Toolbar>
       <Separator orientation="horizontal" />
       <Toolbar>
         <Switch
