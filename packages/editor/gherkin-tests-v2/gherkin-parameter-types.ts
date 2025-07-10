@@ -67,9 +67,14 @@ export const parameterType = {
   }),
   tersePt: createParameterType<Array<string>>({
     name: 'terse-pt',
-    matcher: /"([a-z-,#>:\\n \d|{}]*)"/u,
+    matcher: /"([a-z-,#>:\\n \d|{}'"‘’“”?]*)"/u,
     type: Array,
     transform: parseTersePtString,
+  }),
+  text: createParameterType<string>({
+    name: 'text',
+    matcher: /"([a-z]*)"/u,
+    type: String,
   }),
 }
 
@@ -87,4 +92,5 @@ export const parameterTypes = [
   parameterType.selectPosition,
   parameterType.style,
   parameterType.tersePt,
+  parameterType.text,
 ]
