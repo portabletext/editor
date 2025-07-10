@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.57.4](https://github.com/portabletext/editor/compare/editor-v1.57.3...editor-v1.57.4) (2025-07-10)
+
+
+### Bug Fixes
+
+* improve `EditorSelection`-&gt;Slate Range conversion ([915aaeb](https://github.com/portabletext/editor/commit/915aaeb4b46ac09ca4ba38c3ff21eab9614587e5))
+* remove circular dependencies ([88d4df0](https://github.com/portabletext/editor/commit/88d4df08587ef4706aaed7c11f8e2e5fb920aca4))
+
 ## [1.57.3](https://github.com/portabletext/editor/compare/editor-v1.57.2...editor-v1.57.3) (2025-07-09)
 
 
