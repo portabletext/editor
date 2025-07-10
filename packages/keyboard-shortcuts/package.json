@@ -50,7 +50,7 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
-    "@sanity/pkg-utils": "^7.9.2",
+    "@sanity/pkg-utils": "^7.9.3",
     "vitest": "^3.2.4"
   }
 }
