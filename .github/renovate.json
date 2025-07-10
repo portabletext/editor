@@ -38,7 +38,9 @@
       "description": "Ensure internal and important packages open a PRs right away, without waiting for manual approval",
       "matchPackageNames": [
         "@portabletext/*",
-        "@sanity/*",
+        "@sanity/schema",
+        "@sanity/types",
+        "@sanity/diff-match-patch",
         "react",
         "rxjs",
         "slate",
