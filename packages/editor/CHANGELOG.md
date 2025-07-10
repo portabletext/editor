@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.57.5](https://github.com/portabletext/editor/compare/editor-v1.57.4...editor-v1.57.5) (2025-07-10)
+
+
+### Bug Fixes
+
+* **`delete`:** deleting selection hanging around block object ([afec606](https://github.com/portabletext/editor/commit/afec6060c095656da0a403fcf51fc1f9d578a75b))
+* **deps:** update sanity monorepo to ^3.98.1 ([6fc3671](https://github.com/portabletext/editor/commit/6fc367160ac3ffcb88176fc4d06a99f5c78f5247))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 1.1.38
+
 ## [1.57.4](https://github.com/portabletext/editor/compare/editor-v1.57.3...editor-v1.57.4) (2025-07-10)
 
 
