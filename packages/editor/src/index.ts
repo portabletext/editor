@@ -1,6 +1,7 @@
 export type {Patch} from '@portabletext/patches'
 export type {
   PortableTextBlock,
+  PortableTextTextBlock,
   PortableTextChild,
   PortableTextObject,
   PortableTextSpan,
