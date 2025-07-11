@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.58.0](https://github.com/portabletext/editor/compare/editor-v1.57.5...editor-v1.58.0) (2025-07-11)
+
+
+### Features
+
+* **selectors:** add `getSelection(Start|End)Child` ([9f72a04](https://github.com/portabletext/editor/commit/9f72a04e13698b3fb5e75261f6c72c67038cdc1f))
+
+
+### Bug Fixes
+
+* **types:** export `PortableTextTextBlock` ([5d0cb83](https://github.com/portabletext/editor/commit/5d0cb83835ff164959a05cb2328974c906cc602a))
+
 ## [1.57.5](https://github.com/portabletext/editor/compare/editor-v1.57.4...editor-v1.57.5) (2025-07-10)
 
 
