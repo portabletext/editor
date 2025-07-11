@@ -277,7 +277,6 @@ export function PortableTextToolbar(props: {children?: React.ReactNode}) {
     extendBlockObject,
     extendInlineObject,
   })
-
   return (
     <>
       <Toolbar aria-label="Editor toolbar">

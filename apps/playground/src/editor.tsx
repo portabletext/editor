@@ -59,6 +59,7 @@ import {Switch} from './primitives/switch'
 import {Tooltip} from './primitives/tooltip'
 import {RangeDecorationButton} from './range-decoration-button'
 import {PortableTextToolbar} from './toolbar/portable-text-toolbar'
+import {FloatingToolbar} from './toolbar/toolbar.floating'
 
 const editorStyle = tv({
   base: 'grid gap-2 items-start',
@@ -130,6 +131,7 @@ export function Editor(props: {
             }}
           />
           <Container className="flex flex-col gap-4 overflow-clip">
+            <FloatingToolbar />
             {playgroundFeatureFlags.toolbar ? (
               <PortableTextToolbar>
                 <RangeDecorationButton
