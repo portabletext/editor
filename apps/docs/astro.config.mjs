@@ -1,6 +1,6 @@
 import react from '@astrojs/react'
 import starlight from '@astrojs/starlight'
-import tailwind from '@astrojs/tailwind'
+import tailwindcss from '@tailwindcss/vite'
 import {defineConfig} from 'astro/config'
 import starlightLinksValidator from 'starlight-links-validator'
 import {createStarlightTypeDocPlugin} from 'starlight-typedoc'
@@ -50,9 +50,13 @@ export default defineConfig({
         {tag: 'meta', attrs: {name: 'og:image:width', content: '1200'}},
         {tag: 'meta', attrs: {name: 'og:image:height', content: '630'}},
       ].filter(Boolean),
-      social: {
-        github: 'https://github.com/portabletext/editor',
-      },
+      social: [
+        {
+          href: 'https://github.com/portabletext/editor',
+          icon: 'github',
+          label: 'GitHub',
+        },
+      ],
       sidebar: [
         {slug: 'getting-started'},
         {
@@ -154,8 +158,6 @@ export default defineConfig({
         ...(process.env.CHECK_LINKS ? [starlightLinksValidator()] : []),
       ],
     }),
-    tailwind({
-      applyBaseStyles: false,
-    }),
   ],
+  vite: {plugins: [tailwindcss()]},
 })
