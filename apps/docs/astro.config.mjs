@@ -10,6 +10,9 @@ const [behaviorTypeDoc, behaviorTypeDocSidebar] = createStarlightTypeDocPlugin()
 const [pluginsTypeDoc, pluginsTypeDocSidebar] = createStarlightTypeDocPlugin()
 const [selectorsTypeDoc, selectorsTypeDocSidebar] =
   createStarlightTypeDocPlugin()
+const [toolbarTypeDoc, toolbarTypeDocSidebar] = createStarlightTypeDocPlugin()
+const [keyboardShortcutsTypeDoc, keyboardShortcutsTypeDocSidebar] =
+  createStarlightTypeDocPlugin()
 const tsconfig = '../../packages/editor/tsconfig.json'
 
 // https://astro.build/config
@@ -99,6 +102,20 @@ export default defineConfig({
                 {...selectorsTypeDocSidebar, badge: 'Generated'},
               ],
             },
+            {
+              label: 'Toolbar',
+              items: [
+                {label: 'Overview', slug: 'reference/toolbar'},
+                {...toolbarTypeDocSidebar, badge: 'Generated'},
+              ],
+            },
+            {
+              label: 'Keyboard Shortcuts',
+              items: [
+                {label: 'Overview', slug: 'reference/keyboard-shortcuts'},
+                {...keyboardShortcutsTypeDocSidebar, badge: 'Generated'},
+              ],
+            },
           ],
         },
         {
@@ -154,6 +171,28 @@ export default defineConfig({
             collapsed: true,
           },
           tsconfig,
+        }),
+        toolbarTypeDoc({
+          entryPoints: ['../../packages/toolbar/src/index.ts'],
+          output: 'api/toolbar',
+          typeDoc: {
+            excludeReferences: true,
+          },
+          sidebar: {
+            collapsed: true,
+          },
+          tsconfig: '../../packages/toolbar/tsconfig.json',
+        }),
+        keyboardShortcutsTypeDoc({
+          entryPoints: ['../../packages/keyboard-shortcuts/src/index.ts'],
+          output: 'api/keyboard-shortcuts',
+          typeDoc: {
+            excludeReferences: true,
+          },
+          sidebar: {
+            collapsed: true,
+          },
+          tsconfig: '../../packages/keyboard-shortcuts/tsconfig.json',
         }),
         ...(process.env.CHECK_LINKS ? [starlightLinksValidator()] : []),
       ],
