@@ -3,6 +3,8 @@ title: Behavior API Overview
 description: Reference documentation for the Behavior API.
 ---
 
+import EventTypesList from '@/components/EventTypesList.astro'
+
 Reference docs for the behavior API.
 
 ## `defineBehavior`
@@ -27,60 +29,24 @@ const noLowerCaseA = defineBehavior({
 
 ### Native event types
 
-- clipboard.copy
-- clipboard.cut
-- clipboard.paste
-- drag.dragstart
-- drag.drag
-- drag.dragend
-- drag.dragenter
-- drag.dragover
-- drag.drop
-- drag.dragleave
-- keyboard.keydown
-- keyboard.keyup
-- mouse.click
+<EventTypesList
+  filePath="../../packages/editor/src/behaviors/behavior.types.event.ts"
+  arrayName="nativeBehaviorEventTypes"
+/>
 
 ### Synthetic event types
 
-- annotation.add
-- annotation.remove
-- annotation.toggle
-- block.set
-- block.unset
-- decorator.add
-- decorator.remove
-- decorator.toggle
-- delete.backward
-- delete.block
-- delete.forward
-- delete.text
-- deserialization.failure
-- deserialization.success
-- deserialize
-- insert.block
-- insert.blocks
-- insert.break
-- insert.inline object
-- insert.soft break
-- insert.span
-- insert.text
-- list item.add
-- list item.remove
-- list item.toggle
-- move.block
-- move.block down
-- move.block up
-- select
-- select.next block
-- select.previous block
-- serialization.failure
-- serialization.success
-- serialize
-- split
-- style.add
-- style.remove
-- style.toggle
+<EventTypesList
+  filePath="../../packages/editor/src/behaviors/behavior.types.event.ts"
+  arrayName="syntheticBehaviorEventTypes"
+/>
+
+### Abstract event types
+
+<EventTypesList
+  filePath="../../packages/editor/src/behaviors/behavior.types.event.ts"
+  arrayName="abstractBehaviorEventTypes"
+/>
 
 ### Custom event types
 

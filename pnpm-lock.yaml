@@ -143,6 +143,9 @@ importers:
       tailwindcss-animate:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@4.1.11)
+      ts-morph:
+        specifier: ^26.0.0
+        version: 26.0.0
       typedoc:
         specifier: ^0.28.7
         version: 0.28.7(typescript@5.8.3)
@@ -1741,6 +1744,14 @@ packages:
 
   '@internationalized/string@3.2.7':
     resolution: {integrity: sha512-D4OHBjrinH+PFZPvfCXvG28n2LSykWcJ7GIioQL+ok0LON15SdfoUssoHzzOUmVZLbRoREsQXVzA6r8JKsbP6A==}
+
+  '@isaacs/balanced-match@4.0.1':
+    resolution: {integrity: sha512-yzMTt9lEb8Gv7zRioUilSglI0c0smZ9k5D65677DLWLtWJaXIS3CqcGyUFByYKlnUj6TkjLVs54fBl6+TiGQDQ==}
+    engines: {node: 20 || >=22}
+
+  '@isaacs/brace-expansion@5.0.0':
+    resolution: {integrity: sha512-ZT55BDLV0yv0RBm2czMiZ+SqCGO7AvmOM3G/w2xhVPH+te0aKgFjmBvGlL1dH+ql2tgGO3MVrbb3jCKyvpgnxA==}
+    engines: {node: 20 || >=22}
 
   '@isaacs/cliui@8.0.2':
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
@@ -3364,6 +3375,9 @@ packages:
     peerDependencies:
       '@testing-library/dom': '>=7.21.4'
 
+  '@ts-morph/common@0.27.0':
+    resolution: {integrity: sha512-Wf29UqxWDpc+i61k3oIOzcUfQt79PIT9y/MWfAGlrkjg6lBC1hwDECLXPVJAhWjiGbfBCxZd65F/LIZF3+jeJQ==}
+
   '@tybys/wasm-util@0.9.0':
     resolution: {integrity: sha512-6+7nlbMVX/PVDCwaIQ8nTOPveOcFLSt8GcXdx8hD0bt39uWxYT88uXzqTd4fTvqta7oeUJqudepapKNt2DYJFw==}
 
@@ -4021,6 +4035,9 @@ packages:
   clsx@2.1.1:
     resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
     engines: {node: '>=6'}
+
+  code-block-writer@13.0.3:
+    resolution: {integrity: sha512-Oofo0pq3IKnsFtuHqSF7TqBfr71aeyZDVJ0HpmqB7FBM2qEigL0iPONSCZSO9pE9dZTAxANe5XHG9Uy0YMv8cg==}
 
   collapse-white-space@2.1.0:
     resolution: {integrity: sha512-loKTxY1zCOuG4j9f6EPnuyyYkf58RnhhWTvRoZEokgB+WbdXehfjFviyOVYkqzEWz1Q5kRiZdBYS5SwxbQYwzw==}
@@ -5484,6 +5501,10 @@ packages:
   min-document@2.19.0:
     resolution: {integrity: sha512-9Wy1B3m3f66bPPmU5hdA4DR4PB2OfDU/+GS3yAB7IQozE3tqXaVv2zOjgla7MEGSRv95+ILmOuvhLkOK6wJtCQ==}
 
+  minimatch@10.0.3:
+    resolution: {integrity: sha512-IPZ167aShDZZUMdRk66cyQAW3qr0WzbHkPdMYa8bzZhlHhO3jALbKdxcaak7W9FfT2rZNpQuUu4Od7ILEpXSaw==}
+    engines: {node: 20 || >=22}
+
   minimatch@3.0.8:
     resolution: {integrity: sha512-6FsRAQsxQ61mw+qP1ZzbL9Bc78x2p5OqNgNpnoAFLTrX8n5Kxph0CsnhmKKNXTWjXqU5L0pGPR7hYk+XWZr60Q==}
 
@@ -5696,6 +5717,9 @@ packages:
 
   parse5@7.3.0:
     resolution: {integrity: sha512-IInvU7fabl34qmi9gY8XOVxhYyMyuH2xUNpb2q8/Y+7552KlejkRvqvD19nMoUW/uQGGbqNpA6Tufu5FL5BZgw==}
+
+  path-browserify@1.0.1:
+    resolution: {integrity: sha512-b7uo2UCUOYZcnF/3ID0lulOJi/bafxa1xPe7ZPsammBSpjSWQkjNxlt635YGS2MiR9GjvuXCtz2emr3jbsz98g==}
 
   path-exists@3.0.0:
     resolution: {integrity: sha512-bpC7GYwiDYQ4wYLe+FA8lhRjhQCMcQGuSgGGqDkg/QerRWw9CmGRT0iSOVRSZJ29NMLZgIzqaljJ63oaL4NIJQ==}
@@ -6541,6 +6565,9 @@ packages:
     engines: {node: '>=18.12'}
     peerDependencies:
       typescript: '>=4.8.4'
+
+  ts-morph@26.0.0:
+    resolution: {integrity: sha512-ztMO++owQnz8c/gIENcM9XfCEzgoGphTv+nKpYNM1bgsdOVC/jRZuEBf6N+mLLDNg68Kl+GgUZfOySaRiG1/Ug==}
 
   tsconfck@3.1.6:
     resolution: {integrity: sha512-ks6Vjr/jEw0P1gmOVwutM3B7fWxoWBL2KRDb1JfqGVawBmO5UsvmWOQFGHBPl5yxYz4eERr19E6L7NMv+Fej4w==}
@@ -8231,6 +8258,12 @@ snapshots:
   '@internationalized/string@3.2.7':
     dependencies:
       '@swc/helpers': 0.5.15
+
+  '@isaacs/balanced-match@4.0.1': {}
+
+  '@isaacs/brace-expansion@5.0.0':
+    dependencies:
+      '@isaacs/balanced-match': 4.0.1
 
   '@isaacs/cliui@8.0.2':
     dependencies:
@@ -10399,6 +10432,12 @@ snapshots:
     dependencies:
       '@testing-library/dom': 10.4.0
 
+  '@ts-morph/common@0.27.0':
+    dependencies:
+      fast-glob: 3.3.3
+      minimatch: 10.0.3
+      path-browserify: 1.0.1
+
   '@tybys/wasm-util@0.9.0':
     dependencies:
       tslib: 2.8.1
@@ -11280,6 +11319,8 @@ snapshots:
   clone@2.1.2: {}
 
   clsx@2.1.1: {}
+
+  code-block-writer@13.0.3: {}
 
   collapse-white-space@2.1.0: {}
 
@@ -13315,6 +13356,10 @@ snapshots:
     dependencies:
       dom-walk: 0.1.2
 
+  minimatch@10.0.3:
+    dependencies:
+      '@isaacs/brace-expansion': 5.0.0
+
   minimatch@3.0.8:
     dependencies:
       brace-expansion: 1.1.11
@@ -13516,6 +13561,8 @@ snapshots:
   parse5@7.3.0:
     dependencies:
       entities: 6.0.1
+
+  path-browserify@1.0.1: {}
 
   path-exists@3.0.0: {}
 
@@ -14599,6 +14646,11 @@ snapshots:
   ts-api-utils@2.1.0(typescript@5.8.3):
     dependencies:
       typescript: 5.8.3
+
+  ts-morph@26.0.0:
+    dependencies:
+      '@ts-morph/common': 0.27.0
+      code-block-writer: 13.0.3
 
   tsconfck@3.1.6(typescript@5.8.3):
     optionalDependencies:
