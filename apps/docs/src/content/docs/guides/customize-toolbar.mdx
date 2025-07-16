@@ -3,6 +3,8 @@ title: Customize the toolbar
 description: Common patterns and techniques for creating custom toolbars for the editor.
 ---
 
+import {PackageManagers} from 'starlight-package-managers'
+
 The [getting started guide](/getting-started/) introduces the basics of setting up toolbar components. This guide provides some extra context, best practices, and patterns to get you started.
 
 ## Render the toolbar inside the provider
@@ -11,7 +13,7 @@ You must render any toolbars within `EditorProvider`, as any toolbar actions req
 
 ### The `@portabletext/toolbar` hooks
 
-The `@portabletext/toolbar`library provides a variety of hooks that allow you to dispatch events and view a snapshot of the editor state.
+The `@portabletext/toolbar` library provides a variety of hooks that allow you to dispatch events and view a snapshot of the editor state.
 
 Each hook accepts an individual schema item and returns a `send` method and a `snapshot`. The most common pattern is to `send`, or dispatch, events, and `snapshot.matches` state, like enabled/disabled.
 
