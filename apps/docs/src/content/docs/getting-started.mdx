@@ -229,73 +229,125 @@ Before you can see if anything changed, you need a way to interact with the edit
 
 ## Create a toolbar
 
-A toolbar is a collection of UI elements for interacting with the editor. The PTE library gives you the necessary hooks to create a toolbar however you like.
+A toolbar is a collection of UI elements for interacting with the editor. The `@portabletext/toolbar` library exposes hooks and types that allow you to create a toolbar however you like. The `@portabletext/keyboard-shortcuts` library provides drop-in shortcut access to link toolbar buttons to key commands.
 
-1. Create a `Toolbar` component in the same file.
-2. Import the `useEditor` hook, and declare an `editor` constant in the component.
-3. Iterate over the schema types to create toggle buttons for each style and decorator.
-4. Send events to the editor to toggle the styles and decorators whenever the buttons are clicked.
-5. Render the toolbar buttons.
+Building a custom toolbar differs with each project, but in this example with the following steps:
+
+1. Add the `@portabletext/toolbar` and `@portabletext/keyboard-shortcuts` libraries to your project.
+2. Create a `ToolbarPlugin` component, along with any sub-components in the same file.
+3. Configure `useToolbarSchema` to access the editor schema, then loop over the schema types to create buttons for each style and decorator.
+4. Enhance the schema with any icons / labels / descriptions you want to display in the toolbar.
+5. Create buttons for each schema group (styles, decorators, annotations,etc).
+6. Add the `ToolbarPlugin` to the your render function inside the `EditorProvider`.
+
+<PackageManagers pkg="@portabletext/toolbar @portabletext/keyboard-shortcuts" />
+
+This example shows a minimal toolbar
 
 ```tsx
 // App.tsx
 // ...
-import {useEditor} from '@portabletext/editor'
+import {bold} from '@portabletext/keyboard-shortcuts'
+import {
+  ToolbarPlugin,
+  useDecoratorButton,
+  useStyleSelector,
+  useToolbarSchema,
+  type ExtendDecoratorSchemaType,
+  type ExtendStyleSchemaType,
+  type ToolbarSchema,
+} from '@portabletext/toolbar'
 
 function Toolbar() {
-  // useEditor provides access to the PTE
-  const editor = useEditor()
+  // useToolbarSchema provides access to the PTE schema
+  // optionally, pass in updated schemas to override the default
+  const toolbarSchema = useToolbarSchema({
+    extendDecorator, // see declarations below
+    extendStyle, // see declarations below
+  })
 
-  // Iterate over the schema (defined earlier), or manually create buttons.
-  const styleButtons = schemaDefinition.styles.map((style) => (
-    <button
-      key={style.name}
-      onClick={() => {
-        // Send style toggle event
-        editor.send({
-          type: 'style.toggle',
-          style: style.name,
-        })
-        editor.send({
-          type: 'focus',
-        })
-      }}
-    >
-      {style.name}
-    </button>
-  ))
-
-  const decoratorButtons = schemaDefinition.decorators.map((decorator) => (
-    <button
-      key={decorator.name}
-      onClick={() => {
-        // Send decorator toggle event
-        editor.send({
-          type: 'decorator.toggle',
-          decorator: decorator.name,
-        })
-        editor.send({
-          type: 'focus',
-        })
-      }}
-    >
-      {decorator.name}
-    </button>
-  ))
   return (
-    <>
-      {styleButtons}
-      {decoratorButtons}
-    </>
+    <div>
+      {toolbarSchema.decorators?.map((decorator) => (
+        <DecoratorButton key={decorator.name} schemaType={decorator} />
+      ))}
+      {toolbarSchema.styles?.map((style) => (
+        <StyleButton key={style.name} schemaType={style} />
+      ))}
+    </div>
   )
 }
+// Extend the schema with icons, titles, and keyboard shortcuts
+
+const extendStyle: ExtendStyleSchemaType = (style) => {
+  // Apply updates to the schema, if needed
+  if (style.name === 'h1') {
+    return {
+      ...style,
+      title: 'Title',
+    }
+  }
+  // ...repeat for each style type, or return the original style
+  return style
+}
+const extendDecorator: ExtendDecoratorSchemaType = (decorator) => {
+  if (decorator.name === 'strong') {
+    return {
+      ...decorator,
+      // Optional: add a react component as an icon and unset the title
+      icon: () => <strong>B</strong>,
+      // Optional: connect to a keyboard shortcut from the keyboard-shortcuts library
+      shortcut: bold,
+      title: '',
+    }
+  }
+  // ...repeat for each decorator type, or return the original decorator
+  return decorator
+}
+
+// Create a button for each decorator type
+const DecoratorButton = (props: {schemaType: ToolbarDecoratorSchemaType}) => {
+  const decoratorButton = useDecoratorButton(props)
+  return (
+    <button
+      type="button"
+      onClick={() => decoratorButton.send({type: 'toggle'})}
+      className={
+        decoratorButton.snapshot.matches({enabled: 'active'}) ? 'active' : ''
+      }
+    >
+      {props.schemaType.icon && <props.schemaType.icon />}
+      {props.schemaType.title}
+    </button>
+  )
+}
+function StyleButton(props: {schemaType: ToolbarStyleSchemaType}) {
+  const styleSelector = useStyleSelector({schemaTypes: [props.schemaType]})
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        styleSelector.send({type: 'toggle', style: props.schemaType.name})
+      }
+      className={styleSelector.snapshot.matches('enabled') ? 'active' : ''}
+    >
+      {props.schemaType.icon && <props.schemaType.icon />}
+      {props.schemaType.title}
+    </button>
+  )
+}
+// ... and so on for each schema type, or create a generic button
 ```
 
-The `useEditor` hook gives you access to the active editor. `send` lets you send events to the editor. You can view the full list of events in the [Behavior API reference](/reference/behavior-api/).
+The `useStyleSelector` and `useDecoratorButton` hooks give you access to the active editor. `send` lets you send events to the editor, and `snapshot` lets you read the current state of the editor.
 
-:::note
-The example above sends a `focus` event after each action. Normally when interacting with a button, the browser removes focus from the text editing area. This event returns focus to the field to prevent interrupting the user.
-:::
+<LinkCard
+  title="Customize the toolbar"
+  description="Learn more about building custom toolbars."
+  href="/guides/customize-toolbar/"
+/>
+
+In the next step, you'll add the toolbar to the editor.
 
 ## Bring it all together
 
@@ -324,7 +376,6 @@ function App() {
             }
           }}
         />
-        <Toolbar />
         <PortableTextEditable
           style={{border: '1px solid black', padding: '0.5em'}}
           renderStyle={renderStyle}
@@ -332,6 +383,7 @@ function App() {
           renderBlock={(props) => <div>{props.children}</div>}
           renderListItem={(props) => <>{props.children}</>}
         />
+        <ToolbarPlugin />
       </EditorProvider>
     </>
   )
