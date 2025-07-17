@@ -1,5 +1,32 @@
 # Changelog
 
+## [2.0.0](https://github.com/portabletext/editor/compare/toolbar-v1.0.7...toolbar-v2.0.0) (2025-07-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* require sanity studio v4 ([#1415](https://github.com/portabletext/editor/issues/1415))
+
+### Features
+
+* require sanity studio v4 ([#1415](https://github.com/portabletext/editor/issues/1415)) ([bc7441a](https://github.com/portabletext/editor/commit/bc7441a1cf14b67261f794a23b8793108afb5213))
+
+
+### Bug Fixes
+
+* use `rolldown` instead of `api-extractor` for dts generation ([#1445](https://github.com/portabletext/editor/issues/1445)) ([6dd6b51](https://github.com/portabletext/editor/commit/6dd6b51729b53479e9dd16fedbc8fc9bda73e6c1))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/keyboard-shortcuts bumped to 1.1.1
+  * devDependencies
+    * @portabletext/editor bumped to 2.0.0
+  * peerDependencies
+    * @portabletext/editor bumped to 2.0.0
+
 ## [1.0.7](https://github.com/portabletext/editor/compare/toolbar-v1.0.6...toolbar-v1.0.7) (2025-07-11)
 
 
