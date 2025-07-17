@@ -128,7 +128,7 @@
     "@vitest/coverage-istanbul": "^3.2.4",
     "babel-plugin-react-compiler": "19.1.0-rc.2",
     "eslint": "8.57.1",
-    "eslint-plugin-react-hooks": "0.0.0-experimental-97cdd5d3-20250710",
+    "eslint-plugin-react-hooks": "0.0.0-experimental-dffacc7b-20250717",
     "jsdom": "^26.0.0",
     "racejar": "workspace:*",
     "react": "^19.1.0",
