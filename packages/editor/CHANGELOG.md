@@ -1,5 +1,32 @@
 # Changelog
 
+## [2.0.0](https://github.com/portabletext/editor/compare/editor-v1.58.0...editor-v2.0.0) (2025-07-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* require sanity studio v4 ([#1415](https://github.com/portabletext/editor/issues/1415))
+
+### Features
+
+* require sanity studio v4 ([#1415](https://github.com/portabletext/editor/issues/1415)) ([bc7441a](https://github.com/portabletext/editor/commit/bc7441a1cf14b67261f794a23b8793108afb5213))
+
+
+### Bug Fixes
+
+* **deps:** update dependency use-effect-event to v2 ([#1444](https://github.com/portabletext/editor/issues/1444)) ([7bdffcd](https://github.com/portabletext/editor/commit/7bdffcdd5c45955a465d42d7bb6dd364866e6284))
+* **deps:** Update slate to ^0.117.4 ([#1436](https://github.com/portabletext/editor/issues/1436)) ([a183fef](https://github.com/portabletext/editor/commit/a183fef5be1194024a5e2928952735814cb3077f))
+* use `rolldown` instead of `api-extractor` for dts generation ([#1445](https://github.com/portabletext/editor/issues/1445)) ([6dd6b51](https://github.com/portabletext/editor/commit/6dd6b51729b53479e9dd16fedbc8fc9bda73e6c1))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 2.0.0
+    * @portabletext/keyboard-shortcuts bumped to 1.1.1
+    * @portabletext/patches bumped to 1.1.6
+
 ## [1.58.0](https://github.com/portabletext/editor/compare/editor-v1.57.5...editor-v1.58.0) (2025-07-11)
 
 

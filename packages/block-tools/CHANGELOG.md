@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.0.0](https://github.com/portabletext/editor/compare/block-tools-v1.1.38...block-tools-v2.0.0) (2025-07-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* require sanity studio v4 ([#1415](https://github.com/portabletext/editor/issues/1415))
+
+### Features
+
+* require sanity studio v4 ([#1415](https://github.com/portabletext/editor/issues/1415)) ([bc7441a](https://github.com/portabletext/editor/commit/bc7441a1cf14b67261f794a23b8793108afb5213))
+
+
+### Bug Fixes
+
+* use `rolldown` instead of `api-extractor` for dts generation ([#1445](https://github.com/portabletext/editor/issues/1445)) ([6dd6b51](https://github.com/portabletext/editor/commit/6dd6b51729b53479e9dd16fedbc8fc9bda73e6c1))
+
 ## [1.1.38](https://github.com/portabletext/editor/compare/block-tools-v1.1.37...block-tools-v1.1.38) (2025-07-10)
 
 
