@@ -106,7 +106,7 @@
     "slate": "0.117.2",
     "slate-dom": "^0.116.0",
     "slate-react": "0.117.3",
-    "use-effect-event": "^1.0.2",
+    "use-effect-event": "^2.0.3",
     "xstate": "^5.20.1"
   },
   "devDependencies": {
