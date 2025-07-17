@@ -454,11 +454,11 @@ importers:
         specifier: 0.117.2
         version: 0.117.2
       slate-dom:
-        specifier: ^0.116.0
-        version: 0.116.0(slate@0.117.2)
+        specifier: ^0.117.4
+        version: 0.117.4(slate@0.117.2)
       slate-react:
-        specifier: 0.117.3
-        version: 0.117.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(slate-dom@0.116.0(slate@0.117.2))(slate@0.117.2)
+        specifier: 0.117.4
+        version: 0.117.4(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(slate-dom@0.117.4(slate@0.117.2))(slate@0.117.2)
       use-effect-event:
         specifier: ^2.0.3
         version: 2.0.3(react@19.1.0)
@@ -5993,13 +5993,13 @@ packages:
     resolution: {integrity: sha512-ZA6oR3T/pEyuqwMgAKT0/hAv8oAXckzbkmR0UkUosQ+Mc4RxGoJkRmwHgHufaenlyAgE1Mxgpdcrf75y6XcnDg==}
     engines: {node: '>=14.16'}
 
-  slate-dom@0.116.0:
-    resolution: {integrity: sha512-ZyyPdT4zY4d/P/gfqMWBaAWWqV3N2BbAiDqEfOtZwPLcy7vvC02PsVvSZLaGun7DvaM2EIqdN7tTq3REbQkYgA==}
+  slate-dom@0.117.4:
+    resolution: {integrity: sha512-eu5MMpphkCnr22R6hgFoQt/tEaHBjSdSy7uJjPOm++hCxstoLefp04EY50A4rXBovjkYoAncb9j8QoijZd0ENA==}
     peerDependencies:
       slate: '>=0.99.0'
 
-  slate-react@0.117.3:
-    resolution: {integrity: sha512-jn3pJ7hRcbZ8ImkXwq/Yosfm0wnVfW/ROAjb2exK2UswuEiRV5SAVVxvEKm6l4uY+qVtXoFn3A2ajfQmJxoQTQ==}
+  slate-react@0.117.4:
+    resolution: {integrity: sha512-9ckilyUzQS1VHJnstIpgInhcWnTDgv2Cd7m1HOQVl3zasChoapPSMftzT/wl/48grZaZYZIi4xVuzGTcFRUWFg==}
     peerDependencies:
       react: '>=18.2.0'
       react-dom: '>=18.2.0'
@@ -13797,7 +13797,7 @@ snapshots:
 
   slash@5.1.0: {}
 
-  slate-dom@0.116.0(slate@0.117.2):
+  slate-dom@0.117.4(slate@0.117.2):
     dependencies:
       '@juggle/resize-observer': 3.4.0
       direction: 1.0.4
@@ -13808,7 +13808,7 @@ snapshots:
       slate: 0.117.2
       tiny-invariant: 1.3.1
 
-  slate-react@0.117.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(slate-dom@0.116.0(slate@0.117.2))(slate@0.117.2):
+  slate-react@0.117.4(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(slate-dom@0.117.4(slate@0.117.2))(slate@0.117.2):
     dependencies:
       '@juggle/resize-observer': 3.4.0
       direction: 1.0.4
@@ -13818,7 +13818,7 @@ snapshots:
       react-dom: 19.1.0(react@19.1.0)
       scroll-into-view-if-needed: 3.1.0
       slate: 0.117.2
-      slate-dom: 0.116.0(slate@0.117.2)
+      slate-dom: 0.117.4(slate@0.117.2)
       tiny-invariant: 1.3.1
 
   slate@0.117.2:
