@@ -113,8 +113,8 @@
     "@portabletext/toolkit": "^2.0.17",
     "@sanity/diff-match-patch": "^3.2.0",
     "@sanity/pkg-utils": "^7.9.3",
-    "@sanity/schema": "^3.98.1",
-    "@sanity/types": "^3.98.1",
+    "@sanity/schema": "^4.0.1",
+    "@sanity/types": "^4.0.1",
     "@testing-library/react": "^16.3.0",
     "@types/debug": "^4.1.12",
     "@types/lodash": "^4.17.16",
@@ -128,7 +128,7 @@
     "@vitest/coverage-istanbul": "^3.2.4",
     "babel-plugin-react-compiler": "19.1.0-rc.2",
     "eslint": "8.57.1",
-    "eslint-plugin-react-hooks": "0.0.0-experimental-cee7939b-20250625",
+    "eslint-plugin-react-hooks": "0.0.0-experimental-97cdd5d3-20250710",
     "jsdom": "^26.0.0",
     "racejar": "workspace:*",
     "react": "^19.1.0",
@@ -140,13 +140,13 @@
     "vitest-browser-react": "^1.0.0"
   },
   "peerDependencies": {
-    "@sanity/schema": "^3.98.0 || ^4.0.0-0",
-    "@sanity/types": "^3.98.0 || ^4.0.0-0",
-    "react": "^16.9 || ^17 || ^18 || ^19",
+    "@sanity/schema": "^4.0.0",
+    "@sanity/types": "^4.0.0",
+    "react": "^18.3 || ^19",
     "rxjs": "^7.8.2"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20.19"
   },
   "publishConfig": {
     "access": "public"
