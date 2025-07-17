@@ -140,8 +140,8 @@
     "vitest-browser-react": "^1.0.0"
   },
   "peerDependencies": {
-    "@sanity/schema": "^4.0.0",
-    "@sanity/types": "^4.0.0",
+    "@sanity/schema": "^4.0.1",
+    "@sanity/types": "^4.0.1",
     "react": "^18.3 || ^19",
     "rxjs": "^7.8.2"
   },
