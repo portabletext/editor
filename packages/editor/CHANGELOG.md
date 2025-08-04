@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.7](https://github.com/portabletext/editor/compare/editor-v2.1.6...editor-v2.1.7) (2025-08-04)
+
+
+### Bug Fixes
+
+* ensure correct selection when inserting node as part of `insertText` on Android ([bc43a1e](https://github.com/portabletext/editor/commit/bc43a1e8ad44a67d2e86443986cee7a87083194b))
+
 ## [2.1.6](https://github.com/portabletext/editor/compare/editor-v2.1.5...editor-v2.1.6) (2025-08-04)
 
 
