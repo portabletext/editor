@@ -29,11 +29,16 @@ Feature: Lists
     And "{Delete}" is pressed 2 times
     Then the text is ">#h1:bar"
 
-  Scenario: Pressing Backspace after an empty list item
-    Given the text ">#:|h1:foo"
-    When the caret is put before "foo"
+  Scenario Outline: Pressing Backspace after an empty list item
+    Given the text <text>
+    When the caret is put <caret position>
     And "{Backspace}" is pressed
-    Then the text is ">#h1:foo"
+    Then the text is <new text>
+
+    Examples:
+      | text                  | caret position | new text             |
+      | ">#:\|h1:foo"         | before "foo"   | ">#h1:foo"           |
+      | ">#:foo\|>#:\|>#:bar" | after "bar"    | ">#:foo\|>#:\|>#:ba" |
 
   Scenario: Inserting indented numbered list in empty text block
     Given the text ""
