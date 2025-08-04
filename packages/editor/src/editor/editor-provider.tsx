@@ -7,13 +7,13 @@ import useConstant from '../internal-utils/use-constant'
 import {createInternalEditor} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
 import {EditorContext} from './editor-context'
+import {eventToChange} from './event-to-change'
 import {PortableTextEditorContext} from './hooks/usePortableTextEditor'
 import {
   PortableTextEditor,
   type PortableTextEditorProps,
 } from './PortableTextEditor'
 import {RelayActorContext} from './relay-actor-context'
-import {RouteEventsToChanges} from './route-events-to-changes'
 
 /**
  * @public
@@ -58,6 +58,18 @@ export function EditorProvider(props: EditorProviderProps) {
       unsubscribers.push(subscription())
     }
 
+    const relayActorSubscription = internalEditor.actors.relayActor.on(
+      '*',
+      (event) => {
+        const change = eventToChange(event)
+
+        if (change) {
+          portableTextEditor.change$.next(change)
+        }
+      },
+    )
+    unsubscribers.push(relayActorSubscription.unsubscribe)
+
     internalEditor.actors.editorActor.start()
     internalEditor.actors.mutationActor.start()
     internalEditor.actors.relayActor.start()
@@ -73,16 +85,10 @@ export function EditorProvider(props: EditorProviderProps) {
       stopActor(internalEditor.actors.relayActor)
       stopActor(internalEditor.actors.syncActor)
     }
-  }, [internalEditor])
+  }, [internalEditor, portableTextEditor])
 
   return (
     <EditorContext.Provider value={internalEditor.editor}>
-      <RouteEventsToChanges
-        relayActor={internalEditor.actors.relayActor}
-        onChange={(change) => {
-          portableTextEditor.change$.next(change)
-        }}
-      />
       <EditorActorContext.Provider value={internalEditor.actors.editorActor}>
         <RelayActorContext.Provider value={internalEditor.actors.relayActor}>
           <Slate
