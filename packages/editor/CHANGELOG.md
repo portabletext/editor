@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.1.3](https://github.com/portabletext/editor/compare/editor-v2.1.2...editor-v2.1.3) (2025-08-04)
+
+
+### Bug Fixes
+
+* **`list item.add`:** avoid setting `level` if `listItem` is unknown ([bb6f55d](https://github.com/portabletext/editor/commit/bb6f55d5af225a66386ea2ffb73c6b0480eaa4ba))
+* **`list item.add`:** preserve existing `level` ([1fdf676](https://github.com/portabletext/editor/commit/1fdf676e4ed3a70e9f8a24a664118d14c3c7f89f))
+* **deps:** update dependency slate to v0.118.0 ([a4f9ef4](https://github.com/portabletext/editor/commit/a4f9ef46d4f3f6175dc3c13a9df7895f3c8a4a14))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 2.0.4
+  * devDependencies
+    * racejar bumped to 1.2.12
+
 ## [2.1.2](https://github.com/portabletext/editor/compare/editor-v2.1.1...editor-v2.1.2) (2025-08-04)
 
 

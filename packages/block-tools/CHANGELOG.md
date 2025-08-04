@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.4](https://github.com/portabletext/editor/compare/block-tools-v2.0.3...block-tools-v2.0.4) (2025-08-04)
+
+
+### Bug Fixes
+
+* **deps:** update react monorepo ([8c09d21](https://github.com/portabletext/editor/commit/8c09d212832797a10abcd0c3bc3cea30a3cb610a))
+
 ## [2.0.3](https://github.com/portabletext/editor/compare/block-tools-v2.0.2...block-tools-v2.0.3) (2025-08-04)
 
 
