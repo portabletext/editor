@@ -136,6 +136,15 @@ const mergeTextIntoListOnBackspace = defineBehavior({
       return false
     }
 
+    if (
+      !isAtTheBeginningOfBlock({
+        context: snapshot.context,
+        block: focusTextBlock.node,
+      })
+    ) {
+      return false
+    }
+
     if (!isListBlock(snapshot.context, previousBlock.node)) {
       return false
     }
