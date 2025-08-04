@@ -52,7 +52,7 @@
     "@cucumber/messages": "^28.1.0",
     "@jest/globals": "^30.0.5",
     "@playwright/test": "^1.54.2",
-    "@sanity/pkg-utils": "^7.9.6",
+    "@sanity/pkg-utils": "^7.9.21",
     "typescript": "5.9.2",
     "vitest": "^3.2.4"
   },
