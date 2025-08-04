@@ -73,4 +73,32 @@ describe('event.list item.add', () => {
       },
     ])
   })
+
+  test('Scenario: Aborting if list type is unknown', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const block = {
+      _key: keyGenerator(),
+      _type: 'block',
+      children: [
+        {_key: keyGenerator(), _type: 'span', text: 'Hello', marks: []},
+      ],
+      style: 'normal',
+      markDefs: [],
+    }
+    const {editorRef} = await createTestEditor({
+      schemaDefinition: defineSchema({
+        lists: [{name: 'bullet'}],
+      }),
+      initialValue: [block],
+    })
+
+    editorRef.current?.send({type: 'focus'})
+
+    editorRef.current?.send({
+      type: 'list item.add',
+      listItem: 'number',
+    })
+
+    expect(editorRef.current?.getSnapshot().context.value).toEqual([block])
+  })
 })
