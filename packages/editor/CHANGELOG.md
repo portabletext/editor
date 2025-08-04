@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.6](https://github.com/portabletext/editor/compare/editor-v2.1.5...editor-v2.1.6) (2025-08-04)
+
+
+### Bug Fixes
+
+* remove `use-effect-event` ([ec38d0a](https://github.com/portabletext/editor/commit/ec38d0af1008d20400c881d86ee986b581d9b027))
+
 ## [2.1.5](https://github.com/portabletext/editor/compare/editor-v2.1.4...editor-v2.1.5) (2025-08-04)
 
 
