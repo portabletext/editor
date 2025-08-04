@@ -2,6 +2,7 @@ import {isListBlock, isTextBlock} from '../internal-utils/parse-blocks'
 import {defaultKeyboardShortcuts} from '../keyboard-shortcuts/default-keyboard-shortcuts'
 import * as selectors from '../selectors'
 import {getBlockEndPoint} from '../utils'
+import {isAtTheBeginningOfBlock} from '../utils/util.at-the-beginning-of-block'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
@@ -11,23 +12,26 @@ const MAX_LIST_LEVEL = 10
 const clearListOnBackspace = defineBehavior({
   on: 'delete.backward',
   guard: ({snapshot}) => {
-    const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
     const focusTextBlock = selectors.getFocusTextBlock(snapshot)
-    const focusSpan = selectors.getFocusSpan(snapshot)
 
-    if (!selectionCollapsed || !focusTextBlock || !focusSpan) {
+    if (!focusTextBlock) {
       return false
     }
 
-    const atTheBeginningOfBLock =
-      focusTextBlock.node.children[0]._key === focusSpan.node._key &&
-      snapshot.context.selection?.focus.offset === 0
-
-    if (atTheBeginningOfBLock && focusTextBlock.node.level === 1) {
-      return {focusTextBlock}
+    if (focusTextBlock.node.level !== 1) {
+      return false
     }
 
-    return false
+    if (
+      !isAtTheBeginningOfBlock({
+        context: snapshot.context,
+        block: focusTextBlock.node,
+      })
+    ) {
+      return false
+    }
+
+    return {focusTextBlock}
   },
   actions: [
     (_, {focusTextBlock}) => [
