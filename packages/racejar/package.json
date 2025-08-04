@@ -49,7 +49,7 @@
   "devDependencies": {
     "@cucumber/cucumber-expressions": "^18.0.1",
     "@cucumber/gherkin": "^32.2.0",
-    "@cucumber/messages": "^27.2.0",
+    "@cucumber/messages": "^28.1.0",
     "@jest/globals": "^30.0.5",
     "@playwright/test": "^1.53.2",
     "@sanity/pkg-utils": "^7.9.6",
