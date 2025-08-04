@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.1.0](https://github.com/portabletext/editor/compare/editor-v2.0.0...editor-v2.1.0) (2025-08-04)
+
+
+### Features
+
+* consider range decorations changed if `payload` has changed ([#1448](https://github.com/portabletext/editor/issues/1448)) ([5795a31](https://github.com/portabletext/editor/commit/5795a31611b39245ebce486b7b8105e3b1bfdadf))
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^4.2.0 ([103216b](https://github.com/portabletext/editor/commit/103216b9040661d30d466c46f2186bbf0a9a60b4))
+* only merge into empty list item when at the beginning of block ([b0bb992](https://github.com/portabletext/editor/commit/b0bb9928f64abb7950bc75cdb3b382db06cd3fa9))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 2.0.1
+
 ## [2.0.0](https://github.com/portabletext/editor/compare/editor-v1.58.0...editor-v2.0.0) (2025-07-17)
 
 
