@@ -17,7 +17,7 @@ export const abstractListItemBehaviors = [
             type: 'block.set',
             at: block.path,
             props: {
-              level: 1,
+              level: block.node.level ?? 1,
               listItem: event.listItem,
             },
           }),
