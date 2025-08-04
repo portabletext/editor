@@ -1,5 +1,38 @@
 # Changelog
 
+## [3.0.0](https://github.com/portabletext/editor/compare/block-tools-v2.0.1...block-tools-v3.0.0) (2025-08-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* require sanity studio v4 ([#1415](https://github.com/portabletext/editor/issues/1415))
+
+### Features
+
+* require sanity studio v4 ([#1415](https://github.com/portabletext/editor/issues/1415)) ([bc7441a](https://github.com/portabletext/editor/commit/bc7441a1cf14b67261f794a23b8793108afb5213))
+
+
+### Bug Fixes
+
+* **deps:** allow studio v4 in peer dep ranges ([#1414](https://github.com/portabletext/editor/issues/1414)) ([00b9512](https://github.com/portabletext/editor/commit/00b9512b554420f1f0c8577cda8f6f206326549f))
+* **deps:** update sanity monorepo to ^3.87.1 ([65bdc36](https://github.com/portabletext/editor/commit/65bdc36b80ce4e582ba0f838acd6baf5c78554d8))
+* **deps:** update sanity monorepo to ^3.88.0 ([e0dc666](https://github.com/portabletext/editor/commit/e0dc666cc5a7ae851dc7ea1ad242ba6aebbff97b))
+* **deps:** update sanity monorepo to ^3.88.2 ([ef30039](https://github.com/portabletext/editor/commit/ef3003905679a12d34135ece7ec119bbb59946ca))
+* **deps:** update sanity monorepo to ^3.88.3 ([966a18e](https://github.com/portabletext/editor/commit/966a18edd164ac26fd3465dc1c4c16994e7bbc17))
+* **deps:** update sanity monorepo to ^3.89.0 ([23d9cb8](https://github.com/portabletext/editor/commit/23d9cb80d99705c055e8746e1b4fd438ed414640))
+* **deps:** update sanity monorepo to ^3.90.0 ([2c4f256](https://github.com/portabletext/editor/commit/2c4f25688fa18f84f1d8f50fc05ee343c1432ff2))
+* **deps:** update sanity monorepo to ^3.91.0 ([87993d6](https://github.com/portabletext/editor/commit/87993d620967cc6dba5e75e284fd7393652a3733))
+* **deps:** update sanity monorepo to ^3.92.0 ([8aebf95](https://github.com/portabletext/editor/commit/8aebf95a4dfe6afa16708a56586c39fc7a934029))
+* **deps:** update sanity monorepo to ^3.93.0 ([c2b2785](https://github.com/portabletext/editor/commit/c2b2785c964d54a011677f3e75de35353b577f04))
+* **deps:** update sanity monorepo to ^3.94.2 ([cf34861](https://github.com/portabletext/editor/commit/cf3486130db235ba01cb77e8a42ecbaedf76e8ea))
+* **deps:** update sanity monorepo to ^3.95.0 ([a1605c6](https://github.com/portabletext/editor/commit/a1605c6a4c7a5c51e210881b1a76892b0c0ff24b))
+* **deps:** update sanity monorepo to ^3.96.0 ([c0d7527](https://github.com/portabletext/editor/commit/c0d7527f1e4aef1c3e999d1e3286ac60ca4037a5))
+* **deps:** update sanity monorepo to ^3.97.1 ([e8627eb](https://github.com/portabletext/editor/commit/e8627ebbaf8b097414aec0282a8c22f883f8e2ff))
+* **deps:** update sanity monorepo to ^3.98.0 ([6d57e9b](https://github.com/portabletext/editor/commit/6d57e9b83830e7e45b93ae77466afe53e8a06ef0))
+* **deps:** update sanity monorepo to ^3.98.1 ([6fc3671](https://github.com/portabletext/editor/commit/6fc367160ac3ffcb88176fc4d06a99f5c78f5247))
+* **deps:** update sanity monorepo to ^4.2.0 ([103216b](https://github.com/portabletext/editor/commit/103216b9040661d30d466c46f2186bbf0a9a60b4))
+* use `rolldown` instead of `api-extractor` for dts generation ([#1445](https://github.com/portabletext/editor/issues/1445)) ([6dd6b51](https://github.com/portabletext/editor/commit/6dd6b51729b53479e9dd16fedbc8fc9bda73e6c1))
+
 ## [2.0.1](https://github.com/portabletext/editor/compare/block-tools-v2.0.0...block-tools-v2.0.1) (2025-08-04)
 
 
