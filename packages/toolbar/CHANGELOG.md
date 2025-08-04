@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.0.2](https://github.com/portabletext/editor/compare/toolbar-v2.0.1...toolbar-v2.0.2) (2025-08-04)
+
+
+### Bug Fixes
+
+* **deps:** update react monorepo ([8c09d21](https://github.com/portabletext/editor/commit/8c09d212832797a10abcd0c3bc3cea30a3cb610a))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @portabletext/editor bumped to 2.1.1
+  * peerDependencies
+    * @portabletext/editor bumped to 2.1.1
+
 ## [2.0.1](https://github.com/portabletext/editor/compare/toolbar-v2.0.0...toolbar-v2.0.1) (2025-08-04)
 
 

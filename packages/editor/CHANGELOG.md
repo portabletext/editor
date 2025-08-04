@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.1.1](https://github.com/portabletext/editor/compare/editor-v2.1.0...editor-v2.1.1) (2025-08-04)
+
+
+### Bug Fixes
+
+* **deps:** downgrade `use-effect-event` ([c7163bf](https://github.com/portabletext/editor/commit/c7163bfef3bbaff6ab20633196c0885e1f3e9d6a))
+* **deps:** update react monorepo ([8c09d21](https://github.com/portabletext/editor/commit/8c09d212832797a10abcd0c3bc3cea30a3cb610a))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 2.0.2
+  * devDependencies
+    * racejar bumped to 1.2.11
+
 ## [2.1.0](https://github.com/portabletext/editor/compare/editor-v2.0.0...editor-v2.1.0) (2025-08-04)
 
 
