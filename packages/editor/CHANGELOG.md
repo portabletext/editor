@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.1.2](https://github.com/portabletext/editor/compare/editor-v2.1.1...editor-v2.1.2) (2025-08-04)
+
+
+### Bug Fixes
+
+* remove the need for `useEffectEvent` ([cbcc764](https://github.com/portabletext/editor/commit/cbcc764ab03bd98ec63a673351652d25959f4731))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 2.0.3
+
 ## [2.1.1](https://github.com/portabletext/editor/compare/editor-v2.1.0...editor-v2.1.1) (2025-08-04)
 
 
