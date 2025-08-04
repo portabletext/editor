@@ -1,5 +1,4 @@
 import {useEffect} from 'react'
-import {useEffectEvent} from 'use-effect-event'
 import type {EditorEmittedEvent} from './editor/relay-machine'
 import {useEditor} from './editor/use-editor'
 
@@ -16,15 +15,14 @@ export function EditorEventListener(props: {
   on: (event: EditorEmittedEvent) => void
 }) {
   const editor = useEditor()
-  const on = useEffectEvent(props.on)
 
   useEffect(() => {
-    const subscription = editor.on('*', on)
+    const subscription = editor.on('*', props.on)
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [editor])
+  }, [editor, props.on])
 
   return null
 }
