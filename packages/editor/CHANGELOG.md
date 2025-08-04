@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.5](https://github.com/portabletext/editor/compare/editor-v2.1.4...editor-v2.1.5) (2025-08-04)
+
+
+### Bug Fixes
+
+* **`data-list-index`:** only reset if previous list has different type, but same level ([b0c6ffa](https://github.com/portabletext/editor/commit/b0c6ffaf2aafa10fd6d0f90ece511531f8a9e2e7))
+
 ## [2.1.4](https://github.com/portabletext/editor/compare/editor-v2.1.3...editor-v2.1.4) (2025-08-04)
 
 
