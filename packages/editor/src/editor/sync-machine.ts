@@ -179,12 +179,11 @@ export const syncMachine = setup({
   guards: {
     'initial value synced': ({context}) => context.initialValueSynced,
     'is busy': ({context}) => {
-      const editable = !context.readOnly
       const isProcessingLocalChanges = context.isProcessingLocalChanges
       const isChanging = isChangingRemotely(context.slateEditor) ?? false
-      const isBusy = editable && (isProcessingLocalChanges || isChanging)
+      const isBusy = isProcessingLocalChanges || isChanging
 
-      debug('isBusy', {isBusy, editable, isProcessingLocalChanges, isChanging})
+      debug('isBusy', {isBusy, isProcessingLocalChanges, isChanging})
 
       return isBusy
     },
