@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.1.9](https://github.com/portabletext/editor/compare/editor-v2.1.8...editor-v2.1.9) (2025-08-05)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 2.0.7
+
 ## [2.1.8](https://github.com/portabletext/editor/compare/editor-v2.1.7...editor-v2.1.8) (2025-08-05)
 
 
