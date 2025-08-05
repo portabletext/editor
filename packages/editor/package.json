@@ -112,8 +112,8 @@
     "@portabletext/toolkit": "^2.0.17",
     "@sanity/diff-match-patch": "^3.2.0",
     "@sanity/pkg-utils": "^7.9.21",
-    "@sanity/schema": "^4.2.0",
-    "@sanity/types": "^4.2.0",
+    "@sanity/schema": "^4.3.0",
+    "@sanity/types": "^4.3.0",
     "@testing-library/react": "^16.3.0",
     "@types/debug": "^4.1.12",
     "@types/lodash": "^4.17.16",
@@ -139,8 +139,8 @@
     "vitest-browser-react": "^1.0.1"
   },
   "peerDependencies": {
-    "@sanity/schema": "^4.2.0",
-    "@sanity/types": "^4.2.0",
+    "@sanity/schema": "^4.3.0",
+    "@sanity/types": "^4.3.0",
     "react": "^18.3 || ^19",
     "rxjs": "^7.8.2"
   },
