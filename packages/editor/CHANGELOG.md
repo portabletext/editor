@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.1.8](https://github.com/portabletext/editor/compare/editor-v2.1.7...editor-v2.1.8) (2025-08-05)
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^4.3.0 ([d3baa56](https://github.com/portabletext/editor/commit/d3baa561bbb6a1cafdaf08c98b21f0f68d04dfdf))
+* **sync machine:** don't sync if we have pending local changes ([8a347fb](https://github.com/portabletext/editor/commit/8a347fb268363887972b31cc20ef3ed82556b9e3))
+* **sync machine:** use `deleteText` rather than `Transforms.delete` ([a527d06](https://github.com/portabletext/editor/commit/a527d069714fee67db19beb599738142db781622))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 2.0.6
+
 ## [2.1.7](https://github.com/portabletext/editor/compare/editor-v2.1.6...editor-v2.1.7) (2025-08-04)
 
 
