@@ -1,7 +1,14 @@
 import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@sanity/types'
 import {isEqual} from 'lodash'
-import {Editor, Text, Transforms, type Descendant, type Node} from 'slate'
+import {
+  deleteText,
+  Editor,
+  Text,
+  Transforms,
+  type Descendant,
+  type Node,
+} from 'slate'
 import {
   and,
   assertEvent,
@@ -823,7 +830,7 @@ function _updateBlock(
               oldBlockChild._type === 'span'
             if (isSpanNode && isTextChanged) {
               if (oldBlockChild.text.length > 0) {
-                Transforms.delete(slateEditor, {
+                deleteText(slateEditor, {
                   at: {
                     focus: {path, offset: 0},
                     anchor: {path, offset: oldBlockChild.text.length},
