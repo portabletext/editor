@@ -518,4 +518,53 @@ describe('event.update value', () => {
       ])
     })
   })
+
+  test('Scenario: Updating text while read-only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editorRef} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          style: 'normal',
+          markDefs: [],
+        },
+      ],
+      schemaDefinition: defineSchema({}),
+    })
+
+    editorRef.current?.send({
+      type: 'update readOnly',
+      readOnly: true,
+    })
+
+    editorRef.current?.send({
+      type: 'update value',
+      value: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'bar', marks: []}],
+          style: 'normal',
+          markDefs: [],
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'bar', marks: []}],
+          style: 'normal',
+          markDefs: [],
+        },
+      ])
+    })
+  })
 })
