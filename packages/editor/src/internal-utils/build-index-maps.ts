@@ -58,7 +58,10 @@ export function buildIndexMaps(
       continue
     }
 
-    if (previousListItem.listItem !== block.listItem) {
+    if (
+      previousListItem.listItem !== block.listItem &&
+      previousListItem.level === block.level
+    ) {
       levelIndexMap.clear()
       previousListItem = {
         listItem: block.listItem,

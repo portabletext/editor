@@ -254,6 +254,7 @@ export const rangeDecorationsMachine = setup({
         (decoratedRange) => ({
           anchor: decoratedRange.rangeDecoration.selection?.anchor,
           focus: decoratedRange.rangeDecoration.selection?.focus,
+          payload: decoratedRange.rangeDecoration.payload,
         }),
       )
 
@@ -261,6 +262,7 @@ export const rangeDecorationsMachine = setup({
         (rangeDecoration) => ({
           anchor: rangeDecoration.selection?.anchor,
           focus: rangeDecoration.selection?.focus,
+          payload: rangeDecoration.payload,
         }),
       )
 

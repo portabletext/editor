@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/portabletext/editor/compare/keyboard-shortcuts-v1.1.0...keyboard-shortcuts-v1.1.1) (2025-07-17)
+
+
+### Bug Fixes
+
+* use `rolldown` instead of `api-extractor` for dts generation ([#1445](https://github.com/portabletext/editor/issues/1445)) ([6dd6b51](https://github.com/portabletext/editor/commit/6dd6b51729b53479e9dd16fedbc8fc9bda73e6c1))
+
 ## [1.1.0](https://github.com/portabletext/editor/compare/keyboard-shortcuts-v1.0.0...keyboard-shortcuts-v1.1.0) (2025-07-09)
 
 

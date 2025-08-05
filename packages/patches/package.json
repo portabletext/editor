@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/patches",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "Portable Text Patches",
   "keywords": [
     "portable-text",
@@ -53,9 +53,9 @@
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@sanity/pkg-utils": "^7.9.3",
+    "@sanity/pkg-utils": "^7.9.21",
     "@types/lodash": "^4.17.16",
-    "typescript": "5.8.3",
+    "typescript": "5.9.2",
     "vitest": "^3.2.4"
   }
 }

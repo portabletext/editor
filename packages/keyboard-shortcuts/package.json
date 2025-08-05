@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/keyboard-shortcuts",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Create platform-aware keyboard shortcuts with automatic detection of Apple vs non-Apple platforms",
   "keywords": [
     "portabletext",
@@ -50,7 +50,7 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
-    "@sanity/pkg-utils": "^7.9.3",
+    "@sanity/pkg-utils": "^7.9.21",
     "vitest": "^3.2.4"
   }
 }

@@ -1,3 +1,4 @@
+import {userEvent} from '@vitest/browser/context'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
@@ -514,6 +515,99 @@ describe('event.update value', () => {
           ],
           markDefs: [],
           style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Updating text while read-only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editorRef} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          style: 'normal',
+          markDefs: [],
+        },
+      ],
+      schemaDefinition: defineSchema({}),
+    })
+
+    editorRef.current?.send({
+      type: 'update readOnly',
+      readOnly: true,
+    })
+
+    editorRef.current?.send({
+      type: 'update value',
+      value: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'bar', marks: []}],
+          style: 'normal',
+          markDefs: [],
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'bar', marks: []}],
+          style: 'normal',
+          markDefs: [],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Updating text while read-only and having unemitted local changes', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editorRef, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: '', marks: []}],
+        },
+      ],
+    })
+
+    editorRef.current?.send({type: 'focus'})
+    await userEvent.type(locator, 'foo')
+
+    editorRef.current?.send({type: 'update readOnly', readOnly: true})
+
+    editorRef.current?.send({
+      type: 'update value',
+      value: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'bar', marks: []}],
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          style: 'normal',
+          markDefs: [],
         },
       ])
     })

@@ -5,7 +5,15 @@ import {defineBehavior} from './behavior.types.behavior'
 export const abstractListItemBehaviors = [
   defineBehavior({
     on: 'list item.add',
-    guard: ({snapshot}) => {
+    guard: ({snapshot, event}) => {
+      if (
+        !snapshot.context.schema.lists.some(
+          (list) => list.name === event.listItem,
+        )
+      ) {
+        return false
+      }
+
       const selectedTextBlocks = getSelectedTextBlocks(snapshot)
 
       return {selectedTextBlocks}
@@ -17,7 +25,7 @@ export const abstractListItemBehaviors = [
             type: 'block.set',
             at: block.path,
             props: {
-              level: 1,
+              level: block.node.level ?? 1,
               listItem: event.listItem,
             },
           }),

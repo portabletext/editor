@@ -1,5 +1,70 @@
 # Changelog
 
+## [2.0.7](https://github.com/portabletext/editor/compare/block-tools-v2.0.6...block-tools-v2.0.7) (2025-08-05)
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^4.3.0 ([d3baa56](https://github.com/portabletext/editor/commit/d3baa561bbb6a1cafdaf08c98b21f0f68d04dfdf))
+
+## [2.0.6](https://github.com/portabletext/editor/compare/block-tools-v2.0.5...block-tools-v2.0.6) (2025-08-05)
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^4.3.0 ([d3baa56](https://github.com/portabletext/editor/commit/d3baa561bbb6a1cafdaf08c98b21f0f68d04dfdf))
+
+## [2.0.5](https://github.com/portabletext/editor/compare/block-tools-v2.0.4...block-tools-v2.0.5) (2025-08-04)
+
+
+### Bug Fixes
+
+* **deps:** update react monorepo ([8c09d21](https://github.com/portabletext/editor/commit/8c09d212832797a10abcd0c3bc3cea30a3cb610a))
+
+## [2.0.4](https://github.com/portabletext/editor/compare/block-tools-v2.0.3...block-tools-v2.0.4) (2025-08-04)
+
+
+### Bug Fixes
+
+* **deps:** update react monorepo ([8c09d21](https://github.com/portabletext/editor/commit/8c09d212832797a10abcd0c3bc3cea30a3cb610a))
+
+## [2.0.3](https://github.com/portabletext/editor/compare/block-tools-v2.0.2...block-tools-v2.0.3) (2025-08-04)
+
+
+### Bug Fixes
+
+* **deps:** update react monorepo ([8c09d21](https://github.com/portabletext/editor/commit/8c09d212832797a10abcd0c3bc3cea30a3cb610a))
+
+## [2.0.2](https://github.com/portabletext/editor/compare/block-tools-v2.0.1...block-tools-v2.0.2) (2025-08-04)
+
+
+### Bug Fixes
+
+* **deps:** update react monorepo ([8c09d21](https://github.com/portabletext/editor/commit/8c09d212832797a10abcd0c3bc3cea30a3cb610a))
+
+## [2.0.1](https://github.com/portabletext/editor/compare/block-tools-v2.0.0...block-tools-v2.0.1) (2025-08-04)
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^4.2.0 ([103216b](https://github.com/portabletext/editor/commit/103216b9040661d30d466c46f2186bbf0a9a60b4))
+
+## [2.0.0](https://github.com/portabletext/editor/compare/block-tools-v1.1.38...block-tools-v2.0.0) (2025-07-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* require sanity studio v4 ([#1415](https://github.com/portabletext/editor/issues/1415))
+
+### Features
+
+* require sanity studio v4 ([#1415](https://github.com/portabletext/editor/issues/1415)) ([bc7441a](https://github.com/portabletext/editor/commit/bc7441a1cf14b67261f794a23b8793108afb5213))
+
+
+### Bug Fixes
+
+* use `rolldown` instead of `api-extractor` for dts generation ([#1445](https://github.com/portabletext/editor/issues/1445)) ([6dd6b51](https://github.com/portabletext/editor/commit/6dd6b51729b53479e9dd16fedbc8fc9bda73e6c1))
+
 ## [1.1.38](https://github.com/portabletext/editor/compare/block-tools-v1.1.37...block-tools-v1.1.38) (2025-07-10)
 
 

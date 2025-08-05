@@ -1,5 +1,147 @@
 # Changelog
 
+## [2.0.10](https://github.com/portabletext/editor/compare/toolbar-v2.0.9...toolbar-v2.0.10) (2025-08-05)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @portabletext/editor bumped to 2.1.9
+  * peerDependencies
+    * @portabletext/editor bumped to 2.1.9
+
+## [2.0.9](https://github.com/portabletext/editor/compare/toolbar-v2.0.8...toolbar-v2.0.9) (2025-08-05)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @portabletext/editor bumped to 2.1.8
+  * peerDependencies
+    * @portabletext/editor bumped to 2.1.8
+
+## [2.0.8](https://github.com/portabletext/editor/compare/toolbar-v2.0.7...toolbar-v2.0.8) (2025-08-04)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @portabletext/editor bumped to 2.1.7
+  * peerDependencies
+    * @portabletext/editor bumped to 2.1.7
+
+## [2.0.7](https://github.com/portabletext/editor/compare/toolbar-v2.0.6...toolbar-v2.0.7) (2025-08-04)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @portabletext/editor bumped to 2.1.6
+  * peerDependencies
+    * @portabletext/editor bumped to 2.1.6
+
+## [2.0.6](https://github.com/portabletext/editor/compare/toolbar-v2.0.5...toolbar-v2.0.6) (2025-08-04)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @portabletext/editor bumped to 2.1.5
+  * peerDependencies
+    * @portabletext/editor bumped to 2.1.5
+
+## [2.0.5](https://github.com/portabletext/editor/compare/toolbar-v2.0.4...toolbar-v2.0.5) (2025-08-04)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @portabletext/editor bumped to 2.1.4
+  * peerDependencies
+    * @portabletext/editor bumped to 2.1.4
+
+## [2.0.4](https://github.com/portabletext/editor/compare/toolbar-v2.0.3...toolbar-v2.0.4) (2025-08-04)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @portabletext/editor bumped to 2.1.3
+  * peerDependencies
+    * @portabletext/editor bumped to 2.1.3
+
+## [2.0.3](https://github.com/portabletext/editor/compare/toolbar-v2.0.2...toolbar-v2.0.3) (2025-08-04)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @portabletext/editor bumped to 2.1.2
+  * peerDependencies
+    * @portabletext/editor bumped to 2.1.2
+
+## [2.0.2](https://github.com/portabletext/editor/compare/toolbar-v2.0.1...toolbar-v2.0.2) (2025-08-04)
+
+
+### Bug Fixes
+
+* **deps:** update react monorepo ([8c09d21](https://github.com/portabletext/editor/commit/8c09d212832797a10abcd0c3bc3cea30a3cb610a))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @portabletext/editor bumped to 2.1.1
+  * peerDependencies
+    * @portabletext/editor bumped to 2.1.1
+
+## [2.0.1](https://github.com/portabletext/editor/compare/toolbar-v2.0.0...toolbar-v2.0.1) (2025-08-04)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @portabletext/editor bumped to 2.1.0
+  * peerDependencies
+    * @portabletext/editor bumped to 2.1.0
+
+## [2.0.0](https://github.com/portabletext/editor/compare/toolbar-v1.0.7...toolbar-v2.0.0) (2025-07-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* require sanity studio v4 ([#1415](https://github.com/portabletext/editor/issues/1415))
+
+### Features
+
+* require sanity studio v4 ([#1415](https://github.com/portabletext/editor/issues/1415)) ([bc7441a](https://github.com/portabletext/editor/commit/bc7441a1cf14b67261f794a23b8793108afb5213))
+
+
+### Bug Fixes
+
+* use `rolldown` instead of `api-extractor` for dts generation ([#1445](https://github.com/portabletext/editor/issues/1445)) ([6dd6b51](https://github.com/portabletext/editor/commit/6dd6b51729b53479e9dd16fedbc8fc9bda73e6c1))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/keyboard-shortcuts bumped to 1.1.1
+  * devDependencies
+    * @portabletext/editor bumped to 2.0.0
+  * peerDependencies
+    * @portabletext/editor bumped to 2.0.0
+
 ## [1.0.7](https://github.com/portabletext/editor/compare/toolbar-v1.0.6...toolbar-v1.0.7) (2025-07-11)
 
 

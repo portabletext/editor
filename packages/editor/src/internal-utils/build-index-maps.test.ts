@@ -139,18 +139,16 @@ describe(buildIndexMaps.name, () => {
   })
 
   test('numbered lists broken up by a bulleted list', () => {
-    expect(
-      buildIndexMaps(
-        {
-          schema,
-          value: [
-            textBlock('k0', {listItem: 'number', level: 1}),
-            textBlock('k1', {listItem: 'bullet', level: 1}),
-            textBlock('k2', {listItem: 'number', level: 1}),
-          ],
-        },
-        {blockIndexMap, listIndexMap},
-      ),
+    buildIndexMaps(
+      {
+        schema,
+        value: [
+          textBlock('k0', {listItem: 'number', level: 1}),
+          textBlock('k1', {listItem: 'bullet', level: 1}),
+          textBlock('k2', {listItem: 'number', level: 1}),
+        ],
+      },
+      {blockIndexMap, listIndexMap},
     )
     expect(blockIndexMap).toEqual(
       new Map([
@@ -164,6 +162,27 @@ describe(buildIndexMaps.name, () => {
         ['k0', 1],
         ['k1', 1],
         ['k2', 1],
+      ]),
+    )
+  })
+
+  test('numbered list broken up by an indented bulleted list', () => {
+    buildIndexMaps(
+      {
+        schema,
+        value: [
+          textBlock('k0', {listItem: 'number', level: 1}),
+          textBlock('k1', {listItem: 'bullet', level: 2}),
+          textBlock('k2', {listItem: 'number', level: 1}),
+        ],
+      },
+      {blockIndexMap, listIndexMap},
+    )
+    expect(listIndexMap).toEqual(
+      new Map([
+        ['k0', 1],
+        ['k1', 1],
+        ['k2', 2],
       ]),
     )
   })
@@ -200,18 +219,16 @@ describe(buildIndexMaps.name, () => {
   })
 
   test('reverse indented list', () => {
-    expect(
-      buildIndexMaps(
-        {
-          schema,
-          value: [
-            textBlock('k0', {listItem: 'number', level: 2}),
-            textBlock('k1', {listItem: 'number', level: 1}),
-            textBlock('k2', {listItem: 'number', level: 2}),
-          ],
-        },
-        {blockIndexMap, listIndexMap},
-      ),
+    buildIndexMaps(
+      {
+        schema,
+        value: [
+          textBlock('k0', {listItem: 'number', level: 2}),
+          textBlock('k1', {listItem: 'number', level: 1}),
+          textBlock('k2', {listItem: 'number', level: 2}),
+        ],
+      },
+      {blockIndexMap, listIndexMap},
     )
     expect(blockIndexMap).toEqual(
       new Map([

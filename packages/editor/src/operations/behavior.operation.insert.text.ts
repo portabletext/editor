@@ -1,4 +1,5 @@
 import {Transforms} from 'slate'
+import {EDITOR_TO_PENDING_SELECTION} from 'slate-dom'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
 import {
   getFocusSpan,
@@ -66,6 +67,10 @@ export const insertTextOperationImplementation: BehaviorOperationImplementation<
     text: operation.text,
     marks: [...activeDecorators, ...activeAnnotations],
   })
+
+  // This makes sure the selection is set correctly when event handling is run
+  // through Slate's Android input handling
+  EDITOR_TO_PENDING_SELECTION.set(operation.editor, operation.editor.selection)
 
   operation.editor.decoratorState = {}
 }

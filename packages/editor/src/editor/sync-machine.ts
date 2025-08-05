@@ -1,7 +1,14 @@
 import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@sanity/types'
 import {isEqual} from 'lodash'
-import {Editor, Text, Transforms, type Descendant, type Node} from 'slate'
+import {
+  deleteText,
+  Editor,
+  Text,
+  Transforms,
+  type Descendant,
+  type Node,
+} from 'slate'
 import {
   and,
   assertEvent,
@@ -172,12 +179,11 @@ export const syncMachine = setup({
   guards: {
     'initial value synced': ({context}) => context.initialValueSynced,
     'is busy': ({context}) => {
-      const editable = !context.readOnly
       const isProcessingLocalChanges = context.isProcessingLocalChanges
       const isChanging = isChangingRemotely(context.slateEditor) ?? false
-      const isBusy = editable && (isProcessingLocalChanges || isChanging)
+      const isBusy = isProcessingLocalChanges || isChanging
 
-      debug('isBusy', {isBusy, editable, isProcessingLocalChanges, isChanging})
+      debug('isBusy', {isBusy, isProcessingLocalChanges, isChanging})
 
       return isBusy
     },
@@ -823,7 +829,7 @@ function _updateBlock(
               oldBlockChild._type === 'span'
             if (isSpanNode && isTextChanged) {
               if (oldBlockChild.text.length > 0) {
-                Transforms.delete(slateEditor, {
+                deleteText(slateEditor, {
                   at: {
                     focus: {path, offset: 0},
                     anchor: {path, offset: oldBlockChild.text.length},

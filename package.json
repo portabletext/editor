@@ -44,22 +44,22 @@
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "@ianvs/prettier-plugin-sort-imports": "^4.4.2",
-    "@playwright/test": "^1.53.2",
+    "@ianvs/prettier-plugin-sort-imports": "^4.5.1",
+    "@playwright/test": "^1.54.2",
     "@sanity/prettier-config": "^1.0.6",
-    "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6",
+    "@types/react": "^19.1.9",
+    "@types/react-dom": "^19.1.7",
     "@types/react-is": "^19.0.0",
     "del-cli": "^6.0.0",
     "husky": "^9.0.11",
     "lint-staged": "^15.2.7",
-    "prettier": "^3.6.1",
+    "prettier": "^3.6.2",
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-gherkin": "^3.1.2",
     "pretty-quick": "^4.2.2",
-    "turbo": "^2.5.4"
+    "turbo": "^2.5.5"
   },
-  "packageManager": "pnpm@10.12.1",
+  "packageManager": "pnpm@10.13.1",
   "pnpm": {
     "peerDependencyRules": {
       "allowAny": [

@@ -1,5 +1,156 @@
 # Changelog
 
+## [2.1.9](https://github.com/portabletext/editor/compare/editor-v2.1.8...editor-v2.1.9) (2025-08-05)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 2.0.7
+
+## [2.1.8](https://github.com/portabletext/editor/compare/editor-v2.1.7...editor-v2.1.8) (2025-08-05)
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^4.3.0 ([d3baa56](https://github.com/portabletext/editor/commit/d3baa561bbb6a1cafdaf08c98b21f0f68d04dfdf))
+* **sync machine:** don't sync if we have pending local changes ([8a347fb](https://github.com/portabletext/editor/commit/8a347fb268363887972b31cc20ef3ed82556b9e3))
+* **sync machine:** use `deleteText` rather than `Transforms.delete` ([a527d06](https://github.com/portabletext/editor/commit/a527d069714fee67db19beb599738142db781622))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 2.0.6
+
+## [2.1.7](https://github.com/portabletext/editor/compare/editor-v2.1.6...editor-v2.1.7) (2025-08-04)
+
+
+### Bug Fixes
+
+* ensure correct selection when inserting node as part of `insertText` on Android ([bc43a1e](https://github.com/portabletext/editor/commit/bc43a1e8ad44a67d2e86443986cee7a87083194b))
+
+## [2.1.6](https://github.com/portabletext/editor/compare/editor-v2.1.5...editor-v2.1.6) (2025-08-04)
+
+
+### Bug Fixes
+
+* remove `use-effect-event` ([ec38d0a](https://github.com/portabletext/editor/commit/ec38d0af1008d20400c881d86ee986b581d9b027))
+
+## [2.1.5](https://github.com/portabletext/editor/compare/editor-v2.1.4...editor-v2.1.5) (2025-08-04)
+
+
+### Bug Fixes
+
+* **`data-list-index`:** only reset if previous list has different type, but same level ([b0c6ffa](https://github.com/portabletext/editor/commit/b0c6ffaf2aafa10fd6d0f90ece511531f8a9e2e7))
+
+## [2.1.4](https://github.com/portabletext/editor/compare/editor-v2.1.3...editor-v2.1.4) (2025-08-04)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 2.0.5
+
+## [2.1.3](https://github.com/portabletext/editor/compare/editor-v2.1.2...editor-v2.1.3) (2025-08-04)
+
+
+### Bug Fixes
+
+* **`list item.add`:** avoid setting `level` if `listItem` is unknown ([bb6f55d](https://github.com/portabletext/editor/commit/bb6f55d5af225a66386ea2ffb73c6b0480eaa4ba))
+* **`list item.add`:** preserve existing `level` ([1fdf676](https://github.com/portabletext/editor/commit/1fdf676e4ed3a70e9f8a24a664118d14c3c7f89f))
+* **deps:** update dependency slate to v0.118.0 ([a4f9ef4](https://github.com/portabletext/editor/commit/a4f9ef46d4f3f6175dc3c13a9df7895f3c8a4a14))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 2.0.4
+  * devDependencies
+    * racejar bumped to 1.2.12
+
+## [2.1.2](https://github.com/portabletext/editor/compare/editor-v2.1.1...editor-v2.1.2) (2025-08-04)
+
+
+### Bug Fixes
+
+* remove the need for `useEffectEvent` ([cbcc764](https://github.com/portabletext/editor/commit/cbcc764ab03bd98ec63a673351652d25959f4731))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 2.0.3
+
+## [2.1.1](https://github.com/portabletext/editor/compare/editor-v2.1.0...editor-v2.1.1) (2025-08-04)
+
+
+### Bug Fixes
+
+* **deps:** downgrade `use-effect-event` ([c7163bf](https://github.com/portabletext/editor/commit/c7163bfef3bbaff6ab20633196c0885e1f3e9d6a))
+* **deps:** update react monorepo ([8c09d21](https://github.com/portabletext/editor/commit/8c09d212832797a10abcd0c3bc3cea30a3cb610a))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 2.0.2
+  * devDependencies
+    * racejar bumped to 1.2.11
+
+## [2.1.0](https://github.com/portabletext/editor/compare/editor-v2.0.0...editor-v2.1.0) (2025-08-04)
+
+
+### Features
+
+* consider range decorations changed if `payload` has changed ([#1448](https://github.com/portabletext/editor/issues/1448)) ([5795a31](https://github.com/portabletext/editor/commit/5795a31611b39245ebce486b7b8105e3b1bfdadf))
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^4.2.0 ([103216b](https://github.com/portabletext/editor/commit/103216b9040661d30d466c46f2186bbf0a9a60b4))
+* only merge into empty list item when at the beginning of block ([b0bb992](https://github.com/portabletext/editor/commit/b0bb9928f64abb7950bc75cdb3b382db06cd3fa9))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 2.0.1
+
+## [2.0.0](https://github.com/portabletext/editor/compare/editor-v1.58.0...editor-v2.0.0) (2025-07-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* require sanity studio v4 ([#1415](https://github.com/portabletext/editor/issues/1415))
+
+### Features
+
+* require sanity studio v4 ([#1415](https://github.com/portabletext/editor/issues/1415)) ([bc7441a](https://github.com/portabletext/editor/commit/bc7441a1cf14b67261f794a23b8793108afb5213))
+
+
+### Bug Fixes
+
+* **deps:** update dependency use-effect-event to v2 ([#1444](https://github.com/portabletext/editor/issues/1444)) ([7bdffcd](https://github.com/portabletext/editor/commit/7bdffcdd5c45955a465d42d7bb6dd364866e6284))
+* **deps:** Update slate to ^0.117.4 ([#1436](https://github.com/portabletext/editor/issues/1436)) ([a183fef](https://github.com/portabletext/editor/commit/a183fef5be1194024a5e2928952735814cb3077f))
+* use `rolldown` instead of `api-extractor` for dts generation ([#1445](https://github.com/portabletext/editor/issues/1445)) ([6dd6b51](https://github.com/portabletext/editor/commit/6dd6b51729b53479e9dd16fedbc8fc9bda73e6c1))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 2.0.0
+    * @portabletext/keyboard-shortcuts bumped to 1.1.1
+    * @portabletext/patches bumped to 1.1.6
+
 ## [1.58.0](https://github.com/portabletext/editor/compare/editor-v1.57.5...editor-v1.58.0) (2025-07-11)
 
 

@@ -33,6 +33,7 @@ describe('RangeDecorations', () => {
           anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 0},
           focus: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
         },
+        payload: {id: 'a'},
       },
     ]
 
@@ -85,6 +86,7 @@ describe('RangeDecorations', () => {
           anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 0},
           focus: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
         },
+        payload: {id: 'a'},
       },
     ]
     rerender(
@@ -111,6 +113,7 @@ describe('RangeDecorations', () => {
           anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
           focus: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 4},
         },
+        payload: {id: 'a'},
       },
     ]
     rerender(
@@ -138,6 +141,7 @@ describe('RangeDecorations', () => {
           anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 0},
           focus: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
         },
+        payload: {id: 'a'},
       },
     ]
     rerender(
@@ -155,6 +159,62 @@ describe('RangeDecorations', () => {
         3,
         'updated-with-different',
       ])
+    })
+
+    // Update the range decorations with a new payload
+    rangeDecorations = [
+      {
+        component: RangeDecorationTestComponent,
+        selection: {
+          anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 0},
+          focus: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
+        },
+        payload: {id: 'b'},
+      },
+    ]
+    rerender(
+      <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
+        onChange={onChange}
+        rangeDecorations={rangeDecorations}
+        ref={editorRef}
+        schemaType={schemaType}
+        value={value}
+      />,
+    )
+    await waitFor(() => {
+      expect([
+        rangeDecorationIteration,
+        'updated-with-different-payload',
+      ]).toEqual([4, 'updated-with-different-payload'])
+    })
+
+    // Update the range decorations with a new payload again
+    rangeDecorations = [
+      {
+        component: RangeDecorationTestComponent,
+        selection: {
+          anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 0},
+          focus: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
+        },
+        payload: {id: 'c'},
+      },
+    ]
+    rerender(
+      <PortableTextEditorTester
+        keyGenerator={createTestKeyGenerator()}
+        onChange={onChange}
+        rangeDecorations={rangeDecorations}
+        ref={editorRef}
+        schemaType={schemaType}
+        value={value}
+      />,
+    )
+    await waitFor(() => {
+      expect([
+        rangeDecorationIteration,
+        'updated-with-different-payload',
+      ]).toEqual([5, 'updated-with-different-payload'])
     })
   })
 })

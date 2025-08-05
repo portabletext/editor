@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/toolbar",
-  "version": "1.0.7",
+  "version": "2.0.10",
   "description": "Utilities for building a toolbar for the Portable Text Editor",
   "keywords": [
     "portabletext",
@@ -54,14 +54,14 @@
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:*",
-    "@sanity/pkg-utils": "^7.9.3",
-    "@types/react": "^19.1.2",
-    "@typescript-eslint/eslint-plugin": "^8.35.0",
-    "@typescript-eslint/parser": "^8.35.0",
+    "@sanity/pkg-utils": "^7.9.21",
+    "@types/react": "^19.1.9",
+    "@typescript-eslint/eslint-plugin": "^8.38.0",
+    "@typescript-eslint/parser": "^8.38.0",
     "babel-plugin-react-compiler": "19.1.0-rc.2",
     "eslint": "8.57.1",
-    "eslint-plugin-react-hooks": "0.0.0-experimental-cee7939b-20250625",
-    "react": "^19.1.0"
+    "eslint-plugin-react-hooks": "6.0.0-rc.1",
+    "react": "^19.1.1"
   },
   "peerDependencies": {
     "@portabletext/editor": "workspace:*",
