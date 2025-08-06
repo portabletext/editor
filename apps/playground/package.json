@@ -25,7 +25,7 @@
     "@portabletext/plugin-one-line": "^1.0.17",
     "@portabletext/toolbar": "workspace:*",
     "@xstate/react": "^6.0.0",
-    "lucide-react": "^0.523.0",
+    "lucide-react": "^0.536.0",
     "react": "^19.1.1",
     "react-aria-components": "^1.11.0",
     "react-dom": "^19.1.1",
