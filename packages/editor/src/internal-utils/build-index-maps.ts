@@ -1,7 +1,9 @@
 import type {EditorContext} from '../editor/editor-snapshot'
 import {isTextBlock} from './parse-blocks'
 
-const levelIndexMap = new Map<number, number>()
+// Maps for each list type, keeping track of the current list count for each
+// level.
+const levelIndexMaps = new Map<string, Map<number, number>>()
 
 /**
  * Mutates the maps in place.
@@ -18,7 +20,7 @@ export function buildIndexMaps(
 ): void {
   blockIndexMap.clear()
   listIndexMap.clear()
-  levelIndexMap.clear()
+  levelIndexMaps.clear()
 
   let previousListItem:
     | {
@@ -36,71 +38,82 @@ export function buildIndexMaps(
 
     blockIndexMap.set(block._key, blockIndex)
 
+    // Clear the state if we encounter a non-text block
     if (!isTextBlock(context, block)) {
-      levelIndexMap.clear()
+      levelIndexMaps.clear()
       previousListItem = undefined
+
       continue
     }
 
+    // Clear the state if we encounter a non-list text block
     if (block.listItem === undefined || block.level === undefined) {
-      levelIndexMap.clear()
+      levelIndexMaps.clear()
       previousListItem = undefined
+
       continue
     }
 
+    // If we encounter a new list item, we set the initial index to 1 for the
+    // list type on that level.
     if (!previousListItem) {
+      const listIndex = 1
+      const levelIndexMap =
+        levelIndexMaps.get(block.listItem) ?? new Map<number, number>()
+      levelIndexMap.set(block.level, listIndex)
+      levelIndexMaps.set(block.listItem, levelIndexMap)
+
+      listIndexMap.set(block._key, listIndex)
+
       previousListItem = {
         listItem: block.listItem,
         level: block.level,
       }
-      levelIndexMap.set(block.level, 1)
-      listIndexMap.set(block._key, 1)
+
       continue
     }
 
+    // If the previous list item is of the same type but on a lower level, we
+    // need to reset the level index map for that type.
     if (
-      previousListItem.listItem !== block.listItem &&
-      previousListItem.level === block.level
+      previousListItem.listItem === block.listItem &&
+      previousListItem.level < block.level
     ) {
-      levelIndexMap.clear()
+      const listIndex = 1
+      const levelIndexMap =
+        levelIndexMaps.get(block.listItem) ?? new Map<number, number>()
+      levelIndexMap.set(block.level, listIndex)
+      levelIndexMaps.set(block.listItem, levelIndexMap)
+
+      listIndexMap.set(block._key, listIndex)
+
       previousListItem = {
         listItem: block.listItem,
         level: block.level,
       }
-      levelIndexMap.set(block.level, 1)
-      listIndexMap.set(block._key, 1)
+
       continue
     }
 
-    if (previousListItem.level === block.level) {
-      const levelCounter = levelIndexMap.get(block.level) ?? 0
-      levelIndexMap.set(block.level, levelCounter + 1)
-      previousListItem = {
-        listItem: block.listItem,
-        level: block.level,
+    // Reset all other list items on this level
+    levelIndexMaps.forEach((levelIndexMap, listItem) => {
+      if (listItem === block.listItem) {
+        return
       }
-      listIndexMap.set(block._key, levelCounter + 1)
-      continue
-    }
 
-    if (previousListItem.level < block.level) {
-      levelIndexMap.set(block.level, 1)
-      previousListItem = {
-        listItem: block.listItem,
-        level: block.level,
-      }
-      listIndexMap.set(block._key, 1)
-      continue
-    }
+      levelIndexMap.set(block.level!, 0)
+    })
 
-    if (previousListItem.level > block.level) {
-      const levelCounter = levelIndexMap.get(block.level) ?? 0
-      levelIndexMap.set(block.level, levelCounter + 1)
-      previousListItem = {
-        listItem: block.listItem,
-        level: block.level,
-      }
-      listIndexMap.set(block._key, levelCounter + 1)
+    const levelIndexMap =
+      levelIndexMaps.get(block.listItem) ?? new Map<number, number>()
+    const levelCounter = levelIndexMap.get(block.level) ?? 0
+    levelIndexMap.set(block.level, levelCounter + 1)
+
+    listIndexMap.set(block._key, levelCounter + 1)
+
+    previousListItem = {
+      listItem: block.listItem,
+      level: block.level,
     }
   }
 }
