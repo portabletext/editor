@@ -1,0 +1,12 @@
+---
+import {getExportedArrayFromTsFile} from '@/lib/utils.ts'
+
+const eventTypes = await getExportedArrayFromTsFile(
+  Astro.props.filePath,
+  Astro.props.arrayName,
+)
+---
+
+<ul>
+  {eventTypes?.map((type) => <li>{type}</li>)}
+</ul>

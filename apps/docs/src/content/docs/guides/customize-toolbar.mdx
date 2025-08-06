@@ -1,0 +1,279 @@
+---
+title: Customize the toolbar
+description: Common patterns and techniques for creating custom toolbars for the editor.
+---
+
+import {PackageManagers} from 'starlight-package-managers'
+
+The [getting started guide](/getting-started/) introduces the basics of setting up toolbar components. This guide provides some extra context, best practices, and patterns to get you started.
+
+## Render the toolbar inside the provider
+
+You must render any toolbars within `EditorProvider`, as any toolbar actions require access to the instance of the editor. There are two ways to do this:
+
+### The `@portabletext/toolbar` hooks
+
+The `@portabletext/toolbar` library provides a variety of hooks that allow you to dispatch events and view a snapshot of the editor state.
+
+Each hook accepts an individual schema item and returns a `send` method and a `snapshot`. The most common pattern is to `send`, or dispatch, events, and `snapshot.matches` state, like enabled/disabled.
+
+For example, a button can use `useDecoratorButton` to create interactive buttons for decorators. The hook accepts details about the decorator, provided by the `useToolbarSchema` hook.
+
+```tsx
+import { type ToolbarDecoratorSchemaType, useDecoratorButton, useToolbarSchema} from '@portabletext/toolbar'
+
+const DecoratorButton = (props: {schemaType: ToolbarDecoratorSchemaType}) => {
+  const decoratorButton = useDecoratorButton(props)
+  return (
+    <button
+      onClick{() => decoratorButton.send({type: 'toggle'})}
+      className={decoratorButton.snapshot.matches({enabled: 'active'}) ? 'active' : ''}
+    >
+    {props.schemaType.name}
+    </button>
+  )
+}
+
+function ToolbarPlugin(){
+  const toolbarSchema = useToolbarSchema()
+  return (
+    <div>
+      {toolBarSchema.decorators?.map((decorator)=>(
+        <DecoratorButton key={decorator.name} schemaType={decorator} />
+      ))}
+    </div>
+  )
+}
+
+function App() {
+  //...
+  return (
+    <>
+      <EditorProvider
+        initialConfig={
+          // ...
+        }
+      >
+        // ...
+        <ToolbarPlugin />
+      </EditorProvider>
+    </>
+  )
+}
+```
+
+### The `userEditor` hook
+
+The toolbar library is more closely linked to parts of the PTE—like decorators, styles, and annotations—but you can also access editor state without the context of individual schema items with `useEditor`.
+
+You can send [synthetic events](/reference/behavior-api/) from within the toolbar using `editor.send`.
+
+```tsx
+import {useEditor} from '@portabletext/editor'
+
+function Toolbar() {
+  const editor = useEditor()
+  // ...
+  return (
+    <>
+      <button
+        key={decorator.name}
+        onClick={() => {
+          // Send decorator toggle event
+          editor.send({
+            type: 'decorator.toggle',
+            decorator: decorator.name,
+          })
+        }}
+      >
+        {decorator.name}
+      </button>
+    </>
+  )
+}
+function App() {
+  //...
+  return (
+    <>
+      <EditorProvider
+        initialConfig={
+          // ...
+        }
+      >
+        // ...
+        <Toolbar />
+      </EditorProvider>
+    </>
+  )
+}
+```
+
+## Modify or enhance the schema
+
+Sometimes you need to enhance your schema to change a label or add a shortcut behavior, as shown in the [getting started guide](/getting-started). A common approach is to extend the schema. This is done in two steps:
+
+### Extend the schema
+
+```tsx
+const extendDecorator: ExtendDecoratorSchemaType = (decorator) => {
+  if (decorator.name === 'strong') {
+    return {
+      ...decorator,
+      // Optional: add a react component as an icon and unset the title
+      icon: () => <strong>B</strong>,
+      // Optional: connect to a keyboard shortcut from the keyboard-shortcuts library
+      shortcut: bold, // imported from @portabletext/keyboard-shortcuts
+      title: '',
+    }
+  }
+  // ...repeat for each decorator type, or return the original decorator
+  return decorator
+}
+```
+
+Repeat this same approach for styles, annotations, blocks, etc. as needed using the types from `@portabletext/toolbar`. Types are available for each schema type:
+
+- [ExtendAnnotationSchemaType](/api/toolbar/type-aliases/extendannotationschematype/)
+- [ExtendBlockObjectSchemaType](/api/toolbar/type-aliases/extendblockobjectschematype/)
+- [ExtendDecoratorSchemaType](/api/toolbar/type-aliases/extenddecoratorschematype/)
+- [ExtendInlineObjectSchemaType](/api/toolbar/type-aliases/extendinlineobjectschematype/)
+- [ExtendListSchemaType](/api/toolbar/type-aliases/extendlistschematype/)
+- [ExtendStyleSchemaType](/api/toolbar/type-aliases/extendstyleschematype/)
+
+### Configure `useToolbarSchema` with the extended schema
+
+The `useToolbarSchema` hook optionally accepts these extended schemas.
+
+```tsx
+const toolbarSchema = useToolbarSchema({
+  extendDecorator,
+  extendAnnotation,
+  extendStyle,
+  // etc
+})
+```
+
+## Add keyboard shortcuts
+
+The [Keyboard Shortcuts library](/reference/keyboard-shortcuts/) offers drop-in keyboard shortcuts for the editor that can be paired with toolbar buttons, as well as a way to create your own custom keyboard shortcuts.
+
+This pairs best with the extend schema approach, as it allows you to add keyboard shortcuts to your toolbar buttons.
+
+Add the keyboard shortcut library to your project:
+
+<PackageManagers pkg="@portabletext/keyboard-shortcuts" />
+
+Import the keyboard shortcut you want to use from the library, and extend your schema.
+
+```tsx
+import {bold} from '@portabletext/keyboard-shortcuts'
+
+const extendDecorator: ExtendDecoratorSchemaType = (decorator) => {
+  if (decorator.name === 'strong') {
+    return {
+      ...decorator,
+      // Optional: add a react component as an icon and unset the title
+      icon: () => <strong>B</strong>,
+      // Optional: connect to a keyboard shortcut from the keyboard-shortcuts library
+      shortcut: bold, // imported from @portabletext/keyboard-shortcuts
+      title: '',
+    }
+  }
+  // ...repeat for each decorator type, or return the original decorator
+  return decorator
+}
+```
+
+## Add history buttons for undo/redo
+
+The toolbar library ships with a `useHistoryButtons` hook. This is a convenience hook that limits which events the buttons can send.
+
+Import the hook and create buttons.
+
+```tsx
+import {useHistoryButtons} from '@portabletext/toolbar'
+
+function HistoryButtons() {
+  const historyButtons = useHistoryButtons()
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => historyButtons.send({type: 'history.undo'})}
+        disabled={historyButtons.snapshot.matches('disabled')}
+      >
+        Undo
+      </button>
+      <button
+        type="button"
+        onClick={() => historyButtons.send({type: 'history.redo'})}
+        disabled={historyButtons.snapshot.matches('disabled')}
+      >
+        Redo
+      </button>
+    </>
+  )
+}
+```
+
+Then, render the buttons in a toolbar component.
+
+```tsx
+function ToolbarPlugin() {
+  // ...
+  return (
+    <>
+      // ...
+      <HistoryButtons />
+    </>
+  )
+}
+```
+
+## Use selectors to reflect editor state
+
+The editor offers a variety of helpful selectors for checking the status of inline and block content. Selectors are pure functions that derive state from the editor snapshot. You can find the full list in the [selectors reference](/reference/selectors/).
+
+:::note
+This approach is specific to accessing state with `useEditor`. While the hooks from `@portabletext/toolbar` do access and interact with the editor state, they do not expose the active editor itself for use in selectors.
+:::
+
+A few useful selectors for using in the toolbar are:
+
+- `getActiveStyle`: Get's the active style of the selection.
+- `isActiveDecorator`: Returns `true` if the active selection matches the decorator.
+- `isActiveAnnotation`: Returns `true` if the active selection matches the annotation.
+- `isActiveStyle`: Returns `true` if the active selection matches the style.
+
+You can import each selector individually from `@portabletext/editor/selectors` or import them all as shown below.
+
+```tsx
+import * as selectors from '@portabletext/editor/selectors'
+```
+
+You can then combine these with the `useEditorSelector` hook in your toolbar components. For example, this button will underline if the selected text matches the annotation.
+
+```tsx
+function AnnotationButton(props: {
+  annotation: SchemaDefinition['annotations'][number]
+}) {
+  const editor = useEditor()
+  // useEditorSelector takes the editor instance and the selector
+  const active = useEditorSelector(
+    editor,
+    selectors.isActiveAnnotation(props.annotation.name),
+  )
+
+  return (
+    <button
+      key={props.annotation.name}
+      style={{
+        textDecoration: active ? 'underline' : 'none',
+      }}
+      // ...
+    >
+      {props.annotation.name}
+    </button>
+  )
+}
+```
