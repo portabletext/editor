@@ -61,7 +61,8 @@
     "babel-plugin-react-compiler": "19.1.0-rc.2",
     "eslint": "8.57.1",
     "eslint-plugin-react-hooks": "6.0.0-rc.1",
-    "react": "^19.1.1"
+    "react": "^19.1.1",
+    "typescript": "^5.9.2"
   },
   "peerDependencies": {
     "@portabletext/editor": "workspace:*",
