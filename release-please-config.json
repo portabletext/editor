@@ -1,9 +1,12 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "last-release-sha": "6a46c5d3361906a719cbe30fe9875b53de19e2e7",
-  "bump-minor-pre-major": true,
   "always-link-local": true,
+  "always-update": true,
+  "bump-minor-pre-major": true,
   "plugins": ["node-workspace"],
+  "release-type": "node",
+  "separate-pull-requests": false,
   "packages": {
     "packages/block-tools": {},
     "packages/editor": {},
