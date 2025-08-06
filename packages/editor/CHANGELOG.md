@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.11](https://github.com/portabletext/editor/compare/editor-v2.1.10...editor-v2.1.11) (2025-08-06)
+
+
+### Bug Fixes
+
+* **deps:** update dependency xstate to ^5.20.2 ([4254da2](https://github.com/portabletext/editor/commit/4254da2409c0817bc119179592059dab47f4677b))
+
 ## [2.1.10](https://github.com/portabletext/editor/compare/editor-v2.1.9...editor-v2.1.10) (2025-08-06)
 
 
