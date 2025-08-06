@@ -27,7 +27,7 @@ const DecoratorButton = (props: {schemaType: ToolbarDecoratorSchemaType}) => {
   return (
     <button
       onClick{() => decoratorButton.send({type: 'toggle'})}
-      className={decoratorButton.snapshot.matches({enabled: 'active'})}
+      className={decoratorButton.snapshot.matches({enabled: 'active'}) ? 'active' : ''}
     >
     {props.schemaType.name}
     </button>
