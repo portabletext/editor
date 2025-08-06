@@ -51,6 +51,7 @@
   },
   "devDependencies": {
     "@sanity/pkg-utils": "^7.9.21",
+    "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   }
 }
