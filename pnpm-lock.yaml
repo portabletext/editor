@@ -198,7 +198,7 @@ importers:
         specifier: ^2.23.0
         version: 2.23.0
       shiki:
-        specifier: ^3.7.0
+        specifier: ^3.9.2
         version: 3.9.2
       xstate:
         specifier: ^5.20.1
