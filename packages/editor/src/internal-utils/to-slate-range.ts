@@ -136,7 +136,7 @@ function toSlateSelectionPoint(
   let offset = spanSelectionPoint?.offset ?? selectionPoint.offset
   let childPath: Array<number> = []
   let childIndex = -1
-  let pathChild: PortableTextSpan | PortableTextObject | undefined = undefined
+  let pathChild: PortableTextSpan | PortableTextObject | undefined
 
   for (const child of block.children) {
     childIndex++

@@ -424,7 +424,7 @@ export function createEditableAPI(
       return isActiveAnnotation(annotationType)(snapshot)
     },
     addAnnotation: (type, value) => {
-      let paths: ReturnType<EditableAPI['addAnnotation']> = undefined
+      let paths: ReturnType<EditableAPI['addAnnotation']>
 
       Editor.withoutNormalizing(editor, () => {
         paths = addAnnotationOperationImplementation({

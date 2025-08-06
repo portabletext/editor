@@ -298,7 +298,7 @@ function setPatch(editor: PortableTextSlateEditor, patch: SetPatch) {
     return true
   } else if (Element.isElement(block.node) && patch.path.length === 1) {
     const {children, ...nextRest} = value as unknown as PortableTextBlock
-    const {children: prevChildren, ...prevRest} = block.node || {
+    const {children: _prevChildren, ...prevRest} = block.node || {
       children: undefined,
     }
 
