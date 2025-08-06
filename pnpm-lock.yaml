@@ -195,8 +195,8 @@ importers:
         specifier: ^19.1.1
         version: 19.1.1
       remeda:
-        specifier: ^2.23.0
-        version: 2.23.0
+        specifier: ^2.28.0
+        version: 2.28.0
       shiki:
         specifier: ^3.9.2
         version: 3.9.2
@@ -5977,8 +5977,8 @@ packages:
   remark-stringify@11.0.0:
     resolution: {integrity: sha512-1OSmLd3awB/t8qdoEOMazZkNsfVTeY4fTsgzcQFdXNq8ToTN4ZGwrMnlda4K6smTFKD+GRV6O48i6Z4iKgPPpw==}
 
-  remeda@2.23.0:
-    resolution: {integrity: sha512-0mPy6q4ZMkAyrmucV6U6RaQ4GaJ7PLy9kTCNzC4k99DY6kQZXQIU8lxUVV4ocCWcjPvl7PSpOa42oPJWQiGouA==}
+  remeda@2.28.0:
+    resolution: {integrity: sha512-943nIauNk4xBh/2DNcsZCc3DRpKncNXnNjtWlqfhM72FvD4bKuOXWSfuY0+k7yf8/Ob3+QzXtxLeobLoMn/INA==}
 
   require-from-string@2.0.2:
     resolution: {integrity: sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw==}
@@ -8422,7 +8422,7 @@ snapshots:
       '@portabletext/editor': link:packages/editor
       '@xstate/react': 5.0.5(@types/react@19.1.9)(react@19.1.1)(xstate@5.20.1)
       react: 19.1.1
-      remeda: 2.23.0
+      remeda: 2.28.0
       xstate: 5.20.1
     transitivePeerDependencies:
       - '@types/react'
@@ -13876,7 +13876,7 @@ snapshots:
       mdast-util-to-markdown: 2.1.2
       unified: 11.0.5
 
-  remeda@2.23.0:
+  remeda@2.28.0:
     dependencies:
       type-fest: 4.41.0
 
