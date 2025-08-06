@@ -9,7 +9,7 @@ export function getTextMarks(
     return undefined
   }
 
-  let marks: Array<string> | undefined = undefined
+  let marks: Array<string> | undefined
 
   for (const block of value) {
     if (isPortableTextBlock(block)) {

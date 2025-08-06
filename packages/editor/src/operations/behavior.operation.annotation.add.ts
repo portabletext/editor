@@ -46,7 +46,7 @@ export const addAnnotationOperationImplementation: BehaviorOperationImplementati
     return
   }
 
-  let paths: AddedAnnotationPaths | undefined = undefined
+  let paths: AddedAnnotationPaths | undefined
   let spanPath: Path | undefined
   let markDefPath: Path | undefined
   const markDefPaths: Path[] = []

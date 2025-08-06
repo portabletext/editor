@@ -1,10 +1,16 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.8.3/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.1.3/schema.json",
   "formatter": {
     "enabled": false
   },
   "linter": {
-    "ignore": ["tsconfig.*.json", "coverage", "dist", "lib"],
+    "includes": [
+      "**",
+      "!**/tsconfig.*.json",
+      "!**/coverage",
+      "!**/dist",
+      "!**/lib"
+    ],
     "enabled": true,
     "rules": {
       "recommended": true,
@@ -32,9 +38,9 @@
       "suspicious": {
         "noConfusingVoidType": "off",
         "noExplicitAny": "off",
-        "noConsoleLog": "error",
         "noPrototypeBuiltins": "off",
-        "useAwait": "error"
+        "useAwait": "error",
+        "noConsole": {"level": "error", "options": {"allow": ["warn", "error"]}}
       },
       "style": {
         "noNonNullAssertion": "off",
@@ -43,7 +49,5 @@
       }
     }
   },
-  "organizeImports": {
-    "enabled": false
-  }
+  "assist": {"actions": {"source": {"organizeImports": "off"}}}
 }

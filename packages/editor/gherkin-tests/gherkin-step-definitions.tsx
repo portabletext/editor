@@ -771,7 +771,7 @@ async function toggleDecoratorUsingKeyboard(decorator: 'em' | 'strong') {
   )
 }
 
-async function toggleAnnotation(
+function toggleAnnotation(
   editor: EditorContext,
   annotation: 'comment' | 'link',
 ) {
