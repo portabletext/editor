@@ -187,6 +187,58 @@ describe(buildIndexMaps.name, () => {
     )
   })
 
+  test('numbered list broken up by a nested bulleted list', () => {
+    buildIndexMaps(
+      {
+        schema,
+        value: [
+          textBlock('k0', {listItem: 'number', level: 1}),
+          textBlock('k1', {listItem: 'number', level: 1}),
+          textBlock('k2', {listItem: 'bullet', level: 1}),
+          textBlock('k3', {listItem: 'bullet', level: 2}),
+          textBlock('k4', {listItem: 'number', level: 1}),
+        ],
+      },
+      {blockIndexMap, listIndexMap},
+    )
+    expect(listIndexMap).toEqual(
+      new Map([
+        ['k0', 1],
+        ['k1', 2],
+        ['k2', 1],
+        ['k3', 1],
+        ['k4', 1],
+      ]),
+    )
+  })
+
+  test('numbered list broken up by an inverse-indented bulleted list', () => {
+    buildIndexMaps(
+      {
+        schema,
+        value: [
+          textBlock('k0', {listItem: 'number', level: 1}),
+          textBlock('k1', {listItem: 'number', level: 1}),
+          textBlock('k2', {listItem: 'bullet', level: 2}),
+          textBlock('k3', {listItem: 'bullet', level: 1}),
+          textBlock('k4', {listItem: 'bullet', level: 2}),
+          textBlock('k5', {listItem: 'number', level: 1}),
+        ],
+      },
+      {blockIndexMap, listIndexMap},
+    )
+    expect(listIndexMap).toEqual(
+      new Map([
+        ['k0', 1],
+        ['k1', 2],
+        ['k2', 1],
+        ['k3', 1],
+        ['k4', 1],
+        ['k5', 1],
+      ]),
+    )
+  })
+
   test('simple indented list', () => {
     buildIndexMaps(
       {
