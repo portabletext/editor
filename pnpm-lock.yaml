@@ -208,7 +208,7 @@ importers:
         version: 3.25.76
     devDependencies:
       '@tailwindcss/vite':
-        specifier: ^4.1.10
+        specifier: ^4.1.11
         version: 4.1.11(vite@7.0.6(@types/node@24.2.0)(jiti@2.5.1)(lightningcss@1.30.1)(terser@5.39.0)(yaml@2.8.1))
       '@types/react':
         specifier: ^19.1.9
@@ -244,7 +244,7 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0(tailwindcss@4.1.11)
       tailwindcss:
-        specifier: ^4.1.10
+        specifier: ^4.1.11
         version: 4.1.11
       tailwindcss-react-aria-components:
         specifier: ^2.0.0
