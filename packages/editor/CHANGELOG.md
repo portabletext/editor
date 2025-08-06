@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.1.10](https://github.com/portabletext/editor/compare/editor-v2.1.9...editor-v2.1.10) (2025-08-06)
+
+
+### Bug Fixes
+
+* more `data-list-index` edge cases ([2f7df55](https://github.com/portabletext/editor/commit/2f7df5574dd50160d6004e75f940ab11de36f9f7))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 2.0.8
+
 ## [2.1.9](https://github.com/portabletext/editor/compare/editor-v2.1.8...editor-v2.1.9) (2025-08-05)
 
 
