@@ -1,7 +1,7 @@
+import {isEqual} from 'lodash'
 import {Editor, Path, Point, Range, Transforms, type Descendant} from 'slate'
 import {DOMEditor} from 'slate-dom'
-import type {EditorSchema} from '../editor/editor-schema'
-import {parseBlock} from '../internal-utils/parse-blocks'
+import {isSpan, parseBlock} from '../internal-utils/parse-blocks'
 import {
   getFocusBlock,
   getFocusChild,
@@ -12,7 +12,10 @@ import {
 import {isEqualToEmptyEditor, toSlateValue} from '../internal-utils/values'
 import type {PortableTextSlateEditor} from '../types/editor'
 import {isEmptyTextBlock} from '../utils'
-import type {BehaviorOperationImplementation} from './behavior.operations'
+import type {
+  BehaviorOperationImplementation,
+  BehaviorOperationImplementationContext,
+} from './behavior.operations'
 
 export const insertBlockOperationImplementation: BehaviorOperationImplementation<
   'insert.block'
@@ -36,26 +39,26 @@ export const insertBlockOperationImplementation: BehaviorOperationImplementation
   }
 
   insertBlock({
+    context,
     block: fragment,
     placement: operation.placement,
     select: operation.select ?? 'start',
     editor: operation.editor,
-    schema: context.schema,
   })
 }
 
 export function insertBlock({
+  context,
   block,
   placement,
   select,
   editor,
-  schema,
 }: {
+  context: BehaviorOperationImplementationContext
   block: Descendant
   placement: 'auto' | 'after' | 'before'
   select: 'start' | 'end' | 'none'
   editor: PortableTextSlateEditor
-  schema: EditorSchema
 }) {
   const [startBlock, startBlockPath] = getSelectionStartBlock({editor})
   const [endBlock, endBlockPath] = getSelectionEndBlock({editor})
@@ -93,7 +96,7 @@ export function insertBlock({
     } else {
       // placement === 'auto'
 
-      if (lastBlock && isEqualToEmptyEditor([lastBlock], schema)) {
+      if (lastBlock && isEqualToEmptyEditor([lastBlock], context.schema)) {
         // And if the last block was an empty text block, let's remove
         // that too
         Transforms.removeNodes(editor, {at: lastBlockPath})
@@ -211,7 +214,7 @@ export function insertBlock({
           Transforms.select(editor, adjustedSelection)
         }
 
-        if (focusBlock && isEqualToEmptyEditor([focusBlock], schema)) {
+        if (focusBlock && isEqualToEmptyEditor([focusBlock], context.schema)) {
           Transforms.removeNodes(editor, {at: focusBlockPath})
         }
 
@@ -221,7 +224,7 @@ export function insertBlock({
       if (editor.isTextBlock(endBlock) && editor.isTextBlock(block)) {
         const selectionStartPoint = Range.start(currentSelection)
 
-        if (isEqualToEmptyEditor([endBlock], schema)) {
+        if (isEqualToEmptyEditor([endBlock], context.schema)) {
           const currentSelection = editor.selection
 
           Transforms.insertNodes(editor, [block], {
@@ -241,25 +244,94 @@ export function insertBlock({
           return
         }
 
+        const endBlockChildKeys = endBlock.children.map((child) => child._key)
+        const endBlockMarkDefsKeys =
+          endBlock.markDefs?.map((markDef) => markDef._key) ?? []
+
+        // Assign new keys to markDefs with duplicate keys and keep track of
+        // the mapping between the old and new keys
+        const markDefKeyMap = new Map<string, string>()
+        const adjustedMarkDefs = block.markDefs?.map((markDef) => {
+          if (endBlockMarkDefsKeys.includes(markDef._key)) {
+            const newKey = context.keyGenerator()
+            markDefKeyMap.set(markDef._key, newKey)
+            return {
+              ...markDef,
+              _key: newKey,
+            }
+          }
+
+          return markDef
+        })
+
+        // Assign new keys to spans with duplicate keys and update any markDef
+        // key if needed
+        const adjustedChildren = block.children.map((child) => {
+          if (isSpan(context, child)) {
+            const marks =
+              child.marks?.map((mark) => {
+                const markDefKey = markDefKeyMap.get(mark)
+
+                if (markDefKey) {
+                  return markDefKey
+                }
+
+                return mark
+              }) ?? []
+
+            if (!isEqual(child.marks, marks)) {
+              return {
+                ...child,
+                _key: endBlockChildKeys.includes(child._key)
+                  ? context.keyGenerator()
+                  : child._key,
+                marks,
+              }
+            }
+          }
+
+          if (endBlockChildKeys.includes(child._key)) {
+            return {
+              ...child,
+              _key: context.keyGenerator(),
+            }
+          }
+
+          return child
+        })
+
+        // Carry over the markDefs from the incoming block to the end block
         Transforms.setNodes(
           editor,
           {
-            markDefs: [...(endBlock.markDefs ?? []), ...(block.markDefs ?? [])],
+            markDefs: [
+              ...(endBlock.markDefs ?? []),
+              ...(adjustedMarkDefs ?? []),
+            ],
           },
           {
             at: endBlockPath,
           },
         )
 
+        // If the children have changed, we need to create a new block with
+        // the adjusted children
+        const adjustedBlock = !isEqual(block.children, adjustedChildren)
+          ? {
+              ...block,
+              children: adjustedChildren as Descendant[],
+            }
+          : block
+
         if (select === 'end') {
-          Transforms.insertFragment(editor, [block], {
+          Transforms.insertFragment(editor, [adjustedBlock], {
             voids: true,
           })
 
           return
         }
 
-        Transforms.insertFragment(editor, [block], {
+        Transforms.insertFragment(editor, [adjustedBlock], {
           at: currentSelection,
           voids: true,
         })
@@ -301,7 +373,7 @@ export function insertBlock({
               Transforms.select(editor, Editor.start(editor, endBlockPath))
             }
 
-            if (isEmptyTextBlock({schema}, endBlock)) {
+            if (isEmptyTextBlock(context, endBlock)) {
               Transforms.removeNodes(editor, {at: Path.next(endBlockPath)})
             }
           } else if (
