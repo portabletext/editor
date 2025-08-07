@@ -1,60 +1,18 @@
-import {page, userEvent} from '@vitest/browser/context'
-import React from 'react'
+import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
 import {
-  defineSchema,
-  EditorProvider,
-  PortableTextEditable,
-  type Editor,
-} from '../src'
-import {effect, execute, forward, type BehaviorEvent} from '../src/behaviors'
-import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
-import {getTersePt} from '../src/internal-utils/terse-pt'
+  defineBehavior,
+  effect,
+  forward,
+  type BehaviorEvent,
+} from '../src/behaviors'
+import {defineSchema} from '../src/editor/editor-schema-definition'
 import {createTestEditor} from '../src/internal-utils/test-editor'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
-import {getSelectionBeforeText} from '../src/internal-utils/text-selection'
+import {getSelectionAfterText} from '../src/internal-utils/text-selection'
 import {BehaviorPlugin} from '../src/plugins'
-import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 
-describe('event.delete.backward', () => {
-  test('Scenario: Executing delete.backward', async () => {
-    const editorRef = React.createRef<Editor>()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
-        <BehaviorPlugin
-          behaviors={[
-            defineBehavior({
-              on: 'delete.backward',
-              actions: [({event}) => [execute(event)]],
-            }),
-          ]}
-        />
-      </EditorProvider>,
-    )
-
-    const locator = page.getByRole('textbox')
-
-    await vi.waitFor(() => expect(locator).toBeInTheDocument())
-
-    await userEvent.type(locator, 'foo')
-
-    await userEvent.keyboard('{Backspace}')
-
-    await vi.waitFor(() => {
-      return expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['fo'])
-    })
-  })
-
+describe('event.delete.forward', () => {
   test('Scenario: Merging two text blocks', async () => {
     const keyGenerator = createTestKeyGenerator()
     const block1Key = keyGenerator()
@@ -119,13 +77,13 @@ describe('event.delete.backward', () => {
 
     editorRef.current?.send({
       type: 'select',
-      at: getSelectionBeforeText(
+      at: getSelectionAfterText(
         editorRef.current?.getSnapshot().context.value,
-        'bar',
+        'foo',
       ),
     })
 
-    await userEvent.keyboard('{Backspace}')
+    await userEvent.keyboard('{Delete}')
 
     await vi.waitFor(() => {
       return expect(editorRef.current?.getSnapshot().context.value).toEqual([
