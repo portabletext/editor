@@ -1,4 +1,6 @@
-import {Editor, Element, Node, Transforms} from 'slate'
+import {isEqual} from 'lodash'
+import {Editor, Element, Node, Path, Transforms} from 'slate'
+import {isSpan, isTextBlock} from '../../internal-utils/parse-blocks'
 import {isChangingRemotely} from '../../internal-utils/withChanges'
 import {isRedoing, isUndoing} from '../../internal-utils/withUndoRedo'
 import type {PortableTextSlateEditor} from '../../types/editor'
@@ -76,6 +78,113 @@ export function createWithObjectKeys(editorActor: EditorActor) {
 
           return
         }
+      }
+
+      if (operation.type === 'merge_node') {
+        const index = operation.path[operation.path.length - 1]
+        const prevPath = Path.previous(operation.path)
+        const prevIndex = prevPath[prevPath.length - 1]
+
+        if (operation.path.length !== 1 || prevPath.length !== 1) {
+          apply(operation)
+          return
+        }
+
+        const block = editor.value.at(index)
+        const previousBlock = editor.value.at(prevIndex)
+
+        if (!block || !previousBlock) {
+          apply(operation)
+          return
+        }
+
+        if (
+          !isTextBlock(editorActor.getSnapshot().context, block) ||
+          !isTextBlock(editorActor.getSnapshot().context, previousBlock)
+        ) {
+          apply(operation)
+          return
+        }
+
+        // If we are merging two text blocks, then we need to make sure there
+        // are no duplicate keys in the blocks. Therefore, we assign new keys
+        // to any child or markDef that shares key with other children or
+        // markDefs in the previous block.
+        const previousBlockChildKeys = previousBlock.children.map(
+          (child) => child._key,
+        )
+        const previousBlockMarkDefKeys =
+          previousBlock.markDefs?.map((markDef) => markDef._key) ?? []
+
+        // Assign new keys to markDefs with duplicate keys and keep track of
+        // the mapping between the old and new keys
+        const markDefKeyMap = new Map<string, string>()
+        const adjustedMarkDefs = block.markDefs?.map((markDef) => {
+          if (previousBlockMarkDefKeys.includes(markDef._key)) {
+            const newKey = editorActor.getSnapshot().context.keyGenerator()
+            markDefKeyMap.set(markDef._key, newKey)
+            return {
+              ...markDef,
+              _key: newKey,
+            }
+          }
+
+          return markDef
+        })
+
+        // Assign new keys to spans with duplicate keys and update any markDef
+        // key if needed
+        let childIndex = 0
+        for (const child of block.children) {
+          if (isSpan(editorActor.getSnapshot().context, child)) {
+            const marks =
+              child.marks?.map((mark) => {
+                const markDefKey = markDefKeyMap.get(mark)
+
+                if (markDefKey) {
+                  return markDefKey
+                }
+
+                return mark
+              }) ?? []
+
+            if (!isEqual(child.marks, marks)) {
+              Transforms.setNodes(
+                editor,
+                {
+                  marks,
+                },
+                {
+                  at: [index, childIndex],
+                },
+              )
+            }
+          }
+
+          if (previousBlockChildKeys.includes(child._key)) {
+            Transforms.setNodes(
+              editor,
+              {
+                _key: editorActor.getSnapshot().context.keyGenerator(),
+              },
+              {
+                at: [index, childIndex],
+              },
+            )
+          }
+          childIndex++
+        }
+
+        apply({
+          ...operation,
+          properties: {
+            ...operation.properties,
+            // Make sure the adjusted markDefs are carried along for the merge
+            // operation
+            markDefs: adjustedMarkDefs,
+          },
+        })
+        return
       }
 
       apply(operation)
