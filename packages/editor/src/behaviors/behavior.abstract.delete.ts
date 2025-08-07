@@ -1,4 +1,4 @@
-import {isSpan} from '../internal-utils/parse-blocks'
+import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
 import * as selectors from '../selectors'
 import * as utils from '../utils'
 import {raise} from './behavior.types.action'
@@ -26,6 +26,57 @@ export const abstractDeleteBehaviors = [
     ],
   }),
   defineBehavior({
+    on: 'delete',
+    guard: ({snapshot, event}) => {
+      if (event.direction !== 'backward') {
+        return false
+      }
+
+      const previousBlock = selectors.getPreviousBlock(snapshot)
+      const focusTextBlock = selectors.getFocusTextBlock(snapshot)
+
+      if (!previousBlock || !focusTextBlock) {
+        return false
+      }
+
+      if (!selectors.isAtTheStartOfBlock(focusTextBlock)(snapshot)) {
+        return false
+      }
+
+      const previousBlockEndPoint = utils.getBlockEndPoint({
+        context: snapshot.context,
+        block: previousBlock,
+      })
+
+      if (!isTextBlock(snapshot.context, previousBlock.node)) {
+        return false
+      }
+
+      return {previousBlockEndPoint, focusTextBlock}
+    },
+    actions: [
+      (_, {previousBlockEndPoint, focusTextBlock}) => [
+        raise({
+          type: 'delete.block',
+          at: focusTextBlock.path,
+        }),
+        raise({
+          type: 'select',
+          at: {
+            anchor: previousBlockEndPoint,
+            focus: previousBlockEndPoint,
+          },
+        }),
+        raise({
+          type: 'insert.block',
+          block: focusTextBlock.node,
+          placement: 'auto',
+          select: 'start',
+        }),
+      ],
+    ],
+  }),
+  defineBehavior({
     on: 'delete.forward',
     guard: ({snapshot}) => {
       if (!snapshot.context.selection) {
@@ -41,6 +92,45 @@ export const abstractDeleteBehaviors = [
           direction: 'forward',
           unit: event.unit,
           at: selection,
+        }),
+      ],
+    ],
+  }),
+  defineBehavior({
+    on: 'delete',
+    guard: ({snapshot, event}) => {
+      if (event.direction !== 'forward') {
+        return false
+      }
+
+      const nextBlock = selectors.getNextBlock(snapshot)
+      const focusTextBlock = selectors.getFocusTextBlock(snapshot)
+
+      if (!nextBlock || !focusTextBlock) {
+        return false
+      }
+
+      if (!selectors.isAtTheEndOfBlock(focusTextBlock)(snapshot)) {
+        return false
+      }
+
+      if (!isTextBlock(snapshot.context, nextBlock.node)) {
+        return false
+      }
+
+      return {nextBlock}
+    },
+    actions: [
+      (_, {nextBlock}) => [
+        raise({
+          type: 'delete.block',
+          at: nextBlock.path,
+        }),
+        raise({
+          type: 'insert.block',
+          block: nextBlock.node,
+          placement: 'auto',
+          select: 'none',
         }),
       ],
     ],
