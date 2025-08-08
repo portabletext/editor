@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.0](https://github.com/portabletext/editor/compare/editor-v2.2.0...editor-v2.3.0) (2025-08-08)
+
+
+### Features
+
+* **`delete`:** improve events when merging two text blocks ([f65959d](https://github.com/portabletext/editor/commit/f65959d2bc6c1e89673dcfc5c0d2be7c16affdb9))
+
 ## [2.2.0](https://github.com/portabletext/editor/compare/editor-v2.1.11...editor-v2.2.0) (2025-08-08)
 
 
