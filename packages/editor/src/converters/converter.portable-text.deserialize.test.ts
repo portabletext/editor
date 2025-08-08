@@ -159,7 +159,7 @@ describe(converterPortableText.deserialize, () => {
     ).toMatchObject({
       data: [
         {
-          _key: 'k0',
+          _key: 'b2',
           _type: 'image',
           src: 'https://example.com/image.jpg',
         },
@@ -573,7 +573,7 @@ describe(converterPortableText.deserialize, () => {
             {
               _type: 'span',
               text: 'foo',
-              marks: ['k1'],
+              marks: ['b0m0'],
             },
             {
               _type: 'span',
@@ -583,7 +583,7 @@ describe(converterPortableText.deserialize, () => {
           ],
           markDefs: [
             {
-              _key: 'k1',
+              _key: 'b0m0',
               _type: 'link',
               href: 'https://example.com',
             },

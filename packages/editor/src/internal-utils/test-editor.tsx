@@ -24,6 +24,7 @@ export async function createTestEditor(
     initialValue?: Array<PortableTextBlock>
     keyGenerator?: () => string
     schemaDefinition?: SchemaDefinition
+    children?: React.ReactNode
   } = {},
 ) {
   const editorRef = React.createRef<Editor>()
@@ -45,6 +46,7 @@ export async function createTestEditor(
       <InternalSlateEditorRefPlugin ref={slateRef} />
       <EventListenerPlugin on={onEvent} />
       <PortableTextEditable />
+      {options.children}
     </EditorProvider>,
   )
 

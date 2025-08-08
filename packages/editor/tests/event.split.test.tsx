@@ -140,7 +140,7 @@ describe('event.split', () => {
       {
         _key: 'k4',
         _type: 'block',
-        children: [{_key: 'k5', _type: 'span', text: ' bar baz', marks: []}],
+        children: [{_key: 'k1', _type: 'span', text: ' bar baz', marks: []}],
         markDefs: [],
         style: 'normal',
       },

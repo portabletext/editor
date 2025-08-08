@@ -51,7 +51,7 @@ Feature: Annotations Across Blocks
     And "{Enter}" is pressed
     Then the text is "foo|bar"
     And "foo" has marks "l1"
-    And "bar" has an annotation different than "l1"
+    And "bar" has marks "l1"
 
   Scenario: Splitting an annotation across blocks using a selection
     Given the text "foo bar baz"
@@ -60,7 +60,7 @@ Feature: Annotations Across Blocks
     And "{Enter}" is pressed
     Then the text is "foo | baz"
     And "foo " has marks "l1"
-    And " baz" has an annotation different than "l1"
+    And " baz" has marks "l1"
 
   Scenario: Splitting a split annotation across blocks
     Given the text "foo bar baz"
@@ -70,10 +70,9 @@ Feature: Annotations Across Blocks
     And "{Enter}" is pressed
     Then the text is "foo| ,bar, baz"
     And "foo" has marks "l1"
-    And " " has an annotation different than "l1"
-    And "bar" has an annotation different than "l1"
-    And " baz" has an annotation different than "l1"
-    And " " and " baz" have the same marks
+    And " " has marks "l1"
+    And "bar" has marks "l1,strong"
+    And " baz" has marks "l1"
 
   Scenario: Splitting text after annotation doesn't touch the annotation
     Given the text "foo bar baz"
