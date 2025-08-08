@@ -1,68 +1,47 @@
-import {page, userEvent} from '@vitest/browser/context'
-import * as React from 'react'
+import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
-import type {Editor} from '../src/editor'
-import {PortableTextEditable} from '../src/editor/Editable'
-import {EditorProvider} from '../src/editor/editor-provider'
 import {defineSchema} from '../src/editor/editor-schema-definition'
 import {getSelectionText} from '../src/internal-utils/selection-text'
 import {getTersePt} from '../src/internal-utils/terse-pt'
 import {createTestEditor} from '../src/internal-utils/test-editor'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {getSelectionAfterText} from '../src/internal-utils/text-selection'
-import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 
 describe('event.split', () => {
   test('Scenario: Splitting mid-block before inline object', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const editorRef = React.createRef<Editor>()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator,
-          schemaDefinition: defineSchema({
-            inlineObjects: [{name: 'stock-ticker'}],
-          }),
-          initialValue: [
+    const {editorRef} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [{name: 'stock-ticker'}],
+      }),
+      initialValue: [
+        {
+          _key: keyGenerator(),
+          _type: 'block',
+          children: [
             {
               _key: keyGenerator(),
-              _type: 'block',
-              children: [
-                {
-                  _key: keyGenerator(),
-                  _type: 'span',
-                  text: 'foo',
-                  marks: [],
-                },
-                {
-                  _key: keyGenerator(),
-                  _type: 'stock-ticker',
-                  value: 'AAPL',
-                },
-                {
-                  _key: keyGenerator(),
-                  _type: 'span',
-                  text: '',
-                  marks: [],
-                },
-              ],
-              markDefs: [],
-              style: 'normal',
+              _type: 'span',
+              text: 'foo',
+              marks: [],
+            },
+            {
+              _key: keyGenerator(),
+              _type: 'stock-ticker',
+              value: 'AAPL',
+            },
+            {
+              _key: keyGenerator(),
+              _type: 'span',
+              text: '',
+              marks: [],
             },
           ],
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
-
-    await vi.waitFor(() => {
-      return expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['foo,{stock-ticker},'])
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
     })
 
     editorRef.current?.send({
@@ -85,35 +64,20 @@ describe('event.split', () => {
 
   test('Scenario: Splitting text block with custom properties', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const editorRef = React.createRef<Editor>()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator,
-          schemaDefinition: defineSchema({}),
-          initialValue: [
-            {
-              _key: keyGenerator(),
-              _type: 'block',
-              children: [
-                {_key: keyGenerator(), _type: 'span', text: 'foo bar baz'},
-              ],
-              _foo: 'bar',
-              baz: 42,
-            },
+    const {editorRef} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _key: keyGenerator(),
+          _type: 'block',
+          children: [
+            {_key: keyGenerator(), _type: 'span', text: 'foo bar baz'},
           ],
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
-
-    await vi.waitFor(() => {
-      return expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['foo bar baz'])
+          _foo: 'bar',
+          baz: 42,
+        },
+      ],
     })
 
     editorRef.current?.send({
@@ -150,57 +114,42 @@ describe('event.split', () => {
 
   test('Scenario: Splitting inline object is a noop', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const editorRef = React.createRef<Editor>()
     const blockKey = keyGenerator()
     const fooKey = keyGenerator()
     const stockTickerKey = keyGenerator()
 
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator,
-          schemaDefinition: defineSchema({
-            inlineObjects: [{name: 'stock-ticker'}],
-          }),
-          initialValue: [
+    const {editorRef, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [{name: 'stock-ticker'}],
+      }),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
             {
-              _key: blockKey,
-              _type: 'block',
-              children: [
-                {
-                  _key: fooKey,
-                  _type: 'span',
-                  text: 'foo',
-                  marks: [],
-                },
-                {
-                  _key: stockTickerKey,
-                  _type: 'stock-ticker',
-                  value: 'AAPL',
-                },
-                {
-                  _key: keyGenerator(),
-                  _type: 'span',
-                  text: '',
-                  marks: [],
-                },
-              ],
+              _key: fooKey,
+              _type: 'span',
+              text: 'foo',
+              marks: [],
+            },
+            {
+              _key: stockTickerKey,
+              _type: 'stock-ticker',
+              value: 'AAPL',
+            },
+            {
+              _key: keyGenerator(),
+              _type: 'span',
+              text: '',
+              marks: [],
             },
           ],
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
-
-    await vi.waitFor(() => {
-      return expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['foo,{stock-ticker},'])
+        },
+      ],
     })
 
-    const locator = page.getByRole('textbox')
     await userEvent.click(locator)
 
     editorRef.current?.send({
@@ -246,41 +195,25 @@ describe('event.split', () => {
 
   test('Scenario: Splitting block object is a noop', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const editorRef = React.createRef<Editor>()
     const imageKey = keyGenerator()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator,
-          schemaDefinition: defineSchema({
-            blockObjects: [{name: 'image'}],
-          }),
-          initialValue: [
-            {
-              _key: imageKey,
-              _type: 'image',
-            },
-            {
-              _key: keyGenerator(),
-              _type: 'block',
-              children: [{_key: keyGenerator(), _type: 'span', text: 'bar'}],
-            },
-          ],
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
-
-    await vi.waitFor(() => {
-      return expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['{image}', 'bar'])
+    const {editorRef, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'image'}],
+      }),
+      initialValue: [
+        {
+          _key: imageKey,
+          _type: 'image',
+        },
+        {
+          _key: keyGenerator(),
+          _type: 'block',
+          children: [{_key: keyGenerator(), _type: 'span', text: 'bar'}],
+        },
+      ],
     })
 
-    const locator = page.getByRole('textbox')
     await userEvent.click(locator)
 
     editorRef.current?.send({
@@ -317,48 +250,33 @@ describe('event.split', () => {
 
   test('Scenario: Splitting with an expanded selection starting on a block object', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const editorRef = React.createRef<Editor>()
     const blockKey = keyGenerator()
     const barKey = keyGenerator()
     const imageKey = keyGenerator()
 
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator,
-          schemaDefinition: defineSchema({
-            blockObjects: [{name: 'image'}],
-          }),
-          initialValue: [
-            {
-              _key: keyGenerator(),
-              _type: 'block',
-              children: [{_key: keyGenerator(), _type: 'span', text: 'foo'}],
-            },
-            {
-              _key: imageKey,
-              _type: 'image',
-            },
-            {
-              _key: blockKey,
-              _type: 'block',
-              children: [{_key: barKey, _type: 'span', text: 'bar'}],
-            },
-          ],
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
-
-    await vi.waitFor(() => {
-      return expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['foo', '{image}', 'bar'])
+    const {editorRef, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'image'}],
+      }),
+      initialValue: [
+        {
+          _key: keyGenerator(),
+          _type: 'block',
+          children: [{_key: keyGenerator(), _type: 'span', text: 'foo'}],
+        },
+        {
+          _key: imageKey,
+          _type: 'image',
+        },
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: barKey, _type: 'span', text: 'bar'}],
+        },
+      ],
     })
 
-    const locator = page.getByRole('textbox')
     await userEvent.click(locator)
 
     editorRef.current?.send({
@@ -409,48 +327,33 @@ describe('event.split', () => {
 
   test('Scenario: Splitting with an expanded selection ending on a block object', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const editorRef = React.createRef<Editor>()
     const blockKey = keyGenerator()
     const fooKey = keyGenerator()
     const imageKey = keyGenerator()
 
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator,
-          schemaDefinition: defineSchema({
-            blockObjects: [{name: 'image'}],
-          }),
-          initialValue: [
-            {
-              _key: blockKey,
-              _type: 'block',
-              children: [{_key: fooKey, _type: 'span', text: 'foo'}],
-            },
-            {
-              _key: imageKey,
-              _type: 'image',
-            },
-            {
-              _key: keyGenerator(),
-              _type: 'block',
-              children: [{_key: keyGenerator(), _type: 'span', text: 'bar'}],
-            },
-          ],
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
-
-    await vi.waitFor(() => {
-      return expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['foo', '{image}', 'bar'])
+    const {editorRef, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'image'}],
+      }),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: fooKey, _type: 'span', text: 'foo'}],
+        },
+        {
+          _key: imageKey,
+          _type: 'image',
+        },
+        {
+          _key: keyGenerator(),
+          _type: 'block',
+          children: [{_key: keyGenerator(), _type: 'span', text: 'bar'}],
+        },
+      ],
     })
 
-    const locator = page.getByRole('textbox')
     await userEvent.click(locator)
 
     editorRef.current?.send({
