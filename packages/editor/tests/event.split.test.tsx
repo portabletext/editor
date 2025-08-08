@@ -555,7 +555,7 @@ describe('event.split', () => {
           style: 'normal',
         },
         {
-          _key: 'k6',
+          _key: barBlockKey,
           _type: 'block',
           children: [
             {_key: barSpanKey, _type: 'span', text: 'ar', marks: ['strong']},

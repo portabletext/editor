@@ -65,6 +65,79 @@ export const abstractSplitBehaviors = [
         return false
       }
 
+      const selectionStartBlock = selectors.getSelectionStartBlock(snapshot)
+      const selectionEndBlock = selectors.getSelectionEndBlock(snapshot)
+
+      if (!selectionStartBlock || !selectionEndBlock) {
+        return false
+      }
+
+      if (selectionStartBlock.node._key === selectionEndBlock.node._key) {
+        return false
+      }
+
+      const startPoint = utils.getSelectionStartPoint(selection)
+      const startBlockEndPoint = utils.getBlockEndPoint({
+        context: snapshot.context,
+        block: selectionStartBlock,
+      })
+      const endPoint = utils.getSelectionEndPoint(selection)
+      const endBlockStartPoint = utils.getBlockStartPoint({
+        context: snapshot.context,
+        block: selectionEndBlock,
+      })
+
+      const selectedValue = selectors.getSelectedValue(snapshot)
+
+      const blocksInBetween = selectedValue.filter(
+        (block) =>
+          block._key !== selectionStartBlock.node._key &&
+          block._key !== selectionEndBlock.node._key,
+      )
+
+      return {
+        startPoint,
+        startBlockEndPoint,
+        endPoint,
+        endBlockStartPoint,
+        blocksInBetween,
+      }
+    },
+    actions: [
+      (
+        _,
+        {
+          startPoint,
+          startBlockEndPoint,
+          endPoint,
+          endBlockStartPoint,
+          blocksInBetween,
+        },
+      ) => [
+        raise({
+          type: 'delete',
+          at: {anchor: startPoint, focus: startBlockEndPoint},
+        }),
+        ...blocksInBetween.map((block) =>
+          raise({type: 'delete.block', at: [{_key: block._key}]}),
+        ),
+        raise({
+          type: 'delete',
+          at: {anchor: endBlockStartPoint, focus: endPoint},
+        }),
+      ],
+    ],
+  }),
+
+  defineBehavior({
+    on: 'split',
+    guard: ({snapshot}) => {
+      const selection = snapshot.context.selection
+
+      if (!selection || utils.isSelectionCollapsed(selection)) {
+        return false
+      }
+
       return {selection}
     },
     actions: [
