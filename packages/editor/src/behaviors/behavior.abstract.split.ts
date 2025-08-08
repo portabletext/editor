@@ -111,7 +111,10 @@ export const abstractSplitBehaviors = [
           block: focusTextBlock.node,
         }),
         context: snapshot.context,
-        options: {refreshKeys: true, validateFields: true},
+        options: {
+          refreshKeys: false,
+          validateFields: false,
+        },
       })
 
       if (!newTextBlock) {

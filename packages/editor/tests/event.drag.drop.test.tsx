@@ -2,7 +2,6 @@ import {userEvent} from '@vitest/browser/context'
 import {assert, describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
 import {converterPortableText} from '../src/converters/converter.portable-text'
-import {getTersePt} from '../src/internal-utils/terse-pt'
 import {createTestEditor} from '../src/internal-utils/test-editor'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 
@@ -10,6 +9,7 @@ describe('event.drag.drop', () => {
   test('Scenario: Dragging inline object', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
+    const fooKey = keyGenerator()
     const stockTicketKey = keyGenerator()
     const barKey = keyGenerator()
 
@@ -27,7 +27,7 @@ describe('event.drag.drop', () => {
             _type: 'block',
             children: [
               {
-                _key: keyGenerator(),
+                _key: fooKey,
                 _type: 'span',
                 text: 'foo',
                 marks: [],
@@ -114,9 +114,130 @@ describe('event.drag.drop', () => {
     })
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['foobar,{stock-ticker},'])
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_key: fooKey, _type: 'span', text: 'foobar', marks: []},
+            {_key: stockTicketKey, _type: 'stock-ticker', symbol: 'AAPL'},
+            {_key: 'k6', _type: 'span', text: '', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Dragging block object', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const imageKey = keyGenerator()
+
+    const {locator, editorRef, editorActorRef, slateRef} =
+      await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({
+          blockObjects: [
+            {name: 'image', fields: [{name: 'src', type: 'string'}]},
+          ],
+        }),
+        initialValue: [
+          {
+            _key: blockKey,
+            _type: 'block',
+            children: [{_key: spanKey, _type: 'span', text: 'foo bar baz'}],
+          },
+          {
+            _key: imageKey,
+            _type: 'image',
+            src: 'https://example.com/image.jpg',
+          },
+        ],
+      })
+
+    const imageSelection = {
+      anchor: {
+        path: [{_key: imageKey}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: imageKey}],
+        offset: 0,
+      },
+    }
+
+    await userEvent.click(locator)
+    editorRef.current?.send({type: 'select', at: imageSelection})
+
+    await vi.waitFor(() => {
+      const selection = editorRef.current?.getSnapshot().context.selection
+      expect(selection).toEqual({
+        ...imageSelection,
+        backward: false,
+      })
+    })
+
+    const json = converterPortableText.serialize({
+      snapshot: editorRef.current?.getSnapshot()!,
+      event: {
+        type: 'serialize',
+        originEvent: 'drag.dragstart',
+      },
+    })
+
+    if (json.type === 'serialization.failure') {
+      assert.fail(json.reason)
+    }
+
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData(json.mimeType, json.data)
+
+    editorActorRef.current?.send({
+      type: 'behavior event',
+      behaviorEvent: {
+        type: 'drag.drop',
+        originEvent: {
+          dataTransfer,
+        },
+        dragOrigin: {selection: imageSelection},
+        position: {
+          block: 'start',
+          isEditor: false,
+          selection: {
+            anchor: {
+              path: [{_key: blockKey}, 'children', {_key: spanKey}],
+              offset: 0,
+            },
+            focus: {
+              path: [{_key: blockKey}, 'children', {_key: spanKey}],
+              offset: 0,
+            },
+          },
+        },
+      },
+      editor: slateRef.current!,
+    })
+
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _key: imageKey,
+          _type: 'image',
+          src: 'https://example.com/image.jpg',
+        },
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_key: spanKey, _type: 'span', text: 'foo bar baz', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
     })
   })
 })
