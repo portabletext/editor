@@ -21,8 +21,8 @@ importers:
         specifier: 2.1.3
         version: 2.1.3
       '@ianvs/prettier-plugin-sort-imports':
-        specifier: ^4.5.1
-        version: 4.5.1(prettier@3.6.2)
+        specifier: ^4.6.1
+        version: 4.6.1(prettier@3.6.2)
       '@playwright/test':
         specifier: ^1.54.2
         version: 1.54.2
@@ -1492,16 +1492,22 @@ packages:
     resolution: {integrity: sha512-xeO57FpIu4p1Ri3Jq/EXq4ClRm86dVF2z/+kvFnyqVYRavTZmaFaUBbWCOuuTh0o/g7DSsk6kc2vrS4Vl5oPOQ==}
     engines: {node: '>=18.18'}
 
-  '@ianvs/prettier-plugin-sort-imports@4.5.1':
-    resolution: {integrity: sha512-vOQwIyQHnHz0ikvHEQDzwUkNfX74o/7qNEpm9LiPtyBvCg/AU/DOkhwe1o92chPS1QzS6G7HeiO+OwIt8a358A==}
+  '@ianvs/prettier-plugin-sort-imports@4.6.1':
+    resolution: {integrity: sha512-Q0gujs/g6tw1uOGd1bTVLGDzAwb/UwrCehhPCQevTCYDkho8+eQSOhA0zcy9AM0XnXM1ChBWsZeE4P7Nym0pyw==}
     peerDependencies:
       '@prettier/plugin-oxc': ^0.0.4
       '@vue/compiler-sfc': 2.7.x || 3.x
+      content-tag: ^4.0.0
       prettier: 2 || 3 || ^4.0.0-0
+      prettier-plugin-ember-template-tag: ^2.1.0
     peerDependenciesMeta:
       '@prettier/plugin-oxc':
         optional: true
       '@vue/compiler-sfc':
+        optional: true
+      content-tag:
+        optional: true
+      prettier-plugin-ember-template-tag:
         optional: true
 
   '@img/sharp-darwin-arm64@0.33.5':
@@ -7949,7 +7955,7 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.2': {}
 
-  '@ianvs/prettier-plugin-sort-imports@4.5.1(prettier@3.6.2)':
+  '@ianvs/prettier-plugin-sort-imports@4.6.1(prettier@3.6.2)':
     dependencies:
       '@babel/generator': 7.28.0
       '@babel/parser': 7.28.0
