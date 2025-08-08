@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.2.0](https://github.com/portabletext/editor/compare/editor-v2.1.11...editor-v2.2.0) (2025-08-08)
+
+
+### Features
+
+* make the editor less aggressive when it comes to assigning new keys ([8960c07](https://github.com/portabletext/editor/commit/8960c07a40c9931d87ed4382c02f61cc00d7a9e1))
+
+
+### Bug Fixes
+
+* edge case with splitting expanded selection ([142c00a](https://github.com/portabletext/editor/commit/142c00abe76e3b66f873537f715a161a818e45a4))
+* ensure unique child and markDefs keys when merging text blocks ([1c1f046](https://github.com/portabletext/editor/commit/1c1f0464e325c20ec7506b4cb39659381f99fddd))
+* **split:** avoid splitting when selecting across blocks ([348e017](https://github.com/portabletext/editor/commit/348e017990090c596607789b800cc929cfd55ea3))
+
 ## [2.1.11](https://github.com/portabletext/editor/compare/editor-v2.1.10...editor-v2.1.11) (2025-08-06)
 
 
