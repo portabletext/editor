@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.13](https://github.com/portabletext/editor/compare/toolbar-v2.0.12...toolbar-v2.0.13) (2025-08-08)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @portabletext/editor bumped to 2.2.0
+  * peerDependencies
+    * @portabletext/editor bumped to 2.2.0
+
 ## [2.0.12](https://github.com/portabletext/editor/compare/toolbar-v2.0.11...toolbar-v2.0.12) (2025-08-06)
 
 
