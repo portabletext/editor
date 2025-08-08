@@ -191,57 +191,51 @@ describe('plugin:withPortableTextMarksModel', () => {
       await waitFor(() => {
         PortableTextEditor.select(editor, sel)
         PortableTextEditor.delete(editor, sel)
-        expect(PortableTextEditor.getValue(editor)).toMatchInlineSnapshot(`
-        [
+        expect(PortableTextEditor.getValue(editor)).toEqual([
           {
-            "_key": "5fc57af23597",
-            "_type": "myTestBlockType",
-            "children": [
+            _key: '5fc57af23597',
+            _type: 'myTestBlockType',
+            children: [
               {
-                "_key": "be1c67c6971a",
-                "_type": "span",
-                "marks": [],
-                "text": "This is a ",
+                _key: 'be1c67c6971a',
+                _type: 'span',
+                marks: [],
+                text: 'This is a ',
               },
               {
-                "_key": "11c8c9f783a8",
-                "_type": "span",
-                "marks": [
-                  "fde1fd54b544",
-                ],
-                "text": "link",
+                _key: '11c8c9f783a8',
+                _type: 'span',
+                marks: ['fde1fd54b544'],
+                text: 'link',
               },
               {
-                "_key": "576c748e0cd2",
-                "_type": "span",
-                "marks": [],
-                "text": "This is ",
+                _key: '576c748e0cd2',
+                _type: 'span',
+                marks: [],
+                text: 'This is ',
               },
               {
-                "_key": "f3d73d3833bf",
-                "_type": "span",
-                "marks": [
-                  "7b6d3d5de30c",
-                ],
-                "text": "another",
+                _key: 'f3d73d3833bf',
+                _type: 'span',
+                marks: ['7b6d3d5de30c'],
+                text: 'another',
               },
             ],
-            "markDefs": [
+            markDefs: [
               {
-                "_key": "fde1fd54b544",
-                "_type": "link",
-                "url": "1",
+                _key: 'fde1fd54b544',
+                _type: 'link',
+                url: '1',
               },
               {
-                "_key": "7b6d3d5de30c",
-                "_type": "link",
-                "url": "2",
+                _key: '7b6d3d5de30c',
+                _type: 'link',
+                url: '2',
               },
             ],
-            "style": "normal",
+            style: 'normal',
           },
-        ]
-      `)
+        ])
       })
     })
 
