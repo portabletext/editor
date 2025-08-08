@@ -1,4 +1,4 @@
-import {Transforms} from 'slate'
+import {deleteText, setSelection, Transforms} from 'slate'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {isTextBlock} from '../internal-utils/parse-blocks'
 import {getBlockPath} from '../internal-utils/slate-utils'
@@ -11,13 +11,31 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
 > = ({context, operation}) => {
   const anchorBlockKey = getBlockKeyFromSelectionPoint(operation.at.anchor)
   const focusBlockKey = getBlockKeyFromSelectionPoint(operation.at.focus)
+
+  const startBlockKey = operation.at.backward ? focusBlockKey : anchorBlockKey
   const endBlockKey = operation.at.backward ? anchorBlockKey : focusBlockKey
   const endOffset = operation.at.backward
     ? operation.at.focus.offset
     : operation.at.anchor.offset
 
+  if (!startBlockKey) {
+    throw new Error('Failed to get start block key')
+  }
+
   if (!endBlockKey) {
     throw new Error('Failed to get end block key')
+  }
+
+  const startBlockIndex = operation.editor.blockIndexMap.get(startBlockKey)
+
+  if (startBlockIndex === undefined) {
+    throw new Error('Failed to get start block index')
+  }
+
+  const startBlock = operation.editor.value.at(startBlockIndex)
+
+  if (!startBlock) {
+    throw new Error('Failed to get start block')
   }
 
   const endBlockIndex = operation.editor.blockIndexMap.get(endBlockKey)
@@ -82,10 +100,21 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
 
   const hanging = isTextBlock(context, endBlock) && endOffset === 0
 
-  operation.editor.delete({
+  deleteText(operation.editor, {
     at: range,
     reverse: operation.direction === 'backward',
     unit: operation.unit,
     hanging,
   })
+
+  if (
+    operation.editor.selection &&
+    isTextBlock(context, startBlock) &&
+    isTextBlock(context, endBlock)
+  ) {
+    setSelection(operation.editor, {
+      anchor: operation.editor.selection.focus,
+      focus: operation.editor.selection.focus,
+    })
+  }
 }

@@ -8,6 +8,7 @@ import {EditorProvider} from '../src/editor/editor-provider'
 import {defineSchema} from '../src/editor/editor-schema-definition'
 import {getSelectionText} from '../src/internal-utils/selection-text'
 import {getTersePt} from '../src/internal-utils/terse-pt'
+import {createTestEditor} from '../src/internal-utils/test-editor'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {getSelectionAfterText} from '../src/internal-utils/text-selection'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
@@ -496,5 +497,73 @@ describe('event.split', () => {
       'f',
       'bazbar',
     ])
+  })
+
+  test('Scenario: Splitting with an expanded selection from one span to another', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+
+    const {editorRef} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+      initialValue: [
+        {
+          _key: fooBlockKey,
+          _type: 'block',
+          children: [{_key: fooSpanKey, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: barBlockKey,
+          _type: 'block',
+          children: [
+            {_key: barSpanKey, _type: 'span', text: 'bar', marks: ['strong']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    editorRef.current?.send({
+      type: 'select',
+      at: {
+        anchor: {
+          offset: 2,
+          path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        },
+        focus: {
+          offset: 1,
+          path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
+        },
+      },
+    })
+
+    editorRef.current?.send({type: 'split'})
+
+    await vi.waitFor(() => {
+      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _key: fooBlockKey,
+          _type: 'block',
+          children: [{_key: fooSpanKey, _type: 'span', text: 'fo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: 'k6',
+          _type: 'block',
+          children: [
+            {_key: barSpanKey, _type: 'span', text: 'ar', marks: ['strong']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
   })
 })
