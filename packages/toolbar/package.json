@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/toolbar",
-  "version": "2.0.14",
+  "version": "2.0.15",
   "description": "Utilities for building a toolbar for the Portable Text Editor",
   "keywords": [
     "portabletext",
