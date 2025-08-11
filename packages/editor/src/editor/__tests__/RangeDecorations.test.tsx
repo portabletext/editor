@@ -5,11 +5,11 @@ import {describe, expect, it, vi} from 'vitest'
 import type {RangeDecoration} from '../..'
 import {createTestKeyGenerator} from '../../internal-utils/test-key-generator'
 import type {PortableTextEditor} from '../PortableTextEditor'
-import {PortableTextEditorTester, schemaType} from './PortableTextEditorTester'
+import {PortableTextEditorTester} from './PortableTextEditorTester'
 
 const helloBlock: PortableTextBlock = {
   _key: '123',
-  _type: 'myTestBlockType',
+  _type: 'block',
   markDefs: [],
   children: [{_key: '567', _type: 'span', text: 'Hello', marks: []}],
 }
@@ -44,7 +44,6 @@ describe('RangeDecorations', () => {
           onChange={onChange}
           rangeDecorations={rangeDecorations}
           ref={editorRef}
-          schemaType={schemaType}
           value={value}
         />,
       ),
@@ -71,7 +70,6 @@ describe('RangeDecorations', () => {
         onChange={onChange}
         rangeDecorations={rangeDecorations}
         ref={editorRef}
-        schemaType={schemaType}
         value={value}
       />,
     )
@@ -95,7 +93,6 @@ describe('RangeDecorations', () => {
         onChange={onChange}
         rangeDecorations={rangeDecorations}
         ref={editorRef}
-        schemaType={schemaType}
         value={value}
       />,
     )
@@ -122,7 +119,6 @@ describe('RangeDecorations', () => {
         onChange={onChange}
         rangeDecorations={rangeDecorations}
         ref={editorRef}
-        schemaType={schemaType}
         value={value}
       />,
     )
@@ -150,7 +146,6 @@ describe('RangeDecorations', () => {
         onChange={onChange}
         rangeDecorations={rangeDecorations}
         ref={editorRef}
-        schemaType={schemaType}
         value={value}
       />,
     )
@@ -178,7 +173,6 @@ describe('RangeDecorations', () => {
         onChange={onChange}
         rangeDecorations={rangeDecorations}
         ref={editorRef}
-        schemaType={schemaType}
         value={value}
       />,
     )
@@ -206,7 +200,6 @@ describe('RangeDecorations', () => {
         onChange={onChange}
         rangeDecorations={rangeDecorations}
         ref={editorRef}
-        schemaType={schemaType}
         value={value}
       />,
     )

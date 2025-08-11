@@ -1,10 +1,7 @@
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {
-  PortableTextEditorTester,
-  schemaType,
-} from '../../__tests__/PortableTextEditorTester'
+import {PortableTextEditorTester} from '../../__tests__/PortableTextEditorTester'
 import {createTestKeyGenerator} from '../../../internal-utils/test-key-generator'
 import {PortableTextEditor} from '../../PortableTextEditor'
 
@@ -14,7 +11,7 @@ describe('plugin:withPortableTextLists', () => {
     const initialValue = [
       {
         _key: 'a',
-        _type: 'myTestBlockType',
+        _type: 'block',
         children: [
           {
             _key: 'a1',
@@ -28,7 +25,7 @@ describe('plugin:withPortableTextLists', () => {
       },
       {
         _key: 'b',
-        _type: 'myTestBlockType',
+        _type: 'block',
         children: [
           {
             _key: '2',
@@ -50,7 +47,6 @@ describe('plugin:withPortableTextLists', () => {
           keyGenerator={createTestKeyGenerator()}
           onChange={onChange}
           ref={editorRef}
-          schemaType={schemaType}
           value={initialValue}
         />,
       )

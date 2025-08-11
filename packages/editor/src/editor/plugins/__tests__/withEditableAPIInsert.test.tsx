@@ -1,17 +1,14 @@
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {
-  PortableTextEditorTester,
-  schemaType,
-} from '../../__tests__/PortableTextEditorTester'
+import {PortableTextEditorTester} from '../../__tests__/PortableTextEditorTester'
 import {createTestKeyGenerator} from '../../../internal-utils/test-key-generator'
 import {PortableTextEditor} from '../../PortableTextEditor'
 
 const initialValue = [
   {
     _key: 'a',
-    _type: 'myTestBlockType',
+    _type: 'block',
     children: [
       {
         _key: 'a1',
@@ -32,7 +29,7 @@ const initialSelection = {
 const emptyTextBlock = [
   {
     _key: 'emptyBlock',
-    _type: 'myTestBlockType',
+    _type: 'block',
     children: [
       {
         _key: 'emptySpan',
@@ -66,7 +63,6 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
         keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
-        schemaType={schemaType}
         value={initialValue}
       />,
     )
@@ -104,7 +100,7 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           {
             _key: 'a',
-            _type: 'myTestBlockType',
+            _type: 'block',
             children: [
               {
                 _key: 'a1',
@@ -148,7 +144,7 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           {
             _key: 'a',
-            _type: 'myTestBlockType',
+            _type: 'block',
             children: [
               {
                 _key: 'a1',
@@ -189,7 +185,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
     const value = [
       {
         _key: 'emptyBlock',
-        _type: 'myTestBlockType',
+        _type: 'block',
         children: [
           {
             _key: 'emptySpan',
@@ -207,7 +203,6 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
     render(
       <PortableTextEditorTester
         ref={editorRef}
-        schemaType={schemaType}
         value={emptyTextBlock}
         onChange={onChange}
         keyGenerator={createTestKeyGenerator()}
@@ -230,20 +225,24 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
 
     await waitFor(() => {
       if (editorRef.current) {
-        const someObject = editorRef.current.schemaTypes.inlineObjects.find(
-          (t) => t.name === 'someObject',
-        )!
-
-        PortableTextEditor.insertBlock(editorRef.current, someObject, {
-          color: 'red',
-        })
+        PortableTextEditor.insertBlock(
+          editorRef.current,
+          {name: 'custom image'},
+          {
+            src: 'https://example.com/image.jpg',
+          },
+        )
       }
     })
 
     await waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
-          {_key: 'k2', _type: 'someObject', color: 'red'},
+          {
+            _key: 'k2',
+            _type: 'custom image',
+            src: 'https://example.com/image.jpg',
+          },
         ])
       }
     })
@@ -256,7 +255,6 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
     render(
       <PortableTextEditorTester
         ref={editorRef}
-        schemaType={schemaType}
         value={initialValue}
         onChange={onChange}
         keyGenerator={createTestKeyGenerator()}
@@ -282,13 +280,13 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
 
     await waitFor(() => {
       if (editorRef.current) {
-        const someObject = editorRef.current.schemaTypes.inlineObjects.find(
-          (t) => t.name === 'someObject',
-        )!
-
-        PortableTextEditor.insertBlock(editorRef.current, someObject, {
-          color: 'red',
-        })
+        PortableTextEditor.insertBlock(
+          editorRef.current,
+          {name: 'custom image'},
+          {
+            src: 'https://example.com/image.jpg',
+          },
+        )
       }
     })
 
@@ -296,7 +294,11 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           ...initialValue,
-          {_key: 'k2', _type: 'someObject', color: 'red'},
+          {
+            _key: 'k2',
+            _type: 'custom image',
+            src: 'https://example.com/image.jpg',
+          },
         ])
       }
     })
@@ -310,7 +312,6 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       <PortableTextEditorTester
         onChange={onChange}
         ref={editorRef}
-        schemaType={schemaType}
         value={initialValue}
         keyGenerator={createTestKeyGenerator()}
       />,
@@ -338,19 +339,24 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
 
     await waitFor(() => {
       if (editorRef.current) {
-        const someObject = editorRef.current.schemaTypes.inlineObjects.find(
-          (t) => t.name === 'someObject',
-        )!
-        PortableTextEditor.insertBlock(editorRef.current, someObject, {
-          color: 'red',
-        })
+        PortableTextEditor.insertBlock(
+          editorRef.current,
+          {name: 'custom image'},
+          {
+            src: 'https://example.com/image.jpg',
+          },
+        )
       }
     })
 
     await waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
-          {_key: 'k2', _type: 'someObject', color: 'red'},
+          {
+            _key: 'k2',
+            _type: 'custom image',
+            src: 'https://example.com/image.jpg',
+          },
           ...initialValue,
         ])
       }
@@ -361,14 +367,13 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const value = [
       ...initialValue,
-      {_key: 'b', _type: 'someObject', color: 'red'},
+      {_key: 'b', _type: 'custom image', src: 'https://example.com/image.jpg'},
     ]
     const onChange = vi.fn()
 
     render(
       <PortableTextEditorTester
         ref={editorRef}
-        schemaType={schemaType}
         value={value}
         onChange={onChange}
         keyGenerator={createTestKeyGenerator()}
@@ -385,7 +390,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
     await waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
-        // Focus the `someObject` block
+        // Focus the `custom image` block
         PortableTextEditor.select(editorRef.current, {
           focus: {path: [{_key: 'b'}], offset: 0},
           anchor: {path: [{_key: 'b'}], offset: 0},
@@ -395,12 +400,13 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
 
     await waitFor(() => {
       if (editorRef.current) {
-        const someObject = editorRef.current.schemaTypes.inlineObjects.find(
-          (t) => t.name === 'someObject',
-        )!
-        PortableTextEditor.insertBlock(editorRef.current, someObject, {
-          color: 'yellow',
-        })
+        PortableTextEditor.insertBlock(
+          editorRef.current,
+          {name: 'custom image'},
+          {
+            src: 'https://example.com/image2.jpg',
+          },
+        )
       }
     })
 
@@ -408,7 +414,11 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           ...value,
-          {_key: 'k2', _type: 'someObject', color: 'yellow'},
+          {
+            _key: 'k2',
+            _type: 'custom image',
+            src: 'https://example.com/image2.jpg',
+          },
         ])
       }
     })
@@ -418,14 +428,13 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const value = [
       ...initialValue,
-      {_key: 'b', _type: 'someObject', color: 'red'},
+      {_key: 'b', _type: 'custom image', src: 'https://example.com/image.jpg'},
     ]
     const onChange = vi.fn()
 
     render(
       <PortableTextEditorTester
         ref={editorRef}
-        schemaType={schemaType}
         value={value}
         onChange={onChange}
         keyGenerator={createTestKeyGenerator()}
@@ -449,12 +458,13 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
 
     await waitFor(() => {
       if (editorRef.current) {
-        const someObject = editorRef.current.schemaTypes.inlineObjects.find(
-          (t) => t.name === 'someObject',
-        )!
-        PortableTextEditor.insertBlock(editorRef.current, someObject, {
-          color: 'yellow',
-        })
+        PortableTextEditor.insertBlock(
+          editorRef.current,
+          {name: 'custom image'},
+          {
+            src: 'https://example.com/image2.jpg',
+          },
+        )
       }
     })
 
@@ -462,7 +472,11 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           value[0],
-          {_key: 'k2', _type: 'someObject', color: 'yellow'},
+          {
+            _key: 'k2',
+            _type: 'custom image',
+            src: 'https://example.com/image2.jpg',
+          },
           value[1],
         ])
       }
@@ -477,7 +491,6 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
     render(
       <PortableTextEditorTester
         ref={editorRef}
-        schemaType={schemaType}
         value={value}
         onChange={onChange}
         keyGenerator={createTestKeyGenerator()}
@@ -499,12 +512,13 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
 
     await waitFor(() => {
       if (editorRef.current) {
-        const someObject = editorRef.current.schemaTypes.inlineObjects.find(
-          (t) => t.name === 'someObject',
-        )!
-        PortableTextEditor.insertBlock(editorRef.current, someObject, {
-          color: 'yellow',
-        })
+        PortableTextEditor.insertBlock(
+          editorRef.current,
+          {name: 'custom image'},
+          {
+            src: 'https://example.com/image.jpg',
+          },
+        )
       }
     })
 
@@ -512,7 +526,11 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           value[0],
-          {_key: 'k2', _type: 'someObject', color: 'yellow'},
+          {
+            _key: 'k2',
+            _type: 'custom image',
+            src: 'https://example.com/image.jpg',
+          },
         ])
       }
     })

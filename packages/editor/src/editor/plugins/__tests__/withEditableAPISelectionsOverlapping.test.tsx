@@ -2,17 +2,14 @@ import type {PortableTextBlock} from '@sanity/types'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {
-  PortableTextEditorTester,
-  schemaType,
-} from '../../__tests__/PortableTextEditorTester'
+import {PortableTextEditorTester} from '../../__tests__/PortableTextEditorTester'
 import {createTestKeyGenerator} from '../../../internal-utils/test-key-generator'
 import {PortableTextEditor} from '../../PortableTextEditor'
 
 const INITIAL_VALUE: PortableTextBlock[] = [
   {
     _key: 'a',
-    _type: 'myTestBlockType',
+    _type: 'block',
     children: [
       {
         _key: 'a1',
@@ -35,7 +32,6 @@ describe('plugin:withEditableAPI: .isSelectionsOverlapping', () => {
         keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
-        schemaType={schemaType}
         value={INITIAL_VALUE}
       />,
     )
@@ -70,7 +66,6 @@ describe('plugin:withEditableAPI: .isSelectionsOverlapping', () => {
         keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
-        schemaType={schemaType}
         value={INITIAL_VALUE}
       />,
     )
@@ -105,7 +100,6 @@ describe('plugin:withEditableAPI: .isSelectionsOverlapping', () => {
         keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
-        schemaType={schemaType}
         value={INITIAL_VALUE}
       />,
     )
@@ -140,7 +134,6 @@ describe('plugin:withEditableAPI: .isSelectionsOverlapping', () => {
         keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
-        schemaType={schemaType}
         value={INITIAL_VALUE}
       />,
     )

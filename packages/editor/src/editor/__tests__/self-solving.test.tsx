@@ -1,23 +1,13 @@
 import type {JSONValue, Patch} from '@portabletext/patches'
-import {Schema} from '@sanity/schema'
 import type {PortableTextBlock, PortableTextSpan} from '@sanity/types'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type ComponentProps, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
+import {createTestKeyGenerator} from '../../internal-utils/test-key-generator'
 import {getTextSelection} from '../../internal-utils/text-selection'
-import {PortableTextEditable} from '../Editable'
 import {PortableTextEditor} from '../PortableTextEditor'
+import {PortableTextEditorTester} from './PortableTextEditorTester'
 
-const schema = Schema.compile({
-  types: [
-    {
-      name: 'portable-text',
-      type: 'array',
-      of: [{type: 'block'}, {type: 'custom image'}],
-    },
-    {name: 'custom image', type: 'object'},
-  ],
-}).get('portable-text')
 type OnChange = ComponentProps<typeof PortableTextEditor>['onChange']
 
 function block(
@@ -85,14 +75,12 @@ describe('Feature: Self-solving', () => {
     }
 
     render(
-      <PortableTextEditor
+      <PortableTextEditorTester
         ref={editorRef}
-        schemaType={schema}
+        keyGenerator={createTestKeyGenerator()}
         value={initialValue}
         onChange={onChange}
-      >
-        <PortableTextEditable />
-      </PortableTextEditor>,
+      />,
     )
 
     await waitFor(() => {

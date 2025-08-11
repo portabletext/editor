@@ -1,22 +1,10 @@
-import {Schema} from '@sanity/schema'
 import type {PortableTextBlock} from '@sanity/types'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import type {EditorChange, EditorSelection} from '../../types/editor'
-import {PortableTextEditable} from '../Editable'
 import {PortableTextEditor} from '../PortableTextEditor'
-
-const schema = Schema.compile({
-  types: [
-    {
-      name: 'portable-text',
-      type: 'array',
-      of: [{type: 'block'}, {type: 'custom image'}],
-    },
-    {name: 'custom image', type: 'object'},
-  ],
-}).get('portable-text')
+import {PortableTextEditorTester} from './PortableTextEditorTester'
 
 describe(PortableTextEditor.insertBlock.name, () => {
   test('Scenario: Inserting a custom block without a selection #1', async () => {
@@ -38,15 +26,12 @@ describe(PortableTextEditor.insertBlock.name, () => {
     const onChange: (change: EditorChange) => void = vi.fn()
 
     render(
-      <PortableTextEditor
+      <PortableTextEditorTester
         ref={editorRef}
-        schemaType={schema}
         value={initialValue}
         keyGenerator={() => 'bb'}
         onChange={onChange}
-      >
-        <PortableTextEditable />
-      </PortableTextEditor>,
+      />,
     )
 
     // Given an empty text block
@@ -107,15 +92,12 @@ describe(PortableTextEditor.insertBlock.name, () => {
     const onChange: (change: EditorChange) => void = vi.fn()
 
     render(
-      <PortableTextEditor
+      <PortableTextEditorTester
         ref={editorRef}
-        schemaType={schema}
         value={initialValue}
         keyGenerator={() => 'bb'}
         onChange={onChange}
-      >
-        <PortableTextEditable />
-      </PortableTextEditor>,
+      />,
     )
 
     // Given an non-empty text block
@@ -180,15 +162,12 @@ describe(PortableTextEditor.insertBlock.name, () => {
     const onChange: (change: EditorChange) => void = vi.fn()
 
     render(
-      <PortableTextEditor
+      <PortableTextEditorTester
         ref={editorRef}
-        schemaType={schema}
         value={initialValue}
         keyGenerator={() => 'bc'}
         onChange={onChange}
-      >
-        <PortableTextEditable />
-      </PortableTextEditor>,
+      />,
     )
 
     // Given an empty text block followed by an image

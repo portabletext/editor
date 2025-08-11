@@ -5,11 +5,11 @@ import {describe, expect, it, vi} from 'vitest'
 import type {EditorSelection} from '../..'
 import {createTestKeyGenerator} from '../../internal-utils/test-key-generator'
 import {PortableTextEditor} from '../PortableTextEditor'
-import {PortableTextEditorTester, schemaType} from './PortableTextEditorTester'
+import {PortableTextEditorTester} from './PortableTextEditorTester'
 
 const helloBlock: PortableTextBlock = {
   _key: '123',
-  _type: 'myTestBlockType',
+  _type: 'block',
   markDefs: [],
   children: [{_key: '567', _type: 'span', text: 'Hello', marks: []}],
 }
@@ -26,7 +26,6 @@ describe('initialization', () => {
         onChange={onChange}
         renderPlaceholder={renderPlaceholder}
         ref={editorRef}
-        schemaType={schemaType}
         value={undefined}
       />,
     )
@@ -54,7 +53,7 @@ describe('initialization', () => {
     <div
       class="pt-block pt-text-block pt-text-block-style-normal"
       data-block-key="k0"
-      data-block-name="myTestBlockType"
+      data-block-name="block"
       data-block-type="text"
       data-slate-node="element"
       data-style="normal"
@@ -100,7 +99,6 @@ describe('initialization', () => {
         keyGenerator={createTestKeyGenerator()}
         ref={editorRef}
         onChange={onChange}
-        schemaType={schemaType}
         value={initialValue}
       />,
     )
@@ -133,7 +131,6 @@ describe('initialization', () => {
         onChange={onChange}
         ref={editorRef}
         selection={initialSelection}
-        schemaType={schemaType}
         value={initialValue}
       />,
     )
@@ -178,7 +175,6 @@ describe('initialization', () => {
         onChange={onChange}
         ref={editorRef}
         selection={initialSelection}
-        schemaType={schemaType}
         value={initialValue}
       />,
     )
@@ -212,7 +208,6 @@ describe('initialization', () => {
         onChange={onChange}
         ref={editorRef}
         selection={newSelection}
-        schemaType={schemaType}
         value={initialValue}
       />,
     )
@@ -239,7 +234,6 @@ describe('initialization', () => {
         onChange={onChange}
         ref={editorRef}
         selection={initialSelection}
-        schemaType={schemaType}
         value={initialValue}
       />,
     )
@@ -285,7 +279,6 @@ describe('initialization', () => {
           onChange={onChange}
           ref={editorRef}
           selection={initialSelection}
-          schemaType={schemaType}
           value={value}
         />,
       )
@@ -318,7 +311,6 @@ describe('initialization', () => {
         onChange={newOnChange}
         ref={editorRef}
         selection={initialSelection}
-        schemaType={schemaType}
         value={value}
       />,
     )
@@ -355,7 +347,7 @@ describe('initialization', () => {
       helloBlock,
       {
         _key: 'abc',
-        _type: 'myTestBlockType',
+        _type: 'block',
         markDefs: [],
         children: [{_key: 'def', _type: 'span', marks: []}],
       },
@@ -371,7 +363,6 @@ describe('initialization', () => {
         onChange={onChange}
         ref={editorRef}
         selection={initialSelection}
-        schemaType={schemaType}
         value={initialValue}
       />,
     )
@@ -396,7 +387,7 @@ describe('initialization', () => {
             },
             item: {
               _key: 'abc',
-              _type: 'myTestBlockType',
+              _type: 'block',
               children: [
                 {
                   _key: 'def',

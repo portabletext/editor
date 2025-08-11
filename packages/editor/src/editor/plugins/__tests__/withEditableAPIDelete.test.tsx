@@ -1,17 +1,14 @@
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {
-  PortableTextEditorTester,
-  schemaType,
-} from '../../__tests__/PortableTextEditorTester'
+import {PortableTextEditorTester} from '../../__tests__/PortableTextEditorTester'
 import {createTestKeyGenerator} from '../../../internal-utils/test-key-generator'
 import {PortableTextEditor} from '../../PortableTextEditor'
 
 const initialValue = [
   {
     _key: 'a',
-    _type: 'myTestBlockType',
+    _type: 'block',
     children: [
       {
         _key: 'a1',
@@ -25,7 +22,7 @@ const initialValue = [
   },
   {
     _key: 'b',
-    _type: 'myTestBlockType',
+    _type: 'block',
     children: [
       {
         _key: 'b1',
@@ -52,7 +49,6 @@ describe('plugin:withEditableAPI: .delete()', () => {
       <PortableTextEditorTester
         onChange={onChange}
         ref={editorRef}
-        schemaType={schemaType}
         value={initialValue}
         keyGenerator={createTestKeyGenerator()}
       />,
@@ -82,7 +78,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
           [
             {
               "_key": "a",
-              "_type": "myTestBlockType",
+              "_type": "block",
               "children": [
                 {
                   "_key": "a1",
@@ -108,7 +104,6 @@ describe('plugin:withEditableAPI: .delete()', () => {
         keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
-        schemaType={schemaType}
         value={initialValue}
       />,
     )
@@ -139,7 +134,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           {
             _key: 'k2',
-            _type: 'myTestBlockType',
+            _type: 'block',
             children: [
               {
                 _key: 'k3',
@@ -165,7 +160,6 @@ describe('plugin:withEditableAPI: .delete()', () => {
         keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
-        schemaType={schemaType}
         value={initialValue}
       />,
     )
@@ -206,7 +200,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
                   [
                     {
                       "_key": "a",
-                      "_type": "myTestBlockType",
+                      "_type": "block",
                       "children": [
                         {
                           "_key": "a1",
@@ -220,7 +214,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
                     },
                     {
                       "_key": "b",
-                      "_type": "myTestBlockType",
+                      "_type": "block",
                       "children": [
                         {
                           "_key": "k2",
@@ -246,7 +240,6 @@ describe('plugin:withEditableAPI: .delete()', () => {
       <PortableTextEditorTester
         onChange={onChange}
         ref={editorRef}
-        schemaType={schemaType}
         value={initialValue}
         keyGenerator={createTestKeyGenerator()}
       />,
@@ -286,7 +279,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           {
             _key: 'b',
-            _type: 'myTestBlockType',
+            _type: 'block',
             children: [
               {
                 _key: 'b1',

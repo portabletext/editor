@@ -1,10 +1,9 @@
 import {describe, expect, it} from 'vitest'
-import {schemaType} from '../../editor/__tests__/PortableTextEditorTester'
-import {legacySchemaToEditorSchema} from '../../editor/editor-schema'
-import {createLegacySchema} from '../../editor/legacy-schema'
+import {compileSchemaDefinition} from '../../editor/editor-schema'
+import {defineSchema} from '../../editor/editor-schema-definition'
 import {fromSlateValue, toSlateValue} from '../values'
 
-const schemaTypes = legacySchemaToEditorSchema(createLegacySchema(schemaType))
+const schemaTypes = compileSchemaDefinition(defineSchema({}))
 
 describe('toSlateValue', () => {
   it('checks undefined', () => {
@@ -63,7 +62,7 @@ describe('toSlateValue', () => {
 [
   {
     "_key": "123",
-    "_type": "myTestBlockType",
+    "_type": "block",
     "children": [
       {
         "_key": "1231",
@@ -106,7 +105,7 @@ describe('toSlateValue', () => {
 [
   {
     "_key": "123",
-    "_type": "myTestBlockType",
+    "_type": "block",
     "children": [
       {
         "_key": "1231",

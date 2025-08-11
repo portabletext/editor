@@ -1,10 +1,7 @@
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {
-  PortableTextEditorTester,
-  schemaType,
-} from '../../__tests__/PortableTextEditorTester'
+import {PortableTextEditorTester} from '../../__tests__/PortableTextEditorTester'
 import {createTestKeyGenerator} from '../../../internal-utils/test-key-generator'
 import type {EditorSelection} from '../../../types/editor'
 import {PortableTextEditor} from '../../PortableTextEditor'
@@ -16,7 +13,7 @@ describe('plugin:withPortableTextMarksModel', () => {
       const initialValue = [
         {
           _key: 'a',
-          _type: 'myTestBlockType',
+          _type: 'block',
           children: [
             {
               _key: 'a1',
@@ -47,7 +44,6 @@ describe('plugin:withPortableTextMarksModel', () => {
         <PortableTextEditorTester
           onChange={onChange}
           ref={editorRef}
-          schemaType={schemaType}
           value={initialValue}
           keyGenerator={createTestKeyGenerator()}
         />,
@@ -79,7 +75,7 @@ describe('plugin:withPortableTextMarksModel', () => {
           expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
             {
               _key: 'a',
-              _type: 'myTestBlockType',
+              _type: 'block',
               children: [
                 {
                   _key: 'a1',
@@ -113,7 +109,7 @@ describe('plugin:withPortableTextMarksModel', () => {
       const initialValue = [
         {
           _key: '5fc57af23597',
-          _type: 'myTestBlockType',
+          _type: 'block',
           children: [
             {
               _key: 'be1c67c6971a',
@@ -139,7 +135,7 @@ describe('plugin:withPortableTextMarksModel', () => {
         },
         {
           _key: '7cd53af36712',
-          _type: 'myTestBlockType',
+          _type: 'block',
           children: [
             {
               _key: '576c748e0cd2',
@@ -181,7 +177,6 @@ describe('plugin:withPortableTextMarksModel', () => {
             keyGenerator={createTestKeyGenerator()}
             onChange={onChange}
             ref={editorRef}
-            schemaType={schemaType}
             value={initialValue}
           />,
         )
@@ -194,7 +189,7 @@ describe('plugin:withPortableTextMarksModel', () => {
         expect(PortableTextEditor.getValue(editor)).toEqual([
           {
             _key: '5fc57af23597',
-            _type: 'myTestBlockType',
+            _type: 'block',
             children: [
               {
                 _key: 'be1c67c6971a',
@@ -244,7 +239,7 @@ describe('plugin:withPortableTextMarksModel', () => {
       const initialValue = [
         {
           _key: 'ba',
-          _type: 'myTestBlockType',
+          _type: 'block',
           children: [
             {
               _key: 'sa',
@@ -258,7 +253,7 @@ describe('plugin:withPortableTextMarksModel', () => {
         },
         {
           _key: 'bb',
-          _type: 'myTestBlockType',
+          _type: 'block',
           children: [
             {
               _key: 'sb',
@@ -287,7 +282,6 @@ describe('plugin:withPortableTextMarksModel', () => {
         <PortableTextEditorTester
           onChange={onChange}
           ref={editorRef}
-          schemaType={schemaType}
           value={initialValue}
           keyGenerator={createTestKeyGenerator()}
         />,
@@ -315,7 +309,7 @@ describe('plugin:withPortableTextMarksModel', () => {
           expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
             {
               _key: 'ba',
-              _type: 'myTestBlockType',
+              _type: 'block',
               children: [
                 {
                   _key: 'sa',
@@ -329,7 +323,7 @@ describe('plugin:withPortableTextMarksModel', () => {
             },
             {
               _key: 'k2',
-              _type: 'myTestBlockType',
+              _type: 'block',
               children: [
                 {
                   _key: 'k3',
@@ -343,7 +337,7 @@ describe('plugin:withPortableTextMarksModel', () => {
             },
             {
               _key: 'bb',
-              _type: 'myTestBlockType',
+              _type: 'block',
               children: [
                 {
                   _key: 'sb',
@@ -372,7 +366,7 @@ describe('plugin:withPortableTextMarksModel', () => {
       const initialValue = [
         {
           _key: 'ba',
-          _type: 'myTestBlockType',
+          _type: 'block',
           children: [
             {
               _key: 'sa',
@@ -391,7 +385,6 @@ describe('plugin:withPortableTextMarksModel', () => {
         <PortableTextEditorTester
           onChange={onChange}
           ref={editorRef}
-          schemaType={schemaType}
           value={initialValue}
           keyGenerator={createTestKeyGenerator()}
         />,
@@ -437,7 +430,7 @@ describe('plugin:withPortableTextMarksModel', () => {
       const initialValue = [
         {
           _key: 'a',
-          _type: 'myTestBlockType',
+          _type: 'block',
           children: [
             {
               _key: 'a1',
@@ -462,7 +455,6 @@ describe('plugin:withPortableTextMarksModel', () => {
           <PortableTextEditorTester
             onChange={onChange}
             ref={editorRef}
-            schemaType={schemaType}
             value={initialValue}
             keyGenerator={createTestKeyGenerator()}
           />,
@@ -487,7 +479,7 @@ describe('plugin:withPortableTextMarksModel', () => {
       const initialValue = [
         {
           _key: 'a',
-          _type: 'myTestBlockType',
+          _type: 'block',
           children: [
             {
               _key: 'a1',
@@ -518,7 +510,6 @@ describe('plugin:withPortableTextMarksModel', () => {
           <PortableTextEditorTester
             onChange={onChange}
             ref={editorRef}
-            schemaType={schemaType}
             value={initialValue}
             keyGenerator={createTestKeyGenerator()}
           />,
@@ -545,10 +536,10 @@ describe('plugin:withPortableTextMarksModel', () => {
       const initialValue = [
         {
           _key: '5fc57af23597',
-          _type: 'someObject',
+          _type: 'custom image',
         },
         {
-          _type: 'myTestBlockType',
+          _type: 'block',
           _key: 'existingBlock',
           style: 'normal',
           markDefs: [],
@@ -569,7 +560,6 @@ describe('plugin:withPortableTextMarksModel', () => {
             keyGenerator={createTestKeyGenerator()}
             onChange={onChange}
             ref={editorRef}
-            schemaType={schemaType}
             value={initialValue}
           />,
         )
@@ -601,7 +591,7 @@ describe('plugin:withPortableTextMarksModel', () => {
           const value = PortableTextEditor.getValue(editorRef.current)
           expect(value).toEqual([
             {
-              _type: 'myTestBlockType',
+              _type: 'block',
               _key: 'existingBlock',
               style: 'normal',
               markDefs: [],
