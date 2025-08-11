@@ -13,6 +13,7 @@ import {createEditorDom} from './editor-dom'
 import type {EditorActor} from './editor-machine'
 import {editorMachine} from './editor-machine'
 import {
+  compileSchemaDefinition,
   compileSchemaDefinitionToLegacySchema,
   legacySchemaToEditorSchema,
 } from './editor-schema'
@@ -211,7 +212,9 @@ function compileSchemasFromEditorConfig(config: EditorConfig) {
           ? config.schema
           : compileType(config.schema),
       )
-  const schema = legacySchemaToEditorSchema(legacySchema)
+  const schema = config.schemaDefinition
+    ? compileSchemaDefinition(config.schemaDefinition)
+    : legacySchemaToEditorSchema(legacySchema)
 
   return {
     legacySchema,

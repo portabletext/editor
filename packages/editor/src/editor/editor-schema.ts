@@ -158,9 +158,42 @@ export function legacySchemaToEditorSchema(
 export function compileSchemaDefinition<
   TSchemaDefinition extends SchemaDefinition,
 >(definition: TSchemaDefinition): EditorSchema {
-  return legacySchemaToEditorSchema(
-    compileSchemaDefinitionToLegacySchema(definition),
-  )
+  const styles = (definition.styles ?? []).map((style) => ({
+    ...style,
+    value: style.name,
+  }))
+
+  return {
+    block: {
+      name: 'block',
+    },
+    span: {
+      name: 'span',
+    },
+    styles: !styles.some((style) => style.value === 'normal')
+      ? [{value: 'normal', name: 'normal', title: 'Normal'}, ...styles]
+      : styles,
+    lists: (definition.lists ?? []).map((list) => ({
+      ...list,
+      value: list.name,
+    })),
+    decorators: (definition.decorators ?? []).map((decorator) => ({
+      ...decorator,
+      value: decorator.name,
+    })),
+    annotations: (definition.annotations ?? []).map((annotation) => ({
+      ...annotation,
+      fields: annotation.fields ?? [],
+    })),
+    blockObjects: (definition.blockObjects ?? []).map((blockObject) => ({
+      ...blockObject,
+      fields: blockObject.fields ?? [],
+    })),
+    inlineObjects: (definition.inlineObjects ?? []).map((inlineObject) => ({
+      ...inlineObject,
+      fields: inlineObject.fields ?? [],
+    })),
+  }
 }
 
 export function compileSchemaDefinitionToLegacySchema<
