@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.1](https://github.com/portabletext/editor/compare/editor-v2.3.0...editor-v2.3.1) (2025-08-11)
+
+
+### Bug Fixes
+
+* preserve first list item when deleting list from the start ([db8631a](https://github.com/portabletext/editor/commit/db8631a0e0f1df325ca0be2a983b3f68517496cb))
+
 ## [2.3.0](https://github.com/portabletext/editor/compare/editor-v2.2.0...editor-v2.3.0) (2025-08-08)
 
 
