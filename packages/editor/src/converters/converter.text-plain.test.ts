@@ -1,11 +1,13 @@
 import type {PortableTextBlock, PortableTextTextBlock} from '@sanity/types'
 import {expect, test} from 'vitest'
 import type {EditorSelection} from '..'
-import {schemaType} from '../editor/__tests__/PortableTextEditorTester'
-import {compileSchemaDefinition} from '../editor/editor-schema'
-import {defineSchema} from '../editor/editor-schema-definition'
+import {schemaDefinition} from '../editor/__tests__/PortableTextEditorTester'
+import {
+  compileSchemaDefinition,
+  compileSchemaDefinitionToLegacySchema,
+} from '../editor/editor-schema'
 import type {SchemaDefinition} from '../editor/editor-schema-definition'
-import {createLegacySchema} from '../editor/legacy-schema'
+import {defineSchema} from '../editor/editor-schema-definition'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {createConverterTextPlain} from './converter.text-plain'
 
@@ -82,7 +84,7 @@ function createSnapshot({
 }
 
 const converterTextPlain = createConverterTextPlain(
-  createLegacySchema(schemaType),
+  compileSchemaDefinitionToLegacySchema(schemaDefinition),
 )
 
 test(converterTextPlain.serialize.name, () => {

@@ -3,17 +3,17 @@ import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
 import {
   PortableTextEditorTester,
-  schemaType,
+  schemaDefinition,
 } from '../../__tests__/PortableTextEditorTester'
 import {isTextBlock} from '../../../internal-utils/parse-blocks'
 import {createTestKeyGenerator} from '../../../internal-utils/test-key-generator'
-import {legacySchemaToEditorSchema} from '../../editor-schema'
+import {compileSchemaDefinition} from '../../editor-schema'
 import {PortableTextEditor} from '../../PortableTextEditor'
 
 const initialValue = [
   {
     _key: 'a',
-    _type: 'myTestBlockType',
+    _type: 'block',
     children: [
       {
         _key: 'a1',
@@ -27,7 +27,7 @@ const initialValue = [
   },
   {
     _key: 'b',
-    _type: 'myTestBlockType',
+    _type: 'block',
     children: [
       {
         _key: 'b1',
@@ -61,7 +61,6 @@ describe('plugin:withEditableAPI: .getFragment()', () => {
         keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
-        schemaType={schemaType}
         value={initialValue}
       />,
     )
@@ -89,9 +88,7 @@ describe('plugin:withEditableAPI: .getFragment()', () => {
           fragment &&
             isTextBlock(
               {
-                schema: legacySchemaToEditorSchema(
-                  editorRef.current.schemaTypes,
-                ),
+                schema: compileSchemaDefinition(schemaDefinition),
               },
               fragment[0],
             ) &&
@@ -110,7 +107,6 @@ describe('plugin:withEditableAPI: .getFragment()', () => {
         keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
-        schemaType={schemaType}
         value={initialValue}
       />,
     )
@@ -138,7 +134,7 @@ describe('plugin:withEditableAPI: .getFragment()', () => {
           [
             {
               "_key": "a",
-              "_type": "myTestBlockType",
+              "_type": "block",
               "children": [
                 {
                   "_key": "a1",
@@ -152,7 +148,7 @@ describe('plugin:withEditableAPI: .getFragment()', () => {
             },
             {
               "_key": "b",
-              "_type": "myTestBlockType",
+              "_type": "block",
               "children": [
                 {
                   "_key": "b1",

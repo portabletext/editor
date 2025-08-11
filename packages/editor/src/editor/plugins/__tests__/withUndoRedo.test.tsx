@@ -1,17 +1,14 @@
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {
-  PortableTextEditorTester,
-  schemaType,
-} from '../../__tests__/PortableTextEditorTester'
+import {PortableTextEditorTester} from '../../__tests__/PortableTextEditorTester'
 import {createTestKeyGenerator} from '../../../internal-utils/test-key-generator'
 import {PortableTextEditor} from '../../PortableTextEditor'
 
 const initialValue = [
   {
     _key: 'a',
-    _type: 'myTestBlockType',
+    _type: 'block',
     children: [
       {
         _key: 'a1',
@@ -25,7 +22,7 @@ const initialValue = [
   },
   {
     _key: 'b',
-    _type: 'myTestBlockType',
+    _type: 'block',
     children: [
       {
         _key: 'b1',
@@ -53,7 +50,6 @@ describe('plugin:withUndoRedo', () => {
         keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
-        schemaType={schemaType}
         value={initialValue}
       />,
     )
@@ -82,7 +78,7 @@ describe('plugin:withUndoRedo', () => {
           [
             {
               "_key": "a",
-              "_type": "myTestBlockType",
+              "_type": "block",
               "children": [
                 {
                   "_key": "a1",
@@ -112,7 +108,6 @@ describe('plugin:withUndoRedo', () => {
         keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
-        schemaType={schemaType}
         value={initialValue}
       />,
     )

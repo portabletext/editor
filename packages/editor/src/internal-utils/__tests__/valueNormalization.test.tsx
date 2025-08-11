@@ -1,10 +1,7 @@
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {
-  PortableTextEditorTester,
-  schemaType,
-} from '../../editor/__tests__/PortableTextEditorTester'
+import {PortableTextEditorTester} from '../../editor/__tests__/PortableTextEditorTester'
 import {PortableTextEditor} from '../../editor/PortableTextEditor'
 import {createTestKeyGenerator} from '../test-key-generator'
 
@@ -14,7 +11,7 @@ describe('values: normalization', () => {
     const initialValue = [
       {
         _key: '5fc57af23597',
-        _type: 'myTestBlockType',
+        _type: 'block',
         children: [
           {
             _key: 'be1c67c6971a',
@@ -32,7 +29,6 @@ describe('values: normalization', () => {
         keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
         ref={editorRef}
-        schemaType={schemaType}
         value={initialValue}
       />,
     )
@@ -64,7 +60,7 @@ describe('values: normalization', () => {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           {
             _key: '5fc57af23597',
-            _type: 'myTestBlockType',
+            _type: 'block',
             children: [
               {
                 _key: 'be1c67c6971a',
