@@ -2,11 +2,13 @@ import type {PortableTextTextBlock} from '@sanity/types'
 import {createEditor, type Descendant} from 'slate'
 import {beforeEach, describe, expect, it} from 'vitest'
 import {createActor} from 'xstate'
-import {schemaType} from '../editor/__tests__/PortableTextEditorTester'
 import {editorMachine} from '../editor/editor-machine'
-import {legacySchemaToEditorSchema} from '../editor/editor-schema'
+import {
+  compileSchemaDefinition,
+  compileSchemaDefinitionToLegacySchema,
+} from '../editor/editor-schema'
+import {defineSchema} from '../editor/editor-schema-definition'
 import {defaultKeyGenerator} from '../editor/key-generator'
-import {createLegacySchema} from '../editor/legacy-schema'
 import {withPlugins} from '../editor/plugins/with-plugins'
 import {relayMachine} from '../editor/relay-machine'
 import {
@@ -18,11 +20,14 @@ import {
   splitNodePatch,
 } from './operation-to-patches'
 
-const legacySchema = createLegacySchema(schemaType)
-const schemaTypes = legacySchemaToEditorSchema(legacySchema)
+const schemaDefinition = defineSchema({
+  inlineObjects: [{name: 'someObject'}],
+})
+const schema = compileSchemaDefinition(schemaDefinition)
+const legacySchema = compileSchemaDefinitionToLegacySchema(schemaDefinition)
 const editorActor = createActor(editorMachine, {
   input: {
-    schema: schemaTypes,
+    schema,
     keyGenerator: defaultKeyGenerator,
     getLegacySchema: () => legacySchema,
   },
@@ -38,7 +43,7 @@ const editor = withPlugins(createEditor(), {
 const createDefaultValue = () =>
   [
     {
-      _type: 'myTestBlockType',
+      _type: 'block',
       _key: '1f2e64b47787',
       style: 'normal',
       markDefs: [],
@@ -65,7 +70,7 @@ describe('operationToPatches', () => {
   it('translates void items correctly when splitting spans', () => {
     expect(
       splitNodePatch(
-        schemaTypes,
+        schema,
         editor.children,
         {
           type: 'split_node',
@@ -119,7 +124,7 @@ describe('operationToPatches', () => {
   it('produce correct insert block patch', () => {
     expect(
       insertNodePatch(
-        schemaTypes,
+        schema,
         editor.children,
         {
           type: 'insert_node',
@@ -161,7 +166,7 @@ describe('operationToPatches', () => {
     editor.onChange()
     expect(
       insertNodePatch(
-        schemaTypes,
+        schema,
         editor.children,
         {
           type: 'insert_node',
@@ -204,7 +209,7 @@ describe('operationToPatches', () => {
   it('produce correct insert child patch', () => {
     expect(
       insertNodePatch(
-        schemaTypes,
+        schema,
         editor.children,
         {
           type: 'insert_node',
@@ -392,7 +397,7 @@ describe('operationToPatches', () => {
     editor.onChange()
     expect(
       mergeNodePatch(
-        schemaTypes,
+        schema,
         editor.children,
         {
           type: 'merge_node',
