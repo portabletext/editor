@@ -665,4 +665,14 @@ export const stepDefinitions = [
       })
     },
   ),
+
+  /**
+   * Undo/Redo steps
+   */
+  When('undo is performed', (context: Context) => {
+    context.editor.ref.current.send({type: 'history.undo'})
+  }),
+  When('redo is performed', (context: Context) => {
+    context.editor.ref.current.send({type: 'history.redo'})
+  }),
 ]
