@@ -24,6 +24,7 @@ export const coreBehaviorsConfig = [
   coreListBehaviors.unindentListOnBackspace,
   coreListBehaviors.mergeTextIntoListOnDelete,
   coreListBehaviors.mergeTextIntoListOnBackspace,
+  coreListBehaviors.deletingListFromStart,
   coreListBehaviors.clearListOnEnter,
   coreListBehaviors.indentListOnTab,
   coreListBehaviors.unindentListOnShiftTab,

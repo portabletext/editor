@@ -150,3 +150,24 @@ Feature: Lists
     When the caret is put after ""
     And "{image}" is inserted at "auto"
     Then the text is "{image}"
+
+  Scenario Outline: Deleting list
+    Given the text <text>
+    When <selection> is selected
+    And "{Backspace}" is pressed
+    Then the text is <new text>
+
+    Examples:
+      | text                        | selection   | new text |
+      | ">#:foo\|>>#:bar\|>>>#:baz" | "foobarbaz" | ">#:"    |
+      | ">#:foo\|>>#:bar\|>>>#:baz" | "oobarbaz"  | ">#:f"   |
+      | ">#:foo\|>>#:bar\|>>>#:baz" | "oobarba"   | ">#:fz"  |
+      | ">#:foo\|>>#:bar\|>>>#:baz" | "foobarba"  | ">#:z"   |
+
+  Scenario: Undo after deleting list
+    Given the text ">#:foo|>>#:bar"
+    When "fooba" is selected
+    And "{Backspace}" is pressed
+    Then the text is ">#:r"
+    When undo is performed
+    Then the text is ">#:foo|>>#:bar"
