@@ -1,9 +1,14 @@
 import {isListBlock, isTextBlock} from '../internal-utils/parse-blocks'
 import {defaultKeyboardShortcuts} from '../keyboard-shortcuts/default-keyboard-shortcuts'
 import * as selectors from '../selectors'
-import {getBlockEndPoint} from '../utils'
+import {
+  getBlockEndPoint,
+  getBlockStartPoint,
+  isEqualSelectionPoints,
+} from '../utils'
 import {isAtTheBeginningOfBlock} from '../utils/util.at-the-beginning-of-block'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
+import {sliceTextBlock} from '../utils/util.slice-text-block'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -178,6 +183,148 @@ const mergeTextIntoListOnBackspace = defineBehavior({
       raise({
         type: 'delete.block',
         at: focusTextBlock.path,
+      }),
+    ],
+  ],
+})
+
+/**
+ * When performing a delete operation where the start point of the operation is
+ * at the start of a list item and the end point of the operation is in another
+ * list item, we make sure the preserve the first list item. Otherwise, the
+ * default behavior would be to preserve the last item.
+ */
+const deletingListFromStart = defineBehavior({
+  on: 'delete',
+  guard: ({snapshot, event}) => {
+    const blocksToDelete = selectors.getSelectedBlocks({
+      ...snapshot,
+      context: {
+        ...snapshot.context,
+        selection: event.at,
+      },
+    })
+
+    if (blocksToDelete.length < 2) {
+      return false
+    }
+
+    const startBlock = blocksToDelete.at(0)?.node
+    const middleBlocks = blocksToDelete.slice(1, -1)
+    const endBlock = blocksToDelete.at(-1)?.node
+
+    if (
+      !isListBlock(snapshot.context, startBlock) ||
+      !isListBlock(snapshot.context, endBlock)
+    ) {
+      // It's that any block in between isn't a list item, but the first and
+      // last blocks have to be list items for this Behavior to take effect.
+      return false
+    }
+
+    const deleteStartPoint = selectors.getSelectionStartPoint({
+      ...snapshot,
+      context: {
+        ...snapshot.context,
+        selection: event.at,
+      },
+    })
+    const deleteEndPoint = selectors.getSelectionEndPoint({
+      ...snapshot,
+      context: {
+        ...snapshot.context,
+        selection: event.at,
+      },
+    })
+
+    if (!deleteStartPoint || !deleteEndPoint) {
+      return false
+    }
+
+    const startBlockStartPoint = getBlockStartPoint({
+      context: snapshot.context,
+      block: {
+        node: startBlock,
+        path: [{_key: startBlock._key}],
+      },
+    })
+
+    if (!isEqualSelectionPoints(deleteStartPoint, startBlockStartPoint)) {
+      // If we aren't deleting from the beginning of the first list item, then
+      // there is no need to proceed. The default delete Behavior will suffice.
+      return false
+    }
+
+    const startBlockEndPoint = getBlockEndPoint({
+      context: snapshot.context,
+      block: {
+        node: startBlock,
+        path: [{_key: startBlock._key}],
+      },
+    })
+    const endBlockEndPoint = getBlockEndPoint({
+      context: snapshot.context,
+      block: {
+        node: endBlock,
+        path: [{_key: endBlock._key}],
+      },
+    })
+    const slicedEndBlock = sliceTextBlock({
+      context: {
+        schema: snapshot.context.schema,
+        selection: {
+          anchor: deleteEndPoint,
+          focus: endBlockEndPoint,
+        },
+      },
+      block: endBlock,
+    })
+
+    return {
+      startBlockStartPoint,
+      startBlockEndPoint,
+      middleBlocks,
+      endBlock,
+      slicedEndBlock,
+    }
+  },
+  actions: [
+    (
+      _,
+      {
+        startBlockStartPoint,
+        startBlockEndPoint,
+        middleBlocks,
+        endBlock,
+        slicedEndBlock,
+      },
+    ) => [
+      // All block in between can safely be deleted.
+      ...middleBlocks.map((block) =>
+        raise({type: 'delete.block', at: block.path}),
+      ),
+      // The last block is deleted as well.
+      raise({type: 'delete.block', at: [{_key: endBlock._key}]}),
+      // But in case the delete operation didn't reach all the way to the end
+      // of it, we first place the caret at the end of the start block...
+      raise({
+        type: 'select',
+        at: {
+          anchor: startBlockEndPoint,
+          focus: startBlockEndPoint,
+        },
+      }),
+      // ...and insert the rest of the end block at the end of it.
+      raise({
+        type: 'insert.block',
+        block: slicedEndBlock,
+        placement: 'auto',
+        select: 'none',
+      }),
+      // And finally, we delete the original text of the start block.
+      raise({
+        type: 'delete',
+        at: {anchor: startBlockStartPoint, focus: startBlockEndPoint},
       }),
     ],
   ],
@@ -521,6 +668,7 @@ export const coreListBehaviors = {
   unindentListOnBackspace,
   mergeTextIntoListOnDelete,
   mergeTextIntoListOnBackspace,
+  deletingListFromStart,
   clearListOnEnter,
   indentListOnTab,
   unindentListOnShiftTab,
