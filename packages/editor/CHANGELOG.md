@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.2](https://github.com/portabletext/editor/compare/editor-v2.3.1...editor-v2.3.2) (2025-08-11)
+
+
+### Bug Fixes
+
+* avoid passing Schema Definition through `@sanity/compile` ([5339ff2](https://github.com/portabletext/editor/commit/5339ff2bfb51a7e7d6fbafc47974ec47b38d15c5))
+
 ## [2.3.1](https://github.com/portabletext/editor/compare/editor-v2.3.0...editor-v2.3.1) (2025-08-11)
 
 
