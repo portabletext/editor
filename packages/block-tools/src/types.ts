@@ -83,9 +83,6 @@ export interface HtmlDeserializerOptions {
   unstable_whitespaceOnPasteMode?: WhiteSpacePasteMode
 }
 
-/**
- * @public
- */
 export interface HtmlPreprocessorOptions {
   unstable_whitespaceOnPasteMode?: WhiteSpacePasteMode
 }
