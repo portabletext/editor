@@ -16,63 +16,49 @@ export type FieldDefinition = BaseDefinition & {
 /**
  * @public
  */
-export type DecoratorDefinition<
-  TBaseDefinition extends BaseDefinition = BaseDefinition,
-> = TBaseDefinition
+export type DecoratorDefinition = BaseDefinition
 
 /**
  * @public
  */
-export type AnnotationDefinition<
-  TBaseDefinition extends BaseDefinition = BaseDefinition,
-> = TBaseDefinition & {
+export type AnnotationDefinition = BaseDefinition & {
   fields?: ReadonlyArray<FieldDefinition>
 }
 
 /**
  * @public
  */
-export type BlockObjectDefinition<
-  TBaseDefinition extends BaseDefinition = BaseDefinition,
-> = TBaseDefinition & {
+export type BlockObjectDefinition = BaseDefinition & {
   fields?: ReadonlyArray<FieldDefinition>
 }
 
 /**
  * @public
  */
-export type InlineObjectDefinition<
-  TBaseDefinition extends BaseDefinition = BaseDefinition,
-> = TBaseDefinition & {
+export type InlineObjectDefinition = BaseDefinition & {
   fields?: ReadonlyArray<FieldDefinition>
 }
 
 /**
  * @public
  */
-export type ListDefinition<
-  TBaseDefinition extends BaseDefinition = BaseDefinition,
-> = TBaseDefinition
+export type ListDefinition = BaseDefinition
 
 /**
  * @public
  */
-export type StyleDefinition<
-  TBaseDefinition extends BaseDefinition = BaseDefinition,
-> = TBaseDefinition
+export type StyleDefinition = BaseDefinition
 
 /**
  * @public
  */
-export type SchemaDefinition<
-  TBaseDefinition extends BaseDefinition = BaseDefinition,
-> = {
-  decorators?: ReadonlyArray<DecoratorDefinition<TBaseDefinition>>
-  blockObjects?: ReadonlyArray<BlockObjectDefinition<TBaseDefinition>>
-  inlineObjects?: ReadonlyArray<InlineObjectDefinition<TBaseDefinition>>
-  annotations?: ReadonlyArray<AnnotationDefinition<TBaseDefinition>>
-  lists?: ReadonlyArray<ListDefinition<TBaseDefinition>>
-  styles?: ReadonlyArray<StyleDefinition<TBaseDefinition>>
+export type SchemaDefinition = {
+  decorators?: ReadonlyArray<DecoratorDefinition>
+  blockObjects?: ReadonlyArray<BlockObjectDefinition>
+  inlineObjects?: ReadonlyArray<InlineObjectDefinition>
+  annotations?: ReadonlyArray<AnnotationDefinition>
+  lists?: ReadonlyArray<ListDefinition>
+  styles?: ReadonlyArray<StyleDefinition>
 }
 
 /**
@@ -98,8 +84,6 @@ export type SchemaDefinition<
  * }
  * ```
  */
-export function defineSchema<const TSchemaDefinition extends SchemaDefinition>(
-  definition: TSchemaDefinition,
-): TSchemaDefinition {
+export function defineSchema(definition: SchemaDefinition): SchemaDefinition {
   return definition
 }
