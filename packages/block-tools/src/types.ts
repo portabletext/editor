@@ -1,14 +1,4 @@
-import type {
-  PortableTextObject,
-  PortableTextSchema,
-} from './types.portable-text'
-
-export interface BlockContentFeatures extends PortableTextSchema {
-  styles: Array<string>
-  decorators: Array<string>
-  annotations: Array<string>
-  lists: Array<string>
-}
+import type {PortableTextObject} from './types.portable-text'
 
 /**
  * @public
@@ -101,11 +91,4 @@ export interface DeserializerRule {
       block: ArbitraryTypedObject
     },
   ) => TypedObject | TypedObject[] | undefined
-}
-
-export interface BlockEnabledFeatures {
-  enabledBlockStyles: string[]
-  enabledSpanDecorators: string[]
-  enabledListTypes: string[]
-  enabledBlockAnnotations: string[]
 }

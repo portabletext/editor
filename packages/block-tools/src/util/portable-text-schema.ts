@@ -9,13 +9,36 @@ import {
   type EnumListProps,
   type SpanSchemaType,
 } from '@sanity/types'
-import type {BlockContentFeatures} from '../types'
 import {findBlockType} from './findBlockType'
 
-// Helper method for describing a blockContentType's feature set
-export default function blockContentFeatures(
+export type PortableTextSchema = {
+  block: {
+    name: string
+  }
+  span: {
+    name: string
+  }
+  styles: ReadonlyArray<{
+    name: string
+    title?: string
+  }>
+  lists: ReadonlyArray<{
+    name: string
+    title?: string
+  }>
+  decorators: ReadonlyArray<{
+    name: string
+    title?: string
+  }>
+  annotations: ReadonlyArray<{
+    name: string
+    title?: string
+  }>
+}
+
+export function getPortableTextSchema(
   blockContentType: ArraySchemaType,
-): BlockContentFeatures {
+): PortableTextSchema {
   if (!blockContentType) {
     throw new Error("Parameter 'blockContentType' required")
   }
@@ -59,7 +82,10 @@ export default function blockContentFeatures(
   }
 }
 
-function resolveEnabledStyles(blockType: BlockSchemaType): Array<string> {
+function resolveEnabledStyles(blockType: BlockSchemaType): ReadonlyArray<{
+  name: string
+  title?: string
+}> {
   const styleField = blockType.fields.find(isBlockStyleObjectField)
   if (!styleField) {
     throw new Error(
@@ -82,15 +108,30 @@ function resolveEnabledStyles(blockType: BlockSchemaType): Array<string> {
 
 function resolveEnabledAnnotationTypes(
   spanType: SpanSchemaType,
-): Array<string> {
-  return spanType.annotations.map((annotation) => annotation.name)
+): ReadonlyArray<{
+  name: string
+  title?: string
+}> {
+  return spanType.annotations.map((annotation) => ({
+    name: annotation.name,
+    title: annotation.title,
+  }))
 }
 
-function resolveEnabledDecorators(spanType: SpanSchemaType): Array<string> {
-  return spanType.decorators.map((decorator) => decorator.value)
+function resolveEnabledDecorators(spanType: SpanSchemaType): ReadonlyArray<{
+  name: string
+  title?: string
+}> {
+  return spanType.decorators.map((decorator) => ({
+    name: decorator.value,
+    title: decorator.title,
+  }))
 }
 
-function resolveEnabledListItems(blockType: BlockSchemaType): Array<string> {
+function resolveEnabledListItems(blockType: BlockSchemaType): ReadonlyArray<{
+  name: string
+  title?: string
+}> {
   const listField = blockType.fields.find(isBlockListObjectField)
   if (!listField) {
     throw new Error(
@@ -110,13 +151,24 @@ function resolveEnabledListItems(blockType: BlockSchemaType): Array<string> {
 
 function getTitledListValuesFromEnumListOptions(
   options: EnumListProps<string> | undefined,
-): Array<string> {
+): ReadonlyArray<{
+  name: string
+  title?: string
+}> {
   const list = options ? options.list : undefined
   if (!Array.isArray(list)) {
     return []
   }
 
-  return list.map((item) =>
-    isTitledListValue(item) ? (item.value ?? item.title) : item,
-  )
+  return list.map((item) => {
+    if (isTitledListValue(item)) {
+      return {
+        name: item.value ?? item.title,
+        title: item.title,
+      }
+    }
+    return {
+      name: item,
+    }
+  })
 }

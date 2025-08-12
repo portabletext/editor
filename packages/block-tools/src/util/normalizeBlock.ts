@@ -5,6 +5,7 @@ import {
   type PortableTextSpan,
   type PortableTextTextBlock,
 } from '../types.portable-text'
+import type {PortableTextSchema} from './portable-text-schema'
 import {keyGenerator} from './randomKey'
 
 /**
@@ -53,6 +54,19 @@ export function normalizeBlock(
 > & {
   _key: string
 } {
+  const schema: PortableTextSchema = {
+    block: {
+      name: options.blockTypeName || 'block',
+    },
+    span: {
+      name: 'span',
+    },
+    styles: [],
+    lists: [],
+    decorators: [],
+    annotations: [],
+  }
+
   if (node._type !== (options.blockTypeName || 'block')) {
     return '_key' in node
       ? (node as TypedObject & {_key: string})
@@ -99,28 +113,8 @@ export function normalizeBlock(
         const previousChild = acc[acc.length - 1]
         if (
           previousChild &&
-          isSpan(
-            {
-              block: {
-                name: options.blockTypeName ?? 'block',
-              },
-              span: {
-                name: 'span',
-              },
-            },
-            child,
-          ) &&
-          isSpan(
-            {
-              block: {
-                name: options.blockTypeName ?? 'block',
-              },
-              span: {
-                name: 'span',
-              },
-            },
-            previousChild,
-          ) &&
+          isSpan(schema, child) &&
+          isSpan(schema, previousChild) &&
           isEqual(previousChild.marks, child.marks)
         ) {
           if (
@@ -149,19 +143,7 @@ export function normalizeBlock(
         ? options.keyGenerator()
         : keyGenerator()
 
-      if (
-        isSpan(
-          {
-            block: {
-              name: options.blockTypeName ?? 'block',
-            },
-            span: {
-              name: 'span',
-            },
-          },
-          child,
-        )
-      ) {
+      if (isSpan(schema, child)) {
         if (!child.marks) {
           child.marks = []
         } else if (allowedDecorators) {

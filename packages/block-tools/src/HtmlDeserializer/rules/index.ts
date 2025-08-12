@@ -1,16 +1,18 @@
-import type {BlockEnabledFeatures, DeserializerRule} from '../../types'
+import type {DeserializerRule} from '../../types'
+import type {PortableTextSchema} from '../../util/portable-text-schema'
 import createGDocsRules from './gdocs'
 import createHTMLRules from './html'
 import createNotionRules from './notion'
 import createWordRules from './word'
 
 export function createRules(
-  options: BlockEnabledFeatures & {keyGenerator?: () => string},
+  schema: PortableTextSchema,
+  options: {keyGenerator?: () => string},
 ): DeserializerRule[] {
   return [
     ...createWordRules(),
     ...createNotionRules(),
-    ...createGDocsRules(options),
-    ...createHTMLRules(options),
+    ...createGDocsRules(schema),
+    ...createHTMLRules(schema, options),
   ]
 }

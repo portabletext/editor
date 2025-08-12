@@ -9,26 +9,34 @@ import {
   HTML_SPAN_TAGS,
   type PartialBlock,
 } from '../../constants'
-import type {BlockEnabledFeatures, DeserializerRule} from '../../types'
+import type {DeserializerRule} from '../../types'
+import type {PortableTextSchema} from '../../util/portable-text-schema'
 import {keyGenerator} from '../../util/randomKey'
 import {isElement, tagName} from '../helpers'
 import {whitespaceTextNodeRule} from './whitespace-text-node'
 
 export function resolveListItem(
+  schema: PortableTextSchema,
   listNodeTagName: string,
-  enabledListTypes: string[],
 ): string | undefined {
-  if (listNodeTagName === 'ul' && enabledListTypes.includes('bullet')) {
+  if (
+    listNodeTagName === 'ul' &&
+    schema.lists.some((list) => list.name === 'bullet')
+  ) {
     return 'bullet'
   }
-  if (listNodeTagName === 'ol' && enabledListTypes.includes('number')) {
+  if (
+    listNodeTagName === 'ol' &&
+    schema.lists.some((list) => list.name === 'number')
+  ) {
     return 'number'
   }
   return undefined
 }
 
 export default function createHTMLRules(
-  options: BlockEnabledFeatures & {keyGenerator?: () => string},
+  schema: PortableTextSchema,
+  options: {keyGenerator?: () => string},
 ): DeserializerRule[] {
   return [
     whitespaceTextNodeRule,
@@ -39,7 +47,9 @@ export default function createHTMLRules(
           return undefined
         }
 
-        const isCodeEnabled = options.enabledBlockStyles.includes('code')
+        const isCodeEnabled = schema.styles.some(
+          (style) => style.name === 'code',
+        )
 
         return {
           _type: 'block',
@@ -132,8 +142,9 @@ export default function createHTMLRules(
         if (el.parentNode && tagName(el.parentNode) === 'li') {
           return next(el.childNodes)
         }
+        const blockStyle = block.style
         // If style is not supported, return a defaultBlockType
-        if (!options.enabledBlockStyles.includes(block.style)) {
+        if (!schema.styles.some((style) => style.name === blockStyle)) {
           block = DEFAULT_BLOCK
         }
         return {
@@ -192,10 +203,7 @@ export default function createHTMLRules(
         ) {
           return undefined
         }
-        const enabledListItem = resolveListItem(
-          parentTag,
-          options.enabledListTypes,
-        )
+        const enabledListItem = resolveListItem(schema, parentTag)
         // If the list item style is not supported, return a new default block
         if (!enabledListItem) {
           return block({_type: 'block', children: next(el.childNodes)})
@@ -210,7 +218,12 @@ export default function createHTMLRules(
     {
       deserialize(el, next) {
         const decorator = HTML_DECORATOR_TAGS[tagName(el) || '']
-        if (!decorator || !options.enabledSpanDecorators.includes(decorator)) {
+        if (
+          !decorator ||
+          !schema.decorators.some(
+            (decoratorType) => decoratorType.name === decorator,
+          )
+        ) {
           return undefined
         }
         return {
@@ -226,7 +239,9 @@ export default function createHTMLRules(
         if (tagName(el) !== 'a') {
           return undefined
         }
-        const linkEnabled = options.enabledBlockAnnotations.includes('link')
+        const linkEnabled = schema.annotations.some(
+          (annotation) => annotation.name === 'link',
+        )
         const href = isElement(el) && el.getAttribute('href')
         if (!href) {
           return next(el.childNodes)

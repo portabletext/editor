@@ -2,8 +2,6 @@ import {vercelStegaClean} from '@vercel/stega'
 import {isEqual} from 'lodash'
 import {DEFAULT_BLOCK} from '../constants'
 import type {
-  BlockContentFeatures,
-  BlockEnabledFeatures,
   HtmlParser,
   HtmlPreprocessorOptions,
   MinimalBlock,
@@ -15,30 +13,11 @@ import type {
 import {
   isTextBlock,
   type PortableTextObject,
-  type PortableTextSchema,
   type PortableTextTextBlock,
 } from '../types.portable-text'
+import type {PortableTextSchema} from '../util/portable-text-schema'
 import {resolveJsType} from '../util/resolveJsType'
 import preprocessors from './preprocessors'
-
-/**
- * A utility function to create the options needed for the various rule sets,
- * based on the structure of the blockContentType
- */
-export function createRuleOptions(
-  features: BlockContentFeatures,
-): BlockEnabledFeatures {
-  const enabledBlockStyles = features.styles
-  const enabledSpanDecorators = features.decorators
-  const enabledBlockAnnotations = features.annotations
-  const enabledListTypes = features.lists
-  return {
-    enabledBlockStyles,
-    enabledSpanDecorators,
-    enabledBlockAnnotations,
-    enabledListTypes,
-  }
-}
 
 /**
  * Utility function that always return a lowerCase version of the element.tagName
