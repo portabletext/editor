@@ -1,7 +1,6 @@
 import {flatten} from 'lodash'
 import type {
   ArbitraryTypedObject,
-  BlockContentFeatures,
   DeserializerRule,
   HtmlDeserializerOptions,
   PlaceholderAnnotation,
@@ -13,9 +12,9 @@ import {
   type PortableTextBlock,
   type PortableTextObject,
 } from '../types.portable-text'
+import type {PortableTextSchema} from '../util/portable-text-schema'
 import {resolveJsType} from '../util/resolveJsType'
 import {
-  createRuleOptions,
   defaultParseHtml,
   ensureRootIsBlocks,
   flattenNestedBlocks,
@@ -35,7 +34,7 @@ import {createRules} from './rules'
  *
  */
 export default class HtmlDeserializer {
-  features: BlockContentFeatures
+  schema: PortableTextSchema
   rules: DeserializerRule[]
   parseHtml: (html: string) => HTMLElement
   _markDefs: PortableTextObject[] = []
@@ -47,15 +46,14 @@ export default class HtmlDeserializer {
    * @param options - Options for the deserialization process
    */
   constructor(
-    features: BlockContentFeatures,
+    schema: PortableTextSchema,
     options: HtmlDeserializerOptions = {},
   ) {
     const {rules = [], unstable_whitespaceOnPasteMode = 'preserve'} = options
-    const standardRules = createRules({
-      ...createRuleOptions(features),
+    const standardRules = createRules(schema, {
       keyGenerator: options.keyGenerator,
     })
-    this.features = features
+    this.schema = schema
     this.rules = [...rules, ...standardRules]
     const parseHtml = options.parseHtml || defaultParseHtml()
     this.parseHtml = (html) => {
@@ -77,16 +75,16 @@ export default class HtmlDeserializer {
     const children = Array.from(fragment.childNodes) as HTMLElement[]
     // Ensure that there are no blocks within blocks, and trim whitespace
     const blocks = trimWhitespace(
-      this.features,
+      this.schema,
       flattenNestedBlocks(
-        this.features,
-        ensureRootIsBlocks(this.features, this.deserializeElements(children)),
+        this.schema,
+        ensureRootIsBlocks(this.schema, this.deserializeElements(children)),
       ),
     )
 
     if (this._markDefs.length > 0) {
       blocks
-        .filter((block) => isTextBlock(this.features, block))
+        .filter((block) => isTextBlock(this.schema, block))
         .forEach((block) => {
           block.markDefs = block.markDefs || []
           block.markDefs = block.markDefs.concat(
@@ -101,7 +99,7 @@ export default class HtmlDeserializer {
 
     return blocks.map((block) => {
       if (block._type === 'block') {
-        block._type = this.features.block.name
+        block._type = this.schema.block.name
       }
       return block
     })

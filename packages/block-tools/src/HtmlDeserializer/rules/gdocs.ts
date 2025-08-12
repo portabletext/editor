@@ -6,7 +6,8 @@ import {
   HTML_HEADER_TAGS,
   HTML_LIST_CONTAINER_TAGS,
 } from '../../constants'
-import type {BlockEnabledFeatures, DeserializerRule} from '../../types'
+import type {DeserializerRule} from '../../types'
+import type {PortableTextSchema} from '../../util/portable-text-schema'
 import {isElement, tagName} from '../helpers'
 
 const LIST_CONTAINER_TAGS = Object.keys(HTML_LIST_CONTAINER_TAGS)
@@ -80,20 +81,20 @@ const blocks: Record<string, {style: string} | undefined> = {
   ...HTML_HEADER_TAGS,
 }
 
-function getBlockStyle(el: Node, enabledBlockStyles: string[]): string {
+function getBlockStyle(schema: PortableTextSchema, el: Node): string {
   const childTag = tagName(el.firstChild)
   const block = childTag && blocks[childTag]
   if (!block) {
     return BLOCK_DEFAULT_STYLE
   }
-  if (!enabledBlockStyles.includes(block.style)) {
+  if (!schema.styles.some((style) => style.name === block.style)) {
     return BLOCK_DEFAULT_STYLE
   }
   return block.style
 }
 
 export default function createGDocsRules(
-  options: BlockEnabledFeatures,
+  schema: PortableTextSchema,
 ): DeserializerRule[] {
   return [
     {
@@ -128,7 +129,7 @@ export default function createGDocsRules(
             ...DEFAULT_BLOCK,
             listItem: getListItemStyle(el),
             level: getListItemLevel(el),
-            style: getBlockStyle(el, options.enabledBlockStyles),
+            style: getBlockStyle(schema, el),
             children: next(el.firstChild?.childNodes || []),
           }
         }

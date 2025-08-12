@@ -1,13 +1,5 @@
 import {isArbitraryTypedObject} from './types'
-
-export type PortableTextSchema = {
-  block: {
-    name: string
-  }
-  span: {
-    name: string
-  }
-}
+import type {PortableTextSchema} from './util/portable-text-schema'
 
 /**
  * @public
