@@ -63,13 +63,7 @@ export type BlockObjectSchemaType = BaseDefinition & {
 /**
  * @public
  */
-export type DecoratorSchemaType = BaseDefinition & {
-  /**
-   * @deprecated
-   * Use `name` instead
-   */
-  value: string
-}
+export type DecoratorSchemaType = BaseDefinition
 
 /**
  * @public
@@ -81,24 +75,12 @@ export type InlineObjectSchemaType = BaseDefinition & {
 /**
  * @public
  */
-export type ListSchemaType = BaseDefinition & {
-  /**
-   * @deprecated
-   * Use `name` instead
-   */
-  value: string
-}
+export type ListSchemaType = BaseDefinition
 
 /**
  * @public
  */
-export type StyleSchemaType = BaseDefinition & {
-  /**
-   * @deprecated
-   * Use `name` instead
-   */
-  value: string
-}
+export type StyleSchemaType = BaseDefinition
 
 export function legacySchemaToEditorSchema(
   schema: PortableTextMemberSchemaTypes,
@@ -128,7 +110,6 @@ export function legacySchemaToEditorSchema(
     decorators: schema.decorators.map((decorator) => ({
       name: decorator.value,
       title: decorator.title,
-      value: decorator.value,
     })),
     inlineObjects: schema.inlineObjects.map((inlineObject) => ({
       name: inlineObject.name,
@@ -145,12 +126,10 @@ export function legacySchemaToEditorSchema(
     styles: schema.styles.map((style) => ({
       name: style.value,
       title: style.title,
-      value: style.value,
     })),
     lists: schema.lists.map((list) => ({
       name: list.value,
       title: list.title,
-      value: list.value,
     })),
   }
 }
@@ -158,10 +137,7 @@ export function legacySchemaToEditorSchema(
 export function compileSchemaDefinition<
   TSchemaDefinition extends SchemaDefinition,
 >(definition: TSchemaDefinition): EditorSchema {
-  const styles = (definition.styles ?? []).map((style) => ({
-    ...style,
-    value: style.name,
-  }))
+  const styles = definition.styles ?? []
 
   return {
     block: {
@@ -170,17 +146,11 @@ export function compileSchemaDefinition<
     span: {
       name: 'span',
     },
-    styles: !styles.some((style) => style.value === 'normal')
-      ? [{value: 'normal', name: 'normal', title: 'Normal'}, ...styles]
+    styles: !styles.some((style) => style.name === 'normal')
+      ? [{name: 'normal', title: 'Normal'}, ...styles]
       : styles,
-    lists: (definition.lists ?? []).map((list) => ({
-      ...list,
-      value: list.name,
-    })),
-    decorators: (definition.decorators ?? []).map((decorator) => ({
-      ...decorator,
-      value: decorator.name,
-    })),
+    lists: definition.lists ?? [],
+    decorators: definition.decorators ?? [],
     annotations: (definition.annotations ?? []).map((annotation) => ({
       ...annotation,
       fields: annotation.fields ?? [],

@@ -50,17 +50,17 @@ export type MarkdownPluginConfig = MarkdownBehaviorsConfig & {
  *            )?.name
  *            return name ? {name} : undefined
  *          },
- *          defaultStyle: ({schema}) => schema.styles[0].value,
+ *          defaultStyle: ({schema}) => schema.styles[0].name,
  *          headingStyle: ({schema, level}) =>
- *            schema.styles.find((style) => style.value === `h${level}`)
- *              ?.value,
+ *            schema.styles.find((style) => style.name === `h${level}`)
+ *              ?.name,
  *          blockquoteStyle: ({schema}) =>
- *            schema.styles.find((style) => style.value === 'blockquote')
- *              ?.value,
+ *            schema.styles.find((style) => style.name === 'blockquote')
+ *              ?.name,
  *          unorderedListStyle: ({schema}) =>
- *            schema.lists.find((list) => list.value === 'bullet')?.value,
+ *            schema.lists.find((list) => list.name === 'bullet')?.name,
  *          orderedListStyle: ({schema}) =>
- *            schema.lists.find((list) => list.value === 'number')?.value,
+ *            schema.lists.find((list) => list.name === 'number')?.name,
  *        }}
  *      />
  *      {...}
