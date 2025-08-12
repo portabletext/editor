@@ -1,6 +1,7 @@
-import type {ArraySchemaType, PortableTextTextBlock} from '@sanity/types'
+import type {ArraySchemaType} from '@sanity/types'
 import HtmlDeserializer from './HtmlDeserializer'
 import type {HtmlDeserializerOptions, TypedObject} from './types'
+import type {PortableTextTextBlock} from './types.portable-text'
 import blockContentTypeFeatures from './util/blockContentTypeFeatures'
 import {normalizeBlock} from './util/normalizeBlock'
 
@@ -26,6 +27,12 @@ export function htmlToBlocks(
 }
 
 export type {ArbitraryTypedObject, DeserializerRule, HtmlParser} from './types'
+export type {
+  PortableTextBlock,
+  PortableTextObject,
+  PortableTextSpan,
+  PortableTextTextBlock,
+} from './types.portable-text'
 export type {BlockNormalizationOptions} from './util/normalizeBlock'
 export {randomKey} from './util/randomKey'
 export {normalizeBlock}

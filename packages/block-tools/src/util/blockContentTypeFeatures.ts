@@ -39,13 +39,22 @@ export default function blockContentFeatures(
     )
   }
 
+  const blockName = blockContentType.of.find(findBlockType)?.name
+
+  if (!blockName) {
+    throw new Error('No `block` type found in schema type')
+  }
+
   return {
     styles: resolveEnabledStyles(blockType),
     decorators: resolveEnabledDecorators(spanType),
     annotations: resolveEnabledAnnotationTypes(spanType),
     lists: resolveEnabledListItems(blockType),
-    types: {
-      block: blockContentType,
+    block: {
+      name: blockName,
+    },
+    span: {
+      name: spanType.name,
     },
   }
 }

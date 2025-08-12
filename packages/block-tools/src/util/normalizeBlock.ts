@@ -1,10 +1,10 @@
-import {
-  isPortableTextSpan,
-  type PortableTextSpan,
-  type PortableTextTextBlock,
-} from '@sanity/types'
 import {isEqual} from 'lodash'
 import type {TypedObject} from '../types'
+import {
+  isSpan,
+  type PortableTextSpan,
+  type PortableTextTextBlock,
+} from '../types.portable-text'
 import {keyGenerator} from './randomKey'
 
 /**
@@ -99,8 +99,28 @@ export function normalizeBlock(
         const previousChild = acc[acc.length - 1]
         if (
           previousChild &&
-          isPortableTextSpan(child) &&
-          isPortableTextSpan(previousChild) &&
+          isSpan(
+            {
+              block: {
+                name: options.blockTypeName ?? 'block',
+              },
+              span: {
+                name: 'span',
+              },
+            },
+            child,
+          ) &&
+          isSpan(
+            {
+              block: {
+                name: options.blockTypeName ?? 'block',
+              },
+              span: {
+                name: 'span',
+              },
+            },
+            previousChild,
+          ) &&
           isEqual(previousChild.marks, child.marks)
         ) {
           if (
@@ -129,7 +149,19 @@ export function normalizeBlock(
         ? options.keyGenerator()
         : keyGenerator()
 
-      if (isPortableTextSpan(child)) {
+      if (
+        isSpan(
+          {
+            block: {
+              name: options.blockTypeName ?? 'block',
+            },
+            span: {
+              name: 'span',
+            },
+          },
+          child,
+        )
+      ) {
         if (!child.marks) {
           child.marks = []
         } else if (allowedDecorators) {
