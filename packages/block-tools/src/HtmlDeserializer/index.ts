@@ -1,5 +1,4 @@
 import type {
-  ArraySchemaType,
   PortableTextBlock,
   PortableTextObject,
   PortableTextTextBlock,
@@ -7,6 +6,7 @@ import type {
 import {flatten} from 'lodash'
 import type {
   ArbitraryTypedObject,
+  BlockContentFeatures,
   DeserializerRule,
   HtmlDeserializerOptions,
   PlaceholderAnnotation,
@@ -36,7 +36,7 @@ import {createRules} from './rules'
  *
  */
 export default class HtmlDeserializer {
-  blockContentType: ArraySchemaType
+  features: BlockContentFeatures
   rules: DeserializerRule[]
   parseHtml: (html: string) => HTMLElement
   _markDefs: PortableTextObject[] = []
@@ -48,20 +48,17 @@ export default class HtmlDeserializer {
    * @param options - Options for the deserialization process
    */
   constructor(
-    blockContentType: ArraySchemaType,
+    features: BlockContentFeatures,
     options: HtmlDeserializerOptions = {},
   ) {
     const {rules = [], unstable_whitespaceOnPasteMode = 'preserve'} = options
-    if (!blockContentType) {
-      throw new Error("Parameter 'blockContentType' is required")
-    }
-    const standardRules = createRules(blockContentType, {
-      ...createRuleOptions(blockContentType),
+    const standardRules = createRules({
+      ...createRuleOptions(features),
       keyGenerator: options.keyGenerator,
     })
+    this.features = features
     this.rules = [...rules, ...standardRules]
     const parseHtml = options.parseHtml || defaultParseHtml()
-    this.blockContentType = blockContentType
     this.parseHtml = (html) => {
       const doc = preprocess(html, parseHtml, {unstable_whitespaceOnPasteMode})
       return doc.body
@@ -104,7 +101,8 @@ export default class HtmlDeserializer {
     }
 
     // Set back the potentially hoisted block type
-    const type = this.blockContentType.of.find(findBlockType)
+    const type = this.features.types.block.of.find(findBlockType)
+
     if (!type) {
       return blocks
     }

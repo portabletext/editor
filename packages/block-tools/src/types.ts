@@ -1,23 +1,17 @@
 import type {
   ArraySchemaType,
-  I18nTitledListValue,
   ObjectSchemaType,
   PortableTextObject,
-  SpanSchemaType,
-  TitledListValue,
 } from '@sanity/types'
 import type {ComponentType} from 'react'
 
 export interface BlockContentFeatures {
-  styles: TitledListValue<string>[]
-  decorators: TitledListValue<string>[]
-  annotations: ResolvedAnnotationType[]
-  lists: I18nTitledListValue<string>[]
+  styles: Array<string>
+  decorators: Array<string>
+  annotations: Array<string>
+  lists: Array<string>
   types: {
     block: ArraySchemaType
-    span: SpanSchemaType
-    inlineObjects: ObjectSchemaType[]
-    blockObjects: ObjectSchemaType[]
   }
 }
 

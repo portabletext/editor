@@ -1,4 +1,3 @@
-import type {ArraySchemaType} from '@sanity/types'
 import {DEFAULT_SPAN} from '../../constants'
 import type {DeserializerRule} from '../../types'
 import {isElement, tagName} from '../helpers'
@@ -28,9 +27,7 @@ function isNotion(el: Node): boolean {
   return isElement(el) && Boolean(el.getAttribute('data-is-notion'))
 }
 
-export default function createNotionRules(
-  _blockContentType: ArraySchemaType,
-): DeserializerRule[] {
+export default function createNotionRules(): DeserializerRule[] {
   return [
     {
       deserialize(el) {
