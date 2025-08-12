@@ -96,9 +96,6 @@ export interface DeserializerRule {
   ) => TypedObject | TypedObject[] | undefined
 }
 
-/**
- * @public
- */
 export interface BlockEnabledFeatures {
   enabledBlockStyles: string[]
   enabledSpanDecorators: string[]
