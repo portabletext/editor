@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.0.0](https://github.com/portabletext/editor/compare/block-tools-v3.0.0...block-tools-v4.0.0) (2025-08-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove export of unused `BlockEditorSchemaProps` and `ResolvedAnnotationType`
+* remove export of `blockContentFeatures`
+
+### Bug Fixes
+
+* remove export of `blockContentFeatures` ([843b092](https://github.com/portabletext/editor/commit/843b09287e2899b39d0ebc07a2a366a62aa0479a))
+* remove export of unused `BlockEditorSchemaProps` and `ResolvedAnnotationType` ([10b8ed7](https://github.com/portabletext/editor/commit/10b8ed7ac0857c60fd6885dd467109c4e8c4e18e))
+* **types:** limit dependency on `@sanity/types` ([b0f8fe8](https://github.com/portabletext/editor/commit/b0f8fe80b71b3831520f71778eab39cab2063a54))
+
 ## [3.0.0](https://github.com/portabletext/editor/compare/block-tools-v2.0.8...block-tools-v3.0.0) (2025-08-12)
 
 
