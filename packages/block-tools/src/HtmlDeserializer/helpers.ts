@@ -1,7 +1,3 @@
-import {
-  isPortableTextTextBlock,
-  type PortableTextTextBlock,
-} from '@sanity/types'
 import {vercelStegaClean} from '@vercel/stega'
 import {isEqual} from 'lodash'
 import {DEFAULT_BLOCK} from '../constants'
@@ -16,6 +12,12 @@ import type {
   PlaceholderDecorator,
   TypedObject,
 } from '../types'
+import {
+  isTextBlock,
+  type PortableTextObject,
+  type PortableTextSchema,
+  type PortableTextTextBlock,
+} from '../types.portable-text'
 import {resolveJsType} from '../util/resolveJsType'
 import preprocessors from './preprocessors'
 
@@ -88,7 +90,10 @@ export function defaultParseHtml(): HtmlParser {
   }
 }
 
-export function flattenNestedBlocks(blocks: TypedObject[]): TypedObject[] {
+export function flattenNestedBlocks(
+  schema: PortableTextSchema,
+  blocks: TypedObject[],
+): TypedObject[] {
   let depth = 0
   const flattened: TypedObject[] = []
   const traverse = (nodes: TypedObject[]) => {
@@ -97,7 +102,7 @@ export function flattenNestedBlocks(blocks: TypedObject[]): TypedObject[] {
       if (depth === 0) {
         flattened.push(node)
       }
-      if (isPortableTextTextBlock(node)) {
+      if (isTextBlock(schema, node)) {
         if (depth > 0) {
           toRemove.push(node)
           flattened.push(node)
@@ -139,9 +144,12 @@ function isWhiteSpaceChar(text: string) {
  * @param blocks - Array of blocks to trim whitespace for
  * @returns
  */
-export function trimWhitespace(blocks: TypedObject[]): TypedObject[] {
+export function trimWhitespace(
+  schema: PortableTextSchema,
+  blocks: TypedObject[],
+): TypedObject[] {
   blocks.forEach((block) => {
-    if (!isPortableTextTextBlock(block)) {
+    if (!isTextBlock(schema, block)) {
       return
     }
 
@@ -198,7 +206,10 @@ export function trimWhitespace(blocks: TypedObject[]): TypedObject[] {
   return blocks
 }
 
-export function ensureRootIsBlocks(blocks: TypedObject[]): TypedObject[] {
+export function ensureRootIsBlocks(
+  schema: PortableTextSchema,
+  blocks: TypedObject[],
+): TypedObject[] {
   return blocks.reduce((memo, node, i, original) => {
     if (node._type === 'block') {
       memo.push(node)
@@ -213,10 +224,10 @@ export function ensureRootIsBlocks(blocks: TypedObject[]): TypedObject[] {
     const lastBlock = memo[memo.length - 1]
     if (
       i > 0 &&
-      !isPortableTextTextBlock(original[i - 1]) &&
-      isPortableTextTextBlock<TypedObject>(lastBlock)
+      !isTextBlock(schema, original[i - 1]) &&
+      isTextBlock(schema, lastBlock)
     ) {
-      lastBlock.children.push(node)
+      lastBlock.children.push(node as PortableTextObject)
       return memo
     }
 

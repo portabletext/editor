@@ -1,13 +1,13 @@
-import type {ArraySchemaType, PortableTextObject} from '@sanity/types'
+import type {
+  PortableTextObject,
+  PortableTextSchema,
+} from './types.portable-text'
 
-export interface BlockContentFeatures {
+export interface BlockContentFeatures extends PortableTextSchema {
   styles: Array<string>
   decorators: Array<string>
   annotations: Array<string>
   lists: Array<string>
-  types: {
-    block: ArraySchemaType
-  }
 }
 
 /**
@@ -23,6 +23,16 @@ export interface TypedObject {
  */
 export interface ArbitraryTypedObject extends TypedObject {
   [key: string]: unknown
+}
+
+export function isArbitraryTypedObject(
+  object: unknown,
+): object is ArbitraryTypedObject {
+  return isRecord(object) && typeof object._type === 'string'
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && (typeof value === 'object' || typeof value === 'function')
 }
 
 export interface MinimalSpan {

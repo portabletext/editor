@@ -1,8 +1,3 @@
-import type {
-  PortableTextBlock,
-  PortableTextObject,
-  PortableTextTextBlock,
-} from '@sanity/types'
 import {flatten} from 'lodash'
 import type {
   ArbitraryTypedObject,
@@ -13,7 +8,11 @@ import type {
   PlaceholderDecorator,
   TypedObject,
 } from '../types'
-import {findBlockType} from '../util/findBlockType'
+import {
+  isTextBlock,
+  type PortableTextBlock,
+  type PortableTextObject,
+} from '../types.portable-text'
 import {resolveJsType} from '../util/resolveJsType'
 import {
   createRuleOptions,
@@ -78,16 +77,16 @@ export default class HtmlDeserializer {
     const children = Array.from(fragment.childNodes) as HTMLElement[]
     // Ensure that there are no blocks within blocks, and trim whitespace
     const blocks = trimWhitespace(
+      this.features,
       flattenNestedBlocks(
-        ensureRootIsBlocks(this.deserializeElements(children)),
+        this.features,
+        ensureRootIsBlocks(this.features, this.deserializeElements(children)),
       ),
     )
 
     if (this._markDefs.length > 0) {
       blocks
-        .filter(
-          (block): block is PortableTextTextBlock => block._type === 'block',
-        )
+        .filter((block) => isTextBlock(this.features, block))
         .forEach((block) => {
           block.markDefs = block.markDefs || []
           block.markDefs = block.markDefs.concat(
@@ -100,16 +99,9 @@ export default class HtmlDeserializer {
         })
     }
 
-    // Set back the potentially hoisted block type
-    const type = this.features.types.block.of.find(findBlockType)
-
-    if (!type) {
-      return blocks
-    }
-
     return blocks.map((block) => {
       if (block._type === 'block') {
-        block._type = type.name
+        block._type = this.features.block.name
       }
       return block
     })
