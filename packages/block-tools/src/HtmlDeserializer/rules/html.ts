@@ -1,4 +1,3 @@
-import type {ArraySchemaType, TypedObject} from '@sanity/types'
 import {
   DEFAULT_BLOCK,
   DEFAULT_SPAN,
@@ -29,7 +28,6 @@ export function resolveListItem(
 }
 
 export default function createHTMLRules(
-  _blockContentType: ArraySchemaType,
   options: BlockEnabledFeatures & {keyGenerator?: () => string},
 ): DeserializerRule[] {
   return [
@@ -233,18 +231,16 @@ export default function createHTMLRules(
         if (!href) {
           return next(el.childNodes)
         }
-        let markDef: TypedObject | undefined
         if (linkEnabled) {
-          markDef = {
-            _key: options.keyGenerator
-              ? options.keyGenerator()
-              : keyGenerator(),
-            _type: 'link',
-            href: href,
-          }
           return {
             _type: '__annotation',
-            markDef: markDef,
+            markDef: {
+              _key: options.keyGenerator
+                ? options.keyGenerator()
+                : keyGenerator(),
+              _type: 'link',
+              href: href,
+            },
             children: next(el.childNodes),
           }
         }

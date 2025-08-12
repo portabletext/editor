@@ -1,4 +1,3 @@
-import type {ArraySchemaType} from '@sanity/types'
 import {
   BLOCK_DEFAULT_STYLE,
   DEFAULT_BLOCK,
@@ -94,7 +93,6 @@ function getBlockStyle(el: Node, enabledBlockStyles: string[]): string {
 }
 
 export default function createGDocsRules(
-  _blockContentType: ArraySchemaType,
   options: BlockEnabledFeatures,
 ): DeserializerRule[] {
   return [

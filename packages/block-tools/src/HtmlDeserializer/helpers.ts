@@ -1,12 +1,12 @@
 import {
   isPortableTextTextBlock,
-  type ArraySchemaType,
   type PortableTextTextBlock,
 } from '@sanity/types'
 import {vercelStegaClean} from '@vercel/stega'
 import {isEqual} from 'lodash'
 import {DEFAULT_BLOCK} from '../constants'
 import type {
+  BlockContentFeatures,
   BlockEnabledFeatures,
   HtmlParser,
   HtmlPreprocessorOptions,
@@ -16,33 +16,20 @@ import type {
   PlaceholderDecorator,
   TypedObject,
 } from '../types'
-import blockContentTypeFeatures from '../util/blockContentTypeFeatures'
 import {resolveJsType} from '../util/resolveJsType'
 import preprocessors from './preprocessors'
 
 /**
  * A utility function to create the options needed for the various rule sets,
  * based on the structure of the blockContentType
- *
- * @param blockContentType - Schema type for array containing _at least_ a block child type
- * @returns
  */
 export function createRuleOptions(
-  blockContentType: ArraySchemaType,
+  features: BlockContentFeatures,
 ): BlockEnabledFeatures {
-  const features = blockContentTypeFeatures(blockContentType)
-  const enabledBlockStyles = features.styles.map(
-    (item) => item.value || item.title,
-  )
-  const enabledSpanDecorators = features.decorators.map(
-    (item) => item.value || item.title,
-  )
-  const enabledBlockAnnotations = features.annotations.map(
-    (item) => item.value || item.title || '',
-  )
-  const enabledListTypes = features.lists.map(
-    (item) => item.value || item.title || '',
-  )
+  const enabledBlockStyles = features.styles
+  const enabledSpanDecorators = features.decorators
+  const enabledBlockAnnotations = features.annotations
+  const enabledListTypes = features.lists
   return {
     enabledBlockStyles,
     enabledSpanDecorators,

@@ -3,17 +3,13 @@ import {
   isBlockListObjectField,
   isBlockSchemaType,
   isBlockStyleObjectField,
-  isObjectSchemaType,
   isTitledListValue,
   type ArraySchemaType,
   type BlockSchemaType,
   type EnumListProps,
-  type I18nTitledListValue,
-  type ObjectSchemaType,
   type SpanSchemaType,
-  type TitledListValue,
 } from '@sanity/types'
-import type {BlockContentFeatures, ResolvedAnnotationType} from '../types'
+import type {BlockContentFeatures} from '../types'
 import {findBlockType} from './findBlockType'
 
 // Helper method for describing a blockContentType's feature set
@@ -43,16 +39,6 @@ export default function blockContentFeatures(
     )
   }
 
-  const inlineObjectTypes = ofType.filter(
-    (inlineType): inlineType is ObjectSchemaType =>
-      inlineType.name !== 'span' && isObjectSchemaType(inlineType),
-  )
-
-  const blockObjectTypes = blockContentType.of.filter(
-    (memberType): memberType is ObjectSchemaType =>
-      memberType.name !== blockType.name && isObjectSchemaType(memberType),
-  )
-
   return {
     styles: resolveEnabledStyles(blockType),
     decorators: resolveEnabledDecorators(spanType),
@@ -60,16 +46,11 @@ export default function blockContentFeatures(
     lists: resolveEnabledListItems(blockType),
     types: {
       block: blockContentType,
-      span: spanType,
-      inlineObjects: inlineObjectTypes,
-      blockObjects: blockObjectTypes,
     },
   }
 }
 
-function resolveEnabledStyles(
-  blockType: BlockSchemaType,
-): TitledListValue<string>[] {
+function resolveEnabledStyles(blockType: BlockSchemaType): Array<string> {
   const styleField = blockType.fields.find(isBlockStyleObjectField)
   if (!styleField) {
     throw new Error(
@@ -92,24 +73,15 @@ function resolveEnabledStyles(
 
 function resolveEnabledAnnotationTypes(
   spanType: SpanSchemaType,
-): ResolvedAnnotationType[] {
-  return spanType.annotations.map((annotation) => ({
-    title: annotation.title,
-    type: annotation,
-    value: annotation.name,
-    icon: annotation.icon,
-  }))
+): Array<string> {
+  return spanType.annotations.map((annotation) => annotation.name)
 }
 
-function resolveEnabledDecorators(
-  spanType: SpanSchemaType,
-): TitledListValue<string>[] {
-  return spanType.decorators
+function resolveEnabledDecorators(spanType: SpanSchemaType): Array<string> {
+  return spanType.decorators.map((decorator) => decorator.value)
 }
 
-function resolveEnabledListItems(
-  blockType: BlockSchemaType,
-): I18nTitledListValue<string>[] {
+function resolveEnabledListItems(blockType: BlockSchemaType): Array<string> {
   const listField = blockType.fields.find(isBlockListObjectField)
   if (!listField) {
     throw new Error(
@@ -129,13 +101,13 @@ function resolveEnabledListItems(
 
 function getTitledListValuesFromEnumListOptions(
   options: EnumListProps<string> | undefined,
-): I18nTitledListValue<string>[] {
+): Array<string> {
   const list = options ? options.list : undefined
   if (!Array.isArray(list)) {
     return []
   }
 
   return list.map((item) =>
-    isTitledListValue(item) ? item : {title: item, value: item},
+    isTitledListValue(item) ? (item.value ?? item.title) : item,
   )
 }
