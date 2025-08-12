@@ -9,7 +9,7 @@
 Let's start with a complete example:
 
 ```js
-import {getBlockContentFeatures, htmlToBlocks} from '@portabletext/block-tools'
+import {htmlToBlocks} from '@portabletext/block-tools'
 import {Schema} from '@sanity/schema'
 
 // Start with compiling a schema we can work against
@@ -58,9 +58,6 @@ const blocks = htmlToBlocks(
 //      }
 //    ]
 //  }
-
-// Get the feature-set of a blockContentType
-const features = getBlockContentFeatures(blockContentType)
 ```
 
 ## Methods
@@ -195,32 +192,5 @@ Will produce
     }
   ],
   markDefs: []
-}
-```
-
-### `getBlockContentFeatures(blockContentType)`
-
-Will return an object with the features enabled for the input block content type.
-
-```js
-{
-  annotations: [{title: 'Link', value: 'link'}],
-  decorators: [
-    {title: 'Strong', value: 'strong'},
-    {title: 'Emphasis', value: 'em'},
-    {title: 'Code', value: 'code'},
-    {title: 'Underline', value: 'underline'},
-    {title: 'Strike', value: 'strike-through'}
-  ],
-  styles: [
-    {title: 'Normal', value: 'normal'},
-    {title: 'Heading 1', value: 'h1'},
-    {title: 'H2', value: 'h2'},
-    {title: 'H3', value: 'h3'},
-    {title: 'H4', value: 'h4'},
-    {title: 'H5', value: 'h5'},
-    {title: 'H6', value: 'h6'},
-    {title: 'Quote', value: 'blockquote'}
-  ]
 }
 ```

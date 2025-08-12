@@ -1,10 +1,6 @@
 import type {ArraySchemaType, PortableTextTextBlock} from '@sanity/types'
 import HtmlDeserializer from './HtmlDeserializer'
-import type {
-  BlockContentFeatures,
-  HtmlDeserializerOptions,
-  TypedObject,
-} from './types'
+import type {HtmlDeserializerOptions, TypedObject} from './types'
 import blockContentTypeFeatures from './util/blockContentTypeFeatures'
 import {normalizeBlock} from './util/normalizeBlock'
 
@@ -22,23 +18,11 @@ export function htmlToBlocks(
   blockContentType: ArraySchemaType,
   options: HtmlDeserializerOptions = {},
 ): (TypedObject | PortableTextTextBlock)[] {
-  const deserializer = new HtmlDeserializer(blockContentType, options)
+  const features = blockContentTypeFeatures(blockContentType)
+  const deserializer = new HtmlDeserializer(features, options)
   return deserializer
     .deserialize(html)
     .map((block) => normalizeBlock(block, {keyGenerator: options.keyGenerator}))
-}
-
-/**
- * Normalize and extract features of an schema type containing a block type
- *
- * @param blockContentType - Schema type for the block type
- * @returns Returns the featureset of a compiled block content type.
- * @public
- */
-export function getBlockContentFeatures(
-  blockContentType: ArraySchemaType,
-): BlockContentFeatures {
-  return blockContentTypeFeatures(blockContentType)
 }
 
 export type {
@@ -51,4 +35,4 @@ export type {
 export type {BlockNormalizationOptions} from './util/normalizeBlock'
 export {randomKey} from './util/randomKey'
 export {normalizeBlock}
-export type {BlockContentFeatures, HtmlDeserializerOptions, TypedObject}
+export type {HtmlDeserializerOptions, TypedObject}

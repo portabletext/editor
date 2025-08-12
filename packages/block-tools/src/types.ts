@@ -8,9 +8,6 @@ import type {
 } from '@sanity/types'
 import type {ComponentType} from 'react'
 
-/**
- * @public
- */
 export interface BlockContentFeatures {
   styles: TitledListValue<string>[]
   decorators: TitledListValue<string>[]
