@@ -1,9 +1,4 @@
-import type {
-  ArraySchemaType,
-  ObjectSchemaType,
-  PortableTextObject,
-} from '@sanity/types'
-import type {ComponentType} from 'react'
+import type {ArraySchemaType, PortableTextObject} from '@sanity/types'
 
 export interface BlockContentFeatures {
   styles: Array<string>
@@ -13,25 +8,6 @@ export interface BlockContentFeatures {
   types: {
     block: ArraySchemaType
   }
-}
-
-/**
- * @beta
- */
-export interface BlockEditorSchemaProps {
-  icon?: string | ComponentType
-  render?: ComponentType
-}
-
-/**
- * @public
- */
-export interface ResolvedAnnotationType {
-  blockEditor?: BlockEditorSchemaProps
-  title: string | undefined
-  value: string
-  type: ObjectSchemaType
-  icon: ComponentType | undefined
 }
 
 /**

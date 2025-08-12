@@ -25,13 +25,7 @@ export function htmlToBlocks(
     .map((block) => normalizeBlock(block, {keyGenerator: options.keyGenerator}))
 }
 
-export type {
-  ArbitraryTypedObject,
-  BlockEditorSchemaProps,
-  DeserializerRule,
-  HtmlParser,
-  ResolvedAnnotationType,
-} from './types'
+export type {ArbitraryTypedObject, DeserializerRule, HtmlParser} from './types'
 export type {BlockNormalizationOptions} from './util/normalizeBlock'
 export {randomKey} from './util/randomKey'
 export {normalizeBlock}
