@@ -52,8 +52,8 @@
   },
   "devDependencies": {
     "@sanity/pkg-utils": "^7.11.1",
-    "@sanity/schema": "^4.3.0",
-    "@sanity/types": "^4.3.0",
+    "@sanity/schema": "^4.4.0",
+    "@sanity/types": "^4.4.0",
     "@types/lodash.startcase": "^4.4.9",
     "typescript": "^5.9.2"
   },
