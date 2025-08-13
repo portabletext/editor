@@ -1,4 +1,3 @@
-import {compileSchemaDefinitionToPortableTextMemberSchemaTypes} from '@portabletext/sanity-bridge'
 import {
   compileSchema,
   defineSchema,
@@ -6,7 +5,7 @@ import {
 } from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
-import {createConverterTextHtml} from './converter.text-html'
+import {converterTextHtml} from './converter.text-html'
 
 function createSnapshot(schema: SchemaDefinition) {
   return createTestSnapshot({
@@ -25,12 +24,8 @@ const unorderedList = '<ul><li>foo</li><li>bar</li></ul>'
 const orderedList = '<ol><li>foo</li><li>bar</li></ol>'
 const nestedList = '<ol><li>foo<ul><li>bar</li></ul></li></ol>'
 
-describe(createConverterTextHtml.name, () => {
+describe(converterTextHtml.deserialize.name, () => {
   test('paragraph with unknown decorators', () => {
-    const converterTextHtml = createConverterTextHtml(
-      compileSchemaDefinitionToPortableTextMemberSchemaTypes(defineSchema({})),
-    )
-
     expect(
       converterTextHtml.deserialize({
         snapshot: createSnapshot(defineSchema({})),
@@ -60,14 +55,6 @@ describe(createConverterTextHtml.name, () => {
   })
 
   test('paragraph with known decorators', () => {
-    const converterTextHtml = createConverterTextHtml(
-      compileSchemaDefinitionToPortableTextMemberSchemaTypes(
-        defineSchema({
-          decorators: [{name: 'strong'}, {name: 'em'}, {name: 'code'}],
-        }),
-      ),
-    )
-
     expect(
       converterTextHtml.deserialize({
         snapshot: createSnapshot(
@@ -113,13 +100,6 @@ describe(createConverterTextHtml.name, () => {
   })
 
   test('image', () => {
-    const converterTextHtml = createConverterTextHtml(
-      compileSchemaDefinitionToPortableTextMemberSchemaTypes(
-        defineSchema({
-          blockObjects: [{name: 'image'}],
-        }),
-      ),
-    )
     expect(
       converterTextHtml.deserialize({
         snapshot: createSnapshot(
@@ -138,10 +118,6 @@ describe(createConverterTextHtml.name, () => {
   })
 
   test('paragraph with unknown link', () => {
-    const converterTextHtml = createConverterTextHtml(
-      compileSchemaDefinitionToPortableTextMemberSchemaTypes(defineSchema({})),
-    )
-
     expect(
       converterTextHtml.deserialize({
         snapshot: createSnapshot(defineSchema({})),
@@ -171,16 +147,6 @@ describe(createConverterTextHtml.name, () => {
   })
 
   test('paragraph with known link', () => {
-    const converterTextHtml = createConverterTextHtml(
-      compileSchemaDefinitionToPortableTextMemberSchemaTypes(
-        defineSchema({
-          annotations: [
-            {name: 'link', fields: [{name: 'href', type: 'string'}]},
-          ],
-        }),
-      ),
-    )
-
     expect(
       converterTextHtml.deserialize({
         snapshot: createSnapshot(
@@ -228,14 +194,6 @@ describe(createConverterTextHtml.name, () => {
   })
 
   test('unordered list', () => {
-    const converterTextHtml = createConverterTextHtml(
-      compileSchemaDefinitionToPortableTextMemberSchemaTypes(
-        defineSchema({
-          lists: [{name: 'bullet'}],
-        }),
-      ),
-    )
-
     expect(
       converterTextHtml.deserialize({
         snapshot: createSnapshot(
@@ -287,14 +245,6 @@ describe(createConverterTextHtml.name, () => {
   })
 
   test('ordered list', () => {
-    const converterTextHtml = createConverterTextHtml(
-      compileSchemaDefinitionToPortableTextMemberSchemaTypes(
-        defineSchema({
-          lists: [{name: 'number'}],
-        }),
-      ),
-    )
-
     expect(
       converterTextHtml.deserialize({
         snapshot: createSnapshot(
@@ -346,14 +296,6 @@ describe(createConverterTextHtml.name, () => {
   })
 
   test('nested list', () => {
-    const converterTextHtml = createConverterTextHtml(
-      compileSchemaDefinitionToPortableTextMemberSchemaTypes(
-        defineSchema({
-          lists: [{name: 'bullet'}, {name: 'number'}],
-        }),
-      ),
-    )
-
     expect(
       converterTextHtml.deserialize({
         snapshot: createSnapshot(

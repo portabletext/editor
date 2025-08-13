@@ -1,4 +1,3 @@
-import {compileSchemaDefinitionToPortableTextMemberSchemaTypes} from '@portabletext/sanity-bridge'
 import {
   compileSchema,
   defineSchema,
@@ -8,7 +7,7 @@ import type {PortableTextBlock, PortableTextTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
 import type {EditorSelection} from '..'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
-import {createConverterTextHtml} from './converter.text-html'
+import {converterTextHtml} from './converter.text-html'
 
 const decoratedParagraph: PortableTextTextBlock = {
   _key: 'k0',
@@ -85,10 +84,6 @@ function createSnapshot(schema: SchemaDefinition, selection: EditorSelection) {
     },
   })
 }
-
-const converterTextHtml = createConverterTextHtml(
-  compileSchemaDefinitionToPortableTextMemberSchemaTypes(defineSchema({})),
-)
 
 describe(converterTextHtml.serialize.name, () => {
   test('paragraph with decorators', () => {

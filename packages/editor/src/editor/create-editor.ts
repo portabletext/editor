@@ -5,7 +5,7 @@ import {
 } from '@portabletext/sanity-bridge'
 import {compileSchema} from '@portabletext/schema'
 import {createActor} from 'xstate'
-import {createCoreConverters} from '../converters/converters.core'
+import {coreConverters} from '../converters/converters.core'
 import type {Editor, EditorConfig} from '../editor'
 import {debugWithName} from '../internal-utils/debug'
 import {compileType} from '../internal-utils/schema'
@@ -194,7 +194,7 @@ function editorConfigToMachineInput(config: EditorConfig) {
   const {legacySchema, schema} = compileSchemasFromEditorConfig(config)
 
   return {
-    converters: createCoreConverters(legacySchema),
+    converters: coreConverters,
     getLegacySchema: () => legacySchema,
     keyGenerator: config.keyGenerator ?? defaultKeyGenerator,
     maxBlocks: config.maxBlocks,

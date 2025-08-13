@@ -1,4 +1,3 @@
-import {compileSchemaDefinitionToPortableTextMemberSchemaTypes} from '@portabletext/sanity-bridge'
 import {
   compileSchema,
   defineSchema,
@@ -6,10 +5,9 @@ import {
 } from '@portabletext/schema'
 import type {PortableTextBlock, PortableTextTextBlock} from '@sanity/types'
 import {expect, test} from 'vitest'
-import type {EditorSelection} from '..'
-import {schemaDefinition} from '../editor/__tests__/PortableTextEditorTester'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
-import {createConverterTextPlain} from './converter.text-plain'
+import type {EditorSelection} from '../types/editor'
+import {converterTextPlain} from './converter.text-plain'
 
 const b1: PortableTextTextBlock = {
   _type: 'block',
@@ -82,10 +80,6 @@ function createSnapshot({
     },
   })
 }
-
-const converterTextPlain = createConverterTextPlain(
-  compileSchemaDefinitionToPortableTextMemberSchemaTypes(schemaDefinition),
-)
 
 test(converterTextPlain.serialize.name, () => {
   expect(
