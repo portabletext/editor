@@ -16,7 +16,7 @@ export const markdownShortcutsPluginProps: MarkdownShortcutsPluginProps = {
     )?.name
     return name ? {name} : undefined
   },
-  defaultStyle: ({schema}) => schema.styles[0].value,
+  defaultStyle: ({schema}) => schema.styles[0].name,
   headingStyle: ({schema, level}) =>
     schema.styles.find((style) => style.name === `h${level}`)?.name,
   blockquoteStyle: ({schema}) =>
