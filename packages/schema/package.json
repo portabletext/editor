@@ -1,0 +1,52 @@
+{
+  "name": "@portabletext/schema",
+  "version": "0.0.0",
+  "description": "Portable Text Schema",
+  "keywords": [
+    "portabletext",
+    "schema"
+  ],
+  "homepage": "https://www.portabletext.org/",
+  "bugs": {
+    "url": "https://github.com/portabletext/editor/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/portabletext/editor.git",
+    "directory": "packages/schema"
+  },
+  "license": "MIT",
+  "author": "Sanity.io <hello@sanity.io>",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "pkg-utils build --strict --check --clean",
+    "check:lint": "biome lint .",
+    "check:types": "tsc",
+    "check:types:watch": "tsc --watch",
+    "clean": "del .turbo && del lib && del node_modules",
+    "dev": "pkg-utils watch",
+    "lint:fix": "biome lint --write .",
+    "prepublishOnly": "turbo run build"
+  },
+  "devDependencies": {
+    "@sanity/pkg-utils": "^7.11.1",
+    "typescript": "^5.9.2"
+  }
+}

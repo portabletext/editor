@@ -13,6 +13,7 @@
     "packages/keyboard-shortcuts": {},
     "packages/patches": {},
     "packages/racejar": {},
+    "packages/schema": {},
     "packages/toolbar": {}
   }
 }
