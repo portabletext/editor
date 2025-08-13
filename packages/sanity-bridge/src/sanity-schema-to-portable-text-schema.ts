@@ -1,10 +1,6 @@
 import type {Schema} from '@portabletext/schema'
 import {Schema as SanitySchema} from '@sanity/schema'
-import type {
-  ArrayDefinition,
-  ArraySchemaType,
-  PortableTextBlock,
-} from '@sanity/types'
+import type {ArrayDefinition, ArraySchemaType} from '@sanity/types'
 import {createPortableTextMemberSchemaTypes} from './portable-text-member-schema-types'
 import {portableTextMemberSchemaTypesToSchema} from './portable-text-member-schema-types-to-schema'
 
@@ -32,7 +28,7 @@ import {portableTextMemberSchemaTypesToSchema} from './portable-text-member-sche
  * ```
  */
 export function sanitySchemaToPortableTextSchema(
-  sanitySchema: ArraySchemaType<PortableTextBlock> | ArrayDefinition,
+  sanitySchema: ArraySchemaType<unknown> | ArrayDefinition,
 ): Schema {
   const portableTextMemberSchemaTypes = createPortableTextMemberSchemaTypes(
     sanitySchema.hasOwnProperty('jsonType')
