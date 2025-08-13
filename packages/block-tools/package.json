@@ -50,6 +50,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@portabletext/sanity-bridge": "workspace:^",
+    "@portabletext/schema": "workspace:^",
     "get-random-values-esm": "1.0.2",
     "lodash": "^4.17.21"
   },

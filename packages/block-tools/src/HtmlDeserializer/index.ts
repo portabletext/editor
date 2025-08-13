@@ -1,3 +1,4 @@
+import type {Schema} from '@portabletext/schema'
 import {flatten} from 'lodash'
 import type {
   ArbitraryTypedObject,
@@ -12,7 +13,6 @@ import {
   type PortableTextBlock,
   type PortableTextObject,
 } from '../types.portable-text'
-import type {PortableTextSchema} from '../util/portable-text-schema'
 import {resolveJsType} from '../util/resolveJsType'
 import {
   defaultParseHtml,
@@ -34,7 +34,7 @@ import {createRules} from './rules'
  *
  */
 export default class HtmlDeserializer {
-  schema: PortableTextSchema
+  schema: Schema
   rules: DeserializerRule[]
   parseHtml: (html: string) => HTMLElement
   _markDefs: PortableTextObject[] = []
@@ -45,10 +45,7 @@ export default class HtmlDeserializer {
    * @param blockContentType - Schema type for array containing _at least_ a block child type
    * @param options - Options for the deserialization process
    */
-  constructor(
-    schema: PortableTextSchema,
-    options: HtmlDeserializerOptions = {},
-  ) {
+  constructor(schema: Schema, options: HtmlDeserializerOptions = {}) {
     const {rules = [], unstable_whitespaceOnPasteMode = 'preserve'} = options
     const standardRules = createRules(schema, {
       keyGenerator: options.keyGenerator,

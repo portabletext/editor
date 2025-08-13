@@ -1,3 +1,4 @@
+import type {Schema} from '@portabletext/schema'
 import {
   BLOCK_DEFAULT_STYLE,
   DEFAULT_BLOCK,
@@ -7,7 +8,6 @@ import {
   HTML_LIST_CONTAINER_TAGS,
 } from '../../constants'
 import type {DeserializerRule} from '../../types'
-import type {PortableTextSchema} from '../../util/portable-text-schema'
 import {isElement, tagName} from '../helpers'
 
 const LIST_CONTAINER_TAGS = Object.keys(HTML_LIST_CONTAINER_TAGS)
@@ -81,7 +81,7 @@ const blocks: Record<string, {style: string} | undefined> = {
   ...HTML_HEADER_TAGS,
 }
 
-function getBlockStyle(schema: PortableTextSchema, el: Node): string {
+function getBlockStyle(schema: Schema, el: Node): string {
   const childTag = tagName(el.firstChild)
   const block = childTag && blocks[childTag]
   if (!block) {
@@ -93,9 +93,7 @@ function getBlockStyle(schema: PortableTextSchema, el: Node): string {
   return block.style
 }
 
-export default function createGDocsRules(
-  schema: PortableTextSchema,
-): DeserializerRule[] {
+export default function createGDocsRules(schema: Schema): DeserializerRule[] {
   return [
     {
       deserialize(el) {

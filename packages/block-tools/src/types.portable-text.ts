@@ -1,5 +1,5 @@
+import type {Schema} from '@portabletext/schema'
 import {isArbitraryTypedObject} from './types'
-import type {PortableTextSchema} from './util/portable-text-schema'
 
 /**
  * @public
@@ -22,7 +22,7 @@ export interface PortableTextTextBlock<
 }
 
 export function isTextBlock(
-  schema: PortableTextSchema,
+  schema: Schema,
   block: unknown,
 ): block is PortableTextTextBlock {
   if (!isArbitraryTypedObject(block)) {
@@ -51,7 +51,7 @@ export interface PortableTextSpan {
 }
 
 export function isSpan(
-  schema: PortableTextSchema,
+  schema: Schema,
   child: unknown,
 ): child is PortableTextSpan {
   if (!isArbitraryTypedObject(child)) {
