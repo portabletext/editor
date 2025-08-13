@@ -1,0 +1,70 @@
+{
+  "name": "@portabletext/sanity-bridge",
+  "version": "0.0.0",
+  "description": "Convert a Sanity Schema to a Portable Text Schema",
+  "keywords": [
+    "sanity",
+    "portable-text"
+  ],
+  "homepage": "https://www.portabletext.org/",
+  "bugs": {
+    "url": "https://github.com/portabletext/editor/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/portabletext/editor.git",
+    "directory": "packages/sanity-bridge"
+  },
+  "license": "MIT",
+  "author": "Sanity.io <hello@sanity.io>",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "pkg-utils build --strict --check --clean",
+    "check:lint": "biome lint .",
+    "check:types": "tsc",
+    "check:types:watch": "tsc --watch",
+    "clean": "del .turbo && del lib && del node_modules",
+    "dev": "pkg-utils watch",
+    "lint:fix": "biome lint --write .",
+    "prepublishOnly": "turbo run build"
+  },
+  "dependencies": {
+    "@portabletext/schema": "workspace:*",
+    "get-random-values-esm": "^1.0.2",
+    "lodash.startcase": "^4.4.0"
+  },
+  "devDependencies": {
+    "@sanity/pkg-utils": "^7.11.1",
+    "@sanity/schema": "^4.3.0",
+    "@sanity/types": "^4.3.0",
+    "@types/lodash.startcase": "^4.4.9",
+    "typescript": "^5.9.2"
+  },
+  "peerDependencies": {
+    "@sanity/schema": "^4.3.0",
+    "@sanity/types": "^4.3.0"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
