@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.3.4](https://github.com/portabletext/editor/compare/editor-v2.3.3...editor-v2.3.4) (2025-08-13)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/sanity-bridge bumped to 1.0.0
+    * @portabletext/schema bumped to 1.0.0
+
 ## [2.3.3](https://github.com/portabletext/editor/compare/editor-v2.3.2...editor-v2.3.3) (2025-08-12)
 
 
