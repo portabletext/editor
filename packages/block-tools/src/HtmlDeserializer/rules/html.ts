@@ -1,3 +1,4 @@
+import type {Schema} from '@portabletext/schema'
 import {
   DEFAULT_BLOCK,
   DEFAULT_SPAN,
@@ -10,13 +11,12 @@ import {
   type PartialBlock,
 } from '../../constants'
 import type {DeserializerRule} from '../../types'
-import type {PortableTextSchema} from '../../util/portable-text-schema'
 import {keyGenerator} from '../../util/randomKey'
 import {isElement, tagName} from '../helpers'
 import {whitespaceTextNodeRule} from './whitespace-text-node'
 
 export function resolveListItem(
-  schema: PortableTextSchema,
+  schema: Schema,
   listNodeTagName: string,
 ): string | undefined {
   if (
@@ -35,7 +35,7 @@ export function resolveListItem(
 }
 
 export default function createHTMLRules(
-  schema: PortableTextSchema,
+  schema: Schema,
   options: {keyGenerator?: () => string},
 ): DeserializerRule[] {
   return [

@@ -380,6 +380,12 @@ importers:
 
   packages/block-tools:
     dependencies:
+      '@portabletext/sanity-bridge':
+        specifier: workspace:^
+        version: link:../sanity-bridge
+      '@portabletext/schema':
+        specifier: workspace:^
+        version: link:../schema
       get-random-values-esm:
         specifier: 1.0.2
         version: 1.0.2

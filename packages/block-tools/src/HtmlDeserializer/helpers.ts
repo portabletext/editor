@@ -1,3 +1,4 @@
+import type {Schema} from '@portabletext/schema'
 import {vercelStegaClean} from '@vercel/stega'
 import {isEqual} from 'lodash'
 import {DEFAULT_BLOCK} from '../constants'
@@ -15,7 +16,6 @@ import {
   type PortableTextObject,
   type PortableTextTextBlock,
 } from '../types.portable-text'
-import type {PortableTextSchema} from '../util/portable-text-schema'
 import {resolveJsType} from '../util/resolveJsType'
 import preprocessors from './preprocessors'
 
@@ -70,7 +70,7 @@ export function defaultParseHtml(): HtmlParser {
 }
 
 export function flattenNestedBlocks(
-  schema: PortableTextSchema,
+  schema: Schema,
   blocks: TypedObject[],
 ): TypedObject[] {
   let depth = 0
@@ -124,7 +124,7 @@ function isWhiteSpaceChar(text: string) {
  * @returns
  */
 export function trimWhitespace(
-  schema: PortableTextSchema,
+  schema: Schema,
   blocks: TypedObject[],
 ): TypedObject[] {
   blocks.forEach((block) => {
@@ -186,7 +186,7 @@ export function trimWhitespace(
 }
 
 export function ensureRootIsBlocks(
-  schema: PortableTextSchema,
+  schema: Schema,
   blocks: TypedObject[],
 ): TypedObject[] {
   return blocks.reduce((memo, node, i, original) => {

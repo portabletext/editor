@@ -1,3 +1,4 @@
+import type {Schema} from '@portabletext/schema'
 import {isEqual} from 'lodash'
 import type {TypedObject} from '../types'
 import {
@@ -5,7 +6,6 @@ import {
   type PortableTextSpan,
   type PortableTextTextBlock,
 } from '../types.portable-text'
-import type {PortableTextSchema} from './portable-text-schema'
 import {keyGenerator} from './randomKey'
 
 /**
@@ -54,7 +54,7 @@ export function normalizeBlock(
 > & {
   _key: string
 } {
-  const schema: PortableTextSchema = {
+  const schema: Schema = {
     block: {
       name: options.blockTypeName || 'block',
     },
@@ -65,6 +65,8 @@ export function normalizeBlock(
     lists: [],
     decorators: [],
     annotations: [],
+    blockObjects: [],
+    inlineObjects: [],
   }
 
   if (node._type !== (options.blockTypeName || 'block')) {
