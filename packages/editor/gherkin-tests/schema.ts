@@ -1,4 +1,4 @@
-import {defineSchema} from '../src/editor/editor-schema-definition'
+import {defineSchema} from '@portabletext/schema'
 
 export const schemaDefinition = defineSchema({
   annotations: [

@@ -1,10 +1,9 @@
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import type {PortableTextBlock} from '@sanity/types'
 import {expect, test} from 'vitest'
-import {compileSchemaDefinition} from '../editor/editor-schema'
-import {defineSchema} from '../editor/editor-schema-definition'
 import {blockOffsetToSpanSelectionPoint} from './util.block-offset'
 
-const schema = compileSchemaDefinition(defineSchema({}))
+const schema = compileSchema(defineSchema({}))
 
 test(blockOffsetToSpanSelectionPoint.name, () => {
   const value: Array<PortableTextBlock> = [

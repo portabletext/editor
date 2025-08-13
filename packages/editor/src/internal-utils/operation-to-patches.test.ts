@@ -1,13 +1,10 @@
+import {compileSchemaDefinitionToPortableTextMemberSchemaTypes} from '@portabletext/sanity-bridge'
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import type {PortableTextTextBlock} from '@sanity/types'
 import {createEditor, type Descendant} from 'slate'
 import {beforeEach, describe, expect, it} from 'vitest'
 import {createActor} from 'xstate'
 import {editorMachine} from '../editor/editor-machine'
-import {
-  compileSchemaDefinition,
-  compileSchemaDefinitionToLegacySchema,
-} from '../editor/editor-schema'
-import {defineSchema} from '../editor/editor-schema-definition'
 import {defaultKeyGenerator} from '../editor/key-generator'
 import {withPlugins} from '../editor/plugins/with-plugins'
 import {relayMachine} from '../editor/relay-machine'
@@ -23,8 +20,9 @@ import {
 const schemaDefinition = defineSchema({
   inlineObjects: [{name: 'someObject'}],
 })
-const schema = compileSchemaDefinition(schemaDefinition)
-const legacySchema = compileSchemaDefinitionToLegacySchema(schemaDefinition)
+const schema = compileSchema(schemaDefinition)
+const legacySchema =
+  compileSchemaDefinitionToPortableTextMemberSchemaTypes(schemaDefinition)
 const editorActor = createActor(editorMachine, {
   input: {
     schema,

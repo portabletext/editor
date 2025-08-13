@@ -1,3 +1,4 @@
+import {defineSchema} from '@portabletext/schema'
 import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
 import {
@@ -6,7 +7,6 @@ import {
   forward,
   type BehaviorEvent,
 } from '../src/behaviors'
-import {defineSchema} from '../src/editor/editor-schema-definition'
 import {createTestEditor} from '../src/internal-utils/test-editor'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {getSelectionAfterText} from '../src/internal-utils/text-selection'

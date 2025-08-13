@@ -1,3 +1,4 @@
+import {defineSchema, type SchemaDefinition} from '@portabletext/schema'
 import type {PortableTextBlock} from '@sanity/types'
 import {page} from '@vitest/browser/context'
 import React from 'react'
@@ -7,10 +8,6 @@ import type {Editor} from '../editor'
 import {PortableTextEditable} from '../editor/Editable'
 import type {EditorActor} from '../editor/editor-machine'
 import {EditorProvider} from '../editor/editor-provider'
-import {
-  defineSchema,
-  type SchemaDefinition,
-} from '../editor/editor-schema-definition'
 import type {EditorEmittedEvent} from '../editor/relay-machine'
 import {EditorRefPlugin} from '../plugins/plugin.editor-ref'
 import {EventListenerPlugin} from '../plugins/plugin.event-listener'

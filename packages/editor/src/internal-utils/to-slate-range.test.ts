@@ -1,11 +1,10 @@
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import {compileSchemaDefinition} from '../editor/editor-schema'
-import {defineSchema} from '../editor/editor-schema-definition'
 import {createTestKeyGenerator} from './test-key-generator'
 import {toSlateRange} from './to-slate-range'
 
 describe(toSlateRange.name, () => {
-  const schema = compileSchemaDefinition(
+  const schema = compileSchema(
     defineSchema({
       blockObjects: [{name: 'image'}],
       inlineObjects: [

@@ -1,9 +1,9 @@
+import {defineSchema} from '@portabletext/schema'
 import {page, userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {PortableTextEditable} from '../src/editor/Editable'
 import {EditorProvider} from '../src/editor/editor-provider'
-import {defineSchema} from '../src/editor/editor-schema-definition'
 import {InternalChange$Plugin} from '../src/plugins/plugin.internal.change-ref'
 import type {EditorChange} from '../src/types/editor'
 

@@ -1,6 +1,5 @@
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import type {EditorSnapshot} from '..'
-import {compileSchemaDefinition} from '../editor/editor-schema'
-import {defineSchema} from '../editor/editor-schema-definition'
 import {createTestKeyGenerator} from './test-key-generator'
 
 export function createTestSnapshot(snapshot: {
@@ -9,8 +8,7 @@ export function createTestSnapshot(snapshot: {
 }): EditorSnapshot {
   const context = {
     converters: snapshot.context?.converters ?? [],
-    schema:
-      snapshot.context?.schema ?? compileSchemaDefinition(defineSchema({})),
+    schema: snapshot.context?.schema ?? compileSchema(defineSchema({})),
     keyGenerator: snapshot.context?.keyGenerator ?? createTestKeyGenerator(),
     readOnly: snapshot.context?.readOnly ?? false,
     value: snapshot.context?.value ?? [],

@@ -1,7 +1,9 @@
+import {
+  compileSchema,
+  defineSchema,
+  type SchemaDefinition,
+} from '@portabletext/schema'
 import {assert, describe, expect, test} from 'vitest'
-import {compileSchemaDefinition} from '../editor/editor-schema'
-import {defineSchema} from '../editor/editor-schema-definition'
-import type {SchemaDefinition} from '../editor/editor-schema-definition'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {converterPortableText} from './converter.portable-text'
 
@@ -9,7 +11,7 @@ function createSnapshot(schema: SchemaDefinition) {
   return createTestSnapshot({
     context: {
       converters: [],
-      schema: compileSchemaDefinition(schema),
+      schema: compileSchema(schema),
     },
   })
 }

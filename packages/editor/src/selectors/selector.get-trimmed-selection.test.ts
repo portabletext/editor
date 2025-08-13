@@ -1,7 +1,6 @@
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import type {PortableTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
-import {compileSchemaDefinition} from '../editor/editor-schema'
-import {defineSchema} from '../editor/editor-schema-definition'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {parseBlock} from '../internal-utils/parse-blocks'
 import {createTestKeyGenerator} from '../internal-utils/test-key-generator'
@@ -14,7 +13,7 @@ function snapshot(
   value: Array<Partial<PortableTextBlock>>,
   selection: EditorSelection,
 ) {
-  const schema = compileSchemaDefinition(
+  const schema = compileSchema(
     defineSchema({
       blockObjects: [{name: 'image'}],
       inlineObjects: [{name: 'stock-ticker'}],

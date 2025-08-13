@@ -1,6 +1,6 @@
+import {defineSchema} from '@portabletext/schema'
 import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
-import {defineSchema} from '../src/editor/editor-schema-definition'
 import {getSelectionText} from '../src/internal-utils/selection-text'
 import {getTersePt} from '../src/internal-utils/terse-pt'
 import {createTestEditor} from '../src/internal-utils/test-editor'
