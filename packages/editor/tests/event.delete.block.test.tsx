@@ -1,5 +1,5 @@
+import {defineSchema} from '@portabletext/schema'
 import {describe, expect, test, vi} from 'vitest'
-import {defineSchema} from '../src/editor/editor-schema-definition'
 import {createTestEditor} from '../src/internal-utils/test-editor'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 

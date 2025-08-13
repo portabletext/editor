@@ -95,6 +95,8 @@
     "@portabletext/block-tools": "workspace:*",
     "@portabletext/keyboard-shortcuts": "workspace:*",
     "@portabletext/patches": "workspace:*",
+    "@portabletext/sanity-bridge": "workspace:*",
+    "@portabletext/schema": "workspace:*",
     "@portabletext/to-html": "^2.0.14",
     "@xstate/react": "^6.0.0",
     "debug": "^4.4.1",

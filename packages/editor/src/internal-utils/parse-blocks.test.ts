@@ -1,6 +1,5 @@
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import {compileSchemaDefinition} from '../editor/editor-schema'
-import {defineSchema} from '../editor/editor-schema-definition'
 import {parseBlock, parseSpan} from './parse-blocks'
 import {createTestKeyGenerator} from './test-key-generator'
 
@@ -11,7 +10,7 @@ describe(parseBlock.name, () => {
         block: null,
         context: {
           keyGenerator: createTestKeyGenerator(),
-          schema: compileSchemaDefinition(defineSchema({})),
+          schema: compileSchema(defineSchema({})),
         },
         options: {refreshKeys: false, validateFields: true},
       }),
@@ -24,7 +23,7 @@ describe(parseBlock.name, () => {
         block: undefined,
         context: {
           keyGenerator: createTestKeyGenerator(),
-          schema: compileSchemaDefinition(defineSchema({})),
+          schema: compileSchema(defineSchema({})),
         },
         options: {refreshKeys: false, validateFields: true},
       }),
@@ -38,7 +37,7 @@ describe(parseBlock.name, () => {
           block: {},
           context: {
             keyGenerator: createTestKeyGenerator(),
-            schema: compileSchemaDefinition(defineSchema({})),
+            schema: compileSchema(defineSchema({})),
           },
           options: {refreshKeys: false, validateFields: true},
         }),
@@ -51,7 +50,7 @@ describe(parseBlock.name, () => {
           block: {_key: 'k0'},
           context: {
             keyGenerator: createTestKeyGenerator(),
-            schema: compileSchemaDefinition(
+            schema: compileSchema(
               defineSchema({blockObjects: [{name: 'image'}]}),
             ),
           },
@@ -66,7 +65,7 @@ describe(parseBlock.name, () => {
           block: {_type: 'image'},
           context: {
             keyGenerator: createTestKeyGenerator(),
-            schema: compileSchemaDefinition(
+            schema: compileSchema(
               defineSchema({blockObjects: [{name: 'image'}]}),
             ),
           },
@@ -86,7 +85,7 @@ describe(parseBlock.name, () => {
           block: {_type: 'block'},
           context: {
             keyGenerator: createTestKeyGenerator(),
-            schema: compileSchemaDefinition(defineSchema({})),
+            schema: compileSchema(defineSchema({})),
           },
           options: {refreshKeys: false, validateFields: true},
         }),
@@ -107,7 +106,7 @@ describe(parseBlock.name, () => {
     })
 
     test('custom _type', () => {
-      const schema = compileSchemaDefinition(defineSchema({}))
+      const schema = compileSchema(defineSchema({}))
       expect(
         parseBlock({
           block: {_type: 'text'},
@@ -148,7 +147,7 @@ describe(parseBlock.name, () => {
           },
           context: {
             keyGenerator: createTestKeyGenerator(),
-            schema: compileSchemaDefinition(defineSchema({})),
+            schema: compileSchema(defineSchema({})),
           },
           options: {refreshKeys: false, validateFields: true},
         }),
@@ -182,7 +181,7 @@ describe(parseBlock.name, () => {
           },
           context: {
             keyGenerator: createTestKeyGenerator(),
-            schema: compileSchemaDefinition(
+            schema: compileSchema(
               defineSchema({
                 inlineObjects: [{name: 'stock-ticker'}],
                 decorators: [{name: 'em'}],
@@ -235,9 +234,7 @@ describe(parseBlock.name, () => {
           block: {_type: 'block', listItem: 'bullet'},
           context: {
             keyGenerator: createTestKeyGenerator(),
-            schema: compileSchemaDefinition(
-              defineSchema({lists: [{name: 'bullet'}]}),
-            ),
+            schema: compileSchema(defineSchema({lists: [{name: 'bullet'}]})),
           },
           options: {refreshKeys: false, validateFields: true},
         }),
@@ -264,9 +261,7 @@ describe(parseBlock.name, () => {
           block: {_type: 'block', listItem: 'number'},
           context: {
             keyGenerator: createTestKeyGenerator(),
-            schema: compileSchemaDefinition(
-              defineSchema({lists: [{name: 'bullet'}]}),
-            ),
+            schema: compileSchema(defineSchema({lists: [{name: 'bullet'}]})),
           },
           options: {refreshKeys: false, validateFields: true},
         }),
@@ -295,7 +290,7 @@ describe(parseSpan.name, () => {
         span: undefined,
         context: {
           keyGenerator: createTestKeyGenerator(),
-          schema: compileSchemaDefinition(defineSchema({})),
+          schema: compileSchema(defineSchema({})),
         },
         markDefKeyMap: new Map(),
         options: {refreshKeys: false, validateFields: true},
@@ -309,7 +304,7 @@ describe(parseSpan.name, () => {
         span: null,
         context: {
           keyGenerator: createTestKeyGenerator(),
-          schema: compileSchemaDefinition(defineSchema({})),
+          schema: compileSchema(defineSchema({})),
         },
         markDefKeyMap: new Map(),
         options: {refreshKeys: false, validateFields: true},
@@ -323,7 +318,7 @@ describe(parseSpan.name, () => {
         span: {},
         context: {
           keyGenerator: createTestKeyGenerator(),
-          schema: compileSchemaDefinition(defineSchema({})),
+          schema: compileSchema(defineSchema({})),
         },
         markDefKeyMap: new Map(),
         options: {refreshKeys: false, validateFields: true},
@@ -337,7 +332,7 @@ describe(parseSpan.name, () => {
         span: {_type: 'stock-ticker'},
         context: {
           keyGenerator: createTestKeyGenerator(),
-          schema: compileSchemaDefinition(defineSchema({})),
+          schema: compileSchema(defineSchema({})),
         },
         markDefKeyMap: new Map(),
         options: {refreshKeys: false, validateFields: true},
@@ -351,7 +346,7 @@ describe(parseSpan.name, () => {
         span: {_type: 'span'},
         context: {
           keyGenerator: createTestKeyGenerator(),
-          schema: compileSchemaDefinition(defineSchema({})),
+          schema: compileSchema(defineSchema({})),
         },
         markDefKeyMap: new Map(),
         options: {refreshKeys: false, validateFields: true},
@@ -370,7 +365,7 @@ describe(parseSpan.name, () => {
         span: {_type: 'span', foo: 'bar'},
         context: {
           keyGenerator: createTestKeyGenerator(),
-          schema: compileSchemaDefinition(defineSchema({})),
+          schema: compileSchema(defineSchema({})),
         },
         markDefKeyMap: new Map(),
         options: {refreshKeys: false, validateFields: true},
@@ -392,7 +387,7 @@ describe(parseSpan.name, () => {
         },
         context: {
           keyGenerator: createTestKeyGenerator(),
-          schema: compileSchemaDefinition(defineSchema({})),
+          schema: compileSchema(defineSchema({})),
         },
         markDefKeyMap: new Map(),
         options: {refreshKeys: false, validateFields: true},
@@ -414,9 +409,7 @@ describe(parseSpan.name, () => {
         },
         context: {
           keyGenerator: createTestKeyGenerator(),
-          schema: compileSchemaDefinition(
-            defineSchema({decorators: [{name: 'strong'}]}),
-          ),
+          schema: compileSchema(defineSchema({decorators: [{name: 'strong'}]})),
         },
         markDefKeyMap: new Map(),
         options: {refreshKeys: false, validateFields: true},
@@ -438,9 +431,7 @@ describe(parseSpan.name, () => {
         },
         context: {
           keyGenerator: createTestKeyGenerator(),
-          schema: compileSchemaDefinition(
-            defineSchema({decorators: [{name: 'strong'}]}),
-          ),
+          schema: compileSchema(defineSchema({decorators: [{name: 'strong'}]})),
         },
         markDefKeyMap: new Map(),
         options: {refreshKeys: false, validateFields: true},

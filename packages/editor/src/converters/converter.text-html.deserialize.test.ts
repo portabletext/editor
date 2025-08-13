@@ -1,10 +1,10 @@
-import {describe, expect, test} from 'vitest'
+import {compileSchemaDefinitionToPortableTextMemberSchemaTypes} from '@portabletext/sanity-bridge'
 import {
-  compileSchemaDefinition,
-  compileSchemaDefinitionToLegacySchema,
-} from '../editor/editor-schema'
-import {defineSchema} from '../editor/editor-schema-definition'
-import type {SchemaDefinition} from '../editor/editor-schema-definition'
+  compileSchema,
+  defineSchema,
+  type SchemaDefinition,
+} from '@portabletext/schema'
+import {describe, expect, test} from 'vitest'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {createConverterTextHtml} from './converter.text-html'
 
@@ -12,7 +12,7 @@ function createSnapshot(schema: SchemaDefinition) {
   return createTestSnapshot({
     context: {
       converters: [],
-      schema: compileSchemaDefinition(schema),
+      schema: compileSchema(schema),
     },
   })
 }
@@ -28,7 +28,7 @@ const nestedList = '<ol><li>foo<ul><li>bar</li></ul></li></ol>'
 describe(createConverterTextHtml.name, () => {
   test('paragraph with unknown decorators', () => {
     const converterTextHtml = createConverterTextHtml(
-      compileSchemaDefinitionToLegacySchema(defineSchema({})),
+      compileSchemaDefinitionToPortableTextMemberSchemaTypes(defineSchema({})),
     )
 
     expect(
@@ -61,7 +61,7 @@ describe(createConverterTextHtml.name, () => {
 
   test('paragraph with known decorators', () => {
     const converterTextHtml = createConverterTextHtml(
-      compileSchemaDefinitionToLegacySchema(
+      compileSchemaDefinitionToPortableTextMemberSchemaTypes(
         defineSchema({
           decorators: [{name: 'strong'}, {name: 'em'}, {name: 'code'}],
         }),
@@ -114,7 +114,7 @@ describe(createConverterTextHtml.name, () => {
 
   test('image', () => {
     const converterTextHtml = createConverterTextHtml(
-      compileSchemaDefinitionToLegacySchema(
+      compileSchemaDefinitionToPortableTextMemberSchemaTypes(
         defineSchema({
           blockObjects: [{name: 'image'}],
         }),
@@ -139,7 +139,7 @@ describe(createConverterTextHtml.name, () => {
 
   test('paragraph with unknown link', () => {
     const converterTextHtml = createConverterTextHtml(
-      compileSchemaDefinitionToLegacySchema(defineSchema({})),
+      compileSchemaDefinitionToPortableTextMemberSchemaTypes(defineSchema({})),
     )
 
     expect(
@@ -172,7 +172,7 @@ describe(createConverterTextHtml.name, () => {
 
   test('paragraph with known link', () => {
     const converterTextHtml = createConverterTextHtml(
-      compileSchemaDefinitionToLegacySchema(
+      compileSchemaDefinitionToPortableTextMemberSchemaTypes(
         defineSchema({
           annotations: [
             {name: 'link', fields: [{name: 'href', type: 'string'}]},
@@ -229,7 +229,7 @@ describe(createConverterTextHtml.name, () => {
 
   test('unordered list', () => {
     const converterTextHtml = createConverterTextHtml(
-      compileSchemaDefinitionToLegacySchema(
+      compileSchemaDefinitionToPortableTextMemberSchemaTypes(
         defineSchema({
           lists: [{name: 'bullet'}],
         }),
@@ -288,7 +288,7 @@ describe(createConverterTextHtml.name, () => {
 
   test('ordered list', () => {
     const converterTextHtml = createConverterTextHtml(
-      compileSchemaDefinitionToLegacySchema(
+      compileSchemaDefinitionToPortableTextMemberSchemaTypes(
         defineSchema({
           lists: [{name: 'number'}],
         }),
@@ -347,7 +347,7 @@ describe(createConverterTextHtml.name, () => {
 
   test('nested list', () => {
     const converterTextHtml = createConverterTextHtml(
-      compileSchemaDefinitionToLegacySchema(
+      compileSchemaDefinitionToPortableTextMemberSchemaTypes(
         defineSchema({
           lists: [{name: 'bullet'}, {name: 'number'}],
         }),

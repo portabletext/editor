@@ -1,3 +1,4 @@
+import {compileSchema} from '@portabletext/schema'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
@@ -7,7 +8,6 @@ import {
 } from '../../__tests__/PortableTextEditorTester'
 import {isTextBlock} from '../../../internal-utils/parse-blocks'
 import {createTestKeyGenerator} from '../../../internal-utils/test-key-generator'
-import {compileSchemaDefinition} from '../../editor-schema'
 import {PortableTextEditor} from '../../PortableTextEditor'
 
 const initialValue = [
@@ -88,7 +88,7 @@ describe('plugin:withEditableAPI: .getFragment()', () => {
           fragment &&
             isTextBlock(
               {
-                schema: compileSchemaDefinition(schemaDefinition),
+                schema: compileSchema(schemaDefinition),
               },
               fragment[0],
             ) &&

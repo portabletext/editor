@@ -1,8 +1,7 @@
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import type {PortableTextBlock} from '@sanity/types'
 import {expect, test} from 'vitest'
 import type {EditorSelection} from '..'
-import {compileSchemaDefinition} from '../editor/editor-schema'
-import {defineSchema} from '../editor/editor-schema-definition'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {getSelectionText} from './selector.get-selection-text'
 
@@ -72,7 +71,7 @@ test(getSelectionText.name, () => {
   ) {
     return createTestSnapshot({
       context: {
-        schema: compileSchemaDefinition(
+        schema: compileSchema(
           defineSchema({
             inlineObjects: [{name: 'stock-ticker'}],
           }),

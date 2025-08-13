@@ -1,6 +1,5 @@
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import {compileSchemaDefinition} from '../editor/editor-schema'
-import {defineSchema} from '../editor/editor-schema-definition'
 import type {EditorSelection} from '../types/editor'
 import {createTestSnapshot} from './create-test-snapshot'
 import {getDragSelection} from './drag-selection'
@@ -57,9 +56,7 @@ describe(getDragSelection.name, () => {
     return createTestSnapshot({
       context: {
         keyGenerator,
-        schema: compileSchemaDefinition(
-          defineSchema({blockObjects: [{name: 'image'}]}),
-        ),
+        schema: compileSchema(defineSchema({blockObjects: [{name: 'image'}]})),
         selection,
         value: [foo, baz, image],
       },

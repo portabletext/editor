@@ -19,11 +19,11 @@ export type {
   AnnotationSchemaType,
   BlockObjectSchemaType,
   DecoratorSchemaType,
-  EditorSchema,
   InlineObjectSchemaType,
   ListSchemaType,
   StyleSchemaType,
-} from './editor/editor-schema'
+} from '@portabletext/schema'
+export type {EditorSchema} from './editor/editor-schema'
 export {
   defineSchema,
   type AnnotationDefinition,
@@ -35,7 +35,7 @@ export {
   type ListDefinition,
   type SchemaDefinition,
   type StyleDefinition,
-} from './editor/editor-schema-definition'
+} from '@portabletext/schema'
 export {useEditorSelector, type EditorSelector} from './editor/editor-selector'
 export type {EditorContext, EditorSnapshot} from './editor/editor-snapshot'
 export {usePortableTextEditor} from './editor/hooks/usePortableTextEditor'

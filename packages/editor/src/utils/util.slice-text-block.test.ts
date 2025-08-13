@@ -1,3 +1,4 @@
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import type {
   PortableTextObject,
   PortableTextSpan,
@@ -5,11 +6,9 @@ import type {
 } from '@sanity/types'
 import {describe, expect, test} from 'vitest'
 import {keyGenerator} from '..'
-import {compileSchemaDefinition} from '../editor/editor-schema'
-import {defineSchema} from '../editor/editor-schema-definition'
 import {sliceTextBlock} from './util.slice-text-block'
 
-const schema = compileSchemaDefinition(
+const schema = compileSchema(
   defineSchema({
     inlineObjects: [{name: 'stock-ticker'}],
   }),

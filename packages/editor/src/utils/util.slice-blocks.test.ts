@@ -1,7 +1,6 @@
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import type {PortableTextBlock, PortableTextTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
-import {compileSchemaDefinition} from '../editor/editor-schema'
-import {defineSchema} from '../editor/editor-schema-definition'
 import {sliceBlocks} from './util.slice-blocks'
 
 const b1: PortableTextTextBlock = {
@@ -59,7 +58,7 @@ const b4: PortableTextTextBlock = {
   ],
 }
 
-const schema = compileSchemaDefinition(defineSchema({}))
+const schema = compileSchema(defineSchema({}))
 const blocks: Array<PortableTextBlock> = [b1, b2, b3, b4]
 
 describe(sliceBlocks.name, () => {

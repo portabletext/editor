@@ -1,3 +1,9 @@
+import {
+  compileSchemaDefinitionToPortableTextMemberSchemaTypes,
+  createPortableTextMemberSchemaTypes,
+  portableTextMemberSchemaTypesToSchema,
+} from '@portabletext/sanity-bridge'
+import {compileSchema} from '@portabletext/schema'
 import {createActor} from 'xstate'
 import {createCoreConverters} from '../converters/converters.core'
 import type {Editor, EditorConfig} from '../editor'
@@ -12,14 +18,8 @@ import {createSlateEditor, type SlateEditor} from './create-slate-editor'
 import {createEditorDom} from './editor-dom'
 import type {EditorActor} from './editor-machine'
 import {editorMachine} from './editor-machine'
-import {
-  compileSchemaDefinition,
-  compileSchemaDefinitionToLegacySchema,
-  legacySchemaToEditorSchema,
-} from './editor-schema'
 import {getEditorSnapshot} from './editor-selector'
 import {defaultKeyGenerator} from './key-generator'
-import {createLegacySchema} from './legacy-schema'
 import {mutationMachine, type MutationActor} from './mutation-machine'
 import {createEditableAPI} from './plugins/createWithEditableAPI'
 import {relayMachine, type RelayActor} from './relay-machine'
@@ -206,15 +206,17 @@ function editorConfigToMachineInput(config: EditorConfig) {
 
 function compileSchemasFromEditorConfig(config: EditorConfig) {
   const legacySchema = config.schemaDefinition
-    ? compileSchemaDefinitionToLegacySchema(config.schemaDefinition)
-    : createLegacySchema(
+    ? compileSchemaDefinitionToPortableTextMemberSchemaTypes(
+        config.schemaDefinition,
+      )
+    : createPortableTextMemberSchemaTypes(
         config.schema.hasOwnProperty('jsonType')
           ? config.schema
           : compileType(config.schema),
       )
   const schema = config.schemaDefinition
-    ? compileSchemaDefinition(config.schemaDefinition)
-    : legacySchemaToEditorSchema(legacySchema)
+    ? compileSchema(config.schemaDefinition)
+    : portableTextMemberSchemaTypesToSchema(legacySchema)
 
   return {
     legacySchema,

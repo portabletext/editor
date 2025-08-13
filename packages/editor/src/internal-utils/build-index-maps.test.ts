@@ -1,7 +1,6 @@
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import type {PortableTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
-import {compileSchemaDefinition} from '../editor/editor-schema'
-import {defineSchema} from '../editor/editor-schema-definition'
 import {defaultKeyGenerator} from '../editor/key-generator'
 import {buildIndexMaps} from './build-index-maps'
 
@@ -38,7 +37,7 @@ function textBlock(
   }
 }
 
-const schema = compileSchemaDefinition(
+const schema = compileSchema(
   defineSchema({
     blockObjects: [{name: 'image'}],
   }),

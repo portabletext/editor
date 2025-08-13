@@ -1,13 +1,13 @@
+import {compileSchemaDefinitionToPortableTextMemberSchemaTypes} from '@portabletext/sanity-bridge'
+import {
+  compileSchema,
+  defineSchema,
+  type SchemaDefinition,
+} from '@portabletext/schema'
 import type {PortableTextBlock, PortableTextTextBlock} from '@sanity/types'
 import {expect, test} from 'vitest'
 import type {EditorSelection} from '..'
 import {schemaDefinition} from '../editor/__tests__/PortableTextEditorTester'
-import {
-  compileSchemaDefinition,
-  compileSchemaDefinitionToLegacySchema,
-} from '../editor/editor-schema'
-import type {SchemaDefinition} from '../editor/editor-schema-definition'
-import {defineSchema} from '../editor/editor-schema-definition'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {createConverterTextPlain} from './converter.text-plain'
 
@@ -76,7 +76,7 @@ function createSnapshot({
   return createTestSnapshot({
     context: {
       converters: [],
-      schema: compileSchemaDefinition(schema),
+      schema: compileSchema(schema),
       selection,
       value: [b1, b2, b3, b4],
     },
@@ -84,7 +84,7 @@ function createSnapshot({
 }
 
 const converterTextPlain = createConverterTextPlain(
-  compileSchemaDefinitionToLegacySchema(schemaDefinition),
+  compileSchemaDefinitionToPortableTextMemberSchemaTypes(schemaDefinition),
 )
 
 test(converterTextPlain.serialize.name, () => {

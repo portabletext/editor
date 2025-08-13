@@ -1,9 +1,8 @@
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, it} from 'vitest'
-import {compileSchemaDefinition} from '../../editor/editor-schema'
-import {defineSchema} from '../../editor/editor-schema-definition'
 import {fromSlateValue, toSlateValue} from '../values'
 
-const schemaTypes = compileSchemaDefinition(defineSchema({}))
+const schemaTypes = compileSchema(defineSchema({}))
 
 describe('toSlateValue', () => {
   it('checks undefined', () => {

@@ -1,12 +1,11 @@
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import {compileSchemaDefinition} from '../editor/editor-schema'
-import {defineSchema} from '../editor/editor-schema-definition'
 import {applyOperationToPortableText} from './apply-operation-to-portable-text'
 import {createTestKeyGenerator} from './test-key-generator'
 
 function createContext() {
   const keyGenerator = createTestKeyGenerator()
-  const schema = compileSchemaDefinition(defineSchema({}))
+  const schema = compileSchema(defineSchema({}))
 
   return {
     keyGenerator,
