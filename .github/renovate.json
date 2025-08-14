@@ -14,8 +14,12 @@
       "matchFileNames": [
         "packages/block-tools/package.json",
         "packages/editor/package.json",
+        "packages/keyboard-shortcuts/package.json",
         "packages/patches/package.json",
-        "packages/racejar/package.json"
+        "packages/racejar/package.json",
+        "packages/sanity-bridge/package.json",
+        "packages/schema/package.json",
+        "packages/toolbar/package.json"
       ],
       "matchDepTypes": ["dependencies", "peerDependencies"],
       "rangeStrategy": "bump",
