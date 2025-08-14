@@ -3,6 +3,7 @@ import {vercelStegaClean} from '@vercel/stega'
 import {isEqual} from 'lodash'
 import {DEFAULT_BLOCK} from '../constants'
 import type {
+  ArbitraryTypedObject,
   HtmlParser,
   HtmlPreprocessorOptions,
   MinimalBlock,
@@ -12,8 +13,10 @@ import type {
   TypedObject,
 } from '../types'
 import {
+  isSpan,
   isTextBlock,
   type PortableTextObject,
+  type PortableTextSpan,
   type PortableTextTextBlock,
 } from '../types.portable-text'
 import {resolveJsType} from '../util/resolveJsType'
@@ -70,18 +73,121 @@ export function defaultParseHtml(): HtmlParser {
 }
 
 export function flattenNestedBlocks(
-  schema: Schema,
-  blocks: TypedObject[],
+  context: {
+    schema: Schema
+    keyGenerator: () => string
+  },
+  blocks: Array<ArbitraryTypedObject>,
 ): TypedObject[] {
   let depth = 0
   const flattened: TypedObject[] = []
+
   const traverse = (nodes: TypedObject[]) => {
     const toRemove: TypedObject[] = []
     nodes.forEach((node) => {
       if (depth === 0) {
-        flattened.push(node)
+        //Only apply splitting logic if we have block objects defined in the schema
+        if (
+          context.schema.blockObjects.length > 0 &&
+          isTextBlock(context.schema, node)
+        ) {
+          const hasBlockObjects = node.children.some((child) => {
+            const knownBlockObject = context.schema.blockObjects.some(
+              (blockObject) => blockObject.name === child._type,
+            )
+            return knownBlockObject
+          })
+          const hasBlocks = node.children.some(
+            (child) => child._type === '__block',
+          )
+
+          if (hasBlockObjects || hasBlocks) {
+            // Split the block when it contains block objects
+            const splitChildren = node.children.reduce(
+              (slices, child) => {
+                const knownInlineObject = context.schema.inlineObjects.some(
+                  (inlineObject) => inlineObject.name === child._type,
+                )
+                const knownBlockObject = context.schema.blockObjects.some(
+                  (blockObject) => blockObject.name === child._type,
+                )
+
+                const lastSlice = slices.pop()
+
+                if (!isSpan(context.schema, child) && !knownInlineObject) {
+                  if (knownBlockObject) {
+                    return [
+                      ...slices,
+                      ...(lastSlice ? [lastSlice] : []),
+                      {type: 'block object' as const, block: child},
+                    ]
+                  }
+                }
+
+                if (child._type === '__block') {
+                  return [
+                    ...slices,
+                    ...(lastSlice ? [lastSlice] : []),
+                    {
+                      type: 'block object' as const,
+                      block: (child as any).block,
+                    },
+                  ]
+                }
+
+                if (lastSlice) {
+                  if (lastSlice.type === 'children') {
+                    return [
+                      ...slices,
+                      {
+                        type: 'children' as const,
+                        children: [...lastSlice.children, child],
+                      },
+                    ]
+                  }
+                }
+
+                return [
+                  ...slices,
+                  ...(lastSlice ? [lastSlice] : []),
+                  {type: 'children' as const, children: [child]},
+                ]
+              },
+              [] as Array<
+                | {
+                    type: 'children'
+                    children: Array<PortableTextSpan | PortableTextObject>
+                  }
+                | {type: 'block object'; block: PortableTextObject}
+              >,
+            )
+
+            // Process each slice
+            splitChildren.forEach((slice) => {
+              if (slice.type === 'block object') {
+                // Add the block object directly
+                flattened.push(slice.block)
+              } else if (slice.children.length > 0) {
+                // Create a new text block with the remaining children
+                const newBlock = {
+                  ...node,
+                  children: slice.children,
+                }
+                flattened.push(newBlock)
+              }
+            })
+            return
+          } else {
+            // No block objects, add the block as is
+            flattened.push(node)
+          }
+        } else {
+          //Not a text block or no block objects in schema, add directly
+          flattened.push(node)
+        }
       }
-      if (isTextBlock(schema, node)) {
+
+      if (isTextBlock(context.schema, node)) {
         if (depth > 0) {
           toRemove.push(node)
           flattened.push(node)
