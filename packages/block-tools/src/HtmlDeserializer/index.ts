@@ -13,6 +13,7 @@ import {
   type PortableTextBlock,
   type PortableTextObject,
 } from '../types.portable-text'
+import {keyGenerator} from '../util/randomKey'
 import {resolveJsType} from '../util/resolveJsType'
 import {
   defaultParseHtml,
@@ -34,6 +35,7 @@ import {createRules} from './rules'
  *
  */
 export default class HtmlDeserializer {
+  keyGenerator: () => string
   schema: Schema
   rules: DeserializerRule[]
   parseHtml: (html: string) => HTMLElement
@@ -51,6 +53,7 @@ export default class HtmlDeserializer {
       keyGenerator: options.keyGenerator,
     })
     this.schema = schema
+    this.keyGenerator = options.keyGenerator ?? keyGenerator
     this.rules = [...rules, ...standardRules]
     const parseHtml = options.parseHtml || defaultParseHtml()
     this.parseHtml = (html) => {
@@ -74,8 +77,11 @@ export default class HtmlDeserializer {
     const blocks = trimWhitespace(
       this.schema,
       flattenNestedBlocks(
-        this.schema,
-        ensureRootIsBlocks(this.schema, this.deserializeElements(children)),
+        {schema: this.schema, keyGenerator: this.keyGenerator},
+        ensureRootIsBlocks(
+          this.schema,
+          this.deserializeElements(children) as Array<ArbitraryTypedObject>,
+        ),
       ),
     )
 
