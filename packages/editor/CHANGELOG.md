@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.3.6](https://github.com/portabletext/editor/compare/editor-v2.3.5...editor-v2.3.6) (2025-08-14)
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^4.4.0 ([6ba20dd](https://github.com/portabletext/editor/commit/6ba20dd704a244f4da157e1b543f89a6b4cb89db))
+* **deps:** update sanity monorepo to ^4.4.1 ([697ec61](https://github.com/portabletext/editor/commit/697ec61fb74ad08ab0693377d483ab8765e2b8bd))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 3.1.0
+    * @portabletext/sanity-bridge bumped to 1.1.1
+
 ## [2.3.5](https://github.com/portabletext/editor/compare/editor-v2.3.4...editor-v2.3.5) (2025-08-13)
 
 
