@@ -438,9 +438,6 @@ importers:
       '@portabletext/patches':
         specifier: workspace:*
         version: link:../patches
-      '@portabletext/sanity-bridge':
-        specifier: workspace:*
-        version: link:../sanity-bridge
       '@portabletext/schema':
         specifier: workspace:*
         version: link:../schema
@@ -481,6 +478,9 @@ importers:
         specifier: ^5.20.2
         version: 5.20.2
     devDependencies:
+      '@portabletext/sanity-bridge':
+        specifier: workspace:*
+        version: link:../sanity-bridge
       '@portabletext/toolkit':
         specifier: ^2.0.17
         version: 2.0.17
