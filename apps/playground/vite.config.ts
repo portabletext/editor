@@ -21,6 +21,10 @@ export default defineConfig({
         __dirname,
         '../../packages/block-tools/src',
       ),
+      '@portabletext/keyboard-shortcuts': path.resolve(
+        __dirname,
+        '../../packages/keyboard-shortcuts/src',
+      ),
       '@portabletext/patches': path.resolve(
         __dirname,
         '../../packages/patches/src',
@@ -28,6 +32,14 @@ export default defineConfig({
       '@portabletext/toolbar': path.resolve(
         __dirname,
         '../../packages/toolbar/src',
+      ),
+      '@portabletext/schema': path.resolve(
+        __dirname,
+        '../../packages/schema/src',
+      ),
+      '@portabletext/sanity-bridge': path.resolve(
+        __dirname,
+        '../../packages/sanity-bridge/src',
       ),
     },
   },
