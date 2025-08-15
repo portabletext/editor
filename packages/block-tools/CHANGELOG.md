@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.2.0](https://github.com/portabletext/editor/compare/block-tools-v3.1.0...block-tools-v3.2.0) (2025-08-15)
+
+
+### Features
+
+* accept Portable Text Schema in `htmlToBlocks` ([b2dfcfc](https://github.com/portabletext/editor/commit/b2dfcfc99e92a7153bb1a9559d24c301df078951))
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^4.4.0 ([6ba20dd](https://github.com/portabletext/editor/commit/6ba20dd704a244f4da157e1b543f89a6b4cb89db))
+* **deps:** update sanity monorepo to ^4.4.1 ([697ec61](https://github.com/portabletext/editor/commit/697ec61fb74ad08ab0693377d483ab8765e2b8bd))
+
 ## [3.1.0](https://github.com/portabletext/editor/compare/block-tools-v3.0.0...block-tools-v3.1.0) (2025-08-14)
 
 
