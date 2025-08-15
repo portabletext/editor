@@ -51,6 +51,7 @@ export default class HtmlDeserializer {
     const {rules = [], unstable_whitespaceOnPasteMode = 'preserve'} = options
     const standardRules = createRules(schema, {
       keyGenerator: options.keyGenerator,
+      matchers: options.matchers,
     })
     this.schema = schema
     this.keyGenerator = options.keyGenerator ?? keyGenerator
