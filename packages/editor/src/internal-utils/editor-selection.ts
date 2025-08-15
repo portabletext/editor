@@ -1,20 +1,16 @@
-import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
-import type {PortableTextBlock} from '@sanity/types'
+import type {EditorContext} from '../editor/editor-snapshot'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
+import {isSpan, isTextBlock} from './parse-blocks'
 
 export function getEditorSelection(
-  blocks: Array<PortableTextBlock> | undefined,
+  context: Pick<EditorContext, 'schema' | 'value'>,
 ): EditorSelection {
-  if (!blocks) {
-    throw new Error('No value found')
-  }
-
   let anchor: EditorSelectionPoint | undefined
   let focus: EditorSelectionPoint | undefined
-  const firstBlock = blocks[0]
-  const lastBlock = blocks[blocks.length - 1]
+  const firstBlock = context.value[0]
+  const lastBlock = context.value[context.value.length - 1]
 
-  if (isPortableTextBlock(firstBlock)) {
+  if (isTextBlock(context, firstBlock)) {
     anchor = {
       path: [
         {_key: firstBlock._key},
@@ -30,13 +26,13 @@ export function getEditorSelection(
     }
   }
 
-  const lastChild = isPortableTextBlock(lastBlock)
+  const lastChild = isTextBlock(context, lastBlock)
     ? lastBlock.children[lastBlock.children.length - 1]
     : undefined
   if (
-    isPortableTextBlock(lastBlock) &&
+    isTextBlock(context, lastBlock) &&
     lastChild &&
-    isPortableTextSpan(lastChild)
+    isSpan(context, lastChild)
   ) {
     focus = {
       path: [{_key: lastBlock._key}, 'children', {_key: lastChild._key}],

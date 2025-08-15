@@ -55,33 +55,31 @@ describe('event.history.undo', () => {
     await userEvent.type(locator, 'x')
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['y*z'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'y*z',
+      ])
     })
 
     editorRef.current?.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['y*'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'y*',
+      ])
     })
 
     editorRef.current?.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['x'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'x',
+      ])
     })
 
     editorRef.current?.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual([''])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([''])
     })
   })
 
@@ -130,17 +128,17 @@ describe('event.history.undo', () => {
     await userEvent.type(locator, 'a')
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['yz'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'yz',
+      ])
     })
 
     editorRef.current?.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['y'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'y',
+      ])
     })
   })
 
@@ -186,17 +184,16 @@ describe('event.history.undo', () => {
     await userEvent.type(locator, 'a')
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['B', 'c'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'B',
+        'c',
+      ])
     })
 
     editorRef.current?.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual([''])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([''])
     })
   })
 
@@ -241,17 +238,17 @@ describe('event.history.undo', () => {
     await userEvent.type(locator, 'a')
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['AB'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'AB',
+      ])
     })
 
     editorRef.current?.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['A'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'A',
+      ])
     })
   })
 })

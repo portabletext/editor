@@ -76,7 +76,7 @@ describe('event.child.set', () => {
 
     await vi.waitFor(() => {
       return expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
+        getTersePt(editorRef.current!.getSnapshot().context),
       ).toEqual([',{image},'])
     })
 
@@ -151,7 +151,7 @@ describe('event.child.set', () => {
 
     await vi.waitFor(() => {
       return expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
+        getTersePt(editorRef.current!.getSnapshot().context),
       ).toEqual(['Hello'])
     })
 

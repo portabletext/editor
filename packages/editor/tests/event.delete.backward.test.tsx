@@ -50,7 +50,7 @@ describe('event.delete.backward', () => {
 
     await vi.waitFor(() => {
       return expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
+        getTersePt(editorRef.current!.getSnapshot().context),
       ).toEqual(['fo'])
     })
   })
@@ -120,7 +120,7 @@ describe('event.delete.backward', () => {
     editorRef.current?.send({
       type: 'select',
       at: getSelectionBeforeText(
-        editorRef.current?.getSnapshot().context.value,
+        editorRef.current!.getSnapshot().context,
         'bar',
       ),
     })

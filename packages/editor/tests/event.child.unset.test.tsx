@@ -50,9 +50,9 @@ describe('event.child.unset', () => {
     )
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['Hello'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'Hello',
+      ])
     })
 
     editorRef.current?.send({
@@ -131,9 +131,9 @@ describe('event.child.unset', () => {
     )
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual([',{image},'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        ',{image},',
+      ])
     })
 
     editorRef.current?.send({

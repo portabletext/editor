@@ -1,25 +1,21 @@
-import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
-import type {PortableTextBlock} from '@sanity/types'
+import type {EditorContext} from '../editor/editor-snapshot'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import {collapseSelection} from './collapse-selection'
+import {isSpan, isTextBlock} from './parse-blocks'
 import {splitString} from './split-string'
 import {stringOverlap} from './string-overlap'
 
 export function getTextSelection(
-  value: Array<PortableTextBlock> | undefined,
+  context: Pick<EditorContext, 'schema' | 'value'>,
   text: string,
 ): EditorSelection {
-  if (!value) {
-    throw new Error(`Unable to find selection for value ${value}`)
-  }
-
   let anchor: EditorSelectionPoint | undefined
   let focus: EditorSelectionPoint | undefined
 
-  for (const block of value) {
-    if (isPortableTextBlock(block)) {
+  for (const block of context.value) {
+    if (isTextBlock(context, block)) {
       for (const child of block.children) {
-        if (isPortableTextSpan(child)) {
+        if (isSpan(context, child)) {
           if (child.text === text) {
             anchor = {
               path: [{_key: block._key}, 'children', {_key: child._key}],
@@ -99,7 +95,7 @@ export function getTextSelection(
 
   if (!anchor || !focus) {
     throw new Error(
-      `Unable to find selection for text "${text}" in value "${JSON.stringify(value)}"`,
+      `Unable to find selection for text "${text}" in value "${JSON.stringify(context.value)}"`,
     )
   }
 
@@ -110,15 +106,15 @@ export function getTextSelection(
 }
 
 export function getSelectionBeforeText(
-  value: Array<PortableTextBlock> | undefined,
+  context: Pick<EditorContext, 'schema' | 'value'>,
   text: string,
 ): EditorSelection {
-  return collapseSelection(getTextSelection(value, text), 'start')
+  return collapseSelection(getTextSelection(context, text), 'start')
 }
 
 export function getSelectionAfterText(
-  value: Array<PortableTextBlock> | undefined,
+  context: Pick<EditorContext, 'schema' | 'value'>,
   text: string,
 ): EditorSelection {
-  return collapseSelection(getTextSelection(value, text), 'end')
+  return collapseSelection(getTextSelection(context, text), 'end')
 }

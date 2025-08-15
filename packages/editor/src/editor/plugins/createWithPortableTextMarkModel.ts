@@ -4,11 +4,11 @@
  *
  */
 
-import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import type {PortableTextObject, PortableTextSpan} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {Editor, Element, Node, Path, Range, Text, Transforms} from 'slate'
 import {debugWithName} from '../../internal-utils/debug'
+import {isSpan, isTextBlock} from '../../internal-utils/parse-blocks'
 import {getNextSpan, getPreviousSpan} from '../../internal-utils/sibling-utils'
 import {isChangingRemotely} from '../../internal-utils/withChanges'
 import {isRedoing, isUndoing} from '../../internal-utils/withUndoRedo'
@@ -356,7 +356,7 @@ export function createWithPortableTextMarkModel(
 
           if (
             atTheEndOfAnnotation &&
-            isPortableTextSpan(op.node) &&
+            isSpan(editorActor.getSnapshot().context, op.node) &&
             op.node.marks?.some((mark) => annotationsEnding.includes(mark))
           ) {
             Transforms.insertNodes(editor, {
@@ -378,7 +378,7 @@ export function createWithPortableTextMarkModel(
 
           if (
             atTheStartOfAnnotation &&
-            isPortableTextSpan(op.node) &&
+            isSpan(editorActor.getSnapshot().context, op.node) &&
             op.node.marks?.some((mark) => annotationsStarting.includes(mark))
           ) {
             Transforms.insertNodes(editor, {
@@ -400,7 +400,7 @@ export function createWithPortableTextMarkModel(
             decoratorStarting &&
             atTheEndOfAnnotation &&
             !atTheStartOfAnnotation &&
-            isPortableTextSpan(op.node) &&
+            isSpan(editorActor.getSnapshot().context, op.node) &&
             op.node.marks?.length === 0
           ) {
             Transforms.insertNodes(editor, {
@@ -458,7 +458,11 @@ export function createWithPortableTextMarkModel(
               }),
             )[0] ?? ([undefined, undefined] as const)
 
-          if (span && block && isPortableTextBlock(block)) {
+          if (
+            span &&
+            block &&
+            isTextBlock(editorActor.getSnapshot().context, block)
+          ) {
             const markDefs = block.markDefs ?? []
             const marks = span.marks ?? []
             const spanHasAnnotations = marks.some((mark) =>

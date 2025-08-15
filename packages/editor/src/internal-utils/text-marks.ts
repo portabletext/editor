@@ -1,20 +1,16 @@
-import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
-import type {PortableTextBlock} from '@sanity/types'
+import type {EditorContext} from '../editor/editor-snapshot'
+import {isSpan, isTextBlock} from './parse-blocks'
 
 export function getTextMarks(
-  value: Array<PortableTextBlock> | undefined,
+  context: Pick<EditorContext, 'schema' | 'value'>,
   text: string,
 ) {
-  if (!value) {
-    return undefined
-  }
-
   let marks: Array<string> | undefined
 
-  for (const block of value) {
-    if (isPortableTextBlock(block)) {
+  for (const block of context.value) {
+    if (isTextBlock(context, block)) {
       for (const child of block.children) {
-        if (isPortableTextSpan(child) && child.text === text) {
+        if (isSpan(context, child) && child.text === text) {
           marks = child.marks ?? []
           break
         }

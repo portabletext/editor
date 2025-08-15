@@ -1,6 +1,6 @@
-import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import type {PortableTextBlock, PortableTextTextBlock} from '@sanity/types'
 import type {EditorContext} from '../editor/editor-snapshot'
+import {isSpan, isTextBlock} from './parse-blocks'
 
 type TersePtConfig = {
   style: (name?: string) => string
@@ -20,18 +20,14 @@ const defaultConfig: TersePtConfig = {
 }
 
 export function getTersePt(
-  value: Array<PortableTextBlock> | undefined,
+  context: Pick<EditorContext, 'schema' | 'value'>,
 ): Array<string> {
-  if (!value) {
-    return []
-  }
-
   const blocks: Array<string> = []
 
-  for (const block of value) {
+  for (const block of context.value) {
     let terseBlock = ''
 
-    if (isPortableTextBlock(block)) {
+    if (isTextBlock(context, block)) {
       const blockPrefix = `${defaultConfig.level(block.level)}${defaultConfig.listItem(block.listItem)}${defaultConfig.style(block.style)}`
 
       if (blockPrefix) {
@@ -42,7 +38,7 @@ export function getTersePt(
       for (const child of block.children) {
         index++
 
-        if (isPortableTextSpan(child)) {
+        if (isSpan(context, child)) {
           terseBlock = `${terseBlock}${index > 0 ? ',' : ''}${child.text}`
         } else {
           terseBlock = `${terseBlock}${index > 0 ? ',' : ''}{${child._type}}`

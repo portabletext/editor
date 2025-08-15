@@ -6,6 +6,7 @@ import {getTersePt, parseTersePt, parseTersePtString} from './terse-pt'
 const keyGenerator = createTestKeyGenerator()
 
 test(getTersePt.name, () => {
+  const schema = compileSchema(defineSchema({}))
   const fooBlock = {
     _key: 'b1',
     _type: 'block',
@@ -27,66 +28,88 @@ test(getTersePt.name, () => {
     children: [{_key: 's4', _type: 'span', text: 'foo\nbar'}],
   }
 
-  expect(getTersePt([fooBlock, barBlock])).toEqual(['foo', 'bar'])
-  expect(getTersePt([emptyBlock, barBlock])).toEqual(['', 'bar'])
-  expect(getTersePt([fooBlock, emptyBlock, barBlock])).toEqual([
+  expect(getTersePt({schema, value: [fooBlock, barBlock]})).toEqual([
     'foo',
+    'bar',
+  ])
+  expect(getTersePt({schema, value: [emptyBlock, barBlock]})).toEqual([
     '',
     'bar',
   ])
-  expect(getTersePt([fooBlock, softReturnBlock])).toEqual(['foo', 'foo\nbar'])
+  expect(getTersePt({schema, value: [fooBlock, emptyBlock, barBlock]})).toEqual(
+    ['foo', '', 'bar'],
+  )
+  expect(getTersePt({schema, value: [fooBlock, softReturnBlock]})).toEqual([
+    'foo',
+    'foo\nbar',
+  ])
 
   expect(
-    getTersePt([
-      {
-        _key: keyGenerator(),
-        _type: 'block',
-        children: [{_key: keyGenerator(), _type: 'span', text: 'foo'}],
-      },
-    ]),
+    getTersePt({
+      schema,
+      value: [
+        {
+          _key: keyGenerator(),
+          _type: 'block',
+          children: [{_key: keyGenerator(), _type: 'span', text: 'foo'}],
+        },
+      ],
+    }),
   ).toEqual(['foo'])
   expect(
-    getTersePt([
-      {
-        _key: keyGenerator(),
-        _type: 'block',
-        children: [{_key: keyGenerator(), _type: 'span', text: 'foo'}],
-        listItem: 'number',
-      },
-    ]),
+    getTersePt({
+      schema,
+      value: [
+        {
+          _key: keyGenerator(),
+          _type: 'block',
+          children: [{_key: keyGenerator(), _type: 'span', text: 'foo'}],
+          listItem: 'number',
+        },
+      ],
+    }),
   ).toEqual(['#:foo'])
   expect(
-    getTersePt([
-      {
-        _key: keyGenerator(),
-        _type: 'block',
-        children: [{_key: keyGenerator(), _type: 'span', text: 'foo'}],
-        listItem: 'number',
-        style: 'h3',
-      },
-    ]),
+    getTersePt({
+      schema,
+      value: [
+        {
+          _key: keyGenerator(),
+          _type: 'block',
+          children: [{_key: keyGenerator(), _type: 'span', text: 'foo'}],
+          listItem: 'number',
+          style: 'h3',
+        },
+      ],
+    }),
   ).toEqual(['#h3:foo'])
   expect(
-    getTersePt([
-      {
-        _key: keyGenerator(),
-        _type: 'block',
-        children: [{_key: keyGenerator(), _type: 'span', text: 'foo'}],
-        level: 2,
-        listItem: 'number',
-        style: 'h3',
-      },
-    ]),
+    getTersePt({
+      schema,
+      value: [
+        {
+          _key: keyGenerator(),
+          _type: 'block',
+          children: [{_key: keyGenerator(), _type: 'span', text: 'foo'}],
+          level: 2,
+          listItem: 'number',
+          style: 'h3',
+        },
+      ],
+    }),
   ).toEqual(['>>#h3:foo'])
   expect(
-    getTersePt([
-      {
-        _key: keyGenerator(),
-        _type: 'block',
-        children: [{_key: keyGenerator(), _type: 'span', text: 'foo'}],
-        style: 'h3',
-      },
-    ]),
+    getTersePt({
+      schema,
+      value: [
+        {
+          _key: keyGenerator(),
+          _type: 'block',
+          children: [{_key: keyGenerator(), _type: 'span', text: 'foo'}],
+          style: 'h3',
+        },
+      ],
+    }),
   ).toEqual(['h3:foo'])
 })
 

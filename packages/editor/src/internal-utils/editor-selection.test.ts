@@ -1,7 +1,9 @@
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import {expect, test} from 'vitest'
 import {getEditorSelection} from './editor-selection'
 
 test(getEditorSelection.name, () => {
+  const schema = compileSchema(defineSchema({}))
   const image = {
     _type: 'image',
     _key: 'i1',
@@ -25,15 +27,17 @@ test(getEditorSelection.name, () => {
     ],
   }
 
-  expect(getEditorSelection([image, splitBlock])).toEqual({
+  expect(getEditorSelection({schema, value: [image, splitBlock]})).toEqual({
     anchor: {path: [{_key: 'i1'}], offset: 0},
     focus: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 4},
   })
-  expect(getEditorSelection([splitBlock, image])).toEqual({
+  expect(getEditorSelection({schema, value: [splitBlock, image]})).toEqual({
     anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
     focus: {path: [{_key: 'i1'}], offset: 0},
   })
-  expect(getEditorSelection([blockWithStockTicker, splitBlock])).toEqual({
+  expect(
+    getEditorSelection({schema, value: [blockWithStockTicker, splitBlock]}),
+  ).toEqual({
     anchor: {path: [{_key: 'b2'}, 'children', {_key: 's1'}], offset: 0},
     focus: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 4},
   })

@@ -481,9 +481,6 @@ importers:
       '@portabletext/sanity-bridge':
         specifier: workspace:*
         version: link:../sanity-bridge
-      '@portabletext/toolkit':
-        specifier: ^2.0.17
-        version: 2.0.17
       '@sanity/diff-match-patch':
         specifier: ^3.2.0
         version: 3.2.0

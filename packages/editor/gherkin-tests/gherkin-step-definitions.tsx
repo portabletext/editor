@@ -184,8 +184,8 @@ export const stepDefinitions = [
       await userEvent.type(context.editorA.locator, text)
     })
   }),
-  Then('the text is {text}', async (_: Context, text: Array<string>) => {
-    await expectText(text)
+  Then('the text is {text}', async (context: Context, text: Array<string>) => {
+    await expectText(context.editorA, text)
   }),
 
   /**
@@ -265,7 +265,13 @@ export const stepDefinitions = [
       await waitForNewSelection(context.editorA, async () => {
         await context.editorA.actorRef.send({
           type: 'selection',
-          selection: getTextSelection(value, text),
+          selection: getTextSelection(
+            {
+              schema: context.editorA.ref.current.getSnapshot().context.schema,
+              value: value ?? [],
+            },
+            text,
+          ),
         })
       })
       const newAnnotationKeys = await toggleAnnotation(
@@ -299,7 +305,13 @@ export const stepDefinitions = [
       await waitForNewSelection(context.editorB, async () => {
         await context.editorB.actorRef.send({
           type: 'selection',
-          selection: getTextSelection(value, text),
+          selection: getTextSelection(
+            {
+              schema: context.editorB.ref.current.getSnapshot().context.schema,
+              value: value ?? [],
+            },
+            text,
+          ),
         })
       })
 
@@ -363,7 +375,13 @@ export const stepDefinitions = [
       await waitForNewSelection(context.editorA, async () => {
         await context.editorA.actorRef.send({
           type: 'selection',
-          selection: getTextSelection(value, text),
+          selection: getTextSelection(
+            {
+              schema: context.editorA.ref.current.getSnapshot().context.schema,
+              value: value ?? [],
+            },
+            text,
+          ),
         })
       })
 
@@ -393,7 +411,13 @@ export const stepDefinitions = [
       await waitForNewSelection(context.editorA, async () => {
         await context.editorA.actorRef.send({
           type: 'selection',
-          selection: getTextSelection(value, text),
+          selection: getTextSelection(
+            {
+              schema: context.editorA.ref.current.getSnapshot().context.schema,
+              value: value ?? [],
+            },
+            text,
+          ),
         })
       })
       await waitForNewValue(() => toggleDecoratorUsingKeyboard(decorator))
@@ -407,7 +431,13 @@ export const stepDefinitions = [
       await waitForNewSelection(context.editorA, async () => {
         await context.editorA.actorRef.send({
           type: 'selection',
-          selection: getTextSelection(value, text),
+          selection: getTextSelection(
+            {
+              schema: context.editorA.ref.current.getSnapshot().context.schema,
+              value: value ?? [],
+            },
+            text,
+          ),
         })
       })
       await waitForNewValue(() => toggleDecoratorUsingKeyboard(decorator))
@@ -454,7 +484,7 @@ export const stepDefinitions = [
   Then(
     '{string} has marks {marks}',
     async (context: Context, text: string, marks: Array<string>) => {
-      await getEditorTextMarks(text).then((actualMarks) => {
+      await getEditorTextMarks(context.editorA, text).then((actualMarks) => {
         const expectedMarks = marks.map((mark) =>
           mark === 'em' || mark === 'strong'
             ? mark
@@ -472,7 +502,7 @@ export const stepDefinitions = [
   Then(
     '{string} has an annotation different than {key}',
     async (context: Context, text: string, key: string) => {
-      await getEditorTextMarks(text).then((marks) => {
+      await getEditorTextMarks(context.editorA, text).then((marks) => {
         const annotations =
           marks?.filter((mark) => mark !== 'em' && mark !== 'strong') ?? []
 
@@ -491,9 +521,9 @@ export const stepDefinitions = [
   ),
   Then(
     '{string} and {string} have the same marks',
-    async (_: Context, textA: string, textB: string) => {
-      const marksA = await getEditorTextMarks(textA)
-      const marksB = await getEditorTextMarks(textB)
+    async (context: Context, textA: string, textB: string) => {
+      const marksA = await getEditorTextMarks(context.editorA, textA)
+      const marksB = await getEditorTextMarks(context.editorA, textB)
 
       expect(
         marksA,
@@ -501,8 +531,8 @@ export const stepDefinitions = [
       ).toEqual(marksB)
     },
   ),
-  Then('{string} has no marks', async (_: Context, text: string) => {
-    await getEditorTextMarks(text).then((marks) =>
+  Then('{string} has no marks', async (context: Context, text: string) => {
+    await getEditorTextMarks(context.editorA, text).then((marks) =>
       expect(marks, `Expected "${text} to have no marks"`).toEqual([]),
     )
   }),
@@ -513,7 +543,10 @@ export const stepDefinitions = [
   When('everything is selected', async (context: Context) => {
     await waitForNewSelection(context.editorA, async () => {
       const value = await getValue()
-      const selection = await getEditorSelection(value)
+      const selection = await getEditorSelection({
+        schema: context.editorA.ref.current.getSnapshot().context.schema,
+        value: value ?? [],
+      })
 
       context.editorA.actorRef.send({
         type: 'selection',
@@ -524,7 +557,10 @@ export const stepDefinitions = [
   When('everything is selected backwards', async (context: Context) => {
     await waitForNewSelection(context.editorA, async () => {
       const value = await getValue()
-      const selection = await getEditorSelection(value)
+      const selection = await getEditorSelection({
+        schema: context.editorA.ref.current.getSnapshot().context.schema,
+        value: value ?? [],
+      })
 
       context.editorA.actorRef.send({
         type: 'selection',
@@ -538,7 +574,13 @@ export const stepDefinitions = [
     await waitForNewSelection(context.editorA, async () => {
       await context.editorA.actorRef.send({
         type: 'selection',
-        selection: getTextSelection(value, text),
+        selection: getTextSelection(
+          {
+            schema: context.editorA.ref.current.getSnapshot().context.schema,
+            value: value ?? [],
+          },
+          text,
+        ),
       })
     })
   }),
@@ -550,7 +592,13 @@ export const stepDefinitions = [
       await waitForNewSelection(context.editorB, async () => {
         await context.editorB.actorRef.send({
           type: 'selection',
-          selection: getTextSelection(value, text),
+          selection: getTextSelection(
+            {
+              schema: context.editorB.ref.current.getSnapshot().context.schema,
+              value: value ?? [],
+            },
+            text,
+          ),
         })
       })
     },
@@ -563,7 +611,16 @@ export const stepDefinitions = [
       await waitForNewSelection(context.editorA, async () => {
         await context.editorA.actorRef.send({
           type: 'selection',
-          selection: reverseSelection(getTextSelection(value, text)),
+          selection: reverseSelection(
+            getTextSelection(
+              {
+                schema:
+                  context.editorA.ref.current.getSnapshot().context.schema,
+                value: value ?? [],
+              },
+              text,
+            ),
+          ),
         })
       })
     },
@@ -599,7 +656,11 @@ export const stepDefinitions = [
       const selection = await getSelection(context.editorA)
 
       const collapsed = isSelectionCollapsed(selection)
-      const focusText = getSelectionFocusText(value, selection)
+      const focusText = getSelectionFocusText({
+        schema: context.editorA.ref.current.getSnapshot().context.schema,
+        value: value ?? [],
+        selection,
+      })
 
       expect(collapsed, 'Selection is not collapsed').toBe(true)
       expect(
@@ -615,7 +676,11 @@ export const stepDefinitions = [
       const selection = await getSelection(context.editorA)
 
       const collapsed = isSelectionCollapsed(selection)
-      const focusText = getSelectionFocusText(value, selection)
+      const focusText = getSelectionFocusText({
+        schema: context.editorA.ref.current.getSnapshot().context.schema,
+        value: value ?? [],
+        selection,
+      })
 
       expect(collapsed, 'Selection is not collapsed').toBe(true)
       expect(
@@ -628,9 +693,14 @@ export const stepDefinitions = [
     const value = await getValue()
     const selection = await getSelection(context.editorA)
 
-    expect(getSelectionText(value, selection), 'Unexpected selection').toEqual(
-      text,
-    )
+    expect(
+      getSelectionText({
+        schema: context.editorA.ref.current.getSnapshot().context.schema,
+        value: value ?? [],
+        selection,
+      }),
+      'Unexpected selection',
+    ).toEqual(text)
   }),
   Then('block {key} is selected', async (context: Context, keyKey: string) => {
     await getSelection(context.editorA).then((selection) => {
@@ -680,7 +750,11 @@ export const stepDefinitions = [
     async (context: Context, text: string, keyKey: string) => {
       const value = await getValue()
       const selection = await getSelection(context.editorA)
-      const selectionFocusText = getSelectionFocusText(value, selection)
+      const selectionFocusText = getSelectionFocusText({
+        schema: context.editorA.ref.current.getSnapshot().context.schema,
+        value: value ?? [],
+        selection,
+      })
 
       // Slightly naive way to figure out if we need to put the text in a new block
       if (selectionFocusText !== undefined) {
@@ -691,7 +765,13 @@ export const stepDefinitions = [
         await userEvent.type(context.editorA.locator, text)
       })
       const newValue = await getValue()
-      const newBlockKey = await getTextBlockKey(newValue, text)
+      const newBlockKey = await getTextBlockKey(
+        {
+          schema: context.editorA.ref.current.getSnapshot().context.schema,
+          value: newValue ?? [],
+        },
+        text,
+      )
 
       context.keyMap.set(keyKey, newBlockKey)
     },
@@ -710,7 +790,13 @@ export const stepDefinitions = [
       const value = await getValue()
 
       expect(
-        getTextBlockKey(value, text[0]),
+        getTextBlockKey(
+          {
+            schema: context.editorA.ref.current.getSnapshot().context.schema,
+            value: value ?? [],
+          },
+          text[0],
+        ),
         `"${text}" ("${text[0]}") is in an unexpected block`,
       ).toBe(context.keyMap.get(keyKey))
     },
@@ -775,24 +861,31 @@ function toggleAnnotation(
   editor: EditorContext,
   annotation: 'comment' | 'link',
 ) {
-  return getNewAnnotations(() =>
+  return getNewAnnotations(editor, () =>
     waitForNewValue(async () =>
       editor.toggleAnnotationButtonLocator[annotation].click(),
     ),
   )
 }
 
-async function getNewAnnotations(step: () => Promise<unknown>) {
+async function getNewAnnotations(
+  editor: EditorContext,
+  step: () => Promise<unknown>,
+) {
   const value = await getValue()
-  const annotationsBefore = getValueAnnotations(value)
+  const annotationsBefore = getValueAnnotations(
+    editor.ref.current.getSnapshot().context.schema,
+    value,
+  )
 
   await step()
 
   const newValue = await getValue()
 
-  return getValueAnnotations(newValue).filter(
-    (annotation) => !annotationsBefore.includes(annotation),
-  )
+  return getValueAnnotations(
+    editor.ref.current.getSnapshot().context.schema,
+    newValue,
+  ).filter((annotation) => !annotationsBefore.includes(annotation))
 }
 
 async function getNewBlockKeys(step: () => Promise<unknown>) {
@@ -851,8 +944,16 @@ export async function pressButton(
   })
 }
 
-function getEditorTextMarks(text: string) {
-  return getValue().then((value) => getTextMarks(value, text))
+function getEditorTextMarks(editor: EditorContext, text: string) {
+  return getValue().then((value) =>
+    getTextMarks(
+      {
+        schema: editor.ref.current.getSnapshot().context.schema,
+        value: value ?? [],
+      },
+      text,
+    ),
+  )
 }
 
 export async function getValue(): Promise<
@@ -901,7 +1002,13 @@ export async function putCaretBeforeText(editor: EditorContext, text: string) {
   await waitForNewSelection(editor, async () => {
     await editor.actorRef.send({
       type: 'selection',
-      selection: getSelectionBeforeText(value, text),
+      selection: getSelectionBeforeText(
+        {
+          schema: editor.ref.current.getSnapshot().context.schema,
+          value: value ?? [],
+        },
+        text,
+      ),
     })
   })
 }
@@ -912,7 +1019,13 @@ export async function putCaretAfterText(editor: EditorContext, text: string) {
   await waitForNewSelection(editor, async () => {
     await editor.actorRef.send({
       type: 'selection',
-      selection: getSelectionAfterText(value, text),
+      selection: getSelectionAfterText(
+        {
+          schema: editor.ref.current.getSnapshot().context.schema,
+          value: value ?? [],
+        },
+        text,
+      ),
     })
   })
 }
@@ -942,10 +1055,15 @@ export async function redo(editor: EditorContext) {
   })
 }
 
-export async function expectText(text: Array<string>) {
+export async function expectText(editor: EditorContext, text: Array<string>) {
   await vi.waitFor(() =>
     getValue()
-      .then(getTersePt)
+      .then((value) =>
+        getTersePt({
+          schema: editor.ref.current.getSnapshot().context.schema,
+          value: value ?? [],
+        }),
+      )
       .then((actualText) => {
         expect(actualText ?? [''], 'Unexpected editor text').toEqual(text)
       }),

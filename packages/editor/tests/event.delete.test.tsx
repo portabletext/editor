@@ -62,9 +62,11 @@ describe('event.delete', () => {
     await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['foo', 'bar', '{image}'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'foo',
+        'bar',
+        '{image}',
+      ])
     })
 
     editorRef.current?.send({
@@ -82,9 +84,10 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['foobar', '{image}'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'foobar',
+        '{image}',
+      ])
     })
 
     editorRef.current?.send({
@@ -102,9 +105,9 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['foobar'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'foobar',
+      ])
     })
   })
 
@@ -143,9 +146,11 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['foo', '{image}', 'bar'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'foo',
+        '{image}',
+        'bar',
+      ])
     })
 
     editorRef.current?.send({
@@ -163,9 +168,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual([''])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([''])
     })
   })
 
@@ -203,9 +206,11 @@ describe('event.delete', () => {
     )
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['foo', '{image}', 'bar'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'foo',
+        '{image}',
+        'bar',
+      ])
     })
 
     editorRef.current?.send({
@@ -223,9 +228,9 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['bar'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'bar',
+      ])
     })
   })
 
@@ -263,9 +268,11 @@ describe('event.delete', () => {
     )
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['foo', '{image}', 'bar'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'foo',
+        '{image}',
+        'bar',
+      ])
     })
 
     editorRef.current?.send({
@@ -284,9 +291,9 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['bar'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'bar',
+      ])
     })
   })
 
@@ -324,9 +331,11 @@ describe('event.delete', () => {
     )
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['foo', '{image}', 'bar'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'foo',
+        '{image}',
+        'bar',
+      ])
     })
 
     editorRef.current?.send({
@@ -344,9 +353,9 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['foo'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'foo',
+      ])
     })
   })
 })
