@@ -95,7 +95,6 @@
     "@portabletext/block-tools": "workspace:*",
     "@portabletext/keyboard-shortcuts": "workspace:*",
     "@portabletext/patches": "workspace:*",
-    "@portabletext/sanity-bridge": "workspace:*",
     "@portabletext/schema": "workspace:*",
     "@portabletext/to-html": "^2.0.14",
     "@xstate/react": "^6.0.0",
@@ -111,6 +110,7 @@
     "xstate": "^5.20.2"
   },
   "devDependencies": {
+    "@portabletext/sanity-bridge": "workspace:*",
     "@portabletext/toolkit": "^2.0.17",
     "@sanity/diff-match-patch": "^3.2.0",
     "@sanity/pkg-utils": "^7.11.1",
@@ -141,6 +141,7 @@
     "vitest-browser-react": "^1.0.1"
   },
   "peerDependencies": {
+    "@portabletext/sanity-bridge": "workspace:*",
     "@sanity/schema": "^4.4.1",
     "@sanity/types": "^4.4.1",
     "react": "^18.3 || ^19",
