@@ -1,3 +1,4 @@
+import type {SchemaMatchers} from './schema-matchers'
 import type {PortableTextObject} from './types.portable-text'
 
 /**
@@ -71,6 +72,10 @@ export interface HtmlDeserializerOptions {
   rules?: DeserializerRule[]
   parseHtml?: HtmlParser
   unstable_whitespaceOnPasteMode?: WhiteSpacePasteMode
+  /**
+   * Custom schema matchers to use when deserializing HTML to Portable Text.
+   */
+  matchers?: SchemaMatchers
 }
 
 export interface HtmlPreprocessorOptions {

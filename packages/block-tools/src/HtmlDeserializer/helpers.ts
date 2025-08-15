@@ -293,8 +293,8 @@ export function trimWhitespace(
 
 export function ensureRootIsBlocks(
   schema: Schema,
-  blocks: TypedObject[],
-): TypedObject[] {
+  blocks: Array<ArbitraryTypedObject>,
+): ArbitraryTypedObject[] {
   return blocks.reduce((memo, node, i, original) => {
     if (node._type === 'block') {
       memo.push(node)
@@ -323,7 +323,7 @@ export function ensureRootIsBlocks(
 
     memo.push(block)
     return memo
-  }, [] as TypedObject[])
+  }, [] as ArbitraryTypedObject[])
 }
 
 export function isNodeList(node: unknown): node is NodeList {
