@@ -1,4 +1,5 @@
 import type {JSONValue, Patch} from '@portabletext/patches'
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import type {PortableTextBlock, PortableTextSpan} from '@sanity/types'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type ComponentProps, type RefObject} from 'react'
@@ -30,6 +31,7 @@ function span(
 
 describe('Feature: Self-solving', () => {
   it('Scenario: Missing .markDefs and .marks are added after the editor is made dirty', async () => {
+    const schemaDefinition = defineSchema({decorators: [{name: 'strong'}]})
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn<OnChange>()
     const initialValue = [
@@ -77,6 +79,7 @@ describe('Feature: Self-solving', () => {
     render(
       <PortableTextEditorTester
         ref={editorRef}
+        schemaDefinition={schemaDefinition}
         keyGenerator={createTestKeyGenerator()}
         value={initialValue}
         onChange={onChange}
@@ -99,7 +102,10 @@ describe('Feature: Self-solving', () => {
       if (editorRef.current) {
         PortableTextEditor.select(
           editorRef.current,
-          getTextSelection(initialValue, 'foo'),
+          getTextSelection(
+            {schema: compileSchema(schemaDefinition), value: initialValue},
+            'foo',
+          ),
         )
         PortableTextEditor.toggleMark(editorRef.current, 'strong')
       }
@@ -110,7 +116,10 @@ describe('Feature: Self-solving', () => {
         expect(onChange).toHaveBeenNthCalledWith(3, {
           type: 'selection',
           selection: {
-            ...getTextSelection(initialValue, 'foo'),
+            ...getTextSelection(
+              {schema: compileSchema(schemaDefinition), value: initialValue},
+              'foo',
+            ),
             backward: false,
           },
         })
@@ -129,7 +138,10 @@ describe('Feature: Self-solving', () => {
         expect(onChange).toHaveBeenNthCalledWith(7, {
           type: 'selection',
           selection: {
-            ...getTextSelection(initialValue, 'foo'),
+            ...getTextSelection(
+              {schema: compileSchema(schemaDefinition), value: initialValue},
+              'foo',
+            ),
             backward: false,
           },
         })

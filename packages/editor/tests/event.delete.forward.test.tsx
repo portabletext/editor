@@ -78,7 +78,7 @@ describe('event.delete.forward', () => {
     editorRef.current?.send({
       type: 'select',
       at: getSelectionAfterText(
-        editorRef.current?.getSnapshot().context.value,
+        editorRef.current!.getSnapshot().context,
         'foo',
       ),
     })

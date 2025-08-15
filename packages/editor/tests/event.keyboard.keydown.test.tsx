@@ -112,14 +112,14 @@ describe('event.keyboard.keydown', () => {
     editorRef.current?.send({
       type: 'select',
       at: getSelectionBeforeText(
-        editorRef.current?.getSnapshot().context.value,
+        editorRef.current!.getSnapshot().context,
         'foo',
       ),
     })
 
     await vi.waitFor(() => {
       const selection = getSelectionBeforeText(
-        editorRef.current?.getSnapshot().context.value,
+        editorRef.current!.getSnapshot().context,
         'foo',
       )
       expect(selection).not.toBeNull()
@@ -132,7 +132,7 @@ describe('event.keyboard.keydown', () => {
 
     await vi.waitFor(() => {
       const selection = getSelectionBeforeText(
-        editorRef.current?.getSnapshot().context.value,
+        editorRef.current!.getSnapshot().context,
         'bar',
       )
       expect(selection).not.toBeNull()
@@ -144,9 +144,11 @@ describe('event.keyboard.keydown', () => {
     await userEvent.type(locator, 'new')
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['foo', 'newbar', 'baz'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'foo',
+        'newbar',
+        'baz',
+      ])
     })
   })
 })

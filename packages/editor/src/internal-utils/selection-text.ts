@@ -1,21 +1,18 @@
-import {compileSchema, defineSchema} from '@portabletext/schema'
-import type {PortableTextBlock} from '@sanity/types'
-import type {EditorSelection} from '../types/editor'
+import type {EditorContext} from '../editor/editor-snapshot'
 import {sliceBlocks} from '../utils/util.slice-blocks'
 import {getTersePt} from './terse-pt'
 
 export function getSelectionText(
-  value: Array<PortableTextBlock> | undefined,
-  selection: EditorSelection,
+  context: Pick<EditorContext, 'schema' | 'value' | 'selection'>,
 ) {
-  if (!value || !selection) {
+  if (!context.selection) {
     return []
   }
 
   const slice = sliceBlocks({
-    context: {schema: compileSchema(defineSchema({})), selection},
-    blocks: value,
+    context: {schema: context.schema, selection: context.selection},
+    blocks: context.value,
   })
 
-  return getTersePt(slice)
+  return getTersePt({schema: context.schema, value: slice})
 }

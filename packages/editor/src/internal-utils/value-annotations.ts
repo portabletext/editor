@@ -1,7 +1,9 @@
-import {isPortableTextBlock, isPortableTextSpan} from '@portabletext/toolkit'
 import type {PortableTextBlock} from '@sanity/types'
+import type {EditorSchema} from '../editor/editor-schema'
+import {isSpan, isTextBlock} from './parse-blocks'
 
 export function getValueAnnotations(
+  schema: EditorSchema,
   value: Array<PortableTextBlock> | undefined,
 ): Array<string> {
   if (!value) {
@@ -11,9 +13,9 @@ export function getValueAnnotations(
   const annotations: Array<string> = []
 
   for (const block of value) {
-    if (isPortableTextBlock(block)) {
+    if (isTextBlock({schema}, block)) {
       for (const child of block.children) {
-        if (isPortableTextSpan(child) && child.marks) {
+        if (isSpan({schema}, child) && child.marks) {
           for (const mark of child.marks) {
             if (
               block.markDefs?.some((markDef) => markDef._key === mark) &&

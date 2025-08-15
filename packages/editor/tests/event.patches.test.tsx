@@ -1517,9 +1517,9 @@ describe('event.patches', () => {
     await userEvent.type(locator, ' bar')
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['foo bar'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'foo bar',
+      ])
     })
 
     editorRef.current?.send({
@@ -1546,9 +1546,9 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['baz'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'baz',
+      ])
     })
   })
 

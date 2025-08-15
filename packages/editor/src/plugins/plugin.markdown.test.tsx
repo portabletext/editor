@@ -39,26 +39,23 @@ describe(MarkdownPlugin.name, () => {
     await userEvent.type(locator, '**Hello world!**')
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['Hello world!'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'Hello world!',
+      ])
     })
 
     await vi.waitFor(() => {
       expect(
-        getTextMarks(
-          editorRef.current!.getSnapshot().context.value,
-          'Hello world!',
-        ),
+        getTextMarks(editorRef.current!.getSnapshot().context, 'Hello world!'),
       ).toEqual(['strong'])
     })
 
     editorRef.current?.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['**Hello world!**'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        '**Hello world!**',
+      ])
     })
   })
 })

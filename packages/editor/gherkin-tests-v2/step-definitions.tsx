@@ -129,8 +129,6 @@ export const stepDefinitions = [
   Then(
     '{terse-pt} is in block {key}',
     (context: Context, text: Array<string>, key: string) => {
-      const value = context.editor.value()
-
       const string = text.at(0)
 
       if (string === undefined) {
@@ -141,7 +139,9 @@ export const stepDefinitions = [
         assert.fail('Expected at most one text string')
       }
 
-      expect(getTextBlockKey(value, string)).toBe(key)
+      expect(getTextBlockKey(context.editor.snapshot().context, string)).toBe(
+        key,
+      )
     },
   ),
 
@@ -170,12 +170,15 @@ export const stepDefinitions = [
     'the caret is put before {string}',
     async (context: Context, text: string) => {
       await vi.waitFor(() => {
-        const selection = getSelectionBeforeText(context.editor.value(), text)
+        const selection = getSelectionBeforeText(
+          context.editor.snapshot().context,
+          text,
+        )
         expect(selection).not.toBeNull()
 
         context.editor.ref.current.send({
           type: 'select',
-          at: getSelectionBeforeText(context.editor.value(), text),
+          at: getSelectionBeforeText(context.editor.snapshot().context, text),
         })
       })
     },
@@ -184,7 +187,10 @@ export const stepDefinitions = [
     'the caret is before {string}',
     async (context: Context, text: string) => {
       await vi.waitFor(() => {
-        const selection = getSelectionBeforeText(context.editor.value(), text)
+        const selection = getSelectionBeforeText(
+          context.editor.snapshot().context,
+          text,
+        )
         expect(selection).not.toBeNull()
         expect(context.editor.selection()).toEqual(selection)
       })
@@ -194,12 +200,15 @@ export const stepDefinitions = [
     'the caret is put after {string}',
     async (context: Context, text: string) => {
       await vi.waitFor(() => {
-        const selection = getSelectionAfterText(context.editor.value(), text)
+        const selection = getSelectionAfterText(
+          context.editor.snapshot().context,
+          text,
+        )
         expect(selection).not.toBeNull()
 
         context.editor.ref.current.send({
           type: 'select',
-          at: getSelectionAfterText(context.editor.value(), text),
+          at: getSelectionAfterText(context.editor.snapshot().context, text),
         })
       })
     },
@@ -208,7 +217,10 @@ export const stepDefinitions = [
     'the caret is after {string}',
     async (context: Context, text: string) => {
       await vi.waitFor(() => {
-        const selection = getSelectionAfterText(context.editor.value(), text)
+        const selection = getSelectionAfterText(
+          context.editor.snapshot().context,
+          text,
+        )
         expect(selection).not.toBeNull()
         expect(context.editor.selection()).toEqual(selection)
       })
@@ -220,7 +232,9 @@ export const stepDefinitions = [
     })
   }),
   When('everything is selected', (context: Context) => {
-    const editorSelection = getEditorSelection(context.editor.value())
+    const editorSelection = getEditorSelection(
+      context.editor.snapshot().context,
+    )
 
     context.editor.ref.current.send({
       type: 'select',
@@ -229,7 +243,7 @@ export const stepDefinitions = [
   }),
   When('everything is selected backwards', (context: Context) => {
     const editorSelection = reverseSelection(
-      getEditorSelection(context.editor.value()),
+      getEditorSelection(context.editor.snapshot().context),
     )
 
     context.editor.ref.current.send({
@@ -239,7 +253,10 @@ export const stepDefinitions = [
   }),
   When('{string} is selected', async (context: Context, text: string) => {
     await vi.waitFor(() => {
-      const selection = getTextSelection(context.editor.value(), text)
+      const selection = getTextSelection(
+        context.editor.snapshot().context,
+        text,
+      )
       expect(selection).not.toBeNull()
 
       context.editor.ref.current.send({
@@ -253,7 +270,7 @@ export const stepDefinitions = [
     async (context: Context, text: string) => {
       await vi.waitFor(() => {
         const selection = reverseSelection(
-          getTextSelection(context.editor.value(), text),
+          getTextSelection(context.editor.snapshot().context, text),
         )
         expect(selection).not.toBeNull()
 
@@ -265,12 +282,10 @@ export const stepDefinitions = [
     },
   ),
   Then('{terse-pt} is selected', (context: Context, text: Array<string>) => {
-    const value = context.editor.value()
-    const selection = context.editor.selection()
-
-    expect(getSelectionText(value, selection), 'Unexpected selection').toEqual(
-      text,
-    )
+    expect(
+      getSelectionText(context.editor.snapshot().context),
+      'Unexpected selection',
+    ).toEqual(text)
   }),
 
   When(
@@ -349,7 +364,7 @@ export const stepDefinitions = [
     async (context: Context, tersePt: Parameter['tersePt']) => {
       await vi.waitFor(() => {
         expect(
-          getTersePt(context.editor.value()),
+          getTersePt(context.editor.snapshot().context),
           'Unexpected editor text',
         ).toEqual(tersePt)
       })
@@ -368,8 +383,10 @@ export const stepDefinitions = [
       text: string,
     ) => {
       await vi.waitFor(() => {
-        const value = context.editor.value()
-        const selection = getTextSelection(value, text)
+        const selection = getTextSelection(
+          context.editor.snapshot().context,
+          text,
+        )
         expect(selection).not.toBeNull()
 
         context.editor.ref.current.send({
@@ -379,7 +396,10 @@ export const stepDefinitions = [
       })
 
       const value = context.editor.value()
-      const priorAnnotationKeys = getValueAnnotations(value)
+      const priorAnnotationKeys = getValueAnnotations(
+        context.editor.snapshot().context.schema,
+        value,
+      )
 
       context.editor.ref.current.send({
         type: 'annotation.toggle',
@@ -394,9 +414,17 @@ export const stepDefinitions = [
       await vi.waitFor(() => {
         const newValue = context.editor.value()
 
-        expect(priorAnnotationKeys).not.toEqual(getValueAnnotations(newValue))
+        expect(priorAnnotationKeys).not.toEqual(
+          getValueAnnotations(
+            context.editor.snapshot().context.schema,
+            newValue,
+          ),
+        )
 
-        newAnnotationKeys = getValueAnnotations(newValue).filter(
+        newAnnotationKeys = getValueAnnotations(
+          context.editor.snapshot().context.schema,
+          newValue,
+        ).filter(
           (newAnnotationKey) => !priorAnnotationKeys.includes(newAnnotationKey),
         )
       })
@@ -432,7 +460,10 @@ export const stepDefinitions = [
       keyKeys: Array<string>,
     ) => {
       const value = context.editor.value()
-      const priorAnnotationKeys = getValueAnnotations(value)
+      const priorAnnotationKeys = getValueAnnotations(
+        context.editor.snapshot().context.schema,
+        value,
+      )
 
       context.editor.ref.current.send({
         type: 'annotation.toggle',
@@ -447,9 +478,17 @@ export const stepDefinitions = [
       await vi.waitFor(() => {
         const newValue = context.editor.value()
 
-        expect(priorAnnotationKeys).not.toEqual(getValueAnnotations(newValue))
+        expect(priorAnnotationKeys).not.toEqual(
+          getValueAnnotations(
+            context.editor.snapshot().context.schema,
+            newValue,
+          ),
+        )
 
-        newAnnotationKeys = getValueAnnotations(newValue).filter(
+        newAnnotationKeys = getValueAnnotations(
+          context.editor.snapshot().context.schema,
+          newValue,
+        ).filter(
           (newAnnotationKey) => !priorAnnotationKeys.includes(newAnnotationKey),
         )
       })
@@ -468,7 +507,7 @@ export const stepDefinitions = [
   Then(
     '{string} has an annotation different than {key}',
     (context: Context, text: string, key: string) => {
-      const marks = getTextMarks(context.editor.value(), text)
+      const marks = getTextMarks(context.editor.snapshot().context, text)
       const expectedMarks = [context.keyMap?.get(key) ?? key]
 
       expect(marks).not.toEqual(expectedMarks)
@@ -486,7 +525,10 @@ export const stepDefinitions = [
       text: string,
     ) => {
       await vi.waitFor(() => {
-        const selection = getTextSelection(context.editor.value(), text)
+        const selection = getTextSelection(
+          context.editor.snapshot().context,
+          text,
+        )
         const anchorOffset = selection
           ? selectionPointToBlockOffset({
               context: {
@@ -538,7 +580,10 @@ export const stepDefinitions = [
       decorator: Parameter['decorator'],
     ) => {
       await vi.waitFor(() => {
-        const selection = getTextSelection(context.editor.value(), text)
+        const selection = getTextSelection(
+          context.editor.snapshot().context,
+          text,
+        )
         const anchorOffset = selection
           ? spanSelectionPointToBlockOffset({
               context: {
@@ -580,7 +625,8 @@ export const stepDefinitions = [
     '{string} has marks {marks}',
     async (context: Context, text: string, marks: Parameter['marks']) => {
       await vi.waitFor(() => {
-        const actualMarks = getTextMarks(context.editor.value(), text) ?? []
+        const actualMarks =
+          getTextMarks(context.editor.snapshot().context, text) ?? []
         const expectedMarks = marks.map(
           (mark) => context.keyMap?.get(mark) ?? mark,
         )
@@ -591,15 +637,15 @@ export const stepDefinitions = [
   ),
   Then('{string} has no marks', async (context: Context, text: string) => {
     await vi.waitFor(() => {
-      const textMarks = getTextMarks(context.editor.value(), text)
+      const textMarks = getTextMarks(context.editor.snapshot().context, text)
       expect(textMarks).toEqual([])
     })
   }),
   Then(
     '{string} and {string} have the same marks',
     (context: Context, textA: string, textB: string) => {
-      const marksA = getTextMarks(context.editor.value(), textA)
-      const marksB = getTextMarks(context.editor.value(), textB)
+      const marksA = getTextMarks(context.editor.snapshot().context, textA)
+      const marksB = getTextMarks(context.editor.snapshot().context, textB)
 
       expect(
         marksA,

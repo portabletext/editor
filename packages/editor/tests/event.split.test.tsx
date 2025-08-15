@@ -47,7 +47,7 @@ describe('event.split', () => {
     editorRef.current?.send({
       type: 'select',
       at: getSelectionAfterText(
-        editorRef.current.getSnapshot().context.value,
+        editorRef.current!.getSnapshot().context,
         'foo',
       ),
     })
@@ -56,7 +56,7 @@ describe('event.split', () => {
       type: 'split',
     })
 
-    expect(getTersePt(editorRef.current?.getSnapshot().context.value)).toEqual([
+    expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
       'foo',
       ',{stock-ticker},',
     ])
@@ -83,7 +83,7 @@ describe('event.split', () => {
     editorRef.current?.send({
       type: 'select',
       at: getSelectionAfterText(
-        editorRef.current.getSnapshot().context.value,
+        editorRef.current!.getSnapshot().context,
         'foo',
       ),
     })
@@ -188,7 +188,7 @@ describe('event.split', () => {
 
     await userEvent.type(locator, 'bar')
 
-    expect(getTersePt(editorRef.current?.getSnapshot().context.value)).toEqual([
+    expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
       'foo,{stock-ticker},bar',
     ])
   })
@@ -232,19 +232,17 @@ describe('event.split', () => {
 
     await vi.waitFor(() => {
       return expect(
-        getSelectionText(
-          editorRef.current?.getSnapshot().context.value,
-          editorRef.current?.getSnapshot().context.selection!,
-        ),
+        getSelectionText(editorRef.current!.getSnapshot().context),
       ).toEqual(['{image}'])
     })
 
     editorRef.current?.send({type: 'split'})
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['{image}', 'bar'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        '{image}',
+        'bar',
+      ])
     })
   })
 
@@ -312,14 +310,15 @@ describe('event.split', () => {
     editorRef.current?.send({type: 'split'})
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['foo', 'ar'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'foo',
+        'ar',
+      ])
     })
 
     await userEvent.type(locator, 'baz')
 
-    expect(getTersePt(editorRef.current?.getSnapshot().context.value)).toEqual([
+    expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
       'foo',
       'bazar',
     ])
@@ -389,14 +388,15 @@ describe('event.split', () => {
     editorRef.current?.send({type: 'split'})
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['f', 'bar'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'f',
+        'bar',
+      ])
     })
 
     await userEvent.type(locator, 'baz')
 
-    expect(getTersePt(editorRef.current?.getSnapshot().context.value)).toEqual([
+    expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
       'f',
       'bazbar',
     ])

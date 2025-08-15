@@ -48,10 +48,7 @@ describe('event.annotation', () => {
 
     editorRef.current?.send({
       type: 'select',
-      at: getTextSelection(
-        editorRef.current?.getSnapshot().context.value,
-        'world',
-      ),
+      at: getTextSelection(editorRef.current!.getSnapshot().context, 'world'),
     })
 
     editorRef.current?.send({
@@ -66,10 +63,7 @@ describe('event.annotation', () => {
 
     editorRef.current?.send({
       type: 'select',
-      at: getTextSelection(
-        editorRef.current?.getSnapshot().context.value,
-        'Hello',
-      ),
+      at: getTextSelection(editorRef.current!.getSnapshot().context, 'Hello'),
     })
 
     editorRef.current?.send({
@@ -82,20 +76,20 @@ describe('event.annotation', () => {
       },
     })
 
-    expect(getTersePt(editorRef.current?.getSnapshot().context.value)).toEqual([
+    expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
       'Hello,, ,world,!',
     ])
     expect(
-      getTextMarks(editorRef.current?.getSnapshot().context.value, 'Hello'),
+      getTextMarks(editorRef.current!.getSnapshot().context, 'Hello'),
     ).toEqual(['k5'])
     expect(
-      getTextMarks(editorRef.current?.getSnapshot().context.value, 'world'),
+      getTextMarks(editorRef.current!.getSnapshot().context, 'world'),
     ).toEqual(['k2'])
 
     editorRef.current?.send({
       type: 'select',
       at: getSelectionBeforeText(
-        editorRef.current?.getSnapshot().context.value,
+        editorRef.current!.getSnapshot().context,
         'ld',
       ),
     })
@@ -107,11 +101,11 @@ describe('event.annotation', () => {
       },
     })
 
-    expect(getTersePt(editorRef.current?.getSnapshot().context.value)).toEqual([
+    expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
       'Hello,, world!',
     ])
     expect(
-      getTextMarks(editorRef.current?.getSnapshot().context.value, 'Hello'),
+      getTextMarks(editorRef.current!.getSnapshot().context, 'Hello'),
     ).toEqual(['k5'])
   })
 
@@ -144,7 +138,7 @@ describe('event.annotation', () => {
     editorRef.current?.send({
       type: 'select',
       at: getTextSelection(
-        editorRef.current?.getSnapshot().context.value,
+        editorRef.current!.getSnapshot().context,
         'Hello, world!',
       ),
     })

@@ -1,7 +1,9 @@
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import {expect, test} from 'vitest'
 import {getSelectionText} from './selection-text'
 
 test(getSelectionText.name, () => {
+  const schema = compileSchema(defineSchema({}))
   const splitBlock = {
     _type: 'block',
     _key: 'A-4',
@@ -15,9 +17,13 @@ test(getSelectionText.name, () => {
   }
 
   expect(
-    getSelectionText([splitBlock], {
-      anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-7'}], offset: 0},
-      focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-7'}], offset: 3},
+    getSelectionText({
+      schema,
+      value: [splitBlock],
+      selection: {
+        anchor: {path: [{_key: 'A-4'}, 'children', {_key: 'A-7'}], offset: 0},
+        focus: {path: [{_key: 'A-4'}, 'children', {_key: 'A-7'}], offset: 3},
+      },
     }),
   ).toEqual(['bar'])
 })

@@ -33,33 +33,33 @@ describe(AutoCloseBracketsPlugin.name, () => {
     editorRef.current?.send({type: 'insert.text', text: '('})
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['()'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        '()',
+      ])
     })
 
     await userEvent.type(locator, 'foo')
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['(foo)'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        '(foo)',
+      ])
     })
 
     editorRef.current?.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['()'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        '()',
+      ])
     })
 
     editorRef.current?.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['('])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        '(',
+      ])
     })
   })
 
@@ -86,33 +86,33 @@ describe(AutoCloseBracketsPlugin.name, () => {
     editorRef.current?.send({type: 'insert.text', text: '(f'})
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['(f)'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        '(f)',
+      ])
     })
 
     await userEvent.type(locator, 'oo')
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['(foo)'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        '(foo)',
+      ])
     })
 
     editorRef.current?.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['(f)'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        '(f)',
+      ])
     })
 
     editorRef.current?.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(
-        getTersePt(editorRef.current?.getSnapshot().context.value),
-      ).toEqual(['(f'])
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        '(f',
+      ])
     })
   })
 })
