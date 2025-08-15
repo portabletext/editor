@@ -12,8 +12,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@portabletext/editor": "workspace:^",
-    "@portabletext/patches": "workspace:^",
+    "@portabletext/editor": "workspace:*",
+    "@portabletext/patches": "workspace:*",
     "@sanity/schema": "^4.0.1",
     "@xstate/react": "^4.1.3",
     "react": "^19.1.0",

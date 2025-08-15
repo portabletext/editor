@@ -433,13 +433,13 @@ importers:
         specifier: workspace:*
         version: link:../block-tools
       '@portabletext/keyboard-shortcuts':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../keyboard-shortcuts
       '@portabletext/patches':
         specifier: workspace:*
         version: link:../patches
       '@portabletext/schema':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../schema
       '@portabletext/to-html':
         specifier: ^2.0.14
@@ -627,7 +627,7 @@ importers:
   packages/sanity-bridge:
     dependencies:
       '@portabletext/schema':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../schema
       get-random-values-esm:
         specifier: ^1.0.2
@@ -664,7 +664,7 @@ importers:
   packages/toolbar:
     dependencies:
       '@portabletext/keyboard-shortcuts':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../keyboard-shortcuts
       '@xstate/react':
         specifier: ^6.0.0

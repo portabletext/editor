@@ -47,7 +47,7 @@
     "prepublishOnly": "turbo run build"
   },
   "dependencies": {
-    "@portabletext/keyboard-shortcuts": "workspace:*",
+    "@portabletext/keyboard-shortcuts": "workspace:^",
     "@xstate/react": "^6.0.0",
     "react-compiler-runtime": "19.1.0-rc.2",
     "xstate": "^5.20.2"
@@ -65,7 +65,7 @@
     "typescript": "^5.9.2"
   },
   "peerDependencies": {
-    "@portabletext/editor": "workspace:*",
+    "@portabletext/editor": "workspace:^",
     "react": "^19.1.0"
   }
 }

@@ -17,10 +17,10 @@
     "test:unit:watch": "vitest"
   },
   "dependencies": {
-    "@portabletext/block-tools": "workspace:^",
-    "@portabletext/editor": "workspace:^",
+    "@portabletext/block-tools": "workspace:*",
+    "@portabletext/editor": "workspace:*",
     "@portabletext/keyboard-shortcuts": "workspace:*",
-    "@portabletext/patches": "workspace:^",
+    "@portabletext/patches": "workspace:*",
     "@portabletext/plugin-markdown-shortcuts": "^1.0.14",
     "@portabletext/plugin-one-line": "^1.0.17",
     "@portabletext/toolbar": "workspace:*",

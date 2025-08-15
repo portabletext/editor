@@ -92,10 +92,10 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@portabletext/block-tools": "workspace:*",
-    "@portabletext/keyboard-shortcuts": "workspace:*",
-    "@portabletext/patches": "workspace:*",
-    "@portabletext/schema": "workspace:*",
+    "@portabletext/block-tools": "workspace:^",
+    "@portabletext/keyboard-shortcuts": "workspace:^",
+    "@portabletext/patches": "workspace:^",
+    "@portabletext/schema": "workspace:^",
     "@portabletext/to-html": "^2.0.14",
     "@xstate/react": "^6.0.0",
     "debug": "^4.4.1",
@@ -140,14 +140,14 @@
     "vitest-browser-react": "^1.0.1"
   },
   "peerDependencies": {
-    "@portabletext/sanity-bridge": "workspace:*",
+    "@portabletext/sanity-bridge": "workspace:^",
     "@sanity/schema": "^4.4.1",
     "@sanity/types": "^4.4.1",
     "react": "^18.3 || ^19",
     "rxjs": "^7.8.2"
   },
   "engines": {
-    "node": ">=20.19"
+    "node": ">=20.19 <22 || >=22.12"
   },
   "publishConfig": {
     "access": "public"
