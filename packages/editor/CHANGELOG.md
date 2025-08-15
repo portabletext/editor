@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.3.7](https://github.com/portabletext/editor/compare/editor-v2.3.6...editor-v2.3.7) (2025-08-15)
+
+
+### Bug Fixes
+
+* **deps:** move `@portabletext/sanity-bridge` to peer deps ([fd955f3](https://github.com/portabletext/editor/commit/fd955f3765a0d5700778d9c268dd40906b6a1902))
+* **deps:** remove `@portabletext/toolkit` ([20a9352](https://github.com/portabletext/editor/commit/20a935231c20016c39eb65aabc1a22cfe5c2f5ad))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 3.2.0
+
 ## [2.3.6](https://github.com/portabletext/editor/compare/editor-v2.3.5...editor-v2.3.6) (2025-08-14)
 
 
