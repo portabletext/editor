@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/portabletext/editor/compare/sanity-bridge-v1.1.1...sanity-bridge-v1.1.2) (2025-08-15)
+
+
+### Bug Fixes
+
+* reduce peer deps duplication and set min node 22 version ([#1532](https://github.com/portabletext/editor/issues/1532)) ([41aae56](https://github.com/portabletext/editor/commit/41aae568c208a3512683280319dbb018d13286da))
+
 ## [1.1.1](https://github.com/portabletext/editor/compare/sanity-bridge-v1.1.0...sanity-bridge-v1.1.1) (2025-08-14)
 
 

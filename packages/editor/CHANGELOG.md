@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.3.8](https://github.com/portabletext/editor/compare/editor-v2.3.7...editor-v2.3.8) (2025-08-15)
+
+
+### Bug Fixes
+
+* reduce peer deps duplication and set min node 22 version ([#1532](https://github.com/portabletext/editor/issues/1532)) ([41aae56](https://github.com/portabletext/editor/commit/41aae568c208a3512683280319dbb018d13286da))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 3.2.1
+  * devDependencies
+    * @portabletext/sanity-bridge bumped to 1.1.2
+  * peerDependencies
+    * @portabletext/sanity-bridge bumped to 1.1.2
+
 ## [2.3.7](https://github.com/portabletext/editor/compare/editor-v2.3.6...editor-v2.3.7) (2025-08-15)
 
 
