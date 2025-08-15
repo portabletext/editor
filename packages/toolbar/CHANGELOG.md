@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.0.22](https://github.com/portabletext/editor/compare/toolbar-v2.0.21...toolbar-v2.0.22) (2025-08-15)
+
+
+### Bug Fixes
+
+* reduce peer deps duplication and set min node 22 version ([#1532](https://github.com/portabletext/editor/issues/1532)) ([41aae56](https://github.com/portabletext/editor/commit/41aae568c208a3512683280319dbb018d13286da))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @portabletext/editor bumped to 2.3.8
+  * peerDependencies
+    * @portabletext/editor bumped to 2.3.8
+
 ## [2.0.21](https://github.com/portabletext/editor/compare/toolbar-v2.0.20...toolbar-v2.0.21) (2025-08-15)
 
 

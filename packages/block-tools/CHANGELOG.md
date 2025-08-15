@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.2.1](https://github.com/portabletext/editor/compare/block-tools-v3.2.0...block-tools-v3.2.1) (2025-08-15)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/sanity-bridge bumped to 1.1.2
+
 ## [3.2.0](https://github.com/portabletext/editor/compare/block-tools-v3.1.0...block-tools-v3.2.0) (2025-08-15)
 
 
