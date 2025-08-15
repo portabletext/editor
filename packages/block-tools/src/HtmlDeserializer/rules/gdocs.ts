@@ -96,8 +96,16 @@ function getBlockStyle(schema: Schema, el: Node): string {
 export default function createGDocsRules(schema: Schema): DeserializerRule[] {
   return [
     {
-      deserialize(el) {
+      deserialize(el, next) {
         if (isElement(el) && tagName(el) === 'span' && isGoogleDocs(el)) {
+          if (!el.textContent) {
+            if (!el.previousSibling && !el.nextSibling) {
+              el.setAttribute('data-lonely-child', 'true')
+            }
+
+            return next(el.childNodes)
+          }
+
           const span = {
             ...DEFAULT_SPAN,
             marks: [] as string[],
