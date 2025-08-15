@@ -7,6 +7,7 @@ import {
   HTML_HEADER_TAGS,
   HTML_LIST_CONTAINER_TAGS,
 } from '../../constants'
+import type {SchemaMatchers} from '../../schema-matchers'
 import type {DeserializerRule} from '../../types'
 import {isElement, tagName} from '../helpers'
 
@@ -93,11 +94,22 @@ function getBlockStyle(schema: Schema, el: Node): string {
   return block.style
 }
 
-export default function createGDocsRules(schema: Schema): DeserializerRule[] {
+export default function createGDocsRules(
+  schema: Schema,
+  options: {matchers?: SchemaMatchers},
+): DeserializerRule[] {
   return [
     {
-      deserialize(el) {
+      deserialize(el, next) {
         if (isElement(el) && tagName(el) === 'span' && isGoogleDocs(el)) {
+          if (!el.textContent) {
+            if (!el.previousSibling && !el.nextSibling) {
+              el.setAttribute('data-lonely-child', 'true')
+            }
+
+            return next(el.childNodes)
+          }
+
           const span = {
             ...DEFAULT_SPAN,
             marks: [] as string[],
@@ -173,6 +185,64 @@ export default function createGDocsRules(schema: Schema): DeserializerRule[] {
             text: '',
           }
         }
+        return undefined
+      },
+    },
+    {
+      deserialize(el) {
+        if (isElement(el) && tagName(el) === 'img' && isGoogleDocs(el)) {
+          const src = el.getAttribute('src') ?? undefined
+          const alt = el.getAttribute('alt') ?? undefined
+
+          const ancestorOfLonelyChild =
+            el?.parentElement?.parentElement?.getAttribute('data-lonely-child')
+          const ancestorOfListItem = el.closest('li') !== null
+
+          if (ancestorOfLonelyChild && !ancestorOfListItem) {
+            const image = options.matchers?.image?.({
+              context: {schema},
+              props: {
+                ...(src ? {src} : {}),
+                ...(alt ? {alt} : {}),
+              },
+            })
+
+            if (image) {
+              return {
+                _type: '__block',
+                block: image,
+              }
+            }
+          }
+
+          const inlineImage = options.matchers?.inlineImage?.({
+            context: {schema},
+            props: {
+              ...(src ? {src} : {}),
+              ...(alt ? {alt} : {}),
+            },
+          })
+
+          if (inlineImage) {
+            return inlineImage
+          }
+
+          const image = options.matchers?.image?.({
+            context: {schema},
+            props: {
+              ...(src ? {src} : {}),
+              ...(alt ? {alt} : {}),
+            },
+          })
+
+          if (image) {
+            return {
+              _type: '__block',
+              block: image,
+            }
+          }
+        }
+
         return undefined
       },
     },

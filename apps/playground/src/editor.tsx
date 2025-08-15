@@ -39,6 +39,7 @@ import type {EditorActorRef} from './playground-machine'
 import {
   CommentAnnotationSchema,
   ImageSchema,
+  InlineImageSchema,
   LinkAnnotationSchema,
   playgroundSchemaDefinition,
   StockTickerSchema,
@@ -370,7 +371,19 @@ const renderDecorator: RenderDecoratorFunction = (props) => {
 }
 
 const stockTickerStyle = tv({
-  base: 'inline-flex items-center gap-1 border-2 border-gray-300 rounded px-1 font-mono text-xs',
+  base: 'max-w-30 inline-flex items-center gap-1 border-2 border-gray-300 rounded px-1 font-mono text-xs',
+  variants: {
+    selected: {
+      true: 'border-blue-300',
+    },
+    focused: {
+      true: 'bg-blue-50',
+    },
+  },
+})
+
+const inlineImageStyle = tv({
+  base: 'max-w-35 grid grid-cols-[auto_1fr] items-start gap-1 border-2 border-gray-300 rounded text-sm',
   variants: {
     selected: {
       true: 'border-blue-300',
@@ -394,6 +407,30 @@ const renderChild: RenderChildFunction = (props) => {
       >
         <ActivityIcon className="size-3 shrink-0" />
         {stockTicker.value.symbol}
+      </span>
+    )
+  }
+
+  const image = InlineImageSchema.safeParse(props).data
+
+  if (image) {
+    return (
+      <span
+        className={inlineImageStyle({
+          selected: props.selected,
+          focused: props.focused,
+        })}
+      >
+        <span className="bg-gray-200 size-5 overflow-clip flex items-center justify-center">
+          <img
+            className="object-scale-down max-w-full"
+            src={image.value.url}
+            alt={image.value.alt ?? ''}
+          />
+        </span>
+        <span className="text-ellipsis overflow-hidden whitespace-nowrap">
+          {image.value.url}
+        </span>
       </span>
     )
   }
