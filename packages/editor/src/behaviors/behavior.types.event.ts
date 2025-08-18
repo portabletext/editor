@@ -233,6 +233,7 @@ const abstractBehaviorEventTypes = [
   'delete.forward',
   'delete.text',
   'deserialize',
+  'deserialize.data',
   'deserialization.success',
   'deserialization.failure',
   'insert.blocks',
@@ -246,6 +247,7 @@ const abstractBehaviorEventTypes = [
   'select.previous block',
   'select.next block',
   'serialize',
+  'serialize.data',
   'serialization.success',
   'serialization.failure',
   'split',
@@ -309,7 +311,28 @@ type AbstractBehaviorEvent =
         | InputBehaviorEvent
     }
   | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'deserialize.data'>
+      mimeType: MIMEType
+      data: string
+      originEvent:
+        | PickFromUnion<
+            NativeBehaviorEvent,
+            'type',
+            'drag.drop' | 'clipboard.paste'
+          >
+        | InputBehaviorEvent
+    }
+  | {
       type: StrictExtract<SyntheticBehaviorEventType, 'serialize'>
+      originEvent: PickFromUnion<
+        NativeBehaviorEvent,
+        'type',
+        'clipboard.copy' | 'clipboard.cut' | 'drag.dragstart'
+      >
+    }
+  | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'serialize.data'>
+      mimeType: MIMEType
       originEvent: PickFromUnion<
         NativeBehaviorEvent,
         'type',
