@@ -14,9 +14,11 @@ import type {BehaviorConfig} from '../behaviors/behavior.config'
 import {coreBehaviorsConfig} from '../behaviors/behavior.core'
 import {performEvent} from '../behaviors/behavior.perform-event'
 import type {BehaviorEvent} from '../behaviors/behavior.types.event'
-import type {Converter} from '../converters/converter.types'
+import type {Converter, ConverterConfig} from '../converters/converter.types'
+import {createCoreConverters} from '../converters/converters.core'
 import {debugWithName} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
+import {corePriority} from '../priority/priority.core'
 import {sortByPriority} from '../priority/priority.sort'
 import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
 import type {
@@ -83,6 +85,14 @@ export type InternalEditorEvent =
       behaviorConfig: BehaviorConfig
     }
   | {
+      type: 'add converter'
+      converterConfig: ConverterConfig
+    }
+  | {
+      type: 'remove converter'
+      converterConfig: ConverterConfig
+    }
+  | {
       type: 'blur'
       editor: PortableTextSlateEditor
     }
@@ -142,7 +152,7 @@ export const editorMachine = setup({
     context: {} as {
       behaviors: Set<BehaviorConfig>
       behaviorsSorted: boolean
-      converters: Set<Converter>
+      converters: Set<ConverterConfig>
       getLegacySchema: () => PortableTextMemberSchemaTypes
       keyGenerator: () => string
       pendingEvents: Array<InternalPatchEvent | MutationEvent>
@@ -161,7 +171,6 @@ export const editorMachine = setup({
     events: {} as InternalEditorEvent,
     emitted: {} as InternalEditorEmittedEvent,
     input: {} as {
-      converters?: Array<Converter>
       getLegacySchema: () => PortableTextMemberSchemaTypes
       keyGenerator: () => string
       maxBlocks?: number
@@ -187,6 +196,24 @@ export const editorMachine = setup({
         context.behaviors.delete(event.behaviorConfig)
 
         return new Set([...context.behaviors])
+      },
+    }),
+    'add converter to context': assign({
+      converters: ({context, event}) => {
+        assertEvent(event, 'add converter')
+
+        return new Set(
+          sortByPriority([...context.converters, event.converterConfig]),
+        )
+      },
+    }),
+    'remove converter from context': assign({
+      converters: ({context, event}) => {
+        assertEvent(event, 'remove converter')
+
+        context.converters.delete(event.converterConfig)
+
+        return new Set([...context.converters])
       },
     }),
     'emit patch event': emit(({event}) => {
@@ -261,6 +288,9 @@ export const editorMachine = setup({
         const behaviors = [...context.behaviors.values()].map(
           (config) => config.behavior,
         )
+        const converters = [...context.converters.values()].map(
+          (config) => config.converter,
+        )
 
         performEvent({
           mode: 'raise',
@@ -272,7 +302,7 @@ export const editorMachine = setup({
           schema: context.schema,
           getSnapshot: () =>
             createEditorSnapshot({
-              converters: [...context.converters],
+              converters,
               editor: event.editor,
               keyGenerator: context.keyGenerator,
               readOnly: self.getSnapshot().matches({'edit mode': 'read only'}),
@@ -311,7 +341,12 @@ export const editorMachine = setup({
   context: ({input}) => ({
     behaviors: new Set(coreBehaviorsConfig),
     behaviorsSorted: false,
-    converters: new Set(input.converters ?? []),
+    converters: new Set(
+      createCoreConverters(input.getLegacySchema()).map((converter) => ({
+        converter,
+        priority: corePriority,
+      })),
+    ),
     getLegacySchema: input.getLegacySchema,
     keyGenerator: input.keyGenerator,
     pendingEvents: [],
@@ -325,6 +360,8 @@ export const editorMachine = setup({
   on: {
     'add behavior': {actions: 'add behavior to context'},
     'remove behavior': {actions: 'remove behavior from context'},
+    'add converter': {actions: 'add converter to context'},
+    'remove converter': {actions: 'remove converter from context'},
     'update maxBlocks': {
       actions: assign({maxBlocks: ({event}) => event.maxBlocks}),
     },

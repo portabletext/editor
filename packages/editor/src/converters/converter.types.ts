@@ -1,14 +1,26 @@
 import type {PortableTextBlock} from '@sanity/types'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
 import type {MIMEType} from '../internal-utils/mime-type'
+import {EditorPriority} from '../priority/priority.types'
 import type {PickFromUnion} from '../type-utils'
 
+/**
+ * @beta
+ */
 export type Converter<TMIMEType extends MIMEType = MIMEType> = {
   mimeType: TMIMEType
   serialize: Serializer<TMIMEType>
   deserialize: Deserializer<TMIMEType>
 }
 
+export type ConverterConfig = {
+  converter: Converter
+  priority: EditorPriority
+}
+
+/**
+ * @beta
+ */
 export function defineConverter<TMIMEType extends MIMEType>(
   converter: Converter<TMIMEType>,
 ): Converter<TMIMEType> {

@@ -39,6 +39,12 @@
       "require": "./lib/behaviors/index.cjs",
       "default": "./lib/behaviors/index.js"
     },
+    "./converters": {
+      "source": "./src/converters/_exports/index.ts",
+      "import": "./lib/converters/index.js",
+      "require": "./lib/converters/index.cjs",
+      "default": "./lib/converters/index.js"
+    },
     "./plugins": {
       "source": "./src/plugins/index.ts",
       "import": "./lib/plugins/index.js",

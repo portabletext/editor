@@ -1,4 +1,5 @@
-import type {ConverterEvent} from '../converters/converter.types'
+import type {Converter, ConverterEvent} from '../converters/converter.types'
+import {MIMEType} from '../internal-utils/mime-type'
 import {isTextBlock} from '../internal-utils/parse-blocks'
 import * as selectors from '../selectors'
 import {getActiveDecorators} from '../selectors/selector.get-active-decorators'
@@ -17,15 +18,46 @@ import {abstractStyleBehaviors} from './behavior.abstract.style'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
+const mimeTypePriority: Record<MIMEType, number> = {
+  'application/json': 0,
+  'application/x-portable-text': 1,
+  'text/html': 2,
+  'text/plain': 3,
+}
+
 const raiseDeserializationSuccessOrFailure = defineBehavior({
   on: 'deserialize',
   guard: ({snapshot, event}) => {
     let success:
-      | PickFromUnion<ConverterEvent, 'type', 'deserialization.success'>
+      | {
+          mimeType: MIMEType
+          event: PickFromUnion<
+            ConverterEvent,
+            'type',
+            'deserialization.success'
+          >
+        }
       | undefined
     const failures: Array<
       PickFromUnion<ConverterEvent, 'type', 'deserialization.failure'>
     > = []
+
+    // // Sort converters by mime type. The priority is:
+    // // application/json
+    // // application/x-portable-text
+    // // text/html
+    // // text/plain
+    // const converters = [...snapshot.context.converters].sort((a, b) => {
+
+    //   const priorityA =
+    //     mimeTypePriority[a.mimeType as keyof typeof mimeTypePriority] ?? 999
+    //   const priorityB =
+    //     mimeTypePriority[b.mimeType as keyof typeof mimeTypePriority] ?? 999
+
+    //   return priorityA - priorityB
+    // })
+
+    debugger
 
     for (const converter of snapshot.context.converters) {
       const data = event.originEvent.originEvent.dataTransfer.getData(
@@ -42,7 +74,19 @@ const raiseDeserializationSuccessOrFailure = defineBehavior({
       })
 
       if (deserializeEvent.type === 'deserialization.success') {
-        success = deserializeEvent
+        if (success) {
+          if (
+            mimeTypePriority[success.mimeType] >
+            mimeTypePriority[converter.mimeType]
+          ) {
+            continue
+          }
+        }
+
+        success = {
+          mimeType: converter.mimeType,
+          event: deserializeEvent,
+        }
         break
       } else {
         failures.push(deserializeEvent)
@@ -57,7 +101,7 @@ const raiseDeserializationSuccessOrFailure = defineBehavior({
       } as const
     }
 
-    return success
+    return success.event
   },
   actions: [
     ({event}, deserializeEvent) => [
@@ -76,7 +120,17 @@ const raiseSerializationSuccessOrFailure = defineBehavior({
       return false
     }
 
-    const serializeEvents = snapshot.context.converters.map((converter) =>
+    const converters: Map<MIMEType, Converter> = new Map()
+
+    for (const converter of snapshot.context.converters) {
+      if (!converters.has(converter.mimeType)) {
+        converters.set(converter.mimeType, converter)
+      }
+    }
+
+    debugger
+
+    const serializeEvents = Array.from(converters.values()).map((converter) =>
       converter.serialize({
         snapshot,
         event: {

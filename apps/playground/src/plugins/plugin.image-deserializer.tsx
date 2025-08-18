@@ -1,10 +1,12 @@
-import {useEditor} from '@portabletext/editor'
+import {htmlToBlocks} from '@portabletext/block-tools'
+import {PortableTextBlock, useEditor} from '@portabletext/editor'
 import {
   defineBehavior,
   effect,
   forward,
   raise,
 } from '@portabletext/editor/behaviors'
+import {defineConverter} from '@portabletext/editor/converters'
 import {useEffect} from 'react'
 import {readFiles} from './read-files'
 
@@ -12,6 +14,63 @@ export function ImageDeserializerPlugin() {
   const editor = useEditor()
 
   useEffect(() => {
+    // Registering a custom Converter in the editor
+    const unregisterConverter = editor.registerConverter({
+      // This is the definition of the Converter
+      converter: defineConverter({
+        mimeType: 'text/html',
+        // It's not concerned with the serialization of the data
+        // (it should probably be an option to leave out the method rather than having to return a failure)
+        serialize: ({event}) => {
+          return {
+            type: 'serialization.failure',
+            mimeType: 'text/html',
+            originEvent: event.originEvent,
+            reason: 'Unsupported operation',
+          }
+        },
+        // But it is concerned with the deserialization of the data where it uses `htmlToBlock` from
+        // `@portabletext/block-tools` and adds custom matchers for images.
+        deserialize: ({snapshot, event}) => {
+          // Notice how `htmlToBlocks` can accept an `EditorSchema`
+          const blocks = htmlToBlocks(event.data, snapshot.context.schema, {
+            keyGenerator: snapshot.context.keyGenerator,
+            matchers: {
+              image: ({props}) => {
+                return {
+                  _type: 'image',
+                  ...(props.src ? {url: props.src} : {}),
+                  ...(props.alt ? {alt: props.alt} : {}),
+                }
+              },
+              inlineImage: ({props}) => {
+                return {
+                  _type: 'image',
+                  ...(props.src ? {url: props.src} : {}),
+                  ...(props.alt ? {alt: props.alt} : {}),
+                }
+              },
+            },
+            // Ugly type cast that I need to fix
+          }) as Array<PortableTextBlock>
+
+          if (blocks.length === 0) {
+            return {
+              type: 'deserialization.failure',
+              mimeType: 'text/html',
+              reason: 'No blocks deserialized',
+            }
+          }
+
+          return {
+            type: 'deserialization.success',
+            data: blocks,
+            mimeType: 'text/html',
+          }
+        },
+      }),
+    })
+
     const unregisterBehaviors = [
       editor.registerBehavior({
         behavior: defineBehavior<{images: Array<{alt: string; src: string}>}>({
@@ -78,6 +137,8 @@ export function ImageDeserializerPlugin() {
     ]
 
     return () => {
+      unregisterConverter()
+
       for (const unregisterBehavior of unregisterBehaviors) {
         unregisterBehavior()
       }

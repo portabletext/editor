@@ -5,7 +5,6 @@ import {
 } from '@portabletext/sanity-bridge'
 import {compileSchema} from '@portabletext/schema'
 import {createActor} from 'xstate'
-import {createCoreConverters} from '../converters/converters.core'
 import type {Editor, EditorConfig} from '../editor'
 import {debugWithName} from '../internal-utils/debug'
 import {compileType} from '../internal-utils/schema'
@@ -97,6 +96,31 @@ export function createInternalEditor(config: EditorConfig): {
         editorActor.send({
           type: 'remove behavior',
           behaviorConfig: behaviorConfigWithPriority,
+        })
+      }
+    },
+    registerConverter: (converterConfig) => {
+      const priority = createEditorPriority({
+        name: 'custom',
+        reference: {
+          priority: corePriority,
+          importance: 'higher',
+        },
+      })
+      const converterConfigWithPriority = {
+        ...converterConfig,
+        priority,
+      }
+
+      editorActor.send({
+        type: 'add converter',
+        converterConfig: converterConfigWithPriority,
+      })
+
+      return () => {
+        editorActor.send({
+          type: 'remove converter',
+          converterConfig: converterConfigWithPriority,
         })
       }
     },
@@ -194,7 +218,6 @@ function editorConfigToMachineInput(config: EditorConfig) {
   const {legacySchema, schema} = compileSchemasFromEditorConfig(config)
 
   return {
-    converters: createCoreConverters(legacySchema),
     getLegacySchema: () => legacySchema,
     keyGenerator: config.keyGenerator ?? defaultKeyGenerator,
     maxBlocks: config.maxBlocks,

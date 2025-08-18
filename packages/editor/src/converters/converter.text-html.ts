@@ -54,6 +54,22 @@ export function createConverterTextHtml(
         keyGenerator: snapshot.context.keyGenerator,
         unstable_whitespaceOnPasteMode:
           legacySchema.block.options.unstable_whitespaceOnPasteMode,
+        // matchers: {
+        //   image: ({props}) => {
+        //     return {
+        //       _type: 'image',
+        //       ...(props.src ? {url: props.src} : {}),
+        //       ...(props.alt ? {alt: props.alt} : {}),
+        //     }
+        //   },
+        //   inlineImage: ({props}) => {
+        //     return {
+        //       _type: 'image',
+        //       ...(props.src ? {url: props.src} : {}),
+        //       ...(props.alt ? {alt: props.alt} : {}),
+        //     }
+        //   },
+        // },
       }) as Array<PortableTextBlock>
 
       const parsedBlocks = blocks.flatMap((block) => {

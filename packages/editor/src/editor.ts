@@ -7,6 +7,7 @@ import type {
 import type {ActorRef, EventObject, Snapshot} from 'xstate'
 import type {Behavior} from './behaviors/behavior.types.behavior'
 import type {ExternalBehaviorEvent} from './behaviors/behavior.types.event'
+import type {Converter} from './converters/converter.types'
 import type {EditorDom} from './editor/editor-dom'
 import type {ExternalEditorEvent} from './editor/editor-machine'
 import type {EditorSnapshot} from './editor/editor-snapshot'
@@ -58,6 +59,10 @@ export type Editor = {
    * @beta
    */
   registerBehavior: (config: {behavior: Behavior}) => () => void
+  /**
+   * @beta
+   */
+  registerConverter: (config: {converter: Converter}) => () => void
   send: (event: EditorEvent) => void
   on: ActorRef<Snapshot<unknown>, EventObject, EditorEmittedEvent>['on']
 }
