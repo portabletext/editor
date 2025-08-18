@@ -320,7 +320,7 @@ const RenderBlock = (props: BlockRenderProps) => {
         <div className="bg-gray-200 size-20 overflow-clip flex items-center justify-center">
           <img
             className="object-scale-down max-w-full"
-            src={image.value.url}
+            src={image.value.src}
             alt={image.value.alt ?? ''}
           />
         </div>
@@ -331,11 +331,11 @@ const RenderBlock = (props: BlockRenderProps) => {
                 <LinkIcon className="size-3 shrink-0" />
               </Button>
               <Tooltip className="max-w-120">
-                <span className="wrap-anywhere">{image.value.url}</span>
+                <span className="wrap-anywhere">{image.value.src}</span>
               </Tooltip>
             </TooltipTrigger>
             <span className="text-ellipsis overflow-hidden whitespace-nowrap">
-              {image.value.url}
+              {image.value.src}
             </span>
           </div>
           <div className="flex items-center gap-1">
@@ -424,12 +424,12 @@ const renderChild: RenderChildFunction = (props) => {
         <span className="bg-gray-200 size-5 overflow-clip flex items-center justify-center">
           <img
             className="object-scale-down max-w-full"
-            src={image.value.url}
+            src={image.value.src}
             alt={image.value.alt ?? ''}
           />
         </span>
         <span className="text-ellipsis overflow-hidden whitespace-nowrap">
-          {image.value.url}
+          {image.value.src}
         </span>
       </span>
     )

@@ -97,7 +97,7 @@ export const playgroundSchemaDefinition = defineSchema({
       title: 'Image',
       name: 'image',
       fields: [
-        {name: 'url', title: 'URL', type: 'string'},
+        {name: 'src', title: 'Src', type: 'string'},
         {name: 'alt', title: 'Alt text', type: 'string'},
       ],
     },
@@ -112,7 +112,7 @@ export const playgroundSchemaDefinition = defineSchema({
       title: 'Inline image',
       name: 'image',
       fields: [
-        {name: 'url', title: 'URL', type: 'string'},
+        {name: 'src', title: 'Src', type: 'string'},
         {name: 'alt', title: 'Alt text', type: 'string'},
       ],
     },
@@ -124,7 +124,7 @@ export const ImageSchema = z.object({
     name: z.literal('image'),
   }),
   value: z.object({
-    url: z.string(),
+    src: z.string(),
     alt: z.string().optional(),
   }),
 })
@@ -134,7 +134,7 @@ export const InlineImageSchema = z.object({
     name: z.literal('image'),
   }),
   value: z.object({
-    url: z.string(),
+    src: z.string(),
     alt: z.string().optional(),
   }),
 })

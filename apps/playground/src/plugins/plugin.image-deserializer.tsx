@@ -23,7 +23,7 @@ export function ImageDeserializerPlugin() {
                 blocks: event.images.map((image) => ({
                   _type: 'image',
                   alt: image.alt,
-                  url: image.src,
+                  src: image.src,
                 })),
                 placement: 'auto',
               }),
