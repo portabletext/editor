@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.3](https://github.com/portabletext/editor/compare/sanity-bridge-v1.1.2...sanity-bridge-v1.1.3) (2025-08-19)
+
+
+### Bug Fixes
+
+* **deps:** update sanity monorepo to ^4.5.0 ([aeb60ea](https://github.com/portabletext/editor/commit/aeb60ea207613241bfd222b8de81cf828bc46269))
+
 ## [1.1.2](https://github.com/portabletext/editor/compare/sanity-bridge-v1.1.1...sanity-bridge-v1.1.2) (2025-08-15)
 
 

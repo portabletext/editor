@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.4.1](https://github.com/portabletext/editor/compare/editor-v2.4.0...editor-v2.4.1) (2025-08-19)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 3.4.0
+  * devDependencies
+    * @portabletext/sanity-bridge bumped to 1.1.3
+  * peerDependencies
+    * @portabletext/sanity-bridge bumped to 1.1.3
+
 ## [2.4.0](https://github.com/portabletext/editor/compare/editor-v2.3.8...editor-v2.4.0) (2025-08-19)
 
 
