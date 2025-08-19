@@ -15,6 +15,8 @@ import {
   isNativeBehaviorEvent,
   isSyntheticBehaviorEvent,
   type BehaviorEvent,
+  type CustomBehaviorEvent,
+  type SyntheticBehaviorEvent,
 } from './behavior.types.event'
 
 const debug = debugWithName('behaviors:event')
@@ -54,7 +56,12 @@ export function performEvent({
         preventDefault: () => void
       }
     | undefined
-  sendBack: (event: {type: 'set drag ghost'; ghost: HTMLElement}) => void
+  sendBack: (
+    event:
+      | {type: 'set drag ghost'; ghost: HTMLElement}
+      | SyntheticBehaviorEvent
+      | CustomBehaviorEvent,
+  ) => void
 }) {
   debug(`(${mode}:${eventCategory(event)})`, JSON.stringify(event, null, 2))
 
@@ -196,7 +203,9 @@ export function performEvent({
           for (const action of actions) {
             if (action.type === 'effect') {
               try {
-                action.effect()
+                action.effect({
+                  send: sendBack,
+                })
               } catch (error) {
                 console.error(
                   new Error(
@@ -267,7 +276,9 @@ export function performEvent({
       for (const action of actions) {
         if (action.type === 'effect') {
           try {
-            action.effect()
+            action.effect({
+              send: sendBack,
+            })
           } catch (error) {
             console.error(
               new Error(

@@ -279,7 +279,18 @@ export const editorMachine = setup({
               schema: context.schema,
             }),
           nativeEvent: event.nativeEvent,
-          sendBack: (event) => self.send(event),
+          sendBack: (eventSentBack) => {
+            if (eventSentBack.type === 'set drag ghost') {
+              self.send(eventSentBack)
+              return
+            }
+
+            self.send({
+              type: 'behavior event',
+              behaviorEvent: eventSentBack,
+              editor: event.editor,
+            })
+          },
         })
       } catch (error) {
         console.error(
