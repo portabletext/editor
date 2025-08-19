@@ -3,7 +3,6 @@ import type {Schema} from '@portabletext/schema'
 import type {ArraySchemaType} from '@sanity/types'
 import HtmlDeserializer from './HtmlDeserializer'
 import type {HtmlDeserializerOptions, TypedObject} from './types'
-import type {PortableTextTextBlock} from './types.portable-text'
 import {normalizeBlock} from './util/normalizeBlock'
 
 /**
@@ -19,7 +18,7 @@ export function htmlToBlocks(
   html: string,
   schemaType: ArraySchemaType | Schema,
   options: HtmlDeserializerOptions = {},
-): (TypedObject | PortableTextTextBlock)[] {
+) {
   const schema = isSanitySchema(schemaType)
     ? sanitySchemaToPortableTextSchema(schemaType)
     : schemaType
