@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.4.0](https://github.com/portabletext/editor/compare/editor-v2.3.8...editor-v2.4.0) (2025-08-19)
+
+
+### Features
+
+* add `serialize.data` and `deserialize.data` events ([8d8565b](https://github.com/portabletext/editor/commit/8d8565b90b68e945e69e7d46bd57d4d98f2cef80))
+* pass `send` method to the `effect(() => {})` callback ([464e26e](https://github.com/portabletext/editor/commit/464e26e44c9d8ebb10636dd117b52a05fe903d29))
+
+
+### Bug Fixes
+
+* **behaviors:** limit what Behaviors an executed `raise` action can reach ([182cf75](https://github.com/portabletext/editor/commit/182cf75e71e1e92bf36479f7482aeddf53f413f2))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @portabletext/block-tools bumped to 3.3.0
+
 ## [2.3.8](https://github.com/portabletext/editor/compare/editor-v2.3.7...editor-v2.3.8) (2025-08-15)
 
 

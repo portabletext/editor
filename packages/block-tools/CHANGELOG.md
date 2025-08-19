@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.3.0](https://github.com/portabletext/editor/compare/block-tools-v3.2.1...block-tools-v3.3.0) (2025-08-19)
+
+
+### Features
+
+* support image parsing with `SchemaMatchers` (in beta) ([d6005f2](https://github.com/portabletext/editor/commit/d6005f266d58a785d34e9dcb1b1039016c001023))
+* support splitting text blocks ([ebbe70a](https://github.com/portabletext/editor/commit/ebbe70acd18f36c2f10f4cccf57737373ca18e8b))
+
+
+### Bug Fixes
+
+* export `SchemaMatchers` and `ImageSchemaMatcher` types ([cf170bb](https://github.com/portabletext/editor/commit/cf170bb0dca3a95069e76044abd8d67442b209fe))
+* improve `htmlToBlocks` return type ([11b7dba](https://github.com/portabletext/editor/commit/11b7dbabd2be8e4bdcfabf33806242ef7cca6880))
+* pass `keyGenerator` to `SchemaMatchers` ([e00ab2c](https://github.com/portabletext/editor/commit/e00ab2cc523bb445b07ecba9d6b2f9ace39ed616))
+
 ## [3.2.1](https://github.com/portabletext/editor/compare/block-tools-v3.2.0...block-tools-v3.2.1) (2025-08-15)
 
 
