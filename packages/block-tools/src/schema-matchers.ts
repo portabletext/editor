@@ -16,6 +16,7 @@ type ObjectSchemaMatcher<TProps extends Record<string, unknown>> = ({
 /**
  * Use the current `Schema` as well as the potential img element props to
  * determine what Portable Text Object to use to represent the image.
+ * @beta
  */
 export type ImageSchemaMatcher = ObjectSchemaMatcher<{
   src?: string
@@ -23,6 +24,9 @@ export type ImageSchemaMatcher = ObjectSchemaMatcher<{
   [key: string]: string | undefined
 }>
 
+/**
+ * @beta
+ */
 export type SchemaMatchers = {
   /**
    * Called whenever the HTML parsing encounters an `<img>` element that is
