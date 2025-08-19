@@ -304,7 +304,8 @@ export function performEvent({
           performEvent({
             mode: 'raise',
             behaviors,
-            remainingEventBehaviors: behaviors,
+            remainingEventBehaviors:
+              mode === 'execute' ? remainingEventBehaviors : behaviors,
             event: action.event,
             editor,
             keyGenerator,
