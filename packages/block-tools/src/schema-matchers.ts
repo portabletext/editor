@@ -9,7 +9,7 @@ type ObjectSchemaMatcher<TProps extends Record<string, unknown>> = ({
   context,
   props,
 }: {
-  context: {schema: Schema}
+  context: {schema: Schema; keyGenerator: () => string}
   props: TProps
 }) => ArbitraryTypedObject | undefined
 
