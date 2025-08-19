@@ -1,8 +1,16 @@
+import {
+  htmlToBlocks,
+  type ImageSchemaMatcher,
+  type SchemaMatchers,
+} from '@portabletext/block-tools'
 import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
+import {defineBehavior, raise} from '../src/behaviors'
+import {getTersePt} from '../src/internal-utils/terse-pt'
 import {createTestEditor} from '../src/internal-utils/test-editor'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
+import {BehaviorPlugin} from '../src/plugins'
 
 describe('event.clipboard.paste', () => {
   test('Scenario: Cut/paste block object', async () => {
@@ -155,6 +163,159 @@ describe('event.clipboard.paste', () => {
           style: 'normal',
         },
       ])
+    })
+  })
+
+  describe('Scenario Outline: Pasting text/html with an inline image', () => {
+    const html =
+      '<p>Hello world</p><p>foo <img src="https://example.com/image.jpg" alt="Image" /> bar</p><p>baz</p>'
+
+    const schemaDefinition = defineSchema({
+      blockObjects: [
+        {
+          name: 'image',
+          fields: [
+            {name: 'src', type: 'string'},
+            {name: 'alt', type: 'string'},
+          ],
+        },
+      ],
+      inlineObjects: [
+        {
+          name: 'image',
+          fields: [
+            {name: 'src', type: 'string'},
+            {name: 'alt', type: 'string'},
+          ],
+        },
+      ],
+    })
+
+    const imageMatcher: ImageSchemaMatcher = ({context, props}) => {
+      return {
+        _type: 'image',
+        _key: context.keyGenerator(),
+        src: props.src,
+        alt: props.alt,
+      }
+    }
+    const inlineImageMatcher: ImageSchemaMatcher = ({context, props}) => {
+      return {
+        _type: 'image',
+        _key: context.keyGenerator(),
+        src: props.src,
+        alt: props.alt,
+      }
+    }
+
+    function createBehavior(matchers: SchemaMatchers) {
+      return defineBehavior({
+        on: 'deserialize.data',
+        guard: ({snapshot, event}) => {
+          if (event.mimeType !== 'text/html') {
+            return false
+          }
+
+          const blocks = htmlToBlocks(event.data, snapshot.context.schema, {
+            keyGenerator: snapshot.context.keyGenerator,
+            matchers,
+          })
+
+          if (blocks.length === 0) {
+            return false
+          }
+
+          return {
+            blocks,
+          }
+        },
+        actions: [
+          ({event}, {blocks}) => [
+            raise({
+              type: 'deserialization.success',
+              data: blocks,
+              mimeType: 'text/html',
+              originEvent: event.originEvent,
+            }),
+          ],
+        ],
+      })
+    }
+
+    test('Scenario: `image` and `inlineImage` block-tools matchers', async () => {
+      const {editorRef, paste} = await createTestEditor({
+        children: (
+          <BehaviorPlugin
+            behaviors={[
+              createBehavior({
+                inlineImage: inlineImageMatcher,
+                image: imageMatcher,
+              }),
+            ]}
+          />
+        ),
+        schemaDefinition,
+      })
+
+      const dataTransfer = new DataTransfer()
+      dataTransfer.setData('text/html', html)
+      paste(dataTransfer)
+
+      await vi.waitFor(() => {
+        expect(getTersePt(editorRef.current?.getSnapshot().context!)).toEqual([
+          'Hello world',
+          'foo ,{image}, bar',
+          'baz',
+        ])
+      })
+    })
+
+    test('Scenario: only `image` matcher', async () => {
+      const {editorRef, paste} = await createTestEditor({
+        children: (
+          <BehaviorPlugin
+            behaviors={[
+              createBehavior({
+                image: imageMatcher,
+              }),
+            ]}
+          />
+        ),
+        schemaDefinition,
+      })
+
+      const dataTransfer = new DataTransfer()
+      dataTransfer.setData('text/html', html)
+      paste(dataTransfer)
+
+      await vi.waitFor(() => {
+        expect(getTersePt(editorRef.current?.getSnapshot().context!)).toEqual([
+          'Hello world',
+          'foo',
+          '{image}',
+          'bar',
+          'baz',
+        ])
+      })
+    })
+
+    test('Scenario: No matchers', async () => {
+      const {editorRef, paste} = await createTestEditor({
+        children: <BehaviorPlugin behaviors={[createBehavior({})]} />,
+        schemaDefinition,
+      })
+
+      const dataTransfer = new DataTransfer()
+      dataTransfer.setData('text/html', html)
+      paste(dataTransfer)
+
+      await vi.waitFor(() => {
+        expect(getTersePt(editorRef.current?.getSnapshot().context!)).toEqual([
+          'Hello world',
+          'foo bar',
+          'baz',
+        ])
+      })
     })
   })
 })
