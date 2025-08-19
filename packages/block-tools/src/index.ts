@@ -30,6 +30,7 @@ export function htmlToBlocks(
     .map((block) => normalizeBlock(block, {keyGenerator: options.keyGenerator}))
 }
 
+export type {ImageSchemaMatcher, SchemaMatchers} from './schema-matchers'
 export type {ArbitraryTypedObject, DeserializerRule, HtmlParser} from './types'
 export type {
   PortableTextBlock,
