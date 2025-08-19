@@ -6,7 +6,7 @@ import {
 import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
-import {defineBehavior, raise} from '../src/behaviors'
+import {defineBehavior, effect, execute, raise} from '../src/behaviors'
 import {getTersePt} from '../src/internal-utils/terse-pt'
 import {createTestEditor} from '../src/internal-utils/test-editor'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
@@ -318,4 +318,224 @@ describe('event.clipboard.paste', () => {
       })
     })
   })
+
+  test('Scenario: Pasting image files', async () => {
+    const {editorRef, paste} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'deserialize',
+              guard: ({snapshot, event}) => {
+                const files = Array.from(
+                  event.originEvent.originEvent.dataTransfer.files,
+                )
+                const imageFiles = new Map(
+                  files
+                    .filter((file) => file.type.startsWith('image/'))
+                    .map((imageFile) => [
+                      imageFile,
+                      snapshot.context.keyGenerator(),
+                    ]),
+                )
+
+                if (imageFiles.size === 0) {
+                  return false
+                }
+
+                return {imageFiles}
+              },
+              actions: [
+                (_, {imageFiles}) => [
+                  // Insert the blocks immediately
+                  execute({
+                    type: 'insert.blocks',
+                    blocks: [...imageFiles.entries()].map(
+                      ([imageFile, _key]) => ({
+                        _key,
+                        _type: 'image',
+                        alt: imageFile.name,
+                      }),
+                    ),
+                    placement: 'auto',
+                  }),
+                  // Then upload the images
+                  effect(() => {
+                    uploadImages(imageFiles)
+                      .then((images) =>
+                        // We'll mock the rejection of the second image
+                        images.map((image) =>
+                          image.status === 'fulfilled' &&
+                          image.result.alt === 'pixel-b.jpg'
+                            ? {
+                                ...image,
+                                status: 'rejected',
+                              }
+                            : image,
+                        ),
+                      )
+                      .then((images) => {
+                        // Finally, send a custom event to resolve the images
+                        // in the editor
+                        editorRef.current?.send({
+                          type: 'custom.resolve-images',
+                          images,
+                        })
+                      })
+                  }),
+                ],
+              ],
+            }),
+            // Custom Behavior to resolve images, either by setting the src
+            // and alt props or deleting the block if the upload failed.
+            defineBehavior<{
+              images: Array<ImageResult>
+            }>({
+              on: 'custom.resolve-images',
+              actions: [
+                ({event}) =>
+                  event.images.map((image) =>
+                    image.status === 'fulfilled'
+                      ? raise({
+                          type: 'block.set',
+                          at: [{_key: image._key}],
+                          props: {
+                            src: image.result.src,
+                            alt: image.result.alt,
+                          },
+                        })
+                      : raise({
+                          type: 'delete.block',
+                          at: [{_key: image._key}],
+                        }),
+                  ),
+              ],
+            }),
+          ]}
+        />
+      ),
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'image',
+            fields: [
+              {name: 'src', type: 'string'},
+              {name: 'alt', type: 'string'},
+            ],
+          },
+        ],
+      }),
+    })
+
+    // 1x1 pixel
+    const base64 =
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMBAAZf4xYAAAAASUVORK5CYII='
+    const blob = new Blob([base64ToUint8Array(base64)], {type: 'image/jpeg'})
+    const pixelA = new File([blob], 'pixel-a.jpg', {type: 'image/jpeg'})
+    const pixelB = new File([blob], 'pixel-b.jpg', {type: 'image/jpeg'})
+    const pixelC = new File([blob], 'pixel-c.jpg', {type: 'image/jpeg'})
+    const dataTransfer = new DataTransfer()
+    dataTransfer.items.add(pixelA)
+    dataTransfer.items.add(pixelB)
+    dataTransfer.items.add(pixelC)
+
+    paste(dataTransfer)
+
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _type: 'image',
+          _key: 'k2',
+          alt: 'pixel-a.jpg',
+        },
+        {
+          _type: 'image',
+          _key: 'k3',
+          alt: 'pixel-b.jpg',
+        },
+        {
+          _type: 'image',
+          _key: 'k4',
+          alt: 'pixel-c.jpg',
+        },
+      ])
+    })
+
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _type: 'image',
+          _key: 'k2',
+          src: `data:image/jpeg;base64,${base64}`,
+          alt: 'pixel-a.jpg',
+        },
+        {
+          _type: 'image',
+          _key: 'k4',
+          src: `data:image/jpeg;base64,${base64}`,
+          alt: 'pixel-c.jpg',
+        },
+      ])
+    })
+  })
 })
+
+function base64ToUint8Array(b64: string) {
+  const bin = atob(b64)
+  const bytes = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+  return bytes
+}
+
+function uploadImages(images: Map<File, string>): Promise<Array<ImageResult>> {
+  return Promise.all(
+    [...images.entries()].map(([file, _key]) => uploadImage([file, _key])),
+  )
+}
+
+type ImageResult =
+  | {
+      _key: string
+      status: 'fulfilled'
+      result: {
+        src: string
+        alt: string
+      }
+    }
+  | {
+      _key: string
+      status: 'rejected'
+    }
+
+function uploadImage([file, _key]: [File, string]) {
+  return new Promise<ImageResult>((resolve) => {
+    const reader = new FileReader()
+
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve({
+          _key,
+          status: 'fulfilled',
+          result: {
+            src: reader.result,
+            alt: file.name,
+          },
+        })
+      } else {
+        resolve({
+          _key,
+          status: 'rejected',
+        })
+      }
+    }
+
+    reader.onerror = () => {
+      resolve({
+        _key,
+        status: 'rejected',
+      })
+    }
+
+    reader.readAsDataURL(file)
+  })
+}
