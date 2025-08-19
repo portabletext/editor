@@ -360,7 +360,7 @@ describe('event.clipboard.paste', () => {
                     placement: 'auto',
                   }),
                   // Then upload the images
-                  effect(() => {
+                  effect(({send}) => {
                     uploadImages(imageFiles)
                       .then((images) =>
                         // We'll mock the rejection of the second image
@@ -377,7 +377,7 @@ describe('event.clipboard.paste', () => {
                       .then((images) => {
                         // Finally, send a custom event to resolve the images
                         // in the editor
-                        editorRef.current?.send({
+                        send({
                           type: 'custom.resolve-images',
                           images,
                         })

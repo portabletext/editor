@@ -25,7 +25,31 @@ export type BehaviorAction =
     }
   | {
       type: 'effect'
-      effect: () => void
+      effect: (payload: {
+        /**
+         * Send a Behavior Event back into the Editor.
+         *
+         * @example
+         * ```ts
+         * defineBehavior({
+         *   on: '...',
+         *   actions: [
+         *     () => [
+         *       effect(({send}) => {
+         *         doSomethingAsync()
+         *           .then(() => {
+         *             send({
+         *               type: '...',
+         *             })
+         *           })
+         *       })
+         *     ],
+         *   ],
+         * })
+         * ```
+         */
+        send: (event: SyntheticBehaviorEvent | CustomBehaviorEvent) => void
+      }) => void
     }
 
 /**
@@ -59,7 +83,7 @@ export function raise(
  * @beta
  */
 export function effect(
-  effect: () => void,
+  effect: PickFromUnion<BehaviorAction, 'type', 'effect'>['effect'],
 ): PickFromUnion<BehaviorAction, 'type', 'effect'> {
   return {type: 'effect', effect}
 }
