@@ -51,6 +51,20 @@ export async function createTestEditor(
 
   await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
 
+  function paste(dataTransfer: DataTransfer) {
+    editorActorRef.current?.send({
+      type: 'behavior event',
+      behaviorEvent: {
+        type: 'clipboard.paste',
+        originEvent: {dataTransfer},
+        position: {
+          selection: editorRef.current?.getSnapshot().context.selection!,
+        },
+      },
+      editor: slateRef.current!,
+    })
+  }
+
   return {
     editorActorRef,
     editorRef,
@@ -58,5 +72,6 @@ export async function createTestEditor(
     locator,
     onEvent,
     slateRef,
+    paste,
   }
 }
