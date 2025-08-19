@@ -282,7 +282,10 @@ export default function createHTMLRules(
 
           if (ancestorOfLonelyChild && !ancestorOfListItem) {
             const image = options.matchers?.image?.({
-              context: {schema},
+              context: {
+                schema,
+                keyGenerator: options.keyGenerator ?? keyGenerator,
+              },
               props: {
                 ...props,
                 ...(src ? {src} : {}),
@@ -299,7 +302,10 @@ export default function createHTMLRules(
           }
 
           const inlineImage = options.matchers?.inlineImage?.({
-            context: {schema},
+            context: {
+              schema,
+              keyGenerator: options.keyGenerator ?? keyGenerator,
+            },
             props: {
               ...props,
               ...(src ? {src} : {}),
@@ -312,7 +318,10 @@ export default function createHTMLRules(
           }
 
           const image = options.matchers?.image?.({
-            context: {schema},
+            context: {
+              schema,
+              keyGenerator: options.keyGenerator ?? keyGenerator,
+            },
             props: {
               ...props,
               ...(src ? {src} : {}),
