@@ -68,7 +68,7 @@
     "pretty-quick": "^4.2.2",
     "turbo": "^2.5.5"
   },
-  "packageManager": "pnpm@10.13.1",
+  "packageManager": "pnpm@10.15.0",
   "pnpm": {
     "peerDependencyRules": {
       "allowAny": [
