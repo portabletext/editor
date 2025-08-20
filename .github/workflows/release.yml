@@ -1,0 +1,48 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  contents: read # for checkout
+
+jobs:
+  release:
+    # prevents this action from running on forks
+    if: github.repository == 'portabletext/editor'
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+    permissions:
+      contents: read # for checkout
+      id-token: write # to enable use of OIDC for npm provenance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          cache: pnpm
+          node-version: lts/*
+      # temporary until setup-node action comes with npm version that contains oidc setup by default
+      - run: npm install -g npm@latest
+      - run: pnpm install
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ secrets.ECOSCRIPT_APP_ID }}
+          private-key: ${{ secrets.ECOSCRIPT_APP_PRIVATE_KEY }}
+      - name: Create Release Pull Request or Publish to npm
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          publish: pnpm release
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          NPM_CONFIG_PROVENANCE: true
