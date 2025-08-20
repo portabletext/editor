@@ -448,8 +448,8 @@ importers:
         specifier: workspace:^
         version: link:../schema
       '@portabletext/to-html':
-        specifier: ^2.0.14
-        version: 2.0.14
+        specifier: ^2.0.15
+        version: 2.0.16
       '@xstate/react':
         specifier: ^6.0.0
         version: 6.0.0(@types/react@19.1.9)(react@19.1.1)(xstate@5.20.2)
@@ -2105,8 +2105,8 @@ packages:
     peerDependencies:
       react: ^17 || ^18 || >=19.0.0-0
 
-  '@portabletext/to-html@2.0.14':
-    resolution: {integrity: sha512-wW2et59PoOT/mc56C4U3z+DKAx1yjieN/gp2q9szTfTwusMpb6mclR9+EPIfGrcQWdwGn6PEN7nxVFXnqlZ/0A==}
+  '@portabletext/to-html@2.0.16':
+    resolution: {integrity: sha512-AMz1ECixV2hXS72GlQUYj3FWpTYKoRFXHmclbpAvmestEREz0U2Id5QZaOXtomirDDKF6u8K9POvDsxE1j/8qw==}
     engines: {node: ^14.13.1 || >=16.0.0}
 
   '@portabletext/toolkit@2.0.17':
@@ -8890,7 +8890,7 @@ snapshots:
       '@portabletext/types': 2.0.13
       react: 19.1.1
 
-  '@portabletext/to-html@2.0.14':
+  '@portabletext/to-html@2.0.16':
     dependencies:
       '@portabletext/toolkit': 2.0.17
       '@portabletext/types': 2.0.13
