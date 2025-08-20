@@ -1,7 +1,6 @@
 .next
 dist
 lib
-.release-please-manifest.json
 CHANGELOG.md
 pnpm-lock.yaml
 
