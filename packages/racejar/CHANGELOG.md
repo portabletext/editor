@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.14
+
+### Patch Changes
+
+- [#1545](https://github.com/portabletext/editor/pull/1545) [`c2b3a21`](https://github.com/portabletext/editor/commit/c2b3a216d12dc7c35df80bf04daedf6e5c27021b) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency @playwright/test to ^1.55.0
+
 ## 1.2.13
 
 ### Patch Changes

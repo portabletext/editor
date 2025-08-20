@@ -1,6 +1,6 @@
 {
   "name": "racejar",
-  "version": "1.2.13",
+  "version": "1.2.14",
   "description": "A testing framework agnostic Gherkin driver",
   "keywords": [
     "cucumber",
