@@ -54,7 +54,7 @@
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:*",
-    "@sanity/pkg-utils": "^7.11.1",
+    "@sanity/pkg-utils": "^7.11.9",
     "@types/react": "^19.1.9",
     "@typescript-eslint/eslint-plugin": "^8.39.1",
     "@typescript-eslint/parser": "^8.39.1",
