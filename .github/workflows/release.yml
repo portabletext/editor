@@ -42,6 +42,7 @@ jobs:
         id: changesets
         uses: changesets/action@v1
         with:
+          commitMode: github-api
           publish: pnpm release
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
