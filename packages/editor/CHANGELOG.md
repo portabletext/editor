@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.4.2
+
+### Patch Changes
+
+- [#1561](https://github.com/portabletext/editor/pull/1561) [`1e8ef70`](https://github.com/portabletext/editor/commit/1e8ef7083314fa47dcd9ef4d8befb68951941d77) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency @portabletext/to-html to ^2.0.15
+
 ## 2.4.1
 
 ### Patch Changes
