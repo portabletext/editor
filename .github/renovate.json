@@ -4,6 +4,7 @@
     "github>sanity-io/renovate-config",
     ":dependencyDashboardApproval"
   ],
+  "gitIgnoredAuthors": ["143032650+ecoscript[bot]@users.noreply.github.com"],
   "ignorePresets": ["github>sanity-io/renovate-config:group-non-major"],
   "packageRules": [
     {

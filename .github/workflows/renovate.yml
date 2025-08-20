@@ -7,15 +7,21 @@ on:
 jobs:
   run:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.user.login == 'renovate[bot]'
     steps:
-      - run: echo ${{ github.event.pull_request.user.url }}
-      - run: echo ${{ github.event.pull_request.user.email }}
-      - run: echo ${{ github.event.pull_request.user.login }}
-      - run: echo ${{ github.event.pull_request.user.name }}
-      # - name: Update PR
-      #   uses: mscharley/dependency-changesets-action@v1.0.5
-      #   with:
-      #     token: ${{ secrets.DEPENDENCY_UPDATE_GITHUB_TOKEN }}
-      #     use-conventional-commits: true
-      #     author-name: Renovate Changesets
-      #     author-email: github+renovate@scharley.me
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ secrets.ECOSCRIPT_APP_ID }}
+          private-key: ${{ secrets.ECOSCRIPT_APP_PRIVATE_KEY }}
+      - id: get-user-id
+        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+      - name: Update PR
+        uses: mscharley/dependency-changesets-action@v1.1.7
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          use-conventional-commits: true
+          author-name: "${{ steps.app-token.outputs.app-slug }}[bot]"
+          author-email: "${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com"
