@@ -112,7 +112,9 @@ To send an event back into the editor, use the `raise` action type or the `raise
 
 ```tsx
 // Approach A: With the type set to 'raise'
-import {defineBehavior} from '@portabletext/editor'
+// Approach B: With the raise helper
+import {defineBehavior, defineBehavior, raise} from '@portabletext/editor'
+
 const raisedUppercaseA = defineBehavior({
   on: 'insert.text',
   guard: ({snapshot, event}) => event.text === 'a',
@@ -123,8 +125,6 @@ const raisedUppercaseA = defineBehavior({
   ],
 })
 
-// Approach B: With the raise helper
-import {defineBehavior, raise} from '@portabletext/editor'
 const raisedUppercaseA = defineBehavior({
   on: 'insert.text',
   guard: ({snapshot, event}) => event.text === 'a',
