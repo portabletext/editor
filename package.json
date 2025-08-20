@@ -54,7 +54,7 @@
     "@changesets/changelog-github": "^0.5.1",
     "@changesets/cli": "^2.29.6",
     "@ianvs/prettier-plugin-sort-imports": "^4.6.2",
-    "@playwright/test": "^1.54.2",
+    "@playwright/test": "^1.55.0",
     "@sanity/prettier-config": "^1.0.6",
     "@types/react": "^19.1.9",
     "@types/react-dom": "^19.1.7",
