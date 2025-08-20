@@ -46,7 +46,7 @@
     "prepublishOnly": "turbo run build"
   },
   "devDependencies": {
-    "@sanity/pkg-utils": "^7.11.1",
+    "@sanity/pkg-utils": "^7.11.9",
     "typescript": "^5.9.2"
   }
 }
