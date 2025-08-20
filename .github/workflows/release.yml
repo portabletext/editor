@@ -32,8 +32,6 @@ jobs:
           fetch-depth: 0
           # Uses generated token to allow pushing commits back
           token: ${{ steps.app-token.outputs.token }}
-          # Make sure the value of GITHUB_TOKEN will not be persisted in repo's config
-          persist-credentials: false
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
