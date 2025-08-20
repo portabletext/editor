@@ -448,7 +448,7 @@ importers:
         specifier: workspace:^
         version: link:../schema
       '@portabletext/to-html':
-        specifier: ^2.0.15
+        specifier: ^2.0.16
         version: 2.0.16
       '@xstate/react':
         specifier: ^6.0.0
