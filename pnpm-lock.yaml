@@ -448,8 +448,8 @@ importers:
         specifier: workspace:^
         version: link:../schema
       '@portabletext/to-html':
-        specifier: ^2.0.16
-        version: 2.0.16
+        specifier: ^2.0.17
+        version: 2.0.17
       '@xstate/react':
         specifier: ^6.0.0
         version: 6.0.0(@types/react@19.1.10)(react@19.1.1)(xstate@5.20.2)
@@ -2108,16 +2108,16 @@ packages:
     peerDependencies:
       react: ^17 || ^18 || >=19.0.0-0
 
-  '@portabletext/to-html@2.0.16':
-    resolution: {integrity: sha512-AMz1ECixV2hXS72GlQUYj3FWpTYKoRFXHmclbpAvmestEREz0U2Id5QZaOXtomirDDKF6u8K9POvDsxE1j/8qw==}
+  '@portabletext/to-html@2.0.17':
+    resolution: {integrity: sha512-kLID+QW4qIybqeN5yv1LuycbYC2DMVDcIFKfhrAFpBI3P9lcrYUv8ukzhp2Nh55hvuGphzvTVHDSo/fkbv8ziA==}
     engines: {node: ^14.13.1 || >=16.0.0}
 
-  '@portabletext/toolkit@2.0.17':
-    resolution: {integrity: sha512-5wj+oUaCmHm9Ay1cytPmT1Yc0SrR1twwUIc0qNQ3MtaXaNMPw99Gjt1NcA34yfyKmEf/TAB2NiiT72jFxdddIQ==}
+  '@portabletext/toolkit@2.0.18':
+    resolution: {integrity: sha512-m3v2WwKQTNNk5BFZlUuPuCW0Zi6iDSpwrium4Ej5L2FHDXhFuwAyEMPXDrvwPvqjES/oJzcwmdKLMhYa44T9BQ==}
     engines: {node: ^14.13.1 || >=16.0.0}
 
-  '@portabletext/types@2.0.13':
-    resolution: {integrity: sha512-5xk5MSyQU9CrDho3Rsguj38jhijhD36Mk8S6mZo3huv6PM+t4M/5kJN2KFIxgvt4ONpvOEs1pVIZAV0cL0Vi+Q==}
+  '@portabletext/types@2.0.15':
+    resolution: {integrity: sha512-2e6i2gSQsrA/5OL5Gm4/9bxB9MNO73Fa47zj+0mT93xkoQUCGCWX5fZh1YBJ86hszaRYlqvqG08oULxvvPPp/Q==}
     engines: {node: ^14.13.1 || >=16.0.0 || >=18.0.0}
 
   '@radix-ui/primitive@1.1.2':
@@ -8899,20 +8899,20 @@ snapshots:
 
   '@portabletext/react@3.2.1(react@19.1.1)':
     dependencies:
-      '@portabletext/toolkit': 2.0.17
-      '@portabletext/types': 2.0.13
+      '@portabletext/toolkit': 2.0.18
+      '@portabletext/types': 2.0.15
       react: 19.1.1
 
-  '@portabletext/to-html@2.0.16':
+  '@portabletext/to-html@2.0.17':
     dependencies:
-      '@portabletext/toolkit': 2.0.17
-      '@portabletext/types': 2.0.13
+      '@portabletext/toolkit': 2.0.18
+      '@portabletext/types': 2.0.15
 
-  '@portabletext/toolkit@2.0.17':
+  '@portabletext/toolkit@2.0.18':
     dependencies:
-      '@portabletext/types': 2.0.13
+      '@portabletext/types': 2.0.15
 
-  '@portabletext/types@2.0.13': {}
+  '@portabletext/types@2.0.15': {}
 
   '@radix-ui/primitive@1.1.2': {}
 
