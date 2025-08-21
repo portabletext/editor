@@ -90,8 +90,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/patches
       '@portabletext/react':
-        specifier: ^3.2.1
-        version: 3.2.1(react@19.1.1)
+        specifier: ^3.2.4
+        version: 3.2.4(react@19.1.1)
       '@radix-ui/react-separator':
         specifier: ^1.1.7
         version: 1.1.7(@types/react-dom@19.1.7(@types/react@19.1.10))(@types/react@19.1.10)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -2102,8 +2102,8 @@ packages:
       '@portabletext/editor': workspace:*
       react: ^19.1.0
 
-  '@portabletext/react@3.2.1':
-    resolution: {integrity: sha512-RyFLk6u2q6ZyABTdOk+xoNR2Tq/4fcQFEWayNk4Kbd3gHpUUTabqOrDMChcmG6C7YVLSpwIEBwHoBVcy4vK/hA==}
+  '@portabletext/react@3.2.4':
+    resolution: {integrity: sha512-Gq0BaIBw6PMXnN1M9clG7vOa952O4F+CTfANLH/NaxiH5eI1sOx3IoGoGLnPPUTxCKq3F380gz4ycz6WzMtu0Q==}
     engines: {node: ^14.13.1 || >=16.0.0}
     peerDependencies:
       react: ^17 || ^18 || >=19.0.0-0
@@ -8897,7 +8897,7 @@ snapshots:
       '@portabletext/editor': link:packages/editor
       react: 19.1.1
 
-  '@portabletext/react@3.2.1(react@19.1.1)':
+  '@portabletext/react@3.2.4(react@19.1.1)':
     dependencies:
       '@portabletext/toolkit': 2.0.18
       '@portabletext/types': 2.0.15
