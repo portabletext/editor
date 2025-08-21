@@ -319,6 +319,88 @@ describe(applyPatch.name, () => {
           },
         ])
       })
+
+      test('string at unknown nested path', () => {
+        const object = {
+          asset: {
+            _type: 'reference',
+            _ref: 'image-912edcd083a3a642a4acbe906a3233071f196db8-699x127-png',
+          },
+          imageDimensions: {
+            height: 127,
+            width: 699,
+          },
+        }
+
+        expect(
+          applyPatch(object, {
+            type: 'set',
+            path: ['_analysis', 'status'],
+            value: 'completed',
+          }),
+        ).toEqual(object)
+      })
+
+      test('object at unknown object path', () => {
+        const object = {
+          asset: {
+            _type: 'reference',
+            _ref: 'image-912edcd083a3a642a4acbe906a3233071f196db8-699x127-png',
+          },
+          imageDimensions: {
+            height: 127,
+            width: 699,
+          },
+        }
+
+        expect(
+          applyPatch(object, {
+            type: 'set',
+            path: ['_analysis'],
+            value: {
+              createdAt: '2025-08-21T07:22:46.357Z',
+              updatedAt: '2025-08-21T07:22:46.357Z',
+            },
+          }),
+        ).toEqual({
+          ...object,
+          _analysis: {
+            createdAt: '2025-08-21T07:22:46.357Z',
+            updatedAt: '2025-08-21T07:22:46.357Z',
+          },
+        })
+      })
+
+      test('string at unknown field', () => {
+        const object = {
+          asset: {
+            _type: 'reference',
+            _ref: 'image-912edcd083a3a642a4acbe906a3233071f196db8-699x127-png',
+          },
+          imageDimensions: {
+            height: 127,
+            width: 699,
+          },
+          _analysis: {
+            createdAt: '2025-08-21T07:22:46.357Z',
+            updatedAt: '2025-08-21T07:22:46.357Z',
+          },
+        }
+
+        expect(
+          applyPatch(object, {
+            type: 'set',
+            path: ['_analysis', 'status'],
+            value: 'completed',
+          }),
+        ).toEqual({
+          ...object,
+          _analysis: {
+            ...object._analysis,
+            status: 'completed',
+          },
+        })
+      })
     })
   })
 

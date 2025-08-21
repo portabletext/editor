@@ -40,6 +40,12 @@ export function applyPatchToObject(
     return omit(nextValue, head)
   }
 
+  if (!(head in nextValue) && tail.length > 0) {
+    // The field does not exist on the object so we can just return the object
+    // as is
+    return nextValue
+  }
+
   nextValue[head] = applyPatch(nextValue[head], {
     ...patch,
     path: tail,
