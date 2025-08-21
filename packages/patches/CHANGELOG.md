@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.8
+
+### Patch Changes
+
+- [#1566](https://github.com/portabletext/editor/pull/1566) [`377b923`](https://github.com/portabletext/editor/commit/377b9233ab0f778159a1abef22c0c50b5cd7fd3a) Thanks [@christianhg](https://github.com/christianhg)! - fix: fail gracefully when trying to set unknown nested object path
+
 ## 1.1.7
 
 ### Patch Changes
