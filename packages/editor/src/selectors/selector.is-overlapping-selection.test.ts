@@ -1,4 +1,5 @@
 import {describe, expect, test} from 'vitest'
+import {defaultKeyGenerator} from '../editor/key-generator'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import type {EditorSelection} from '../types/editor'
 import {isOverlappingSelection} from './selector.is-overlapping-selection'
@@ -164,6 +165,22 @@ describe(isOverlappingSelection.name, () => {
         snapshot({
           anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k4'}], offset: 0},
           focus: {path: [{_key: 'k1'}, 'children', {_key: 'k4'}], offset: 0},
+        }),
+      ),
+    ).toBe(false)
+  })
+
+  test('unknown block', () => {
+    const unknownBlockKey = defaultKeyGenerator()
+
+    expect(
+      isOverlappingSelection({
+        anchor: {path: [{_key: unknownBlockKey}], offset: 0},
+        focus: {path: [{_key: unknownBlockKey}], offset: 0},
+      })(
+        snapshot({
+          anchor: {path: [{_key: 'k0'}], offset: 0},
+          focus: {path: [{_key: 'k0'}], offset: 0},
         }),
       ),
     ).toBe(false)

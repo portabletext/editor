@@ -112,6 +112,19 @@ export function isOverlappingSelection(
       originalSelectionEndPoint,
     )
 
+    // If all checks fail then we can deduce that the selection does not exist
+    // and there doesn't overlap with the snapshot selection
+    if (
+      !endPointEqualToOriginalStartPoint &&
+      !startPointEqualToOriginalEndPoint &&
+      !originalStartPointBeforeStartPoint &&
+      !originalStartPointAfterStartPoint &&
+      !originalEndPointBeforeEndPoint &&
+      !originalEndPointAfterEndPoint
+    ) {
+      return false
+    }
+
     if (endPointBeforeSelection && !endPointEqualToOriginalStartPoint) {
       return false
     }
