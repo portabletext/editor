@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.4.3
+
+### Patch Changes
+
+- [#1563](https://github.com/portabletext/editor/pull/1563) [`22d35fa`](https://github.com/portabletext/editor/commit/22d35fa95e04f31ff83930f9705619ff20055ba8) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency @portabletext/to-html to ^2.0.16
+
+- [#1565](https://github.com/portabletext/editor/pull/1565) [`f74068d`](https://github.com/portabletext/editor/commit/f74068df49714be0c35640e910401c15ea008980) Thanks [@christianhg](https://github.com/christianhg)! - fix(`isOverlappingSelection`): return `false` for unknown selection
+
 ## 2.4.2
 
 ### Patch Changes
