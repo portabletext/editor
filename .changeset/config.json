@@ -8,8 +8,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["docs", "playground", "example-basic", "example-legacy"],
-  "___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH": {
-    "updateInternalDependents": "always"
-  }
+  "ignore": ["docs", "playground", "example-basic", "example-legacy"]
 }
