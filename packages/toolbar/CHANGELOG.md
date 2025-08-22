@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.26
+
+### Patch Changes
+
+- Updated dependencies [[`c747a78`](https://github.com/portabletext/editor/commit/c747a786f5a90355ca9bebcd0bcaa02f238e9f42)]:
+  - @portabletext/editor@2.6.1
+
 ## 2.0.25
 
 ### Patch Changes
