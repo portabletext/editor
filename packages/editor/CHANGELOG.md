@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.6.3
+
+### Patch Changes
+
+- [#1584](https://github.com/portabletext/editor/pull/1584) [`9cc2421`](https://github.com/portabletext/editor/commit/9cc2421c72122af4e2e85b10d61c7996676c6a86) Thanks [@christianhg](https://github.com/christianhg)! - Broaden the type of `PortableTextEditable.ref`
+
 ## 2.6.2
 
 ### Patch Changes
