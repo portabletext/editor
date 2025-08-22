@@ -657,6 +657,9 @@ importers:
       typescript:
         specifier: ^5.9.2
         version: 5.9.2
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@24.3.0)(@vitest/browser@3.2.4)(jiti@2.5.1)(jsdom@26.0.0)(lightningcss@1.30.1)(terser@5.43.1)(tsx@4.20.4)(yaml@2.8.1)
 
   packages/schema:
     devDependencies:
@@ -2110,10 +2113,6 @@ packages:
 
   '@portabletext/to-html@3.0.0':
     resolution: {integrity: sha512-MlU5Og1HqYnU9riXjtydJQcrG/kWmtgo8q2pGEDmLMbKD0Agel4umYLhVoHhRAwC7AEApu9U4BweO8HkY0SIow==}
-    engines: {node: ^14.13.1 || >=16.0.0}
-
-  '@portabletext/toolkit@2.0.18':
-    resolution: {integrity: sha512-m3v2WwKQTNNk5BFZlUuPuCW0Zi6iDSpwrium4Ej5L2FHDXhFuwAyEMPXDrvwPvqjES/oJzcwmdKLMhYa44T9BQ==}
     engines: {node: ^14.13.1 || >=16.0.0}
 
   '@portabletext/toolkit@3.0.0':
@@ -8910,10 +8909,6 @@ snapshots:
   '@portabletext/to-html@3.0.0':
     dependencies:
       '@portabletext/toolkit': 3.0.0
-      '@portabletext/types': 2.0.15
-
-  '@portabletext/toolkit@2.0.18':
-    dependencies:
       '@portabletext/types': 2.0.15
 
   '@portabletext/toolkit@3.0.0':

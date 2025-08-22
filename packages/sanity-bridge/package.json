@@ -43,7 +43,9 @@
     "clean": "del .turbo && del lib && del node_modules",
     "dev": "pkg-utils watch",
     "lint:fix": "biome lint --write .",
-    "prepublishOnly": "turbo run build"
+    "prepublishOnly": "turbo run build",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest watch"
   },
   "dependencies": {
     "@portabletext/schema": "workspace:^",
@@ -55,7 +57,8 @@
     "@sanity/schema": "^4.5.0",
     "@sanity/types": "^4.5.0",
     "@types/lodash.startcase": "^4.4.9",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
   },
   "peerDependencies": {
     "@sanity/schema": "^4.5.0",
