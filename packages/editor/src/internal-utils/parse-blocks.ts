@@ -129,14 +129,22 @@ export function parseTextBlock({
 
   for (const key of Object.keys(block)) {
     if (
-      key !== '_type' &&
-      key !== '_key' &&
-      key !== 'children' &&
-      key !== 'markDefs' &&
-      key !== 'style' &&
-      key !== 'listItem' &&
-      key !== 'level'
+      key === '_type' ||
+      key === '_key' ||
+      key === 'children' ||
+      key === 'markDefs' ||
+      key === 'style' ||
+      key === 'listItem' ||
+      key === 'level'
     ) {
+      continue
+    }
+
+    if (options.validateFields) {
+      if (context.schema.block.fields?.some((field) => field.name === key)) {
+        customFields[key] = block[key]
+      }
+    } else {
       customFields[key] = block[key]
     }
   }
@@ -219,7 +227,7 @@ export function parseTextBlock({
             },
           ],
     markDefs,
-    ...(options.validateFields ? {} : customFields),
+    ...customFields,
   }
 
   if (

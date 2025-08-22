@@ -280,6 +280,95 @@ describe(parseBlock.name, () => {
         style: 'normal',
       })
     })
+
+    describe('validating custom fields', () => {
+      test('none defined', () => {
+        expect(
+          parseBlock({
+            block: {_type: 'block', map: {}},
+            context: {
+              keyGenerator: createTestKeyGenerator(),
+              schema: compileSchema(defineSchema({})),
+            },
+            options: {refreshKeys: false, validateFields: true},
+          }),
+        ).toEqual({
+          _type: 'block',
+          _key: 'k0',
+          children: [
+            {
+              _key: 'k1',
+              _type: 'span',
+              text: '',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        })
+      })
+
+      test('field defined', () => {
+        expect(
+          parseBlock({
+            block: {_type: 'block', map: {}},
+            context: {
+              keyGenerator: createTestKeyGenerator(),
+              schema: compileSchema(
+                defineSchema({
+                  block: {fields: [{name: 'map', type: 'object'}]},
+                }),
+              ),
+            },
+            options: {refreshKeys: false, validateFields: true},
+          }),
+        ).toEqual({
+          _type: 'block',
+          _key: 'k0',
+          map: {},
+          children: [
+            {
+              _key: 'k1',
+              _type: 'span',
+              text: '',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        })
+      })
+
+      test('different field defined', () => {
+        expect(
+          parseBlock({
+            block: {_type: 'block', foo: {}},
+            context: {
+              keyGenerator: createTestKeyGenerator(),
+              schema: compileSchema(
+                defineSchema({
+                  block: {fields: [{name: 'map', type: 'object'}]},
+                }),
+              ),
+            },
+            options: {refreshKeys: false, validateFields: true},
+          }),
+        ).toEqual({
+          _type: 'block',
+          _key: 'k0',
+          children: [
+            {
+              _key: 'k1',
+              _type: 'span',
+              text: '',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        })
+      })
+    })
   })
 })
 
