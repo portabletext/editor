@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.6.0
+
+### Minor Changes
+
+- [#1578](https://github.com/portabletext/editor/pull/1578) [`abe7a58`](https://github.com/portabletext/editor/commit/abe7a58e60a9781144d07e93878c3e9f97a3a8f4) Thanks [@christianhg](https://github.com/christianhg)! - Validate text block fields against fields on the schema
+
+### Patch Changes
+
+- Updated dependencies [[`1121f93`](https://github.com/portabletext/editor/commit/1121f9306b10481d10954f95211eed2ca20446f3)]:
+  - @portabletext/schema@1.1.0
+  - @portabletext/block-tools@3.3.2
+  - @portabletext/sanity-bridge@1.1.4
+
 ## 2.5.0
 
 ### Minor Changes

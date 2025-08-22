@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.0
+
+### Minor Changes
+
+- [#1578](https://github.com/portabletext/editor/pull/1578) [`1121f93`](https://github.com/portabletext/editor/commit/1121f9306b10481d10954f95211eed2ca20446f3) Thanks [@christianhg](https://github.com/christianhg)! - Support fields on the block type
+
 ## 1.0.1
 
 ### Patch Changes
