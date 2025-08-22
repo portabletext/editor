@@ -61,6 +61,7 @@ export type PortableTextEditableProps = Omit<
   TextareaHTMLAttributes<HTMLDivElement>,
   'onPaste' | 'onCopy' | 'onBeforeInput'
 > & {
+  ref?: React.RefObject<HTMLDivElement>
   hotkeys?: HotkeyOptions
   onBeforeInput?: (event: InputEvent) => void
   onPaste?: OnPasteFn
