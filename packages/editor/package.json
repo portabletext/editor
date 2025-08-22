@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/editor",
-  "version": "2.6.1",
+  "version": "2.6.2",
   "description": "Portable Text Editor made in React",
   "keywords": [
     "sanity",
@@ -140,7 +140,7 @@
     "vitest-browser-react": "^1.0.1"
   },
   "peerDependencies": {
-    "@portabletext/sanity-bridge": "workspace:^1.1.4",
+    "@portabletext/sanity-bridge": "workspace:^1.1.5",
     "@sanity/schema": "^4.5.0",
     "@sanity/types": "^4.5.0",
     "react": "^18.3 || ^19",

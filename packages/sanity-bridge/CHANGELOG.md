@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.5
+
+### Patch Changes
+
+- [#1582](https://github.com/portabletext/editor/pull/1582) [`b1acd3f`](https://github.com/portabletext/editor/commit/b1acd3f6e118195b3cbbc46c8dde619116ef4774) Thanks [@christianhg](https://github.com/christianhg)! - Mitigate `compileSchemaDefinitionToPortableTextMemberSchemaTypes` crashing for block object array fields
+
 ## 1.1.4
 
 ### Patch Changes

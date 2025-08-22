@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.6.2
+
+### Patch Changes
+
+- Updated dependencies [[`b1acd3f`](https://github.com/portabletext/editor/commit/b1acd3f6e118195b3cbbc46c8dde619116ef4774)]:
+  - @portabletext/sanity-bridge@1.1.5
+  - @portabletext/block-tools@3.3.3
+
 ## 2.6.1
 
 ### Patch Changes
