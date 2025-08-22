@@ -65,7 +65,7 @@
     "typescript": "^5.9.2"
   },
   "peerDependencies": {
-    "@portabletext/editor": "workspace:^",
+    "@portabletext/editor": "workspace:^2.0.0",
     "react": "^19.1.1"
   }
 }
