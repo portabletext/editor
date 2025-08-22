@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.5.0
+
+### Minor Changes
+
+- [`5f4e282`](https://github.com/portabletext/editor/commit/5f4e282740f638bf37dadc2c836d791fafe956fb) Thanks [@christianhg](https://github.com/christianhg)! - feat: support `PortableTextEditable` callback ref
+
+### Patch Changes
+
+- [#1570](https://github.com/portabletext/editor/pull/1570) [`1c074b9`](https://github.com/portabletext/editor/commit/1c074b97ff2506988f7dbf4822112d13ff3c0893) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency @portabletext/to-html to ^2.0.17
+
+- [#1573](https://github.com/portabletext/editor/pull/1573) [`09d4e05`](https://github.com/portabletext/editor/commit/09d4e05520b62cc4aa016da7a1d72b2590d6af92) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency @portabletext/to-html to v3
+
+- [#1577](https://github.com/portabletext/editor/pull/1577) [`53cc628`](https://github.com/portabletext/editor/commit/53cc628e6a22345ecf2f62a698e1fe179bcc819d) Thanks [@stipsan](https://github.com/stipsan)! - Widen workspace peer dependency range
+
 ## 2.4.3
 
 ### Patch Changes
