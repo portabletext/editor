@@ -3,10 +3,14 @@ import {Schema as SanitySchema} from '@sanity/schema'
 import {
   defineArrayMember,
   defineField,
+  defineType,
   type ArrayDefinition,
 } from '@sanity/types'
 import {describe, expect, test} from 'vitest'
+import {createPortableTextMemberSchemaTypes} from './portable-text-member-schema-types'
+import {portableTextMemberSchemaTypesToSchema} from './portable-text-member-schema-types-to-schema'
 import {sanitySchemaToPortableTextSchema} from './sanity-schema-to-portable-text-schema'
+import {compileSchemaDefinitionToPortableTextMemberSchemaTypes} from './schema-definition-to-portable-text-member-schema-types'
 
 describe(sanitySchemaToPortableTextSchema.name, () => {
   const defaultSchema: Schema = {
@@ -140,6 +144,59 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
 
     expect(sanitySchemaToPortableTextSchema(sanitySchema)).toEqual(
       defaultSchema,
+    )
+  })
+
+  test('compiled back and forth', () => {
+    const imageType = defineType({
+      name: 'custom image',
+      type: 'object',
+      fields: [
+        defineField({
+          name: 'url',
+          type: 'string',
+        }),
+      ],
+    })
+    const stockTickerType = defineType({
+      name: 'stock ticker',
+      type: 'object',
+      fields: [defineField({name: 'symbol', type: 'string'})],
+    })
+    const portableTextType = defineType({
+      type: 'array',
+      name: 'body',
+      of: [
+        {
+          type: 'block',
+          name: 'block',
+          of: [{type: 'stock ticker'}],
+        },
+        {type: 'custom image'},
+      ],
+    })
+
+    const sanitySchema = SanitySchema.compile({
+      types: [portableTextType, imageType, stockTickerType],
+    })
+
+    const portableTextMemberSchemaTypesFromSanitySchema =
+      createPortableTextMemberSchemaTypes(sanitySchema.get('body'))
+
+    const portableTextSchema = sanitySchemaToPortableTextSchema(
+      sanitySchema.get('body'),
+    )
+    const portableTextMemberSchemaTypesFromPortableTextSchema =
+      compileSchemaDefinitionToPortableTextMemberSchemaTypes(portableTextSchema)
+
+    expect(
+      portableTextMemberSchemaTypesToSchema(
+        portableTextMemberSchemaTypesFromPortableTextSchema,
+      ),
+    ).toEqual(
+      portableTextMemberSchemaTypesToSchema(
+        portableTextMemberSchemaTypesFromSanitySchema,
+      ),
     )
   })
 })

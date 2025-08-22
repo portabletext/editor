@@ -5,7 +5,6 @@ import {
   defineType,
   isArraySchemaType,
   isObjectSchemaType,
-  type ObjectField,
   type ObjectSchemaType,
 } from '@sanity/types'
 import startCase from 'lodash.startcase'
@@ -156,33 +155,25 @@ export function compileSchemaDefinitionToPortableTextMemberSchemaTypes(
 
         const nameMapping = blockObjectNames[schemaType.name]
 
-        return {
-          ...schemaType,
-          name: nameMapping ?? schemaType.name,
-          fields: schemaType.fields.map((field) => {
-            if (field.name !== 'children' || !isArraySchemaType(field.type)) {
-              return field
+        schemaType.name = nameMapping ?? schemaType.name
+
+        for (const field of schemaType.fields) {
+          if (field.name !== 'children' || !isArraySchemaType(field.type)) {
+            continue
+          }
+
+          for (const ofSchemaType of field.type.of) {
+            const nameMapping = inlineObjectNames[ofSchemaType.name]
+
+            if (!nameMapping) {
+              continue
             }
 
-            return {
-              ...field,
-              type: {
-                of: field.type.of.map((ofSchemaType) => {
-                  const nameMapping = inlineObjectNames[ofSchemaType.name]
-
-                  if (!nameMapping) {
-                    return ofSchemaType
-                  }
-
-                  return {
-                    ...ofSchemaType,
-                    name: nameMapping,
-                  }
-                }),
-              },
-            } as ObjectField
-          }),
+            ofSchemaType.name = nameMapping
+          }
         }
+
+        return schemaType
       }),
     },
     blockObjects: pteSchema.blockObjects.map((blockObject) =>
