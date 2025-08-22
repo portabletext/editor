@@ -5,7 +5,8 @@ import type {BaseDefinition, FieldDefinition} from './schema'
  */
 export type SchemaDefinition = {
   block?: {
-    name: string
+    name?: string
+    fields?: ReadonlyArray<FieldDefinition>
   }
   styles?: ReadonlyArray<StyleDefinition>
   lists?: ReadonlyArray<ListDefinition>
