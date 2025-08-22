@@ -140,7 +140,7 @@
     "vitest-browser-react": "^1.0.1"
   },
   "peerDependencies": {
-    "@portabletext/sanity-bridge": "workspace:^",
+    "@portabletext/sanity-bridge": "workspace:^1.0.0",
     "@sanity/schema": "^4.5.0",
     "@sanity/types": "^4.5.0",
     "react": "^18.3 || ^19",
