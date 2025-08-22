@@ -4,6 +4,7 @@
 export type Schema = {
   block: {
     name: string
+    fields?: ReadonlyArray<FieldDefinition>
   }
   span: {
     name: string

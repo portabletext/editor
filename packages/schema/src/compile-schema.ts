@@ -1,5 +1,5 @@
 import type {SchemaDefinition} from './define-schema'
-import type {Schema} from './schema'
+import type {FieldDefinition, Schema} from './schema'
 
 /**
  * @public
@@ -10,9 +10,33 @@ export function compileSchema(definition: SchemaDefinition): Schema {
     value: style.name,
   }))
 
+  const blockFields: Array<FieldDefinition> = []
+
+  if (definition.block?.fields) {
+    for (const field of definition.block.fields) {
+      if (
+        field.name === '_type' ||
+        field.name === '_key' ||
+        field.name === 'children' ||
+        field.name === 'markDefs' ||
+        field.name === 'style' ||
+        field.name === 'listItem' ||
+        field.name === 'level'
+      ) {
+        console.warn(
+          `"${field.name}" is a reserved field name on Portable Text blocks`,
+        )
+        continue
+      }
+
+      blockFields.push(field)
+    }
+  }
+
   return {
     block: {
       name: definition.block?.name ?? 'block',
+      ...(blockFields.length > 0 ? {fields: blockFields} : {}),
     },
     span: {
       name: 'span',
