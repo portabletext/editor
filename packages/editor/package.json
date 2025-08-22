@@ -112,7 +112,7 @@
   "devDependencies": {
     "@portabletext/sanity-bridge": "workspace:*",
     "@sanity/diff-match-patch": "^3.2.0",
-    "@sanity/pkg-utils": "^7.11.9",
+    "@sanity/pkg-utils": "^8.0.4",
     "@sanity/schema": "^4.5.0",
     "@sanity/types": "^4.5.0",
     "@testing-library/react": "^16.3.0",
