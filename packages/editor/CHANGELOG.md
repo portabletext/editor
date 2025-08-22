@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.6.1
+
+### Patch Changes
+
+- [#1580](https://github.com/portabletext/editor/pull/1580) [`c747a78`](https://github.com/portabletext/editor/commit/c747a786f5a90355ca9bebcd0bcaa02f238e9f42) Thanks [@christianhg](https://github.com/christianhg)! - Add miss `PortableTextEditableProps.ref` type
+
 ## 2.6.0
 
 ### Minor Changes
