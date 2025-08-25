@@ -55,9 +55,9 @@ export function compileFeature<
 
   const parameterTypeRegistry = new ParameterTypeRegistry()
   if (parameterTypes) {
-    parameterTypes.forEach((parameterType) =>
-      parameterTypeRegistry.defineParameterType(parameterType),
-    )
+    parameterTypes.forEach((parameterType) => {
+      parameterTypeRegistry.defineParameterType(parameterType)
+    })
   }
 
   if (!gherkinDocument.feature) {

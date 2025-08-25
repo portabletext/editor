@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.1.3/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.2.2/schema.json",
   "formatter": {
     "enabled": false
   },
@@ -39,6 +39,7 @@
         "noConfusingVoidType": "off",
         "noExplicitAny": "off",
         "noPrototypeBuiltins": "off",
+        "noUnknownAtRules": "off",
         "useAwait": "error",
         "noConsole": {"level": "error", "options": {"allow": ["warn", "error"]}}
       },
