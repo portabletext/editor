@@ -1,9 +1,120 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
 import {createTestKeyGenerator} from '../../test/test-key-generator'
-import {flattenNestedBlocks} from './helpers'
+import {flattenNestedBlocks} from './flatten-nested-blocks'
 
 describe(flattenNestedBlocks.name, () => {
+  test('flattening text blocks', () => {
+    const keyGenerator = createTestKeyGenerator('k')
+    const schema = compileSchema(defineSchema({}))
+    expect(
+      flattenNestedBlocks({schema, keyGenerator}, [
+        {
+          _type: 'block',
+          children: [
+            {
+              _type: 'block',
+              children: [
+                {
+                  _type: 'span',
+                  marks: [],
+                  text: 'foo',
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ]),
+    ).toEqual([
+      {
+        _type: 'block',
+        children: [{_type: 'span', text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+  })
+
+  test('flattening text blocks with block objects in schema', () => {
+    const keyGenerator = createTestKeyGenerator('k')
+    const schema = compileSchema(
+      defineSchema({blockObjects: [{name: 'image'}]}),
+    )
+    expect(
+      flattenNestedBlocks({schema, keyGenerator}, [
+        {
+          _type: 'block',
+          children: [
+            {
+              _type: 'block',
+              children: [
+                {
+                  _type: 'span',
+                  text: 'foo',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ]),
+    ).toEqual([
+      {
+        _type: 'block',
+        children: [{_type: 'span', text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+  })
+
+  test('flattening text blocks with styles in schema', () => {
+    const keyGenerator = createTestKeyGenerator('k')
+    const schema = compileSchema(
+      defineSchema({
+        styles: [{name: 'h1'}],
+      }),
+    )
+    expect(
+      flattenNestedBlocks({schema, keyGenerator}, [
+        {
+          _type: 'block',
+          children: [
+            {
+              _type: 'block',
+              children: [
+                {
+                  _type: 'span',
+                  marks: [],
+                  text: 'foo',
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          markDefs: [],
+          style: 'h1',
+        },
+      ]),
+    ).toEqual([
+      {
+        _type: 'block',
+        children: [{_type: 'span', text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+  })
+
   test('splitting text block', () => {
     const keyGenerator = createTestKeyGenerator('k')
     const schema = compileSchema(
