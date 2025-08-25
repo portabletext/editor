@@ -393,7 +393,9 @@ export function normalizeWhitespace(rootNode: Node) {
   }
 
   // Remove marked nodes
-  nodesToRemove.forEach((node) => node.parentElement?.removeChild(node))
+  nodesToRemove.forEach((node) => {
+    node.parentElement?.removeChild(node)
+  })
 }
 
 /**
@@ -438,7 +440,9 @@ export function removeAllWhitespace(rootNode: Node) {
   collectNodesToRemove(rootNode)
 
   // Remove the collected nodes
-  nodesToRemove.forEach((node) => node.parentElement?.removeChild(node))
+  nodesToRemove.forEach((node) => {
+    node.parentElement?.removeChild(node)
+  })
 }
 
 function isWhitespaceBlock(elm: HTMLElement): boolean {

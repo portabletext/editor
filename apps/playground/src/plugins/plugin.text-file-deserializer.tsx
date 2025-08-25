@@ -69,7 +69,9 @@ export function TextFileDeserializerPlugin() {
     ]
 
     return () =>
-      unregisterBehaviors.forEach((unregisterBehavior) => unregisterBehavior())
+      unregisterBehaviors.forEach((unregisterBehavior) => {
+        unregisterBehavior()
+      })
   }, [editor])
 
   return null
