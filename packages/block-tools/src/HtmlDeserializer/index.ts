@@ -15,10 +15,10 @@ import {
 } from '../types.portable-text'
 import {keyGenerator} from '../util/randomKey'
 import {resolveJsType} from '../util/resolveJsType'
+import {flattenNestedBlocks} from './flatten-nested-blocks'
 import {
   defaultParseHtml,
   ensureRootIsBlocks,
-  flattenNestedBlocks,
   isMinimalBlock,
   isMinimalSpan,
   isNodeList,
