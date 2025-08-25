@@ -293,27 +293,27 @@ export function trimWhitespace(
 
 export function ensureRootIsBlocks(
   schema: Schema,
-  blocks: Array<ArbitraryTypedObject>,
+  objects: Array<ArbitraryTypedObject>,
 ): ArbitraryTypedObject[] {
-  return blocks.reduce((memo, node, i, original) => {
+  return objects.reduce((blocks, node, i, original) => {
     if (node._type === 'block') {
-      memo.push(node)
-      return memo
+      blocks.push(node)
+      return blocks
     }
 
     if (node._type === '__block') {
-      memo.push((node as any).block)
-      return memo
+      blocks.push((node as any).block)
+      return blocks
     }
 
-    const lastBlock = memo[memo.length - 1]
+    const lastBlock = blocks[blocks.length - 1]
     if (
       i > 0 &&
       !isTextBlock(schema, original[i - 1]) &&
       isTextBlock(schema, lastBlock)
     ) {
       lastBlock.children.push(node as PortableTextObject)
-      return memo
+      return blocks
     }
 
     const block = {
@@ -321,8 +321,8 @@ export function ensureRootIsBlocks(
       children: [node],
     }
 
-    memo.push(block)
-    return memo
+    blocks.push(block)
+    return blocks
   }, [] as ArbitraryTypedObject[])
 }
 
