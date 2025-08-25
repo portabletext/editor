@@ -53,7 +53,7 @@
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@sanity/pkg-utils": "^8.0.4",
+    "@sanity/pkg-utils": "^8.0.5",
     "@types/lodash": "^4.17.20",
     "typescript": "5.9.2",
     "vitest": "^3.2.4"

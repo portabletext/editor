@@ -56,7 +56,7 @@
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@sanity/pkg-utils": "^8.0.4",
+    "@sanity/pkg-utils": "^8.0.5",
     "@sanity/schema": "^4.5.0",
     "@sanity/types": "^4.5.0",
     "@types/jsdom": "^20.0.0",
