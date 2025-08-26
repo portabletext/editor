@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.6
+
+### Patch Changes
+
+- Updated dependencies [[`7da6d79`](https://github.com/portabletext/editor/commit/7da6d790eab1566de522f65bf98410cc778fd303)]:
+  - @portabletext/schema@1.2.0
+
 ## 1.1.5
 
 ### Patch Changes
