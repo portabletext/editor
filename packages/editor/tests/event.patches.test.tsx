@@ -1,4 +1,5 @@
 import type {SchemaDefinition} from '@portabletext/schema'
+import {getTersePt} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {page, userEvent} from '@vitest/browser/context'
 import React from 'react'
@@ -11,7 +12,6 @@ import {
   type Editor,
   type EditorEmittedEvent,
 } from '../src'
-import {getTersePt} from '../src/internal-utils/terse-pt'
 import {createTestEditor} from '../src/internal-utils/test-editor'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {EditorRefPlugin, EventListenerPlugin} from '../src/plugins'

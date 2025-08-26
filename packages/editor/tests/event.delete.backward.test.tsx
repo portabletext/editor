@@ -1,3 +1,4 @@
+import {getTersePt} from '@portabletext/test'
 import {page, userEvent} from '@vitest/browser/context'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
@@ -10,7 +11,6 @@ import {
 } from '../src'
 import {effect, execute, forward, type BehaviorEvent} from '../src/behaviors'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
-import {getTersePt} from '../src/internal-utils/terse-pt'
 import {createTestEditor} from '../src/internal-utils/test-editor'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {getSelectionBeforeText} from '../src/internal-utils/text-selection'

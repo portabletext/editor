@@ -1,6 +1,10 @@
-import type {PortableTextBlock, PortableTextTextBlock} from '@sanity/types'
-import type {EditorContext} from '../editor/editor-snapshot'
-import {isSpan, isTextBlock} from './parse-blocks'
+import {
+  isSpan,
+  isTextBlock,
+  type PortableTextBlock,
+  type PortableTextTextBlock,
+  type Schema,
+} from '@portabletext/schema'
 
 type TersePtConfig = {
   style: (name?: string) => string
@@ -19,8 +23,14 @@ const defaultConfig: TersePtConfig = {
   level: (level) => (level === undefined ? '' : '>'.repeat(level)),
 }
 
+type Context = {
+  keyGenerator: () => string
+  schema: Schema
+  value: Array<PortableTextBlock>
+}
+
 export function getTersePt(
-  context: Pick<EditorContext, 'schema' | 'value'>,
+  context: Pick<Context, 'schema' | 'value'>,
 ): Array<string> {
   const blocks: Array<string> = []
 
@@ -55,7 +65,7 @@ export function getTersePt(
 }
 
 export function parseTersePt(
-  context: Pick<EditorContext, 'keyGenerator' | 'schema'>,
+  context: Pick<Context, 'keyGenerator' | 'schema'>,
   tersePt: Array<string>,
 ): Array<PortableTextBlock> {
   const blocks: Array<PortableTextBlock> = []
@@ -77,7 +87,9 @@ export function parseTersePt(
     }
 
     if (terseBlock.includes(':')) {
-      const [prefix, content] = terseBlock.split(':')
+      const splitTerseBlock = terseBlock.split(':')
+      const prefix = splitTerseBlock[0] ?? ''
+      const content = splitTerseBlock[1] ?? ''
 
       const listItem = prefix.includes('#')
         ? 'number'

@@ -1,6 +1,6 @@
+import {getTersePt} from '@portabletext/test'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {sliceBlocks} from '../utils/util.slice-blocks'
-import {getTersePt} from './terse-pt'
 
 export function getSelectionText(
   context: Pick<EditorContext, 'schema' | 'value' | 'selection'>,

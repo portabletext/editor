@@ -1,0 +1,47 @@
+{
+  "name": "@portabletext/test",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Testing utilities for the Portable Text Editor",
+  "keywords": [
+    "portable-text",
+    "editor",
+    "test"
+  ],
+  "homepage": "https://www.portabletext.org/",
+  "bugs": {
+    "url": "https://github.com/portabletext/editor/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/portabletext/editor.git",
+    "directory": "packages/test"
+  },
+  "license": "MIT",
+  "author": "Sanity.io <hello@sanity.io>",
+  "sideEffects": false,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "check:lint": "biome lint .",
+    "check:types": "tsc",
+    "check:types:watch": "tsc --watch",
+    "clean": "del node_modules",
+    "lint:fix": "biome lint --write .",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest watch"
+  },
+  "devDependencies": {
+    "@portabletext/schema": "workspace:^",
+    "@sanity/pkg-utils": "^8.0.7",
+    "@sanity/types": "^4.5.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "peerDependencies": {
+    "@sanity/types": "^4.5.0"
+  },
+  "engines": {
+    "node": ">=20.19 <22 || >=22.12"
+  }
+}

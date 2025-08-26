@@ -1,7 +1,7 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {expect, test} from 'vitest'
-import {createTestKeyGenerator} from '../internal-utils/test-key-generator'
 import {getTersePt, parseTersePt, parseTersePtString} from './terse-pt'
+import {createTestKeyGenerator} from './test-key-generator'
 
 const keyGenerator = createTestKeyGenerator()
 
