@@ -1,3 +1,4 @@
+import {htmlToBlocks, type ImageSchemaMatcher} from '@portabletext/block-tools'
 import {useEditor} from '@portabletext/editor'
 import {
   defineBehavior,
@@ -8,11 +9,81 @@ import {
 import {useEffect} from 'react'
 import {readFiles} from './read-files'
 
+const imageMatcher: ImageSchemaMatcher = ({context, props}) => {
+  if (
+    !context.schema.blockObjects.some(
+      (blockObject) => blockObject.name === 'image',
+    )
+  ) {
+    return undefined
+  }
+
+  return {
+    _type: 'image',
+    ...(props.src ? {src: props.src} : {}),
+    ...(props.alt ? {alt: props.alt} : {}),
+  }
+}
+
+const inlineImageMatcher: ImageSchemaMatcher = ({context, props}) => {
+  if (
+    !context.schema.inlineObjects.some(
+      (inlineObject) => inlineObject.name === 'image',
+    )
+  ) {
+    return undefined
+  }
+
+  return {
+    _type: 'image',
+    ...(props.src ? {src: props.src} : {}),
+    ...(props.alt ? {alt: props.alt} : {}),
+  }
+}
+
 export function ImageDeserializerPlugin() {
   const editor = useEditor()
 
   useEffect(() => {
     const unregisterBehaviors = [
+      editor.registerBehavior({
+        behavior: defineBehavior({
+          on: 'deserialize.data',
+          guard: ({snapshot, event}) => {
+            if (event.mimeType !== 'text/html') {
+              return false
+            }
+
+            const blocks = htmlToBlocks(event.data, snapshot.context.schema, {
+              keyGenerator: snapshot.context.keyGenerator,
+              matchers: {
+                image: imageMatcher,
+                inlineImage: inlineImageMatcher,
+              },
+            })
+
+            return {blocks}
+          },
+          actions: [
+            ({event}, {blocks}) =>
+              blocks.length > 0
+                ? [
+                    raise({
+                      ...event,
+                      type: 'deserialization.success',
+                      data: blocks,
+                    }),
+                  ]
+                : [
+                    raise({
+                      ...event,
+                      reason: '',
+                      type: 'deserialization.failure',
+                    }),
+                  ],
+          ],
+        }),
+      }),
       editor.registerBehavior({
         behavior: defineBehavior<{images: Array<{alt: string; src: string}>}>({
           on: 'custom.insert.images',
