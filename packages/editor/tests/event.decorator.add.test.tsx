@@ -1,4 +1,5 @@
 import {defineSchema} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import type {PortableTextChild} from '@sanity/types'
 import * as React from 'react'
 import {describe, expect, test, vi} from 'vitest'
@@ -6,7 +7,6 @@ import {render} from 'vitest-browser-react'
 import type {Editor} from '../src/editor'
 import {PortableTextEditable} from '../src/editor/Editable'
 import {EditorProvider} from '../src/editor/editor-provider'
-import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 
 const keyGenerator = createTestKeyGenerator()

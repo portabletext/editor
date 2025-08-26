@@ -1,3 +1,4 @@
+import {createTestKeyGenerator} from '@portabletext/test'
 import {userEvent} from '@vitest/browser/context'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
@@ -10,7 +11,6 @@ import {
   type EditorEmittedEvent,
 } from '../src'
 import {createTestEditor} from '../src/internal-utils/test-editor'
-import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {EventListenerPlugin} from '../src/plugins'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 

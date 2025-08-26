@@ -1,3 +1,4 @@
+import {createTestKeyGenerator} from '@portabletext/test'
 import {page, userEvent} from '@vitest/browser/context'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
@@ -10,7 +11,6 @@ import {
   type EditorSnapshot,
 } from '../src'
 import {defineBehavior, execute} from '../src/behaviors'
-import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {BehaviorPlugin, EditorRefPlugin} from '../src/plugins'
 
 describe('EditorSnapshot', () => {

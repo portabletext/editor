@@ -1,8 +1,8 @@
+import {createTestKeyGenerator} from '@portabletext/test'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
 import {PortableTextEditorTester} from '../../__tests__/PortableTextEditorTester'
-import {createTestKeyGenerator} from '../../../internal-utils/test-key-generator'
 import type {EditorSelection} from '../../../types/editor'
 import {PortableTextEditor} from '../../PortableTextEditor'
 

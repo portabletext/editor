@@ -1,6 +1,6 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import type {EditorSnapshot} from '..'
-import {createTestKeyGenerator} from './test-key-generator'
 
 export function createTestSnapshot(snapshot: {
   context?: Partial<EditorSnapshot['context']>

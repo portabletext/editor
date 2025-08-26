@@ -1,9 +1,9 @@
+import {createTestKeyGenerator} from '@portabletext/test'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
 import {PortableTextEditorTester} from '../../editor/__tests__/PortableTextEditorTester'
 import {PortableTextEditor} from '../../editor/PortableTextEditor'
-import {createTestKeyGenerator} from '../test-key-generator'
 
 describe('values: normalization', () => {
   it("accepts incoming value with blocks without a style or markDefs prop, but doesn't leave them without them when editing them", async () => {

@@ -1,9 +1,9 @@
+import {createTestKeyGenerator} from '@portabletext/test'
 import type {PortableTextBlock} from '@sanity/types'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
 import type {EditorSelection} from '../..'
-import {createTestKeyGenerator} from '../../internal-utils/test-key-generator'
 import {PortableTextEditor} from '../PortableTextEditor'
 import {PortableTextEditorTester} from './PortableTextEditorTester'
 

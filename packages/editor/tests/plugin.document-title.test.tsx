@@ -1,3 +1,4 @@
+import {createTestKeyGenerator} from '@portabletext/test'
 import {page} from '@vitest/browser/context'
 import React, {useEffect} from 'react'
 import {expect, test, vi} from 'vitest'
@@ -11,7 +12,6 @@ import {
   type PortableTextBlock,
 } from '../src'
 import {defineBehavior, execute} from '../src/behaviors'
-import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {EditorRefPlugin} from '../src/plugins'
 import {
   getFirstBlock,

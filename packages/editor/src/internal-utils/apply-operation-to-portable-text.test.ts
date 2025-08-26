@@ -1,7 +1,7 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {applyOperationToPortableText} from './apply-operation-to-portable-text'
-import {createTestKeyGenerator} from './test-key-generator'
 
 function createContext() {
   const keyGenerator = createTestKeyGenerator()

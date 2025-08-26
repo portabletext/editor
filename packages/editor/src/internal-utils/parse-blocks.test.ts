@@ -1,7 +1,7 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {parseBlock, parseSpan} from './parse-blocks'
-import {createTestKeyGenerator} from './test-key-generator'
 
 describe(parseBlock.name, () => {
   test('null', () => {

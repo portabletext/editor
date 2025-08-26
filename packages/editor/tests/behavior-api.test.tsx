@@ -1,4 +1,4 @@
-import {getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {page, userEvent} from '@vitest/browser/context'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
@@ -10,7 +10,6 @@ import {
   type Editor,
 } from '../src'
 import {defineBehavior, effect, execute, forward, raise} from '../src/behaviors'
-import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {BehaviorPlugin} from '../src/plugins'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 

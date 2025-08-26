@@ -1,4 +1,5 @@
 import {defineSchema} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import type {PortableTextTextBlock} from '@sanity/types'
 import {page, userEvent} from '@vitest/browser/context'
 import React from 'react'
@@ -7,7 +8,6 @@ import {render} from 'vitest-browser-react'
 import type {Editor, EditorEmittedEvent} from '../src'
 import {PortableTextEditable} from '../src/editor/Editable'
 import {EditorProvider} from '../src/editor/editor-provider'
-import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {EventListenerPlugin} from '../src/plugins'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 
