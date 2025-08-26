@@ -267,6 +267,18 @@ export default function createHTMLRules(
       },
     },
     {
+      deserialize(el, next) {
+        if (isElement(el) && (tagName(el) === 'td' || tagName(el) === 'th')) {
+          return {
+            ...DEFAULT_BLOCK,
+            children: next(el.childNodes),
+          }
+        }
+
+        return undefined
+      },
+    },
+    {
       deserialize(el) {
         if (isElement(el) && tagName(el) === 'img') {
           const src = el.getAttribute('src') ?? undefined
