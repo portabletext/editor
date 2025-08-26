@@ -1,5 +1,5 @@
+import type {PortableTextObject} from '@portabletext/schema'
 import type {SchemaMatchers} from './schema-matchers'
-import type {PortableTextObject} from './types.portable-text'
 
 /**
  * @public

@@ -1,10 +1,4 @@
 import type {Schema} from '@portabletext/schema'
-import {isEqual} from 'lodash'
-import {
-  isArbitraryTypedObject,
-  type ArbitraryTypedObject,
-  type TypedObject,
-} from '../types'
 import {
   isSpan,
   isTextBlock,
@@ -12,7 +6,13 @@ import {
   type PortableTextObject,
   type PortableTextSpan,
   type PortableTextTextBlock,
-} from '../types.portable-text'
+} from '@portabletext/schema'
+import {isEqual} from 'lodash'
+import {
+  isArbitraryTypedObject,
+  type ArbitraryTypedObject,
+  type TypedObject,
+} from '../types'
 
 export function flattenNestedBlocks(
   context: {
@@ -26,7 +26,7 @@ export function flattenNestedBlocks(
       return flattenNestedBlocks(context, [block.block])
     }
 
-    if (isTextBlock(context.schema, block)) {
+    if (isTextBlock(context, block)) {
       const hasBlockObjects = block.children.some((child) => {
         const knownBlockObject = context.schema.blockObjects.some(
           (blockObject) => blockObject.name === child._type,
@@ -62,8 +62,7 @@ export function flattenNestedBlocks(
           if (slice.children.length > 0) {
             if (
               slice.children.every(
-                (child) =>
-                  isSpan(context.schema, child) && child.text.trim() === '',
+                (child) => isSpan(context, child) && child.text.trim() === '',
               )
             ) {
               return []
@@ -116,7 +115,7 @@ function getSplitChildren(
 
       const lastSlice = slices.pop()
 
-      if (!isSpan(context.schema, child) && !knownInlineObject) {
+      if (!isSpan(context, child) && !knownInlineObject) {
         if (knownBlockObject) {
           return [
             ...slices,

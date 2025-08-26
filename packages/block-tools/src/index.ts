@@ -36,7 +36,7 @@ export type {
   PortableTextObject,
   PortableTextSpan,
   PortableTextTextBlock,
-} from './types.portable-text'
+} from '@portabletext/schema'
 export type {BlockNormalizationOptions} from './util/normalizeBlock'
 export {randomKey} from './util/randomKey'
 export {normalizeBlock}

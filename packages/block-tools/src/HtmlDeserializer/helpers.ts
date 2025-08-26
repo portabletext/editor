@@ -1,4 +1,9 @@
 import type {Schema} from '@portabletext/schema'
+import {
+  isTextBlock,
+  type PortableTextObject,
+  type PortableTextTextBlock,
+} from '@portabletext/schema'
 import {vercelStegaClean} from '@vercel/stega'
 import {isEqual} from 'lodash'
 import {DEFAULT_BLOCK} from '../constants'
@@ -12,11 +17,6 @@ import type {
   PlaceholderDecorator,
   TypedObject,
 } from '../types'
-import {
-  isTextBlock,
-  type PortableTextObject,
-  type PortableTextTextBlock,
-} from '../types.portable-text'
 import {resolveJsType} from '../util/resolveJsType'
 import preprocessors from './preprocessors'
 
@@ -95,7 +95,7 @@ export function trimWhitespace(
   blocks: TypedObject[],
 ): TypedObject[] {
   blocks.forEach((block) => {
-    if (!isTextBlock(schema, block)) {
+    if (!isTextBlock({schema}, block)) {
       return
     }
 
@@ -170,8 +170,8 @@ export function ensureRootIsBlocks(
     const lastBlock = blocks[blocks.length - 1]
     if (
       i > 0 &&
-      !isTextBlock(schema, original[i - 1]) &&
-      isTextBlock(schema, lastBlock)
+      !isTextBlock({schema}, original[i - 1]) &&
+      isTextBlock({schema}, lastBlock)
     ) {
       lastBlock.children.push(node as PortableTextObject)
       return blocks
