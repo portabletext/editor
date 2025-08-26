@@ -1,9 +1,18 @@
 import {isTextBlock} from '@portabletext/schema'
-import {deleteText, setSelection, Transforms} from 'slate'
+import {
+  deleteText,
+  Editor,
+  Element,
+  Range,
+  setSelection,
+  Transforms,
+} from 'slate'
+import {DOMEditor} from 'slate-dom'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {getBlockPath} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {getBlockKeyFromSelectionPoint} from '../selection/selection-point'
+import {PortableTextSlateEditor} from '../types/editor'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const deleteOperationImplementation: BehaviorOperationImplementation<
@@ -98,6 +107,32 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
     )
   }
 
+  if (operation.direction === 'backward' && operation.unit === 'line') {
+    const parentBlockEntry = Editor.above(operation.editor, {
+      match: (n) => Element.isElement(n) && Editor.isBlock(operation.editor, n),
+      at: range,
+    })
+
+    if (parentBlockEntry) {
+      const [, parentBlockPath] = parentBlockEntry
+      const parentElementRange = Editor.range(
+        operation.editor,
+        parentBlockPath,
+        range.anchor,
+      )
+
+      const currentLineRange = findCurrentLineRange(
+        operation.editor,
+        parentElementRange,
+      )
+
+      if (!Range.isCollapsed(currentLineRange)) {
+        Transforms.delete(operation.editor, {at: currentLineRange})
+        return
+      }
+    }
+  }
+
   const hanging = isTextBlock(context, endBlock) && endOffset === 0
 
   deleteText(operation.editor, {
@@ -117,4 +152,65 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
       focus: operation.editor.selection.focus,
     })
   }
+}
+
+function findCurrentLineRange(
+  editor: PortableTextSlateEditor,
+  parentRange: Range,
+): Range {
+  const parentRangeBoundary = Editor.range(editor, Range.end(parentRange))
+  const positions = Array.from(Editor.positions(editor, {at: parentRange}))
+
+  let left = 0
+  let right = positions.length
+  let middle = Math.floor(right / 2)
+
+  if (
+    rangesAreOnSameLine(
+      editor,
+      Editor.range(editor, positions[left]),
+      parentRangeBoundary,
+    )
+  ) {
+    return Editor.range(editor, positions[left], parentRangeBoundary)
+  }
+
+  if (positions.length < 2) {
+    return Editor.range(
+      editor,
+      positions[positions.length - 1],
+      parentRangeBoundary,
+    )
+  }
+
+  while (middle !== positions.length && middle !== left) {
+    if (
+      rangesAreOnSameLine(
+        editor,
+        Editor.range(editor, positions[middle]),
+        parentRangeBoundary,
+      )
+    ) {
+      right = middle
+    } else {
+      left = middle
+    }
+
+    middle = Math.floor((left + right) / 2)
+  }
+
+  return Editor.range(editor, positions[left], parentRangeBoundary)
+}
+
+function rangesAreOnSameLine(editor: DOMEditor, range1: Range, range2: Range) {
+  const rect1 = DOMEditor.toDOMRange(editor, range1).getBoundingClientRect()
+  const rect2 = DOMEditor.toDOMRange(editor, range2).getBoundingClientRect()
+
+  return domRectsIntersect(rect1, rect2) && domRectsIntersect(rect2, rect1)
+}
+
+function domRectsIntersect(rect: DOMRect, compareRect: DOMRect) {
+  const middle = (compareRect.top + compareRect.bottom) / 2
+
+  return rect.top <= middle && rect.bottom >= middle
 }
