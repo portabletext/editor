@@ -8,8 +8,16 @@ import {getSelectedBlocks} from './selector.get-selected-blocks'
  */
 export function isActiveAnnotation(
   annotation: string,
+  options?: {
+    /**
+     * By default, annotations of the same type are considered mutually
+     * exclusive.
+     */
+    mutuallyExclusive?: ReadonlyArray<string>
+  },
 ): EditorSelector<boolean> {
   return (snapshot) => {
+    const mutuallyExclusive = options?.mutuallyExclusive ?? [annotation]
     const selectedBlocks = getSelectedBlocks(snapshot)
     const selectionMarkDefs = selectedBlocks.flatMap((block) =>
       isTextBlock(snapshot.context, block.node)
@@ -20,7 +28,8 @@ export function isActiveAnnotation(
     const activeMarkDefs = selectionMarkDefs.filter(
       (markDef) =>
         markDef._type === annotation &&
-        activeAnnotations.includes(markDef._key),
+        activeAnnotations.includes(markDef._key) &&
+        !mutuallyExclusive.includes(markDef._type),
     )
 
     return activeMarkDefs.length > 0

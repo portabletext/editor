@@ -116,22 +116,28 @@ export const addAnnotationOperationImplementation: BehaviorOperationImplementati
       }
 
       const marks = span.marks ?? []
-      const existingSameTypeAnnotations = marks.filter((mark) =>
-        markDefs.some(
-          (markDef) =>
-            markDef._key === mark && markDef._type === parsedAnnotation._type,
-        ),
-      )
+
+      const mutuallyExclusive = operation.options?.mutuallyExclusive ?? [
+        parsedAnnotation._type,
+      ]
+      const filteredMarks = marks.filter((mark) => {
+        const markDef = markDefs.find((markDef) => markDef._key === mark)
+
+        if (!markDef) {
+          return true
+        }
+
+        if (mutuallyExclusive.includes(markDef._type)) {
+          return false
+        }
+
+        return true
+      })
 
       Transforms.setNodes(
         editor,
         {
-          marks: [
-            ...marks.filter(
-              (mark) => !existingSameTypeAnnotations.includes(mark),
-            ),
-            annotationKey,
-          ],
+          marks: [...filteredMarks, annotationKey],
         },
         {at: path},
       )

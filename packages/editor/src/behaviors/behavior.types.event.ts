@@ -98,6 +98,12 @@ export type SyntheticBehaviorEvent =
         name: string
         value: {[prop: string]: unknown}
       }
+      options?: {
+        /**
+         * By default, annotations of the same type are mutually exclusive.
+         */
+        mutuallyExclusive?: ReadonlyArray<string>
+      }
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'annotation.remove'>

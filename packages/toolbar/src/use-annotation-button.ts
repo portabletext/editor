@@ -107,6 +107,11 @@ const annotationButtonMachine = setup({
           name: context.schemaType.name,
           value: event.annotation.value,
         },
+        options: {
+          ...(context.schemaType.mutuallyExclusive
+            ? {mutuallyExclusive: context.schemaType.mutuallyExclusive}
+            : {}),
+        },
       })
       context.editor.send({type: 'focus'})
     },
