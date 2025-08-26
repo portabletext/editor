@@ -1,11 +1,11 @@
 import {insert, setIfMissing, unset, type Patch} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {page} from '@vitest/browser/context'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {EditorProvider, PortableTextEditable, type Editor} from '../src'
-import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 

@@ -4,12 +4,11 @@ import {
   type SchemaMatchers,
 } from '@portabletext/block-tools'
 import {defineSchema} from '@portabletext/schema'
-import {getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
 import {defineBehavior, raise} from '../src/behaviors'
 import {createTestEditor} from '../src/internal-utils/test-editor'
-import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {BehaviorPlugin} from '../src/plugins'
 
 describe('event.clipboard.paste', () => {

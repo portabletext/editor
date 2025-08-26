@@ -1,4 +1,4 @@
-import {getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
@@ -8,7 +8,6 @@ import {
   PortableTextEditable,
   type Editor,
 } from '../src'
-import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {EditorRefPlugin} from '../src/plugins'
 
 describe('event.child.unset', () => {

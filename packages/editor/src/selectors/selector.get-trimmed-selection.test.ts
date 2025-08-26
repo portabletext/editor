@@ -1,9 +1,9 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import type {PortableTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {parseBlock} from '../internal-utils/parse-blocks'
-import {createTestKeyGenerator} from '../internal-utils/test-key-generator'
 import type {EditorSelection} from '../types/editor'
 import {getTrimmedSelection} from './selector.get-trimmed-selection'
 

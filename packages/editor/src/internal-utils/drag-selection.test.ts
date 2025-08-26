@@ -1,9 +1,9 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import type {EditorSelection} from '../types/editor'
 import {createTestSnapshot} from './create-test-snapshot'
 import {getDragSelection} from './drag-selection'
-import {createTestKeyGenerator} from './test-key-generator'
 
 describe(getDragSelection.name, () => {
   const keyGenerator = createTestKeyGenerator()

@@ -1,4 +1,5 @@
 import {compileSchema} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
@@ -7,7 +8,6 @@ import {
   schemaDefinition,
 } from '../../__tests__/PortableTextEditorTester'
 import {isTextBlock} from '../../../internal-utils/parse-blocks'
-import {createTestKeyGenerator} from '../../../internal-utils/test-key-generator'
 import {PortableTextEditor} from '../../PortableTextEditor'
 
 const initialValue = [

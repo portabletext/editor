@@ -1,4 +1,5 @@
 import {defineSchema, type SchemaDefinition} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import type {PortableTextBlock} from '@sanity/types'
 import {page} from '@vitest/browser/context'
 import React from 'react'
@@ -14,7 +15,6 @@ import {EventListenerPlugin} from '../plugins/plugin.event-listener'
 import {InternalEditorAfterRefPlugin} from '../plugins/plugin.internal.editor-actor-ref'
 import {InternalSlateEditorRefPlugin} from '../plugins/plugin.internal.slate-editor-ref'
 import type {PortableTextSlateEditor} from '../types/editor'
-import {createTestKeyGenerator} from './test-key-generator'
 
 export async function createTestEditor(
   options: {

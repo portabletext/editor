@@ -1,6 +1,6 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
-import {createTestKeyGenerator} from './test-key-generator'
 import {toSlateRange} from './to-slate-range'
 
 describe(toSlateRange.name, () => {

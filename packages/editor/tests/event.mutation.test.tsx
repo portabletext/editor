@@ -1,3 +1,4 @@
+import {createTestKeyGenerator} from '@portabletext/test'
 import {page, userEvent} from '@vitest/browser/context'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
@@ -9,7 +10,6 @@ import {
   type Editor,
   type EditorEmittedEvent,
 } from '../src'
-import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {EditorRefPlugin, EventListenerPlugin} from '../src/plugins'
 
 describe('event.mutation', () => {
