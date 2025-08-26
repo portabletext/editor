@@ -1,5 +1,5 @@
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
 import {
   getBlockKeyFromSelectionPoint,
   getChildKeyFromSelectionPoint,

@@ -1,6 +1,6 @@
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import {isEqual} from 'lodash'
 import {Editor, Element, Node, Path, Transforms} from 'slate'
-import {isSpan, isTextBlock} from '../../internal-utils/parse-blocks'
 import {isChangingRemotely} from '../../internal-utils/withChanges'
 import {isRedoing, isUndoing} from '../../internal-utils/withUndoRedo'
 import type {PortableTextSlateEditor} from '../../types/editor'

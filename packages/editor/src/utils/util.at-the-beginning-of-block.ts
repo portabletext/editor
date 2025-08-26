@@ -1,6 +1,6 @@
+import {isTextBlock} from '@portabletext/schema'
 import type {PortableTextBlock} from '@sanity/types'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {isTextBlock} from '../internal-utils/parse-blocks'
 import {getChildKeyFromSelectionPoint} from '../selection/selection-point'
 import {isSelectionCollapsed} from './util.is-selection-collapsed'
 

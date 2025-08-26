@@ -1,6 +1,6 @@
+import {isTextBlock} from '@portabletext/schema'
 import type {PortableTextTextBlock} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
-import {isTextBlock} from '../internal-utils/parse-blocks'
 import {getSelectedBlocks} from './selector.get-selected-blocks'
 
 /**

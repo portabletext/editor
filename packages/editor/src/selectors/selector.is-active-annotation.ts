@@ -1,5 +1,5 @@
+import {isTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import {isTextBlock} from '../internal-utils/parse-blocks'
 import {getActiveAnnotationsMarks} from './selector.get-active-annotation-marks'
 import {getSelectedBlocks} from './selector.get-selected-blocks'
 

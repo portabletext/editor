@@ -1,3 +1,4 @@
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {PortableTextObject, PortableTextSpan} from '@sanity/types'
 import type {Path, Range} from 'slate'
 import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
@@ -8,7 +9,6 @@ import {
 import type {EditorSelectionPoint} from '../types/editor'
 import {isEqualSelectionPoints} from '../utils'
 import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
-import {isSpan, isTextBlock} from './parse-blocks'
 
 export function toSlateRange(
   snapshot: {

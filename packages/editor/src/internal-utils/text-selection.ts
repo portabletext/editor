@@ -1,7 +1,7 @@
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
 import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import {collapseSelection} from './collapse-selection'
-import {isSpan, isTextBlock} from './parse-blocks'
 import {splitString} from './split-string'
 import {stringOverlap} from './string-overlap'
 

@@ -1,6 +1,6 @@
+import {isSpan} from '@portabletext/schema'
 import type {PortableTextChild, PortableTextTextBlock} from '@sanity/types'
-import type {EditorContext} from '..'
-import {isSpan} from '../internal-utils/parse-blocks'
+import type {EditorContext} from '../editor/editor-snapshot'
 import {
   getBlockKeyFromSelectionPoint,
   getChildKeyFromSelectionPoint,

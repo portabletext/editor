@@ -1,4 +1,4 @@
-import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import * as selectors from '../selectors'
 import * as utils from '../utils'
 import {raise} from './behavior.types.action'

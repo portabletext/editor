@@ -1,7 +1,8 @@
+import {isSpan} from '@portabletext/schema'
 import {isEqual} from 'lodash'
 import {Editor, Path, Point, Range, Transforms, type Descendant} from 'slate'
 import {DOMEditor} from 'slate-dom'
-import {isSpan, parseBlock} from '../internal-utils/parse-blocks'
+import {parseBlock} from '../internal-utils/parse-blocks'
 import {
   getFocusBlock,
   getFocusChild,

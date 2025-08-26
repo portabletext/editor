@@ -1,5 +1,5 @@
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
 import {getSelectedValue} from './selector.get-selected-value'
 
 /**

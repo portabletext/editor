@@ -4,11 +4,11 @@
  *
  */
 
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {PortableTextObject, PortableTextSpan} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {Editor, Element, Node, Path, Range, Text, Transforms} from 'slate'
 import {debugWithName} from '../../internal-utils/debug'
-import {isSpan, isTextBlock} from '../../internal-utils/parse-blocks'
 import {getNextSpan, getPreviousSpan} from '../../internal-utils/sibling-utils'
 import {isChangingRemotely} from '../../internal-utils/withChanges'
 import {isRedoing, isUndoing} from '../../internal-utils/withUndoRedo'

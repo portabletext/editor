@@ -1,6 +1,6 @@
+import {isSpan} from '@portabletext/schema'
 import type {PortableTextSpan} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
-import {isSpan} from '../internal-utils/parse-blocks'
 import type {ChildPath} from '../types/paths'
 import {getFocusChild} from './selector.get-focus-child'
 
