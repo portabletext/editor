@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0
+
+### Minor Changes
+
+- [#1591](https://github.com/portabletext/editor/pull/1591) [`7da6d79`](https://github.com/portabletext/editor/commit/7da6d790eab1566de522f65bf98410cc778fd303) Thanks [@christianhg](https://github.com/christianhg)! - Export common Portable Text types and type guards
+
 ## 1.1.0
 
 ### Minor Changes

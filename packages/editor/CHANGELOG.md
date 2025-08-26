@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.6.4
+
+### Patch Changes
+
+- [#1588](https://github.com/portabletext/editor/pull/1588) [`0e9f4f9`](https://github.com/portabletext/editor/commit/0e9f4f90aaa53446151af073503b7e3cc094c03e) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): Update slate to v0.118.1
+
+- [#1592](https://github.com/portabletext/editor/pull/1592) [`c92318b`](https://github.com/portabletext/editor/commit/c92318b4dc8d3aaaad2f9b885ea47c6ec9be871a) Thanks [@christianhg](https://github.com/christianhg)! - Support Mod+Backspace to delete line
+
+- Updated dependencies [[`6938b25`](https://github.com/portabletext/editor/commit/6938b259164cd294b4f27a5e80e7aa12fd094822), [`7da6d79`](https://github.com/portabletext/editor/commit/7da6d790eab1566de522f65bf98410cc778fd303), [`d6c6235`](https://github.com/portabletext/editor/commit/d6c6235354e61975b7cea8284db3be3fc9fd85a7)]:
+  - @portabletext/block-tools@3.4.0
+  - @portabletext/schema@1.2.0
+  - @portabletext/sanity-bridge@1.1.6
+
 ## 2.6.3
 
 ### Patch Changes
