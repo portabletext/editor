@@ -20,3 +20,11 @@ export type {
   Schema,
   StyleSchemaType,
 } from './schema'
+export {isSpan, isTextBlock, isTypedObject} from './types'
+export type {
+  PortableTextBlock,
+  PortableTextObject,
+  PortableTextSpan,
+  PortableTextTextBlock,
+  TypedObject,
+} from './types'
