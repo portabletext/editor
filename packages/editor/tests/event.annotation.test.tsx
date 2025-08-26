@@ -1,3 +1,4 @@
+import {getTersePt} from '@portabletext/test'
 import type {PortableTextTextBlock} from '@sanity/types'
 import {page, userEvent} from '@vitest/browser/context'
 import React from 'react'
@@ -9,7 +10,6 @@ import {
   PortableTextEditable,
   type Editor,
 } from '../src'
-import {getTersePt} from '../src/internal-utils/terse-pt'
 import {createTestKeyGenerator} from '../src/internal-utils/test-key-generator'
 import {getTextMarks} from '../src/internal-utils/text-marks'
 import {

@@ -1,3 +1,4 @@
+import {getTersePt} from '@portabletext/test'
 import type {PortableTextBlock} from '@sanity/types'
 import {page, userEvent, type Locator} from '@vitest/browser/context'
 import {isEqual} from 'lodash'
@@ -13,7 +14,6 @@ import {IS_MAC} from '../src/internal-utils/is-hotkey'
 import {getSelectionBlockKeys} from '../src/internal-utils/selection-block-keys'
 import {getSelectionFocusText} from '../src/internal-utils/selection-focus-text'
 import {getSelectionText} from '../src/internal-utils/selection-text'
-import {getTersePt} from '../src/internal-utils/terse-pt'
 import {getTextBlockKey} from '../src/internal-utils/text-block-key'
 import {getTextMarks} from '../src/internal-utils/text-marks'
 import {

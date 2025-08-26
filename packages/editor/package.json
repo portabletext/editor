@@ -111,6 +111,7 @@
   },
   "devDependencies": {
     "@portabletext/sanity-bridge": "workspace:*",
+    "@portabletext/test": "workspace:^",
     "@sanity/diff-match-patch": "^3.2.0",
     "@sanity/pkg-utils": "^8.0.5",
     "@sanity/schema": "^4.5.0",

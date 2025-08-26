@@ -1,3 +1,4 @@
+import {getTersePt, parseTersePt} from '@portabletext/test'
 import {page, userEvent} from '@vitest/browser/context'
 import {Given, Then, When} from 'racejar'
 import {assert, expect, vi} from 'vitest'
@@ -5,7 +6,6 @@ import {render} from 'vitest-browser-react'
 import {getEditorSelection} from '../src/internal-utils/editor-selection'
 import {parseBlocks} from '../src/internal-utils/parse-blocks'
 import {getSelectionText} from '../src/internal-utils/selection-text'
-import {getTersePt, parseTersePt} from '../src/internal-utils/terse-pt'
 import {getTextBlockKey} from '../src/internal-utils/text-block-key'
 import {getTextMarks} from '../src/internal-utils/text-marks'
 import {

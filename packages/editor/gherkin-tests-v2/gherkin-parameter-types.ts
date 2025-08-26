@@ -1,5 +1,5 @@
+import {parseTersePtString} from '@portabletext/test'
 import {createParameterType, type ParameterType} from 'racejar'
-import {parseTersePtString} from '../src/internal-utils/terse-pt'
 
 export type Parameter = {
   [K in keyof typeof parameterType]: (typeof parameterType)[K] extends ParameterType<
