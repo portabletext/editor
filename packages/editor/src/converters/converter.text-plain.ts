@@ -1,6 +1,7 @@
 import {htmlToBlocks} from '@portabletext/block-tools'
+import {isTextBlock} from '@portabletext/schema'
 import type {PortableTextBlock} from '@sanity/types'
-import {isTextBlock, parseBlock} from '../internal-utils/parse-blocks'
+import {parseBlock} from '../internal-utils/parse-blocks'
 import * as selectors from '../selectors'
 import type {PortableTextMemberSchemaTypes} from '../types/editor'
 import {defineConverter} from './converter.types'

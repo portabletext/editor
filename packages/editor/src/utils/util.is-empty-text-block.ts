@@ -1,6 +1,6 @@
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {PortableTextBlock} from '@sanity/types'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {isSpan, isTextBlock} from '../internal-utils/parse-blocks'
 import {getTextBlockText} from './util.get-text-block-text'
 
 /**

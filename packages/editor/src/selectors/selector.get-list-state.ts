@@ -1,5 +1,5 @@
+import {isTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
-import {isTextBlock} from '../internal-utils/parse-blocks'
 import type {BlockPath} from '../types/paths'
 import {getFocusTextBlock} from './selector.get-focus-text-block'
 

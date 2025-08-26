@@ -1,4 +1,5 @@
 import {insert, set, setIfMissing, unset} from '@portabletext/patches'
+import {isTextBlock} from '@portabletext/schema'
 import type {
   PortableTextBlock,
   PortableTextSpan,
@@ -7,7 +8,6 @@ import type {
 import {flatten, isPlainObject, uniq} from 'lodash'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {InvalidValueResolution} from '../types/editor'
-import {isTextBlock} from './parse-blocks'
 
 export interface Validation {
   valid: boolean

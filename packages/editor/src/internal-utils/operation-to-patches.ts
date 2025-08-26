@@ -7,6 +7,7 @@ import {
   type InsertPosition,
   type Patch,
 } from '@portabletext/patches'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {Path, PortableTextSpan, PortableTextTextBlock} from '@sanity/types'
 import {get, isUndefined, omitBy} from 'lodash'
 import {
@@ -22,7 +23,6 @@ import {
   type SplitNodeOperation,
 } from 'slate'
 import type {EditorSchema} from '../editor/editor-schema'
-import {isSpan, isTextBlock} from './parse-blocks'
 import {fromSlateValue} from './values'
 
 export function insertTextPatch(

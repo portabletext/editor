@@ -1,4 +1,4 @@
-import {isTextBlock} from '../internal-utils/parse-blocks'
+import {isTextBlock} from '@portabletext/schema'
 import {defaultKeyboardShortcuts} from '../keyboard-shortcuts/default-keyboard-shortcuts'
 import * as selectors from '../selectors'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'

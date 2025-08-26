@@ -1,5 +1,5 @@
+import {isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import {isTextBlock} from '../internal-utils/parse-blocks'
 import * as selectors from '../selectors'
 import {spanSelectionPointToBlockOffset} from '../utils/util.block-offset'
 import {getTextBlockText} from '../utils/util.get-text-block-text'

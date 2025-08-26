@@ -1,4 +1,5 @@
-import {isTextBlock, parseBlock} from '../internal-utils/parse-blocks'
+import {isTextBlock} from '@portabletext/schema'
+import {parseBlock} from '../internal-utils/parse-blocks'
 import * as selectors from '../selectors'
 import * as utils from '../utils'
 import {sliceTextBlock} from '../utils/util.slice-text-block'

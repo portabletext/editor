@@ -1,9 +1,9 @@
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {
   getBlockKeyFromSelectionPoint,
   getChildKeyFromSelectionPoint,
 } from '../selection/selection-point'
-import {isSpan, isTextBlock} from './parse-blocks'
 
 export function getSelectionFocusText(
   context: Pick<EditorContext, 'schema' | 'value' | 'selection'>,

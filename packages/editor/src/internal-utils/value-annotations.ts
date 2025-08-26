@@ -1,6 +1,6 @@
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {PortableTextBlock} from '@sanity/types'
 import type {EditorSchema} from '../editor/editor-schema'
-import {isSpan, isTextBlock} from './parse-blocks'
 
 export function getValueAnnotations(
   schema: EditorSchema,

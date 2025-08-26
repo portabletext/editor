@@ -1,7 +1,7 @@
+import {isSpan} from '@portabletext/schema'
 import type {PortableTextTextBlock} from '@sanity/types'
 import type {EditorSelectionPoint} from '..'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {isSpan} from './util.is-span'
 import {sliceTextBlock} from './util.slice-text-block'
 
 /**

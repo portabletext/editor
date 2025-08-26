@@ -1,6 +1,6 @@
+import {isTextBlock} from '@portabletext/schema'
 import {deleteText, setSelection, Transforms} from 'slate'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
-import {isTextBlock} from '../internal-utils/parse-blocks'
 import {getBlockPath} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {getBlockKeyFromSelectionPoint} from '../selection/selection-point'

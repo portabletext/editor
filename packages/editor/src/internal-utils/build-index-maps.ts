@@ -1,5 +1,5 @@
+import {isTextBlock} from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {isTextBlock} from './parse-blocks'
 
 // Maps for each list type, keeping track of the current list count for each
 // level.

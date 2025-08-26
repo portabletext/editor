@@ -1,8 +1,8 @@
+import {isTextBlock} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import {useContext, type ReactElement} from 'react'
 import type {Element as SlateElement} from 'slate'
 import {useSlateStatic, type RenderElementProps} from 'slate-react'
-import {isTextBlock} from '../../internal-utils/parse-blocks'
 import type {
   RenderBlockFunction,
   RenderChildFunction,

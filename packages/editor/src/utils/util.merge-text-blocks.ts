@@ -1,7 +1,7 @@
+import {isTextBlock} from '@portabletext/schema'
 import type {PortableTextTextBlock} from '@sanity/types'
 import type {EditorContext} from '..'
 import {parseBlock} from '../internal-utils/parse-blocks'
-import {isTextBlock} from './util.is-text-block'
 
 /**
  * @beta

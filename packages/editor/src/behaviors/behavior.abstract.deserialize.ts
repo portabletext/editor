@@ -1,4 +1,4 @@
-import {isTextBlock} from '../internal-utils/parse-blocks'
+import {isTextBlock} from '@portabletext/schema'
 import * as selectors from '../selectors'
 import {getActiveDecorators} from '../selectors/selector.get-active-decorators'
 import {getTextBlockText} from '../utils/util.get-text-block-text'
