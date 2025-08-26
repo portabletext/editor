@@ -1,4 +1,9 @@
 import type {Schema} from '@portabletext/schema'
+import {
+  isTextBlock,
+  type PortableTextBlock,
+  type PortableTextObject,
+} from '@portabletext/schema'
 import {flatten} from 'lodash'
 import type {
   ArbitraryTypedObject,
@@ -8,11 +13,6 @@ import type {
   PlaceholderDecorator,
   TypedObject,
 } from '../types'
-import {
-  isTextBlock,
-  type PortableTextBlock,
-  type PortableTextObject,
-} from '../types.portable-text'
 import {keyGenerator} from '../util/randomKey'
 import {resolveJsType} from '../util/resolveJsType'
 import {flattenNestedBlocks} from './flatten-nested-blocks'
@@ -88,7 +88,7 @@ export default class HtmlDeserializer {
 
     if (this._markDefs.length > 0) {
       blocks
-        .filter((block) => isTextBlock(this.schema, block))
+        .filter((block) => isTextBlock({schema: this.schema}, block))
         .forEach((block) => {
           block.markDefs = block.markDefs || []
           block.markDefs = block.markDefs.concat(
