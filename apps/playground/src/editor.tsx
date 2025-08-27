@@ -1,4 +1,6 @@
 import {
+  defineSchema,
+  Editor as EditorInstance,
   EditorProvider,
   PortableTextEditable,
   useEditor,
@@ -16,6 +18,7 @@ import {
   type RenderPlaceholderFunction,
   type RenderStyleFunction,
 } from '@portabletext/editor'
+import {EventListenerPlugin} from '@portabletext/editor/plugins'
 import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 import {OneLinePlugin} from '@portabletext/plugin-one-line'
 import {useSelector} from '@xstate/react'
@@ -29,6 +32,7 @@ import {
 import {useContext, useEffect, useState, type JSX} from 'react'
 import {TooltipTrigger} from 'react-aria-components'
 import {tv} from 'tailwind-variants'
+import z from 'zod'
 import {DebugMenu} from './debug-menu'
 import './editor.css'
 import {
@@ -37,6 +41,7 @@ import {
 } from './feature-flags'
 import type {EditorActorRef} from './playground-machine'
 import {
+  CodeBlockSchema,
   CommentAnnotationSchema,
   ImageSchema,
   InlineImageSchema,
@@ -347,6 +352,12 @@ const RenderBlock = (props: BlockRenderProps) => {
     )
   }
 
+  const codeBlock = CodeBlockSchema.safeParse(props).data
+
+  if (codeBlock) {
+    return <CodeBlock blockProps={props} codeBlock={codeBlock} />
+  }
+
   if (props.level === undefined && enableDragHandles) {
     // Don't render drag handle on other levels right now since the styling is off
     return (
@@ -364,6 +375,65 @@ const RenderBlock = (props: BlockRenderProps) => {
   }
 
   return children
+}
+
+function CodeBlock(props: {
+  blockProps: BlockRenderProps
+  codeBlock: z.infer<typeof CodeBlockSchema>
+}) {
+  const editor = useEditor()
+
+  return (
+    <div className="bg-gray-200 rounded p-1 font-mono text-sm whitespace-pre overflow-x-auto select-text">
+      <EditorProvider
+        initialConfig={{
+          initialValue: props.codeBlock.value.code ?? [],
+          schemaDefinition: defineSchema({}),
+          readOnly: editor.getSnapshot().context.readOnly,
+        }}
+      >
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'mutation') {
+              editor.send({
+                type: 'block.set',
+                at: props.blockProps.path,
+                props: {
+                  code: event.value,
+                },
+              })
+            }
+          }}
+        />
+        <CodeBlockReadOnlyPlugin outerEditor={editor} />
+        <PortableTextEditable />
+      </EditorProvider>
+    </div>
+  )
+}
+
+function CodeBlockReadOnlyPlugin(props: {outerEditor: EditorInstance}) {
+  const editor = useEditor()
+
+  useEffect(() => {
+    return props.outerEditor.on('*', (event) => {
+      if (event.type === 'read only') {
+        editor.send({
+          type: 'update readOnly',
+          readOnly: true,
+        })
+      }
+
+      if (event.type === 'editable') {
+        editor.send({
+          type: 'update readOnly',
+          readOnly: false,
+        })
+      }
+    }).unsubscribe
+  }, [editor, props.outerEditor])
+
+  return null
 }
 
 const renderDecorator: RenderDecoratorFunction = (props) => {

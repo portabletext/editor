@@ -251,6 +251,13 @@ const extendBlockObject: ExtendBlockObjectSchemaType = (blockObject) => {
     }
   }
 
+  if (blockObject.name === 'code block') {
+    return {
+      ...blockObject,
+      icon: CodeIcon,
+    }
+  }
+
   return blockObject
 }
 
@@ -368,7 +375,11 @@ export function PortableTextToolbar(props: {children?: React.ReactNode}) {
         <AnnotationPopover schemaTypes={toolbarSchema.annotations} />
       ) : null}
       {toolbarSchema.blockObjects ? (
-        <BlockObjectPopover schemaTypes={toolbarSchema.blockObjects} />
+        <BlockObjectPopover
+          schemaTypes={toolbarSchema.blockObjects.filter(
+            (blockObject) => blockObject.name !== 'code block',
+          )}
+        />
       ) : null}
       {toolbarSchema.inlineObjects ? (
         <InlineObjectPopover schemaTypes={toolbarSchema.inlineObjects} />
