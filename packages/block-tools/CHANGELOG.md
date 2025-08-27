@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.4.1
+
+### Patch Changes
+
+- [#1594](https://github.com/portabletext/editor/pull/1594) [`8ebc392`](https://github.com/portabletext/editor/commit/8ebc39284ac3c286c73046e99fef4e77193d4608) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update sanity monorepo to ^4.6.0
+
+- Updated dependencies [[`8ebc392`](https://github.com/portabletext/editor/commit/8ebc39284ac3c286c73046e99fef4e77193d4608)]:
+  - @portabletext/sanity-bridge@1.1.7
+
 ## 3.4.0
 
 ### Minor Changes

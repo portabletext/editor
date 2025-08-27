@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.6.5
+
+### Patch Changes
+
+- [#1594](https://github.com/portabletext/editor/pull/1594) [`8ebc392`](https://github.com/portabletext/editor/commit/8ebc39284ac3c286c73046e99fef4e77193d4608) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update sanity monorepo to ^4.6.0
+
+- [#1596](https://github.com/portabletext/editor/pull/1596) [`ab013ed`](https://github.com/portabletext/editor/commit/ab013ed93b60b797a7818dfaef1fc6f721acb3a0) Thanks [@christianhg](https://github.com/christianhg)! - keep `IS_FOCUSED` `false` as long as the editor is read-only
+
+- Updated dependencies [[`8ebc392`](https://github.com/portabletext/editor/commit/8ebc39284ac3c286c73046e99fef4e77193d4608)]:
+  - @portabletext/block-tools@3.4.1
+  - @portabletext/sanity-bridge@1.1.7
+
 ## 2.6.4
 
 ### Patch Changes
