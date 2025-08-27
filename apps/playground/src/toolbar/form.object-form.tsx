@@ -20,10 +20,17 @@ export function ObjectForm(
 
         const formData = new FormData(e.target as HTMLFormElement)
         const formDataValues = Object.fromEntries(formData)
-        const value = FormDataSchema.parse(formDataValues)
+        const values = FormDataSchema.parse(formDataValues)
+
+        for (const [key, value] of Object.entries(values)) {
+          const field = props.fields.find((field) => field.name === key)
+          if (field?.type === 'array') {
+            values[key] = JSON.parse(value as string)
+          }
+        }
 
         props.onSubmit({
-          value,
+          value: values,
         })
       }}
     >

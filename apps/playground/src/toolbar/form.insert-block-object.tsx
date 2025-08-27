@@ -31,6 +31,14 @@ export function InsertBlockObjectForm(
         const formDataValues = Object.fromEntries(formData)
         const {placement, ...value} = FormDataSchema.parse(formDataValues)
 
+        for (const [key, fieldValue] of Object.entries(value)) {
+          const field = props.fields.find((field) => field.name === key)
+
+          if (field?.type === 'array') {
+            value[key] = JSON.parse(fieldValue as string)
+          }
+        }
+
         props.onSubmit({
           value,
           placement,

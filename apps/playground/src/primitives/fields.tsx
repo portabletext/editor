@@ -1,3 +1,4 @@
+import {TextArea} from 'react-aria-components'
 import {NumberField} from './field.number'
 import {TextField} from './field.text'
 
@@ -37,6 +38,23 @@ export function Fields(props: {
           label={field.title}
           defaultValue={
             typeof defaultValue === 'number' ? defaultValue : undefined
+          }
+        />
+      )
+    }
+
+    if (field.type === 'array') {
+      const defaultValue = props.defaultValues?.[field.name]
+
+      return (
+        <TextArea
+          key={field.name}
+          autoFocus={index === 0}
+          name={field.name}
+          defaultValue={
+            typeof defaultValue === 'object'
+              ? JSON.stringify(defaultValue, null, 2)
+              : undefined
           }
         />
       )
