@@ -125,6 +125,187 @@ describe(createFlattenTableRule.name, () => {
     ])
   })
 
+  test('ordinary table without thead and tbody', () => {
+    /**
+     * | Year | Sales    | Expenses | Profit  |
+     * | 2022 | \$8,000  | \$5,000  | \$3,000 |
+     * | 2023 | \$10,000 | \$6,500  | \$3,500 |
+     * | 2024 | \$15,000 | \$9,000  | \$6,000 |
+     */
+    const html = [
+      '<table>',
+      '<tr>',
+      '<td>Year</td>',
+      '<td>Sales</td>',
+      '<td>Expenses</td>',
+      '<td>Profit</td>',
+      '</tr>',
+      '<tr>',
+      '<td>2022</td>',
+      '<td>$8,000</td>',
+      '<td>$5,000</td>',
+      '<td>$3,000</td>',
+      '</tr>',
+      '<tr>',
+      '<td>2023</td>',
+      '<td>$10,000</td>',
+      '<td>$6,500</td>',
+      '<td>$3,500</td>',
+      '</tr>',
+      '<tr>',
+      '<td>2024</td>',
+      '<td>$15,000</td>',
+      '<td>$9,000</td>',
+      '<td>$6,000</td>',
+      '</tr>',
+      '</table>',
+    ].join('')
+
+    expect(
+      getTersePt({
+        schema,
+        value: transform(html, {
+          rules: [flattenTableRule],
+        }),
+      }),
+    ).toEqual([
+      'Year, ,2022',
+      'Sales, ,$8,000',
+      'Expenses, ,$5,000',
+      'Profit, ,$3,000',
+      'Year, ,2023',
+      'Sales, ,$10,000',
+      'Expenses, ,$6,500',
+      'Profit, ,$3,500',
+      'Year, ,2024',
+      'Sales, ,$15,000',
+      'Expenses, ,$9,000',
+      'Profit, ,$6,000',
+    ])
+  })
+
+  test('ordinary table without thead', () => {
+    /**
+     * | Year | Sales    | Expenses | Profit  |
+     * | 2022 | \$8,000  | \$5,000  | \$3,000 |
+     * | 2023 | \$10,000 | \$6,500  | \$3,500 |
+     * | 2024 | \$15,000 | \$9,000  | \$6,000 |
+     */
+    const html = [
+      '<table>',
+      '<tbody>',
+      '<tr>',
+      '<td>Year</td>',
+      '<td>Sales</td>',
+      '<td>Expenses</td>',
+      '<td>Profit</td>',
+      '</tr>',
+      '<tr>',
+      '<td>2022</td>',
+      '<td>$8,000</td>',
+      '<td>$5,000</td>',
+      '<td>$3,000</td>',
+      '</tr>',
+      '<tr>',
+      '<td>2023</td>',
+      '<td>$10,000</td>',
+      '<td>$6,500</td>',
+      '<td>$3,500</td>',
+      '</tr>',
+      '<tr>',
+      '<td>2024</td>',
+      '<td>$15,000</td>',
+      '<td>$9,000</td>',
+      '<td>$6,000</td>',
+      '</tr>',
+      '</tbody>',
+      '</table>',
+    ].join('')
+
+    expect(
+      getTersePt({
+        schema,
+        value: transform(html, {
+          rules: [flattenTableRule],
+        }),
+      }),
+    ).toEqual([
+      'Year, ,2022',
+      'Sales, ,$8,000',
+      'Expenses, ,$5,000',
+      'Profit, ,$3,000',
+      'Year, ,2023',
+      'Sales, ,$10,000',
+      'Expenses, ,$6,500',
+      'Profit, ,$3,500',
+      'Year, ,2024',
+      'Sales, ,$15,000',
+      'Expenses, ,$9,000',
+      'Profit, ,$6,000',
+    ])
+  })
+
+  test('ordinary table without tbody', () => {
+    /**
+     * | Year | Sales    | Expenses | Profit  |
+     * | 2022 | \$8,000  | \$5,000  | \$3,000 |
+     * | 2023 | \$10,000 | \$6,500  | \$3,500 |
+     * | 2024 | \$15,000 | \$9,000  | \$6,000 |
+     */
+    const html = [
+      '<table>',
+      '<thead>',
+      '<tr>',
+      '<td>Year</td>',
+      '<td>Sales</td>',
+      '<td>Expenses</td>',
+      '<td>Profit</td>',
+      '</tr>',
+      '</thead>',
+      '<tr>',
+      '<td>2022</td>',
+      '<td>$8,000</td>',
+      '<td>$5,000</td>',
+      '<td>$3,000</td>',
+      '</tr>',
+      '<tr>',
+      '<td>2023</td>',
+      '<td>$10,000</td>',
+      '<td>$6,500</td>',
+      '<td>$3,500</td>',
+      '</tr>',
+      '<tr>',
+      '<td>2024</td>',
+      '<td>$15,000</td>',
+      '<td>$9,000</td>',
+      '<td>$6,000</td>',
+      '</tr>',
+      '</table>',
+    ].join('')
+
+    expect(
+      getTersePt({
+        schema,
+        value: transform(html, {
+          rules: [flattenTableRule],
+        }),
+      }),
+    ).toEqual([
+      'Year, ,2022',
+      'Sales, ,$8,000',
+      'Expenses, ,$5,000',
+      'Profit, ,$3,000',
+      'Year, ,2023',
+      'Sales, ,$10,000',
+      'Expenses, ,$6,500',
+      'Profit, ,$3,500',
+      'Year, ,2024',
+      'Sales, ,$15,000',
+      'Expenses, ,$9,000',
+      'Profit, ,$6,000',
+    ])
+  })
+
   describe('table with images', () => {
     /**
      * | Name       | Photo                                                          |
