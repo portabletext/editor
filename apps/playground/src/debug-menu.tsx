@@ -158,6 +158,19 @@ export function DebugMenu(props: {
       </Toolbar>
       <Toolbar>
         <Switch
+          isSelected={featureFlags.htmlDeserializerPlugin}
+          onChange={() => {
+            props.editorRef.send({
+              type: 'toggle feature flag',
+              flag: 'htmlDeserializerPlugin',
+            })
+          }}
+        >
+          HTML deserializer plugin
+        </Switch>
+      </Toolbar>
+      <Toolbar>
+        <Switch
           isSelected={featureFlags.textFileDeserializerPlugin}
           onChange={() => {
             props.editorRef.send({

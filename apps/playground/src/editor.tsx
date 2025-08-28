@@ -46,6 +46,7 @@ import {
 } from './playground-schema-definition'
 import {CodeEditorPlugin} from './plugins/plugin.code-editor'
 import {EmojiPickerPlugin} from './plugins/plugin.emoji-picker'
+import {HtmlDeserializerPlugin} from './plugins/plugin.html-deserializer'
 import {ImageDeserializerPlugin} from './plugins/plugin.image-deserializer'
 import {LinkPlugin} from './plugins/plugin.link'
 import {markdownShortcutsPluginProps} from './plugins/plugin.markdown'
@@ -166,6 +167,9 @@ export function Editor(props: {
             {featureFlags.linkPlugin ? <LinkPlugin /> : null}
             {featureFlags.imageDeserializerPlugin ? (
               <ImageDeserializerPlugin />
+            ) : null}
+            {featureFlags.htmlDeserializerPlugin ? (
+              <HtmlDeserializerPlugin />
             ) : null}
             {featureFlags.textFileDeserializerPlugin ? (
               <TextFileDeserializerPlugin />
