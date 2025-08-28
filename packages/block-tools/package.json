@@ -26,6 +26,12 @@
       "require": "./lib/index.cjs",
       "default": "./lib/index.js"
     },
+    "./rules": {
+      "source": "./src/rules/_exports/index.ts",
+      "import": "./lib/rules/index.js",
+      "require": "./lib/rules/index.cjs",
+      "default": "./lib/rules/index.js"
+    },
     "./package.json": "./package.json"
   },
   "main": "./lib/index.cjs",
