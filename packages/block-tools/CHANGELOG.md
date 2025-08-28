@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.5.0
+
+### Minor Changes
+
+- [#1599](https://github.com/portabletext/editor/pull/1599) [`80a8e51`](https://github.com/portabletext/editor/commit/80a8e51bf5489edd20d56ea4e0c2ae1f55e3672d) Thanks [@christianhg](https://github.com/christianhg)! - export experimental \`createFlattenTableRule\`
+
 ## 3.4.1
 
 ### Patch Changes
