@@ -78,7 +78,7 @@ export default class HtmlDeserializer {
     const blocks = trimWhitespace(
       this.schema,
       flattenNestedBlocks(
-        {schema: this.schema, keyGenerator: this.keyGenerator},
+        {schema: this.schema},
         ensureRootIsBlocks(
           this.schema,
           this.deserializeElements(children) as Array<ArbitraryTypedObject>,
