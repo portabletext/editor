@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.32
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @portabletext/editor@2.6.7
+
 ## 2.0.31
 
 ### Patch Changes

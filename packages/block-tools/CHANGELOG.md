@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.5.1
+
+### Patch Changes
+
+- [#1602](https://github.com/portabletext/editor/pull/1602) [`240da56`](https://github.com/portabletext/editor/commit/240da56da08164dd4c10c832e6e9044fb08244b7) Thanks [@christianhg](https://github.com/christianhg)! - add better inference of header and body rows in `createFlattenTableRule`
+
 ## 3.5.0
 
 ### Minor Changes
