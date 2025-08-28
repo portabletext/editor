@@ -14,6 +14,7 @@ export const PlaygroundFeatureFlagsContext =
 export type EditorFeatureFlags = {
   dragHandles: boolean
   imageDeserializerPlugin: boolean
+  htmlDeserializerPlugin: boolean
   textFileDeserializerPlugin: boolean
   emojiPickerPlugin: boolean
   codeEditorPlugin: boolean
@@ -25,6 +26,7 @@ export type EditorFeatureFlags = {
 export const defaultEditorFeatureFlags: EditorFeatureFlags = {
   dragHandles: false,
   imageDeserializerPlugin: false,
+  htmlDeserializerPlugin: false,
   textFileDeserializerPlugin: false,
   emojiPickerPlugin: false,
   codeEditorPlugin: false,
