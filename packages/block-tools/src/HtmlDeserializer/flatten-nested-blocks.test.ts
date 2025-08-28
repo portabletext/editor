@@ -5,10 +5,9 @@ import {flattenNestedBlocks} from './flatten-nested-blocks'
 
 describe(flattenNestedBlocks.name, () => {
   test('flattening text blocks', () => {
-    const keyGenerator = createTestKeyGenerator('k')
     const schema = compileSchema(defineSchema({}))
     expect(
-      flattenNestedBlocks({schema, keyGenerator}, [
+      flattenNestedBlocks({schema}, [
         {
           _type: 'block',
           children: [
@@ -40,12 +39,11 @@ describe(flattenNestedBlocks.name, () => {
   })
 
   test('flattening text blocks with block objects in schema', () => {
-    const keyGenerator = createTestKeyGenerator('k')
     const schema = compileSchema(
       defineSchema({blockObjects: [{name: 'image'}]}),
     )
     expect(
-      flattenNestedBlocks({schema, keyGenerator}, [
+      flattenNestedBlocks({schema}, [
         {
           _type: 'block',
           children: [
@@ -77,14 +75,13 @@ describe(flattenNestedBlocks.name, () => {
   })
 
   test('flattening text blocks with styles in schema', () => {
-    const keyGenerator = createTestKeyGenerator('k')
     const schema = compileSchema(
       defineSchema({
         styles: [{name: 'h1'}],
       }),
     )
     expect(
-      flattenNestedBlocks({schema, keyGenerator}, [
+      flattenNestedBlocks({schema}, [
         {
           _type: 'block',
           children: [
@@ -131,7 +128,7 @@ describe(flattenNestedBlocks.name, () => {
     const linkKey = keyGenerator()
 
     expect(
-      flattenNestedBlocks({schema, keyGenerator}, [
+      flattenNestedBlocks({schema}, [
         {
           _key: blockKey,
           _type: 'block',
@@ -198,7 +195,7 @@ describe(flattenNestedBlocks.name, () => {
     const barKey = keyGenerator()
 
     expect(
-      flattenNestedBlocks({schema, keyGenerator}, [
+      flattenNestedBlocks({schema}, [
         {
           _key: blockKey,
           _type: 'block',

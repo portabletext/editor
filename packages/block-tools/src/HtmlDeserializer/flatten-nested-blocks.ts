@@ -17,7 +17,6 @@ import {
 export function flattenNestedBlocks(
   context: {
     schema: Schema
-    keyGenerator: () => string
   },
   blocks: Array<ArbitraryTypedObject>,
 ): TypedObject[] {
