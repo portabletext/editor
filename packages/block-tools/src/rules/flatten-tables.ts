@@ -87,30 +87,53 @@ export function createFlattenTableRule({
       }
 
       const thead = node.querySelector('thead')
+      let headerRow = thead?.querySelector('tr')
       const tbody = node.querySelector('tbody')
+      let bodyRows = tbody ? [...tbody.querySelectorAll('tr')] : []
 
-      // Only process tables with thead and tbody
-      if (!thead || !tbody) {
-        return undefined
+      if (!headerRow || !bodyRows) {
+        // If there is not thead or tbody, we look at the column count. If the
+        // column count is greater than 2 then we infer that the first row is
+        // the header row and the rest are the body rows.
+
+        const columnCounts = [...node.querySelectorAll('tr')].map((row) => {
+          const cells = row.querySelectorAll('td')
+          return cells.length
+        })
+
+        const firstColumnCount = columnCounts[0]
+
+        if (
+          !firstColumnCount ||
+          !columnCounts.every((count) => count === firstColumnCount)
+        ) {
+          return undefined
+        }
+
+        if (firstColumnCount < 3) {
+          return undefined
+        }
+
+        // Now we know that all rows have the same column count and that
+        // count is >2
+        const rows = [...node.querySelectorAll('tr')]
+        headerRow = rows.slice(0, 1)[0]
+        bodyRows = rows.slice(1)
       }
-
-      // Extract header labels from thead
-      const headerRow = thead.querySelector('tr')
 
       if (!headerRow) {
         return undefined
       }
 
-      const headerCells = headerRow.querySelectorAll('th')
+      const headerCells = headerRow.querySelectorAll('th, td')
       const headerResults = [...headerCells].map((headerCell) =>
         next(headerCell),
       )
 
       // Process tbody rows and combine with headers
       const rows: TypedObject[] = []
-      const rowElements = tbody.querySelectorAll('tr')
 
-      for (const row of rowElements) {
+      for (const row of bodyRows) {
         const cells = row.querySelectorAll('td')
 
         let cellIndex = 0
