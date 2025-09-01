@@ -1,9 +1,8 @@
 import type React from 'react'
-import {useEffect} from 'react'
+import {useEffect, useState} from 'react'
 import {Slate} from 'slate-react'
 import type {EditorConfig} from '../editor'
 import {stopActor} from '../internal-utils/stop-actor'
-import useConstant from '../internal-utils/use-constant'
 import {createInternalEditor} from './create-editor'
 import {EditorActorContext} from './editor-actor-context'
 import {EditorContext} from './editor-context'
@@ -42,7 +41,7 @@ export type EditorProviderProps = {
  * @group Components
  */
 export function EditorProvider(props: EditorProviderProps) {
-  const {internalEditor, portableTextEditor} = useConstant(() => {
+  const [{internalEditor, portableTextEditor}] = useState(() => {
     const internalEditor = createInternalEditor(props.initialConfig)
     const portableTextEditor = new PortableTextEditor({
       editor: internalEditor.editor,
