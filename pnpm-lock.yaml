@@ -545,6 +545,9 @@ importers:
       eslint:
         specifier: ^9.34.0
         version: 9.34.0(jiti@2.5.1)
+      eslint-formatter-compact:
+        specifier: ^8.40.0
+        version: 8.40.0
       eslint-plugin-react-hooks:
         specifier: 6.0.0-rc.2
         version: 6.0.0-rc.2(eslint@9.34.0(jiti@2.5.1))
@@ -4385,6 +4388,10 @@ packages:
   escape-string-regexp@5.0.0:
     resolution: {integrity: sha512-/veY75JbMK4j1yjvuUxuVsiS/hr/4iHs9FTT6cgTexxdE0Ly/glccBAkloH/DofkjRbZU3bnoj38mOmhkZ0lHw==}
     engines: {node: '>=12'}
+
+  eslint-formatter-compact@8.40.0:
+    resolution: {integrity: sha512-cwGUs113TgmTQXecx5kfRjB7m0y2wkDLSadPTE2pK6M/wO4N8PjmUaoWOFNCP9MHgsiZwgqd5bZFnDCnszC56Q==}
+    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
 
   eslint-plugin-react-hooks@6.0.0-rc.2:
     resolution: {integrity: sha512-2cnFkQl2xld2BgKDtxLSd/JqkpZHBXZKcz+ZurfiQ7GECzMckIddJN5PZyWach3MN4h/CjwfqPigAtYxInXtuw==}
@@ -11719,6 +11726,8 @@ snapshots:
   escape-string-regexp@4.0.0: {}
 
   escape-string-regexp@5.0.0: {}
+
+  eslint-formatter-compact@8.40.0: {}
 
   eslint-plugin-react-hooks@6.0.0-rc.2(eslint@9.34.0(jiti@2.5.1)):
     dependencies:

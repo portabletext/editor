@@ -58,6 +58,7 @@
     "@types/react": "^19.1.11",
     "babel-plugin-react-compiler": "19.1.0-rc.3",
     "eslint": "^9.34.0",
+    "eslint-formatter-compact": "^8.40.0",
     "eslint-plugin-react-hooks": "6.0.0-rc.2",
     "react": "^19.1.1",
     "typescript": "catalog:",
