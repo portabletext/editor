@@ -83,13 +83,10 @@
     {
       "matchPackageNames": [
         "react-compiler-runtime",
-        "babel-plugin-react-compiler"
+        "babel-plugin-react-compiler",
+        "eslint-plugin-react-hooks"
       ],
       "followTag": "rc"
-    },
-    {
-      "matchPackageNames": ["eslint-plugin-react-hooks"],
-      "followTag": "experimental"
     }
   ]
 }
