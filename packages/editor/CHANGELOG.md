@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.6.9
+
+### Patch Changes
+
+- [#1608](https://github.com/portabletext/editor/pull/1608) [`61f7f2d`](https://github.com/portabletext/editor/commit/61f7f2d1d90280801d4c248e337e8456ce1a6027) Thanks [@christianhg](https://github.com/christianhg)! - simplify emitted patches when deleting empty text block
+
+- [#1608](https://github.com/portabletext/editor/pull/1608) [`a19f91b`](https://github.com/portabletext/editor/commit/a19f91bc8af459272550a560754c3a20222066f3) Thanks [@christianhg](https://github.com/christianhg)! - fix: emit mutations at a minimum every 1s
+
+- [#1608](https://github.com/portabletext/editor/pull/1608) [`a6e9e81`](https://github.com/portabletext/editor/commit/a6e9e8179b6ea1b3212f266d3e35e6007bd2ed0b) Thanks [@christianhg](https://github.com/christianhg)! - fix: batch more mutations
+
 ## 2.6.8
 
 ### Patch Changes
