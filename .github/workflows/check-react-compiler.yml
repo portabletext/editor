@@ -32,6 +32,10 @@ jobs:
         working-directory: packages/editor
         run: pnpm check:react-compiler -f compact
 
+      - name: Check react compiler on toolbar
+        working-directory: packages/toolbar
+        run: pnpm check:react-compiler -f compact
+
       - name: Check react compiler on playground
         working-directory: apps/playground
         run: pnpm check:react-compiler -f compact

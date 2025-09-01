@@ -244,6 +244,9 @@ importers:
       eslint:
         specifier: ^9.34.0
         version: 9.34.0(jiti@2.5.1)
+      eslint-formatter-compact:
+        specifier: ^8.40.0
+        version: 8.40.0
       eslint-plugin-react-hooks:
         specifier: 6.0.0-rc.2
         version: 6.0.0-rc.2(eslint@9.34.0(jiti@2.5.1))
@@ -734,6 +737,9 @@ importers:
       eslint:
         specifier: ^9.34.0
         version: 9.34.0(jiti@2.5.1)
+      eslint-formatter-compact:
+        specifier: ^8.40.0
+        version: 8.40.0
       eslint-plugin-react-hooks:
         specifier: 6.0.0-rc.2
         version: 6.0.0-rc.2(eslint@9.34.0(jiti@2.5.1))
