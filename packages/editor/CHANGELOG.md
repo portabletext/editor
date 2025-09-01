@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.6.8
+
+### Patch Changes
+
+- [#1605](https://github.com/portabletext/editor/pull/1605) [`e13374a`](https://github.com/portabletext/editor/commit/e13374abffbeb1a30c1ae1bc9be237d273b8c341) Thanks [@christianhg](https://github.com/christianhg)! - `data-list-index` edge cases
+
+- [#1606](https://github.com/portabletext/editor/pull/1606) [`bb9f648`](https://github.com/portabletext/editor/commit/bb9f648bdd3046799e25a4825390114db8b0da8e) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency xstate to ^5.21.0
+
 ## 2.6.7
 
 ### Patch Changes
