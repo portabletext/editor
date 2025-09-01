@@ -50,7 +50,7 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
-    "@sanity/pkg-utils": "^8.1.1",
+    "@sanity/pkg-utils": "^8.1.4",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   }
