@@ -10,8 +10,8 @@ import {
   enqueueActions,
   fromCallback,
   not,
+  raise,
   setup,
-  stateIn,
   type AnyEventObject,
 } from 'xstate'
 import {debugWithName} from '../internal-utils/debug'
@@ -41,7 +41,7 @@ export const mutationMachine = setup({
     },
     events: {} as
       | {
-          type: 'mutation delay passed'
+          type: 'emit changes'
         }
       | {
           type: 'patch'
@@ -164,12 +164,12 @@ export const mutationMachine = setup({
         input.slateEditor.apply = originalApply
       }
     }),
-    'mutation debouncer': fromCallback(({sendBack}) => {
+    'mutation interval': fromCallback(({sendBack}) => {
       const interval = setInterval(
         () => {
-          sendBack({type: 'mutation delay passed'})
+          sendBack({type: 'emit changes'})
         },
-        process.env.NODE_ENV === 'test' ? 250 : 0,
+        process.env.NODE_ENV === 'test' ? 250 : 1000,
       )
 
       return () => {
@@ -179,12 +179,11 @@ export const mutationMachine = setup({
   },
   guards: {
     'is read-only': ({context}) => context.readOnly,
-    'is typing': stateIn({typing: 'typing'}),
     'slate is normalizing': ({context}) =>
       Editor.isNormalizing(context.slateEditor),
   },
   delays: {
-    'type debounce': process.env.NODE_ENV === 'test' ? 0 : 250,
+    'type debounce': 250,
   },
 }).createMachine({
   id: 'mutation',
@@ -232,6 +231,7 @@ export const mutationMachine = setup({
             'type debounce': {
               target: 'idle',
               actions: [
+                raise({type: 'emit changes'}),
                 () => {
                   debug('exit: typing->typing')
                 },
@@ -241,6 +241,7 @@ export const mutationMachine = setup({
           on: {
             'not typing': {
               target: 'idle',
+              actions: [raise({type: 'emit changes'})],
             },
             'typing': {
               target: 'typing',
@@ -291,15 +292,11 @@ export const mutationMachine = setup({
             },
           ],
           invoke: {
-            src: 'mutation debouncer',
+            src: 'mutation interval',
           },
           on: {
-            'mutation delay passed': {
-              guard: and([
-                not('is read-only'),
-                not('is typing'),
-                'slate is normalizing',
-              ]),
+            'emit changes': {
+              guard: and([not('is read-only'), 'slate is normalizing']),
               target: 'idle',
               actions: [
                 'emit pending patch events',
