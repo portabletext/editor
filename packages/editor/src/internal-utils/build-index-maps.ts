@@ -95,19 +95,31 @@ export function buildIndexMaps(
       continue
     }
 
-    // Reset all other list items on this level
+    // Reset other list types at current level and deeper
     levelIndexMaps.forEach((levelIndexMap, listItem) => {
       if (listItem === block.listItem) {
         return
       }
 
-      levelIndexMap.set(block.level!, 0)
+      // Reset all levels that are >= current level
+      const levelsToDelete: number[] = []
+
+      levelIndexMap.forEach((_, level) => {
+        if (level >= block.level!) {
+          levelsToDelete.push(level)
+        }
+      })
+
+      levelsToDelete.forEach((level) => {
+        levelIndexMap.delete(level)
+      })
     })
 
     const levelIndexMap =
       levelIndexMaps.get(block.listItem) ?? new Map<number, number>()
     const levelCounter = levelIndexMap.get(block.level) ?? 0
     levelIndexMap.set(block.level, levelCounter + 1)
+    levelIndexMaps.set(block.listItem, levelIndexMap)
 
     listIndexMap.set(block._key, levelCounter + 1)
 
