@@ -50,7 +50,7 @@
     "@portabletext/keyboard-shortcuts": "workspace:^",
     "@xstate/react": "^6.0.0",
     "react-compiler-runtime": "19.1.0-rc.2",
-    "xstate": "^5.20.2"
+    "xstate": "^5.21.0"
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:*",
