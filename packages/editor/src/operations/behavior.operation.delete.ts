@@ -12,7 +12,7 @@ import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block
 import {getBlockPath} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {getBlockKeyFromSelectionPoint} from '../selection/selection-point'
-import {PortableTextSlateEditor} from '../types/editor'
+import type {PortableTextSlateEditor} from '../types/editor'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const deleteOperationImplementation: BehaviorOperationImplementation<
