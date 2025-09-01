@@ -103,6 +103,59 @@ export const abstractDeleteBehaviors = [
         return false
       }
 
+      const nextBlock = selectors.getNextBlock({
+        ...snapshot,
+        context: {
+          ...snapshot.context,
+          selection: event.at,
+        },
+      })
+      const focusTextBlock = selectors.getFocusTextBlock({
+        ...snapshot,
+        context: {
+          ...snapshot.context,
+          selection: event.at,
+        },
+      })
+
+      if (!nextBlock || !focusTextBlock) {
+        return false
+      }
+
+      if (!utils.isEmptyTextBlock(snapshot.context, focusTextBlock.node)) {
+        return false
+      }
+
+      const nextBlockStartPoint = utils.getBlockStartPoint({
+        context: snapshot.context,
+        block: nextBlock,
+      })
+
+      return {focusTextBlock, nextBlockStartPoint}
+    },
+    actions: [
+      (_, {focusTextBlock, nextBlockStartPoint}) => [
+        raise({
+          type: 'delete.block',
+          at: focusTextBlock.path,
+        }),
+        raise({
+          type: 'select',
+          at: {
+            anchor: nextBlockStartPoint,
+            focus: nextBlockStartPoint,
+          },
+        }),
+      ],
+    ],
+  }),
+  defineBehavior({
+    on: 'delete',
+    guard: ({snapshot, event}) => {
+      if (event.direction !== 'forward') {
+        return false
+      }
+
       const nextBlock = selectors.getNextBlock(snapshot)
       const focusTextBlock = selectors.getFocusTextBlock(snapshot)
 

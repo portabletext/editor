@@ -1,7 +1,7 @@
 import {insert, setIfMissing, unset, type Patch} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator} from '@portabletext/test'
-import {page} from '@vitest/browser/context'
+import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {page, userEvent} from '@vitest/browser/context'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
@@ -10,6 +10,87 @@ import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 
 describe('event.patch', () => {
+  test('Scenario: Deleting empty block above non-empty text block', async () => {
+    const editorRef = React.createRef<Editor>()
+    const keyGenerator = createTestKeyGenerator()
+    const patches: Array<Patch> = []
+    const blockAKey = keyGenerator()
+    const spanAKey = keyGenerator()
+    const blockBKey = keyGenerator()
+    const spanBKey = keyGenerator()
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator,
+          initialValue: [
+            {
+              _key: blockAKey,
+              _type: 'block',
+              children: [{_key: spanAKey, _type: 'span', text: '', marks: []}],
+              style: 'normal',
+              markDefs: [],
+            },
+            {
+              _key: blockBKey,
+              _type: 'block',
+              children: [
+                {_key: spanBKey, _type: 'span', text: 'bar', marks: []},
+              ],
+              style: 'normal',
+              markDefs: [],
+            },
+          ],
+          schemaDefinition: defineSchema({}),
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+        <PortableTextEditable />
+      </EditorProvider>,
+    )
+
+    const editorLocator = page.getByRole('textbox')
+    await vi.waitFor(() => expect.element(editorLocator).toBeInTheDocument())
+
+    editorRef.current?.send({type: 'focus'})
+
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+          offset: 0,
+        },
+        backward: false,
+      })
+    })
+
+    await userEvent.keyboard('{Delete}')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        'bar',
+      ])
+    })
+
+    expect(patches).toEqual([
+      {
+        type: 'unset',
+        path: [{_key: blockAKey}],
+        origin: 'local',
+      },
+    ])
+  })
   test('Scenario: Inserting two text blocks where the first one is empty', async () => {
     const editorRef = React.createRef<Editor>()
     const keyGenerator = createTestKeyGenerator()
