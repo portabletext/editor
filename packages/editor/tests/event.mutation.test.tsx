@@ -9,6 +9,7 @@ import {
   PortableTextEditable,
   type Editor,
   type EditorEmittedEvent,
+  type MutationEvent,
 } from '../src'
 import {EditorRefPlugin, EventListenerPlugin} from '../src/plugins'
 
@@ -92,5 +93,58 @@ describe('event.mutation', () => {
         ],
       }),
     )
+  })
+
+  test('Scenario: Batching typing mutations', async () => {
+    const editorRef = React.createRef<Editor>()
+    const mutations: Array<MutationEvent> = []
+    const keyGenerator = createTestKeyGenerator()
+
+    render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator,
+          schemaDefinition: defineSchema({}),
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+        <PortableTextEditable />
+      </EditorProvider>,
+    )
+
+    const locator = page.getByRole('textbox')
+    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+
+    await userEvent.type(locator, 'foo')
+    await new Promise((resolve) => setTimeout(resolve, 250))
+    await userEvent.type(locator, 'bar')
+    await new Promise((resolve) => setTimeout(resolve, 250))
+
+    expect(mutations).toHaveLength(2)
+    expect(mutations[0].value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+    expect(mutations[1].value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        children: [{_type: 'span', _key: 'k1', text: 'foobar', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
   })
 })

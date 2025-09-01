@@ -147,39 +147,7 @@ describe('Feature: Self-solving', () => {
         })
         expect(onChange).toHaveBeenNthCalledWith(8, {
           type: 'mutation',
-          patches: [spanPatch, blockPatch],
-          snapshot: [
-            block({
-              _key: 'b1',
-              children: [
-                span({
-                  _key: 's1',
-                  text: 'foo',
-                  marks: [],
-                }),
-              ],
-              style: 'normal',
-              markDefs: [],
-            }),
-          ],
-          value: [
-            block({
-              _key: 'b1',
-              children: [
-                span({
-                  _key: 's1',
-                  text: 'foo',
-                  marks: [],
-                }),
-              ],
-              style: 'normal',
-              markDefs: [],
-            }),
-          ],
-        })
-        expect(onChange).toHaveBeenNthCalledWith(9, {
-          type: 'mutation',
-          patches: [strongPatch],
+          patches: [spanPatch, blockPatch, strongPatch],
           snapshot: [
             block({
               _key: 'b1',

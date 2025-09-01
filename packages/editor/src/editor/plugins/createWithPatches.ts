@@ -26,7 +26,7 @@ import {
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 import type {RelayActor} from '../relay-machine'
-import {getCurrentOperationId} from '../with-applying-behavior-operations'
+import {getCurrentUndoStepId} from '../with-undo-step'
 import {withoutSaving} from './createWithUndoRedo'
 
 const debug = debugWithName('plugin:withPatches')
@@ -266,7 +266,7 @@ export function createWithPatches({
           editorActor.send({
             type: 'internal.patch',
             patch: {...patch, origin: 'local'},
-            operationId: getCurrentOperationId(editor),
+            operationId: getCurrentUndoStepId(editor),
             value: editor.value,
           })
         }
