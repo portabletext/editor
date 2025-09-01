@@ -49,7 +49,7 @@
   "dependencies": {
     "@portabletext/keyboard-shortcuts": "workspace:^",
     "@xstate/react": "^6.0.0",
-    "react-compiler-runtime": "19.1.0-rc.2",
+    "react-compiler-runtime": "19.1.0-rc.3",
     "xstate": "^5.21.0"
   },
   "devDependencies": {
@@ -58,9 +58,9 @@
     "@types/react": "^19.1.11",
     "@typescript-eslint/eslint-plugin": "^8.39.1",
     "@typescript-eslint/parser": "^8.39.1",
-    "babel-plugin-react-compiler": "19.1.0-rc.2",
+    "babel-plugin-react-compiler": "19.1.0-rc.3",
     "eslint": "8.57.1",
-    "eslint-plugin-react-hooks": "6.0.0-rc.1",
+    "eslint-plugin-react-hooks": "6.0.0-rc.2",
     "react": "^19.1.1",
     "typescript": "^5.9.2"
   },
