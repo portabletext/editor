@@ -60,16 +60,19 @@ export function RenderTextBlock(props: {
         : undefined
 
     if (legacyStyleSchemaType) {
-      children = props.renderStyle({
-        block: props.textBlock,
-        children,
-        editorElementRef: blockRef,
-        focused,
-        path: [{_key: props.textBlock._key}],
-        schemaType: legacyStyleSchemaType,
-        selected,
-        value: props.textBlock.style,
-      })
+      children = (
+        <props.renderStyle
+          block={props.textBlock}
+          editorElementRef={blockRef}
+          focused={focused}
+          path={[{_key: props.textBlock._key}]}
+          schemaType={legacyStyleSchemaType}
+          selected={selected}
+          value={props.textBlock.style}
+        >
+          {children}
+        </props.renderStyle>
+      )
     } else {
       console.error(
         `Unable to find Schema type for text block style ${props.textBlock.style}`,
@@ -83,17 +86,20 @@ export function RenderTextBlock(props: {
     )
 
     if (legacyListItemSchemaType) {
-      children = props.renderListItem({
-        block: props.textBlock,
-        children,
-        editorElementRef: blockRef,
-        focused,
-        level: props.textBlock.level ?? 1,
-        path: [{_key: props.textBlock._key}],
-        selected,
-        value: props.textBlock.listItem,
-        schemaType: legacyListItemSchemaType,
-      })
+      children = (
+        <props.renderListItem
+          block={props.textBlock}
+          editorElementRef={blockRef}
+          focused={focused}
+          level={props.textBlock.level ?? 1}
+          path={[{_key: props.textBlock._key}]}
+          selected={selected}
+          value={props.textBlock.listItem}
+          schemaType={legacyListItemSchemaType}
+        >
+          {children}
+        </props.renderListItem>
+      )
     } else {
       console.error(
         `Unable to find Schema type for text block list item ${props.textBlock.listItem}`,
@@ -145,21 +151,24 @@ export function RenderTextBlock(props: {
     >
       {dragPositionBlock === 'start' ? <DropIndicator /> : null}
       <div ref={blockRef}>
-        {props.renderBlock
-          ? props.renderBlock({
-              children,
-              editorElementRef: blockRef,
-              focused,
-              level: props.textBlock.level,
-              listItem: props.textBlock.listItem,
-              path: [{_key: props.textBlock._key}],
-              selected,
-              schemaType: props.legacySchema.block,
-              style: props.textBlock.style,
-              type: props.legacySchema.block,
-              value: props.textBlock,
-            })
-          : children}
+        {props.renderBlock ? (
+          <props.renderBlock
+            editorElementRef={blockRef}
+            focused={focused}
+            level={props.textBlock.level}
+            listItem={props.textBlock.listItem}
+            path={[{_key: props.textBlock._key}]}
+            selected={selected}
+            schemaType={props.legacySchema.block}
+            style={props.textBlock.style}
+            type={props.legacySchema.block}
+            value={props.textBlock}
+          >
+            {children}
+          </props.renderBlock>
+        ) : (
+          children
+        )}
       </div>
       {dragPositionBlock === 'end' ? <DropIndicator /> : null}
     </div>

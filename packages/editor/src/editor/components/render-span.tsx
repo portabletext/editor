@@ -186,16 +186,19 @@ export function RenderSpan(props: RenderSpanProps) {
     )
 
     if (path && legacyDecoratorSchemaType && props.renderDecorator) {
-      children = props.renderDecorator({
-        children: children,
-        editorElementRef: spanRef,
-        focused,
-        path,
-        selected,
-        schemaType: legacyDecoratorSchemaType,
-        value: mark,
-        type: legacyDecoratorSchemaType,
-      })
+      children = (
+        <props.renderDecorator
+          editorElementRef={spanRef}
+          focused={focused}
+          path={path}
+          selected={selected}
+          schemaType={legacyDecoratorSchemaType}
+          value={mark}
+          type={legacyDecoratorSchemaType}
+        >
+          {children}
+        </props.renderDecorator>
+      )
     }
   }
 
@@ -210,17 +213,18 @@ export function RenderSpan(props: RenderSpanProps) {
       if (block && path && props.renderAnnotation) {
         children = (
           <span ref={spanRef}>
-            {props.renderAnnotation({
-              block,
-              children: children,
-              editorElementRef: spanRef,
-              focused,
-              path,
-              selected,
-              schemaType: legacyAnnotationSchemaType,
-              value: annotationMarkDef,
-              type: legacyAnnotationSchemaType,
-            })}
+            <props.renderAnnotation
+              block={block}
+              editorElementRef={spanRef}
+              focused={focused}
+              path={path}
+              selected={selected}
+              schemaType={legacyAnnotationSchemaType}
+              value={annotationMarkDef}
+              type={legacyAnnotationSchemaType}
+            >
+              {children}
+            </props.renderAnnotation>
           </span>
         )
       } else {
@@ -238,17 +242,20 @@ export function RenderSpan(props: RenderSpanProps) {
     ) // Ensure object equality
 
     if (child) {
-      children = props.renderChild({
-        annotations: annotationMarkDefs,
-        children: children,
-        editorElementRef: spanRef,
-        focused,
-        path,
-        schemaType: legacySchema.span,
-        selected,
-        value: child,
-        type: legacySchema.span,
-      })
+      children = (
+        <props.renderChild
+          annotations={annotationMarkDefs}
+          editorElementRef={spanRef}
+          focused={focused}
+          path={path}
+          schemaType={legacySchema.span}
+          selected={selected}
+          value={child}
+          type={legacySchema.span}
+        >
+          {children}
+        </props.renderChild>
+      )
     }
   }
 

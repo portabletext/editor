@@ -73,16 +73,17 @@ export function RenderBlockObject(props: {
         draggable={!props.readOnly}
       >
         {props.renderBlock && legacySchemaType ? (
-          props.renderBlock({
-            children: <RenderDefaultBlockObject blockObject={blockObject} />,
-            editorElementRef: blockObjectRef,
-            focused,
-            path: [{_key: props.element._key}],
-            schemaType: legacySchemaType,
-            selected,
-            type: legacySchemaType,
-            value: blockObject,
-          })
+          <props.renderBlock
+            editorElementRef={blockObjectRef}
+            focused={focused}
+            path={[{_key: props.element._key}]}
+            schemaType={legacySchemaType}
+            selected={selected}
+            type={legacySchemaType}
+            value={blockObject}
+          >
+            <RenderDefaultBlockObject blockObject={blockObject} />
+          </props.renderBlock>
         ) : (
           <RenderDefaultBlockObject blockObject={blockObject} />
         )}
