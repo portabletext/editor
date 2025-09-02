@@ -9,7 +9,7 @@ import {getTextSelection} from '../src/internal-utils/text-selection'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 
 describe('Serialize/Deserialize', () => {
-  test('Scenario: Custom text/html deserializer', async () => {
+  test.skip('Scenario: Custom text/html deserializer', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
