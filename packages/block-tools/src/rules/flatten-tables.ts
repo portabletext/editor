@@ -86,42 +86,27 @@ export function createFlattenTableRule({
         return undefined
       }
 
+      const columnCounts = [...node.querySelectorAll('tr')].map((row) => {
+        const cells = row.querySelectorAll('td, th')
+        return cells.length
+      })
+
+      const firstColumnCount = columnCounts[0]
+
+      if (
+        !firstColumnCount ||
+        !columnCounts.every((count) => count === firstColumnCount)
+      ) {
+        // If the column counts are not all the same, we return undefined.
+        return undefined
+      }
+
       const thead = node.querySelector('thead')
-      let headerRow = thead?.querySelector('tr')
+      const headerRow = thead?.querySelector('tr')
       const tbody = node.querySelector('tbody')
       let bodyRows = tbody ? [...tbody.querySelectorAll('tr')] : []
 
       if (!headerRow || !bodyRows) {
-        // If there is not thead or tbody, we look at the column count. If the
-        // column count is greater than 2 then we infer that the first row is
-        // the header row and the rest are the body rows.
-
-        const columnCounts = [...node.querySelectorAll('tr')].map((row) => {
-          const cells = row.querySelectorAll('td')
-          return cells.length
-        })
-
-        const firstColumnCount = columnCounts[0]
-
-        if (
-          !firstColumnCount ||
-          !columnCounts.every((count) => count === firstColumnCount)
-        ) {
-          return undefined
-        }
-
-        if (firstColumnCount < 3) {
-          return undefined
-        }
-
-        // Now we know that all rows have the same column count and that
-        // count is >2
-        const rows = [...node.querySelectorAll('tr')]
-        headerRow = rows.slice(0, 1)[0]
-        bodyRows = rows.slice(1)
-      }
-
-      if (!headerRow) {
         return undefined
       }
 
