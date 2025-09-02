@@ -14,6 +14,8 @@ export default tseslint.config([
         tsconfigRootDir: import.meta.dirname,
       },
     },
-    rules: {'react-hooks/exhaustive-deps': 'error', 'react-hooks/refs': 'warn'},
+    rules: {
+      'react-hooks/exhaustive-deps': 'error',
+    },
   },
 ])

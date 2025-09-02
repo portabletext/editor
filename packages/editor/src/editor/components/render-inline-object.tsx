@@ -79,17 +79,18 @@ export function RenderInlineObject(props: {
       {props.children}
       <span ref={inlineObjectRef} style={{display: 'inline-block'}}>
         {props.renderChild && block && legacySchemaType ? (
-          props.renderChild({
-            annotations: [],
-            children: <RenderDefaultInlineObject inlineObject={inlineObject} />,
-            editorElementRef: inlineObjectRef,
-            selected,
-            focused,
-            path: [{_key: block._key}, 'children', {_key: props.element._key}],
-            schemaType: legacySchemaType,
-            value: inlineObject,
-            type: legacySchemaType,
-          })
+          <props.renderChild
+            annotations={[]}
+            editorElementRef={inlineObjectRef}
+            selected={selected}
+            focused={focused}
+            path={[{_key: block._key}, 'children', {_key: props.element._key}]}
+            schemaType={legacySchemaType}
+            value={inlineObject}
+            type={legacySchemaType}
+          >
+            <RenderDefaultInlineObject inlineObject={inlineObject} />
+          </props.renderChild>
         ) : (
           <RenderDefaultInlineObject inlineObject={inlineObject} />
         )}
