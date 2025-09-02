@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.7.2
+
+### Patch Changes
+
+- Updated dependencies [[`24bd38d`](https://github.com/portabletext/editor/commit/24bd38ddf84d4317ed2f3205ca8333f276dfc8c7)]:
+  - @portabletext/block-tools@3.5.2
+
 ## 2.7.1
 
 ### Patch Changes
