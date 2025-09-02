@@ -1,24 +1,21 @@
+import {isTextBlock} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
-import {isEqual, uniq} from 'lodash'
+import {uniq} from 'lodash'
+import {useContext, useMemo, useRef, type ReactElement} from 'react'
+import {useSlateStatic, type RenderLeafProps} from 'slate-react'
 import {
-  startTransition,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactElement,
-} from 'react'
-import {useSelected, useSlateStatic, type RenderLeafProps} from 'slate-react'
+  getFocusSpan,
+  isOverlappingSelection,
+  isSelectionCollapsed,
+} from '../../selectors'
 import type {
+  EditorSelection,
   RenderAnnotationFunction,
   RenderChildFunction,
   RenderDecoratorFunction,
 } from '../../types/editor'
 import {EditorActorContext} from '../editor-actor-context'
-import {usePortableTextEditor} from '../hooks/usePortableTextEditor'
-import {PortableTextEditor} from '../PortableTextEditor'
+import {getEditorSnapshot} from '../editor-selector'
 
 export interface RenderSpanProps extends RenderLeafProps {
   children: ReactElement<any>
@@ -35,10 +32,66 @@ export function RenderSpan(props: RenderSpanProps) {
     s.context.getLegacySchema(),
   )
   const spanRef = useRef<HTMLElement>(null)
-  const portableTextEditor = usePortableTextEditor()
-  const blockSelected = useSelected()
-  const [focused, setFocused] = useState(false)
-  const [selected, setSelected] = useState(false)
+
+  /**
+   * A span is considered focused if the selection is collapsed and the caret
+   * is inside the span.
+   */
+  const focused = useSelector(editorActor, (editorActorSnapshot) => {
+    const snapshot = getEditorSnapshot({
+      editorActorSnapshot,
+      slateEditorInstance: slateEditor,
+    })
+
+    if (!snapshot.context.selection) {
+      return false
+    }
+
+    if (!isSelectionCollapsed(snapshot)) {
+      return false
+    }
+
+    const focusedSpan = getFocusSpan(snapshot)
+
+    if (!focusedSpan) {
+      return false
+    }
+
+    return focusedSpan.node._key === props.leaf._key
+  })
+
+  /**
+   * A span is considered selected if editor selection is overlapping with the
+   * span selection points.
+   */
+  const selected = useSelector(editorActor, (editorActorSnapshot) => {
+    const snapshot = getEditorSnapshot({
+      editorActorSnapshot,
+      slateEditorInstance: slateEditor,
+    })
+
+    if (!snapshot.context.selection) {
+      return false
+    }
+
+    const parent = props.children.props.parent
+    const block =
+      parent && isTextBlock(snapshot.context, parent) ? parent : undefined
+    const spanSelection: EditorSelection = block
+      ? {
+          anchor: {
+            path: [{_key: block._key}, 'children', {_key: props.leaf._key}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: block._key}, 'children', {_key: props.leaf._key}],
+            offset: props.leaf.text.length,
+          },
+        }
+      : null
+
+    return isOverlappingSelection(spanSelection)(snapshot)
+  })
 
   const parent = props.children.props.parent
   const block = parent && slateEditor.isTextBlock(parent) ? parent : undefined
@@ -74,106 +127,6 @@ export function RenderSpan(props: RenderSpanProps) {
 
     return []
   })
-
-  const shouldTrackSelectionAndFocus =
-    annotationMarkDefs.length > 0 && blockSelected
-
-  useEffect(() => {
-    if (!shouldTrackSelectionAndFocus) {
-      setFocused(false)
-      return
-    }
-
-    const sel = PortableTextEditor.getSelection(portableTextEditor)
-
-    if (
-      sel &&
-      isEqual(sel.focus.path, path) &&
-      PortableTextEditor.isCollapsedSelection(portableTextEditor)
-    ) {
-      startTransition(() => {
-        setFocused(true)
-      })
-    }
-  }, [shouldTrackSelectionAndFocus, path, portableTextEditor])
-
-  // Function to check if this leaf is currently inside the user's text selection
-  const setSelectedFromRange = useCallback(() => {
-    if (!shouldTrackSelectionAndFocus) {
-      return
-    }
-
-    const winSelection = window.getSelection()
-
-    if (!winSelection) {
-      setSelected(false)
-      return
-    }
-
-    if (winSelection && winSelection.rangeCount > 0) {
-      const range = winSelection.getRangeAt(0)
-
-      if (spanRef.current && range.intersectsNode(spanRef.current)) {
-        setSelected(true)
-      } else {
-        setSelected(false)
-      }
-    } else {
-      setSelected(false)
-    }
-  }, [shouldTrackSelectionAndFocus])
-
-  useEffect(() => {
-    if (!shouldTrackSelectionAndFocus) {
-      return undefined
-    }
-
-    const onBlur = editorActor.on('blurred', () => {
-      setFocused(false)
-      setSelected(false)
-    })
-
-    const onFocus = editorActor.on('focused', () => {
-      const sel = PortableTextEditor.getSelection(portableTextEditor)
-
-      if (
-        sel &&
-        isEqual(sel.focus.path, path) &&
-        PortableTextEditor.isCollapsedSelection(portableTextEditor)
-      ) {
-        setFocused(true)
-      }
-
-      setSelectedFromRange()
-    })
-
-    const onSelection = editorActor.on('selection', (event) => {
-      if (
-        event.selection &&
-        isEqual(event.selection.focus.path, path) &&
-        PortableTextEditor.isCollapsedSelection(portableTextEditor)
-      ) {
-        setFocused(true)
-      } else {
-        setFocused(false)
-      }
-      setSelectedFromRange()
-    })
-
-    return () => {
-      onBlur.unsubscribe()
-      onFocus.unsubscribe()
-      onSelection.unsubscribe()
-    }
-  }, [
-    editorActor,
-    path,
-    portableTextEditor,
-    setSelectedFromRange,
-    shouldTrackSelectionAndFocus,
-  ])
-
-  useEffect(() => setSelectedFromRange(), [setSelectedFromRange])
 
   let children = props.children
 
