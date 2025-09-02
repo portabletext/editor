@@ -38,7 +38,7 @@
   "scripts": {
     "build": "pkg-utils build --strict --check --clean",
     "check:lint": "biome lint .",
-    "check:react-compiler": "eslint --cache --no-inline-config --no-eslintrc --ignore-pattern '**/__tests__/**' --ext .cjs,.mjs,.js,.jsx,.ts,.tsx --parser @typescript-eslint/parser --plugin react-hooks --rule 'react-hooks/rules-of-hooks: [error]' --rule 'react-hooks/exhaustive-deps: [error]' src",
+    "check:react-compiler": "eslint --cache .",
     "check:types": "tsc",
     "check:types:watch": "tsc --watch",
     "clean": "del .turbo && del dist && del node_modules",
@@ -56,13 +56,13 @@
     "@portabletext/editor": "workspace:*",
     "@sanity/pkg-utils": "^8.1.4",
     "@types/react": "^19.1.11",
-    "@typescript-eslint/eslint-plugin": "^8.41.0",
-    "@typescript-eslint/parser": "^8.41.0",
     "babel-plugin-react-compiler": "19.1.0-rc.3",
-    "eslint": "8.57.1",
+    "eslint": "^9.34.0",
+    "eslint-formatter-gha": "^1.6.0",
     "eslint-plugin-react-hooks": "6.0.0-rc.2",
     "react": "^19.1.1",
-    "typescript": "^5.9.2"
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.41.0"
   },
   "peerDependencies": {
     "@portabletext/editor": "workspace:^2.6.9",
