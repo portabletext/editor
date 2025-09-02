@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.7.1
+
+### Patch Changes
+
+- [#1619](https://github.com/portabletext/editor/pull/1619) [`1028284`](https://github.com/portabletext/editor/commit/1028284f77b3b29229ff8d8ac537f188be1df3bb) Thanks [@christianhg](https://github.com/christianhg)! - fix: `react-hooks/refs` warnings
+
+- [#1619](https://github.com/portabletext/editor/pull/1619) [`1028284`](https://github.com/portabletext/editor/commit/1028284f77b3b29229ff8d8ac537f188be1df3bb) Thanks [@christianhg](https://github.com/christianhg)! - fix: make `focused`/`selected` state inside spans consistent
+
 ## 2.7.0
 
 ### Minor Changes
