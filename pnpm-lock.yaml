@@ -334,7 +334,7 @@ importers:
         version: link:../../packages/patches
       '@sanity/schema':
         specifier: ^4.0.1
-        version: 4.6.0(@types/react@19.1.11)(debug@4.4.1)
+        version: 4.6.1(@types/react@19.1.11)(debug@4.4.1)
       '@xstate/react':
         specifier: ^4.1.3
         version: 4.1.3(@types/react@19.1.11)(react@19.1.1)(xstate@5.21.0)
@@ -359,7 +359,7 @@ importers:
         version: 9.34.0
       '@sanity/types':
         specifier: ^4.0.1
-        version: 4.6.0(@types/react@19.1.11)(debug@4.4.1)
+        version: 4.6.1(@types/react@19.1.11)(debug@4.4.1)
       '@types/react':
         specifier: ^19.1.11
         version: 19.1.11
@@ -416,11 +416,11 @@ importers:
         specifier: ^8.1.4
         version: 8.1.4(@types/babel__core@7.20.5)(@types/node@24.3.0)(babel-plugin-react-compiler@19.1.0-rc.3)(typescript@5.9.2)
       '@sanity/schema':
-        specifier: ^4.6.0
-        version: 4.6.0(@types/react@19.1.11)(debug@4.4.1)
+        specifier: ^4.6.1
+        version: 4.6.1(@types/react@19.1.11)(debug@4.4.1)
       '@sanity/types':
-        specifier: ^4.6.0
-        version: 4.6.0(@types/react@19.1.11)(debug@4.4.1)
+        specifier: ^4.6.1
+        version: 4.6.1(@types/react@19.1.11)(debug@4.4.1)
       '@types/jsdom':
         specifier: ^20.0.0
         version: 20.0.1
@@ -510,11 +510,11 @@ importers:
         specifier: ^8.1.4
         version: 8.1.4(@types/babel__core@7.20.5)(@types/node@24.3.0)(babel-plugin-react-compiler@19.1.0-rc.3)(debug@4.4.1)(typescript@5.9.2)
       '@sanity/schema':
-        specifier: ^4.6.0
-        version: 4.6.0(@types/react@19.1.11)(debug@4.4.1)
+        specifier: ^4.6.1
+        version: 4.6.1(@types/react@19.1.11)(debug@4.4.1)
       '@sanity/types':
-        specifier: ^4.6.0
-        version: 4.6.0(@types/react@19.1.11)(debug@4.4.1)
+        specifier: ^4.6.1
+        version: 4.6.1(@types/react@19.1.11)(debug@4.4.1)
       '@testing-library/react':
         specifier: ^16.3.0
         version: 16.3.0(@testing-library/dom@10.4.0)(@types/react-dom@19.1.7(@types/react@19.1.11))(@types/react@19.1.11)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -662,11 +662,11 @@ importers:
         specifier: ^8.1.4
         version: 8.1.4(@types/babel__core@7.20.5)(@types/node@24.3.0)(babel-plugin-react-compiler@19.1.0-rc.3)(typescript@5.9.2)
       '@sanity/schema':
-        specifier: ^4.6.0
-        version: 4.6.0(@types/react@19.1.11)(debug@4.4.1)
+        specifier: ^4.6.1
+        version: 4.6.1(@types/react@19.1.11)(debug@4.4.1)
       '@sanity/types':
-        specifier: ^4.6.0
-        version: 4.6.0(@types/react@19.1.11)(debug@4.4.1)
+        specifier: ^4.6.1
+        version: 4.6.1(@types/react@19.1.11)(debug@4.4.1)
       '@types/lodash.startcase':
         specifier: ^4.4.9
         version: 4.4.9
@@ -699,7 +699,7 @@ importers:
         version: 8.1.4(@types/babel__core@7.20.5)(@types/node@24.3.0)(babel-plugin-react-compiler@19.1.0-rc.3)(typescript@5.9.2)
       '@sanity/types':
         specifier: ^4.5.0
-        version: 4.6.0(@types/react@19.1.11)(debug@4.4.1)
+        version: 4.6.1(@types/react@19.1.11)(debug@4.4.1)
       typescript:
         specifier: 'catalog:'
         version: 5.9.2
@@ -3267,11 +3267,11 @@ packages:
     peerDependencies:
       prettier: ^3.6.0
 
-  '@sanity/schema@4.6.0':
-    resolution: {integrity: sha512-EkCMecou56j9DfvbAqCuwTHy6nszuLkmDYXxMHELgfNbopxWZzQU/KdvP54RVn/iVwOTlYykgFns90l/oicpug==}
+  '@sanity/schema@4.6.1':
+    resolution: {integrity: sha512-Xmr+Hi6mEAzB0Y9ksJ3UZQBdbGCG/TwIW0tbULn8kuA1akVY3B1+Wq3mPtIgEYFs7jmnQqLZ0lLQEVonCc2nZQ==}
 
-  '@sanity/types@4.6.0':
-    resolution: {integrity: sha512-Mn4z2izu+Sg1mquPQzS8dFCVeao3a3fCM/qfgOlm8PU8IM6vaXpF65KePf4QRuq1HXJ8OmQFAIImuxzOMyGqzw==}
+  '@sanity/types@4.6.1':
+    resolution: {integrity: sha512-nxFPTqj1L9HH+4pL6uzPC5RkElkRoaQKLCt9lQ8VLRuAVQJ4YuLyU7NTxIqSRJtt3yvEbbKZTpY7CWxfdaZijg==}
     peerDependencies:
       '@types/react': ^19.1.11
 
@@ -10405,11 +10405,11 @@ snapshots:
       prettier: 3.6.2
       prettier-plugin-packagejson: 2.5.15(prettier@3.6.2)
 
-  '@sanity/schema@4.6.0(@types/react@19.1.11)(debug@4.4.1)':
+  '@sanity/schema@4.6.1(@types/react@19.1.11)(debug@4.4.1)':
     dependencies:
       '@sanity/descriptors': 1.1.1
       '@sanity/generate-help-url': 3.0.0
-      '@sanity/types': 4.6.0(@types/react@19.1.11)(debug@4.4.1)
+      '@sanity/types': 4.6.1(@types/react@19.1.11)(debug@4.4.1)
       arrify: 2.0.1
       groq-js: 1.17.3
       humanize-list: 1.0.1
@@ -10421,7 +10421,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@sanity/types@4.6.0(@types/react@19.1.11)(debug@4.4.1)':
+  '@sanity/types@4.6.1(@types/react@19.1.11)(debug@4.4.1)':
     dependencies:
       '@sanity/client': 7.10.0(debug@4.4.1)
       '@sanity/media-library-types': 1.0.0
