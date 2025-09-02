@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.5.2
+
+### Patch Changes
+
+- [#1617](https://github.com/portabletext/editor/pull/1617) [`24bd38d`](https://github.com/portabletext/editor/commit/24bd38ddf84d4317ed2f3205ca8333f276dfc8c7) Thanks [@christianhg](https://github.com/christianhg)! - simplify flatten table rule algorithm
+
 ## 3.5.1
 
 ### Patch Changes
