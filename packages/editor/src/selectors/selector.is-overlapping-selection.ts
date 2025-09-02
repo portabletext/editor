@@ -44,6 +44,22 @@ export function isOverlappingSelection(
       return false
     }
 
+    const startPointEqualToOriginalStartPoint = isEqualSelectionPoints(
+      selectionStartPoint,
+      originalSelectionStartPoint,
+    )
+    const endPointEqualToOriginalEndPoint = isEqualSelectionPoints(
+      selectionEndPoint,
+      originalSelectionEndPoint,
+    )
+
+    if (
+      startPointEqualToOriginalStartPoint &&
+      endPointEqualToOriginalEndPoint
+    ) {
+      return true
+    }
+
     const startPointBeforeSelection =
       isPointBeforeSelection(selectionStartPoint)(snapshot)
     const startPointAfterSelection =
@@ -103,13 +119,13 @@ export function isOverlappingSelection(
       },
     })
 
-    const endPointEqualToOriginalStartPoint = isEqualSelectionPoints(
-      selectionEndPoint,
-      originalSelectionStartPoint,
-    )
     const startPointEqualToOriginalEndPoint = isEqualSelectionPoints(
       selectionStartPoint,
       originalSelectionEndPoint,
+    )
+    const endPointEqualToOriginalStartPoint = isEqualSelectionPoints(
+      selectionEndPoint,
+      originalSelectionStartPoint,
     )
 
     // If all checks fail then we can deduce that the selection does not exist

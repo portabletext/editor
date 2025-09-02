@@ -170,6 +170,122 @@ describe(isOverlappingSelection.name, () => {
     ).toBe(false)
   })
 
+  test('partial span selection', () => {
+    expect(
+      isOverlappingSelection({
+        anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 0},
+        focus: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 3},
+      })(
+        snapshot({
+          anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 2},
+          focus: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 1},
+        }),
+      ),
+    ).toBe(true)
+  })
+
+  test('expanded selection at the end edge of span', () => {
+    expect(
+      isOverlappingSelection({
+        anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 0},
+        focus: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 3},
+      })(
+        snapshot({
+          anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 3},
+          focus: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 1},
+        }),
+      ),
+    ).toBe(false)
+  })
+
+  test('collapsed selection at the end edge of span', () => {
+    expect(
+      isOverlappingSelection({
+        anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 0},
+        focus: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 3},
+      })(
+        snapshot({
+          anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 3},
+          focus: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 3},
+        }),
+      ),
+    ).toBe(true)
+  })
+
+  test('expanded selection at the start edge of span', () => {
+    expect(
+      isOverlappingSelection({
+        anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 0},
+        focus: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 3},
+      })(
+        snapshot({
+          anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k3'}], offset: 3},
+          focus: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 0},
+        }),
+      ),
+    ).toBe(false)
+  })
+
+  test('collapsed selection at the start edge of span', () => {
+    expect(
+      isOverlappingSelection({
+        anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 0},
+        focus: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 3},
+      })(
+        snapshot({
+          anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 0},
+          focus: {path: [{_key: 'k1'}, 'children', {_key: 'k5'}], offset: 0},
+        }),
+      ),
+    ).toBe(true)
+  })
+
+  test('selecting entire span', () => {
+    const blockKey = defaultKeyGenerator()
+    const fooKey = defaultKeyGenerator()
+    const barKey = defaultKeyGenerator()
+    const bazKey = defaultKeyGenerator()
+
+    expect(
+      isOverlappingSelection({
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: barKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: barKey}],
+          offset: 3,
+        },
+      })(
+        createTestSnapshot({
+          context: {
+            value: [
+              {
+                _key: blockKey,
+                _type: 'block',
+                children: [
+                  {_key: fooKey, _type: 'span', text: 'foo'},
+                  {_key: barKey, _type: 'span', text: 'bar', marks: ['strong']},
+                  {_key: bazKey, _type: 'span', text: 'baz'},
+                ],
+              },
+            ],
+            selection: {
+              anchor: {
+                path: [{_key: blockKey}, 'children', {_key: barKey}],
+                offset: 0,
+              },
+              focus: {
+                path: [{_key: blockKey}, 'children', {_key: barKey}],
+                offset: 3,
+              },
+            },
+          },
+        }),
+      ),
+    ).toBe(true)
+  })
+
   test('unknown block', () => {
     const unknownBlockKey = defaultKeyGenerator()
 
