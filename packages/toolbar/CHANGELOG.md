@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.1.0
+
+### Minor Changes
+
+- [#1613](https://github.com/portabletext/editor/pull/1613) [`249f558`](https://github.com/portabletext/editor/commit/249f558298b525e732da9799b08d12eb271ae0cd) Thanks [@stipsan](https://github.com/stipsan)! - Update React Compiler to RC3
+
+### Patch Changes
+
+- Updated dependencies [[`249f558`](https://github.com/portabletext/editor/commit/249f558298b525e732da9799b08d12eb271ae0cd), [`ddf8f7e`](https://github.com/portabletext/editor/commit/ddf8f7eadf5211d7288c2f0ef52b7a467ce81ffb)]:
+  - @portabletext/editor@2.7.0
+
 ## 2.0.34
 
 ### Patch Changes
