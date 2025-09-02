@@ -100,8 +100,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/patches
       '@portabletext/react':
-        specifier: ^4.0.1
-        version: 4.0.1(react@19.1.1)
+        specifier: ^4.0.3
+        version: 4.0.3(react@19.1.1)
       '@radix-ui/react-separator':
         specifier: ^1.1.7
         version: 1.1.7(@types/react-dom@19.1.7(@types/react@19.1.11))(@types/react@19.1.11)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -2122,8 +2122,8 @@ packages:
       '@portabletext/editor': workspace:*
       react: ^19
 
-  '@portabletext/react@4.0.1':
-    resolution: {integrity: sha512-S1MNyGQERpdU5bVUYGDWyyHkTiedwnuOHSMPgLr96yJmLKGcyHTcwPktqcgPuaCxsRUrqPVR89IYFsGW2JKn3w==}
+  '@portabletext/react@4.0.3':
+    resolution: {integrity: sha512-sdVSXbi0L5MBVb1Ch5KwbBPZjW/Oqe6s5ZkPi4LcItzHl8rqY2jB0VxsFaGywZyn8Jc47cGLaOtyBM9HkW/9Hg==}
     engines: {node: ^14.13.1 || >=16.0.0}
     peerDependencies:
       react: ^18.2 || ^19
@@ -2132,8 +2132,8 @@ packages:
     resolution: {integrity: sha512-MlU5Og1HqYnU9riXjtydJQcrG/kWmtgo8q2pGEDmLMbKD0Agel4umYLhVoHhRAwC7AEApu9U4BweO8HkY0SIow==}
     engines: {node: ^14.13.1 || >=16.0.0}
 
-  '@portabletext/toolkit@3.0.0':
-    resolution: {integrity: sha512-50otiRkac8unAAU+U9VdhpkZ4FqTG64kzz/6ckeBigKG/cGSU8YZLfmvDhdMH8tw+/uTI7d9Skwqm8RnTHZwDw==}
+  '@portabletext/toolkit@3.0.1':
+    resolution: {integrity: sha512-z8NGqxKxfP0zuC58hPe8+xFC17qSbQ3nC9DgZmhrr7NUFaENJ6vAHJBsH5QzT7nKUjj++dTn+i4O2Uz9cqiGjA==}
     engines: {node: ^14.13.1 || >=16.0.0}
 
   '@portabletext/types@2.0.15':
@@ -8797,18 +8797,18 @@ snapshots:
       '@portabletext/editor': link:packages/editor
       react: 19.1.1
 
-  '@portabletext/react@4.0.1(react@19.1.1)':
+  '@portabletext/react@4.0.3(react@19.1.1)':
     dependencies:
-      '@portabletext/toolkit': 3.0.0
+      '@portabletext/toolkit': 3.0.1
       '@portabletext/types': 2.0.15
       react: 19.1.1
 
   '@portabletext/to-html@3.0.0':
     dependencies:
-      '@portabletext/toolkit': 3.0.0
+      '@portabletext/toolkit': 3.0.1
       '@portabletext/types': 2.0.15
 
-  '@portabletext/toolkit@3.0.0':
+  '@portabletext/toolkit@3.0.1':
     dependencies:
       '@portabletext/types': 2.0.15
 
