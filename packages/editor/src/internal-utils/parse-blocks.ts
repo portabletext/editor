@@ -193,6 +193,7 @@ export function parseTextBlock({
         parseInlineObject({inlineObject: child, context, options}),
     )
     .filter((child) => child !== undefined)
+  const marks = children.flatMap((child) => child.marks ?? [])
 
   const parsedBlock: PortableTextTextBlock = {
     _type: context.schema.block.name,
@@ -208,7 +209,7 @@ export function parseTextBlock({
               marks: [],
             },
           ],
-    markDefs,
+    markDefs: markDefs.filter((markDef) => marks.includes(markDef._key)),
     ...customFields,
   }
 
