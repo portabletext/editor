@@ -7,7 +7,7 @@ import {coreInsertBreakBehaviors} from './behavior.core.insert-break'
 import {coreListBehaviors} from './behavior.core.lists'
 
 export const coreBehaviorsConfig = [
-  coreAnnotationBehaviors.addAnnotationOnCollapsedSelection,
+  ...coreAnnotationBehaviors,
   coreDecoratorBehaviors.strongShortcut,
   coreDecoratorBehaviors.emShortcut,
   coreDecoratorBehaviors.underlineShortcut,

@@ -34,6 +34,28 @@ const addAnnotationOnCollapsedSelection = defineBehavior({
   ],
 })
 
-export const coreAnnotationBehaviors = {
+/**
+ * By default, same-type annotations can overlap. This Core Behavior ensures
+ * that annotations of the same type are mutually exclusive.
+ */
+const preventOverlappingAnnotations = defineBehavior({
+  // Given an `annotation.add` event
+  on: 'annotation.add',
+  // When the annotation is active in the selection
+  guard: ({snapshot, event}) =>
+    selectors.isActiveAnnotation(event.annotation.name, {mode: 'partial'})(
+      snapshot,
+    ),
+  // Then the existing annotation is removed
+  actions: [
+    ({event}) => [
+      raise({type: 'annotation.remove', annotation: event.annotation}),
+      raise(event),
+    ],
+  ],
+})
+
+export const coreAnnotationBehaviors = [
   addAnnotationOnCollapsedSelection,
-}
+  preventOverlappingAnnotations,
+]

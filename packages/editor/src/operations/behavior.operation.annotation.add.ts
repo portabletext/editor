@@ -116,22 +116,11 @@ export const addAnnotationOperationImplementation: BehaviorOperationImplementati
       }
 
       const marks = span.marks ?? []
-      const existingSameTypeAnnotations = marks.filter((mark) =>
-        markDefs.some(
-          (markDef) =>
-            markDef._key === mark && markDef._type === parsedAnnotation._type,
-        ),
-      )
 
       Transforms.setNodes(
         editor,
         {
-          marks: [
-            ...marks.filter(
-              (mark) => !existingSameTypeAnnotations.includes(mark),
-            ),
-            annotationKey,
-          ],
+          marks: [...marks, annotationKey],
         },
         {at: path},
       )
