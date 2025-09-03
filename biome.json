@@ -44,6 +44,7 @@
         "noConsole": {"level": "error", "options": {"allow": ["warn", "error"]}}
       },
       "style": {
+        "useConst": "error",
         "noNonNullAssertion": "off",
         "noUnusedTemplateLiteral": "off",
         "noUselessElse": "off"
