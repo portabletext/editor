@@ -426,6 +426,22 @@ export function createEditableAPI(
     addAnnotation: (type, value) => {
       let paths: ReturnType<EditableAPI['addAnnotation']>
 
+      const snapshot = getEditorSnapshot({
+        editorActorSnapshot: editorActor.getSnapshot(),
+        slateEditorInstance: editor,
+      })
+
+      if (isActiveAnnotation(type.name, {mode: 'partial'})(snapshot)) {
+        editorActor.send({
+          type: 'behavior event',
+          behaviorEvent: {
+            type: 'annotation.remove',
+            annotation: {name: type.name},
+          },
+          editor,
+        })
+      }
+
       Editor.withoutNormalizing(editor, () => {
         paths = addAnnotationOperationImplementation({
           context: {
