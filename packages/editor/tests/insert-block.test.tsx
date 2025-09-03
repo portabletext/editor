@@ -1,10 +1,12 @@
+import {defineSchema} from '@portabletext/schema'
 import type {PortableTextBlock} from '@sanity/types'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, test, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
 import {PortableTextEditor} from '../src/editor/PortableTextEditor'
+import {createTestEditor} from '../src/internal-utils/test-editor'
+import {InternalChange$Plugin} from '../src/plugins/plugin.internal.change-ref'
+import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
 import type {EditorChange, EditorSelection} from '../src/types/editor'
-import {PortableTextEditorTester} from './PortableTextEditorTester'
 
 describe(PortableTextEditor.insertBlock.name, () => {
   test('Scenario: Inserting a custom block without a selection #1', async () => {
@@ -25,14 +27,21 @@ describe(PortableTextEditor.insertBlock.name, () => {
     const initialValue: Array<PortableTextBlock> = [emptyTextBlock]
     const onChange: (change: EditorChange) => void = vi.fn()
 
-    render(
-      <PortableTextEditorTester
-        ref={editorRef}
-        value={initialValue}
-        keyGenerator={() => 'bb'}
-        onChange={onChange}
-      />,
-    )
+    await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'custom image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue,
+      keyGenerator: () => 'bb',
+    })
 
     // Given an empty text block
     await vi.waitFor(() => {
@@ -91,14 +100,21 @@ describe(PortableTextEditor.insertBlock.name, () => {
     const initialValue: Array<PortableTextBlock> = [nonEmptyTextBlock]
     const onChange: (change: EditorChange) => void = vi.fn()
 
-    render(
-      <PortableTextEditorTester
-        ref={editorRef}
-        value={initialValue}
-        keyGenerator={() => 'bb'}
-        onChange={onChange}
-      />,
-    )
+    await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'custom image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue,
+      keyGenerator: () => 'bb',
+    })
 
     // Given an non-empty text block
     await vi.waitFor(() => {
@@ -161,14 +177,21 @@ describe(PortableTextEditor.insertBlock.name, () => {
     const initialValue: Array<PortableTextBlock> = [emptyTextBlock, imageBlock]
     const onChange: (change: EditorChange) => void = vi.fn()
 
-    render(
-      <PortableTextEditorTester
-        ref={editorRef}
-        value={initialValue}
-        keyGenerator={() => 'bc'}
-        onChange={onChange}
-      />,
-    )
+    await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'custom image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+      initialValue,
+      keyGenerator: () => 'bc',
+    })
 
     // Given an empty text block followed by an image
     await vi.waitFor(() => {
