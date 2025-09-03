@@ -94,24 +94,29 @@ describe(converterTextHtml.serialize.name, () => {
   test('paragraph with decorators', () => {
     expect(
       converterTextHtml.serialize({
-        snapshot: createSnapshot(defineSchema({}), {
-          anchor: {
-            path: [
-              {_key: decoratedParagraph._key},
-              'children',
-              {_key: decoratedParagraph.children[0]._key},
-            ],
-            offset: 0,
+        snapshot: createSnapshot(
+          defineSchema({
+            decorators: [{name: 'em'}, {name: 'code'}, {name: 'strong'}],
+          }),
+          {
+            anchor: {
+              path: [
+                {_key: decoratedParagraph._key},
+                'children',
+                {_key: decoratedParagraph.children[0]._key},
+              ],
+              offset: 0,
+            },
+            focus: {
+              path: [
+                {_key: decoratedParagraph._key},
+                'children',
+                {_key: decoratedParagraph.children[2]._key},
+              ],
+              offset: 4,
+            },
           },
-          focus: {
-            path: [
-              {_key: decoratedParagraph._key},
-              'children',
-              {_key: decoratedParagraph.children[2]._key},
-            ],
-            offset: 4,
-          },
-        }),
+        ),
         event: {
           type: 'serialize',
           originEvent: 'clipboard.copy',
@@ -181,6 +186,11 @@ describe(converterTextHtml.serialize.name, () => {
       converterTextHtml.serialize({
         snapshot: createTestSnapshot({
           context: {
+            schema: compileSchema(
+              defineSchema({
+                lists: [{name: 'bullet'}, {name: 'number'}],
+              }),
+            ),
             converters: [],
             value: [
               {

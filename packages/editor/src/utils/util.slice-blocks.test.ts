@@ -11,13 +11,17 @@ const b1: PortableTextTextBlock = {
       _type: 'span',
       _key: 'b1c1',
       text: 'foo',
+      marks: [],
     },
     {
       _type: 'span',
       _key: 'b1c2',
       text: 'bar',
+      marks: [],
     },
   ],
+  markDefs: [],
+  style: 'normal',
 }
 const b2: PortableTextBlock = {
   _type: 'image',
@@ -33,8 +37,11 @@ const b3: PortableTextTextBlock = {
       _type: 'span',
       _key: 'b3c1',
       text: 'baz',
+      marks: [],
     },
   ],
+  markDefs: [],
+  style: 'normal',
 }
 const b4: PortableTextTextBlock = {
   _type: 'block',
@@ -44,6 +51,7 @@ const b4: PortableTextTextBlock = {
       _type: 'span',
       _key: 'b4c1',
       text: 'fizz',
+      marks: [],
     },
     {
       _type: 'stock-ticker',
@@ -54,11 +62,19 @@ const b4: PortableTextTextBlock = {
       _type: 'span',
       _key: 'b4c3',
       text: 'buzz',
+      marks: [],
     },
   ],
+  markDefs: [],
+  style: 'normal',
 }
 
-const schema = compileSchema(defineSchema({}))
+const schema = compileSchema(
+  defineSchema({
+    blockObjects: [{name: 'image'}],
+    inlineObjects: [{name: 'stock-ticker'}],
+  }),
+)
 const blocks: Array<PortableTextBlock> = [b1, b2, b3, b4]
 
 describe(sliceBlocks.name, () => {
@@ -413,7 +429,11 @@ describe(sliceBlocks.name, () => {
           {
             _key: 'b0',
             _type: 'block',
-            children: [{_key: 's0', _type: 'span', text: 'Hello, world!'}],
+            children: [
+              {_key: 's0', _type: 'span', text: 'Hello, world!', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
             _map: {},
           },
         ],
@@ -422,7 +442,9 @@ describe(sliceBlocks.name, () => {
       {
         _key: 'b0',
         _type: 'block',
-        children: [{_key: 's0', _type: 'span', text: 'world'}],
+        children: [{_key: 's0', _type: 'span', text: 'world', marks: []}],
+        markDefs: [],
+        style: 'normal',
         _map: {},
       },
     ])
@@ -449,8 +471,16 @@ describe(sliceBlocks.name, () => {
             _key: 'b0',
             _type: 'block',
             children: [
-              {_key: 's0', _type: 'span', text: 'Hello, world!', _map: {}},
+              {
+                _key: 's0',
+                _type: 'span',
+                text: 'Hello, world!',
+                _map: {},
+                marks: [],
+              },
             ],
+            markDefs: [],
+            style: 'normal',
           },
         ],
       }),
@@ -458,7 +488,11 @@ describe(sliceBlocks.name, () => {
       {
         _key: 'b0',
         _type: 'block',
-        children: [{_key: 's0', _type: 'span', text: 'world', _map: {}}],
+        children: [
+          {_key: 's0', _type: 'span', text: 'world', _map: {}, marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
       },
     ])
   })

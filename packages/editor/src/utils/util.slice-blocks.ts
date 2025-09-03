@@ -1,6 +1,8 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {PortableTextBlock} from '@sanity/types'
 import type {EditorContext} from '../editor/editor-snapshot'
+import {defaultKeyGenerator} from '../editor/key-generator'
+import {parseBlock} from '../internal-utils/parse-blocks'
 import {
   getBlockKeyFromSelectionPoint,
   getChildKeyFromSelectionPoint,
@@ -162,13 +164,44 @@ export function sliceBlocks({
     }
 
     if (startBlock) {
-      middleBlocks.push(block)
+      middleBlocks.push(
+        parseBlock({
+          context: {
+            ...context,
+            keyGenerator: defaultKeyGenerator,
+          },
+          block,
+          options: {refreshKeys: false, validateFields: false},
+        }) ?? block,
+      )
     }
   }
 
+  const parsedStartBlock = startBlock
+    ? parseBlock({
+        context: {
+          ...context,
+          keyGenerator: defaultKeyGenerator,
+        },
+        block: startBlock,
+        options: {refreshKeys: false, validateFields: false},
+      })
+    : undefined
+
+  const parsedEndBlock = endBlock
+    ? parseBlock({
+        context: {
+          ...context,
+          keyGenerator: defaultKeyGenerator,
+        },
+        block: endBlock,
+        options: {refreshKeys: false, validateFields: false},
+      })
+    : undefined
+
   return [
-    ...(startBlock ? [startBlock] : []),
+    ...(parsedStartBlock ? [parsedStartBlock] : []),
     ...middleBlocks,
-    ...(endBlock ? [endBlock] : []),
+    ...(parsedEndBlock ? [parsedEndBlock] : []),
   ]
 }
