@@ -141,6 +141,7 @@ const extendAnnotation: ExtendAnnotationSchemaType = (annotation) => {
       defaultValues: {
         text: 'Consider rewriting this',
       },
+      mutuallyExclusive: [],
     }
   }
 
