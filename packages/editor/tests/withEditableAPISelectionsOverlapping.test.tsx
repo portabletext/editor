@@ -1,10 +1,10 @@
 import {createTestKeyGenerator} from '@portabletext/test'
 import type {PortableTextBlock} from '@sanity/types'
-import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {PortableTextEditorTester} from '../../__tests__/PortableTextEditorTester'
-import {PortableTextEditor} from '../../PortableTextEditor'
+import {render} from 'vitest-browser-react'
+import {PortableTextEditor} from '../src/editor/PortableTextEditor'
+import {PortableTextEditorTester} from './PortableTextEditorTester'
 
 const INITIAL_VALUE: PortableTextBlock[] = [
   {
@@ -45,7 +45,7 @@ describe('plugin:withEditableAPI: .isSelectionsOverlapping', () => {
       anchor: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 6},
     }
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         const isOverlapping = PortableTextEditor.isSelectionsOverlapping(
           editorRef.current,
@@ -79,7 +79,7 @@ describe('plugin:withEditableAPI: .isSelectionsOverlapping', () => {
       anchor: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 8},
     }
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         const isOverlapping = PortableTextEditor.isSelectionsOverlapping(
           editorRef.current,
@@ -113,7 +113,7 @@ describe('plugin:withEditableAPI: .isSelectionsOverlapping', () => {
       anchor: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 6},
     }
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         const isOverlapping = PortableTextEditor.isSelectionsOverlapping(
           editorRef.current,
@@ -147,7 +147,7 @@ describe('plugin:withEditableAPI: .isSelectionsOverlapping', () => {
       anchor: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 12},
     }
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         const isOverlapping = PortableTextEditor.isSelectionsOverlapping(
           editorRef.current,

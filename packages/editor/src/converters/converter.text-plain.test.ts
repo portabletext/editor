@@ -7,7 +7,7 @@ import {
 import type {PortableTextBlock, PortableTextTextBlock} from '@sanity/types'
 import {expect, test} from 'vitest'
 import type {EditorSelection} from '..'
-import {schemaDefinition} from '../editor/__tests__/PortableTextEditorTester'
+import {schemaDefinition} from '../../tests/PortableTextEditorTester'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import {createConverterTextPlain} from './converter.text-plain'
 

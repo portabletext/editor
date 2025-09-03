@@ -1,9 +1,9 @@
 import {createTestKeyGenerator} from '@portabletext/test'
-import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {PortableTextEditorTester} from '../../__tests__/PortableTextEditorTester'
-import {PortableTextEditor} from '../../PortableTextEditor'
+import {render} from 'vitest-browser-react'
+import {PortableTextEditor} from '../src/editor/PortableTextEditor'
+import {PortableTextEditorTester} from './PortableTextEditorTester'
 
 const initialValue = [
   {
@@ -53,7 +53,7 @@ describe('plugin:withPortableTextSelections', () => {
       focus: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 7},
     }
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({
           type: 'value',
@@ -63,7 +63,7 @@ describe('plugin:withPortableTextSelections', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
         PortableTextEditor.select(editorRef.current, initialSelection)

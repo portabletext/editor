@@ -1,9 +1,9 @@
 import {createTestKeyGenerator} from '@portabletext/test'
-import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {PortableTextEditorTester} from '../../__tests__/PortableTextEditorTester'
-import {PortableTextEditor} from '../../PortableTextEditor'
+import {render} from 'vitest-browser-react'
+import {PortableTextEditor} from '../src/editor/PortableTextEditor'
+import {PortableTextEditorTester} from './PortableTextEditorTester'
 
 const initialValue = [
   {
@@ -54,7 +54,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
       />,
     )
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({
           type: 'value',
@@ -64,7 +64,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
         PortableTextEditor.select(editorRef.current, initialSelection)
@@ -99,16 +99,18 @@ describe('plugin:withEditableAPI: .delete()', () => {
   it('deletes all the blocks, but leaves a placeholder block', async () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
-    render(
-      <PortableTextEditorTester
-        keyGenerator={createTestKeyGenerator()}
-        onChange={onChange}
-        ref={editorRef}
-        value={initialValue}
-      />,
+    await vi.waitFor(() =>
+      render(
+        <PortableTextEditorTester
+          keyGenerator={createTestKeyGenerator()}
+          onChange={onChange}
+          ref={editorRef}
+          value={initialValue}
+        />,
+      ),
     )
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(onChange).toHaveBeenCalledWith({
         type: 'value',
         value: initialValue,
@@ -116,7 +118,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
       expect(onChange).toHaveBeenCalledWith({type: 'ready'})
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.delete(
           editorRef.current,
@@ -128,7 +130,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
         )
       }
     })
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         // New keys here confirms that a placeholder block has been created
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
@@ -155,16 +157,18 @@ describe('plugin:withEditableAPI: .delete()', () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
 
-    render(
-      <PortableTextEditorTester
-        keyGenerator={createTestKeyGenerator()}
-        onChange={onChange}
-        ref={editorRef}
-        value={initialValue}
-      />,
+    await vi.waitFor(() =>
+      render(
+        <PortableTextEditorTester
+          keyGenerator={createTestKeyGenerator()}
+          onChange={onChange}
+          ref={editorRef}
+          value={initialValue}
+        />,
+      ),
     )
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({
           type: 'value',
@@ -174,7 +178,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.select(editorRef.current, {
           focus: {path: [{_key: 'b'}, 'children', {_key: 'b1'}], offset: 5},
@@ -183,7 +187,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.delete(
           editorRef.current,
@@ -193,7 +197,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current))
           .toMatchInlineSnapshot(`
@@ -236,16 +240,18 @@ describe('plugin:withEditableAPI: .delete()', () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
 
-    render(
-      <PortableTextEditorTester
-        onChange={onChange}
-        ref={editorRef}
-        value={initialValue}
-        keyGenerator={createTestKeyGenerator()}
-      />,
+    await vi.waitFor(() =>
+      render(
+        <PortableTextEditorTester
+          onChange={onChange}
+          ref={editorRef}
+          value={initialValue}
+          keyGenerator={createTestKeyGenerator()}
+        />,
+      ),
     )
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({
           type: 'value',
@@ -255,7 +261,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.select(editorRef.current, {
           focus: {path: [{_key: 'b'}, 'children', {_key: 'b1'}], offset: 5},
@@ -264,7 +270,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.delete(
           editorRef.current,
@@ -274,7 +280,7 @@ describe('plugin:withEditableAPI: .delete()', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           {

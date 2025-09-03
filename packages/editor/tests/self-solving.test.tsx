@@ -2,11 +2,11 @@ import type {JSONValue, Patch} from '@portabletext/patches'
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import type {PortableTextBlock, PortableTextSpan} from '@sanity/types'
-import {render, waitFor} from '@testing-library/react'
 import {createRef, type ComponentProps, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {getTextSelection} from '../../internal-utils/text-selection'
-import {PortableTextEditor} from '../PortableTextEditor'
+import {render} from 'vitest-browser-react'
+import {PortableTextEditor} from '../src/editor/PortableTextEditor'
+import {getTextSelection} from '../src/internal-utils/text-selection'
 import {PortableTextEditorTester} from './PortableTextEditorTester'
 
 type OnChange = ComponentProps<typeof PortableTextEditor>['onChange']
@@ -86,7 +86,7 @@ describe('Feature: Self-solving', () => {
       />,
     )
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenNthCalledWith(1, {
           type: 'value',
@@ -98,7 +98,7 @@ describe('Feature: Self-solving', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.select(
           editorRef.current,
@@ -111,7 +111,7 @@ describe('Feature: Self-solving', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenNthCalledWith(3, {
           type: 'selection',

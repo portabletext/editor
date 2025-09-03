@@ -1,9 +1,9 @@
 import {createTestKeyGenerator} from '@portabletext/test'
-import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {PortableTextEditorTester} from '../../__tests__/PortableTextEditorTester'
-import {PortableTextEditor} from '../../PortableTextEditor'
+import {render} from 'vitest-browser-react'
+import {PortableTextEditor} from '../src/editor/PortableTextEditor'
+import {PortableTextEditorTester} from './PortableTextEditorTester'
 
 describe('plugin:withPortableTextLists', () => {
   it('should return active list styles that cover the whole selection', async () => {
@@ -41,7 +41,7 @@ describe('plugin:withPortableTextLists', () => {
       },
     ]
     const onChange = vi.fn()
-    await waitFor(() => {
+    await vi.waitFor(() => {
       render(
         <PortableTextEditorTester
           keyGenerator={createTestKeyGenerator()}
@@ -53,7 +53,7 @@ describe('plugin:withPortableTextLists', () => {
     })
     const editor = editorRef.current!
     expect(editor).toBeDefined()
-    await waitFor(() => {
+    await vi.waitFor(() => {
       PortableTextEditor.focus(editor)
       PortableTextEditor.select(editor, {
         focus: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 0},

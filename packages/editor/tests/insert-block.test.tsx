@@ -1,9 +1,9 @@
 import type {PortableTextBlock} from '@sanity/types'
-import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, test, vi} from 'vitest'
-import type {EditorChange, EditorSelection} from '../../types/editor'
-import {PortableTextEditor} from '../PortableTextEditor'
+import {render} from 'vitest-browser-react'
+import {PortableTextEditor} from '../src/editor/PortableTextEditor'
+import type {EditorChange, EditorSelection} from '../src/types/editor'
 import {PortableTextEditorTester} from './PortableTextEditorTester'
 
 describe(PortableTextEditor.insertBlock.name, () => {
@@ -35,7 +35,7 @@ describe(PortableTextEditor.insertBlock.name, () => {
     )
 
     // Given an empty text block
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({
           type: 'value',
@@ -46,14 +46,14 @@ describe(PortableTextEditor.insertBlock.name, () => {
     })
 
     // And no selection
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getSelection(editorRef.current)).toBeNull()
       }
     })
 
     // When a new image is inserted
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         const imageBlockType = editorRef.current.schemaTypes.blockObjects.find(
           (object) => object.name === 'custom image',
@@ -63,7 +63,7 @@ describe(PortableTextEditor.insertBlock.name, () => {
     })
 
     // Then the empty text block is replaced with the new image
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           {_key: 'bb', _type: 'custom image'},
@@ -101,7 +101,7 @@ describe(PortableTextEditor.insertBlock.name, () => {
     )
 
     // Given an non-empty text block
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({
           type: 'value',
@@ -112,14 +112,14 @@ describe(PortableTextEditor.insertBlock.name, () => {
     })
 
     // And no selection
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getSelection(editorRef.current)).toBeNull()
       }
     })
 
     // When a new image is inserted
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         const imageBlockType = editorRef.current.schemaTypes.blockObjects.find(
           (object) => object.name === 'custom image',
@@ -129,7 +129,7 @@ describe(PortableTextEditor.insertBlock.name, () => {
     })
 
     // Then the empty text block is replaced with the new image
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           nonEmptyTextBlock,
@@ -171,7 +171,7 @@ describe(PortableTextEditor.insertBlock.name, () => {
     )
 
     // Given an empty text block followed by an image
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({
           type: 'value',
@@ -187,12 +187,12 @@ describe(PortableTextEditor.insertBlock.name, () => {
       focus: {path: [{_key: 'ba'}, 'children', {_key: 'sa'}], offset: 0},
       backward: false,
     }
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.select(editorRef.current, initialSelection)
       }
     })
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({
           type: 'selection',
@@ -202,7 +202,7 @@ describe(PortableTextEditor.insertBlock.name, () => {
     })
 
     // When a new image is inserted
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         const imageBlockType = editorRef.current.schemaTypes.blockObjects.find(
           (object) => object.name === 'custom image',
@@ -212,7 +212,7 @@ describe(PortableTextEditor.insertBlock.name, () => {
     })
 
     // Then the empty text block is replaced with the new image
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           {_key: 'bc', _type: 'custom image'},

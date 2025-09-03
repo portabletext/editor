@@ -1,13 +1,13 @@
 import {compileSchema, isTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
+import {render} from 'vitest-browser-react'
+import {PortableTextEditor} from '../src/editor/PortableTextEditor'
 import {
   PortableTextEditorTester,
   schemaDefinition,
-} from '../../__tests__/PortableTextEditorTester'
-import {PortableTextEditor} from '../../PortableTextEditor'
+} from './PortableTextEditorTester'
 
 const initialValue = [
   {
@@ -68,7 +68,7 @@ describe('plugin:withEditableAPI: .getFragment()', () => {
       anchor: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 7},
     }
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({
           type: 'value',
@@ -78,7 +78,7 @@ describe('plugin:withEditableAPI: .getFragment()', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
         PortableTextEditor.select(editorRef.current, initialSelection)
@@ -101,20 +101,22 @@ describe('plugin:withEditableAPI: .getFragment()', () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
 
-    render(
-      <PortableTextEditorTester
-        keyGenerator={createTestKeyGenerator()}
-        onChange={onChange}
-        ref={editorRef}
-        value={initialValue}
-      />,
+    await vi.waitFor(() =>
+      render(
+        <PortableTextEditorTester
+          keyGenerator={createTestKeyGenerator()}
+          onChange={onChange}
+          ref={editorRef}
+          value={initialValue}
+        />,
+      ),
     )
     const initialSelection = {
       anchor: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 6},
       focus: {path: [{_key: 'b'}, 'children', {_key: 'b3'}], offset: 9},
     }
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({
           type: 'value',
@@ -124,7 +126,7 @@ describe('plugin:withEditableAPI: .getFragment()', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
         PortableTextEditor.select(editorRef.current, initialSelection)

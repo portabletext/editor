@@ -1,10 +1,10 @@
 import {createTestKeyGenerator} from '@portabletext/test'
 import type {PortableTextBlock} from '@sanity/types'
-import {render, waitFor} from '@testing-library/react'
 import {createRef, type ReactNode, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import type {RangeDecoration} from '../..'
-import type {PortableTextEditor} from '../PortableTextEditor'
+import {render} from 'vitest-browser-react'
+import type {RangeDecoration} from '../src'
+import type {PortableTextEditor} from '../src/editor/PortableTextEditor'
 import {PortableTextEditorTester} from './PortableTextEditorTester'
 
 const helloBlock: PortableTextBlock = {
@@ -37,7 +37,7 @@ describe('RangeDecorations', () => {
       },
     ]
 
-    const {rerender} = await waitFor(() =>
+    const {rerender} = await vi.waitFor(() =>
       render(
         <PortableTextEditorTester
           keyGenerator={createTestKeyGenerator()}
@@ -49,7 +49,7 @@ describe('RangeDecorations', () => {
       ),
     )
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({
           type: 'value',
@@ -59,7 +59,7 @@ describe('RangeDecorations', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect([rangeDecorationIteration, 'initial']).toEqual([1, 'initial'])
     })
 
@@ -73,7 +73,7 @@ describe('RangeDecorations', () => {
         value={value}
       />,
     )
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect([rangeDecorationIteration, 'initial']).toEqual([1, 'initial'])
     })
     // Update the range decorations, a new object with identical values
@@ -96,7 +96,7 @@ describe('RangeDecorations', () => {
         value={value}
       />,
     )
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect([rangeDecorationIteration, 'updated-with-equal-values']).toEqual([
         1,
         'updated-with-equal-values',
@@ -122,7 +122,7 @@ describe('RangeDecorations', () => {
         value={value}
       />,
     )
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect([rangeDecorationIteration, 'updated-with-different']).toEqual([
         2,
         'updated-with-different',
@@ -149,7 +149,7 @@ describe('RangeDecorations', () => {
         value={value}
       />,
     )
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect([rangeDecorationIteration, 'updated-with-different']).toEqual([
         3,
         'updated-with-different',
@@ -176,7 +176,7 @@ describe('RangeDecorations', () => {
         value={value}
       />,
     )
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect([
         rangeDecorationIteration,
         'updated-with-different-payload',
@@ -203,7 +203,7 @@ describe('RangeDecorations', () => {
         value={value}
       />,
     )
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect([
         rangeDecorationIteration,
         'updated-with-different-payload',

@@ -1,9 +1,9 @@
 import {createTestKeyGenerator} from '@portabletext/test'
-import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {PortableTextEditorTester} from '../../editor/__tests__/PortableTextEditorTester'
-import {PortableTextEditor} from '../../editor/PortableTextEditor'
+import {render} from 'vitest-browser-react'
+import {PortableTextEditor} from '../src/editor/PortableTextEditor'
+import {PortableTextEditorTester} from './PortableTextEditorTester'
 
 describe('values: normalization', () => {
   it("accepts incoming value with blocks without a style or markDefs prop, but doesn't leave them without them when editing them", async () => {
@@ -33,7 +33,7 @@ describe('values: normalization', () => {
       />,
     )
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({
           type: 'value',
@@ -43,7 +43,7 @@ describe('values: normalization', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
         PortableTextEditor.select(editorRef.current, {

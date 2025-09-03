@@ -93,7 +93,6 @@ export default defineConfig({
             'src/plugins/*.test.tsx',
           ],
           environment: 'jsdom',
-          setupFiles: ['./vitest.setup.ts'],
         },
       },
     ],
