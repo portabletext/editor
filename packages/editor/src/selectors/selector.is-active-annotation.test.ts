@@ -1,3 +1,4 @@
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
@@ -39,11 +40,17 @@ describe(isActiveAnnotation.name, () => {
       ],
     },
   ]
+  const schema = compileSchema(
+    defineSchema({
+      annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+    }),
+  )
 
   describe('collapsed selection', () => {
     test('selection before the annotation', () => {
       const snapshot = createTestSnapshot({
         context: {
+          schema,
           value,
           selection: {
             anchor: {
@@ -64,6 +71,7 @@ describe(isActiveAnnotation.name, () => {
     test('selection at the start of the annotation', () => {
       const snapshot = createTestSnapshot({
         context: {
+          schema,
           value,
           selection: {
             anchor: {
@@ -84,6 +92,7 @@ describe(isActiveAnnotation.name, () => {
     test('selection after the annotation', () => {
       const snapshot = createTestSnapshot({
         context: {
+          schema,
           value,
           selection: {
             anchor: {
@@ -104,6 +113,7 @@ describe(isActiveAnnotation.name, () => {
     test('selection at the end of the annotation', () => {
       const snapshot = createTestSnapshot({
         context: {
+          schema,
           value,
           selection: {
             anchor: {
@@ -124,6 +134,7 @@ describe(isActiveAnnotation.name, () => {
     test('selection in the annotation', () => {
       const snapshot = createTestSnapshot({
         context: {
+          schema,
           value,
           selection: {
             anchor: {
@@ -146,6 +157,7 @@ describe(isActiveAnnotation.name, () => {
     test('selection on the annotation', () => {
       const snapshot = createTestSnapshot({
         context: {
+          schema,
           value,
           selection: {
             anchor: {
@@ -166,6 +178,7 @@ describe(isActiveAnnotation.name, () => {
     test('selection in the annotation', () => {
       const snapshot = createTestSnapshot({
         context: {
+          schema,
           value,
           selection: {
             anchor: {
@@ -183,9 +196,10 @@ describe(isActiveAnnotation.name, () => {
       expect(isActiveAnnotation('link')(snapshot)).toBe(true)
     })
 
-    test('selection including the annotation', () => {
+    describe('selection including the annotation', () => {
       const snapshot = createTestSnapshot({
         context: {
+          schema,
           value,
           selection: {
             anchor: {
@@ -200,12 +214,21 @@ describe(isActiveAnnotation.name, () => {
         },
       })
 
-      expect(isActiveAnnotation('link')(snapshot)).toBe(false)
+      test('mode: full', () => {
+        expect(isActiveAnnotation('link')(snapshot)).toBe(false)
+      })
+
+      test('mode: partial', () => {
+        expect(isActiveAnnotation('link', {mode: 'partial'})(snapshot)).toBe(
+          true,
+        )
+      })
     })
 
-    test('selection before the annotation', () => {
+    describe('selection before the annotation', () => {
       const snapshot = createTestSnapshot({
         context: {
+          schema,
           value,
           selection: {
             anchor: {
@@ -220,12 +243,21 @@ describe(isActiveAnnotation.name, () => {
         },
       })
 
-      expect(isActiveAnnotation('link')(snapshot)).toBe(false)
+      test('mode: full', () => {
+        expect(isActiveAnnotation('link')(snapshot)).toBe(false)
+      })
+
+      test('mode: partial', () => {
+        expect(isActiveAnnotation('link', {mode: 'partial'})(snapshot)).toBe(
+          false,
+        )
+      })
     })
 
     test('selection overlapping from the start', () => {
       const snapshot = createTestSnapshot({
         context: {
+          schema,
           value,
           selection: {
             anchor: {
@@ -246,6 +278,7 @@ describe(isActiveAnnotation.name, () => {
     test('selection after the annotation', () => {
       const snapshot = createTestSnapshot({
         context: {
+          schema,
           value,
           selection: {
             anchor: {
@@ -266,6 +299,7 @@ describe(isActiveAnnotation.name, () => {
     test('selection overlapping from the end', () => {
       const snapshot = createTestSnapshot({
         context: {
+          schema,
           value,
           selection: {
             anchor: {
