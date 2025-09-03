@@ -4,6 +4,7 @@ import * as selectors from '@portabletext/editor/selectors'
 import {useActor} from '@xstate/react'
 import {fromCallback, setup, type AnyEventObject} from 'xstate'
 import {disableListener, type DisableListenerEvent} from './disable-listener'
+import {useMutuallyExclusiveAnnotation} from './use-mutually-exclusive-annotation'
 import type {ToolbarAnnotationSchemaType} from './use-toolbar-schema'
 
 const activeListener = fromCallback<
@@ -292,6 +293,8 @@ export function useAnnotationButton(props: {
       schemaType: props.schemaType,
     },
   })
+
+  useMutuallyExclusiveAnnotation(props)
 
   return {
     snapshot: {

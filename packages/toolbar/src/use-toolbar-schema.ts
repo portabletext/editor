@@ -1,6 +1,7 @@
 import {
   useEditor,
   useEditorSelector,
+  type AnnotationDefinition,
   type AnnotationSchemaType,
   type BlockObjectSchemaType,
   type DecoratorDefinition,
@@ -128,6 +129,7 @@ export type ToolbarAnnotationSchemaType = AnnotationSchemaType & {
   icon?: React.ComponentType
   defaultValues?: Record<string, unknown>
   shortcut?: KeyboardShortcut
+  mutuallyExclusive?: ReadonlyArray<AnnotationDefinition['name']>
 }
 
 /**
