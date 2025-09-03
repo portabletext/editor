@@ -1,9 +1,9 @@
 import {createTestKeyGenerator} from '@portabletext/test'
-import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {PortableTextEditorTester} from '../../__tests__/PortableTextEditorTester'
-import {PortableTextEditor} from '../../PortableTextEditor'
+import {render} from 'vitest-browser-react'
+import {PortableTextEditor} from '../src/editor/PortableTextEditor'
+import {PortableTextEditorTester} from './PortableTextEditorTester'
 
 const initialValue = [
   {
@@ -67,7 +67,7 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
       />,
     )
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({
           type: 'value',
@@ -77,14 +77,14 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
         PortableTextEditor.select(editorRef.current, initialSelection)
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         const inlineType = editorRef.current.schemaTypes.inlineObjects.find(
           (t) => t.name === 'someObject',
@@ -95,7 +95,7 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           {
@@ -127,7 +127,7 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.insertChild(
           editorRef.current,
@@ -139,7 +139,7 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           {
@@ -209,21 +209,21 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       />,
     )
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({type: 'value', value})
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
         PortableTextEditor.select(editorRef.current, emptyBlockSelection)
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.insertBlock(
           editorRef.current,
@@ -235,7 +235,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           {
@@ -261,7 +261,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       />,
     )
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({
           type: 'value',
@@ -271,14 +271,14 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
         PortableTextEditor.select(editorRef.current, initialSelection)
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.insertBlock(
           editorRef.current,
@@ -290,7 +290,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           ...initialValue,
@@ -317,7 +317,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       />,
     )
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({
           type: 'value',
@@ -327,7 +327,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
         PortableTextEditor.select(editorRef.current, {
@@ -337,7 +337,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.insertBlock(
           editorRef.current,
@@ -349,7 +349,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           {
@@ -380,14 +380,14 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       />,
     )
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({type: 'value', value})
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
         // Focus the `custom image` block
@@ -398,7 +398,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.insertBlock(
           editorRef.current,
@@ -410,7 +410,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           ...value,
@@ -441,14 +441,14 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       />,
     )
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({type: 'value', value})
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
         // Focus the `text` block
@@ -456,7 +456,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.insertBlock(
           editorRef.current,
@@ -468,7 +468,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           value[0],
@@ -497,20 +497,20 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       />,
     )
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({type: 'value', value})
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.select(editorRef.current, emptyBlockSelection)
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.insertBlock(
           editorRef.current,
@@ -522,7 +522,7 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
           value[0],

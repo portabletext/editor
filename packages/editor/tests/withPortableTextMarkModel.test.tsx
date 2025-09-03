@@ -1,10 +1,10 @@
 import {createTestKeyGenerator} from '@portabletext/test'
-import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {PortableTextEditorTester} from '../../__tests__/PortableTextEditorTester'
-import type {EditorSelection} from '../../../types/editor'
-import {PortableTextEditor} from '../../PortableTextEditor'
+import {render} from 'vitest-browser-react'
+import {PortableTextEditor} from '../src/editor/PortableTextEditor'
+import type {EditorSelection} from '../src/types/editor'
+import {PortableTextEditorTester} from './PortableTextEditorTester'
 
 describe('plugin:withPortableTextMarksModel', () => {
   describe('normalization', () => {
@@ -49,7 +49,7 @@ describe('plugin:withPortableTextMarksModel', () => {
         />,
       )
 
-      await waitFor(() => {
+      await vi.waitFor(() => {
         if (editorRef.current) {
           expect(onChange).toHaveBeenCalledWith({
             type: 'value',
@@ -59,7 +59,7 @@ describe('plugin:withPortableTextMarksModel', () => {
         }
       })
 
-      await waitFor(() => {
+      await vi.waitFor(() => {
         if (editorRef.current) {
           PortableTextEditor.focus(editorRef.current)
           PortableTextEditor.select(editorRef.current, {
@@ -70,7 +70,7 @@ describe('plugin:withPortableTextMarksModel', () => {
         }
       })
 
-      await waitFor(() => {
+      await vi.waitFor(() => {
         if (editorRef.current) {
           expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
             {
@@ -171,7 +171,7 @@ describe('plugin:withPortableTextMarksModel', () => {
         },
       }
       const onChange = vi.fn()
-      await waitFor(() => {
+      await vi.waitFor(() => {
         render(
           <PortableTextEditorTester
             keyGenerator={createTestKeyGenerator()}
@@ -183,7 +183,7 @@ describe('plugin:withPortableTextMarksModel', () => {
       })
       const editor = editorRef.current!
       expect(editor).toBeDefined()
-      await waitFor(() => {
+      await vi.waitFor(() => {
         PortableTextEditor.select(editor, sel)
         PortableTextEditor.delete(editor, sel)
         expect(PortableTextEditor.getValue(editor)).toEqual([
@@ -287,7 +287,7 @@ describe('plugin:withPortableTextMarksModel', () => {
         />,
       )
 
-      await waitFor(() => {
+      await vi.waitFor(() => {
         if (editorRef.current) {
           expect(onChange).toHaveBeenCalledWith({
             type: 'value',
@@ -297,14 +297,14 @@ describe('plugin:withPortableTextMarksModel', () => {
         }
       })
 
-      await waitFor(() => {
+      await vi.waitFor(() => {
         if (editorRef.current) {
           PortableTextEditor.select(editorRef.current, sel)
           PortableTextEditor.insertBreak(editorRef.current)
         }
       })
 
-      await waitFor(() => {
+      await vi.waitFor(() => {
         if (editorRef.current) {
           expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
             {
@@ -390,7 +390,7 @@ describe('plugin:withPortableTextMarksModel', () => {
         />,
       )
 
-      await waitFor(() => {
+      await vi.waitFor(() => {
         if (editorRef.current) {
           expect(onChange).toHaveBeenCalledWith({
             type: 'value',
@@ -400,13 +400,13 @@ describe('plugin:withPortableTextMarksModel', () => {
         }
       })
 
-      await waitFor(() => {
+      await vi.waitFor(() => {
         if (editorRef.current) {
           PortableTextEditor.focus(editorRef.current)
         }
       })
 
-      await waitFor(() => {
+      await vi.waitFor(() => {
         if (editorRef.current) {
           const currentSelectionObject = PortableTextEditor.getSelection(
             editorRef.current,
@@ -450,7 +450,7 @@ describe('plugin:withPortableTextMarksModel', () => {
         },
       ]
       const onChange = vi.fn()
-      await waitFor(() => {
+      await vi.waitFor(() => {
         render(
           <PortableTextEditorTester
             onChange={onChange}
@@ -462,7 +462,7 @@ describe('plugin:withPortableTextMarksModel', () => {
       })
       const editor = editorRef.current!
       expect(editor).toBeDefined()
-      await waitFor(() => {
+      await vi.waitFor(() => {
         PortableTextEditor.focus(editor)
         PortableTextEditor.select(editor, {
           focus: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 0},
@@ -505,7 +505,7 @@ describe('plugin:withPortableTextMarksModel', () => {
         },
       ]
       const onChange = vi.fn()
-      await waitFor(() => {
+      await vi.waitFor(() => {
         render(
           <PortableTextEditorTester
             onChange={onChange}
@@ -517,7 +517,7 @@ describe('plugin:withPortableTextMarksModel', () => {
       })
       const editor = editorRef.current!
       expect(editor).toBeDefined()
-      await waitFor(() => {
+      await vi.waitFor(() => {
         PortableTextEditor.focus(editor)
         PortableTextEditor.select(editor, {
           focus: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 0},
@@ -554,7 +554,7 @@ describe('plugin:withPortableTextMarksModel', () => {
         },
       ]
       const onChange = vi.fn()
-      await waitFor(() => {
+      await vi.waitFor(() => {
         render(
           <PortableTextEditorTester
             keyGenerator={createTestKeyGenerator()}
@@ -565,7 +565,7 @@ describe('plugin:withPortableTextMarksModel', () => {
         )
       })
 
-      await waitFor(() => {
+      await vi.waitFor(() => {
         if (editorRef.current) {
           expect(onChange).toHaveBeenCalledWith({
             type: 'value',
@@ -575,7 +575,7 @@ describe('plugin:withPortableTextMarksModel', () => {
         }
       })
 
-      await waitFor(() => {
+      await vi.waitFor(() => {
         if (editorRef.current) {
           PortableTextEditor.focus(editorRef.current)
 

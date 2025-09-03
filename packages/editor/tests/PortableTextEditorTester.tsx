@@ -8,9 +8,9 @@ import {
   type PortableTextEditor,
   type PortableTextEditorProps,
   type SchemaDefinition,
-} from '../../index'
-import {InternalChange$Plugin} from '../../plugins/plugin.internal.change-ref'
-import {InternalPortableTextEditorRefPlugin} from '../../plugins/plugin.internal.portable-text-editor-ref'
+} from '../src/index'
+import {InternalChange$Plugin} from '../src/plugins/plugin.internal.change-ref'
+import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
 
 export const schemaDefinition = defineSchema({
   decorators: [{name: 'strong'}],
@@ -50,7 +50,6 @@ export const PortableTextEditorTester = forwardRef(
           selection={props.selection || undefined}
           rangeDecorations={props.rangeDecorations}
           renderPlaceholder={props.renderPlaceholder}
-          aria-describedby="desc_foo"
         />
       </EditorProvider>
     )

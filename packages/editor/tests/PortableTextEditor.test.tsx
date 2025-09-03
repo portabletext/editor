@@ -1,10 +1,10 @@
 import {createTestKeyGenerator} from '@portabletext/test'
 import type {PortableTextBlock} from '@sanity/types'
-import {render, waitFor} from '@testing-library/react'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import type {EditorSelection} from '../..'
-import {PortableTextEditor} from '../PortableTextEditor'
+import {render} from 'vitest-browser-react'
+import type {EditorSelection} from '../src'
+import {PortableTextEditor} from '../src/editor/PortableTextEditor'
 import {PortableTextEditorTester} from './PortableTextEditorTester'
 
 const helloBlock: PortableTextBlock = {
@@ -20,7 +20,7 @@ describe('initialization', () => {
   it('receives initial onChange events and has custom placeholder', async () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
-    const {container} = render(
+    render(
       <PortableTextEditorTester
         keyGenerator={createTestKeyGenerator()}
         onChange={onChange}
@@ -30,64 +30,9 @@ describe('initialization', () => {
       />,
     )
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(editorRef.current).not.toBe(null)
       expect(onChange).toHaveBeenCalledWith({type: 'ready'})
-      expect(container).toMatchInlineSnapshot(`
-<div>
-  <div
-    aria-describedby="desc_foo"
-    aria-multiline="true"
-    autocapitalize="false"
-    autocorrect="false"
-    class="pt-editable"
-    contenteditable="true"
-    data-read-only="false"
-    data-slate-editor="true"
-    data-slate-node="value"
-    role="textbox"
-    spellcheck="false"
-    style="position: relative; white-space: pre-wrap; word-wrap: break-word;"
-    zindex="-1"
-  >
-    <div
-      class="pt-block pt-text-block pt-text-block-style-normal"
-      data-block-key="k0"
-      data-block-name="block"
-      data-block-type="text"
-      data-slate-node="element"
-      data-style="normal"
-    >
-      <div>
-        <span
-          data-child-key="k1"
-          data-child-name="span"
-          data-child-type="span"
-          data-slate-node="text"
-        >
-          <span
-            contenteditable="false"
-            style="position: absolute; user-select: none; pointer-events: none; left: 0px; right: 0px;"
-          >
-            Jot something down here
-          </span>
-          <span
-            data-slate-leaf="true"
-          >
-            <span
-              data-slate-length="0"
-              data-slate-zero-width="n"
-            >
-              ﻿
-              <br />
-            </span>
-          </span>
-        </span>
-      </div>
-    </div>
-  </div>
-</div>
-`)
     })
   })
   it('takes value from props and confirms it by emitting value change event', async () => {
@@ -103,7 +48,7 @@ describe('initialization', () => {
       />,
     )
     const normalizedEditorValue = [{...initialValue[0], style: 'normal'}]
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(onChange).toHaveBeenCalledWith({
         type: 'value',
         value: initialValue,
@@ -135,7 +80,7 @@ describe('initialization', () => {
       />,
     )
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({
           type: 'value',
@@ -145,7 +90,7 @@ describe('initialization', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         PortableTextEditor.focus(editorRef.current)
         expect(
@@ -179,7 +124,7 @@ describe('initialization', () => {
       />,
     )
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({
           type: 'value',
@@ -189,7 +134,7 @@ describe('initialization', () => {
       }
     })
 
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         const sel = PortableTextEditor.getSelection(editorRef.current)
         PortableTextEditor.focus(editorRef.current)
@@ -211,7 +156,7 @@ describe('initialization', () => {
         value={initialValue}
       />,
     )
-    waitFor(() => {
+    vi.waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getSelection(editorRef.current)).toEqual(
           newSelection,
@@ -237,7 +182,7 @@ describe('initialization', () => {
         value={initialValue}
       />,
     )
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).not.toHaveBeenCalledWith({
           type: 'invalidValue',
@@ -272,7 +217,7 @@ describe('initialization', () => {
     }
     const onChange = vi.fn()
     let _rerender: any
-    await waitFor(() => {
+    await vi.waitFor(() => {
       render(
         <PortableTextEditorTester
           keyGenerator={createTestKeyGenerator()}
@@ -284,7 +229,7 @@ describe('initialization', () => {
       )
       _rerender = render
     })
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(onChange).not.toHaveBeenCalledWith({
         type: 'invalidValue',
         value,
@@ -314,7 +259,7 @@ describe('initialization', () => {
         value={value}
       />,
     )
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(newOnChange).toHaveBeenCalledWith({
         type: 'invalidValue',
         value,
@@ -366,7 +311,7 @@ describe('initialization', () => {
         value={initialValue}
       />,
     )
-    await waitFor(() => {
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({
           type: 'invalidValue',

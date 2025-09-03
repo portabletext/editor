@@ -3,8 +3,8 @@ import type {PortableTextBlock} from '@sanity/types'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
-import {PortableTextEditorTester} from '../src/editor/__tests__/PortableTextEditorTester'
 import {PortableTextEditor} from '../src/editor/PortableTextEditor'
+import {PortableTextEditorTester} from './PortableTextEditorTester'
 
 describe('when PTE would display warnings, instead it self solves', () => {
   it('when child at index is missing required _key in block with _key', async () => {
