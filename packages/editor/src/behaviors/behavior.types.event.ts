@@ -73,7 +73,6 @@ const syntheticBehaviorEventTypes = [
   'history.undo',
   'insert.inline object',
   'insert.block',
-  'insert.span',
   'insert.text',
   'move.backward',
   'move.block',
@@ -169,15 +168,6 @@ export type SyntheticBehaviorEvent =
       select?: 'start' | 'end' | 'none'
     }
   | {
-      type: StrictExtract<SyntheticBehaviorEventType, 'insert.span'>
-      text: string
-      annotations?: Array<{
-        name: string
-        value: {[prop: string]: unknown}
-      }>
-      decorators?: Array<string>
-    }
-  | {
       type: StrictExtract<SyntheticBehaviorEventType, 'insert.text'>
       text: string
     }
@@ -239,6 +229,7 @@ const abstractBehaviorEventTypes = [
   'insert.blocks',
   'insert.break',
   'insert.soft break',
+  'insert.span',
   'list item.add',
   'list item.remove',
   'list item.toggle',
@@ -394,6 +385,15 @@ type AbstractBehaviorEvent =
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'insert.soft break'>
+    }
+  | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'insert.span'>
+      text: string
+      annotations?: Array<{
+        name: string
+        value: {[prop: string]: unknown}
+      }>
+      decorators?: Array<string>
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'list item.add'>
