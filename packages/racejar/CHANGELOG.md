@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.15
+
+### Patch Changes
+
+- [#1628](https://github.com/portabletext/editor/pull/1628) [`be05c56`](https://github.com/portabletext/editor/commit/be05c5681418f9803de204f385d940bcd35d39e1) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency @jest/globals to ^30.1.2
+
 ## 1.2.14
 
 ### Patch Changes
