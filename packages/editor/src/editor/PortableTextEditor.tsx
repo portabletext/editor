@@ -16,8 +16,8 @@ import {Subject} from 'rxjs'
 import {Slate} from 'slate-react'
 import {debugWithName} from '../internal-utils/debug'
 import {stopActor} from '../internal-utils/stop-actor'
-import type {AddedAnnotationPaths} from '../operations/behavior.operation.annotation.add'
 import type {
+  AddedAnnotationPaths,
   EditableAPI,
   EditableAPIDeleteOptions,
   EditorChange,

@@ -45,7 +45,7 @@ export {PortableTextEditor} from './editor/PortableTextEditor'
 export type {PortableTextEditorProps} from './editor/PortableTextEditor'
 export type {EditorEmittedEvent, MutationEvent} from './editor/relay-machine'
 export {useEditor} from './editor/use-editor'
-export type {AddedAnnotationPaths} from './operations/behavior.operation.annotation.add'
+export type {AddedAnnotationPaths} from './types/editor'
 export type {BlockOffset} from './types/block-offset'
 export type {
   BlockAnnotationRenderProps,
