@@ -1,6 +1,6 @@
 import {getFocusTextBlock} from '../selectors'
 import {isEmptyTextBlock} from '../utils'
-import {raise} from './behavior.types.action'
+import {execute, raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
 export const abstractInsertBehaviors = [
@@ -132,5 +132,41 @@ export const abstractInsertBehaviors = [
   defineBehavior({
     on: 'insert.soft break',
     actions: [() => [raise({type: 'insert.text', text: '\n'})]],
+  }),
+  defineBehavior({
+    on: 'insert.span',
+    guard: ({snapshot, event}) => {
+      const markDefs =
+        event.annotations?.map((annotation) => ({
+          _type: annotation.name,
+          _key: snapshot.context.keyGenerator(),
+          ...annotation.value,
+        })) ?? []
+
+      return {markDefs}
+    },
+    actions: [
+      ({snapshot, event}, {markDefs}) => [
+        execute({
+          type: 'insert.block',
+          block: {
+            _type: snapshot.context.schema.block.name,
+            children: [
+              {
+                _type: snapshot.context.schema.span.name,
+                text: event.text,
+                marks: [
+                  ...(event.decorators ?? []),
+                  ...markDefs.map((markDef) => markDef._key),
+                ],
+              },
+            ],
+            markDefs,
+          },
+          placement: 'auto',
+          select: 'end',
+        }),
+      ],
+    ],
   }),
 ]
