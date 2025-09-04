@@ -37,6 +37,24 @@ export interface EditableAPIDeleteOptions {
   mode?: 'blocks' | 'children' | 'selected'
 }
 
+/**
+ * @public
+ */
+export type AddedAnnotationPaths = {
+  /**
+   * @deprecated An annotation may be applied to multiple blocks, resulting
+   * in multiple `markDef`'s being created. Use `markDefPaths` instead.
+   */
+  markDefPath: Path
+  markDefPaths: Array<Path>
+  /**
+   * @deprecated Does not return anything meaningful since an annotation
+   * can span multiple blocks and spans. If references the span closest
+   * to the focus point of the selection.
+   */
+  spanPath: Path
+}
+
 /** @beta */
 export interface EditableAPI {
   activeAnnotations: () => PortableTextObject[]
@@ -44,9 +62,7 @@ export interface EditableAPI {
   addAnnotation: <TSchemaType extends {name: string}>(
     type: TSchemaType,
     value?: {[prop: string]: unknown},
-  ) =>
-    | {markDefPath: Path; markDefPaths: Array<Path>; spanPath: Path}
-    | undefined
+  ) => AddedAnnotationPaths | undefined
   blur: () => void
   delete: (
     selection: EditorSelection,

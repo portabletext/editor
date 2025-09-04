@@ -32,14 +32,13 @@ export type BehaviorOperationImplementationContext = Pick<
 
 export type BehaviorOperationImplementation<
   TBehaviorOperationType extends BehaviorOperation['type'],
-  TReturnType = void,
 > = ({
   context,
   operation,
 }: {
   context: BehaviorOperationImplementationContext
   operation: PickFromUnion<BehaviorOperation, 'type', TBehaviorOperationType>
-}) => TReturnType
+}) => void
 
 type BehaviorOperation = OmitFromUnion<
   SyntheticBehaviorEvent,

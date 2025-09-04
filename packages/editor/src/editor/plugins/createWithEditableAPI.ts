@@ -1,3 +1,4 @@
+import {isTextBlock} from '@portabletext/schema'
 import type {
   Path,
   PortableTextBlock,
@@ -29,8 +30,12 @@ import {
   KEY_TO_VALUE_ELEMENT,
   SLATE_TO_PORTABLE_TEXT_RANGE,
 } from '../../internal-utils/weakMaps'
-import {addAnnotationOperationImplementation} from '../../operations/behavior.operation.annotation.add'
-import {isActiveAnnotation} from '../../selectors'
+import {
+  getFocusBlock,
+  getFocusSpan,
+  getSelectedValue,
+  isActiveAnnotation,
+} from '../../selectors'
 import {getActiveAnnotationsMarks} from '../../selectors/selector.get-active-annotation-marks'
 import {getActiveDecorators} from '../../selectors/selector.get-active-decorators'
 import type {
@@ -424,40 +429,77 @@ export function createEditableAPI(
       return isActiveAnnotation(annotationType)(snapshot)
     },
     addAnnotation: (type, value) => {
-      let paths: ReturnType<EditableAPI['addAnnotation']>
+      const snapshotBefore = getEditorSnapshot({
+        editorActorSnapshot: editorActor.getSnapshot(),
+        slateEditorInstance: editor,
+      })
+      const selectedValueBefore = getSelectedValue(snapshotBefore)
+      const focusSpanBefore = getFocusSpan(snapshotBefore)
+      const markDefsBefore = selectedValueBefore.flatMap((block) => {
+        if (isTextBlock(snapshotBefore.context, block)) {
+          return block.markDefs ?? []
+        }
 
-      const snapshot = getEditorSnapshot({
+        return []
+      })
+
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'annotation.add',
+          annotation: {name: type.name, value: value ?? {}},
+        },
+        editor,
+      })
+
+      const snapshotAfter = getEditorSnapshot({
         editorActorSnapshot: editorActor.getSnapshot(),
         slateEditorInstance: editor,
       })
 
-      if (isActiveAnnotation(type.name, {mode: 'partial'})(snapshot)) {
-        editorActor.send({
-          type: 'behavior event',
-          behaviorEvent: {
-            type: 'annotation.remove',
-            annotation: {name: type.name},
-          },
-          editor,
-        })
-      }
+      const selectedValueAfter = getSelectedValue(snapshotAfter)
+      const focusBlockAfter = getFocusBlock(snapshotAfter)
+      const focusSpanAfter = getFocusSpan(snapshotAfter)
 
-      Editor.withoutNormalizing(editor, () => {
-        paths = addAnnotationOperationImplementation({
-          context: {
-            keyGenerator: editorActor.getSnapshot().context.keyGenerator,
-            schema: types,
-          },
-          operation: {
-            type: 'annotation.add',
-            annotation: {name: type.name, value: value ?? {}},
-            editor,
-          },
-        })
+      const newMarkDefKeysOnFocusSpan = focusSpanAfter?.node.marks?.filter(
+        (mark) =>
+          !focusSpanBefore?.node.marks?.includes(mark) &&
+          !snapshotAfter.context.schema.decorators
+            .map((decorator) => decorator.name)
+            .includes(mark),
+      )
+      const markDefsAfter = selectedValueAfter.flatMap((block) => {
+        if (isTextBlock(snapshotAfter.context, block)) {
+          return (
+            block.markDefs?.map((markDef) => ({
+              markDef,
+              path: [{_key: block._key}, 'markDefs', {_key: markDef._key}],
+            })) ?? []
+          )
+        }
+
+        return []
       })
-      editor.onChange()
+      const markDefs = markDefsAfter.filter(
+        (markDef) =>
+          !markDefsBefore.some(
+            (markDefBefore) => markDefBefore._key === markDef.markDef._key,
+          ),
+      )
+      const spanPath = focusSpanAfter?.path
+      const markDef = markDefs.find((markDef) =>
+        newMarkDefKeysOnFocusSpan?.some(
+          (mark) => mark === markDef.markDef._key,
+        ),
+      )
 
-      return paths
+      if (focusBlockAfter && spanPath && markDef) {
+        return {
+          markDefPath: markDef.path,
+          markDefPaths: markDefs.map((markDef) => markDef.path),
+          spanPath,
+        }
+      }
     },
     delete: (
       selection: EditorSelection,
