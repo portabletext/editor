@@ -1,5 +1,31 @@
 # Changelog
 
+## 2.8.0
+
+### Minor Changes
+
+- [#1623](https://github.com/portabletext/editor/pull/1623) [`760a68d`](https://github.com/portabletext/editor/commit/760a68dd6a42fc6cbe4c9c012ad5c19b839a0474) Thanks [@christianhg](https://github.com/christianhg)! - feat(`isActiveAnnotation`): add configurable `mode`
+
+- [#1593](https://github.com/portabletext/editor/pull/1593) [`9db3c37`](https://github.com/portabletext/editor/commit/9db3c378ff1e497c6f481ee21e5551c4f9b4241f) Thanks [@christianhg](https://github.com/christianhg)! - feat: allow overlapping annotations through Behaviors
+
+### Patch Changes
+
+- [#1623](https://github.com/portabletext/editor/pull/1623) [`d8b9bd0`](https://github.com/portabletext/editor/commit/d8b9bd0e3cc81a17c64ef325678fb96fee3f0cdd) Thanks [@christianhg](https://github.com/christianhg)! - fix(\`sliceBlocks\`): parse blocks when slicing
+
+- [#1623](https://github.com/portabletext/editor/pull/1623) [`7874f53`](https://github.com/portabletext/editor/commit/7874f53772b401958d52d596736305a5ef2248b5) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unused `markDefs` when parsing blocks
+
+- [#1622](https://github.com/portabletext/editor/pull/1622) [`6539bfc`](https://github.com/portabletext/editor/commit/6539bfc45ef0f31d38d475a2461725529b24f2f3) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update sanity monorepo to ^4.6.1
+
+- [#1627](https://github.com/portabletext/editor/pull/1627) [`99adbd2`](https://github.com/portabletext/editor/commit/99adbd25abaf86f7a71e085bc8813506c7409a58) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency immer to ^10.1.3
+
+- [#1626](https://github.com/portabletext/editor/pull/1626) [`86d9cbb`](https://github.com/portabletext/editor/commit/86d9cbb00b4fcd445ec83e80c427e00dc78db0b8) Thanks [@christianhg](https://github.com/christianhg)! - fix: improve `insert.span` by internally routing it through `insert.block`
+
+- [#1626](https://github.com/portabletext/editor/pull/1626) [`9d59889`](https://github.com/portabletext/editor/commit/9d59889de28eebcb6fcac1d73328d28d392ea2c4) Thanks [@christianhg](https://github.com/christianhg)! - fix: improve `insert.inline object` by internally routing it through `insert.block`
+
+- Updated dependencies [[`6539bfc`](https://github.com/portabletext/editor/commit/6539bfc45ef0f31d38d475a2461725529b24f2f3)]:
+  - @portabletext/block-tools@3.5.3
+  - @portabletext/sanity-bridge@1.1.8
+
 ## 2.7.2
 
 ### Patch Changes

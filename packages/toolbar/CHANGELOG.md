@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.2.0
+
+### Minor Changes
+
+- [#1593](https://github.com/portabletext/editor/pull/1593) [`fc9fe19`](https://github.com/portabletext/editor/commit/fc9fe19a9fbc9edf3dc0832cf6d7e9a1894ce1ce) Thanks [@christianhg](https://github.com/christianhg)! - feat: support `mutuallyExclusive` option on annotations
+
+### Patch Changes
+
+- Updated dependencies [[`d8b9bd0`](https://github.com/portabletext/editor/commit/d8b9bd0e3cc81a17c64ef325678fb96fee3f0cdd), [`7874f53`](https://github.com/portabletext/editor/commit/7874f53772b401958d52d596736305a5ef2248b5), [`6539bfc`](https://github.com/portabletext/editor/commit/6539bfc45ef0f31d38d475a2461725529b24f2f3), [`99adbd2`](https://github.com/portabletext/editor/commit/99adbd25abaf86f7a71e085bc8813506c7409a58), [`760a68d`](https://github.com/portabletext/editor/commit/760a68dd6a42fc6cbe4c9c012ad5c19b839a0474), [`9db3c37`](https://github.com/portabletext/editor/commit/9db3c378ff1e497c6f481ee21e5551c4f9b4241f), [`86d9cbb`](https://github.com/portabletext/editor/commit/86d9cbb00b4fcd445ec83e80c427e00dc78db0b8), [`9d59889`](https://github.com/portabletext/editor/commit/9d59889de28eebcb6fcac1d73328d28d392ea2c4)]:
+  - @portabletext/editor@2.8.0
+
 ## 2.1.2
 
 ### Patch Changes
