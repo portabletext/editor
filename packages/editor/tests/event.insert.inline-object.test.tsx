@@ -1,5 +1,5 @@
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator} from '@portabletext/test'
+import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import type {PortableTextTextBlock} from '@sanity/types'
 import {page, userEvent} from '@vitest/browser/context'
 import React from 'react'
@@ -8,6 +8,7 @@ import {render} from 'vitest-browser-react'
 import type {Editor, EditorEmittedEvent} from '../src'
 import {PortableTextEditable} from '../src/editor/Editable'
 import {EditorProvider} from '../src/editor/editor-provider'
+import {createTestEditor} from '../src/internal-utils/test-editor'
 import {EventListenerPlugin} from '../src/plugins'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 
@@ -45,12 +46,12 @@ describe('event.insert.inline object', () => {
 
     expect(editorRef.current?.getSnapshot().context.value).toEqual([
       {
-        _key: 'k0',
+        _key: 'k2',
         _type: 'block',
         children: [
-          {_key: 'k1', _type: 'span', text: '', marks: []},
-          {_key: 'k2', _type: 'stock ticker'},
           {_key: 'k4', _type: 'span', text: '', marks: []},
+          {_key: 'k3', _type: 'stock ticker'},
+          {_key: 'k5', _type: 'span', text: '', marks: []},
         ],
         markDefs: [],
         style: 'normal',
@@ -141,12 +142,12 @@ describe('event.insert.inline object', () => {
     await vi.waitFor(() => {
       expect(editorRef.current?.getSnapshot().context.value).toEqual([
         {
-          _key: 'k0',
+          _key: 'k2',
           _type: 'block',
           children: [
-            {_key: 'k1', _type: 'span', text: '', marks: []},
-            {_key: 'k2', _type: 'stock ticker', symbol: 'AAPL'},
             {_key: 'k4', _type: 'span', text: '', marks: []},
+            {_key: 'k3', _type: 'stock ticker', symbol: 'AAPL'},
+            {_key: 'k5', _type: 'span', text: '', marks: []},
           ],
           markDefs: [],
           style: 'normal',
@@ -156,11 +157,11 @@ describe('event.insert.inline object', () => {
     await vi.waitFor(() => {
       expect(editorRef.current?.getSnapshot().context.selection).toEqual({
         anchor: {
-          path: [{_key: 'k0'}, 'children', {_key: 'k2'}],
+          path: [{_key: 'k2'}, 'children', {_key: 'k3'}],
           offset: 0,
         },
         focus: {
-          path: [{_key: 'k0'}, 'children', {_key: 'k2'}],
+          path: [{_key: 'k2'}, 'children', {_key: 'k3'}],
           offset: 0,
         },
         backward: false,
@@ -173,30 +174,85 @@ describe('event.insert.inline object', () => {
     await vi.waitFor(() => {
       expect(editorRef.current?.getSnapshot().context.value).toEqual([
         {
-          _key: 'k0',
+          _key: 'k2',
           _type: 'block',
           children: [
-            {_key: 'k1', _type: 'span', text: '', marks: []},
-            {_key: 'k2', _type: 'stock ticker', symbol: 'AAPL'},
-            {_key: 'k4', _type: 'span', text: 'foo', marks: []},
+            {_key: 'k4', _type: 'span', text: '', marks: []},
+            {_key: 'k3', _type: 'stock ticker', symbol: 'AAPL'},
+            {_key: 'k5', _type: 'span', text: 'foo', marks: []},
           ],
           markDefs: [],
           style: 'normal',
         },
       ])
     })
+
     await vi.waitFor(() => {
       expect(editorRef.current?.getSnapshot().context.selection).toEqual({
         anchor: {
-          path: [{_key: 'k0'}, 'children', {_key: 'k4'}],
+          path: [{_key: 'k2'}, 'children', {_key: 'k5'}],
           offset: 3,
         },
         focus: {
-          path: [{_key: 'k0'}, 'children', {_key: 'k4'}],
+          path: [{_key: 'k2'}, 'children', {_key: 'k5'}],
           offset: 3,
         },
         backward: false,
       })
+    })
+  })
+
+  test('Scenario: Inserting inline object on block object', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const imageKey = keyGenerator()
+
+    const {editorRef} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'image'}],
+        inlineObjects: [
+          {name: 'stock ticker', fields: [{name: 'symbol', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _type: 'image',
+          _key: imageKey,
+        },
+      ],
+    })
+
+    editorRef.current?.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: imageKey}], offset: 0},
+        focus: {path: [{_key: imageKey}], offset: 0},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editorRef.current?.getSnapshot().context.selection).toEqual({
+        anchor: {path: [{_key: imageKey}], offset: 0},
+        focus: {path: [{_key: imageKey}], offset: 0},
+        backward: false,
+      })
+    })
+
+    editorRef.current?.send({
+      type: 'insert.inline object',
+      inlineObject: {
+        name: 'stock ticker',
+        value: {
+          symbol: 'AAPL',
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+        '{image}',
+        ',{stock ticker},',
+      ])
     })
   })
 })

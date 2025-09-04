@@ -130,6 +130,27 @@ export const abstractInsertBehaviors = [
     actions: [() => [raise({type: 'split'})]],
   }),
   defineBehavior({
+    on: 'insert.inline object',
+    actions: [
+      ({snapshot, event}) => [
+        execute({
+          type: 'insert.block',
+          block: {
+            _type: snapshot.context.schema.block.name,
+            children: [
+              {
+                _type: event.inlineObject.name,
+                ...event.inlineObject.value,
+              },
+            ],
+          },
+          placement: 'auto',
+          select: 'end',
+        }),
+      ],
+    ],
+  }),
+  defineBehavior({
     on: 'insert.soft break',
     actions: [() => [raise({type: 'insert.text', text: '\n'})]],
   }),

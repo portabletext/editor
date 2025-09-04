@@ -71,7 +71,6 @@ const syntheticBehaviorEventTypes = [
   'delete',
   'history.redo',
   'history.undo',
-  'insert.inline object',
   'insert.block',
   'insert.text',
   'move.backward',
@@ -155,13 +154,6 @@ export type SyntheticBehaviorEvent =
       type: StrictExtract<SyntheticBehaviorEventType, 'history.undo'>
     }
   | {
-      type: StrictExtract<SyntheticBehaviorEventType, 'insert.inline object'>
-      inlineObject: {
-        name: string
-        value?: {[prop: string]: unknown}
-      }
-    }
-  | {
       type: StrictExtract<SyntheticBehaviorEventType, 'insert.block'>
       block: BlockWithOptionalKey
       placement: InsertPlacement
@@ -228,6 +220,7 @@ const abstractBehaviorEventTypes = [
   'deserialization.failure',
   'insert.blocks',
   'insert.break',
+  'insert.inline object',
   'insert.soft break',
   'insert.span',
   'list item.add',
@@ -382,6 +375,13 @@ type AbstractBehaviorEvent =
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'insert.break'>
+    }
+  | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'insert.inline object'>
+      inlineObject: {
+        name: string
+        value?: {[prop: string]: unknown}
+      }
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'insert.soft break'>
