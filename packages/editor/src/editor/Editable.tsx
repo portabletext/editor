@@ -461,7 +461,6 @@ export const PortableTextEditable = forwardRef<
                     },
                     blocks: result.insert,
                     options: {
-                      refreshKeys: false,
                       validateFields: false,
                     },
                   }),

@@ -186,7 +186,6 @@ export const abstractSplitBehaviors = [
         }),
         context: snapshot.context,
         options: {
-          refreshKeys: false,
           validateFields: false,
         },
       })

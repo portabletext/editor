@@ -50,7 +50,6 @@ export const converterPortableText = defineConverter({
         context: snapshot.context,
         block,
         options: {
-          refreshKeys: false,
           validateFields: false,
         },
       })

@@ -24,7 +24,7 @@ export const insertBlockOperationImplementation: BehaviorOperationImplementation
   const parsedBlock = parseBlock({
     block: operation.block,
     context,
-    options: {refreshKeys: false, validateFields: true},
+    options: {validateFields: true},
   })
 
   if (!parsedBlock) {
