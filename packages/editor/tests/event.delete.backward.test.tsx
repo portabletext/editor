@@ -65,7 +65,7 @@ describe('event.delete.backward', () => {
 
     const behaviorEvents: Array<BehaviorEvent> = []
 
-    const {editorRef, locator} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
         decorators: [{name: 'strong'}],
@@ -116,18 +116,15 @@ describe('event.delete.backward', () => {
 
     await userEvent.click(locator)
 
-    editorRef.current?.send({
+    editor.send({
       type: 'select',
-      at: getSelectionBeforeText(
-        editorRef.current!.getSnapshot().context,
-        'bar',
-      ),
+      at: getSelectionBeforeText(editor.getSnapshot().context, 'bar'),
     })
 
     await userEvent.keyboard('{Backspace}')
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: block1Key,
           _type: 'block',

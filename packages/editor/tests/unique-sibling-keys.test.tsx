@@ -15,7 +15,7 @@ describe('unique sibling `_key`s', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
         decorators: [{name: 'strong'}],
@@ -31,7 +31,7 @@ describe('unique sibling `_key`s', () => {
       ],
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'decorator.toggle',
       decorator: 'strong',
       at: {
@@ -47,9 +47,9 @@ describe('unique sibling `_key`s', () => {
     })
 
     await vi.waitFor(() => {
-      const block = editorRef.current!.getSnapshot().context.value.at(0)!
+      const block = editor.getSnapshot().context.value.at(0)!
 
-      if (!isTextBlock(editorRef.current!.getSnapshot().context, block)) {
+      if (!isTextBlock(editor.getSnapshot().context, block)) {
         throw new Error('Block is not a text block')
       }
 
@@ -63,7 +63,7 @@ describe('unique sibling `_key`s', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
         annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
@@ -79,12 +79,12 @@ describe('unique sibling `_key`s', () => {
       ],
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'select',
-      at: getTextSelection(editorRef.current!.getSnapshot().context, 'bar'),
+      at: getTextSelection(editor.getSnapshot().context, 'bar'),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'annotation.add',
       annotation: {
         name: 'link',
@@ -95,9 +95,9 @@ describe('unique sibling `_key`s', () => {
     })
 
     await vi.waitFor(() => {
-      const block = editorRef.current!.getSnapshot().context.value.at(0)!
+      const block = editor.getSnapshot().context.value.at(0)!
 
-      if (!isTextBlock(editorRef.current!.getSnapshot().context, block)) {
+      if (!isTextBlock(editor.getSnapshot().context, block)) {
         throw new Error('Block is not a text block')
       }
 

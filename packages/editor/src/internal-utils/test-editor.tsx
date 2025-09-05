@@ -5,14 +5,13 @@ import {page} from '@vitest/browser/context'
 import React from 'react'
 import {expect, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
+import type {Context} from '../../gherkin-tests-v2/step-context'
 import type {NativeBehaviorEvent} from '../behaviors'
 import type {Editor} from '../editor'
 import {PortableTextEditable} from '../editor/Editable'
 import type {EditorActor} from '../editor/editor-machine'
 import {EditorProvider} from '../editor/editor-provider'
-import type {EditorEmittedEvent} from '../editor/relay-machine'
 import {EditorRefPlugin} from '../plugins/plugin.editor-ref'
-import {EventListenerPlugin} from '../plugins/plugin.event-listener'
 import {InternalEditorAfterRefPlugin} from '../plugins/plugin.internal.editor-actor-ref'
 import {InternalSlateEditorRefPlugin} from '../plugins/plugin.internal.slate-editor-ref'
 import type {PortableTextSlateEditor} from '../types/editor'
@@ -24,11 +23,10 @@ export async function createTestEditor(
     schemaDefinition?: SchemaDefinition
     children?: React.ReactNode
   } = {},
-) {
+): Promise<Pick<Context, 'editor' | 'locator'>> {
   const editorRef = React.createRef<Editor>()
   const editorActorRef = React.createRef<EditorActor>()
   const slateRef = React.createRef<PortableTextSlateEditor>()
-  const onEvent = vi.fn<() => EditorEmittedEvent>()
   const keyGenerator = options.keyGenerator ?? createTestKeyGenerator()
 
   render(
@@ -42,7 +40,6 @@ export async function createTestEditor(
       <EditorRefPlugin ref={editorRef} />
       <InternalEditorAfterRefPlugin ref={editorActorRef} />
       <InternalSlateEditorRefPlugin ref={slateRef} />
-      <EventListenerPlugin on={onEvent} />
       <PortableTextEditable />
       {options.children}
     </EditorProvider>,
@@ -61,10 +58,10 @@ export async function createTestEditor(
   }
 
   return {
-    editorRef,
-    keyGenerator,
+    editor: {
+      ...editorRef.current!,
+      sendNativeEvent,
+    },
     locator,
-    onEvent,
-    sendNativeEvent,
   }
 }

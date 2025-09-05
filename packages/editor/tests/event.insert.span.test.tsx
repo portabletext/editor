@@ -5,21 +5,21 @@ import {createTestEditor} from '../src/internal-utils/test-editor'
 
 describe('event.insert.span', () => {
   test('Scenario: Unknown decorators are filtered out', async () => {
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       schemaDefinition: defineSchema({
         decorators: [{name: 'strong'}],
       }),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'insert.span',
       text: 'foo',
       decorators: ['strong', 'em'],
     })
 
     await vi.waitFor(() => {
-      if (editorRef.current) {
-        expect(editorRef.current.getSnapshot().context.value).toEqual([
+      if (editor) {
+        expect(editor.getSnapshot().context.value).toEqual([
           expect.objectContaining({
             children: [
               expect.objectContaining({
@@ -35,13 +35,13 @@ describe('event.insert.span', () => {
   })
 
   test('Scenario: Unknown annotations are filtered out', async () => {
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       schemaDefinition: defineSchema({
         annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
       }),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'insert.span',
       text: 'foo',
       annotations: [
@@ -61,8 +61,8 @@ describe('event.insert.span', () => {
     })
 
     await vi.waitFor(() => {
-      if (editorRef.current) {
-        expect(editorRef.current.getSnapshot().context.value).toEqual([
+      if (editor) {
+        expect(editor.getSnapshot().context.value).toEqual([
           expect.objectContaining({
             children: [
               expect.objectContaining({
@@ -85,7 +85,7 @@ describe('event.insert.span', () => {
   test('Scenario: Inserting on block object', async () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
         blockObjects: [{name: 'image'}],
@@ -98,7 +98,7 @@ describe('event.insert.span', () => {
       ],
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'select',
       at: {
         anchor: {path: [{_key: imageKey}], offset: 0},
@@ -107,20 +107,20 @@ describe('event.insert.span', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.selection).toEqual({
+      expect(editor.getSnapshot().context.selection).toEqual({
         anchor: {path: [{_key: imageKey}], offset: 0},
         focus: {path: [{_key: imageKey}], offset: 0},
         backward: false,
       })
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'insert.span',
       text: 'foo',
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
         '{image}',
         'foo',
       ])
@@ -131,7 +131,7 @@ describe('event.insert.span', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const imageKey = keyGenerator()
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       schemaDefinition: defineSchema({
         inlineObjects: [{name: 'image'}],
       }),
@@ -161,7 +161,7 @@ describe('event.insert.span', () => {
       ],
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'select',
       at: {
         anchor: {
@@ -176,7 +176,7 @@ describe('event.insert.span', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.selection).toEqual({
+      expect(editor.getSnapshot().context.selection).toEqual({
         anchor: {
           path: [{_key: blockKey}, 'children', {_key: imageKey}],
           offset: 0,
@@ -189,15 +189,13 @@ describe('event.insert.span', () => {
       })
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'insert.span',
       text: 'foo',
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        ',{image},foo',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([',{image},foo'])
     })
   })
 })

@@ -206,7 +206,7 @@ describe('event.insert.inline object', () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
 
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
         blockObjects: [{name: 'image'}],
@@ -222,7 +222,7 @@ describe('event.insert.inline object', () => {
       ],
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'select',
       at: {
         anchor: {path: [{_key: imageKey}], offset: 0},
@@ -231,14 +231,14 @@ describe('event.insert.inline object', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.selection).toEqual({
+      expect(editor.getSnapshot().context.selection).toEqual({
         anchor: {path: [{_key: imageKey}], offset: 0},
         focus: {path: [{_key: imageKey}], offset: 0},
         backward: false,
       })
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'insert.inline object',
       inlineObject: {
         name: 'stock ticker',
@@ -249,7 +249,7 @@ describe('event.insert.inline object', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
         '{image}',
         ',{stock ticker},',
       ])

@@ -52,18 +52,18 @@ describe('overlapping annotations', () => {
   })
 
   test('default behavior', async () => {
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       initialValue: value,
       schemaDefinition,
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'select',
-      at: getTextSelection(editorRef.current!.getSnapshot().context, 'o bar b'),
+      at: getTextSelection(editor.getSnapshot().context, 'o bar b'),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'annotation.toggle',
       annotation: {
         name: 'comment',
@@ -75,13 +75,13 @@ describe('overlapping annotations', () => {
 
     await vi.waitFor(() => {
       // Then the text is "fo,o bar b,az"
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
         'fo,o bar b,az',
       ])
 
-      const block = editorRef.current!.getSnapshot().context.value.at(0)
+      const block = editor.getSnapshot().context.value.at(0)
 
-      if (!isTextBlock(editorRef.current!.getSnapshot().context, block)) {
+      if (!isTextBlock(editor.getSnapshot().context, block)) {
         throw new Error('Block is not a text block')
       }
 
@@ -92,14 +92,14 @@ describe('overlapping annotations', () => {
           text: 'Comment B',
         }),
       ])
-      expect(
-        getTextMarks(editorRef.current!.getSnapshot().context, 'o bar b'),
-      ).toEqual(block.markDefs?.map((markDef) => markDef._key))
+      expect(getTextMarks(editor.getSnapshot().context, 'o bar b')).toEqual(
+        block.markDefs?.map((markDef) => markDef._key),
+      )
     })
   })
 
   test('allowing overlapping annotations', async () => {
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       children: (
         <BehaviorPlugin
           behaviors={[
@@ -115,12 +115,12 @@ describe('overlapping annotations', () => {
       schemaDefinition,
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'select',
-      at: getTextSelection(editorRef.current!.getSnapshot().context, 'o bar b'),
+      at: getTextSelection(editor.getSnapshot().context, 'o bar b'),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'annotation.toggle',
       annotation: {
         name: 'comment',
@@ -129,13 +129,13 @@ describe('overlapping annotations', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
         'fo,o ,bar, b,az',
       ])
 
-      const block = editorRef.current!.getSnapshot().context.value.at(0)
+      const block = editor.getSnapshot().context.value.at(0)
 
-      if (!isTextBlock(editorRef.current!.getSnapshot().context, block)) {
+      if (!isTextBlock(editor.getSnapshot().context, block)) {
         throw new Error('Block is not a text block')
       }
 
@@ -151,9 +151,9 @@ describe('overlapping annotations', () => {
         }),
       ])
 
-      expect(
-        getTextMarks(editorRef.current!.getSnapshot().context, 'bar'),
-      ).toEqual(block.markDefs?.map((markDef) => markDef._key))
+      expect(getTextMarks(editor.getSnapshot().context, 'bar')).toEqual(
+        block.markDefs?.map((markDef) => markDef._key),
+      )
     })
   })
 
@@ -162,7 +162,7 @@ describe('overlapping annotations', () => {
       link: ['comment'],
     }
 
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       children: (
         <BehaviorPlugin
           behaviors={[
@@ -203,24 +203,24 @@ describe('overlapping annotations', () => {
       schemaDefinition,
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'select',
-      at: getTextSelection(editorRef.current!.getSnapshot().context, 'o bar b'),
+      at: getTextSelection(editor.getSnapshot().context, 'o bar b'),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'annotation.toggle',
       annotation: {name: 'link', value: {href: 'https://portabletext.org'}},
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
         'fo,o bar b,az',
       ])
 
-      const block = editorRef.current!.getSnapshot().context.value.at(0)
+      const block = editor.getSnapshot().context.value.at(0)
 
-      if (!isTextBlock(editorRef.current!.getSnapshot().context, block)) {
+      if (!isTextBlock(editor.getSnapshot().context, block)) {
         throw new Error('Block is not a text block')
       }
 
@@ -232,24 +232,24 @@ describe('overlapping annotations', () => {
       ])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'select',
-      at: getTextSelection(editorRef.current!.getSnapshot().context, 'foo'),
+      at: getTextSelection(editor.getSnapshot().context, 'foo'),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'annotation.toggle',
       annotation: {name: 'link', value: {href: 'https://sanity.io'}},
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
         'fo,o, bar b,az',
       ])
 
-      const block = editorRef.current!.getSnapshot().context.value.at(0)
+      const block = editor.getSnapshot().context.value.at(0)
 
-      if (!isTextBlock(editorRef.current!.getSnapshot().context, block)) {
+      if (!isTextBlock(editor.getSnapshot().context, block)) {
         throw new Error('Block is not a text block')
       }
 

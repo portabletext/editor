@@ -402,7 +402,7 @@ describe('event.update value', () => {
   test('Scenario: Clearing lonely block object', async () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       initialValue: [
         {
@@ -416,7 +416,7 @@ describe('event.update value', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _type: 'image',
           _key: imageKey,
@@ -424,13 +424,13 @@ describe('event.update value', () => {
       ])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'update value',
       value: undefined,
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _type: 'block',
           _key: 'k3',
@@ -453,7 +453,7 @@ describe('event.update value', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       initialValue: [
         {
@@ -477,7 +477,7 @@ describe('event.update value', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _type: 'block',
           _key: blockKey,
@@ -495,13 +495,13 @@ describe('event.update value', () => {
       ])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'update value',
       value: undefined,
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _type: 'block',
           _key: 'k4',
@@ -524,7 +524,7 @@ describe('event.update value', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       initialValue: [
         {
@@ -538,12 +538,12 @@ describe('event.update value', () => {
       schemaDefinition: defineSchema({}),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'update readOnly',
       readOnly: true,
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'update value',
       value: [
         {
@@ -557,7 +557,7 @@ describe('event.update value', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _type: 'block',
           _key: blockKey,
@@ -573,7 +573,7 @@ describe('event.update value', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
-    const {editorRef, locator} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       keyGenerator,
       initialValue: [
         {
@@ -584,12 +584,12 @@ describe('event.update value', () => {
       ],
     })
 
-    editorRef.current?.send({type: 'focus'})
+    editor.send({type: 'focus'})
     await userEvent.type(locator, 'foo')
 
-    editorRef.current?.send({type: 'update readOnly', readOnly: true})
+    editor.send({type: 'update readOnly', readOnly: true})
 
-    editorRef.current?.send({
+    editor.send({
       type: 'update value',
       value: [
         {
@@ -601,7 +601,7 @@ describe('event.update value', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _type: 'block',
           _key: blockKey,

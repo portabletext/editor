@@ -117,7 +117,7 @@ describe('event.delete', () => {
     const barBlockKey = keyGenerator()
     const barSpanKey = keyGenerator()
     const imageKey = keyGenerator()
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       initialValue: [
         {
           _type: 'block',
@@ -145,14 +145,14 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
         'foo',
         '{image}',
         'bar',
       ])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'delete',
       at: {
         anchor: {
@@ -167,7 +167,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([''])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
     })
   })
 

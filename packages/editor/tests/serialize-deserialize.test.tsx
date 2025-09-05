@@ -14,7 +14,7 @@ describe('Serialize/Deserialize', () => {
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
 
-    const {editorRef, locator, sendNativeEvent} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       children: (
         // Given a custom plugin for serializing and deserializing text/html
         <BehaviorPlugin
@@ -80,24 +80,24 @@ describe('Serialize/Deserialize', () => {
     })
 
     const fooBarBazSelection = getTextSelection(
-      editorRef.current!.getSnapshot().context,
+      editor.getSnapshot().context,
       'foo bar baz',
     )
 
     await userEvent.click(locator)
     // When "foo bar baz" is selected
-    editorRef.current?.send({
+    editor.send({
       type: 'select',
       at: fooBarBazSelection,
     })
     await vi.waitFor(() => {
-      const selection = editorRef.current?.getSnapshot().context.selection
+      const selection = editor.getSnapshot().context.selection
       expect(selection).toEqual({...fooBarBazSelection, backward: false})
     })
 
     // And a cut is performed
     const dataTransfer = new DataTransfer()
-    sendNativeEvent({
+    editor.sendNativeEvent({
       type: 'clipboard.cut',
       originEvent: {dataTransfer},
       position: {
@@ -132,40 +132,38 @@ describe('Serialize/Deserialize', () => {
 
     // And the text is ""
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([''])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
     })
 
     // When a paste is performed
-    sendNativeEvent({
+    editor.sendNativeEvent({
       type: 'clipboard.paste',
       originEvent: {dataTransfer},
       position: {
-        selection: editorRef.current!.getSnapshot().context.selection!,
+        selection: editor.getSnapshot().context.selection!,
       },
     })
 
     // Then the text is "foo bar baz"
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'foo bar baz',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo bar baz'])
     })
 
     // However, when only text/plain and text/html is pasted
     const newDataTransfer = new DataTransfer()
     newDataTransfer.setData('text/plain', 'hey')
     newDataTransfer.setData('text/html', '<strong>hey</strong>')
-    sendNativeEvent({
+    editor.sendNativeEvent({
       type: 'clipboard.paste',
       originEvent: {dataTransfer: newDataTransfer},
       position: {
-        selection: editorRef.current!.getSnapshot().context.selection!,
+        selection: editor.getSnapshot().context.selection!,
       },
     })
 
     // The custom HTML deserializer takes precedence
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
         'foo bar baz',
         '{image}',
       ])
@@ -177,7 +175,7 @@ describe('Serialize/Deserialize', () => {
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
 
-    const {editorRef, locator, sendNativeEvent} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       children: (
         <BehaviorPlugin
           behaviors={[
@@ -256,20 +254,20 @@ describe('Serialize/Deserialize', () => {
     })
 
     const fooBarBazSelection = getTextSelection(
-      editorRef.current!.getSnapshot().context,
+      editor.getSnapshot().context,
       'foo bar baz',
     )
 
     await userEvent.click(locator)
     // When "foo bar baz" is selected
-    editorRef.current?.send({
+    editor.send({
       type: 'select',
       at: fooBarBazSelection,
     })
 
     // And a cut is performed
     const dataTransfer = new DataTransfer()
-    sendNativeEvent({
+    editor.sendNativeEvent({
       type: 'clipboard.cut',
       originEvent: {dataTransfer},
       position: {
@@ -301,17 +299,17 @@ describe('Serialize/Deserialize', () => {
     expect(dataTransfer.getData('text/html')).toEqual('<p>foo bar baz</p>')
 
     // When a paste is performed
-    sendNativeEvent({
+    editor.sendNativeEvent({
       type: 'clipboard.paste',
       originEvent: {dataTransfer},
       position: {
-        selection: editorRef.current!.getSnapshot().context.selection!,
+        selection: editor.getSnapshot().context.selection!,
       },
     })
 
     // Then the text is "Overwritten HTML"
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
         'Overwritten HTML',
       ])
     })
@@ -320,7 +318,7 @@ describe('Serialize/Deserialize', () => {
   test('Scenario: Executing deserialize', async () => {
     const keyGenerator = createTestKeyGenerator()
 
-    const {editorRef, locator, sendNativeEvent} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       children: (
         <BehaviorPlugin
           behaviors={[
@@ -360,25 +358,23 @@ describe('Serialize/Deserialize', () => {
     const dataTransfer = new DataTransfer()
     dataTransfer.setData('text/html', '<p>foo bar baz</p>')
 
-    sendNativeEvent({
+    editor.sendNativeEvent({
       type: 'clipboard.paste',
       originEvent: {dataTransfer},
       position: {
-        selection: editorRef.current!.getSnapshot().context.selection!,
+        selection: editor.getSnapshot().context.selection!,
       },
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'foo bar baz',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo bar baz'])
     })
   })
 
   test('Scenario: Forwarding deserialize', async () => {
     const keyGenerator = createTestKeyGenerator()
 
-    const {editorRef, locator, sendNativeEvent} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       children: (
         <BehaviorPlugin
           behaviors={[
@@ -417,18 +413,16 @@ describe('Serialize/Deserialize', () => {
     const dataTransfer = new DataTransfer()
     dataTransfer.setData('text/html', '<p>foo bar baz</p>')
 
-    sendNativeEvent({
+    editor.sendNativeEvent({
       type: 'clipboard.paste',
       originEvent: {dataTransfer},
       position: {
-        selection: editorRef.current!.getSnapshot().context.selection!,
+        selection: editor.getSnapshot().context.selection!,
       },
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'fizz buzz',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['fizz buzz'])
     })
   })
 })

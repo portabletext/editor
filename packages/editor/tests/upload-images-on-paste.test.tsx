@@ -33,7 +33,7 @@ const resolveImagesBehavior = defineBehavior<{
 })
 
 test('Scenario: Pasting image files', async () => {
-  const {editorRef, sendNativeEvent} = await createTestEditor({
+  const {editor} = await createTestEditor({
     children: (
       <BehaviorPlugin
         behaviors={[
@@ -128,16 +128,16 @@ test('Scenario: Pasting image files', async () => {
   dataTransfer.items.add(pixelB)
   dataTransfer.items.add(pixelC)
 
-  sendNativeEvent({
+  editor.sendNativeEvent({
     type: 'clipboard.paste',
     originEvent: {dataTransfer},
     position: {
-      selection: editorRef.current?.getSnapshot().context.selection!,
+      selection: editor.getSnapshot().context.selection!,
     },
   })
 
   await vi.waitFor(() => {
-    expect(editorRef.current?.getSnapshot().context.value).toEqual([
+    expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'image',
         _key: 'k2',
@@ -157,7 +157,7 @@ test('Scenario: Pasting image files', async () => {
   })
 
   await vi.waitFor(() => {
-    expect(editorRef.current?.getSnapshot().context.value).toEqual([
+    expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'image',
         _key: 'k2',
@@ -175,7 +175,7 @@ test('Scenario: Pasting image files', async () => {
 })
 
 test('Scenario: Uploading images embedded in HTML', async () => {
-  const {editorRef, sendNativeEvent} = await createTestEditor({
+  const {editor} = await createTestEditor({
     children: (
       <BehaviorPlugin
         behaviors={[
@@ -263,16 +263,16 @@ test('Scenario: Uploading images embedded in HTML', async () => {
   `
   const dataTransfer = new DataTransfer()
   dataTransfer.setData('text/html', html)
-  sendNativeEvent({
+  editor.sendNativeEvent({
     type: 'clipboard.paste',
     originEvent: {dataTransfer},
     position: {
-      selection: editorRef.current?.getSnapshot().context.selection!,
+      selection: editor.getSnapshot().context.selection!,
     },
   })
 
   await vi.waitFor(() => {
-    expect(editorRef.current?.getSnapshot().context.value).toEqual([
+    expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'image',
         _key: 'k2',
@@ -289,7 +289,7 @@ test('Scenario: Uploading images embedded in HTML', async () => {
   })
 
   await vi.waitFor(() => {
-    expect(editorRef.current?.getSnapshot().context.value).toEqual([
+    expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'image',
         _key: 'k2',
@@ -401,7 +401,7 @@ test('Scenario: Pasting image files that exist both in HTML and as a file', asyn
   })
 
   // Given an editor with Behaviors that handle image files and HTML images
-  const {editorRef, sendNativeEvent} = await createTestEditor({
+  const {editor} = await createTestEditor({
     children: (
       <BehaviorPlugin
         behaviors={[
@@ -428,18 +428,18 @@ test('Scenario: Pasting image files that exist both in HTML and as a file', asyn
   const dataTransfer = new DataTransfer()
   dataTransfer.items.add(imageA)
   dataTransfer.setData('text/html', html)
-  sendNativeEvent({
+  editor.sendNativeEvent({
     type: 'clipboard.paste',
     originEvent: {dataTransfer},
     position: {
-      selection: editorRef.current?.getSnapshot().context.selection!,
+      selection: editor.getSnapshot().context.selection!,
     },
   })
 
   // Then the image file takes precedence because the `deserialize` events
   // happens before the `deserialize.data` event.
   await vi.waitFor(() => {
-    expect(editorRef.current?.getSnapshot().context.value).toEqual([
+    expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'image',
         _key: 'k2',

@@ -19,7 +19,7 @@ describe('event.clipboard.paste', () => {
     const imageKey = keyGenerator()
 
     // Given the text "foo bar baz|{image}"
-    const {locator, editorRef, sendNativeEvent} = await createTestEditor({
+    const {locator, editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
         blockObjects: [
@@ -53,10 +53,10 @@ describe('event.clipboard.paste', () => {
 
     // When the {image} is selected
     await userEvent.click(locator)
-    editorRef.current?.send({type: 'select', at: imageSelection})
+    editor.send({type: 'select', at: imageSelection})
 
     await vi.waitFor(() => {
-      const selection = editorRef.current?.getSnapshot().context.selection
+      const selection = editor.getSnapshot().context.selection
       expect(selection).toEqual({
         ...imageSelection,
         backward: false,
@@ -66,7 +66,7 @@ describe('event.clipboard.paste', () => {
     const dataTransfer = new DataTransfer()
 
     // And cut is performed
-    sendNativeEvent({
+    editor.sendNativeEvent({
       type: 'clipboard.cut',
       originEvent: {dataTransfer},
       position: {
@@ -86,10 +86,10 @@ describe('event.clipboard.paste', () => {
     }
 
     // And the caret is put before "foo bar baz"
-    editorRef.current?.send({type: 'select', at: newSelection})
+    editor.send({type: 'select', at: newSelection})
 
     // And paste is performed
-    sendNativeEvent({
+    editor.sendNativeEvent({
       type: 'clipboard.paste',
       originEvent: {dataTransfer},
       position: {
@@ -99,7 +99,7 @@ describe('event.clipboard.paste', () => {
 
     // Then the image is pasted before "foo bar baz"
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: imageKey,
           _type: 'image',
@@ -118,7 +118,7 @@ describe('event.clipboard.paste', () => {
     })
 
     // And when paste is performed
-    sendNativeEvent({
+    editor.sendNativeEvent({
       type: 'clipboard.paste',
       originEvent: {dataTransfer},
       position: {
@@ -128,7 +128,7 @@ describe('event.clipboard.paste', () => {
 
     // The image is pasted again, this time with a new _key
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: imageKey,
           _type: 'image',
@@ -229,7 +229,7 @@ describe('event.clipboard.paste', () => {
     }
 
     test('Scenario: `image` and `inlineImage` block-tools matchers', async () => {
-      const {editorRef, sendNativeEvent} = await createTestEditor({
+      const {editor} = await createTestEditor({
         children: (
           <BehaviorPlugin
             behaviors={[
@@ -245,16 +245,16 @@ describe('event.clipboard.paste', () => {
 
       const dataTransfer = new DataTransfer()
       dataTransfer.setData('text/html', html)
-      sendNativeEvent({
+      editor.sendNativeEvent({
         type: 'clipboard.paste',
         originEvent: {dataTransfer},
         position: {
-          selection: editorRef.current?.getSnapshot().context.selection!,
+          selection: editor.getSnapshot().context.selection!,
         },
       })
 
       await vi.waitFor(() => {
-        expect(getTersePt(editorRef.current?.getSnapshot().context!)).toEqual([
+        expect(getTersePt(editor.getSnapshot().context!)).toEqual([
           'Hello world',
           'foo ,{image}, bar',
           'baz',
@@ -263,7 +263,7 @@ describe('event.clipboard.paste', () => {
     })
 
     test('Scenario: only `image` matcher', async () => {
-      const {editorRef, sendNativeEvent} = await createTestEditor({
+      const {editor} = await createTestEditor({
         children: (
           <BehaviorPlugin
             behaviors={[
@@ -278,16 +278,16 @@ describe('event.clipboard.paste', () => {
 
       const dataTransfer = new DataTransfer()
       dataTransfer.setData('text/html', html)
-      sendNativeEvent({
+      editor.sendNativeEvent({
         type: 'clipboard.paste',
         originEvent: {dataTransfer},
         position: {
-          selection: editorRef.current?.getSnapshot().context.selection!,
+          selection: editor.getSnapshot().context.selection!,
         },
       })
 
       await vi.waitFor(() => {
-        expect(getTersePt(editorRef.current?.getSnapshot().context!)).toEqual([
+        expect(getTersePt(editor.getSnapshot().context!)).toEqual([
           'Hello world',
           'foo',
           '{image}',
@@ -298,23 +298,23 @@ describe('event.clipboard.paste', () => {
     })
 
     test('Scenario: No matchers', async () => {
-      const {editorRef, sendNativeEvent} = await createTestEditor({
+      const {editor} = await createTestEditor({
         children: <BehaviorPlugin behaviors={[createBehavior({})]} />,
         schemaDefinition,
       })
 
       const dataTransfer = new DataTransfer()
       dataTransfer.setData('text/html', html)
-      sendNativeEvent({
+      editor.sendNativeEvent({
         type: 'clipboard.paste',
         originEvent: {dataTransfer},
         position: {
-          selection: editorRef.current?.getSnapshot().context.selection!,
+          selection: editor.getSnapshot().context.selection!,
         },
       })
 
       await vi.waitFor(() => {
-        expect(getTersePt(editorRef.current?.getSnapshot().context!)).toEqual([
+        expect(getTersePt(editor.getSnapshot().context!)).toEqual([
           'Hello world',
           'foo bar',
           'baz',
