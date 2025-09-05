@@ -5,6 +5,7 @@ import {page} from '@vitest/browser/context'
 import React from 'react'
 import {expect, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
+import type {NativeBehaviorEvent} from '../behaviors'
 import type {Editor} from '../editor'
 import {PortableTextEditable} from '../editor/Editable'
 import type {EditorActor} from '../editor/editor-machine'
@@ -51,27 +52,19 @@ export async function createTestEditor(
 
   await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
 
-  function paste(dataTransfer: DataTransfer) {
+  function sendNativeEvent(event: NativeBehaviorEvent) {
     editorActorRef.current?.send({
       type: 'behavior event',
-      behaviorEvent: {
-        type: 'clipboard.paste',
-        originEvent: {dataTransfer},
-        position: {
-          selection: editorRef.current?.getSnapshot().context.selection!,
-        },
-      },
+      behaviorEvent: event,
       editor: slateRef.current!,
     })
   }
 
   return {
-    editorActorRef,
     editorRef,
     keyGenerator,
     locator,
     onEvent,
-    slateRef,
-    paste,
+    sendNativeEvent,
   }
 }

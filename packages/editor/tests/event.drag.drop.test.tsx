@@ -13,42 +13,41 @@ describe('event.drag.drop', () => {
     const stockTicketKey = keyGenerator()
     const barKey = keyGenerator()
 
-    const {locator, editorRef, editorActorRef, slateRef} =
-      await createTestEditor({
-        keyGenerator,
-        schemaDefinition: defineSchema({
-          inlineObjects: [
-            {name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]},
-          ],
-        }),
-        initialValue: [
-          {
-            _key: blockKey,
-            _type: 'block',
-            children: [
-              {
-                _key: fooKey,
-                _type: 'span',
-                text: 'foo',
-                marks: [],
-              },
-              {
-                _type: 'stock-ticker',
-                _key: stockTicketKey,
-                symbol: 'AAPL',
-              },
-              {
-                _key: barKey,
-                _type: 'span',
-                text: 'bar',
-                marks: [],
-              },
-            ],
-            markDefs: [],
-            style: 'normal',
-          },
+    const {locator, editorRef, sendNativeEvent} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]},
         ],
-      })
+      }),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {
+              _key: fooKey,
+              _type: 'span',
+              text: 'foo',
+              marks: [],
+            },
+            {
+              _type: 'stock-ticker',
+              _key: stockTicketKey,
+              symbol: 'AAPL',
+            },
+            {
+              _key: barKey,
+              _type: 'span',
+              text: 'bar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
 
     const stockTickerSelection = {
       anchor: {
@@ -87,30 +86,26 @@ describe('event.drag.drop', () => {
     const dataTransfer = new DataTransfer()
     dataTransfer.setData(json.mimeType, json.data)
 
-    editorActorRef.current?.send({
-      type: 'behavior event',
-      behaviorEvent: {
-        type: 'drag.drop',
-        originEvent: {
-          dataTransfer,
-        },
-        dragOrigin: {selection: stockTickerSelection},
-        position: {
-          block: 'end',
-          isEditor: false,
-          selection: {
-            anchor: {
-              path: [{_key: blockKey}, 'children', {_key: barKey}],
-              offset: 3,
-            },
-            focus: {
-              path: [{_key: blockKey}, 'children', {_key: barKey}],
-              offset: 3,
-            },
+    sendNativeEvent({
+      type: 'drag.drop',
+      originEvent: {
+        dataTransfer,
+      },
+      dragOrigin: {selection: stockTickerSelection},
+      position: {
+        block: 'end',
+        isEditor: false,
+        selection: {
+          anchor: {
+            path: [{_key: blockKey}, 'children', {_key: barKey}],
+            offset: 3,
+          },
+          focus: {
+            path: [{_key: blockKey}, 'children', {_key: barKey}],
+            offset: 3,
           },
         },
       },
-      editor: slateRef.current!,
     })
 
     await vi.waitFor(() => {
@@ -136,27 +131,26 @@ describe('event.drag.drop', () => {
     const spanKey = keyGenerator()
     const imageKey = keyGenerator()
 
-    const {locator, editorRef, editorActorRef, slateRef} =
-      await createTestEditor({
-        keyGenerator,
-        schemaDefinition: defineSchema({
-          blockObjects: [
-            {name: 'image', fields: [{name: 'src', type: 'string'}]},
-          ],
-        }),
-        initialValue: [
-          {
-            _key: blockKey,
-            _type: 'block',
-            children: [{_key: spanKey, _type: 'span', text: 'foo bar baz'}],
-          },
-          {
-            _key: imageKey,
-            _type: 'image',
-            src: 'https://example.com/image.jpg',
-          },
+    const {locator, editorRef, sendNativeEvent} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
         ],
-      })
+      }),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'foo bar baz'}],
+        },
+        {
+          _key: imageKey,
+          _type: 'image',
+          src: 'https://example.com/image.jpg',
+        },
+      ],
+    })
 
     const imageSelection = {
       anchor: {
@@ -195,30 +189,26 @@ describe('event.drag.drop', () => {
     const dataTransfer = new DataTransfer()
     dataTransfer.setData(json.mimeType, json.data)
 
-    editorActorRef.current?.send({
-      type: 'behavior event',
-      behaviorEvent: {
-        type: 'drag.drop',
-        originEvent: {
-          dataTransfer,
-        },
-        dragOrigin: {selection: imageSelection},
-        position: {
-          block: 'start',
-          isEditor: false,
-          selection: {
-            anchor: {
-              path: [{_key: blockKey}, 'children', {_key: spanKey}],
-              offset: 0,
-            },
-            focus: {
-              path: [{_key: blockKey}, 'children', {_key: spanKey}],
-              offset: 0,
-            },
+    sendNativeEvent({
+      type: 'drag.drop',
+      originEvent: {
+        dataTransfer,
+      },
+      dragOrigin: {selection: imageSelection},
+      position: {
+        block: 'start',
+        isEditor: false,
+        selection: {
+          anchor: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 0,
           },
         },
       },
-      editor: slateRef.current!,
     })
 
     await vi.waitFor(() => {

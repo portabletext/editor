@@ -4,7 +4,6 @@ import {userEvent} from '@vitest/browser/context'
 import {Given, Then, When} from 'racejar'
 import {assert, expect, vi} from 'vitest'
 import type {Editor} from '../src'
-import type {EditorActor} from '../src/editor/editor-machine'
 import {getEditorSelection} from '../src/internal-utils/editor-selection'
 import {parseBlocks} from '../src/internal-utils/parse-blocks'
 import {getSelectionText} from '../src/internal-utils/selection-text'
@@ -17,7 +16,6 @@ import {
   getTextSelection,
 } from '../src/internal-utils/text-selection'
 import {getValueAnnotations} from '../src/internal-utils/value-annotations'
-import type {PortableTextSlateEditor} from '../src/types/editor'
 import {
   reverseSelection,
   selectionPointToBlockOffset,
@@ -28,32 +26,30 @@ import type {Context} from './step-context'
 
 export const stepDefinitions = [
   Given('one editor', async (context: Context) => {
-    const {editorRef, editorActorRef, slateRef, locator} =
-      await createTestEditor({
-        schemaDefinition: defineSchema({
-          annotations: [{name: 'comment'}, {name: 'link'}],
-          decorators: [{name: 'em'}, {name: 'strong'}],
-          blockObjects: [{name: 'image'}, {name: 'break'}],
-          inlineObjects: [{name: 'stock-ticker'}],
-          lists: [{name: 'bullet'}, {name: 'number'}],
-          styles: [
-            {name: 'normal'},
-            {name: 'h1'},
-            {name: 'h2'},
-            {name: 'h3'},
-            {name: 'h4'},
-            {name: 'h5'},
-            {name: 'h6'},
-            {name: 'blockquote'},
-          ],
-        }),
-      })
+    const {editorRef, locator, sendNativeEvent} = await createTestEditor({
+      schemaDefinition: defineSchema({
+        annotations: [{name: 'comment'}, {name: 'link'}],
+        decorators: [{name: 'em'}, {name: 'strong'}],
+        blockObjects: [{name: 'image'}, {name: 'break'}],
+        inlineObjects: [{name: 'stock-ticker'}],
+        lists: [{name: 'bullet'}, {name: 'number'}],
+        styles: [
+          {name: 'normal'},
+          {name: 'h1'},
+          {name: 'h2'},
+          {name: 'h3'},
+          {name: 'h4'},
+          {name: 'h5'},
+          {name: 'h6'},
+          {name: 'blockquote'},
+        ],
+      }),
+    })
 
     context.editor = {
       ref: editorRef as React.RefObject<Editor>,
-      actorRef: editorActorRef as React.RefObject<EditorActor>,
-      slateRef: slateRef as React.RefObject<PortableTextSlateEditor>,
       locator,
+      sendNativeEvent,
       value: () => editorRef.current?.getSnapshot().context.value ?? [],
       selection: () =>
         editorRef.current?.getSnapshot().context.selection ?? null,
@@ -698,20 +694,14 @@ export const stepDefinitions = [
     dataTransfer.setData('application/x-portable-text', blocks)
     dataTransfer.setData('application/json', blocks)
 
-    // This is a slight hack since Vitest doesn't allow us to populate the
-    // DataTransfer object as we paste
-    context.editor.actorRef.current.send({
-      type: 'behavior event',
-      behaviorEvent: {
-        type: 'clipboard.paste',
-        originEvent: {
-          dataTransfer,
-        },
-        position: {
-          selection: context.editor.snapshot().context.selection!,
-        },
+    context.editor.sendNativeEvent({
+      type: 'clipboard.paste',
+      originEvent: {
+        dataTransfer,
       },
-      editor: context.editor.slateRef.current,
+      position: {
+        selection: context.editor.snapshot().context.selection!,
+      },
     })
   }),
   When(
@@ -723,20 +713,12 @@ export const stepDefinitions = [
         dataTransfer.setData(data[0], data[1])
       }
 
-      // This is a slight hack since Vitest doesn't allow us to populate the
-      // DataTransfer object as we paste
-      context.editor.actorRef.current.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'clipboard.paste',
-          originEvent: {
-            dataTransfer,
-          },
-          position: {
-            selection: context.editor.snapshot().context.selection!,
-          },
+      context.editor.sendNativeEvent({
+        type: 'clipboard.paste',
+        originEvent: {dataTransfer},
+        position: {
+          selection: context.editor.snapshot().context.selection!,
         },
-        editor: context.editor.slateRef.current,
       })
     },
   ),
