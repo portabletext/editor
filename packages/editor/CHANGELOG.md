@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.8.1
+
+### Patch Changes
+
+- [#1630](https://github.com/portabletext/editor/pull/1630) [`2b9d291`](https://github.com/portabletext/editor/commit/2b9d291571328d2ae7d98c5a5055bdef0229bfcf) Thanks [@christianhg](https://github.com/christianhg)! - fix(`getSelectedValue`): avoid looping through value
+
 ## 2.8.0
 
 ### Minor Changes
