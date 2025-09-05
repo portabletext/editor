@@ -1,45 +1,31 @@
 import {createTestKeyGenerator} from '@portabletext/test'
 import {page, userEvent} from '@vitest/browser/context'
-import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
-import {
-  defineSchema,
-  EditorProvider,
-  type Editor,
-  type EditorEmittedEvent,
-} from '../src'
-import {PortableTextEditable} from '../src/editor/Editable'
-import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
+import {defineSchema, type EditorEmittedEvent} from '../src'
+import {createTestEditor} from '../src/internal-utils/test-editor'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 
 describe('focus', () => {
   test('Scenario: Focusing on an empty editor', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const editorRef = React.createRef<Editor>()
     const events: Array<EditorEmittedEvent> = []
 
-    render(
-      <>
-        <EditorProvider
-          initialConfig={{
-            keyGenerator,
-            schemaDefinition: defineSchema({}),
-          }}
-        >
+    const {locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      children: (
+        <>
           <div data-testid="toolbar">Toolbar</div>
-          <EditorRefPlugin ref={editorRef} />
-          <PortableTextEditable />
           <EventListenerPlugin
             on={(event) => {
               events.push(event)
             }}
           />
-        </EditorProvider>
-      </>,
-    )
+        </>
+      ),
+    })
 
-    const editorLocator = page.getByRole('textbox')
+    const editorLocator = locator
     const toolbarLocator = page.getByTestId('toolbar')
     await vi.waitFor(() => expect.element(editorLocator).toBeInTheDocument())
     await vi.waitFor(() => expect.element(toolbarLocator).toBeInTheDocument())
@@ -94,7 +80,6 @@ describe('focus', () => {
 
   test('Scenario: Focusing on a non-empty editor', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const editorRef = React.createRef<Editor>()
     const events: Array<EditorEmittedEvent> = []
     const fooBlockKey = keyGenerator()
     const fooSpanKey = keyGenerator()
@@ -131,28 +116,23 @@ describe('focus', () => {
       },
     ]
 
-    render(
-      <>
-        <EditorProvider
-          initialConfig={{
-            keyGenerator,
-            schemaDefinition: defineSchema({}),
-            initialValue,
-          }}
-        >
+    const {locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue,
+      children: (
+        <>
           <div data-testid="toolbar">Toolbar</div>
-          <EditorRefPlugin ref={editorRef} />
-          <PortableTextEditable />
           <EventListenerPlugin
             on={(event) => {
               events.push(event)
             }}
           />
-        </EditorProvider>
-      </>,
-    )
+        </>
+      ),
+    })
 
-    const editorLocator = page.getByRole('textbox')
+    const editorLocator = locator
     const barSpanLocator = editorLocator.getByText('b')
     const toolbarLocator = page.getByTestId('toolbar')
     await vi.waitFor(() => expect.element(barSpanLocator).toBeInTheDocument())

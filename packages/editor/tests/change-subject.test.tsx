@@ -1,9 +1,6 @@
-import {defineSchema} from '@portabletext/schema'
-import {page, userEvent} from '@vitest/browser/context'
-import {describe, expect, test, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
-import {PortableTextEditable} from '../src/editor/Editable'
-import {EditorProvider} from '../src/editor/editor-provider'
+import {userEvent} from '@vitest/browser/context'
+import {describe, expect, test} from 'vitest'
+import {createTestEditor} from '../src/internal-utils/test-editor'
 import {InternalChange$Plugin} from '../src/plugins/plugin.internal.change-ref'
 import type {EditorChange} from '../src/types/editor'
 
@@ -11,27 +8,19 @@ describe('change$', () => {
   test('emits changes', async () => {
     const changes: Array<EditorChange> = []
 
-    render(
-      <EditorProvider
-        initialConfig={{
-          schemaDefinition: defineSchema({}),
-        }}
-      >
+    const {locator} = await createTestEditor({
+      children: (
         <InternalChange$Plugin
           onChange={(change) => {
             changes.push(change)
           }}
         />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
-
-    const editorLocator = page.getByRole('textbox')
-    await vi.waitFor(() => expect.element(editorLocator).toBeInTheDocument())
+      ),
+    })
 
     expect(changes).toEqual([{type: 'ready'}])
 
-    await userEvent.type(editorLocator, 'f')
+    await userEvent.type(locator, 'f')
 
     expect(changes).toEqual([
       {type: 'ready'},

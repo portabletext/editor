@@ -1,20 +1,11 @@
 import {createTestKeyGenerator} from '@portabletext/test'
-import {page, userEvent} from '@vitest/browser/context'
-import React from 'react'
+import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
-import {
-  defineSchema,
-  EditorProvider,
-  PortableTextEditable,
-  type BlockAnnotationRenderProps,
-  type Editor,
-} from '../src'
-import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
+import {defineSchema, type BlockAnnotationRenderProps} from '../src'
+import {createTestEditor} from '../src/internal-utils/test-editor'
 
 describe('renderAnnotation', () => {
   test('focused and selected props', async () => {
-    const editorRef = React.createRef<Editor>()
     const keyGenerator = createTestKeyGenerator()
 
     const blockKey = keyGenerator()
@@ -35,47 +26,36 @@ describe('renderAnnotation', () => {
       return props.children
     }
 
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator,
-          initialValue: [
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: fooSpanKey, text: 'foo '},
             {
-              _type: 'block',
-              _key: blockKey,
-              children: [
-                {_type: 'span', _key: fooSpanKey, text: 'foo '},
-                {
-                  _type: 'span',
-                  _key: barSpanKey,
-                  text: 'bar',
-                  marks: [linkKey],
-                },
-                {_type: 'span', _key: bazSpanKey, text: ' baz'},
-              ],
-              markDefs: [
-                {_type: 'link', _key: linkKey, href: 'https://example.com'},
-              ],
-              style: 'normal',
+              _type: 'span',
+              _key: barSpanKey,
+              text: 'bar',
+              marks: [linkKey],
             },
+            {_type: 'span', _key: bazSpanKey, text: ' baz'},
           ],
-          schemaDefinition: defineSchema({
-            annotations: [
-              {name: 'link', fields: [{name: 'href', type: 'string'}]},
-            ],
-          }),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable renderAnnotation={renderAnnotation} />
-      </EditorProvider>,
-    )
-
-    const locator = page.getByRole('textbox')
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+          markDefs: [
+            {_type: 'link', _key: linkKey, href: 'https://example.com'},
+          ],
+          style: 'normal',
+        },
+      ],
+      schemaDefinition: defineSchema({
+        annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+      }),
+      editableProps: {renderAnnotation},
+    })
 
     await userEvent.click(locator)
-    editorRef.current?.send({
+    editor.send({
       type: 'select',
       at: {
         anchor: {
@@ -89,7 +69,7 @@ describe('renderAnnotation', () => {
       },
     })
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.selection).toEqual({
+      expect(editor.getSnapshot().context.selection).toEqual({
         anchor: {
           path: [{_key: blockKey}, 'children', {_key: fooSpanKey}],
           offset: 4,

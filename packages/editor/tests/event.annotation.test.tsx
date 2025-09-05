@@ -1,56 +1,33 @@
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {getTersePt} from '@portabletext/test'
 import type {PortableTextTextBlock} from '@sanity/types'
-import {page, userEvent} from '@vitest/browser/context'
-import React from 'react'
-import {describe, expect, test, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
-import {
-  defineSchema,
-  EditorProvider,
-  PortableTextEditable,
-  type Editor,
-} from '../src'
+import {userEvent} from '@vitest/browser/context'
+import {describe, expect, test} from 'vitest'
+import {defineSchema} from '../src'
+import {createTestEditor} from '../src/internal-utils/test-editor'
 import {getTextMarks} from '../src/internal-utils/text-marks'
 import {
   getSelectionBeforeText,
   getTextSelection,
 } from '../src/internal-utils/text-selection'
-import {EditorRefPlugin} from '../src/plugins'
 
 describe('event.annotation', () => {
   test('.add/.remove', async () => {
-    const editorRef = React.createRef<Editor>()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({
-            decorators: [{name: 'strong'}],
-            annotations: [
-              {name: 'link', fields: [{name: 'href', type: 'string'}]},
-            ],
-          }),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
-
-    const locator = page.getByRole('textbox')
-
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    const {editor, locator} = await createTestEditor({
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+        annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+      }),
+    })
 
     await userEvent.click(locator)
     await userEvent.fill(locator, 'Hello, world!')
 
-    editorRef.current?.send({
+    editor.send({
       type: 'select',
-      at: getTextSelection(editorRef.current!.getSnapshot().context, 'world'),
+      at: getTextSelection(editor.getSnapshot().context, 'world'),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'annotation.add',
       annotation: {
         name: 'link',
@@ -60,12 +37,12 @@ describe('event.annotation', () => {
       },
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'select',
-      at: getTextSelection(editorRef.current!.getSnapshot().context, 'Hello'),
+      at: getTextSelection(editor.getSnapshot().context, 'Hello'),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'annotation.add',
       annotation: {
         name: 'link',
@@ -75,79 +52,49 @@ describe('event.annotation', () => {
       },
     })
 
-    expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+    expect(getTersePt(editor.getSnapshot().context)).toEqual([
       'Hello,, ,world,!',
     ])
-    expect(
-      getTextMarks(editorRef.current!.getSnapshot().context, 'Hello'),
-    ).toEqual(['k5'])
-    expect(
-      getTextMarks(editorRef.current!.getSnapshot().context, 'world'),
-    ).toEqual(['k2'])
+    expect(getTextMarks(editor.getSnapshot().context, 'Hello')).toEqual(['k5'])
+    expect(getTextMarks(editor.getSnapshot().context, 'world')).toEqual(['k2'])
 
-    editorRef.current?.send({
+    editor.send({
       type: 'select',
-      at: getSelectionBeforeText(
-        editorRef.current!.getSnapshot().context,
-        'ld',
-      ),
+      at: getSelectionBeforeText(editor.getSnapshot().context, 'ld'),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'annotation.remove',
       annotation: {
         name: 'link',
       },
     })
 
-    expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-      'Hello,, world!',
-    ])
-    expect(
-      getTextMarks(editorRef.current!.getSnapshot().context, 'Hello'),
-    ).toEqual(['k5'])
+    expect(getTersePt(editor.getSnapshot().context)).toEqual(['Hello,, world!'])
+    expect(getTextMarks(editor.getSnapshot().context, 'Hello')).toEqual(['k5'])
   })
 
   test('Scenario: Adding annotation without any initial fields', async () => {
-    const editorRef = React.createRef<Editor>()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({
-            annotations: [
-              {name: 'link', fields: [{name: 'href', type: 'string'}]},
-            ],
-          }),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
-
-    const locator = page.getByRole('textbox')
-
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    const {editor, locator} = await createTestEditor({
+      schemaDefinition: defineSchema({
+        annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+      }),
+    })
 
     await userEvent.click(locator)
     await userEvent.fill(locator, 'Hello, world!')
 
-    editorRef.current?.send({
+    editor.send({
       type: 'select',
-      at: getTextSelection(
-        editorRef.current!.getSnapshot().context,
-        'Hello, world!',
-      ),
+      at: getTextSelection(editor.getSnapshot().context, 'Hello, world!'),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'annotation.add',
       annotation: {name: 'link', value: {}},
     })
 
-    expect(editorRef.current?.getSnapshot().context.value).toEqual([
+    expect(editor.getSnapshot().context.value).toEqual([
       {
         _key: 'k0',
         _type: 'block',
@@ -165,8 +112,7 @@ describe('event.annotation', () => {
     ])
 
     const markDef = (
-      editorRef.current?.getSnapshot().context
-        .value?.[0] as PortableTextTextBlock
+      editor.getSnapshot().context.value?.[0] as PortableTextTextBlock
     )?.markDefs?.[0]
 
     expect(Object.keys(markDef ?? {})).toEqual(['_type', '_key'])

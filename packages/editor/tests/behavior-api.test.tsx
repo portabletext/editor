@@ -1,31 +1,14 @@
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
-import {page, userEvent} from '@vitest/browser/context'
-import React from 'react'
+import {getTersePt} from '@portabletext/test'
+import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
-import {
-  defineSchema,
-  EditorProvider,
-  PortableTextEditable,
-  type Editor,
-} from '../src'
 import {defineBehavior, effect, execute, forward, raise} from '../src/behaviors'
+import {createTestEditor} from '../src/internal-utils/test-editor'
 import {BehaviorPlugin} from '../src/plugins'
-import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 
 describe('Behavior API', () => {
   test('Scenario: Suppressing raised events while executing', async () => {
-    const editorRef = React.createRef<Editor>()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
+    const {editor, locator} = await createTestEditor({
+      children: (
         <BehaviorPlugin
           behaviors={[
             defineBehavior({
@@ -43,32 +26,18 @@ describe('Behavior API', () => {
             }),
           ]}
         />
-      </EditorProvider>,
-    )
-
-    const locator = page.getByRole('textbox')
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+      ),
+    })
 
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'a',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
     })
   })
 
   test('Scenario: Raising one custom event as the result of raising another', async () => {
-    const editorRef = React.createRef<Editor>()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
+    const {editor, locator} = await createTestEditor({
+      children: (
         <BehaviorPlugin
           behaviors={[
             defineBehavior({
@@ -94,32 +63,18 @@ describe('Behavior API', () => {
             }),
           ]}
         />
-      </EditorProvider>,
-    )
-
-    const locator = page.getByRole('textbox')
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+      ),
+    })
 
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'b',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['b'])
     })
   })
 
   test('Scenario: Sending custom events', async () => {
-    const editorRef = React.createRef<Editor>()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
+    const {editor} = await createTestEditor({
+      children: (
         <BehaviorPlugin
           behaviors={[
             defineBehavior({
@@ -130,33 +85,21 @@ describe('Behavior API', () => {
             }),
           ]}
         />
-      </EditorProvider>,
-    )
+      ),
+    })
 
-    const locator = page.getByRole('textbox')
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
-
-    editorRef.current?.send({type: 'custom.hello world'})
+    editor.send({type: 'custom.hello world'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
         'Hello, world!',
       ])
     })
   })
 
   test('Scenario: Raised events default to their default action', async () => {
-    const editorRef = React.createRef<Editor>()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
+    const {editor} = await createTestEditor({
+      children: (
         <BehaviorPlugin
           behaviors={[
             defineBehavior({
@@ -169,33 +112,21 @@ describe('Behavior API', () => {
             }),
           ]}
         />
-      </EditorProvider>,
-    )
+      ),
+    })
 
-    const locator = page.getByRole('textbox')
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
-
-    editorRef.current?.send({type: 'custom.hello world'})
+    editor.send({type: 'custom.hello world'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
         'Hello, world!',
       ])
     })
   })
 
   test('Scenario: `forward`ing all events', async () => {
-    const editorRef = React.createRef<Editor>()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
+    const {editor, locator} = await createTestEditor({
+      children: (
         <BehaviorPlugin
           behaviors={[
             defineBehavior({
@@ -204,33 +135,20 @@ describe('Behavior API', () => {
             }),
           ]}
         />
-      </EditorProvider>,
-    )
-
-    const locator = page.getByRole('textbox')
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+      ),
+    })
 
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'a',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
     })
   })
 
   test('Scenario: `forward`ing all events combined with an `effect`', async () => {
-    const editorRef = React.createRef<Editor>()
     const sideEffect = vi.fn()
 
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
+    const {editor, locator} = await createTestEditor({
+      children: (
         <BehaviorPlugin
           behaviors={[
             defineBehavior({
@@ -239,37 +157,23 @@ describe('Behavior API', () => {
             }),
           ]}
         />
-      </EditorProvider>,
-    )
-
-    const locator = page.getByRole('textbox')
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+      ),
+    })
 
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'a',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
     })
 
     expect(sideEffect).toHaveBeenCalled()
   })
 
   test('Scenario: `effect` can be combined with `forward` to not alter the chain of events', async () => {
-    const editorRef = React.createRef<Editor>()
-
     const sideEffectA = vi.fn()
     const sideEffectB = vi.fn()
 
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
+    const {editor, locator} = await createTestEditor({
+      children: (
         <BehaviorPlugin
           behaviors={[
             defineBehavior({
@@ -296,17 +200,12 @@ describe('Behavior API', () => {
             }),
           ]}
         />
-      </EditorProvider>,
-    )
-
-    const locator = page.getByRole('textbox')
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+      ),
+    })
 
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'a',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
     })
 
     expect(sideEffectA).toHaveBeenCalled()
@@ -316,26 +215,15 @@ describe('Behavior API', () => {
     await userEvent.type(locator, 'c')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'ac',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['ac'])
     })
 
     expect(sideEffectB).toHaveBeenCalled()
   })
 
   test('Scenario: Empty action sets stop event propagation', async () => {
-    const editorRef = React.createRef<Editor>()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
+    const {editor, locator} = await createTestEditor({
+      children: (
         <BehaviorPlugin
           behaviors={[
             defineBehavior({
@@ -351,34 +239,20 @@ describe('Behavior API', () => {
             }),
           ]}
         />
-      </EditorProvider>,
-    )
-
-    const locator = page.getByRole('textbox')
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+      ),
+    })
 
     await userEvent.type(locator, 'a')
     await userEvent.type(locator, 'b')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'b',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['b'])
     })
   })
 
   test('Scenario: `forward` forwards an event to succeeding Behaviors', async () => {
-    const editorRef = React.createRef<Editor>()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
+    const {editor, locator} = await createTestEditor({
+      children: (
         <BehaviorPlugin
           behaviors={[
             defineBehavior({
@@ -393,32 +267,18 @@ describe('Behavior API', () => {
             }),
           ]}
         />
-      </EditorProvider>,
-    )
-
-    const locator = page.getByRole('textbox')
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+      ),
+    })
 
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'b',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['b'])
     })
   })
 
   test('Scenario: `forward`ing twice', async () => {
-    const editorRef = React.createRef<Editor>()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
+    const {editor, locator} = await createTestEditor({
+      children: (
         <BehaviorPlugin
           behaviors={[
             defineBehavior({
@@ -435,32 +295,18 @@ describe('Behavior API', () => {
             }),
           ]}
         />
-      </EditorProvider>,
-    )
-
-    const locator = page.getByRole('textbox')
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+      ),
+    })
 
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'bb',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['bb'])
     })
   })
 
   test('Scenario: Empty actions cancel the chain of events', async () => {
-    const editorRef = React.createRef<Editor>()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
+    const {editor, locator} = await createTestEditor({
+      children: (
         <BehaviorPlugin
           behaviors={[
             defineBehavior({
@@ -475,33 +321,19 @@ describe('Behavior API', () => {
             }),
           ]}
         />
-      </EditorProvider>,
-    )
-
-    const locator = page.getByRole('textbox')
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+      ),
+    })
 
     await userEvent.type(locator, 'a')
     await userEvent.type(locator, 'c')
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'c',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['c'])
     })
   })
 
   test('Scenario: A lonely `forward` action does not alter the default action', async () => {
-    const editorRef = React.createRef<Editor>()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
+    const {editor, locator} = await createTestEditor({
+      children: (
         <BehaviorPlugin
           behaviors={[
             defineBehavior({
@@ -510,32 +342,18 @@ describe('Behavior API', () => {
             }),
           ]}
         />
-      </EditorProvider>,
-    )
-
-    const locator = page.getByRole('textbox')
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+      ),
+    })
 
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'a',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
     })
   })
 
   test('Scenario: `forward`ing a native event does not cancel it', async () => {
-    const editorRef = React.createRef<Editor>()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
+    const {editor, locator} = await createTestEditor({
+      children: (
         <BehaviorPlugin
           behaviors={[
             defineBehavior({
@@ -544,17 +362,12 @@ describe('Behavior API', () => {
             }),
           ]}
         />
-      </EditorProvider>,
-    )
-
-    const locator = page.getByRole('textbox')
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+      ),
+    })
 
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'a',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
     })
   })
 })

@@ -1,34 +1,19 @@
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
-import * as React from 'react'
+import {getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
 import {defineBehavior, execute} from '../src/behaviors'
 import type {InsertPlacement} from '../src/behaviors/behavior.types.event'
-import type {Editor} from '../src/editor'
-import {PortableTextEditable} from '../src/editor/Editable'
-import {EditorProvider} from '../src/editor/editor-provider'
+import {createTestEditor} from '../src/internal-utils/test-editor'
 import {BehaviorPlugin} from '../src/plugins'
-import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 import {getFocusBlock} from '../src/selectors'
 
 describe('event.insert.block', () => {
-  test('Scenario: Inserting block with custom _key', () => {
-    const editorRef = React.createRef<Editor>()
+  test('Scenario: Inserting block with custom _key', async () => {
+    const {editor} = await createTestEditor({
+      schemaDefinition: defineSchema({}),
+    })
 
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
-
-    expect(editorRef.current?.getSnapshot().context.value).toEqual([
+    expect(editor.getSnapshot().context.value).toEqual([
       {
         _key: 'k0',
         _type: 'block',
@@ -45,7 +30,7 @@ describe('event.insert.block', () => {
       },
     ])
 
-    editorRef.current?.send({
+    editor.send({
       type: 'insert.block',
       block: {
         _type: 'block',
@@ -60,7 +45,7 @@ describe('event.insert.block', () => {
       placement: 'auto',
     })
 
-    expect(editorRef.current?.getSnapshot().context.value).toEqual([
+    expect(editor.getSnapshot().context.value).toEqual([
       {
         _key: 'custom key',
         _type: 'block',
@@ -78,22 +63,12 @@ describe('event.insert.block', () => {
     ])
   })
 
-  test('Scenario: Inserting two blocks with same custom _key', () => {
-    const editorRef = React.createRef<Editor>()
+  test('Scenario: Inserting two blocks with same custom _key', async () => {
+    const {editor} = await createTestEditor({
+      schemaDefinition: defineSchema({}),
+    })
 
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
-
-    expect(editorRef.current?.getSnapshot().context.value).toEqual([
+    expect(editor.getSnapshot().context.value).toEqual([
       {
         _key: 'k0',
         _type: 'block',
@@ -110,7 +85,7 @@ describe('event.insert.block', () => {
       },
     ])
 
-    editorRef.current?.send({
+    editor.send({
       type: 'insert.block',
       block: {
         _type: 'block',
@@ -125,7 +100,7 @@ describe('event.insert.block', () => {
       placement: 'auto',
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'insert.block',
       block: {
         _type: 'block',
@@ -140,7 +115,7 @@ describe('event.insert.block', () => {
       placement: 'after',
     })
 
-    expect(editorRef.current?.getSnapshot().context.value).toEqual([
+    expect(editor.getSnapshot().context.value).toEqual([
       {
         _key: 'custom key',
         _type: 'block',
@@ -172,22 +147,12 @@ describe('event.insert.block', () => {
     ])
   })
 
-  test('Scenario: Stripping unknown text block props', () => {
-    const editorRef = React.createRef<Editor>()
+  test('Scenario: Stripping unknown text block props', async () => {
+    const {editor} = await createTestEditor({
+      schemaDefinition: defineSchema({lists: [{name: 'bullet'}]}),
+    })
 
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({lists: [{name: 'bullet'}]}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
-
-    editorRef.current?.send({
+    editor.send({
       type: 'insert.block',
       block: {
         _type: 'block',
@@ -208,7 +173,7 @@ describe('event.insert.block', () => {
       placement: 'after',
     })
 
-    expect(editorRef.current?.getSnapshot().context.value).toEqual([
+    expect(editor.getSnapshot().context.value).toEqual([
       {
         _key: 'k0',
         _type: 'block',
@@ -242,22 +207,12 @@ describe('event.insert.block', () => {
     ])
   })
 
-  test('Scenario: Stripping unknown span props', () => {
-    const editorRef = React.createRef<Editor>()
+  test('Scenario: Stripping unknown span props', async () => {
+    const {editor} = await createTestEditor({
+      schemaDefinition: defineSchema({}),
+    })
 
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
-
-    editorRef.current?.send({
+    editor.send({
       type: 'insert.block',
       block: {
         _type: 'block',
@@ -275,7 +230,7 @@ describe('event.insert.block', () => {
       placement: 'after',
     })
 
-    expect(editorRef.current?.getSnapshot().context.value).toEqual([
+    expect(editor.getSnapshot().context.value).toEqual([
       {
         _key: 'k0',
         _type: 'block',
@@ -308,16 +263,9 @@ describe('event.insert.block', () => {
   })
 
   test('Scenario: Inserting block in an empty editor', async () => {
-    const editorRef = React.createRef<Editor>()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
+    const {editor} = await createTestEditor({
+      schemaDefinition: defineSchema({}),
+      children: (
         <BehaviorPlugin
           behaviors={[
             defineBehavior<{placement: InsertPlacement; text: string}>({
@@ -357,12 +305,11 @@ describe('event.insert.block', () => {
             }),
           ]}
         />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
+      ),
+    })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: 'k0',
           _type: 'block',
@@ -380,15 +327,15 @@ describe('event.insert.block', () => {
       ])
     })
 
-    editorRef.current?.send({type: 'focus'})
-    editorRef.current?.send({
+    editor.send({type: 'focus'})
+    editor.send({
       type: 'custom.insert',
       placement: 'auto',
       text: 'foo',
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: 'k2',
           _type: 'block',
@@ -406,15 +353,15 @@ describe('event.insert.block', () => {
       ])
     })
 
-    editorRef.current?.send({type: 'focus'})
-    editorRef.current?.send({
+    editor.send({type: 'focus'})
+    editor.send({
       type: 'custom.insert',
       placement: 'auto',
       text: 'bar',
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: 'k6',
           _type: 'block',
@@ -432,15 +379,15 @@ describe('event.insert.block', () => {
       ])
     })
 
-    editorRef.current?.send({type: 'focus'})
-    editorRef.current?.send({
+    editor.send({type: 'focus'})
+    editor.send({
       type: 'custom.insert',
       placement: 'auto',
       text: 'baz',
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: 'k10',
           _type: 'block',
@@ -460,28 +407,18 @@ describe('event.insert.block', () => {
   })
 
   test('Scenario: Inserting block with lonely inline object', async () => {
-    const editorRef = React.createRef<Editor>()
+    const {editor} = await createTestEditor({
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {
+            name: 'stock-ticker',
+            fields: [{name: 'symbol', type: 'string'}],
+          },
+        ],
+      }),
+    })
 
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({
-            inlineObjects: [
-              {
-                name: 'stock-ticker',
-                fields: [{name: 'symbol', type: 'string'}],
-              },
-            ],
-          }),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
-
-    editorRef.current?.send({
+    editor.send({
       type: 'insert.block',
       block: {
         _type: 'block',
@@ -491,7 +428,7 @@ describe('event.insert.block', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
         ',{stock-ticker},',
       ])
     })

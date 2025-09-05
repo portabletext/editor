@@ -1,36 +1,17 @@
 import {createTestKeyGenerator} from '@portabletext/test'
 import {userEvent} from '@vitest/browser/context'
-import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
-import {
-  defineSchema,
-  EditorProvider,
-  PortableTextEditable,
-  type Editor,
-  type EditorEmittedEvent,
-} from '../src'
+import {defineSchema, type EditorEmittedEvent} from '../src'
 import {createTestEditor} from '../src/internal-utils/test-editor'
 import {EventListenerPlugin} from '../src/plugins'
-import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 
 describe('event.update value', () => {
   test('Scenario: Clearing placeholder value', async () => {
-    const editorRef = React.createRef<Editor>()
+    const {editor} = await createTestEditor({
+      schemaDefinition: defineSchema({}),
+    })
 
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
-
-    expect(editorRef.current?.getSnapshot().context.value).toEqual([
+    expect(editor.getSnapshot().context.value).toEqual([
       {
         _key: 'k0',
         _type: 'block',
@@ -47,13 +28,13 @@ describe('event.update value', () => {
       },
     ])
 
-    editorRef.current?.send({
+    editor.send({
       type: 'update value',
       value: undefined,
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: 'k0',
           _type: 'block',
@@ -73,21 +54,11 @@ describe('event.update value', () => {
   })
 
   test('Scenario: Updating and then clearing placeholder value', async () => {
-    const editorRef = React.createRef<Editor>()
+    const {editor} = await createTestEditor({
+      schemaDefinition: defineSchema({}),
+    })
 
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
-
-    editorRef.current?.send({
+    editor.send({
       type: 'update value',
       value: [
         {
@@ -108,7 +79,7 @@ describe('event.update value', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: 'k0',
           _type: 'block',
@@ -126,13 +97,13 @@ describe('event.update value', () => {
       ])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'update value',
       value: undefined,
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: 'k2',
           _type: 'block',
@@ -152,24 +123,16 @@ describe('event.update value', () => {
   })
 
   test('Scenario: updating block object property', async () => {
-    const editorRef = React.createRef<Editor>()
     const keyGenerator = createTestKeyGenerator()
 
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator,
-          schemaDefinition: defineSchema({
-            blockObjects: [{name: 'url'}],
-          }),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'url'}],
+      }),
+    })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'insert.block object',
       blockObject: {
         name: 'url',
@@ -180,7 +143,7 @@ describe('event.update value', () => {
       placement: 'auto',
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'update value',
       value: [
         {
@@ -194,7 +157,7 @@ describe('event.update value', () => {
 
     await vi.waitFor(
       () => {
-        return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        return expect(editor.getSnapshot().context.value).toEqual([
           {
             _key: 'k2',
             _type: 'url',
@@ -210,7 +173,6 @@ describe('event.update value', () => {
   })
 
   test('Scenario: Updating the text of an empty span', async () => {
-    const editorRef = React.createRef<Editor>()
     const keyGenerator = createTestKeyGenerator()
 
     const span = {_type: 'span', _key: 'span1', text: '', marks: []}
@@ -233,37 +195,29 @@ describe('event.update value', () => {
       markDefs: [],
     }
 
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator,
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
+    const {editor} = await createTestEditor({
+      keyGenerator,
+    })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'update value',
       value: [emptyFirstLine, lastLine],
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         emptyFirstLine,
         lastLine,
       ])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'update value',
       value: [populatedFirstLine, lastLine],
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         populatedFirstLine,
         lastLine,
       ])
@@ -271,7 +225,6 @@ describe('event.update value', () => {
   })
 
   test("Scenario: Updating before 'ready'", async () => {
-    const editorRef = React.createRef<Editor>()
     const keyGenerator = createTestKeyGenerator()
     const onEvent = vi.fn<() => EditorEmittedEvent>()
     const listBlock = {
@@ -291,30 +244,23 @@ describe('event.update value', () => {
       style: 'normal',
     }
 
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator,
-          schemaDefinition: defineSchema({
-            lists: [{name: 'bullet'}],
-            styles: [{name: 'normal'}, {name: 'h1'}],
-          }),
-          initialValue: [
-            {
-              _key: keyGenerator(),
-              _type: 'block',
-              children: [{_key: keyGenerator(), _type: 'span', text: 'a'}],
-            },
-          ],
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <EventListenerPlugin on={onEvent} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
+    const {editor} = await createTestEditor({
+      children: <EventListenerPlugin on={onEvent} />,
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        lists: [{name: 'bullet'}],
+        styles: [{name: 'normal'}, {name: 'h1'}],
+      }),
+      initialValue: [
+        {
+          _key: keyGenerator(),
+          _type: 'block',
+          children: [{_key: keyGenerator(), _type: 'span', text: 'a'}],
+        },
+      ],
+    })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'update value',
       value: [listBlock],
     })
@@ -324,14 +270,11 @@ describe('event.update value', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
-        listBlock,
-      ])
+      expect(editor.getSnapshot().context.value).toEqual([listBlock])
     })
   })
 
   test('Scenario: Adding blocks before existing block', async () => {
-    const editorRef = React.createRef<Editor>()
     const keyGenerator = createTestKeyGenerator()
     const onEvent = vi.fn<() => EditorEmittedEvent>()
 
@@ -359,43 +302,32 @@ describe('event.update value', () => {
       markDefs: [],
     }
 
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator,
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <EventListenerPlugin on={onEvent} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
+    const {editor} = await createTestEditor({
+      children: <EventListenerPlugin on={onEvent} />,
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+    })
 
     await vi.waitFor(() => {
       expect(onEvent).toHaveBeenCalledWith({type: 'ready'})
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'update value',
       value: [h2],
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([h2])
+      expect(editor.getSnapshot().context.value).toEqual([h2])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'update value',
       value: [h1, paragraph, h2],
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
-        h1,
-        paragraph,
-        h2,
-      ])
+      expect(editor.getSnapshot().context.value).toEqual([h1, paragraph, h2])
     })
   })
 
