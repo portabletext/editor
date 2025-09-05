@@ -85,7 +85,6 @@ export function createConverterTextPlain(
           context: snapshot.context,
           block,
           options: {
-            refreshKeys: false,
             validateFields: false,
           },
         })

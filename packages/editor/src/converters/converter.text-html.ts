@@ -61,7 +61,6 @@ export function createConverterTextHtml(
           context: snapshot.context,
           block,
           options: {
-            refreshKeys: false,
             validateFields: false,
           },
         })

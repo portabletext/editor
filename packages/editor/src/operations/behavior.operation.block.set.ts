@@ -51,7 +51,7 @@ export const blockSetOperationImplementation: BehaviorOperationImplementation<
       ...parsedBlock,
       ...filteredProps,
     },
-    options: {refreshKeys: false, validateFields: true},
+    options: {validateFields: true},
   })
 
   if (!updatedBlock) {

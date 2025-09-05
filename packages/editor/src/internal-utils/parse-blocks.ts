@@ -19,7 +19,6 @@ export function parseBlocks({
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>
   blocks: unknown
   options: {
-    refreshKeys: boolean
     validateFields: boolean
   }
 }): Array<PortableTextBlock> {
@@ -42,7 +41,6 @@ export function parseBlock({
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>
   block: unknown
   options: {
-    refreshKeys: boolean
     validateFields: boolean
   }
 }): PortableTextBlock | undefined {
@@ -59,7 +57,7 @@ export function parseBlockObject({
 }: {
   blockObject: unknown
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>
-  options: {refreshKeys: boolean; validateFields: boolean}
+  options: {validateFields: boolean}
 }): PortableTextObject | undefined {
   if (!isTypedObject(blockObject)) {
     return undefined
@@ -101,7 +99,7 @@ export function parseTextBlock({
 }: {
   block: unknown
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>
-  options: {refreshKeys: boolean; validateFields: boolean}
+  options: {validateFields: boolean}
 }): PortableTextTextBlock | undefined {
   if (!isTypedObject(block)) {
     return undefined
@@ -135,11 +133,8 @@ export function parseTextBlock({
     return undefined
   }
 
-  const _key = options.refreshKeys
-    ? context.keyGenerator()
-    : typeof block._key === 'string'
-      ? block._key
-      : context.keyGenerator()
+  const _key =
+    typeof block._key === 'string' ? block._key : context.keyGenerator()
 
   const unparsedMarkDefs: Array<unknown> = Array.isArray(block.markDefs)
     ? block.markDefs
@@ -251,7 +246,7 @@ export function parseSpan({
   span: unknown
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>
   markDefKeyMap: Map<string, string>
-  options: {refreshKeys: boolean; validateFields: boolean}
+  options: {validateFields: boolean}
 }): PortableTextSpan | undefined {
   if (!isTypedObject(span)) {
     return undefined
@@ -300,11 +295,7 @@ export function parseSpan({
 
   return {
     _type: 'span',
-    _key: options.refreshKeys
-      ? context.keyGenerator()
-      : typeof span._key === 'string'
-        ? span._key
-        : context.keyGenerator(),
+    _key: typeof span._key === 'string' ? span._key : context.keyGenerator(),
     text: typeof span.text === 'string' ? span.text : '',
     marks,
     ...(options.validateFields ? {} : customFields),
@@ -318,7 +309,7 @@ export function parseInlineObject({
 }: {
   inlineObject: unknown
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>
-  options: {refreshKeys: boolean; validateFields: boolean}
+  options: {validateFields: boolean}
 }): PortableTextObject | undefined {
   if (!isTypedObject(inlineObject)) {
     return undefined
@@ -349,7 +340,7 @@ export function parseAnnotation({
 }: {
   annotation: TypedObject
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>
-  options: {refreshKeys: boolean; validateFields: boolean}
+  options: {validateFields: boolean}
 }): PortableTextObject | undefined {
   if (!isTypedObject(annotation)) {
     return undefined
@@ -382,7 +373,7 @@ function parseObject({
   context: Pick<EditorContext, 'keyGenerator'> & {
     schemaType: EditorSchema['blockObjects'][0]
   }
-  options: {refreshKeys: boolean; validateFields: boolean}
+  options: {validateFields: boolean}
 }): PortableTextObject {
   const {_type, _key, ...customFields} = object
 
@@ -405,11 +396,8 @@ function parseObject({
 
   return {
     _type: context.schemaType.name,
-    _key: options.refreshKeys
-      ? context.keyGenerator()
-      : typeof object._key === 'string'
-        ? object._key
-        : context.keyGenerator(),
+    _key:
+      typeof object._key === 'string' ? object._key : context.keyGenerator(),
     ...values,
   }
 }

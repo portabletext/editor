@@ -82,7 +82,7 @@ export const stepDefinitions = [
               context.editor.ref.current.getSnapshot().context.keyGenerator,
           },
           blocks: JSON.parse(blocks),
-          options: {refreshKeys: false, validateFields: true},
+          options: {validateFields: true},
         }),
         placement,
       })
@@ -351,7 +351,7 @@ export const stepDefinitions = [
               context.editor.ref.current.getSnapshot().context.keyGenerator,
           },
           blocks: JSON.parse(blocks),
-          options: {refreshKeys: false, validateFields: true},
+          options: {validateFields: true},
         }),
         placement,
         select: selectPosition,
