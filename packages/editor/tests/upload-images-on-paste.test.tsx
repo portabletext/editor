@@ -33,7 +33,7 @@ const resolveImagesBehavior = defineBehavior<{
 })
 
 test('Scenario: Pasting image files', async () => {
-  const {editorRef, paste} = await createTestEditor({
+  const {editorRef, sendNativeEvent} = await createTestEditor({
     children: (
       <BehaviorPlugin
         behaviors={[
@@ -128,7 +128,13 @@ test('Scenario: Pasting image files', async () => {
   dataTransfer.items.add(pixelB)
   dataTransfer.items.add(pixelC)
 
-  paste(dataTransfer)
+  sendNativeEvent({
+    type: 'clipboard.paste',
+    originEvent: {dataTransfer},
+    position: {
+      selection: editorRef.current?.getSnapshot().context.selection!,
+    },
+  })
 
   await vi.waitFor(() => {
     expect(editorRef.current?.getSnapshot().context.value).toEqual([
@@ -169,7 +175,7 @@ test('Scenario: Pasting image files', async () => {
 })
 
 test('Scenario: Uploading images embedded in HTML', async () => {
-  const {editorRef, paste} = await createTestEditor({
+  const {editorRef, sendNativeEvent} = await createTestEditor({
     children: (
       <BehaviorPlugin
         behaviors={[
@@ -257,7 +263,13 @@ test('Scenario: Uploading images embedded in HTML', async () => {
   `
   const dataTransfer = new DataTransfer()
   dataTransfer.setData('text/html', html)
-  paste(dataTransfer)
+  sendNativeEvent({
+    type: 'clipboard.paste',
+    originEvent: {dataTransfer},
+    position: {
+      selection: editorRef.current?.getSnapshot().context.selection!,
+    },
+  })
 
   await vi.waitFor(() => {
     expect(editorRef.current?.getSnapshot().context.value).toEqual([
@@ -389,7 +401,7 @@ test('Scenario: Pasting image files that exist both in HTML and as a file', asyn
   })
 
   // Given an editor with Behaviors that handle image files and HTML images
-  const {editorRef, paste} = await createTestEditor({
+  const {editorRef, sendNativeEvent} = await createTestEditor({
     children: (
       <BehaviorPlugin
         behaviors={[
@@ -416,7 +428,13 @@ test('Scenario: Pasting image files that exist both in HTML and as a file', asyn
   const dataTransfer = new DataTransfer()
   dataTransfer.items.add(imageA)
   dataTransfer.setData('text/html', html)
-  paste(dataTransfer)
+  sendNativeEvent({
+    type: 'clipboard.paste',
+    originEvent: {dataTransfer},
+    position: {
+      selection: editorRef.current?.getSnapshot().context.selection!,
+    },
+  })
 
   // Then the image file takes precedence because the `deserialize` events
   // happens before the `deserialize.data` event.
