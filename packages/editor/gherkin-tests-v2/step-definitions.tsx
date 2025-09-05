@@ -3,7 +3,6 @@ import {getTersePt, parseTersePt} from '@portabletext/test'
 import {userEvent} from '@vitest/browser/context'
 import {Given, Then, When} from 'racejar'
 import {assert, expect, vi} from 'vitest'
-import type {Editor} from '../src'
 import {getEditorSelection} from '../src/internal-utils/editor-selection'
 import {parseBlocks} from '../src/internal-utils/parse-blocks'
 import {getSelectionText} from '../src/internal-utils/selection-text'
@@ -26,7 +25,7 @@ import type {Context} from './step-context'
 
 export const stepDefinitions = [
   Given('one editor', async (context: Context) => {
-    const {editorRef, locator, sendNativeEvent} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       schemaDefinition: defineSchema({
         annotations: [{name: 'comment'}, {name: 'link'}],
         decorators: [{name: 'em'}, {name: 'strong'}],
@@ -46,15 +45,8 @@ export const stepDefinitions = [
       }),
     })
 
-    context.editor = {
-      ref: editorRef as React.RefObject<Editor>,
-      locator,
-      sendNativeEvent,
-      value: () => editorRef.current?.getSnapshot().context.value ?? [],
-      selection: () =>
-        editorRef.current?.getSnapshot().context.selection ?? null,
-      snapshot: () => editorRef.current!.getSnapshot(),
-    }
+    context.locator = locator
+    context.editor = editor
   }),
 
   Given('a global keymap', (context: Context) => {
@@ -62,12 +54,12 @@ export const stepDefinitions = [
   }),
 
   Given('the editor is focused', async (context: Context) => {
-    context.editor.ref.current.send({
+    context.editor.send({
       type: 'focus',
     })
 
     await vi.waitFor(() => {
-      const selection = context.editor.selection()
+      const selection = context.editor.getSnapshot().context.selection
       expect(selection).not.toBeNull()
     })
   }),
@@ -77,13 +69,13 @@ export const stepDefinitions = [
     (context: Context, tersePt: Parameter['tersePt']) => {
       const blocks = parseTersePt(
         {
-          keyGenerator: context.editor.snapshot().context.keyGenerator,
-          schema: context.editor.snapshot().context.schema,
+          keyGenerator: context.editor.getSnapshot().context.keyGenerator,
+          schema: context.editor.getSnapshot().context.schema,
         },
         tersePt,
       )
 
-      context.editor.ref.current.send({
+      context.editor.send({
         type: 'insert.blocks',
         blocks,
         placement: 'auto',
@@ -98,13 +90,12 @@ export const stepDefinitions = [
   Given(
     'blocks {placement}',
     (context: Context, placement: Parameter['placement'], blocks: string) => {
-      context.editor.ref.current.send({
+      context.editor.send({
         type: 'insert.blocks',
         blocks: parseBlocks({
           context: {
-            schema: context.editor.ref.current.getSnapshot().context.schema,
-            keyGenerator:
-              context.editor.ref.current.getSnapshot().context.keyGenerator,
+            schema: context.editor.getSnapshot().context.schema,
+            keyGenerator: context.editor.getSnapshot().context.keyGenerator,
           },
           blocks: JSON.parse(blocks),
           options: {validateFields: true},
@@ -120,7 +111,7 @@ export const stepDefinitions = [
   When(
     'a(n) {inline-object} is inserted',
     (context: Context, inlineObject: Parameter['inlineObject']) => {
-      context.editor.ref.current.send({
+      context.editor.send({
         type: 'insert.inline object',
         inlineObject: {
           name: inlineObject,
@@ -136,7 +127,7 @@ export const stepDefinitions = [
   Given(
     'a block {key} with text {text}',
     (context: Context, key: string, text: Parameter['text']) => {
-      context.editor.ref.current.send({
+      context.editor.send({
         type: 'insert.block',
         block: {
           _key: key,
@@ -149,7 +140,7 @@ export const stepDefinitions = [
     },
   ),
   When('{string} is typed', async (context: Context, text: string) => {
-    await userEvent.type(context.editor.locator, text)
+    await userEvent.type(context.locator, text)
   }),
   Then(
     '{terse-pt} is in block {key}',
@@ -164,9 +155,9 @@ export const stepDefinitions = [
         assert.fail('Expected at most one text string')
       }
 
-      expect(getTextBlockKey(context.editor.snapshot().context, string)).toBe(
-        key,
-      )
+      expect(
+        getTextBlockKey(context.editor.getSnapshot().context, string),
+      ).toBe(key)
     },
   ),
 
@@ -196,14 +187,17 @@ export const stepDefinitions = [
     async (context: Context, text: string) => {
       await vi.waitFor(() => {
         const selection = getSelectionBeforeText(
-          context.editor.snapshot().context,
+          context.editor.getSnapshot().context,
           text,
         )
         expect(selection).not.toBeNull()
 
-        context.editor.ref.current.send({
+        context.editor.send({
           type: 'select',
-          at: getSelectionBeforeText(context.editor.snapshot().context, text),
+          at: getSelectionBeforeText(
+            context.editor.getSnapshot().context,
+            text,
+          ),
         })
       })
     },
@@ -213,11 +207,13 @@ export const stepDefinitions = [
     async (context: Context, text: string) => {
       await vi.waitFor(() => {
         const selection = getSelectionBeforeText(
-          context.editor.snapshot().context,
+          context.editor.getSnapshot().context,
           text,
         )
         expect(selection).not.toBeNull()
-        expect(context.editor.selection()).toEqual(selection)
+        expect(context.editor.getSnapshot().context.selection).toEqual(
+          selection,
+        )
       })
     },
   ),
@@ -226,14 +222,14 @@ export const stepDefinitions = [
     async (context: Context, text: string) => {
       await vi.waitFor(() => {
         const selection = getSelectionAfterText(
-          context.editor.snapshot().context,
+          context.editor.getSnapshot().context,
           text,
         )
         expect(selection).not.toBeNull()
 
-        context.editor.ref.current.send({
+        context.editor.send({
           type: 'select',
-          at: getSelectionAfterText(context.editor.snapshot().context, text),
+          at: getSelectionAfterText(context.editor.getSnapshot().context, text),
         })
       })
     },
@@ -243,35 +239,37 @@ export const stepDefinitions = [
     async (context: Context, text: string) => {
       await vi.waitFor(() => {
         const selection = getSelectionAfterText(
-          context.editor.snapshot().context,
+          context.editor.getSnapshot().context,
           text,
         )
         expect(selection).not.toBeNull()
-        expect(context.editor.selection()).toEqual(selection)
+        expect(context.editor.getSnapshot().context.selection).toEqual(
+          selection,
+        )
       })
     },
   ),
   Then('nothing is selected', async (context: Context) => {
     await vi.waitFor(() => {
-      expect(context.editor.selection()).toBeNull()
+      expect(context.editor.getSnapshot().context.selection).toBeNull()
     })
   }),
   When('everything is selected', (context: Context) => {
     const editorSelection = getEditorSelection(
-      context.editor.snapshot().context,
+      context.editor.getSnapshot().context,
     )
 
-    context.editor.ref.current.send({
+    context.editor.send({
       type: 'select',
       at: editorSelection,
     })
   }),
   When('everything is selected backwards', (context: Context) => {
     const editorSelection = reverseSelection(
-      getEditorSelection(context.editor.snapshot().context),
+      getEditorSelection(context.editor.getSnapshot().context),
     )
 
-    context.editor.ref.current.send({
+    context.editor.send({
       type: 'select',
       at: editorSelection,
     })
@@ -279,12 +277,12 @@ export const stepDefinitions = [
   When('{string} is selected', async (context: Context, text: string) => {
     await vi.waitFor(() => {
       const selection = getTextSelection(
-        context.editor.snapshot().context,
+        context.editor.getSnapshot().context,
         text,
       )
       expect(selection).not.toBeNull()
 
-      context.editor.ref.current.send({
+      context.editor.send({
         type: 'select',
         at: selection,
       })
@@ -295,11 +293,11 @@ export const stepDefinitions = [
     async (context: Context, text: string) => {
       await vi.waitFor(() => {
         const selection = reverseSelection(
-          getTextSelection(context.editor.snapshot().context, text),
+          getTextSelection(context.editor.getSnapshot().context, text),
         )
         expect(selection).not.toBeNull()
 
-        context.editor.ref.current.send({
+        context.editor.send({
           type: 'select',
           at: selection,
         })
@@ -308,7 +306,7 @@ export const stepDefinitions = [
   ),
   Then('{terse-pt} is selected', (context: Context, text: Array<string>) => {
     expect(
-      getSelectionText(context.editor.snapshot().context),
+      getSelectionText(context.editor.getSnapshot().context),
       'Unexpected selection',
     ).toEqual(text)
   }),
@@ -322,13 +320,13 @@ export const stepDefinitions = [
     ) => {
       const blocks = parseTersePt(
         {
-          keyGenerator: context.editor.snapshot().context.keyGenerator,
-          schema: context.editor.snapshot().context.schema,
+          keyGenerator: context.editor.getSnapshot().context.keyGenerator,
+          schema: context.editor.getSnapshot().context.schema,
         },
         tersePt,
       )
 
-      context.editor.ref.current.send({
+      context.editor.send({
         type: 'insert.blocks',
         blocks,
         placement,
@@ -345,13 +343,13 @@ export const stepDefinitions = [
     ) => {
       const blocks = parseTersePt(
         {
-          keyGenerator: context.editor.snapshot().context.keyGenerator,
-          schema: context.editor.snapshot().context.schema,
+          keyGenerator: context.editor.getSnapshot().context.keyGenerator,
+          schema: context.editor.getSnapshot().context.schema,
         },
         tersePt,
       )
 
-      context.editor.ref.current.send({
+      context.editor.send({
         type: 'insert.blocks',
         blocks,
         placement,
@@ -367,13 +365,12 @@ export const stepDefinitions = [
       selectPosition: Parameter['selectPosition'],
       blocks: string,
     ) => {
-      context.editor.ref.current.send({
+      context.editor.send({
         type: 'insert.blocks',
         blocks: parseBlocks({
           context: {
-            schema: context.editor.ref.current.getSnapshot().context.schema,
-            keyGenerator:
-              context.editor.ref.current.getSnapshot().context.keyGenerator,
+            schema: context.editor.getSnapshot().context.schema,
+            keyGenerator: context.editor.getSnapshot().context.keyGenerator,
           },
           blocks: JSON.parse(blocks),
           options: {validateFields: true},
@@ -389,7 +386,7 @@ export const stepDefinitions = [
     async (context: Context, tersePt: Parameter['tersePt']) => {
       await vi.waitFor(() => {
         expect(
-          getTersePt(context.editor.snapshot().context),
+          getTersePt(context.editor.getSnapshot().context),
           'Unexpected editor text',
         ).toEqual(tersePt)
       })
@@ -409,24 +406,24 @@ export const stepDefinitions = [
     ) => {
       await vi.waitFor(() => {
         const selection = getTextSelection(
-          context.editor.snapshot().context,
+          context.editor.getSnapshot().context,
           text,
         )
         expect(selection).not.toBeNull()
 
-        context.editor.ref.current.send({
+        context.editor.send({
           type: 'select',
           at: selection,
         })
       })
 
-      const value = context.editor.value()
+      const value = context.editor.getSnapshot().context.value
       const priorAnnotationKeys = getValueAnnotations(
-        context.editor.snapshot().context.schema,
+        context.editor.getSnapshot().context.schema,
         value,
       )
 
-      context.editor.ref.current.send({
+      context.editor.send({
         type: 'annotation.toggle',
         annotation: {
           name: annotation,
@@ -437,17 +434,17 @@ export const stepDefinitions = [
       let newAnnotationKeys: Array<string> = []
 
       await vi.waitFor(() => {
-        const newValue = context.editor.value()
+        const newValue = context.editor.getSnapshot().context.value
 
         expect(priorAnnotationKeys).not.toEqual(
           getValueAnnotations(
-            context.editor.snapshot().context.schema,
+            context.editor.getSnapshot().context.schema,
             newValue,
           ),
         )
 
         newAnnotationKeys = getValueAnnotations(
-          context.editor.snapshot().context.schema,
+          context.editor.getSnapshot().context.schema,
           newValue,
         ).filter(
           (newAnnotationKey) => !priorAnnotationKeys.includes(newAnnotationKey),
@@ -468,7 +465,7 @@ export const stepDefinitions = [
   When(
     '{annotation} is toggled',
     (context: Context, annotation: Parameter['annotation']) => {
-      context.editor.ref.current.send({
+      context.editor.send({
         type: 'annotation.toggle',
         annotation: {
           name: annotation,
@@ -484,13 +481,13 @@ export const stepDefinitions = [
       annotation: Parameter['annotation'],
       keyKeys: Array<string>,
     ) => {
-      const value = context.editor.value()
+      const value = context.editor.getSnapshot().context.value
       const priorAnnotationKeys = getValueAnnotations(
-        context.editor.snapshot().context.schema,
+        context.editor.getSnapshot().context.schema,
         value,
       )
 
-      context.editor.ref.current.send({
+      context.editor.send({
         type: 'annotation.toggle',
         annotation: {
           name: annotation,
@@ -501,17 +498,17 @@ export const stepDefinitions = [
       let newAnnotationKeys: Array<string> = []
 
       await vi.waitFor(() => {
-        const newValue = context.editor.value()
+        const newValue = context.editor.getSnapshot().context.value
 
         expect(priorAnnotationKeys).not.toEqual(
           getValueAnnotations(
-            context.editor.snapshot().context.schema,
+            context.editor.getSnapshot().context.schema,
             newValue,
           ),
         )
 
         newAnnotationKeys = getValueAnnotations(
-          context.editor.snapshot().context.schema,
+          context.editor.getSnapshot().context.schema,
           newValue,
         ).filter(
           (newAnnotationKey) => !priorAnnotationKeys.includes(newAnnotationKey),
@@ -532,7 +529,7 @@ export const stepDefinitions = [
   Then(
     '{string} has an annotation different than {key}',
     (context: Context, text: string, key: string) => {
-      const marks = getTextMarks(context.editor.snapshot().context, text)
+      const marks = getTextMarks(context.editor.getSnapshot().context, text)
       const expectedMarks = [context.keyMap?.get(key) ?? key]
 
       expect(marks).not.toEqual(expectedMarks)
@@ -551,14 +548,14 @@ export const stepDefinitions = [
     ) => {
       await vi.waitFor(() => {
         const selection = getTextSelection(
-          context.editor.snapshot().context,
+          context.editor.getSnapshot().context,
           text,
         )
         const anchorOffset = selection
           ? selectionPointToBlockOffset({
               context: {
-                schema: context.editor.ref.current.getSnapshot().context.schema,
-                value: context.editor.value(),
+                schema: context.editor.getSnapshot().context.schema,
+                value: context.editor.getSnapshot().context.value,
               },
               selectionPoint: selection.anchor,
             })
@@ -566,8 +563,8 @@ export const stepDefinitions = [
         const focusOffset = selection
           ? selectionPointToBlockOffset({
               context: {
-                schema: context.editor.ref.current.getSnapshot().context.schema,
-                value: context.editor.value(),
+                schema: context.editor.getSnapshot().context.schema,
+                value: context.editor.getSnapshot().context.value,
               },
               selectionPoint: selection.focus,
             })
@@ -575,7 +572,7 @@ export const stepDefinitions = [
         expect(anchorOffset).toBeDefined()
         expect(focusOffset).toBeDefined()
 
-        context.editor.ref.current.send({
+        context.editor.send({
           type: 'decorator.toggle',
           decorator,
           at: {
@@ -590,7 +587,7 @@ export const stepDefinitions = [
     '{decorator} is toggled',
     async (context: Context, decorator: Parameter['decorator']) => {
       await vi.waitFor(() => {
-        context.editor.ref.current.send({
+        context.editor.send({
           type: 'decorator.toggle',
           decorator,
         })
@@ -606,14 +603,14 @@ export const stepDefinitions = [
     ) => {
       await vi.waitFor(() => {
         const selection = getTextSelection(
-          context.editor.snapshot().context,
+          context.editor.getSnapshot().context,
           text,
         )
         const anchorOffset = selection
           ? spanSelectionPointToBlockOffset({
               context: {
-                schema: context.editor.ref.current.getSnapshot().context.schema,
-                value: context.editor.value(),
+                schema: context.editor.getSnapshot().context.schema,
+                value: context.editor.getSnapshot().context.value,
               },
               selectionPoint: selection.anchor,
             })
@@ -621,8 +618,8 @@ export const stepDefinitions = [
         const focusOffset = selection
           ? spanSelectionPointToBlockOffset({
               context: {
-                schema: context.editor.ref.current.getSnapshot().context.schema,
-                value: context.editor.value(),
+                schema: context.editor.getSnapshot().context.schema,
+                value: context.editor.getSnapshot().context.value,
               },
               selectionPoint: selection.focus,
             })
@@ -631,7 +628,7 @@ export const stepDefinitions = [
         expect(anchorOffset).toBeDefined()
         expect(focusOffset).toBeDefined()
 
-        context.editor.ref.current.send({
+        context.editor.send({
           type: 'decorator.toggle',
           decorator,
           at: {
@@ -651,7 +648,7 @@ export const stepDefinitions = [
     async (context: Context, text: string, marks: Parameter['marks']) => {
       await vi.waitFor(() => {
         const actualMarks =
-          getTextMarks(context.editor.snapshot().context, text) ?? []
+          getTextMarks(context.editor.getSnapshot().context, text) ?? []
         const expectedMarks = marks.map(
           (mark) => context.keyMap?.get(mark) ?? mark,
         )
@@ -662,15 +659,15 @@ export const stepDefinitions = [
   ),
   Then('{string} has no marks', async (context: Context, text: string) => {
     await vi.waitFor(() => {
-      const textMarks = getTextMarks(context.editor.snapshot().context, text)
+      const textMarks = getTextMarks(context.editor.getSnapshot().context, text)
       expect(textMarks).toEqual([])
     })
   }),
   Then(
     '{string} and {string} have the same marks',
     (context: Context, textA: string, textB: string) => {
-      const marksA = getTextMarks(context.editor.snapshot().context, textA)
-      const marksB = getTextMarks(context.editor.snapshot().context, textB)
+      const marksA = getTextMarks(context.editor.getSnapshot().context, textA)
+      const marksB = getTextMarks(context.editor.getSnapshot().context, textB)
 
       expect(
         marksA,
@@ -683,7 +680,7 @@ export const stepDefinitions = [
    * Style steps
    */
   When('{style} is toggled', (context: Context, style: Parameter['style']) => {
-    context.editor.ref.current.send({type: 'style.toggle', style})
+    context.editor.send({type: 'style.toggle', style})
   }),
 
   /**
@@ -700,7 +697,7 @@ export const stepDefinitions = [
         dataTransfer,
       },
       position: {
-        selection: context.editor.snapshot().context.selection!,
+        selection: context.editor.getSnapshot().context.selection!,
       },
     })
   }),
@@ -717,7 +714,7 @@ export const stepDefinitions = [
         type: 'clipboard.paste',
         originEvent: {dataTransfer},
         position: {
-          selection: context.editor.snapshot().context.selection!,
+          selection: context.editor.getSnapshot().context.selection!,
         },
       })
     },
@@ -727,9 +724,9 @@ export const stepDefinitions = [
    * Undo/Redo steps
    */
   When('undo is performed', (context: Context) => {
-    context.editor.ref.current.send({type: 'history.undo'})
+    context.editor.send({type: 'history.undo'})
   }),
   When('redo is performed', (context: Context) => {
-    context.editor.ref.current.send({type: 'history.redo'})
+    context.editor.send({type: 'history.redo'})
   }),
 ]

@@ -15,21 +15,21 @@ describe('event.list item.add', () => {
       style: 'normal',
       markDefs: [],
     }
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       schemaDefinition: defineSchema({
         lists: [{name: 'bullet'}],
       }),
       initialValue: [block],
     })
 
-    editorRef.current?.send({type: 'focus'})
+    editor.send({type: 'focus'})
 
-    editorRef.current?.send({
+    editor.send({
       type: 'list item.add',
       listItem: 'bullet',
     })
 
-    expect(editorRef.current?.getSnapshot().context.value).toEqual([
+    expect(editor.getSnapshot().context.value).toEqual([
       {
         ...block,
         level: 1,
@@ -51,21 +51,21 @@ describe('event.list item.add', () => {
       style: 'normal',
       markDefs: [],
     }
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       schemaDefinition: defineSchema({
         lists: [{name: 'bullet'}, {name: 'number'}],
       }),
       initialValue: [block],
     })
 
-    editorRef.current?.send({type: 'focus'})
+    editor.send({type: 'focus'})
 
-    editorRef.current?.send({
+    editor.send({
       type: 'list item.add',
       listItem: 'number',
     })
 
-    expect(editorRef.current?.getSnapshot().context.value).toEqual([
+    expect(editor.getSnapshot().context.value).toEqual([
       {
         ...block,
         level: 2,
@@ -85,20 +85,20 @@ describe('event.list item.add', () => {
       style: 'normal',
       markDefs: [],
     }
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       schemaDefinition: defineSchema({
         lists: [{name: 'bullet'}],
       }),
       initialValue: [block],
     })
 
-    editorRef.current?.send({type: 'focus'})
+    editor.send({type: 'focus'})
 
-    editorRef.current?.send({
+    editor.send({
       type: 'list item.add',
       listItem: 'number',
     })
 
-    expect(editorRef.current?.getSnapshot().context.value).toEqual([block])
+    expect(editor.getSnapshot().context.value).toEqual([block])
   })
 })

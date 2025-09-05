@@ -385,7 +385,7 @@ describe('event.patches', () => {
       style: 'h1',
     }
 
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       initialValue: [listBlock],
       keyGenerator,
       schemaDefinition: defineSchema({
@@ -394,7 +394,7 @@ describe('event.patches', () => {
       }),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'patches',
       patches: [
         {
@@ -419,7 +419,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         headingBlock,
         listBlock,
       ])
@@ -428,7 +428,9 @@ describe('event.patches', () => {
 
   test('Scenario: Patching while syncing incoming value', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const {editorRef, onEvent} = await createTestEditor({
+    const onEvent = vi.fn<() => EditorEmittedEvent>()
+    const {editor} = await createTestEditor({
+      children: <EventListenerPlugin on={onEvent} />,
       keyGenerator,
       schemaDefinition: defineSchema({
         lists: [{name: 'bullet'}],
@@ -467,7 +469,7 @@ describe('event.patches', () => {
       style: 'h1',
     }
 
-    editorRef.current?.send({
+    editor.send({
       type: 'update value',
       value: [listBlock],
     })
@@ -476,7 +478,7 @@ describe('event.patches', () => {
       expect(onEvent).toHaveBeenCalledWith({type: 'ready'})
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'patches',
       patches: [
         {
@@ -501,7 +503,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         headingBlock,
         listBlock,
       ])
@@ -515,7 +517,7 @@ describe('event.patches', () => {
     const cKey = keyGenerator()
     const bKey = keyGenerator()
 
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       initialValue: [
         {
           _type: 'block',
@@ -533,7 +535,7 @@ describe('event.patches', () => {
       }),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'patches',
       patches: [
         {
@@ -569,7 +571,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           _type: 'block',
           _key: blockKey,
@@ -584,7 +586,7 @@ describe('event.patches', () => {
   })
 
   test('Scenario: `set` span properties', async () => {
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       initialValue: [
         {
           _type: 'block',
@@ -597,7 +599,7 @@ describe('event.patches', () => {
       }),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'patches',
       patches: [
         {
@@ -611,7 +613,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           _type: 'block',
           _key: 'k0',
@@ -622,7 +624,7 @@ describe('event.patches', () => {
       ])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'patches',
       patches: [
         {
@@ -642,7 +644,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           _type: 'block',
           _key: 'k0',
@@ -661,7 +663,7 @@ describe('event.patches', () => {
       ])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'patches',
       patches: [
         {
@@ -675,7 +677,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           _type: 'block',
           _key: 'k0',
@@ -696,7 +698,7 @@ describe('event.patches', () => {
   })
 
   test('Scenario: `unset` span properties', async () => {
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       initialValue: [
         {
           _type: 'block',
@@ -716,7 +718,7 @@ describe('event.patches', () => {
       ],
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'patches',
       patches: [
         {
@@ -729,7 +731,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           _type: 'block',
           _key: 'k0',
@@ -740,7 +742,7 @@ describe('event.patches', () => {
       ])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'patches',
       patches: [
         {
@@ -753,7 +755,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           _type: 'block',
           _key: 'k0',
@@ -768,7 +770,7 @@ describe('event.patches', () => {
   test('Scenario: `set` initial block object property', async () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       initialValue: [
         {
           _key: imageKey,
@@ -783,7 +785,7 @@ describe('event.patches', () => {
       }),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'patches',
       patches: [
         {
@@ -797,7 +799,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: imageKey,
           _type: 'image',
@@ -808,7 +810,7 @@ describe('event.patches', () => {
   })
 
   test('`set` block object properties', async () => {
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       schemaDefinition: defineSchema({
         blockObjects: [
           {
@@ -822,7 +824,7 @@ describe('event.patches', () => {
       }),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'insert.block object',
       blockObject: {
         name: 'url',
@@ -834,7 +836,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: 'k2',
           _type: 'url',
@@ -843,7 +845,7 @@ describe('event.patches', () => {
       ])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'patches',
       patches: [
         {
@@ -864,7 +866,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: 'k2',
           _type: 'url',
@@ -876,7 +878,7 @@ describe('event.patches', () => {
   })
 
   test('`set` nested block object properties', async () => {
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       schemaDefinition: defineSchema({
         blockObjects: [
           {
@@ -890,7 +892,7 @@ describe('event.patches', () => {
       }),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'insert.block object',
       blockObject: {
         name: 'url',
@@ -902,7 +904,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: 'k2',
           _type: 'url',
@@ -911,7 +913,7 @@ describe('event.patches', () => {
       ])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'patches',
       patches: [
         {
@@ -940,7 +942,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: 'k2',
           _type: 'url',
@@ -956,7 +958,7 @@ describe('event.patches', () => {
   test('Scenario: `unset` block object properties', async () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       initialValue: [
         {
           _key: imageKey,
@@ -973,14 +975,14 @@ describe('event.patches', () => {
       }),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'patches',
       patches: [{type: 'unset', origin: 'remote', path: [{_key: 'k0'}, 'src']}],
       snapshot: undefined,
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: imageKey,
           _type: 'image',
@@ -989,7 +991,7 @@ describe('event.patches', () => {
       ])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'patches',
       patches: [
         {
@@ -1002,7 +1004,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: imageKey,
           _type: 'image',
@@ -1011,7 +1013,7 @@ describe('event.patches', () => {
       ])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'patches',
       patches: [
         {type: 'unset', origin: 'remote', path: [{_key: imageKey}, '_map']},
@@ -1020,7 +1022,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: imageKey,
           _type: 'image',
@@ -1072,7 +1074,7 @@ describe('event.patches', () => {
     const span1Key = keyGenerator()
     const stockTickerKey = keyGenerator()
     const span2Key = keyGenerator()
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       initialValue: [
         {
           _key: blockKey,
@@ -1094,7 +1096,7 @@ describe('event.patches', () => {
       }),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'patches',
       patches: [
         {
@@ -1113,7 +1115,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: blockKey,
           _type: 'block',
@@ -1132,7 +1134,7 @@ describe('event.patches', () => {
       ])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'patches',
       patches: [
         {
@@ -1158,7 +1160,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: blockKey,
           _type: 'block',
@@ -1186,7 +1188,7 @@ describe('event.patches', () => {
     const stockTickerKey = keyGenerator()
     const span2Key = keyGenerator()
 
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       initialValue: [
         {
           _key: blockKey,
@@ -1206,7 +1208,7 @@ describe('event.patches', () => {
       }),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'patches',
       patches: [
         {
@@ -1220,7 +1222,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: blockKey,
           _type: 'block',
@@ -1235,7 +1237,7 @@ describe('event.patches', () => {
       ])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'patches',
       patches: [
         {
@@ -1249,7 +1251,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: blockKey,
           _type: 'block',
@@ -1271,7 +1273,7 @@ describe('event.patches', () => {
     const span1Key = keyGenerator()
     const stockTickerKey = keyGenerator()
     const span2Key = keyGenerator()
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       initialValue: [
         {
           _key: blockKey,
@@ -1298,7 +1300,7 @@ describe('event.patches', () => {
       }),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'patches',
       patches: [
         {
@@ -1316,7 +1318,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: blockKey,
           _type: 'block',
@@ -1342,7 +1344,7 @@ describe('event.patches', () => {
     const span1Key = keyGenerator()
     const stockTickerKey = keyGenerator()
     const span2Key = keyGenerator()
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       initialValue: [
         {
           _key: blockKey,
@@ -1364,7 +1366,7 @@ describe('event.patches', () => {
       }),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'patches',
       patches: [
         {
@@ -1402,7 +1404,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: blockKey,
           _type: 'block',
@@ -1451,19 +1453,17 @@ describe('event.patches', () => {
       },
     ]
 
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       initialValue,
       schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual(
-        initialValue,
-      )
+      return expect(editor.getSnapshot().context.value).toEqual(initialValue)
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'patches',
       patches: [
         {
@@ -1483,7 +1483,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         initialValue[0],
         {
           _key: imageKey,
@@ -1497,7 +1497,7 @@ describe('event.patches', () => {
   test('Scenario: `unset`ing last text block and `insert`ing a new one', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
-    const {editorRef, locator} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       keyGenerator,
       initialValue: [
         {
@@ -1516,12 +1516,10 @@ describe('event.patches', () => {
     await userEvent.type(locator, ' bar')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'foo bar',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo bar'])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'patches',
       patches: [
         {type: 'unset', origin: 'remote', path: [{_key: blockKey}]},
@@ -1545,9 +1543,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'baz',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['baz'])
     })
   })
 
@@ -1590,11 +1586,11 @@ describe('event.patches', () => {
     }
 
     test('Scenario: Adding and removing text to an empty editor', async () => {
-      const {editorRef} = await createTestEditor({
+      const {editor} = await createTestEditor({
         schemaDefinition: defineSchema({}),
       })
 
-      editorRef.current?.send({
+      editor.send({
         type: 'patches',
         patches: [
           {
@@ -1608,7 +1604,7 @@ describe('event.patches', () => {
       })
 
       await vi.waitFor(() => {
-        expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        expect(editor.getSnapshot().context.value).toEqual([
           {
             _type: 'block',
             _key: 'k0',
@@ -1619,7 +1615,7 @@ describe('event.patches', () => {
         ])
       })
 
-      editorRef.current?.send({
+      editor.send({
         type: 'patches',
         patches: [
           {
@@ -1633,7 +1629,7 @@ describe('event.patches', () => {
       })
 
       await vi.waitFor(() => {
-        expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        expect(editor.getSnapshot().context.value).toEqual([
           {
             _type: 'block',
             _key: 'k0',

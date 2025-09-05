@@ -24,7 +24,7 @@ describe('event.delete.forward', () => {
 
     const behaviorEvents: Array<BehaviorEvent> = []
 
-    const {editorRef, locator} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
         decorators: [{name: 'strong'}],
@@ -75,18 +75,15 @@ describe('event.delete.forward', () => {
 
     await userEvent.click(locator)
 
-    editorRef.current?.send({
+    editor.send({
       type: 'select',
-      at: getSelectionAfterText(
-        editorRef.current!.getSnapshot().context,
-        'foo',
-      ),
+      at: getSelectionAfterText(editor.getSnapshot().context, 'foo'),
     })
 
     await userEvent.keyboard('{Delete}')
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: block1Key,
           _type: 'block',

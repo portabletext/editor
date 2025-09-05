@@ -13,7 +13,7 @@ describe('event.drag.drop', () => {
     const stockTicketKey = keyGenerator()
     const barKey = keyGenerator()
 
-    const {locator, editorRef, sendNativeEvent} = await createTestEditor({
+    const {locator, editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
         inlineObjects: [
@@ -61,10 +61,10 @@ describe('event.drag.drop', () => {
     }
 
     await userEvent.click(locator)
-    editorRef.current?.send({type: 'select', at: stockTickerSelection})
+    editor.send({type: 'select', at: stockTickerSelection})
 
     await vi.waitFor(() => {
-      const selection = editorRef.current?.getSnapshot().context.selection
+      const selection = editor.getSnapshot().context.selection
       expect(selection).toEqual({
         ...stockTickerSelection,
         backward: false,
@@ -72,7 +72,7 @@ describe('event.drag.drop', () => {
     })
 
     const json = converterPortableText.serialize({
-      snapshot: editorRef.current?.getSnapshot()!,
+      snapshot: editor.getSnapshot(),
       event: {
         type: 'serialize',
         originEvent: 'drag.dragstart',
@@ -86,7 +86,7 @@ describe('event.drag.drop', () => {
     const dataTransfer = new DataTransfer()
     dataTransfer.setData(json.mimeType, json.data)
 
-    sendNativeEvent({
+    editor.sendNativeEvent({
       type: 'drag.drop',
       originEvent: {
         dataTransfer,
@@ -109,7 +109,7 @@ describe('event.drag.drop', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: blockKey,
           _type: 'block',
@@ -131,7 +131,7 @@ describe('event.drag.drop', () => {
     const spanKey = keyGenerator()
     const imageKey = keyGenerator()
 
-    const {locator, editorRef, sendNativeEvent} = await createTestEditor({
+    const {locator, editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
         blockObjects: [
@@ -164,10 +164,10 @@ describe('event.drag.drop', () => {
     }
 
     await userEvent.click(locator)
-    editorRef.current?.send({type: 'select', at: imageSelection})
+    editor.send({type: 'select', at: imageSelection})
 
     await vi.waitFor(() => {
-      const selection = editorRef.current?.getSnapshot().context.selection
+      const selection = editor.getSnapshot().context.selection
       expect(selection).toEqual({
         ...imageSelection,
         backward: false,
@@ -175,7 +175,7 @@ describe('event.drag.drop', () => {
     })
 
     const json = converterPortableText.serialize({
-      snapshot: editorRef.current?.getSnapshot()!,
+      snapshot: editor.getSnapshot(),
       event: {
         type: 'serialize',
         originEvent: 'drag.dragstart',
@@ -189,7 +189,7 @@ describe('event.drag.drop', () => {
     const dataTransfer = new DataTransfer()
     dataTransfer.setData(json.mimeType, json.data)
 
-    sendNativeEvent({
+    editor.sendNativeEvent({
       type: 'drag.drop',
       originEvent: {
         dataTransfer,
@@ -212,7 +212,7 @@ describe('event.drag.drop', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: imageKey,
           _type: 'image',

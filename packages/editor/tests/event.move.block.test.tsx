@@ -25,7 +25,7 @@ const bar = {
 
 describe('event.move.block down', () => {
   test('Scenario: Moving block object down', async () => {
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       initialValue: [image, foo, bar],
       keyGenerator,
       schemaDefinition: defineSchema({
@@ -33,35 +33,27 @@ describe('event.move.block down', () => {
       }),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'move.block down',
       at: [{_key: image._key}],
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
-        foo,
-        image,
-        bar,
-      ])
+      expect(editor.getSnapshot().context.value).toEqual([foo, image, bar])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'move.block down',
       at: [{_key: image._key}],
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
-        foo,
-        bar,
-        image,
-      ])
+      expect(editor.getSnapshot().context.value).toEqual([foo, bar, image])
     })
   })
 
   test('Scenario: Moving text block down', async () => {
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       initialValue: [foo, bar, image],
       keyGenerator,
       schemaDefinition: defineSchema({
@@ -69,37 +61,29 @@ describe('event.move.block down', () => {
       }),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'move.block down',
       at: [{_key: foo._key}],
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
-        bar,
-        foo,
-        image,
-      ])
+      expect(editor.getSnapshot().context.value).toEqual([bar, foo, image])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'move.block down',
       at: [{_key: foo._key}],
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
-        bar,
-        image,
-        foo,
-      ])
+      expect(editor.getSnapshot().context.value).toEqual([bar, image, foo])
     })
   })
 })
 
 describe('event.move.block up', () => {
   test('Scenario: Moving block object up', async () => {
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       initialValue: [foo, bar, image],
       keyGenerator,
       schemaDefinition: defineSchema({
@@ -107,35 +91,27 @@ describe('event.move.block up', () => {
       }),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'move.block up',
       at: [{_key: image._key}],
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
-        foo,
-        image,
-        bar,
-      ])
+      expect(editor.getSnapshot().context.value).toEqual([foo, image, bar])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'move.block up',
       at: [{_key: image._key}],
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
-        image,
-        foo,
-        bar,
-      ])
+      expect(editor.getSnapshot().context.value).toEqual([image, foo, bar])
     })
   })
 
   test('Scenario: Moving text block up', async () => {
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       initialValue: [bar, image, foo],
       keyGenerator,
       schemaDefinition: defineSchema({
@@ -143,30 +119,22 @@ describe('event.move.block up', () => {
       }),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'move.block up',
       at: [{_key: foo._key}],
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
-        bar,
-        foo,
-        image,
-      ])
+      expect(editor.getSnapshot().context.value).toEqual([bar, foo, image])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'move.block up',
       at: [{_key: foo._key}],
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
-        foo,
-        bar,
-        image,
-      ])
+      expect(editor.getSnapshot().context.value).toEqual([foo, bar, image])
     })
   })
 })

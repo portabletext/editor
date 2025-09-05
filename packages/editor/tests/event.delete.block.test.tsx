@@ -7,7 +7,7 @@ describe('event.delete.block', () => {
   test('Scenario: Deleting lonely block object', async () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       initialValue: [
         {
@@ -21,18 +21,18 @@ describe('event.delete.block', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {_type: 'image', _key: imageKey},
       ])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'delete.block',
       at: [{_key: imageKey}],
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _type: 'block',
           _key: 'k3',
@@ -48,7 +48,7 @@ describe('event.delete.block', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       initialValue: [
         {
@@ -69,7 +69,7 @@ describe('event.delete.block', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _type: 'block',
           _key: blockKey,
@@ -80,13 +80,13 @@ describe('event.delete.block', () => {
       ])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'delete.block',
       at: [{_key: blockKey}],
     })
 
     await vi.waitFor(() => {
-      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _type: 'block',
           _key: 'k4',

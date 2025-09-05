@@ -9,7 +9,7 @@ import {getSelectionAfterText} from '../src/internal-utils/text-selection'
 describe('event.split', () => {
   test('Scenario: Splitting mid-block before inline object', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
         inlineObjects: [{name: 'stock-ticker'}],
@@ -43,19 +43,16 @@ describe('event.split', () => {
       ],
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'select',
-      at: getSelectionAfterText(
-        editorRef.current!.getSnapshot().context,
-        'foo',
-      ),
+      at: getSelectionAfterText(editor.getSnapshot().context, 'foo'),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'split',
     })
 
-    expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+    expect(getTersePt(editor.getSnapshot().context)).toEqual([
       'foo',
       ',{stock-ticker},',
     ])
@@ -63,7 +60,7 @@ describe('event.split', () => {
 
   test('Scenario: Splitting text block with custom properties', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({}),
       initialValue: [
@@ -79,19 +76,16 @@ describe('event.split', () => {
       ],
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'select',
-      at: getSelectionAfterText(
-        editorRef.current!.getSnapshot().context,
-        'foo',
-      ),
+      at: getSelectionAfterText(editor.getSnapshot().context, 'foo'),
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'split',
     })
 
-    expect(editorRef.current?.getSnapshot().context.value).toEqual([
+    expect(editor.getSnapshot().context.value).toEqual([
       {
         _key: 'k0',
         _type: 'block',
@@ -117,7 +111,7 @@ describe('event.split', () => {
     const fooKey = keyGenerator()
     const stockTickerKey = keyGenerator()
 
-    const {editorRef, locator} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
         inlineObjects: [{name: 'stock-ticker'}],
@@ -151,7 +145,7 @@ describe('event.split', () => {
 
     await userEvent.click(locator)
 
-    editorRef.current?.send({
+    editor.send({
       type: 'select',
       at: {
         anchor: {
@@ -166,28 +160,26 @@ describe('event.split', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.selection).toEqual(
-        {
-          anchor: {
-            offset: 0,
-            path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
-          },
-          focus: {
-            offset: 0,
-            path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
-          },
-          backward: false,
+      return expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          offset: 0,
+          path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
         },
-      )
+        focus: {
+          offset: 0,
+          path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
+        },
+        backward: false,
+      })
     })
 
-    editorRef.current?.send({type: 'split'})
+    editor.send({type: 'split'})
 
     await userEvent.keyboard('{ArrowRight}')
 
     await userEvent.type(locator, 'bar')
 
-    expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+    expect(getTersePt(editor.getSnapshot().context)).toEqual([
       'foo,{stock-ticker},bar',
     ])
   })
@@ -195,7 +187,7 @@ describe('event.split', () => {
   test('Scenario: Splitting block object is a noop', async () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
-    const {editorRef, locator} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
         blockObjects: [{name: 'image'}],
@@ -215,7 +207,7 @@ describe('event.split', () => {
 
     await userEvent.click(locator)
 
-    editorRef.current?.send({
+    editor.send({
       type: 'select',
       at: {
         anchor: {
@@ -230,15 +222,15 @@ describe('event.split', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(
-        getSelectionText(editorRef.current!.getSnapshot().context),
-      ).toEqual(['{image}'])
+      return expect(getSelectionText(editor.getSnapshot().context)).toEqual([
+        '{image}',
+      ])
     })
 
-    editorRef.current?.send({type: 'split'})
+    editor.send({type: 'split'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
         '{image}',
         'bar',
       ])
@@ -251,7 +243,7 @@ describe('event.split', () => {
     const barKey = keyGenerator()
     const imageKey = keyGenerator()
 
-    const {editorRef, locator} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
         blockObjects: [{name: 'image'}],
@@ -276,7 +268,7 @@ describe('event.split', () => {
 
     await userEvent.click(locator)
 
-    editorRef.current?.send({
+    editor.send({
       type: 'select',
       at: {
         anchor: {
@@ -291,36 +283,28 @@ describe('event.split', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.selection).toEqual(
-        {
-          anchor: {
-            offset: 0,
-            path: [{_key: imageKey}],
-          },
-          focus: {
-            offset: 1,
-            path: [{_key: blockKey}, 'children', {_key: barKey}],
-          },
-          backward: false,
+      return expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          offset: 0,
+          path: [{_key: imageKey}],
         },
-      )
+        focus: {
+          offset: 1,
+          path: [{_key: blockKey}, 'children', {_key: barKey}],
+        },
+        backward: false,
+      })
     })
 
-    editorRef.current?.send({type: 'split'})
+    editor.send({type: 'split'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'foo',
-        'ar',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo', 'ar'])
     })
 
     await userEvent.type(locator, 'baz')
 
-    expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-      'foo',
-      'bazar',
-    ])
+    expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo', 'bazar'])
   })
 
   test('Scenario: Splitting with an expanded selection ending on a block object', async () => {
@@ -329,7 +313,7 @@ describe('event.split', () => {
     const fooKey = keyGenerator()
     const imageKey = keyGenerator()
 
-    const {editorRef, locator} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
         blockObjects: [{name: 'image'}],
@@ -354,7 +338,7 @@ describe('event.split', () => {
 
     await userEvent.click(locator)
 
-    editorRef.current?.send({
+    editor.send({
       type: 'select',
       at: {
         anchor: {
@@ -369,36 +353,28 @@ describe('event.split', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.selection).toEqual(
-        {
-          anchor: {
-            offset: 1,
-            path: [{_key: blockKey}, 'children', {_key: fooKey}],
-          },
-          focus: {
-            offset: 0,
-            path: [{_key: imageKey}],
-          },
-          backward: false,
+      return expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          offset: 1,
+          path: [{_key: blockKey}, 'children', {_key: fooKey}],
         },
-      )
+        focus: {
+          offset: 0,
+          path: [{_key: imageKey}],
+        },
+        backward: false,
+      })
     })
 
-    editorRef.current?.send({type: 'split'})
+    editor.send({type: 'split'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'f',
-        'bar',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['f', 'bar'])
     })
 
     await userEvent.type(locator, 'baz')
 
-    expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-      'f',
-      'bazbar',
-    ])
+    expect(getTersePt(editor.getSnapshot().context)).toEqual(['f', 'bazbar'])
   })
 
   test('Scenario: Splitting with an expanded selection from one span to another', async () => {
@@ -408,7 +384,7 @@ describe('event.split', () => {
     const barBlockKey = keyGenerator()
     const barSpanKey = keyGenerator()
 
-    const {editorRef} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
       initialValue: [
@@ -431,7 +407,7 @@ describe('event.split', () => {
       ],
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'select',
       at: {
         anchor: {
@@ -445,10 +421,10 @@ describe('event.split', () => {
       },
     })
 
-    editorRef.current?.send({type: 'split'})
+    editor.send({type: 'split'})
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: fooBlockKey,
           _type: 'block',

@@ -2,7 +2,6 @@ import {defineSchema} from '@portabletext/schema'
 import {Before} from 'racejar'
 import {Feature} from 'racejar/vitest'
 import behaviorMarkdownFeature from '../gherkin-spec/behavior.markdown.feature?raw'
-import type {Editor} from '../src'
 import {createTestEditor} from '../src/internal-utils/test-editor'
 import {MarkdownPlugin} from '../src/plugins'
 import {parameterTypes} from './gherkin-parameter-types'
@@ -12,7 +11,7 @@ import {stepDefinitions} from './step-definitions'
 Feature({
   hooks: [
     Before(async (context: Context) => {
-      const {editorRef, locator, sendNativeEvent} = await createTestEditor({
+      const {editor, locator} = await createTestEditor({
         children: (
           <MarkdownPlugin
             config={{
@@ -48,15 +47,8 @@ Feature({
         }),
       })
 
-      context.editor = {
-        ref: editorRef as React.RefObject<Editor>,
-        locator,
-        sendNativeEvent,
-        value: () => editorRef.current?.getSnapshot().context.value ?? [],
-        selection: () =>
-          editorRef.current?.getSnapshot().context.selection ?? null,
-        snapshot: () => editorRef.current!.getSnapshot(),
-      }
+      context.locator = locator
+      context.editor = editor
     }),
   ],
   featureText: behaviorMarkdownFeature,
