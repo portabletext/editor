@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.8.2
+
+### Patch Changes
+
+- [#1629](https://github.com/portabletext/editor/pull/1629) [`b032b9e`](https://github.com/portabletext/editor/commit/b032b9eda6666d97812db42f74e8ae295c42ea7e) Thanks [@christianhg](https://github.com/christianhg)! - fix: raise `annotation.add` from `PortableTextEditor.addAnnotation`
+
 ## 2.8.1
 
 ### Patch Changes
