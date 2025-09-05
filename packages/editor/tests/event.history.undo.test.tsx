@@ -1,29 +1,15 @@
 import {defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
-import {page, userEvent} from '@vitest/browser/context'
-import * as React from 'react'
+import {getTersePt} from '@portabletext/test'
+import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
 import {defineBehavior, execute, forward, raise} from '../src/behaviors'
-import type {Editor} from '../src/editor'
-import {PortableTextEditable} from '../src/editor/Editable'
-import {EditorProvider} from '../src/editor/editor-provider'
+import {createTestEditor} from '../src/internal-utils/test-editor'
 import {BehaviorPlugin} from '../src/plugins'
-import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 
 describe('event.history.undo', () => {
   test('Scenario: Undoing action sets', async () => {
-    const editorRef = React.createRef<Editor>()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
+    const {editor, locator} = await createTestEditor({
+      children: (
         <BehaviorPlugin
           behaviors={[
             defineBehavior({
@@ -44,56 +30,38 @@ describe('event.history.undo', () => {
             }),
           ]}
         />
-      </EditorProvider>,
-    )
-
-    const locator = page.getByRole('textbox')
-
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+      ),
+      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+    })
 
     await userEvent.type(locator, 'x')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'y*z',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['y*z'])
     })
 
-    editorRef.current?.send({type: 'history.undo'})
+    editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'y*',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['y*'])
     })
 
-    editorRef.current?.send({type: 'history.undo'})
+    editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'x',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['x'])
     })
 
-    editorRef.current?.send({type: 'history.undo'})
+    editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([''])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
     })
   })
 
   test('Scenario: Undoing raised action sets', async () => {
-    const editorRef = React.createRef<Editor>()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
+    const {editor, locator} = await createTestEditor({
+      children: (
         <BehaviorPlugin
           behaviors={[
             defineBehavior({
@@ -117,42 +85,25 @@ describe('event.history.undo', () => {
             }),
           ]}
         />
-      </EditorProvider>,
-    )
-
-    const locator = page.getByRole('textbox')
-
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+      ),
+    })
 
     await userEvent.type(locator, 'a')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'yz',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['yz'])
     })
 
-    editorRef.current?.send({type: 'history.undo'})
+    editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'y',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['y'])
     })
   })
 
   test('Scenario: Undoing recursive raises', async () => {
-    const editorRef = React.createRef<Editor>()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
+    const {editor, locator} = await createTestEditor({
+      children: (
         <BehaviorPlugin
           behaviors={[
             defineBehavior({
@@ -173,41 +124,25 @@ describe('event.history.undo', () => {
             }),
           ]}
         />
-      </EditorProvider>,
-    )
-
-    const locator = page.getByRole('textbox')
-
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+      ),
+    })
 
     await userEvent.type(locator, 'a')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'B',
-        'c',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['B', 'c'])
     })
 
-    editorRef.current?.send({type: 'history.undo'})
+    editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([''])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
     })
   })
 
   test('Scenario: A lonely `forward` action does not squash the recursive undo stack', async () => {
-    const editorRef = React.createRef<Editor>()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
+    const {editor, locator} = await createTestEditor({
+      children: (
         <BehaviorPlugin
           behaviors={[
             defineBehavior({
@@ -227,27 +162,19 @@ describe('event.history.undo', () => {
             }),
           ]}
         />
-      </EditorProvider>,
-    )
-
-    const locator = page.getByRole('textbox')
-
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+      ),
+    })
 
     await userEvent.type(locator, 'a')
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'AB',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['AB'])
     })
 
-    editorRef.current?.send({type: 'history.undo'})
+    editor.send({type: 'history.undo'})
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'A',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['A'])
     })
   })
 })

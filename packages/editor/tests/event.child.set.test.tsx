@@ -1,18 +1,10 @@
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
-import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
-import {
-  defineSchema,
-  EditorProvider,
-  PortableTextEditable,
-  type Editor,
-} from '../src'
-import {EditorRefPlugin} from '../src/plugins'
+import {defineSchema} from '../src'
+import {createTestEditor} from '../src/internal-utils/test-editor'
 
 describe('event.child.set', () => {
   test('Scenario: Setting properties on inline object', async () => {
-    const editorRef = React.createRef<Editor>()
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const imageKey = keyGenerator()
@@ -44,44 +36,31 @@ describe('event.child.set', () => {
       },
     ]
 
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator,
-          initialValue,
-          schemaDefinition: defineSchema({
-            inlineObjects: [
-              {
-                name: 'image',
-                fields: [
-                  {
-                    name: 'alt',
-                    type: 'string',
-                  },
-                  {
-                    name: 'url',
-                    type: 'string',
-                  },
-                ],
-              },
+    const {editor} = await createTestEditor({
+      initialValue,
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {
+            name: 'image',
+            fields: [
+              {name: 'alt', type: 'string'},
+              {name: 'url', type: 'string'},
             ],
-          }),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
+          },
+        ],
+      }),
+    })
 
     await vi.waitFor(() => {
-      return expect(
-        getTersePt(editorRef.current!.getSnapshot().context),
-      ).toEqual([',{image},'])
+      return expect(getTersePt(editor.getSnapshot().context)).toEqual([
+        ',{image},',
+      ])
     })
 
     const newImageKey = keyGenerator()
 
-    editorRef.current?.send({
+    editor.send({
       type: 'child.set',
       at: [{_key: blockKey}, 'children', {_key: imageKey}],
       props: {
@@ -93,7 +72,7 @@ describe('event.child.set', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           ...initialValue[0],
           children: [
@@ -112,7 +91,6 @@ describe('event.child.set', () => {
   })
 
   test('Scenario: Setting properties on span', async () => {
-    const editorRef = React.createRef<Editor>()
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -133,30 +111,21 @@ describe('event.child.set', () => {
       },
     ]
 
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator,
-          initialValue,
-          schemaDefinition: defineSchema({
-            decorators: [{name: 'strong'}],
-          }),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+      }),
+    })
 
     await vi.waitFor(() => {
-      return expect(
-        getTersePt(editorRef.current!.getSnapshot().context),
-      ).toEqual(['Hello'])
+      return expect(getTersePt(editor.getSnapshot().context)).toEqual(['Hello'])
     })
 
     const newSpanKey = keyGenerator()
 
-    editorRef.current?.send({
+    editor.send({
       type: 'child.set',
       at: [{_key: blockKey}, 'children', {_key: spanKey}],
       props: {
@@ -168,7 +137,7 @@ describe('event.child.set', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           ...initialValue[0],
           children: [

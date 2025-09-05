@@ -1,74 +1,57 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
-import {page} from '@vitest/browser/context'
-import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
-import type {Editor} from '../src/editor'
-import {PortableTextEditable} from '../src/editor/Editable'
-import {EditorProvider} from '../src/editor/editor-provider'
 import {createTestEditor} from '../src/internal-utils/test-editor'
-import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 
 describe('event.delete', () => {
   test('Scenario: Deleting collapsed selection', async () => {
-    const editorRef = React.createRef<Editor>()
     const keyGenerator = createTestKeyGenerator()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator,
-          schemaDefinition: defineSchema({
-            blockObjects: [{name: 'image'}],
-          }),
-          initialValue: [
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'image'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [
             {
-              _type: 'block',
-              _key: 'k0',
-              children: [
-                {
-                  _type: 'span',
-                  _key: 'k1',
-                  text: 'foo',
-                },
-              ],
-            },
-            {
-              _type: 'block',
-              _key: 'k2',
-              children: [
-                {
-                  _type: 'span',
-                  _key: 'k3',
-                  text: 'bar',
-                },
-              ],
-            },
-            {
-              _type: 'image',
-              _key: 'k4',
+              _type: 'span',
+              _key: 'k1',
+              text: 'foo',
             },
           ],
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
-      </EditorProvider>,
-    )
+        },
+        {
+          _type: 'block',
+          _key: 'k2',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k3',
+              text: 'bar',
+            },
+          ],
+        },
+        {
+          _type: 'image',
+          _key: 'k4',
+        },
+      ],
+    })
 
-    const locator = page.getByRole('textbox')
     await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
         'foo',
         'bar',
         '{image}',
       ])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'delete',
       at: {
         anchor: {
@@ -83,13 +66,13 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
         'foobar',
         '{image}',
       ])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'delete',
       at: {
         anchor: {
@@ -104,9 +87,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'foobar',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foobar'])
     })
   })
 
@@ -173,46 +154,38 @@ describe('event.delete', () => {
 
   test('Scenario: Deleting selection hanging around a block object', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const editorRef = React.createRef<Editor>()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator,
-          schemaDefinition: defineSchema({
-            blockObjects: [{name: 'image'}],
-          }),
-          initialValue: [
-            {
-              _key: 'k0',
-              _type: 'block',
-              children: [{_key: 'k1', _type: 'span', text: 'foo'}],
-            },
-            {
-              _key: 'k2',
-              _type: 'image',
-            },
-            {
-              _key: 'k3',
-              _type: 'block',
-              children: [{_key: 'k4', _type: 'span', text: 'bar'}],
-            },
-          ],
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-      </EditorProvider>,
-    )
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'image'}],
+      }),
+      initialValue: [
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [{_key: 'k1', _type: 'span', text: 'foo'}],
+        },
+        {
+          _key: 'k2',
+          _type: 'image',
+        },
+        {
+          _key: 'k3',
+          _type: 'block',
+          children: [{_key: 'k4', _type: 'span', text: 'bar'}],
+        },
+      ],
+    })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
         'foo',
         '{image}',
         'bar',
       ])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'delete',
       at: {
         anchor: {
@@ -227,54 +200,44 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'bar',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['bar'])
     })
   })
 
   test('Scenario: Deleting selection hanging around a block object #2', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const editorRef = React.createRef<Editor>()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator,
-          schemaDefinition: defineSchema({
-            blockObjects: [{name: 'image'}],
-          }),
-          initialValue: [
-            {
-              _key: 'k0',
-              _type: 'block',
-              children: [{_key: 'k1', _type: 'span', text: 'foo'}],
-            },
-            {
-              _key: 'k2',
-              _type: 'image',
-            },
-            {
-              _key: 'k3',
-              _type: 'block',
-              children: [{_key: 'k4', _type: 'span', text: 'bar'}],
-            },
-          ],
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-      </EditorProvider>,
-    )
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'image'}],
+      }),
+      initialValue: [
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [{_key: 'k1', _type: 'span', text: 'foo'}],
+        },
+        {
+          _key: 'k2',
+          _type: 'image',
+        },
+        {
+          _key: 'k3',
+          _type: 'block',
+          children: [{_key: 'k4', _type: 'span', text: 'bar'}],
+        },
+      ],
+    })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
         'foo',
         '{image}',
         'bar',
       ])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'delete',
       at: {
         anchor: {
@@ -290,54 +253,44 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'bar',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['bar'])
     })
   })
 
   test('Scenario: Deleting selection hanging around a block object #3', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const editorRef = React.createRef<Editor>()
-
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator,
-          schemaDefinition: defineSchema({
-            blockObjects: [{name: 'image'}],
-          }),
-          initialValue: [
-            {
-              _key: 'k0',
-              _type: 'block',
-              children: [{_key: 'k1', _type: 'span', text: 'foo'}],
-            },
-            {
-              _key: 'k2',
-              _type: 'image',
-            },
-            {
-              _key: 'k3',
-              _type: 'block',
-              children: [{_key: 'k4', _type: 'span', text: 'bar'}],
-            },
-          ],
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-      </EditorProvider>,
-    )
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'image'}],
+      }),
+      initialValue: [
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [{_key: 'k1', _type: 'span', text: 'foo'}],
+        },
+        {
+          _key: 'k2',
+          _type: 'image',
+        },
+        {
+          _key: 'k3',
+          _type: 'block',
+          children: [{_key: 'k4', _type: 'span', text: 'bar'}],
+        },
+      ],
+    })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
         'foo',
         '{image}',
         'bar',
       ])
     })
 
-    editorRef.current?.send({
+    editor.send({
       type: 'delete',
       at: {
         anchor: {
@@ -352,9 +305,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getTersePt(editorRef.current!.getSnapshot().context)).toEqual([
-        'foo',
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
     })
   })
 })

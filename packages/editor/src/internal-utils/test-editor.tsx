@@ -8,7 +8,10 @@ import {render} from 'vitest-browser-react'
 import type {Context} from '../../gherkin-tests-v2/step-context'
 import type {NativeBehaviorEvent} from '../behaviors'
 import type {Editor} from '../editor'
-import {PortableTextEditable} from '../editor/Editable'
+import {
+  PortableTextEditable,
+  type PortableTextEditableProps,
+} from '../editor/Editable'
 import type {EditorActor} from '../editor/editor-machine'
 import {EditorProvider} from '../editor/editor-provider'
 import {EditorRefPlugin} from '../plugins/plugin.editor-ref'
@@ -22,6 +25,7 @@ export async function createTestEditor(
     keyGenerator?: () => string
     schemaDefinition?: SchemaDefinition
     children?: React.ReactNode
+    editableProps?: PortableTextEditableProps
   } = {},
 ): Promise<Pick<Context, 'editor' | 'locator'>> {
   const editorRef = React.createRef<Editor>()
@@ -40,7 +44,7 @@ export async function createTestEditor(
       <EditorRefPlugin ref={editorRef} />
       <InternalEditorAfterRefPlugin ref={editorActorRef} />
       <InternalSlateEditorRefPlugin ref={slateRef} />
-      <PortableTextEditable />
+      <PortableTextEditable {...options.editableProps} />
       {options.children}
     </EditorProvider>,
   )

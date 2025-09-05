@@ -1,18 +1,9 @@
 import {createTestKeyGenerator} from '@portabletext/test'
-import {page} from '@vitest/browser/context'
-import React, {useEffect} from 'react'
+import {useEffect} from 'react'
 import {expect, test, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
-import {
-  defineSchema,
-  EditorProvider,
-  PortableTextEditable,
-  useEditor,
-  type Editor,
-  type PortableTextBlock,
-} from '../src'
+import {defineSchema, useEditor, type PortableTextBlock} from '../src'
 import {defineBehavior, execute} from '../src/behaviors'
-import {EditorRefPlugin} from '../src/plugins'
+import {createTestEditor} from '../src/internal-utils/test-editor'
 import {
   getFirstBlock,
   getFocusTextBlock,
@@ -79,7 +70,6 @@ function DocumentTitlePlugin() {
 }
 
 test(DocumentTitlePlugin.name, async () => {
-  const editorRef = React.createRef<Editor>()
   const keyGenerator = createTestKeyGenerator()
   const titleBlockKey = keyGenerator()
   const titleSpanKey = keyGenerator()
@@ -107,27 +97,17 @@ test(DocumentTitlePlugin.name, async () => {
     },
   ]
 
-  render(
-    <EditorProvider
-      initialConfig={{
-        keyGenerator,
-        schemaDefinition: defineSchema({
-          decorators: [{name: 'strong'}, {name: 'em'}],
-          styles: [{name: 'h1'}],
-        }),
-        initialValue,
-      }}
-    >
-      <DocumentTitlePlugin />
-      <EditorRefPlugin ref={editorRef} />
-      <PortableTextEditable />
-    </EditorProvider>,
-  )
+  const {editor} = await createTestEditor({
+    children: <DocumentTitlePlugin />,
+    keyGenerator,
+    schemaDefinition: defineSchema({
+      decorators: [{name: 'strong'}, {name: 'em'}],
+      styles: [{name: 'h1'}],
+    }),
+    initialValue,
+  })
 
-  const locator = page.getByRole('textbox')
-  await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
-
-  editorRef.current?.send({
+  editor.send({
     type: 'select',
     at: {
       anchor: {
@@ -141,13 +121,13 @@ test(DocumentTitlePlugin.name, async () => {
     },
   })
 
-  editorRef.current?.send({
+  editor.send({
     type: 'delete.backward',
     unit: 'character',
   })
 
   await vi.waitFor(() => {
-    return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+    return expect(editor.getSnapshot().context.value).toEqual([
       {
         _key: titleBlockKey,
         _type: 'block',

@@ -1,21 +1,15 @@
 import {createTestKeyGenerator} from '@portabletext/test'
-import {page, userEvent} from '@vitest/browser/context'
-import React from 'react'
+import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
 import {
   defineSchema,
-  EditorProvider,
-  PortableTextEditable,
   type BlockRenderProps,
-  type Editor,
   type PortableTextBlock,
 } from '../src'
-import {EditorRefPlugin} from '../src/plugins'
+import {createTestEditor} from '../src/internal-utils/test-editor'
 
 describe('renderBlock', () => {
   test('Receives the updated value for text block changes', async () => {
-    const editorRef = React.createRef<Editor>()
     const keyGenerator = createTestKeyGenerator()
     const fooBlock = {
       _type: 'block',
@@ -65,22 +59,15 @@ describe('renderBlock', () => {
       return props.children
     }
 
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator,
-          initialValue,
-          schemaDefinition: defineSchema({
-            inlineObjects: [{name: 'stock-ticker'}],
-          }),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable renderBlock={renderBlock} />
-      </EditorProvider>,
-    )
+    const {locator} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      schemaDefinition: defineSchema({
+        inlineObjects: [{name: 'stock-ticker'}],
+      }),
+      editableProps: {renderBlock},
+    })
 
-    const locator = page.getByRole('textbox')
     const barSpanLocator = locator.getByText('b')
     await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
     await vi.waitFor(() => expect.element(barSpanLocator).toBeInTheDocument())

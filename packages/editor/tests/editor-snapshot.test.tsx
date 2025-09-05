@@ -1,35 +1,19 @@
-import {createTestKeyGenerator} from '@portabletext/test'
-import {page, userEvent} from '@vitest/browser/context'
-import React from 'react'
+import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
-import {
-  defineSchema,
-  EditorProvider,
-  PortableTextEditable,
-  type Editor,
-  type EditorSnapshot,
-} from '../src'
+import type {EditorSnapshot} from '../src'
 import {defineBehavior, execute} from '../src/behaviors'
-import {BehaviorPlugin, EditorRefPlugin} from '../src/plugins'
+import {createTestEditor} from '../src/internal-utils/test-editor'
+import {BehaviorPlugin} from '../src/plugins'
 
 describe('EditorSnapshot', () => {
   test('Scenario: A new snapshot is captured for each action set', async () => {
-    const editorRef = React.createRef<Editor>()
     const inspectSelection =
       vi.fn<(selection: EditorSnapshot['context']['selection']) => void>()
     const inspectValue =
       vi.fn<(value: EditorSnapshot['context']['value']) => void>()
 
-    render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: createTestKeyGenerator(),
-          schemaDefinition: defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorRef} />
-        <PortableTextEditable />
+    const {locator} = await createTestEditor({
+      children: (
         <BehaviorPlugin
           behaviors={[
             defineBehavior({
@@ -60,11 +44,8 @@ describe('EditorSnapshot', () => {
             }),
           ]}
         />
-      </EditorProvider>,
-    )
-
-    const locator = page.getByRole('textbox')
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+      ),
+    })
 
     await userEvent.type(locator, 'a')
 
