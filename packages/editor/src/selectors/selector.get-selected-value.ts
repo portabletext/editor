@@ -35,13 +35,34 @@ export const getSelectedValue: EditorSelector<Array<PortableTextBlock>> = (
     return []
   }
 
-  const slicedValue = snapshot.context.value.slice(
-    startBlockIndex,
-    endBlockIndex + 1,
+  const startBlock = snapshot.context.value.at(startBlockIndex)
+  const slicedStartBlock = startBlock
+    ? sliceBlocks({
+        context: snapshot.context,
+        blocks: [startBlock],
+      }).at(0)
+    : undefined
+
+  if (startBlockIndex === endBlockIndex) {
+    return slicedStartBlock ? [slicedStartBlock] : []
+  }
+
+  const endBlock = snapshot.context.value.at(endBlockIndex)
+  const slicedEndBlock = endBlock
+    ? sliceBlocks({
+        context: snapshot.context,
+        blocks: [endBlock],
+      }).at(0)
+    : undefined
+
+  const middleBlocks = snapshot.context.value.slice(
+    startBlockIndex + 1,
+    endBlockIndex,
   )
 
-  return sliceBlocks({
-    context: snapshot.context,
-    blocks: slicedValue,
-  })
+  return [
+    ...(slicedStartBlock ? [slicedStartBlock] : []),
+    ...middleBlocks,
+    ...(slicedEndBlock ? [slicedEndBlock] : []),
+  ]
 }
