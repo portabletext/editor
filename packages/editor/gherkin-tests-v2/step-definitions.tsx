@@ -1,11 +1,14 @@
+import {defineSchema} from '@portabletext/schema'
 import {getTersePt, parseTersePt} from '@portabletext/test'
-import {page, userEvent} from '@vitest/browser/context'
+import {userEvent} from '@vitest/browser/context'
 import {Given, Then, When} from 'racejar'
 import {assert, expect, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
+import type {Editor} from '../src'
+import type {EditorActor} from '../src/editor/editor-machine'
 import {getEditorSelection} from '../src/internal-utils/editor-selection'
 import {parseBlocks} from '../src/internal-utils/parse-blocks'
 import {getSelectionText} from '../src/internal-utils/selection-text'
+import {createTestEditor} from '../src/internal-utils/test-editor'
 import {getTextBlockKey} from '../src/internal-utils/text-block-key'
 import {getTextMarks} from '../src/internal-utils/text-marks'
 import {
@@ -14,22 +17,48 @@ import {
   getTextSelection,
 } from '../src/internal-utils/text-selection'
 import {getValueAnnotations} from '../src/internal-utils/value-annotations'
+import type {PortableTextSlateEditor} from '../src/types/editor'
 import {
   reverseSelection,
   selectionPointToBlockOffset,
   spanSelectionPointToBlockOffset,
 } from '../src/utils'
 import type {Parameter} from './gherkin-parameter-types'
-import {RenderEditor} from './render-editor'
 import type {Context} from './step-context'
 
 export const stepDefinitions = [
   Given('one editor', async (context: Context) => {
-    render(<RenderEditor page={page} context={context} />)
+    const {editorRef, editorActorRef, slateRef, locator} =
+      await createTestEditor({
+        schemaDefinition: defineSchema({
+          annotations: [{name: 'comment'}, {name: 'link'}],
+          decorators: [{name: 'em'}, {name: 'strong'}],
+          blockObjects: [{name: 'image'}, {name: 'break'}],
+          inlineObjects: [{name: 'stock-ticker'}],
+          lists: [{name: 'bullet'}, {name: 'number'}],
+          styles: [
+            {name: 'normal'},
+            {name: 'h1'},
+            {name: 'h2'},
+            {name: 'h3'},
+            {name: 'h4'},
+            {name: 'h5'},
+            {name: 'h6'},
+            {name: 'blockquote'},
+          ],
+        }),
+      })
 
-    await vi.waitFor(() =>
-      expect.element(context.editor.locator).toBeInTheDocument(),
-    )
+    context.editor = {
+      ref: editorRef as React.RefObject<Editor>,
+      actorRef: editorActorRef as React.RefObject<EditorActor>,
+      slateRef: slateRef as React.RefObject<PortableTextSlateEditor>,
+      locator,
+      value: () => editorRef.current?.getSnapshot().context.value ?? [],
+      selection: () =>
+        editorRef.current?.getSnapshot().context.selection ?? null,
+      snapshot: () => editorRef.current!.getSnapshot(),
+    }
   }),
 
   Given('a global keymap', (context: Context) => {
