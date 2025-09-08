@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.5.4
+
+### Patch Changes
+
+- [#1635](https://github.com/portabletext/editor/pull/1635) [`ff6aef7`](https://github.com/portabletext/editor/commit/ff6aef7fbd4a4f82947d9513e68ef581784de298) Thanks [@christianhg](https://github.com/christianhg)! - fix(flatten tables): account for too many heading rows
+
 ## 3.5.3
 
 ### Patch Changes
