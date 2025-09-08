@@ -102,11 +102,17 @@ export function createFlattenTableRule({
       }
 
       const thead = node.querySelector('thead')
-      const headerRow = thead?.querySelector('tr')
+      const headerRows = thead?.querySelectorAll('tr')
       const tbody = node.querySelector('tbody')
       const bodyRows = tbody ? [...tbody.querySelectorAll('tr')] : []
 
-      if (!headerRow || !bodyRows) {
+      if (!headerRows || !bodyRows) {
+        return undefined
+      }
+
+      const headerRow = [...headerRows][0]
+
+      if (!headerRow || headerRows.length > 1) {
         return undefined
       }
 
