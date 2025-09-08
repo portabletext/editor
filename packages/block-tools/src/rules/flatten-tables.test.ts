@@ -314,6 +314,88 @@ describe(createFlattenTableRule.name, () => {
     ])
   })
 
+  test('multiple header rows', () => {
+    /**
+     * | Name       | Age   |
+     * | Navn       | Alder |
+     * | ---        | ---   |
+     * | John Doe   | 18    |
+     * | Jane Smith | 20    |
+     */
+    const html = [
+      '<table>',
+      '<thead>',
+      '<tr>',
+      '<th>Name</th>',
+      '<th>Age</th>',
+      '</tr>',
+      '<tr>',
+      '<th>Navn</th>',
+      '<th>Alder</th>',
+      '</tr>',
+      '</thead>',
+      '<tbody>',
+      '<tr>',
+      '<td>John Doe</td>',
+      '<td>18</td>',
+      '</tr>',
+      '<tr>',
+      '<td>Jane Smith</td>',
+      '<td>20</td>',
+      '</tr>',
+      '</tbody>',
+      '</table>',
+    ].join('')
+
+    expect(
+      getTersePt({
+        schema,
+        value: transform(html, {
+          rules: [flattenTableRule],
+        }),
+      }),
+    ).toEqual([
+      'Name',
+      'Age',
+      'Navn',
+      'Alder',
+      'John Doe',
+      '18',
+      'Jane Smith',
+      '20',
+    ])
+  })
+
+  test('only thead', () => {
+    /**
+     * | Name | John Doe |
+     * | Age  | 18       |
+     */
+    const html = [
+      '<table>',
+      '<thead>',
+      '<tr>',
+      '<th>Name</th>',
+      '<th>John Doe</th>',
+      '</tr>',
+      '<tr>',
+      '<th>Age</th>',
+      '<th>18</th>',
+      '</tr>',
+      '</thead>',
+      '</table>',
+    ].join('')
+
+    expect(
+      getTersePt({
+        schema,
+        value: transform(html, {
+          rules: [flattenTableRule],
+        }),
+      }),
+    ).toEqual(['Name', 'John Doe', 'Age', '18'])
+  })
+
   describe('table with images', () => {
     /**
      * | Name       | Photo                                                          |
