@@ -1,9 +1,9 @@
-import {createTestKeyGenerator} from '@portabletext/test'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
 import {PortableTextEditor} from '../src/editor/PortableTextEditor'
-import {PortableTextEditorTester} from './PortableTextEditorTester'
+import {createTestEditor} from '../src/internal-utils/test-editor'
+import {InternalChange$Plugin} from '../src/plugins/plugin.internal.change-ref'
+import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
 
 const initialValue = [
   {
@@ -40,14 +40,17 @@ describe('plugin:withPortableTextSelections', () => {
   it('will report that a selection is made backward', async () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
-    render(
-      <PortableTextEditorTester
-        keyGenerator={createTestKeyGenerator()}
-        onChange={onChange}
-        ref={editorRef}
-        value={initialValue}
-      />,
-    )
+
+    await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue,
+    })
+
     const initialSelection = {
       anchor: {path: [{_key: 'b'}, 'children', {_key: 'b1'}], offset: 9},
       focus: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 7},

@@ -1,9 +1,10 @@
-import {createTestKeyGenerator} from '@portabletext/test'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
+import {defineSchema} from '../src'
 import {PortableTextEditor} from '../src/editor/PortableTextEditor'
-import {PortableTextEditorTester} from './PortableTextEditorTester'
+import {createTestEditor} from '../src/internal-utils/test-editor'
+import {InternalChange$Plugin} from '../src/plugins/plugin.internal.change-ref'
+import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
 
 describe('values: normalization', () => {
   it("accepts incoming value with blocks without a style or markDefs prop, but doesn't leave them without them when editing them", async () => {
@@ -24,14 +25,17 @@ describe('values: normalization', () => {
       },
     ]
     const onChange = vi.fn()
-    render(
-      <PortableTextEditorTester
-        keyGenerator={createTestKeyGenerator()}
-        onChange={onChange}
-        ref={editorRef}
-        value={initialValue}
-      />,
-    )
+
+    await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue,
+      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+    })
 
     await vi.waitFor(() => {
       if (editorRef.current) {

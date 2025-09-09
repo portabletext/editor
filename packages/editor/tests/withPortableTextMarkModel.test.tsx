@@ -1,10 +1,11 @@
-import {createTestKeyGenerator} from '@portabletext/test'
+import {defineSchema} from '@portabletext/schema'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
 import {PortableTextEditor} from '../src/editor/PortableTextEditor'
+import {createTestEditor} from '../src/internal-utils/test-editor'
+import {InternalChange$Plugin} from '../src/plugins/plugin.internal.change-ref'
+import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
 import type {EditorSelection} from '../src/types/editor'
-import {PortableTextEditorTester} from './PortableTextEditorTester'
 
 describe('plugin:withPortableTextMarksModel', () => {
   describe('normalization', () => {
@@ -40,14 +41,16 @@ describe('plugin:withPortableTextMarksModel', () => {
       ]
       const onChange = vi.fn()
 
-      render(
-        <PortableTextEditorTester
-          onChange={onChange}
-          ref={editorRef}
-          value={initialValue}
-          keyGenerator={createTestKeyGenerator()}
-        />,
-      )
+      await createTestEditor({
+        children: (
+          <>
+            <InternalChange$Plugin onChange={onChange} />
+            <InternalPortableTextEditorRefPlugin ref={editorRef} />
+          </>
+        ),
+        initialValue,
+        schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+      })
 
       await vi.waitFor(() => {
         if (editorRef.current) {
@@ -171,16 +174,17 @@ describe('plugin:withPortableTextMarksModel', () => {
         },
       }
       const onChange = vi.fn()
-      await vi.waitFor(() => {
-        render(
-          <PortableTextEditorTester
-            keyGenerator={createTestKeyGenerator()}
-            onChange={onChange}
-            ref={editorRef}
-            value={initialValue}
-          />,
-        )
+
+      await createTestEditor({
+        children: (
+          <>
+            <InternalChange$Plugin onChange={onChange} />
+            <InternalPortableTextEditorRefPlugin ref={editorRef} />
+          </>
+        ),
+        initialValue,
       })
+
       const editor = editorRef.current!
       expect(editor).toBeDefined()
       await vi.waitFor(() => {
@@ -278,14 +282,15 @@ describe('plugin:withPortableTextMarksModel', () => {
       }
       const onChange = vi.fn()
 
-      render(
-        <PortableTextEditorTester
-          onChange={onChange}
-          ref={editorRef}
-          value={initialValue}
-          keyGenerator={createTestKeyGenerator()}
-        />,
-      )
+      await createTestEditor({
+        children: (
+          <>
+            <InternalChange$Plugin onChange={onChange} />
+            <InternalPortableTextEditorRefPlugin ref={editorRef} />
+          </>
+        ),
+        initialValue,
+      })
 
       await vi.waitFor(() => {
         if (editorRef.current) {
@@ -381,14 +386,15 @@ describe('plugin:withPortableTextMarksModel', () => {
       ]
       const onChange = vi.fn()
 
-      render(
-        <PortableTextEditorTester
-          onChange={onChange}
-          ref={editorRef}
-          value={initialValue}
-          keyGenerator={createTestKeyGenerator()}
-        />,
-      )
+      await createTestEditor({
+        children: (
+          <>
+            <InternalChange$Plugin onChange={onChange} />
+            <InternalPortableTextEditorRefPlugin ref={editorRef} />
+          </>
+        ),
+        initialValue,
+      })
 
       await vi.waitFor(() => {
         if (editorRef.current) {
@@ -450,16 +456,17 @@ describe('plugin:withPortableTextMarksModel', () => {
         },
       ]
       const onChange = vi.fn()
-      await vi.waitFor(() => {
-        render(
-          <PortableTextEditorTester
-            onChange={onChange}
-            ref={editorRef}
-            value={initialValue}
-            keyGenerator={createTestKeyGenerator()}
-          />,
-        )
+
+      await createTestEditor({
+        children: (
+          <>
+            <InternalChange$Plugin onChange={onChange} />
+            <InternalPortableTextEditorRefPlugin ref={editorRef} />
+          </>
+        ),
+        initialValue,
       })
+
       const editor = editorRef.current!
       expect(editor).toBeDefined()
       await vi.waitFor(() => {
@@ -505,16 +512,17 @@ describe('plugin:withPortableTextMarksModel', () => {
         },
       ]
       const onChange = vi.fn()
-      await vi.waitFor(() => {
-        render(
-          <PortableTextEditorTester
-            onChange={onChange}
-            ref={editorRef}
-            value={initialValue}
-            keyGenerator={createTestKeyGenerator()}
-          />,
-        )
+
+      await createTestEditor({
+        children: (
+          <>
+            <InternalChange$Plugin onChange={onChange} />
+            <InternalPortableTextEditorRefPlugin ref={editorRef} />
+          </>
+        ),
+        initialValue,
       })
+
       const editor = editorRef.current!
       expect(editor).toBeDefined()
       await vi.waitFor(() => {
@@ -554,15 +562,18 @@ describe('plugin:withPortableTextMarksModel', () => {
         },
       ]
       const onChange = vi.fn()
-      await vi.waitFor(() => {
-        render(
-          <PortableTextEditorTester
-            keyGenerator={createTestKeyGenerator()}
-            onChange={onChange}
-            ref={editorRef}
-            value={initialValue}
-          />,
-        )
+
+      await createTestEditor({
+        children: (
+          <>
+            <InternalChange$Plugin onChange={onChange} />
+            <InternalPortableTextEditorRefPlugin ref={editorRef} />
+          </>
+        ),
+        initialValue,
+        schemaDefinition: defineSchema({
+          blockObjects: [{name: 'custom image'}],
+        }),
       })
 
       await vi.waitFor(() => {

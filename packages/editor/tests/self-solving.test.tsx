@@ -1,13 +1,13 @@
 import type {JSONValue, Patch} from '@portabletext/patches'
 import {compileSchema, defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator} from '@portabletext/test'
 import type {PortableTextBlock, PortableTextSpan} from '@sanity/types'
 import {createRef, type ComponentProps, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
 import {PortableTextEditor} from '../src/editor/PortableTextEditor'
+import {createTestEditor} from '../src/internal-utils/test-editor'
 import {getTextSelection} from '../src/internal-utils/text-selection'
-import {PortableTextEditorTester} from './PortableTextEditorTester'
+import {InternalChange$Plugin} from '../src/plugins/plugin.internal.change-ref'
+import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
 
 type OnChange = ComponentProps<typeof PortableTextEditor>['onChange']
 
@@ -76,15 +76,16 @@ describe('Feature: Self-solving', () => {
       origin: 'local',
     }
 
-    render(
-      <PortableTextEditorTester
-        ref={editorRef}
-        schemaDefinition={schemaDefinition}
-        keyGenerator={createTestKeyGenerator()}
-        value={initialValue}
-        onChange={onChange}
-      />,
-    )
+    await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue,
+      schemaDefinition,
+    })
 
     await vi.waitFor(() => {
       if (editorRef.current) {
