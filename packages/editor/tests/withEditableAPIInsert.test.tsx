@@ -1,9 +1,10 @@
-import {createTestKeyGenerator} from '@portabletext/test'
+import {defineSchema} from '@portabletext/schema'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
 import {PortableTextEditor} from '../src/editor/PortableTextEditor'
-import {PortableTextEditorTester} from './PortableTextEditorTester'
+import {createTestEditor} from '../src/internal-utils/test-editor'
+import {InternalChange$Plugin} from '../src/plugins/plugin.internal.change-ref'
+import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
 
 const initialValue = [
   {
@@ -58,14 +59,20 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
 
-    render(
-      <PortableTextEditorTester
-        keyGenerator={createTestKeyGenerator()}
-        onChange={onChange}
-        ref={editorRef}
-        value={initialValue}
-      />,
-    )
+    await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue,
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {name: 'someObject', fields: [{name: 'color', type: 'string'}]},
+        ],
+      }),
+    })
 
     await vi.waitFor(() => {
       if (editorRef.current) {
@@ -200,14 +207,20 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
     ]
     const onChange = vi.fn()
 
-    render(
-      <PortableTextEditorTester
-        ref={editorRef}
-        value={emptyTextBlock}
-        onChange={onChange}
-        keyGenerator={createTestKeyGenerator()}
-      />,
-    )
+    await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue: value,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'custom image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+    })
 
     await vi.waitFor(() => {
       if (editorRef.current) {
@@ -252,14 +265,20 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
 
-    render(
-      <PortableTextEditorTester
-        ref={editorRef}
-        value={initialValue}
-        onChange={onChange}
-        keyGenerator={createTestKeyGenerator()}
-      />,
-    )
+    await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'custom image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+    })
 
     await vi.waitFor(() => {
       if (editorRef.current) {
@@ -308,14 +327,20 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
 
-    render(
-      <PortableTextEditorTester
-        onChange={onChange}
-        ref={editorRef}
-        value={initialValue}
-        keyGenerator={createTestKeyGenerator()}
-      />,
-    )
+    await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'custom image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+    })
 
     await vi.waitFor(() => {
       if (editorRef.current) {
@@ -371,14 +396,20 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
     ]
     const onChange = vi.fn()
 
-    render(
-      <PortableTextEditorTester
-        ref={editorRef}
-        value={value}
-        onChange={onChange}
-        keyGenerator={createTestKeyGenerator()}
-      />,
-    )
+    await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue: value,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'custom image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+    })
 
     await vi.waitFor(() => {
       if (editorRef.current) {
@@ -432,14 +463,20 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
     ]
     const onChange = vi.fn()
 
-    render(
-      <PortableTextEditorTester
-        ref={editorRef}
-        value={value}
-        onChange={onChange}
-        keyGenerator={createTestKeyGenerator()}
-      />,
-    )
+    await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue: value,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'custom image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+    })
 
     await vi.waitFor(() => {
       if (editorRef.current) {
@@ -488,14 +525,20 @@ describe('plugin:withEditableAPI: .insertBlock()', () => {
     const value = [...initialValue, ...emptyTextBlock]
     const onChange = vi.fn()
 
-    render(
-      <PortableTextEditorTester
-        ref={editorRef}
-        value={value}
-        onChange={onChange}
-        keyGenerator={createTestKeyGenerator()}
-      />,
-    )
+    await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue: value,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'custom image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+    })
 
     await vi.waitFor(() => {
       if (editorRef.current) {

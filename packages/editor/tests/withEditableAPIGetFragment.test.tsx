@@ -1,13 +1,10 @@
-import {compileSchema, isTextBlock} from '@portabletext/schema'
-import {createTestKeyGenerator} from '@portabletext/test'
+import {compileSchema, defineSchema, isTextBlock} from '@portabletext/schema'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
 import {PortableTextEditor} from '../src/editor/PortableTextEditor'
-import {
-  PortableTextEditorTester,
-  schemaDefinition,
-} from './PortableTextEditorTester'
+import {createTestEditor} from '../src/internal-utils/test-editor'
+import {InternalChange$Plugin} from '../src/plugins/plugin.internal.change-ref'
+import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
 
 const initialValue = [
   {
@@ -55,14 +52,21 @@ describe('plugin:withEditableAPI: .getFragment()', () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
 
-    render(
-      <PortableTextEditorTester
-        keyGenerator={createTestKeyGenerator()}
-        onChange={onChange}
-        ref={editorRef}
-        value={initialValue}
-      />,
-    )
+    await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue,
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {name: 'someObject', fields: [{name: 'color', type: 'string'}]},
+        ],
+      }),
+    })
+
     const initialSelection = {
       focus: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 6},
       anchor: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 7},
@@ -87,7 +91,7 @@ describe('plugin:withEditableAPI: .getFragment()', () => {
           fragment &&
             isTextBlock(
               {
-                schema: compileSchema(schemaDefinition),
+                schema: compileSchema(defineSchema({})),
               },
               fragment[0],
             ) &&
@@ -101,16 +105,21 @@ describe('plugin:withEditableAPI: .getFragment()', () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
 
-    await vi.waitFor(() =>
-      render(
-        <PortableTextEditorTester
-          keyGenerator={createTestKeyGenerator()}
-          onChange={onChange}
-          ref={editorRef}
-          value={initialValue}
-        />,
+    await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
       ),
-    )
+      initialValue,
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {name: 'someObject', fields: [{name: 'color', type: 'string'}]},
+        ],
+      }),
+    })
+
     const initialSelection = {
       anchor: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 6},
       focus: {path: [{_key: 'b'}, 'children', {_key: 'b3'}], offset: 9},

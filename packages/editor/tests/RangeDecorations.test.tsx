@@ -1,11 +1,11 @@
-import {createTestKeyGenerator} from '@portabletext/test'
 import type {PortableTextBlock} from '@sanity/types'
 import {createRef, type ReactNode, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
 import type {RangeDecoration} from '../src'
 import type {PortableTextEditor} from '../src/editor/PortableTextEditor'
-import {PortableTextEditorTester} from './PortableTextEditorTester'
+import {createTestEditor} from '../src/internal-utils/test-editor'
+import {InternalChange$Plugin} from '../src/plugins/plugin.internal.change-ref'
+import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
 
 const helloBlock: PortableTextBlock = {
   _key: '123',
@@ -37,17 +37,16 @@ describe('RangeDecorations', () => {
       },
     ]
 
-    const {rerender} = await vi.waitFor(() =>
-      render(
-        <PortableTextEditorTester
-          keyGenerator={createTestKeyGenerator()}
-          onChange={onChange}
-          rangeDecorations={rangeDecorations}
-          ref={editorRef}
-          value={value}
-        />,
+    const {rerender} = await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
       ),
-    )
+      initialValue: value,
+      editableProps: {rangeDecorations},
+    })
 
     await vi.waitFor(() => {
       if (editorRef.current) {
@@ -64,15 +63,17 @@ describe('RangeDecorations', () => {
     })
 
     // Re-render with the same range decorations
-    rerender(
-      <PortableTextEditorTester
-        keyGenerator={createTestKeyGenerator()}
-        onChange={onChange}
-        rangeDecorations={rangeDecorations}
-        ref={editorRef}
-        value={value}
-      />,
-    )
+    rerender({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue: value,
+      editableProps: {rangeDecorations},
+    })
+
     await vi.waitFor(() => {
       expect([rangeDecorationIteration, 'initial']).toEqual([1, 'initial'])
     })
@@ -87,15 +88,18 @@ describe('RangeDecorations', () => {
         payload: {id: 'a'},
       },
     ]
-    rerender(
-      <PortableTextEditorTester
-        keyGenerator={createTestKeyGenerator()}
-        onChange={onChange}
-        rangeDecorations={rangeDecorations}
-        ref={editorRef}
-        value={value}
-      />,
-    )
+
+    rerender({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue: value,
+      editableProps: {rangeDecorations},
+    })
+
     await vi.waitFor(() => {
       expect([rangeDecorationIteration, 'updated-with-equal-values']).toEqual([
         1,
@@ -113,15 +117,17 @@ describe('RangeDecorations', () => {
         payload: {id: 'a'},
       },
     ]
-    rerender(
-      <PortableTextEditorTester
-        keyGenerator={createTestKeyGenerator()}
-        onChange={onChange}
-        rangeDecorations={rangeDecorations}
-        ref={editorRef}
-        value={value}
-      />,
-    )
+    rerender({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue: value,
+      editableProps: {rangeDecorations},
+    })
+
     await vi.waitFor(() => {
       expect([rangeDecorationIteration, 'updated-with-different']).toEqual([
         2,
@@ -140,15 +146,18 @@ describe('RangeDecorations', () => {
         payload: {id: 'a'},
       },
     ]
-    rerender(
-      <PortableTextEditorTester
-        keyGenerator={createTestKeyGenerator()}
-        onChange={onChange}
-        rangeDecorations={rangeDecorations}
-        ref={editorRef}
-        value={value}
-      />,
-    )
+
+    rerender({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue: value,
+      editableProps: {rangeDecorations},
+    })
+
     await vi.waitFor(() => {
       expect([rangeDecorationIteration, 'updated-with-different']).toEqual([
         3,
@@ -167,15 +176,18 @@ describe('RangeDecorations', () => {
         payload: {id: 'b'},
       },
     ]
-    rerender(
-      <PortableTextEditorTester
-        keyGenerator={createTestKeyGenerator()}
-        onChange={onChange}
-        rangeDecorations={rangeDecorations}
-        ref={editorRef}
-        value={value}
-      />,
-    )
+
+    rerender({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue: value,
+      editableProps: {rangeDecorations},
+    })
+
     await vi.waitFor(() => {
       expect([
         rangeDecorationIteration,
@@ -194,15 +206,18 @@ describe('RangeDecorations', () => {
         payload: {id: 'c'},
       },
     ]
-    rerender(
-      <PortableTextEditorTester
-        keyGenerator={createTestKeyGenerator()}
-        onChange={onChange}
-        rangeDecorations={rangeDecorations}
-        ref={editorRef}
-        value={value}
-      />,
-    )
+
+    rerender({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue: value,
+      editableProps: {rangeDecorations},
+    })
+
     await vi.waitFor(() => {
       expect([
         rangeDecorationIteration,

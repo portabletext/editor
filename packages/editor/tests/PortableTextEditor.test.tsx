@@ -1,11 +1,11 @@
-import {createTestKeyGenerator} from '@portabletext/test'
 import type {PortableTextBlock} from '@sanity/types'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
 import type {EditorSelection} from '../src'
 import {PortableTextEditor} from '../src/editor/PortableTextEditor'
-import {PortableTextEditorTester} from './PortableTextEditorTester'
+import {createTestEditor} from '../src/internal-utils/test-editor'
+import {InternalChange$Plugin} from '../src/plugins/plugin.internal.change-ref'
+import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
 
 const helloBlock: PortableTextBlock = {
   _key: '123',
@@ -20,33 +20,39 @@ describe('initialization', () => {
   it('receives initial onChange events and has custom placeholder', async () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
-    render(
-      <PortableTextEditorTester
-        keyGenerator={createTestKeyGenerator()}
-        onChange={onChange}
-        renderPlaceholder={renderPlaceholder}
-        ref={editorRef}
-        value={undefined}
-      />,
-    )
+
+    const {locator} = await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      editableProps: {renderPlaceholder},
+    })
 
     await vi.waitFor(() => {
       expect(editorRef.current).not.toBe(null)
       expect(onChange).toHaveBeenCalledWith({type: 'ready'})
+      expect(locator.getByText('Jot something down here')).toBeInTheDocument()
     })
   })
+
   it('takes value from props and confirms it by emitting value change event', async () => {
     const initialValue = [helloBlock]
     const onChange = vi.fn()
     const editorRef = createRef<PortableTextEditor>()
-    render(
-      <PortableTextEditorTester
-        keyGenerator={createTestKeyGenerator()}
-        ref={editorRef}
-        onChange={onChange}
-        value={initialValue}
-      />,
-    )
+
+    await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue,
+    })
+
     const normalizedEditorValue = [{...initialValue[0], style: 'normal'}]
     await vi.waitFor(() => {
       expect(onChange).toHaveBeenCalledWith({
@@ -70,15 +76,17 @@ describe('initialization', () => {
       backward: false,
     }
     const onChange = vi.fn()
-    render(
-      <PortableTextEditorTester
-        keyGenerator={createTestKeyGenerator()}
-        onChange={onChange}
-        ref={editorRef}
-        selection={initialSelection}
-        value={initialValue}
-      />,
-    )
+
+    await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue,
+      editableProps: {selection: initialSelection},
+    })
 
     await vi.waitFor(() => {
       if (editorRef.current) {
@@ -114,15 +122,17 @@ describe('initialization', () => {
       backward: false,
     }
     const onChange = vi.fn()
-    const {rerender} = render(
-      <PortableTextEditorTester
-        keyGenerator={createTestKeyGenerator()}
-        onChange={onChange}
-        ref={editorRef}
-        selection={initialSelection}
-        value={initialValue}
-      />,
-    )
+
+    const {rerender} = await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue,
+      editableProps: {selection: initialSelection},
+    })
 
     await vi.waitFor(() => {
       if (editorRef.current) {
@@ -147,20 +157,23 @@ describe('initialization', () => {
         expect(sel).toBe(anotherSel)
       }
     })
-    rerender(
-      <PortableTextEditorTester
-        keyGenerator={createTestKeyGenerator()}
-        onChange={onChange}
-        ref={editorRef}
-        selection={newSelection}
-        value={initialValue}
-      />,
-    )
-    vi.waitFor(() => {
+
+    rerender({
+      children: (
+        <>
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      editableProps: {selection: newSelection},
+    })
+
+    await vi.waitFor(() => {
       if (editorRef.current) {
         expect(PortableTextEditor.getSelection(editorRef.current)).toEqual(
           newSelection,
         )
+      } else {
+        throw new Error('editorRef.current is null')
       }
     })
   })
@@ -173,15 +186,18 @@ describe('initialization', () => {
       focus: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
     }
     const onChange = vi.fn()
-    render(
-      <PortableTextEditorTester
-        keyGenerator={createTestKeyGenerator()}
-        onChange={onChange}
-        ref={editorRef}
-        selection={initialSelection}
-        value={initialValue}
-      />,
-    )
+
+    await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue,
+      editableProps: {selection: initialSelection},
+    })
+
     await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).not.toHaveBeenCalledWith({
@@ -208,27 +224,24 @@ describe('initialization', () => {
       }
     })
   })
+
   it('validates a non-initial value', async () => {
-    const editorRef: RefObject<PortableTextEditor | null> = createRef()
     let value: PortableTextBlock[] = [helloBlock]
     const initialSelection: EditorSelection = {
       anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
       focus: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
     }
     const onChange = vi.fn()
-    let _rerender: any
-    await vi.waitFor(() => {
-      render(
-        <PortableTextEditorTester
-          keyGenerator={createTestKeyGenerator()}
-          onChange={onChange}
-          ref={editorRef}
-          selection={initialSelection}
-          value={value}
-        />,
-      )
-      _rerender = render
+    const {editor} = await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+        </>
+      ),
+      initialValue: value,
+      editableProps: {selection: initialSelection},
     })
+
     await vi.waitFor(() => {
       expect(onChange).not.toHaveBeenCalledWith({
         type: 'invalidValue',
@@ -249,18 +262,11 @@ describe('initialization', () => {
       expect(onChange).toHaveBeenCalledWith({type: 'value', value})
     })
     value = [{_type: 'banana', _key: '123'}]
-    const newOnChange = vi.fn()
-    _rerender(
-      <PortableTextEditorTester
-        keyGenerator={createTestKeyGenerator()}
-        onChange={newOnChange}
-        ref={editorRef}
-        selection={initialSelection}
-        value={value}
-      />,
-    )
+
+    editor.send({type: 'update value', value})
+
     await vi.waitFor(() => {
-      expect(newOnChange).toHaveBeenCalledWith({
+      expect(onChange).toHaveBeenCalledWith({
         type: 'invalidValue',
         value,
         resolution: {
@@ -286,6 +292,7 @@ describe('initialization', () => {
       })
     })
   })
+
   it("doesn't crash when containing a invalid block somewhere inside the content", async () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const initialValue: PortableTextBlock[] = [
@@ -302,15 +309,18 @@ describe('initialization', () => {
       focus: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
     }
     const onChange = vi.fn()
-    render(
-      <PortableTextEditorTester
-        keyGenerator={createTestKeyGenerator()}
-        onChange={onChange}
-        ref={editorRef}
-        selection={initialSelection}
-        value={initialValue}
-      />,
-    )
+
+    await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue,
+      editableProps: {selection: initialSelection},
+    })
+
     await vi.waitFor(() => {
       if (editorRef.current) {
         expect(onChange).toHaveBeenCalledWith({

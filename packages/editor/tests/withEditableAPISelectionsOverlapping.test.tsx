@@ -1,10 +1,10 @@
-import {createTestKeyGenerator} from '@portabletext/test'
 import type {PortableTextBlock} from '@sanity/types'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
 import {PortableTextEditor} from '../src/editor/PortableTextEditor'
-import {PortableTextEditorTester} from './PortableTextEditorTester'
+import {createTestEditor} from '../src/internal-utils/test-editor'
+import {InternalChange$Plugin} from '../src/plugins/plugin.internal.change-ref'
+import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
 
 const INITIAL_VALUE: PortableTextBlock[] = [
   {
@@ -27,14 +27,17 @@ describe('plugin:withEditableAPI: .isSelectionsOverlapping', () => {
   it('returns true if the selections are partially overlapping', async () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
-    render(
-      <PortableTextEditorTester
-        keyGenerator={createTestKeyGenerator()}
-        onChange={onChange}
-        ref={editorRef}
-        value={INITIAL_VALUE}
-      />,
-    )
+
+    await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue: INITIAL_VALUE,
+    })
+
     const selectionA = {
       focus: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 4},
       anchor: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 8},
@@ -61,14 +64,17 @@ describe('plugin:withEditableAPI: .isSelectionsOverlapping', () => {
   it('returns true if the selections are fully overlapping', async () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
-    render(
-      <PortableTextEditorTester
-        keyGenerator={createTestKeyGenerator()}
-        onChange={onChange}
-        ref={editorRef}
-        value={INITIAL_VALUE}
-      />,
-    )
+
+    await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue: INITIAL_VALUE,
+    })
+
     const selectionA = {
       focus: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 4},
       anchor: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 8},
@@ -95,14 +101,17 @@ describe('plugin:withEditableAPI: .isSelectionsOverlapping', () => {
   it('return true if selection is fully inside another selection', async () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
-    render(
-      <PortableTextEditorTester
-        keyGenerator={createTestKeyGenerator()}
-        onChange={onChange}
-        ref={editorRef}
-        value={INITIAL_VALUE}
-      />,
-    )
+
+    await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue: INITIAL_VALUE,
+    })
+
     const selectionA = {
       focus: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 2},
       anchor: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 10},
@@ -129,14 +138,17 @@ describe('plugin:withEditableAPI: .isSelectionsOverlapping', () => {
   it('returns false if the selections are not overlapping', async () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
-    render(
-      <PortableTextEditorTester
-        keyGenerator={createTestKeyGenerator()}
-        onChange={onChange}
-        ref={editorRef}
-        value={INITIAL_VALUE}
-      />,
-    )
+
+    await createTestEditor({
+      children: (
+        <>
+          <InternalChange$Plugin onChange={onChange} />
+          <InternalPortableTextEditorRefPlugin ref={editorRef} />
+        </>
+      ),
+      initialValue: INITIAL_VALUE,
+    })
+
     const selectionA = {
       focus: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 4},
       anchor: {path: [{_key: 'a'}, 'children', {_key: 'a1'}], offset: 8},

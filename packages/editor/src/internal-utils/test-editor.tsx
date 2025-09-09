@@ -19,24 +19,30 @@ import {InternalEditorAfterRefPlugin} from '../plugins/plugin.internal.editor-ac
 import {InternalSlateEditorRefPlugin} from '../plugins/plugin.internal.slate-editor-ref'
 import type {PortableTextSlateEditor} from '../types/editor'
 
+type CreateTestEditorOptions = {
+  initialValue?: Array<PortableTextBlock>
+  keyGenerator?: () => string
+  schemaDefinition?: SchemaDefinition
+  children?: React.ReactNode
+  editableProps?: PortableTextEditableProps
+}
+
 export async function createTestEditor(
-  options: {
-    initialValue?: Array<PortableTextBlock>
-    keyGenerator?: () => string
-    schemaDefinition?: SchemaDefinition
-    children?: React.ReactNode
-    editableProps?: PortableTextEditableProps
-  } = {},
-): Promise<Pick<Context, 'editor' | 'locator'>> {
+  options: CreateTestEditorOptions = {},
+): Promise<
+  Pick<Context, 'editor' | 'locator'> & {
+    rerender: (options?: CreateTestEditorOptions) => void
+  }
+> {
   const editorRef = React.createRef<Editor>()
   const editorActorRef = React.createRef<EditorActor>()
   const slateRef = React.createRef<PortableTextSlateEditor>()
   const keyGenerator = options.keyGenerator ?? createTestKeyGenerator()
 
-  render(
+  const renderResult = render(
     <EditorProvider
       initialConfig={{
-        keyGenerator,
+        keyGenerator: keyGenerator,
         schemaDefinition: options.schemaDefinition ?? defineSchema({}),
         initialValue: options.initialValue,
       }}
@@ -48,6 +54,40 @@ export async function createTestEditor(
       {options.children}
     </EditorProvider>,
   )
+
+  function rerender(newOptions?: CreateTestEditorOptions) {
+    newOptions
+      ? renderResult.rerender(
+          <EditorProvider
+            initialConfig={{
+              keyGenerator: keyGenerator,
+              schemaDefinition: newOptions.schemaDefinition ?? defineSchema({}),
+              initialValue: newOptions.initialValue,
+            }}
+          >
+            <EditorRefPlugin ref={editorRef} />
+            <InternalEditorAfterRefPlugin ref={editorActorRef} />
+            <InternalSlateEditorRefPlugin ref={slateRef} />
+            <PortableTextEditable {...newOptions.editableProps} />
+            {newOptions.children}
+          </EditorProvider>,
+        )
+      : renderResult.rerender(
+          <EditorProvider
+            initialConfig={{
+              keyGenerator: keyGenerator,
+              schemaDefinition: options.schemaDefinition ?? defineSchema({}),
+              initialValue: options.initialValue,
+            }}
+          >
+            <EditorRefPlugin ref={editorRef} />
+            <InternalEditorAfterRefPlugin ref={editorActorRef} />
+            <InternalSlateEditorRefPlugin ref={slateRef} />
+            <PortableTextEditable {...options.editableProps} />
+            {options.children}
+          </EditorProvider>,
+        )
+  }
 
   const locator = page.getByRole('textbox')
 
@@ -67,5 +107,6 @@ export async function createTestEditor(
       sendNativeEvent,
     },
     locator,
+    rerender,
   }
 }
