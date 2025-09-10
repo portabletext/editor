@@ -435,7 +435,7 @@ export function createWithPortableTextMarkModel(
           _type: 'span',
           _key: editorActor.getSnapshot().context.keyGenerator(),
           text: op.text,
-          marks: markState.marks,
+          marks: markState.newMarks,
         })
 
         return

@@ -5,7 +5,7 @@ export function getTextMarks(
   context: Pick<EditorContext, 'schema' | 'value'>,
   text: string,
 ) {
-  let marks: Array<string> | undefined
+  let marks: Array<string> = []
 
   for (const block of context.value) {
     if (isTextBlock(context, block)) {

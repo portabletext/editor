@@ -194,10 +194,7 @@ export const stepDefinitions = [
 
         context.editor.send({
           type: 'select',
-          at: getSelectionBeforeText(
-            context.editor.getSnapshot().context,
-            text,
-          ),
+          at: selection,
         })
       })
     },

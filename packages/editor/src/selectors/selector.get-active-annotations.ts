@@ -17,7 +17,7 @@ export const getActiveAnnotations: EditorSelector<Array<PortableTextObject>> = (
   const selectedBlocks = getSelectedBlocks(snapshot)
   const markState = getMarkState(snapshot)
 
-  const activeAnnotations = (markState?.marks ?? []).filter(
+  const activeAnnotations = (markState?.newMarks ?? []).filter(
     (mark) =>
       !snapshot.context.schema.decorators
         .map((decorator) => decorator.name)
