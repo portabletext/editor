@@ -263,7 +263,7 @@ export const editorMachine = setup({
         )
 
         performEvent({
-          mode: 'raise',
+          mode: 'send',
           behaviors,
           remainingEventBehaviors: behaviors,
           event: event.behaviorEvent,

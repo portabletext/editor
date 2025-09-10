@@ -2,7 +2,7 @@ import {createEditorDom} from '../editor/editor-dom'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
 import {withApplyingBehaviorOperations} from '../editor/with-applying-behavior-operations'
-import {withUndoStep} from '../editor/with-undo-step'
+import {clearUndoStep, createUndoStep} from '../editor/with-undo-step'
 import {debugWithName} from '../internal-utils/debug'
 import {performOperation} from '../operations/behavior.operations'
 import type {PortableTextSlateEditor} from '../types/editor'
@@ -43,7 +43,7 @@ export function performEvent({
   nativeEvent,
   sendBack,
 }: {
-  mode: 'raise' | 'execute' | 'forward'
+  mode: 'send' | 'raise' | 'execute' | 'forward'
   behaviors: Array<Behavior>
   remainingEventBehaviors: Array<Behavior>
   event: BehaviorEvent
@@ -63,6 +63,10 @@ export function performEvent({
       | CustomBehaviorEvent,
   ) => void
 }) {
+  if (mode === 'send' && !isNativeBehaviorEvent(event)) {
+    createUndoStep(editor)
+  }
+
   debug(`(${mode}:${eventCategory(event)})`, JSON.stringify(event, null, 2))
 
   const eventBehaviors = [
@@ -107,6 +111,10 @@ export function performEvent({
 
   if (eventBehaviors.length === 0 && isSyntheticBehaviorEvent(event)) {
     nativeEvent?.preventDefault()
+
+    if (mode === 'send') {
+      clearUndoStep(editor)
+    }
 
     withApplyingBehaviorOperations(editor, () => {
       debug(`(execute:${eventCategory(event)})`, JSON.stringify(event, null, 2))
@@ -199,76 +207,78 @@ export function performEvent({
         // we set up a new undo step.
         // All actions performed recursively from now will be squashed into this
         // undo step
-        withUndoStep(editor, () => {
-          for (const action of actions) {
-            if (action.type === 'effect') {
-              try {
-                action.effect({
-                  send: sendBack,
-                })
-              } catch (error) {
-                console.error(
-                  new Error(
-                    `Executing effect as a result of "${event.type}" failed due to: ${error.message}`,
-                  ),
-                )
-              }
+        createUndoStep(editor)
 
-              continue
-            }
-
-            if (action.type === 'forward') {
-              const remainingEventBehaviors = eventBehaviors.slice(
-                eventBehaviorIndex + 1,
+        for (const action of actions) {
+          if (action.type === 'effect') {
+            try {
+              action.effect({
+                send: sendBack,
+              })
+            } catch (error) {
+              console.error(
+                new Error(
+                  `Executing effect as a result of "${event.type}" failed due to: ${error.message}`,
+                ),
               )
-
-              performEvent({
-                mode: 'forward',
-                behaviors,
-                remainingEventBehaviors: remainingEventBehaviors,
-                event: action.event,
-                editor,
-                keyGenerator,
-                schema,
-                getSnapshot,
-                nativeEvent,
-                sendBack,
-              })
-
-              continue
             }
 
-            if (action.type === 'raise') {
-              performEvent({
-                mode: 'raise',
-                behaviors,
-                remainingEventBehaviors: behaviors,
-                event: action.event,
-                editor,
-                keyGenerator,
-                schema,
-                getSnapshot,
-                nativeEvent,
-                sendBack,
-              })
+            continue
+          }
 
-              continue
-            }
+          if (action.type === 'forward') {
+            const remainingEventBehaviors = eventBehaviors.slice(
+              eventBehaviorIndex + 1,
+            )
 
             performEvent({
-              mode: 'execute',
+              mode: 'forward',
               behaviors,
-              remainingEventBehaviors: [],
+              remainingEventBehaviors: remainingEventBehaviors,
               event: action.event,
               editor,
               keyGenerator,
               schema,
               getSnapshot,
-              nativeEvent: undefined,
+              nativeEvent,
               sendBack,
             })
+
+            continue
           }
-        })
+
+          if (action.type === 'raise') {
+            performEvent({
+              mode: 'raise',
+              behaviors,
+              remainingEventBehaviors: behaviors,
+              event: action.event,
+              editor,
+              keyGenerator,
+              schema,
+              getSnapshot,
+              nativeEvent,
+              sendBack,
+            })
+
+            continue
+          }
+
+          performEvent({
+            mode: 'execute',
+            behaviors,
+            remainingEventBehaviors: [],
+            event: action.event,
+            editor,
+            keyGenerator,
+            schema,
+            getSnapshot,
+            nativeEvent: undefined,
+            sendBack,
+          })
+        }
+
+        clearUndoStep(editor)
 
         continue
       }
@@ -340,6 +350,10 @@ export function performEvent({
 
   if (!defaultBehaviorOverwritten && isSyntheticBehaviorEvent(event)) {
     nativeEvent?.preventDefault()
+
+    if (mode === 'send') {
+      clearUndoStep(editor)
+    }
 
     withApplyingBehaviorOperations(editor, () => {
       debug(`(execute:${eventCategory(event)})`, JSON.stringify(event, null, 2))
