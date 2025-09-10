@@ -3,10 +3,65 @@ import {getTersePt} from '@portabletext/test'
 import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
 import {defineBehavior, execute, forward, raise} from '../src/behaviors'
+import type {MutationEvent} from '../src/editor/relay-machine'
 import {createTestEditor} from '../src/internal-utils/test-editor'
-import {BehaviorPlugin} from '../src/plugins'
+import {BehaviorPlugin, EventListenerPlugin} from '../src/plugins'
 
 describe('event.history.undo', () => {
+  test('Scenario: Undoing writing two words', async () => {
+    const mutationEvents: Array<MutationEvent> = []
+
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'mutation') {
+              mutationEvents.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'foo')
+    await userEvent.type(locator, ' bar')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo bar'])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+    })
+  })
+
+  test('Scenario: Selection change does not affect the undo stack', async () => {
+    const {editor, locator} = await createTestEditor()
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, 'foo')
+    await userEvent.keyboard('{ArrowLeft}')
+    await userEvent.type(locator, 'bar')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['fobaro'])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+    })
+  })
+
   test('Scenario: Undoing action sets', async () => {
     const {editor, locator} = await createTestEditor({
       children: (
@@ -175,6 +230,143 @@ describe('event.history.undo', () => {
 
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['A'])
+    })
+  })
+
+  describe('Scenario Outline: Custom events', () => {
+    test('Scenario: execute', async () => {
+      const {editor} = await createTestEditor({
+        children: (
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior<{text: string}>({
+                on: 'custom.insert block',
+                actions: [
+                  ({event}) => [
+                    execute({
+                      type: 'insert.block',
+                      block: {
+                        _type: 'block',
+                        children: [
+                          {
+                            _type: 'span',
+                            text: event.text,
+                          },
+                        ],
+                      },
+                      placement: 'auto',
+                      select: 'end',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+        ),
+      })
+
+      editor.send({type: 'custom.insert block', text: 'foo'})
+      editor.send({type: 'custom.insert block', text: 'bar'})
+
+      await vi.waitFor(() => {
+        expect(getTersePt(editor.getSnapshot().context)).toEqual(['foobar'])
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+      })
+    })
+
+    test('Scenario: forward', async () => {
+      const {editor} = await createTestEditor({
+        children: (
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior<{text: string}>({
+                on: 'custom.insert block',
+                actions: [
+                  ({event}) => [
+                    forward({
+                      type: 'insert.block',
+                      block: {
+                        _type: 'block',
+                        children: [
+                          {
+                            _type: 'span',
+                            text: event.text,
+                          },
+                        ],
+                      },
+                      placement: 'auto',
+                      select: 'end',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+        ),
+      })
+
+      editor.send({type: 'custom.insert block', text: 'foo'})
+      editor.send({type: 'custom.insert block', text: 'bar'})
+
+      await vi.waitFor(() => {
+        expect(getTersePt(editor.getSnapshot().context)).toEqual(['foobar'])
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+      })
+    })
+
+    test('Scenario: raise', async () => {
+      const {editor} = await createTestEditor({
+        children: (
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior<{text: string}>({
+                on: 'custom.insert block',
+                actions: [
+                  ({event}) => [
+                    raise({
+                      type: 'insert.block',
+                      block: {
+                        _type: 'block',
+                        children: [
+                          {
+                            _type: 'span',
+                            text: event.text,
+                          },
+                        ],
+                      },
+                      placement: 'auto',
+                      select: 'end',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+        ),
+      })
+
+      editor.send({type: 'custom.insert block', text: 'foo'})
+      editor.send({type: 'custom.insert block', text: 'bar'})
+
+      await vi.waitFor(() => {
+        expect(getTersePt(editor.getSnapshot().context)).toEqual(['foobar'])
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+      })
     })
   })
 })

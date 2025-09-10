@@ -25,3 +25,13 @@ export function withUndoStep(editor: Editor, fn: () => void) {
 export function getCurrentUndoStepId(editor: Editor) {
   return CURRENT_UNDO_STEP.get(editor)?.undoStepId
 }
+
+export function createUndoStep(editor: Editor) {
+  CURRENT_UNDO_STEP.set(editor, {
+    undoStepId: defaultKeyGenerator(),
+  })
+}
+
+export function clearUndoStep(editor: Editor) {
+  CURRENT_UNDO_STEP.set(editor, undefined)
+}
