@@ -228,6 +228,7 @@ const abstractBehaviorEventTypes = [
   'list item.toggle',
   'move.block down',
   'move.block up',
+  'select.block',
   'select.previous block',
   'select.next block',
   'serialize',
@@ -414,6 +415,11 @@ type AbstractBehaviorEvent =
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'move.block up'>
       at: BlockPath
+    }
+  | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'select.block'>
+      at: BlockPath
+      select?: 'start' | 'end'
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'select.previous block'>
