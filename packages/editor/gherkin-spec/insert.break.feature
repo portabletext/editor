@@ -24,6 +24,9 @@ Feature: Insert Break
     And "baz" is typed
     Then the text is <text>
     And the caret is <new position>
+    When undo is performed
+    And undo is performed
+    Then the text is "foo|bar"
 
     Examples:
       | position     | text            | new position |
@@ -44,6 +47,8 @@ Feature: Insert Break
     When everything is selected
     And "{Enter}" is pressed
     Then the text is ""
+    When undo is performed
+    Then the text is "foo|{image}|bar"
 
   Scenario: Pressing Enter on an inline object
     Given the text "foo,{stock-ticker},"

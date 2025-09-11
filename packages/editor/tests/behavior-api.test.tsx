@@ -13,16 +13,16 @@ describe('Behavior API', () => {
           behaviors={[
             defineBehavior({
               on: 'insert.text',
-              guard: ({event}) => event.text === 'a',
-              actions: [() => [raise({type: 'insert.text', text: 'b'})]],
-            }),
-            defineBehavior({
-              on: 'insert.text',
               guard: ({event}) => event.text === 'b',
               // The insertion of 'a' is executed, which means the event
               // doesn't trigger any other Behavior from this point.
               // Hence, no infinite loop is created.
               actions: [() => [execute({type: 'insert.text', text: 'a'})]],
+            }),
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'a',
+              actions: [() => [raise({type: 'insert.text', text: 'b'})]],
             }),
           ]}
         />
@@ -32,6 +32,12 @@ describe('Behavior API', () => {
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
     })
   })
 
@@ -69,6 +75,12 @@ describe('Behavior API', () => {
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['b'])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
     })
   })
 
@@ -141,6 +153,12 @@ describe('Behavior API', () => {
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
     })
   })
 
