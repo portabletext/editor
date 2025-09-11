@@ -1,5 +1,25 @@
 # Changelog
 
+## 2.9.0
+
+### Minor Changes
+
+- [#1644](https://github.com/portabletext/editor/pull/1644) [`4a87bb5`](https://github.com/portabletext/editor/commit/4a87bb53c4f73e358fa5a44e078226d642dbe0f9) Thanks [@christianhg](https://github.com/christianhg)! - feat: add `select.block` event
+
+  You can now `send`, `raise`, `execute` and `forward` `select.block` events. Under the hood they convert into `select` events. For convenience, you can `select` the block either at the `'start'` or `'end'` (`'start'` is default).
+
+  ```ts
+  raise({
+    type: 'select.block',
+    at: [{_key: firstBlockKey}],
+    select: 'start',
+  })
+  ```
+
+### Patch Changes
+
+- [#1644](https://github.com/portabletext/editor/pull/1644) [`5c766f0`](https://github.com/portabletext/editor/commit/5c766f034a41a913f6022d47c47afcebaf9658a4) Thanks [@christianhg](https://github.com/christianhg)! - fix(`insert.blocks`): edge cases related to target selection
+
 ## 2.8.4
 
 ### Patch Changes
