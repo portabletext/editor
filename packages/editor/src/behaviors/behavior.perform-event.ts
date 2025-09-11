@@ -15,8 +15,7 @@ import {
   isNativeBehaviorEvent,
   isSyntheticBehaviorEvent,
   type BehaviorEvent,
-  type CustomBehaviorEvent,
-  type SyntheticBehaviorEvent,
+  type ExternalBehaviorEvent,
 } from './behavior.types.event'
 
 const debug = debugWithName('behaviors:event')
@@ -57,10 +56,7 @@ export function performEvent({
       }
     | undefined
   sendBack: (
-    event:
-      | {type: 'set drag ghost'; ghost: HTMLElement}
-      | SyntheticBehaviorEvent
-      | CustomBehaviorEvent,
+    event: {type: 'set drag ghost'; ghost: HTMLElement} | ExternalBehaviorEvent,
   ) => void
 }) {
   if (mode === 'send' && !isNativeBehaviorEvent(event)) {

@@ -17,7 +17,7 @@ import type {EditableAPI, PortableTextSlateEditor} from '../types/editor'
 import {createSlateEditor, type SlateEditor} from './create-slate-editor'
 import {createEditorDom} from './editor-dom'
 import type {EditorActor} from './editor-machine'
-import {editorMachine} from './editor-machine'
+import {editorMachine, rerouteExternalBehaviorEvent} from './editor-machine'
 import {getEditorSnapshot} from './editor-selector'
 import {defaultKeyGenerator} from './key-generator'
 import {mutationMachine, type MutationActor} from './mutation-machine'
@@ -112,41 +112,13 @@ export function createInternalEditor(config: EditorConfig): {
           editorActor.send(event)
           break
 
-        case 'blur':
-          editorActor.send({
-            type: 'blur',
-            editor: slateEditor.instance,
-          })
-          break
-
-        case 'focus':
-          editorActor.send({
-            type: 'focus',
-            editor: slateEditor.instance,
-          })
-          break
-
-        case 'insert.block object':
-          editorActor.send({
-            type: 'behavior event',
-            behaviorEvent: {
-              type: 'insert.block',
-              block: {
-                _type: event.blockObject.name,
-                ...(event.blockObject.value ?? {}),
-              },
-              placement: event.placement,
-            },
-            editor: slateEditor.instance,
-          })
-          break
-
         default:
-          editorActor.send({
-            type: 'behavior event',
-            behaviorEvent: event,
-            editor: slateEditor.instance,
-          })
+          editorActor.send(
+            rerouteExternalBehaviorEvent({
+              event,
+              slateEditor: slateEditor.instance,
+            }),
+          )
       }
     },
     on: (event, listener) => {
