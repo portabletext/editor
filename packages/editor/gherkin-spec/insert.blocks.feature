@@ -3,6 +3,23 @@ Feature: Insert Blocks
   Background:
     Given one editor
 
+  Scenario Outline: Inserting blocks on an empty editor
+    Given the editor is focused
+    When "foo|bar" is inserted at <placement> and selected at the <selection>
+    And "baz" is typed
+    Then the text is <text>
+
+    Examples:
+      | placement | selection | text            |
+      | "before"  | "none"    | "foo\|bar\|baz" |
+      | "before"  | "start"   | "bazfoo\|bar\|" |
+      | "before"  | "end"     | "foo\|barbaz\|" |
+      | "after"   | "none"    | "baz\|foo\|bar" |
+      | "after"   | "start"   | "\|bazfoo\|bar" |
+      | "after"   | "end"     | "\|foo\|barbaz" |
+      | "auto"    | "none"    | "bazfoo\|bar"   |
+      | "auto"    | "start"   | "bazfoo\|bar"   |
+
   Scenario Outline: Inserting block objects an empty editor
     When "{image}" is inserted at <placement>
     Then the text is <text>
@@ -34,20 +51,30 @@ Feature: Insert Blocks
   Scenario Outline: Inserting blocks on a text block
     Given the text "foo"
     When the caret is put <position>
-    And "bar|{image}|baz" is inserted at <placement>
+    And "bar|{image}|baz" is inserted at <placement> and selected at the <select-position>
+    And "new" is typed
     Then the text is <text>
 
     Examples:
-      | position     | placement | text                     |
-      | before "foo" | "before"  | "bar\|{image}\|baz\|foo" |
-      | before "foo" | "after"   | "foo\|bar\|{image}\|baz" |
-      | before "foo" | "auto"    | "bar\|{image}\|bazfoo"   |
-      | after "f"    | "before"  | "bar\|{image}\|baz\|foo" |
-      | after "f"    | "after"   | "foo\|bar\|{image}\|baz" |
-      | after "f"    | "auto"    | "fbar\|{image}\|bazoo"   |
-      | after "foo"  | "before"  | "bar\|{image}\|baz\|foo" |
-      | after "foo"  | "after"   | "foo\|bar\|{image}\|baz" |
-      | after "foo"  | "auto"    | "foobar\|{image}\|baz"   |
+      | position     | placement | select-position | text                        |
+      | before "foo" | "before"  | "start"         | "newbar\|{image}\|baz\|foo" |
+      | before "foo" | "before"  | "end"           | "bar\|{image}\|baznew\|foo" |
+      | before "foo" | "after"   | "start"         | "foo\|newbar\|{image}\|baz" |
+      | before "foo" | "after"   | "end"           | "foo\|bar\|{image}\|baznew" |
+      | before "foo" | "auto"    | "start"         | "newbar\|{image}\|bazfoo"   |
+      | before "foo" | "auto"    | "end"           | "bar\|{image}\|baznewfoo"   |
+      | after "f"    | "before"  | "start"         | "newbar\|{image}\|baz\|foo" |
+      | after "f"    | "before"  | "end"           | "bar\|{image}\|baznew\|foo" |
+      | after "f"    | "after"   | "start"         | "foo\|newbar\|{image}\|baz" |
+      | after "f"    | "after"   | "end"           | "foo\|bar\|{image}\|baznew" |
+      | after "f"    | "auto"    | "start"         | "fnewbar\|{image}\|bazoo"   |
+      | after "f"    | "auto"    | "end"           | "fbar\|{image}\|baznewoo"   |
+      | after "foo"  | "before"  | "start"         | "newbar\|{image}\|baz\|foo" |
+      | after "foo"  | "before"  | "end"           | "bar\|{image}\|baznew\|foo" |
+      | after "foo"  | "after"   | "start"         | "foo\|newbar\|{image}\|baz" |
+      | after "foo"  | "after"   | "end"           | "foo\|bar\|{image}\|baznew" |
+      | after "foo"  | "auto"    | "start"         | "foonewbar\|{image}\|baz"   |
+      | after "foo"  | "auto"    | "end"           | "foobar\|{image}\|baznew"   |
 
   Scenario: Pasting text blocks between two text blocks
     Given the text "foo|bar"
