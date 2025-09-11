@@ -1,9 +1,10 @@
 import {getTersePt} from '@portabletext/test'
 import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
+import type {EditorEmittedEvent} from '../src'
 import {defineBehavior, effect, execute, forward, raise} from '../src/behaviors'
 import {createTestEditor} from '../src/internal-utils/test-editor'
-import {BehaviorPlugin} from '../src/plugins'
+import {BehaviorPlugin, EventListenerPlugin} from '../src/plugins'
 
 describe('Behavior API', () => {
   test('Scenario: Suppressing raised events while executing', async () => {
@@ -386,6 +387,98 @@ describe('Behavior API', () => {
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
+    })
+  })
+
+  test('Scenario: `effect` can be used to `send` a `focus` event', async () => {
+    const focusedBlurredEvents: Array<EditorEmittedEvent> = []
+
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <>
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'focused' || event.type === 'blurred') {
+                focusedBlurredEvents.push(event)
+              }
+            }}
+          />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'insert.text',
+                actions: [
+                  ({event}) => [
+                    effect(({send}) => {
+                      setTimeout(() => {
+                        send({type: 'focus'})
+                      }, 100)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+            ]}
+          />
+        </>
+      ),
+    })
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, 'a')
+    editor.send({type: 'blur'})
+
+    await vi.waitFor(() => {
+      expect(focusedBlurredEvents).toEqual([
+        expect.objectContaining({type: 'focused'}),
+        expect.objectContaining({type: 'blurred'}),
+        expect.objectContaining({type: 'focused'}),
+      ])
+    })
+  })
+
+  test('Scenario: `effect` can be used to `send` a `blur` event', async () => {
+    const focusedBlurredEvents: Array<EditorEmittedEvent> = []
+
+    const {locator} = await createTestEditor({
+      children: (
+        <>
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'focused' || event.type === 'blurred') {
+                focusedBlurredEvents.push(event)
+              }
+            }}
+          />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'insert.text',
+                actions: [
+                  ({event}) => [
+                    effect(({send}) => {
+                      setTimeout(() => {
+                        send({type: 'blur'})
+                      }, 100)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+            ]}
+          />
+        </>
+      ),
+    })
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, 'a')
+
+    await vi.waitFor(() => {
+      expect(focusedBlurredEvents).toEqual([
+        expect.objectContaining({type: 'focused'}),
+        expect.objectContaining({type: 'blurred'}),
+      ])
     })
   })
 })

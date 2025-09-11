@@ -13,7 +13,10 @@ import {
 import type {BehaviorConfig} from '../behaviors/behavior.config'
 import {coreBehaviorsConfig} from '../behaviors/behavior.core'
 import {performEvent} from '../behaviors/behavior.perform-event'
-import type {BehaviorEvent} from '../behaviors/behavior.types.event'
+import type {
+  BehaviorEvent,
+  ExternalBehaviorEvent,
+} from '../behaviors/behavior.types.event'
 import type {Converter} from '../converters/converter.types'
 import {debugWithName} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
@@ -133,6 +136,49 @@ export type InternalEditorEmittedEvent =
   | OmitFromUnion<EditorEmittedEvent, 'type', 'patch'>
   | InternalPatchEvent
   | PatchesEvent
+
+export function rerouteExternalBehaviorEvent({
+  event,
+  slateEditor,
+}: {
+  event: ExternalBehaviorEvent
+  slateEditor: PortableTextSlateEditor
+}): InternalEditorEvent {
+  switch (event.type) {
+    case 'blur':
+      return {
+        type: 'blur',
+        editor: slateEditor,
+      }
+
+    case 'focus':
+      return {
+        type: 'focus',
+        editor: slateEditor,
+      }
+
+    case 'insert.block object':
+      return {
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'insert.block',
+          block: {
+            _type: event.blockObject.name,
+            ...(event.blockObject.value ?? {}),
+          },
+          placement: event.placement,
+        },
+        editor: slateEditor,
+      }
+
+    default:
+      return {
+        type: 'behavior event',
+        behaviorEvent: event,
+        editor: slateEditor,
+      }
+  }
+}
 
 /**
  * @internal
@@ -285,11 +331,12 @@ export const editorMachine = setup({
               return
             }
 
-            self.send({
-              type: 'behavior event',
-              behaviorEvent: eventSentBack,
-              editor: event.editor,
-            })
+            self.send(
+              rerouteExternalBehaviorEvent({
+                event: eventSentBack,
+                slateEditor: event.editor,
+              }),
+            )
           },
         })
       } catch (error) {

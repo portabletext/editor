@@ -3,6 +3,7 @@ import type {EditorSnapshot} from '../editor/editor-snapshot'
 import type {PickFromUnion} from '../type-utils'
 import type {
   CustomBehaviorEvent,
+  ExternalBehaviorEvent,
   NativeBehaviorEvent,
   SyntheticBehaviorEvent,
 } from './behavior.types.event'
@@ -48,7 +49,7 @@ export type BehaviorAction =
          * })
          * ```
          */
-        send: (event: SyntheticBehaviorEvent | CustomBehaviorEvent) => void
+        send: (event: ExternalBehaviorEvent) => void
       }) => void
     }
 
