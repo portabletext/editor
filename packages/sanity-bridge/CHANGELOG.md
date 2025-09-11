@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.9
+
+### Patch Changes
+
+- [#1638](https://github.com/portabletext/editor/pull/1638) [`d7f34d4`](https://github.com/portabletext/editor/commit/d7f34d4191d3248c69ef14125670db89517772d5) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update sanity monorepo to ^4.8.1
+
 ## 1.1.8
 
 ### Patch Changes

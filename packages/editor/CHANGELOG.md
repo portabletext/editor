@@ -1,5 +1,42 @@
 # Changelog
 
+## 2.8.4
+
+### Patch Changes
+
+- [#1638](https://github.com/portabletext/editor/pull/1638) [`d7f34d4`](https://github.com/portabletext/editor/commit/d7f34d4191d3248c69ef14125670db89517772d5) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update sanity monorepo to ^4.8.1
+
+- [#1641](https://github.com/portabletext/editor/pull/1641) [`97288ec`](https://github.com/portabletext/editor/commit/97288ec7f1b80962e44cea7c00c42f2b22fb47aa) Thanks [@christianhg](https://github.com/christianhg)! - fix: improve history stack heuristics
+
+  Sending custom Behavior events will now create distinct steps in the history stack:
+
+  ```ts
+  // Creates one step in the history stack
+  editor.send({type: 'custom.insert block', text: 'foo'})
+  // Creates another step in the history stack
+  editor.send({type: 'custom.insert block', text: 'bar'})
+  ```
+
+- [#1643](https://github.com/portabletext/editor/pull/1643) [`4ccb9ab`](https://github.com/portabletext/editor/commit/4ccb9ab5b5433073901b33dd9fcdcb2350f1bf0c) Thanks [@christianhg](https://github.com/christianhg)! - fix: `send` inside `effect` now has access to `focus`/`blur` events
+
+  ```ts
+  defineBehavior({
+    on: 'decorator.add',
+    actions: [
+      ({event}) => [
+        forward(event),
+        effect(({send}) => {
+          send({type: 'blur'})
+        }),
+      ],
+    ],
+  })
+  ```
+
+- Updated dependencies [[`d7f34d4`](https://github.com/portabletext/editor/commit/d7f34d4191d3248c69ef14125670db89517772d5)]:
+  - @portabletext/block-tools@3.5.5
+  - @portabletext/sanity-bridge@1.1.9
+
 ## 2.8.3
 
 ### Patch Changes
