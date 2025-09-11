@@ -305,6 +305,22 @@ describe('event.split', () => {
     await userEvent.type(locator, 'baz')
 
     expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo', 'bazar'])
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo', 'ar'])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
+        'foo',
+        '{image}',
+        'bar',
+      ])
+    })
   })
 
   test('Scenario: Splitting with an expanded selection ending on a block object', async () => {
