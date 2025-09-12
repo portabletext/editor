@@ -5,7 +5,7 @@ export function getActiveAnnotationsMarks(snapshot: EditorSnapshot) {
   const schema = snapshot.context.schema
   const markState = getMarkState(snapshot)
 
-  return (markState?.marks ?? []).filter(
+  return (markState?.newMarks ?? []).filter(
     (mark) =>
       !schema.decorators.map((decorator) => decorator.name).includes(mark),
   )

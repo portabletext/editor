@@ -46,7 +46,7 @@ export const insertTextOperationImplementation: BehaviorOperationImplementation<
   }
 
   if (markState && markState.state === 'unchanged') {
-    const markStateDecorators = (markState.marks ?? []).filter((mark) =>
+    const markStateDecorators = (markState.newMarks ?? []).filter((mark) =>
       context.schema.decorators
         .map((decorator) => decorator.name)
         .includes(mark),

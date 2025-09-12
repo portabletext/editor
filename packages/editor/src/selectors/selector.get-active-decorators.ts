@@ -7,7 +7,7 @@ export function getActiveDecorators(snapshot: EditorSnapshot) {
   const markState = getMarkState(snapshot)
   const decorators = schema.decorators.map((decorator) => decorator.name)
 
-  const markStateDecorators = (markState?.marks ?? []).filter((mark) =>
+  const markStateDecorators = (markState?.newMarks ?? []).filter((mark) =>
     decorators.includes(mark),
   )
 
