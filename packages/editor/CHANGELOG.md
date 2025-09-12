@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.9.1
+
+### Patch Changes
+
+- [#1646](https://github.com/portabletext/editor/pull/1646) [`9ca66b7`](https://github.com/portabletext/editor/commit/9ca66b734332e96008315c255177202818af68e3) Thanks [@christianhg](https://github.com/christianhg)! - fix: avoid thrown error if the editor has been unmounted
+
+  The editor attempts to validate its selection upon unexpected DOM changes. However, in some cases, this logic might run after the editor has been unmounted and removed from the DOM. In this case an error would be thrown because no editor DOM node could be found. This error has now been suppressed as there is no need to surface it to the user.
+
 ## 2.9.0
 
 ### Minor Changes
