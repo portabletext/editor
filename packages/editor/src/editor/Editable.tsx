@@ -1027,7 +1027,18 @@ function validateSelection(slateEditor: Editor, activeElement: HTMLDivElement) {
   if (!slateEditor.selection) {
     return
   }
-  const root = ReactEditor.findDocumentOrShadowRoot(slateEditor)
+
+  let root: Document | ShadowRoot | undefined
+
+  try {
+    root = ReactEditor.findDocumentOrShadowRoot(slateEditor)
+  } catch {}
+
+  if (!root) {
+    // The editor has most likely been unmounted
+    return
+  }
+
   // Return if the editor isn't the active element
   if (activeElement !== root.activeElement) {
     return
