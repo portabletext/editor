@@ -233,7 +233,7 @@ export function performEvent({
           )
 
           performEvent({
-            mode: 'forward',
+            mode: mode === 'execute' ? 'execute' : 'forward',
             behaviors,
             remainingEventBehaviors: remainingEventBehaviors,
             event: action.event,
@@ -250,7 +250,7 @@ export function performEvent({
 
         if (action.type === 'raise') {
           performEvent({
-            mode: 'raise',
+            mode: mode === 'execute' ? 'execute' : 'raise',
             behaviors,
             remainingEventBehaviors:
               mode === 'execute' ? remainingEventBehaviors : behaviors,
