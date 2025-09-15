@@ -1,21 +1,16 @@
 import type {
-  PathSegment,
   PortableTextBlock,
   PortableTextChild,
   PortableTextObject,
   PortableTextTextBlock,
 } from '@sanity/types'
 import {isEqual} from 'lodash'
-import {Element, Text, type Descendant, type Node} from 'slate'
+import {Element, Text, type Descendant} from 'slate'
 import type {EditorSchema} from '../editor/editor-schema'
 
 export const EMPTY_MARKDEFS: PortableTextObject[] = []
 
 export const VOID_CHILD_KEY = 'void-child'
-
-type Partial<T> = {
-  [P in keyof T]?: T[P]
-}
 
 function keepObjectEquality(
   object: PortableTextBlock | PortableTextChild,
@@ -187,53 +182,4 @@ export function isEqualToEmptyEditor(
       !children[0].children[0].marks?.join('') &&
       children[0].children[0].text === '')
   )
-}
-
-export function findBlockAndIndexFromPath(
-  firstPathSegment: PathSegment,
-  children: (Node | Partial<Node>)[],
-): [Element | undefined, number | undefined] {
-  let blockIndex = -1
-  const isNumber = Number.isInteger(Number(firstPathSegment))
-  if (isNumber) {
-    blockIndex = Number(firstPathSegment)
-  } else if (children) {
-    blockIndex = children.findIndex(
-      (blk) =>
-        Element.isElement(blk) && isEqual({_key: blk._key}, firstPathSegment),
-    )
-  }
-  if (blockIndex > -1) {
-    return [children[blockIndex] as Element, blockIndex]
-  }
-  return [undefined, -1]
-}
-
-export function findChildAndIndexFromPath(
-  secondPathSegment: PathSegment,
-  block: Element,
-): [Element | Text | undefined, number] {
-  let childIndex = -1
-  const isNumber = Number.isInteger(Number(secondPathSegment))
-  if (isNumber) {
-    childIndex = Number(secondPathSegment)
-  } else {
-    childIndex = block.children.findIndex((child) =>
-      isEqual({_key: child._key}, secondPathSegment),
-    )
-  }
-  if (childIndex > -1) {
-    return [block.children[childIndex] as Element | Text, childIndex]
-  }
-  return [undefined, -1]
-}
-
-export function getValueOrInitialValue(
-  value: unknown,
-  initialValue: PortableTextBlock[],
-): PortableTextBlock[] | undefined {
-  if (value && Array.isArray(value) && value.length > 0) {
-    return value
-  }
-  return initialValue
 }
