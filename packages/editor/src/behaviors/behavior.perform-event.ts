@@ -1,4 +1,3 @@
-import {Editor} from 'slate'
 import {createEditorDom} from '../editor/editor-dom'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
@@ -116,17 +115,15 @@ export function performEvent({
     withPerformingBehaviorOperation(editor, () => {
       debug(`(execute:${eventCategory(event)})`, JSON.stringify(event, null, 2))
 
-      Editor.withoutNormalizing(editor, () => {
-        performOperation({
-          context: {
-            keyGenerator,
-            schema,
-          },
-          operation: {
-            ...event,
-            editor,
-          },
-        })
+      performOperation({
+        context: {
+          keyGenerator,
+          schema,
+        },
+        operation: {
+          ...event,
+          editor,
+        },
       })
     })
 
@@ -357,14 +354,12 @@ export function performEvent({
     withPerformingBehaviorOperation(editor, () => {
       debug(`(execute:${eventCategory(event)})`, JSON.stringify(event, null, 2))
 
-      Editor.withoutNormalizing(editor, () => {
-        performOperation({
-          context: {keyGenerator, schema},
-          operation: {
-            ...event,
-            editor,
-          },
-        })
+      performOperation({
+        context: {keyGenerator, schema},
+        operation: {
+          ...event,
+          editor,
+        },
       })
     })
 
