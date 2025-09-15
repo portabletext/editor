@@ -3,7 +3,7 @@ import {slateRangeToSelection} from '../../internal-utils/slate-utils'
 import {insertTextOperationImplementation} from '../../operations/behavior.operation.insert.text'
 import {performOperation} from '../../operations/behavior.operations'
 import type {EditorActor} from '../editor-machine'
-import {isApplyingBehaviorOperations} from '../with-applying-behavior-operations'
+import {isPerformingBehaviorOperation} from '../with-performing-behavior-operation'
 
 export function createWithEventListeners(editorActor: EditorActor) {
   return function withEventListeners(editor: Editor) {
@@ -14,7 +14,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     const {delete: editorDelete, select} = editor
 
     editor.delete = (options) => {
-      if (isApplyingBehaviorOperations(editor)) {
+      if (isPerformingBehaviorOperation(editor)) {
         editorDelete(options)
         return
       }
@@ -54,7 +54,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.deleteBackward = (unit) => {
-      if (isApplyingBehaviorOperations(editor)) {
+      if (isPerformingBehaviorOperation(editor)) {
         console.error('Unexpected call to .deleteBackward(...)')
         return
       }
@@ -71,7 +71,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.deleteForward = (unit) => {
-      if (isApplyingBehaviorOperations(editor)) {
+      if (isPerformingBehaviorOperation(editor)) {
         console.error('Unexpected call to .deleteForward(...)')
         return
       }
@@ -88,7 +88,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.insertBreak = () => {
-      if (isApplyingBehaviorOperations(editor)) {
+      if (isPerformingBehaviorOperation(editor)) {
         console.error('Unexpected call to .insertBreak(...)')
         return
       }
@@ -104,7 +104,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.insertData = (dataTransfer) => {
-      if (isApplyingBehaviorOperations(editor)) {
+      if (isPerformingBehaviorOperation(editor)) {
         console.error('Unexpected call to .insertData(...)')
         return
       }
@@ -122,7 +122,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.insertSoftBreak = () => {
-      if (isApplyingBehaviorOperations(editor)) {
+      if (isPerformingBehaviorOperation(editor)) {
         insertTextOperationImplementation({
           context: {
             keyGenerator: editorActor.getSnapshot().context.keyGenerator,
@@ -144,7 +144,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.insertText = (text) => {
-      if (isApplyingBehaviorOperations(editor)) {
+      if (isPerformingBehaviorOperation(editor)) {
         insertTextOperationImplementation({
           context: {
             keyGenerator: editorActor.getSnapshot().context.keyGenerator,
@@ -167,7 +167,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.redo = () => {
-      if (isApplyingBehaviorOperations(editor)) {
+      if (isPerformingBehaviorOperation(editor)) {
         performOperation({
           context: {
             keyGenerator: editorActor.getSnapshot().context.keyGenerator,
@@ -192,7 +192,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.select = (location) => {
-      if (isApplyingBehaviorOperations(editor)) {
+      if (isPerformingBehaviorOperation(editor)) {
         select(location)
         return
       }
@@ -220,7 +220,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
     }
 
     editor.undo = () => {
-      if (isApplyingBehaviorOperations(editor)) {
+      if (isPerformingBehaviorOperation(editor)) {
         performOperation({
           context: {
             keyGenerator: editorActor.getSnapshot().context.keyGenerator,
