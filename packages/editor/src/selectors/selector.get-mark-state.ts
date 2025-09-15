@@ -6,10 +6,16 @@ import {getNextSpan} from './selector.get-next-span'
 import {getPreviousSpan} from './selector.get-previous-span'
 import {getSelectedSpans} from './selector.get-selected-spans'
 
-export type MarkState = {
-  state: 'changed' | 'unchanged'
-  marks: Array<string>
-}
+export type MarkState =
+  | {
+      state: 'unchanged'
+      marks: Array<string>
+    }
+  | {
+      state: 'changed'
+      marks: Array<string>
+      previousMarks: Array<string>
+    }
 
 /**
  * Given that text is inserted at the current position, what marks should
@@ -106,21 +112,25 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
       if (previousSpanHasSameMarks) {
         return {
           state: 'changed',
+          previousMarks: marks,
           marks: previousSpan?.node.marks ?? [],
         }
       } else if (previousSpanHasSameAnnotations) {
         return {
           state: 'changed',
+          previousMarks: marks,
           marks: previousSpan?.node.marks ?? [],
         }
       } else if (previousSpanHasSameAnnotation) {
         return {
           state: 'unchanged',
+          previousMarks: marks,
           marks: focusSpan.node.marks ?? [],
         }
       } else if (!previousSpan) {
         return {
           state: 'changed',
+          previousMarks: marks,
           marks: [],
         }
       }
@@ -135,6 +145,7 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
       ) {
         return {
           state: 'changed',
+          previousMarks: marks,
           marks: nextSpan?.node.marks ?? [],
         }
       }
@@ -142,6 +153,7 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
       if (!nextSpan) {
         return {
           state: 'changed',
+          previousMarks: marks,
           marks: [],
         }
       }
@@ -152,11 +164,13 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
     if (previousSpanHasAnnotations) {
       return {
         state: 'changed',
+        previousMarks: marks,
         marks: [],
       }
     } else {
       return {
         state: 'changed',
+        previousMarks: marks,
         marks: (previousSpan?.node.marks ?? []).filter((mark) =>
           decorators.includes(mark),
         ),
@@ -166,6 +180,6 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
 
   return {
     state: 'unchanged',
-    marks: focusSpan.node.marks ?? [],
+    marks,
   }
 }
