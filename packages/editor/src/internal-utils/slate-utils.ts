@@ -79,7 +79,20 @@ export function getFocusSpan({
   }
 
   try {
-    const [node, path] = Editor.node(editor, editor.selection.focus.path)
+    const [focusBlock] = getFocusBlock({editor})
+
+    if (!focusBlock) {
+      return [undefined, undefined]
+    }
+
+    if (!editor.isTextBlock(focusBlock)) {
+      return [undefined, undefined]
+    }
+
+    const [node, path] = Editor.node(
+      editor,
+      editor.selection.focus.path.slice(0, 2),
+    )
 
     if (editor.isTextSpan(node)) {
       return [node, path]
