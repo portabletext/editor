@@ -198,6 +198,8 @@ export function performEvent({
           (action) => action.type === 'raise' || action.type === 'execute',
         ) || !actions.some((action) => action.type === 'forward')
 
+      let undoStepCreated = false
+
       if (actions.some((action) => action.type === 'execute')) {
         // Since at least one action is about to `execute` changes in the editor,
         // we set up a new undo step.
@@ -205,78 +207,7 @@ export function performEvent({
         // undo step
         createUndoStep(editor)
 
-        for (const action of actions) {
-          if (action.type === 'effect') {
-            try {
-              action.effect({
-                send: sendBack,
-              })
-            } catch (error) {
-              console.error(
-                new Error(
-                  `Executing effect as a result of "${event.type}" failed due to: ${error.message}`,
-                ),
-              )
-            }
-
-            continue
-          }
-
-          if (action.type === 'forward') {
-            const remainingEventBehaviors = eventBehaviors.slice(
-              eventBehaviorIndex + 1,
-            )
-
-            performEvent({
-              mode: 'forward',
-              behaviors,
-              remainingEventBehaviors: remainingEventBehaviors,
-              event: action.event,
-              editor,
-              keyGenerator,
-              schema,
-              getSnapshot,
-              nativeEvent,
-              sendBack,
-            })
-
-            continue
-          }
-
-          if (action.type === 'raise') {
-            performEvent({
-              mode: 'raise',
-              behaviors,
-              remainingEventBehaviors: behaviors,
-              event: action.event,
-              editor,
-              keyGenerator,
-              schema,
-              getSnapshot,
-              nativeEvent,
-              sendBack,
-            })
-
-            continue
-          }
-
-          performEvent({
-            mode: 'execute',
-            behaviors,
-            remainingEventBehaviors: [],
-            event: action.event,
-            editor,
-            keyGenerator,
-            schema,
-            getSnapshot,
-            nativeEvent: undefined,
-            sendBack,
-          })
-        }
-
-        clearUndoStep(editor)
-
-        continue
+        undoStepCreated = true
       }
 
       for (const action of actions) {
@@ -335,9 +266,22 @@ export function performEvent({
           continue
         }
 
-        if (action.type === 'execute') {
-          console.error('Unexpected action type: `execute`')
-        }
+        performEvent({
+          mode: 'execute',
+          behaviors,
+          remainingEventBehaviors: [],
+          event: action.event,
+          editor,
+          keyGenerator,
+          schema,
+          getSnapshot,
+          nativeEvent: undefined,
+          sendBack,
+        })
+      }
+
+      if (undoStepCreated) {
+        clearUndoStep(editor)
       }
     }
 
