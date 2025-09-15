@@ -507,6 +507,10 @@ async function updateValue({
 
                   isChanged = blockChanged || isChanged
                   isValid = isValid && blockValid
+
+                  if (!isValid) {
+                    break
+                  }
                 }
 
                 resolve()
@@ -544,6 +548,11 @@ async function updateValue({
 
               isChanged = blockChanged || isChanged
               isValid = isValid && blockValid
+
+              if (!blockValid) {
+                break
+              }
+
               index++
             }
           })

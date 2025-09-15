@@ -1,4 +1,4 @@
-import {createTestKeyGenerator} from '@portabletext/test'
+import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema, type EditorEmittedEvent} from '../src'
@@ -541,6 +541,58 @@ describe('event.update value', () => {
           style: 'normal',
           markDefs: [],
         },
+      ])
+    })
+  })
+
+  test('Scenario: Updating with unknown block object', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const events: Array<EditorEmittedEvent> = []
+    const {editor} = await createTestEditor({
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            events.push(event)
+          }}
+        />
+      ),
+      keyGenerator,
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _key: keyGenerator(),
+          _type: 'block',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+          ],
+        },
+        {
+          _key: keyGenerator(),
+          _type: 'image',
+        },
+        {
+          _key: keyGenerator(),
+          _type: 'block',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'bar', marks: []},
+          ],
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {type: 'ready'},
+        expect.objectContaining({
+          type: 'invalid value',
+        }),
       ])
     })
   })
