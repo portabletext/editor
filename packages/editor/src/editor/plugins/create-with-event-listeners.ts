@@ -1,6 +1,5 @@
 import {Editor} from 'slate'
 import {slateRangeToSelection} from '../../internal-utils/slate-utils'
-import {insertTextOperationImplementation} from '../../operations/behavior.operation.insert.text'
 import {performOperation} from '../../operations/behavior.operations'
 import type {EditorActor} from '../editor-machine'
 import {isPerformingBehaviorOperation} from '../with-performing-behavior-operation'
@@ -123,7 +122,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
 
     editor.insertSoftBreak = () => {
       if (isPerformingBehaviorOperation(editor)) {
-        insertTextOperationImplementation({
+        performOperation({
           context: {
             keyGenerator: editorActor.getSnapshot().context.keyGenerator,
             schema: editorActor.getSnapshot().context.schema,
@@ -145,7 +144,7 @@ export function createWithEventListeners(editorActor: EditorActor) {
 
     editor.insertText = (text) => {
       if (isPerformingBehaviorOperation(editor)) {
-        insertTextOperationImplementation({
+        performOperation({
           context: {
             keyGenerator: editorActor.getSnapshot().context.keyGenerator,
             schema: editorActor.getSnapshot().context.schema,
