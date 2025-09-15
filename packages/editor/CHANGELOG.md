@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.9.2
+
+### Patch Changes
+
+- [#1649](https://github.com/portabletext/editor/pull/1649) [`8c0ee32`](https://github.com/portabletext/editor/commit/8c0ee323adf303602d81f566793316a6401dd3bd) Thanks [@christianhg](https://github.com/christianhg)! - fix(value sync): avoid throwing error when encountering invalid block
+
 ## 2.9.1
 
 ### Patch Changes
