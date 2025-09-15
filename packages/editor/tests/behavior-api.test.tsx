@@ -1,9 +1,10 @@
-import {getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
 import type {EditorEmittedEvent} from '../src'
 import {defineBehavior, effect, execute, forward, raise} from '../src/behaviors'
 import {createTestEditor} from '../src/internal-utils/test-editor'
+import {getSelectionAfterText} from '../src/internal-utils/text-selection'
 import {BehaviorPlugin, EventListenerPlugin} from '../src/plugins'
 
 describe('Behavior API', () => {
@@ -479,6 +480,88 @@ describe('Behavior API', () => {
         expect.objectContaining({type: 'focused'}),
         expect.objectContaining({type: 'blurred'}),
       ])
+    })
+  })
+
+  test('Scenario: `execute` suppresses `raise`', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.break',
+              actions: [() => [execute({type: 'insert.break'})]],
+            }),
+            defineBehavior({
+              on: 'split',
+              actions: [],
+            }),
+          ]}
+        />
+      ),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          children: [{_type: 'span', _key: keyGenerator(), text: 'foo bar'}],
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'select',
+      at: getSelectionAfterText(editor.getSnapshot().context, 'foo'),
+    })
+
+    editor.send({type: 'insert.break'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo', ' bar'])
+    })
+  })
+
+  test('Scenario: `forward` triggering `execute`', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.break',
+              actions: [() => [forward({type: 'insert.break'})]],
+            }),
+            defineBehavior({
+              on: 'insert.break',
+              actions: [() => [execute({type: 'insert.break'})]],
+            }),
+            defineBehavior({
+              on: 'split',
+              actions: [() => []],
+            }),
+          ]}
+        />
+      ),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          children: [{_type: 'span', _key: keyGenerator(), text: 'foo bar'}],
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'select',
+      at: getSelectionAfterText(editor.getSnapshot().context, 'foo'),
+    })
+
+    editor.send({type: 'insert.break'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo', ' bar'])
     })
   })
 })
