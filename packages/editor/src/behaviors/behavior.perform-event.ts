@@ -1,7 +1,8 @@
+import {Editor} from 'slate'
 import {createEditorDom} from '../editor/editor-dom'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
-import {withApplyingBehaviorOperations} from '../editor/with-applying-behavior-operations'
+import {withPerformingBehaviorOperation} from '../editor/with-performing-behavior-operation'
 import {clearUndoStep, createUndoStep} from '../editor/with-undo-step'
 import {debugWithName} from '../internal-utils/debug'
 import {performOperation} from '../operations/behavior.operations'
@@ -112,18 +113,20 @@ export function performEvent({
       clearUndoStep(editor)
     }
 
-    withApplyingBehaviorOperations(editor, () => {
+    withPerformingBehaviorOperation(editor, () => {
       debug(`(execute:${eventCategory(event)})`, JSON.stringify(event, null, 2))
 
-      performOperation({
-        context: {
-          keyGenerator,
-          schema,
-        },
-        operation: {
-          ...event,
-          editor,
-        },
+      Editor.withoutNormalizing(editor, () => {
+        performOperation({
+          context: {
+            keyGenerator,
+            schema,
+          },
+          operation: {
+            ...event,
+            editor,
+          },
+        })
       })
     })
 
@@ -351,15 +354,17 @@ export function performEvent({
       clearUndoStep(editor)
     }
 
-    withApplyingBehaviorOperations(editor, () => {
+    withPerformingBehaviorOperation(editor, () => {
       debug(`(execute:${eventCategory(event)})`, JSON.stringify(event, null, 2))
 
-      performOperation({
-        context: {keyGenerator, schema},
-        operation: {
-          ...event,
-          editor,
-        },
+      Editor.withoutNormalizing(editor, () => {
+        performOperation({
+          context: {keyGenerator, schema},
+          operation: {
+            ...event,
+            editor,
+          },
+        })
       })
     })
 
