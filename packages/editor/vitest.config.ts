@@ -55,6 +55,7 @@ export default defineConfig({
             'gherkin-tests-v2/**/*.test.tsx',
             'tests/**/*.test.ts',
             'tests/**/*.test.tsx',
+            'src/internal-utils/slate-utils.test.tsx',
             'src/plugins/*.test.tsx',
           ],
           browser: {
@@ -91,6 +92,7 @@ export default defineConfig({
             'gherkin-tests-v2',
             'tests',
             'src/plugins/*.test.tsx',
+            'src/internal-utils/slate-utils.test.tsx',
           ],
           environment: 'jsdom',
         },
