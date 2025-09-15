@@ -1,5 +1,6 @@
 import type {Schema} from '@portabletext/schema'
 import {Schema as SanitySchema} from '@sanity/schema'
+import {builtinTypes} from '@sanity/schema/_internal'
 import {
   defineArrayMember,
   defineField,
@@ -133,6 +134,58 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
     expect(
       sanitySchemaToPortableTextSchema(sanitySchema.get('content')),
     ).toEqual(defaultSchema)
+  })
+
+  test('schema with built-in types', () => {
+    const sanitySchema = SanitySchema.compile({
+      name: 'test',
+      types: [
+        defineArrayMember({
+          type: 'array',
+          name: 'content',
+          of: [
+            defineField({
+              type: 'block',
+              name: 'block',
+            }),
+            defineField({type: 'image', name: 'image'}),
+          ],
+        }),
+        ...builtinTypes,
+      ],
+    })
+
+    expect(
+      sanitySchemaToPortableTextSchema(sanitySchema.get('content'))
+        .blockObjects,
+    ).toEqual([
+      {
+        name: 'image',
+        title: 'Image',
+        fields: [
+          {
+            name: 'asset',
+            title: 'Asset',
+            type: 'object',
+          },
+          {
+            name: 'media',
+            title: 'Media',
+            type: 'object',
+          },
+          {
+            name: 'hotspot',
+            title: 'Hotspot',
+            type: 'object',
+          },
+          {
+            name: 'crop',
+            title: 'Crop',
+            type: 'object',
+          },
+        ],
+      },
+    ])
   })
 
   test('simple array definition', () => {
