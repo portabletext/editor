@@ -1,3 +1,4 @@
+import {Editor} from 'slate'
 import type {
   AbstractBehaviorEventType,
   SyntheticBehaviorEvent,
@@ -79,133 +80,135 @@ export function performOperation({
   context: BehaviorOperationImplementationContext
   operation: BehaviorOperation
 }) {
-  try {
-    switch (operation.type) {
-      case 'annotation.add': {
-        behaviorOperationImplementations['annotation.add']({
-          context,
-          operation: operation,
-        })
-        break
+  Editor.withoutNormalizing(operation.editor, () => {
+    try {
+      switch (operation.type) {
+        case 'annotation.add': {
+          behaviorOperationImplementations['annotation.add']({
+            context,
+            operation: operation,
+          })
+          break
+        }
+        case 'annotation.remove': {
+          behaviorOperationImplementations['annotation.remove']({
+            context,
+            operation: operation,
+          })
+          break
+        }
+        case 'block.set': {
+          behaviorOperationImplementations['block.set']({
+            context,
+            operation: operation,
+          })
+          break
+        }
+        case 'block.unset': {
+          behaviorOperationImplementations['block.unset']({
+            context,
+            operation: operation,
+          })
+          break
+        }
+        case 'child.set': {
+          behaviorOperationImplementations['child.set']({
+            context,
+            operation: operation,
+          })
+          break
+        }
+        case 'child.unset': {
+          behaviorOperationImplementations['child.unset']({
+            context,
+            operation: operation,
+          })
+          break
+        }
+        case 'decorator.add': {
+          behaviorOperationImplementations['decorator.add']({
+            context,
+            operation: operation,
+          })
+          break
+        }
+        case 'decorator.remove': {
+          behaviorOperationImplementations['decorator.remove']({
+            context,
+            operation: operation,
+          })
+          break
+        }
+        case 'delete': {
+          behaviorOperationImplementations.delete({
+            context,
+            operation: operation,
+          })
+          break
+        }
+        case 'history.redo': {
+          behaviorOperationImplementations['history.redo']({
+            context,
+            operation: operation,
+          })
+          break
+        }
+        case 'history.undo': {
+          behaviorOperationImplementations['history.undo']({
+            context,
+            operation: operation,
+          })
+          break
+        }
+        case 'insert.block': {
+          behaviorOperationImplementations['insert.block']({
+            context,
+            operation: operation,
+          })
+          break
+        }
+        case 'insert.text': {
+          behaviorOperationImplementations['insert.text']({
+            context,
+            operation: operation,
+          })
+          break
+        }
+        case 'move.backward': {
+          behaviorOperationImplementations['move.backward']({
+            context,
+            operation: operation,
+          })
+          break
+        }
+        case 'move.block': {
+          behaviorOperationImplementations['move.block']({
+            context,
+            operation: operation,
+          })
+          break
+        }
+        case 'move.forward': {
+          behaviorOperationImplementations['move.forward']({
+            context,
+            operation: operation,
+          })
+          break
+        }
+        default: {
+          behaviorOperationImplementations.select({
+            context,
+            operation: operation,
+          })
+          break
+        }
       }
-      case 'annotation.remove': {
-        behaviorOperationImplementations['annotation.remove']({
-          context,
-          operation: operation,
-        })
-        break
-      }
-      case 'block.set': {
-        behaviorOperationImplementations['block.set']({
-          context,
-          operation: operation,
-        })
-        break
-      }
-      case 'block.unset': {
-        behaviorOperationImplementations['block.unset']({
-          context,
-          operation: operation,
-        })
-        break
-      }
-      case 'child.set': {
-        behaviorOperationImplementations['child.set']({
-          context,
-          operation: operation,
-        })
-        break
-      }
-      case 'child.unset': {
-        behaviorOperationImplementations['child.unset']({
-          context,
-          operation: operation,
-        })
-        break
-      }
-      case 'decorator.add': {
-        behaviorOperationImplementations['decorator.add']({
-          context,
-          operation: operation,
-        })
-        break
-      }
-      case 'decorator.remove': {
-        behaviorOperationImplementations['decorator.remove']({
-          context,
-          operation: operation,
-        })
-        break
-      }
-      case 'delete': {
-        behaviorOperationImplementations.delete({
-          context,
-          operation: operation,
-        })
-        break
-      }
-      case 'history.redo': {
-        behaviorOperationImplementations['history.redo']({
-          context,
-          operation: operation,
-        })
-        break
-      }
-      case 'history.undo': {
-        behaviorOperationImplementations['history.undo']({
-          context,
-          operation: operation,
-        })
-        break
-      }
-      case 'insert.block': {
-        behaviorOperationImplementations['insert.block']({
-          context,
-          operation: operation,
-        })
-        break
-      }
-      case 'insert.text': {
-        behaviorOperationImplementations['insert.text']({
-          context,
-          operation: operation,
-        })
-        break
-      }
-      case 'move.backward': {
-        behaviorOperationImplementations['move.backward']({
-          context,
-          operation: operation,
-        })
-        break
-      }
-      case 'move.block': {
-        behaviorOperationImplementations['move.block']({
-          context,
-          operation: operation,
-        })
-        break
-      }
-      case 'move.forward': {
-        behaviorOperationImplementations['move.forward']({
-          context,
-          operation: operation,
-        })
-        break
-      }
-      default: {
-        behaviorOperationImplementations.select({
-          context,
-          operation: operation,
-        })
-        break
-      }
+    } catch (error) {
+      console.error(
+        new Error(
+          `Executing "${operation.type}" failed due to: ${error.message}`,
+        ),
+      )
     }
-  } catch (error) {
-    console.error(
-      new Error(
-        `Executing "${operation.type}" failed due to: ${error.message}`,
-      ),
-    )
-  }
+  })
 }
