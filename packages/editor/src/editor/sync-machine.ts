@@ -23,7 +23,7 @@ import {
 } from 'xstate'
 import type {ActorRefFrom} from 'xstate'
 import {debugWithName} from '../internal-utils/debug'
-import {validateValue} from '../internal-utils/validateValue'
+import {validateBlock} from '../internal-utils/validateValue'
 import {toSlateValue, VOID_CHILD_KEY} from '../internal-utils/values'
 import {
   isChangingRemotely,
@@ -667,11 +667,11 @@ function syncBlock({
     withRemoteChanges(slateEditor, () => {
       withoutPatching(slateEditor, () => {
         if (hasChanges && blockValid) {
-          const validationValue = [value[currentBlockIndex]]
-          const validation = validateValue(
+          const validationValue = value[currentBlockIndex]
+          const validation = validateBlock(
+            context,
             validationValue,
-            context.schema,
-            context.keyGenerator,
+            currentBlockIndex,
           )
           // Resolve validations that can be resolved automatically, without involving the user (but only if the value was changed)
           if (
@@ -687,7 +687,7 @@ function syncBlock({
             ) {
               // Give a console warning about the fact that it did an auto resolution
               console.warn(
-                `${validation.resolution.action} for block with _key '${validationValue[0]._key}'. ${validation.resolution?.description}`,
+                `${validation.resolution.action} for block with _key '${validationValue._key}'. ${validation.resolution?.description}`,
               )
               validation.resolution.patches.forEach((patch) => {
                 sendBack({type: 'patch', patch})
@@ -720,11 +720,11 @@ function syncBlock({
         }
 
         if (!oldBlock && blockValid) {
-          const validationValue = [value[currentBlockIndex]]
-          const validation = validateValue(
+          const validationValue = value[currentBlockIndex]
+          const validation = validateBlock(
+            context,
             validationValue,
-            context.schema,
-            context.keyGenerator,
+            currentBlockIndex,
           )
           if (debug.enabled)
             debug(
