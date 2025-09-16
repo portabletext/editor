@@ -269,7 +269,7 @@ export type InvalidValueResolution = {
   patches: Patch[]
   description: string
   action: string
-  item: PortableTextBlock[] | PortableTextBlock | PortableTextChild | undefined
+  item: unknown
 
   /**
    * i18n keys for the description and action
