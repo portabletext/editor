@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.11.0
+
+### Minor Changes
+
+- [#1656](https://github.com/portabletext/editor/pull/1656) [`d1a28f3`](https://github.com/portabletext/editor/commit/d1a28f3cc33d83aedd7e9db07fe56fe4ba172c88) Thanks [@christianhg](https://github.com/christianhg)! - feat: allow sending `NativeBehaviorEvent`s to the editor
+
 ## 2.10.0
 
 ### Minor Changes
