@@ -20,6 +20,7 @@ import {childUnsetOperationImplementation} from './behavior.operation.child.unse
 import {decoratorAddOperationImplementation} from './behavior.operation.decorator.add'
 import {deleteOperationImplementation} from './behavior.operation.delete'
 import {insertBlockOperationImplementation} from './behavior.operation.insert.block'
+import {insertChildOperationImplementation} from './behavior.operation.insert.child'
 import {insertTextOperationImplementation} from './behavior.operation.insert.text'
 import {moveBackwardOperationImplementation} from './behavior.operation.move.backward'
 import {moveBlockOperationImplementation} from './behavior.operation.move.block'
@@ -66,6 +67,7 @@ const behaviorOperationImplementations: BehaviorOperationImplementations = {
   'history.redo': historyRedoOperationImplementation,
   'history.undo': historyUndoOperationImplementation,
   'insert.block': insertBlockOperationImplementation,
+  'insert.child': insertChildOperationImplementation,
   'insert.text': insertTextOperationImplementation,
   'move.backward': moveBackwardOperationImplementation,
   'move.block': moveBlockOperationImplementation,
@@ -162,6 +164,13 @@ export function performOperation({
         }
         case 'insert.block': {
           behaviorOperationImplementations['insert.block']({
+            context,
+            operation: operation,
+          })
+          break
+        }
+        case 'insert.child': {
+          behaviorOperationImplementations['insert.child']({
             context,
             operation: operation,
           })

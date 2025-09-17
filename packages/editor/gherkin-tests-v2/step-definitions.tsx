@@ -4,7 +4,11 @@ import {userEvent} from '@vitest/browser/context'
 import {Given, Then, When} from 'racejar'
 import {assert, expect, vi} from 'vitest'
 import {getEditorSelection} from '../src/internal-utils/editor-selection'
-import {parseBlocks} from '../src/internal-utils/parse-blocks'
+import {
+  parseBlocks,
+  parseInlineObject,
+  parseSpan,
+} from '../src/internal-utils/parse-blocks'
 import {getSelectionText} from '../src/internal-utils/selection-text'
 import {createTestEditor} from '../src/internal-utils/test-editor'
 import {getTextBlockKey} from '../src/internal-utils/text-block-key'
@@ -106,8 +110,37 @@ export const stepDefinitions = [
   ),
 
   /**
-   * Inline object steps
+   * Child steps
    */
+  When('a child is inserted', (context: Context, child: string) => {
+    const parsedChild =
+      parseSpan({
+        context: {
+          schema: context.editor.getSnapshot().context.schema,
+          keyGenerator: context.editor.getSnapshot().context.keyGenerator,
+        },
+        span: JSON.parse(child),
+        markDefKeyMap: new Map(),
+        options: {validateFields: true},
+      }) ??
+      parseInlineObject({
+        context: {
+          schema: context.editor.getSnapshot().context.schema,
+          keyGenerator: context.editor.getSnapshot().context.keyGenerator,
+        },
+        inlineObject: JSON.parse(child),
+        options: {validateFields: true},
+      })
+
+    if (!parsedChild) {
+      throw new Error(`Unable to parse child ${child}`)
+    }
+
+    context.editor.send({
+      type: 'insert.child',
+      child: parsedChild,
+    })
+  }),
   When(
     'a(n) {inline-object} is inserted',
     (context: Context, inlineObject: Parameter['inlineObject']) => {
