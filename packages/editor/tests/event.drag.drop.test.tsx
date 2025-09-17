@@ -86,7 +86,7 @@ describe('event.drag.drop', () => {
     const dataTransfer = new DataTransfer()
     dataTransfer.setData(json.mimeType, json.data)
 
-    editor.sendNativeEvent({
+    editor.send({
       type: 'drag.drop',
       originEvent: {
         dataTransfer,
@@ -189,7 +189,7 @@ describe('event.drag.drop', () => {
     const dataTransfer = new DataTransfer()
     dataTransfer.setData(json.mimeType, json.data)
 
-    editor.sendNativeEvent({
+    editor.send({
       type: 'drag.drop',
       originEvent: {
         dataTransfer,

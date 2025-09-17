@@ -727,7 +727,7 @@ export const stepDefinitions = [
     dataTransfer.setData('application/x-portable-text', blocks)
     dataTransfer.setData('application/json', blocks)
 
-    context.editor.sendNativeEvent({
+    context.editor.send({
       type: 'clipboard.paste',
       originEvent: {
         dataTransfer,
@@ -746,7 +746,7 @@ export const stepDefinitions = [
         dataTransfer.setData(data[0], data[1])
       }
 
-      context.editor.sendNativeEvent({
+      context.editor.send({
         type: 'clipboard.paste',
         originEvent: {dataTransfer},
         position: {

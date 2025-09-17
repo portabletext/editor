@@ -97,7 +97,7 @@ describe('Serialize/Deserialize', () => {
 
     // And a cut is performed
     const dataTransfer = new DataTransfer()
-    editor.sendNativeEvent({
+    editor.send({
       type: 'clipboard.cut',
       originEvent: {dataTransfer},
       position: {
@@ -136,7 +136,7 @@ describe('Serialize/Deserialize', () => {
     })
 
     // When a paste is performed
-    editor.sendNativeEvent({
+    editor.send({
       type: 'clipboard.paste',
       originEvent: {dataTransfer},
       position: {
@@ -153,7 +153,7 @@ describe('Serialize/Deserialize', () => {
     const newDataTransfer = new DataTransfer()
     newDataTransfer.setData('text/plain', 'hey')
     newDataTransfer.setData('text/html', '<strong>hey</strong>')
-    editor.sendNativeEvent({
+    editor.send({
       type: 'clipboard.paste',
       originEvent: {dataTransfer: newDataTransfer},
       position: {
@@ -267,7 +267,7 @@ describe('Serialize/Deserialize', () => {
 
     // And a cut is performed
     const dataTransfer = new DataTransfer()
-    editor.sendNativeEvent({
+    editor.send({
       type: 'clipboard.cut',
       originEvent: {dataTransfer},
       position: {
@@ -299,7 +299,7 @@ describe('Serialize/Deserialize', () => {
     expect(dataTransfer.getData('text/html')).toEqual('<p>foo bar baz</p>')
 
     // When a paste is performed
-    editor.sendNativeEvent({
+    editor.send({
       type: 'clipboard.paste',
       originEvent: {dataTransfer},
       position: {
@@ -358,7 +358,7 @@ describe('Serialize/Deserialize', () => {
     const dataTransfer = new DataTransfer()
     dataTransfer.setData('text/html', '<p>foo bar baz</p>')
 
-    editor.sendNativeEvent({
+    editor.send({
       type: 'clipboard.paste',
       originEvent: {dataTransfer},
       position: {
@@ -413,7 +413,7 @@ describe('Serialize/Deserialize', () => {
     const dataTransfer = new DataTransfer()
     dataTransfer.setData('text/html', '<p>foo bar baz</p>')
 
-    editor.sendNativeEvent({
+    editor.send({
       type: 'clipboard.paste',
       originEvent: {dataTransfer},
       position: {

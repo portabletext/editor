@@ -128,7 +128,7 @@ test('Scenario: Pasting image files', async () => {
   dataTransfer.items.add(pixelB)
   dataTransfer.items.add(pixelC)
 
-  editor.sendNativeEvent({
+  editor.send({
     type: 'clipboard.paste',
     originEvent: {dataTransfer},
     position: {
@@ -263,7 +263,7 @@ test('Scenario: Uploading images embedded in HTML', async () => {
   `
   const dataTransfer = new DataTransfer()
   dataTransfer.setData('text/html', html)
-  editor.sendNativeEvent({
+  editor.send({
     type: 'clipboard.paste',
     originEvent: {dataTransfer},
     position: {
@@ -428,7 +428,7 @@ test('Scenario: Pasting image files that exist both in HTML and as a file', asyn
   const dataTransfer = new DataTransfer()
   dataTransfer.items.add(imageA)
   dataTransfer.setData('text/html', html)
-  editor.sendNativeEvent({
+  editor.send({
     type: 'clipboard.paste',
     originEvent: {dataTransfer},
     position: {
