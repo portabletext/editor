@@ -3,7 +3,10 @@ import type {EventPosition} from '../internal-utils/event-position'
 import type {MIMEType} from '../internal-utils/mime-type'
 import type {OmitFromUnion, PickFromUnion, StrictExtract} from '../type-utils'
 import type {BlockOffset} from '../types/block-offset'
-import type {BlockWithOptionalKey} from '../types/block-with-optional-key'
+import type {
+  BlockWithOptionalKey,
+  ChildWithOptionalKey,
+} from '../types/block-with-optional-key'
 import type {EditorSelection} from '../types/editor'
 import type {AnnotationPath, BlockPath, ChildPath} from '../types/paths'
 
@@ -72,6 +75,7 @@ const syntheticBehaviorEventTypes = [
   'history.redo',
   'history.undo',
   'insert.block',
+  'insert.child',
   'insert.text',
   'move.backward',
   'move.block',
@@ -158,6 +162,10 @@ export type SyntheticBehaviorEvent =
       block: BlockWithOptionalKey
       placement: InsertPlacement
       select?: 'start' | 'end' | 'none'
+    }
+  | {
+      type: StrictExtract<SyntheticBehaviorEventType, 'insert.child'>
+      child: ChildWithOptionalKey
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'insert.text'>

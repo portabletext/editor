@@ -1,4 +1,4 @@
-import {getFocusTextBlock} from '../selectors'
+import {getFocusTextBlock, getLastBlock} from '../selectors'
 import {
   getBlockEndPoint,
   getBlockStartPoint,
@@ -326,6 +326,67 @@ export const abstractInsertBehaviors = [
   defineBehavior({
     on: 'insert.break',
     actions: [() => [raise({type: 'split'})]],
+  }),
+  defineBehavior({
+    on: 'insert.child',
+    guard: ({snapshot}) => {
+      const lastBlock = getLastBlock(snapshot)
+
+      if (!lastBlock) {
+        return false
+      }
+
+      if (snapshot.context.selection) {
+        return false
+      }
+
+      const lastBlockEndPoint = getBlockEndPoint({
+        context: snapshot.context,
+        block: lastBlock,
+      })
+
+      return {lastBlockEndPoint}
+    },
+    actions: [
+      ({event}, {lastBlockEndPoint}) => [
+        raise({
+          type: 'select',
+          at: {
+            anchor: lastBlockEndPoint,
+            focus: lastBlockEndPoint,
+          },
+        }),
+        raise(event),
+      ],
+    ],
+  }),
+  defineBehavior({
+    on: 'insert.child',
+    guard: ({snapshot}) => {
+      const focusTextBlock = getFocusTextBlock(snapshot)
+
+      return snapshot.context.selection && !focusTextBlock
+    },
+    actions: [
+      ({snapshot, event}) => [
+        raise({
+          type: 'insert.block',
+          block: {
+            _type: snapshot.context.schema.block.name,
+            children: [
+              {
+                _type: snapshot.context.schema.span.name,
+                text: '',
+                marks: [],
+              },
+            ],
+          },
+          placement: 'auto',
+          select: 'end',
+        }),
+        raise(event),
+      ],
+    ],
   }),
   defineBehavior({
     on: 'insert.inline object',
