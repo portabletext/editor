@@ -3,6 +3,7 @@ import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
 import {withPerformingBehaviorOperation} from '../editor/with-performing-behavior-operation'
 import {clearUndoStep, createUndoStep} from '../editor/with-undo-step'
+import {withoutNormalizingConditional} from '../editor/without-normalizing-conditional'
 import {debugWithName} from '../internal-utils/debug'
 import {performOperation} from '../operations/behavior.operations'
 import type {PortableTextSlateEditor} from '../types/editor'
@@ -210,75 +211,96 @@ export function performEvent({
         undoStepCreated = true
       }
 
-      for (const action of actions) {
-        if (action.type === 'effect') {
-          try {
-            action.effect({
-              send: sendBack,
+      const actionTypes = actions.map((action) => action.type)
+      const uniqueActionTypes = new Set(actionTypes)
+
+      // The set of actions are all `raise` actions
+      const raiseGroup =
+        actionTypes.length > 1 &&
+        uniqueActionTypes.size === 1 &&
+        uniqueActionTypes.has('raise')
+
+      // The set of actions are all `execute` actions
+      const executeGroup =
+        actionTypes.length > 1 &&
+        uniqueActionTypes.size === 1 &&
+        uniqueActionTypes.has('execute')
+
+      withoutNormalizingConditional(
+        editor,
+        () => raiseGroup || executeGroup,
+        () => {
+          for (const action of actions) {
+            if (action.type === 'effect') {
+              try {
+                action.effect({
+                  send: sendBack,
+                })
+              } catch (error) {
+                console.error(
+                  new Error(
+                    `Executing effect as a result of "${event.type}" failed due to: ${error.message}`,
+                  ),
+                )
+              }
+
+              continue
+            }
+
+            if (action.type === 'forward') {
+              const remainingEventBehaviors = eventBehaviors.slice(
+                eventBehaviorIndex + 1,
+              )
+
+              performEvent({
+                mode: mode === 'execute' ? 'execute' : 'forward',
+                behaviors,
+                remainingEventBehaviors: remainingEventBehaviors,
+                event: action.event,
+                editor,
+                keyGenerator,
+                schema,
+                getSnapshot,
+                nativeEvent,
+                sendBack,
+              })
+
+              continue
+            }
+
+            if (action.type === 'raise') {
+              performEvent({
+                mode: mode === 'execute' ? 'execute' : 'raise',
+                behaviors,
+                remainingEventBehaviors:
+                  mode === 'execute' ? remainingEventBehaviors : behaviors,
+                event: action.event,
+                editor,
+                keyGenerator,
+                schema,
+                getSnapshot,
+                nativeEvent,
+                sendBack,
+              })
+
+              continue
+            }
+
+            performEvent({
+              mode: 'execute',
+              behaviors,
+              remainingEventBehaviors: [],
+              event: action.event,
+              editor,
+              keyGenerator,
+              schema,
+              getSnapshot,
+              nativeEvent: undefined,
+              sendBack,
             })
-          } catch (error) {
-            console.error(
-              new Error(
-                `Executing effect as a result of "${event.type}" failed due to: ${error.message}`,
-              ),
-            )
           }
-
-          continue
-        }
-
-        if (action.type === 'forward') {
-          const remainingEventBehaviors = eventBehaviors.slice(
-            eventBehaviorIndex + 1,
-          )
-
-          performEvent({
-            mode: mode === 'execute' ? 'execute' : 'forward',
-            behaviors,
-            remainingEventBehaviors: remainingEventBehaviors,
-            event: action.event,
-            editor,
-            keyGenerator,
-            schema,
-            getSnapshot,
-            nativeEvent,
-            sendBack,
-          })
-
-          continue
-        }
-
-        if (action.type === 'raise') {
-          performEvent({
-            mode: mode === 'execute' ? 'execute' : 'raise',
-            behaviors,
-            remainingEventBehaviors:
-              mode === 'execute' ? remainingEventBehaviors : behaviors,
-            event: action.event,
-            editor,
-            keyGenerator,
-            schema,
-            getSnapshot,
-            nativeEvent,
-            sendBack,
-          })
-
-          continue
-        }
-
-        performEvent({
-          mode: 'execute',
-          behaviors,
-          remainingEventBehaviors: [],
-          event: action.event,
-          editor,
-          keyGenerator,
-          schema,
-          getSnapshot,
-          nativeEvent: undefined,
-          sendBack,
-        })
-      }
+        },
+      )
 
       if (undoStepCreated) {
         clearUndoStep(editor)
