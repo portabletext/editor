@@ -30,14 +30,15 @@ export const blockSetOperationImplementation: BehaviorOperationImplementation<
   const parsedBlock = parseBlock({
     context,
     block: updatedBlock,
-    options: {validateFields: true},
+    options: {
+      removeUnusedMarkDefs: false,
+      validateFields: true,
+    },
   })
 
   if (!parsedBlock) {
     throw new Error(`Unable to update block at ${JSON.stringify(operation.at)}`)
   }
-
-  parsedBlock.markDefs = updatedBlock.markDefs
 
   const slateBlock = toSlateValue([parsedBlock], {
     schemaTypes: context.schema,

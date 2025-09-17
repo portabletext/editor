@@ -61,6 +61,7 @@ export function createConverterTextHtml(
           context: snapshot.context,
           block,
           options: {
+            removeUnusedMarkDefs: true,
             validateFields: false,
           },
         })

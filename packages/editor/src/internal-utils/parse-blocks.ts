@@ -19,6 +19,7 @@ export function parseBlocks({
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>
   blocks: unknown
   options: {
+    removeUnusedMarkDefs: boolean
     validateFields: boolean
   }
 }): Array<PortableTextBlock> {
@@ -41,6 +42,7 @@ export function parseBlock({
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>
   block: unknown
   options: {
+    removeUnusedMarkDefs: boolean
     validateFields: boolean
   }
 }): PortableTextBlock | undefined {
@@ -99,7 +101,10 @@ export function parseTextBlock({
 }: {
   block: unknown
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>
-  options: {validateFields: boolean}
+  options: {
+    removeUnusedMarkDefs: boolean
+    validateFields: boolean
+  }
 }): PortableTextTextBlock | undefined {
   if (!isTypedObject(block)) {
     return undefined
@@ -204,7 +209,9 @@ export function parseTextBlock({
               marks: [],
             },
           ],
-    markDefs: markDefs.filter((markDef) => marks.includes(markDef._key)),
+    markDefs: options.removeUnusedMarkDefs
+      ? markDefs.filter((markDef) => marks.includes(markDef._key))
+      : markDefs,
     ...customFields,
   }
 

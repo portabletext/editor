@@ -102,7 +102,10 @@ export const stepDefinitions = [
             keyGenerator: context.editor.getSnapshot().context.keyGenerator,
           },
           blocks: JSON.parse(blocks),
-          options: {validateFields: true},
+          options: {
+            removeUnusedMarkDefs: false,
+            validateFields: true,
+          },
         }),
         placement,
       })
@@ -403,7 +406,10 @@ export const stepDefinitions = [
             keyGenerator: context.editor.getSnapshot().context.keyGenerator,
           },
           blocks: JSON.parse(blocks),
-          options: {validateFields: true},
+          options: {
+            removeUnusedMarkDefs: false,
+            validateFields: true,
+          },
         }),
         placement,
         select: selectPosition,

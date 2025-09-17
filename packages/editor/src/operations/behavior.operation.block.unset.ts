@@ -51,7 +51,10 @@ export const blockUnsetOperationImplementation: BehaviorOperationImplementation<
     const updatedTextBlock = parseBlock({
       context,
       block: omit(parsedBlock, propsToRemove),
-      options: {validateFields: true},
+      options: {
+        removeUnusedMarkDefs: true,
+        validateFields: true,
+      },
     })
 
     if (!updatedTextBlock) {
@@ -81,7 +84,10 @@ export const blockUnsetOperationImplementation: BehaviorOperationImplementation<
       parsedBlock,
       operation.props.filter((prop) => prop !== '_type'),
     ),
-    options: {validateFields: true},
+    options: {
+      removeUnusedMarkDefs: true,
+      validateFields: true,
+    },
   })
 
   if (!updatedBlockObject) {
