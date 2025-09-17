@@ -171,7 +171,7 @@ export function sliceBlocks({
             keyGenerator: defaultKeyGenerator,
           },
           block,
-          options: {validateFields: false},
+          options: {removeUnusedMarkDefs: true, validateFields: false},
         }) ?? block,
       )
     }
@@ -184,7 +184,7 @@ export function sliceBlocks({
           keyGenerator: defaultKeyGenerator,
         },
         block: startBlock,
-        options: {validateFields: false},
+        options: {removeUnusedMarkDefs: true, validateFields: false},
       })
     : undefined
 
@@ -195,7 +195,7 @@ export function sliceBlocks({
           keyGenerator: defaultKeyGenerator,
         },
         block: endBlock,
-        options: {validateFields: false},
+        options: {removeUnusedMarkDefs: true, validateFields: false},
       })
     : undefined
 

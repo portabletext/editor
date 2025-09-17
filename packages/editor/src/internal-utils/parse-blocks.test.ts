@@ -12,7 +12,7 @@ describe(parseBlock.name, () => {
           keyGenerator: createTestKeyGenerator(),
           schema: compileSchema(defineSchema({})),
         },
-        options: {validateFields: true},
+        options: {removeUnusedMarkDefs: true, validateFields: true},
       }),
     ).toBe(undefined)
   })
@@ -25,7 +25,7 @@ describe(parseBlock.name, () => {
           keyGenerator: createTestKeyGenerator(),
           schema: compileSchema(defineSchema({})),
         },
-        options: {validateFields: true},
+        options: {removeUnusedMarkDefs: true, validateFields: true},
       }),
     ).toBe(undefined)
   })
@@ -39,7 +39,7 @@ describe(parseBlock.name, () => {
             keyGenerator: createTestKeyGenerator(),
             schema: compileSchema(defineSchema({})),
           },
-          options: {validateFields: true},
+          options: {removeUnusedMarkDefs: true, validateFields: true},
         }),
       ).toBe(undefined)
     })
@@ -54,7 +54,7 @@ describe(parseBlock.name, () => {
               defineSchema({blockObjects: [{name: 'image'}]}),
             ),
           },
-          options: {validateFields: true},
+          options: {removeUnusedMarkDefs: true, validateFields: true},
         }),
       ).toBe(undefined)
     })
@@ -69,7 +69,7 @@ describe(parseBlock.name, () => {
               defineSchema({blockObjects: [{name: 'image'}]}),
             ),
           },
-          options: {validateFields: true},
+          options: {removeUnusedMarkDefs: true, validateFields: true},
         }),
       ).toEqual({
         _key: 'k0',
@@ -87,7 +87,7 @@ describe(parseBlock.name, () => {
             keyGenerator: createTestKeyGenerator(),
             schema: compileSchema(defineSchema({})),
           },
-          options: {validateFields: true},
+          options: {removeUnusedMarkDefs: true, validateFields: true},
         }),
       ).toEqual({
         _key: 'k0',
@@ -114,7 +114,7 @@ describe(parseBlock.name, () => {
             keyGenerator: createTestKeyGenerator(),
             schema: {...schema, block: {...schema.block, name: 'text'}},
           },
-          options: {validateFields: true},
+          options: {removeUnusedMarkDefs: true, validateFields: true},
         }),
       ).toEqual({
         _key: 'k0',
@@ -149,7 +149,7 @@ describe(parseBlock.name, () => {
             keyGenerator: createTestKeyGenerator(),
             schema: compileSchema(defineSchema({})),
           },
-          options: {validateFields: true},
+          options: {removeUnusedMarkDefs: true, validateFields: true},
         }),
       ).toBe(undefined)
     })
@@ -188,7 +188,7 @@ describe(parseBlock.name, () => {
               }),
             ),
           },
-          options: {validateFields: true},
+          options: {removeUnusedMarkDefs: true, validateFields: true},
         }),
       ).toEqual({
         _key: 'k0',
@@ -236,7 +236,7 @@ describe(parseBlock.name, () => {
             keyGenerator: createTestKeyGenerator(),
             schema: compileSchema(defineSchema({lists: [{name: 'bullet'}]})),
           },
-          options: {validateFields: true},
+          options: {removeUnusedMarkDefs: true, validateFields: true},
         }),
       ).toEqual({
         _key: 'k0',
@@ -263,7 +263,7 @@ describe(parseBlock.name, () => {
             keyGenerator: createTestKeyGenerator(),
             schema: compileSchema(defineSchema({lists: [{name: 'bullet'}]})),
           },
-          options: {validateFields: true},
+          options: {removeUnusedMarkDefs: true, validateFields: true},
         }),
       ).toEqual({
         _key: 'k0',
@@ -290,7 +290,7 @@ describe(parseBlock.name, () => {
               keyGenerator: createTestKeyGenerator(),
               schema: compileSchema(defineSchema({})),
             },
-            options: {validateFields: true},
+            options: {removeUnusedMarkDefs: true, validateFields: true},
           }),
         ).toEqual({
           _type: 'block',
@@ -320,7 +320,7 @@ describe(parseBlock.name, () => {
                 }),
               ),
             },
-            options: {validateFields: true},
+            options: {removeUnusedMarkDefs: true, validateFields: true},
           }),
         ).toEqual({
           _type: 'block',
@@ -351,7 +351,7 @@ describe(parseBlock.name, () => {
                 }),
               ),
             },
-            options: {validateFields: true},
+            options: {removeUnusedMarkDefs: true, validateFields: true},
           }),
         ).toEqual({
           _type: 'block',

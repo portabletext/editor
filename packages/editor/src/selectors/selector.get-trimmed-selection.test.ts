@@ -33,6 +33,7 @@ function snapshot(
           },
           block,
           options: {
+            removeUnusedMarkDefs: true,
             validateFields: false,
           },
         })

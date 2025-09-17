@@ -186,6 +186,7 @@ export const abstractSplitBehaviors = [
         }),
         context: snapshot.context,
         options: {
+          removeUnusedMarkDefs: true,
           validateFields: false,
         },
       })
