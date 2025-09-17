@@ -55,8 +55,7 @@ export type ExternalBehaviorEvent =
         value?: {[prop: string]: unknown}
       }
     }
-  | SyntheticBehaviorEvent
-  | CustomBehaviorEvent
+  | BehaviorEvent
 
 /**************************************
  * Synthetic events

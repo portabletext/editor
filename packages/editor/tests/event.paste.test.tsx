@@ -66,7 +66,7 @@ describe('event.clipboard.paste', () => {
     const dataTransfer = new DataTransfer()
 
     // And cut is performed
-    editor.sendNativeEvent({
+    editor.send({
       type: 'clipboard.cut',
       originEvent: {dataTransfer},
       position: {
@@ -89,7 +89,7 @@ describe('event.clipboard.paste', () => {
     editor.send({type: 'select', at: newSelection})
 
     // And paste is performed
-    editor.sendNativeEvent({
+    editor.send({
       type: 'clipboard.paste',
       originEvent: {dataTransfer},
       position: {
@@ -118,7 +118,7 @@ describe('event.clipboard.paste', () => {
     })
 
     // And when paste is performed
-    editor.sendNativeEvent({
+    editor.send({
       type: 'clipboard.paste',
       originEvent: {dataTransfer},
       position: {
@@ -245,7 +245,7 @@ describe('event.clipboard.paste', () => {
 
       const dataTransfer = new DataTransfer()
       dataTransfer.setData('text/html', html)
-      editor.sendNativeEvent({
+      editor.send({
         type: 'clipboard.paste',
         originEvent: {dataTransfer},
         position: {
@@ -278,7 +278,7 @@ describe('event.clipboard.paste', () => {
 
       const dataTransfer = new DataTransfer()
       dataTransfer.setData('text/html', html)
-      editor.sendNativeEvent({
+      editor.send({
         type: 'clipboard.paste',
         originEvent: {dataTransfer},
         position: {
@@ -305,7 +305,7 @@ describe('event.clipboard.paste', () => {
 
       const dataTransfer = new DataTransfer()
       dataTransfer.setData('text/html', html)
-      editor.sendNativeEvent({
+      editor.send({
         type: 'clipboard.paste',
         originEvent: {dataTransfer},
         position: {
