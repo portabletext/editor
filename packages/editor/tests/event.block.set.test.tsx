@@ -1,7 +1,9 @@
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
+import {defineBehavior, execute, raise} from '../src/behaviors'
 import {createTestEditor} from '../src/internal-utils/test-editor'
+import {BehaviorPlugin} from '../src/plugins'
 
 describe('event.block.set', () => {
   test('Scenario: adding block object property', async () => {
@@ -259,6 +261,166 @@ describe('event.block.set', () => {
           _type: 'block',
           children: [{_key: 'k3', _type: 'span', text: '', marks: []}],
           markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Setting an annotation by raising', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const markDefKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior<{
+              name: string
+              value: Record<string, unknown>
+            }>({
+              on: 'custom.set annotation',
+              actions: [
+                ({event}) => [
+                  raise({
+                    type: 'child.set',
+                    at: [{_key: blockKey}, 'children', {_key: spanKey}],
+                    props: {
+                      marks: [markDefKey],
+                    },
+                  }),
+                  raise({
+                    type: 'block.set',
+                    at: [{_key: blockKey}],
+                    props: {
+                      markDefs: [
+                        {
+                          _key: markDefKey,
+                          _type: event.name,
+                          ...event.value,
+                        },
+                      ],
+                    },
+                  }),
+                ],
+              ],
+            }),
+          ]}
+        />
+      ),
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+      }),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'custom.set annotation',
+      name: 'link',
+      value: {
+        href: 'https://www.sanity.io',
+      },
+    })
+
+    await vi.waitFor(() => {
+      return expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_key: spanKey, _type: 'span', text: 'foo', marks: [markDefKey]},
+          ],
+          markDefs: [
+            {_key: markDefKey, _type: 'link', href: 'https://www.sanity.io'},
+          ],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Setting an annotation by executing', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const markDefKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior<{
+              name: string
+              value: Record<string, unknown>
+            }>({
+              on: 'custom.set annotation',
+              actions: [
+                ({event}) => [
+                  execute({
+                    type: 'child.set',
+                    at: [{_key: blockKey}, 'children', {_key: spanKey}],
+                    props: {
+                      marks: [markDefKey],
+                    },
+                  }),
+                  execute({
+                    type: 'block.set',
+                    at: [{_key: blockKey}],
+                    props: {
+                      markDefs: [
+                        {
+                          _key: markDefKey,
+                          _type: event.name,
+                          ...event.value,
+                        },
+                      ],
+                    },
+                  }),
+                ],
+              ],
+            }),
+          ]}
+        />
+      ),
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+      }),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'custom.set annotation',
+      name: 'link',
+      value: {
+        href: 'https://www.sanity.io',
+      },
+    })
+
+    await vi.waitFor(() => {
+      return expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_key: spanKey, _type: 'span', text: 'foo', marks: [markDefKey]},
+          ],
+          markDefs: [
+            {_key: markDefKey, _type: 'link', href: 'https://www.sanity.io'},
+          ],
           style: 'normal',
         },
       ])
