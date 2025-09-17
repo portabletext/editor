@@ -625,8 +625,8 @@ importers:
         specifier: ^35.0.0
         version: 35.0.0
       '@cucumber/messages':
-        specifier: ^28.1.0
-        version: 28.1.0
+        specifier: ^29.0.1
+        version: 29.0.1
       '@jest/globals':
         specifier: ^30.1.2
         version: 30.1.2
@@ -1216,8 +1216,8 @@ packages:
   '@cucumber/messages@23.0.0':
     resolution: {integrity: sha512-2ZWKNnikNMBnle3P3cgy+fgzhABrY4oBbiWp9wcI8ANdT4LlYRN6jQ6j/9CQGTDGRfkyRtr/5VkYq7q24XCsuA==}
 
-  '@cucumber/messages@28.1.0':
-    resolution: {integrity: sha512-2LzZtOwYKNlCuNf31ajkrekoy2M4z0Z1QGiPH40n4gf5t8VOUFb7m1ojtR4LmGvZxBGvJZP8voOmRqDWzBzYKA==}
+  '@cucumber/messages@29.0.1':
+    resolution: {integrity: sha512-aAvIYfQD6/aBdF8KFQChC3CQ1Q+GX9orlR6GurGiX6oqaCnBkxA4WU3OQUVepDynEFrPayerqKRFcAMhdcXReQ==}
 
   '@emnapi/core@1.4.5':
     resolution: {integrity: sha512-XsLw1dEOpkSX/WucdqUhPWP7hDxSvZiY+fsUC14h+FtQ2Ifni4znbBt8punRX+Uj2JG/uDb8nEHVKvrVlvdZ5Q==}
@@ -3542,9 +3542,6 @@ packages:
 
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
-
-  '@types/uuid@10.0.0':
-    resolution: {integrity: sha512-7gqG38EyHgyP1S+7+xomFtL+ZNHcKv6DwNaCZmJmo1vgMugyF3TCnXVg4t1uk89mLNwnLtnY3TpOpCOyp1/xHQ==}
 
   '@types/uuid@9.0.1':
     resolution: {integrity: sha512-rFT3ak0/2trgvp4yYZo5iKFEPsET7vKydKF+VRCxlQ9bpheehyAJH89dAkaLEq/j/RZXJIqcgsmPJKUP1Z28HA==}
@@ -7941,7 +7938,7 @@ snapshots:
 
   '@cucumber/gherkin@35.0.0':
     dependencies:
-      '@cucumber/messages': 28.1.0
+      '@cucumber/messages': 29.0.1
 
   '@cucumber/messages@22.0.0':
     dependencies:
@@ -7957,12 +7954,10 @@ snapshots:
       reflect-metadata: 0.1.13
       uuid: 9.0.1
 
-  '@cucumber/messages@28.1.0':
+  '@cucumber/messages@29.0.1':
     dependencies:
-      '@types/uuid': 10.0.0
       class-transformer: 0.5.1
       reflect-metadata: 0.2.2
-      uuid: 11.1.0
 
   '@emnapi/core@1.4.5':
     dependencies:
@@ -10689,8 +10684,6 @@ snapshots:
   '@types/unist@2.0.11': {}
 
   '@types/unist@3.0.3': {}
-
-  '@types/uuid@10.0.0': {}
 
   '@types/uuid@9.0.1': {}
 
