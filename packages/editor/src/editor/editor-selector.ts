@@ -1,5 +1,6 @@
 import {useSelector} from '@xstate/react'
 import type {Editor} from '../editor'
+import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import type {PortableTextSlateEditor} from '../types/editor'
 import type {InternalEditor} from './create-editor'
 import type {EditorActor} from './editor-machine'
@@ -65,6 +66,14 @@ export function getEditorSnapshot({
   editorActorSnapshot: ReturnType<EditorActor['getSnapshot']>
   slateEditorInstance: PortableTextSlateEditor
 }): EditorSnapshot {
+  const selection = slateEditorInstance.selection
+    ? slateRangeToSelection({
+        schema: editorActorSnapshot.context.schema,
+        editor: slateEditorInstance,
+        range: slateEditorInstance.selection,
+      })
+    : null
+
   return {
     blockIndexMap: slateEditorInstance.blockIndexMap,
     context: {
@@ -72,7 +81,7 @@ export function getEditorSnapshot({
       keyGenerator: editorActorSnapshot.context.keyGenerator,
       readOnly: editorActorSnapshot.matches({'edit mode': 'read only'}),
       schema: editorActorSnapshot.context.schema,
-      selection: editorActorSnapshot.context.selection,
+      selection,
       value: slateEditorInstance.value,
     },
     decoratorState: slateEditorInstance.decoratorState,
