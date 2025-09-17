@@ -1050,12 +1050,12 @@ describe('event.patches', () => {
 
     const value = [
       {
-        _key: 'ea-k2',
+        _key: 'ea-k0',
         _type: 'block',
         children: [
-          {_type: 'span', _key: 'ea-k4', text: '', marks: []},
-          {_type: 'stock-ticker', _key: 'ea-k3'},
-          {_type: 'span', _key: 'ea-k5', text: '', marks: []},
+          {_type: 'span', _key: 'ea-k1', text: '', marks: []},
+          {_type: 'stock-ticker', _key: 'ea-k2'},
+          {_type: 'span', _key: 'ea-k3', text: '', marks: []},
         ],
         markDefs: [],
         style: 'normal',
