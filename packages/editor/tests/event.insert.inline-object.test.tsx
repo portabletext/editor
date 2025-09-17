@@ -29,12 +29,12 @@ describe('event.insert.inline object', () => {
 
     expect(editor.getSnapshot().context.value).toEqual([
       {
-        _key: 'k2',
+        _key: 'k0',
         _type: 'block',
         children: [
-          {_key: 'k4', _type: 'span', text: '', marks: []},
-          {_key: 'k3', _type: 'stock ticker'},
-          {_key: 'k5', _type: 'span', text: '', marks: []},
+          {_key: 'k1', _type: 'span', text: '', marks: []},
+          {_key: 'k2', _type: 'stock ticker'},
+          {_key: 'k3', _type: 'span', text: '', marks: []},
         ],
         markDefs: [],
         style: 'normal',
@@ -115,12 +115,12 @@ describe('event.insert.inline object', () => {
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual([
         {
-          _key: 'k2',
+          _key: 'k0',
           _type: 'block',
           children: [
-            {_key: 'k4', _type: 'span', text: '', marks: []},
-            {_key: 'k3', _type: 'stock ticker', symbol: 'AAPL'},
-            {_key: 'k5', _type: 'span', text: '', marks: []},
+            {_key: 'k1', _type: 'span', text: '', marks: []},
+            {_key: 'k2', _type: 'stock ticker', symbol: 'AAPL'},
+            {_key: 'k3', _type: 'span', text: '', marks: []},
           ],
           markDefs: [],
           style: 'normal',
@@ -130,11 +130,11 @@ describe('event.insert.inline object', () => {
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.selection).toEqual({
         anchor: {
-          path: [{_key: 'k2'}, 'children', {_key: 'k3'}],
+          path: [{_key: 'k0'}, 'children', {_key: 'k2'}],
           offset: 0,
         },
         focus: {
-          path: [{_key: 'k2'}, 'children', {_key: 'k3'}],
+          path: [{_key: 'k0'}, 'children', {_key: 'k2'}],
           offset: 0,
         },
         backward: false,
@@ -147,12 +147,12 @@ describe('event.insert.inline object', () => {
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual([
         {
-          _key: 'k2',
+          _key: 'k0',
           _type: 'block',
           children: [
-            {_key: 'k4', _type: 'span', text: '', marks: []},
-            {_key: 'k3', _type: 'stock ticker', symbol: 'AAPL'},
-            {_key: 'k5', _type: 'span', text: 'foo', marks: []},
+            {_key: 'k1', _type: 'span', text: '', marks: []},
+            {_key: 'k2', _type: 'stock ticker', symbol: 'AAPL'},
+            {_key: 'k3', _type: 'span', text: 'foo', marks: []},
           ],
           markDefs: [],
           style: 'normal',
@@ -163,11 +163,11 @@ describe('event.insert.inline object', () => {
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.selection).toEqual({
         anchor: {
-          path: [{_key: 'k2'}, 'children', {_key: 'k5'}],
+          path: [{_key: 'k0'}, 'children', {_key: 'k3'}],
           offset: 3,
         },
         focus: {
-          path: [{_key: 'k2'}, 'children', {_key: 'k5'}],
+          path: [{_key: 'k0'}, 'children', {_key: 'k3'}],
           offset: 3,
         },
         backward: false,

@@ -6,7 +6,7 @@ import {
   isEqualSelectionPoints,
 } from '../utils'
 import {sliceTextBlock} from '../utils/util.slice-text-block'
-import {execute, raise} from './behavior.types.action'
+import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
 export const abstractInsertBehaviors = [
@@ -391,20 +391,13 @@ export const abstractInsertBehaviors = [
   defineBehavior({
     on: 'insert.inline object',
     actions: [
-      ({snapshot, event}) => [
-        execute({
-          type: 'insert.block',
-          block: {
-            _type: snapshot.context.schema.block.name,
-            children: [
-              {
-                _type: event.inlineObject.name,
-                ...event.inlineObject.value,
-              },
-            ],
+      ({event}) => [
+        raise({
+          type: 'insert.child',
+          child: {
+            _type: event.inlineObject.name,
+            ...event.inlineObject.value,
           },
-          placement: 'auto',
-          select: 'end',
         }),
       ],
     ],
@@ -415,7 +408,32 @@ export const abstractInsertBehaviors = [
   }),
   defineBehavior({
     on: 'insert.span',
+    guard: ({snapshot}) => !getFocusTextBlock(snapshot),
+    actions: [
+      ({snapshot, event}) => [
+        raise({
+          type: 'insert.block',
+          block: {
+            _type: snapshot.context.schema.block.name,
+            children: [
+              {
+                _type: snapshot.context.schema.span.name,
+                text: '',
+                marks: [],
+              },
+            ],
+          },
+          placement: 'auto',
+          select: 'end',
+        }),
+        raise(event),
+      ],
+    ],
+  }),
+  defineBehavior({
+    on: 'insert.span',
     guard: ({snapshot, event}) => {
+      const focusTextBlock = getFocusTextBlock(snapshot)
       const markDefs =
         event.annotations?.map((annotation) => ({
           _type: annotation.name,
@@ -423,28 +441,34 @@ export const abstractInsertBehaviors = [
           ...annotation.value,
         })) ?? []
 
-      return {markDefs}
+      return {markDefs, focusTextBlock}
     },
     actions: [
-      ({snapshot, event}, {markDefs}) => [
-        execute({
-          type: 'insert.block',
-          block: {
-            _type: snapshot.context.schema.block.name,
-            children: [
-              {
-                _type: snapshot.context.schema.span.name,
-                text: event.text,
-                marks: [
-                  ...(event.decorators ?? []),
-                  ...markDefs.map((markDef) => markDef._key),
-                ],
-              },
+      ({snapshot, event}, {markDefs, focusTextBlock}) => [
+        ...(focusTextBlock
+          ? [
+              raise({
+                type: 'block.set',
+                at: focusTextBlock.path,
+                props: {
+                  markDefs: [
+                    ...(focusTextBlock.node.markDefs ?? []),
+                    ...markDefs,
+                  ],
+                },
+              }),
+            ]
+          : []),
+        raise({
+          type: 'insert.child',
+          child: {
+            _type: snapshot.context.schema.span.name,
+            text: event.text,
+            marks: [
+              ...(event.decorators ?? []),
+              ...markDefs.map((markDef) => markDef._key),
             ],
-            markDefs,
           },
-          placement: 'auto',
-          select: 'end',
         }),
       ],
     ],

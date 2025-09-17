@@ -116,12 +116,12 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
                 text: 'Block A',
               },
               {
-                _key: 'k3',
+                _key: 'k2',
                 _type: 'someObject',
                 color: 'red',
               },
               {
-                _key: 'k4',
+                _key: 'k3',
                 _type: 'span',
                 marks: [],
                 text: '',
@@ -160,12 +160,12 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
                 text: 'Block A',
               },
               {
-                _key: 'k3',
+                _key: 'k2',
                 _type: 'someObject',
                 color: 'red',
               },
               {
-                _key: 'k6',
+                _key: 'k5',
                 _type: 'span',
                 marks: [],
                 text: ' ',
@@ -177,8 +177,8 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
         ])
 
         expect(PortableTextEditor.getSelection(editorRef.current)).toEqual({
-          anchor: {path: [{_key: 'a'}, 'children', {_key: 'k6'}], offset: 1},
-          focus: {path: [{_key: 'a'}, 'children', {_key: 'k6'}], offset: 1},
+          anchor: {path: [{_key: 'a'}, 'children', {_key: 'k5'}], offset: 1},
+          focus: {path: [{_key: 'a'}, 'children', {_key: 'k5'}], offset: 1},
           backward: false,
         })
       }

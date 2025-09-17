@@ -1,7 +1,9 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
+import {defineBehavior, execute, forward} from '../src/behaviors'
 import {createTestEditor} from '../src/internal-utils/test-editor'
+import {BehaviorPlugin} from '../src/plugins'
 
 describe('event.insert.span', () => {
   test('Scenario: Unknown decorators are filtered out', async () => {
@@ -34,6 +36,34 @@ describe('event.insert.span', () => {
     })
   })
 
+  test('Scenario: Inserting span with annotation', async () => {
+    const {editor} = await createTestEditor({
+      schemaDefinition: defineSchema({
+        annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+      }),
+    })
+
+    editor.send({
+      type: 'insert.span',
+      text: 'foo',
+      annotations: [{name: 'link', value: {href: 'https://portabletext.org'}}],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k2',
+          _type: 'block',
+          children: [{_key: 'k5', _type: 'span', text: 'foo', marks: ['k4']}],
+          markDefs: [
+            {_key: 'k4', _type: 'link', href: 'https://portabletext.org'},
+          ],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
   test('Scenario: Unknown annotations are filtered out', async () => {
     const {editor} = await createTestEditor({
       schemaDefinition: defineSchema({
@@ -61,24 +91,100 @@ describe('event.insert.span', () => {
     })
 
     await vi.waitFor(() => {
-      if (editor) {
-        expect(editor.getSnapshot().context.value).toEqual([
-          expect.objectContaining({
-            children: [
-              expect.objectContaining({
-                _type: 'span',
-                text: 'foo',
-              }),
-            ],
-            markDefs: [
-              expect.objectContaining({
-                _type: 'link',
-                href: 'https://portabletext.org',
-              }),
-            ],
-          }),
-        ])
-      }
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k2',
+          _type: 'block',
+          children: [
+            {
+              _key: 'k6',
+              _type: 'span',
+              text: 'foo',
+              marks: ['k4'],
+            },
+          ],
+          markDefs: [
+            {_key: 'k4', _type: 'link', href: 'https://portabletext.org'},
+          ],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Forwarding the event', async () => {
+    const {editor} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.span',
+              actions: [({event}) => [forward(event)]],
+            }),
+          ]}
+        />
+      ),
+      schemaDefinition: defineSchema({
+        annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+      }),
+    })
+
+    editor.send({
+      type: 'insert.span',
+      text: 'foo',
+      annotations: [{name: 'link', value: {href: 'https://portabletext.org'}}],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k2',
+          _type: 'block',
+          children: [{_key: 'k5', _type: 'span', text: 'foo', marks: ['k4']}],
+          markDefs: [
+            {_key: 'k4', _type: 'link', href: 'https://portabletext.org'},
+          ],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Executing the event', async () => {
+    const {editor} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.span',
+              actions: [({event}) => [execute(event)]],
+            }),
+          ]}
+        />
+      ),
+      schemaDefinition: defineSchema({
+        annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+      }),
+    })
+
+    editor.send({
+      type: 'insert.span',
+      text: 'foo',
+      annotations: [{name: 'link', value: {href: 'https://portabletext.org'}}],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k2',
+          _type: 'block',
+          children: [{_key: 'k5', _type: 'span', text: 'foo', marks: ['k4']}],
+          markDefs: [
+            {_key: 'k4', _type: 'link', href: 'https://portabletext.org'},
+          ],
+          style: 'normal',
+        },
+      ])
     })
   })
 
@@ -132,6 +238,7 @@ describe('event.insert.span', () => {
     const blockKey = keyGenerator()
     const imageKey = keyGenerator()
     const {editor} = await createTestEditor({
+      keyGenerator,
       schemaDefinition: defineSchema({
         inlineObjects: [{name: 'image'}],
       }),
