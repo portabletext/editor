@@ -107,7 +107,7 @@ describe(sliceTextBlock.name, () => {
     })
   })
 
-  test('multiple children', () => {
+  describe('multiple children', () => {
     const fooSpan = createSpan({
       text: 'foo',
       marks: ['strong'],
@@ -127,36 +127,62 @@ describe(sliceTextBlock.name, () => {
       children: [fooSpan, barSpan, stockTicker, bazSpan],
     })
 
-    expect(
-      sliceTextBlock({
-        context: {
-          schema,
-          selection: {
-            anchor: {
-              path: [{_key: block._key}, 'children', {_key: barSpan._key}],
-              offset: 1,
-            },
-            focus: {
-              path: [{_key: block._key}, 'children', {_key: bazSpan._key}],
-              offset: 1,
+    test('mid-span', () => {
+      expect(
+        sliceTextBlock({
+          context: {
+            schema,
+            selection: {
+              anchor: {
+                path: [{_key: block._key}, 'children', {_key: barSpan._key}],
+                offset: 1,
+              },
+              focus: {
+                path: [{_key: block._key}, 'children', {_key: bazSpan._key}],
+                offset: 1,
+              },
             },
           },
-        },
-        block,
-      }),
-    ).toEqual({
-      ...block,
-      children: [
-        {
-          ...barSpan,
-          text: 'ar',
-        },
-        stockTicker,
-        {
-          ...bazSpan,
-          text: 'b',
-        },
-      ],
+          block,
+        }),
+      ).toEqual({
+        ...block,
+        children: [
+          {
+            ...barSpan,
+            text: 'ar',
+          },
+          stockTicker,
+          {
+            ...bazSpan,
+            text: 'b',
+          },
+        ],
+      })
+    })
+
+    test('from end of span to end of block', () => {
+      expect(
+        sliceTextBlock({
+          context: {
+            schema,
+            selection: {
+              anchor: {
+                path: [{_key: block._key}, 'children', {_key: fooSpan._key}],
+                offset: 3,
+              },
+              focus: {
+                path: [{_key: block._key}, 'children', {_key: bazSpan._key}],
+                offset: 3,
+              },
+            },
+          },
+          block,
+        }),
+      ).toEqual({
+        ...block,
+        children: [{...fooSpan, text: ''}, barSpan, stockTicker, bazSpan],
+      })
     })
   })
 })
