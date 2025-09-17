@@ -1,5 +1,88 @@
 # Changelog
 
+## 2.10.0
+
+### Minor Changes
+
+- [#1640](https://github.com/portabletext/editor/pull/1640) [`74dc56a`](https://github.com/portabletext/editor/commit/74dc56a2b826ae56ee4351361fba0277bc9a1ede) Thanks [@christianhg](https://github.com/christianhg)! - fix: raise `insert.child` from `insert.(span|inline object)`
+
+  `insert.span` and `insert.inline object` now raise `insert.child` internally.
+
+- [#1640](https://github.com/portabletext/editor/pull/1640) [`7cdcb11`](https://github.com/portabletext/editor/commit/7cdcb114fe43d5f9a4ffa2db2dd69cfbd70c949e) Thanks [@christianhg](https://github.com/christianhg)! - feat: add `insert.child` event
+
+  A new `insert.child` event can now be used to insert and select spans or
+  inline objects at the current editor selection.
+
+### Patch Changes
+
+- [#1654](https://github.com/portabletext/editor/pull/1654) [`6071455`](https://github.com/portabletext/editor/commit/6071455249417866398439cc707d94d6baf97cbf) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update sanity monorepo to ^4.9.0
+
+- [#1640](https://github.com/portabletext/editor/pull/1640) [`52a3a72`](https://github.com/portabletext/editor/commit/52a3a72e62eaeed7b3b828a7f8e7a89315bd9978) Thanks [@christianhg](https://github.com/christianhg)! - fix(`block.set`): validate `marDefs`
+
+  Adding `markDefs` to a text block using `block.set` now validates the `markDefs` against the schema to make sure only known annotations are added.
+
+- [#1640](https://github.com/portabletext/editor/pull/1640) [`eaf3ff1`](https://github.com/portabletext/editor/commit/eaf3ff1a1962816cce84851308a80e9bcd27dd22) Thanks [@christianhg](https://github.com/christianhg)! - fix: derive Snapshot `selection` on demand
+
+  In some cases, the `selection` on `snapshot.context.selection` could be
+  slightly out of sync. Now, the selection is derived on demand whenever a
+  Snapshot is requested.
+
+- [#1640](https://github.com/portabletext/editor/pull/1640) [`9dbf915`](https://github.com/portabletext/editor/commit/9dbf915d548e7bfeff542b5896897a3d1234b93a) Thanks [@christianhg](https://github.com/christianhg)! - fix(behaviors): perform groups of raised or executed events without normalization
+
+  This is useful if one event depends on a previous event. For example, raising
+  `block.set` together with `insert.child` to add an annotation will happen
+  without the editor normalizing the unused markDef away between the two events.
+
+  ```ts
+  defineBehavior({
+    on: 'insert.span',
+    guard: ({snapshot, event}) => {
+      const focusTextBlock = getFocusTextBlock(snapshot)
+      const markDefs =
+        event.annotations?.map((annotation) => ({
+          _type: annotation.name,
+          _key: snapshot.context.keyGenerator(),
+          ...annotation.value,
+        })) ?? []
+
+      return {markDefs, focusTextBlock}
+    },
+    actions: [
+      ({snapshot, event}, {markDefs, focusTextBlock}) => [
+        ...(focusTextBlock
+          ? [
+              raise({
+                type: 'block.set',
+                at: focusTextBlock.path,
+                props: {
+                  markDefs: [
+                    ...(focusTextBlock.node.markDefs ?? []),
+                    ...markDefs,
+                  ],
+                },
+              }),
+            ]
+          : []),
+        raise({
+          type: 'insert.child',
+          child: {
+            _type: snapshot.context.schema.span.name,
+            text: event.text,
+            marks: [
+              ...(event.decorators ?? []),
+              ...markDefs.map((markDef) => markDef._key),
+            ],
+          },
+        }),
+      ],
+    ],
+  })
+  ```
+
+- Updated dependencies [[`6071455`](https://github.com/portabletext/editor/commit/6071455249417866398439cc707d94d6baf97cbf)]:
+  - @portabletext/block-tools@3.5.6
+  - @portabletext/sanity-bridge@1.1.10
+
 ## 2.9.2
 
 ### Patch Changes
