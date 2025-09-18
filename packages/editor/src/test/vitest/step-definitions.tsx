@@ -340,12 +340,17 @@ export const stepDefinitions = [
       })
     },
   ),
-  Then('{terse-pt} is selected', (context: Context, text: Array<string>) => {
-    expect(
-      getSelectionText(context.editor.getSnapshot().context),
-      'Unexpected selection',
-    ).toEqual(text)
-  }),
+  Then(
+    '{terse-pt} is selected',
+    async (context: Context, text: Array<string>) => {
+      await vi.waitFor(() => {
+        expect(
+          getSelectionText(context.editor.getSnapshot().context),
+          'Unexpected selection',
+        ).toEqual(text)
+      })
+    },
+  ),
 
   When(
     '{terse-pt} is inserted at {placement}',
