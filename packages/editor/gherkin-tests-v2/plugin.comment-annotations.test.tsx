@@ -4,13 +4,12 @@ import {Feature} from 'racejar/vitest'
 import {useEffect} from 'react'
 import {useEditor} from '../src'
 import {defineBehavior, execute, raise} from '../src/behaviors'
-import {createTestEditor} from '../src/internal-utils/test-editor'
 import {getFocusTextBlock} from '../src/selectors/selector.get-focus-text-block'
 import {getMarkState} from '../src/selectors/selector.get-mark-state'
-import {parameterTypes} from './gherkin-parameter-types'
+import {parameterTypes} from '../src/test'
+import {createTestEditor, stepDefinitions} from '../src/test/vitest'
+import type {Context} from '../src/test/vitest/step-context'
 import pluginCommentAnnotationsFeature from './plugin.comment-annotations.feature?raw'
-import type {Context} from './step-context'
-import {stepDefinitions} from './step-definitions'
 
 Feature({
   hooks: [

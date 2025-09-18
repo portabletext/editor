@@ -2,9 +2,9 @@ import type {PortableTextBlock} from '@sanity/types'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
 import {PortableTextEditor} from '../src/editor/PortableTextEditor'
-import {createTestEditor} from '../src/internal-utils/test-editor'
 import {InternalChange$Plugin} from '../src/plugins/plugin.internal.change-ref'
 import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
+import {createTestEditor} from '../src/test/vitest'
 
 describe('when PTE would display warnings, instead it self solves', () => {
   it('when child at index is missing required _key in block with _key', async () => {

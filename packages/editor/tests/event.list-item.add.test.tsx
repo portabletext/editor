@@ -1,7 +1,7 @@
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {defineSchema} from '../src'
-import {createTestEditor} from '../src/internal-utils/test-editor'
+import {createTestEditor} from '../src/test/vitest'
 
 describe('event.list item.add', () => {
   test('Scenario: Adding initial level', async () => {

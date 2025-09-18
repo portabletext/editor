@@ -1,7 +1,7 @@
 import {Feature} from 'racejar/vitest'
 import splittingBlocksFeature from '../gherkin-spec/splitting-blocks.feature?raw'
-import {parameterTypes} from './gherkin-parameter-types'
-import {stepDefinitions} from './step-definitions'
+import {parameterTypes} from '../src/test'
+import {stepDefinitions} from '../src/test/vitest'
 
 Feature({
   featureText: splittingBlocksFeature,

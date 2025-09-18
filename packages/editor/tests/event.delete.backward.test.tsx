@@ -4,9 +4,9 @@ import {describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
 import {effect, execute, forward, type BehaviorEvent} from '../src/behaviors'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
-import {createTestEditor} from '../src/internal-utils/test-editor'
 import {getSelectionBeforeText} from '../src/internal-utils/text-selection'
 import {BehaviorPlugin} from '../src/plugins'
+import {createTestEditor} from '../src/test/vitest'
 
 describe('event.delete.backward', () => {
   test('Scenario: Executing delete.backward', async () => {

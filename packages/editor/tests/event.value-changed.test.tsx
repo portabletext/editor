@@ -1,7 +1,7 @@
 import {describe, expect, test, vi} from 'vitest'
 import type {EditorEmittedEvent} from '../src'
-import {createTestEditor} from '../src/internal-utils/test-editor'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {createTestEditor} from '../src/test/vitest'
 
 describe('event.value changed', () => {
   test('does not emit for "undefined" initial value', async () => {

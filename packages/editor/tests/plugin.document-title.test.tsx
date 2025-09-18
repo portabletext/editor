@@ -3,12 +3,12 @@ import {useEffect} from 'react'
 import {expect, test, vi} from 'vitest'
 import {defineSchema, useEditor, type PortableTextBlock} from '../src'
 import {defineBehavior, execute} from '../src/behaviors'
-import {createTestEditor} from '../src/internal-utils/test-editor'
 import {
   getFirstBlock,
   getFocusTextBlock,
   getPreviousBlock,
 } from '../src/selectors'
+import {createTestEditor} from '../src/test/vitest'
 import {getBlockEndPoint, getTextBlockText} from '../src/utils'
 
 function DocumentTitlePlugin() {

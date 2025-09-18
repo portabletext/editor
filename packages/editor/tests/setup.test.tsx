@@ -5,9 +5,9 @@ import type {
   EditorEmittedEvent,
   MutationEvent,
 } from '../src/editor/relay-machine'
-import {createTestEditor} from '../src/internal-utils/test-editor'
 import {getSelectionAfterText} from '../src/internal-utils/text-selection'
 import {EventListenerPlugin} from '../src/plugins'
+import {createTestEditor} from '../src/test/vitest'
 
 describe('Setup', () => {
   test('Scenario: Unknown block object', async () => {

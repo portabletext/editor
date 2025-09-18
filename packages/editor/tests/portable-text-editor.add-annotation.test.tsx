@@ -2,9 +2,9 @@ import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema, PortableTextEditor} from '../src'
-import {createTestEditor} from '../src/internal-utils/test-editor'
 import {getTextSelection} from '../src/internal-utils/text-selection'
 import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
+import {createTestEditor} from '../src/test/vitest'
 
 describe(PortableTextEditor.addAnnotation.name, () => {
   test('Scenario: Prevents overlapping annotations of the same type', async () => {

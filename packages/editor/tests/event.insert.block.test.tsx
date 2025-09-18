@@ -3,9 +3,9 @@ import {getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {defineBehavior, execute} from '../src/behaviors'
 import type {InsertPlacement} from '../src/behaviors/behavior.types.event'
-import {createTestEditor} from '../src/internal-utils/test-editor'
 import {BehaviorPlugin} from '../src/plugins'
 import {getFocusBlock} from '../src/selectors'
+import {createTestEditor} from '../src/test/vitest'
 
 describe('event.insert.block', () => {
   test('Scenario: Inserting block with custom _key', async () => {

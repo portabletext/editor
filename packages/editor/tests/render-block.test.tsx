@@ -6,7 +6,7 @@ import {
   type BlockRenderProps,
   type PortableTextBlock,
 } from '../src'
-import {createTestEditor} from '../src/internal-utils/test-editor'
+import {createTestEditor} from '../src/test/vitest'
 
 describe('renderBlock', () => {
   test('Receives the updated value for text block changes', async () => {

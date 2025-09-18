@@ -3,7 +3,7 @@ import {userEvent} from '@vitest/browser/context'
 import {assert, describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
 import {converterPortableText} from '../src/converters/converter.portable-text'
-import {createTestEditor} from '../src/internal-utils/test-editor'
+import {createTestEditor} from '../src/test/vitest'
 
 describe('event.drag.drop', () => {
   test('Scenario: Dragging inline object', async () => {

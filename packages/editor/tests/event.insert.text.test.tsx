@@ -11,8 +11,8 @@ import {
   type BehaviorEvent,
 } from '../src/behaviors'
 import {IS_MAC} from '../src/internal-utils/is-hotkey'
-import {createTestEditor} from '../src/internal-utils/test-editor'
 import {BehaviorPlugin} from '../src/plugins'
+import {createTestEditor} from '../src/test/vitest'
 
 describe('event.insert.text', () => {
   test('Scenario: `insert.text` can trigger `insert.child` events', async () => {

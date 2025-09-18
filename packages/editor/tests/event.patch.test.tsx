@@ -3,8 +3,8 @@ import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
-import {createTestEditor} from '../src/internal-utils/test-editor'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {createTestEditor} from '../src/test/vitest'
 
 describe('event.patch', () => {
   test('Scenario: Deleting empty block above non-empty text block', async () => {

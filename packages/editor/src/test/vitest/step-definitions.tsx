@@ -3,30 +3,33 @@ import {getTersePt, parseTersePt} from '@portabletext/test'
 import {userEvent} from '@vitest/browser/context'
 import {Given, Then, When} from 'racejar'
 import {assert, expect, vi} from 'vitest'
-import {getEditorSelection} from '../src/internal-utils/editor-selection'
+import {getEditorSelection} from '../../internal-utils/editor-selection'
 import {
   parseBlocks,
   parseInlineObject,
   parseSpan,
-} from '../src/internal-utils/parse-blocks'
-import {getSelectionText} from '../src/internal-utils/selection-text'
-import {createTestEditor} from '../src/internal-utils/test-editor'
-import {getTextBlockKey} from '../src/internal-utils/text-block-key'
-import {getTextMarks} from '../src/internal-utils/text-marks'
+} from '../../internal-utils/parse-blocks'
+import {getSelectionText} from '../../internal-utils/selection-text'
+import {getTextBlockKey} from '../../internal-utils/text-block-key'
+import {getTextMarks} from '../../internal-utils/text-marks'
 import {
   getSelectionAfterText,
   getSelectionBeforeText,
   getTextSelection,
-} from '../src/internal-utils/text-selection'
-import {getValueAnnotations} from '../src/internal-utils/value-annotations'
+} from '../../internal-utils/text-selection'
+import {getValueAnnotations} from '../../internal-utils/value-annotations'
+import {createTestEditor} from '../../test/vitest'
 import {
   reverseSelection,
   selectionPointToBlockOffset,
   spanSelectionPointToBlockOffset,
-} from '../src/utils'
-import type {Parameter} from './gherkin-parameter-types'
+} from '../../utils'
+import type {Parameter} from '../gherkin-parameter-types'
 import type {Context} from './step-context'
 
+/**
+ * @internal
+ */
 export const stepDefinitions = [
   Given('one editor', async (context: Context) => {
     const {editor, locator} = await createTestEditor({

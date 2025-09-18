@@ -4,8 +4,8 @@ import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
 import {defineBehavior, execute, forward, raise} from '../src/behaviors'
 import type {MutationEvent} from '../src/editor/relay-machine'
-import {createTestEditor} from '../src/internal-utils/test-editor'
 import {BehaviorPlugin, EventListenerPlugin} from '../src/plugins'
+import {createTestEditor} from '../src/test/vitest'
 
 describe('event.history.undo', () => {
   test('Scenario: Undoing writing two words', async () => {

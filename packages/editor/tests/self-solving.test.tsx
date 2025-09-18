@@ -4,10 +4,10 @@ import type {PortableTextBlock, PortableTextSpan} from '@sanity/types'
 import {createRef, type ComponentProps, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
 import {PortableTextEditor} from '../src/editor/PortableTextEditor'
-import {createTestEditor} from '../src/internal-utils/test-editor'
 import {getTextSelection} from '../src/internal-utils/text-selection'
 import {InternalChange$Plugin} from '../src/plugins/plugin.internal.change-ref'
 import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
+import {createTestEditor} from '../src/test/vitest'
 
 type OnChange = ComponentProps<typeof PortableTextEditor>['onChange']
 

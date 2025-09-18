@@ -3,9 +3,9 @@ import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
 import type {EditorEmittedEvent} from '../src'
 import {defineBehavior, effect, execute, forward, raise} from '../src/behaviors'
-import {createTestEditor} from '../src/internal-utils/test-editor'
 import {getSelectionAfterText} from '../src/internal-utils/text-selection'
 import {BehaviorPlugin, EventListenerPlugin} from '../src/plugins'
+import {createTestEditor} from '../src/test/vitest'
 
 describe('Behavior API', () => {
   test('Scenario: Suppressing raised events while executing', async () => {
