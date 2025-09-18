@@ -1,7 +1,27 @@
+import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
+import {isTextBlock} from '@portabletext/schema'
 import {defaultKeyboardShortcuts} from '../keyboard-shortcuts/default-keyboard-shortcuts'
-import * as selectors from '../selectors'
+import {
+  getFocusBlock,
+  getFocusInlineObject,
+  getPreviousBlock,
+  isSelectionCollapsed,
+} from '../selectors'
+import {getBlockEndPoint, isEmptyTextBlock} from '../utils'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
+
+const shiftLeft = createKeyboardShortcut({
+  default: [
+    {
+      key: 'ArrowLeft',
+      shift: true,
+      meta: false,
+      ctrl: false,
+      alt: false,
+    },
+  ],
+})
 
 export const abstractKeyboardBehaviors = [
   /**
@@ -12,8 +32,8 @@ export const abstractKeyboardBehaviors = [
     on: 'keyboard.keydown',
     guard: ({snapshot, event}) =>
       defaultKeyboardShortcuts.break.guard(event.originEvent) &&
-      selectors.isSelectionCollapsed(snapshot) &&
-      selectors.getFocusInlineObject(snapshot),
+      isSelectionCollapsed(snapshot) &&
+      getFocusInlineObject(snapshot),
     actions: [() => [raise({type: 'insert.break'})]],
   }),
 
@@ -47,5 +67,69 @@ export const abstractKeyboardBehaviors = [
     guard: ({event}) =>
       defaultKeyboardShortcuts.history.redo.guard(event.originEvent),
     actions: [() => [raise({type: 'history.redo'})]],
+  }),
+
+  /**
+   * Fix edge case where Shift+ArrowLeft didn't reduce a selection hanging
+   * onto an empty text block.
+   */
+  defineBehavior({
+    on: 'keyboard.keydown',
+    guard: ({snapshot, event}) => {
+      if (!snapshot.context.selection || !shiftLeft.guard(event.originEvent)) {
+        return false
+      }
+
+      const focusBlock = getFocusBlock(snapshot)
+
+      if (!focusBlock) {
+        return false
+      }
+
+      const previousBlock = getPreviousBlock({
+        ...snapshot,
+        context: {
+          ...snapshot.context,
+          selection: {
+            anchor: {
+              path: focusBlock.path,
+              offset: 0,
+            },
+            focus: {
+              path: focusBlock.path,
+              offset: 0,
+            },
+          },
+        },
+      })
+
+      if (!previousBlock) {
+        return false
+      }
+
+      const hanging =
+        isTextBlock(snapshot.context, focusBlock.node) &&
+        snapshot.context.selection.focus.offset === 0
+
+      if (hanging && isEmptyTextBlock(snapshot.context, focusBlock.node)) {
+        return {previousBlock, selection: snapshot.context.selection}
+      }
+
+      return false
+    },
+    actions: [
+      ({snapshot}, {previousBlock, selection}) => [
+        raise({
+          type: 'select',
+          at: {
+            anchor: selection.anchor,
+            focus: getBlockEndPoint({
+              context: snapshot.context,
+              block: previousBlock,
+            }),
+          },
+        }),
+      ],
+    ],
   }),
 ]
