@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.12.0
+
+### Minor Changes
+
+- [#1658](https://github.com/portabletext/editor/pull/1658) [`b9af25b`](https://github.com/portabletext/editor/commit/b9af25bf0e0611e3c4f9c3993134523f0277b28c) Thanks [@christianhg](https://github.com/christianhg)! - feat: improve `insert.text` composition
+
+  As part of the editors Core Behaviors, `insert.text` now triggers
+  `insert.child` whenever the `marks` on the given span should change. This
+  means, you can now `execute` `insert.text` events to circumvent that Behavior. Or `forward`/`execute` `insert.text` events from `insert.child` events.
+
 ## 2.11.0
 
 ### Minor Changes
