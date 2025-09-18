@@ -12,8 +12,8 @@ import {
   type Editor,
   type EditorEmittedEvent,
 } from '../src'
-import {createTestEditor} from '../src/internal-utils/test-editor'
 import {EditorRefPlugin, EventListenerPlugin} from '../src/plugins'
+import {createTestEditor} from '../src/test/vitest'
 
 async function getEditors({
   schemaDefinition,

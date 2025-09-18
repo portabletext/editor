@@ -8,9 +8,9 @@ import {
   forward,
   type BehaviorEvent,
 } from '../src/behaviors'
-import {createTestEditor} from '../src/internal-utils/test-editor'
 import {getSelectionAfterText} from '../src/internal-utils/text-selection'
 import {BehaviorPlugin} from '../src/plugins'
+import {createTestEditor} from '../src/test/vitest'
 
 describe('event.delete.forward', () => {
   test('Scenario: Merging two text blocks', async () => {

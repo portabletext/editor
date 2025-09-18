@@ -3,9 +3,9 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import React from 'react'
 import {describe, expect, test} from 'vitest'
 import {InternalSlateEditorRefPlugin} from '../plugins/plugin.internal.slate-editor-ref'
+import {createTestEditor} from '../test/vitest'
 import type {PortableTextSlateEditor} from '../types/editor'
 import {getFocusSpan} from './slate-utils'
-import {createTestEditor} from './test-editor'
 
 describe(getFocusSpan.name, () => {
   const keyGenerator = createTestKeyGenerator()

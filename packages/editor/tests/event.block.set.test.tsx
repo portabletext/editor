@@ -2,8 +2,8 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
 import {defineBehavior, execute, raise} from '../src/behaviors'
-import {createTestEditor} from '../src/internal-utils/test-editor'
 import {BehaviorPlugin} from '../src/plugins'
+import {createTestEditor} from '../src/test/vitest'
 
 describe('event.block.set', () => {
   test('Scenario: adding block object property', async () => {

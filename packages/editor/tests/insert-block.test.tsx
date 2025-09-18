@@ -3,9 +3,9 @@ import type {PortableTextBlock} from '@sanity/types'
 import {createRef, type RefObject} from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {PortableTextEditor} from '../src/editor/PortableTextEditor'
-import {createTestEditor} from '../src/internal-utils/test-editor'
 import {InternalChange$Plugin} from '../src/plugins/plugin.internal.change-ref'
 import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
+import {createTestEditor} from '../src/test/vitest'
 import type {EditorChange, EditorSelection} from '../src/types/editor'
 
 describe(PortableTextEditor.insertBlock.name, () => {

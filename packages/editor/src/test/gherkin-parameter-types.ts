@@ -1,6 +1,9 @@
 import {parseTersePtString} from '@portabletext/test'
 import {createParameterType, type ParameterType} from 'racejar'
 
+/**
+ * @internal
+ */
 export type Parameter = {
   [K in keyof typeof parameterType]: (typeof parameterType)[K] extends ParameterType<
     infer TParameterType
@@ -9,7 +12,7 @@ export type Parameter = {
     : never
 }
 
-export const parameterType = {
+const parameterType = {
   annotation: createParameterType<'comment' | 'link'>({
     name: 'annotation',
     matcher: /"(comment|link)"/,
@@ -78,6 +81,9 @@ export const parameterType = {
   }),
 }
 
+/**
+ * @internal
+ */
 export const parameterTypes = [
   parameterType.annotation,
   parameterType.blockObject,

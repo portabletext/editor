@@ -2,11 +2,10 @@ import {defineSchema} from '@portabletext/schema'
 import {Before} from 'racejar'
 import {Feature} from 'racejar/vitest'
 import behaviorMarkdownFeature from '../gherkin-spec/behavior.markdown.feature?raw'
-import {createTestEditor} from '../src/internal-utils/test-editor'
 import {MarkdownPlugin} from '../src/plugins'
-import {parameterTypes} from './gherkin-parameter-types'
-import type {Context} from './step-context'
-import {stepDefinitions} from './step-definitions'
+import {parameterTypes} from '../src/test'
+import {createTestEditor, stepDefinitions} from '../src/test/vitest'
+import type {Context} from '../src/test/vitest/step-context'
 
 Feature({
   hooks: [

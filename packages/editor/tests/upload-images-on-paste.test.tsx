@@ -3,8 +3,8 @@ import {defineSchema} from '@portabletext/schema'
 import type {PortableTextObject} from '@sanity/types'
 import {expect, test, vi} from 'vitest'
 import {defineBehavior, effect, execute, raise} from '../src/behaviors'
-import {createTestEditor} from '../src/internal-utils/test-editor'
 import {BehaviorPlugin} from '../src/plugins'
+import {createTestEditor} from '../src/test/vitest'
 
 // Custom Behavior to resolve images, either by setting the src
 // and alt props or deleting the block if the upload failed.
