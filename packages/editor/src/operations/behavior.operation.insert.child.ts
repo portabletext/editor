@@ -1,5 +1,6 @@
 import {isTextBlock} from '@portabletext/schema'
 import {Transforms} from 'slate'
+import {EDITOR_TO_PENDING_SELECTION} from 'slate-dom'
 import {parseInlineObject, parseSpan} from '../internal-utils/parse-blocks'
 import {getFocusBlock, getFocusSpan} from '../internal-utils/slate-utils'
 import {VOID_CHILD_KEY} from '../internal-utils/values'
@@ -53,6 +54,13 @@ export const insertChildOperationImplementation: BehaviorOperationImplementation
         select: true,
       })
     }
+
+    // This makes sure the selection is set correctly when event handling is run
+    // through Slate's Android input handling
+    EDITOR_TO_PENDING_SELECTION.set(
+      operation.editor,
+      operation.editor.selection,
+    )
 
     return
   }
