@@ -168,6 +168,10 @@ export function performEvent({
     // action prevented
     defaultBehaviorOverwritten = true
 
+    if (eventBehavior.actions.length === 0) {
+      nativeEventPrevented = true
+    }
+
     for (const actionSet of eventBehavior.actions) {
       const actionsSnapshot = getSnapshot()
 
