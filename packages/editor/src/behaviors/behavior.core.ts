@@ -3,6 +3,7 @@ import {coreAnnotationBehaviors} from './behavior.core.annotations'
 import {coreBlockObjectBehaviors} from './behavior.core.block-objects'
 import {coreDecoratorBehaviors} from './behavior.core.decorators'
 import {coreDndBehaviors} from './behavior.core.dnd'
+import {coreInsertBehaviors} from './behavior.core.insert'
 import {coreInsertBreakBehaviors} from './behavior.core.insert-break'
 import {coreListBehaviors} from './behavior.core.lists'
 
@@ -20,6 +21,7 @@ export const coreBehaviorsConfig = [
   coreBlockObjectBehaviors.breakingBlockObject,
   coreBlockObjectBehaviors.deletingEmptyTextBlockAfterBlockObject,
   coreBlockObjectBehaviors.deletingEmptyTextBlockBeforeBlockObject,
+  ...coreInsertBehaviors,
   coreListBehaviors.clearListOnBackspace,
   coreListBehaviors.unindentListOnBackspace,
   coreListBehaviors.mergeTextIntoListOnDelete,
