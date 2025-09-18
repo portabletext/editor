@@ -1,7 +1,7 @@
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
-import {createTestEditor} from '../src/internal-utils/test-editor'
+import {createTestEditor} from '../src/test/vitest'
 
 describe('event.child.set', () => {
   test('Scenario: Setting properties on inline object', async () => {

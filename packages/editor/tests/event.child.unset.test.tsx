@@ -1,7 +1,7 @@
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
-import {createTestEditor} from '../src/internal-utils/test-editor'
+import {createTestEditor} from '../src/test/vitest'
 
 describe('event.child.unset', () => {
   test('Scenario: Unsetting properties on span', async () => {

@@ -3,12 +3,12 @@ import type {PortableTextTextBlock} from '@sanity/types'
 import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test} from 'vitest'
 import {defineSchema} from '../src'
-import {createTestEditor} from '../src/internal-utils/test-editor'
 import {getTextMarks} from '../src/internal-utils/text-marks'
 import {
   getSelectionBeforeText,
   getTextSelection,
 } from '../src/internal-utils/text-selection'
+import {createTestEditor} from '../src/test/vitest'
 
 describe('event.annotation', () => {
   test('.add/.remove', async () => {

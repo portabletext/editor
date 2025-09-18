@@ -1,6 +1,9 @@
 import type {Locator} from '@vitest/browser/context'
-import type {Editor} from '../src'
+import type {Editor} from '../../editor'
 
+/**
+ * @internal
+ */
 export type Context = {
   editor: Editor
   locator: Locator

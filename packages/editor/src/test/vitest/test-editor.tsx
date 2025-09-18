@@ -5,14 +5,14 @@ import {page} from '@vitest/browser/context'
 import React from 'react'
 import {expect, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
-import type {Context} from '../../gherkin-tests-v2/step-context'
-import type {Editor} from '../editor'
+import type {Editor} from '../../editor'
 import {
   PortableTextEditable,
   type PortableTextEditableProps,
-} from '../editor/Editable'
-import {EditorProvider} from '../editor/editor-provider'
-import {EditorRefPlugin} from '../plugins/plugin.editor-ref'
+} from '../../editor/Editable'
+import {EditorProvider} from '../../editor/editor-provider'
+import {EditorRefPlugin} from '../../plugins/plugin.editor-ref'
+import type {Context} from './step-context'
 
 type CreateTestEditorOptions = {
   initialValue?: Array<PortableTextBlock>
@@ -22,6 +22,9 @@ type CreateTestEditorOptions = {
   editableProps?: PortableTextEditableProps
 }
 
+/**
+ * @internal
+ */
 export async function createTestEditor(
   options: CreateTestEditorOptions = {},
 ): Promise<
