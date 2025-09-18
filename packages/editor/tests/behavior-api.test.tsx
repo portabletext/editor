@@ -391,6 +391,26 @@ describe('Behavior API', () => {
     })
   })
 
+  test('Scenario: no action set cancels a native event', async () => {
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'keyboard.keydown',
+              actions: [],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'a')
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+    })
+  })
+
   test('Scenario: `effect` can be used to `send` a `focus` event', async () => {
     const focusedBlurredEvents: Array<EditorEmittedEvent> = []
 
