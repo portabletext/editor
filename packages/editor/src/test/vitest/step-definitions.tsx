@@ -181,6 +181,9 @@ export const stepDefinitions = [
   When('{string} is typed', async (context: Context, text: string) => {
     await userEvent.type(context.locator, text)
   }),
+  When('{string} is inserted', (context: Context, text: string) => {
+    context.editor.send({type: 'insert.text', text})
+  }),
   Then(
     '{terse-pt} is in block {key}',
     (context: Context, text: Array<string>, key: string) => {
