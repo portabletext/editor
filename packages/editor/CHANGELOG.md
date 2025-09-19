@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.12.1
+
+### Patch Changes
+
+- [#1662](https://github.com/portabletext/editor/pull/1662) [`0dbd421`](https://github.com/portabletext/editor/commit/0dbd42147f0bf592ed9a795c53dee84d9019cb1f) Thanks [@christianhg](https://github.com/christianhg)! - fix(behaviors): let empty action sets cancel native events
+
+- [#1662](https://github.com/portabletext/editor/pull/1662) [`d689f45`](https://github.com/portabletext/editor/commit/d689f45837e54dc80bb92188b350cc7fe5083a1c) Thanks [@christianhg](https://github.com/christianhg)! - fix: issue with reducing selection hanging on an empty line
+
 ## 2.12.0
 
 ### Minor Changes
