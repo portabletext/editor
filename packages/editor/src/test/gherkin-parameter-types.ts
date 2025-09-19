@@ -70,7 +70,7 @@ const parameterType = {
   }),
   tersePt: createParameterType<Array<string>>({
     name: 'terse-pt',
-    matcher: /"([a-z-,#>:\\n \d|{}'"‘’“”?]*)"/u,
+    matcher: /"([a-z-,#>:\\n \d|{}'"‘’“”?—]*)"/u,
     type: Array,
     transform: parseTersePtString,
   }),
