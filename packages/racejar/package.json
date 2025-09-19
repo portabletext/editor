@@ -21,35 +21,59 @@
   "license": "MIT",
   "author": "Sanity.io <hello@sanity.io>",
   "sideEffects": false,
+  "type": "module",
   "exports": {
     ".": {
-      "default": "./src/index.ts",
-      "types": "./src/index.ts"
+      "source": "./src/index.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
     },
     "./jest": {
-      "default": "./src/jest/index.ts",
-      "types": "./src/jest/index.ts"
+      "source": "./src/jest/index.ts",
+      "import": "./dist/jest/index.js",
+      "require": "./dist/jest/index.cjs",
+      "default": "./dist/jest/index.js"
     },
     "./playwright": {
-      "default": "./src/playwright/index.ts",
-      "types": "./src/playwright/index.ts"
+      "source": "./src/playwright/index.ts",
+      "import": "./dist/playwright/index.js",
+      "require": "./dist/playwright/index.cjs",
+      "default": "./dist/playwright/index.js"
     },
     "./vitest": {
-      "default": "./src/vitest/index.ts",
-      "types": "./src/vitest/index.ts"
-    }
+      "source": "./src/vitest/index.ts",
+      "import": "./dist/vitest/index.js",
+      "require": "./dist/vitest/index.cjs",
+      "default": "./dist/vitest/index.js"
+    },
+    "./package.json": "./package.json"
   },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
+    "build": "pkg-utils build --strict --check --clean",
     "check:lint": "biome lint .",
     "check:types": "tsc",
+    "check:types:watch": "tsc --watch",
+    "clean": "del .turbo && del dist && del node_modules",
+    "dev": "pkg-utils watch",
     "lint:fix": "biome lint --write .",
+    "prepublishOnly": "turbo run build",
     "test": "vitest --run",
     "test:watch": "vitest"
   },
-  "devDependencies": {
+  "dependencies": {
     "@cucumber/cucumber-expressions": "^18.0.1",
     "@cucumber/gherkin": "^35.0.0",
-    "@cucumber/messages": "^29.0.1",
+    "@cucumber/messages": "^29.0.1"
+  },
+  "devDependencies": {
     "@jest/globals": "^30.1.2",
     "@playwright/test": "^1.55.0",
     "@sanity/pkg-utils": "^8.1.4",
