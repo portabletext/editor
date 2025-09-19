@@ -172,7 +172,11 @@ export function performEvent({
       nativeEventPrevented = true
     }
 
+    let actionSetIndex = -1
+
     for (const actionSet of eventBehavior.actions) {
+      actionSetIndex++
+
       const actionsSnapshot = getSnapshot()
 
       let actions: Array<BehaviorAction> = []
@@ -205,7 +209,17 @@ export function performEvent({
 
       let undoStepCreated = false
 
-      if (actions.some((action) => action.type === 'execute')) {
+      if (actionSetIndex > 0) {
+        // Since there are multiple action sets
+        createUndoStep(editor)
+
+        undoStepCreated = true
+      }
+
+      if (
+        !undoStepCreated &&
+        actions.some((action) => action.type === 'execute')
+      ) {
         // Since at least one action is about to `execute` changes in the editor,
         // we set up a new undo step.
         // All actions performed recursively from now will be squashed into this
