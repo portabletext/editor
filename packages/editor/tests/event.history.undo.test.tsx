@@ -369,4 +369,156 @@ describe('event.history.undo', () => {
       })
     })
   })
+
+  test('Scenario: `forward` in one step, `raise` in another', async () => {
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'a',
+              actions: [
+                ({event}) => [forward(event)],
+                () => [
+                  raise({type: 'delete.backward', unit: 'character'}),
+                  raise({type: 'insert.text', text: 'b'}),
+                ],
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'a')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['b'])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
+    })
+  })
+
+  test('Scenario: `forward` twice in same step', async () => {
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'a',
+              actions: [({event}) => [forward(event), forward(event)]],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'a')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['aa'])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+    })
+  })
+
+  test('Scenario: `forward` twice in separate steps', async () => {
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'a',
+              actions: [
+                ({event}) => [forward(event)],
+                ({event}) => [forward(event)],
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'a')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['aa'])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
+    })
+  })
+
+  test('Scenario: two `forward`s in separate steps does not squash the undo stack', async () => {
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'a',
+              actions: [
+                ({event}) => [forward(event)],
+                ({event}) => [forward(event)],
+              ],
+            }),
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'a',
+              actions: [
+                // 'A' is inserted in its own undo step
+                () => [raise({type: 'insert.text', text: 'A'})],
+                // 'B' is inserted in its own undo step
+                () => [raise({type: 'insert.text', text: 'B'})],
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'a')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['ABAB'])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['ABA'])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['AB'])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['A'])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+    })
+  })
 })
