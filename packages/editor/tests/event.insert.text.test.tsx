@@ -1,5 +1,5 @@
 import {isSpan} from '@portabletext/schema'
-import {getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
@@ -15,6 +15,46 @@ import {BehaviorPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.insert.text', () => {
+  test('Scenario: Consecutive `insert.text` events', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {editor, locator} = await createTestEditor({keyGenerator})
+
+    await userEvent.click(locator)
+
+    editor.send({type: 'insert.text', text: 'foo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+        focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'insert.text', text: 'bar'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foobar'])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 6},
+        focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 6},
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'delete.backward', unit: 'character'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['fooba'])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 5},
+        focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 5},
+        backward: false,
+      })
+    })
+  })
+
   test('Scenario: `insert.text` can trigger `insert.child` events', async () => {
     const insertChildEvents: Array<BehaviorEvent> = []
     const {editor, locator} = await createTestEditor({
