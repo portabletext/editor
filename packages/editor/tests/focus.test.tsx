@@ -32,25 +32,23 @@ describe('focus', () => {
 
     await userEvent.click(editorLocator)
 
-    const initialEvents = [
-      {
-        type: 'ready',
-      },
-      expect.objectContaining({
-        type: 'focused',
-      }),
-      {
-        type: 'selection',
-        selection: {
-          anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
-          focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
-          backward: false,
-        },
-      },
-    ]
-
     await vi.waitFor(() => {
-      expect(events).toEqual(initialEvents)
+      expect(events).toEqual([
+        {
+          type: 'ready',
+        },
+        expect.objectContaining({
+          type: 'focused',
+        }),
+        {
+          type: 'selection',
+          selection: {
+            anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+            focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+            backward: false,
+          },
+        },
+      ])
     })
 
     await userEvent.click(toolbarLocator)
@@ -140,35 +138,33 @@ describe('focus', () => {
 
     await userEvent.click(barSpanLocator)
 
-    const initialEvents = [
-      {
-        type: 'value changed',
-        value: initialValue,
-      },
-      {
-        type: 'ready',
-      },
-      expect.objectContaining({
-        type: 'focused',
-      }),
-      {
-        type: 'selection',
-        selection: {
-          anchor: {
-            path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
-            offset: 0,
-          },
-          focus: {
-            path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
-            offset: 0,
-          },
-          backward: false,
-        },
-      },
-    ]
-
     await vi.waitFor(() => {
-      expect(events).toEqual(initialEvents)
+      expect(events).toEqual([
+        {
+          type: 'value changed',
+          value: initialValue,
+        },
+        {
+          type: 'ready',
+        },
+        expect.objectContaining({
+          type: 'focused',
+        }),
+        {
+          type: 'selection',
+          selection: {
+            anchor: {
+              path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
+              offset: 0,
+            },
+            focus: {
+              path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
+              offset: 0,
+            },
+            backward: false,
+          },
+        },
+      ])
     })
 
     await userEvent.click(toolbarLocator)
