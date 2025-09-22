@@ -6,6 +6,7 @@ import {
   getFocusInlineObject,
   getPreviousBlock,
   isSelectionCollapsed,
+  isSelectionExpanded,
 } from '../selectors'
 import {getBlockEndPoint, isEmptyTextBlock} from '../utils'
 import {raise} from './behavior.types.action'
@@ -34,6 +35,18 @@ export const abstractKeyboardBehaviors = [
       defaultKeyboardShortcuts.break.guard(event.originEvent) &&
       isSelectionCollapsed(snapshot) &&
       getFocusInlineObject(snapshot),
+    actions: [() => [raise({type: 'insert.break'})]],
+  }),
+
+  /**
+   * On Firefox, Enter might collapse the selection. To mitigate this, we
+   * `raise` an `insert.break` event manually.
+   */
+  defineBehavior({
+    on: 'keyboard.keydown',
+    guard: ({snapshot, event}) =>
+      defaultKeyboardShortcuts.break.guard(event.originEvent) &&
+      isSelectionExpanded(snapshot),
     actions: [() => [raise({type: 'insert.break'})]],
   }),
 
