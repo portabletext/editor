@@ -2,4 +2,4 @@
 '@portabletext/editor': patch
 ---
 
-fix: undo heuristics related to `forward`
+fix: create undo steps if there is more than 1 action set
