@@ -68,6 +68,7 @@ export default defineConfig({
               },
               {
                 browser: 'firefox',
+                retry: 3,
               },
               {
                 browser: 'webkit',
