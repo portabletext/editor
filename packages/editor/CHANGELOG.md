@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.12.2
+
+### Patch Changes
+
+- [#1664](https://github.com/portabletext/editor/pull/1664) [`7e57673`](https://github.com/portabletext/editor/commit/7e5767322280e1338d92c3113324653699a4d5da) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency xstate to ^5.22.0
+
+- [#1668](https://github.com/portabletext/editor/pull/1668) [`a5886f3`](https://github.com/portabletext/editor/commit/a5886f34dba657d12d656dd36fa9890909e660cc) Thanks [@christianhg](https://github.com/christianhg)! - fix: issue with calculating "mark state"
+
+- [#1666](https://github.com/portabletext/editor/pull/1666) [`0fa420a`](https://github.com/portabletext/editor/commit/0fa420a36895d42c359180b3012ddd1e6f353d41) Thanks [@christianhg](https://github.com/christianhg)! - fix: create undo steps if there is more than 1 action set
+
+- [#1668](https://github.com/portabletext/editor/pull/1668) [`52bf635`](https://github.com/portabletext/editor/commit/52bf635949e9050497bb1c077f6ec7caf97acbcb) Thanks [@christianhg](https://github.com/christianhg)! - fix: issue with Enter collapsing the selection on Firefox
+
 ## 2.12.1
 
 ### Patch Changes

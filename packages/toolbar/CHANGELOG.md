@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.2.12
+
+### Patch Changes
+
+- [#1664](https://github.com/portabletext/editor/pull/1664) [`7e57673`](https://github.com/portabletext/editor/commit/7e5767322280e1338d92c3113324653699a4d5da) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency xstate to ^5.22.0
+
+- Updated dependencies [[`7e57673`](https://github.com/portabletext/editor/commit/7e5767322280e1338d92c3113324653699a4d5da), [`a5886f3`](https://github.com/portabletext/editor/commit/a5886f34dba657d12d656dd36fa9890909e660cc), [`0fa420a`](https://github.com/portabletext/editor/commit/0fa420a36895d42c359180b3012ddd1e6f353d41), [`52bf635`](https://github.com/portabletext/editor/commit/52bf635949e9050497bb1c077f6ec7caf97acbcb)]:
+  - @portabletext/editor@2.12.2
+
 ## 2.2.11
 
 ### Patch Changes

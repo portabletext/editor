@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0
+
+### Minor Changes
+
+- [#1668](https://github.com/portabletext/editor/pull/1668) [`db705d2`](https://github.com/portabletext/editor/commit/db705d2e1b68d467a2f1f931458923cccf8846fb) Thanks [@christianhg](https://github.com/christianhg)! - feat: package up racejar
+
 ## 1.2.15
 
 ### Patch Changes
