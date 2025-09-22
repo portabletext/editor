@@ -61,14 +61,7 @@ export const stepDefinitions = [
   }),
 
   Given('the editor is focused', async (context: Context) => {
-    context.editor.send({
-      type: 'focus',
-    })
-
-    await vi.waitFor(() => {
-      const selection = context.editor.getSnapshot().context.selection
-      expect(selection).not.toBeNull()
-    })
+    await userEvent.click(context.locator)
   }),
 
   Given(
