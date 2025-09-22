@@ -446,12 +446,18 @@ describe('Behavior API', () => {
     })
 
     await userEvent.click(locator)
+
+    await vi.waitFor(() => {
+      expect(focusedBlurredEvents.slice(0, 1)).toEqual([
+        expect.objectContaining({type: 'focused'}),
+      ])
+    })
+
     await userEvent.type(locator, 'a')
     editor.send({type: 'blur'})
 
     await vi.waitFor(() => {
-      expect(focusedBlurredEvents).toEqual([
-        expect.objectContaining({type: 'focused'}),
+      expect(focusedBlurredEvents.slice(1, 3)).toEqual([
         expect.objectContaining({type: 'blurred'}),
         expect.objectContaining({type: 'focused'}),
       ])
@@ -493,11 +499,17 @@ describe('Behavior API', () => {
     })
 
     await userEvent.click(locator)
+
+    await vi.waitFor(() => {
+      expect(focusedBlurredEvents.slice(0, 1)).toEqual([
+        expect.objectContaining({type: 'focused'}),
+      ])
+    })
+
     await userEvent.type(locator, 'a')
 
     await vi.waitFor(() => {
-      expect(focusedBlurredEvents).toEqual([
-        expect.objectContaining({type: 'focused'}),
+      expect(focusedBlurredEvents.slice(1)).toEqual([
         expect.objectContaining({type: 'blurred'}),
       ])
     })
