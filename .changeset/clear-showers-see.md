@@ -1,5 +1,5 @@
 ---
-'racejar': patch
+'racejar': minor
 ---
 
-fix: package up racejar
+feat: package up racejar
