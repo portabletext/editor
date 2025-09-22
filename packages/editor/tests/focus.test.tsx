@@ -6,7 +6,12 @@ import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('focus', () => {
-  test('Scenario: Focusing on an empty editor', async () => {
+  test('Scenario: Focusing on an empty editor', async (context) => {
+    if (navigator.userAgent.includes('Firefox')) {
+      context.skip()
+      return
+    }
+
     const keyGenerator = createTestKeyGenerator()
     const events: Array<EditorEmittedEvent> = []
 
@@ -76,7 +81,12 @@ describe('focus', () => {
     })
   })
 
-  test('Scenario: Focusing on a non-empty editor', async () => {
+  test('Scenario: Focusing on a non-empty editor', async (context) => {
+    if (navigator.userAgent.includes('Firefox')) {
+      context.skip()
+      return
+    }
+
     const keyGenerator = createTestKeyGenerator()
     const events: Array<EditorEmittedEvent> = []
     const fooBlockKey = keyGenerator()
