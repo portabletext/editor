@@ -1,5 +1,6 @@
 import type {Schema} from '@portabletext/schema'
 import {Schema as SanitySchema} from '@sanity/schema'
+import {builtinTypes} from '@sanity/schema/_internal'
 import type {ArrayDefinition, ArraySchemaType} from '@sanity/types'
 import {createPortableTextMemberSchemaTypes} from './portable-text-member-schema-types'
 import {portableTextMemberSchemaTypesToSchema} from './portable-text-member-schema-types-to-schema'
@@ -42,6 +43,6 @@ export function sanitySchemaToPortableTextSchema(
 function compileType(rawType: any) {
   return SanitySchema.compile({
     name: 'blockTypeSchema',
-    types: [rawType],
+    types: [rawType, ...builtinTypes],
   }).get(rawType.name)
 }
