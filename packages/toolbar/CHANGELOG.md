@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.2.14
+
+### Patch Changes
+
+- Updated dependencies [[`b9744c9`](https://github.com/portabletext/editor/commit/b9744c901b7b12197e14bf6e9ea7ec7d57217fa4), [`5e87231`](https://github.com/portabletext/editor/commit/5e87231bad00e06d6b29aacc84b6655fdc1b5159), [`27c50d0`](https://github.com/portabletext/editor/commit/27c50d0ae12038f6b4bada7c95ee1cdf1bbb3bbe), [`ccd536e`](https://github.com/portabletext/editor/commit/ccd536eb7b2f8f28f74abeacf955153006e0a8f5), [`60b4164`](https://github.com/portabletext/editor/commit/60b416487f0ff8dfd58f8256f548dc75bc8a3fd0)]:
+  - @portabletext/editor@2.13.0
+
 ## 2.2.13
 
 ### Patch Changes
