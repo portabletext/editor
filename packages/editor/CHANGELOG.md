@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.12.3
+
+### Patch Changes
+
+- [#1670](https://github.com/portabletext/editor/pull/1670) [`b23cdd1`](https://github.com/portabletext/editor/commit/b23cdd1ff131304a14461bf45dabe90453e502a3) Thanks [@christianhg](https://github.com/christianhg)! - fix: allow consecutive `insert.text` events
+
+- Updated dependencies [[`b7997e1`](https://github.com/portabletext/editor/commit/b7997e1f37cc65a4cebc90967a81852690980262)]:
+  - @portabletext/sanity-bridge@1.1.11
+  - @portabletext/block-tools@3.5.7
+
 ## 2.12.2
 
 ### Patch Changes
