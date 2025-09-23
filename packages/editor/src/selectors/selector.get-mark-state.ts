@@ -20,6 +20,7 @@ export type MarkState =
 /**
  * Given that text is inserted at the current position, what marks should
  * be applied?
+ * @beta
  */
 export const getMarkState: EditorSelector<MarkState | undefined> = (
   snapshot,
