@@ -55,7 +55,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.2.4",
     "@changesets/changelog-github": "^0.5.1",
-    "@changesets/cli": "^2.29.6",
+    "@changesets/cli": "^2.29.7",
     "@ianvs/prettier-plugin-sort-imports": "^4.6.2",
     "@playwright/test": "^1.55.0",
     "@sanity/prettier-config": "^1.0.6",
