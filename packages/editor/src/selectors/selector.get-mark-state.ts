@@ -1,4 +1,6 @@
 import type {EditorSelector} from '../editor/editor-selector'
+import {isBlockPath} from '../types/paths'
+import {blockOffsetToSpanSelectionPoint} from '../utils'
 import {isSelectionExpanded} from '../utils/util.is-selection-expanded'
 import {getFocusSpan} from './selector.get-focus-span'
 import {getFocusTextBlock} from './selector.get-focus-text-block'
@@ -29,15 +31,69 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
     return undefined
   }
 
+  let selection = snapshot.context.selection
   const focusTextBlock = getFocusTextBlock(snapshot)
-  const focusSpan = getFocusSpan(snapshot)
 
-  if (!focusTextBlock || !focusSpan) {
+  if (!focusTextBlock) {
     return undefined
   }
 
-  if (isSelectionExpanded(snapshot.context.selection)) {
-    const selectedSpans = getSelectedSpans(snapshot)
+  if (isBlockPath(selection.anchor.path)) {
+    const spanSelectionPoint = blockOffsetToSpanSelectionPoint({
+      context: snapshot.context,
+      blockOffset: {
+        path: selection.anchor.path,
+        offset: selection.anchor.offset,
+      },
+      direction: selection.backward ? 'backward' : 'forward',
+    })
+
+    selection = spanSelectionPoint
+      ? {
+          ...selection,
+          anchor: spanSelectionPoint,
+        }
+      : selection
+  }
+
+  if (isBlockPath(selection.focus.path)) {
+    const spanSelectionPoint = blockOffsetToSpanSelectionPoint({
+      context: snapshot.context,
+      blockOffset: {
+        path: selection.focus.path,
+        offset: selection.focus.offset,
+      },
+      direction: selection.backward ? 'backward' : 'forward',
+    })
+
+    selection = spanSelectionPoint
+      ? {
+          ...selection,
+          focus: spanSelectionPoint,
+        }
+      : selection
+  }
+
+  const focusSpan = getFocusSpan({
+    ...snapshot,
+    context: {
+      ...snapshot.context,
+      selection,
+    },
+  })
+
+  if (!focusSpan) {
+    return undefined
+  }
+
+  if (isSelectionExpanded(selection)) {
+    const selectedSpans = getSelectedSpans({
+      ...snapshot,
+      context: {
+        ...snapshot.context,
+        selection,
+      },
+    })
 
     let index = 0
     let marks: Array<string> = []
@@ -81,8 +137,20 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
   const atTheEndOfSpan =
     snapshot.context.selection.anchor.offset === focusSpan.node.text.length
 
-  const previousSpan = getPreviousSpan(snapshot)
-  const nextSpan = getNextSpan(snapshot)
+  const previousSpan = getPreviousSpan({
+    ...snapshot,
+    context: {
+      ...snapshot.context,
+      selection,
+    },
+  })
+  const nextSpan = getNextSpan({
+    ...snapshot,
+    context: {
+      ...snapshot.context,
+      selection,
+    },
+  })
   const nextSpanAnnotations =
     nextSpan?.node?.marks?.filter((mark) => !decorators.includes(mark)) ?? []
   const spanAnnotations = marks.filter((mark) => !decorators.includes(mark))
