@@ -202,9 +202,19 @@ function setPatch(editor: PortableTextSlateEditor, patch: SetPatch) {
 
   const isTextBlock = editor.isTextBlock(block.node)
 
-  // Ignore patches targeting nested void data, like 'markDefs'
-  if (isTextBlock && patch.path.length > 1 && patch.path[1] !== 'children') {
-    return false
+  if (isTextBlock && patch.path[1] !== 'children') {
+    const updatedBlock = applyAll(block.node, [
+      {
+        ...patch,
+        path: patch.path.slice(1),
+      },
+    ])
+
+    Transforms.setNodes(editor, updatedBlock as Partial<Node>, {
+      at: [block.index],
+    })
+
+    return true
   }
 
   const child = findBlockChild(block, patch.path)
