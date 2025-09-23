@@ -200,6 +200,50 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
     )
   })
 
+  test('array definition with image', () => {
+    const sanitySchema: ArrayDefinition = {
+      type: 'array',
+      name: 'content',
+      of: [
+        defineField({type: 'block', name: 'block'}),
+        defineField({type: 'image', name: 'image'}),
+      ],
+    }
+
+    expect(sanitySchemaToPortableTextSchema(sanitySchema)).toEqual({
+      ...defaultSchema,
+      blockObjects: [
+        ...defaultSchema.blockObjects,
+        {
+          name: 'image',
+          title: 'Image',
+          fields: [
+            {
+              name: 'asset',
+              title: 'Asset',
+              type: 'object',
+            },
+            {
+              name: 'media',
+              title: 'Media',
+              type: 'object',
+            },
+            {
+              name: 'hotspot',
+              title: 'Hotspot',
+              type: 'object',
+            },
+            {
+              name: 'crop',
+              title: 'Crop',
+              type: 'object',
+            },
+          ],
+        },
+      ],
+    })
+  })
+
   test('compiled back and forth', () => {
     const imageType = defineType({
       name: 'custom image',
