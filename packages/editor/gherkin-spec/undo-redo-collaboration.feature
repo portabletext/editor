@@ -67,7 +67,6 @@ Feature: Undo/Redo Collaboration
     And "foo" has no marks
     And "bar" has marks "l1"
 
-  @skip
   Scenario: Undoing local annotation added after remote annotation
     Given the text "foobar"
     And a "link" "l1" around "bar" by editor B
