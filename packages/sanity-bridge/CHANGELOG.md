@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.11
+
+### Patch Changes
+
+- [#1672](https://github.com/portabletext/editor/pull/1672) [`b7997e1`](https://github.com/portabletext/editor/commit/b7997e1f37cc65a4cebc90967a81852690980262) Thanks [@christianhg](https://github.com/christianhg)! - fix: handle `ArrayDefinition` with image field
+
 ## 1.1.10
 
 ### Patch Changes
