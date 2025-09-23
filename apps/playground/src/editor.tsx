@@ -16,6 +16,7 @@ import {
   type RenderPlaceholderFunction,
   type RenderStyleFunction,
 } from '@portabletext/editor'
+import {emDashRule, InputRulePlugin} from '@portabletext/plugin-input-rule'
 import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 import {OneLinePlugin} from '@portabletext/plugin-one-line'
 import {useSelector} from '@xstate/react'
@@ -111,6 +112,7 @@ export function Editor(props: {
             schemaDefinition: playgroundSchemaDefinition,
           }}
         >
+          <InputRulePlugin rule={emDashRule} />
           <EditorEventListener
             editorRef={props.editorRef}
             value={value}
