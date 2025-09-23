@@ -1420,8 +1420,50 @@ describe('event.patches', () => {
     })
   })
 
-  // TODO: We should revisit this and allow `set` inside text blocks
-  test('Scenario: `set`ing inside text block is a noop', async () => {
+  test('Scenario: `set`ing `style` on text block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          origin: 'remote',
+          path: [{_key: blockKey}, 'style'],
+          value: 'h1',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      return expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'h1',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: `set`ing deep inside text block', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const fooKey = keyGenerator()
@@ -1469,8 +1511,8 @@ describe('event.patches', () => {
         {
           type: 'set',
           origin: 'remote',
-          path: [{_key: blockKey}, 'markDefs', {_key: markDefKey}],
-          value: {href: 'https://www.sanity.io'},
+          path: [{_key: blockKey}, 'markDefs', {_key: markDefKey}, 'href'],
+          value: 'https://www.sanity.io',
         },
         {
           type: 'set',
@@ -1484,7 +1526,16 @@ describe('event.patches', () => {
 
     await vi.waitFor(() => {
       return expect(editor.getSnapshot().context.value).toEqual([
-        initialValue[0],
+        {
+          ...initialValue[0],
+          markDefs: [
+            {
+              _key: markDefKey,
+              _type: 'link',
+              href: 'https://www.sanity.io',
+            },
+          ],
+        },
         {
           _key: imageKey,
           _type: 'image',
