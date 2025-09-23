@@ -63,7 +63,7 @@
   },
   "devDependencies": {
     "@portabletext/test": "workspace:^",
-    "@sanity/pkg-utils": "^8.1.4",
+    "@sanity/pkg-utils": "^8.1.14",
     "@sanity/schema": "^4.9.0",
     "@sanity/types": "^4.9.0",
     "@types/jsdom": "^20.0.1",
