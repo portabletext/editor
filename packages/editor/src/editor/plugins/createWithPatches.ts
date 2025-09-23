@@ -263,6 +263,7 @@ export function createWithPatches({
       // Emit all patches
       if (patches.length > 0) {
         for (const patch of patches) {
+          console.log('send patch', patch)
           editorActor.send({
             type: 'internal.patch',
             patch: {...patch, origin: 'local'},

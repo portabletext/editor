@@ -86,6 +86,7 @@ export const mutationMachine = setup({
     }),
     'emit has pending mutations': emit({type: 'has pending mutations'}),
     'emit mutations': enqueueActions(({context, enqueue}) => {
+      console.log('emit mutations', context.pendingMutations)
       for (const bulk of context.pendingMutations) {
         enqueue.emit({
           type: 'mutation',
@@ -100,6 +101,8 @@ export const mutationMachine = setup({
     'defer mutation': assign({
       pendingMutations: ({context, event}) => {
         assertEvent(event, 'patch')
+
+        console.log('defer mutation', event.patch)
 
         if (context.pendingMutations.length === 0) {
           return [

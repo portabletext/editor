@@ -1,8 +1,16 @@
+import {PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
-import type {EditorEmittedEvent} from '../src'
-import {defineBehavior, effect, execute, forward, raise} from '../src/behaviors'
+import {defineSchema, type EditorEmittedEvent} from '../src'
+import {
+  defineBehavior,
+  effect,
+  execute,
+  forward,
+  InsertPlacement,
+  raise,
+} from '../src/behaviors'
 import {getSelectionAfterText} from '../src/internal-utils/text-selection'
 import {BehaviorPlugin, EventListenerPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
@@ -594,6 +602,90 @@ describe('Behavior API', () => {
 
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo', ' bar'])
+    })
+  })
+
+  test.only('Scenario: Effects run after mutations', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    let mutationTimestamp: number | undefined
+    let effectTimestamp: number | undefined
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <>
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'mutation') {
+                mutationTimestamp = Date.now()
+                console.log('mutation', mutationTimestamp - effectTimestamp)
+              }
+            }}
+          />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior<{
+                block: PortableTextBlock
+                placement: InsertPlacement
+                select: 'end' | 'start' | 'none'
+              }>({
+                on: 'custom.insert.block',
+                actions: [
+                  ({event}) => [
+                    execute({
+                      type: 'insert.block',
+                      block: event.block,
+                      placement: event.placement,
+                      select: event.select,
+                    }),
+                  ],
+                  () => [
+                    effect(() => {
+                      effectTimestamp = Date.now()
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'custom.insert.block',
+      block: {
+        _type: 'image',
+      },
+      placement: 'after',
+      select: 'end',
+    })
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
+        'foo',
+        '{image}',
+      ])
+    })
+
+    await vi.waitFor(() => {
+      expect(mutationTimestamp).toBeDefined()
+      expect(effectTimestamp).toBeDefined()
+
+      // The effect happens after the mutation
+      expect(effectTimestamp ?? 0).toBeGreaterThan(mutationTimestamp ?? 0)
     })
   })
 })

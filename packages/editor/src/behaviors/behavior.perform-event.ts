@@ -128,6 +128,7 @@ export function performEvent({
       })
     })
 
+    console.log('onChange', event.type)
     editor.onChange()
 
     return
@@ -251,6 +252,7 @@ export function performEvent({
           for (const action of actions) {
             if (action.type === 'effect') {
               try {
+                console.log('effect')
                 action.effect({
                   send: sendBack,
                 })
