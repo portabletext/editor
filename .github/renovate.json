@@ -81,6 +81,11 @@
       "groupName": "cucumber"
     },
     {
+      "description": "Group JSDOM packages",
+      "matchPackageNames": ["/jsdom/"],
+      "groupName": "jsdom"
+    },
+    {
       "matchPackageNames": [
         "react-compiler-runtime",
         "babel-plugin-react-compiler",
