@@ -467,7 +467,7 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0(@types/react@19.1.13)(react@19.1.1)(xstate@5.22.0)
       debug:
-        specifier: ^4.4.1
+        specifier: ^4.4.3
         version: 4.4.3
       get-random-values-esm:
         specifier: ^1.0.2
