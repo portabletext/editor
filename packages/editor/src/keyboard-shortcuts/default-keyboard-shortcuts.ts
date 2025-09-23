@@ -31,6 +31,17 @@ export const defaultKeyboardShortcuts = {
       },
     ],
   }),
+  backspace: createKeyboardShortcut({
+    default: [
+      {
+        key: 'Backspace',
+        alt: false,
+        ctrl: false,
+        meta: false,
+        shift: false,
+      },
+    ],
+  }),
   break: createKeyboardShortcut({
     default: [
       {
@@ -53,6 +64,17 @@ export const defaultKeyboardShortcuts = {
     underline: underline,
     code: code,
   },
+  delete: createKeyboardShortcut({
+    default: [
+      {
+        key: 'Delete',
+        alt: false,
+        ctrl: false,
+        meta: false,
+        shift: false,
+      },
+    ],
+  }),
   history: {
     undo,
     redo,
