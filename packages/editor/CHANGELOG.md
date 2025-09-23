@@ -1,5 +1,21 @@
 # Changelog
 
+## 2.13.0
+
+### Minor Changes
+
+- [#1684](https://github.com/portabletext/editor/pull/1684) [`5e87231`](https://github.com/portabletext/editor/commit/5e87231bad00e06d6b29aacc84b6655fdc1b5159) Thanks [@christianhg](https://github.com/christianhg)! - feat(selectors): export `getMarkState` in beta
+
+### Patch Changes
+
+- [#1676](https://github.com/portabletext/editor/pull/1676) [`b9744c9`](https://github.com/portabletext/editor/commit/b9744c901b7b12197e14bf6e9ea7ec7d57217fa4) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency debug to ^4.4.3
+
+- [#1684](https://github.com/portabletext/editor/pull/1684) [`27c50d0`](https://github.com/portabletext/editor/commit/27c50d0ae12038f6b4bada7c95ee1cdf1bbb3bbe) Thanks [@christianhg](https://github.com/christianhg)! - fix: use `unit: 'character'` for deletion of inline objects
+
+- [#1684](https://github.com/portabletext/editor/pull/1684) [`ccd536e`](https://github.com/portabletext/editor/commit/ccd536eb7b2f8f28f74abeacf955153006e0a8f5) Thanks [@christianhg](https://github.com/christianhg)! - fix(`delete`): respect `unit: 'block'` option
+
+- [#1684](https://github.com/portabletext/editor/pull/1684) [`60b4164`](https://github.com/portabletext/editor/commit/60b416487f0ff8dfd58f8256f548dc75bc8a3fd0) Thanks [@christianhg](https://github.com/christianhg)! - fix(`getMarkState`): support block offsets
+
 ## 2.12.3
 
 ### Patch Changes
