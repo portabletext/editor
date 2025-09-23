@@ -26,6 +26,33 @@ const shiftLeft = createKeyboardShortcut({
 
 export const abstractKeyboardBehaviors = [
   /**
+   * When Backspace is pressed on an inline object, Slate will raise a
+   * `delete.backward` event with `unit: 'block'`. This is wrong and this
+   * Behavior adjusts that.
+   */
+  defineBehavior({
+    on: 'keyboard.keydown',
+    guard: ({snapshot, event}) =>
+      defaultKeyboardShortcuts.backspace.guard(event.originEvent) &&
+      isSelectionCollapsed(snapshot) &&
+      getFocusInlineObject(snapshot),
+    actions: [() => [raise({type: 'delete.backward', unit: 'character'})]],
+  }),
+  /**
+   * When Delete is pressed on an inline object, Slate will raise a
+   * `delete.forward` event with `unit: 'block'`. This is wrong and this
+   * Behavior adjusts that.
+   */
+  defineBehavior({
+    on: 'keyboard.keydown',
+    guard: ({snapshot, event}) =>
+      defaultKeyboardShortcuts.delete.guard(event.originEvent) &&
+      isSelectionCollapsed(snapshot) &&
+      getFocusInlineObject(snapshot),
+    actions: [() => [raise({type: 'delete.forward', unit: 'character'})]],
+  }),
+
+  /**
    * Allow raising an `insert.break` event when pressing Enter on an inline
    * object.
    */
