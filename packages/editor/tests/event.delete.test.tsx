@@ -308,4 +308,131 @@ describe('event.delete', () => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
     })
   })
+
+  test('Scenario: Deleting block offset', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockAKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const barKey = keyGenerator()
+    const bazKey = keyGenerator()
+    const blockBKey = keyGenerator()
+    const fizzKey = keyGenerator()
+    const buzzKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockAKey,
+          children: [
+            {_type: 'span', _key: fooKey, text: 'foo'},
+            {_type: 'span', _key: barKey, text: 'bar', marks: ['strong']},
+            {_type: 'span', _key: bazKey, text: 'baz'},
+          ],
+        },
+        {
+          _type: 'block',
+          _key: blockBKey,
+          children: [
+            {_type: 'span', _key: fizzKey, text: 'fizz'},
+            {_type: 'span', _key: buzzKey, text: 'buzz', marks: ['strong']},
+          ],
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'delete',
+      at: {
+        anchor: {
+          path: [{_key: blockBKey}],
+          offset: 2,
+        },
+        focus: {
+          path: [{_key: blockBKey}],
+          offset: 7,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
+        'foo,bar,baz',
+        'fi,z',
+      ])
+    })
+
+    editor.send({
+      type: 'delete',
+      at: {
+        anchor: {
+          path: [{_key: blockAKey}],
+          offset: 2,
+        },
+        focus: {
+          path: [{_key: blockAKey}],
+          offset: 7,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foaz', 'fi,z'])
+    })
+  })
+
+  test('Scenario: Deleting multiple blocks', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const block0Key = keyGenerator()
+    const block1Key = keyGenerator()
+    const block2Key = keyGenerator()
+    const block3Key = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: block0Key,
+          children: [{_type: 'span', _key: keyGenerator(), text: 'foo'}],
+        },
+        {
+          _type: 'image',
+          _key: block1Key,
+        },
+        {
+          _type: 'block',
+          _key: block2Key,
+          children: [{_type: 'span', _key: keyGenerator(), text: 'bar'}],
+        },
+        {
+          _type: 'block',
+          _key: block3Key,
+          children: [{_type: 'span', _key: keyGenerator(), text: 'baz'}],
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'delete',
+      at: {
+        anchor: {
+          path: [{_key: block0Key}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: block2Key}],
+          offset: 0,
+        },
+      },
+      unit: 'block',
+    })
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['baz'])
+    })
+  })
 })

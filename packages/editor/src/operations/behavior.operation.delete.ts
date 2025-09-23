@@ -9,7 +9,6 @@ import {
 } from 'slate'
 import {DOMEditor} from 'slate-dom'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
-import {getBlockPath} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {getBlockKeyFromSelectionPoint} from '../selection/selection-point'
 import type {PortableTextSlateEditor} from '../types/editor'
@@ -59,30 +58,13 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
     throw new Error('Failed to get end block')
   }
 
-  const anchorBlockPath =
-    anchorBlockKey !== undefined
-      ? getBlockPath({
-          editor: operation.editor,
-          _key: anchorBlockKey,
-        })
-      : undefined
-  const focusBlockPath =
-    focusBlockKey !== undefined
-      ? getBlockPath({
-          editor: operation.editor,
-          _key: focusBlockKey,
-        })
-      : undefined
-
-  if (
-    operation.at.anchor.path.length === 1 &&
-    operation.at.focus.path.length === 1 &&
-    anchorBlockPath &&
-    focusBlockPath &&
-    anchorBlockPath[0] === focusBlockPath[0]
-  ) {
+  if (operation.unit === 'block') {
     Transforms.removeNodes(operation.editor, {
-      at: [anchorBlockPath[0]],
+      at: {
+        anchor: {path: [startBlockIndex], offset: 0},
+        focus: {path: [endBlockIndex], offset: 0},
+      },
+      mode: 'highest',
     })
 
     if (operation.editor.children.length === 0) {

@@ -204,6 +204,7 @@ export const abstractDeleteBehaviors = [
               offset: 0,
             },
           },
+          unit: 'block',
         }),
       ],
     ],
