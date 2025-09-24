@@ -942,8 +942,28 @@ export const PortableTextEditable = forwardRef<
       } else if (forwardedRef) {
         forwardedRef.current = node
       }
+
+      if (node) {
+        // Observe mutations (child list and subtree) to this component's DOM,
+        // and make sure the editor selection is valid when that happens.
+        const mutationObserver = new MutationObserver(() => {
+          validateSelection(slateEditor, node)
+        })
+
+        mutationObserver.observe(node, {
+          attributeOldValue: false,
+          attributes: false,
+          characterData: false,
+          childList: true,
+          subtree: true,
+        })
+
+        return () => {
+          mutationObserver.disconnect()
+        }
+      }
     },
-    [forwardedRef],
+    [forwardedRef, slateEditor],
   )
 
   if (!portableTextEditor) {
@@ -987,3 +1007,72 @@ export const PortableTextEditable = forwardRef<
 })
 
 PortableTextEditable.displayName = 'ForwardRef(PortableTextEditable)'
+
+// This function will handle unexpected DOM changes inside the Editable rendering,
+// and make sure that we can maintain a stable slateEditor.selection when that happens.
+//
+// For example, if this Editable is rendered inside something that might re-render
+// this component (hidden contexts) while the user is still actively changing the
+// contentEditable, this could interfere with the intermediate DOM selection,
+// which again could be picked up by ReactEditor's event listeners.
+// If that range is invalid at that point, the slate.editorSelection could be
+// set either wrong, or invalid, to which slateEditor will throw exceptions
+// that are impossible to recover properly from or result in a wrong selection.
+//
+// Also the other way around, when the ReactEditor will try to create a DOM Range
+// from the current slateEditor.selection, it may throw unrecoverable errors
+// if the current editor.selection is invalid according to the DOM.
+// If this is the case, default to selecting the top of the document, if the
+// user already had a selection.
+function validateSelection(slateEditor: Editor, activeElement: HTMLDivElement) {
+  if (!slateEditor.selection) {
+    return
+  }
+
+  let root: Document | ShadowRoot | undefined
+
+  try {
+    root = ReactEditor.findDocumentOrShadowRoot(slateEditor)
+  } catch {}
+
+  if (!root) {
+    // The editor has most likely been unmounted
+    return
+  }
+
+  // Return if the editor isn't the active element
+  if (activeElement !== root.activeElement) {
+    return
+  }
+  const window = ReactEditor.getWindow(slateEditor)
+  const domSelection = window.getSelection()
+  if (!domSelection || domSelection.rangeCount === 0) {
+    return
+  }
+  const existingDOMRange = domSelection.getRangeAt(0)
+  try {
+    const newDOMRange = ReactEditor.toDOMRange(
+      slateEditor,
+      slateEditor.selection,
+    )
+    if (
+      newDOMRange.startOffset !== existingDOMRange.startOffset ||
+      newDOMRange.endOffset !== existingDOMRange.endOffset
+    ) {
+      debug('DOM range out of sync, validating selection')
+      // Remove all ranges temporary
+      domSelection?.removeAllRanges()
+      // Set the correct range
+      domSelection.addRange(newDOMRange)
+    }
+  } catch {
+    debug(`Could not resolve selection, selecting top document`)
+    // Deselect the editor
+    Transforms.deselect(slateEditor)
+    // Select top document if there is a top block to select
+    if (slateEditor.children.length > 0) {
+      Transforms.select(slateEditor, [0, 0])
+    }
+    slateEditor.onChange()
+  }
+}
