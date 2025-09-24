@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.13.2
+
+### Patch Changes
+
+- [#1689](https://github.com/portabletext/editor/pull/1689) [`141c3e1`](https://github.com/portabletext/editor/commit/141c3e15f3244c8e9943db14e20d99bc22742786) Thanks [@christianhg](https://github.com/christianhg)! - fix: add back selection validation
+
 ## 2.13.1
 
 ### Patch Changes
