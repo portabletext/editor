@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.13.1
+
+### Patch Changes
+
+- [#1687](https://github.com/portabletext/editor/pull/1687) [`b5a48b9`](https://github.com/portabletext/editor/commit/b5a48b9f10ab5eb2c2b19949222d7635ebf038b6) Thanks [@christianhg](https://github.com/christianhg)! - fix: avoid render functions causing unmounts
+
 ## 2.13.0
 
 ### Minor Changes
