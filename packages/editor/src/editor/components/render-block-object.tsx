@@ -8,6 +8,7 @@ import {
 } from 'slate-react'
 import type {EventPositionBlock} from '../../internal-utils/event-position'
 import type {
+  BlockRenderProps,
   PortableTextMemberSchemaTypes,
   RenderBlockFunction,
 } from '../../types/editor'
@@ -73,7 +74,8 @@ export function RenderBlockObject(props: {
         draggable={!props.readOnly}
       >
         {props.renderBlock && legacySchemaType ? (
-          <props.renderBlock
+          <RenderBlock
+            renderBlock={props.renderBlock}
             editorElementRef={blockObjectRef}
             focused={focused}
             path={[{_key: props.element._key}]}
@@ -83,7 +85,7 @@ export function RenderBlockObject(props: {
             value={blockObject}
           >
             <RenderDefaultBlockObject blockObject={blockObject} />
-          </props.renderBlock>
+          </RenderBlock>
         ) : (
           <RenderDefaultBlockObject blockObject={blockObject} />
         )}
@@ -91,4 +93,29 @@ export function RenderBlockObject(props: {
       {dragPositionBlock === 'end' ? <DropIndicator /> : null}
     </div>
   )
+}
+
+function RenderBlock({
+  renderBlock,
+  children,
+  editorElementRef,
+  focused,
+  path,
+  schemaType,
+  selected,
+  type,
+  value,
+}: {
+  renderBlock: RenderBlockFunction
+} & BlockRenderProps) {
+  return renderBlock({
+    children,
+    editorElementRef,
+    focused,
+    path,
+    schemaType,
+    selected,
+    type,
+    value,
+  })
 }

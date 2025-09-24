@@ -8,6 +8,9 @@ import {
 } from 'slate-react'
 import type {EventPositionBlock} from '../../internal-utils/event-position'
 import type {
+  BlockListItemRenderProps,
+  BlockRenderProps,
+  BlockStyleRenderProps,
   PortableTextMemberSchemaTypes,
   RenderBlockFunction,
   RenderListItemFunction,
@@ -61,7 +64,8 @@ export function RenderTextBlock(props: {
 
     if (legacyStyleSchemaType) {
       children = (
-        <props.renderStyle
+        <RenderStyle
+          renderStyle={props.renderStyle}
           block={props.textBlock}
           editorElementRef={blockRef}
           focused={focused}
@@ -71,7 +75,7 @@ export function RenderTextBlock(props: {
           value={props.textBlock.style}
         >
           {children}
-        </props.renderStyle>
+        </RenderStyle>
       )
     } else {
       console.error(
@@ -87,7 +91,8 @@ export function RenderTextBlock(props: {
 
     if (legacyListItemSchemaType) {
       children = (
-        <props.renderListItem
+        <RenderListItem
+          renderListItem={props.renderListItem}
           block={props.textBlock}
           editorElementRef={blockRef}
           focused={focused}
@@ -98,7 +103,7 @@ export function RenderTextBlock(props: {
           schemaType={legacyListItemSchemaType}
         >
           {children}
-        </props.renderListItem>
+        </RenderListItem>
       )
     } else {
       console.error(
@@ -152,7 +157,8 @@ export function RenderTextBlock(props: {
       {dragPositionBlock === 'start' ? <DropIndicator /> : null}
       <div ref={blockRef}>
         {props.renderBlock ? (
-          <props.renderBlock
+          <RenderBlock
+            renderBlock={props.renderBlock}
             editorElementRef={blockRef}
             focused={focused}
             level={props.textBlock.level}
@@ -165,7 +171,7 @@ export function RenderTextBlock(props: {
             value={props.textBlock}
           >
             {children}
-          </props.renderBlock>
+          </RenderBlock>
         ) : (
           children
         )}
@@ -173,4 +179,87 @@ export function RenderTextBlock(props: {
       {dragPositionBlock === 'end' ? <DropIndicator /> : null}
     </div>
   )
+}
+
+function RenderBlock({
+  renderBlock,
+  children,
+  editorElementRef,
+  focused,
+  level,
+  listItem,
+  path,
+  selected,
+  style,
+  schemaType,
+  type,
+  value,
+}: {
+  renderBlock: RenderBlockFunction
+} & BlockRenderProps) {
+  return renderBlock({
+    children,
+    editorElementRef,
+    focused,
+    level,
+    listItem,
+    path,
+    selected,
+    style,
+    schemaType,
+    type,
+    value,
+  })
+}
+
+function RenderListItem({
+  renderListItem,
+  block,
+  children,
+  editorElementRef,
+  focused,
+  level,
+  path,
+  schemaType,
+  selected,
+  value,
+}: {
+  renderListItem: RenderListItemFunction
+} & BlockListItemRenderProps) {
+  return renderListItem({
+    block,
+    children,
+    editorElementRef,
+    focused,
+    level,
+    path,
+    schemaType,
+    selected,
+    value,
+  })
+}
+
+function RenderStyle({
+  renderStyle,
+  block,
+  children,
+  editorElementRef,
+  focused,
+  path,
+  schemaType,
+  selected,
+  value,
+}: {
+  renderStyle: RenderStyleFunction
+} & BlockStyleRenderProps) {
+  return renderStyle({
+    block,
+    children,
+    editorElementRef,
+    focused,
+    path,
+    schemaType,
+    selected,
+    value,
+  })
 }
