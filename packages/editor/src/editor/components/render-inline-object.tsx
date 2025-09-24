@@ -9,6 +9,7 @@ import {
 } from 'slate-react'
 import {getPointBlock} from '../../internal-utils/slate-utils'
 import type {
+  BlockChildRenderProps,
   PortableTextMemberSchemaTypes,
   RenderChildFunction,
 } from '../../types/editor'
@@ -79,7 +80,8 @@ export function RenderInlineObject(props: {
       {props.children}
       <span ref={inlineObjectRef} style={{display: 'inline-block'}}>
         {props.renderChild && block && legacySchemaType ? (
-          <props.renderChild
+          <RenderChild
+            renderChild={props.renderChild}
             annotations={[]}
             editorElementRef={inlineObjectRef}
             selected={selected}
@@ -90,11 +92,38 @@ export function RenderInlineObject(props: {
             type={legacySchemaType}
           >
             <RenderDefaultInlineObject inlineObject={inlineObject} />
-          </props.renderChild>
+          </RenderChild>
         ) : (
           <RenderDefaultInlineObject inlineObject={inlineObject} />
         )}
       </span>
     </span>
   )
+}
+
+function RenderChild({
+  renderChild,
+  annotations,
+  children,
+  editorElementRef,
+  focused,
+  path,
+  schemaType,
+  selected,
+  value,
+  type,
+}: {
+  renderChild: RenderChildFunction
+} & BlockChildRenderProps) {
+  return renderChild({
+    annotations,
+    children,
+    editorElementRef,
+    focused,
+    path,
+    schemaType,
+    selected,
+    value,
+    type,
+  })
 }

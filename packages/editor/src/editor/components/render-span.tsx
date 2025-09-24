@@ -9,6 +9,9 @@ import {
   isSelectionCollapsed,
 } from '../../selectors'
 import type {
+  BlockAnnotationRenderProps,
+  BlockChildRenderProps,
+  BlockDecoratorRenderProps,
   EditorSelection,
   RenderAnnotationFunction,
   RenderChildFunction,
@@ -140,7 +143,8 @@ export function RenderSpan(props: RenderSpanProps) {
 
     if (path && legacyDecoratorSchemaType && props.renderDecorator) {
       children = (
-        <props.renderDecorator
+        <RenderDecorator
+          renderDecorator={props.renderDecorator}
           editorElementRef={spanRef}
           focused={focused}
           path={path}
@@ -150,7 +154,7 @@ export function RenderSpan(props: RenderSpanProps) {
           type={legacyDecoratorSchemaType}
         >
           {children}
-        </props.renderDecorator>
+        </RenderDecorator>
       )
     }
   }
@@ -166,7 +170,8 @@ export function RenderSpan(props: RenderSpanProps) {
       if (block && path && props.renderAnnotation) {
         children = (
           <span ref={spanRef}>
-            <props.renderAnnotation
+            <RenderAnnotation
+              renderAnnotation={props.renderAnnotation}
               block={block}
               editorElementRef={spanRef}
               focused={focused}
@@ -177,7 +182,7 @@ export function RenderSpan(props: RenderSpanProps) {
               type={legacyAnnotationSchemaType}
             >
               {children}
-            </props.renderAnnotation>
+            </RenderAnnotation>
           </span>
         )
       } else {
@@ -196,7 +201,8 @@ export function RenderSpan(props: RenderSpanProps) {
 
     if (child) {
       children = (
-        <props.renderChild
+        <RenderChild
+          renderChild={props.renderChild}
           annotations={annotationMarkDefs}
           editorElementRef={spanRef}
           focused={focused}
@@ -207,7 +213,7 @@ export function RenderSpan(props: RenderSpanProps) {
           type={legacySchema.span}
         >
           {children}
-        </props.renderChild>
+        </RenderChild>
       )
     }
   }
@@ -217,4 +223,83 @@ export function RenderSpan(props: RenderSpanProps) {
       {children}
     </span>
   )
+}
+
+function RenderAnnotation({
+  renderAnnotation,
+  block,
+  children,
+  editorElementRef,
+  focused,
+  path,
+  schemaType,
+  selected,
+  value,
+  type,
+}: {
+  renderAnnotation: RenderAnnotationFunction
+} & BlockAnnotationRenderProps) {
+  return renderAnnotation({
+    block,
+    children,
+    editorElementRef,
+    focused,
+    path,
+    schemaType,
+    selected,
+    value,
+    type,
+  })
+}
+
+function RenderDecorator({
+  renderDecorator,
+  children,
+  editorElementRef,
+  focused,
+  path,
+  schemaType,
+  selected,
+  value,
+  type,
+}: {
+  renderDecorator: RenderDecoratorFunction
+} & BlockDecoratorRenderProps) {
+  return renderDecorator({
+    children,
+    editorElementRef,
+    focused,
+    path,
+    schemaType,
+    selected,
+    value,
+    type,
+  })
+}
+
+function RenderChild({
+  renderChild,
+  annotations,
+  children,
+  editorElementRef,
+  focused,
+  path,
+  schemaType,
+  selected,
+  value,
+  type,
+}: {
+  renderChild: RenderChildFunction
+} & BlockChildRenderProps) {
+  return renderChild({
+    annotations,
+    children,
+    editorElementRef,
+    focused,
+    path,
+    schemaType,
+    selected,
+    value,
+    type,
+  })
 }
