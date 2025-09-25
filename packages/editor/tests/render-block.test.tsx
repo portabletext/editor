@@ -1,11 +1,18 @@
 import {createTestKeyGenerator} from '@portabletext/test'
-import {userEvent} from '@vitest/browser/context'
+import {page, userEvent} from '@vitest/browser/context'
+import React, {useCallback, useEffect, useState} from 'react'
 import {describe, expect, test, vi} from 'vitest'
+import {render} from 'vitest-browser-react'
 import {
   defineSchema,
+  EditorProvider,
+  PortableTextEditable,
   type BlockRenderProps,
+  type Editor,
+  type MutationEvent,
   type PortableTextBlock,
 } from '../src'
+import {EditorRefPlugin, EventListenerPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('renderBlock', () => {
@@ -144,5 +151,82 @@ describe('renderBlock', () => {
         },
       ]),
     )
+  })
+
+  test('Scenario: Stable across re-renders', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const editorRef = React.createRef<Editor>()
+    // Keeping track of the mount/unmount events for the `renderBlock` callback
+    const renderBlockMountEvents: Array<'mount' | 'unmount'> = []
+    // Keeping track of the mutation events emitted by the editor
+    const mutationEvents: Array<MutationEvent> = []
+
+    function App(props: {children: React.ReactNode}) {
+      const [value, setValue] = useState<Array<PortableTextBlock>>([])
+
+      const renderBlock = useCallback(
+        (props: BlockRenderProps) => {
+          // biome-ignore lint/correctness/useHookAtTopLevel: This is the only way to keep track of the mount/unmount events
+          useEffect(() => {
+            renderBlockMountEvents.push('mount')
+            return () => {
+              renderBlockMountEvents.push('unmount')
+            }
+          }, [])
+
+          return props.children
+        },
+        // Making `renderBlock` depend on `value` to provoke a recreation
+        // of the callback
+        [value],
+      )
+
+      return (
+        <EditorProvider
+          initialConfig={{
+            keyGenerator,
+            schemaDefinition: defineSchema({}),
+            initialValue: value,
+          }}
+        >
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'mutation') {
+                mutationEvents.push(event)
+                // Setting the value to trigger a re-render of App and thereby
+                // a recreation of the `renderBlock` callback
+                setValue(event.value ?? [])
+              }
+            }}
+          />
+          <PortableTextEditable renderBlock={renderBlock} />
+          {props.children}
+        </EditorProvider>
+      )
+    }
+
+    render(
+      <App>
+        <EditorRefPlugin ref={editorRef} />
+      </App>,
+    )
+
+    const locator = page.getByRole('textbox')
+    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, 'foo')
+
+    // Waiting for the mutation event to be emitted so we know the value has
+    // been set inside `App`
+    await vi.waitFor(() => {
+      expect(mutationEvents.length).toEqual(1)
+    })
+
+    // Asserting that the `renderBlock` callback has been mounted exactly once
+    // and never unmounted
+    await vi.waitFor(() => {
+      expect(renderBlockMountEvents).toEqual(['mount'])
+    })
   })
 })
