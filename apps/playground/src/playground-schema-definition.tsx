@@ -101,6 +101,11 @@ export const playgroundSchemaDefinition = defineSchema({
         {name: 'alt', title: 'Alt text', type: 'string'},
       ],
     },
+    {
+      title: 'Code Block',
+      name: 'code block',
+      fields: [{name: 'code', type: 'array'}],
+    },
   ],
   inlineObjects: [
     {
@@ -117,6 +122,29 @@ export const playgroundSchemaDefinition = defineSchema({
       ],
     },
   ],
+})
+
+export const CodeBlockSchema = z.object({
+  schemaType: z.object({
+    name: z.literal('code block'),
+  }),
+  value: z.object({
+    code: z
+      .array(
+        z.object({
+          _key: z.string(),
+          _type: z.literal('block'),
+          children: z.array(
+            z.object({
+              _key: z.string(),
+              _type: z.literal('span'),
+              text: z.string(),
+            }),
+          ),
+        }),
+      )
+      .optional(),
+  }),
 })
 
 export const ImageSchema = z.object({

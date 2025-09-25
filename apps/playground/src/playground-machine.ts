@@ -377,7 +377,72 @@ export const playgroundMachine = setup({
   context: ({input}) => ({
     editorIdGenerator: input.editorIdGenerator,
     featureFlags: defaultPlaygroundFeatureFlags,
-    value: [],
+    value: [
+      {
+        _type: 'block',
+        _key: keyGenerator(),
+        children: [
+          {
+            _key: keyGenerator(),
+            _type: 'span',
+            text: 'Hello, world!',
+          },
+        ],
+        style: 'h1',
+      },
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        children: [
+          {
+            _key: keyGenerator(),
+            _type: 'span',
+            text: '',
+          },
+        ],
+        style: 'normal',
+      },
+      {
+        _key: keyGenerator(),
+        _type: 'code block',
+        code: [
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            children: [
+              {
+                _key: keyGenerator(),
+                _type: 'span',
+                text: 'const foo = "bar";',
+              },
+            ],
+          },
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            children: [
+              {
+                _key: keyGenerator(),
+                _type: 'span',
+                text: '',
+              },
+            ],
+          },
+        ],
+      },
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        children: [
+          {
+            _key: keyGenerator(),
+            _type: 'span',
+            text: '',
+          },
+        ],
+        style: 'normal',
+      },
+    ],
     rangeDecorations: [],
     editors: [],
   }),
