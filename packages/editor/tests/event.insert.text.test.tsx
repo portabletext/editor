@@ -15,7 +15,7 @@ import {BehaviorPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.insert.text', () => {
-  test.skip('Scenario: Consecutive `insert.text` events', async () => {
+  test('Scenario: Consecutive `insert.text` events', async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor, locator} = await createTestEditor({keyGenerator})
 
