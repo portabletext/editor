@@ -1,10 +1,27 @@
+import {compileSchema, isSpan, isTextBlock} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import type {PortableTextBlock} from '@sanity/types'
-import {createRef, type ReactNode, type RefObject} from 'react'
-import {describe, expect, it, vi} from 'vitest'
-import type {RangeDecoration} from '../src'
+import {page, userEvent} from '@vitest/browser/context'
+import {createRef, useState, type ReactNode, type RefObject} from 'react'
+import {describe, expect, it, test, vi} from 'vitest'
+import {render} from 'vitest-browser-react'
+import {
+  defineSchema,
+  EditorProvider,
+  PortableTextEditable,
+  type Editor,
+  type MutationEvent,
+  type RangeDecoration,
+} from '../src'
 import type {PortableTextEditor} from '../src/editor/PortableTextEditor'
+import {getSelectionAfterText} from '../src/internal-utils/text-selection'
+import {EditorRefPlugin, EventListenerPlugin} from '../src/plugins'
 import {InternalChange$Plugin} from '../src/plugins/plugin.internal.change-ref'
 import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
+import {
+  getBlockKeyFromSelectionPoint,
+  getChildKeyFromSelectionPoint,
+} from '../src/selection/selection-point'
 import {createTestEditor} from '../src/test/vitest'
 
 const helloBlock: PortableTextBlock = {
@@ -224,5 +241,120 @@ describe('RangeDecorations', () => {
         'updated-with-different-payload',
       ]).toEqual([5, 'updated-with-different-payload'])
     })
+  })
+
+  test("Scenario: Range Decorations don't affect the caret position", async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const editorRef: RefObject<Editor | null> = createRef()
+    // Keeping track of the mutation events emitted by the editor
+    const mutationEvents: Array<MutationEvent> = []
+
+    function SpanRangeDecoration(props: {children?: ReactNode}) {
+      return <span data-testid="range-decoration">{props.children}</span>
+    }
+
+    function App(props: {children: ReactNode}) {
+      const [rangeDecorations, setRangeDecorations] = useState<
+        Array<RangeDecoration>
+      >([])
+      const schema = compileSchema(defineSchema({}))
+      const [value, setValue] = useState<Array<PortableTextBlock>>([])
+
+      return (
+        <EditorProvider
+          initialConfig={{
+            keyGenerator,
+            schemaDefinition: schema,
+            initialValue: value,
+          }}
+        >
+          <EventListenerPlugin
+            on={(event) => {
+              if (
+                event.type === 'patch' &&
+                event.patch.type === 'diffMatchPatch' &&
+                event.patch.origin === 'local'
+              ) {
+                const blockKey = getBlockKeyFromSelectionPoint({
+                  path: event.patch.path,
+                  offset: 0,
+                })
+                const spanKey = getChildKeyFromSelectionPoint({
+                  path: event.patch.path,
+                  offset: 0,
+                })
+                const block = editorRef.current
+                  ?.getSnapshot()
+                  .context.value?.find((block) => block._key === blockKey)
+                const child = isTextBlock({schema}, block)
+                  ? block?.children?.find((child) => child._key === spanKey)
+                  : undefined
+
+                if (!isSpan({schema}, child)) {
+                  return
+                }
+
+                // Create a Range Decoration that follows the span from the
+                // start to the end
+                const rangeDecoration: RangeDecoration = {
+                  component: SpanRangeDecoration,
+                  selection: {
+                    anchor: {
+                      path: event.patch.path.slice(0, 2),
+                      offset: 0,
+                    },
+                    focus: {
+                      path: event.patch.path.slice(0, 2),
+                      offset: child.text.length,
+                    },
+                  },
+                }
+
+                setRangeDecorations([rangeDecoration])
+              }
+
+              if (event.type === 'mutation') {
+                // Set the value to trigger a re-render of the App component
+                setValue(event.value ?? [])
+                mutationEvents.push(event)
+              }
+            }}
+          />
+          <PortableTextEditable rangeDecorations={rangeDecorations} />
+          {props.children}
+        </EditorProvider>
+      )
+    }
+
+    render(
+      <App>
+        <EditorRefPlugin ref={editorRef} />
+      </App>,
+    )
+
+    const locator = page.getByRole('textbox')
+
+    await userEvent.click(locator)
+    await userEvent.type(locator, 'f')
+
+    // Assert that the caret is after "f"
+    expect(editorRef.current?.getSnapshot().context.selection).toEqual(
+      getSelectionAfterText(editorRef.current!.getSnapshot().context, 'f'),
+    )
+
+    await vi.waitFor(() => {
+      expect(page.getByTestId('range-decoration')).toBeInTheDocument()
+    })
+
+    // Waiting for the mutation event to be emitted so we know the value has
+    // been set inside `App`
+    await vi.waitFor(() => {
+      expect(mutationEvents.length).toEqual(1)
+    })
+
+    // Assert that the caret is still after "f"
+    expect(editorRef.current?.getSnapshot().context.selection).toEqual(
+      getSelectionAfterText(editorRef.current!.getSnapshot().context, 'f'),
+    )
   })
 })
