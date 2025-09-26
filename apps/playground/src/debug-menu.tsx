@@ -144,15 +144,15 @@ export function DebugMenu(props: {
       </Toolbar>
       <Toolbar>
         <Switch
-          isSelected={featureFlags.smartQuotesPlugin}
+          isSelected={featureFlags.inputRules}
           onChange={() => {
             props.editorRef.send({
               type: 'toggle feature flag',
-              flag: 'smartQuotesPlugin',
+              flag: 'inputRules',
             })
           }}
         >
-          Smart quotes plugin
+          Input rules
         </Switch>
       </Toolbar>
       <Separator orientation="horizontal" />

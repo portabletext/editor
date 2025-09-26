@@ -21,7 +21,7 @@ import {
 import type {InputRule} from './input-rule'
 
 function createInputRuleBehavior(config: {
-  rule: InputRule
+  rules: Array<InputRule>
   onApply: (blockOffset: BlockOffset) => void
 }) {
   return defineBehavior({
@@ -33,27 +33,70 @@ function createInputRuleBehavior(config: {
         return false
       }
 
-      const textBefore = getBlockTextBefore(snapshot)
+      const originalTextBefore = getBlockTextBefore(snapshot)
+      let textBefore = originalTextBefore
       const newText = textBefore + event.text
+      const rules = config.rules
 
-      const previousMatches = [...textBefore.matchAll(config.rule.matcher)].map(
-        (match) => ({
-          index: match.index,
-          length: match?.at(0)?.length,
-        }),
-      )
-      const matches = [...newText.matchAll(config.rule.matcher)].map(
-        (match) => ({
-          index: match.index,
-          length: match?.at(0)?.length,
-        }),
-      )
-      const newMatches = matches.filter(
-        (match) =>
-          !previousMatches.some(
-            (previousMatch) => previousMatch.index === match.index,
-          ),
-      )
+      let newMatches: {
+        index: number
+        length: number | undefined
+        transform: string
+      }[] = []
+
+      for (const rule of rules) {
+        while (true) {
+          if (rule.matcher.global) {
+            const previousMatches = [...textBefore.matchAll(rule.matcher)].map(
+              (match) => ({
+                index: match.index,
+                length: match?.at(0)?.length,
+              }),
+            )
+            const matches = [...newText.matchAll(rule.matcher)].map(
+              (match) => ({
+                match,
+                index: match.index,
+                length: match?.at(0)?.length,
+                transform: rule.transform(),
+              }),
+            )
+            const ruleMatches = matches.filter(
+              (match) =>
+                !newMatches.some(
+                  (newMatch) => newMatch.index === match.index,
+                ) &&
+                !previousMatches.some(
+                  (previousMatch) => previousMatch.index === match.index,
+                ),
+            )
+            const ruleMatch = ruleMatches.at(0)
+
+            if (ruleMatch) {
+              newMatches.push(ruleMatch)
+
+              textBefore = newText.slice(
+                0,
+                ruleMatch.index + (ruleMatch.length ?? 0),
+              )
+            } else {
+              break
+            }
+          } else {
+            const match = newText.match(rule.matcher)
+
+            if (match) {
+              newMatches = [
+                {
+                  index: match.index ?? 0,
+                  length: match?.at(0)?.length,
+                  transform: rule.transform(),
+                },
+              ]
+            }
+          }
+        }
+      }
 
       if (newMatches.length === 0) {
         return false
@@ -82,7 +125,7 @@ function createInputRuleBehavior(config: {
                 anchor,
                 focus: {
                   path: focusTextBlock.path,
-                  offset: Math.min(focus.offset, textBefore.length),
+                  offset: Math.min(focus.offset, originalTextBefore.length),
                 },
               },
             },
@@ -93,6 +136,7 @@ function createInputRuleBehavior(config: {
               anchor,
               focus,
               markState,
+              transform: match.transform,
             },
           ]
         })
@@ -107,8 +151,7 @@ function createInputRuleBehavior(config: {
         offsetPairs.reduce(
           (acc, pair) =>
             acc -
-            (config.rule.transform().length -
-              (pair.focus.offset - pair.anchor.offset)),
+            (pair.transform.length - (pair.focus.offset - pair.anchor.offset)),
           0,
         )
 
@@ -132,7 +175,7 @@ function createInputRuleBehavior(config: {
             type: 'insert.child',
             child: {
               _type: snapshot.context.schema.span.name,
-              text: config.rule.transform(),
+              text: offsetPair.transform,
               marks: offsetPair.markState?.marks ?? [],
             },
           }),
@@ -155,11 +198,11 @@ function createInputRuleBehavior(config: {
 /**
  * @beta
  */
-export function InputRulePlugin(props: {rule: InputRule}) {
+export function InputRulePlugin(props: {rules: Array<InputRule>}) {
   const editor = useEditor()
 
   useActorRef(inputRuleMachine, {
-    input: {editor, rule: props.rule},
+    input: {editor, rules: props.rules},
   })
 
   return null
@@ -176,11 +219,11 @@ type InputRuleEvent =
 const inputRuleListenerCallback: CallbackLogicFunction<
   AnyEventObject,
   InputRuleEvent,
-  {editor: Editor; rule: InputRule}
+  {editor: Editor; rules: Array<InputRule>}
 > = ({input, sendBack}) => {
   const unregister = input.editor.registerBehavior({
     behavior: createInputRuleBehavior({
-      rule: input.rule,
+      rules: input.rules,
       onApply: (targetOffset) => {
         sendBack({type: 'input rule raised', targetOffset})
       },
@@ -249,12 +292,12 @@ const inputRuleSetup = setup({
   types: {
     context: {} as {
       editor: Editor
-      rule: InputRule
+      rules: Array<InputRule>
       offsetAfterInputRule?: BlockOffset
     },
     input: {} as {
       editor: Editor
-      rule: InputRule
+      rules: Array<InputRule>
     },
     events: {} as InputRuleEvent,
   },
@@ -297,22 +340,21 @@ const inputRuleMachine = inputRuleSetup.createMachine({
   id: 'input rule',
   context: ({input}) => ({
     editor: input.editor,
-    rule: input.rule,
+    rules: input.rules,
   }),
   initial: 'idle',
-  states: {
-    'idle': {
-      invoke: {
-        src: 'input rule listener',
-        input: ({context}) => ({editor: context.editor, rule: context.rule}),
-      },
-      on: {
-        'input rule raised': {
-          target: 'input rule applied',
-          actions: assignOffsetAfterInputRule,
-        },
-      },
+  invoke: {
+    src: 'input rule listener',
+    input: ({context}) => ({editor: context.editor, rules: context.rules}),
+  },
+  on: {
+    'input rule raised': {
+      target: '.input rule applied',
+      actions: assignOffsetAfterInputRule,
     },
+  },
+  states: {
+    'idle': {},
     'input rule applied': {
       invoke: [
         {

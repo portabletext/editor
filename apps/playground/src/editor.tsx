@@ -16,7 +16,11 @@ import {
   type RenderPlaceholderFunction,
   type RenderStyleFunction,
 } from '@portabletext/editor'
-import {emDashRule, InputRulePlugin} from '@portabletext/plugin-input-rule'
+import {
+  EllipsisInputRulePlugin,
+  EmDashInputRulePlugin,
+  SmartQuotesInputRulePlugin,
+} from '@portabletext/plugin-input-rule'
 import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 import {OneLinePlugin} from '@portabletext/plugin-one-line'
 import {useSelector} from '@xstate/react'
@@ -32,7 +36,6 @@ import {TooltipTrigger} from 'react-aria-components'
 import {tv} from 'tailwind-variants'
 import {DebugMenu} from './debug-menu'
 import './editor.css'
-import {SmartQuotesPlugin} from '@portabletext/plugin-smart-quotes'
 import {
   EditorFeatureFlagsContext,
   PlaygroundFeatureFlagsContext,
@@ -112,7 +115,6 @@ export function Editor(props: {
             schemaDefinition: playgroundSchemaDefinition,
           }}
         >
-          <InputRulePlugin rule={emDashRule} />
           <EditorEventListener
             editorRef={props.editorRef}
             value={value}
@@ -181,7 +183,13 @@ export function Editor(props: {
               <MarkdownShortcutsPlugin {...markdownShortcutsPluginProps} />
             ) : null}
             {featureFlags.oneLinePlugin ? <OneLinePlugin /> : null}
-            {featureFlags.smartQuotesPlugin ? <SmartQuotesPlugin /> : null}
+            {featureFlags.inputRules ? (
+              <>
+                <SmartQuotesInputRulePlugin />
+                <EllipsisInputRulePlugin />
+                <EmDashInputRulePlugin />
+              </>
+            ) : null}
             <div className="flex gap-2 items-center">
               <ErrorBoundary
                 fallbackProps={{area: 'PortableTextEditable'}}

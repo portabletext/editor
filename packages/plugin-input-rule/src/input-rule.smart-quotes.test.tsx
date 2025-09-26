@@ -7,15 +7,19 @@ import {
 import {defineSchema} from '@portabletext/schema'
 import {Before} from 'racejar'
 import {Feature} from 'racejar/vitest'
-import {emDashRule} from './input-rule.em-dash'
-import emDashFeature from './input-rule.em-dash.feature?raw'
+import {smartQuotesRules} from './input-rule.smart-quotes'
+import smartQuotesFeature from './input-rule.smart-quotes.feature?raw'
 import {InputRulePlugin} from './plugin.input-rule'
 
 Feature({
   hooks: [
     Before(async (context: Context) => {
       const {editor, locator} = await createTestEditor({
-        children: <InputRulePlugin rules={[emDashRule]} />,
+        children: (
+          <>
+            <InputRulePlugin rules={smartQuotesRules} />
+          </>
+        ),
         schemaDefinition: defineSchema({
           decorators: [{name: 'strong'}],
           annotations: [{name: 'link'}],
@@ -26,7 +30,7 @@ Feature({
       context.editor = editor
     }),
   ],
-  featureText: emDashFeature,
+  featureText: smartQuotesFeature,
   stepDefinitions,
   parameterTypes,
 })
