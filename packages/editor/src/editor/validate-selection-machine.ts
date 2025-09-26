@@ -1,4 +1,4 @@
-import {Transforms} from 'slate'
+import {Editor, Transforms} from 'slate'
 import {ReactEditor} from 'slate-react'
 import {setup} from 'xstate'
 import {debugWithName} from '../internal-utils/debug'
@@ -142,7 +142,7 @@ function validateSelection(
     Transforms.deselect(slateEditor)
     // Select top document if there is a top block to select
     if (slateEditor.children.length > 0) {
-      Transforms.select(slateEditor, [0, 0])
+      Transforms.select(slateEditor, Editor.start(slateEditor, []))
     }
     slateEditor.onChange()
   }
