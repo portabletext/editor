@@ -334,7 +334,7 @@ importers:
         version: link:../../packages/patches
       '@sanity/schema':
         specifier: ^4.0.1
-        version: 4.9.0(@types/react@19.1.13)(debug@4.4.3)
+        version: 4.10.1(@types/react@19.1.13)(debug@4.4.3)
       '@xstate/react':
         specifier: ^4.1.3
         version: 4.1.3(@types/react@19.1.13)(react@19.1.1)(xstate@5.22.0)
@@ -359,7 +359,7 @@ importers:
         version: 9.36.0
       '@sanity/types':
         specifier: ^4.0.1
-        version: 4.9.0(@types/react@19.1.13)(debug@4.4.3)
+        version: 4.10.1(@types/react@19.1.13)(debug@4.4.3)
       '@types/react':
         specifier: ^19.1.13
         version: 19.1.13
@@ -416,11 +416,11 @@ importers:
         specifier: ^8.1.14
         version: 8.1.14(@types/babel__core@7.20.5)(@types/node@24.3.0)(babel-plugin-react-compiler@19.1.0-rc.3)(typescript@5.9.2)
       '@sanity/schema':
-        specifier: ^4.9.0
-        version: 4.9.0(@types/react@19.1.13)(debug@4.4.3)
+        specifier: ^4.10.1
+        version: 4.10.1(@types/react@19.1.13)(debug@4.4.3)
       '@sanity/types':
-        specifier: ^4.9.0
-        version: 4.9.0(@types/react@19.1.13)(debug@4.4.3)
+        specifier: ^4.10.1
+        version: 4.10.1(@types/react@19.1.13)(debug@4.4.3)
       '@types/jsdom':
         specifier: ^20.0.1
         version: 20.0.1
@@ -510,11 +510,11 @@ importers:
         specifier: ^8.1.14
         version: 8.1.14(@types/babel__core@7.20.5)(@types/node@24.3.0)(babel-plugin-react-compiler@19.1.0-rc.3)(debug@4.4.3)(typescript@5.9.2)
       '@sanity/schema':
-        specifier: ^4.9.0
-        version: 4.9.0(@types/react@19.1.13)(debug@4.4.3)
+        specifier: ^4.10.1
+        version: 4.10.1(@types/react@19.1.13)(debug@4.4.3)
       '@sanity/types':
-        specifier: ^4.9.0
-        version: 4.9.0(@types/react@19.1.13)(debug@4.4.3)
+        specifier: ^4.10.1
+        version: 4.10.1(@types/react@19.1.13)(debug@4.4.3)
       '@types/debug':
         specifier: ^4.1.12
         version: 4.1.12
@@ -660,11 +660,11 @@ importers:
         specifier: ^8.1.14
         version: 8.1.14(@types/babel__core@7.20.5)(@types/node@24.3.0)(babel-plugin-react-compiler@19.1.0-rc.3)(typescript@5.9.2)
       '@sanity/schema':
-        specifier: ^4.9.0
-        version: 4.9.0(@types/react@19.1.13)(debug@4.4.3)
+        specifier: ^4.10.1
+        version: 4.10.1(@types/react@19.1.13)(debug@4.4.3)
       '@sanity/types':
-        specifier: ^4.9.0
-        version: 4.9.0(@types/react@19.1.13)(debug@4.4.3)
+        specifier: ^4.10.1
+        version: 4.10.1(@types/react@19.1.13)(debug@4.4.3)
       '@types/lodash.startcase':
         specifier: ^4.4.9
         version: 4.4.9
@@ -697,7 +697,7 @@ importers:
         version: 8.1.14(@types/babel__core@7.20.5)(@types/node@24.3.0)(babel-plugin-react-compiler@19.1.0-rc.3)(typescript@5.9.2)
       '@sanity/types':
         specifier: ^4.5.0
-        version: 4.9.0(@types/react@19.1.13)(debug@4.4.3)
+        version: 4.10.1(@types/react@19.1.13)(debug@4.4.3)
       typescript:
         specifier: 'catalog:'
         version: 5.9.2
@@ -3254,8 +3254,8 @@ packages:
   '@sanity/browserslist-config@1.0.5':
     resolution: {integrity: sha512-so+/UtCge8t1jq509hH0otbbptRz0zM/Aa0dh5MhMD7HGT6n2igWIL2VWH/9QR9e77Jn3dJsjz23mW1WCxT+sg==}
 
-  '@sanity/client@7.11.1':
-    resolution: {integrity: sha512-nvuyItcknj2qFH3FPqqZhjN94rHv7eRzuHveN2ZIhHTGhGYLp1zE7UfESMcNn+flL/Oik+Ctkp3jKB3z02NdHQ==}
+  '@sanity/client@7.11.2':
+    resolution: {integrity: sha512-q7rm2KgbWV60z+umlIZa3l7Nc9xyDRjmicm9tOP7PovOYNM0UK1PP/Auj6wssr+OqEsgcoe2n2pQFDtn/n8N9Q==}
     engines: {node: '>=20'}
 
   '@sanity/descriptors@1.1.1':
@@ -3291,11 +3291,11 @@ packages:
     peerDependencies:
       prettier: ^3.6.0
 
-  '@sanity/schema@4.9.0':
-    resolution: {integrity: sha512-tdXEnk2hS0iBOyxpOMSkuDsDMbWtBtCWnLMTXpBK/nLPVWCOFVD/Jq4JcaNl6F4HPUWprQsxB64sM1hjmvGcsw==}
+  '@sanity/schema@4.10.1':
+    resolution: {integrity: sha512-dw01M9iHyMEbKYno/vo833eMfljy212/+SvGVOrvC9Gw3fvf2VtQFJnio5aUQyB0SN0atXx+r93ScuA4FrFzOg==}
 
-  '@sanity/types@4.9.0':
-    resolution: {integrity: sha512-7qWlTwGXy/0l+CNUKdv7clN6kKVXHqw68GZkZ6zvVdSMvD7IAhd6BtMm9mu2fpCbfzMGGmiKZEghXtM/+MgjGw==}
+  '@sanity/types@4.10.1':
+    resolution: {integrity: sha512-XwbZIMJvP5GQ0KQVEq2AeCxAVaFGOECtH1RQ/qKTnP+iNN5YVgbhmWKU3FsLXwnxvyjKe/sUjk2we38S+hq/qw==}
     peerDependencies:
       '@types/react': ^19.1.13
 
@@ -4709,8 +4709,8 @@ packages:
   graphemer@1.4.0:
     resolution: {integrity: sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==}
 
-  groq-js@1.18.0:
-    resolution: {integrity: sha512-24Tn7L9YrVeZxJVfAj5StrOVV1TJoOlY3oetLk/uo/BogWah8WBI7ChYGEidMXZ0gbU9Ydy3NhhO/fwisumcXg==}
+  groq-js@1.19.0:
+    resolution: {integrity: sha512-SkTQxn4BImqaNaNawzf0mlAf/wXeezgfz14SiEAYUKjOCgGhtn9uADyE3T+3to97Wbtdna//1if1qkH12XAhtA==}
     engines: {node: '>= 14'}
 
   h3@1.15.4:
@@ -10210,7 +10210,7 @@ snapshots:
 
   '@sanity/browserslist-config@1.0.5': {}
 
-  '@sanity/client@7.11.1(debug@4.4.3)':
+  '@sanity/client@7.11.2(debug@4.4.3)':
     dependencies:
       '@sanity/eventsource': 5.0.2
       get-it: 8.6.9(debug@4.4.3)
@@ -10363,13 +10363,13 @@ snapshots:
       prettier: 3.6.2
       prettier-plugin-packagejson: 2.5.15(prettier@3.6.2)
 
-  '@sanity/schema@4.9.0(@types/react@19.1.13)(debug@4.4.3)':
+  '@sanity/schema@4.10.1(@types/react@19.1.13)(debug@4.4.3)':
     dependencies:
       '@sanity/descriptors': 1.1.1
       '@sanity/generate-help-url': 3.0.0
-      '@sanity/types': 4.9.0(@types/react@19.1.13)(debug@4.4.3)
+      '@sanity/types': 4.10.1(@types/react@19.1.13)(debug@4.4.3)
       arrify: 2.0.1
-      groq-js: 1.18.0
+      groq-js: 1.19.0
       humanize-list: 1.0.1
       leven: 3.1.0
       lodash: 4.17.21
@@ -10379,9 +10379,9 @@ snapshots:
       - debug
       - supports-color
 
-  '@sanity/types@4.9.0(@types/react@19.1.13)(debug@4.4.3)':
+  '@sanity/types@4.10.1(@types/react@19.1.13)(debug@4.4.3)':
     dependencies:
-      '@sanity/client': 7.11.1(debug@4.4.3)
+      '@sanity/client': 7.11.2(debug@4.4.3)
       '@sanity/media-library-types': 1.0.1
       '@types/react': 19.1.13
     transitivePeerDependencies:
@@ -12081,7 +12081,7 @@ snapshots:
 
   graphemer@1.4.0: {}
 
-  groq-js@1.18.0:
+  groq-js@1.19.0:
     dependencies:
       debug: 4.4.3
     transitivePeerDependencies:
