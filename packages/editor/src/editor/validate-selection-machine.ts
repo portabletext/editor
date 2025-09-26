@@ -16,7 +16,7 @@ const validateSelectionSetup = setup({
     },
     events: {} as {
       type: 'validate selection'
-      activeElement: HTMLDivElement
+      editorElement: HTMLDivElement
     },
   },
   guards: {
@@ -27,7 +27,7 @@ const validateSelectionSetup = setup({
 
 const validateSelectionAction = validateSelectionSetup.createAction(
   ({context, event}) => {
-    validateSelection(context.slateEditor, event.activeElement)
+    validateSelection(context.slateEditor, event.editorElement)
   },
 )
 
@@ -94,7 +94,7 @@ export const validateSelectionMachine = validateSelectionSetup.createMachine({
 // user already had a selection.
 function validateSelection(
   slateEditor: PortableTextSlateEditor,
-  activeElement: HTMLDivElement,
+  editorElement: HTMLDivElement,
 ) {
   if (!slateEditor.selection) {
     return
@@ -112,7 +112,7 @@ function validateSelection(
   }
 
   // Return if the editor isn't the active element
-  if (activeElement !== root.activeElement) {
+  if (editorElement !== root.activeElement) {
     return
   }
   const window = ReactEditor.getWindow(slateEditor)

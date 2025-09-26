@@ -942,24 +942,24 @@ export const PortableTextEditable = forwardRef<
   )
 
   const callbackRef = useCallback(
-    (node: HTMLDivElement | null) => {
+    (editorElement: HTMLDivElement | null) => {
       if (typeof forwardedRef === 'function') {
-        forwardedRef(node)
+        forwardedRef(editorElement)
       } else if (forwardedRef) {
-        forwardedRef.current = node
+        forwardedRef.current = editorElement
       }
 
-      if (node) {
+      if (editorElement) {
         // Observe mutations (child list and subtree) to this component's DOM,
         // and make sure the editor selection is valid when that happens.
         const mutationObserver = new MutationObserver(() => {
           validateSelectionActor.send({
             type: 'validate selection',
-            activeElement: node,
+            editorElement,
           })
         })
 
-        mutationObserver.observe(node, {
+        mutationObserver.observe(editorElement, {
           attributeOldValue: false,
           attributes: false,
           characterData: false,
