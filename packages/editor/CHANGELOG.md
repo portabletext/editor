@@ -1,5 +1,21 @@
 # Changelog
 
+## 2.13.3
+
+### Patch Changes
+
+- [#1686](https://github.com/portabletext/editor/pull/1686) [`dfe17a1`](https://github.com/portabletext/editor/commit/dfe17a1a307b1a512818b37645a8efd05407a0a5) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update sanity monorepo to ^4.10.1
+
+- [#1431](https://github.com/portabletext/editor/pull/1431) [`aa7d632`](https://github.com/portabletext/editor/commit/aa7d63267231f28e3c4a0ad47d4c70c39ae94c35) Thanks [@christianhg](https://github.com/christianhg)! - fix: export `MarkState`
+
+- [#1693](https://github.com/portabletext/editor/pull/1693) [`77ce561`](https://github.com/portabletext/editor/commit/77ce56102785f69a4152ab9b346aef0a3a0cbf67) Thanks [@christianhg](https://github.com/christianhg)! - fix: select editor start if selection validation fails
+
+- [#1693](https://github.com/portabletext/editor/pull/1693) [`30058e9`](https://github.com/portabletext/editor/commit/30058e90068ba9807585bce2fd9b5e6a7a525dff) Thanks [@christianhg](https://github.com/christianhg)! - fix: avoid validating selection while Slate has pending operations
+
+- Updated dependencies [[`dfe17a1`](https://github.com/portabletext/editor/commit/dfe17a1a307b1a512818b37645a8efd05407a0a5)]:
+  - @portabletext/block-tools@3.5.8
+  - @portabletext/sanity-bridge@1.1.12
+
 ## 2.13.2
 
 ### Patch Changes
