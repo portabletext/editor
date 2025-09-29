@@ -142,6 +142,19 @@ export function DebugMenu(props: {
           Link plugin
         </Switch>
       </Toolbar>
+      <Toolbar>
+        <Switch
+          isSelected={featureFlags.inputRules}
+          onChange={() => {
+            props.editorRef.send({
+              type: 'toggle feature flag',
+              flag: 'inputRules',
+            })
+          }}
+        >
+          Input rules (experimental)
+        </Switch>
+      </Toolbar>
       <Separator orientation="horizontal" />
       <Toolbar>
         <Switch
