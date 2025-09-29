@@ -8,6 +8,9 @@ import {getNextSpan} from './selector.get-next-span'
 import {getPreviousSpan} from './selector.get-previous-span'
 import {getSelectedSpans} from './selector.get-selected-spans'
 
+/**
+ * @beta
+ */
 export type MarkState =
   | {
       state: 'unchanged'
