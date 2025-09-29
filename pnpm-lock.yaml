@@ -183,6 +183,9 @@ importers:
       '@portabletext/patches':
         specifier: workspace:*
         version: link:../../packages/patches
+      '@portabletext/plugin-input-rule':
+        specifier: workspace:*
+        version: link:../../packages/plugin-input-rule
       '@portabletext/plugin-markdown-shortcuts':
         specifier: ^1.1.2
         version: 1.1.2(@portabletext/editor@packages+editor)(@types/react@19.1.13)(react@19.1.1)

@@ -21,6 +21,7 @@
     "@portabletext/editor": "workspace:*",
     "@portabletext/keyboard-shortcuts": "workspace:*",
     "@portabletext/patches": "workspace:*",
+    "@portabletext/plugin-input-rule": "workspace:*",
     "@portabletext/plugin-markdown-shortcuts": "^1.1.2",
     "@portabletext/plugin-one-line": "^1.1.2",
     "@portabletext/toolbar": "workspace:*",
