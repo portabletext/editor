@@ -26,6 +26,9 @@
     "check:lint": {
       "outputLogs": "errors-only"
     },
+    "check:react-compiler": {
+      "outputLogs": "errors-only"
+    },
     "lint:fix": {
       "outputs": [""]
     },

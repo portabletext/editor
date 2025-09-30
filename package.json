@@ -17,6 +17,7 @@
     "build:toolbar": "turbo build --filter=@portabletext/toolbar...",
     "check:format": "prettier . --check",
     "check:lint": "turbo check:lint",
+    "check:react-compiler": "turbo check:react-compiler",
     "check:types": "turbo check:types",
     "check:types:watch": "turbo check:types:watch",
     "clean": "turbo clean && del .turbo && del node_modules",
