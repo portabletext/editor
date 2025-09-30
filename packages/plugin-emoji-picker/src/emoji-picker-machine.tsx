@@ -8,6 +8,7 @@ import {
   defineBehavior,
   effect,
   execute,
+  forward,
   raise,
 } from '@portabletext/editor/behaviors'
 import * as selectors from '@portabletext/editor/selectors'
@@ -107,11 +108,8 @@ const colonListenerCallback: CallbackLogicFunction<
           : false
       },
       actions: [
-        (_, {point, blockOffset}) => [
-          execute({
-            type: 'insert.text',
-            text: ':',
-          }),
+        ({event}, {point, blockOffset}) => [
+          forward(event),
           effect(() => {
             sendBack({type: 'colon inserted', point, blockOffset})
           }),
@@ -596,6 +594,32 @@ export const emojiPickerMachine = setup({
       'selection is after keyword',
       'selection is expanded',
     ]),
+    'unexpected text insertion': ({context, event}) => {
+      if (event.type !== 'insert.text') {
+        return false
+      }
+
+      if (!context.keywordAnchor) {
+        return false
+      }
+
+      const snapshot = context.editor.getSnapshot()
+
+      const textInsertedBeforeKeyword =
+        selectors.isPointBeforeSelection(event.focus)({
+          ...snapshot,
+          context: {
+            ...snapshot.context,
+            selection: {
+              anchor: context.keywordAnchor.point,
+              focus: context.keywordAnchor.point,
+            },
+          },
+        }) ||
+        utils.isEqualSelectionPoints(event.focus, context.keywordAnchor.point)
+
+      return textInsertedBeforeKeyword
+    },
   },
 }).createMachine({
   /** @xstate-layout N4IgpgJg5mDOIC5RgLYHsBWBLABABywGMBrMAJwDosIAbMAYkLRrQDsctXZyAXSAbQAMAXUSg8aWFh5Y2YkAA9EARmUB2AJwUAzADYNADgCs65YO1q1ygDQgAnojUG1O5c+W7tAJmdfdRgF8A21RMXAIScgpuAEMyQgALTih6Tm4yHgo+BR4hUSQQCSkZOQKlBABaZW0DHSMAFksNQUF6oyNzL1sHBC9vCnrGtS8GtQaNNt0gkPRsfCJSSlj4pNYUiDA6PgoAMzQyAHc4iDz5IulZVnlyr3MKE30LA31DZoNuxD6vAaHdP29vOo1NNwLNwgsostEsl6BstmAKAAjGIkI5kE4iM6SC6lUDlerabT3arDfS3eoaPQfXr9QaWEaNcaTEGhOYRRbRMBxaFrWFYWAofmwU4Fc4lK5lFTqWqDAwUjReeoGbwaNTU1TPCh-QxNNS6XQGHwssHzSJLLkrGHcOiEcU4RIxNYCTGi7Hi66IfxE1oeZX1EbeZXUhUUZSKjxOOV6bTmY1hU0cqGrFLWsC2y72hKOmAnZT5cRuy4ehDVXQUVXDIyWGpmAzveyfLRKwQaVRVwR1ixeONsiHm7nJ+gigvFIuSkvKVuhgwaEwKmMKwbqkaCAaverqVuvKbBUHx9mQi08qAUVhoHAoGI8RJwHCwBJoA4w4eFQu4xSfaoDA3KOmCVSTn06r-i4-hGH0ZiEoI4H1D24JmpyA7JNED5PmsF5XjesD0KwMQAG5YFAV5gDgECPqwL5imOeKIIM9ShsoRh1i2erPB41L6C40GqISUb6n8cEJoeSFrChj7JBh14JHAOH4YRxE4AArnglFvhKNEIGoq4+E0yraPULa6PUHGqhQ3HVDUBL8dogkHv2lqife4noZeUkybhBFEXwOA8Ggqmju+5RGPqFBqP6ujDD4v4tjYDYIMqLjVKo5gdM4TGBLurLwYmR7JmJaFQJJWGpFwvB3psaZ8BARUJP5OLqR+CD1Loq5ymYfyeP4spGOqv70fpv7NBSBKtBlMz7n2iEOSeTkFTVMl1e645eB49wGP+K0UpBbjaMBzQUF4IzBYq7TNa2QS7meGzwAUWVCWQWIBQ15RVJq2ijJoLRtB03jUhUVYUHKtz-gqeoxkYGi2ZN1B0I99XFqobTlh4-5-Ot4H1j0ZirbcENhR4RmKrBmUmnZU3HnDS0aVUjHlh2cqtkqfTBdSSr0RMGieBS7htASUMIUmyFnvNsB3qhySU9RjUVBFdN1ltTPvbowZOGZEWHe9xgTHo-M5SJM3iy5mHSTdI7w+OlnlgY6heJzbgUv4ytxaqtSCBFg1eJFM4XQEQA */
@@ -646,9 +670,15 @@ export const emojiPickerMachine = setup({
         },
       ],
       on: {
-        'insert.text': {
-          actions: ['update keyword focus'],
-        },
+        'insert.text': [
+          {
+            guard: 'unexpected text insertion',
+            target: 'idle',
+          },
+          {
+            actions: ['update keyword focus'],
+          },
+        ],
         'delete.forward': {
           actions: ['update keyword focus'],
         },
