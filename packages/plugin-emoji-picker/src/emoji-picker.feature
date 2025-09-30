@@ -24,3 +24,10 @@ Feature: Emoji Picker
     And "{Backspace}" is pressed
     And "{Enter}" is pressed
     Then the text is "😂"
+
+  Scenario: Typing before the colon
+    When ":j" is typed
+    And "{ArrowLeft}{ArrowLeft}" is pressed
+    And "f" is typed
+    And "{Enter}" is pressed
+    Then the text is "f|:j"
