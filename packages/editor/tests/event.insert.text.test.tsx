@@ -3,15 +3,11 @@ import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
-import {
-  defineBehavior,
-  effect,
-  execute,
-  forward,
-  type BehaviorEvent,
-} from '../src/behaviors'
+import {effect, execute, forward} from '../src/behaviors/behavior.types.action'
+import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
+import type {BehaviorEvent} from '../src/behaviors/behavior.types.event'
 import {IS_MAC} from '../src/internal-utils/is-hotkey'
-import {BehaviorPlugin} from '../src/plugins'
+import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.insert.text', () => {

@@ -13,20 +13,13 @@ import {
   splitNodePatch,
 } from '../../internal-utils/operation-to-patches'
 import {fromSlateValue, isEqualToEmptyEditor} from '../../internal-utils/values'
-import {
-  IS_PROCESSING_REMOTE_CHANGES,
-  KEY_TO_VALUE_ELEMENT,
-} from '../../internal-utils/weakMaps'
-import {withRemoteChanges} from '../../internal-utils/withChanges'
-import {
-  isPatching,
-  PATCHING,
-  withoutPatching,
-} from '../../internal-utils/withoutPatching'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 import type {RelayActor} from '../relay-machine'
+import {IS_PROCESSING_REMOTE_CHANGES, KEY_TO_VALUE_ELEMENT} from '../weakMaps'
 import {getCurrentUndoStepId} from '../with-undo-step'
+import {withRemoteChanges} from '../withChanges'
+import {isPatching, PATCHING, withoutPatching} from '../withoutPatching'
 import {withoutSaving} from './createWithUndoRedo'
 
 const debug = debugWithName('plugin:withPatches')

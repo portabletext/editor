@@ -1,4 +1,5 @@
-import {getSelectedTextBlocks, isActiveListItem} from '../selectors'
+import {getSelectedTextBlocks} from '../selectors/selector.get-selected-text-blocks'
+import {isActiveListItem} from '../selectors/selector.is-active-list-item'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 

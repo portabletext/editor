@@ -1,5 +1,5 @@
-import {parseBlock} from '../internal-utils/parse-blocks'
-import * as selectors from '../selectors'
+import {getSelectedValue} from '../selectors/selector.get-selected-value'
+import {parseBlock} from '../utils/parse-blocks'
 import {defineConverter} from './converter.types'
 
 export const converterPortableText = defineConverter({
@@ -16,7 +16,7 @@ export const converterPortableText = defineConverter({
       }
     }
 
-    const blocks = selectors.getSelectedValue(snapshot)
+    const blocks = getSelectedValue(snapshot)
 
     if (blocks.length === 0) {
       return {

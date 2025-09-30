@@ -1,7 +1,7 @@
+import {isSpan} from '@portabletext/schema'
 import {isKeySegment, type PortableTextObject} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import type {ChildPath} from '../types/paths'
-import {isSpan} from '../utils'
 import {getFocusTextBlock} from './selector.get-focus-text-block'
 import {getSelectionStartPoint} from './selector.get-selection-start-point'
 

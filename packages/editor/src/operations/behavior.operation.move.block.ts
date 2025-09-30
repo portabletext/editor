@@ -1,5 +1,5 @@
 import {Transforms} from 'slate'
-import {getBlockKeyFromSelectionPoint} from '../selection/selection-point'
+import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const moveBlockOperationImplementation: BehaviorOperationImplementation<

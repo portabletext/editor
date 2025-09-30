@@ -1,7 +1,8 @@
 import type {PortableTextBlock} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import type {BlockPath} from '../types/paths'
-import * as utils from '../utils'
+import {getBlockEndPoint} from '../utils/util.get-block-end-point'
+import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
 import {isSelectionCollapsed} from './selector.is-selection-collapsed'
 
 /**
@@ -16,12 +17,12 @@ export function isAtTheEndOfBlock(block: {
       return false
     }
 
-    const blockEndPoint = utils.getBlockEndPoint({
+    const blockEndPoint = getBlockEndPoint({
       context: snapshot.context,
       block,
     })
 
-    return utils.isEqualSelectionPoints(
+    return isEqualSelectionPoints(
       snapshot.context.selection.focus,
       blockEndPoint,
     )

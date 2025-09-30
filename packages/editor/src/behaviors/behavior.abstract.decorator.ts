@@ -1,5 +1,5 @@
-import {isActiveDecorator} from '../selectors'
-import {blockOffsetsToSelection} from '../utils'
+import {isActiveDecorator} from '../selectors/selector.is-active-decorator'
+import {blockOffsetsToSelection} from '../utils/util.block-offsets-to-selection'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 

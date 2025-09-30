@@ -1,4 +1,4 @@
-import {defaultKeyGenerator} from '../editor/key-generator'
+import {defaultKeyGenerator} from '../utils/key-generator'
 
 export type EditorPriority = {
   id: string

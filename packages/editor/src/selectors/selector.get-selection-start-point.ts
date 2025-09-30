@@ -1,5 +1,5 @@
-import type {EditorSelectionPoint} from '..'
 import type {EditorSelector} from '../editor/editor-selector'
+import type {EditorSelectionPoint} from '../types/editor'
 
 /**
  * @public

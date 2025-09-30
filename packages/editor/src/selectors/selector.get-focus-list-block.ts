@@ -1,7 +1,7 @@
 import type {PortableTextListBlock} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
-import {isListBlock} from '../internal-utils/parse-blocks'
 import type {BlockPath} from '../types/paths'
+import {isListBlock} from '../utils/parse-blocks'
 import {getFocusTextBlock} from './selector.get-focus-text-block'
 
 /**

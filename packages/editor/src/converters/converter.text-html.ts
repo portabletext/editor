@@ -1,9 +1,9 @@
 import {htmlToBlocks} from '@portabletext/block-tools'
 import {toHTML} from '@portabletext/to-html'
 import type {PortableTextBlock} from '@sanity/types'
-import {parseBlock} from '../internal-utils/parse-blocks'
-import * as selectors from '../selectors'
+import {getSelectedValue} from '../selectors/selector.get-selected-value'
 import type {PortableTextMemberSchemaTypes} from '../types/editor'
+import {parseBlock} from '../utils/parse-blocks'
 import {defineConverter} from './converter.types'
 
 export function createConverterTextHtml(
@@ -23,7 +23,7 @@ export function createConverterTextHtml(
         }
       }
 
-      const blocks = selectors.getSelectedValue(snapshot)
+      const blocks = getSelectedValue(snapshot)
 
       const html = toHTML(blocks, {
         onMissingComponent: false,

@@ -10,8 +10,8 @@ import {
 import {DOMEditor} from 'slate-dom'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {getBlockKeyFromSelectionPoint} from '../selection/selection-point'
 import type {PortableTextSlateEditor} from '../types/editor'
+import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const deleteOperationImplementation: BehaviorOperationImplementation<

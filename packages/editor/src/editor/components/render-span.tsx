@@ -3,11 +3,9 @@ import {useSelector} from '@xstate/react'
 import {uniq} from 'lodash'
 import {useContext, useMemo, useRef, type ReactElement} from 'react'
 import {useSlateStatic, type RenderLeafProps} from 'slate-react'
-import {
-  getFocusSpan,
-  isOverlappingSelection,
-  isSelectionCollapsed,
-} from '../../selectors'
+import {getFocusSpan} from '../../selectors/selector.get-focus-span'
+import {isOverlappingSelection} from '../../selectors/selector.is-overlapping-selection'
+import {isSelectionCollapsed} from '../../selectors/selector.is-selection-collapsed'
 import type {
   BlockAnnotationRenderProps,
   BlockChildRenderProps,

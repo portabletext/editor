@@ -1,7 +1,7 @@
 import type {PortableTextBlock} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
-import {getBlockKeyFromSelectionPoint} from '../selection/selection-point'
 import type {BlockPath} from '../types/paths'
+import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 
 /**
  * @public

@@ -1,10 +1,12 @@
 import {Editor, type BaseRange, type Node} from 'slate'
 import {DOMEditor, isDOMNode} from 'slate-dom'
-import type {EditorSchema, EditorSelection} from '..'
 import type {EditorActor} from '../editor/editor-machine'
-import {getBlockKeyFromSelectionPoint} from '../selection/selection-point'
-import type {PortableTextSlateEditor} from '../types/editor'
-import * as utils from '../utils'
+import type {EditorSchema} from '../editor/editor-schema'
+import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
+import {getBlockEndPoint} from '../utils/util.get-block-end-point'
+import {getBlockStartPoint} from '../utils/util.get-block-start-point'
+import {isSelectionCollapsed} from '../utils/util.is-selection-collapsed'
+import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 import {
   getFirstBlock,
   getLastBlock,
@@ -69,14 +71,14 @@ export function getEventPosition({
       block: eventPositionBlock,
       isEditor: false,
       selection: {
-        anchor: utils.getBlockStartPoint({
+        anchor: getBlockStartPoint({
           context: editorActor.getSnapshot().context,
           block: {
             node: eventBlock,
             path: [{_key: eventBlock._key}],
           },
         }),
-        focus: utils.getBlockEndPoint({
+        focus: getBlockEndPoint({
           context: editorActor.getSnapshot().context,
           block: {
             node: eventBlock,
@@ -100,7 +102,7 @@ export function getEventPosition({
   }
 
   if (
-    utils.isSelectionCollapsed(eventSelection) &&
+    isSelectionCollapsed(eventSelection) &&
     eventBlock &&
     eventSelectionFocusBlockKey !== eventBlock._key
   ) {
@@ -110,14 +112,14 @@ export function getEventPosition({
       block: eventPositionBlock,
       isEditor: false,
       selection: {
-        anchor: utils.getBlockStartPoint({
+        anchor: getBlockStartPoint({
           context: editorActor.getSnapshot().context,
           block: {
             node: eventBlock,
             path: [{_key: eventBlock._key}],
           },
         }),
-        focus: utils.getBlockEndPoint({
+        focus: getBlockEndPoint({
           context: editorActor.getSnapshot().context,
           block: {
             node: eventBlock,

@@ -1,8 +1,8 @@
 import type {EditorContext} from '../editor/editor-snapshot'
-import {getBlockKeyFromSelectionPoint} from '../selection/selection-point'
 import type {BlockOffset} from '../types/block-offset'
 import type {EditorSelectionPoint} from '../types/editor'
 import {childSelectionPointToBlockOffset} from './util.child-selection-point-to-block-offset'
+import {getBlockKeyFromSelectionPoint} from './util.selection-point'
 
 /**
  * @public

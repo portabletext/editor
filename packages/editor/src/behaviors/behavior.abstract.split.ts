@@ -1,7 +1,16 @@
 import {isTextBlock} from '@portabletext/schema'
-import {parseBlock} from '../internal-utils/parse-blocks'
-import * as selectors from '../selectors'
-import * as utils from '../utils'
+import {getFocusBlockObject} from '../selectors/selector.get-focus-block-object'
+import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
+import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
+import {getSelectedValue} from '../selectors/selector.get-selected-value'
+import {getSelectionEndBlock} from '../selectors/selector.get-selection-end-block'
+import {getSelectionStartBlock} from '../selectors/selector.get-selection-start-block'
+import {parseBlock} from '../utils/parse-blocks'
+import {getBlockEndPoint} from '../utils/util.get-block-end-point'
+import {getBlockStartPoint} from '../utils/util.get-block-start-point'
+import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
+import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
+import {isSelectionCollapsed} from '../utils/util.is-selection-collapsed'
 import {sliceTextBlock} from '../utils/util.slice-text-block'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
@@ -13,8 +22,8 @@ export const abstractSplitBehaviors = [
   defineBehavior({
     on: 'split',
     guard: ({snapshot}) =>
-      selectors.isSelectionCollapsed(snapshot) &&
-      selectors.getFocusInlineObject(snapshot),
+      isSelectionCollapsed(snapshot.context.selection) &&
+      getFocusInlineObject(snapshot),
     actions: [],
   }),
 
@@ -24,8 +33,8 @@ export const abstractSplitBehaviors = [
   defineBehavior({
     on: 'split',
     guard: ({snapshot}) =>
-      selectors.isSelectionCollapsed(snapshot) &&
-      selectors.getFocusBlockObject(snapshot),
+      isSelectionCollapsed(snapshot.context.selection) &&
+      getFocusBlockObject(snapshot),
     actions: [],
   }),
 
@@ -34,12 +43,12 @@ export const abstractSplitBehaviors = [
     guard: ({snapshot}) => {
       const selection = snapshot.context.selection
 
-      if (!selection || utils.isSelectionCollapsed(selection)) {
+      if (!selection || isSelectionCollapsed(selection)) {
         return false
       }
 
-      const selectionStartBlock = selectors.getSelectionStartBlock(snapshot)
-      const selectionEndBlock = selectors.getSelectionEndBlock(snapshot)
+      const selectionStartBlock = getSelectionStartBlock(snapshot)
+      const selectionEndBlock = getSelectionEndBlock(snapshot)
 
       if (!selectionStartBlock || !selectionEndBlock) {
         return false
@@ -62,12 +71,12 @@ export const abstractSplitBehaviors = [
     guard: ({snapshot}) => {
       const selection = snapshot.context.selection
 
-      if (!selection || utils.isSelectionCollapsed(selection)) {
+      if (!selection || isSelectionCollapsed(selection)) {
         return false
       }
 
-      const selectionStartBlock = selectors.getSelectionStartBlock(snapshot)
-      const selectionEndBlock = selectors.getSelectionEndBlock(snapshot)
+      const selectionStartBlock = getSelectionStartBlock(snapshot)
+      const selectionEndBlock = getSelectionEndBlock(snapshot)
 
       if (!selectionStartBlock || !selectionEndBlock) {
         return false
@@ -77,18 +86,18 @@ export const abstractSplitBehaviors = [
         return false
       }
 
-      const startPoint = utils.getSelectionStartPoint(selection)
-      const startBlockEndPoint = utils.getBlockEndPoint({
+      const startPoint = getSelectionStartPoint(selection)
+      const startBlockEndPoint = getBlockEndPoint({
         context: snapshot.context,
         block: selectionStartBlock,
       })
-      const endPoint = utils.getSelectionEndPoint(selection)
-      const endBlockStartPoint = utils.getBlockStartPoint({
+      const endPoint = getSelectionEndPoint(selection)
+      const endBlockStartPoint = getBlockStartPoint({
         context: snapshot.context,
         block: selectionEndBlock,
       })
 
-      const selectedValue = selectors.getSelectedValue(snapshot)
+      const selectedValue = getSelectedValue(snapshot)
 
       const blocksInBetween = selectedValue.filter(
         (block) =>
@@ -135,7 +144,7 @@ export const abstractSplitBehaviors = [
     guard: ({snapshot}) => {
       const selection = snapshot.context.selection
 
-      if (!selection || utils.isSelectionCollapsed(selection)) {
+      if (!selection || isSelectionCollapsed(selection)) {
         return false
       }
 
@@ -154,19 +163,19 @@ export const abstractSplitBehaviors = [
     guard: ({snapshot}) => {
       const selection = snapshot.context.selection
 
-      if (!selection || !utils.isSelectionCollapsed(selection)) {
+      if (!selection || !isSelectionCollapsed(selection)) {
         return false
       }
 
-      const selectionStartPoint = utils.getSelectionStartPoint(selection)
+      const selectionStartPoint = getSelectionStartPoint(selection)
 
-      const focusTextBlock = selectors.getFocusTextBlock(snapshot)
+      const focusTextBlock = getFocusTextBlock(snapshot)
 
       if (!focusTextBlock) {
         return false
       }
 
-      const blockEndPoint = utils.getBlockEndPoint({
+      const blockEndPoint = getBlockEndPoint({
         context: snapshot.context,
         block: focusTextBlock,
       })
@@ -202,7 +211,7 @@ export const abstractSplitBehaviors = [
     },
     actions: [
       (_, {newTextBlock, newTextBlockSelection}) =>
-        utils.isSelectionCollapsed(newTextBlockSelection)
+        isSelectionCollapsed(newTextBlockSelection)
           ? [
               raise({
                 type: 'insert.block',

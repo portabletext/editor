@@ -4,14 +4,11 @@ import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debugWithName} from '../internal-utils/debug'
 import {toSlateValue} from '../internal-utils/values'
-import {
-  KEY_TO_SLATE_ELEMENT,
-  KEY_TO_VALUE_ELEMENT,
-} from '../internal-utils/weakMaps'
 import type {PortableTextSlateEditor} from '../types/editor'
 import type {EditorActor} from './editor-machine'
 import {withPlugins} from './plugins/with-plugins'
 import type {RelayActor} from './relay-machine'
+import {KEY_TO_SLATE_ELEMENT, KEY_TO_VALUE_ELEMENT} from './weakMaps'
 
 const debug = debugWithName('setup')
 

@@ -1,6 +1,11 @@
 import {isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
-import * as selectors from '../selectors'
+import {getFocusBlock} from '../selectors/selector.get-focus-block'
+import {getFocusSpan} from '../selectors/selector.get-focus-span'
+import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
+import {getPreviousInlineObject} from '../selectors/selector.get-previous-inline-object'
+import {getBlockTextBefore} from '../selectors/selector.get-text-before'
+import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
 import {spanSelectionPointToBlockOffset} from '../utils/util.block-offset'
 import {getTextBlockText} from '../utils/util.get-text-block-text'
 import {execute} from './behavior.types.action'
@@ -30,15 +35,15 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
-      const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
-      const focusTextBlock = selectors.getFocusTextBlock(snapshot)
-      const focusSpan = selectors.getFocusSpan(snapshot)
+      const selectionCollapsed = isSelectionCollapsed(snapshot)
+      const focusTextBlock = getFocusTextBlock(snapshot)
+      const focusSpan = getFocusSpan(snapshot)
 
       if (!selectionCollapsed || !focusTextBlock || !focusSpan) {
         return false
       }
 
-      const previousInlineObject = selectors.getPreviousInlineObject(snapshot)
+      const previousInlineObject = getPreviousInlineObject(snapshot)
       const blockOffset = spanSelectionPointToBlockOffset({
         context: snapshot.context,
         selectionPoint: {
@@ -121,15 +126,15 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       }
 
       const hrObject = config.horizontalRuleObject?.(snapshot.context)
-      const focusBlock = selectors.getFocusTextBlock(snapshot)
-      const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
+      const focusBlock = getFocusTextBlock(snapshot)
+      const selectionCollapsed = isSelectionCollapsed(snapshot)
 
       if (!hrObject || !focusBlock || !selectionCollapsed) {
         return false
       }
 
-      const previousInlineObject = selectors.getPreviousInlineObject(snapshot)
-      const textBefore = selectors.getBlockTextBefore(snapshot)
+      const previousInlineObject = getPreviousInlineObject(snapshot)
+      const textBefore = getBlockTextBefore(snapshot)
       const hrBlockOffsets = {
         anchor: {
           path: focusBlock.path,
@@ -180,7 +185,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       const hrRegExp = /^(---)$|(___)$|(\*\*\*)$/
       const hrCharacters = text.match(hrRegExp)?.[0]
       const hrObject = config.horizontalRuleObject?.(snapshot.context)
-      const focusBlock = selectors.getFocusBlock(snapshot)
+      const focusBlock = getFocusBlock(snapshot)
 
       if (!hrCharacters || !hrObject || !focusBlock) {
         return false
@@ -240,9 +245,9 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
-      const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
-      const focusTextBlock = selectors.getFocusTextBlock(snapshot)
-      const focusSpan = selectors.getFocusSpan(snapshot)
+      const selectionCollapsed = isSelectionCollapsed(snapshot)
+      const focusTextBlock = getFocusTextBlock(snapshot)
+      const focusSpan = getFocusSpan(snapshot)
 
       if (!selectionCollapsed || !focusTextBlock || !focusSpan) {
         return false
@@ -264,7 +269,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
-      const previousInlineObject = selectors.getPreviousInlineObject(snapshot)
+      const previousInlineObject = getPreviousInlineObject(snapshot)
       const blockText = getTextBlockText(focusTextBlock.node)
       const markdownHeadingSearch = /^#+/.exec(blockText)
       const level = markdownHeadingSearch
@@ -323,9 +328,9 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   const clearStyleOnBackspace = defineBehavior({
     on: 'delete.backward',
     guard: ({snapshot}) => {
-      const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
-      const focusTextBlock = selectors.getFocusTextBlock(snapshot)
-      const focusSpan = selectors.getFocusSpan(snapshot)
+      const selectionCollapsed = isSelectionCollapsed(snapshot)
+      const focusTextBlock = getFocusTextBlock(snapshot)
+      const focusSpan = getFocusSpan(snapshot)
 
       if (!selectionCollapsed || !focusTextBlock || !focusSpan) {
         return false
@@ -366,15 +371,15 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         return false
       }
 
-      const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
-      const focusTextBlock = selectors.getFocusTextBlock(snapshot)
-      const focusSpan = selectors.getFocusSpan(snapshot)
+      const selectionCollapsed = isSelectionCollapsed(snapshot)
+      const focusTextBlock = getFocusTextBlock(snapshot)
+      const focusSpan = getFocusSpan(snapshot)
 
       if (!selectionCollapsed || !focusTextBlock || !focusSpan) {
         return false
       }
 
-      const previousInlineObject = selectors.getPreviousInlineObject(snapshot)
+      const previousInlineObject = getPreviousInlineObject(snapshot)
       const blockOffset = spanSelectionPointToBlockOffset({
         context: snapshot.context,
         selectionPoint: {

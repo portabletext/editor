@@ -1,4 +1,6 @@
-import * as selectors from '../selectors'
+import {getFocusSpan} from '../selectors/selector.get-focus-span'
+import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
+import {isSelectionExpanded} from '../selectors/selector.is-selection-expanded'
 import {abstractAnnotationBehaviors} from './behavior.abstract.annotation'
 import {abstractDecoratorBehaviors} from './behavior.abstract.decorator'
 import {abstractDeleteBehaviors} from './behavior.abstract.delete'
@@ -18,8 +20,8 @@ export const abstractBehaviors = [
   defineBehavior({
     on: 'clipboard.copy',
     guard: ({snapshot}) => {
-      const focusSpan = selectors.getFocusSpan(snapshot)
-      const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
+      const focusSpan = getFocusSpan(snapshot)
+      const selectionCollapsed = isSelectionCollapsed(snapshot)
 
       return focusSpan && selectionCollapsed
     },
@@ -39,8 +41,8 @@ export const abstractBehaviors = [
   defineBehavior({
     on: 'clipboard.cut',
     guard: ({snapshot}) => {
-      const focusSpan = selectors.getFocusSpan(snapshot)
-      const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
+      const focusSpan = getFocusSpan(snapshot)
+      const selectionCollapsed = isSelectionCollapsed(snapshot)
 
       return focusSpan && selectionCollapsed
     },
@@ -83,8 +85,7 @@ export const abstractBehaviors = [
   defineBehavior({
     on: 'clipboard.paste',
     guard: ({snapshot}) => {
-      return snapshot.context.selection &&
-        selectors.isSelectionExpanded(snapshot)
+      return snapshot.context.selection && isSelectionExpanded(snapshot)
         ? {selection: snapshot.context.selection}
         : false
     },

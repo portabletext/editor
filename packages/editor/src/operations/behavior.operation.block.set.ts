@@ -1,6 +1,6 @@
 import {Transforms, type Element as SlateElement} from 'slate'
-import {parseBlock} from '../internal-utils/parse-blocks'
 import {toSlateValue} from '../internal-utils/values'
+import {parseBlock} from '../utils/parse-blocks'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const blockSetOperationImplementation: BehaviorOperationImplementation<

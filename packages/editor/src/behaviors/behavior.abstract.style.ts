@@ -1,4 +1,5 @@
-import {getSelectedTextBlocks, isActiveStyle} from '../selectors'
+import {getSelectedTextBlocks} from '../selectors/selector.get-selected-text-blocks'
+import {isActiveStyle} from '../selectors/selector.is-active-style'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 

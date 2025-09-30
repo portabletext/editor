@@ -1,5 +1,5 @@
 import type {Editor} from 'slate'
-import {defaultKeyGenerator} from './key-generator'
+import {defaultKeyGenerator} from '../utils/key-generator'
 
 const CURRENT_UNDO_STEP: WeakMap<Editor, {undoStepId: string} | undefined> =
   new WeakMap()

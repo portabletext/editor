@@ -22,7 +22,7 @@ import {
   getTextSelection,
 } from '../src/internal-utils/text-selection'
 import {getValueAnnotations} from '../src/internal-utils/value-annotations'
-import {isSelectionCollapsed} from '../src/utils'
+import {isSelectionCollapsed} from '../src/utils/util.is-selection-collapsed'
 import {reverseSelection} from '../src/utils/util.reverse-selection'
 import {Editors} from './editors'
 import {schemaDefinition} from './schema'

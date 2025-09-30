@@ -2,9 +2,16 @@ import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
 import type {EditorEmittedEvent} from '../src'
-import {defineBehavior, effect, execute, forward, raise} from '../src/behaviors'
+import {
+  effect,
+  execute,
+  forward,
+  raise,
+} from '../src/behaviors/behavior.types.action'
+import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {getSelectionAfterText} from '../src/internal-utils/text-selection'
-import {BehaviorPlugin, EventListenerPlugin} from '../src/plugins'
+import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
+import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('Behavior API', () => {

@@ -1,7 +1,7 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import type {PortableTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
-import {defaultKeyGenerator} from '../editor/key-generator'
+import {defaultKeyGenerator} from '../utils/key-generator'
 import {buildIndexMaps} from './build-index-maps'
 
 function blockObject(_key: string, name: string) {

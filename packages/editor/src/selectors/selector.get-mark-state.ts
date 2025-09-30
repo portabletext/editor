@@ -1,6 +1,6 @@
 import type {EditorSelector} from '../editor/editor-selector'
 import {isBlockPath} from '../types/paths'
-import {blockOffsetToSpanSelectionPoint} from '../utils'
+import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
 import {isSelectionExpanded} from '../utils/util.is-selection-expanded'
 import {getFocusSpan} from './selector.get-focus-span'
 import {getFocusTextBlock} from './selector.get-focus-text-block'

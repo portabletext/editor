@@ -1,6 +1,6 @@
 import type {EditorSelector} from '../editor/editor-selector'
 import type {BlockOffset} from '../types/block-offset'
-import * as utils from '../utils'
+import {spanSelectionPointToBlockOffset} from '../utils/util.block-offset'
 import {getSelectionEndPoint} from './selector.get-selection-end-point'
 import {getSelectionStartPoint} from './selector.get-selection-start-point'
 
@@ -21,11 +21,11 @@ export const getBlockOffsets: EditorSelector<
     return undefined
   }
 
-  const start = utils.spanSelectionPointToBlockOffset({
+  const start = spanSelectionPointToBlockOffset({
     context: snapshot.context,
     selectionPoint: selectionStartPoint,
   })
-  const end = utils.spanSelectionPointToBlockOffset({
+  const end = spanSelectionPointToBlockOffset({
     context: snapshot.context,
     selectionPoint: selectionEndPoint,
   })

@@ -2,9 +2,11 @@ import {defineSchema} from '@portabletext/schema'
 import {getTersePt} from '@portabletext/test'
 import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
-import {defineBehavior, execute, forward, raise} from '../src/behaviors'
+import {execute, forward, raise} from '../src/behaviors/behavior.types.action'
+import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import type {MutationEvent} from '../src/editor/relay-machine'
-import {BehaviorPlugin, EventListenerPlugin} from '../src/plugins'
+import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
+import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.history.undo', () => {

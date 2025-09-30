@@ -1,11 +1,11 @@
 import {isTextBlock} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
+import type {EditorSelectionPoint} from '../types/editor'
+import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
 import {
   getBlockKeyFromSelectionPoint,
   getChildKeyFromSelectionPoint,
-} from '../selection/selection-point'
-import type {EditorSelectionPoint} from '../types/editor'
-import {getSelectionEndPoint} from '../utils'
+} from '../utils/util.selection-point'
 
 /**
  * @public

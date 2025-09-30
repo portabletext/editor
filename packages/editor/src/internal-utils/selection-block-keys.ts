@@ -1,5 +1,5 @@
-import {getBlockKeyFromSelectionPoint} from '../selection/selection-point'
 import type {EditorSelection} from '../types/editor'
+import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 
 export function getSelectionBlockKeys(selection: EditorSelection) {
   if (!selection) {

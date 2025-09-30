@@ -1,14 +1,13 @@
 import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 import {isTextBlock} from '@portabletext/schema'
 import {defaultKeyboardShortcuts} from '../keyboard-shortcuts/default-keyboard-shortcuts'
-import {
-  getFocusBlock,
-  getFocusInlineObject,
-  getPreviousBlock,
-  isSelectionCollapsed,
-  isSelectionExpanded,
-} from '../selectors'
-import {getBlockEndPoint, isEmptyTextBlock} from '../utils'
+import {getFocusBlock} from '../selectors/selector.get-focus-block'
+import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
+import {getPreviousBlock} from '../selectors/selector.get-previous-block'
+import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
+import {isSelectionExpanded} from '../selectors/selector.is-selection-expanded'
+import {getBlockEndPoint} from '../utils/util.get-block-end-point'
+import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 

@@ -1,8 +1,9 @@
 import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
 import type {EditorSnapshot} from '../src'
-import {defineBehavior, execute} from '../src/behaviors'
-import {BehaviorPlugin} from '../src/plugins'
+import {execute} from '../src/behaviors/behavior.types.action'
+import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
+import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('EditorSnapshot', () => {

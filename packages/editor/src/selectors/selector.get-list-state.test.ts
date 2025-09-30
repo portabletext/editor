@@ -1,8 +1,8 @@
 import type {PortableTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
 import type {EditorSelector} from '../editor/editor-selector'
-import {defaultKeyGenerator} from '../editor/key-generator'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
+import {defaultKeyGenerator} from '../utils/key-generator'
 import {getListIndex} from './selector.get-list-state'
 
 function blockObject(_key: string, name: string) {

@@ -10,11 +10,12 @@ import {
   type RangeDecoration,
   type SchemaDefinition,
 } from '../src'
-import type {Behavior} from '../src/behaviors'
+import type {Behavior} from '../src/behaviors/behavior.types.behavior'
 import {EditorProvider} from '../src/editor/editor-provider'
 import type {EditorEmittedEvent} from '../src/editor/relay-machine'
-import {BehaviorPlugin, EditorRefPlugin} from '../src/plugins'
-import * as selectors from '../src/selectors'
+import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
+import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
+import {isActiveAnnotation} from '../src/selectors/selector.is-active-annotation'
 import type {EditorActorRef, TestActorRef} from './test-machine'
 
 export function Editors(props: {testRef: TestActorRef}) {
@@ -226,10 +227,7 @@ function InlineObjectButtons() {
 
 function CommentButtons() {
   const editor = useEditor()
-  const isActive = useEditorSelector(
-    editor,
-    selectors.isActiveAnnotation('comment'),
-  )
+  const isActive = useEditorSelector(editor, isActiveAnnotation('comment'))
 
   return (
     <>
@@ -295,10 +293,7 @@ function CommentButtons() {
 
 function LinkButtons() {
   const editor = useEditor()
-  const isActive = useEditorSelector(
-    editor,
-    selectors.isActiveAnnotation('link'),
-  )
+  const isActive = useEditorSelector(editor, isActiveAnnotation('link'))
 
   return (
     <>

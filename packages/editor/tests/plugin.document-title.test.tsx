@@ -2,14 +2,14 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import {useEffect} from 'react'
 import {expect, test, vi} from 'vitest'
 import {defineSchema, useEditor, type PortableTextBlock} from '../src'
-import {defineBehavior, execute} from '../src/behaviors'
-import {
-  getFirstBlock,
-  getFocusTextBlock,
-  getPreviousBlock,
-} from '../src/selectors'
+import {execute} from '../src/behaviors/behavior.types.action'
+import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
+import {getFirstBlock} from '../src/selectors/selector.get-first-block'
+import {getFocusTextBlock} from '../src/selectors/selector.get-focus-text-block'
+import {getPreviousBlock} from '../src/selectors/selector.get-previous-block'
 import {createTestEditor} from '../src/test/vitest'
-import {getBlockEndPoint, getTextBlockText} from '../src/utils'
+import {getBlockEndPoint} from '../src/utils/util.get-block-end-point'
+import {getTextBlockText} from '../src/utils/util.get-text-block-text'
 
 function DocumentTitlePlugin() {
   const editor = useEditor()

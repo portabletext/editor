@@ -18,10 +18,10 @@ import {
 import type {Path, PortableTextBlock, PortableTextChild} from '@sanity/types'
 import {Element, Node, Text, Transforms, type Descendant} from 'slate'
 import type {EditorSchema} from '../editor/editor-schema'
+import {KEY_TO_SLATE_ELEMENT} from '../editor/weakMaps'
 import type {PortableTextSlateEditor} from '../types/editor'
-import {isKeyedSegment} from '../utils'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {isEqualToEmptyEditor, toSlateValue} from './values'
-import {KEY_TO_SLATE_ELEMENT} from './weakMaps'
 
 /**
  * Creates a function that can apply a patch onto a PortableTextSlateEditor.

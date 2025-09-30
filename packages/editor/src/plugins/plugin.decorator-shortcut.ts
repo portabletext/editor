@@ -14,7 +14,7 @@ import type {Editor} from '../editor'
 import type {EditorSchema} from '../editor/editor-schema'
 import {useEditor} from '../editor/use-editor'
 import type {BlockOffset} from '../types/block-offset'
-import * as utils from '../utils'
+import {spanSelectionPointToBlockOffset} from '../utils/util.block-offset'
 
 /**
  * @beta
@@ -88,11 +88,11 @@ const selectionListenerCallback: CallbackLogicFunction<
           return {blockOffsets: undefined}
         }
 
-        const anchor = utils.spanSelectionPointToBlockOffset({
+        const anchor = spanSelectionPointToBlockOffset({
           context: snapshot.context,
           selectionPoint: event.at.anchor,
         })
-        const focus = utils.spanSelectionPointToBlockOffset({
+        const focus = spanSelectionPointToBlockOffset({
           context: snapshot.context,
           selectionPoint: event.at.focus,
         })

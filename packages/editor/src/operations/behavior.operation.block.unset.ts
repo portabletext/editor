@@ -1,10 +1,10 @@
 import {isTextBlock} from '@portabletext/schema'
 import {omit} from 'lodash'
 import {Editor, Transforms} from 'slate'
-import {parseBlock} from '../internal-utils/parse-blocks'
+import {KEY_TO_VALUE_ELEMENT} from '../editor/weakMaps'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {fromSlateValue} from '../internal-utils/values'
-import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
+import {parseBlock} from '../utils/parse-blocks'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const blockUnsetOperationImplementation: BehaviorOperationImplementation<

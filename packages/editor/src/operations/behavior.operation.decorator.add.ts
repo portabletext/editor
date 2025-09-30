@@ -1,10 +1,12 @@
 import {Editor, Range, Text, Transforms} from 'slate'
+import {KEY_TO_VALUE_ELEMENT} from '../editor/weakMaps'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {fromSlateValue} from '../internal-utils/values'
-import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
-import * as selectors from '../selectors'
-import * as utils from '../utils'
+import {getTrimmedSelection} from '../selectors/selector.get-trimmed-selection'
+import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
+import {blockOffsetsToSelection} from '../utils/util.block-offsets-to-selection'
+import {selectionPointToBlockOffset} from '../utils/util.selection-point-to-block-offset'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const decoratorAddOperationImplementation: BehaviorOperationImplementation<
@@ -19,7 +21,7 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
   )
 
   const manualAnchor = operation.at?.anchor
-    ? utils.blockOffsetToSpanSelectionPoint({
+    ? blockOffsetToSpanSelectionPoint({
         context: {
           ...context,
           value,
@@ -29,7 +31,7 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
       })
     : undefined
   const manualFocus = operation.at?.focus
-    ? utils.blockOffsetToSpanSelectionPoint({
+    ? blockOffsetToSpanSelectionPoint({
         context: {
           ...context,
           value,
@@ -67,7 +69,7 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
     range: selection,
   })
   const anchorOffset = editorSelection
-    ? utils.selectionPointToBlockOffset({
+    ? selectionPointToBlockOffset({
         context: {
           ...context,
           value,
@@ -76,7 +78,7 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
       })
     : undefined
   const focusOffset = editorSelection
-    ? utils.selectionPointToBlockOffset({
+    ? selectionPointToBlockOffset({
         context: {
           ...context,
           value,
@@ -105,7 +107,7 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
     )
     // We need to find the new selection from the original offsets because the
     // split operation might have changed the value.
-    const newSelection = utils.blockOffsetsToSelection({
+    const newSelection = blockOffsetsToSelection({
       context: {
         ...context,
         value: newValue,
@@ -114,7 +116,7 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
       backward: editorSelection?.backward,
     })
 
-    const trimmedSelection = selectors.getTrimmedSelection({
+    const trimmedSelection = getTrimmedSelection({
       blockIndexMap: editor.blockIndexMap,
       context: {
         converters: [],

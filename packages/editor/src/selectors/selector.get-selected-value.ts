@@ -1,11 +1,9 @@
 import type {PortableTextBlock} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
-import {getBlockKeyFromSelectionPoint} from '../selection/selection-point'
-import {
-  getSelectionEndPoint,
-  getSelectionStartPoint,
-  sliceBlocks,
-} from '../utils'
+import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
+import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
+import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
+import {sliceBlocks} from '../utils/util.slice-blocks'
 
 /**
  * @public

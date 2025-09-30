@@ -1,10 +1,11 @@
 import {getTersePt} from '@portabletext/test'
 import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
-import {defineBehavior, execute, raise} from '../src/behaviors'
+import {execute, raise} from '../src/behaviors/behavior.types.action'
+import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {getSelectionBeforeText} from '../src/internal-utils/text-selection'
-import {BehaviorPlugin} from '../src/plugins'
-import {getNextBlock} from '../src/selectors'
+import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
+import {getNextBlock} from '../src/selectors/selector.get-next-block'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.keyboard.keydown', () => {

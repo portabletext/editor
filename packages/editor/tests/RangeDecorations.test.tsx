@@ -15,14 +15,15 @@ import {
 } from '../src'
 import type {PortableTextEditor} from '../src/editor/PortableTextEditor'
 import {getSelectionAfterText} from '../src/internal-utils/text-selection'
-import {EditorRefPlugin, EventListenerPlugin} from '../src/plugins'
+import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
+import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {InternalChange$Plugin} from '../src/plugins/plugin.internal.change-ref'
 import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
+import {createTestEditor} from '../src/test/vitest'
 import {
   getBlockKeyFromSelectionPoint,
   getChildKeyFromSelectionPoint,
-} from '../src/selection/selection-point'
-import {createTestEditor} from '../src/test/vitest'
+} from '../src/utils/util.selection-point'
 
 const helloBlock: PortableTextBlock = {
   _key: '123',

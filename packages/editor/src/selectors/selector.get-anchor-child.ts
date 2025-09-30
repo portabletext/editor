@@ -1,7 +1,7 @@
 import type {PortableTextObject, PortableTextSpan} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
-import {getChildKeyFromSelectionPoint} from '../selection/selection-point'
 import type {ChildPath} from '../types/paths'
+import {getChildKeyFromSelectionPoint} from '../utils/util.selection-point'
 import {getAnchorTextBlock} from './selector.get-anchor-text-block'
 
 /**

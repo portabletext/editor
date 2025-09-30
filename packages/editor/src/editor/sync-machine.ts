@@ -25,11 +25,6 @@ import type {ActorRefFrom} from 'xstate'
 import {debugWithName} from '../internal-utils/debug'
 import {validateValue} from '../internal-utils/validateValue'
 import {toSlateValue, VOID_CHILD_KEY} from '../internal-utils/values'
-import {
-  isChangingRemotely,
-  withRemoteChanges,
-} from '../internal-utils/withChanges'
-import {withoutPatching} from '../internal-utils/withoutPatching'
 import type {PickFromUnion} from '../type-utils'
 import type {
   InvalidValueResolution,
@@ -37,6 +32,8 @@ import type {
 } from '../types/editor'
 import type {EditorSchema} from './editor-schema'
 import {withoutSaving} from './plugins/createWithUndoRedo'
+import {isChangingRemotely, withRemoteChanges} from './withChanges'
+import {withoutPatching} from './withoutPatching'
 
 const debug = debugWithName('sync machine')
 

@@ -1,12 +1,12 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {
-  getBlockKeyFromSelectionPoint,
-  getChildKeyFromSelectionPoint,
-} from '../selection/selection-point'
 import type {BlockOffset} from '../types/block-offset'
 import type {EditorSelectionPoint} from '../types/editor'
 import type {ChildPath} from '../types/paths'
+import {
+  getBlockKeyFromSelectionPoint,
+  getChildKeyFromSelectionPoint,
+} from './util.selection-point'
 
 /**
  * @public
