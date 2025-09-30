@@ -153,12 +153,9 @@ const arrowListenerCallback: CallbackLogicFunction<
         guard: ({event}) => event.originEvent.key === 'ArrowDown',
         actions: [
           () => [
-            {
-              type: 'effect',
-              effect: () => {
-                sendBack({type: 'navigate down'})
-              },
-            },
+            effect(() => {
+              sendBack({type: 'navigate down'})
+            }),
           ],
         ],
       }),
@@ -169,12 +166,9 @@ const arrowListenerCallback: CallbackLogicFunction<
         guard: ({event}) => event.originEvent.key === 'ArrowUp',
         actions: [
           () => [
-            {
-              type: 'effect',
-              effect: () => {
-                sendBack({type: 'navigate up'})
-              },
-            },
+            effect(() => {
+              sendBack({type: 'navigate up'})
+            }),
           ],
         ],
       }),
@@ -290,12 +284,9 @@ const emojiInsertListener: CallbackLogicFunction<
           event.originEvent.key === 'Enter' || event.originEvent.key === 'Tab',
         actions: [
           () => [
-            {
-              type: 'effect',
-              effect: () => {
-                sendBack({type: 'dismiss'})
-              },
-            },
+            effect(() => {
+              sendBack({type: 'dismiss'})
+            }),
           ],
         ],
       }),
