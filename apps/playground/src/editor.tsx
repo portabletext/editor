@@ -36,6 +36,7 @@ import {TooltipTrigger} from 'react-aria-components'
 import {tv} from 'tailwind-variants'
 import {DebugMenu} from './debug-menu'
 import './editor.css'
+import {EmojiPickerPlugin} from './emoji-picker'
 import {
   EditorFeatureFlagsContext,
   PlaygroundFeatureFlagsContext,
@@ -50,7 +51,6 @@ import {
   StockTickerSchema,
 } from './playground-schema-definition'
 import {CodeEditorPlugin} from './plugins/plugin.code-editor'
-import {EmojiPickerPlugin} from './plugins/plugin.emoji-picker'
 import {HtmlDeserializerPlugin} from './plugins/plugin.html-deserializer'
 import {ImageDeserializerPlugin} from './plugins/plugin.image-deserializer'
 import {LinkPlugin} from './plugins/plugin.link'

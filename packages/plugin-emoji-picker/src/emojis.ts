@@ -1,59 +1,7 @@
-export type EmojiMatch =
-  | {
-      type: 'exact'
-      emoji: string
-      keyword: string
-    }
-  | {
-      type: 'partial'
-      emoji: string
-      keyword: string
-      startSlice: string
-      endSlice: string
-    }
-
-export function matchEmojis(keyword: string): Array<EmojiMatch> {
-  const foundEmojis: Array<EmojiMatch> = []
-
-  if (keyword.length < 1) {
-    return foundEmojis
-  }
-
-  for (const emoji in emojis) {
-    const emojiKeywords = emojis[emoji]
-
-    for (const emojiKeyword of emojiKeywords) {
-      const keywordIndex = emojiKeyword.indexOf(keyword)
-
-      if (keywordIndex === -1) {
-        continue
-      }
-
-      if (emojiKeyword === keyword) {
-        foundEmojis.push({
-          type: 'exact',
-          emoji,
-          keyword,
-        })
-      } else {
-        const start = emojiKeyword.slice(0, keywordIndex)
-        const end = emojiKeyword.slice(keywordIndex + keyword.length)
-
-        foundEmojis.push({
-          type: 'partial',
-          emoji,
-          keyword,
-          startSlice: start,
-          endSlice: end,
-        })
-      }
-    }
-  }
-
-  return foundEmojis
-}
-
-const emojis: Record<string, Array<string>> = {
+/**
+ * @beta
+ */
+export const emojis: Record<string, Array<string>> = {
   '😀': [
     'grinning_face',
     'face',

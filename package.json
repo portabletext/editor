@@ -11,6 +11,7 @@
     "build:keyboard-shortcuts": "turbo build --filter=@portabletext/keyboard-shortcuts...",
     "build:patches": "turbo build --filter=@portabletext/patches...",
     "build:playground": "turbo build --filter=playground...",
+    "build:plugin-emoji-picker": "turbo build --filter=@portabletext/plugin-emoji-picker...",
     "build:plugin-input-rule": "turbo build --filter=@portabletext/plugin-input-rule...",
     "build:sanity-bridge": "turbo build --filter=@portabletext/sanity-bridge...",
     "build:schema": "turbo build --filter=@portabletext/schema...",
