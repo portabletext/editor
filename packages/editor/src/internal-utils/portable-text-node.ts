@@ -1,5 +1,5 @@
 import type {EditorSchema} from '../editor/editor-schema'
-import {isTypedObject} from './asserters'
+import {isTypedObject} from '../utils/asserters'
 
 type Path = Array<number>
 

@@ -1,4 +1,4 @@
-import type {EditorSelection, EditorSelectionPoint} from '..'
+import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 
 /**
  * @public

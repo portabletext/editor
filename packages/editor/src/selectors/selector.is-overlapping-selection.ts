@@ -1,5 +1,5 @@
 import type {EditorSelection} from '../types/editor'
-import {isEqualSelectionPoints} from '../utils'
+import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
 import type {EditorSelector} from './../editor/editor-selector'
 import {getSelectionEndPoint} from './selector.get-selection-end-point'
 import {getSelectionStartPoint} from './selector.get-selection-start-point'

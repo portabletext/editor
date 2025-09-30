@@ -2,7 +2,6 @@ import {isSpan} from '@portabletext/schema'
 import {isEqual} from 'lodash'
 import {Editor, Path, Point, Range, Transforms, type Descendant} from 'slate'
 import {DOMEditor} from 'slate-dom'
-import {parseBlock} from '../internal-utils/parse-blocks'
 import {
   getFocusBlock,
   getFocusChild,
@@ -12,7 +11,8 @@ import {
 } from '../internal-utils/slate-utils'
 import {isEqualToEmptyEditor, toSlateValue} from '../internal-utils/values'
 import type {PortableTextSlateEditor} from '../types/editor'
-import {isEmptyTextBlock} from '../utils'
+import {parseBlock} from '../utils/parse-blocks'
+import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import type {
   BehaviorOperationImplementation,
   BehaviorOperationImplementationContext,

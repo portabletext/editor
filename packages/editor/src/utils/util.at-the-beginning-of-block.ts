@@ -1,8 +1,8 @@
 import {isTextBlock} from '@portabletext/schema'
 import type {PortableTextBlock} from '@sanity/types'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {getChildKeyFromSelectionPoint} from '../selection/selection-point'
 import {isSelectionCollapsed} from './util.is-selection-collapsed'
+import {getChildKeyFromSelectionPoint} from './util.selection-point'
 
 export function isAtTheBeginningOfBlock({
   context,

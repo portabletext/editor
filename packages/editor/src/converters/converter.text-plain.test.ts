@@ -6,8 +6,8 @@ import {
 } from '@portabletext/schema'
 import type {PortableTextBlock, PortableTextTextBlock} from '@sanity/types'
 import {expect, test} from 'vitest'
-import type {EditorSelection} from '..'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
+import type {EditorSelection} from '../types/editor'
 import {createConverterTextPlain} from './converter.text-plain'
 
 const b1: PortableTextTextBlock = {

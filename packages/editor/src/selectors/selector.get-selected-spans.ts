@@ -1,11 +1,11 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {PortableTextSpan} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
+import type {ChildPath} from '../types/paths'
 import {
   getBlockKeyFromSelectionPoint,
   getChildKeyFromSelectionPoint,
-} from '../selection/selection-point'
-import type {ChildPath} from '../types/paths'
+} from '../utils/util.selection-point'
 import {getSelectionEndPoint} from './selector.get-selection-end-point'
 import {getSelectionStartPoint} from './selector.get-selection-start-point'
 

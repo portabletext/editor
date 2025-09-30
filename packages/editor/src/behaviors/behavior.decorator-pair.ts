@@ -1,8 +1,13 @@
 import type {EditorSchema} from '../editor/editor-schema'
 import {createPairRegex} from '../internal-utils/get-text-to-emphasize'
-import * as selectors from '../selectors'
+import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
+import {getPreviousInlineObject} from '../selectors/selector.get-previous-inline-object'
+import {getSelectionStartPoint} from '../selectors/selector.get-selection-start-point'
+import {getBlockTextBefore} from '../selectors/selector.get-text-before'
 import type {BlockOffset} from '../types/block-offset'
-import * as utils from '../utils'
+import {spanSelectionPointToBlockOffset} from '../utils/util.block-offset'
+import {blockOffsetsToSelection} from '../utils/util.block-offsets-to-selection'
+import {childSelectionPointToBlockOffset} from '../utils/util.child-selection-point-to-block-offset'
 import {effect, execute} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -33,10 +38,10 @@ export function createDecoratorPairBehavior(config: {
         return false
       }
 
-      const focusTextBlock = selectors.getFocusTextBlock(snapshot)
-      const selectionStartPoint = selectors.getSelectionStartPoint(snapshot)
+      const focusTextBlock = getFocusTextBlock(snapshot)
+      const selectionStartPoint = getSelectionStartPoint(snapshot)
       const selectionStartOffset = selectionStartPoint
-        ? utils.spanSelectionPointToBlockOffset({
+        ? spanSelectionPointToBlockOffset({
             context: {
               schema: snapshot.context.schema,
               value: snapshot.context.value,
@@ -49,7 +54,7 @@ export function createDecoratorPairBehavior(config: {
         return false
       }
 
-      const textBefore = selectors.getBlockTextBefore(snapshot)
+      const textBefore = getBlockTextBefore(snapshot)
       const newText = `${textBefore}${event.text}`
       const textToDecorate = newText.match(regEx)?.at(0)
 
@@ -92,27 +97,25 @@ export function createDecoratorPairBehavior(config: {
       // If the prefix is more than one character, then we need to check if
       // there is an inline object inside it
       if (prefixOffsets.focus.offset - prefixOffsets.anchor.offset > 1) {
-        const prefixSelection = utils.blockOffsetsToSelection({
+        const prefixSelection = blockOffsetsToSelection({
           context: snapshot.context,
           offsets: prefixOffsets,
         })
-        const inlineObjectBeforePrefixFocus = selectors.getPreviousInlineObject(
-          {
-            ...snapshot,
-            context: {
-              ...snapshot.context,
-              selection: prefixSelection
-                ? {
-                    anchor: prefixSelection.focus,
-                    focus: prefixSelection.focus,
-                  }
-                : null,
-            },
+        const inlineObjectBeforePrefixFocus = getPreviousInlineObject({
+          ...snapshot,
+          context: {
+            ...snapshot.context,
+            selection: prefixSelection
+              ? {
+                  anchor: prefixSelection.focus,
+                  focus: prefixSelection.focus,
+                }
+              : null,
           },
-        )
+        })
         const inlineObjectBeforePrefixFocusOffset =
           inlineObjectBeforePrefixFocus
-            ? utils.childSelectionPointToBlockOffset({
+            ? childSelectionPointToBlockOffset({
                 context: {
                   schema: snapshot.context.schema,
                   value: snapshot.context.value,
@@ -138,9 +141,9 @@ export function createDecoratorPairBehavior(config: {
       // If the suffix is more than one character, then we need to check if
       // there is an inline object inside it
       if (suffixOffsets.focus.offset - suffixOffsets.anchor.offset > 1) {
-        const previousInlineObject = selectors.getPreviousInlineObject(snapshot)
+        const previousInlineObject = getPreviousInlineObject(snapshot)
         const previousInlineObjectOffset = previousInlineObject
-          ? utils.childSelectionPointToBlockOffset({
+          ? childSelectionPointToBlockOffset({
               context: {
                 schema: snapshot.context.schema,
                 value: snapshot.context.value,

@@ -1,19 +1,22 @@
-import * as selectors from '../selectors'
+import {getCaretWordSelection} from '../selectors/selector.get-caret-word-selection'
+import {isActiveAnnotation} from '../selectors/selector.is-active-annotation'
+import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
+import {isSelectionExpanded} from '../selectors/selector.is-selection-expanded'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
 const addAnnotationOnCollapsedSelection = defineBehavior({
   on: 'annotation.add',
   guard: ({snapshot}) => {
-    if (!selectors.isSelectionCollapsed(snapshot)) {
+    if (!isSelectionCollapsed(snapshot)) {
       return false
     }
 
-    const caretWordSelection = selectors.getCaretWordSelection(snapshot)
+    const caretWordSelection = getCaretWordSelection(snapshot)
 
     if (
       !caretWordSelection ||
-      !selectors.isSelectionExpanded({
+      !isSelectionExpanded({
         ...snapshot,
         context: {
           ...snapshot.context,
@@ -43,9 +46,7 @@ const preventOverlappingAnnotations = defineBehavior({
   on: 'annotation.add',
   // When the annotation is active in the selection
   guard: ({snapshot, event}) =>
-    selectors.isActiveAnnotation(event.annotation.name, {mode: 'partial'})(
-      snapshot,
-    ),
+    isActiveAnnotation(event.annotation.name, {mode: 'partial'})(snapshot),
   // Then the existing annotation is removed
   actions: [
     ({event}) => [

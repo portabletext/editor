@@ -22,7 +22,11 @@ import {
 } from 'slate'
 import {debugWithName} from '../../internal-utils/debug'
 import {fromSlateValue} from '../../internal-utils/values'
-import {isChangingRemotely} from '../../internal-utils/withChanges'
+import type {BehaviorOperationImplementation} from '../../operations/behavior.operations'
+import type {PortableTextSlateEditor} from '../../types/editor'
+import type {EditorActor} from '../editor-machine'
+import {getCurrentUndoStepId} from '../with-undo-step'
+import {isChangingRemotely} from '../withChanges'
 import {
   isRedoing,
   isUndoing,
@@ -30,11 +34,7 @@ import {
   setIsUndoing,
   withRedoing,
   withUndoing,
-} from '../../internal-utils/withUndoRedo'
-import type {BehaviorOperationImplementation} from '../../operations/behavior.operations'
-import type {PortableTextSlateEditor} from '../../types/editor'
-import type {EditorActor} from '../editor-machine'
-import {getCurrentUndoStepId} from '../with-undo-step'
+} from '../withUndoRedo'
 
 const debug = debugWithName('plugin:withUndoRedo')
 const debugVerbose = debug.enabled && false

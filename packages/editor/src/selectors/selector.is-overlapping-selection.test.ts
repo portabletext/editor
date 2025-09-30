@@ -1,7 +1,7 @@
 import {describe, expect, test} from 'vitest'
-import {defaultKeyGenerator} from '../editor/key-generator'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
 import type {EditorSelection} from '../types/editor'
+import {defaultKeyGenerator} from '../utils/key-generator'
 import {isOverlappingSelection} from './selector.is-overlapping-selection'
 
 function snapshot(selection: EditorSelection) {

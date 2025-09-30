@@ -1,9 +1,10 @@
 import {isTextBlock} from '@portabletext/schema'
 import type {PortableTextTextBlock} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
-import {getBlockKeyFromSelectionPoint} from '../selection/selection-point'
 import type {BlockPath} from '../types/paths'
-import {getSelectionEndPoint, getSelectionStartPoint} from '../utils'
+import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
+import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
+import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 
 /**
  * @public

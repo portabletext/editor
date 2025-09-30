@@ -1,6 +1,7 @@
+import type {PortableTextBlock} from '@portabletext/schema'
 import {expect, test} from 'vitest'
-import type {EditorSelection, PortableTextBlock} from '..'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
+import type {EditorSelection} from '../types/editor'
 import {isActiveDecorator} from './selector.is-active-decorator'
 
 test(isActiveDecorator.name, () => {

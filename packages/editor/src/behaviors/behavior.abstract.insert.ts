@@ -1,10 +1,9 @@
-import {getFocusTextBlock, getLastBlock} from '../selectors'
-import {
-  getBlockEndPoint,
-  getBlockStartPoint,
-  isEmptyTextBlock,
-  isEqualSelectionPoints,
-} from '../utils'
+import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
+import {getLastBlock} from '../selectors/selector.get-last-block'
+import {getBlockEndPoint} from '../utils/util.get-block-end-point'
+import {getBlockStartPoint} from '../utils/util.get-block-start-point'
+import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
+import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
 import {sliceTextBlock} from '../utils/util.slice-text-block'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'

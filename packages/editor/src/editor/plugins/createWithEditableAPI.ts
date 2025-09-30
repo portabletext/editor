@@ -26,18 +26,12 @@ import {
 } from '../../internal-utils/slate-utils'
 import {toSlateRange} from '../../internal-utils/to-slate-range'
 import {fromSlateValue, toSlateValue} from '../../internal-utils/values'
-import {
-  KEY_TO_VALUE_ELEMENT,
-  SLATE_TO_PORTABLE_TEXT_RANGE,
-} from '../../internal-utils/weakMaps'
-import {
-  getFocusBlock,
-  getFocusSpan,
-  getSelectedValue,
-  isActiveAnnotation,
-} from '../../selectors'
 import {getActiveAnnotationsMarks} from '../../selectors/selector.get-active-annotation-marks'
 import {getActiveDecorators} from '../../selectors/selector.get-active-decorators'
+import {getFocusBlock} from '../../selectors/selector.get-focus-block'
+import {getFocusSpan} from '../../selectors/selector.get-focus-span'
+import {getSelectedValue} from '../../selectors/selector.get-selected-value'
+import {isActiveAnnotation} from '../../selectors/selector.is-active-annotation'
 import type {
   EditableAPI,
   EditableAPIDeleteOptions,
@@ -46,6 +40,7 @@ import type {
 } from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 import {getEditorSnapshot} from '../editor-selector'
+import {KEY_TO_VALUE_ELEMENT, SLATE_TO_PORTABLE_TEXT_RANGE} from '../weakMaps'
 
 const debug = debugWithName('API:editable')
 

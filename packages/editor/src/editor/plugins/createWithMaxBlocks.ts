@@ -1,7 +1,7 @@
-import {isChangingRemotely} from '../../internal-utils/withChanges'
-import {isRedoing, isUndoing} from '../../internal-utils/withUndoRedo'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
+import {isChangingRemotely} from '../withChanges'
+import {isRedoing, isUndoing} from '../withUndoRedo'
 
 /**
  * This plugin makes sure that the PTE maxBlocks prop is respected

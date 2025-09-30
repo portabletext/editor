@@ -2,8 +2,9 @@ import {htmlToBlocks} from '@portabletext/block-tools'
 import {defineSchema} from '@portabletext/schema'
 import type {PortableTextObject} from '@sanity/types'
 import {expect, test, vi} from 'vitest'
-import {defineBehavior, effect, execute, raise} from '../src/behaviors'
-import {BehaviorPlugin} from '../src/plugins'
+import {effect, execute, raise} from '../src/behaviors/behavior.types.action'
+import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
+import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {createTestEditor} from '../src/test/vitest'
 
 // Custom Behavior to resolve images, either by setting the src

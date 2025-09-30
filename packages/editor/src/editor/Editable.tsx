@@ -22,12 +22,10 @@ import {
 } from 'slate-react'
 import {debugWithName} from '../internal-utils/debug'
 import {getEventPosition} from '../internal-utils/event-position'
-import {parseBlocks} from '../internal-utils/parse-blocks'
 import {normalizeSelection} from '../internal-utils/selection'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {fromSlateValue, isEqualToEmptyEditor} from '../internal-utils/values'
-import {KEY_TO_VALUE_ELEMENT} from '../internal-utils/weakMaps'
 import type {
   EditorSelection,
   OnCopyFn,
@@ -43,6 +41,7 @@ import type {
   ScrollSelectionIntoViewFunction,
 } from '../types/editor'
 import type {HotkeyOptions} from '../types/options'
+import {parseBlocks} from '../utils/parse-blocks'
 import {RenderElement} from './components/render-element'
 import {RenderLeaf} from './components/render-leaf'
 import {RenderText, type RenderTextProps} from './components/render-text'
@@ -52,6 +51,7 @@ import {createWithHotkeys} from './plugins/createWithHotKeys'
 import {rangeDecorationsMachine} from './range-decorations-machine'
 import {RelayActorContext} from './relay-actor-context'
 import {validateSelectionMachine} from './validate-selection-machine'
+import {KEY_TO_VALUE_ELEMENT} from './weakMaps'
 
 const debug = debugWithName('component:Editable')
 

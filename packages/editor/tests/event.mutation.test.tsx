@@ -1,7 +1,7 @@
 import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
 import type {EditorEmittedEvent, MutationEvent} from '../src'
-import {EventListenerPlugin} from '../src/plugins'
+import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.mutation', () => {

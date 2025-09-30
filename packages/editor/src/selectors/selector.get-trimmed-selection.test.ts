@@ -3,8 +3,8 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import type {PortableTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
-import {parseBlock} from '../internal-utils/parse-blocks'
 import type {EditorSelection} from '../types/editor'
+import {parseBlock} from '../utils/parse-blocks'
 import {getTrimmedSelection} from './selector.get-trimmed-selection'
 
 const keyGenerator = createTestKeyGenerator()

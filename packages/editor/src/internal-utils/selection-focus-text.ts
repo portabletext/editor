@@ -3,7 +3,7 @@ import type {EditorContext} from '../editor/editor-snapshot'
 import {
   getBlockKeyFromSelectionPoint,
   getChildKeyFromSelectionPoint,
-} from '../selection/selection-point'
+} from '../utils/util.selection-point'
 
 export function getSelectionFocusText(
   context: Pick<EditorContext, 'schema' | 'value' | 'selection'>,

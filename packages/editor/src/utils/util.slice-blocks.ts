@@ -1,14 +1,14 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {PortableTextBlock} from '@sanity/types'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {defaultKeyGenerator} from '../editor/key-generator'
-import {parseBlock} from '../internal-utils/parse-blocks'
+import {defaultKeyGenerator} from './key-generator'
+import {parseBlock} from './parse-blocks'
+import {getSelectionEndPoint} from './util.get-selection-end-point'
+import {getSelectionStartPoint} from './util.get-selection-start-point'
 import {
   getBlockKeyFromSelectionPoint,
   getChildKeyFromSelectionPoint,
-} from '../selection/selection-point'
-import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
-import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
+} from './util.selection-point'
 
 /**
  * @public

@@ -1,10 +1,10 @@
 import {Editor} from 'slate'
 import {DOMEditor} from 'slate-dom'
-import type {EditorSnapshot} from '..'
-import type {BehaviorEvent} from '../behaviors'
+import type {BehaviorEvent} from '../behaviors/behavior.types.event'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import type {PickFromUnion} from '../type-utils'
 import type {PortableTextSlateEditor} from '../types/editor'
+import type {EditorSnapshot} from './editor-snapshot'
 
 export type EditorDom = {
   getBlockNodes: (snapshot: EditorSnapshot) => Array<Node>

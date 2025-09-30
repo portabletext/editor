@@ -1,5 +1,4 @@
 import type {Path} from '@sanity/types'
-import {isRecord} from '../internal-utils/asserters'
 
 /**
  * @public
@@ -19,6 +18,10 @@ export function isBlockPath(path: Path): path is BlockPath {
     '_key' in firstSegment &&
     typeof firstSegment._key === 'string'
   )
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && (typeof value === 'object' || typeof value === 'function')
 }
 
 /**

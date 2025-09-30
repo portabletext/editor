@@ -1,5 +1,7 @@
 import type {EditorSelector} from '../editor/editor-selector'
-import * as utils from '../utils'
+import {getBlockEndPoint} from '../utils/util.get-block-end-point'
+import {getBlockStartPoint} from '../utils/util.get-block-start-point'
+import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
 import {getSelectionEndBlock} from './selector.get-selection-end-block'
 import {getSelectionStartBlock} from './selector.get-selection-start-block'
 
@@ -25,17 +27,17 @@ export const isSelectingEntireBlocks: EditorSelector<boolean> = (snapshot) => {
     return false
   }
 
-  const startBlockStartPoint = utils.getBlockStartPoint({
+  const startBlockStartPoint = getBlockStartPoint({
     context: snapshot.context,
     block: startBlock,
   })
-  const endBlockEndPoint = utils.getBlockEndPoint({
+  const endBlockEndPoint = getBlockEndPoint({
     context: snapshot.context,
     block: endBlock,
   })
 
   return (
-    utils.isEqualSelectionPoints(startBlockStartPoint, startPoint) &&
-    utils.isEqualSelectionPoints(endBlockEndPoint, endPoint)
+    isEqualSelectionPoints(startBlockStartPoint, startPoint) &&
+    isEqualSelectionPoints(endBlockEndPoint, endPoint)
   )
 }

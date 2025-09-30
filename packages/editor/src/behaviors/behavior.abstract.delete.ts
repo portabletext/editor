@@ -1,6 +1,15 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import * as selectors from '../selectors'
-import * as utils from '../utils'
+import {getFocusChild} from '../selectors/selector.get-focus-child'
+import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
+import {getNextBlock} from '../selectors/selector.get-next-block'
+import {getPreviousBlock} from '../selectors/selector.get-previous-block'
+import {getTrimmedSelection} from '../selectors/selector.get-trimmed-selection'
+import {isAtTheEndOfBlock} from '../selectors/selector.is-at-the-end-of-block'
+import {isAtTheStartOfBlock} from '../selectors/selector.is-at-the-start-of-block'
+import {blockOffsetsToSelection} from '../utils/util.block-offsets-to-selection'
+import {getBlockEndPoint} from '../utils/util.get-block-end-point'
+import {getBlockStartPoint} from '../utils/util.get-block-start-point'
+import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -32,18 +41,18 @@ export const abstractDeleteBehaviors = [
         return false
       }
 
-      const previousBlock = selectors.getPreviousBlock(snapshot)
-      const focusTextBlock = selectors.getFocusTextBlock(snapshot)
+      const previousBlock = getPreviousBlock(snapshot)
+      const focusTextBlock = getFocusTextBlock(snapshot)
 
       if (!previousBlock || !focusTextBlock) {
         return false
       }
 
-      if (!selectors.isAtTheStartOfBlock(focusTextBlock)(snapshot)) {
+      if (!isAtTheStartOfBlock(focusTextBlock)(snapshot)) {
         return false
       }
 
-      const previousBlockEndPoint = utils.getBlockEndPoint({
+      const previousBlockEndPoint = getBlockEndPoint({
         context: snapshot.context,
         block: previousBlock,
       })
@@ -103,14 +112,14 @@ export const abstractDeleteBehaviors = [
         return false
       }
 
-      const nextBlock = selectors.getNextBlock({
+      const nextBlock = getNextBlock({
         ...snapshot,
         context: {
           ...snapshot.context,
           selection: event.at,
         },
       })
-      const focusTextBlock = selectors.getFocusTextBlock({
+      const focusTextBlock = getFocusTextBlock({
         ...snapshot,
         context: {
           ...snapshot.context,
@@ -122,11 +131,11 @@ export const abstractDeleteBehaviors = [
         return false
       }
 
-      if (!utils.isEmptyTextBlock(snapshot.context, focusTextBlock.node)) {
+      if (!isEmptyTextBlock(snapshot.context, focusTextBlock.node)) {
         return false
       }
 
-      const nextBlockStartPoint = utils.getBlockStartPoint({
+      const nextBlockStartPoint = getBlockStartPoint({
         context: snapshot.context,
         block: nextBlock,
       })
@@ -156,14 +165,14 @@ export const abstractDeleteBehaviors = [
         return false
       }
 
-      const nextBlock = selectors.getNextBlock(snapshot)
-      const focusTextBlock = selectors.getFocusTextBlock(snapshot)
+      const nextBlock = getNextBlock(snapshot)
+      const focusTextBlock = getFocusTextBlock(snapshot)
 
       if (!nextBlock || !focusTextBlock) {
         return false
       }
 
-      if (!selectors.isAtTheEndOfBlock(focusTextBlock)(snapshot)) {
+      if (!isAtTheEndOfBlock(focusTextBlock)(snapshot)) {
         return false
       }
 
@@ -212,7 +221,7 @@ export const abstractDeleteBehaviors = [
   defineBehavior({
     on: 'delete.child',
     guard: ({snapshot, event}) => {
-      const focusChild = selectors.getFocusChild({
+      const focusChild = getFocusChild({
         ...snapshot,
         context: {
           ...snapshot.context,
@@ -266,7 +275,7 @@ export const abstractDeleteBehaviors = [
   defineBehavior({
     on: 'delete.text',
     guard: ({snapshot, event}) => {
-      const selection = utils.blockOffsetsToSelection({
+      const selection = blockOffsetsToSelection({
         context: snapshot.context,
         offsets: event.at,
       })
@@ -275,7 +284,7 @@ export const abstractDeleteBehaviors = [
         return false
       }
 
-      const trimmedSelection = selectors.getTrimmedSelection({
+      const trimmedSelection = getTrimmedSelection({
         ...snapshot,
         context: {
           ...snapshot.context,

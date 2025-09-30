@@ -1,16 +1,14 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {PortableTextSpan} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
+import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
+import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
+import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
+import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {
   getBlockKeyFromSelectionPoint,
   getChildKeyFromSelectionPoint,
-} from '../selection/selection-point'
-import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
-import {
-  getSelectionEndPoint,
-  getSelectionStartPoint,
-  isEmptyTextBlock,
-} from '../utils'
+} from '../utils/util.selection-point'
 import {getFocusTextBlock} from './selector.get-focus-text-block'
 import {isSelectionCollapsed} from './selector.is-selection-collapsed'
 

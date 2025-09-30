@@ -1,5 +1,5 @@
-import {isActiveAnnotation} from '../selectors'
-import * as selectors from '../selectors'
+import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
+import {isActiveAnnotation} from '../selectors/selector.is-active-annotation'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -10,7 +10,7 @@ export const abstractAnnotationBehaviors = [
       const blockKey = event.at[0]._key
       const markDefKey = event.at[2]._key
 
-      const block = selectors.getFocusTextBlock({
+      const block = getFocusTextBlock({
         ...snapshot,
         context: {
           ...snapshot.context,

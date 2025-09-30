@@ -1,5 +1,7 @@
-import {getFocusBlock, getNextBlock, getPreviousBlock} from '../selectors'
-import {getBlockEndPoint} from '../utils'
+import {getFocusBlock} from '../selectors/selector.get-focus-block'
+import {getNextBlock} from '../selectors/selector.get-next-block'
+import {getPreviousBlock} from '../selectors/selector.get-previous-block'
+import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 

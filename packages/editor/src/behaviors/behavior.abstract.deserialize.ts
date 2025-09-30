@@ -1,6 +1,7 @@
 import {isTextBlock} from '@portabletext/schema'
-import * as selectors from '../selectors'
+import {getActiveAnnotations} from '../selectors/selector.get-active-annotations'
 import {getActiveDecorators} from '../selectors/selector.get-active-decorators'
+import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getTextBlockText} from '../utils/util.get-text-block-text'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
@@ -111,7 +112,7 @@ export const abstractDeserializeBehaviors = [
   defineBehavior({
     on: 'deserialization.success',
     guard: ({snapshot, event}) => {
-      const focusTextBlock = selectors.getFocusTextBlock(snapshot)
+      const focusTextBlock = getFocusTextBlock(snapshot)
 
       if (
         focusTextBlock &&
@@ -119,7 +120,7 @@ export const abstractDeserializeBehaviors = [
         event.originEvent.type === 'clipboard.paste'
       ) {
         const activeDecorators = getActiveDecorators(snapshot)
-        const activeAnnotations = selectors.getActiveAnnotations(snapshot)
+        const activeAnnotations = getActiveAnnotations(snapshot)
 
         return {
           activeAnnotations,

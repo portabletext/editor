@@ -6,7 +6,7 @@ import type {
   MutationEvent,
 } from '../src/editor/relay-machine'
 import {getSelectionAfterText} from '../src/internal-utils/text-selection'
-import {EventListenerPlugin} from '../src/plugins'
+import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('Setup', () => {

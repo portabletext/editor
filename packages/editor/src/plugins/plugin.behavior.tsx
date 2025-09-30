@@ -1,5 +1,5 @@
 import {useEffect} from 'react'
-import type {Behavior} from '../behaviors'
+import type {Behavior} from '../behaviors/behavior.types.behavior'
 import {useEditor} from '../editor/use-editor'
 
 /**

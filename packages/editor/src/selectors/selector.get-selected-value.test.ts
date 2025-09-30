@@ -2,8 +2,8 @@ import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import type {PortableTextBlock, PortableTextTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
-import {getSelectedValue} from '.'
 import {createTestSnapshot} from '../internal-utils/create-test-snapshot'
+import {getSelectedValue} from './selector.get-selected-value'
 
 const b1: PortableTextTextBlock = {
   _type: 'block',

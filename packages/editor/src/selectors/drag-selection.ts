@@ -1,7 +1,16 @@
-import type {EditorSnapshot} from '..'
-import * as selectors from '../selectors'
-import * as utils from '../utils'
-import type {EventPosition} from './event-position'
+import type {EditorSnapshot} from '../editor/editor-snapshot'
+import type {EventPosition} from '../internal-utils/event-position'
+import {getBlockEndPoint} from '../utils/util.get-block-end-point'
+import {getBlockStartPoint} from '../utils/util.get-block-start-point'
+import {getFocusInlineObject} from './selector.get-focus-inline-object'
+import {getFocusSpan} from './selector.get-focus-span'
+import {getFocusTextBlock} from './selector.get-focus-text-block'
+import {getSelectedBlocks} from './selector.get-selected-blocks'
+import {getSelectionEndBlock} from './selector.get-selection-end-block'
+import {getSelectionStartBlock} from './selector.get-selection-start-block'
+import {isOverlappingSelection} from './selector.is-overlapping-selection'
+import {isSelectionCollapsed} from './selector.is-selection-collapsed'
+import {isSelectionExpanded} from './selector.is-selection-expanded'
 
 /**
  * Given the current editor `snapshot` and an `eventSelection` representing
@@ -17,7 +26,7 @@ export function getDragSelection({
 }) {
   let dragSelection = eventSelection
 
-  const draggedInlineObject = selectors.getFocusInlineObject({
+  const draggedInlineObject = getFocusInlineObject({
     ...snapshot,
     context: {
       ...snapshot.context,
@@ -29,21 +38,21 @@ export function getDragSelection({
     return dragSelection
   }
 
-  const draggingCollapsedSelection = selectors.isSelectionCollapsed({
+  const draggingCollapsedSelection = isSelectionCollapsed({
     ...snapshot,
     context: {
       ...snapshot.context,
       selection: eventSelection,
     },
   })
-  const draggedTextBlock = selectors.getFocusTextBlock({
+  const draggedTextBlock = getFocusTextBlock({
     ...snapshot,
     context: {
       ...snapshot.context,
       selection: eventSelection,
     },
   })
-  const draggedSpan = selectors.getFocusSpan({
+  const draggedSpan = getFocusSpan({
     ...snapshot,
     context: {
       ...snapshot.context,
@@ -55,43 +64,41 @@ export function getDragSelection({
     // Looks like we are dragging an empty span
     // Let's drag the entire block instead
     dragSelection = {
-      anchor: utils.getBlockStartPoint({
+      anchor: getBlockStartPoint({
         context: snapshot.context,
         block: draggedTextBlock,
       }),
-      focus: utils.getBlockEndPoint({
+      focus: getBlockEndPoint({
         context: snapshot.context,
         block: draggedTextBlock,
       }),
     }
   }
 
-  const selectedBlocks = selectors.getSelectedBlocks(snapshot)
+  const selectedBlocks = getSelectedBlocks(snapshot)
 
   if (
     snapshot.context.selection &&
-    selectors.isSelectionExpanded(snapshot) &&
+    isSelectionExpanded(snapshot) &&
     selectedBlocks.length > 1
   ) {
-    const selectionStartBlock = selectors.getSelectionStartBlock(snapshot)
-    const selectionEndBlock = selectors.getSelectionEndBlock(snapshot)
+    const selectionStartBlock = getSelectionStartBlock(snapshot)
+    const selectionEndBlock = getSelectionEndBlock(snapshot)
 
     if (!selectionStartBlock || !selectionEndBlock) {
       return dragSelection
     }
 
-    const selectionStartPoint = utils.getBlockStartPoint({
+    const selectionStartPoint = getBlockStartPoint({
       context: snapshot.context,
       block: selectionStartBlock,
     })
-    const selectionEndPoint = utils.getBlockEndPoint({
+    const selectionEndPoint = getBlockEndPoint({
       context: snapshot.context,
       block: selectionEndBlock,
     })
 
-    const eventSelectionInsideBlocks = selectors.isOverlappingSelection(
-      eventSelection,
-    )({
+    const eventSelectionInsideBlocks = isOverlappingSelection(eventSelection)({
       ...snapshot,
       context: {
         ...snapshot.context,

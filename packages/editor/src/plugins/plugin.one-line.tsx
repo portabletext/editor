@@ -1,6 +1,9 @@
-import {defineBehavior, execute, raise} from '../behaviors'
-import * as selectors from '../selectors'
-import * as utils from '../utils'
+import {isTextBlock} from '@portabletext/schema'
+import {execute, raise} from '../behaviors/behavior.types.action'
+import {defineBehavior} from '../behaviors/behavior.types.behavior'
+import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
+import {isSelectionExpanded} from '../selectors/selector.is-selection-expanded'
+import {mergeTextBlocks} from '../utils/util.merge-text-blocks'
 import {BehaviorPlugin} from './plugin.behavior'
 
 const oneLineBehaviors = [
@@ -11,7 +14,7 @@ const oneLineBehaviors = [
   defineBehavior({
     on: 'insert.break',
     guard: ({snapshot}) =>
-      snapshot.context.selection && selectors.isSelectionExpanded(snapshot)
+      snapshot.context.selection && isSelectionExpanded(snapshot)
         ? {selection: snapshot.context.selection}
         : false,
     actions: [(_, {selection}) => [execute({type: 'delete', at: selection})]],
@@ -39,12 +42,9 @@ const oneLineBehaviors = [
   defineBehavior({
     on: 'insert.block',
     guard: ({snapshot, event}) => {
-      const focusTextBlock = selectors.getFocusTextBlock(snapshot)
+      const focusTextBlock = getFocusTextBlock(snapshot)
 
-      if (
-        !focusTextBlock ||
-        !utils.isTextBlock(snapshot.context, event.block)
-      ) {
+      if (!focusTextBlock || !isTextBlock(snapshot.context, event.block)) {
         return false
       }
 
@@ -77,7 +77,7 @@ const oneLineBehaviors = [
     on: 'insert.blocks',
     guard: ({snapshot, event}) => {
       const textBlocks = event.blocks.filter((block) =>
-        utils.isTextBlock(snapshot.context, block),
+        isTextBlock(snapshot.context, block),
       )
 
       if (textBlocks.length === 0) {
@@ -85,7 +85,7 @@ const oneLineBehaviors = [
       }
 
       return textBlocks.reduce((targetBlock, incomingBlock) => {
-        return utils.mergeTextBlocks({
+        return mergeTextBlocks({
           context: snapshot.context,
           targetBlock,
           incomingBlock,

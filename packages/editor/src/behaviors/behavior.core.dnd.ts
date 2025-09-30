@@ -1,6 +1,8 @@
 import {getCompoundClientRect} from '../internal-utils/compound-client-rect'
-import {getDragSelection} from '../internal-utils/drag-selection'
-import * as selectors from '../selectors'
+import {getDragSelection} from '../selectors/drag-selection'
+import {getSelectedBlocks} from '../selectors/selector.get-selected-blocks'
+import {isOverlappingSelection} from '../selectors/selector.is-overlapping-selection'
+import {isSelectingEntireBlocks} from '../selectors/selector.is-selecting-entire-blocks'
 import {effect, forward, raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -18,7 +20,7 @@ export const coreDndBehaviors = [
         snapshot,
         eventSelection: event.position.selection,
       })
-      const selectingEntireBlocks = selectors.isSelectingEntireBlocks({
+      const selectingEntireBlocks = isSelectingEntireBlocks({
         ...snapshot,
         context: {
           ...snapshot.context,
@@ -180,7 +182,7 @@ export const coreDndBehaviors = [
     guard: ({snapshot, event}) => {
       const dragOrigin = event.dragOrigin
       const draggingOverDragOrigin = dragOrigin
-        ? selectors.isOverlappingSelection(event.position.selection)({
+        ? isOverlappingSelection(event.position.selection)({
             ...snapshot,
             context: {
               ...snapshot.context,
@@ -204,7 +206,7 @@ export const coreDndBehaviors = [
       const dragOrigin = event.dragOrigin
       const dropPosition = event.position.selection
       const droppingOnDragOrigin = dragOrigin
-        ? selectors.isOverlappingSelection(dropPosition)({
+        ? isOverlappingSelection(dropPosition)({
             ...snapshot,
             context: {
               ...snapshot.context,
@@ -272,7 +274,7 @@ export const coreDndBehaviors = [
       })
       const dropPosition = event.originEvent.position.selection
       const droppingOnDragOrigin = dragOrigin
-        ? selectors.isOverlappingSelection(dropPosition)({
+        ? isOverlappingSelection(dropPosition)({
             ...snapshot,
             context: {
               ...snapshot.context,
@@ -281,7 +283,7 @@ export const coreDndBehaviors = [
           })
         : false
 
-      const draggingEntireBlocks = selectors.isSelectingEntireBlocks({
+      const draggingEntireBlocks = isSelectingEntireBlocks({
         ...snapshot,
         context: {
           ...snapshot.context,
@@ -289,7 +291,7 @@ export const coreDndBehaviors = [
         },
       })
 
-      const draggedBlocks = selectors.getSelectedBlocks({
+      const draggedBlocks = getSelectedBlocks({
         ...snapshot,
         context: {
           ...snapshot.context,

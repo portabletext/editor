@@ -6,8 +6,8 @@ import type {
 } from '@sanity/types'
 import {Editor, Transforms, type Element} from 'slate'
 import {debugWithName} from '../../internal-utils/debug'
-import {isListBlock} from '../../internal-utils/parse-blocks'
 import type {PortableTextSlateEditor} from '../../types/editor'
+import {isListBlock} from '../../utils/parse-blocks'
 import type {EditorActor} from '../editor-machine'
 
 const debug = debugWithName('plugin:withSchemaTypes')

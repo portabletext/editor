@@ -1,5 +1,6 @@
 import {useEffect} from 'react'
-import {defineBehavior, execute} from '../behaviors'
+import {execute} from '../behaviors/behavior.types.action'
+import {defineBehavior} from '../behaviors/behavior.types.behavior'
 import {useEditor} from '../editor/use-editor'
 
 export function AutoCloseBracketsPlugin() {

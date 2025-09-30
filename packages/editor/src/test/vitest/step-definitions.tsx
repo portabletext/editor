@@ -4,11 +4,6 @@ import {userEvent} from '@vitest/browser/context'
 import {Given, Then, When} from 'racejar'
 import {assert, expect, vi} from 'vitest'
 import {getEditorSelection} from '../../internal-utils/editor-selection'
-import {
-  parseBlocks,
-  parseInlineObject,
-  parseSpan,
-} from '../../internal-utils/parse-blocks'
 import {getSelectionText} from '../../internal-utils/selection-text'
 import {getTextBlockKey} from '../../internal-utils/text-block-key'
 import {getTextMarks} from '../../internal-utils/text-marks'
@@ -20,10 +15,13 @@ import {
 import {getValueAnnotations} from '../../internal-utils/value-annotations'
 import {createTestEditor} from '../../test/vitest'
 import {
-  reverseSelection,
-  selectionPointToBlockOffset,
-  spanSelectionPointToBlockOffset,
-} from '../../utils'
+  parseBlocks,
+  parseInlineObject,
+  parseSpan,
+} from '../../utils/parse-blocks'
+import {spanSelectionPointToBlockOffset} from '../../utils/util.block-offset'
+import {reverseSelection} from '../../utils/util.reverse-selection'
+import {selectionPointToBlockOffset} from '../../utils/util.selection-point-to-block-offset'
 import type {Parameter} from '../gherkin-parameter-types'
 import type {Context} from './step-context'
 

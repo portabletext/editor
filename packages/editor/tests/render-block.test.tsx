@@ -12,7 +12,8 @@ import {
   type MutationEvent,
   type PortableTextBlock,
 } from '../src'
-import {EditorRefPlugin, EventListenerPlugin} from '../src/plugins'
+import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
+import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('renderBlock', () => {

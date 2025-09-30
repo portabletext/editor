@@ -1,7 +1,7 @@
 import {slateRangeToSelection} from '../../internal-utils/slate-utils'
-import {SLATE_TO_PORTABLE_TEXT_RANGE} from '../../internal-utils/weakMaps'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
+import {SLATE_TO_PORTABLE_TEXT_RANGE} from '../weakMaps'
 
 export function pluginUpdateSelection({
   editor,

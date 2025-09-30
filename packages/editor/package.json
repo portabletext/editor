@@ -40,7 +40,7 @@
       "default": "./lib/behaviors/index.js"
     },
     "./plugins": {
-      "source": "./src/plugins/index.ts",
+      "source": "./src/plugins/_exports/index.ts",
       "import": "./lib/plugins/index.js",
       "require": "./lib/plugins/index.cjs",
       "default": "./lib/plugins/index.js"

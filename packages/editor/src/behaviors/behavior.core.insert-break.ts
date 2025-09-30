@@ -1,20 +1,34 @@
-import * as selectors from '../selectors'
-import * as utils from '../utils'
+import {getFirstBlock} from '../selectors/selector.get-first-block'
+import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
+import {getFocusSpan} from '../selectors/selector.get-focus-span'
+import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
+import {getLastBlock} from '../selectors/selector.get-last-block'
+import {getSelectedBlocks} from '../selectors/selector.get-selected-blocks'
+import {getSelectionEndBlock} from '../selectors/selector.get-selection-end-block'
+import {getSelectionStartBlock} from '../selectors/selector.get-selection-start-block'
+import {isAtTheEndOfBlock} from '../selectors/selector.is-at-the-end-of-block'
+import {isAtTheStartOfBlock} from '../selectors/selector.is-at-the-start-of-block'
+import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
+import {isSelectionExpanded} from '../selectors/selector.is-selection-expanded'
+import {getBlockEndPoint} from '../utils/util.get-block-end-point'
+import {getBlockStartPoint} from '../utils/util.get-block-start-point'
+import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
+import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
+import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
 const breakingAtTheEndOfTextBlock = defineBehavior({
   on: 'insert.break',
   guard: ({snapshot}) => {
-    const focusTextBlock = selectors.getFocusTextBlock(snapshot)
-    const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
+    const focusTextBlock = getFocusTextBlock(snapshot)
+    const selectionCollapsed = isSelectionCollapsed(snapshot)
 
     if (!snapshot.context.selection || !focusTextBlock || !selectionCollapsed) {
       return false
     }
 
-    const atTheEndOfBlock =
-      selectors.isAtTheEndOfBlock(focusTextBlock)(snapshot)
+    const atTheEndOfBlock = isAtTheEndOfBlock(focusTextBlock)(snapshot)
 
     const focusListItem = focusTextBlock.node.listItem
     const focusLevel = focusTextBlock.node.level
@@ -52,14 +66,14 @@ const breakingAtTheEndOfTextBlock = defineBehavior({
 const breakingAtTheStartOfTextBlock = defineBehavior({
   on: 'insert.break',
   guard: ({snapshot}) => {
-    const focusTextBlock = selectors.getFocusTextBlock(snapshot)
-    const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
+    const focusTextBlock = getFocusTextBlock(snapshot)
+    const selectionCollapsed = isSelectionCollapsed(snapshot)
 
     if (!snapshot.context.selection || !focusTextBlock || !selectionCollapsed) {
       return false
     }
 
-    const focusSpan = selectors.getFocusSpan(snapshot)
+    const focusSpan = getFocusSpan(snapshot)
 
     const focusDecorators = focusSpan?.node.marks?.filter(
       (mark) =>
@@ -77,8 +91,7 @@ const breakingAtTheStartOfTextBlock = defineBehavior({
     const focusListItem = focusTextBlock.node.listItem
     const focusLevel = focusTextBlock.node.level
 
-    const atTheStartOfBlock =
-      selectors.isAtTheStartOfBlock(focusTextBlock)(snapshot)
+    const atTheStartOfBlock = isAtTheStartOfBlock(focusTextBlock)(snapshot)
 
     if (atTheStartOfBlock) {
       return {focusAnnotations, focusDecorators, focusListItem, focusLevel}
@@ -120,35 +133,33 @@ const breakingEntireDocument = defineBehavior({
       return false
     }
 
-    if (!selectors.isSelectionExpanded(snapshot)) {
+    if (!isSelectionExpanded(snapshot)) {
       return false
     }
 
-    const firstBlock = selectors.getFirstBlock(snapshot)
-    const lastBlock = selectors.getLastBlock(snapshot)
+    const firstBlock = getFirstBlock(snapshot)
+    const lastBlock = getLastBlock(snapshot)
 
     if (!firstBlock || !lastBlock) {
       return false
     }
 
-    const firstBlockStartPoint = utils.getBlockStartPoint({
+    const firstBlockStartPoint = getBlockStartPoint({
       context: snapshot.context,
       block: firstBlock,
     })
-    const selectionStartPoint = utils.getSelectionStartPoint(
+    const selectionStartPoint = getSelectionStartPoint(
       snapshot.context.selection,
     )
-    const lastBlockEndPoint = utils.getBlockEndPoint({
+    const lastBlockEndPoint = getBlockEndPoint({
       context: snapshot.context,
       block: lastBlock,
     })
-    const selectionEndPoint = utils.getSelectionEndPoint(
-      snapshot.context.selection,
-    )
+    const selectionEndPoint = getSelectionEndPoint(snapshot.context.selection)
 
     if (
-      utils.isEqualSelectionPoints(firstBlockStartPoint, selectionStartPoint) &&
-      utils.isEqualSelectionPoints(lastBlockEndPoint, selectionEndPoint)
+      isEqualSelectionPoints(firstBlockStartPoint, selectionStartPoint) &&
+      isEqualSelectionPoints(lastBlockEndPoint, selectionEndPoint)
     ) {
       return {selection: snapshot.context.selection}
     }
@@ -172,36 +183,34 @@ const breakingEntireBlocks = defineBehavior({
       return false
     }
 
-    if (!selectors.isSelectionExpanded(snapshot)) {
+    if (!isSelectionExpanded(snapshot)) {
       return false
     }
 
-    const selectedBlocks = selectors.getSelectedBlocks(snapshot)
-    const selectionStartBlock = selectors.getSelectionStartBlock(snapshot)
-    const selectionEndBlock = selectors.getSelectionEndBlock(snapshot)
+    const selectedBlocks = getSelectedBlocks(snapshot)
+    const selectionStartBlock = getSelectionStartBlock(snapshot)
+    const selectionEndBlock = getSelectionEndBlock(snapshot)
 
     if (!selectionStartBlock || !selectionEndBlock) {
       return false
     }
 
-    const startBlockStartPoint = utils.getBlockStartPoint({
+    const startBlockStartPoint = getBlockStartPoint({
       context: snapshot.context,
       block: selectionStartBlock,
     })
-    const selectionStartPoint = utils.getSelectionStartPoint(
+    const selectionStartPoint = getSelectionStartPoint(
       snapshot.context.selection,
     )
-    const endBlockEndPoint = utils.getBlockEndPoint({
+    const endBlockEndPoint = getBlockEndPoint({
       context: snapshot.context,
       block: selectionEndBlock,
     })
-    const selectionEndPoint = utils.getSelectionEndPoint(
-      snapshot.context.selection,
-    )
+    const selectionEndPoint = getSelectionEndPoint(snapshot.context.selection)
 
     if (
-      utils.isEqualSelectionPoints(selectionStartPoint, startBlockStartPoint) &&
-      utils.isEqualSelectionPoints(selectionEndPoint, endBlockEndPoint)
+      isEqualSelectionPoints(selectionStartPoint, startBlockStartPoint) &&
+      isEqualSelectionPoints(selectionEndPoint, endBlockEndPoint)
     ) {
       return {selectedBlocks}
     }
@@ -238,8 +247,8 @@ const breakingEntireBlocks = defineBehavior({
 const breakingInlineObject = defineBehavior({
   on: 'insert.break',
   guard: ({snapshot}) => {
-    const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
-    const focusInlineObject = selectors.getFocusInlineObject(snapshot)
+    const selectionCollapsed = isSelectionCollapsed(snapshot)
+    const focusInlineObject = getFocusInlineObject(snapshot)
 
     return selectionCollapsed && focusInlineObject
   },

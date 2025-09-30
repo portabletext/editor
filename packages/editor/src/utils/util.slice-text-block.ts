@@ -1,12 +1,12 @@
 import {isSpan} from '@portabletext/schema'
 import type {PortableTextChild, PortableTextTextBlock} from '@sanity/types'
 import type {EditorContext} from '../editor/editor-snapshot'
+import {getSelectionEndPoint} from './util.get-selection-end-point'
+import {getSelectionStartPoint} from './util.get-selection-start-point'
 import {
   getBlockKeyFromSelectionPoint,
   getChildKeyFromSelectionPoint,
-} from '../selection/selection-point'
-import {getSelectionEndPoint} from './util.get-selection-end-point'
-import {getSelectionStartPoint} from './util.get-selection-start-point'
+} from './util.selection-point'
 
 export function sliceTextBlock({
   context,
