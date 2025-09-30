@@ -1,9 +1,8 @@
-import {
-  useEditor,
-  type BlockOffset,
-  type Editor,
-  type EditorSelectionPoint,
-  type EditorSnapshot,
+import type {
+  BlockOffset,
+  Editor,
+  EditorSelectionPoint,
+  EditorSnapshot,
 } from '@portabletext/editor'
 import {
   defineBehavior,
@@ -13,8 +12,6 @@ import {
 } from '@portabletext/editor/behaviors'
 import * as selectors from '@portabletext/editor/selectors'
 import * as utils from '@portabletext/editor/utils'
-import {useActorRef, useSelector} from '@xstate/react'
-import {useEffect, useRef} from 'react'
 import {
   assertEvent,
   assign,
@@ -26,18 +23,20 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
-import {Button} from '../primitives/button'
-import {matchEmojis, type EmojiMatch} from './emoji-search'
+import type {EmojiMatch, MatchEmojis} from './match-emojis'
 
 type EmojiPickerContext = {
   editor: Editor
   matches: Array<EmojiMatch>
+  matchEmojis: MatchEmojis
   selectedIndex: number
-  keywordAnchor?: {
-    point: EditorSelectionPoint
-    blockOffset: BlockOffset
-  }
-  keywordFocus?: BlockOffset
+  keywordAnchor:
+    | {
+        point: EditorSelectionPoint
+        blockOffset: BlockOffset
+      }
+    | undefined
+  keywordFocus: BlockOffset | undefined
   incompleteKeywordRegex: RegExp
   keyword: string
 }
@@ -398,11 +397,12 @@ const textChangeListener: CallbackLogicFunction<
   }
 }
 
-const emojiPickerMachine = setup({
+export const emojiPickerMachine = setup({
   types: {
     context: {} as EmojiPickerContext,
     input: {} as {
       editor: Editor
+      matchEmojis: MatchEmojis
     },
     events: {} as EmojiPickerEvent,
   },
@@ -498,7 +498,7 @@ const emojiPickerMachine = setup({
           return []
         }
 
-        return matchEmojis(rawKeyword)
+        return context.matchEmojis(rawKeyword)
       },
     }),
     'reset selected index': assign({
@@ -612,6 +612,9 @@ const emojiPickerMachine = setup({
   context: ({input}) => ({
     editor: input.editor,
     keyword: '',
+    keywordAnchor: undefined,
+    keywordFocus: undefined,
+    matchEmojis: input.matchEmojis,
     incompleteKeywordRegex: /:([a-zA-Z-_0-9:]*)$/,
     matches: [],
     selectedIndex: 0,
@@ -733,129 +736,3 @@ const emojiPickerMachine = setup({
     },
   },
 })
-
-export function EmojiPickerPlugin() {
-  const editor = useEditor()
-  const emojiPickerActor = useActorRef(emojiPickerMachine, {input: {editor}})
-  const keyword = useSelector(
-    emojiPickerActor,
-    (snapshot) => snapshot.context.keyword,
-  )
-  const matches = useSelector(
-    emojiPickerActor,
-    (snapshot) => snapshot.context.matches,
-  )
-  const selectedIndex = useSelector(
-    emojiPickerActor,
-    (snapshot) => snapshot.context.selectedIndex,
-  )
-
-  return (
-    <EmojiListBox
-      keyword={keyword}
-      matches={matches}
-      selectedIndex={selectedIndex}
-      onDismiss={() => {
-        emojiPickerActor.send({type: 'dismiss'})
-      }}
-      onNavigateTo={(index) => {
-        emojiPickerActor.send({type: 'navigate to', index})
-      }}
-      onSelect={() => {
-        emojiPickerActor.send({type: 'insert selected match'})
-        editor.send({type: 'focus'})
-      }}
-    />
-  )
-}
-
-export function EmojiListBox(props: {
-  keyword: string
-  matches: Array<EmojiMatch>
-  selectedIndex: number
-  onDismiss: () => void
-  onNavigateTo: (index: number) => void
-  onSelect: () => void
-}) {
-  if (props.keyword.length < 2) {
-    return null
-  }
-
-  return (
-    <div className="border border-gray-300 rounded bg-white shadow">
-      {props.matches.length === 0 ? (
-        <div className="p-2 flex align-middle gap-2">
-          No results found{' '}
-          <Button size="sm" variant="secondary" onPress={props.onDismiss}>
-            Dismiss
-          </Button>
-        </div>
-      ) : (
-        <ol className="p-2" style={{maxHeight: 200, overflowY: 'auto'}}>
-          {props.matches.map((match, index) => (
-            <EmojiListItem
-              key={
-                match.type === 'exact'
-                  ? `${match.emoji}-${match.keyword}`
-                  : `${match.emoji}-${match.startSlice}${match.keyword}${match.endSlice}`
-              }
-              match={match}
-              selected={props.selectedIndex === index}
-              onMouseEnter={() => {
-                props.onNavigateTo(index)
-              }}
-              onSelect={props.onSelect}
-            />
-          ))}
-        </ol>
-      )}
-    </div>
-  )
-}
-
-function EmojiListItem(props: {
-  match: EmojiMatch
-  selected: boolean
-  onMouseEnter: () => void
-  onSelect: () => void
-}) {
-  const ref = useRef<HTMLLIElement>(null)
-
-  useEffect(() => {
-    if (props.selected && ref.current) {
-      ref.current.scrollIntoView({behavior: 'smooth', block: 'nearest'})
-    }
-  }, [props.selected])
-
-  if (props.match.type === 'exact') {
-    return (
-      <li
-        ref={ref}
-        style={{
-          background: props.selected ? 'lightblue' : 'unset',
-        }}
-        onMouseEnter={props.onMouseEnter}
-        onClick={props.onSelect}
-      >
-        <span>{props.match.emoji} :</span>
-        <span style={{background: 'yellow'}}>{props.match.keyword}</span>:
-      </li>
-    )
-  }
-
-  return (
-    <li
-      ref={ref}
-      style={{
-        background: props.selected ? 'lightblue' : 'unset',
-      }}
-      onMouseEnter={props.onMouseEnter}
-      onClick={props.onSelect}
-    >
-      <span>{props.match.emoji} :</span>
-      {props.match.startSlice}
-      <span style={{background: 'yellow'}}>{props.match.keyword}</span>
-      {props.match.endSlice}:
-    </li>
-  )
-}
