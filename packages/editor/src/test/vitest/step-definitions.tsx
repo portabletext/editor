@@ -230,6 +230,12 @@ export const stepDefinitions = [
           at: selection,
         })
       })
+
+      await vi.waitFor(() => {
+        expect(context.editor.getSnapshot().context.selection).toEqual(
+          getSelectionBeforeText(context.editor.getSnapshot().context, text),
+        )
+      })
     },
   ),
   Then(
@@ -261,6 +267,12 @@ export const stepDefinitions = [
           type: 'select',
           at: getSelectionAfterText(context.editor.getSnapshot().context, text),
         })
+      })
+
+      await vi.waitFor(() => {
+        expect(context.editor.getSnapshot().context.selection).toEqual(
+          getSelectionAfterText(context.editor.getSnapshot().context, text),
+        )
       })
     },
   ),
