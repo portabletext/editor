@@ -61,79 +61,99 @@ function createInputRuleBehavior(config: {
       const matches: Array<InputRuleMatch> = []
 
       for (const rule of config.rules) {
-        const matcher = rule.matcher.global
-          ? rule.matcher
-          : new RegExp(rule.matcher.source, 'g')
+        const matcher = new RegExp(rule.matcher.source, 'gd')
 
         while (true) {
           // Find matches in the text before the insertion
           const matchesInTextBefore = [...textBefore.matchAll(matcher)].flatMap(
             (ruleMatch) => {
-              const match = ruleMatch.at(0)
-
-              if (match === undefined) {
+              if (ruleMatch.indices === undefined) {
                 return []
               }
 
-              const groupMatch = ruleMatch.at(1)
+              const [index] = ruleMatch.indices.at(0) ?? [undefined, undefined]
 
-              const index =
-                groupMatch !== undefined
-                  ? match.indexOf(groupMatch)
-                  : ruleMatch.index
-
-              if (index === -1) {
+              if (index === undefined) {
                 return []
               }
 
-              const matchLength =
-                groupMatch !== undefined ? groupMatch.length : match.length
+              const groupMatches =
+                ruleMatch.indices.length > 1
+                  ? ruleMatch.indices.slice(1).map(([start, end]) => ({
+                      index: start,
+                      length: end - start,
+                    }))
+                  : ruleMatch.indices.map(([start, end]) => ({
+                      index: start,
+                      length: end - start,
+                    }))
 
-              return {
-                selection: {
-                  anchor: {
-                    path: focusTextBlock.path,
-                    offset: index,
+              return groupMatches.map((groupMatch) => {
+                const adjustedIndex =
+                  groupMatch.index + originalNewText.length - newText.length
+                return {
+                  selection: {
+                    anchor: {
+                      path: focusTextBlock.path,
+                      offset: adjustedIndex,
+                    },
+                    focus: {
+                      path: focusTextBlock.path,
+                      offset: adjustedIndex + groupMatch.length,
+                    },
+                    backward: false,
                   },
-                  focus: {
-                    path: focusTextBlock.path,
-                    offset: index + matchLength,
-                  },
-                  backward: false,
-                },
-              }
+                  transform: rule.transform(),
+                  markState: getMarkState({
+                    ...snapshot,
+                    context: {
+                      ...snapshot.context,
+                      selection: {
+                        anchor: {
+                          path: focusTextBlock.path,
+                          offset: adjustedIndex,
+                        },
+                        focus: {
+                          path: focusTextBlock.path,
+                          offset: Math.min(
+                            adjustedIndex + groupMatch.length,
+                            originalTextBefore.length,
+                          ),
+                        },
+                      },
+                    },
+                  }),
+                }
+              })
             },
           )
           const matchesInNewText = [...newText.matchAll(matcher)]
 
           // Find matches in the text after the insertion
           const ruleMatches = matchesInNewText.flatMap((ruleMatch) => {
-            const match = ruleMatch.at(0)
-
-            if (match === undefined) {
+            if (ruleMatch.indices === undefined) {
               return []
             }
 
-            const groupMatch = ruleMatch.at(1)
+            const [index] = ruleMatch.indices.at(0) ?? [undefined, undefined]
 
-            const index =
-              groupMatch !== undefined
-                ? match.indexOf(groupMatch)
-                : ruleMatch.index
-
-            if (index === -1) {
+            if (index === undefined) {
               return []
             }
+
+            const groupMatches =
+              ruleMatch.indices.length > 1
+                ? ruleMatch.indices.slice(1).map(([start, end]) => ({
+                    index: start,
+                    length: end - start,
+                  }))
+                : ruleMatch.indices.map(([start, end]) => ({
+                    index: start,
+                    length: end - start,
+                  }))
 
             const adjustedIndex =
               index + originalNewText.length - newText.length
-
-            const matchLength =
-              groupMatch !== undefined ? groupMatch.length : match.length
-
-            if (matchLength === undefined) {
-              return []
-            }
 
             const alreadyFound = matches.some(
               (match) => match.selection.anchor.offset === adjustedIndex,
@@ -154,8 +174,10 @@ function createInputRuleBehavior(config: {
               return []
             }
 
-            return [
-              {
+            return groupMatches.map((groupMatch) => {
+              const adjustedIndex =
+                groupMatch.index + originalNewText.length - newText.length
+              return {
                 selection: {
                   anchor: {
                     path: focusTextBlock.path,
@@ -163,7 +185,7 @@ function createInputRuleBehavior(config: {
                   },
                   focus: {
                     path: focusTextBlock.path,
-                    offset: adjustedIndex + matchLength,
+                    offset: adjustedIndex + groupMatch.length,
                   },
                   backward: false,
                 },
@@ -180,27 +202,31 @@ function createInputRuleBehavior(config: {
                       focus: {
                         path: focusTextBlock.path,
                         offset: Math.min(
-                          adjustedIndex + matchLength,
+                          adjustedIndex + groupMatch.length,
                           originalTextBefore.length,
                         ),
                       },
                     },
                   },
                 }),
-              },
-            ]
+              }
+            })
           })
 
-          const ruleMatch = ruleMatches.at(0)
-
-          if (ruleMatch) {
+          if (ruleMatches.length > 0) {
             // If a match was found, add it to the matches array and update
             // the text before the insertion
-            matches.push(ruleMatch)
-            textBefore = newText.slice(0, ruleMatch.selection.focus.offset ?? 0)
-            newText = originalNewText.slice(
-              ruleMatch.selection.focus.offset ?? 0,
-            )
+
+            for (const ruleMatch of ruleMatches) {
+              matches.push(ruleMatch)
+              textBefore = newText.slice(
+                0,
+                ruleMatch.selection.focus.offset ?? 0,
+              )
+              newText = originalNewText.slice(
+                ruleMatch.selection.focus.offset ?? 0,
+              )
+            }
           } else {
             // If no match was found, break out of the loop to try the next
             // rule

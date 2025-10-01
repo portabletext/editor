@@ -26,6 +26,11 @@ const nonGlobalRule: InputRule = {
   transform: () => '©',
 }
 
+const multipleGroupsRule: InputRule = {
+  matcher: /(x)[fo]+(y)/,
+  transform: () => 'z',
+}
+
 Feature({
   hooks: [
     Before(async (context: Context) => {
@@ -35,6 +40,7 @@ Feature({
             <InputRulePlugin rules={[longerTransformRule]} />
             <InputRulePlugin rules={[endStringRule]} />
             <InputRulePlugin rules={[nonGlobalRule]} />
+            <InputRulePlugin rules={[multipleGroupsRule]} />
           </>
         ),
         schemaDefinition: defineSchema({
