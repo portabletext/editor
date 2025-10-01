@@ -13,7 +13,7 @@ const [selectorsTypeDoc, selectorsTypeDocSidebar] =
 const [toolbarTypeDoc, toolbarTypeDocSidebar] = createStarlightTypeDocPlugin()
 const [keyboardShortcutsTypeDoc, keyboardShortcutsTypeDocSidebar] =
   createStarlightTypeDocPlugin()
-const tsconfig = '../../packages/editor/tsconfig.json'
+const tsconfig = '../../packages/editor/tsconfig.typedoc.json'
 
 // https://astro.build/config
 export default defineConfig({
@@ -133,6 +133,7 @@ export default defineConfig({
           output: 'api/editor',
           typeDoc: {
             excludeReferences: true,
+            skipErrorChecking: true,
           },
           sidebar: {
             collapsed: true,
@@ -144,6 +145,7 @@ export default defineConfig({
           output: 'api/behaviors',
           typeDoc: {
             excludeReferences: true,
+            skipErrorChecking: true,
           },
           sidebar: {
             collapsed: true,
@@ -155,6 +157,7 @@ export default defineConfig({
           output: 'api/plugins',
           typeDoc: {
             excludeReferences: true,
+            skipErrorChecking: true,
           },
           sidebar: {
             collapsed: true,
@@ -166,6 +169,7 @@ export default defineConfig({
           output: 'api/selectors',
           typeDoc: {
             excludeReferences: true,
+            skipErrorChecking: true,
           },
           sidebar: {
             collapsed: true,
@@ -177,6 +181,7 @@ export default defineConfig({
           output: 'api/toolbar',
           typeDoc: {
             excludeReferences: true,
+            skipErrorChecking: true,
           },
           sidebar: {
             collapsed: true,
@@ -188,6 +193,7 @@ export default defineConfig({
           output: 'api/keyboard-shortcuts',
           typeDoc: {
             excludeReferences: true,
+            skipErrorChecking: true,
           },
           sidebar: {
             collapsed: true,
