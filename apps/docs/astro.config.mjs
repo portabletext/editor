@@ -136,6 +136,10 @@ export default defineConfig({
           autogenerate: {directory: 'resources'},
         },
         {
+          label: 'Playground',
+          link: 'https://playground.portabletext.org/',
+        },
+        {
           label: 'Portable Text Specification',
           link: 'https://github.com/portabletext/portabletext',
         },
