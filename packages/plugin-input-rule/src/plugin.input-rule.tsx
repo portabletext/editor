@@ -4,13 +4,12 @@ import {
   effect,
   forward,
   raise,
+  type BehaviorAction,
 } from '@portabletext/editor/behaviors'
-import type {MarkState} from '@portabletext/editor/selectors'
 import {
   getBlockOffsets,
   getBlockTextBefore,
   getFocusTextBlock,
-  getMarkState,
 } from '@portabletext/editor/selectors'
 import {useActorRef} from '@xstate/react'
 import {
@@ -30,19 +29,15 @@ type InputRuleMatch = {
     focus: BlockOffset
     backward: boolean
   }
-  /**
-   * The new text to replace the match with
-   */
-  transform: string
-  /**
-   * The mark state of the match
-   */
-  markState: MarkState | undefined
 }
 
 function createInputRuleBehavior(config: {
   rules: Array<InputRule>
-  onApply: ({endCaretPosition}: {endCaretPosition: BlockOffset}) => void
+  onApply: ({
+    endOffsets,
+  }: {
+    endOffsets: {start: BlockOffset; end: BlockOffset} | undefined
+  }) => void
 }) {
   return defineBehavior({
     on: 'insert.text',
@@ -59,6 +54,8 @@ function createInputRuleBehavior(config: {
       let newText = originalNewText
 
       const matches: Array<InputRuleMatch> = []
+      const actions: Array<BehaviorAction> = []
+      // let endCaretPosition: BlockOffset | undefined
 
       for (const rule of config.rules) {
         const matcher = new RegExp(rule.matcher.source, 'gd')
@@ -91,6 +88,7 @@ function createInputRuleBehavior(config: {
               return groupMatches.map((groupMatch) => {
                 const adjustedIndex =
                   groupMatch.index + originalNewText.length - newText.length
+
                 return {
                   selection: {
                     anchor: {
@@ -103,26 +101,6 @@ function createInputRuleBehavior(config: {
                     },
                     backward: false,
                   },
-                  transform: rule.transform(),
-                  markState: getMarkState({
-                    ...snapshot,
-                    context: {
-                      ...snapshot.context,
-                      selection: {
-                        anchor: {
-                          path: focusTextBlock.path,
-                          offset: adjustedIndex,
-                        },
-                        focus: {
-                          path: focusTextBlock.path,
-                          offset: Math.min(
-                            adjustedIndex + groupMatch.length,
-                            originalTextBefore.length,
-                          ),
-                        },
-                      },
-                    },
-                  }),
                 }
               })
             },
@@ -177,47 +155,43 @@ function createInputRuleBehavior(config: {
             return groupMatches.map((groupMatch) => {
               const adjustedIndex =
                 groupMatch.index + originalNewText.length - newText.length
-              return {
-                selection: {
-                  anchor: {
-                    path: focusTextBlock.path,
-                    offset: adjustedIndex,
-                  },
-                  focus: {
-                    path: focusTextBlock.path,
-                    offset: adjustedIndex + groupMatch.length,
-                  },
-                  backward: false,
+
+              const selection = {
+                anchor: {
+                  path: focusTextBlock.path,
+                  offset: adjustedIndex,
                 },
-                transform: rule.transform(),
-                markState: getMarkState({
-                  ...snapshot,
-                  context: {
-                    ...snapshot.context,
-                    selection: {
-                      anchor: {
-                        path: focusTextBlock.path,
-                        offset: adjustedIndex,
-                      },
-                      focus: {
-                        path: focusTextBlock.path,
-                        offset: Math.min(
-                          adjustedIndex + groupMatch.length,
-                          originalTextBefore.length,
-                        ),
-                      },
-                    },
-                  },
-                }),
+                focus: {
+                  path: focusTextBlock.path,
+                  offset: adjustedIndex + groupMatch.length,
+                },
+                backward: false,
+              }
+
+              return {
+                selection,
               }
             })
           })
 
           if (ruleMatches.length > 0) {
-            // If a match was found, add it to the matches array and update
-            // the text before the insertion
+            const result = rule.transform({
+              matches: ruleMatches,
+              snapshot,
+              textBefore: originalTextBefore,
+              focusTextBlock,
+              event,
+            })
+
+            for (const action of result.actions) {
+              actions.push(action)
+            }
+
+            // endCaretPosition = result.endCaretPosition
 
             for (const ruleMatch of ruleMatches) {
+              // Remember each match and adjust `textBefore` and `newText` so
+              // no subsequent matches can overlap with this one
               matches.push(ruleMatch)
               textBefore = newText.slice(
                 0,
@@ -235,57 +209,21 @@ function createInputRuleBehavior(config: {
         }
       }
 
-      const lastMatch = matches.at(-1)
-
-      // If no matches were found, abort to let the text insertion happen
-      // uninterrupted
-      if (!lastMatch) {
+      if (actions.length === 0) {
         return false
       }
 
-      const textLengthDelta = matches.reduce(
-        (length, match) =>
-          length -
-          (match.transform.length -
-            (match.selection.focus.offset - match.selection.anchor.offset)),
-        0,
-      )
-
-      const endCaretPosition = {
-        path: focusTextBlock.path,
-        offset: originalNewText.length - textLengthDelta,
-      }
-
-      return {
-        matches,
-        endCaretPosition,
-      }
+      return {actions}
     },
     actions: [
       ({event}) => [forward(event)],
-      ({snapshot}, {matches, endCaretPosition}) => [
-        ...matches.reverse().flatMap((match) => [
-          raise({type: 'select', at: match.selection}),
-          raise({type: 'delete', at: match.selection}),
-          raise({
-            type: 'insert.child',
-            child: {
-              _type: snapshot.context.schema.span.name,
-              text: match.transform,
-              marks: match.markState?.marks ?? [],
-            },
-          }),
-        ]),
-        raise({
-          type: 'select',
-          at: {
-            anchor: endCaretPosition,
-            focus: endCaretPosition,
-          },
+      (_, {actions}) => actions,
+      ({snapshot}) => [
+        effect(() => {
+          const blockOffsets = getBlockOffsets(snapshot)
+
+          config.onApply({endOffsets: blockOffsets})
         }),
-      ],
-      (_, {endCaretPosition}) => [
-        effect(() => config.onApply({endCaretPosition})),
       ],
     ],
   })
@@ -305,7 +243,10 @@ export function InputRulePlugin(props: {rules: Array<InputRule>}) {
 }
 
 type InputRuleEvent =
-  | {type: 'input rule raised'; endCaretPosition: BlockOffset}
+  | {
+      type: 'input rule raised'
+      endOffsets: {start: BlockOffset; end: BlockOffset} | undefined
+    }
   | {type: 'history.undo raised'}
   | {
       type: 'selection changed'
@@ -320,8 +261,8 @@ const inputRuleListenerCallback: CallbackLogicFunction<
   const unregister = input.editor.registerBehavior({
     behavior: createInputRuleBehavior({
       rules: input.rules,
-      onApply: ({endCaretPosition}) => {
-        sendBack({type: 'input rule raised', endCaretPosition})
+      onApply: ({endOffsets}) => {
+        sendBack({type: 'input rule raised', endOffsets})
       },
     }),
   })
@@ -389,7 +330,7 @@ const inputRuleSetup = setup({
     context: {} as {
       editor: Editor
       rules: Array<InputRule>
-      endCaretPosition?: BlockOffset
+      endOffsets: {start: BlockOffset; end: BlockOffset} | undefined
     },
     input: {} as {
       editor: Editor
@@ -408,27 +349,27 @@ const inputRuleSetup = setup({
         return false
       }
 
-      if (!event.blockOffsets || !context.endCaretPosition) {
+      if (!event.blockOffsets || !context.endOffsets) {
         return true
       }
 
-      return (
-        context.endCaretPosition.path[0]._key !==
+      const startChanged =
+        context.endOffsets.start.path[0]._key !==
           event.blockOffsets.start.path[0]._key ||
-        context.endCaretPosition.offset !== event.blockOffsets.start.offset ||
-        context.endCaretPosition.path[0]._key !==
+        context.endOffsets.start.offset !== event.blockOffsets.start.offset
+      const endChanged =
+        context.endOffsets.end.path[0]._key !==
           event.blockOffsets.end.path[0]._key ||
-        context.endCaretPosition.offset !== event.blockOffsets.end.offset
-      )
+        context.endOffsets.end.offset !== event.blockOffsets.end.offset
+
+      return startChanged || endChanged
     },
   },
 })
 
-const assignEndCaretPosition = inputRuleSetup.assign({
-  endCaretPosition: ({context, event}) =>
-    event.type === 'input rule raised'
-      ? event.endCaretPosition
-      : context.endCaretPosition,
+const assignEndOffsets = inputRuleSetup.assign({
+  endOffsets: ({context, event}) =>
+    event.type === 'input rule raised' ? event.endOffsets : context.endOffsets,
 })
 
 const inputRuleMachine = inputRuleSetup.createMachine({
@@ -436,6 +377,7 @@ const inputRuleMachine = inputRuleSetup.createMachine({
   context: ({input}) => ({
     editor: input.editor,
     rules: input.rules,
+    endOffsets: undefined,
   }),
   initial: 'idle',
   invoke: {
@@ -445,7 +387,7 @@ const inputRuleMachine = inputRuleSetup.createMachine({
   on: {
     'input rule raised': {
       target: '.input rule applied',
-      actions: assignEndCaretPosition,
+      actions: assignEndOffsets,
     },
   },
   states: {

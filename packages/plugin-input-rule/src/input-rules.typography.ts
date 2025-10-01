@@ -1,9 +1,9 @@
-import {defineInputRule, type InputRule} from './input-rule'
+import {defineTextTransformRule, type InputRule} from './input-rule'
 
 /**
  * @beta
  */
-export const emDashRule = defineInputRule({
+export const emDashRule = defineTextTransformRule({
   matcher: /--/,
   transform: () => '—',
 })
@@ -11,7 +11,7 @@ export const emDashRule = defineInputRule({
 /**
  * @beta
  */
-export const ellipsisRule = defineInputRule({
+export const ellipsisRule = defineTextTransformRule({
   matcher: /\.\.\./,
   transform: () => '…',
 })
@@ -19,7 +19,7 @@ export const ellipsisRule = defineInputRule({
 /**
  * @beta
  */
-export const openingDoubleQuoteRule = defineInputRule({
+export const openingDoubleQuoteRule = defineTextTransformRule({
   matcher: /(?:^|(?<=[\s{[(<'"\u2018\u201C]))"/g,
   transform: () => '“',
 })
@@ -27,7 +27,7 @@ export const openingDoubleQuoteRule = defineInputRule({
 /**
  * @beta
  */
-export const closingDoubleQuoteRule = defineInputRule({
+export const closingDoubleQuoteRule = defineTextTransformRule({
   matcher: /"/g,
   transform: () => '”',
 })
@@ -35,7 +35,7 @@ export const closingDoubleQuoteRule = defineInputRule({
 /**
  * @beta
  */
-export const openingSingleQuoteRule = defineInputRule({
+export const openingSingleQuoteRule = defineTextTransformRule({
   matcher: /(?:^|(?<=[\s{[(<'"\u2018\u201C]))'/g,
   transform: () => '‘',
 })
@@ -43,7 +43,7 @@ export const openingSingleQuoteRule = defineInputRule({
 /**
  * @beta
  */
-export const closingSingleQuoteRule = defineInputRule({
+export const closingSingleQuoteRule = defineTextTransformRule({
   matcher: /'/g,
   transform: () => '’',
 })
@@ -61,7 +61,7 @@ export const smartQuotesRules: Array<InputRule> = [
 /**
  * @beta
  */
-export const leftArrowRule = defineInputRule({
+export const leftArrowRule = defineTextTransformRule({
   matcher: /<-/,
   transform: () => '←',
 })
@@ -69,7 +69,7 @@ export const leftArrowRule = defineInputRule({
 /**
  * @beta
  */
-export const rightArrowRule = defineInputRule({
+export const rightArrowRule = defineTextTransformRule({
   matcher: /->/,
   transform: () => '→',
 })
@@ -77,7 +77,7 @@ export const rightArrowRule = defineInputRule({
 /**
  * @beta
  */
-export const copyrightRule = defineInputRule({
+export const copyrightRule = defineTextTransformRule({
   matcher: /\(c\)/,
   transform: () => '©',
 })
@@ -85,7 +85,7 @@ export const copyrightRule = defineInputRule({
 /**
  * @beta
  */
-export const servicemarkRule = defineInputRule({
+export const servicemarkRule = defineTextTransformRule({
   matcher: /\(sm\)/,
   transform: () => '℠',
 })
@@ -93,7 +93,7 @@ export const servicemarkRule = defineInputRule({
 /**
  * @beta
  */
-export const trademarkRule = defineInputRule({
+export const trademarkRule = defineTextTransformRule({
   matcher: /\(tm\)/,
   transform: () => '™',
 })
@@ -101,7 +101,7 @@ export const trademarkRule = defineInputRule({
 /**
  * @beta
  */
-export const registeredTrademarkRule = defineInputRule({
+export const registeredTrademarkRule = defineTextTransformRule({
   matcher: /\(r\)/,
   transform: () => '®',
 })
@@ -109,7 +109,7 @@ export const registeredTrademarkRule = defineInputRule({
 /**
  * @beta
  */
-export const oneHalfRule = defineInputRule({
+export const oneHalfRule = defineTextTransformRule({
   matcher: /(?:^|\s)(1\/2)\s/,
   transform: () => '½',
 })
@@ -117,7 +117,7 @@ export const oneHalfRule = defineInputRule({
 /**
  * @beta
  */
-export const plusMinusRule = defineInputRule({
+export const plusMinusRule = defineTextTransformRule({
   matcher: /\+\/-/,
   transform: () => '±',
 })
@@ -125,7 +125,7 @@ export const plusMinusRule = defineInputRule({
 /**
  * @beta
  */
-export const notEqualRule = defineInputRule({
+export const notEqualRule = defineTextTransformRule({
   matcher: /!=/,
   transform: () => '≠',
 })
@@ -133,7 +133,7 @@ export const notEqualRule = defineInputRule({
 /**
  * @beta
  */
-export const laquoRule = defineInputRule({
+export const laquoRule = defineTextTransformRule({
   matcher: /<</,
   transform: () => '«',
 })
@@ -141,7 +141,7 @@ export const laquoRule = defineInputRule({
 /**
  * @beta
  */
-export const raquoRule = defineInputRule({
+export const raquoRule = defineTextTransformRule({
   matcher: />>/,
   transform: () => '»',
 })
@@ -149,7 +149,7 @@ export const raquoRule = defineInputRule({
 /**
  * @beta
  */
-export const multiplicationRule = defineInputRule({
+export const multiplicationRule = defineTextTransformRule({
   matcher: /\d+\s?([*x])\s?\d+/,
   transform: () => '×',
 })
@@ -157,7 +157,7 @@ export const multiplicationRule = defineInputRule({
 /**
  * @beta
  */
-export const superscriptTwoRule = defineInputRule({
+export const superscriptTwoRule = defineTextTransformRule({
   matcher: /\^2/,
   transform: () => '²',
 })
@@ -165,7 +165,7 @@ export const superscriptTwoRule = defineInputRule({
 /**
  * @beta
  */
-export const superscriptThreeRule = defineInputRule({
+export const superscriptThreeRule = defineTextTransformRule({
   matcher: /\^3/,
   transform: () => '³',
 })
@@ -173,7 +173,7 @@ export const superscriptThreeRule = defineInputRule({
 /**
  * @beta
  */
-export const oneQuarterRule = defineInputRule({
+export const oneQuarterRule = defineTextTransformRule({
   matcher: /(?:^|\s)(1\/4)\s/,
   transform: () => '¼',
 })
@@ -181,7 +181,7 @@ export const oneQuarterRule = defineInputRule({
 /**
  * @beta
  */
-export const threeQuartersRule = defineInputRule({
+export const threeQuartersRule = defineTextTransformRule({
   matcher: /(?:^|\s)(3\/4)\s/,
   transform: () => '¾',
 })

@@ -8,28 +8,28 @@ import {defineSchema} from '@portabletext/schema'
 import {Before} from 'racejar'
 import {Feature} from 'racejar/vitest'
 import edgeCasesFeature from './edge-cases.feature?raw'
-import type {InputRule} from './input-rule'
+import {defineTextTransformRule} from './input-rule'
 import {InputRulePlugin} from './plugin.input-rule'
 
-const longerTransformRule: InputRule = {
+const longerTransformRule = defineTextTransformRule({
   matcher: /\./,
   transform: () => '...',
-}
+})
 
-const endStringRule: InputRule = {
+const endStringRule = defineTextTransformRule({
   matcher: /->$/,
   transform: () => '→',
-}
+})
 
-const nonGlobalRule: InputRule = {
+const nonGlobalRule = defineTextTransformRule({
   matcher: /\(c\)/,
   transform: () => '©',
-}
+})
 
-const multipleGroupsRule: InputRule = {
+const multipleGroupsRule = defineTextTransformRule({
   matcher: /(x)[fo]+(y)/,
   transform: () => 'z',
-}
+})
 
 Feature({
   hooks: [
