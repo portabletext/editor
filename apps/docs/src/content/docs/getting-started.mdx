@@ -234,11 +234,11 @@ A toolbar is a collection of UI elements for interacting with the editor. The `@
 Building a custom toolbar differs with each project, but in this example with the following steps:
 
 1. Add the `@portabletext/toolbar` and `@portabletext/keyboard-shortcuts` libraries to your project.
-2. Create a `ToolbarPlugin` component, along with any sub-components in the same file.
+2. Create a `Toolbar` component, along with any sub-components in the same file.
 3. Configure `useToolbarSchema` to access the editor schema, then loop over the schema types to create buttons for each style and decorator.
 4. Enhance the schema with any icons / labels / descriptions you want to display in the toolbar.
 5. Create buttons for each schema group (styles, decorators, annotations,etc).
-6. Add the `ToolbarPlugin` to the your render function inside the `EditorProvider`.
+6. Add the `Toolbar` to the your render function inside the `EditorProvider`.
 
 <PackageManagers pkg="@portabletext/toolbar @portabletext/keyboard-shortcuts" />
 
@@ -249,7 +249,6 @@ This example shows a minimal toolbar
 // ...
 import {bold} from '@portabletext/keyboard-shortcuts'
 import {
-  ToolbarPlugin,
   useDecoratorButton,
   useStyleSelector,
   useToolbarSchema,
@@ -383,7 +382,7 @@ function App() {
           renderBlock={(props) => <div>{props.children}</div>}
           renderListItem={(props) => <>{props.children}</>}
         />
-        <ToolbarPlugin />
+        <Toolbar />
       </EditorProvider>
     </>
   )
