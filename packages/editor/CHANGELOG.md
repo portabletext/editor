@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.13.4
+
+### Patch Changes
+
+- [#1698](https://github.com/portabletext/editor/pull/1698) [`c4fd0cd`](https://github.com/portabletext/editor/commit/c4fd0cd273cb95e1d5769514c730cf9397dc279f) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update sanity monorepo to ^4.10.2
+
+- [#1701](https://github.com/portabletext/editor/pull/1701) [`fe04fee`](https://github.com/portabletext/editor/commit/fe04fee1fa6cd2b30e83cd07313536a268ea3eed) Thanks [@christianhg](https://github.com/christianhg)! - fix(`getSelectedValue`): account for start/end spans with same \_key
+
+- Updated dependencies [[`c4fd0cd`](https://github.com/portabletext/editor/commit/c4fd0cd273cb95e1d5769514c730cf9397dc279f)]:
+  - @portabletext/block-tools@3.5.9
+  - @portabletext/sanity-bridge@1.1.13
+
 ## 2.13.3
 
 ### Patch Changes
