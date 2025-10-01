@@ -7,8 +7,8 @@ import {
 import {defineSchema} from '@portabletext/schema'
 import {Before} from 'racejar'
 import {Feature} from 'racejar/vitest'
-import {ellipsisRule} from './input-rule.ellipsis'
 import ellipsisFeature from './input-rule.ellipsis.feature?raw'
+import {ellipsisRule} from './input-rules.typography'
 import {InputRulePlugin} from './plugin.input-rule'
 
 Feature({

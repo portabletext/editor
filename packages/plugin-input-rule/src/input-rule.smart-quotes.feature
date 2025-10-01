@@ -21,16 +21,16 @@ Feature: Smart Quotes Input Rule
     # mimic how insert.text behaves on Android
     When <inserted text> is inserted
     Then the text is <before undo>
+    When undo is performed
+    Then the text is <after undo>
 
-    # When undo is performed
-    # Then the text is <after undo>
     Examples:
       | text    | inserted text | before undo  | after undo   |
       | ""      | "\""          | "“"          | """          |
       | ""      | "\"\""        | "““"         | """"         |
       | ""      | "\"\"\""      | "“““"        | """""        |
       | "”"     | "\""          | "””"         | "”""         |
-      #| "”"  | "\"\""        | "”””"       | "””""      |
+      # | "”"  | "\"\""        | "”””"       | "””""      |
       | ""      | "\"foo\""     | "“foo”"      | ""foo""      |
       | "“foo"  | "\""          | "“foo”"      | "“foo""      |
       | ""foo"  | "\""          | ""foo”"      | ""foo""      |
