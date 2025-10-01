@@ -73,6 +73,7 @@ const b4: PortableTextTextBlock = {
 
 const schema = compileSchema(
   defineSchema({
+    decorators: [{name: 'strong'}],
     blockObjects: [{name: 'image'}],
     inlineObjects: [{name: 'stock-ticker'}],
   }),
@@ -744,5 +745,90 @@ describe(getSelectedValue.name, () => {
         ],
       },
     ])
+  })
+
+  test('starts and ends in different blocks with same span _key', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanAKey = keyGenerator()
+    const spanBKey = keyGenerator()
+    const spanCKey = keyGenerator()
+    const blockBKey = keyGenerator()
+    const value = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [
+          {
+            _type: 'span',
+            _key: spanAKey,
+            text: 'foo ',
+            marks: [],
+          },
+          {
+            _type: 'span',
+            _key: spanBKey,
+            text: 'bar',
+            marks: ['strong'],
+          },
+          {
+            _type: 'span',
+            _key: spanCKey,
+            text: ' baz',
+            marks: [],
+          },
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: blockBKey,
+        children: [
+          {_type: 'span', _key: spanAKey, text: 'fizz buzz', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+    const selection = {
+      anchor: {
+        path: [
+          {
+            _key: blockBKey,
+          },
+          'children',
+          {
+            _key: spanAKey,
+          },
+        ],
+        offset: 9,
+      },
+      focus: {
+        path: [
+          {
+            _key: blockKey,
+          },
+          'children',
+          {
+            _key: spanAKey,
+          },
+        ],
+        offset: 0,
+      },
+      backward: true,
+    }
+
+    expect(
+      getSelectedValue(
+        createTestSnapshot({
+          context: {
+            schema,
+            value,
+            selection,
+          },
+        }),
+      ),
+    ).toEqual(value)
   })
 })

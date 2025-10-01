@@ -80,7 +80,7 @@ export function sliceBlocks({
               }
             }
 
-            if (startChildKey === endChildKey) {
+            if (block._key === endBlockKey && startChildKey === endChildKey) {
               break
             }
             continue
