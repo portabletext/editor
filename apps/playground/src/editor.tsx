@@ -16,11 +16,7 @@ import {
   type RenderPlaceholderFunction,
   type RenderStyleFunction,
 } from '@portabletext/editor'
-import {
-  EllipsisInputRulePlugin,
-  EmDashInputRulePlugin,
-  SmartQuotesInputRulePlugin,
-} from '@portabletext/plugin-input-rule'
+import {TypographyPlugin} from '@portabletext/plugin-input-rule'
 import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 import {OneLinePlugin} from '@portabletext/plugin-one-line'
 import {useSelector} from '@xstate/react'
@@ -183,11 +179,9 @@ export function Editor(props: {
               <MarkdownShortcutsPlugin {...markdownShortcutsPluginProps} />
             ) : null}
             {featureFlags.oneLinePlugin ? <OneLinePlugin /> : null}
-            {featureFlags.inputRules ? (
+            {featureFlags.typographyPlugin ? (
               <>
-                <SmartQuotesInputRulePlugin />
-                <EllipsisInputRulePlugin />
-                <EmDashInputRulePlugin />
+                <TypographyPlugin />
               </>
             ) : null}
             <div className="flex gap-2 items-center">

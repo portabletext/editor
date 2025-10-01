@@ -55,7 +55,9 @@ function createInputRuleBehavior(config: {
 
       const originalTextBefore = getBlockTextBefore(snapshot)
       let textBefore = originalTextBefore
-      const newText = textBefore + event.text
+      const originalNewText = textBefore + event.text
+      let newText = originalNewText
+
       const matches: Array<InputRuleMatch> = []
 
       for (const rule of config.rules) {
@@ -63,90 +65,131 @@ function createInputRuleBehavior(config: {
           ? rule.matcher
           : new RegExp(rule.matcher.source, 'g')
 
-        // if (rule.matcher.global) {
         while (true) {
           // Find matches in the text before the insertion
-          const matchesInTextBefore = [...textBefore.matchAll(matcher)].map(
-            (match) => ({
-              selection: {
-                anchor: {
-                  path: focusTextBlock.path,
-                  offset: match.index,
-                },
-                focus: {
-                  path: focusTextBlock.path,
-                  offset: match.index + (match?.at(0)?.length ?? 0),
-                },
-                backward: false,
-              },
-            }),
-          )
-
-          // Find matches in the text after the insertion
-          const ruleMatches = [...newText.matchAll(matcher)].flatMap(
+          const matchesInTextBefore = [...textBefore.matchAll(matcher)].flatMap(
             (ruleMatch) => {
-              const matchLength = ruleMatch?.at(0)?.length
+              const match = ruleMatch.at(0)
 
-              if (matchLength === undefined) {
+              if (match === undefined) {
                 return []
               }
 
-              const alreadyFound = matches.some(
-                (match) => match.selection.anchor.offset === ruleMatch.index,
-              )
+              const groupMatch = ruleMatch.at(1)
 
-              // Ignore if this match has already been found
-              if (alreadyFound) {
+              const index =
+                groupMatch !== undefined
+                  ? match.indexOf(groupMatch)
+                  : ruleMatch.index
+
+              if (index === -1) {
                 return []
               }
 
-              const existsInTextBefore = matchesInTextBefore.some(
-                (matchInTextBefore) =>
-                  matchInTextBefore.selection.anchor.offset === ruleMatch.index,
-              )
+              const matchLength =
+                groupMatch !== undefined ? groupMatch.length : match.length
 
-              // Ignore if this match occurs in the text before the insertion
-              if (existsInTextBefore) {
-                return []
-              }
-
-              return [
-                {
-                  selection: {
-                    anchor: {
-                      path: focusTextBlock.path,
-                      offset: ruleMatch.index,
-                    },
-                    focus: {
-                      path: focusTextBlock.path,
-                      offset: ruleMatch.index + matchLength,
-                    },
-                    backward: false,
+              return {
+                selection: {
+                  anchor: {
+                    path: focusTextBlock.path,
+                    offset: index,
                   },
-                  transform: rule.transform(),
-                  markState: getMarkState({
-                    ...snapshot,
-                    context: {
-                      ...snapshot.context,
-                      selection: {
-                        anchor: {
-                          path: focusTextBlock.path,
-                          offset: ruleMatch.index,
-                        },
-                        focus: {
-                          path: focusTextBlock.path,
-                          offset: Math.min(
-                            ruleMatch.index + matchLength,
-                            originalTextBefore.length,
-                          ),
-                        },
-                      },
-                    },
-                  }),
+                  focus: {
+                    path: focusTextBlock.path,
+                    offset: index + matchLength,
+                  },
+                  backward: false,
                 },
-              ]
+              }
             },
           )
+          const matchesInNewText = [...newText.matchAll(matcher)]
+
+          // Find matches in the text after the insertion
+          const ruleMatches = matchesInNewText.flatMap((ruleMatch) => {
+            const match = ruleMatch.at(0)
+
+            if (match === undefined) {
+              return []
+            }
+
+            const groupMatch = ruleMatch.at(1)
+
+            const index =
+              groupMatch !== undefined
+                ? match.indexOf(groupMatch)
+                : ruleMatch.index
+
+            if (index === -1) {
+              return []
+            }
+
+            const adjustedIndex =
+              index + originalNewText.length - newText.length
+
+            const matchLength =
+              groupMatch !== undefined ? groupMatch.length : match.length
+
+            if (matchLength === undefined) {
+              return []
+            }
+
+            const alreadyFound = matches.some(
+              (match) => match.selection.anchor.offset === adjustedIndex,
+            )
+
+            // Ignore if this match has already been found
+            if (alreadyFound) {
+              return []
+            }
+
+            const existsInTextBefore = matchesInTextBefore.some(
+              (matchInTextBefore) =>
+                matchInTextBefore.selection.anchor.offset === adjustedIndex,
+            )
+
+            // Ignore if this match occurs in the text before the insertion
+            if (existsInTextBefore) {
+              return []
+            }
+
+            return [
+              {
+                selection: {
+                  anchor: {
+                    path: focusTextBlock.path,
+                    offset: adjustedIndex,
+                  },
+                  focus: {
+                    path: focusTextBlock.path,
+                    offset: adjustedIndex + matchLength,
+                  },
+                  backward: false,
+                },
+                transform: rule.transform(),
+                markState: getMarkState({
+                  ...snapshot,
+                  context: {
+                    ...snapshot.context,
+                    selection: {
+                      anchor: {
+                        path: focusTextBlock.path,
+                        offset: adjustedIndex,
+                      },
+                      focus: {
+                        path: focusTextBlock.path,
+                        offset: Math.min(
+                          adjustedIndex + matchLength,
+                          originalTextBefore.length,
+                        ),
+                      },
+                    },
+                  },
+                }),
+              },
+            ]
+          })
 
           const ruleMatch = ruleMatches.at(0)
 
@@ -155,6 +198,9 @@ function createInputRuleBehavior(config: {
             // the text before the insertion
             matches.push(ruleMatch)
             textBefore = newText.slice(0, ruleMatch.selection.focus.offset ?? 0)
+            newText = originalNewText.slice(
+              ruleMatch.selection.focus.offset ?? 0,
+            )
           } else {
             // If no match was found, break out of the loop to try the next
             // rule
@@ -181,7 +227,7 @@ function createInputRuleBehavior(config: {
 
       const endCaretPosition = {
         path: focusTextBlock.path,
-        offset: newText.length - textLengthDelta,
+        offset: originalNewText.length - textLengthDelta,
       }
 
       return {

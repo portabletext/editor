@@ -21,7 +21,7 @@ export type EditorFeatureFlags = {
   linkPlugin: boolean
   oneLinePlugin: boolean
   markdownPlugin: boolean
-  inputRules: boolean
+  typographyPlugin: boolean
 }
 
 export const defaultEditorFeatureFlags: EditorFeatureFlags = {
@@ -34,7 +34,7 @@ export const defaultEditorFeatureFlags: EditorFeatureFlags = {
   linkPlugin: false,
   oneLinePlugin: false,
   markdownPlugin: false,
-  inputRules: false,
+  typographyPlugin: true,
 }
 
 export const EditorFeatureFlagsContext = createContext<EditorFeatureFlags>(
