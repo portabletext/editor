@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "./lib",
+    "isolatedModules": false,
+    "types": ["node"]
+  },
+  "include": ["./src"],
+  "exclude": [
+    "./e2e-tests",
+    "./gherkin-tests",
+    "./gherkin-tests-v2",
+    "./tests",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "**/__tests__/**",
+    "**/test/**",
+    "**/tests/**"
+  ]
+}
