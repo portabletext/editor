@@ -1,3 +1,4 @@
+import type {BehaviorGuard} from '@portabletext/editor/behaviors'
 import {
   copyrightRule,
   ellipsisRule,
@@ -21,12 +22,17 @@ import {
 } from './input-rules.typography'
 import {InputRulePlugin} from './plugin.input-rule'
 
+type TypographyPluginProps = {
+  guard?: BehaviorGuard<{type: 'insert.text'; text: string}, boolean>
+}
+
 /**
  * @beta
  */
-export function TypographyPlugin() {
+export function TypographyPlugin(props: TypographyPluginProps) {
   return (
     <InputRulePlugin
+      {...props}
       rules={[
         emDashRule,
         ellipsisRule,
