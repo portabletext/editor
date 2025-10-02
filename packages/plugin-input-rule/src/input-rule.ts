@@ -8,42 +8,34 @@ import type {
 import {raise, type BehaviorAction} from '@portabletext/editor/behaviors'
 import {getMarkState} from '@portabletext/editor/selectors'
 
-/**
- * Match found in the text after the insertion
- */
-export type InputRuleMatch = {
+type InputRuleMatchLocation = {
   /**
-   * Estimated selection of the match in the text after the insertion
+   * Estimated selection of where in the original text the match is located.
+   * The selection is estimated since the match is found in the text after
+   * insertion.
    */
   selection: NonNullable<EditorSelection>
   /**
    * Block offsets of the match in the text after the insertion
    */
-  offsets: {
+  targetOffsets: {
     anchor: BlockOffset
     focus: BlockOffset
     backward: boolean
   }
-  groupMatches: Array<{
-    /**
-     * Estimated selection of the match in the text after the insertion
-     */
-    selection: NonNullable<EditorSelection>
-    /**
-     * Block offsets of the match in the text after the insertion
-     */
-    offsets: {
-      anchor: BlockOffset
-      focus: BlockOffset
-      backward: boolean
-    }
-  }>
+}
+
+/**
+ * Match found in the text after the insertion
+ */
+export type InputRuleMatch = InputRuleMatchLocation & {
+  groupMatches: Array<InputRuleMatchLocation>
 }
 
 export type InputRuleEvent = {
   type: 'custom.input rule'
   /**
-   * The entire mat
+   * Matches found by the input rule
    */
   matches: Array<InputRuleMatch>
   /**
@@ -105,7 +97,8 @@ export function defineTextTransformRule(config: TextTransformRule): InputRule {
         return (
           length -
           (config.transform().length -
-            (match.offsets.focus.offset - match.offsets.anchor.offset))
+            (match.targetOffsets.focus.offset -
+              match.targetOffsets.anchor.offset))
         )
       }, 0)
 
@@ -116,8 +109,8 @@ export function defineTextTransformRule(config: TextTransformRule): InputRule {
       }
 
       const actions = matches.reverse().flatMap((match) => [
-        raise({type: 'select', at: match.offsets}),
-        raise({type: 'delete', at: match.offsets}),
+        raise({type: 'select', at: match.targetOffsets}),
+        raise({type: 'delete', at: match.targetOffsets}),
         raise({
           type: 'insert.child',
           child: {

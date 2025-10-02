@@ -82,7 +82,7 @@ function createInputRuleBehavior(config: {
             }
             const adjustedIndex =
               match.index + originalNewText.length - newText.length
-            const offsets = {
+            const targetOffsets = {
               anchor: {
                 path: focusTextBlock.path,
                 offset: adjustedIndex,
@@ -95,7 +95,7 @@ function createInputRuleBehavior(config: {
             }
             const selection = blockOffsetsToSelection({
               context: snapshot.context,
-              offsets,
+              offsets: targetOffsets,
               backward: false,
             })
 
@@ -112,12 +112,12 @@ function createInputRuleBehavior(config: {
                 : []
             const ruleMatch = {
               selection,
-              offsets,
+              targetOffsets,
               groupMatches: groupMatches.flatMap((groupMatch) => {
                 const adjustedIndex =
                   groupMatch.index + originalNewText.length - newText.length
 
-                const offsets = {
+                const targetOffsets = {
                   anchor: {
                     path: focusTextBlock.path,
                     offset: adjustedIndex,
@@ -128,10 +128,26 @@ function createInputRuleBehavior(config: {
                   },
                   backward: false,
                 }
-
+                const normalizedOffsets = {
+                  anchor: {
+                    path: focusTextBlock.path,
+                    offset: Math.min(
+                      targetOffsets.anchor.offset,
+                      originalTextBefore.length,
+                    ),
+                  },
+                  focus: {
+                    path: focusTextBlock.path,
+                    offset: Math.min(
+                      targetOffsets.focus.offset,
+                      originalTextBefore.length,
+                    ),
+                  },
+                  backward: false,
+                }
                 const selection = blockOffsetsToSelection({
                   context: snapshot.context,
-                  offsets,
+                  offsets: normalizedOffsets,
                   backward: false,
                 })
 
@@ -141,7 +157,7 @@ function createInputRuleBehavior(config: {
 
                 return {
                   selection,
-                  offsets,
+                  targetOffsets,
                 }
               }),
             }
@@ -175,7 +191,7 @@ function createInputRuleBehavior(config: {
             }
             const adjustedIndex =
               match.index + originalNewText.length - newText.length
-            const offsets = {
+            const targetOffsets = {
               anchor: {
                 path: focusTextBlock.path,
                 offset: adjustedIndex,
@@ -186,9 +202,26 @@ function createInputRuleBehavior(config: {
               },
               backward: false,
             }
+            const normalizedOffsets = {
+              anchor: {
+                path: focusTextBlock.path,
+                offset: Math.min(
+                  targetOffsets.anchor.offset,
+                  originalTextBefore.length,
+                ),
+              },
+              focus: {
+                path: focusTextBlock.path,
+                offset: Math.min(
+                  targetOffsets.focus.offset,
+                  originalTextBefore.length,
+                ),
+              },
+              backward: false,
+            }
             const selection = blockOffsetsToSelection({
               context: snapshot.context,
-              offsets,
+              offsets: normalizedOffsets,
               backward: false,
             })
 
@@ -206,12 +239,12 @@ function createInputRuleBehavior(config: {
 
             const ruleMatch = {
               selection,
-              offsets,
+              targetOffsets,
               groupMatches: groupMatches.flatMap((groupMatch) => {
                 const adjustedIndex =
                   groupMatch.index + originalNewText.length - newText.length
 
-                const offsets = {
+                const targetOffsets = {
                   anchor: {
                     path: focusTextBlock.path,
                     offset: adjustedIndex,
@@ -222,9 +255,26 @@ function createInputRuleBehavior(config: {
                   },
                   backward: false,
                 }
+                const normalizedOffsets = {
+                  anchor: {
+                    path: focusTextBlock.path,
+                    offset: Math.min(
+                      targetOffsets.anchor.offset,
+                      originalTextBefore.length,
+                    ),
+                  },
+                  focus: {
+                    path: focusTextBlock.path,
+                    offset: Math.min(
+                      targetOffsets.focus.offset,
+                      originalTextBefore.length,
+                    ),
+                  },
+                  backward: false,
+                }
                 const selection = blockOffsetsToSelection({
                   context: snapshot.context,
-                  offsets,
+                  offsets: normalizedOffsets,
                   backward: false,
                 })
 
@@ -234,7 +284,7 @@ function createInputRuleBehavior(config: {
 
                 return [
                   {
-                    offsets,
+                    targetOffsets,
                     selection,
                   },
                 ]
@@ -243,7 +293,7 @@ function createInputRuleBehavior(config: {
 
             const alreadyFound = foundMatches.some(
               (foundMatch) =>
-                foundMatch.offsets.anchor.offset === adjustedIndex,
+                foundMatch.targetOffsets.anchor.offset === adjustedIndex,
             )
 
             // Ignore if this match has already been found
@@ -253,7 +303,7 @@ function createInputRuleBehavior(config: {
 
             const existsInTextBefore = matchesInTextBefore.some(
               (matchInTextBefore) =>
-                matchInTextBefore.offsets.anchor.offset === adjustedIndex,
+                matchInTextBefore.targetOffsets.anchor.offset === adjustedIndex,
             )
 
             // Ignore if this match occurs in the text before the insertion
@@ -304,8 +354,13 @@ function createInputRuleBehavior(config: {
               // Remember each match and adjust `textBefore` and `newText` so
               // no subsequent matches can overlap with this one
               foundMatches.push(match)
-              textBefore = newText.slice(0, match.offsets.focus.offset ?? 0)
-              newText = originalNewText.slice(match.offsets.focus.offset ?? 0)
+              textBefore = newText.slice(
+                0,
+                match.targetOffsets.focus.offset ?? 0,
+              )
+              newText = originalNewText.slice(
+                match.targetOffsets.focus.offset ?? 0,
+              )
             }
           } else {
             // If no match was found, break out of the loop to try the next
