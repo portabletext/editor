@@ -32,6 +32,7 @@ import {TooltipTrigger} from 'react-aria-components'
 import {tv} from 'tailwind-variants'
 import {DebugMenu} from './debug-menu'
 import './editor.css'
+import {isActiveDecorator} from '@portabletext/editor/selectors'
 import {EmojiPickerPlugin} from './emoji-picker'
 import {
   EditorFeatureFlagsContext,
@@ -181,7 +182,13 @@ export function Editor(props: {
             {featureFlags.oneLinePlugin ? <OneLinePlugin /> : null}
             {featureFlags.typographyPlugin ? (
               <>
-                <TypographyPlugin />
+                <TypographyPlugin
+                  guard={({snapshot}) => {
+                    const codeIsActive = isActiveDecorator('code')(snapshot)
+
+                    return !codeIsActive
+                  }}
+                />
               </>
             ) : null}
             <div className="flex gap-2 items-center">
