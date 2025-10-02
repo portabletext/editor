@@ -5,6 +5,7 @@ import {
   forward,
   raise,
   type BehaviorAction,
+  type BehaviorGuard,
 } from '@portabletext/editor/behaviors'
 import {
   getBlockOffsets,
@@ -33,6 +34,7 @@ type InputRuleMatch = {
 
 function createInputRuleBehavior(config: {
   rules: Array<InputRule>
+  guard: BehaviorGuard<{type: 'insert.text'; text: string}, boolean> | undefined
   onApply: ({
     endOffsets,
   }: {
@@ -41,7 +43,11 @@ function createInputRuleBehavior(config: {
 }) {
   return defineBehavior({
     on: 'insert.text',
-    guard: ({snapshot, event}) => {
+    guard: ({snapshot, event, dom}) => {
+      if (config.guard && !config.guard({snapshot, event, dom})) {
+        return false
+      }
+
       const focusTextBlock = getFocusTextBlock(snapshot)
 
       if (!focusTextBlock) {
@@ -55,7 +61,6 @@ function createInputRuleBehavior(config: {
 
       const matches: Array<InputRuleMatch> = []
       const actions: Array<BehaviorAction> = []
-      // let endCaretPosition: BlockOffset | undefined
 
       for (const rule of config.rules) {
         const matcher = new RegExp(rule.matcher.source, 'gd')
@@ -229,14 +234,19 @@ function createInputRuleBehavior(config: {
   })
 }
 
+type InputRulePluginProps = {
+  rules: Array<InputRule>
+  guard?: BehaviorGuard<{type: 'insert.text'; text: string}, boolean>
+}
+
 /**
  * @beta
  */
-export function InputRulePlugin(props: {rules: Array<InputRule>}) {
+export function InputRulePlugin(props: InputRulePluginProps) {
   const editor = useEditor()
 
   useActorRef(inputRuleMachine, {
-    input: {editor, rules: props.rules},
+    input: {editor, rules: props.rules, guard: props.guard},
   })
 
   return null
@@ -256,11 +266,18 @@ type InputRuleEvent =
 const inputRuleListenerCallback: CallbackLogicFunction<
   AnyEventObject,
   InputRuleEvent,
-  {editor: Editor; rules: Array<InputRule>}
+  {
+    editor: Editor
+    guard:
+      | BehaviorGuard<{type: 'insert.text'; text: string}, boolean>
+      | undefined
+    rules: Array<InputRule>
+  }
 > = ({input, sendBack}) => {
   const unregister = input.editor.registerBehavior({
     behavior: createInputRuleBehavior({
       rules: input.rules,
+      guard: input.guard,
       onApply: ({endOffsets}) => {
         sendBack({type: 'input rule raised', endOffsets})
       },
@@ -329,11 +346,17 @@ const inputRuleSetup = setup({
   types: {
     context: {} as {
       editor: Editor
+      guard:
+        | BehaviorGuard<{type: 'insert.text'; text: string}, boolean>
+        | undefined
       rules: Array<InputRule>
       endOffsets: {start: BlockOffset; end: BlockOffset} | undefined
     },
     input: {} as {
       editor: Editor
+      guard:
+        | BehaviorGuard<{type: 'insert.text'; text: string}, boolean>
+        | undefined
       rules: Array<InputRule>
     },
     events: {} as InputRuleEvent,
@@ -376,13 +399,18 @@ const inputRuleMachine = inputRuleSetup.createMachine({
   id: 'input rule',
   context: ({input}) => ({
     editor: input.editor,
+    guard: input.guard,
     rules: input.rules,
     endOffsets: undefined,
   }),
   initial: 'idle',
   invoke: {
     src: 'input rule listener',
-    input: ({context}) => ({editor: context.editor, rules: context.rules}),
+    input: ({context}) => ({
+      editor: context.editor,
+      guard: context.guard,
+      rules: context.rules,
+    }),
   },
   on: {
     'input rule raised': {
