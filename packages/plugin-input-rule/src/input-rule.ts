@@ -27,11 +27,15 @@ type InputRuleMatchLocation = {
 
 /**
  * Match found in the text after the insertion
+ * @beta
  */
 export type InputRuleMatch = InputRuleMatchLocation & {
   groupMatches: Array<InputRuleMatchLocation>
 }
 
+/**
+ * @beta
+ */
 export type InputRuleEvent = {
   type: 'custom.input rule'
   /**
@@ -86,6 +90,9 @@ type TextTransformRule = {
   transform: () => string
 }
 
+/**
+ * @beta
+ */
 export function defineTextTransformRule(config: TextTransformRule): InputRule {
   return {
     matcher: config.matcher,
