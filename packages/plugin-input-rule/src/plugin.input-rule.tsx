@@ -12,6 +12,7 @@ import {
   getBlockTextBefore,
   getFocusTextBlock,
 } from '@portabletext/editor/selectors'
+import {blockOffsetsToSelection} from '@portabletext/editor/utils'
 import {useActorRef} from '@xstate/react'
 import {
   fromCallback,
@@ -19,22 +20,13 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
-import type {InputRule} from './input-rule'
+import type {InputRule, InputRuleEvent, InputRuleMatch} from './input-rule'
 
-type InputRuleMatch = {
-  /**
-   * The selection of the match
-   */
-  selection: {
-    anchor: BlockOffset
-    focus: BlockOffset
-    backward: boolean
-  }
-}
+export type InputRuleGuard = BehaviorGuard<InputRuleEvent, boolean>
 
 function createInputRuleBehavior(config: {
   rules: Array<InputRule>
-  guard: BehaviorGuard<{type: 'insert.text'; text: string}, boolean> | undefined
+  guard: InputRuleGuard | undefined
   onApply: ({
     endOffsets,
   }: {
@@ -44,10 +36,6 @@ function createInputRuleBehavior(config: {
   return defineBehavior({
     on: 'insert.text',
     guard: ({snapshot, event, dom}) => {
-      if (config.guard && !config.guard({snapshot, event, dom})) {
-        return false
-      }
-
       const focusTextBlock = getFocusTextBlock(snapshot)
 
       if (!focusTextBlock) {
@@ -59,7 +47,7 @@ function createInputRuleBehavior(config: {
       const originalNewText = textBefore + event.text
       let newText = originalNewText
 
-      const matches: Array<InputRuleMatch> = []
+      const foundMatches: Array<InputRuleMatch['groupMatches'][number]> = []
       const actions: Array<BehaviorAction> = []
 
       for (const rule of config.rules) {
@@ -67,79 +55,195 @@ function createInputRuleBehavior(config: {
 
         while (true) {
           // Find matches in the text before the insertion
-          const matchesInTextBefore = [...textBefore.matchAll(matcher)].flatMap(
-            (ruleMatch) => {
-              if (ruleMatch.indices === undefined) {
-                return []
-              }
-
-              const [index] = ruleMatch.indices.at(0) ?? [undefined, undefined]
-
-              if (index === undefined) {
-                return []
-              }
-
-              const groupMatches =
-                ruleMatch.indices.length > 1
-                  ? ruleMatch.indices.slice(1).map(([start, end]) => ({
-                      index: start,
-                      length: end - start,
-                    }))
-                  : ruleMatch.indices.map(([start, end]) => ({
-                      index: start,
-                      length: end - start,
-                    }))
-
-              return groupMatches.map((groupMatch) => {
-                const adjustedIndex =
-                  groupMatch.index + originalNewText.length - newText.length
-
-                return {
-                  selection: {
-                    anchor: {
-                      path: focusTextBlock.path,
-                      offset: adjustedIndex,
-                    },
-                    focus: {
-                      path: focusTextBlock.path,
-                      offset: adjustedIndex + groupMatch.length,
-                    },
-                    backward: false,
-                  },
-                }
-              })
-            },
-          )
-          const matchesInNewText = [...newText.matchAll(matcher)]
-
-          // Find matches in the text after the insertion
-          const ruleMatches = matchesInNewText.flatMap((ruleMatch) => {
-            if (ruleMatch.indices === undefined) {
+          const matchesInTextBefore: Array<InputRuleMatch> = [
+            ...textBefore.matchAll(matcher),
+          ].flatMap((regExpMatch) => {
+            if (regExpMatch.indices === undefined) {
               return []
             }
 
-            const [index] = ruleMatch.indices.at(0) ?? [undefined, undefined]
+            const [index] = regExpMatch.indices.at(0) ?? [undefined, undefined]
 
             if (index === undefined) {
               return []
             }
 
-            const groupMatches =
-              ruleMatch.indices.length > 1
-                ? ruleMatch.indices.slice(1).map(([start, end]) => ({
-                    index: start,
-                    length: end - start,
-                  }))
-                : ruleMatch.indices.map(([start, end]) => ({
-                    index: start,
-                    length: end - start,
-                  }))
+            const [firstMatchStart, firstMatchEnd] = regExpMatch.indices.at(
+              0,
+            ) ?? [undefined, undefined]
 
+            if (firstMatchStart === undefined || firstMatchEnd === undefined) {
+              return []
+            }
+
+            const match = {
+              index: firstMatchStart,
+              length: firstMatchEnd - firstMatchStart,
+            }
             const adjustedIndex =
-              index + originalNewText.length - newText.length
+              match.index + originalNewText.length - newText.length
+            const offsets = {
+              anchor: {
+                path: focusTextBlock.path,
+                offset: adjustedIndex,
+              },
+              focus: {
+                path: focusTextBlock.path,
+                offset: adjustedIndex + match.length,
+              },
+              backward: false,
+            }
+            const selection = blockOffsetsToSelection({
+              context: snapshot.context,
+              offsets,
+              backward: false,
+            })
 
-            const alreadyFound = matches.some(
-              (match) => match.selection.anchor.offset === adjustedIndex,
+            if (!selection) {
+              return []
+            }
+
+            const groupMatches =
+              regExpMatch.indices.length > 1
+                ? regExpMatch.indices.slice(1).map(([start, end]) => ({
+                    index: start,
+                    length: end - start,
+                  }))
+                : []
+            const ruleMatch = {
+              selection,
+              offsets,
+              groupMatches: groupMatches.flatMap((groupMatch) => {
+                const adjustedIndex =
+                  groupMatch.index + originalNewText.length - newText.length
+
+                const offsets = {
+                  anchor: {
+                    path: focusTextBlock.path,
+                    offset: adjustedIndex,
+                  },
+                  focus: {
+                    path: focusTextBlock.path,
+                    offset: adjustedIndex + groupMatch.length,
+                  },
+                  backward: false,
+                }
+
+                const selection = blockOffsetsToSelection({
+                  context: snapshot.context,
+                  offsets,
+                  backward: false,
+                })
+
+                if (!selection) {
+                  return []
+                }
+
+                return {
+                  selection,
+                  offsets,
+                }
+              }),
+            }
+
+            return [ruleMatch]
+          })
+          const matchesInNewText = [...newText.matchAll(matcher)]
+          // Find matches in the text after the insertion
+          const ruleMatches = matchesInNewText.flatMap((regExpMatch) => {
+            if (regExpMatch.indices === undefined) {
+              return []
+            }
+
+            const [index] = regExpMatch.indices.at(0) ?? [undefined, undefined]
+
+            if (index === undefined) {
+              return []
+            }
+
+            const [firstMatchStart, firstMatchEnd] = regExpMatch.indices.at(
+              0,
+            ) ?? [undefined, undefined]
+
+            if (firstMatchStart === undefined || firstMatchEnd === undefined) {
+              return []
+            }
+
+            const match = {
+              index: firstMatchStart,
+              length: firstMatchEnd - firstMatchStart,
+            }
+            const adjustedIndex =
+              match.index + originalNewText.length - newText.length
+            const offsets = {
+              anchor: {
+                path: focusTextBlock.path,
+                offset: adjustedIndex,
+              },
+              focus: {
+                path: focusTextBlock.path,
+                offset: adjustedIndex + match.length,
+              },
+              backward: false,
+            }
+            const selection = blockOffsetsToSelection({
+              context: snapshot.context,
+              offsets,
+              backward: false,
+            })
+
+            if (!selection) {
+              return []
+            }
+
+            const groupMatches =
+              regExpMatch.indices.length > 1
+                ? regExpMatch.indices.slice(1).map(([start, end]) => ({
+                    index: start,
+                    length: end - start,
+                  }))
+                : []
+
+            const ruleMatch = {
+              selection,
+              offsets,
+              groupMatches: groupMatches.flatMap((groupMatch) => {
+                const adjustedIndex =
+                  groupMatch.index + originalNewText.length - newText.length
+
+                const offsets = {
+                  anchor: {
+                    path: focusTextBlock.path,
+                    offset: adjustedIndex,
+                  },
+                  focus: {
+                    path: focusTextBlock.path,
+                    offset: adjustedIndex + groupMatch.length,
+                  },
+                  backward: false,
+                }
+                const selection = blockOffsetsToSelection({
+                  context: snapshot.context,
+                  offsets,
+                  backward: false,
+                })
+
+                if (!selection) {
+                  return []
+                }
+
+                return [
+                  {
+                    offsets,
+                    selection,
+                  },
+                ]
+              }),
+            }
+
+            const alreadyFound = foundMatches.some(
+              (foundMatch) =>
+                foundMatch.offsets.anchor.offset === adjustedIndex,
             )
 
             // Ignore if this match has already been found
@@ -149,7 +253,7 @@ function createInputRuleBehavior(config: {
 
             const existsInTextBefore = matchesInTextBefore.some(
               (matchInTextBefore) =>
-                matchInTextBefore.selection.anchor.offset === adjustedIndex,
+                matchInTextBefore.offsets.anchor.offset === adjustedIndex,
             )
 
             // Ignore if this match occurs in the text before the insertion
@@ -157,54 +261,51 @@ function createInputRuleBehavior(config: {
               return []
             }
 
-            return groupMatches.map((groupMatch) => {
-              const adjustedIndex =
-                groupMatch.index + originalNewText.length - newText.length
-
-              const selection = {
-                anchor: {
-                  path: focusTextBlock.path,
-                  offset: adjustedIndex,
-                },
-                focus: {
-                  path: focusTextBlock.path,
-                  offset: adjustedIndex + groupMatch.length,
-                },
-                backward: false,
-              }
-
-              return {
-                selection,
-              }
-            })
+            return [ruleMatch]
           })
 
           if (ruleMatches.length > 0) {
+            const guardResult =
+              config.guard?.({
+                snapshot,
+                event: {
+                  type: 'custom.input rule',
+                  matches: ruleMatches,
+                  focusTextBlock,
+                  textBefore: originalTextBefore,
+                  textInserted: event.text,
+                },
+                dom,
+              }) ?? true
+
+            if (!guardResult) {
+              break
+            }
+
             const result = rule.transform({
-              matches: ruleMatches,
               snapshot,
-              textBefore: originalTextBefore,
-              focusTextBlock,
-              event,
+              event: {
+                type: 'custom.input rule',
+                matches: ruleMatches,
+                focusTextBlock,
+                textBefore: originalTextBefore,
+                textInserted: event.text,
+              },
             })
 
             for (const action of result.actions) {
               actions.push(action)
             }
 
-            // endCaretPosition = result.endCaretPosition
-
-            for (const ruleMatch of ruleMatches) {
+            const matches = ruleMatches.flatMap((match) =>
+              match.groupMatches.length === 0 ? [match] : match.groupMatches,
+            )
+            for (const match of matches) {
               // Remember each match and adjust `textBefore` and `newText` so
               // no subsequent matches can overlap with this one
-              matches.push(ruleMatch)
-              textBefore = newText.slice(
-                0,
-                ruleMatch.selection.focus.offset ?? 0,
-              )
-              newText = originalNewText.slice(
-                ruleMatch.selection.focus.offset ?? 0,
-              )
+              foundMatches.push(match)
+              textBefore = newText.slice(0, match.offsets.focus.offset ?? 0)
+              newText = originalNewText.slice(match.offsets.focus.offset ?? 0)
             }
           } else {
             // If no match was found, break out of the loop to try the next
@@ -236,7 +337,7 @@ function createInputRuleBehavior(config: {
 
 type InputRulePluginProps = {
   rules: Array<InputRule>
-  guard?: BehaviorGuard<{type: 'insert.text'; text: string}, boolean>
+  guard?: InputRuleGuard
 }
 
 /**
@@ -252,7 +353,7 @@ export function InputRulePlugin(props: InputRulePluginProps) {
   return null
 }
 
-type InputRuleEvent =
+type InputRuleMachineEvent =
   | {
       type: 'input rule raised'
       endOffsets: {start: BlockOffset; end: BlockOffset} | undefined
@@ -265,12 +366,10 @@ type InputRuleEvent =
 
 const inputRuleListenerCallback: CallbackLogicFunction<
   AnyEventObject,
-  InputRuleEvent,
+  InputRuleMachineEvent,
   {
     editor: Editor
-    guard:
-      | BehaviorGuard<{type: 'insert.text'; text: string}, boolean>
-      | undefined
+    guard: InputRuleGuard | undefined
     rules: Array<InputRule>
   }
 > = ({input, sendBack}) => {
@@ -291,7 +390,7 @@ const inputRuleListenerCallback: CallbackLogicFunction<
 
 const deleteBackwardListenerCallback: CallbackLogicFunction<
   AnyEventObject,
-  InputRuleEvent,
+  InputRuleMachineEvent,
   {editor: Editor}
 > = ({input, sendBack}) => {
   return input.editor.registerBehavior({
@@ -311,7 +410,7 @@ const deleteBackwardListenerCallback: CallbackLogicFunction<
 
 const selectionListenerCallback: CallbackLogicFunction<
   AnyEventObject,
-  InputRuleEvent,
+  InputRuleMachineEvent,
   {editor: Editor}
 > = ({sendBack, input}) => {
   const unregister = input.editor.registerBehavior({
@@ -346,20 +445,16 @@ const inputRuleSetup = setup({
   types: {
     context: {} as {
       editor: Editor
-      guard:
-        | BehaviorGuard<{type: 'insert.text'; text: string}, boolean>
-        | undefined
+      guard: InputRuleGuard | undefined
       rules: Array<InputRule>
       endOffsets: {start: BlockOffset; end: BlockOffset} | undefined
     },
     input: {} as {
       editor: Editor
-      guard:
-        | BehaviorGuard<{type: 'insert.text'; text: string}, boolean>
-        | undefined
+      guard: InputRuleGuard | undefined
       rules: Array<InputRule>
     },
-    events: {} as InputRuleEvent,
+    events: {} as InputRuleMachineEvent,
   },
   actors: {
     'delete.backward listener': fromCallback(deleteBackwardListenerCallback),

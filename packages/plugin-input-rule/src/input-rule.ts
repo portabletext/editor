@@ -1,10 +1,67 @@
 import type {
+  BlockOffset,
   BlockPath,
+  EditorSelection,
   EditorSnapshot,
   PortableTextTextBlock,
 } from '@portabletext/editor'
 import {raise, type BehaviorAction} from '@portabletext/editor/behaviors'
 import {getMarkState} from '@portabletext/editor/selectors'
+
+/**
+ * Match found in the text after the insertion
+ */
+export type InputRuleMatch = {
+  /**
+   * Estimated selection of the match in the text after the insertion
+   */
+  selection: NonNullable<EditorSelection>
+  /**
+   * Block offsets of the match in the text after the insertion
+   */
+  offsets: {
+    anchor: BlockOffset
+    focus: BlockOffset
+    backward: boolean
+  }
+  groupMatches: Array<{
+    /**
+     * Estimated selection of the match in the text after the insertion
+     */
+    selection: NonNullable<EditorSelection>
+    /**
+     * Block offsets of the match in the text after the insertion
+     */
+    offsets: {
+      anchor: BlockOffset
+      focus: BlockOffset
+      backward: boolean
+    }
+  }>
+}
+
+export type InputRuleEvent = {
+  type: 'custom.input rule'
+  /**
+   * The entire mat
+   */
+  matches: Array<InputRuleMatch>
+  /**
+   * The text before the insertion
+   */
+  textBefore: string
+  /**
+   * The text is destined to be inserted
+   */
+  textInserted: string
+  /**
+   * The text block where the insertion takes place
+   */
+  focusTextBlock: {
+    path: BlockPath
+    node: PortableTextTextBlock
+  }
+}
 
 /**
  * @beta
@@ -14,30 +71,9 @@ export type InputRule = {
   transform: ({
     snapshot,
     event,
-    textBefore,
-    matches,
-    focusTextBlock,
   }: {
     snapshot: EditorSnapshot
-    event: {type: 'insert.text'; text: string}
-    textBefore: string
-    focusTextBlock: {
-      path: BlockPath
-      node: PortableTextTextBlock
-    }
-    matches: Array<{
-      selection: {
-        anchor: {
-          path: BlockPath
-          offset: number
-        }
-        focus: {
-          path: BlockPath
-          offset: number
-        }
-        backward: boolean
-      }
-    }>
+    event: InputRuleEvent
   }) => {
     actions: Array<BehaviorAction>
   }
@@ -61,24 +97,27 @@ type TextTransformRule = {
 export function defineTextTransformRule(config: TextTransformRule): InputRule {
   return {
     matcher: config.matcher,
-    transform: ({snapshot, event, matches, focusTextBlock, textBefore}) => {
-      const textLengthDelta = matches.reduce(
-        (length, match) =>
+    transform: ({snapshot, event}) => {
+      const matches = event.matches.flatMap((match) =>
+        match.groupMatches.length === 0 ? [match] : match.groupMatches,
+      )
+      const textLengthDelta = matches.reduce((length, match) => {
+        return (
           length -
           (config.transform().length -
-            (match.selection.focus.offset - match.selection.anchor.offset)),
-        0,
-      )
+            (match.offsets.focus.offset - match.offsets.anchor.offset))
+        )
+      }, 0)
 
-      const newText = textBefore + event.text
+      const newText = event.textBefore + event.textInserted
       const endCaretPosition = {
-        path: focusTextBlock.path,
+        path: event.focusTextBlock.path,
         offset: newText.length - textLengthDelta,
       }
 
       const actions = matches.reverse().flatMap((match) => [
-        raise({type: 'select', at: match.selection}),
-        raise({type: 'delete', at: match.selection}),
+        raise({type: 'select', at: match.offsets}),
+        raise({type: 'delete', at: match.offsets}),
         raise({
           type: 'insert.child',
           child: {
@@ -95,7 +134,7 @@ export function defineTextTransformRule(config: TextTransformRule): InputRule {
                       path: match.selection.focus.path,
                       offset: Math.min(
                         match.selection.focus.offset,
-                        textBefore.length,
+                        event.textBefore.length,
                       ),
                     },
                   },
