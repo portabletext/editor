@@ -22,6 +22,9 @@ import {
 } from 'xstate'
 import type {InputRule, InputRuleEvent, InputRuleMatch} from './input-rule'
 
+/**
+ * @beta
+ */
 export type InputRuleGuard = BehaviorGuard<InputRuleEvent, boolean>
 
 function createInputRuleBehavior(config: {
