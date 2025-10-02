@@ -1,4 +1,3 @@
-import {type BehaviorGuard} from '@portabletext/editor/behaviors'
 import {isActiveDecorator} from '@portabletext/editor/selectors'
 import {parameterTypes} from '@portabletext/editor/test'
 import {
@@ -10,11 +9,10 @@ import {defineSchema} from '@portabletext/schema'
 import {Before} from 'racejar'
 import {Feature} from 'racejar/vitest'
 import disallowInCodeFeature from './disallow-in-code.feature?raw'
+import type {InputRuleGuard} from './plugin.input-rule'
 import {TypographyPlugin} from './plugin.typography'
 
-const guard: BehaviorGuard<{type: 'insert.text'; text: string}, boolean> = ({
-  snapshot,
-}) => {
+const guard: InputRuleGuard = ({snapshot}) => {
   const codeIsActive = isActiveDecorator('code')(snapshot)
 
   return !codeIsActive
