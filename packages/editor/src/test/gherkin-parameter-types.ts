@@ -28,7 +28,7 @@ const parameterType = {
   }),
   decorator: createParameterType<'em' | 'strong'>({
     name: 'decorator',
-    matcher: /"(em|strong)"/,
+    matcher: /"(code|em|strong)"/,
   }),
   index: createParameterType({
     name: 'index',
@@ -52,7 +52,7 @@ const parameterType = {
   }),
   marks: createParameterType<Array<string>>({
     name: 'marks',
-    matcher: /"((strong|em|[a-z]\d)(,(strong|em|[a-z]\d))*)"/,
+    matcher: /"((code|strong|em|[a-z]\d)(,(code|strong|em|[a-z]\d))*)"/,
     type: Array,
     transform: (input) => input.split(','),
   }),
