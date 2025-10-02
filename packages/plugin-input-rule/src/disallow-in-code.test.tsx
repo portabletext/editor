@@ -1,4 +1,7 @@
-import {isActiveDecorator} from '@portabletext/editor/selectors'
+import {
+  getSelectedSpans,
+  isActiveDecorator,
+} from '@portabletext/editor/selectors'
 import {parameterTypes} from '@portabletext/editor/test'
 import {
   createTestEditor,
@@ -12,10 +15,23 @@ import disallowInCodeFeature from './disallow-in-code.feature?raw'
 import type {InputRuleGuard} from './plugin.input-rule'
 import {TypographyPlugin} from './plugin.typography'
 
-const guard: InputRuleGuard = ({snapshot}) => {
+const guard: InputRuleGuard = ({snapshot, event}) => {
   const codeIsActive = isActiveDecorator('code')(snapshot)
+  const matchedSpans = event.matches.flatMap((match) =>
+    getSelectedSpans({
+      ...snapshot,
+      context: {
+        ...snapshot.context,
+        selection: match.selection,
+      },
+    }),
+  )
 
-  return !codeIsActive
+  const anySpanIsCode = matchedSpans.some(
+    (span) => span.node.text.length > 0 && span.node.marks?.includes('code'),
+  )
+
+  return !codeIsActive && !anySpanIsCode
 }
 
 Feature({

@@ -32,7 +32,10 @@ import {TooltipTrigger} from 'react-aria-components'
 import {tv} from 'tailwind-variants'
 import {DebugMenu} from './debug-menu'
 import './editor.css'
-import {isActiveDecorator} from '@portabletext/editor/selectors'
+import {
+  getSelectedSpans,
+  isActiveDecorator,
+} from '@portabletext/editor/selectors'
 import {EmojiPickerPlugin} from './emoji-picker'
 import {
   EditorFeatureFlagsContext,
@@ -183,10 +186,25 @@ export function Editor(props: {
             {featureFlags.typographyPlugin ? (
               <>
                 <TypographyPlugin
-                  guard={({snapshot}) => {
+                  guard={({snapshot, event}) => {
                     const codeIsActive = isActiveDecorator('code')(snapshot)
+                    const matchedSpans = event.matches.flatMap((match) =>
+                      getSelectedSpans({
+                        ...snapshot,
+                        context: {
+                          ...snapshot.context,
+                          selection: match.selection,
+                        },
+                      }),
+                    )
 
-                    return !codeIsActive
+                    const anySpanIsCode = matchedSpans.some(
+                      (span) =>
+                        span.node.text.length > 0 &&
+                        span.node.marks?.includes('code'),
+                    )
+
+                    return !codeIsActive && !anySpanIsCode
                   }}
                 />
               </>
