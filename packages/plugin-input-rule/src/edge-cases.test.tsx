@@ -8,8 +8,8 @@ import {defineSchema} from '@portabletext/schema'
 import {Before} from 'racejar'
 import {Feature} from 'racejar/vitest'
 import edgeCasesFeature from './edge-cases.feature?raw'
-import {defineTextTransformRule} from './input-rule'
 import {InputRulePlugin} from './plugin.input-rule'
+import {defineTextTransformRule} from './text-transform-rule'
 
 const longerTransformRule = defineTextTransformRule({
   matcher: /\./,
