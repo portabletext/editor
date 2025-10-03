@@ -18,7 +18,10 @@ import {
 } from '@portabletext/editor'
 import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 import {OneLinePlugin} from '@portabletext/plugin-one-line'
-import {TypographyPlugin} from '@portabletext/plugin-typography'
+import {
+  createDecoratorGuard,
+  TypographyPlugin,
+} from '@portabletext/plugin-typography'
 import {useSelector} from '@xstate/react'
 import {
   ActivityIcon,
@@ -32,10 +35,6 @@ import {TooltipTrigger} from 'react-aria-components'
 import {tv} from 'tailwind-variants'
 import {DebugMenu} from './debug-menu'
 import './editor.css'
-import {
-  getSelectedSpans,
-  isActiveDecorator,
-} from '@portabletext/editor/selectors'
 import {EmojiPickerPlugin} from './emoji-picker'
 import {
   EditorFeatureFlagsContext,
@@ -186,26 +185,12 @@ export function Editor(props: {
             {featureFlags.typographyPlugin ? (
               <>
                 <TypographyPlugin
-                  guard={({snapshot, event}) => {
-                    const codeIsActive = isActiveDecorator('code')(snapshot)
-                    const matchedSpans = event.matches.flatMap((match) =>
-                      getSelectedSpans({
-                        ...snapshot,
-                        context: {
-                          ...snapshot.context,
-                          selection: match.selection,
-                        },
-                      }),
-                    )
-
-                    const anySpanIsCode = matchedSpans.some(
-                      (span) =>
-                        span.node.text.length > 0 &&
-                        span.node.marks?.includes('code'),
-                    )
-
-                    return !codeIsActive && !anySpanIsCode
-                  }}
+                  guard={createDecoratorGuard({
+                    decorators: ({schema}) =>
+                      schema.decorators.flatMap((decorator) =>
+                        decorator.name === 'code' ? [decorator.name] : [],
+                      ),
+                  })}
                 />
               </>
             ) : null}

@@ -37,6 +37,10 @@ export default defineConfig({
         __dirname,
         '../../packages/plugin-input-rule/src',
       ),
+      '@portabletext/plugin-typography': path.resolve(
+        __dirname,
+        '../../packages/plugin-typography/src',
+      ),
       '@portabletext/toolbar': path.resolve(
         __dirname,
         '../../packages/toolbar/src',
