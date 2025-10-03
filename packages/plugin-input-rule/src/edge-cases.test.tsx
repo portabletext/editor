@@ -12,22 +12,22 @@ import {InputRulePlugin} from './plugin.input-rule'
 import {defineTextTransformRule} from './text-transform-rule'
 
 const longerTransformRule = defineTextTransformRule({
-  matcher: /\./,
+  on: /\./,
   transform: () => '...',
 })
 
 const endStringRule = defineTextTransformRule({
-  matcher: /->$/,
+  on: /->$/,
   transform: () => '→',
 })
 
 const nonGlobalRule = defineTextTransformRule({
-  matcher: /\(c\)/,
+  on: /\(c\)/,
   transform: () => '©',
 })
 
 const multipleGroupsRule = defineTextTransformRule({
-  matcher: /(x)[fo]+(y)/,
+  on: /(x)[fo]+(y)/,
   transform: () => 'z',
 })
 
