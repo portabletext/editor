@@ -46,3 +46,23 @@ function App() {
   )
 }
 ```
+
+Optionally, create a `guard` to disallow the text transformations inside certain decorators:
+
+```tsx
+import {
+  createDecoratorGuard,
+  TypographyPlugin,
+} from '@portabletext/plugin-typography'
+
+return (
+  <TypographyPlugin
+    guard={createDecoratorGuard({
+      decorators: ({schema}) =>
+        schema.decorators.flatMap((decorator) =>
+          decorator.name === 'code' ? [decorator.name] : [],
+        ),
+    })}
+  />
+)
+```
