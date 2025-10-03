@@ -13,7 +13,9 @@ const [selectorsTypeDoc, selectorsTypeDocSidebar] =
 const [toolbarTypeDoc, toolbarTypeDocSidebar] = createStarlightTypeDocPlugin()
 const [keyboardShortcutsTypeDoc, keyboardShortcutsTypeDocSidebar] =
   createStarlightTypeDocPlugin()
-const tsconfig = '../../packages/editor/tsconfig.json'
+const [blockToolsTypeDoc, blockToolsTypeDocSidebar] =
+  createStarlightTypeDocPlugin()
+const tsconfig = '../../packages/editor/tsconfig.typedoc.json'
 
 // https://astro.build/config
 export default defineConfig({
@@ -116,11 +118,26 @@ export default defineConfig({
                 {...keyboardShortcutsTypeDocSidebar, badge: 'Generated'},
               ],
             },
+            {
+              label: 'Block Tools',
+              items: [
+                {label: 'Overview', slug: 'reference/block-tools'},
+                {...blockToolsTypeDocSidebar, badge: 'Generated'},
+              ],
+            },
           ],
         },
         {
           label: 'Integrations',
           autogenerate: {directory: 'integrations'},
+        },
+        {
+          label: 'Resources',
+          autogenerate: {directory: 'resources'},
+        },
+        {
+          label: 'Playground',
+          link: 'https://playground.portabletext.org/',
         },
         {
           label: 'Portable Text Specification',
@@ -133,6 +150,7 @@ export default defineConfig({
           output: 'api/editor',
           typeDoc: {
             excludeReferences: true,
+            skipErrorChecking: true,
           },
           sidebar: {
             collapsed: true,
@@ -144,6 +162,7 @@ export default defineConfig({
           output: 'api/behaviors',
           typeDoc: {
             excludeReferences: true,
+            skipErrorChecking: true,
           },
           sidebar: {
             collapsed: true,
@@ -155,6 +174,7 @@ export default defineConfig({
           output: 'api/plugins',
           typeDoc: {
             excludeReferences: true,
+            skipErrorChecking: true,
           },
           sidebar: {
             collapsed: true,
@@ -166,6 +186,7 @@ export default defineConfig({
           output: 'api/selectors',
           typeDoc: {
             excludeReferences: true,
+            skipErrorChecking: true,
           },
           sidebar: {
             collapsed: true,
@@ -177,6 +198,7 @@ export default defineConfig({
           output: 'api/toolbar',
           typeDoc: {
             excludeReferences: true,
+            skipErrorChecking: true,
           },
           sidebar: {
             collapsed: true,
@@ -188,11 +210,24 @@ export default defineConfig({
           output: 'api/keyboard-shortcuts',
           typeDoc: {
             excludeReferences: true,
+            skipErrorChecking: true,
           },
           sidebar: {
             collapsed: true,
           },
           tsconfig: '../../packages/keyboard-shortcuts/tsconfig.json',
+        }),
+        blockToolsTypeDoc({
+          entryPoints: ['../../packages/block-tools/src/index.ts'],
+          output: 'api/block-tools',
+          typeDoc: {
+            excludeReferences: true,
+            skipErrorChecking: true,
+          },
+          sidebar: {
+            collapsed: true,
+          },
+          tsconfig: '../../packages/block-tools/tsconfig.json',
         }),
         ...(process.env.CHECK_LINKS ? [starlightLinksValidator()] : []),
       ],
