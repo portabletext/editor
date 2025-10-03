@@ -7,15 +7,14 @@ import {
 import {defineSchema} from '@portabletext/schema'
 import {Before} from 'racejar'
 import {Feature} from 'racejar/vitest'
-import multiplicationFeature from './input-rule.multiplication.feature?raw'
-import {multiplicationRule} from './input-rules.typography'
-import {InputRulePlugin} from './plugin.input-rule'
+import smartQuotesFeature from './input-rule.smart-quotes.feature?raw'
+import {TypographyPlugin} from './plugin.typography'
 
 Feature({
   hooks: [
     Before(async (context: Context) => {
       const {editor, locator} = await createTestEditor({
-        children: <InputRulePlugin rules={[multiplicationRule]} />,
+        children: <TypographyPlugin />,
         schemaDefinition: defineSchema({
           decorators: [{name: 'strong'}],
           annotations: [{name: 'link'}],
@@ -26,7 +25,7 @@ Feature({
       context.editor = editor
     }),
   ],
-  featureText: multiplicationFeature,
+  featureText: smartQuotesFeature,
   stepDefinitions,
   parameterTypes,
 })

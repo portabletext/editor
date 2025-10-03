@@ -1,4 +1,8 @@
 import {
+  InputRulePlugin,
+  type InputRuleGuard,
+} from '@portabletext/plugin-input-rule'
+import {
   copyrightRule,
   ellipsisRule,
   emDashRule,
@@ -19,7 +23,6 @@ import {
   threeQuartersRule,
   trademarkRule,
 } from './input-rules.typography'
-import {InputRulePlugin, type InputRuleGuard} from './plugin.input-rule'
 
 type TypographyPluginProps = {
   guard?: InputRuleGuard

@@ -7,15 +7,14 @@ import {
 import {defineSchema} from '@portabletext/schema'
 import {Before} from 'racejar'
 import {Feature} from 'racejar/vitest'
-import emDashFeature from './input-rule.em-dash.feature?raw'
-import {emDashRule} from './input-rules.typography'
-import {InputRulePlugin} from './plugin.input-rule'
+import ellipsisFeature from './input-rule.ellipsis.feature?raw'
+import {TypographyPlugin} from './plugin.typography'
 
 Feature({
   hooks: [
     Before(async (context: Context) => {
       const {editor, locator} = await createTestEditor({
-        children: <InputRulePlugin rules={[emDashRule]} />,
+        children: <TypographyPlugin />,
         schemaDefinition: defineSchema({
           decorators: [{name: 'strong'}],
           annotations: [{name: 'link'}],
@@ -26,7 +25,7 @@ Feature({
       context.editor = editor
     }),
   ],
-  featureText: emDashFeature,
+  featureText: ellipsisFeature,
   stepDefinitions,
   parameterTypes,
 })
