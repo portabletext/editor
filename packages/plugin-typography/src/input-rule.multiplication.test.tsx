@@ -14,7 +14,7 @@ Feature({
   hooks: [
     Before(async (context: Context) => {
       const {editor, locator} = await createTestEditor({
-        children: <TypographyPlugin />,
+        children: <TypographyPlugin rules={{multiplication: 'on'}} />,
         schemaDefinition: defineSchema({
           decorators: [{name: 'strong'}],
           annotations: [{name: 'link'}],
