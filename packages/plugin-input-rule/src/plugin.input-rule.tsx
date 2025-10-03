@@ -410,7 +410,7 @@ type InputRulePluginProps = {
  * <InputRulePlugin rules={smartQuotesRules} />
  * ```
  *
- * @public
+ * @alpha
  */
 export function InputRulePlugin(props: InputRulePluginProps) {
   const editor = useEditor()

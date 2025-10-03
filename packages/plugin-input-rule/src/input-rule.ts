@@ -28,14 +28,14 @@ type InputRuleMatchLocation = {
 
 /**
  * Match found in the text after the insertion
- * @public
+ * @alpha
  */
 export type InputRuleMatch = InputRuleMatchLocation & {
   groupMatches: Array<InputRuleMatchLocation>
 }
 
 /**
- * @public
+ * @alpha
  */
 export type InputRuleEvent = {
   type: 'custom.input rule'
@@ -61,12 +61,12 @@ export type InputRuleEvent = {
 }
 
 /**
- * @public
+ * @alpha
  */
 export type InputRuleGuard = BehaviorGuard<InputRuleEvent, boolean>
 
 /**
- * @public
+ * @alpha
  */
 export type InputRule = {
   on: RegExp
@@ -75,7 +75,7 @@ export type InputRule = {
 }
 
 /**
- * @public
+ * @alpha
  */
 export function defineInputRule(config: InputRule): InputRule {
   return config
