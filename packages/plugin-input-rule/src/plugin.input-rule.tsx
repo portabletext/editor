@@ -399,7 +399,18 @@ type InputRulePluginProps = {
 }
 
 /**
- * @beta
+ * Turn an array of `InputRule`s into a Behavior that can be used to apply the
+ * rules to the editor.
+ *
+ * The plugin handles undo/redo out of the box including smart undo with
+ * Backspace.
+ *
+ * @example
+ * ```tsx
+ * <InputRulePlugin rules={smartQuotesRules} />
+ * ```
+ *
+ * @public
  */
 export function InputRulePlugin(props: InputRulePluginProps) {
   const editor = useEditor()
