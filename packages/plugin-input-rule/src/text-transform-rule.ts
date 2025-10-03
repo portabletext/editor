@@ -3,7 +3,7 @@ import {getMarkState} from '@portabletext/editor/selectors'
 import type {InputRule, InputRuleGuard} from './input-rule'
 
 type TextTransformRule = {
-  matcher: RegExp
+  on: RegExp
   guard?: InputRuleGuard
   transform: () => string
 }
@@ -13,7 +13,7 @@ type TextTransformRule = {
  */
 export function defineTextTransformRule(config: TextTransformRule): InputRule {
   return {
-    matcher: config.matcher,
+    on: config.on,
     guard: config.guard ?? (() => true),
     actions: [
       ({snapshot, event}) => {

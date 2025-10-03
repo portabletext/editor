@@ -7,7 +7,7 @@ import {
  * @beta
  */
 export const emDashRule = defineTextTransformRule({
-  matcher: /--/,
+  on: /--/,
   transform: () => '—',
 })
 
@@ -15,7 +15,7 @@ export const emDashRule = defineTextTransformRule({
  * @beta
  */
 export const ellipsisRule = defineTextTransformRule({
-  matcher: /\.\.\./,
+  on: /\.\.\./,
   transform: () => '…',
 })
 
@@ -23,7 +23,7 @@ export const ellipsisRule = defineTextTransformRule({
  * @beta
  */
 export const openingDoubleQuoteRule = defineTextTransformRule({
-  matcher: /(?:^|(?<=[\s{[(<'"\u2018\u201C]))"/g,
+  on: /(?:^|(?<=[\s{[(<'"\u2018\u201C]))"/g,
   transform: () => '“',
 })
 
@@ -31,7 +31,7 @@ export const openingDoubleQuoteRule = defineTextTransformRule({
  * @beta
  */
 export const closingDoubleQuoteRule = defineTextTransformRule({
-  matcher: /"/g,
+  on: /"/g,
   transform: () => '”',
 })
 
@@ -39,7 +39,7 @@ export const closingDoubleQuoteRule = defineTextTransformRule({
  * @beta
  */
 export const openingSingleQuoteRule = defineTextTransformRule({
-  matcher: /(?:^|(?<=[\s{[(<'"\u2018\u201C]))'/g,
+  on: /(?:^|(?<=[\s{[(<'"\u2018\u201C]))'/g,
   transform: () => '‘',
 })
 
@@ -47,7 +47,7 @@ export const openingSingleQuoteRule = defineTextTransformRule({
  * @beta
  */
 export const closingSingleQuoteRule = defineTextTransformRule({
-  matcher: /'/g,
+  on: /'/g,
   transform: () => '’',
 })
 
@@ -65,7 +65,7 @@ export const smartQuotesRules: Array<InputRule> = [
  * @beta
  */
 export const leftArrowRule = defineTextTransformRule({
-  matcher: /<-/,
+  on: /<-/,
   transform: () => '←',
 })
 
@@ -73,7 +73,7 @@ export const leftArrowRule = defineTextTransformRule({
  * @beta
  */
 export const rightArrowRule = defineTextTransformRule({
-  matcher: /->/,
+  on: /->/,
   transform: () => '→',
 })
 
@@ -81,7 +81,7 @@ export const rightArrowRule = defineTextTransformRule({
  * @beta
  */
 export const copyrightRule = defineTextTransformRule({
-  matcher: /\(c\)/,
+  on: /\(c\)/,
   transform: () => '©',
 })
 
@@ -89,7 +89,7 @@ export const copyrightRule = defineTextTransformRule({
  * @beta
  */
 export const servicemarkRule = defineTextTransformRule({
-  matcher: /\(sm\)/,
+  on: /\(sm\)/,
   transform: () => '℠',
 })
 
@@ -97,7 +97,7 @@ export const servicemarkRule = defineTextTransformRule({
  * @beta
  */
 export const trademarkRule = defineTextTransformRule({
-  matcher: /\(tm\)/,
+  on: /\(tm\)/,
   transform: () => '™',
 })
 
@@ -105,7 +105,7 @@ export const trademarkRule = defineTextTransformRule({
  * @beta
  */
 export const registeredTrademarkRule = defineTextTransformRule({
-  matcher: /\(r\)/,
+  on: /\(r\)/,
   transform: () => '®',
 })
 
@@ -113,7 +113,7 @@ export const registeredTrademarkRule = defineTextTransformRule({
  * @beta
  */
 export const oneHalfRule = defineTextTransformRule({
-  matcher: /(?:^|\s)(1\/2)\s/,
+  on: /(?:^|\s)(1\/2)\s/,
   transform: () => '½',
 })
 
@@ -121,7 +121,7 @@ export const oneHalfRule = defineTextTransformRule({
  * @beta
  */
 export const plusMinusRule = defineTextTransformRule({
-  matcher: /\+\/-/,
+  on: /\+\/-/,
   transform: () => '±',
 })
 
@@ -129,7 +129,7 @@ export const plusMinusRule = defineTextTransformRule({
  * @beta
  */
 export const notEqualRule = defineTextTransformRule({
-  matcher: /!=/,
+  on: /!=/,
   transform: () => '≠',
 })
 
@@ -137,7 +137,7 @@ export const notEqualRule = defineTextTransformRule({
  * @beta
  */
 export const laquoRule = defineTextTransformRule({
-  matcher: /<</,
+  on: /<</,
   transform: () => '«',
 })
 
@@ -145,7 +145,7 @@ export const laquoRule = defineTextTransformRule({
  * @beta
  */
 export const raquoRule = defineTextTransformRule({
-  matcher: />>/,
+  on: />>/,
   transform: () => '»',
 })
 
@@ -153,7 +153,7 @@ export const raquoRule = defineTextTransformRule({
  * @beta
  */
 export const multiplicationRule = defineTextTransformRule({
-  matcher: /\d+\s?([*x])\s?\d+/,
+  on: /\d+\s?([*x])\s?\d+/,
   transform: () => '×',
 })
 
@@ -161,7 +161,7 @@ export const multiplicationRule = defineTextTransformRule({
  * @beta
  */
 export const superscriptTwoRule = defineTextTransformRule({
-  matcher: /\^2/,
+  on: /\^2/,
   transform: () => '²',
 })
 
@@ -169,7 +169,7 @@ export const superscriptTwoRule = defineTextTransformRule({
  * @beta
  */
 export const superscriptThreeRule = defineTextTransformRule({
-  matcher: /\^3/,
+  on: /\^3/,
   transform: () => '³',
 })
 
@@ -177,7 +177,7 @@ export const superscriptThreeRule = defineTextTransformRule({
  * @beta
  */
 export const oneQuarterRule = defineTextTransformRule({
-  matcher: /(?:^|\s)(1\/4)\s/,
+  on: /(?:^|\s)(1\/4)\s/,
   transform: () => '¼',
 })
 
@@ -185,6 +185,6 @@ export const oneQuarterRule = defineTextTransformRule({
  * @beta
  */
 export const threeQuartersRule = defineTextTransformRule({
-  matcher: /(?:^|\s)(3\/4)\s/,
+  on: /(?:^|\s)(3\/4)\s/,
   transform: () => '¾',
 })

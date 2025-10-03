@@ -47,7 +47,7 @@ function createInputRuleBehavior(config: {
       const foundActions: Array<BehaviorAction> = []
 
       for (const rule of config.rules) {
-        const matcher = new RegExp(rule.matcher.source, 'gd')
+        const matcher = new RegExp(rule.on.source, 'gd')
 
         while (true) {
           // Find matches in the text before the insertion

@@ -69,7 +69,7 @@ export type InputRuleGuard = BehaviorGuard<InputRuleEvent, boolean>
  * @beta
  */
 export type InputRule = {
-  matcher: RegExp
+  on: RegExp
   guard?: InputRuleGuard
   actions: Array<BehaviorActionSet<InputRuleEvent, boolean>>
 }
