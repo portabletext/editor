@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.2.19
+
+### Patch Changes
+
+- [#1705](https://github.com/portabletext/editor/pull/1705) [`634a6c0`](https://github.com/portabletext/editor/commit/634a6c0ef6135d9b0e7a33654029ff8618b87efc) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency xstate to ^5.22.1
+
+- Updated dependencies [[`634a6c0`](https://github.com/portabletext/editor/commit/634a6c0ef6135d9b0e7a33654029ff8618b87efc)]:
+  - @portabletext/editor@2.13.5
+
 ## 2.2.18
 
 ### Patch Changes
