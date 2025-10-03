@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.1
+
+### Patch Changes
+
+- [#1706](https://github.com/portabletext/editor/pull/1706) [`e21c3bb`](https://github.com/portabletext/editor/commit/e21c3bb47a0b67a50830a0251aa7d7d146ab2581) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency @cucumber/gherkin to ^35.1.0
+
 ## 1.3.0
 
 ### Minor Changes
