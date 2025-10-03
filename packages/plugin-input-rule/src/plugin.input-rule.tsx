@@ -5,7 +5,6 @@ import {
   forward,
   raise,
   type BehaviorAction,
-  type BehaviorGuard,
 } from '@portabletext/editor/behaviors'
 import {
   getBlockOffsets,
@@ -20,16 +19,10 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
-import type {InputRule, InputRuleEvent, InputRuleMatch} from './input-rule'
-
-/**
- * @beta
- */
-export type InputRuleGuard = BehaviorGuard<InputRuleEvent, boolean>
+import type {InputRule, InputRuleMatch} from './input-rule'
 
 function createInputRuleBehavior(config: {
   rules: Array<InputRule>
-  guard: InputRuleGuard | undefined
   onApply: ({
     endOffsets,
   }: {
@@ -319,7 +312,7 @@ function createInputRuleBehavior(config: {
 
           if (ruleMatches.length > 0) {
             const guardResult =
-              config.guard?.({
+              rule.guard?.({
                 snapshot,
                 event: {
                   type: 'custom.input rule',
@@ -395,7 +388,6 @@ function createInputRuleBehavior(config: {
 
 type InputRulePluginProps = {
   rules: Array<InputRule>
-  guard?: InputRuleGuard
 }
 
 /**
@@ -405,7 +397,7 @@ export function InputRulePlugin(props: InputRulePluginProps) {
   const editor = useEditor()
 
   useActorRef(inputRuleMachine, {
-    input: {editor, rules: props.rules, guard: props.guard},
+    input: {editor, rules: props.rules},
   })
 
   return null
@@ -427,14 +419,12 @@ const inputRuleListenerCallback: CallbackLogicFunction<
   InputRuleMachineEvent,
   {
     editor: Editor
-    guard: InputRuleGuard | undefined
     rules: Array<InputRule>
   }
 > = ({input, sendBack}) => {
   const unregister = input.editor.registerBehavior({
     behavior: createInputRuleBehavior({
       rules: input.rules,
-      guard: input.guard,
       onApply: ({endOffsets}) => {
         sendBack({type: 'input rule raised', endOffsets})
       },
@@ -503,13 +493,11 @@ const inputRuleSetup = setup({
   types: {
     context: {} as {
       editor: Editor
-      guard: InputRuleGuard | undefined
       rules: Array<InputRule>
       endOffsets: {start: BlockOffset; end: BlockOffset} | undefined
     },
     input: {} as {
       editor: Editor
-      guard: InputRuleGuard | undefined
       rules: Array<InputRule>
     },
     events: {} as InputRuleMachineEvent,
@@ -552,7 +540,6 @@ const inputRuleMachine = inputRuleSetup.createMachine({
   id: 'input rule',
   context: ({input}) => ({
     editor: input.editor,
-    guard: input.guard,
     rules: input.rules,
     endOffsets: undefined,
   }),
@@ -561,7 +548,6 @@ const inputRuleMachine = inputRuleSetup.createMachine({
     src: 'input rule listener',
     input: ({context}) => ({
       editor: context.editor,
-      guard: context.guard,
       rules: context.rules,
     }),
   },

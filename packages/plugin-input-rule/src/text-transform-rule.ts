@@ -1,9 +1,10 @@
 import {raise} from '@portabletext/editor/behaviors'
 import {getMarkState} from '@portabletext/editor/selectors'
-import type {InputRule} from './input-rule'
+import type {InputRule, InputRuleGuard} from './input-rule'
 
 type TextTransformRule = {
   matcher: RegExp
+  guard?: InputRuleGuard
   transform: () => string
 }
 
@@ -13,6 +14,7 @@ type TextTransformRule = {
 export function defineTextTransformRule(config: TextTransformRule): InputRule {
   return {
     matcher: config.matcher,
+    guard: config.guard ?? (() => true),
     transform: ({snapshot, event}) => {
       const matches = event.matches.flatMap((match) =>
         match.groupMatches.length === 0 ? [match] : match.groupMatches,

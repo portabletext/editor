@@ -5,7 +5,10 @@ import type {
   EditorSnapshot,
   PortableTextTextBlock,
 } from '@portabletext/editor'
-import type {BehaviorAction} from '@portabletext/editor/behaviors'
+import type {
+  BehaviorAction,
+  BehaviorGuard,
+} from '@portabletext/editor/behaviors'
 
 type InputRuleMatchLocation = {
   /**
@@ -61,8 +64,14 @@ export type InputRuleEvent = {
 /**
  * @beta
  */
+export type InputRuleGuard = BehaviorGuard<InputRuleEvent, boolean>
+
+/**
+ * @beta
+ */
 export type InputRule = {
   matcher: RegExp
+  guard?: InputRuleGuard
   transform: ({
     snapshot,
     event,
@@ -78,8 +87,5 @@ export type InputRule = {
  * @beta
  */
 export function defineInputRule(config: InputRule): InputRule {
-  return {
-    matcher: config.matcher,
-    transform: config.transform,
-  }
+  return config
 }
