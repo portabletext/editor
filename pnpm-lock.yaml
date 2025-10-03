@@ -738,7 +738,7 @@ importers:
   packages/plugin-typography:
     dependencies:
       '@portabletext/plugin-input-rule':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../plugin-input-rule
       react-compiler-runtime:
         specifier: 19.1.0-rc.3
