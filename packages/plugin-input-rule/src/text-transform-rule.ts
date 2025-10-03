@@ -2,14 +2,28 @@ import {raise} from '@portabletext/editor/behaviors'
 import {getMarkState} from '@portabletext/editor/selectors'
 import type {InputRule, InputRuleGuard} from './input-rule'
 
-type TextTransformRule = {
+/**
+ * @public
+ */
+export type TextTransformRule = {
   on: RegExp
   guard?: InputRuleGuard
   transform: () => string
 }
 
 /**
- * @beta
+ * Define an `InputRule` specifically designed to transform matched text into
+ * some other text.
+ *
+ * @example
+ * ```tsx
+ * const transformRule = defineTextTransformRule({
+ *   on: /--/,
+ *   transform: () => '—',
+ * })
+ * ```
+ *
+ * @public
  */
 export function defineTextTransformRule(config: TextTransformRule): InputRule {
   return {
