@@ -22,7 +22,9 @@ Feature({
   hooks: [
     Before(async (context: Context) => {
       const {editor, locator} = await createTestEditor({
-        children: <TypographyPlugin guard={codeGuard} />,
+        children: (
+          <TypographyPlugin guard={codeGuard} rules={{multiplication: 'on'}} />
+        ),
         schemaDefinition: defineSchema({
           decorators: [{name: 'strong'}, {name: 'code'}],
           annotations: [{name: 'link'}],
