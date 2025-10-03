@@ -2,11 +2,10 @@ import type {
   BlockOffset,
   BlockPath,
   EditorSelection,
-  EditorSnapshot,
   PortableTextTextBlock,
 } from '@portabletext/editor'
 import type {
-  BehaviorAction,
+  BehaviorActionSet,
   BehaviorGuard,
 } from '@portabletext/editor/behaviors'
 
@@ -72,15 +71,7 @@ export type InputRuleGuard = BehaviorGuard<InputRuleEvent, boolean>
 export type InputRule = {
   matcher: RegExp
   guard?: InputRuleGuard
-  transform: ({
-    snapshot,
-    event,
-  }: {
-    snapshot: EditorSnapshot
-    event: InputRuleEvent
-  }) => {
-    actions: Array<BehaviorAction>
-  }
+  actions: Array<BehaviorActionSet<InputRuleEvent, boolean>>
 }
 
 /**

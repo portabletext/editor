@@ -44,7 +44,7 @@ function createInputRuleBehavior(config: {
       let newText = originalNewText
 
       const foundMatches: Array<InputRuleMatch['groupMatches'][number]> = []
-      const actions: Array<BehaviorAction> = []
+      const foundActions: Array<BehaviorAction> = []
 
       for (const rule of config.rules) {
         const matcher = new RegExp(rule.matcher.source, 'gd')
@@ -328,19 +328,27 @@ function createInputRuleBehavior(config: {
               break
             }
 
-            const result = rule.transform({
-              snapshot,
-              event: {
-                type: 'custom.input rule',
-                matches: ruleMatches,
-                focusTextBlock,
-                textBefore: originalTextBefore,
-                textInserted: event.text,
-              },
-            })
+            const actionSets = rule.actions.map((action) =>
+              action(
+                {
+                  snapshot,
+                  event: {
+                    type: 'custom.input rule',
+                    matches: ruleMatches,
+                    focusTextBlock,
+                    textBefore: originalTextBefore,
+                    textInserted: event.text,
+                  },
+                  dom,
+                },
+                guardResult,
+              ),
+            )
 
-            for (const action of result.actions) {
-              actions.push(action)
+            for (const actionSet of actionSets) {
+              for (const action of actionSet) {
+                foundActions.push(action)
+              }
             }
 
             const matches = ruleMatches.flatMap((match) =>
@@ -366,11 +374,11 @@ function createInputRuleBehavior(config: {
         }
       }
 
-      if (actions.length === 0) {
+      if (foundActions.length === 0) {
         return false
       }
 
-      return {actions}
+      return {actions: foundActions}
     },
     actions: [
       ({event}) => [forward(event)],
