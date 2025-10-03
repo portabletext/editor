@@ -16,9 +16,9 @@ import {
   type RenderPlaceholderFunction,
   type RenderStyleFunction,
 } from '@portabletext/editor'
-import {TypographyPlugin} from '@portabletext/plugin-input-rule'
 import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 import {OneLinePlugin} from '@portabletext/plugin-one-line'
+import {TypographyPlugin} from '@portabletext/plugin-typography'
 import {useSelector} from '@xstate/react'
 import {
   ActivityIcon,

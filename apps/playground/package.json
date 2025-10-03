@@ -25,6 +25,7 @@
     "@portabletext/plugin-input-rule": "workspace:*",
     "@portabletext/plugin-markdown-shortcuts": "^1.1.2",
     "@portabletext/plugin-one-line": "^1.1.2",
+    "@portabletext/plugin-typography": "workspace:*",
     "@portabletext/toolbar": "workspace:*",
     "@xstate/react": "^6.0.0",
     "lucide-react": "^0.536.0",

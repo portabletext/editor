@@ -1,4 +1,7 @@
-import {defineTextTransformRule, type InputRule} from './input-rule'
+import {
+  defineTextTransformRule,
+  type InputRule,
+} from '@portabletext/plugin-input-rule'
 
 /**
  * @beta
