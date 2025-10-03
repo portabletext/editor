@@ -48,6 +48,14 @@ Feature: Em Dash Input Rule
     Then the text is "foo—"
     And "foo—" has marks "l1"
 
+  Scenario: Inserting em dash halfway inside an annotation
+    Given the text "foo-"
+    And a "link" "l1" around "foo-"
+    When the caret is put after "foo-"
+    And "-" is typed
+    Then the text is "foo—"
+    And "foo—" has marks "l1"
+
   Scenario: Inserting em dash at the edge of an annotation
     Given the text "foo-"
     And a "link" "l1" around "foo"
