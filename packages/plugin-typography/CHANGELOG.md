@@ -1,5 +1,15 @@
 # @portabletext/plugin-typography
 
+## 1.0.2
+
+### Patch Changes
+
+- [#1712](https://github.com/portabletext/editor/pull/1712) [`45fb678`](https://github.com/portabletext/editor/commit/45fb67805609171a69d81be643f08f0ac59c71da) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update react monorepo to ^19.2.0
+
+- Updated dependencies [[`45fb678`](https://github.com/portabletext/editor/commit/45fb67805609171a69d81be643f08f0ac59c71da)]:
+  - @portabletext/editor@2.13.6
+  - @portabletext/plugin-input-rule@0.1.2
+
 ## 1.0.1
 
 ### Patch Changes
