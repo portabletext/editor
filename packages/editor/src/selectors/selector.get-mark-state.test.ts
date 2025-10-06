@@ -73,4 +73,67 @@ describe(getMarkState.name, () => {
       previousMarks: [linkKey, 'strong'],
     })
   })
+
+  test('Scenario: Caret after annotation inside decorator', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const linkKey = keyGenerator()
+    const snapshot = createTestSnapshot({
+      context: {
+        keyGenerator,
+        value: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            children: [
+              {
+                _type: 'span',
+                _key: fooSpanKey,
+                text: 'foo ',
+                marks: ['strong'],
+              },
+              {
+                _type: 'span',
+                _key: barSpanKey,
+                text: 'bar',
+                marks: [linkKey, 'strong'],
+              },
+              {
+                _type: 'span',
+                _key: bazSpanKey,
+                text: ' baz',
+                marks: ['strong'],
+              },
+            ],
+          },
+        ],
+        selection: {
+          anchor: {
+            path: [{_key: blockKey}, 'children', {_key: bazSpanKey}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: blockKey}, 'children', {_key: bazSpanKey}],
+            offset: 0,
+          },
+          backward: false,
+        },
+        schema: compileSchema(
+          defineSchema({
+            annotations: [{name: 'link'}],
+            decorators: [{name: 'strong'}],
+          }),
+        ),
+      },
+    })
+
+    expect(getMarkState(snapshot)).toEqual({
+      state: 'changed',
+      marks: ['strong'],
+      previousMarks: [linkKey, 'strong'],
+    })
+  })
 })
