@@ -236,8 +236,8 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
     if (previousSpanHasAnnotations) {
       return {
         state: 'changed',
-        previousMarks: previousSpan.node.marks ?? [],
-        marks: [],
+        marks,
+        previousMarks: previousSpan?.node.marks ?? [],
       }
     } else {
       return {
