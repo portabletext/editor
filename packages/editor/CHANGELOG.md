@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.13.7
+
+### Patch Changes
+
+- [#1716](https://github.com/portabletext/editor/pull/1716) [`ac41e55`](https://github.com/portabletext/editor/commit/ac41e556340cb604f9bc5533241869a69ffd53af) Thanks [@christianhg](https://github.com/christianhg)! - fix(`insert.child`): avoid underlying `.marks` interference
+
+- [#1716](https://github.com/portabletext/editor/pull/1716) [`d4be819`](https://github.com/portabletext/editor/commit/d4be819bf47d3e352d767d0a62964605591b22bc) Thanks [@christianhg](https://github.com/christianhg)! - fix(`insert.text`): avoid underlying `.marks` interference
+
+- [#1716](https://github.com/portabletext/editor/pull/1716) [`13b6951`](https://github.com/portabletext/editor/commit/13b6951bd126c4be2be96eee399f42ac70aa70b3) Thanks [@christianhg](https://github.com/christianhg)! - fix(`getMarkState`): handle caret after annotation inside decorator
+
 ## 2.13.6
 
 ### Patch Changes
