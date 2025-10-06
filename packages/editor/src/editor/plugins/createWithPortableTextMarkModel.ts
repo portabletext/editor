@@ -4,7 +4,7 @@
  *
  */
 
-import {isSpan, isTextBlock} from '@portabletext/schema'
+import {isTextBlock} from '@portabletext/schema'
 import type {PortableTextObject, PortableTextSpan} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {Editor, Element, Node, Path, Range, Text, Transforms} from 'slate'
@@ -321,94 +321,6 @@ export function createWithPortableTextMarkModel(
             if (!movedToNextSpan && !movedToPreviousSpan) {
               editor.decoratorState = {}
             }
-          }
-        }
-      }
-
-      if (op.type === 'insert_node') {
-        const {selection} = editor
-
-        if (selection) {
-          const [_block, blockPath] = Editor.node(editor, selection, {depth: 1})
-          const previousSpan = getPreviousSpan({
-            editor,
-            blockPath,
-            spanPath: op.path,
-          })
-          const previousSpanAnnotations = previousSpan
-            ? previousSpan.marks?.filter((mark) => !decorators.includes(mark))
-            : []
-
-          const nextSpan = getNextSpan({
-            editor,
-            blockPath,
-            spanPath: [op.path[0], op.path[1] - 1],
-          })
-          const nextSpanAnnotations = nextSpan
-            ? nextSpan.marks?.filter((mark) => !decorators.includes(mark))
-            : []
-
-          const annotationsEnding =
-            previousSpanAnnotations?.filter(
-              (annotation) => !nextSpanAnnotations?.includes(annotation),
-            ) ?? []
-          const atTheEndOfAnnotation = annotationsEnding.length > 0
-
-          if (
-            atTheEndOfAnnotation &&
-            isSpan(editorActor.getSnapshot().context, op.node) &&
-            op.node.marks?.some((mark) => annotationsEnding.includes(mark))
-          ) {
-            Transforms.insertNodes(editor, {
-              ...op.node,
-              _key: editorActor.getSnapshot().context.keyGenerator(),
-              marks:
-                op.node.marks?.filter(
-                  (mark) => !annotationsEnding.includes(mark),
-                ) ?? [],
-            })
-            return
-          }
-
-          const annotationsStarting =
-            nextSpanAnnotations?.filter(
-              (annotation) => !previousSpanAnnotations?.includes(annotation),
-            ) ?? []
-          const atTheStartOfAnnotation = annotationsStarting.length > 0
-
-          if (
-            atTheStartOfAnnotation &&
-            isSpan(editorActor.getSnapshot().context, op.node) &&
-            op.node.marks?.some((mark) => annotationsStarting.includes(mark))
-          ) {
-            Transforms.insertNodes(editor, {
-              ...op.node,
-              _key: editorActor.getSnapshot().context.keyGenerator(),
-              marks:
-                op.node.marks?.filter(
-                  (mark) => !annotationsStarting.includes(mark),
-                ) ?? [],
-            })
-            return
-          }
-
-          const nextSpanDecorators =
-            nextSpan?.marks?.filter((mark) => decorators.includes(mark)) ?? []
-          const decoratorStarting = nextSpanDecorators.length > 0
-
-          if (
-            decoratorStarting &&
-            atTheEndOfAnnotation &&
-            !atTheStartOfAnnotation &&
-            isSpan(editorActor.getSnapshot().context, op.node) &&
-            op.node.marks?.length === 0
-          ) {
-            Transforms.insertNodes(editor, {
-              ...op.node,
-              _key: editorActor.getSnapshot().context.keyGenerator(),
-              marks: nextSpanDecorators,
-            })
-            return
           }
         }
       }
