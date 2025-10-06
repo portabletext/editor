@@ -79,3 +79,14 @@ Feature: Edge Cases
       | "xfooy" | "z"           | "xfooyz"    | "xfooy"     |
       | ""      | "xfyxoy"      | "zfzzoz"    | "xfyxoy"    |
       | ""      | "xfyxoyxoy"   | "zfzzozzoz" | "xfyxoyxoy" |
+
+  @only
+  Scenario Outline: Preserving inline objects
+    Given the text <text>
+    When <inserted text> is inserted
+    And "new" is typed
+    Then the text is <new text>
+
+    Examples:
+      | text                | inserted text | new text                |
+      | "-,{stock-ticker}," | ">"           | "-,{stock-ticker},>new" |

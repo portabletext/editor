@@ -46,6 +46,7 @@ Feature({
         schemaDefinition: defineSchema({
           decorators: [{name: 'strong'}],
           annotations: [{name: 'link'}],
+          inlineObjects: [{name: 'stock-ticker'}],
         }),
       })
 
