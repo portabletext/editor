@@ -1,30 +1,9 @@
-import type {
-  BlockOffset,
-  BlockPath,
-  EditorSelection,
-  PortableTextTextBlock,
-} from '@portabletext/editor'
+import type {BlockPath, PortableTextTextBlock} from '@portabletext/editor'
 import type {
   BehaviorActionSet,
   BehaviorGuard,
 } from '@portabletext/editor/behaviors'
-
-type InputRuleMatchLocation = {
-  /**
-   * Estimated selection of where in the original text the match is located.
-   * The selection is estimated since the match is found in the text after
-   * insertion.
-   */
-  selection: NonNullable<EditorSelection>
-  /**
-   * Block offsets of the match in the text after the insertion
-   */
-  targetOffsets: {
-    anchor: BlockOffset
-    focus: BlockOffset
-    backward: boolean
-  }
-}
+import type {InputRuleMatchLocation} from './input-rule-match-location'
 
 /**
  * Match found in the text after the insertion
