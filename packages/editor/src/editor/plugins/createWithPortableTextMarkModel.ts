@@ -12,7 +12,6 @@ import {debugWithName} from '../../internal-utils/debug'
 import {getNextSpan, getPreviousSpan} from '../../internal-utils/sibling-utils'
 import type {BehaviorOperationImplementation} from '../../operations/behavior.operations'
 import {getActiveDecorators} from '../../selectors/selector.get-active-decorators'
-import {getMarkState} from '../../selectors/selector.get-mark-state'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 import {getEditorSnapshot} from '../editor-selector'
@@ -323,34 +322,6 @@ export function createWithPortableTextMarkModel(
             }
           }
         }
-      }
-
-      if (op.type === 'insert_text') {
-        const snapshot = getEditorSnapshot({
-          editorActorSnapshot: editorActor.getSnapshot(),
-          slateEditorInstance: editor,
-        })
-
-        const markState = getMarkState(snapshot)
-
-        if (!markState) {
-          apply(op)
-          return
-        }
-
-        if (markState.state === 'unchanged') {
-          apply(op)
-          return
-        }
-
-        Transforms.insertNodes(editor, {
-          _type: 'span',
-          _key: editorActor.getSnapshot().context.keyGenerator(),
-          text: op.text,
-          marks: markState.marks,
-        })
-
-        return
       }
 
       if (op.type === 'remove_text') {
