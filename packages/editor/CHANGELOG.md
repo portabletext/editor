@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.13.6
+
+### Patch Changes
+
+- [#1712](https://github.com/portabletext/editor/pull/1712) [`45fb678`](https://github.com/portabletext/editor/commit/45fb67805609171a69d81be643f08f0ac59c71da) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update react monorepo to ^19.2.0
+
+- Updated dependencies [[`45fb678`](https://github.com/portabletext/editor/commit/45fb67805609171a69d81be643f08f0ac59c71da), [`df5c167`](https://github.com/portabletext/editor/commit/df5c1673b8ee41a307fb3b4cc9f1318b8a440002)]:
+  - @portabletext/block-tools@3.5.10
+
 ## 2.13.5
 
 ### Patch Changes
