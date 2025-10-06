@@ -7,6 +7,7 @@ import {effect, execute, forward} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import type {BehaviorEvent} from '../src/behaviors/behavior.types.event'
 import {IS_MAC} from '../src/internal-utils/is-hotkey'
+import {getSelectionAfterText} from '../src/internal-utils/text-selection'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -154,6 +155,70 @@ describe('event.insert.text', () => {
 
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo bar baz'])
+    })
+  })
+
+  test('Scenario: executing after annotation', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const linkKey = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        annotations: [{name: 'link'}],
+        decorators: [{name: 'strong'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {
+              _type: 'span',
+              _key: spanKey,
+              text: 'foo',
+              marks: [linkKey],
+            },
+          ],
+          markDefs: [{_key: linkKey, _type: 'link'}],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              actions: [({event}) => [execute(event)]],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+
+    editor.send({
+      type: 'select',
+      at: getSelectionAfterText(editor.getSnapshot().context, 'foo'),
+    })
+
+    await userEvent.type(locator, ' bar')
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_key: spanKey, _type: 'span', text: 'foo bar', marks: [linkKey]},
+          ],
+          markDefs: [{_key: linkKey, _type: 'link'}],
+          style: 'normal',
+        },
+      ])
     })
   })
 
