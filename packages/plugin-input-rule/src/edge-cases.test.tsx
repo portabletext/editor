@@ -1,3 +1,4 @@
+import {getPreviousInlineObject} from '@portabletext/editor/selectors'
 import {parameterTypes} from '@portabletext/editor/test'
 import {
   createTestEditor,
@@ -31,6 +32,19 @@ const multipleGroupsRule = defineTextTransformRule({
   transform: () => 'z',
 })
 
+const h1Rule = defineTextTransformRule({
+  on: /^(# )/,
+  transform: () => '',
+})
+
+const betterH2Rule = defineTextTransformRule({
+  on: /^(## )/,
+  guard: ({snapshot}) => {
+    return !getPreviousInlineObject(snapshot)
+  },
+  transform: () => '',
+})
+
 Feature({
   hooks: [
     Before(async (context: Context) => {
@@ -41,11 +55,14 @@ Feature({
             <InputRulePlugin rules={[endStringRule]} />
             <InputRulePlugin rules={[nonGlobalRule]} />
             <InputRulePlugin rules={[multipleGroupsRule]} />
+            <InputRulePlugin rules={[h1Rule]} />
+            <InputRulePlugin rules={[betterH2Rule]} />
           </>
         ),
         schemaDefinition: defineSchema({
           decorators: [{name: 'strong'}],
           annotations: [{name: 'link'}],
+          inlineObjects: [{name: 'stock-ticker'}],
         }),
       })
 
