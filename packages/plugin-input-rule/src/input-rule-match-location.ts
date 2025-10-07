@@ -4,7 +4,11 @@ import type {
   EditorSelection,
   EditorSnapshot,
 } from '@portabletext/editor'
-import {blockOffsetsToSelection} from '@portabletext/editor/utils'
+import {
+  getNextInlineObjects,
+  getPreviousInlineObjects,
+} from '@portabletext/editor/selectors'
+import {blockOffsetToSpanSelectionPoint} from '@portabletext/editor/utils'
 
 export type InputRuleMatchLocation = {
   /**
@@ -63,13 +67,47 @@ export function getInputRuleMatchLocation({
     },
     backward: false,
   }
-  const selection = blockOffsetsToSelection({
+
+  const anchorBackwards = blockOffsetToSpanSelectionPoint({
     context: snapshot.context,
-    offsets: normalizedOffsets,
-    backward: false,
+    blockOffset: normalizedOffsets.anchor,
+    direction: 'backward',
+  })
+  const focusForwards = blockOffsetToSpanSelectionPoint({
+    context: snapshot.context,
+    blockOffset: normalizedOffsets.focus,
+    direction: 'forward',
   })
 
-  if (!selection) {
+  if (!anchorBackwards || !focusForwards) {
+    return undefined
+  }
+
+  const selection = {
+    anchor: anchorBackwards,
+    focus: focusForwards,
+  }
+
+  const inlineObjectsAfterMatch = getNextInlineObjects({
+    ...snapshot,
+    context: {
+      ...snapshot.context,
+      selection: {
+        anchor: selection.anchor,
+        focus: selection.anchor,
+      },
+    },
+  })
+  const inlineObjectsBefore = getPreviousInlineObjects(snapshot)
+
+  if (
+    inlineObjectsAfterMatch.some((inlineObjectAfter) =>
+      inlineObjectsBefore.some(
+        (inlineObjectBefore) =>
+          inlineObjectAfter.node._key === inlineObjectBefore.node._key,
+      ),
+    )
+  ) {
     return undefined
   }
 
