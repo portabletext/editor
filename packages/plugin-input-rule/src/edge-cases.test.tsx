@@ -32,6 +32,13 @@ const multipleGroupsRule = defineTextTransformRule({
   transform: () => 'z',
 })
 
+const replaceAandCRule = defineTextTransformRule({
+  on: /(A).*(C)/,
+  transform: ({location}) => {
+    return location.text === 'A' ? 'C' : 'A'
+  },
+})
+
 const h1Rule = defineTextTransformRule({
   on: /^(# )/,
   transform: () => '',
@@ -57,6 +64,7 @@ Feature({
             <InputRulePlugin rules={[multipleGroupsRule]} />
             <InputRulePlugin rules={[h1Rule]} />
             <InputRulePlugin rules={[betterH2Rule]} />
+            <InputRulePlugin rules={[replaceAandCRule]} />
           </>
         ),
         schemaDefinition: defineSchema({

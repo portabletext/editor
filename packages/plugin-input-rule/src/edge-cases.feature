@@ -65,6 +65,17 @@ Feature: Edge Cases
       | ""      | "xfyxoy"      | "zfzzoznew"    |
       | ""      | "xfyxoyxoy"   | "zfzzozzoznew" |
 
+  Scenario Outline: Replacing 'a' and 'c'
+    Given the text <text>
+    When <inserted text> is inserted
+    And "new" is typed
+    Then the text is <new text>
+
+    Examples:
+      | text | inserted text | new text |
+      | ""   | "ABC"         | "CBAnew" |
+      | "AB" | "C"           | "CBAnew" |
+
   Scenario Outline: Undoing Multiple Groups Rule
     Given the text <text>
     When <inserted text> is inserted

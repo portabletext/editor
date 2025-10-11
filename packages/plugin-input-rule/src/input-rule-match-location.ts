@@ -12,6 +12,10 @@ import {blockOffsetToSpanSelectionPoint} from '@portabletext/editor/utils'
 
 export type InputRuleMatchLocation = {
   /**
+   * The matched text
+   */
+  text: string
+  /**
    * Estimated selection of where in the original text the match is located.
    * The selection is estimated since the match is found in the text after
    * insertion.
@@ -34,7 +38,7 @@ export function getInputRuleMatchLocation({
   focusTextBlock,
   originalTextBefore,
 }: {
-  match: [number, number]
+  match: [string, number, number]
   adjustIndexBy: number
   snapshot: EditorSnapshot
   focusTextBlock: {
@@ -42,7 +46,7 @@ export function getInputRuleMatchLocation({
   }
   originalTextBefore: string
 }): InputRuleMatchLocation | undefined {
-  const [start, end] = match
+  const [text, start, end] = match
   const adjustedIndex = start + adjustIndexBy
 
   const targetOffsets = {
@@ -112,6 +116,7 @@ export function getInputRuleMatchLocation({
   }
 
   return {
+    text,
     selection,
     targetOffsets,
   }

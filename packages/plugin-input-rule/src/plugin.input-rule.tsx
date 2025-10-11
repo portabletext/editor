@@ -64,7 +64,7 @@ function createInputRuleBehavior(config: {
               }
 
               const matchLocation = getInputRuleMatchLocation({
-                match,
+                match: [regExpMatch.at(0) ?? '', ...match],
                 adjustIndexBy: originalNewText.length - newText.length,
                 snapshot,
                 focusTextBlock,
@@ -101,11 +101,13 @@ function createInputRuleBehavior(config: {
                   : []
 
               const ruleMatch = {
+                text: matchLocation.text,
                 selection: matchLocation.selection,
                 targetOffsets: matchLocation.targetOffsets,
-                groupMatches: groupMatches.flatMap((match) => {
+                groupMatches: groupMatches.flatMap((match, index) => {
+                  const text = regExpMatch.at(index + 1) ?? ''
                   const groupMatchLocation = getInputRuleMatchLocation({
-                    match,
+                    match: [text, ...match],
                     adjustIndexBy: originalNewText.length - newText.length,
                     snapshot,
                     focusTextBlock,

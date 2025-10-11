@@ -1,6 +1,7 @@
 import {raise, type BehaviorAction} from '@portabletext/editor/behaviors'
 import {getMarkState} from '@portabletext/editor/selectors'
 import type {InputRule, InputRuleGuard} from './input-rule'
+import type {InputRuleMatchLocation} from './input-rule-match-location'
 
 /**
  * @alpha
@@ -8,7 +9,7 @@ import type {InputRule, InputRuleGuard} from './input-rule'
 export type TextTransformRule = {
   on: RegExp
   guard?: InputRuleGuard
-  transform: () => string
+  transform: ({location}: {location: InputRuleMatchLocation}) => string
 }
 
 /**
@@ -40,7 +41,7 @@ export function defineTextTransformRule(config: TextTransformRule): InputRule {
         const actions: Array<BehaviorAction> = []
 
         for (const location of locations.reverse()) {
-          const text = config.transform()
+          const text = config.transform({location})
 
           textLengthDelta =
             textLengthDelta -
