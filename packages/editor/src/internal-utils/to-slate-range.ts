@@ -28,7 +28,7 @@ export function toSlateRange(
     const anchorPoint = toSlateSelectionPoint(
       snapshot,
       snapshot.context.selection.anchor,
-      snapshot.context.selection.backward ? 'forward' : 'backward',
+      snapshot.context.selection.backward ? 'backward' : 'forward',
     )
 
     if (!anchorPoint) {
