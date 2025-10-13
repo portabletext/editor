@@ -1,0 +1,69 @@
+{
+  "name": "@portabletext/plugin-markdown-shortcuts",
+  "version": "1.1.2",
+  "description": "Adds helpful Markdown shortcuts to the editor",
+  "keywords": [
+    "portabletext",
+    "plugin",
+    "markdown",
+    "shortcuts",
+    "behaviors"
+  ],
+  "homepage": "https://portabletext.org",
+  "bugs": {
+    "url": "https://github.com/portabletext/editor/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/portabletext/editor.git",
+    "directory": "packages/plugin-markdown-shortcuts"
+  },
+  "license": "MIT",
+  "author": "Sanity.io <hello@sanity.io>",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "src",
+    "dist"
+  ],
+  "scripts": {
+    "build": "pkg-utils build --strict --check --clean",
+    "check:lint": "biome lint .",
+    "check:react-compiler": "eslint .",
+    "check:types": "tsc",
+    "check:types:watch": "tsc --watch",
+    "clean": "del .turbo && del dist && del node_modules",
+    "dev": "pkg-utils watch",
+    "lint:fix": "biome lint --write .",
+    "prepublishOnly": "turbo run build"
+  },
+  "dependencies": {
+    "@portabletext/plugin-character-pair-decorator": "workspace:^"
+  },
+  "devDependencies": {
+    "@portabletext/editor": "^2.6.9",
+    "@types/react": "^19.1.12",
+    "babel-plugin-react-compiler": "19.1.0-rc.3",
+    "eslint": "^9.37.0",
+    "eslint-plugin-react-hooks": "6.0.0-rc.2",
+    "react": "^19.1.1",
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.46.1"
+  },
+  "peerDependencies": {
+    "@portabletext/editor": "^2.6.9",
+    "react": "^19"
+  }
+}

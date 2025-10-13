@@ -37,6 +37,14 @@ export default defineConfig({
         __dirname,
         '../../packages/plugin-input-rule/src',
       ),
+      '@portabletext/plugin-markdown-shortcuts': path.resolve(
+        __dirname,
+        '../../packages/plugin-markdown-shortcuts/src',
+      ),
+      '@portabletext/plugin-one-line': path.resolve(
+        __dirname,
+        '../../packages/plugin-one-line/src',
+      ),
       '@portabletext/plugin-typography': path.resolve(
         __dirname,
         '../../packages/plugin-typography/src',
