@@ -1,0 +1,86 @@
+{
+  "name": "@portabletext/plugin-sdk-value",
+  "version": "1.0.6",
+  "description": "Synchronizes the Portable Text Editor value with the Sanity SDK, allowing for two-way editing.",
+  "keywords": [
+    "portabletext",
+    "plugin",
+    "sdk",
+    "sync",
+    "value",
+    "@sanity/sdk",
+    "@sanity/sdk-react"
+  ],
+  "homepage": "https://portabletext.org",
+  "bugs": {
+    "url": "https://github.com/portabletext/editor/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/portabletext/editor.git",
+    "directory": "packages/plugin-sdk-value"
+  },
+  "license": "MIT",
+  "author": "Sanity.io <hello@sanity.io>",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "src",
+    "dist"
+  ],
+  "scripts": {
+    "build": "pkg-utils build --strict --check --clean",
+    "check:lint": "biome lint .",
+    "check:react-compiler": "eslint .",
+    "check:types": "tsc",
+    "check:types:watch": "tsc --watch",
+    "clean": "del .turbo && del dist && del node_modules",
+    "dev": "pkg-utils watch",
+    "lint:fix": "biome lint --write .",
+    "prepublishOnly": "turbo run build",
+    "test": "vitest --run"
+  },
+  "dependencies": {
+    "@sanity/diff-patch": "^6.0.0",
+    "@sanity/json-match": "^1.0.5"
+  },
+  "devDependencies": {
+    "@portabletext/editor": "workspace:^",
+    "@portabletext/patches": "workspace:^",
+    "@sanity/schema": "^4.6.0",
+    "@sanity/sdk-react": "^2.1.2",
+    "@sanity/types": "^4.6.0",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/react": "^19.1.12",
+    "@vitejs/plugin-react": "^5.0.2",
+    "babel-plugin-react-compiler": "19.1.0-rc.3",
+    "eslint": "^9.37.0",
+    "eslint-plugin-react-hooks": "6.0.0-rc.2",
+    "playwright": "^1.55.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-error-boundary": "^6.0.0",
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.46.1",
+    "vitest": "^3.2.4"
+  },
+  "peerDependencies": {
+    "@portabletext/editor": "workspace:^",
+    "@sanity/sdk-react": "^2.1.2",
+    "react": "^19",
+    "react-dom": "^19"
+  }
+}
