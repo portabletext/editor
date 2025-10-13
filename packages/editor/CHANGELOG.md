@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.14.0
+
+### Minor Changes
+
+- [#1720](https://github.com/portabletext/editor/pull/1720) [`6502159`](https://github.com/portabletext/editor/commit/650215951a623af22b0d39ebfdaa66f81dcac27c) Thanks [@christianhg](https://github.com/christianhg)! - feat(selectors): add `get(Previous|Next)InlineObjects`
+
+### Patch Changes
+
+- [#1719](https://github.com/portabletext/editor/pull/1719) [`5b86653`](https://github.com/portabletext/editor/commit/5b86653e964ff26c3f17c749ef1d6d05972529a9) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency xstate to ^5.23.0
+
+- [#1720](https://github.com/portabletext/editor/pull/1720) [`d593b98`](https://github.com/portabletext/editor/commit/d593b98ea62f54b879fbdb42e91a01d47c2aeb76) Thanks [@christianhg](https://github.com/christianhg)! - fix(`select`): select before inline object if selection is facing forward
+
 ## 2.13.7
 
 ### Patch Changes
