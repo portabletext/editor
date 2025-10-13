@@ -35,7 +35,7 @@
     "react-is": "^19.2.0",
     "remeda": "^2.28.0",
     "shiki": "^3.9.2",
-    "xstate": "^5.22.1",
+    "xstate": "^5.23.0",
     "zod": "^4.0.17"
   },
   "devDependencies": {

@@ -113,7 +113,7 @@
     "slate": "0.118.1",
     "slate-dom": "^0.118.1",
     "slate-react": "0.117.4",
-    "xstate": "^5.22.1"
+    "xstate": "^5.23.0"
   },
   "devDependencies": {
     "@portabletext/sanity-bridge": "workspace:*",
