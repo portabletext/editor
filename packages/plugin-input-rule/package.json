@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-input-rule",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Easily configure input rules in the Portable Text Editor",
   "keywords": [
     "portabletext",

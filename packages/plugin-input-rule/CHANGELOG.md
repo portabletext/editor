@@ -1,5 +1,15 @@
 # @portabletext/plugin-input-rule
 
+## 0.3.0
+
+### Minor Changes
+
+- [#1727](https://github.com/portabletext/editor/pull/1727) [`bb10e48`](https://github.com/portabletext/editor/commit/bb10e48d0f3bc6373ce3280cdebdbf00f130d32b) Thanks [@christianhg](https://github.com/christianhg)! - feat: allow returning arbitrary data from `guard`
+
+### Patch Changes
+
+- [#1727](https://github.com/portabletext/editor/pull/1727) [`ede0ba7`](https://github.com/portabletext/editor/commit/ede0ba71f49210096d133048501726d2348ac90f) Thanks [@christianhg](https://github.com/christianhg)! - fix: account for unmatched groups
+
 ## 0.2.0
 
 ### Minor Changes

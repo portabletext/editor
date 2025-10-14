@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.0
+
+### Minor Changes
+
+- [#1727](https://github.com/portabletext/editor/pull/1727) [`957746a`](https://github.com/portabletext/editor/commit/957746ab4f5ac76c54cae27567ad127e41f60c87) Thanks [@christianhg](https://github.com/christianhg)! - feat: allow `"—-"` to match a horizontal rule
+
+### Patch Changes
+
+- Updated dependencies [[`bb10e48`](https://github.com/portabletext/editor/commit/bb10e48d0f3bc6373ce3280cdebdbf00f130d32b), [`ede0ba7`](https://github.com/portabletext/editor/commit/ede0ba71f49210096d133048501726d2348ac90f)]:
+  - @portabletext/plugin-input-rule@0.3.0
+
 ## 1.1.4
 
 ### Patch Changes
