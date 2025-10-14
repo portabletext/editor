@@ -464,6 +464,52 @@ describe(applyPatch.name, () => {
       })
     })
   })
+
+  describe.only('`setIfMissing`', () => {
+    describe('number', () => {
+      test('missing', () => {
+        expect(
+          applyPatch(undefined, {
+            type: 'setIfMissing',
+            path: [],
+            value: 2,
+          }),
+        ).toEqual(2)
+      })
+
+      test('present', () => {
+        expect(
+          applyPatch(1, {
+            type: 'setIfMissing',
+            path: [],
+            value: 2,
+          }),
+        ).toEqual(1)
+      })
+    })
+
+    describe('string', () => {
+      test('missing', () => {
+        expect(
+          applyPatch(undefined, {
+            type: 'setIfMissing',
+            path: [],
+            value: 'Hello, world',
+          }),
+        ).toEqual('Hello, world')
+      })
+
+      test('present', () => {
+        expect(
+          applyPatch('Hello', {
+            type: 'setIfMissing',
+            path: [],
+            value: 'Hello, world',
+          }),
+        ).toEqual('Hello')
+      })
+    })
+  })
 })
 
 function createTestKeyGenerator() {
