@@ -117,15 +117,11 @@ export function MarkdownShortcutsPlugin({
           rules={[createHorizontalRuleRule({horizontalRuleObject})]}
         />
       ) : null}
-      {orderedList && defaultStyle ? (
-        <InputRulePlugin
-          rules={[createOrderedListRule({orderedList, defaultStyle})]}
-        />
+      {orderedList ? (
+        <InputRulePlugin rules={[createOrderedListRule({orderedList})]} />
       ) : null}
-      {unorderedList && defaultStyle ? (
-        <InputRulePlugin
-          rules={[createUnorderedListRule({unorderedList, defaultStyle})]}
-        />
+      {unorderedList ? (
+        <InputRulePlugin rules={[createUnorderedListRule({unorderedList})]} />
       ) : null}
     </>
   )

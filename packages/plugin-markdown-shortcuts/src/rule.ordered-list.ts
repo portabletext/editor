@@ -4,7 +4,6 @@ import {getPreviousInlineObject} from '@portabletext/editor/selectors'
 import {defineInputRule} from '@portabletext/plugin-input-rule'
 
 export function createOrderedListRule(config: {
-  defaultStyle: (context: {schema: EditorSchema}) => string | undefined
   orderedList: (context: {schema: EditorSchema}) => string | undefined
 }) {
   return defineInputRule({
@@ -13,11 +12,8 @@ export function createOrderedListRule(config: {
       const orderedList = config.orderedList({
         schema: snapshot.context.schema,
       })
-      const defaultStyle = config.defaultStyle({
-        schema: snapshot.context.schema,
-      })
 
-      if (!orderedList || !defaultStyle) {
+      if (!orderedList) {
         return false
       }
 
@@ -33,15 +29,19 @@ export function createOrderedListRule(config: {
         return false
       }
 
-      return {defaultStyle, match, orderedList}
+      return {match, orderedList}
     },
     actions: [
-      ({event}, {defaultStyle, match, orderedList}) => [
+      ({event}, {match, orderedList}) => [
+        raise({
+          type: 'block.unset',
+          props: ['style'],
+          at: event.focusTextBlock.path,
+        }),
         raise({
           type: 'block.set',
           props: {
             listItem: orderedList,
-            style: defaultStyle,
             level: event.focusTextBlock.node.level ?? 1,
           },
           at: event.focusTextBlock.path,
