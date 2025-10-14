@@ -1,5 +1,5 @@
-import {useEditor} from '@portabletext/editor'
 import type {EditorSchema} from '@portabletext/editor'
+import {useEditor} from '@portabletext/editor'
 import {CharacterPairDecoratorPlugin} from '@portabletext/plugin-character-pair-decorator'
 import {InputRulePlugin} from '@portabletext/plugin-input-rule'
 import {useEffect} from 'react'
@@ -7,12 +7,24 @@ import {
   createMarkdownBehaviors,
   type MarkdownBehaviorsConfig,
 } from './behavior.markdown-shortcuts'
+import {createBlockquoteRule} from './rule.blockquote'
+import {createHeadingRule} from './rule.heading'
 import {createHorizontalRuleRule} from './rule.horizontal-rule'
+import {createOrderedListRule} from './rule.ordered-list'
+import {createUnorderedListRule} from './rule.unordered-list'
 
 /**
  * @beta
  */
 export type MarkdownShortcutsPluginProps = MarkdownBehaviorsConfig & {
+  blockquoteStyle?: (context: {schema: EditorSchema}) => string | undefined
+  defaultStyle?: (context: {schema: EditorSchema}) => string | undefined
+  headingStyle?: (context: {
+    schema: EditorSchema
+    level: number
+  }) => string | undefined
+  unorderedList?: (context: {schema: EditorSchema}) => string | undefined
+  orderedList?: (context: {schema: EditorSchema}) => string | undefined
   boldDecorator?: ({schema}: {schema: EditorSchema}) => string | undefined
   codeDecorator?: ({schema}: {schema: EditorSchema}) => string | undefined
   italicDecorator?: ({schema}: {schema: EditorSchema}) => string | undefined
@@ -42,12 +54,7 @@ export function MarkdownShortcutsPlugin({
 
   useEffect(() => {
     const behaviors = createMarkdownBehaviors({
-      blockquoteStyle,
       defaultStyle,
-      headingStyle,
-      horizontalRuleObject,
-      orderedList,
-      unorderedList,
     })
 
     const unregisterBehaviors = behaviors.map((behavior) =>
@@ -59,15 +66,7 @@ export function MarkdownShortcutsPlugin({
         unregisterBehavior()
       }
     }
-  }, [
-    blockquoteStyle,
-    defaultStyle,
-    editor,
-    headingStyle,
-    horizontalRuleObject,
-    orderedList,
-    unorderedList,
-  ])
+  }, [defaultStyle, editor, horizontalRuleObject])
 
   return (
     <>
@@ -107,9 +106,25 @@ export function MarkdownShortcutsPlugin({
           pair={{char: '~', amount: 2}}
         />
       ) : null}
+      {blockquoteStyle ? (
+        <InputRulePlugin rules={[createBlockquoteRule({blockquoteStyle})]} />
+      ) : null}
+      {headingStyle ? (
+        <InputRulePlugin rules={[createHeadingRule({headingStyle})]} />
+      ) : null}
       {horizontalRuleObject ? (
         <InputRulePlugin
           rules={[createHorizontalRuleRule({horizontalRuleObject})]}
+        />
+      ) : null}
+      {orderedList && defaultStyle ? (
+        <InputRulePlugin
+          rules={[createOrderedListRule({orderedList, defaultStyle})]}
+        />
+      ) : null}
+      {unorderedList && defaultStyle ? (
+        <InputRulePlugin
+          rules={[createUnorderedListRule({unorderedList, defaultStyle})]}
         />
       ) : null}
     </>
