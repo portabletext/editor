@@ -50,7 +50,8 @@
     "prepublishOnly": "turbo run build"
   },
   "dependencies": {
-    "@portabletext/plugin-character-pair-decorator": "workspace:^"
+    "@portabletext/plugin-character-pair-decorator": "workspace:^",
+    "@portabletext/plugin-input-rule": "workspace:*"
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",

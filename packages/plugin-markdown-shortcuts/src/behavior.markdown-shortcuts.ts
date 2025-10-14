@@ -103,83 +103,11 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       ],
     ],
   })
-  const automaticHr = defineBehavior({
-    on: 'insert.text',
-    guard: ({snapshot, event}) => {
-      const hrCharacter =
-        event.text === '-'
-          ? '-'
-          : event.text === '*'
-            ? '*'
-            : event.text === '_'
-              ? '_'
-              : undefined
-
-      if (hrCharacter === undefined) {
-        return false
-      }
-
-      const hrObject = config.horizontalRuleObject?.({
-        schema: snapshot.context.schema,
-      })
-      const focusBlock = selectors.getFocusTextBlock(snapshot)
-      const selectionCollapsed = selectors.isSelectionCollapsed(snapshot)
-
-      if (!hrObject || !focusBlock || !selectionCollapsed) {
-        return false
-      }
-
-      const previousInlineObject = selectors.getPreviousInlineObject(snapshot)
-      const textBefore = selectors.getBlockTextBefore(snapshot)
-      const hrBlockOffsets = {
-        anchor: {
-          path: focusBlock.path,
-          offset: 0,
-        },
-        focus: {
-          path: focusBlock.path,
-          offset: 3,
-        },
-      }
-
-      if (
-        !previousInlineObject &&
-        textBefore === `${hrCharacter}${hrCharacter}`
-      ) {
-        return {hrObject, focusBlock, hrCharacter, hrBlockOffsets}
-      }
-
-      return false
-    },
-    actions: [
-      (_, {hrCharacter}) => [
-        execute({
-          type: 'insert.text',
-          text: hrCharacter,
-        }),
-      ],
-      (_, {hrObject, hrBlockOffsets}) => [
-        execute({
-          type: 'insert.block',
-          block: {
-            _type: hrObject.name,
-            ...(hrObject.value ?? {}),
-          },
-          placement: 'before',
-          select: 'none',
-        }),
-        execute({
-          type: 'delete.text',
-          at: hrBlockOffsets,
-        }),
-      ],
-    ],
-  })
   const automaticHrOnPaste = defineBehavior({
     on: 'clipboard.paste',
     guard: ({snapshot, event}) => {
       const text = event.originEvent.dataTransfer.getData('text/plain')
-      const hrRegExp = /^(---)$|(___)$|(\*\*\*)$/
+      const hrRegExp = /^(---)$|^(—-)$|^(___)$|^(\*\*\*)$/
       const hrCharacters = text.match(hrRegExp)?.[0]
       const hrObject = config.horizontalRuleObject?.({
         schema: snapshot.context.schema,
@@ -476,7 +404,6 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
   const markdownBehaviors = [
     automaticBlockquoteOnSpace,
     automaticHeadingOnSpace,
-    automaticHr,
     automaticHrOnPaste,
     clearStyleOnBackspace,
     automaticListOnSpace,
