@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.3
+
+### Patch Changes
+
+- [#1722](https://github.com/portabletext/editor/pull/1722) [`b7c1e14`](https://github.com/portabletext/editor/commit/b7c1e14ca63990adf2cec0fb858fd9170ae86518) Thanks [@christianhg](https://github.com/christianhg)! - fix: move plugin to editor repository
+
 ## 1.1.2
 
 ### Patch Changes
