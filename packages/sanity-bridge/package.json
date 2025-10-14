@@ -54,15 +54,15 @@
   },
   "devDependencies": {
     "@sanity/pkg-utils": "^8.1.14",
-    "@sanity/schema": "^4.10.2",
-    "@sanity/types": "^4.10.2",
+    "@sanity/schema": "^4.10.3",
+    "@sanity/types": "^4.10.3",
     "@types/lodash.startcase": "^4.4.9",
     "typescript": "catalog:",
     "vitest": "^3.2.4"
   },
   "peerDependencies": {
-    "@sanity/schema": "^4.10.2",
-    "@sanity/types": "^4.10.2"
+    "@sanity/schema": "^4.10.3",
+    "@sanity/types": "^4.10.3"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"

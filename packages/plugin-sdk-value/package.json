@@ -59,9 +59,9 @@
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
     "@portabletext/patches": "workspace:^",
-    "@sanity/schema": "^4.10.2",
+    "@sanity/schema": "^4.10.3",
     "@sanity/sdk-react": "^2.1.2",
-    "@sanity/types": "^4.10.2",
+    "@sanity/types": "^4.10.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
     "@types/react": "^19.1.12",
