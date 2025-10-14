@@ -1,11 +1,13 @@
 import {useEditor} from '@portabletext/editor'
 import type {EditorSchema} from '@portabletext/editor'
 import {CharacterPairDecoratorPlugin} from '@portabletext/plugin-character-pair-decorator'
+import {InputRulePlugin} from '@portabletext/plugin-input-rule'
 import {useEffect} from 'react'
 import {
   createMarkdownBehaviors,
   type MarkdownBehaviorsConfig,
 } from './behavior.markdown-shortcuts'
+import {createHorizontalRuleRule} from './rule.horizontal-rule'
 
 /**
  * @beta
@@ -103,6 +105,11 @@ export function MarkdownShortcutsPlugin({
         <CharacterPairDecoratorPlugin
           decorator={strikeThroughDecorator}
           pair={{char: '~', amount: 2}}
+        />
+      ) : null}
+      {horizontalRuleObject ? (
+        <InputRulePlugin
+          rules={[createHorizontalRuleRule({horizontalRuleObject})]}
         />
       ) : null}
     </>

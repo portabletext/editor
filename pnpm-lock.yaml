@@ -780,6 +780,9 @@ importers:
       '@portabletext/plugin-character-pair-decorator':
         specifier: workspace:^
         version: link:../plugin-character-pair-decorator
+      '@portabletext/plugin-input-rule':
+        specifier: workspace:*
+        version: link:../plugin-input-rule
     devDependencies:
       '@portabletext/editor':
         specifier: workspace:*
