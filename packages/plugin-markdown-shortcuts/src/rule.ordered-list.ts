@@ -42,7 +42,7 @@ export function createOrderedListRule(config: {
           props: {
             listItem: orderedList,
             style: defaultStyle,
-            level: 1,
+            level: event.focusTextBlock.node.level ?? 1,
           },
           at: event.focusTextBlock.path,
         }),
