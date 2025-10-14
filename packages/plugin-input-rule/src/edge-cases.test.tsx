@@ -52,6 +52,11 @@ const betterH2Rule = defineTextTransformRule({
   transform: () => '',
 })
 
+const unmatchedGroupsRule = defineTextTransformRule({
+  on: /^(---)|^(—-)|^(___)|^(\*\*\*)/,
+  transform: () => '<hr />',
+})
+
 Feature({
   hooks: [
     Before(async (context: Context) => {
@@ -65,6 +70,7 @@ Feature({
             <InputRulePlugin rules={[h1Rule]} />
             <InputRulePlugin rules={[betterH2Rule]} />
             <InputRulePlugin rules={[replaceAandCRule]} />
+            <InputRulePlugin rules={[unmatchedGroupsRule]} />
           </>
         ),
         schemaDefinition: defineSchema({

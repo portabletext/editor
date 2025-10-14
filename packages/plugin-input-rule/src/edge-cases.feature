@@ -156,3 +156,14 @@ Feature: Edge Cases
       | ",{stock-ticker},foo" | after "foo" | "{Shift}"     | ",{stock-ticker},foo## new" |
       | ",{stock-ticker},f"   | after "f"   | "{Backspace}" | ",{stock-ticker},## new"    |
       | "f,{stock-ticker},"   | after "f"   | "{Backspace}" | "new,{stock-ticker},"       |
+
+  Scenario Outline: Unmatched Groups Rule
+    Given the text <text>
+    When the caret is put <position>
+    And <inserted text> is inserted
+    And "new" is typed
+    Then the text is <new text>
+
+    Examples:
+      | text | position | inserted text | new text    |
+      | ""   | after "" | "---"         | "<hr />new" |
