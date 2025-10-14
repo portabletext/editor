@@ -97,7 +97,9 @@ function createInputRuleBehavior(config: {
 
               const groupMatches =
                 regExpMatch.indices.length > 1
-                  ? regExpMatch.indices.slice(1)
+                  ? regExpMatch.indices
+                      .slice(1)
+                      .filter((indices) => indices !== undefined)
                   : []
 
               const ruleMatch = {
