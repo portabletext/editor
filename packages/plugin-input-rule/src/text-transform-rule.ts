@@ -6,10 +6,13 @@ import type {InputRuleMatchLocation} from './input-rule-match-location'
 /**
  * @alpha
  */
-export type TextTransformRule = {
+export type TextTransformRule<TGuardResponse = true> = {
   on: RegExp
-  guard?: InputRuleGuard
-  transform: ({location}: {location: InputRuleMatchLocation}) => string
+  guard?: InputRuleGuard<TGuardResponse>
+  transform: (
+    {location}: {location: InputRuleMatchLocation},
+    guardResponse: TGuardResponse,
+  ) => string
 }
 
 /**
@@ -26,12 +29,14 @@ export type TextTransformRule = {
  *
  * @alpha
  */
-export function defineTextTransformRule(config: TextTransformRule): InputRule {
+export function defineTextTransformRule<TGuardResponse = true>(
+  config: TextTransformRule<TGuardResponse>,
+): InputRule<TGuardResponse> {
   return {
     on: config.on,
-    guard: config.guard ?? (() => true),
+    guard: config.guard ?? (() => true as TGuardResponse),
     actions: [
-      ({snapshot, event}) => {
+      ({snapshot, event}, guardResponse) => {
         const locations = event.matches.flatMap((match) =>
           match.groupMatches.length === 0 ? [match] : match.groupMatches,
         )
@@ -41,7 +46,7 @@ export function defineTextTransformRule(config: TextTransformRule): InputRule {
         const actions: Array<BehaviorAction> = []
 
         for (const location of locations.reverse()) {
-          const text = config.transform({location})
+          const text = config.transform({location}, guardResponse)
 
           textLengthDelta =
             textLengthDelta -

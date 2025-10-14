@@ -22,7 +22,7 @@ import type {InputRule, InputRuleMatch} from './input-rule'
 import {getInputRuleMatchLocation} from './input-rule-match-location'
 
 function createInputRuleBehavior(config: {
-  rules: Array<InputRule>
+  rules: Array<InputRule<any>>
   onApply: ({
     endOffsets,
   }: {
@@ -214,7 +214,7 @@ function createInputRuleBehavior(config: {
 }
 
 type InputRulePluginProps = {
-  rules: Array<InputRule>
+  rules: Array<InputRule<any>>
 }
 
 /**
