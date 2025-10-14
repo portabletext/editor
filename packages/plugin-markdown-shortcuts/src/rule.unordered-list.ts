@@ -42,7 +42,7 @@ export function createUnorderedListRule(config: {
           props: {
             listItem: unorderedList,
             style: defaultStyle,
-            level: 1,
+            level: event.focusTextBlock.node.level ?? 1,
           },
           at: event.focusTextBlock.path,
         }),
