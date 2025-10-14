@@ -33,7 +33,7 @@ export const defaultEditorFeatureFlags: EditorFeatureFlags = {
   codeEditorPlugin: false,
   linkPlugin: false,
   oneLinePlugin: false,
-  markdownPlugin: false,
+  markdownPlugin: true,
   typographyPlugin: true,
 }
 
