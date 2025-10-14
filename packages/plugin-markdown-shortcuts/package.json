@@ -53,7 +53,7 @@
     "@portabletext/plugin-character-pair-decorator": "workspace:^"
   },
   "devDependencies": {
-    "@portabletext/editor": "^2.6.9",
+    "@portabletext/editor": "^2.14.0",
     "@types/react": "^19.1.12",
     "babel-plugin-react-compiler": "19.1.0-rc.3",
     "eslint": "^9.37.0",
