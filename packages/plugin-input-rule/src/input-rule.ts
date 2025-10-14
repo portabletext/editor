@@ -42,20 +42,25 @@ export type InputRuleEvent = {
 /**
  * @alpha
  */
-export type InputRuleGuard = BehaviorGuard<InputRuleEvent, boolean>
+export type InputRuleGuard<TGuardResponse = true> = BehaviorGuard<
+  InputRuleEvent,
+  TGuardResponse
+>
 
 /**
  * @alpha
  */
-export type InputRule = {
+export type InputRule<TGuardResponse = true> = {
   on: RegExp
-  guard?: InputRuleGuard
-  actions: Array<BehaviorActionSet<InputRuleEvent, boolean>>
+  guard?: InputRuleGuard<TGuardResponse>
+  actions: Array<BehaviorActionSet<InputRuleEvent, TGuardResponse>>
 }
 
 /**
  * @alpha
  */
-export function defineInputRule(config: InputRule): InputRule {
+export function defineInputRule<TGuardResponse = true>(
+  config: InputRule<TGuardResponse>,
+): InputRule<TGuardResponse> {
   return config
 }
