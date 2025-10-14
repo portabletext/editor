@@ -373,6 +373,50 @@ In order to provide a robust and consistent end-user experience, the editor is b
 
 Now, you should be able to run `pnpm dev:test-studio` in the `sanity` repo to test Studio with a locally running Portable Text Editor.
 
+## Available plugins
+
+### `@portabletext/plugin-character-pair-decorator`
+
+> ✨ Automatically match a pair of characters and decorate the text in between
+
+- 💻 [`./packages/plugin-character-pair-decorator`](./packages/plugin-character-pair-decorator/)
+- 📦 [@portabletext/plugin-character-pair-decorator](https://www.npmjs.com/package/@portabletext/plugin-character-pair-decorator)
+
+### `@portabletext/plugin-input-rule`
+
+> 🪄 Easily configure input rules in the Portable Text Editor
+
+- 💻 [`./packages/plugin-input-rule`](./packages/plugin-input-rule/)
+- 📦 [@portabletext/plugin-input-rule](https://www.npmjs.com/package/@portabletext/plugin-input-rule)
+
+### `@portabletext/plugin-markdown-shortcuts`
+
+> ⬇️ Adds helpful Markdown shortcuts to the editor
+
+- 💻 [`./packages/plugin-markdown-shortcuts`](./packages/plugin-markdown-shortcuts/)
+- 📦 [@portabletext/plugin-markdown-shortcuts](https://www.npmjs.com/package/@portabletext/plugin-markdown-shortcuts)
+
+### `@portabletext/plugin-one-line`
+
+> 🤏 Restricts the Portable Text Editor to a single line
+
+- 💻 [`./packages/plugin-one-line`](./packages/plugin-one-line/)
+- 📦 [@portabletext/plugin-one-line](https://www.npmjs.com/package/@portabletext/plugin-one-line)
+
+### `@portabletext/plugin-sdk-value`
+
+> 🔗 Connects a Portable Text Editor with a Sanity document using the SDK
+
+- 💻 [`./packages/plugin-sdk-value`](./packages/plugin-sdk-value/)
+- 📦 [@portabletext/plugin-sdk-value](https://www.npmjs.com/package/@portabletext/plugin-sdk-value)
+
+### `@portabletext/plugin-typography`
+
+> 🔁 Automatically transform text to typographic variants
+
+- 💻 [`./packages/plugin-typography`](./packages/plugin-typography/)
+- 📦 [@portabletext/plugin-typography](https://www.npmjs.com/package/@portabletext/plugin-typography)
+
 ## Other Libraries
 
 This monorepo also contains additional libraries that can be used with the Portable Text Editor:
