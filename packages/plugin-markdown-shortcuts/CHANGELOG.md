@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.4
+
+### Patch Changes
+
+- [`8d44f0a`](https://github.com/portabletext/editor/commit/8d44f0af8a19784f7f8f41414b64e999c919dd2f) Thanks [@christianhg](https://github.com/christianhg)! - fix: @portabletext/editor dependency
+
 ## 1.1.3
 
 ### Patch Changes
