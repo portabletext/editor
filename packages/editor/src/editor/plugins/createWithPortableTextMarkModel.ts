@@ -15,6 +15,7 @@ import {getActiveDecorators} from '../../selectors/selector.get-active-decorator
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 import {getEditorSnapshot} from '../editor-selector'
+import {withNormalizeNode} from '../with-normalizing-node'
 import {isChangingRemotely} from '../withChanges'
 import {isRedoing, isUndoing} from '../withUndoRedo'
 
@@ -50,12 +51,12 @@ export function createWithPortableTextMarkModel(
               JSON.stringify(child, null, 2),
               JSON.stringify(nextNode, null, 2),
             )
-            editorActor.send({type: 'normalizing'})
-            Transforms.mergeNodes(editor, {
-              at: [childPath[0], childPath[1] + 1],
-              voids: true,
+            withNormalizeNode(editor, () => {
+              Transforms.mergeNodes(editor, {
+                at: [childPath[0], childPath[1] + 1],
+                voids: true,
+              })
             })
-            editorActor.send({type: 'done normalizing'})
             return
           }
         }
@@ -66,9 +67,9 @@ export function createWithPortableTextMarkModel(
        */
       if (editor.isTextBlock(node) && !Array.isArray(node.markDefs)) {
         debug('Adding .markDefs to block node')
-        editorActor.send({type: 'normalizing'})
-        Transforms.setNodes(editor, {markDefs: []}, {at: path})
-        editorActor.send({type: 'done normalizing'})
+        withNormalizeNode(editor, () => {
+          Transforms.setNodes(editor, {markDefs: []}, {at: path})
+        })
         return
       }
 
@@ -77,9 +78,9 @@ export function createWithPortableTextMarkModel(
        */
       if (editor.isTextSpan(node) && !Array.isArray(node.marks)) {
         debug('Adding .marks to span node')
-        editorActor.send({type: 'normalizing'})
-        Transforms.setNodes(editor, {marks: []}, {at: path})
-        editorActor.send({type: 'done normalizing'})
+        withNormalizeNode(editor, () => {
+          Transforms.setNodes(editor, {marks: []}, {at: path})
+        })
         return
       }
 
@@ -99,13 +100,17 @@ export function createWithPortableTextMarkModel(
         if (editor.isTextBlock(block)) {
           if (node.text === '' && annotations && annotations.length > 0) {
             debug('Removing annotations from empty span node')
-            editorActor.send({type: 'normalizing'})
-            Transforms.setNodes(
-              editor,
-              {marks: node.marks?.filter((mark) => decorators.includes(mark))},
-              {at: path},
-            )
-            editorActor.send({type: 'done normalizing'})
+            withNormalizeNode(editor, () => {
+              Transforms.setNodes(
+                editor,
+                {
+                  marks: node.marks?.filter((mark) =>
+                    decorators.includes(mark),
+                  ),
+                },
+                {at: path},
+              )
+            })
             return
           }
         }
@@ -131,17 +136,17 @@ export function createWithPortableTextMarkModel(
 
             if (orphanedAnnotations.length > 0) {
               debug('Removing orphaned annotations from span node')
-              editorActor.send({type: 'normalizing'})
-              Transforms.setNodes(
-                editor,
-                {
-                  marks: marks.filter(
-                    (mark) => !orphanedAnnotations.includes(mark),
-                  ),
-                },
-                {at: childPath},
-              )
-              editorActor.send({type: 'done normalizing'})
+              withNormalizeNode(editor, () => {
+                Transforms.setNodes(
+                  editor,
+                  {
+                    marks: marks.filter(
+                      (mark) => !orphanedAnnotations.includes(mark),
+                    ),
+                  },
+                  {at: childPath},
+                )
+              })
               return
             }
           }
@@ -169,17 +174,17 @@ export function createWithPortableTextMarkModel(
 
           if (orphanedAnnotations.length > 0) {
             debug('Removing orphaned annotations from span node')
-            editorActor.send({type: 'normalizing'})
-            Transforms.setNodes(
-              editor,
-              {
-                marks: marks.filter(
-                  (mark) => !orphanedAnnotations.includes(mark),
-                ),
-              },
-              {at: path},
-            )
-            editorActor.send({type: 'done normalizing'})
+            withNormalizeNode(editor, () => {
+              Transforms.setNodes(
+                editor,
+                {
+                  marks: marks.filter(
+                    (mark) => !orphanedAnnotations.includes(mark),
+                  ),
+                },
+                {at: path},
+              )
+            })
             return
           }
         }
@@ -200,9 +205,9 @@ export function createWithPortableTextMarkModel(
 
         if (markDefs.length !== newMarkDefs.length) {
           debug('Removing duplicate markDefs')
-          editorActor.send({type: 'normalizing'})
-          Transforms.setNodes(editor, {markDefs: newMarkDefs}, {at: path})
-          editorActor.send({type: 'done normalizing'})
+          withNormalizeNode(editor, () => {
+            Transforms.setNodes(editor, {markDefs: newMarkDefs}, {at: path})
+          })
           return
         }
       }
@@ -228,20 +233,22 @@ export function createWithPortableTextMarkModel(
         })
         if (node.markDefs && !isEqual(newMarkDefs, node.markDefs)) {
           debug('Removing markDef not in use')
-          editorActor.send({type: 'normalizing'})
-          Transforms.setNodes(
-            editor,
-            {
-              markDefs: newMarkDefs,
-            },
-            {at: path},
-          )
-          editorActor.send({type: 'done normalizing'})
+          withNormalizeNode(editor, () => {
+            Transforms.setNodes(
+              editor,
+              {
+                markDefs: newMarkDefs,
+              },
+              {at: path},
+            )
+          })
           return
         }
       }
 
-      normalizeNode(nodeEntry)
+      withNormalizeNode(editor, () => {
+        normalizeNode(nodeEntry)
+      })
     }
 
     editor.apply = (op) => {

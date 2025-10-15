@@ -9,6 +9,7 @@ import {debugWithName} from '../../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import {isListBlock} from '../../utils/parse-blocks'
 import type {EditorActor} from '../editor-machine'
+import {withNormalizeNode} from '../with-normalizing-node'
 
 const debug = debugWithName('plugin:withSchemaTypes')
 /**
@@ -87,17 +88,17 @@ export function createWithSchemaTypes({
         const span = node as PortableTextSpan
         const key =
           span._key || editorActor.getSnapshot().context.keyGenerator()
-        editorActor.send({type: 'normalizing'})
-        Transforms.setNodes(
-          editor,
-          {
-            ...span,
-            _type: editorActor.getSnapshot().context.schema.span.name,
-            _key: key,
-          },
-          {at: path},
-        )
-        editorActor.send({type: 'done normalizing'})
+        withNormalizeNode(editor, () => {
+          Transforms.setNodes(
+            editor,
+            {
+              ...span,
+              _type: editorActor.getSnapshot().context.schema.span.name,
+              _key: key,
+            },
+            {at: path},
+          )
+        })
         return
       }
 
@@ -105,13 +106,15 @@ export function createWithSchemaTypes({
       if (node._key === undefined && (path.length === 1 || path.length === 2)) {
         debug('Setting missing key on child node without a key')
         const key = editorActor.getSnapshot().context.keyGenerator()
-        editorActor.send({type: 'normalizing'})
-        Transforms.setNodes(editor, {_key: key}, {at: path})
-        editorActor.send({type: 'done normalizing'})
+        withNormalizeNode(editor, () => {
+          Transforms.setNodes(editor, {_key: key}, {at: path})
+        })
         return
       }
 
-      normalizeNode(entry)
+      withNormalizeNode(editor, () => {
+        normalizeNode(entry)
+      })
     }
     return editor
   }

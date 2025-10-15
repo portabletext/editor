@@ -70,6 +70,10 @@ export function EditorProvider(props: EditorProviderProps) {
     unsubscribers.push(relayActorSubscription.unsubscribe)
 
     internalEditor.actors.editorActor.start()
+    internalEditor.actors.editorActor.send({
+      type: 'add slate editor',
+      editor: internalEditor.editor._internal.slateEditor.instance,
+    })
     internalEditor.actors.mutationActor.start()
     internalEditor.actors.relayActor.start()
     internalEditor.actors.syncActor.start()
