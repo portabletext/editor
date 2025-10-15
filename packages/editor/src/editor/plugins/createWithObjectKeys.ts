@@ -3,6 +3,7 @@ import {isEqual} from 'lodash'
 import {Editor, Element, Node, Path, Transforms} from 'slate'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
+import {withNormalizeNode} from '../with-normalizing-node'
 import {isChangingRemotely} from '../withChanges'
 import {isRedoing, isUndoing} from '../withUndoRedo'
 
@@ -198,30 +199,33 @@ export function createWithObjectKeys(editorActor: EditorActor) {
       ) {
         // Set key on block itself
         if (!node._key) {
-          editorActor.send({type: 'normalizing'})
-          Transforms.setNodes(
-            editor,
-            {_key: editorActor.getSnapshot().context.keyGenerator()},
-            {at: path},
-          )
-          editorActor.send({type: 'done normalizing'})
+          withNormalizeNode(editor, () => {
+            Transforms.setNodes(
+              editor,
+              {_key: editorActor.getSnapshot().context.keyGenerator()},
+              {at: path},
+            )
+          })
           return
         }
         // Set keys on it's children
         for (const [child, childPath] of Node.children(editor, path)) {
           if (!child._key) {
-            editorActor.send({type: 'normalizing'})
-            Transforms.setNodes(
-              editor,
-              {_key: editorActor.getSnapshot().context.keyGenerator()},
-              {at: childPath},
-            )
-            editorActor.send({type: 'done normalizing'})
+            withNormalizeNode(editor, () => {
+              Transforms.setNodes(
+                editor,
+                {_key: editorActor.getSnapshot().context.keyGenerator()},
+                {at: childPath},
+              )
+            })
             return
           }
         }
       }
-      normalizeNode(entry)
+
+      withNormalizeNode(editor, () => {
+        normalizeNode(entry)
+      })
     }
 
     return editor

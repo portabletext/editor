@@ -34,6 +34,7 @@ import type {
   MutationEvent,
   PatchEvent,
 } from './relay-machine'
+import {isNormalizingNode} from './with-normalizing-node'
 
 export * from 'xstate/guards'
 
@@ -94,14 +95,8 @@ export type InternalEditorEvent =
       editor: PortableTextSlateEditor
     }
   | {
-      type: 'normalizing'
-    }
-  | {
       type: 'update selection'
       selection: EditorSelection
-    }
-  | {
-      type: 'done normalizing'
     }
   | {
       type: 'done syncing value'
@@ -128,6 +123,7 @@ export type InternalEditorEvent =
     }
   | {type: 'dragend'}
   | {type: 'drop'}
+  | {type: 'add slate editor'; editor: PortableTextSlateEditor}
 
 /**
  * @internal
@@ -233,6 +229,13 @@ export const editorMachine = setup({
         context.behaviors.delete(event.behaviorConfig)
 
         return new Set([...context.behaviors])
+      },
+    }),
+    'add slate editor to context': assign({
+      slateEditor: ({context, event}) => {
+        return event.type === 'add slate editor'
+          ? event.editor
+          : context.slateEditor
       },
     }),
     'emit patch event': emit(({event}) => {
@@ -363,6 +366,13 @@ export const editorMachine = setup({
 
       return context.slateEditor.operations.length > 0
     },
+    'slate is normalizing node': ({context}) => {
+      if (!context.slateEditor) {
+        return false
+      }
+
+      return isNormalizingNode(context.slateEditor)
+    },
   },
 }).createMachine({
   id: 'editor',
@@ -386,6 +396,7 @@ export const editorMachine = setup({
     'update maxBlocks': {
       actions: assign({maxBlocks: ({event}) => event.maxBlocks}),
     },
+    'add slate editor': {actions: 'add slate editor to context'},
     'update selection': {
       actions: [
         assign({selection: ({event}) => event.selection}),
@@ -694,44 +705,26 @@ export const editorMachine = setup({
                         },
                       ],
                       on: {
-                        'normalizing': {
-                          target: 'normalizing',
-                        },
-                        'internal.patch': {
-                          actions: 'defer event',
-                          target: '#editor.setup.set up.writing.dirty',
-                        },
-                        'mutation': {
-                          actions: 'defer event',
-                          target: '#editor.setup.set up.writing.dirty',
-                        },
-                      },
-                    },
-                    normalizing: {
-                      entry: [
-                        () => {
-                          debug(
-                            'entry: setup->set up->writing->pristine->normalizing',
-                          )
-                        },
-                      ],
-                      exit: [
-                        () => {
-                          debug(
-                            'exit: setup->set up->writing->pristine->normalizing',
-                          )
-                        },
-                      ],
-                      on: {
-                        'done normalizing': {
-                          target: 'idle',
-                        },
-                        'internal.patch': {
-                          actions: 'defer event',
-                        },
-                        'mutation': {
-                          actions: 'defer event',
-                        },
+                        'internal.patch': [
+                          {
+                            guard: 'slate is normalizing node',
+                            actions: 'defer event',
+                          },
+                          {
+                            actions: 'defer event',
+                            target: '#editor.setup.set up.writing.dirty',
+                          },
+                        ],
+                        'mutation': [
+                          {
+                            guard: 'slate is normalizing node',
+                            actions: 'defer event',
+                          },
+                          {
+                            actions: 'defer event',
+                            target: '#editor.setup.set up.writing.dirty',
+                          },
+                        ],
                       },
                     },
                   },
