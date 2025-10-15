@@ -1,5 +1,11 @@
 # @portabletext/plugin-input-rule
 
+## 0.3.2
+
+### Patch Changes
+
+- [#1733](https://github.com/portabletext/editor/pull/1733) [`3099c65`](https://github.com/portabletext/editor/commit/3099c65dc00bb6b2b117185134ce5477f94009d3) Thanks [@christianhg](https://github.com/christianhg)! - fix: improve docs
+
 ## 0.3.1
 
 ### Patch Changes
