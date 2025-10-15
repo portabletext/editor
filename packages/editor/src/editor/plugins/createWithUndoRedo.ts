@@ -25,6 +25,7 @@ import {fromSlateValue} from '../../internal-utils/values'
 import type {BehaviorOperationImplementation} from '../../operations/behavior.operations'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
+import {isNormalizingNode} from '../with-normalizing-node'
 import {getCurrentUndoStepId} from '../with-undo-step'
 import {isChangingRemotely} from '../withChanges'
 import {
@@ -151,7 +152,8 @@ export function createWithUndoRedo(
 
       const currentUndoStepId = getCurrentUndoStepId(editor)
 
-      let merge = currentUndoStepId === previousUndoStepId
+      let merge =
+        currentUndoStepId === previousUndoStepId || isNormalizingNode(editor)
 
       if (save) {
         if (!step) {
