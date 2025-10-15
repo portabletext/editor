@@ -1,5 +1,6 @@
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getLastBlock} from '../selectors/selector.get-last-block'
+import {isSelectionCollapsed} from '../utils'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
@@ -469,6 +470,24 @@ export const abstractInsertBehaviors = [
             ],
           },
         }),
+      ],
+    ],
+  }),
+  defineBehavior({
+    on: 'insert.text',
+    guard: ({snapshot}) => {
+      const selection = snapshot.context.selection
+
+      if (!selection || isSelectionCollapsed(selection)) {
+        return false
+      }
+
+      return {selection}
+    },
+    actions: [
+      ({event}, {selection}) => [
+        raise({type: 'delete', at: selection}),
+        raise(event),
       ],
     ],
   }),
