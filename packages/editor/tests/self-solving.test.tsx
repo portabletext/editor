@@ -1,216 +1,191 @@
-import type {JSONValue, Patch} from '@portabletext/patches'
+import type {Patch} from '@portabletext/patches'
 import {compileSchema, defineSchema} from '@portabletext/schema'
-import type {PortableTextBlock, PortableTextSpan} from '@sanity/types'
-import {createRef, type ComponentProps, type RefObject} from 'react'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, it, vi} from 'vitest'
-import {PortableTextEditor} from '../src/editor/PortableTextEditor'
+import {
+  EditorEmittedEvent,
+  MutationEvent,
+  PatchEvent,
+} from '../src/editor/relay-machine'
 import {getTextSelection} from '../src/internal-utils/text-selection'
-import {InternalChange$Plugin} from '../src/plugins/plugin.internal.change-ref'
-import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
+import {EventListenerPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
-
-type OnChange = ComponentProps<typeof PortableTextEditor>['onChange']
-
-function block(
-  props?: Partial<Omit<PortableTextBlock, '_type'>>,
-): PortableTextBlock {
-  return {
-    _type: 'block',
-    ...(props ?? {}),
-  } as PortableTextBlock
-}
-
-function span(
-  props?: Partial<Omit<PortableTextSpan, '_type'>>,
-): PortableTextSpan {
-  return {
-    _type: 'span',
-    ...(props ?? {}),
-  } as PortableTextSpan
-}
 
 describe('Feature: Self-solving', () => {
   it('Scenario: Missing .markDefs and .marks are added after the editor is made dirty', async () => {
     const schemaDefinition = defineSchema({decorators: [{name: 'strong'}]})
-    const editorRef: RefObject<PortableTextEditor | null> = createRef()
-    const onChange = vi.fn<OnChange>()
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
     const initialValue = [
-      block({
-        _key: 'b1',
+      {
+        _key: blockKey,
+        _type: 'block',
         children: [
-          span({
-            _key: 's1',
+          {
+            _key: spanKey,
+            _type: 'span',
             text: 'foo',
-          }),
+          },
         ],
         style: 'normal',
-      }),
+      },
     ]
     const spanPatch: Patch = {
       type: 'set',
-      path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'marks'],
+      path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
       value: [],
       origin: 'local',
     }
     const blockPatch: Patch = {
       type: 'set',
-      path: [{_key: 'b1'}],
-      value: block({
-        _key: 'b1',
+      path: [{_key: blockKey}],
+      value: {
+        _key: blockKey,
+        _type: 'block',
         children: [
-          span({
-            _key: 's1',
+          {
+            _key: spanKey,
+            _type: 'span',
             text: 'foo',
             marks: [],
-          }),
+          },
         ],
         style: 'normal',
         markDefs: [],
-      }) as JSONValue,
+      },
       origin: 'local',
     }
     const strongPatch: Patch = {
       type: 'set',
-      path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'marks'],
+      path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
       value: ['strong'],
       origin: 'local',
     }
+    const onEvent = vi.fn<(event: EditorEmittedEvent) => void>()
+    const patchEvents: Array<PatchEvent> = []
+    const mutationEvents: Array<MutationEvent> = []
 
-    await createTestEditor({
+    const {editor} = await createTestEditor({
       children: (
-        <>
-          <InternalChange$Plugin onChange={onChange} />
-          <InternalPortableTextEditorRefPlugin ref={editorRef} />
-        </>
+        <EventListenerPlugin
+          on={(event) => {
+            onEvent(event)
+
+            if (event.type === 'patch') {
+              patchEvents.push(event)
+            }
+            if (event.type === 'mutation') {
+              mutationEvents.push(event)
+            }
+          }}
+        />
       ),
       initialValue,
+      keyGenerator,
       schemaDefinition,
     })
 
     await vi.waitFor(() => {
-      if (editorRef.current) {
-        expect(onChange).toHaveBeenNthCalledWith(1, {
-          type: 'value',
-          value: initialValue,
-        })
-        expect(onChange).toHaveBeenNthCalledWith(2, {
-          type: 'ready',
-        })
-      }
+      expect(onEvent).toHaveBeenCalledWith({
+        type: 'ready',
+      })
+      expect(patchEvents).toEqual([])
+      expect(mutationEvents).toEqual([])
+    })
+
+    editor.send({
+      type: 'select',
+      at: getTextSelection(
+        {schema: compileSchema(schemaDefinition), value: initialValue},
+        'foo',
+      ),
+    })
+    editor.send({
+      type: 'decorator.toggle',
+      decorator: 'strong',
     })
 
     await vi.waitFor(() => {
-      if (editorRef.current) {
-        PortableTextEditor.select(
-          editorRef.current,
-          getTextSelection(
-            {schema: compileSchema(schemaDefinition), value: initialValue},
-            'foo',
-          ),
-        )
-        PortableTextEditor.toggleMark(editorRef.current, 'strong')
-      }
-    })
-
-    await vi.waitFor(() => {
-      if (editorRef.current) {
-        expect(onChange).toHaveBeenNthCalledWith(3, {
-          type: 'selection',
-          selection: {
-            ...getTextSelection(
-              {schema: compileSchema(schemaDefinition), value: initialValue},
-              'foo',
-            ),
-            backward: false,
-          },
-        })
-        expect(onChange).toHaveBeenNthCalledWith(4, {
-          type: 'patch',
-          patch: spanPatch,
-        })
-        expect(onChange).toHaveBeenNthCalledWith(5, {
-          type: 'patch',
-          patch: blockPatch,
-        })
-        expect(onChange).toHaveBeenNthCalledWith(6, {
-          type: 'patch',
-          patch: strongPatch,
-        })
-        expect(onChange).toHaveBeenNthCalledWith(7, {
-          type: 'selection',
-          selection: {
-            ...getTextSelection(
-              {schema: compileSchema(schemaDefinition), value: initialValue},
-              'foo',
-            ),
-            backward: false,
-          },
-        })
-        expect(onChange).toHaveBeenNthCalledWith(8, {
+      expect(patchEvents).toEqual([
+        {type: 'patch', patch: spanPatch},
+        {type: 'patch', patch: blockPatch},
+        {type: 'patch', patch: strongPatch},
+      ])
+      expect(mutationEvents).toEqual([
+        {
           type: 'mutation',
           patches: [spanPatch, blockPatch],
           snapshot: [
-            block({
-              _key: 'b1',
+            {
+              _key: blockKey,
+              _type: 'block',
               children: [
-                span({
-                  _key: 's1',
+                {
+                  _key: spanKey,
+                  _type: 'span',
                   text: 'foo',
                   marks: [],
-                }),
+                },
               ],
               style: 'normal',
               markDefs: [],
-            }),
+            },
           ],
           value: [
-            block({
-              _key: 'b1',
+            {
+              _key: blockKey,
+              _type: 'block',
               children: [
-                span({
-                  _key: 's1',
+                {
+                  _key: spanKey,
+                  _type: 'span',
                   text: 'foo',
                   marks: [],
-                }),
+                },
               ],
               style: 'normal',
               markDefs: [],
-            }),
+            },
           ],
-        })
-        expect(onChange).toHaveBeenNthCalledWith(9, {
+        },
+        {
           type: 'mutation',
           patches: [strongPatch],
           snapshot: [
-            block({
-              _key: 'b1',
+            {
+              _key: blockKey,
+              _type: 'block',
               children: [
-                span({
-                  _key: 's1',
+                {
+                  _key: spanKey,
+                  _type: 'span',
                   text: 'foo',
                   marks: ['strong'],
-                }),
+                },
               ],
               style: 'normal',
               markDefs: [],
-            }),
+            },
           ],
           value: [
-            block({
-              _key: 'b1',
+            {
+              _key: blockKey,
+              _type: 'block',
               children: [
-                span({
-                  _key: 's1',
+                {
+                  _key: spanKey,
+                  _type: 'span',
                   text: 'foo',
                   marks: ['strong'],
-                }),
+                },
               ],
               style: 'normal',
               markDefs: [],
-            }),
+            },
           ],
-        })
-      }
+        },
+      ])
     })
   })
 })
