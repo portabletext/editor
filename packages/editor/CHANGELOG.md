@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.14.1
+
+### Patch Changes
+
+- [#1731](https://github.com/portabletext/editor/pull/1731) [`13a2c63`](https://github.com/portabletext/editor/commit/13a2c6337cc48773fe84baaa5f6ddbbc9502b683) Thanks [@christianhg](https://github.com/christianhg)! - fix: raise `delete` event when inserting text on expanded selection
+
+- [#1731](https://github.com/portabletext/editor/pull/1731) [`0e90027`](https://github.com/portabletext/editor/commit/0e90027a750c49f0dfa1273b26b367fbbc20f59c) Thanks [@christianhg](https://github.com/christianhg)! - fix: merge undo steps when normalizing
+
+- [#1731](https://github.com/portabletext/editor/pull/1731) [`4041334`](https://github.com/portabletext/editor/commit/4041334f4474b00b275f94532e4baddcc1b906ab) Thanks [@christianhg](https://github.com/christianhg)! - fix: use more reliable flag for when Slate is normalizing
+
 ## 2.14.0
 
 ### Minor Changes

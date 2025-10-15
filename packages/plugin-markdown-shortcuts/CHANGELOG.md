@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.3.0
+
+### Minor Changes
+
+- [#1731](https://github.com/portabletext/editor/pull/1731) [`dc3e528`](https://github.com/portabletext/editor/commit/dc3e5287f6850fd6746b6416ffeb7fcbfcdbcd9f) Thanks [@christianhg](https://github.com/christianhg)! - feat: rewrite Behaviors as Input Rules
+
+  This greatly simplifies the code and makes the markdown shortcuts more robust,
+  especially on mobile.
+
+### Patch Changes
+
+- [#1731](https://github.com/portabletext/editor/pull/1731) [`30c90f4`](https://github.com/portabletext/editor/commit/30c90f455917ced77883e01b3731cb27013c7637) Thanks [@christianhg](https://github.com/christianhg)! - fix: preserve list level if present
+
+  When toggling an ordered or unordered list, the existing `level` of the text
+  block is now preserved if present.
+
+- Updated dependencies [[`13a2c63`](https://github.com/portabletext/editor/commit/13a2c6337cc48773fe84baaa5f6ddbbc9502b683), [`0e90027`](https://github.com/portabletext/editor/commit/0e90027a750c49f0dfa1273b26b367fbbc20f59c), [`4041334`](https://github.com/portabletext/editor/commit/4041334f4474b00b275f94532e4baddcc1b906ab), [`3af9410`](https://github.com/portabletext/editor/commit/3af9410dfdedf51fccc66ba6e060713f09fa9d31)]:
+  - @portabletext/editor@2.14.1
+  - @portabletext/plugin-input-rule@0.3.1
+  - @portabletext/plugin-character-pair-decorator@1.1.4
+
 ## 1.2.0
 
 ### Minor Changes
