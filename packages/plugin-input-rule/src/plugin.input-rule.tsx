@@ -11,6 +11,7 @@ import {
   getBlockTextBefore,
   getFocusTextBlock,
 } from '@portabletext/editor/selectors'
+import {isSelectionCollapsed} from '@portabletext/editor/utils'
 import {useActorRef} from '@xstate/react'
 import {
   fromCallback,
@@ -32,6 +33,13 @@ function createInputRuleBehavior(config: {
   return defineBehavior({
     on: 'insert.text',
     guard: ({snapshot, event, dom}) => {
+      if (
+        !snapshot.context.selection ||
+        !isSelectionCollapsed(snapshot.context.selection)
+      ) {
+        return false
+      }
+
       const focusTextBlock = getFocusTextBlock(snapshot)
 
       if (!focusTextBlock) {

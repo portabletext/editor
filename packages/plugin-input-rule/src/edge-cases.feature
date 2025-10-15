@@ -167,3 +167,29 @@ Feature: Edge Cases
     Examples:
       | text | position | inserted text | new text    |
       | ""   | after "" | "---"         | "<hr />new" |
+
+  Scenario Outline: Expanded selection
+    Given the text <text>
+    When <selection> is selected
+    And <inserted text> is inserted
+    And "new" is typed
+    Then the text is <new text>
+
+    Examples:
+      | text        | selection | inserted text | new text  |
+      | "(foo"      | "foo"     | "c)"          | "©new"    |
+      | "(foo"      | "oo"      | "c)"          | "(fc)new" |
+      | "(foo"      | "(foo"    | "c)"          | "c)new"   |
+      | "(coo\|bar" | "ooba"    | ")"           | "©newr"   |
+
+  Scenario Outline: Undo after transform on expanded selection
+    Given the text <text>
+    When <selection> is selected
+    And <inserted text> is inserted
+    Then the text is <before undo>
+    When undo is performed
+    Then the text is <after undo>
+
+    Examples:
+      | text  | selection | inserted text | before undo | after undo |
+      | "(cf" | "f"       | ")"           | "©"         | "(c)"      |
