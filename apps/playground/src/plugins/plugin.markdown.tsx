@@ -16,6 +16,12 @@ export const markdownShortcutsPluginProps: MarkdownShortcutsPluginProps = {
     )?.name
     return name ? {name} : undefined
   },
+  linkObject: ({schema, href}) => {
+    const name = schema.annotations.find(
+      (annotation) => annotation.name === 'link',
+    )?.name
+    return name ? {name, value: {href}} : undefined
+  },
   defaultStyle: ({schema}) => schema.styles[0].value,
   headingStyle: ({schema, level}) =>
     schema.styles.find((style) => style.name === `h${level}`)?.name,

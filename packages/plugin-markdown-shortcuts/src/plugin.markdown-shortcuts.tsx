@@ -10,6 +10,7 @@ import {
 import {createBlockquoteRule} from './rule.blockquote'
 import {createHeadingRule} from './rule.heading'
 import {createHorizontalRuleRule} from './rule.horizontal-rule'
+import {createMarkdownLinkRule} from './rule.markdown-link'
 import {createOrderedListRule} from './rule.ordered-list'
 import {createUnorderedListRule} from './rule.unordered-list'
 
@@ -23,6 +24,10 @@ export type MarkdownShortcutsPluginProps = MarkdownBehaviorsConfig & {
     schema: EditorSchema
     level: number
   }) => string | undefined
+  linkObject?: (context: {
+    schema: EditorSchema
+    href: string
+  }) => {name: string; value?: {[prop: string]: unknown}} | undefined
   unorderedList?: (context: {schema: EditorSchema}) => string | undefined
   orderedList?: (context: {schema: EditorSchema}) => string | undefined
   boldDecorator?: ({schema}: {schema: EditorSchema}) => string | undefined
@@ -45,6 +50,7 @@ export function MarkdownShortcutsPlugin({
   defaultStyle,
   headingStyle,
   horizontalRuleObject,
+  linkObject,
   italicDecorator,
   orderedList,
   strikeThroughDecorator,
@@ -116,6 +122,9 @@ export function MarkdownShortcutsPlugin({
         <InputRulePlugin
           rules={[createHorizontalRuleRule({horizontalRuleObject})]}
         />
+      ) : null}
+      {linkObject ? (
+        <InputRulePlugin rules={[createMarkdownLinkRule({linkObject})]} />
       ) : null}
       {orderedList ? (
         <InputRulePlugin rules={[createOrderedListRule({orderedList})]} />

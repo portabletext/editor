@@ -2,7 +2,7 @@ import type {Patch} from '@portabletext/patches'
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, it, vi} from 'vitest'
-import {
+import type {
   EditorEmittedEvent,
   MutationEvent,
   PatchEvent,

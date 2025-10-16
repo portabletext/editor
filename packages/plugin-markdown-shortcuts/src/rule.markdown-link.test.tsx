@@ -1,13 +1,13 @@
+import {defineSchema} from '@portabletext/editor'
 import {parameterTypes} from '@portabletext/editor/test'
 import {
   createTestEditor,
   stepDefinitions,
   type Context,
 } from '@portabletext/editor/test/vitest'
-import {defineSchema} from '@portabletext/schema'
+import {InputRulePlugin} from '@portabletext/plugin-input-rule'
 import {Before} from 'racejar'
 import {Feature} from 'racejar/vitest'
-import {InputRulePlugin} from './plugin.input-rule'
 import {createMarkdownLinkRule} from './rule.markdown-link'
 import markdownLinkFeature from './rule.markdown-link.feature?raw'
 
