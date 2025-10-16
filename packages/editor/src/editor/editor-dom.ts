@@ -10,6 +10,7 @@ import type {EditorSnapshot} from './editor-snapshot'
 export type EditorDom = {
   getBlockNodes: (snapshot: EditorSnapshot) => Array<Node>
   getChildNodes: (snapshot: EditorSnapshot) => Array<Node>
+  getEditorElement: () => Element | undefined
   getSelectionRect: (snapshot: EditorSnapshot) => DOMRect | null
   getStartBlockElement: (snapshot: EditorSnapshot) => Element | null
   getEndBlockElement: (snapshot: EditorSnapshot) => Element | null
@@ -37,6 +38,7 @@ export function createEditorDom(
   return {
     getBlockNodes: (snapshot) => getBlockNodes(slateEditor, snapshot),
     getChildNodes: (snapshot) => getChildNodes(slateEditor, snapshot),
+    getEditorElement: () => getEditorElement(slateEditor),
     getSelectionRect: (snapshot) => getSelectionRect(snapshot),
     getStartBlockElement: (snapshot) =>
       getStartBlockElement(slateEditor, snapshot),
@@ -104,6 +106,14 @@ function getChildNodes(
     )
   } catch {
     return []
+  }
+}
+
+function getEditorElement(slateEditor: PortableTextSlateEditor) {
+  try {
+    return DOMEditor.toDOMNode(slateEditor, slateEditor)
+  } catch {
+    return undefined
   }
 }
 
