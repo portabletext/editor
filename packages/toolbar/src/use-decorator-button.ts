@@ -16,6 +16,17 @@ const activeListener = fromCallback<
   {editor: Editor; schemaType: DecoratorSchemaType},
   {type: 'set active'} | {type: 'set inactive'}
 >(({input, sendBack}) => {
+  // Send back the initial state
+  if (
+    selectors.isActiveDecorator(input.schemaType.name)(
+      input.editor.getSnapshot(),
+    )
+  ) {
+    sendBack({type: 'set active'})
+  } else {
+    sendBack({type: 'set inactive'})
+  }
+
   return input.editor.on('*', () => {
     const snapshot = input.editor.getSnapshot()
 
