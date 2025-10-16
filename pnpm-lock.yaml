@@ -634,7 +634,7 @@ importers:
         specifier: ^2.30.0
         version: 2.30.0
       xstate:
-        specifier: ^5.21.0
+        specifier: ^5.23.0
         version: 5.23.0
     devDependencies:
       '@portabletext/editor':
