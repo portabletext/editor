@@ -20,6 +20,10 @@ const activeListener = fromCallback<
   {editor: Editor},
   ActiveStyleListenerEvent
 >(({input, sendBack}) => {
+  // Send back the initial state
+  const activeStyle = selectors.getActiveStyle(input.editor.getSnapshot())
+  sendBack({type: 'set active style', style: activeStyle})
+
   return input.editor.on('*', () => {
     const snapshot = input.editor.getSnapshot()
     const activeStyle = selectors.getActiveStyle(snapshot)
