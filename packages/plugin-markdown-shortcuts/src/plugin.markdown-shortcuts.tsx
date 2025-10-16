@@ -2,7 +2,7 @@ import type {EditorSchema} from '@portabletext/editor'
 import {useEditor} from '@portabletext/editor'
 import {CharacterPairDecoratorPlugin} from '@portabletext/plugin-character-pair-decorator'
 import {InputRulePlugin} from '@portabletext/plugin-input-rule'
-import {useEffect} from 'react'
+import {useEffect, useMemo} from 'react'
 import {
   createMarkdownBehaviors,
   type MarkdownBehaviorsConfig,
@@ -72,7 +72,37 @@ export function MarkdownShortcutsPlugin({
         unregisterBehavior()
       }
     }
-  }, [defaultStyle, editor, horizontalRuleObject])
+  }, [defaultStyle, editor])
+
+  const inputRules = useMemo(() => {
+    const rules = []
+    if (blockquoteStyle) {
+      rules.push(createBlockquoteRule({blockquoteStyle}))
+    }
+    if (headingStyle) {
+      rules.push(createHeadingRule({headingStyle}))
+    }
+    if (horizontalRuleObject) {
+      rules.push(createHorizontalRuleRule({horizontalRuleObject}))
+    }
+    if (linkObject) {
+      rules.push(createMarkdownLinkRule({linkObject}))
+    }
+    if (orderedList) {
+      rules.push(createOrderedListRule({orderedList}))
+    }
+    if (unorderedList) {
+      rules.push(createUnorderedListRule({unorderedList}))
+    }
+    return rules.length > 0 ? rules : null
+  }, [
+    blockquoteStyle,
+    headingStyle,
+    horizontalRuleObject,
+    linkObject,
+    orderedList,
+    unorderedList,
+  ])
 
   return (
     <>
@@ -112,26 +142,7 @@ export function MarkdownShortcutsPlugin({
           pair={{char: '~', amount: 2}}
         />
       ) : null}
-      {blockquoteStyle ? (
-        <InputRulePlugin rules={[createBlockquoteRule({blockquoteStyle})]} />
-      ) : null}
-      {headingStyle ? (
-        <InputRulePlugin rules={[createHeadingRule({headingStyle})]} />
-      ) : null}
-      {horizontalRuleObject ? (
-        <InputRulePlugin
-          rules={[createHorizontalRuleRule({horizontalRuleObject})]}
-        />
-      ) : null}
-      {linkObject ? (
-        <InputRulePlugin rules={[createMarkdownLinkRule({linkObject})]} />
-      ) : null}
-      {orderedList ? (
-        <InputRulePlugin rules={[createOrderedListRule({orderedList})]} />
-      ) : null}
-      {unorderedList ? (
-        <InputRulePlugin rules={[createUnorderedListRule({unorderedList})]} />
-      ) : null}
+      {inputRules ? <InputRulePlugin rules={inputRules} /> : null}
     </>
   )
 }
