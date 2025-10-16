@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.4.0
+
+### Minor Changes
+
+- [#1735](https://github.com/portabletext/editor/pull/1735) [`f8ae10e`](https://github.com/portabletext/editor/commit/f8ae10e6f2b2b998f59975600f1a715652379d38) Thanks [@christianhg](https://github.com/christianhg)! - feat: add link shortcut
+
+### Patch Changes
+
+- [#1735](https://github.com/portabletext/editor/pull/1735) [`f1adeda`](https://github.com/portabletext/editor/commit/f1adeda3d6d6c6486c66d2413d2db7451d342e89) Thanks [@christianhg](https://github.com/christianhg)! - fix: adjust @portabletext/plugin-input-rule semver range
+
 ## 1.3.1
 
 ### Patch Changes
