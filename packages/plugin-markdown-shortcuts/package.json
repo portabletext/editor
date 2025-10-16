@@ -47,7 +47,13 @@
     "clean": "del .turbo && del dist && del node_modules",
     "dev": "pkg-utils watch",
     "lint:fix": "biome lint --write .",
-    "prepublishOnly": "turbo run build"
+    "prepublishOnly": "turbo run build",
+    "test:browser:chromium": "vitest run --project \"browser (chromium)\"",
+    "test:browser:chromium:watch": "vitest watch --project \"browser (chromium)\"",
+    "test:browser:firefox": "vitest run --project \"browser (firefox)\"",
+    "test:browser:firefox:watch": "vitest watch --project \"browser (firefox)\"",
+    "test:browser:webkit": "vitest run --project \"browser (webkit)\"",
+    "test:browser:webkit:watch": "vitest watch --project \"browser (webkit)\""
   },
   "dependencies": {
     "@portabletext/plugin-character-pair-decorator": "workspace:^",
@@ -56,12 +62,15 @@
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
     "@types/react": "^19.1.12",
+    "@vitejs/plugin-react": "^5.0.4",
     "babel-plugin-react-compiler": "19.1.0-rc.3",
     "eslint": "^9.37.0",
     "eslint-plugin-react-hooks": "6.0.0-rc.2",
+    "racejar": "workspace:*",
     "react": "^19.1.1",
     "typescript": "catalog:",
-    "typescript-eslint": "^8.46.1"
+    "typescript-eslint": "^8.46.1",
+    "vitest": "^3.2.4"
   },
   "peerDependencies": {
     "@portabletext/editor": "workspace:^",

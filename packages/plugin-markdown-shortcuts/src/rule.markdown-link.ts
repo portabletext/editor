@@ -1,6 +1,6 @@
 import type {EditorSchema} from '@portabletext/editor'
 import {raise, type BehaviorAction} from '@portabletext/editor/behaviors'
-import {defineInputRule} from './input-rule'
+import {defineInputRule} from '@portabletext/plugin-input-rule'
 
 export function createMarkdownLinkRule(config: {
   linkObject: (context: {

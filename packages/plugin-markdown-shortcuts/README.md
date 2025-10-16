@@ -75,6 +75,12 @@ function App() {
           )?.name
           return name ? {name} : undefined
         }}
+        linkObject={({schema, href}) => {
+          const name = schema.annotations.find(
+            (annotation) => annotation.name === 'link',
+          )?.name
+          return name ? {name, value: {href}} : undefined
+        }}
       />
     </EditorProvider>
   )

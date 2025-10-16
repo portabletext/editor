@@ -1,4 +1,4 @@
-import {Editor} from 'slate'
+import type {Editor} from 'slate'
 
 const IS_NORMALIZING_NODE: WeakMap<Editor, boolean | undefined> = new WeakMap()
 
