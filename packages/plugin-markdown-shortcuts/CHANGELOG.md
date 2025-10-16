@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.4.1
+
+### Patch Changes
+
+- [#1737](https://github.com/portabletext/editor/pull/1737) [`dac0d17`](https://github.com/portabletext/editor/commit/dac0d1728c2bcbe2913f1f769a6133427bd7c2b8) Thanks [@christianhg](https://github.com/christianhg)! - fix(perf): optimise `MarkdownShortcutsPlugin`
+
+- Updated dependencies [[`7eab00e`](https://github.com/portabletext/editor/commit/7eab00ee9b1f1186fdac76210daa1953edc2847c)]:
+  - @portabletext/editor@2.14.2
+  - @portabletext/plugin-character-pair-decorator@1.1.5
+  - @portabletext/plugin-input-rule@0.3.3
+
 ## 1.4.0
 
 ### Minor Changes
