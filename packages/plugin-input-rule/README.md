@@ -2,15 +2,15 @@
 
 > Easily configure Input Rules in the Portable Text Editor
 
-> ⚠️ Please note that `defineInputRule` and other APIs exposed by this plugin are still WIP and might change slightly. We are still ironing out some details before can cut a stable release.
+> ⚠️ **Note:** `defineInputRule` and other APIs exposed by this plugin are still a work in progress and may change slightly. We are still ironing out some details before we can cut a stable release.
 
-Listening for an inserted text pattern to then perform a set of actions is incredibly common, but also carries many footguns:
+Listening for inserted text patterns and performing actions based on them is incredibly common, but it comes with many challenges:
 
 1. How do you implement undo functionality correctly?
 2. What about smart undo with <kbd>Backspace</kbd>?
-3. And have you considered `insert.text` events that carry more than one character? (Android says hello.)
+3. Have you considered `insert.text` events that carry more than one character? (Android, anyone?)
 
-_This is why this plugin exists_. It brings the concept of "Input Rules" to the Portable Text Editor to allow you to write text transformation logic as if they were Behaviors, without having to worry about low-level details:
+_This is why this plugin exists_. It brings the concept of "Input Rules" to the Portable Text Editor, allowing you to write text transformation logic as if they were Behaviors, without worrying about low-level details:
 
 ```tsx
 import type {EditorSchema} from '@portabletext/editor'
@@ -19,13 +19,13 @@ import {getPreviousInlineObject} from '@portabletext/editor/selectors'
 import {defineInputRule} from '@portabletext/plugin-input-rule'
 
 const unorderedListRule = defineInputRule({
-  // Instead of an event, we listen for a RegExp pattern
+  // Listen for a RegExp pattern instead of a raw event
   on: /^(-|\*) /,
   // The `event` carries useful information like the offsets of RegExp matches
-  // as well as information about the focused text block.
+  // as well as information about the focused text block
   guard: ({snapshot, event}) => {
-    // In theory, an Input Rule could return multiple matches. But in this
-    // case we only expect one match.
+    // In theory, an Input Rule could return multiple matches, but in this
+    // case we only expect one
     const match = event.matches.at(0)
 
     if (!match) {
@@ -42,7 +42,7 @@ const unorderedListRule = defineInputRule({
         props: ['style'],
         at: event.focusTextBlock.path,
       }),
-      // Then, turn it into a list ite
+      // Then, turn it into a list item
       raise({
         type: 'block.set',
         props: {
@@ -65,11 +65,11 @@ export function MyMarkdownPlugin() {
 }
 ```
 
-🤫 [`@portabletext/plugin-markdown-shortcuts`](../plugin-markdown-shortcuts/) already exists and is powered by Input Rules.
+> 💡 **Tip:** The [`@portabletext/plugin-markdown-shortcuts`](../plugin-markdown-shortcuts/) package is already built using Input Rules and provides common markdown shortcuts out of the box.
 
 ## Text Transformation Rules
 
-Because text transformations are so common, the plugin exposes a high-level `defineTextTransformRule` to configure these without the need for any boilerplate:
+Text transformations are so common that the plugin provides a high-level `defineTextTransformRule` helper to configure them without any boilerplate:
 
 ```tsx
 const emDashRule = defineTextTransformRule({
@@ -78,20 +78,22 @@ const emDashRule = defineTextTransformRule({
 })
 
 export function MyTypographyPlugin() {
-  return <InputRulePlugin rules={[emDasRule]} />
+  return <InputRulePlugin rules={[emDashRule]} />
 }
 ```
 
 In fact, the production-ready [`@portabletext/plugin-typography`](../plugin-typography/) is built on top of Input Rules and comes packed with common text transformations like this.
 
-## Other Examples
+## Advanced Examples
 
-Other ideas that can easily be realized with Input Rules:
+Input Rules can handle more complex transformations. Here are two advanced examples:
 
-1. Automatically turning `"[Sanity](https://sanity.io)" into a link.
-2. Listening for text patterns like `"{AAPL}"` and turn that into a stock ticker.
+1. **Markdown Link**: Automatically convert `[text](url)` syntax into proper links
+2. **Stock Ticker**: Convert `{SYMBOL}` patterns into stock ticker objects
 
-### Markdown Link
+### Markdown Link Rule
+
+This example shows how to convert markdown-style link syntax `[text](url)` into proper link annotations:
 
 ```tsx
 const markdownLinkRule = defineInputRule({
@@ -176,7 +178,9 @@ const markdownLinkRule = defineInputRule({
 })
 ```
 
-## Stock Ticker Rule
+### Stock Ticker Rule
+
+This example demonstrates how to convert text patterns like `{AAPL}` into custom inline objects:
 
 ```tsx
 const stockTickerRule = defineInputRule({
