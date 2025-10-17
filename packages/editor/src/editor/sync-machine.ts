@@ -24,7 +24,7 @@ import {
 import type {ActorRefFrom} from 'xstate'
 import {debugWithName} from '../internal-utils/debug'
 import {validateValue} from '../internal-utils/validateValue'
-import {toSlateValue, VOID_CHILD_KEY} from '../internal-utils/values'
+import {toSlateBlock, VOID_CHILD_KEY} from '../internal-utils/values'
 import type {PickFromUnion} from '../type-utils'
 import type {
   InvalidValueResolution,
@@ -467,10 +467,6 @@ async function updateValue({
   }
   // Remove, replace or add nodes according to what is changed.
   if (value && value.length > 0) {
-    const slateValueFromProps = toSlateValue(value, {
-      schemaTypes: context.schema,
-    })
-
     if (streamBlocks) {
       await new Promise<void>((resolve) => {
         Editor.withoutNormalizing(slateEditor, () => {
@@ -483,7 +479,7 @@ async function updateValue({
 
               isChanged = removeExtraBlocks({
                 slateEditor,
-                slateValueFromProps,
+                value,
               })
 
               const processBlocks = async () => {
@@ -491,7 +487,7 @@ async function updateValue({
                   currentBlock,
                   currentBlockIndex,
                 ] of getStreamedBlocks({
-                  slateValue: slateValueFromProps,
+                  value,
                 })) {
                   const {blockChanged, blockValid} = syncBlock({
                     context,
@@ -528,12 +524,12 @@ async function updateValue({
 
             isChanged = removeExtraBlocks({
               slateEditor,
-              slateValueFromProps,
+              value,
             })
 
             let index = 0
 
-            for (const currentBlock of slateValueFromProps) {
+            for (const currentBlock of value) {
               const {blockChanged, blockValid} = syncBlock({
                 context,
                 sendBack,
@@ -598,17 +594,17 @@ async function updateValue({
 
 function removeExtraBlocks({
   slateEditor,
-  slateValueFromProps,
+  value,
 }: {
   slateEditor: PortableTextSlateEditor
-  slateValueFromProps: Array<Descendant>
+  value: Array<PortableTextBlock>
 }) {
   let isChanged = false
   const childrenLength = slateEditor.children.length
 
   // Remove blocks that have become superfluous
-  if (slateValueFromProps.length < childrenLength) {
-    for (let i = childrenLength - 1; i > slateValueFromProps.length - 1; i--) {
+  if (value.length < childrenLength) {
+    for (let i = childrenLength - 1; i > value.length - 1; i--) {
       Transforms.removeNodes(slateEditor, {
         at: [i],
       })
@@ -618,13 +614,9 @@ function removeExtraBlocks({
   return isChanged
 }
 
-async function* getStreamedBlocks({
-  slateValue,
-}: {
-  slateValue: Array<Descendant>
-}) {
+async function* getStreamedBlocks({value}: {value: Array<PortableTextBlock>}) {
   let index = 0
-  for await (const block of slateValue) {
+  for await (const block of value) {
     if (index % 10 === 0) {
       await new Promise<void>((resolve) => setTimeout(resolve, 0))
     }
@@ -648,7 +640,7 @@ function syncBlock({
     schema: EditorSchema
   }
   sendBack: (event: SyncValueEvent) => void
-  block: Descendant
+  block: PortableTextBlock
   index: number
   slateEditor: PortableTextSlateEditor
   value: Array<PortableTextBlock>
@@ -692,18 +684,17 @@ function syncBlock({
             }
           }
           if (validation.valid || validation.resolution?.autoResolve) {
+            const slateBlock = toSlateBlock(currentBlock, {
+              schemaTypes: context.schema,
+            })
+
             if (oldBlock._key === currentBlock._key) {
               if (debug.enabled) debug('Updating block', oldBlock, currentBlock)
-              _updateBlock(
-                slateEditor,
-                currentBlock,
-                oldBlock,
-                currentBlockIndex,
-              )
+              _updateBlock(slateEditor, slateBlock, oldBlock, currentBlockIndex)
             } else {
               if (debug.enabled)
                 debug('Replacing block', oldBlock, currentBlock)
-              _replaceBlock(slateEditor, currentBlock, currentBlockIndex)
+              _replaceBlock(slateEditor, slateBlock, currentBlockIndex)
             }
             blockChanged = true
           } else {
@@ -717,7 +708,7 @@ function syncBlock({
         }
 
         if (!oldBlock && blockValid) {
-          const validationValue = [value[currentBlockIndex]]
+          const validationValue = [currentBlock]
           const validation = validateValue(
             validationValue,
             context.schema,
@@ -729,7 +720,10 @@ function syncBlock({
               currentBlock,
             )
           if (validation.valid || validation.resolution?.autoResolve) {
-            Transforms.insertNodes(slateEditor, currentBlock, {
+            const slateBlock = toSlateBlock(currentBlock, {
+              schemaTypes: context.schema,
+            })
+            Transforms.insertNodes(slateEditor, slateBlock, {
               at: [currentBlockIndex],
             })
           } else {

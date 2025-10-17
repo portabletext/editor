@@ -30,82 +30,92 @@ export function toSlateValue(
   keyMap: Record<string, any> = {},
 ): Descendant[] {
   if (value && Array.isArray(value)) {
-    return value.map((block) => {
-      const {_type, _key, ...rest} = block
-      const isPortableText = block && block._type === schemaTypes.block.name
-      if (isPortableText) {
-        const textBlock = block as PortableTextTextBlock
-        let hasInlines = false
-        const hasMissingStyle = typeof textBlock.style === 'undefined'
-        const hasMissingMarkDefs = typeof textBlock.markDefs === 'undefined'
-        const hasMissingChildren = typeof textBlock.children === 'undefined'
-
-        const children = (textBlock.children || []).map((child) => {
-          const {_type: cType, _key: cKey, ...cRest} = child
-          // Return 'slate' version of inline object where the actual
-          // value is stored in the `value` property.
-          // In slate, inline objects are represented as regular
-          // children with actual text node in order to be able to
-          // be selected the same way as the rest of the (text) content.
-          if (cType !== 'span') {
-            hasInlines = true
-            return keepObjectEquality(
-              {
-                _type: cType,
-                _key: cKey,
-                children: [
-                  {
-                    _key: VOID_CHILD_KEY,
-                    _type: 'span',
-                    text: '',
-                    marks: [],
-                  },
-                ],
-                value: cRest,
-                __inline: true,
-              },
-              keyMap,
-            )
-          }
-          // Original child object (span)
-          return child
-        })
-        // Return original block
-        if (
-          !hasMissingStyle &&
-          !hasMissingMarkDefs &&
-          !hasMissingChildren &&
-          !hasInlines &&
-          Element.isElement(block)
-        ) {
-          // Original object
-          return block
-        }
-        // TODO: remove this when we have a better way to handle missing style
-        if (hasMissingStyle) {
-          rest.style = schemaTypes.styles[0].name
-        }
-        return keepObjectEquality({_type, _key, ...rest, children}, keyMap)
-      }
-      return keepObjectEquality(
-        {
-          _type,
-          _key,
-          children: [
-            {
-              _key: VOID_CHILD_KEY,
-              _type: 'span',
-              text: '',
-              marks: [],
-            },
-          ],
-          value: rest,
-        },
-        keyMap,
-      )
-    }) as Descendant[]
+    return value.map((block) => toSlateBlock(block, {schemaTypes}, keyMap))
   }
   return []
+}
+
+export function toSlateBlock(
+  block: PortableTextBlock,
+  {schemaTypes}: {schemaTypes: EditorSchema},
+  keyMap: Record<string, any> = {},
+): Descendant {
+  const {_type, _key, ...rest} = block
+  const isPortableText = block && block._type === schemaTypes.block.name
+  if (isPortableText) {
+    const textBlock = block as PortableTextTextBlock
+    let hasInlines = false
+    const hasMissingStyle = typeof textBlock.style === 'undefined'
+    const hasMissingMarkDefs = typeof textBlock.markDefs === 'undefined'
+    const hasMissingChildren = typeof textBlock.children === 'undefined'
+
+    const children = (textBlock.children || []).map((child) => {
+      const {_type: cType, _key: cKey, ...cRest} = child
+      // Return 'slate' version of inline object where the actual
+      // value is stored in the `value` property.
+      // In slate, inline objects are represented as regular
+      // children with actual text node in order to be able to
+      // be selected the same way as the rest of the (text) content.
+      if (cType !== 'span') {
+        hasInlines = true
+        return keepObjectEquality(
+          {
+            _type: cType,
+            _key: cKey,
+            children: [
+              {
+                _key: VOID_CHILD_KEY,
+                _type: 'span',
+                text: '',
+                marks: [],
+              },
+            ],
+            value: cRest,
+            __inline: true,
+          },
+          keyMap,
+        )
+      }
+      // Original child object (span)
+      return child
+    })
+    // Return original block
+    if (
+      !hasMissingStyle &&
+      !hasMissingMarkDefs &&
+      !hasMissingChildren &&
+      !hasInlines &&
+      Element.isElement(block)
+    ) {
+      // Original object
+      return block
+    }
+    // TODO: remove this when we have a better way to handle missing style
+    if (hasMissingStyle) {
+      rest.style = schemaTypes.styles[0].name
+    }
+    return keepObjectEquality(
+      {_type, _key, ...rest, children},
+      keyMap,
+    ) as Descendant
+  }
+
+  return keepObjectEquality(
+    {
+      _type,
+      _key,
+      children: [
+        {
+          _key: VOID_CHILD_KEY,
+          _type: 'span',
+          text: '',
+          marks: [],
+        },
+      ],
+      value: rest,
+    },
+    keyMap,
+  ) as Descendant
 }
 
 export function fromSlateValue(
