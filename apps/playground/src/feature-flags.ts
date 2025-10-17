@@ -29,7 +29,7 @@ export const defaultEditorFeatureFlags: EditorFeatureFlags = {
   imageDeserializerPlugin: false,
   htmlDeserializerPlugin: false,
   textFileDeserializerPlugin: false,
-  emojiPickerPlugin: false,
+  emojiPickerPlugin: true,
   codeEditorPlugin: false,
   linkPlugin: false,
   oneLinePlugin: false,

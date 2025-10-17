@@ -3,22 +3,40 @@ import {
   useEmojiPicker,
   type EmojiMatch,
 } from '@portabletext/plugin-emoji-picker'
+import {usePopover} from '@portabletext/toolbar'
 import {useEffect, useRef} from 'react'
 import {Button} from './primitives/button'
+import {Popover} from './primitives/popover'
 
 export function EmojiPickerPlugin() {
   const {keyword, matches, selectedIndex, onDismiss, onNavigateTo, onSelect} =
     useEmojiPicker({matchEmojis})
+  const popover = usePopover({
+    guard: () => true,
+    placement: 'top',
+  })
+
+  if (!popover.snapshot.matches('active')) {
+    return null
+  }
 
   return (
-    <EmojiListBox
-      keyword={keyword}
-      matches={matches}
-      selectedIndex={selectedIndex}
-      onDismiss={onDismiss}
-      onNavigateTo={onNavigateTo}
-      onSelect={onSelect}
-    />
+    <Popover
+      isNonModal
+      triggerRef={popover.snapshot.context.anchorRef}
+      crossOffset={popover.snapshot.context.crossOffset}
+      placement={popover.snapshot.context.placement}
+      isOpen={keyword.length >= 2}
+    >
+      <EmojiListBox
+        keyword={keyword}
+        matches={matches}
+        selectedIndex={selectedIndex}
+        onDismiss={onDismiss}
+        onNavigateTo={onNavigateTo}
+        onSelect={onSelect}
+      />
+    </Popover>
   )
 }
 
@@ -30,12 +48,8 @@ export function EmojiListBox(props: {
   onNavigateTo: (index: number) => void
   onSelect: () => void
 }) {
-  if (props.keyword.length < 2) {
-    return null
-  }
-
   return (
-    <div className="border border-gray-300 rounded bg-white shadow">
+    <div className="rounded">
       {props.matches.length === 0 ? (
         <div className="p-2 flex align-middle gap-2">
           No results found{' '}
