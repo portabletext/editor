@@ -596,4 +596,74 @@ describe('event.update value', () => {
       ])
     })
   })
+
+  test('Scenario: Setting child to `null` results in a validation error', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const events: Array<EditorEmittedEvent> = []
+    const blockKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const barKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: fooKey, text: 'foo', marks: []},
+            {_type: 'span', _key: barKey, text: 'bar', marks: ['strong']},
+          ],
+        },
+      ],
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+      }),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            events.push(event)
+          }}
+        />
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo,bar'])
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        expect.objectContaining({
+          type: 'value changed',
+        }),
+        {type: 'ready'},
+      ])
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: fooKey, text: 'foo', marks: []},
+            null,
+          ],
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(events.slice(2)).toEqual([
+        expect.objectContaining({
+          type: 'invalid value',
+        }),
+      ])
+    })
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo,bar'])
+    })
+  })
 })

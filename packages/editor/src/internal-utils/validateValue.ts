@@ -1,5 +1,5 @@
 import {insert, set, setIfMissing, unset} from '@portabletext/patches'
-import {isTextBlock} from '@portabletext/schema'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {
   PortableTextBlock,
   PortableTextSpan,
@@ -228,9 +228,9 @@ export function validateValue(
         const allUsedMarks = uniq(
           flatten(
             textBlock.children
-              .filter((cld) => cld._type === types.span.name)
+              .filter((child) => isSpan({schema: types}, child))
               .map((cld) => cld.marks || []),
-          ) as string[],
+          ),
         )
 
         // Test that all markDefs are in use (remove orphaned markDefs)
