@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.14.3
+
+### Patch Changes
+
+- [#1741](https://github.com/portabletext/editor/pull/1741) [`54f57e3`](https://github.com/portabletext/editor/commit/54f57e3e85cc5544c5d18881c393957218ffb34a) Thanks [@christianhg](https://github.com/christianhg)! - fix: avoid crashing if incoming child is `null`
+
 ## 2.14.2
 
 ### Patch Changes
