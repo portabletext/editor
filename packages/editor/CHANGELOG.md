@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.14.4
+
+### Patch Changes
+
+- [#1744](https://github.com/portabletext/editor/pull/1744) [`9d6cfdb`](https://github.com/portabletext/editor/commit/9d6cfdbe3fc67d88113da7f73b408f3185ddabef) Thanks [@christianhg](https://github.com/christianhg)! - fix: selection undo step edge case
+
+- [#1745](https://github.com/portabletext/editor/pull/1745) [`82bb94d`](https://github.com/portabletext/editor/commit/82bb94d998445f0b79c215d6ab1f3eed56c020fc) Thanks [@stipsan](https://github.com/stipsan)! - Upgrade React Compiler to v1
+
+- [#1744](https://github.com/portabletext/editor/pull/1744) [`a8a3fad`](https://github.com/portabletext/editor/commit/a8a3faddb5217fde30df34bd175e99e709983ff6) Thanks [@christianhg](https://github.com/christianhg)! - fix: selection events sometimes getting a distinct undo step
+
 ## 2.14.3
 
 ### Patch Changes
