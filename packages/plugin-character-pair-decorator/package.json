@@ -54,7 +54,7 @@
   "dependencies": {
     "@xstate/react": "^6.0.0",
     "remeda": "^2.30.0",
-    "xstate": "^5.21.0"
+    "xstate": "^5.23.0"
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
