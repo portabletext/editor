@@ -59,9 +59,9 @@
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
     "@types/react": "^19.1.12",
-    "babel-plugin-react-compiler": "19.1.0-rc.3",
-    "eslint": "^9.37.0",
-    "eslint-plugin-react-hooks": "6.0.0-rc.2",
+    "babel-plugin-react-compiler": "1.0.0",
+    "eslint": "^9.38.0",
+    "eslint-plugin-react-hooks": "7.0.0",
     "react": "^19.1.1",
     "typescript": "catalog:",
     "typescript-eslint": "^8.46.1",
