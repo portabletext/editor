@@ -4,7 +4,7 @@ import tseslint from 'typescript-eslint'
 
 export default tseslint.config([
   globalIgnores(['dist', '*.test.tsx']),
-  ...reactHooks.configs['flat/recommended'],
+  reactHooks.configs.flat.recommended,
   {
     files: ['src/**/*.{cjs,mjs,js,jsx,ts,tsx}'],
     languageOptions: {

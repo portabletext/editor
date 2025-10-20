@@ -49,20 +49,20 @@
   "dependencies": {
     "@portabletext/keyboard-shortcuts": "workspace:^",
     "@xstate/react": "^6.0.0",
-    "react-compiler-runtime": "19.1.0-rc.3",
+    "react-compiler-runtime": "1.0.0",
     "xstate": "^5.23.0"
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:*",
     "@sanity/pkg-utils": "^8.1.14",
     "@types/react": "^19.2.0",
-    "babel-plugin-react-compiler": "19.1.0-rc.3",
-    "eslint": "^9.36.0",
+    "babel-plugin-react-compiler": "1.0.0",
+    "eslint": "^9.38.0",
     "eslint-formatter-gha": "^1.6.0",
-    "eslint-plugin-react-hooks": "6.0.0-rc.2",
+    "eslint-plugin-react-hooks": "7.0.0",
     "react": "^19.2.0",
     "typescript": "catalog:",
-    "typescript-eslint": "^8.44.1"
+    "typescript-eslint": "^8.46.1"
   },
   "peerDependencies": {
     "@portabletext/editor": "workspace:^2.14.3",

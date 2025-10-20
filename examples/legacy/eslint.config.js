@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
   {ignores: ['dist']},
-  ...reactHooks.configs['flat/recommended'],
+  reactHooks.configs.flat.recommended,
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
