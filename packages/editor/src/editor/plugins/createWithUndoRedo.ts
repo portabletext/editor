@@ -187,6 +187,11 @@ export function createWithUndoRedo(
         op.type === 'set_selection' &&
         currentUndoStepId === undefined &&
         previousUndoStepId !== undefined
+      const selectingWithDifferentUndoStepId =
+        op.type === 'set_selection' &&
+        currentUndoStepId !== undefined &&
+        previousUndoStepId !== undefined &&
+        previousUndoStepId !== currentUndoStepId
 
       const lastOp = step.operations.at(-1)
       const mergeOpIntoPreviousStep =
@@ -194,6 +199,7 @@ export function createWithUndoRedo(
           ? currentUndoStepId === previousUndoStepId ||
             isNormalizingNode(editor)
           : selectingWithoutUndoStepId ||
+              selectingWithDifferentUndoStepId ||
               (currentUndoStepId === undefined &&
                 previousUndoStepId === undefined)
             ? shouldMerge(op, lastOp) ||
