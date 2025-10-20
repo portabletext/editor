@@ -193,3 +193,11 @@ Feature: Edge Cases
     Examples:
       | text  | selection | inserted text | before undo | after undo |
       | "(cf" | "f"       | ")"           | "©"         | "(c)"      |
+
+  Scenario: Consecutive undo after selection change
+    Given the text ""
+    When "->" is typed
+    And undo is performed
+    And "{ArrowLeft}" is pressed
+    And undo is performed
+    Then the text is "-"
