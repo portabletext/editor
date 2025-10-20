@@ -567,4 +567,65 @@ describe('event.history.undo', () => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
     })
   })
+
+  test('Scenario: Undo after sending `select` after ended Behavior', async () => {
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'a',
+              actions: [
+                ({event}) => [forward(event)],
+                () => [
+                  raise({type: 'delete.backward', unit: 'character'}),
+                  raise({type: 'insert.text', text: 'b'}),
+                ],
+              ],
+            }),
+            defineBehavior<{
+              at: EditorSelection
+            }>({
+              on: 'custom.select',
+              actions: [({event}) => [raise({type: 'select', at: event.at})]],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'a')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['b'])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
+    })
+
+    const firstBlock = getFirstBlock(editor.getSnapshot())
+
+    if (!firstBlock) {
+      throw new Error('First block not found')
+    }
+
+    // Provoke the creation of a new undo step
+    editor.send({
+      type: 'custom.select',
+      at: {
+        anchor: {path: firstBlock.path, offset: 0},
+        focus: {path: firstBlock.path, offset: 0},
+      },
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+    })
+  })
 })
