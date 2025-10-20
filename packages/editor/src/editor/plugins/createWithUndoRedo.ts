@@ -142,52 +142,83 @@ export function createWithUndoRedo(
         return
       }
 
-      const {operations, history} = editor
-      const {undos} = history
-      const step = undos[undos.length - 1]
-      const lastOp =
-        step && step.operations && step.operations[step.operations.length - 1]
-      const overwrite = shouldOverwrite(op, lastOp)
-      const save = isSaving(editor)
-
+      const savingUndoSteps = isSaving(editor)
       const currentUndoStepId = getCurrentUndoStepId(editor)
 
-      let merge =
-        currentUndoStepId === previousUndoStepId || isNormalizingNode(editor)
+      if (!savingUndoSteps) {
+        // If we are bypassing saving undo steps, then we can just move along.
 
-      if (save) {
-        if (!step) {
-          merge = false
-        } else if (operations.length === 0) {
-          merge =
-            currentUndoStepId === undefined && previousUndoStepId === undefined
-              ? shouldMerge(op, lastOp) || overwrite
-              : merge
-        }
+        previousUndoStepId = currentUndoStepId
 
-        if (step && merge) {
-          step.operations.push(op)
-        } else {
-          const newStep = {
-            operations: [
-              ...(editor.selection === null
-                ? []
-                : [createSelectOperation(editor)]),
-              op,
-            ],
-            timestamp: new Date(),
-          }
-          undos.push(newStep)
-          debug('Created new undo step', step)
-        }
+        apply(op)
 
-        while (undos.length > UNDO_STEP_LIMIT) {
-          undos.shift()
-        }
+        return
+      }
 
-        if (shouldClear(op)) {
-          history.redos = []
-        }
+      if (op.type !== 'set_selection') {
+        // Clear the repo steps if any actual changes are made
+        editor.history.redos = []
+      }
+
+      const step = editor.history.undos.at(editor.history.undos.length - 1)
+
+      if (!step) {
+        // If the undo stack is empty, then we can just create a new step and
+        // move along.
+
+        editor.history.undos.push({
+          operations: [
+            ...(editor.selection === null
+              ? []
+              : [createSelectOperation(editor)]),
+            op,
+          ],
+          timestamp: new Date(),
+        })
+
+        apply(op)
+
+        previousUndoStepId = currentUndoStepId
+
+        return
+      }
+
+      const selectingWithoutUndoStepId =
+        op.type === 'set_selection' &&
+        currentUndoStepId === undefined &&
+        previousUndoStepId !== undefined
+
+      const lastOp = step.operations.at(-1)
+      const mergeOpIntoPreviousStep =
+        editor.operations.length > 0
+          ? currentUndoStepId === previousUndoStepId ||
+            isNormalizingNode(editor)
+          : selectingWithoutUndoStepId ||
+              (currentUndoStepId === undefined &&
+                previousUndoStepId === undefined)
+            ? shouldMerge(op, lastOp) ||
+              (lastOp?.type === 'set_selection' && op.type === 'set_selection')
+            : currentUndoStepId === previousUndoStepId ||
+              isNormalizingNode(editor)
+
+      if (mergeOpIntoPreviousStep) {
+        step.operations.push(op)
+      } else {
+        editor.history.undos.push({
+          operations: [
+            ...(editor.selection === null
+              ? []
+              : [createSelectOperation(editor)]),
+            op,
+          ],
+          timestamp: new Date(),
+        })
+      }
+
+      // Make sure we don't exceed the maximum number of undo steps we want
+      // to store.
+      while (editor.history.undos.length > UNDO_STEP_LIMIT) {
+        editor.history.undos.shift()
       }
 
       previousUndoStepId = currentUndoStepId
@@ -195,7 +226,6 @@ export function createWithUndoRedo(
       apply(op)
     }
 
-    // Plugin return
     return editor
   }
 }
@@ -561,25 +591,6 @@ const shouldMerge = (op: Operation, prev: Operation | undefined): boolean => {
 
   // Don't merge
   return false
-}
-
-const shouldOverwrite = (
-  op: Operation,
-  prev: Operation | undefined,
-): boolean => {
-  if (prev && op.type === 'set_selection' && prev.type === 'set_selection') {
-    return true
-  }
-
-  return false
-}
-
-const shouldClear = (op: Operation): boolean => {
-  if (op.type === 'set_selection') {
-    return false
-  }
-
-  return true
 }
 
 export function withoutSaving(editor: Editor, fn: () => void): void {
