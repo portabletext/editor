@@ -2,11 +2,13 @@ import {defineSchema} from '@portabletext/schema'
 import {getTersePt} from '@portabletext/test'
 import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
+import type {EditorSelection} from '../src'
 import {execute, forward, raise} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import type {MutationEvent} from '../src/editor/relay-machine'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {getFirstBlock} from '../src/selectors'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.history.undo', () => {
@@ -518,6 +520,48 @@ describe('event.history.undo', () => {
     })
 
     editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+    })
+  })
+
+  test('Scenario: Undo after moving cursor after ended Behavior', async () => {
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'a',
+              actions: [
+                ({event}) => [forward(event)],
+                () => [
+                  raise({type: 'delete.backward', unit: 'character'}),
+                  raise({type: 'insert.text', text: 'b'}),
+                ],
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'a')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['b'])
+    })
+
+    await userEvent.keyboard('{ControlOrMeta>}{z}{/ControlOrMeta}')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['a'])
+    })
+
+    await userEvent.keyboard('{ArrowLeft}')
+
+    await userEvent.keyboard('{ControlOrMeta>}{z}{/ControlOrMeta}')
 
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
