@@ -66,7 +66,7 @@
     "@portabletext/schema": "workspace:*",
     "@sanity/pkg-utils": "^8.1.4",
     "@types/react": "^19.2.0",
-    "@vitejs/plugin-react": "^5.0.3",
+    "@vitejs/plugin-react": "^5.0.4",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9.38.0",
     "eslint-formatter-gha": "^1.6.0",
