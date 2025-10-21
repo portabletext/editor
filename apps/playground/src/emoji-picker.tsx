@@ -3,15 +3,21 @@ import {
   useEmojiPicker,
   type EmojiMatch,
 } from '@portabletext/plugin-emoji-picker'
+import {usePopover} from '@portabletext/toolbar'
 import {useEffect, useRef} from 'react'
 import {Button} from './primitives/button'
+import {Popover} from './primitives/popover'
 
 export function EmojiPickerPlugin() {
   const {keyword, matches, selectedIndex, onDismiss, onNavigateTo, onSelect} =
     useEmojiPicker({matchEmojis})
 
+  if (keyword.length < 2) {
+    return null
+  }
+
   return (
-    <EmojiListBox
+    <EmojiPickerPopover
       keyword={keyword}
       matches={matches}
       selectedIndex={selectedIndex}
@@ -22,7 +28,7 @@ export function EmojiPickerPlugin() {
   )
 }
 
-export function EmojiListBox(props: {
+function EmojiPickerPopover(props: {
   keyword: string
   matches: Array<EmojiMatch>
   selectedIndex: number
@@ -30,12 +36,47 @@ export function EmojiListBox(props: {
   onNavigateTo: (index: number) => void
   onSelect: () => void
 }) {
-  if (props.keyword.length < 2) {
+  const popover = usePopover({
+    guard: () => true,
+    placement: 'top',
+  })
+
+  if (!popover.snapshot.matches('active')) {
     return null
   }
 
   return (
-    <div className="border border-gray-300 rounded bg-white shadow">
+    <Popover
+      className="p-0"
+      isNonModal
+      triggerRef={popover.snapshot.context.anchorRef}
+      crossOffset={popover.snapshot.context.crossOffset}
+      offset={popover.snapshot.context.offset}
+      placement={popover.snapshot.context.placement}
+      isOpen={props.keyword.length >= 2}
+    >
+      <EmojiListBox
+        keyword={props.keyword}
+        matches={props.matches}
+        selectedIndex={props.selectedIndex}
+        onDismiss={props.onDismiss}
+        onNavigateTo={props.onNavigateTo}
+        onSelect={props.onSelect}
+      />
+    </Popover>
+  )
+}
+
+function EmojiListBox(props: {
+  keyword: string
+  matches: Array<EmojiMatch>
+  selectedIndex: number
+  onDismiss: () => void
+  onNavigateTo: (index: number) => void
+  onSelect: () => void
+}) {
+  return (
+    <div className="rounded">
       {props.matches.length === 0 ? (
         <div className="p-2 flex align-middle gap-2">
           No results found{' '}

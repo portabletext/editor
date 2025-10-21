@@ -12,6 +12,7 @@ type ActiveListenerEvent =
       boundaryElement: Element | undefined
       anchorRef: React.RefObject<Element | null>
       crossOffset: number
+      offset: number
     }
   | {
       type: 'set inactive'
@@ -33,7 +34,10 @@ const activeListener = fromCallback(
       const snapshot = input.editor.getSnapshot()
 
       if (!input.guard(snapshot)) {
+        // If the guard is not satisfied, then we set the popover to inactive.
+
         sendBack({type: 'set inactive'})
+
         return
       }
 
@@ -43,59 +47,85 @@ const activeListener = fromCallback(
       const endBlock = selectors.getSelectionEndBlock(snapshot)
 
       if (!editorRect || !startBlock || !endBlock) {
+        // Can't proceed without basic information about the editor and the selection.
+
         sendBack({type: 'set inactive'})
+
         return
       }
 
       if (input.placement === 'top' || input.placement === 'bottom') {
-        const element =
+        // The anchor element is either the first or last block selected,
+        // depending on the preferred placement.
+        const anchorElement =
           input.placement === 'top'
             ? input.editor.dom.getStartBlockElement(snapshot)
             : input.editor.dom.getEndBlockElement(snapshot)
 
-        if (!element) {
+        if (!anchorElement) {
+          // If the anchor element is not found, then we set the popover to inactive.
+
           sendBack({type: 'set inactive'})
+
           return
         }
 
         const anchorRef = React.createRef<Element>()
-        anchorRef.current = element
+        anchorRef.current = anchorElement
 
         if (startBlock.node._key !== endBlock.node._key) {
           // If the selection spans multiple blocks, then we position the
-          // popover relative to the start block with no cross offset applied,
-          // since the selection rect is unpredictable.
+          // popover relative to the anchor element with no cross offset
+          // applied since the selection rect is unpredictable.
+
           sendBack({
             type: 'set active',
             boundaryElement: editorElement,
             anchorRef,
             crossOffset: 0,
+            offset: 0,
           })
+
           return
         }
 
         const selectionRect = input.editor.dom.getSelectionRect(snapshot)
 
         if (!selectionRect) {
+          // If the selection rect is not found, then we set the popover to inactive.
+
           sendBack({type: 'set inactive'})
+
           return
         }
 
-        const elementRect = element.getBoundingClientRect()
-        const halfWidth = elementRect.width / 2
-        const offset = elementRect.left + halfWidth
+        const elementRect = anchorElement.getBoundingClientRect()
+        const elementHalfWidth = elementRect.width / 2
+        const selectionHalfWidth = selectionRect.width / 2
+        // Subtracting the element's half width should give us a cross offset
+        // that aligns the popover with the inline start of the anchor element.
+        // Adding the selection rect's left should give us a cross offset that
+        // then aligns the popover with the selection.
+        const crossOffset =
+          -elementHalfWidth + selectionRect.left + selectionHalfWidth
 
-        const halfSelectionWidth = selectionRect.width / 2
-        const selectionOffset = selectionRect.left + halfSelectionWidth
-        const crossOffset = isTextBlock(snapshot.context, startBlock.node)
-          ? selectionOffset - offset
-          : 0
+        const offset =
+          input.placement === 'top'
+            ? -(selectionRect.top - elementRect.top)
+            : -(elementRect.bottom - selectionRect.bottom)
+
+        console.log(offset)
 
         sendBack({
           type: 'set active',
           boundaryElement: editorElement,
           anchorRef,
-          crossOffset,
+          // Only apply the cross offset if the start block is a text block.
+          crossOffset: isTextBlock(snapshot.context, startBlock.node)
+            ? crossOffset
+            : 0,
+          // Only apply the offset if the start block is a text block.
+          offset: isTextBlock(snapshot.context, startBlock.node) ? offset : 0,
         })
         return
       }
@@ -104,6 +134,7 @@ const activeListener = fromCallback(
 
       if (!startBlockElement) {
         sendBack({type: 'set inactive'})
+
         return
       }
 
@@ -140,6 +171,7 @@ const activeListener = fromCallback(
           boundaryElement: editorElement,
           anchorRef,
           crossOffset,
+          offset: 0,
         })
         return
       }
@@ -165,18 +197,20 @@ const activeListener = fromCallback(
         boundaryElement: editorElement,
         anchorRef,
         crossOffset,
+        offset: 0,
       })
     }).unsubscribe
   },
 )
 
-const floatingToolbarMachine = setup({
+const popoverMachine = setup({
   types: {
     context: {} as {
       editor: Editor
       boundaryElement: Element | undefined
       anchorRef: React.RefObject<Element | null>
       crossOffset: number
+      offset: number
       placement: 'top' | 'bottom' | 'left' | 'right'
       guard: (snapshot: EditorSnapshot) => boolean
     },
@@ -192,12 +226,13 @@ const floatingToolbarMachine = setup({
     'disable listener': disableListener,
   },
 }).createMachine({
-  id: 'floating toolbar',
+  id: 'popover',
   context: ({input}) => ({
     editor: input.editor,
     boundaryElement: undefined,
     anchorRef: React.createRef<Element>(),
     crossOffset: 0,
+    offset: 0,
     guard: input.guard,
     placement: input.placement,
   }),
@@ -227,6 +262,7 @@ const floatingToolbarMachine = setup({
             boundaryElement: ({event}) => event.boundaryElement,
             anchorRef: ({event}) => event.anchorRef,
             crossOffset: ({event}) => event.crossOffset,
+            offset: ({event}) => event.offset,
           }),
         },
         'set inactive': {
@@ -238,14 +274,14 @@ const floatingToolbarMachine = setup({
         inactive: {
           on: {
             enable: {
-              target: '#floating toolbar.enabled.inactive',
+              target: '#popover.enabled.inactive',
             },
           },
         },
         active: {
           on: {
             enable: {
-              target: '#floating toolbar.enabled.active',
+              target: '#popover.enabled.active',
             },
           },
         },
@@ -260,6 +296,7 @@ const floatingToolbarMachine = setup({
             boundaryElement: ({event}) => event.boundaryElement,
             anchorRef: ({event}) => event.anchorRef,
             crossOffset: ({event}) => event.crossOffset,
+            offset: ({event}) => event.offset,
           }),
         },
         'set inactive': {
@@ -270,14 +307,14 @@ const floatingToolbarMachine = setup({
         inactive: {
           on: {
             disable: {
-              target: '#floating toolbar.disabled.inactive',
+              target: '#popover.disabled.inactive',
             },
           },
         },
         active: {
           on: {
             disable: {
-              target: '#floating toolbar.disabled.active',
+              target: '#popover.disabled.active',
             },
           },
         },
@@ -301,6 +338,7 @@ export type Popover = {
        * Inspired by React Aria (https://react-spectrum.adobe.com/react-aria/Popover.html#offset-and-cross-offset)
        */
       crossOffset: number
+      offset: number
       placement: 'top' | 'bottom' | 'left' | 'right'
     }
   }
@@ -310,30 +348,40 @@ export type Popover = {
  * @beta
  */
 export function usePopover(props: {
-  guard: (snapshot: EditorSnapshot) => boolean
+  guard?: (snapshot: EditorSnapshot) => boolean
   placement: 'top' | 'bottom' | 'left' | 'right'
 }): Popover {
   const editor = useEditor()
-  const actorRef = useActorRef(floatingToolbarMachine, {
+  const actorRef = useActorRef(popoverMachine, {
     input: {
       editor,
-      guard: props.guard,
+      guard: props.guard ?? (() => true),
       placement: props.placement,
     },
   })
-  const snapshot = useSelector(actorRef, (s) => s)
+  const state = useSelector(actorRef, (s) =>
+    s.matches({
+      enabled: 'active',
+    })
+      ? 'active'
+      : 'inactive',
+  )
+  const boundaryElement = useSelector(
+    actorRef,
+    (s) => s.context.boundaryElement,
+  )
+  const anchorRef = useSelector(actorRef, (s) => s.context.anchorRef)
+  const crossOffset = useSelector(actorRef, (s) => s.context.crossOffset)
+  const offset = useSelector(actorRef, (s) => s.context.offset)
 
   return {
     snapshot: {
-      matches: (state: 'active' | 'inactive') =>
-        state === 'active'
-          ? snapshot.matches({
-              enabled: 'active',
-            })
-          : snapshot.matches('disabled') ||
-            snapshot.matches({enabled: 'inactive'}),
+      matches: (matchState: 'active' | 'inactive') => matchState === state,
       context: {
-        ...snapshot.context,
+        boundaryElement,
+        anchorRef,
+        crossOffset,
+        offset,
         placement: props.placement,
       },
     },

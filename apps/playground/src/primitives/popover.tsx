@@ -28,7 +28,7 @@ const styles = tv({
 export function Popover({children, className, ...props}: PopoverProps) {
   return (
     <AriaPopover
-      offset={8}
+      offset={props.offset ?? 8}
       {...props}
       className={composeRenderProps(className, (className, renderProps) =>
         styles({...renderProps, className}),

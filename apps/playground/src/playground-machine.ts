@@ -377,7 +377,19 @@ export const playgroundMachine = setup({
   context: ({input}) => ({
     editorIdGenerator: input.editorIdGenerator,
     featureFlags: defaultPlaygroundFeatureFlags,
-    value: [],
+    value: [
+      {
+        _type: 'block',
+        _key: keyGenerator(),
+        children: [
+          {
+            _type: 'span',
+            _key: keyGenerator(),
+            text: 'foo\nbar',
+          },
+        ],
+      },
+    ],
     rangeDecorations: [],
     editors: [],
   }),

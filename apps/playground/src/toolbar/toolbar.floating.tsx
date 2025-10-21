@@ -9,7 +9,7 @@ export function FloatingToolbar() {
   const toolbarSchema = usePlaygroundToolbarSchema()
   const popover = usePopover({
     guard: isSelectionExpanded,
-    placement: 'top',
+    placement: 'bottom',
   })
 
   if (popover.snapshot.matches('inactive')) {
@@ -21,6 +21,7 @@ export function FloatingToolbar() {
       isNonModal
       triggerRef={popover.snapshot.context.anchorRef}
       crossOffset={popover.snapshot.context.crossOffset}
+      offset={popover.snapshot.context.offset + 8}
       placement={popover.snapshot.context.placement}
       isOpen={true}
     >
