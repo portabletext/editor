@@ -26,10 +26,10 @@ import {
 } from 'xstate'
 import type {EmojiMatch, MatchEmojis} from './match-emojis'
 
-type EmojiPickerContext = {
+type EmojiPickerContext<TEmojiMatch = EmojiMatch> = {
   editor: Editor
-  matches: Array<EmojiMatch>
-  matchEmojis: MatchEmojis
+  matches: ReadonlyArray<TEmojiMatch>
+  matchEmojis: MatchEmojis<TEmojiMatch>
   selectedIndex: number
   keywordAnchor:
     | {
@@ -487,7 +487,7 @@ export const emojiPickerMachine = setup({
           return []
         }
 
-        return context.matchEmojis(rawKeyword)
+        return context.matchEmojis({keyword: rawKeyword})
       },
     }),
     'reset selected index': assign({
