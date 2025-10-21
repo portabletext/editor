@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.4
+
+### Patch Changes
+
+- Updated dependencies [[`258768f`](https://github.com/portabletext/editor/commit/258768f5b7c2791c5c05e7c29649774809324dac)]:
+  - @portabletext/plugin-character-pair-decorator@1.1.8
+
 ## 1.4.3
 
 ### Patch Changes
