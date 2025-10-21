@@ -24,7 +24,7 @@ export function EmojiPickerPlugin() {
 
 export function EmojiListBox(props: {
   keyword: string
-  matches: Array<EmojiMatch>
+  matches: ReadonlyArray<EmojiMatch>
   selectedIndex: number
   onDismiss: () => void
   onNavigateTo: (index: number) => void
