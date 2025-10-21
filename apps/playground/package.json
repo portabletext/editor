@@ -54,7 +54,7 @@
     "tailwindcss-react-aria-components": "^2.0.0",
     "typescript": "catalog:",
     "typescript-eslint": "^8.46.1",
-    "vite": "^7.1.7",
+    "vite": "^7.1.10",
     "vitest": "^3.2.4"
   }
 }
