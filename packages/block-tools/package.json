@@ -64,8 +64,8 @@
   "devDependencies": {
     "@portabletext/test": "workspace:^",
     "@sanity/pkg-utils": "^8.1.14",
-    "@sanity/schema": "^4.10.3",
-    "@sanity/types": "^4.10.3",
+    "@sanity/schema": "^4.11.0",
+    "@sanity/types": "^4.11.0",
     "@types/jsdom": "^20.0.1",
     "@types/lodash": "^4.17.20",
     "@vercel/stega": "0.1.2",
@@ -75,7 +75,7 @@
     "vitest": "^3.2.4"
   },
   "peerDependencies": {
-    "@sanity/types": "^4.10.3"
+    "@sanity/types": "^4.11.0"
   },
   "publishConfig": {
     "access": "public"
