@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.15.0
+
+### Minor Changes
+
+- [#1755](https://github.com/portabletext/editor/pull/1755) [`79e3e98`](https://github.com/portabletext/editor/commit/79e3e983fae9eb3106d7741d877ff99a76d7fde5) Thanks [@christianhg](https://github.com/christianhg)! - feat(dom): add `getEditorElement`
+
+- [#1755](https://github.com/portabletext/editor/pull/1755) [`36615f3`](https://github.com/portabletext/editor/commit/36615f3c42805434e5e597587a4c1e2fac73c75e) Thanks [@christianhg](https://github.com/christianhg)! - feat(dom): add `getSelectionRect`/`get(Start|End)BlockElement`
+
+### Patch Changes
+
+- [#1758](https://github.com/portabletext/editor/pull/1758) [`f9b0849`](https://github.com/portabletext/editor/commit/f9b0849c4cf5de298fb8133230d9d14ff780e25d) Thanks [@christianhg](https://github.com/christianhg)! - fix: produce correct patches when updating inline object properties
+
 ## 2.14.4
 
 ### Patch Changes
