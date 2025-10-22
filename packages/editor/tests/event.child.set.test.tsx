@@ -1,6 +1,7 @@
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import {defineSchema} from '../src'
+import {defineSchema, type Patch} from '../src'
+import {EventListenerPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.child.set', () => {
@@ -85,6 +86,248 @@ describe('event.child.set', () => {
             },
             ...initialValue[0].children.slice(2),
           ],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Patches when setting properties on inline object', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const cellKey = keyGenerator()
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [
+          {
+            _type: 'span',
+            _key: keyGenerator(),
+            text: '',
+            marks: [],
+          },
+          {
+            _type: 'cell',
+            _key: cellKey,
+            alive: false,
+            abilities: {
+              fly: true,
+              swim: false,
+            },
+          },
+          {
+            _type: 'span',
+            _key: keyGenerator(),
+            text: '',
+            marks: [],
+          },
+        ],
+        style: 'normal',
+        markDefs: [],
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      initialValue,
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {
+            name: 'cell',
+            fields: [
+              {
+                name: 'alive',
+                type: 'boolean',
+              },
+              {
+                name: 'abilities',
+                type: 'object',
+              },
+            ],
+          },
+        ],
+      }),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    await vi.waitFor(() => {
+      return expect(getTersePt(editor.getSnapshot().context)).toEqual([
+        ',{cell},',
+      ])
+    })
+
+    editor.send({
+      type: 'child.set',
+      at: [{_key: blockKey}, 'children', {_key: cellKey}],
+      props: {
+        alive: true,
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          ...initialValue[0],
+          children: [
+            ...initialValue[0].children.slice(0, 1),
+            {
+              ...initialValue[0].children[1],
+              alive: true,
+            },
+            ...initialValue[0].children.slice(2),
+          ],
+        },
+      ])
+    })
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        {
+          origin: 'local',
+          path: [{_key: blockKey}, 'children', {_key: cellKey}, 'alive'],
+          type: 'set',
+          value: true,
+        },
+        {
+          origin: 'local',
+          path: [{_key: blockKey}, 'children', {_key: cellKey}, 'abilities'],
+          type: 'set',
+          value: {
+            fly: true,
+            swim: false,
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Setting _key on inline object', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const cellKey = keyGenerator()
+    const span1 = {
+      _type: 'span',
+      _key: keyGenerator(),
+      text: '',
+      marks: [],
+    }
+    const cell = {
+      _type: 'cell',
+      _key: cellKey,
+      alive: false,
+      abilities: {
+        fly: true,
+        swim: false,
+      },
+    }
+    const span2 = {
+      _type: 'span',
+      _key: keyGenerator(),
+      text: '',
+      marks: [],
+    }
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [span1, cell, span2],
+        style: 'normal',
+        markDefs: [],
+      },
+    ]
+
+    const {editor} = await createTestEditor({
+      initialValue,
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {
+            name: 'cell',
+            fields: [
+              {name: 'alive', type: 'boolean'},
+              {name: 'abilities', type: 'object'},
+            ],
+          },
+        ],
+      }),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    await vi.waitFor(() => {
+      return expect(getTersePt(editor.getSnapshot().context)).toEqual([
+        ',{cell},',
+      ])
+    })
+
+    editor.send({
+      type: 'child.set',
+      at: [{_key: blockKey}, 'children', {_key: cellKey}],
+      props: {
+        _key: 'new-cell-key',
+      },
+    })
+
+    await vi.waitFor(() => {
+      return expect(editor.getSnapshot().context.value).toEqual([
+        {
+          ...initialValue[0],
+          children: [
+            span1,
+            {
+              ...cell,
+              _key: 'new-cell-key',
+            },
+            span2,
+          ],
+        },
+      ])
+    })
+
+    await vi.waitFor(() => {
+      return expect(patches).toEqual([
+        {
+          origin: 'local',
+          path: [{_key: blockKey}, 'children', 1, '_key'],
+          type: 'set',
+          value: 'new-cell-key',
+        },
+        {
+          origin: 'local',
+          path: [{_key: blockKey}, 'children', {_key: 'new-cell-key'}, 'alive'],
+          type: 'set',
+          value: false,
+        },
+        {
+          origin: 'local',
+          path: [
+            {_key: blockKey},
+            'children',
+            {_key: 'new-cell-key'},
+            'abilities',
+          ],
+          type: 'set',
+          value: {
+            fly: true,
+            swim: false,
+          },
         },
       ])
     })
