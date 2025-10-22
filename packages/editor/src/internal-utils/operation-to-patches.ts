@@ -11,6 +11,7 @@ import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {Path, PortableTextSpan, PortableTextTextBlock} from '@sanity/types'
 import {get, isUndefined, omitBy} from 'lodash'
 import {
+  Element,
   Text,
   type Descendant,
   type InsertNodeOperation,
@@ -122,6 +123,44 @@ export function setNodePatch(
         const blockKey = block._key
         const childKey = child._key
         const patches: Patch[] = []
+
+        if (Element.isElement(child)) {
+          // The child is an inline object. This needs to be treated
+          // differently since all custom properties are stored on a `value`
+          // object.
+
+          const _key = operation.newProperties._key
+
+          if (_key !== undefined) {
+            patches.push(
+              set(_key, [
+                {_key: blockKey},
+                'children',
+                block.children.indexOf(child),
+                '_key',
+              ]),
+            )
+          }
+
+          const properties =
+            'value' in operation.newProperties &&
+            typeof operation.newProperties.value === 'object'
+              ? (operation.newProperties.value as Record<string, unknown>)
+              : ({} satisfies Record<string, unknown>)
+
+          const keys = Object.keys(properties)
+
+          for (const key of keys) {
+            const value = properties[key]
+
+            patches.push(
+              set(value, [{_key: blockKey}, 'children', {_key: childKey}, key]),
+            )
+          }
+
+          return patches
+        }
+
         const keys = Object.keys(operation.newProperties)
         keys.forEach((keyName) => {
           // Special case for setting _key on a child. We have to target it by index and not the _key.
