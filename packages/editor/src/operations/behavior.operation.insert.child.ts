@@ -74,27 +74,53 @@ export const insertChildOperationImplementation: BehaviorOperationImplementation
   if (inlineObject) {
     const {_key, _type, ...rest} = inlineObject
 
-    Transforms.insertNodes(
-      operation.editor,
-      {
-        _key,
-        _type,
-        children: [
-          {
-            _key: VOID_CHILD_KEY,
-            _type: 'span',
-            text: '',
-            marks: [],
-          },
-        ],
-        value: rest,
-        __inline: true,
-      },
-      {
-        at: [focusBlockIndex, focusChildIndex + 1],
-        select: true,
-      },
-    )
+    const [focusSpan] = getFocusSpan({editor: operation.editor})
+
+    if (focusSpan) {
+      Transforms.insertNodes(
+        operation.editor,
+        {
+          _key,
+          _type,
+          children: [
+            {
+              _key: VOID_CHILD_KEY,
+              _type: 'span',
+              text: '',
+              marks: [],
+            },
+          ],
+          value: rest,
+          __inline: true,
+        },
+        {
+          at: focus,
+          select: true,
+        },
+      )
+    } else {
+      Transforms.insertNodes(
+        operation.editor,
+        {
+          _key,
+          _type,
+          children: [
+            {
+              _key: VOID_CHILD_KEY,
+              _type: 'span',
+              text: '',
+              marks: [],
+            },
+          ],
+          value: rest,
+          __inline: true,
+        },
+        {
+          at: [focusBlockIndex, focusChildIndex + 1],
+          select: true,
+        },
+      )
+    }
 
     return
   }
