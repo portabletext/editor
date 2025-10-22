@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.2.27
+
+### Patch Changes
+
+- [#1755](https://github.com/portabletext/editor/pull/1755) [`3bf8a4b`](https://github.com/portabletext/editor/commit/3bf8a4b7967e43b5e29091de4fdaf3628ed17b17) Thanks [@christianhg](https://github.com/christianhg)! - fix: properly set initial enabled/disabled state of controls
+
+- [#1755](https://github.com/portabletext/editor/pull/1755) [`ca3272d`](https://github.com/portabletext/editor/commit/ca3272dcf7c52a3ada7fe56436dbf5423e91db99) Thanks [@christianhg](https://github.com/christianhg)! - fix: properly set initial active state of controls
+
+- Updated dependencies [[`f9b0849`](https://github.com/portabletext/editor/commit/f9b0849c4cf5de298fb8133230d9d14ff780e25d), [`79e3e98`](https://github.com/portabletext/editor/commit/79e3e983fae9eb3106d7741d877ff99a76d7fde5), [`36615f3`](https://github.com/portabletext/editor/commit/36615f3c42805434e5e597587a4c1e2fac73c75e)]:
+  - @portabletext/editor@2.15.0
+
 ## 2.2.26
 
 ### Patch Changes
