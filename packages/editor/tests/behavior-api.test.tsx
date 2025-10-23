@@ -434,15 +434,14 @@ describe('Behavior API', () => {
           <BehaviorPlugin
             behaviors={[
               defineBehavior({
-                on: 'insert.text',
+                on: 'custom.focus',
                 actions: [
-                  ({event}) => [
+                  () => [
                     effect(({send}) => {
                       setTimeout(() => {
                         send({type: 'focus'})
                       }, 100)
                     }),
-                    forward(event),
                   ],
                 ],
               }),
@@ -460,7 +459,7 @@ describe('Behavior API', () => {
       ])
     })
 
-    await userEvent.type(locator, 'a')
+    editor.send({type: 'custom.focus'})
     editor.send({type: 'blur'})
 
     await vi.waitFor(() => {
