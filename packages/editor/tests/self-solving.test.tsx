@@ -378,4 +378,214 @@ describe('Feature: Self-solving', () => {
       ])
     })
   })
+
+  test('Scenario: Initial block _keys are made unique', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpan = {
+      _key: fooKey,
+      _type: 'span',
+      text: 'foo',
+      marks: [],
+    }
+    const barKey = keyGenerator()
+    const barSpan = {
+      _key: barKey,
+      _type: 'span',
+      text: 'bar',
+      marks: [],
+    }
+    const block0 = {
+      _key: blockKey,
+      _type: 'block',
+      children: [fooSpan],
+      style: 'normal',
+      markDefs: [],
+    }
+    const block1 = {
+      _key: blockKey,
+      _type: 'block',
+      children: [barSpan],
+      style: 'normal',
+      markDefs: [],
+    }
+    const image = {
+      _key: blockKey,
+      _type: 'image',
+    }
+    const initialValue = [block0, block1, image]
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'image'}],
+      }),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        block0,
+        {...block1, _key: 'k5'},
+        {...image, _key: 'k6'},
+      ])
+      expect(patches).toEqual([])
+    })
+
+    await userEvent.click(locator)
+
+    const afterBarSelection = getSelectionAfterText(
+      editor.getSnapshot().context,
+      'bar',
+    )
+
+    editor.send({
+      type: 'select',
+      at: afterBarSelection,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual(afterBarSelection)
+    })
+
+    await userEvent.type(locator, 'b')
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        block0,
+        {
+          ...block1,
+          _key: 'k5',
+          children: [
+            {
+              ...barSpan,
+              text: 'barb',
+            },
+          ],
+        },
+        {
+          ...image,
+          _key: 'k6',
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          origin: 'local',
+          type: 'set',
+          path: [1, '_key'],
+          value: 'k5',
+        },
+        {
+          origin: 'local',
+          type: 'set',
+          path: [2, '_key'],
+          value: 'k6',
+        },
+        {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [{_key: 'k5'}, 'children', {_key: 'k2'}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('bar', 'barb'))),
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Inserted block _keys are made unique', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpan = {
+      _key: fooKey,
+      _type: 'span',
+      text: 'foo',
+      marks: [],
+    }
+    const barKey = keyGenerator()
+    const barSpan = {
+      _key: barKey,
+      _type: 'span',
+      text: 'bar',
+      marks: [],
+    }
+    const block = {
+      _key: blockKey,
+      _type: 'block',
+      children: [fooSpan],
+      style: 'normal',
+      markDefs: [],
+    }
+    const initialValue = [block]
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([block])
+      expect(patches).toEqual([])
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _type: 'block',
+        _key: blockKey,
+        children: [barSpan],
+      },
+      placement: 'after',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        block,
+        {
+          _type: 'block',
+          _key: 'k5',
+          children: [barSpan],
+          style: 'normal',
+          markDefs: [],
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          origin: 'local',
+          type: 'insert',
+          path: [{_key: blockKey}],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'k5',
+              children: [barSpan],
+              style: 'normal',
+              markDefs: [],
+            },
+          ],
+        },
+      ])
+    })
+  })
 })
