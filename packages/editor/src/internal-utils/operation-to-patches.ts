@@ -9,7 +9,7 @@ import {
 } from '@portabletext/patches'
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {Path, PortableTextSpan, PortableTextTextBlock} from '@sanity/types'
-import {get, isUndefined, omitBy} from 'lodash'
+import {get} from 'lodash'
 import {
   Element,
   Text,
@@ -101,20 +101,55 @@ export function setNodePatch(
   children: Descendant[],
   operation: SetNodeOperation,
 ): Array<Patch> {
-  if (operation.path.length === 1) {
-    const block = children[operation.path[0]]
-    if (typeof block._key !== 'string') {
-      throw new Error('Expected block to have a _key')
+  const blockIndex = operation.path.at(0)
+
+  if (blockIndex !== undefined && operation.path.length === 1) {
+    const block = children.at(blockIndex)
+
+    if (!block) {
+      console.error('Could not find block at index', blockIndex)
+      return []
     }
-    const setNode = omitBy(
-      {...children[operation.path[0]], ...operation.newProperties},
-      isUndefined,
-    ) as unknown as Descendant
-    return [
-      set(fromSlateValue([setNode], schema.block.name)[0], [
-        {_key: block._key},
-      ]),
-    ]
+
+    if (isTextBlock({schema}, block)) {
+      const patches: Patch[] = []
+
+      for (const key of Object.keys(operation.newProperties)) {
+        const value = (operation.newProperties as Record<string, unknown>)[key]
+
+        if (key === '_key') {
+          patches.push(set(value, [blockIndex, '_key']))
+        } else {
+          patches.push(set(value, [{_key: block._key}, key]))
+        }
+      }
+
+      return patches
+    } else {
+      const patches: Patch[] = []
+
+      const _key = operation.newProperties._key
+
+      if (_key !== undefined) {
+        patches.push(set(_key, [blockIndex, '_key']))
+      }
+
+      const properties =
+        'value' in operation.newProperties &&
+        typeof operation.newProperties.value === 'object'
+          ? (operation.newProperties.value as Record<string, unknown>)
+          : ({} satisfies Record<string, unknown>)
+
+      const keys = Object.keys(properties)
+
+      for (const key of keys) {
+        const value = properties[key]
+
+        patches.push(set(value, [{_key: block._key}, key]))
+      }
+
+      return patches
+    }
   } else if (operation.path.length === 2) {
     const block = children[operation.path[0]]
     if (isTextBlock({schema}, block)) {

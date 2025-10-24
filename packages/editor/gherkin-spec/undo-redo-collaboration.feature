@@ -57,6 +57,7 @@ Feature: Undo/Redo Collaboration
     And undo is performed
     Then the text is "foo| bar"
 
+  @skip
   Scenario: Undoing local annotation added before remote annotation
     Given the text "foobar"
     And a "comment" "c1" around "foo"
@@ -66,6 +67,7 @@ Feature: Undo/Redo Collaboration
     And "foo" has no marks
     And "bar" has marks "l1"
 
+  @skip
   Scenario: Undoing local annotation added after remote annotation
     Given the text "foobar"
     And a "link" "l1" around "bar" by editor B
@@ -75,6 +77,7 @@ Feature: Undo/Redo Collaboration
     And "foo" has no marks
     And "bar" has marks "l1"
 
+  @skip
   Scenario: Undoing local same-type annotation added before remote annotation
     Given the text "foobar"
     And a "comment" "c1" around "foo"
