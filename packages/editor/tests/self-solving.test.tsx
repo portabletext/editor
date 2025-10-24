@@ -1,7 +1,7 @@
 import type {Patch} from '@portabletext/patches'
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import type {
   EditorEmittedEvent,
   MutationEvent,
@@ -12,7 +12,7 @@ import {EventListenerPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('Feature: Self-solving', () => {
-  it('Scenario: Missing .markDefs and .marks are added after the editor is made dirty', async () => {
+  test('Scenario: Missing .markDefs and .marks are added after the editor is made dirty', async () => {
     const schemaDefinition = defineSchema({decorators: [{name: 'strong'}]})
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
@@ -39,21 +39,8 @@ describe('Feature: Self-solving', () => {
     }
     const blockPatch: Patch = {
       type: 'set',
-      path: [{_key: blockKey}],
-      value: {
-        _key: blockKey,
-        _type: 'block',
-        children: [
-          {
-            _key: spanKey,
-            _type: 'span',
-            text: 'foo',
-            marks: [],
-          },
-        ],
-        style: 'normal',
-        markDefs: [],
-      },
+      path: [{_key: blockKey}, 'markDefs'],
+      value: [],
       origin: 'local',
     }
     const strongPatch: Patch = {
