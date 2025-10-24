@@ -52,6 +52,7 @@ Feature: Insert Break
 
   Scenario: Pressing Enter on an inline object
     Given the text "foo,{stock-ticker},"
+    And the editor is focused
     When the caret is put after "foo"
     And "{ArrowRight}" is pressed
     And "{Enter}" is pressed
