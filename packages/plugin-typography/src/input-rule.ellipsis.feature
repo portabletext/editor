@@ -76,13 +76,13 @@ Feature: Ellipsis Input Rule
   Scenario Outline: Smart undo aborted after text changes
     Given the text <text>
     When <inserted text> is inserted
-    And <new text> is inserted
+    And <new text> is typed
     And "{Backspace}" is pressed
     Then the text is <final text>
 
     Examples:
       | text | inserted text | new text | final text |
-      | ""   | "..."         | "new"    | "…ne"      |
+      | ""   | "..."         | "n"      | "…"        |
 
   Scenario Outline: Smart undo aborted after selection changes
     Given the text <text>
