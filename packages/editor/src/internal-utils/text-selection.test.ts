@@ -17,6 +17,7 @@ test(getTextSelection.name, () => {
   expect(getTextSelection({schema, value: [simpleBlock]}, 'foo')).toEqual({
     anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
     focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+    backward: false,
   })
 
   const joinedBlock = {
@@ -28,18 +29,22 @@ test(getTextSelection.name, () => {
   expect(getTextSelection({schema, value: [joinedBlock]}, 'foo ')).toEqual({
     anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
     focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 4},
+    backward: false,
   })
   expect(getTextSelection({schema, value: [joinedBlock]}, 'o')).toEqual({
     anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
     focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
+    backward: false,
   })
   expect(getTextSelection({schema, value: [joinedBlock]}, 'bar')).toEqual({
     anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 4},
     focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 7},
+    backward: false,
   })
   expect(getTextSelection({schema, value: [joinedBlock]}, ' baz')).toEqual({
     anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 7},
     focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 11},
+    backward: false,
   })
 
   const noSpaceBlock = {
@@ -54,6 +59,7 @@ test(getTextSelection.name, () => {
   expect(getTextSelection({schema, value: [noSpaceBlock]}, 'obar')).toEqual({
     anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
     focus: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 3},
+    backward: false,
   })
 
   const emptyLineBlock = {
@@ -70,6 +76,7 @@ test(getTextSelection.name, () => {
     {
       anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
       focus: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 3},
+      backward: false,
     },
   )
 
@@ -86,24 +93,29 @@ test(getTextSelection.name, () => {
   expect(getTextSelection({schema, value: [splitBlock]}, 'foo')).toEqual({
     anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
     focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+    backward: false,
   })
   expect(getTextSelection({schema, value: [splitBlock]}, 'bar')).toEqual({
     anchor: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 0},
     focus: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 3},
+    backward: false,
   })
   expect(getTextSelection({schema, value: [splitBlock]}, 'baz')).toEqual({
     anchor: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 1},
     focus: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 4},
+    backward: false,
   })
   expect(
     getTextSelection({schema, value: [splitBlock]}, 'foo bar baz'),
   ).toEqual({
     anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
     focus: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 4},
+    backward: false,
   })
   expect(getTextSelection({schema, value: [splitBlock]}, 'o bar b')).toEqual({
     anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
     focus: {path: [{_key: 'b1'}, 'children', {_key: 's3'}], offset: 2},
+    backward: false,
   })
 
   const twoBlocks = [
@@ -122,6 +134,7 @@ test(getTextSelection.name, () => {
   expect(getTextSelection({schema, value: twoBlocks}, 'ooba')).toEqual({
     anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
     focus: {path: [{_key: 'b2'}, 'children', {_key: 's2'}], offset: 2},
+    backward: false,
   })
 })
 
