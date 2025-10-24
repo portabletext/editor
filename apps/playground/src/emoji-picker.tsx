@@ -1,25 +1,28 @@
 import {
   matchEmojis,
   useEmojiPicker,
+  useEmojiPickerTakeThree,
+  useEmojiPickerTakeTwo,
   type EmojiMatch,
 } from '@portabletext/plugin-emoji-picker'
 import {useEffect, useRef} from 'react'
 import {Button} from './primitives/button'
 
 export function EmojiPickerPlugin() {
-  const {keyword, matches, selectedIndex, onDismiss, onNavigateTo, onSelect} =
-    useEmojiPicker({matchEmojis})
+  useEmojiPickerTakeThree()
+  // const {keyword, matches, selectedIndex, onDismiss, onNavigateTo, onSelect} =
+  //   useEmojiPicker({matchEmojis})
 
-  return (
-    <EmojiListBox
-      keyword={keyword}
-      matches={matches}
-      selectedIndex={selectedIndex}
-      onDismiss={onDismiss}
-      onNavigateTo={onNavigateTo}
-      onSelect={onSelect}
-    />
-  )
+  // return (
+  //   <EmojiListBox
+  //     keyword={keyword}
+  //     matches={matches}
+  //     selectedIndex={selectedIndex}
+  //     onDismiss={onDismiss}
+  //     onNavigateTo={onNavigateTo}
+  //     onSelect={onSelect}
+  //   />
+  // )
 }
 
 export function EmojiListBox(props: {

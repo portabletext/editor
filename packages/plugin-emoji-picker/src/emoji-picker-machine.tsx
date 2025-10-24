@@ -7,12 +7,15 @@ import type {
 import {
   defineBehavior,
   effect,
-  execute,
   forward,
   raise,
 } from '@portabletext/editor/behaviors'
 import * as selectors from '@portabletext/editor/selectors'
 import * as utils from '@portabletext/editor/utils'
+import {
+  createInputRuleBehavior,
+  defineInputRule,
+} from '@portabletext/plugin-input-rule'
 import {
   assertEvent,
   assign,
@@ -31,12 +34,11 @@ type EmojiPickerContext<TEmojiMatch = EmojiMatch> = {
   matches: ReadonlyArray<TEmojiMatch>
   matchEmojis: MatchEmojis<TEmojiMatch>
   selectedIndex: number
-  keywordAnchor:
-    | {
-        point: EditorSelectionPoint
-        blockOffset: BlockOffset
-      }
-    | undefined
+  keywordAnchor: // | {
+  //     point: EditorSelectionPoint
+  //     blockOffset: BlockOffset
+  //   }
+  BlockOffset | undefined
   keywordFocus: BlockOffset | undefined
   incompleteKeywordRegex: RegExp
   keyword: string
@@ -45,8 +47,12 @@ type EmojiPickerContext<TEmojiMatch = EmojiMatch> = {
 type EmojiPickerEvent =
   | {
       type: 'colon inserted'
-      point: EditorSelectionPoint
-      blockOffset: BlockOffset
+      keywordAnchor: BlockOffset
+      // {
+      //   point: EditorSelectionPoint
+      //   blockOffset: BlockOffset
+      // }
+      keywordFocus: BlockOffset
     }
   | {
       type: 'selection changed'
@@ -88,33 +94,37 @@ const colonListenerCallback: CallbackLogicFunction<
   {editor: Editor}
 > = ({sendBack, input}) => {
   return input.editor.registerBehavior({
-    behavior: defineBehavior({
-      on: 'insert.text',
-      guard: ({snapshot, event}) => {
-        if (event.text !== ':' || !snapshot.context.selection) {
-          return false
-        }
+    behavior: createInputRuleBehavior({
+      rules: [
+        defineInputRule({
+          on: /:/,
+          guard: ({event}) => {
+            const match = event.matches.at(-1)
 
-        const blockOffset = utils.spanSelectionPointToBlockOffset({
-          context: snapshot.context,
-          selectionPoint: snapshot.context.selection.focus,
-        })
-
-        return blockOffset
-          ? {
-              point: snapshot.context.selection.focus,
-              blockOffset,
+            if (match === undefined) {
+              return false
             }
-          : false
-      },
-      actions: [
-        ({event}, {point, blockOffset}) => [
-          forward(event),
-          effect(() => {
-            sendBack({type: 'colon inserted', point, blockOffset})
-          }),
-        ],
+
+            return {match}
+          },
+          actions: [
+            (_, {match}) => [
+              effect(() => {
+                sendBack({
+                  type: 'colon inserted',
+                  // keywordAnchor: {
+                  //   point: match.selection.anchor,
+                  //   blockOffset: match?.targetOffsets.anchor,
+                  // },
+                  keywordAnchor: match.targetOffsets.anchor,
+                  keywordFocus: match.targetOffsets.focus,
+                })
+              }),
+            ],
+          ],
+        }),
       ],
+      onApply: () => {},
     }),
   })
 }
@@ -204,11 +214,11 @@ const emojiInsertListener: CallbackLogicFunction<
             effect(() => {
               sendBack({type: 'dismiss'})
             }),
-            execute({
+            raise({
               type: 'delete.text',
               at: {anchor: event.anchor, focus: event.focus},
             }),
-            execute({
+            raise({
               type: 'insert.text',
               text: event.emoji,
             }),
@@ -217,30 +227,31 @@ const emojiInsertListener: CallbackLogicFunction<
       }),
     }),
     input.context.editor.registerBehavior({
-      behavior: defineBehavior({
-        on: 'insert.text',
-        guard: ({event}) => {
-          if (event.text !== ':') {
-            return false
-          }
+      behavior: createInputRuleBehavior({
+        rules: [
+          defineInputRule({
+            on: /:([a-zA-Z-_0-9]+):/,
+            guard: ({event}) => {
+              const match = event.matches.at(0)
+              const emojiMatch = context.matches.at(context.selectedIndex)
 
-          const anchor = context.keywordAnchor?.blockOffset
-          const focus = context.keywordFocus
-          const match = context.matches[context.selectedIndex]
+              if (match === undefined || emojiMatch === undefined) {
+                return false
+              }
 
-          return match && match.type === 'exact' && anchor && focus
-            ? {anchor, focus, emoji: match.emoji}
-            : false
-        },
-        actions: [
-          (_, {anchor, focus, emoji}) => [
-            raise({
-              type: 'custom.insert emoji',
-              emoji,
-              anchor,
-              focus,
-            }),
-          ],
+              return {match, emojiMatch}
+            },
+            actions: [
+              (_, {match, emojiMatch}) => [
+                raise({
+                  type: 'custom.insert emoji',
+                  emoji: emojiMatch.emoji,
+                  anchor: match.targetOffsets.anchor,
+                  focus: match.targetOffsets.focus,
+                }),
+              ],
+            ],
+          }),
         ],
       }),
     }),
@@ -255,7 +266,8 @@ const emojiInsertListener: CallbackLogicFunction<
             return false
           }
 
-          const anchor = context.keywordAnchor?.blockOffset
+          // const anchor = context.keywordAnchor?.blockOffset
+          const anchor = context.keywordAnchor
           const focus = context.keywordFocus
           const match = context.matches[context.selectedIndex]
 
@@ -332,7 +344,7 @@ const textChangeListener: CallbackLogicFunction<
                 focus,
               })
             }),
-            execute(event),
+            forward(event),
           ],
         ],
       }),
@@ -352,7 +364,7 @@ const textChangeListener: CallbackLogicFunction<
                 focus,
               })
             }),
-            execute(event),
+            forward(event),
           ],
         ],
       }),
@@ -372,7 +384,7 @@ const textChangeListener: CallbackLogicFunction<
                 focus,
               })
             }),
-            execute(event),
+            forward(event),
           ],
         ],
       }),
@@ -411,20 +423,14 @@ export const emojiPickerMachine = setup({
       keywordAnchor: ({event}) => {
         assertEvent(event, 'colon inserted')
 
-        return {
-          point: event.point,
-          blockOffset: event.blockOffset,
-        }
+        return event.keywordAnchor
       },
     }),
     'set keyword focus': assign({
       keywordFocus: ({event}) => {
         assertEvent(event, 'colon inserted')
 
-        return {
-          path: event.blockOffset.path,
-          offset: event.blockOffset.offset + 1,
-        }
+        return event.keywordFocus
       },
     }),
     'update keyword focus': assign({
@@ -447,36 +453,36 @@ export const emojiPickerMachine = setup({
         }
       },
     }),
-    'update keyword': assign({
-      keyword: ({context, event}) => {
-        assertEvent(event, 'selection changed')
+    // 'update keyword': assign({
+    //   keyword: ({context, event}) => {
+    //     assertEvent(event, 'selection changed')
 
-        if (!context.keywordAnchor || !context.keywordFocus) {
-          return ''
-        }
+    //     if (!context.keywordAnchor || !context.keywordFocus) {
+    //       return ''
+    //     }
 
-        const keywordFocusPoint = utils.blockOffsetToSpanSelectionPoint({
-          context: event.snapshot.context,
-          blockOffset: context.keywordFocus,
-          direction: 'forward',
-        })
+    //     const keywordFocusPoint = utils.blockOffsetToSpanSelectionPoint({
+    //       context: event.snapshot.context,
+    //       blockOffset: context.keywordFocus,
+    //       direction: 'forward',
+    //     })
 
-        if (!keywordFocusPoint) {
-          return ''
-        }
+    //     if (!keywordFocusPoint) {
+    //       return ''
+    //     }
 
-        return selectors.getSelectionText({
-          ...event.snapshot,
-          context: {
-            ...event.snapshot.context,
-            selection: {
-              anchor: context.keywordAnchor.point,
-              focus: keywordFocusPoint,
-            },
-          },
-        })
-      },
-    }),
+    //     return selectors.getSelectionText({
+    //       ...event.snapshot,
+    //       context: {
+    //         ...event.snapshot.context,
+    //         selection: {
+    //           anchor: context.keywordAnchor.point,
+    //           focus: keywordFocusPoint,
+    //         },
+    //       },
+    //     })
+    //   },
+    // }),
     'update matches': assign({
       matches: ({context}) => {
         const rawKeyword = context.keyword.match(
@@ -561,7 +567,7 @@ export const emojiPickerMachine = setup({
         return true
       }
 
-      return selectors.isPointAfterSelection(context.keywordAnchor.point)(
+      return selectors.isPointAfterSelection(context.keywordAnchor)(
         event.snapshot,
       )
     },

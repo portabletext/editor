@@ -57,6 +57,8 @@
     "test:browser:webkit:watch": "vitest watch --project \"browser (webkit)\""
   },
   "dependencies": {
+    "@portabletext/keyboard-shortcuts": "workspace:^",
+    "@portabletext/plugin-input-rule": "workspace:~",
     "@xstate/react": "^6.0.0",
     "react-compiler-runtime": "1.0.0",
     "xstate": "^5.23.0"

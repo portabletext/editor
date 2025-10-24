@@ -667,6 +667,12 @@ importers:
 
   packages/plugin-emoji-picker:
     dependencies:
+      '@portabletext/keyboard-shortcuts':
+        specifier: workspace:^
+        version: link:../keyboard-shortcuts
+      '@portabletext/plugin-input-rule':
+        specifier: workspace:~
+        version: link:../plugin-input-rule
       '@xstate/react':
         specifier: ^6.0.0
         version: 6.0.0(@types/react@19.2.0)(react@19.2.0)(xstate@5.23.0)
