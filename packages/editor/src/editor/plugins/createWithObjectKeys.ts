@@ -194,6 +194,42 @@ export function createWithObjectKeys(editorActor: EditorActor) {
     editor.normalizeNode = (entry) => {
       const [node, path] = entry
 
+      if (Element.isElement(node)) {
+        const [parent] = Editor.parent(editor, path)
+
+        if (parent && Editor.isEditor(parent)) {
+          const blockKeys = new Set<string>()
+
+          for (const sibling of parent.children) {
+            if (sibling._key && blockKeys.has(sibling._key)) {
+              const _key = editorActor.getSnapshot().context.keyGenerator()
+
+              blockKeys.add(_key)
+
+              withNormalizeNode(editor, () => {
+                Transforms.setNodes(editor, {_key}, {at: path})
+              })
+
+              return
+            }
+
+            if (!sibling._key) {
+              const _key = editorActor.getSnapshot().context.keyGenerator()
+
+              blockKeys.add(_key)
+
+              withNormalizeNode(editor, () => {
+                Transforms.setNodes(editor, {_key}, {at: path})
+              })
+
+              return
+            }
+
+            blockKeys.add(sibling._key)
+          }
+        }
+      }
+
       if (
         Element.isElement(node) &&
         node._type === editorActor.getSnapshot().context.schema.block.name
