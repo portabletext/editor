@@ -13,7 +13,7 @@ import {
   getTextSelection,
 } from '../../internal-utils/text-selection'
 import {getValueAnnotations} from '../../internal-utils/value-annotations'
-import {createTestEditor} from '../../test/vitest'
+import {createTestEditor, createTestEditors} from '../../test/vitest'
 import {
   parseBlocks,
   parseInlineObject,
@@ -25,33 +25,45 @@ import {selectionPointToBlockOffset} from '../../utils/util.selection-point-to-b
 import type {Parameter} from '../gherkin-parameter-types'
 import type {Context} from './step-context'
 
+const schemaDefinition = defineSchema({
+  annotations: [{name: 'comment'}, {name: 'link'}],
+  decorators: [{name: 'em'}, {name: 'strong'}],
+  blockObjects: [{name: 'image'}, {name: 'break'}],
+  inlineObjects: [{name: 'stock-ticker'}],
+  lists: [{name: 'bullet'}, {name: 'number'}],
+  styles: [
+    {name: 'normal'},
+    {name: 'h1'},
+    {name: 'h2'},
+    {name: 'h3'},
+    {name: 'h4'},
+    {name: 'h5'},
+    {name: 'h6'},
+    {name: 'blockquote'},
+  ],
+})
+
 /**
  * @internal
  */
 export const stepDefinitions = [
   Given('one editor', async (context: Context) => {
     const {editor, locator} = await createTestEditor({
-      schemaDefinition: defineSchema({
-        annotations: [{name: 'comment'}, {name: 'link'}],
-        decorators: [{name: 'em'}, {name: 'strong'}],
-        blockObjects: [{name: 'image'}, {name: 'break'}],
-        inlineObjects: [{name: 'stock-ticker'}],
-        lists: [{name: 'bullet'}, {name: 'number'}],
-        styles: [
-          {name: 'normal'},
-          {name: 'h1'},
-          {name: 'h2'},
-          {name: 'h3'},
-          {name: 'h4'},
-          {name: 'h5'},
-          {name: 'h6'},
-          {name: 'blockquote'},
-        ],
-      }),
+      schemaDefinition,
     })
 
     context.locator = locator
     context.editor = editor
+  }),
+  Given('two editors', async (context: Context) => {
+    const {editor, locator, editorB, locatorB} = await createTestEditors({
+      schemaDefinition,
+    })
+
+    context.locator = locator
+    context.editor = editor
+    context.locatorB = locatorB
+    context.editorB = editorB
   }),
 
   Given('a global keymap', (context: Context) => {
@@ -60,6 +72,10 @@ export const stepDefinitions = [
 
   Given('the editor is focused', async (context: Context) => {
     await userEvent.click(context.locator)
+  }),
+
+  When('Editor B is focused', async (context: Context) => {
+    await userEvent.click(context.locatorB)
   }),
 
   Given(
@@ -172,6 +188,12 @@ export const stepDefinitions = [
   When('{string} is typed', async (context: Context, text: string) => {
     await userEvent.type(context.locator, text)
   }),
+  When(
+    '{string} is typed by Editor B',
+    async (context: Context, text: string) => {
+      await userEvent.type(context.locatorB, text)
+    },
+  ),
   When('{string} is inserted', (context: Context, text: string) => {
     context.editor.send({type: 'insert.text', text})
   }),
@@ -272,6 +294,28 @@ export const stepDefinitions = [
       await vi.waitFor(() => {
         expect(context.editor.getSnapshot().context.selection).toEqual(
           getSelectionAfterText(context.editor.getSnapshot().context, text),
+        )
+      })
+    },
+  ),
+  When(
+    'the caret is put after {string} by Editor B',
+    async (context: Context, text: string) => {
+      await vi.waitFor(() => {
+        const selection = getSelectionAfterText(
+          context.editorB.getSnapshot().context,
+          text,
+        )
+
+        expect(selection).not.toBeNull()
+
+        context.editorB.send({
+          type: 'select',
+          at: selection,
+        })
+
+        expect(context.editorB.getSnapshot().context.selection).toEqual(
+          selection,
         )
       })
     },

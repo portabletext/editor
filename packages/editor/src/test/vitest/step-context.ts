@@ -6,6 +6,8 @@ import type {Editor} from '../../editor'
  */
 export type Context = {
   editor: Editor
+  editorB: Editor
   locator: Locator
+  locatorB: Locator
   keyMap?: Map<string, string>
 }

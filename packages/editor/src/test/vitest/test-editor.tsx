@@ -11,6 +11,7 @@ import {
   type PortableTextEditableProps,
 } from '../../editor/Editable'
 import {EditorProvider} from '../../editor/editor-provider'
+import {EventListenerPlugin} from '../../plugins'
 import {EditorRefPlugin} from '../../plugins/plugin.editor-ref'
 import type {Context} from './step-context'
 
@@ -87,5 +88,98 @@ export async function createTestEditor(
     editor: editorRef.current!,
     locator,
     rerender,
+  }
+}
+
+/**
+ * @internal
+ */
+export async function createTestEditors(
+  options: CreateTestEditorOptions,
+): Promise<Pick<Context, 'editor' | 'locator' | 'editorB' | 'locatorB'>> {
+  const editorRef = React.createRef<Editor>()
+  const editorBRef = React.createRef<Editor>()
+  const keyGenerator = options.keyGenerator ?? createTestKeyGenerator()
+
+  render(
+    <>
+      <EditorProvider
+        initialConfig={{
+          keyGenerator: keyGenerator,
+          schemaDefinition: options.schemaDefinition ?? defineSchema({}),
+          initialValue: options.initialValue,
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <PortableTextEditable
+          {...options.editableProps}
+          data-testid="editor-a"
+        />
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'mutation') {
+              editorBRef.current?.send({
+                type: 'patches',
+                patches: event.patches.map((patch) => ({
+                  ...patch,
+                  origin: 'remote',
+                })),
+                snapshot: event.snapshot,
+              })
+              editorBRef.current?.send({
+                type: 'update value',
+                value: event.value,
+              })
+            }
+          }}
+        />
+        {options.children}
+      </EditorProvider>
+      <EditorProvider
+        initialConfig={{
+          keyGenerator: keyGenerator,
+          schemaDefinition: options.schemaDefinition ?? defineSchema({}),
+          initialValue: options.initialValue,
+        }}
+      >
+        <EditorRefPlugin ref={editorBRef} />
+        <PortableTextEditable
+          {...options.editableProps}
+          data-testid="editor-b"
+        />
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'mutation') {
+              editorRef.current?.send({
+                type: 'patches',
+                patches: event.patches.map((patch) => ({
+                  ...patch,
+                  origin: 'remote',
+                })),
+                snapshot: event.value,
+              })
+              editorRef.current?.send({
+                type: 'update value',
+                value: event.value,
+              })
+            }
+          }}
+        />
+        {options.children}
+      </EditorProvider>
+    </>,
+  )
+
+  const locator = page.getByTestId('editor-a')
+  const locatorB = page.getByTestId('editor-b')
+
+  await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+  await vi.waitFor(() => expect.element(locatorB).toBeInTheDocument())
+
+  return {
+    editor: editorRef.current!,
+    locator,
+    editorB: editorBRef.current!,
+    locatorB,
   }
 }
