@@ -1,5 +1,5 @@
 import {Transforms, type Element as SlateElement} from 'slate'
-import {toSlateValue} from '../internal-utils/values'
+import {toSlateBlock} from '../internal-utils/values'
 import {parseBlock} from '../utils/parse-blocks'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
@@ -40,13 +40,9 @@ export const blockSetOperationImplementation: BehaviorOperationImplementation<
     throw new Error(`Unable to update block at ${JSON.stringify(operation.at)}`)
   }
 
-  const slateBlock = toSlateValue([parsedBlock], {
+  const slateBlock = toSlateBlock(parsedBlock, {
     schemaTypes: context.schema,
-  })?.at(0) as SlateElement | undefined
-
-  if (!slateBlock) {
-    throw new Error(`Unable to convert block to Slate value`)
-  }
+  }) as SlateElement
 
   Transforms.setNodes(operation.editor, slateBlock, {at: [blockIndex]})
 }
