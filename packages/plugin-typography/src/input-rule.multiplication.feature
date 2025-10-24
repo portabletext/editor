@@ -12,7 +12,7 @@ Feature: Multiplication Input Rule
     Examples:
       | text | inserted text | new text |
       | ""   | "1*2"         | "1×2"    |
-      | ""   | "1*2*3"       | "1×2×3"  |
+      | ""   | "1*2*3"       | "1×2*3"  |
 
   Scenario Outline: Inserting multiplication sign and writing afterwards
     Given the text <text>
@@ -23,4 +23,4 @@ Feature: Multiplication Input Rule
     Examples:
       | text | inserted text | new text   |
       | ""   | "1*2"         | "1×2new"   |
-      | ""   | "1*2*3"       | "1×2×3new" |
+      | ""   | "1*2*3"       | "1×2*3new" |

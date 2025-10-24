@@ -30,6 +30,7 @@
     "dev:example-legacy": "turbo dev --filter=example-legacy",
     "dev:keyboard-shortcuts": "turbo dev --filter=@portabletext/keyboard-shortcuts...",
     "dev:playground": "turbo dev --filter=playground",
+    "dev:plugin-emoji-picker": "turbo dev --filter=@portabletext/plugin-emoji-picker...",
     "dev:sanity-bridge": "turbo dev --filter=@portabletext/sanity-bridge...",
     "dev:schema": "turbo dev --filter=@portabletext/schema...",
     "dev:toolbar": "turbo dev --filter=@portabletext/toolbar...",

@@ -1,13 +1,18 @@
 import type {Patch} from '@portabletext/patches'
 import {compileSchema, defineSchema} from '@portabletext/schema'
-import {createTestKeyGenerator} from '@portabletext/test'
-import {describe, expect, it, vi} from 'vitest'
+import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
+import {userEvent} from '@vitest/browser/context'
+import {describe, expect, it, test, vi} from 'vitest'
 import type {
   EditorEmittedEvent,
   MutationEvent,
   PatchEvent,
 } from '../src/editor/relay-machine'
-import {getTextSelection} from '../src/internal-utils/text-selection'
+import {
+  getSelectionAfterText,
+  getTextSelection,
+} from '../src/internal-utils/text-selection'
 import {EventListenerPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -182,6 +187,204 @@ describe('Feature: Self-solving', () => {
               ],
               style: 'normal',
               markDefs: [],
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Child keys on inserted blocks are made unique', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const fooSpan = {
+      _key: spanKey,
+      _type: 'span',
+      text: 'foo',
+      marks: [],
+    }
+    const barSpan = {
+      _key: spanKey,
+      _type: 'span',
+      text: 'bar',
+      marks: ['strong'],
+    }
+    const block = {
+      _key: blockKey,
+      _type: 'block',
+      children: [fooSpan, barSpan],
+      style: 'normal',
+      markDefs: [],
+    }
+    const initialValue = [block]
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+      }),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          ...block,
+          children: [
+            fooSpan,
+            {
+              ...barSpan,
+              _key: 'k4',
+            },
+          ],
+        },
+      ])
+
+      expect(patches).toEqual([])
+    })
+
+    await userEvent.click(locator)
+
+    const afterBarSelection = getSelectionAfterText(
+      editor.getSnapshot().context,
+      'bar',
+    )
+
+    editor.send({
+      type: 'select',
+      at: afterBarSelection,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual(afterBarSelection)
+    })
+
+    await userEvent.type(locator, 'b')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo,barb'])
+
+      expect(patches).toEqual([
+        {
+          origin: 'local',
+          path: [{_key: blockKey}, 'children', 1, '_key'],
+          type: 'set',
+          value: 'k4',
+        },
+        {
+          origin: 'local',
+          path: [{_key: blockKey}, 'children', {_key: 'k4'}, 'text'],
+          type: 'diffMatchPatch',
+          value: stringifyPatches(makePatches(makeDiff('bar', 'barb'))),
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Inserted child keys are made unique', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const fooSpan = {
+      _key: spanKey,
+      _type: 'span',
+      text: 'foo',
+      marks: [],
+    }
+    const barSpan = {
+      _key: spanKey,
+      _type: 'span',
+      text: 'bar',
+      marks: ['strong'],
+    }
+    const block = {
+      _key: blockKey,
+      _type: 'block',
+      children: [fooSpan],
+      style: 'normal',
+      markDefs: [],
+    }
+    const initialValue = [block]
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+      }),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([block])
+      expect(patches).toEqual([])
+    })
+
+    await userEvent.click(locator)
+
+    const afterFooSelection = getSelectionAfterText(
+      editor.getSnapshot().context,
+      'foo',
+    )
+
+    editor.send({
+      type: 'select',
+      at: afterFooSelection,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual(afterFooSelection)
+    })
+
+    editor.send({
+      type: 'insert.child',
+      child: barSpan,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          ...block,
+          children: [
+            fooSpan,
+            {
+              ...barSpan,
+              _key: 'k4',
+            },
+          ],
+        },
+      ])
+
+      expect(patches).toEqual([
+        {
+          origin: 'local',
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', 0],
+          position: 'after',
+          items: [
+            {
+              ...barSpan,
+              _key: 'k4',
             },
           ],
         },

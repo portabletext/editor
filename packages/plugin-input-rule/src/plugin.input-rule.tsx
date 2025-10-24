@@ -22,9 +22,12 @@ import {
 import type {InputRule, InputRuleMatch} from './input-rule'
 import {getInputRuleMatchLocation} from './input-rule-match-location'
 
-function createInputRuleBehavior(config: {
+/**
+ * @alpha
+ */
+export function createInputRuleBehavior(config: {
   rules: Array<InputRule<any>>
-  onApply: ({
+  onApply?: ({
     endOffsets,
   }: {
     endOffsets: {start: BlockOffset; end: BlockOffset} | undefined
@@ -177,9 +180,10 @@ function createInputRuleBehavior(config: {
               }
             }
 
-            const matches = ruleMatches.flatMap((match) =>
-              match.groupMatches.length === 0 ? [match] : match.groupMatches,
-            )
+            // const matches = ruleMatches.flatMap((match) =>
+            //   match.groupMatches.length === 0 ? [match] : match.groupMatches,
+            // )
+            const matches = ruleMatches
 
             for (const match of matches) {
               // Remember each match and adjust `textBefore` and `newText` so
@@ -214,7 +218,7 @@ function createInputRuleBehavior(config: {
         effect(() => {
           const blockOffsets = getBlockOffsets(snapshot)
 
-          config.onApply({endOffsets: blockOffsets})
+          config.onApply?.({endOffsets: blockOffsets})
         }),
       ],
     ],

@@ -8,7 +8,7 @@ import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import type {MutationEvent} from '../src/editor/relay-machine'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
-import {getFirstBlock} from '../src/selectors'
+import {getFirstBlock, getFocusBlock} from '../src/selectors'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.history.undo', () => {
@@ -115,6 +115,103 @@ describe('event.history.undo', () => {
 
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+    })
+  })
+
+  test('Scenario: Undoing one-action action sets', async () => {
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text === 'a',
+              actions: [
+                () => [raise({type: 'insert.text', text: 'b'})],
+                () => [raise({type: 'insert.text', text: 'c'})],
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'a')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['bc'])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['b'])
+    })
+  })
+
+  test('Scenario: Undoing `insert.text` after `delete`', async () => {
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({snapshot, event}) => {
+                if (event.text !== 'c') {
+                  return false
+                }
+
+                const focusBlock = getFocusBlock(snapshot)
+
+                if (!focusBlock) {
+                  return false
+                }
+
+                return {focusBlock}
+              },
+              actions: [
+                ({event}) => [forward(event)],
+                (_, {focusBlock}) => [
+                  raise({
+                    type: 'delete',
+                    at: {
+                      anchor: {
+                        path: focusBlock.path,
+                        offset: 0,
+                      },
+                      focus: {
+                        path: focusBlock.path,
+                        offset: 3,
+                      },
+                    },
+                  }),
+                ],
+                () => [raise({type: 'insert.text', text: 'd'})],
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'a')
+    await userEvent.type(locator, 'b')
+    await userEvent.type(locator, 'c')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['d'])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['abc'])
     })
   })
 
