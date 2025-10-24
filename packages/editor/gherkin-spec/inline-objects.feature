@@ -26,6 +26,7 @@ Feature: Inline Objects
 
   Scenario Outline: Deleting an inline object
     Given the text "foo,{stock-ticker},"
+    And the editor is focused
     When the caret is put after "foo"
     And "{ArrowRight}" is pressed
     And <key> is pressed
