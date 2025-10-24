@@ -516,8 +516,12 @@ describe('event.update value', () => {
       ],
     })
 
-    editor.send({type: 'focus'})
+    await userEvent.click(locator)
     await userEvent.type(locator, 'foo')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+    })
 
     editor.send({type: 'update readOnly', readOnly: true})
 
@@ -533,15 +537,15 @@ describe('event.update value', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: blockKey,
-          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
-          style: 'normal',
-          markDefs: [],
-        },
-      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+    })
+
+    editor.send({type: 'update readOnly', readOnly: false})
+
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['bar'])
     })
   })
 
