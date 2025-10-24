@@ -193,6 +193,7 @@ export function createWithObjectKeys(editorActor: EditorActor) {
 
     editor.normalizeNode = (entry) => {
       const [node, path] = entry
+
       if (
         Element.isElement(node) &&
         node._type === editorActor.getSnapshot().context.schema.block.name
@@ -208,18 +209,36 @@ export function createWithObjectKeys(editorActor: EditorActor) {
           })
           return
         }
-        // Set keys on it's children
+
+        // Set unique keys on it's children
+        const childKeys = new Set<string>()
+
         for (const [child, childPath] of Node.children(editor, path)) {
-          if (!child._key) {
+          if (child._key && childKeys.has(child._key)) {
+            const _key = editorActor.getSnapshot().context.keyGenerator()
+
+            childKeys.add(_key)
+
             withNormalizeNode(editor, () => {
-              Transforms.setNodes(
-                editor,
-                {_key: editorActor.getSnapshot().context.keyGenerator()},
-                {at: childPath},
-              )
+              Transforms.setNodes(editor, {_key}, {at: childPath})
             })
+
+            continue
+          }
+
+          if (!child._key) {
+            const _key = editorActor.getSnapshot().context.keyGenerator()
+
+            childKeys.add(_key)
+
+            withNormalizeNode(editor, () => {
+              Transforms.setNodes(editor, {_key}, {at: childPath})
+            })
+
             return
           }
+
+          childKeys.add(child._key)
         }
       }
 
