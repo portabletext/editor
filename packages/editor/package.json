@@ -144,7 +144,7 @@
     "typescript-eslint": "^8.46.1",
     "vite": "^7.1.10",
     "vitest": "^3.2.4",
-    "vitest-browser-react": "^1.0.1"
+    "vitest-browser-react": "^2.0.0"
   },
   "peerDependencies": {
     "@portabletext/sanity-bridge": "workspace:^1.1.15",
