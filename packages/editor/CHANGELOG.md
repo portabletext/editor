@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.15.3
+
+### Patch Changes
+
+- [#1770](https://github.com/portabletext/editor/pull/1770) [`777b61b`](https://github.com/portabletext/editor/commit/777b61ba6c25f6a543e1a3111ad8978072999b3e) Thanks [@christianhg](https://github.com/christianhg)! - fix: produce correct patches when unsetting block properties
+
 ## 2.15.2
 
 ### Patch Changes
