@@ -124,6 +124,12 @@ export function setNodePatch(
         }
       }
 
+      for (const key of Object.keys(operation.properties)) {
+        if (!(key in operation.newProperties)) {
+          patches.push(unset([{_key: block._key}, key]))
+        }
+      }
+
       return patches
     } else {
       const patches: Patch[] = []
@@ -134,18 +140,30 @@ export function setNodePatch(
         patches.push(set(_key, [blockIndex, '_key']))
       }
 
-      const properties =
+      const newValue =
         'value' in operation.newProperties &&
         typeof operation.newProperties.value === 'object'
           ? (operation.newProperties.value as Record<string, unknown>)
           : ({} satisfies Record<string, unknown>)
 
-      const keys = Object.keys(properties)
+      const keys = Object.keys(newValue)
 
       for (const key of keys) {
-        const value = properties[key]
+        const value = newValue[key]
 
         patches.push(set(value, [{_key: block._key}, key]))
+      }
+
+      const value =
+        'value' in operation.properties &&
+        typeof operation.properties.value === 'object'
+          ? (operation.properties.value as Record<string, unknown>)
+          : ({} satisfies Record<string, unknown>)
+
+      for (const key of Object.keys(value)) {
+        if (!(key in newValue)) {
+          patches.push(unset([{_key: block._key}, key]))
+        }
       }
 
       return patches
