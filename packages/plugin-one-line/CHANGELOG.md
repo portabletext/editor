@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.12
+
+### Patch Changes
+
+- Updated dependencies [[`851cad1`](https://github.com/portabletext/editor/commit/851cad1a5e77ff4f069f1882e5a147b461e9e04a)]:
+  - @portabletext/editor@2.15.4
+
 ## 1.1.11
 
 ### Patch Changes
