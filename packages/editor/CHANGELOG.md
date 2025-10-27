@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.15.4
+
+### Patch Changes
+
+- [#1772](https://github.com/portabletext/editor/pull/1772) [`851cad1`](https://github.com/portabletext/editor/commit/851cad1a5e77ff4f069f1882e5a147b461e9e04a) Thanks [@christianhg](https://github.com/christianhg)! - fix: produce correct patches when unsetting child properties
+
 ## 2.15.3
 
 ### Patch Changes
