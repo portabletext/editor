@@ -3,9 +3,16 @@ Feature: Emoji Picker
   Background:
     Given the editor is focused
 
-  Scenario: Picking a direct hit
-    When ":joy:" is typed
-    Then the text is "😂"
+  Scenario Outline: Picking a direct hit
+    When <initial text> is inserted
+    When <inserted text> is inserted
+    Then the text is <final text>
+
+    Examples:
+      | initial text | inserted text | final text |
+      | ""           | ":joy:"       | "😂"       |
+      | ":jo"        | "y:"          | "😂"       |
+      | ":joy"       | ":"           | "😂"       |
 
   Scenario: Undo after direct hit
     When ":joy:" is typed
