@@ -7,6 +7,11 @@ Feature: Emoji Picker
     When ":joy:" is typed
     Then the text is "😂"
 
+  Scenario: Two consecutive direct hits
+    When ":joy:" is typed
+    And ":joy_cat:" is typed
+    Then the text is "😂😹"
+
   Scenario: Picking the closest hit with Enter
     When ":joy" is typed
     And "{Enter}" is pressed
