@@ -192,15 +192,7 @@ type EmojiPickerContext<TEmojiMatch = EmojiMatch> = {
 }
 
 type EmojiPickerEvent =
-  | {
-      type: 'colon inserted'
-      keyword: string
-      keywordAnchor: {
-        point: EditorSelectionPoint
-        blockOffset: BlockOffset
-      }
-      keywordFocus: BlockOffset
-    }
+  | TriggerFoundEvent
   | PartialKeywordFoundEvent
   | KeywordFoundEvent
   | {
@@ -237,7 +229,7 @@ type EmojiPickerEvent =
       type: 'insert selected match'
     }
 
-const colonListenerCallback: CallbackLogicFunction<
+const triggerListenerCallback: CallbackLogicFunction<
   AnyEventObject,
   EmojiPickerEvent,
   {editor: Editor}
@@ -281,10 +273,7 @@ const colonListenerCallback: CallbackLogicFunction<
         actions: [
           ({event}) => [
             effect(() => {
-              sendBack({
-                ...event,
-                type: 'colon inserted',
-              })
+              sendBack(event)
             }),
           ],
         ],
@@ -600,7 +589,7 @@ export const emojiPickerMachine = setup({
     'emoji insert listener': fromCallback(emojiInsertListener),
     'submit listener': fromCallback(submitListenerCallback),
     'arrow listener': fromCallback(arrowListenerCallback),
-    'colon listener': fromCallback(colonListenerCallback),
+    'trigger listener': fromCallback(triggerListenerCallback),
     'escape listener': fromCallback(escapeListenerCallback),
     'selection listener': fromCallback(selectionListenerCallback),
     'text change listener': fromCallback(textChangeListener),
@@ -609,7 +598,7 @@ export const emojiPickerMachine = setup({
     'init keyword': assign({
       keyword: ({context, event}) => {
         if (
-          event.type !== 'colon inserted' &&
+          event.type !== 'custom.trigger found' &&
           event.type !== 'custom.partial keyword found' &&
           event.type !== 'custom.keyword found'
         ) {
@@ -622,7 +611,7 @@ export const emojiPickerMachine = setup({
     'set keyword anchor': assign({
       keywordAnchor: ({context, event}) => {
         if (
-          event.type !== 'colon inserted' &&
+          event.type !== 'custom.trigger found' &&
           event.type !== 'custom.partial keyword found' &&
           event.type !== 'custom.keyword found'
         ) {
@@ -635,7 +624,7 @@ export const emojiPickerMachine = setup({
     'set keyword focus': assign({
       keywordFocus: ({context, event}) => {
         if (
-          event.type !== 'colon inserted' &&
+          event.type !== 'custom.trigger found' &&
           event.type !== 'custom.partial keyword found' &&
           event.type !== 'custom.keyword found'
         ) {
@@ -880,11 +869,11 @@ export const emojiPickerMachine = setup({
     idle: {
       entry: ['reset'],
       invoke: {
-        src: 'colon listener',
+        src: 'trigger listener',
         input: ({context}) => ({editor: context.editor}),
       },
       on: {
-        'colon inserted': {
+        'custom.trigger found': {
           target: 'searching',
           actions: ['set keyword anchor', 'set keyword focus', 'init keyword'],
         },
