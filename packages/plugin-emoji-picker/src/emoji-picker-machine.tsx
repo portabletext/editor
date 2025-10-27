@@ -452,20 +452,33 @@ const submitListenerCallback: CallbackLogicFunction<
       }),
     }),
     input.context.editor.registerBehavior({
-      behavior: defineBehavior({
-        on: 'insert.text',
+      behavior: defineInputRuleBehavior({
+        rules: [triggerRule],
+      }),
+    }),
+    input.context.editor.registerBehavior({
+      behavior: defineBehavior<
+        TriggerFoundEvent,
+        TriggerFoundEvent['type'],
+        {
+          anchor: BlockOffset
+          focus: BlockOffset
+          emoji: string
+        }
+      >({
+        on: 'custom.trigger found',
         guard: ({event}) => {
-          if (event.text !== ':') {
+          const match = context.matches[context.selectedIndex]
+
+          if (!match || match.type !== 'exact' || !context.keywordAnchor) {
             return false
           }
 
-          const anchor = context.keywordAnchor?.blockOffset
-          const focus = context.keywordFocus
-          const match = context.matches[context.selectedIndex]
-
-          return match && match.type === 'exact' && anchor && focus
-            ? {anchor, focus, emoji: match.emoji}
-            : false
+          return {
+            anchor: context.keywordAnchor.blockOffset,
+            focus: event.keywordFocus,
+            emoji: match.emoji,
+          }
         },
         actions: [
           (_, {anchor, focus, emoji}) => [
