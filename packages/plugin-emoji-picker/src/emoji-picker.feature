@@ -13,6 +13,15 @@ Feature: Emoji Picker
     When undo is performed
     Then the text is ":joy:"
 
+  Scenario: Picking direct hit after undo
+    When ":joy:" is typed
+    And undo is performed
+    And "{Backspace}" is pressed
+    And ":" is typed
+    Then the text is "😂"
+    And the keyword is ""
+    And the matches are ""
+
   Scenario: Two consecutive direct hits
     When ":joy:" is typed
     And ":joy_cat:" is typed

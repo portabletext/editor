@@ -5,15 +5,22 @@ import {
   type Context,
 } from '@portabletext/editor/test/vitest'
 import {defineSchema} from '@portabletext/schema'
-import {Before} from 'racejar'
+import {page, type Locator} from '@vitest/browser/context'
+import {Before, Then} from 'racejar'
 import {Feature} from 'racejar/vitest'
+import {expect, vi} from 'vitest'
 import emojiPickerFeature from './emoji-picker.feature?raw'
 import {createMatchEmojis} from './match-emojis'
 import {useEmojiPicker} from './use-emoji-picker'
 
+type EmojiPickerTestContext = Context & {
+  keywordLocator: Locator
+  matchesLocator: Locator
+}
+
 Feature({
   hooks: [
-    Before(async (context: Context) => {
+    Before(async (context: EmojiPickerTestContext) => {
       const {editor, locator} = await createTestEditor({
         children: <EmojiPickerPlugin />,
         schemaDefinition: defineSchema({
@@ -24,10 +31,33 @@ Feature({
 
       context.locator = locator
       context.editor = editor
+      context.keywordLocator = page.getByTestId('keyword')
+      context.matchesLocator = page.getByTestId('matches')
+
+      await vi.waitFor(() =>
+        expect.element(context.keywordLocator).toBeInTheDocument(),
+      )
+      await vi.waitFor(() =>
+        expect.element(context.matchesLocator).toBeInTheDocument(),
+      )
     }),
   ],
   featureText: emojiPickerFeature,
-  stepDefinitions,
+  stepDefinitions: [
+    ...stepDefinitions,
+    Then(
+      'the keyword is {string}',
+      (context: EmojiPickerTestContext, keyword: string) => {
+        expect(context.keywordLocator.element().textContent).toEqual(keyword)
+      },
+    ),
+    Then(
+      'the matches are {string}',
+      (context: EmojiPickerTestContext, matches: string) => {
+        expect(context.matchesLocator.element().textContent).toEqual(matches)
+      },
+    ),
+  ],
   parameterTypes,
 })
 
@@ -39,7 +69,14 @@ const emojis: Record<string, Array<string>> = {
 const matchEmojis = createMatchEmojis({emojis})
 
 function EmojiPickerPlugin() {
-  useEmojiPicker({matchEmojis})
+  const {keyword, matches} = useEmojiPicker({matchEmojis})
 
-  return null
+  return (
+    <>
+      <div data-testid="keyword">{keyword}</div>
+      <div data-testid="matches">
+        {matches.map((match) => match.emoji).join(', ')}
+      </div>
+    </>
+  )
 }

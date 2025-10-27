@@ -891,6 +891,8 @@ export const emojiPickerMachine = setup({
             'update matches',
             'insert selected match',
           ],
+          target: 'idle',
+          reenter: true,
         },
       },
     },
