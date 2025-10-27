@@ -7,6 +7,12 @@ Feature: Emoji Picker
     When ":joy:" is typed
     Then the text is "😂"
 
+  Scenario: Undo after direct hit
+    When ":joy:" is typed
+    Then the text is "😂"
+    When undo is performed
+    Then the text is ":joy:"
+
   Scenario: Two consecutive direct hits
     When ":joy:" is typed
     And ":joy_cat:" is typed
