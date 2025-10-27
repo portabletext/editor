@@ -27,7 +27,7 @@ import {getInputRuleMatchLocation} from './input-rule-match-location'
  */
 export function defineInputRuleBehavior(config: {
   rules: Array<InputRule<any>>
-  onApply: ({
+  onApply?: ({
     endOffsets,
   }: {
     endOffsets: {start: BlockOffset; end: BlockOffset} | undefined
@@ -217,7 +217,7 @@ export function defineInputRuleBehavior(config: {
         effect(() => {
           const blockOffsets = getBlockOffsets(snapshot)
 
-          config.onApply({endOffsets: blockOffsets})
+          config.onApply?.({endOffsets: blockOffsets})
         }),
       ],
     ],
