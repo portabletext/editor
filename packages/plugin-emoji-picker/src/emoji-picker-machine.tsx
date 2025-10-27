@@ -363,76 +363,34 @@ const arrowListenerCallback: CallbackLogicFunction<
 }
 
 const emojiInsertListener: CallbackLogicFunction<
-  {type: 'context changed'; context: EmojiPickerContext},
+  AnyEventObject,
   EmojiPickerEvent,
   {context: EmojiPickerContext}
-> = ({sendBack, input, receive}) => {
-  let context = input.context
-
-  receive((event) => {
-    context = event.context
+> = ({sendBack, input}) => {
+  return input.context.editor.registerBehavior({
+    behavior: defineBehavior<{
+      emoji: string
+      anchor: BlockOffset
+      focus: BlockOffset
+    }>({
+      on: 'custom.insert emoji',
+      actions: [
+        ({event}) => [
+          effect(() => {
+            sendBack({type: 'dismiss'})
+          }),
+          raise({
+            type: 'delete.text',
+            at: {anchor: event.anchor, focus: event.focus},
+          }),
+          raise({
+            type: 'insert.text',
+            text: event.emoji,
+          }),
+        ],
+      ],
+    }),
   })
-
-  const unregisterBehaviors = [
-    input.context.editor.registerBehavior({
-      behavior: defineBehavior<{
-        emoji: string
-        anchor: BlockOffset
-        focus: BlockOffset
-      }>({
-        on: 'custom.insert emoji',
-        actions: [
-          ({event}) => [
-            effect(() => {
-              sendBack({type: 'dismiss'})
-            }),
-            raise({
-              type: 'delete.text',
-              at: {anchor: event.anchor, focus: event.focus},
-            }),
-            raise({
-              type: 'insert.text',
-              text: event.emoji,
-            }),
-          ],
-        ],
-      }),
-    }),
-    input.context.editor.registerBehavior({
-      behavior: defineBehavior({
-        on: 'insert.text',
-        guard: ({event}) => {
-          if (event.text !== ':') {
-            return false
-          }
-
-          const anchor = context.keywordAnchor?.blockOffset
-          const focus = context.keywordFocus
-          const match = context.matches[context.selectedIndex]
-
-          return match && match.type === 'exact' && anchor && focus
-            ? {anchor, focus, emoji: match.emoji}
-            : false
-        },
-        actions: [
-          (_, {anchor, focus, emoji}) => [
-            raise({
-              type: 'custom.insert emoji',
-              emoji,
-              anchor,
-              focus,
-            }),
-          ],
-        ],
-      }),
-    }),
-  ]
-
-  return () => {
-    for (const unregister of unregisterBehaviors) {
-      unregister()
-    }
-  }
 }
 
 const submitListenerCallback: CallbackLogicFunction<
@@ -488,6 +446,34 @@ const submitListenerCallback: CallbackLogicFunction<
           () => [
             effect(() => {
               sendBack({type: 'dismiss'})
+            }),
+          ],
+        ],
+      }),
+    }),
+    input.context.editor.registerBehavior({
+      behavior: defineBehavior({
+        on: 'insert.text',
+        guard: ({event}) => {
+          if (event.text !== ':') {
+            return false
+          }
+
+          const anchor = context.keywordAnchor?.blockOffset
+          const focus = context.keywordFocus
+          const match = context.matches[context.selectedIndex]
+
+          return match && match.type === 'exact' && anchor && focus
+            ? {anchor, focus, emoji: match.emoji}
+            : false
+        },
+        actions: [
+          (_, {anchor, focus, emoji}) => [
+            raise({
+              type: 'custom.insert emoji',
+              emoji,
+              anchor,
+              focus,
             }),
           ],
         ],
@@ -944,7 +930,6 @@ export const emojiPickerMachine = setup({
               'update keyword',
               'update matches',
               'reset selected index',
-              'update emoji insert listener context',
               'update submit listener context',
             ],
           },
@@ -980,23 +965,17 @@ export const emojiPickerMachine = setup({
             'navigate down': {
               actions: [
                 'increment selected index',
-                'update emoji insert listener context',
                 'update submit listener context',
               ],
             },
             'navigate up': {
               actions: [
                 'decrement selected index',
-                'update emoji insert listener context',
                 'update submit listener context',
               ],
             },
             'navigate to': {
-              actions: [
-                'set selected index',
-                'update emoji insert listener context',
-                'update submit listener context',
-              ],
+              actions: ['set selected index', 'update submit listener context'],
             },
             'insert selected match': {
               actions: ['insert selected match'],
