@@ -7,6 +7,16 @@ Feature: Emoji Picker
     When ":joy:" is typed
     Then the text is "😂"
 
+  Scenario: Picking the closest hit with Enter
+    When ":joy" is typed
+    And "{Enter}" is pressed
+    Then the text is "😂"
+
+  Scenario: Picking the closest hit with Tab
+    When ":joy" is typed
+    And "{Tab}" is pressed
+    Then the text is "😂"
+
   Scenario: Navigating down the list
     When ":joy" is typed
     And "{ArrowDown}" is pressed
@@ -24,6 +34,19 @@ Feature: Emoji Picker
     And "{Backspace}" is pressed
     And "{Enter}" is pressed
     Then the text is "😂"
+
+  Scenario Outline: Inserting longer trigger text
+    Given the text <text>
+    When <inserted text> is inserted
+    And <new text> is typed
+    Then the text is <final text>
+
+    Examples:
+      | text | inserted text | new text | final text |
+      | ""   | ":"           | "joy:"   | "😂"       |
+      | ""   | ":j"          | "oy:"    | "😂"       |
+      | ""   | ":joy"        | ":"      | "😂"       |
+      | ""   | ":joy:"       | ":"      | "😂:"      |
 
   Scenario Outline: Matching inside decorator
     Given the text <text>
