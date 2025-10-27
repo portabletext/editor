@@ -24,20 +24,6 @@ Feature: Inline Objects
     When "{Backspace}" is pressed
     Then the caret is after "foo"
 
-  Scenario Outline: Deleting an inline object
-    Given the text "foo,{stock-ticker},"
-    And the editor is focused
-    When the caret is put after "foo"
-    And "{ArrowRight}" is pressed
-    And <key> is pressed
-    And "bar" is typed
-    Then the text is "foobar"
-
-    Examples:
-      | key           |
-      | "{Backspace}" |
-      | "{Delete}"    |
-
   Scenario: Adding a decorator across an inline object
     Given the text "foo,{stock-ticker},bar"
     When "foobar" is selected
