@@ -112,7 +112,7 @@
     "react-compiler-runtime": "1.0.0",
     "slate": "0.118.1",
     "slate-dom": "^0.118.1",
-    "slate-react": "0.117.4",
+    "slate-react": "0.118.2",
     "xstate": "^5.23.0"
   },
   "devDependencies": {
