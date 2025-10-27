@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.11
+
+### Patch Changes
+
+- Updated dependencies [[`e7c0e93`](https://github.com/portabletext/editor/commit/e7c0e932937f2f4c1c0e1fb01ff06099bc805aa6), [`6ceff3f`](https://github.com/portabletext/editor/commit/6ceff3fb5b2fb8eac06a6ed2f7ac873beb0d5064)]:
+  - @portabletext/plugin-input-rule@0.4.0
+
 ## 1.4.10
 
 ### Patch Changes

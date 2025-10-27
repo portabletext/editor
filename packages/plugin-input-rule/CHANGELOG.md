@@ -1,5 +1,15 @@
 # @portabletext/plugin-input-rule
 
+## 0.4.0
+
+### Minor Changes
+
+- [#1775](https://github.com/portabletext/editor/pull/1775) [`e7c0e93`](https://github.com/portabletext/editor/commit/e7c0e932937f2f4c1c0e1fb01ff06099bc805aa6) Thanks [@christianhg](https://github.com/christianhg)! - feat: export `defineInputRuleBehavior`
+
+### Patch Changes
+
+- [#1775](https://github.com/portabletext/editor/pull/1775) [`6ceff3f`](https://github.com/portabletext/editor/commit/6ceff3fb5b2fb8eac06a6ed2f7ac873beb0d5064) Thanks [@christianhg](https://github.com/christianhg)! - fix: make `onApply` optional
+
 ## 0.3.11
 
 ### Patch Changes
