@@ -22,7 +22,10 @@ import {
 import type {InputRule, InputRuleMatch} from './input-rule'
 import {getInputRuleMatchLocation} from './input-rule-match-location'
 
-function createInputRuleBehavior(config: {
+/**
+ * @alpha
+ */
+export function defineInputRuleBehavior(config: {
   rules: Array<InputRule<any>>
   onApply: ({
     endOffsets,
@@ -269,7 +272,7 @@ const inputRuleListenerCallback: CallbackLogicFunction<
   }
 > = ({input, sendBack}) => {
   const unregister = input.editor.registerBehavior({
-    behavior: createInputRuleBehavior({
+    behavior: defineInputRuleBehavior({
       rules: input.rules,
       onApply: ({endOffsets}) => {
         sendBack({type: 'input rule raised', endOffsets})
