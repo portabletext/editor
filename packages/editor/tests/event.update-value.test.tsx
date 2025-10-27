@@ -1,3 +1,4 @@
+import {compileSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
@@ -505,6 +506,12 @@ describe('event.update value', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
+
+    let resolveValueChangedToBar: () => void
+    const valueChangedToBar = new Promise<void>((resolve) => {
+      resolveValueChangedToBar = resolve
+    })
+
     const {editor, locator} = await createTestEditor({
       keyGenerator,
       initialValue: [
@@ -514,6 +521,22 @@ describe('event.update value', () => {
           children: [{_type: 'span', _key: spanKey, text: '', marks: []}],
         },
       ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'value changed') {
+              if (
+                getTersePt({
+                  schema: compileSchema(defineSchema({})),
+                  value: event.value ?? [],
+                }).at(0) === 'bar'
+              ) {
+                resolveValueChangedToBar()
+              }
+            }
+          }}
+        />
+      ),
     })
 
     await userEvent.click(locator)
@@ -524,6 +547,10 @@ describe('event.update value', () => {
     })
 
     editor.send({type: 'update readOnly', readOnly: true})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.readOnly).toEqual(true)
+    })
 
     editor.send({
       type: 'update value',
@@ -542,7 +569,7 @@ describe('event.update value', () => {
 
     editor.send({type: 'update readOnly', readOnly: false})
 
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    await valueChangedToBar
 
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['bar'])
