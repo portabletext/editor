@@ -7,7 +7,6 @@ import type {
 import {
   defineBehavior,
   effect,
-  execute,
   forward,
   raise,
 } from '@portabletext/editor/behaviors'
@@ -204,11 +203,11 @@ const emojiInsertListener: CallbackLogicFunction<
             effect(() => {
               sendBack({type: 'dismiss'})
             }),
-            execute({
+            raise({
               type: 'delete.text',
               at: {anchor: event.anchor, focus: event.focus},
             }),
-            execute({
+            raise({
               type: 'insert.text',
               text: event.emoji,
             }),
@@ -332,7 +331,7 @@ const textChangeListener: CallbackLogicFunction<
                 focus,
               })
             }),
-            execute(event),
+            forward(event),
           ],
         ],
       }),
@@ -352,7 +351,7 @@ const textChangeListener: CallbackLogicFunction<
                 focus,
               })
             }),
-            execute(event),
+            forward(event),
           ],
         ],
       }),
@@ -372,7 +371,7 @@ const textChangeListener: CallbackLogicFunction<
                 focus,
               })
             }),
-            execute(event),
+            forward(event),
           ],
         ],
       }),
