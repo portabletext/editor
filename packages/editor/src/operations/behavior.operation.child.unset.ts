@@ -33,18 +33,14 @@ export const childUnsetOperationImplementation: BehaviorOperationImplementation<
   }
 
   if (operation.editor.isTextSpan(child)) {
-    if (operation.props.includes('text')) {
-      operation.editor.apply({
-        type: 'remove_text',
-        path: childPath,
-        offset: 0,
-        text: child.text,
-      })
-    }
-
     const newNode: Record<string, unknown> = {}
 
     for (const prop of operation.props) {
+      if (prop === 'text') {
+        // Unsetting `text` requires special treatment
+        continue
+      }
+
       if (prop === '_type') {
         // It's not allowed to unset the _type of a span
         continue
@@ -59,6 +55,15 @@ export const childUnsetOperationImplementation: BehaviorOperationImplementation<
     }
 
     Transforms.setNodes(operation.editor, newNode, {at: childPath})
+
+    if (operation.props.includes('text')) {
+      operation.editor.apply({
+        type: 'remove_text',
+        path: childPath,
+        offset: 0,
+        text: child.text,
+      })
+    }
 
     return
   }

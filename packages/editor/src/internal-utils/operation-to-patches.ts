@@ -9,7 +9,6 @@ import {
 } from '@portabletext/patches'
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {Path, PortableTextSpan, PortableTextTextBlock} from '@sanity/types'
-import {get} from 'lodash'
 import {
   Element,
   Text,
@@ -214,31 +213,48 @@ export function setNodePatch(
           return patches
         }
 
-        const keys = Object.keys(operation.newProperties)
-        keys.forEach((keyName) => {
-          // Special case for setting _key on a child. We have to target it by index and not the _key.
-          if (keys.length === 1 && keyName === '_key') {
-            const val = get(operation.newProperties, keyName)
+        const newPropNames = Object.keys(operation.newProperties)
+
+        for (const keyName of newPropNames) {
+          const value = (operation.newProperties as Record<string, unknown>)[
+            keyName
+          ]
+
+          if (keyName === '_key') {
             patches.push(
-              set(val, [
+              set(value, [
                 {_key: blockKey},
                 'children',
                 block.children.indexOf(child),
                 keyName,
               ]),
             )
-          } else {
-            const val = get(operation.newProperties, keyName)
-            patches.push(
-              set(val, [
-                {_key: blockKey},
-                'children',
-                {_key: childKey},
-                keyName,
-              ]),
-            )
+
+            continue
           }
-        })
+
+          patches.push(
+            set(value, [
+              {_key: blockKey},
+              'children',
+              {_key: childKey},
+              keyName,
+            ]),
+          )
+        }
+
+        const propNames = Object.keys(operation.properties)
+
+        for (const keyName of propNames) {
+          if (keyName in operation.newProperties) {
+            continue
+          }
+
+          patches.push(
+            unset([{_key: blockKey}, 'children', {_key: childKey}, keyName]),
+          )
+        }
+
         return patches
       }
       throw new Error('Could not find a valid child')
