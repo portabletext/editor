@@ -440,40 +440,24 @@ const submitListenerCallback: CallbackLogicFunction<
     }),
     input.context.editor.registerBehavior({
       behavior: defineInputRuleBehavior({
-        rules: [triggerRule],
+        rules: [keywordRule],
       }),
     }),
     input.context.editor.registerBehavior({
       behavior: defineBehavior<
-        TriggerFoundEvent,
-        TriggerFoundEvent['type'],
+        KeywordFoundEvent,
+        KeywordFoundEvent['type'],
         {
           anchor: BlockOffset
           focus: BlockOffset
           emoji: string
         }
       >({
-        on: 'custom.trigger found',
-        guard: ({event}) => {
-          const match = context.matches[context.selectedIndex]
-
-          if (!match || match.type !== 'exact' || !context.keywordAnchor) {
-            return false
-          }
-
-          return {
-            anchor: context.keywordAnchor.blockOffset,
-            focus: event.keywordFocus,
-            emoji: match.emoji,
-          }
-        },
+        on: 'custom.keyword found',
         actions: [
-          (_, {anchor, focus, emoji}) => [
-            raise({
-              type: 'custom.insert emoji',
-              emoji,
-              anchor,
-              focus,
+          ({event}) => [
+            effect(() => {
+              sendBack(event)
             }),
           ],
         ],
@@ -915,6 +899,15 @@ export const emojiPickerMachine = setup({
         },
       ],
       on: {
+        'custom.keyword found': {
+          actions: [
+            'set keyword anchor',
+            'set keyword focus',
+            'init keyword',
+            'update matches',
+            'insert selected match',
+          ],
+        },
         'insert.text': [
           {
             guard: 'unexpected text insertion',
