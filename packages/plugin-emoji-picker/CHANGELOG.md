@@ -1,5 +1,23 @@
 # @portabletext/plugin-emoji-picker
 
+## 1.0.0
+
+### Major Changes
+
+- [#1777](https://github.com/portabletext/editor/pull/1777) [`f6c208b`](https://github.com/portabletext/editor/commit/f6c208bd0a2575ebe88030cd2d009d08f92f98e2) Thanks [@christianhg](https://github.com/christianhg)! - feat!: cut v1 of emoji picker
+
+### Patch Changes
+
+- [#1779](https://github.com/portabletext/editor/pull/1779) [`cf7ab69`](https://github.com/portabletext/editor/commit/cf7ab690498c3e49420f2e4e7e785ebd402ab870) Thanks [@christianhg](https://github.com/christianhg)! - fix: allow consecutive direct hits
+
+- [#1781](https://github.com/portabletext/editor/pull/1781) [`e08c994`](https://github.com/portabletext/editor/commit/e08c994f6e4b76ecef0a08f2b3a0808890b9c672) Thanks [@christianhg](https://github.com/christianhg)! - fix: edge case with submitting with lengthy text insertion
+
+- [#1781](https://github.com/portabletext/editor/pull/1781) [`519cce0`](https://github.com/portabletext/editor/commit/519cce04b1d81e684c842af470d8436d60c2e632) Thanks [@christianhg](https://github.com/christianhg)! - fix: wrong direct hit edge case after undo
+
+- [#1779](https://github.com/portabletext/editor/pull/1779) [`37d26d4`](https://github.com/portabletext/editor/commit/37d26d4fa572332077ec4937e0785e1e9044eddf) Thanks [@christianhg](https://github.com/christianhg)! - fix: allow undo after direct hit
+
+- [#1779](https://github.com/portabletext/editor/pull/1779) [`7cbe5cb`](https://github.com/portabletext/editor/commit/7cbe5cb39588eb293be60d5753a249e327c6d303) Thanks [@christianhg](https://github.com/christianhg)! - fix: properly clear state when picking direct hit after undo
+
 ## 0.0.16
 
 ### Patch Changes
