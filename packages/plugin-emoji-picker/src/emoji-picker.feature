@@ -22,6 +22,28 @@ Feature: Emoji Picker
     And the keyword is ""
     And the matches are ""
 
+  Scenario: Picking wrong direct hit
+    When ":jo:" is typed
+    Then the text is ":jo:"
+    And the keyword is ":jo:"
+    And the matches are "😂, 😹"
+
+  Scenario: Colon after wrong direct hit
+    When ":jo:" is typed
+    And ":" is typed
+    Then the text is ":jo::"
+    And the keyword is ":jo::"
+    And the matches are ""
+
+  Scenario: Picking wrong direct hit after undoing direct hit
+    When ":joy:" is typed
+    And undo is performed
+    And "{Backspace}{Backspace}" is pressed
+    And ":" is typed
+    Then the text is ":jo:"
+    And the keyword is ""
+    And the matches are ""
+
   Scenario: Two consecutive direct hits
     When ":joy:" is typed
     And ":joy_cat:" is typed

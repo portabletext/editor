@@ -201,6 +201,7 @@ type EmojiPickerEvent =
       }
       keywordFocus: BlockOffset
     }
+  | PartialKeywordFoundEvent
   | KeywordFoundEvent
   | {
       type: 'selection changed'
@@ -268,10 +269,7 @@ const colonListenerCallback: CallbackLogicFunction<
         actions: [
           ({event}) => [
             effect(() => {
-              sendBack({
-                ...event,
-                type: 'colon inserted',
-              })
+              sendBack(event)
             }),
           ],
         ],
@@ -612,6 +610,7 @@ export const emojiPickerMachine = setup({
       keyword: ({context, event}) => {
         if (
           event.type !== 'colon inserted' &&
+          event.type !== 'custom.partial keyword found' &&
           event.type !== 'custom.keyword found'
         ) {
           return context.keyword
@@ -624,6 +623,7 @@ export const emojiPickerMachine = setup({
       keywordAnchor: ({context, event}) => {
         if (
           event.type !== 'colon inserted' &&
+          event.type !== 'custom.partial keyword found' &&
           event.type !== 'custom.keyword found'
         ) {
           return context.keywordAnchor
@@ -636,6 +636,7 @@ export const emojiPickerMachine = setup({
       keywordFocus: ({context, event}) => {
         if (
           event.type !== 'colon inserted' &&
+          event.type !== 'custom.partial keyword found' &&
           event.type !== 'custom.keyword found'
         ) {
           return context.keywordFocus
@@ -752,10 +753,14 @@ export const emojiPickerMachine = setup({
         context,
       }),
     ),
-    'insert selected match': ({context}) => {
+    'insert selected match': ({context, event}) => {
       const match = context.matches[context.selectedIndex]
 
       if (!match || !context.keywordAnchor || !context.keywordFocus) {
+        return
+      }
+
+      if (event.type === 'custom.keyword found' && match.type !== 'exact') {
         return
       }
 
@@ -880,6 +885,10 @@ export const emojiPickerMachine = setup({
       },
       on: {
         'colon inserted': {
+          target: 'searching',
+          actions: ['set keyword anchor', 'set keyword focus', 'init keyword'],
+        },
+        'custom.partial keyword found': {
           target: 'searching',
           actions: ['set keyword anchor', 'set keyword focus', 'init keyword'],
         },
