@@ -382,6 +382,13 @@ Now, you should be able to run `pnpm dev:test-studio` in the `sanity` repo to te
 - 💻 [`./packages/plugin-character-pair-decorator`](./packages/plugin-character-pair-decorator/)
 - 📦 [@portabletext/plugin-character-pair-decorator](https://www.npmjs.com/package/@portabletext/plugin-character-pair-decorator)
 
+### `@portabletext/plugin-emoji-picker`
+
+> ⚡️ Easily configure an Emoji Picker for the Portable Text Editor
+
+- 💻 [`./packages/plugin-emoji-picker`](./packages/plugin-emoji-picker/)
+- 📦 [@portabletext/plugin-emoji-picker](https://www.npmjs.com/package/@portabletext/plugin-emoji-picker)
+
 ### `@portabletext/plugin-input-rule`
 
 > 🪄 Easily configure input rules in the Portable Text Editor
