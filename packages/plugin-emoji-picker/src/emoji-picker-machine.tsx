@@ -12,6 +12,7 @@ import {
 } from '@portabletext/editor/behaviors'
 import * as selectors from '@portabletext/editor/selectors'
 import * as utils from '@portabletext/editor/utils'
+import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 import {
   assertEvent,
   assign,
@@ -24,6 +25,25 @@ import {
   type CallbackLogicFunction,
 } from 'xstate'
 import type {EmojiMatch, MatchEmojis} from './match-emojis'
+
+/**
+ * Keyboard shortcuts
+ */
+const arrowUpShortcut = createKeyboardShortcut({
+  default: [{key: 'ArrowUp'}],
+})
+const arrowDownShortcut = createKeyboardShortcut({
+  default: [{key: 'ArrowDown'}],
+})
+const enterShortcut = createKeyboardShortcut({
+  default: [{key: 'Enter'}],
+})
+const tabShortcut = createKeyboardShortcut({
+  default: [{key: 'Tab'}],
+})
+const escapeShortcut = createKeyboardShortcut({
+  default: [{key: 'Escape'}],
+})
 
 type EmojiPickerContext<TEmojiMatch = EmojiMatch> = {
   editor: Editor
@@ -126,7 +146,7 @@ const escapeListenerCallback: CallbackLogicFunction<
   return input.editor.registerBehavior({
     behavior: defineBehavior({
       on: 'keyboard.keydown',
-      guard: ({event}) => event.originEvent.key === 'Escape',
+      guard: ({event}) => escapeShortcut.guard(event.originEvent),
       actions: [
         () => [
           effect(() => {
@@ -147,7 +167,7 @@ const arrowListenerCallback: CallbackLogicFunction<
     input.editor.registerBehavior({
       behavior: defineBehavior({
         on: 'keyboard.keydown',
-        guard: ({event}) => event.originEvent.key === 'ArrowDown',
+        guard: ({event}) => arrowDownShortcut.guard(event.originEvent),
         actions: [
           () => [
             effect(() => {
@@ -160,7 +180,7 @@ const arrowListenerCallback: CallbackLogicFunction<
     input.editor.registerBehavior({
       behavior: defineBehavior({
         on: 'keyboard.keydown',
-        guard: ({event}) => event.originEvent.key === 'ArrowUp',
+        guard: ({event}) => arrowUpShortcut.guard(event.originEvent),
         actions: [
           () => [
             effect(() => {
@@ -248,8 +268,8 @@ const emojiInsertListener: CallbackLogicFunction<
         on: 'keyboard.keydown',
         guard: ({event}) => {
           if (
-            event.originEvent.key !== 'Enter' &&
-            event.originEvent.key !== 'Tab'
+            !enterShortcut.guard(event.originEvent) &&
+            !tabShortcut.guard(event.originEvent)
           ) {
             return false
           }
@@ -278,7 +298,8 @@ const emojiInsertListener: CallbackLogicFunction<
       behavior: defineBehavior({
         on: 'keyboard.keydown',
         guard: ({event}) =>
-          event.originEvent.key === 'Enter' || event.originEvent.key === 'Tab',
+          enterShortcut.guard(event.originEvent) ||
+          tabShortcut.guard(event.originEvent),
         actions: [
           () => [
             effect(() => {
