@@ -14,6 +14,10 @@ import * as selectors from '@portabletext/editor/selectors'
 import * as utils from '@portabletext/editor/utils'
 import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 import {
+  defineInputRule,
+  defineInputRuleBehavior,
+} from '@portabletext/plugin-input-rule'
+import {
   assertEvent,
   assign,
   fromCallback,
@@ -26,9 +30,9 @@ import {
 } from 'xstate'
 import type {EmojiMatch, MatchEmojis} from './match-emojis'
 
-/**
+/*******************
  * Keyboard shortcuts
- */
+ *******************/
 const arrowUpShortcut = createKeyboardShortcut({
   default: [{key: 'ArrowUp'}],
 })
@@ -44,6 +48,132 @@ const tabShortcut = createKeyboardShortcut({
 const escapeShortcut = createKeyboardShortcut({
   default: [{key: 'Escape'}],
 })
+
+/*******************
+ * Input Rules
+ *******************/
+
+/**
+ * Listen for a single colon insertion
+ */
+const triggerRule = defineInputRule({
+  on: /:/,
+  guard: ({event}) => {
+    const lastMatch = event.matches.at(-1)
+
+    if (lastMatch === undefined) {
+      return false
+    }
+
+    return {
+      keyword: lastMatch.text,
+      keywordAnchor: {
+        point: lastMatch.selection.anchor,
+        blockOffset: lastMatch.targetOffsets.anchor,
+      },
+      keywordFocus: lastMatch.targetOffsets.focus,
+    }
+  },
+  actions: [(_, payload) => [raise(createTriggerFoundEvent(payload))]],
+})
+
+type TriggerFoundEvent = ReturnType<typeof createTriggerFoundEvent>
+
+function createTriggerFoundEvent(payload: {
+  keyword: string
+  keywordAnchor: {
+    point: EditorSelectionPoint
+    blockOffset: BlockOffset
+  }
+  keywordFocus: BlockOffset
+}) {
+  return {
+    type: 'custom.trigger found',
+    ...payload,
+  } as const
+}
+
+/**
+ * Listen for a partial keyword like ":joy"
+ */
+const partialKeywordRule = defineInputRule({
+  on: /:[a-zA-Z-_0-9]+/,
+  guard: ({event}) => {
+    const lastMatch = event.matches.at(-1)
+
+    if (lastMatch === undefined) {
+      return false
+    }
+
+    const keyword = lastMatch.text
+    const keywordAnchor = {
+      point: lastMatch.selection.anchor,
+      blockOffset: lastMatch.targetOffsets.anchor,
+    }
+    const keywordFocus = lastMatch.targetOffsets.focus
+
+    return {keyword, keywordAnchor, keywordFocus}
+  },
+  actions: [(_, payload) => [raise(createPartialKeywordFoundEvent(payload))]],
+})
+
+type PartialKeywordFoundEvent = ReturnType<
+  typeof createPartialKeywordFoundEvent
+>
+
+function createPartialKeywordFoundEvent(payload: {
+  keyword: string
+  keywordAnchor: {
+    point: EditorSelectionPoint
+    blockOffset: BlockOffset
+  }
+  keywordFocus: BlockOffset
+}) {
+  return {
+    type: 'custom.partial keyword found',
+    ...payload,
+  } as const
+}
+
+/**
+ * Listen for a complete keyword like ":joy:"
+ */
+const keywordRule = defineInputRule({
+  on: /:[a-zA-Z-_0-9]+:/,
+  guard: ({event}) => {
+    const lastMatch = event.matches.at(-1)
+
+    if (lastMatch === undefined) {
+      return false
+    }
+
+    const keyword = lastMatch.text
+    const keywordAnchor = {
+      point: lastMatch.selection.anchor,
+      blockOffset: lastMatch.targetOffsets.anchor,
+    }
+    const keywordFocus = lastMatch.targetOffsets.focus
+
+    return {keyword, keywordAnchor, keywordFocus}
+  },
+  actions: [(_, payload) => [raise(createKeywordFoundEvent(payload))]],
+})
+
+type KeywordFoundEvent = ReturnType<typeof createKeywordFoundEvent>
+
+function createKeywordFoundEvent(payload: {
+  keyword: string
+  keywordAnchor: {
+    point: EditorSelectionPoint
+    blockOffset: BlockOffset
+  }
+  keywordFocus: BlockOffset
+}) {
+  return {
+    type: 'custom.keyword found',
+    ...payload,
+  } as const
+}
 
 type EmojiPickerContext<TEmojiMatch = EmojiMatch> = {
   editor: Editor
@@ -64,9 +194,14 @@ type EmojiPickerContext<TEmojiMatch = EmojiMatch> = {
 type EmojiPickerEvent =
   | {
       type: 'colon inserted'
-      point: EditorSelectionPoint
-      blockOffset: BlockOffset
+      keyword: string
+      keywordAnchor: {
+        point: EditorSelectionPoint
+        blockOffset: BlockOffset
+      }
+      keywordFocus: BlockOffset
     }
+  | KeywordFoundEvent
   | {
       type: 'selection changed'
       snapshot: EditorSnapshot
@@ -106,36 +241,64 @@ const colonListenerCallback: CallbackLogicFunction<
   EmojiPickerEvent,
   {editor: Editor}
 > = ({sendBack, input}) => {
-  return input.editor.registerBehavior({
-    behavior: defineBehavior({
-      on: 'insert.text',
-      guard: ({snapshot, event}) => {
-        if (event.text !== ':' || !snapshot.context.selection) {
-          return false
-        }
-
-        const blockOffset = utils.spanSelectionPointToBlockOffset({
-          context: snapshot.context,
-          selectionPoint: snapshot.context.selection.focus,
-        })
-
-        return blockOffset
-          ? {
-              point: snapshot.context.selection.focus,
-              blockOffset,
-            }
-          : false
-      },
-      actions: [
-        ({event}, {point, blockOffset}) => [
-          forward(event),
-          effect(() => {
-            sendBack({type: 'colon inserted', point, blockOffset})
-          }),
-        ],
-      ],
+  const unregisterBehaviors = [
+    input.editor.registerBehavior({
+      behavior: defineInputRuleBehavior({
+        rules: [keywordRule, partialKeywordRule, triggerRule],
+      }),
     }),
-  })
+    input.editor.registerBehavior({
+      behavior: defineBehavior<KeywordFoundEvent, KeywordFoundEvent['type']>({
+        on: 'custom.keyword found',
+        actions: [
+          ({event}) => [
+            effect(() => {
+              sendBack(event)
+            }),
+          ],
+        ],
+      }),
+    }),
+    input.editor.registerBehavior({
+      behavior: defineBehavior<
+        PartialKeywordFoundEvent,
+        PartialKeywordFoundEvent['type']
+      >({
+        on: 'custom.partial keyword found',
+        actions: [
+          ({event}) => [
+            effect(() => {
+              sendBack({
+                ...event,
+                type: 'colon inserted',
+              })
+            }),
+          ],
+        ],
+      }),
+    }),
+    input.editor.registerBehavior({
+      behavior: defineBehavior<TriggerFoundEvent, TriggerFoundEvent['type']>({
+        on: 'custom.trigger found',
+        actions: [
+          ({event}) => [
+            effect(() => {
+              sendBack({
+                ...event,
+                type: 'colon inserted',
+              })
+            }),
+          ],
+        ],
+      }),
+    }),
+  ]
+
+  return () => {
+    for (const unregister of unregisterBehaviors) {
+      unregister()
+    }
+  }
 }
 
 const escapeListenerCallback: CallbackLogicFunction<
@@ -263,6 +426,27 @@ const emojiInsertListener: CallbackLogicFunction<
         ],
       }),
     }),
+  ]
+
+  return () => {
+    for (const unregister of unregisterBehaviors) {
+      unregister()
+    }
+  }
+}
+
+const submitListenerCallback: CallbackLogicFunction<
+  {type: 'context changed'; context: EmojiPickerContext},
+  EmojiPickerEvent,
+  {context: EmojiPickerContext}
+> = ({sendBack, input, receive}) => {
+  let context = input.context
+
+  receive((event) => {
+    context = event.context
+  })
+
+  const unregisterBehaviors = [
     input.context.editor.registerBehavior({
       behavior: defineBehavior({
         on: 'keyboard.keydown',
@@ -417,6 +601,7 @@ export const emojiPickerMachine = setup({
   },
   actors: {
     'emoji insert listener': fromCallback(emojiInsertListener),
+    'submit listener': fromCallback(submitListenerCallback),
     'arrow listener': fromCallback(arrowListenerCallback),
     'colon listener': fromCallback(colonListenerCallback),
     'escape listener': fromCallback(escapeListenerCallback),
@@ -425,26 +610,39 @@ export const emojiPickerMachine = setup({
   },
   actions: {
     'init keyword': assign({
-      keyword: ':',
+      keyword: ({context, event}) => {
+        if (
+          event.type !== 'colon inserted' &&
+          event.type !== 'custom.keyword found'
+        ) {
+          return context.keyword
+        }
+
+        return event.keyword
+      },
     }),
     'set keyword anchor': assign({
-      keywordAnchor: ({event}) => {
-        assertEvent(event, 'colon inserted')
-
-        return {
-          point: event.point,
-          blockOffset: event.blockOffset,
+      keywordAnchor: ({context, event}) => {
+        if (
+          event.type !== 'colon inserted' &&
+          event.type !== 'custom.keyword found'
+        ) {
+          return context.keywordAnchor
         }
+
+        return event.keywordAnchor
       },
     }),
     'set keyword focus': assign({
-      keywordFocus: ({event}) => {
-        assertEvent(event, 'colon inserted')
-
-        return {
-          path: event.blockOffset.path,
-          offset: event.blockOffset.offset + 1,
+      keywordFocus: ({context, event}) => {
+        if (
+          event.type !== 'colon inserted' &&
+          event.type !== 'custom.keyword found'
+        ) {
+          return context.keywordFocus
         }
+
+        return event.keywordFocus
       },
     }),
     'update keyword focus': assign({
@@ -499,9 +697,14 @@ export const emojiPickerMachine = setup({
     }),
     'update matches': assign({
       matches: ({context}) => {
-        const rawKeyword = context.keyword.match(
-          context.incompleteKeywordRegex,
-        )?.[1]
+        // Strip leading colon
+        let rawKeyword = context.keyword.startsWith(':')
+          ? context.keyword.slice(1)
+          : context.keyword
+        // Strip trailing colon
+        rawKeyword = rawKeyword.endsWith(':')
+          ? rawKeyword.slice(0, -1)
+          : rawKeyword
 
         if (rawKeyword === undefined) {
           return []
@@ -538,6 +741,13 @@ export const emojiPickerMachine = setup({
     }),
     'update emoji insert listener context': sendTo(
       'emoji insert listener',
+      ({context}) => ({
+        type: 'context changed',
+        context,
+      }),
+    ),
+    'update submit listener context': sendTo(
+      'submit listener',
       ({context}) => ({
         type: 'context changed',
         context,
@@ -655,6 +865,13 @@ export const emojiPickerMachine = setup({
     selectedIndex: 0,
   }),
   initial: 'idle',
+  invoke: [
+    {
+      src: 'emoji insert listener',
+      id: 'emoji insert listener',
+      input: ({context}) => ({context}),
+    },
+  ],
   states: {
     idle: {
       entry: ['reset'],
@@ -667,13 +884,22 @@ export const emojiPickerMachine = setup({
           target: 'searching',
           actions: ['set keyword anchor', 'set keyword focus', 'init keyword'],
         },
+        'custom.keyword found': {
+          actions: [
+            'set keyword anchor',
+            'set keyword focus',
+            'init keyword',
+            'update matches',
+            'insert selected match',
+          ],
+        },
       },
     },
     searching: {
       invoke: [
         {
-          src: 'emoji insert listener',
-          id: 'emoji insert listener',
+          src: 'submit listener',
+          id: 'submit listener',
           input: ({context}) => ({context}),
         },
         {
@@ -719,6 +945,7 @@ export const emojiPickerMachine = setup({
               'update matches',
               'reset selected index',
               'update emoji insert listener context',
+              'update submit listener context',
             ],
           },
         ],
@@ -754,18 +981,21 @@ export const emojiPickerMachine = setup({
               actions: [
                 'increment selected index',
                 'update emoji insert listener context',
+                'update submit listener context',
               ],
             },
             'navigate up': {
               actions: [
                 'decrement selected index',
                 'update emoji insert listener context',
+                'update submit listener context',
               ],
             },
             'navigate to': {
               actions: [
                 'set selected index',
                 'update emoji insert listener context',
+                'update submit listener context',
               ],
             },
             'insert selected match': {
