@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.15.5
+
+### Patch Changes
+
+- [#1767](https://github.com/portabletext/editor/pull/1767) [`75b4c38`](https://github.com/portabletext/editor/commit/75b4c38be8b82aaa9d6f86ba97ba551ee2a83255) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency immer to ^10.2.0
+
 ## 2.15.4
 
 ### Patch Changes
