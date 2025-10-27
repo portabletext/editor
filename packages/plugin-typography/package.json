@@ -70,7 +70,7 @@
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9.38.0",
     "eslint-formatter-gha": "^1.6.0",
-    "eslint-plugin-react-hooks": "7.0.0",
+    "eslint-plugin-react-hooks": "7.0.1",
     "racejar": "workspace:*",
     "react": "^19.2.0",
     "typescript": "catalog:",
