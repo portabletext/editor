@@ -251,11 +251,9 @@ export const stepDefinitions = [
           type: 'select',
           at: selection,
         })
-      })
 
-      await vi.waitFor(() => {
         expect(context.editor.getSnapshot().context.selection).toEqual(
-          getSelectionBeforeText(context.editor.getSnapshot().context, text),
+          selection,
         )
       })
     },
@@ -283,17 +281,16 @@ export const stepDefinitions = [
           context.editor.getSnapshot().context,
           text,
         )
+
         expect(selection).not.toBeNull()
 
         context.editor.send({
           type: 'select',
-          at: getSelectionAfterText(context.editor.getSnapshot().context, text),
+          at: selection,
         })
-      })
 
-      await vi.waitFor(() => {
         expect(context.editor.getSnapshot().context.selection).toEqual(
-          getSelectionAfterText(context.editor.getSnapshot().context, text),
+          selection,
         )
       })
     },
