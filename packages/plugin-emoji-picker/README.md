@@ -7,13 +7,26 @@
 The `useEmojiPicker` hook handles the state and logic needed to create an emoji picker for the Portable Text Editor. It manages keyword matching, keyboard navigation, and emoji insertion, but is not concerned with the UI, how the picker is rendered, or how it's positioned in the document.
 
 ```tsx
-import {matchEmojis, useEmojiPicker} from '@portabletext/plugin-emoji-picker'
+import {
+  createMatchEmojis,
+  useEmojiPicker,
+} from '@portabletext/plugin-emoji-picker'
+
+const matchEmojis = createMatchEmojis({
+  emojis: {
+    '😂': ['joy', 'laugh'],
+    '❤️': ['heart', 'love'],
+    '🎉': ['party', 'celebrate'],
+    '👍': ['thumbsup', 'yes', 'approve'],
+    '🔥': ['fire', 'hot', 'lit'],
+  },
+})
 
 function EmojiPicker() {
   const {keyword, matches, selectedIndex, onNavigateTo, onSelect, onDismiss} =
     useEmojiPicker({matchEmojis})
 
-  if (keyword.length < 2) {
+  if (keyword.length < 1) {
     return null
   }
 
@@ -43,6 +56,16 @@ function EmojiPicker() {
 }
 ```
 
+**Tip:** For a comprehensive emoji library, you can install [`emojilib`](https://www.npmjs.com/package/emojilib) and use it directly:
+
+```tsx
+import emojilib from 'emojilib'
+
+const matchEmojis = createMatchEmojis({
+  emojis: emojilib,
+})
+```
+
 ## How It Works
 
 The emoji picker activates when users type `:` followed by a keyword (e.g., `:smile` or `:joy`).
@@ -70,29 +93,59 @@ The emoji picker activates when users type `:` followed by a keyword (e.g., `:sm
 - `onSelect()`: Select the current match.
 - `onDismiss()`: Dismiss the emoji picker.
 
-## Custom Emoji Sets
+## Custom Search Algorithm
 
-The `matchEmojis` function is generic and can return any shape of emoji match required for your UI. However, the default implementation returns `EmojiMatch` objects and can be created using `createMatchEmojis`:
+You can implement a custom search algorithm with your own matching logic and data structures. The only requirement is that your function adheres to the `MatchEmojis` type and returns matches that extend `BaseEmojiMatch`:
 
 ```tsx
-import {
-  createMatchEmojis,
-  useEmojiPicker,
+import type {
+  BaseEmojiMatch,
+  MatchEmojis,
 } from '@portabletext/plugin-emoji-picker'
 
-const myMatchEmojis = createMatchEmojis({
-  emojis: {
-    '😂': ['joy', 'laugh'],
-    '😹': ['joy_cat', 'laugh_cat'],
-    '❤️': ['heart', 'love'],
-    '🎉': ['party', 'celebrate'],
-  },
-})
+// Custom emoji match type with relevance scoring
+type CustomEmojiMatch = BaseEmojiMatch & {
+  key: string
+  label: string
+  score: number
+}
+
+// Custom search algorithm with fuzzy matching and scoring
+const myCustomMatchEmojis: MatchEmojis<CustomEmojiMatch> = ({keyword}) => {
+  const emojis = [
+    {emoji: '😂', labels: ['joy', 'laugh', 'happy']},
+    {emoji: '❤️', labels: ['heart', 'love']},
+    {emoji: '🎉', labels: ['party', 'celebrate', 'tada']},
+  ]
+
+  return emojis
+    .flatMap(({emoji, labels}) =>
+      labels
+        .map((label) => {
+          // Calculate relevance score
+          const isExact = label === keyword
+          const score = label.startsWith(keyword)
+            ? 100 // Exact prefix match
+            : label.includes(keyword)
+              ? 50 // Contains keyword
+              : 0 // No match
+
+          return {
+            type: isExact ? 'exact' : 'partial',
+            key: `${emoji}-${label}`,
+            emoji,
+            label,
+            score,
+          } as CustomEmojiMatch
+        })
+        .filter((match) => match.score > 0),
+    )
+    .sort((a, b) => b.score - a.score) // Sort by relevance
+    .slice(0, 10) // Limit to 10 results
+}
 
 function MyEmojiPicker() {
-  const picker = useEmojiPicker({matchEmojis: myMatchEmojis})
-  // ... render your UI
+  const picker = useEmojiPicker({matchEmojis: myCustomMatchEmojis})
+  // ... render your UI with custom match data
 }
 ```
-
-The default `matchEmojis` export includes a comprehensive set of emojis. You can also implement a completely custom matching function that returns any shape you need for your specific UI requirements.

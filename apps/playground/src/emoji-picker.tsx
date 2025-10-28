@@ -1,10 +1,13 @@
 import {
-  matchEmojis,
+  createMatchEmojis,
   useEmojiPicker,
   type EmojiMatch,
 } from '@portabletext/plugin-emoji-picker'
+import emojis from 'emojilib'
 import {useEffect, useRef} from 'react'
 import {Button} from './primitives/button'
+
+const matchEmojis = createMatchEmojis({emojis})
 
 export function EmojiPickerPlugin() {
   const {keyword, matches, selectedIndex, onDismiss, onNavigateTo, onSelect} =

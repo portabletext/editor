@@ -28,6 +28,7 @@
     "@portabletext/plugin-typography": "workspace:*",
     "@portabletext/toolbar": "workspace:*",
     "@xstate/react": "^6.0.0",
+    "emojilib": "^4.0.2",
     "lucide-react": "^0.536.0",
     "react": "^19.2.0",
     "react-aria-components": "^1.11.0",
