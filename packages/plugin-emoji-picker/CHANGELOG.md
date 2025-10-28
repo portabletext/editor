@@ -1,5 +1,16 @@
 # @portabletext/plugin-emoji-picker
 
+## 1.0.3
+
+### Patch Changes
+
+- [#1786](https://github.com/portabletext/editor/pull/1786) [`13bc83d`](https://github.com/portabletext/editor/commit/13bc83d4b9e94fa47f61d64e0c522d611e0590e6) Thanks [@christianhg](https://github.com/christianhg)! - fix: allow any non-whitespace char in keyword
+
+- [#1786](https://github.com/portabletext/editor/pull/1786) [`51c4deb`](https://github.com/portabletext/editor/commit/51c4deb149b16b10e2622752e68242575c28afc3) Thanks [@christianhg](https://github.com/christianhg)! - fix: exclude default list of emojis
+
+  This potentially bloats the bundle of consumer apps, and there is no need to
+  include it when you can just install `emojilib` and use it from there.
+
 ## 1.0.2
 
 ### Patch Changes
