@@ -149,7 +149,9 @@ export function useEmojiPicker<
     const rawKeyword = snapshot.context.keyword.startsWith(':')
       ? snapshot.context.keyword.slice(1)
       : snapshot.context.keyword
-    return rawKeyword.endsWith(':') ? rawKeyword.slice(0, -1) : rawKeyword
+    return rawKeyword.length > 1 && rawKeyword.endsWith(':')
+      ? rawKeyword.slice(0, -1)
+      : rawKeyword
   })
   const matches = useSelector(
     emojiPickerActor,

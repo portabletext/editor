@@ -97,7 +97,7 @@ function createTriggerFoundEvent(payload: {
  * Listen for a partial keyword like ":joy"
  */
 const partialKeywordRule = defineInputRule({
-  on: /:[a-zA-Z-_0-9]+/,
+  on: /:[\S]+/,
   guard: ({event}) => {
     const lastMatch = event.matches.at(-1)
 
@@ -139,7 +139,7 @@ function createPartialKeywordFoundEvent(payload: {
  * Listen for a complete keyword like ":joy:"
  */
 const keywordRule = defineInputRule({
-  on: /:[a-zA-Z-_0-9]+:/,
+  on: /:[\S]+:/,
   guard: ({event}) => {
     const lastMatch = event.matches.at(-1)
 
@@ -675,9 +675,10 @@ export const emojiPickerMachine = setup({
           ? context.keyword.slice(1)
           : context.keyword
         // Strip trailing colon
-        rawKeyword = rawKeyword.endsWith(':')
-          ? rawKeyword.slice(0, -1)
-          : rawKeyword
+        rawKeyword =
+          rawKeyword.length > 1 && rawKeyword.endsWith(':')
+            ? rawKeyword.slice(0, -1)
+            : rawKeyword
 
         if (rawKeyword === undefined) {
           return []
@@ -837,7 +838,7 @@ export const emojiPickerMachine = setup({
     keywordAnchor: undefined,
     keywordFocus: undefined,
     matchEmojis: input.matchEmojis,
-    incompleteKeywordRegex: /:([a-zA-Z-_0-9:]*)$/,
+    incompleteKeywordRegex: /:[\S]*$/,
     matches: [],
     selectedIndex: 0,
   }),

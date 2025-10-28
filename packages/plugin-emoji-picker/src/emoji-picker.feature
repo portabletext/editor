@@ -33,7 +33,7 @@ Feature: Emoji Picker
     When ":jo:" is typed
     Then the text is ":jo:"
     And the keyword is "jo"
-    And the matches are "😂, 😹"
+    And the matches are "😂,😹,🕹️"
 
   Scenario: Colon after wrong direct hit
     When ":jo:" is typed
@@ -174,3 +174,25 @@ Feature: Emoji Picker
       | text          | position    | keyword | button                              | final text        |
       | "foo bar baz" | after "foo" | ":j"    | "{ArrowRight}"                      | "foo:j \|bar baz" |
       | "foo bar baz" | after "foo" | ":j"    | "{ArrowLeft}{ArrowLeft}{ArrowLeft}" | "fo\|o:j bar baz" |
+
+  Scenario: Dismissing by pressing Space
+    Given the text ""
+    When ":joy" is typed
+    Then the keyword is "joy"
+    When " " is typed
+    Then the keyword is ""
+
+  Scenario Outline: Allow special characters
+    Given the text <text>
+    When <inserted text> is inserted
+    Then the keyword is <keyword>
+    And the matches are <matches>
+
+    Examples:
+      | text | inserted text | keyword | matches        |
+      | ""   | ":joy!"       | "joy!"  | "🕹️"          |
+      | ""   | ":*"          | "*"     | "😘"           |
+      | ""   | ":!"          | "!"     | "🕹️,❗️,⁉️,‼️" |
+      | ""   | ":!!"         | "!!"    | "‼️"           |
+      | ""   | "::)"         | ":)"    | "😊"           |
+      | ""   | "::"          | ":"     | "😊"           |

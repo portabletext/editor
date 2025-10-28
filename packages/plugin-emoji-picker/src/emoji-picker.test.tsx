@@ -64,6 +64,12 @@ Feature({
 const emojis: Record<string, Array<string>> = {
   '😂': ['joy'],
   '😹': ['joy_cat'],
+  '🕹️': ['joy!stick'],
+  '😘': ['*'],
+  '❗️': ['!'],
+  '⁉️': ['!?'],
+  '‼️': ['!!'],
+  '😊': [':)'],
 }
 
 const matchEmojis = createMatchEmojis({emojis})
@@ -75,7 +81,7 @@ function EmojiPickerPlugin() {
     <>
       <div data-testid="keyword">{keyword}</div>
       <div data-testid="matches">
-        {matches.map((match) => match.emoji).join(', ')}
+        {matches.map((match) => match.emoji).join(',')}
       </div>
     </>
   )
