@@ -32,14 +32,14 @@ Feature: Emoji Picker
   Scenario: Picking wrong direct hit
     When ":jo:" is typed
     Then the text is ":jo:"
-    And the keyword is ":jo:"
+    And the keyword is "jo"
     And the matches are "😂, 😹"
 
   Scenario: Colon after wrong direct hit
     When ":jo:" is typed
     And ":" is typed
     Then the text is ":jo::"
-    And the keyword is ":jo::"
+    And the keyword is "jo:"
     And the matches are ""
 
   Scenario: Picking wrong direct hit after undoing direct hit
