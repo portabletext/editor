@@ -1,4 +1,3 @@
-import {emojis} from './emojis'
 import type {MatchEmojis} from './match-emojis'
 
 /**
@@ -42,13 +41,6 @@ export type EmojiMatch =
       startSlice: string
       endSlice: string
     }
-
-/**
- * Proposed, but not required, default implementation of `MatchEmojis`.
- *
- * @beta
- */
-export const matchEmojis = createMatchEmojis({emojis})
 
 /**
  * Proposed, but not required, function to create a `MatchEmojis` function.
