@@ -30,7 +30,7 @@ export function EmojiListBox(props: {
   onNavigateTo: (index: number) => void
   onSelect: () => void
 }) {
-  if (props.keyword.length < 2) {
+  if (props.keyword.length < 1) {
     return null
   }
 

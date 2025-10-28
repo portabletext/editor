@@ -63,7 +63,7 @@ The emoji picker activates when users type `:` followed by a keyword (e.g., `:sm
 
 **Returns:**
 
-- `keyword`: The matches keyword, including colons.
+- `keyword`: The matched keyword.
 - `matches`: Emoji matches found for the current keyword.
 - `selectedIndex`: Index of the selected match
 - `onNavigateTo(index)`: Navigate to a specific match by index.

@@ -9,14 +9,14 @@ import type {BaseEmojiMatch, MatchEmojis} from './match-emojis'
  */
 export type EmojiPicker<TEmojiMatch extends BaseEmojiMatch = BaseEmojiMatch> = {
   /**
-   * The matched keyword, including colons.
+   * The matched keyword.
    *
    * Can be used to display the keyword in the UI or conditionally render the
    * list of matches.
    *
    * @example
    * ```tsx
-   * if (keyword.length < 2) {
+   * if (keyword.length < 1) {
    *   return null
    * }
    * ```
@@ -145,10 +145,12 @@ export function useEmojiPicker<
   const emojiPickerActor = useActorRef(emojiPickerMachine, {
     input: {editor, matchEmojis: props.matchEmojis},
   })
-  const keyword = useSelector(
-    emojiPickerActor,
-    (snapshot) => snapshot.context.keyword,
-  )
+  const keyword = useSelector(emojiPickerActor, (snapshot) => {
+    const rawKeyword = snapshot.context.keyword.startsWith(':')
+      ? snapshot.context.keyword.slice(1)
+      : snapshot.context.keyword
+    return rawKeyword.endsWith(':') ? rawKeyword.slice(0, -1) : rawKeyword
+  })
   const matches = useSelector(
     emojiPickerActor,
     (snapshot) => snapshot.context.matches as ReadonlyArray<TEmojiMatch>,
