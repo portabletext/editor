@@ -1,5 +1,26 @@
 # @portabletext/plugin-emoji-picker
 
+## 1.0.1
+
+### Patch Changes
+
+- [#1782](https://github.com/portabletext/editor/pull/1782) [`16b7cc9`](https://github.com/portabletext/editor/commit/16b7cc9d62ba63aa1a327cf2f17da8d4ba610315) Thanks [@christianhg](https://github.com/christianhg)! - fix: require `MatchEmojis` to return a `BaseEmojiMatch`
+
+  The internals of the emoji picker requires a `type` `'exact'` or `'partial'` as
+  well as an `emoji` prop to pluck the emoji for insertion.
+
+  ```ts
+  export type BaseEmojiMatch =
+    | {
+        type: 'exact'
+        emoji: string
+      }
+    | {
+        type: 'partial'
+        emoji: string
+      }
+  ```
+
 ## 1.0.0
 
 ### Major Changes
