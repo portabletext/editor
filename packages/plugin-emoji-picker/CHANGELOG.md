@@ -1,5 +1,15 @@
 # @portabletext/plugin-emoji-picker
 
+## 1.0.2
+
+### Patch Changes
+
+- [#1784](https://github.com/portabletext/editor/pull/1784) [`b9de031`](https://github.com/portabletext/editor/commit/b9de031fe85a3b154fd47a6bfb4423bd086e541d) Thanks [@christianhg](https://github.com/christianhg)! - fix: strip leading and trailing colons from returned `keyword`
+
+  It's confusing and contradicting if the `keyword` returned from
+  `useEmojiPicker` includes colons if the `keyword` passed to `MatchEmojis`
+  doesn't.
+
 ## 1.0.1
 
 ### Patch Changes
