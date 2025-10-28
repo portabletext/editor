@@ -2,12 +2,12 @@ import {useEditor} from '@portabletext/editor'
 import {useActorRef, useSelector} from '@xstate/react'
 import {useCallback} from 'react'
 import {emojiPickerMachine} from './emoji-picker-machine'
-import type {EmojiMatch, MatchEmojis} from './match-emojis'
+import type {BaseEmojiMatch, MatchEmojis} from './match-emojis'
 
 /**
  * @beta
  */
-export type EmojiPicker<TEmojiMatch = EmojiMatch> = {
+export type EmojiPicker<TEmojiMatch extends BaseEmojiMatch = BaseEmojiMatch> = {
   /**
    * The matched keyword, including colons.
    *
@@ -105,7 +105,9 @@ export type EmojiPicker<TEmojiMatch = EmojiMatch> = {
 /**
  * @beta
  */
-export type EmojiPickerProps<TEmojiMatch = EmojiMatch> = {
+export type EmojiPickerProps<
+  TEmojiMatch extends BaseEmojiMatch = BaseEmojiMatch,
+> = {
   matchEmojis: MatchEmojis<TEmojiMatch>
 }
 
@@ -136,12 +138,12 @@ export type EmojiPickerProps<TEmojiMatch = EmojiMatch> = {
  *
  * @beta
  */
-export function useEmojiPicker<TEmojiMatch = EmojiMatch>(
-  props: EmojiPickerProps<TEmojiMatch>,
-): EmojiPicker<TEmojiMatch> {
+export function useEmojiPicker<
+  TEmojiMatch extends BaseEmojiMatch = BaseEmojiMatch,
+>(props: EmojiPickerProps<TEmojiMatch>): EmojiPicker<TEmojiMatch> {
   const editor = useEditor()
   const emojiPickerActor = useActorRef(emojiPickerMachine, {
-    input: {editor, matchEmojis: props.matchEmojis as MatchEmojis<EmojiMatch>},
+    input: {editor, matchEmojis: props.matchEmojis},
   })
   const keyword = useSelector(
     emojiPickerActor,

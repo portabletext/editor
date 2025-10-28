@@ -9,8 +9,8 @@ import {page, type Locator} from '@vitest/browser/context'
 import {Before, Then} from 'racejar'
 import {Feature} from 'racejar/vitest'
 import {expect, vi} from 'vitest'
+import {createMatchEmojis} from './create-match-emojis'
 import emojiPickerFeature from './emoji-picker.feature?raw'
-import {createMatchEmojis} from './match-emojis'
 import {useEmojiPicker} from './use-emoji-picker'
 
 type EmojiPickerTestContext = Context & {
