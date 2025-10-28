@@ -28,7 +28,7 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
-import type {EmojiMatch, MatchEmojis} from './match-emojis'
+import type {BaseEmojiMatch, MatchEmojis} from './match-emojis'
 
 /*******************
  * Keyboard shortcuts
@@ -175,10 +175,10 @@ function createKeywordFoundEvent(payload: {
   } as const
 }
 
-type EmojiPickerContext<TEmojiMatch = EmojiMatch> = {
+type EmojiPickerContext = {
   editor: Editor
-  matches: ReadonlyArray<TEmojiMatch>
-  matchEmojis: MatchEmojis<TEmojiMatch>
+  matches: ReadonlyArray<BaseEmojiMatch>
+  matchEmojis: MatchEmojis<BaseEmojiMatch>
   selectedIndex: number
   keywordAnchor:
     | {

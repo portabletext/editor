@@ -1,6 +1,3 @@
-/**
- * @beta
- */
 export const emojis: Record<string, Array<string>> = {
   '😀': [
     'grinning_face',
