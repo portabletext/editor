@@ -120,8 +120,8 @@
     "@portabletext/test": "workspace:^",
     "@sanity/diff-match-patch": "^3.2.0",
     "@sanity/pkg-utils": "^8.1.14",
-    "@sanity/schema": "^4.11.0",
-    "@sanity/types": "^4.11.0",
+    "@sanity/schema": "^4.12.0",
+    "@sanity/types": "^4.12.0",
     "@types/debug": "^4.1.12",
     "@types/lodash": "^4.17.20",
     "@types/lodash.startcase": "^4.4.9",
@@ -148,8 +148,8 @@
   },
   "peerDependencies": {
     "@portabletext/sanity-bridge": "workspace:^1.1.15",
-    "@sanity/schema": "^4.11.0",
-    "@sanity/types": "^4.11.0",
+    "@sanity/schema": "^4.12.0",
+    "@sanity/types": "^4.12.0",
     "react": "^18.3 || ^19",
     "rxjs": "^7.8.2"
   },
