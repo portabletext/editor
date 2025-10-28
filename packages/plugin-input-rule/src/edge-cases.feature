@@ -201,3 +201,8 @@ Feature: Edge Cases
     And "{ArrowLeft}" is pressed
     And undo is performed
     Then the text is "-"
+
+  Scenario Outline: Multiple overlapping matches in one insertion
+    Given the text ""
+    When "1*2*3" is inserted
+    Then the text is "1×2×3"
