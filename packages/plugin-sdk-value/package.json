@@ -50,7 +50,12 @@
     "dev": "pkg-utils watch",
     "lint:fix": "biome lint --write .",
     "prepublishOnly": "turbo run build",
-    "test": "vitest --run"
+    "test:browser:chromium": "vitest --run --project \"browser (chromium)\"",
+    "test:browser:chromium:watch": "vitest watch --project \"browser (chromium)\"",
+    "test:browser:firefox": "vitest --run --project \"browser (firefox)\"",
+    "test:browser:firefox:watch": "vitest watch --project \"browser (firefox)\"",
+    "test:browser:webkit": "vitest --run --project \"browser (webkit)\"",
+    "test:browser:webkit:watch": "vitest watch --project \"browser (webkit)\""
   },
   "dependencies": {
     "@sanity/diff-patch": "^6.0.0",

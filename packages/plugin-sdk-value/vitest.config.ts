@@ -9,15 +9,17 @@ export default defineConfig({
     }),
   ],
   test: {
+    name: 'browser',
     browser: {
       enabled: true,
       headless: true,
       provider: playwright(),
       instances: [
         {browser: 'chromium'},
-        // {browser: 'firefox'},
-        // {browser: 'webkit'},
+        {browser: 'firefox'},
+        {browser: 'webkit'},
       ],
+      screenshotFailures: false,
     },
   },
 })
