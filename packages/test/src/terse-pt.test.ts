@@ -154,6 +154,67 @@ describe(parseTersePt.name, () => {
     ])
   })
 
+  test('just a colon', () => {
+    expect(
+      parseTersePt(
+        {
+          schema: compileSchema(defineSchema({})),
+          keyGenerator: createTestKeyGenerator(),
+        },
+        parseTersePtString(':'),
+      ),
+    ).toEqual([
+      {
+        _key: 'k0',
+        _type: 'block',
+        children: [
+          {
+            _key: 'k1',
+            _type: 'span',
+            text: ':',
+          },
+        ],
+      },
+    ])
+  })
+
+  test('colon followed by content', () => {
+    expect(
+      parseTersePt(
+        {
+          schema: compileSchema(defineSchema({})),
+          keyGenerator: createTestKeyGenerator(),
+        },
+        parseTersePtString(':foo'),
+      ),
+    ).toEqual([
+      {
+        _key: 'k0',
+        _type: 'block',
+        children: [{_key: 'k1', _type: 'span', text: ':foo'}],
+      },
+    ])
+  })
+
+  test('colon in content', () => {
+    expect(
+      parseTersePt(
+        {
+          schema: compileSchema(defineSchema({})),
+          keyGenerator: createTestKeyGenerator(),
+        },
+        parseTersePtString('h1:foo:bar'),
+      ),
+    ).toEqual([
+      {
+        _key: 'k0',
+        _type: 'block',
+        children: [{_key: 'k1', _type: 'span', text: 'foo:bar'}],
+        style: 'h1',
+      },
+    ])
+  })
+
   test('extended example', () => {
     expect(
       parseTersePt(
