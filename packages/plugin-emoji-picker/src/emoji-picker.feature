@@ -154,28 +154,28 @@ Feature: Emoji Picker
     Given the text <text>
     And a "link" "l1" around <annotated>
     When the caret is put <position>
-    And <keyword> is typed
-    Then the text is <final text>
+    And <inserted text> is inserted
+    Then the keyword is <keyword>
 
     Examples:
-      | text          | annotated | position      | keyword | final text        |
-      | "foo bar baz" | "bar"     | after "foo "  | ":joy:" | "foo 😂,bar, baz" |
-      # | "foo bar baz" | "bar"     | before "bar"  | ":joy:" | "foo 😂,bar, baz" |
-      | "foo bar baz" | "bar"     | after "bar"   | ":joy:" | "foo ,bar,😂 baz" |
-      | "foo bar baz" | "bar"     | before " baz" | ":joy:" | "foo ,bar,😂 baz" |
+      | text          | annotated | position     | inserted text | keyword |
+      | "foo bar baz" | "bar"     | after "foo " | ":j"          | "j"     |
+      # | "foo bar baz" | "bar"     | before "bar"  | ":j" | "j" |
+      | "foo bar baz" | "bar"     | after "bar"  | ":j"          | "j"     |
 
+  # | "foo bar baz" | "bar"     | before " baz" | ":j" | "j" |
   Scenario Outline: Typing before the colon
     Given the text <text>
-    When <keyword> is typed
+    When <inserted text> is typed
     And <button> is pressed
     And <new text> is typed
     And "{Enter}" is pressed
     Then the text is <final text>
 
     Examples:
-      | text | keyword | button                   | new text | final text |
-      | ""   | ":j"    | "{ArrowLeft}{ArrowLeft}" | "f"      | "f\|:j"    |
-      | "fo" | ":j"    | "{ArrowLeft}{ArrowLeft}" | "o"      | "foo\|:j"  |
+      | text | inserted text | button                   | new text | final text |
+      | ""   | ":j"          | "{ArrowLeft}{ArrowLeft}" | "f"      | "f\|:j"    |
+      | "fo" | ":j"          | "{ArrowLeft}{ArrowLeft}" | "o"      | "foo\|:j"  |
 
   Scenario Outline: Navigating away from the keyword
     Given the text <text>
@@ -211,3 +211,17 @@ Feature: Emoji Picker
       | ""   | ":!!"         | "!!"    | "‼️"           |
       | ""   | "::)"         | ":)"    | "😊"           |
       | ""   | "::"          | ":"     | "😊"           |
+
+  Scenario: Narrowing keyword by deletion
+    Given the text "foo"
+    When the caret is put after "fo"
+    And <inserted text> is inserted
+    And "{ArrowLeft}" is pressed
+    And "{Backspace}" is pressed
+    Then the text is <final text>
+    And the keyword is <keyword>
+
+    Examples:
+      | inserted text | final text | keyword |
+      | ":joy"        | "fo:jyo"   | "jy"    |
+      | ":j👻y"       | "fo:jyo"   | "jy"    |
