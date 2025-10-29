@@ -87,9 +87,8 @@ export function parseTersePt(
     }
 
     if (terseBlock.includes(':')) {
-      const splitTerseBlock = terseBlock.split(':')
-      const prefix = splitTerseBlock[0] ?? ''
-      const content = splitTerseBlock[1] ?? ''
+      const [prefix = '', ...contentParts] = terseBlock.split(':')
+      const content = contentParts.join(':')
 
       const listItem = prefix.includes('#')
         ? 'number'
@@ -119,7 +118,8 @@ export function parseTersePt(
         block.style = style
       }
 
-      const textRuns = content.split(',')
+      const textRuns =
+        !style && !listItem ? `:${content}`.split(',') : content.split(',')
 
       for (const textRun of textRuns) {
         if (textRun.startsWith('{')) {
