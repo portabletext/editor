@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.12
+
+### Patch Changes
+
+- Updated dependencies [[`9aee71a`](https://github.com/portabletext/editor/commit/9aee71a463dbcaadc0037170addb23f28ba40250), [`5f4cac4`](https://github.com/portabletext/editor/commit/5f4cac440d766cf8415e7392dc9f72e6327fdb8c), [`31f61c4`](https://github.com/portabletext/editor/commit/31f61c49607b141a1500e5ec3b9703e7cdf1786c), [`db80acc`](https://github.com/portabletext/editor/commit/db80acc5a189d45069d30b4bfc98c42d8ff88f67), [`dc886f5`](https://github.com/portabletext/editor/commit/dc886f586c9f0d70a5650e438a0407366a5e60a6)]:
+  - @portabletext/editor@2.16.0
+  - @portabletext/plugin-character-pair-decorator@1.1.15
+  - @portabletext/plugin-input-rule@0.4.1
+
 ## 1.4.11
 
 ### Patch Changes
