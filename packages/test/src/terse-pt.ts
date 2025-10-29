@@ -101,10 +101,13 @@ export function parseTersePt(
         block.listItem = listItem
       }
 
+      const initialLevel = listItem !== undefined ? 1 : 0
       const level = prefix.split('').filter((part) => part === '>').length
 
       if (level > 0) {
         block.level = level
+      } else if (initialLevel > 0) {
+        block.level = initialLevel
       }
 
       const style = prefix
