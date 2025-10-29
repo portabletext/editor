@@ -14,6 +14,21 @@ Feature: Emoji Picker
       | ":jo"        | "y:"          | "😂"       |
       | ":joy"       | ":"           | "😂"       |
 
+  Scenario Outline: Is only triggered when an initial colon is typed
+    Given the text <text>
+    When the caret is put <position>
+    And <inserted text> is inserted
+    Then the text is <final text>
+    And the keyword is <keyword>
+
+    Examples:
+      | text   | position     | inserted text | final text | keyword |
+      | ""     | after ""     | ":j"          | ":j"       | "j"     |
+      | ":"    | after ":"    | "j"           | ":j"       | ""      |
+      | ":j"   | after ":j"   | "o"           | ":jo"      | ""      |
+      | ":jo"  | after ":jo"  | ":"           | ":jo:"     | ""      |
+      | ":joy" | after ":joy" | ":"           | ":joy:"    | ""      |
+
   Scenario: Undo after direct hit
     When ":joy:" is typed
     Then the text is "😂"
@@ -25,7 +40,7 @@ Feature: Emoji Picker
     And undo is performed
     And "{Backspace}" is pressed
     And ":" is typed
-    Then the text is "😂"
+    Then the text is ":joy:"
     And the keyword is ""
     And the matches are ""
 
