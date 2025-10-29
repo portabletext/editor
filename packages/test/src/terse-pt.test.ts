@@ -1,5 +1,5 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
-import {expect, test} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {getTersePt, parseTersePt, parseTersePtString} from './terse-pt'
 import {createTestKeyGenerator} from './test-key-generator'
 
@@ -124,52 +124,82 @@ test(parseTersePtString.name, () => {
   expect(parseTersePtString('|')).toEqual(['', ''])
   expect(parseTersePtString('||')).toEqual(['', '', ''])
   expect(parseTersePtString('>>#h3:foo')).toEqual(['>>#h3:foo'])
+  expect(parseTersePtString(':')).toEqual([':'])
 })
 
-test(parseTersePt.name, () => {
-  expect(
-    parseTersePt(
+describe(parseTersePt.name, () => {
+  test('empty list', () => {
+    expect(
+      parseTersePt(
+        {
+          schema: compileSchema(defineSchema({})),
+          keyGenerator: createTestKeyGenerator(),
+        },
+        parseTersePtString('-:'),
+      ),
+    ).toEqual([
       {
-        schema: compileSchema(defineSchema({})),
-        keyGenerator: createTestKeyGenerator(),
+        _key: 'k0',
+        _type: 'block',
+        children: [
+          {
+            _key: 'k1',
+            _type: 'span',
+            text: '',
+          },
+        ],
+        listItem: 'bullet',
+        level: 1,
       },
-      parseTersePtString('{image}|foo|>>#h4:bar|-:baz,fizz|,{stock-ticker},'),
-    ),
-  ).toEqual([
-    {
-      _key: 'k0',
-      _type: 'image',
-    },
-    {
-      _key: 'k1',
-      _type: 'block',
-      children: [{_key: 'k2', _type: 'span', text: 'foo'}],
-    },
-    {
-      _key: 'k3',
-      _type: 'block',
-      children: [{_key: 'k4', _type: 'span', text: 'bar'}],
-      level: 2,
-      listItem: 'number',
-      style: 'h4',
-    },
-    {
-      _key: 'k5',
-      _type: 'block',
-      children: [
-        {_key: 'k6', _type: 'span', text: 'baz'},
-        {_key: 'k7', _type: 'span', text: 'fizz'},
-      ],
-      listItem: 'bullet',
-    },
-    {
-      _key: 'k8',
-      _type: 'block',
-      children: [
-        {_key: 'k9', _type: 'span', text: ''},
-        {_key: 'k10', _type: 'stock-ticker'},
-        {_key: 'k11', _type: 'span', text: ''},
-      ],
-    },
-  ])
+    ])
+  })
+
+  test('extended example', () => {
+    expect(
+      parseTersePt(
+        {
+          schema: compileSchema(defineSchema({})),
+          keyGenerator: createTestKeyGenerator(),
+        },
+        parseTersePtString('{image}|foo|>>#h4:bar|-:baz,fizz|,{stock-ticker},'),
+      ),
+    ).toEqual([
+      {
+        _key: 'k0',
+        _type: 'image',
+      },
+      {
+        _key: 'k1',
+        _type: 'block',
+        children: [{_key: 'k2', _type: 'span', text: 'foo'}],
+      },
+      {
+        _key: 'k3',
+        _type: 'block',
+        children: [{_key: 'k4', _type: 'span', text: 'bar'}],
+        level: 2,
+        listItem: 'number',
+        style: 'h4',
+      },
+      {
+        _key: 'k5',
+        _type: 'block',
+        children: [
+          {_key: 'k6', _type: 'span', text: 'baz'},
+          {_key: 'k7', _type: 'span', text: 'fizz'},
+        ],
+        listItem: 'bullet',
+        level: 1,
+      },
+      {
+        _key: 'k8',
+        _type: 'block',
+        children: [
+          {_key: 'k9', _type: 'span', text: ''},
+          {_key: 'k10', _type: 'stock-ticker'},
+          {_key: 'k11', _type: 'span', text: ''},
+        ],
+      },
+    ])
+  })
 })
