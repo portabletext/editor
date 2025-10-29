@@ -1,5 +1,25 @@
 # Changelog
 
+## 2.16.0
+
+### Minor Changes
+
+- [#1791](https://github.com/portabletext/editor/pull/1791) [`31f61c4`](https://github.com/portabletext/editor/commit/31f61c49607b141a1500e5ec3b9703e7cdf1786c) Thanks [@christianhg](https://github.com/christianhg)! - feat(selectors): add `getBlockTextAfter`
+
+- [#1791](https://github.com/portabletext/editor/pull/1791) [`db80acc`](https://github.com/portabletext/editor/commit/db80acc5a189d45069d30b4bfc98c42d8ff88f67) Thanks [@christianhg](https://github.com/christianhg)! - feat(selectors): add `getNextSpan`
+
+### Patch Changes
+
+- [#1768](https://github.com/portabletext/editor/pull/1768) [`9aee71a`](https://github.com/portabletext/editor/commit/9aee71a463dbcaadc0037170addb23f28ba40250) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency slate-react to v0.118.2
+
+- [#1788](https://github.com/portabletext/editor/pull/1788) [`5f4cac4`](https://github.com/portabletext/editor/commit/5f4cac440d766cf8415e7392dc9f72e6327fdb8c) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update sanity monorepo to ^4.12.0
+
+- [#1791](https://github.com/portabletext/editor/pull/1791) [`dc886f5`](https://github.com/portabletext/editor/commit/dc886f586c9f0d70a5650e438a0407366a5e60a6) Thanks [@christianhg](https://github.com/christianhg)! - fix: ensure correct marks when typing between annotations
+
+- Updated dependencies [[`5f4cac4`](https://github.com/portabletext/editor/commit/5f4cac440d766cf8415e7392dc9f72e6327fdb8c)]:
+  - @portabletext/block-tools@3.5.13
+  - @portabletext/sanity-bridge@1.1.16
+
 ## 2.15.5
 
 ### Patch Changes
