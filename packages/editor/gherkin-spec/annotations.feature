@@ -154,6 +154,14 @@ Feature: Annotations
       | "foo"         | "foo"     | before "foo"  | "new,foo"          |
       | "foo"         | "foo"     | after "foo"   | "foo,new"          |
 
+  Scenario Outline: Inserting text between annotations
+    Given the text "foobar"
+    And a "link" "l1" around "foo"
+    And a "link" "l2" around "bar"
+    When the caret is put after "foo"
+    And "n" is typed
+    Then the text is "foo,n,bar"
+
   Scenario: Inserting text after inline object, before annotation
     Given the editor is focused
     When a "stock-ticker" is inserted
