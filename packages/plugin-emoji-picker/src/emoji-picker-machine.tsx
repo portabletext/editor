@@ -105,6 +105,10 @@ const partialKeywordRule = defineInputRule({
       return false
     }
 
+    if (lastMatch.targetOffsets.anchor.offset < event.textBefore.length) {
+      return false
+    }
+
     const keyword = lastMatch.text
     const keywordAnchor = {
       point: lastMatch.selection.anchor,
@@ -138,26 +142,35 @@ function createPartialKeywordFoundEvent(payload: {
 /**
  * Listen for a complete keyword like ":joy:"
  */
-const keywordRule = defineInputRule({
-  on: /:[\S]+:/,
-  guard: ({event}) => {
-    const lastMatch = event.matches.at(-1)
+function createKeywordRule(config: {insertedAtOnce: boolean}) {
+  return defineInputRule({
+    on: /:[\S]+:/,
+    guard: ({event}) => {
+      const lastMatch = event.matches.at(-1)
 
-    if (lastMatch === undefined) {
-      return false
-    }
+      if (lastMatch === undefined) {
+        return false
+      }
 
-    const keyword = lastMatch.text
-    const keywordAnchor = {
-      point: lastMatch.selection.anchor,
-      blockOffset: lastMatch.targetOffsets.anchor,
-    }
-    const keywordFocus = lastMatch.targetOffsets.focus
+      if (
+        config.insertedAtOnce &&
+        lastMatch.targetOffsets.anchor.offset < event.textBefore.length
+      ) {
+        return false
+      }
 
-    return {keyword, keywordAnchor, keywordFocus}
-  },
-  actions: [(_, payload) => [raise(createKeywordFoundEvent(payload))]],
-})
+      const keyword = lastMatch.text
+      const keywordAnchor = {
+        point: lastMatch.selection.anchor,
+        blockOffset: lastMatch.targetOffsets.anchor,
+      }
+      const keywordFocus = lastMatch.targetOffsets.focus
+
+      return {keyword, keywordAnchor, keywordFocus}
+    },
+    actions: [(_, payload) => [raise(createKeywordFoundEvent(payload))]],
+  })
+}
 
 type KeywordFoundEvent = ReturnType<typeof createKeywordFoundEvent>
 
@@ -237,7 +250,11 @@ const triggerListenerCallback: CallbackLogicFunction<
   const unregisterBehaviors = [
     input.editor.registerBehavior({
       behavior: defineInputRuleBehavior({
-        rules: [keywordRule, partialKeywordRule, triggerRule],
+        rules: [
+          createKeywordRule({insertedAtOnce: true}),
+          partialKeywordRule,
+          triggerRule,
+        ],
       }),
     }),
     input.editor.registerBehavior({
@@ -440,7 +457,7 @@ const submitListenerCallback: CallbackLogicFunction<
     }),
     input.context.editor.registerBehavior({
       behavior: defineInputRuleBehavior({
-        rules: [keywordRule],
+        rules: [createKeywordRule({insertedAtOnce: false})],
       }),
     }),
     input.context.editor.registerBehavior({
