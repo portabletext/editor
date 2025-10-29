@@ -47,20 +47,22 @@ describe(getFocusSpan.name, () => {
 
   test('Scenario: Text block span is selected', async () => {
     const slateEditorRef = React.createRef<PortableTextSlateEditor>()
-    await createTestEditor({
+    const {editor} = await createTestEditor({
       children: <InternalSlateEditorRefPlugin ref={slateEditorRef} />,
       schemaDefinition,
       initialValue,
-      editableProps: {
-        selection: {
-          anchor: {
-            path: [{_key: blockKey}, 'children', {_key: fooSpanKey}],
-            offset: 0,
-          },
-          focus: {
-            path: [{_key: blockKey}, 'children', {_key: fooSpanKey}],
-            offset: 0,
-          },
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: fooSpanKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: fooSpanKey}],
+          offset: 0,
         },
       },
     })

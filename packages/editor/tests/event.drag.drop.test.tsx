@@ -1,6 +1,6 @@
 import {createTestKeyGenerator} from '@portabletext/test'
-import {userEvent} from '@vitest/browser/context'
 import {assert, describe, expect, test, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
 import {defineSchema} from '../src'
 import {converterPortableText} from '../src/converters/converter.portable-text'
 import {createTestEditor} from '../src/test/vitest'

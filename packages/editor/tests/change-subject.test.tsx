@@ -1,5 +1,5 @@
-import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test} from 'vitest'
+import {userEvent} from 'vitest/browser'
 import {InternalChange$Plugin} from '../src/plugins/plugin.internal.change-ref'
 import {createTestEditor} from '../src/test/vitest'
 import type {EditorChange} from '../src/types/editor'

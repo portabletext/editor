@@ -1,6 +1,6 @@
 import {getTersePt} from '@portabletext/test'
-import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
 import {execute, raise} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {getSelectionBeforeText} from '../src/internal-utils/text-selection'

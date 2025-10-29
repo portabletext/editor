@@ -1,6 +1,6 @@
 import {createTestKeyGenerator} from '@portabletext/test'
-import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
 import {defineSchema, type BlockAnnotationRenderProps} from '../src'
 import {createTestEditor} from '../src/test/vitest'
 

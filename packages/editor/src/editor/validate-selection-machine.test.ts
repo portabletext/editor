@@ -1,6 +1,6 @@
 import {getTersePt} from '@portabletext/test'
-import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
 import {getSelectionAfterText} from '../internal-utils/text-selection'
 import {createTestEditor} from '../test/vitest'
 import {validateSelectionMachine} from './validate-selection-machine'

@@ -63,6 +63,8 @@
     "@portabletext/editor": "workspace:^",
     "@types/react": "^19.1.12",
     "@vitejs/plugin-react": "^5.0.4",
+    "@vitest/browser": "^4.0.4",
+    "@vitest/browser-playwright": "^4.0.4",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9.38.0",
     "eslint-plugin-react-hooks": "7.0.0",
@@ -70,7 +72,7 @@
     "react": "^19.1.1",
     "typescript": "catalog:",
     "typescript-eslint": "^8.46.1",
-    "vitest": "^3.2.4"
+    "vitest": "^4.0.4"
   },
   "peerDependencies": {
     "@portabletext/editor": "workspace:^",

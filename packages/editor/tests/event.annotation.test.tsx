@@ -1,7 +1,7 @@
 import {getTersePt} from '@portabletext/test'
 import type {PortableTextTextBlock} from '@sanity/types'
-import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test} from 'vitest'
+import {userEvent} from 'vitest/browser'
 import {defineSchema} from '../src'
 import {getTextMarks} from '../src/internal-utils/text-marks'
 import {

@@ -1,6 +1,6 @@
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
-import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
 import type {
   EditorEmittedEvent,
   MutationEvent,

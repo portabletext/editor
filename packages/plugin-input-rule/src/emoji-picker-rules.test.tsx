@@ -7,11 +7,11 @@ import {
   type Context,
 } from '@portabletext/editor/test/vitest'
 import {defineSchema} from '@portabletext/schema'
-import {page, type Locator} from '@vitest/browser/context'
 import {Before, Then} from 'racejar'
 import {Feature} from 'racejar/vitest'
 import {useEffect, useState} from 'react'
 import {expect, vi} from 'vitest'
+import {page, type Locator} from 'vitest/browser'
 import emojiPickerRulesFeature from './emoji-picker-rules.feature?raw'
 import {defineInputRule} from './input-rule'
 import {defineInputRuleBehavior} from './plugin.input-rule'
