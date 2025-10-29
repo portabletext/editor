@@ -1,28 +1,30 @@
 import type {
-  BlockOffset,
+  ChildPath,
   Editor,
-  EditorSelectionPoint,
+  EditorSelector,
   EditorSnapshot,
+  PortableTextSpan,
 } from '@portabletext/editor'
+import {defineBehavior, effect, raise} from '@portabletext/editor/behaviors'
 import {
-  defineBehavior,
-  effect,
-  forward,
-  raise,
-} from '@portabletext/editor/behaviors'
-import * as selectors from '@portabletext/editor/selectors'
-import * as utils from '@portabletext/editor/utils'
+  getFocusSpan,
+  getMarkState,
+  getNextSpan,
+  isPointAfterSelection,
+  isPointBeforeSelection,
+  type MarkState,
+} from '@portabletext/editor/selectors'
 import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 import {
   defineInputRule,
   defineInputRuleBehavior,
+  type InputRuleMatch,
 } from '@portabletext/plugin-input-rule'
 import {
   assertEvent,
   assign,
   fromCallback,
   not,
-  or,
   sendTo,
   setup,
   type AnyEventObject,
@@ -49,6 +51,134 @@ const escapeShortcut = createKeyboardShortcut({
   default: [{key: 'Escape'}],
 })
 
+const getTriggerState: EditorSelector<
+  | {
+      focusSpan: {
+        node: PortableTextSpan
+        path: ChildPath
+      }
+      markState: MarkState
+      focusSpanTextBefore: string
+      focusSpanTextAfter: string
+      nextSpan:
+        | {
+            node: PortableTextSpan
+            path: ChildPath
+          }
+        | undefined
+    }
+  | undefined
+> = (snapshot) => {
+  const focusSpan = getFocusSpan(snapshot)
+  const markState = getMarkState(snapshot)
+
+  if (!focusSpan || !markState || !snapshot.context.selection) {
+    return undefined
+  }
+
+  const focusSpanTextBefore = focusSpan.node.text.slice(
+    0,
+    snapshot.context.selection.focus.offset,
+  )
+  const focusSpanTextAfter = focusSpan.node.text.slice(
+    snapshot.context.selection.focus.offset,
+  )
+  const nextSpan = getNextSpan(snapshot)
+
+  return {
+    focusSpan,
+    markState,
+    focusSpanTextBefore,
+    focusSpanTextAfter,
+    nextSpan,
+  }
+}
+
+function createTriggerActions({
+  snapshot,
+  payload,
+  keywordState,
+}: {
+  snapshot: EditorSnapshot
+  payload: ReturnType<typeof getTriggerState> & {lastMatch: InputRuleMatch}
+  keywordState: 'partial' | 'complete'
+}) {
+  if (payload.markState.state === 'unchanged') {
+    const focusSpan = {
+      node: {
+        _key: payload.focusSpan.node._key,
+        _type: payload.focusSpan.node._type,
+        text: `${payload.focusSpanTextBefore}${payload.lastMatch.text}${payload.focusSpanTextAfter}`,
+        marks: payload.markState.marks,
+      },
+      path: payload.focusSpan.path,
+      textBefore: payload.focusSpanTextBefore,
+      textAfter: payload.focusSpanTextAfter,
+    }
+
+    if (keywordState === 'complete') {
+      return [
+        raise(
+          createKeywordFoundEvent({
+            focusSpan,
+          }),
+        ),
+      ]
+    }
+
+    return [
+      raise(
+        createTriggerFoundEvent({
+          focusSpan,
+        }),
+      ),
+    ]
+  }
+
+  const newSpan = {
+    _key: snapshot.context.keyGenerator(),
+    _type: payload.focusSpan.node._type,
+    text: payload.lastMatch.text,
+    marks: payload.markState.marks,
+  }
+  const focusSpan = {
+    node: {
+      _key: newSpan._key,
+      _type: newSpan._type,
+      text: `${newSpan.text}${payload.nextSpan?.node.text ?? ''}`,
+      marks: payload.markState.marks,
+    },
+    path: [
+      {_key: payload.focusSpan.path[0]._key},
+      'children',
+      {_key: newSpan._key},
+    ] satisfies ChildPath,
+    textBefore: '',
+    textAfter: payload.nextSpan?.node.text ?? '',
+  }
+
+  return [
+    raise({type: 'select', at: payload.lastMatch.targetOffsets}),
+    raise({type: 'delete', at: payload.lastMatch.targetOffsets}),
+    raise({type: 'insert.child', child: newSpan}),
+    ...(keywordState === 'complete'
+      ? [
+          raise(
+            createKeywordFoundEvent({
+              focusSpan,
+            }),
+          ),
+        ]
+      : [
+          raise(
+            createTriggerFoundEvent({
+              focusSpan,
+            }),
+          ),
+        ]),
+  ]
+}
+
 /*******************
  * Input Rules
  *******************/
@@ -58,34 +188,39 @@ const escapeShortcut = createKeyboardShortcut({
  */
 const triggerRule = defineInputRule({
   on: /:/,
-  guard: ({event}) => {
+  guard: ({snapshot, event}) => {
     const lastMatch = event.matches.at(-1)
 
     if (lastMatch === undefined) {
       return false
     }
 
+    const triggerState = getTriggerState(snapshot)
+
+    if (!triggerState) {
+      return false
+    }
+
     return {
-      keyword: lastMatch.text,
-      keywordAnchor: {
-        point: lastMatch.selection.anchor,
-        blockOffset: lastMatch.targetOffsets.anchor,
-      },
-      keywordFocus: lastMatch.targetOffsets.focus,
+      lastMatch,
+      ...triggerState,
     }
   },
-  actions: [(_, payload) => [raise(createTriggerFoundEvent(payload))]],
+  actions: [
+    ({snapshot}, payload) =>
+      createTriggerActions({snapshot, payload, keywordState: 'partial'}),
+  ],
 })
 
 type TriggerFoundEvent = ReturnType<typeof createTriggerFoundEvent>
 
 function createTriggerFoundEvent(payload: {
-  keyword: string
-  keywordAnchor: {
-    point: EditorSelectionPoint
-    blockOffset: BlockOffset
+  focusSpan: {
+    node: PortableTextSpan
+    path: ChildPath
+    textBefore: string
+    textAfter: string
   }
-  keywordFocus: BlockOffset
 }) {
   return {
     type: 'custom.trigger found',
@@ -98,7 +233,7 @@ function createTriggerFoundEvent(payload: {
  */
 const partialKeywordRule = defineInputRule({
   on: /:[\S]+/,
-  guard: ({event}) => {
+  guard: ({snapshot, event}) => {
     const lastMatch = event.matches.at(-1)
 
     if (lastMatch === undefined) {
@@ -109,78 +244,65 @@ const partialKeywordRule = defineInputRule({
       return false
     }
 
-    const keyword = lastMatch.text
-    const keywordAnchor = {
-      point: lastMatch.selection.anchor,
-      blockOffset: lastMatch.targetOffsets.anchor,
+    const triggerState = getTriggerState(snapshot)
+
+    if (!triggerState) {
+      return false
     }
-    const keywordFocus = lastMatch.targetOffsets.focus
 
-    return {keyword, keywordAnchor, keywordFocus}
+    return {
+      ...triggerState,
+      lastMatch,
+    }
   },
-  actions: [(_, payload) => [raise(createPartialKeywordFoundEvent(payload))]],
+  actions: [
+    ({snapshot}, payload) =>
+      createTriggerActions({snapshot, payload, keywordState: 'partial'}),
+  ],
 })
-
-type PartialKeywordFoundEvent = ReturnType<
-  typeof createPartialKeywordFoundEvent
->
-
-function createPartialKeywordFoundEvent(payload: {
-  keyword: string
-  keywordAnchor: {
-    point: EditorSelectionPoint
-    blockOffset: BlockOffset
-  }
-  keywordFocus: BlockOffset
-}) {
-  return {
-    type: 'custom.partial keyword found',
-    ...payload,
-  } as const
-}
 
 /**
  * Listen for a complete keyword like ":joy:"
  */
-function createKeywordRule(config: {insertedAtOnce: boolean}) {
-  return defineInputRule({
-    on: /:[\S]+:/,
-    guard: ({event}) => {
-      const lastMatch = event.matches.at(-1)
+const keywordRule = defineInputRule({
+  on: /:[\S]+:/,
+  guard: ({snapshot, event}) => {
+    const lastMatch = event.matches.at(-1)
 
-      if (lastMatch === undefined) {
-        return false
-      }
+    if (lastMatch === undefined) {
+      return false
+    }
 
-      if (
-        config.insertedAtOnce &&
-        lastMatch.targetOffsets.anchor.offset < event.textBefore.length
-      ) {
-        return false
-      }
+    if (lastMatch.targetOffsets.anchor.offset < event.textBefore.length) {
+      return false
+    }
 
-      const keyword = lastMatch.text
-      const keywordAnchor = {
-        point: lastMatch.selection.anchor,
-        blockOffset: lastMatch.targetOffsets.anchor,
-      }
-      const keywordFocus = lastMatch.targetOffsets.focus
+    const triggerState = getTriggerState(snapshot)
 
-      return {keyword, keywordAnchor, keywordFocus}
-    },
-    actions: [(_, payload) => [raise(createKeywordFoundEvent(payload))]],
-  })
-}
+    if (!triggerState) {
+      return false
+    }
+
+    return {
+      ...triggerState,
+      lastMatch,
+    }
+  },
+  actions: [
+    ({snapshot}, payload) =>
+      createTriggerActions({snapshot, payload, keywordState: 'complete'}),
+  ],
+})
 
 type KeywordFoundEvent = ReturnType<typeof createKeywordFoundEvent>
 
 function createKeywordFoundEvent(payload: {
-  keyword: string
-  keywordAnchor: {
-    point: EditorSelectionPoint
-    blockOffset: BlockOffset
+  focusSpan: {
+    node: PortableTextSpan
+    path: ChildPath
+    textBefore: string
+    textAfter: string
   }
-  keywordFocus: BlockOffset
 }) {
   return {
     type: 'custom.keyword found',
@@ -193,37 +315,24 @@ type EmojiPickerContext = {
   matches: ReadonlyArray<BaseEmojiMatch>
   matchEmojis: MatchEmojis<BaseEmojiMatch>
   selectedIndex: number
-  keywordAnchor:
+  focusSpan:
     | {
-        point: EditorSelectionPoint
-        blockOffset: BlockOffset
+        node: PortableTextSpan
+        path: ChildPath
+        textBefore: string
+        textAfter: string
       }
     | undefined
-  keywordFocus: BlockOffset | undefined
   incompleteKeywordRegex: RegExp
   keyword: string
 }
 
 type EmojiPickerEvent =
   | TriggerFoundEvent
-  | PartialKeywordFoundEvent
   | KeywordFoundEvent
   | {
       type: 'selection changed'
       snapshot: EditorSnapshot
-    }
-  | {
-      type: 'insert.text'
-      focus: EditorSelectionPoint
-      text: string
-    }
-  | {
-      type: 'delete.backward'
-      focus: EditorSelectionPoint
-    }
-  | {
-      type: 'delete.forward'
-      focus: EditorSelectionPoint
     }
   | {
       type: 'dismiss'
@@ -250,31 +359,12 @@ const triggerListenerCallback: CallbackLogicFunction<
   const unregisterBehaviors = [
     input.editor.registerBehavior({
       behavior: defineInputRuleBehavior({
-        rules: [
-          createKeywordRule({insertedAtOnce: true}),
-          partialKeywordRule,
-          triggerRule,
-        ],
+        rules: [keywordRule, partialKeywordRule, triggerRule],
       }),
     }),
     input.editor.registerBehavior({
       behavior: defineBehavior<KeywordFoundEvent, KeywordFoundEvent['type']>({
         on: 'custom.keyword found',
-        actions: [
-          ({event}) => [
-            effect(() => {
-              sendBack(event)
-            }),
-          ],
-        ],
-      }),
-    }),
-    input.editor.registerBehavior({
-      behavior: defineBehavior<
-        PartialKeywordFoundEvent,
-        PartialKeywordFoundEvent['type']
-      >({
-        on: 'custom.partial keyword found',
         actions: [
           ({event}) => [
             effect(() => {
@@ -374,8 +464,12 @@ const emojiInsertListener: CallbackLogicFunction<
   return input.context.editor.registerBehavior({
     behavior: defineBehavior<{
       emoji: string
-      anchor: BlockOffset
-      focus: BlockOffset
+      focusSpan: {
+        node: PortableTextSpan
+        path: ChildPath
+        textBefore: string
+        textAfter: string
+      }
     }>({
       on: 'custom.insert emoji',
       actions: [
@@ -384,8 +478,19 @@ const emojiInsertListener: CallbackLogicFunction<
             sendBack({type: 'dismiss'})
           }),
           raise({
-            type: 'delete.text',
-            at: {anchor: event.anchor, focus: event.focus},
+            type: 'delete',
+            at: {
+              anchor: {
+                path: event.focusSpan.path,
+                offset: event.focusSpan.textBefore.length,
+              },
+              focus: {
+                path: event.focusSpan.path,
+                offset:
+                  event.focusSpan.node.text.length -
+                  event.focusSpan.textAfter.length,
+              },
+            },
           }),
           raise({
             type: 'insert.text',
@@ -420,21 +525,17 @@ const submitListenerCallback: CallbackLogicFunction<
             return false
           }
 
-          const anchor = context.keywordAnchor?.blockOffset
-          const focus = context.keywordFocus
+          const focusSpan = context.focusSpan
           const match = context.matches[context.selectedIndex]
 
-          return match && anchor && focus
-            ? {anchor, focus, emoji: match.emoji}
-            : false
+          return match && focusSpan ? {focusSpan, emoji: match.emoji} : false
         },
         actions: [
-          (_, {anchor, focus, emoji}) => [
+          (_, {focusSpan, emoji}) => [
             raise({
               type: 'custom.insert emoji',
               emoji,
-              anchor,
-              focus,
+              focusSpan,
             }),
           ],
         ],
@@ -450,31 +551,6 @@ const submitListenerCallback: CallbackLogicFunction<
           () => [
             effect(() => {
               sendBack({type: 'dismiss'})
-            }),
-          ],
-        ],
-      }),
-    }),
-    input.context.editor.registerBehavior({
-      behavior: defineInputRuleBehavior({
-        rules: [createKeywordRule({insertedAtOnce: false})],
-      }),
-    }),
-    input.context.editor.registerBehavior({
-      behavior: defineBehavior<
-        KeywordFoundEvent,
-        KeywordFoundEvent['type'],
-        {
-          anchor: BlockOffset
-          focus: BlockOffset
-          emoji: string
-        }
-      >({
-        on: 'custom.keyword found',
-        actions: [
-          ({event}) => [
-            effect(() => {
-              sendBack(event)
             }),
           ],
         ],
@@ -502,81 +578,6 @@ const selectionListenerCallback: CallbackLogicFunction<
   return subscription.unsubscribe
 }
 
-const textChangeListener: CallbackLogicFunction<
-  AnyEventObject,
-  EmojiPickerEvent,
-  {editor: Editor}
-> = ({sendBack, input}) => {
-  const unregisterBehaviors = [
-    input.editor.registerBehavior({
-      behavior: defineBehavior({
-        on: 'insert.text',
-        guard: ({snapshot}) =>
-          snapshot.context.selection
-            ? {focus: snapshot.context.selection.focus}
-            : false,
-        actions: [
-          ({event}, {focus}) => [
-            effect(() => {
-              sendBack({
-                ...event,
-                focus,
-              })
-            }),
-            forward(event),
-          ],
-        ],
-      }),
-    }),
-    input.editor.registerBehavior({
-      behavior: defineBehavior({
-        on: 'delete.backward',
-        guard: ({snapshot, event}) =>
-          event.unit === 'character' && snapshot.context.selection
-            ? {focus: snapshot.context.selection.focus}
-            : false,
-        actions: [
-          ({event}, {focus}) => [
-            effect(() => {
-              sendBack({
-                type: 'delete.backward',
-                focus,
-              })
-            }),
-            forward(event),
-          ],
-        ],
-      }),
-    }),
-    input.editor.registerBehavior({
-      behavior: defineBehavior({
-        on: 'delete.forward',
-        guard: ({snapshot, event}) =>
-          event.unit === 'character' && snapshot.context.selection
-            ? {focus: snapshot.context.selection.focus}
-            : false,
-        actions: [
-          ({event}, {focus}) => [
-            effect(() => {
-              sendBack({
-                type: 'delete.forward',
-                focus,
-              })
-            }),
-            forward(event),
-          ],
-        ],
-      }),
-    }),
-  ]
-
-  return () => {
-    for (const unregister of unregisterBehaviors) {
-      unregister()
-    }
-  }
-}
-
 export const emojiPickerMachine = setup({
   types: {
     context: {} as EmojiPickerContext,
@@ -593,96 +594,106 @@ export const emojiPickerMachine = setup({
     'trigger listener': fromCallback(triggerListenerCallback),
     'escape listener': fromCallback(escapeListenerCallback),
     'selection listener': fromCallback(selectionListenerCallback),
-    'text change listener': fromCallback(textChangeListener),
   },
   actions: {
-    'init keyword': assign({
-      keyword: ({context, event}) => {
+    'set focus span': assign({
+      focusSpan: ({context, event}) => {
         if (
           event.type !== 'custom.trigger found' &&
-          event.type !== 'custom.partial keyword found' &&
           event.type !== 'custom.keyword found'
         ) {
-          return context.keyword
+          return context.focusSpan
         }
 
-        return event.keyword
+        return event.focusSpan
       },
     }),
-    'set keyword anchor': assign({
-      keywordAnchor: ({context, event}) => {
+    'update focus span': assign({
+      focusSpan: ({context}) => {
+        if (!context.focusSpan) {
+          return undefined
+        }
+
+        const snapshot = context.editor.getSnapshot()
+        const focusSpan = getFocusSpan(snapshot)
+
+        if (!focusSpan) {
+          return undefined
+        }
+
         if (
-          event.type !== 'custom.trigger found' &&
-          event.type !== 'custom.partial keyword found' &&
-          event.type !== 'custom.keyword found'
+          JSON.stringify(focusSpan.path) !==
+          JSON.stringify(context.focusSpan.path)
         ) {
-          return context.keywordAnchor
+          return undefined
         }
 
-        return event.keywordAnchor
-      },
-    }),
-    'set keyword focus': assign({
-      keywordFocus: ({context, event}) => {
-        if (
-          event.type !== 'custom.trigger found' &&
-          event.type !== 'custom.partial keyword found' &&
-          event.type !== 'custom.keyword found'
-        ) {
-          return context.keywordFocus
+        if (!focusSpan.node.text.startsWith(context.focusSpan.textBefore)) {
+          return undefined
         }
 
-        return event.keywordFocus
-      },
-    }),
-    'update keyword focus': assign({
-      keywordFocus: ({context, event}) => {
-        assertEvent(event, ['insert.text', 'delete.backward', 'delete.forward'])
+        if (!focusSpan.node.text.endsWith(context.focusSpan.textAfter)) {
+          return undefined
+        }
 
-        if (!context.keywordFocus) {
-          return context.keywordFocus
+        const keywordAnchor = {
+          path: focusSpan.path,
+          offset: context.focusSpan.textBefore.length,
+        }
+        const keywordFocus = {
+          path: focusSpan.path,
+          offset:
+            focusSpan.node.text.length - context.focusSpan.textAfter.length,
+        }
+
+        const selectionIsBeforeKeyword =
+          isPointAfterSelection(keywordAnchor)(snapshot)
+
+        const selectionIsAfterKeyword =
+          isPointBeforeSelection(keywordFocus)(snapshot)
+
+        if (selectionIsBeforeKeyword || selectionIsAfterKeyword) {
+          return undefined
         }
 
         return {
-          path: context.keywordFocus.path,
-          offset:
-            event.type === 'insert.text'
-              ? context.keywordFocus.offset + event.text.length
-              : event.type === 'delete.backward' ||
-                  event.type === 'delete.forward'
-                ? context.keywordFocus.offset - 1
-                : event.focus.offset,
+          node: focusSpan.node,
+          path: focusSpan.path,
+          textBefore: context.focusSpan.textBefore,
+          textAfter: context.focusSpan.textAfter,
         }
       },
     }),
     'update keyword': assign({
-      keyword: ({context, event}) => {
-        assertEvent(event, 'selection changed')
-
-        if (!context.keywordAnchor || !context.keywordFocus) {
+      keyword: ({context}) => {
+        if (!context.focusSpan) {
           return ''
         }
 
-        const keywordFocusPoint = utils.blockOffsetToSpanSelectionPoint({
-          context: event.snapshot.context,
-          blockOffset: context.keywordFocus,
-          direction: 'forward',
-        })
-
-        if (!keywordFocusPoint) {
-          return ''
+        if (
+          context.focusSpan.textBefore.length > 0 &&
+          context.focusSpan.textAfter.length > 0
+        ) {
+          return context.focusSpan.node.text.slice(
+            context.focusSpan.textBefore.length,
+            -context.focusSpan.textAfter.length,
+          )
         }
 
-        return selectors.getSelectionText({
-          ...event.snapshot,
-          context: {
-            ...event.snapshot.context,
-            selection: {
-              anchor: context.keywordAnchor.point,
-              focus: keywordFocusPoint,
-            },
-          },
-        })
+        if (context.focusSpan.textBefore.length > 0) {
+          return context.focusSpan.node.text.slice(
+            context.focusSpan.textBefore.length,
+          )
+        }
+
+        if (context.focusSpan.textAfter.length > 0) {
+          return context.focusSpan.node.text.slice(
+            0,
+            -context.focusSpan.textAfter.length,
+          )
+        }
+
+        return context.focusSpan.node.text
       },
     }),
     'update matches': assign({
@@ -730,13 +741,6 @@ export const emojiPickerMachine = setup({
         return event.index
       },
     }),
-    'update emoji insert listener context': sendTo(
-      'emoji insert listener',
-      ({context}) => ({
-        type: 'context changed',
-        context,
-      }),
-    ),
     'update submit listener context': sendTo(
       'submit listener',
       ({context}) => ({
@@ -744,118 +748,61 @@ export const emojiPickerMachine = setup({
         context,
       }),
     ),
-    'insert selected match': ({context, event}) => {
+    'insert selected match': ({context}) => {
       const match = context.matches[context.selectedIndex]
 
-      if (!match || !context.keywordAnchor || !context.keywordFocus) {
-        return
-      }
-
-      if (event.type === 'custom.keyword found' && match.type !== 'exact') {
+      if (!match || !context.focusSpan) {
         return
       }
 
       context.editor.send({
         type: 'custom.insert emoji',
         emoji: match.emoji,
-        anchor: context.keywordAnchor.blockOffset,
-        focus: context.keywordFocus,
+        focusSpan: context.focusSpan,
       })
     },
     'reset': assign({
-      keywordAnchor: undefined,
-      keywordFocus: undefined,
+      focusSpan: undefined,
       keyword: '',
       matches: [],
       selectedIndex: 0,
     }),
   },
   guards: {
+    'no focus span': ({context}) => {
+      return !context.focusSpan
+    },
     'has matches': ({context}) => {
       return context.matches.length > 0
     },
     'no matches': not('has matches'),
-    'keyword is wel-formed': ({context}) => {
-      return context.incompleteKeywordRegex.test(context.keyword)
+    'keyword is malformed': ({context}) => {
+      return !context.incompleteKeywordRegex.test(context.keyword)
     },
-    'keyword is malformed': not('keyword is wel-formed'),
-    'selection is before keyword': ({context, event}) => {
-      assertEvent(event, 'selection changed')
+    'keyword is direct match': ({context}) => {
+      const fullKeywordRegex = /^:[\S]+:$/
 
-      if (!context.keywordAnchor) {
-        return true
-      }
-
-      return selectors.isPointAfterSelection(context.keywordAnchor.point)(
-        event.snapshot,
-      )
-    },
-    'selection is after keyword': ({context, event}) => {
-      assertEvent(event, 'selection changed')
-
-      if (context.keywordFocus === undefined) {
-        return true
-      }
-
-      const keywordFocusPoint = utils.blockOffsetToSpanSelectionPoint({
-        context: event.snapshot.context,
-        blockOffset: context.keywordFocus,
-        direction: 'forward',
-      })
-
-      if (!keywordFocusPoint) {
-        return true
-      }
-
-      return selectors.isPointBeforeSelection(keywordFocusPoint)(event.snapshot)
-    },
-    'selection is expanded': ({event}) => {
-      assertEvent(event, 'selection changed')
-
-      return selectors.isSelectionExpanded(event.snapshot)
-    },
-    'selection moved unexpectedly': or([
-      'selection is before keyword',
-      'selection is after keyword',
-      'selection is expanded',
-    ]),
-    'unexpected text insertion': ({context, event}) => {
-      if (event.type !== 'insert.text') {
+      if (!fullKeywordRegex.test(context.keyword)) {
         return false
       }
 
-      if (!context.keywordAnchor) {
+      const match = context.matches.at(context.selectedIndex)
+
+      if (!match || match.type !== 'exact') {
         return false
       }
 
-      const snapshot = context.editor.getSnapshot()
-
-      const textInsertedBeforeKeyword =
-        selectors.isPointBeforeSelection(event.focus)({
-          ...snapshot,
-          context: {
-            ...snapshot.context,
-            selection: {
-              anchor: context.keywordAnchor.point,
-              focus: context.keywordAnchor.point,
-            },
-          },
-        }) ||
-        utils.isEqualSelectionPoints(event.focus, context.keywordAnchor.point)
-
-      return textInsertedBeforeKeyword
+      return true
     },
   },
 }).createMachine({
-  /** @xstate-layout N4IgpgJg5mDOIC5RgLYHsBWBLABABywGMBrMAJwDosIAbMAYkLRrQDsctXZyAXSAbQAMAXUSg8aWFh5Y2YkAA9EARmUB2AJwUAzADYNADgCs65YO1q1ygDQgAnojUG1O5c+W7tAJmdfdRgF8A21RMXAIScgpuAEMyQgALTih6Tm4yHgo+BR4hUSQQCSkZOQKlBABaZW0DHSMAFksNQUF6oyNzL1sHBC9vCnrGtS8GtQaNNt0gkPRsfCJSSlj4pNYUiDA6PgoAMzQyAHc4iDz5IulZVnlyr3MKE30LA31DZoNuxD6vAaHdP29vOo1NNwLNwgsostEsl6BstmAKAAjGIkI5kE4iM6SC6lUDlerabT3arDfS3eoaPQfXr9QaWEaNcaTEGhOYRRbRMBxaFrWFYWAofmwU4Fc4lK5lFTqWqDAwUjReeoGbwaNTU1TPCh-QxNNS6XQGHwssHzSJLLkrGHcOiEcU4RIxNYCTGi7Hi66IfxE1oeZX1EbeZXUhUUZSKjxOOV6bTmY1hU0cqGrFLWsC2y72hKOmAnZT5cRuy4ehDVXQUVXDIyWGpmAzveyfLRKwQaVRVwR1ixeONsiHm7nJ+gigvFIuSkvKVuhgwaEwKmMKwbqkaCAaverqVuvKbBUHx9mQi08qAUVhoHAoGI8RJwHCwBJoA4w4eFQu4xSfaoDA3KOmCVSTn06r-i4-hGH0ZiEoI4H1D24JmpyA7JNED5PmsF5XjesD0KwMQAG5YFAV5gDgECPqwL5imOeKIIM9ShsoRh1i2erPB41L6C40GqISUb6n8cEJoeSFrChj7JBh14JHAOH4YRxE4AArnglFvhKNEIGoq4+E0yraPULa6PUHGqhQ3HVDUBL8dogkHv2lqife4noZeUkybhBFEXwOA8Ggqmju+5RGPqFBqP6ujDD4v4tjYDYIMqLjVKo5gdM4TGBLurLwYmR7JmJaFQJJWGpFwvB3psaZ8BARUJP5OLqR+CD1Loq5ymYfyeP4spGOqv70fpv7NBSBKtBlMz7n2iEOSeTkFTVMl1e645eB49wGP+K0UpBbjaMBzQUF4IzBYq7TNa2QS7meGzwAUWVCWQWIBQ15RVJq2ijJoLRtB03jUhUVYUHKtz-gqeoxkYGi2ZN1B0I99XFqobTlh4-5-Ot4H1j0ZirbcENhR4RmKrBmUmnZU3HnDS0aVUjHlh2cqtkqfTBdSSr0RMGieBS7htASUMIUmyFnvNsB3qhySU9RjUVBFdN1ltTPvbowZOGZEWHe9xgTHo-M5SJM3iy5mHSTdI7w+OlnlgY6heJzbgUv4ytxaqtSCBFg1eJFM4XQEQA */
   id: 'emoji picker',
   context: ({input}) => ({
     editor: input.editor,
     keyword: '',
-    keywordAnchor: undefined,
-    keywordFocus: undefined,
+    focusSpan: undefined,
     matchEmojis: input.matchEmojis,
-    incompleteKeywordRegex: /:[\S]*$/,
+    incompleteKeywordRegex: /^:[\S]*$/,
     matches: [],
     selectedIndex: 0,
   }),
@@ -877,17 +824,12 @@ export const emojiPickerMachine = setup({
       on: {
         'custom.trigger found': {
           target: 'searching',
-          actions: ['set keyword anchor', 'set keyword focus', 'init keyword'],
-        },
-        'custom.partial keyword found': {
-          target: 'searching',
-          actions: ['set keyword anchor', 'set keyword focus', 'init keyword'],
+          actions: ['set focus span', 'update keyword'],
         },
         'custom.keyword found': {
           actions: [
-            'set keyword anchor',
-            'set keyword focus',
-            'init keyword',
+            'set focus span',
+            'update keyword',
             'update matches',
             'insert selected match',
           ],
@@ -911,46 +853,15 @@ export const emojiPickerMachine = setup({
           src: 'selection listener',
           input: ({context}) => ({editor: context.editor}),
         },
-        {
-          src: 'text change listener',
-          input: ({context}) => ({editor: context.editor}),
-        },
       ],
       on: {
-        'custom.keyword found': {
-          actions: [
-            'set keyword anchor',
-            'set keyword focus',
-            'init keyword',
-            'update matches',
-            'insert selected match',
-          ],
-        },
-        'insert.text': [
-          {
-            guard: 'unexpected text insertion',
-            target: 'idle',
-          },
-          {
-            actions: ['update keyword focus'],
-          },
-        ],
-        'delete.forward': {
-          actions: ['update keyword focus'],
-        },
-        'delete.backward': {
-          actions: ['update keyword focus'],
-        },
         'dismiss': {
           target: 'idle',
         },
         'selection changed': [
           {
-            guard: 'selection moved unexpectedly',
-            target: 'idle',
-          },
-          {
             actions: [
+              'update focus span',
               'update keyword',
               'update matches',
               'reset selected index',
@@ -961,7 +872,16 @@ export const emojiPickerMachine = setup({
       },
       always: [
         {
+          guard: 'no focus span',
+          target: 'idle',
+        },
+        {
           guard: 'keyword is malformed',
+          target: 'idle',
+        },
+        {
+          guard: 'keyword is direct match',
+          actions: ['insert selected match'],
           target: 'idle',
         },
       ],
