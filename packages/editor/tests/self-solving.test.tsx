@@ -2,8 +2,8 @@ import type {Patch} from '@portabletext/patches'
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
-import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
 import type {
   EditorEmittedEvent,
   MutationEvent,

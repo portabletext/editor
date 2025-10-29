@@ -1,10 +1,10 @@
 import {defineSchema, type SchemaDefinition} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import type {PortableTextBlock} from '@sanity/types'
-import {page} from '@vitest/browser/context'
 import React from 'react'
 import {expect, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
+import {page} from 'vitest/browser'
 import type {Editor} from '../../editor'
 import {
   PortableTextEditable,
@@ -30,13 +30,12 @@ export async function createTestEditor(
   options: CreateTestEditorOptions = {},
 ): Promise<
   Pick<Context, 'editor' | 'locator'> & {
-    rerender: (options?: CreateTestEditorOptions) => void
+    rerender: (options?: CreateTestEditorOptions) => Promise<void>
   }
 > {
   const editorRef = React.createRef<Editor>()
   const keyGenerator = options.keyGenerator ?? createTestKeyGenerator()
-
-  const renderResult = render(
+  const renderResult = await render(
     <EditorProvider
       initialConfig={{
         keyGenerator: keyGenerator,
@@ -50,8 +49,8 @@ export async function createTestEditor(
     </EditorProvider>,
   )
 
-  function rerender(newOptions?: CreateTestEditorOptions) {
-    newOptions
+  async function rerender(newOptions?: CreateTestEditorOptions) {
+    await (newOptions
       ? renderResult.rerender(
           <EditorProvider
             initialConfig={{
@@ -77,7 +76,7 @@ export async function createTestEditor(
             <PortableTextEditable {...options.editableProps} />
             {options.children}
           </EditorProvider>,
-        )
+        ))
   }
 
   const locator = page.getByRole('textbox')

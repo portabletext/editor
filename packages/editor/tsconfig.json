@@ -13,6 +13,6 @@
     "outDir": "./lib",
 
     "isolatedModules": false,
-    "types": ["@vitest/browser/providers/playwright"]
+    "types": ["@vitest/browser-playwright"]
   }
 }

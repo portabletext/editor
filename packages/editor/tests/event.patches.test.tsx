@@ -1,10 +1,10 @@
 import type {SchemaDefinition} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
-import {page, userEvent} from '@vitest/browser/context'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
+import {page, userEvent} from 'vitest/browser'
 import {
   defineSchema,
   EditorProvider,

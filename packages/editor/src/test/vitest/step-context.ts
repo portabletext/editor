@@ -1,4 +1,4 @@
-import type {Locator} from '@vitest/browser/context'
+import type {Locator} from 'vitest/browser'
 import type {Editor} from '../../editor'
 
 /**

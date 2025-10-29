@@ -1,7 +1,7 @@
 import {defineSchema} from '@portabletext/schema'
 import {getTersePt} from '@portabletext/test'
-import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
 import {getTextMarks} from '../internal-utils/text-marks'
 import {createTestEditor} from '../test/vitest'
 import {MarkdownPlugin} from './plugin.markdown'

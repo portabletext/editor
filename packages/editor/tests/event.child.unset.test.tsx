@@ -1,7 +1,7 @@
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
-import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
 import {defineSchema, type Patch} from '../src'
 import {EventListenerPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'

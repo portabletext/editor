@@ -1,6 +1,6 @@
 import {createTestKeyGenerator} from '@portabletext/test'
-import {page, userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
+import {page, userEvent} from 'vitest/browser'
 import {defineSchema, type EditorEmittedEvent} from '../src'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'

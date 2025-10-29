@@ -1,8 +1,8 @@
 import {createTestKeyGenerator} from '@portabletext/test'
-import {page, userEvent} from '@vitest/browser/context'
 import React, {useCallback, useEffect, useState} from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
+import {page, userEvent} from 'vitest/browser'
 import {
   defineSchema,
   EditorProvider,

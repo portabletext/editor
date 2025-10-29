@@ -1,10 +1,10 @@
 import {compileSchema, isSpan, isTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import type {PortableTextBlock} from '@sanity/types'
-import {page, userEvent} from '@vitest/browser/context'
 import {createRef, useState, type ReactNode, type RefObject} from 'react'
 import {describe, expect, it, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
+import {page, userEvent} from 'vitest/browser'
 import {
   defineSchema,
   EditorProvider,
@@ -81,7 +81,7 @@ describe('RangeDecorations', () => {
     })
 
     // Re-render with the same range decorations
-    rerender({
+    await rerender({
       children: (
         <>
           <InternalChange$Plugin onChange={onChange} />
@@ -107,7 +107,7 @@ describe('RangeDecorations', () => {
       },
     ]
 
-    rerender({
+    await rerender({
       children: (
         <>
           <InternalChange$Plugin onChange={onChange} />
@@ -135,7 +135,7 @@ describe('RangeDecorations', () => {
         payload: {id: 'a'},
       },
     ]
-    rerender({
+    await rerender({
       children: (
         <>
           <InternalChange$Plugin onChange={onChange} />
@@ -165,7 +165,7 @@ describe('RangeDecorations', () => {
       },
     ]
 
-    rerender({
+    await rerender({
       children: (
         <>
           <InternalChange$Plugin onChange={onChange} />
@@ -195,7 +195,7 @@ describe('RangeDecorations', () => {
       },
     ]
 
-    rerender({
+    await rerender({
       children: (
         <>
           <InternalChange$Plugin onChange={onChange} />
@@ -225,7 +225,7 @@ describe('RangeDecorations', () => {
       },
     ]
 
-    rerender({
+    await rerender({
       children: (
         <>
           <InternalChange$Plugin onChange={onChange} />

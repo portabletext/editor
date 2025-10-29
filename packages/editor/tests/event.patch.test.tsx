@@ -1,8 +1,8 @@
 import {insert, setIfMissing, unset, type Patch} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
-import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
 

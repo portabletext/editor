@@ -1,5 +1,5 @@
-import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
 import type {EditorSnapshot} from '../src'
 import {execute} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'

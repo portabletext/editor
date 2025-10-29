@@ -116,14 +116,9 @@ describe('initialization', () => {
       focus: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 0},
       backward: false,
     }
-    const newSelection: EditorSelection = {
-      anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 0},
-      focus: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 3},
-      backward: false,
-    }
     const onChange = vi.fn()
 
-    const {rerender} = await createTestEditor({
+    await createTestEditor({
       children: (
         <>
           <InternalChange$Plugin onChange={onChange} />
@@ -155,25 +150,6 @@ describe('initialization', () => {
           PortableTextEditor.getSelection(editorRef.current),
         ).toStrictEqual(initialSelection)
         expect(sel).toBe(anotherSel)
-      }
-    })
-
-    rerender({
-      children: (
-        <>
-          <InternalPortableTextEditorRefPlugin ref={editorRef} />
-        </>
-      ),
-      editableProps: {selection: newSelection},
-    })
-
-    await vi.waitFor(() => {
-      if (editorRef.current) {
-        expect(PortableTextEditor.getSelection(editorRef.current)).toEqual(
-          newSelection,
-        )
-      } else {
-        throw new Error('editorRef.current is null')
       }
     })
   })

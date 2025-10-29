@@ -1,6 +1,6 @@
 import {defineSchema} from '@portabletext/schema'
-import {userEvent} from '@vitest/browser/context'
 import {describe, expect, test, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
 import {defineBehavior, raise} from '../src/behaviors'
 import {BehaviorPlugin} from '../src/plugins'
 import {getFocusSpan, getFocusTextBlock} from '../src/selectors'
