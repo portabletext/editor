@@ -196,7 +196,6 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
       } else if (previousSpanHasSameAnnotation) {
         return {
           state: 'unchanged',
-          previousMarks: marks,
           marks: focusSpan.node.marks ?? [],
         }
       } else if (!previousSpan) {
@@ -209,9 +208,24 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
     }
 
     if (atTheEndOfSpan) {
+      if (!nextSpan) {
+        return {
+          state: 'changed',
+          previousMarks: marks,
+          marks: [],
+        }
+      }
+
+      if (nextSpanAnnotations.length > 0 && !nextSpanSharesSomeAnnotations) {
+        return {
+          state: 'changed',
+          previousMarks: marks,
+          marks: [],
+        }
+      }
+
       if (
-        (nextSpan &&
-          nextSpanSharesSomeAnnotations &&
+        (nextSpanSharesSomeAnnotations &&
           nextSpanAnnotations.length < spanAnnotations.length) ||
         !nextSpanSharesSomeAnnotations
       ) {
@@ -219,14 +233,6 @@ export const getMarkState: EditorSelector<MarkState | undefined> = (
           state: 'changed',
           previousMarks: marks,
           marks: nextSpan?.node.marks ?? [],
-        }
-      }
-
-      if (!nextSpan) {
-        return {
-          state: 'changed',
-          previousMarks: marks,
-          marks: [],
         }
       }
     }
