@@ -1,5 +1,17 @@
 # @portabletext/plugin-emoji-picker
 
+## 1.0.5
+
+### Patch Changes
+
+- [#1794](https://github.com/portabletext/editor/pull/1794) [`1481519`](https://github.com/portabletext/editor/commit/14815192fcbae8e61df652cc9b954aff040cc4ce) Thanks [@christianhg](https://github.com/christianhg)! - fix: handle edge cases with matching at the edge of spans
+
+- [#1794](https://github.com/portabletext/editor/pull/1794) [`5c52ea4`](https://github.com/portabletext/editor/commit/5c52ea4934d504f46e106705a599c2b4514ba6af) Thanks [@christianhg](https://github.com/christianhg)! - fix: dismiss when typing before the colon
+
+- Updated dependencies [[`5442326`](https://github.com/portabletext/editor/commit/5442326569c145a0c146d2523f99ca245bf92623)]:
+  - @portabletext/editor@2.17.0
+  - @portabletext/plugin-input-rule@0.4.2
+
 ## 1.0.4
 
 ### Patch Changes
