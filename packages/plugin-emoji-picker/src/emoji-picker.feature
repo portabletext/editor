@@ -124,20 +124,34 @@ Feature: Emoji Picker
       | "foo bar baz" | "bar"     | before "ar baz" | ":joy:" | "foo ,b😂ar, baz" |
       | "foo bar baz" | "bar"     | before "r baz"  | ":joy:" | "foo ,ba😂r, baz" |
 
-  Scenario Outline: Matching at the edge of decorator
-    Given the text <text>
-    And "strong" around <decorated>
+  Scenario Outline: Triggering at the edge of decorator
+    Given the text "foo bar baz"
+    And "strong" around "bar"
     When the caret is put <position>
-    And <keyword> is typed
+    And ":j" is typed
+    Then the keyword is "j"
+
+    Examples:
+      | position      |
+      | after "foo "  |
+      | before "bar"  |
+      | after "bar"   |
+      | before " baz" |
+
+  Scenario Outline: Matching at the edge of decorator
+    Given the text "foo bar baz"
+    And "strong" around "bar"
+    When the caret is put <position>
+    And ":joy:" is typed
     Then the text is <final text>
 
     Examples:
-      | text          | decorated | position     | keyword | final text        |
-      | "foo bar baz" | "bar"     | after "foo " | ":joy:" | "foo 😂,bar, baz" |
-      # | "foo bar baz" | "bar"     | before "bar"  | ":joy:" | "foo 😂,bar, baz" |
-      | "foo bar baz" | "bar"     | after "bar"  | ":joy:" | "foo ,bar😂, baz" |
+      | position      | final text        |
+      | after "foo "  | "foo 😂,bar, baz" |
+      | before "bar"  | "foo 😂,bar, baz" |
+      | after "bar"   | "foo ,bar😂, baz" |
+      | before " baz" | "foo ,bar😂, baz" |
 
-  # | "foo bar baz" | "bar"     | before " baz" | ":joy:" | "foo ,bar😂, baz" |
   Scenario Outline: Matching inside annotation
     Given the text <text>
     And a "link" "l1" around <annotated>
@@ -150,20 +164,34 @@ Feature: Emoji Picker
       | "foo bar baz" | "bar"     | before "ar baz" | ":joy:" | "foo ,b😂ar, baz" |
       | "foo bar baz" | "bar"     | before "r baz"  | ":joy:" | "foo ,ba😂r, baz" |
 
-  Scenario Outline: Matching at the edge of an annotation
-    Given the text <text>
-    And a "link" "l1" around <annotated>
+  Scenario Outline: Triggering at the edge of an annotation
+    Given the text "foo bar baz"
+    And a "link" "l1" around "bar"
     When the caret is put <position>
-    And <inserted text> is inserted
-    Then the keyword is <keyword>
+    And ":j" is typed
+    Then the keyword is "j"
 
     Examples:
-      | text          | annotated | position     | inserted text | keyword |
-      | "foo bar baz" | "bar"     | after "foo " | ":j"          | "j"     |
-      # | "foo bar baz" | "bar"     | before "bar"  | ":j" | "j" |
-      | "foo bar baz" | "bar"     | after "bar"  | ":j"          | "j"     |
+      | position      |
+      | after "foo "  |
+      | before "bar"  |
+      | after "bar"   |
+      | before " baz" |
 
-  # | "foo bar baz" | "bar"     | before " baz" | ":j" | "j" |
+  Scenario Outline: Matching at the edge of an annotation
+    Given the text "foo bar baz"
+    And a "link" "l1" around "bar"
+    When the caret is put <position>
+    And ":joy:" is typed
+    Then the text is <final text>
+
+    Examples:
+      | position      | final text        |
+      | after "foo "  | "foo 😂,bar, baz" |
+      | before "bar"  | "foo 😂,bar, baz" |
+      | after "bar"   | "foo ,bar,😂 baz" |
+      | before " baz" | "foo ,bar,😂 baz" |
+
   Scenario Outline: Typing before the colon dismisses the emoji picker
     Given the text <text>
     When <inserted text> is typed

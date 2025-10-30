@@ -15,11 +15,15 @@ import {
   getFocusSpan,
   getMarkState,
   getNextSpan,
+  getPreviousSpan,
   isPointAfterSelection,
   isPointBeforeSelection,
   type MarkState,
 } from '@portabletext/editor/selectors'
-import {isEqualSelectionPoints} from '@portabletext/editor/utils'
+import {
+  isEqualSelectionPoints,
+  isSelectionCollapsed,
+} from '@portabletext/editor/utils'
 import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 import {
   defineInputRule,
@@ -66,6 +70,12 @@ const getTriggerState: EditorSelector<
       markState: MarkState
       focusSpanTextBefore: string
       focusSpanTextAfter: string
+      previousSpan:
+        | {
+            node: PortableTextSpan
+            path: ChildPath
+          }
+        | undefined
       nextSpan:
         | {
             node: PortableTextSpan
@@ -89,6 +99,7 @@ const getTriggerState: EditorSelector<
   const focusSpanTextAfter = focusSpan.node.text.slice(
     snapshot.context.selection.focus.offset,
   )
+  const previousSpan = getPreviousSpan(snapshot)
   const nextSpan = getNextSpan(snapshot)
 
   return {
@@ -96,6 +107,7 @@ const getTriggerState: EditorSelector<
     markState,
     focusSpanTextBefore,
     focusSpanTextAfter,
+    previousSpan,
     nextSpan,
   }
 }
@@ -147,11 +159,12 @@ function createTriggerActions({
     text: payload.lastMatch.text,
     marks: payload.markState.marks,
   }
-  const focusSpan = {
+
+  let focusSpan = {
     node: {
       _key: newSpan._key,
       _type: newSpan._type,
-      text: `${newSpan.text}${payload.nextSpan?.node.text ?? ''}`,
+      text: `${newSpan.text}${payload.nextSpan?.node.text ?? payload.focusSpanTextAfter}`,
       marks: payload.markState.marks,
     },
     path: [
@@ -160,7 +173,29 @@ function createTriggerActions({
       {_key: newSpan._key},
     ] satisfies ChildPath,
     textBefore: '',
-    textAfter: payload.nextSpan?.node.text ?? '',
+    textAfter: payload.nextSpan?.node.text ?? payload.focusSpanTextAfter,
+  }
+
+  if (
+    payload.previousSpan &&
+    payload.focusSpanTextBefore.length === 0 &&
+    JSON.stringify(payload.previousSpan.node.marks ?? []) ===
+      JSON.stringify(payload.markState.marks)
+  ) {
+    // The text will be inserted into the previous span, so we'll treat that
+    // as the focus span
+
+    focusSpan = {
+      node: {
+        _key: payload.previousSpan.node._key,
+        _type: newSpan._type,
+        text: `${payload.previousSpan.node.text}${newSpan.text}`,
+        marks: newSpan.marks,
+      },
+      path: payload.previousSpan.path,
+      textBefore: payload.previousSpan.node.text,
+      textAfter: '',
+    }
   }
 
   return [
@@ -338,7 +373,6 @@ type EmojiPickerEvent =
   | KeywordFoundEvent
   | {
       type: 'selection changed'
-      snapshot: EditorSnapshot
     }
   | {
       type: 'dismiss'
@@ -577,8 +611,7 @@ const selectionListenerCallback: CallbackLogicFunction<
   {editor: Editor}
 > = ({sendBack, input}) => {
   const subscription = input.editor.on('selection', () => {
-    const snapshot = input.editor.getSnapshot()
-    sendBack({type: 'selection changed', snapshot})
+    sendBack({type: 'selection changed'})
   })
 
   return subscription.unsubscribe
@@ -669,14 +702,46 @@ export const emojiPickerMachine = setup({
         const snapshot = context.editor.getSnapshot()
         const focusSpan = getFocusSpan(snapshot)
 
+        if (!snapshot.context.selection) {
+          return undefined
+        }
+
         if (!focusSpan) {
           return undefined
         }
+
+        const nextSpan = getNextSpan({
+          ...snapshot,
+          context: {
+            ...snapshot.context,
+            selection: {
+              anchor: {
+                path: context.focusSpan.path,
+                offset: 0,
+              },
+              focus: {
+                path: context.focusSpan.path,
+                offset: 0,
+              },
+            },
+          },
+        })
 
         if (
           JSON.stringify(focusSpan.path) !==
           JSON.stringify(context.focusSpan.path)
         ) {
+          if (
+            nextSpan &&
+            context.focusSpan.textAfter.length === 0 &&
+            snapshot.context.selection.focus.offset === 0 &&
+            isSelectionCollapsed(snapshot.context.selection)
+          ) {
+            // This is an edge case where the caret is moved from the end of
+            // the focus span to the start of the next span.
+            return context.focusSpan
+          }
+
           return undefined
         }
 
