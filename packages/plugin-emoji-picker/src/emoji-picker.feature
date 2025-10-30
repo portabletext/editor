@@ -164,18 +164,18 @@ Feature: Emoji Picker
       | "foo bar baz" | "bar"     | after "bar"  | ":j"          | "j"     |
 
   # | "foo bar baz" | "bar"     | before " baz" | ":j" | "j" |
-  Scenario Outline: Typing before the colon
+  Scenario Outline: Typing before the colon dismisses the emoji picker
     Given the text <text>
     When <inserted text> is typed
     And <button> is pressed
     And <new text> is typed
-    And "{Enter}" is pressed
-    Then the text is <final text>
+    Then the keyword is ""
 
     Examples:
-      | text | inserted text | button                   | new text | final text |
-      | ""   | ":j"          | "{ArrowLeft}{ArrowLeft}" | "f"      | "f\|:j"    |
-      | "fo" | ":j"          | "{ArrowLeft}{ArrowLeft}" | "o"      | "foo\|:j"  |
+      | text | inserted text | button                   | new text |
+      | ""   | ":j"          | "{ArrowLeft}{ArrowLeft}" | "f"      |
+      | "fo" | ":j"          | "{ArrowLeft}{ArrowLeft}" | "o"      |
+      | ""   | ":j"          | "{ArrowLeft}{ArrowLeft}" | ":"      |
 
   Scenario Outline: Navigating away from the keyword
     Given the text <text>

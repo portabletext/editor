@@ -5,7 +5,12 @@ import type {
   EditorSnapshot,
   PortableTextSpan,
 } from '@portabletext/editor'
-import {defineBehavior, effect, raise} from '@portabletext/editor/behaviors'
+import {
+  defineBehavior,
+  effect,
+  forward,
+  raise,
+} from '@portabletext/editor/behaviors'
 import {
   getFocusSpan,
   getMarkState,
@@ -14,6 +19,7 @@ import {
   isPointBeforeSelection,
   type MarkState,
 } from '@portabletext/editor/selectors'
+import {isEqualSelectionPoints} from '@portabletext/editor/utils'
 import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 import {
   defineInputRule,
@@ -578,6 +584,51 @@ const selectionListenerCallback: CallbackLogicFunction<
   return subscription.unsubscribe
 }
 
+const textInsertionListenerCallback: CallbackLogicFunction<
+  {type: 'context changed'; context: EmojiPickerContext},
+  EmojiPickerEvent,
+  {context: EmojiPickerContext}
+> = ({sendBack, input, receive}) => {
+  let context = input.context
+
+  receive((event) => {
+    context = event.context
+  })
+
+  return input.context.editor.registerBehavior({
+    behavior: defineBehavior({
+      on: 'insert.text',
+      guard: ({snapshot}) => {
+        if (!context.focusSpan) {
+          return false
+        }
+
+        if (!snapshot.context.selection) {
+          return false
+        }
+
+        const keywordAnchor = {
+          path: context.focusSpan.path,
+          offset: context.focusSpan.textBefore.length,
+        }
+
+        return isEqualSelectionPoints(
+          snapshot.context.selection.focus,
+          keywordAnchor,
+        )
+      },
+      actions: [
+        ({event}) => [
+          forward(event),
+          effect(() => {
+            sendBack({type: 'dismiss'})
+          }),
+        ],
+      ],
+    }),
+  })
+}
+
 export const emojiPickerMachine = setup({
   types: {
     context: {} as EmojiPickerContext,
@@ -594,6 +645,7 @@ export const emojiPickerMachine = setup({
     'trigger listener': fromCallback(triggerListenerCallback),
     'escape listener': fromCallback(escapeListenerCallback),
     'selection listener': fromCallback(selectionListenerCallback),
+    'text insertion listener': fromCallback(textInsertionListenerCallback),
   },
   actions: {
     'set focus span': assign({
@@ -748,6 +800,13 @@ export const emojiPickerMachine = setup({
         context,
       }),
     ),
+    'update text insertion listener context': sendTo(
+      'text insertion listener',
+      ({context}) => ({
+        type: 'context changed',
+        context,
+      }),
+    ),
     'insert selected match': ({context}) => {
       const match = context.matches[context.selectedIndex]
 
@@ -853,6 +912,11 @@ export const emojiPickerMachine = setup({
           src: 'selection listener',
           input: ({context}) => ({editor: context.editor}),
         },
+        {
+          src: 'text insertion listener',
+          id: 'text insertion listener',
+          input: ({context}) => ({context}),
+        },
       ],
       on: {
         'dismiss': {
@@ -866,6 +930,7 @@ export const emojiPickerMachine = setup({
               'update matches',
               'reset selected index',
               'update submit listener context',
+              'update text insertion listener context',
             ],
           },
         ],
