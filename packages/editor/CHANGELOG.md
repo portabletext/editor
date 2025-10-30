@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.17.0
+
+### Minor Changes
+
+- [#1794](https://github.com/portabletext/editor/pull/1794) [`5442326`](https://github.com/portabletext/editor/commit/5442326569c145a0c146d2523f99ca245bf92623) Thanks [@christianhg](https://github.com/christianhg)! - feat(selectors): add `getPreviousSpan`
+
 ## 2.16.0
 
 ### Minor Changes
