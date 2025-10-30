@@ -9,7 +9,7 @@ import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('Serialize/Deserialize', () => {
-  test.skip('Scenario: Custom text/html deserializer', async () => {
+  test('Scenario: Custom text/html deserializer', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
