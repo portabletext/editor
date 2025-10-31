@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.17.1
+
+### Patch Changes
+
+- [#1796](https://github.com/portabletext/editor/pull/1796) [`5beedd2`](https://github.com/portabletext/editor/commit/5beedd2778149a70e5e6464c28da8e31d9bef3ac) Thanks [@christianhg](https://github.com/christianhg)! - fix(`isSelectionExpanded`): return `false` if there's no selection
+
+- [#1796](https://github.com/portabletext/editor/pull/1796) [`fdac1f0`](https://github.com/portabletext/editor/commit/fdac1f0f5fc264dff703b0b6e814e407964004ad) Thanks [@christianhg](https://github.com/christianhg)! - fix(`delete`): make `at` optional and adjust delete heuristics
+
 ## 2.17.0
 
 ### Minor Changes

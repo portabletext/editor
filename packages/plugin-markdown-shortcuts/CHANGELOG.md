@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.4.14
+
+### Patch Changes
+
+- [#1798](https://github.com/portabletext/editor/pull/1798) [`78c8470`](https://github.com/portabletext/editor/commit/78c847010e262c7e1755d6c143a614dcd8a4d9ab) Thanks [@christianhg](https://github.com/christianhg)! - fix: make markdown link shortcut RegExp less greedy
+
+- Updated dependencies [[`5beedd2`](https://github.com/portabletext/editor/commit/5beedd2778149a70e5e6464c28da8e31d9bef3ac), [`fdac1f0`](https://github.com/portabletext/editor/commit/fdac1f0f5fc264dff703b0b6e814e407964004ad)]:
+  - @portabletext/editor@2.17.1
+  - @portabletext/plugin-character-pair-decorator@1.1.17
+  - @portabletext/plugin-input-rule@0.4.3
+
 ## 1.4.13
 
 ### Patch Changes
