@@ -313,4 +313,14 @@ describe('event.insert.text', () => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo bar baz'])
     })
   })
+
+  test('Scenario: Inserting text without a selection', async () => {
+    const {editor} = await createTestEditor()
+
+    editor.send({type: 'insert.text', text: 'foo'})
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
+    })
+  })
 })
