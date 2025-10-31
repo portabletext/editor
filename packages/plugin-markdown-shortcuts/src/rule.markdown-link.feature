@@ -9,11 +9,14 @@ Feature: Markdown Link Rule
     When <inserted text> is inserted
     And "new" is typed
     Then the text is <new text>
-    And <annotated> has marks "k4"
+    And <annotated> has <marks>
 
     Examples:
-      | text        | inserted text | new text  | annotated |
-      | "[foo](bar" | ")"           | "foo,new" | "foo"     |
+      | text          | inserted text | new text          | annotated | marks      |
+      | "[foo](bar"   | ")"           | "foo,new"         | "foo"     | marks "k4" |
+      | "[[foo](bar"  | ")"           | "[,foo,new"       | "foo"     | marks "k4" |
+      | "[f[oo](bar"  | ")"           | "[f,oo,new"       | "oo"      | marks "k4" |
+      | "[f[]oo](bar" | ")"           | "[f[]oo](bar)new" | ""        | no marks   |
 
   Scenario: Preserving decorator in link text
     Given the text "[foo](bar"
