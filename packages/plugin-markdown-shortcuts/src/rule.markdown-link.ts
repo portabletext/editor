@@ -9,7 +9,7 @@ export function createMarkdownLinkRule(config: {
   }) => {name: string; value?: {[prop: string]: unknown}} | undefined
 }) {
   return defineInputRule({
-    on: /\[(.+)]\((.+)\)/,
+    on: /\[([^\[\]]+)]\((.+)\)/,
     actions: [
       ({snapshot, event}) => {
         const newText = event.textBefore + event.textInserted
