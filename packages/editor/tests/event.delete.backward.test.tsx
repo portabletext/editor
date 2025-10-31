@@ -137,4 +137,76 @@ describe('event.delete.backward', () => {
       ).toBe(true)
     })
   })
+
+  describe('Scenario: Deleting line', () => {
+    test('with selection', async () => {
+      const {editor, locator} = await createTestEditor({
+        initialValue: [
+          {
+            _key: 'k0',
+            _type: 'block',
+            children: [{_key: 'k1', _type: 'span', text: 'foo bar baz'}],
+          },
+        ],
+      })
+
+      await userEvent.click(locator)
+
+      const selection = getSelectionBeforeText(
+        editor.getSnapshot().context,
+        'bar',
+      )
+
+      editor.send({
+        type: 'select',
+        at: selection,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual(selection)
+      })
+
+      editor.send({
+        type: 'delete',
+        direction: 'backward',
+        unit: 'line',
+      })
+
+      await vi.waitFor(() => {
+        expect(getTersePt(editor.getSnapshot().context)).toEqual(['bar baz'])
+      })
+    })
+
+    test('without selection', async () => {
+      const {editor} = await createTestEditor({
+        initialValue: [
+          {
+            _key: 'k0',
+            _type: 'block',
+            children: [{_key: 'k1', _type: 'span', text: 'foo bar baz'}],
+          },
+        ],
+      })
+
+      editor.send({
+        type: 'delete',
+        direction: 'backward',
+        unit: 'line',
+        at: {
+          anchor: {
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+            offset: 4,
+          },
+          focus: {
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+            offset: 4,
+          },
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(getTersePt(editor.getSnapshot().context)).toEqual(['bar baz'])
+      })
+    })
+  })
 })

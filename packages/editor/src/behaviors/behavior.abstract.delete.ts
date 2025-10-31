@@ -17,19 +17,14 @@ export const abstractDeleteBehaviors = [
   defineBehavior({
     on: 'delete.backward',
     guard: ({snapshot}) => {
-      if (!snapshot.context.selection) {
-        return false
-      }
-
-      return {selection: snapshot.context.selection}
+      return snapshot.context.selection
     },
     actions: [
-      ({event}, {selection}) => [
+      ({event}) => [
         raise({
           type: 'delete',
           direction: 'backward',
           unit: event.unit,
-          at: selection,
         }),
       ],
     ],
@@ -88,19 +83,14 @@ export const abstractDeleteBehaviors = [
   defineBehavior({
     on: 'delete.forward',
     guard: ({snapshot}) => {
-      if (!snapshot.context.selection) {
-        return false
-      }
-
-      return {selection: snapshot.context.selection}
+      return snapshot.context.selection
     },
     actions: [
-      ({event}, {selection}) => [
+      ({event}) => [
         raise({
           type: 'delete',
           direction: 'forward',
           unit: event.unit,
-          at: selection,
         }),
       ],
     ],
@@ -112,18 +102,24 @@ export const abstractDeleteBehaviors = [
         return false
       }
 
+      const at = event.at ?? snapshot.context.selection
+
+      if (!at) {
+        return false
+      }
+
       const nextBlock = getNextBlock({
         ...snapshot,
         context: {
           ...snapshot.context,
-          selection: event.at,
+          selection: at,
         },
       })
       const focusTextBlock = getFocusTextBlock({
         ...snapshot,
         context: {
           ...snapshot.context,
-          selection: event.at,
+          selection: at,
         },
       })
 

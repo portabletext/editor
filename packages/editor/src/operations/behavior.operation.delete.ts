@@ -1,14 +1,8 @@
 import {isTextBlock} from '@portabletext/schema'
-import {
-  deleteText,
-  Editor,
-  Element,
-  Range,
-  setSelection,
-  Transforms,
-} from 'slate'
+import {deleteText, Editor, Element, Range, Transforms} from 'slate'
 import {DOMEditor} from 'slate-dom'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
+import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import type {PortableTextSlateEditor} from '../types/editor'
 import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
@@ -17,48 +11,54 @@ import type {BehaviorOperationImplementation} from './behavior.operations'
 export const deleteOperationImplementation: BehaviorOperationImplementation<
   'delete'
 > = ({context, operation}) => {
-  const anchorBlockKey = getBlockKeyFromSelectionPoint(operation.at.anchor)
-  const focusBlockKey = getBlockKeyFromSelectionPoint(operation.at.focus)
+  const at = operation.at
+    ? toSlateRange({
+        context: {
+          schema: context.schema,
+          value: operation.editor.value,
+          selection: operation.at,
+        },
+        blockIndexMap: operation.editor.blockIndexMap,
+      })
+    : undefined
 
-  const startBlockKey = operation.at.backward ? focusBlockKey : anchorBlockKey
-  const endBlockKey = operation.at.backward ? anchorBlockKey : focusBlockKey
-  const endOffset = operation.at.backward
-    ? operation.at.focus.offset
-    : operation.at.anchor.offset
+  const selection = operation.editor.selection
+    ? slateRangeToSelection({
+        schema: context.schema,
+        editor: operation.editor,
+        range: operation.editor.selection,
+      })
+    : undefined
 
-  if (!startBlockKey) {
-    throw new Error('Failed to get start block key')
-  }
-
-  if (!endBlockKey) {
-    throw new Error('Failed to get end block key')
-  }
-
-  const startBlockIndex = operation.editor.blockIndexMap.get(startBlockKey)
-
-  if (startBlockIndex === undefined) {
-    throw new Error('Failed to get start block index')
-  }
-
-  const startBlock = operation.editor.value.at(startBlockIndex)
-
-  if (!startBlock) {
-    throw new Error('Failed to get start block')
-  }
-
-  const endBlockIndex = operation.editor.blockIndexMap.get(endBlockKey)
-
-  if (endBlockIndex === undefined) {
-    throw new Error('Failed to get end block index')
-  }
-
-  const endBlock = operation.editor.value.at(endBlockIndex)
-
-  if (!endBlock) {
-    throw new Error('Failed to get end block')
-  }
+  const reverse = operation.direction === 'backward'
+  const anchorPoint = operation.at?.anchor ?? selection?.anchor
+  const focusPoint = operation.at?.focus ?? selection?.focus
+  const startPoint = reverse ? focusPoint : anchorPoint
+  const endPoint = reverse ? anchorPoint : focusPoint
+  const startBlockKey = startPoint
+    ? getBlockKeyFromSelectionPoint(startPoint)
+    : undefined
+  const endBlockKey = endPoint
+    ? getBlockKeyFromSelectionPoint(endPoint)
+    : undefined
+  const startBlockIndex = startBlockKey
+    ? operation.editor.blockIndexMap.get(startBlockKey)
+    : undefined
+  const endBlockIndex = endBlockKey
+    ? operation.editor.blockIndexMap.get(endBlockKey)
+    : undefined
+  const startBlock = startBlockIndex
+    ? operation.editor.value.at(startBlockIndex)
+    : undefined
+  const endBlock = endBlockIndex
+    ? operation.editor.value.at(endBlockIndex)
+    : undefined
 
   if (operation.unit === 'block') {
+    if (startBlockIndex === undefined || endBlockIndex === undefined) {
+      throw new Error('Failed to get start or end block index')
+    }
+
     Transforms.removeNodes(operation.editor, {
       at: {
         anchor: {path: [startBlockIndex], offset: 0},
@@ -74,22 +74,13 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
     return
   }
 
-  const range = toSlateRange({
-    context: {
-      schema: context.schema,
-      value: operation.editor.value,
-      selection: operation.at,
-    },
-    blockIndexMap: operation.editor.blockIndexMap,
-  })
-
-  if (!range) {
-    throw new Error(
-      `Failed to get Slate Range for selection ${JSON.stringify(operation.at)}`,
-    )
-  }
-
   if (operation.direction === 'backward' && operation.unit === 'line') {
+    const range = at ?? operation.editor.selection ?? undefined
+
+    if (!range) {
+      throw new Error('Unable to delete line without a selection')
+    }
+
     const parentBlockEntry = Editor.above(operation.editor, {
       match: (n) => Element.isElement(n) && Editor.isBlock(operation.editor, n),
       at: range,
@@ -115,23 +106,28 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
     }
   }
 
-  const hanging = isTextBlock(context, endBlock) && endOffset === 0
+  const hanging = reverse
+    ? endPoint
+      ? isTextBlock(context, endBlock)
+        ? endPoint.offset === 0
+        : true
+      : false
+    : startPoint
+      ? isTextBlock(context, startBlock)
+        ? startPoint.offset === 0
+        : true
+      : false
 
-  deleteText(operation.editor, {
-    at: range,
-    reverse: operation.direction === 'backward',
-    unit: operation.unit,
-    hanging,
-  })
-
-  if (
-    operation.editor.selection &&
-    isTextBlock(context, startBlock) &&
-    isTextBlock(context, endBlock)
-  ) {
-    setSelection(operation.editor, {
-      anchor: operation.editor.selection.focus,
-      focus: operation.editor.selection.focus,
+  if (at) {
+    deleteText(operation.editor, {
+      at,
+      hanging,
+      reverse,
+    })
+  } else {
+    deleteText(operation.editor, {
+      hanging,
+      reverse,
     })
   }
 }

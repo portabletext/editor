@@ -204,11 +204,17 @@ const mergeTextIntoListOnBackspace = defineBehavior({
 const deletingListFromStart = defineBehavior({
   on: 'delete',
   guard: ({snapshot, event}) => {
+    const at = event.at ?? snapshot.context.selection
+
+    if (!at) {
+      return false
+    }
+
     const blocksToDelete = getSelectedBlocks({
       ...snapshot,
       context: {
         ...snapshot.context,
-        selection: event.at,
+        selection: at,
       },
     })
 
@@ -233,14 +239,14 @@ const deletingListFromStart = defineBehavior({
       ...snapshot,
       context: {
         ...snapshot.context,
-        selection: event.at,
+        selection: at,
       },
     })
     const deleteEndPoint = getSelectionEndPoint({
       ...snapshot,
       context: {
         ...snapshot.context,
-        selection: event.at,
+        selection: at,
       },
     })
 

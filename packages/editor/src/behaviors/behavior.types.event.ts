@@ -140,7 +140,7 @@ export type SyntheticBehaviorEvent =
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'delete'>
-      at: NonNullable<EditorSelection>
+      at?: NonNullable<EditorSelection>
       /**
        * Defaults to forward deletion.
        */
