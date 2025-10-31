@@ -18,38 +18,37 @@ export function createWithEventListeners(editorActor: EditorActor) {
         return
       }
 
-      const at = options?.at ?? editor.selection
+      const range = options?.at ? Editor.range(editor, options.at) : undefined
+      const selection = range
+        ? slateRangeToSelection({
+            schema: editorActor.getSnapshot().context.schema,
+            editor,
+            range,
+          })
+        : undefined
 
-      if (!at) {
-        console.error('Unexpected call to .delete(...) without `at` option')
-        return
+      if (selection) {
+        editorActor.send({
+          type: 'behavior event',
+          behaviorEvent: {
+            type: 'delete',
+            at: selection,
+            direction: options?.reverse ? 'backward' : 'forward',
+            unit: options?.unit,
+          },
+          editor,
+        })
+      } else {
+        editorActor.send({
+          type: 'behavior event',
+          behaviorEvent: {
+            type: 'delete',
+            direction: options?.reverse ? 'backward' : 'forward',
+            unit: options?.unit,
+          },
+          editor,
+        })
       }
-
-      const range = Editor.range(editor, at)
-
-      const selection = slateRangeToSelection({
-        schema: editorActor.getSnapshot().context.schema,
-        editor,
-        range,
-      })
-
-      if (!selection) {
-        console.error(
-          'Unexpected call to .delete(...) with invalid `at` option',
-        )
-        return
-      }
-
-      editorActor.send({
-        type: 'behavior event',
-        behaviorEvent: {
-          type: 'delete',
-          at: selection,
-          direction: options?.reverse ? 'backward' : 'forward',
-          unit: options?.unit,
-        },
-        editor,
-      })
     }
 
     editor.deleteBackward = (unit) => {

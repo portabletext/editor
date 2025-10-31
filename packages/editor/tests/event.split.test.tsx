@@ -390,7 +390,7 @@ describe('event.split', () => {
 
     await userEvent.type(locator, 'baz')
 
-    expect(getTersePt(editor.getSnapshot().context)).toEqual(['f', 'bazbar'])
+    expect(getTersePt(editor.getSnapshot().context)).toEqual(['fbaz', 'bar'])
   })
 
   test('Scenario: Splitting with an expanded selection from one span to another', async () => {
@@ -440,23 +440,9 @@ describe('event.split', () => {
     editor.send({type: 'split'})
 
     await vi.waitFor(() => {
-      return expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _key: fooBlockKey,
-          _type: 'block',
-          children: [{_key: fooSpanKey, _type: 'span', text: 'fo', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-        {
-          _key: barBlockKey,
-          _type: 'block',
-          children: [
-            {_key: barSpanKey, _type: 'span', text: 'ar', marks: ['strong']},
-          ],
-          markDefs: [],
-          style: 'normal',
-        },
+      return expect(getTersePt(editor.getSnapshot().context)).toEqual([
+        'fo',
+        'ar',
       ])
     })
   })

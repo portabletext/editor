@@ -1,6 +1,6 @@
+import {isSelectionExpanded} from '../selectors'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getLastBlock} from '../selectors/selector.get-last-block'
-import {isSelectionCollapsed} from '../utils'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
@@ -473,20 +473,51 @@ export const abstractInsertBehaviors = [
       ],
     ],
   }),
+
+  /**
+   * If there's an expanded selection, then we delete the selection before we
+   * insert the text.
+   */
   defineBehavior({
     on: 'insert.text',
     guard: ({snapshot}) => {
-      const selection = snapshot.context.selection
+      return isSelectionExpanded(snapshot)
+    },
+    actions: [({event}) => [raise({type: 'delete'}), raise(event)]],
+  }),
 
-      if (!selection || isSelectionCollapsed(selection)) {
+  /**
+   * If there's no selection, then we select the end of the editor before we
+   * we insert the text.
+   */
+  defineBehavior({
+    on: 'insert.text',
+    guard: ({snapshot}) => {
+      if (snapshot.context.selection) {
         return false
       }
 
-      return {selection}
+      const lastBlok = getLastBlock(snapshot)
+
+      if (!lastBlok) {
+        return false
+      }
+
+      const endPoint = getBlockEndPoint({
+        context: snapshot.context,
+        block: lastBlok,
+      })
+      return {endPoint}
     },
     actions: [
-      ({event}, {selection}) => [
-        raise({type: 'delete', at: selection}),
+      ({event}, {endPoint}) => [
+        raise({
+          type: 'select',
+          at: {
+            anchor: endPoint,
+            focus: endPoint,
+          },
+        }),
         raise(event),
       ],
     ],

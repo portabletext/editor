@@ -1,6 +1,11 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
+import {
+  getSelectionAfterText,
+  getSelectionBeforeText,
+} from '../src/internal-utils/text-selection'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.delete', () => {
@@ -309,6 +314,151 @@ describe('event.delete', () => {
     })
   })
 
+  describe('Scenario: Deleting backwards selection starting on a block object', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const imageKey = keyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazBlockKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const fooBlock = {
+      _key: fooBlockKey,
+      _type: 'block',
+      children: [{_key: fooSpanKey, _type: 'span', text: 'foo', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const barBlock = {
+      _key: barBlockKey,
+      _type: 'block',
+      children: [{_key: barSpanKey, _type: 'span', text: 'bar', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const image = {
+      _key: imageKey,
+      _type: 'image',
+    }
+    const bazBlock = {
+      _key: bazBlockKey,
+      _type: 'block',
+      children: [{_key: bazSpanKey, _type: 'span', text: 'baz', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+
+    describe('with trailing text block', () => {
+      test('without selection', async () => {
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            blockObjects: [{name: 'image'}],
+          }),
+          initialValue: [fooBlock, barBlock, image, bazBlock],
+        })
+
+        editor.send({
+          type: 'delete',
+          at: {
+            anchor: {
+              path: [{_key: imageKey}],
+              offset: 0,
+            },
+            focus: {
+              path: [{_key: fooBlockKey}],
+              offset: 0,
+            },
+            backward: true,
+          },
+        })
+
+        await vi.waitFor(() => {
+          expect(getTersePt(editor.getSnapshot().context)).toEqual(['', 'baz'])
+
+          expect(editor.getSnapshot().context.selection).toBeNull()
+        })
+      })
+
+      test('with selection', async () => {
+        const {locator, editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            blockObjects: [{name: 'image'}],
+          }),
+          initialValue: [fooBlock, barBlock, image, bazBlock],
+        })
+
+        const selection = {
+          anchor: {
+            path: [{_key: imageKey}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: fooBlockKey}],
+            offset: 0,
+          },
+          backward: true,
+        }
+
+        await userEvent.click(locator)
+
+        editor.send({
+          type: 'select',
+          at: selection,
+        })
+        editor.send({
+          type: 'delete',
+        })
+
+        await vi.waitFor(() => {
+          expect(getTersePt(editor.getSnapshot().context)).toEqual(['', 'baz'])
+          expect(editor.getSnapshot().context.selection).toEqual({
+            anchor: {
+              path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+              offset: 0,
+            },
+            focus: {
+              path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+              offset: 0,
+            },
+            backward: false,
+          })
+        })
+      })
+    })
+
+    test('without trailing text block', async () => {
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({
+          blockObjects: [{name: 'image'}],
+        }),
+        initialValue: [fooBlock, barBlock, image],
+      })
+
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {
+            path: [{_key: imageKey}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: fooBlockKey}],
+            offset: 0,
+          },
+          backward: true,
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+      })
+    })
+  })
+
   test('Scenario: Deleting block offset', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockAKey = keyGenerator()
@@ -433,6 +583,133 @@ describe('event.delete', () => {
 
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['baz'])
+    })
+  })
+
+  test('Scenario: Deleting without selection', async () => {
+    const {editor} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'foo bar baz'}],
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'delete',
+      at: {
+        anchor: {
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+          offset: 4,
+        },
+        focus: {
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+          offset: 8,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo baz'])
+      expect(editor.getSnapshot().context.selection).toBeNull()
+    })
+  })
+
+  test('Scenario: Deleting before selection', async () => {
+    const {editor, locator} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'foo bar baz'}],
+        },
+      ],
+    })
+
+    await userEvent.click(locator)
+
+    editor.send({
+      type: 'select',
+      at: getSelectionBeforeText(editor.getSnapshot().context, 'baz'),
+    })
+
+    editor.send({
+      type: 'delete',
+      at: {
+        anchor: {
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+          offset: 4,
+        },
+        focus: {
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+          offset: 8,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo baz'])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+          offset: 4,
+        },
+        focus: {
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+          offset: 4,
+        },
+        backward: false,
+      })
+    })
+  })
+
+  test('Scenario: Deleting after selection', async () => {
+    const {editor, locator} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'foo bar baz'}],
+        },
+      ],
+    })
+
+    await userEvent.click(locator)
+
+    editor.send({
+      type: 'select',
+      at: getSelectionAfterText(editor.getSnapshot().context, 'foo'),
+    })
+
+    editor.send({
+      type: 'delete',
+      at: {
+        anchor: {
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+          offset: 4,
+        },
+        focus: {
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+          offset: 8,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo baz'])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+          offset: 3,
+        },
+        backward: false,
+      })
     })
   })
 })

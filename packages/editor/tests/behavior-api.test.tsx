@@ -94,7 +94,7 @@ describe('Behavior API', () => {
   })
 
   test('Scenario: Sending custom events', async () => {
-    const {editor} = await createTestEditor({
+    const {locator, editor} = await createTestEditor({
       children: (
         <BehaviorPlugin
           behaviors={[
@@ -109,6 +109,8 @@ describe('Behavior API', () => {
       ),
     })
 
+    await userEvent.click(locator)
+
     editor.send({type: 'custom.hello world'})
 
     await vi.waitFor(() => {
@@ -119,7 +121,7 @@ describe('Behavior API', () => {
   })
 
   test('Scenario: Raised events default to their default action', async () => {
-    const {editor} = await createTestEditor({
+    const {editor, locator} = await createTestEditor({
       children: (
         <BehaviorPlugin
           behaviors={[
@@ -135,6 +137,8 @@ describe('Behavior API', () => {
         />
       ),
     })
+
+    await userEvent.click(locator)
 
     editor.send({type: 'custom.hello world'})
 
