@@ -49,7 +49,6 @@
   },
   "dependencies": {
     "@portabletext/schema": "workspace:^",
-    "get-random-values-esm": "^1.0.2",
     "lodash.startcase": "^4.4.0"
   },
   "devDependencies": {

@@ -105,7 +105,6 @@
     "@portabletext/to-html": "^3.0.0",
     "@xstate/react": "^6.0.0",
     "debug": "^4.4.3",
-    "get-random-values-esm": "^1.0.2",
     "immer": "^10.2.0",
     "lodash": "^4.17.21",
     "lodash.startcase": "^4.4.0",
