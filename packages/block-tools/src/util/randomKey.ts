@@ -2,9 +2,10 @@ export function keyGenerator() {
   return randomKey(12)
 }
 
-function cryptoRNG(length = 16) {
+// WHATWG crypto RNG - https://w3c.github.io/webcrypto/Overview.html
+function whatwgRNG(length = 16) {
   const rnds8 = new Uint8Array(length)
-  globalThis.crypto.getRandomValues(rnds8)
+  crypto.getRandomValues(rnds8)
   return rnds8
 }
 
@@ -21,7 +22,7 @@ for (let i = 0; i < 256; ++i) {
  * @public
  */
 export function randomKey(length: number): string {
-  return cryptoRNG(length)
+  return whatwgRNG(length)
     .reduce((str, n) => str + byteToHex[n], '')
     .slice(0, length)
 }
