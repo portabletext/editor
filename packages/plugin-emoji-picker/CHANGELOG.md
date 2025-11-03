@@ -1,5 +1,11 @@
 # @portabletext/plugin-emoji-picker
 
+## 1.0.7
+
+### Patch Changes
+
+- [#1800](https://github.com/portabletext/editor/pull/1800) [`5c8f5de`](https://github.com/portabletext/editor/commit/5c8f5de0fc9fe9ecb7744d667843190a622b1b1c) Thanks [@christianhg](https://github.com/christianhg)! - fix: `forward` Enter/Tab events if no keyword is typed
+
 ## 1.0.6
 
 ### Patch Changes
