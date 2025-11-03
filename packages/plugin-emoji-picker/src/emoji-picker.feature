@@ -93,6 +93,17 @@ Feature: Emoji Picker
     And "{Enter}" is pressed
     Then the text is ":joy|"
 
+  Scenario: Aborting and forwarding Enter if there is no keyword
+    When ":" is typed
+    And "{Enter}" is pressed
+    Then the text is ":|"
+
+  Scenario: Aborting Enter if there are no matches
+    When ":asdf" is typed
+    And "{Enter}" is pressed
+    Then the text is ":asdf"
+    And the keyword is ""
+
   Scenario: Backspacing to narrow search
     When ":joy" is typed
     And "{Backspace}" is pressed

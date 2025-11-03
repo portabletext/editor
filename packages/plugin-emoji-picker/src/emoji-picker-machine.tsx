@@ -585,8 +585,26 @@ const submitListenerCallback: CallbackLogicFunction<
       behavior: defineBehavior({
         on: 'keyboard.keydown',
         guard: ({event}) =>
-          enterShortcut.guard(event.originEvent) ||
-          tabShortcut.guard(event.originEvent),
+          (enterShortcut.guard(event.originEvent) ||
+            tabShortcut.guard(event.originEvent)) &&
+          context.keyword.length === 1,
+        actions: [
+          ({event}) => [
+            forward(event),
+            effect(() => {
+              sendBack({type: 'dismiss'})
+            }),
+          ],
+        ],
+      }),
+    }),
+    input.context.editor.registerBehavior({
+      behavior: defineBehavior({
+        on: 'keyboard.keydown',
+        guard: ({event}) =>
+          (enterShortcut.guard(event.originEvent) ||
+            tabShortcut.guard(event.originEvent)) &&
+          context.keyword.length > 1,
         actions: [
           () => [
             effect(() => {
