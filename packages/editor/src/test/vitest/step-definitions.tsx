@@ -223,6 +223,7 @@ export const stepDefinitions = [
     '{button} is pressed',
     async (_: Context, button: Parameter['button']) => {
       await userEvent.keyboard(button)
+      await new Promise((resolve) => setTimeout(resolve, 100))
     },
   ),
   When(
@@ -230,6 +231,7 @@ export const stepDefinitions = [
     async (_: Context, button: Parameter['button'], times: number) => {
       for (let i = 0; i < times; i++) {
         await userEvent.keyboard(button)
+        await new Promise((resolve) => setTimeout(resolve, 100))
       }
     },
   ),
