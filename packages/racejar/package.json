@@ -70,7 +70,7 @@
   },
   "dependencies": {
     "@cucumber/cucumber-expressions": "^18.0.1",
-    "@cucumber/gherkin": "^35.1.0",
+    "@cucumber/gherkin": "^36.0.0",
     "@cucumber/messages": "^29.0.1"
   },
   "devDependencies": {
