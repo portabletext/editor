@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.17.2
+
+### Patch Changes
+
+- [#1799](https://github.com/portabletext/editor/pull/1799) [`ab4ac2d`](https://github.com/portabletext/editor/commit/ab4ac2d5dd29c65cdab7c328bdae70665d36bb9e) Thanks [@chuttam](https://github.com/chuttam)! - fix: remove `get-random-values-esm`
+
+- Updated dependencies [[`ab4ac2d`](https://github.com/portabletext/editor/commit/ab4ac2d5dd29c65cdab7c328bdae70665d36bb9e)]:
+  - @portabletext/sanity-bridge@1.1.17
+  - @portabletext/block-tools@3.5.14
+
 ## 2.17.1
 
 ### Patch Changes
