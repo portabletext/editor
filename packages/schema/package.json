@@ -50,6 +50,6 @@
   "devDependencies": {
     "@sanity/pkg-utils": "^8.1.14",
     "typescript": "catalog:",
-    "vitest": "^4.0.4"
+    "vitest": "^4.0.5"
   }
 }
