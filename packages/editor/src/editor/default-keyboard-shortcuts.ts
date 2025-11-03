@@ -132,6 +132,28 @@ export const defaultKeyboardShortcuts = {
       },
     ],
   }),
+  shiftDown: createKeyboardShortcut({
+    default: [
+      {
+        key: 'ArrowDown',
+        shift: true,
+        meta: false,
+        ctrl: false,
+        alt: false,
+      },
+    ],
+  }),
+  shiftLeft: createKeyboardShortcut({
+    default: [
+      {
+        key: 'ArrowLeft',
+        shift: true,
+        meta: false,
+        ctrl: false,
+        alt: false,
+      },
+    ],
+  }),
   shiftTab: createKeyboardShortcut({
     default: [
       {
