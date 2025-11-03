@@ -1,8 +1,8 @@
-import {describe, expect, it} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {randomKey} from '../../../src/util/randomKey'
 
-describe('randomKey', () => {
-  it('returns a random string of specified length', () => {
+describe(randomKey.name, () => {
+  test('returns a random string of specified length', () => {
     expect(randomKey(0)).toBe('')
     expect(randomKey(1).length).toBe(1)
     expect(randomKey(5).length).toBe(5)
@@ -11,15 +11,15 @@ describe('randomKey', () => {
     expect(randomKey(100).length).toBe(100)
   })
 
-  it('returns unique values on multiple calls', () => {
+  test('returns unique values on multiple calls', () => {
     const keys = new Set<string>()
     for (let i = 0; i < 100; i++) {
       keys.add(randomKey(16))
     }
-    expect(keys.size).toBeGreaterThan(95) // allow for extremely rare collisions
+    expect(keys.size).toBe(100)
   })
 
-  it('returns valid hex characters only', () => {
+  test('returns valid hex characters only', () => {
     const hexPattern = /^[0-9a-f]*$/
     expect(randomKey(20)).toMatch(hexPattern)
   })
