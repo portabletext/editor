@@ -129,9 +129,9 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",
-    "@vitest/browser": "^4.0.4",
-    "@vitest/browser-playwright": "^4.0.4",
-    "@vitest/coverage-istanbul": "^4.0.4",
+    "@vitest/browser": "^4.0.5",
+    "@vitest/browser-playwright": "^4.0.5",
+    "@vitest/coverage-istanbul": "^4.0.5",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9.38.0",
     "eslint-formatter-gha": "^1.6.0",
@@ -144,7 +144,7 @@
     "typescript": "catalog:",
     "typescript-eslint": "^8.46.1",
     "vite": "^7.1.10",
-    "vitest": "^4.0.4",
+    "vitest": "^4.0.5",
     "vitest-browser-react": "^2.0.2"
   },
   "peerDependencies": {

@@ -71,8 +71,8 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/react": "^19.1.12",
     "@vitejs/plugin-react": "^5.0.4",
-    "@vitest/browser": "^4.0.4",
-    "@vitest/browser-playwright": "^4.0.4",
+    "@vitest/browser": "^4.0.5",
+    "@vitest/browser-playwright": "^4.0.5",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9.38.0",
     "eslint-plugin-react-hooks": "7.0.1",
@@ -82,7 +82,7 @@
     "react-error-boundary": "^6.0.0",
     "typescript": "catalog:",
     "typescript-eslint": "^8.46.1",
-    "vitest": "^4.0.4"
+    "vitest": "^4.0.5"
   },
   "peerDependencies": {
     "@portabletext/editor": "workspace:^",
