@@ -14,7 +14,6 @@
 '@portabletext/toolbar': patch
 '@portabletext/editor': patch
 '@portabletext/schema': patch
-'@portabletext/test': patch
 ---
 
 Upgrade @sanity/pkg-utils to v9
