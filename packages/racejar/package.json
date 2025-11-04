@@ -25,32 +25,23 @@
   "exports": {
     ".": {
       "source": "./src/index.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
       "default": "./dist/index.js"
     },
     "./jest": {
       "source": "./src/jest/index.ts",
-      "import": "./dist/jest/index.js",
-      "require": "./dist/jest/index.cjs",
       "default": "./dist/jest/index.js"
     },
     "./playwright": {
       "source": "./src/playwright/index.ts",
-      "import": "./dist/playwright/index.js",
-      "require": "./dist/playwright/index.cjs",
       "default": "./dist/playwright/index.js"
     },
     "./vitest": {
       "source": "./src/vitest/index.ts",
-      "import": "./dist/vitest/index.js",
-      "require": "./dist/vitest/index.cjs",
       "default": "./dist/vitest/index.js"
     },
     "./package.json": "./package.json"
   },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
@@ -76,7 +67,7 @@
   "devDependencies": {
     "@jest/globals": "^30.1.2",
     "@playwright/test": "^1.56.1",
-    "@sanity/pkg-utils": "^8.1.14",
+    "@sanity/pkg-utils": "^9.0.0",
     "typescript": "catalog:",
     "vitest": "^4.0.5"
   },
@@ -84,5 +75,8 @@
     "@jest/globals": "^30.1.2",
     "@playwright/test": "^1.56.1",
     "vitest": "^4.0.5"
+  },
+  "engines": {
+    "node": ">=20.19 <22 || >=22.12"
   }
 }

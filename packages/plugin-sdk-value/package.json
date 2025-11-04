@@ -27,14 +27,11 @@
   "exports": {
     ".": {
       "source": "./src/index.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
       "default": "./dist/index.js"
     },
     "./package.json": "./package.json"
   },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
     "src",
@@ -89,5 +86,8 @@
     "@sanity/sdk-react": "^2.1.2",
     "react": "^19",
     "react-dom": "^19"
+  },
+  "engines": {
+    "node": ">=20.19 <22 || >=22.12"
   }
 }

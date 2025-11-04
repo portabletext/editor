@@ -22,20 +22,15 @@
   "exports": {
     ".": {
       "source": "./src/index.ts",
-      "import": "./lib/index.js",
-      "require": "./lib/index.cjs",
       "default": "./lib/index.js"
     },
     "./rules": {
       "source": "./src/rules/_exports/index.ts",
-      "import": "./lib/rules/index.js",
-      "require": "./lib/rules/index.cjs",
       "default": "./lib/rules/index.js"
     },
     "./package.json": "./package.json"
   },
-  "main": "./lib/index.cjs",
-  "module": "./lib/index.js",
+  "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
     "lib",
@@ -62,7 +57,7 @@
   },
   "devDependencies": {
     "@portabletext/test": "workspace:^",
-    "@sanity/pkg-utils": "^8.1.14",
+    "@sanity/pkg-utils": "^9.0.0",
     "@sanity/schema": "^4.12.0",
     "@sanity/types": "^4.12.0",
     "@types/jsdom": "^20.0.1",
@@ -75,6 +70,9 @@
   },
   "peerDependencies": {
     "@sanity/types": "^4.12.0"
+  },
+  "engines": {
+    "node": ">=20.19 <22 || >=22.12"
   },
   "publishConfig": {
     "access": "public"

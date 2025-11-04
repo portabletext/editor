@@ -23,14 +23,11 @@
   "exports": {
     ".": {
       "source": "./src/index.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
       "default": "./dist/index.js"
     },
     "./package.json": "./package.json"
   },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
@@ -62,7 +59,7 @@
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
     "@portabletext/schema": "workspace:^",
-    "@sanity/pkg-utils": "^8.1.4",
+    "@sanity/pkg-utils": "^9.0.0",
     "@types/react": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",
     "@vitest/browser": "^4.0.5",
@@ -80,6 +77,9 @@
   "peerDependencies": {
     "@portabletext/editor": "workspace:^2.17.2",
     "react": "^19.1.1"
+  },
+  "engines": {
+    "node": ">=20.19 <22 || >=22.12"
   },
   "publishConfig": {
     "access": "public"

@@ -29,26 +29,18 @@
   "exports": {
     ".": {
       "source": "./src/index.ts",
-      "import": "./lib/index.js",
-      "require": "./lib/index.cjs",
       "default": "./lib/index.js"
     },
     "./behaviors": {
       "source": "./src/behaviors/_exports/index.ts",
-      "import": "./lib/behaviors/index.js",
-      "require": "./lib/behaviors/index.cjs",
       "default": "./lib/behaviors/index.js"
     },
     "./plugins": {
       "source": "./src/plugins/_exports/index.ts",
-      "import": "./lib/plugins/index.js",
-      "require": "./lib/plugins/index.cjs",
       "default": "./lib/plugins/index.js"
     },
     "./selectors": {
       "source": "./src/selectors/_exports/index.ts",
-      "import": "./lib/selectors/index.js",
-      "require": "./lib/selectors/index.cjs",
       "default": "./lib/selectors/index.js"
     },
     "./test": {
@@ -59,14 +51,11 @@
     },
     "./utils": {
       "source": "./src/utils/_exports/index.ts",
-      "import": "./lib/utils/index.js",
-      "require": "./lib/utils/index.cjs",
       "default": "./lib/utils/index.js"
     },
     "./package.json": "./package.json"
   },
-  "main": "./lib/index.cjs",
-  "module": "./lib/index.js",
+  "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
     "lib",
@@ -118,7 +107,7 @@
     "@portabletext/sanity-bridge": "workspace:*",
     "@portabletext/test": "workspace:^",
     "@sanity/diff-match-patch": "^3.2.0",
-    "@sanity/pkg-utils": "^8.1.14",
+    "@sanity/pkg-utils": "^9.0.0",
     "@sanity/schema": "^4.12.0",
     "@sanity/types": "^4.12.0",
     "@types/debug": "^4.1.12",

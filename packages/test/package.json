@@ -33,7 +33,7 @@
   },
   "devDependencies": {
     "@portabletext/schema": "workspace:^",
-    "@sanity/pkg-utils": "^8.0.7",
+    "@sanity/pkg-utils": "^9.0.0",
     "@sanity/types": "^4.5.0",
     "typescript": "catalog:",
     "vitest": "^4.0.4"
