@@ -3,7 +3,7 @@
 '@portabletext/plugin-markdown-shortcuts': major
 '@portabletext/plugin-emoji-picker': major
 '@portabletext/keyboard-shortcuts': major
-'@portabletext/plugin-input-rule': major
+'@portabletext/plugin-input-rule': minor
 '@portabletext/plugin-typography': major
 '@portabletext/plugin-sdk-value': major
 '@portabletext/plugin-one-line': major
