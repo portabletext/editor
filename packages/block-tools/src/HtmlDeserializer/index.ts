@@ -4,11 +4,14 @@ import {
   type PortableTextBlock,
   type PortableTextObject,
 } from '@portabletext/schema'
+import {vercelStegaClean} from '@vercel/stega'
 import {flatten} from 'lodash'
 import type {
   ArbitraryTypedObject,
   DeserializerRule,
   HtmlDeserializerOptions,
+  HtmlParser,
+  HtmlPreprocessorOptions,
   PlaceholderAnnotation,
   PlaceholderDecorator,
   TypedObject,
@@ -24,10 +27,10 @@ import {
   isNodeList,
   isPlaceholderAnnotation,
   isPlaceholderDecorator,
-  preprocess,
   tagName,
   trimWhitespace,
 } from './helpers'
+import preprocessors from './preprocessors'
 import {createRules} from './rules'
 
 /**
@@ -302,4 +305,22 @@ export default class HtmlDeserializer {
       return children
     }, [] as TypedObject[])
   }
+}
+
+// TODO: make this plugin-style
+function preprocess(
+  html: string,
+  parseHtml: HtmlParser,
+  options: HtmlPreprocessorOptions,
+): Document {
+  const cleanHTML = vercelStegaClean(html)
+  const doc = parseHtml(normalizeHtmlBeforePreprocess(cleanHTML))
+  preprocessors.forEach((processor) => {
+    processor(cleanHTML, doc, options)
+  })
+  return doc
+}
+
+function normalizeHtmlBeforePreprocess(html: string): string {
+  return html.trim()
 }

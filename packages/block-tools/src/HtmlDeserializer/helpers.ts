@@ -4,13 +4,11 @@ import {
   type PortableTextObject,
   type PortableTextTextBlock,
 } from '@portabletext/schema'
-import {vercelStegaClean} from '@vercel/stega'
 import {isEqual} from 'lodash'
 import {DEFAULT_BLOCK} from '../constants'
 import type {
   ArbitraryTypedObject,
   HtmlParser,
-  HtmlPreprocessorOptions,
   MinimalBlock,
   MinimalSpan,
   PlaceholderAnnotation,
@@ -18,7 +16,6 @@ import type {
   TypedObject,
 } from '../types'
 import {resolveJsType} from '../util/resolveJsType'
-import preprocessors from './preprocessors'
 
 /**
  * Utility function that always return a lowerCase version of the element.tagName
@@ -32,24 +29,6 @@ export function tagName(el: HTMLElement | Node | null): string | undefined {
   }
 
   return undefined
-}
-
-// TODO: make this plugin-style
-export function preprocess(
-  html: string,
-  parseHtml: HtmlParser,
-  options: HtmlPreprocessorOptions,
-): Document {
-  const cleanHTML = vercelStegaClean(html)
-  const doc = parseHtml(normalizeHtmlBeforePreprocess(cleanHTML))
-  preprocessors.forEach((processor) => {
-    processor(cleanHTML, doc, options)
-  })
-  return doc
-}
-
-function normalizeHtmlBeforePreprocess(html: string): string {
-  return html.trim()
 }
 
 /**
