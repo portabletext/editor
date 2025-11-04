@@ -424,13 +424,22 @@ describe('Behavior API', () => {
 
   test('Scenario: `effect` can be used to `send` a `focus` event', async () => {
     const focusedBlurredEvents: Array<EditorEmittedEvent> = []
+    let resolveEditorBlurred: () => void
+    const editorBlurredPromise = new Promise<void>((resolve) => {
+      resolveEditorBlurred = resolve
+    })
 
     const {editor, locator} = await createTestEditor({
       children: (
         <>
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'focused' || event.type === 'blurred') {
+              if (event.type === 'focused') {
+                focusedBlurredEvents.push(event)
+              }
+
+              if (event.type === 'blurred') {
+                resolveEditorBlurred()
                 focusedBlurredEvents.push(event)
               }
             }}
@@ -441,10 +450,9 @@ describe('Behavior API', () => {
                 on: 'custom.focus',
                 actions: [
                   () => [
-                    effect(({send}) => {
-                      setTimeout(() => {
-                        send({type: 'focus'})
-                      }, 100)
+                    effect(async ({send}) => {
+                      await editorBlurredPromise
+                      send({type: 'focus'})
                     }),
                   ],
                 ],
