@@ -1600,41 +1600,33 @@ describe('event.patches', () => {
   })
 
   describe('Feature: diffMatchPatch', () => {
-    function createEditor(text: string) {
-      const editorRef = React.createRef<Editor>()
+    async function createEditor(text: string) {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
 
-      render(
-        <EditorProvider
-          initialConfig={{
-            keyGenerator,
-            initialValue: [
+      const {editor} = await createTestEditor({
+        initialValue: [
+          {
+            _key: blockKey,
+            _type: 'block',
+            children: [
               {
-                _key: blockKey,
-                _type: 'block',
-                children: [
-                  {
-                    _key: spanKey,
-                    _type: 'span',
-                    text,
-                    marks: [],
-                  },
-                ],
-                markDefs: [],
-                style: 'normal',
+                _key: spanKey,
+                _type: 'span',
+                text,
+                marks: [],
               },
             ],
-            schemaDefinition: defineSchema({}),
-          }}
-        >
-          <EditorRefPlugin ref={editorRef} />
-          <PortableTextEditable />
-        </EditorProvider>,
-      )
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+        keyGenerator,
+        schemaDefinition: defineSchema({}),
+      })
 
-      return {editorRef, keyGenerator, blockKey, spanKey}
+      return {editor, keyGenerator, blockKey, spanKey}
     }
 
     test('Scenario: Adding and removing text to an empty editor', async () => {
@@ -1696,9 +1688,9 @@ describe('event.patches', () => {
     test('Scenario: Adding text', async () => {
       const editorText = 'Hello'
       const incomingText = 'Hello there'
-      const {editorRef, blockKey, spanKey} = createEditor(editorText)
+      const {editor, blockKey, spanKey} = await createEditor(editorText)
 
-      editorRef.current?.send({
+      editor.send({
         type: 'patches',
         patches: [
           {
@@ -1714,7 +1706,7 @@ describe('event.patches', () => {
       })
 
       await vi.waitFor(() => {
-        return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        return expect(editor.getSnapshot().context.value).toEqual([
           {
             _key: blockKey,
             _type: 'block',
@@ -1736,9 +1728,9 @@ describe('event.patches', () => {
     test('Scenario: Removing text', async () => {
       const editorText = 'Hello there'
       const incomingText = 'Hello'
-      const {editorRef, blockKey, spanKey} = createEditor(editorText)
+      const {editor, blockKey, spanKey} = await createEditor(editorText)
 
-      editorRef.current?.send({
+      editor.send({
         type: 'patches',
         patches: [
           {
@@ -1754,7 +1746,7 @@ describe('event.patches', () => {
       })
 
       await vi.waitFor(() => {
-        return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        return expect(editor.getSnapshot().context.value).toEqual([
           {
             _key: blockKey,
             _type: 'block',
@@ -1776,9 +1768,9 @@ describe('event.patches', () => {
     test('Scenario: Same text', async () => {
       const editorText = 'Hello'
       const incomingText = 'Hello'
-      const {editorRef, blockKey, spanKey} = createEditor(editorText)
+      const {editor, blockKey, spanKey} = await createEditor(editorText)
 
-      editorRef.current?.send({
+      editor.send({
         type: 'patches',
         patches: [
           {
@@ -1794,7 +1786,7 @@ describe('event.patches', () => {
       })
 
       await vi.waitFor(() => {
-        return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        return expect(editor.getSnapshot().context.value).toEqual([
           {
             _key: blockKey,
             _type: 'block',
@@ -1816,9 +1808,9 @@ describe('event.patches', () => {
     test('Scenario: Adding and removing text', async () => {
       const editorText = 'A quick brown fox jumps over the very lazy dog'
       const incomingText = 'The quick brown fox jumps over the lazy dog'
-      const {editorRef, blockKey, spanKey} = createEditor(editorText)
+      const {editor, blockKey, spanKey} = await createEditor(editorText)
 
-      editorRef.current?.send({
+      editor.send({
         type: 'patches',
         patches: [
           {
@@ -1834,7 +1826,7 @@ describe('event.patches', () => {
       })
 
       await vi.waitFor(() => {
-        return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        return expect(editor.getSnapshot().context.value).toEqual([
           {
             _key: blockKey,
             _type: 'block',
@@ -1857,9 +1849,9 @@ describe('event.patches', () => {
       const editorText = 'Many quick brown fox jumps over the very lazy dog'
       const incomingText =
         'The many, quick, brown, foxes jumps over all of the lazy dogs'
-      const {editorRef, blockKey, spanKey} = createEditor(editorText)
+      const {editor, blockKey, spanKey} = await createEditor(editorText)
 
-      editorRef.current?.send({
+      editor.send({
         type: 'patches',
         patches: [
           {
@@ -1875,7 +1867,7 @@ describe('event.patches', () => {
       })
 
       await vi.waitFor(() => {
-        return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        return expect(editor.getSnapshot().context.value).toEqual([
           {
             _key: blockKey,
             _type: 'block',
@@ -1900,9 +1892,9 @@ describe('event.patches', () => {
       const editorText = [line1, line2, line1, line2].join('\n')
       const incomingText = [line2, line1, line2, line1].join('\n')
 
-      const {editorRef, blockKey, spanKey} = createEditor(editorText)
+      const {editor, blockKey, spanKey} = await createEditor(editorText)
 
-      editorRef.current?.send({
+      editor.send({
         type: 'patches',
         patches: [
           {
@@ -1918,7 +1910,7 @@ describe('event.patches', () => {
       })
 
       await vi.waitFor(() => {
-        return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        return expect(editor.getSnapshot().context.value).toEqual([
           {
             _key: blockKey,
             _type: 'block',
@@ -1941,9 +1933,9 @@ describe('event.patches', () => {
       const editorText = `Portable Text is a agnostic abstraction of "rich text" that can be stringified into any markup language, for instance HTML, Markdown, SSML, XML, etc. It's designed to be efficient for collaboration, and makes it possible to enrich rich text with data structures in depth.\n\nPortable Text is built on the idea of rich text as an array of blocks, themselves arrays of children spans. Each block can have a style and a set of mark dfinitions, which describe data structures distributed on the children spans. Portable Text also allows for inserting arbitrary data objects in the array, only requiring _type-key. Portable Text also allows for custom objects in the root array, enabling rendering environments to mix rich text with custom content types.\n\nPortable Text is a combination of arrays and objects. In its simplest form it's an array of objects with an array of children. Some definitions: \n- Block: Typically recognized as a section of a text, e.g. a paragraph or a heading.\n- Span: Piece of text with a set of marks, e.g. bold or italic.\n- Mark: A mark is a data structure that can be appliad to a span, e.g. a link or a comment.\n- Mark definition: A mark definition is a structure that describes a mark, a link or a comment.`
       const incomingText = `Portable Text is an agnostic abstraction of rich text that can be serialized into pretty much any markup language, be it HTML, Markdown, SSML, XML, etc. It is designed to be efficient for real-time collaborative interfaces, and makes it possible to annotate rich text with additional data structures recursively.\n\nPortable Text is built on the idea of rich text as an array of blocks, themselves arrays of child spans. Each block can have a style and a set of mark definitions, which describe data structures that can be applied on the children spans. Portable Text also allows for inserting arbitrary data objects in the array, only requiring _type-key. Portable Text also allows for custom content objects in the root array, enabling editing- and rendering environments to mix rich text with custom content types.\n\nPortable Text is a recursive composition of arrays and objects. In its simplest form it's an array of objects of a type with an array of children. Some definitions: \n- Block: A block is what's typically recognized as a section of a text, e.g. a paragraph or a heading.\n- Span: A span is a piece of text with a set of marks, e.g. bold or italic.\n- Mark: A mark is a data structure that can be applied to a span, e.g. a link or a comment.\n- Mark definition: A mark definition is a data structure that describes a mark, e.g. a link or a comment.`
 
-      const {editorRef, blockKey, spanKey} = createEditor(editorText)
+      const {editor, blockKey, spanKey} = await createEditor(editorText)
 
-      editorRef.current?.send({
+      editor.send({
         type: 'patches',
         patches: [
           {
@@ -1959,7 +1951,7 @@ describe('event.patches', () => {
       })
 
       await vi.waitFor(() => {
-        return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        return expect(editor.getSnapshot().context.value).toEqual([
           {
             _key: blockKey,
             _type: 'block',
@@ -1982,9 +1974,9 @@ describe('event.patches', () => {
       const editorText = `This string has changes, but they occur somewhere near the end. That means we need to use an offset to get at the change, we cannot just rely on equality segaments in the generated diff.`
       const incomingText = `This string has changes, but they occur somewhere near the end. That means we need to use an offset to get at the change, we cannot just rely on equality segments in the generated diff.`
 
-      const {editorRef, blockKey, spanKey} = createEditor(editorText)
+      const {editor, blockKey, spanKey} = await createEditor(editorText)
 
-      editorRef.current?.send({
+      editor.send({
         type: 'patches',
         patches: [
           {
@@ -2000,7 +1992,7 @@ describe('event.patches', () => {
       })
 
       await vi.waitFor(() => {
-        return expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        return expect(editor.getSnapshot().context.value).toEqual([
           {
             _key: blockKey,
             _type: 'block',
