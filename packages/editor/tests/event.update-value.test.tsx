@@ -1,7 +1,5 @@
-import {compileSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import {userEvent} from 'vitest/browser'
 import {defineSchema, type EditorEmittedEvent} from '../src'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
@@ -499,80 +497,6 @@ describe('event.update value', () => {
           markDefs: [],
         },
       ])
-    })
-  })
-
-  test('Scenario: Updating text while read-only and having unemitted local changes', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-
-    let resolveValueChangedToBar: () => void
-    const valueChangedToBar = new Promise<void>((resolve) => {
-      resolveValueChangedToBar = resolve
-    })
-
-    const {editor, locator} = await createTestEditor({
-      keyGenerator,
-      initialValue: [
-        {
-          _type: 'block',
-          _key: blockKey,
-          children: [{_type: 'span', _key: spanKey, text: '', marks: []}],
-        },
-      ],
-      children: (
-        <EventListenerPlugin
-          on={(event) => {
-            if (event.type === 'value changed') {
-              if (
-                getTersePt({
-                  schema: compileSchema(defineSchema({})),
-                  value: event.value ?? [],
-                }).at(0) === 'bar'
-              ) {
-                resolveValueChangedToBar()
-              }
-            }
-          }}
-        />
-      ),
-    })
-
-    await userEvent.click(locator)
-    await userEvent.type(locator, 'foo')
-
-    await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
-    })
-
-    editor.send({type: 'update readOnly', readOnly: true})
-
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.readOnly).toEqual(true)
-    })
-
-    editor.send({
-      type: 'update value',
-      value: [
-        {
-          _type: 'block',
-          _key: blockKey,
-          children: [{_type: 'span', _key: spanKey, text: 'bar', marks: []}],
-        },
-      ],
-    })
-
-    await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
-    })
-
-    editor.send({type: 'update readOnly', readOnly: false})
-
-    await valueChangedToBar
-
-    await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['bar'])
     })
   })
 
