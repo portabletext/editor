@@ -1,118 +1,19 @@
-import type {SchemaDefinition} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
-import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
-import {page, userEvent} from 'vitest/browser'
-import {
-  defineSchema,
-  EditorProvider,
-  PortableTextEditable,
-  type Editor,
-  type EditorEmittedEvent,
-} from '../src'
-import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
+import {userEvent} from 'vitest/browser'
+import {defineSchema, type EditorEmittedEvent} from '../src'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
-import {createTestEditor} from '../src/test/vitest'
-
-async function getEditors({
-  schemaDefinition,
-}: {
-  schemaDefinition?: SchemaDefinition
-} = {}) {
-  const editorARef = React.createRef<Editor>()
-  const editorBRef = React.createRef<Editor>()
-  const editorAKeyGenerator = createTestKeyGenerator('ea-')
-  const editorBKeyGenerator = createTestKeyGenerator('eb-')
-  const onEditorAEvent = vi.fn<(event: EditorEmittedEvent) => void>()
-  const onEditorBEvent = vi.fn<(event: EditorEmittedEvent) => void>()
-
-  const editors = (
-    <>
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: editorAKeyGenerator,
-          schemaDefinition: schemaDefinition ?? defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorARef} />
-        <EventListenerPlugin
-          on={(event) => {
-            onEditorAEvent(event)
-
-            if (event.type === 'mutation') {
-              editorBRef.current?.send({
-                type: 'patches',
-                patches: event.patches.map((patch) => ({
-                  ...patch,
-                  origin: 'remote',
-                })),
-                snapshot: editorBRef.current?.getSnapshot().context.value,
-              })
-            }
-          }}
-        />
-        <PortableTextEditable data-testid="editor-a" />
-      </EditorProvider>
-      <EditorProvider
-        initialConfig={{
-          keyGenerator: editorBKeyGenerator,
-          schemaDefinition: schemaDefinition ?? defineSchema({}),
-        }}
-      >
-        <EditorRefPlugin ref={editorBRef} />
-        <EventListenerPlugin
-          on={(event) => {
-            onEditorBEvent(event)
-
-            if (event.type === 'mutation') {
-              editorARef.current?.send({
-                type: 'patches',
-                patches: event.patches.map((patch) => ({
-                  ...patch,
-                  origin: 'remote',
-                })),
-                snapshot: editorARef.current?.getSnapshot().context.value,
-              })
-            }
-          }}
-        />
-        <PortableTextEditable data-testid="editor-b" />
-      </EditorProvider>
-    </>
-  )
-
-  render(editors)
-
-  const editorALocator = page.getByTestId('editor-a')
-  const editorBLocator = page.getByTestId('editor-b')
-
-  await vi.waitFor(async () => {
-    await expect.element(editorALocator).toBeInTheDocument()
-    await expect.element(editorBLocator).toBeInTheDocument()
-  })
-
-  return {
-    editorALocator,
-    editorBLocator,
-    editorARef,
-    editorBRef,
-    onEditorAEvent,
-    onEditorBEvent,
-    editors,
-  }
-}
+import {createTestEditor, createTestEditors} from '../src/test/vitest'
 
 describe('event.patches', () => {
   test('Scenario: Consuming initial diffMatchPatch', async () => {
-    const {editorARef, editorBRef, onEditorAEvent, editorALocator} =
-      await getEditors()
+    const {editor, locator, onEditorEvent, editorB} = await createTestEditors()
 
-    await userEvent.type(editorALocator, 'f')
+    await userEvent.type(locator, 'f')
 
     await vi.waitFor(() => {
-      expect(onEditorAEvent).toHaveBeenCalledWith({
+      expect(onEditorEvent).toHaveBeenCalledWith({
         type: 'patch',
         patch: {
           type: 'setIfMissing',
@@ -121,7 +22,7 @@ describe('event.patches', () => {
           value: [],
         },
       })
-      expect(onEditorAEvent).toHaveBeenCalledWith({
+      expect(onEditorEvent).toHaveBeenCalledWith({
         type: 'patch',
         patch: {
           type: 'insert',
@@ -139,7 +40,7 @@ describe('event.patches', () => {
           ],
         },
       })
-      expect(onEditorAEvent).toHaveBeenCalledWith({
+      expect(onEditorEvent).toHaveBeenCalledWith({
         type: 'patch',
         patch: {
           type: 'diffMatchPatch',
@@ -151,7 +52,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editorARef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _type: 'block',
           _key: 'ea-k0',
@@ -160,7 +61,7 @@ describe('event.patches', () => {
           style: 'normal',
         },
       ])
-      expect(editorBRef.current?.getSnapshot().context.value).toEqual([
+      expect(editorB.getSnapshot().context.value).toEqual([
         {
           _type: 'block',
           _key: 'ea-k0',
@@ -173,13 +74,13 @@ describe('event.patches', () => {
   })
 
   test('Scenario: Consuming initial insert patch', async () => {
-    const {editorARef, editorBRef, onEditorAEvent} = await getEditors()
+    const {editor, onEditorEvent, editorB} = await createTestEditors()
 
-    editorARef.current?.send({type: 'focus'})
+    editor.send({type: 'focus'})
     await userEvent.keyboard('{Enter}')
 
     await vi.waitFor(() => {
-      expect(onEditorAEvent).toHaveBeenCalledWith({
+      expect(onEditorEvent).toHaveBeenCalledWith({
         type: 'patch',
         patch: {
           type: 'setIfMissing',
@@ -188,7 +89,7 @@ describe('event.patches', () => {
           value: [],
         },
       })
-      expect(onEditorAEvent).toHaveBeenCalledWith({
+      expect(onEditorEvent).toHaveBeenCalledWith({
         type: 'patch',
         patch: {
           type: 'insert',
@@ -206,7 +107,7 @@ describe('event.patches', () => {
           ],
         },
       })
-      expect(onEditorAEvent).toHaveBeenCalledWith({
+      expect(onEditorEvent).toHaveBeenCalledWith({
         type: 'patch',
         patch: {
           type: 'insert',
@@ -227,7 +128,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editorARef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _type: 'block',
           _key: 'ea-k0',
@@ -243,7 +144,7 @@ describe('event.patches', () => {
           style: 'normal',
         },
       ])
-      expect(editorBRef.current?.getSnapshot().context.value).toEqual([
+      expect(editorB.getSnapshot().context.value).toEqual([
         {
           _type: 'block',
           _key: 'ea-k0',
@@ -263,14 +164,13 @@ describe('event.patches', () => {
   })
 
   test('Scenario: Splitting initial block', async () => {
-    const {editorARef, editorBRef, onEditorAEvent, editorALocator} =
-      await getEditors()
+    const {editor, onEditorEvent, editorB, locator} = await createTestEditors()
 
-    await userEvent.click(editorALocator)
+    await userEvent.click(locator)
     await userEvent.keyboard('{Enter}')
 
     await vi.waitFor(() => {
-      expect(onEditorAEvent).toHaveBeenCalledWith({
+      expect(onEditorEvent).toHaveBeenCalledWith({
         type: 'patch',
         patch: {
           type: 'setIfMissing',
@@ -279,7 +179,7 @@ describe('event.patches', () => {
           value: [],
         },
       })
-      expect(onEditorAEvent).toHaveBeenCalledWith({
+      expect(onEditorEvent).toHaveBeenCalledWith({
         type: 'patch',
         patch: {
           type: 'insert',
@@ -297,7 +197,7 @@ describe('event.patches', () => {
           ],
         },
       })
-      expect(onEditorAEvent).toHaveBeenCalledWith({
+      expect(onEditorEvent).toHaveBeenCalledWith({
         type: 'patch',
         patch: {
           type: 'insert',
@@ -318,7 +218,7 @@ describe('event.patches', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editorARef.current?.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _type: 'block',
           _key: 'ea-k0',
@@ -334,7 +234,7 @@ describe('event.patches', () => {
           style: 'normal',
         },
       ])
-      expect(editorBRef.current?.getSnapshot().context.value).toEqual([
+      expect(editorB.getSnapshot().context.value).toEqual([
         {
           _type: 'block',
           _key: 'ea-k0',
@@ -1033,7 +933,7 @@ describe('event.patches', () => {
   })
 
   test('Scenario: Inserting inline object', async () => {
-    const {editorARef, editorBRef} = await getEditors({
+    const {editor, editorB} = await createTestEditors({
       schemaDefinition: defineSchema({
         inlineObjects: [
           {name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]},
@@ -1041,8 +941,8 @@ describe('event.patches', () => {
       }),
     })
 
-    editorARef.current?.send({type: 'focus'})
-    editorARef.current?.send({
+    editor.send({type: 'focus'})
+    editor.send({
       type: 'insert.inline object',
       inlineObject: {
         name: 'stock-ticker',
@@ -1064,8 +964,8 @@ describe('event.patches', () => {
     ]
 
     await vi.waitFor(() => {
-      expect(editorARef.current?.getSnapshot().context.value).toEqual(value)
-      expect(editorBRef.current?.getSnapshot().context.value).toEqual(value)
+      expect(editor.getSnapshot().context.value).toEqual(value)
+      expect(editorB.getSnapshot().context.value).toEqual(value)
     })
   })
 

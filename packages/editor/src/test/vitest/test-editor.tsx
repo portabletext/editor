@@ -11,6 +11,7 @@ import {
   type PortableTextEditableProps,
 } from '../../editor/Editable'
 import {EditorProvider} from '../../editor/editor-provider'
+import {EditorEmittedEvent} from '../../editor/relay-machine'
 import {EventListenerPlugin} from '../../plugins'
 import {EditorRefPlugin} from '../../plugins/plugin.editor-ref'
 import type {Context} from './step-context'
@@ -94,11 +95,20 @@ export async function createTestEditor(
  * @internal
  */
 export async function createTestEditors(
-  options: CreateTestEditorOptions,
-): Promise<Pick<Context, 'editor' | 'locator' | 'editorB' | 'locatorB'>> {
+  options: CreateTestEditorOptions = {},
+): Promise<
+  Pick<Context, 'editor' | 'locator' | 'editorB' | 'locatorB'> & {
+    onEditorEvent: (event: EditorEmittedEvent) => void
+    onEditorBEvent: (event: EditorEmittedEvent) => void
+  }
+> {
   const editorRef = React.createRef<Editor>()
   const editorBRef = React.createRef<Editor>()
-  const keyGenerator = options.keyGenerator ?? createTestKeyGenerator()
+
+  const keyGenerator = options.keyGenerator ?? createTestKeyGenerator('ea-')
+  const keyGeneratorB = options.keyGenerator ?? createTestKeyGenerator('eb-')
+  const onEditorEvent = vi.fn<(event: EditorEmittedEvent) => void>()
+  const onEditorBEvent = vi.fn<(event: EditorEmittedEvent) => void>()
 
   render(
     <>
@@ -116,6 +126,7 @@ export async function createTestEditors(
         />
         <EventListenerPlugin
           on={(event) => {
+            onEditorEvent(event)
             if (event.type === 'mutation') {
               editorBRef.current?.send({
                 type: 'patches',
@@ -136,7 +147,7 @@ export async function createTestEditors(
       </EditorProvider>
       <EditorProvider
         initialConfig={{
-          keyGenerator: keyGenerator,
+          keyGenerator: keyGeneratorB,
           schemaDefinition: options.schemaDefinition ?? defineSchema({}),
           initialValue: options.initialValue,
         }}
@@ -148,6 +159,7 @@ export async function createTestEditors(
         />
         <EventListenerPlugin
           on={(event) => {
+            onEditorBEvent(event)
             if (event.type === 'mutation') {
               editorRef.current?.send({
                 type: 'patches',
@@ -178,7 +190,9 @@ export async function createTestEditors(
   return {
     editor: editorRef.current!,
     locator,
+    onEditorEvent,
     editorB: editorBRef.current!,
     locatorB,
+    onEditorBEvent,
   }
 }
