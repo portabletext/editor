@@ -1,4 +1,5 @@
 import {defineSchema} from '@portabletext/schema'
+import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineBehavior, raise} from '../src/behaviors'
@@ -101,6 +102,130 @@ describe('event.insert.child', () => {
           markDefs: [{_type: 'suggestion', _key: 'k2'}],
           style: 'normal',
         },
+      ])
+    })
+  })
+
+  test('Scenario: Inserting span on inline object', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const stockTickerKey = keyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey},
+            {_type: 'span', _key: keyGenerator(), text: 'bar', marks: []},
+          ],
+        },
+      ],
+      schemaDefinition: defineSchema({
+        inlineObjects: [{name: 'stock-ticker'}],
+      }),
+    })
+
+    await userEvent.click(locator)
+
+    const stockTickerSelection = {
+      anchor: {
+        path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
+        offset: 0,
+      },
+      backward: false,
+    }
+
+    editor.send({
+      type: 'select',
+      at: stockTickerSelection,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual(
+        stockTickerSelection,
+      )
+    })
+
+    editor.send({
+      type: 'insert.child',
+      child: {
+        _type: 'span',
+        text: 'new',
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
+        'foo,{stock-ticker},newbar',
+      ])
+    })
+  })
+
+  test('Scenario: Inserting inline object on inline object', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const stockTickerKey = keyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+            {_type: 'stock-ticker', _key: stockTickerKey},
+            {_type: 'span', _key: keyGenerator(), text: ' bar baz', marks: []},
+          ],
+        },
+      ],
+      schemaDefinition: defineSchema({
+        inlineObjects: [{name: 'stock-ticker'}],
+      }),
+    })
+
+    await userEvent.click(locator)
+
+    const stockTickerSelection = {
+      anchor: {
+        path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
+        offset: 0,
+      },
+      backward: false,
+    }
+
+    editor.send({
+      type: 'select',
+      at: stockTickerSelection,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual(
+        stockTickerSelection,
+      )
+    })
+
+    editor.send({
+      type: 'insert.child',
+      child: {
+        _type: 'stock-ticker',
+        symbol: 'AAPL',
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
+        'foo,{stock-ticker},,{stock-ticker}, bar baz',
       ])
     })
   })
