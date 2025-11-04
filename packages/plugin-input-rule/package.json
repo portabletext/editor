@@ -60,7 +60,7 @@
   "devDependencies": {
     "@portabletext/editor": "workspace:*",
     "@portabletext/schema": "workspace:*",
-    "@sanity/pkg-utils": "^9.0.0",
+    "@sanity/pkg-utils": "^9.0.1",
     "@types/react": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",
     "@vitest/browser": "^4.0.5",
