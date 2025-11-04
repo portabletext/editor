@@ -19,6 +19,7 @@
       },
       "complexity": {
         "noForEach": "off",
+        "noUselessEscapeInRegex": "error",
         "noUselessFragments": "off",
         "useOptionalChain": "off"
       },
