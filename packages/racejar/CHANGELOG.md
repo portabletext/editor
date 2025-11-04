@@ -1,5 +1,25 @@
 # Changelog
 
+## 2.0.0
+
+### Major Changes
+
+- [#1814](https://github.com/portabletext/editor/pull/1814) [`e3c26cb`](https://github.com/portabletext/editor/commit/e3c26cb4a68fdc3e563f9b025c4af04678202b89) Thanks [@stipsan](https://github.com/stipsan)! - Require node v20.19 or later, or v22.12 or later
+
+### Minor Changes
+
+- [#1814](https://github.com/portabletext/editor/pull/1814) [`e3c26cb`](https://github.com/portabletext/editor/commit/e3c26cb4a68fdc3e563f9b025c4af04678202b89) Thanks [@stipsan](https://github.com/stipsan)! - Remove CJS exports, this package is now ESM-only
+
+### Patch Changes
+
+- [#1814](https://github.com/portabletext/editor/pull/1814) [`e3c26cb`](https://github.com/portabletext/editor/commit/e3c26cb4a68fdc3e563f9b025c4af04678202b89) Thanks [@stipsan](https://github.com/stipsan)! - Upgrade @sanity/pkg-utils to v9
+
+- [#1805](https://github.com/portabletext/editor/pull/1805) [`2b60dad`](https://github.com/portabletext/editor/commit/2b60dadadd07ed17256bbe3535cd68be0701d9d3) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency @jest/globals to ^30.2.0
+
+- [#1806](https://github.com/portabletext/editor/pull/1806) [`d977c51`](https://github.com/portabletext/editor/commit/d977c519dea9795119b84dcc759d77329816c706) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency @cucumber/gherkin to v36
+
+- [#1807](https://github.com/portabletext/editor/pull/1807) [`60eef7c`](https://github.com/portabletext/editor/commit/60eef7c8699bac0cf3a052385e29ab494d5f10e8) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency @cucumber/messages to v30
+
 ## 1.3.2
 
 ### Patch Changes
