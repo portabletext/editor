@@ -10,7 +10,6 @@
     "module": "Preserve",
     "moduleDetection": "force",
     "allowSyntheticDefaultImports": true,
-    "jsx": "preserve",
     // If a package that emits code forgets to specify the outDir then the default behavior of tsc is to colocate .d.ts files,
     // that's incredibly problematic and can be time-consuming to clean up. This default value acts as a failsafe against that
     "outDir": "./node_modules/.sanity-monorepo/dts",
