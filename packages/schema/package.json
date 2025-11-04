@@ -22,14 +22,11 @@
   "exports": {
     ".": {
       "source": "./src/index.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
       "default": "./dist/index.js"
     },
     "./package.json": "./package.json"
   },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
@@ -48,8 +45,11 @@
     "test:unit:watch": "vitest watch"
   },
   "devDependencies": {
-    "@sanity/pkg-utils": "^8.1.14",
+    "@sanity/pkg-utils": "^9.0.0",
     "typescript": "catalog:",
     "vitest": "^4.0.5"
+  },
+  "engines": {
+    "node": ">=20.19 <22 || >=22.12"
   }
 }
