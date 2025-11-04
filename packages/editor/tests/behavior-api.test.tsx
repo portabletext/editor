@@ -474,6 +474,8 @@ describe('Behavior API', () => {
     editor.send({type: 'custom.focus'})
     editor.send({type: 'blur'})
 
+    await editorBlurredPromise
+
     await vi.waitFor(() => {
       expect(focusedBlurredEvents.slice(1, 3)).toEqual([
         expect.objectContaining({type: 'blurred'}),
