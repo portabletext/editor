@@ -2,6 +2,7 @@ import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import type {EditorEmittedEvent} from '../src'
+import type {BehaviorEvent} from '../src/behaviors'
 import {
   effect,
   execute,
@@ -419,6 +420,50 @@ describe('Behavior API', () => {
     await userEvent.type(locator, 'a')
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+    })
+  })
+
+  test('Scenario: no `forward` action cancels a native event', async () => {
+    const events: Array<BehaviorEvent['type']> = []
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'keyboard.keydown',
+              actions: [
+                () => [
+                  effect(() => {}),
+                  raise({
+                    type: 'insert.text',
+                    text: 'b',
+                  }),
+                ],
+              ],
+            }),
+            defineBehavior({
+              on: '*',
+              actions: [
+                ({event}) => [
+                  forward(event),
+                  effect(() => {
+                    events.push(event.type)
+                  }),
+                ],
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.type(locator, 'a')
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['b'])
+    })
+    await vi.waitFor(() => {
+      expect(events.includes('keyboard.keyup')).toBe(true)
+      expect(events.includes('keyboard.keydown')).toBe(false)
     })
   })
 
