@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-typography",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Automatically transform text to typographic variants",
   "keywords": [
     "portabletext",
@@ -75,7 +75,7 @@
     "vitest": "^4.0.6"
   },
   "peerDependencies": {
-    "@portabletext/editor": "workspace:^2.18.0",
+    "@portabletext/editor": "workspace:^2.18.1",
     "react": "^19.1.1"
   },
   "engines": {

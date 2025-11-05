@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.18.1
+
+### Patch Changes
+
+- [#1818](https://github.com/portabletext/editor/pull/1818) [`b4c729c`](https://github.com/portabletext/editor/commit/b4c729cfaa4429c6de8e50ece79e6da2175a5e35) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency @portabletext/to-html to v4
+
+- [#1827](https://github.com/portabletext/editor/pull/1827) [`5e5d349`](https://github.com/portabletext/editor/commit/5e5d349f9d45dd472fa69820d20067b3020a03bb) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency @portabletext/to-html to ^4.0.1
+
 ## 2.18.0
 
 ### Minor Changes
