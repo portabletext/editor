@@ -7,7 +7,6 @@ export type {
   PortableTextSpan,
 } from '@sanity/types'
 export type {Editor, EditorConfig, EditorEvent} from './editor'
-export {EditorEventListener} from './editor-event-listener'
 export {PortableTextEditable} from './editor/Editable'
 export type {PortableTextEditableProps} from './editor/Editable'
 export type {PatchesEvent} from './editor/editor-machine'
