@@ -1,5 +1,10 @@
 import type {BlockOffset, EditorContext} from '@portabletext/editor'
-import {defineBehavior, effect, execute} from '@portabletext/editor/behaviors'
+import {
+  defineBehavior,
+  effect,
+  forward,
+  raise,
+} from '@portabletext/editor/behaviors'
 import * as selectors from '@portabletext/editor/selectors'
 import * as utils from '@portabletext/editor/utils'
 import {createCharacterPairRegex} from './regex.character-pair'
@@ -167,10 +172,10 @@ export function createCharacterPairDecoratorBehavior(config: {
     },
     actions: [
       // Insert the text as usual in its own undo step
-      ({event}) => [execute(event)],
+      ({event}) => [forward(event)],
       (_, {prefixOffsets, suffixOffsets, decorator}) => [
         // Decorate the text between the prefix and suffix
-        execute({
+        raise({
           type: 'decorator.add',
           decorator,
           at: {
@@ -179,17 +184,17 @@ export function createCharacterPairDecoratorBehavior(config: {
           },
         }),
         // Delete the suffix
-        execute({
+        raise({
           type: 'delete.text',
           at: suffixOffsets,
         }),
         // Delete the prefix
-        execute({
+        raise({
           type: 'delete.text',
           at: prefixOffsets,
         }),
         // Toggle the decorator off so the next inserted text isn't emphasized
-        execute({
+        raise({
           type: 'decorator.remove',
           decorator,
         }),
