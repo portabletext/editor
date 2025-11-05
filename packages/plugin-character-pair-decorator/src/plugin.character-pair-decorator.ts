@@ -3,8 +3,8 @@ import {useEditor} from '@portabletext/editor'
 import {
   defineBehavior,
   effect,
-  execute,
   forward,
+  raise,
 } from '@portabletext/editor/behaviors'
 import * as utils from '@portabletext/editor/utils'
 import {useActorRef} from '@xstate/react'
@@ -144,7 +144,7 @@ const deleteBackwardListenerCallback: CallbackLogicFunction<
       on: 'delete.backward',
       actions: [
         () => [
-          execute({
+          raise({
             type: 'history.undo',
           }),
           effect(() => {
