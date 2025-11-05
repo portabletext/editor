@@ -54,7 +54,7 @@
     ]
   },
   "dependencies": {
-    "@sanity/pkg-utils": "^9.0.0"
+    "@sanity/pkg-utils": "^9.0.1"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.4",

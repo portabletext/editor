@@ -49,7 +49,7 @@
     "lodash.startcase": "^4.4.0"
   },
   "devDependencies": {
-    "@sanity/pkg-utils": "^9.0.0",
+    "@sanity/pkg-utils": "^9.0.1",
     "@sanity/schema": "^4.13.0",
     "@sanity/types": "^4.13.0",
     "@types/lodash.startcase": "^4.4.9",
