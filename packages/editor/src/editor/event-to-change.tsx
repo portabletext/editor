@@ -30,7 +30,11 @@ export function eventToChange(
       }
     }
     case 'mutation': {
-      return event
+      return {
+        type: 'mutation',
+        patches: event.patches,
+        snapshot: event.value,
+      }
     }
     case 'ready': {
       return event
