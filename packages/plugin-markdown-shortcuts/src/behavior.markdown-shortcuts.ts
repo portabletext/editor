@@ -1,5 +1,5 @@
 import type {EditorContext} from '@portabletext/editor'
-import {defineBehavior, execute} from '@portabletext/editor/behaviors'
+import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 import * as selectors from '@portabletext/editor/selectors'
 
 export type ObjectWithOptionalKey = {
@@ -45,7 +45,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
     },
     actions: [
       (_, {hrCharacters}) => [
-        execute({
+        raise({
           type: 'insert.text',
           text: hrCharacters,
         }),
@@ -53,7 +53,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       ({snapshot}, {hrObject, focusBlock, focusTextBlock}) =>
         focusTextBlock
           ? [
-              execute({
+              raise({
                 type: 'insert.block',
                 block: {
                   _type: snapshot.context.schema.block.name,
@@ -61,18 +61,18 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
                 },
                 placement: 'after',
               }),
-              execute({
+              raise({
                 type: 'insert.block',
                 block: hrObject,
                 placement: 'after',
               }),
-              execute({
+              raise({
                 type: 'delete.block',
                 at: focusBlock.path,
               }),
             ]
           : [
-              execute({
+              raise({
                 type: 'insert.block',
                 block: hrObject,
                 placement: 'after',
@@ -112,7 +112,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
     },
     actions: [
       (_, {defaultStyle, focusTextBlock}) => [
-        execute({
+        raise({
           type: 'block.set',
           props: {style: defaultStyle},
           at: focusTextBlock.path,
