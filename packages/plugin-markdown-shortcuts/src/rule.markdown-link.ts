@@ -1,12 +1,15 @@
-import type {EditorSchema} from '@portabletext/editor'
+import type {EditorContext} from '@portabletext/editor'
 import {raise, type BehaviorAction} from '@portabletext/editor/behaviors'
 import {defineInputRule} from '@portabletext/plugin-input-rule'
 import type {ObjectWithOptionalKey} from './behavior.markdown-shortcuts'
 
 export function createMarkdownLinkRule(config: {
-  linkObject: (context: {
-    schema: EditorSchema
-    href: string
+  linkObject: ({
+    context,
+    props,
+  }: {
+    context: Pick<EditorContext, 'schema' | 'keyGenerator'>
+    props: {href: string}
   }) => ObjectWithOptionalKey | undefined
 }) {
   return defineInputRule({
@@ -32,8 +35,11 @@ export function createMarkdownLinkRule(config: {
               textMatch.text.length)
 
           const linkObject = config.linkObject({
-            schema: snapshot.context.schema,
-            href: hrefMatch.text,
+            context: {
+              schema: snapshot.context.schema,
+              keyGenerator: snapshot.context.keyGenerator,
+            },
+            props: {href: hrefMatch.text},
           })
 
           if (!linkObject) {

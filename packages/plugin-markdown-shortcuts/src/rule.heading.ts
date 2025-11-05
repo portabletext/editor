@@ -1,12 +1,15 @@
-import type {EditorSchema} from '@portabletext/editor'
+import type {EditorContext} from '@portabletext/editor'
 import {raise} from '@portabletext/editor/behaviors'
 import {getPreviousInlineObject} from '@portabletext/editor/selectors'
 import {defineInputRule} from '@portabletext/plugin-input-rule'
 
 export function createHeadingRule(config: {
-  headingStyle: (context: {
-    schema: EditorSchema
-    level: number
+  headingStyle: ({
+    context,
+    props,
+  }: {
+    context: Pick<EditorContext, 'schema'>
+    props: {level: number}
   }) => string | undefined
 }) {
   return defineInputRule({
@@ -27,8 +30,8 @@ export function createHeadingRule(config: {
       const level = match.text.length - 1
 
       const style = config.headingStyle({
-        schema: snapshot.context.schema,
-        level,
+        context: {schema: snapshot.context.schema},
+        props: {level},
       })
 
       if (!style) {

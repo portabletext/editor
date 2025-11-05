@@ -23,8 +23,8 @@ function App() {
     >
       <PortableTextEditable />
       <CharacterPairDecoratorPlugin
-        decorator={({schema}) =>
-          schema.decorators.find((d) => d.name === 'italic')?.name
+        decorator={({context}) =>
+          context.schema.decorators.find((d) => d.name === 'italic')?.name
         }
         pair={{char: '#', amount: 1}}
       />

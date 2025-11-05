@@ -12,9 +12,9 @@ import {createMarkdownLinkRule} from './rule.markdown-link'
 import markdownLinkFeature from './rule.markdown-link.feature?raw'
 
 const markdownLinkRule = createMarkdownLinkRule({
-  linkObject: (context) => ({
+  linkObject: ({props}) => ({
     _type: 'link',
-    href: context.href,
+    href: props.href,
   }),
 })
 
