@@ -16,7 +16,7 @@ import {createOrderedListRule} from './rule.ordered-list'
 import {createUnorderedListRule} from './rule.unordered-list'
 
 /**
- * @beta
+ * @public
  */
 export type MarkdownShortcutsPluginProps = MarkdownBehaviorsConfig & {
   blockquoteStyle?: (context: {schema: EditorSchema}) => string | undefined
@@ -42,7 +42,7 @@ export type MarkdownShortcutsPluginProps = MarkdownBehaviorsConfig & {
 }
 
 /**
- * @beta
+ * @public
  */
 export function MarkdownShortcutsPlugin({
   blockquoteStyle,
