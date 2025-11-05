@@ -20,7 +20,7 @@ import type {Behavior} from '../src/behaviors/behavior.types.behavior'
 type MutationEvent = {
   type: 'mutation'
   patches: Array<Patch>
-  snapshot: Array<PortableTextBlock> | undefined
+  value: Array<PortableTextBlock> | undefined
 }
 
 type PatchesEvent = {
@@ -113,7 +113,7 @@ export type TestMachineEvent =
       type: 'editor.mutation'
       editorId: string
       patches: MutationEvent['patches']
-      snapshot: MutationEvent['snapshot']
+      value: MutationEvent['value']
     }
   | {
       type: 'update behaviors'
@@ -174,7 +174,7 @@ export const testMachine = setup({
             ...patch,
             origin: event.editorId === editor.id ? 'local' : 'remote',
           })),
-          snapshot: event.snapshot,
+          snapshot: event.value,
         })
       }
     },

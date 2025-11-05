@@ -108,22 +108,6 @@ describe('Feature: Self-solving', () => {
         {
           type: 'mutation',
           patches: [spanPatch, blockPatch],
-          snapshot: [
-            {
-              _key: blockKey,
-              _type: 'block',
-              children: [
-                {
-                  _key: spanKey,
-                  _type: 'span',
-                  text: 'foo',
-                  marks: [],
-                },
-              ],
-              style: 'normal',
-              markDefs: [],
-            },
-          ],
           value: [
             {
               _key: blockKey,
@@ -144,22 +128,6 @@ describe('Feature: Self-solving', () => {
         {
           type: 'mutation',
           patches: [strongPatch],
-          snapshot: [
-            {
-              _key: blockKey,
-              _type: 'block',
-              children: [
-                {
-                  _key: spanKey,
-                  _type: 'span',
-                  text: 'foo',
-                  marks: ['strong'],
-                },
-              ],
-              style: 'normal',
-              markDefs: [],
-            },
-          ],
           value: [
             {
               _key: blockKey,

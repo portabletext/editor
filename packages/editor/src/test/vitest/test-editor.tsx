@@ -134,7 +134,7 @@ export async function createTestEditors(
                   ...patch,
                   origin: 'remote',
                 })),
-                snapshot: event.snapshot,
+                snapshot: event.value,
               })
               editorBRef.current?.send({
                 type: 'update value',
