@@ -77,7 +77,6 @@ export type {
   RangeDecoration,
   RangeDecorationOnMovedDetails,
   ReadyChange,
-  RedoChange,
   RenderAnnotationFunction,
   RenderBlockFunction,
   RenderChildFunction,
@@ -88,7 +87,6 @@ export type {
   RenderStyleFunction,
   ScrollSelectionIntoViewFunction,
   SelectionChange,
-  UndoChange,
   ValueChange,
 } from './types/editor'
 export type {HotkeyOptions} from './types/options'

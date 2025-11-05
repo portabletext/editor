@@ -262,28 +262,6 @@ export type InvalidValue = {
 }
 
 /**
- * The editor performed a undo history step
- * @beta
- * @deprecated The change is no longer emitted
- *  */
-export type UndoChange = {
-  type: 'undo'
-  patches: Patch[]
-  timestamp: Date
-}
-
-/**
- * The editor performed redo history step
- * @beta
- * @deprecated The change is no longer emitted
- *  */
-export type RedoChange = {
-  type: 'redo'
-  patches: Patch[]
-  timestamp: Date
-}
-
-/**
  * When the editor changes, it will emit a change item describing the change
  * @beta */
 export type EditorChange =
@@ -293,9 +271,7 @@ export type EditorChange =
   | MutationChange
   | PatchChange
   | ReadyChange
-  | RedoChange
   | SelectionChange
-  | UndoChange
   | ValueChange
 
 /**
