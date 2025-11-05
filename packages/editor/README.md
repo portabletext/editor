@@ -435,6 +435,13 @@ This monorepo also contains additional libraries that can be used with the Porta
 - 💻 [./packages/keyboard-shortcuts](./packages/keyboard-shortcuts/)
 - 📦 [@portabletext/keyboard-shortcuts](https://www.npmjs.com/package/@portabletext/keyboard-shortcuts)
 
+### `@portabletext/test`
+
+> Testing utilities for the Portable Text Editor
+
+- 💻 [./packages/test](./packages/test/)
+- 📦 [@portabletext/test](https://www.npmjs.com/package/@portabletext/test)
+
 ### `@portabletext/toolbar`
 
 > Powered by [Behaviors](https://www.portabletext.org/concepts/behavior/) and [State Machines](https://stately.ai/docs/xstate), `@portabletext/toolbar` is a collection of robust React hooks for building toolbars and related UI components
