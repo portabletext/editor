@@ -47,7 +47,7 @@ Feature: Markdown Behaviors
       | "##"  | before "##"  | " ##"    |
       | "###" | before "###" | " ###"   |
 
-  Scenario Outline: Automatic headings not toggled by space mid-heading
+  Scenario Outline: Automatic headings toggled by space mid-heading
     Given the text <text>
     When the caret is put <position>
     When "{ArrowRight}" is pressed
@@ -56,8 +56,8 @@ Feature: Markdown Behaviors
 
     Examples:
       | text  | position     | new text |
-      | "##"  | before "##"  | "# #"    |
-      | "###" | before "###" | "# ##"   |
+      | "##"  | before "##"  | "h1:#"   |
+      | "###" | before "###" | "h1:##"  |
 
   Scenario Outline: Automatic headings in non-empty block
     Given the text <text>
