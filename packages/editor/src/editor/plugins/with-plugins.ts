@@ -1,7 +1,6 @@
 import type {BaseOperation, Editor, Node, NodeEntry} from 'slate'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
-import type {RelayActor} from '../relay-machine'
 import {createWithEventListeners} from './create-with-event-listeners'
 import {createWithObjectKeys} from './createWithObjectKeys'
 import {createWithPatches} from './createWithPatches'
@@ -21,7 +20,6 @@ export interface OriginalEditorFunctions {
 
 type PluginsOptions = {
   editorActor: EditorActor
-  relayActor: RelayActor
   subscriptions: Array<() => () => void>
 }
 
@@ -30,14 +28,13 @@ export const withPlugins = <T extends Editor>(
   options: PluginsOptions,
 ): PortableTextSlateEditor => {
   const e = editor as T & PortableTextSlateEditor
-  const {editorActor, relayActor} = options
+  const {editorActor} = options
   const withObjectKeys = createWithObjectKeys(editorActor)
   const withSchemaTypes = createWithSchemaTypes({
     editorActor,
   })
   const withPatches = createWithPatches({
     editorActor,
-    relayActor,
     subscriptions: options.subscriptions,
   })
   const withUndoRedo = createWithUndoRedo({

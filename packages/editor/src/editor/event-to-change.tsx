@@ -38,8 +38,5 @@ export function eventToChange(
     case 'selection': {
       return event
     }
-    case 'unset': {
-      return event
-    }
   }
 }

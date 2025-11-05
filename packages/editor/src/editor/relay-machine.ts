@@ -64,7 +64,7 @@ type ErrorEvent = {
   data: unknown
 }
 
-export type InternalEditorEmittedEvent = EditorEmittedEvent | UnsetEvent
+export type InternalEditorEmittedEvent = EditorEmittedEvent
 
 /**
  * @public
@@ -82,14 +82,6 @@ export type MutationEvent = {
 export type PatchEvent = {
   type: 'patch'
   patch: Patch
-}
-
-export type UnsetEvent = {
-  /**
-   * @deprecated Use `'patch'` events instead
-   */
-  type: 'unset'
-  previousValue: Array<PortableTextBlock>
 }
 
 export type RelayActor = ActorRefFrom<typeof relayMachine>
