@@ -55,7 +55,6 @@ export type {
   BlockRenderProps,
   BlockStyleRenderProps,
   BlurChange,
-  ConnectionChange,
   EditableAPI,
   EditableAPIDeleteOptions,
   EditorChange,
