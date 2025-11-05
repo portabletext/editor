@@ -24,8 +24,13 @@ import {createCharacterPairDecoratorBehavior} from './behavior.character-pair-de
 export function CharacterPairDecoratorPlugin(props: {
   decorator: ({
     context,
+    schema,
   }: {
     context: Pick<EditorContext, 'schema'>
+    /**
+     * @deprecated Use `context.schema` instead
+     */
+    schema: EditorContext['schema']
   }) => string | undefined
   pair: {char: string; amount: number}
 }) {
@@ -64,8 +69,13 @@ const decorateListener: CallbackLogicFunction<
   {
     decorator: ({
       context,
+      schema,
     }: {
       context: Pick<EditorContext, 'schema'>
+      /**
+       * @deprecated Use `context.schema` instead
+       */
+      schema: EditorContext['schema']
     }) => string | undefined
     editor: Editor
     pair: {char: string; amount: number}
@@ -163,8 +173,13 @@ const decoratorPairMachine = setup({
     context: {} as {
       decorator: ({
         context,
+        schema,
       }: {
         context: Pick<EditorContext, 'schema'>
+        /**
+         * @deprecated Use `context.schema` instead
+         */
+        schema: EditorContext['schema']
       }) => string | undefined
       editor: Editor
       offsetAfterDecorator?: BlockOffset
@@ -173,8 +188,13 @@ const decoratorPairMachine = setup({
     input: {} as {
       decorator: ({
         context,
+        schema,
       }: {
         context: Pick<EditorContext, 'schema'>
+        /**
+         * @deprecated Use `context.schema` instead
+         */
+        schema: EditorContext['schema']
       }) => string | undefined
       editor: Editor
       pair: {char: string; amount: number}
