@@ -61,7 +61,6 @@ export type {
   EditorChanges,
   EditorSelection,
   EditorSelectionPoint,
-  ErrorChange,
   FocusChange,
   InvalidValue,
   InvalidValueResolution,

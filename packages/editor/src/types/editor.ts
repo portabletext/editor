@@ -229,19 +229,6 @@ export type ReadyChange = {
 }
 
 /**
- * The editor produced an error
- * @beta
- * @deprecated The change is no longer emitted
- * */
-export type ErrorChange = {
-  type: 'error'
-  name: string // short computer readable name
-  level: 'warning' | 'error'
-  description: string
-  data?: unknown
-}
-
-/**
  * The editor has invalid data in the value that can be resolved by the user
  * @beta */
 export type InvalidValueResolution = {
@@ -313,7 +300,6 @@ export type ConnectionChange = {
 export type EditorChange =
   | BlurChange
   | ConnectionChange
-  | ErrorChange
   | FocusChange
   | InvalidValue
   | MutationChange

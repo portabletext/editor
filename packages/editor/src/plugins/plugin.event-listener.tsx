@@ -7,7 +7,6 @@ import {useEditor} from '../editor/use-editor'
  * Listen for events emitted by the editor. Must be used inside `EditorProvider`. Events available include:
  *  - 'blurred'
  *  - 'editable'
- *  - 'error'
  *  - 'focused'
  *  - 'invalid value'
  *  - 'mutation'
