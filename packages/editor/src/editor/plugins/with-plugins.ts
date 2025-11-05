@@ -3,7 +3,6 @@ import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 import type {RelayActor} from '../relay-machine'
 import {createWithEventListeners} from './create-with-event-listeners'
-import {createWithMaxBlocks} from './createWithMaxBlocks'
 import {createWithObjectKeys} from './createWithObjectKeys'
 import {createWithPatches} from './createWithPatches'
 import {createWithPlaceholderBlock} from './createWithPlaceholderBlock'
@@ -41,7 +40,6 @@ export const withPlugins = <T extends Editor>(
     relayActor,
     subscriptions: options.subscriptions,
   })
-  const withMaxBlocks = createWithMaxBlocks(editorActor)
   const withUndoRedo = createWithUndoRedo({
     editorActor,
     subscriptions: options.subscriptions,
@@ -62,16 +60,14 @@ export const withPlugins = <T extends Editor>(
         withPortableTextMarkModel(
           withPlaceholderBlock(
             withUtils(
-              withMaxBlocks(
-                withUndoRedo(
-                  withPatches(
-                    pluginUpdateValue(
-                      editorActor.getSnapshot().context,
-                      pluginUpdateSelection({
-                        editorActor,
-                        editor: e,
-                      }),
-                    ),
+              withUndoRedo(
+                withPatches(
+                  pluginUpdateValue(
+                    editorActor.getSnapshot().context,
+                    pluginUpdateSelection({
+                      editorActor,
+                      editor: e,
+                    }),
                   ),
                 ),
               ),

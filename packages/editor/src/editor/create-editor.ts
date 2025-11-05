@@ -108,7 +108,6 @@ export function createInternalEditor(config: EditorConfig): {
 
         case 'update readOnly':
         case 'patches':
-        case 'update maxBlocks':
           editorActor.send(event)
           break
 
@@ -169,7 +168,6 @@ function editorConfigToMachineInput(config: EditorConfig) {
     converters: createCoreConverters(legacySchema),
     getLegacySchema: () => legacySchema,
     keyGenerator: config.keyGenerator ?? defaultKeyGenerator,
-    maxBlocks: config.maxBlocks,
     readOnly: config.readOnly,
     schema,
     initialValue: config.initialValue,
