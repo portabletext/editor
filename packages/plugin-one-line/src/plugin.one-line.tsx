@@ -1,5 +1,5 @@
 import {useEditor} from '@portabletext/editor'
-import {defineBehavior, execute, raise} from '@portabletext/editor/behaviors'
+import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 import * as selectors from '@portabletext/editor/selectors'
 import * as utils from '@portabletext/editor/utils'
 import {useEffect} from 'react'
@@ -15,7 +15,7 @@ const oneLineBehaviors = [
       snapshot.context.selection && selectors.isSelectionExpanded(snapshot)
         ? {selection: snapshot.context.selection}
         : false,
-    actions: [(_, {selection}) => [execute({type: 'delete', at: selection})]],
+    actions: [(_, {selection}) => [raise({type: 'delete', at: selection})]],
   }),
   /**
    * All other cases of `insert.break` should be aborted.
@@ -49,11 +49,11 @@ const oneLineBehaviors = [
         return false
       }
 
-      return true
+      return event.placement !== 'auto' || event.select !== 'end'
     },
     actions: [
       ({event}) => [
-        execute({
+        raise({
           type: 'insert.block',
           block: event.block,
           placement: 'auto',
@@ -68,6 +68,15 @@ const oneLineBehaviors = [
    */
   defineBehavior({
     on: 'insert.block',
+    guard: ({snapshot, event}) => {
+      const focusTextBlock = selectors.getFocusTextBlock(snapshot)
+
+      if (!focusTextBlock) {
+        return true
+      }
+
+      return !utils.isTextBlock(snapshot.context, event.block)
+    },
     actions: [],
   }),
   /**
