@@ -37,7 +37,7 @@
     "remeda": "^2.28.0",
     "shiki": "^3.9.2",
     "xstate": "^5.23.0",
-    "zod": "^4.0.17"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.12",
