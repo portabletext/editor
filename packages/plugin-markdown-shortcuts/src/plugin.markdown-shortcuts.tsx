@@ -6,6 +6,7 @@ import {useEffect, useMemo} from 'react'
 import {
   createMarkdownBehaviors,
   type MarkdownBehaviorsConfig,
+  type ObjectWithOptionalKey,
 } from './behavior.markdown-shortcuts'
 import {createBlockquoteRule} from './rule.blockquote'
 import {createHeadingRule} from './rule.heading'
@@ -27,7 +28,7 @@ export type MarkdownShortcutsPluginProps = MarkdownBehaviorsConfig & {
   linkObject?: (context: {
     schema: EditorSchema
     href: string
-  }) => {name: string; value?: {[prop: string]: unknown}} | undefined
+  }) => ObjectWithOptionalKey | undefined
   unorderedList?: (context: {schema: EditorSchema}) => string | undefined
   orderedList?: (context: {schema: EditorSchema}) => string | undefined
   boldDecorator?: ({schema}: {schema: EditorSchema}) => string | undefined

@@ -2,11 +2,12 @@ import type {EditorSchema} from '@portabletext/editor'
 import {raise} from '@portabletext/editor/behaviors'
 import {getPreviousInlineObject} from '@portabletext/editor/selectors'
 import {defineInputRule} from '@portabletext/plugin-input-rule'
+import type {ObjectWithOptionalKey} from './behavior.markdown-shortcuts'
 
 export function createHorizontalRuleRule(config: {
   horizontalRuleObject: (context: {
     schema: EditorSchema
-  }) => {name: string; value?: {[prop: string]: unknown}} | undefined
+  }) => ObjectWithOptionalKey | undefined
 }) {
   return defineInputRule({
     on: /^(---)|^(—-)|^(___)|^(\*\*\*)/,
@@ -44,10 +45,7 @@ export function createHorizontalRuleRule(config: {
       (_, {hrObject, match}) => [
         raise({
           type: 'insert.block',
-          block: {
-            _type: hrObject.name,
-            ...(hrObject.value ?? {}),
-          },
+          block: hrObject,
           placement: 'before',
           select: 'none',
         }),

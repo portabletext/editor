@@ -11,16 +11,32 @@ export const markdownShortcutsPluginProps: MarkdownShortcutsPluginProps = {
     schema.decorators.find((decorator) => decorator.name === 'strike-through')
       ?.name,
   horizontalRuleObject: ({schema}) => {
-    const name = schema.blockObjects.find(
+    const schemaType = schema.blockObjects.find(
       (object) => object.name === 'break',
-    )?.name
-    return name ? {name} : undefined
+    )
+
+    if (!schemaType) {
+      return undefined
+    }
+
+    return {_type: schemaType.name}
   },
   linkObject: ({schema, href}) => {
-    const name = schema.annotations.find(
+    const schemaType = schema.annotations.find(
       (annotation) => annotation.name === 'link',
-    )?.name
-    return name ? {name, value: {href}} : undefined
+    )
+    const hrefField = schemaType?.fields.find(
+      (field) => field.name === 'href' && field.type === 'string',
+    )
+
+    if (!schemaType || !hrefField) {
+      return undefined
+    }
+
+    return {
+      _type: schemaType.name,
+      [hrefField.name]: href,
+    }
   },
   defaultStyle: ({schema}) => schema.styles[0].value,
   headingStyle: ({schema, level}) =>

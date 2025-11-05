@@ -2,10 +2,16 @@ import type {EditorSchema} from '@portabletext/editor'
 import {defineBehavior, execute} from '@portabletext/editor/behaviors'
 import * as selectors from '@portabletext/editor/selectors'
 
+export type ObjectWithOptionalKey = {
+  _type: string
+  _key?: string
+  [other: string]: unknown
+}
+
 export type MarkdownBehaviorsConfig = {
   horizontalRuleObject?: (context: {
     schema: EditorSchema
-  }) => {name: string; value?: {[prop: string]: unknown}} | undefined
+  }) => ObjectWithOptionalKey | undefined
   defaultStyle?: (context: {schema: EditorSchema}) => string | undefined
 }
 
@@ -48,10 +54,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
               }),
               execute({
                 type: 'insert.block',
-                block: {
-                  _type: hrObject.name,
-                  ...(hrObject.value ?? {}),
-                },
+                block: hrObject,
                 placement: 'after',
               }),
               execute({
@@ -62,10 +65,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
           : [
               execute({
                 type: 'insert.block',
-                block: {
-                  _type: hrObject.name,
-                  ...(hrObject.value ?? {}),
-                },
+                block: hrObject,
                 placement: 'after',
               }),
             ],
