@@ -6,10 +6,6 @@ import {isPerformingBehaviorOperation} from '../with-performing-behavior-operati
 
 export function createWithEventListeners(editorActor: EditorActor) {
   return function withEventListeners(editor: Editor) {
-    if (editorActor.getSnapshot().context.maxBlocks !== undefined) {
-      return editor
-    }
-
     const {delete: editorDelete, select} = editor
 
     editor.delete = (options) => {
