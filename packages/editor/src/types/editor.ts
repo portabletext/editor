@@ -214,15 +214,6 @@ export type FocusChange = {
 }
 
 /**
- * @beta
- * @deprecated Use `'patch'` changes instead
- */
-export type UnsetChange = {
-  type: 'unset'
-  previousValue: PortableTextBlock[]
-}
-
-/**
  * The editor blurred
  * @beta */
 export type BlurChange = {
@@ -343,7 +334,6 @@ export type EditorChange =
   | RedoChange
   | SelectionChange
   | UndoChange
-  | UnsetChange
   | ValueChange
 
 /**

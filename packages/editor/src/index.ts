@@ -91,7 +91,6 @@ export type {
   ScrollSelectionIntoViewFunction,
   SelectionChange,
   UndoChange,
-  UnsetChange,
   ValueChange,
 } from './types/editor'
 export type {HotkeyOptions} from './types/options'
