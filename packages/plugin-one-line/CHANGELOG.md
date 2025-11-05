@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.1.0
+
+### Minor Changes
+
+- [#1832](https://github.com/portabletext/editor/pull/1832) [`cbb5f2c`](https://github.com/portabletext/editor/commit/cbb5f2ca43ad7f28e7a0fb7387633b0310208a3d) Thanks [@christianhg](https://github.com/christianhg)! - feat: mark APIs public
+
+### Patch Changes
+
+- [#1832](https://github.com/portabletext/editor/pull/1832) [`0cbc7d7`](https://github.com/portabletext/editor/commit/0cbc7d70f18c360ef3f84f80de4b4922660bba27) Thanks [@christianhg](https://github.com/christianhg)! - fix: allow composing with other Behaviors
+
+- Updated dependencies [[`ae4fd2c`](https://github.com/portabletext/editor/commit/ae4fd2cc37b87d26f2db7a09c20c41486c88ace8)]:
+  - @portabletext/editor@2.19.0
+
 ## 2.0.1
 
 ### Patch Changes

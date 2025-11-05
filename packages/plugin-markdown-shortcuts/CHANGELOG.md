@@ -1,5 +1,78 @@
 # Changelog
 
+## 3.0.0
+
+### Major Changes
+
+- [#1830](https://github.com/portabletext/editor/pull/1830) [`a90da35`](https://github.com/portabletext/editor/commit/a90da350e37cca38429346bad2d78c11d00b6079) Thanks [@christianhg](https://github.com/christianhg)! - feat: allow specifying actual object types for link and horizontal rule
+
+- [#1832](https://github.com/portabletext/editor/pull/1832) [`10e282b`](https://github.com/portabletext/editor/commit/10e282bac9f196a64f469feb6eeeae3e6c021722) Thanks [@christianhg](https://github.com/christianhg)! - feat: align schema matcher callbacks
+
+  Schema matcher callbacks now consistently receive an object with a distinct `context` property and an optional `props` property:
+
+  **Before:**
+
+  ```ts
+  <MarkdownShortcutsPlugin
+    linkObject={(context, props) => {
+      const schemaType = context.schema.annotations.find(
+        (annotation) => annotation.name === 'link',
+      )
+      const hrefField = schemaType?.fields.find(
+        (field) =>
+          field.name === 'href' && field.type === 'string',
+      )
+
+      if (!schemaType || !hrefField) {
+        return undefined
+      }
+
+      return {
+        _type: schemaType.name,
+        [hrefField.name]: props.href,
+      }
+    }}
+  />
+  ```
+
+  **After:**
+
+  ```ts
+  <MarkdownShortcutsPlugin
+    linkObject={({context, props}) => {
+      const schemaType = context.schema.annotations.find(
+        (annotation) => annotation.name === 'link',
+      )
+      const hrefField = schemaType?.fields.find(
+        (field) =>
+          field.name === 'href' && field.type === 'string',
+      )
+
+      if (!schemaType || !hrefField) {
+        return undefined
+      }
+
+      return {
+        _type: schemaType.name,
+        [hrefField.name]: props.href,
+      }
+    }}
+  />
+  ```
+
+### Minor Changes
+
+- [#1830](https://github.com/portabletext/editor/pull/1830) [`808eaa6`](https://github.com/portabletext/editor/commit/808eaa6d14f48d201cb3f07a0721818d643992fd) Thanks [@christianhg](https://github.com/christianhg)! - feat: mark APIs as public
+
+### Patch Changes
+
+- [#1832](https://github.com/portabletext/editor/pull/1832) [`f41b3bd`](https://github.com/portabletext/editor/commit/f41b3bd22a5e3a7e9cb68607d4076e8662dce7a8) Thanks [@christianhg](https://github.com/christianhg)! - fix: allow composing with other Behaviors
+
+- Updated dependencies [[`10e282b`](https://github.com/portabletext/editor/commit/10e282bac9f196a64f469feb6eeeae3e6c021722), [`d860a49`](https://github.com/portabletext/editor/commit/d860a49d4eab6817da5eed56c7b27bbe9f2fb070), [`90a924f`](https://github.com/portabletext/editor/commit/90a924fddd7ba6298ce053fac638a3dae11ea638), [`ae4fd2c`](https://github.com/portabletext/editor/commit/ae4fd2cc37b87d26f2db7a09c20c41486c88ace8)]:
+  - @portabletext/plugin-character-pair-decorator@3.0.0
+  - @portabletext/editor@2.19.0
+  - @portabletext/plugin-input-rule@0.5.2
+
 ## 2.0.1
 
 ### Patch Changes
