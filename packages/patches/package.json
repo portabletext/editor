@@ -54,7 +54,7 @@
     "@sanity/pkg-utils": "^9.0.1",
     "@types/lodash": "^4.17.20",
     "typescript": "catalog:",
-    "vitest": "^4.0.5"
+    "vitest": "^4.0.6"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"

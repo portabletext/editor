@@ -69,12 +69,12 @@
     "@playwright/test": "^1.56.1",
     "@sanity/pkg-utils": "^9.0.1",
     "typescript": "catalog:",
-    "vitest": "^4.0.5"
+    "vitest": "^4.0.6"
   },
   "peerDependencies": {
     "@jest/globals": "^30.2.0",
     "@playwright/test": "^1.56.1",
-    "vitest": "^4.0.5"
+    "vitest": "^4.0.6"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
