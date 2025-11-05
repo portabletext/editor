@@ -14,6 +14,7 @@ import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 
 const schemaDefinition = defineSchema({
   blockObjects: [{name: 'break'}],
+  annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}]
   decorators: [
     {name: 'em'},
     {name: 'code'},
@@ -70,16 +71,32 @@ function App() {
           schema.lists.find((s) => s.name === 'bullet')?.name
         }
         horizontalRuleObject={({schema}) => {
-          const name = schema.blockObjects.find(
-            (blockObject) => blockObject.name === 'break',
-          )?.name
-          return name ? {name} : undefined
+          const schemaType = schema.blockObjects.find(
+            (object) => object.name === 'break',
+          )
+
+          if (!schemaType) {
+            return undefined
+          }
+
+          return {_type: schemaType.name}
         }}
         linkObject={({schema, href}) => {
-          const name = schema.annotations.find(
+          const schemaType = schema.annotations.find(
             (annotation) => annotation.name === 'link',
-          )?.name
-          return name ? {name, value: {href}} : undefined
+          )
+          const hrefField = schemaType?.fields.find(
+            (field) => field.name === 'href' && field.type === 'string',
+          )
+
+          if (!schemaType || !hrefField) {
+            return undefined
+          }
+
+          return {
+            _type: schemaType.name,
+            [hrefField.name]: href,
+          }
         }}
       />
     </EditorProvider>

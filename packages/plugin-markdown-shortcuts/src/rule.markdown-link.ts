@@ -1,12 +1,13 @@
 import type {EditorSchema} from '@portabletext/editor'
 import {raise, type BehaviorAction} from '@portabletext/editor/behaviors'
 import {defineInputRule} from '@portabletext/plugin-input-rule'
+import type {ObjectWithOptionalKey} from './behavior.markdown-shortcuts'
 
 export function createMarkdownLinkRule(config: {
   linkObject: (context: {
     schema: EditorSchema
     href: string
-  }) => {name: string; value?: {[prop: string]: unknown}} | undefined
+  }) => ObjectWithOptionalKey | undefined
 }) {
   return defineInputRule({
     on: /\[([^[\]]+)]\((.+)\)/,
@@ -39,6 +40,8 @@ export function createMarkdownLinkRule(config: {
             continue
           }
 
+          const {_type, _key, ...value} = linkObject
+
           const leftSideOffsets = {
             anchor: match.targetOffsets.anchor,
             focus: textMatch.targetOffsets.anchor,
@@ -58,8 +61,9 @@ export function createMarkdownLinkRule(config: {
             raise({
               type: 'annotation.add',
               annotation: {
-                name: linkObject.name,
-                value: linkObject.value ?? {},
+                name: _type,
+                _key,
+                value,
               },
             }),
           )
