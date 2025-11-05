@@ -21,20 +21,40 @@ import {createUnorderedListRule} from './rule.unordered-list'
 export type MarkdownShortcutsPluginProps = MarkdownBehaviorsConfig & {
   blockquoteStyle?: ({
     context,
+    schema,
   }: {
     context: Pick<EditorContext, 'schema'>
+    /**
+     * @deprecated Use `context.schema` instead
+     */
+    schema: EditorContext['schema']
   }) => string | undefined
   defaultStyle?: ({
     context,
+    schema,
   }: {
     context: Pick<EditorContext, 'schema'>
+    /**
+     * @deprecated Use `context.schema` instead
+     */
+    schema: EditorContext['schema']
   }) => string | undefined
   headingStyle?: ({
     context,
+    schema,
     props,
+    level,
   }: {
     context: Pick<EditorContext, 'schema'>
+    /**
+     * @deprecated Use `context.schema` instead
+     */
+    schema: EditorContext['schema']
     props: {level: number}
+    /**
+     * @deprecated Use `props.level` instead
+     */
+    level: number
   }) => string | undefined
   linkObject?: ({
     context,
@@ -45,33 +65,63 @@ export type MarkdownShortcutsPluginProps = MarkdownBehaviorsConfig & {
   }) => ObjectWithOptionalKey | undefined
   unorderedList?: ({
     context,
+    schema,
   }: {
     context: Pick<EditorContext, 'schema'>
+    /**
+     * @deprecated Use `context.schema` instead
+     */
+    schema: EditorContext['schema']
   }) => string | undefined
   orderedList?: ({
     context,
+    schema,
   }: {
     context: Pick<EditorContext, 'schema'>
+    /**
+     * @deprecated Use `context.schema` instead
+     */
+    schema: EditorContext['schema']
   }) => string | undefined
   boldDecorator?: ({
     context,
+    schema,
   }: {
     context: Pick<EditorContext, 'schema'>
+    /**
+     * @deprecated Use `context.schema` instead
+     */
+    schema: EditorContext['schema']
   }) => string | undefined
   codeDecorator?: ({
     context,
+    schema,
   }: {
     context: Pick<EditorContext, 'schema'>
+    /**
+     * @deprecated Use `context.schema` instead
+     */
+    schema: EditorContext['schema']
   }) => string | undefined
   italicDecorator?: ({
     context,
+    schema,
   }: {
     context: Pick<EditorContext, 'schema'>
+    /**
+     * @deprecated Use `context.schema` instead
+     */
+    schema: EditorContext['schema']
   }) => string | undefined
   strikeThroughDecorator?: ({
     context,
+    schema,
   }: {
     context: Pick<EditorContext, 'schema'>
+    /**
+     * @deprecated Use `context.schema` instead
+     */
+    schema: EditorContext['schema']
   }) => string | undefined
 }
 
