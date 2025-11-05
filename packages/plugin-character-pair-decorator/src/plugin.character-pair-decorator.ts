@@ -19,7 +19,7 @@ import {
 import {createCharacterPairDecoratorBehavior} from './behavior.character-pair-decorator'
 
 /**
- * @beta
+ * @public
  */
 export function CharacterPairDecoratorPlugin(props: {
   decorator: ({
