@@ -6,8 +6,13 @@ import {defineInputRule} from '@portabletext/plugin-input-rule'
 export function createOrderedListRule(config: {
   orderedList: ({
     context,
+    schema,
   }: {
     context: Pick<EditorContext, 'schema'>
+    /**
+     * @deprecated Use `context.schema` instead
+     */
+    schema: EditorContext['schema']
   }) => string | undefined
 }) {
   return defineInputRule({
@@ -15,6 +20,7 @@ export function createOrderedListRule(config: {
     guard: ({snapshot, event}) => {
       const orderedList = config.orderedList({
         context: {schema: snapshot.context.schema},
+        schema: snapshot.context.schema,
       })
 
       if (!orderedList) {

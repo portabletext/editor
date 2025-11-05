@@ -16,8 +16,13 @@ export type MarkdownBehaviorsConfig = {
   }) => ObjectWithOptionalKey | undefined
   defaultStyle?: ({
     context,
+    schema,
   }: {
     context: Pick<EditorContext, 'schema'>
+    /**
+     * @deprecated Use `context.schema` instead
+     */
+    schema: EditorContext['schema']
   }) => string | undefined
 }
 
@@ -98,6 +103,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
 
       const defaultStyle = config.defaultStyle?.({
         context: {schema: snapshot.context.schema},
+        schema: snapshot.context.schema,
       })
 
       if (

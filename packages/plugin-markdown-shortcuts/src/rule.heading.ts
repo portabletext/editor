@@ -6,10 +6,20 @@ import {defineInputRule} from '@portabletext/plugin-input-rule'
 export function createHeadingRule(config: {
   headingStyle: ({
     context,
+    schema,
     props,
+    level,
   }: {
     context: Pick<EditorContext, 'schema'>
+    /**
+     * @deprecated Use `context.schema` instead
+     */
+    schema: EditorContext['schema']
     props: {level: number}
+    /**
+     * @deprecated Use `props.level` instead
+     */
+    level: number
   }) => string | undefined
 }) {
   return defineInputRule({
@@ -31,7 +41,9 @@ export function createHeadingRule(config: {
 
       const style = config.headingStyle({
         context: {schema: snapshot.context.schema},
+        schema: snapshot.context.schema,
         props: {level},
+        level,
       })
 
       if (!style) {
