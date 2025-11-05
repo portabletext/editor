@@ -1,4 +1,4 @@
-import type {BlockOffset, Editor, EditorSchema} from '@portabletext/editor'
+import type {BlockOffset, Editor, EditorContext} from '@portabletext/editor'
 import {useEditor} from '@portabletext/editor'
 import {
   defineBehavior,
@@ -21,8 +21,12 @@ import {createCharacterPairDecoratorBehavior} from './behavior.character-pair-de
 /**
  * @beta
  */
-export function CharacterPairDecoratorPlugin(config: {
-  decorator: ({schema}: {schema: EditorSchema}) => string | undefined
+export function CharacterPairDecoratorPlugin(props: {
+  decorator: ({
+    context,
+  }: {
+    context: Pick<EditorContext, 'schema'>
+  }) => string | undefined
   pair: {char: string; amount: number}
 }) {
   const editor = useEditor()
@@ -30,8 +34,8 @@ export function CharacterPairDecoratorPlugin(config: {
   useActorRef(decoratorPairMachine, {
     input: {
       editor,
-      decorator: config.decorator,
-      pair: config.pair,
+      decorator: props.decorator,
+      pair: props.pair,
     },
   })
 
@@ -58,7 +62,11 @@ const decorateListener: CallbackLogicFunction<
   AnyEventObject,
   DecoratorPairEvent,
   {
-    decorator: ({schema}: {schema: EditorSchema}) => string | undefined
+    decorator: ({
+      context,
+    }: {
+      context: Pick<EditorContext, 'schema'>
+    }) => string | undefined
     editor: Editor
     pair: {char: string; amount: number}
   }
@@ -153,13 +161,21 @@ const deleteBackwardListenerCallback: CallbackLogicFunction<
 const decoratorPairMachine = setup({
   types: {
     context: {} as {
-      decorator: ({schema}: {schema: EditorSchema}) => string | undefined
+      decorator: ({
+        context,
+      }: {
+        context: Pick<EditorContext, 'schema'>
+      }) => string | undefined
       editor: Editor
       offsetAfterDecorator?: BlockOffset
       pair: {char: string; amount: number}
     },
     input: {} as {
-      decorator: ({schema}: {schema: EditorSchema}) => string | undefined
+      decorator: ({
+        context,
+      }: {
+        context: Pick<EditorContext, 'schema'>
+      }) => string | undefined
       editor: Editor
       pair: {char: string; amount: number}
     },

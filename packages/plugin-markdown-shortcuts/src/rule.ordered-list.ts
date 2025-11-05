@@ -1,16 +1,20 @@
-import type {EditorSchema} from '@portabletext/editor'
+import type {EditorContext} from '@portabletext/editor'
 import {raise} from '@portabletext/editor/behaviors'
 import {getPreviousInlineObject} from '@portabletext/editor/selectors'
 import {defineInputRule} from '@portabletext/plugin-input-rule'
 
 export function createOrderedListRule(config: {
-  orderedList: (context: {schema: EditorSchema}) => string | undefined
+  orderedList: ({
+    context,
+  }: {
+    context: Pick<EditorContext, 'schema'>
+  }) => string | undefined
 }) {
   return defineInputRule({
     on: /^1\. /,
     guard: ({snapshot, event}) => {
       const orderedList = config.orderedList({
-        schema: snapshot.context.schema,
+        context: {schema: snapshot.context.schema},
       })
 
       if (!orderedList) {

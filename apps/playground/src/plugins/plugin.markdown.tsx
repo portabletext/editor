@@ -1,17 +1,21 @@
 import type {MarkdownShortcutsPluginProps} from '@portabletext/plugin-markdown-shortcuts'
 
 export const markdownShortcutsPluginProps: MarkdownShortcutsPluginProps = {
-  boldDecorator: ({schema}) =>
-    schema.decorators.find((decorator) => decorator.name === 'strong')?.name,
-  codeDecorator: ({schema}) =>
-    schema.decorators.find((decorator) => decorator.name === 'code')?.name,
-  italicDecorator: ({schema}) =>
-    schema.decorators.find((decorator) => decorator.name === 'em')?.name,
-  strikeThroughDecorator: ({schema}) =>
-    schema.decorators.find((decorator) => decorator.name === 'strike-through')
+  boldDecorator: ({context}) =>
+    context.schema.decorators.find((decorator) => decorator.name === 'strong')
       ?.name,
-  horizontalRuleObject: ({schema}) => {
-    const schemaType = schema.blockObjects.find(
+  codeDecorator: ({context}) =>
+    context.schema.decorators.find((decorator) => decorator.name === 'code')
+      ?.name,
+  italicDecorator: ({context}) =>
+    context.schema.decorators.find((decorator) => decorator.name === 'em')
+      ?.name,
+  strikeThroughDecorator: ({context}) =>
+    context.schema.decorators.find(
+      (decorator) => decorator.name === 'strike-through',
+    )?.name,
+  horizontalRuleObject: ({context}) => {
+    const schemaType = context.schema.blockObjects.find(
       (object) => object.name === 'break',
     )
 
@@ -21,8 +25,8 @@ export const markdownShortcutsPluginProps: MarkdownShortcutsPluginProps = {
 
     return {_type: schemaType.name}
   },
-  linkObject: ({schema, href}) => {
-    const schemaType = schema.annotations.find(
+  linkObject: ({context, props}) => {
+    const schemaType = context.schema.annotations.find(
       (annotation) => annotation.name === 'link',
     )
     const hrefField = schemaType?.fields.find(
@@ -35,16 +39,17 @@ export const markdownShortcutsPluginProps: MarkdownShortcutsPluginProps = {
 
     return {
       _type: schemaType.name,
-      [hrefField.name]: href,
+      [hrefField.name]: props.href,
     }
   },
-  defaultStyle: ({schema}) => schema.styles[0].value,
-  headingStyle: ({schema, level}) =>
-    schema.styles.find((style) => style.name === `h${level}`)?.name,
-  blockquoteStyle: ({schema}) =>
-    schema.styles.find((style) => style.name === 'blockquote')?.name,
-  unorderedList: ({schema}) =>
-    schema.lists.find((list) => list.name === 'bullet')?.name,
-  orderedList: ({schema}) =>
-    schema.lists.find((list) => list.name === 'number')?.name,
+  defaultStyle: ({context}) => context.schema.styles[0].value,
+  headingStyle: ({context, props}) =>
+    context.schema.styles.find((style) => style.name === `h${props.level}`)
+      ?.name,
+  blockquoteStyle: ({context}) =>
+    context.schema.styles.find((style) => style.name === 'blockquote')?.name,
+  unorderedList: ({context}) =>
+    context.schema.lists.find((list) => list.name === 'bullet')?.name,
+  orderedList: ({context}) =>
+    context.schema.lists.find((list) => list.name === 'number')?.name,
 }

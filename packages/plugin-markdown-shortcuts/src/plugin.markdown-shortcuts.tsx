@@ -1,4 +1,4 @@
-import type {EditorSchema} from '@portabletext/editor'
+import type {EditorContext} from '@portabletext/editor'
 import {useEditor} from '@portabletext/editor'
 import {CharacterPairDecoratorPlugin} from '@portabletext/plugin-character-pair-decorator'
 import {InputRulePlugin} from '@portabletext/plugin-input-rule'
@@ -19,25 +19,59 @@ import {createUnorderedListRule} from './rule.unordered-list'
  * @public
  */
 export type MarkdownShortcutsPluginProps = MarkdownBehaviorsConfig & {
-  blockquoteStyle?: (context: {schema: EditorSchema}) => string | undefined
-  defaultStyle?: (context: {schema: EditorSchema}) => string | undefined
-  headingStyle?: (context: {
-    schema: EditorSchema
-    level: number
-  }) => string | undefined
-  linkObject?: (context: {
-    schema: EditorSchema
-    href: string
-  }) => ObjectWithOptionalKey | undefined
-  unorderedList?: (context: {schema: EditorSchema}) => string | undefined
-  orderedList?: (context: {schema: EditorSchema}) => string | undefined
-  boldDecorator?: ({schema}: {schema: EditorSchema}) => string | undefined
-  codeDecorator?: ({schema}: {schema: EditorSchema}) => string | undefined
-  italicDecorator?: ({schema}: {schema: EditorSchema}) => string | undefined
-  strikeThroughDecorator?: ({
-    schema,
+  blockquoteStyle?: ({
+    context,
   }: {
-    schema: EditorSchema
+    context: Pick<EditorContext, 'schema'>
+  }) => string | undefined
+  defaultStyle?: ({
+    context,
+  }: {
+    context: Pick<EditorContext, 'schema'>
+  }) => string | undefined
+  headingStyle?: ({
+    context,
+    props,
+  }: {
+    context: Pick<EditorContext, 'schema'>
+    props: {level: number}
+  }) => string | undefined
+  linkObject?: ({
+    context,
+    props,
+  }: {
+    context: Pick<EditorContext, 'schema' | 'keyGenerator'>
+    props: {href: string}
+  }) => ObjectWithOptionalKey | undefined
+  unorderedList?: ({
+    context,
+  }: {
+    context: Pick<EditorContext, 'schema'>
+  }) => string | undefined
+  orderedList?: ({
+    context,
+  }: {
+    context: Pick<EditorContext, 'schema'>
+  }) => string | undefined
+  boldDecorator?: ({
+    context,
+  }: {
+    context: Pick<EditorContext, 'schema'>
+  }) => string | undefined
+  codeDecorator?: ({
+    context,
+  }: {
+    context: Pick<EditorContext, 'schema'>
+  }) => string | undefined
+  italicDecorator?: ({
+    context,
+  }: {
+    context: Pick<EditorContext, 'schema'>
+  }) => string | undefined
+  strikeThroughDecorator?: ({
+    context,
+  }: {
+    context: Pick<EditorContext, 'schema'>
   }) => string | undefined
 }
 

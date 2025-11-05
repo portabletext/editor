@@ -1,4 +1,4 @@
-import type {EditorSchema} from '@portabletext/editor'
+import type {EditorContext} from '@portabletext/editor'
 import {defineBehavior, execute} from '@portabletext/editor/behaviors'
 import * as selectors from '@portabletext/editor/selectors'
 
@@ -9,10 +9,16 @@ export type ObjectWithOptionalKey = {
 }
 
 export type MarkdownBehaviorsConfig = {
-  horizontalRuleObject?: (context: {
-    schema: EditorSchema
+  horizontalRuleObject?: ({
+    context,
+  }: {
+    context: Pick<EditorContext, 'schema' | 'keyGenerator'>
   }) => ObjectWithOptionalKey | undefined
-  defaultStyle?: (context: {schema: EditorSchema}) => string | undefined
+  defaultStyle?: ({
+    context,
+  }: {
+    context: Pick<EditorContext, 'schema'>
+  }) => string | undefined
 }
 
 export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
@@ -23,7 +29,10 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
       const hrRegExp = /^(---)$|^(—-)$|^(___)$|^(\*\*\*)$/
       const hrCharacters = text.match(hrRegExp)?.[0]
       const hrObject = config.horizontalRuleObject?.({
-        schema: snapshot.context.schema,
+        context: {
+          schema: snapshot.context.schema,
+          keyGenerator: snapshot.context.keyGenerator,
+        },
       })
       const focusBlock = selectors.getFocusBlock(snapshot)
       const focusTextBlock = selectors.getFocusTextBlock(snapshot)
@@ -88,7 +97,7 @@ export function createMarkdownBehaviors(config: MarkdownBehaviorsConfig) {
         snapshot.context.selection?.focus.offset === 0
 
       const defaultStyle = config.defaultStyle?.({
-        schema: snapshot.context.schema,
+        context: {schema: snapshot.context.schema},
       })
 
       if (

@@ -1,11 +1,15 @@
-import type {BlockOffset, EditorSchema} from '@portabletext/editor'
+import type {BlockOffset, EditorContext} from '@portabletext/editor'
 import {defineBehavior, effect, execute} from '@portabletext/editor/behaviors'
 import * as selectors from '@portabletext/editor/selectors'
 import * as utils from '@portabletext/editor/utils'
 import {createCharacterPairRegex} from './regex.character-pair'
 
 export function createCharacterPairDecoratorBehavior(config: {
-  decorator: ({schema}: {schema: EditorSchema}) => string | undefined
+  decorator: ({
+    context,
+  }: {
+    context: Pick<EditorContext, 'schema'>
+  }) => string | undefined
   pair: {char: string; amount: number}
   onDecorate: (offset: BlockOffset) => void
 }) {
@@ -28,7 +32,9 @@ export function createCharacterPairDecoratorBehavior(config: {
         return false
       }
 
-      const decorator = config.decorator({schema: snapshot.context.schema})
+      const decorator = config.decorator({
+        context: {schema: snapshot.context.schema},
+      })
 
       if (decorator === undefined) {
         return false

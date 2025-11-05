@@ -1,19 +1,24 @@
-import type {EditorSchema} from '@portabletext/editor'
+import type {EditorContext} from '@portabletext/editor'
 import {raise} from '@portabletext/editor/behaviors'
 import {getPreviousInlineObject} from '@portabletext/editor/selectors'
 import {defineInputRule} from '@portabletext/plugin-input-rule'
 import type {ObjectWithOptionalKey} from './behavior.markdown-shortcuts'
 
 export function createHorizontalRuleRule(config: {
-  horizontalRuleObject: (context: {
-    schema: EditorSchema
+  horizontalRuleObject: ({
+    context,
+  }: {
+    context: Pick<EditorContext, 'schema' | 'keyGenerator'>
   }) => ObjectWithOptionalKey | undefined
 }) {
   return defineInputRule({
     on: /^(---)|^(—-)|^(___)|^(\*\*\*)/,
     guard: ({snapshot, event}) => {
       const hrObject = config.horizontalRuleObject({
-        schema: snapshot.context.schema,
+        context: {
+          schema: snapshot.context.schema,
+          keyGenerator: snapshot.context.keyGenerator,
+        },
       })
 
       if (!hrObject) {
