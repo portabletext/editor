@@ -66,7 +66,6 @@ export type {
   FocusChange,
   InvalidValue,
   InvalidValueResolution,
-  LoadingChange,
   MutationChange,
   OnBeforeInputFn,
   OnCopyFn,

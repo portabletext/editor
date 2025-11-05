@@ -13,12 +13,6 @@ export type EditorEmittedEvent =
       event: FocusEvent<HTMLDivElement, Element>
     }
   | {
-      /**
-       * @deprecated Will be removed in the next major version
-       */
-      type: 'done loading'
-    }
-  | {
       type: 'editable'
     }
   | ErrorEvent
@@ -30,12 +24,6 @@ export type EditorEmittedEvent =
       type: 'invalid value'
       resolution: InvalidValueResolution | null
       value: Array<PortableTextBlock> | undefined
-    }
-  | {
-      /**
-       * @deprecated Will be removed in the next major version
-       */
-      type: 'loading'
     }
   | MutationEvent
   | PatchEvent

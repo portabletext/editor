@@ -424,9 +424,6 @@ export const PortableTextEditable = forwardRef<
       if (onPasteResult || !slateEditor.selection) {
         event.preventDefault()
 
-        // Resolve it as promise (can be either async promise or sync return value)
-        relayActor.send({type: 'loading'})
-
         Promise.resolve(onPasteResult)
           .then((result) => {
             debug('Custom paste function from client resolved', result)
@@ -487,9 +484,6 @@ export const PortableTextEditable = forwardRef<
 
             return error
           })
-          .finally(() => {
-            relayActor.send({type: 'done loading'})
-          })
       } else if (event.nativeEvent.clipboardData) {
         // Prevent Slate from handling the event
         event.preventDefault()
@@ -519,7 +513,7 @@ export const PortableTextEditable = forwardRef<
 
       debug('No result from custom paste handler, pasting normally')
     },
-    [editorActor, onPaste, portableTextEditor, relayActor, slateEditor],
+    [editorActor, onPaste, portableTextEditor, slateEditor],
   )
 
   const handleOnFocus: FocusEventHandler<HTMLDivElement> = useCallback(
