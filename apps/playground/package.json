@@ -40,7 +40,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.1.12",
+    "@tailwindcss/vite": "^4.1.16",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "@types/react-is": "^19.2.0",
@@ -51,8 +51,8 @@
     "eslint-plugin-react-hooks": "7.0.1",
     "tailwind-merge": "^3.3.1",
     "tailwind-variants": "^1.0.0",
-    "tailwindcss": "^4.1.12",
-    "tailwindcss-react-aria-components": "^2.0.0",
+    "tailwindcss": "^4.1.16",
+    "tailwindcss-react-aria-components": "^2.0.1",
     "typescript": "catalog:",
     "typescript-eslint": "^8.46.1",
     "vite": "^7.1.12",
