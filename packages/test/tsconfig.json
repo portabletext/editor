@@ -1,5 +1,5 @@
 {
-  "extends": "@sanity/pkg-utils/tsconfig/strictest.json",
+  "extends": "./tsconfig.settings.json",
   "compilerOptions": {
     "noEmit": true
   },

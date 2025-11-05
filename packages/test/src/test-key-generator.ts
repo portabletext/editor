@@ -1,3 +1,6 @@
+/**
+ * @public
+ */
 export function createTestKeyGenerator(prefix?: string) {
   let index = 0
 

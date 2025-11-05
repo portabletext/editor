@@ -112,6 +112,9 @@ type Context = {
   value: Array<PortableTextBlock>
 }
 
+/**
+ * @public
+ */
 export function getTersePt(
   context: Pick<Context, 'schema' | 'value'>,
 ): Array<string> {
@@ -160,6 +163,9 @@ export function getTersePt(
   return blocks
 }
 
+/**
+ * @public
+ */
 export function parseTersePt(
   context: Pick<Context, 'keyGenerator' | 'schema'>,
   tersePt: Array<string>,
@@ -297,6 +303,9 @@ export function parseTersePt(
   return blocks
 }
 
+/**
+ * @public
+ */
 export function parseTersePtString(text: string) {
   return text.split('|').map((span) => span.replace(/\\n/g, '\n'))
 }
