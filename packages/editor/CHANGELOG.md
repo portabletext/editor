@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.19.0
+
+### Minor Changes
+
+- [#1830](https://github.com/portabletext/editor/pull/1830) [`ae4fd2c`](https://github.com/portabletext/editor/commit/ae4fd2cc37b87d26f2db7a09c20c41486c88ace8) Thanks [@christianhg](https://github.com/christianhg)! - feat(`annotation.add`): allow specifying `_key`
+
 ## 2.18.1
 
 ### Patch Changes

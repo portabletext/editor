@@ -1,5 +1,46 @@
 # Changelog
 
+## 3.0.0
+
+### Major Changes
+
+- [#1832](https://github.com/portabletext/editor/pull/1832) [`10e282b`](https://github.com/portabletext/editor/commit/10e282bac9f196a64f469feb6eeeae3e6c021722) Thanks [@christianhg](https://github.com/christianhg)! - feat: align schema matcher callbacks
+
+  Schema matcher callbacks now consistently receive an object with a `context` property instead of receiving the context directly.
+
+  **Before:**
+
+  ```ts
+  <CharacterPairDecoratorPlugin
+    decorator={(context) =>
+      context.schema.decorators.find((decorator) => decorator.name === 'strong')?.name
+    }
+    pair={{char: '*', amount: 2}}
+  />
+  ```
+
+  **After:**
+
+  ```ts
+  <CharacterPairDecoratorPlugin
+    decorator={({context}) =>
+      context.schema.decorators.find((decorator) => decorator.name === 'strong')?.name
+    }
+    pair={{char: '*', amount: 2}}
+  />
+  ```
+
+### Minor Changes
+
+- [#1832](https://github.com/portabletext/editor/pull/1832) [`d860a49`](https://github.com/portabletext/editor/commit/d860a49d4eab6817da5eed56c7b27bbe9f2fb070) Thanks [@christianhg](https://github.com/christianhg)! - feat: mark APIs public
+
+### Patch Changes
+
+- [#1832](https://github.com/portabletext/editor/pull/1832) [`90a924f`](https://github.com/portabletext/editor/commit/90a924fddd7ba6298ce053fac638a3dae11ea638) Thanks [@christianhg](https://github.com/christianhg)! - fix: allow composing with other Behaviors
+
+- Updated dependencies [[`ae4fd2c`](https://github.com/portabletext/editor/commit/ae4fd2cc37b87d26f2db7a09c20c41486c88ace8)]:
+  - @portabletext/editor@2.19.0
+
 ## 2.0.1
 
 ### Patch Changes
