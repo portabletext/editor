@@ -222,17 +222,6 @@ export type BlurChange = {
 }
 
 /**
- * The editor is currently loading something
- * Could be used to show a spinner etc.
- * @beta
- * @deprecated Will be removed in the next major version
- */
-export type LoadingChange = {
-  type: 'loading'
-  isLoading: boolean
-}
-
-/**
  * The editor content is ready to be edited by the user
  * @beta */
 export type ReadyChange = {
@@ -327,7 +316,6 @@ export type EditorChange =
   | ErrorChange
   | FocusChange
   | InvalidValue
-  | LoadingChange
   | MutationChange
   | PatchChange
   | ReadyChange

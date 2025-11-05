@@ -10,12 +10,6 @@ export function eventToChange(
     }
     case 'patch':
       return event
-    case 'loading': {
-      return {type: 'loading', isLoading: true}
-    }
-    case 'done loading': {
-      return {type: 'loading', isLoading: false}
-    }
     case 'focused': {
       return {type: 'focus', event: event.event}
     }
