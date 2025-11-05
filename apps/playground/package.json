@@ -41,8 +41,8 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.12",
-    "@types/react": "^19.2.0",
-    "@types/react-dom": "^19.2.0",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
     "@types/react-is": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",
     "babel-plugin-react-compiler": "1.0.0",

@@ -60,7 +60,7 @@
     "@portabletext/editor": "workspace:^",
     "@portabletext/schema": "workspace:^",
     "@sanity/pkg-utils": "^9.0.1",
-    "@types/react": "^19.2.0",
+    "@types/react": "^19.2.2",
     "@vitejs/plugin-react": "^5.0.4",
     "@vitest/browser": "^4.0.5",
     "@vitest/browser-playwright": "^4.0.5",
