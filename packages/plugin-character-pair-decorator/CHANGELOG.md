@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.0.1
+
+### Patch Changes
+
+- [#1836](https://github.com/portabletext/editor/pull/1836) [`550b51a`](https://github.com/portabletext/editor/commit/550b51a35d5c257ef9e15d48c1c36d1492dd6a2c) Thanks [@christianhg](https://github.com/christianhg)! - fix: make APIs backwards compatible with previous major version
+
 ## 3.0.0
 
 ### Major Changes

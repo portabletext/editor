@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.0.1
+
+### Patch Changes
+
+- [#1836](https://github.com/portabletext/editor/pull/1836) [`4af5f6b`](https://github.com/portabletext/editor/commit/4af5f6bd1c845840c44c6d449ad67c36a050f7e6) Thanks [@christianhg](https://github.com/christianhg)! - fix: make APIs backwards compatible with previous major version
+
+- Updated dependencies [[`550b51a`](https://github.com/portabletext/editor/commit/550b51a35d5c257ef9e15d48c1c36d1492dd6a2c)]:
+  - @portabletext/plugin-character-pair-decorator@3.0.1
+
 ## 3.0.0
 
 ### Major Changes
