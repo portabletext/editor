@@ -467,8 +467,8 @@ importers:
         specifier: workspace:^
         version: link:../schema
       '@portabletext/to-html':
-        specifier: ^3.0.0
-        version: 3.0.0
+        specifier: ^4.0.0
+        version: 4.0.0
       '@xstate/react':
         specifier: ^6.0.0
         version: 6.0.0(@types/react@19.2.0)(react@19.2.0)(xstate@5.23.0)
@@ -2371,21 +2371,13 @@ packages:
     peerDependencies:
       react: ^18.2 || ^19
 
-  '@portabletext/to-html@3.0.0':
-    resolution: {integrity: sha512-MlU5Og1HqYnU9riXjtydJQcrG/kWmtgo8q2pGEDmLMbKD0Agel4umYLhVoHhRAwC7AEApu9U4BweO8HkY0SIow==}
-    engines: {node: ^14.13.1 || >=16.0.0}
-
-  '@portabletext/toolkit@3.0.1':
-    resolution: {integrity: sha512-z8NGqxKxfP0zuC58hPe8+xFC17qSbQ3nC9DgZmhrr7NUFaENJ6vAHJBsH5QzT7nKUjj++dTn+i4O2Uz9cqiGjA==}
-    engines: {node: ^14.13.1 || >=16.0.0}
+  '@portabletext/to-html@4.0.0':
+    resolution: {integrity: sha512-/bx6zojRDCzO0tXbbr2axozMsp39BeUSq1voY52fl7hvGkJDYvw7SKw01dGOTrco3ghxLzfbbkV0ZdlWE5tz/w==}
+    engines: {node: '>=20.19 <22 || >=22.12'}
 
   '@portabletext/toolkit@4.0.0':
     resolution: {integrity: sha512-Jj/QIy3vzZCNcxiUGM7KjGhUhyVjch+9pOzotWRARPNe07R6nbF/cRsKL70q5Xizf+6PVtFYwks4CSXKInC+wg==}
     engines: {node: '>=20.19 <22 || >=22.12'}
-
-  '@portabletext/types@2.0.15':
-    resolution: {integrity: sha512-2e6i2gSQsrA/5OL5Gm4/9bxB9MNO73Fa47zj+0mT93xkoQUCGCWX5fZh1YBJ86hszaRYlqvqG08oULxvvPPp/Q==}
-    engines: {node: ^14.13.1 || >=16.0.0 || >=18.0.0}
 
   '@portabletext/types@3.0.0':
     resolution: {integrity: sha512-7U8+bFcnguNtXr4rwMDj0EvJJDRzLaaof2mQqCjUcqxuuJpAppFaATZgrKmPI1uBgtFMi4unk1nIaOOmLHrX8Q==}
@@ -9076,20 +9068,14 @@ snapshots:
       '@portabletext/types': 3.0.0
       react: 19.2.0
 
-  '@portabletext/to-html@3.0.0':
+  '@portabletext/to-html@4.0.0':
     dependencies:
-      '@portabletext/toolkit': 3.0.1
-      '@portabletext/types': 2.0.15
-
-  '@portabletext/toolkit@3.0.1':
-    dependencies:
-      '@portabletext/types': 2.0.15
+      '@portabletext/toolkit': 4.0.0
+      '@portabletext/types': 3.0.0
 
   '@portabletext/toolkit@4.0.0':
     dependencies:
       '@portabletext/types': 3.0.0
-
-  '@portabletext/types@2.0.15': {}
 
   '@portabletext/types@3.0.0': {}
 
