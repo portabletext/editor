@@ -237,7 +237,6 @@ function createActors(config: {
         config.editorActor.send({
           type: 'mutation',
           patches: event.patches,
-          snapshot: event.snapshot,
           value: event.snapshot,
         })
       }

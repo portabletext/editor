@@ -281,7 +281,7 @@ export const playgroundMachine = setup({
             ...patch,
             origin: event.editorId === editor.id ? 'local' : 'remote',
           })),
-          snapshot: event.snapshot,
+          snapshot: event.value,
         })
       })
     },
