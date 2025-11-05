@@ -8,6 +8,7 @@ export const addAnnotationOperationImplementation: BehaviorOperationImplementati
   const parsedAnnotation = parseAnnotation({
     annotation: {
       _type: operation.annotation.name,
+      _key: operation.annotation._key,
       ...operation.annotation.value,
     },
     context,

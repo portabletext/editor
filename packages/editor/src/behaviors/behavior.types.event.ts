@@ -97,6 +97,7 @@ export type SyntheticBehaviorEvent =
       type: StrictExtract<SyntheticBehaviorEventType, 'annotation.add'>
       annotation: {
         name: string
+        _key?: string
         value: {[prop: string]: unknown}
       }
     }
