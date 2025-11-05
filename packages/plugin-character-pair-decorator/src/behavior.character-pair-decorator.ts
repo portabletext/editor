@@ -12,8 +12,13 @@ import {createCharacterPairRegex} from './regex.character-pair'
 export function createCharacterPairDecoratorBehavior(config: {
   decorator: ({
     context,
+    schema,
   }: {
     context: Pick<EditorContext, 'schema'>
+    /**
+     * @deprecated Use `context.schema` instead
+     */
+    schema: EditorContext['schema']
   }) => string | undefined
   pair: {char: string; amount: number}
   onDecorate: (offset: BlockOffset) => void
@@ -39,6 +44,7 @@ export function createCharacterPairDecoratorBehavior(config: {
 
       const decorator = config.decorator({
         context: {schema: snapshot.context.schema},
+        schema: snapshot.context.schema,
       })
 
       if (decorator === undefined) {
