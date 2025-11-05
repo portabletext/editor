@@ -119,7 +119,7 @@ const oneLineBehaviors = [
 ]
 
 /**
- * @beta
+ * @public
  * Restrict the editor to one line. The plugin takes care of blocking
  * `insert.break` events and smart handling of other `insert.*` events.
  *
