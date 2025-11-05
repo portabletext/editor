@@ -232,7 +232,7 @@ importers:
         specifier: ^5.23.0
         version: 5.23.0
       zod:
-        specifier: ^4.0.17
+        specifier: ^4.1.12
         version: 4.1.12
     devDependencies:
       '@tailwindcss/vite':
