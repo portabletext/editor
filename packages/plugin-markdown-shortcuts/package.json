@@ -58,7 +58,7 @@
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
-    "@types/react": "^19.1.12",
+    "@types/react": "^19.2.2",
     "@vitejs/plugin-react": "^5.0.4",
     "@vitest/browser": "^4.0.5",
     "@vitest/browser-playwright": "^4.0.5",
@@ -66,7 +66,7 @@
     "eslint": "^9.38.0",
     "eslint-plugin-react-hooks": "7.0.1",
     "racejar": "workspace:*",
-    "react": "^19.1.1",
+    "react": "^19.2.0",
     "typescript": "catalog:",
     "typescript-eslint": "^8.46.1",
     "vitest": "^4.0.5"
