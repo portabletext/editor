@@ -921,7 +921,7 @@ importers:
         specifier: 7.0.1
         version: 7.0.1(eslint@9.38.0(jiti@2.5.1))
       playwright:
-        specifier: ^1.55.0
+        specifier: ^1.56.1
         version: 1.56.1
       react:
         specifier: ^19.2.0
