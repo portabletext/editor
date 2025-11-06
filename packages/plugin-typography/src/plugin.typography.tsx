@@ -1,6 +1,5 @@
 import {
   InputRulePlugin,
-  type InputRule,
   type InputRuleGuard,
 } from '@portabletext/plugin-input-rule'
 import {useMemo} from 'react'
@@ -29,114 +28,7 @@ import {
   trademarkRule,
 } from './input-rules.typography'
 
-/**
- * @public
- */
-export type TypographyPluginProps = {
-  guard?: InputRuleGuard
-  /**
-   * Configure which rules to enable or disable. Ordinary rules like `emDash` and `ellipsis` are enabled by default.
-   * Less common rules like `multiplication` are disabled by default.
-   */
-  rules?: {
-    /**
-     * @defaultValue 'on'
-     */
-    emDash?: 'on' | 'off'
-    /**
-     * @defaultValue 'on'
-     */
-    ellipsis?: 'on' | 'off'
-    /**
-     * @defaultValue 'on'
-     */
-    openingDoubleQuote?: 'on' | 'off'
-    /**
-     * @defaultValue 'on'
-     */
-    closingDoubleQuote?: 'on' | 'off'
-    /**
-     * @defaultValue 'on'
-     */
-    openingSingleQuote?: 'on' | 'off'
-    /**
-     * @defaultValue 'on'
-     */
-    closingSingleQuote?: 'on' | 'off'
-    /**
-     * @defaultValue 'on'
-     */
-    leftArrow?: 'on' | 'off'
-    /**
-     * @defaultValue 'on'
-     */
-    rightArrow?: 'on' | 'off'
-    /**
-     * @defaultValue 'on'
-     */
-    copyright?: 'on' | 'off'
-    /**
-     * @defaultValue 'on'
-     */
-    trademark?: 'on' | 'off'
-    /**
-     * @defaultValue 'on'
-     */
-    servicemark?: 'on' | 'off'
-    /**
-     * @defaultValue 'on'
-     */
-    registeredTrademark?: 'on' | 'off'
-    /**
-     * @defaultValue 'off'
-     */
-    oneHalf?: 'on' | 'off'
-    /**
-     * @defaultValue 'off'
-     */
-    plusMinus?: 'on' | 'off'
-    /**
-     * @defaultValue 'off'
-     */
-    notEqual?: 'on' | 'off'
-    /**
-     * @defaultValue 'off'
-     */
-    laquo?: 'on' | 'off'
-    /**
-     * @defaultValue 'off'
-     */
-    raquo?: 'on' | 'off'
-    /**
-     * @defaultValue 'off'
-     */
-    multiplication?: 'on' | 'off'
-    /**
-     * @defaultValue 'off'
-     */
-    superscriptTwo?: 'on' | 'off'
-    /**
-     * @defaultValue 'off'
-     */
-    superscriptThree?: 'on' | 'off'
-    /**
-     * @defaultValue 'off'
-     */
-    oneQuarter?: 'on' | 'off'
-    /**
-     * @defaultValue 'off'
-     */
-    threeQuarters?: 'on' | 'off'
-  }
-}
-
-type RuleName = keyof NonNullable<TypographyPluginProps['rules']>
-
-const defaultRuleConfig: Array<{
-  name: RuleName
-  rule: InputRule
-  state: 'on' | 'off'
-}> = [
+const defaultRuleConfig = [
   {name: 'emDash', rule: emDashRule, state: 'on'},
   {name: 'ellipsis', rule: ellipsisRule, state: 'on'},
   {name: 'openingDoubleQuote', rule: openingDoubleQuoteRule, state: 'on'},
@@ -159,24 +51,97 @@ const defaultRuleConfig: Array<{
   {name: 'superscriptThree', rule: superscriptThreeRule, state: 'off'},
   {name: 'oneQuarter', rule: oneQuarterRule, state: 'off'},
   {name: 'threeQuarters', rule: threeQuartersRule, state: 'off'},
-]
+] as const
+
+type RuleName = (typeof defaultRuleConfig)[number]['name']
 
 /**
  * @public
  */
-export function TypographyPlugin(props: TypographyPluginProps) {
-  const configuredInputRules = useMemo(
-    () =>
-      defaultRuleConfig.flatMap((rule) =>
-        props.rules && props.rules[rule.name] === 'on'
-          ? {...rule.rule, guard: props.guard ?? (() => true)}
-          : (props.rules && props.rules[rule.name] === 'off') ||
-              rule.state === 'off'
-            ? []
-            : {...rule.rule, guard: props.guard ?? (() => true)},
-      ),
-    [props.guard, props.rules],
-  )
+export type TypographyPluginProps<
+  TEnabledRuleName extends RuleName = never,
+  TDisabledRuleName extends Exclude<RuleName, TEnabledRuleName> = never,
+> = {
+  guard?: InputRuleGuard
+  /**
+   * Preset configuration for rules.
+   * - `'default'`: Common typography rules enabled (em dash, ellipsis, quotes, arrows, copyright symbols)
+   * - `'all'`: All rules enabled
+   * - `'none'`: No rules enabled (use with `enable` prop)
+   *
+   * @defaultValue 'default'
+   */
+  preset?: 'default' | 'all' | 'none'
+  /**
+   * Enable specific rules (additive to preset).
+   * Use this to enable additional rules beyond the preset.
+   *
+   * @example
+   * ```tsx
+   * // Enable multiplication and plusMinus in addition to default rules
+   * <TypographyPlugin enable={['multiplication', 'plusMinus']} />
+   * ```
+   */
+  enable?: ReadonlyArray<TEnabledRuleName>
+  /**
+   * Disable specific rules (subtractive from preset).
+   * Use this to disable rules that would otherwise be enabled by the preset.
+   * Cannot contain rules that are in the `enable` array (TypeScript will enforce this).
+   *
+   * @example
+   * ```tsx
+   * // Disable em dash from the default rules
+   * <TypographyPlugin disable={['emDash']} />
+   * ```
+   */
+  disable?: ReadonlyArray<TDisabledRuleName>
+}
 
-  return <InputRulePlugin {...props} rules={configuredInputRules} />
+/**
+ * @public
+ */
+export function TypographyPlugin<
+  TEnabledRuleName extends RuleName = never,
+  TDisabledRuleName extends Exclude<RuleName, TEnabledRuleName> = never,
+>(props: TypographyPluginProps<TEnabledRuleName, TDisabledRuleName>) {
+  const {preset = 'default', enable = [], disable = [], guard} = props
+
+  const configuredInputRules = useMemo(() => {
+    // Determine which rules should be enabled based on preset
+    const enabledRules = new Set<RuleName>()
+
+    if (preset === 'all') {
+      // Enable all rules
+      for (const rule of defaultRuleConfig) {
+        enabledRules.add(rule.name)
+      }
+    } else if (preset === 'default') {
+      // Enable only default rules (state: 'on')
+      for (const rule of defaultRuleConfig) {
+        if (rule.state === 'on') {
+          enabledRules.add(rule.name)
+        }
+      }
+    }
+    // preset === 'none' starts with empty set
+
+    // Apply enable list (additive)
+    for (const ruleName of enable) {
+      enabledRules.add(ruleName)
+    }
+
+    // Apply disable list (subtractive)
+    for (const ruleName of disable) {
+      enabledRules.delete(ruleName)
+    }
+
+    // Build final rule list
+    return defaultRuleConfig.flatMap((rule) =>
+      enabledRules.has(rule.name)
+        ? [{...rule.rule, guard: guard ?? (() => true)}]
+        : [],
+    )
+  }, [preset, enable, disable, guard])
+
+  return <InputRulePlugin rules={configuredInputRules} />
 }

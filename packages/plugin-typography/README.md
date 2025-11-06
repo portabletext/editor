@@ -76,15 +76,78 @@ The plugin includes the following typographic transformation rules:
 | `oneQuarter`       | `1/4` → `¼`                      |
 | `threeQuarters`    | `3/4` → `¾`                      |
 
-## Configuring what Rules are Enabled
+## Configuring Rules
 
-Use the `rules` prop on the `TypographyPlugin` to control which rules are enabled:
+The plugin supports flexible configuration through `preset`, `enable`, and `disable` props:
+
+### Using Presets
+
+The `preset` prop provides quick configuration:
+
+- `'default'` (default): Common typography rules enabled
+- `'all'`: Enable all rules
+- `'none'`: Start with no rules (use with `enable`)
 
 ```tsx
-return <TypographyPlugin rules={{multiplication: 'on'}} />
+// Use default rules (most common transformations)
+<TypographyPlugin />
+
+// Enable everything
+<TypographyPlugin preset="all" />
+
+// Start from scratch and enable only specific rules
+<TypographyPlugin preset="none" enable={['emDash', 'ellipsis']} />
 ```
 
-`emDash`, `ellipsis`, `openingDoubleQuote`, `closingDoubleQuote`, `openingSingleQuote`, `closingSingleQuote`, `leftArrow`, `rightArrow`, `copyright`, `trademark`, `servicemark`, and `registeredTrademark` are `'on'` by default.
+### Enabling Additional Rules
+
+Use `enable` to add rules beyond the preset:
+
+```tsx
+// Add multiplication and plusMinus to default rules
+<TypographyPlugin enable={['multiplication', 'plusMinus']} />
+
+// Enable all rules except a few
+<TypographyPlugin preset="all" disable={['emDash', 'ellipsis']} />
+```
+
+### Disabling Rules
+
+Use `disable` to remove rules from the preset:
+
+```tsx
+// Use defaults but disable quote transformations
+<TypographyPlugin
+  disable={[
+    'openingDoubleQuote',
+    'closingDoubleQuote',
+    'openingSingleQuote',
+    'closingSingleQuote',
+  ]}
+/>
+```
+
+### Combining Options
+
+All three props work together. The order of operations is:
+
+1. Start with `preset` (default: `'default'`)
+2. Add rules from `enable`
+3. Remove rules from `disable`
+
+```tsx
+// Start with all rules, then customize
+<TypographyPlugin
+  preset="all"
+  disable={['multiplication']}
+/>
+
+// Start with none, enable only math symbols
+<TypographyPlugin
+  preset="none"
+  enable={['multiplication', 'plusMinus', 'notEqual']}
+/>
+```
 
 ## Controlling when Text Transformations Run
 

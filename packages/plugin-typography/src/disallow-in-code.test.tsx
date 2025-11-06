@@ -23,7 +23,7 @@ Feature({
     Before(async (context: Context) => {
       const {editor, locator} = await createTestEditor({
         children: (
-          <TypographyPlugin guard={codeGuard} rules={{multiplication: 'on'}} />
+          <TypographyPlugin guard={codeGuard} enable={['multiplication']} />
         ),
         schemaDefinition: defineSchema({
           decorators: [{name: 'strong'}, {name: 'code'}],
