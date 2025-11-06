@@ -1,5 +1,13 @@
 # @portabletext/plugin-typography
 
+## 3.0.0
+
+### Major Changes
+
+- [#1841](https://github.com/portabletext/editor/pull/1841) [`abdcd25`](https://github.com/portabletext/editor/commit/abdcd252aceedfbe914020f0548c70a1518cc3a2) Thanks [@christianhg](https://github.com/christianhg)! - feat: improve rule enabling/disabling API
+
+- [#1841](https://github.com/portabletext/editor/pull/1841) [`91674f2`](https://github.com/portabletext/editor/commit/91674f2df8f6ca90383fec62d3fd2ff500b39c35) Thanks [@christianhg](https://github.com/christianhg)! - feat: flip `createDecoratorGuard` into accepting an allowlist
+
 ## 2.0.3
 
 ### Patch Changes
