@@ -1,4 +1,4 @@
-import type {EditorSchema} from '@portabletext/editor'
+import type {EditorContext, EditorSchema} from '@portabletext/editor'
 import {
   getSelectedSpans,
   isActiveDecorator,
@@ -13,17 +13,29 @@ import type {InputRuleGuard} from '@portabletext/plugin-input-rule'
  * @example
  * ```tsx
  * const guard = createDecoratorGuard({
- *   decorators: ({schema}) => schema.decorators.flatMap((decorator) => decorator.name === 'code' ? [decorator.name] : []),
+ *  decorators: ({context}) => context.schema.decorators.flatMap((decorator) => decorator.name === 'code' ? [] : [decorator.name]),
  * })
  *
  * <TypographyPlugin guard={guard} />
  * ```
  */
 export function createDecoratorGuard(config: {
-  decorators: ({schema}: {schema: EditorSchema}) => Array<string>
+  decorators: ({
+    context,
+  }: {
+    context: Pick<EditorContext, 'schema'>
+  }) => Array<EditorSchema['decorators'][number]['name']>
 }): InputRuleGuard {
   return ({snapshot, event}) => {
-    const decorators = config.decorators({schema: snapshot.context.schema})
+    const allowedDecorators = config.decorators({
+      context: {
+        schema: snapshot.context.schema,
+      },
+    })
+    const decorators = snapshot.context.schema.decorators.flatMap(
+      (decorator) =>
+        allowedDecorators.includes(decorator.name) ? [] : [decorator.name],
+    )
 
     if (decorators.length === 0) {
       return true

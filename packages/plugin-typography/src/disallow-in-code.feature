@@ -41,14 +41,17 @@ Feature: Disallow in code
 
   Scenario Outline: Decorated and annotated text
     Given the text "foo bar baz"
-    And "code" around "bar"
+    And <decorator> around "bar"
     And a "link" "l1" around "bar"
     When the caret is put <position>
     And "->" is typed
     Then the text is <new text>
 
     Examples:
-      | position        | new text          |
-      | after "bar"     | "foo ,bar,→ baz"  |
-      | before "bar"    | "foo →,bar, baz"  |
-      | before "ar baz" | "foo ,b->ar, baz" |
+      | decorator | position        | new text          |
+      | "code"    | after "bar"     | "foo ,bar,→ baz"  |
+      | "strong"  | after "bar"     | "foo ,bar,→ baz"  |
+      | "code"    | before "bar"    | "foo →,bar, baz"  |
+      | "strong"  | before "bar"    | "foo →,bar, baz"  |
+      | "code"    | before "ar baz" | "foo ,b->ar, baz" |
+      | "strong"  | before "ar baz" | "foo ,b→ar, baz"  |
