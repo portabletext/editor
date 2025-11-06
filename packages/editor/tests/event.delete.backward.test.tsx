@@ -5,7 +5,11 @@ import {defineSchema} from '../src'
 import {effect, execute, forward} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import type {BehaviorEvent} from '../src/behaviors/behavior.types.event'
-import {getSelectionBeforeText} from '../src/internal-utils/text-selection'
+import {
+  getSelectionAfterText,
+  getSelectionBeforeText,
+  getTextSelection,
+} from '../src/internal-utils/text-selection'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -135,6 +139,140 @@ describe('event.delete.backward', () => {
           (behaviorEvent) => behaviorEvent.type === 'insert.block',
         ),
       ).toBe(true)
+    })
+  })
+
+  describe('Scenario: Deleting word', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const initialValue = [
+      {
+        _key: blockKey,
+        _type: 'block',
+        children: [{_key: spanKey, _type: 'span', text: 'foo bar baz'}],
+      },
+    ]
+
+    describe('with selection', () => {
+      test('collapsed selection', async () => {
+        const {editor, locator} = await createTestEditor({
+          initialValue,
+        })
+
+        await userEvent.click(locator)
+
+        const selection = getSelectionAfterText(
+          editor.getSnapshot().context,
+          'bar',
+        )
+
+        editor.send({
+          type: 'select',
+          at: selection,
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.selection).toEqual(selection)
+        })
+
+        editor.send({
+          type: 'delete',
+          direction: 'backward',
+          unit: 'word',
+        })
+
+        await vi.waitFor(() => {
+          expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo  baz'])
+        })
+      })
+
+      test('expanded selection', async () => {
+        const {editor, locator} = await createTestEditor({
+          initialValue,
+        })
+
+        await userEvent.click(locator)
+
+        const selection = getTextSelection(editor.getSnapshot().context, 'ar')
+
+        editor.send({
+          type: 'select',
+          at: selection,
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.selection).toEqual(selection)
+        })
+
+        editor.send({
+          type: 'delete',
+          direction: 'backward',
+          unit: 'word',
+        })
+
+        await vi.waitFor(() => {
+          expect(getTersePt(editor.getSnapshot().context)).toEqual([
+            'foo b baz',
+          ])
+        })
+      })
+    })
+
+    describe('without selection', () => {
+      test('collapsed selection', async () => {
+        const {editor} = await createTestEditor({
+          initialValue,
+        })
+
+        editor.send({
+          type: 'delete',
+          direction: 'backward',
+          unit: 'word',
+          at: {
+            anchor: {
+              path: [{_key: blockKey}, 'children', {_key: spanKey}],
+              offset: 7,
+            },
+            focus: {
+              path: [{_key: blockKey}, 'children', {_key: spanKey}],
+              offset: 7,
+            },
+          },
+        })
+
+        await vi.waitFor(() => {
+          expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo  baz'])
+        })
+      })
+
+      test('expanded selection', async () => {
+        const {editor} = await createTestEditor({
+          initialValue,
+        })
+
+        editor.send({
+          type: 'delete',
+          direction: 'backward',
+          unit: 'word',
+          at: {
+            anchor: {
+              path: [{_key: blockKey}, 'children', {_key: spanKey}],
+              offset: 5,
+            },
+            focus: {
+              path: [{_key: blockKey}, 'children', {_key: spanKey}],
+              offset: 7,
+            },
+          },
+        })
+
+        await vi.waitFor(() => {
+          expect(getTersePt(editor.getSnapshot().context)).toEqual([
+            'foo b baz',
+          ])
+        })
+      })
     })
   })
 

@@ -106,6 +106,24 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
     }
   }
 
+  if (operation.unit === 'word') {
+    const range = at ?? operation.editor.selection ?? undefined
+
+    if (!range) {
+      throw new Error('Unable to delete word without a selection')
+    }
+
+    if (Range.isCollapsed(range)) {
+      deleteText(operation.editor, {
+        at: range,
+        unit: 'word',
+        reverse: operation.direction === 'backward',
+      })
+
+      return
+    }
+  }
+
   const hanging = reverse
     ? endPoint
       ? isTextBlock(context, endBlock)

@@ -4,6 +4,7 @@ import {Given, Then, When} from 'racejar'
 import {assert, expect, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {getEditorSelection} from '../../internal-utils/editor-selection'
+import {IS_MAC} from '../../internal-utils/is-hotkey'
 import {getSelectionText} from '../../internal-utils/selection-text'
 import {getTextBlockKey} from '../../internal-utils/text-block-key'
 import {getTextMarks} from '../../internal-utils/text-marks'
@@ -233,6 +234,22 @@ export const stepDefinitions = [
         await userEvent.keyboard(button)
         await new Promise((resolve) => setTimeout(resolve, 100))
       }
+    },
+  ),
+  When(
+    '{shortcut} is pressed',
+    async (_: Context, shortcut: Parameter['shortcut']) => {
+      const shortcuts: Record<Parameter['shortcut'], string> = {
+        'deleteWord.backward': IS_MAC
+          ? '{Alt>}{Backspace}{/Alt}'
+          : '{Control>}{Backspace}{/Control}',
+        'deleteWord.forward': IS_MAC
+          ? '{Alt>}{Delete}{/Alt}'
+          : '{Control>}{Delete}{/Control}',
+      }
+
+      await userEvent.keyboard(shortcuts[shortcut])
+      await new Promise((resolve) => setTimeout(resolve, 100))
     },
   ),
 

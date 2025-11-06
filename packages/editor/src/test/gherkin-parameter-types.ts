@@ -64,6 +64,10 @@ const parameterType = {
     name: 'select-position',
     matcher: /"(start|end|none)"/,
   }),
+  shortcut: createParameterType<'deleteWord.backward' | 'deleteWord.forward'>({
+    name: 'shortcut',
+    matcher: /"(deleteWord\.backward|deleteWord\.forward)"/,
+  }),
   style: createParameterType({
     name: 'style',
     matcher: /"(normal|blockquote|h\d)"/,
@@ -96,6 +100,7 @@ export const parameterTypes = [
   parameterType.marks,
   parameterType.placement,
   parameterType.selectPosition,
+  parameterType.shortcut,
   parameterType.style,
   parameterType.tersePt,
   parameterType.text,
