@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.0.4
+
+### Patch Changes
+
+- [#1844](https://github.com/portabletext/editor/pull/1844) [`dd80369`](https://github.com/portabletext/editor/commit/dd80369dcb68b1d6910828a90a8ce5bf3e5fb5d6) Thanks [@stipsan](https://github.com/stipsan)! - fix: add support for react 18
+
+- Updated dependencies [[`dd80369`](https://github.com/portabletext/editor/commit/dd80369dcb68b1d6910828a90a8ce5bf3e5fb5d6)]:
+  - @portabletext/keyboard-shortcuts@2.0.1
+  - @portabletext/editor@2.19.2
+
 ## 3.0.3
 
 ### Patch Changes

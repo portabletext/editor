@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.1
+
+### Patch Changes
+
+- [#1844](https://github.com/portabletext/editor/pull/1844) [`dd80369`](https://github.com/portabletext/editor/commit/dd80369dcb68b1d6910828a90a8ce5bf3e5fb5d6) Thanks [@stipsan](https://github.com/stipsan)! - fix: add support for react 18
+
 ## 2.0.0
 
 ### Major Changes

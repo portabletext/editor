@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.19.2
+
+### Patch Changes
+
+- Updated dependencies [[`dd80369`](https://github.com/portabletext/editor/commit/dd80369dcb68b1d6910828a90a8ce5bf3e5fb5d6)]:
+  - @portabletext/keyboard-shortcuts@2.0.1
+
 ## 2.19.1
 
 ### Patch Changes

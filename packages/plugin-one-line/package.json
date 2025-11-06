@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-one-line",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "🤏 Restricts the Portable Text Editor to a single line",
   "keywords": [
     "portabletext",
