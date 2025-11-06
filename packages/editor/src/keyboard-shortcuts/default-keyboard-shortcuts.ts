@@ -75,6 +75,48 @@ export const defaultKeyboardShortcuts = {
       },
     ],
   }),
+  deleteWord: {
+    backward: createKeyboardShortcut({
+      default: [
+        {
+          key: 'Backspace',
+          alt: false,
+          ctrl: true,
+          meta: false,
+          // shift is optional
+        },
+      ],
+      apple: [
+        {
+          key: 'Backspace',
+          alt: true,
+          ctrl: false,
+          meta: false,
+          // shift is optional
+        },
+      ],
+    }),
+    forward: createKeyboardShortcut({
+      default: [
+        {
+          key: 'Delete',
+          alt: false,
+          ctrl: true,
+          meta: false,
+          // shift is optional
+        },
+      ],
+      apple: [
+        {
+          key: 'Delete',
+          alt: true,
+          ctrl: false,
+          meta: false,
+          // shift is optional
+        },
+      ],
+    }),
+  },
   history: {
     undo,
     redo,

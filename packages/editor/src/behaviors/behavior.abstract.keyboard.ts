@@ -37,6 +37,7 @@ export const abstractKeyboardBehaviors = [
       getFocusInlineObject(snapshot),
     actions: [() => [raise({type: 'delete.backward', unit: 'character'})]],
   }),
+
   /**
    * When Delete is pressed on an inline object, Slate will raise a
    * `delete.forward` event with `unit: 'block'`. This is wrong and this
@@ -49,6 +50,20 @@ export const abstractKeyboardBehaviors = [
       isSelectionCollapsed(snapshot) &&
       getFocusInlineObject(snapshot),
     actions: [() => [raise({type: 'delete.forward', unit: 'character'})]],
+  }),
+
+  defineBehavior({
+    on: 'keyboard.keydown',
+    guard: ({event}) =>
+      defaultKeyboardShortcuts.deleteWord.backward.guard(event.originEvent),
+    actions: [() => [raise({type: 'delete.backward', unit: 'word'})]],
+  }),
+
+  defineBehavior({
+    on: 'keyboard.keydown',
+    guard: ({event}) =>
+      defaultKeyboardShortcuts.deleteWord.forward.guard(event.originEvent),
+    actions: [() => [raise({type: 'delete.forward', unit: 'word'})]],
   }),
 
   /**
