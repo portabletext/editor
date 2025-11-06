@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.19.1
+
+### Patch Changes
+
+- [#1839](https://github.com/portabletext/editor/pull/1839) [`b669b14`](https://github.com/portabletext/editor/commit/b669b14cc70a12c22a0726bc8e1cb31e336acdbc) Thanks [@christianhg](https://github.com/christianhg)! - fix: make sure delete word shortcuts work
+
 ## 2.19.0
 
 ### Minor Changes
