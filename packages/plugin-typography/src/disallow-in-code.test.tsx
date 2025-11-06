@@ -12,9 +12,9 @@ import disallowInCodeFeature from './disallow-in-code.feature?raw'
 import {TypographyPlugin} from './plugin.typography'
 
 const codeGuard = createDecoratorGuard({
-  decorators: ({schema}) =>
-    schema.decorators.flatMap((decorator) =>
-      decorator.name === 'code' ? [decorator.name] : [],
+  decorators: ({context}) =>
+    context.schema.decorators.flatMap((decorator) =>
+      decorator.name === 'code' ? [] : [decorator.name],
     ),
 })
 

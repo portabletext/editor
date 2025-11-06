@@ -186,9 +186,9 @@ export function Editor(props: {
               <>
                 <TypographyPlugin
                   guard={createDecoratorGuard({
-                    decorators: ({schema}) =>
-                      schema.decorators.flatMap((decorator) =>
-                        decorator.name === 'code' ? [decorator.name] : [],
+                    decorators: ({context}) =>
+                      context.schema.decorators.flatMap((decorator) =>
+                        decorator.name === 'code' ? [] : [decorator.name],
                       ),
                   })}
                 />

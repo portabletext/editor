@@ -90,7 +90,7 @@ return <TypographyPlugin rules={{multiplication: 'on'}} />
 
 The `TypographyPlugin` has an optional `guard` prop that accepts any type of `BehaviorGuard`. Here, you'll have access to the current `EditorSnapshot` as well as information about the current rule being matched.
 
-Because disallowing text transformations inside code is a common use case, this plugin ships a built-in `createDecoratorGuard` function. use that to create a `guard` that disallows text transformations inside certain decorators:
+Because disallowing text transformations inside code is a common use case, this plugin ships a built-in `createDecoratorGuard` function. use that to create a `guard` that only allows text transformations inside certain decorators:
 
 ```tsx
 import {
@@ -101,9 +101,9 @@ import {
 return (
   <TypographyPlugin
     guard={createDecoratorGuard({
-      decorators: ({schema}) =>
-        schema.decorators.flatMap((decorator) =>
-          decorator.name === 'code' ? [decorator.name] : [],
+      decorators: ({context}) =>
+        context.schema.decorators.flatMap((decorator) =>
+          decorator.name === 'code' ? [] : [decorator.name],
         ),
     })}
   />
