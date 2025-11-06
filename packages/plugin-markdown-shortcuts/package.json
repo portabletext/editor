@@ -54,7 +54,8 @@
   },
   "dependencies": {
     "@portabletext/plugin-character-pair-decorator": "workspace:^",
-    "@portabletext/plugin-input-rule": "workspace:~"
+    "@portabletext/plugin-input-rule": "workspace:~",
+    "react-compiler-runtime": "1.0.0"
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
@@ -73,7 +74,7 @@
   },
   "peerDependencies": {
     "@portabletext/editor": "workspace:^",
-    "react": "^19"
+    "react": "^18.3 || ^19"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"

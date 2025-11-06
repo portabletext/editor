@@ -56,7 +56,8 @@
   },
   "dependencies": {
     "@sanity/diff-patch": "^6.0.0",
-    "@sanity/json-match": "^1.0.5"
+    "@sanity/json-match": "^1.0.5",
+    "react-compiler-runtime": "1.0.0"
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:^",
@@ -84,8 +85,8 @@
   "peerDependencies": {
     "@portabletext/editor": "workspace:^",
     "@sanity/sdk-react": "^2.1.2",
-    "react": "^19",
-    "react-dom": "^19"
+    "react": "^18.3 || ^19",
+    "react-dom": "^18.3 || ^19"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"

@@ -46,6 +46,9 @@
     "test:unit:watch": "vitest --project unit",
     "test:watch": "vitest"
   },
+  "dependencies": {
+    "react-compiler-runtime": "1.0.0"
+  },
   "devDependencies": {
     "@sanity/pkg-utils": "^9.0.1",
     "typescript": "catalog:",
