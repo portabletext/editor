@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.20.0
+
+### Minor Changes
+
+- [#1853](https://github.com/portabletext/editor/pull/1853) [`2b87d38`](https://github.com/portabletext/editor/commit/2b87d387ee39f12202bcae3a1d7e82a7fc3729b9) Thanks [@christianhg](https://github.com/christianhg)! - feat(`decorator.(add|toggle)`): support proper editor selection
+
+### Patch Changes
+
+- [#1855](https://github.com/portabletext/editor/pull/1855) [`d1abdbc`](https://github.com/portabletext/editor/commit/d1abdbc4cb7aef5922086e3bd446ec7b24663343) Thanks [@christianhg](https://github.com/christianhg)! - fix(`delete.text`): simplify and make obsolete
+
+- [#1855](https://github.com/portabletext/editor/pull/1855) [`f4021e5`](https://github.com/portabletext/editor/commit/f4021e53f862686bcaac087c2ff1a7033a797d04) Thanks [@christianhg](https://github.com/christianhg)! - fix: deprecate `getTrimmedSelection`
+
 ## 2.19.3
 
 ### Patch Changes
