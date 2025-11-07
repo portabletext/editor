@@ -51,7 +51,7 @@
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@sanity/pkg-utils": "^9.0.1",
+    "@sanity/pkg-utils": "^9.0.3",
     "@types/lodash": "^4.17.20",
     "typescript": "catalog:",
     "vitest": "^4.0.6"
