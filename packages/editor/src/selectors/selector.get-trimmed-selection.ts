@@ -14,6 +14,8 @@ import {isSelectionCollapsed} from './selector.is-selection-collapsed'
 
 /**
  * @public
+ *
+ * @deprecated - Will be removed in the next major version.
  */
 export const getTrimmedSelection: EditorSelector<EditorSelection> = (
   snapshot,

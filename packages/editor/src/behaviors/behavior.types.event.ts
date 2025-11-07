@@ -2,7 +2,6 @@ import type {PortableTextBlock} from '@sanity/types'
 import type {EventPosition} from '../internal-utils/event-position'
 import type {MIMEType} from '../internal-utils/mime-type'
 import type {OmitFromUnion, PickFromUnion, StrictExtract} from '../type-utils'
-import type {BlockOffset} from '../types/block-offset'
 import type {
   BlockWithOptionalKey,
   ChildWithOptionalKey,
