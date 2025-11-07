@@ -35,7 +35,7 @@ test(htmlToBlocks.name, () => {
             if (isElement(el) && el.tagName.toLowerCase() === 'cta') {
               const items = Array.from(el.childNodes)
               const title = findElement(items, 'h2')
-              const intro = findElement(items, 'div')?.childNodes[0]!
+              const intro = findElement(items, 'div')?.childNodes[0]
               const anchor = findElement(items, 'a')
 
               return block({
