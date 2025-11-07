@@ -57,7 +57,7 @@
     "@portabletext/plugin-input-rule": "workspace:~",
     "@xstate/react": "^6.0.0",
     "react-compiler-runtime": "1.0.0",
-    "xstate": "^5.23.0"
+    "xstate": "^5.24.0"
   },
   "devDependencies": {
     "@portabletext/editor": "workspace:*",
