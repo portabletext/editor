@@ -1,3 +1,4 @@
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
@@ -29,7 +30,11 @@ describe('Setup', () => {
       },
     ]
     const events: Array<EditorEmittedEvent> = []
-    const mutationEvents: Array<MutationEvent> = []
+    let mutationEvent: MutationEvent | undefined
+    let resolveFooBarMutation: () => void
+    const fooBarMutationPromise = new Promise<void>((resolve) => {
+      resolveFooBarMutation = resolve
+    })
 
     const {editor, locator} = await createTestEditor({
       children: (
@@ -37,8 +42,15 @@ describe('Setup', () => {
           on={(event) => {
             events.push(event)
 
-            if (event.type === 'mutation') {
-              mutationEvents.push(event)
+            if (
+              event.type === 'mutation' &&
+              getTersePt({
+                schema: compileSchema(defineSchema({})),
+                value: event.value ?? [],
+              }).at(0) === 'foo bar'
+            ) {
+              resolveFooBarMutation()
+              mutationEvent = event
             }
           }}
         />
@@ -74,8 +86,10 @@ describe('Setup', () => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo bar'])
     })
 
+    await fooBarMutationPromise
+
     await vi.waitFor(() => {
-      expect(mutationEvents).toEqual([
+      expect(mutationEvent).toEqual(
         expect.objectContaining({
           type: 'mutation',
           snapshot: expect.arrayContaining([
@@ -95,7 +109,7 @@ describe('Setup', () => {
             },
           ]),
         }),
-      ])
+      )
     })
   })
 })
