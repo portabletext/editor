@@ -3,10 +3,8 @@ import {getFocusChild} from '../selectors/selector.get-focus-child'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getNextBlock} from '../selectors/selector.get-next-block'
 import {getPreviousBlock} from '../selectors/selector.get-previous-block'
-import {getTrimmedSelection} from '../selectors/selector.get-trimmed-selection'
 import {isAtTheEndOfBlock} from '../selectors/selector.is-at-the-end-of-block'
 import {isAtTheStartOfBlock} from '../selectors/selector.is-at-the-start-of-block'
-import {blockOffsetsToSelection} from '../utils/util.block-offsets-to-selection'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
@@ -270,33 +268,6 @@ export const abstractDeleteBehaviors = [
   }),
   defineBehavior({
     on: 'delete.text',
-    guard: ({snapshot, event}) => {
-      const selection = blockOffsetsToSelection({
-        context: snapshot.context,
-        offsets: event.at,
-      })
-
-      if (!selection) {
-        return false
-      }
-
-      const trimmedSelection = getTrimmedSelection({
-        ...snapshot,
-        context: {
-          ...snapshot.context,
-          value: snapshot.context.value,
-          selection,
-        },
-      })
-
-      if (!trimmedSelection) {
-        return false
-      }
-
-      return {
-        selection: trimmedSelection,
-      }
-    },
-    actions: [(_, {selection}) => [raise({type: 'delete', at: selection})]],
+    actions: [({event}) => [raise({...event, type: 'delete'})]],
   }),
 ]
