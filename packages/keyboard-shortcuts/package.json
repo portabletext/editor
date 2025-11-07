@@ -47,7 +47,7 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
-    "@sanity/pkg-utils": "^9.0.1",
+    "@sanity/pkg-utils": "^9.0.3",
     "typescript": "catalog:",
     "vitest": "^4.0.6"
   },

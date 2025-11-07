@@ -67,7 +67,7 @@
   "devDependencies": {
     "@jest/globals": "^30.2.0",
     "@playwright/test": "^1.56.1",
-    "@sanity/pkg-utils": "^9.0.1",
+    "@sanity/pkg-utils": "^9.0.3",
     "typescript": "catalog:",
     "vitest": "^4.0.6"
   },
