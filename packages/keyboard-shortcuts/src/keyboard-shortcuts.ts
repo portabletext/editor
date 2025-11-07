@@ -3,7 +3,7 @@ import {isKeyboardShortcut} from './is-keyboard-shortcut'
 import type {KeyboardEventDefinition} from './keyboard-event-definition'
 
 /**
- * @beta
+ * @public
  * Definition of a keyboard shortcut with platform-specific keyboard event
  * definitions.
  *
@@ -36,7 +36,7 @@ export type KeyboardShortcutDefinition = {
 }
 
 /**
- * @beta
+ * @public
  * A resolved keyboard shortcut for the current platform that has been
  * processed by `createKeyboardShortcut(...)` to select the appropriate
  * platform-specific key combination. The `guard` function determines if the
@@ -57,7 +57,7 @@ export type KeyboardShortcut<
 }
 
 /**
- * @beta
+ * @public
  * Creates a `KeyboardShortcut` from a `KeyboardShortcutDefinition`.
  *
  * `default` keyboard event definitions are required while the `apple`

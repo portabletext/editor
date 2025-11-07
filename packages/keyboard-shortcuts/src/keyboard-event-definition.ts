@@ -1,5 +1,5 @@
 /**
- * @beta
+ * @public
  * A keyboard event definition that can be used to create a keyboard shortcut.
  *
  * At least one of `key` or `code` must be provided while the `alt`, `ctrl`,
