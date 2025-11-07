@@ -7,7 +7,6 @@ export type {
   PortableTextSpan,
 } from '@sanity/types'
 export type {Editor, EditorConfig, EditorEvent} from './editor'
-export {EditorEventListener} from './editor-event-listener'
 export {PortableTextEditable} from './editor/Editable'
 export type {PortableTextEditableProps} from './editor/Editable'
 export type {PatchesEvent} from './editor/editor-machine'
@@ -55,18 +54,15 @@ export type {
   BlockRenderProps,
   BlockStyleRenderProps,
   BlurChange,
-  ConnectionChange,
   EditableAPI,
   EditableAPIDeleteOptions,
   EditorChange,
   EditorChanges,
   EditorSelection,
   EditorSelectionPoint,
-  ErrorChange,
   FocusChange,
   InvalidValue,
   InvalidValueResolution,
-  LoadingChange,
   MutationChange,
   OnBeforeInputFn,
   OnCopyFn,
@@ -80,7 +76,6 @@ export type {
   RangeDecoration,
   RangeDecorationOnMovedDetails,
   ReadyChange,
-  RedoChange,
   RenderAnnotationFunction,
   RenderBlockFunction,
   RenderChildFunction,
@@ -91,8 +86,6 @@ export type {
   RenderStyleFunction,
   ScrollSelectionIntoViewFunction,
   SelectionChange,
-  UndoChange,
-  UnsetChange,
   ValueChange,
 } from './types/editor'
 export type {HotkeyOptions} from './types/options'

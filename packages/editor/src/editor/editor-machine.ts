@@ -57,10 +57,6 @@ export type ExternalEditorEvent =
       type: 'update readOnly'
       readOnly: boolean
     }
-  | {
-      type: 'update maxBlocks'
-      maxBlocks: number | undefined
-    }
   | PatchesEvent
 
 type InternalPatchEvent = NamespaceEvent<PatchEvent, 'internal'> & {
@@ -191,7 +187,6 @@ export const editorMachine = setup({
       pendingIncomingPatchesEvents: Array<PatchesEvent>
       schema: EditorSchema
       initialReadOnly: boolean
-      maxBlocks: number | undefined
       selection: EditorSelection
       initialValue: Array<PortableTextBlock> | undefined
       internalDrag?: {
@@ -206,7 +201,6 @@ export const editorMachine = setup({
       converters?: Array<Converter>
       getLegacySchema: () => PortableTextMemberSchemaTypes
       keyGenerator: () => string
-      maxBlocks?: number
       readOnly?: boolean
       schema: EditorSchema
       initialValue?: Array<PortableTextBlock>
@@ -387,15 +381,11 @@ export const editorMachine = setup({
     schema: input.schema,
     selection: null,
     initialReadOnly: input.readOnly ?? false,
-    maxBlocks: input.maxBlocks,
     initialValue: input.initialValue,
   }),
   on: {
     'add behavior': {actions: 'add behavior to context'},
     'remove behavior': {actions: 'remove behavior from context'},
-    'update maxBlocks': {
-      actions: assign({maxBlocks: ({event}) => event.maxBlocks}),
-    },
     'add slate editor': {actions: 'add slate editor to context'},
     'update selection': {
       actions: [

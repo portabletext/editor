@@ -12,11 +12,10 @@ import {
   setNodePatch,
   splitNodePatch,
 } from '../../internal-utils/operation-to-patches'
-import {fromSlateValue, isEqualToEmptyEditor} from '../../internal-utils/values'
+import {isEqualToEmptyEditor} from '../../internal-utils/values'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
-import type {RelayActor} from '../relay-machine'
-import {IS_PROCESSING_REMOTE_CHANGES, KEY_TO_VALUE_ELEMENT} from '../weakMaps'
+import {IS_PROCESSING_REMOTE_CHANGES} from '../weakMaps'
 import {getCurrentUndoStepId} from '../with-undo-step'
 import {withRemoteChanges} from '../withChanges'
 import {isPatching, PATCHING, withoutPatching} from '../withoutPatching'
@@ -27,13 +26,11 @@ const debugVerbose = false
 
 interface Options {
   editorActor: EditorActor
-  relayActor: RelayActor
   subscriptions: Array<() => () => void>
 }
 
 export function createWithPatches({
   editorActor,
-  relayActor,
   subscriptions,
 }: Options): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
   // The previous editor children are needed to figure out the _key of deleted nodes
@@ -238,14 +235,6 @@ export function createWithPatches({
         )
       ) {
         patches = [...patches, unset([])]
-        relayActor.send({
-          type: 'unset',
-          previousValue: fromSlateValue(
-            previousChildren,
-            editorActor.getSnapshot().context.schema.block.name,
-            KEY_TO_VALUE_ELEMENT.get(editor),
-          ),
-        })
       }
 
       // Prepend patches with setIfMissing if going from empty editor to something involving a patch.

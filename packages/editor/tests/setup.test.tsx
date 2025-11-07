@@ -78,7 +78,7 @@ describe('Setup', () => {
       expect(mutationEvents).toEqual([
         expect.objectContaining({
           type: 'mutation',
-          snapshot: expect.arrayContaining([
+          value: expect.arrayContaining([
             {
               _type: 'block',
               _key: expect.any(String),

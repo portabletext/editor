@@ -108,7 +108,6 @@ export function createInternalEditor(config: EditorConfig): {
 
         case 'update readOnly':
         case 'patches':
-        case 'update maxBlocks':
           editorActor.send(event)
           break
 
@@ -125,11 +124,9 @@ export function createInternalEditor(config: EditorConfig): {
       const subscription = relayActor.on(event, (event) => {
         switch (event.type) {
           case 'blurred':
-          case 'done loading':
           case 'editable':
           case 'focused':
           case 'invalid value':
-          case 'loading':
           case 'mutation':
           case 'patch':
           case 'read only':
@@ -169,7 +166,6 @@ function editorConfigToMachineInput(config: EditorConfig) {
     converters: createCoreConverters(legacySchema),
     getLegacySchema: () => legacySchema,
     keyGenerator: config.keyGenerator ?? defaultKeyGenerator,
-    maxBlocks: config.maxBlocks,
     readOnly: config.readOnly,
     schema,
     initialValue: config.initialValue,
@@ -239,7 +235,6 @@ function createActors(config: {
         config.editorActor.send({
           type: 'mutation',
           patches: event.patches,
-          snapshot: event.snapshot,
           value: event.snapshot,
         })
       }

@@ -28,7 +28,6 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
 
   const instance = withPlugins(withReact(createEditor()), {
     editorActor: config.editorActor,
-    relayActor: config.relayActor,
     subscriptions: config.subscriptions,
   })
 

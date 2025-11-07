@@ -20,10 +20,6 @@ export type EditorConfig = {
    * @beta
    */
   keyGenerator?: () => string
-  /**
-   * @deprecated Will be removed in the next major version
-   */
-  maxBlocks?: number
   readOnly?: boolean
   initialValue?: Array<PortableTextBlock>
 } & (

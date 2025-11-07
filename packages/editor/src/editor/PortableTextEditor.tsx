@@ -68,11 +68,6 @@ export type PortableTextEditorProps<
         schemaType: ArraySchemaType<PortableTextBlock> | ArrayDefinition
 
         /**
-         * Maximum number of blocks to allow within the editor
-         */
-        maxBlocks?: number | string
-
-        /**
          * Function used to generate keys for array items (`_key`)
          */
         keyGenerator?: () => string
@@ -152,10 +147,6 @@ export class PortableTextEditor extends Component<
       const {actors, editor, subscriptions} = createInternalEditor({
         initialValue: props.value,
         keyGenerator: props.keyGenerator,
-        maxBlocks:
-          props.maxBlocks === undefined
-            ? undefined
-            : Number.parseInt(props.maxBlocks.toString(), 10),
         readOnly: props.readOnly,
         schema: props.schemaType,
       })
@@ -218,16 +209,6 @@ export class PortableTextEditor extends Component<
         this.editor._internal.editorActor.send({
           type: 'update readOnly',
           readOnly: this.props.readOnly ?? false,
-        })
-      }
-
-      if (this.props.maxBlocks !== prevProps.maxBlocks) {
-        this.editor._internal.editorActor.send({
-          type: 'update maxBlocks',
-          maxBlocks:
-            this.props.maxBlocks === undefined
-              ? undefined
-              : Number.parseInt(this.props.maxBlocks.toString(), 10),
         })
       }
 
