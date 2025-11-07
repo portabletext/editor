@@ -1,12 +1,5 @@
 import {Editor, Range, Text, Transforms} from 'slate'
-import {KEY_TO_VALUE_ELEMENT} from '../editor/weakMaps'
-import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {fromSlateValue} from '../internal-utils/values'
-import {getTrimmedSelection} from '../selectors/selector.get-trimmed-selection'
-import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
-import {blockOffsetsToSelection} from '../utils/util.block-offsets-to-selection'
-import {selectionPointToBlockOffset} from '../utils/util.selection-point-to-block-offset'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const decoratorAddOperationImplementation: BehaviorOperationImplementation<
@@ -14,147 +7,61 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
 > = ({context, operation}) => {
   const editor = operation.editor
   const mark = operation.decorator
-  const value = fromSlateValue(
-    editor.children,
-    context.schema.block.name,
-    KEY_TO_VALUE_ELEMENT.get(editor),
-  )
 
-  const manualAnchor = operation.at?.anchor
-    ? blockOffsetToSpanSelectionPoint({
-        context: {
-          ...context,
-          value,
-        },
-        blockOffset: operation.at.anchor,
-        direction: 'backward',
-      })
-    : undefined
-  const manualFocus = operation.at?.focus
-    ? blockOffsetToSpanSelectionPoint({
-        context: {
-          ...context,
-          value,
-        },
-        blockOffset: operation.at.focus,
-        direction: 'forward',
-      })
-    : undefined
-  const manualSelection =
-    manualAnchor && manualFocus
-      ? {
-          anchor: manualAnchor,
-          focus: manualFocus,
-        }
-      : undefined
-
-  const selection = manualSelection
-    ? (toSlateRange({
+  let at = operation.at
+    ? toSlateRange({
         context: {
           schema: context.schema,
           value: operation.editor.value,
-          selection: manualSelection,
+          selection: operation.at,
         },
         blockIndexMap: operation.editor.blockIndexMap,
-      }) ?? editor.selection)
-    : editor.selection
+      })
+    : operation.editor.selection
 
-  if (!selection) {
-    return
+  if (!at) {
+    throw new Error('Unable to add decorator without a selection')
   }
 
-  const editorSelection = slateRangeToSelection({
-    schema: context.schema,
-    editor,
-    range: selection,
-  })
-  const anchorOffset = editorSelection
-    ? selectionPointToBlockOffset({
-        context: {
-          ...context,
-          value,
-        },
-        selectionPoint: editorSelection.anchor,
-      })
-    : undefined
-  const focusOffset = editorSelection
-    ? selectionPointToBlockOffset({
-        context: {
-          ...context,
-          value,
-        },
-        selectionPoint: editorSelection.focus,
-      })
-    : undefined
+  if (Range.isExpanded(at)) {
+    const rangeRef = Editor.rangeRef(editor, at, {affinity: 'inward'})
+    const [start, end] = Range.edges(at)
 
-  if (!anchorOffset || !focusOffset) {
-    throw new Error('Unable to find anchor or focus offset')
-  }
+    const endAtEndOfNode = Editor.isEnd(editor, end, end.path)
 
-  if (Range.isExpanded(selection)) {
-    // Split if needed
-    Transforms.setNodes(
-      editor,
-      {},
-      {at: selection, match: Text.isText, split: true, hanging: true},
-    )
-
-    // The value might have changed after splitting
-    const newValue = fromSlateValue(
-      editor.children,
-      context.schema.block.name,
-      KEY_TO_VALUE_ELEMENT.get(editor),
-    )
-    // We need to find the new selection from the original offsets because the
-    // split operation might have changed the value.
-    const newSelection = blockOffsetsToSelection({
-      context: {
-        ...context,
-        value: newValue,
-      },
-      offsets: {anchor: anchorOffset, focus: focusOffset},
-      backward: editorSelection?.backward,
+    Transforms.splitNodes(editor, {
+      at: end,
+      match: Text.isText,
+      mode: 'lowest',
+      voids: false,
+      always: !endAtEndOfNode,
     })
 
-    const trimmedSelection = getTrimmedSelection({
-      blockIndexMap: editor.blockIndexMap,
-      context: {
-        converters: [],
-        keyGenerator: context.keyGenerator,
-        readOnly: false,
-        schema: context.schema,
-        selection: newSelection,
-        value: newValue,
-      },
-      decoratorState: editor.decoratorState,
+    const startAtStartOfNode = Editor.isStart(editor, start, start.path)
+
+    Transforms.splitNodes(editor, {
+      at: start,
+      match: Text.isText,
+      mode: 'lowest',
+      voids: false,
+      always: !startAtStartOfNode,
     })
 
-    if (!trimmedSelection) {
-      throw new Error('Unable to find trimmed selection')
+    at = rangeRef.unref()
+
+    if (!at) {
+      throw new Error('Unable to add decorator without a selection')
     }
 
-    const newRange = toSlateRange({
-      context: {
-        schema: context.schema,
-        value: operation.editor.value,
-        selection: trimmedSelection,
-      },
-      blockIndexMap: operation.editor.blockIndexMap,
-    })
-
-    if (!newRange) {
-      throw new Error('Unable to find new selection')
+    if (!operation.at) {
+      Transforms.select(editor, at)
     }
 
     // Use new selection to find nodes to decorate
-    const splitTextNodes = Range.isRange(newRange)
-      ? [
-          ...Editor.nodes(editor, {
-            at: newRange,
-            match: (node) => Text.isText(node),
-          }),
-        ]
-      : []
+    const splitTextNodes = Editor.nodes(editor, {
+      at,
+      match: Text.isText,
+    })
 
     for (const [node, path] of splitTextNodes) {
       const marks = [
@@ -172,7 +79,7 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
   } else {
     const selectedSpan = Array.from(
       Editor.nodes(editor, {
-        at: selection,
+        at,
         match: (node) => editor.isTextSpan(node),
       }),
     )?.at(0)
@@ -181,7 +88,7 @@ export const decoratorAddOperationImplementation: BehaviorOperationImplementatio
       return
     }
 
-    const [block, blockPath] = Editor.node(editor, selection, {
+    const [block, blockPath] = Editor.node(editor, at, {
       depth: 1,
     })
     const lonelyEmptySpan =
