@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.0.5
+
+### Patch Changes
+
+- [#1848](https://github.com/portabletext/editor/pull/1848) [`e868069`](https://github.com/portabletext/editor/commit/e868069c8eab8e803e0da6d7a9376001f4a7363f) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency xstate to ^5.24.0
+
+- Updated dependencies [[`c0075a3`](https://github.com/portabletext/editor/commit/c0075a34e2d17a2616461ac6789daf52740926c1), [`e868069`](https://github.com/portabletext/editor/commit/e868069c8eab8e803e0da6d7a9376001f4a7363f), [`53439a0`](https://github.com/portabletext/editor/commit/53439a0a1f0e623f8cf72294572c1723a9e407bd)]:
+  - @portabletext/editor@2.19.3
+  - @portabletext/keyboard-shortcuts@2.1.0
+
 ## 3.0.4
 
 ### Patch Changes

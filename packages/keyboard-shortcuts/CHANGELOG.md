@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.0
+
+### Minor Changes
+
+- [#1851](https://github.com/portabletext/editor/pull/1851) [`53439a0`](https://github.com/portabletext/editor/commit/53439a0a1f0e623f8cf72294572c1723a9e407bd) Thanks [@christianhg](https://github.com/christianhg)! - feat: mark APIs as public
+
 ## 2.0.1
 
 ### Patch Changes
