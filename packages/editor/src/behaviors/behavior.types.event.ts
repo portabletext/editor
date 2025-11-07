@@ -285,10 +285,7 @@ type AbstractBehaviorEvent =
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'delete.text'>
-      at: {
-        anchor: BlockOffset
-        focus: BlockOffset
-      }
+      at: NonNullable<EditorSelection>
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'deserialize'>
