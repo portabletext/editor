@@ -130,10 +130,7 @@ export type SyntheticBehaviorEvent =
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'decorator.add'>
       decorator: string
-      at?: {
-        anchor: BlockOffset
-        focus: BlockOffset
-      }
+      at?: NonNullable<EditorSelection>
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'decorator.remove'>
@@ -268,7 +265,7 @@ type AbstractBehaviorEvent =
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'decorator.toggle'>
       decorator: string
-      at?: {anchor: BlockOffset; focus: BlockOffset}
+      at?: NonNullable<EditorSelection>
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'delete.backward'>

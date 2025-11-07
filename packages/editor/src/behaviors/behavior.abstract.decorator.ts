@@ -1,5 +1,4 @@
 import {isActiveDecorator} from '../selectors/selector.is-active-decorator'
-import {blockOffsetsToSelection} from '../utils/util.block-offsets-to-selection'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
@@ -16,19 +15,12 @@ export const abstractDecoratorBehaviors = [
   defineBehavior({
     on: 'decorator.toggle',
     guard: ({snapshot, event}) => {
-      const manualSelection = event.at
-        ? blockOffsetsToSelection({
-            context: snapshot.context,
-            offsets: event.at,
-          })
-        : null
-
-      if (manualSelection) {
+      if (event.at) {
         return !isActiveDecorator(event.decorator)({
           ...snapshot,
           context: {
             ...snapshot.context,
-            selection: manualSelection,
+            selection: event.at,
           },
         })
       }
