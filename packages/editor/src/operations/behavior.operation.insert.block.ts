@@ -1,16 +1,19 @@
 import {isSpan} from '@portabletext/schema'
 import {isEqual} from 'lodash'
-import {Editor, Path, Point, Range, Transforms, type Descendant} from 'slate'
-import {DOMEditor} from 'slate-dom'
 import {
-  getFocusBlock,
-  getFocusChild,
-  getLastBlock,
-  getSelectionEndBlock,
-  getSelectionStartBlock,
-} from '../internal-utils/slate-utils'
+  Editor,
+  Element,
+  Path,
+  Point,
+  Range,
+  Transforms,
+  type Descendant,
+} from 'slate'
+import {DOMEditor} from 'slate-dom'
+import {getFocusBlock, getFocusChild} from '../internal-utils/slate-utils'
+import {toSlateRange} from '../internal-utils/to-slate-range'
 import {isEqualToEmptyEditor, toSlateValue} from '../internal-utils/values'
-import type {PortableTextSlateEditor} from '../types/editor'
+import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
 import {parseBlock} from '../utils/parse-blocks'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import type {
@@ -47,39 +50,62 @@ export const insertBlockOperationImplementation: BehaviorOperationImplementation
     block: fragment,
     placement: operation.placement,
     select: operation.select ?? 'start',
+    at: operation.at,
     editor: operation.editor,
   })
 }
 
-export function insertBlock({
-  context,
-  block,
-  placement,
-  select,
-  editor,
-}: {
+export function insertBlock(options: {
   context: BehaviorOperationImplementationContext
   block: Descendant
   placement: 'auto' | 'after' | 'before'
   select: 'start' | 'end' | 'none'
+  at?: NonNullable<EditorSelection>
   editor: PortableTextSlateEditor
 }) {
-  const [startBlock, startBlockPath] = getSelectionStartBlock({editor})
-  const [endBlock, endBlockPath] = getSelectionEndBlock({editor})
+  const {context, block, placement, select, editor} = options
+  const at = options.at
+    ? toSlateRange({
+        context: {
+          schema: context.schema,
+          value: editor.value,
+          selection: options.at,
+        },
+        blockIndexMap: editor.blockIndexMap,
+      })
+    : editor.selection
 
-  if (
-    !editor.selection ||
-    !startBlock ||
-    !startBlockPath ||
-    !endBlock ||
-    !endBlockPath
-  ) {
-    if (select !== 'none') {
-      DOMEditor.focus(editor)
-    }
+  // Fall back to the start and end of the editor if neither an editor
+  // selection nor an `at` range is provided
+  const start = at ? Range.start(at) : Editor.start(editor, [])
+  const end = at ? Range.end(at) : Editor.end(editor, [])
 
-    const [lastBlock, lastBlockPath] = getLastBlock({editor})
+  const [startBlock, startBlockPath] = Array.from(
+    Editor.nodes(editor, {
+      at: start,
+      mode: 'lowest',
+      match: (node, path) =>
+        Element.isElement(node) && path.length <= start.path.length,
+    }),
+  ).at(0) ?? [undefined, undefined]
+  const [endBlock, endBlockPath] = Array.from(
+    Editor.nodes(editor, {
+      at: end,
+      mode: 'lowest',
+      match: (node, path) =>
+        Element.isElement(node) && path.length <= end.path.length,
+    }),
+  ).at(0) ?? [undefined, undefined]
 
+  if (!startBlock || !startBlockPath || !endBlock || !endBlockPath) {
+    throw new Error('Unable to insert block without a start and end block')
+  }
+
+  if (!editor.selection && select !== 'none') {
+    DOMEditor.focus(editor)
+  }
+
+  if (!at) {
     if (placement === 'before') {
       Transforms.insertNodes(editor, [block], {at: [0]})
 
@@ -89,7 +115,7 @@ export function insertBlock({
         Transforms.select(editor, Editor.end(editor, [0]))
       }
     } else if (placement === 'after') {
-      const nextPath = lastBlockPath ? [lastBlockPath[0] + 1] : [0]
+      const nextPath = Path.next(endBlockPath)
       Transforms.insertNodes(editor, [block], {at: nextPath})
 
       if (select === 'start') {
@@ -100,22 +126,22 @@ export function insertBlock({
     } else {
       // placement === 'auto'
 
-      if (lastBlock && isEqualToEmptyEditor([lastBlock], context.schema)) {
+      if (endBlock && isEqualToEmptyEditor([endBlock], context.schema)) {
         // And if the last block was an empty text block, let's remove
         // that too
-        Transforms.removeNodes(editor, {at: lastBlockPath})
+        Transforms.removeNodes(editor, {at: endBlockPath})
 
         Transforms.insertNodes(editor, [block], {
-          at: lastBlockPath,
+          at: endBlockPath,
           select: false,
         })
 
         Transforms.deselect(editor)
 
         if (select === 'start') {
-          Transforms.select(editor, Editor.start(editor, lastBlockPath))
+          Transforms.select(editor, Editor.start(editor, endBlockPath))
         } else if (select === 'end') {
-          Transforms.select(editor, Editor.end(editor, lastBlockPath))
+          Transforms.select(editor, Editor.end(editor, endBlockPath))
         }
 
         return
@@ -123,13 +149,13 @@ export function insertBlock({
 
       if (
         editor.isTextBlock(block) &&
-        lastBlock &&
-        editor.isTextBlock(lastBlock)
+        endBlock &&
+        editor.isTextBlock(endBlock)
       ) {
-        const selectionBefore = Editor.end(editor, lastBlockPath)
+        const selectionBefore = Editor.end(editor, endBlockPath)
 
         Transforms.insertFragment(editor, [block], {
-          at: Editor.end(editor, lastBlockPath),
+          at: Editor.end(editor, endBlockPath),
         })
 
         if (select === 'start') {
@@ -141,7 +167,7 @@ export function insertBlock({
         return
       }
 
-      const nextPath = lastBlockPath ? [lastBlockPath[0] + 1] : [0]
+      const nextPath = Path.next(endBlockPath)
 
       Transforms.insertNodes(editor, [block], {at: nextPath, select: false})
 
@@ -151,326 +177,314 @@ export function insertBlock({
         Transforms.select(editor, Editor.end(editor, nextPath))
       }
     }
+
+    return
+  }
+
+  if (!at) {
+    throw new Error('Unable to insert block without a selection')
+  }
+
+  if (placement === 'before') {
+    Transforms.insertNodes(editor, [block], {
+      at: startBlockPath,
+      select: false,
+    })
+
+    if (select === 'start') {
+      Transforms.select(editor, Editor.start(editor, startBlockPath))
+    } else if (select === 'end') {
+      Transforms.select(editor, Editor.end(editor, startBlockPath))
+    }
+  } else if (placement === 'after') {
+    const nextPath = Path.next(endBlockPath)
+
+    Transforms.insertNodes(editor, [block], {
+      at: nextPath,
+      select: false,
+    })
+
+    if (select === 'start') {
+      Transforms.select(editor, Editor.start(editor, nextPath))
+    } else if (select === 'end') {
+      Transforms.select(editor, Editor.end(editor, nextPath))
+    }
   } else {
-    if (placement === 'before') {
-      const currentSelection = editor.selection
-      const selectionStartPoint = Range.start(currentSelection)
+    // placement === 'auto'
+
+    const endBlockEndPoint = Editor.start(editor, endBlockPath)
+
+    if (Range.isExpanded(at) && !editor.isTextBlock(block)) {
+      const atBeforeDelete = Editor.rangeRef(editor, at, {affinity: 'inward'})
+
+      Transforms.delete(editor, {at})
+
+      const [focusBlock, focusBlockPath] = getFocusBlock({editor})
+
+      const atAfterDelete = atBeforeDelete.unref() ?? editor.selection
+
+      const atBeforeInsert = atAfterDelete
+        ? Editor.rangeRef(editor, atAfterDelete, {affinity: 'inward'})
+        : undefined
 
       Transforms.insertNodes(editor, [block], {
-        at: [selectionStartPoint.path[0]],
-        select: false,
+        voids: true,
+        at: atAfterDelete ?? undefined,
+        select: select !== 'none',
       })
 
-      if (select === 'start') {
-        Transforms.select(
-          editor,
-          Editor.start(editor, [selectionStartPoint.path[0]]),
-        )
-      } else if (select === 'end') {
-        Transforms.select(
-          editor,
-          Editor.end(editor, [selectionStartPoint.path[0]]),
-        )
+      const atAfterInsert = atBeforeInsert?.unref() ?? editor.selection
+
+      if (select === 'none' && atAfterInsert) {
+        Transforms.select(editor, atAfterInsert)
       }
-    } else if (placement === 'after') {
-      const currentSelection = editor.selection
-      const selectionEndPoint = Range.end(currentSelection)
 
-      const nextPath = [selectionEndPoint.path[0] + 1]
-
-      Transforms.insertNodes(editor, [block], {
-        at: nextPath,
-        select: false,
-      })
-
-      if (select === 'start') {
-        Transforms.select(editor, Editor.start(editor, nextPath))
-      } else if (select === 'end') {
-        Transforms.select(editor, Editor.end(editor, nextPath))
+      if (focusBlock && isEqualToEmptyEditor([focusBlock], context.schema)) {
+        Transforms.removeNodes(editor, {at: focusBlockPath})
       }
-    } else {
-      // placement === 'auto'
 
-      const currentSelection = editor.selection
-      const endBlockEndPoint = Editor.start(editor, endBlockPath)
+      return
+    }
 
-      if (Range.isExpanded(currentSelection) && !editor.isTextBlock(block)) {
-        Transforms.delete(editor, {at: currentSelection})
+    if (editor.isTextBlock(endBlock) && editor.isTextBlock(block)) {
+      const selectionStartPoint = Range.start(at)
 
-        const newSelection = editor.selection
-
-        const [focusBlock, focusBlockPath] = getFocusBlock({editor})
-
+      if (isEqualToEmptyEditor([endBlock], context.schema)) {
         Transforms.insertNodes(editor, [block], {
-          voids: true,
+          at: endBlockPath,
+          select: false,
         })
+        Transforms.removeNodes(editor, {at: Path.next(endBlockPath)})
 
-        const adjustedSelection =
-          newSelection.anchor.offset === 0
-            ? Range.transform(newSelection, {
-                type: 'insert_node',
-                node: block,
-                path: [newSelection.anchor.path[0]],
-              })
-            : newSelection
-
-        if (select === 'none' && adjustedSelection) {
-          Transforms.select(editor, adjustedSelection)
-        }
-
-        if (focusBlock && isEqualToEmptyEditor([focusBlock], context.schema)) {
-          Transforms.removeNodes(editor, {at: focusBlockPath})
+        if (select === 'start') {
+          Transforms.select(editor, selectionStartPoint)
+        } else if (select === 'end') {
+          Transforms.select(editor, Editor.end(editor, endBlockPath))
+        } else {
+          Transforms.select(editor, at)
         }
 
         return
       }
 
-      if (editor.isTextBlock(endBlock) && editor.isTextBlock(block)) {
-        const selectionStartPoint = Range.start(currentSelection)
+      const endBlockChildKeys = endBlock.children.map((child) => child._key)
+      const endBlockMarkDefsKeys =
+        endBlock.markDefs?.map((markDef) => markDef._key) ?? []
 
-        if (isEqualToEmptyEditor([endBlock], context.schema)) {
-          const currentSelection = editor.selection
+      // Assign new keys to markDefs with duplicate keys and keep track of
+      // the mapping between the old and new keys
+      const markDefKeyMap = new Map<string, string>()
+      const adjustedMarkDefs = block.markDefs?.map((markDef) => {
+        if (endBlockMarkDefsKeys.includes(markDef._key)) {
+          const newKey = context.keyGenerator()
+          markDefKeyMap.set(markDef._key, newKey)
+          return {
+            ...markDef,
+            _key: newKey,
+          }
+        }
 
+        return markDef
+      })
+
+      // Assign new keys to spans with duplicate keys and update any markDef
+      // key if needed
+      const adjustedChildren = block.children.map((child) => {
+        if (isSpan(context, child)) {
+          const marks =
+            child.marks?.map((mark) => {
+              const markDefKey = markDefKeyMap.get(mark)
+
+              if (markDefKey) {
+                return markDefKey
+              }
+
+              return mark
+            }) ?? []
+
+          if (!isEqual(child.marks, marks)) {
+            return {
+              ...child,
+              _key: endBlockChildKeys.includes(child._key)
+                ? context.keyGenerator()
+                : child._key,
+              marks,
+            }
+          }
+        }
+
+        if (endBlockChildKeys.includes(child._key)) {
+          return {
+            ...child,
+            _key: context.keyGenerator(),
+          }
+        }
+
+        return child
+      })
+
+      // Carry over the markDefs from the incoming block to the end block
+      Transforms.setNodes(
+        editor,
+        {
+          markDefs: [...(endBlock.markDefs ?? []), ...(adjustedMarkDefs ?? [])],
+        },
+        {
+          at: endBlockPath,
+        },
+      )
+
+      // If the children have changed, we need to create a new block with
+      // the adjusted children
+      const adjustedBlock = !isEqual(block.children, adjustedChildren)
+        ? {
+            ...block,
+            children: adjustedChildren as Descendant[],
+          }
+        : block
+
+      if (select === 'end') {
+        Transforms.insertFragment(editor, [adjustedBlock], {
+          voids: true,
+        })
+
+        return
+      }
+
+      Transforms.insertFragment(editor, [adjustedBlock], {
+        at,
+        voids: true,
+      })
+
+      if (select === 'start') {
+        Transforms.select(editor, selectionStartPoint)
+      } else {
+        if (!Point.equals(selectionStartPoint, endBlockEndPoint)) {
+          Transforms.select(editor, selectionStartPoint)
+        }
+      }
+    } else {
+      if (!editor.isTextBlock(endBlock)) {
+        Transforms.insertNodes(editor, [block], {select: false})
+
+        const nextPath = [endBlockPath[0] + 1]
+
+        if (select === 'start') {
+          Transforms.select(editor, Editor.start(editor, nextPath))
+        } else if (select === 'end') {
+          Transforms.select(editor, Editor.end(editor, nextPath))
+        }
+      } else {
+        const endBlockStartPoint = Editor.start(editor, endBlockPath)
+        const endBlockEndPoint = Editor.end(editor, endBlockPath)
+        const selectionStartPoint = Range.start(at)
+        const selectionEndPoint = Range.end(at)
+
+        if (
+          Range.isCollapsed(at) &&
+          Point.equals(selectionStartPoint, endBlockStartPoint)
+        ) {
           Transforms.insertNodes(editor, [block], {
             at: endBlockPath,
             select: false,
           })
-          Transforms.removeNodes(editor, {at: Path.next(endBlockPath)})
 
-          if (select === 'start') {
-            Transforms.select(editor, selectionStartPoint)
-          } else if (select === 'end') {
-            Transforms.select(editor, Editor.end(editor, endBlockPath))
-          } else {
-            Transforms.select(editor, currentSelection)
+          if (select === 'start' || select === 'end') {
+            Transforms.select(editor, Editor.start(editor, endBlockPath))
           }
 
-          return
-        }
-
-        const endBlockChildKeys = endBlock.children.map((child) => child._key)
-        const endBlockMarkDefsKeys =
-          endBlock.markDefs?.map((markDef) => markDef._key) ?? []
-
-        // Assign new keys to markDefs with duplicate keys and keep track of
-        // the mapping between the old and new keys
-        const markDefKeyMap = new Map<string, string>()
-        const adjustedMarkDefs = block.markDefs?.map((markDef) => {
-          if (endBlockMarkDefsKeys.includes(markDef._key)) {
-            const newKey = context.keyGenerator()
-            markDefKeyMap.set(markDef._key, newKey)
-            return {
-              ...markDef,
-              _key: newKey,
-            }
+          if (isEmptyTextBlock(context, endBlock)) {
+            Transforms.removeNodes(editor, {at: Path.next(endBlockPath)})
           }
-
-          return markDef
-        })
-
-        // Assign new keys to spans with duplicate keys and update any markDef
-        // key if needed
-        const adjustedChildren = block.children.map((child) => {
-          if (isSpan(context, child)) {
-            const marks =
-              child.marks?.map((mark) => {
-                const markDefKey = markDefKeyMap.get(mark)
-
-                if (markDefKey) {
-                  return markDefKey
-                }
-
-                return mark
-              }) ?? []
-
-            if (!isEqual(child.marks, marks)) {
-              return {
-                ...child,
-                _key: endBlockChildKeys.includes(child._key)
-                  ? context.keyGenerator()
-                  : child._key,
-                marks,
-              }
-            }
-          }
-
-          if (endBlockChildKeys.includes(child._key)) {
-            return {
-              ...child,
-              _key: context.keyGenerator(),
-            }
-          }
-
-          return child
-        })
-
-        // Carry over the markDefs from the incoming block to the end block
-        Transforms.setNodes(
-          editor,
-          {
-            markDefs: [
-              ...(endBlock.markDefs ?? []),
-              ...(adjustedMarkDefs ?? []),
-            ],
-          },
-          {
-            at: endBlockPath,
-          },
-        )
-
-        // If the children have changed, we need to create a new block with
-        // the adjusted children
-        const adjustedBlock = !isEqual(block.children, adjustedChildren)
-          ? {
-              ...block,
-              children: adjustedChildren as Descendant[],
-            }
-          : block
-
-        if (select === 'end') {
-          Transforms.insertFragment(editor, [adjustedBlock], {
-            voids: true,
-          })
-
-          return
-        }
-
-        Transforms.insertFragment(editor, [adjustedBlock], {
-          at: currentSelection,
-          voids: true,
-        })
-
-        if (select === 'start') {
-          Transforms.select(editor, selectionStartPoint)
-        } else {
-          if (!Point.equals(selectionStartPoint, endBlockEndPoint)) {
-            Transforms.select(editor, selectionStartPoint)
-          }
-        }
-      } else {
-        if (!editor.isTextBlock(endBlock)) {
-          Transforms.insertNodes(editor, [block], {select: false})
-
+        } else if (
+          Range.isCollapsed(at) &&
+          Point.equals(selectionEndPoint, endBlockEndPoint)
+        ) {
           const nextPath = [endBlockPath[0] + 1]
 
-          if (select === 'start') {
+          Transforms.insertNodes(editor, [block], {
+            at: nextPath,
+            select: false,
+          })
+
+          if (select === 'start' || select === 'end') {
             Transforms.select(editor, Editor.start(editor, nextPath))
+          }
+        } else if (
+          Range.isExpanded(at) &&
+          Point.equals(selectionStartPoint, endBlockStartPoint) &&
+          Point.equals(selectionEndPoint, endBlockEndPoint)
+        ) {
+          Transforms.insertFragment(editor, [block], {
+            at,
+          })
+
+          if (select === 'start') {
+            Transforms.select(editor, Editor.start(editor, endBlockPath))
           } else if (select === 'end') {
-            Transforms.select(editor, Editor.end(editor, nextPath))
+            Transforms.select(editor, Editor.end(editor, endBlockPath))
+          }
+        } else if (
+          Range.isExpanded(at) &&
+          Point.equals(selectionStartPoint, endBlockStartPoint)
+        ) {
+          Transforms.insertFragment(editor, [block], {
+            at,
+          })
+
+          if (select === 'start') {
+            Transforms.select(editor, Editor.start(editor, endBlockPath))
+          } else if (select === 'end') {
+            Transforms.select(editor, Editor.end(editor, endBlockPath))
+          }
+        } else if (
+          Range.isExpanded(at) &&
+          Point.equals(selectionEndPoint, endBlockEndPoint)
+        ) {
+          Transforms.insertFragment(editor, [block], {
+            at,
+          })
+
+          if (select === 'start') {
+            Transforms.select(
+              editor,
+              Editor.start(editor, Path.next(endBlockPath)),
+            )
+          } else if (select === 'end') {
+            Transforms.select(
+              editor,
+              Editor.end(editor, Path.next(endBlockPath)),
+            )
           }
         } else {
-          const endBlockStartPoint = Editor.start(editor, endBlockPath)
-          const endBlockEndPoint = Editor.end(editor, endBlockPath)
-          const selectionStartPoint = Range.start(currentSelection)
-          const selectionEndPoint = Range.end(currentSelection)
+          const [focusChild] = getFocusChild({editor})
 
-          if (
-            Range.isCollapsed(currentSelection) &&
-            Point.equals(selectionStartPoint, endBlockStartPoint)
-          ) {
-            Transforms.insertNodes(editor, [block], {
-              at: endBlockPath,
-              select: false,
+          if (focusChild && editor.isTextSpan(focusChild)) {
+            Transforms.splitNodes(editor, {
+              at,
+            })
+
+            Transforms.insertFragment(editor, [block], {
+              at,
             })
 
             if (select === 'start' || select === 'end') {
-              Transforms.select(editor, Editor.start(editor, endBlockPath))
+              Transforms.select(editor, [endBlockPath[0] + 1])
+            } else {
+              Transforms.select(editor, at)
             }
-
-            if (isEmptyTextBlock(context, endBlock)) {
-              Transforms.removeNodes(editor, {at: Path.next(endBlockPath)})
-            }
-          } else if (
-            Range.isCollapsed(currentSelection) &&
-            Point.equals(selectionEndPoint, endBlockEndPoint)
-          ) {
+          } else {
             const nextPath = [endBlockPath[0] + 1]
-
             Transforms.insertNodes(editor, [block], {
               at: nextPath,
               select: false,
             })
+            Transforms.select(editor, at)
 
-            if (select === 'start' || select === 'end') {
+            if (select === 'start') {
               Transforms.select(editor, Editor.start(editor, nextPath))
-            }
-          } else if (
-            Range.isExpanded(currentSelection) &&
-            Point.equals(selectionStartPoint, endBlockStartPoint) &&
-            Point.equals(selectionEndPoint, endBlockEndPoint)
-          ) {
-            Transforms.insertFragment(editor, [block], {
-              at: currentSelection,
-            })
-
-            if (select === 'start') {
-              Transforms.select(editor, Editor.start(editor, endBlockPath))
             } else if (select === 'end') {
-              Transforms.select(editor, Editor.end(editor, endBlockPath))
-            }
-          } else if (
-            Range.isExpanded(currentSelection) &&
-            Point.equals(selectionStartPoint, endBlockStartPoint)
-          ) {
-            Transforms.insertFragment(editor, [block], {
-              at: currentSelection,
-            })
-
-            if (select === 'start') {
-              Transforms.select(editor, Editor.start(editor, endBlockPath))
-            } else if (select === 'end') {
-              Transforms.select(editor, Editor.end(editor, endBlockPath))
-            }
-          } else if (
-            Range.isExpanded(currentSelection) &&
-            Point.equals(selectionEndPoint, endBlockEndPoint)
-          ) {
-            Transforms.insertFragment(editor, [block], {
-              at: currentSelection,
-            })
-
-            if (select === 'start') {
-              Transforms.select(
-                editor,
-                Editor.start(editor, Path.next(endBlockPath)),
-              )
-            } else if (select === 'end') {
-              Transforms.select(
-                editor,
-                Editor.end(editor, Path.next(endBlockPath)),
-              )
-            }
-          } else {
-            const currentSelection = editor.selection
-            const [focusChild] = getFocusChild({editor})
-
-            if (focusChild && editor.isTextSpan(focusChild)) {
-              Transforms.splitNodes(editor, {
-                at: currentSelection,
-              })
-
-              Transforms.insertFragment(editor, [block], {
-                at: currentSelection,
-              })
-
-              if (select === 'start' || select === 'end') {
-                Transforms.select(editor, [endBlockPath[0] + 1])
-              } else {
-                Transforms.select(editor, currentSelection)
-              }
-            } else {
-              const nextPath = [endBlockPath[0] + 1]
-              Transforms.insertNodes(editor, [block], {
-                at: nextPath,
-                select: false,
-              })
-              Transforms.select(editor, currentSelection)
-
-              if (select === 'start') {
-                Transforms.select(editor, Editor.start(editor, nextPath))
-              } else if (select === 'end') {
-                Transforms.select(editor, Editor.end(editor, nextPath))
-              }
+              Transforms.select(editor, Editor.end(editor, nextPath))
             }
           }
         }
