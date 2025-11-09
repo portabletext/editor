@@ -40,16 +40,16 @@ const unorderedListRule = defineInputRule({
       raise({
         type: 'block.unset',
         props: ['style'],
-        at: event.focusTextBlock.path,
+        at: event.focusBlock.path,
       }),
       // Then, turn it into a list item
       raise({
         type: 'block.set',
         props: {
           listItem: 'bullet',
-          level: event.focusTextBlock.node.level ?? 1,
+          level: event.focusBlock.node.level ?? 1,
         },
-        at: event.focusTextBlock.path,
+        at: event.focusBlock.path,
       }),
       // Finally, delete the matched text
       raise({
@@ -159,7 +159,7 @@ const markdownLinkRule = defineInputRule({
       }
 
       const endCaretPosition = {
-        path: event.focusTextBlock.path,
+        path: event.focusBlock.path,
         offset: newText.length - textLengthDelta * -1,
       }
 
@@ -222,7 +222,7 @@ const stockTickerRule = defineInputRule({
           at: {
             anchor: {
               path: [
-                {_key: event.focusTextBlock.node._key},
+                {_key: event.focusBlock.node._key},
                 'children',
                 {_key: stockTickerKey},
               ],
@@ -230,7 +230,7 @@ const stockTickerRule = defineInputRule({
             },
             focus: {
               path: [
-                {_key: event.focusTextBlock.node._key},
+                {_key: event.focusBlock.node._key},
                 'children',
                 {_key: stockTickerKey},
               ],

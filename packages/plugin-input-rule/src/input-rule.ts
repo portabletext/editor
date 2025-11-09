@@ -1,4 +1,4 @@
-import type {BlockPath, PortableTextTextBlock} from '@portabletext/editor'
+import type {BlockPath, PortableTextBlock} from '@portabletext/editor'
 import type {
   BehaviorActionSet,
   BehaviorGuard,
@@ -31,11 +31,11 @@ export type InputRuleEvent = {
    */
   textInserted: string
   /**
-   * The text block where the insertion takes place
+   * The block where the insertion takes place
    */
-  focusTextBlock: {
+  focusBlock: {
     path: BlockPath
-    node: PortableTextTextBlock
+    node: PortableTextBlock
   }
 }
 

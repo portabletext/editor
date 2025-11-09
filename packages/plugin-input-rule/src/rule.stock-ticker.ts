@@ -56,7 +56,7 @@ export function createStockTickerRule(config: {
             at: {
               anchor: {
                 path: [
-                  {_key: event.focusTextBlock.node._key},
+                  {_key: event.focusBlock.node._key},
                   'children',
                   {_key: stockTickerKey},
                 ],
@@ -64,7 +64,7 @@ export function createStockTickerRule(config: {
               },
               focus: {
                 path: [
-                  {_key: event.focusTextBlock.node._key},
+                  {_key: event.focusBlock.node._key},
                   'children',
                   {_key: stockTickerKey},
                 ],

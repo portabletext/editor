@@ -57,12 +57,12 @@ export function createHeadingRule(config: {
         raise({
           type: 'block.unset',
           props: ['listItem', 'level'],
-          at: event.focusTextBlock.path,
+          at: event.focusBlock.path,
         }),
         raise({
           type: 'block.set',
           props: {style},
-          at: event.focusTextBlock.path,
+          at: event.focusBlock.path,
         }),
         raise({
           type: 'delete',

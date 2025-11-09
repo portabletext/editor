@@ -9,7 +9,7 @@ import {
 import {
   getBlockOffsets,
   getBlockTextBefore,
-  getFocusTextBlock,
+  getFocusBlock,
 } from '@portabletext/editor/selectors'
 import {isSelectionCollapsed} from '@portabletext/editor/utils'
 import {useActorRef} from '@xstate/react'
@@ -43,9 +43,9 @@ export function defineInputRuleBehavior(config: {
         return false
       }
 
-      const focusTextBlock = getFocusTextBlock(snapshot)
+      const focusBlock = getFocusBlock(snapshot)
 
-      if (!focusTextBlock) {
+      if (!focusBlock) {
         return false
       }
 
@@ -78,7 +78,7 @@ export function defineInputRuleBehavior(config: {
                 match: [regExpMatch.at(0) ?? '', ...match],
                 adjustIndexBy: originalNewText.length - newText.length,
                 snapshot,
-                focusTextBlock,
+                focusBlock,
                 originalTextBefore,
               })
 
@@ -123,7 +123,7 @@ export function defineInputRuleBehavior(config: {
                     match: [text, ...match],
                     adjustIndexBy: originalNewText.length - newText.length,
                     snapshot,
-                    focusTextBlock,
+                    focusBlock,
                     originalTextBefore,
                   })
 
@@ -146,7 +146,7 @@ export function defineInputRuleBehavior(config: {
                 event: {
                   type: 'custom.input rule',
                   matches: ruleMatches,
-                  focusTextBlock,
+                  focusBlock,
                   textBefore: originalTextBefore,
                   textInserted: event.text,
                 },
@@ -164,7 +164,7 @@ export function defineInputRuleBehavior(config: {
                   event: {
                     type: 'custom.input rule',
                     matches: ruleMatches,
-                    focusTextBlock,
+                    focusBlock,
                     textBefore: originalTextBefore,
                     textInserted: event.text,
                   },

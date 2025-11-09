@@ -35,13 +35,13 @@ export function getInputRuleMatchLocation({
   match,
   adjustIndexBy,
   snapshot,
-  focusTextBlock,
+  focusBlock,
   originalTextBefore,
 }: {
   match: [string, number, number]
   adjustIndexBy: number
   snapshot: EditorSnapshot
-  focusTextBlock: {
+  focusBlock: {
     path: BlockPath
   }
   originalTextBefore: string
@@ -51,22 +51,22 @@ export function getInputRuleMatchLocation({
 
   const targetOffsets = {
     anchor: {
-      path: focusTextBlock.path,
+      path: focusBlock.path,
       offset: adjustedIndex,
     },
     focus: {
-      path: focusTextBlock.path,
+      path: focusBlock.path,
       offset: adjustedIndex + end - start,
     },
     backward: false,
   }
   const normalizedOffsets = {
     anchor: {
-      path: focusTextBlock.path,
+      path: focusBlock.path,
       offset: Math.min(targetOffsets.anchor.offset, originalTextBefore.length),
     },
     focus: {
-      path: focusTextBlock.path,
+      path: focusBlock.path,
       offset: Math.min(targetOffsets.focus.offset, originalTextBefore.length),
     },
     backward: false,

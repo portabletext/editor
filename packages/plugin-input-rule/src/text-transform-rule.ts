@@ -85,7 +85,7 @@ export function defineTextTransformRule<TGuardResponse = true>(
         }
 
         const endCaretPosition = {
-          path: event.focusTextBlock.path,
+          path: event.focusBlock.path,
           offset: newText.length - textLengthDelta,
         }
 
