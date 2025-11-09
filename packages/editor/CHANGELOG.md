@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.21.0
+
+### Minor Changes
+
+- [#1859](https://github.com/portabletext/editor/pull/1859) [`9a98716`](https://github.com/portabletext/editor/commit/9a987169735f6ec97d916cf4ed0ea4f1da48dd72) Thanks [@christianhg](https://github.com/christianhg)! - feat(`insert.block`): add initial `at` property support
+
+### Patch Changes
+
+- [#1858](https://github.com/portabletext/editor/pull/1858) [`746acd3`](https://github.com/portabletext/editor/commit/746acd3a64cd8d05ee171e069f2a20c35a4e1ccf) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update sanity monorepo to ^4.14.2
+
+- Updated dependencies [[`746acd3`](https://github.com/portabletext/editor/commit/746acd3a64cd8d05ee171e069f2a20c35a4e1ccf)]:
+  - @portabletext/block-tools@4.0.2
+  - @portabletext/sanity-bridge@1.2.2
+
 ## 2.20.0
 
 ### Minor Changes
