@@ -46,15 +46,15 @@ export function createUnorderedListRule(config: {
         raise({
           type: 'block.unset',
           props: ['style'],
-          at: event.focusTextBlock.path,
+          at: event.focusBlock.path,
         }),
         raise({
           type: 'block.set',
           props: {
             listItem: unorderedList,
-            level: event.focusTextBlock.node.level ?? 1,
+            level: event.focusBlock.node.level ?? 1,
           },
-          at: event.focusTextBlock.path,
+          at: event.focusBlock.path,
         }),
         raise({
           type: 'delete',
