@@ -12,7 +12,7 @@ import {
 import {DOMEditor} from 'slate-dom'
 import {getFocusBlock, getFocusChild} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {isEqualToEmptyEditor, toSlateValue} from '../internal-utils/values'
+import {isEqualToEmptyEditor, toSlateBlock} from '../internal-utils/values'
 import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
 import {parseBlock} from '../utils/parse-blocks'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
@@ -37,17 +37,11 @@ export const insertBlockOperationImplementation: BehaviorOperationImplementation
     throw new Error(`Failed to parse block ${JSON.stringify(operation.block)}`)
   }
 
-  const fragment = toSlateValue([parsedBlock], {schemaTypes: context.schema})[0]
-
-  if (!fragment) {
-    throw new Error(
-      `Failed to convert block to Slate fragment ${JSON.stringify(parsedBlock)}`,
-    )
-  }
+  const block = toSlateBlock(parsedBlock, {schemaTypes: context.schema})
 
   insertBlock({
     context,
-    block: fragment,
+    block,
     placement: operation.placement,
     select: operation.select ?? 'start',
     at: operation.at,
