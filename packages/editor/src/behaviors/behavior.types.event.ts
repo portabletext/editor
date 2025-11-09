@@ -158,6 +158,7 @@ export type SyntheticBehaviorEvent =
       block: BlockWithOptionalKey
       placement: InsertPlacement
       select?: 'start' | 'end' | 'none'
+      at?: NonNullable<EditorSelection>
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'insert.child'>
