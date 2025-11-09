@@ -3,7 +3,7 @@ import type {Path} from '@sanity/types'
 /**
  * @public
  */
-export type BlockPath = [{_key: string}]
+export type BlockPath = Path
 
 /**
  * @public
@@ -32,4 +32,4 @@ export type AnnotationPath = [{_key: string}, 'markDefs', {_key: string}]
 /**
  * @public
  */
-export type ChildPath = [{_key: string}, 'children', {_key: string}]
+export type ChildPath = Path

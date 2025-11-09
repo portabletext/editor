@@ -1,4 +1,4 @@
-import {isTextBlock} from '@portabletext/schema'
+import {isBlockObject} from '@portabletext/schema'
 import type {PortableTextObject} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
 import type {BlockPath} from '../types/paths'
@@ -12,7 +12,7 @@ export const getFocusBlockObject: EditorSelector<
 > = (snapshot) => {
   const focusBlock = getFocusBlock(snapshot)
 
-  return focusBlock && !isTextBlock(snapshot.context, focusBlock.node)
+  return focusBlock && isBlockObject(snapshot.context, focusBlock.node)
     ? {node: focusBlock.node, path: focusBlock.path}
     : undefined
 }

@@ -1,0 +1,89 @@
+{
+  "name": "@portabletext/plugin-tables",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Create and edit tables in the Portable Text Editor",
+  "keywords": [
+    "portabletext",
+    "plugin",
+    "tables"
+  ],
+  "homepage": "https://www.portabletext.org/",
+  "bugs": {
+    "url": "https://github.com/portabletext/editor/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/portabletext/editor.git",
+    "directory": "packages/plugin-tables"
+  },
+  "license": "MIT",
+  "author": "Sanity.io <hello@sanity.io>",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "pkg-utils build --strict --check --clean",
+    "check:lint": "biome lint .",
+    "check:react-compiler": "eslint --cache .",
+    "check:types": "tsc",
+    "check:types:watch": "tsc --watch",
+    "clean": "del .turbo && del lib && del node_modules",
+    "dev": "pkg-utils watch",
+    "lint:fix": "biome lint --write .",
+    "prepublishOnly": "turbo run build",
+    "test": "vitest --run",
+    "test:browser": "vitest --run --project browser",
+    "test:browser:chromium": "vitest run --project \"browser (chromium)\"",
+    "test:browser:chromium:watch": "vitest watch --project \"browser (chromium)\"",
+    "test:browser:firefox": "vitest run --project \"browser (firefox)\"",
+    "test:browser:firefox:watch": "vitest watch --project \"browser (firefox)\"",
+    "test:browser:webkit": "vitest run --project \"browser (webkit)\"",
+    "test:browser:webkit:watch": "vitest watch --project \"browser (webkit)\""
+  },
+  "dependencies": {
+    "@portabletext/plugin-input-rule": "workspace:~",
+    "react-compiler-runtime": "1.0.0"
+  },
+  "devDependencies": {
+    "@portabletext/editor": "workspace:^",
+    "@portabletext/schema": "workspace:^",
+    "@sanity/pkg-utils": "^9.0.3",
+    "@types/react": "^19.2.2",
+    "@vitejs/plugin-react": "^5.0.4",
+    "@vitest/browser": "^4.0.6",
+    "@vitest/browser-playwright": "^4.0.6",
+    "babel-plugin-react-compiler": "1.0.0",
+    "eslint": "^9.38.0",
+    "eslint-formatter-gha": "^1.6.0",
+    "eslint-plugin-react-hooks": "7.0.1",
+    "racejar": "workspace:*",
+    "react": "^19.2.0",
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.46.1",
+    "vitest": "^4.0.6"
+  },
+  "peerDependencies": {
+    "@portabletext/editor": "workspace:^",
+    "@portabletext/schema": "workspace:^",
+    "react": "^18.3 || ^19"
+  },
+  "engines": {
+    "node": ">=20.19 <22 || >=22.12"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

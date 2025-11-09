@@ -1,4 +1,5 @@
 import {Transforms} from 'slate'
+import {blockPathToSlatePath} from '../internal-utils/block-path-utils'
 import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
@@ -14,9 +15,9 @@ export const moveBlockOperationImplementation: BehaviorOperationImplementation<
     throw new Error('Failed to get block key from selection point')
   }
 
-  const originBlockIndex = operation.editor.blockIndexMap.get(originKey)
+  const originBlockPath = operation.editor.blockIndexMap.get(originKey)
 
-  if (originBlockIndex === undefined) {
+  if (originBlockPath === undefined) {
     throw new Error('Failed to get block index from block key')
   }
 
@@ -29,16 +30,16 @@ export const moveBlockOperationImplementation: BehaviorOperationImplementation<
     throw new Error('Failed to get block key from selection point')
   }
 
-  const destinationBlockIndex =
+  const destinationBlockPath =
     operation.editor.blockIndexMap.get(destinationKey)
 
-  if (destinationBlockIndex === undefined) {
+  if (destinationBlockPath === undefined) {
     throw new Error('Failed to get block index from block key')
   }
 
   Transforms.moveNodes(operation.editor, {
-    at: [originBlockIndex],
-    to: [destinationBlockIndex],
+    at: blockPathToSlatePath(originBlockPath),
+    to: blockPathToSlatePath(destinationBlockPath),
     mode: 'highest',
   })
 }

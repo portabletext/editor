@@ -86,6 +86,8 @@ export type {
   RenderChildFunction,
   RenderDecoratorFunction,
   RenderEditableFunction,
+  RenderContainerBlockFunction,
+  ContainerBlockRenderProps,
   RenderListItemFunction,
   RenderPlaceholderFunction,
   RenderStyleFunction,

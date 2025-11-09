@@ -8,6 +8,7 @@ export type SchemaDefinition = {
     name?: string
     fields?: ReadonlyArray<FieldDefinition>
   }
+  blocks?: ReadonlyArray<ContainerBlockDefinition>
   styles?: ReadonlyArray<StyleDefinition>
   lists?: ReadonlyArray<ListDefinition>
   decorators?: ReadonlyArray<DecoratorDefinition>
@@ -43,6 +44,17 @@ export function defineSchema<const TSchemaDefinition extends SchemaDefinition>(
   definition: TSchemaDefinition,
 ): TSchemaDefinition {
   return definition
+}
+
+/**
+ * @public
+ */
+export type ContainerBlockDefinition<
+  TBaseDefinition extends BaseDefinition = BaseDefinition,
+> = TBaseDefinition & {
+  children: ReadonlyArray<{name: string}>
+  annotations?: ReadonlyArray<AnnotationDefinition>
+  decorators?: ReadonlyArray<DecoratorDefinition>
 }
 
 /**

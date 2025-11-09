@@ -153,6 +153,7 @@ export function performEvent({
           dom: createEditorDom(sendBack, editor),
         })
     } catch (error) {
+      debugger
       console.error(
         new Error(
           `Evaluating guard for "${event.type}" failed due to: ${error.message}`,

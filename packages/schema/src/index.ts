@@ -3,6 +3,7 @@ export {
   defineSchema,
   type AnnotationDefinition,
   type BlockObjectDefinition,
+  type ContainerBlockDefinition,
   type DecoratorDefinition,
   type InlineObjectDefinition,
   type ListDefinition,
@@ -13,6 +14,7 @@ export type {
   AnnotationSchemaType,
   BaseDefinition,
   BlockObjectSchemaType,
+  ContainerBlockSchemaType,
   DecoratorSchemaType,
   FieldDefinition,
   InlineObjectSchemaType,
@@ -20,9 +22,16 @@ export type {
   Schema,
   StyleSchemaType,
 } from './schema'
-export {isSpan, isTextBlock, isTypedObject} from './types'
+export {
+  isBlockObject,
+  isContainerBlock,
+  isSpan,
+  isTextBlock,
+  isTypedObject,
+} from './types'
 export type {
   PortableTextBlock,
+  PortableTextContainerBlock,
   PortableTextObject,
   PortableTextSpan,
   PortableTextTextBlock,

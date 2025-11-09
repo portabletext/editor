@@ -1,17 +1,21 @@
 import type {Patch} from '@portabletext/patches'
 import type {
+  ContainerBlockSchemaType,
+  PortableTextBlock,
+  PortableTextContainerBlock,
+  PortableTextObject,
+  PortableTextSpan,
+  PortableTextTextBlock,
+} from '@portabletext/schema'
+import type {
   ArraySchemaType,
   BlockDecoratorDefinition,
   BlockListDefinition,
   BlockStyleDefinition,
   ObjectSchemaType,
   Path,
-  PortableTextBlock,
   PortableTextChild,
   PortableTextListBlock,
-  PortableTextObject,
-  PortableTextSpan,
-  PortableTextTextBlock,
   TypedObject,
 } from '@sanity/types'
 import type {
@@ -26,7 +30,7 @@ import type {
 import type {Observable, Subject} from 'rxjs'
 import type {Descendant, Operation as SlateOperation} from 'slate'
 import type {DOMNode} from 'slate-dom'
-import type {ReactEditor} from 'slate-react'
+import type {ReactEditor, RenderElementProps} from 'slate-react'
 import type {PortableTextEditableProps} from '../editor/Editable'
 import type {PortableTextEditor} from '../editor/PortableTextEditor'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
@@ -144,7 +148,7 @@ export interface PortableTextSlateEditor extends ReactEditor {
   value: Array<PortableTextBlock>
   decoratedRanges: Array<DecoratedRange>
   decoratorState: Record<string, boolean | undefined>
-  blockIndexMap: Map<string, number>
+  blockIndexMap: Map<string, Array<number>>
   listIndexMap: Map<string, number>
 
   /**
@@ -504,6 +508,18 @@ export type RenderListItemFunction = (
 /** @beta */
 export type RenderDecoratorFunction = (
   props: BlockDecoratorRenderProps,
+) => JSX.Element
+
+/** @beta */
+export interface ContainerBlockRenderProps {
+  attributes: RenderElementProps['attributes']
+  children: ReactElement<any>
+  block: PortableTextContainerBlock
+}
+
+/** @beta */
+export type RenderContainerBlockFunction = (
+  props: ContainerBlockRenderProps,
 ) => JSX.Element
 
 /** @beta */

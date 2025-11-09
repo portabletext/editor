@@ -1,5 +1,5 @@
 import {defineSchema} from '@portabletext/schema'
-import {getTersePt} from '@portabletext/test'
+import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {execute} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
@@ -431,6 +431,215 @@ describe('event.insert.block', () => {
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual([
         ',{stock-ticker},',
+      ])
+    })
+  })
+
+  test('Scenario: Inserting row in table', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+    const rowKey = keyGenerator()
+    const cellKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blocks: [
+          {name: 'table', children: [{name: 'row'}]},
+          {name: 'row', children: [{name: 'cell'}]},
+          {name: 'cell', children: [{name: 'span'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _key: tableKey,
+          _type: 'table',
+          children: [
+            {
+              _key: rowKey,
+              _type: 'row',
+              children: [
+                {
+                  _key: cellKey,
+                  _type: 'cell',
+                  children: [{_key: spanKey, _type: 'span', text: ''}],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _type: 'row',
+        children: [{_type: 'cell', children: [{_type: 'span', text: ''}]}],
+      },
+      placement: 'after',
+      select: 'start',
+      at: {
+        anchor: {
+          path: [{_key: tableKey}, 'children', {_key: rowKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: tableKey}, 'children', {_key: rowKey}],
+          offset: 0,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: tableKey,
+          _type: 'table',
+          children: [
+            {
+              _key: rowKey,
+              _type: 'row',
+              children: [
+                {
+                  _key: cellKey,
+                  _type: 'cell',
+                  children: [
+                    {_key: spanKey, _type: 'span', text: '', marks: []},
+                  ],
+                },
+              ],
+            },
+            {
+              _key: expect.any(String),
+              _type: 'row',
+              children: [
+                {
+                  _key: expect.any(String),
+                  _type: 'cell',
+                  children: [
+                    {
+                      _key: expect.any(String),
+                      _type: 'span',
+                      text: '',
+                      marks: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Inserting cell in row', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+    const rowKey = keyGenerator()
+    const cellKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blocks: [
+          {name: 'table', children: [{name: 'row'}]},
+          {name: 'row', children: [{name: 'cell'}]},
+          {name: 'cell', children: [{name: 'span'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _key: tableKey,
+          _type: 'table',
+          children: [
+            {
+              _key: rowKey,
+              _type: 'row',
+              children: [
+                {
+                  _key: cellKey,
+                  _type: 'cell',
+                  children: [{_key: spanKey, _type: 'span', text: 'foo'}],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _type: 'cell',
+        children: [{_type: 'span', text: 'bar'}],
+      },
+      placement: 'after',
+      select: 'start',
+      at: {
+        anchor: {
+          path: [
+            {_key: tableKey},
+            'children',
+            {_key: rowKey},
+            'children',
+            {_key: cellKey},
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {_key: tableKey},
+            'children',
+            {_key: rowKey},
+            'children',
+            {_key: cellKey},
+          ],
+          offset: 0,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: tableKey,
+          _type: 'table',
+          children: [
+            {
+              _key: rowKey,
+              _type: 'row',
+              children: [
+                {
+                  _key: cellKey,
+                  _type: 'cell',
+                  children: [
+                    {
+                      _key: spanKey,
+                      _type: 'span',
+                      text: 'foo',
+                      marks: [],
+                    },
+                  ],
+                },
+                {
+                  _key: expect.any(String),
+                  _type: 'cell',
+                  children: [
+                    {
+                      _key: expect.any(String),
+                      _type: 'span',
+                      text: 'bar',
+                      marks: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
       ])
     })
   })

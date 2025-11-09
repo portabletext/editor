@@ -1,4 +1,7 @@
-import {isTextBlock} from '@portabletext/schema'
+import {
+  isTextBlock,
+  type PortableTextContainerBlock,
+} from '@portabletext/schema'
 import type {
   PortableTextBlock,
   PortableTextListBlock,
@@ -47,6 +50,7 @@ export function parseBlock({
   }
 }): PortableTextBlock | undefined {
   return (
+    parseContainerBlock({block, context, options}) ??
     parseTextBlock({block, context, options}) ??
     parseBlockObject({blockObject: block, context, options})
   )
@@ -81,6 +85,80 @@ export function parseBlockObject({
     },
     options,
   })
+}
+
+export function parseContainerBlock({
+  block,
+  context,
+  options,
+}: {
+  block: unknown
+  context: Pick<EditorContext, 'keyGenerator' | 'schema'>
+  options: {
+    removeUnusedMarkDefs: boolean
+    validateFields: boolean
+  }
+}): PortableTextContainerBlock | undefined {
+  if (!isTypedObject(block)) {
+    return undefined
+  }
+
+  // Check if this block type is defined as a container block in the schema
+  const schemaType = context.schema.blocks.find(
+    ({name}) => name === block._type,
+  )
+
+  if (!schemaType) {
+    return undefined
+  }
+
+  if (!Array.isArray(block.children)) {
+    return undefined
+  }
+
+  const _key =
+    typeof block._key === 'string' ? block._key : context.keyGenerator()
+
+  // Check what type of children this container block expects based on schema
+  const childrenTypes = schemaType.children.map((c) => c.name)
+  const expectsSpanChildren = childrenTypes.includes(context.schema.span.name)
+
+  // Recursively parse children
+  // Container children are either (spans | inline objects) OR container blocks, not both
+  const children = block.children
+    .map((child) => {
+      if (expectsSpanChildren) {
+        // If this container expects span children, parse as span or inline object
+        const parsedSpan = parseSpan({
+          span: child,
+          context,
+          markDefKeyMap: new Map(),
+          options,
+        })
+        if (parsedSpan) return parsedSpan
+
+        const parsedInlineObject = parseInlineObject({
+          inlineObject: child,
+          context,
+          options,
+        })
+        if (parsedInlineObject) return parsedInlineObject
+
+        return undefined
+      } else {
+        // Otherwise, children are container blocks
+        return parseBlock({block: child, context, options})
+      }
+    })
+    .filter((child): child is PortableTextBlock => child !== undefined)
+
+  return {
+    _type: block._type,
+    _key,
+    children: children as
+      | Array<PortableTextSpan | PortableTextObject>
+      | Array<PortableTextContainerBlock>,
+  }
 }
 
 export function isListBlock(

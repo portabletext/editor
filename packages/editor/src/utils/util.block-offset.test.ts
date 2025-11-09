@@ -2,11 +2,94 @@ import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import type {PortableTextBlock} from '@sanity/types'
 import {describe, expect, test} from 'vitest'
-import {blockOffsetToSpanSelectionPoint} from './util.block-offset'
+import {
+  blockOffsetToSpanSelectionPoint,
+  spanSelectionPointToBlockOffset,
+} from './util.block-offset'
 
 const schema = compileSchema(defineSchema({}))
 
 describe(blockOffsetToSpanSelectionPoint.name, () => {
+  test('table cell', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+    const rowKey = keyGenerator()
+    const cellKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    expect(
+      blockOffsetToSpanSelectionPoint({
+        context: {
+          schema: compileSchema(
+            defineSchema({
+              blocks: [
+                {
+                  name: 'table',
+                  children: [{name: 'row'}],
+                },
+                {
+                  name: 'row',
+                  children: [{name: 'cell'}],
+                },
+                {
+                  name: 'cell',
+                  children: [{name: 'span'}],
+                },
+              ],
+            }),
+          ),
+          value: [
+            {
+              _key: tableKey,
+              _type: 'table',
+              children: [
+                {
+                  _key: rowKey,
+                  _type: 'row',
+                  children: [
+                    {
+                      _key: cellKey,
+                      _type: 'cell',
+                      children: [
+                        {
+                          _key: spanKey,
+                          _type: 'span',
+                          text: 'foo',
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        blockOffset: {
+          path: [
+            {_key: tableKey},
+            'children',
+            {_key: rowKey},
+            'children',
+            {_key: cellKey},
+          ],
+          offset: 3,
+        },
+        direction: 'forward',
+      }),
+    ).toEqual({
+      path: [
+        {_key: tableKey},
+        'children',
+        {_key: rowKey},
+        'children',
+        {_key: cellKey},
+        'children',
+        {_key: spanKey},
+      ],
+      offset: 3,
+    })
+  })
+
   describe('simple text block ', () => {
     const keyGenerator = createTestKeyGenerator()
     const b0 = keyGenerator()
@@ -369,6 +452,87 @@ describe(blockOffsetToSpanSelectionPoint.name, () => {
       }),
     ).toEqual({
       path: [{_key: b1}, 'children', {_key: b1s1}],
+      offset: 2,
+    })
+  })
+})
+
+describe(spanSelectionPointToBlockOffset.name, () => {
+  test('table cell', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+    const rowKey = keyGenerator()
+    const cellKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    expect(
+      spanSelectionPointToBlockOffset({
+        context: {
+          schema: compileSchema(
+            defineSchema({
+              blocks: [
+                {
+                  name: 'table',
+                  children: [{name: 'row'}],
+                },
+                {
+                  name: 'row',
+                  children: [{name: 'cell'}],
+                },
+                {
+                  name: 'cell',
+                  children: [{name: 'span'}],
+                },
+              ],
+            }),
+          ),
+          value: [
+            {
+              _key: tableKey,
+              _type: 'table',
+              children: [
+                {
+                  _key: rowKey,
+                  _type: 'row',
+                  children: [
+                    {
+                      _key: cellKey,
+                      _type: 'cell',
+                      children: [
+                        {
+                          _key: spanKey,
+                          _type: 'span',
+                          text: 'foo',
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        selectionPoint: {
+          path: [
+            {_key: tableKey},
+            'children',
+            {_key: rowKey},
+            'children',
+            {_key: cellKey},
+            'children',
+            {_key: spanKey},
+          ],
+          offset: 2,
+        },
+      }),
+    ).toEqual({
+      path: [
+        {_key: tableKey},
+        'children',
+        {_key: rowKey},
+        'children',
+        {_key: cellKey},
+      ],
       offset: 2,
     })
   })

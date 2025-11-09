@@ -41,28 +41,32 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
   const endBlockKey = endPoint
     ? getBlockKeyFromSelectionPoint(endPoint)
     : undefined
-  const startBlockIndex = startBlockKey
+  const startBlockPath = startBlockKey
     ? operation.editor.blockIndexMap.get(startBlockKey)
     : undefined
-  const endBlockIndex = endBlockKey
+  const endBlockPath = endBlockKey
     ? operation.editor.blockIndexMap.get(endBlockKey)
     : undefined
-  const startBlock = startBlockIndex
-    ? operation.editor.value.at(startBlockIndex)
-    : undefined
-  const endBlock = endBlockIndex
-    ? operation.editor.value.at(endBlockIndex)
-    : undefined
+  const startTopLevelIndex = startBlockPath?.[0]
+  const endTopLevelIndex = endBlockPath?.[0]
+  const startBlock =
+    startTopLevelIndex !== undefined
+      ? operation.editor.value.at(startTopLevelIndex)
+      : undefined
+  const endBlock =
+    endTopLevelIndex !== undefined
+      ? operation.editor.value.at(endTopLevelIndex)
+      : undefined
 
   if (operation.unit === 'block') {
-    if (startBlockIndex === undefined || endBlockIndex === undefined) {
+    if (startTopLevelIndex === undefined || endTopLevelIndex === undefined) {
       throw new Error('Failed to get start or end block index')
     }
 
     Transforms.removeNodes(operation.editor, {
       at: {
-        anchor: {path: [startBlockIndex], offset: 0},
-        focus: {path: [endBlockIndex], offset: 0},
+        anchor: {path: [startTopLevelIndex], offset: 0},
+        focus: {path: [endTopLevelIndex], offset: 0},
       },
       mode: 'highest',
     })

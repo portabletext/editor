@@ -8,7 +8,7 @@ import {
   type Patch,
 } from '@portabletext/patches'
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import type {Path, PortableTextSpan, PortableTextTextBlock} from '@sanity/types'
+import type {Path, PortableTextTextBlock} from '@sanity/types'
 import {
   Element,
   Text,
@@ -31,28 +31,45 @@ export function insertTextPatch(
   operation: InsertTextOperation,
   beforeValue: Descendant[],
 ): Array<Patch> {
-  const block =
-    isTextBlock({schema}, children[operation.path[0]]) &&
-    children[operation.path[0]]
-  if (!block) {
-    throw new Error('Could not find block')
+  // Navigate to the parent block that contains the span
+  // For nested paths like [0, 0, 0, 0], we need to traverse to find the actual text-containing block
+  let currentNode: any = children[operation.path[0]]
+  let prevNode: any = beforeValue[operation.path[0]]
+  const patchPath: Path = [{_key: currentNode._key}]
+
+  // Traverse all but the last segment to get to the parent block
+  for (let i = 1; i < operation.path.length - 1; i++) {
+    const index = operation.path[i]
+
+    if (!currentNode.children || !Array.isArray(currentNode.children)) {
+      throw new Error('Could not find block')
+    }
+
+    const child = currentNode.children[index]
+    if (!child) {
+      throw new Error('Could not find block')
+    }
+
+    patchPath.push('children', {_key: child._key})
+    currentNode = child
+
+    // Also traverse the previous value
+    if (prevNode && prevNode.children && Array.isArray(prevNode.children)) {
+      prevNode = prevNode.children[index]
+    }
   }
-  const textChild =
-    isTextBlock({schema}, block) &&
-    isSpan({schema}, block.children[operation.path[1]]) &&
-    (block.children[operation.path[1]] as PortableTextSpan)
-  if (!textChild) {
+
+  // Now currentNode is the parent block containing the span
+  const spanIndex = operation.path[operation.path.length - 1]
+  const textChild = currentNode.children?.[spanIndex]
+
+  if (!textChild || !isSpan({schema}, textChild)) {
     throw new Error('Could not find child')
   }
-  const path: Path = [
-    {_key: block._key},
-    'children',
-    {_key: textChild._key},
-    'text',
-  ]
-  const prevBlock = beforeValue[operation.path[0]]
-  const prevChild =
-    isTextBlock({schema}, prevBlock) && prevBlock.children[operation.path[1]]
+
+  const path: Path = [...patchPath, 'children', {_key: textChild._key}, 'text']
+
+  const prevChild = prevNode?.children?.[spanIndex]
   const prevText = isSpan({schema}, prevChild) ? prevChild.text : ''
   const patch = diffMatchPatch(prevText, textChild.text, path)
   return patch.value.length ? [patch] : []
@@ -64,32 +81,45 @@ export function removeTextPatch(
   operation: RemoveTextOperation,
   beforeValue: Descendant[],
 ): Array<Patch> {
-  const block = children[operation.path[0]]
-  if (!block) {
-    throw new Error('Could not find block')
+  // Navigate to the parent block that contains the span
+  // For nested paths like [0, 0, 0, 0], we need to traverse to find the actual text-containing block
+  let currentNode: any = children[operation.path[0]]
+  let prevNode: any = beforeValue[operation.path[0]]
+  const patchPath: Path = [{_key: currentNode._key}]
+
+  // Traverse all but the last segment to get to the parent block
+  for (let i = 1; i < operation.path.length - 1; i++) {
+    const index = operation.path[i]
+
+    if (!currentNode.children || !Array.isArray(currentNode.children)) {
+      throw new Error('Could not find block')
+    }
+
+    const child = currentNode.children[index]
+    if (!child) {
+      throw new Error('Could not find block')
+    }
+
+    patchPath.push('children', {_key: child._key})
+    currentNode = child
+
+    // Also traverse the previous value
+    if (prevNode && prevNode.children && Array.isArray(prevNode.children)) {
+      prevNode = prevNode.children[index]
+    }
   }
-  const child =
-    (isTextBlock({schema}, block) && block.children[operation.path[1]]) ||
-    undefined
-  const textChild: PortableTextSpan | undefined = isSpan({schema}, child)
-    ? child
-    : undefined
-  if (child && !textChild) {
-    throw new Error('Expected span')
-  }
-  if (!textChild) {
+
+  // Now currentNode is the parent block containing the span
+  const spanIndex = operation.path[operation.path.length - 1]
+  const textChild = currentNode.children?.[spanIndex]
+
+  if (!textChild || !isSpan({schema}, textChild)) {
     throw new Error('Could not find child')
   }
-  const path: Path = [
-    {_key: block._key},
-    'children',
-    {_key: textChild._key},
-    'text',
-  ]
-  const beforeBlock = beforeValue[operation.path[0]]
-  const prevTextChild =
-    isTextBlock({schema}, beforeBlock) &&
-    beforeBlock.children[operation.path[1]]
+
+  const path: Path = [...patchPath, 'children', {_key: textChild._key}, 'text']
+
+  const prevTextChild = prevNode?.children?.[spanIndex]
   const prevText = isSpan({schema}, prevTextChild) && prevTextChild.text
   const patch = diffMatchPatch(prevText || '', textChild.text, path)
   return patch.value ? [patch] : []
@@ -167,15 +197,39 @@ export function setNodePatch(
 
       return patches
     }
-  } else if (operation.path.length === 2) {
-    const block = children[operation.path[0]]
-    if (isTextBlock({schema}, block)) {
-      const child = block.children[operation.path[1]]
-      if (child) {
-        const blockKey = block._key
-        const childKey = child._key
+  } else if (operation.path.length >= 2) {
+    // Handle nested paths (e.g., [0, 0] for text block children or [0, 0, 0, 0] for nested container blocks)
+
+    // Navigate to the target node by traversing the path
+    let currentNode: any = children[operation.path[0]]
+    const patchPath: Path = [{_key: currentNode._key}]
+
+    // Traverse the path to build the patch path
+    for (let i = 1; i < operation.path.length; i++) {
+      const index = operation.path[i]
+
+      if (!currentNode.children || !Array.isArray(currentNode.children)) {
+        throw new Error(
+          `Node at path ${operation.path.slice(0, i)} does not have children`,
+        )
+      }
+
+      const child = currentNode.children[index]
+
+      if (!child) {
+        throw new Error(
+          `Could not find child at index ${index} in path ${operation.path}`,
+        )
+      }
+
+      patchPath.push('children')
+
+      // For the last segment in the path, we're at the target node
+      if (i === operation.path.length - 1) {
+        // This is the node we're setting properties on
         const patches: Patch[] = []
 
+        // Check if it's an inline object (Element) or a span
         if (Element.isElement(child)) {
           // The child is an inline object. This needs to be treated
           // differently since all custom properties are stored on a `value`
@@ -184,14 +238,7 @@ export function setNodePatch(
           const _key = operation.newProperties._key
 
           if (_key !== undefined) {
-            patches.push(
-              set(_key, [
-                {_key: blockKey},
-                'children',
-                block.children.indexOf(child),
-                '_key',
-              ]),
-            )
+            patches.push(set(_key, [...patchPath, index, '_key']))
           }
 
           const properties =
@@ -205,14 +252,13 @@ export function setNodePatch(
           for (const key of keys) {
             const value = properties[key]
 
-            patches.push(
-              set(value, [{_key: blockKey}, 'children', {_key: childKey}, key]),
-            )
+            patches.push(set(value, [...patchPath, {_key: child._key}, key]))
           }
 
           return patches
         }
 
+        // It's a span or similar text node
         const newPropNames = Object.keys(operation.newProperties)
 
         for (const keyName of newPropNames) {
@@ -221,26 +267,12 @@ export function setNodePatch(
           ]
 
           if (keyName === '_key') {
-            patches.push(
-              set(value, [
-                {_key: blockKey},
-                'children',
-                block.children.indexOf(child),
-                keyName,
-              ]),
-            )
+            patches.push(set(value, [...patchPath, index, keyName]))
 
             continue
           }
 
-          patches.push(
-            set(value, [
-              {_key: blockKey},
-              'children',
-              {_key: childKey},
-              keyName,
-            ]),
-          )
+          patches.push(set(value, [...patchPath, {_key: child._key}, keyName]))
         }
 
         const propNames = Object.keys(operation.properties)
@@ -250,16 +282,18 @@ export function setNodePatch(
             continue
           }
 
-          patches.push(
-            unset([{_key: blockKey}, 'children', {_key: childKey}, keyName]),
-          )
+          patches.push(unset([...patchPath, {_key: child._key}, keyName]))
         }
 
         return patches
+      } else {
+        // We're still navigating, add the key and continue
+        patchPath.push({_key: child._key})
+        currentNode = child
       }
-      throw new Error('Could not find a valid child')
     }
-    throw new Error('Could not find a valid block')
+
+    throw new Error('Could not process path')
   } else {
     throw new Error(
       `Unexpected path encountered: ${JSON.stringify(operation.path)}`,

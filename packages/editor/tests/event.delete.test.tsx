@@ -712,4 +712,98 @@ describe('event.delete', () => {
       })
     })
   })
+
+  test('Scenario: Deleting offsets in table cell', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+    const rowKey = keyGenerator()
+    const cellKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blocks: [
+          {name: 'table', children: [{name: 'row'}]},
+          {name: 'row', children: [{name: 'cell'}]},
+          {name: 'cell', children: [{name: 'span'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _key: tableKey,
+          _type: 'table',
+          children: [
+            {
+              _key: rowKey,
+              _type: 'row',
+              children: [
+                {
+                  _key: cellKey,
+                  _type: 'cell',
+                  children: [
+                    {_key: spanKey, _type: 'span', text: 'foo bar baz'},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'delete',
+      at: {
+        anchor: {
+          path: [
+            {_key: tableKey},
+            'children',
+            {_key: rowKey},
+            'children',
+            {_key: cellKey},
+          ],
+          offset: 3,
+        },
+        focus: {
+          path: [
+            {_key: tableKey},
+            'children',
+            {_key: rowKey},
+            'children',
+            {_key: cellKey},
+          ],
+          offset: 7,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: tableKey,
+          _type: 'table',
+          children: [
+            {
+              _key: rowKey,
+              _type: 'row',
+              children: [
+                {
+                  _key: cellKey,
+                  _type: 'cell',
+                  children: [
+                    {
+                      _key: spanKey,
+                      _type: 'span',
+                      text: 'foo baz',
+                      marks: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
 })

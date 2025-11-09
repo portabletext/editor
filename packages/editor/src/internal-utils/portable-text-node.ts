@@ -44,6 +44,18 @@ export function isTextBlockNode<TEditorSchema extends EditorSchema>(
   return isTypedObject(node) && node._type === context.schema.block.name
 }
 
+export function isNestedBlockNode<TEditorSchema extends EditorSchema>(
+  context: {schema: TEditorSchema},
+  node: unknown,
+): node is TextBlockNode<TEditorSchema> {
+  return (
+    isTypedObject(node) &&
+    context.schema.blocks.some((b) => b.name === node._type) &&
+    'children' in node &&
+    Array.isArray(node.children)
+  )
+}
+
 //////////
 
 export type SpanNode<TEditorSchema extends EditorSchema> = {
@@ -130,6 +142,7 @@ export function getBlock<TEditorSchema extends EditorSchema>(
  * 2. A block (path length is 1)
  * 3. A span (path length is 2)
  * 4. Or an inline object (path length is 2)
+ * 5. Or a nested block/span at any depth (path length > 2)
  */
 export function getNode<TEditorSchema extends EditorSchema>(
   context: {schema: TEditorSchema},
@@ -144,21 +157,28 @@ export function getNode<TEditorSchema extends EditorSchema>(
     return getBlock(root, path)
   }
 
-  if (path.length === 2) {
-    const block = getBlock(root, path.slice(0, 1))
+  // Navigate through nested structure
+  let current: any = root
 
-    if (!block || !isTextBlockNode(context, block)) {
+  for (let i = 0; i < path.length; i++) {
+    const index = path[i]
+
+    if (
+      !current ||
+      !('children' in current) ||
+      !Array.isArray(current.children)
+    ) {
       return undefined
     }
 
-    const child = block.children.at(path[1])
+    current = current.children.at(index)
 
-    if (!child) {
+    if (current === undefined) {
       return undefined
     }
-
-    return child
   }
+
+  return current
 }
 
 export function getSpan<TEditorSchema extends EditorSchema>(
@@ -176,7 +196,7 @@ export function getSpan<TEditorSchema extends EditorSchema>(
 }
 
 /**
- * A parent can either be the root or a text block
+ * A parent can either be the root, a text block, or a nested block
  */
 export function getParent<TEditorSchema extends EditorSchema>(
   context: {schema: TEditorSchema},
@@ -193,17 +213,26 @@ export function getParent<TEditorSchema extends EditorSchema>(
     return root
   }
 
-  const blockIndex = parentPath.at(0)
+  // Navigate through nested structure without using getNode to avoid circular deps
+  let current: any = root
 
-  if (blockIndex === undefined || parentPath.length !== 1) {
-    return undefined
+  for (let i = 0; i < parentPath.length; i++) {
+    const index = parentPath[i]
+
+    if (
+      !current ||
+      !('children' in current) ||
+      !Array.isArray(current.children)
+    ) {
+      return undefined
+    }
+
+    current = current.children.at(index)
+
+    if (current === undefined) {
+      return undefined
+    }
   }
 
-  const block = root.children.at(blockIndex)
-
-  if (block && isTextBlockNode(context, block)) {
-    return block
-  }
-
-  return undefined
+  return current
 }

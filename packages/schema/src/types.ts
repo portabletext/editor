@@ -22,7 +22,45 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 /**
  * @public
  */
-export type PortableTextBlock = PortableTextTextBlock | PortableTextObject
+export type PortableTextBlock =
+  | PortableTextTextBlock
+  | PortableTextObject
+  | PortableTextContainerBlock
+
+/**
+ * @public
+ */
+export type PortableTextContainerBlock = {
+  _key: string
+  _type: string
+  children:
+    | Array<PortableTextSpan | PortableTextObject>
+    | Array<PortableTextContainerBlock>
+}
+
+/**
+ * @public
+ */
+export function isContainerBlock(
+  context: {schema: Schema},
+  block: unknown,
+): block is PortableTextContainerBlock {
+  if (!isTypedObject(block)) {
+    return false
+  }
+
+  if (
+    !context.schema.blocks.some((blockType) => blockType.name === block._type)
+  ) {
+    return false
+  }
+
+  if (!Array.isArray(block.children)) {
+    return false
+  }
+
+  return true
+}
 
 /**
  * @public
@@ -55,6 +93,28 @@ export function isTextBlock(
   }
 
   if (!Array.isArray(block.children)) {
+    return false
+  }
+
+  return true
+}
+
+/**
+ * @public
+ */
+export function isBlockObject(
+  context: {schema: Schema},
+  block: unknown,
+): block is PortableTextObject {
+  if (!isTypedObject(block)) {
+    return false
+  }
+
+  if (
+    !context.schema.blockObjects.some(
+      (blockObject) => blockObject.name === block._type,
+    )
+  ) {
     return false
   }
 

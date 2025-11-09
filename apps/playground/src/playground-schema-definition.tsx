@@ -88,6 +88,21 @@ export const playgroundSchemaDefinition = defineSchema({
       name: 'blockquote',
     },
   ],
+  blocks: [
+    {
+      name: 'table',
+      children: [{name: 'row'}],
+    },
+    {
+      name: 'row',
+      children: [{name: 'cell'}],
+    },
+    {
+      name: 'cell',
+      children: [{name: 'span'}],
+      decorators: [{name: 'strong'}],
+    },
+  ],
   blockObjects: [
     {
       title: 'Break',

@@ -5,7 +5,15 @@ import {applyOperationToPortableText} from './apply-operation-to-portable-text'
 
 function createContext() {
   const keyGenerator = createTestKeyGenerator()
-  const schema = compileSchema(defineSchema({}))
+  const schema = compileSchema(
+    defineSchema({
+      blocks: [
+        {name: 'table', children: [{name: 'row'}]},
+        {name: 'row', children: [{name: 'cell'}]},
+        {name: 'cell', children: [{name: 'span'}]},
+      ],
+    }),
+  )
 
   return {
     keyGenerator,
@@ -14,6 +22,121 @@ function createContext() {
 }
 
 describe(applyOperationToPortableText.name, () => {
+  test('inserting table block', () => {
+    expect(
+      applyOperationToPortableText(createContext(), [], {
+        type: 'insert_node',
+        path: [0],
+        node: {
+          _type: 'table',
+          _key: 'k0',
+          children: [
+            {
+              _type: 'row',
+              _key: 'k1',
+              children: [
+                {
+                  _type: 'cell',
+                  _key: 'k2',
+                  children: [{_type: 'span', _key: 'k3', text: ''}],
+                },
+              ],
+            },
+          ],
+        },
+      }),
+    ).toEqual([
+      {
+        _type: 'table',
+        _key: 'k0',
+        children: [
+          {
+            _type: 'row',
+            _key: 'k1',
+            children: [
+              {
+                _type: 'cell',
+                _key: 'k2',
+                children: [{_type: 'span', _key: 'k3', text: ''}],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+
+  test('inserting table row', () => {
+    expect(
+      applyOperationToPortableText(
+        createContext(),
+        [
+          {
+            _type: 'table',
+            _key: 't0',
+            children: [
+              {
+                _type: 'row',
+                _key: 'r0',
+                children: [
+                  {
+                    _type: 'cell',
+                    _key: 'c0',
+                    children: [{_type: 'span', _key: 's0', text: 'foo'}],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        {
+          type: 'insert_node',
+          path: [0, 0],
+          node: {
+            _type: 'row',
+            _key: 'r1',
+            children: [
+              {
+                _type: 'cell',
+                _key: 'c1',
+                children: [{_type: 'span', _key: 's1', text: 'bar'}],
+              },
+            ],
+          },
+        },
+      ),
+    ).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        children: [
+          {
+            _type: 'row',
+            _key: 'r1',
+            children: [
+              {
+                _type: 'cell',
+                _key: 'c1',
+                children: [{_type: 'span', _key: 's1', text: 'bar'}],
+              },
+            ],
+          },
+          {
+            _type: 'row',
+            _key: 'r0',
+            children: [
+              {
+                _type: 'cell',
+                _key: 'c0',
+                children: [{_type: 'span', _key: 's0', text: 'foo'}],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+
   test('setting block object properties', () => {
     expect(
       applyOperationToPortableText(

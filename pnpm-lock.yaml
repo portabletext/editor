@@ -195,9 +195,15 @@ importers:
       '@portabletext/plugin-one-line':
         specifier: workspace:*
         version: link:../../packages/plugin-one-line
+      '@portabletext/plugin-tables':
+        specifier: workspace:*
+        version: link:../../packages/plugin-tables
       '@portabletext/plugin-typography':
         specifier: workspace:*
         version: link:../../packages/plugin-typography
+      '@portabletext/schema':
+        specifier: workspace:*
+        version: link:../../packages/schema
       '@portabletext/toolbar':
         specifier: workspace:*
         version: link:../../packages/toolbar
@@ -942,6 +948,64 @@ importers:
       react-error-boundary:
         specifier: ^6.0.0
         version: 6.0.0(react@19.2.0)
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      typescript-eslint:
+        specifier: ^8.46.1
+        version: 8.46.1(eslint@9.38.0(jiti@2.6.1))(typescript@5.9.3)
+      vitest:
+        specifier: ^4.0.6
+        version: 4.0.6(@types/debug@4.1.12)(@types/node@24.10.0)(@vitest/browser-playwright@4.0.6)(jiti@2.6.1)(jsdom@27.0.0(postcss@8.5.6))(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1)
+
+  packages/plugin-tables:
+    dependencies:
+      '@portabletext/plugin-input-rule':
+        specifier: workspace:~
+        version: link:../plugin-input-rule
+      react-compiler-runtime:
+        specifier: 1.0.0
+        version: 1.0.0(react@19.2.0)
+    devDependencies:
+      '@portabletext/editor':
+        specifier: workspace:*
+        version: link:../editor
+      '@portabletext/schema':
+        specifier: workspace:^
+        version: link:../schema
+      '@sanity/pkg-utils':
+        specifier: ^9.0.3
+        version: 9.0.3(@types/babel__core@7.20.5)(@types/node@24.10.0)(babel-plugin-react-compiler@1.0.0)(typescript@5.9.3)
+      '@types/react':
+        specifier: ^19.2.2
+        version: 19.2.2
+      '@vitejs/plugin-react':
+        specifier: ^5.0.4
+        version: 5.0.4(vite@7.1.12(@types/node@24.10.0)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))
+      '@vitest/browser':
+        specifier: ^4.0.6
+        version: 4.0.6(vite@7.1.12(@types/node@24.10.0)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.6)
+      '@vitest/browser-playwright':
+        specifier: ^4.0.6
+        version: 4.0.6(playwright@1.56.1)(vite@7.1.12(@types/node@24.10.0)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1))(vitest@4.0.6)
+      babel-plugin-react-compiler:
+        specifier: 1.0.0
+        version: 1.0.0
+      eslint:
+        specifier: ^9.38.0
+        version: 9.38.0(jiti@2.6.1)
+      eslint-formatter-gha:
+        specifier: ^1.6.0
+        version: 1.6.0
+      eslint-plugin-react-hooks:
+        specifier: 7.0.1
+        version: 7.0.1(eslint@9.38.0(jiti@2.6.1))
+      racejar:
+        specifier: workspace:*
+        version: link:../racejar
+      react:
+        specifier: ^19.2.0
+        version: 19.2.0
       typescript:
         specifier: 'catalog:'
         version: 5.9.3

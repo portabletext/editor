@@ -139,94 +139,98 @@ export function createWithPatches({
         patches.push(insert(previousChildren, 'before', [0]))
       }
 
-      switch (operation.type) {
-        case 'insert_text':
-          patches = [
-            ...patches,
-            ...insertTextPatch(
-              editorActor.getSnapshot().context.schema,
-              editor.children,
-              operation,
-              previousChildren,
-            ),
-          ]
-          break
-        case 'remove_text':
-          patches = [
-            ...patches,
-            ...removeTextPatch(
-              editorActor.getSnapshot().context.schema,
-              editor.children,
-              operation,
-              previousChildren,
-            ),
-          ]
-          break
-        case 'remove_node':
-          patches = [
-            ...patches,
-            ...removeNodePatch(
-              editorActor.getSnapshot().context.schema,
-              previousChildren,
-              operation,
-            ),
-          ]
-          break
-        case 'split_node':
-          patches = [
-            ...patches,
-            ...splitNodePatch(
-              editorActor.getSnapshot().context.schema,
-              editor.children,
-              operation,
-              previousChildren,
-            ),
-          ]
-          break
-        case 'insert_node':
-          patches = [
-            ...patches,
-            ...insertNodePatch(
-              editorActor.getSnapshot().context.schema,
-              editor.children,
-              operation,
-              previousChildren,
-            ),
-          ]
-          break
-        case 'set_node':
-          patches = [
-            ...patches,
-            ...setNodePatch(
-              editorActor.getSnapshot().context.schema,
-              editor.children,
-              operation,
-            ),
-          ]
-          break
-        case 'merge_node':
-          patches = [
-            ...patches,
-            ...mergeNodePatch(
-              editorActor.getSnapshot().context.schema,
-              editor.children,
-              operation,
-              previousChildren,
-            ),
-          ]
-          break
-        case 'move_node':
-          patches = [
-            ...patches,
-            ...moveNodePatch(
-              editorActor.getSnapshot().context.schema,
-              previousChildren,
-              operation,
-            ),
-          ]
-          break
-        default:
-        // Do nothing
+      try {
+        switch (operation.type) {
+          case 'insert_text':
+            patches = [
+              ...patches,
+              ...insertTextPatch(
+                editorActor.getSnapshot().context.schema,
+                editor.children,
+                operation,
+                previousChildren,
+              ),
+            ]
+            break
+          case 'remove_text':
+            patches = [
+              ...patches,
+              ...removeTextPatch(
+                editorActor.getSnapshot().context.schema,
+                editor.children,
+                operation,
+                previousChildren,
+              ),
+            ]
+            break
+          case 'remove_node':
+            patches = [
+              ...patches,
+              ...removeNodePatch(
+                editorActor.getSnapshot().context.schema,
+                previousChildren,
+                operation,
+              ),
+            ]
+            break
+          case 'split_node':
+            patches = [
+              ...patches,
+              ...splitNodePatch(
+                editorActor.getSnapshot().context.schema,
+                editor.children,
+                operation,
+                previousChildren,
+              ),
+            ]
+            break
+          case 'insert_node':
+            patches = [
+              ...patches,
+              ...insertNodePatch(
+                editorActor.getSnapshot().context.schema,
+                editor.children,
+                operation,
+                previousChildren,
+              ),
+            ]
+            break
+          case 'set_node':
+            patches = [
+              ...patches,
+              ...setNodePatch(
+                editorActor.getSnapshot().context.schema,
+                editor.children,
+                operation,
+              ),
+            ]
+            break
+          case 'merge_node':
+            patches = [
+              ...patches,
+              ...mergeNodePatch(
+                editorActor.getSnapshot().context.schema,
+                editor.children,
+                operation,
+                previousChildren,
+              ),
+            ]
+            break
+          case 'move_node':
+            patches = [
+              ...patches,
+              ...moveNodePatch(
+                editorActor.getSnapshot().context.schema,
+                previousChildren,
+                operation,
+              ),
+            ]
+            break
+          default:
+          // Do nothing
+        }
+      } catch (error) {
+        console.error('Unable to transform operation to patches', error.message)
       }
 
       // Unset the value if a operation made the editor empty

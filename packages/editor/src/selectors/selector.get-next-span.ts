@@ -1,6 +1,7 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import type {KeyedSegment, PortableTextSpan} from '@sanity/types'
+import type {PortableTextSpan} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
+import type {ChildPath} from '../types/paths'
 import {getChildKeyFromSelectionPoint} from '../utils/util.selection-point'
 import {getSelectionEndBlock} from './selector.get-selection-end-block'
 import {getSelectionEndPoint} from './selector.get-selection-end-point'
@@ -11,7 +12,7 @@ import {getSelectionEndPoint} from './selector.get-selection-end-point'
 export const getNextSpan: EditorSelector<
   | {
       node: PortableTextSpan
-      path: [KeyedSegment, 'children', KeyedSegment]
+      path: ChildPath
     }
   | undefined
 > = (snapshot) => {
@@ -33,7 +34,7 @@ export const getNextSpan: EditorSelector<
   let nextSpan:
     | {
         node: PortableTextSpan
-        path: [KeyedSegment, 'children', KeyedSegment]
+        path: ChildPath
       }
     | undefined
 

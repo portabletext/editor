@@ -1,8 +1,10 @@
 import {compileSchemaDefinitionToPortableTextMemberSchemaTypes} from '@portabletext/sanity-bridge'
 import {compileSchema, defineSchema} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import type {PortableTextTextBlock} from '@sanity/types'
 import {createEditor, type Descendant} from 'slate'
-import {beforeEach, describe, expect, it} from 'vitest'
+import {beforeEach, describe, expect, it, test} from 'vitest'
 import {createActor} from 'xstate'
 import {editorMachine} from '../editor/editor-machine'
 import {withPlugins} from '../editor/plugins/with-plugins'
@@ -14,6 +16,7 @@ import {
   mergeNodePatch,
   removeNodePatch,
   removeTextPatch,
+  setNodePatch,
   splitNodePatch,
 } from './operation-to-patches'
 
@@ -58,6 +61,238 @@ const createDefaultValue = () =>
       ],
     },
   ] as Descendant[]
+
+describe(insertTextPatch.name, () => {
+  const schema = compileSchema(
+    defineSchema({
+      blocks: [
+        {name: 'table', children: [{name: 'row'}]},
+        {name: 'row', children: [{name: 'cell'}]},
+        {name: 'cell', children: [{name: 'span'}]},
+      ],
+    }),
+  )
+
+  test('in text block', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    expect(
+      insertTextPatch(
+        schema,
+        [
+          {
+            _key: blockKey,
+            _type: 'block',
+            children: [{_key: spanKey, _type: 'span', text: 'f'}],
+          },
+        ],
+        {
+          type: 'insert_text',
+          path: [0, 0],
+          text: 'f',
+          offset: 0,
+        },
+        [
+          {
+            _key: blockKey,
+            _type: 'block',
+            children: [{_key: spanKey, _type: 'span', text: ''}],
+          },
+        ],
+      ),
+    ).toEqual([
+      {
+        type: 'diffMatchPatch',
+        path: [{_key: blockKey}, 'children', {_key: spanKey}, 'text'],
+        value: stringifyPatches(makePatches(makeDiff('', 'f'))),
+      },
+    ])
+  })
+
+  test('in table cell', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const tableKey = keyGenerator()
+    const rowKey = keyGenerator()
+    const cellKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    expect(
+      insertTextPatch(
+        schema,
+        [
+          {
+            _key: tableKey,
+            _type: 'table',
+            children: [
+              {
+                _key: rowKey,
+                _type: 'row',
+                children: [
+                  {
+                    _key: cellKey,
+                    _type: 'cell',
+                    children: [{_key: spanKey, _type: 'span', text: 'f'}],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        {
+          type: 'insert_text',
+          path: [0, 0, 0, 0],
+          text: 'f',
+          offset: 0,
+        },
+        [
+          {
+            _key: tableKey,
+            _type: 'table',
+            children: [
+              {
+                _key: rowKey,
+                _type: 'row',
+                children: [
+                  {
+                    _key: cellKey,
+                    _type: 'cell',
+                    children: [{_key: spanKey, _type: 'span', text: ''}],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      ),
+    ).toEqual([
+      {
+        type: 'diffMatchPatch',
+        path: [
+          {_key: tableKey},
+          'children',
+          {_key: rowKey},
+          'children',
+          {_key: cellKey},
+          'children',
+          {_key: spanKey},
+          'text',
+        ],
+        value: stringifyPatches(makePatches(makeDiff('', 'f'))),
+      },
+    ])
+  })
+})
+
+describe(setNodePatch.name, () => {
+  const schema = compileSchema(
+    defineSchema({
+      blocks: [
+        {name: 'table', children: [{name: 'row'}]},
+        {name: 'row', children: [{name: 'cell'}]},
+        {name: 'cell', children: [{name: 'span'}]},
+      ],
+    }),
+  )
+
+  describe('set span marks', () => {
+    test('in text block', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+
+      expect(
+        setNodePatch(
+          schema,
+          [
+            {
+              _key: blockKey,
+              _type: 'block',
+              children: [
+                {
+                  _key: spanKey,
+                  _type: 'span',
+                  text: '',
+                },
+              ],
+            },
+          ],
+          {
+            type: 'set_node',
+            path: [0, 0],
+            newProperties: {
+              marks: [],
+            },
+            properties: {},
+          },
+        ),
+      ).toEqual([
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
+          value: [],
+        },
+      ])
+    })
+
+    test('in table cell', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const tableKey = keyGenerator()
+      const rowKey = keyGenerator()
+      const cellKey = keyGenerator()
+      const spanKey = keyGenerator()
+
+      expect(
+        setNodePatch(
+          schema,
+          [
+            {
+              _key: tableKey,
+              _type: 'table',
+              children: [
+                {
+                  _key: rowKey,
+                  _type: 'row',
+                  children: [
+                    {
+                      _key: cellKey,
+                      _type: 'cell',
+                      children: [{_key: spanKey, _type: 'span', text: ''}],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          {
+            type: 'set_node',
+            path: [0, 0, 0, 0],
+            newProperties: {
+              marks: [],
+            },
+            properties: {},
+          },
+        ),
+      ).toEqual([
+        {
+          type: 'set',
+          path: [
+            {_key: tableKey},
+            'children',
+            {_key: rowKey},
+            'children',
+            {_key: cellKey},
+            'children',
+            {_key: spanKey},
+            'marks',
+          ],
+          value: [],
+        },
+      ])
+    })
+  })
+})
 
 describe('operationToPatches', () => {
   beforeEach(() => {

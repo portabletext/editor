@@ -42,7 +42,7 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
     config.editorActor.getSnapshot().context,
   )
   instance.value = [placeholderBlock]
-  instance.blockIndexMap = new Map<string, number>()
+  instance.blockIndexMap = new Map<string, Array<number>>()
   instance.listIndexMap = new Map<string, number>()
 
   buildIndexMaps(

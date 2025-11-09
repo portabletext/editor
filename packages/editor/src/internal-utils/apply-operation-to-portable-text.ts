@@ -10,6 +10,7 @@ import {
   getParent,
   getSpan,
   isEditorNode,
+  isNestedBlockNode,
   isObjectNode,
   isPartialSpanNode,
   isSpanNode,
@@ -52,6 +53,10 @@ function applyOperationToPortableTextDraft(
         break
       }
 
+      if (!('children' in parent) || !Array.isArray(parent.children)) {
+        break
+      }
+
       if (index > parent.children.length) {
         break
       }
@@ -84,6 +89,12 @@ function applyOperationToPortableTextDraft(
           break
         }
 
+        if (isNestedBlockNode(context, insertedNode)) {
+          // Nested blocks (like tables) can be inserted as is with their children
+          parent.children.splice(index, 0, insertedNode)
+          break
+        }
+
         if (Element.isElement(insertedNode) && !('__inline' in insertedNode)) {
           // Void blocks have to have their `value` spread onto the block
 
@@ -99,11 +110,24 @@ function applyOperationToPortableTextDraft(
         }
       }
 
-      if (path.length === 2) {
-        // Inserting children into blocks
+      if (path.length >= 2) {
+        // Inserting children into blocks (including nested blocks)
 
-        if (!isTextBlockNode(context, parent)) {
-          // Only text blocks can have children
+        if (
+          !isTextBlockNode(context, parent) &&
+          !isNestedBlockNode(context, parent)
+        ) {
+          // Only text blocks and nested blocks can have children
+          break
+        }
+
+        if (!('children' in parent) || !Array.isArray(parent.children)) {
+          break
+        }
+
+        // Handle nested block insertion
+        if (isNestedBlockNode(context, insertedNode)) {
+          parent.children.splice(index, 0, insertedNode)
           break
         }
 
@@ -159,6 +183,10 @@ function applyOperationToPortableTextDraft(
         break
       }
 
+      if (!('children' in parent) || !Array.isArray(parent.children)) {
+        break
+      }
+
       const index = path[path.length - 1]
 
       if (isPartialSpanNode(node) && isPartialSpanNode(prev)) {
@@ -167,6 +195,12 @@ function applyOperationToPortableTextDraft(
         isTextBlockNode(context, node) &&
         isTextBlockNode(context, prev)
       ) {
+        prev.children.push(...node.children)
+      } else if (
+        isNestedBlockNode(context, node) &&
+        isNestedBlockNode(context, prev)
+      ) {
+        // Merge nested blocks
         prev.children.push(...node.children)
       } else {
         break
@@ -189,6 +223,10 @@ function applyOperationToPortableTextDraft(
       const index = path[path.length - 1]
 
       if (!node || !parent) {
+        break
+      }
+
+      if (!('children' in parent) || !Array.isArray(parent.children)) {
         break
       }
 
@@ -224,7 +262,10 @@ function applyOperationToPortableTextDraft(
       const {path} = operation
       const index = path[path.length - 1]
       const parent = getParent(context, root, path)
-      parent?.children.splice(index, 1)
+
+      if (parent && 'children' in parent && Array.isArray(parent.children)) {
+        parent.children.splice(index, 1)
+      }
 
       break
     }
@@ -384,6 +425,10 @@ function applyOperationToPortableTextDraft(
         break
       }
 
+      if (!('children' in parent) || !Array.isArray(parent.children)) {
+        break
+      }
+
       if (isEditorNode(parent)) {
         const block = getBlock(root, path)
 
@@ -407,24 +452,51 @@ function applyOperationToPortableTextDraft(
         break
       }
 
-      if (isTextBlockNode(context, parent)) {
+      if (
+        isTextBlockNode(context, parent) ||
+        isNestedBlockNode(context, parent)
+      ) {
         const node = getNode(context, root, path)
 
-        if (!node || !isSpanNode(context, node)) {
+        if (!node) {
           break
         }
 
-        const before = node.text.slice(0, position)
-        const after = node.text.slice(position)
-        node.text = before
+        // Handle span splitting
+        if (isSpanNode(context, node)) {
+          const before = node.text.slice(0, position)
+          const after = node.text.slice(position)
+          node.text = before
 
-        // _key is deliberately left out
-        const newSpanNode = {
-          ...properties,
-          text: after,
-        } as unknown as SpanNode<EditorSchema>
+          // _key is deliberately left out
+          const newSpanNode = {
+            ...properties,
+            text: after,
+          } as unknown as SpanNode<EditorSchema>
 
-        parent.children.splice(index + 1, 0, newSpanNode)
+          parent.children.splice(index + 1, 0, newSpanNode)
+          break
+        }
+
+        // Handle nested block splitting
+        if (
+          isNestedBlockNode(context, node) &&
+          'children' in node &&
+          Array.isArray(node.children)
+        ) {
+          const before = node.children.slice(0, position)
+          const after = node.children.slice(position)
+          node.children = before
+
+          // _key is deliberately left out
+          const newNestedBlockNode = {
+            ...properties,
+            children: after,
+          } as any
+
+          parent.children.splice(index + 1, 0, newNestedBlockNode)
+          break
+        }
       }
 
       break

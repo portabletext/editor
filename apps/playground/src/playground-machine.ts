@@ -377,7 +377,103 @@ export const playgroundMachine = setup({
   context: ({input}) => ({
     editorIdGenerator: input.editorIdGenerator,
     featureFlags: defaultPlaygroundFeatureFlags,
-    value: [],
+    value: [
+      {
+        _key: 'b0',
+        _type: 'block',
+        children: [
+          {
+            _key: 's0',
+            _type: 'span',
+            text: 'foo',
+          },
+        ],
+      },
+      {
+        _key: 't0',
+        _type: 'table',
+        children: [
+          {
+            _key: 'r0',
+            _type: 'row',
+            children: [
+              {
+                _key: 'c0',
+                _type: 'cell',
+                children: [
+                  {
+                    _key: 's0',
+                    _type: 'span',
+                    text: 'foo',
+                  },
+                ],
+              },
+              {
+                _key: 'c1',
+                _type: 'cell',
+                children: [
+                  {
+                    _key: 's1',
+                    _type: 'span',
+                    text: 'bar',
+                  },
+                ],
+              },
+              {
+                _key: 'c2',
+                _type: 'cell',
+                children: [
+                  {
+                    _key: 's2',
+                    _type: 'span',
+                    text: 'baz',
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            _key: 'r1',
+            _type: 'row',
+            children: [
+              {
+                _key: 'c3',
+                _type: 'cell',
+                children: [
+                  {
+                    _key: 's3',
+                    _type: 'span',
+                    text: 'fizz',
+                  },
+                ],
+              },
+              {
+                _key: 'c4',
+                _type: 'cell',
+                children: [
+                  {
+                    _key: 's4',
+                    _type: 'span',
+                    text: 'buzz',
+                  },
+                ],
+              },
+              {
+                _key: 'c5',
+                _type: 'cell',
+                children: [
+                  {
+                    _key: 's5',
+                    _type: 'span',
+                    text: '',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
     rangeDecorations: [],
     editors: [],
   }),

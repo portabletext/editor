@@ -33,14 +33,33 @@ export function compileSchema(definition: SchemaDefinition): Schema {
     }
   }
 
+  const block = {
+    name: definition.block?.name ?? 'block',
+    ...(blockFields.length > 0 ? {fields: blockFields} : {}),
+  }
+
+  const span = {
+    name: 'span',
+  }
+
+  const blockObjects = (definition.blockObjects ?? []).map((blockObject) => ({
+    ...blockObject,
+    fields: blockObject.fields ?? [],
+  }))
+
+  const inlineObjects = (definition.inlineObjects ?? []).map(
+    (inlineObject) => ({
+      ...inlineObject,
+      fields: inlineObject.fields ?? [],
+    }),
+  )
+
+  const blocks = definition.blocks ?? []
+
   return {
-    block: {
-      name: definition.block?.name ?? 'block',
-      ...(blockFields.length > 0 ? {fields: blockFields} : {}),
-    },
-    span: {
-      name: 'span',
-    },
+    block,
+    blocks,
+    span,
     styles: !styles.some((style) => style.value === 'normal')
       ? [{value: 'normal', name: 'normal', title: 'Normal'}, ...styles]
       : styles,
@@ -56,13 +75,7 @@ export function compileSchema(definition: SchemaDefinition): Schema {
       ...annotation,
       fields: annotation.fields ?? [],
     })),
-    blockObjects: (definition.blockObjects ?? []).map((blockObject) => ({
-      ...blockObject,
-      fields: blockObject.fields ?? [],
-    })),
-    inlineObjects: (definition.inlineObjects ?? []).map((inlineObject) => ({
-      ...inlineObject,
-      fields: inlineObject.fields ?? [],
-    })),
+    blockObjects,
+    inlineObjects,
   }
 }

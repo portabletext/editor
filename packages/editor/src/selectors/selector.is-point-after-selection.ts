@@ -29,25 +29,28 @@ export function isPointAfterSelection(
       return false
     }
 
-    const pointBlockIndex = snapshot.blockIndexMap.get(pointBlockKey)
-    const endBlockIndex = snapshot.blockIndexMap.get(endBlockKey)
+    const pointBlockPath = snapshot.blockIndexMap.get(pointBlockKey)
+    const endBlockPath = snapshot.blockIndexMap.get(endBlockKey)
 
-    if (pointBlockIndex === undefined || endBlockIndex === undefined) {
+    if (pointBlockPath === undefined || endBlockPath === undefined) {
       return false
     }
 
-    if (pointBlockIndex > endBlockIndex) {
+    const pointTopLevelIndex = pointBlockPath[0]
+    const endTopLevelIndex = endBlockPath[0]
+
+    if (pointTopLevelIndex > endTopLevelIndex) {
       // The point block is after the end block.
       return true
     }
 
-    if (pointBlockIndex < endBlockIndex) {
+    if (pointTopLevelIndex < endTopLevelIndex) {
       // The point block is before the end block.
       return false
     }
 
     // The point block is the same as the end block.
-    const pointBlock = snapshot.context.value.at(pointBlockIndex)
+    const pointBlock = snapshot.context.value.at(pointTopLevelIndex)
 
     if (!pointBlock) {
       // The point block is not in the value.

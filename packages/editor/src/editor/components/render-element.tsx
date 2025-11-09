@@ -1,16 +1,19 @@
-import {isTextBlock} from '@portabletext/schema'
+import {isContainerBlock, isTextBlock} from '@portabletext/schema'
 import {useSelector} from '@xstate/react'
 import {useContext, type ReactElement} from 'react'
 import type {Element as SlateElement} from 'slate'
 import {useSlateStatic, type RenderElementProps} from 'slate-react'
+import {getBlockByPath} from '../../internal-utils/block-path-utils'
 import type {
   RenderBlockFunction,
   RenderChildFunction,
+  RenderContainerBlockFunction,
   RenderListItemFunction,
   RenderStyleFunction,
 } from '../../types/editor'
 import {EditorActorContext} from '../editor-actor-context'
 import {RenderBlockObject} from './render-block-object'
+import {RenderContainerBlock} from './render-container-block'
 import {RenderInlineObject} from './render-inline-object'
 import {RenderTextBlock} from './render-text-block'
 
@@ -21,6 +24,7 @@ export function RenderElement(props: {
   readOnly: boolean
   renderBlock?: RenderBlockFunction
   renderChild?: RenderChildFunction
+  renderContainerBlock?: RenderContainerBlockFunction
   renderListItem?: RenderListItemFunction
   renderStyle?: RenderStyleFunction
   spellCheck?: boolean
@@ -50,9 +54,11 @@ export function RenderElement(props: {
     )
   }
 
-  const blockIndex = slateStatic.blockIndexMap.get(props.element._key)
+  const blockPath = slateStatic.blockIndexMap.get(props.element._key)
   const block =
-    blockIndex !== undefined ? slateStatic.value.at(blockIndex) : undefined
+    blockPath !== undefined
+      ? getBlockByPath({schema, value: slateStatic.value}, blockPath)
+      : undefined
 
   if (isTextBlock({schema}, block)) {
     return (
@@ -69,6 +75,18 @@ export function RenderElement(props: {
       >
         {props.children}
       </RenderTextBlock>
+    )
+  }
+
+  if (isContainerBlock({schema}, block)) {
+    return (
+      <RenderContainerBlock
+        attributes={props.attributes}
+        renderContainerBlock={props.renderContainerBlock}
+        block={block}
+      >
+        {props.children}
+      </RenderContainerBlock>
     )
   }
 

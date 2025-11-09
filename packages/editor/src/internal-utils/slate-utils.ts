@@ -173,31 +173,6 @@ export function getFocusChild({
   }
 }
 
-function getPointChild({
-  editor,
-  point,
-}: {
-  editor: PortableTextSlateEditor
-  point: Point
-}): [node: Node, path: Path] | [undefined, undefined] {
-  const [block, blockPath] = getPointBlock({editor, point})
-  const childIndex = point.path.at(1)
-
-  if (!block || !blockPath || childIndex === undefined) {
-    return [undefined, undefined]
-  }
-
-  try {
-    const pointChild = Node.child(block, childIndex)
-
-    return pointChild
-      ? [pointChild, [...blockPath, childIndex]]
-      : [undefined, undefined]
-  } catch {
-    return [undefined, undefined]
-  }
-}
-
 export function getFirstBlock({
   editor,
 }: {
@@ -353,8 +328,70 @@ export function isStyleActive({
   return false
 }
 
+/**
+ * Gets all container blocks in the path and the child at a point.
+ * For a path like [0, 0, 0, 0] (table > row > cell > span), returns all blocks
+ * in the hierarchy: [table, row, cell] and the span child.
+ */
+function getPointBlocksAndChild({
+  editor,
+  point,
+}: {
+  editor: PortableTextSlateEditor
+  point: Point
+}): {
+  blocks: Node[]
+  child: Node | undefined
+} {
+  try {
+    const pathDepth = point.path.length
+
+    if (pathDepth < 1) {
+      return {blocks: [], child: undefined}
+    }
+
+    // Get all blocks in the hierarchy by traversing from root to the parent of the leaf
+    const blocks: Node[] = []
+
+    // For text blocks, path is [blockIndex, childIndex] - only 1 block
+    // For nested containers, path is [0, 0, 0, 0] - we need blocks at [0], [0,0], [0,0,0]
+
+    if (pathDepth === 1) {
+      // Just the top-level block, no child
+      const [block] = Editor.node(editor, point.path) ?? [undefined]
+      if (block && Element.isElement(block)) {
+        blocks.push(block)
+      }
+      return {blocks, child: undefined}
+    }
+
+    // Get all blocks from root to parent of leaf
+    for (let depth = 1; depth < pathDepth; depth++) {
+      const blockPath = point.path.slice(0, depth)
+      const [block] = Editor.node(editor, blockPath) ?? [undefined]
+
+      if (block && Element.isElement(block)) {
+        blocks.push(block)
+      }
+    }
+
+    // Get the child (leaf node)
+    const parentPath = point.path.slice(0, -1)
+    const childIndex = point.path[point.path.length - 1]
+    const [parent] = Editor.node(editor, parentPath) ?? [undefined]
+
+    const child =
+      parent && Element.isElement(parent)
+        ? parent.children?.[childIndex]
+        : undefined
+
+    return {blocks, child}
+  } catch {
+    return {blocks: [], child: undefined}
+  }
+}
+
 export function slateRangeToSelection({
-  schema,
   editor,
   range,
 }: {
@@ -362,54 +399,69 @@ export function slateRangeToSelection({
   editor: PortableTextSlateEditor
   range: Range
 }): EditorSelection {
-  const [anchorBlock] = getPointBlock({
+  const {blocks: anchorBlocks, child: anchorChild} = getPointBlocksAndChild({
     editor,
     point: range.anchor,
   })
-  const [focusBlock] = getPointBlock({
+  const {blocks: focusBlocks, child: focusChild} = getPointBlocksAndChild({
     editor,
     point: range.focus,
   })
 
-  if (!anchorBlock || !focusBlock) {
+  if (anchorBlocks.length === 0 || focusBlocks.length === 0) {
     return null
   }
 
-  const [anchorChild] =
-    anchorBlock._type === schema.block.name
-      ? getPointChild({
-          editor,
-          point: range.anchor,
-        })
-      : [undefined, undefined]
-  const [focusChild] =
-    focusBlock._type === schema.block.name
-      ? getPointChild({
-          editor,
-          point: range.focus,
-        })
-      : [undefined, undefined]
+  // The selection path should include the full path from root through all container blocks
+  // For nested containers like [table, row, cell] + span, we want:
+  // [{_key: table}, 'children', {_key: row}, 'children', {_key: cell}, 'children', {_key: span}]
+  // For inline objects, the inline object itself is in the blocks array, so we don't add it as a child
+
+  const buildPath = (blocks: Node[], child: Node | undefined) => {
+    const path: Array<{_key: string} | 'children'> = []
+
+    // Check if the last block is an inline object (has __inline property)
+    const lastBlock = blocks[blocks.length - 1]
+    const lastBlockIsInlineObject =
+      lastBlock && '__inline' in lastBlock && lastBlock.__inline === true
+
+    // Build the full path through all container blocks
+    for (const block of blocks) {
+      if (!block || !('_key' in block)) {
+        return []
+      }
+
+      if (path.length > 0) {
+        path.push('children')
+      }
+      path.push({_key: block._key})
+    }
+
+    // Add the child (span) if present and not a void-child
+    // If the last block is an inline object, don't add the void-child
+    if (
+      child &&
+      '_key' in child &&
+      child._key !== 'void-child' &&
+      !lastBlockIsInlineObject
+    ) {
+      path.push('children')
+      path.push({_key: child._key})
+    }
+
+    return path
+  }
 
   const selection: EditorSelection = {
     anchor: {
-      path: [{_key: anchorBlock._key}],
+      path: buildPath(anchorBlocks, anchorChild),
       offset: range.anchor.offset,
     },
     focus: {
-      path: [{_key: focusBlock._key}],
+      path: buildPath(focusBlocks, focusChild),
       offset: range.focus.offset,
     },
     backward: Range.isBackward(range),
-  }
-
-  if (anchorChild) {
-    selection.anchor.path.push('children')
-    selection.anchor.path.push({_key: anchorChild._key})
-  }
-
-  if (focusChild) {
-    selection.focus.path.push('children')
-    selection.focus.path.push({_key: focusChild._key})
   }
 
   return selection

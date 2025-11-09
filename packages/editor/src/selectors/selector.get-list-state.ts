@@ -50,17 +50,19 @@ export function getListIndex({
     const targetKey = focusTextBlock.node._key
 
     // Find the target block's index
-    const targetIndex = snapshot.blockIndexMap.get(targetKey)
+    const targetPath = snapshot.blockIndexMap.get(targetKey)
 
-    if (targetIndex === undefined) {
+    if (targetPath === undefined) {
       return undefined
     }
+
+    const targetTopLevelIndex = targetPath[0]
 
     // Walk backwards from the target block and count consecutive list items
     // of the same type and level
     let listIndex = 1 // Start at 1 for the target block itself
 
-    for (let i = targetIndex - 1; i >= 0; i--) {
+    for (let i = targetTopLevelIndex - 1; i >= 0; i--) {
       const block = snapshot.context.value[i]
 
       if (!isTextBlock(snapshot.context, block)) {

@@ -1,5 +1,6 @@
 import type {PortableTextBlock} from '@sanity/types'
 import type {EditorSelector} from '../editor/editor-selector'
+import {getTopLevelIndex} from '../internal-utils/block-path-utils'
 import type {BlockPath} from '../types/paths'
 import {getSelectionEndBlock} from './selector.get-selection-end-block'
 
@@ -15,13 +16,17 @@ export const getNextBlock: EditorSelector<
     return undefined
   }
 
-  const index = snapshot.blockIndexMap.get(selectionEndBlock.node._key)
+  const blockPath = snapshot.blockIndexMap.get(selectionEndBlock.node._key)
+  const topLevelIndex = blockPath ? getTopLevelIndex(blockPath) : undefined
 
-  if (index === undefined || index === snapshot.context.value.length - 1) {
+  if (
+    topLevelIndex === undefined ||
+    topLevelIndex === snapshot.context.value.length - 1
+  ) {
     return undefined
   }
 
-  const nextBlock = snapshot.context.value.at(index + 1)
+  const nextBlock = snapshot.context.value.at(topLevelIndex + 1)
 
   return nextBlock
     ? {node: nextBlock, path: [{_key: nextBlock._key}]}

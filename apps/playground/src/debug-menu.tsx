@@ -144,6 +144,19 @@ export function DebugMenu(props: {
       </Toolbar>
       <Toolbar>
         <Switch
+          isSelected={featureFlags.tablesPlugin}
+          onChange={() => {
+            props.editorRef.send({
+              type: 'toggle feature flag',
+              flag: 'tablesPlugin',
+            })
+          }}
+        >
+          Tables plugin
+        </Switch>
+      </Toolbar>
+      <Toolbar>
+        <Switch
           isSelected={featureFlags.typographyPlugin}
           onChange={() => {
             props.editorRef.send({

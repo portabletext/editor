@@ -21,6 +21,7 @@ export type EditorFeatureFlags = {
   linkPlugin: boolean
   oneLinePlugin: boolean
   markdownPlugin: boolean
+  tablesPlugin: boolean
   typographyPlugin: boolean
 }
 
@@ -34,6 +35,7 @@ export const defaultEditorFeatureFlags: EditorFeatureFlags = {
   linkPlugin: false,
   oneLinePlugin: false,
   markdownPlugin: true,
+  tablesPlugin: true,
   typographyPlugin: true,
 }
 

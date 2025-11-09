@@ -370,6 +370,92 @@ describe(parseBlock.name, () => {
       })
     })
   })
+
+  describe('container block', () => {
+    test('table with rows and cells', () => {
+      expect(
+        parseBlock({
+          block: {
+            _type: 'table',
+            _key: 't1',
+            children: [
+              {
+                _type: 'row',
+                _key: 'r1',
+                children: [
+                  {
+                    _type: 'cell',
+                    _key: 'c1',
+                    children: [{_type: 'span', text: 'Hello', marks: []}],
+                  },
+                ],
+              },
+            ],
+          },
+          context: {
+            keyGenerator: createTestKeyGenerator(),
+            schema: compileSchema(
+              defineSchema({
+                blocks: [
+                  {name: 'table', children: [{name: 'row'}]},
+                  {name: 'row', children: [{name: 'cell'}]},
+                  {name: 'cell', children: [{name: 'span'}]},
+                ],
+              }),
+            ),
+          },
+          options: {removeUnusedMarkDefs: true, validateFields: true},
+        }),
+      ).toEqual({
+        _key: 't1',
+        _type: 'table',
+        children: [
+          {
+            _key: 'r1',
+            _type: 'row',
+            children: [
+              {
+                _key: 'c1',
+                _type: 'cell',
+                children: [
+                  {
+                    _key: 'k0',
+                    _type: 'span',
+                    text: 'Hello',
+                    marks: [],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      })
+    })
+
+    test('container blocks should not have style property', () => {
+      const result = parseBlock({
+        block: {
+          _type: 'table',
+          children: [{_type: 'row', children: []}],
+        },
+        context: {
+          keyGenerator: createTestKeyGenerator(),
+          schema: compileSchema(
+            defineSchema({
+              blocks: [
+                {name: 'table', children: [{name: 'row'}]},
+                {name: 'row', children: [{name: 'cell'}]},
+              ],
+            }),
+          ),
+        },
+        options: {removeUnusedMarkDefs: true, validateFields: true},
+      })
+
+      expect(result).toBeDefined()
+      expect(result).not.toHaveProperty('style')
+    })
+  })
 })
 
 describe(parseSpan.name, () => {

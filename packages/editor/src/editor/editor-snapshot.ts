@@ -21,7 +21,7 @@ export type EditorContext = {
  */
 export type EditorSnapshot = {
   context: EditorContext
-  blockIndexMap: Map<string, number>
+  blockIndexMap: Map<string, Array<number>>
   /**
    * @beta
    * Subject to change

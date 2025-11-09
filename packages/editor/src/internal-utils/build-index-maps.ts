@@ -1,9 +1,40 @@
-import {isTextBlock} from '@portabletext/schema'
+import {isContainerBlock, isTextBlock} from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
 
 // Maps for each list type, keeping track of the current list count for each
 // level.
 const levelIndexMaps = new Map<string, Map<number, number>>()
+
+/**
+ * Recursively processes container blocks and their children to build the block index map.
+ */
+function processContainerChildren(
+  context: Pick<EditorContext, 'schema' | 'value'>,
+  children: Array<any>,
+  parentPath: Array<number>,
+  blockIndexMap: Map<string, Array<number>>,
+): void {
+  for (let childIndex = 0; childIndex < children.length; childIndex++) {
+    const child = children.at(childIndex)
+
+    if (child === undefined) {
+      continue
+    }
+
+    // If this child is also a container block, recursively process its children
+    if (isContainerBlock(context, child)) {
+      const childPath = [...parentPath, childIndex]
+      blockIndexMap.set(child._key, childPath)
+
+      processContainerChildren(
+        context,
+        child.children,
+        childPath,
+        blockIndexMap,
+      )
+    }
+  }
+}
 
 /**
  * Mutates the maps in place.
@@ -14,7 +45,7 @@ export function buildIndexMaps(
     blockIndexMap,
     listIndexMap,
   }: {
-    blockIndexMap: Map<string, number>
+    blockIndexMap: Map<string, Array<number>>
     listIndexMap: Map<string, number>
   },
 ): void {
@@ -36,7 +67,21 @@ export function buildIndexMaps(
       continue
     }
 
-    blockIndexMap.set(block._key, blockIndex)
+    blockIndexMap.set(block._key, [blockIndex])
+
+    if (isContainerBlock(context, block)) {
+      // Recursively process all children (and nested children) of this container block
+      processContainerChildren(
+        context,
+        block.children,
+        [blockIndex],
+        blockIndexMap,
+      )
+
+      levelIndexMaps.clear()
+      previousListItem = undefined
+      continue
+    }
 
     // Clear the state if we encounter a non-text block
     if (!isTextBlock(context, block)) {

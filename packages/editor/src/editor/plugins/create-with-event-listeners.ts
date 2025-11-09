@@ -197,15 +197,17 @@ export function createWithEventListeners(editorActor: EditorActor) {
 
       const range = Editor.range(editor, location)
 
+      const at = slateRangeToSelection({
+        schema: editorActor.getSnapshot().context.schema,
+        editor,
+        range,
+      })
+
       editorActor.send({
         type: 'behavior event',
         behaviorEvent: {
           type: 'select',
-          at: slateRangeToSelection({
-            schema: editorActor.getSnapshot().context.schema,
-            editor,
-            range,
-          }),
+          at,
         },
         editor,
       })

@@ -50,16 +50,15 @@ export function createWithSchemaTypes({
         return false
       }
 
+      const schema = editorActor.getSnapshot().context.schema
+
+      // Container blocks should not be treated as void - they have editable children
+      // Block objects and inline objects are void
       return (
-        editorActor.getSnapshot().context.schema.block.name !== element._type &&
-        (editorActor
-          .getSnapshot()
-          .context.schema.blockObjects.map((obj) => obj.name)
-          .includes(element._type) ||
-          editorActor
-            .getSnapshot()
-            .context.schema.inlineObjects.map((obj) => obj.name)
-            .includes(element._type))
+        schema.block.name !== element._type &&
+        !schema.blocks.some((b) => b.name === element._type) &&
+        (schema.blockObjects.map((obj) => obj.name).includes(element._type) ||
+          schema.inlineObjects.map((obj) => obj.name).includes(element._type))
       )
     }
     editor.isInline = (element: Element): boolean => {

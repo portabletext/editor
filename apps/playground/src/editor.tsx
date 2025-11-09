@@ -6,6 +6,7 @@ import {
   type BlockDecoratorRenderProps,
   type BlockRenderProps,
   type BlockStyleRenderProps,
+  type ContainerBlockRenderProps,
   type EditorEmittedEvent,
   type PortableTextBlock,
   type RangeDecoration,
@@ -18,6 +19,7 @@ import {
 } from '@portabletext/editor'
 import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 import {OneLinePlugin} from '@portabletext/plugin-one-line'
+import {TablesPlugin} from '@portabletext/plugin-tables'
 import {
   createDecoratorGuard,
   TypographyPlugin,
@@ -182,6 +184,7 @@ export function Editor(props: {
               <MarkdownShortcutsPlugin {...markdownShortcutsPluginProps} />
             ) : null}
             {featureFlags.oneLinePlugin ? <OneLinePlugin /> : null}
+            {featureFlags.tablesPlugin ? <TablesPlugin /> : null}
             {featureFlags.typographyPlugin ? (
               <>
                 <TypographyPlugin
@@ -206,6 +209,7 @@ export function Editor(props: {
                     rangeDecorations={props.rangeDecorations}
                     renderAnnotation={renderAnnotation}
                     renderBlock={RenderBlock}
+                    renderContainerBlock={RenderContainerBlock}
                     renderChild={renderChild}
                     renderDecorator={renderDecorator}
                     renderListItem={renderListItem}
@@ -306,6 +310,30 @@ const imageStyle = tv({
     },
   },
 })
+
+const RenderContainerBlock = (props: ContainerBlockRenderProps) => {
+  if (props.block._type === 'table') {
+    return (
+      <table className="border-collapse border border-gray-300 my-2">
+        <tbody {...props.attributes}>{props.children}</tbody>
+      </table>
+    )
+  }
+
+  if (props.block._type === 'row') {
+    return <tr {...props.attributes}>{props.children}</tr>
+  }
+
+  if (props.block._type === 'cell') {
+    return (
+      <td className="border border-gray-300 px-2 py-1" {...props.attributes}>
+        {props.children}
+      </td>
+    )
+  }
+
+  return <div {...props.attributes}>{props.children}</div>
+}
 
 const RenderBlock = (props: BlockRenderProps) => {
   const enableDragHandles = useContext(EditorFeatureFlagsContext).dragHandles

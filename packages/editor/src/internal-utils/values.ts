@@ -41,16 +41,30 @@ export function toSlateBlock(
   keyMap: Record<string, any> = {},
 ): Descendant {
   const {_type, _key, ...rest} = block
-  const isPortableText = block && block._type === schemaTypes.block.name
+  const isTextBlock = block._type === schemaTypes.block.name
+  const isContainerBlock = schemaTypes.blocks.some(
+    (b) => b.name === block._type,
+  )
+  const isPortableText = block && (isTextBlock || isContainerBlock)
+
   if (isPortableText) {
     const textBlock = block as PortableTextTextBlock
     let hasInlines = false
-    const hasMissingStyle = typeof textBlock.style === 'undefined'
+    const hasMissingStyle =
+      isTextBlock && typeof textBlock.style === 'undefined'
     const hasMissingMarkDefs = typeof textBlock.markDefs === 'undefined'
     const hasMissingChildren = typeof textBlock.children === 'undefined'
 
     const children = (textBlock.children || []).map((child) => {
       const {_type: cType, _key: cKey, ...cRest} = child
+
+      if (
+        cType === schemaTypes.block.name ||
+        schemaTypes.blocks.some((b) => b.name === cType)
+      ) {
+        return toSlateBlock(child as PortableTextBlock, {schemaTypes}, keyMap)
+      }
+
       // Return 'slate' version of inline object where the actual
       // value is stored in the `value` property.
       // In slate, inline objects are represented as regular
@@ -90,7 +104,7 @@ export function toSlateBlock(
       // Original object
       return block
     }
-    // TODO: remove this when we have a better way to handle missing style
+    // Only add style to text blocks, not container blocks
     if (hasMissingStyle) {
       rest.style = schemaTypes.styles[0].name
     }

@@ -28,6 +28,7 @@ export function validateValue(
   ]
   const validBlockTypes = [
     types.block.name,
+    ...types.blocks.map((block) => block.name),
     ...types.blockObjects.map((t) => t.name),
   ]
 
