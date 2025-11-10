@@ -25,7 +25,7 @@ import {
   slateRangeToSelection,
 } from '../../internal-utils/slate-utils'
 import {toSlateRange} from '../../internal-utils/to-slate-range'
-import {fromSlateValue, toSlateValue} from '../../internal-utils/values'
+import {fromSlateValue} from '../../internal-utils/values'
 import {getActiveAnnotationsMarks} from '../../selectors/selector.get-active-annotation-marks'
 import {getActiveDecorators} from '../../selectors/selector.get-active-decorators'
 import {getFocusBlock} from '../../selectors/selector.get-focus-block'
@@ -187,83 +187,17 @@ export function createEditableAPI(
       type: TSchemaType,
       value?: {[prop: string]: any},
     ): Path => {
-      if (type.name !== types.span.name) {
-        editorActor.send({
-          type: 'behavior event',
-          behaviorEvent: {
-            type: 'insert.inline object',
-            inlineObject: {
-              name: type.name,
-              value,
-            },
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'insert.child',
+          child: {
+            _type: type.name,
+            ...(value ? value : {}),
           },
-          editor,
-        })
-
-        return editor.selection
-          ? (slateRangeToSelection({
-              schema: editorActor.getSnapshot().context.schema,
-              editor,
-              range: editor.selection,
-            })?.focus.path ?? [])
-          : []
-      }
-
-      if (!editor.selection) {
-        throw new Error('The editor has no selection')
-      }
-      const [focusBlock] = Array.from(
-        Editor.nodes(editor, {
-          at: editor.selection.focus.path.slice(0, 1),
-          match: (n) => n._type === types.block.name,
-        }),
-      )[0] || [undefined]
-      if (!focusBlock) {
-        throw new Error('No focused text block')
-      }
-      if (
-        type.name !== types.span.name &&
-        !types.inlineObjects.some((t) => t.name === type.name)
-      ) {
-        throw new Error(
-          'This type cannot be inserted as a child to a text block',
-        )
-      }
-      const block = toSlateValue(
-        [
-          {
-            _key: editorActor.getSnapshot().context.keyGenerator(),
-            _type: types.block.name,
-            children: [
-              {
-                _key: editorActor.getSnapshot().context.keyGenerator(),
-                _type: type.name,
-                ...(value ? value : {}),
-              },
-            ],
-          },
-        ],
-        {schemaTypes: editorActor.getSnapshot().context.schema},
-      )[0] as unknown as SlateElement
-      const child = block.children[0]
-      const focusChildPath = editor.selection.focus.path.slice(0, 2)
-      const isSpanNode = child._type === types.span.name
-      const focusNode = Node.get(editor, focusChildPath)
-
-      // If we are inserting a span, and currently have focus on an inline object,
-      // move the selection to the next span (guaranteed by normalizing rules) before inserting it.
-      if (isSpanNode && focusNode._type !== types.span.name) {
-        debug(
-          'Inserting span child next to inline object child, moving selection + 1',
-        )
-        editor.move({distance: 1, unit: 'character'})
-      }
-
-      Transforms.insertNodes(editor, child, {
-        select: true,
-        at: editor.selection,
+        },
+        editor,
       })
-      editor.onChange()
 
       return editor.selection
         ? (slateRangeToSelection({

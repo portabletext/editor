@@ -165,7 +165,7 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
                 color: 'red',
               },
               {
-                _key: 'k5',
+                _key: 'k4',
                 _type: 'span',
                 marks: [],
                 text: ' ',
@@ -177,8 +177,8 @@ describe('plugin:withEditableAPI: .insertChild()', () => {
         ])
 
         expect(PortableTextEditor.getSelection(editorRef.current)).toEqual({
-          anchor: {path: [{_key: 'a'}, 'children', {_key: 'k5'}], offset: 1},
-          focus: {path: [{_key: 'a'}, 'children', {_key: 'k5'}], offset: 1},
+          anchor: {path: [{_key: 'a'}, 'children', {_key: 'k4'}], offset: 1},
+          focus: {path: [{_key: 'a'}, 'children', {_key: 'k4'}], offset: 1},
           backward: false,
         })
       }
