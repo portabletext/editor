@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-emoji-picker",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "description": "Easily configure an Emoji Picker for the Portable Text Editor",
   "keywords": [
     "portabletext",

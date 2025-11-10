@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.0.7
+
+### Patch Changes
+
+- Updated dependencies [[`b32abfc`](https://github.com/portabletext/editor/commit/b32abfc202bdc1c27d40a99258fa13bd32cde7a4)]:
+  - @portabletext/plugin-input-rule@0.6.0
+
 ## 3.0.6
 
 ### Patch Changes
