@@ -1,8 +1,8 @@
 import {Feature} from 'racejar/vitest'
 import undoRedoCollaborationFeature from '../gherkin-spec/undo-redo-collaboration.feature?raw'
 import undoRedoFeature from '../gherkin-spec/undo-redo.feature?raw'
-import {parameterTypes} from './gherkin-parameter-types'
-import {stepDefinitions} from './gherkin-step-definitions'
+import {parameterTypes} from '../src/test'
+import {stepDefinitions} from '../src/test/vitest'
 
 Feature({
   featureText: undoRedoFeature,
