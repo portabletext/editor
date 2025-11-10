@@ -1,5 +1,11 @@
 # @portabletext/plugin-input-rule
 
+## 0.6.0
+
+### Minor Changes
+
+- [#1861](https://github.com/portabletext/editor/pull/1861) [`b32abfc`](https://github.com/portabletext/editor/commit/b32abfc202bdc1c27d40a99258fa13bd32cde7a4) Thanks [@christianhg](https://github.com/christianhg)! - feat: generalize `focusTextBlock` as `focusBlock`
+
 ## 0.5.7
 
 ### Patch Changes
