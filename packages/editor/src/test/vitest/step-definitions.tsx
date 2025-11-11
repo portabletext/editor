@@ -222,23 +222,40 @@ export const stepDefinitions = [
    */
   When(
     '{button} is pressed',
-    async (_: Context, button: Parameter['button']) => {
+    async (context: Context, button: Parameter['button']) => {
+      const previousSelection = context.editor.getSnapshot().context.selection
       await userEvent.keyboard(button)
-      await new Promise((resolve) => setTimeout(resolve, 100))
+
+      await vi.waitFor(() => {
+        const currentSelection = context.editor.getSnapshot().context.selection
+
+        if (currentSelection) {
+          expect(currentSelection).not.toBe(previousSelection)
+        }
+      })
     },
   ),
   When(
     '{button} is pressed {int} times',
-    async (_: Context, button: Parameter['button'], times: number) => {
+    async (context: Context, button: Parameter['button'], times: number) => {
       for (let i = 0; i < times; i++) {
+        const previousSelection = context.editor.getSnapshot().context.selection
         await userEvent.keyboard(button)
-        await new Promise((resolve) => setTimeout(resolve, 100))
+
+        await vi.waitFor(() => {
+          const currentSelection =
+            context.editor.getSnapshot().context.selection
+
+          if (currentSelection) {
+            expect(currentSelection).not.toBe(previousSelection)
+          }
+        })
       }
     },
   ),
   When(
     '{shortcut} is pressed',
-    async (_: Context, shortcut: Parameter['shortcut']) => {
+    async (context: Context, shortcut: Parameter['shortcut']) => {
       const shortcuts: Record<Parameter['shortcut'], string> = {
         'deleteWord.backward': IS_MAC
           ? '{Alt>}{Backspace}{/Alt}'
@@ -248,8 +265,16 @@ export const stepDefinitions = [
           : '{Control>}{Delete}{/Control}',
       }
 
+      const previousSelection = context.editor.getSnapshot().context.selection
       await userEvent.keyboard(shortcuts[shortcut])
-      await new Promise((resolve) => setTimeout(resolve, 100))
+
+      await vi.waitFor(() => {
+        const currentSelection = context.editor.getSnapshot().context.selection
+
+        if (currentSelection) {
+          expect(currentSelection).not.toBe(previousSelection)
+        }
+      })
     },
   ),
 
