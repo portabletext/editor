@@ -190,7 +190,7 @@ export const stepDefinitions = [
     await userEvent.type(context.locator, text)
   }),
   When(
-    '{string} is typed by Editor B',
+    '{string} is typed in Editor B',
     async (context: Context, text: string) => {
       await userEvent.type(context.locatorB, text)
     },
@@ -315,7 +315,7 @@ export const stepDefinitions = [
     },
   ),
   When(
-    'the caret is put after {string} by Editor B',
+    'the caret is put after {string} in Editor B',
     async (context: Context, text: string) => {
       await vi.waitFor(() => {
         const selection = getSelectionAfterText(
