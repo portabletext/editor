@@ -60,7 +60,7 @@ describe('event.block.unset', () => {
           _type: 'url',
         },
       ])
-      expect(patches.slice(6)).toEqual([
+      expect(patches.slice(4)).toEqual([
         {
           origin: 'local',
           type: 'unset',
@@ -109,11 +109,11 @@ describe('event.block.unset', () => {
           href: 'https://www.sanity.io',
         },
       ])
-      expect(patches.slice(5)).toEqual([
+      expect(patches.slice(2)).toEqual([
         {
           origin: 'local',
           type: 'insert',
-          path: [0],
+          path: [{_key: 'k0'}],
           position: 'before',
           items: [
             {
@@ -122,6 +122,11 @@ describe('event.block.unset', () => {
               href: 'https://www.sanity.io',
             },
           ],
+        },
+        {
+          origin: 'local',
+          type: 'unset',
+          path: [{_key: 'k0'}],
         },
       ])
     })
@@ -142,7 +147,7 @@ describe('event.block.unset', () => {
       expect(editor.getSnapshot().context.value[0]._key).not.toEqual(
         urlBlockKey,
       )
-      expect(patches.slice(6)).toEqual([
+      expect(patches.slice(4)).toEqual([
         {
           origin: 'local',
           type: 'set',
@@ -260,7 +265,7 @@ describe('event.block.unset', () => {
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual([block])
 
-      expect(patches.slice(6)).toEqual([
+      expect(patches.slice(4)).toEqual([
         {
           origin: 'local',
           type: 'unset',
@@ -316,11 +321,11 @@ describe('event.block.unset', () => {
           style: 'h1',
         },
       ])
-      expect(patches.slice(5)).toEqual([
+      expect(patches.slice(2)).toEqual([
         {
           origin: 'local',
           type: 'insert',
-          path: [0],
+          path: [{_key: 'k0'}],
           position: 'before',
           items: [
             {
@@ -333,6 +338,11 @@ describe('event.block.unset', () => {
               style: 'h1',
             },
           ],
+        },
+        {
+          origin: 'local',
+          type: 'unset',
+          path: [{_key: 'k0'}],
         },
       ])
     })
@@ -355,7 +365,7 @@ describe('event.block.unset', () => {
           style: 'normal',
         },
       ])
-      expect(patches.slice(6)).toEqual([
+      expect(patches.slice(4)).toEqual([
         {
           origin: 'local',
           type: 'set',
@@ -485,7 +495,7 @@ describe('event.block.unset', () => {
           style: 'h1',
         },
       ])
-      expect(patches.slice(6)).toEqual([])
+      expect(patches.slice(4)).toEqual([])
     })
 
     editor.send({
@@ -506,7 +516,7 @@ describe('event.block.unset', () => {
           style: 'normal',
         },
       ])
-      expect(patches.slice(6)).toEqual([
+      expect(patches.slice(4)).toEqual([
         {
           origin: 'local',
           type: 'set',

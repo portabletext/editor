@@ -73,6 +73,7 @@ describe('event.patch', () => {
       },
     ])
   })
+
   test('Scenario: Inserting two text blocks where the first one is empty', async () => {
     const keyGenerator = createTestKeyGenerator()
     const patches: Array<Patch> = []
@@ -167,5 +168,85 @@ describe('event.patch', () => {
         insert([h1], 'after', [{_key: emptyParagraph._key}]),
       ].map((patch) => ({...patch, origin: 'local'})),
     )
+  })
+
+  test('Scenario: Inserting block object on empty editor', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const patches: Array<Patch> = []
+
+    const {editor} = await createTestEditor({
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'image'}],
+      }),
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _type: 'image',
+      },
+      placement: 'auto',
+      select: 'none',
+    })
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        {
+          origin: 'local',
+          path: [],
+          type: 'setIfMissing',
+          value: [],
+        },
+        {
+          origin: 'local',
+          path: [0],
+          type: 'insert',
+          position: 'before',
+          items: [
+            {
+              _key: 'k0',
+              _type: 'block',
+              children: [
+                {
+                  _key: 'k1',
+                  _type: 'span',
+                  text: '',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          origin: 'local',
+          type: 'insert',
+          path: [{_key: 'k0'}],
+          position: 'before',
+          items: [
+            {
+              _type: 'image',
+              _key: 'k2',
+            },
+          ],
+        },
+        {
+          origin: 'local',
+          type: 'unset',
+          path: [{_key: 'k0'}],
+        },
+      ])
+    })
   })
 })
