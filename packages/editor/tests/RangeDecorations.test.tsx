@@ -1,5 +1,5 @@
 import {compileSchema, isSpan, isTextBlock} from '@portabletext/schema'
-import {createTestKeyGenerator} from '@portabletext/test'
+import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import type {PortableTextBlock} from '@sanity/types'
 import {createRef, useState, type ReactNode, type RefObject} from 'react'
 import {describe, expect, it, test, vi} from 'vitest'
@@ -12,9 +12,13 @@ import {
   type Editor,
   type MutationEvent,
   type RangeDecoration,
+  type RangeDecorationOnMovedDetails,
 } from '../src'
 import type {PortableTextEditor} from '../src/editor/PortableTextEditor'
-import {getSelectionAfterText} from '../src/internal-utils/text-selection'
+import {
+  getSelectionAfterText,
+  getSelectionBeforeText,
+} from '../src/internal-utils/text-selection'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {InternalChange$Plugin} from '../src/plugins/plugin.internal.change-ref'
@@ -39,7 +43,249 @@ const RangeDecorationTestComponent = ({children}: {children?: ReactNode}) => {
   return <span data-testid="range-decoration">{children}</span>
 }
 
+function updateRangeDecorations({
+  rangeDecorations,
+  details,
+}: {
+  rangeDecorations: Array<RangeDecoration>
+  details: RangeDecorationOnMovedDetails
+}) {
+  return rangeDecorations?.flatMap((rangeDecoration) => {
+    if (rangeDecoration.payload?.id === details.rangeDecoration.payload?.id) {
+      if (!details.newSelection) {
+        return []
+      }
+
+      return [
+        {
+          selection: details.newSelection,
+          payload: rangeDecoration.payload,
+          onMoved: rangeDecoration.onMoved,
+          component: rangeDecoration.component,
+        },
+      ]
+    }
+
+    return [rangeDecoration]
+  })
+}
+
 describe('RangeDecorations', () => {
+  test('Scenario: Drawing a Range Decoration', async () => {
+    let rangeDecorations: Array<RangeDecoration> = [
+      {
+        component: (props) => (
+          <span data-testid="range-decoration">{props.children}</span>
+        ),
+        onMoved: (details) => {
+          rangeDecorations = updateRangeDecorations({
+            rangeDecorations,
+            details,
+          })
+        },
+        selection: {
+          anchor: {
+            path: [{_key: 'a'}, 'children', {_key: 'a1'}],
+            offset: 6,
+          },
+          focus: {
+            path: [{_key: 'a'}, 'children', {_key: 'a1'}],
+            offset: 11,
+          },
+        },
+      },
+    ]
+
+    const {locator} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'a',
+          children: [{_type: 'span', _key: 'a1', text: 'Hello there world'}],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: 'b',
+          children: [
+            {
+              _type: 'span',
+              _key: 'b1',
+              text: "It's a beautiful day on planet earth",
+            },
+          ],
+          markDefs: [],
+        },
+      ],
+      editableProps: {
+        rangeDecorations,
+      },
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toBeInTheDocument(),
+    )
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('there'),
+    )
+  })
+
+  test('Scenario: Moving a Range Decoration', async () => {
+    let rangeDecorations: Array<RangeDecoration> = [
+      {
+        component: (props) => (
+          <span data-testid="range-decoration">{props.children}</span>
+        ),
+        onMoved: (details) => {
+          rangeDecorations = updateRangeDecorations({
+            rangeDecorations,
+            details,
+          })
+        },
+        selection: {
+          anchor: {
+            path: [{_key: 'a'}, 'children', {_key: 'a1'}],
+            offset: 6,
+          },
+          focus: {
+            path: [{_key: 'a'}, 'children', {_key: 'a1'}],
+            offset: 11,
+          },
+        },
+        payload: {
+          id: 'rd0',
+        },
+      },
+    ]
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: 'a',
+        children: [{_type: 'span', _key: 'a1', text: 'Hello there world'}],
+        markDefs: [],
+      },
+      {
+        _type: 'block',
+        _key: 'b',
+        children: [
+          {
+            _type: 'span',
+            _key: 'b1',
+            text: "It's a beautiful day on planet earth",
+          },
+        ],
+        markDefs: [],
+      },
+    ]
+
+    const {editor, locator, rerender} = await createTestEditor({
+      initialValue,
+      editableProps: {
+        rangeDecorations,
+      },
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toBeInTheDocument(),
+    )
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toHaveTextContent('there'),
+    )
+
+    editor.send({
+      type: 'select',
+      at: getSelectionBeforeText(editor.getSnapshot().context, 'Hello'),
+    })
+
+    await userEvent.type(locator, '123 ')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
+        '123 Hello there world',
+        "It's a beautiful day on planet earth",
+      ])
+    })
+
+    await rerender({
+      initialValue,
+      editableProps: {
+        rangeDecorations,
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(locator.getByTestId('range-decoration')).toHaveTextContent('there')
+    })
+  })
+
+  test('Scenario: Drawing a collapsed Range Decoration', async () => {
+    let rangeDecorations: Array<RangeDecoration> = [
+      {
+        component: (props) => (
+          <span data-testid="range-decoration">{props.children}</span>
+        ),
+        onMoved: (details) => {
+          rangeDecorations = updateRangeDecorations({
+            rangeDecorations,
+            details,
+          })
+        },
+        selection: {
+          anchor: {
+            path: [{_key: 'a'}, 'children', {_key: 'a1'}],
+            offset: 6,
+          },
+          focus: {
+            path: [{_key: 'a'}, 'children', {_key: 'a1'}],
+            offset: 6,
+          },
+        },
+      },
+    ]
+
+    const {locator} = await createTestEditor({
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'a',
+          children: [{_type: 'span', _key: 'a1', text: 'Hello there world'}],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: 'b',
+          children: [
+            {
+              _type: 'span',
+              _key: 'b1',
+              text: "It's a beautiful day on planet earth",
+            },
+          ],
+          markDefs: [],
+        },
+      ],
+      editableProps: {
+        rangeDecorations,
+      },
+    })
+
+    await vi.waitFor(() =>
+      expect
+        .element(locator.getByTestId('range-decoration'))
+        .toBeInTheDocument(),
+    )
+  })
+
   it('only render range decorations as necessary', async () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
