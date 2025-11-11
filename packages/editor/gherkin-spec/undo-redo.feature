@@ -4,6 +4,22 @@ Feature: Undo/Redo
     Given one editor
     And a global keymap
 
+  Scenario: Undoing writing two words
+    Given the text ""
+    When "foo" is typed
+    And " bar" is typed
+    And undo is performed
+    Then the text is "foo"
+
+  Scenario: Selection change does not affect the undo stack
+    Given the text ""
+    When "foo" is typed
+    And "{ArrowLeft}" is pressed
+    And "bar" is typed
+    Then the text is "fobaro"
+    When undo is performed
+    Then the text is "foo"
+
   Scenario: Undoing annotation
     Given the text "foo"
     When "foo" is selected

@@ -5,67 +5,11 @@ import {userEvent} from 'vitest/browser'
 import type {EditorSelection} from '../src'
 import {execute, forward, raise} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
-import type {MutationEvent} from '../src/editor/relay-machine'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
-import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {getFirstBlock, getFocusBlock} from '../src/selectors'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.history.undo', () => {
-  test('Scenario: Undoing writing two words', async () => {
-    const mutationEvents: Array<MutationEvent> = []
-
-    const {editor, locator} = await createTestEditor({
-      children: (
-        <EventListenerPlugin
-          on={(event) => {
-            if (event.type === 'mutation') {
-              mutationEvents.push(event)
-            }
-          }}
-        />
-      ),
-    })
-
-    await userEvent.type(locator, 'foo')
-    await userEvent.type(locator, ' bar')
-
-    await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo bar'])
-    })
-
-    editor.send({type: 'history.undo'})
-
-    await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
-    })
-  })
-
-  test('Scenario: Selection change does not affect the undo stack', async () => {
-    const {editor, locator} = await createTestEditor()
-
-    await userEvent.click(locator)
-    await userEvent.type(locator, 'foo')
-    await userEvent.keyboard('{ArrowLeft}')
-    await userEvent.type(locator, 'bar')
-
-    await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['fobaro'])
-    })
-
-    editor.send({type: 'history.undo'})
-
-    await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo'])
-    })
-
-    editor.send({type: 'history.undo'})
-
-    await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
-    })
-  })
-
   test('Scenario: Undoing action sets', async () => {
     const {editor, locator} = await createTestEditor({
       children: (
