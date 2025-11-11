@@ -5,8 +5,8 @@ Feature: Selection
 
   Scenario: Expanding collapsed selection backwards from empty line
     Given the text "foo|"
-    And the editor is focused
-    When the caret is put before ""
+    When the editor is focused
+    And the caret is put before ""
     And "{Shift>}{ArrowLeft}{/Shift}" is pressed
     And "{Shift>}{ArrowLeft}{/Shift}" is pressed
     Then "o|" is selected
@@ -15,8 +15,8 @@ Feature: Selection
   @skip
   Scenario: Expanding selection backwards, then forwards
     Given the text "foo|bar"
-    And the editor is focused
-    When the caret is put before "bar"
+    When the editor is focused
+    And the caret is put before "bar"
     And "{Shift>}{ArrowLeft}{/Shift}" is pressed
     And "{Shift>}{ArrowLeft}{/Shift}" is pressed
     Then "o|" is selected
@@ -27,8 +27,8 @@ Feature: Selection
 
   Scenario: Reducing hanging selection
     Given the text "foo|bar"
-    And the editor is focused
-    When the caret is put before "foo"
+    When the editor is focused
+    And the caret is put before "foo"
     And "{Shift>}{ArrowRight}{/Shift}" is pressed
     And "{Shift>}{ArrowRight}{/Shift}" is pressed
     And "{Shift>}{ArrowRight}{/Shift}" is pressed
@@ -39,8 +39,8 @@ Feature: Selection
 
   Scenario: Reducing selection hanging onto empty line
     Given the text "foo|"
-    And the editor is focused
-    When the caret is put before "foo"
+    When the editor is focused
+    And the caret is put before "foo"
     And "{Shift>}{ArrowRight}{/Shift}" is pressed
     And "{Shift>}{ArrowRight}{/Shift}" is pressed
     And "{Shift>}{ArrowRight}{/Shift}" is pressed

@@ -1,8 +1,7 @@
 Feature: Markdown Link Rule
 
   Background:
-    Given the editor is focused
-    And a global keymap
+    Given a global keymap
 
   Scenario Outline: Transform markdown Link into annotation
     Given the text <text>

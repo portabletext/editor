@@ -34,7 +34,7 @@ Feature: Insert Child
 
   Scenario: Inserting span on block object
     Given the text "{image}"
-    And the editor is focused
+    When the editor is focused
     When a child is inserted
       ```
       {

@@ -26,8 +26,8 @@ Feature: Comment Annotations Plugin
 
   Scenario Outline: Writing after bold text with comment
     Given the text "foo bar baz"
-    And the editor is focused
-    And "strong" around "bar"
+    When the editor is focused
+    Given "strong" around "bar"
     And a "comment" "c1" around "bar"
     When the caret is put <position>
     And "new" is typed
@@ -42,8 +42,8 @@ Feature: Comment Annotations Plugin
 
   Scenario: Writing after bold text with comment and link
     Given the text "foo bar baz"
-    And the editor is focused
-    And "strong" around "bar"
+    When the editor is focused
+    Given "strong" around "bar"
     And a "comment" "c1" around "bar"
     And a "link" "l1" around "bar"
     When the caret is put after "bar"
@@ -54,8 +54,8 @@ Feature: Comment Annotations Plugin
 
   Scenario: Writing in link after bold text with comment
     Given the text "foo bar baz"
-    And the editor is focused
-    And "strong" around "bar"
+    When the editor is focused
+    Given "strong" around "bar"
     And a "comment" "c1" around "bar"
     And a "link" "l1" around "foo bar baz"
     When the caret is put after "bar"
