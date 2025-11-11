@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.21.2
+
+### Patch Changes
+
+- [#1865](https://github.com/portabletext/editor/pull/1865) [`585f6e1`](https://github.com/portabletext/editor/commit/585f6e1c473ce025bd478341208ae86416d2ec7c) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): Update slate to ^0.119.0
+
 ## 2.21.1
 
 ### Patch Changes
