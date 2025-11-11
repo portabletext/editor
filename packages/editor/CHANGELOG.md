@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.21.1
+
+### Patch Changes
+
+- [#1868](https://github.com/portabletext/editor/pull/1868) [`3e12791`](https://github.com/portabletext/editor/commit/3e12791fb73989811b411ace6a3d4161b984959f) Thanks [@christianhg](https://github.com/christianhg)! - fix: ensure correct patches when inserting block on empty editor
+
+- [#1863](https://github.com/portabletext/editor/pull/1863) [`46b5503`](https://github.com/portabletext/editor/commit/46b5503806ce8435fb55ead3a901b41581ac5631) Thanks [@christianhg](https://github.com/christianhg)! - fix(`.insertChild`): use `insert.child` event
+
 ## 2.21.0
 
 ### Minor Changes
