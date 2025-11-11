@@ -63,8 +63,8 @@
     "@sanity/pkg-utils": "^9.0.3",
     "@types/react": "^19.2.2",
     "@vitejs/plugin-react": "^5.0.4",
-    "@vitest/browser": "^4.0.6",
-    "@vitest/browser-playwright": "^4.0.6",
+    "@vitest/browser": "^4.0.8",
+    "@vitest/browser-playwright": "^4.0.8",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9.38.0",
     "eslint-formatter-gha": "^1.6.0",
@@ -73,7 +73,7 @@
     "react": "^19.2.0",
     "typescript": "catalog:",
     "typescript-eslint": "^8.46.1",
-    "vitest": "^4.0.6"
+    "vitest": "^4.0.8"
   },
   "peerDependencies": {
     "@portabletext/editor": "workspace:^2.21.2",
