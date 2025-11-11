@@ -2,7 +2,7 @@ import {compileSchemaDefinitionToPortableTextMemberSchemaTypes} from '@portablet
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import type {PortableTextTextBlock} from '@sanity/types'
 import {createEditor, type Descendant} from 'slate'
-import {beforeEach, describe, expect, it} from 'vitest'
+import {beforeEach, describe, expect, it, test} from 'vitest'
 import {createActor} from 'xstate'
 import {editorMachine} from '../editor/editor-machine'
 import {withPlugins} from '../editor/plugins/with-plugins'
@@ -58,6 +58,66 @@ const createDefaultValue = () =>
       ],
     },
   ] as Descendant[]
+
+describe(insertNodePatch.name, () => {
+  test('Scenario: Inserting block object on empty editor', () => {
+    expect(
+      insertNodePatch(
+        compileSchema(defineSchema({blockObjects: [{name: 'image'}]})),
+        [
+          {
+            _key: 'k2',
+            _type: 'image',
+            children: [
+              {
+                _key: 'void-child',
+                _type: 'span',
+                marks: [],
+                text: '',
+              },
+            ],
+            value: {},
+          },
+        ],
+        {
+          type: 'insert_node',
+          path: [0],
+          node: {
+            _key: 'k2',
+            _type: 'image',
+            children: [
+              {
+                _key: 'void-child',
+                _type: 'span',
+                marks: [],
+                text: '',
+              },
+            ],
+            value: {},
+          },
+        },
+        [],
+      ),
+    ).toEqual([
+      {
+        path: [],
+        type: 'setIfMissing',
+        value: [],
+      },
+      {
+        path: [0],
+        type: 'insert',
+        items: [
+          {
+            _key: 'k2',
+            _type: 'image',
+          },
+        ],
+        position: 'before',
+      },
+    ])
+  })
+})
 
 describe('operationToPatches', () => {
   beforeEach(() => {
