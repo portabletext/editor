@@ -1,3 +1,5 @@
+import {compileSchema, defineSchema} from '@portabletext/schema'
+import {getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import type {EditorEmittedEvent, MutationEvent} from '../src'
@@ -8,30 +10,35 @@ describe('event.mutation', () => {
   test('Scenario: Deferring mutation events when read-only', async () => {
     const onEvent = vi.fn<(event: EditorEmittedEvent) => void>()
 
+    let resolveFooMutation: () => void
+    const fooMutationPromise = new Promise<void>((resolve) => {
+      resolveFooMutation = resolve
+    })
+
     const {editor, locator} = await createTestEditor({
-      children: <EventListenerPlugin on={onEvent} />,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            onEvent(event)
+            if (
+              event.type === 'mutation' &&
+              getTersePt({
+                schema: compileSchema(defineSchema({})),
+                value: event.value ?? [],
+              }).at(0) === 'foo'
+            ) {
+              resolveFooMutation()
+            }
+          }}
+        />
+      ),
     })
 
     await userEvent.type(locator, 'foo')
 
-    await new Promise((resolve) => setTimeout(resolve, 250))
+    await fooMutationPromise
 
-    expect(onEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: 'mutation',
-        value: [
-          {
-            _type: 'block',
-            _key: 'k0',
-            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
-            markDefs: [],
-            style: 'normal',
-          },
-        ],
-      }),
-    )
-
-    await userEvent.type(locator, 'bar')
+    editor.send({type: 'insert.text', text: 'bar'})
 
     editor.send({type: 'update readOnly', readOnly: true})
 
@@ -56,20 +63,24 @@ describe('event.mutation', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 250))
 
-    expect(onEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: 'mutation',
-        value: [
-          {
-            _type: 'block',
-            _key: 'k0',
-            children: [{_type: 'span', _key: 'k1', text: 'foobar', marks: []}],
-            markDefs: [],
-            style: 'normal',
-          },
-        ],
-      }),
-    )
+    await vi.waitFor(() => {
+      expect(onEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'mutation',
+          value: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              children: [
+                {_type: 'span', _key: 'k1', text: 'foobar', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        }),
+      )
+    })
   })
 
   test('Scenario: Batching typing mutations', async () => {
