@@ -1,11 +1,11 @@
 Feature: Markdown Link Rule
 
   Background:
-    Given the editor is focused
-    And a global keymap
+    Given a global keymap
 
   Scenario Outline: Transform markdown Link into annotation
     Given the text <text>
+    And the editor is focused
     When <inserted text> is inserted
     And "new" is typed
     Then the text is <new text>
@@ -20,6 +20,7 @@ Feature: Markdown Link Rule
 
   Scenario: Preserving decorator in link text
     Given the text "[foo](bar"
+    And the editor is focused
     And "strong" around "foo"
     When ")" is inserted
     And "new" is typed
@@ -28,6 +29,7 @@ Feature: Markdown Link Rule
 
   Scenario: Preserving decorators in link text
     Given the text "[foo](bar"
+    And the editor is focused
     And "strong" around "foo"
     And "em" around "oo"
     When ")" is inserted
@@ -38,6 +40,7 @@ Feature: Markdown Link Rule
 
   Scenario: Overwriting other links
     Given the text "[foo](bar"
+    And the editor is focused
     And a "link" "l1" around "foo"
     When the caret is put after "bar"
     And ")" is inserted
@@ -47,6 +50,7 @@ Feature: Markdown Link Rule
 
   Scenario: Preserving other annotations
     Given the text "[foo](bar"
+    And the editor is focused
     And a "link" "l1" around "foo"
     And a "comment" "c1" around "foo"
     When the caret is put after "bar"

@@ -26,6 +26,7 @@ Feature: Annotations Across Blocks
 
   Scenario: Adding annotation across an image
     Given the text "foo|{image}"
+    And the editor is focused
     When "{Enter}" is pressed
     And "bar" is typed
     And "foobar" is selected
@@ -36,6 +37,7 @@ Feature: Annotations Across Blocks
 
   Scenario: Adding annotation across an image (backwards selection)
     Given the text "foo|{image}"
+    And the editor is focused
     When "{Enter}" is pressed
     And "bar" is typed
     And "foobar" is selected backwards
@@ -46,6 +48,7 @@ Feature: Annotations Across Blocks
 
   Scenario: Splitting an annotation across blocks
     Given the text "foobar"
+    And the editor is focused
     And a "link" "l1" around "foobar"
     When the caret is put after "foo"
     And "{Enter}" is pressed
@@ -55,6 +58,7 @@ Feature: Annotations Across Blocks
 
   Scenario: Splitting an annotation across blocks using a selection
     Given the text "foo bar baz"
+    And the editor is focused
     And a "link" "l1" around "foo bar baz"
     When "bar" is selected
     And "{Enter}" is pressed
@@ -64,6 +68,7 @@ Feature: Annotations Across Blocks
 
   Scenario: Splitting a split annotation across blocks
     Given the text "foo bar baz"
+    And the editor is focused
     And a "link" "l1" around "foo bar baz"
     And "strong" around "bar"
     When the caret is put after "foo"
@@ -76,6 +81,7 @@ Feature: Annotations Across Blocks
 
   Scenario: Splitting text after annotation doesn't touch the annotation
     Given the text "foo bar baz"
+    And the editor is focused
     And a "link" "l1" around "foo"
     When the caret is put after "bar"
     And "{Enter}" is pressed
@@ -87,6 +93,7 @@ Feature: Annotations Across Blocks
   # Fixing this is possibly a breaking change
   Scenario: Splitting and merging an annotation across blocks
     Given the text "foobar"
+    And the editor is focused
     And a "link" "l1" around "foobar"
     When the caret is put after "foo"
     And "{Enter}" is pressed
@@ -110,6 +117,7 @@ Feature: Annotations Across Blocks
 
   Scenario: Splitting block before annotation
     Given the text "foo"
+    And the editor is focused
     And a "link" "l1" around "foo"
     When the caret is put before "foo"
     And "{Enter}" is pressed
@@ -119,6 +127,7 @@ Feature: Annotations Across Blocks
 
   Scenario: Splitting block after annotation
     Given the text "foo"
+    And the editor is focused
     And a "link" "l1" around "foo"
     When the caret is put after "foo"
     And "{Enter}" is pressed
@@ -128,6 +137,7 @@ Feature: Annotations Across Blocks
 
   Scenario: Merging blocks with annotations
     Given the text "foo"
+    And the editor is focused
     When "{Enter}" is pressed
     And "bar" is typed
     And "foo" is selected

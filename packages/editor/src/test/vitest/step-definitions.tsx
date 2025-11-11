@@ -94,7 +94,7 @@ export const stepDefinitions = [
         type: 'insert.blocks',
         blocks,
         placement: 'auto',
-        select: 'end',
+        select: 'none',
       })
     },
   ),

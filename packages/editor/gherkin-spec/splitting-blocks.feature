@@ -50,6 +50,7 @@ Feature: Splitting Blocks
         }
       ]
       ```
+    And the editor is focused
     When "{Enter}" is pressed
     And "baz" is typed
     Then the text is "foo||baz"
@@ -100,26 +101,31 @@ Feature: Splitting Blocks
 
   Scenario: Soft-splitting styled block at the beginning
     Given the text "foo"
-    When "h1" is toggled
-    And the caret is put before "foo"
+    And the editor is focused
+    When the caret is put before "foo"
+    And "h1" is toggled
     And "{Shift>}{Enter}{/Shift}" is pressed
     Then the text is "h1:\nfoo"
 
   Scenario: Soft-splitting styled block in the middle
     Given the text "foo"
-    When "h1" is toggled
-    And the caret is put after "fo"
+    And the editor is focused
+    When the caret is put after "fo"
+    And "h1" is toggled
     And "{Shift>}{Enter}{/Shift}" is pressed
     Then the text is "h1:fo\no"
 
   Scenario: Soft-splitting styled block at the end
     Given the text "foo"
-    When "h1" is toggled
+    And the editor is focused
+    When the caret is put after "foo"
+    And "h1" is toggled
     And "{Shift>}{Enter}{/Shift}" is pressed
     Then the text is "h1:foo\n"
 
   Scenario: Splitting decorated styled block at the beginning
     Given the text "h1:foo bar baz"
+    And the editor is focused
     And "strong" around "foo"
     When the caret is put before "foo"
     When "{Enter}" is pressed
@@ -129,9 +135,10 @@ Feature: Splitting Blocks
 
   Scenario Outline: Splitting decorated styled block in the middle
     Given the text "foo bar baz"
+    And the editor is focused
     And "strong" around <decorated>
-    When "h1" is toggled
-    And the caret is put <position>
+    When the caret is put <position>
+    And "h1" is toggled
     And "{Enter}" is pressed
     And "new" is typed
     Then the text is <new text>
@@ -148,9 +155,10 @@ Feature: Splitting Blocks
 
   Scenario: Splitting decorated styled block at the end
     Given the text "foo bar baz"
+    And the editor is focused
     And "strong" around "baz"
-    When "h1" is toggled
-    And the caret is put after "baz"
+    When the caret is put after "baz"
+    And "h1" is toggled
     And "{Enter}" is pressed
     And "new" is typed
     Then the text is "h1:foo bar ,baz|new"

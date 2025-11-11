@@ -1,11 +1,11 @@
 Feature: Smart Quotes Input Rule
 
   Background:
-    Given the editor is focused
-    And a global keymap
+    Given a global keymap
 
   Scenario Outline: Typing turns double quotes into smart quotes
     Given the text <text>
+    And the editor is focused
     When <inserted text> is typed
     Then the text is <new text>
 
@@ -17,6 +17,7 @@ Feature: Smart Quotes Input Rule
 
   Scenario Outline: Inserting double smart quotes in unformatted text
     Given the text <text>
+    And the editor is focused
     # The "When {string} is inserted" step inserts all characters at once to
     # mimic how insert.text behaves on Android
     When <inserted text> is inserted
@@ -40,6 +41,7 @@ Feature: Smart Quotes Input Rule
   # | "“foo”" | "\"\""        | "“foo”””"    | "“foo”"""    |
   Scenario Outline: Inserting single smart quotes in unformatted text
     Given the text <text>
+    And the editor is focused
     # The "When {string} is inserted" step inserts all characters at once to
     # mimic how insert.text behaves on Android
     When <inserted text> is inserted
@@ -57,10 +59,12 @@ Feature: Smart Quotes Input Rule
 
   Scenario: Mixed quotes
     Given the text ""
+    And the editor is focused
     When "\"'sorry' you say?\" she asked" is typed
     Then the text is "“‘sorry’ you say?” she asked"
 
   Scenario Outline: Contractions
+    Given the editor is focused
     When <text> is typed
     Then the text is <new text>
 

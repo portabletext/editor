@@ -50,6 +50,7 @@ Feature: Insert Blocks
 
   Scenario Outline: Inserting blocks on a text block
     Given the text "foo"
+    And the editor is focused
     When the caret is put <position>
     And "bar|{image}|baz" is inserted at <placement> and selected at the <select-position>
     And "new" is typed

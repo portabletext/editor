@@ -125,6 +125,7 @@ Feature: Annotations
 
   Scenario: Writing on top of annotation
     Given the text "foo bar baz"
+    And the editor is focused
     And a "comment" "c1" around "bar"
     When "removed" is typed
     Then the text is "foo removed baz"
@@ -132,6 +133,7 @@ Feature: Annotations
 
   Scenario: Writing inside an annotation
     Given the text "foo baz"
+    And the editor is focused
     And a "link" "l1" around "foo baz"
     When the caret is put after "foo"
     And " bar" is typed
@@ -140,6 +142,7 @@ Feature: Annotations
 
   Scenario Outline: Inserting text at the edge of an annotation
     Given the text <text>
+    And the editor is focused
     And a "link" "l1" around <annotated>
     When the caret is put <position>
     And "new" is typed
@@ -156,6 +159,7 @@ Feature: Annotations
 
   Scenario Outline: Inserting text between annotations
     Given the text "foobar"
+    And the editor is focused
     And a "link" "l1" around "foo"
     And a "link" "l2" around "bar"
     When the caret is put after "foo"
@@ -175,6 +179,7 @@ Feature: Annotations
 
   Scenario Outline: Toggling decorator at the edge of an annotation
     Given the text <text>
+    And the editor is focused
     And a "link" "l1" around <annotated>
     When the caret is put <position>
     And "strong" is toggled

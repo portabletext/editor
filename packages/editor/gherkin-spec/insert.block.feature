@@ -15,6 +15,7 @@ Feature: Insert Block
       | "auto"    | "{image}"   |
 
   Scenario Outline: Inserting block object on an empty editor and selecting it
+    Given the editor is focused
     When "{image}" is inserted at <placement> and selected at the <position>
     And "bar" is typed
     Then the text is <text>
@@ -30,6 +31,7 @@ Feature: Insert Block
 
   Scenario Outline: Inserting block object on an empty text block
     Given the text "f"
+    And the editor is focused
     When "{Backspace}" is pressed
     And "{image}" is inserted at <placement> and selected at the <position>
     And "bar" is typed
@@ -77,6 +79,7 @@ Feature: Insert Block
 
   Scenario Outline: Inserting block object on text selection without selecting it
     Given the text "foo"
+    And the editor is focused
     When <selection> is selected
     And "{image}" is inserted at <placement> and selected at the "none"
     And "bar" is typed
@@ -96,6 +99,7 @@ Feature: Insert Block
 
   Scenario Outline: Inserting and selecting block object on cross-block selection
     Given the text "foo"
+    And the editor is focused
     When "{Enter}" is pressed
     And "bar" is typed
     And <selection> is selected
@@ -119,6 +123,7 @@ Feature: Insert Block
 
   Scenario Outline: Inserting a block object on a cross-block selection without selecting it
     Given the text "foo"
+    And the editor is focused
     When "{Enter}" is pressed
     And "bar" is typed
     And <selection> is selected
@@ -144,6 +149,7 @@ Feature: Insert Block
       | "auto"    | "foo"   |
 
   Scenario Outline: Inserting and selecting text block on an empty editor
+    Given the editor is focused
     When "foo" is inserted at <placement> and selected at the <position>
     And "bar" is typed
     Then the text is <text>
@@ -152,7 +158,7 @@ Feature: Insert Block
       | placement | position | text       |
       | "before"  | "start"  | "barfoo\|" |
       | "before"  | "end"    | "foobar\|" |
-      | "before"  | "none"   | "barfoo\|" |
+      | "before"  | "none"   | "foo\|bar" |
       | "after"   | "start"  | "\|barfoo" |
       | "after"   | "end"    | "\|foobar" |
       | "after"   | "none"   | "bar\|foo" |
@@ -231,6 +237,7 @@ Feature: Insert Block
 
   Scenario Outline: Inserting block object on block objects
     Given the text "{image}|{image}"
+    And the editor is focused
     When everything is selected
     When "{break}" is inserted at <placement> and selected at the <position>
     And "{Enter}" is pressed
@@ -248,6 +255,7 @@ Feature: Insert Block
 
   Scenario Outline: Inserting block object on text block
     Given the text "foo"
+    And the editor is focused
     When "{Enter}" is pressed
     And "bar" is typed
     And the caret is put <position>
@@ -300,6 +308,7 @@ Feature: Insert Block
 
   Scenario Outline: Inserting and selecting text block on text block
     Given the text "foo"
+    And the editor is focused
     When the caret is put <position>
     And "bar" is inserted at <placement> and selected at the <select-position>
     And "baz" is typed
@@ -337,6 +346,7 @@ Feature: Insert Block
 
   Scenario Outline: Inserting text block on text selection
     Given the text "foo"
+    And the editor is focused
     When <selection> is selected
     And "bar" is inserted at <placement> and selected at the <position>
     And "baz" is typed
@@ -365,6 +375,7 @@ Feature: Insert Block
 
   Scenario Outline: Inserting text block on cross-block text selection
     Given the text "foo"
+    And the editor is focused
     When "{Enter}" is pressed
     And "bar" is typed
     And <selection> is selected

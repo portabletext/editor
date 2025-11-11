@@ -5,6 +5,7 @@ Feature: Delete
 
   Scenario Outline: Deleting word
     Given the text <text>
+    And the editor is focused
     When the caret is put <position>
     And <shortcut> is pressed
     Then the text is <final text>

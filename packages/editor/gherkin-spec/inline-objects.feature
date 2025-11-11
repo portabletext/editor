@@ -15,12 +15,14 @@ Feature: Inline Objects
 
   Scenario: Pressing Delete before an inline object
     Given the text "foo,{stock-ticker},"
+    And the editor is focused
     When the caret is put after "foo"
     And "{Delete}" is pressed
     Then the text is "foo"
 
   Scenario: Pressing Backspace after an inline object
     Given the text "foo,{stock-ticker},"
+    And the editor is focused
     When "{Backspace}" is pressed
     Then the caret is after "foo"
 

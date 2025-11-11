@@ -5,6 +5,7 @@ Feature: Insert text
 
   Scenario Outline: Inserting text on expanded selection
     Given the text <text>
+    And the editor is focused
     When <selection> is selected
     And "new" is typed
     Then the text is <new text>

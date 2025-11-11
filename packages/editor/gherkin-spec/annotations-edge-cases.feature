@@ -6,6 +6,7 @@ Feature: Annotations Edge Cases
 
   Scenario: Deleting emphasised paragraph with comment in the middle
     Given the text "foo bar baz"
+    And the editor is focused
     And "em" around "foo bar baz"
     And a "comment" "c1" around "bar"
     When "foo bar baz" is selected
@@ -14,6 +15,7 @@ Feature: Annotations Edge Cases
 
   Scenario: Deleting half of annotated text
     Given the text "foo bar baz"
+    And the editor is focused
     And a "comment" "c1" around "foo bar baz"
     When " baz" is selected
     And "{Backspace}" is pressed
@@ -22,6 +24,7 @@ Feature: Annotations Edge Cases
 
   Scenario: Deleting annotation in the middle of text
     Given the text "foo bar baz"
+    And the editor is focused
     And a "comment" "c1" around "bar"
     When "bar " is selected
     And "{Backspace}" is pressed

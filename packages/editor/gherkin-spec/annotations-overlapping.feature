@@ -6,6 +6,7 @@ Feature: Overlapping Annotations
 
   Scenario Outline: Inserting text at the edge of overlapping annotations
     Given the text <text>
+    And the editor is focused
     And a "link" "l1" around <link>
     And a "comment" "c1" around <comment>
     When the caret is put <position>

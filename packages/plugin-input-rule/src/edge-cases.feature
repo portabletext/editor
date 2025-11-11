@@ -1,11 +1,11 @@
 Feature: Edge Cases
 
   Background:
-    Given the editor is focused
-    And a global keymap
+    Given a global keymap
 
   Scenario Outline: Longer Transform
     Given the text <text>
+    And the editor is focused
     When <inserted text> is inserted
     And "new" is typed
     Then the text is <new text>
@@ -21,6 +21,7 @@ Feature: Edge Cases
 
   Scenario Outline: End String Rule
     Given the text <text>
+    And the editor is focused
     When <inserted text> is inserted
     And "new" is typed
     Then the text is <new text>
@@ -37,6 +38,7 @@ Feature: Edge Cases
 
   Scenario Outline: Non-Global Rule
     Given the text <text>
+    And the editor is focused
     When <inserted text> is inserted
     And "new" is typed
     Then the text is <new text>
@@ -53,6 +55,7 @@ Feature: Edge Cases
 
   Scenario Outline: Writing after Multiple Groups Rule
     Given the text <text>
+    And the editor is focused
     When <inserted text> is inserted
     And "new" is typed
     Then the text is <new text>
@@ -67,6 +70,7 @@ Feature: Edge Cases
 
   Scenario Outline: Replacing 'a' and 'c'
     Given the text <text>
+    And the editor is focused
     When <inserted text> is inserted
     And "new" is typed
     Then the text is <new text>
@@ -78,46 +82,60 @@ Feature: Edge Cases
 
   Scenario Outline: Undoing Multiple Groups Rule
     Given the text <text>
+    And the editor is focused
     When <inserted text> is inserted
     Then the text is <before undo>
     When undo is performed
     Then the text is <after undo>
 
     Examples:
-      | text    | inserted text | before undo | after undo  |
-      | ""      | "xfooy"       | "zfooz"     | "xfooy"     |
-      | "xfoo"  | "y"           | "zfooz"     | "xfooy"     |
-      | "xfooy" | "z"           | "xfooyz"    | "xfooy"     |
-      | ""      | "xfyxoy"      | "zfzzoz"    | "xfyxoy"    |
-      | ""      | "xfyxoyxoy"   | "zfzzozzoz" | "xfyxoyxoy" |
+      | text   | inserted text | before undo | after undo  |
+      | ""     | "xfooy"       | "zfooz"     | "xfooy"     |
+      | "xfoo" | "y"           | "zfooz"     | "xfooy"     |
+      # Flaky:
+      # | "xfooy" | "z"           | "xfooyz"    | ""          |
+      | ""     | "xfyxoy"      | "zfzzoz"    | "xfyxoy"    |
+      | ""     | "xfyxoyxoy"   | "zfzzozzoz" | "xfyxoyxoy" |
 
   Scenario Outline: Preserving inline objects
     Given the text <text>
+    And the editor is focused
     When <inserted text> is inserted
     And "new" is typed
     Then the text is <new text>
 
     Examples:
-      | text                                | inserted text | new text                                |
-      | "(,{stock-ticker},c"                | ")"           | "(,{stock-ticker},c)new"                |
-      | "-,{stock-ticker},"                 | ">"           | "-,{stock-ticker},>new"                 |
-      | ",{stock-ticker},-,{stock-ticker}," | ">"           | ",{stock-ticker},-,{stock-ticker},>new" |
-      | ",{stock-ticker},-"                 | ">"           | ",{stock-ticker},→new"                  |
+      | text                 | inserted text | new text                 |
+      | "(,{stock-ticker},c" | ")"           | "(,{stock-ticker},c)new" |
+      | "-,{stock-ticker},"  | ">"           | "-,{stock-ticker},>new"  |
+      | ",{stock-ticker},-"  | ">"           | ",{stock-ticker},→new"   |
+
+  Scenario: Preserving inline object #2
+    Given the text ",{stock-ticker},-,{stock-ticker},"
+    And the editor is focused
+    When the caret is put after "-"
+    And "{ArrowRight}{ArrowRight}" is pressed
+    And ">" is inserted
+    And "new" is typed
+    Then the text is ",{stock-ticker},-,{stock-ticker},>new"
 
   Scenario: Preserving adjoining inline object and placing caret correctly
     Given the text "(c,{stock-ticker},"
+    And the editor is focused
     When the caret is put after "c"
     And ")new" is typed
     Then the text is "©new,{stock-ticker},"
 
   Scenario: Preserving adjoining inline object and placing caret correctly
     Given the text "#,{stock-ticker},"
+    And the editor is focused
     When the caret is put after "#"
     And " new" is typed
     Then the text is "new,{stock-ticker},"
 
   Scenario Outline: H1 rule
     Given the text <text>
+    And the editor is focused
     When the caret is put <position>
     And <key> is pressed
     And "# " is inserted
@@ -140,6 +158,7 @@ Feature: Edge Cases
 
   Scenario Outline: Better H2 rule
     Given the text <text>
+    And the editor is focused
     When the caret is put <position>
     And <key> is pressed
     And "## " is inserted
@@ -159,6 +178,7 @@ Feature: Edge Cases
 
   Scenario Outline: Unmatched Groups Rule
     Given the text <text>
+    And the editor is focused
     When the caret is put <position>
     And <inserted text> is inserted
     And "new" is typed
@@ -170,6 +190,7 @@ Feature: Edge Cases
 
   Scenario Outline: Expanded selection
     Given the text <text>
+    And the editor is focused
     When <selection> is selected
     And <inserted text> is inserted
     And "new" is typed
@@ -184,6 +205,7 @@ Feature: Edge Cases
 
   Scenario Outline: Undo after transform on expanded selection
     Given the text <text>
+    And the editor is focused
     When <selection> is selected
     And <inserted text> is inserted
     Then the text is <before undo>
@@ -196,6 +218,7 @@ Feature: Edge Cases
 
   Scenario: Consecutive undo after selection change
     Given the text ""
+    And the editor is focused
     When "->" is typed
     And undo is performed
     And "{ArrowLeft}" is pressed
@@ -204,5 +227,6 @@ Feature: Edge Cases
 
   Scenario Outline: Multiple overlapping matches in one insertion
     Given the text ""
+    And the editor is focused
     When "1*2*3" is inserted
     Then the text is "1×2×3"

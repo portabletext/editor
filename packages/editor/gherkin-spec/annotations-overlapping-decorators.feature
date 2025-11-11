@@ -6,6 +6,7 @@ Feature: Annotations Overlapping Decorators
 
   Scenario Outline: Inserting text at the edge of a decorated annotation
     Given the text <text>
+    And the editor is focused
     And a "link" "l1" around <annotated>
     And "strong" around <decorated>
     When the caret is put <position>
@@ -31,6 +32,7 @@ Feature: Annotations Overlapping Decorators
 
   Scenario Outline: Toggling decorator at the edge of a decorated annotation
     Given the text <text>
+    And the editor is focused
     And a "link" "l1" around <annotated>
     And "strong" around <decorated>
     When the caret is put <position>
@@ -54,6 +56,7 @@ Feature: Annotations Overlapping Decorators
 
   Scenario Outline: Writing on top of a decorated annotation
     Given the text "foo bar baz"
+    And the editor is focused
     And a "link" "l1" around <annotated>
     And "strong" around <decorated>
     When <selected> is selected
@@ -68,6 +71,7 @@ Feature: Annotations Overlapping Decorators
 
   Scenario: Splitting block before a decorated annotation
     Given the text "bar"
+    And the editor is focused
     And a "link" "l1" around "bar"
     And "strong" around "bar"
     When the caret is put before "bar"
@@ -80,6 +84,7 @@ Feature: Annotations Overlapping Decorators
 
   Scenario: Splitting block after a decorated annotation
     Given the text "bar"
+    And the editor is focused
     And a "link" "l1" around "bar"
     And "strong" around "bar"
     When the caret is put after "bar"
@@ -91,6 +96,7 @@ Feature: Annotations Overlapping Decorators
 
   Scenario: Splitting block after a decorated annotation #2
     Given the text "foobar"
+    And the editor is focused
     And a "link" "l1" around "bar"
     And "strong" around "bar"
     When the caret is put after "bar"

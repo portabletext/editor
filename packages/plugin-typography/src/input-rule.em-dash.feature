@@ -1,11 +1,11 @@
 Feature: Em Dash Input Rule
 
   Background:
-    Given the editor is focused
-    And a global keymap
+    Given a global keymap
 
   Scenario Outline: Inserting em dash in unformatted text
     Given the text <text>
+    And the editor is focused
     # The "When {string} is inserted" step inserts all characters at once to
     # mimic how insert.text behaves on Android
     When <inserted text> is inserted
@@ -25,6 +25,7 @@ Feature: Em Dash Input Rule
 
   Scenario: Inserting em dash inside a decorator
     Given the text "foo-"
+    And the editor is focused
     And "strong" around "foo-"
     When the caret is put after "foo-"
     And "-" is typed
@@ -33,6 +34,7 @@ Feature: Em Dash Input Rule
 
   Scenario: Inserting em dash at the edge of a decorator
     Given the text "foo-"
+    And the editor is focused
     And "strong" around "foo"
     When the caret is put after "foo-"
     And "-" is typed
@@ -42,6 +44,7 @@ Feature: Em Dash Input Rule
 
   Scenario: Inserting em dash inside an annotation
     Given the text "foo-"
+    And the editor is focused
     And a "link" "l1" around "foo-"
     When the caret is put after "foo-"
     And "-" is typed
@@ -50,6 +53,7 @@ Feature: Em Dash Input Rule
 
   Scenario: Inserting em dash halfway inside an annotation
     Given the text "foo-"
+    And the editor is focused
     And a "link" "l1" around "foo-"
     When the caret is put after "foo-"
     And "-" is typed
@@ -58,6 +62,7 @@ Feature: Em Dash Input Rule
 
   Scenario: Inserting em dash at the edge of an annotation
     Given the text "foo-"
+    And the editor is focused
     And a "link" "l1" around "foo"
     When the caret is put after "foo-"
     And "-" is typed
@@ -67,6 +72,7 @@ Feature: Em Dash Input Rule
 
   Scenario Outline: Smart undo with Backspace
     Given the text <text>
+    And the editor is focused
     When <inserted text> is inserted
     And "{Backspace}" is pressed
     Then the text is <new text>
@@ -83,6 +89,7 @@ Feature: Em Dash Input Rule
 
   Scenario Outline: Smart undo aborted after text changes
     Given the text <text>
+    And the editor is focused
     When <inserted text> is inserted
     And <new text> is typed
     And "{Backspace}" is pressed
@@ -94,6 +101,7 @@ Feature: Em Dash Input Rule
 
   Scenario Outline: Smart undo aborted after selection changes
     Given the text <text>
+    And the editor is focused
     When <inserted text> is inserted
     And "{ArrowLeft}" is pressed
     And "{Backspace}" is pressed
