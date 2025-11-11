@@ -1,5 +1,13 @@
 # @portabletext/plugin-typography
 
+## 3.0.6
+
+### Patch Changes
+
+- Updated dependencies [[`3e12791`](https://github.com/portabletext/editor/commit/3e12791fb73989811b411ace6a3d4161b984959f), [`46b5503`](https://github.com/portabletext/editor/commit/46b5503806ce8435fb55ead3a901b41581ac5631)]:
+  - @portabletext/editor@2.21.1
+  - @portabletext/plugin-input-rule@0.6.1
+
 ## 3.0.5
 
 ### Patch Changes
