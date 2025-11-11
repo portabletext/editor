@@ -1,8 +1,5 @@
 Feature: Emoji Picker Rules
 
-  Background:
-    Given the editor is focused
-
   Scenario: Trigger Rule
     Given the text ""
     When ":" is typed

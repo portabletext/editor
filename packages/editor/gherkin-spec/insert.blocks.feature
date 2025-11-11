@@ -4,8 +4,8 @@ Feature: Insert Blocks
     Given one editor
 
   Scenario Outline: Inserting blocks on an empty editor
-    Given the editor is focused
-    When "foo|bar" is inserted at <placement> and selected at the <selection>
+    When the editor is focused
+    And "foo|bar" is inserted at <placement> and selected at the <selection>
     And "baz" is typed
     Then the text is <text>
 

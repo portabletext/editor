@@ -71,7 +71,7 @@ export const stepDefinitions = [
     context.keyMap = new Map()
   }),
 
-  Given('the editor is focused', async (context: Context) => {
+  When('the editor is focused', async (context: Context) => {
     await userEvent.click(context.locator)
   }),
 

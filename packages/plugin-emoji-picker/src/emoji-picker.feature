@@ -1,11 +1,9 @@
 Feature: Emoji Picker
 
-  Background:
-    Given the editor is focused
-
   Scenario Outline: Picking a direct hit
-    When <initial text> is inserted
-    When <inserted text> is inserted
+    When the editor is focused
+    And <initial text> is inserted
+    And <inserted text> is inserted
     Then the text is <final text>
 
     Examples:

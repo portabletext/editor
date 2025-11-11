@@ -1,8 +1,7 @@
 Feature: Em Dash Input Rule
 
   Background:
-    Given the editor is focused
-    And a global keymap
+    Given a global keymap
 
   Scenario Outline: Inserting em dash in unformatted text
     Given the text <text>

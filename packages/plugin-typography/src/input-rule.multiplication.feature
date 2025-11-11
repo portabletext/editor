@@ -1,9 +1,5 @@
 Feature: Multiplication Input Rule
 
-  Background:
-    Given the editor is focused
-    And a global keymap
-
   Scenario Outline: Inserting multiplication sign
     Given the text <text>
     When <inserted text> is inserted

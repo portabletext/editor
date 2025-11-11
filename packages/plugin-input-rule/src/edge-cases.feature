@@ -1,8 +1,7 @@
 Feature: Edge Cases
 
   Background:
-    Given the editor is focused
-    And a global keymap
+    Given a global keymap
 
   Scenario Outline: Longer Transform
     Given the text <text>

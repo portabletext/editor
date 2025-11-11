@@ -161,8 +161,8 @@ Feature: Insert Block
       | "auto"    | "none"   | "barfoo"   |
 
   Scenario Outline: Inserting and selecting text block on an empty selected editor
-    Given the editor is focused
-    When "foo" is inserted at <placement> and selected at the <position>
+    When the editor is focused
+    And "foo" is inserted at <placement> and selected at the <position>
     And "bar" is typed
     Then the text is <text>
 

@@ -1,8 +1,7 @@
 Feature: Smart Quotes Input Rule
 
   Background:
-    Given the editor is focused
-    And a global keymap
+    Given a global keymap
 
   Scenario Outline: Typing turns double quotes into smart quotes
     Given the text <text>

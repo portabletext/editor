@@ -1,8 +1,7 @@
 Feature: Ellipsis Input Rule
 
   Background:
-    Given the editor is focused
-    And a global keymap
+    Given a global keymap
 
   Scenario Outline: Inserting ellipsis in unformatted text
     Given the text <text>

@@ -1,9 +1,5 @@
 Feature: Disallow in code
 
-  Background:
-    Given the editor is focused
-    And a global keymap
-
   Scenario Outline: Decorated text
     Given the text <text>
     And "code" around <decorated>

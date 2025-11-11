@@ -163,8 +163,8 @@ Feature: Annotations
     Then the text is "foo,n,bar"
 
   Scenario: Inserting text after inline object, before annotation
-    Given the editor is focused
-    When a "stock-ticker" is inserted
+    When the editor is focused
+    And a "stock-ticker" is inserted
     And "{ArrowRight}" is pressed
     And "bar" is typed
     And "bar" is selected
