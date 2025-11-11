@@ -228,6 +228,13 @@ export const stepDefinitions = [
     },
   ),
   When(
+    '{button} is pressed by Editor B',
+    async (_: Context, button: Parameter['button']) => {
+      await userEvent.keyboard(button)
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    },
+  ),
+  When(
     '{button} is pressed {int} times',
     async (_: Context, button: Parameter['button'], times: number) => {
       for (let i = 0; i < times; i++) {
@@ -514,62 +521,27 @@ export const stepDefinitions = [
       keyKeys: Array<string>,
       text: string,
     ) => {
-      await vi.waitFor(() => {
-        const selection = getTextSelection(
-          context.editor.getSnapshot().context,
-          text,
-        )
-        expect(selection).not.toBeNull()
-
-        context.editor.send({
-          type: 'select',
-          at: selection,
-        })
-      })
-
-      const value = context.editor.getSnapshot().context.value
-      const priorAnnotationKeys = getValueAnnotations(
-        context.editor.getSnapshot().context.schema,
-        value,
-      )
-
-      context.editor.send({
-        type: 'annotation.toggle',
-        annotation: {
-          name: annotation,
-          value: {},
+      await toggleAnnotationOnText(context, annotation, keyKeys, text)
+    },
+  ),
+  Given(
+    'a(n) {annotation} {keyKeys} around {string} by Editor B',
+    async (
+      context: Context,
+      annotation: Parameter['annotation'],
+      keyKeys: Array<string>,
+      text: string,
+    ) => {
+      await toggleAnnotationOnText(
+        {
+          editor: context.editorB,
+          locator: context.locatorB,
+          keyMap: context.keyMap,
         },
-      })
-
-      let newAnnotationKeys: Array<string> = []
-
-      await vi.waitFor(() => {
-        const newValue = context.editor.getSnapshot().context.value
-
-        expect(priorAnnotationKeys).not.toEqual(
-          getValueAnnotations(
-            context.editor.getSnapshot().context.schema,
-            newValue,
-          ),
-        )
-
-        newAnnotationKeys = getValueAnnotations(
-          context.editor.getSnapshot().context.schema,
-          newValue,
-        ).filter(
-          (newAnnotationKey) => !priorAnnotationKeys.includes(newAnnotationKey),
-        )
-      })
-
-      if (newAnnotationKeys.length !== keyKeys.length) {
-        assert.fail(
-          `Expected ${keyKeys.length} new annotation keys, but got ${newAnnotationKeys.length}`,
-        )
-      }
-
-      keyKeys.forEach((keyKey, index) => {
-        context.keyMap?.set(keyKey, newAnnotationKeys[index])
-      })
+        annotation,
+        keyKeys,
+        text,
+      )
     },
   ),
   When(
@@ -836,7 +808,74 @@ export const stepDefinitions = [
   When('undo is performed', (context: Context) => {
     context.editor.send({type: 'history.undo'})
   }),
+  When('undo is performed by Editor B', (context: Context) => {
+    context.editorB.send({type: 'history.undo'})
+  }),
   When('redo is performed', (context: Context) => {
     context.editor.send({type: 'history.redo'})
   }),
 ]
+
+async function toggleAnnotationOnText(
+  context: Pick<Context, 'editor' | 'locator' | 'keyMap'>,
+  annotation: Parameter['annotation'],
+  keyKeys: Array<string>,
+  text: string,
+) {
+  await vi.waitFor(() => {
+    const selection = getTextSelection(
+      context.editor.getSnapshot().context,
+      text,
+    )
+    expect(selection).not.toBeNull()
+
+    context.editor.send({
+      type: 'select',
+      at: selection,
+    })
+  })
+
+  const value = context.editor.getSnapshot().context.value
+  const priorAnnotationKeys = getValueAnnotations(
+    context.editor.getSnapshot().context.schema,
+    value,
+  )
+
+  context.editor.send({
+    type: 'annotation.toggle',
+    annotation: {
+      name: annotation,
+      value: {},
+    },
+  })
+
+  let newAnnotationKeys: Array<string> = []
+
+  await vi.waitFor(() => {
+    const newValue = context.editor.getSnapshot().context.value
+
+    expect(priorAnnotationKeys).not.toEqual(
+      getValueAnnotations(
+        context.editor.getSnapshot().context.schema,
+        newValue,
+      ),
+    )
+
+    newAnnotationKeys = getValueAnnotations(
+      context.editor.getSnapshot().context.schema,
+      newValue,
+    ).filter(
+      (newAnnotationKey) => !priorAnnotationKeys.includes(newAnnotationKey),
+    )
+  })
+
+  if (newAnnotationKeys.length !== keyKeys.length) {
+    assert.fail(
+      `Expected ${keyKeys.length} new annotation keys, but got ${newAnnotationKeys.length}`,
+    )
+  }
+
+  keyKeys.forEach((keyKey, index) => {
+    context.keyMap?.set(keyKey, newAnnotationKeys[index])
+  })
+}
