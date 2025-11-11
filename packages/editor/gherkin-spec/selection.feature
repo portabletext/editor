@@ -11,8 +11,6 @@ Feature: Selection
     And "{Shift>}{ArrowLeft}{/Shift}" is pressed
     Then "o|" is selected
 
-  # Flaky
-  @skip
   Scenario: Expanding selection backwards, then forwards
     Given the text "foo|bar"
     When the editor is focused
