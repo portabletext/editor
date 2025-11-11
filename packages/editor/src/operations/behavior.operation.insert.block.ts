@@ -121,14 +121,14 @@ export function insertBlock(options: {
       // placement === 'auto'
 
       if (endBlock && isEqualToEmptyEditor([endBlock], context.schema)) {
-        // And if the last block was an empty text block, let's remove
-        // that too
-        Transforms.removeNodes(editor, {at: endBlockPath})
-
         Transforms.insertNodes(editor, [block], {
           at: endBlockPath,
           select: false,
         })
+
+        // And if the last block was an empty text block, let's remove
+        // that too
+        Transforms.removeNodes(editor, {at: Path.next(endBlockPath)})
 
         Transforms.deselect(editor)
 

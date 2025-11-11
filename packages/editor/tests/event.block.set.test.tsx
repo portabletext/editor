@@ -55,11 +55,11 @@ describe('event.block.set', () => {
           href: 'https://www.sanity.io',
         },
       ])
-      expect(patches.slice(5)).toEqual([
+      expect(patches.slice(2)).toEqual([
         {
           origin: 'local',
           type: 'insert',
-          path: [0],
+          path: [{_key: 'k0'}],
           position: 'before',
           items: [
             {
@@ -68,6 +68,11 @@ describe('event.block.set', () => {
               href: 'https://www.sanity.io',
             },
           ],
+        },
+        {
+          origin: 'local',
+          type: 'unset',
+          path: [{_key: 'k0'}],
         },
       ])
     })
@@ -89,7 +94,7 @@ describe('event.block.set', () => {
           description: 'Sanity is a headless CMS',
         },
       ])
-      expect(patches.slice(6)).toEqual([
+      expect(patches.slice(4)).toEqual([
         {
           origin: 'local',
           type: 'set',
@@ -145,11 +150,11 @@ describe('event.block.set', () => {
           href: 'https://www.sanity.io',
         },
       ])
-      expect(patches.slice(5)).toEqual([
+      expect(patches.slice(2)).toEqual([
         {
           origin: 'local',
           type: 'insert',
-          path: [0],
+          path: [{_key: 'k0'}],
           position: 'before',
           items: [
             {
@@ -158,6 +163,11 @@ describe('event.block.set', () => {
               href: 'https://www.sanity.io',
             },
           ],
+        },
+        {
+          origin: 'local',
+          type: 'unset',
+          path: [{_key: 'k0'}],
         },
       ])
     })
@@ -180,7 +190,7 @@ describe('event.block.set', () => {
           href: 'https://www.sanity.io',
         },
       ])
-      expect(patches.slice(6)).toEqual([
+      expect(patches.slice(4)).toEqual([
         {
           origin: 'local',
           type: 'set',
@@ -236,11 +246,11 @@ describe('event.block.set', () => {
           href: 'https://www.sanity.io',
         },
       ])
-      expect(patches.slice(5)).toEqual([
+      expect(patches.slice(2)).toEqual([
         {
           origin: 'local',
           type: 'insert',
-          path: [0],
+          path: [{_key: 'k0'}],
           position: 'before',
           items: [
             {
@@ -249,6 +259,11 @@ describe('event.block.set', () => {
               href: 'https://www.sanity.io',
             },
           ],
+        },
+        {
+          origin: 'local',
+          type: 'unset',
+          path: [{_key: 'k0'}],
         },
       ])
     })
@@ -269,7 +284,7 @@ describe('event.block.set', () => {
           href: 'https://www.sanity.io',
         },
       ])
-      expect(patches.slice(6)).toEqual([
+      expect(patches.slice(4)).toEqual([
         {
           origin: 'local',
           type: 'set',
@@ -318,11 +333,11 @@ describe('event.block.set', () => {
           style: 'normal',
         },
       ])
-      expect(patches.slice(4)).toEqual([
+      expect(patches.slice(2)).toEqual([
         {
           origin: 'local',
           type: 'insert',
-          path: [0],
+          path: [{_key: 'k0'}],
           position: 'before',
           items: [
             {
@@ -340,6 +355,16 @@ describe('event.block.set', () => {
               style: 'normal',
             },
           ],
+        },
+        {
+          origin: 'local',
+          type: 'unset',
+          path: [{_key: 'k0'}],
+        },
+        {
+          origin: 'local',
+          type: 'unset',
+          path: [],
         },
       ])
     })
