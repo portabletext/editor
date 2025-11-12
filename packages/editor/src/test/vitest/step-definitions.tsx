@@ -236,6 +236,21 @@ export const stepDefinitions = [
     },
   ),
   When(
+    '{button} is pressed in Editor B',
+    async (context: Context, button: Parameter['button']) => {
+      const previousSelection = context.editorB.getSnapshot().context.selection
+      await userEvent.keyboard(button)
+
+      await vi.waitFor(() => {
+        const currentSelection = context.editorB.getSnapshot().context.selection
+
+        if (currentSelection) {
+          expect(currentSelection).not.toBe(previousSelection)
+        }
+      })
+    },
+  ),
+  When(
     '{button} is pressed {int} times',
     async (context: Context, button: Parameter['button'], times: number) => {
       for (let i = 0; i < times; i++) {
@@ -245,6 +260,25 @@ export const stepDefinitions = [
         await vi.waitFor(() => {
           const currentSelection =
             context.editor.getSnapshot().context.selection
+
+          if (currentSelection) {
+            expect(currentSelection).not.toBe(previousSelection)
+          }
+        })
+      }
+    },
+  ),
+  When(
+    '{button} is pressed {int} times in Editor B',
+    async (context: Context, button: Parameter['button'], times: number) => {
+      for (let i = 0; i < times; i++) {
+        const previousSelection =
+          context.editorB.getSnapshot().context.selection
+        await userEvent.keyboard(button)
+
+        await vi.waitFor(() => {
+          const currentSelection =
+            context.editorB.getSnapshot().context.selection
 
           if (currentSelection) {
             expect(currentSelection).not.toBe(previousSelection)
@@ -297,6 +331,27 @@ export const stepDefinitions = [
         })
 
         expect(context.editor.getSnapshot().context.selection).toEqual(
+          selection,
+        )
+      })
+    },
+  ),
+  When(
+    'the caret is put before {string} in Editor B',
+    async (context: Context, text: string) => {
+      await vi.waitFor(() => {
+        const selection = getSelectionBeforeText(
+          context.editorB.getSnapshot().context,
+          text,
+        )
+        expect(selection).not.toBeNull()
+
+        context.editorB.send({
+          type: 'select',
+          at: selection,
+        })
+
+        expect(context.editorB.getSnapshot().context.selection).toEqual(
           selection,
         )
       })
