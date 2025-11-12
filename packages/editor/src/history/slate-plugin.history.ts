@@ -27,7 +27,7 @@ import {debugWithName} from '../internal-utils/debug'
 import {fromSlateValue} from '../internal-utils/values'
 import type {BehaviorOperationImplementation} from '../operations/behavior.operations'
 import type {PortableTextSlateEditor} from '../types/editor'
-import {getCurrentUndoStepId} from './with-undo-step'
+import {getCurrentUndoStepId} from './undo-step'
 import {
   isRedoing,
   isUndoing,
