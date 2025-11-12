@@ -1,6 +1,6 @@
 import {insert, setIfMissing, unset, type Patch} from '@portabletext/patches'
 import {Editor, type Descendant, type Operation} from 'slate'
-import {withoutSaving} from '../../history/slate-plugin.history'
+import {pluginWithoutHistory} from '../../history/slate-plugin.without-history'
 import {getCurrentUndoStepId} from '../../history/undo-step'
 import {createApplyPatch} from '../../internal-utils/applyPatch'
 import {debugWithName} from '../../internal-utils/debug'
@@ -61,7 +61,7 @@ export function createWithPatches({
       withRemoteChanges(editor, () => {
         Editor.withoutNormalizing(editor, () => {
           withoutPatching(editor, () => {
-            withoutSaving(editor, () => {
+            pluginWithoutHistory(editor, () => {
               for (const patch of patches) {
                 if (debug.enabled)
                   debug(`Handling remote patch ${JSON.stringify(patch)}`)

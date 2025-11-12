@@ -27,6 +27,11 @@ import {debugWithName} from '../internal-utils/debug'
 import {fromSlateValue} from '../internal-utils/values'
 import type {BehaviorOperationImplementation} from '../operations/behavior.operations'
 import type {PortableTextSlateEditor} from '../types/editor'
+import {
+  isWithHistory,
+  pluginWithoutHistory,
+  setWithHistory,
+} from './slate-plugin.without-history'
 import {getCurrentUndoStepId} from './undo-step'
 import {
   isRedoing,
@@ -40,7 +45,6 @@ import {
 const debug = debugWithName('plugin:withUndoRedo')
 const debugVerbose = debug.enabled && false
 
-const SAVING = new WeakMap<Editor, boolean | undefined>()
 const REMOTE_PATCHES = new WeakMap<
   Editor,
   {
@@ -51,11 +55,6 @@ const REMOTE_PATCHES = new WeakMap<
   }[]
 >()
 const UNDO_STEP_LIMIT = 1000
-
-const isSaving = (editor: Editor): boolean | undefined => {
-  const state = SAVING.get(editor)
-  return state === undefined ? true : state
-}
 
 export interface Options {
   editorActor: EditorActor
@@ -94,7 +93,7 @@ export function pluginHistory(
               )
               editor.history = {undos: [], redos: []}
               remotePatches.splice(0, remotePatches.length)
-              SAVING.set(editor, true)
+              setWithHistory(editor, true)
               reset = true
               return
             }
@@ -142,10 +141,10 @@ export function pluginHistory(
         return
       }
 
-      const savingUndoSteps = isSaving(editor)
+      const withHistory = isWithHistory(editor)
       const currentUndoStepId = getCurrentUndoStepId(editor)
 
-      if (!savingUndoSteps) {
+      if (!withHistory) {
         // If we are bypassing saving undo steps, then we can just move along.
 
         previousUndoStepId = currentUndoStepId
@@ -271,7 +270,7 @@ export const historyUndoOperationImplementation: BehaviorOperationImplementation
       try {
         Editor.withoutNormalizing(editor, () => {
           withUndoing(editor, () => {
-            withoutSaving(editor, () => {
+            pluginWithoutHistory(editor, () => {
               reversedOperations.forEach((op) => {
                 editor.apply(op)
               })
@@ -283,7 +282,7 @@ export const historyUndoOperationImplementation: BehaviorOperationImplementation
         remotePatches.splice(0, remotePatches.length)
         Transforms.deselect(editor)
         editor.history = {undos: [], redos: []}
-        SAVING.set(editor, true)
+        setWithHistory(editor, true)
         setIsUndoing(editor, false)
         editor.onChange()
         return
@@ -325,7 +324,7 @@ export const historyRedoOperationImplementation: BehaviorOperationImplementation
       try {
         Editor.withoutNormalizing(editor, () => {
           withRedoing(editor, () => {
-            withoutSaving(editor, () => {
+            pluginWithoutHistory(editor, () => {
               transformedOperations.forEach((op) => {
                 editor.apply(op)
               })
@@ -337,7 +336,7 @@ export const historyRedoOperationImplementation: BehaviorOperationImplementation
         remotePatches.splice(0, remotePatches.length)
         Transforms.deselect(editor)
         editor.history = {undos: [], redos: []}
-        SAVING.set(editor, true)
+        setWithHistory(editor, true)
         setIsRedoing(editor, false)
         editor.onChange()
         return
@@ -597,13 +596,6 @@ const shouldMerge = (op: Operation, prev: Operation | undefined): boolean => {
 
   // Don't merge
   return false
-}
-
-export function withoutSaving(editor: Editor, fn: () => void): void {
-  const prev = isSaving(editor)
-  SAVING.set(editor, false)
-  fn()
-  SAVING.set(editor, prev)
 }
 
 function createSelectOperation(editor: Editor): SelectionOperation {
