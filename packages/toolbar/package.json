@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/toolbar",
-  "version": "3.0.9",
+  "version": "3.0.10",
   "description": "Utilities for building a toolbar for the Portable Text Editor",
   "keywords": [
     "portabletext",
@@ -62,7 +62,7 @@
     "typescript-eslint": "^8.46.1"
   },
   "peerDependencies": {
-    "@portabletext/editor": "workspace:^2.21.2",
+    "@portabletext/editor": "workspace:^2.21.3",
     "react": "^18.3 || ^19"
   },
   "engines": {
