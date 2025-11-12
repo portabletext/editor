@@ -16,7 +16,7 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
-import {withoutSaving} from '../history/slate-plugin.history'
+import {pluginWithoutHistory} from '../history/slate-plugin.without-history'
 import {debugWithName} from '../internal-utils/debug'
 import {validateValue} from '../internal-utils/validateValue'
 import {toSlateBlock, VOID_CHILD_KEY} from '../internal-utils/values'
@@ -582,7 +582,7 @@ function clearEditor({
   hadSelection: boolean
 }) {
   Editor.withoutNormalizing(slateEditor, () => {
-    withoutSaving(slateEditor, () => {
+    pluginWithoutHistory(slateEditor, () => {
       withRemoteChanges(slateEditor, () => {
         withoutPatching(slateEditor, () => {
           if (doneSyncing) {
