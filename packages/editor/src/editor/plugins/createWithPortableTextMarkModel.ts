@@ -8,6 +8,7 @@ import {isTextBlock} from '@portabletext/schema'
 import type {PortableTextObject, PortableTextSpan} from '@sanity/types'
 import {isEqual, uniq} from 'lodash'
 import {Editor, Element, Node, Path, Range, Text, Transforms} from 'slate'
+import {isRedoing, isUndoing} from '../../history/withUndoRedo'
 import {debugWithName} from '../../internal-utils/debug'
 import {getNextSpan, getPreviousSpan} from '../../internal-utils/sibling-utils'
 import type {BehaviorOperationImplementation} from '../../operations/behavior.operations'
@@ -17,7 +18,6 @@ import type {EditorActor} from '../editor-machine'
 import {getEditorSnapshot} from '../editor-selector'
 import {withNormalizeNode} from '../with-normalizing-node'
 import {isChangingRemotely} from '../withChanges'
-import {isRedoing, isUndoing} from '../withUndoRedo'
 
 const debug = debugWithName('plugin:withPortableTextMarkModel')
 

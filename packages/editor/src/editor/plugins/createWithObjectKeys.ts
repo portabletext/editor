@@ -1,11 +1,11 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {isEqual} from 'lodash'
 import {Editor, Element, Node, Path, Transforms} from 'slate'
+import {isRedoing, isUndoing} from '../../history/withUndoRedo'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 import {withNormalizeNode} from '../with-normalizing-node'
 import {isChangingRemotely} from '../withChanges'
-import {isRedoing, isUndoing} from '../withUndoRedo'
 
 /**
  * This plugin makes sure that every new node in the editor get a new _key prop when created

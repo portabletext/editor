@@ -1,5 +1,7 @@
 import {insert, setIfMissing, unset, type Patch} from '@portabletext/patches'
 import {Editor, type Descendant, type Operation} from 'slate'
+import {withoutSaving} from '../../history/slate-plugin.history'
+import {getCurrentUndoStepId} from '../../history/with-undo-step'
 import {createApplyPatch} from '../../internal-utils/applyPatch'
 import {debugWithName} from '../../internal-utils/debug'
 import {
@@ -17,10 +19,8 @@ import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 import type {RelayActor} from '../relay-machine'
 import {IS_PROCESSING_REMOTE_CHANGES, KEY_TO_VALUE_ELEMENT} from '../weakMaps'
-import {getCurrentUndoStepId} from '../with-undo-step'
 import {withRemoteChanges} from '../withChanges'
 import {isPatching, PATCHING, withoutPatching} from '../withoutPatching'
-import {withoutSaving} from './createWithUndoRedo'
 
 const debug = debugWithName('plugin:withPatches')
 const debugVerbose = false

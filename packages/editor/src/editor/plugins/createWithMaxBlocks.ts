@@ -1,7 +1,7 @@
+import {isRedoing, isUndoing} from '../../history/withUndoRedo'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 import {isChangingRemotely} from '../withChanges'
-import {isRedoing, isUndoing} from '../withUndoRedo'
 
 /**
  * This plugin makes sure that the PTE maxBlocks prop is respected

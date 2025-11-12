@@ -28,6 +28,8 @@ export default defineConfig({
             'src/editor/*.test.ts',
             'src/internal-utils/slate-utils.test.tsx',
             'src/plugins/*.test.tsx',
+            'src/history/**/*.test.ts',
+            'src/history/**/*.test.tsx',
           ],
           browser: {
             enabled: true,
@@ -64,6 +66,7 @@ export default defineConfig({
             'src/editor/*.test.ts',
             'src/plugins/*.test.tsx',
             'src/internal-utils/slate-utils.test.tsx',
+            'src/history',
           ],
           environment: 'jsdom',
         },

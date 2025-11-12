@@ -2,12 +2,12 @@ import {defineSchema} from '@portabletext/schema'
 import {getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import type {EditorSelection} from '../src'
-import {execute, forward, raise} from '../src/behaviors/behavior.types.action'
-import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
-import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
-import {getFirstBlock, getFocusBlock} from '../src/selectors'
-import {createTestEditor} from '../src/test/vitest'
+import {execute, forward, raise} from '../behaviors/behavior.types.action'
+import {defineBehavior} from '../behaviors/behavior.types.behavior'
+import {BehaviorPlugin} from '../plugins/plugin.behavior'
+import {getFirstBlock, getFocusBlock} from '../selectors'
+import {createTestEditor} from '../test/vitest'
+import type {EditorSelection} from '../types/editor'
 
 describe('event.history.undo', () => {
   test('Scenario: Undoing action sets', async () => {
