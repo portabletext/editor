@@ -19,41 +19,10 @@ export default defineConfig({
           }),
         ],
         test: {
-          name: 'browser.bak',
+          name: 'browser',
           include: [
             'gherkin-tests/**/*.test.ts',
             'gherkin-tests/**/*.test.tsx',
-          ],
-          browser: {
-            enabled: true,
-            headless: true,
-            provider: playwright(),
-            instances: [
-              {
-                browser: 'chromium',
-              },
-              {
-                browser: 'firefox',
-              },
-              {
-                browser: 'webkit',
-              },
-            ],
-            screenshotFailures: false,
-          },
-        },
-      },
-      {
-        plugins: [
-          react({
-            babel: {plugins: [['babel-plugin-react-compiler', {target: '18'}]]},
-          }),
-        ],
-        test: {
-          name: 'browser',
-          include: [
-            'gherkin-tests-v2/**/*.test.ts',
-            'gherkin-tests-v2/**/*.test.tsx',
             'tests/**/*.test.ts',
             'tests/**/*.test.tsx',
             'src/editor/*.test.ts',
@@ -90,9 +59,7 @@ export default defineConfig({
           name: 'unit',
           exclude: [
             'node_modules',
-            'e2e-tests',
             'gherkin-tests',
-            'gherkin-tests-v2',
             'tests',
             'src/editor/*.test.ts',
             'src/plugins/*.test.tsx',

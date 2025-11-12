@@ -80,8 +80,6 @@
     "test:browser:watch": "vitest --project browser",
     "test:browser:webkit": "vitest --run --project \"browser (webkit)\"",
     "test:browser:webkit:watch": "vitest --project \"browser (webkit)\"",
-    "test:e2e:chromium": "vitest --run --project \"browser.bak (chromium)\"",
-    "test:e2e:chromium:watch": "vitest --project \"browser.bak (chromium)\"",
     "test:unit": "vitest --run --project unit",
     "test:unit:watch": "vitest --project unit",
     "test:watch": "vitest"
