@@ -21,53 +21,59 @@ const debug = debugWithName('plugin:history')
 
 const UNDO_STEP_LIMIT = 1000
 
-export interface Options {
+export function pluginHistory({
+  editorActor,
+  subscriptions,
+}: {
   editorActor: EditorActor
   subscriptions: Array<() => () => void>
-}
-
-export function pluginHistory(
-  options: Options,
-): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
-  const {editorActor} = options
-
+}): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
   return (editor: PortableTextSlateEditor) => {
+    const remotePatches = getRemotePatches(editor)
     let previousSnapshot: PortableTextBlock[] | undefined = fromSlateValue(
       editor.children,
       editorActor.getSnapshot().context.schema.block.name,
     )
-    const remotePatches = getRemotePatches(editor)
     let previousUndoStepId = getCurrentUndoStepId(editor)
 
-    options.subscriptions.push(() => {
-      debug('Subscribing to patches')
-      const sub = editorActor.on('patches', ({patches, snapshot}) => {
+    subscriptions.push(() => {
+      const subscription = editorActor.on('patches', ({patches, snapshot}) => {
         let reset = false
-        patches.forEach((patch) => {
-          if (!reset && patch.origin !== 'local' && remotePatches) {
-            if (patch.type === 'unset' && patch.path.length === 0) {
-              debug(
-                'Someone else cleared the content, resetting undo/redo history',
-              )
-              editor.history = {undos: [], redos: []}
-              remotePatches.splice(0, remotePatches.length)
-              setWithHistory(editor, true)
-              reset = true
-              return
-            }
-            remotePatches.push({
-              patch,
-              time: new Date(),
-              snapshot,
-              previousSnapshot,
-            })
+
+        for (const patch of patches) {
+          if (reset) {
+            continue
           }
-        })
+
+          if (patch.origin === 'local') {
+            continue
+          }
+
+          if (patch.type === 'unset' && patch.path.length === 0) {
+            debug(
+              'Someone else cleared the content, resetting undo/redo history',
+            )
+
+            editor.history = {undos: [], redos: []}
+            remotePatches.splice(0, remotePatches.length)
+            setWithHistory(editor, true)
+            reset = true
+            return
+          }
+
+          remotePatches.push({
+            patch,
+            time: new Date(),
+            snapshot,
+            previousSnapshot,
+          })
+        }
+
         previousSnapshot = snapshot
       })
+
       return () => {
-        debug('Unsubscribing to patches')
-        sub.unsubscribe()
+        subscription.unsubscribe()
       }
     })
 
