@@ -3,7 +3,7 @@ import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
 import {withPerformingBehaviorOperation} from '../editor/with-performing-behavior-operation'
 import {withoutNormalizingConditional} from '../editor/without-normalizing-conditional'
-import {clearUndoStep, createUndoStep} from '../history/undo-step'
+import {clearUndoStepId, createUndoStepId} from '../history/undo-step'
 import {debugWithName} from '../internal-utils/debug'
 import {performOperation} from '../operations/behavior.operations'
 import type {PortableTextSlateEditor} from '../types/editor'
@@ -61,7 +61,7 @@ export function performEvent({
   ) => void
 }) {
   if (mode === 'send' && !isNativeBehaviorEvent(event)) {
-    createUndoStep(editor)
+    createUndoStepId(editor)
   }
 
   debug(`(${mode}:${eventCategory(event)})`, JSON.stringify(event, null, 2))
@@ -110,7 +110,7 @@ export function performEvent({
     nativeEvent?.preventDefault()
 
     if (mode === 'send') {
-      clearUndoStep(editor)
+      clearUndoStepId(editor)
     }
 
     withPerformingBehaviorOperation(editor, () => {
@@ -211,7 +211,7 @@ export function performEvent({
 
       if (actionSetIndex > 0) {
         // Since there are multiple action sets
-        createUndoStep(editor)
+        createUndoStepId(editor)
 
         undoStepCreated = true
       }
@@ -224,7 +224,7 @@ export function performEvent({
         // we set up a new undo step.
         // All actions performed recursively from now will be squashed into this
         // undo step
-        createUndoStep(editor)
+        createUndoStepId(editor)
 
         undoStepCreated = true
       }
@@ -321,7 +321,7 @@ export function performEvent({
       )
 
       if (undoStepCreated) {
-        clearUndoStep(editor)
+        clearUndoStepId(editor)
       }
     }
 
@@ -332,7 +332,7 @@ export function performEvent({
     nativeEvent?.preventDefault()
 
     if (mode === 'send') {
-      clearUndoStep(editor)
+      clearUndoStepId(editor)
     }
 
     withPerformingBehaviorOperation(editor, () => {

@@ -4,9 +4,8 @@
  */
 
 import type {PortableTextBlock} from '@portabletext/schema'
-import {Path, type Editor, type Operation, type SelectionOperation} from 'slate'
+import type {Operation} from 'slate'
 import type {EditorActor} from '../editor/editor-machine'
-import {isNormalizingNode} from '../editor/with-normalizing-node'
 import {isChangingRemotely} from '../editor/withChanges'
 import {debugWithName} from '../internal-utils/debug'
 import {fromSlateValue} from '../internal-utils/values'
@@ -15,7 +14,7 @@ import {getRemotePatches} from './remote-patches'
 import {isRedoing} from './slate-plugin.redoing'
 import {isUndoing} from './slate-plugin.undoing'
 import {isWithHistory, setWithHistory} from './slate-plugin.without-history'
-import {getCurrentUndoStepId} from './undo-step'
+import {createUndoSteps, getCurrentUndoStepId} from './undo-step'
 
 const debug = debugWithName('plugin:history')
 
@@ -123,66 +122,13 @@ export function pluginHistory({
         editor.history.redos = []
       }
 
-      const step = editor.history.undos.at(editor.history.undos.length - 1)
-
-      if (!step) {
-        // If the undo stack is empty, then we can just create a new step and
-        // move along.
-
-        editor.history.undos.push({
-          operations: [
-            ...(editor.selection === null
-              ? []
-              : [createSelectOperation(editor)]),
-            op,
-          ],
-          timestamp: new Date(),
-        })
-
-        apply(op)
-
-        previousUndoStepId = currentUndoStepId
-
-        return
-      }
-
-      const selectingWithoutUndoStepId =
-        op.type === 'set_selection' &&
-        currentUndoStepId === undefined &&
-        previousUndoStepId !== undefined
-      const selectingWithDifferentUndoStepId =
-        op.type === 'set_selection' &&
-        currentUndoStepId !== undefined &&
-        previousUndoStepId !== undefined &&
-        previousUndoStepId !== currentUndoStepId
-
-      const lastOp = step.operations.at(-1)
-      const mergeOpIntoPreviousStep =
-        editor.operations.length > 0
-          ? currentUndoStepId === previousUndoStepId ||
-            isNormalizingNode(editor)
-          : selectingWithoutUndoStepId ||
-              selectingWithDifferentUndoStepId ||
-              (currentUndoStepId === undefined &&
-                previousUndoStepId === undefined)
-            ? shouldMerge(op, lastOp) ||
-              (lastOp?.type === 'set_selection' && op.type === 'set_selection')
-            : currentUndoStepId === previousUndoStepId ||
-              isNormalizingNode(editor)
-
-      if (mergeOpIntoPreviousStep) {
-        step.operations.push(op)
-      } else {
-        editor.history.undos.push({
-          operations: [
-            ...(editor.selection === null
-              ? []
-              : [createSelectOperation(editor)]),
-            op,
-          ],
-          timestamp: new Date(),
-        })
-      }
+      editor.history.undos = createUndoSteps({
+        steps: editor.history.undos,
+        op,
+        editor,
+        currentUndoStepId,
+        previousUndoStepId,
+      })
 
       // Make sure we don't exceed the maximum number of undo steps we want
       // to store.
@@ -196,45 +142,5 @@ export function pluginHistory({
     }
 
     return editor
-  }
-}
-
-const shouldMerge = (op: Operation, prev: Operation | undefined): boolean => {
-  if (op.type === 'set_selection') {
-    return true
-  }
-
-  // Text input
-  if (
-    prev &&
-    op.type === 'insert_text' &&
-    prev.type === 'insert_text' &&
-    op.offset === prev.offset + prev.text.length &&
-    Path.equals(op.path, prev.path) &&
-    op.text !== ' ' // Tokenize between words
-  ) {
-    return true
-  }
-
-  // Text deletion
-  if (
-    prev &&
-    op.type === 'remove_text' &&
-    prev.type === 'remove_text' &&
-    op.offset + op.text.length === prev.offset &&
-    Path.equals(op.path, prev.path)
-  ) {
-    return true
-  }
-
-  // Don't merge
-  return false
-}
-
-function createSelectOperation(editor: Editor): SelectionOperation {
-  return {
-    type: 'set_selection',
-    properties: {...editor.selection},
-    newProperties: {...editor.selection},
   }
 }
