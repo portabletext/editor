@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.21.3
+
+### Patch Changes
+
+- [#1876](https://github.com/portabletext/editor/pull/1876) [`aaac0b5`](https://github.com/portabletext/editor/commit/aaac0b58dd2f0959317787e751f64e9f3772403b) Thanks [@christianhg](https://github.com/christianhg)! - fix: handle incoming `set` patches targeting text blocks
+
 ## 2.21.2
 
 ### Patch Changes
