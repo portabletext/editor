@@ -16,6 +16,7 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
+import {withoutSaving} from '../history/slate-plugin.history'
 import {debugWithName} from '../internal-utils/debug'
 import {validateValue} from '../internal-utils/validateValue'
 import {toSlateBlock, VOID_CHILD_KEY} from '../internal-utils/values'
@@ -25,7 +26,6 @@ import type {
   PortableTextSlateEditor,
 } from '../types/editor'
 import type {EditorSchema} from './editor-schema'
-import {withoutSaving} from './plugins/createWithUndoRedo'
 import {isChangingRemotely, withRemoteChanges} from './withChanges'
 import {withoutPatching} from './withoutPatching'
 
