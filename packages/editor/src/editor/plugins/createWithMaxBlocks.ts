@@ -1,5 +1,5 @@
+import {isRedoing} from '../../history/slate-plugin.redoing'
 import {isUndoing} from '../../history/slate-plugin.undoing'
-import {isRedoing} from '../../history/withUndoRedo'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 import {isChangingRemotely} from '../withChanges'

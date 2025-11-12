@@ -28,13 +28,13 @@ import {fromSlateValue} from '../internal-utils/values'
 import type {BehaviorOperationImplementation} from '../operations/behavior.operations'
 import type {PortableTextSlateEditor} from '../types/editor'
 import {isUndoing, pluginUndoing, setIsUndoing} from './slate-plugin.undoing'
+import {isRedoing, pluginRedoing, setIsRedoing} from './slate-plugin.redoing'
 import {
   isWithHistory,
   pluginWithoutHistory,
   setWithHistory,
 } from './slate-plugin.without-history'
 import {getCurrentUndoStepId} from './undo-step'
-import {isRedoing, setIsRedoing, withRedoing} from './withUndoRedo'
 
 const debug = debugWithName('plugin:withUndoRedo')
 const debugVerbose = debug.enabled && false
@@ -317,7 +317,7 @@ export const historyRedoOperationImplementation: BehaviorOperationImplementation
       })
       try {
         Editor.withoutNormalizing(editor, () => {
-          withRedoing(editor, () => {
+          pluginRedoing(editor, () => {
             pluginWithoutHistory(editor, () => {
               transformedOperations.forEach((op) => {
                 editor.apply(op)
