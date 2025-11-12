@@ -1,4 +1,5 @@
 import type {BaseOperation, Editor, Node, NodeEntry} from 'slate'
+import {pluginHistory} from '../../history/slate-plugin.history'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 import type {RelayActor} from '../relay-machine'
@@ -9,7 +10,6 @@ import {createWithPatches} from './createWithPatches'
 import {createWithPlaceholderBlock} from './createWithPlaceholderBlock'
 import {createWithPortableTextMarkModel} from './createWithPortableTextMarkModel'
 import {createWithSchemaTypes} from './createWithSchemaTypes'
-import {createWithUndoRedo} from './createWithUndoRedo'
 import {createWithUtils} from './createWithUtils'
 import {pluginUpdateSelection} from './slate-plugin.update-selection'
 import {pluginUpdateValue} from './slate-plugin.update-value'
@@ -42,7 +42,7 @@ export const withPlugins = <T extends Editor>(
     subscriptions: options.subscriptions,
   })
   const withMaxBlocks = createWithMaxBlocks(editorActor)
-  const withUndoRedo = createWithUndoRedo({
+  const withUndoRedo = pluginHistory({
     editorActor,
     subscriptions: options.subscriptions,
   })

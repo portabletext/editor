@@ -1,9 +1,9 @@
 import {createRef, type RefObject} from 'react'
 import {describe, expect, it, vi} from 'vitest'
-import {PortableTextEditor} from '../src/editor/PortableTextEditor'
-import {InternalChange$Plugin} from '../src/plugins/plugin.internal.change-ref'
-import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
-import {createTestEditor} from '../src/test/vitest'
+import {PortableTextEditor} from '../editor/PortableTextEditor'
+import {InternalChange$Plugin} from '../plugins/plugin.internal.change-ref'
+import {InternalPortableTextEditorRefPlugin} from '../plugins/plugin.internal.portable-text-editor-ref'
+import {createTestEditor} from '../test/vitest'
 
 const initialValue = [
   {

@@ -20,14 +20,14 @@ import {
   type Descendant,
   type SelectionOperation,
 } from 'slate'
-import {debugWithName} from '../../internal-utils/debug'
-import {fromSlateValue} from '../../internal-utils/values'
-import type {BehaviorOperationImplementation} from '../../operations/behavior.operations'
-import type {PortableTextSlateEditor} from '../../types/editor'
-import type {EditorActor} from '../editor-machine'
-import {isNormalizingNode} from '../with-normalizing-node'
-import {getCurrentUndoStepId} from '../with-undo-step'
-import {isChangingRemotely} from '../withChanges'
+import type {EditorActor} from '../editor/editor-machine'
+import {isNormalizingNode} from '../editor/with-normalizing-node'
+import {isChangingRemotely} from '../editor/withChanges'
+import {debugWithName} from '../internal-utils/debug'
+import {fromSlateValue} from '../internal-utils/values'
+import type {BehaviorOperationImplementation} from '../operations/behavior.operations'
+import type {PortableTextSlateEditor} from '../types/editor'
+import {getCurrentUndoStepId} from './with-undo-step'
 import {
   isRedoing,
   isUndoing,
@@ -35,7 +35,7 @@ import {
   setIsUndoing,
   withRedoing,
   withUndoing,
-} from '../withUndoRedo'
+} from './withUndoRedo'
 
 const debug = debugWithName('plugin:withUndoRedo')
 const debugVerbose = debug.enabled && false
@@ -69,7 +69,7 @@ const getRemotePatches = (editor: Editor) => {
   return REMOTE_PATCHES.get(editor) || []
 }
 
-export function createWithUndoRedo(
+export function pluginHistory(
   options: Options,
 ): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
   const {editorActor} = options
