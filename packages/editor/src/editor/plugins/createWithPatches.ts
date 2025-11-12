@@ -1,7 +1,7 @@
 import {insert, setIfMissing, unset, type Patch} from '@portabletext/patches'
 import {Editor, type Descendant, type Operation} from 'slate'
 import {withoutSaving} from '../../history/slate-plugin.history'
-import {getCurrentUndoStepId} from '../../history/with-undo-step'
+import {getCurrentUndoStepId} from '../../history/undo-step'
 import {createApplyPatch} from '../../internal-utils/applyPatch'
 import {debugWithName} from '../../internal-utils/debug'
 import {
