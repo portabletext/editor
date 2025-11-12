@@ -16,7 +16,7 @@ import {
   parsePatch,
 } from '@sanity/diff-match-patch'
 import type {Path, PortableTextBlock, PortableTextChild} from '@sanity/types'
-import {Element, Node, Text, Transforms, type Descendant} from 'slate'
+import {Editor, Element, Node, Text, Transforms, type Descendant} from 'slate'
 import type {EditorSchema} from '../editor/editor-schema'
 import {KEY_TO_SLATE_ELEMENT} from '../editor/weakMaps'
 import type {PortableTextSlateEditor} from '../types/editor'
@@ -201,6 +201,51 @@ function setPatch(editor: PortableTextSlateEditor, patch: SetPatch) {
   }
 
   const isTextBlock = editor.isTextBlock(block.node)
+
+  if (patch.path.length === 1) {
+    const updatedBlock = applyAll(block.node, [
+      {
+        ...patch,
+        path: patch.path.slice(1),
+      },
+    ])
+
+    if (editor.isTextBlock(block.node) && Element.isElement(updatedBlock)) {
+      Transforms.setNodes(editor, updatedBlock, {at: [block.index]})
+
+      const previousSelection = editor.selection
+
+      // Remove the previous children
+      for (const [_, childPath] of Editor.nodes(editor, {
+        at: [block.index],
+        reverse: true,
+        mode: 'lowest',
+      })) {
+        Transforms.removeNodes(editor, {at: childPath})
+      }
+
+      // Insert the new children
+      Transforms.insertNodes(editor, updatedBlock.children, {
+        at: [block.index, 0],
+      })
+
+      // Restore the selection
+      if (previousSelection) {
+        // Update the selection on the editor object
+        Transforms.setSelection(editor, previousSelection)
+        // Actively select the previous selection
+        Transforms.select(editor, previousSelection)
+      }
+
+      return true
+    } else {
+      Transforms.setNodes(editor, updatedBlock as Partial<Node>, {
+        at: [block.index],
+      })
+
+      return true
+    }
+  }
 
   if (isTextBlock && patch.path[1] !== 'children') {
     const updatedBlock = applyAll(block.node, [

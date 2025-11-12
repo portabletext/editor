@@ -1911,4 +1911,90 @@ describe('event.patches', () => {
       })
     })
   })
+
+  test('Scenario: `set` block with new markDef', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const barKey = keyGenerator()
+    const linkKey = keyGenerator()
+    const newLinkKey = keyGenerator()
+
+    // Given the text foo,bar
+    // And a link around "foo"
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_key: fooKey, _type: 'span', text: 'foo', marks: [linkKey]},
+            {_key: barKey, _type: 'span', text: 'bar', marks: []},
+          ],
+          markDefs: [{_key: linkKey, _type: 'link'}],
+          style: 'normal',
+        },
+      ],
+      schemaDefinition: defineSchema({
+        annotations: [{name: 'link'}],
+        styles: [{name: 'normal'}, {name: 'h1'}],
+      }),
+    })
+
+    // When the cursor is put after "foo b"
+    await userEvent.click(locator)
+    const midBarSelection = {
+      anchor: {
+        path: [{_key: blockKey}, 'children', {_key: barKey}],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: blockKey}, 'children', {_key: barKey}],
+        offset: 1,
+      },
+      backward: false,
+    }
+    editor.send({
+      type: 'select',
+      at: midBarSelection,
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual(midBarSelection)
+    })
+
+    // And the block is replaced with a new block with different link _key
+    const newBlock = {
+      _key: blockKey,
+      _type: 'block',
+      children: [
+        {_key: fooKey, _type: 'span', text: 'foo', marks: [newLinkKey]},
+        {_key: barKey, _type: 'span', text: 'bar', marks: []},
+      ],
+      markDefs: [{_key: newLinkKey, _type: 'link'}],
+      style: 'normal',
+    }
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          origin: 'remote',
+          type: 'set',
+          path: [{_key: blockKey}],
+          value: newBlock,
+        },
+      ],
+      snapshot: [newBlock],
+    })
+
+    // Then the block is replaced with the new block
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([newBlock])
+    })
+
+    // And the selection is restored
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual(midBarSelection)
+    })
+  })
 })
