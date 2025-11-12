@@ -428,8 +428,8 @@ importers:
         specifier: ^4.14.2
         version: 4.14.2(@types/react@19.2.2)(debug@4.4.3)
       '@types/jsdom':
-        specifier: ^20.0.1
-        version: 20.0.1
+        specifier: ^27.0.0
+        version: 27.0.0
       '@types/lodash':
         specifier: ^4.17.20
         version: 4.17.20
@@ -3824,8 +3824,8 @@ packages:
   '@types/js-yaml@4.0.9':
     resolution: {integrity: sha512-k4MGaQl5TGo/iipqb2UDG2UwjXziSWkh0uysQelTlJpX1qGlpUZYm8PnO4DxG1qBomtJUdYJ6qR6xdIah10JLg==}
 
-  '@types/jsdom@20.0.1':
-    resolution: {integrity: sha512-d0r18sZPmMQr1eG35u12FZfhIXNrnsPU/g5wvRKCUf/tOGilKKwYMYGqh33BNR6ba+2gkHw1EUiHoN3mn7E5IQ==}
+  '@types/jsdom@27.0.0':
+    resolution: {integrity: sha512-NZyFl/PViwKzdEkQg96gtnB8wm+1ljhdDay9ahn4hgb+SfVtPCbm3TlmDUFXTA+MGN3CijicnMhG18SI5H3rFw==}
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
@@ -10970,7 +10970,7 @@ snapshots:
 
   '@types/js-yaml@4.0.9': {}
 
-  '@types/jsdom@20.0.1':
+  '@types/jsdom@27.0.0':
     dependencies:
       '@types/node': 20.19.19
       '@types/tough-cookie': 4.0.5
