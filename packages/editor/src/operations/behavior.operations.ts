@@ -5,10 +5,8 @@ import type {
 } from '../behaviors/behavior.types.event'
 import type {EditorContext} from '../editor/editor-snapshot'
 import {removeDecoratorOperationImplementation} from '../editor/plugins/createWithPortableTextMarkModel'
-import {
-  historyRedoOperationImplementation,
-  historyUndoOperationImplementation,
-} from '../history/slate-plugin.history'
+import {historyRedoOperationImplementation} from '../history/behavior.operation.history.redo'
+import {historyUndoOperationImplementation} from '../history/behavior.operation.history.undo'
 import type {OmitFromUnion, PickFromUnion} from '../type-utils'
 import type {PortableTextSlateEditor} from '../types/editor'
 import {addAnnotationOperationImplementation} from './behavior.operation.annotation.add'
