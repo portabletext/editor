@@ -1,5 +1,4 @@
 import {Path, type Editor, type Operation, type SelectionOperation} from 'slate'
-import {isNormalizingNode} from '../editor/with-normalizing-node'
 import {defaultKeyGenerator} from '../utils/key-generator'
 
 const CURRENT_UNDO_STEP_ID: WeakMap<Editor, {undoStepId: string} | undefined> =
@@ -51,27 +50,91 @@ export function createUndoSteps({
     ]
   }
 
-  const selectingWithoutUndoStepId =
+  if (
+    editor.operations.length > 0 &&
+    currentUndoStepId === previousUndoStepId
+  ) {
+    // Merging batched operations into the last step
+    // But only if we aren't unsetting the undo step ID
+    return [
+      ...steps.slice(0, -1),
+      {
+        timestamp: lastStep.timestamp,
+        operations: [...lastStep.operations, op],
+      },
+    ]
+  }
+
+  if (previousUndoStepId === undefined && currentUndoStepId === undefined) {
+    if (op.type === 'set_selection') {
+      // Selecting without an undo step ID
+      return [
+        ...steps.slice(0, -1),
+        {
+          timestamp: lastStep.timestamp,
+          operations: [...lastStep.operations, op],
+        },
+      ]
+    }
+
+    const lastOp = lastStep.operations.at(-1)
+
+    if (
+      lastOp &&
+      op.type === 'insert_text' &&
+      lastOp.type === 'insert_text' &&
+      op.offset === lastOp.offset + lastOp.text.length &&
+      Path.equals(op.path, lastOp.path) &&
+      op.text !== ' ' // Tokenize between words
+    ) {
+      return [
+        ...steps.slice(0, -1),
+        {
+          timestamp: lastStep.timestamp,
+          operations: [...lastStep.operations, op],
+        },
+      ]
+    }
+
+    if (
+      lastOp &&
+      op.type === 'remove_text' &&
+      lastOp.type === 'remove_text' &&
+      op.offset + op.text.length === lastOp.offset &&
+      Path.equals(op.path, lastOp.path)
+    ) {
+      return [
+        ...steps.slice(0, -1),
+        {
+          timestamp: lastStep.timestamp,
+          operations: [...lastStep.operations, op],
+        },
+      ]
+    }
+  }
+
+  if (
     op.type === 'set_selection' &&
     currentUndoStepId === undefined &&
     previousUndoStepId !== undefined
-  const selectingWithDifferentUndoStepId =
+  ) {
+    // Selecting with an unset undo step ID
+    return [
+      ...steps.slice(0, -1),
+      {
+        timestamp: lastStep.timestamp,
+        operations: [...lastStep.operations, op],
+      },
+    ]
+  }
+
+  if (
     op.type === 'set_selection' &&
     currentUndoStepId !== undefined &&
     previousUndoStepId !== undefined &&
     previousUndoStepId !== currentUndoStepId
-  const lastOp = lastStep.operations.at(-1)
-  const mergeOpIntoPreviousStep =
-    editor.operations.length > 0
-      ? currentUndoStepId === previousUndoStepId || isNormalizingNode(editor)
-      : selectingWithoutUndoStepId ||
-          selectingWithDifferentUndoStepId ||
-          (currentUndoStepId === undefined && previousUndoStepId === undefined)
-        ? shouldMerge(op, lastOp) ||
-          (lastOp?.type === 'set_selection' && op.type === 'set_selection')
-        : currentUndoStepId === previousUndoStepId || isNormalizingNode(editor)
-
-  if (mergeOpIntoPreviousStep) {
+  ) {
+    // Selecting with a different undo step ID
     return [
       ...steps.slice(0, -1),
       {
@@ -91,38 +154,6 @@ export function createUndoSteps({
       timestamp: new Date(),
     },
   ]
-}
-
-const shouldMerge = (op: Operation, prev: Operation | undefined): boolean => {
-  if (op.type === 'set_selection') {
-    return true
-  }
-
-  // Text input
-  if (
-    prev &&
-    op.type === 'insert_text' &&
-    prev.type === 'insert_text' &&
-    op.offset === prev.offset + prev.text.length &&
-    Path.equals(op.path, prev.path) &&
-    op.text !== ' ' // Tokenize between words
-  ) {
-    return true
-  }
-
-  // Text deletion
-  if (
-    prev &&
-    op.type === 'remove_text' &&
-    prev.type === 'remove_text' &&
-    op.offset + op.text.length === prev.offset &&
-    Path.equals(op.path, prev.path)
-  ) {
-    return true
-  }
-
-  // Don't merge
-  return false
 }
 
 function createSelectOperation(editor: Editor): SelectionOperation {
