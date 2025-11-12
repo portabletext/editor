@@ -16,5 +16,5 @@ export const getRemotePatches = (editor: Editor) => {
   if (!REMOTE_PATCHES.get(editor)) {
     REMOTE_PATCHES.set(editor, [])
   }
-  return REMOTE_PATCHES.get(editor) || []
+  return REMOTE_PATCHES.get(editor) ?? []
 }
