@@ -1,5 +1,6 @@
 import {Editor} from 'slate'
-import {isRedoing, isUndoing} from '../../history/withUndoRedo'
+import {isUndoing} from '../../history/slate-plugin.undoing'
+import {isRedoing} from '../../history/withUndoRedo'
 import {debugWithName} from '../../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
