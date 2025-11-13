@@ -1,8 +1,7 @@
 Feature: Undo/Redo
 
   Background:
-    Given one editor
-    And a global keymap
+    Given a global keymap
 
   Scenario: Undoing writing two words
     Given the text ""
@@ -99,3 +98,28 @@ Feature: Undo/Redo
     Then the text is "foo|bar"
     And "foo" has no marks
     And "bar" has no marks
+
+  Scenario: Undoing action step
+    Given the text "-"
+    When ">" is typed
+    Then the text is "→"
+    When undo is performed
+    Then the text is "->"
+
+  Scenario: Consecutive undo after selection change
+    Given the text "-"
+    When ">" is typed
+    And undo is performed
+    And "{ArrowLeft}" is pressed
+    And undo is performed
+    Then the text is "-"
+
+  Scenario: Undo after transform on expanded selection
+    Given the text "(cf"
+    When "f" is selected
+    And ")" is inserted
+    Then the text is "©"
+    When undo is performed
+    Then the text is "(c)"
+    When undo is performed
+    Then the text is "(cf"
