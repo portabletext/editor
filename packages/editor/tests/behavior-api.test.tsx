@@ -661,4 +661,62 @@ describe('Behavior API', () => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo', ' bar'])
     })
   })
+
+  test('Scenario: Typing on expanded selection causes two `insert.text` event', async () => {
+    const insertTextEvents: Array<BehaviorEvent['type']> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: '(cf'}],
+        },
+      ],
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              actions: [
+                ({event}) => [
+                  effect(() => {
+                    insertTextEvents.push(event.type)
+                  }),
+                  forward(event),
+                ],
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 2,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+      },
+    })
+
+    await userEvent.type(locator, ')')
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['(c)'])
+    })
+
+    expect(insertTextEvents).toEqual(['insert.text', 'insert.text'])
+  })
 })
