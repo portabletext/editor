@@ -1,4 +1,4 @@
-import {Path, type Editor, type Operation, type SelectionOperation} from 'slate'
+import {Path, type Editor, type Operation} from 'slate'
 import {isNormalizingNode} from '../editor/with-normalizing-node'
 import {defaultKeyGenerator} from '../utils/key-generator'
 
@@ -40,95 +40,109 @@ export function createUndoSteps({
   const lastStep = steps.at(-1)
 
   if (!lastStep) {
-    return [
-      {
-        operations: [
-          ...(editor.selection === null ? [] : [createSelectOperation(editor)]),
-          op,
-        ],
-        timestamp: new Date(),
-      },
-    ]
+    return createNewStep(steps, op, editor)
   }
 
-  const selectingWithoutUndoStepId =
+  if (editor.operations.length > 0) {
+    // The editor has operations in progress
+
+    if (currentUndoStepId === previousUndoStepId || isNormalizingNode(editor)) {
+      return mergeIntoLastStep(steps, lastStep, op)
+    }
+
+    return createNewStep(steps, op, editor)
+  }
+
+  if (
     op.type === 'set_selection' &&
     currentUndoStepId === undefined &&
     previousUndoStepId !== undefined
-  const selectingWithDifferentUndoStepId =
+  ) {
+    // Selecting without undo step ID
+    return mergeIntoLastStep(steps, lastStep, op)
+  }
+
+  if (
     op.type === 'set_selection' &&
     currentUndoStepId !== undefined &&
     previousUndoStepId !== undefined &&
     previousUndoStepId !== currentUndoStepId
-  const lastOp = lastStep.operations.at(-1)
-  const mergeOpIntoPreviousStep =
-    editor.operations.length > 0
-      ? currentUndoStepId === previousUndoStepId || isNormalizingNode(editor)
-      : selectingWithoutUndoStepId ||
-          selectingWithDifferentUndoStepId ||
-          (currentUndoStepId === undefined && previousUndoStepId === undefined)
-        ? shouldMerge(op, lastOp) ||
-          (lastOp?.type === 'set_selection' && op.type === 'set_selection')
-        : currentUndoStepId === previousUndoStepId || isNormalizingNode(editor)
-
-  if (mergeOpIntoPreviousStep) {
-    return [
-      ...steps.slice(0, -1),
-      {
-        timestamp: lastStep.timestamp,
-        operations: [...lastStep.operations, op],
-      },
-    ]
+  ) {
+    // Selecting with different undo step ID
+    return mergeIntoLastStep(steps, lastStep, op)
   }
+
+  // Handle case when both IDs are undefined
+  if (currentUndoStepId === undefined && previousUndoStepId === undefined) {
+    if (op.type === 'set_selection') {
+      return mergeIntoLastStep(steps, lastStep, op)
+    }
+
+    const lastOp = lastStep.operations.at(-1)
+
+    if (
+      lastOp &&
+      op.type === 'insert_text' &&
+      lastOp.type === 'insert_text' &&
+      op.offset === lastOp.offset + lastOp.text.length &&
+      Path.equals(op.path, lastOp.path) &&
+      op.text !== ' '
+    ) {
+      return mergeIntoLastStep(steps, lastStep, op)
+    }
+
+    if (
+      lastOp &&
+      op.type === 'remove_text' &&
+      lastOp.type === 'remove_text' &&
+      op.offset + op.text.length === lastOp.offset &&
+      Path.equals(op.path, lastOp.path)
+    ) {
+      return mergeIntoLastStep(steps, lastStep, op)
+    }
+
+    return createNewStep(steps, op, editor)
+  }
+
+  return createNewStep(steps, op, editor)
+}
+
+function createNewStep(
+  steps: Array<UndoStep>,
+  op: Operation,
+  editor: Editor,
+): Array<UndoStep> {
+  const operations =
+    editor.selection === null
+      ? [op]
+      : [
+          {
+            type: 'set_selection' as const,
+            properties: {...editor.selection},
+            newProperties: {...editor.selection},
+          },
+          op,
+        ]
 
   return [
     ...steps,
     {
-      operations: [
-        ...(editor.selection === null ? [] : [createSelectOperation(editor)]),
-        op,
-      ],
+      operations,
       timestamp: new Date(),
     },
   ]
 }
 
-const shouldMerge = (op: Operation, prev: Operation | undefined): boolean => {
-  if (op.type === 'set_selection') {
-    return true
-  }
-
-  // Text input
-  if (
-    prev &&
-    op.type === 'insert_text' &&
-    prev.type === 'insert_text' &&
-    op.offset === prev.offset + prev.text.length &&
-    Path.equals(op.path, prev.path) &&
-    op.text !== ' ' // Tokenize between words
-  ) {
-    return true
-  }
-
-  // Text deletion
-  if (
-    prev &&
-    op.type === 'remove_text' &&
-    prev.type === 'remove_text' &&
-    op.offset + op.text.length === prev.offset &&
-    Path.equals(op.path, prev.path)
-  ) {
-    return true
-  }
-
-  // Don't merge
-  return false
-}
-
-function createSelectOperation(editor: Editor): SelectionOperation {
-  return {
-    type: 'set_selection',
-    properties: {...editor.selection},
-    newProperties: {...editor.selection},
-  }
+function mergeIntoLastStep(
+  steps: Array<UndoStep>,
+  lastStep: UndoStep,
+  op: Operation,
+): Array<UndoStep> {
+  return [
+    ...steps.slice(0, -1),
+    {
+      timestamp: lastStep.timestamp,
+      operations: [...lastStep.operations, op],
+    },
+  ]
 }
