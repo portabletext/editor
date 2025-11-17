@@ -2,10 +2,6 @@
 
 > Easily configure Input Rules in the Portable Text Editor
 
-> ⚠️ **Note:** `defineInputRule` and other APIs exposed by this plugin are still a work in progress and may change slightly. We are still ironing out some details before we can cut a stable release.
-
-Listening for inserted text patterns and performing actions based on them is incredibly common, but it comes with many challenges:
-
 1. How do you implement undo functionality correctly?
 2. What about smart undo with <kbd>Backspace</kbd>?
 3. Have you considered `insert.text` events that carry more than one character? (Android, anyone?)
