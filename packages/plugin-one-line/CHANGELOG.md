@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.0.0
+
+### Patch Changes
+
+- Updated dependencies [[`0454f2f`](https://github.com/portabletext/editor/commit/0454f2f7f014b327c53832b3e3d16d87b614eebb), [`c8cb899`](https://github.com/portabletext/editor/commit/c8cb899ca71a0462ea74d631916c6af71dc81993), [`b5046ce`](https://github.com/portabletext/editor/commit/b5046ce61982b35b3f4851aed708e495e7b9724f), [`12f50bd`](https://github.com/portabletext/editor/commit/12f50bd1a9db16da161beab737030ea204d34d5c), [`849a881`](https://github.com/portabletext/editor/commit/849a881bccc6aa619d6a98e9d39e3256db210a6a), [`7c209bd`](https://github.com/portabletext/editor/commit/7c209bd975f08406c6ef2afad134440932ad3b6b), [`ea8ad76`](https://github.com/portabletext/editor/commit/ea8ad76c379c7cf9cd451b3a3191ef2c23d5541f)]:
+  - @portabletext/editor@3.0.0
+
 ## 2.1.8
 
 ### Patch Changes
