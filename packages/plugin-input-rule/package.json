@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-input-rule",
-  "version": "0.6.3",
+  "version": "1.0.0",
   "description": "Easily configure input rules in the Portable Text Editor",
   "keywords": [
     "portabletext",
@@ -76,7 +76,7 @@
     "vitest": "^4.0.8"
   },
   "peerDependencies": {
-    "@portabletext/editor": "workspace:^2.21.3",
+    "@portabletext/editor": "workspace:^3.0.0",
     "react": "^18.3 || ^19"
   },
   "engines": {

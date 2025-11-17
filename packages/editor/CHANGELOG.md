@@ -1,5 +1,32 @@
 # Changelog
 
+## 3.0.0
+
+### Major Changes
+
+- [#1856](https://github.com/portabletext/editor/pull/1856) [`0454f2f`](https://github.com/portabletext/editor/commit/0454f2f7f014b327c53832b3e3d16d87b614eebb) Thanks [@christianhg](https://github.com/christianhg)! - feat: remove deprecated `getSelectedSlice` selector
+
+  The selector has been renamed to `getSelectedValue`.
+
+- [#1856](https://github.com/portabletext/editor/pull/1856) [`c8cb899`](https://github.com/portabletext/editor/commit/c8cb899ca71a0462ea74d631916c6af71dc81993) Thanks [@christianhg](https://github.com/christianhg)! - feat: remove deprecated `maxBlocks` config
+
+  The `maxBlocks` config hasn't worked in a while. To restrict the maximum number of blocks in the editor, it's better to use the Behavior API. An official `OneLinePlugin` exists to restrict the editor to a single block.
+
+- [#1856](https://github.com/portabletext/editor/pull/1856) [`b5046ce`](https://github.com/portabletext/editor/commit/b5046ce61982b35b3f4851aed708e495e7b9724f) Thanks [@christianhg](https://github.com/christianhg)! - feat: remove deprecated `EditorEventListener`
+
+  `EditorEventListener` has been superseded by `EventListenerPlugin` exported from `@portabletext/editor/plugins`.
+
+- [#1856](https://github.com/portabletext/editor/pull/1856) [`12f50bd`](https://github.com/portabletext/editor/commit/12f50bd1a9db16da161beab737030ea204d34d5c) Thanks [@christianhg](https://github.com/christianhg)! - feat: remove deprecated `getTrimmedSelection` selector
+
+- [#1856](https://github.com/portabletext/editor/pull/1856) [`849a881`](https://github.com/portabletext/editor/commit/849a881bccc6aa619d6a98e9d39e3256db210a6a) Thanks [@christianhg](https://github.com/christianhg)! - feat: remove deprecated `.snapshot` from '`mutation'` event
+
+- [#1856](https://github.com/portabletext/editor/pull/1856) [`7c209bd`](https://github.com/portabletext/editor/commit/7c209bd975f08406c6ef2afad134440932ad3b6b) Thanks [@christianhg](https://github.com/christianhg)! - feat: remove deprecated plugins
+  1. `DecoratorShortcutPlugin` exported from `@portabletext/editor/plugins` has been superseded by the standalone `CharacterPairDecoratorPlugin` exported from `@portabletext/plugin-character-pair-decorator`.
+  2. `MarkdownPlugin` exported from `@portabletext/editor/plugins` has been superseded by the standalone `MarkdownShortcutsPlugin` exported from `@portabletext/plugin-markdown-shortcuts`.
+  3. `OneLinePlugin` exported from `@portabletext/editor/plugins` has been superseded by the standalone `OneLinePlugin` exported from `@portabletext/plugin-one-line`.
+
+- [#1856](https://github.com/portabletext/editor/pull/1856) [`ea8ad76`](https://github.com/portabletext/editor/commit/ea8ad76c379c7cf9cd451b3a3191ef2c23d5541f) Thanks [@christianhg](https://github.com/christianhg)! - feat: remove deprecated `getListIndex` selector
+
 ## 2.21.3
 
 ### Patch Changes
