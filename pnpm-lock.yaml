@@ -671,7 +671,7 @@ importers:
         specifier: workspace:^
         version: link:../keyboard-shortcuts
       '@portabletext/plugin-input-rule':
-        specifier: workspace:~
+        specifier: workspace:^
         version: link:../plugin-input-rule
       '@xstate/react':
         specifier: ^6.0.0
@@ -799,7 +799,7 @@ importers:
         specifier: workspace:^
         version: link:../plugin-character-pair-decorator
       '@portabletext/plugin-input-rule':
-        specifier: workspace:~
+        specifier: workspace:^
         version: link:../plugin-input-rule
       react-compiler-runtime:
         specifier: 1.0.0
@@ -955,7 +955,7 @@ importers:
   packages/plugin-typography:
     dependencies:
       '@portabletext/plugin-input-rule':
-        specifier: workspace:~
+        specifier: workspace:^
         version: link:../plugin-input-rule
       react-compiler-runtime:
         specifier: 1.0.0
