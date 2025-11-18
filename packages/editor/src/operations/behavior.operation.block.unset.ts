@@ -52,6 +52,7 @@ export const blockUnsetOperationImplementation: BehaviorOperationImplementation<
       context,
       block: omit(parsedBlock, propsToRemove),
       options: {
+        normalize: false,
         removeUnusedMarkDefs: true,
         validateFields: true,
       },
@@ -85,6 +86,7 @@ export const blockUnsetOperationImplementation: BehaviorOperationImplementation<
       operation.props.filter((prop) => prop !== '_type'),
     ),
     options: {
+      normalize: false,
       removeUnusedMarkDefs: true,
       validateFields: true,
     },

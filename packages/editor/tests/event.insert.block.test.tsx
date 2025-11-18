@@ -1,3 +1,4 @@
+import type {Patch} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
 import {getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
@@ -5,6 +6,7 @@ import {execute} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import type {InsertPlacement} from '../src/behaviors/behavior.types.event'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
+import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {getFocusBlock} from '../src/selectors/selector.get-focus-block'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -408,7 +410,17 @@ describe('event.insert.block', () => {
   })
 
   test('Scenario: Inserting block with lonely inline object', async () => {
+    const patches: Array<Patch> = []
     const {editor} = await createTestEditor({
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
       schemaDefinition: defineSchema({
         inlineObjects: [
           {
@@ -431,6 +443,149 @@ describe('event.insert.block', () => {
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual([
         ',{stock-ticker},',
+      ])
+    })
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        {
+          origin: 'local',
+          path: [],
+          type: 'setIfMissing',
+          value: [],
+        },
+        {
+          origin: 'local',
+          path: [0],
+          type: 'insert',
+          position: 'before',
+          items: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          origin: 'local',
+          type: 'insert',
+          position: 'before',
+          path: [{_key: 'k0'}],
+          items: [
+            {
+              _type: 'block',
+              _key: 'k2',
+              children: [
+                {_type: 'span', _key: 'k4', text: '', marks: []},
+                {_type: 'stock-ticker', _key: 'k3', symbol: 'AAPL'},
+                {_type: 'span', _key: 'k5', text: '', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          origin: 'local',
+          type: 'unset',
+          path: [{_key: 'k0'}],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Inserting block with two inline objects', async () => {
+    const patches: Array<Patch> = []
+    const {editor} = await createTestEditor({
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {
+            name: 'stock-ticker',
+            fields: [{name: 'symbol', type: 'string'}],
+          },
+        ],
+      }),
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _type: 'block',
+        children: [
+          {_type: 'stock-ticker', symbol: 'AAPL'},
+          {_type: 'stock-ticker', symbol: 'GOOG'},
+        ],
+      },
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
+        ',{stock-ticker},,{stock-ticker},',
+      ])
+    })
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        {
+          origin: 'local',
+          path: [],
+          type: 'setIfMissing',
+          value: [],
+        },
+        {
+          origin: 'local',
+          path: [0],
+          type: 'insert',
+          position: 'before',
+          items: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          origin: 'local',
+          type: 'insert',
+          position: 'before',
+          path: [{_key: 'k0'}],
+          items: [
+            {
+              _type: 'block',
+              _key: 'k2',
+              children: [
+                {_type: 'span', _key: 'k5', text: '', marks: []},
+                {_type: 'stock-ticker', _key: 'k3', symbol: 'AAPL'},
+                {_type: 'span', _key: 'k6', text: '', marks: []},
+                {_type: 'stock-ticker', _key: 'k4', symbol: 'GOOG'},
+                {_type: 'span', _key: 'k7', text: '', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          origin: 'local',
+          type: 'unset',
+          path: [{_key: 'k0'}],
+        },
       ])
     })
   })

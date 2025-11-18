@@ -1,4 +1,4 @@
-import {isTextBlock} from '@portabletext/schema'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import type {
   PortableTextBlock,
   PortableTextListBlock,
@@ -19,6 +19,7 @@ export function parseBlocks({
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>
   blocks: unknown
   options: {
+    normalize: boolean
     removeUnusedMarkDefs: boolean
     validateFields: boolean
   }
@@ -42,6 +43,7 @@ export function parseBlock({
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>
   block: unknown
   options: {
+    normalize: boolean
     removeUnusedMarkDefs: boolean
     validateFields: boolean
   }
@@ -102,6 +104,7 @@ export function parseTextBlock({
   block: unknown
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>
   options: {
+    normalize: boolean
     removeUnusedMarkDefs: boolean
     validateFields: boolean
   }
@@ -186,29 +189,70 @@ export function parseTextBlock({
     ? block.children
     : []
 
-  const children = unparsedChildren
+  const parsedChildren = unparsedChildren
     .map(
       (child) =>
         parseSpan({span: child, context, markDefKeyMap, options}) ??
         parseInlineObject({inlineObject: child, context, options}),
     )
     .filter((child) => child !== undefined)
-  const marks = children.flatMap((child) => child.marks ?? [])
+  const marks = parsedChildren.flatMap((child) => child.marks ?? [])
+
+  const children =
+    parsedChildren.length > 0
+      ? parsedChildren
+      : [
+          {
+            _key: context.keyGenerator(),
+            _type: context.schema.span.name,
+            text: '',
+            marks: [],
+          },
+        ]
+
+  const normalizedChildren = options.normalize
+    ? // Ensure that inline objects re surrounded by spans
+      children.reduce<Array<PortableTextObject | PortableTextSpan>>(
+        (normalizedChildren, child, index) => {
+          if (isSpan(context, child)) {
+            return [...normalizedChildren, child]
+          }
+
+          const previousChild = normalizedChildren.at(-1)
+
+          if (!previousChild || !isSpan(context, previousChild)) {
+            return [
+              ...normalizedChildren,
+              {
+                _key: context.keyGenerator(),
+                _type: context.schema.span.name,
+                text: '',
+                marks: [],
+              },
+              child,
+              ...(index === children.length - 1
+                ? [
+                    {
+                      _key: context.keyGenerator(),
+                      _type: context.schema.span.name,
+                      text: '',
+                      marks: [],
+                    },
+                  ]
+                : []),
+            ]
+          }
+
+          return [...normalizedChildren, child]
+        },
+        [],
+      )
+    : children
 
   const parsedBlock: PortableTextTextBlock = {
     _type: context.schema.block.name,
     _key,
-    children:
-      children.length > 0
-        ? children
-        : [
-            {
-              _key: context.keyGenerator(),
-              _type: context.schema.span.name,
-              text: '',
-              marks: [],
-            },
-          ],
+    children: normalizedChildren,
     markDefs: options.removeUnusedMarkDefs
       ? markDefs.filter((markDef) => marks.includes(markDef._key))
       : markDefs,

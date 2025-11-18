@@ -28,6 +28,7 @@ export const insertBlockOperationImplementation: BehaviorOperationImplementation
     block: operation.block,
     context,
     options: {
+      normalize: true,
       removeUnusedMarkDefs: true,
       validateFields: true,
     },
