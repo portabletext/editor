@@ -309,32 +309,41 @@ export function insertNodePatch(
       block.children.length === 0 || !block.children[operation.path[1] - 1]
         ? 'before'
         : 'after'
-    const node = {...operation.node} as Descendant
-    if (!node._type && Text.isText(node)) {
-      node._type = 'span'
-      node.marks = []
+    const path =
+      block.children.length <= 1 || !block.children[operation.path[1] - 1]
+        ? [{_key: block._key}, 'children', 0]
+        : [
+            {_key: block._key},
+            'children',
+            {_key: block.children[operation.path[1] - 1]._key},
+          ]
+
+    if (Text.isText(operation.node)) {
+      return [insert([operation.node], position, path)]
     }
-    const blk = fromSlateValue(
-      [
-        {
-          _key: 'bogus',
-          _type: schema.block.name,
-          children: [node],
-        },
-      ],
-      schema.block.name,
-    )[0] as PortableTextTextBlock
-    const child = blk.children[0]
+
+    const _type = operation.node._type
+    const _key = operation.node._key
+    const value =
+      'value' in operation.node && typeof operation.node.value === 'object'
+        ? operation.node.value
+        : ({} satisfies Record<string, unknown>)
+
     return [
-      insert([child], position, [
-        {_key: block._key},
-        'children',
-        block.children.length <= 1 || !block.children[operation.path[1] - 1]
-          ? 0
-          : {_key: block.children[operation.path[1] - 1]._key},
-      ]),
+      insert(
+        [
+          {
+            _type,
+            _key,
+            ...value,
+          },
+        ],
+        position,
+        path,
+      ),
     ]
   }
+
   return []
 }
 
