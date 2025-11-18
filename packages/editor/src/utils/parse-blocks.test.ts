@@ -12,7 +12,11 @@ describe(parseBlock.name, () => {
           keyGenerator: createTestKeyGenerator(),
           schema: compileSchema(defineSchema({})),
         },
-        options: {removeUnusedMarkDefs: true, validateFields: true},
+        options: {
+          normalize: false,
+          removeUnusedMarkDefs: true,
+          validateFields: true,
+        },
       }),
     ).toBe(undefined)
   })
@@ -25,7 +29,11 @@ describe(parseBlock.name, () => {
           keyGenerator: createTestKeyGenerator(),
           schema: compileSchema(defineSchema({})),
         },
-        options: {removeUnusedMarkDefs: true, validateFields: true},
+        options: {
+          normalize: false,
+          removeUnusedMarkDefs: true,
+          validateFields: true,
+        },
       }),
     ).toBe(undefined)
   })
@@ -39,7 +47,11 @@ describe(parseBlock.name, () => {
             keyGenerator: createTestKeyGenerator(),
             schema: compileSchema(defineSchema({})),
           },
-          options: {removeUnusedMarkDefs: true, validateFields: true},
+          options: {
+            normalize: false,
+            removeUnusedMarkDefs: true,
+            validateFields: true,
+          },
         }),
       ).toBe(undefined)
     })
@@ -54,7 +66,11 @@ describe(parseBlock.name, () => {
               defineSchema({blockObjects: [{name: 'image'}]}),
             ),
           },
-          options: {removeUnusedMarkDefs: true, validateFields: true},
+          options: {
+            normalize: false,
+            removeUnusedMarkDefs: true,
+            validateFields: true,
+          },
         }),
       ).toBe(undefined)
     })
@@ -69,7 +85,11 @@ describe(parseBlock.name, () => {
               defineSchema({blockObjects: [{name: 'image'}]}),
             ),
           },
-          options: {removeUnusedMarkDefs: true, validateFields: true},
+          options: {
+            normalize: false,
+            removeUnusedMarkDefs: true,
+            validateFields: true,
+          },
         }),
       ).toEqual({
         _key: 'k0',
@@ -87,7 +107,11 @@ describe(parseBlock.name, () => {
             keyGenerator: createTestKeyGenerator(),
             schema: compileSchema(defineSchema({})),
           },
-          options: {removeUnusedMarkDefs: true, validateFields: true},
+          options: {
+            normalize: false,
+            removeUnusedMarkDefs: true,
+            validateFields: true,
+          },
         }),
       ).toEqual({
         _key: 'k0',
@@ -114,7 +138,11 @@ describe(parseBlock.name, () => {
             keyGenerator: createTestKeyGenerator(),
             schema: {...schema, block: {...schema.block, name: 'text'}},
           },
-          options: {removeUnusedMarkDefs: true, validateFields: true},
+          options: {
+            normalize: false,
+            removeUnusedMarkDefs: true,
+            validateFields: true,
+          },
         }),
       ).toEqual({
         _key: 'k0',
@@ -149,7 +177,11 @@ describe(parseBlock.name, () => {
             keyGenerator: createTestKeyGenerator(),
             schema: compileSchema(defineSchema({})),
           },
-          options: {removeUnusedMarkDefs: true, validateFields: true},
+          options: {
+            normalize: false,
+            removeUnusedMarkDefs: true,
+            validateFields: true,
+          },
         }),
       ).toBe(undefined)
     })
@@ -188,7 +220,11 @@ describe(parseBlock.name, () => {
               }),
             ),
           },
-          options: {removeUnusedMarkDefs: true, validateFields: true},
+          options: {
+            normalize: false,
+            removeUnusedMarkDefs: true,
+            validateFields: true,
+          },
         }),
       ).toEqual({
         _key: 'k0',
@@ -236,7 +272,11 @@ describe(parseBlock.name, () => {
             keyGenerator: createTestKeyGenerator(),
             schema: compileSchema(defineSchema({lists: [{name: 'bullet'}]})),
           },
-          options: {removeUnusedMarkDefs: true, validateFields: true},
+          options: {
+            normalize: false,
+            removeUnusedMarkDefs: true,
+            validateFields: true,
+          },
         }),
       ).toEqual({
         _key: 'k0',
@@ -263,7 +303,11 @@ describe(parseBlock.name, () => {
             keyGenerator: createTestKeyGenerator(),
             schema: compileSchema(defineSchema({lists: [{name: 'bullet'}]})),
           },
-          options: {removeUnusedMarkDefs: true, validateFields: true},
+          options: {
+            normalize: false,
+            removeUnusedMarkDefs: true,
+            validateFields: true,
+          },
         }),
       ).toEqual({
         _key: 'k0',
@@ -290,7 +334,11 @@ describe(parseBlock.name, () => {
               keyGenerator: createTestKeyGenerator(),
               schema: compileSchema(defineSchema({})),
             },
-            options: {removeUnusedMarkDefs: true, validateFields: true},
+            options: {
+              normalize: false,
+              removeUnusedMarkDefs: true,
+              validateFields: true,
+            },
           }),
         ).toEqual({
           _type: 'block',
@@ -320,7 +368,11 @@ describe(parseBlock.name, () => {
                 }),
               ),
             },
-            options: {removeUnusedMarkDefs: true, validateFields: true},
+            options: {
+              normalize: false,
+              removeUnusedMarkDefs: true,
+              validateFields: true,
+            },
           }),
         ).toEqual({
           _type: 'block',
@@ -351,7 +403,11 @@ describe(parseBlock.name, () => {
                 }),
               ),
             },
-            options: {removeUnusedMarkDefs: true, validateFields: true},
+            options: {
+              normalize: false,
+              removeUnusedMarkDefs: true,
+              validateFields: true,
+            },
           }),
         ).toEqual({
           _type: 'block',

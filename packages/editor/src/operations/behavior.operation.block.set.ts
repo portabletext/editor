@@ -31,6 +31,7 @@ export const blockSetOperationImplementation: BehaviorOperationImplementation<
     context,
     block: updatedBlock,
     options: {
+      normalize: false,
       removeUnusedMarkDefs: false,
       validateFields: true,
     },

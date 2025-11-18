@@ -114,6 +114,7 @@ export const stepDefinitions = [
           },
           blocks: JSON.parse(blocks),
           options: {
+            normalize: false,
             removeUnusedMarkDefs: false,
             validateFields: true,
           },
@@ -561,6 +562,7 @@ export const stepDefinitions = [
           },
           blocks: JSON.parse(blocks),
           options: {
+            normalize: false,
             removeUnusedMarkDefs: false,
             validateFields: true,
           },

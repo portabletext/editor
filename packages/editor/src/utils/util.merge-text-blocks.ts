@@ -18,7 +18,11 @@ export function mergeTextBlocks({
   const parsedIncomingBlock = parseBlock({
     context,
     block: incomingBlock,
-    options: {removeUnusedMarkDefs: true, validateFields: false},
+    options: {
+      normalize: false,
+      removeUnusedMarkDefs: true,
+      validateFields: false,
+    },
   })
 
   if (!parsedIncomingBlock || !isTextBlock(context, parsedIncomingBlock)) {

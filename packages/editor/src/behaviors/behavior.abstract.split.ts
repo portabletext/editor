@@ -130,6 +130,7 @@ export const abstractSplitBehaviors = [
         }),
         context: snapshot.context,
         options: {
+          normalize: false,
           removeUnusedMarkDefs: true,
           validateFields: false,
         },
