@@ -264,7 +264,7 @@ describe('operationToPatches', () => {
     `)
   })
 
-  it('produce correct insert child patch', () => {
+  test('produce correct insert child patch', () => {
     expect(
       insertNodePatch(
         schema,
@@ -283,30 +283,28 @@ describe('operationToPatches', () => {
 
         createDefaultValue(),
       ),
-    ).toMatchInlineSnapshot(`
-      [
-        {
-          "items": [
-            {
-              "_key": "c130395c640c",
-              "_type": "someObject",
-              "title": "The Object",
-            },
-          ],
-          "path": [
-            {
-              "_key": "1f2e64b47787",
-            },
-            "children",
-            {
-              "_key": "fd9b4a4e6c0b",
-            },
-          ],
-          "position": "after",
-          "type": "insert",
-        },
-      ]
-    `)
+    ).toEqual([
+      {
+        items: [
+          {
+            _key: 'c130395c640c',
+            _type: 'someObject',
+            title: 'The Object',
+          },
+        ],
+        path: [
+          {
+            _key: '1f2e64b47787',
+          },
+          'children',
+          {
+            _key: 'fd9b4a4e6c0b',
+          },
+        ],
+        position: 'after',
+        type: 'insert',
+      },
+    ])
   })
 
   it('produce correct insert text patch', () => {
