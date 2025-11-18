@@ -1,12 +1,13 @@
-import {Editor} from 'slate'
+import {Editor, Node, Text} from 'slate'
 import {slateRangeToSelection} from '../../internal-utils/slate-utils'
 import {performOperation} from '../../operations/behavior.operations'
 import type {EditorActor} from '../editor-machine'
+import {isNormalizingNode} from '../with-normalizing-node'
 import {isPerformingBehaviorOperation} from '../with-performing-behavior-operation'
 
 export function createWithEventListeners(editorActor: EditorActor) {
   return function withEventListeners(editor: Editor) {
-    const {delete: editorDelete, select} = editor
+    const {delete: editorDelete, insertNodes, select} = editor
 
     editor.delete = (options) => {
       if (isPerformingBehaviorOperation(editor)) {
@@ -113,6 +114,33 @@ export function createWithEventListeners(editorActor: EditorActor) {
         },
         editor,
       })
+    }
+
+    editor.insertNodes = (nodes, options) => {
+      if (isNormalizingNode(editor)) {
+        const normalizedNodes = (Node.isNode(nodes) ? [nodes] : nodes).map(
+          (node) => {
+            if (!Text.isText(node)) {
+              return node
+            }
+
+            if (typeof node._type !== 'string') {
+              return {
+                ...(node as Node),
+                _type: editorActor.getSnapshot().context.schema.span.name,
+              }
+            }
+
+            return node
+          },
+        ) as Array<Node>
+
+        insertNodes(normalizedNodes, options)
+
+        return
+      }
+
+      insertNodes(nodes, options)
     }
 
     editor.insertSoftBreak = () => {
