@@ -9,7 +9,7 @@ import type {
 } from '@sanity/types'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorContext} from '../editor/editor-snapshot'
-import {isTypedObject} from './asserters'
+import {isRecord, isTypedObject} from './asserters'
 
 export function parseBlocks({
   context,
@@ -299,7 +299,7 @@ export function parseSpan({
   markDefKeyMap: Map<string, string>
   options: {validateFields: boolean}
 }): PortableTextSpan | undefined {
-  if (!isTypedObject(span)) {
+  if (!isRecord(span)) {
     return undefined
   }
 
@@ -314,11 +314,6 @@ export function parseSpan({
     ) {
       customFields[key] = span[key]
     }
-  }
-
-  // In reality, the span schema name is always 'span', but we only the check here anyway
-  if (span._type !== context.schema.span.name || span._type !== 'span') {
-    return undefined
   }
 
   const unparsedMarks: Array<unknown> = Array.isArray(span.marks)
@@ -344,8 +339,28 @@ export function parseSpan({
     return []
   })
 
+  if (span._type !== context.schema.span.name) {
+    if (
+      !context.schema.inlineObjects.some(
+        (inlineObject) => inlineObject.name === span._type,
+      ) &&
+      typeof span.text === 'string'
+    ) {
+      return {
+        _type: context.schema.span.name as 'span',
+        _key:
+          typeof span._key === 'string' ? span._key : context.keyGenerator(),
+        text: span.text,
+        marks,
+        ...(options.validateFields ? {} : customFields),
+      }
+    }
+
+    return undefined
+  }
+
   return {
-    _type: 'span',
+    _type: context.schema.span.name as 'span',
     _key: typeof span._key === 'string' ? span._key : context.keyGenerator(),
     text: typeof span.text === 'string' ? span.text : '',
     marks,
