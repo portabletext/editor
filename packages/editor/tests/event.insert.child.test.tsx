@@ -1,9 +1,10 @@
+import type {Patch} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineBehavior, raise} from '../src/behaviors'
-import {BehaviorPlugin} from '../src/plugins'
+import {BehaviorPlugin, EventListenerPlugin} from '../src/plugins'
 import {getFocusSpan, getFocusTextBlock} from '../src/selectors'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -226,6 +227,116 @@ describe('event.insert.child', () => {
     await vi.waitFor(() => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual([
         'foo,{stock-ticker},,{stock-ticker}, bar baz',
+      ])
+    })
+  })
+
+  test('Scenario: Inserting inline object at the end of text block', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]},
+        ],
+      }),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+
+    const selection = {
+      anchor: {
+        path: [{_key: blockKey}, 'children', {_key: spanKey}],
+        offset: 3,
+      },
+      focus: {
+        path: [{_key: blockKey}, 'children', {_key: spanKey}],
+        offset: 3,
+      },
+      backward: false,
+    }
+    editor.send({
+      type: 'select',
+      at: selection,
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual(selection)
+    })
+
+    editor.send({
+      type: 'insert.child',
+      child: {
+        _type: 'stock-ticker',
+        symbol: 'AAPL',
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
+        'foo,{stock-ticker},',
+      ])
+    })
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        {
+          origin: 'local',
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', 0],
+          position: 'after',
+          items: [
+            {
+              _key: 'k4',
+              _type: 'stock-ticker',
+              symbol: 'AAPL',
+            },
+          ],
+        },
+        {
+          origin: 'local',
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', {_key: 'k4'}],
+          position: 'after',
+          items: [
+            {
+              _key: 'k5',
+              text: '',
+            },
+          ],
+        },
+        {
+          origin: 'local',
+          type: 'set',
+          path: [{_key: blockKey}, 'children', {_key: 'k5'}, '_type'],
+          value: 'span',
+        },
+        {
+          origin: 'local',
+          type: 'set',
+          path: [{_key: blockKey}, 'children', {_key: 'k5'}, 'marks'],
+          value: [],
+        },
       ])
     })
   })
