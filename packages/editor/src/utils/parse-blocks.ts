@@ -190,11 +190,7 @@ export function parseTextBlock({
     : []
 
   const parsedChildren = unparsedChildren
-    .map(
-      (child) =>
-        parseSpan({span: child, context, markDefKeyMap, options}) ??
-        parseInlineObject({inlineObject: child, context, options}),
-    )
+    .map((child) => parseChild({child, context, markDefKeyMap, options}))
     .filter((child) => child !== undefined)
   const marks = parsedChildren.flatMap((child) => child.marks ?? [])
 
@@ -288,6 +284,23 @@ export function parseTextBlock({
   return parsedBlock
 }
 
+export function parseChild({
+  child,
+  context,
+  markDefKeyMap,
+  options,
+}: {
+  child: unknown
+  context: Pick<EditorContext, 'keyGenerator' | 'schema'>
+  markDefKeyMap: Map<string, string>
+  options: {validateFields: boolean}
+}): PortableTextSpan | PortableTextObject | undefined {
+  return (
+    parseSpan({span: child, context, markDefKeyMap, options}) ??
+    parseInlineObject({inlineObject: child, context, options})
+  )
+}
+
 export function parseSpan({
   span,
   context,
@@ -339,13 +352,15 @@ export function parseSpan({
     return []
   })
 
-  if (span._type !== context.schema.span.name) {
-    if (
-      !context.schema.inlineObjects.some(
-        (inlineObject) => inlineObject.name === span._type,
-      ) &&
-      typeof span.text === 'string'
-    ) {
+  if (
+    typeof span._type === 'string' &&
+    span._type !== context.schema.span.name
+  ) {
+    return undefined
+  }
+
+  if (typeof span._type !== 'string') {
+    if (typeof span.text === 'string') {
       return {
         _type: context.schema.span.name as 'span',
         _key:
