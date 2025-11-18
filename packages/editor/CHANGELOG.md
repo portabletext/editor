@@ -1,5 +1,21 @@
 # Changelog
 
+## 3.0.1
+
+### Patch Changes
+
+- [#1888](https://github.com/portabletext/editor/pull/1888) [`4cf086e`](https://github.com/portabletext/editor/commit/4cf086e9ed97d8b2fc2010ad9af6c7db7d75aa7a) Thanks [@christianhg](https://github.com/christianhg)! - fix: avoid incorrect `insert` patch for spans inserted through normalization
+
+- [#1888](https://github.com/portabletext/editor/pull/1888) [`4a6dabd`](https://github.com/portabletext/editor/commit/4a6dabd527d286d3f7e6cc04dc93f3391f11a6c3) Thanks [@christianhg](https://github.com/christianhg)! - fix: add initial `_type` to spans inserted through normalization
+
+- [#1888](https://github.com/portabletext/editor/pull/1888) [`1c257be`](https://github.com/portabletext/editor/commit/1c257be04dacf0b3d2ff25c3b995d901ce17bf7e) Thanks [@christianhg](https://github.com/christianhg)! - fix: parse unknown children with `text` prop as spans
+
+- [#1888](https://github.com/portabletext/editor/pull/1888) [`9668d22`](https://github.com/portabletext/editor/commit/9668d220072b9969f71818179a668e11d8479975) Thanks [@christianhg](https://github.com/christianhg)! - fix(`insert.block`): normalize text block children
+
+- [#1888](https://github.com/portabletext/editor/pull/1888) [`57aa71e`](https://github.com/portabletext/editor/commit/57aa71ecdf0d376d8afbec5d7f53e542257cdc55) Thanks [@christianhg](https://github.com/christianhg)! - fix: parse text nodes without `_type` as spans
+
+- [#1888](https://github.com/portabletext/editor/pull/1888) [`41dbb85`](https://github.com/portabletext/editor/commit/41dbb85fe6d686e7fa25d20e84e72e8b7171efc8) Thanks [@christianhg](https://github.com/christianhg)! - feat(`sliceBlocks`): allow `context.keyGenerator`
+
 ## 3.0.0
 
 ### Major Changes
