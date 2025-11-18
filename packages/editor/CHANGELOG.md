@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.0.3
+
+### Patch Changes
+
+- [#1892](https://github.com/portabletext/editor/pull/1892) [`348de8e`](https://github.com/portabletext/editor/commit/348de8e0b8e8557ffb998575c6f533ecba87774d) Thanks [@christianhg](https://github.com/christianhg)! - fix: make internal span conversion less lax
+
 ## 3.0.2
 
 ### Patch Changes
