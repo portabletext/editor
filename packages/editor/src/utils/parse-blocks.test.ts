@@ -1,7 +1,12 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
-import {parseBlock, parseInlineObject, parseSpan} from './parse-blocks'
+import {
+  parseBlock,
+  parseChild,
+  parseInlineObject,
+  parseSpan,
+} from './parse-blocks'
 
 describe(parseBlock.name, () => {
   test('null', () => {
@@ -264,12 +269,6 @@ describe(parseBlock.name, () => {
             _type: 'span',
             text: '',
             marks: ['em'],
-          },
-          {
-            _key: 'k6',
-            _type: 'span',
-            text: 'inline object or span?',
-            marks: [],
           },
         ],
         markDefs: [],
@@ -809,6 +808,44 @@ describe(parseInlineObject.name, () => {
         _key: 'k0',
         _type: 'stock-ticker',
         foo: 'bar',
+      })
+    })
+  })
+})
+
+describe(parseChild.name, () => {
+  describe('inline object', () => {
+    describe('looks like text node', () => {
+      test('known inline object _type', () => {
+        expect(
+          parseChild({
+            context: {
+              keyGenerator: createTestKeyGenerator(),
+              schema: compileSchema(
+                defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
+              ),
+            },
+            markDefKeyMap: new Map(),
+            options: {validateFields: true},
+            child: {_type: 'stock-ticker', text: 'foo'},
+          }),
+        ).toEqual({_key: 'k0', _type: 'stock-ticker'})
+      })
+
+      test('unknown inline object _type', () => {
+        expect(
+          parseChild({
+            context: {
+              keyGenerator: createTestKeyGenerator(),
+              schema: compileSchema(
+                defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
+              ),
+            },
+            markDefKeyMap: new Map(),
+            options: {validateFields: true},
+            child: {_type: 'image', text: 'foo'},
+          }),
+        ).toBe(undefined)
       })
     })
   })
