@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.0.2
+
+### Patch Changes
+
+- [#1890](https://github.com/portabletext/editor/pull/1890) [`adf1465`](https://github.com/portabletext/editor/commit/adf1465b4e99e3c2215442ab76e45fafbf08afa1) Thanks [@christianhg](https://github.com/christianhg)! - fix: make span parsing less lax
+
 ## 3.0.1
 
 ### Patch Changes
