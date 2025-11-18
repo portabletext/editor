@@ -17,7 +17,9 @@ export function sliceBlocks({
   context,
   blocks,
 }: {
-  context: Pick<EditorContext, 'schema' | 'selection'>
+  context: Pick<EditorContext, 'schema' | 'selection'> & {
+    keyGenerator?: () => string
+  }
   blocks: Array<PortableTextBlock>
 }): Array<PortableTextBlock> {
   const slice: Array<PortableTextBlock> = []
@@ -167,11 +169,15 @@ export function sliceBlocks({
       middleBlocks.push(
         parseBlock({
           context: {
-            ...context,
-            keyGenerator: defaultKeyGenerator,
+            schema: context.schema,
+            keyGenerator: context.keyGenerator ?? defaultKeyGenerator,
           },
           block,
-          options: {removeUnusedMarkDefs: true, validateFields: false},
+          options: {
+            normalize: false,
+            removeUnusedMarkDefs: true,
+            validateFields: false,
+          },
         }) ?? block,
       )
     }
@@ -180,22 +186,30 @@ export function sliceBlocks({
   const parsedStartBlock = startBlock
     ? parseBlock({
         context: {
-          ...context,
-          keyGenerator: defaultKeyGenerator,
+          schema: context.schema,
+          keyGenerator: context.keyGenerator ?? defaultKeyGenerator,
         },
         block: startBlock,
-        options: {removeUnusedMarkDefs: true, validateFields: false},
+        options: {
+          normalize: false,
+          removeUnusedMarkDefs: true,
+          validateFields: false,
+        },
       })
     : undefined
 
   const parsedEndBlock = endBlock
     ? parseBlock({
         context: {
-          ...context,
-          keyGenerator: defaultKeyGenerator,
+          schema: context.schema,
+          keyGenerator: context.keyGenerator ?? defaultKeyGenerator,
         },
         block: endBlock,
-        options: {removeUnusedMarkDefs: true, validateFields: false},
+        options: {
+          normalize: false,
+          removeUnusedMarkDefs: true,
+          validateFields: false,
+        },
       })
     : undefined
 

@@ -1,8 +1,10 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {expect, test} from 'vitest'
 import {getSelectionText} from './selection-text'
 
 test(getSelectionText.name, () => {
+  const keyGenerator = createTestKeyGenerator()
   const schema = compileSchema(defineSchema({}))
   const splitBlock = {
     _type: 'block',
@@ -18,6 +20,7 @@ test(getSelectionText.name, () => {
 
   expect(
     getSelectionText({
+      keyGenerator,
       schema,
       value: [splitBlock],
       selection: {
