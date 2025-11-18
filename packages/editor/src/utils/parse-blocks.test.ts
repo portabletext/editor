@@ -1,7 +1,7 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
-import {parseBlock, parseSpan} from './parse-blocks'
+import {parseBlock, parseInlineObject, parseSpan} from './parse-blocks'
 
 describe(parseBlock.name, () => {
   test('null', () => {
@@ -198,7 +198,7 @@ describe(parseBlock.name, () => {
               42,
               {foo: 'bar'},
               {
-                _key: 'k1',
+                _key: 'some key',
                 text: 'foo',
                 marks: [],
               },
@@ -209,6 +209,7 @@ describe(parseBlock.name, () => {
               {_type: 'span', text: 'foo'},
               {_type: 'span', marks: ['strong']},
               {_type: 'span', marks: ['em']},
+              {_type: 'image', text: 'inline object or span?'},
             ],
           },
           context: {
@@ -230,6 +231,12 @@ describe(parseBlock.name, () => {
         _key: 'k0',
         _type: 'block',
         children: [
+          {
+            _key: 'some key',
+            _type: 'span',
+            text: 'foo',
+            marks: [],
+          },
           {
             _key: 'k1',
             _type: 'stock-ticker',
@@ -257,6 +264,12 @@ describe(parseBlock.name, () => {
             _type: 'span',
             text: '',
             marks: ['em'],
+          },
+          {
+            _key: 'k6',
+            _type: 'span',
+            text: 'inline object or span?',
+            marks: [],
           },
         ],
         markDefs: [],
@@ -586,6 +599,217 @@ describe(parseSpan.name, () => {
       _type: 'span',
       text: '',
       marks: ['strong'],
+    })
+  })
+})
+
+describe(parseInlineObject.name, () => {
+  test('undefined', () => {
+    expect(
+      parseInlineObject({
+        inlineObject: undefined,
+        context: {
+          keyGenerator: createTestKeyGenerator(),
+          schema: compileSchema(
+            defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
+          ),
+        },
+        options: {validateFields: true},
+      }),
+    ).toBe(undefined)
+  })
+
+  test('null', () => {
+    expect(
+      parseInlineObject({
+        inlineObject: null,
+        context: {
+          keyGenerator: createTestKeyGenerator(),
+          schema: compileSchema(
+            defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
+          ),
+        },
+        options: {validateFields: true},
+      }),
+    ).toBe(undefined)
+  })
+
+  test('empty object', () => {
+    expect(
+      parseInlineObject({
+        inlineObject: {},
+        context: {
+          keyGenerator: createTestKeyGenerator(),
+          schema: compileSchema(
+            defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
+          ),
+        },
+        options: {validateFields: true},
+      }),
+    ).toBe(undefined)
+  })
+
+  test('invalid _type', () => {
+    expect(
+      parseInlineObject({
+        inlineObject: {_type: 'image'},
+        context: {
+          keyGenerator: createTestKeyGenerator(),
+          schema: compileSchema(
+            defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
+          ),
+        },
+        options: {validateFields: true},
+      }),
+    ).toBe(undefined)
+  })
+
+  test('only _type', () => {
+    expect(
+      parseInlineObject({
+        inlineObject: {_type: 'stock-ticker'},
+        context: {
+          keyGenerator: createTestKeyGenerator(),
+          schema: compileSchema(
+            defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
+          ),
+        },
+        options: {validateFields: true},
+      }),
+    ).toEqual({
+      _key: 'k0',
+      _type: 'stock-ticker',
+    })
+  })
+
+  describe('looks like text node', () => {
+    test('known inline object _type', () => {
+      expect(
+        parseInlineObject({
+          inlineObject: {_type: 'stock-ticker', text: 'foo'},
+          context: {
+            keyGenerator: createTestKeyGenerator(),
+            schema: compileSchema(
+              defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
+            ),
+          },
+          options: {validateFields: true},
+        }),
+      ).toEqual({_key: 'k0', _type: 'stock-ticker'})
+    })
+
+    test('unknown inline object _type', () => {
+      expect(
+        parseInlineObject({
+          inlineObject: {_type: 'image', text: 'foo'},
+          context: {
+            keyGenerator: createTestKeyGenerator(),
+            schema: compileSchema(
+              defineSchema({inlineObjects: [{name: 'stock-ticker'}]}),
+            ),
+          },
+          options: {validateFields: true},
+        }),
+      ).toBe(undefined)
+    })
+  })
+
+  describe('custom props', () => {
+    describe('unknown prop', () => {
+      test('validateFields: true', () => {
+        expect(
+          parseInlineObject({
+            inlineObject: {_type: 'stock-ticker', foo: 'bar'},
+            context: {
+              keyGenerator: createTestKeyGenerator(),
+              schema: compileSchema(
+                defineSchema({
+                  inlineObjects: [{name: 'stock-ticker'}],
+                }),
+              ),
+            },
+            options: {validateFields: true},
+          }),
+        ).toEqual({
+          _key: 'k0',
+          _type: 'stock-ticker',
+        })
+      })
+
+      test('validateFields: false', () => {
+        expect(
+          parseInlineObject({
+            inlineObject: {_type: 'stock-ticker', foo: 'bar'},
+            context: {
+              keyGenerator: createTestKeyGenerator(),
+              schema: compileSchema(
+                defineSchema({
+                  inlineObjects: [{name: 'stock-ticker'}],
+                }),
+              ),
+            },
+            options: {validateFields: false},
+          }),
+        ).toEqual({
+          _key: 'k0',
+          _type: 'stock-ticker',
+          foo: 'bar',
+        })
+      })
+    })
+
+    describe('known prop', () => {
+      test('validateFields: true', () => {
+        expect(
+          parseInlineObject({
+            inlineObject: {_type: 'stock-ticker', foo: 'bar'},
+            context: {
+              keyGenerator: createTestKeyGenerator(),
+              schema: compileSchema(
+                defineSchema({
+                  inlineObjects: [
+                    {
+                      name: 'stock-ticker',
+                      fields: [{name: 'foo', type: 'string'}],
+                    },
+                  ],
+                }),
+              ),
+            },
+            options: {validateFields: true},
+          }),
+        ).toEqual({
+          _key: 'k0',
+          _type: 'stock-ticker',
+          foo: 'bar',
+        })
+      })
+    })
+
+    test('validateFields: false', () => {
+      expect(
+        parseInlineObject({
+          inlineObject: {_type: 'stock-ticker', foo: 'bar'},
+          context: {
+            keyGenerator: createTestKeyGenerator(),
+            schema: compileSchema(
+              defineSchema({
+                inlineObjects: [
+                  {
+                    name: 'stock-ticker',
+                    fields: [{name: 'foo', type: 'string'}],
+                  },
+                ],
+              }),
+            ),
+          },
+          options: {validateFields: false},
+        }),
+      ).toEqual({
+        _key: 'k0',
+        _type: 'stock-ticker',
+        foo: 'bar',
+      })
     })
   })
 })
