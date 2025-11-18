@@ -54,11 +54,17 @@ export function toSlateBlock(
       const {_type: childType, _key: childKey, ...childProps} = child
       const propKeys = Object.keys(childProps)
 
-      if (childType !== schemaTypes.span.name) {
+      if (childType === undefined) {
         if (propKeys.length === 1 && propKeys.at(0) === 'text') {
-          return child
+          return {
+            _key: childKey,
+            _type: schemaTypes.span.name,
+            text: childProps.text,
+          }
         }
+      }
 
+      if (childType !== schemaTypes.span.name) {
         // Return 'slate' version of inline object where the actual
         // value is stored in the `value` property.
         // In slate, inline objects are represented as regular
