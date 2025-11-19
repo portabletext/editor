@@ -61,6 +61,18 @@ describe('App SDK Quickstart Guide', () => {
     expect(getTersePt({schema, value: transform([htmlWord])})).toEqual(tersePt)
   })
 
+  test.skip('Word (Windows)', () => {
+    const htmlWordWindows = fs
+      .readFileSync(
+        path.resolve(__dirname, 'app-sdk-quickstart-guide.word.windows.html'),
+      )
+      .toString()
+
+    expect(getTersePt({schema, value: transform([htmlWordWindows])})).toEqual(
+      tersePt,
+    )
+  })
+
   test.skip('Word Online', () => {
     const htmlWordOnline = fs
       .readFileSync(
