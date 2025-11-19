@@ -1997,4 +1997,213 @@ describe('event.patches', () => {
       expect(editor.getSnapshot().context.selection).toEqual(midBarSelection)
     })
   })
+
+  describe('`insert`', () => {
+    test('Scenario: Inserting block object on empty editor', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({
+          blockObjects: [{name: 'image'}],
+        }),
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            origin: 'remote',
+            type: 'insert',
+            position: 'before',
+            path: [0],
+            items: [
+              {
+                _key: blockKey,
+                _type: 'image',
+              },
+            ],
+          },
+        ],
+        snapshot: [
+          {
+            _key: blockKey,
+            _type: 'image',
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(getTersePt(editor.getSnapshot().context)).toEqual(['{image}'])
+      })
+    })
+
+    test('Scenario: Inserting text block on empty editor', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({}),
+      })
+      const spanKey = keyGenerator()
+      const blockKey = keyGenerator()
+      const block = {
+        _key: blockKey,
+        _type: 'block',
+        children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      }
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            origin: 'remote',
+            type: 'insert',
+            position: 'before',
+            path: [0],
+            items: [block],
+          },
+        ],
+        snapshot: [block],
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([block])
+      })
+    })
+
+    describe('Scenario Outline: Inserting two text blocks on empty editor', () => {
+      test('Scenario: Both blocks are empty', async () => {
+        const keyGenerator = createTestKeyGenerator()
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: defineSchema({}),
+        })
+        const blockAKey = keyGenerator()
+        const spanAKey = keyGenerator()
+        const blockBKey = keyGenerator()
+        const spanBKey = keyGenerator()
+        const blockA = {
+          _key: blockAKey,
+          _type: 'block',
+          children: [{_key: spanAKey, _type: 'span', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        }
+        const blockB = {
+          _key: blockBKey,
+          _type: 'block',
+          children: [{_key: spanBKey, _type: 'span', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        }
+        editor.send({
+          type: 'patches',
+          patches: [
+            {
+              origin: 'remote',
+              type: 'insert',
+              position: 'before',
+              path: [0],
+              items: [blockA, blockB],
+            },
+          ],
+          snapshot: [blockA, blockB],
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual([blockA, blockB])
+        })
+      })
+
+      test('Scenario: First block is empty', async () => {
+        const keyGenerator = createTestKeyGenerator()
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: defineSchema({}),
+        })
+        const blockAKey = keyGenerator()
+        const spanAKey = keyGenerator()
+        const blockBKey = keyGenerator()
+        const spanBKey = keyGenerator()
+        const blockA = {
+          _key: blockAKey,
+          _type: 'block',
+          children: [{_key: spanAKey, _type: 'span', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        }
+        const blockB = {
+          _key: blockBKey,
+          _type: 'block',
+          children: [{_key: spanBKey, _type: 'span', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        }
+
+        editor.send({
+          type: 'patches',
+          patches: [
+            {
+              origin: 'remote',
+              type: 'insert',
+              position: 'before',
+              path: [0],
+              items: [blockA, blockB],
+            },
+          ],
+          snapshot: [blockA, blockB],
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual([blockA, blockB])
+        })
+      })
+
+      test('Scenario: Second block is empty', async () => {
+        const keyGenerator = createTestKeyGenerator()
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: defineSchema({}),
+        })
+        const blockAKey = keyGenerator()
+        const spanAKey = keyGenerator()
+        const blockBKey = keyGenerator()
+        const spanBKey = keyGenerator()
+        const blockA = {
+          _key: blockAKey,
+          _type: 'block',
+          children: [{_key: spanAKey, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        }
+        const blockB = {
+          _key: blockBKey,
+          _type: 'block',
+          children: [{_key: spanBKey, _type: 'span', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        }
+
+        editor.send({
+          type: 'patches',
+          patches: [
+            {
+              origin: 'remote',
+              type: 'insert',
+              position: 'before',
+              path: [0],
+              items: [blockA, blockB],
+            },
+          ],
+          snapshot: [blockA, blockB],
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual([blockA, blockB])
+        })
+      })
+    })
+  })
 })
