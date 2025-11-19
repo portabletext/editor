@@ -46,6 +46,16 @@ export function transform(
 ) {
   const defaultSchema = compileSchema(
     defineSchema({
+      styles: [
+        {name: 'normal'},
+        {name: 'h1'},
+        {name: 'h2'},
+        {name: 'h3'},
+        {name: 'h4'},
+        {name: 'h5'},
+        {name: 'h6'},
+        {name: 'blockquote'},
+      ],
       blockObjects: [
         {
           name: 'image',
