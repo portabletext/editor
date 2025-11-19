@@ -24,17 +24,6 @@ function keepObjectEquality(
   return object
 }
 
-export function toSlateValue(
-  value: PortableTextBlock[] | undefined,
-  {schemaTypes}: {schemaTypes: EditorSchema},
-  keyMap: Record<string, any> = {},
-): Descendant[] {
-  if (value && Array.isArray(value)) {
-    return value.map((block) => toSlateBlock(block, {schemaTypes}, keyMap))
-  }
-  return []
-}
-
 export function toSlateBlock(
   block: PortableTextBlock,
   {schemaTypes}: {schemaTypes: EditorSchema},

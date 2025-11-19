@@ -21,7 +21,7 @@ import type {EditorSchema} from '../editor/editor-schema'
 import {KEY_TO_SLATE_ELEMENT} from '../editor/weakMaps'
 import type {PortableTextSlateEditor} from '../types/editor'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
-import {isEqualToEmptyEditor, toSlateValue} from './values'
+import {isEqualToEmptyEditor, toSlateBlock} from './values'
 
 /**
  * Creates a function that can apply a patch onto a PortableTextSlateEditor.
@@ -134,11 +134,13 @@ function insertPatch(
   // Insert blocks
   if (patch.path.length === 1) {
     const {items, position} = patch
-    const blocksToInsert = toSlateValue(
-      items as PortableTextBlock[],
-      {schemaTypes: schema},
-      KEY_TO_SLATE_ELEMENT.get(editor),
-    ) as Descendant[]
+    const blocksToInsert = items.map((item) =>
+      toSlateBlock(
+        item as PortableTextBlock,
+        {schemaTypes: schema},
+        KEY_TO_SLATE_ELEMENT.get(editor),
+      ),
+    )
     const targetBlockIndex = block.index
     const normalizedIdx =
       position === 'after' ? targetBlockIndex + 1 : targetBlockIndex
@@ -173,8 +175,8 @@ function insertPatch(
     return false
   }
 
-  const childrenToInsert = toSlateValue(
-    [{...block.node, children: items as PortableTextChild[]}],
+  const childrenToInsert = toSlateBlock(
+    {...block.node, children: items as PortableTextChild[]},
     {schemaTypes: schema},
     KEY_TO_SLATE_ELEMENT.get(editor),
   )
@@ -182,8 +184,8 @@ function insertPatch(
     position === 'after' ? targetChild.index + 1 : targetChild.index
   const childInsertPath = [block.index, normalizedIdx]
 
-  if (childrenToInsert && Element.isElement(childrenToInsert[0])) {
-    Transforms.insertNodes(editor, childrenToInsert[0].children, {
+  if (childrenToInsert && Element.isElement(childrenToInsert)) {
+    Transforms.insertNodes(editor, childrenToInsert.children, {
       at: childInsertPath,
     })
   }

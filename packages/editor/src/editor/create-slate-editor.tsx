@@ -3,7 +3,7 @@ import {withReact} from 'slate-react'
 import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debugWithName} from '../internal-utils/debug'
-import {toSlateValue} from '../internal-utils/values'
+import {toSlateBlock} from '../internal-utils/values'
 import type {PortableTextSlateEditor} from '../types/editor'
 import type {EditorActor} from './editor-machine'
 import {withPlugins} from './plugins/with-plugins'
@@ -56,9 +56,11 @@ export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
     },
   )
 
-  const initialValue = toSlateValue(instance.value, {
-    schemaTypes: config.editorActor.getSnapshot().context.schema,
-  })
+  const initialValue = [
+    toSlateBlock(placeholderBlock, {
+      schemaTypes: config.editorActor.getSnapshot().context.schema,
+    }),
+  ]
 
   const slateEditor: SlateEditor = {
     instance,
