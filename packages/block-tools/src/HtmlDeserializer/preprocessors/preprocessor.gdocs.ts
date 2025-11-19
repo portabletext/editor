@@ -1,14 +1,7 @@
-import type {HtmlPreprocessorOptions} from '../../types'
-import {normalizeWhitespace, removeAllWhitespace, tagName} from '../helpers'
+import {tagName} from '../helpers'
 import {_XPathResult} from './xpathResult'
 
-export function preprocessGDocs(
-  _html: string,
-  doc: Document,
-  options: HtmlPreprocessorOptions,
-): Document {
-  const whitespaceOnPasteMode =
-    options?.unstable_whitespaceOnPasteMode || 'preserve'
+export function preprocessGDocs(_html: string, doc: Document): Document {
   let gDocsRootOrSiblingNode = doc
     .evaluate(
       '//*[@id and contains(@id, "docs-internal-guid")]',
@@ -25,19 +18,6 @@ export function preprocessGDocs(
     // If this document isn't wrapped in a 'b' tag, then assume all siblings live on the root level
     if (!isWrappedRootTag) {
       gDocsRootOrSiblingNode = doc.body
-    }
-
-    switch (whitespaceOnPasteMode) {
-      case 'normalize':
-        // Keep only 1 empty block between content nodes
-        normalizeWhitespace(gDocsRootOrSiblingNode)
-        break
-      case 'remove':
-        // Remove all whitespace nodes
-        removeAllWhitespace(gDocsRootOrSiblingNode)
-        break
-      default:
-        break
     }
 
     // Tag every child with attribute 'is-google-docs' so that the GDocs rule-set can

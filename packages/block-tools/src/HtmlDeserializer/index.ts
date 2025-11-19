@@ -11,7 +11,6 @@ import type {
   DeserializerRule,
   HtmlDeserializerOptions,
   HtmlParser,
-  HtmlPreprocessorOptions,
   PlaceholderAnnotation,
   PlaceholderDecorator,
   TypedObject,
@@ -28,10 +27,10 @@ import {
   isPlaceholderAnnotation,
   isPlaceholderDecorator,
   tagName,
-  trimWhitespace,
 } from './helpers'
 import {preprocessors} from './preprocessors'
 import {createRules} from './rules'
+import {trimWhitespace} from './trim-whitespace'
 
 /**
  * HTML Deserializer
@@ -42,6 +41,7 @@ export default class HtmlDeserializer {
   schema: Schema
   rules: DeserializerRule[]
   parseHtml: (html: string) => HTMLElement
+  whitespaceMode: 'preserve' | 'remove' | 'normalize'
   _markDefs: PortableTextObject[] = []
 
   /**
@@ -59,9 +59,10 @@ export default class HtmlDeserializer {
     this.schema = schema
     this.keyGenerator = options.keyGenerator ?? keyGenerator
     this.rules = [...rules, ...standardRules]
+    this.whitespaceMode = unstable_whitespaceOnPasteMode
     const parseHtml = options.parseHtml || defaultParseHtml()
     this.parseHtml = (html) => {
-      const doc = preprocess(html, parseHtml, {unstable_whitespaceOnPasteMode})
+      const doc = preprocess(html, parseHtml)
       return doc.body
     }
   }
@@ -77,9 +78,10 @@ export default class HtmlDeserializer {
     const {parseHtml} = this
     const fragment = parseHtml(html)
     const children = Array.from(fragment.childNodes) as HTMLElement[]
-    // Ensure that there are no blocks within blocks, and trim whitespace
+
     const blocks = trimWhitespace(
-      this.schema,
+      {schema: this.schema},
+      this.whitespaceMode,
       flattenNestedBlocks(
         {schema: this.schema},
         ensureRootIsBlocks(
@@ -308,15 +310,11 @@ export default class HtmlDeserializer {
 }
 
 // TODO: make this plugin-style
-function preprocess(
-  html: string,
-  parseHtml: HtmlParser,
-  options: HtmlPreprocessorOptions,
-): Document {
+function preprocess(html: string, parseHtml: HtmlParser): Document {
   const cleanHTML = vercelStegaClean(html)
   const doc = parseHtml(normalizeHtmlBeforePreprocess(cleanHTML))
   preprocessors.forEach((processor) => {
-    processor(cleanHTML, doc, options)
+    processor(cleanHTML, doc)
   })
   return doc
 }

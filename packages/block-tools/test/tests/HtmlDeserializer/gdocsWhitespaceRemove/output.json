@@ -930,19 +930,5 @@
       }
     ],
     "style": "normal"
-  },
-  {
-    "_key": "randomKey129",
-    "_type": "block",
-    "children": [
-      {
-        "_type": "span",
-        "marks": [],
-        "text": "\n",
-        "_key": "randomKey130"
-      }
-    ],
-    "markDefs": [],
-    "style": "normal"
   }
 ]
