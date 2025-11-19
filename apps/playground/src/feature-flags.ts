@@ -27,7 +27,7 @@ export type EditorFeatureFlags = {
 export const defaultEditorFeatureFlags: EditorFeatureFlags = {
   dragHandles: false,
   imageDeserializerPlugin: false,
-  htmlDeserializerPlugin: false,
+  htmlDeserializerPlugin: true,
   textFileDeserializerPlugin: false,
   emojiPickerPlugin: true,
   codeEditorPlugin: false,
