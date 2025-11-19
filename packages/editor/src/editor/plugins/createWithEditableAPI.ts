@@ -559,7 +559,12 @@ export function createEditableAPI(
       editor.onChange()
     },
     getFragment: () => {
-      return fromSlateValue(editor.getFragment(), types.block.name)
+      const snapshot = getEditorSnapshot({
+        editorActorSnapshot: editorActor.getSnapshot(),
+        slateEditorInstance: editor,
+      })
+
+      return getSelectedValue(snapshot)
     },
     isSelectionsOverlapping: (
       selectionA: EditorSelection,
