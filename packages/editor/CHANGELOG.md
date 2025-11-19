@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.4
+
+### Patch Changes
+
+- [#1894](https://github.com/portabletext/editor/pull/1894) [`8553515`](https://github.com/portabletext/editor/commit/85535157db06a3535961f8d3bc41a3f3e53220ec) Thanks [@christianhg](https://github.com/christianhg)! - fix: data loss edge case when inserting blocks on empty editor
+
+- [#1894](https://github.com/portabletext/editor/pull/1894) [`d723c0a`](https://github.com/portabletext/editor/commit/d723c0a1e0e224167dfe98bb9de786cc7d5e1774) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove mention of old selector in typedoc
+
 ## 3.0.3
 
 ### Patch Changes
