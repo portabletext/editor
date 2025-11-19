@@ -15,7 +15,7 @@ const unwantedWordDocumentPaths = [
   '//link',
 ]
 
-export default (_html: string, doc: Document): Document => {
+export function preprocessHTML(_html: string, doc: Document): Document {
   // Make sure text directly on the body is wrapped in spans.
   // This mimics what the browser does before putting html on the clipboard,
   // when used in a script context with JSDOM

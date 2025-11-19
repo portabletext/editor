@@ -2,11 +2,11 @@ import type {HtmlPreprocessorOptions} from '../../types'
 import {normalizeWhitespace, removeAllWhitespace, tagName} from '../helpers'
 import {_XPathResult} from './xpathResult'
 
-export default (
+export function preprocessGDocs(
   _html: string,
   doc: Document,
   options: HtmlPreprocessorOptions,
-): Document => {
+): Document {
   const whitespaceOnPasteMode =
     options?.unstable_whitespaceOnPasteMode || 'preserve'
   let gDocsRootOrSiblingNode = doc

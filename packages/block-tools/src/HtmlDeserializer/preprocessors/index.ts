@@ -1,10 +1,10 @@
-import preprocessGDocs from './gdocs'
-import preprocessHTML from './html'
-import preprocessNotion from './notion'
-import preprocessWhitespace from './whitespace'
-import preprocessWord from './word'
+import {preprocessGDocs} from './preprocessor.gdocs'
+import {preprocessHTML} from './preprocessor.html'
+import {preprocessNotion} from './preprocessor.notion'
+import {preprocessWhitespace} from './preprocessor.whitespace'
+import {preprocessWord} from './preprocessor.word'
 
-export default [
+export const preprocessors = [
   preprocessWhitespace,
   preprocessNotion,
   preprocessWord,

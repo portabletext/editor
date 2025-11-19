@@ -35,7 +35,7 @@ function isWordHtml(html: string) {
   return WORD_HTML_REGEX.test(html)
 }
 
-export default (html: string, doc: Document): Document => {
+export function preprocessWord(html: string, doc: Document): Document {
   if (!isWordHtml(html)) {
     return doc
   }

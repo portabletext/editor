@@ -1,7 +1,7 @@
 import {PRESERVE_WHITESPACE_TAGS} from '../../constants'
 import {_XPathResult} from './xpathResult'
 
-export default (_: string, doc: Document): Document => {
+export function preprocessWhitespace(_: string, doc: Document): Document {
   // Recursively process all nodes.
   function processNode(node: Node) {
     // If this is a text node and not inside a tag where whitespace should be preserved, process it.
