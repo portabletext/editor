@@ -4,6 +4,7 @@ import type {DeserializerRule} from '../../types'
 import createGDocsRules from './gdocs'
 import createHTMLRules from './html'
 import createNotionRules from './notion'
+import {createWordOnlineRules} from './rules.word-online'
 import createWordRules from './word'
 
 export function createRules(
@@ -12,6 +13,7 @@ export function createRules(
 ): DeserializerRule[] {
   return [
     ...createWordRules(),
+    ...createWordOnlineRules(schema, options),
     ...createNotionRules(),
     ...createGDocsRules(schema),
     ...createHTMLRules(schema, options),
