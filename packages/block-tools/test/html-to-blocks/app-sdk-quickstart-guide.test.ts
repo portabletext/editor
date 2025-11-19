@@ -84,4 +84,19 @@ describe('App SDK Quickstart Guide', () => {
       tersePt,
     )
   })
+
+  test.skip('Word Online (Windows)', () => {
+    const htmlWordOnlineWindows = fs
+      .readFileSync(
+        path.resolve(
+          __dirname,
+          'app-sdk-quickstart-guide.word-online.windows.html',
+        ),
+      )
+      .toString()
+
+    expect(
+      getTersePt({schema, value: transform([htmlWordOnlineWindows])}),
+    ).toEqual(tersePt)
+  })
 })
