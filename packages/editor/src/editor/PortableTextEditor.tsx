@@ -694,7 +694,7 @@ export class PortableTextEditor extends Component<
    * ```
    * import * as selectors from '@portabletext/editor/selectors'
    * const editor = useEditor()
-   * const selectedSlice = useEditorSelector(editor, selectors.getSelectedSlice)
+   * const selectedValue = useEditorSelector(editor, selectors.getSelectedValue)
    * ```
    */
   static getFragment = (
