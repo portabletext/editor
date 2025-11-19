@@ -241,50 +241,60 @@ describe('tables', () => {
     ])
   })
 
-  test('transposed table with images (from Google Docs)', () => {
-    const html = [
-      '<meta charset="utf-8">',
-      '<b id="docs-internal-guid-c40d92a5-7fff-9760-35d4-1917aed0f102">',
-      '<div dir="ltr" align="left">',
-      '<table>',
-      '<colgroup>',
-      '<col width="187" />',
-      '<col width="437" />',
-      '</colgroup>',
-      '<thead>',
-      '<tr>',
-      '<th scope="col"><p dir="ltr"><span>Image asset</span></p></th>',
-      '<th scope="col"><p dir="ltr"><span><span><img src="https://lh7-rt.googleusercontent.com/docsz/AD_4nXctqIkh6E_Dk-oqmfwSPE2j91gaCBFgZzEknmUZswtVtBMYCGFo_mhGO8Y0zTgeyKSVDaG3xZ9b801CNN4K2WxXHFLf8JOGH0gOle9sYceFgaWVFlZ1IRe4uPe8CEij_G8U8AphUQ?key=rQm4iHsybZ8QbxaYriGRJQ" width="423" height="316" /></span></span></p></th>',
-      '</tr>',
-      '<tr>',
-      '<th scope="col"><p dir="ltr"><span>ALT text</span></p><p dir="ltr"><span>Describe the image for people who can\'t see it</span></p></th>',
-      '<th scope="col"><p dir="ltr"><span>a screenshot of a sanity app that says welcome to your sanity app</span></p></th>',
-      '</tr>',
-      '<tr>',
-      '<th scope="col"><p dir="ltr"><span>Dark Mode Variant</span></p><p dir="ltr"><span>Optional alternate image to be used in dark mode.</span></p></th>',
-      '<th scope="col"><p dir="ltr"><span><span><img src="https://lh7-rt.googleusercontent.com/docsz/AD_4nXdlaYiRplD8rau0_vC2ZyY02EH8_VgBCrMqe-Ak7B1QhPN6HFQnoZo-6mo7iu4Z26tLMh-1B7XDgUCMgDX0i40yZWfVRpEQH9bBGlRihuCobXLUwj0GD0WXReszLd1iUZAfCPBSnw?key=rQm4iHsybZ8QbxaYriGRJQ" width="423" height="316" /></span></span></p></th>',
-      '</tr>',
-      '<tr>',
-      '<th scope="col"><p dir="ltr"><span>Caption</span></p></th>',
-      '<th scope="col"><p dir="ltr"><span>Create your own custom apps with the Sanity SDK</span></p></th>',
-      '</tr>',
-      '</thead>',
-      '</table>',
-      '</div>',
-      '</b>',
-    ].join('')
+  describe('table cell with image', () => {
+    test('Google Docs', () => {
+      const html = `<meta charset='utf-8'><meta charset="utf-8"><b style="font-weight:normal;" id="docs-internal-guid-e43aaf72-7fff-b92f-4e9c-c262cf7e0bea"><div dir="ltr" style="margin-left:0pt;" align="left"><table style="border:none;border-collapse:collapse;table-layout:fixed;width:468pt"><colgroup><col /></colgroup><tbody><tr style="height:0pt"><td style="border-left:solid #000000 1pt;border-right:solid #000000 1pt;border-bottom:solid #000000 1pt;border-top:solid #000000 1pt;vertical-align:top;padding:5pt 5pt 5pt 5pt;overflow:hidden;overflow-wrap:break-word;"><p dir="ltr" style="line-height:1.38;margin-top:0pt;margin-bottom:0pt;"><span style="font-size:11pt;font-family:Arial,sans-serif;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;"><span style="border:none;display:inline-block;overflow:hidden;width:317px;height:237px;"><img src="https://example.com/image.jpg" width="317" height="237" style="margin-left:0px;margin-top:0px;" /></span></span></p></td></tr></tbody></table></div></b>`
 
-    expect(getTersePt({schema, value: transform(html)})).toEqual([
-      'Image asset',
-      '{image}',
-      'ALT text',
-      "Describe the image for people who can't see it",
-      'a screenshot of a sanity app that says welcome to your sanity app',
-      'Dark Mode Variant',
-      'Optional alternate image to be used in dark mode.',
-      '{image}',
-      'Caption',
-      'Create your own custom apps with the Sanity SDK',
-    ])
+      expect(getTersePt({schema, value: transform(html)})).toEqual(['{image}'])
+    })
+  })
+
+  describe('transposed table with images', () => {
+    test('Google Docs', () => {
+      const html = [
+        '<meta charset="utf-8">',
+        '<b id="docs-internal-guid-c40d92a5-7fff-9760-35d4-1917aed0f102">',
+        '<div dir="ltr" align="left">',
+        '<table>',
+        '<colgroup>',
+        '<col width="187" />',
+        '<col width="437" />',
+        '</colgroup>',
+        '<thead>',
+        '<tr>',
+        '<th scope="col"><p dir="ltr"><span>Image asset</span></p></th>',
+        '<th scope="col"><p dir="ltr"><span><span><img src="https://lh7-rt.googleusercontent.com/docsz/AD_4nXctqIkh6E_Dk-oqmfwSPE2j91gaCBFgZzEknmUZswtVtBMYCGFo_mhGO8Y0zTgeyKSVDaG3xZ9b801CNN4K2WxXHFLf8JOGH0gOle9sYceFgaWVFlZ1IRe4uPe8CEij_G8U8AphUQ?key=rQm4iHsybZ8QbxaYriGRJQ" width="423" height="316" /></span></span></p></th>',
+        '</tr>',
+        '<tr>',
+        '<th scope="col"><p dir="ltr"><span>ALT text</span></p><p dir="ltr"><span>Describe the image for people who can\'t see it</span></p></th>',
+        '<th scope="col"><p dir="ltr"><span>a screenshot of a sanity app that says welcome to your sanity app</span></p></th>',
+        '</tr>',
+        '<tr>',
+        '<th scope="col"><p dir="ltr"><span>Dark Mode Variant</span></p><p dir="ltr"><span>Optional alternate image to be used in dark mode.</span></p></th>',
+        '<th scope="col"><p dir="ltr"><span><span><img src="https://lh7-rt.googleusercontent.com/docsz/AD_4nXdlaYiRplD8rau0_vC2ZyY02EH8_VgBCrMqe-Ak7B1QhPN6HFQnoZo-6mo7iu4Z26tLMh-1B7XDgUCMgDX0i40yZWfVRpEQH9bBGlRihuCobXLUwj0GD0WXReszLd1iUZAfCPBSnw?key=rQm4iHsybZ8QbxaYriGRJQ" width="423" height="316" /></span></span></p></th>',
+        '</tr>',
+        '<tr>',
+        '<th scope="col"><p dir="ltr"><span>Caption</span></p></th>',
+        '<th scope="col"><p dir="ltr"><span>Create your own custom apps with the Sanity SDK</span></p></th>',
+        '</tr>',
+        '</thead>',
+        '</table>',
+        '</div>',
+        '</b>',
+      ].join('')
+
+      expect(getTersePt({schema, value: transform(html)})).toEqual([
+        'Image asset',
+        '{image}',
+        'ALT text',
+        "Describe the image for people who can't see it",
+        'a screenshot of a sanity app that says welcome to your sanity app',
+        'Dark Mode Variant',
+        'Optional alternate image to be used in dark mode.',
+        '{image}',
+        'Caption',
+        'Create your own custom apps with the Sanity SDK',
+      ])
+    })
   })
 })
