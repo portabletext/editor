@@ -14,9 +14,9 @@ import type {SchemaMatchers} from '../../schema-matchers'
 import type {DeserializerRule} from '../../types'
 import {keyGenerator} from '../../util/randomKey'
 import {isElement, tagName} from '../helpers'
-import {whitespaceTextNodeRule} from './whitespace-text-node'
+import {whitespaceTextNodeRule} from './rules.whitespace-text-node'
 
-export function resolveListItem(
+function resolveListItem(
   schema: Schema,
   listNodeTagName: string,
 ): string | undefined {
@@ -35,7 +35,7 @@ export function resolveListItem(
   return undefined
 }
 
-export default function createHTMLRules(
+export function createHTMLRules(
   schema: Schema,
   options: {keyGenerator?: () => string; matchers?: SchemaMatchers},
 ): DeserializerRule[] {

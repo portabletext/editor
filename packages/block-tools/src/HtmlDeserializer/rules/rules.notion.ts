@@ -27,7 +27,7 @@ function isNotion(el: Node): boolean {
   return isElement(el) && Boolean(el.getAttribute('data-is-notion'))
 }
 
-export default function createNotionRules(): DeserializerRule[] {
+export function createNotionRules(): DeserializerRule[] {
   return [
     {
       deserialize(el) {

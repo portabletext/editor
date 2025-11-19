@@ -93,7 +93,7 @@ function getBlockStyle(schema: Schema, el: Node): string {
   return block.style
 }
 
-export default function createGDocsRules(schema: Schema): DeserializerRule[] {
+export function createGDocsRules(schema: Schema): DeserializerRule[] {
   return [
     {
       deserialize(el, next) {
