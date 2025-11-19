@@ -1,10 +1,10 @@
 import type {Schema} from '@portabletext/schema'
 import type {SchemaMatchers} from '../../schema-matchers'
 import type {DeserializerRule} from '../../types'
-import createGDocsRules from './gdocs'
-import createHTMLRules from './html'
-import createNotionRules from './notion'
-import createWordRules from './word'
+import {createGDocsRules} from './rules.gdocs'
+import {createHTMLRules} from './rules.html'
+import {createNotionRules} from './rules.notion'
+import {createWordRules} from './rules.word'
 
 export function createRules(
   schema: Schema,

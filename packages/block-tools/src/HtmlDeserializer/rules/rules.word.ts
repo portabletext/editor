@@ -39,7 +39,7 @@ function isWordListElement(el: Node): boolean {
     : false
 }
 
-export default function createWordRules(): DeserializerRule[] {
+export function createWordRules(): DeserializerRule[] {
   return [
     {
       deserialize(el, next) {
