@@ -2,7 +2,7 @@ import type {PortableTextSpan} from '@sanity/types'
 import {Editor, Element, Node, Range, type Path, type Point} from 'slate'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
-import {fromSlateValue} from './values'
+import {fromSlateBlock} from './values'
 
 export function getBlockPath({
   editor,
@@ -284,7 +284,7 @@ function elementToBlock({
   schema: EditorSchema
   element: Element
 }) {
-  return fromSlateValue([element], schema.block.name)?.at(0)
+  return fromSlateBlock(element, schema.block.name)
 }
 
 function isBlockElement(

@@ -3,7 +3,7 @@ import {omit} from 'lodash'
 import {Editor, Transforms} from 'slate'
 import {KEY_TO_VALUE_ELEMENT} from '../editor/weakMaps'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {fromSlateValue} from '../internal-utils/values'
+import {fromSlateBlock} from '../internal-utils/values'
 import {parseBlock} from '../utils/parse-blocks'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
@@ -35,11 +35,11 @@ export const blockUnsetOperationImplementation: BehaviorOperationImplementation<
     throw new Error(`Unable to find block at ${JSON.stringify(operation.at)}`)
   }
 
-  const parsedBlock = fromSlateValue(
-    [block],
+  const parsedBlock = fromSlateBlock(
+    block,
     context.schema.block.name,
     KEY_TO_VALUE_ELEMENT.get(operation.editor),
-  ).at(0)
+  )
 
   if (!parsedBlock) {
     throw new Error(`Unable to parse block at ${JSON.stringify(operation.at)}`)
