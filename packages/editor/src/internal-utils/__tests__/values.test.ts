@@ -1,139 +1,113 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, it} from 'vitest'
-import {fromSlateValue, toSlateValue} from '../values'
+import {fromSlateValue, toSlateBlock} from '../values'
 
 const schemaTypes = compileSchema(defineSchema({}))
 
-describe('toSlateValue', () => {
-  it('checks undefined', () => {
-    const result = toSlateValue(undefined, {schemaTypes})
-    expect(result).toHaveLength(0)
-  })
-
-  it('runs given empty array', () => {
-    const result = toSlateValue([], {schemaTypes})
-    expect(result).toHaveLength(0)
-  })
-
+describe(toSlateBlock.name, () => {
   it('given type is custom with no custom properties, should include an empty text property in children and an empty value', () => {
-    const result = toSlateValue(
-      [
-        {
-          _type: 'image',
-          _key: '123',
-        },
-      ],
+    const result = toSlateBlock(
+      {
+        _type: 'image',
+        _key: '123',
+      },
       {schemaTypes},
     )
 
-    expect(result).toMatchObject([
-      {
-        _key: '123',
-        _type: 'image',
-        children: [
-          {
-            text: '',
-          },
-        ],
-        value: {},
-      },
-    ])
+    expect(result).toMatchObject({
+      _key: '123',
+      _type: 'image',
+      children: [
+        {
+          text: '',
+        },
+      ],
+      value: {},
+    })
   })
 
   it('given type is block', () => {
-    const result = toSlateValue(
-      [
-        {
-          _type: schemaTypes.block.name,
-          _key: '123',
-          children: [
-            {
-              _type: 'span',
-              _key: '1231',
-              text: '123',
-            },
-          ],
-        },
-      ],
+    const result = toSlateBlock(
+      {
+        _type: schemaTypes.block.name,
+        _key: '123',
+        children: [
+          {
+            _type: 'span',
+            _key: '1231',
+            text: '123',
+          },
+        ],
+      },
       {schemaTypes},
     )
-    expect(result).toMatchInlineSnapshot(`
-[
-  {
-    "_key": "123",
-    "_type": "block",
-    "children": [
-      {
-        "_key": "1231",
-        "_type": "span",
-        "text": "123",
-      },
-    ],
-    "style": "normal",
-  },
-]
-`)
+    expect(result).toEqual({
+      _key: '123',
+      _type: 'block',
+      children: [
+        {
+          _key: '1231',
+          _type: 'span',
+          text: '123',
+        },
+      ],
+      style: 'normal',
+    })
   })
 
   it('given type is block and has custom in children', () => {
-    const result = toSlateValue(
-      [
-        {
-          _type: schemaTypes.block.name,
-          _key: '123',
-          children: [
-            {
-              _type: 'span',
-              _key: '1231',
-              text: '123',
+    const result = toSlateBlock(
+      {
+        _type: schemaTypes.block.name,
+        _key: '123',
+        children: [
+          {
+            _type: 'span',
+            _key: '1231',
+            text: '123',
+          },
+          {
+            _type: 'image',
+            _key: '1232',
+            asset: {
+              _ref: 'ref-123',
             },
-            {
-              _type: 'image',
-              _key: '1232',
-              asset: {
-                _ref: 'ref-123',
-              },
-            },
-          ],
-        },
-      ],
+          },
+        ],
+      },
       {schemaTypes},
     )
 
-    expect(result).toMatchInlineSnapshot(`
-[
-  {
-    "_key": "123",
-    "_type": "block",
-    "children": [
-      {
-        "_key": "1231",
-        "_type": "span",
-        "text": "123",
-      },
-      {
-        "__inline": true,
-        "_key": "1232",
-        "_type": "image",
-        "children": [
-          {
-            "_key": "void-child",
-            "_type": "span",
-            "marks": [],
-            "text": "",
-          },
-        ],
-        "value": {
-          "asset": {
-            "_ref": "ref-123",
+    expect(result).toEqual({
+      _key: '123',
+      _type: 'block',
+      children: [
+        {
+          _key: '1231',
+          _type: 'span',
+          text: '123',
+        },
+        {
+          __inline: true,
+          _key: '1232',
+          _type: 'image',
+          children: [
+            {
+              _key: 'void-child',
+              _type: 'span',
+              marks: [],
+              text: '',
+            },
+          ],
+          value: {
+            asset: {
+              _ref: 'ref-123',
+            },
           },
         },
-      },
-    ],
-    "style": "normal",
-  },
-]
-`)
+      ],
+      style: 'normal',
+    })
   })
 })
 
@@ -240,8 +214,12 @@ describe('fromSlateValue', () => {
         style: 'normal',
       },
     ]
-    const toSlate1 = toSlateValue(value, {schemaTypes}, keyMap)
-    const toSlate2 = toSlateValue(value, {schemaTypes}, keyMap)
+    const toSlate1 = value.map((block) =>
+      toSlateBlock(block, {schemaTypes}, keyMap),
+    )
+    const toSlate2 = value.map((block) =>
+      toSlateBlock(block, {schemaTypes}, keyMap),
+    )
     expect(toSlate1[0]).toBe(toSlate2[0])
     expect(toSlate1[1]).toBe(toSlate2[1])
     const fromSlate1 = fromSlateValue(toSlate1, 'block', keyMap)
