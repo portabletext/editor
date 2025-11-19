@@ -23,7 +23,7 @@ import {
   type SplitNodeOperation,
 } from 'slate'
 import type {EditorSchema} from '../editor/editor-schema'
-import {fromSlateValue} from './values'
+import {fromSlateBlock} from './values'
 
 export function insertTextPatch(
   schema: EditorSchema,
@@ -281,12 +281,7 @@ export function insertNodePatch(
     if (targetKey) {
       return [
         insert(
-          [
-            fromSlateValue(
-              [operation.node as Descendant],
-              schema.block.name,
-            )[0],
-          ],
+          [fromSlateBlock(operation.node as Descendant, schema.block.name)],
           position,
           [{_key: targetKey}],
         ),
@@ -295,7 +290,7 @@ export function insertNodePatch(
     return [
       setIfMissing(beforeValue, []),
       insert(
-        [fromSlateValue([operation.node as Descendant], schema.block.name)[0]],
+        [fromSlateBlock(operation.node as Descendant, schema.block.name)],
         'before',
         [operation.path[0]],
       ),
@@ -365,10 +360,10 @@ export function splitNodePatch(
   if (operation.path.length === 1) {
     const oldBlock = beforeValue[operation.path[0]]
     if (isTextBlock({schema}, oldBlock)) {
-      const targetValue = fromSlateValue(
-        [children[operation.path[0] + 1]],
+      const targetValue = fromSlateBlock(
+        children[operation.path[0] + 1],
         schema.block.name,
-      )[0]
+      )
       if (targetValue) {
         patches.push(insert([targetValue], 'after', [{_key: splitBlock._key}]))
         const spansToUnset = oldBlock.children.slice(operation.position)
@@ -384,18 +379,16 @@ export function splitNodePatch(
     const splitSpan = splitBlock.children[operation.path[1]]
     if (isSpan({schema}, splitSpan)) {
       const targetSpans = (
-        fromSlateValue(
-          [
-            {
-              ...splitBlock,
-              children: splitBlock.children.slice(
-                operation.path[1] + 1,
-                operation.path[1] + 2,
-              ),
-            } as Descendant,
-          ],
+        fromSlateBlock(
+          {
+            ...splitBlock,
+            children: splitBlock.children.slice(
+              operation.path[1] + 1,
+              operation.path[1] + 2,
+            ),
+          } as Descendant,
           schema.block.name,
-        )[0] as PortableTextTextBlock
+        ) as PortableTextTextBlock
       ).children
 
       patches.push(
@@ -470,10 +463,10 @@ export function mergeNodePatch(
 
   if (operation.path.length === 1) {
     if (block?._key) {
-      const newBlock = fromSlateValue(
-        [children[operation.path[0] - 1]],
+      const newBlock = fromSlateBlock(
+        children[operation.path[0] - 1],
         schema.block.name,
-      )[0]
+      )
       patches.push(set(newBlock, [{_key: newBlock._key}]))
       patches.push(unset([{_key: block._key}]))
     } else {
@@ -555,7 +548,7 @@ export function moveNodePatch(
       operation.path[0] > operation.newPath[0] ? 'before' : 'after'
     patches.push(unset([{_key: block._key}]))
     patches.push(
-      insert([fromSlateValue([block], schema.block.name)[0]], position, [
+      insert([fromSlateBlock(block, schema.block.name)], position, [
         {_key: targetBlock._key},
       ]),
     )
@@ -569,7 +562,7 @@ export function moveNodePatch(
     const position =
       operation.newPath[1] === targetBlock.children.length ? 'after' : 'before'
     const childToInsert = (
-      fromSlateValue([block], schema.block.name)[0] as PortableTextTextBlock
+      fromSlateBlock(block, schema.block.name) as PortableTextTextBlock
     ).children[operation.path[1]]
     patches.push(unset([{_key: block._key}, 'children', {_key: child._key}]))
     patches.push(

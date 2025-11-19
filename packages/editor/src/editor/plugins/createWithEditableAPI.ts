@@ -25,7 +25,7 @@ import {
   slateRangeToSelection,
 } from '../../internal-utils/slate-utils'
 import {toSlateRange} from '../../internal-utils/to-slate-range'
-import {fromSlateValue} from '../../internal-utils/values'
+import {fromSlateBlock, fromSlateValue} from '../../internal-utils/values'
 import {getActiveAnnotationsMarks} from '../../selectors/selector.get-active-annotation-marks'
 import {getActiveDecorators} from '../../selectors/selector.get-active-decorators'
 import {getFocusBlock} from '../../selectors/selector.get-focus-block'
@@ -157,11 +157,11 @@ export function createEditableAPI(
           editor.selection.focus.path.slice(0, 1),
         )
         if (block) {
-          return fromSlateValue(
-            [block],
+          return fromSlateBlock(
+            block,
             types.block.name,
             KEY_TO_VALUE_ELEMENT.get(editor),
-          )[0]
+          )
         }
       }
       return undefined
@@ -173,11 +173,11 @@ export function createEditableAPI(
           editor.selection.focus.path.slice(0, 1),
         )
         if (block && editor.isTextBlock(block)) {
-          const ptBlock = fromSlateValue(
-            [block],
+          const ptBlock = fromSlateBlock(
+            block,
             types.block.name,
             KEY_TO_VALUE_ELEMENT.get(editor),
-          )[0] as PortableTextTextBlock
+          ) as PortableTextTextBlock
           return ptBlock.children[editor.selection.focus.path[1]]
         }
       }
@@ -274,15 +274,15 @@ export function createEditableAPI(
         if (block && blockPath && typeof block._key === 'string') {
           if (path.length === 1 && slatePath.focus.path.length === 1) {
             return [
-              fromSlateValue([block], types.block.name)[0],
+              fromSlateBlock(block, types.block.name),
               [{_key: block._key}],
             ]
           }
-          const ptBlock = fromSlateValue(
-            [block],
+          const ptBlock = fromSlateBlock(
+            block,
             types.block.name,
             KEY_TO_VALUE_ELEMENT.get(editor),
-          )[0]
+          )
           if (editor.isTextBlock(ptBlock)) {
             const ptChild = ptBlock.children[slatePath.focus.path[1]]
             if (ptChild) {
