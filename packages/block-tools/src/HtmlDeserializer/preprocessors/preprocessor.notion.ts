@@ -1,6 +1,6 @@
 import {_XPathResult} from './xpathResult'
 
-export default (html: string, doc: Document): Document => {
+export function preprocessNotion(html: string, doc: Document): Document {
   const NOTION_REGEX = /<!-- notionvc:.*?-->/g
 
   if (html.match(NOTION_REGEX)) {

@@ -30,7 +30,7 @@ import {
   tagName,
   trimWhitespace,
 } from './helpers'
-import preprocessors from './preprocessors'
+import {preprocessors} from './preprocessors'
 import {createRules} from './rules'
 
 /**
