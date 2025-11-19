@@ -153,7 +153,11 @@ function insertPatch(
       patch.path[0] === 0
     ) {
       Transforms.removeNodes(editor, {
-        at: [position === 'before' ? targetBlockIndex + 1 : targetBlockIndex],
+        at: [
+          position === 'before'
+            ? targetBlockIndex + blocksToInsert.length
+            : targetBlockIndex,
+        ],
       })
     }
 
