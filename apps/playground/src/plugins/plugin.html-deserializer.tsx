@@ -60,6 +60,7 @@ export function HtmlDeserializerPlugin() {
                 separator: () => ({_type: 'span', text: ': '}),
               }),
             ],
+            unstable_whitespaceOnPasteMode: 'normalize',
           })
 
           return {blocks}
