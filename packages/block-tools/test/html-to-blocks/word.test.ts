@@ -1,28 +1,46 @@
-import fs from 'node:fs'
-import path from 'node:path'
-import {JSDOM} from 'jsdom'
-import {expect, test} from 'vitest'
-import {htmlToBlocks} from '../../src'
-import defaultSchema from '../fixtures/defaultSchema'
-import {createTestKeyGenerator} from '../test-key-generator'
+import {compileSchema, defineSchema} from '@portabletext/schema'
+import {getTersePt} from '@portabletext/test'
+import {describe, expect, test} from 'vitest'
+import {transform} from './test-utils'
 
-const blockContentType = defaultSchema
-  .get('blogPost')
-  .fields.find((field: any) => field.name === 'body').type
+describe('Word', () => {
+  test('foo **bar** baz', () => {
+    const html = `<p class=MsoNormal>foo <b>bar</b> baz<o:p></o:p></p>`
 
-const html = fs.readFileSync(path.resolve(__dirname, 'word.html')).toString()
+    expect(
+      getTersePt({
+        schema: compileSchema(defineSchema({})),
+        value: transform([html]),
+      }),
+    ).toEqual(['foo ,bar, baz'])
+  })
 
-const json = JSON.parse(
-  fs.readFileSync(path.resolve(__dirname, 'word.json'), 'utf-8'),
-)
+  test('simple table', () => {
+    const html = [
+      `<table class=MsoTableGrid border=1 cellspacing=0 cellpadding=0
+ style='border-collapse:collapse;border:none;mso-border-alt:solid windowtext .5pt;
+ mso-yfti-tbllook:1184;mso-padding-alt:0cm 5.4pt 0cm 5.4pt'>`,
+      `<tr style='mso-yfti-irow:0;mso-yfti-firstrow:yes;mso-yfti-lastrow:yes'>`,
+      `<td width=301 valign=top style='width:225.4pt;border:solid windowtext 1.0pt;
+  mso-border-alt:solid windowtext .5pt;padding:0cm 5.4pt 0cm 5.4pt'>`,
+      `<p class=MsoNormal style='margin-bottom:0cm;line-height:200%'><span
+  lang=EN-US style='mso-ansi-language:EN-US'>foo<o:p></o:p></span></p>`,
+      `</td>`,
+      `<td width=301 valign=top style='width:225.4pt;border:solid windowtext 1.0pt;
+  border-left:none;mso-border-left-alt:solid windowtext .5pt;mso-border-alt:
+  solid windowtext .5pt;padding:0cm 5.4pt 0cm 5.4pt'>`,
+      `<p class=MsoNormal style='margin-bottom:0cm;line-height:200%'><span
+  lang=EN-US style='mso-ansi-language:EN-US'>bar<o:p></o:p></span></p>`,
+      `</td>`,
+      `</tr>`,
+      `</table>`,
+    ].join('\n')
 
-const keyGenerator = createTestKeyGenerator()
-
-test(htmlToBlocks.name, () => {
-  expect(
-    htmlToBlocks(html, blockContentType, {
-      parseHtml: (html) => new JSDOM(html).window.document,
-      keyGenerator,
-    }),
-  ).toEqual(json)
+    expect(
+      getTersePt({
+        schema: compileSchema(defineSchema({})),
+        value: transform([html]),
+      }),
+    ).toEqual(['foo', 'bar'])
+  })
 })
