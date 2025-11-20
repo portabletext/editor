@@ -1,5 +1,30 @@
 # Changelog
 
+## 4.1.0
+
+### Minor Changes
+
+- [#1902](https://github.com/portabletext/editor/pull/1902) [`507c5bc`](https://github.com/portabletext/editor/commit/507c5bc6f72a7f6f84cf30614497f22af253173d) Thanks [@christianhg](https://github.com/christianhg)! - feat: vastly improve deserialization of Word Online documents
+
+  Specialized rules have been added to handle documents coming from Word Online. This fixes issues with formatting and block styles getting lost, as well as whitespace disappearing and images not being parsed correctly.
+
+- [#1902](https://github.com/portabletext/editor/pull/1902) [`891099c`](https://github.com/portabletext/editor/commit/891099ce17dee2574921ac7d99dfce8686e995d5) Thanks [@christianhg](https://github.com/christianhg)! - feat: improve deserialization of Word documents
+
+### Patch Changes
+
+- [#1875](https://github.com/portabletext/editor/pull/1875) [`9ac5955`](https://github.com/portabletext/editor/commit/9ac5955011432373fb1eddf1e9501ea9d49cb667) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update sanity monorepo to ^4.16.0
+
+- [#1902](https://github.com/portabletext/editor/pull/1902) [`e955746`](https://github.com/portabletext/editor/commit/e955746bef160d160b7079c16d30dbbaa7792d12) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove unneeded outer trim of html string
+
+- [#1899](https://github.com/portabletext/editor/pull/1899) [`a17ca1e`](https://github.com/portabletext/editor/commit/a17ca1e37cae14fcbded8a8b1340ab8f25d2cf08) Thanks [@christianhg](https://github.com/christianhg)! - fix: improve whitespace handling
+
+  Trimming whitespace is now more reliable because it happens in a post processing step after the ordinary deserialization and block flattening has been conducted. This fixes issues with lonely images in Google Docs paragraphs being removed and improves trimming whitespace after tables.
+
+- [#1902](https://github.com/portabletext/editor/pull/1902) [`a82c3b6`](https://github.com/portabletext/editor/commit/a82c3b61535c2074982517750c19cd1b3f5f05fb) Thanks [@christianhg](https://github.com/christianhg)! - fix: trim whitespace between block elements
+
+- Updated dependencies [[`9ac5955`](https://github.com/portabletext/editor/commit/9ac5955011432373fb1eddf1e9501ea9d49cb667)]:
+  - @portabletext/sanity-bridge@1.2.3
+
 ## 4.0.2
 
 ### Patch Changes
