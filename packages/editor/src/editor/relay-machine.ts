@@ -13,15 +13,8 @@ export type EditorEmittedEvent =
       event: FocusEvent<HTMLDivElement, Element>
     }
   | {
-      /**
-       * @deprecated Will be removed in the next major version
-       */
-      type: 'done loading'
-    }
-  | {
       type: 'editable'
     }
-  | ErrorEvent
   | {
       type: 'focused'
       event: FocusEvent<HTMLDivElement, Element>
@@ -30,12 +23,6 @@ export type EditorEmittedEvent =
       type: 'invalid value'
       resolution: InvalidValueResolution | null
       value: Array<PortableTextBlock> | undefined
-    }
-  | {
-      /**
-       * @deprecated Will be removed in the next major version
-       */
-      type: 'loading'
     }
   | MutationEvent
   | PatchEvent
@@ -54,17 +41,7 @@ export type EditorEmittedEvent =
       value: Array<PortableTextBlock> | undefined
     }
 
-/**
- * @deprecated The event is no longer emitted
- */
-type ErrorEvent = {
-  type: 'error'
-  name: string
-  description: string
-  data: unknown
-}
-
-export type InternalEditorEmittedEvent = EditorEmittedEvent | UnsetEvent
+export type InternalEditorEmittedEvent = EditorEmittedEvent
 
 /**
  * @public
@@ -78,14 +55,6 @@ export type MutationEvent = {
 export type PatchEvent = {
   type: 'patch'
   patch: Patch
-}
-
-export type UnsetEvent = {
-  /**
-   * @deprecated Use `'patch'` events instead
-   */
-  type: 'unset'
-  previousValue: Array<PortableTextBlock>
 }
 
 export type RelayActor = ActorRefFrom<typeof relayMachine>
