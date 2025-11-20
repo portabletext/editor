@@ -47,6 +47,18 @@ export function transform(
   const defaultSchema = compileSchema(
     defineSchema({
       annotations: [{name: 'link'}],
+      decorators: [
+        {name: 'strong'},
+        {name: 'em'},
+        {name: 'code'},
+        {name: 'underline'},
+        {name: 'strike-through'},
+        {name: 'sup'},
+        {name: 'sub'},
+        {name: 'ins'},
+        {name: 'mark'},
+        {name: 'small'},
+      ],
       styles: [
         {name: 'normal'},
         {name: 'h1'},
