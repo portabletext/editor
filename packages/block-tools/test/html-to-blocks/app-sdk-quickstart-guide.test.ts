@@ -48,7 +48,7 @@ describe('App SDK Quickstart Guide', () => {
     )
   })
 
-  test.skip('Word Online', () => {
+  test('Word Online', () => {
     const htmlWordOnline = fs
       .readFileSync(
         path.resolve(__dirname, 'app-sdk-quickstart-guide.word-online.html'),
@@ -60,7 +60,7 @@ describe('App SDK Quickstart Guide', () => {
     )
   })
 
-  test.skip('Word Online (Windows)', () => {
+  test('Word Online (Windows)', () => {
     const htmlWordOnlineWindows = fs
       .readFileSync(
         path.resolve(

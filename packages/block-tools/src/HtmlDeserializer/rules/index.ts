@@ -1,11 +1,11 @@
 import type {Schema} from '@portabletext/schema'
 import type {SchemaMatchers} from '../../schema-matchers'
 import type {DeserializerRule} from '../../types'
+import {createWordOnlineRules} from '../word-online/rules.word-online'
 import {createGDocsRules} from './rules.gdocs'
 import {createHTMLRules} from './rules.html'
 import {createNotionRules} from './rules.notion'
 import {createWordRules} from './rules.word'
-import {createWordOnlineRules} from './rules.word-online'
 
 export function createRules(
   schema: Schema,
@@ -13,7 +13,7 @@ export function createRules(
 ): DeserializerRule[] {
   return [
     ...createWordRules(),
-    ...createWordOnlineRules(),
+    ...createWordOnlineRules(schema, options),
     ...createNotionRules(),
     ...createGDocsRules(schema),
     ...createHTMLRules(schema, options),
