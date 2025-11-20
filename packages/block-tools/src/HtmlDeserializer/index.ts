@@ -10,7 +10,6 @@ import type {
   ArbitraryTypedObject,
   DeserializerRule,
   HtmlDeserializerOptions,
-  HtmlParser,
   PlaceholderAnnotation,
   PlaceholderDecorator,
   TypedObject,
@@ -62,7 +61,13 @@ export default class HtmlDeserializer {
     this.whitespaceMode = unstable_whitespaceOnPasteMode
     const parseHtml = options.parseHtml || defaultParseHtml()
     this.parseHtml = (html) => {
-      const doc = preprocess(html, parseHtml)
+      const cleanHTML = vercelStegaClean(html)
+      const doc = parseHtml(cleanHTML)
+
+      for (const processor of preprocessors) {
+        processor(cleanHTML, doc)
+      }
+
       return doc.body
     }
   }
@@ -307,14 +312,4 @@ export default class HtmlDeserializer {
       return children
     }, [] as TypedObject[])
   }
-}
-
-// TODO: make this plugin-style
-function preprocess(html: string, parseHtml: HtmlParser): Document {
-  const cleanHTML = vercelStegaClean(html)
-  const doc = parseHtml(cleanHTML)
-  preprocessors.forEach((processor) => {
-    processor(cleanHTML, doc)
-  })
-  return doc
 }
