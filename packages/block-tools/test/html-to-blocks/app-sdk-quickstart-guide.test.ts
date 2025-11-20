@@ -5,32 +5,7 @@ import {getTersePt} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {transform} from './test-utils'
 
-const schema = compileSchema(
-  defineSchema({
-    styles: [
-      {name: 'normal'},
-      {name: 'h1'},
-      {name: 'h2'},
-      {name: 'h3'},
-      {name: 'h4'},
-      {name: 'h5'},
-      {name: 'h6'},
-      {name: 'blockquote'},
-    ],
-    blockObjects: [
-      {
-        name: 'image',
-        fields: [{name: 'src', type: 'string'}],
-      },
-    ],
-    inlineObjects: [
-      {
-        name: 'image',
-        fields: [{name: 'src', type: 'string'}],
-      },
-    ],
-  }),
-)
+const schema = compileSchema(defineSchema({}))
 
 describe('App SDK Quickstart Guide', () => {
   const tersePt = JSON.parse(
