@@ -26,7 +26,7 @@ describe('App SDK Quickstart Guide', () => {
     expect(getTersePt({schema, value: transform([htmlGdocs])})).toEqual(tersePt)
   })
 
-  test.skip('Word', () => {
+  test('Word', () => {
     const htmlWord = fs
       .readFileSync(
         path.resolve(__dirname, 'app-sdk-quickstart-guide.word.html'),
@@ -36,7 +36,7 @@ describe('App SDK Quickstart Guide', () => {
     expect(getTersePt({schema, value: transform([htmlWord])})).toEqual(tersePt)
   })
 
-  test.skip('Word (Windows)', () => {
+  test('Word (Windows)', () => {
     const htmlWordWindows = fs
       .readFileSync(
         path.resolve(__dirname, 'app-sdk-quickstart-guide.word.windows.html'),
