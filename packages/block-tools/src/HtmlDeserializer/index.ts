@@ -312,13 +312,9 @@ export default class HtmlDeserializer {
 // TODO: make this plugin-style
 function preprocess(html: string, parseHtml: HtmlParser): Document {
   const cleanHTML = vercelStegaClean(html)
-  const doc = parseHtml(normalizeHtmlBeforePreprocess(cleanHTML))
+  const doc = parseHtml(cleanHTML)
   preprocessors.forEach((processor) => {
     processor(cleanHTML, doc)
   })
   return doc
-}
-
-function normalizeHtmlBeforePreprocess(html: string): string {
-  return html.trim()
 }
