@@ -54,7 +54,7 @@
     "@sanity/types": "^4.14.2",
     "@types/lodash.startcase": "^4.4.9",
     "typescript": "catalog:",
-    "vitest": "^4.0.8"
+    "vitest": "^4.0.9"
   },
   "peerDependencies": {
     "@sanity/schema": "^4.14.2",
