@@ -1,6 +1,18 @@
 import {PRESERVE_WHITESPACE_TAGS} from '../../constants'
 import {_XPathResult} from './xpathResult'
 
+// Elements that only contain block-level children (not inline text content)
+const BLOCK_CONTAINER_ELEMENTS = [
+  'body',
+  'table',
+  'tbody',
+  'thead',
+  'tfoot',
+  'tr',
+  'ul',
+  'ol',
+]
+
 export function preprocessWhitespace(_: string, doc: Document): Document {
   // Recursively process all nodes.
   function processNode(node: Node) {
@@ -11,14 +23,27 @@ export function preprocessWhitespace(_: string, doc: Document): Document {
         node.parentElement?.tagName.toLowerCase() || '',
       )
     ) {
-      node.textContent =
+      const normalized =
         node.textContent
           ?.replace(/\s\s+/g, ' ') // Remove multiple whitespace
           .replace(/[\r\n]+/g, ' ') || '' // Replace newlines with spaces
+      const parentTag = node.parentElement?.tagName.toLowerCase()
+
+      if (
+        parentTag &&
+        BLOCK_CONTAINER_ELEMENTS.includes(parentTag) &&
+        normalized.trim() === ''
+      ) {
+        // If parent is a block container and text is only whitespace, remove it
+        node.parentNode?.removeChild(node)
+      } else {
+        node.textContent = normalized
+      }
     }
     // Otherwise, if this node has children, process them.
     else {
-      for (let i = 0; i < node.childNodes.length; i++) {
+      // Process children in reverse to handle removals safely
+      for (let i = node.childNodes.length - 1; i >= 0; i--) {
         processNode(node.childNodes[i])
       }
     }
