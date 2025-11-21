@@ -260,14 +260,6 @@ export function parseTextBlock({
     context.schema.styles.find((style) => style.name === block.style)
   ) {
     parsedBlock.style = block.style
-  } else {
-    const defaultStyle = context.schema.styles.at(0)?.name
-
-    if (defaultStyle !== undefined) {
-      parsedBlock.style = defaultStyle
-    } else {
-      console.error('Expected default style')
-    }
   }
 
   if (

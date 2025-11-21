@@ -368,6 +368,11 @@ describe('event.block.unset', () => {
       expect(patches.slice(4)).toEqual([
         {
           origin: 'local',
+          type: 'unset',
+          path: [{_key: textBlockKey}, 'style'],
+        },
+        {
+          origin: 'local',
           type: 'set',
           path: [{_key: textBlockKey}, 'style'],
           value: 'normal',
@@ -517,6 +522,11 @@ describe('event.block.unset', () => {
         },
       ])
       expect(patches.slice(4)).toEqual([
+        {
+          origin: 'local',
+          type: 'unset',
+          path: [{_key: textBlockKey}, 'style'],
+        },
         {
           origin: 'local',
           type: 'set',

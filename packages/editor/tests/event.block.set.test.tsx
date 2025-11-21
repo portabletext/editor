@@ -321,6 +321,7 @@ describe('event.block.set', () => {
       block: {
         _key: textBlockKey,
         _type: 'block',
+        style: 'normal',
       },
       placement: 'auto',
     })
@@ -542,6 +543,7 @@ describe('event.block.set', () => {
           _key: blockKey,
           _type: 'block',
           children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+          style: 'normal',
           markDefs: [],
         },
       ],

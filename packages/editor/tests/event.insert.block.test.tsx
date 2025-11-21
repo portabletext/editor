@@ -436,6 +436,7 @@ describe('event.insert.block', () => {
       block: {
         _type: 'block',
         children: [{_type: 'stock-ticker', symbol: 'AAPL'}],
+        style: 'normal',
       },
       placement: 'auto',
     })
@@ -527,6 +528,7 @@ describe('event.insert.block', () => {
           {_type: 'stock-ticker', symbol: 'AAPL'},
           {_type: 'stock-ticker', symbol: 'GOOG'},
         ],
+        style: 'normal',
       },
       placement: 'auto',
     })

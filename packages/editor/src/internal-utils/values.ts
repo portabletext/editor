@@ -35,7 +35,6 @@ export function toSlateBlock(
   if (isPortableText) {
     const textBlock = block as PortableTextTextBlock
     let hasInlines = false
-    const hasMissingStyle = typeof textBlock.style === 'undefined'
     const hasMissingMarkDefs = typeof textBlock.markDefs === 'undefined'
     const hasMissingChildren = typeof textBlock.children === 'undefined'
 
@@ -86,7 +85,6 @@ export function toSlateBlock(
 
     // Return original block
     if (
-      !hasMissingStyle &&
       !hasMissingMarkDefs &&
       !hasMissingChildren &&
       !hasInlines &&
@@ -94,11 +92,6 @@ export function toSlateBlock(
     ) {
       // Original object
       return block
-    }
-
-    // TODO: remove this when we have a better way to handle missing style
-    if (hasMissingStyle) {
-      rest.style = schemaTypes.styles[0].name
     }
 
     return keepObjectEquality(

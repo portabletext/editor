@@ -264,7 +264,6 @@ describe(converterPortableText.deserialize, () => {
           },
         ],
         markDefs: [],
-        style: 'normal',
       },
     ])
   })
@@ -300,7 +299,6 @@ describe(converterPortableText.deserialize, () => {
           },
         ],
         markDefs: [],
-        style: 'normal',
       },
     ])
   })
@@ -337,7 +335,6 @@ describe(converterPortableText.deserialize, () => {
           },
         ],
         markDefs: [],
-        style: 'normal',
       },
     ])
   })
@@ -417,7 +414,6 @@ describe(converterPortableText.deserialize, () => {
         ],
         markDefs: [],
         level: 1,
-        style: 'normal',
       },
     ])
   })
@@ -461,7 +457,6 @@ describe(converterPortableText.deserialize, () => {
         markDefs: [],
         listItem: 'bullet',
         level: 1,
-        style: 'normal',
       },
     ])
   })
