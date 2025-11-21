@@ -484,7 +484,6 @@ describe('event.insert.block', () => {
                 {_type: 'stock-ticker', _key: 'k3', symbol: 'AAPL'},
                 {_type: 'span', _key: 'k5', text: '', marks: []},
               ],
-              markDefs: [],
               style: 'normal',
             },
           ],
@@ -493,6 +492,12 @@ describe('event.insert.block', () => {
           origin: 'local',
           type: 'unset',
           path: [{_key: 'k0'}],
+        },
+        {
+          origin: 'local',
+          type: 'set',
+          path: [{_key: 'k2'}, 'markDefs'],
+          value: [],
         },
       ])
     })
@@ -578,7 +583,6 @@ describe('event.insert.block', () => {
                 {_type: 'stock-ticker', _key: 'k4', symbol: 'GOOG'},
                 {_type: 'span', _key: 'k7', text: '', marks: []},
               ],
-              markDefs: [],
               style: 'normal',
             },
           ],
@@ -587,6 +591,12 @@ describe('event.insert.block', () => {
           origin: 'local',
           type: 'unset',
           path: [{_key: 'k0'}],
+        },
+        {
+          origin: 'local',
+          type: 'set',
+          path: [{_key: 'k2'}, 'markDefs'],
+          value: [],
         },
       ])
     })

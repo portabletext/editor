@@ -249,10 +249,13 @@ export function parseTextBlock({
     _type: context.schema.block.name,
     _key,
     children: normalizedChildren,
-    markDefs: options.removeUnusedMarkDefs
-      ? markDefs.filter((markDef) => marks.includes(markDef._key))
-      : markDefs,
     ...customFields,
+  }
+
+  if (typeof block.markDefs === 'object' && block.markDefs !== null) {
+    parsedBlock.markDefs = options.removeUnusedMarkDefs
+      ? markDefs.filter((markDef) => marks.includes(markDef._key))
+      : markDefs
   }
 
   if (
