@@ -246,6 +246,9 @@ function createActors(config: {
     })
 
     return () => {
+      // Flushing pending patches and mutations before unmounting
+      mutationActor.send({type: 'emit changes'})
+
       subscription.unsubscribe()
     }
   })
