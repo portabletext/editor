@@ -176,25 +176,76 @@ export function fromSlateBlock(
 }
 
 export function isEqualToEmptyEditor(
-  children: Descendant[] | PortableTextBlock[],
+  blocks: Array<Descendant> | Array<PortableTextBlock>,
   schemaTypes: EditorSchema,
 ): boolean {
-  return (
-    children === undefined ||
-    (children && Array.isArray(children) && children.length === 0) ||
-    (children &&
-      Array.isArray(children) &&
-      children.length === 1 &&
-      Element.isElement(children[0]) &&
-      children[0]._type === schemaTypes.block.name &&
-      'style' in children[0] &&
-      children[0].style === schemaTypes.styles[0].name &&
-      !('listItem' in children[0]) &&
-      Array.isArray(children[0].children) &&
-      children[0].children.length === 1 &&
-      Text.isText(children[0].children[0]) &&
-      children[0].children[0]._type === 'span' &&
-      !children[0].children[0].marks?.join('') &&
-      children[0].children[0].text === '')
-  )
+  // Must have exactly one block
+  if (blocks.length !== 1) {
+    return false
+  }
+
+  const firstBlock = blocks.at(0)
+
+  if (!firstBlock) {
+    return true
+  }
+
+  if (!Element.isElement(firstBlock)) {
+    return false
+  }
+
+  // Must be a text block
+  if (firstBlock._type !== schemaTypes.block.name) {
+    return false
+  }
+
+  // Must not be a list item
+  if ('listItem' in firstBlock) {
+    return false
+  }
+
+  // Style must exist and be the default style
+  if (
+    !('style' in firstBlock) ||
+    firstBlock.style !== schemaTypes.styles.at(0)?.name
+  ) {
+    return false
+  }
+
+  // Must have children array
+  if (!Array.isArray(firstBlock.children)) {
+    return false
+  }
+
+  // Must have exactly one child
+  if (firstBlock.children.length !== 1) {
+    return false
+  }
+
+  const firstChild = firstBlock.children.at(0)
+
+  if (!firstChild) {
+    return false
+  }
+
+  if (!Text.isText(firstChild)) {
+    return false
+  }
+
+  // Must be a span type
+  if (!('_type' in firstChild) || firstChild._type !== schemaTypes.span.name) {
+    return false
+  }
+
+  // Must have empty text
+  if (firstChild.text !== '') {
+    return false
+  }
+
+  // Must have no marks (marks can be undefined or empty array)
+  if (firstChild.marks?.join('')) {
+    return false
+  }
+
+  return true
 }
