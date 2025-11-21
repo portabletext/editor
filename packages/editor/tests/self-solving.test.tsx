@@ -775,9 +775,14 @@ describe('Feature: Self-solving', () => {
               _key: 'k5',
               children: [barSpan],
               style: 'normal',
-              markDefs: [],
             },
           ],
+        },
+        {
+          origin: 'local',
+          type: 'set',
+          path: [{_key: 'k5'}, 'markDefs'],
+          value: [],
         },
       ])
     })

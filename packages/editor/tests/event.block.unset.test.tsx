@@ -321,7 +321,28 @@ describe('event.block.unset', () => {
           style: 'h1',
         },
       ])
-      expect(patches.slice(2)).toEqual([
+      expect(patches).toEqual([
+        {
+          origin: 'local',
+          type: 'setIfMissing',
+          path: [],
+          value: [],
+        },
+        {
+          origin: 'local',
+          type: 'insert',
+          path: [0],
+          position: 'before',
+          items: [
+            {
+              _key: 'k0',
+              _type: 'block',
+              children: [{_key: 'k1', _type: 'span', text: '', marks: []}],
+              style: 'normal',
+              markDefs: [],
+            },
+          ],
+        },
         {
           origin: 'local',
           type: 'insert',
@@ -334,7 +355,6 @@ describe('event.block.unset', () => {
               children: [
                 {_key: 'k3', _type: 'span', text: 'Hello, world!', marks: []},
               ],
-              markDefs: [],
               style: 'h1',
             },
           ],
@@ -343,6 +363,12 @@ describe('event.block.unset', () => {
           origin: 'local',
           type: 'unset',
           path: [{_key: 'k0'}],
+        },
+        {
+          origin: 'local',
+          type: 'set',
+          path: [{_key: textBlockKey}, 'markDefs'],
+          value: [],
         },
       ])
     })
@@ -365,7 +391,7 @@ describe('event.block.unset', () => {
           style: 'normal',
         },
       ])
-      expect(patches.slice(4)).toEqual([
+      expect(patches.slice(5)).toEqual([
         {
           origin: 'local',
           type: 'unset',

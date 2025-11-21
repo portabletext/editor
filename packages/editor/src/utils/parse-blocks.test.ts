@@ -129,7 +129,6 @@ describe(parseBlock.name, () => {
             marks: [],
           },
         ],
-        markDefs: [],
       })
     })
 
@@ -159,7 +158,6 @@ describe(parseBlock.name, () => {
             marks: [],
           },
         ],
-        markDefs: [],
       })
     })
 
@@ -269,7 +267,6 @@ describe(parseBlock.name, () => {
             marks: ['em'],
           },
         ],
-        markDefs: [],
       })
     })
 
@@ -298,7 +295,6 @@ describe(parseBlock.name, () => {
             marks: [],
           },
         ],
-        markDefs: [],
         listItem: 'bullet',
       })
     })
@@ -328,7 +324,6 @@ describe(parseBlock.name, () => {
             marks: [],
           },
         ],
-        markDefs: [],
       })
     })
 
@@ -358,7 +353,6 @@ describe(parseBlock.name, () => {
               marks: [],
             },
           ],
-          markDefs: [],
         })
       })
 
@@ -392,7 +386,6 @@ describe(parseBlock.name, () => {
               marks: [],
             },
           ],
-          markDefs: [],
         })
       })
 
@@ -425,7 +418,6 @@ describe(parseBlock.name, () => {
               marks: [],
             },
           ],
-          markDefs: [],
         })
       })
     })
