@@ -30,6 +30,9 @@ export function createWithPortableTextMarkModel(
     const decorators = editorActor
       .getSnapshot()
       .context.schema.decorators.map((t) => t.name)
+    const defaultStyle = editorActor
+      .getSnapshot()
+      .context.schema.styles.at(0)?.name
 
     // Extend Slate's default normalization. Merge spans with same set of .marks when doing merge_node operations, and clean up markDefs / marks
     editor.normalizeNode = (nodeEntry) => {
@@ -70,6 +73,22 @@ export function createWithPortableTextMarkModel(
         debug('Adding .markDefs to block node')
         withNormalizeNode(editor, () => {
           Transforms.setNodes(editor, {markDefs: []}, {at: path})
+        })
+        return
+      }
+
+      /**
+       * Add missing .style to block nodes
+       */
+      if (
+        defaultStyle &&
+        editor.isTextBlock(node) &&
+        typeof node.style === 'undefined'
+      ) {
+        debug('Adding .style to block node')
+
+        withNormalizeNode(editor, () => {
+          Transforms.setNodes(editor, {style: defaultStyle}, {at: path})
         })
         return
       }

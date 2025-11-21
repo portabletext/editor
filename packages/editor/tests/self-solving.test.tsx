@@ -149,6 +149,231 @@ describe('Feature: Self-solving', () => {
     })
   })
 
+  test('Scenario: Missing .style is added after the editor is made dirty', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const initialValue = [
+      {
+        _key: blockKey,
+        _type: 'block',
+        children: [
+          {
+            _key: spanKey,
+            _type: 'span',
+            text: '',
+            marks: [],
+          },
+        ],
+        markDefs: [],
+      },
+    ]
+
+    const {locator} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([])
+    })
+
+    await userEvent.type(locator, 'f')
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        {
+          origin: 'local',
+          type: 'set',
+          path: [{_key: blockKey}, 'style'],
+          value: 'normal',
+        },
+        {
+          origin: 'local',
+          type: 'unset',
+          path: [],
+        },
+        {
+          origin: 'local',
+          type: 'setIfMissing',
+          path: [],
+          value: [],
+        },
+        {
+          origin: 'local',
+          type: 'insert',
+          path: [0],
+          position: 'before',
+          items: [
+            {
+              ...initialValue[0],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('', 'f'))),
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Missing .style is added to inserted block', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    editor.send({
+      type: 'insert.block',
+      at: {
+        anchor: {
+          path: [{_key: 'k0'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'k0'}],
+          offset: 0,
+        },
+      },
+      block: {
+        _type: 'block',
+        _key: blockKey,
+        children: [
+          {
+            _type: 'span',
+            _key: spanKey,
+            text: 'foo',
+            marks: [],
+          },
+        ],
+        markDefs: [],
+      },
+      placement: 'after',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [
+            {
+              _key: 'k1',
+              _type: 'span',
+              text: '',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {
+              _key: spanKey,
+              _type: 'span',
+              text: 'foo',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        {
+          origin: 'local',
+          type: 'setIfMissing',
+          path: [],
+          value: [],
+        },
+        {
+          origin: 'local',
+          type: 'insert',
+          path: [0],
+          position: 'before',
+          items: [
+            {
+              _key: 'k0',
+              _type: 'block',
+              children: [
+                {
+                  _key: 'k1',
+                  _type: 'span',
+                  text: '',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          origin: 'local',
+          type: 'insert',
+          path: [{_key: 'k0'}],
+          position: 'after',
+          items: [
+            {
+              _key: blockKey,
+              _type: 'block',
+              children: [
+                {
+                  _key: spanKey,
+                  _type: 'span',
+                  text: 'foo',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+            },
+          ],
+        },
+        {
+          origin: 'local',
+          type: 'set',
+          path: [{_key: blockKey}, 'style'],
+          value: 'normal',
+        },
+      ])
+    })
+  })
+
   test('Scenario: Child keys on initial blocks are made unique', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
@@ -522,6 +747,7 @@ describe('Feature: Self-solving', () => {
         _type: 'block',
         _key: blockKey,
         children: [barSpan],
+        style: 'normal',
       },
       placement: 'after',
     })

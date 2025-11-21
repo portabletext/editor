@@ -51,7 +51,6 @@ describe(toSlateBlock.name, () => {
           text: '123',
         },
       ],
-      style: 'normal',
     })
   })
 
@@ -106,7 +105,6 @@ describe(toSlateBlock.name, () => {
           },
         },
       ],
-      style: 'normal',
     })
   })
 })
