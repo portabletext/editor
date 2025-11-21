@@ -32,7 +32,6 @@ describe(toSlateBlock.name, () => {
               text: 'foo',
             },
           ],
-          style: 'normal',
         })
       })
 
@@ -62,7 +61,6 @@ describe(toSlateBlock.name, () => {
               text: 'foo',
             },
           ],
-          style: 'normal',
         })
       })
 
@@ -101,7 +99,6 @@ describe(toSlateBlock.name, () => {
               __inline: true,
             },
           ],
-          style: 'normal',
         })
       })
     })
@@ -148,7 +145,6 @@ describe(toSlateBlock.name, () => {
               },
             },
           ],
-          style: 'normal',
         })
       })
 
@@ -191,7 +187,6 @@ describe(toSlateBlock.name, () => {
               },
             },
           ],
-          style: 'normal',
         })
       })
     })
@@ -238,7 +233,6 @@ describe(toSlateBlock.name, () => {
               },
             },
           ],
-          style: 'normal',
         })
       })
 
@@ -281,7 +275,6 @@ describe(toSlateBlock.name, () => {
               },
             },
           ],
-          style: 'normal',
         })
       })
     })
