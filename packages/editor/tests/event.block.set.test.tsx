@@ -321,19 +321,43 @@ describe('event.block.set', () => {
       block: {
         _key: textBlockKey,
         _type: 'block',
+        style: 'normal',
       },
       placement: 'auto',
     })
 
     await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toMatchObject([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: textBlockKey,
           _type: 'block',
+          children: [{_key: 'k3', _type: 'span', text: '', marks: []}],
+          markDefs: [],
           style: 'normal',
         },
       ])
-      expect(patches.slice(2)).toEqual([
+      expect(patches).toEqual([
+        {
+          origin: 'local',
+          type: 'setIfMissing',
+          path: [],
+          value: [],
+        },
+        {
+          origin: 'local',
+          type: 'insert',
+          path: [0],
+          position: 'before',
+          items: [
+            {
+              _key: 'k0',
+              _type: 'block',
+              children: [{_key: 'k1', _type: 'span', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
         {
           origin: 'local',
           type: 'insert',
@@ -351,7 +375,6 @@ describe('event.block.set', () => {
                   marks: [],
                 },
               ],
-              markDefs: [],
               style: 'normal',
             },
           ],
@@ -366,6 +389,18 @@ describe('event.block.set', () => {
           type: 'unset',
           path: [],
         },
+        {
+          origin: 'local',
+          type: 'setIfMissing',
+          path: [],
+          value: [],
+        },
+        {
+          origin: 'local',
+          type: 'set',
+          path: [{_key: textBlockKey}, 'markDefs'],
+          value: [],
+        },
       ])
     })
 
@@ -378,14 +413,16 @@ describe('event.block.set', () => {
     })
 
     await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toMatchObject([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: textBlockKey,
           _type: 'block',
+          children: [{_key: 'k3', _type: 'span', text: '', marks: []}],
+          markDefs: [],
           style: 'h1',
         },
       ])
-      expect(patches.slice(5)).toEqual([
+      expect(patches.slice(7)).toEqual([
         {
           origin: 'local',
           type: 'setIfMissing',
@@ -451,10 +488,12 @@ describe('event.block.set', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editor.getSnapshot().context.value).toMatchObject([
+      return expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: textBlockKey,
           _type: 'block',
+          children: [{_key: 'k3', _type: 'span', text: '', marks: []}],
+          markDefs: [],
           style: 'normal',
         },
       ])
@@ -542,6 +581,7 @@ describe('event.block.set', () => {
           _key: blockKey,
           _type: 'block',
           children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+          style: 'normal',
           markDefs: [],
         },
       ],

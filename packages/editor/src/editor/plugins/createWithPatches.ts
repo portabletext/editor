@@ -38,7 +38,7 @@ export function createWithPatches({
 }: Options): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
   // The previous editor children are needed to figure out the _key of deleted nodes
   // The editor.children would no longer contain that information if the node is already deleted.
-  let previousChildren: Descendant[]
+  let previousChildren: Descendant[] = []
 
   const applyPatch = createApplyPatch(editorActor.getSnapshot().context.schema)
 
