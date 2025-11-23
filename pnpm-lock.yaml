@@ -473,8 +473,8 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
       immer:
-        specifier: ^10.2.0
-        version: 10.2.0
+        specifier: ^11.0.0
+        version: 11.0.0
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -899,7 +899,7 @@ importers:
         version: 4.17.0(@types/react@19.2.6)(debug@4.4.3)
       '@sanity/sdk-react':
         specifier: ^2.1.2
-        version: 2.2.0(@types/react@19.2.6)(immer@10.2.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(use-sync-external-store@1.5.0(react@19.2.0))
+        version: 2.2.0(@types/react@19.2.6)(immer@11.0.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(use-sync-external-store@1.5.0(react@19.2.0))
       '@sanity/types':
         specifier: ^4.17.0
         version: 4.17.0(@types/react@19.2.6)(debug@4.4.3)
@@ -5152,6 +5152,9 @@ packages:
 
   immer@10.2.0:
     resolution: {integrity: sha512-d/+XTN3zfODyjr89gM3mPq1WNX2B8pYsu7eORitdwyA2sBubnTl3laYlBk4sXY5FUa5qTZGBDPJICVbvqzjlbw==}
+
+  immer@11.0.0:
+    resolution: {integrity: sha512-XtRG4SINt4dpqlnJvs70O2j6hH7H0X8fUzFsjMn1rwnETaxwp83HLNimXBjZ78MrKl3/d3/pkzDH0o0Lkxm37Q==}
 
   import-fresh@3.3.1:
     resolution: {integrity: sha512-TR3KfrTZTYLPB6jUjfx6MF9WcWrHL9su5TObK4ZkYgBdWKPOFoSoQIdEuTuR82pmtxH2spWG9h6etwfr1pLBqQ==}
@@ -10678,11 +10681,11 @@ snapshots:
       - debug
       - supports-color
 
-  '@sanity/sdk-react@2.2.0(@types/react@19.2.6)(immer@10.2.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(use-sync-external-store@1.5.0(react@19.2.0))':
+  '@sanity/sdk-react@2.2.0(@types/react@19.2.6)(immer@11.0.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(use-sync-external-store@1.5.0(react@19.2.0))':
     dependencies:
       '@sanity/client': 7.12.1(debug@4.4.3)
       '@sanity/message-protocol': 0.12.0
-      '@sanity/sdk': 2.2.0(@types/react@19.2.6)(immer@10.2.0)(react@19.2.0)(use-sync-external-store@1.5.0(react@19.2.0))
+      '@sanity/sdk': 2.2.0(@types/react@19.2.6)(immer@11.0.0)(react@19.2.0)(use-sync-external-store@1.5.0(react@19.2.0))
       '@sanity/types': 3.99.0(@types/react@19.2.6)
       '@types/lodash-es': 4.17.12
       groq: 3.88.1-typegen-experimental.0
@@ -10698,7 +10701,7 @@ snapshots:
       - immer
       - use-sync-external-store
 
-  '@sanity/sdk@2.2.0(@types/react@19.2.6)(immer@10.2.0)(react@19.2.0)(use-sync-external-store@1.5.0(react@19.2.0))':
+  '@sanity/sdk@2.2.0(@types/react@19.2.6)(immer@11.0.0)(react@19.2.0)(use-sync-external-store@1.5.0(react@19.2.0))':
     dependencies:
       '@sanity/bifur-client': 0.4.1
       '@sanity/client': 7.12.1(debug@4.4.3)
@@ -10713,7 +10716,7 @@ snapshots:
       lodash-es: 4.17.21
       reselect: 5.1.1
       rxjs: 7.8.2
-      zustand: 5.0.8(@types/react@19.2.6)(immer@10.2.0)(react@19.2.0)(use-sync-external-store@1.5.0(react@19.2.0))
+      zustand: 5.0.8(@types/react@19.2.6)(immer@11.0.0)(react@19.2.0)(use-sync-external-store@1.5.0(react@19.2.0))
     transitivePeerDependencies:
       - '@types/react'
       - debug
@@ -12746,6 +12749,8 @@ snapshots:
   ignore@7.0.5: {}
 
   immer@10.2.0: {}
+
+  immer@11.0.0: {}
 
   import-fresh@3.3.1:
     dependencies:
@@ -15469,10 +15474,10 @@ snapshots:
 
   zod@4.1.12: {}
 
-  zustand@5.0.8(@types/react@19.2.6)(immer@10.2.0)(react@19.2.0)(use-sync-external-store@1.5.0(react@19.2.0)):
+  zustand@5.0.8(@types/react@19.2.6)(immer@11.0.0)(react@19.2.0)(use-sync-external-store@1.5.0(react@19.2.0)):
     optionalDependencies:
       '@types/react': 19.2.6
-      immer: 10.2.0
+      immer: 11.0.0
       react: 19.2.0
       use-sync-external-store: 1.5.0(react@19.2.0)
 
