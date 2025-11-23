@@ -60,7 +60,6 @@ import {Container} from './primitives/container'
 import {ErrorBoundary} from './primitives/error-boundary'
 import {ErrorScreen} from './primitives/error-screen'
 import {Separator} from './primitives/separator'
-import {Spinner} from './primitives/spinner'
 import {Switch} from './primitives/switch'
 import {Tooltip} from './primitives/tooltip'
 import {RangeDecorationButton} from './range-decoration-button'
@@ -88,7 +87,6 @@ export function Editor(props: {
   const debugModeEnabled = useSelector(props.editorRef, (s) =>
     s.matches({'debug mode': 'shown'}),
   )
-  const [loading, setLoading] = useState(false)
   const [readOnly, setReadOnly] = useState(false)
   const playgroundFeatureFlags = useContext(PlaygroundFeatureFlagsContext)
   const featureFlags = useSelector(
@@ -120,12 +118,6 @@ export function Editor(props: {
             on={(event) => {
               if (event.type === 'mutation') {
                 props.editorRef.send(event)
-              }
-              if (event.type === 'loading') {
-                setLoading(true)
-              }
-              if (event.type === 'done loading') {
-                setLoading(false)
               }
               if (event.type === 'editable') {
                 setReadOnly(false)
@@ -214,7 +206,6 @@ export function Editor(props: {
                   />
                 </EditorFeatureFlagsContext.Provider>
               </ErrorBoundary>
-              {loading ? <Spinner /> : null}
             </div>
           </Container>
           {debugModeEnabled ? (

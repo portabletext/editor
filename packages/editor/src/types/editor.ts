@@ -214,15 +214,6 @@ export type FocusChange = {
 }
 
 /**
- * @beta
- * @deprecated Use `'patch'` changes instead
- */
-export type UnsetChange = {
-  type: 'unset'
-  previousValue: PortableTextBlock[]
-}
-
-/**
  * The editor blurred
  * @beta */
 export type BlurChange = {
@@ -231,34 +222,10 @@ export type BlurChange = {
 }
 
 /**
- * The editor is currently loading something
- * Could be used to show a spinner etc.
- * @beta
- * @deprecated Will be removed in the next major version
- */
-export type LoadingChange = {
-  type: 'loading'
-  isLoading: boolean
-}
-
-/**
  * The editor content is ready to be edited by the user
  * @beta */
 export type ReadyChange = {
   type: 'ready'
-}
-
-/**
- * The editor produced an error
- * @beta
- * @deprecated The change is no longer emitted
- * */
-export type ErrorChange = {
-  type: 'error'
-  name: string // short computer readable name
-  level: 'warning' | 'error'
-  description: string
-  data?: unknown
 }
 
 /**
@@ -295,55 +262,16 @@ export type InvalidValue = {
 }
 
 /**
- * The editor performed a undo history step
- * @beta
- * @deprecated The change is no longer emitted
- *  */
-export type UndoChange = {
-  type: 'undo'
-  patches: Patch[]
-  timestamp: Date
-}
-
-/**
- * The editor performed redo history step
- * @beta
- * @deprecated The change is no longer emitted
- *  */
-export type RedoChange = {
-  type: 'redo'
-  patches: Patch[]
-  timestamp: Date
-}
-
-/**
- * The editor was either connected or disconnected to the network
- * To show out of sync warnings etc when in collaborative mode.
- * @beta
- * @deprecated The change is no longer emitted
- *  */
-export type ConnectionChange = {
-  type: 'connection'
-  value: 'online' | 'offline'
-}
-
-/**
  * When the editor changes, it will emit a change item describing the change
  * @beta */
 export type EditorChange =
   | BlurChange
-  | ConnectionChange
-  | ErrorChange
   | FocusChange
   | InvalidValue
-  | LoadingChange
   | MutationChange
   | PatchChange
   | ReadyChange
-  | RedoChange
   | SelectionChange
-  | UndoChange
-  | UnsetChange
   | ValueChange
 
 /**

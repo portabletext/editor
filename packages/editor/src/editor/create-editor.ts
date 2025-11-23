@@ -124,11 +124,9 @@ export function createInternalEditor(config: EditorConfig): {
       const subscription = relayActor.on(event, (event) => {
         switch (event.type) {
           case 'blurred':
-          case 'done loading':
           case 'editable':
           case 'focused':
           case 'invalid value':
-          case 'loading':
           case 'mutation':
           case 'patch':
           case 'read only':
