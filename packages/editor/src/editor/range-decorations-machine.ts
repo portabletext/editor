@@ -357,7 +357,7 @@ function createDecorate(
   slateEditor: PortableTextSlateEditor,
 ) {
   return function decorate([node, path]: NodeEntry): Array<BaseRange> {
-    if (isEqualToEmptyEditor(slateEditor.children, schema)) {
+    if (isEqualToEmptyEditor(slateEditor.value, schema)) {
       return [
         {
           anchor: {

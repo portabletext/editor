@@ -9,7 +9,6 @@ import {createCoreConverters} from '../converters/converters.core'
 import type {Editor, EditorConfig} from '../editor'
 import {debugWithName} from '../internal-utils/debug'
 import {compileType} from '../internal-utils/schema'
-import {fromSlateValue} from '../internal-utils/values'
 import {corePriority} from '../priority/priority.core'
 import {createEditorPriority} from '../priority/priority.types'
 import type {EditableAPI, PortableTextSlateEditor} from '../types/editor'
@@ -23,7 +22,6 @@ import {mutationMachine, type MutationActor} from './mutation-machine'
 import {createEditableAPI} from './plugins/createWithEditableAPI'
 import {relayMachine, type RelayActor} from './relay-machine'
 import {syncMachine, type SyncActor} from './sync-machine'
-import {KEY_TO_VALUE_ELEMENT} from './weakMaps'
 
 const debug = debugWithName('setup')
 
@@ -266,11 +264,7 @@ function createActors(config: {
           config.editorActor.send({
             ...event,
             type: 'internal.patch',
-            value: fromSlateValue(
-              config.slateEditor.children,
-              config.editorActor.getSnapshot().context.schema.block.name,
-              KEY_TO_VALUE_ELEMENT.get(config.slateEditor),
-            ),
+            value: config.slateEditor.value,
           })
           break
 

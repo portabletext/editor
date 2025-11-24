@@ -145,7 +145,7 @@ function insertPatch(
     const normalizedIdx =
       position === 'after' ? targetBlockIndex + 1 : targetBlockIndex
 
-    const editorWasEmptyBefore = isEqualToEmptyEditor(editor.children, schema)
+    const editorWasEmptyBefore = isEqualToEmptyEditor(editor.value, schema)
 
     Transforms.insertNodes(editor, blocksToInsert, {at: [normalizedIdx]})
 

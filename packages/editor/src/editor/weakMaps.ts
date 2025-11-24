@@ -7,8 +7,6 @@ export const IS_PROCESSING_REMOTE_CHANGES: WeakMap<Editor, boolean> =
 
 export const KEY_TO_SLATE_ELEMENT: WeakMap<Editor, any | undefined> =
   new WeakMap()
-export const KEY_TO_VALUE_ELEMENT: WeakMap<Editor, any | undefined> =
-  new WeakMap()
 
 // Keep object relation to slate range in the portable-text-range
 export const SLATE_TO_PORTABLE_TEXT_RANGE = new WeakMap<

@@ -1,5 +1,9 @@
 import {compileSchemaDefinitionToPortableTextMemberSchemaTypes} from '@portabletext/sanity-bridge'
-import {compileSchema, defineSchema} from '@portabletext/schema'
+import {
+  compileSchema,
+  defineSchema,
+  type PortableTextBlock,
+} from '@portabletext/schema'
 import type {PortableTextTextBlock} from '@sanity/types'
 import {createEditor, type Descendant} from 'slate'
 import {beforeEach, describe, expect, it, test} from 'vitest'
@@ -32,13 +36,15 @@ const editorActor = createActor(editorMachine, {
 })
 const relayActor = createActor(relayMachine)
 
-const editor = withPlugins(createEditor(), {
+const e = createEditor()
+e.value = []
+const editor = withPlugins(e, {
   editorActor,
   relayActor,
   subscriptions: [],
 })
 
-const createDefaultValue = () =>
+const createDefaultChildren = () =>
   [
     {
       _type: 'block',
@@ -57,7 +63,25 @@ const createDefaultValue = () =>
         {_type: 'span', _key: 'fd9b4a4e6c0b', text: '', marks: []},
       ],
     },
-  ] as Descendant[]
+  ] satisfies Array<Descendant>
+const createDefaultValue = () =>
+  [
+    {
+      _type: 'block',
+      _key: '1f2e64b47787',
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: 'c130395c640c', text: '', marks: []},
+        {
+          _key: '773866318fa8',
+          _type: 'someObject',
+          value: {title: 'The Object'},
+        },
+        {_type: 'span', _key: 'fd9b4a4e6c0b', text: '', marks: []},
+      ],
+    },
+  ] as Array<PortableTextBlock>
 
 describe(insertNodePatch.name, () => {
   test('Scenario: Inserting block object on empty editor', () => {
@@ -121,7 +145,7 @@ describe(insertNodePatch.name, () => {
 
 describe('operationToPatches', () => {
   beforeEach(() => {
-    editor.children = createDefaultValue()
+    editor.children = createDefaultChildren()
     editor.onChange()
   })
 
@@ -418,12 +442,13 @@ describe('operationToPatches', () => {
   })
 
   it('produce correct remove block patch', () => {
+    const children = createDefaultChildren()
     const val = createDefaultValue()
     expect(
       removeNodePatch(editorActor.getSnapshot().context.schema, val, {
         type: 'remove_node',
         path: [0],
-        node: val[0],
+        node: children[0],
       }),
     ).toMatchInlineSnapshot(`
       [

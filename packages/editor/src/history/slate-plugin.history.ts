@@ -8,7 +8,6 @@ import type {Operation} from 'slate'
 import type {EditorActor} from '../editor/editor-machine'
 import {isChangingRemotely} from '../editor/withChanges'
 import {debugWithName} from '../internal-utils/debug'
-import {fromSlateValue} from '../internal-utils/values'
 import type {PortableTextSlateEditor} from '../types/editor'
 import {getRemotePatches} from './remote-patches'
 import {isRedoing} from './slate-plugin.redoing'
@@ -29,10 +28,7 @@ export function pluginHistory({
 }): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
   return (editor: PortableTextSlateEditor) => {
     const remotePatches = getRemotePatches(editor)
-    let previousSnapshot: PortableTextBlock[] | undefined = fromSlateValue(
-      editor.children,
-      editorActor.getSnapshot().context.schema.block.name,
-    )
+    let previousSnapshot: Array<PortableTextBlock> | undefined = editor.value
     let previousUndoStepId = getCurrentUndoStepId(editor)
 
     subscriptions.push(() => {

@@ -125,14 +125,6 @@ export function toSlateBlock(
   ) as Descendant
 }
 
-export function fromSlateValue(
-  value: Descendant[],
-  textBlockType: string,
-  keyMap: Record<string, PortableTextBlock | PortableTextChild> = {},
-): PortableTextBlock[] {
-  return value.map((block) => fromSlateBlock(block, textBlockType, keyMap))
-}
-
 export function fromSlateBlock(
   block: Descendant,
   textBlockType: string,

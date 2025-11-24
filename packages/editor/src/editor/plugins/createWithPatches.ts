@@ -1,5 +1,6 @@
 import {insert, setIfMissing, unset, type Patch} from '@portabletext/patches'
-import {Editor, type Descendant, type Operation} from 'slate'
+import type {PortableTextBlock} from '@portabletext/schema'
+import {Editor, type Operation} from 'slate'
 import {pluginWithoutHistory} from '../../history/slate-plugin.without-history'
 import {getCurrentUndoStepId} from '../../history/undo-step'
 import {createApplyPatch} from '../../internal-utils/applyPatch'
@@ -14,11 +15,11 @@ import {
   setNodePatch,
   splitNodePatch,
 } from '../../internal-utils/operation-to-patches'
-import {fromSlateValue, isEqualToEmptyEditor} from '../../internal-utils/values'
+import {isEqualToEmptyEditor} from '../../internal-utils/values'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
 import type {RelayActor} from '../relay-machine'
-import {IS_PROCESSING_REMOTE_CHANGES, KEY_TO_VALUE_ELEMENT} from '../weakMaps'
+import {IS_PROCESSING_REMOTE_CHANGES} from '../weakMaps'
 import {withRemoteChanges} from '../withChanges'
 import {isPatching, PATCHING, withoutPatching} from '../withoutPatching'
 
@@ -36,16 +37,16 @@ export function createWithPatches({
   relayActor,
   subscriptions,
 }: Options): (editor: PortableTextSlateEditor) => PortableTextSlateEditor {
-  // The previous editor children are needed to figure out the _key of deleted nodes
-  // The editor.children would no longer contain that information if the node is already deleted.
-  let previousChildren: Descendant[]
+  // The previous editor value are needed to figure out the _key of deleted nodes
+  // The editor.value would no longer contain that information if the node is already deleted.
+  let previousValue: PortableTextBlock[]
 
   const applyPatch = createApplyPatch(editorActor.getSnapshot().context.schema)
 
   return function withPatches(editor: PortableTextSlateEditor) {
     IS_PROCESSING_REMOTE_CHANGES.set(editor, false)
     PATCHING.set(editor, true)
-    previousChildren = [...editor.children]
+    previousValue = [...editor.value]
 
     const {apply} = editor
     let bufferedPatches: Patch[] = []
@@ -106,10 +107,10 @@ export function createWithPatches({
       let patches: Patch[] = []
 
       // Update previous children here before we apply
-      previousChildren = editor.children
+      previousValue = editor.value
 
       const editorWasEmpty = isEqualToEmptyEditor(
-        previousChildren,
+        previousValue,
         editorActor.getSnapshot().context.schema,
       )
 
@@ -117,7 +118,7 @@ export function createWithPatches({
       apply(operation)
 
       const editorIsEmpty = isEqualToEmptyEditor(
-        editor.children,
+        editor.value,
         editorActor.getSnapshot().context.schema,
       )
 
@@ -136,7 +137,7 @@ export function createWithPatches({
         !editorIsEmpty &&
         operation.type !== 'set_selection'
       ) {
-        patches.push(insert(previousChildren, 'before', [0]))
+        patches.push(insert(previousValue, 'before', [0]))
       }
 
       switch (operation.type) {
@@ -147,7 +148,7 @@ export function createWithPatches({
               editorActor.getSnapshot().context.schema,
               editor.children,
               operation,
-              previousChildren,
+              previousValue,
             ),
           ]
           break
@@ -158,7 +159,7 @@ export function createWithPatches({
               editorActor.getSnapshot().context.schema,
               editor.children,
               operation,
-              previousChildren,
+              previousValue,
             ),
           ]
           break
@@ -167,7 +168,7 @@ export function createWithPatches({
             ...patches,
             ...removeNodePatch(
               editorActor.getSnapshot().context.schema,
-              previousChildren,
+              previousValue,
               operation,
             ),
           ]
@@ -179,7 +180,7 @@ export function createWithPatches({
               editorActor.getSnapshot().context.schema,
               editor.children,
               operation,
-              previousChildren,
+              previousValue,
             ),
           ]
           break
@@ -190,7 +191,7 @@ export function createWithPatches({
               editorActor.getSnapshot().context.schema,
               editor.children,
               operation,
-              previousChildren,
+              previousValue,
             ),
           ]
           break
@@ -211,7 +212,7 @@ export function createWithPatches({
               editorActor.getSnapshot().context.schema,
               editor.children,
               operation,
-              previousChildren,
+              previousValue,
             ),
           ]
           break
@@ -220,7 +221,7 @@ export function createWithPatches({
             ...patches,
             ...moveNodePatch(
               editorActor.getSnapshot().context.schema,
-              previousChildren,
+              previousValue,
               operation,
             ),
           ]
@@ -240,11 +241,7 @@ export function createWithPatches({
         patches = [...patches, unset([])]
         relayActor.send({
           type: 'unset',
-          previousValue: fromSlateValue(
-            previousChildren,
-            editorActor.getSnapshot().context.schema.block.name,
-            KEY_TO_VALUE_ELEMENT.get(editor),
-          ),
+          previousValue,
         })
       }
 
