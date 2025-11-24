@@ -1,30 +1,48 @@
 import {applyAll} from '@portabletext/patches'
+import {isTextBlock} from '@portabletext/schema'
 import {Editor, Element, Transforms} from 'slate'
-import {toSlateRange} from '../internal-utils/to-slate-range'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const childUnsetOperationImplementation: BehaviorOperationImplementation<
   'child.unset'
 > = ({context, operation}) => {
-  const location = toSlateRange({
-    context: {
-      schema: context.schema,
-      value: operation.editor.value,
-      selection: {
-        anchor: {path: operation.at, offset: 0},
-        focus: {path: operation.at, offset: 0},
-      },
-    },
-    blockIndexMap: operation.editor.blockIndexMap,
-  })
+  const blockKey = operation.at[0]._key
+  const blockIndex = operation.editor.blockIndexMap.get(blockKey)
 
-  if (!location) {
+  if (blockIndex === undefined) {
+    throw new Error(`Unable to find block index for block key ${blockKey}`)
+  }
+
+  const block =
+    blockIndex !== undefined ? operation.editor.value.at(blockIndex) : undefined
+
+  if (!block) {
+    throw new Error(`Unable to find block at ${JSON.stringify(operation.at)}`)
+  }
+
+  if (!isTextBlock(context, block)) {
+    throw new Error(`Block ${JSON.stringify(blockKey)} is not a text block`)
+  }
+
+  const childKey = operation.at[2]._key
+
+  if (!childKey) {
     throw new Error(
-      `Unable to convert ${JSON.stringify(operation.at)} into a Slate Range`,
+      `Unable to find child key at ${JSON.stringify(operation.at)}`,
     )
   }
 
-  const childEntry = Editor.node(operation.editor, location, {depth: 2})
+  const childIndex = block.children.findIndex(
+    (child) => child._key === childKey,
+  )
+
+  if (childIndex === -1) {
+    throw new Error(`Unable to find child at ${JSON.stringify(operation.at)}`)
+  }
+
+  const childEntry = Editor.node(operation.editor, [blockIndex, childIndex], {
+    depth: 2,
+  })
   const child = childEntry?.[0]
   const childPath = childEntry?.[1]
 
