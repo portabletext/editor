@@ -7,7 +7,7 @@ import {
   type InsertPosition,
   type Patch,
 } from '@portabletext/patches'
-import {isSpan, isTextBlock} from '@portabletext/schema'
+import {isSpan, isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import type {Path, PortableTextSpan, PortableTextTextBlock} from '@sanity/types'
 import {
   Element,
@@ -29,7 +29,7 @@ export function insertTextPatch(
   schema: EditorSchema,
   children: Descendant[],
   operation: InsertTextOperation,
-  beforeValue: Descendant[],
+  beforeValue: Array<PortableTextBlock>,
 ): Array<Patch> {
   const block =
     isTextBlock({schema}, children[operation.path[0]]) &&
@@ -62,7 +62,7 @@ export function removeTextPatch(
   schema: EditorSchema,
   children: Descendant[],
   operation: RemoveTextOperation,
-  beforeValue: Descendant[],
+  beforeValue: Array<PortableTextBlock>,
 ): Array<Patch> {
   const block = children[operation.path[0]]
   if (!block) {
@@ -271,7 +271,7 @@ export function insertNodePatch(
   schema: EditorSchema,
   children: Descendant[],
   operation: InsertNodeOperation,
-  beforeValue: Descendant[],
+  beforeValue: Array<PortableTextBlock>,
 ): Array<Patch> {
   const block = beforeValue[operation.path[0]]
   if (operation.path.length === 1) {
@@ -346,7 +346,7 @@ export function splitNodePatch(
   schema: EditorSchema,
   children: Descendant[],
   operation: SplitNodeOperation,
-  beforeValue: Descendant[],
+  beforeValue: Array<PortableTextBlock>,
 ): Array<Patch> {
   const patches: Patch[] = []
   const splitBlock = children[operation.path[0]]
@@ -414,7 +414,7 @@ export function splitNodePatch(
 
 export function removeNodePatch(
   schema: EditorSchema,
-  beforeValue: Descendant[],
+  beforeValue: Array<PortableTextBlock>,
   operation: RemoveNodeOperation,
 ): Array<Patch> {
   const block = beforeValue[operation.path[0]]
@@ -454,7 +454,7 @@ export function mergeNodePatch(
   schema: EditorSchema,
   children: Descendant[],
   operation: MergeNodeOperation,
-  beforeValue: Descendant[],
+  beforeValue: Array<PortableTextBlock>,
 ): Array<Patch> {
   const patches: Patch[] = []
 
@@ -532,7 +532,7 @@ export function mergeNodePatch(
 
 export function moveNodePatch(
   schema: EditorSchema,
-  beforeValue: Descendant[],
+  beforeValue: Array<PortableTextBlock>,
   operation: MoveNodeOperation,
 ): Array<Patch> {
   const patches: Patch[] = []
@@ -547,11 +547,7 @@ export function moveNodePatch(
     const position: InsertPosition =
       operation.path[0] > operation.newPath[0] ? 'before' : 'after'
     patches.push(unset([{_key: block._key}]))
-    patches.push(
-      insert([fromSlateBlock(block, schema.block.name)], position, [
-        {_key: targetBlock._key},
-      ]),
-    )
+    patches.push(insert([block], position, [{_key: targetBlock._key}]))
   } else if (
     operation.path.length === 2 &&
     isTextBlock({schema}, block) &&
@@ -561,9 +557,7 @@ export function moveNodePatch(
     const targetChild = targetBlock.children[operation.newPath[1]]
     const position =
       operation.newPath[1] === targetBlock.children.length ? 'after' : 'before'
-    const childToInsert = (
-      fromSlateBlock(block, schema.block.name) as PortableTextTextBlock
-    ).children[operation.path[1]]
+    const childToInsert = block.children[operation.path[1]]
     patches.push(unset([{_key: block._key}, 'children', {_key: child._key}]))
     patches.push(
       insert([childToInsert], position, [

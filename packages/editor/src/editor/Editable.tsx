@@ -25,7 +25,7 @@ import {getEventPosition} from '../internal-utils/event-position'
 import {normalizeSelection} from '../internal-utils/selection'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {fromSlateValue, isEqualToEmptyEditor} from '../internal-utils/values'
+import {isEqualToEmptyEditor} from '../internal-utils/values'
 import type {
   EditorSelection,
   OnCopyFn,
@@ -51,7 +51,6 @@ import {createWithHotkeys} from './plugins/createWithHotKeys'
 import {rangeDecorationsMachine} from './range-decorations-machine'
 import {RelayActorContext} from './relay-actor-context'
 import {validateSelectionMachine} from './validate-selection-machine'
-import {KEY_TO_VALUE_ELEMENT} from './weakMaps'
 
 const debug = debugWithName('component:Editable')
 
@@ -250,10 +249,7 @@ export const PortableTextEditable = forwardRef<
       debug(`Selection from props ${JSON.stringify(propsSelection)}`)
       const normalizedSelection = normalizeSelection(
         propsSelection,
-        fromSlateValue(
-          slateEditor.children,
-          editorActor.getSnapshot().context.schema.block.name,
-        ),
+        slateEditor.value,
       )
       if (normalizedSelection !== null) {
         debug(
@@ -401,11 +397,7 @@ export const PortableTextEditable = forwardRef<
   // Handle incoming pasting events in the editor
   const handlePaste = useCallback(
     (event: ClipboardEvent<HTMLDivElement>): Promise<void> | void => {
-      const value = fromSlateValue(
-        slateEditor.children,
-        editorActor.getSnapshot().context.schema.block.name,
-        KEY_TO_VALUE_ELEMENT.get(slateEditor),
-      )
+      const value = slateEditor.value
       const ptRange = slateEditor.selection
         ? slateRangeToSelection({
             schema: editorActor.getSnapshot().context.schema,

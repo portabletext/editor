@@ -17,7 +17,6 @@ import {
   slateRangeToSelection,
 } from '../../internal-utils/slate-utils'
 import {toSlateRange} from '../../internal-utils/to-slate-range'
-import {fromSlateValue} from '../../internal-utils/values'
 import {getActiveAnnotationsMarks} from '../../selectors/selector.get-active-annotation-marks'
 import {getActiveDecorators} from '../../selectors/selector.get-active-decorators'
 import {getFocusBlock} from '../../selectors/selector.get-focus-block'
@@ -36,7 +35,7 @@ import {
 } from '../../utils/util.selection-point'
 import type {EditorActor} from '../editor-machine'
 import {getEditorSnapshot} from '../editor-selector'
-import {KEY_TO_VALUE_ELEMENT, SLATE_TO_PORTABLE_TEXT_RANGE} from '../weakMaps'
+import {SLATE_TO_PORTABLE_TEXT_RANGE} from '../weakMaps'
 
 const debug = debugWithName('API:editable')
 
@@ -540,11 +539,7 @@ export function createEditableAPI(
       return ptRange
     },
     getValue: () => {
-      return fromSlateValue(
-        editor.children,
-        types.block.name,
-        KEY_TO_VALUE_ELEMENT.get(editor),
-      )
+      return editor.value
     },
     isCollapsedSelection: () => {
       return !!editor.selection && Range.isCollapsed(editor.selection)

@@ -8,7 +8,7 @@ import type {PortableTextSlateEditor} from '../types/editor'
 import type {EditorActor} from './editor-machine'
 import {withPlugins} from './plugins/with-plugins'
 import type {RelayActor} from './relay-machine'
-import {KEY_TO_SLATE_ELEMENT, KEY_TO_VALUE_ELEMENT} from './weakMaps'
+import {KEY_TO_SLATE_ELEMENT} from './weakMaps'
 
 const debug = debugWithName('setup')
 
@@ -26,24 +26,24 @@ export type SlateEditor = {
 export function createSlateEditor(config: SlateEditorConfig): SlateEditor {
   debug('Creating new Slate editor instance')
 
-  const instance = withPlugins(withReact(createEditor()), {
+  const placeholderBlock = createPlaceholderBlock(
+    config.editorActor.getSnapshot().context,
+  )
+
+  const editor = createEditor()
+  editor.decoratedRanges = []
+  editor.decoratorState = {}
+  editor.value = [placeholderBlock]
+  editor.blockIndexMap = new Map<string, number>()
+  editor.listIndexMap = new Map<string, number>()
+
+  const instance = withPlugins(withReact(editor), {
     editorActor: config.editorActor,
     relayActor: config.relayActor,
     subscriptions: config.subscriptions,
   })
 
-  KEY_TO_VALUE_ELEMENT.set(instance, {})
   KEY_TO_SLATE_ELEMENT.set(instance, {})
-
-  instance.decoratedRanges = []
-  instance.decoratorState = {}
-
-  const placeholderBlock = createPlaceholderBlock(
-    config.editorActor.getSnapshot().context,
-  )
-  instance.value = [placeholderBlock]
-  instance.blockIndexMap = new Map<string, number>()
-  instance.listIndexMap = new Map<string, number>()
 
   buildIndexMaps(
     {
