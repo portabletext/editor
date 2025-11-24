@@ -4,16 +4,8 @@ import type {
   PortableTextBlock,
   PortableTextChild,
   PortableTextObject,
-  PortableTextTextBlock,
 } from '@sanity/types'
-import {
-  Editor,
-  Node,
-  Range,
-  Element as SlateElement,
-  Text,
-  Transforms,
-} from 'slate'
+import {Editor, Range, Element as SlateElement, Text, Transforms} from 'slate'
 import type {DOMNode} from 'slate-dom'
 import {ReactEditor} from 'slate-react'
 import {buildIndexMaps} from '../../internal-utils/build-index-maps'
@@ -25,7 +17,7 @@ import {
   slateRangeToSelection,
 } from '../../internal-utils/slate-utils'
 import {toSlateRange} from '../../internal-utils/to-slate-range'
-import {fromSlateBlock, fromSlateValue} from '../../internal-utils/values'
+import {fromSlateValue} from '../../internal-utils/values'
 import {getActiveAnnotationsMarks} from '../../selectors/selector.get-active-annotation-marks'
 import {getActiveDecorators} from '../../selectors/selector.get-active-decorators'
 import {getFocusBlock} from '../../selectors/selector.get-focus-block'
@@ -38,6 +30,10 @@ import type {
   EditorSelection,
   PortableTextSlateEditor,
 } from '../../types/editor'
+import {
+  getBlockKeyFromSelectionPoint,
+  getChildKeyFromSelectionPoint,
+} from '../../utils/util.selection-point'
 import type {EditorActor} from '../editor-machine'
 import {getEditorSnapshot} from '../editor-selector'
 import {KEY_TO_VALUE_ELEMENT, SLATE_TO_PORTABLE_TEXT_RANGE} from '../weakMaps'
@@ -151,36 +147,43 @@ export function createEditableAPI(
       editor.onChange()
     },
     focusBlock: (): PortableTextBlock | undefined => {
-      if (editor.selection) {
-        const block = Node.descendant(
-          editor,
-          editor.selection.focus.path.slice(0, 1),
-        )
-        if (block) {
-          return fromSlateBlock(
-            block,
-            types.block.name,
-            KEY_TO_VALUE_ELEMENT.get(editor),
-          )
-        }
+      if (!editor.selection) {
+        return undefined
       }
-      return undefined
+
+      const focusBlockIndex = editor.selection.focus.path.at(0)
+
+      if (focusBlockIndex === undefined) {
+        return undefined
+      }
+
+      return editor.value.at(focusBlockIndex)
     },
     focusChild: (): PortableTextChild | undefined => {
-      if (editor.selection) {
-        const block = Node.descendant(
-          editor,
-          editor.selection.focus.path.slice(0, 1),
-        )
-        if (block && editor.isTextBlock(block)) {
-          const ptBlock = fromSlateBlock(
-            block,
-            types.block.name,
-            KEY_TO_VALUE_ELEMENT.get(editor),
-          ) as PortableTextTextBlock
-          return ptBlock.children[editor.selection.focus.path[1]]
-        }
+      if (!editor.selection) {
+        return undefined
       }
+
+      const focusBlockIndex = editor.selection.focus.path.at(0)
+      const focusChildIndex = editor.selection.focus.path.at(1)
+
+      const block =
+        focusBlockIndex !== undefined
+          ? editor.value.at(focusBlockIndex)
+          : undefined
+
+      if (!block) {
+        return undefined
+      }
+
+      if (isTextBlock(editorActor.getSnapshot().context, block)) {
+        if (focusChildIndex === undefined) {
+          return undefined
+        }
+
+        return block.children.at(focusChildIndex)
+      }
+
       return undefined
     },
     insertChild: <TSchemaType extends {name: string}>(
@@ -257,43 +260,38 @@ export function createEditableAPI(
       PortableTextBlock | PortableTextChild | undefined,
       Path | undefined,
     ] => {
-      const slatePath = toSlateRange({
-        context: {
-          schema: editorActor.getSnapshot().context.schema,
-          value: editor.value,
-          selection: {focus: {path, offset: 0}, anchor: {path, offset: 0}},
-        },
-        blockIndexMap: editor.blockIndexMap,
-      })
+      const blockKey = getBlockKeyFromSelectionPoint({path, offset: 0})
 
-      if (slatePath) {
-        const [block, blockPath] = Editor.node(
-          editor,
-          slatePath.focus.path.slice(0, 1),
-        )
-        if (block && blockPath && typeof block._key === 'string') {
-          if (path.length === 1 && slatePath.focus.path.length === 1) {
-            return [
-              fromSlateBlock(block, types.block.name),
-              [{_key: block._key}],
-            ]
-          }
-          const ptBlock = fromSlateBlock(
-            block,
-            types.block.name,
-            KEY_TO_VALUE_ELEMENT.get(editor),
-          )
-          if (editor.isTextBlock(ptBlock)) {
-            const ptChild = ptBlock.children[slatePath.focus.path[1]]
-            if (ptChild) {
-              return [
-                ptChild,
-                [{_key: block._key}, 'children', {_key: ptChild._key}],
-              ]
-            }
-          }
+      if (!blockKey) {
+        return [undefined, undefined]
+      }
+
+      const blockIndex = editor.blockIndexMap.get(blockKey)
+
+      if (blockIndex === undefined) {
+        return [undefined, undefined]
+      }
+
+      const block = editor.value.at(blockIndex)
+
+      if (!block) {
+        return [undefined, undefined]
+      }
+
+      const childKey = getChildKeyFromSelectionPoint({path, offset: 0})
+
+      if (path.length === 1 && !childKey) {
+        return [block, [{_key: block._key}]]
+      }
+
+      if (isTextBlock(editorActor.getSnapshot().context, block) && childKey) {
+        const child = block.children.find((child) => child._key === childKey)
+
+        if (child) {
+          return [child, [{_key: block._key}, 'children', {_key: child._key}]]
         }
       }
+
       return [undefined, undefined]
     },
     findDOMNode: (

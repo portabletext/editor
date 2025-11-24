@@ -1,56 +1,32 @@
 import {isTextBlock} from '@portabletext/schema'
 import {omit} from 'lodash'
-import {Editor, Transforms} from 'slate'
-import {KEY_TO_VALUE_ELEMENT} from '../editor/weakMaps'
-import {toSlateRange} from '../internal-utils/to-slate-range'
-import {fromSlateBlock} from '../internal-utils/values'
+import {Transforms} from 'slate'
 import {parseBlock} from '../utils/parse-blocks'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const blockUnsetOperationImplementation: BehaviorOperationImplementation<
   'block.unset'
 > = ({context, operation}) => {
-  const location = toSlateRange({
-    context: {
-      schema: context.schema,
-      value: operation.editor.value,
-      selection: {
-        anchor: {path: operation.at, offset: 0},
-        focus: {path: operation.at, offset: 0},
-      },
-    },
-    blockIndexMap: operation.editor.blockIndexMap,
-  })
+  const blockKey = operation.at[0]._key
+  const blockIndex = operation.editor.blockIndexMap.get(blockKey)
 
-  if (!location) {
-    throw new Error(
-      `Unable to convert ${JSON.stringify(operation.at)} into a Slate Range`,
-    )
+  if (blockIndex === undefined) {
+    throw new Error(`Unable to find block index for block key ${blockKey}`)
   }
 
-  const blockEntry = Editor.node(operation.editor, location, {depth: 1})
-  const block = blockEntry?.[0]
+  const block =
+    blockIndex !== undefined ? operation.editor.value.at(blockIndex) : undefined
 
   if (!block) {
     throw new Error(`Unable to find block at ${JSON.stringify(operation.at)}`)
   }
 
-  const parsedBlock = fromSlateBlock(
-    block,
-    context.schema.block.name,
-    KEY_TO_VALUE_ELEMENT.get(operation.editor),
-  )
-
-  if (!parsedBlock) {
-    throw new Error(`Unable to parse block at ${JSON.stringify(operation.at)}`)
-  }
-
-  if (isTextBlock(context, parsedBlock)) {
+  if (isTextBlock(context, block)) {
     const propsToRemove = operation.props.filter((prop) => prop !== '_type')
 
     const updatedTextBlock = parseBlock({
       context,
-      block: omit(parsedBlock, propsToRemove),
+      block: omit(block, propsToRemove),
       options: {
         normalize: false,
         removeUnusedMarkDefs: true,
@@ -74,7 +50,7 @@ export const blockUnsetOperationImplementation: BehaviorOperationImplementation<
       }
     }
 
-    Transforms.setNodes(operation.editor, propsToSet, {at: location})
+    Transforms.setNodes(operation.editor, propsToSet, {at: [blockIndex]})
 
     return
   }
@@ -82,7 +58,7 @@ export const blockUnsetOperationImplementation: BehaviorOperationImplementation<
   const updatedBlockObject = parseBlock({
     context,
     block: omit(
-      parsedBlock,
+      block,
       operation.props.filter((prop) => prop !== '_type'),
     ),
     options: {
@@ -105,6 +81,6 @@ export const blockUnsetOperationImplementation: BehaviorOperationImplementation<
       _key,
       value: props,
     },
-    {at: location},
+    {at: [blockIndex]},
   )
 }
