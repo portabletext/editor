@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.0.7
+
+### Patch Changes
+
+- [#1908](https://github.com/portabletext/editor/pull/1908) [`5fec0bd`](https://github.com/portabletext/editor/commit/5fec0bdefe69bef404037c57e7668e049434fc06) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update sanity monorepo to ^4.18.0
+
+- [#1909](https://github.com/portabletext/editor/pull/1909) [`9b228fd`](https://github.com/portabletext/editor/commit/9b228fdd4433461c802feb86b2b35361a95a4577) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency immer to v11
+
+- Updated dependencies [[`5fec0bd`](https://github.com/portabletext/editor/commit/5fec0bdefe69bef404037c57e7668e049434fc06)]:
+  - @portabletext/block-tools@4.1.2
+  - @portabletext/sanity-bridge@1.2.5
+
 ## 3.0.6
 
 ### Patch Changes

@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.1.2
+
+### Patch Changes
+
+- [#1908](https://github.com/portabletext/editor/pull/1908) [`5fec0bd`](https://github.com/portabletext/editor/commit/5fec0bdefe69bef404037c57e7668e049434fc06) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update sanity monorepo to ^4.18.0
+
+- Updated dependencies [[`5fec0bd`](https://github.com/portabletext/editor/commit/5fec0bdefe69bef404037c57e7668e049434fc06)]:
+  - @portabletext/sanity-bridge@1.2.5
+
 ## 4.1.1
 
 ### Patch Changes
