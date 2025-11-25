@@ -603,6 +603,37 @@ importers:
         specifier: ^4.0.14
         version: 4.0.14(@types/node@24.10.1)(@vitest/browser-playwright@4.0.14)(jiti@2.6.1)(jsdom@27.0.0(postcss@8.5.6))(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1)
 
+  packages/markdown:
+    dependencies:
+      '@portabletext/schema':
+        specifier: workspace:^
+        version: link:../schema
+      markdown-it:
+        specifier: ^14.1.0
+        version: 14.1.0
+    devDependencies:
+      '@portabletext/test':
+        specifier: workspace:^
+        version: link:../test
+      '@sanity/pkg-utils':
+        specifier: ^10.0.0
+        version: 10.0.0(@types/babel__core@7.20.5)(@types/node@24.10.1)(babel-plugin-react-compiler@1.0.0)(typescript@5.9.3)
+      '@sanity/schema':
+        specifier: ^4.17.0
+        version: 4.20.0(@types/react@19.2.6)
+      '@sanity/tsconfig':
+        specifier: ^1.0.0
+        version: 1.0.0
+      '@types/markdown-it':
+        specifier: ^14.1.2
+        version: 14.1.2
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.9
+        version: 4.0.14(@types/node@24.10.1)(@vitest/browser-playwright@4.0.14)(jiti@2.6.1)(jsdom@27.0.0(postcss@8.5.6))(lightningcss@1.30.2)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.1)
+
   packages/patches:
     dependencies:
       '@sanity/diff-match-patch':
@@ -4169,6 +4200,9 @@ packages:
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
+  '@types/linkify-it@5.0.0':
+    resolution: {integrity: sha512-sVDA58zAw4eWAffKOaQH5/5j3XeayukzDk+ewSsnv3p4yJEZHCCzMDiZM8e0OUrRvmpGZ85jf4yDHkHsgBNr9Q==}
+
   '@types/lodash-es@4.17.12':
     resolution: {integrity: sha512-0NgftHUcV4v34VhXm8QBSftKVXtbkBG3ViCjs6+eJ5a6y6Mi/jiFGPc1sC7QK+9BFhWrURE3EOggmWaSxL9OzQ==}
 
@@ -4178,8 +4212,14 @@ packages:
   '@types/lodash@4.17.20':
     resolution: {integrity: sha512-H3MHACvFUEiujabxhaI/ImO6gUrd8oOurg7LQtS7mbwIXA/cUqWrvBsaeJ23aZEPk1TAYkurjfMbSELfoCXlGA==}
 
+  '@types/markdown-it@14.1.2':
+    resolution: {integrity: sha512-promo4eFwuiW+TfGxhi+0x3czqTYJkG8qB17ZUJiVF10Xm7NLVRSLUsfRTU/6h1e24VvRnXCx+hG7li58lkzog==}
+
   '@types/mdast@4.0.4':
     resolution: {integrity: sha512-kGaNbPh1k7AFzgpud/gMdvIm5xuECykRR+JnWKQno9TAXVa6WIVCGTPvYGekIDL4uwCZQSYbUxNBSb1aUo79oA==}
+
+  '@types/mdurl@2.0.0':
+    resolution: {integrity: sha512-RGdgjQUZba5p6QEFAVx2OGb8rQDL/cPRG7GiedRzMcJ1tYnUANBncjbSB1NRGwbvjcPeikRABz2nshyPk1bhWg==}
 
   '@types/mdx@2.0.13':
     resolution: {integrity: sha512-+OWZQfAYyio6YkJb3HLxDrvnx6SWWDbC0zVPfBRzUk0/nqoDyf6dNxQi3eArPe8rJ473nobTMQ/8Zk+LxJ+Yuw==}
@@ -11039,6 +11079,15 @@ snapshots:
 
   '@sanity/browserslist-config@1.0.5': {}
 
+  '@sanity/client@7.13.1':
+    dependencies:
+      '@sanity/eventsource': 5.0.2
+      get-it: 8.6.10
+      nanoid: 3.3.11
+      rxjs: 7.8.2
+    transitivePeerDependencies:
+      - debug
+
   '@sanity/client@7.13.1(debug@4.4.3)':
     dependencies:
       '@sanity/eventsource': 5.0.2
@@ -11185,7 +11234,7 @@ snapshots:
       chokidar: 5.0.0
       esbuild: 0.27.0
       find-config: 1.0.0
-      get-latest-version: 5.1.0(debug@4.4.3)
+      get-latest-version: 5.1.0
       git-url-parse: 16.1.0
       globby: 16.0.0
       jsonc-parser: 3.3.1
@@ -11288,6 +11337,22 @@ snapshots:
       prettier: 3.7.4
       prettier-plugin-packagejson: 2.5.15(prettier@3.7.4)
 
+  '@sanity/schema@4.20.0(@types/react@19.2.6)':
+    dependencies:
+      '@sanity/descriptors': 1.3.0
+      '@sanity/generate-help-url': 3.0.0
+      '@sanity/types': 4.20.0(@types/react@19.2.6)
+      arrify: 2.0.1
+      groq-js: 1.21.0
+      humanize-list: 1.0.1
+      leven: 3.1.0
+      lodash: 4.17.21
+      object-inspect: 1.13.4
+    transitivePeerDependencies:
+      - '@types/react'
+      - debug
+      - supports-color
+
   '@sanity/schema@4.20.0(@types/react@19.2.6)(debug@4.4.3)':
     dependencies:
       '@sanity/descriptors': 1.3.0
@@ -11352,6 +11417,14 @@ snapshots:
   '@sanity/types@3.99.0(@types/react@19.2.6)':
     dependencies:
       '@sanity/client': 7.13.1(debug@4.4.3)
+      '@sanity/media-library-types': 1.0.1
+      '@types/react': 19.2.6
+    transitivePeerDependencies:
+      - debug
+
+  '@sanity/types@4.20.0(@types/react@19.2.6)':
+    dependencies:
+      '@sanity/client': 7.13.1
       '@sanity/media-library-types': 1.0.1
       '@types/react': 19.2.6
     transitivePeerDependencies:
@@ -11604,6 +11677,8 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
+  '@types/linkify-it@5.0.0': {}
+
   '@types/lodash-es@4.17.12':
     dependencies:
       '@types/lodash': 4.17.20
@@ -11614,9 +11689,16 @@ snapshots:
 
   '@types/lodash@4.17.20': {}
 
+  '@types/markdown-it@14.1.2':
+    dependencies:
+      '@types/linkify-it': 5.0.0
+      '@types/mdurl': 2.0.0
+
   '@types/mdast@4.0.4':
     dependencies:
       '@types/unist': 3.0.3
+
+  '@types/mdurl@2.0.0': {}
 
   '@types/mdx@2.0.13': {}
 
@@ -12969,6 +13051,8 @@ snapshots:
 
   flattie@1.1.1: {}
 
+  follow-redirects@1.15.11: {}
+
   follow-redirects@1.15.11(debug@4.4.3):
     optionalDependencies:
       debug: 4.4.3
@@ -13024,6 +13108,17 @@ snapshots:
 
   get-east-asian-width@1.4.0: {}
 
+  get-it@8.6.10:
+    dependencies:
+      '@types/follow-redirects': 1.14.4
+      decompress-response: 7.0.0
+      follow-redirects: 1.15.11
+      is-retry-allowed: 2.2.0
+      through2: 4.0.2
+      tunnel-agent: 0.6.0
+    transitivePeerDependencies:
+      - debug
+
   get-it@8.6.10(debug@4.4.3):
     dependencies:
       '@types/follow-redirects': 1.14.4
@@ -13032,6 +13127,15 @@ snapshots:
       is-retry-allowed: 2.2.0
       through2: 4.0.2
       tunnel-agent: 0.6.0
+    transitivePeerDependencies:
+      - debug
+
+  get-latest-version@5.1.0:
+    dependencies:
+      get-it: 8.6.10
+      registry-auth-token: 5.1.0
+      registry-url: 5.1.0
+      semver: 7.7.3
     transitivePeerDependencies:
       - debug
 

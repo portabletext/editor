@@ -1,0 +1,66 @@
+{
+  "name": "@portabletext/markdown",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Convert Portable Text to and from Markdown",
+  "keywords": [
+    "portable-text",
+    "markdown"
+  ],
+  "homepage": "https://portabletext.org",
+  "bugs": {
+    "url": "https://github.com/portabletext/editor/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/portabletext/editor.git",
+    "directory": "packages/markdown"
+  },
+  "license": "MIT",
+  "author": "Sanity.io <hello@sanity.io>",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "pkg-utils build --strict --check --clean",
+    "check:lint": "biome lint .",
+    "check:types": "tsc",
+    "check:types:watch": "tsc --watch",
+    "clean": "del .turbo && del dist && del node_modules",
+    "dev": "pkg-utils watch",
+    "lint:fix": "biome lint --write .",
+    "prepublishOnly": "turbo run build",
+    "test": "vitest --run",
+    "test:unit": "vitest --run --project unit",
+    "test:unit:watch": "vitest --project unit",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@portabletext/schema": "workspace:^",
+    "markdown-it": "^14.1.0"
+  },
+  "devDependencies": {
+    "@portabletext/test": "workspace:^",
+    "@sanity/pkg-utils": "^10.0.0",
+    "@sanity/schema": "^4.17.0",
+    "@sanity/tsconfig": "^1.0.0",
+    "@types/markdown-it": "^14.1.2",
+    "typescript": "catalog:",
+    "vitest": "^4.0.9"
+  },
+  "engines": {
+    "node": ">=20.19 <22 || >=22.12"
+  }
+}
