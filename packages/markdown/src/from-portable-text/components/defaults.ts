@@ -25,15 +25,15 @@ export const defaultPortableTextBlockStyles: Record<
     if (!children || children.trim() === '') {
       return ''
     }
-    return `${children}\n\n`
+    return children
   },
-  blockquote: ({children}) => `> ${children}\n\n`,
-  h1: ({children}) => `# ${children}\n\n`,
-  h2: ({children}) => `## ${children}\n\n`,
-  h3: ({children}) => `### ${children}\n\n`,
-  h4: ({children}) => `#### ${children}\n\n`,
-  h5: ({children}) => `##### ${children}\n\n`,
-  h6: ({children}) => `###### ${children}\n\n`,
+  blockquote: ({children}) => `> ${children}`,
+  h1: ({children}) => `# ${children}`,
+  h2: ({children}) => `## ${children}`,
+  h3: ({children}) => `### ${children}`,
+  h4: ({children}) => `#### ${children}`,
+  h5: ({children}) => `##### ${children}`,
+  h6: ({children}) => `###### ${children}`,
 }
 
 export const defaultComponents: PortableTextHtmlComponents = {

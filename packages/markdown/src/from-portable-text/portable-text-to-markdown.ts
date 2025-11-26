@@ -60,15 +60,28 @@ export function portableTextToMarkdown<
     renderNode({node: node, index, isInline: false, renderNode}),
   )
 
-  // Join top-level elements, adding separation between lists
+  // Join top-level elements, adding spacing between blocks
   return rendered
     .map((item, index) => {
-      // Add newline after lists to separate from next element
+      // Skip empty items
+      if (!item) return item
+
+      // Add spacing between blocks (but not after the last one)
       if (index < rendered.length - 1) {
         const currentNode = nested[index]
+
+        // Lists need a single newline after them
         if (currentNode && isPortableTextToolkitList(currentNode)) {
-          // List followed by anything (including empty blocks) needs separation
           return `${item}\n`
+        }
+
+        // Blocks need double newlines between them (unless next is empty)
+        if (currentNode && isPortableTextBlock(currentNode)) {
+          // Check if next item will be empty
+          const nextItem = rendered[index + 1]
+          if (nextItem && nextItem.trim() !== '') {
+            return `${item}\n\n`
+          }
         }
       }
       return item
@@ -311,22 +324,12 @@ const getNodeRenderer = (
     }
 
     const component = node || components.unknownType
-    const result = component({
+    return component({
       value,
       isInline,
       index,
       renderNode,
     })
-
-    // Add trailing newlines for block-level custom types
-    // Skip if using default unknown type (returns empty string) or result already has trailing newlines
-    const isDefaultUnknown =
-      !node && component === components.unknownType && result === ''
-    if (!isInline && !isDefaultUnknown && !result.endsWith('\n\n')) {
-      return `${result}\n\n`
-    }
-
-    return result
   }
 
   return renderNode

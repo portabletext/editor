@@ -13,7 +13,7 @@ export const DefaultUnknownMark: PortableTextHtmlComponents['unknownMark'] = ({
 
 export const DefaultUnknownBlockStyle: PortableTextHtmlComponents['unknownBlockStyle'] =
   ({children}) => {
-    return `${children}\n\n`
+    return children || ''
   }
 
 export const DefaultUnknownList: PortableTextHtmlComponents['unknownList'] = ({
