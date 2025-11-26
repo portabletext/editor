@@ -1,5 +1,19 @@
 # Changelog
 
+## 3.0.8
+
+### Patch Changes
+
+- [#1913](https://github.com/portabletext/editor/pull/1913) [`cb190ec`](https://github.com/portabletext/editor/commit/cb190ec4d90e7ba2b4805e993b138436f7c1c83b) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update sanity monorepo to ^4.19.0
+
+- [#1905](https://github.com/portabletext/editor/pull/1905) [`99e1cd5`](https://github.com/portabletext/editor/commit/99e1cd59ff740c3089124debd805fde0f78aaaee) Thanks [@christianhg](https://github.com/christianhg)! - fix: add missing block `markDefs` declaratively
+
+- [#1905](https://github.com/portabletext/editor/pull/1905) [`b9248d1`](https://github.com/portabletext/editor/commit/b9248d16869ec77299c7bc19ec34ac1bcbab03d5) Thanks [@christianhg](https://github.com/christianhg)! - fix: add missing block `style` declaratively
+
+- Updated dependencies [[`cb190ec`](https://github.com/portabletext/editor/commit/cb190ec4d90e7ba2b4805e993b138436f7c1c83b)]:
+  - @portabletext/block-tools@4.1.3
+  - @portabletext/sanity-bridge@1.2.6
+
 ## 3.0.7
 
 ### Patch Changes

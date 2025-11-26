@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.0.8
+
+### Patch Changes
+
+- [#1913](https://github.com/portabletext/editor/pull/1913) [`cb190ec`](https://github.com/portabletext/editor/commit/cb190ec4d90e7ba2b4805e993b138436f7c1c83b) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update sanity monorepo to ^4.19.0
+
+- Updated dependencies [[`cb190ec`](https://github.com/portabletext/editor/commit/cb190ec4d90e7ba2b4805e993b138436f7c1c83b), [`99e1cd5`](https://github.com/portabletext/editor/commit/99e1cd59ff740c3089124debd805fde0f78aaaee), [`b9248d1`](https://github.com/portabletext/editor/commit/b9248d16869ec77299c7bc19ec34ac1bcbab03d5)]:
+  - @portabletext/editor@3.0.8
+
 ## 3.0.7
 
 ### Patch Changes
