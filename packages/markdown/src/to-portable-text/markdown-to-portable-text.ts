@@ -134,6 +134,34 @@ const defaultOptions = {
 } as const satisfies Options
 
 /**
+ * Flattens a table structure by lifting all blocks from all cells.
+ */
+function flattenTable(
+  table: {
+    rows: Array<{
+      _key: string
+      _type: 'row'
+      cells: Array<{
+        _type: 'cell'
+        _key: string
+        value: Array<PortableTextBlock>
+      }>
+    }>
+    headerRows: number
+  },
+  portableText: Array<PortableTextBlock>,
+): void {
+  // Flatten the table by lifting all blocks from all cells
+  for (const row of table.rows) {
+    for (const cell of row.cells) {
+      for (const block of cell.value) {
+        portableText.push(block)
+      }
+    }
+  }
+}
+
+/**
  * Converts a markdown string to an array of Portable Text blocks.
  *
  * @public
@@ -518,6 +546,20 @@ export function markdownToPortableText(
         })
 
         if (!hrObject) {
+          // If there's no break definition in the schema, parse as text
+          const style = consolidatedOptions.block.normal({
+            context: {schema: consolidatedOptions.schema},
+          })
+
+          if (!style) {
+            console.warn('No default style found, using "normal"')
+            startBlock('normal')
+          } else {
+            startBlock(style)
+          }
+
+          addSpan('---')
+          flushBlock()
           break
         }
 
@@ -546,6 +588,20 @@ export function markdownToPortableText(
         })
 
         if (!htmlObject) {
+          // If there's no HTML block definition in the schema, parse as text
+          const style = consolidatedOptions.block.normal({
+            context: {schema: consolidatedOptions.schema},
+          })
+
+          if (!style) {
+            console.warn('No default style found, using "normal"')
+            startBlock('normal')
+          } else {
+            startBlock(style)
+          }
+
+          addSpan(htmlContent)
+          flushBlock()
           break
         }
 
@@ -616,7 +672,13 @@ export function markdownToPortableText(
 
           if (tableObject) {
             portableText.push(tableObject)
+          } else {
+            // If table object couldn't be created, flatten the table
+            flattenTable(currentTable, portableText)
           }
+        } else {
+          // If there's no table definition in the schema, flatten the table
+          flattenTable(currentTable, portableText)
         }
 
         currentTable = null

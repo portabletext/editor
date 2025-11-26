@@ -1340,7 +1340,22 @@ describe(markdownToPortableText.name, () => {
           keyGenerator,
           schema: compileSchema(defineSchema({})),
         }),
-      ).toEqual([])
+      ).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [
+            {
+              _key: 'k1',
+              _type: 'span',
+              text: '---',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
     })
   })
 
@@ -1387,7 +1402,6 @@ describe(markdownToPortableText.name, () => {
       expect(
         markdownToPortableText(markdown, {
           keyGenerator,
-          // Overriding the default schema with an empty one
           schema: compileSchema(defineSchema({})),
         }),
       ).toEqual([
@@ -1413,9 +1427,7 @@ describe(markdownToPortableText.name, () => {
       const markdown = ['```js', `const foo = 'bar'`, '```'].join('\n')
       expect(
         markdownToPortableText(markdown, {
-          // Add an optional key generator
           keyGenerator,
-          // Add a custom schema
           schema: compileSchema(
             defineSchema({
               blockObjects: [
@@ -1530,7 +1542,22 @@ describe(markdownToPortableText.name, () => {
             keyGenerator,
             schema: compileSchema(defineSchema({})),
           }),
-        ).toEqual([])
+        ).toEqual([
+          {
+            _key: 'k0',
+            _type: 'block',
+            children: [
+              {
+                _key: 'k1',
+                _type: 'span',
+                text: '<div>Content</div>',
+                marks: [],
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
       })
     })
 
@@ -1580,8 +1607,7 @@ describe(markdownToPortableText.name, () => {
   })
 
   describe('tables', () => {
-    // Table definition for testing
-    const tableObjectDefinitionForTests = {
+    const tableObjectDefinition = {
       name: 'table',
       fields: [
         {name: 'headerRows', type: 'number'},
@@ -1589,14 +1615,10 @@ describe(markdownToPortableText.name, () => {
       ],
     } as const satisfies BlockObjectDefinition
 
-    // Schema with table support for testing (includes default schema + table)
     const schemaWithTable = compileSchema(
       defineSchema({
         ...defaultSchema,
-        blockObjects: [
-          ...defaultSchema.blockObjects,
-          tableObjectDefinitionForTests,
-        ],
+        blockObjects: [...defaultSchema.blockObjects, tableObjectDefinition],
       }),
     )
 
@@ -1605,7 +1627,7 @@ describe(markdownToPortableText.name, () => {
       keyGenerator,
       schema: schemaWithTable,
       types: {
-        table: buildObjectMatcher(tableObjectDefinitionForTests),
+        table: buildObjectMatcher(tableObjectDefinition),
       },
     })
 
@@ -2061,7 +2083,7 @@ describe(markdownToPortableText.name, () => {
                 {name: 'alt', type: 'string'},
               ],
             },
-            tableObjectDefinitionForTests,
+            tableObjectDefinition,
           ],
         }),
       )
@@ -2071,7 +2093,7 @@ describe(markdownToPortableText.name, () => {
           keyGenerator,
           schema,
           types: {
-            table: buildObjectMatcher(tableObjectDefinitionForTests),
+            table: buildObjectMatcher(tableObjectDefinition),
           },
         }),
       ).toEqual([
@@ -2710,7 +2732,140 @@ describe(markdownToPortableText.name, () => {
           keyGenerator,
           schema: compileSchema(defineSchema({})),
         }),
-      ).toEqual([])
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k1',
+              text: 'A',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: 'k3',
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k4',
+              text: 'B',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: 'k7',
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k8',
+              text: '1',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: 'k10',
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k11',
+              text: '2',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ])
+    })
+
+    test('no table definition with formatting', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        '| **Bold** | _Italic_ |',
+        '| -------- | -------- |',
+        '| `Code`   | Normal   |',
+      ].join('\n')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator,
+          schema: compileSchema(
+            defineSchema({
+              decorators: [{name: 'strong'}, {name: 'em'}, {name: 'code'}],
+            }),
+          ),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k1',
+              text: 'Bold',
+              marks: ['strong'],
+            },
+          ],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: 'k3',
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k4',
+              text: 'Italic',
+              marks: ['em'],
+            },
+          ],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: 'k7',
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k8',
+              text: 'Code',
+              marks: ['code'],
+            },
+          ],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: 'k10',
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k11',
+              text: 'Normal',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ])
     })
   })
 })
