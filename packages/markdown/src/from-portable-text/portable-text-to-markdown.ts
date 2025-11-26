@@ -40,6 +40,9 @@ import {
   unknownTypeWarning,
 } from './warnings'
 
+/**
+ * @public
+ */
 export function portableTextToMarkdown<
   B extends TypedObject = PortableTextBlock | ArbitraryTypedObject,
 >(value: B | B[], options: PortableTextOptions = {}): string {
