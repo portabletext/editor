@@ -1,7 +1,7 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
 import {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
-import {markdownToPortableText} from './to-portable-text'
+import {markdownToPortableText} from './to-portable-text/markdown-to-portable-text'
 import {buildObjectMatcher} from './to-portable-text/matchers'
 
 describe(portableTextToMarkdown.name, () => {
