@@ -49,10 +49,12 @@
   },
   "dependencies": {
     "@portabletext/schema": "workspace:^",
+    "@portabletext/toolkit": "^4.0.0",
     "markdown-it": "^14.1.0"
   },
   "devDependencies": {
     "@portabletext/test": "workspace:^",
+    "@portabletext/types": "^3.0.0",
     "@sanity/pkg-utils": "^9.0.3",
     "@sanity/schema": "^4.17.0",
     "@sanity/types": "^4.17.0",
