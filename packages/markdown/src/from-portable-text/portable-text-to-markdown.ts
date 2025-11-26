@@ -175,8 +175,7 @@ const getNodeRenderer = (
 
     if (node.style && node.style !== 'normal') {
       // Wrap any other style in whatever the block component says to use
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const {listItem, ...blockNode} = node
+      const {listItem: _listItem, ...blockNode} = node
       children = renderNode({
         node: blockNode,
         index,

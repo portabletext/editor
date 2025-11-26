@@ -246,7 +246,7 @@ export interface PortableTextMarkComponentOptions<
   /**
    * Key for this mark. The same key can be used amongst multiple text spans within the same block, so don't rely on this to be unique.
    */
-  markKey?: string
+  markKey: string | undefined
 
   /**
    * Type of mark - ie value of `_type` in the case of annotations, or the name of the decorator otherwise - eg `em`, `italic`.
