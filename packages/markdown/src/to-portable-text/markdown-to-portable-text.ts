@@ -83,7 +83,7 @@ type Options = {
         }>
       }>
     }>
-    image?: ObjectMatcher<{src: string; alt: string}>
+    image?: ObjectMatcher<{src: string; alt: string; title: string | undefined}>
   }
   html?: {
     /**
@@ -244,7 +244,8 @@ export function markdownToPortableText(
   const currentListStack: Array<string | null> = []
   const markDefRefs: Array<string> = [] // mark keys: 'strong', 'em', 'code', or link keys
   let currentMarkDefs: Array<PortableTextObject> = []
-  let blockNestingDepth = 0 // Track nesting depth for blockquotes, lists, etc.
+  let currentBlockquoteStyle: string | null = null // Track blockquote style when inside blockquote
+  let inListItem = false // Track if we're inside a list item
 
   // Table state
   let currentTable: {
@@ -334,9 +335,12 @@ export function markdownToPortableText(
   const listLevel = () => currentListStack.length
   const ensureListBlock = (listItem: string) => {
     if (!currentBlock) {
-      const style = consolidatedOptions.block.normal({
-        context: {schema: consolidatedOptions.schema},
-      })
+      // Use blockquote style if inside a blockquote, otherwise use normal style
+      const style =
+        currentBlockquoteStyle ??
+        consolidatedOptions.block.normal({
+          context: {schema: consolidatedOptions.schema},
+        })
 
       if (!style) {
         console.warn('No default style found, using "normal"')
@@ -364,14 +368,17 @@ export function markdownToPortableText(
     switch (token.type) {
       // Paragraphs
       case 'paragraph_open': {
-        // Skip creating a new block if we're inside a blockquote or other container
-        if (blockNestingDepth > 0) {
+        // Skip creating a new block if we're inside a list item (the list item is the block)
+        if (inListItem) {
           break
         }
 
-        const style = consolidatedOptions.block.normal({
-          context: {schema: consolidatedOptions.schema},
-        })
+        // Use blockquote style if inside a blockquote, otherwise use normal style
+        const style =
+          currentBlockquoteStyle ??
+          consolidatedOptions.block.normal({
+            context: {schema: consolidatedOptions.schema},
+          })
 
         if (!style) {
           console.warn('No default style found, using "normal"')
@@ -383,8 +390,8 @@ export function markdownToPortableText(
         break
       }
       case 'paragraph_close':
-        // Skip flushing if we're inside a blockquote or other container
-        if (blockNestingDepth > 0) {
+        // Skip flushing if we're inside a list item (list_item_close will flush)
+        if (inListItem) {
           break
         }
         flushBlock()
@@ -430,7 +437,7 @@ export function markdownToPortableText(
 
       // Blockquote
       case 'blockquote_open': {
-        blockNestingDepth++
+        // Set the blockquote style for paragraphs inside the blockquote
         const style =
           consolidatedOptions.block.blockquote({
             context: {schema: consolidatedOptions.schema},
@@ -439,18 +446,11 @@ export function markdownToPortableText(
             context: {schema: consolidatedOptions.schema},
           })
 
-        if (!style) {
-          console.warn('No blockquote style found, using "normal"')
-          startBlock('normal')
-          break
-        }
-
-        startBlock(style)
+        currentBlockquoteStyle = style ?? 'normal'
         break
       }
       case 'blockquote_close': {
-        blockNestingDepth--
-        flushBlock()
+        currentBlockquoteStyle = null
         break
       }
       // Lists
@@ -487,8 +487,6 @@ export function markdownToPortableText(
         currentListStack.pop()
         break
       case 'list_item_open': {
-        blockNestingDepth++
-
         const listType = currentListStack.at(-1)
 
         if (listType === undefined) {
@@ -504,9 +502,12 @@ export function markdownToPortableText(
         // If listType is null, it means there's no list definition in the schema
         // Just create a normal block without list properties
         if (listType === null) {
-          const style = consolidatedOptions.block.normal({
-            context: {schema: consolidatedOptions.schema},
-          })
+          // Use blockquote style if inside a blockquote, otherwise use normal style
+          const style =
+            currentBlockquoteStyle ??
+            consolidatedOptions.block.normal({
+              context: {schema: consolidatedOptions.schema},
+            })
 
           if (!style) {
             console.warn('No default style found, using "normal"')
@@ -514,15 +515,16 @@ export function markdownToPortableText(
           } else {
             startBlock(style)
           }
+          inListItem = true
           break
         }
 
         ensureListBlock(listType)
-
+        inListItem = true
         break
       }
       case 'list_item_close':
-        blockNestingDepth--
+        inListItem = false
         flushBlock()
         break
 
@@ -531,29 +533,44 @@ export function markdownToPortableText(
         flushBlock()
 
         const language = token.info.trim() || undefined
+        // Remove trailing newline from code content
+        const code = token.content.replace(/\n$/, '')
 
         const codeObject = consolidatedOptions.types.code({
           context: {
             schema: consolidatedOptions.schema,
             keyGenerator: consolidatedOptions.keyGenerator,
           },
-          value: {language, code: token.content},
+          value: {language, code},
           isInline: false,
         })
 
         if (!codeObject) {
-          const style = consolidatedOptions.block.normal({
-            context: {schema: consolidatedOptions.schema},
-          })
+          // For fallback to text block, check if it's multi-line
+          const hasMultipleLines = code.includes('\n')
 
-          if (!style) {
-            console.warn('No default style found, using "normal"')
-            startBlock('normal')
+          if (hasMultipleLines) {
+            // Multi-line code without definition should still be a code object
+            portableText.push({
+              _type: 'code',
+              _key: consolidatedOptions.keyGenerator(),
+              code,
+            })
           } else {
-            startBlock(style)
-          }
+            // Single-line code becomes a text block
+            const style = consolidatedOptions.block.normal({
+              context: {schema: consolidatedOptions.schema},
+            })
 
-          addSpan(token.content)
+            if (!style) {
+              console.warn('No default style found, using "normal"')
+              startBlock('normal')
+            } else {
+              startBlock(style)
+            }
+
+            addSpan(code)
+          }
 
           break
         }
@@ -644,28 +661,44 @@ export function markdownToPortableText(
       case 'code_block': {
         flushBlock()
 
+        // Remove trailing newline from code content
+        const code = token.content.replace(/\n$/, '')
+
         const codeObject = consolidatedOptions.types.code({
           context: {
             schema: consolidatedOptions.schema,
             keyGenerator: consolidatedOptions.keyGenerator,
           },
-          value: {language: undefined, code: token.content},
+          value: {language: undefined, code},
           isInline: false,
         })
 
         if (!codeObject) {
-          const style = consolidatedOptions.block.normal({
-            context: {schema: consolidatedOptions.schema},
-          })
+          // For fallback to text block, check if it's multi-line
+          const hasMultipleLines = code.includes('\n')
 
-          if (!style) {
-            console.warn('No default style found, using "normal"')
-            startBlock('normal')
+          if (hasMultipleLines) {
+            // Multi-line code without definition should still be a code object
+            portableText.push({
+              _type: 'code',
+              _key: consolidatedOptions.keyGenerator(),
+              code,
+            })
           } else {
-            startBlock(style)
-          }
+            // Single-line code becomes a text block
+            const style = consolidatedOptions.block.normal({
+              context: {schema: consolidatedOptions.schema},
+            })
 
-          addSpan(token.content)
+            if (!style) {
+              console.warn('No default style found, using "normal"')
+              startBlock('normal')
+            } else {
+              startBlock(style)
+            }
+
+            addSpan(code)
+          }
         } else {
           portableText.push(codeObject)
         }
@@ -854,13 +887,16 @@ export function markdownToPortableText(
           const src =
             imageToken.attrs?.find(([name]) => name === 'src')?.at(1) || ''
           const alt = imageToken.content || ''
+          const title =
+            imageToken.attrs?.find(([name]) => name === 'title')?.at(1) ||
+            undefined
 
           const blockImageObject = consolidatedOptions.types.image({
             context: {
               schema: consolidatedOptions.schema,
               keyGenerator: consolidatedOptions.keyGenerator,
             },
-            value: {src, alt},
+            value: {src, alt, title},
             isInline: false,
           })
 
@@ -1067,7 +1103,7 @@ export function markdownToPortableText(
                   schema: consolidatedOptions.schema,
                   keyGenerator: consolidatedOptions.keyGenerator,
                 },
-                value: {src, alt},
+                value: {src, alt, title: undefined},
                 isInline: true,
               })
 
@@ -1104,7 +1140,7 @@ export function markdownToPortableText(
                   schema: consolidatedOptions.schema,
                   keyGenerator: consolidatedOptions.keyGenerator,
                 },
-                value: {src, alt},
+                value: {src, alt, title: undefined},
                 isInline: false,
               })
 

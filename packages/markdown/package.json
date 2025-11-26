@@ -49,10 +49,12 @@
   },
   "dependencies": {
     "@portabletext/schema": "workspace:^",
+    "@portabletext/toolkit": "^4.0.0",
     "markdown-it": "^14.1.0"
   },
   "devDependencies": {
     "@portabletext/test": "workspace:^",
+    "@portabletext/types": "^3.0.0",
     "@sanity/pkg-utils": "^10.0.0",
     "@sanity/schema": "^4.17.0",
     "@sanity/tsconfig": "^1.0.0",
