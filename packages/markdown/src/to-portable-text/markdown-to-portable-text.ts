@@ -19,7 +19,6 @@ import {
   defaultSchema,
   defaultStrikeThroughDecoratorDefinition,
   defaultStrongDecoratorDefinition,
-  defaultTableObjectDefinition,
   defaultUnorderedListItemDefinition,
   h1StyleDefinition,
   h2StyleDefinition,
@@ -71,7 +70,18 @@ type Options = {
     code?: ObjectMatcher<{language: string | undefined; code: string}>
     horizontalRule?: ObjectMatcher
     html?: ObjectMatcher<{html: string}>
-    table?: ObjectMatcher<{rows: Array<{cells: string[]}>}>
+    table?: ObjectMatcher<{
+      headerRows: number | undefined
+      rows: Array<{
+        _key: string
+        _type: 'row'
+        cells: Array<{
+          _type: 'cell'
+          _key: string
+          value: Array<PortableTextBlock>
+        }>
+      }>
+    }>
     image?: ObjectMatcher<{src: string; alt: string}>
   }
   html?: {
@@ -119,7 +129,6 @@ const defaultOptions = {
     code: buildObjectMatcher(defaultCodeObjectDefinition),
     horizontalRule: buildObjectMatcher(defaultHorizontalRuleObjectDefinition),
     html: buildObjectMatcher(defaultHtmlObjectDefinition),
-    table: buildObjectMatcher(defaultTableObjectDefinition),
     image: buildObjectMatcher(defaultImageObjectDefinition),
   },
 } as const satisfies Options
@@ -175,9 +184,24 @@ export function markdownToPortableText(
   let blockNestingDepth = 0 // Track nesting depth for blockquotes, lists, etc.
 
   // Table state
-  let currentTable: {rows: Array<{cells: string[]}>} | null = null
-  let currentTableRow: string[] | null = null
-  let currentTableCell: string = ''
+  let currentTable: {
+    rows: Array<{
+      _key: string
+      _type: 'row'
+      cells: Array<{
+        _type: 'cell'
+        _key: string
+        value: Array<PortableTextBlock>
+      }>
+    }>
+    headerRows: number
+  } | null = null
+  let currentTableRow: Array<{
+    _type: 'cell'
+    _key: string
+    value: Array<PortableTextBlock>
+  }> | null = null
+  let inTableHead = false
 
   const startBlock = (style: string) => {
     flushBlock()
@@ -565,7 +589,7 @@ export function markdownToPortableText(
       // Tables
       case 'table_open':
         flushBlock()
-        currentTable = {rows: []}
+        currentTable = {rows: [], headerRows: 0}
         break
 
       case 'table_close': {
@@ -573,17 +597,26 @@ export function markdownToPortableText(
           break
         }
 
-        const tableObject = consolidatedOptions.types.table({
-          context: {
-            schema: consolidatedOptions.schema,
-            keyGenerator: consolidatedOptions.keyGenerator,
-          },
-          value: {rows: currentTable.rows},
-          isInline: false,
-        })
+        // Only create table object if table type is defined
+        if (consolidatedOptions.types.table) {
+          const tableObject = consolidatedOptions.types.table({
+            context: {
+              schema: consolidatedOptions.schema,
+              keyGenerator: consolidatedOptions.keyGenerator,
+            },
+            value: {
+              rows: currentTable.rows,
+              headerRows:
+                currentTable.headerRows > 0
+                  ? currentTable.headerRows
+                  : undefined,
+            },
+            isInline: false,
+          })
 
-        if (tableObject) {
-          portableText.push(tableObject)
+          if (tableObject) {
+            portableText.push(tableObject)
+          }
         }
 
         currentTable = null
@@ -591,11 +624,14 @@ export function markdownToPortableText(
       }
 
       case 'thead_open':
-      case 'tbody_open':
-        // Just markers, no action needed
+        inTableHead = true
         break
 
       case 'thead_close':
+        inTableHead = false
+        break
+
+      case 'tbody_open':
       case 'tbody_close':
         // Just markers, no action needed
         break
@@ -606,32 +642,114 @@ export function markdownToPortableText(
 
       case 'tr_close':
         if (currentTable && currentTableRow) {
-          currentTable.rows.push({cells: currentTableRow})
+          currentTable.rows.push({
+            _key: consolidatedOptions.keyGenerator(),
+            _type: 'row',
+            cells: currentTableRow,
+          })
+          if (inTableHead) {
+            currentTable.headerRows++
+          }
         }
         currentTableRow = null
         break
 
       case 'th_open':
-      case 'td_open':
-        currentTableCell = ''
+      case 'td_open': {
+        // Start a new block for the table cell
+        const style = consolidatedOptions.block.normal({
+          context: {schema: consolidatedOptions.schema},
+        })
+
+        if (!style) {
+          console.warn('No default style found, using "normal"')
+          startBlock('normal')
+        } else {
+          startBlock(style)
+        }
         break
+      }
 
       case 'th_close':
-      case 'td_close':
-        if (currentTableRow !== null) {
-          currentTableRow.push(currentTableCell)
+      case 'td_close': {
+        // Flush the current block into the cell
+        flushBlock()
+
+        // Get all blocks that were added since this cell started
+        // We need to extract them from portableText array
+        const cellBlocks: Array<PortableTextBlock> = []
+
+        // Check if we have blocks to extract (added after table_open)
+        if (portableText.length > 0) {
+          const lastBlock = portableText.at(-1)
+          if (lastBlock && lastBlock._type === 'block') {
+            cellBlocks.push(portableText.pop()!)
+          }
         }
-        currentTableCell = ''
+
+        // If no blocks were created (empty cell), create an empty block
+        if (cellBlocks.length === 0) {
+          cellBlocks.push({
+            _type: 'block' as const,
+            style:
+              consolidatedOptions.block.normal({
+                context: {schema: consolidatedOptions.schema},
+              }) || 'normal',
+            children: [
+              {
+                _type: consolidatedOptions.schema.span.name,
+                _key: consolidatedOptions.keyGenerator(),
+                text: '',
+                marks: [],
+              },
+            ],
+            _key: consolidatedOptions.keyGenerator(),
+            markDefs: [],
+          })
+        }
+
+        // Check if the cell contains a single block with a single image child
+        // If so, extract the image as a block-level image
+        const firstBlock = cellBlocks[0]
+        if (
+          cellBlocks.length === 1 &&
+          firstBlock &&
+          firstBlock._type === 'block' &&
+          'children' in firstBlock &&
+          Array.isArray(firstBlock.children) &&
+          firstBlock.children.length === 1
+        ) {
+          const onlyChild = firstBlock.children[0]
+          // Check if it's an image object (not a span)
+          if (
+            typeof onlyChild === 'object' &&
+            onlyChild !== null &&
+            '_type' in onlyChild &&
+            onlyChild._type !== consolidatedOptions.schema.span.name &&
+            onlyChild._type === 'image'
+          ) {
+            // Replace the block with just the image
+            cellBlocks[0] = onlyChild as PortableTextBlock
+          }
+        }
+
+        if (currentTableRow !== null) {
+          currentTableRow.push({
+            _type: 'cell',
+            _key: consolidatedOptions.keyGenerator(),
+            value: cellBlocks,
+          })
+        }
         break
+      }
 
       // Inline container
       case 'inline': {
-        // If we're in a table cell, accumulate text there instead
+        // Check if we're in a table cell
         const inTableCell = currentTableRow !== null
 
         // Check if this is a standalone image (paragraph with only an image)
         if (
-          !inTableCell &&
           token.children?.length === 1 &&
           token.children[0]?.type === 'image'
         ) {
@@ -654,10 +772,21 @@ export function markdownToPortableText(
           })
 
           if (blockImageObject) {
-            // Discard the empty paragraph block that was created by paragraph_open
-            currentBlock = null
-            currentMarkDefs = []
-            portableText.push(blockImageObject)
+            if (inTableCell) {
+              // In table cells, we can't push to portableText directly
+              // The block image will be handled in th_close/td_close extraction logic
+              // For now, add it as a child of the current block
+              if (currentBlock && 'children' in currentBlock) {
+                ;(currentBlock as PortableTextTextBlock).children.push(
+                  blockImageObject as PortableTextObject,
+                )
+              }
+            } else {
+              // Discard the empty paragraph block that was created by paragraph_open
+              currentBlock = null
+              currentMarkDefs = []
+              portableText.push(blockImageObject)
+            }
           }
           break
         }
@@ -666,26 +795,13 @@ export function markdownToPortableText(
         for (const childToken of token.children ?? []) {
           switch (childToken.type) {
             case 'text':
-              if (inTableCell) {
-                currentTableCell += childToken.content
-              } else {
-                addSpan(childToken.content)
-              }
+              addSpan(childToken.content)
               break
             case 'softbreak':
             case 'hardbreak':
-              if (inTableCell) {
-                currentTableCell += '\n'
-              } else {
-                addSpan('\n')
-              }
+              addSpan('\n')
               break
             case 'code_inline': {
-              if (inTableCell) {
-                currentTableCell += childToken.content
-                break
-              }
-
               const decorator = consolidatedOptions.marks.code({
                 context: {schema: consolidatedOptions.schema},
               })
@@ -849,7 +965,8 @@ export function markdownToPortableText(
                 childToken.attrs?.find(([name]) => name === 'src')?.at(1) || ''
               const alt = childToken.content || ''
 
-              const imageObject = consolidatedOptions.types.image({
+              // Try to create an inline image first
+              const inlineImageObject = consolidatedOptions.types.image({
                 context: {
                   schema: consolidatedOptions.schema,
                   keyGenerator: consolidatedOptions.keyGenerator,
@@ -858,32 +975,72 @@ export function markdownToPortableText(
                 isInline: true,
               })
 
-              if (!imageObject) {
+              if (inlineImageObject) {
+                // Inline image is supported - add it to current block
+                if (!currentBlock) {
+                  const style = consolidatedOptions.block.normal({
+                    context: {schema: consolidatedOptions.schema},
+                  })
+
+                  if (!style) {
+                    console.warn('No default style found, using "normal"')
+                    startBlock('normal')
+                  } else {
+                    startBlock(style)
+                  }
+                }
+
+                // At this point currentBlock should exist
+                if (!currentBlock) {
+                  throw new Error('Expected current block after startBlock')
+                }
+
+                // Add the image as an inline object (TypeScript assertion needed for type narrowing)
+                ;(currentBlock as PortableTextTextBlock).children.push(
+                  inlineImageObject as PortableTextObject,
+                )
                 break
               }
 
-              if (!currentBlock) {
-                const style = consolidatedOptions.block.normal({
-                  context: {schema: consolidatedOptions.schema},
-                })
+              // Inline image not supported - try block image as fallback
+              const blockImageObject = consolidatedOptions.types.image({
+                context: {
+                  schema: consolidatedOptions.schema,
+                  keyGenerator: consolidatedOptions.keyGenerator,
+                },
+                value: {src, alt},
+                isInline: false,
+              })
 
-                if (!style) {
-                  console.warn('No default style found, using "normal"')
-                  startBlock('normal')
-                } else {
-                  startBlock(style)
+              if (!blockImageObject) {
+                // Neither inline nor block image supported
+                break
+              }
+
+              // Block image supported - flush current block and add as block-level
+              // Skip if we're in a table cell (images in cells are handled differently)
+              if (inTableCell) {
+                // In table cells, add the image to current block (will be extracted later)
+                if (currentBlock && 'children' in currentBlock) {
+                  ;(currentBlock as PortableTextTextBlock).children.push(
+                    blockImageObject as PortableTextObject,
+                  )
                 }
+                break
               }
 
-              // At this point currentBlock should exist
-              if (!currentBlock) {
-                throw new Error('Expected current block after startBlock')
-              }
+              // Not in table - flush current block, add image as block, start new block
+              flushBlock()
+              portableText.push(blockImageObject)
 
-              // Add the image as an inline object (TypeScript assertion needed for type narrowing)
-              ;(currentBlock as PortableTextTextBlock).children.push(
-                imageObject as PortableTextObject,
-              )
+              // Start a new block for any remaining content
+              const style = consolidatedOptions.block.normal({
+                context: {schema: consolidatedOptions.schema},
+              })
+
+              if (style) {
+                startBlock(style)
+              }
 
               break
             }

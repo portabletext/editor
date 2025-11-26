@@ -1,7 +1,13 @@
-import {compileSchema, defineSchema} from '@portabletext/schema'
+import {
+  compileSchema,
+  defineSchema,
+  type BlockObjectDefinition,
+} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
+import {defaultSchema} from './default-schema'
 import {markdownToPortableText} from './to-portable-text/markdown-to-portable-text'
+import {buildObjectMatcher} from './to-portable-text/matchers'
 
 describe(markdownToPortableText.name, () => {
   test('empty string', () => {
@@ -597,6 +603,52 @@ describe(markdownToPortableText.name, () => {
           _type: 'block',
           _key: 'k0',
           children: [{_type: 'span', _key: 'k1', text: 'foo  baz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    test('only image block object definition', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText(
+          'foo ![alt](https://example.com/image.png) baz',
+          {
+            keyGenerator,
+            schema: compileSchema(
+              defineSchema({
+                blockObjects: [
+                  {
+                    name: 'image',
+                    fields: [
+                      {name: 'src', type: 'string'},
+                      {name: 'alt', type: 'string'},
+                    ],
+                  },
+                ],
+              }),
+            ),
+          },
+        ),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'foo ', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'image',
+          _key: 'k2',
+          src: 'https://example.com/image.png',
+          alt: 'alt',
+        },
+        {
+          _type: 'block',
+          _key: 'k3',
+          children: [{_type: 'span', _key: 'k4', text: ' baz', marks: []}],
           markDefs: [],
           style: 'normal',
         },
@@ -1528,6 +1580,35 @@ describe(markdownToPortableText.name, () => {
   })
 
   describe('tables', () => {
+    // Table definition for testing
+    const tableObjectDefinitionForTests = {
+      name: 'table',
+      fields: [
+        {name: 'headerRows', type: 'number'},
+        {name: 'rows', type: 'array'},
+      ],
+    } as const satisfies BlockObjectDefinition
+
+    // Schema with table support for testing (includes default schema + table)
+    const schemaWithTable = compileSchema(
+      defineSchema({
+        ...defaultSchema,
+        blockObjects: [
+          ...defaultSchema.blockObjects,
+          tableObjectDefinitionForTests,
+        ],
+      }),
+    )
+
+    // Helper to get table options for tests
+    const getTableTestOptions = (keyGenerator: () => string) => ({
+      keyGenerator,
+      schema: schemaWithTable,
+      types: {
+        table: buildObjectMatcher(tableObjectDefinitionForTests),
+      },
+    })
+
     test('simple table', () => {
       const keyGenerator = createTestKeyGenerator()
       const markdown = [
@@ -1536,14 +1617,963 @@ describe(markdownToPortableText.name, () => {
         '| Cell 1   | Cell 2   |',
         '| Cell 3   | Cell 4   |',
       ].join('\n')
-      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+      expect(
+        markdownToPortableText(markdown, getTableTestOptions(keyGenerator)),
+      ).toEqual([
         {
           _type: 'table',
-          _key: 'k0',
+          _key: 'k21',
+          headerRows: 1,
           rows: [
-            {cells: ['Header 1', 'Header 2']},
-            {cells: ['Cell 1', 'Cell 2']},
-            {cells: ['Cell 3', 'Cell 4']},
+            {
+              _key: 'k6',
+              _type: 'row',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k2',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k0',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k1',
+                          text: 'Header 1',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: 'k5',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k3',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k4',
+                          text: 'Header 2',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _key: 'k13',
+              _type: 'row',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k9',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k7',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k8',
+                          text: 'Cell 1',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: 'k12',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k10',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k11',
+                          text: 'Cell 2',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _key: 'k20',
+              _type: 'row',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k16',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k14',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k15',
+                          text: 'Cell 3',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: 'k19',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k17',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k18',
+                          text: 'Cell 4',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('table with formatting', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        '| **Header 1** | **Header 2** |',
+        '|--------------|--------------|',
+        '| *Cell 1*     | *Cell 2*     |',
+        '| *Cell 3*     | *Cell 4*     |',
+      ].join('\n')
+      expect(
+        markdownToPortableText(markdown, getTableTestOptions(keyGenerator)),
+      ).toEqual([
+        {
+          _type: 'table',
+          _key: 'k21',
+          headerRows: 1,
+          rows: [
+            {
+              _key: 'k6',
+              _type: 'row',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k2',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k0',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k1',
+                          text: 'Header 1',
+                          marks: ['strong'],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: 'k5',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k3',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k4',
+                          text: 'Header 2',
+                          marks: ['strong'],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _key: 'k13',
+              _type: 'row',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k9',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k7',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k8',
+                          text: 'Cell 1',
+                          marks: ['em'],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: 'k12',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k10',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k11',
+                          text: 'Cell 2',
+                          marks: ['em'],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _key: 'k20',
+              _type: 'row',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k16',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k14',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k15',
+                          text: 'Cell 3',
+                          marks: ['em'],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: 'k19',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k17',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k18',
+                          text: 'Cell 4',
+                          marks: ['em'],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('table with image', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        '| Block image | Inline image |',
+        '| --- | --- |',
+        '| ![Block image](https://example.com/block.png) | foo ![Inline image](https://example.com/inline.png) bar |',
+      ].join('\n')
+      expect(
+        markdownToPortableText(markdown, getTableTestOptions(keyGenerator)),
+      ).toEqual([
+        {
+          _type: 'table',
+          _key: 'k16',
+          headerRows: 1,
+          rows: [
+            {
+              _key: 'k6',
+              _type: 'row',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k2',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k0',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k1',
+                          text: 'Block image',
+                          marks: [],
+                        },
+                      ],
+                      style: 'normal',
+                      markDefs: [],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: 'k5',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k3',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k4',
+                          text: 'Inline image',
+                          marks: [],
+                        },
+                      ],
+                      style: 'normal',
+                      markDefs: [],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _key: 'k15',
+              _type: 'row',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k9',
+                  value: [
+                    {
+                      _type: 'image',
+                      _key: 'k8',
+                      src: 'https://example.com/block.png',
+                      alt: 'Block image',
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: 'k14',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k10',
+                      children: [
+                        {
+                          _key: 'k11',
+                          _type: 'span',
+                          text: 'foo ',
+                          marks: [],
+                        },
+                        {
+                          _key: 'k12',
+                          _type: 'image',
+                          src: 'https://example.com/inline.png',
+                          alt: 'Inline image',
+                        },
+                        {
+                          _key: 'k13',
+                          _type: 'span',
+                          text: ' bar',
+                          marks: [],
+                        },
+                      ],
+                      style: 'normal',
+                      markDefs: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('table with images without inline image support', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        '| Block image | Inline image |',
+        '| --- | --- |',
+        '| ![Block image](https://example.com/block.png) | foo ![Inline image](https://example.com/inline.png) bar |',
+      ].join('\n')
+
+      const schema = compileSchema(
+        defineSchema({
+          blockObjects: [
+            {
+              name: 'image',
+              fields: [
+                {name: 'src', type: 'string'},
+                {name: 'alt', type: 'string'},
+              ],
+            },
+            tableObjectDefinitionForTests,
+          ],
+        }),
+      )
+
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator,
+          schema,
+          types: {
+            table: buildObjectMatcher(tableObjectDefinitionForTests),
+          },
+        }),
+      ).toEqual([
+        {
+          _type: 'table',
+          _key: 'k16',
+          headerRows: 1,
+          rows: [
+            {
+              _key: 'k6',
+              _type: 'row',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k2',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k0',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k1',
+                          text: 'Block image',
+                          marks: [],
+                        },
+                      ],
+                      style: 'normal',
+                      markDefs: [],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: 'k5',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k3',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k4',
+                          text: 'Inline image',
+                          marks: [],
+                        },
+                      ],
+                      style: 'normal',
+                      markDefs: [],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _key: 'k15',
+              _type: 'row',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k9',
+                  value: [
+                    {
+                      _type: 'image',
+                      _key: 'k8',
+                      src: 'https://example.com/block.png',
+                      alt: 'Block image',
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: 'k14',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k10',
+                      children: [
+                        {
+                          _key: 'k11',
+                          _type: 'span',
+                          text: 'foo ',
+                          marks: [],
+                        },
+                        {
+                          _key: 'k12',
+                          _type: 'image',
+                          src: 'https://example.com/inline.png',
+                          alt: 'Inline image',
+                        },
+                        {
+                          _key: 'k13',
+                          _type: 'span',
+                          text: ' bar',
+                          marks: [],
+                        },
+                      ],
+                      style: 'normal',
+                      markDefs: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('table with empty cells', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = ['| A | | C |', '|---|---|---|', '| 1 | | 3 |'].join(
+        '\n',
+      )
+      expect(
+        markdownToPortableText(markdown, getTableTestOptions(keyGenerator)),
+      ).toEqual([
+        {
+          _type: 'table',
+          _key: 'k20',
+          headerRows: 1,
+          rows: [
+            {
+              _key: 'k9',
+              _type: 'row',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k2',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k0',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k1',
+                          text: 'A',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: 'k5',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k3',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k4',
+                          text: '',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: 'k8',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k6',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k7',
+                          text: 'C',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _key: 'k19',
+              _type: 'row',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k12',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k10',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k11',
+                          text: '1',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: 'k15',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k13',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k14',
+                          text: '',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: 'k18',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k16',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k17',
+                          text: '3',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('table with links', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        '| Link |',
+        '| --- |',
+        '| [Example](https://example.com) |',
+      ].join('\n')
+      expect(
+        markdownToPortableText(markdown, getTableTestOptions(keyGenerator)),
+      ).toEqual([
+        {
+          _type: 'table',
+          _key: 'k9',
+          headerRows: 1,
+          rows: [
+            {
+              _key: 'k3',
+              _type: 'row',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k2',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k0',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k1',
+                          text: 'Link',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _key: 'k8',
+              _type: 'row',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k7',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k4',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k6',
+                          text: 'Example',
+                          marks: ['k5'],
+                        },
+                      ],
+                      markDefs: [
+                        {
+                          _type: 'link',
+                          _key: 'k5',
+                          href: 'https://example.com',
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('table with inline code', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = ['| Code |', '| --- |', '| `const x = 1` |'].join('\n')
+      expect(
+        markdownToPortableText(markdown, getTableTestOptions(keyGenerator)),
+      ).toEqual([
+        {
+          _type: 'table',
+          _key: 'k8',
+          headerRows: 1,
+          rows: [
+            {
+              _key: 'k3',
+              _type: 'row',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k2',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k0',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k1',
+                          text: 'Code',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _key: 'k7',
+              _type: 'row',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k6',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k4',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k5',
+                          text: 'const x = 1',
+                          marks: ['code'],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('table with mixed formatting', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        '| Mixed |',
+        '| --- |',
+        '| **bold** and *italic* and [link](https://example.com) |',
+      ].join('\n')
+      expect(
+        markdownToPortableText(markdown, getTableTestOptions(keyGenerator)),
+      ).toEqual([
+        {
+          _type: 'table',
+          _key: 'k13',
+          headerRows: 1,
+          rows: [
+            {
+              _key: 'k3',
+              _type: 'row',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k2',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k0',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k1',
+                          text: 'Mixed',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _key: 'k12',
+              _type: 'row',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k11',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k4',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k5',
+                          text: 'bold',
+                          marks: ['strong'],
+                        },
+                        {
+                          _type: 'span',
+                          _key: 'k6',
+                          text: ' and ',
+                          marks: [],
+                        },
+                        {
+                          _type: 'span',
+                          _key: 'k7',
+                          text: 'italic',
+                          marks: ['em'],
+                        },
+                        {
+                          _type: 'span',
+                          _key: 'k8',
+                          text: ' and ',
+                          marks: [],
+                        },
+                        {
+                          _type: 'span',
+                          _key: 'k10',
+                          text: 'link',
+                          marks: ['k9'],
+                        },
+                      ],
+                      markDefs: [
+                        {
+                          _type: 'link',
+                          _key: 'k9',
+                          href: 'https://example.com',
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
           ],
         },
       ])
@@ -1573,8 +2603,101 @@ describe(markdownToPortableText.name, () => {
       ).toEqual([
         {
           _type: 'dataTable',
-          _key: 'k0',
-          data: [{cells: ['A', 'B']}, {cells: ['1', '2']}],
+          _key: 'k14',
+          data: [
+            {
+              _key: 'k6',
+              _type: 'row',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k2',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k0',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k1',
+                          text: 'A',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: 'k5',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k3',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k4',
+                          text: 'B',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _key: 'k13',
+              _type: 'row',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k9',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k7',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k8',
+                          text: '1',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: 'k12',
+                  value: [
+                    {
+                      _type: 'block',
+                      _key: 'k10',
+                      style: 'normal',
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k11',
+                          text: '2',
+                          marks: [],
+                        },
+                      ],
+                      markDefs: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
       ])
     })

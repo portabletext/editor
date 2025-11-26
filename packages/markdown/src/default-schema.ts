@@ -117,11 +117,6 @@ export const defaultHtmlObjectDefinition = {
   fields: [{name: 'html', type: 'string'}],
 } as const satisfies BlockObjectDefinition
 
-export const defaultTableObjectDefinition = {
-  name: 'table',
-  fields: [{name: 'rows', type: 'array'}],
-} as const satisfies BlockObjectDefinition
-
 /**
  * The default schema for converting markdown to Portable Text.
  *
@@ -155,7 +150,6 @@ export const defaultSchema = compileSchema(
       defaultHorizontalRuleObjectDefinition,
       defaultImageObjectDefinition,
       defaultHtmlObjectDefinition,
-      defaultTableObjectDefinition,
     ],
     inlineObjects: [defaultImageObjectDefinition],
   }),
