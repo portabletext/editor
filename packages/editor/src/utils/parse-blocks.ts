@@ -144,45 +144,10 @@ export function parseTextBlock({
   const _key =
     typeof block._key === 'string' ? block._key : context.keyGenerator()
 
-  const unparsedMarkDefs: Array<unknown> = Array.isArray(block.markDefs)
-    ? block.markDefs
-    : []
-  const markDefKeyMap = new Map<string, string>()
-  const markDefs = unparsedMarkDefs.flatMap((markDef) => {
-    if (!isTypedObject(markDef)) {
-      return []
-    }
-
-    const schemaType = context.schema.annotations.find(
-      ({name}) => name === markDef._type,
-    )
-
-    if (!schemaType) {
-      return []
-    }
-
-    if (typeof markDef._key !== 'string') {
-      // If the `markDef` doesn't have a `_key` then we don't know what spans
-      // it belongs to and therefore we have to discard it.
-      return []
-    }
-
-    const parsedAnnotation = parseObject({
-      object: markDef,
-      context: {
-        schemaType,
-        keyGenerator: context.keyGenerator,
-      },
-      options,
-    })
-
-    if (!parsedAnnotation) {
-      return []
-    }
-
-    markDefKeyMap.set(markDef._key, parsedAnnotation._key)
-
-    return [parsedAnnotation]
+  const {markDefs, markDefKeyMap} = parseMarkDefs({
+    context,
+    markDefs: block.markDefs,
+    options,
   })
 
   const unparsedChildren: Array<unknown> = Array.isArray(block.children)
@@ -277,6 +242,66 @@ export function parseTextBlock({
   }
 
   return parsedBlock
+}
+
+export function parseMarkDefs({
+  context,
+  markDefs,
+  options,
+}: {
+  context: Pick<EditorContext, 'keyGenerator' | 'schema'>
+  markDefs: unknown
+  options: {validateFields: boolean}
+}): {
+  markDefs: Array<PortableTextObject>
+  markDefKeyMap: Map<string, string>
+} {
+  const unparsedMarkDefs: Array<unknown> = Array.isArray(markDefs)
+    ? markDefs
+    : []
+  const markDefKeyMap = new Map<string, string>()
+
+  const parsedMarkDefs = unparsedMarkDefs.flatMap((markDef) => {
+    if (!isTypedObject(markDef)) {
+      return []
+    }
+
+    const schemaType = context.schema.annotations.find(
+      ({name}) => name === markDef._type,
+    )
+
+    if (!schemaType) {
+      return []
+    }
+
+    if (typeof markDef._key !== 'string') {
+      // If the `markDef` doesn't have a `_key` then we don't know what spans
+      // it belongs to and therefore we have to discard it.
+      return []
+    }
+
+    const parsedAnnotation = parseObject({
+      object: markDef,
+      context: {
+        schemaType,
+        keyGenerator: context.keyGenerator,
+      },
+      options,
+    })
+
+    if (!parsedAnnotation) {
+      return []
+    }
+
+    markDefKeyMap.set(markDef._key, parsedAnnotation._key)
+
+    return [parsedAnnotation]
+  })
+
+  return {
+    markDefs: parsedMarkDefs,
+    markDefKeyMap,
+  }
 }
 
 export function parseChild({
