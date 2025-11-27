@@ -145,7 +145,7 @@ export type SyntheticBehaviorEvent =
       /**
        * Defaults to character deletion.
        */
-      unit?: 'character' | 'word' | 'line' | 'block'
+      unit?: 'character' | 'word' | 'line' | 'block' | 'child'
     }
   | {
       type: StrictExtract<SyntheticBehaviorEventType, 'history.redo'>

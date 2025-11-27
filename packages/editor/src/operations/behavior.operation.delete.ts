@@ -1,9 +1,10 @@
-import {isTextBlock} from '@portabletext/schema'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import {deleteText, Editor, Element, Range, Transforms} from 'slate'
 import {DOMEditor} from 'slate-dom'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
+import {VOID_CHILD_KEY} from '../internal-utils/values'
 import type {PortableTextSlateEditor} from '../types/editor'
 import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 import type {BehaviorOperationImplementation} from './behavior.operations'
@@ -70,6 +71,23 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
     if (operation.editor.children.length === 0) {
       Transforms.insertNodes(operation.editor, createPlaceholderBlock(context))
     }
+
+    return
+  }
+
+  if (operation.unit === 'child') {
+    const range = at ?? operation.editor.selection ?? undefined
+
+    if (!range) {
+      throw new Error('Unable to delete children without a selection')
+    }
+
+    Transforms.removeNodes(operation.editor, {
+      at: range,
+      match: (node) =>
+        (isSpan(context, node) && node._key !== VOID_CHILD_KEY) ||
+        ('__inline' in node && node.__inline === true),
+    })
 
     return
   }
