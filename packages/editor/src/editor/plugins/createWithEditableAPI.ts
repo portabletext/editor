@@ -5,12 +5,9 @@ import type {
   PortableTextChild,
   PortableTextObject,
 } from '@sanity/types'
-import {Editor, Range, Element as SlateElement, Text, Transforms} from 'slate'
+import {Editor, Range, Text, Transforms} from 'slate'
 import type {DOMNode} from 'slate-dom'
 import {ReactEditor} from 'slate-react'
-import {buildIndexMaps} from '../../internal-utils/build-index-maps'
-import {createPlaceholderBlock} from '../../internal-utils/create-placeholder-block'
-import {debugWithName} from '../../internal-utils/debug'
 import {
   isListItemActive,
   isStyleActive,
@@ -36,8 +33,6 @@ import {
 import type {EditorActor} from '../editor-machine'
 import {getEditorSnapshot} from '../editor-selector'
 import {SLATE_TO_PORTABLE_TEXT_RANGE} from '../weakMaps'
-
-const debug = debugWithName('API:editable')
 
 export function createEditableAPI(
   editor: PortableTextSlateEditor,
@@ -431,84 +426,24 @@ export function createEditableAPI(
       selection: EditorSelection,
       options?: EditableAPIDeleteOptions,
     ): void => {
-      if (selection) {
-        const range = toSlateRange({
-          context: {
-            schema: editorActor.getSnapshot().context.schema,
-            value: editor.value,
-            selection,
-          },
-          blockIndexMap: editor.blockIndexMap,
-        })
-        const hasRange =
-          range && range.anchor.path.length > 0 && range.focus.path.length > 0
-        if (!hasRange) {
-          throw new Error('Invalid range')
-        }
-        if (range) {
-          if (!options?.mode || options?.mode === 'selected') {
-            debug(`Deleting content in selection`)
-            Transforms.delete(editor, {
-              at: range,
-              hanging: true,
-              voids: true,
-            })
-            editor.onChange()
-            return
-          }
-          if (options?.mode === 'blocks') {
-            debug(`Deleting blocks touched by selection`)
-            Transforms.removeNodes(editor, {
-              at: range,
-              voids: true,
-              match: (node) => {
-                return (
-                  editor.isTextBlock(node) ||
-                  (!editor.isTextBlock(node) && SlateElement.isElement(node))
-                )
-              },
-            })
-          }
-          if (options?.mode === 'children') {
-            debug(`Deleting children touched by selection`)
-            Transforms.removeNodes(editor, {
-              at: range,
-              voids: true,
-              match: (node) => {
-                return (
-                  node._type === types.span.name || // Text children
-                  (!editor.isTextBlock(node) && SlateElement.isElement(node)) // inline blocks
-                )
-              },
-            })
-          }
-          // If the editor was emptied, insert a placeholder block
-          // directly into the editor's children. We don't want to do this
-          // through a Transform (because that would trigger a change event
-          // that would insert the placeholder into the actual value
-          // which should remain empty)
-          if (editor.children.length === 0) {
-            const placeholderBlock = createPlaceholderBlock(
-              editorActor.getSnapshot().context,
-            )
-            editor.children = [placeholderBlock]
-            editor.value = [placeholderBlock]
-
-            buildIndexMaps(
-              {
-                schema: editorActor.getSnapshot().context.schema,
-                value: editor.value,
-              },
-              {
-                blockIndexMap: editor.blockIndexMap,
-                listIndexMap: editor.listIndexMap,
-              },
-            )
-          }
-
-          editor.onChange()
-        }
+      if (!selection) {
+        return
       }
+
+      editorActor.send({
+        type: 'behavior event',
+        behaviorEvent: {
+          type: 'delete',
+          at: selection,
+          unit:
+            options?.mode === 'blocks'
+              ? 'block'
+              : options?.mode === 'children'
+                ? 'child'
+                : undefined,
+        },
+        editor,
+      })
     },
     removeAnnotation: <TSchemaType extends {name: string}>(
       type: TSchemaType,
