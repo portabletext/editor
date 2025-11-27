@@ -200,39 +200,36 @@ describe('plugin:withEditableAPI: .delete()', () => {
 
     await vi.waitFor(() => {
       if (editorRef.current) {
-        expect(PortableTextEditor.getValue(editorRef.current))
-          .toMatchInlineSnapshot(`
-                  [
-                    {
-                      "_key": "a",
-                      "_type": "block",
-                      "children": [
-                        {
-                          "_key": "a1",
-                          "_type": "span",
-                          "marks": [],
-                          "text": "Block A",
-                        },
-                      ],
-                      "markDefs": [],
-                      "style": "normal",
-                    },
-                    {
-                      "_key": "b",
-                      "_type": "block",
-                      "children": [
-                        {
-                          "_key": "k2",
-                          "_type": "span",
-                          "marks": [],
-                          "text": "",
-                        },
-                      ],
-                      "markDefs": [],
-                      "style": "normal",
-                    },
-                  ]
-              `)
+        expect(PortableTextEditor.getValue(editorRef.current)).toEqual([
+          {
+            _key: 'a',
+            _type: 'block',
+            children: [
+              {
+                _key: 'a1',
+                _type: 'span',
+                marks: [],
+                text: 'Block A',
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _key: 'b',
+            _type: 'block',
+            children: [
+              {
+                _key: 'k2',
+                _type: 'span',
+                marks: [],
+                text: '',
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
       }
     })
   })
