@@ -1,7 +1,6 @@
+import {applyAll, set, unset} from '@portabletext/patches'
 import {isTextBlock} from '@portabletext/schema'
-import {omit} from 'lodash'
-import {Transforms} from 'slate'
-import {parseBlock} from '../utils/parse-blocks'
+import {Transforms, type Node} from 'slate'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const blockUnsetOperationImplementation: BehaviorOperationImplementation<
@@ -14,73 +13,42 @@ export const blockUnsetOperationImplementation: BehaviorOperationImplementation<
     throw new Error(`Unable to find block index for block key ${blockKey}`)
   }
 
-  const block =
-    blockIndex !== undefined ? operation.editor.value.at(blockIndex) : undefined
+  const slateBlock =
+    blockIndex !== undefined
+      ? operation.editor.children.at(blockIndex)
+      : undefined
 
-  if (!block) {
+  if (!slateBlock) {
     throw new Error(`Unable to find block at ${JSON.stringify(operation.at)}`)
   }
 
-  if (isTextBlock(context, block)) {
-    const propsToRemove = operation.props.filter((prop) => prop !== '_type')
+  if (isTextBlock(context, slateBlock)) {
+    const propsToRemove = operation.props.filter(
+      (prop) => prop !== '_type' && prop !== '_key' && prop !== 'children',
+    )
 
-    const updatedTextBlock = parseBlock({
-      context,
-      block: omit(block, propsToRemove),
-      options: {
-        normalize: false,
-        removeUnusedMarkDefs: true,
-        validateFields: true,
-      },
-    })
+    Transforms.unsetNodes(operation.editor, propsToRemove, {at: [blockIndex]})
 
-    if (!updatedTextBlock) {
-      throw new Error(
-        `Unable to update block at ${JSON.stringify(operation.at)}`,
+    if (operation.props.includes('_key')) {
+      Transforms.setNodes(
+        operation.editor,
+        {_key: context.keyGenerator()},
+        {at: [blockIndex]},
       )
     }
-
-    const propsToSet: Record<string, unknown> = {}
-
-    for (const prop of propsToRemove) {
-      if (!(prop in updatedTextBlock)) {
-        propsToSet[prop] = undefined
-      } else {
-        propsToSet[prop] = (updatedTextBlock as Record<string, unknown>)[prop]
-      }
-    }
-
-    Transforms.setNodes(operation.editor, propsToSet, {at: [blockIndex]})
 
     return
   }
 
-  const updatedBlockObject = parseBlock({
-    context,
-    block: omit(
-      block,
-      operation.props.filter((prop) => prop !== '_type'),
-    ),
-    options: {
-      normalize: false,
-      removeUnusedMarkDefs: true,
-      validateFields: true,
-    },
-  })
-
-  if (!updatedBlockObject) {
-    throw new Error(`Unable to update block at ${JSON.stringify(operation.at)}`)
-  }
-
-  const {_type, _key, ...props} = updatedBlockObject
-
-  Transforms.setNodes(
-    operation.editor,
-    {
-      _type,
-      _key,
-      value: props,
-    },
-    {at: [blockIndex]},
+  const patches = operation.props.flatMap((key) =>
+    key === '_type'
+      ? []
+      : key === '_key'
+        ? set(context.keyGenerator(), ['_key'])
+        : unset(['value', key]),
   )
+
+  const updatedSlateBlock = applyAll(slateBlock, patches) as Partial<Node>
+
+  Transforms.setNodes(operation.editor, updatedSlateBlock, {at: [blockIndex]})
 }

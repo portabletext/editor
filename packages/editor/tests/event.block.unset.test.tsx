@@ -1,3 +1,4 @@
+import {insert, set, setIfMissing, unset} from '@portabletext/patches'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema, type Patch} from '../src'
@@ -5,7 +6,7 @@ import {EventListenerPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.block.unset', () => {
-  test('Scenario: removing block object property', async () => {
+  test('Scenario: `unset`ing block object property removes it', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
 
@@ -18,7 +19,8 @@ describe('event.block.unset', () => {
         <EventListenerPlugin
           on={(event) => {
             if (event.type === 'patch') {
-              patches.push(event.patch)
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
             }
           }}
         />
@@ -60,17 +62,40 @@ describe('event.block.unset', () => {
           _type: 'url',
         },
       ])
-      expect(patches.slice(4)).toEqual([
-        {
-          origin: 'local',
-          type: 'unset',
-          path: [{_key: urlBlockKey}, 'href'],
-        },
+
+      expect(patches).toEqual([
+        setIfMissing([], []),
+        insert(
+          [
+            {
+              _key: 'k0',
+              _type: 'block',
+              children: [{_key: 'k1', _type: 'span', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          'before',
+          [0],
+        ),
+        insert(
+          [
+            {
+              _key: urlBlockKey,
+              _type: 'url',
+              href: 'https://www.sanity.io',
+            },
+          ],
+          'before',
+          [{_key: 'k0'}],
+        ),
+        unset([{_key: 'k0'}]),
+        unset([{_key: urlBlockKey}, 'href']),
       ])
     })
   })
 
-  test('Scenario: removing block object _key sets a new _key', async () => {
+  test('Scenario: `unset`ing block object `_key` `set`s a new `_key`', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
     const {editor} = await createTestEditor({
@@ -82,7 +107,8 @@ describe('event.block.unset', () => {
         <EventListenerPlugin
           on={(event) => {
             if (event.type === 'patch') {
-              patches.push(event.patch)
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
             }
           }}
         />
@@ -109,25 +135,33 @@ describe('event.block.unset', () => {
           href: 'https://www.sanity.io',
         },
       ])
-      expect(patches.slice(2)).toEqual([
-        {
-          origin: 'local',
-          type: 'insert',
-          path: [{_key: 'k0'}],
-          position: 'before',
-          items: [
+      expect(patches).toEqual([
+        setIfMissing([], []),
+        insert(
+          [
+            {
+              _key: 'k0',
+              _type: 'block',
+              children: [{_key: 'k1', _type: 'span', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          'before',
+          [0],
+        ),
+        insert(
+          [
             {
               _key: urlBlockKey,
               _type: 'url',
               href: 'https://www.sanity.io',
             },
           ],
-        },
-        {
-          origin: 'local',
-          type: 'unset',
-          path: [{_key: 'k0'}],
-        },
+          'before',
+          [{_key: 'k0'}],
+        ),
+        unset([{_key: 'k0'}]),
       ])
     })
 
@@ -147,30 +181,28 @@ describe('event.block.unset', () => {
       expect(editor.getSnapshot().context.value[0]._key).not.toEqual(
         urlBlockKey,
       )
-      expect(patches.slice(4)).toEqual([
-        {
-          origin: 'local',
-          type: 'set',
-          path: [0, '_key'],
-          value: 'k3',
-        },
-        {
-          origin: 'local',
-          type: 'set',
-          path: [{_key: 'k3'}, 'href'],
-          value: 'https://www.sanity.io',
-        },
-      ])
+      expect(patches.slice(4)).toEqual([set('k3', [0, '_key'])])
     })
   })
 
-  test('Scenario: removing block object _type is a noop', async () => {
+  test('Scenario: `unset`ing block object `_type` is a noop', async () => {
+    const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
         blockObjects: [{name: 'url', fields: [{name: 'href', type: 'string'}]}],
       }),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
     })
 
     const urlBlockKey = keyGenerator()
@@ -186,7 +218,7 @@ describe('event.block.unset', () => {
     })
 
     await vi.waitFor(() => {
-      return expect(editor.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: urlBlockKey,
           _type: 'url',
@@ -198,43 +230,86 @@ describe('event.block.unset', () => {
     editor.send({
       type: 'block.unset',
       at: [{_key: urlBlockKey}],
-      props: ['_type'],
+      props: ['_type', 'href'],
     })
 
     await vi.waitFor(() => {
-      return expect(editor.getSnapshot().context.value).toEqual([
+      expect(editor.getSnapshot().context.value).toEqual([
         {
           _key: urlBlockKey,
           _type: 'url',
-          href: 'https://www.sanity.io',
         },
+      ])
+
+      expect(patches).toEqual([
+        setIfMissing([], []),
+        insert(
+          [
+            {
+              _key: 'k0',
+              _type: 'block',
+              children: [{_key: 'k1', _type: 'span', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          'before',
+          [0],
+        ),
+        insert(
+          [
+            {
+              _key: urlBlockKey,
+              _type: 'url',
+              href: 'https://www.sanity.io',
+            },
+          ],
+          'before',
+          [{_key: 'k0'}],
+        ),
+        unset([{_key: 'k0'}]),
+        unset([{_key: urlBlockKey}, 'href']),
       ])
     })
   })
 
-  test('Scenario: removing text block listItem', async () => {
+  test('Scenario: `unset`ing text block `markDefs` removes the annotation', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
     const textBlockKey = keyGenerator()
-    const block = {
-      _key: textBlockKey,
-      _type: 'block',
-      children: [
-        {_key: keyGenerator(), _type: 'span', text: 'Hello, world!', marks: []},
-      ],
-      style: 'normal',
-      markDefs: [],
-    }
+    const spanKey = keyGenerator()
+    const annotationKey = keyGenerator()
+
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
         lists: [{name: 'bullet'}],
+        annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
       }),
+      initialValue: [
+        {
+          _key: textBlockKey,
+          _type: 'block',
+          children: [
+            {
+              _key: spanKey,
+              _type: 'span',
+              text: 'foo ',
+              marks: [annotationKey],
+            },
+          ],
+          style: 'normal',
+          markDefs: [
+            {_key: annotationKey, _type: 'link', href: 'https://example.com'},
+          ],
+        },
+      ],
       children: (
         <EventListenerPlugin
           on={(event) => {
             if (event.type === 'patch') {
-              patches.push(event.patch)
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
             }
           }}
         />
@@ -242,40 +317,31 @@ describe('event.block.unset', () => {
     })
 
     editor.send({
-      type: 'insert.block',
-      block: {
-        ...block,
-        listItem: 'bullet',
-      },
-      placement: 'auto',
+      type: 'block.unset',
+      at: [{_key: textBlockKey}],
+      props: ['markDefs'],
     })
 
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual([
-        {...block, listItem: 'bullet'},
-      ])
-    })
-
-    editor.send({
-      type: 'block.unset',
-      at: [{_key: textBlockKey}],
-      props: ['listItem'],
-    })
-
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([block])
-
-      expect(patches.slice(4)).toEqual([
         {
-          origin: 'local',
-          type: 'unset',
-          path: [{_key: textBlockKey}, 'listItem'],
+          _key: textBlockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'foo ', marks: []}],
+          style: 'normal',
+          markDefs: [],
         },
+      ])
+
+      expect(patches).toEqual([
+        unset([{_key: textBlockKey}, 'markDefs']),
+        set([], [{_key: textBlockKey}, 'markDefs']),
+        set([], [{_key: textBlockKey}, 'children', {_key: spanKey}, 'marks']),
       ])
     })
   })
 
-  test('Scenario: removing text block style', async () => {
+  test('Scenario: `unset`ing text block `style` `set`s the default style', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
     const {editor} = await createTestEditor({
@@ -287,7 +353,8 @@ describe('event.block.unset', () => {
         <EventListenerPlugin
           on={(event) => {
             if (event.type === 'patch') {
-              patches.push(event.patch)
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
             }
           }}
         />
@@ -322,18 +389,9 @@ describe('event.block.unset', () => {
         },
       ])
       expect(patches).toEqual([
-        {
-          origin: 'local',
-          type: 'setIfMissing',
-          path: [],
-          value: [],
-        },
-        {
-          origin: 'local',
-          type: 'insert',
-          path: [0],
-          position: 'before',
-          items: [
+        setIfMissing([], []),
+        insert(
+          [
             {
               _key: 'k0',
               _type: 'block',
@@ -342,13 +400,11 @@ describe('event.block.unset', () => {
               markDefs: [],
             },
           ],
-        },
-        {
-          origin: 'local',
-          type: 'insert',
-          path: [{_key: 'k0'}],
-          position: 'before',
-          items: [
+          'before',
+          [0],
+        ),
+        insert(
+          [
             {
               _key: textBlockKey,
               _type: 'block',
@@ -358,18 +414,11 @@ describe('event.block.unset', () => {
               style: 'h1',
             },
           ],
-        },
-        {
-          origin: 'local',
-          type: 'unset',
-          path: [{_key: 'k0'}],
-        },
-        {
-          origin: 'local',
-          type: 'set',
-          path: [{_key: textBlockKey}, 'markDefs'],
-          value: [],
-        },
+          'before',
+          [{_key: 'k0'}],
+        ),
+        unset([{_key: 'k0'}]),
+        set([], [{_key: textBlockKey}, 'markDefs']),
       ])
     })
 
@@ -392,22 +441,13 @@ describe('event.block.unset', () => {
         },
       ])
       expect(patches.slice(5)).toEqual([
-        {
-          origin: 'local',
-          type: 'unset',
-          path: [{_key: textBlockKey}, 'style'],
-        },
-        {
-          origin: 'local',
-          type: 'set',
-          path: [{_key: textBlockKey}, 'style'],
-          value: 'normal',
-        },
+        unset([{_key: textBlockKey}, 'style']),
+        set('normal', [{_key: textBlockKey}, 'style']),
       ])
     })
   })
 
-  test('Scenario: removing text block listItem', async () => {
+  test('Scenario: `unset`ing text block `listItem` and `level` removes them', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
@@ -435,7 +475,8 @@ describe('event.block.unset', () => {
         <EventListenerPlugin
           on={(event) => {
             if (event.type === 'patch') {
-              patches.push(event.patch)
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
             }
           }}
         />
@@ -460,21 +501,51 @@ describe('event.block.unset', () => {
 
     await vi.waitFor(() => {
       return expect(patches).toEqual([
-        {
-          origin: 'local',
-          type: 'unset',
-          path: [{_key: blockKey}, 'listItem'],
-        },
-        {
-          origin: 'local',
-          type: 'unset',
-          path: [{_key: blockKey}, 'level'],
-        },
+        unset([{_key: blockKey}, 'listItem']),
+        unset([{_key: blockKey}, 'level']),
       ])
     })
   })
 
-  test('Scenario: Removing text block children is a noop', async () => {
+  test('Scenario: `unset`ing text block `_key` `set`s a new `_key`', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'block.unset',
+      props: ['_key'],
+      at: [{_key: 'k0'}],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k2',
+          _type: 'block',
+          children: [{_key: 'k1', _type: 'span', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+
+      expect(patches).toEqual([setIfMissing([], []), set('k2', [0, '_key'])])
+    })
+  })
+
+  test('Scenario: `unset`ing text block `_type` is a noop', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
     const {editor} = await createTestEditor({
@@ -486,7 +557,89 @@ describe('event.block.unset', () => {
         <EventListenerPlugin
           on={(event) => {
             if (event.type === 'patch') {
-              patches.push(event.patch)
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    const textBlockKey = keyGenerator()
+
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _key: textBlockKey,
+        _type: 'block',
+        children: [
+          {
+            _key: keyGenerator(),
+            _type: 'span',
+            text: 'Hello, world!',
+            marks: [],
+          },
+        ],
+        markDefs: [],
+        style: 'h1',
+      },
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: textBlockKey,
+          _type: 'block',
+          children: [
+            {_key: 'k3', _type: 'span', text: 'Hello, world!', marks: []},
+          ],
+          markDefs: [],
+          style: 'h1',
+        },
+      ])
+      expect(patches.slice(4)).toEqual([])
+    })
+
+    editor.send({
+      type: 'block.unset',
+      at: [{_key: textBlockKey}],
+      props: ['_type', 'style'],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: textBlockKey,
+          _type: 'block',
+          children: [
+            {_key: 'k3', _type: 'span', text: 'Hello, world!', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(patches.slice(4)).toEqual([
+        unset([{_key: textBlockKey}, 'style']),
+        set('normal', [{_key: textBlockKey}, 'style']),
+      ])
+    })
+  })
+
+  test('Scenario: `unset`ing text block children is a noop', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        styles: [{name: 'normal'}, {name: 'h1'}],
+      }),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
             }
           }}
         />
@@ -548,17 +701,8 @@ describe('event.block.unset', () => {
         },
       ])
       expect(patches.slice(4)).toEqual([
-        {
-          origin: 'local',
-          type: 'unset',
-          path: [{_key: textBlockKey}, 'style'],
-        },
-        {
-          origin: 'local',
-          type: 'set',
-          path: [{_key: textBlockKey}, 'style'],
-          value: 'normal',
-        },
+        unset([{_key: textBlockKey}, 'style']),
+        set('normal', [{_key: textBlockKey}, 'style']),
       ])
     })
   })
