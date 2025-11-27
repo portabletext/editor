@@ -712,4 +712,229 @@ describe('event.delete', () => {
       })
     })
   })
+
+  describe('unit: child', () => {
+    describe('Scenario: deleting text block children', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const fooKey = keyGenerator()
+      const stockTickerKey = keyGenerator()
+      const barKey = keyGenerator()
+      const initialValue = [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: fooKey, text: 'foo'},
+            {_type: 'stock-ticker', _key: stockTickerKey},
+            {_type: 'span', _key: barKey, text: 'bar'},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ]
+
+      test('end-to-end selection', async () => {
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            inlineObjects: [{name: 'stock-ticker'}],
+          }),
+          initialValue,
+        })
+
+        editor.send({
+          type: 'delete',
+          at: {
+            anchor: {
+              path: [{_key: blockKey}, 'children', {_key: fooKey}],
+              offset: 0,
+            },
+            focus: {
+              path: [{_key: blockKey}, 'children', {_key: barKey}],
+              offset: 3,
+            },
+          },
+          unit: 'child',
+        })
+
+        await vi.waitFor(() => {
+          expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+        })
+      })
+
+      test('mid-span to mid-span selection', async () => {
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            inlineObjects: [{name: 'stock-ticker'}],
+          }),
+          initialValue,
+        })
+
+        editor.send({
+          type: 'delete',
+          at: {
+            anchor: {
+              path: [{_key: blockKey}, 'children', {_key: fooKey}],
+              offset: 1,
+            },
+            focus: {
+              path: [{_key: blockKey}, 'children', {_key: barKey}],
+              offset: 2,
+            },
+          },
+          unit: 'child',
+        })
+
+        await vi.waitFor(() => {
+          expect(getTersePt(editor.getSnapshot().context)).toEqual([''])
+        })
+      })
+
+      test('partial span selection', async () => {
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            inlineObjects: [{name: 'stock-ticker'}],
+          }),
+          initialValue,
+        })
+
+        editor.send({
+          type: 'delete',
+          at: {
+            anchor: {
+              path: [{_key: blockKey}, 'children', {_key: fooKey}],
+              offset: 1,
+            },
+            focus: {
+              path: [{_key: blockKey}, 'children', {_key: fooKey}],
+              offset: 2,
+            },
+          },
+          unit: 'child',
+        })
+
+        await vi.waitFor(() => {
+          expect(getTersePt(editor.getSnapshot().context)).toEqual([
+            ',{stock-ticker},bar',
+          ])
+        })
+      })
+
+      test('inline object selection', async () => {
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            inlineObjects: [{name: 'stock-ticker'}],
+          }),
+          initialValue,
+        })
+
+        editor.send({
+          type: 'delete',
+          at: {
+            anchor: {
+              path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
+              offset: 0,
+            },
+            focus: {
+              path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
+              offset: 0,
+            },
+          },
+          unit: 'child',
+        })
+
+        await vi.waitFor(() => {
+          expect(getTersePt(editor.getSnapshot().context)).toEqual(['foobar'])
+        })
+      })
+    })
+  })
+
+  test('Scenario: Deleting block object', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const imageKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'image'}],
+      }),
+      initialValue: [
+        {
+          _type: 'image',
+          _key: imageKey,
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'delete',
+      at: {
+        anchor: {path: [{_key: imageKey}], offset: 0},
+        focus: {path: [{_key: imageKey}], offset: 0},
+      },
+      unit: 'child',
+    })
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['{image}'])
+    })
+  })
+
+  test('Scenario: Deleting across block object', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const imageKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'image'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: fooBlockKey,
+          children: [{_type: 'span', _key: fooSpanKey, text: 'foo'}],
+        },
+        {
+          _type: 'image',
+          _key: imageKey,
+        },
+        {
+          _type: 'block',
+          _key: barBlockKey,
+          children: [{_type: 'span', _key: barSpanKey, text: 'bar'}],
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'delete',
+      at: {
+        anchor: {
+          path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
+          offset: 2,
+        },
+      },
+      unit: 'child',
+    })
+
+    await vi.waitFor(() => {
+      expect(getTersePt(editor.getSnapshot().context)).toEqual([
+        '',
+        '{image}',
+        '',
+      ])
+    })
+  })
 })
