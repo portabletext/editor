@@ -17,6 +17,7 @@ export function createCoreConverters(
       ...converterTextMarkdown,
       mimeType: 'text/plain',
     },
+    // converterTextPlain,
     // createConverterTextPlain(legacySchema),
   ]
 }

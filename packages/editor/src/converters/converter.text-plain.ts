@@ -1,10 +1,67 @@
 import {htmlToBlocks} from '@portabletext/block-tools'
+import {
+  markdownToPortableText,
+  portableTextToMarkdown,
+} from '@portabletext/markdown'
 import {isTextBlock} from '@portabletext/schema'
 import type {PortableTextBlock} from '@sanity/types'
 import {getSelectedValue} from '../selectors/selector.get-selected-value'
 import type {PortableTextMemberSchemaTypes} from '../types/editor'
 import {parseBlock} from '../utils/parse-blocks'
 import {defineConverter} from './converter.types'
+
+export const converterTextPlain = defineConverter({
+  mimeType: 'text/plain',
+  serialize: ({snapshot, event}) => {
+    const selection = snapshot.context.selection
+
+    if (!selection) {
+      return {
+        type: 'serialization.failure',
+        mimeType: 'text/plain',
+        originEvent: event.originEvent,
+        reason: 'No selection',
+      }
+    }
+
+    const blocks = getSelectedValue(snapshot)
+
+    const markdown = portableTextToMarkdown(blocks, {
+      components: {
+        types: {
+          image: ({value}) => `![${value.alt || 'Image'}](${value.src})`,
+        },
+      },
+    })
+
+    return {
+      type: 'serialization.success',
+      data: markdown,
+      mimeType: 'text/plain',
+      originEvent: event.originEvent,
+    }
+  },
+  deserialize: ({snapshot, event}) => {
+    const blocks = markdownToPortableText(event.data, {
+      keyGenerator: snapshot.context.keyGenerator,
+      schema: snapshot.context.schema,
+    })
+
+    if (blocks.length === 0) {
+      return {
+        type: 'deserialization.failure',
+        mimeType: 'text/plain',
+        reason: 'No blocks deserialized',
+      }
+    }
+
+    return {
+      type: 'deserialization.success',
+      data: blocks,
+      mimeType: 'text/plain',
+    }
+  },
+})
 
 export function createConverterTextPlain(
   legacySchema: PortableTextMemberSchemaTypes,

@@ -3,7 +3,6 @@ import {
   portableTextToMarkdown,
 } from '@portabletext/markdown'
 import {getSelectedValue} from '../selectors/selector.get-selected-value'
-import {parseBlock} from '../utils/parse-blocks'
 import {defineConverter} from './converter.types'
 
 export const converterTextMarkdown = defineConverter({
@@ -21,6 +20,7 @@ export const converterTextMarkdown = defineConverter({
     }
 
     const blocks = getSelectedValue(snapshot)
+
     const markdown = portableTextToMarkdown(blocks, {
       components: {
         types: {
@@ -42,20 +42,7 @@ export const converterTextMarkdown = defineConverter({
       schema: snapshot.context.schema,
     })
 
-    const parsedBlocks = blocks.flatMap((block) => {
-      const parsedBlock = parseBlock({
-        context: snapshot.context,
-        block,
-        options: {
-          normalize: false,
-          removeUnusedMarkDefs: true,
-          validateFields: false,
-        },
-      })
-      return parsedBlock ? [parsedBlock] : []
-    })
-
-    if (parsedBlocks.length === 0) {
+    if (blocks.length === 0) {
       return {
         type: 'deserialization.failure',
         mimeType: 'text/markdown',
@@ -65,7 +52,7 @@ export const converterTextMarkdown = defineConverter({
 
     return {
       type: 'deserialization.success',
-      data: parsedBlocks,
+      data: blocks,
       mimeType: 'text/markdown',
     }
   },
