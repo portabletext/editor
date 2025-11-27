@@ -1,3 +1,4 @@
+import {insert, set, setIfMissing, unset} from '@portabletext/patches'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema, type Patch} from '../src'
@@ -8,27 +9,20 @@ import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.block.set', () => {
-  test('Scenario: adding block object property', async () => {
+  test('Scenario: setting undefined block object property is a noop', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
     const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
-        blockObjects: [
-          {
-            name: 'url',
-            fields: [
-              {name: 'description', type: 'string'},
-              {name: 'href', type: 'string'},
-            ],
-          },
-        ],
+        blockObjects: [{name: 'url', fields: [{name: 'href', type: 'string'}]}],
       }),
       children: (
         <EventListenerPlugin
           on={(event) => {
             if (event.type === 'patch') {
-              patches.push(event.patch)
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
             }
           }}
         />
@@ -55,25 +49,131 @@ describe('event.block.set', () => {
           href: 'https://www.sanity.io',
         },
       ])
-      expect(patches.slice(2)).toEqual([
-        {
-          origin: 'local',
-          type: 'insert',
-          path: [{_key: 'k0'}],
-          position: 'before',
-          items: [
+      expect(patches).toEqual([
+        setIfMissing([], []),
+        insert(
+          [
+            {
+              _key: 'k0',
+              _type: 'block',
+              children: [{_key: 'k1', _type: 'span', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          'before',
+          [0],
+        ),
+        insert(
+          [
             {
               _key: urlBlockKey,
               _type: 'url',
               href: 'https://www.sanity.io',
             },
           ],
-        },
+          'before',
+          [{_key: 'k0'}],
+        ),
+        unset([{_key: 'k0'}]),
+      ])
+    })
+
+    editor.send({
+      type: 'block.set',
+      at: [{_key: urlBlockKey}],
+      props: {
+        description: 'Sanity is a headless CMS',
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
         {
-          origin: 'local',
-          type: 'unset',
-          path: [{_key: 'k0'}],
+          _key: urlBlockKey,
+          _type: 'url',
+          href: 'https://www.sanity.io',
         },
+      ])
+      expect(patches.slice(4)).toEqual([])
+    })
+  })
+
+  test('Scenario: setting defined block object property', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'url',
+            fields: [
+              {name: 'description', type: 'string'},
+              {name: 'href', type: 'string'},
+            ],
+          },
+        ],
+      }),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    const urlBlockKey = keyGenerator()
+
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _key: urlBlockKey,
+        _type: 'url',
+        href: 'https://www.sanity.io',
+      },
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: urlBlockKey,
+          _type: 'url',
+          href: 'https://www.sanity.io',
+        },
+      ])
+      expect(patches).toEqual([
+        setIfMissing([], []),
+        insert(
+          [
+            {
+              _key: 'k0',
+              _type: 'block',
+              children: [{_key: 'k1', _type: 'span', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          'before',
+          [0],
+        ),
+        insert(
+          [
+            {
+              _key: urlBlockKey,
+              _type: 'url',
+              href: 'https://www.sanity.io',
+            },
+          ],
+          'before',
+          [{_key: 'k0'}],
+        ),
+        unset([{_key: 'k0'}]),
       ])
     })
 
@@ -95,18 +195,8 @@ describe('event.block.set', () => {
         },
       ])
       expect(patches.slice(4)).toEqual([
-        {
-          origin: 'local',
-          type: 'set',
-          path: [{_key: urlBlockKey}, 'description'],
-          value: 'Sanity is a headless CMS',
-        },
-        {
-          origin: 'local',
-          type: 'set',
-          path: [{_key: urlBlockKey}, 'href'],
-          value: 'https://www.sanity.io',
-        },
+        set('https://www.sanity.io', [{_key: urlBlockKey}, 'href']),
+        set('Sanity is a headless CMS', [{_key: urlBlockKey}, 'description']),
       ])
     })
   })
@@ -197,12 +287,6 @@ describe('event.block.set', () => {
           path: [0, '_key'],
           value: newUrlBlockKey,
         },
-        {
-          origin: 'local',
-          type: 'set',
-          path: [{_key: newUrlBlockKey}, 'href'],
-          value: 'https://www.sanity.io',
-        },
       ])
     })
   })
@@ -219,7 +303,8 @@ describe('event.block.set', () => {
         <EventListenerPlugin
           on={(event) => {
             if (event.type === 'patch') {
-              patches.push(event.patch)
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
             }
           }}
         />
@@ -247,24 +332,18 @@ describe('event.block.set', () => {
         },
       ])
       expect(patches.slice(2)).toEqual([
-        {
-          origin: 'local',
-          type: 'insert',
-          path: [{_key: 'k0'}],
-          position: 'before',
-          items: [
+        insert(
+          [
             {
               _key: urlBlockKey,
               _type: 'url',
               href: 'https://www.sanity.io',
             },
           ],
-        },
-        {
-          origin: 'local',
-          type: 'unset',
-          path: [{_key: 'k0'}],
-        },
+          'before',
+          [{_key: 'k0'}],
+        ),
+        unset([{_key: 'k0'}]),
       ])
     })
 
@@ -284,14 +363,7 @@ describe('event.block.set', () => {
           href: 'https://www.sanity.io',
         },
       ])
-      expect(patches.slice(4)).toEqual([
-        {
-          origin: 'local',
-          type: 'set',
-          path: [{_key: urlBlockKey}, 'href'],
-          value: 'https://www.sanity.io',
-        },
-      ])
+      expect(patches.slice(4)).toEqual([])
     })
   })
 
@@ -307,7 +379,8 @@ describe('event.block.set', () => {
         <EventListenerPlugin
           on={(event) => {
             if (event.type === 'patch') {
-              patches.push(event.patch)
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
             }
           }}
         />
@@ -337,18 +410,9 @@ describe('event.block.set', () => {
         },
       ])
       expect(patches).toEqual([
-        {
-          origin: 'local',
-          type: 'setIfMissing',
-          path: [],
-          value: [],
-        },
-        {
-          origin: 'local',
-          type: 'insert',
-          path: [0],
-          position: 'before',
-          items: [
+        setIfMissing([], []),
+        insert(
+          [
             {
               _key: 'k0',
               _type: 'block',
@@ -357,13 +421,11 @@ describe('event.block.set', () => {
               style: 'normal',
             },
           ],
-        },
-        {
-          origin: 'local',
-          type: 'insert',
-          path: [{_key: 'k0'}],
-          position: 'before',
-          items: [
+          'before',
+          [0],
+        ),
+        insert(
+          [
             {
               _key: textBlockKey,
               _type: 'block',
@@ -378,29 +440,13 @@ describe('event.block.set', () => {
               style: 'normal',
             },
           ],
-        },
-        {
-          origin: 'local',
-          type: 'unset',
-          path: [{_key: 'k0'}],
-        },
-        {
-          origin: 'local',
-          type: 'unset',
-          path: [],
-        },
-        {
-          origin: 'local',
-          type: 'setIfMissing',
-          path: [],
-          value: [],
-        },
-        {
-          origin: 'local',
-          type: 'set',
-          path: [{_key: textBlockKey}, 'markDefs'],
-          value: [],
-        },
+          'before',
+          [{_key: 'k0'}],
+        ),
+        unset([{_key: 'k0'}]),
+        unset([]),
+        setIfMissing([], []),
+        set([], [{_key: textBlockKey}, 'markDefs']),
       ])
     })
 
@@ -422,19 +468,11 @@ describe('event.block.set', () => {
           style: 'h1',
         },
       ])
+
       expect(patches.slice(7)).toEqual([
-        {
-          origin: 'local',
-          type: 'setIfMissing',
-          path: [],
-          value: [],
-        },
-        {
-          origin: 'local',
-          type: 'insert',
-          path: [0],
-          position: 'before',
-          items: [
+        setIfMissing([], []),
+        insert(
+          [
             {
               _key: textBlockKey,
               _type: 'block',
@@ -450,24 +488,15 @@ describe('event.block.set', () => {
               style: 'normal',
             },
           ],
-        },
-        {
-          origin: 'local',
-          type: 'set',
-          path: [{_key: textBlockKey}, 'markDefs'],
-          value: [],
-        },
-        {
-          origin: 'local',
-          type: 'set',
-          path: [{_key: textBlockKey}, 'style'],
-          value: 'h1',
-        },
+          'before',
+          [0],
+        ),
+        set('h1', [{_key: textBlockKey}, 'style']),
       ])
     })
   })
 
-  test("Scenario: Text blocks don't accept custom props", async () => {
+  test("Scenario: Text blocks don't accept undefined custom props", async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor} = await createTestEditor({
       keyGenerator,
@@ -516,6 +545,54 @@ describe('event.block.set', () => {
           markDefs: [],
           style: 'normal',
         },
+      ])
+    })
+  })
+
+  test('Scenario: Text blocks accept defined custom props', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        styles: [{name: 'normal'}, {name: 'h1'}],
+        block: {fields: [{name: 'foo', type: 'string'}]},
+      }),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'block.set',
+      at: [{_key: 'k0'}],
+      props: {
+        foo: 'bar',
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [{_key: 'k1', _type: 'span', text: '', marks: []}],
+          foo: 'bar',
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+
+      expect(patches).toEqual([
+        setIfMissing([], []),
+        set('bar', [{_key: 'k0'}, 'foo']),
       ])
     })
   })
