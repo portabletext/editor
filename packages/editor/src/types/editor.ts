@@ -153,15 +153,6 @@ export interface PortableTextSlateEditor extends ReactEditor {
   pteWithHotKeys: (event: KeyboardEvent<HTMLDivElement>) => void
 
   /**
-   * Helper function that creates a text block
-   */
-  pteCreateTextBlock: (options: {
-    decorators: Array<string>
-    listItem?: string
-    level?: number
-  }) => Descendant
-
-  /**
    * Undo
    */
   undo: () => void

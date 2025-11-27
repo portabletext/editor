@@ -17,17 +17,18 @@ import {
 } from '@sanity/diff-match-patch'
 import type {Path, PortableTextBlock, PortableTextChild} from '@sanity/types'
 import {Editor, Element, Node, Text, Transforms, type Descendant} from 'slate'
-import type {EditorSchema} from '../editor/editor-schema'
+import type {EditorContext} from '../editor/editor-snapshot'
 import {KEY_TO_SLATE_ELEMENT} from '../editor/weakMaps'
 import type {PortableTextSlateEditor} from '../types/editor'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
+import {createPlaceholderBlock} from './create-placeholder-block'
 import {isEqualToEmptyEditor, toSlateBlock} from './values'
 
 /**
  * Creates a function that can apply a patch onto a PortableTextSlateEditor.
  */
 export function createApplyPatch(
-  schema: EditorSchema,
+  context: Pick<EditorContext, 'schema' | 'keyGenerator'>,
 ): (editor: PortableTextSlateEditor, patch: Patch) => boolean {
   return (editor: PortableTextSlateEditor, patch: Patch): boolean => {
     let changed = false
@@ -35,10 +36,10 @@ export function createApplyPatch(
     try {
       switch (patch.type) {
         case 'insert':
-          changed = insertPatch(editor, patch, schema)
+          changed = insertPatch(context, editor, patch)
           break
         case 'unset':
-          changed = unsetPatch(editor, patch)
+          changed = unsetPatch(context, editor, patch)
           break
         case 'set':
           changed = setPatch(editor, patch)
@@ -117,9 +118,9 @@ function diffMatchPatch(
 }
 
 function insertPatch(
+  context: Pick<EditorContext, 'schema' | 'keyGenerator'>,
   editor: PortableTextSlateEditor,
   patch: InsertPatch,
-  schema: EditorSchema,
 ) {
   const block = findBlock(editor.children, patch.path)
 
@@ -137,7 +138,7 @@ function insertPatch(
     const blocksToInsert = items.map((item) =>
       toSlateBlock(
         item as PortableTextBlock,
-        {schemaTypes: schema},
+        {schemaTypes: context.schema},
         KEY_TO_SLATE_ELEMENT.get(editor),
       ),
     )
@@ -145,7 +146,10 @@ function insertPatch(
     const normalizedIdx =
       position === 'after' ? targetBlockIndex + 1 : targetBlockIndex
 
-    const editorWasEmptyBefore = isEqualToEmptyEditor(editor.value, schema)
+    const editorWasEmptyBefore = isEqualToEmptyEditor(
+      editor.value,
+      context.schema,
+    )
 
     Transforms.insertNodes(editor, blocksToInsert, {at: [normalizedIdx]})
 
@@ -177,7 +181,7 @@ function insertPatch(
 
   const childrenToInsert = toSlateBlock(
     {...block.node, children: items as PortableTextChild[]},
-    {schemaTypes: schema},
+    {schemaTypes: context.schema},
     KEY_TO_SLATE_ELEMENT.get(editor),
   )
   const normalizedIdx =
@@ -414,7 +418,11 @@ function setPatch(editor: PortableTextSlateEditor, patch: SetPatch) {
   return true
 }
 
-function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
+function unsetPatch(
+  context: Pick<EditorContext, 'keyGenerator' | 'schema'>,
+  editor: PortableTextSlateEditor,
+  patch: UnsetPatch,
+) {
   // Value
   if (patch.path.length === 0) {
     const previousSelection = editor.selection
@@ -428,7 +436,7 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
       Transforms.removeNodes(editor, {at: path})
     }
 
-    Transforms.insertNodes(editor, editor.pteCreateTextBlock({decorators: []}))
+    Transforms.insertNodes(editor, createPlaceholderBlock(context))
     if (previousSelection) {
       Transforms.select(editor, {
         anchor: {path: [0, 0], offset: 0},
@@ -455,10 +463,7 @@ function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
 
       Transforms.deselect(editor)
       Transforms.removeNodes(editor, {at: [block.index]})
-      Transforms.insertNodes(
-        editor,
-        editor.pteCreateTextBlock({decorators: []}),
-      )
+      Transforms.insertNodes(editor, createPlaceholderBlock(context))
 
       if (previousSelection) {
         Transforms.select(editor, {

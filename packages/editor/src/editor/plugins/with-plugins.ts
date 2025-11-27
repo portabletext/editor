@@ -9,7 +9,6 @@ import {createWithPatches} from './createWithPatches'
 import {createWithPlaceholderBlock} from './createWithPlaceholderBlock'
 import {createWithPortableTextMarkModel} from './createWithPortableTextMarkModel'
 import {createWithSchemaTypes} from './createWithSchemaTypes'
-import {createWithUtils} from './createWithUtils'
 import {pluginUpdateSelection} from './slate-plugin.update-selection'
 import {pluginUpdateValue} from './slate-plugin.update-value'
 
@@ -48,9 +47,6 @@ export const withPlugins = <T extends Editor>(
 
   const withPlaceholderBlock = createWithPlaceholderBlock(editorActor)
 
-  const withUtils = createWithUtils({
-    editorActor,
-  })
   const withEventListeners = createWithEventListeners(editorActor)
 
   // Ordering is important here, selection dealing last, data manipulation in the middle and core model stuff first.
@@ -59,16 +55,14 @@ export const withPlugins = <T extends Editor>(
       withObjectKeys(
         withPortableTextMarkModel(
           withPlaceholderBlock(
-            withUtils(
-              withUndoRedo(
-                withPatches(
-                  pluginUpdateValue(
-                    editorActor.getSnapshot().context,
-                    pluginUpdateSelection({
-                      editorActor,
-                      editor: e,
-                    }),
-                  ),
+            withUndoRedo(
+              withPatches(
+                pluginUpdateValue(
+                  editorActor.getSnapshot().context,
+                  pluginUpdateSelection({
+                    editorActor,
+                    editor: e,
+                  }),
                 ),
               ),
             ),

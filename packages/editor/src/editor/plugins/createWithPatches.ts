@@ -41,7 +41,7 @@ export function createWithPatches({
   // The editor.value would no longer contain that information if the node is already deleted.
   let previousValue: PortableTextBlock[]
 
-  const applyPatch = createApplyPatch(editorActor.getSnapshot().context.schema)
+  const applyPatch = createApplyPatch(editorActor.getSnapshot().context)
 
   return function withPatches(editor: PortableTextSlateEditor) {
     IS_PROCESSING_REMOTE_CHANGES.set(editor, false)

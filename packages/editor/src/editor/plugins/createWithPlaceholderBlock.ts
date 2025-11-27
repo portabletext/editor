@@ -1,6 +1,7 @@
 import {Editor} from 'slate'
 import {isRedoing} from '../../history/slate-plugin.redoing'
 import {isUndoing} from '../../history/slate-plugin.undoing'
+import {createPlaceholderBlock} from '../../internal-utils/create-placeholder-block'
 import {debugWithName} from '../../internal-utils/debug'
 import type {PortableTextSlateEditor} from '../../types/editor'
 import type {EditorActor} from '../editor-machine'
@@ -55,7 +56,10 @@ export function createWithPlaceholderBlock(
 
         if (isLonelyBlock && isBlockObject) {
           debug('Adding placeholder block')
-          Editor.insertNode(editor, editor.pteCreateTextBlock({decorators: []}))
+          Editor.insertNode(
+            editor,
+            createPlaceholderBlock(editorActor.getSnapshot().context),
+          )
         }
       }
 
