@@ -1,0 +1,8 @@
+{
+  "extends": "@sanity/pkg-utils/tsconfig/strictest.json",
+  "compilerOptions": {
+    "jsx": "preserve",
+    "rootDir": ".",
+    "outDir": "./dist"
+  }
+}
