@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.1
+
+### Patch Changes
+
+- [#1915](https://github.com/portabletext/editor/pull/1915) [`77443af`](https://github.com/portabletext/editor/commit/77443afe9941200f7eea5b22882c32d3426a883a) Thanks [@christianhg](https://github.com/christianhg)! - fix: harden outgoing patch logic surrounding clearing the editor value
+
 ## 3.1.0
 
 ### Minor Changes
