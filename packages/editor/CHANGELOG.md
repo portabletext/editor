@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.1.0
+
+### Minor Changes
+
+- [#1922](https://github.com/portabletext/editor/pull/1922) [`6d038fd`](https://github.com/portabletext/editor/commit/6d038fdce591eedde45f73790678fbf6337ab675) Thanks [@christianhg](https://github.com/christianhg)! - feat(`delete`): add `unit: 'child'` option
+
+### Patch Changes
+
+- [#1922](https://github.com/portabletext/editor/pull/1922) [`c03200f`](https://github.com/portabletext/editor/commit/c03200f174b42f7b36ecb9c21c133b9848b46d90) Thanks [@christianhg](https://github.com/christianhg)! - fix: deprecate `PortableTextEditor.delete(...)`
+
+- [#1922](https://github.com/portabletext/editor/pull/1922) [`817a538`](https://github.com/portabletext/editor/commit/817a538f860870b6d8275a22a3a6ca64300cf335) Thanks [@christianhg](https://github.com/christianhg)! - fix(`.delete()`): send Behavior Event under the hood
+
 ## 3.0.9
 
 ### Patch Changes
