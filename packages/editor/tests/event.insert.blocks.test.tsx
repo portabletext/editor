@@ -4,7 +4,7 @@ import {defineSchema} from '../src'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.insert.blocks', () => {
-  test('Scenario: ', async () => {
+  test('Scenario: Inserting text block with lonely inline object', async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor} = await createTestEditor({
       keyGenerator,
