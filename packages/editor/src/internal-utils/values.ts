@@ -169,9 +169,14 @@ export function fromSlateBlock(
 }
 
 export function isEqualToEmptyEditor(
+  initialValue: Array<PortableTextBlock> | undefined,
   blocks: Array<Descendant> | Array<PortableTextBlock>,
   schemaTypes: EditorSchema,
 ): boolean {
+  if (!blocks) {
+    return false
+  }
+
   // Must have exactly one block
   if (blocks.length !== 1) {
     return false
@@ -237,6 +242,23 @@ export function isEqualToEmptyEditor(
 
   // Must have no marks (marks can be undefined or empty array)
   if (firstChild.marks?.join('')) {
+    return false
+  }
+
+  if (
+    Object.keys(firstBlock).some(
+      (key) =>
+        key !== '_type' &&
+        key !== '_key' &&
+        key !== 'children' &&
+        key !== 'markDefs' &&
+        key !== 'style',
+    )
+  ) {
+    return false
+  }
+
+  if (isEqual(initialValue, [firstBlock])) {
     return false
   }
 

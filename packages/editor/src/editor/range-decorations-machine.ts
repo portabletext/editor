@@ -18,8 +18,8 @@ import {
 import {moveRangeByOperation} from '../internal-utils/move-range-by-operation'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {isEqualToEmptyEditor} from '../internal-utils/values'
 import type {PortableTextSlateEditor, RangeDecoration} from '../types/editor'
+import {isEmptyTextBlock} from '../utils'
 import type {EditorSchema} from './editor-schema'
 
 const slateOperationCallback: CallbackLogicFunction<
@@ -282,7 +282,9 @@ export const rangeDecorationsMachine = setup({
     skipSetup: input.skipSetup,
     schema: input.schema,
     slateEditor: input.slateEditor,
-    decorate: {fn: createDecorate(input.schema, input.slateEditor)},
+    decorate: {
+      fn: createDecorate(input.schema, input.slateEditor),
+    },
   }),
   invoke: {
     src: 'slate operation listener',
@@ -357,7 +359,15 @@ function createDecorate(
   slateEditor: PortableTextSlateEditor,
 ) {
   return function decorate([node, path]: NodeEntry): Array<BaseRange> {
-    if (isEqualToEmptyEditor(slateEditor.value, schema)) {
+    const defaultStyle = schema.styles.at(0)?.name
+    const editorOnlyContainsEmptyParagraph =
+      slateEditor.value.length === 1 &&
+      isEmptyTextBlock({schema}, slateEditor.value[0]) &&
+      (!slateEditor.value[0].style ||
+        slateEditor.value[0].style === defaultStyle) &&
+      !slateEditor.value[0].listItem
+
+    if (editorOnlyContainsEmptyParagraph) {
       return [
         {
           anchor: {

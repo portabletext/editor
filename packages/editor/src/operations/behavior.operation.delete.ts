@@ -1,7 +1,6 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {deleteText, Editor, Element, Range, Transforms} from 'slate'
 import {DOMEditor} from 'slate-dom'
-import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {VOID_CHILD_KEY} from '../internal-utils/values'
@@ -67,10 +66,6 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
       },
       mode: 'highest',
     })
-
-    if (operation.editor.children.length === 0) {
-      Transforms.insertNodes(operation.editor, createPlaceholderBlock(context))
-    }
 
     return
   }

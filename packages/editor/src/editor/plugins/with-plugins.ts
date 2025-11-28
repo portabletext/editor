@@ -6,7 +6,6 @@ import type {RelayActor} from '../relay-machine'
 import {createWithEventListeners} from './create-with-event-listeners'
 import {createWithObjectKeys} from './createWithObjectKeys'
 import {createWithPatches} from './createWithPatches'
-import {createWithPlaceholderBlock} from './createWithPlaceholderBlock'
 import {createWithPortableTextMarkModel} from './createWithPortableTextMarkModel'
 import {createWithSchemaTypes} from './createWithSchemaTypes'
 import {pluginUpdateSelection} from './slate-plugin.update-selection'
@@ -45,8 +44,6 @@ export const withPlugins = <T extends Editor>(
   })
   const withPortableTextMarkModel = createWithPortableTextMarkModel(editorActor)
 
-  const withPlaceholderBlock = createWithPlaceholderBlock(editorActor)
-
   const withEventListeners = createWithEventListeners(editorActor)
 
   // Ordering is important here, selection dealing last, data manipulation in the middle and core model stuff first.
@@ -54,16 +51,14 @@ export const withPlugins = <T extends Editor>(
     withSchemaTypes(
       withObjectKeys(
         withPortableTextMarkModel(
-          withPlaceholderBlock(
-            withUndoRedo(
-              withPatches(
-                pluginUpdateValue(
-                  editorActor.getSnapshot().context,
-                  pluginUpdateSelection({
-                    editorActor,
-                    editor: e,
-                  }),
-                ),
+          withUndoRedo(
+            withPatches(
+              pluginUpdateValue(
+                editorActor.getSnapshot().context,
+                pluginUpdateSelection({
+                  editorActor,
+                  editor: e,
+                }),
               ),
             ),
           ),

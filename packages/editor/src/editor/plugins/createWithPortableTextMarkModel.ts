@@ -10,6 +10,7 @@ import {isEqual, uniq} from 'lodash'
 import {Editor, Element, Node, Path, Range, Text, Transforms} from 'slate'
 import {isRedoing} from '../../history/slate-plugin.redoing'
 import {isUndoing} from '../../history/slate-plugin.undoing'
+import {createPlaceholderBlock} from '../../internal-utils/create-placeholder-block'
 import {debugWithName} from '../../internal-utils/debug'
 import {getNextSpan, getPreviousSpan} from '../../internal-utils/sibling-utils'
 import type {BehaviorOperationImplementation} from '../../operations/behavior.operations'
@@ -19,6 +20,7 @@ import type {EditorActor} from '../editor-machine'
 import {getEditorSnapshot} from '../editor-selector'
 import {withNormalizeNode} from '../with-normalizing-node'
 import {isChangingRemotely} from '../withChanges'
+import {withoutPatching} from '../withoutPatching'
 
 const debug = debugWithName('plugin:withPortableTextMarkModel')
 
@@ -37,6 +39,18 @@ export function createWithPortableTextMarkModel(
     // Extend Slate's default normalization. Merge spans with same set of .marks when doing merge_node operations, and clean up markDefs / marks
     editor.normalizeNode = (nodeEntry) => {
       const [node, path] = nodeEntry
+
+      if (Editor.isEditor(node) && node.children.length === 0) {
+        withoutPatching(editor, () => {
+          withNormalizeNode(editor, () => {
+            Transforms.insertNodes(
+              editor,
+              createPlaceholderBlock(editorActor.getSnapshot().context),
+              {at: [0], select: true},
+            )
+          })
+        })
+      }
 
       if (editor.isTextBlock(node)) {
         const children = Node.children(editor, path)
