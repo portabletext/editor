@@ -1,3 +1,12 @@
+import {
+  applyAll,
+  insert,
+  set,
+  setIfMissing,
+  unset,
+  type Patch,
+} from '@portabletext/patches'
+import type {PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test, vi} from 'vitest'
@@ -664,6 +673,90 @@ describe('event.patches', () => {
           markDefs: [],
           style: 'normal',
         },
+      ])
+    })
+  })
+
+  test('Scenario: `unset` lonely block', async () => {
+    let foreignValue: Array<PortableTextBlock> | undefined
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        block: {fields: [{name: 'foo', type: 'string'}]},
+      }),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+              foreignValue = applyAll(foreignValue, [patch])
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [{type: 'unset', origin: 'remote', path: [{_key: 'k0'}]}],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k2',
+          _type: 'block',
+          children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(foreignValue).toEqual(undefined)
+      expect(patches).toEqual([])
+    })
+
+    editor.send({
+      type: 'block.set',
+      at: [{_key: 'k2'}],
+      props: {
+        foo: 'bar',
+      },
+    })
+
+    await vi.waitFor(() => {
+      const expectedValue = [
+        {
+          _key: 'k2',
+          _type: 'block',
+          children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+          foo: 'bar',
+        },
+      ]
+
+      expect(editor.getSnapshot().context.value).toEqual(expectedValue)
+      expect(foreignValue).toEqual(expectedValue)
+      expect(patches).toEqual([
+        setIfMissing([], []),
+        insert(
+          [
+            {
+              _key: 'k2',
+              _type: 'block',
+              children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          'before',
+          [0],
+        ),
+        set('bar', [{_key: 'k2'}, 'foo']),
       ])
     })
   })
@@ -2013,6 +2106,10 @@ describe('event.patches', () => {
         type: 'patches',
         patches: [
           {
+            ...unset([]),
+            origin: 'remote',
+          },
+          {
             origin: 'remote',
             type: 'insert',
             position: 'before',
@@ -2039,11 +2136,8 @@ describe('event.patches', () => {
     })
 
     test('Scenario: Inserting text block on empty editor', async () => {
+      const patches: Array<Patch> = []
       const keyGenerator = createTestKeyGenerator()
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        schemaDefinition: defineSchema({}),
-      })
       const spanKey = keyGenerator()
       const blockKey = keyGenerator()
       const block = {
@@ -2053,10 +2147,32 @@ describe('event.patches', () => {
         markDefs: [],
         style: 'normal',
       }
+      let foreignValue = [block]
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({
+          block: {fields: [{name: 'foo', type: 'string'}]},
+        }),
+        children: (
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                const {origin: _, ...patch} = event.patch
+                patches.push(patch)
+                foreignValue = applyAll(foreignValue, [patch])
+              }
+            }}
+          />
+        ),
+      })
 
       editor.send({
         type: 'patches',
         patches: [
+          {
+            ...unset([]),
+            origin: 'remote',
+          },
           {
             origin: 'remote',
             type: 'insert',
@@ -2070,6 +2186,28 @@ describe('event.patches', () => {
 
       await vi.waitFor(() => {
         expect(editor.getSnapshot().context.value).toEqual([block])
+        expect(patches).toEqual([])
+      })
+
+      editor.send({
+        type: 'block.set',
+        at: [{_key: blockKey}],
+        props: {
+          foo: 'bar',
+        },
+      })
+
+      await vi.waitFor(() => {
+        const expectedValue = [
+          {
+            ...block,
+            foo: 'bar',
+          },
+        ]
+
+        expect(editor.getSnapshot().context.value).toEqual(expectedValue)
+        expect(foreignValue).toEqual(expectedValue)
+        expect(patches).toEqual([set('bar', [{_key: blockKey}, 'foo'])])
       })
     })
 

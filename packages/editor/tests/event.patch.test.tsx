@@ -1,4 +1,11 @@
-import {insert, setIfMissing, unset, type Patch} from '@portabletext/patches'
+import {
+  diffMatchPatch,
+  insert,
+  set,
+  setIfMissing,
+  unset,
+  type Patch,
+} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
@@ -247,6 +254,244 @@ describe('event.patch', () => {
           path: [{_key: 'k0'}],
         },
       ])
+    })
+  })
+
+  describe('Scenario: Setting and unsetting the editor', () => {
+    test('regular text block', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const patches: Array<Patch> = []
+      const {editor, locator} = await createTestEditor({
+        keyGenerator,
+        children: (
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                const {origin: _, ...patch} = event.patch
+                patches.push(patch)
+              }
+            }}
+          />
+        ),
+      })
+
+      await userEvent.click(locator)
+      await userEvent.type(locator, 'f')
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            children: [{_type: 'span', _key: 'k1', text: 'f', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+
+        expect(patches).toEqual([
+          setIfMissing([], []),
+          insert(
+            [
+              {
+                _type: 'block',
+                _key: 'k0',
+                children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+            'before',
+            [0],
+          ),
+          diffMatchPatch('', 'f', [
+            {_key: 'k0'},
+            'children',
+            {_key: 'k1'},
+            'text',
+          ]),
+        ])
+      })
+
+      await userEvent.keyboard('{ControlOrMeta>}{A}{/ControlOrMeta}')
+      await userEvent.keyboard('{Delete}')
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+
+        expect(patches.slice(3)).toEqual([
+          diffMatchPatch('f', '', [
+            {_key: 'k0'},
+            'children',
+            {_key: 'k1'},
+            'text',
+          ]),
+          unset([]),
+        ])
+      })
+
+      await userEvent.type(locator, 'f')
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            children: [{_type: 'span', _key: 'k1', text: 'f', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+
+        expect(patches.slice(5)).toEqual([
+          setIfMissing([], []),
+          insert(
+            [
+              {
+                _type: 'block',
+                _key: 'k0',
+                children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+            'before',
+            [0],
+          ),
+          diffMatchPatch('', 'f', [
+            {_key: 'k0'},
+            'children',
+            {_key: 'k1'},
+            'text',
+          ]),
+        ])
+      })
+    })
+
+    test('text block with custom field', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const patches: Array<Patch> = []
+      const {editor, locator} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({
+          block: {fields: [{name: 'foo', type: 'string'}]},
+        }),
+        children: (
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                const {origin: _, ...patch} = event.patch
+                patches.push(patch)
+              }
+            }}
+          />
+        ),
+      })
+
+      editor.send({
+        type: 'block.set',
+        at: [{_key: 'k0'}],
+        props: {
+          foo: 'bar',
+        },
+      })
+
+      await userEvent.click(locator)
+      await userEvent.type(locator, 'f')
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            children: [{_type: 'span', _key: 'k1', text: 'f', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            foo: 'bar',
+          },
+        ])
+
+        expect(patches).toEqual([
+          setIfMissing([], []),
+          insert(
+            [
+              {
+                _type: 'block',
+                _key: 'k0',
+                children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+            'before',
+            [0],
+          ),
+          set('bar', [{_key: 'k0'}, 'foo']),
+          diffMatchPatch('', 'f', [
+            {_key: 'k0'},
+            'children',
+            {_key: 'k1'},
+            'text',
+          ]),
+        ])
+      })
+
+      await userEvent.keyboard('{ControlOrMeta>}{A}{/ControlOrMeta}')
+      await userEvent.keyboard('{Delete}')
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            foo: 'bar',
+          },
+        ])
+
+        expect(patches.slice(4)).toEqual([
+          diffMatchPatch('f', '', [
+            {_key: 'k0'},
+            'children',
+            {_key: 'k1'},
+            'text',
+          ]),
+        ])
+      })
+
+      await userEvent.type(locator, 'f')
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            children: [{_type: 'span', _key: 'k1', text: 'f', marks: []}],
+            markDefs: [],
+            style: 'normal',
+            foo: 'bar',
+          },
+        ])
+
+        expect(patches.slice(5)).toEqual([
+          diffMatchPatch('', 'f', [
+            {_key: 'k0'},
+            'children',
+            {_key: 'k1'},
+            'text',
+          ]),
+        ])
+      })
     })
   })
 })

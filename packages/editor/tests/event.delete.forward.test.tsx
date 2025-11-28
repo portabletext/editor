@@ -1,3 +1,11 @@
+import {
+  applyAll,
+  insert,
+  set,
+  setIfMissing,
+  unset,
+  type Patch,
+} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
@@ -6,10 +14,101 @@ import {effect, forward} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import type {BehaviorEvent} from '../src/behaviors/behavior.types.event'
 import {getSelectionAfterText} from '../src/internal-utils/text-selection'
+import {EventListenerPlugin} from '../src/plugins'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.delete.forward', () => {
+  test('Scenario: Deleting lonely block object', async () => {
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const imageKey = keyGenerator()
+    let foreignValue = [
+      {
+        _type: 'image',
+        _key: imageKey,
+      },
+    ]
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue: foreignValue,
+      schemaDefinition: defineSchema({
+        block: {fields: [{name: 'foo', type: 'string'}]},
+        blockObjects: [{name: 'image'}],
+      }),
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              const {origin: _, ...patch} = event.patch
+              patches.push(patch)
+              foreignValue = applyAll(foreignValue, [patch])
+            }
+          }}
+        />
+      ),
+    })
+
+    await userEvent.click(locator)
+    await userEvent.keyboard('{Delete}')
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k3',
+          children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(foreignValue).toEqual([])
+
+      expect(patches).toEqual([unset([{_key: imageKey}])])
+    })
+
+    editor.send({
+      type: 'block.set',
+      at: [{_key: 'k3'}],
+      props: {
+        foo: 'bar',
+      },
+    })
+
+    await vi.waitFor(() => {
+      const expectedValue = [
+        {
+          _type: 'block',
+          _key: 'k3',
+          children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+          foo: 'bar',
+        },
+      ]
+
+      expect(editor.getSnapshot().context.value).toEqual(expectedValue)
+      expect(foreignValue).toEqual(expectedValue)
+      expect(patches.slice(1)).toEqual([
+        setIfMissing([], []),
+        insert(
+          [
+            {
+              _type: 'block',
+              _key: 'k3',
+              children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          'before',
+          [0],
+        ),
+        set('bar', [{_key: 'k3'}, 'foo']),
+      ])
+    })
+  })
+
   test('Scenario: Merging two text blocks', async () => {
     const keyGenerator = createTestKeyGenerator()
     const block1Key = keyGenerator()

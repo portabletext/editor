@@ -10,6 +10,7 @@ import {
   type Descendant,
 } from 'slate'
 import {DOMEditor} from 'slate-dom'
+import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {getFocusBlock, getFocusChild} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {toSlateBlock} from '../internal-utils/values'
@@ -69,6 +70,10 @@ export function insertBlock(options: {
         blockIndexMap: editor.blockIndexMap,
       })
     : editor.selection
+
+  if (editor.children.length === 0) {
+    Transforms.insertNodes(editor, createPlaceholderBlock(context), {at: [0]})
+  }
 
   // Fall back to the start and end of the editor if neither an editor
   // selection nor an `at` range is provided

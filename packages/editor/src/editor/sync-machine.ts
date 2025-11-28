@@ -17,7 +17,6 @@ import {
   type CallbackLogicFunction,
 } from 'xstate'
 import {pluginWithoutHistory} from '../history/slate-plugin.without-history'
-import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debugWithName} from '../internal-utils/debug'
 import {validateValue} from '../internal-utils/validateValue'
 import {toSlateBlock, VOID_CHILD_KEY} from '../internal-utils/values'
@@ -425,10 +424,8 @@ async function updateValue({
     debug('Value is empty')
 
     clearEditor({
-      context,
       slateEditor,
       doneSyncing,
-      hadSelection,
     })
 
     isChanged = true
@@ -575,18 +572,11 @@ async function* getStreamedBlocks({value}: {value: Array<PortableTextBlock>}) {
  * Remove all blocks and insert a placeholder block
  */
 function clearEditor({
-  context,
   slateEditor,
   doneSyncing,
-  hadSelection,
 }: {
-  context: {
-    keyGenerator: () => string
-    schema: EditorSchema
-  }
   slateEditor: PortableTextSlateEditor
   doneSyncing: boolean
-  hadSelection: boolean
 }) {
   Editor.withoutNormalizing(slateEditor, () => {
     pluginWithoutHistory(slateEditor, () => {
@@ -596,10 +586,6 @@ function clearEditor({
             return
           }
 
-          if (hadSelection) {
-            Transforms.deselect(slateEditor)
-          }
-
           const childrenLength = slateEditor.children.length
 
           slateEditor.children.forEach((_, index) => {
@@ -607,15 +593,6 @@ function clearEditor({
               at: [childrenLength - 1 - index],
             })
           })
-
-          Transforms.insertNodes(slateEditor, createPlaceholderBlock(context), {
-            at: [0],
-          })
-
-          // Add a new selection in the top of the document
-          if (hadSelection) {
-            Transforms.select(slateEditor, [0, 0])
-          }
         })
       })
     })

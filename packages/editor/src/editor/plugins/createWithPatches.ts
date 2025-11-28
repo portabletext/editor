@@ -110,6 +110,7 @@ export function createWithPatches({
       previousValue = editor.value
 
       const editorWasEmpty = isEqualToEmptyEditor(
+        editorActor.getSnapshot().context.initialValue,
         previousValue,
         editorActor.getSnapshot().context.schema,
       )
@@ -118,6 +119,7 @@ export function createWithPatches({
       apply(operation)
 
       const editorIsEmpty = isEqualToEmptyEditor(
+        editorActor.getSnapshot().context.initialValue,
         editor.value,
         editorActor.getSnapshot().context.schema,
       )

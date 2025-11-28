@@ -21,14 +21,15 @@ import type {EditorContext} from '../editor/editor-snapshot'
 import {KEY_TO_SLATE_ELEMENT} from '../editor/weakMaps'
 import type {PortableTextSlateEditor} from '../types/editor'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
-import {createPlaceholderBlock} from './create-placeholder-block'
 import {isEqualToEmptyEditor, toSlateBlock} from './values'
 
 /**
  * Creates a function that can apply a patch onto a PortableTextSlateEditor.
  */
 export function createApplyPatch(
-  context: Pick<EditorContext, 'schema' | 'keyGenerator'>,
+  context: Pick<EditorContext, 'schema' | 'keyGenerator'> & {
+    initialValue: Array<PortableTextBlock> | undefined
+  },
 ): (editor: PortableTextSlateEditor, patch: Patch) => boolean {
   return (editor: PortableTextSlateEditor, patch: Patch): boolean => {
     let changed = false
@@ -39,7 +40,7 @@ export function createApplyPatch(
           changed = insertPatch(context, editor, patch)
           break
         case 'unset':
-          changed = unsetPatch(context, editor, patch)
+          changed = unsetPatch(editor, patch)
           break
         case 'set':
           changed = setPatch(editor, patch)
@@ -118,13 +119,31 @@ function diffMatchPatch(
 }
 
 function insertPatch(
-  context: Pick<EditorContext, 'schema' | 'keyGenerator'>,
+  context: Pick<EditorContext, 'schema' | 'keyGenerator'> & {
+    initialValue: Array<PortableTextBlock> | undefined
+  },
   editor: PortableTextSlateEditor,
   patch: InsertPatch,
 ) {
   const block = findBlock(editor.children, patch.path)
 
   if (!block) {
+    if (patch.path.length === 1 && patch.path[0] === 0) {
+      const blocksToInsert = patch.items.map((item) =>
+        toSlateBlock(
+          item as PortableTextBlock,
+          {schemaTypes: context.schema},
+          KEY_TO_SLATE_ELEMENT.get(editor),
+        ),
+      )
+
+      Transforms.insertNodes(editor, blocksToInsert, {
+        at: [0],
+      })
+
+      return true
+    }
+
     return false
   }
 
@@ -147,6 +166,7 @@ function insertPatch(
       position === 'after' ? targetBlockIndex + 1 : targetBlockIndex
 
     const editorWasEmptyBefore = isEqualToEmptyEditor(
+      context.initialValue,
       editor.value,
       context.schema,
     )
@@ -418,14 +438,9 @@ function setPatch(editor: PortableTextSlateEditor, patch: SetPatch) {
   return true
 }
 
-function unsetPatch(
-  context: Pick<EditorContext, 'keyGenerator' | 'schema'>,
-  editor: PortableTextSlateEditor,
-  patch: UnsetPatch,
-) {
+function unsetPatch(editor: PortableTextSlateEditor, patch: UnsetPatch) {
   // Value
   if (patch.path.length === 0) {
-    const previousSelection = editor.selection
     Transforms.deselect(editor)
 
     const children = Node.children(editor, [], {
@@ -436,15 +451,6 @@ function unsetPatch(
       Transforms.removeNodes(editor, {at: path})
     }
 
-    Transforms.insertNodes(editor, createPlaceholderBlock(context))
-    if (previousSelection) {
-      Transforms.select(editor, {
-        anchor: {path: [0, 0], offset: 0},
-        focus: {path: [0, 0], offset: 0},
-      })
-    }
-    // call OnChange here to emit the new selection
-    editor.onChange()
     return true
   }
 
@@ -456,27 +462,6 @@ function unsetPatch(
 
   // Single blocks
   if (patch.path.length === 1) {
-    if (editor.children.length === 1) {
-      // `unset`ing the last block should be treated similar to `unset`ing the
-      // entire editor value
-      const previousSelection = editor.selection
-
-      Transforms.deselect(editor)
-      Transforms.removeNodes(editor, {at: [block.index]})
-      Transforms.insertNodes(editor, createPlaceholderBlock(context))
-
-      if (previousSelection) {
-        Transforms.select(editor, {
-          anchor: {path: [0, 0], offset: 0},
-          focus: {path: [0, 0], offset: 0},
-        })
-      }
-
-      editor.onChange()
-
-      return true
-    }
-
     Transforms.removeNodes(editor, {at: [block.index]})
 
     return true

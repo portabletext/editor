@@ -592,6 +592,19 @@ describe('event.block.set', () => {
 
       expect(patches).toEqual([
         setIfMissing([], []),
+        insert(
+          [
+            {
+              _key: 'k0',
+              _type: 'block',
+              children: [{_key: 'k1', _type: 'span', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          'before',
+          [0],
+        ),
         set('bar', [{_key: 'k0'}, 'foo']),
       ])
     })
