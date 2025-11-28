@@ -350,6 +350,20 @@ export class PortableTextEditor extends Component<
     editor.editable?.blur()
   }
 
+  /**
+   * @deprecated
+   * Use `editor.send(...)` instead
+   *
+   * ```
+   * const editor = useEditor()
+   * editor.send({
+   *  type: 'delete',
+   *  at: {...},
+   *  direction: '...',
+   *  unit: '...',
+   * })
+   * ```
+   */
   static delete = (
     editor: PortableTextEditor,
     selection: EditorSelection,
