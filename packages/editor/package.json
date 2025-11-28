@@ -92,7 +92,7 @@
     "@portabletext/to-html": "^4.0.1",
     "@xstate/react": "^6.0.0",
     "debug": "^4.4.3",
-    "immer": "^11.0.0",
+    "immer": "^11.0.1",
     "lodash": "^4.17.21",
     "lodash.startcase": "^4.4.0",
     "react-compiler-runtime": "1.0.0",
