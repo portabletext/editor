@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.0.9
+
+### Patch Changes
+
+- [#1918](https://github.com/portabletext/editor/pull/1918) [`b0b7383`](https://github.com/portabletext/editor/commit/b0b7383acc93132b829abaffd0edb1280a223636) Thanks [@christianhg](https://github.com/christianhg)! - fix(`block.unset`): avoid unnecessary `set` patches when possible
+
+- [#1920](https://github.com/portabletext/editor/pull/1920) [`ccea206`](https://github.com/portabletext/editor/commit/ccea206accfbd7e9774daa03e9cb3bc444161cc4) Thanks [@christianhg](https://github.com/christianhg)! - fix: use correct empty text block check when applicable
+
+  In some cases, when inserting blocks with `placement: 'auto'`, the focus block can get removed if it is an empty text block. This fix makes sure we use the proper heuristics to determine if a text block is empty (no text). In some cases, the wrong asserter function was used, causing empty headings or list items to not be treated as empty.
+
+- [#1916](https://github.com/portabletext/editor/pull/1916) [`4d94aa6`](https://github.com/portabletext/editor/commit/4d94aa684d2eaa95762652300660ecb86c333178) Thanks [@christianhg](https://github.com/christianhg)! - fix(`block.set`): avoid unnecessary `set` patches when possible
+
 ## 3.0.8
 
 ### Patch Changes
