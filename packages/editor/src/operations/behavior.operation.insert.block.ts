@@ -12,7 +12,7 @@ import {
 import {DOMEditor} from 'slate-dom'
 import {getFocusBlock, getFocusChild} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {isEqualToEmptyEditor, toSlateBlock} from '../internal-utils/values'
+import {toSlateBlock} from '../internal-utils/values'
 import type {EditorSelection, PortableTextSlateEditor} from '../types/editor'
 import {parseBlock} from '../utils/parse-blocks'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
@@ -121,7 +121,7 @@ export function insertBlock(options: {
     } else {
       // placement === 'auto'
 
-      if (endBlock && isEqualToEmptyEditor([endBlock], context.schema)) {
+      if (isEmptyTextBlock(context, endBlock)) {
         Transforms.insertNodes(editor, [block], {
           at: endBlockPath,
           select: false,
@@ -234,7 +234,7 @@ export function insertBlock(options: {
         Transforms.select(editor, atAfterInsert)
       }
 
-      if (focusBlock && isEqualToEmptyEditor([focusBlock], context.schema)) {
+      if (isEmptyTextBlock(context, focusBlock)) {
         Transforms.removeNodes(editor, {at: focusBlockPath})
       }
 
@@ -244,7 +244,7 @@ export function insertBlock(options: {
     if (editor.isTextBlock(endBlock) && editor.isTextBlock(block)) {
       const selectionStartPoint = Range.start(at)
 
-      if (isEqualToEmptyEditor([endBlock], context.schema)) {
+      if (isEmptyTextBlock(context, endBlock)) {
         Transforms.insertNodes(editor, [block], {
           at: endBlockPath,
           select: false,

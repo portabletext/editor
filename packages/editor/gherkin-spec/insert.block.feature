@@ -47,6 +47,28 @@ Feature: Insert Block
       | "after"   | "end"    | "\|{image}"    |
       | "auto"    | "end"    | "{image}"      |
 
+  Scenario Outline: Inserting block object on empty heading
+    When "h1:" is inserted at "auto" and selected at the "none"
+    When "{image}" is inserted at <placement> and selected at the "none"
+    Then the text is <text>
+
+    Examples:
+      | placement | text           |
+      | "auto"    | "{image}"      |
+      | "before"  | "{image}\|h1:" |
+      | "after"   | "h1:\|{image}" |
+
+  Scenario Outline: Inserting block object on empty list item
+    When ">-:" is inserted at "auto" and selected at the "none"
+    When "{image}" is inserted at <placement> and selected at the "none"
+    Then the text is <text>
+
+    Examples:
+      | placement | text           |
+      | "auto"    | "{image}"      |
+      | "before"  | "{image}\|>-:" |
+      | "after"   | ">-:\|{image}" |
+
   Scenario Outline: Inserting and selecting block object on text selection
     Given the text "foo"
     When <selection> is selected

@@ -25,7 +25,6 @@ import {getEventPosition} from '../internal-utils/event-position'
 import {normalizeSelection} from '../internal-utils/selection'
 import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
-import {isEqualToEmptyEditor} from '../internal-utils/values'
 import type {
   EditorSelection,
   OnCopyFn,
@@ -41,6 +40,7 @@ import type {
   ScrollSelectionIntoViewFunction,
 } from '../types/editor'
 import type {HotkeyOptions} from '../types/options'
+import {isEmptyTextBlock} from '../utils'
 import {parseBlocks} from '../utils/parse-blocks'
 import {RenderElement} from './components/render-element'
 import {RenderLeaf} from './components/render-leaf'
@@ -526,9 +526,10 @@ export const PortableTextEditable = forwardRef<
 
         if (
           !slateEditor.selection &&
-          isEqualToEmptyEditor(
-            slateEditor.children,
-            editorActor.getSnapshot().context.schema,
+          slateEditor.children.length === 1 &&
+          isEmptyTextBlock(
+            editorActor.getSnapshot().context,
+            slateEditor.value.at(0),
           )
         ) {
           Transforms.select(slateEditor, Editor.start(slateEditor, []))
