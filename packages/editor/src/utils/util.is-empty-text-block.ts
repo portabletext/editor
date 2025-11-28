@@ -8,7 +8,7 @@ import {getTextBlockText} from './util.get-text-block-text'
  */
 export function isEmptyTextBlock(
   context: Pick<EditorContext, 'schema'>,
-  block: PortableTextBlock,
+  block: PortableTextBlock | unknown,
 ) {
   if (!isTextBlock(context, block)) {
     return false
