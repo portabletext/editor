@@ -47,7 +47,7 @@
   "devDependencies": {
     "@sanity/pkg-utils": "^9.0.3",
     "typescript": "catalog:",
-    "vitest": "^4.0.9"
+    "vitest": "^4.0.14"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
