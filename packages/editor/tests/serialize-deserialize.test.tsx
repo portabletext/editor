@@ -247,11 +247,13 @@ describe('Serialize/Deserialize', () => {
             },
           ],
           markDefs: [],
-          style: 'normal',
+          style: 'h1',
         },
       ],
       keyGenerator,
-      schemaDefinition: defineSchema({}),
+      schemaDefinition: defineSchema({
+        styles: [{name: 'h1'}],
+      }),
     })
 
     const fooBarBazSelection = getTextSelection(
@@ -291,13 +293,16 @@ describe('Serialize/Deserialize', () => {
             },
           ],
           markDefs: [],
-          style: 'normal',
+          style: 'h1',
         },
       ]),
     )
 
+    // And text/markdown is put on the clipboard
+    expect(dataTransfer.getData('text/markdown')).toEqual('# foo bar baz')
+
     // And text/html is put on the clipboard
-    expect(dataTransfer.getData('text/html')).toEqual('<p>foo bar baz</p>')
+    expect(dataTransfer.getData('text/html')).toEqual('<h1>foo bar baz</h1>')
 
     // When a paste is performed
     editor.send({

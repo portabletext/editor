@@ -1,4 +1,5 @@
 import {isTextBlock} from '@portabletext/schema'
+import type {MIMEType} from '../internal-utils/mime-type'
 import {getActiveAnnotations} from '../selectors/selector.get-active-annotations'
 import {getActiveDecorators} from '../selectors/selector.get-active-decorators'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
@@ -6,60 +7,67 @@ import {getTextBlockText} from '../utils/util.get-text-block-text'
 import {raise} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 
+const mimeTypePriority: Array<MIMEType> = [
+  'application/x-portable-text',
+  'application/json',
+  'text/markdown',
+  'text/html',
+  'text/plain',
+]
+
+/**
+ * Finds the first available data from the dataTransfer based on priority.
+ * Optionally starts from a specific mime type in the priority list.
+ */
+function getFirstAvailableData({
+  dataTransfer,
+  startAfter,
+}: {
+  dataTransfer: DataTransfer
+  startAfter?: MIMEType
+}): {mimeType: MIMEType; data: string} | undefined {
+  const startIndex = startAfter ? mimeTypePriority.indexOf(startAfter) + 1 : 0
+
+  for (let index = startIndex; index < mimeTypePriority.length; index++) {
+    const mimeType = mimeTypePriority.at(index)
+
+    if (!mimeType) {
+      continue
+    }
+
+    const data = dataTransfer.getData(mimeType)
+
+    if (!data) {
+      continue
+    }
+
+    return {
+      mimeType,
+      data,
+    }
+  }
+
+  return undefined
+}
+
 export const abstractDeserializeBehaviors = [
   defineBehavior({
     on: 'deserialize',
     guard: ({event}) => {
-      const portableText = event.originEvent.originEvent.dataTransfer.getData(
-        'application/x-portable-text',
-      )
+      const availableData = getFirstAvailableData({
+        dataTransfer: event.originEvent.originEvent.dataTransfer,
+      })
 
-      if (portableText) {
-        return {
-          type: 'deserialize.data',
-          mimeType: 'application/x-portable-text',
-          data: portableText,
-          originEvent: event.originEvent,
-        } as const
+      if (!availableData) {
+        return false
       }
 
-      const json =
-        event.originEvent.originEvent.dataTransfer.getData('application/json')
-
-      if (json) {
-        return {
-          type: 'deserialize.data',
-          mimeType: 'application/json',
-          data: json,
-          originEvent: event.originEvent,
-        } as const
+      return {
+        type: 'deserialize.data' as const,
+        mimeType: availableData.mimeType,
+        data: availableData.data,
+        originEvent: event.originEvent,
       }
-
-      const html =
-        event.originEvent.originEvent.dataTransfer.getData('text/html')
-
-      if (html) {
-        return {
-          type: 'deserialize.data',
-          mimeType: 'text/html',
-          data: html,
-          originEvent: event.originEvent,
-        } as const
-      }
-
-      const text =
-        event.originEvent.originEvent.dataTransfer.getData('text/plain')
-
-      if (text) {
-        return {
-          type: 'deserialize.data',
-          mimeType: 'text/plain',
-          data: text,
-          originEvent: event.originEvent,
-        } as const
-      }
-
-      return false
     },
     actions: [(_, deserializeEvent) => [raise(deserializeEvent)]],
   }),
@@ -184,49 +192,25 @@ export const abstractDeserializeBehaviors = [
   defineBehavior({
     on: 'deserialization.failure',
     guard: ({event}) => {
-      if (event.mimeType === 'application/x-portable-text') {
-        const json =
-          event.originEvent.originEvent.dataTransfer.getData('application/json')
-
-        if (json) {
-          return {
-            type: 'deserialize.data',
-            mimeType: 'application/json',
-            data: json,
-            originEvent: event.originEvent,
-          } as const
-        }
+      if (event.mimeType === '*/*') {
+        return false
       }
 
-      if (event.mimeType === 'application/json') {
-        const html =
-          event.originEvent.originEvent.dataTransfer.getData('text/html')
+      const availableData = getFirstAvailableData({
+        dataTransfer: event.originEvent.originEvent.dataTransfer,
+        startAfter: event.mimeType,
+      })
 
-        if (html) {
-          return {
-            type: 'deserialize.data',
-            mimeType: 'text/html',
-            data: html,
-            originEvent: event.originEvent,
-          } as const
-        }
+      if (!availableData) {
+        return false
       }
 
-      if (event.mimeType === 'text/html') {
-        const text =
-          event.originEvent.originEvent.dataTransfer.getData('text/plain')
-
-        if (text) {
-          return {
-            type: 'deserialize.data',
-            mimeType: 'text/plain',
-            data: text,
-            originEvent: event.originEvent,
-          } as const
-        }
+      return {
+        type: 'deserialize.data' as const,
+        mimeType: availableData.mimeType,
+        data: availableData.data,
+        originEvent: event.originEvent,
       }
-
-      return false
     },
     actions: [(_, deserializeDataEvent) => [raise(deserializeDataEvent)]],
   }),
