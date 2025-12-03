@@ -35,6 +35,18 @@ export const abstractDeserializeBehaviors = [
         } as const
       }
 
+      const markdown =
+        event.originEvent.originEvent.dataTransfer.getData('text/markdown')
+
+      if (markdown) {
+        return {
+          type: 'deserialize.data',
+          mimeType: 'text/markdown',
+          data: markdown,
+          originEvent: event.originEvent,
+        } as const
+      }
+
       const html =
         event.originEvent.originEvent.dataTransfer.getData('text/html')
 
@@ -199,6 +211,20 @@ export const abstractDeserializeBehaviors = [
       }
 
       if (event.mimeType === 'application/json') {
+        const markdown =
+          event.originEvent.originEvent.dataTransfer.getData('text/markdown')
+
+        if (markdown) {
+          return {
+            type: 'deserialize.data',
+            mimeType: 'text/markdown',
+            data: markdown,
+            originEvent: event.originEvent,
+          } as const
+        }
+      }
+
+      if (event.mimeType === 'text/markdown') {
         const html =
           event.originEvent.originEvent.dataTransfer.getData('text/html')
 
