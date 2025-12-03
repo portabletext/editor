@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.2.2
+
+### Patch Changes
+
+- [#1944](https://github.com/portabletext/editor/pull/1944) [`93edd06`](https://github.com/portabletext/editor/commit/93edd06478ec0748242a652668af5b90b87d9d45) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update react monorepo to ^19.2.1
+
 ## 3.2.1
 
 ### Patch Changes

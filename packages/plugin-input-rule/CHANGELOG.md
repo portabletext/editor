@@ -1,5 +1,14 @@
 # @portabletext/plugin-input-rule
 
+## 1.0.15
+
+### Patch Changes
+
+- [#1944](https://github.com/portabletext/editor/pull/1944) [`93edd06`](https://github.com/portabletext/editor/commit/93edd06478ec0748242a652668af5b90b87d9d45) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update react monorepo to ^19.2.1
+
+- Updated dependencies [[`93edd06`](https://github.com/portabletext/editor/commit/93edd06478ec0748242a652668af5b90b87d9d45)]:
+  - @portabletext/editor@3.2.2
+
 ## 1.0.14
 
 ### Patch Changes
