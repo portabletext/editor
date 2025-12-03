@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.0.13
+
+### Patch Changes
+
+- Updated dependencies [[`9513ef4`](https://github.com/portabletext/editor/commit/9513ef4f5596b13e4d7c8c794ec5c303c46ddb0e)]:
+  - @portabletext/editor@3.2.0
+  - @portabletext/plugin-character-pair-decorator@4.0.13
+  - @portabletext/plugin-input-rule@1.0.13
+
 ## 4.0.12
 
 ### Patch Changes
