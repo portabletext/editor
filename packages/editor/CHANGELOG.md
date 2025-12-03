@@ -1,5 +1,19 @@
 # Changelog
 
+## 3.1.2
+
+### Patch Changes
+
+- [#1926](https://github.com/portabletext/editor/pull/1926) [`87a9d7a`](https://github.com/portabletext/editor/commit/87a9d7abac3895e35ebb9d68a75185f65fec0dcd) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency immer to ^11.0.1
+
+- [#1929](https://github.com/portabletext/editor/pull/1929) [`93509e8`](https://github.com/portabletext/editor/commit/93509e84652df14a488070dc2c3a7cca0e252e5f) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): Update slate to v0.120.0
+
+- [#1930](https://github.com/portabletext/editor/pull/1930) [`d7a7c89`](https://github.com/portabletext/editor/commit/d7a7c892b929194dcc335a7e291e0a9c20c5160e) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update sanity monorepo to ^4.20.0
+
+- Updated dependencies [[`d7a7c89`](https://github.com/portabletext/editor/commit/d7a7c892b929194dcc335a7e291e0a9c20c5160e)]:
+  - @portabletext/block-tools@4.1.4
+  - @portabletext/sanity-bridge@1.2.7
+
 ## 3.1.1
 
 ### Patch Changes
