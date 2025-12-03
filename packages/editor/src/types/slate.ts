@@ -11,8 +11,10 @@ export interface VoidElement {
   value: Record<string, unknown>
 }
 
-export interface SlateTextBlock
-  extends Omit<PortableTextTextBlock, 'children'> {
+export interface SlateTextBlock extends Omit<
+  PortableTextTextBlock,
+  'children'
+> {
   children: Descendant[]
 }
 
