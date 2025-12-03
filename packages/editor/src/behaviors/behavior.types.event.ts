@@ -625,10 +625,8 @@ type CustomBehaviorEventType<
 export type CustomBehaviorEvent<
   TPayload extends Record<string, unknown> = Record<string, unknown>,
   TType extends string = string,
-  TInternalType extends CustomBehaviorEventType<
-    'custom',
-    TType
-  > = CustomBehaviorEventType<'custom', TType>,
+  TInternalType extends CustomBehaviorEventType<'custom', TType> =
+    CustomBehaviorEventType<'custom', TType>,
 > = {
   type: TInternalType
 } & TPayload

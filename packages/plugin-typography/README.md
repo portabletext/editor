@@ -46,19 +46,19 @@ The plugin includes the following typographic transformation rules:
 
 **Default rules:**
 
-| Name                  | Conversion    |
-| --------------------- | ------------- |
-| `emDash`              | `--` → `—`    |
-| `ellipsis`            | `...` → `…`   |
-| `openingDoubleQuote`  | `"` → `“`     |
-| `closingDoubleQuote`  | `"` → `”`     |
-| `openingSingleQuote`  | `'` → `‘`     |
-| `closingSingleQuote`  | `'` → `’`     |
-| `leftArrow`           | `<-` → `←`    |
-| `rightArrow`          | `->` → `→`    |
+| Name                  | Conversion   |
+| --------------------- | ------------ |
+| `emDash`              | `--` → `—`   |
+| `ellipsis`            | `...` → `…`  |
+| `openingDoubleQuote`  | `"` → `“`    |
+| `closingDoubleQuote`  | `"` → `”`    |
+| `openingSingleQuote`  | `'` → `‘`    |
+| `closingSingleQuote`  | `'` → `’`    |
+| `leftArrow`           | `<-` → `←`   |
+| `rightArrow`          | `->` → `→`   |
 | `copyright`           | `(c)` → `©`  |
 | `trademark`           | `(tm)` → `™` |
-| `servicemark`         | `(sm)` → `℠`  |
+| `servicemark`         | `(sm)` → `℠` |
 | `registeredTrademark` | `(r)` → `®`  |
 
 **Optional rules:**

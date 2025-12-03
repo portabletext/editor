@@ -19,8 +19,8 @@ export type Behavior<
     | `${BehaviorEventTypeNamespace}.*`
     | BehaviorEvent['type'],
   TGuardResponse = true,
-  TBehaviorEvent extends
-    ResolveBehaviorEvent<TBehaviorEventType> = ResolveBehaviorEvent<TBehaviorEventType>,
+  TBehaviorEvent extends ResolveBehaviorEvent<TBehaviorEventType> =
+    ResolveBehaviorEvent<TBehaviorEventType>,
 > = {
   /**
    * Editor Event that triggers this Behavior.
@@ -74,10 +74,8 @@ export function defineBehavior<
     | `${BehaviorEventTypeNamespace}.*`
     | BehaviorEvent['type'] = BehaviorEvent['type'],
   TGuardResponse = true,
-  TBehaviorEvent extends ResolveBehaviorEvent<
-    TBehaviorEventType,
-    TPayload
-  > = ResolveBehaviorEvent<TBehaviorEventType, TPayload>,
+  TBehaviorEvent extends ResolveBehaviorEvent<TBehaviorEventType, TPayload> =
+    ResolveBehaviorEvent<TBehaviorEventType, TPayload>,
 >(
   behavior: Behavior<TBehaviorEventType, TGuardResponse, TBehaviorEvent>,
 ): Behavior {
