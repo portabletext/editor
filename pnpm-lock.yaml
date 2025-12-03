@@ -457,6 +457,9 @@ importers:
       '@portabletext/keyboard-shortcuts':
         specifier: workspace:^
         version: link:../keyboard-shortcuts
+      '@portabletext/markdown':
+        specifier: workspace:^
+        version: link:../markdown
       '@portabletext/patches':
         specifier: workspace:*
         version: link:../patches
