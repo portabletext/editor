@@ -51,6 +51,7 @@
   "devDependencies": {
     "@sanity/pkg-utils": "^9.0.3",
     "@sanity/schema": "^4.19.0",
+    "@sanity/tsconfig": "^1.0.0",
     "@sanity/types": "^4.19.0",
     "@types/lodash.startcase": "^4.4.9",
     "typescript": "catalog:",
