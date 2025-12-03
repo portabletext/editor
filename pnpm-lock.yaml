@@ -593,6 +593,9 @@ importers:
       '@sanity/pkg-utils':
         specifier: ^9.0.3
         version: 9.0.3(@types/babel__core@7.20.5)(@types/node@24.10.1)(babel-plugin-react-compiler@1.0.0)(typescript@5.9.3)
+      '@sanity/tsconfig':
+        specifier: ^1.0.0
+        version: 1.0.0
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -612,6 +615,9 @@ importers:
       '@sanity/pkg-utils':
         specifier: ^9.0.3
         version: 9.0.3(@types/babel__core@7.20.5)(@types/node@24.10.1)(babel-plugin-react-compiler@1.0.0)(typescript@5.9.3)
+      '@sanity/tsconfig':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@types/lodash':
         specifier: ^4.17.20
         version: 4.17.20
@@ -640,6 +646,9 @@ importers:
       '@portabletext/editor':
         specifier: workspace:*
         version: link:../editor
+      '@sanity/tsconfig':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@types/react':
         specifier: ^19.2.2
         version: 19.2.6
@@ -692,6 +701,9 @@ importers:
       '@sanity/pkg-utils':
         specifier: ^9.0.3
         version: 9.0.3(@types/babel__core@7.20.5)(@types/node@24.10.1)(babel-plugin-react-compiler@1.0.0)(typescript@5.9.3)
+      '@sanity/tsconfig':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@types/react':
         specifier: ^19.2.2
         version: 19.2.6
@@ -753,6 +765,9 @@ importers:
       '@sanity/pkg-utils':
         specifier: ^9.0.3
         version: 9.0.3(@types/babel__core@7.20.5)(@types/node@24.10.1)(babel-plugin-react-compiler@1.0.0)(typescript@5.9.3)
+      '@sanity/tsconfig':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@types/react':
         specifier: ^19.2.2
         version: 19.2.6
@@ -808,6 +823,9 @@ importers:
       '@portabletext/editor':
         specifier: workspace:*
         version: link:../editor
+      '@sanity/tsconfig':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@types/react':
         specifier: ^19.2.2
         version: 19.2.6
@@ -854,6 +872,9 @@ importers:
       '@portabletext/editor':
         specifier: workspace:*
         version: link:../editor
+      '@sanity/tsconfig':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@types/react':
         specifier: ^19.2.2
         version: 19.2.6
@@ -900,6 +921,9 @@ importers:
       '@sanity/sdk-react':
         specifier: ^2.1.2
         version: 2.2.0(@types/react@19.2.6)(immer@11.0.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(use-sync-external-store@1.5.0(react@19.2.0))
+      '@sanity/tsconfig':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@sanity/types':
         specifier: ^4.19.0
         version: 4.19.0(@types/react@19.2.6)(debug@4.4.3)
@@ -970,6 +994,9 @@ importers:
       '@sanity/pkg-utils':
         specifier: ^9.0.3
         version: 9.0.3(@types/babel__core@7.20.5)(@types/node@24.10.1)(babel-plugin-react-compiler@1.0.0)(typescript@5.9.3)
+      '@sanity/tsconfig':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@types/react':
         specifier: ^19.2.2
         version: 19.2.6
@@ -1031,6 +1058,9 @@ importers:
       '@sanity/pkg-utils':
         specifier: ^9.0.3
         version: 9.0.3(@types/babel__core@7.20.5)(@types/node@24.10.1)(babel-plugin-react-compiler@1.0.0)(typescript@5.9.3)
+      '@sanity/tsconfig':
+        specifier: ^1.0.0
+        version: 1.0.0
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -1053,6 +1083,9 @@ importers:
       '@sanity/schema':
         specifier: ^4.19.0
         version: 4.19.0(@types/react@19.2.6)(debug@4.4.3)
+      '@sanity/tsconfig':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@sanity/types':
         specifier: ^4.19.0
         version: 4.19.0(@types/react@19.2.6)(debug@4.4.3)
@@ -1071,6 +1104,9 @@ importers:
       '@sanity/pkg-utils':
         specifier: ^9.0.3
         version: 9.0.3(@types/babel__core@7.20.5)(@types/node@24.10.1)(babel-plugin-react-compiler@1.0.0)(typescript@5.9.3)
+      '@sanity/tsconfig':
+        specifier: ^1.0.0
+        version: 1.0.0
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -1086,6 +1122,9 @@ importers:
       '@sanity/pkg-utils':
         specifier: ^9.0.0
         version: 9.0.3(@types/babel__core@7.20.5)(@types/node@24.10.1)(babel-plugin-react-compiler@1.0.0)(typescript@5.9.3)
+      '@sanity/tsconfig':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@sanity/types':
         specifier: ^4.5.0
         version: 4.19.0(@types/react@19.2.6)(debug@4.4.3)
@@ -1117,6 +1156,9 @@ importers:
       '@sanity/pkg-utils':
         specifier: ^9.0.3
         version: 9.0.3(@types/babel__core@7.20.5)(@types/node@24.10.1)(babel-plugin-react-compiler@1.0.0)(typescript@5.9.3)
+      '@sanity/tsconfig':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@types/react':
         specifier: ^19.2.2
         version: 19.2.6
@@ -3585,6 +3627,9 @@ packages:
   '@sanity/sdk@2.2.0':
     resolution: {integrity: sha512-JyUv8W1lTXHsaQY06LDJNKloVlRAWQsY3BgvzDNFXs9gvIU2KBrfB7IRLmRlxwMMZfYQhKKjpjRYn/DD5adzIg==}
     engines: {node: '>=20.0.0'}
+
+  '@sanity/tsconfig@1.0.0':
+    resolution: {integrity: sha512-GZBLxyURcWJhUVsIGpsW9teVtXlszqvF4Yij6m2/hmmeV4SAkhI91/nYBeBVPx2mFJdCvNmtVwu0WcPq0JmU+A==}
 
   '@sanity/types@3.99.0':
     resolution: {integrity: sha512-a766U9VSoyOSWq+RZz9wsEo/Nnn+inDkEcdGu+rHFuygdepullB/RZpF2MxNsfUMCSPnajgG1Tm9lhwbSmlySA==}
@@ -10720,6 +10765,8 @@ snapshots:
       - immer
       - react
       - use-sync-external-store
+
+  '@sanity/tsconfig@1.0.0': {}
 
   '@sanity/types@3.99.0(@types/react@19.2.6)':
     dependencies:
