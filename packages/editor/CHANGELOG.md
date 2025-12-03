@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.2.1
+
+### Patch Changes
+
+- [#1936](https://github.com/portabletext/editor/pull/1936) [`2ad036f`](https://github.com/portabletext/editor/commit/2ad036f27f00ac156351620fdfb537097b02e9ef) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove Markdown serialization and deserialization again
+
 ## 3.2.0
 
 ### Minor Changes
