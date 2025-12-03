@@ -1,7 +1,6 @@
 {
   "name": "@portabletext/markdown",
-  "version": "0.0.0",
-  "private": true,
+  "version": "1.0.0",
   "description": "Convert Portable Text to and from Markdown",
   "keywords": [
     "portable-text",
@@ -64,5 +63,8 @@
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
