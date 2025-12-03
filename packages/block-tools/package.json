@@ -58,8 +58,8 @@
   "devDependencies": {
     "@portabletext/test": "workspace:^",
     "@sanity/pkg-utils": "^9.0.3",
-    "@sanity/schema": "^4.19.0",
-    "@sanity/types": "^4.19.0",
+    "@sanity/schema": "^4.20.0",
+    "@sanity/types": "^4.20.0",
     "@types/jsdom": "^27.0.0",
     "@types/lodash": "^4.17.20",
     "@vercel/stega": "0.1.2",
@@ -69,7 +69,7 @@
     "vitest": "^4.0.14"
   },
   "peerDependencies": {
-    "@sanity/types": "^4.19.0"
+    "@sanity/types": "^4.20.0"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
