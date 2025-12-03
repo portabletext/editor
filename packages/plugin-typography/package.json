@@ -70,7 +70,7 @@
     "eslint-formatter-gha": "^1.6.0",
     "eslint-plugin-react-hooks": "7.0.1",
     "racejar": "workspace:*",
-    "react": "^19.2.0",
+    "react": "^19.2.1",
     "typescript": "catalog:",
     "typescript-eslint": "^8.46.1",
     "vitest": "^4.0.14"
