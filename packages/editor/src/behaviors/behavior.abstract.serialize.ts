@@ -18,6 +18,11 @@ export const abstractSerializeBehaviors = [
         }),
         raise({
           type: 'serialize.data',
+          mimeType: 'text/markdown',
+          originEvent: event.originEvent,
+        }),
+        raise({
+          type: 'serialize.data',
           mimeType: 'text/html',
           originEvent: event.originEvent,
         }),

@@ -180,13 +180,14 @@ describe('Serialize/Deserialize', () => {
         <BehaviorPlugin
           behaviors={[
             // Given a custom plugin that deliberately fails to deserialize
-            // application/x-portable-text and application/json
+            // application/x-portable-text, application/json and text/markdown
             defineBehavior({
               on: 'deserialize.data',
               guard: ({event}) => {
                 if (
                   event.mimeType === 'application/x-portable-text' ||
-                  event.mimeType === 'application/json'
+                  event.mimeType === 'application/json' ||
+                  event.mimeType === 'text/markdown'
                 ) {
                   return true
                 }
