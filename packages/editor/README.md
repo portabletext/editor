@@ -428,6 +428,13 @@ Now, you should be able to run `pnpm dev:test-studio` in the `sanity` repo to te
 
 This monorepo also contains additional libraries that can be used with the Portable Text Editor:
 
+### `@portabletext/markdown`
+
+> Convert Portable Text to Markdown and back again
+
+- 💻 [./packages/markdown](./packages/markdown/)
+- 📦 [@portabletext/markdown](https://www.npmjs.com/package/@portabletext/markdown)
+
 ### `@portabletext/keyboard-shortcuts`
 
 > A TypeScript library for creating platform-aware keyboard shortcuts with automatic detection of Apple vs non-Apple platforms.
