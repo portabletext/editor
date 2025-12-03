@@ -105,7 +105,7 @@
     "@portabletext/sanity-bridge": "workspace:*",
     "@portabletext/test": "workspace:^",
     "@sanity/diff-match-patch": "^3.2.0",
-    "@sanity/pkg-utils": "^9.0.3",
+    "@sanity/pkg-utils": "^10.0.0",
     "@sanity/schema": "^4.20.0",
     "@sanity/types": "^4.20.0",
     "@types/debug": "^4.1.12",
