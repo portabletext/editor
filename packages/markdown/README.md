@@ -8,6 +8,54 @@
 npm install @portabletext/markdown
 ```
 
+## Quick start
+
+**Markdown → Portable Text**
+
+```ts
+import {markdownToPortableText} from '@portabletext/markdown'
+
+const blocks = markdownToPortableText('# Hello **world**')
+```
+
+```json
+[
+  {
+    "_type": "block",
+    "_key": "f4s8k2",
+    "style": "h1",
+    "children": [
+      {"_type": "span", "_key": "a9c3x1", "text": "Hello ", "marks": []},
+      {"_type": "span", "_key": "b7d2m5", "text": "world", "marks": ["strong"]}
+    ],
+    "markDefs": []
+  }
+]
+```
+
+**Portable Text → Markdown**
+
+```ts
+import {portableTextToMarkdown} from '@portabletext/markdown'
+
+const markdown = portableTextToMarkdown([
+  {
+    _type: 'block',
+    _key: 'f4s8k2',
+    style: 'h1',
+    children: [
+      {_type: 'span', _key: 'a9c3x1', text: 'Hello ', marks: []},
+      {_type: 'span', _key: 'b7d2m5', text: 'world', marks: ['strong']},
+    ],
+    markDefs: [],
+  },
+])
+```
+
+```md
+# Hello **world**
+```
+
 ## Supported features
 
 | Feature          | Markdown → Portable Text | Portable Text → Markdown |
@@ -35,23 +83,70 @@ npm install @portabletext/markdown
 
 ### `markdownToPortableText`
 
-Converts a Markdown string to an array of Portable Text blocks.
-
 ```ts
 import {markdownToPortableText} from '@portabletext/markdown'
 
-const markdown = `
+const blocks = markdownToPortableText(`
 # Hello World
 
-This is a **bold** and *italic* text with a [link](https://example.com).
+This is **bold** and *italic* text with a [link](https://example.com).
 
 - First item
 - Second item
+`)
+```
 
-> A blockquote
-`
-
-const blocks = markdownToPortableText(markdown)
+```json
+[
+  {
+    "_type": "block",
+    "_key": "k9f2x1",
+    "style": "h1",
+    "children": [
+      {"_type": "span", "_key": "s1a2b3", "text": "Hello World", "marks": []}
+    ],
+    "markDefs": []
+  },
+  {
+    "_type": "block",
+    "_key": "m3n4p5",
+    "style": "normal",
+    "children": [
+      {"_type": "span", "_key": "s2c3d4", "text": "This is ", "marks": []},
+      {"_type": "span", "_key": "s3e4f5", "text": "bold", "marks": ["strong"]},
+      {"_type": "span", "_key": "s4g5h6", "text": " and ", "marks": []},
+      {"_type": "span", "_key": "s5i6j7", "text": "italic", "marks": ["em"]},
+      {"_type": "span", "_key": "s6k7l8", "text": " text with a ", "marks": []},
+      {"_type": "span", "_key": "s7m8n9", "text": "link", "marks": ["a1b2c3"]},
+      {"_type": "span", "_key": "s8o9p0", "text": ".", "marks": []}
+    ],
+    "markDefs": [
+      {"_type": "link", "_key": "a1b2c3", "href": "https://example.com"}
+    ]
+  },
+  {
+    "_type": "block",
+    "_key": "q1r2s3",
+    "style": "normal",
+    "listItem": "bullet",
+    "level": 1,
+    "children": [
+      {"_type": "span", "_key": "s9q0r1", "text": "First item", "marks": []}
+    ],
+    "markDefs": []
+  },
+  {
+    "_type": "block",
+    "_key": "t4u5v6",
+    "style": "normal",
+    "listItem": "bullet",
+    "level": 1,
+    "children": [
+      {"_type": "span", "_key": "s0s1t2", "text": "Second item", "marks": []}
+    ],
+    "markDefs": []
+  }
+]
 ```
 
 The conversion is driven by two concepts:
@@ -215,23 +310,60 @@ markdownToPortableText(markdown, {
 
 ### `portableTextToMarkdown`
 
-Converts an array of Portable Text blocks to a Markdown string.
-
 ```ts
 import {portableTextToMarkdown} from '@portabletext/markdown'
 
-const blocks = [
+const markdown = portableTextToMarkdown([
   {
     _type: 'block',
-    _key: 'abc123',
+    _key: 'k9f2x1',
     style: 'h1',
-    children: [{_type: 'span', _key: 'def456', text: 'Hello World', marks: []}],
+    children: [{_type: 'span', _key: 's1a2b3', text: 'Hello World', marks: []}],
     markDefs: [],
   },
-]
+  {
+    _type: 'block',
+    _key: 'm3n4p5',
+    style: 'normal',
+    children: [
+      {_type: 'span', _key: 's2c3d4', text: 'This is ', marks: []},
+      {_type: 'span', _key: 's3e4f5', text: 'bold', marks: ['strong']},
+      {_type: 'span', _key: 's4g5h6', text: ' and ', marks: []},
+      {_type: 'span', _key: 's5i6j7', text: 'italic', marks: ['em']},
+      {_type: 'span', _key: 's6k7l8', text: ' text with a ', marks: []},
+      {_type: 'span', _key: 's7m8n9', text: 'link', marks: ['a1b2c3']},
+      {_type: 'span', _key: 's8o9p0', text: '.', marks: []},
+    ],
+    markDefs: [{_type: 'link', _key: 'a1b2c3', href: 'https://example.com'}],
+  },
+  {
+    _type: 'block',
+    _key: 'q1r2s3',
+    style: 'normal',
+    listItem: 'bullet',
+    level: 1,
+    children: [{_type: 'span', _key: 's9q0r1', text: 'First item', marks: []}],
+    markDefs: [],
+  },
+  {
+    _type: 'block',
+    _key: 't4u5v6',
+    style: 'normal',
+    listItem: 'bullet',
+    level: 1,
+    children: [{_type: 'span', _key: 's0s1t2', text: 'Second item', marks: []}],
+    markDefs: [],
+  },
+])
+```
 
-const markdown = portableTextToMarkdown(blocks)
-// # Hello World
+```md
+# Hello World
+
+This is **bold** and _italic_ text with a [link](https://example.com).
+
+- First item
+- Second item
 ```
 
 The conversion is driven by **Renderers**: functions that render Portable Text elements to Markdown strings. The library includes default renderers for common types; provide your own for custom block types.
@@ -318,13 +450,6 @@ portableTextToMarkdown(blocks, {
 | `DefaultHtmlRenderer`           | `{html: string}`                              | Raw HTML               |
 | `DefaultImageRenderer`          | `{src: string, alt?: string, title?: string}` | `![alt](src "title")`  |
 | `DefaultTableRenderer`          | `{rows: [...], headerRows?: number}`          | Markdown table         |
-
-**Other exports:** The library also exports mark renderers, block style renderers, and TypeScript types:
-
-- `DefaultStrongRenderer`, `DefaultEmRenderer`, `DefaultCodeRenderer`, `DefaultUnderlineRenderer`, `DefaultStrikeThroughRenderer`, `DefaultLinkRenderer`
-- `DefaultNormalRenderer`, `DefaultBlockquoteRenderer`, `DefaultH1Renderer`–`DefaultH6Renderer`
-- `DefaultListItemRenderer`, `DefaultHardBreakRenderer`, `DefaultBlockSpacingRenderer`
-- `BlockSpacingRenderer`, `PortableTextRenderers`, `PortableTextMarkRenderer`, etc.
 
 #### What renderers receive
 
