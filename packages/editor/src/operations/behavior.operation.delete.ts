@@ -1,11 +1,9 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {deleteText, Editor, Element, Range, Transforms} from 'slate'
 import {DOMEditor} from 'slate-dom'
-import {slateRangeToSelection} from '../internal-utils/slate-utils'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {VOID_CHILD_KEY} from '../internal-utils/values'
 import type {PortableTextSlateEditor} from '../types/editor'
-import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 import type {BehaviorOperationImplementation} from './behavior.operations'
 
 export const deleteOperationImplementation: BehaviorOperationImplementation<
@@ -20,39 +18,16 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
         },
         blockIndexMap: operation.editor.blockIndexMap,
       })
-    : undefined
+    : operation.editor.selection
 
-  const selection = operation.editor.selection
-    ? slateRangeToSelection({
-        schema: context.schema,
-        editor: operation.editor,
-        range: operation.editor.selection,
-      })
-    : undefined
+  if (!at) {
+    throw new Error('Unable to delete without a selection')
+  }
 
-  const reverse = operation.direction === 'backward'
-  const anchorPoint = operation.at?.anchor ?? selection?.anchor
-  const focusPoint = operation.at?.focus ?? selection?.focus
-  const startPoint = reverse ? focusPoint : anchorPoint
-  const endPoint = reverse ? anchorPoint : focusPoint
-  const startBlockKey = startPoint
-    ? getBlockKeyFromSelectionPoint(startPoint)
-    : undefined
-  const endBlockKey = endPoint
-    ? getBlockKeyFromSelectionPoint(endPoint)
-    : undefined
-  const startBlockIndex = startBlockKey
-    ? operation.editor.blockIndexMap.get(startBlockKey)
-    : undefined
-  const endBlockIndex = endBlockKey
-    ? operation.editor.blockIndexMap.get(endBlockKey)
-    : undefined
-  const startBlock = startBlockIndex
-    ? operation.editor.value.at(startBlockIndex)
-    : undefined
-  const endBlock = endBlockIndex
-    ? operation.editor.value.at(endBlockIndex)
-    : undefined
+  const startPoint = Range.start(at)
+  const endPoint = Range.end(at)
+  const startBlockIndex = startPoint.path.at(0)
+  const endBlockIndex = endPoint.path.at(0)
 
   if (operation.unit === 'block') {
     if (startBlockIndex === undefined || endBlockIndex === undefined) {
@@ -71,14 +46,8 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
   }
 
   if (operation.unit === 'child') {
-    const range = at ?? operation.editor.selection ?? undefined
-
-    if (!range) {
-      throw new Error('Unable to delete children without a selection')
-    }
-
     Transforms.removeNodes(operation.editor, {
-      at: range,
+      at,
       match: (node) =>
         (isSpan(context, node) && node._key !== VOID_CHILD_KEY) ||
         ('__inline' in node && node.__inline === true),
@@ -88,15 +57,9 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
   }
 
   if (operation.direction === 'backward' && operation.unit === 'line') {
-    const range = at ?? operation.editor.selection ?? undefined
-
-    if (!range) {
-      throw new Error('Unable to delete line without a selection')
-    }
-
     const parentBlockEntry = Editor.above(operation.editor, {
       match: (n) => Element.isElement(n) && Editor.isBlock(operation.editor, n),
-      at: range,
+      at,
     })
 
     if (parentBlockEntry) {
@@ -104,7 +67,7 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
       const parentElementRange = Editor.range(
         operation.editor,
         parentBlockPath,
-        range.anchor,
+        at.anchor,
       )
 
       const currentLineRange = findCurrentLineRange(
@@ -120,15 +83,9 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
   }
 
   if (operation.unit === 'word') {
-    const range = at ?? operation.editor.selection ?? undefined
-
-    if (!range) {
-      throw new Error('Unable to delete word without a selection')
-    }
-
-    if (Range.isCollapsed(range)) {
+    if (Range.isCollapsed(at)) {
       deleteText(operation.editor, {
-        at: range,
+        at,
         unit: 'word',
         reverse: operation.direction === 'backward',
       })
@@ -136,6 +93,14 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
       return
     }
   }
+
+  const reverse = operation.direction === 'backward'
+  const startBlock = startBlockIndex
+    ? operation.editor.value.at(startBlockIndex)
+    : undefined
+  const endBlock = endBlockIndex
+    ? operation.editor.value.at(endBlockIndex)
+    : undefined
 
   const hanging = reverse
     ? endPoint
@@ -149,7 +114,7 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
         : true
       : false
 
-  if (at) {
+  if (operation.at) {
     deleteText(operation.editor, {
       at,
       hanging,
