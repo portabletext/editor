@@ -67,13 +67,13 @@
     "@vitest/browser": "^4.0.14",
     "@vitest/browser-playwright": "^4.0.14",
     "babel-plugin-react-compiler": "1.0.0",
-    "eslint": "^9.38.0",
+    "eslint": "^9.39.1",
     "eslint-formatter-gha": "^1.6.0",
     "eslint-plugin-react-hooks": "7.0.1",
     "racejar": "workspace:*",
     "react": "^19.2.1",
     "typescript": "catalog:",
-    "typescript-eslint": "^8.46.1",
+    "typescript-eslint": "^8.48.0",
     "vitest": "^4.0.14"
   },
   "peerDependencies": {
