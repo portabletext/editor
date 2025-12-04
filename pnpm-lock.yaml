@@ -24,8 +24,8 @@ importers:
   .:
     dependencies:
       '@sanity/pkg-utils':
-        specifier: ^10.0.0
-        version: 10.0.0(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
+        specifier: ^10.1.1
+        version: 10.1.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
     devDependencies:
       '@biomejs/biome':
         specifier: 2.3.8
@@ -419,8 +419,8 @@ importers:
         specifier: workspace:^
         version: link:../test
       '@sanity/pkg-utils':
-        specifier: ^10.0.0
-        version: 10.0.0(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
+        specifier: ^10.1.1
+        version: 10.1.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/schema':
         specifier: ^4.20.2
         version: 4.20.2(@types/react@19.2.7)(debug@4.4.3)
@@ -507,8 +507,8 @@ importers:
         specifier: ^3.2.0
         version: 3.2.0
       '@sanity/pkg-utils':
-        specifier: ^10.0.0
-        version: 10.0.0(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
+        specifier: ^10.1.1
+        version: 10.1.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/schema':
         specifier: ^4.20.2
         version: 4.20.2(@types/react@19.2.7)(debug@4.4.3)
@@ -591,8 +591,8 @@ importers:
   packages/keyboard-shortcuts:
     devDependencies:
       '@sanity/pkg-utils':
-        specifier: ^10.0.0
-        version: 10.0.0(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
+        specifier: ^10.1.1
+        version: 10.1.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/tsconfig':
         specifier: ^1.0.0
         version: 1.0.0
@@ -622,8 +622,8 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0
       '@sanity/pkg-utils':
-        specifier: ^10.0.0
-        version: 10.0.0(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
+        specifier: ^10.1.1
+        version: 10.1.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/tsconfig':
         specifier: ^1.0.0
         version: 1.0.0
@@ -647,8 +647,8 @@ importers:
         version: 4.17.21
     devDependencies:
       '@sanity/pkg-utils':
-        specifier: ^10.0.0
-        version: 10.0.0(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
+        specifier: ^10.1.1
+        version: 10.1.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/tsconfig':
         specifier: ^1.0.0
         version: 1.0.0
@@ -733,8 +733,8 @@ importers:
         specifier: workspace:*
         version: link:../schema
       '@sanity/pkg-utils':
-        specifier: ^10.0.0
-        version: 10.0.0(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
+        specifier: ^10.1.1
+        version: 10.1.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/tsconfig':
         specifier: ^1.0.0
         version: 1.0.0
@@ -797,8 +797,8 @@ importers:
         specifier: workspace:*
         version: link:../schema
       '@sanity/pkg-utils':
-        specifier: ^10.0.0
-        version: 10.0.0(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
+        specifier: ^10.1.1
+        version: 10.1.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/tsconfig':
         specifier: ^1.0.0
         version: 1.0.0
@@ -1026,8 +1026,8 @@ importers:
         specifier: workspace:^
         version: link:../schema
       '@sanity/pkg-utils':
-        specifier: ^10.0.0
-        version: 10.0.0(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
+        specifier: ^10.1.1
+        version: 10.1.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/tsconfig':
         specifier: ^1.0.0
         version: 1.0.0
@@ -1090,8 +1090,8 @@ importers:
         specifier: ^1.56.1
         version: 1.57.0
       '@sanity/pkg-utils':
-        specifier: ^10.0.0
-        version: 10.0.0(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
+        specifier: ^10.1.1
+        version: 10.1.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/tsconfig':
         specifier: ^1.0.0
         version: 1.0.0
@@ -1112,8 +1112,8 @@ importers:
         version: 4.4.0
     devDependencies:
       '@sanity/pkg-utils':
-        specifier: ^10.0.0
-        version: 10.0.0(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
+        specifier: ^10.1.1
+        version: 10.1.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/schema':
         specifier: ^4.20.2
         version: 4.20.2(@types/react@19.2.7)(debug@4.4.3)
@@ -1136,8 +1136,8 @@ importers:
   packages/schema:
     devDependencies:
       '@sanity/pkg-utils':
-        specifier: ^10.0.0
-        version: 10.0.0(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
+        specifier: ^10.1.1
+        version: 10.1.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/tsconfig':
         specifier: ^1.0.0
         version: 1.0.0
@@ -1188,8 +1188,8 @@ importers:
         specifier: workspace:*
         version: link:../editor
       '@sanity/pkg-utils':
-        specifier: ^10.0.0
-        version: 10.0.0(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
+        specifier: ^10.1.1
+        version: 10.1.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)
       '@sanity/tsconfig':
         specifier: ^1.0.0
         version: 1.0.0
@@ -3856,8 +3856,12 @@ packages:
     resolution: {integrity: sha512-Ai9Dy0C79yUALnuLe0ealwqgz11T+ngpWCzTyZv01xdjB6coQo+KoM8E0FeRTK5Zr/IAgKphYuYLU5DFCB9cGw==}
     engines: {node: '>=18'}
 
-  '@sanity/pkg-utils@10.0.0':
-    resolution: {integrity: sha512-d2EzR9Dzz39+PMMPqJWqcHvEBwBQOGFJyUmbWJT9LjTRC5sTyYPg3S4VX19wAbe29t42oTSEdVEOTFdzHPeS+g==}
+  '@sanity/parse-package-json@1.0.0':
+    resolution: {integrity: sha512-cW3hzKAX+7JvxJf/u7XzerW8j0dMuwZB6lu3hDDHLftGuQDPe8q/zGiw4IQqLbf0mEx8Exj118AtKf3k9/Q6JA==}
+    engines: {node: '>=20.19 <22 || >=22.12'}
+
+  '@sanity/pkg-utils@10.1.1':
+    resolution: {integrity: sha512-ucJ2g/z3P+/WWa1wjm2Y9y90EN03scB/oqUB4Orh/vv9C0E2dK+862SlM6V03H989LrsJZJH1nMmdrI0FZIHwA==}
     engines: {node: '>=20.19 <22 || >=22.12'}
     hasBin: true
     peerDependencies:
@@ -4978,6 +4982,10 @@ packages:
 
   emojilib@4.0.2:
     resolution: {integrity: sha512-8sP3sfAi861cNaFFp7RmyKi4S26K34ZKy4si75ojUW627AIVBHhMSu2SFJo3YRoK66YWnbysIbOk/d48uEqtKQ==}
+
+  empathic@2.0.0:
+    resolution: {integrity: sha512-i6UzDscO/XfAcNYD75CfICkmfLedpyPDdozrLMmQc5ORaQcdMoc21OnlEylMIqI7U8eniKrPMxxtj8k0vhmJhA==}
+    engines: {node: '>=14'}
 
   enhanced-resolve@5.18.3:
     resolution: {integrity: sha512-d4lC8xfavMeBjzGr2vECC3fsGXziXZQyJxD868h2M/mBI3PwAuODxAkLkq5HYuvrPYcUtiLzsTo8U3PgX3Ocww==}
@@ -10920,7 +10928,11 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  '@sanity/pkg-utils@10.0.0(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)':
+  '@sanity/parse-package-json@1.0.0':
+    dependencies:
+      zod: 4.1.13
+
+  '@sanity/pkg-utils@10.1.1(@types/babel__core@7.20.5)(@types/node@20.19.25)(babel-plugin-react-compiler@1.0.0)(debug@4.4.3)(typescript@5.9.3)':
     dependencies:
       '@babel/core': 7.28.5
       '@babel/parser': 7.28.5
@@ -10937,11 +10949,13 @@ snapshots:
       '@rollup/plugin-replace': 6.0.3(rollup@4.53.3)
       '@rollup/plugin-terser': 0.4.4(rollup@4.53.3)
       '@sanity/browserslist-config': 1.0.5
+      '@sanity/parse-package-json': 1.0.0
       '@vanilla-extract/rollup-plugin': 1.5.0(rollup@4.53.3)
       browserslist: 4.28.0
       cac: 6.7.14
       chalk: 5.6.2
       chokidar: 5.0.0
+      empathic: 2.0.0
       esbuild: 0.27.0
       find-config: 1.0.0
       get-latest-version: 5.1.0(debug@4.4.3)
@@ -10951,7 +10965,6 @@ snapshots:
       lightningcss: 1.30.2
       mkdirp: 3.0.1
       outdent: 0.8.0
-      package-up: 5.0.0
       prettier: 3.7.3
       pretty-bytes: 7.1.0
       prompts: 2.4.2
@@ -12360,6 +12373,8 @@ snapshots:
   emoji-regex@8.0.0: {}
 
   emojilib@4.0.2: {}
+
+  empathic@2.0.0: {}
 
   enhanced-resolve@5.18.3:
     dependencies:
