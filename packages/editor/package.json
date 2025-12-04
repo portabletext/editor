@@ -96,9 +96,9 @@
     "lodash": "^4.17.21",
     "lodash.startcase": "^4.4.0",
     "react-compiler-runtime": "1.0.0",
-    "slate": "0.120.0",
+    "slate": "^0.118.1",
     "slate-dom": "^0.119.0",
-    "slate-react": "0.120.0",
+    "slate-react": "^0.119.0",
     "xstate": "^5.24.0"
   },
   "devDependencies": {
