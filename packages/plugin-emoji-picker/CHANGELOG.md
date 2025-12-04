@@ -1,5 +1,13 @@
 # @portabletext/plugin-emoji-picker
 
+## 3.0.17
+
+### Patch Changes
+
+- Updated dependencies [[`5aff467`](https://github.com/portabletext/editor/commit/5aff467d3a0a607514224edcc2ed6ea3a8b17b4b), [`4be12e4`](https://github.com/portabletext/editor/commit/4be12e44447d8dc749c8efe4e76de26f4c0300f6), [`ba41b1d`](https://github.com/portabletext/editor/commit/ba41b1dba6b3cc33eb48bfcd052c15d84e6cf46d)]:
+  - @portabletext/editor@3.2.4
+  - @portabletext/plugin-input-rule@1.0.17
+
 ## 3.0.16
 
 ### Patch Changes

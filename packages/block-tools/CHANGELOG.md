@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.1.6
+
+### Patch Changes
+
+- [#1955](https://github.com/portabletext/editor/pull/1955) [`5aff467`](https://github.com/portabletext/editor/commit/5aff467d3a0a607514224edcc2ed6ea3a8b17b4b) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update sanity monorepo to ^4.20.2
+
+- [#1957](https://github.com/portabletext/editor/pull/1957) [`4be12e4`](https://github.com/portabletext/editor/commit/4be12e44447d8dc749c8efe4e76de26f4c0300f6) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency @sanity/types to ^4.20.3
+
+- Updated dependencies [[`5aff467`](https://github.com/portabletext/editor/commit/5aff467d3a0a607514224edcc2ed6ea3a8b17b4b), [`4be12e4`](https://github.com/portabletext/editor/commit/4be12e44447d8dc749c8efe4e76de26f4c0300f6)]:
+  - @portabletext/sanity-bridge@1.2.9
+
 ## 4.1.5
 
 ### Patch Changes
