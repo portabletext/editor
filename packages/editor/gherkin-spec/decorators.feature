@@ -95,6 +95,48 @@ Feature: Decorators
     And "bar" is typed
     Then "bar" has marks "strong"
 
+  Scenario Outline: Deleting expanded selection ending in a decorator
+    Given the text <text>
+    When "bar" is selected
+    And "strong" is toggled
+    And "foobar" is selected <direction>
+    And <button> is pressed
+    Then the text is ""
+    And the caret is before ""
+    And "" has no marks
+
+    Examples:
+      | text                | direction   | button        |
+      | "foo\|bar"          | "forwards"  | "{Backspace}" |
+      | "foo\|bar"          | "forwards"  | "{Delete}"    |
+      | "foo\|bar"          | "backwards" | "{Backspace}" |
+      | "foo\|bar"          | "backwards" | "{Delete}"    |
+      | "foo\|{image}\|bar" | "forwards"  | "{Backspace}" |
+      | "foo\|{image}\|bar" | "forwards"  | "{Delete}"    |
+      | "foo\|{image}\|bar" | "backwards" | "{Backspace}" |
+      | "foo\|{image}\|bar" | "backwards" | "{Delete}"    |
+
+  Scenario Outline: Deleting expanded selection starting in a decorator
+    Given the text <text>
+    When "foo" is selected
+    And "strong" is toggled
+    And "foobar" is selected <direction>
+    And <button> is pressed
+    Then the text is ""
+    And the caret is before ""
+    And "" has marks "strong"
+
+    Examples:
+      | text                | direction   | button        |
+      | "foo\|bar"          | "forwards"  | "{Backspace}" |
+      | "foo\|bar"          | "forwards"  | "{Delete}"    |
+      | "foo\|bar"          | "backwards" | "{Backspace}" |
+      | "foo\|bar"          | "backwards" | "{Delete}"    |
+      | "foo\|{image}\|bar" | "forwards"  | "{Backspace}" |
+      | "foo\|{image}\|bar" | "forwards"  | "{Delete}"    |
+      | "foo\|{image}\|bar" | "backwards" | "{Backspace}" |
+      | "foo\|{image}\|bar" | "backwards" | "{Delete}"    |
+
   Scenario: Adding bold across an empty block and typing in the same
     Given the text "foo"
     When "{Enter}" is pressed 2 times

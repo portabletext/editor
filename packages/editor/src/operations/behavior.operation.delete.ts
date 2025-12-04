@@ -1,5 +1,14 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import {deleteText, Editor, Element, Range, Transforms} from 'slate'
+import {
+  deleteText,
+  Editor,
+  Element,
+  Path,
+  Point,
+  Range,
+  Transforms,
+  type NodeEntry,
+} from 'slate'
 import {DOMEditor} from 'slate-dom'
 import {toSlateRange} from '../internal-utils/to-slate-range'
 import {VOID_CHILD_KEY} from '../internal-utils/values'
@@ -24,12 +33,12 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
     throw new Error('Unable to delete without a selection')
   }
 
-  const startPoint = Range.start(at)
-  const endPoint = Range.end(at)
-  const startBlockIndex = startPoint.path.at(0)
-  const endBlockIndex = endPoint.path.at(0)
+  const [start, end] = Range.edges(at)
 
   if (operation.unit === 'block') {
+    const startBlockIndex = start.path.at(0)
+    const endBlockIndex = end.path.at(0)
+
     if (startBlockIndex === undefined || endBlockIndex === undefined) {
       throw new Error('Failed to get start or end block index')
     }
@@ -94,23 +103,118 @@ export const deleteOperationImplementation: BehaviorOperationImplementation<
     }
   }
 
-  const reverse = operation.direction === 'backward'
-  const startBlock = startBlockIndex
-    ? operation.editor.value.at(startBlockIndex)
-    : undefined
-  const endBlock = endBlockIndex
-    ? operation.editor.value.at(endBlockIndex)
-    : undefined
+  const startBlock = Editor.above(operation.editor, {
+    match: (n) => Element.isElement(n) && Editor.isBlock(operation.editor, n),
+    at: start,
+    voids: false,
+  })
+  const endBlock = Editor.above(operation.editor, {
+    match: (n) => Element.isElement(n) && Editor.isBlock(operation.editor, n),
+    at: end,
+    voids: false,
+  })
+  const isAcrossBlocks =
+    startBlock && endBlock && !Path.equals(startBlock[1], endBlock[1])
+  const startNonEditable =
+    Editor.void(operation.editor, {at: start, mode: 'highest'}) ??
+    Editor.elementReadOnly(operation.editor, {at: start, mode: 'highest'})
+  const endNonEditable =
+    Editor.void(operation.editor, {at: end, mode: 'highest'}) ??
+    Editor.elementReadOnly(operation.editor, {at: end, mode: 'highest'})
 
+  const matches: NodeEntry[] = []
+  let lastPath: Path | undefined
+
+  for (const entry of Editor.nodes(operation.editor, {at, voids: false})) {
+    const [node, path] = entry
+
+    if (lastPath && Path.compare(path, lastPath) === 0) {
+      continue
+    }
+
+    if (
+      (Element.isElement(node) &&
+        (Editor.isVoid(operation.editor, node) ||
+          Editor.isElementReadOnly(operation.editor, node))) ||
+      (!Path.isCommon(path, start.path) && !Path.isCommon(path, end.path))
+    ) {
+      matches.push(entry)
+      lastPath = path
+    }
+  }
+
+  const pathRefs = Array.from(matches, ([, path]) =>
+    Editor.pathRef(operation.editor, path),
+  )
+  const startRef = Editor.pointRef(operation.editor, start)
+  const endRef = Editor.pointRef(operation.editor, end)
+
+  const endToEndSelection =
+    startBlock &&
+    endBlock &&
+    Point.equals(start, Editor.start(operation.editor, startBlock[1])) &&
+    Point.equals(end, Editor.end(operation.editor, endBlock[1]))
+
+  if (
+    endToEndSelection &&
+    isAcrossBlocks &&
+    !startNonEditable &&
+    !endNonEditable
+  ) {
+    if (!startNonEditable) {
+      const point = startRef.current!
+      const [node] = Editor.leaf(operation.editor, point)
+
+      if (node.text.length > 0) {
+        operation.editor.apply({
+          type: 'remove_text',
+          path: point.path,
+          offset: 0,
+          text: node.text,
+        })
+      }
+    }
+
+    for (const pathRef of pathRefs.reverse()) {
+      const path = pathRef.unref()
+
+      if (path) {
+        Transforms.removeNodes(operation.editor, {at: path, voids: false})
+      }
+    }
+
+    if (!endNonEditable) {
+      const point = endRef.current!
+      const [node] = Editor.leaf(operation.editor, point)
+      const {path} = point
+      const offset = 0
+      const text = node.text.slice(offset, end.offset)
+
+      if (text.length > 0) {
+        operation.editor.apply({type: 'remove_text', path, offset, text})
+      }
+    }
+
+    if (endRef.current && startRef.current) {
+      Transforms.removeNodes(operation.editor, {
+        at: endRef.current,
+        voids: false,
+      })
+    }
+
+    return
+  }
+
+  const reverse = operation.direction === 'backward'
   const hanging = reverse
-    ? endPoint
+    ? end
       ? isTextBlock(context, endBlock)
-        ? endPoint.offset === 0
+        ? end.offset === 0
         : true
       : false
-    : startPoint
+    : start
       ? isTextBlock(context, startBlock)
-        ? startPoint.offset === 0
+        ? start.offset === 0
         : true
       : false
 
