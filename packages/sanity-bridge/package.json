@@ -49,7 +49,7 @@
     "lodash.startcase": "^4.4.0"
   },
   "devDependencies": {
-    "@sanity/pkg-utils": "^10.0.0",
+    "@sanity/pkg-utils": "^10.1.1",
     "@sanity/schema": "^4.20.2",
     "@sanity/tsconfig": "^1.0.0",
     "@sanity/types": "^4.20.3",
