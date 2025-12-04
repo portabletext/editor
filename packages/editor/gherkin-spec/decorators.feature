@@ -137,6 +137,16 @@ Feature: Decorators
       | "foo\|{image}\|bar" | "backwards" | "{Backspace}" |
       | "foo\|{image}\|bar" | "backwards" | "{Delete}"    |
 
+  Scenario: Deleting expanded selection with decorator toggled on
+    Given the text "foo|bar"
+    When the caret is put after "bar"
+    And "strong" is toggled
+    And "foobar" is selected
+    And "{Backspace}" is pressed
+    And "baz" is typed
+    Then the text is "baz"
+    And "baz" has no marks
+
   Scenario: Adding bold across an empty block and typing in the same
     Given the text "foo"
     When "{Enter}" is pressed 2 times

@@ -356,12 +356,16 @@ export function createWithPortableTextMarkModel(
               op.properties.focus.offset === 0 &&
               newFocusSpan.text.length === op.newProperties.focus.offset
 
-            // We only want to clear the decorator state if the caret is visually
-            // moving
+            // In the case of a collapsed selection moving to another collapsed
+            // selection, we only want to clear the decorator state if the
+            // caret is visually moving to a different span.
             if (!movedToNextSpan && !movedToPreviousSpan) {
               editor.decoratorState = {}
             }
           }
+        } else {
+          // In any other case, we want to clear the decorator state.
+          editor.decoratorState = {}
         }
       }
 
