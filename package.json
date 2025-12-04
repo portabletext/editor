@@ -84,7 +84,7 @@
       ]
     },
     "overrides": {
-      "@astrojs/mdx": "^4.0.0",
+      "@astrojs/mdx": "^4.3.12",
       "@portabletext/block-tools": "workspace:*",
       "@portabletext/editor": "workspace:*",
       "@portabletext/patches": "workspace:*",
