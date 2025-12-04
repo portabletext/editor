@@ -14,10 +14,10 @@ import type {StepDefinition} from './step-definitions'
 export type CompiledFeature<TStepContext extends Record<string, any> = object> =
   {
     name: string
-    tag: 'only' | 'skip' | undefined
+    tags: Array<string>
     scenarios: Array<{
       name: string
-      tag: 'only' | 'skip' | undefined
+      tags: Array<string>
       steps: Array<(stepContext?: TStepContext) => Promise<void> | void>
     }>
     beforeHooks: Array<(stepContext?: TStepContext) => Promise<void> | void>
@@ -78,22 +78,15 @@ export function compileFeature<
     }
   })
 
-  const skippedFeature = gherkinDocument.feature.tags.some(
-    (tag) => tag.name === '@skip',
-  )
-  const onlyFeature = gherkinDocument.feature.tags.some(
-    (tag) => tag.name === '@only',
-  )
+  const featureTags = gherkinDocument.feature.tags.map((tag) => tag.name)
 
-  if (skippedFeature && onlyFeature) {
+  if (featureTags.includes('@skip') && featureTags.includes('@only')) {
     throw new Error('Feature cannot have both @skip and @only tags')
   }
 
   let context = {} as TContext
 
   const scenarios = pickles.map((pickle) => {
-    const skippedPickle = pickle.tags.some((tag) => tag.name === '@skip')
-    const onlyPickle = pickle.tags.some((tag) => tag.name === '@only')
     context = {} as TContext
 
     const steps = pickle.steps.map((step) => {
@@ -147,20 +140,14 @@ export function compileFeature<
 
     return {
       name: pickle.name,
-      tag: skippedFeature
-        ? ('skip' as const)
-        : skippedPickle
-          ? ('skip' as const)
-          : onlyPickle
-            ? ('only' as const)
-            : undefined,
+      tags: pickle.tags.map((tag) => tag.name),
       steps,
     }
   })
 
   return {
-    tag: skippedFeature ? 'skip' : onlyFeature ? 'only' : undefined,
     name: gherkinDocument.feature.name,
+    tags: gherkinDocument.feature.tags.map((tag) => tag.name),
     scenarios,
     beforeHooks: (hooks ?? [])
       .filter((hook) => hook.type === 'Before')

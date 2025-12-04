@@ -4,6 +4,20 @@ import {compileFeature} from '../compile-feature'
 import type {Hook} from '../hooks'
 import type {StepDefinition} from '../step-definitions'
 
+declare const __vitest_browser_runner__:
+  | {config: {browser: {name: string}}}
+  | undefined
+
+/**
+ * Get the current browser name if running in vitest-browser
+ */
+function getBrowserName(): string | undefined {
+  if (typeof __vitest_browser_runner__ !== 'undefined') {
+    return __vitest_browser_runner__.config.browser.name
+  }
+  return undefined
+}
+
 /**
  * @public
  */
@@ -25,12 +39,15 @@ export function Feature<TContext extends Record<string, any> = object>({
     parameterTypes: parameterTypes ?? [],
   })
 
-  const describeFn =
-    feature.tag === 'only'
-      ? describe.only
-      : feature.tag === 'skip'
-        ? describe.skip
-        : describe
+  const browserName = getBrowserName()
+  const skipFeature = feature.tags.includes('@skip')
+  const onlyFeature = feature.tags.includes('@only')
+
+  const describeFn = onlyFeature
+    ? describe.only
+    : skipFeature
+      ? describe.skip
+      : describe
 
   describeFn(feature.name, () => {
     for (const before of feature.beforeHooks) {
@@ -42,12 +59,14 @@ export function Feature<TContext extends Record<string, any> = object>({
     }
 
     for (const scenario of feature.scenarios) {
-      const testFn =
-        scenario.tag === 'only'
-          ? test.only
-          : scenario.tag === 'skip'
-            ? test.skip
-            : test
+      const tags = scenario.tags
+      const skip =
+        skipFeature ||
+        tags.includes('@skip') ||
+        (browserName && tags.includes(`@skip-${browserName}`))
+      const only = tags.includes('@only')
+
+      const testFn = only ? test.only : skip ? test.skip : test
 
       testFn(scenario.name, async () => {
         for (const step of scenario.steps) {

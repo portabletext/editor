@@ -67,6 +67,18 @@ export const stepDefinitions = [
     context.editorB = editorB
   }),
 
+  Given('one RTL editor', async (context: Context) => {
+    const {editor, locator} = await createTestEditor({
+      schemaDefinition,
+      editableProps: {
+        dir: 'rtl',
+      },
+    })
+
+    context.locator = locator
+    context.editor = editor
+  }),
+
   Given('a global keymap', (context: Context) => {
     context.keyMap = new Map()
   }),
@@ -309,6 +321,7 @@ export const stepDefinitions = [
         'deleteWord.forward': IS_MAC
           ? '{Alt>}{Delete}{/Alt}'
           : '{Control>}{Delete}{/Control}',
+        'select.all': IS_MAC ? '{Meta>}a{/Meta}' : '{Control>}a{/Control}',
       }
 
       const previousSelection = context.editor.getSnapshot().context.selection
@@ -957,4 +970,61 @@ export const stepDefinitions = [
   When('redo is performed', (context: Context) => {
     context.editor.send({type: 'history.redo'})
   }),
+
+  /**
+   * Visual position steps
+   */
+  Then(
+    '{string} is visually before {string}',
+    async (context: Context, first: string, second: string) => {
+      await vi.waitFor(() => {
+        const el = context.locator.element() as HTMLElement
+        const text = el.textContent || ''
+        const firstIndex = text.indexOf(first)
+        const secondIndex = text.indexOf(second)
+
+        assert(
+          firstIndex !== -1 && secondIndex !== -1,
+          `Could not find "${first}" or "${second}" in the text "${text}"`,
+        )
+
+        // Create ranges to measure character positions
+        const range1 = document.createRange()
+        const range2 = document.createRange()
+
+        // Find the text nodes and set up ranges
+        const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null)
+        let currentIndex = 0
+        let node: Node | null = walker.nextNode()
+
+        while (node) {
+          const nodeLength = node.textContent?.length || 0
+          if (
+            currentIndex <= firstIndex &&
+            firstIndex < currentIndex + nodeLength
+          ) {
+            range1.setStart(node, firstIndex - currentIndex)
+            range1.setEnd(node, firstIndex - currentIndex + 1)
+          }
+          if (
+            currentIndex <= secondIndex &&
+            secondIndex < currentIndex + nodeLength
+          ) {
+            range2.setStart(node, secondIndex - currentIndex)
+            range2.setEnd(node, secondIndex - currentIndex + 1)
+          }
+          currentIndex += nodeLength
+          node = walker.nextNode()
+        }
+
+        const rect1 = range1.getBoundingClientRect()
+        const rect2 = range2.getBoundingClientRect()
+
+        assert(
+          rect1.left < rect2.left,
+          `Expected "${first}" (x=${rect1.left.toFixed(0)}) to be visually before "${second}" (x=${rect2.left.toFixed(0)})`,
+        )
+      })
+    },
+  ),
 ]

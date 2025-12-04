@@ -25,12 +25,14 @@ export function Feature<TContext extends Record<string, any> = object>({
     parameterTypes: parameterTypes ?? [],
   })
 
-  const describeFn =
-    feature.tag === 'only'
-      ? describe.only
-      : feature.tag === 'skip'
-        ? describe.skip
-        : describe
+  const skipFeature = feature.tags.includes('@skip')
+  const onlyFeature = feature.tags.includes('@only')
+
+  const describeFn = onlyFeature
+    ? describe.only
+    : skipFeature
+      ? describe.skip
+      : describe
 
   describeFn(feature.name, () => {
     for (const before of feature.beforeHooks) {
@@ -42,12 +44,11 @@ export function Feature<TContext extends Record<string, any> = object>({
     }
 
     for (const scenario of feature.scenarios) {
-      const testFn =
-        scenario.tag === 'only'
-          ? test.only
-          : scenario.tag === 'skip'
-            ? test.skip
-            : test
+      const tags = scenario.tags
+      const skip = skipFeature || tags.includes('@skip')
+      const only = tags.includes('@only')
+
+      const testFn = only ? test.only : skip ? test.skip : test
 
       testFn(scenario.name, async () => {
         for (const step of scenario.steps) {
