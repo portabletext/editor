@@ -472,6 +472,28 @@ export const stepDefinitions = [
     })
   }),
   When(
+    '{string} is selected {direction}',
+    async (
+      context: Context,
+      text: string,
+      direction: Parameter['direction'],
+    ) => {
+      await vi.waitFor(() => {
+        const selection = getTextSelection(
+          context.editor.getSnapshot().context,
+          text,
+        )
+        expect(selection).not.toBeNull()
+
+        context.editor.send({
+          type: 'select',
+          at:
+            direction === 'forwards' ? selection : reverseSelection(selection),
+        })
+      })
+    },
+  ),
+  When(
     '{string} is selected backwards',
     async (context: Context, text: string) => {
       await vi.waitFor(() => {
