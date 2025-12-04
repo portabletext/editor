@@ -30,6 +30,10 @@ const parameterType = {
     name: 'decorator',
     matcher: /"(code|em|strong)"/,
   }),
+  direction: createParameterType<'forwards' | 'backwards'>({
+    name: 'direction',
+    matcher: /"(forwards|backwards)"/,
+  }),
   index: createParameterType({
     name: 'index',
     matcher: /"(\d)"/,
@@ -93,6 +97,7 @@ export const parameterTypes = [
   parameterType.blockObject,
   parameterType.button,
   parameterType.decorator,
+  parameterType.direction,
   parameterType.index,
   parameterType.inlineObject,
   parameterType.key,
