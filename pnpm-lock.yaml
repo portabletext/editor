@@ -223,8 +223,8 @@ importers:
         specifier: ^19.2.1
         version: 19.2.1
       remeda:
-        specifier: ^2.28.0
-        version: 2.30.0
+        specifier: ^2.32.0
+        version: 2.32.0
       shiki:
         specifier: ^3.9.2
         version: 3.15.0
@@ -671,8 +671,8 @@ importers:
         specifier: 1.0.0
         version: 1.0.0(react@19.2.1)
       remeda:
-        specifier: ^2.30.0
-        version: 2.30.0
+        specifier: ^2.32.0
+        version: 2.32.0
       xstate:
         specifier: ^5.24.0
         version: 5.24.0
@@ -6788,8 +6788,8 @@ packages:
   remark-stringify@11.0.0:
     resolution: {integrity: sha512-1OSmLd3awB/t8qdoEOMazZkNsfVTeY4fTsgzcQFdXNq8ToTN4ZGwrMnlda4K6smTFKD+GRV6O48i6Z4iKgPPpw==}
 
-  remeda@2.30.0:
-    resolution: {integrity: sha512-TcRpI1ecqnMer3jHhFtMerGvHFCDlCHljUp0/9A4HxHOh5bSY3kP1l8nQDFMnWYJKl3MSarDNY1tb0Bs/bCmvw==}
+  remeda@2.32.0:
+    resolution: {integrity: sha512-BZx9DsT4FAgXDTOdgJIc5eY6ECIXMwtlSPQoPglF20ycSWigttDDe88AozEsPPT4OWk5NujroGSBC1phw5uU+w==}
 
   require-from-string@2.0.2:
     resolution: {integrity: sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw==}
@@ -15123,7 +15123,7 @@ snapshots:
       mdast-util-to-markdown: 2.1.2
       unified: 11.0.5
 
-  remeda@2.30.0:
+  remeda@2.32.0:
     dependencies:
       type-fest: 4.41.0
 
