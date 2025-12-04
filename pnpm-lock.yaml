@@ -368,7 +368,7 @@ importers:
         version: 9.39.1
       '@sanity/types':
         specifier: ^4.0.1
-        version: 4.20.2(@types/react@19.2.7)(debug@4.4.3)
+        version: 4.20.3(@types/react@19.2.7)(debug@4.4.3)
       '@types/react':
         specifier: ^19.2.7
         version: 19.2.7
@@ -425,8 +425,8 @@ importers:
         specifier: ^4.20.2
         version: 4.20.2(@types/react@19.2.7)(debug@4.4.3)
       '@sanity/types':
-        specifier: ^4.20.2
-        version: 4.20.2(@types/react@19.2.7)(debug@4.4.3)
+        specifier: ^4.20.3
+        version: 4.20.3(@types/react@19.2.7)(debug@4.4.3)
       '@types/jsdom':
         specifier: ^27.0.0
         version: 27.0.0
@@ -513,8 +513,8 @@ importers:
         specifier: ^4.20.2
         version: 4.20.2(@types/react@19.2.7)(debug@4.4.3)
       '@sanity/types':
-        specifier: ^4.20.2
-        version: 4.20.2(@types/react@19.2.7)(debug@4.4.3)
+        specifier: ^4.20.3
+        version: 4.20.3(@types/react@19.2.7)(debug@4.4.3)
       '@types/debug':
         specifier: ^4.1.12
         version: 4.1.12
@@ -959,8 +959,8 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0
       '@sanity/types':
-        specifier: ^4.20.2
-        version: 4.20.2(@types/react@19.2.7)(debug@4.4.3)
+        specifier: ^4.20.3
+        version: 4.20.3(@types/react@19.2.7)(debug@4.4.3)
       '@testing-library/react':
         specifier: ^16.3.0
         version: 16.3.0(@testing-library/dom@10.4.0)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
@@ -1121,8 +1121,8 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0
       '@sanity/types':
-        specifier: ^4.20.2
-        version: 4.20.2(@types/react@19.2.7)(debug@4.4.3)
+        specifier: ^4.20.3
+        version: 4.20.3(@types/react@19.2.7)(debug@4.4.3)
       '@types/lodash.startcase':
         specifier: ^4.4.9
         version: 4.4.9
@@ -1161,7 +1161,7 @@ importers:
         version: 1.0.0
       '@sanity/types':
         specifier: ^4.5.0
-        version: 4.20.2(@types/react@19.2.7)(debug@4.4.3)
+        version: 4.20.3(@types/react@19.2.7)(debug@4.4.3)
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -3960,6 +3960,11 @@ packages:
 
   '@sanity/types@4.20.2':
     resolution: {integrity: sha512-Y2iR7L0kDmXB6vMpdPgV9pgYVFkr4CosDBYXSvg5bG0ketXolZ8Xq5WQN8H9GnpbrGWAcBVqPhwLKI36h2RZmw==}
+    peerDependencies:
+      '@types/react': ^19.2.7
+
+  '@sanity/types@4.20.3':
+    resolution: {integrity: sha512-Vuj3JPPvfLJkoeqn0s3uXguc1Sn9uCWaCOzX2dG9qOSjsmGuVvcbA9QI3CvLUjg/TzFUg5MUXf9FoSRNzQkL9w==}
     peerDependencies:
       '@types/react': ^19.2.7
 
@@ -11406,6 +11411,14 @@ snapshots:
       - debug
 
   '@sanity/types@4.20.2(@types/react@19.2.7)(debug@4.4.3)':
+    dependencies:
+      '@sanity/client': 7.13.1(debug@4.4.3)
+      '@sanity/media-library-types': 1.0.1
+      '@types/react': 19.2.7
+    transitivePeerDependencies:
+      - debug
+
+  '@sanity/types@4.20.3(@types/react@19.2.7)(debug@4.4.3)':
     dependencies:
       '@sanity/client': 7.13.1(debug@4.4.3)
       '@sanity/media-library-types': 1.0.1
