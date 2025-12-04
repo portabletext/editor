@@ -52,14 +52,14 @@
     "@sanity/pkg-utils": "^10.0.0",
     "@sanity/schema": "^4.20.2",
     "@sanity/tsconfig": "^1.0.0",
-    "@sanity/types": "^4.20.2",
+    "@sanity/types": "^4.20.3",
     "@types/lodash.startcase": "^4.4.9",
     "typescript": "catalog:",
     "vitest": "^4.0.14"
   },
   "peerDependencies": {
     "@sanity/schema": "^4.20.2",
-    "@sanity/types": "^4.20.2"
+    "@sanity/types": "^4.20.3"
   },
   "engines": {
     "node": ">=20.19 <22 || >=22.12"
