@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.2.5
+
+### Patch Changes
+
+- [#1961](https://github.com/portabletext/editor/pull/1961) [`b99833c`](https://github.com/portabletext/editor/commit/b99833c77502e8f1bfa59c80522b2ee22585a8b6) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency @sanity/schema to ^4.20.3
+
+- [#1962](https://github.com/portabletext/editor/pull/1962) [`fef5b3c`](https://github.com/portabletext/editor/commit/fef5b3c75beb2063704257428e5a817bce6e66db) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): Update slate to ^0.120.0
+
+- Updated dependencies [[`b99833c`](https://github.com/portabletext/editor/commit/b99833c77502e8f1bfa59c80522b2ee22585a8b6)]:
+  - @portabletext/block-tools@4.1.7
+  - @portabletext/sanity-bridge@1.2.10
+
 ## 3.2.4
 
 ### Patch Changes

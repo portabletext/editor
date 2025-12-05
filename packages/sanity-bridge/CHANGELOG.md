@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.10
+
+### Patch Changes
+
+- [#1961](https://github.com/portabletext/editor/pull/1961) [`b99833c`](https://github.com/portabletext/editor/commit/b99833c77502e8f1bfa59c80522b2ee22585a8b6) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency @sanity/schema to ^4.20.3
+
 ## 1.2.9
 
 ### Patch Changes
