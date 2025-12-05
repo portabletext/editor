@@ -32,3 +32,24 @@ Feature: Delete
       | "কি" | "ক"        |
       # Thai - "กิ" is ก (ko kai) + ิ (sara i)
       | "กิ" | "ก"        |
+
+  Scenario Outline: Deleting right-to-left text
+    Given the text <text>
+    When the caret is put after <text>
+    And "{Backspace}" is pressed
+    Then the text is <final text>
+
+    Examples:
+      | text    | final text |
+      # Hebrew - שלום (shalom)
+      | "שלום"  | "שלו"      |
+      # Arabic - مرحبا (marhaba)
+      | "مرحبا" | "مرحب"     |
+      # Arabic with diacritic - كُ is ك (kaf) + ُ (damma vowel)
+      | "كُتُب" | "كُتُ"     |
+
+  Scenario: Deleting in mixed LTR and RTL text
+    Given the text "Hello שלום World"
+    When the caret is put after "שלום"
+    And "{Backspace}" is pressed
+    Then the text is "Hello שלו World"
