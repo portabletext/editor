@@ -11,8 +11,8 @@ import {debugWithName} from '../internal-utils/debug'
 import {compileType} from '../internal-utils/schema'
 import {corePriority} from '../priority/priority.core'
 import {createEditorPriority} from '../priority/priority.types'
-import type {EditableAPI} from '../types/editor'
-import type {PortableTextSlateEditor} from '../types/slate-editor'
+import type {Renderer, RendererConfig} from '../renderers/renderer.types'
+import type {EditableAPI, PortableTextSlateEditor} from '../types/editor'
 import {defaultKeyGenerator} from '../utils/key-generator'
 import {createEditableAPI} from './create-editable-api'
 import {createSlateEditor, type SlateEditor} from './create-slate-editor'
@@ -96,6 +96,31 @@ export function createInternalEditor(config: EditorConfig): {
         editorActor.send({
           type: 'remove behavior',
           behaviorConfig: behaviorConfigWithPriority,
+        })
+      }
+    },
+    registerRenderer: (rendererConfig: {renderer: Renderer}) => {
+      const priority = createEditorPriority({
+        name: 'custom',
+        reference: {
+          priority: corePriority,
+          importance: 'higher',
+        },
+      })
+      const rendererConfigWithPriority = {
+        ...rendererConfig,
+        priority,
+      } satisfies RendererConfig
+
+      editorActor.send({
+        type: 'add renderer',
+        rendererConfig: rendererConfigWithPriority,
+      })
+
+      return () => {
+        editorActor.send({
+          type: 'remove renderer',
+          rendererConfig: rendererConfigWithPriority,
         })
       }
     },

@@ -6,7 +6,7 @@ import type {EditorDom} from './editor/editor-dom'
 import type {ExternalEditorEvent} from './editor/editor-machine'
 import type {EditorSnapshot} from './editor/editor-snapshot'
 import type {EditorEmittedEvent} from './editor/relay-machine'
-import type {ArrayDefinition, ArraySchemaType} from './types/sanity-types'
+import type {Renderer} from './renderers/renderer.types'
 
 /**
  * @public
@@ -50,6 +50,28 @@ export type Editor = {
    * @beta
    */
   registerBehavior: (config: {behavior: Behavior}) => () => void
+  /**
+   * @beta
+   * Register a custom renderer for a specific node type.
+   *
+   * @example
+   * ```tsx
+   * // Block object renderer (type: 'block', name matches the object type)
+   * const unregister = editor.registerRenderer({
+   *   renderer: defineRenderer<typeof schema>()({
+   *     type: 'block',
+   *     name: 'image',
+   *     render: ({attributes, children, node}) => (
+   *       <figure {...attributes}>
+   *         <img src={node.src} alt={node.alt} />
+   *         {children}
+   *       </figure>
+   *     ),
+   *   }),
+   * })
+   * ```
+   */
+  registerRenderer: (config: {renderer: Renderer}) => () => void
   send: (event: EditorEvent) => void
   on: ActorRef<Snapshot<unknown>, EventObject, EditorEmittedEvent>['on']
 }

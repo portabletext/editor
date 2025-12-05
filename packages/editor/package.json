@@ -35,6 +35,10 @@
       "source": "./src/behaviors/_exports/index.ts",
       "default": "./lib/behaviors/index.js"
     },
+    "./renderers": {
+      "source": "./src/renderers/_exports/index.ts",
+      "default": "./lib/renderers/index.js"
+    },
     "./plugins": {
       "source": "./src/plugins/_exports/index.ts",
       "default": "./lib/plugins/index.js"
