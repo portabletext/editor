@@ -472,9 +472,6 @@ importers:
       debug:
         specifier: ^4.4.3
         version: 4.4.3
-      immer:
-        specifier: ^11.0.1
-        version: 11.0.1
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
@@ -13149,7 +13146,8 @@ snapshots:
 
   ignore@7.0.5: {}
 
-  immer@11.0.1: {}
+  immer@11.0.1:
+    optional: true
 
   import-fresh@3.3.1:
     dependencies:
