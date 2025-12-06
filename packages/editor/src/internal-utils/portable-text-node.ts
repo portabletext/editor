@@ -31,7 +31,7 @@ export function isEditorNode<TEditorSchema extends EditorSchema>(
 //////////
 
 export type TextBlockNode<TEditorSchema extends EditorSchema> = {
-  _key: string
+  _key?: string
   _type: TEditorSchema['block']['name']
   children: Array<SpanNode<TEditorSchema> | ObjectNode>
   [other: string]: unknown
@@ -47,7 +47,7 @@ export function isTextBlockNode<TEditorSchema extends EditorSchema>(
 //////////
 
 export type SpanNode<TEditorSchema extends EditorSchema> = {
-  _key: string
+  _key?: string
   _type?: TEditorSchema['span']['name']
   text: string
   [other: string]: unknown
