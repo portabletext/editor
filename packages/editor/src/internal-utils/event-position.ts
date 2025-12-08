@@ -148,7 +148,13 @@ export function getEventNode({
     return undefined
   }
 
-  const node = DOMEditor.toSlateNode(slateEditor, event.target)
+  let node: Node | undefined
+
+  try {
+    node = DOMEditor.toSlateNode(slateEditor, event.target)
+  } catch (error) {
+    console.error(error)
+  }
 
   return node
 }
@@ -168,7 +174,18 @@ function getEventPositionBlock({
     return undefined
   }
 
-  const firstBlockElement = DOMEditor.toDOMNode(slateEditor, firstBlock)
+  let firstBlockElement: HTMLElement | undefined
+
+  try {
+    firstBlockElement = DOMEditor.toDOMNode(slateEditor, firstBlock)
+  } catch (error) {
+    console.error(error)
+  }
+
+  if (!firstBlockElement) {
+    return undefined
+  }
+
   const firstBlockRect = firstBlockElement.getBoundingClientRect()
 
   if (event.pageY < firstBlockRect.top) {
@@ -181,14 +198,36 @@ function getEventPositionBlock({
     return undefined
   }
 
-  const lastBlockElement = DOMEditor.toDOMNode(slateEditor, lastBlock)
+  let lastBlockElement: HTMLElement | undefined
+
+  try {
+    lastBlockElement = DOMEditor.toDOMNode(slateEditor, lastBlock)
+  } catch (error) {
+    console.error(error)
+  }
+
+  if (!lastBlockElement) {
+    return undefined
+  }
+
   const lastBlockRef = lastBlockElement.getBoundingClientRect()
 
   if (event.pageY > lastBlockRef.bottom) {
     return 'end'
   }
 
-  const element = DOMEditor.toDOMNode(slateEditor, node)
+  let element: HTMLElement | undefined
+
+  try {
+    element = DOMEditor.toDOMNode(slateEditor, node)
+  } catch (error) {
+    console.error(error)
+  }
+
+  if (!element) {
+    return undefined
+  }
+
   const elementRect = element.getBoundingClientRect()
   const top = elementRect.top
   const height = elementRect.height
