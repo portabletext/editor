@@ -9,7 +9,7 @@ import {
 import {isEqual} from 'lodash'
 import type {Descendant, Operation} from 'slate'
 import {debugWithName} from '../internal-utils/debug'
-import type {PortableTextSlateEditor} from '../types/editor'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 const debug = debugWithName('transformOperation')
 const debugVerbose = debug.enabled && false

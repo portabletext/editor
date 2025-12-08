@@ -15,7 +15,7 @@ import {
   type AnyEventObject,
 } from 'xstate'
 import {debugWithName} from '../internal-utils/debug'
-import type {PortableTextSlateEditor} from '../types/editor'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorSchema} from './editor-schema'
 import type {PatchEvent} from './relay-machine'
 

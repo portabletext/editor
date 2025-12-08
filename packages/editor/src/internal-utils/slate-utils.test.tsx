@@ -4,7 +4,7 @@ import React from 'react'
 import {describe, expect, test} from 'vitest'
 import {InternalSlateEditorRefPlugin} from '../plugins/plugin.internal.slate-editor-ref'
 import {createTestEditor} from '../test/vitest'
-import type {PortableTextSlateEditor} from '../types/editor'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {getFocusSpan} from './slate-utils'
 
 describe(getFocusSpan.name, () => {

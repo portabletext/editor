@@ -2,7 +2,7 @@ import {Editor, Transforms} from 'slate'
 import {ReactEditor} from 'slate-react'
 import {setup} from 'xstate'
 import {debugWithName} from '../internal-utils/debug'
-import type {PortableTextSlateEditor} from '../types/editor'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 const debug = debugWithName('validate selection machine')
 

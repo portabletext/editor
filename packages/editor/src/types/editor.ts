@@ -8,9 +8,7 @@ import type {
   Path,
   PortableTextBlock,
   PortableTextChild,
-  PortableTextListBlock,
   PortableTextObject,
-  PortableTextSpan,
   PortableTextTextBlock,
   TypedObject,
 } from '@sanity/types'
@@ -18,18 +16,13 @@ import type {
   ClipboardEvent,
   FocusEvent,
   JSX,
-  KeyboardEvent,
   PropsWithChildren,
   ReactElement,
   RefObject,
 } from 'react'
 import type {Observable, Subject} from 'rxjs'
-import type {Descendant, Operation as SlateOperation} from 'slate'
-import type {DOMNode} from 'slate-dom'
-import type {ReactEditor} from 'slate-react'
 import type {PortableTextEditableProps} from '../editor/Editable'
 import type {PortableTextEditor} from '../editor/PortableTextEditor'
-import type {DecoratedRange} from '../editor/range-decorations-machine'
 import type {BlockPath} from './paths'
 
 /** @beta */
@@ -73,7 +66,7 @@ export interface EditableAPI {
   ) => [PortableTextBlock | PortableTextChild | undefined, Path | undefined]
   findDOMNode: (
     element: PortableTextBlock | PortableTextChild,
-  ) => DOMNode | undefined
+  ) => Node | undefined
   focus: () => void
   focusBlock: () => PortableTextBlock | undefined
   focusChild: () => PortableTextChild | undefined
@@ -111,16 +104,6 @@ export interface EditableAPI {
   undo: () => void
 }
 
-type HistoryItem = {
-  operations: SlateOperation[]
-  timestamp: Date
-}
-
-interface History {
-  redos: HistoryItem[]
-  undos: HistoryItem[]
-}
-
 /** @public */
 export type EditorSelectionPoint = {path: Path; offset: number}
 /** @public */
@@ -129,39 +112,6 @@ export type EditorSelection = {
   focus: EditorSelectionPoint
   backward?: boolean
 } | null
-
-export interface PortableTextSlateEditor extends ReactEditor {
-  _key: 'editor'
-  _type: 'editor'
-  createPlaceholderBlock: () => Descendant
-  editable: EditableAPI
-  history: History
-  insertPortableTextData: (data: DataTransfer) => boolean
-  insertTextOrHTMLData: (data: DataTransfer) => boolean
-  isTextBlock: (value: unknown) => value is PortableTextTextBlock
-  isTextSpan: (value: unknown) => value is PortableTextSpan
-  isListBlock: (value: unknown) => value is PortableTextListBlock
-  value: Array<PortableTextBlock>
-  decoratedRanges: Array<DecoratedRange>
-  decoratorState: Record<string, boolean | undefined>
-  blockIndexMap: Map<string, number>
-  listIndexMap: Map<string, number>
-
-  /**
-   * Use hotkeys
-   */
-  pteWithHotKeys: (event: KeyboardEvent<HTMLDivElement>) => void
-
-  /**
-   * Undo
-   */
-  undo: () => void
-
-  /**
-   * Redo
-   */
-  redo: () => void
-}
 
 /**
  * The editor has mutated it's content.

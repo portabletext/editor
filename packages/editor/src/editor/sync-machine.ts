@@ -21,10 +21,8 @@ import {debugWithName} from '../internal-utils/debug'
 import {validateValue} from '../internal-utils/validateValue'
 import {toSlateBlock, VOID_CHILD_KEY} from '../internal-utils/values'
 import type {PickFromUnion} from '../type-utils'
-import type {
-  InvalidValueResolution,
-  PortableTextSlateEditor,
-} from '../types/editor'
+import type {InvalidValueResolution} from '../types/editor'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 import type {EditorSchema} from './editor-schema'
 import {isChangingRemotely, withRemoteChanges} from './withChanges'
 import {withoutPatching} from './withoutPatching'

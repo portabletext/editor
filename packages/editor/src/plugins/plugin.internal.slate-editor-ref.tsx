@@ -1,6 +1,6 @@
 import React from 'react'
 import {useSlateStatic} from 'slate-react'
-import type {PortableTextSlateEditor} from '../types/editor'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 export const InternalSlateEditorRefPlugin =
   React.forwardRef<PortableTextSlateEditor | null>((_, ref) => {

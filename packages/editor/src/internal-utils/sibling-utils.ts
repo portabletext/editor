@@ -1,6 +1,6 @@
 import type {PortableTextSpan} from '@sanity/types'
 import {Node, Path} from 'slate'
-import type {PortableTextSlateEditor} from '../types/editor'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 
 export function getPreviousSpan({
   editor,

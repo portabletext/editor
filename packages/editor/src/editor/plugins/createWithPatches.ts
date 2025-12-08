@@ -16,7 +16,7 @@ import {
   splitNodePatch,
 } from '../../internal-utils/operation-to-patches'
 import {isEqualToEmptyEditor} from '../../internal-utils/values'
-import type {PortableTextSlateEditor} from '../../types/editor'
+import type {PortableTextSlateEditor} from '../../types/slate-editor'
 import type {EditorActor} from '../editor-machine'
 import type {RelayActor} from '../relay-machine'
 import {IS_PROCESSING_REMOTE_CHANGES} from '../weakMaps'

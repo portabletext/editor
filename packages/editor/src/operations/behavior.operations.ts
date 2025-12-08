@@ -8,7 +8,7 @@ import {removeDecoratorOperationImplementation} from '../editor/plugins/createWi
 import {historyRedoOperationImplementation} from '../history/behavior.operation.history.redo'
 import {historyUndoOperationImplementation} from '../history/behavior.operation.history.undo'
 import type {OmitFromUnion, PickFromUnion} from '../type-utils'
-import type {PortableTextSlateEditor} from '../types/editor'
+import type {PortableTextSlateEditor} from '../types/slate-editor'
 import {addAnnotationOperationImplementation} from './behavior.operation.annotation.add'
 import {removeAnnotationOperationImplementation} from './behavior.operation.annotation.remove'
 import {blockSetOperationImplementation} from './behavior.operation.block.set'
